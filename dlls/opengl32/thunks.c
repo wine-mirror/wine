@@ -3783,6 +3783,22 @@ static void WINAPI glBlitFramebufferEXT( GLint srcX0, GLint srcY0, GLint srcX1, 
     if ((status = UNIX_CALL( glBlitFramebufferEXT, &args ))) WARN( "glBlitFramebufferEXT returned %#lx\n", status );
 }
 
+static void WINAPI glBlitFramebufferLayerEXT( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint srcLayer, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLint dstLayer, GLbitfield mask, GLenum filter )
+{
+    struct glBlitFramebufferLayerEXT_params args = { .teb = NtCurrentTeb(), .srcX0 = srcX0, .srcY0 = srcY0, .srcX1 = srcX1, .srcY1 = srcY1, .srcLayer = srcLayer, .dstX0 = dstX0, .dstY0 = dstY0, .dstX1 = dstX1, .dstY1 = dstY1, .dstLayer = dstLayer, .mask = mask, .filter = filter };
+    NTSTATUS status;
+    TRACE( "srcX0 %d, srcY0 %d, srcX1 %d, srcY1 %d, srcLayer %d, dstX0 %d, dstY0 %d, dstX1 %d, dstY1 %d, dstLayer %d, mask %d, filter %d\n", srcX0, srcY0, srcX1, srcY1, srcLayer, dstX0, dstY0, dstX1, dstY1, dstLayer, mask, filter );
+    if ((status = UNIX_CALL( glBlitFramebufferLayerEXT, &args ))) WARN( "glBlitFramebufferLayerEXT returned %#lx\n", status );
+}
+
+static void WINAPI glBlitFramebufferLayersEXT( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter )
+{
+    struct glBlitFramebufferLayersEXT_params args = { .teb = NtCurrentTeb(), .srcX0 = srcX0, .srcY0 = srcY0, .srcX1 = srcX1, .srcY1 = srcY1, .dstX0 = dstX0, .dstY0 = dstY0, .dstX1 = dstX1, .dstY1 = dstY1, .mask = mask, .filter = filter };
+    NTSTATUS status;
+    TRACE( "srcX0 %d, srcY0 %d, srcX1 %d, srcY1 %d, dstX0 %d, dstY0 %d, dstX1 %d, dstY1 %d, mask %d, filter %d\n", srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter );
+    if ((status = UNIX_CALL( glBlitFramebufferLayersEXT, &args ))) WARN( "glBlitFramebufferLayersEXT returned %#lx\n", status );
+}
+
 static void WINAPI glBlitNamedFramebuffer( GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter )
 {
     struct glBlitNamedFramebuffer_params args = { .teb = NtCurrentTeb(), .readFramebuffer = readFramebuffer, .drawFramebuffer = drawFramebuffer, .srcX0 = srcX0, .srcY0 = srcY0, .srcX1 = srcX1, .srcY1 = srcY1, .dstX0 = dstX0, .dstY0 = dstY0, .dstX1 = dstX1, .dstY1 = dstY1, .mask = mask, .filter = filter };
@@ -3829,6 +3845,14 @@ static void WINAPI glBufferPageCommitmentARB( GLenum target, GLintptr offset, GL
     NTSTATUS status;
     TRACE( "target %d, offset %Id, size %Id, commit %d\n", target, offset, size, commit );
     if ((status = UNIX_CALL( glBufferPageCommitmentARB, &args ))) WARN( "glBufferPageCommitmentARB returned %#lx\n", status );
+}
+
+static void WINAPI glBufferPageCommitmentMemNV( GLenum target, GLintptr offset, GLsizeiptr size, GLuint memory, GLuint64 memOffset, GLboolean commit )
+{
+    struct glBufferPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .target = target, .offset = offset, .size = size, .memory = memory, .memOffset = memOffset, .commit = commit };
+    NTSTATUS status;
+    TRACE( "target %d, offset %Id, size %Id, memory %d, memOffset %s, commit %d\n", target, offset, size, memory, wine_dbgstr_longlong(memOffset), commit );
+    if ((status = UNIX_CALL( glBufferPageCommitmentMemNV, &args ))) WARN( "glBufferPageCommitmentMemNV returned %#lx\n", status );
 }
 
 static void WINAPI glBufferParameteriAPPLE( GLenum target, GLenum pname, GLint param )
@@ -5360,6 +5384,14 @@ static void WINAPI glCreateSamplers( GLsizei n, GLuint *samplers )
     if ((status = UNIX_CALL( glCreateSamplers, &args ))) WARN( "glCreateSamplers returned %#lx\n", status );
 }
 
+static void WINAPI glCreateSemaphoresNV( GLsizei n, GLuint *semaphores )
+{
+    struct glCreateSemaphoresNV_params args = { .teb = NtCurrentTeb(), .n = n, .semaphores = semaphores };
+    NTSTATUS status;
+    TRACE( "n %d, semaphores %p\n", n, semaphores );
+    if ((status = UNIX_CALL( glCreateSemaphoresNV, &args ))) WARN( "glCreateSemaphoresNV returned %#lx\n", status );
+}
+
 static GLuint WINAPI glCreateShader( GLenum type )
 {
     struct glCreateShader_params args = { .teb = NtCurrentTeb(), .type = type };
@@ -6283,6 +6315,22 @@ static void WINAPI glDrawMeshArraysSUN( GLenum mode, GLint first, GLsizei count,
     NTSTATUS status;
     TRACE( "mode %d, first %d, count %d, width %d\n", mode, first, count, width );
     if ((status = UNIX_CALL( glDrawMeshArraysSUN, &args ))) WARN( "glDrawMeshArraysSUN returned %#lx\n", status );
+}
+
+static void WINAPI glDrawMeshTasksEXT( GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z )
+{
+    struct glDrawMeshTasksEXT_params args = { .teb = NtCurrentTeb(), .num_groups_x = num_groups_x, .num_groups_y = num_groups_y, .num_groups_z = num_groups_z };
+    NTSTATUS status;
+    TRACE( "num_groups_x %d, num_groups_y %d, num_groups_z %d\n", num_groups_x, num_groups_y, num_groups_z );
+    if ((status = UNIX_CALL( glDrawMeshTasksEXT, &args ))) WARN( "glDrawMeshTasksEXT returned %#lx\n", status );
+}
+
+static void WINAPI glDrawMeshTasksIndirectEXT( GLintptr indirect )
+{
+    struct glDrawMeshTasksIndirectEXT_params args = { .teb = NtCurrentTeb(), .indirect = indirect };
+    NTSTATUS status;
+    TRACE( "indirect %Id\n", indirect );
+    if ((status = UNIX_CALL( glDrawMeshTasksIndirectEXT, &args ))) WARN( "glDrawMeshTasksIndirectEXT returned %#lx\n", status );
 }
 
 static void WINAPI glDrawMeshTasksIndirectNV( GLintptr indirect )
@@ -8128,7 +8176,7 @@ static GLuint WINAPI glGetDebugMessageLog( GLuint count, GLsizei bufSize, GLenum
     return args.ret;
 }
 
-static GLuint WINAPI glGetDebugMessageLogAMD( GLuint count, GLsizei bufSize, GLenum *categories, GLuint *severities, GLuint *ids, GLsizei *lengths, GLchar *message )
+static GLuint WINAPI glGetDebugMessageLogAMD( GLuint count, GLsizei bufSize, GLenum *categories, GLenum *severities, GLuint *ids, GLsizei *lengths, GLchar *message )
 {
     struct glGetDebugMessageLogAMD_params args = { .teb = NtCurrentTeb(), .count = count, .bufSize = bufSize, .categories = categories, .severities = severities, .ids = ids, .lengths = lengths, .message = message };
     NTSTATUS status;
@@ -9797,6 +9845,14 @@ static void WINAPI glGetSamplerParameteriv( GLuint sampler, GLenum pname, GLint 
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, params %p\n", sampler, pname, params );
     if ((status = UNIX_CALL( glGetSamplerParameteriv, &args ))) WARN( "glGetSamplerParameteriv returned %#lx\n", status );
+}
+
+static void WINAPI glGetSemaphoreParameterivNV( GLuint semaphore, GLenum pname, GLint *params )
+{
+    struct glGetSemaphoreParameterivNV_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "semaphore %d, pname %d, params %p\n", semaphore, pname, params );
+    if ((status = UNIX_CALL( glGetSemaphoreParameterivNV, &args ))) WARN( "glGetSemaphoreParameterivNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, GLuint64 *params )
@@ -12811,12 +12867,28 @@ static void WINAPI glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type
     if ((status = UNIX_CALL( glMultiDrawElementsIndirectCountARB, &args ))) WARN( "glMultiDrawElementsIndirectCountARB returned %#lx\n", status );
 }
 
+static void WINAPI glMultiDrawMeshTasksIndirectCountEXT( GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
+{
+    struct glMultiDrawMeshTasksIndirectCountEXT_params args = { .teb = NtCurrentTeb(), .indirect = indirect, .drawcount = drawcount, .maxdrawcount = maxdrawcount, .stride = stride };
+    NTSTATUS status;
+    TRACE( "indirect %Id, drawcount %Id, maxdrawcount %d, stride %d\n", indirect, drawcount, maxdrawcount, stride );
+    if ((status = UNIX_CALL( glMultiDrawMeshTasksIndirectCountEXT, &args ))) WARN( "glMultiDrawMeshTasksIndirectCountEXT returned %#lx\n", status );
+}
+
 static void WINAPI glMultiDrawMeshTasksIndirectCountNV( GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
 {
     struct glMultiDrawMeshTasksIndirectCountNV_params args = { .teb = NtCurrentTeb(), .indirect = indirect, .drawcount = drawcount, .maxdrawcount = maxdrawcount, .stride = stride };
     NTSTATUS status;
     TRACE( "indirect %Id, drawcount %Id, maxdrawcount %d, stride %d\n", indirect, drawcount, maxdrawcount, stride );
     if ((status = UNIX_CALL( glMultiDrawMeshTasksIndirectCountNV, &args ))) WARN( "glMultiDrawMeshTasksIndirectCountNV returned %#lx\n", status );
+}
+
+static void WINAPI glMultiDrawMeshTasksIndirectEXT( GLintptr indirect, GLsizei drawcount, GLsizei stride )
+{
+    struct glMultiDrawMeshTasksIndirectEXT_params args = { .teb = NtCurrentTeb(), .indirect = indirect, .drawcount = drawcount, .stride = stride };
+    NTSTATUS status;
+    TRACE( "indirect %Id, drawcount %d, stride %d\n", indirect, drawcount, stride );
+    if ((status = UNIX_CALL( glMultiDrawMeshTasksIndirectEXT, &args ))) WARN( "glMultiDrawMeshTasksIndirectEXT returned %#lx\n", status );
 }
 
 static void WINAPI glMultiDrawMeshTasksIndirectNV( GLintptr indirect, GLsizei drawcount, GLsizei stride )
@@ -14235,6 +14307,14 @@ static void WINAPI glNamedBufferPageCommitmentEXT( GLuint buffer, GLintptr offse
     if ((status = UNIX_CALL( glNamedBufferPageCommitmentEXT, &args ))) WARN( "glNamedBufferPageCommitmentEXT returned %#lx\n", status );
 }
 
+static void WINAPI glNamedBufferPageCommitmentMemNV( GLuint buffer, GLintptr offset, GLsizeiptr size, GLuint memory, GLuint64 memOffset, GLboolean commit )
+{
+    struct glNamedBufferPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .offset = offset, .size = size, .memory = memory, .memOffset = memOffset, .commit = commit };
+    NTSTATUS status;
+    TRACE( "buffer %d, offset %Id, size %Id, memory %d, memOffset %s, commit %d\n", buffer, offset, size, memory, wine_dbgstr_longlong(memOffset), commit );
+    if ((status = UNIX_CALL( glNamedBufferPageCommitmentMemNV, &args ))) WARN( "glNamedBufferPageCommitmentMemNV returned %#lx\n", status );
+}
+
 static void WINAPI glNamedBufferStorage( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags )
 {
     struct glNamedBufferStorage_params args = { .teb = NtCurrentTeb(), .buffer = buffer, .size = size, .data = data, .flags = flags };
@@ -14433,6 +14513,14 @@ static void WINAPI glNamedFramebufferTextureLayerEXT( GLuint framebuffer, GLenum
     NTSTATUS status;
     TRACE( "framebuffer %d, attachment %d, texture %d, level %d, layer %d\n", framebuffer, attachment, texture, level, layer );
     if ((status = UNIX_CALL( glNamedFramebufferTextureLayerEXT, &args ))) WARN( "glNamedFramebufferTextureLayerEXT returned %#lx\n", status );
+}
+
+static void WINAPI glNamedFramebufferTextureMultiviewOVR( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews )
+{
+    struct glNamedFramebufferTextureMultiviewOVR_params args = { .teb = NtCurrentTeb(), .framebuffer = framebuffer, .attachment = attachment, .texture = texture, .level = level, .baseViewIndex = baseViewIndex, .numViews = numViews };
+    NTSTATUS status;
+    TRACE( "framebuffer %d, attachment %d, texture %d, level %d, baseViewIndex %d, numViews %d\n", framebuffer, attachment, texture, level, baseViewIndex, numViews );
+    if ((status = UNIX_CALL( glNamedFramebufferTextureMultiviewOVR, &args ))) WARN( "glNamedFramebufferTextureMultiviewOVR returned %#lx\n", status );
 }
 
 static void WINAPI glNamedProgramLocalParameter4dEXT( GLuint program, GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
@@ -14936,7 +15024,7 @@ static GLenum WINAPI glPathGlyphIndexArrayNV( GLuint firstPathName, GLenum fontT
     return args.ret;
 }
 
-static GLenum WINAPI glPathGlyphIndexRangeNV( GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint baseAndCount[2] )
+static GLenum WINAPI glPathGlyphIndexRangeNV( GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint *baseAndCount )
 {
     struct glPathGlyphIndexRangeNV_params args = { .teb = NtCurrentTeb(), .fontTarget = fontTarget, .fontName = fontName, .fontStyle = fontStyle, .pathParameterTemplate = pathParameterTemplate, .emScale = emScale, .baseAndCount = baseAndCount };
     NTSTATUS status;
@@ -17928,6 +18016,14 @@ static void WINAPI glSelectTextureSGIS( GLenum target )
     if ((status = UNIX_CALL( glSelectTextureSGIS, &args ))) WARN( "glSelectTextureSGIS returned %#lx\n", status );
 }
 
+static void WINAPI glSemaphoreParameterivNV( GLuint semaphore, GLenum pname, const GLint *params )
+{
+    struct glSemaphoreParameterivNV_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "semaphore %d, pname %d, params %p\n", semaphore, pname, params );
+    if ((status = UNIX_CALL( glSemaphoreParameterivNV, &args ))) WARN( "glSemaphoreParameterivNV returned %#lx\n", status );
+}
+
 static void WINAPI glSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, const GLuint64 *params )
 {
     struct glSemaphoreParameterui64vEXT_params args = { .teb = NtCurrentTeb(), .semaphore = semaphore, .pname = pname, .params = params };
@@ -18000,11 +18096,11 @@ static void WINAPI glSetMultisamplefvAMD( GLenum pname, GLuint index, const GLfl
     if ((status = UNIX_CALL( glSetMultisamplefvAMD, &args ))) WARN( "glSetMultisamplefvAMD returned %#lx\n", status );
 }
 
-static void WINAPI glShaderBinary( GLsizei count, const GLuint *shaders, GLenum binaryformat, const void *binary, GLsizei length )
+static void WINAPI glShaderBinary( GLsizei count, const GLuint *shaders, GLenum binaryFormat, const void *binary, GLsizei length )
 {
-    struct glShaderBinary_params args = { .teb = NtCurrentTeb(), .count = count, .shaders = shaders, .binaryformat = binaryformat, .binary = binary, .length = length };
+    struct glShaderBinary_params args = { .teb = NtCurrentTeb(), .count = count, .shaders = shaders, .binaryFormat = binaryFormat, .binary = binary, .length = length };
     NTSTATUS status;
-    TRACE( "count %d, shaders %p, binaryformat %d, binary %p, length %d\n", count, shaders, binaryformat, binary, length );
+    TRACE( "count %d, shaders %p, binaryFormat %d, binary %p, length %d\n", count, shaders, binaryFormat, binary, length );
     if ((status = UNIX_CALL( glShaderBinary, &args ))) WARN( "glShaderBinary returned %#lx\n", status );
 }
 
@@ -19059,6 +19155,14 @@ static void WINAPI glTexPageCommitmentARB( GLenum target, GLint level, GLint xof
     if ((status = UNIX_CALL( glTexPageCommitmentARB, &args ))) WARN( "glTexPageCommitmentARB returned %#lx\n", status );
 }
 
+static void WINAPI glTexPageCommitmentMemNV( GLenum target, GLint layer, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset, GLboolean commit )
+{
+    struct glTexPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .target = target, .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset, .commit = commit };
+    NTSTATUS status;
+    TRACE( "target %d, layer %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, memory %d, offset %s, commit %d\n", target, layer, level, xoffset, yoffset, zoffset, width, height, depth, memory, wine_dbgstr_longlong(offset), commit );
+    if ((status = UNIX_CALL( glTexPageCommitmentMemNV, &args ))) WARN( "glTexPageCommitmentMemNV returned %#lx\n", status );
+}
+
 static void WINAPI glTexParameterIiv( GLenum target, GLenum pname, const GLint *params )
 {
     struct glTexParameterIiv_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
@@ -19123,12 +19227,28 @@ static void WINAPI glTexStorage1D( GLenum target, GLsizei levels, GLenum interna
     if ((status = UNIX_CALL( glTexStorage1D, &args ))) WARN( "glTexStorage1D returned %#lx\n", status );
 }
 
+static void WINAPI glTexStorage1DEXT( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width )
+{
+    struct glTexStorage1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalformat = internalformat, .width = width };
+    NTSTATUS status;
+    TRACE( "target %d, levels %d, internalformat %d, width %d\n", target, levels, internalformat, width );
+    if ((status = UNIX_CALL( glTexStorage1DEXT, &args ))) WARN( "glTexStorage1DEXT returned %#lx\n", status );
+}
+
 static void WINAPI glTexStorage2D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height )
 {
     struct glTexStorage2D_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalformat = internalformat, .width = width, .height = height };
     NTSTATUS status;
     TRACE( "target %d, levels %d, internalformat %d, width %d, height %d\n", target, levels, internalformat, width, height );
     if ((status = UNIX_CALL( glTexStorage2D, &args ))) WARN( "glTexStorage2D returned %#lx\n", status );
+}
+
+static void WINAPI glTexStorage2DEXT( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    struct glTexStorage2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalformat = internalformat, .width = width, .height = height };
+    NTSTATUS status;
+    TRACE( "target %d, levels %d, internalformat %d, width %d, height %d\n", target, levels, internalformat, width, height );
+    if ((status = UNIX_CALL( glTexStorage2DEXT, &args ))) WARN( "glTexStorage2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTexStorage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations )
@@ -19145,6 +19265,14 @@ static void WINAPI glTexStorage3D( GLenum target, GLsizei levels, GLenum interna
     NTSTATUS status;
     TRACE( "target %d, levels %d, internalformat %d, width %d, height %d, depth %d\n", target, levels, internalformat, width, height, depth );
     if ((status = UNIX_CALL( glTexStorage3D, &args ))) WARN( "glTexStorage3D returned %#lx\n", status );
+}
+
+static void WINAPI glTexStorage3DEXT( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth )
+{
+    struct glTexStorage3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalformat = internalformat, .width = width, .height = height, .depth = depth };
+    NTSTATUS status;
+    TRACE( "target %d, levels %d, internalformat %d, width %d, height %d, depth %d\n", target, levels, internalformat, width, height, depth );
+    if ((status = UNIX_CALL( glTexStorage3DEXT, &args ))) WARN( "glTexStorage3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTexStorage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations )
@@ -19393,6 +19521,14 @@ static void WINAPI glTexturePageCommitmentEXT( GLuint texture, GLint level, GLin
     NTSTATUS status;
     TRACE( "texture %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, commit %d\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, commit );
     if ((status = UNIX_CALL( glTexturePageCommitmentEXT, &args ))) WARN( "glTexturePageCommitmentEXT returned %#lx\n", status );
+}
+
+static void WINAPI glTexturePageCommitmentMemNV( GLuint texture, GLint layer, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset, GLboolean commit )
+{
+    struct glTexturePageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .texture = texture, .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset, .commit = commit };
+    NTSTATUS status;
+    TRACE( "texture %d, layer %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, memory %d, offset %s, commit %d\n", texture, layer, level, xoffset, yoffset, zoffset, width, height, depth, memory, wine_dbgstr_longlong(offset), commit );
+    if ((status = UNIX_CALL( glTexturePageCommitmentMemNV, &args ))) WARN( "glTexturePageCommitmentMemNV returned %#lx\n", status );
 }
 
 static void WINAPI glTextureParameterIiv( GLuint texture, GLenum pname, const GLint *params )
@@ -24534,12 +24670,15 @@ const void *extension_procs[] =
     glBlendParameteriNV,
     glBlitFramebuffer,
     glBlitFramebufferEXT,
+    glBlitFramebufferLayerEXT,
+    glBlitFramebufferLayersEXT,
     glBlitNamedFramebuffer,
     glBufferAddressRangeNV,
     glBufferAttachMemoryNV,
     glBufferData,
     glBufferDataARB,
     glBufferPageCommitmentARB,
+    glBufferPageCommitmentMemNV,
     glBufferParameteriAPPLE,
     glBufferRegionEnabled,
     glBufferStorage,
@@ -24730,6 +24869,7 @@ const void *extension_procs[] =
     glCreateQueries,
     glCreateRenderbuffers,
     glCreateSamplers,
+    glCreateSemaphoresNV,
     glCreateShader,
     glCreateShaderObjectARB,
     glCreateShaderProgramEXT,
@@ -24845,6 +24985,8 @@ const void *extension_procs[] =
     glDrawElementsInstancedBaseVertexBaseInstance,
     glDrawElementsInstancedEXT,
     glDrawMeshArraysSUN,
+    glDrawMeshTasksEXT,
+    glDrawMeshTasksIndirectEXT,
     glDrawMeshTasksIndirectNV,
     glDrawMeshTasksNV,
     glDrawRangeElementArrayAPPLE,
@@ -25281,6 +25423,7 @@ const void *extension_procs[] =
     glGetSamplerParameterIuiv,
     glGetSamplerParameterfv,
     glGetSamplerParameteriv,
+    glGetSemaphoreParameterivNV,
     glGetSemaphoreParameterui64vEXT,
     glGetSeparableFilter,
     glGetSeparableFilterEXT,
@@ -25650,7 +25793,9 @@ const void *extension_procs[] =
     glMultiDrawElementsIndirectBindlessNV,
     glMultiDrawElementsIndirectCount,
     glMultiDrawElementsIndirectCountARB,
+    glMultiDrawMeshTasksIndirectCountEXT,
     glMultiDrawMeshTasksIndirectCountNV,
+    glMultiDrawMeshTasksIndirectEXT,
     glMultiDrawMeshTasksIndirectNV,
     glMultiDrawRangeElementArrayAPPLE,
     glMultiModeDrawArraysIBM,
@@ -25828,6 +25973,7 @@ const void *extension_procs[] =
     glNamedBufferDataEXT,
     glNamedBufferPageCommitmentARB,
     glNamedBufferPageCommitmentEXT,
+    glNamedBufferPageCommitmentMemNV,
     glNamedBufferStorage,
     glNamedBufferStorageEXT,
     glNamedBufferStorageExternalEXT,
@@ -25853,6 +25999,7 @@ const void *extension_procs[] =
     glNamedFramebufferTextureFaceEXT,
     glNamedFramebufferTextureLayer,
     glNamedFramebufferTextureLayerEXT,
+    glNamedFramebufferTextureMultiviewOVR,
     glNamedProgramLocalParameter4dEXT,
     glNamedProgramLocalParameter4dvEXT,
     glNamedProgramLocalParameter4fEXT,
@@ -26288,6 +26435,7 @@ const void *extension_procs[] =
     glSelectPerfMonitorCountersAMD,
     glSelectTextureCoordSetSGIS,
     glSelectTextureSGIS,
+    glSemaphoreParameterivNV,
     glSemaphoreParameterui64vEXT,
     glSeparableFilter2D,
     glSeparableFilter2DEXT,
@@ -26429,6 +26577,7 @@ const void *extension_procs[] =
     glTexImage3DMultisampleCoverageNV,
     glTexImage4DSGIS,
     glTexPageCommitmentARB,
+    glTexPageCommitmentMemNV,
     glTexParameterIiv,
     glTexParameterIivEXT,
     glTexParameterIuiv,
@@ -26437,9 +26586,12 @@ const void *extension_procs[] =
     glTexParameterxvOES,
     glTexRenderbufferNV,
     glTexStorage1D,
+    glTexStorage1DEXT,
     glTexStorage2D,
+    glTexStorage2DEXT,
     glTexStorage2DMultisample,
     glTexStorage3D,
+    glTexStorage3DEXT,
     glTexStorage3DMultisample,
     glTexStorageMem1DEXT,
     glTexStorageMem2DEXT,
@@ -26471,6 +26623,7 @@ const void *extension_procs[] =
     glTextureMaterialEXT,
     glTextureNormalEXT,
     glTexturePageCommitmentEXT,
+    glTexturePageCommitmentMemNV,
     glTextureParameterIiv,
     glTextureParameterIivEXT,
     glTextureParameterIuiv,

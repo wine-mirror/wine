@@ -274,6 +274,7 @@ my %map_default_fbo_thunks =
      "glNamedFramebufferSampleLocationsfvARB" => [ "framebuffer" ],
      "glNamedFramebufferSampleLocationsfvNV" => [ "framebuffer" ],
      "glNamedFramebufferSamplePositionsfvAMD" => [ "framebuffer" ],
+     "glNamedFramebufferTextureMultiviewOVR" => [ "framebuffer" ],
     );
 my %manual_wow64_wrappers =
     (
@@ -739,13 +740,6 @@ sub generate_func_params($$)
     $ret .= "    TEB *teb;\n";
     foreach my $arg (@{$func->[1]})
     {
-        my $ptype = get_arg_type( $arg );
-        if ($ptype =~ /\]$/)
-        {
-            $ptype =~ s/\[.*//;
-            $ret .= "    $ptype*" . get_arg_name( $arg ) . ";\n";
-            next;
-        }
         $ret .= sprintf "    %s;\n", $arg->textContent();
     }
     $ret .= sprintf "    %sret;\n", $func->[0]->textContent() unless is_void_func($func);
@@ -807,7 +801,7 @@ if ($version eq "1.0") {
 # Fetch the registry files
 #
 my $ogl_url="https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry";
-my $ogl_commit="03e1bfb87c4664d34dc7822fb591841eec747094";
+my $ogl_commit="a77f5b6ffd0b0b74904f755ae977fa278eac4e95";
 my $egl_url="https://raw.githubusercontent.com/KhronosGroup/EGL-Registry";
 my $egl_commit="bd4838f57cd7e0cb6e4a4154919af426b038695d";
 my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
