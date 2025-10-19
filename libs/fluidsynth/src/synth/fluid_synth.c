@@ -1747,8 +1747,14 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 /* reset the current basic channel before changing it */
                 fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
                 fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+                FLUID_LOG(FLUID_INFO, "Successfully configured channel group, from channel %d up to including chan %d to mode 0x%X", channum, channum + value, new_mode);
                 break; /* FLUID_OK */
             }
+        }
+        else
+        {
+            static const char* poly_mono_str[] = {"OMNI_OFF","OMNI_ON","POLY_OFF","POLY_ON"};
+            FLUID_LOG(FLUID_WARN, "Failed to set channel %d to %s: Operation illegal, because channel is currently no basic channel.", channum, poly_mono_str[num - OMNI_OFF]);
         }
 
         return FLUID_FAILED;
@@ -7711,7 +7717,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
     };
 
     enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
-    int is_realtime = FALSE, i, coef;
+    int is_realtime = FALSE, i;
     fluid_real_t converted_sf2_generator_value, q;
 
     // The AWE32 NRPN docs say that a value of 8192 is considered to be the middle, i.e. zero.
@@ -7786,7 +7792,7 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
 
         case GEN_FILTERFC:
             fluid_clip(data_lsb, 0, 127);
-            // Yes, DO NOT use data here, Uplift.mid doesn't set MSB=64, therefore we would always get a negative value after subtracting 8192.
+            // Yes, DO NOT use data here, Uplift.mid doesn't set DATA_MSB=64, therefore we would always get a negative value after subtracting 8192.
             // Since Uplift.mid sounds fine on hardware though, it seems like AWE32 only inspects DATA_LSB in this case.
             // conversion continues below!
             converted_sf2_generator_value = (data_lsb * 62 /* Hz */);
@@ -7799,20 +7805,25 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             synth->channel[chan]->awe32_filter_coeff = data_lsb;
             return;
 
+        // Note: The description in the official "SB AWE32 Developer's Information Pack" is probably wrong.
+        // There it says: "Positive data value causes a positive phase (from 0 to maximum) filter modulation
+        //  [...] negative data value causes a negative phase [...]"
+        // That doesn't make sense. A filter is a causual system - you cannot change its phase independently
+        // of the rest. The text a few section above has it correct, there they speak of the filter's
+        // cutoff frequency. In that sense, this is probably intended to behave similar to the logic in SF2.
+        // PS: Same applies to the GEN_MODENVTOFILTERFC below!
         case GEN_MODLFOTOFILTERFC:
             fluid_clip(data, -64, 63);
             converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
             FLUID_LOG(FLUID_DBG, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
             is_realtime = TRUE;
-            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
-            return;
+            break;
 
         case GEN_MODENVTOFILTERFC:
             fluid_clip(data, -127, 127);
             converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
             FLUID_LOG(FLUID_DBG, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
-            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
-            return;
+            break;
 
         case GEN_REVERBSEND:
             fluid_clip(data, 0, 255);
@@ -7836,9 +7847,9 @@ static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan,
             return;
     }
 
-    coef = synth->channel[chan]->awe32_filter_coeff;
     if(sf2_gen == GEN_FILTERFC)
     {
+        int coef = synth->channel[chan]->awe32_filter_coeff;
         // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 1000Hz gives a closer signal to the SB! hardware filter...
         converted_sf2_generator_value -= 1000;
         q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);

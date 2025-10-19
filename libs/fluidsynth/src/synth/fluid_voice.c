@@ -859,11 +859,6 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         break;
 
     case GEN_FILTERFC:
-        /* The resonance frequency is converted from absolute cents to
-         * midicents .val and .mod are both used, this permits real-time
-         * modulation.  The allowed range is tested in the 'fluid_ct2hz'
-         * function [PH,20021214]
-         */
         UPDATE_RVOICE_GENERIC_R1(fluid_iir_filter_set_fres, &voice->rvoice->resonant_filter, x);
         break;
 

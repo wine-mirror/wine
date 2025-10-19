@@ -58,8 +58,9 @@ fluid_rvoice_get_float_sample(const short int *dsp_msb, const char *dsp_lsb, uns
   * the playback pointer.  Questionable quality, but very
   * efficient. */
 int
-fluid_rvoice_dsp_interpolate_none(fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_none(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
+    fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
     short int *dsp_data = voice->sample->data;
@@ -82,7 +83,12 @@ fluid_rvoice_dsp_interpolate_none(fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID
         /* interpolate sequence of sample points */
         for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
         {
-            dsp_buf[dsp_i] = dsp_amp * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index);
+            fluid_real_t sample = fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index);
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -121,8 +127,9 @@ fluid_rvoice_dsp_interpolate_none(fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
+    fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
     short int *dsp_data = voice->sample->data;
@@ -158,9 +165,16 @@ fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_dsp_t *voice, fluid_real_t *FLU
         /* interpolate the sequence of sample points */
         for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = interp_coeff_linear[fluid_phase_fract_to_tablerow(dsp_phase)];
-            dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                        + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1));
+
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1));
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -179,9 +193,16 @@ fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_dsp_t *voice, fluid_real_t *FLU
         /* interpolate within last point */
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = interp_coeff_linear[fluid_phase_fract_to_tablerow(dsp_phase)];
-            dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                        + coeffs[1] * point);
+
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[1] * point);
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -221,8 +242,9 @@ fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_dsp_t *voice, fluid_real_t *FLU
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
+    fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
     short int *dsp_data = voice->sample->data;
@@ -271,12 +293,18 @@ fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate first sample point (start or loop start) if needed */
         for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];
-            dsp_buf[dsp_i] = dsp_amp *
-                             (coeffs[0] * start_point
-                              + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                              + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                              + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2));
+
+            sample =  (coeffs[0] * start_point
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2));
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -287,12 +315,18 @@ fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate the sequence of sample points */
         for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];
-            dsp_buf[dsp_i] = dsp_amp *
-                             (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                              + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                              + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                              + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2));
+
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2));
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -311,12 +345,18 @@ fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate within 2nd to last point */
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];
-            dsp_buf[dsp_i] = dsp_amp *
-                             (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                              + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                              + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                              + coeffs[3] * end_point1);
+
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[3] * end_point1);
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -329,12 +369,19 @@ fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate within the last point */
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];
-            dsp_buf[dsp_i] = dsp_amp *
-                             (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                              + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                              + coeffs[2] * end_point1
-                              + coeffs[3] * end_point2);
+
+
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[2] * end_point1
+                     + coeffs[3] * end_point2);
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -380,8 +427,9 @@ fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
+fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
+    fluid_rvoice_dsp_t *voice = &rvoice->dsp;
     fluid_phase_t dsp_phase = voice->phase;
     fluid_phase_t dsp_phase_incr;
     short int *dsp_data = voice->sample->data;
@@ -440,16 +488,21 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate first sample point (start or loop start) if needed */
         for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
 
-            dsp_buf[dsp_i] = dsp_amp
-                             * (coeffs[0] * start_points[2]
-                                + coeffs[1] * start_points[1]
-                                + coeffs[2] * start_points[0]
-                                + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                                + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
-                                + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+            sample =  (coeffs[0] * start_points[2]
+                     + coeffs[1] * start_points[1]
+                     + coeffs[2] * start_points[0]
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
+                     + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -462,16 +515,21 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate 2nd to first sample point (start or loop start) if needed */
         for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
 
-            dsp_buf[dsp_i] = dsp_amp
-                             * (coeffs[0] * start_points[1]
-                                + coeffs[1] * start_points[0]
-                                + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                                + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                                + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
-                                + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+            sample =  (coeffs[0] * start_points[1]
+                     + coeffs[1] * start_points[0]
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
+                     + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -484,16 +542,21 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate 3rd to first sample point (start or loop start) if needed */
         for(; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
 
-            dsp_buf[dsp_i] = dsp_amp
-                             * (coeffs[0] * start_points[0]
-                                + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
-                                + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                                + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                                + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
-                                + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+            sample =  (coeffs[0] * start_points[0]
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
+                     + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -507,16 +570,21 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate the sequence of sample points */
         for(; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
 
-            dsp_buf[dsp_i] = dsp_amp
-                             * (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
-                                + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
-                                + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                                + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                                + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
-                                + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
+                     + coeffs[6] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 3));
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -535,16 +603,21 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate within 3rd to last point */
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
 
-            dsp_buf[dsp_i] = dsp_amp
-                             * (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
-                                + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
-                                + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                                + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                                + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
-                                + coeffs[6] * end_points[0]);
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[5] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 2)
+                     + coeffs[6] * end_points[0]);
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -557,16 +630,21 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate within 2nd to last point */
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
 
-            dsp_buf[dsp_i] = dsp_amp
-                             * (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
-                                + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
-                                + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                                + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
-                                + coeffs[5] * end_points[0]
-                                + coeffs[6] * end_points[1]);
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[4] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index + 1)
+                     + coeffs[5] * end_points[0]
+                     + coeffs[6] * end_points[1]);
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
@@ -579,16 +657,21 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
         /* interpolate within last point */
         for(; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
+            fluid_real_t sample;
             coeffs = sinc_table7[fluid_phase_fract_to_tablerow(dsp_phase)];
 
-            dsp_buf[dsp_i] = dsp_amp
-                             * (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
-                                + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
-                                + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
-                                + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
-                                + coeffs[4] * end_points[0]
-                                + coeffs[5] * end_points[1]
-                                + coeffs[6] * end_points[2]);
+            sample =  (coeffs[0] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 3)
+                     + coeffs[1] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 2)
+                     + coeffs[2] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index - 1)
+                     + coeffs[3] * fluid_rvoice_get_float_sample(dsp_data, dsp_data24, dsp_phase_index)
+                     + coeffs[4] * end_points[0]
+                     + coeffs[5] * end_points[1]
+                     + coeffs[6] * end_points[2]);
+
+            fluid_iir_filter_apply(&rvoice->resonant_filter, &sample, 1, voice->output_rate);
+            fluid_iir_filter_apply(&rvoice->resonant_custom_filter, &sample, 1, voice->output_rate);
+
+            dsp_buf[dsp_i] = dsp_amp * sample;
 
             /* increment phase and amplitude */
             fluid_phase_incr(dsp_phase, dsp_phase_incr);
