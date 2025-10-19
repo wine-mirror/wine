@@ -2388,7 +2388,7 @@ RETURN_CODE WCMD_setshow_default(const WCHAR *args)
        change of directory, even if path was restored due to missing
        /D (allows changing drive letter when not resident on that
        drive                                                          */
-    if ((string[1] == ':') && IsCharAlphaW(string[0])) {
+    if (IsCharAlphaW(string[0]) && string[1] == L':') {
       WCHAR env[4];
       lstrcpyW(env, L"=");
       memcpy(env+1, string, 2 * sizeof(WCHAR));
