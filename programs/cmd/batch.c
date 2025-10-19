@@ -536,14 +536,11 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
 
     /* 4. Handle 'z' : File length (File doesn't have to exist) */
     if (wmemchr(firstModifier, 'z', modifierLen) != NULL) {
-      /* FIXME: Output full 64 bit size (sprintf does not support I64 here) */
-      ULONG/*64*/ fullsize = /*(fileInfo.nFileSizeHigh << 32) +*/
-                                  fileInfo.nFileSizeLow;
-
       doneModifier = TRUE;
       if (exists) {
+        ULONG64 fullsize = ((ULONG64)fileInfo.nFileSizeHigh << 32) | fileInfo.nFileSizeLow;
         if (finaloutput[0] != 0x00) lstrcatW(finaloutput, L" ");
-        wsprintfW(thisoutput, L"%u", fullsize);
+        wsprintfW(thisoutput, L"%I64u", fullsize);
         lstrcatW(finaloutput, thisoutput);
       }
     }
