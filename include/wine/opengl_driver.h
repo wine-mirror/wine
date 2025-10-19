@@ -184,6 +184,7 @@ struct opengl_drawable
     EGLSurface                          surface;        /* surface for EGL based drivers */
     GLuint                              read_fbo;       /* default read FBO name when emulating framebuffer */
     GLuint                              draw_fbo;       /* default draw FBO name when emulating framebuffer */
+    GLenum                              buffer_map[GL_AUX3 - GL_FRONT_LEFT + 1]; /* buffer constants mapping */
 };
 
 static inline const char *debugstr_opengl_drawable( struct opengl_drawable *drawable )

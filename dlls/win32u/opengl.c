@@ -116,6 +116,7 @@ void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *fun
     drawable->doublebuffer = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_DOUBLEBUFFER);
     drawable->stereo = !!(pixel_formats[format - 1].pfd.dwFlags & PFD_STEREO);
     if ((drawable->client = client)) client_surface_add_ref( client );
+    for (UINT i = 0; i < ARRAY_SIZE(drawable->buffer_map); i++) drawable->buffer_map[i] = GL_FRONT_LEFT + i;
 
     TRACE( "created %s\n", debugstr_opengl_drawable( drawable ) );
     return drawable;
@@ -407,6 +408,25 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
 {
     struct framebuffer_surface *surface;
     if (!(surface = opengl_drawable_create( sizeof(*surface), &framebuffer_surface_funcs, format, client ))) return NULL;
+
+    surface->base.buffer_map[0] = GL_COLOR_ATTACHMENT0;
+    surface->base.buffer_map[2] = surface->base.doublebuffer ? GL_COLOR_ATTACHMENT1 : GL_NONE;
+    if (surface->base.stereo)
+    {
+        surface->base.buffer_map[1] = surface->base.doublebuffer ? GL_COLOR_ATTACHMENT2 : GL_COLOR_ATTACHMENT1;
+        surface->base.buffer_map[3] = surface->base.doublebuffer ? GL_COLOR_ATTACHMENT3 : GL_NONE;
+    }
+    else
+    {
+        surface->base.buffer_map[1] = GL_NONE;
+        surface->base.buffer_map[3] = GL_NONE;
+    }
+    surface->base.buffer_map[GL_FRONT - GL_FRONT_LEFT] = surface->base.buffer_map[0]; /* only front left */
+    surface->base.buffer_map[GL_BACK - GL_FRONT_LEFT] = surface->base.buffer_map[2]; /* only back left */
+    surface->base.buffer_map[GL_LEFT - GL_FRONT_LEFT] = surface->base.buffer_map[0]; /* only front left */
+    surface->base.buffer_map[GL_RIGHT - GL_FRONT_LEFT] = surface->base.buffer_map[1]; /* only front right */
+    surface->base.buffer_map[GL_FRONT_AND_BACK - GL_FRONT_LEFT] = surface->base.buffer_map[0]; /* only front left */
+
     return &surface->base;
 }
 

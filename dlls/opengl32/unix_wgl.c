@@ -1186,6 +1186,13 @@ BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     return TRUE;
 }
 
+static GLenum drawable_buffer_from_buffer( struct opengl_drawable *drawable, GLenum buffer )
+{
+    if (buffer == GL_NONE) return GL_NONE;
+    if (buffer < GL_FRONT_LEFT || buffer > GL_AUX3) return GL_NONE;
+    return drawable->buffer_map[buffer - GL_FRONT_LEFT];
+}
+
 static void flush_context( TEB *teb, void (*flush)(void) )
 {
     struct context *ctx = get_current_context( teb, NULL, NULL );
@@ -1658,21 +1665,8 @@ static GLenum *set_default_fbo_draw_buffers( struct context *ctx, struct opengl_
 
     for (GLsizei i = 0; i < count; i++)
     {
-        if (src[i] == GL_NONE)
-            dst[i] = GL_NONE;
-        else if (src[i] == GL_FRONT_LEFT)
-            dst[i] = GL_COLOR_ATTACHMENT0;
-        else if (src[i] == GL_FRONT_RIGHT && draw->stereo)
-            dst[i] = draw->doublebuffer ? GL_COLOR_ATTACHMENT2 : GL_COLOR_ATTACHMENT1;
-        else if (src[i] == GL_BACK_LEFT && draw->doublebuffer)
-            dst[i] = GL_COLOR_ATTACHMENT1;
-        else if (src[i] == GL_BACK_RIGHT && draw->stereo && draw->doublebuffer)
-            dst[i] = GL_COLOR_ATTACHMENT3;
-        else
-        {
-            WARN( "Invalid draw buffer #%d %#x for context %p\n", i, src[i], ctx );
-            dst[i] = src[i];
-        }
+        dst[i] = drawable_buffer_from_buffer( draw, src[i] );
+        if (src[i] && !dst[i]) WARN( "Invalid draw buffer #%d %#x for context %p\n", i, src[i], ctx );
 
         if (i >= MAX_DRAW_BUFFERS) FIXME( "Needs %u draw buffers\n", i );
         else ctx->color_buffer.draw_buffers[i] = src[i];
@@ -1688,7 +1682,7 @@ void wrap_glDrawBuffers( TEB *teb, GLsizei n, const GLenum *bufs )
     struct opengl_drawable *draw;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo && draw->draw_fbo)
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo)
         bufs = set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
 
     funcs->p_glDrawBuffers( n, bufs );
@@ -1701,7 +1695,7 @@ void wrap_glFramebufferDrawBuffersEXT( TEB *teb, GLuint fbo, GLsizei n, const GL
     struct opengl_drawable *draw;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && (fbo = draw->draw_fbo))
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo)
         bufs = set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
 
     funcs->p_glFramebufferDrawBuffersEXT( fbo, n, bufs );
@@ -1714,75 +1708,19 @@ void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint fbo, GLsizei n, const 
     struct opengl_drawable *draw;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && (fbo = draw->draw_fbo))
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo)
         bufs = set_default_fbo_draw_buffers( ctx, draw, n, bufs, buffer );
 
     funcs->p_glNamedFramebufferDrawBuffers( fbo, n, bufs );
 }
 
-static GLenum set_default_fbo_draw_buffer( struct context *ctx, struct opengl_drawable *draw, GLint buffer )
+static GLenum set_default_fbo_draw_buffer( struct context *ctx, struct opengl_drawable *draw, GLint src )
 {
-    switch (buffer)
-    {
-    case GL_LEFT:
-        if (draw->doublebuffer) FIXME( "Not implemented\n" ); /* only front left */
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return GL_COLOR_ATTACHMENT0;
-
-    case GL_RIGHT:
-        if (!draw->stereo) break;
-        if (draw->doublebuffer) FIXME( "Not implemented\n" ); /* only front right */
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return draw->doublebuffer ? GL_COLOR_ATTACHMENT2 : GL_COLOR_ATTACHMENT1;
-
-    case GL_FRONT:
-        if (draw->stereo) FIXME( "Not implemented\n" ); /* only front left */
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return GL_COLOR_ATTACHMENT0;
-
-    case GL_BACK:
-        if (!draw->doublebuffer) break;
-        if (draw->stereo) FIXME( "Not implemented\n" ); /* only back left */
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return GL_COLOR_ATTACHMENT1;
-
-    case GL_FRONT_AND_BACK:
-        FIXME( "Not implemented\n" ); /* only front left */
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return GL_COLOR_ATTACHMENT0;
-
-    case GL_FRONT_LEFT:
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return GL_COLOR_ATTACHMENT0;
-
-    case GL_FRONT_RIGHT:
-        if (!draw->stereo) break;
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return draw->doublebuffer ? GL_COLOR_ATTACHMENT2 : GL_COLOR_ATTACHMENT1;
-
-    case GL_BACK_LEFT:
-        if (!draw->doublebuffer) break;
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return GL_COLOR_ATTACHMENT1;
-
-    case GL_BACK_RIGHT:
-        if (!draw->stereo || !draw->doublebuffer) break;
-        memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
-        ctx->color_buffer.draw_buffers[0] = buffer;
-        return GL_COLOR_ATTACHMENT3;
-
-    }
-
-    WARN( "Invalid draw buffer %#x for context %p\n", buffer, ctx );
-    return buffer;
+    GLenum dst = drawable_buffer_from_buffer( draw, src );
+    if (src && !dst) WARN( "Invalid draw buffer %#x for context %p\n", src, ctx );
+    memset( ctx->color_buffer.draw_buffers, 0, sizeof(ctx->color_buffer.draw_buffers) );
+    ctx->color_buffer.draw_buffers[0] = src;
+    return dst;
 }
 
 void wrap_glDrawBuffer( TEB *teb, GLenum buf )
@@ -1791,7 +1729,7 @@ void wrap_glDrawBuffer( TEB *teb, GLenum buf )
     struct opengl_drawable *draw;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo && draw->draw_fbo)
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !ctx->draw_fbo)
         buf = set_default_fbo_draw_buffer( ctx, draw, buf );
 
     funcs->p_glDrawBuffer( buf );
@@ -1803,7 +1741,7 @@ void wrap_glFramebufferDrawBufferEXT( TEB *teb, GLuint fbo, GLenum mode )
     struct opengl_drawable *draw;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && (fbo = draw->draw_fbo))
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo)
         mode = set_default_fbo_draw_buffer( ctx, draw, mode );
 
     funcs->p_glFramebufferDrawBufferEXT( fbo, mode );
@@ -1815,43 +1753,18 @@ void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint fbo, GLenum buf )
     struct opengl_drawable *draw;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo && (fbo = draw->draw_fbo))
+    if ((ctx = get_current_context( teb, &draw, NULL )) && !fbo)
         buf = set_default_fbo_draw_buffer( ctx, draw, buf );
 
     funcs->p_glNamedFramebufferDrawBuffer( fbo, buf );
 }
 
-static GLenum set_default_fbo_read_buffer( struct context *ctx, struct opengl_drawable *read, GLint buffer )
+static GLenum set_default_fbo_read_buffer( struct context *ctx, struct opengl_drawable *read, GLint src )
 {
-    switch (buffer)
-    {
-    case GL_FRONT:
-    case GL_LEFT:
-        FIXME( "Partial implementation\n" ); /* only front left */
-    case GL_FRONT_LEFT:
-        ctx->pixel_mode.read_buffer = buffer;
-        return GL_COLOR_ATTACHMENT0;
-
-    case GL_RIGHT:
-    case GL_FRONT_RIGHT:
-        if (!read->stereo) break;
-        ctx->pixel_mode.read_buffer = buffer;
-        return read->doublebuffer ? GL_COLOR_ATTACHMENT2 : GL_COLOR_ATTACHMENT1;
-
-    case GL_BACK:
-    case GL_BACK_LEFT:
-        if (!read->doublebuffer) break;
-        ctx->pixel_mode.read_buffer = buffer;
-        return GL_COLOR_ATTACHMENT1;
-
-    case GL_BACK_RIGHT:
-        if (!read->stereo) break;
-        ctx->pixel_mode.read_buffer = buffer;
-        return GL_COLOR_ATTACHMENT3;
-    }
-
-    WARN( "Invalid read buffer %#x for context %p\n", buffer, ctx );
-    return buffer;
+    GLenum dst = drawable_buffer_from_buffer( read, src );
+    if (src && !dst) WARN( "Invalid read buffer %#x for context %p\n", src, ctx );
+    ctx->pixel_mode.read_buffer = src;
+    return dst;
 }
 
 void wrap_glReadBuffer( TEB *teb, GLenum src )
@@ -1860,7 +1773,7 @@ void wrap_glReadBuffer( TEB *teb, GLenum src )
     struct opengl_drawable *read;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, NULL, &read )) && !ctx->read_fbo && read->read_fbo)
+    if ((ctx = get_current_context( teb, NULL, &read )) && !ctx->read_fbo)
         src = set_default_fbo_read_buffer( ctx, read, src );
 
     funcs->p_glReadBuffer( src );
@@ -1872,7 +1785,7 @@ void wrap_glFramebufferReadBufferEXT( TEB *teb, GLuint fbo, GLenum mode )
     struct opengl_drawable *read;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, NULL, &read )) && !fbo && (fbo = read->read_fbo))
+    if ((ctx = get_current_context( teb, NULL, &read )) && !fbo)
         mode = set_default_fbo_read_buffer( ctx, read, mode );
 
     funcs->p_glFramebufferReadBufferEXT( fbo, mode );
@@ -1884,7 +1797,7 @@ void wrap_glNamedFramebufferReadBuffer( TEB *teb, GLuint fbo, GLenum src )
     struct opengl_drawable *read;
     struct context *ctx;
 
-    if ((ctx = get_current_context( teb, NULL, &read )) && !fbo && (fbo = read->read_fbo))
+    if ((ctx = get_current_context( teb, NULL, &read )) && !fbo)
         src = set_default_fbo_read_buffer( ctx, read, src );
 
     funcs->p_glNamedFramebufferReadBuffer( fbo, src );
