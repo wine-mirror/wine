@@ -333,15 +333,7 @@ static LSTATUS get_class_property_keys( const GUID *class, DEVPROPKEY *buffer, U
     return err;
 }
 
-struct device_interface
-{
-    GUID class_guid;
-    WCHAR class[39];
-    WCHAR name[MAX_PATH];
-    WCHAR refstr[MAX_PATH];
-};
-
-static LSTATUS init_device_interface( struct device_interface *iface, const WCHAR *name )
+LSTATUS init_device_interface( struct device_interface *iface, const WCHAR *name )
 {
     WCHAR *tmp;
     UINT len;
@@ -357,7 +349,7 @@ static LSTATUS init_device_interface( struct device_interface *iface, const WCHA
     return guid_from_string( wcscpy( iface->class, tmp + 1 ), &iface->class_guid );
 }
 
-static LSTATUS open_device_interface_key( const struct device_interface *iface, REGSAM access, BOOL open, HKEY *hkey )
+LSTATUS open_device_interface_key( const struct device_interface *iface, REGSAM access, BOOL open, HKEY *hkey )
 {
     WCHAR path[MAX_PATH];
     swprintf( path, ARRAY_SIZE(path), L"%s\\%s", iface->class, iface->name );

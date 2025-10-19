@@ -460,7 +460,7 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
     for (i = 0; SUCCEEDED( hr ); i++)
     {
         char buffer[sizeof( SP_DEVICE_INTERFACE_DETAIL_DATA_W ) + MAX_PATH * sizeof( WCHAR )];
-        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof( iface )};
+        SP_DEVICE_INTERFACE_DATA iface_data = {.cbSize = sizeof( iface_data )};
         SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
         HDEVINFO set = INVALID_HANDLE_VALUE;
         WCHAR iface_guid_str[40];
@@ -487,21 +487,32 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
             continue;
         }
 
-        for (j = 0; SUCCEEDED( hr ) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface ); j++)
+        for (j = 0; SUCCEEDED( hr ) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface_data ); j++)
         {
             ULONG keys_len = props_len, properties_len = 0;
             const DEVPROPCOMPKEY *keys = props;
             DEVPROPERTY *properties = NULL;
+            struct device_interface iface;
+            LSTATUS err;
+            HKEY hkey;
 
             detail->cbSize = sizeof( *detail );
-            if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof( buffer ), NULL, NULL )) continue;
+            if (!SetupDiGetDeviceInterfaceDetailW( set, &iface_data, detail, sizeof( buffer ), NULL, NULL )) continue;
+            if ((err = init_device_interface( &iface, detail->DevicePath )) ||
+                (err = open_device_interface_key( &iface, KEY_ALL_ACCESS, TRUE, &hkey )))
+            {
+                hr = HRESULT_FROM_WIN32(err);
+                break;
+            }
 
             /* If we're also filtering objects, get all properties for this object. Once the filters have been
              * evaluated, free properties that have not been requested, and set cPropertyCount to props_len.  */
-            if ((all_props || filters) && FAILED(hr = dev_get_device_interface_property_keys( set, &iface, &keys, &keys_len ))) break;
-
-            if (keys_len && !(properties = calloc( keys_len, sizeof(*properties) ))) hr = E_OUTOFMEMORY;
-            else hr = dev_object_iface_get_props( set, &iface, keys, keys_len, properties, &properties_len );
+            if (all_props || filters) hr = dev_get_device_interface_property_keys( set, &iface_data, &keys, &keys_len );
+            if (SUCCEEDED(hr))
+            {
+                if (keys_len && !(properties = calloc( keys_len, sizeof(*properties) ))) hr = E_OUTOFMEMORY;
+                else hr = dev_object_iface_get_props( set, &iface_data, keys, keys_len, properties, &properties_len );
+            }
 
             if (SUCCEEDED( hr ))
             {
@@ -520,6 +531,7 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
             DevFreeObjectProperties( properties_len, properties );
 
             if (keys != props) free( (void *)keys );
+            RegCloseKey( hkey );
         }
 
         if (set != INVALID_HANDLE_VALUE)
@@ -1132,26 +1144,33 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
     case DevObjectTypeDeviceInterface:
     case DevObjectTypeDeviceInterfaceDisplay:
     {
-        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof( iface )};
+        SP_DEVICE_INTERFACE_DATA iface_data = {.cbSize = sizeof( iface_data )};
         ULONG properties_len = 0, keys_len = props_len;
         const DEVPROPCOMPKEY *keys = props;
         DEVPROPERTY *properties = NULL;
+        struct device_interface iface;
         HDEVINFO set;
+        LSTATUS err;
+        HKEY hkey;
+
+        if ((err = init_device_interface( &iface, id ))) return HRESULT_FROM_WIN32(err);
+        if ((err = open_device_interface_key( &iface, KEY_ALL_ACCESS, TRUE, &hkey ))) return HRESULT_FROM_WIN32(err);
 
         set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL );
         if (set == INVALID_HANDLE_VALUE) return HRESULT_FROM_WIN32( GetLastError() );
-        if (!SetupDiOpenDeviceInterfaceW( set, id, 0, &iface ))
+        if (!SetupDiOpenDeviceInterfaceW( set, id, 0, &iface_data ))
         {
             DWORD err = GetLastError();
             SetupDiDestroyDeviceInfoList( set );
+            RegCloseKey( hkey );
             return HRESULT_FROM_WIN32(err == ERROR_NO_SUCH_DEVICE_INTERFACE ? ERROR_FILE_NOT_FOUND : err);
         }
 
-        if (all_props) hr = dev_get_device_interface_property_keys( set, &iface, &keys, &keys_len );
+        if (all_props) hr = dev_get_device_interface_property_keys( set, &iface_data, &keys, &keys_len );
         if (SUCCEEDED(hr))
         {
             if ((properties_len = keys_len) && !(properties = calloc( keys_len, sizeof(*properties) ))) hr = E_OUTOFMEMORY;
-            else hr = dev_object_iface_get_props( set, &iface, keys, keys_len, properties, &properties_len );
+            else hr = dev_object_iface_get_props( set, &iface_data, keys, keys_len, properties, &properties_len );
         }
 
         *buf = properties;
@@ -1159,6 +1178,7 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
 
         if (keys != props) free( (void *)keys );
         SetupDiDestroyDeviceInfoList( set );
+        RegCloseKey( hkey );
         break;
     }
     default:

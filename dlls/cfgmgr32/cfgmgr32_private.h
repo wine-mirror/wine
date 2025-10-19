@@ -59,3 +59,14 @@ struct property
     void *buffer;
     DWORD *size;
 };
+
+struct device_interface
+{
+    GUID class_guid;
+    WCHAR class[39];
+    WCHAR name[MAX_PATH];
+    WCHAR refstr[MAX_PATH];
+};
+
+extern LSTATUS init_device_interface( struct device_interface *iface, const WCHAR *name );
+extern LSTATUS open_device_interface_key( const struct device_interface *iface, REGSAM access, BOOL open, HKEY *hkey );
