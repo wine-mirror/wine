@@ -2089,6 +2089,17 @@ HRESULT WINAPI GetThemeBitmap(HTHEME hTheme, int iPartId, int iStateId,
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ *      GetThemeStream                                      (UXTHEME.@)
+ */
+HRESULT WINAPI GetThemeStream(HTHEME hTheme, int iPartId, int iStateId, int iPropId,
+                              void **ppvStream, DWORD *pcbStream, HINSTANCE hInst)
+{
+    FIXME("(%p,%d,%d,%d,%p,%p,%p) stub\n", hTheme, iPartId, iStateId, iPropId, ppvStream, pcbStream, hInst);
+
+    return E_NOTIMPL;
+}
+
 /* compute part size for "borderfill" backgrounds */
 static HRESULT get_border_background_size (HTHEME hTheme, int iPartId,
                                            int iStateId, THEMESIZE eSize, POINT* psz)

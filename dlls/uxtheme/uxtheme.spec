@@ -94,6 +94,7 @@
 @ stdcall GetThemePosition(ptr long long long ptr)
 @ stdcall GetThemePropertyOrigin(ptr long long long ptr)
 @ stdcall GetThemeRect(ptr long long long ptr)
+@ stdcall GetThemeStream(ptr long long long ptr ptr ptr)
 @ stdcall GetThemeString(ptr long long long wstr long)
 @ stdcall GetThemeSysBool(ptr long)
 @ stdcall GetThemeSysColor(ptr long)
