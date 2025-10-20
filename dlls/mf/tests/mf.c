@@ -43,6 +43,9 @@
 #include "devpkey.h"
 #include "evr9.h"
 
+#include "initguid.h"
+#include "netlistmgr.h"
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -5828,6 +5831,8 @@ static void test_scheme_resolvers(void)
         L"http://test.winehq.org",
     };
 
+    INetworkListManager *network_list_manager;
+    NLM_CONNECTIVITY connectivity;
     IMFSourceResolver *resolver;
     IMFByteStream *byte_stream;
     IMFAttributes *attributes;
@@ -5837,6 +5842,20 @@ static void test_scheme_resolvers(void)
     UINT64 length;
     DWORD i, caps;
     HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx\n", hr);
+    hr = CoCreateInstance(&CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER, &IID_INetworkListManager, (void **)&network_list_manager);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = INetworkListManager_GetConnectivity(network_list_manager, &connectivity);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    INetworkListManager_Release(network_list_manager);
+    CoUninitialize();
+    if (connectivity == NLM_CONNECTIVITY_DISCONNECTED)
+    {
+        skip("Internet connection unavailable, skipping scheme resolver tests.\n");
+        return;
+    }
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "got hr %#lx\n", hr);
