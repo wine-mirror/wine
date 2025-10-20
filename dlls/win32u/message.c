@@ -2229,18 +2229,27 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         HWND foreground;
 
         if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground )) return 0;
-        if (foreground) NtUserSetForegroundWindow( foreground );
-        if (state_cmd)
-        {
-            if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
-            send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+        window_rect = map_rect_raw_to_virt( window_rect, get_thread_dpi() );
 
-            /* state change might have changed the window config already, check again */
-            user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground );
-            if (foreground) NtUserSetForegroundWindow( foreground );
-            if (state_cmd) WARN( "window %p state needs another update, ignoring\n", hwnd );
+        if (foreground) NtUserSetForegroundWindow( foreground );
+        switch (LOWORD(state_cmd))
+        {
+        case SC_MAXIMIZE:
+        case SC_MINIMIZE:
+            send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+            break;
+        case SC_RESTORE:
+            if (HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
+            NtUserSetInternalWindowPos( hwnd, SW_SHOW, &window_rect, NULL );
+            send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+            break;
+        default:
+            if (!swp_flags) break;
+            NtUserSetWindowPos( hwnd, 0, window_rect.left, window_rect.top, window_rect.right - window_rect.left,
+                                window_rect.bottom - window_rect.top, swp_flags );
+            break;
         }
-        if (swp_flags) NtUserSetRawWindowPos( hwnd, window_rect, swp_flags, FALSE );
+
         return 0;
     }
     case WM_WINE_UPDATEWINDOWSTATE:
