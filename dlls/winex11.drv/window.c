@@ -1672,19 +1672,19 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
 
     TRACE( "window %p/%lx config changed %s -> %s, flags %#x\n", data->hwnd, data->whole_window,
            wine_dbgstr_rect(&old_rect), wine_dbgstr_rect(&new_rect), flags );
-    return MAKELONG(SC_MOVE, flags);
+    return flags;
 }
 
 /***********************************************************************
  *      GetWindowStateUpdates   (X11DRV.@)
  */
-BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect, HWND *foreground )
+BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *swp_flags, RECT *rect, HWND *foreground )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
     HWND old_foreground;
 
-    *state_cmd = *config_cmd = 0;
+    *state_cmd = *swp_flags = 0;
     *foreground = 0;
 
     if (!(old_foreground = NtUserGetForegroundWindow())) old_foreground = NtUserGetDesktopWindow();
@@ -1699,14 +1699,14 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd,
     if ((data = get_win_data( hwnd )))
     {
         *state_cmd = window_update_client_state( data );
-        *config_cmd = window_update_client_config( data );
+        *swp_flags = window_update_client_config( data );
         *rect = window_rect_from_visible( &data->rects, data->current_state.rect );
         release_win_data( data );
     }
 
-    if (!*state_cmd && !*config_cmd && !*foreground) return FALSE;
-    TRACE( "hwnd %p, returning state_cmd %#x, config_cmd %#x, rect %s, foreground %p\n",
-           hwnd, *state_cmd, *config_cmd, wine_dbgstr_rect(rect), *foreground );
+    if (!*state_cmd && !*swp_flags && !*foreground) return FALSE;
+    TRACE( "hwnd %p, returning state_cmd %#x, swp_flags %#x, rect %s, foreground %p\n",
+           hwnd, *state_cmd, *swp_flags, wine_dbgstr_rect(rect), *foreground );
     return TRUE;
 }
 

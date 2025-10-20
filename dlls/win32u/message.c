@@ -2224,11 +2224,11 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     }
     case WM_WINE_WINDOW_STATE_CHANGED:
     {
-        UINT state_cmd, config_cmd;
+        UINT state_cmd, swp_flags;
         RECT window_rect;
         HWND foreground;
 
-        if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &config_cmd, &window_rect, &foreground )) return 0;
+        if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground )) return 0;
         if (foreground) NtUserSetForegroundWindow( foreground );
         if (state_cmd)
         {
@@ -2236,15 +2236,11 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
             send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
 
             /* state change might have changed the window config already, check again */
-            user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &config_cmd, &window_rect, &foreground );
+            user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground );
             if (foreground) NtUserSetForegroundWindow( foreground );
             if (state_cmd) WARN( "window %p state needs another update, ignoring\n", hwnd );
         }
-        if (config_cmd)
-        {
-            if (LOWORD(config_cmd) == SC_MOVE) NtUserSetRawWindowPos( hwnd, window_rect, HIWORD(config_cmd), FALSE );
-            else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
-        }
+        if (swp_flags) NtUserSetRawWindowPos( hwnd, window_rect, swp_flags, FALSE );
         return 0;
     }
     case WM_WINE_UPDATEWINDOWSTATE:
