@@ -1266,7 +1266,12 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             int flag = 0;
             char buf[MAX_ATOM_LEN + 1];
 
-            UnpackDDElParam( msg, lParam, &lo, &hi );
+            if (!UnpackDDElParam( msg, lParam, &lo, &hi ))
+            {
+                /* Probably this is a response to WM_DDE_INITIATE */
+                lo = LOWORD( lParam );
+                hi = HIWORD( lParam );
+            }
 
             if (GlobalGetAtomNameA((ATOM)hi, buf, sizeof(buf)) > 0) flag |= 1;
             if (GlobalSize((HANDLE)hi) != 0) flag |= 2;
