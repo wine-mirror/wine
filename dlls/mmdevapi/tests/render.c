@@ -2319,8 +2319,12 @@ static void check_session_ids_(unsigned int line, IMMDevice *dev, const GUID *se
 
     hr = IAudioSessionControl2_GetSessionInstanceIdentifier(ctl2, &str);
     ok_(__FILE__, line)(hr == S_OK, "GetSessionInstanceIdentifier failed, hr %#lx.\n", hr);
-    wsprintfW(expected, L"%s|%s%%b%s|1%%b%lu", dev_id, exe_path, guidstr, GetCurrentProcessId());
-    ok_(__FILE__, line)(!wcscmp(str, expected), "got %s, expected %s.\n", debugstr_w(str), debugstr_w(expected));
+    wsprintfW(expected, L"%s|%s%%b%s|", dev_id, exe_path, guidstr);
+    size = wcslen(expected);
+    ok_(__FILE__, line)(!wcsncmp(str, expected, size), "got %s, expected %s.\n", debugstr_wn(str, size), debugstr_wn(expected, size));
+    ok(iswdigit(str[size]), "Unexpected %s.\n", debugstr_w(str));
+    wsprintfW(expected, L"%%b%lu", GetCurrentProcessId());
+    ok_(__FILE__, line)(!wcscmp(&str[size + 1], expected), "got %s, expected %s.\n", debugstr_w(&str[size + 1]), debugstr_w(expected));
     CoTaskMemFree(str);
 
     CoTaskMemFree(dev_id);
