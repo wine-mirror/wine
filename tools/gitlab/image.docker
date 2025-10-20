@@ -153,8 +153,8 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         curl -L -o /usr/local/bin/sarif-converter https://gitlab.com/ignis-build/sarif-converter/-/releases/permalink/latest/downloads/bin/sarif-converter-linux-amd64 && \
         chmod +x /usr/local/bin/sarif-converter ;; \
     arm64) \
-        curl -s -L https://github.com/mstorsjo/llvm-mingw/releases/download/20250613/llvm-mingw-20250613-ucrt-ubuntu-22.04-aarch64.tar.xz | tar xJ && \
-        mv llvm-mingw-20250613-ucrt-ubuntu-22.04-aarch64 /usr/local/llvm-mingw ;; \
+        curl -s -L https://github.com/mstorsjo/llvm-mingw/releases/download/20251007/llvm-mingw-20251007-ucrt-ubuntu-22.04-aarch64.tar.xz | tar xJ && \
+        mv llvm-mingw-20251007-ucrt-ubuntu-22.04-aarch64 /usr/local/llvm-mingw ;; \
     esac && \
     apt-get clean && \
     useradd -m gitlab
