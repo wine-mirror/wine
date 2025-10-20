@@ -458,7 +458,7 @@ static LSTATUS get_device_interface_property( const struct device_interface *ifa
     return err;
 }
 
-static LSTATUS enum_device_interface_property_keys( HKEY hkey, const struct device_interface *iface, DEVPROPKEY *buffer, ULONG *size )
+LSTATUS enum_device_interface_property_keys( HKEY hkey, const struct device_interface *iface, DEVPROPKEY *buffer, ULONG *size )
 {
     ULONG capacity = *size, count = 0;
     LSTATUS err = ERROR_SUCCESS;
