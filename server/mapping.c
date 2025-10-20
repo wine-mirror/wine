@@ -965,8 +965,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) mapping->image.contains_code = 1;
     }
 
-    mapping->exp_len = load_export_name( &mapping->exp_name, exp_va, exp_size, align_mask,
-                                         unix_fd, sec, nt.FileHeader.NumberOfSections );
+    if (mapping->image.wine_builtin)
+        mapping->exp_len = load_export_name( &mapping->exp_name, exp_va, exp_size, align_mask,
+                                             unix_fd, sec, nt.FileHeader.NumberOfSections );
 
     if (load_clr_header( &clr, clr_va, clr_size, align_mask,
                          unix_fd, sec, nt.FileHeader.NumberOfSections ) &&
