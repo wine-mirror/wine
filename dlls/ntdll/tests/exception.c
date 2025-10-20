@@ -6343,6 +6343,37 @@ static void test_user_callback_context(void)
     UnregisterClassA(cls.lpszClassName, GetModuleHandleA(0));
 }
 
+static void test_base_init_thunk_unwind(void)
+{
+    static const BYTE thread_proc_code[] =
+    {
+        /* buffer offset 2 */
+        0x49, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0,         /* movabs imm64,%r8 */
+        0x48, 0x31, 0xc9,                           /* xor %rcx,%rcx */
+        0x48, 0xc7, 0xc2, 0x00, 0x01, 0x00, 0x00,   /* mov $256,%rdx */
+        0x4d, 0x31, 0xc9,                           /* xor %r9,%r9 */
+        0x48, 0x31, 0xed,                           /* xor %rbp,%rbp */
+        /* RtlCaptureStackBackTrace offset 28  */
+        0x48, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0,         /* movabs RtlCaptureStackBackTrace, %rax */
+        0xff, 0xe0,                                 /* jmpq *%rax */
+    };
+    static void *addrs[256];
+    HANDLE thread;
+    BOOL bret;
+    DWORD count;
+
+    memset( addrs, 0xcc, sizeof(addrs) );
+    memcpy( code_mem, thread_proc_code, sizeof(thread_proc_code) );
+    *(void **)((char *)code_mem + 2) = addrs;
+    *(void **)((char *)code_mem + 28) = RtlCaptureStackBackTrace;
+    thread = CreateThread( NULL, 0, code_mem, NULL, 0, NULL );
+    WaitForSingleObject( thread, INFINITE );
+    bret = GetExitCodeThread( thread, &count );
+    CloseHandle( thread );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( count == 2, "got count %lu.\n", count );
+}
+
 #elif defined(__arm__)
 
 static void test_thread_context(void)
@@ -12587,6 +12618,7 @@ START_TEST(exception)
     test_instrumentation_callback();
     test_direct_syscalls();
     test_single_step_address();
+    test_base_init_thunk_unwind();
 
 #elif defined(__aarch64__)
 
