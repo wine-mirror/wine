@@ -2471,23 +2471,23 @@ static void test_session_creation(void)
     if(hr == S_OK){
         WAVEFORMATEX *cap_pwfx;
         IAudioClient *cap_ac;
-        ISimpleAudioVolume *cap_sav;
         IAudioSessionManager *cap_sesm;
+        IAudioSessionControl *cap_sesc;
+        AudioSessionState state;
 
         hr = IMMDevice_Activate(cap_dev, &IID_IAudioSessionManager,
                 CLSCTX_INPROC_SERVER, NULL, (void**)&cap_sesm);
         ok((hr == S_OK)^(cap_sesm == NULL), "Activate %08lx &out pointer\n", hr);
         ok(hr == S_OK, "Activate failed: %08lx\n", hr);
 
-        hr = IAudioSessionManager_GetSimpleAudioVolume(cap_sesm, &session_guid,
-                FALSE, &cap_sav);
-        ok(hr == S_OK, "GetSimpleAudioVolume failed: %08lx\n", hr);
+        hr = IAudioSessionManager_GetAudioSessionControl(cap_sesm, &session_guid, FALSE, &cap_sesc);
+        ok(hr == S_OK, "GetAudioSessionControl failed: %08lx\n", hr);
 
-        vol = 0.5f;
-        hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
-        ok(hr == S_OK, "GetMasterVolume failed: %08lx\n", hr);
+        hr = IAudioSessionControl_GetState(cap_sesc, &state);
+        ok(hr == S_OK, "GetState failed: %08lx\n", hr);
+        ok(state == AudioSessionStateInactive || state == AudioSessionStateExpired, "state %u\n", state);
 
-        ISimpleAudioVolume_Release(cap_sav);
+        IAudioSessionControl_Release(cap_sesc);
         IAudioSessionManager_Release(cap_sesm);
 
         hr = IMMDevice_Activate(cap_dev, &IID_IAudioClient,
@@ -2505,19 +2505,20 @@ static void test_session_creation(void)
 
         CoTaskMemFree(cap_pwfx);
 
-        if(hr == S_OK){
-            hr = IAudioClient_GetService(cap_ac, &IID_ISimpleAudioVolume,
-                    (void**)&cap_sav);
-            ok(hr == S_OK, "GetService failed: %08lx\n", hr);
-        }
-        if(hr == S_OK){
-            vol = 0.5f;
-            hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
-            ok(hr == S_OK, "GetMasterVolume failed: %08lx\n", hr);
+        hr = IAudioClient_Start(cap_ac);
+        ok(hr == S_OK, "Start failed: %08lx\n", hr);
 
-            ISimpleAudioVolume_Release(cap_sav);
-        }
+        hr = IAudioClient_GetService(cap_ac, &IID_IAudioSessionControl, (void**)&cap_sesc);
+        ok(hr == S_OK, "GetService failed: %08lx\n", hr);
 
+        hr = IAudioSessionControl_GetState(cap_sesc, &state);
+        ok(hr == S_OK, "GetState failed: %08lx\n", hr);
+        ok(state == AudioSessionStateActive, "state %u\n", state);
+
+        hr = IAudioClient_Stop(cap_ac);
+        ok(hr == S_OK, "Start failed: %08lx\n", hr);
+
+        IAudioSessionControl_Release(cap_sesc);
         IAudioClient_Release(cap_ac);
     }
 
