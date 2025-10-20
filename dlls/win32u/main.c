@@ -1824,6 +1824,11 @@ HDC SYSCALL_API NtUserGetWindowDC( HWND hwnd )
     SYSCALL_FUNC( NtUserGetWindowDC );
 }
 
+BOOL SYSCALL_API NtUserGetWindowDisplayAffinity( HWND hwnd, DWORD *affinity )
+{
+    SYSCALL_FUNC( NtUserGetWindowDisplayAffinity );
+}
+
 BOOL SYSCALL_API NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
 {
     SYSCALL_FUNC( NtUserGetWindowPlacement );

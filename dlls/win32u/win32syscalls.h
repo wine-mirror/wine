@@ -1120,7 +1120,7 @@
     SYSCALL_ENTRY( 0x145c, NtUserGetWindowCompositionInfo, 0 ) \
     SYSCALL_ENTRY( 0x145d, NtUserGetWindowContextHelpId, 4 ) \
     SYSCALL_ENTRY( 0x145e, NtUserGetWindowDC, 4 ) \
-    SYSCALL_ENTRY( 0x145f, NtUserGetWindowDisplayAffinity, 0 ) \
+    SYSCALL_ENTRY( 0x145f, NtUserGetWindowDisplayAffinity, 8 ) \
     SYSCALL_ENTRY( 0x1460, NtUserGetWindowFeedbackSetting, 0 ) \
     SYSCALL_ENTRY( 0x1461, NtUserGetWindowGroupId, 0 ) \
     SYSCALL_ENTRY( 0x1462, NtUserGetWindowMinimizeRect, 0 ) \
@@ -2662,7 +2662,7 @@
     SYSCALL_ENTRY( 0x145c, NtUserGetWindowCompositionInfo, 0 ) \
     SYSCALL_ENTRY( 0x145d, NtUserGetWindowContextHelpId, 8 ) \
     SYSCALL_ENTRY( 0x145e, NtUserGetWindowDC, 8 ) \
-    SYSCALL_ENTRY( 0x145f, NtUserGetWindowDisplayAffinity, 0 ) \
+    SYSCALL_ENTRY( 0x145f, NtUserGetWindowDisplayAffinity, 16 ) \
     SYSCALL_ENTRY( 0x1460, NtUserGetWindowFeedbackSetting, 0 ) \
     SYSCALL_ENTRY( 0x1461, NtUserGetWindowGroupId, 0 ) \
     SYSCALL_ENTRY( 0x1462, NtUserGetWindowMinimizeRect, 0 ) \
@@ -3867,7 +3867,6 @@
     SYSCALL_STUB( NtUserGetWindowBand ) \
     SYSCALL_STUB( NtUserGetWindowCompositionAttribute ) \
     SYSCALL_STUB( NtUserGetWindowCompositionInfo ) \
-    SYSCALL_STUB( NtUserGetWindowDisplayAffinity ) \
     SYSCALL_STUB( NtUserGetWindowFeedbackSetting ) \
     SYSCALL_STUB( NtUserGetWindowGroupId ) \
     SYSCALL_STUB( NtUserGetWindowMinimizeRect ) \

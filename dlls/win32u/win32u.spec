@@ -1118,7 +1118,7 @@
 @ stub -syscall NtUserGetWindowCompositionInfo
 @ stdcall -syscall NtUserGetWindowContextHelpId(long)
 @ stdcall -syscall NtUserGetWindowDC(long)
-@ stub -syscall NtUserGetWindowDisplayAffinity
+@ stdcall -syscall NtUserGetWindowDisplayAffinity(ptr ptr)
 @ stub -syscall NtUserGetWindowFeedbackSetting
 @ stub -syscall NtUserGetWindowGroupId
 @ stub -syscall NtUserGetWindowMinimizeRect

@@ -3042,6 +3042,14 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceList( UINT *args )
     }
 }
 
+NTSTATUS WINAPI wow64_NtUserGetWindowDisplayAffinity( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    DWORD *affinity = get_ptr( &args );
+
+    return NtUserGetWindowDisplayAffinity( hwnd, affinity );
+}
+
 NTSTATUS WINAPI wow64_NtUserRealChildWindowFromPoint( UINT *args )
 {
     HWND parent = get_handle( &args );

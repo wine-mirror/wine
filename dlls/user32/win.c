@@ -1605,23 +1605,6 @@ LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 #endif /* _WIN64 */
 
 /*****************************************************************************
- *              GetWindowDisplayAffinity (USER32.@)
- */
-BOOL WINAPI GetWindowDisplayAffinity(HWND hwnd, DWORD *affinity)
-{
-    FIXME("(%p, %p): stub\n", hwnd, affinity);
-
-    if (!hwnd || !affinity)
-    {
-        SetLastError(hwnd ? ERROR_NOACCESS : ERROR_INVALID_WINDOW_HANDLE);
-        return FALSE;
-    }
-
-    *affinity = WDA_NONE;
-    return TRUE;
-}
-
-/*****************************************************************************
  *              SetWindowDisplayAffinity (USER32.@)
  */
 BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)

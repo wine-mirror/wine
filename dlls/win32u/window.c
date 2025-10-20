@@ -6381,3 +6381,20 @@ BOOL WINAPI NtUserIsChildWindowDpiMessageEnabled( HWND hwnd )
     FIXME( "%p: stub\n", hwnd );
     return FALSE;
 }
+
+/*****************************************************************
+ *           NtUserGetWindowDisplayAffinity (win32u.@)
+ */
+BOOL WINAPI NtUserGetWindowDisplayAffinity( HWND hwnd, DWORD *affinity )
+{
+    FIXME( "%p, %p: stub\n", hwnd, affinity );
+
+    if (!hwnd || !affinity)
+    {
+        RtlSetLastWin32Error( hwnd ? ERROR_NOACCESS : ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
+    *affinity = WDA_NONE;
+    return TRUE;
+}
