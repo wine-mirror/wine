@@ -7011,25 +7011,26 @@ static void test_media_session_source_shutdown(void)
                 hr = IMFMediaSession_Pause(session);
                 IMFMediaSource_Shutdown(source);
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-                hr = wait_media_event(session, callback, MESessionPaused, 1000, &propvar);
+                hr = wait_media_event_until_blocking(session, callback, MESessionPaused, 1000, &propvar);
                 /* Windows has not been observed to emit PAUSEWHILESTOPPED here, but this could
-                 * be a matter of async command timing, and this error is not exactly wrong. */
-                ok(hr == S_OK || hr == MF_E_SESSION_PAUSEWHILESTOPPED || hr == MF_E_SHUTDOWN,
+                 * be a matter of async command timing, and this error is not exactly wrong.
+                 * Windows occasionally never sends MESessionPaused here; ditto for Stopped and Closed. */
+                ok(hr == S_OK || hr == MF_E_SESSION_PAUSEWHILESTOPPED || hr == WAIT_TIMEOUT || hr == MF_E_SHUTDOWN,
                         "Unexpected hr %#lx.\n", hr);
                 break;
             case TEST_STOP:
                 hr = IMFMediaSession_Stop(session);
                 IMFMediaSource_Shutdown(source);
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-                hr = wait_media_event(session, callback, MESessionStopped, 1000, &propvar);
-                ok(hr == S_OK || hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+                hr = wait_media_event_until_blocking(session, callback, MESessionStopped, 1000, &propvar);
+                ok(hr == S_OK || hr == WAIT_TIMEOUT || hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
                 break;
             case TEST_CLOSE:
                 hr = IMFMediaSession_Close(session);
                 IMFMediaSource_Shutdown(source);
                 ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-                hr = wait_media_event(session, callback, MESessionClosed, 1000, &propvar);
-                ok(hr == S_OK || hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+                hr = wait_media_event_until_blocking(session, callback, MESessionClosed, 1000, &propvar);
+                ok(hr == S_OK || hr == WAIT_TIMEOUT || hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
             default:
                 break;
         }
