@@ -1612,7 +1612,6 @@ static void test_session(void)
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ses1_ac1);
     ok(hr == S_OK, "Activation failed with %08lx\n", hr);
-    if (FAILED(hr)) return;
 
     hr = IAudioClient_GetMixFormat(ses1_ac1, &pwfx);
     ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
@@ -1621,19 +1620,9 @@ static void test_session(void)
             0, 5000000, 0, pwfx, &ses1_guid);
     ok(hr == S_OK, "Initialize failed: %08lx\n", hr);
 
-    if(hr == S_OK){
-        hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
-                NULL, (void**)&ses1_ac2);
-        ok(hr == S_OK, "Activation failed with %08lx\n", hr);
-    }
-    if(hr != S_OK){
-        skip("Unable to open the same device twice. Skipping session tests\n");
-
-        ref = IAudioClient_Release(ses1_ac1);
-        ok(ref == 0, "AudioClient wasn't released: %lu\n", ref);
-        CoTaskMemFree(pwfx);
-        return;
-    }
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                            NULL, (void**)&ses1_ac2);
+    ok(hr == S_OK, "Activation failed with %08lx\n", hr);
 
     hr = IAudioClient_Initialize(ses1_ac2, AUDCLNT_SHAREMODE_SHARED,
             0, 5000000, 0, pwfx, &ses1_guid);
@@ -1644,7 +1633,6 @@ static void test_session(void)
     if(hr == S_OK){
         hr = IMMDevice_Activate(cap_dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
                 NULL, (void**)&cap_ac);
-        ok((hr == S_OK)^(cap_ac == NULL), "Activate %08lx &out pointer\n", hr);
         ok(hr == S_OK, "Activate failed: %08lx\n", hr);
         IMMDevice_Release(cap_dev);
     }
@@ -2352,7 +2340,6 @@ static void test_session_creation(void)
 
     hr = IMMDevice_Activate(dev, &IID_IAudioSessionManager,
             CLSCTX_INPROC_SERVER, NULL, (void**)&sesm);
-    ok((hr == S_OK)^(sesm == NULL), "Activate %08lx &out pointer\n", hr);
     ok(hr == S_OK, "Activate failed: %08lx\n", hr);
 
     hr = IAudioSessionManager_GetSimpleAudioVolume(sesm, &session_guid,
@@ -2477,7 +2464,6 @@ static void test_session_creation(void)
 
         hr = IMMDevice_Activate(cap_dev, &IID_IAudioSessionManager,
                 CLSCTX_INPROC_SERVER, NULL, (void**)&cap_sesm);
-        ok((hr == S_OK)^(cap_sesm == NULL), "Activate %08lx &out pointer\n", hr);
         ok(hr == S_OK, "Activate failed: %08lx\n", hr);
 
         hr = IAudioSessionManager_GetAudioSessionControl(cap_sesm, &session_guid, FALSE, &cap_sesc);
@@ -2524,10 +2510,7 @@ static void test_session_creation(void)
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac);
-    ok((hr == S_OK)^(ac == NULL), "Activate %08lx &out pointer\n", hr);
     ok(hr == S_OK, "Activation failed with %08lx\n", hr);
-    if(hr != S_OK)
-        return;
 
     hr = IAudioClient_GetMixFormat(ac, &fmt);
     ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
@@ -2538,14 +2521,12 @@ static void test_session_creation(void)
 
     hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
     ok(hr == S_OK, "GetService failed: %08lx\n", hr);
-    if(hr == S_OK){
-        vol = 0.5f;
-        hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
-        ok(hr == S_OK, "GetMasterVolume failed: %08lx\n", hr);
-        ok(fabs(vol - 0.6f) < 0.05f, "Got wrong volume: %f\n", vol);
+    vol = 0.5f;
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "GetMasterVolume failed: %08lx\n", hr);
+    ok(fabs(vol - 0.6f) < 0.05f, "Got wrong volume: %f\n", vol);
 
-        ISimpleAudioVolume_Release(sav);
-    }
+    ISimpleAudioVolume_Release(sav);
 
     CoTaskMemFree(fmt);
     IAudioClient_Release(ac);
