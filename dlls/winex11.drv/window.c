@@ -1585,7 +1585,7 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
 
     if ((old_style & WS_MINIMIZE) && !(new_style & WS_MINIMIZE))
     {
-        if ((old_style & WS_CAPTION) == WS_CAPTION && (data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
+        if ((old_style & WS_CAPTION) == WS_CAPTION && (new_style & WS_MAXIMIZE))
         {
             if ((old_style & WS_MAXIMIZEBOX) && !(old_style & WS_DISABLED))
             {
@@ -1609,16 +1609,30 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
         }
     }
 
+    if ((old_style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)
+    {
+        if ((new_style & WS_MAXIMIZE) && !(old_style & WS_MAXIMIZE))
+        {
+            TRACE( "window %p/%lx is maximized\n", data->hwnd, data->whole_window );
+            return SC_MAXIMIZE;
+        }
+        if (!(new_style & WS_MAXIMIZE) && (old_style & WS_MAXIMIZE))
+        {
+            TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
+            return SC_RESTORE;
+        }
+    }
+
     return 0;
 }
 
 static UINT window_update_client_config( struct x11drv_win_data *data )
 {
     static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
-    UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), flags;
     RECT rect, old_rect = data->rects.window, new_rect;
     unsigned int old_generation, generation;
     long old_monitors[4], monitors[4];
+    UINT flags;
 
     if (!data->managed) return 0; /* unmanaged windows are managed by the Win32 side */
     if (is_virtual_desktop()) return 0; /* ignore window manager config changes in virtual desktop mode */
@@ -1639,20 +1653,6 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
         xinerama_get_fullscreen_monitors( &data->rects.visible, &old_generation, old_monitors );
         xinerama_get_fullscreen_monitors( &data->current_state.rect, &generation, monitors );
         if (!memcmp( old_monitors, monitors, sizeof(monitors) )) return 0;
-    }
-
-    if ((old_style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)
-    {
-        if ((data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && !(old_style & WS_MAXIMIZE))
-        {
-            TRACE( "window %p/%lx is maximized\n", data->hwnd, data->whole_window );
-            return SC_MAXIMIZE;
-        }
-        if (!(data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && (old_style & WS_MAXIMIZE))
-        {
-            TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
-            return SC_RESTORE;
-        }
     }
 
     flags = SWP_NOACTIVATE | SWP_NOZORDER;
