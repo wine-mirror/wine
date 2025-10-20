@@ -579,8 +579,7 @@ static struct inproc_sync *cache_inproc_sync( HANDLE handle, struct inproc_sync 
             static const size_t size = INPROC_SYNC_CACHE_BLOCK_SIZE * sizeof(struct inproc_sync);
             void *ptr = anon_mmap_alloc( size, PROT_READ | PROT_WRITE );
             if (ptr == MAP_FAILED) return sync;
-            if (InterlockedCompareExchangePointer( (void **)&inproc_sync_cache[entry], ptr, NULL ))
-                munmap( ptr, size ); /* someone beat us to it */
+            inproc_sync_cache[entry] = ptr;
         }
     }
 
@@ -702,14 +701,21 @@ static NTSTATUS get_inproc_sync( HANDLE handle, enum inproc_sync_type desired_ty
          * and we need to use an uninterrupted section to prevent reentrancy.
          * We also need fd_cache_mutex to protect against the same race with
          * NtClose, that is, to prevent the object from being cached again between
-         * close_inproc_sync() and close_handle. */
+         * close_inproc_sync() and close_handle.
+         *
+         * The mutex also protects cache_inproc_sync(). Accessing the cache is
+         * done without a lock, but populating it currently is not. */
         server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
-        if ((sync = get_cached_inproc_sync( handle ))) ret = STATUS_SUCCESS;
-        else ret = get_server_inproc_sync( handle, stack );
+        if (!(sync = get_cached_inproc_sync( handle )))
+        {
+            if ((ret = get_server_inproc_sync( handle, stack )))
+            {
+                server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
+                return ret;
+            }
+            sync = cache_inproc_sync( handle, stack );
+        }
         server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
-        if (ret) return ret;
-
-        if (!sync) sync = cache_inproc_sync( handle, stack );
     }
 
     if (desired_type != INPROC_SYNC_UNKNOWN && desired_type != sync->type)
