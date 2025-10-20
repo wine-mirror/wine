@@ -2764,7 +2764,7 @@ static void add_runtimeclass_type_step1( type_t *type )
 
     if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
     {
-        create_typeref( iface->type );
+        add_interface_type_step1( iface->type );
     }
 }
 
