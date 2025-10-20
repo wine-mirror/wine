@@ -2252,11 +2252,13 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             win->has_icons = need_icons = TRUE;
         }
 
+        if (win->dwStyle & WS_THICKFRAME) swp_flags |= WINE_SWP_RESIZABLE;
         if (is_child) monitor_rects = map_dpi_window_rects( *new_rects, dpi, raw_dpi );
         else
         {
             MONITORINFO monitor_info = monitor_info_from_rect( new_rects->window, dpi );
             if (is_fullscreen( &monitor_info, &new_rects->visible )) swp_flags |= WINE_SWP_FULLSCREEN;
+            if (is_fullscreen( &monitor_info, &new_rects->window )) swp_flags &= ~WINE_SWP_RESIZABLE;
             monitor_rects = map_window_rects_virt_to_raw( *new_rects, dpi );
         }
     }
