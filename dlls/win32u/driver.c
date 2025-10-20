@@ -890,7 +890,7 @@ static void nulldrv_MoveWindowBits( HWND hwnd, const struct window_rects *old_re
 {
 }
 
-static void nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+static void nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
                                       const struct window_rects *new_rects, struct window_surface *surface )
 {
 }

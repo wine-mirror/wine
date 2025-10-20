@@ -353,6 +353,7 @@ struct gdi_device_manager
 };
 
 #define WINE_DM_UNSUPPORTED 0x80000000
+#define WINE_SWP_FULLSCREEN 0x80000000
 
 struct vulkan_driver_funcs;
 struct opengl_driver_funcs;
@@ -424,7 +425,7 @@ struct user_driver_funcs
     BOOL    (*pGetWindowStateUpdates)(HWND,UINT*,UINT*,RECT*,HWND*);
     BOOL    (*pCreateWindowSurface)(HWND,BOOL,const RECT *,struct window_surface**);
     void    (*pMoveWindowBits)(HWND,const struct window_rects *,const struct window_rects *,const RECT *);
-    void    (*pWindowPosChanged)(HWND,HWND,HWND,UINT,BOOL,const struct window_rects*,struct window_surface*);
+    void    (*pWindowPosChanged)(HWND,HWND,HWND,UINT,const struct window_rects*,struct window_surface*);
     /* system parameters */
     BOOL    (*pSystemParametersInfo)(UINT,UINT,void*,UINT);
     /* wintab support */

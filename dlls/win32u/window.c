@@ -2145,6 +2145,12 @@ HICON get_window_icon_info( HWND hwnd, UINT type, HICON icon, ICONINFO *ret )
     return NULL;
 }
 
+static BOOL is_fullscreen( const MONITORINFO *info, const RECT *rect )
+{
+    return rect->left <= info->rcMonitor.left && rect->right >= info->rcMonitor.right &&
+           rect->top <= info->rcMonitor.top && rect->bottom >= info->rcMonitor.bottom;
+}
+
 /***********************************************************************
  *           apply_window_pos
  *
@@ -2156,8 +2162,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     struct window_rects monitor_rects;
     WND *win;
     HWND owner_hint, surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
-    BOOL ret, is_fullscreen, is_layered, is_child, need_icons = FALSE;
     UINT raw_dpi, monitor_dpi, dpi = get_thread_dpi();
+    BOOL ret, is_layered, is_child, need_icons = FALSE;
     struct window_rects old_rects;
     RECT extra_rects[3];
     struct window_surface *old_surface;
@@ -2165,7 +2171,6 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     ICONINFO ii, ii_small;
 
     is_layered = new_surface && new_surface->alpha_mask;
-    is_fullscreen = is_window_rect_full_screen( &new_rects->visible, get_thread_dpi() );
     is_child = parent && parent != NtUserGetDesktopWindow();
 
     if (is_child) monitor_dpi = get_win_monitor_dpi( parent, &raw_dpi );
@@ -2184,9 +2189,6 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         swp_flags |= SWP_NOCOPYBITS;
         valid_rects = NULL;
     }
-
-    if (is_child) monitor_rects = map_dpi_window_rects( *new_rects, dpi, raw_dpi );
-    else monitor_rects = map_window_rects_virt_to_raw( *new_rects, dpi );
 
     SERVER_START_REQ( set_window_pos )
     {
@@ -2248,6 +2250,14 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             icon = win->hIcon;
             icon_small = win->hIconSmall2 ? win->hIconSmall2 : win->hIconSmall;
             win->has_icons = need_icons = TRUE;
+        }
+
+        if (is_child) monitor_rects = map_dpi_window_rects( *new_rects, dpi, raw_dpi );
+        else
+        {
+            MONITORINFO monitor_info = monitor_info_from_rect( new_rects->window, dpi );
+            if (is_fullscreen( &monitor_info, &new_rects->visible )) swp_flags |= WINE_SWP_FULLSCREEN;
+            monitor_rects = map_window_rects_virt_to_raw( *new_rects, dpi );
         }
     }
 
@@ -2316,7 +2326,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         if (!owner_hint) owner_hint = NtUserWindowFromPoint(new_rects->window.left - 1, new_rects->window.top - 1);
         if (owner_hint) owner_hint = NtUserGetAncestor(owner_hint, GA_ROOT);
 
-        user_driver->pWindowPosChanged( hwnd, insert_after, owner_hint, swp_flags, is_fullscreen, &monitor_rects,
+        user_driver->pWindowPosChanged( hwnd, insert_after, owner_hint, swp_flags, &monitor_rects,
                                         get_driver_window_surface( new_surface, raw_dpi ) );
         update_client_surfaces( hwnd );
 

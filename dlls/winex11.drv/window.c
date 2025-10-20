@@ -3156,13 +3156,13 @@ static BOOL get_desired_wm_state( DWORD style, const struct window_rects *rects 
 /***********************************************************************
  *		WindowPosChanged   (X11DRV.@)
  */
-void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
                               const struct window_rects *new_rects, struct window_surface *surface )
 {
     struct x11drv_win_data *data;
     UINT ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ), new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     struct window_rects old_rects;
-    BOOL is_managed, was_fullscreen, activate = !(swp_flags & SWP_NOACTIVATE);
+    BOOL is_managed, was_fullscreen, activate = !(swp_flags & SWP_NOACTIVATE), fullscreen = !!(swp_flags & WINE_SWP_FULLSCREEN);
 
     if ((is_managed = is_window_managed( hwnd, swp_flags, fullscreen ))) make_owner_managed( hwnd );
 

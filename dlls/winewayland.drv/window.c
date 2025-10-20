@@ -436,14 +436,14 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const str
 /***********************************************************************
  *           WAYLAND_WindowPosChanged
  */
-void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
                               const struct window_rects *new_rects, struct window_surface *surface)
 {
     HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_surface *toplevel_surface;
     struct wayland_client_surface *client;
     struct wayland_win_data *data, *toplevel_data;
-    BOOL managed;
+    BOOL managed, fullscreen = swp_flags & WINE_SWP_FULLSCREEN;
 
     TRACE("hwnd %p new_rects %s after %p flags %08x\n", hwnd, debugstr_window_rects(new_rects), insert_after, swp_flags);
 
