@@ -2157,10 +2157,10 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     WND *win;
     HWND owner_hint, surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
     BOOL ret, is_fullscreen, is_layered, is_child, need_icons = FALSE;
+    UINT raw_dpi, monitor_dpi, dpi = get_thread_dpi();
     struct window_rects old_rects;
     RECT extra_rects[3];
     struct window_surface *old_surface;
-    UINT raw_dpi, monitor_dpi;
     HICON icon, icon_small;
     ICONINFO ii, ii_small;
 
@@ -2169,9 +2169,9 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     is_child = parent && parent != NtUserGetDesktopWindow();
 
     if (is_child) monitor_dpi = get_win_monitor_dpi( parent, &raw_dpi );
-    else monitor_dpi = monitor_dpi_from_rect( new_rects->window, get_thread_dpi(), &raw_dpi );
+    else monitor_dpi = monitor_dpi_from_rect( new_rects->window, dpi, &raw_dpi );
 
-    get_window_rects( hwnd, COORDS_PARENT, &old_rects, get_thread_dpi() );
+    get_window_rects( hwnd, COORDS_PARENT, &old_rects, dpi );
     if (IsRectEmpty( &valid_rects[0] ) || is_layered) valid_rects = NULL;
 
     if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
@@ -2185,8 +2185,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         valid_rects = NULL;
     }
 
-    if (is_child) monitor_rects = map_dpi_window_rects( *new_rects, get_thread_dpi(), raw_dpi );
-    else monitor_rects = map_window_rects_virt_to_raw( *new_rects, get_thread_dpi() );
+    if (is_child) monitor_rects = map_dpi_window_rects( *new_rects, dpi, raw_dpi );
+    else monitor_rects = map_window_rects_virt_to_raw( *new_rects, dpi );
 
     SERVER_START_REQ( set_window_pos )
     {
@@ -2223,7 +2223,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             if (get_window_long( win->parent, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
             {
                 RECT client = {0};
-                get_client_rect_rel( win->parent, COORDS_CLIENT, &client, get_thread_dpi() );
+                get_client_rect_rel( win->parent, COORDS_CLIENT, &client, dpi );
                 mirror_rect( &client, &win->rects.window );
                 mirror_rect( &client, &win->rects.client );
                 mirror_rect( &client, &win->rects.visible );
