@@ -602,8 +602,8 @@ static void test_formats(AUDCLNT_SHAREMODE mode, BOOL extensible)
                     if (fmt.Format.nChannels > 2 && !extensible)
                         expected = E_INVALIDARG;
                     todo_wine_if(fmt.Format.nChannels > 2 && !extensible)
-                    ok(hr == expected, "Initialize(shared,  %s%lux%2ux%u) returns %08lx\n",
-                       format_chr, fmt.Format.nSamplesPerSec, fmt.Format.wBitsPerSample, fmt.Format.nChannels, hr);
+                    ok(hr == expected, "Initialize(shared,  %s%lux%2ux%u) returns %08lx, expected %08lx\n",
+                       format_chr, fmt.Format.nSamplesPerSec, fmt.Format.wBitsPerSample, fmt.Format.nChannels, hr, expected);
                 } else if (hrs == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED)
                     /* Unsupported format implies "create failed" and shadows "not allowed" */
                     ok(hrs == hexcl && (hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || hr == hrs),
@@ -634,8 +634,8 @@ static void test_formats(AUDCLNT_SHAREMODE mode, BOOL extensible)
                     if (fmt.Format.nChannels > 2 && !extensible)
                         expected = E_INVALIDARG;
                     todo_wine_if(hr != expected)
-                    ok(hr == expected, "Initialize(shared,  %s%lux%2ux%u, RATEADJUST) returns %08lx\n",
-                       format_chr, fmt.Format.nSamplesPerSec, fmt.Format.wBitsPerSample, fmt.Format.nChannels, hr);
+                    ok(hr == expected, "Initialize(shared,  %s%lux%2ux%u, RATEADJUST) returns %08lx, expected %08lx\n",
+                       format_chr, fmt.Format.nSamplesPerSec, fmt.Format.wBitsPerSample, fmt.Format.nChannels, hr, expected);
                 } else if (hrs == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED)
                     /* Unsupported format implies "create failed" and shadows "not allowed" */
                     ok(hrs == hexcl && (hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || hr == hrs),
