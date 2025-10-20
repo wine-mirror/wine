@@ -3972,6 +3972,58 @@ static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *a
 
     switch (data->ReparseTag)
     {
+    case IO_REPARSE_TAG_SYMLINK:
+    {
+        const WCHAR *target = data->SymbolicLinkReparseBuffer.PathBuffer
+                        + data->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR);
+        USHORT target_len = data->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(WCHAR);
+
+        if (data->SymbolicLinkReparseBuffer.Flags & SYMLINK_FLAG_RELATIVE)
+        {
+            WCHAR *new_nt_name;
+
+            TRACE( "target %s\n", debugstr_wn(target, target_len) );
+
+            if (!target_len)
+            {
+                free( data );
+                return STATUS_IO_REPARSE_DATA_INVALID;
+            }
+
+            if (!(new_nt_name = malloc( (nt_pos + target_len + 1 + remainder_len + 1) * sizeof(WCHAR) )))
+            {
+                free( data );
+                return STATUS_NO_MEMORY;
+            }
+
+            memcpy( new_nt_name, name, nt_pos * sizeof(WCHAR) );
+            memcpy( new_nt_name + nt_pos, target, target_len * sizeof(WCHAR) );
+            if (remainder_len)
+            {
+                if (target[target_len - 1] != '\\')
+                    new_nt_name[nt_pos + target_len++] = '\\';
+                memcpy( new_nt_name + nt_pos + target_len, remainder, remainder_len * sizeof(WCHAR) );
+            }
+            new_nt_name[nt_pos + target_len + remainder_len] = 0;
+
+            free( nt_name->Buffer );
+            nt_name->Buffer = new_nt_name;
+            nt_name->Length = (nt_pos + target_len + remainder_len) * sizeof(WCHAR);
+            nt_name->MaximumLength = nt_name->Length + sizeof(WCHAR);
+            attr->ObjectName = nt_name;
+
+            status = lookup_unix_name( root_fd, attr, nt_name, nt_pos, unix_name, unix_len, pos,
+                                       disposition, open_reparse, is_unix, reparse_count );
+        }
+        else
+        {
+            status = resolve_absolute_reparse_point( target, target_len, attr, nt_name,
+                                                     remainder, remainder_len, unix_name,
+                                                     disposition, open_reparse, reparse_count );
+        }
+        break;
+    }
+
     case IO_REPARSE_TAG_MOUNT_POINT:
     {
         const WCHAR *target = data->MountPointReparseBuffer.PathBuffer
