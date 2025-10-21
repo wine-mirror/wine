@@ -897,6 +897,11 @@ my %supported_egl_extensions =
     "EGL_KHR_platform_x11" => 1,
     "EGL_MESA_platform_surfaceless" => 1,
    );
+my %extension_aliases =
+    (
+     "GL_EXT_blend_equation_separate" => "GL_ATI_blend_equation_separate",
+     "GL_EXT_multi_draw_arrays" => "GL_SUN_multi_draw_arrays",
+    );
 
 my %supported_apis =
     (
@@ -1611,7 +1616,13 @@ foreach (sort keys %ext_functions)
 {
     next if $_ =~ /^egl/; # unix-side only API
     my $func = $ext_functions{$_};
-    printf OUT "    { \"%s\", \"%s\", offsetof(struct opengl_funcs, p_$_) },\n", $_, join(" ", sort @{$func->[2]});
+    my @exts;
+    foreach my $ext (@{$func->[2]})
+    {
+        push @exts, $ext;
+        push @exts, $extension_aliases{$ext} if defined $extension_aliases{$ext};
+    }
+    printf OUT "    { \"%s\", \"%s\", offsetof(struct opengl_funcs, p_$_) },\n", $_, join(" ", sort @exts);
 }
 print OUT "};\n";
 
