@@ -792,9 +792,8 @@ static const GLuint *disabled_extensions_index( TEB *teb )
 }
 
 /* Check if a GL extension is supported */
-static BOOL check_extension_support( TEB *teb, const char *extension, const char *available_extensions )
+static BOOL check_extension_support( struct context *ctx, const char *extension, const char *available_extensions )
 {
-    const struct opengl_funcs *funcs = teb->glTable;
     size_t len;
 
     TRACE( "Checking for extension '%s'\n", extension );
@@ -816,21 +815,15 @@ static BOOL check_extension_support( TEB *teb, const char *extension, const char
          * Check if we are searching for a core GL function */
         if (!strncmp( extension, "GL_VERSION_", 11 ))
         {
-            const GLubyte *gl_version = funcs->p_glGetString( GL_VERSION );
-            const char *version = extension + 11; /* Move past 'GL_VERSION_' */
-
-            if (!gl_version)
-            {
-                ERR( "No OpenGL version found!\n" );
-                return FALSE;
-            }
+            int major = extension[11] - '0'; /* Move past 'GL_VERSION_' */
+            int minor = extension[13] - '0';
 
             /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
              * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
-            if ((gl_version[0] > version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2]))) return TRUE;
+            if (ctx->major_version > major || (ctx->major_version == major && ctx->minor_version >= minor)) return TRUE;
 
-            WARN( "The function requires OpenGL version '%c.%c' while your drivers only provide '%c.%c'\n",
-                  version[0], version[2], gl_version[0], gl_version[2] );
+            WARN( "The function requires OpenGL version '%d.%d' while your drivers only provide '%d.%d'\n",
+                  major, minor, ctx->major_version, ctx->minor_version );
         }
 
         if (extension[len] == ' ') len++;
@@ -1020,7 +1013,7 @@ static BOOL is_extension_supported( TEB *teb, struct context *ctx, const char *e
     if (!available_extensions) available_extensions = build_extension_list( teb );
 
     if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
-    else ret = check_extension_support( teb, extension, available_extensions );
+    else ret = check_extension_support( ctx, extension, available_extensions );
 
     free( available_extensions );
     return ret;
