@@ -7690,9 +7690,9 @@ static inline BOOL is_valid_attr_dispid(HTMLAttributeCollection *col, DISPID id)
     return TRUE;
 }
 
-static HRESULT get_attr_dispid_by_relative_idx(HTMLAttributeCollection *This, LONG *idx, DISPID start, DISPID *dispid)
+static HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG *idx, DISPID *dispid)
 {
-    DISPID id = start;
+    DISPID id = DISPID_STARTENUM;
     LONG len = -1;
     HRESULT hres;
 
@@ -7719,11 +7719,6 @@ static HRESULT get_attr_dispid_by_relative_idx(HTMLAttributeCollection *This, LO
 
     *idx = len+1;
     return S_OK;
-}
-
-static HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG *idx, DISPID *dispid)
-{
-    return get_attr_dispid_by_relative_idx(This, idx, DISPID_STARTENUM, dispid);
 }
 
 static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, const WCHAR *name, DISPID *id)
@@ -7760,156 +7755,6 @@ static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG
     return S_OK;
 }
 
-typedef struct {
-    IEnumVARIANT IEnumVARIANT_iface;
-
-    LONG ref;
-
-    DISPID iter_dispid;
-    HTMLAttributeCollection *col;
-} HTMLAttributeCollectionEnum;
-
-static inline HTMLAttributeCollectionEnum *HTMLAttributeCollectionEnum_from_IEnumVARIANT(IEnumVARIANT *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLAttributeCollectionEnum, IEnumVARIANT_iface);
-}
-
-static HRESULT WINAPI HTMLAttributeCollectionEnum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
-{
-    HTMLAttributeCollectionEnum *This = HTMLAttributeCollectionEnum_from_IEnumVARIANT(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        *ppv = &This->IEnumVARIANT_iface;
-    }else if(IsEqualGUID(riid, &IID_IEnumVARIANT)) {
-        *ppv = &This->IEnumVARIANT_iface;
-    }else {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-}
-
-static ULONG WINAPI HTMLAttributeCollectionEnum_AddRef(IEnumVARIANT *iface)
-{
-    HTMLAttributeCollectionEnum *This = HTMLAttributeCollectionEnum_from_IEnumVARIANT(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI HTMLAttributeCollectionEnum_Release(IEnumVARIANT *iface)
-{
-    HTMLAttributeCollectionEnum *This = HTMLAttributeCollectionEnum_from_IEnumVARIANT(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref) {
-        IHTMLAttributeCollection_Release(&This->col->IHTMLAttributeCollection_iface);
-        free(This);
-    }
-
-    return ref;
-}
-
-static HRESULT WINAPI HTMLAttributeCollectionEnum_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
-{
-    HTMLAttributeCollectionEnum *This = HTMLAttributeCollectionEnum_from_IEnumVARIANT(iface);
-    DISPID tmp, dispid = This->iter_dispid;
-    HTMLDOMAttribute *attr;
-    LONG rel_index = 0;
-    HRESULT hres;
-    ULONG i;
-
-    TRACE("(%p)->(%lu %p %p)\n", This, celt, rgVar, pCeltFetched);
-
-    for(i = 0; i < celt; i++) {
-        hres = get_attr_dispid_by_relative_idx(This->col, &rel_index, dispid, &tmp);
-        if(SUCCEEDED(hres)) {
-            dispid = tmp;
-            hres = get_domattr(This->col, dispid, NULL, &attr);
-        }
-        else if(hres == DISP_E_UNKNOWNNAME)
-            break;
-
-        if(FAILED(hres)) {
-            while(i--)
-                VariantClear(&rgVar[i]);
-            return hres;
-        }
-
-        V_VT(&rgVar[i]) = VT_DISPATCH;
-        V_DISPATCH(&rgVar[i]) = (IDispatch*)&attr->IHTMLDOMAttribute_iface;
-    }
-
-    This->iter_dispid = dispid;
-    if(pCeltFetched)
-        *pCeltFetched = i;
-    return i == celt ? S_OK : S_FALSE;
-}
-
-static HRESULT WINAPI HTMLAttributeCollectionEnum_Skip(IEnumVARIANT *iface, ULONG celt)
-{
-    HTMLAttributeCollectionEnum *This = HTMLAttributeCollectionEnum_from_IEnumVARIANT(iface);
-    LONG remaining, rel_index;
-    DISPID dispid;
-    HRESULT hres;
-
-    TRACE("(%p)->(%lu)\n", This, celt);
-
-    if(!celt)
-        return S_OK;
-
-    rel_index = -1;
-    hres = get_attr_dispid_by_relative_idx(This->col, &rel_index, This->iter_dispid, NULL);
-    if(FAILED(hres))
-        return hres;
-    remaining = min(celt, rel_index);
-
-    if(remaining) {
-        rel_index = remaining - 1;
-        hres = get_attr_dispid_by_relative_idx(This->col, &rel_index, This->iter_dispid, &dispid);
-        if(FAILED(hres))
-            return hres;
-        This->iter_dispid = dispid;
-    }
-    return celt > remaining ? S_FALSE : S_OK;
-}
-
-static HRESULT WINAPI HTMLAttributeCollectionEnum_Reset(IEnumVARIANT *iface)
-{
-    HTMLAttributeCollectionEnum *This = HTMLAttributeCollectionEnum_from_IEnumVARIANT(iface);
-
-    TRACE("(%p)->()\n", This);
-
-    This->iter_dispid = DISPID_STARTENUM;
-    return S_OK;
-}
-
-static HRESULT WINAPI HTMLAttributeCollectionEnum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
-{
-    HTMLAttributeCollectionEnum *This = HTMLAttributeCollectionEnum_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%p)\n", This, ppEnum);
-    return E_NOTIMPL;
-}
-
-static const IEnumVARIANTVtbl HTMLAttributeCollectionEnumVtbl = {
-    HTMLAttributeCollectionEnum_QueryInterface,
-    HTMLAttributeCollectionEnum_AddRef,
-    HTMLAttributeCollectionEnum_Release,
-    HTMLAttributeCollectionEnum_Next,
-    HTMLAttributeCollectionEnum_Skip,
-    HTMLAttributeCollectionEnum_Reset,
-    HTMLAttributeCollectionEnum_Clone
-};
-
 /* interface IHTMLAttributeCollection */
 static inline HTMLAttributeCollection *impl_from_IHTMLAttributeCollection(IHTMLAttributeCollection *iface)
 {
@@ -7934,23 +7779,10 @@ static HRESULT WINAPI HTMLAttributeCollection_get_length(IHTMLAttributeCollectio
 static HRESULT WINAPI HTMLAttributeCollection__newEnum(IHTMLAttributeCollection *iface, IUnknown **p)
 {
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
-    HTMLAttributeCollectionEnum *ret;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = malloc(sizeof(*ret));
-    if(!ret)
-        return E_OUTOFMEMORY;
-
-    ret->IEnumVARIANT_iface.lpVtbl = &HTMLAttributeCollectionEnumVtbl;
-    ret->ref = 1;
-    ret->iter_dispid = DISPID_STARTENUM;
-
-    HTMLAttributeCollection_AddRef(&This->IHTMLAttributeCollection_iface);
-    ret->col = This;
-
-    *p = (IUnknown*)&ret->IEnumVARIANT_iface;
-    return S_OK;
+    return create_enum_variant(&This->dispex, p);
 }
 
 static HRESULT WINAPI HTMLAttributeCollection_item(IHTMLAttributeCollection *iface, VARIANT *name, IDispatch **ppItem)
@@ -8441,6 +8273,26 @@ static HRESULT HTMLAttributeCollection_invoke(DispatchEx *dispex, DISPID id, LCI
     }
 }
 
+static ULONG HTMLAttributeCollection_collection_len(DispatchEx *dispex)
+{
+    HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+    LONG idx = -1;
+
+    return SUCCEEDED(get_attr_dispid_by_idx(This, &idx, NULL)) ? idx : 0;
+}
+
+static HRESULT HTMLAttributeCollection_collection_item(DispatchEx *dispex, ULONG index, IDispatch **p)
+{
+    HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
+    IHTMLDOMAttribute *attr;
+    HRESULT hres;
+
+    hres = IHTMLAttributeCollection3_item(&This->IHTMLAttributeCollection3_iface, index, &attr);
+    if(SUCCEEDED(hres))
+        *p = (IDispatch*)attr;
+    return hres;
+}
+
 static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
     .query_interface  = HTMLAttributeCollection_query_interface,
     .destructor       = HTMLAttributeCollection_destructor,
@@ -8449,6 +8301,8 @@ static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
     .get_dispid       = HTMLAttributeCollection_get_dispid,
     .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLAttributeCollection_invoke,
+    .collection_len   = HTMLAttributeCollection_collection_len,
+    .collection_item  = HTMLAttributeCollection_collection_item,
 };
 
 static void NamedNodeMap_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
