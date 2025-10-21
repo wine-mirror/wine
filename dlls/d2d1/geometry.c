@@ -4239,9 +4239,11 @@ static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Simplify(ID2D1EllipseGeome
 static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_Tessellate(ID2D1EllipseGeometry *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
 {
-    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+    struct d2d_geometry *geometry = impl_from_ID2D1EllipseGeometry(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p, tolerance %.8e, sink %p.\n", iface, transform, tolerance, sink);
+
+    return d2d_geometry_tessellate(&geometry->ID2D1Geometry_iface, transform, tolerance, sink);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_ellipse_geometry_CombineWithGeometry(ID2D1EllipseGeometry *iface,
