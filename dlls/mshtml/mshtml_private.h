@@ -420,6 +420,10 @@ typedef struct {
 
     /* Used by objects that want to return a custom name instead of the one in the dispex static data */
     const char *(*get_name)(DispatchEx*);
+
+    /* Used by objects that have a collection of items, required by enumerators */
+    ULONG (*collection_len)(DispatchEx*);
+    HRESULT (*collection_item)(DispatchEx*,ULONG,IDispatch**);
 } dispex_static_data_vtbl_t;
 
 #define ALL_OBJECTS                     \
@@ -1184,7 +1188,7 @@ HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
 HRESULT create_document_node(nsIDOMDocument*,GeckoBrowser*,HTMLInnerWindow*,HTMLInnerWindow*,
                              compat_mode_t,HTMLDocumentNode**);
 HRESULT create_doctype_node(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
-
+HRESULT create_enum_variant(DispatchEx*,IUnknown**);
 HRESULT create_outer_window(GeckoBrowser*,mozIDOMWindowProxy*,HTMLOuterWindow*,HTMLOuterWindow**);
 HRESULT update_window_doc(HTMLInnerWindow*);
 HTMLOuterWindow *mozwindow_to_window(const mozIDOMWindowProxy*);

@@ -40,15 +40,6 @@ typedef struct {
 } HTMLElementCollection;
 
 typedef struct {
-    IEnumVARIANT IEnumVARIANT_iface;
-
-    LONG ref;
-
-    ULONG iter;
-    HTMLElementCollection *col;
-} HTMLElementCollectionEnum;
-
-typedef struct {
     HTMLElement **buf;
     DWORD len;
     DWORD size;
@@ -93,118 +84,6 @@ static inline BOOL is_elem_node(nsIDOMNode *node)
     return type == ELEMENT_NODE || type == COMMENT_NODE;
 }
 
-static inline HTMLElementCollectionEnum *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLElementCollectionEnum, IEnumVARIANT_iface);
-}
-
-static HRESULT WINAPI HTMLElementCollectionEnum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
-{
-    HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        *ppv = &This->IEnumVARIANT_iface;
-    }else if(IsEqualGUID(riid, &IID_IEnumVARIANT)) {
-        *ppv = &This->IEnumVARIANT_iface;
-    }else {
-        FIXME("Unsupported iface %s\n", debugstr_mshtml_guid(riid));
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-}
-
-static ULONG WINAPI HTMLElementCollectionEnum_AddRef(IEnumVARIANT *iface)
-{
-    HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI HTMLElementCollectionEnum_Release(IEnumVARIANT *iface)
-{
-    HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref) {
-        IHTMLElementCollection_Release(&This->col->IHTMLElementCollection_iface);
-        free(This);
-    }
-
-    return ref;
-}
-
-static HRESULT WINAPI HTMLElementCollectionEnum_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
-{
-    HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
-    ULONG fetched = 0;
-
-    TRACE("(%p)->(%ld %p %p)\n", This, celt, rgVar, pCeltFetched);
-
-    while(This->iter+fetched < This->col->len && fetched < celt) {
-        V_VT(rgVar+fetched) = VT_DISPATCH;
-        V_DISPATCH(rgVar+fetched) = (IDispatch*)&This->col->elems[This->iter+fetched]->IHTMLElement_iface;
-        IDispatch_AddRef(V_DISPATCH(rgVar+fetched));
-        fetched++;
-    }
-
-    This->iter += fetched;
-    if(pCeltFetched)
-        *pCeltFetched = fetched;
-    return fetched == celt ? S_OK : S_FALSE;
-}
-
-static HRESULT WINAPI HTMLElementCollectionEnum_Skip(IEnumVARIANT *iface, ULONG celt)
-{
-    HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
-
-    TRACE("(%p)->(%ld)\n", This, celt);
-
-    if(This->iter + celt > This->col->len) {
-        This->iter = This->col->len;
-        return S_FALSE;
-    }
-
-    This->iter += celt;
-    return S_OK;
-}
-
-static HRESULT WINAPI HTMLElementCollectionEnum_Reset(IEnumVARIANT *iface)
-{
-    HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
-
-    TRACE("(%p)->()\n", This);
-
-    This->iter = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI HTMLElementCollectionEnum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
-{
-    HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%p)\n", This, ppEnum);
-    return E_NOTIMPL;
-}
-
-static const IEnumVARIANTVtbl HTMLElementCollectionEnumVtbl = {
-    HTMLElementCollectionEnum_QueryInterface,
-    HTMLElementCollectionEnum_AddRef,
-    HTMLElementCollectionEnum_Release,
-    HTMLElementCollectionEnum_Next,
-    HTMLElementCollectionEnum_Skip,
-    HTMLElementCollectionEnum_Reset,
-    HTMLElementCollectionEnum_Clone
-};
-
 static inline HTMLElementCollection *impl_from_IHTMLElementCollection(IHTMLElementCollection *iface)
 {
     return CONTAINING_RECORD(iface, HTMLElementCollection, IHTMLElementCollection_iface);
@@ -246,23 +125,10 @@ static HRESULT WINAPI HTMLElementCollection_get__newEnum(IHTMLElementCollection 
                                                          IUnknown **p)
 {
     HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    HTMLElementCollectionEnum *ret;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = malloc(sizeof(*ret));
-    if(!ret)
-        return E_OUTOFMEMORY;
-
-    ret->IEnumVARIANT_iface.lpVtbl = &HTMLElementCollectionEnumVtbl;
-    ret->ref = 1;
-    ret->iter = 0;
-
-    IHTMLElementCollection_AddRef(&This->IHTMLElementCollection_iface);
-    ret->col = This;
-
-    *p = (IUnknown*)&ret->IEnumVARIANT_iface;
-    return S_OK;
+    return create_enum_variant(&This->dispex, p);
 }
 
 static BOOL is_elem_id(HTMLElement *elem, LPCWSTR name)
@@ -559,6 +425,22 @@ static HRESULT HTMLElementCollection_invoke(DispatchEx *dispex, DISPID id, LCID 
     return S_OK;
 }
 
+static ULONG HTMLElementCollection_collection_len(DispatchEx *dispex)
+{
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
+
+    return This->len;
+}
+
+static HRESULT HTMLElementCollection_collection_item(DispatchEx *dispex, ULONG index, IDispatch **p)
+{
+    HTMLElementCollection *This = impl_from_DispatchEx(dispex);
+
+    *p = (IDispatch*)&This->elems[index]->IHTMLElement_iface;
+    IDispatch_AddRef(*p);
+    return S_OK;
+}
+
 static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
     .query_interface  = HTMLElementCollection_query_interface,
     .destructor       = HTMLElementCollection_destructor,
@@ -567,6 +449,8 @@ static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
     .get_dispid       = HTMLElementCollection_get_dispid,
     .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLElementCollection_invoke,
+    .collection_len   = HTMLElementCollection_collection_len,
+    .collection_item  = HTMLElementCollection_collection_item,
 };
 
 static const tid_t HTMLCollection_iface_tids[] = {
