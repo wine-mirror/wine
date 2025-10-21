@@ -385,25 +385,25 @@ namespace Windows.Foundation {
         HRESULT GetPoint([out, retval] Windows.Foundation.Point *value);
         HRESULT GetSize([out, retval] Windows.Foundation.Size *value);
         HRESULT GetRect([out, retval] Windows.Foundation.Rect *value);
-        HRESULT GetUInt8Array([out] UINT32 *value_size, [out, size_is(*value_size)] BYTE **value);
-        HRESULT GetInt16Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT16 **value);
-        HRESULT GetUInt16Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT16 **value);
-        HRESULT GetInt32Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT32 **value);
-        HRESULT GetUInt32Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT32 **value);
-        HRESULT GetInt64Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT64 **value);
-        HRESULT GetUInt64Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT64 **value);
-        HRESULT GetSingleArray([out] UINT32 *value_size, [out, size_is(*value_size)] FLOAT **value);
-        HRESULT GetDoubleArray([out] UINT32 *value_size, [out, size_is(*value_size)] DOUBLE **value);
-        HRESULT GetChar16Array([out] UINT32 *value_size, [out, size_is(*value_size)] WCHAR **value);
-        HRESULT GetBooleanArray([out] UINT32 *value_size, [out, size_is(*value_size)] boolean **value);
-        HRESULT GetStringArray([out] UINT32 *value_size, [out, size_is(*value_size)] HSTRING **value);
-        HRESULT GetInspectableArray([out] UINT32 *value_size, [out, size_is(*value_size)] IInspectable ***value);
-        HRESULT GetGuidArray([out] UINT32 *value_size, [out, size_is(*value_size)] GUID **value);
-        HRESULT GetDateTimeArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.DateTime **value);
-        HRESULT GetTimeSpanArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.TimeSpan **value);
-        HRESULT GetPointArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Point **value);
-        HRESULT GetSizeArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Size **value);
-        HRESULT GetRectArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Rect **value);
+        HRESULT GetUInt8Array([out] UINT32 *value_size, [out, size_is(, *value_size)] BYTE **value);
+        HRESULT GetInt16Array([out] UINT32 *value_size, [out, size_is(, *value_size)] INT16 **value);
+        HRESULT GetUInt16Array([out] UINT32 *value_size, [out, size_is(, *value_size)] UINT16 **value);
+        HRESULT GetInt32Array([out] UINT32 *value_size, [out, size_is(, *value_size)] INT32 **value);
+        HRESULT GetUInt32Array([out] UINT32 *value_size, [out, size_is(, *value_size)] UINT32 **value);
+        HRESULT GetInt64Array([out] UINT32 *value_size, [out, size_is(, *value_size)] INT64 **value);
+        HRESULT GetUInt64Array([out] UINT32 *value_size, [out, size_is(, *value_size)] UINT64 **value);
+        HRESULT GetSingleArray([out] UINT32 *value_size, [out, size_is(, *value_size)] FLOAT **value);
+        HRESULT GetDoubleArray([out] UINT32 *value_size, [out, size_is(, *value_size)] DOUBLE **value);
+        HRESULT GetChar16Array([out] UINT32 *value_size, [out, size_is(, *value_size)] WCHAR **value);
+        HRESULT GetBooleanArray([out] UINT32 *value_size, [out, size_is(, *value_size)] boolean **value);
+        HRESULT GetStringArray([out] UINT32 *value_size, [out, size_is(, *value_size)] HSTRING **value);
+        HRESULT GetInspectableArray([out] UINT32 *value_size, [out, size_is(, *value_size)] IInspectable ***value);
+        HRESULT GetGuidArray([out] UINT32 *value_size, [out, size_is(, *value_size)] GUID **value);
+        HRESULT GetDateTimeArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.DateTime **value);
+        HRESULT GetTimeSpanArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.TimeSpan **value);
+        HRESULT GetPointArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.Point **value);
+        HRESULT GetSizeArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.Size **value);
+        HRESULT GetRectArray([out] UINT32 *value_size, [out, size_is(, *value_size)] Windows.Foundation.Rect **value);
     }
 
     [
