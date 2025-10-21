@@ -133,6 +133,8 @@ struct context
     HGLRC share;                 /* context to be shared with */
     int *attribs;                /* creation attributes */
     DWORD tid;                   /* thread that the context is current in */
+    int major_version;           /* major GL version */
+    int minor_version;           /* minor GL version */
     UINT64 debug_callback;       /* client pointer */
     UINT64 debug_user;           /* client pointer */
     GLubyte *extensions;         /* extension string */
@@ -1008,24 +1010,13 @@ static char *build_extension_list( TEB *teb )
     return available_extensions;
 }
 
-static UINT get_context_major_version( TEB *teb )
-{
-    struct context *ctx;
-
-    if (!(ctx = get_current_context( teb, NULL, NULL ))) return TRUE;
-    for (const int *attr = ctx->attribs; attr && attr[0]; attr += 2)
-        if (attr[0] == WGL_CONTEXT_MAJOR_VERSION_ARB) return attr[1];
-
-    return 1;
-}
-
 /* Check if a GL extension is supported */
-static BOOL is_extension_supported( TEB *teb, const char *extension )
+static BOOL is_extension_supported( TEB *teb, struct context *ctx, const char *extension )
 {
     char *available_extensions = NULL;
     BOOL ret = FALSE;
 
-    if (get_context_major_version( teb ) < 3) available_extensions = strdup( (const char *)wrap_glGetString( teb, GL_EXTENSIONS ) );
+    if (ctx->major_version < 3) available_extensions = strdup( (const char *)wrap_glGetString( teb, GL_EXTENSIONS ) );
     if (!available_extensions) available_extensions = build_extension_list( teb );
 
     if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
@@ -1046,11 +1037,12 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     const struct registry_entry entry = {.name = name}, *found;
     struct opengl_funcs *funcs = teb->glTable;
     const void **func_ptr;
+    struct context *ctx;
 
     /* Without an active context opengl32 doesn't know to what
      * driver it has to dispatch wglGetProcAddress.
      */
-    if (!get_current_context( teb, NULL, NULL ))
+    if (!(ctx = get_current_context( teb, NULL, NULL )))
     {
         WARN( "No active WGL context found\n" );
         return (void *)-1;
@@ -1067,7 +1059,7 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     {
         void *driver_func = funcs->p_wglGetProcAddress( name );
 
-        if (!is_extension_supported( teb, found->extension ))
+        if (!is_extension_supported( teb, ctx, found->extension ))
         {
             unsigned int i;
             static const struct { const char *name, *alt; } alternatives[] =
@@ -1121,6 +1113,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
                                   HGLRC hglrc, struct context *ctx )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
+    const char *version;
 
     ctx->tid = tid;
     teb->glReserved1[0] = draw_hdc;
@@ -1128,6 +1121,13 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     teb->glCurrentRC = hglrc;
     teb->glTable = (void *)funcs;
     pop_default_fbo( teb );
+
+    if (ctx->major_version) return; /* already synced */
+
+    version = (const char *)funcs->p_glGetString( GL_VERSION );
+    if (version) parse_gl_version( version, &ctx->major_version, &ctx->minor_version );
+    if (!ctx->major_version) ctx->major_version = 1;
+    TRACE( "context %p version %d.%d\n", ctx, ctx->major_version, ctx->minor_version );
 }
 
 BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
