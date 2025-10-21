@@ -2045,6 +2045,8 @@ int main(int argc, char **argv)
                target.cpu == CPU_ARM ? "arm" : "aarch64" );
 
     if (!subsystem) subsystem = is_gui_app ? "windows" : "console";
+    if (!strcmp( subsystem, "windows" ) || !strcmp( subsystem, "console" ))
+        subsystem = strmake( "%s:6.0", subsystem );
 
     if (!winebuild)
     {
