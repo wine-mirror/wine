@@ -1313,7 +1313,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
             assert( num_handles == 0 );
             RtlLeaveCriticalSection( &waitqueue.cs );
             timeout.QuadPart = (ULONGLONG)THREADPOOL_WORKER_TIMEOUT * -10000;
-            status = NtWaitForMultipleObjects( 1, &bucket->update_event, TRUE, bucket->alertable, &timeout );
+            status = NtWaitForMultipleObjects( 1, &bucket->update_event, WaitAny, bucket->alertable, &timeout );
             RtlEnterCriticalSection( &waitqueue.cs );
 
             if (status == STATUS_TIMEOUT && !bucket->objcount)
@@ -1323,7 +1323,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
         {
             handles[num_handles] = bucket->update_event;
             RtlLeaveCriticalSection( &waitqueue.cs );
-            status = NtWaitForMultipleObjects( num_handles + 1, handles, TRUE, bucket->alertable, &timeout );
+            status = NtWaitForMultipleObjects( num_handles + 1, handles, WaitAny, bucket->alertable, &timeout );
             RtlEnterCriticalSection( &waitqueue.cs );
 
             if (status >= STATUS_WAIT_0 && status < STATUS_WAIT_0 + num_handles)

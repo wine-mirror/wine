@@ -98,7 +98,7 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
     }
     LeaveCriticalSection( &sync_cs );
 
-    ret = NtWaitForMultipleObjects( count, handles, (wait_type == WaitAny), alertable, timeout );
+    ret = NtWaitForMultipleObjects( count, handles, wait_type, alertable, timeout );
 
     EnterCriticalSection( &sync_cs );
     for (i = 0; i < count; i++)

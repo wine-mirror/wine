@@ -3300,6 +3300,7 @@ static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout 
 static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DWORD wake_mask, DWORD changed_mask, DWORD flags )
 {
     struct thunk_lock_params params = {.dispatch.callback = thunk_lock_callback};
+    WAIT_TYPE type = flags & MWMO_WAITALL ? WaitAll : WaitAny;
     LARGE_INTEGER time, now, *abs;
     void *ret_ptr;
     ULONG ret_len;
@@ -3322,7 +3323,7 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     process_driver_events( QS_ALLINPUT, wake_mask, changed_mask );
     if (!(changed_mask & QS_SMRESULT) && (event = get_user_thread_info()->idle_event)) NtSetEvent( event, NULL );
 
-    do ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE), abs );
+    do ret = NtWaitForMultipleObjects( count, handles, type, !!(flags & MWMO_ALERTABLE), abs );
     while (ret == count - 1 && !process_driver_events( QS_ALLINPUT, wake_mask, changed_mask ));
 
     if (HIWORD(ret)) /* is it an error code? */
