@@ -3308,6 +3308,7 @@ static void test_path_geometry(BOOL d3d11)
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
     UINT32 count;
+    float area;
     HRESULT hr;
 
     static const struct geometry_segment expected_segments[] =
@@ -4439,6 +4440,40 @@ static void test_path_geometry(BOOL d3d11)
     ID2D1PathGeometry_Release(geometry);
 
     ID2D1SolidColorBrush_Release(brush);
+
+    /* ComputeArea */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_point(&point, 0.0f, 0.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 100.0f, 0.0f);
+    line_to(sink, 100.0f, 100.0f);
+    line_to(sink, 0.0f, 100.0f);
+    line_to(sink, 50.0f, 50.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    set_point(&point, -100.0f, -100.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 60.0f, 40.0f);
+    line_to(sink, -100.0f, 100.0f);
+    line_to(sink, -50.0f, 0.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    hr = ID2D1PathGeometry_ComputeArea(geometry, NULL, 1.0f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(compare_float(area, 1.701948e4, 1), "Unexpected area value %.8e.\n", area);
+
+    ID2D1PathGeometry_Release(geometry);
+
     release_test_context(&ctx);
 }
 
