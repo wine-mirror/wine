@@ -6151,7 +6151,7 @@ static void test_reparse_points(void)
 
     status = GetVolumeInformationW( L"C:\\", NULL, 0, NULL, NULL, &flags, NULL, 0 );
     ok( status == TRUE, "got error %lu\n", GetLastError() );
-    todo_wine ok( flags & FILE_SUPPORTS_REPARSE_POINTS, "C: drive does not support reparse points\n" );
+    ok( flags & FILE_SUPPORTS_REPARSE_POINTS, "C: drive does not support reparse points\n" );
 
     swprintf( path, ARRAY_SIZE(path), L"\\??\\%s", temp_path );
     RtlInitUnicodeString( &nameW, path );
