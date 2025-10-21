@@ -551,6 +551,8 @@ typedef struct {
     nsIDOMClientRect *nsrect;
 } HTMLRect;
 
+static HRESULT HTMLRectCollection_collection_item(DispatchEx*,ULONG,IDispatch**);
+
 static inline HTMLRect *impl_from_IHTMLRect(IHTMLRect *iface)
 {
     return CONTAINING_RECORD(iface, HTMLRect, IHTMLRect_iface);
@@ -815,139 +817,6 @@ typedef struct {
     nsIDOMClientRectList *rect_list;
 } HTMLRectCollection;
 
-typedef struct {
-    IEnumVARIANT IEnumVARIANT_iface;
-
-    LONG ref;
-
-    ULONG iter;
-    HTMLRectCollection *col;
-} HTMLRectCollectionEnum;
-
-static inline HTMLRectCollectionEnum *HTMLRectCollectionEnum_from_IEnumVARIANT(IEnumVARIANT *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLRectCollectionEnum, IEnumVARIANT_iface);
-}
-
-static HRESULT WINAPI HTMLRectCollectionEnum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
-{
-    HTMLRectCollectionEnum *This = HTMLRectCollectionEnum_from_IEnumVARIANT(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        *ppv = &This->IEnumVARIANT_iface;
-    }else if(IsEqualGUID(riid, &IID_IEnumVARIANT)) {
-        *ppv = &This->IEnumVARIANT_iface;
-    }else {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
-}
-
-static ULONG WINAPI HTMLRectCollectionEnum_AddRef(IEnumVARIANT *iface)
-{
-    HTMLRectCollectionEnum *This = HTMLRectCollectionEnum_from_IEnumVARIANT(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI HTMLRectCollectionEnum_Release(IEnumVARIANT *iface)
-{
-    HTMLRectCollectionEnum *This = HTMLRectCollectionEnum_from_IEnumVARIANT(iface);
-    LONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%ld\n", This, ref);
-
-    if(!ref) {
-        IHTMLRectCollection_Release(&This->col->IHTMLRectCollection_iface);
-        free(This);
-    }
-
-    return ref;
-}
-
-static HRESULT WINAPI HTMLRectCollectionEnum_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
-{
-    HTMLRectCollectionEnum *This = HTMLRectCollectionEnum_from_IEnumVARIANT(iface);
-    VARIANT index;
-    HRESULT hres;
-    ULONG num, i;
-    UINT32 len;
-
-    TRACE("(%p)->(%lu %p %p)\n", This, celt, rgVar, pCeltFetched);
-
-    nsIDOMClientRectList_GetLength(This->col->rect_list, &len);
-    num = min(len - This->iter, celt);
-    V_VT(&index) = VT_I4;
-
-    for(i = 0; i < num; i++) {
-        V_I4(&index) = This->iter + i;
-        hres = IHTMLRectCollection_item(&This->col->IHTMLRectCollection_iface, &index, &rgVar[i]);
-        if(FAILED(hres)) {
-            while(i--)
-                VariantClear(&rgVar[i]);
-            return hres;
-        }
-    }
-
-    This->iter += num;
-    if(pCeltFetched)
-        *pCeltFetched = num;
-    return num == celt ? S_OK : S_FALSE;
-}
-
-static HRESULT WINAPI HTMLRectCollectionEnum_Skip(IEnumVARIANT *iface, ULONG celt)
-{
-    HTMLRectCollectionEnum *This = HTMLRectCollectionEnum_from_IEnumVARIANT(iface);
-    UINT32 len;
-
-    TRACE("(%p)->(%lu)\n", This, celt);
-
-    nsIDOMClientRectList_GetLength(This->col->rect_list, &len);
-    if(This->iter + celt > len) {
-        This->iter = len;
-        return S_FALSE;
-    }
-
-    This->iter += celt;
-    return S_OK;
-}
-
-static HRESULT WINAPI HTMLRectCollectionEnum_Reset(IEnumVARIANT *iface)
-{
-    HTMLRectCollectionEnum *This = HTMLRectCollectionEnum_from_IEnumVARIANT(iface);
-
-    TRACE("(%p)->()\n", This);
-
-    This->iter = 0;
-    return S_OK;
-}
-
-static HRESULT WINAPI HTMLRectCollectionEnum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
-{
-    HTMLRectCollectionEnum *This = HTMLRectCollectionEnum_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%p)\n", This, ppEnum);
-    return E_NOTIMPL;
-}
-
-static const IEnumVARIANTVtbl HTMLRectCollectionEnumVtbl = {
-    HTMLRectCollectionEnum_QueryInterface,
-    HTMLRectCollectionEnum_AddRef,
-    HTMLRectCollectionEnum_Release,
-    HTMLRectCollectionEnum_Next,
-    HTMLRectCollectionEnum_Skip,
-    HTMLRectCollectionEnum_Reset,
-    HTMLRectCollectionEnum_Clone
-};
-
 static inline HTMLRectCollection *impl_from_IHTMLRectCollection(IHTMLRectCollection *iface)
 {
     return CONTAINING_RECORD(iface, HTMLRectCollection, IHTMLRectCollection_iface);
@@ -972,32 +841,15 @@ static HRESULT WINAPI HTMLRectCollection_get_length(IHTMLRectCollection *iface, 
 static HRESULT WINAPI HTMLRectCollection_get__newEnum(IHTMLRectCollection *iface, IUnknown **p)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    HTMLRectCollectionEnum *ret;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = malloc(sizeof(*ret));
-    if(!ret)
-        return E_OUTOFMEMORY;
-
-    ret->IEnumVARIANT_iface.lpVtbl = &HTMLRectCollectionEnumVtbl;
-    ret->ref = 1;
-    ret->iter = 0;
-
-    HTMLRectCollection_AddRef(&This->IHTMLRectCollection_iface);
-    ret->col = This;
-
-    *p = (IUnknown*)&ret->IEnumVARIANT_iface;
-    return S_OK;
+    return create_enum_variant(&This->dispex, p);
 }
 
 static HRESULT WINAPI HTMLRectCollection_item(IHTMLRectCollection *iface, VARIANT *index, VARIANT *result)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    nsIDOMClientRect *nsrect;
-    IHTMLRect *rect;
-    nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_variant(index), result);
 
@@ -1006,22 +858,8 @@ static HRESULT WINAPI HTMLRectCollection_item(IHTMLRectCollection *iface, VARIAN
         return E_NOTIMPL;
     }
 
-    nsres = nsIDOMClientRectList_Item(This->rect_list, V_I4(index), &nsrect);
-    if(NS_FAILED(nsres))
-        return map_nsresult(nsres);
-    if(!nsrect) {
-        V_VT(result) = VT_NULL;
-        return S_OK;
-    }
-
-    hres = create_html_rect(nsrect, &This->dispex, &rect);
-    nsIDOMClientRect_Release(nsrect);
-    if(FAILED(hres))
-        return hres;
-
     V_VT(result) = VT_DISPATCH;
-    V_DISPATCH(result) = (IDispatch *)rect;
-    return S_OK;
+    return HTMLRectCollection_collection_item(&This->dispex, V_I4(index), &V_DISPATCH(result));
 }
 
 static const IHTMLRectCollectionVtbl HTMLRectCollectionVtbl = {
@@ -1100,34 +938,46 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
     TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", This, id, lcid, flags, params, res, ei, caller);
 
     switch(flags) {
-    case DISPATCH_PROPERTYGET: {
-        nsIDOMClientRect *rect;
-        IHTMLRect *html_rect;
-        nsresult nsres;
-        HRESULT hres;
-
-        nsres = nsIDOMClientRectList_Item(This->rect_list, id - MSHTML_DISPID_CUSTOM_MIN, &rect);
-        if(NS_FAILED(nsres) || !rect) {
-            WARN("Unknown item\n");
-            return DISP_E_MEMBERNOTFOUND;
-        }
-
-        hres = create_html_rect(rect, &This->dispex, &html_rect);
-        nsIDOMClientRect_Release(rect);
-        if(FAILED(hres))
-            return hres;
-
+    case DISPATCH_PROPERTYGET:
         V_VT(res) = VT_DISPATCH;
-        V_DISPATCH(res) = (IDispatch*)html_rect;
-        break;
-    }
-
+        return HTMLRectCollection_collection_item(&This->dispex, id - MSHTML_DISPID_CUSTOM_MIN, &V_DISPATCH(res));
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
     }
 
     return S_OK;
+}
+
+static ULONG HTMLRectCollection_collection_len(DispatchEx *dispex)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    nsresult nsres;
+    UINT32 len;
+
+    nsres = nsIDOMClientRectList_GetLength(This->rect_list, &len);
+    assert(nsres == NS_OK);
+    return len;
+}
+
+static HRESULT HTMLRectCollection_collection_item(DispatchEx *dispex, ULONG index, IDispatch **p)
+{
+    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    nsIDOMClientRect *nsrect;
+    nsresult nsres;
+    HRESULT hres;
+
+    nsres = nsIDOMClientRectList_Item(This->rect_list, index, &nsrect);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+    if(!nsrect) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = create_html_rect(nsrect, &This->dispex, (IHTMLRect**)p);
+    nsIDOMClientRect_Release(nsrect);
+    return hres;
 }
 
 static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
@@ -1138,6 +988,8 @@ static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
     .get_dispid       = HTMLRectCollection_get_dispid,
     .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLRectCollection_invoke,
+    .collection_len   = HTMLRectCollection_collection_len,
+    .collection_item  = HTMLRectCollection_collection_item,
 };
 static const tid_t ClientRectList_iface_tids[] = {
     IHTMLRectCollection_tid,
