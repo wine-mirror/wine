@@ -329,6 +329,7 @@ static void open_file_test(void)
     NTSTATUS status;
     HANDLE dir, root, handle, file;
     WCHAR path[MAX_PATH], tmpfile[MAX_PATH];
+    FILE_BASIC_INFORMATION info;
     BYTE data[1024];
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
@@ -362,6 +363,11 @@ static void open_file_test(void)
                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
     ok( !status, "open %s failed %lx\n", wine_dbgstr_w(nameW.Buffer), status );
     CloseHandle( handle );
+
+    status = pNtQueryAttributesFile( &attr, &info );
+    todo_wine ok( !status, "query %s failed %lx\n", wine_dbgstr_w(nameW.Buffer), status );
+    if (!status)
+        ok( info.FileAttributes == FILE_ATTRIBUTE_DIRECTORY, "got %#lx\n", info.FileAttributes );
 
     /* try uppercase name */
     for (i = len; path[i]; i++) if (path[i] >= 'a' && path[i] <= 'z') path[i] -= 'a' - 'A';
