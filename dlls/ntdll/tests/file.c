@@ -7050,7 +7050,7 @@ static void test_reparse_points(void)
 
     RtlInitUnicodeString( &nameW, L"testreparse_dirlink\\file" );
     status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
-    todo_wine ok( !status, "got %#lx\n", status );
+    ok( !status, "got %#lx\n", status );
     NtClose( handle2 );
 
     data_size = init_reparse_symlink( &data, L".\\testreparse_dir\\..\\.\\testreparse_dir2\\.", SYMLINK_FLAG_RELATIVE );
@@ -7060,13 +7060,13 @@ static void test_reparse_points(void)
     RtlInitUnicodeString( &nameW, L"testreparse_dirlink" );
     status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN, FILE_DIRECTORY_FILE, NULL, 0 );
-    todo_wine ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status );
 
     status = NtCreateFile( &handle2, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                            FILE_OPEN_IF, FILE_DIRECTORY_FILE, NULL, 0 );
-    todo_wine ok( !status, "got %#lx\n", status );
+    ok( !status, "got %#lx\n", status );
     status = NtSetInformationFile( handle2, &io, &fdi, sizeof(fdi), FileDispositionInformation );
-    todo_wine ok( !status, "got %#lx\n", status );
+    ok( !status, "got %#lx\n", status );
     NtClose( handle2 );
 
     data_size = init_reparse_symlink( &data, L"./testreparse_dir", SYMLINK_FLAG_RELATIVE );
@@ -7088,7 +7088,7 @@ static void test_reparse_points(void)
     ok( !status, "got %#lx\n", status );
 
     status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
-    todo_wine ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status );
 
     data_size = init_reparse_symlink( &data, L"", SYMLINK_FLAG_RELATIVE );
     status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
@@ -7110,7 +7110,7 @@ static void test_reparse_points(void)
 
     RtlInitUnicodeString( &nameW, L"testreparse_dirlink\\" );
     status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
-    todo_wine ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
+    ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
 
     /* Create an absolute symlink. */
 
