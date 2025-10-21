@@ -3829,12 +3829,79 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry1 *
     return S_OK;
 }
 
+static HRESULT d2d_geometry_get_simplified(ID2D1Geometry *geometry, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, ID2D1PathGeometry **ret)
+{
+    ID2D1PathGeometry *path_geometry = NULL;
+    ID2D1GeometrySink *geometry_sink = NULL;
+    ID2D1Factory *factory;
+    HRESULT hr;
+
+    *ret = NULL;
+
+    ID2D1Geometry_GetFactory(geometry, &factory);
+
+    hr = ID2D1Factory_CreatePathGeometry(factory, &path_geometry);
+    if (SUCCEEDED(hr))
+        hr = ID2D1PathGeometry_Open(path_geometry, &geometry_sink);
+    if (SUCCEEDED(hr))
+    {
+        hr = ID2D1Geometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
+                transform, tolerance, (ID2D1SimplifiedGeometrySink *)geometry_sink);
+    }
+    if (SUCCEEDED(hr))
+        hr = ID2D1GeometrySink_Close(geometry_sink);
+    if (geometry_sink)
+        ID2D1GeometrySink_Release(geometry_sink);
+
+    if (SUCCEEDED(hr))
+    {
+        *ret = path_geometry;
+        ID2D1PathGeometry_AddRef(*ret);
+    }
+
+    if (path_geometry)
+        ID2D1PathGeometry_Release(path_geometry);
+    ID2D1Factory_Release(factory);
+
+    return hr;
+}
+
+static HRESULT d2d_geometry_tessellate(ID2D1Geometry *geometry, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, ID2D1TessellationSink *sink)
+{
+    ID2D1PathGeometry *path_geometry;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = d2d_geometry_get_simplified(geometry, transform, tolerance, &path_geometry)))
+    {
+        struct d2d_geometry *path_impl = unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)path_geometry);
+        D2D1_TRIANGLE t;
+
+        for (size_t i = 0; i < path_impl->fill.face_count; ++i)
+        {
+            const struct d2d_face *face = &path_impl->fill.faces[i];
+
+            t.point1 = path_impl->fill.vertices[face->v[0]];
+            t.point2 = path_impl->fill.vertices[face->v[1]];
+            t.point3 = path_impl->fill.vertices[face->v[2]];
+            ID2D1TessellationSink_AddTriangles(sink, &t, 1);
+        }
+
+        ID2D1PathGeometry_Release(path_geometry);
+    }
+
+    return hr;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Tessellate(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
 {
-    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p, tolerance %.8e, sink %p.\n", iface, transform, tolerance, sink);
+
+    return d2d_geometry_tessellate(&geometry->ID2D1Geometry_iface, transform, tolerance, sink);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CombineWithGeometry(ID2D1PathGeometry1 *iface,
