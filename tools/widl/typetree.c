@@ -55,6 +55,7 @@ type_t *make_type(enum type_type type)
     t->impl_name = NULL;
     t->param_name = NULL;
     t->short_name = NULL;
+    t->winmd_short_name = NULL;
     memset(&t->details, 0, sizeof(t->details));
     memset(&t->md, 0, sizeof(t->md));
     t->typestring_offset = 0;
@@ -693,6 +694,18 @@ static char *format_parameterized_type_impl_name(type_t *type, typeref_list_t *p
         if (list_next( params, &ref->entry )) strappend( &str, ", " );
     }
     strappend( &str, " >" );
+
+    return str.buf;
+}
+
+static char *format_parameterized_type_winmd_short_name(type_t *type, typeref_list_t *params)
+{
+    struct strbuf str = {0};
+    unsigned int count = 0;
+
+    strappend(&str, "%s", type->name);
+    if (params) count = list_count(params);
+    if (count) strappend(&str, "`%u", count);
 
     return str.buf;
 }
@@ -1530,6 +1543,7 @@ type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t 
     new_type->c_name = format_parameterized_type_c_name(type, params, "", "_C");
     new_type->short_name = format_parameterized_type_short_name(type, params, "");
     new_type->param_name = format_parameterized_type_c_name(type, params, "", "__C");
+    new_type->winmd_short_name = format_parameterized_type_winmd_short_name(type, params);
 
     if (new_type->type_type == TYPE_DELEGATE)
     {

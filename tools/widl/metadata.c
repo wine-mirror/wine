@@ -1495,7 +1495,11 @@ static void create_typeref( type_t *type )
         return;
     }
 
-    base_type->md.name = add_string( base_type->name );
+    if (base_type->winmd_short_name)
+        base_type->md.name = add_string( base_type->winmd_short_name );
+    else
+        base_type->md.name = add_string( base_type->name );
+
     namespace_str = format_namespace( base_type->namespace, "", ".", NULL, NULL );
     base_type->md.namespace = add_string( namespace_str );
 
