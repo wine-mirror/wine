@@ -1121,6 +1121,16 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     if (version) parse_gl_version( version, &ctx->major_version, &ctx->minor_version );
     if (!ctx->major_version) ctx->major_version = 1;
     TRACE( "context %p version %d.%d\n", ctx, ctx->major_version, ctx->minor_version );
+
+    if (is_win64 && is_wow64())
+    {
+        if (ctx->major_version > 4 || (ctx->major_version == 4 && ctx->minor_version > 3))
+        {
+            FIXME( "GL version %d.%d is not supported on wow64, using 4.3\n", ctx->major_version, ctx->minor_version );
+            ctx->major_version = 4;
+            ctx->minor_version = 3;
+        }
+    }
 }
 
 BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
