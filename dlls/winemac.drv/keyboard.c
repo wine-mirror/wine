@@ -1139,8 +1139,16 @@ UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_s
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
 
-    macdrv_send_keydown_to_input_source(flags, repeat, keyc, himc, &done);
-    while (!done) NtUserMsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
+    if (!thread_data->ime_done_event)
+    {
+        NTSTATUS status;
+        status = NtCreateEvent(&thread_data->ime_done_event, EVENT_ALL_ACCESS, NULL,
+                               SynchronizationEvent, FALSE);
+        if (status != STATUS_SUCCESS) ERR("NtCreateEvent call failed.\n");
+    }
+
+    macdrv_ime_process_key(keyc, flags, repeat, himc, &done, thread_data->ime_done_event);
+    NtUserMsgWaitForMultipleObjectsEx(1, &thread_data->ime_done_event, INFINITE, 0, 0);
 
     return done > 0;
 }

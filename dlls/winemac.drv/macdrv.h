@@ -112,6 +112,7 @@ struct macdrv_thread_data
     HKL                         active_keyboard_layout;
     WORD                        keyc2vkey[128];
     WORD                        keyc2scan[128];
+    HANDLE                      ime_done_event;
 };
 
 extern struct macdrv_thread_data *macdrv_init_thread_data(void);

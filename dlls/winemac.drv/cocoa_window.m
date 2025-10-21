@@ -4034,13 +4034,14 @@ uint32_t macdrv_window_background_color(void)
 }
 
 /***********************************************************************
- *              macdrv_send_keydown_to_input_source
+ *              macdrv_ime_process_key
  *
  * Sends a key down event to the active window's inputContext so that it can be
  * processed by input sources (AKA IMEs). This is only called when there is an
  * active non-keyboard input source.
  */
-void macdrv_send_keydown_to_input_source(unsigned int flags, int repeat, int keyc, void* himc, int* done)
+void macdrv_ime_process_key(int keyc, unsigned int flags, int repeat, void *himc,
+                            int *done, void *ime_done_event)
 {
     OnMainThreadAsync(^{
         BOOL ret;
@@ -4080,6 +4081,7 @@ void macdrv_send_keydown_to_input_source(unsigned int flags, int repeat, int key
         event = macdrv_create_event(SENT_TEXT_INPUT, window);
         event->sent_text_input.handled = ret;
         event->sent_text_input.done = done;
+        event->sent_text_input.ime_done_event = ime_done_event;
         [[window queue] postEvent:event];
         macdrv_release_event(event);
     });

@@ -464,6 +464,8 @@ void macdrv_ThreadDetach(void)
         macdrv_destroy_event_queue(data->queue);
         if (data->keyboard_layout_uchr)
             CFRelease(data->keyboard_layout_uchr);
+        if (data->ime_done_event)
+            NtClose(data->ime_done_event);
         free(data);
         /* clear data in case we get re-entered from user32 before the thread is truly dead */
         NtUserGetThreadInfo()->driver_data = 0;
@@ -522,6 +524,8 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
         ERR("macdrv: Can't create event queue.\n");
         NtTerminateProcess(0, 1);
     }
+
+    data->ime_done_event = NULL;
 
     macdrv_get_input_source_info(&data->keyboard_layout_uchr, &data->keyboard_type, &data->iso_keyboard, &input_source);
     data->active_keyboard_layout = macdrv_get_hkl_from_source(input_source);

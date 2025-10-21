@@ -190,8 +190,12 @@ static void macdrv_im_set_text(const macdrv_event *event)
  */
 static void macdrv_sent_text_input(const macdrv_event *event)
 {
+    HANDLE ime_done_event = event->sent_text_input.ime_done_event;
+
     TRACE_(imm)("handled: %s\n", event->sent_text_input.handled ? "TRUE" : "FALSE");
+
     *event->sent_text_input.done = event->sent_text_input.handled ? 1 : -1;
+    if (ime_done_event) NtSetEvent(ime_done_event, NULL);
 }
 
 
