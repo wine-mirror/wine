@@ -3894,6 +3894,49 @@ static HRESULT d2d_geometry_tessellate(ID2D1Geometry *geometry, const D2D1_MATRI
     return hr;
 }
 
+static float d2d_triangle_area(const D2D1_TRIANGLE *triangle)
+{
+    D2D1_POINT_2F point2, point3;
+
+    /* Translate one vertex to origin */
+    point2.x = triangle->point2.x - triangle->point1.x;
+    point2.y = triangle->point2.y - triangle->point1.y;
+    point3.x = triangle->point3.x - triangle->point1.x;
+    point3.y = triangle->point3.y - triangle->point1.y;
+
+    return 0.5f * fabsf(point2.x * point3.y - point3.x * point2.y);
+}
+
+static HRESULT d2d_geometry_compute_area(ID2D1Geometry *geometry, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, float *ret)
+{
+    ID2D1PathGeometry *path_geometry;
+    float area = 0.0f;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = d2d_geometry_get_simplified(geometry, transform, tolerance, &path_geometry)))
+    {
+        struct d2d_geometry *path_impl = unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)path_geometry);
+        D2D1_TRIANGLE t;
+
+        for (size_t i = 0; i < path_impl->fill.face_count; ++i)
+        {
+            const struct d2d_face *face = &path_impl->fill.faces[i];
+
+            t.point1 = path_impl->fill.vertices[face->v[0]];
+            t.point2 = path_impl->fill.vertices[face->v[1]];
+            t.point3 = path_impl->fill.vertices[face->v[2]];
+            area += d2d_triangle_area(&t);
+        }
+
+        *ret = area;
+
+        ID2D1PathGeometry_Release(path_geometry);
+    }
+
+    return hr;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Tessellate(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
 {
@@ -3925,9 +3968,11 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Outline(ID2D1PathGeometry1 *i
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeArea(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, float *area)
 {
-    FIXME("iface %p, transform %p, tolerance %.8e, area %p stub!\n", iface, transform, tolerance, area);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p, tolerance %.8e, area %p.\n", iface, transform, tolerance, area);
+
+    return d2d_geometry_compute_area(&geometry->ID2D1Geometry_iface, transform, tolerance, area);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeLength(ID2D1PathGeometry1 *iface,
@@ -4670,19 +4715,6 @@ static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_Outline(ID2D1RectangleGe
     FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
 
     return E_NOTIMPL;
-}
-
-static float d2d_triangle_area(const D2D1_TRIANGLE *triangle)
-{
-    D2D1_POINT_2F point2, point3;
-
-    /* Translate one vertex to origin */
-    point2.x = triangle->point2.x - triangle->point1.x;
-    point2.y = triangle->point2.y - triangle->point1.y;
-    point3.x = triangle->point3.x - triangle->point1.x;
-    point3.y = triangle->point3.y - triangle->point1.y;
-
-    return 0.5f * fabsf(point2.x * point3.y - point3.x * point2.y);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_ComputeArea(ID2D1RectangleGeometry *iface,

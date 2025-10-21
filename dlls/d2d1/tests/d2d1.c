@@ -4467,10 +4467,8 @@ static void test_path_geometry(BOOL d3d11)
     ID2D1GeometrySink_Release(sink);
 
     hr = ID2D1PathGeometry_ComputeArea(geometry, NULL, 1.0f, &area);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(compare_float(area, 1.701948e4, 1), "Unexpected area value %.8e.\n", area);
+    ok(compare_float(area, 1.701948e4, 1), "Unexpected area value %.8e.\n", area);
 
     ID2D1PathGeometry_Release(geometry);
 
