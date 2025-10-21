@@ -123,6 +123,8 @@ HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
     SERVER_END_REQ;
     if (!ret) return 0;
 
+    check_for_events( QS_INPUT );
+
     if (!(obj = get_icon_ptr( old_cursor ))) return 0;
     release_user_handle_ptr( obj );
     return old_cursor;
