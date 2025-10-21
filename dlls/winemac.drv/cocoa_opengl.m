@@ -94,12 +94,16 @@
         }
     }
 
+    /* This is a no-op if either dimension of the size is zero. */
     - (void) wine_updateBackingSize:(const CGSize*)size
     {
         GLint enabled;
 
         if (size)
         {
+            if (size->width == 0 || size->height == 0)
+                return;
+
             if (CGLIsEnabled(self.CGLContextObj, kCGLCESurfaceBackingSize, &enabled) != kCGLNoError)
                 enabled = 0;
 
