@@ -4288,11 +4288,7 @@ sync_test("prototype props", function() {
         ["autofocus",10], ["checkValidity",10], "createTextRange", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10],
         "form", ["formAction",10], ["formEnctype",10], ["formMethod",10], ["formNoValidate",10], ["formTarget",10], "name",
         ["setCustomValidity",10], "status", "type", ["validationMessage",10], ["validity",10], "value", ["willValidate",10]
-    ], [
-        ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["formAction",10],
-        ["formEnctype",10], ["formMethod",10], ["formNoValidate",10], ["formTarget",10], ["setCustomValidity",10],
-        ["validationMessage",10], ["validity",10], ["willValidate",10]
-    ]);
+    ], [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10] ]);
     if(v >= 11)
         check(HTMLDocument, []);
     check(HTMLElement, [
