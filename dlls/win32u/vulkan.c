@@ -68,6 +68,9 @@ struct device_memory
     D3DKMT_HANDLE local;
     D3DKMT_HANDLE global;
     HANDLE shared;
+
+    D3DKMT_HANDLE sync;
+    D3DKMT_HANDLE mutex;
 };
 
 static inline struct device_memory *device_memory_from_handle( VkDeviceMemory handle )
@@ -338,7 +341,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT:
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT:
             memory->global = PtrToUlong( import_win32->handle );
-            memory->local = d3dkmt_open_resource( memory->global, NULL );
+            memory->local = d3dkmt_open_resource( memory->global, NULL, &memory->mutex, &memory->sync );
             break;
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT:
         case VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT:
@@ -347,7 +350,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         {
             HANDLE shared = import_win32->handle;
             if (import_win32->name && !(shared = open_shared_resource_from_name( import_win32->name ))) break;
-            memory->local = d3dkmt_open_resource( 0, shared );
+            memory->local = d3dkmt_open_resource( 0, shared, &memory->mutex, &memory->sync );
             if (shared && shared != import_win32->handle) NtClose( shared );
             break;
         }
@@ -407,6 +410,8 @@ failed:
     WARN( "Failed to allocate memory, res %d\n", res );
     if (host_device_memory) device->p_vkFreeMemory( device->host.device, host_device_memory, NULL );
     d3dkmt_destroy_resource( memory->local );
+    d3dkmt_destroy_mutex( memory->mutex );
+    d3dkmt_destroy_sync( memory->sync );
     free( memory );
     return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
@@ -443,6 +448,8 @@ static void win32u_vkFreeMemory( VkDevice client_device, VkDeviceMemory client_m
 
     if (memory->shared) NtClose( memory->shared );
     d3dkmt_destroy_resource( memory->local );
+    d3dkmt_destroy_mutex( memory->mutex );
+    d3dkmt_destroy_sync( memory->sync );
     free( memory );
 }
 
