@@ -198,7 +198,8 @@ static inline void init_codepage_table( USHORT *ptr, CPTABLEINFO *info )
     info->UniDefaultChar       = ptr[4];
     info->TransDefaultChar     = ptr[5];
     info->TransUniDefaultChar  = ptr[6];
-    memcpy( info->LeadByte, ptr + 7, sizeof(info->LeadByte) );
+    //memcpy( info->LeadByte, ptr + 7, sizeof(info->LeadByte) ); BUGBUG: your referencing the object not the address of the object
+    memcpy( &info->LeadByte, ptr + 7, sizeof(info->LeadByte) );
     ptr += hdr_size;
 
     info->WideCharTable = ptr + ptr[0] + 1;
