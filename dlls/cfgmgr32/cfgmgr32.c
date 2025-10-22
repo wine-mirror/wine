@@ -191,8 +191,6 @@ static LSTATUS return_property_bool( struct property *prop, DEVPROP_BOOLEAN valu
     return return_property( prop, DEVPROP_TYPE_BOOLEAN, &value, sizeof(value) );
 }
 
-typedef LSTATUS (*enum_objects_cb)( HKEY hkey, const void *object, const WCHAR *path, UINT path_len, void *context );
-
 static LSTATUS enum_objects_size( HKEY hkey, const void *object, const WCHAR *path, UINT path_len, void *context )
 {
     UINT *total = context;
@@ -391,6 +389,26 @@ static LSTATUS enum_class_device_interfaces( HKEY root, struct device_interface 
         }
 
         RegCloseKey( iface_key );
+    }
+    if (err == ERROR_NO_MORE_ITEMS) err = ERROR_SUCCESS;
+
+    return err;
+}
+
+LSTATUS enum_device_interfaces( BOOL all, enum_objects_cb callback, void *context )
+{
+    struct device_interface iface;
+    LSTATUS err = ERROR_SUCCESS;
+    HKEY root, class_key;
+
+    if ((root = cache_root_key( HKEY_LOCAL_MACHINE, device_classesW, NULL )) == (HKEY)-1) return ERROR_FILE_NOT_FOUND;
+
+    for (UINT i = 0; !err && !(err = RegEnumKeyW( root, i, iface.class, ARRAY_SIZE(iface.class) )); i++)
+    {
+        if ((err = guid_from_string( iface.class, &iface.class_guid ))) continue;
+        if ((err = open_key( root, iface.class, KEY_ENUMERATE_SUB_KEYS, TRUE, &class_key ))) continue;
+        err = enum_class_device_interfaces( class_key, &iface, NULL, all, callback, context );
+        RegCloseKey( class_key );
     }
     if (err == ERROR_NO_MORE_ITEMS) err = ERROR_SUCCESS;
 

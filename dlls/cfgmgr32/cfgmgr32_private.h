@@ -70,6 +70,14 @@ struct device_interface
     WCHAR refstr[MAX_PATH];
 };
 
+static inline const char *debugstr_device_interface( const struct device_interface *iface )
+{
+    return wine_dbg_sprintf( "{%s %s %s}", debugstr_w(iface->class), debugstr_w(iface->name), debugstr_w(iface->refstr) );
+}
+
+typedef LSTATUS (*enum_objects_cb)( HKEY hkey, const void *object, const WCHAR *path, UINT path_len, void *context );
+extern LSTATUS enum_device_interfaces( BOOL all, enum_objects_cb callback, void *context );
+
 extern LSTATUS init_device_interface( struct device_interface *iface, const WCHAR *name );
 extern LSTATUS open_device_interface_key( const struct device_interface *iface, REGSAM access, BOOL open, HKEY *hkey );
 extern LSTATUS enum_device_interface_property_keys( HKEY hkey, const struct device_interface *iface, DEVPROPKEY *buffer, ULONG *size );

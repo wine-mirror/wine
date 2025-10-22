@@ -1789,6 +1789,17 @@ static void test_DevGetObjects( void )
             filters = calloc( obj->cPropertyCount, sizeof( *filters ) );
             /* If there are no logical operators present, then logical AND is used. */
             filter_add_props( filters, obj->cPropertyCount, obj->pProperties, TRUE );
+
+            /* setupapi touches the DeviceInstance property, changing it to upper case when it shouldn't */
+            if (i == 0 && !wcsnicmp( obj->pszObjectId, L"\\\\?\\DISPLAY", 11 ))
+            {
+                for (UINT k = 0; k < obj->cPropertyCount; k++)
+                {
+                    if (memcmp( &filters[k].Property.CompKey.Key, &DEVPKEY_Device_InstanceId, sizeof(DEVPROPKEY) )) continue;
+                    filters[k].Operator |= DEVPROP_OPERATOR_MODIFIER_IGNORE_CASE;
+                }
+            }
+
             hr = pDevGetObjects( test_cases[i].object_type, DevQueryFlagAllProperties, 0, NULL, obj->cPropertyCount,
                                 filters, &len2, &objects2 );
             ok( hr == S_OK, "got hr %#lx\n", hr );
