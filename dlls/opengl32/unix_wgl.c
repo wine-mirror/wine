@@ -883,41 +883,27 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
         return TRUE;
     }
 
-    if (is_win64 && is_wow64())
+    if (!(ctx = get_current_context( teb, &draw, &read ))) return FALSE;
+
+    switch (pname)
     {
-        /* 4.4 depends on ARB_buffer_storage, which we don't support on wow64. */
-        if (pname == GL_MAJOR_VERSION)
-        {
-            funcs->p_glGetIntegerv( pname, data );
-            if (*data > 4) *data = 4;
-            return TRUE;
-        }
-        if (pname == GL_MINOR_VERSION)
-        {
-            GLint major;
-            funcs->p_glGetIntegerv( GL_MAJOR_VERSION, &major );
-            funcs->p_glGetIntegerv( pname, data );
-            if (major == 4 && *data > 3) *data = 3;
-            return TRUE;
-        }
+    case GL_MAJOR_VERSION:
+        *data = ctx->major_version;
+        return TRUE;
+    case GL_MINOR_VERSION:
+        *data = ctx->minor_version;
+        return TRUE;
+    case GL_DRAW_FRAMEBUFFER_BINDING:
+        if (!draw->draw_fbo) break;
+        *data = ctx->draw_fbo;
+        return TRUE;
+    case GL_READ_FRAMEBUFFER_BINDING:
+        if (!read->read_fbo) break;
+        *data = ctx->read_fbo;
+        return TRUE;
     }
 
-    if ((ctx = get_current_context( teb, &draw, &read )))
-    {
-        if (pname == GL_DRAW_FRAMEBUFFER_BINDING && draw->draw_fbo)
-        {
-            *data = ctx->draw_fbo;
-            return TRUE;
-        }
-        if (pname == GL_READ_FRAMEBUFFER_BINDING && read->read_fbo)
-        {
-            *data = ctx->read_fbo;
-            return TRUE;
-        }
-        if (get_default_fbo_integer( ctx, draw, read, pname, data )) return TRUE;
-    }
-
-    return FALSE;
+    return get_default_fbo_integer( ctx, draw, read, pname, data );
 }
 
 const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
