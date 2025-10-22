@@ -58,6 +58,10 @@ static NTSTATUS (WINAPI *pRtlWaitOnAddress)( const void *, const void *, SIZE_T,
 static void     (WINAPI *pRtlWakeAddressAll)( const void * );
 static void     (WINAPI *pRtlWakeAddressSingle)( const void * );
 
+static NTSTATUS (WINAPI *pRtlInitBarrier)(RTL_BARRIER*,LONG,LONG);
+static void     (WINAPI *pRtlDeleteBarrier)(RTL_BARRIER*);
+static BOOLEAN  (WINAPI *pRtlBarrier)(RTL_BARRIER*,ULONG);
+
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
 #define KEYEDEVENT_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x0003)
@@ -1134,6 +1138,30 @@ static void test_delayexecution(void)
     }
 }
 
+static void test_barrier(void)
+{
+    RTL_BARRIER barrier;
+    NTSTATUS status;
+    BOOLEAN bval;
+
+    if (!pRtlInitBarrier)
+    {
+        win_skip("RtlInitBarrier is not available.\n");
+        return;
+    }
+
+    status = pRtlInitBarrier( &barrier, 1, -1 );
+    ok( !status, "got %#lx.\n", status );
+
+    bval = pRtlBarrier( &barrier, 0 );
+    ok( bval == 1, "got %#x.\n", bval );
+
+    bval = pRtlBarrier( &barrier, 0 );
+    ok( bval == 1, "got %#x.\n", bval );
+
+    pRtlDeleteBarrier( &barrier );
+}
+
 START_TEST(sync)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
@@ -1175,6 +1203,9 @@ START_TEST(sync)
     pRtlWaitOnAddress               = (void *)GetProcAddress(module, "RtlWaitOnAddress");
     pRtlWakeAddressAll              = (void *)GetProcAddress(module, "RtlWakeAddressAll");
     pRtlWakeAddressSingle           = (void *)GetProcAddress(module, "RtlWakeAddressSingle");
+    pRtlInitBarrier                 = (void *)GetProcAddress(module, "RtlInitBarrier");
+    pRtlDeleteBarrier               = (void *)GetProcAddress(module, "RtlDeleteBarrier");
+    pRtlBarrier                     = (void *)GetProcAddress(module, "RtlBarrier");
 
     test_wait_on_address();
     test_event();
@@ -1185,4 +1216,5 @@ START_TEST(sync)
     test_tid_alert( argv );
     test_completion_port_scheduling();
     test_delayexecution();
+    test_barrier();
 }

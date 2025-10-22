@@ -1374,3 +1374,34 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
          rwl, rwl->iNumberActive, rwl->uSharedWaiters, rwl->uExclusiveWaiters, rwl->hOwningThreadId );
     ERR( "\n" );
 }
+
+
+/***********************************************************************
+ *           RtlInitBarrier  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitBarrier( RTL_BARRIER *barrier, LONG thread_count, LONG spin_count )
+{
+    FIXME( "barrier %p, thread_count %ld, spin_count %ld stub.\n", barrier, thread_count, spin_count );
+
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           RtlDeleteBarrier  (NTDLL.@)
+ */
+void WINAPI RtlDeleteBarrier( RTL_BARRIER *barrier )
+{
+    FIXME( "barrier %p stub.\n", barrier );
+}
+
+
+/***********************************************************************
+ *           RtlBarrier  (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlBarrier( RTL_BARRIER *barrier, ULONG flags )
+{
+    FIXME( "barrier %p, flags %#lx stub.\n", barrier, flags );
+
+    return TRUE;
+}

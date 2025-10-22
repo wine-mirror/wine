@@ -525,6 +525,7 @@
 @ stdcall RtlAreBitsSet(ptr long long)
 # @ stub RtlAssert2
 @ stdcall RtlAssert(ptr ptr long str)
+@ stdcall RtlBarrier(ptr long)
 # @ stub RtlCancelTimer
 @ stdcall -norelay RtlCaptureContext(ptr)
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr)
@@ -611,6 +612,7 @@
 @ stdcall RtlDelete(ptr)
 @ stdcall RtlDeleteAce(ptr long)
 @ stdcall RtlDeleteAtomFromAtomTable(ptr long)
+@ stdcall RtlDeleteBarrier(ptr)
 @ stdcall RtlDeleteCriticalSection(ptr)
 @ stdcall -arch=!i386 RtlDeleteGrowableFunctionTable(ptr)
 @ stdcall RtlDeleteElementGenericTable(ptr ptr)
@@ -792,6 +794,7 @@
 @ stdcall RtlImpersonateSelf(long)
 @ stdcall RtlInitAnsiString(ptr str)
 @ stdcall RtlInitAnsiStringEx(ptr str)
+@ stdcall RtlInitBarrier(ptr long long)
 @ stdcall RtlInitCodePageTable(ptr ptr)
 # @ stub RtlInitMemoryStream
 @ stdcall RtlInitNlsTables(ptr ptr ptr ptr)
