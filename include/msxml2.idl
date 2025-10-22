@@ -1613,15 +1613,6 @@ coclass FreeThreadedDOMDocument40
 }
 
 [
-    uuid(88d96a06-f192-11d4-a65f-0040963251e5),
-]
-coclass FreeThreadedDOMDocument60
-{
-    [default] interface IXMLDOMDocument3;
-    [default, source] dispinterface XMLDOMDocumentEvents;
-}
-
-[
     helpstring("Free threaded XML DOM Document"),
     progid("Msxml2.FreeThreadedDOMDocument"),
     vi_progid("Msxml2.FreeThreadedDOMDocument"),
@@ -1770,14 +1761,6 @@ coclass XSLTemplate30
     uuid(88d969c3-f192-11d4-a65f-0040963251e5)
 ]
 coclass XSLTemplate40
-{
-    [default] interface IXSLTemplate;
-}
-
-[
-    uuid(88d96a08-f192-11d4-a65f-0040963251e5)
-]
-coclass XSLTemplate60
 {
     [default] interface IXSLTemplate;
 }
@@ -3384,26 +3367,6 @@ coclass MXXMLWriter30
     uuid(88d969c8-f192-11d4-a65f-0040963251e5),
 ]
 coclass MXXMLWriter40
-{
-    [default] interface IMXWriter;
-
-    interface ISAXContentHandler;
-    interface ISAXDeclHandler;
-    interface ISAXDTDHandler;
-    interface ISAXErrorHandler;
-    interface ISAXLexicalHandler;
-
-    interface IVBSAXContentHandler;
-    interface IVBSAXDeclHandler;
-    interface IVBSAXDTDHandler;
-    interface IVBSAXErrorHandler;
-    interface IVBSAXLexicalHandler;
-}
-
-[
-    uuid(88d96a0f-f192-11d4-a65f-0040963251e5)
-]
-coclass MXXMLWriter60
 {
     [default] interface IMXWriter;
 
