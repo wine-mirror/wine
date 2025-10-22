@@ -903,7 +903,7 @@ static unsigned int current_rva(void)
 
 static unsigned int current_filepos(void)
 {
-    if (!pe.sec_count) return pe.file_align;
+    if (!pe.sec_count) return max( 0x400, pe.file_align );
     return pe.sec[pe.sec_count - 1].filepos + pe.sec[pe.sec_count - 1].file_size;
 }
 
@@ -1299,7 +1299,7 @@ void output_fake_module( DLLSPEC *spec )
     }
 
     /* .edata section */
-    if (pe.exp_count)
+    if (pe.exp_count || spec->exports.nb_entry_points)
     {
         unsigned int exp_rva = current_rva() + 40; /* sizeof(IMAGE_EXPORT_DIRECTORY) */
         unsigned int pos, str_rva = exp_rva + 10 * pe.exp_count;
