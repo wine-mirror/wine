@@ -525,6 +525,7 @@ struct HTMLSelectElement {
     HTMLElement element;
 
     IHTMLSelectElement IHTMLSelectElement_iface;
+    IWineHTMLSelectPrivate IWineHTMLSelectPrivate_iface;
 
     nsIDOMHTMLSelectElement *nsselect;
 };
@@ -986,6 +987,80 @@ static const IHTMLSelectElementVtbl HTMLSelectElementVtbl = {
     HTMLSelectElement_tags
 };
 
+static inline HTMLSelectElement *impl_from_IWineHTMLSelectPrivateVtbl(IWineHTMLSelectPrivate *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLSelectElement, IWineHTMLSelectPrivate_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(HTMLSelectElement_private, IWineHTMLSelectPrivate,
+                      impl_from_IWineHTMLSelectPrivateVtbl(iface)->element.node.event_target.dispex)
+
+static HRESULT WINAPI HTMLSelectElement_private_put_autofocus(IWineHTMLSelectPrivate *iface, VARIANT_BOOL v)
+{
+    HTMLSelectElement *This = impl_from_IWineHTMLSelectPrivateVtbl(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLSelectElement_private_get_autofocus(IWineHTMLSelectPrivate *iface, VARIANT_BOOL *ret)
+{
+    HTMLSelectElement *This = impl_from_IWineHTMLSelectPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLSelectElement_private_get_validationMessage(IWineHTMLSelectPrivate *iface, BSTR *ret)
+{
+    HTMLSelectElement *This = impl_from_IWineHTMLSelectPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLSelectElement_private_get_validity(IWineHTMLSelectPrivate *iface, IDispatch **ret)
+{
+    HTMLSelectElement *This = impl_from_IWineHTMLSelectPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLSelectElement_private_get_willValidate(IWineHTMLSelectPrivate *iface, VARIANT_BOOL *ret)
+{
+    HTMLSelectElement *This = impl_from_IWineHTMLSelectPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLSelectElement_private_setCustomValidity(IWineHTMLSelectPrivate *iface, VARIANT *message)
+{
+    HTMLSelectElement *This = impl_from_IWineHTMLSelectPrivateVtbl(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(message));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLSelectElement_private_checkValidity(IWineHTMLSelectPrivate *iface, VARIANT_BOOL *ret)
+{
+    HTMLSelectElement *This = impl_from_IWineHTMLSelectPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static const IWineHTMLSelectPrivateVtbl WineHTMLSelectPrivateVtbl = {
+    HTMLSelectElement_private_QueryInterface,
+    HTMLSelectElement_private_AddRef,
+    HTMLSelectElement_private_Release,
+    HTMLSelectElement_private_GetTypeInfoCount,
+    HTMLSelectElement_private_GetTypeInfo,
+    HTMLSelectElement_private_GetIDsOfNames,
+    HTMLSelectElement_private_Invoke,
+    HTMLSelectElement_private_put_autofocus,
+    HTMLSelectElement_private_get_autofocus,
+    HTMLSelectElement_private_get_validationMessage,
+    HTMLSelectElement_private_get_validity,
+    HTMLSelectElement_private_get_willValidate,
+    HTMLSelectElement_private_setCustomValidity,
+    HTMLSelectElement_private_checkValidity
+};
+
 static inline HTMLSelectElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLSelectElement, element.node);
@@ -1014,6 +1089,8 @@ static void *HTMLSelectElement_query_interface(DispatchEx *dispex, REFIID riid)
 
     if(IsEqualGUID(&IID_IHTMLSelectElement, riid))
         return &This->IHTMLSelectElement_iface;
+    if(IsEqualGUID(&IID_IWineHTMLSelectPrivate, riid))
+        return &This->IWineHTMLSelectPrivate_iface;
 
     return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
@@ -1127,6 +1204,8 @@ static void HTMLSelectElement_init_dispex_info(dispex_data_t *info, compat_mode_
         {DISPID_UNKNOWN}
     };
     dispex_info_add_interface(info, IHTMLSelectElement_tid, select_hooks);
+    if(mode >= COMPAT_MODE_IE10)
+        dispex_info_add_interface(info, IWineHTMLSelectPrivate_tid, NULL);
 
     HTMLElement_init_dispex_info(info, mode);
 }
@@ -1166,6 +1245,7 @@ HRESULT HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, H
         return E_OUTOFMEMORY;
 
     ret->IHTMLSelectElement_iface.lpVtbl = &HTMLSelectElementVtbl;
+    ret->IWineHTMLSelectPrivate_iface.lpVtbl = &WineHTMLSelectPrivateVtbl;
     ret->element.node.vtbl = &HTMLSelectElementImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLSelectElement_dispex);

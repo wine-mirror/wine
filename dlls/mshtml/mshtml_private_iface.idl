@@ -276,6 +276,31 @@ interface IWineHTMLInputPrivate : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(d26d41ef-79ef-f921-a8a2-65739537ff07)
+]
+interface IWineHTMLSelectPrivate : IDispatch
+{
+    [propput, id(50)]
+    HRESULT autofocus([in] VARIANT_BOOL v);
+    [propget, id(50)]
+    HRESULT autofocus([retval, out] VARIANT_BOOL *ret);
+    [propget, id(51)]
+    HRESULT validationMessage([retval, out] BSTR *ret);
+    [propget, id(52)]
+    HRESULT validity([retval, out] IDispatch **ret);
+    [propget, id(53)]
+    HRESULT willValidate([retval, out] VARIANT_BOOL *ret);
+    [id(54)]
+    HRESULT setCustomValidity([in] VARIANT *message);
+    [id(55)]
+    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(307eb8f7-362b-6398-8c22-54c1c714efd8)
 ]
 interface IWineHTMLObjectPrivate : IDispatch

@@ -314,6 +314,7 @@ struct constructor;
     XIID(IWineHTMLInputPrivate) \
     XIID(IWineHTMLFormPrivate) \
     XIID(IWineHTMLObjectPrivate) \
+    XIID(IWineHTMLSelectPrivate) \
     XIID(IWineHTMLWindowPrivate) \
     XIID(IWineHTMLWindowCompatPrivate) \
     XIID(IWineCSSProperties) \
