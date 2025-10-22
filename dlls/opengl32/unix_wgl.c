@@ -26,6 +26,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <pthread.h>
 
@@ -129,19 +130,20 @@ struct context
 {
     struct wgl_context base;
 
-    HDC hdc;                     /* context creation DC */
-    HGLRC share;                 /* context to be shared with */
-    int *attribs;                /* creation attributes */
-    DWORD tid;                   /* thread that the context is current in */
-    int major_version;           /* major GL version */
-    int minor_version;           /* minor GL version */
-    UINT64 debug_callback;       /* client pointer */
-    UINT64 debug_user;           /* client pointer */
-    GLubyte *extensions;         /* extension string */
-    GLuint *disabled_exts;       /* indices of disabled extensions */
-    char *wow64_version;         /* wow64 GL version override */
-    struct buffers *buffers;     /* wow64 buffers map */
-    GLenum gl_error;             /* wrapped GL error */
+    HDC hdc;                       /* context creation DC */
+    HGLRC share;                   /* context to be shared with */
+    int *attribs;                  /* creation attributes */
+    DWORD tid;                     /* thread that the context is current in */
+    int major_version;             /* major GL version */
+    int minor_version;             /* minor GL version */
+    UINT64 debug_callback;         /* client pointer */
+    UINT64 debug_user;             /* client pointer */
+    GLubyte *extensions;           /* extension string */
+    char *wow64_version;           /* wow64 GL version override */
+    struct buffers *buffers;       /* wow64 buffers map */
+    GLenum gl_error;               /* wrapped GL error */
+    const char **extension_array;  /* array of supported extensions */
+    size_t extension_count;        /* size of supported extensions */
 
     /* semi-stub state tracker for wglCopyContext */
     GLbitfield used;                            /* context state used bits */
@@ -555,60 +557,6 @@ static const char *parse_gl_version( const char *gl_version, int *major, int *mi
     return ptr;
 }
 
-static GLuint *filter_extensions_index( TEB *teb, const char *disabled, const char *enabled )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    const char *ext, *version;
-    GLuint *disabled_index;
-    GLint extensions_count;
-    unsigned int i = 0, j, len;
-    int major, minor;
-
-    if (!funcs->p_glGetStringi)
-    {
-        void **func_ptr = (void **)&funcs->p_glGetStringi;
-        *func_ptr = funcs->p_wglGetProcAddress( "glGetStringi" );
-        if (!funcs->p_glGetStringi) return NULL;
-    }
-
-    version = (const char *)funcs->p_glGetString( GL_VERSION );
-    parse_gl_version( version, &major, &minor );
-    if (major < 3)
-        return NULL;
-
-    funcs->p_glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
-    disabled_index = malloc( extensions_count * sizeof(*disabled_index) );
-    if (!disabled_index) return NULL;
-
-    TRACE( "GL_EXTENSIONS:\n" );
-
-    for (j = 0; j < extensions_count; ++j)
-    {
-        ext = (const char *)funcs->p_glGetStringi( GL_EXTENSIONS, j );
-        len = strlen( ext );
-
-        /* We do not support GL_MAP_PERSISTENT_BIT, and hence
-         * ARB_buffer_storage, on wow64. */
-        if (is_win64 && is_wow64() && (!strcmp( ext, "GL_ARB_buffer_storage" ) || !strcmp( ext, "GL_EXT_buffer_storage" )))
-        {
-            TRACE( "-- %s (disabled due to wow64)\n", ext );
-            disabled_index[i++] = j;
-        }
-        else if (!has_extension( disabled, ext, len ) && (!*enabled || has_extension( enabled, ext, len )))
-        {
-            TRACE( "++ %s\n", ext );
-        }
-        else
-        {
-            TRACE( "-- %s (disabled by config)\n", ext );
-            disabled_index[i++] = j;
-        }
-    }
-
-    disabled_index[i] = ~0u;
-    return disabled_index;
-}
-
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 {
     while (len--) *dst++ = (unsigned char)*src++;
@@ -762,7 +710,7 @@ static char *query_opengl_option( const char *name )
 }
 
 /* build the extension string by filtering out the disabled extensions */
-static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts_list, GLuint **disabled_exts )
+static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts_list )
 {
     static const char *disabled, *enabled;
     char *str;
@@ -779,16 +727,14 @@ static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts
     }
 
     if (extensions && !*exts_list) *exts_list = filter_extensions_list( extensions, disabled, enabled );
-    if (!*disabled_exts) *disabled_exts = filter_extensions_index( teb, disabled, enabled );
-    return (exts_list && *exts_list) || *disabled_exts;
+    return exts_list && *exts_list;
 }
 
-static const GLuint *disabled_extensions_index( TEB *teb )
+static int string_array_cmp( const void *p1, const void *p2 )
 {
-    struct context *ctx = get_current_context( teb, NULL, NULL );
-    GLuint **disabled = &ctx->disabled_exts;
-    if (*disabled || filter_extensions( teb, NULL, NULL, disabled )) return *disabled;
-    return NULL;
+    const char *const *s1 = p1;
+    const char *const *s2 = p2;
+    return strcmp( *s1, *s2 );
 }
 
 /* Check if a GL extension is supported */
@@ -868,19 +814,8 @@ static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable
 
 static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 {
-    const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw, *read;
-    const GLuint *disabled;
     struct context *ctx;
-
-    if (pname == GL_NUM_EXTENSIONS)
-    {
-        funcs->p_glGetIntegerv( pname, data );
-        if ((disabled = disabled_extensions_index( teb )))
-            while (*disabled++ != ~0u) (*data)--;
-        *data += ARRAY_SIZE(legacy_extensions) - 1;
-        return TRUE;
-    }
 
     if (!(ctx = get_current_context( teb, &draw, &read ))) return FALSE;
 
@@ -891,6 +826,9 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
         return TRUE;
     case GL_MINOR_VERSION:
         *data = ctx->minor_version;
+        return TRUE;
+    case GL_NUM_EXTENSIONS:
+        *data = ctx->extension_count;
         return TRUE;
     case GL_DRAW_FRAMEBUFFER_BINDING:
         if (!draw->draw_fbo) break;
@@ -916,8 +854,7 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
         {
             struct context *ctx = get_current_context( teb, NULL, NULL );
             GLubyte **extensions = &ctx->extensions;
-            GLuint **disabled = &ctx->disabled_exts;
-            if (*extensions || filter_extensions( teb, (const char *)ret, extensions, disabled )) return *extensions;
+            if (*extensions || filter_extensions( teb, (const char *)ret, extensions )) return *extensions;
         }
         else if (name == GL_VERSION)
         {
@@ -932,8 +869,6 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
 const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    const GLuint *disabled;
-    GLint count;
 
     if (!funcs->p_glGetStringi)
     {
@@ -943,13 +878,9 @@ const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
 
     if (name == GL_EXTENSIONS)
     {
-        funcs->p_glGetIntegerv( GL_NUM_EXTENSIONS, &count );
-
-        if ((disabled = disabled_extensions_index( teb )))
-            while (index >= *disabled++) index++;
-
-        if (index >= count && index - count < ARRAY_SIZE(legacy_extensions))
-            return (const GLubyte *)legacy_extensions[index - count];
+        struct context *ctx = get_current_context( teb, NULL, NULL );
+        if (index < ctx->extension_count) return (const GLubyte *)ctx->extension_array[index];
+        index = -1;
     }
 
     return funcs->p_glGetStringi( name, index );
@@ -957,7 +888,7 @@ const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
 
 static char *build_extension_list( TEB *teb )
 {
-    GLint len = 0, capacity, i, extensions_count;
+    GLint len = 0, capacity, i, extensions_count = 0;
     char *extension, *tmp, *available_extensions;
 
     get_integer( teb, GL_NUM_EXTENSIONS, &extensions_count );
@@ -1080,7 +1011,11 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
                                   HGLRC hglrc, struct context *ctx )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    const char *version, *rest = "";
+    size_t size = ARRAYSIZE(legacy_extensions) - 1, count = 0;
+    const char *version, *rest = "", **extensions;
+    int i, j;
+
+    static const char *disabled, *enabled;
 
     ctx->tid = tid;
     teb->glReserved1[0] = draw_hdc;
@@ -1092,9 +1027,69 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     if (ctx->major_version) return; /* already synced */
 
     version = (const char *)funcs->p_glGetString( GL_VERSION );
-    if (version) parse_gl_version( version, &ctx->major_version, &ctx->minor_version );
+    if (version) rest = parse_gl_version( version, &ctx->major_version, &ctx->minor_version );
     if (!ctx->major_version) ctx->major_version = 1;
     TRACE( "context %p version %d.%d\n", ctx, ctx->major_version, ctx->minor_version );
+
+    if (ctx->major_version >= 3)
+    {
+        GLint extensions_count;
+
+        if (!funcs->p_glGetStringi)
+        {
+            void **func_ptr = (void **)&funcs->p_glGetStringi;
+            *func_ptr = funcs->p_wglGetProcAddress( "glGetStringi" );
+        }
+
+        funcs->p_glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
+        size += extensions_count;
+        if (!(extensions = malloc( size * sizeof(*extensions) ))) return;
+        for (i = 0; i < extensions_count; i++) extensions[count++] = (const char *)funcs->p_glGetStringi( GL_EXTENSIONS, i );
+    }
+    else
+    {
+        const char *str = (const char *)funcs->p_glGetString( GL_EXTENSIONS );
+        size_t len = strlen( str );
+        const char *p;
+        char *ext;
+        if (!str) str = "";
+        if ((len = strlen( str )) && str[len - 1] == ' ') len--;
+        if (*str) size++;
+        for (p = str; p < str + len; p++) if (*p == ' ') size++;
+        if (!(extensions = malloc( size * sizeof(*extensions) + len + 1 ))) return;
+        ext = (char *)&extensions[size];
+        memcpy( ext, str, len );
+        ext[len] = 0;
+        if (*ext) extensions[count++] = ext;
+        while (*ext)
+        {
+            if (*ext == ' ')
+            {
+                *ext = 0;
+                extensions[count++] = ext + 1;
+            }
+            ext++;
+        }
+        assert( count + ARRAYSIZE(legacy_extensions) - 1 == size );
+    }
+
+    if (!disabled && !(disabled = query_opengl_option( "DisabledExtensions" ))) disabled = "";
+    if (!enabled && !(enabled = query_opengl_option( "EnabledExtensions" ))) enabled = "";
+    if (*enabled || *disabled)
+    {
+        for (i = 0, j = 0; i < count; i++)
+        {
+            size_t len = strlen( extensions[i] );
+            if (!has_extension( disabled, extensions[i], len ) && (!*enabled || has_extension( enabled, extensions[i], len )))
+                extensions[j++] = extensions[i];
+            else
+                TRACE( "-- %s (disabled by config)\n", extensions[i] );
+        }
+        count = j;
+    }
+
+    for (i = 0; legacy_extensions[i]; i++) extensions[count++] = legacy_extensions[i];
+    qsort( extensions, count, sizeof(*extensions), string_array_cmp );
 
     if (is_win64 && is_wow64())
     {
@@ -1105,7 +1100,22 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
             ctx->minor_version = 3;
             asprintf( &ctx->wow64_version, "4.3%s", rest );
         }
+        for (i = 0, j = 0; i < count; i++)
+        {
+            const char *ext = extensions[i];
+            if (!strcmp( ext, "GL_ARB_buffer_storage" ) || !strcmp( ext, "GL_ARB_buffer_storage" ))
+            {
+                FIXME( "Disabling %s extension on wow64\n", ext );
+                continue;
+            }
+            extensions[j++] = ext;
+        }
+        count = j;
     }
+
+    ctx->extension_array = extensions;
+    ctx->extension_count = count;
+    if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", extensions[i] );
 }
 
 BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
@@ -1146,7 +1156,7 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 static void free_context( struct context *ctx )
 {
     free( ctx->wow64_version );
-    free( ctx->disabled_exts );
+    free( ctx->extension_array );
     free( ctx->extensions );
     free( ctx->attribs );
     free( ctx );
