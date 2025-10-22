@@ -579,15 +579,19 @@ DISPEX_IDISPATCH_IMPL(HTMLFormElement_private, IWineHTMLFormPrivate,
 static HRESULT WINAPI HTMLFormElement_private_put_enctype(IWineHTMLFormPrivate *iface, BSTR v)
 {
     HTMLFormElement *This = impl_from_IWineHTMLFormPrivateVtbl(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return IHTMLFormElement_put_encoding(&This->IHTMLFormElement_iface, v);
 }
 
 static HRESULT WINAPI HTMLFormElement_private_get_enctype(IWineHTMLFormPrivate *iface, BSTR *ret)
 {
     HTMLFormElement *This = impl_from_IWineHTMLFormPrivateVtbl(iface);
-    FIXME("(%p)->(%p)\n", This, ret);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    return IHTMLFormElement_get_encoding(&This->IHTMLFormElement_iface, ret);
 }
 
 static HRESULT WINAPI HTMLFormElement_private_put_noValidate(IWineHTMLFormPrivate *iface, VARIANT_BOOL v)
