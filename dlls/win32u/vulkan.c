@@ -106,6 +106,7 @@ struct device_memory
     D3DKMT_HANDLE sync;
     D3DKMT_HANDLE mutex;
     VkSemaphore semaphore;
+    UINT64 semaphore_value;
 };
 
 static inline struct device_memory *device_memory_from_handle( VkDeviceMemory handle )
@@ -1396,6 +1397,112 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
     return res;
 }
 
+static LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout )
+{
+    if (timeout == INFINITE) return NULL;
+    time->QuadPart = (ULONGLONG)timeout * -10000;
+    return time;
+}
+
+static VkResult acquire_keyed_mutexes( VkWin32KeyedMutexAcquireReleaseInfoKHR *mutex_info, struct mempool *pool,
+                                       const VkSemaphoreSubmitInfo **semaphores, UINT *semaphores_count )
+{
+    UINT i, count = *semaphores_count;
+    VkSemaphoreSubmitInfo *submits;
+    NTSTATUS status;
+
+    if (!(submits = mem_alloc( pool, (count + mutex_info->acquireCount) * sizeof(*submits) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    memcpy( submits, *semaphores, count * sizeof(*submits) );
+    memset( submits + count, 0, mutex_info->acquireCount * sizeof(*submits) );
+
+    for (i = 0; i < mutex_info->acquireCount; i++)
+    {
+        LARGE_INTEGER timeout;
+        struct device_memory *memory = device_memory_from_handle( mutex_info->pAcquireSyncs[i] );
+        D3DKMT_ACQUIREKEYEDMUTEX acquire =
+        {
+            .hKeyedMutex = memory->mutex,
+            .Key = mutex_info->pAcquireKeys[i],
+            .pTimeout = get_nt_timeout( &timeout, mutex_info->pAcquireTimeouts[i] ),
+        };
+        VkSemaphoreSubmitInfo submit =
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            .semaphore = memory->semaphore,
+            .stageMask = 0,
+            .deviceIndex = 0,
+        };
+
+        if ((status = NtGdiDdDDIAcquireKeyedMutex( &acquire ))) goto error;
+        submit.value = memory->semaphore_value = acquire.FenceValue;
+        submits[count++] = submit;
+    }
+
+    *semaphores = submits;
+    *semaphores_count = count;
+    return VK_SUCCESS;
+
+error:
+    WARN( "Failed to acquire keyed mutex 0x%s key 0x%s, status %#x\n", wine_dbgstr_longlong( mutex_info->pAcquireSyncs[i] ),
+          wine_dbgstr_longlong( mutex_info->pAcquireKeys[i] ), status );
+
+    while (i--)
+    {
+        struct device_memory *memory = device_memory_from_handle( mutex_info->pAcquireSyncs[i] );
+        D3DKMT_RELEASEKEYEDMUTEX release =
+        {
+            .hKeyedMutex = memory->mutex,
+            .Key = mutex_info->pAcquireKeys[i],
+            .FenceValue = memory->semaphore_value,
+        };
+        NtGdiDdDDIReleaseKeyedMutex( &release );
+    }
+    return status == STATUS_TIMEOUT ? VK_TIMEOUT : VK_ERROR_UNKNOWN;
+}
+
+static VkResult release_keyed_mutexes( VkWin32KeyedMutexAcquireReleaseInfoKHR *mutex_info, struct mempool *pool,
+                                       const VkSemaphoreSubmitInfo **semaphores, UINT *semaphores_count )
+{
+    UINT i, count = *semaphores_count;
+    VkSemaphoreSubmitInfo *submits;
+    NTSTATUS status;
+
+    if (!(submits = mem_alloc( pool, (count + mutex_info->releaseCount) * sizeof(*submits) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    memcpy( submits, *semaphores, count * sizeof(*submits) );
+    memset( submits + count, 0, mutex_info->releaseCount * sizeof(*submits) );
+
+    for (i = 0; i < mutex_info->releaseCount; i++)
+    {
+        struct device_memory *memory = device_memory_from_handle( mutex_info->pReleaseSyncs[i] );
+        D3DKMT_RELEASEKEYEDMUTEX release =
+        {
+            .hKeyedMutex = memory->mutex,
+            .Key = mutex_info->pReleaseKeys[i],
+            .FenceValue = memory->semaphore_value + 1,
+        };
+        VkSemaphoreSubmitInfo submit =
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            .semaphore = memory->semaphore,
+            .stageMask = 0,
+            .deviceIndex = 0,
+        };
+
+        if ((status = NtGdiDdDDIReleaseKeyedMutex( &release ))) goto failed;
+        submit.value = memory->semaphore_value + 1;
+        submits[count++] = submit;
+    }
+
+    *semaphores = submits;
+    *semaphores_count = count;
+    return VK_SUCCESS;
+
+failed:
+    WARN( "Failed to release keyed mutex 0x%s key 0x%s, status %#x\n", wine_dbgstr_longlong( mutex_info->pReleaseSyncs[i] ),
+          wine_dbgstr_longlong( mutex_info->pReleaseKeys[i] ), status );
+    return VK_ERROR_UNKNOWN;
+}
+
 static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, const VkSubmitInfo *submits, VkFence client_fence )
 {
     struct vulkan_fence *fence = client_fence ? vulkan_fence_from_handle( client_fence ) : NULL;
@@ -1413,6 +1520,7 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
     for (uint32_t i = 0; i < count; i++)
     {
         VkSubmitInfo *submit = (VkSubmitInfo *)submits + i; /* cast away const, chain has been copied in the thunks */
+        const VkSemaphoreSubmitInfo *wait_infos = NULL, *signal_infos = NULL;
         VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)submit;
         VkTimelineSemaphoreSubmitInfo *timeline = timelines + i;
         VkSemaphore *wait_semaphores, *signal_semaphores;
@@ -1467,9 +1575,8 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
             {
                 VkWin32KeyedMutexAcquireReleaseInfoKHR *mutex_info = (VkWin32KeyedMutexAcquireReleaseInfoKHR *)*next;
-                FIXME( "VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR not implemented!\n" );
-                wait_count = mutex_info->acquireCount;
-                signal_count = mutex_info->releaseCount;
+                if ((res = acquire_keyed_mutexes( mutex_info, &pool, &wait_infos, &wait_count ))) goto failed;
+                if ((res = release_keyed_mutexes( mutex_info, &pool, &signal_infos, &signal_count ))) goto failed;
                 *next = (*next)->pNext; next = &prev;
                 break;
             }
@@ -1487,8 +1594,16 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             memcpy( wait_stages, submit->pWaitDstStageMask, submit->waitSemaphoreCount * sizeof(*wait_stages) );
             submit->pWaitDstStageMask = wait_stages;
 
+            for (uint32_t j = 0; j < wait_count; j++)
+            {
+                wait_semaphores[submit->waitSemaphoreCount + j] = wait_infos[j].semaphore;
+                wait_stages[submit->waitSemaphoreCount + j] = wait_infos[j].stageMask;
+            }
+            submit->waitSemaphoreCount += wait_count;
+
             if (!(values = mem_alloc( &pool, (timeline->waitSemaphoreValueCount + wait_count) * sizeof(*values) ))) goto failed;
             memcpy( values, timeline->pWaitSemaphoreValues, timeline->waitSemaphoreValueCount * sizeof(*values) );
+            for (uint32_t j = 0; j < wait_count; j++) values[submit->waitSemaphoreCount + j] = wait_infos[j].value;
             timeline->waitSemaphoreValueCount = submit->waitSemaphoreCount;
             timeline->pWaitSemaphoreValues = values;
 
@@ -1496,6 +1611,7 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             {
                 if (!(indexes = mem_alloc( &pool, submit->waitSemaphoreCount * sizeof(*indexes) ))) goto failed;
                 memcpy( indexes, device_group->pWaitSemaphoreDeviceIndices, device_group->waitSemaphoreCount * sizeof(*indexes) );
+                for (uint32_t j = 0; j < wait_count; j++) indexes[device_group->waitSemaphoreCount + j] = wait_infos[j].deviceIndex;
                 device_group->waitSemaphoreCount = submit->waitSemaphoreCount;
                 device_group->pWaitSemaphoreDeviceIndices = indexes;
             }
@@ -1505,10 +1621,13 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
         {
             if (!(signal_semaphores = mem_alloc( &pool, (submit->signalSemaphoreCount + signal_count) * sizeof(*signal_semaphores) ))) goto failed;
             memcpy( signal_semaphores, submit->pSignalSemaphores, submit->signalSemaphoreCount * sizeof(*signal_semaphores) );
+            for (uint32_t j = 0; j < signal_count; j++) signal_semaphores[submit->signalSemaphoreCount + j] = signal_infos[j].semaphore;
+            submit->signalSemaphoreCount += signal_count;
             submit->pSignalSemaphores = signal_semaphores;
 
             if (!(values = mem_alloc( &pool, submit->signalSemaphoreCount * sizeof(*values) ))) goto failed;
             memcpy( values, timeline->pSignalSemaphoreValues, timeline->signalSemaphoreValueCount * sizeof(*values) );
+            for (uint32_t j = 0; j < signal_count; j++) values[submit->signalSemaphoreCount + j] = signal_infos[j].value;
             timeline->signalSemaphoreValueCount = submit->signalSemaphoreCount;
             timeline->pSignalSemaphoreValues = values;
 
@@ -1516,13 +1635,14 @@ static VkResult win32u_vkQueueSubmit( VkQueue client_queue, uint32_t count, cons
             {
                 if (!(indexes = mem_alloc( &pool, submit->signalSemaphoreCount * sizeof(*indexes) ))) goto failed;
                 memcpy( indexes, device_group->pSignalSemaphoreDeviceIndices, device_group->signalSemaphoreCount * sizeof(*indexes) );
+                for (uint32_t j = 0; j < signal_count; j++) indexes[device_group->signalSemaphoreCount + j] = signal_infos[j].deviceIndex;
                 device_group->signalSemaphoreCount = submit->signalSemaphoreCount;
                 device_group->pSignalSemaphoreDeviceIndices = indexes;
             }
         }
 
-        /* insert the timeline semaphore values in the chain if it was there */
-        if (timeline->sType)
+        /* insert the timeline semaphore values in the chain if it was there or has been created */
+        if (timeline->sType || wait_count || signal_count)
         {
             timeline->sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
             timeline->pNext = submit->pNext;
@@ -1542,6 +1662,8 @@ static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, con
     struct vulkan_fence *fence = client_fence ? vulkan_fence_from_handle( client_fence ) : NULL;
     struct vulkan_queue *queue = vulkan_queue_from_handle( client_queue );
     struct vulkan_device *device = queue->device;
+    struct mempool pool = {0};
+    VkResult res;
 
     TRACE( "queue %p, count %u, submits %p, fence %p\n", queue, count, submits, fence );
 
@@ -1583,15 +1705,23 @@ static VkResult win32u_vkQueueSubmit2( VkQueue client_queue, uint32_t count, con
             case VK_STRUCTURE_TYPE_LATENCY_SUBMISSION_PRESENT_ID_NV: break;
             case VK_STRUCTURE_TYPE_PERFORMANCE_QUERY_SUBMIT_INFO_KHR: break;
             case VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR:
-                FIXME( "VK_STRUCTURE_TYPE_WIN32_KEYED_MUTEX_ACQUIRE_RELEASE_INFO_KHR not implemented!\n" );
+            {
+                VkWin32KeyedMutexAcquireReleaseInfoKHR *mutex_info = (VkWin32KeyedMutexAcquireReleaseInfoKHR *)*next;
+                if ((res = acquire_keyed_mutexes( mutex_info, &pool, &submit->pWaitSemaphoreInfos, &submit->waitSemaphoreInfoCount ))) goto failed;
+                if ((res = release_keyed_mutexes( mutex_info, &pool, &submit->pSignalSemaphoreInfos, &submit->signalSemaphoreInfoCount ))) goto failed;
                 *next = (*next)->pNext; next = &prev;
                 break;
+            }
             default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
             }
         }
     }
 
-    return device->p_vkQueueSubmit2( queue->host.queue, count, submits, fence ? fence->host.fence : 0 );
+    res = device->p_vkQueueSubmit2( queue->host.queue, count, submits, fence ? fence->host.fence : 0 );
+
+failed:
+    mem_free( &pool );
+    return res;
 }
 
 static HANDLE create_shared_semaphore_handle( D3DKMT_HANDLE local, const VkExportSemaphoreWin32HandleInfoKHR *info )
