@@ -313,6 +313,7 @@ struct constructor;
     XIID(IWineHTMLElementPrivate) \
     XIID(IWineHTMLInputPrivate) \
     XIID(IWineHTMLFormPrivate) \
+    XIID(IWineHTMLObjectPrivate) \
     XIID(IWineHTMLWindowPrivate) \
     XIID(IWineHTMLWindowCompatPrivate) \
     XIID(IWineCSSProperties) \

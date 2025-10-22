@@ -276,6 +276,27 @@ interface IWineHTMLInputPrivate : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(307eb8f7-362b-6398-8c22-54c1c714efd8)
+]
+interface IWineHTMLObjectPrivate : IDispatch
+{
+    [propget, id(50)]
+    HRESULT validationMessage([retval, out] BSTR *ret);
+    [propget, id(51)]
+    HRESULT validity([retval, out] IDispatch **ret);
+    [propget, id(52)]
+    HRESULT willValidate([retval, out] VARIANT_BOOL *ret);
+    [id(53)]
+    HRESULT setCustomValidity([in] VARIANT *message);
+    [id(54)]
+    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(465908fd-f394-489f-b7a3-4c00fbbe9eed)
 ]
 interface IWineCSSProperties : IDispatch
