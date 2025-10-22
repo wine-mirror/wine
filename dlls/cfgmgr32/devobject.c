@@ -371,7 +371,7 @@ static LSTATUS copy_device_interface_property_keys( HKEY hkey, const struct devi
     return ERROR_SUCCESS;
 }
 
-typedef HRESULT (*enum_device_object_cb)( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG *props_len, DEVPROPERTY **props, void *context );
+typedef LSTATUS (*enum_device_object_cb)( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG *props_len, DEVPROPERTY **props, void *context );
 
 static UINT select_property( const DEVPROPCOMPKEY *key, DEVPROPERTY *props, DEVPROPERTY *select_end, DEVPROPERTY *props_end )
 {
@@ -403,13 +403,12 @@ static void select_properties( const DEVPROPCOMPKEY *keys, ULONG keys_len, DEVPR
     }
 }
 
-static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *props, ULONG props_len, BOOL all_props,
+static LSTATUS enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *props, ULONG props_len, BOOL all_props,
                                  const DEVPROP_FILTER_EXPRESSION *filters, const DEVPROP_FILTER_EXPRESSION *filters_end,
                                  enum_device_object_cb callback, void *data )
 {
+    LSTATUS err = ERROR_SUCCESS;
     HKEY iface_key;
-    HRESULT hr = S_OK;
-
     DWORD i;
 
     switch (type)
@@ -429,35 +428,31 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
     case DevObjectTypeAEPProtocol:
         FIXME("Unsupported DEV_OJBECT_TYPE: %d\n", type );
     default:
-        return S_OK;
+        return ERROR_SUCCESS;
     }
 
     if (!(iface_key = SetupDiOpenClassRegKeyExW( NULL, KEY_ENUMERATE_SUB_KEYS, DIOCR_INTERFACE, NULL, NULL )))
         return HRESULT_FROM_WIN32( GetLastError() );
 
-    for (i = 0; SUCCEEDED( hr ); i++)
+    for (i = 0; !err; i++)
     {
         char buffer[sizeof( SP_DEVICE_INTERFACE_DETAIL_DATA_W ) + MAX_PATH * sizeof( WCHAR )];
         SP_DEVICE_INTERFACE_DATA iface_data = {.cbSize = sizeof( iface_data )};
         SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
         HDEVINFO set = INVALID_HANDLE_VALUE;
         WCHAR iface_guid_str[40];
-        DWORD ret, len, j;
+        DWORD len, j;
         GUID iface_class;
 
         len = ARRAY_SIZE( iface_guid_str );
-        ret = RegEnumKeyExW( iface_key, i, iface_guid_str, &len, NULL, NULL, NULL, NULL );
-        if (ret)
-        {
-            hr = (ret == ERROR_NO_MORE_ITEMS) ? S_OK : HRESULT_FROM_WIN32( ret );
-            break;
-        }
+        err = RegEnumKeyExW( iface_key, i, iface_guid_str, &len, NULL, NULL, NULL, NULL );
+        if (err) break;
 
         iface_guid_str[37] = '\0';
         if (!UuidFromStringW( &iface_guid_str[1], &iface_class ))
         {
             set = SetupDiGetClassDevsW( &iface_class, NULL, NULL, DIGCF_DEVICEINTERFACE );
-            if (set == INVALID_HANDLE_VALUE) hr = HRESULT_FROM_WIN32( GetLastError() );
+            if (set == INVALID_HANDLE_VALUE) err = GetLastError();
         }
         else
         {
@@ -465,23 +460,19 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
             continue;
         }
 
-        for (j = 0; SUCCEEDED( hr ) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface_data ); j++)
+        for (j = 0; !err && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface_data ); j++)
         {
             ULONG keys_len = props_len, properties_len = 0;
             const DEVPROPCOMPKEY *keys = props;
             DEVPROPERTY *properties = NULL;
             struct device_interface iface;
-            LSTATUS err;
             HKEY hkey;
 
             detail->cbSize = sizeof( *detail );
             if (!SetupDiGetDeviceInterfaceDetailW( set, &iface_data, detail, sizeof( buffer ), NULL, NULL )) continue;
             if ((err = init_device_interface( &iface, detail->DevicePath )) ||
                 (err = open_device_interface_key( &iface, KEY_ALL_ACCESS, TRUE, &hkey )))
-            {
-                hr = HRESULT_FROM_WIN32(err);
                 break;
-            }
 
             /* If we're also filtering objects, get all properties for this object. Once the filters have been
              * evaluated, free properties that have not been requested, and set cPropertyCount to props_len.  */
@@ -491,9 +482,8 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
                 if (keys_len && !(properties = calloc( keys_len, sizeof(*properties) ))) err = ERROR_OUTOFMEMORY;
                 else err = copy_device_interface_properties( hkey, &iface, keys, keys_len, properties, &properties_len );
             }
-            if (err) hr = HRESULT_FROM_WIN32(err);
 
-            if (SUCCEEDED( hr ))
+            if (!err)
             {
                 BOOL matches;
 
@@ -506,7 +496,7 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
                 /* Shrink properties to only the desired ones, unless DevQueryFlagAllProperties is set. */
                 if (!all_props) select_properties( props, props_len, &properties, &properties_len );
 
-                if (matches) hr = callback( type, detail->DevicePath, &properties_len, &properties, data );
+                if (matches) err = callback( type, detail->DevicePath, &properties_len, &properties, data );
             }
 
             DevFreeObjectProperties( properties_len, properties );
@@ -518,8 +508,10 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
         if (set != INVALID_HANDLE_VALUE)
             SetupDiDestroyDeviceInfoList( set );
     }
+    if (err == ERROR_NO_MORE_ITEMS) err = ERROR_SUCCESS;
+
     RegCloseKey( iface_key );
-    return SUCCEEDED( hr ) ? S_OK : hr;
+    return err;
 }
 
 struct objects_list
@@ -528,16 +520,16 @@ struct objects_list
     ULONG len;
 };
 
-static HRESULT dev_objects_append( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG *props_len, DEVPROPERTY **props, void *data )
+static LSTATUS dev_objects_append( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG *props_len, DEVPROPERTY **props, void *context )
 {
-    struct objects_list *list = data;
+    struct objects_list *list = context;
     DEV_OBJECT *tmp, *obj;
 
-    if (!(tmp = realloc( list->objects, (list->len + 1) * sizeof(*list->objects) ))) return E_OUTOFMEMORY;
+    if (!(tmp = realloc( list->objects, (list->len + 1) * sizeof(*list->objects) ))) return ERROR_OUTOFMEMORY;
     list->objects = tmp;
 
     obj = list->objects + list->len;
-    if (!(obj->pszObjectId = wcsdup( id ))) return E_OUTOFMEMORY;
+    if (!(obj->pszObjectId = wcsdup( id ))) return ERROR_OUTOFMEMORY;
     obj->ObjectType = type;
     obj->cPropertyCount = *props_len;
     obj->pProperties = *props;
@@ -545,7 +537,7 @@ static HRESULT dev_objects_append( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG 
     *props = NULL;
     list->len++;
 
-    return S_OK;
+    return ERROR_SUCCESS;
 }
 
 HRESULT WINAPI DevGetObjects( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_len, const DEVPROPCOMPKEY *props,
@@ -562,7 +554,7 @@ HRESULT WINAPI DevGetObjectsEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_l
 {
     ULONG valid_flags = DevQueryFlagAllProperties | DevQueryFlagLocalize;
     struct objects_list objects = {0};
-    HRESULT hr = S_OK;
+    LSTATUS err;
 
     TRACE( "(%d, %#lx, %lu, %p, %lu, %p, %lu, %p, %p, %p)\n", type, flags, props_len, props, filters_len, filters,
            params_len, params, objs_len, objs );
@@ -576,18 +568,16 @@ HRESULT WINAPI DevGetObjectsEx( DEV_OBJECT_TYPE type, ULONG flags, ULONG props_l
 
     *objs = NULL;
     *objs_len = 0;
-
-    hr = enum_dev_objects( type, props, props_len, !!(flags & DevQueryFlagAllProperties), filters, filters + filters_len,
-                           dev_objects_append, &objects );
-    if (SUCCEEDED( hr ))
+    if ((err = enum_dev_objects( type, props, props_len, !!(flags & DevQueryFlagAllProperties), filters, filters + filters_len,
+                                 dev_objects_append, &objects )))
     {
-        *objs = objects.objects;
-        *objs_len = objects.len;
-    }
-    else
         DevFreeObjects( objects.len, objects.objects );
+        return HRESULT_FROM_WIN32(err);
+    }
 
-    return hr;
+    *objs = objects.objects;
+    *objs_len = objects.len;
+    return S_OK;
 }
 
 void WINAPI DevFreeObjects( ULONG objs_len, const DEV_OBJECT *objs )
@@ -636,7 +626,7 @@ struct device_query_context
     HCMNOTIFICATION notify;
 };
 
-static HRESULT device_query_context_add_object( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG *props_len, DEVPROPERTY **props, void *data )
+static LSTATUS device_query_context_add_object( DEV_OBJECT_TYPE type, const WCHAR *id, ULONG *props_len, DEVPROPERTY **props, void *data )
 {
     DEV_QUERY_RESULT_ACTION_DATA action_data =
     {
@@ -651,7 +641,7 @@ static HRESULT device_query_context_add_object( DEV_OBJECT_TYPE type, const WCHA
     };
     struct device_query_context *ctx = data;
     struct device_iface_path *iface_entry = NULL;
-    HRESULT hr = S_OK;
+    LSTATUS err = ERROR_SUCCESS;
 
     TRACE( "(%s, %p)\n", debugstr_w( id ), data );
 
@@ -659,14 +649,14 @@ static HRESULT device_query_context_add_object( DEV_OBJECT_TYPE type, const WCHA
 
     EnterCriticalSection( &ctx->cs );
     if (ctx->state == DevQueryStateClosed)
-        hr = E_CHANGED_STATE;
+        err = ERROR_CANCELLED;
     else if (type == DevObjectTypeDeviceInterface || type == DevObjectTypeDeviceInterfaceDisplay)
     {
         if (!(iface_entry = calloc( 1, sizeof( *iface_entry ) )) || !(iface_entry->path = wcsdup( id )))
         {
             if (iface_entry) free( iface_entry->path );
             free( iface_entry );
-            hr = E_OUTOFMEMORY;
+            err = ERROR_OUTOFMEMORY;
         }
         else if (rb_put( &ctx->known_ifaces, iface_entry->path, &iface_entry->entry ))
         {
@@ -676,7 +666,7 @@ static HRESULT device_query_context_add_object( DEV_OBJECT_TYPE type, const WCHA
     }
     LeaveCriticalSection( &ctx->cs );
 
-    return hr;
+    return err;
 }
 
 static HRESULT device_query_context_create( struct device_query_context **query, DEV_OBJECT_TYPE type, ULONG flags,
@@ -934,20 +924,20 @@ abort:
 static void CALLBACK device_query_enum_objects_async( TP_CALLBACK_INSTANCE *instance, void *data )
 {
     struct device_query_context *ctx = data;
+    LSTATUS err = ERROR_SUCCESS;
     BOOL success;
-    HRESULT hr = S_OK;
 
     if (!ctx->filters)
-        hr = enum_dev_objects( ctx->type, ctx->prop_keys, ctx->prop_keys_len, !!(ctx->flags & DevQueryFlagAllProperties),
+        err = enum_dev_objects( ctx->type, ctx->prop_keys, ctx->prop_keys_len, !!(ctx->flags & DevQueryFlagAllProperties),
                                0, NULL, device_query_context_add_object, ctx );
 
     EnterCriticalSection( &ctx->cs );
     if (ctx->state == DevQueryStateClosed)
-        hr = E_CHANGED_STATE;
+        err = ERROR_CANCELLED;
 
-    switch (hr)
+    switch (err)
     {
-    case S_OK:
+    case ERROR_SUCCESS:
         ctx->state = DevQueryStateEnumCompleted;
         success = TrySubmitThreadpoolCallback( device_query_context_notify_enum_completed_async, ctx, NULL );
         if (ctx->filters || !(ctx->flags & DevQueryFlagUpdateResults))
@@ -978,7 +968,7 @@ static void CALLBACK device_query_enum_objects_async( TP_CALLBACK_INSTANCE *inst
             break;
         }
         break;
-    case E_CHANGED_STATE:
+    case ERROR_CANCELLED:
         if (!(ctx->flags & DevQueryFlagAsyncClose))
         {
             LeaveCriticalSection( &ctx->cs );
@@ -1105,9 +1095,9 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
                                          const DEVPROPCOMPKEY *props, ULONG params_len,
                                          const DEV_QUERY_PARAMETER *params, ULONG *buf_len, const DEVPROPERTY **buf )
 {
-    HRESULT hr = S_OK;
     ULONG valid_flags = DevQueryFlagAllProperties | DevQueryFlagLocalize;
     BOOL all_props = flags & DevQueryFlagAllProperties;
+    LSTATUS err = ERROR_SUCCESS;
 
     TRACE( "(%d, %s, %#lx, %lu, %p, %lu, %p, %p, %p)\n", type, debugstr_w( id ), flags, props_len, props,
            params_len, params, buf_len, buf );
@@ -1129,18 +1119,16 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
         const DEVPROPCOMPKEY *keys = props;
         DEVPROPERTY *properties = NULL;
         struct device_interface iface;
-        LSTATUS err;
         HKEY hkey;
 
-        if ((err = init_device_interface( &iface, id ))) return HRESULT_FROM_WIN32(err);
-        if ((err = open_device_interface_key( &iface, KEY_ALL_ACCESS, TRUE, &hkey ))) return HRESULT_FROM_WIN32(err);
+        if ((err = init_device_interface( &iface, id ))) break;
+        if ((err = open_device_interface_key( &iface, KEY_ALL_ACCESS, TRUE, &hkey ))) break;
 
-        if (all_props && (err = copy_device_interface_property_keys( hkey, &iface, &keys, &keys_len ))) hr = HRESULT_FROM_WIN32( err );
-        if (SUCCEEDED(hr))
+        if (all_props) err = copy_device_interface_property_keys( hkey, &iface, &keys, &keys_len );
+        if (!err)
         {
             if ((properties_len = keys_len) && !(properties = calloc( keys_len, sizeof(*properties) ))) err = ERROR_OUTOFMEMORY;
             else err = copy_device_interface_properties( hkey, &iface, keys, keys_len, properties, &properties_len );
-            if (err) hr = HRESULT_FROM_WIN32( err );
         }
 
         *buf = properties;
@@ -1152,10 +1140,12 @@ HRESULT WINAPI DevGetObjectPropertiesEx( DEV_OBJECT_TYPE type, const WCHAR *id, 
     }
     default:
         FIXME( "Unsupported DEV_OBJECT_TYPE: %d\n", type );
-        hr = HRESULT_FROM_WIN32( ERROR_FILE_NOT_FOUND );
+        err = ERROR_FILE_NOT_FOUND;
+        break;
     }
 
-    return hr;
+    if (err) return HRESULT_FROM_WIN32(err);
+    return S_OK;
 }
 
 const DEVPROPERTY *WINAPI DevFindProperty( const DEVPROPKEY *key, DEVPROPSTORE store, const WCHAR *locale,
