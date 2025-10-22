@@ -63,7 +63,7 @@ struct property
     DWORD *size;
 };
 
-extern LSTATUS init_property( struct property *prop, const DEVPROPKEY *key, DEVPROPTYPE *type, void *buffer, DWORD *size );
+extern LSTATUS init_property( struct property *prop, const DEVPROPKEY *key, DEVPROPTYPE *type, void *buffer, DWORD *size, BOOL binary );
 
 struct device_interface
 {

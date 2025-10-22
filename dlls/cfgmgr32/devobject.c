@@ -317,7 +317,7 @@ static LSTATUS copy_device_interface_property( HKEY hkey, const struct device_in
     struct property prop;
     LSTATUS err;
 
-    init_property( &prop, &property->CompKey.Key, &property->Type, property->Buffer, &property->BufferSize );
+    init_property( &prop, &property->CompKey.Key, &property->Type, property->Buffer, &property->BufferSize, TRUE );
     if (!(err = query_device_interface_property( hkey, iface, &prop ))) return ERROR_SUCCESS;
     if (err && err != ERROR_MORE_DATA) return ERROR_SUCCESS;
 

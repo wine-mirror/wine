@@ -98,14 +98,14 @@
 @ stdcall CM_Get_Device_IDW(ptr ptr long long)
 @ stdcall CM_Get_Device_ID_ExA(ptr ptr long long ptr)
 @ stdcall CM_Get_Device_ID_ExW(ptr ptr long long ptr)
-@ stdcall CM_Get_Device_ID_ListA(str ptr long long) setupapi.CM_Get_Device_ID_ListA
-@ stdcall CM_Get_Device_ID_ListW(wstr ptr long long) setupapi.CM_Get_Device_ID_ListW
-@ stdcall CM_Get_Device_ID_List_ExA(str ptr long long ptr) setupapi.CM_Get_Device_ID_List_ExA
-@ stdcall CM_Get_Device_ID_List_ExW(wstr ptr long long ptr) setupapi.CM_Get_Device_ID_List_ExW
-@ stdcall CM_Get_Device_ID_List_SizeA(ptr str long) setupapi.CM_Get_Device_ID_List_SizeA
-@ stdcall CM_Get_Device_ID_List_SizeW(ptr wstr long) setupapi.CM_Get_Device_ID_List_SizeW
-@ stdcall CM_Get_Device_ID_List_Size_ExA(ptr str long ptr) setupapi.CM_Get_Device_ID_List_Size_ExA
-@ stdcall CM_Get_Device_ID_List_Size_ExW(ptr wstr long ptr) setupapi.CM_Get_Device_ID_List_Size_ExW
+@ stdcall CM_Get_Device_ID_ListA(str ptr long long)
+@ stdcall CM_Get_Device_ID_ListW(wstr ptr long long)
+@ stdcall CM_Get_Device_ID_List_ExA(str ptr long long ptr)
+@ stdcall CM_Get_Device_ID_List_ExW(wstr ptr long long ptr)
+@ stdcall CM_Get_Device_ID_List_SizeA(ptr str long)
+@ stdcall CM_Get_Device_ID_List_SizeW(ptr wstr long)
+@ stdcall CM_Get_Device_ID_List_Size_ExA(ptr str long ptr)
+@ stdcall CM_Get_Device_ID_List_Size_ExW(ptr wstr long ptr)
 @ stdcall CM_Get_Device_ID_Size(ptr ptr long)
 @ stdcall CM_Get_Device_ID_Size_Ex(ptr ptr long ptr)
 @ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long) setupapi.CM_Get_Device_Interface_AliasA
