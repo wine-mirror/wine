@@ -1244,8 +1244,17 @@ static HRESULT WINAPI HTMLInputElement_private_setCustomValidity(IWineHTMLInputP
 static HRESULT WINAPI HTMLInputElement_private_checkValidity(IWineHTMLInputPrivate *iface, VARIANT_BOOL *ret)
 {
     HTMLInputElement *This = impl_from_IWineHTMLInputPrivateVtbl(iface);
-    FIXME("(%p)->(%p)\n", This, ret);
-    return E_NOTIMPL;
+    nsresult nsres;
+    cpp_bool b;
+
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    nsres = nsIDOMHTMLInputElement_CheckValidity(This->nsinput, &b);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    *ret = variant_bool(b);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_private_put_formAction(IWineHTMLInputPrivate *iface, BSTR v)

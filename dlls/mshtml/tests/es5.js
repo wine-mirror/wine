@@ -2594,6 +2594,29 @@ sync_test("functions scope", function() {
     })();
 });
 
+sync_test("input validation", function() {
+    var fired, elem = document.createElement("input");
+    elem.type = "number";
+    elem.setAttribute("min", "1");
+    elem.setAttribute("max", "4");
+    elem.addEventListener("invalid", function(e) {
+        ok(e.target === elem, "unexpected target " + e.target);
+        fired = true;
+    });
+    fired = false;
+    elem.value = 1;
+    ok(elem.checkValidity() === true, "input number (1-4) with value 1: invalid");
+    ok(fired === false, "input number (1-4) with value 1 fired invalid event");
+    fired = false;
+    elem.value = 0;
+    ok(elem.checkValidity() === false, "input number (1-4) with value 0: valid");
+    ok(fired === true, "input number (1-4) with value 0 did not fire invalid event");
+    fired = false;
+    elem.value = 5;
+    ok(elem.checkValidity() === false, "input number (1-4) with value 5: valid");
+    ok(fired === true, "input number (1-4) with value 5 did not fire invalid event");
+});
+
 sync_test("perf toJSON", function() {
     var json, objs = [ performance, performance.navigation, performance.timing ];
     var non_props = [ "constructor", "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED" ];
