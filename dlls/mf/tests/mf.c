@@ -2467,7 +2467,12 @@ static void test_media_session_events(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSession_SetTopology(session, 0, topology);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    if (hr == E_INVALIDARG)
+    {
+        skip("Skipping tests invalid on this windows version.\n");
+        goto skip_invalid;
+    }
     hr = wait_media_event(session, callback, MESessionTopologySet, 1000, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(propvar.vt == VT_UNKNOWN, "got vt %u\n", propvar.vt);
@@ -2705,6 +2710,7 @@ static void test_media_session_events(void)
     CLEAR_CALLED(test_stub_source_QueueEvent);
     CLEAR_CALLED(test_stub_source_Start);
 
+skip_invalid:
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
 
