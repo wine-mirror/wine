@@ -4361,10 +4361,8 @@ sync_test("prototype props", function() {
         "size", "src", "start", "status", ["step",10], ["stepDown",10], ["stepUp",10], "type", "useMap", ["validationMessage",10], ["validity",10], "value",
         ["valueAsNumber",10], "vrml", "vspace", "width", ["willValidate",10]
     ], [
-        "accept", ["autocomplete",10], ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["files",10], ["formAction",10],
-        ["formEnctype",10], ["formMethod",10], ["formNoValidate",10], ["formTarget",10], ["list",10], ["max",10], ["min",10], ["multiple",10], ["pattern",10],
-        ["placeholder",10], ["readyState",11], ["required",10], ["setCustomValidity",10], ["step",10], ["stepDown",10], ["stepUp",10], "useMap", ["validationMessage",10],
-        ["validity",10], ["valueAsNumber",10], ["willValidate",10]
+        "accept", ["autocomplete",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["files",10],["list",10], ["max",10], ["min",10], ["multiple",10],
+        ["pattern",10], ["placeholder",10], ["readyState",11], ["required",10], ["step",10], ["stepDown",10], ["stepUp",10], "useMap", ["valueAsNumber",10]
     ]);
     check(HTMLLabelElement, [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form", "htmlFor" ], [ ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "form" ]);
     check(HTMLLinkElement, [ "charset", "href", "hreflang", "media", "rel", "rev", "sheet", ["styleSheet",9,10], "target", "type" ],

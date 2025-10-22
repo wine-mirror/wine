@@ -231,6 +231,51 @@ interface IWineHTMLFormPrivate : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(f356f6d2-f210-4f54-24c7-3f88fa3c20fc)
+]
+interface IWineHTMLInputPrivate : IDispatch
+{
+    [propput, id(50)]
+    HRESULT autofocus([in] VARIANT_BOOL v);
+    [propget, id(50)]
+    HRESULT autofocus([retval, out] VARIANT_BOOL *ret);
+    [propget, id(51)]
+    HRESULT validationMessage([retval, out] BSTR *ret);
+    [propget, id(52)]
+    HRESULT validity([retval, out] IDispatch **ret);
+    [propget, id(53)]
+    HRESULT willValidate([retval, out] VARIANT_BOOL *ret);
+    [id(54)]
+    HRESULT setCustomValidity([in] VARIANT *message);
+    [id(55)]
+    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
+    [propput, id(56)]
+    HRESULT formAction([in] BSTR v);
+    [propget, id(56)]
+    HRESULT formAction([retval, out] BSTR *ret);
+    [propput, id(57)]
+    HRESULT formEnctype([in] BSTR v);
+    [propget, id(57)]
+    HRESULT formEnctype([retval, out] BSTR *ret);
+    [propput, id(58)]
+    HRESULT formMethod([in] BSTR v);
+    [propget, id(58)]
+    HRESULT formMethod([retval, out] BSTR *ret);
+    [propput, id(59)]
+    HRESULT formNoValidate([in] VARIANT_BOOL v);
+    [propget, id(59)]
+    HRESULT formNoValidate([retval, out] VARIANT_BOOL *ret);
+    [propput, id(60)]
+    HRESULT formTarget([in] BSTR v);
+    [propget, id(60)]
+    HRESULT formTarget([retval, out] BSTR *ret);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(465908fd-f394-489f-b7a3-4c00fbbe9eed)
 ]
 interface IWineCSSProperties : IDispatch
