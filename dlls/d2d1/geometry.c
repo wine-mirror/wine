@@ -5403,9 +5403,16 @@ static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Simplify(ID2D1Transfor
 static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Tessellate(ID2D1TransformedGeometry *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
 {
-    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+    D2D1_MATRIX_3X2_F g;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p, tolerance %.8e, sink %p.\n", iface, transform, tolerance, sink);
+
+    g = geometry->transform;
+    if (transform)
+        d2d_matrix_multiply(&g, transform);
+
+    return ID2D1Geometry_Tessellate(geometry->u.transformed.src_geometry, transform, tolerance, sink);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_CombineWithGeometry(ID2D1TransformedGeometry *iface,
