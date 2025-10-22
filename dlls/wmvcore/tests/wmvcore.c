@@ -4170,6 +4170,101 @@ static void test_sync_reader_allocator(void)
     callback_cleanup(&callback);
 }
 
+static struct IWMReaderAllocatorEx failing_allocator;
+
+static HRESULT WINAPI failing_allocator_QueryInterface(IWMReaderAllocatorEx *this, REFIID riid, void **out)
+{
+    if (IsEqualGUID(riid, &IID_IWMReaderAllocatorEx))
+    {
+        *out = &failing_allocator;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI failing_allocator_AddRef(IWMReaderAllocatorEx *this)
+{
+    return 2;
+}
+
+static ULONG WINAPI failing_allocator_Release(IWMReaderAllocatorEx *this)
+{
+    return 1;
+}
+
+static HRESULT WINAPI failing_allocator_AllocateForStream(IWMReaderAllocatorEx *This, WORD wStreamNum,
+    DWORD cbBuffer, INSSBuffer **ppBuffer, DWORD dwFlags, QWORD cnsSampleTime, QWORD cnsSampleDuration,
+    void *pvContext)
+{
+    return E_FAIL;
+}
+
+static HRESULT WINAPI failing_allocator_AllocateForOutput(IWMReaderAllocatorEx *This, DWORD dwOutput,
+    DWORD cbBuffer, INSSBuffer **ppBuffer, DWORD dwFlags, QWORD cnsSampleTime, QWORD cnsSampleDuration,
+    void *pvContext)
+{
+    return E_FAIL;
+}
+
+static struct IWMReaderAllocatorExVtbl failing_allocator_vtbl =
+{
+    failing_allocator_QueryInterface,
+    failing_allocator_AddRef,
+    failing_allocator_Release,
+    failing_allocator_AllocateForStream,
+    failing_allocator_AllocateForOutput,
+};
+static struct IWMReaderAllocatorEx failing_allocator = { &failing_allocator_vtbl };
+
+static void test_sync_reader_allocator_failure(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    struct teststream stream;
+    DWORD output_num, flags;
+    IWMSyncReader2 *reader;
+    QWORD pts, duration;
+    INSSBuffer *sample;
+    WORD stream_num;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = WMCreateSyncReader(NULL, 0, (IWMSyncReader **)&reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
+
+    teststream_init(&stream, file);
+
+    hr = IWMSyncReader2_OpenStream(reader, &stream.IStream_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(stream.refcount > 1, "Got refcount %ld.\n", stream.refcount);
+
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForStream(reader, stream_num, &failing_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetReadStreamSamples(reader, stream_num, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_SetAllocateForOutput(reader, 1, &failing_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
+            &output_num, &stream_num);
+    todo_wine ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
+
+    IWMSyncReader2_Release(reader);
+
+    ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
+    CloseHandle(stream.file);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -4189,6 +4284,7 @@ START_TEST(wmvcore)
     test_urlextension();
     test_iscontentprotected();
     test_sync_reader_allocator();
+    test_sync_reader_allocator_failure();
     test_sync_reader_settings();
     test_sync_reader_streaming();
     test_sync_reader_types();
