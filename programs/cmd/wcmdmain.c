@@ -3130,7 +3130,7 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_parameter(p + 1, 0, NULL, FALSE, FALSE);
+                    filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
                     tkn_pmt.redirection = redirection_create_file(REDIR_READ_FROM, 0, filename);
                 }
             }
