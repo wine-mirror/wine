@@ -4326,7 +4326,7 @@ sync_test("prototype props", function() {
     check(HTMLFormElement, [
         "acceptCharset", "action", ["autocomplete",10], ["checkValidity",10], "elements", "encoding", "enctype", "item",
         "length", "method", "name", "namedItem", ["noValidate",10], "reset", "submit", "tags", "target", "urns"
-    ], [ "_newEnum", "acceptCharset", ["autocomplete",10], ["checkValidity",10], "enctype", "namedItem", ["noValidate",10], "urns" ]);
+    ], [ "_newEnum", "acceptCharset", ["autocomplete",10], "namedItem", "urns" ]);
     check(HTMLFrameElement, [
         "border", "borderColor", "contentDocument", "contentWindow", ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], "frameBorder", "frameSpacing",
         "getSVGDocument", "height", "longDesc", "marginHeight", "marginWidth", "name", "noResize", "onload", "scrolling", "security", "src", "width"

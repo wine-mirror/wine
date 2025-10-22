@@ -203,6 +203,29 @@ interface IWineHTMLElementPrivate : IDispatch
     HRESULT classList([retval, out] IDispatch **class_list);
 }
 
+const long DISPID_IWINEHTMLFORMPRIVATE_NOVALIDATE = 51;
+const long DISPID_IWINEHTMLFORMPRIVATE_CHECKVALIDITY = 52;
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(8a11c39f-12e3-dcc3-14ec-479ba0bddac1)
+]
+interface IWineHTMLFormPrivate : IDispatch
+{
+    [propput, id(50)]
+    HRESULT enctype([in] BSTR v);
+    [propget, id(50)]
+    HRESULT enctype([retval, out] BSTR *ret);
+    [propput, id(DISPID_IWINEHTMLFORMPRIVATE_NOVALIDATE)]
+    HRESULT noValidate([in] VARIANT_BOOL v);
+    [propget, id(DISPID_IWINEHTMLFORMPRIVATE_NOVALIDATE)]
+    HRESULT noValidate([retval, out] VARIANT_BOOL *ret);
+    [id(DISPID_IWINEHTMLFORMPRIVATE_CHECKVALIDITY)]
+    HRESULT checkValidity([retval, out] VARIANT_BOOL *ret);
+}
+
 [
     odl,
     oleautomation,
