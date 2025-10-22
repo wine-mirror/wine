@@ -139,7 +139,7 @@ struct context
     UINT64 debug_user;           /* client pointer */
     GLubyte *extensions;         /* extension string */
     GLuint *disabled_exts;       /* indices of disabled extensions */
-    GLubyte *wow64_version;      /* wow64 GL version override */
+    char *wow64_version;         /* wow64 GL version override */
     struct buffers *buffers;     /* wow64 buffers map */
     GLenum gl_error;             /* wrapped GL error */
 
@@ -920,21 +920,10 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
             GLuint **disabled = &ctx->disabled_exts;
             if (*extensions || filter_extensions( teb, (const char *)ret, extensions, disabled )) return *extensions;
         }
-        else if (name == GL_VERSION && is_win64 && is_wow64())
+        else if (name == GL_VERSION)
         {
             struct context *ctx = get_current_context( teb, NULL, NULL );
-            GLubyte **str = &ctx->wow64_version;
-            int major, minor;
-
-            if (!*str)
-            {
-                const char *rest = parse_gl_version( (const char *)ret, &major, &minor );
-                /* 4.4 depends on ARB_buffer_storage, which we don't support on wow64. */
-                if (major > 4 || (major == 4 && minor >= 4)) asprintf( (char **)str, "4.3%s", rest );
-                else *str = (GLubyte *)strdup( (char *)ret );
-            }
-
-            return *str;
+            if (ctx->wow64_version) return (const GLubyte *)ctx->wow64_version;
         }
     }
 
@@ -1092,7 +1081,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
                                   HGLRC hglrc, struct context *ctx )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    const char *version;
+    const char *version, *rest = "";
 
     ctx->tid = tid;
     teb->glReserved1[0] = draw_hdc;
@@ -1115,6 +1104,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
             FIXME( "GL version %d.%d is not supported on wow64, using 4.3\n", ctx->major_version, ctx->minor_version );
             ctx->major_version = 4;
             ctx->minor_version = 3;
+            asprintf( &ctx->wow64_version, "4.3%s", rest );
         }
     }
 }
