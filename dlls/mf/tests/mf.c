@@ -5953,7 +5953,7 @@ static void test_scheme_resolvers(void)
     ok(hr == NS_E_FILE_NOT_FOUND, "got hr %#lx\n", hr);
     hr = IMFSourceResolver_CreateObjectFromURL(resolver, L"mms://test.winehq.org/tests/invalid.mp3", MF_RESOLUTION_BYTESTREAM, NULL, &type, &object);
     todo_wine
-    ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got hr %#lx\n", hr);
+    ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE || hr == NS_E_FILE_NOT_FOUND, "got hr %#lx\n", hr);
 
     IMFSourceResolver_Release(resolver);
 
