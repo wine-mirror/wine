@@ -4255,7 +4255,7 @@ static void test_sync_reader_allocator_failure(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMSyncReader2_GetNextSample(reader, stream_num, &sample, &pts, &duration, &flags,
             &output_num, &stream_num);
-    todo_wine ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
+    ok(hr == NS_E_NO_MORE_SAMPLES, "Got hr %#lx.\n", hr);
 
     IWMSyncReader2_Release(reader);
 
