@@ -1039,6 +1039,8 @@ static void test_GetAttributesOf(void)
 
     IShellFolder_Release(psfMyComputer);
 
+    /* Note that SFGAO_HASSUBFOLDER respects hidden folders, but it also
+     * respects the "show hidden files" setting. */
     ret = CreateDirectoryW(L"winetestdir", NULL);
     ok(ret == TRUE, "got error %lu\n", GetLastError());
     ret = CreateDirectoryW(L"winetestdir\\subdir", NULL);
@@ -1046,8 +1048,6 @@ static void test_GetAttributesOf(void)
     ret = CreateDirectoryW(L"winetestdir2", NULL);
     ok(ret == TRUE, "got error %lu\n", GetLastError());
     ret = CreateDirectoryW(L"winetestdir2\\subdir", NULL);
-    ok(ret == TRUE, "got error %lu\n", GetLastError());
-    ret = SetFileAttributesW(L"winetestdir2\\subdir", FILE_ATTRIBUTE_HIDDEN);
     ok(ret == TRUE, "got error %lu\n", GetLastError());
     CreateTestFile("winetestdir2\\file");
 
@@ -1089,7 +1089,7 @@ static void test_GetAttributesOf(void)
 
     for (unsigned int i = 0; i < 32; ++i)
     {
-        static const DWORD set_flags = (SFGAO_CANCOPY | SFGAO_CANLINK | SFGAO_STORAGE | SFGAO_DROPTARGET
+        static const DWORD set_flags = (SFGAO_CANCOPY | SFGAO_CANLINK | SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_DROPTARGET
                 | SFGAO_STORAGEANCESTOR | SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_FILESYSTEM);
         DWORD input = (1u << i);
         DWORD expect = 0;
@@ -1097,20 +1097,23 @@ static void test_GetAttributesOf(void)
         if ((testdir_flags | SFGAO_LINK | SFGAO_READONLY | SFGAO_STREAM) & input)
         {
             expect = (set_flags | input) & testdir_flags;
-            if (input == SFGAO_CANRENAME)
-                expect |= SFGAO_HASPROPSHEET;
             if (input & (SFGAO_CANDELETE | SFGAO_CANMOVE))
                 expect |= SFGAO_CANDELETE | SFGAO_CANMOVE;
         }
 
+        /* Windows 8+ always sets SFGAO_HASPROPSHEET. Versions before that only
+         * set it if it's in the input. */
+
         dwFlags = input;
         hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, path, NULL, &newPIDL, &dwFlags);
         ok(hr == S_OK, "got %#lx\n", hr);
+        dwFlags |= (expect & SFGAO_HASPROPSHEET);
         todo_wine ok(dwFlags == expect, "got flags %#lx for input %#lx\n", dwFlags, input);
 
         dwFlags = input;
         hr = IShellFolder_GetAttributesOf(testIShellFolder, 1, (LPCITEMIDLIST *)&newPIDL, &dwFlags);
         ok(hr == S_OK, "got hr %#lx\n", hr);
+        dwFlags |= (expect & SFGAO_HASPROPSHEET);
         todo_wine ok(dwFlags == expect, "got flags %#lx for input %#lx\n", dwFlags, input);
     }
 
@@ -1287,7 +1290,7 @@ static void test_GetAttributesOf(void)
                 broken(!wcsncmp(L"::{26EE0668-A00A-44D7-9371-BEB064C98683}\\", name, 41)
                     && dwFlags == SFGAO_VALIDATE),
                 "%s dwFlags = %08lx\n", debugstr_w(name), dwFlags);
-        expect = dwFlags;
+        expect = dwFlags | SFGAO_CANLINK;
 
         dwFlags = 0;
         hr = IShellFolder_GetAttributesOf(testIShellFolder, 1, (LPCITEMIDLIST *)&newPIDL, &dwFlags);
@@ -1304,7 +1307,9 @@ static void test_GetAttributesOf(void)
 
         dwFlags = ~0u;
         hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, name, NULL, &newPIDL, &dwFlags);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(hr == S_OK || broken(hr == E_INVALIDARG) /* 8.1+ up to win10 2009 */, "got hr %#lx\n", hr);
+        if (hr != S_OK)
+            continue;
         todo_wine ok(dwFlags == expect, "got flags %#lx\n", dwFlags);
 
         dwFlags = 0;
