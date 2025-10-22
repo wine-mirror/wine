@@ -351,9 +351,6 @@
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
-/* Define to 1 if the system has the type 'request_sense'. */
-#undef HAVE_REQUEST_SENSE
-
 /* Define if you have the resolver library and header */
 #undef HAVE_RESOLV
 

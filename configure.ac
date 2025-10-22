@@ -2160,8 +2160,6 @@ fi
 
 dnl **** Check for types ****
 
-AC_CHECK_TYPES([request_sense],,,[#include <linux/cdrom.h>])
-
 AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
    	wine_cv_linux_gethostbyname_r_6,
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]],[[

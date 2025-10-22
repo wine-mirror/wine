@@ -21481,17 +21481,6 @@ printf "%s\n" "#define HAVE_SCHED_SETAFFINITY 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_type "$LINENO" "request_sense" "ac_cv_type_request_sense" "#include <linux/cdrom.h>
-"
-if test "x$ac_cv_type_request_sense" = xyes
-then :
-
-printf "%s\n" "#define HAVE_REQUEST_SENSE 1" >>confdefs.h
-
-
-fi
-
-
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we can use re-entrant gethostbyname_r Linux style" >&5
 printf %s "checking whether we can use re-entrant gethostbyname_r Linux style... " >&6; }
 if test ${wine_cv_linux_gethostbyname_r_6+y}
