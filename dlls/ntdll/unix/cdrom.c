@@ -215,6 +215,23 @@ static const char *iocodex(DWORD code)
 #define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
 #define MSF_OF_FRAME(m,fr) {int f=(fr); ((UCHAR *)&(m))[2]=f%CD_FRAMES;f/=CD_FRAMES;((UCHAR *)&(m))[1]=f%CD_SECS;((UCHAR *)&(m))[0]=f/CD_SECS;}
 
+typedef struct _SCSI_PASS_THROUGH32
+ {
+    USHORT       Length;
+    UCHAR        ScsiStatus;
+    UCHAR        PathId;
+    UCHAR        TargetId;
+    UCHAR        Lun;
+    UCHAR        CdbLength;
+    UCHAR        SenseInfoLength;
+    UCHAR        DataIn;
+    ULONG        DataTransferLength;
+    ULONG        TimeOutValue;
+    ULONG        DataBufferOffset;
+    ULONG        SenseInfoOffset;
+    UCHAR        Cdb[16];
+} SCSI_PASS_THROUGH32, *PSCSI_PASS_THROUGH32;
+
 /* The documented format of DVD_LAYER_DESCRIPTOR is wrong. Even the format in the
  * DDK's header is wrong. There are four bytes at the start  defined by
  * MMC-5. The first two are the size of the structure in big-endian order as
@@ -1881,6 +1898,86 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, const SCSI_PASS_THROUGH *in_pkt, S
     return ret;
 }
 
+static NTSTATUS CDROM_ScsiPassThrough32(int fd, const SCSI_PASS_THROUGH32 *in_pkt32, SCSI_PASS_THROUGH32 *out_pkt32)
+{
+    SCSI_PASS_THROUGH *pkt;
+    ULONG_PTR ptr;
+    NTSTATUS ret;
+
+    if (in_pkt32->Length < sizeof(SCSI_PASS_THROUGH32))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    if (in_pkt32->CdbLength > sizeof(in_pkt32->Cdb))
+        return STATUS_INVALID_PARAMETER;
+
+    if (in_pkt32->DataTransferLength > 0)
+    {
+        if (in_pkt32->DataBufferOffset < sizeof(SCSI_PASS_THROUGH32))
+            return STATUS_INVALID_PARAMETER;
+        ptr = (ULONG_PTR)in_pkt32 + in_pkt32->DataBufferOffset;
+        if (ptr < (ULONG_PTR)in_pkt32)
+            return STATUS_INVALID_PARAMETER;
+        if ((ptr + in_pkt32->DataTransferLength) < ptr)
+            return STATUS_INVALID_PARAMETER;
+    }
+
+    if (in_pkt32->SenseInfoLength > 0)
+    {
+        if (in_pkt32->SenseInfoOffset < sizeof(SCSI_PASS_THROUGH32))
+            return STATUS_INVALID_PARAMETER;
+        ptr = (ULONG_PTR)in_pkt32 + in_pkt32->SenseInfoOffset;
+        if (ptr < (ULONG_PTR)in_pkt32)
+            return STATUS_INVALID_PARAMETER;
+        if ((ptr + in_pkt32->SenseInfoLength) < ptr)
+            return STATUS_INVALID_PARAMETER;
+    }
+
+    pkt = calloc(1, sizeof(SCSI_PASS_THROUGH) + in_pkt32->SenseInfoLength + in_pkt32->DataTransferLength);
+    if (!pkt) return STATUS_NO_MEMORY;
+
+    pkt->Length = sizeof(SCSI_PASS_THROUGH);
+    pkt->CdbLength = in_pkt32->CdbLength;
+    pkt->SenseInfoLength = in_pkt32->SenseInfoLength;
+    pkt->DataIn = in_pkt32->DataIn;
+    pkt->DataTransferLength = in_pkt32->DataTransferLength;
+    pkt->TimeOutValue = in_pkt32->TimeOutValue;
+    pkt->DataBufferOffset = sizeof(SCSI_PASS_THROUGH) + in_pkt32->SenseInfoLength;
+    pkt->SenseInfoOffset = sizeof(SCSI_PASS_THROUGH);
+    memcpy(pkt->Cdb, in_pkt32->Cdb, sizeof(pkt->Cdb));
+    if (pkt->DataIn == SCSI_IOCTL_DATA_OUT)
+        memcpy((char*)pkt + pkt->DataBufferOffset,
+                (const char*)in_pkt32 + in_pkt32->DataBufferOffset,
+                in_pkt32->DataTransferLength);
+
+    ret = CDROM_ScsiPassThrough(fd, pkt, pkt);
+    if (NT_ERROR(ret)) goto done;
+
+    out_pkt32->Length = sizeof(SCSI_PASS_THROUGH32);
+    out_pkt32->ScsiStatus = pkt->ScsiStatus;
+    out_pkt32->PathId = pkt->PathId;
+    out_pkt32->TargetId = pkt->TargetId;
+    out_pkt32->Lun = pkt->Lun;
+    out_pkt32->CdbLength = pkt->CdbLength;
+    out_pkt32->SenseInfoLength = pkt->SenseInfoLength;
+    out_pkt32->DataIn = pkt->DataIn;
+    out_pkt32->DataTransferLength = pkt->DataTransferLength;
+    out_pkt32->TimeOutValue = pkt->TimeOutValue;
+    out_pkt32->DataBufferOffset = in_pkt32->DataBufferOffset;
+    out_pkt32->SenseInfoOffset = in_pkt32->SenseInfoOffset;
+    memcpy(out_pkt32->Cdb, pkt->Cdb, sizeof(out_pkt32->Cdb));
+    memcpy((char*)out_pkt32 + out_pkt32->SenseInfoOffset,
+            (const char*)pkt + pkt->SenseInfoOffset,
+            pkt->SenseInfoLength);
+    if (pkt->DataIn == SCSI_IOCTL_DATA_IN)
+        memcpy((char*)out_pkt32 + out_pkt32->DataBufferOffset,
+                (const char*)pkt + pkt->DataBufferOffset,
+                pkt->DataTransferLength);
+
+done:
+    free(pkt);
+    return ret;
+}
+
 /******************************************************************
  *		CDROM_ScsiGetCaps
  *
@@ -2955,10 +3052,20 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         else status = CDROM_ScsiPassThroughDirect(fd, out_buffer);
         break;
     case IOCTL_SCSI_PASS_THROUGH:
-        sz = sizeof(SCSI_PASS_THROUGH);
-        if (in_buffer == NULL || out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
-        else if (out_size < sizeof(SCSI_PASS_THROUGH)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ScsiPassThrough(fd, in_buffer, out_buffer);
+        if (in_wow64_call())
+        {
+            sz = sizeof(SCSI_PASS_THROUGH32);
+            if (in_buffer == NULL || out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
+            else if (out_size < sizeof(SCSI_PASS_THROUGH32)) status = STATUS_BUFFER_TOO_SMALL;
+            else status = CDROM_ScsiPassThrough32(fd, in_buffer, out_buffer);
+        }
+        else
+        {
+            sz = sizeof(SCSI_PASS_THROUGH);
+            if (in_buffer == NULL || out_buffer == NULL) status = STATUS_INVALID_PARAMETER;
+            else if (out_size < sizeof(SCSI_PASS_THROUGH)) status = STATUS_BUFFER_TOO_SMALL;
+            else status = CDROM_ScsiPassThrough(fd, in_buffer, out_buffer);
+        }
         break;
     case IOCTL_SCSI_GET_CAPABILITIES:
         sz = sizeof(IO_SCSI_CAPABILITIES);
