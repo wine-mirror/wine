@@ -279,8 +279,8 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
     VkImportMemoryHostPointerInfoEXT host_pointer_info, *pointer_info = NULL;
     VkExportMemoryWin32HandleInfoKHR export_win32 = {.dwAccess = GENERIC_ALL};
     VkImportMemoryWin32HandleInfoKHR *import_win32 = NULL;
+    VkDeviceMemory host_device_memory = VK_NULL_HANDLE;
     VkExportMemoryAllocateInfo *export_info = NULL;
-    VkDeviceMemory host_device_memory;
     struct device_memory *memory;
     BOOL nt_shared = FALSE;
     uint32_t mem_flags;
@@ -358,8 +358,8 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
 
         if ((fd_info.fd = d3dkmt_object_get_fd( memory->local )) < 0)
         {
-            free( memory );
-            return VK_ERROR_INVALID_EXTERNAL_HANDLE;
+            res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+            goto failed;
         }
 
         fd_info.handleType = get_host_external_memory_type();
@@ -367,12 +367,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
         alloc_info->pNext = &fd_info;
     }
 
-    if ((res = device->p_vkAllocateMemory( device->host.device, alloc_info, NULL, &host_device_memory )))
-    {
-        if (memory->local) d3dkmt_destroy_resource( memory->local );
-        free( memory );
-        return res;
-    }
+    if ((res = device->p_vkAllocateMemory( device->host.device, alloc_info, NULL, &host_device_memory ))) goto failed;
 
     if (export_info)
     {
@@ -410,8 +405,8 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
 
 failed:
     WARN( "Failed to allocate memory, res %d\n", res );
-    device->p_vkFreeMemory( device->host.device, host_device_memory, NULL );
-    if (memory->local) d3dkmt_destroy_resource( memory->local );
+    if (host_device_memory) device->p_vkFreeMemory( device->host.device, host_device_memory, NULL );
+    d3dkmt_destroy_resource( memory->local );
     free( memory );
     return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
@@ -447,7 +442,7 @@ static void win32u_vkFreeMemory( VkDevice client_device, VkDeviceMemory client_m
     }
 
     if (memory->shared) NtClose( memory->shared );
-    if (memory->local) d3dkmt_destroy_resource( memory->local );
+    d3dkmt_destroy_resource( memory->local );
     free( memory );
 }
 
@@ -1567,7 +1562,7 @@ static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaph
 failed:
     WARN( "Failed to create semaphore, res %d\n", res );
     device->p_vkDestroySemaphore( device->host.device, host_semaphore, NULL );
-    if (semaphore->local) d3dkmt_destroy_sync( semaphore->local );
+    d3dkmt_destroy_sync( semaphore->local );
     free( semaphore );
     return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
@@ -1586,7 +1581,7 @@ static void win32u_vkDestroySemaphore( VkDevice client_device, VkSemaphore clien
     instance->p_remove_object( instance, &semaphore->obj.obj );
 
     if (semaphore->shared) NtClose( semaphore->shared );
-    if (semaphore->local) d3dkmt_destroy_sync( semaphore->local );
+    d3dkmt_destroy_sync( semaphore->local );
     free( semaphore );
 }
 
@@ -1670,7 +1665,7 @@ static VkResult win32u_vkImportSemaphoreWin32HandleKHR( VkDevice client_device, 
     else
     {
         if (semaphore->shared) NtClose( semaphore->shared );
-        if (semaphore->local) d3dkmt_destroy_sync( semaphore->local );
+        d3dkmt_destroy_sync( semaphore->local );
         semaphore->shared = shared;
         semaphore->global = global;
         semaphore->local = local;
@@ -1775,7 +1770,7 @@ static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreat
 failed:
     WARN( "Failed to create fence, res %d\n", res );
     device->p_vkDestroyFence( device->host.device, host_fence, NULL );
-    if (fence->local) d3dkmt_destroy_sync( fence->local );
+    d3dkmt_destroy_sync( fence->local );
     free( fence );
     return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
@@ -1794,7 +1789,7 @@ static void win32u_vkDestroyFence( VkDevice client_device, VkFence client_fence,
     instance->p_remove_object( instance, &fence->obj.obj );
 
     if (fence->shared) NtClose( fence->shared );
-    if (fence->local) d3dkmt_destroy_sync( fence->local );
+    d3dkmt_destroy_sync( fence->local );
     free( fence );
 }
 
