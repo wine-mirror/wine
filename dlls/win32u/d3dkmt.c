@@ -1894,7 +1894,7 @@ NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local )
     TRACE( "local %#x\n", local );
 
     if (!(resource = get_d3dkmt_object( local, D3DKMT_RESOURCE ))) return STATUS_INVALID_PARAMETER;
-    if ((allocation = get_d3dkmt_object( resource->allocation, D3DKMT_RESOURCE ))) d3dkmt_object_free( allocation );
+    if ((allocation = get_d3dkmt_object( resource->allocation, D3DKMT_ALLOCATION ))) d3dkmt_object_free( allocation );
     d3dkmt_object_free( &resource->obj );
 
     return STATUS_SUCCESS;
