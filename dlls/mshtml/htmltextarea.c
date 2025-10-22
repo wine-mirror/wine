@@ -37,6 +37,7 @@ struct HTMLTextAreaElement {
     HTMLElement element;
 
     IHTMLTextAreaElement IHTMLTextAreaElement_iface;
+    IWineHTMLTextAreaPrivate IWineHTMLTextAreaPrivate_iface;
 
     nsIDOMHTMLTextAreaElement *nstextarea;
 };
@@ -335,6 +336,80 @@ static const IHTMLTextAreaElementVtbl HTMLTextAreaElementVtbl = {
     HTMLTextAreaElement_createTextRange
 };
 
+static inline HTMLTextAreaElement *impl_from_IWineHTMLTextAreaPrivateVtbl(IWineHTMLTextAreaPrivate *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTextAreaElement, IWineHTMLTextAreaPrivate_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(HTMLTextAreaElement_private, IWineHTMLTextAreaPrivate,
+                      impl_from_IWineHTMLTextAreaPrivateVtbl(iface)->element.node.event_target.dispex)
+
+static HRESULT WINAPI HTMLTextAreaElement_private_put_autofocus(IWineHTMLTextAreaPrivate *iface, VARIANT_BOOL v)
+{
+    HTMLTextAreaElement *This = impl_from_IWineHTMLTextAreaPrivateVtbl(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTextAreaElement_private_get_autofocus(IWineHTMLTextAreaPrivate *iface, VARIANT_BOOL *ret)
+{
+    HTMLTextAreaElement *This = impl_from_IWineHTMLTextAreaPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTextAreaElement_private_get_validationMessage(IWineHTMLTextAreaPrivate *iface, BSTR *ret)
+{
+    HTMLTextAreaElement *This = impl_from_IWineHTMLTextAreaPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTextAreaElement_private_get_validity(IWineHTMLTextAreaPrivate *iface, IDispatch **ret)
+{
+    HTMLTextAreaElement *This = impl_from_IWineHTMLTextAreaPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTextAreaElement_private_get_willValidate(IWineHTMLTextAreaPrivate *iface, VARIANT_BOOL *ret)
+{
+    HTMLTextAreaElement *This = impl_from_IWineHTMLTextAreaPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTextAreaElement_private_setCustomValidity(IWineHTMLTextAreaPrivate *iface, VARIANT *message)
+{
+    HTMLTextAreaElement *This = impl_from_IWineHTMLTextAreaPrivateVtbl(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(message));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTextAreaElement_private_checkValidity(IWineHTMLTextAreaPrivate *iface, VARIANT_BOOL *ret)
+{
+    HTMLTextAreaElement *This = impl_from_IWineHTMLTextAreaPrivateVtbl(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static const IWineHTMLTextAreaPrivateVtbl WineHTMLTextAreaPrivateVtbl = {
+    HTMLTextAreaElement_private_QueryInterface,
+    HTMLTextAreaElement_private_AddRef,
+    HTMLTextAreaElement_private_Release,
+    HTMLTextAreaElement_private_GetTypeInfoCount,
+    HTMLTextAreaElement_private_GetTypeInfo,
+    HTMLTextAreaElement_private_GetIDsOfNames,
+    HTMLTextAreaElement_private_Invoke,
+    HTMLTextAreaElement_private_put_autofocus,
+    HTMLTextAreaElement_private_get_autofocus,
+    HTMLTextAreaElement_private_get_validationMessage,
+    HTMLTextAreaElement_private_get_validity,
+    HTMLTextAreaElement_private_get_willValidate,
+    HTMLTextAreaElement_private_setCustomValidity,
+    HTMLTextAreaElement_private_checkValidity
+};
+
 static inline HTMLTextAreaElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLTextAreaElement, element.node);
@@ -368,6 +443,8 @@ static void *HTMLTextAreaElement_query_interface(DispatchEx *dispex, REFIID riid
 
     if(IsEqualGUID(&IID_IHTMLTextAreaElement, riid))
         return &This->IHTMLTextAreaElement_iface;
+    if(IsEqualGUID(&IID_IWineHTMLTextAreaPrivate, riid))
+        return &This->IWineHTMLTextAreaPrivate_iface;
 
     return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
@@ -408,6 +485,8 @@ static void HTMLTextAreaElement_init_dispex_info(dispex_data_t *info, compat_mod
         {DISPID_UNKNOWN}
     };
     dispex_info_add_interface(info, IHTMLTextAreaElement_tid, hooks);
+    if(mode >= COMPAT_MODE_IE10)
+        dispex_info_add_interface(info, IWineHTMLTextAreaPrivate_tid, NULL);
 
     HTMLElement_init_dispex_info(info, mode);
 }
@@ -442,6 +521,7 @@ HRESULT HTMLTextAreaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem,
         return E_OUTOFMEMORY;
 
     ret->IHTMLTextAreaElement_iface.lpVtbl = &HTMLTextAreaElementVtbl;
+    ret->IWineHTMLTextAreaPrivate_iface.lpVtbl = &WineHTMLTextAreaPrivateVtbl;
     ret->element.node.vtbl = &HTMLTextAreaElementImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTextAreaElement_dispex);

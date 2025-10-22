@@ -4405,8 +4405,8 @@ sync_test("prototype props", function() {
         ["maxLength",10], "name", ["placeholder",10], "readOnly", ["required",10], "rows", "select", "selectionEnd", "selectionStart", ["setCustomValidity",10],
         "setSelectionRange", "status", "type", ["validationMessage",10], ["validity",10], "value", ["willValidate",10], "wrap"
     ], [
-        ["autofocus",10], ["checkValidity",10], ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["maxLength",10], ["placeholder",10], ["required",10],
-        "selectionEnd", "selectionStart", ["setCustomValidity",10], "setSelectionRange", ["validationMessage",10], ["validity",10], ["willValidate",10]
+        ["dataFld",9,10], ["dataFormatAs",9,10], ["dataSrc",9,10], ["maxLength",10], ["placeholder",10], ["required",10], "selectionEnd", "selectionStart",
+        "setSelectionRange"
     ]);
     check(HTMLTitleElement, [ "text" ]);
     check(HTMLUnknownElement, [ "namedRecordset", "recordset" ]);
