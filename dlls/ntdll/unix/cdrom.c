@@ -1617,9 +1617,6 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
     int io;
-#elif defined HAVE_SCSIREQ_T_CMD
-    scsireq_t cmd;
-    int io;
 #elif defined __APPLE__
     dk_scsi_command_t cmd;
     int io;
@@ -1674,56 +1671,6 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     pPacket->ScsiStatus         = cmd.status;
     pPacket->DataTransferLength -= cmd.resid;
     pPacket->SenseInfoLength    = cmd.sb_len_wr;
-
-    ret = CDROM_GetStatusCode(io);
-
-#elif defined HAVE_SCSIREQ_T_CMD
-
-    memset(&cmd, 0, sizeof(cmd));
-    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
-
-    cmd.cmdlen         = pPacket->CdbLength;
-    cmd.databuf        = pPacket->DataBuffer;
-    cmd.datalen        = pPacket->DataTransferLength;
-    cmd.senselen       = pPacket->SenseInfoLength;
-    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
-
-    switch (pPacket->DataIn)
-    {
-    case SCSI_IOCTL_DATA_OUT:
-        cmd.flags |= SCCMD_WRITE;
-	break;
-    case SCSI_IOCTL_DATA_IN:
-        cmd.flags |= SCCMD_READ;
-	break;
-    case SCSI_IOCTL_DATA_UNSPECIFIED:
-        cmd.flags = 0;
-	break;
-    default:
-       return STATUS_INVALID_PARAMETER;
-    }
-
-    io = ioctl(fd, SCIOCCOMMAND, &cmd);
-
-    switch (cmd.retsts)
-    {
-    case SCCMD_OK:         break;
-    case SCCMD_TIMEOUT:    return STATUS_TIMEOUT;
-                           break;
-    case SCCMD_BUSY:       return STATUS_DEVICE_BUSY;
-                           break;
-    case SCCMD_SENSE:      break;
-    case SCCMD_UNKNOWN:    return STATUS_UNSUCCESSFUL;
-                           break;
-    }
-
-    if (pPacket->SenseInfoLength != 0)
-    {
-        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
-	       cmd.sense, pPacket->SenseInfoLength);
-    }
-
-    pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
 
@@ -1799,9 +1746,6 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
     int io;
-#elif defined HAVE_SCSIREQ_T_CMD
-    scsireq_t cmd;
-    int io;
 #elif defined __APPLE__
     dk_scsi_command_t cmd;
     int io;
@@ -1858,64 +1802,6 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     pPacket->ScsiStatus         = cmd.status;
     pPacket->DataTransferLength -= cmd.resid;
     pPacket->SenseInfoLength    = cmd.sb_len_wr;
-
-    ret = CDROM_GetStatusCode(io);
-
-#elif defined HAVE_SCSIREQ_T_CMD
-
-    memset(&cmd, 0, sizeof(cmd));
-    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
-
-    if ( pPacket->DataBufferOffset > 0x1000 )
-    {
-        cmd.databuf     = (void*)pPacket->DataBufferOffset;
-    }
-    else
-    {
-        cmd.databuf     = (char*)pPacket + pPacket->DataBufferOffset;
-    }
-
-    cmd.cmdlen         = pPacket->CdbLength;
-    cmd.datalen        = pPacket->DataTransferLength;
-    cmd.senselen       = pPacket->SenseInfoLength;
-    cmd.timeout        = pPacket->TimeOutValue*1000; /* in milliseconds */
-
-    switch (pPacket->DataIn)
-    {
-    case SCSI_IOCTL_DATA_OUT:
-        cmd.flags |= SCCMD_WRITE;
-	break;
-    case SCSI_IOCTL_DATA_IN:
-        cmd.flags |= SCCMD_READ;
-	break;
-    case SCSI_IOCTL_DATA_UNSPECIFIED:
-        cmd.flags = 0;
-	break;
-    default:
-       return STATUS_INVALID_PARAMETER;
-    }
-
-    io = ioctl(fd, SCIOCCOMMAND, &cmd);
-
-    switch (cmd.retsts)
-    {
-    case SCCMD_OK:         break;
-    case SCCMD_TIMEOUT:    return STATUS_TIMEOUT;
-                           break;
-    case SCCMD_BUSY:       return STATUS_DEVICE_BUSY;
-                           break;
-    case SCCMD_SENSE:      break;
-    case SCCMD_UNKNOWN:    return STATUS_UNSUCCESSFUL;
-                           break;
-    }
-
-    if (pPacket->SenseInfoLength != 0)
-    {
-        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
-	       cmd.sense, pPacket->SenseInfoLength);
-    }
-
-    pPacket->ScsiStatus = cmd.status;
 
     ret = CDROM_GetStatusCode(io);
 

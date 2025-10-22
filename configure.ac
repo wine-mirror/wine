@@ -2193,8 +2193,8 @@ AC_CHECK_MEMBERS([struct sockaddr_un.sun_len],,,
 # include <sys/un.h>
 #endif])
 
-dnl Check for scsireq_t and sg_io_hdr_t members
-AC_CHECK_MEMBERS([scsireq_t.cmd, sg_io_hdr_t.interface_id],,,
+dnl Check for sg_io_hdr_t members
+AC_CHECK_MEMBERS([sg_io_hdr_t.interface_id],,,
 [#include <sys/types.h>
 #ifdef HAVE_SCSI_SG_H
 #include <scsi/sg.h>

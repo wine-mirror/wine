@@ -21558,18 +21558,6 @@ printf "%s\n" "#define HAVE_STRUCT_SOCKADDR_UN_SUN_LEN 1" >>confdefs.h
 fi
 
 
-ac_fn_c_check_member "$LINENO" "scsireq_t" "cmd" "ac_cv_member_scsireq_t_cmd" "#include <sys/types.h>
-#ifdef HAVE_SCSI_SG_H
-#include <scsi/sg.h>
-#endif
-"
-if test "x$ac_cv_member_scsireq_t_cmd" = xyes
-then :
-
-printf "%s\n" "#define HAVE_SCSIREQ_T_CMD 1" >>confdefs.h
-
-
-fi
 ac_fn_c_check_member "$LINENO" "sg_io_hdr_t" "interface_id" "ac_cv_member_sg_io_hdr_t_interface_id" "#include <sys/types.h>
 #ifdef HAVE_SCSI_SG_H
 #include <scsi/sg.h>
