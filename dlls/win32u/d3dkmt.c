@@ -1803,15 +1803,9 @@ failed:
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params )
 {
-    struct d3dkmt_object *sync;
-
     TRACE( "params %p\n", params );
 
-    if (!(sync = get_d3dkmt_object( params->hSyncObject, D3DKMT_SYNC )))
-        return STATUS_INVALID_PARAMETER;
-    d3dkmt_object_free( sync );
-
-    return STATUS_SUCCESS;
+    return d3dkmt_destroy_sync( params->hSyncObject );
 }
 
 /* get a locally opened D3DKMT object host-specific fd */
