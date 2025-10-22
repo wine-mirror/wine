@@ -71,7 +71,7 @@ static const char *debugstr_DEVPROP_FILTER_EXPRESSION( const DEVPROP_FILTER_EXPR
 }
 
 /* Evaluate a filter expression containing comparison operator. */
-static HRESULT devprop_filter_eval_compare( const DEVPROPERTY *props, UINT props_len, const DEVPROP_FILTER_EXPRESSION *filter )
+static BOOL devprop_filter_eval_compare( const DEVPROPERTY *props, UINT props_len, const DEVPROP_FILTER_EXPRESSION *filter )
 {
     const DEVPROPERTY *cmp_prop = &filter->Property;
     DEVPROP_OPERATOR op = filter->Operator;
@@ -79,9 +79,6 @@ static HRESULT devprop_filter_eval_compare( const DEVPROPERTY *props, UINT props
     BOOL ret = FALSE;
 
     TRACE( "(%p, %u, %s)\n", props, props_len, debugstr_DEVPROP_FILTER_EXPRESSION( filter ) );
-
-    if ((op & DEVPROP_OPERATOR_MASK_MODIFIER) & ~(DEVPROP_OPERATOR_MODIFIER_NOT | DEVPROP_OPERATOR_MODIFIER_IGNORE_CASE))
-        return E_INVALIDARG;
 
     switch (filter->Operator & DEVPROP_OPERATOR_MASK_EVAL)
     {
@@ -105,6 +102,7 @@ static HRESULT devprop_filter_eval_compare( const DEVPROPERTY *props, UINT props
             case DEVPROP_TYPE_STRING:
                 cmp = op & DEVPROP_OPERATOR_MODIFIER_IGNORE_CASE ? wcsicmp( prop->Buffer, cmp_prop->Buffer )
                                                                  : wcscmp( prop->Buffer, cmp_prop->Buffer );
+                TRACE( "%s vs %s -> %u\n", debugstr_w(prop->Buffer), debugstr_w(cmp_prop->Buffer), !!cmp );
                 break;
             case DEVPROP_TYPE_GUID:
                 /* Any other comparison operator other than DEVPROP_OPERATOR_EQUALS with GUIDs evaluates to false. */
@@ -127,12 +125,12 @@ static HRESULT devprop_filter_eval_compare( const DEVPROPERTY *props, UINT props
     case DEVPROP_OPERATOR_CONTAINS:
     default:
         FIXME( "Unsupported operator: %s", debugstr_DEVPROP_OPERATOR( filter->Operator & DEVPROP_OPERATOR_MASK_EVAL ) );
-        return S_OK;
+        return FALSE;
     }
 
-    if (op & DEVPROP_OPERATOR_MODIFIER_NOT)
-        ret = !ret;
-    return ret ? S_OK : S_FALSE;
+    if (op & DEVPROP_OPERATOR_MODIFIER_NOT) ret = !ret;
+    TRACE( "-> %u\n", ret );
+    return ret;
 }
 
 static const DEVPROP_FILTER_EXPRESSION *find_closing_filter( const DEVPROP_FILTER_EXPRESSION *filter, const DEVPROP_FILTER_EXPRESSION *end )
@@ -149,11 +147,11 @@ static const DEVPROP_FILTER_EXPRESSION *find_closing_filter( const DEVPROP_FILTE
     return NULL;
 }
 
-/* Return S_OK if the specified filter expressions match the object, S_FALSE if it doesn't. */
-static HRESULT devprop_filter_matches_properties( const DEVPROPERTY *props, UINT props_len, DEVPROP_OPERATOR op_outer_logical,
-                                                  const DEVPROP_FILTER_EXPRESSION *filters, const DEVPROP_FILTER_EXPRESSION *end )
+/* Return TRUE if the specified filter expressions match the object, FALSE if it doesn't. */
+static BOOL devprop_filter_matches_properties( const DEVPROPERTY *props, UINT props_len, DEVPROP_OPERATOR op_outer_logical,
+                                               const DEVPROP_FILTER_EXPRESSION *filters, const DEVPROP_FILTER_EXPRESSION *end )
 {
-    HRESULT hr = S_OK;
+    BOOL ret = TRUE;
 
     TRACE( "(%p, %u, %#x, %p, %p)\n", props, props_len, op_outer_logical, filters, end );
 
@@ -161,26 +159,22 @@ static HRESULT devprop_filter_matches_properties( const DEVPROPERTY *props, UINT
     {
         DEVPROP_OPERATOR op = filter->Operator;
 
-        if (op == DEVPROP_OPERATOR_NONE)
-        {
-            hr = S_FALSE;
-        }
+        if (op == DEVPROP_OPERATOR_NONE) ret = FALSE;
         else if (op & (DEVPROP_OPERATOR_MASK_LIST | DEVPROP_OPERATOR_MASK_ARRAY))
         {
             FIXME( "Unsupported list/array operator: %s\n", debugstr_DEVPROP_OPERATOR( op ) );
-            hr = S_FALSE;
+            ret = FALSE;
         }
         else if (op & DEVPROP_OPERATOR_MASK_LOGICAL)
         {
             const DEVPROP_FILTER_EXPRESSION *closing = find_closing_filter( filter, end );
-            hr = devprop_filter_matches_properties( props, props_len, op & DEVPROP_OPERATOR_MASK_LOGICAL, filter + 1, closing );
+            ret = devprop_filter_matches_properties( props, props_len, op & DEVPROP_OPERATOR_MASK_LOGICAL, filter + 1, closing );
             filter = closing;
         }
         else if (op & DEVPROP_OPERATOR_MASK_EVAL)
         {
-            hr = devprop_filter_eval_compare( props, props_len, filter );
+            ret = devprop_filter_eval_compare( props, props_len, filter );
         }
-        if (FAILED( hr )) break;
 
         /* See if we can short-circuit. */
         switch (op_outer_logical)
@@ -189,10 +183,10 @@ static HRESULT devprop_filter_matches_properties( const DEVPROPERTY *props, UINT
          * short circuit here as well. */
         case DEVPROP_OPERATOR_NOT_OPEN:
         case DEVPROP_OPERATOR_AND_OPEN:
-            if (hr == S_FALSE) goto done;
+            if (!ret) goto done;
             break;
         case DEVPROP_OPERATOR_OR_OPEN:
-            if (hr == S_OK) goto done;
+            if (ret) goto done;
             break;
         default:
             assert( 0 );
@@ -201,12 +195,9 @@ static HRESULT devprop_filter_matches_properties( const DEVPROPERTY *props, UINT
     }
 
 done:
-    if (op_outer_logical == DEVPROP_OPERATOR_NOT_OPEN)
-    {
-        if (hr == S_FALSE) hr = S_OK;
-        else if (hr == S_OK) hr = S_FALSE;
-    }
-    return hr;
+    if (op_outer_logical == DEVPROP_OPERATOR_NOT_OPEN) ret = !ret;
+    TRACE( "-> %u\n", ret );
+    return ret;
 }
 
 static BOOL devprop_type_validate( DEVPROPTYPE type, ULONG buf_size )
@@ -516,16 +507,18 @@ static HRESULT enum_dev_objects( DEV_OBJECT_TYPE type, const DEVPROPCOMPKEY *pro
 
             if (SUCCEEDED( hr ))
             {
+                BOOL matches;
+
                 /* Sort properties by DEVPROPCOMPKEY for faster filter evaluation. */
                 if (filters) qsort( properties, properties_len, sizeof(*properties), devproperty_compare );
 
                 /* By default, the evaluation is performed by AND-ing all individual filter expressions. */
-                hr = devprop_filter_matches_properties( properties, properties_len, DEVPROP_OPERATOR_AND_OPEN, filters, filters_end );
+                matches = devprop_filter_matches_properties( properties, properties_len, DEVPROP_OPERATOR_AND_OPEN, filters, filters_end );
 
                 /* Shrink properties to only the desired ones, unless DevQueryFlagAllProperties is set. */
                 if (!all_props) select_properties( props, props_len, &properties, &properties_len );
 
-                if (hr == S_OK) hr = callback( type, detail->DevicePath, &properties_len, &properties, data );
+                if (matches) hr = callback( type, detail->DevicePath, &properties_len, &properties, data );
             }
 
             DevFreeObjectProperties( properties_len, properties );
