@@ -71,6 +71,7 @@ struct device_memory
 
     D3DKMT_HANDLE sync;
     D3DKMT_HANDLE mutex;
+    VkSemaphore semaphore;
 };
 
 static inline struct device_memory *device_memory_from_handle( VkDeviceMemory handle )
@@ -359,6 +360,26 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
             break;
         }
 
+        if (device->has_win32_keyed_mutex && memory->sync)
+        {
+            VkSemaphoreTypeCreateInfo semaphore_type = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO};
+            VkSemaphoreCreateInfo semaphore_create = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, .pNext = &semaphore_type};
+            VkImportSemaphoreFdInfoKHR fd_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_FD_INFO_KHR};
+
+            semaphore_type.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+            if ((res = device->p_vkCreateSemaphore( device->host.device, &semaphore_create, NULL, &memory->semaphore ))) goto failed;
+
+            fd_info.handleType = get_host_external_semaphore_type();
+            fd_info.semaphore = memory->semaphore;
+            if ((fd_info.fd = d3dkmt_object_get_fd( memory->sync )) < 0)
+            {
+                res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+                goto failed;
+            }
+
+            if ((res = device->p_vkImportSemaphoreFdKHR( device->host.device, &fd_info ))) goto failed;
+        }
+
         if ((fd_info.fd = d3dkmt_object_get_fd( memory->local )) < 0)
         {
             res = VK_ERROR_INVALID_EXTERNAL_HANDLE;
@@ -409,6 +430,7 @@ static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryA
 failed:
     WARN( "Failed to allocate memory, res %d\n", res );
     if (host_device_memory) device->p_vkFreeMemory( device->host.device, host_device_memory, NULL );
+    if (memory->semaphore) device->p_vkDestroySemaphore( device->host.device, memory->semaphore, NULL );
     d3dkmt_destroy_resource( memory->local );
     d3dkmt_destroy_mutex( memory->mutex );
     d3dkmt_destroy_sync( memory->sync );
@@ -446,6 +468,7 @@ static void win32u_vkFreeMemory( VkDevice client_device, VkDeviceMemory client_m
         NtFreeVirtualMemory( GetCurrentProcess(), &memory->vm_map, &alloc_size, MEM_RELEASE );
     }
 
+    if (memory->semaphore) device->p_vkDestroySemaphore( device->host.device, memory->semaphore, NULL );
     if (memory->shared) NtClose( memory->shared );
     d3dkmt_destroy_resource( memory->local );
     d3dkmt_destroy_mutex( memory->mutex );

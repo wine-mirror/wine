@@ -602,7 +602,11 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
         if (!strcmp(*extension, "VK_EXT_swapchain_maintenance1")) has_swapchain_maintenance1 = true;
         if (!strcmp(*extension, "VK_EXT_surface_maintenance1")) has_surface_maintenance1 = true;
         if (!strcmp(*extension, "VK_KHR_swapchain")) has_swapchain = true;
-        if (!strcmp(*extension, "VK_KHR_win32_keyed_mutex")) *extension = "VK_KHR_timeline_semaphore";
+        if (!strcmp(*extension, "VK_KHR_win32_keyed_mutex"))
+        {
+            device->obj.has_win32_keyed_mutex = true;
+            *extension = "VK_KHR_timeline_semaphore";
+        }
         if (!strcmp(*extension, "VK_KHR_external_memory_win32"))
         {
             if (zero_bits && !physical_device->map_placed_align)
