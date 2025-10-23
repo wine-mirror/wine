@@ -77,6 +77,12 @@ SUCCESS 0
 FAILURE 1
 FAILURE 1
 FAILURE 1
+FAILURE 1
+SUCCESS 0
+a@space@
+b@space@
+SUCCESS 0
+a@space@
 --- success/failure for MOVE command
 FAILURE 1
 SUCCESS 0
