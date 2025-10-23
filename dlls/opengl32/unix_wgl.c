@@ -796,16 +796,16 @@ static BOOL check_extension_support( struct context *ctx, const char *extension,
 {
     size_t len;
 
-    TRACE( "Checking for extension '%s'\n", extension );
-
     /* We use the GetProcAddress function from the display driver to retrieve function pointers
      * for OpenGL and WGL extensions. In case of winex11.drv the OpenGL extension lookup is done
      * using glXGetProcAddress. This function is quite unreliable in the sense that its specs don't
      * require the function to return NULL when an extension isn't found. For this reason we check
      * if the OpenGL extension required for the function we are looking up is supported. */
 
-    while ((len = strcspn( extension, " " )))
+    while ((len = strlen( extension )))
     {
+        TRACE( "Checking for extension '%s'\n", extension );
+
         /* Check if the extension is part of the GL extension string to see if it is supported. */
         if (has_extension( available_extensions, extension, len )) return TRUE;
 
@@ -826,8 +826,7 @@ static BOOL check_extension_support( struct context *ctx, const char *extension,
                   major, minor, ctx->major_version, ctx->minor_version );
         }
 
-        if (extension[len] == ' ') len++;
-        extension += len;
+        extension += len + 1;
     }
 
     return FALSE;

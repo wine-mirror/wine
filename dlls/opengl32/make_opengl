@@ -1622,7 +1622,7 @@ foreach (sort keys %ext_functions)
         push @exts, $ext;
         push @exts, $extension_aliases{$ext} if defined $extension_aliases{$ext};
     }
-    printf OUT "    { \"%s\", \"%s\", offsetof(struct opengl_funcs, p_$_) },\n", $_, join(" ", sort @exts);
+    printf OUT "    { \"%s\", \"%s\\0\", offsetof(struct opengl_funcs, p_$_) },\n", $_, join("\\0", sort @exts);
 }
 print OUT "};\n";
 
