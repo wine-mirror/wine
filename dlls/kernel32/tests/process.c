@@ -4404,6 +4404,7 @@ static void test_ProcThreadAttributeList(void)
     int i;
     struct _PROC_THREAD_ATTRIBUTE_LIST list, expect_list;
     HANDLE handles[4];
+    GROUP_AFFINITY gaff = {.Group = 0, .Mask = 0xffff};
 
     if (!pInitializeProcThreadAttributeList)
     {
@@ -4501,6 +4502,18 @@ static void test_ProcThreadAttributeList(void)
         expect_list.attrs[i].attr = PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE;
         expect_list.attrs[i].size = sizeof(HPCON);
         expect_list.attrs[i].value = handles;
+    }
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY, &gaff, sizeof(gaff), NULL, NULL);
+    todo_wine
+    ok(ret, "got %d gle %ld\n", ret, GetLastError());
+    if (ret)
+    {
+        unsigned int i = expect_list.count++;
+        expect_list.mask |= 1 << ProcThreadAttributeGroupAffinity;
+        expect_list.attrs[i].attr = PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY;
+        expect_list.attrs[i].size = sizeof(GROUP_AFFINITY);
+        expect_list.attrs[i].value = &gaff;
     }
 
     ok(!memcmp(&list, &expect_list, size), "mismatch\n");
