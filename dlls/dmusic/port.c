@@ -686,6 +686,7 @@ static const IKsControlVtbl ikscontrol_vtbl = {
 HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
         DMUS_PORTCAPS *port_caps, IDirectMusicPort **port)
 {
+    IKsControl *synth_control = NULL;
     struct synth_port *obj;
     HRESULT hr = E_FAIL;
     int i;
@@ -712,6 +713,9 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
             (void **)&obj->synth);
 
     if (SUCCEEDED(hr))
+        hr = IDirectMusicSynth_QueryInterface(obj->synth, &IID_IKsControl, (void **)&synth_control);
+
+    if (SUCCEEDED(hr))
         hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynthSink, (void**)&obj->synth_sink);
 
     if (SUCCEEDED(hr))
@@ -725,6 +729,29 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
 
     if (SUCCEEDED(hr))
         hr = IDirectMusicSynth_Open(obj->synth, port_params);
+
+    if (SUCCEEDED(hr))
+    {
+        KSPROPERTY volume_prop;
+        DWORD volume_size;
+        LONG volume = 0;
+
+        volume = -600;
+        volume_prop.Set = GUID_DMUS_PROP_Volume;
+        volume_prop.Id = 0;
+        volume_prop.Flags = KSPROPERTY_TYPE_SET;
+
+        IKsControl_KsProperty(synth_control, &volume_prop, sizeof(volume_prop), &volume,
+                sizeof(volume), &volume_size);
+
+        volume = 0;
+        volume_prop.Set = GUID_DMUS_PROP_Volume;
+        volume_prop.Id = 1;
+        volume_prop.Flags = KSPROPERTY_TYPE_SET;
+
+        IKsControl_KsProperty(synth_control, &volume_prop, sizeof(volume_prop), &volume,
+                sizeof(volume), &volume_size);
+    }
 
     if (0)
     {
@@ -752,6 +779,9 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
             }
         }
     }
+
+    if (synth_control)
+        IKsControl_Release(synth_control);
 
     if (SUCCEEDED(hr)) {
         *port = &obj->IDirectMusicPort_iface;
