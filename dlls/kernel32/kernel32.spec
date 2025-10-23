@@ -376,6 +376,7 @@
 # @ stub DisableThreadProfiling
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) NTDLL.TpDisassociateCallback
 @ stdcall DiscardVirtualMemory(ptr long) kernelbase.DiscardVirtualMemory
+@ stdcall DeleteSynchronizationBarrier(ptr)
 @ stdcall DeleteTimerQueue(long)
 @ stdcall -import DeleteTimerQueueEx(long long)
 @ stdcall -import DeleteTimerQueueTimer(long long long)
@@ -424,6 +425,7 @@
 @ stdcall -import EnumResourceTypesExA(long ptr long long long)
 @ stdcall -import EnumResourceTypesExW(long ptr long long long)
 @ stdcall EnumResourceTypesW(long ptr long)
+@ stdcall EnterSynchronizationBarrier(ptr long)
 @ stdcall EnumSystemCodePagesA(ptr long)
 @ stdcall -import EnumSystemCodePagesW(ptr long)
 @ stdcall -import EnumSystemFirmwareTables(long ptr long)
@@ -977,6 +979,7 @@
 @ stdcall -import InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall -import InitializeCriticalSectionEx(ptr long long)
 @ stdcall -import InitializeProcThreadAttributeList(ptr long long ptr)
+@ stdcall InitializeSynchronizationBarrier(ptr long long)
 @ stdcall InitializeSListHead(ptr) NTDLL.RtlInitializeSListHead
 @ stdcall InitializeSRWLock(ptr) NTDLL.RtlInitializeSRWLock
 @ stdcall -arch=i386 InterlockedCompareExchange (ptr long long)
