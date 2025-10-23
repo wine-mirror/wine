@@ -407,4 +407,5 @@ Enter HELP <command> for further information on any of the above commands.\n"
   WCMD_ENDOFLINE, "End of line"
   WCMD_ENDOFFILE, "End of file"
   WCMD_NUMCOPIED, "%t%1!u! file(s) copied\n"
+  WCMD_NOCOPYTOSELF, "File cannot be copied onto itself.\n"
 }

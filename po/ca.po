@@ -14896,6 +14896,12 @@ msgstr "S'ha acabat el fitxer.\n"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%1!d! fitxer(s) copiat(s)\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "The file cannot be accessed.\n"
+msgid "File cannot be copied onto itself.\n"
+msgstr "No es pot accedir al fitxer.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Mida de cursor"

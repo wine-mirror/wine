@@ -14793,6 +14793,12 @@ msgstr "Koniec pliku"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "Skopiowano %t%1!u! plik(ów)\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "The file cannot be accessed.\n"
+msgid "File cannot be copied onto itself.\n"
+msgstr "Nie można uzyskać dostępu do pliku.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Rozmiar kursora"

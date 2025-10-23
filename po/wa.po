@@ -14676,6 +14676,10 @@ msgstr "&Rafacer\tDel"
 msgid "%t%1!u! file(s) copied\n"
 msgstr ""
 
+#: programs/cmd/cmd.rc:411
+msgid "File cannot be copied onto itself.\n"
+msgstr ""
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

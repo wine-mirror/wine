@@ -14562,6 +14562,12 @@ msgstr "文件尾"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "已复制 %1!d! 个文件\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "The file cannot be accessed.\n"
+msgid "File cannot be copied onto itself.\n"
+msgstr "无法访问此文件。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "光标尺寸"

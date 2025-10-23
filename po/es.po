@@ -15473,6 +15473,12 @@ msgstr "Fin del archivo.\n"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%1!d! archivo(s) copiados\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "The file cannot be accessed.\n"
+msgid "File cannot be copied onto itself.\n"
+msgstr "El fichero no puede ser accedido.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamaño del cursor"

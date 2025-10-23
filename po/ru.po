@@ -15075,6 +15075,12 @@ msgstr "Конец файла"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "Скопировано %1!d! файл(ов)\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "The file cannot be accessed.\n"
+msgid "File cannot be copied onto itself.\n"
+msgstr "Система не может обратиться к файлу.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Размер курсора"

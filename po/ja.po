@@ -14749,6 +14749,12 @@ msgstr "ファイルの終端"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%t%1!d! ファイルをコピーしました\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "The file cannot be accessed.\n"
+msgid "File cannot be copied onto itself.\n"
+msgstr "ネットワーク上の場所にアクセスできません。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "カーソルの大きさ"

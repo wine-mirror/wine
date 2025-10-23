@@ -15316,6 +15316,10 @@ msgstr "&Додај у омиљене..."
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%d датотека/е је умножено\n"
 
+#: programs/cmd/cmd.rc:411
+msgid "File cannot be copied onto itself.\n"
+msgstr ""
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

@@ -523,17 +523,15 @@ static BOOL WCMD_IsSameFile(const WCHAR *name1, const WCHAR *name2)
   BY_HANDLE_FILE_INFORMATION info1, info2;
 
   file1 = CreateFileW(name1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-  if (file1 == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(file1, &info1))
-    goto end;
+  if (file1 != INVALID_HANDLE_VALUE && GetFileInformationByHandle(file1, &info1)) {
+    file2 = CreateFileW(name2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+    if (file2 != INVALID_HANDLE_VALUE && GetFileInformationByHandle(file2, &info2)) {
+      ret = info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
+        && info1.nFileIndexHigh == info2.nFileIndexHigh
+        && info1.nFileIndexLow == info2.nFileIndexLow;
+    }
+  }
 
-  file2 = CreateFileW(name2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-  if (file2 == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(file2, &info2))
-    goto end;
-
-  ret = info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
-    && info1.nFileIndexHigh == info2.nFileIndexHigh
-    && info1.nFileIndexLow == info2.nFileIndexLow;
-end:
   if (file1 != INVALID_HANDLE_VALUE)
     CloseHandle(file1);
   if (file2 != INVALID_HANDLE_VALUE)
@@ -673,6 +671,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
   DWORD   len;
   BOOL    dstisdevice = FALSE;
   unsigned numcopied = 0;
+  BOOL    want_numcopied = FALSE;
 
   typedef struct _COPY_FILES
   {
@@ -1042,6 +1041,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
         WCHAR outname[MAX_PATH];
         BOOL  overwrite;
         BOOL  appendtofirstfile = FALSE;
+        BOOL  issamefile;
 
         /* Skip . and .., and directories */
         if (!srcisdevice && fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -1061,13 +1061,24 @@ RETURN_CODE WCMD_copy(WCHAR * args)
             overwrite = TRUE;
           }
 
+          issamefile = WCMD_IsSameFile(srcpath, outname);
+
           WINE_TRACE("Copying from : '%s'\n", wine_dbgstr_w(srcpath));
           WINE_TRACE("Copying to : '%s'\n", wine_dbgstr_w(outname));
           WINE_TRACE("Flags: srcbinary(%d), dstbinary(%d), over(%d), prompt(%d)\n",
                      thiscopy->binarycopy, destination->binarycopy, overwrite, prompt);
 
+          if (!anyconcats && issamefile) {
+            WCMD_output_asis(srcpath);
+            WCMD_output_asis(L"\r\n");
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOCOPYTOSELF));
+            return_code = ERROR_INVALID_FUNCTION;
+            want_numcopied = TRUE;
+            break;
+          }
+
           if (!writtenoneconcat) {
-            appendtofirstfile = anyconcats && WCMD_IsSameFile(srcpath, outname);
+            appendtofirstfile = anyconcats && issamefile;
           }
 
           /* Prompt before overwriting */
@@ -1099,7 +1110,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
               WCMD_output_asis(srcpath);
               WCMD_output_asis(L"\r\n");
             }
-            if (anyconcats && WCMD_IsSameFile(srcpath, outname)) {
+            if (anyconcats && issamefile) {
               /* behavior is as Unix 'touch' (change last-written time only) */
               HANDLE file = CreateFileW(srcpath, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
                                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -1169,7 +1180,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
     }
   }
 
-  if (numcopied) {
+  if (numcopied || want_numcopied) {
     WCMD_output(WCMD_LoadMessage(WCMD_NUMCOPIED), numcopied);
   }
 

@@ -15843,6 +15843,10 @@ msgstr "Sfârșit de fișier.\n"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%1!d! fișier(e) copiat(e)\n"
 
+#: programs/cmd/cmd.rc:411
+msgid "File cannot be copied onto itself.\n"
+msgstr ""
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Dimensiune cursor"
