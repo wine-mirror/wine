@@ -4044,12 +4044,11 @@ uint32_t macdrv_window_background_color(void)
  * processed by input sources (AKA IMEs). This is only called when there is an
  * active non-keyboard input source.
  */
-void macdrv_ime_process_key(int keyc, unsigned int flags, int repeat, void *himc,
-                            int *done, void *ime_done_event)
+int macdrv_ime_process_key(int keyc, unsigned int flags, int repeat, void *himc)
 {
-    OnMainThreadAsync(^{
-        BOOL ret;
-        macdrv_event* event;
+    __block BOOL ret;
+
+    OnMainThread(^{
         WineWindow* window = (WineWindow*)[NSApp keyWindow];
         if (![window isKindOfClass:[WineWindow class]])
         {
@@ -4081,14 +4080,9 @@ void macdrv_ime_process_key(int keyc, unsigned int flags, int repeat, void *himc
         }
         else
             ret = FALSE;
-
-        event = macdrv_create_event(SENT_TEXT_INPUT, window);
-        event->sent_text_input.handled = ret;
-        event->sent_text_input.done = done;
-        event->sent_text_input.ime_done_event = ime_done_event;
-        [[window queue] postEvent:event];
-        macdrv_release_event(event);
     });
+
+    return (int)ret;
 }
 
 void macdrv_clear_ime_text(void)

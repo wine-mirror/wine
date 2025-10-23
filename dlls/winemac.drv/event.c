@@ -61,7 +61,6 @@ static const char *dbgstr_event(int type)
         "QUERY_EVENT_NO_PREEMPT_WAIT",
         "REASSERT_WINDOW_POSITION",
         "RELEASE_CAPTURE",
-        "SENT_TEXT_INPUT",
         "STATUS_ITEM_MOUSE_BUTTON",
         "STATUS_ITEM_MOUSE_MOVE",
         "WINDOW_BROUGHT_FORWARD",
@@ -138,7 +137,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(QUERY_EVENT_NO_PREEMPT_WAIT);
         event_mask |= event_mask_for_type(REASSERT_WINDOW_POSITION);
         event_mask |= event_mask_for_type(RELEASE_CAPTURE);
-        event_mask |= event_mask_for_type(SENT_TEXT_INPUT);
         event_mask |= event_mask_for_type(WINDOW_BROUGHT_FORWARD);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DRAG_BEGIN);
@@ -183,19 +181,6 @@ static void macdrv_im_set_text(const macdrv_event *event)
                          text, NULL);
 
     free(text);
-}
-
-/***********************************************************************
- *              macdrv_sent_text_input
- */
-static void macdrv_sent_text_input(const macdrv_event *event)
-{
-    HANDLE ime_done_event = event->sent_text_input.ime_done_event;
-
-    TRACE_(imm)("handled: %s\n", event->sent_text_input.handled ? "TRUE" : "FALSE");
-
-    *event->sent_text_input.done = event->sent_text_input.handled ? 1 : -1;
-    if (ime_done_event) NtSetEvent(ime_done_event, NULL);
 }
 
 
@@ -474,9 +459,6 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case RELEASE_CAPTURE:
         macdrv_release_capture(hwnd, event);
-        break;
-    case SENT_TEXT_INPUT:
-        macdrv_sent_text_input(event);
         break;
     case STATUS_ITEM_MOUSE_BUTTON:
         macdrv_status_item_mouse_button(event);
