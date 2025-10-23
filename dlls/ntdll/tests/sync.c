@@ -24,6 +24,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "setjmp.h"
 #include "wine/test.h"
 
 static NTSTATUS (WINAPI *pNtAlertThreadByThreadId)( HANDLE );
@@ -1138,11 +1139,75 @@ static void test_delayexecution(void)
     }
 }
 
+static jmp_buf call_exception_jmpbuf;
+
+static LONG WINAPI call_exception_handler( EXCEPTION_POINTERS *eptr )
+{
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+
+    longjmp(call_exception_jmpbuf, rec->ExceptionCode);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+struct test_barrier_thread_param
+{
+    RTL_BARRIER *barrier;
+    ULONG flags;
+    LONG thread_count;
+    BOOL wait_skipped;
+    volatile LONG *count;
+    volatile LONG *true_ret_count;
+};
+
+static DWORD WINAPI test_barrier_thread(void *param)
+{
+    struct test_barrier_thread_param *p = param;
+
+    InterlockedIncrement( p->count );
+    if (pRtlBarrier( p->barrier, p->flags ))
+        InterlockedIncrement( p->true_ret_count );
+    if (!p->wait_skipped)
+        ok( *p->count == p->thread_count, "got %ld.\n", *p->count );
+    return 0;
+}
+
+static DWORD WINAPI test_barrier_delete_thread(void *param)
+{
+    struct test_barrier_thread_param *p = param;
+
+    pRtlDeleteBarrier( p->barrier );
+    if (p->flags & 0x10000)
+    {
+        ok( *p->count == p->thread_count, "got %ld.\n", *p->count );
+    }
+    else
+    {
+        /* No wait was performed. */
+        ok( *p->count <= p->thread_count, "got %ld.\n", *p->count );
+    }
+
+    return 0;
+}
+
 static void test_barrier(void)
 {
+    static const ULONG rtl_barrier_flags[] =
+    {
+        0,
+        0x10000,
+        ~0u,
+        1,
+    };
+    struct test_barrier_thread_param p, p2;
+    volatile LONG count, true_ret_count;
+    HANDLE threads[8], delete_thread;
+    void *vectored_handler;
+    unsigned int i, test;
     RTL_BARRIER barrier;
     NTSTATUS status;
+    int exc_code;
     BOOLEAN bval;
+    DWORD ret;
 
     if (!pRtlInitBarrier)
     {
@@ -1150,16 +1215,149 @@ static void test_barrier(void)
         return;
     }
 
+
+    vectored_handler = AddVectoredExceptionHandler(TRUE, call_exception_handler);
+    status = 0;
+    if (!(exc_code = setjmp(call_exception_jmpbuf)))
+        status = pRtlInitBarrier( NULL, 1, -1 );
+    if (exc_code == STATUS_ACCESS_VIOLATION)
+    {
+        /* Crashes before Win10 1607; the other behaviour details are also different. */
+        win_skip( "Old synchronization barriers implementation, skipping tests.\n" );
+        return;
+    }
+    ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+    RemoveVectoredExceptionHandler(vectored_handler);
+
+    status = pRtlInitBarrier(  &barrier, -2, -1 );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier(  &barrier, INT_MAX, -1 );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier(  &barrier, 0, -1 );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier(  &barrier, 1, -2 );
+    ok( !status, "got %#lx.\n", status );
+
+    status = pRtlInitBarrier(  &barrier, 1, INT_MAX );
+    ok( !status, "got %#lx.\n", status );
+
     status = pRtlInitBarrier( &barrier, 1, -1 );
     ok( !status, "got %#lx.\n", status );
 
     bval = pRtlBarrier( &barrier, 0 );
     ok( bval == 1, "got %#x.\n", bval );
 
+    bval = pRtlBarrier( NULL, 0 );
+    ok( !bval, "got %#x.\n", bval );
+
     bval = pRtlBarrier( &barrier, 0 );
     ok( bval == 1, "got %#x.\n", bval );
 
+    pRtlDeleteBarrier( NULL );
+
     pRtlDeleteBarrier( &barrier );
+
+    bval = pRtlBarrier( &barrier, 0 );
+    ok( bval == 1, "got %#x.\n", bval );
+
+    /* Previously completed barrier. */
+    p.barrier = &barrier;
+    p.flags = 0;
+    p.thread_count = ARRAY_SIZE(threads) + 1;
+    p.count = &count;
+    p.true_ret_count = &true_ret_count;
+    p.wait_skipped = TRUE;
+    count = 0;
+    true_ret_count = 0;
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+        threads[i] = CreateThread( NULL, 0, test_barrier_thread, &p, 0, NULL );
+    InterlockedIncrement( p.count );
+    if (pRtlBarrier( p.barrier, p.flags ))
+        InterlockedIncrement( p.true_ret_count );
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+    {
+        WaitForSingleObject( threads[i], INFINITE );
+        CloseHandle( threads[i] );
+    }
+    ok( true_ret_count == p.thread_count, "got %ld.\n", true_ret_count );
+
+    /* Normal case. */
+    status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
+    ok( !status, "got %#lx.\n", status );
+    /* RtlDeleteBarrier doesn't seem to do anything unless there are threads already waiting on the barrier with
+     * flag 0x10000 (and then it will wait for those to finish). */
+    pRtlDeleteBarrier( &barrier );
+    p.flags = 0x10000;
+    p.wait_skipped = FALSE;
+    count = 0;
+    true_ret_count = 0;
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+        threads[i] = CreateThread( NULL, 0, test_barrier_thread, &p, 0, NULL );
+    InterlockedIncrement( p.count );
+    if (pRtlBarrier( p.barrier, p.flags ))
+        InterlockedIncrement( p.true_ret_count );
+    /* RtlDeleteBarrier (with 0x10000 flag passed to RtlBarrier) will wait for the waiters to be actually woken
+     * before returning. Without calling RtlDeleteBarrier or setting 0x10000 flag here the test will randomly
+     * fire an exception or hang (because RtlInitBarrier will break the not yet woken waiters wake up. */
+    pRtlDeleteBarrier( &barrier );
+    pRtlInitBarrier( &barrier, p.thread_count, -1 );
+    /* p.count is incremented before barrier wait, check at once. */
+    ok( *p.count == p.thread_count, "got %ld.\n", *p.count );
+    for (i = 0; i < ARRAY_SIZE(threads); ++i)
+    {
+        WaitForSingleObject( threads[i], INFINITE );
+        CloseHandle( threads[i] );
+    }
+    /* Only check after all the threads are finished and thus guaranteed to exit RtlBarrier() and increment true_ret_count. */
+    ok( true_ret_count == 1, "got %ld.\n", true_ret_count );
+
+    /* Test wait in RtlDeleteBarrier(). */
+    for (test = 0; test < ARRAY_SIZE(rtl_barrier_flags); ++test)
+    {
+        winetest_push_context( "flags %#lx", rtl_barrier_flags[test] );
+        p.thread_count = ARRAY_SIZE(threads);
+        status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
+        ok( !status, "got %#lx.\n", status );
+        true_ret_count = 0;
+        p.wait_skipped = FALSE;
+        count = 0;
+        true_ret_count = 0;
+        p.flags = rtl_barrier_flags[test];
+        threads[0] = CreateThread( NULL, 0, test_barrier_thread, &p, 0, NULL );
+        /* Now try to make sure the thread has entered barrier wait before spawning test_barrier_delete_thread. */
+        while (!ReadAcquire( p.count ))
+            Sleep(1);
+        Sleep(16);
+
+        delete_thread = CreateThread( NULL, 0, test_barrier_delete_thread, &p, 0, NULL );
+        ret = WaitForSingleObject( delete_thread, 100 );
+        if (p.flags & 0x10000)
+            ok( ret == WAIT_TIMEOUT, "got %#lx.\n", ret );
+        else
+            ok( !ret, "got %#lx.\n", ret );
+
+        /* If barrier waiters joined with flag 0x10000 after RtlDeleteBarrier started the wait, all the barrier
+         * waiting threads and RtlDeleteBarrier will hang forever on Windows for some reason. So create the rest of
+         * the waiters without the flag. */
+        p2 = p;
+        p2.flags = 0;
+        for (i = 1; i < ARRAY_SIZE(threads); ++i)
+            threads[i] = CreateThread( NULL, 0, test_barrier_thread, &p2, 0, NULL );
+
+        WaitForSingleObject( delete_thread, INFINITE );
+        CloseHandle( delete_thread );
+        for (i = 0; i < ARRAY_SIZE(threads); ++i)
+        {
+            WaitForSingleObject( threads[i], INFINITE );
+            CloseHandle( threads[i] );
+        }
+        ok( *p.count == p.thread_count, "got %ld.\n", *p.count );
+        ok( true_ret_count == 1, "got %ld.\n", true_ret_count );
+        winetest_pop_context();
+    }
 }
 
 START_TEST(sync)

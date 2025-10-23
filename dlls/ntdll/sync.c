@@ -1376,13 +1376,32 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 }
 
 
+struct barrier_impl
+{
+    LONG spin_count;
+    LONG total_thread_count;
+    volatile LONG reached_thread_count;
+    volatile LONG waiting_thread_count;
+    volatile LONG wait_barrier_complete;
+};
+
+C_ASSERT( sizeof(struct barrier_impl) <= sizeof(RTL_BARRIER) );
+
 /***********************************************************************
  *           RtlInitBarrier  (NTDLL.@)
  */
 NTSTATUS WINAPI RtlInitBarrier( RTL_BARRIER *barrier, LONG thread_count, LONG spin_count )
 {
-    FIXME( "barrier %p, thread_count %ld, spin_count %ld stub.\n", barrier, thread_count, spin_count );
+    struct barrier_impl *b = (struct barrier_impl *)barrier;
 
+    TRACE( "barrier %p, thread_count %ld, spin_count %ld.\n", barrier, thread_count, spin_count );
+
+    if (!barrier) return STATUS_INVALID_PARAMETER;
+    b->total_thread_count = thread_count;
+    b->spin_count = spin_count;
+    b->reached_thread_count = 0;
+    b->waiting_thread_count = 0;
+    b->wait_barrier_complete = 0;
     return STATUS_SUCCESS;
 }
 
@@ -1392,7 +1411,20 @@ NTSTATUS WINAPI RtlInitBarrier( RTL_BARRIER *barrier, LONG thread_count, LONG sp
  */
 void WINAPI RtlDeleteBarrier( RTL_BARRIER *barrier )
 {
-    FIXME( "barrier %p stub.\n", barrier );
+    struct barrier_impl *b = (struct barrier_impl *)barrier;
+    LONG count;
+
+    TRACE( "barrier %p.\n", barrier );
+
+    if (!barrier) return;
+    if (ReadAcquire( &b->reached_thread_count ) < b->total_thread_count && b->waiting_thread_count)
+    {
+        /* On Windows this case will make RtlDeleteBarrier and the threads joining after wait forever,
+         * unless the threads joining after will have SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE. */
+        ERR( "called before the barrier wait is satisfied.\n" );
+    }
+    while ((count = ReadAcquire( &b->waiting_thread_count )))
+        RtlWaitOnAddress( (void *)&b->waiting_thread_count, &count, sizeof(b->waiting_thread_count), NULL );
 }
 
 
@@ -1401,7 +1433,52 @@ void WINAPI RtlDeleteBarrier( RTL_BARRIER *barrier )
  */
 BOOLEAN WINAPI RtlBarrier( RTL_BARRIER *barrier, ULONG flags )
 {
-    FIXME( "barrier %p, flags %#lx stub.\n", barrier, flags );
+    static unsigned int once;
+    static const LONG zero;
 
-    return TRUE;
+    struct barrier_impl *b = (struct barrier_impl *)barrier;
+    unsigned int spin_count, count;
+    BOOL ret = FALSE;
+
+    TRACE( "barrier %p, flags %#lx.\n", barrier, flags );
+
+    if (flags & ~0x10000 && !once++) FIXME( "Unknown flags %#lx.\n", flags );
+    if (!barrier) return FALSE;
+
+    if (ReadAcquire( &b->reached_thread_count ) >= b->total_thread_count) return TRUE;
+
+    /* Incrementing reached_thread_count may trigger RTL_BARRIER data desrtuction from another thread,
+     * so lock RtlDeleteBarrier with waiting_thread_count before that. */
+    if (flags & 0x10000) InterlockedIncrement( &b->waiting_thread_count );
+    if (InterlockedIncrement( &b->reached_thread_count ) == b->total_thread_count)
+    {
+        WriteRelease( &b->wait_barrier_complete, 1 );
+        RtlWakeAddressAll( (const void *)&b->wait_barrier_complete );
+        ret = TRUE;
+        goto done;
+    }
+    /* On Windows the long wait doesn't consume CPU with any spin count, so probably the spin count
+     * is limited or not used at all. */
+    spin_count = min( 2000, (unsigned int)b->spin_count );
+    count = 0;
+    while (ReadAcquire( &b->reached_thread_count ) < b->total_thread_count )
+    {
+        if (count < spin_count)
+        {
+            ++count;
+            YieldProcessor();
+            continue;
+        }
+        RtlWaitOnAddress( (void *)&b->wait_barrier_complete, &zero, sizeof(b->wait_barrier_complete), NULL );
+    }
+
+done:
+    if (flags & 0x10000 && !InterlockedDecrement( &b->waiting_thread_count ))
+    {
+        /* Now RTL_BARRIER structure contents may become invalid. Signaling on its address should be fine, the worst
+         * (unlikely) case it will wake something unrelated on reused address but that should be a legitimate spurious
+         * wakeup case. */
+        RtlWakeAddressAll( (const void *)&b->waiting_thread_count );
+    }
+    return ret;
 }
