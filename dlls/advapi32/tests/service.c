@@ -3023,6 +3023,62 @@ static void test_EventLog(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_LockServiceDatabase(void)
+{
+    static const struct
+    {
+        DWORD access, error;
+    } td[] =
+    {
+        { 0, ERROR_ACCESS_DENIED },
+        { SC_MANAGER_CONNECT, ERROR_ACCESS_DENIED },
+        { SC_MANAGER_LOCK, 0 }
+    };
+    SC_HANDLE hscm;
+    SC_LOCK lock;
+    int i, ret;
+
+    for (i = 0; i < ARRAY_SIZE(td); i++)
+    {
+        winetest_push_context("%d", i);
+
+        hscm = OpenSCManagerW(NULL, NULL, td[i].access);
+        if (!hscm)
+        {
+            skip("OpenSCManager(%08lx) error %lu, skipping the tests\n", td[i].access, GetLastError());
+            break;
+        }
+
+        SetLastError(0xdeadbeef);
+        lock = LockServiceDatabase(hscm);
+        if (!td[i].error)
+        {
+            ok(lock != NULL, "LockServiceDatabase() error %lu\n", GetLastError());
+            SetLastError(0xdeadbeef);
+            ret = UnlockServiceDatabase(lock);
+            ok(ret, "UnlockServiceDatabase() error %lu\n", GetLastError());
+        }
+        else
+        {
+            todo_wine
+            ok(!lock, "LockServiceDatabase() should fail\n");
+            todo_wine
+            ok(td[i].error == GetLastError(), "got %lu\n", GetLastError());
+        }
+
+        SetLastError(0xdeadbeef);
+        ret = UnlockServiceDatabase(lock);
+        todo_wine
+        ok(!ret, "UnlockServiceDatabase() should fail\n");
+        todo_wine
+        ok(GetLastError() == ERROR_INVALID_SERVICE_LOCK, "got %lu\n", GetLastError());
+
+        winetest_pop_context();
+    }
+
+    CloseServiceHandle(hscm);
+}
+
 static DWORD WINAPI ctrl_handler(DWORD ctl, DWORD type, void *data, void *user)
 {
     HANDLE evt = user;
@@ -3110,6 +3166,7 @@ START_TEST(service)
     test_get_displayname();
     test_get_servicekeyname();
     test_query_svc();
+    test_LockServiceDatabase();
 
     /* Services may start or stop between enumeration calls, leading to
      * inconsistencies and failures. So we may need a couple attempts.
