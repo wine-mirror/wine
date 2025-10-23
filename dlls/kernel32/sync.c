@@ -33,6 +33,8 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "ddk/wdm.h"
+#define _WINMM_
+#include "mmsystem.h"
 
 #include "wine/asm.h"
 #include "kernel_private.h"
@@ -783,6 +785,79 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 BOOL WINAPI BindIoCompletionCallback( HANDLE handle, LPOVERLAPPED_COMPLETION_ROUTINE func, ULONG flags )
 {
     return set_ntstatus( RtlSetIoCompletionCallback( handle, (PRTL_OVERLAPPED_COMPLETION_ROUTINE)func, flags ));
+}
+
+/* MMSYSTEM time functions */
+
+#define MMSYSTIME_MININTERVAL 1
+#define MMSYSTIME_MAXINTERVAL 65535
+
+/******************************************************************************
+ *		timeGetTime (KERNEL32.@)
+ */
+DWORD WINAPI timeGetTime(void)
+{
+    LARGE_INTEGER now, freq;
+
+    QueryPerformanceCounter(&now);
+    QueryPerformanceFrequency(&freq);
+
+    return (now.QuadPart * 1000) / freq.QuadPart;
+}
+
+/******************************************************************************
+ *		timeGetSystemTime (KERNEL32.@)
+ */
+MMRESULT WINAPI timeGetSystemTime(MMTIME *time, UINT size)
+{
+    if (size >= sizeof(*time))
+    {
+        time->wType = TIME_MS;
+        time->u.ms = timeGetTime();
+    }
+    return 0;
+}
+
+/******************************************************************************
+ *		timeGetDevCaps (KERNEL32.@)
+ */
+MMRESULT WINAPI timeGetDevCaps(TIMECAPS *caps, UINT size)
+{
+    TRACE("(%p, %u)\n", caps, size);
+
+    if (!caps) return TIMERR_NOCANDO;
+    if (size < sizeof(TIMECAPS)) return TIMERR_NOCANDO;
+    caps->wPeriodMin = MMSYSTIME_MININTERVAL;
+    caps->wPeriodMax = MMSYSTIME_MAXINTERVAL;
+    return 0;
+}
+
+/******************************************************************************
+ *		timeBeginPeriod (KERNEL32.@)
+ */
+MMRESULT WINAPI timeBeginPeriod(UINT period)
+{
+    if (period < MMSYSTIME_MININTERVAL || period > MMSYSTIME_MAXINTERVAL)
+        return TIMERR_NOCANDO;
+
+    if (period > MMSYSTIME_MININTERVAL)
+        WARN("Stub; we set our timer resolution at minimum\n");
+
+    return 0;
+}
+
+/******************************************************************************
+ *		timeEndPeriod (KERNEL32.@)
+ */
+MMRESULT WINAPI timeEndPeriod(UINT period)
+{
+    if (period < MMSYSTIME_MININTERVAL || period > MMSYSTIME_MAXINTERVAL)
+        return TIMERR_NOCANDO;
+
+    if (period > MMSYSTIME_MININTERVAL)
+        WARN("Stub; we set our timer resolution at minimum\n");
+
+    return 0;
 }
 
 

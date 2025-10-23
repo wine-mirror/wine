@@ -1714,6 +1714,11 @@
 @ stdcall -import lstrlen(str)
 @ stdcall -import lstrlenA(str)
 @ stdcall -import lstrlenW(wstr)
+@ stdcall timeBeginPeriod(long)
+@ stdcall timeEndPeriod(long)
+@ stdcall timeGetDevCaps(ptr long)
+@ stdcall timeGetSystemTime(ptr long)
+@ stdcall timeGetTime()
 
 ################################################################
 # Wine internal extensions
