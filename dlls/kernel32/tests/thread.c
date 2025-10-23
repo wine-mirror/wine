@@ -88,21 +88,26 @@ static BOOL (WINAPI *pUnregisterWait)(HANDLE);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static BOOL (WINAPI *pSetThreadErrorMode)(DWORD,PDWORD);
 static DWORD (WINAPI *pGetThreadErrorMode)(void);
-static DWORD (WINAPI *pRtlGetThreadErrorMode)(void);
 static PTP_POOL (WINAPI *pCreateThreadpool)(PVOID);
 static void (WINAPI *pCloseThreadpool)(PTP_POOL);
 static PTP_WORK (WINAPI *pCreateThreadpoolWork)(PTP_WORK_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
 static void (WINAPI *pSubmitThreadpoolWork)(PTP_WORK);
 static void (WINAPI *pWaitForThreadpoolWorkCallbacks)(PTP_WORK,BOOL);
 static void (WINAPI *pCloseThreadpoolWork)(PTP_WORK);
-static NTSTATUS (WINAPI *pNtQueryInformationThread)(HANDLE,THREADINFOCLASS,PVOID,ULONG,PULONG);
 static BOOL (WINAPI *pGetThreadGroupAffinity)(HANDLE,GROUP_AFFINITY*);
 static BOOL (WINAPI *pSetThreadGroupAffinity)(HANDLE,const GROUP_AFFINITY*,GROUP_AFFINITY*);
-static NTSTATUS (WINAPI *pNtSetInformationThread)(HANDLE,THREADINFOCLASS,LPCVOID,ULONG);
+static BOOL (WINAPI *pInitializeProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD, SIZE_T*);
+static BOOL (WINAPI *pUpdateProcThreadAttribute)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD_PTR, void *,SIZE_T,void*,SIZE_T*);
+static void (WINAPI *pDeleteProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*);
 static HRESULT (WINAPI *pSetThreadDescription)(HANDLE,const WCHAR *);
 static HRESULT (WINAPI *pGetThreadDescription)(HANDLE,WCHAR **);
+static HANDLE (WINAPI *pCreateRemoteThreadEx)(HANDLE, SECURITY_ATTRIBUTES *, SIZE_T, LPTHREAD_START_ROUTINE,
+                                              LPVOID, DWORD, LPPROC_THREAD_ATTRIBUTE_LIST, DWORD *);
+static NTSTATUS (WINAPI *pNtSetInformationThread)(HANDLE,THREADINFOCLASS,LPCVOID,ULONG);
 static PVOID (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG,PVECTORED_EXCEPTION_HANDLER);
 static ULONG (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
+static NTSTATUS (WINAPI *pNtQueryInformationThread)(HANDLE,THREADINFOCLASS,PVOID,ULONG,PULONG);
+static DWORD (WINAPI *pRtlGetThreadErrorMode)(void);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -2634,6 +2639,12 @@ static void init_funcs(void)
     X(FlsFree);
     X(FlsSetValue);
     X(FlsGetValue);
+
+    X(InitializeProcThreadAttributeList);
+    X(UpdateProcThreadAttribute);
+    X(DeleteProcThreadAttributeList);
+
+    X(CreateRemoteThreadEx);
 #undef X
 
 #define X(f) p##f = (void*)GetProcAddress(ntdll, #f)
@@ -2646,6 +2657,83 @@ static void init_funcs(void)
        X(RtlRemoveVectoredExceptionHandler);
    }
 #undef X
+}
+
+static DWORD CALLBACK thread_ex_proc(void *_pmt)
+{
+    BOOL ret;
+
+    ret = GetThreadGroupAffinity(GetCurrentThread(), (GROUP_AFFINITY *)_pmt);
+    ok(ret, "Expected GetTheadGroupAffinity to succeed\n");
+    return 0;
+}
+
+static void test_CreateRemoteThreadEx_affinity(void)
+{
+    struct _PROC_THREAD_ATTRIBUTE_LIST *attr_list;
+    GROUP_AFFINITY gaff, thread_gaff;
+    HANDLE handle;
+    SIZE_T size;
+    BOOL ret;
+
+    if (RtlGetCurrentPeb()->NumberOfProcessors < 2)
+    {
+        skip("Not enough cores to test\n");
+        return;
+    }
+
+    ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+
+    attr_list = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pInitializeProcThreadAttributeList(attr_list, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    memset(&gaff, 0, sizeof(gaff));
+    gaff.Mask = (ULONG_PTR)1u << ((GetCurrentProcessorNumber() + 1) % RtlGetCurrentPeb()->NumberOfProcessors);
+    ret = pUpdateProcThreadAttribute(attr_list, 0, PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY,
+                                     &gaff, sizeof(gaff), NULL, NULL);
+    ok(ret, "Couldn't update attr_list\n");
+
+    handle = pCreateRemoteThreadEx(GetCurrentProcess(), NULL, 0, &thread_ex_proc, &thread_gaff, 0, attr_list, NULL);
+    ok(handle != NULL, "Couldn't create thread %lu %lu\n", GetLastError(), RtlGetCurrentPeb()->NumberOfProcessors);
+
+    ret = WaitForSingleObject(handle, INFINITE) == WAIT_OBJECT_0;
+    ok(ret, "Couldn't wait for thread termination\n");
+    ok(thread_gaff.Group == gaff.Group, "Unexpected group %x (expecting %x)\n", thread_gaff.Group, gaff.Group);
+    todo_wine
+    ok(thread_gaff.Mask == gaff.Mask, "Unexpected affinity %Ix (expecting %Ix)\n", thread_gaff.Mask, gaff.Mask);
+    CloseHandle(handle);
+
+    pDeleteProcThreadAttributeList(attr_list);
+    HeapFree(GetProcessHeap(), 0, attr_list);
+
+    ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+
+    /* check invalid core number */
+    if ((RtlGetCurrentPeb()->NumberOfProcessors + 1) < MAXIMUM_PROCESSORS)
+    {
+        attr_list = HeapAlloc(GetProcessHeap(), 0, size);
+        ret = pInitializeProcThreadAttributeList(attr_list, 1, 0, &size);
+        ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+        memset(&gaff, 0, sizeof(gaff));
+        gaff.Mask = (ULONG_PTR)1u << (RtlGetCurrentPeb()->NumberOfProcessors + 1);
+        ret = pUpdateProcThreadAttribute(attr_list, 0, PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY,
+                                         &gaff, sizeof(gaff), NULL, NULL);
+        ok(ret, "Couldn't update attr_list\n");
+
+        SetLastError(0xdeadbeef);
+        handle = pCreateRemoteThreadEx(GetCurrentProcess(), NULL, 0, &thread_ex_proc, &thread_gaff, 0, attr_list, NULL);
+        todo_wine
+        ok(handle == NULL, "Expecting failure\n");
+        todo_wine
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected gle %lu\n", GetLastError());
+        if (handle) CloseHandle(handle);
+        pDeleteProcThreadAttributeList(attr_list);
+        HeapFree(GetProcessHeap(), 0, attr_list);
+    }
 }
 
 START_TEST(thread)
@@ -2709,6 +2797,7 @@ START_TEST(thread)
    test_thread_fpu_cw();
    test_thread_actctx();
    test_thread_description();
+   test_CreateRemoteThreadEx_affinity();
 
    test_threadpool();
 }
