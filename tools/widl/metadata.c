@@ -1487,6 +1487,9 @@ static void create_typeref( type_t *type )
     /* HSTRING is treated as a fundamental type */
     if (type->name && !strcmp( type->name, "HSTRING__" )) return;
 
+    /* IInspectable is treated as a fundamental type */
+    if (type->name && !strcmp( base_type->name, "IInspectable" )) return;
+
     /* GUID is imported from mscorlib */
     if (type->name && !strcmp( type->name, "GUID" ))
     {
