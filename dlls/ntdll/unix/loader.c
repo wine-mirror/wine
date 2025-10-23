@@ -2065,9 +2065,6 @@ static void apple_create_wine_thread( void *arg )
 
     pthread_attr_init( &attr );
     pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE );
-    /* Use the same QoS class as the process main thread (user-interactive). */
-    if (&pthread_attr_set_qos_class_np)
-        pthread_attr_set_qos_class_np( &attr, QOS_CLASS_USER_INTERACTIVE, 0 );
     if (pthread_create( &thread, &attr, apple_wine_thread, NULL )) exit(1);
     pthread_attr_destroy( &attr );
 }
