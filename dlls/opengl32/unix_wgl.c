@@ -738,7 +738,14 @@ static int string_array_cmp( const void *p1, const void *p2 )
 }
 
 /* Check if a GL extension is supported */
-static BOOL check_extension_support( struct context *ctx, const char *extension, const char *available_extensions )
+static BOOL is_extension_supported( struct context *ctx, const char *extension )
+{
+    return bsearch( &extension, ctx->extension_array, ctx->extension_count,
+                    sizeof(ctx->extension_array[0]), string_array_cmp ) != NULL;
+}
+
+/* Check if any GL extension from the list is supported */
+static BOOL is_any_extension_supported( struct context *ctx, const char *extension )
 {
     size_t len;
 
@@ -753,7 +760,7 @@ static BOOL check_extension_support( struct context *ctx, const char *extension,
         TRACE( "Checking for extension '%s'\n", extension );
 
         /* Check if the extension is part of the GL extension string to see if it is supported. */
-        if (has_extension( available_extensions, extension, len )) return TRUE;
+        if (is_extension_supported( ctx, extension )) return TRUE;
 
         /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
          * it becomes part of the core OpenGL library and can be reached without the ARB/EXT
@@ -886,44 +893,6 @@ const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
     return funcs->p_glGetStringi( name, index );
 }
 
-static char *build_extension_list( TEB *teb )
-{
-    GLint len = 0, capacity, i, extensions_count = 0;
-    char *extension, *tmp, *available_extensions;
-
-    get_integer( teb, GL_NUM_EXTENSIONS, &extensions_count );
-    capacity = 128 * extensions_count;
-
-    if (!(available_extensions = malloc( capacity ))) return NULL;
-    for (i = 0; i < extensions_count; ++i)
-    {
-        extension = (char *)wrap_glGetStringi( teb, GL_EXTENSIONS, i );
-        capacity = max( capacity, len + strlen( extension ) + 2 );
-        if (!(tmp = realloc( available_extensions, capacity ))) break;
-        available_extensions = tmp;
-        len += snprintf( available_extensions + len, capacity - len, "%s ", extension );
-    }
-    if (len) available_extensions[len - 1] = 0;
-
-    return available_extensions;
-}
-
-/* Check if a GL extension is supported */
-static BOOL is_extension_supported( TEB *teb, struct context *ctx, const char *extension )
-{
-    char *available_extensions = NULL;
-    BOOL ret = FALSE;
-
-    if (ctx->major_version < 3) available_extensions = strdup( (const char *)wrap_glGetString( teb, GL_EXTENSIONS ) );
-    if (!available_extensions) available_extensions = build_extension_list( teb );
-
-    if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
-    else ret = check_extension_support( ctx, extension, available_extensions );
-
-    free( available_extensions );
-    return ret;
-}
-
 static int registry_entry_cmp( const void *a, const void *b )
 {
     const struct registry_entry *entry_a = a, *entry_b = b;
@@ -957,7 +926,7 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     {
         void *driver_func = funcs->p_wglGetProcAddress( name );
 
-        if (!is_extension_supported( teb, ctx, found->extension ))
+        if (!is_any_extension_supported( ctx, found->extension ))
         {
             unsigned int i;
             static const struct { const char *name, *alt; } alternatives[] =
