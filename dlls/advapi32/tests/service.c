@@ -3060,17 +3060,13 @@ static void test_LockServiceDatabase(void)
         }
         else
         {
-            todo_wine
             ok(!lock, "LockServiceDatabase() should fail\n");
-            todo_wine
             ok(td[i].error == GetLastError(), "got %lu\n", GetLastError());
         }
 
         SetLastError(0xdeadbeef);
         ret = UnlockServiceDatabase(lock);
-        todo_wine
         ok(!ret, "UnlockServiceDatabase() should fail\n");
-        todo_wine
         ok(GetLastError() == ERROR_INVALID_SERVICE_LOCK, "got %lu\n", GetLastError());
 
         winetest_pop_context();

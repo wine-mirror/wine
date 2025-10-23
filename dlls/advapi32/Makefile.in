@@ -15,4 +15,5 @@ SOURCES = \
 	registry.c \
 	security.c \
 	service.c \
+	svcctl.idl \
 	wmi.c

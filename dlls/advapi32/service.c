@@ -24,20 +24,65 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winsvc.h"
+#include "svcctl.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 #include "advapi32_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
+
+static LONG WINAPI rpc_filter( EXCEPTION_POINTERS *eptr )
+{
+    return I_RpcExceptionFilter( eptr->ExceptionRecord->ExceptionCode );
+}
+
+static DWORD map_exception_code( DWORD exception_code )
+{
+    switch (exception_code)
+    {
+    case RPC_X_NULL_REF_POINTER:
+        return ERROR_INVALID_ADDRESS;
+    case RPC_X_ENUM_VALUE_OUT_OF_RANGE:
+    case RPC_X_BYTE_COUNT_TOO_SMALL:
+        return ERROR_INVALID_PARAMETER;
+    case RPC_S_INVALID_BINDING:
+    case RPC_X_SS_IN_NULL_CONTEXT:
+        return ERROR_INVALID_HANDLE;
+    default:
+        return exception_code;
+    }
+}
 
 /******************************************************************************
  * LockServiceDatabase  [ADVAPI32.@]
  */
 SC_LOCK WINAPI LockServiceDatabase( SC_HANDLE manager )
 {
-    /* this function is a no-op in Vista and above */
+    SC_LOCK handle = NULL;
+    DWORD err;
+
     TRACE("%p\n", manager);
-    return (SC_LOCK)0xdeadbeef;
+
+    if (!manager)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+
+    __TRY
+    {
+        err = svcctl_LockServiceDatabase( manager, &handle );
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code( GetExceptionCode() );
+    }
+    __ENDTRY
+
+    if (!err) return handle;
+    SetLastError( err );
+    return 0;
 }
 
 /******************************************************************************
@@ -45,9 +90,35 @@ SC_LOCK WINAPI LockServiceDatabase( SC_HANDLE manager )
  */
 BOOL WINAPI UnlockServiceDatabase( SC_LOCK lock )
 {
-    /* this function is a no-op in Vista and above */
+    DWORD err;
+
     TRACE("%p\n", lock);
-    return TRUE;
+
+    if (!lock)
+    {
+        SetLastError( ERROR_INVALID_SERVICE_LOCK );
+        return FALSE;
+    }
+
+    __TRY
+    {
+        err = svcctl_UnlockServiceDatabase( &lock );
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = GetExceptionCode();
+
+        if (err == ERROR_INVALID_HANDLE)
+            err = ERROR_INVALID_SERVICE_LOCK;
+        else
+            err = map_exception_code( err );
+    }
+    __ENDTRY
+
+    if (!err) return TRUE;
+    SetLastError( err );
+    return FALSE;
+
 }
 
 /******************************************************************************
@@ -422,4 +493,98 @@ BOOL WINAPI EnumDependentServicesA( SC_HANDLE hService, DWORD dwServiceState,
 
     *lpServicesReturned = 0;
     return TRUE;
+}
+
+static handle_t rpc_wstr_bind( RPC_WSTR str )
+{
+    WCHAR transport[] = SVCCTL_TRANSPORT;
+    WCHAR endpoint[] = SVCCTL_ENDPOINT;
+    RPC_WSTR binding_str;
+    RPC_STATUS status;
+    handle_t rpc_handle;
+
+    status = RpcStringBindingComposeW( NULL, transport, str, endpoint, NULL, &binding_str );
+    if (status != RPC_S_OK)
+    {
+        ERR("RpcStringBindingComposeW failed, error %ld\n", status);
+        return NULL;
+    }
+
+    status = RpcBindingFromStringBindingW( binding_str, &rpc_handle );
+    RpcStringFreeW( &binding_str );
+
+    if (status != RPC_S_OK)
+    {
+        ERR("Couldn't connect to services.exe, error %ld\n", status);
+        return NULL;
+    }
+
+    return rpc_handle;
+}
+
+static handle_t rpc_cstr_bind(RPC_CSTR str)
+{
+    RPC_CSTR transport = (RPC_CSTR)SVCCTL_TRANSPORTA;
+    RPC_CSTR endpoint = (RPC_CSTR)SVCCTL_ENDPOINTA;
+    RPC_CSTR binding_str;
+    RPC_STATUS status;
+    handle_t rpc_handle;
+
+    status = RpcStringBindingComposeA( NULL, transport, str, endpoint, NULL, &binding_str );
+    if (status != RPC_S_OK)
+    {
+        ERR("RpcStringBindingComposeA failed, error %ld\n", status);
+        return NULL;
+    }
+
+    status = RpcBindingFromStringBindingA( binding_str, &rpc_handle );
+    RpcStringFreeA( &binding_str );
+
+    if (status != RPC_S_OK)
+    {
+        ERR("Couldn't connect to services.exe, error %ld\n", status);
+        return NULL;
+    }
+
+    return rpc_handle;
+}
+
+handle_t __RPC_USER MACHINE_HANDLEA_bind( MACHINE_HANDLEA name )
+{
+    return rpc_cstr_bind( (RPC_CSTR)name );
+}
+
+void __RPC_USER MACHINE_HANDLEA_unbind( MACHINE_HANDLEA name, handle_t h )
+{
+    RpcBindingFree( &h );
+}
+
+handle_t __RPC_USER MACHINE_HANDLEW_bind( MACHINE_HANDLEW name )
+{
+    return rpc_wstr_bind( (RPC_WSTR)name );
+}
+
+void __RPC_USER MACHINE_HANDLEW_unbind( MACHINE_HANDLEW name, handle_t h )
+{
+    RpcBindingFree( &h );
+}
+
+handle_t __RPC_USER SVCCTL_HANDLEW_bind( SVCCTL_HANDLEW name )
+{
+    return rpc_wstr_bind( (RPC_WSTR)name );
+}
+
+void __RPC_USER SVCCTL_HANDLEW_unbind( SVCCTL_HANDLEW name, handle_t h )
+{
+    RpcBindingFree( &h );
+}
+
+void  __RPC_FAR * __RPC_USER MIDL_user_allocate( SIZE_T len )
+{
+    return malloc(len);
+}
+
+void __RPC_USER MIDL_user_free( void __RPC_FAR *ptr )
+{
+    free(ptr);
 }
