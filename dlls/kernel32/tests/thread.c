@@ -2701,7 +2701,6 @@ static void test_CreateRemoteThreadEx_affinity(void)
     ret = WaitForSingleObject(handle, INFINITE) == WAIT_OBJECT_0;
     ok(ret, "Couldn't wait for thread termination\n");
     ok(thread_gaff.Group == gaff.Group, "Unexpected group %x (expecting %x)\n", thread_gaff.Group, gaff.Group);
-    todo_wine
     ok(thread_gaff.Mask == gaff.Mask, "Unexpected affinity %Ix (expecting %Ix)\n", thread_gaff.Mask, gaff.Mask);
     CloseHandle(handle);
 
@@ -2726,9 +2725,7 @@ static void test_CreateRemoteThreadEx_affinity(void)
 
         SetLastError(0xdeadbeef);
         handle = pCreateRemoteThreadEx(GetCurrentProcess(), NULL, 0, &thread_ex_proc, &thread_gaff, 0, attr_list, NULL);
-        todo_wine
         ok(handle == NULL, "Expecting failure\n");
-        todo_wine
         ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected gle %lu\n", GetLastError());
         if (handle) CloseHandle(handle);
         pDeleteProcThreadAttributeList(attr_list);

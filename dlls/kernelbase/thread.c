@@ -64,6 +64,22 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThread( HANDLE process, SECURITY_ATT
     return CreateRemoteThreadEx( process, sa, stack, start, param, flags, NULL, id );
 }
 
+struct proc_thread_attr
+{
+    DWORD_PTR attr;
+    SIZE_T size;
+    void *value;
+};
+
+struct _PROC_THREAD_ATTRIBUTE_LIST
+{
+    DWORD mask;  /* bitmask of items in list */
+    DWORD size;  /* max number of items in list */
+    DWORD count; /* number of items in list */
+    DWORD pad;
+    DWORD_PTR unk;
+    struct proc_thread_attr attrs[];
+};
 
 /***************************************************************************
  *           CreateRemoteThreadEx   (kernelbase.@)
@@ -76,8 +92,22 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
     HANDLE handle;
     CLIENT_ID client_id;
     SIZE_T stack_reserve = 0, stack_commit = 0;
+    GROUP_AFFINITY *group_affinity = NULL;
 
-    if (attributes) FIXME("thread attributes ignored\n");
+    if (attributes)
+    {
+        DWORD i;
+        for (i = 0; i < attributes->count; i++)
+            switch (attributes->attrs[i].attr)
+            {
+            case PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY:
+                group_affinity = attributes->attrs[i].value;
+                break;
+            default:
+                FIXME("thread attributes %Ix ignored\n", attributes->attrs[i].attr);
+                break;
+            }
+    }
 
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
@@ -90,7 +120,13 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
     if (id) *id = HandleToULong( client_id.UniqueThread );
     if (sa && sa->nLength >= sizeof(*sa) && sa->bInheritHandle)
         SetHandleInformation( handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT );
-    if (!(flags & CREATE_SUSPENDED))
+    if (group_affinity && !SetThreadGroupAffinity(handle, group_affinity, NULL))
+    {
+        NtTerminateThread( handle, 0 );
+        NtClose( handle );
+        handle = 0;
+    }
+    else if (!(flags & CREATE_SUSPENDED))
     {
         ULONG ret;
         if (NtResumeThread( handle, &ret ))
