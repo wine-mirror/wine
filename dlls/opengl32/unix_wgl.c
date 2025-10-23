@@ -485,60 +485,6 @@ static const char *legacy_extensions[] =
     NULL,
 };
 
-static GLubyte *filter_extensions_list( const char *extensions, const char *disabled, const char *enabled )
-{
-    const char *end, **extra;
-    char *p, *str;
-    size_t size, len;
-
-    size = strlen( extensions ) + 2;
-    for (extra = legacy_extensions; *extra; extra++) size += strlen( *extra ) + 1;
-    if (!(p = str = malloc( size ))) return NULL;
-
-    TRACE( "GL_EXTENSIONS:\n" );
-
-    for (;;)
-    {
-        while (*extensions == ' ') extensions++;
-        if (!*extensions) break;
-
-        if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
-        memcpy( p, extensions, end - extensions );
-        len = end - extensions;
-        p[len] = 0;
-
-        /* We do not support GL_MAP_PERSISTENT_BIT, and hence
-         * ARB_buffer_storage, on wow64. */
-        if (is_win64 && is_wow64() && (!strcmp( p, "GL_ARB_buffer_storage" ) || !strcmp( p, "GL_EXT_buffer_storage" )))
-        {
-            TRACE( "-- %s (disabled due to wow64)\n", p );
-        }
-        else if (!has_extension( disabled, p, len ) && (!*enabled || has_extension( enabled, p, len )))
-        {
-            TRACE( "++ %s\n", p );
-            p += end - extensions;
-            *p++ = ' ';
-        }
-        else
-        {
-            TRACE( "-- %s (disabled by config)\n", p );
-        }
-        extensions = end;
-    }
-
-    for (extra = legacy_extensions; *extra; extra++)
-    {
-        size = strlen( *extra );
-        memcpy( p, *extra, size );
-        p += size;
-        *p++ = ' ';
-    }
-
-    if (p != str) --p;
-    *p = 0;
-    return (GLubyte *)str;
-}
-
 static const char *parse_gl_version( const char *gl_version, int *major, int *minor )
 {
     const char *ptr = gl_version;
@@ -709,27 +655,6 @@ static char *query_opengl_option( const char *name )
     return str;
 }
 
-/* build the extension string by filtering out the disabled extensions */
-static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts_list )
-{
-    static const char *disabled, *enabled;
-    char *str;
-
-    if (!disabled)
-    {
-        if (!(str = query_opengl_option( "DisabledExtensions" ))) disabled = "";
-        else if (InterlockedCompareExchangePointer( (void **)&disabled, str, NULL )) free( str );
-    }
-    if (!enabled)
-    {
-        if (!(str = query_opengl_option( "EnabledExtensions" ))) enabled = "";
-        else if (InterlockedCompareExchangePointer( (void **)&enabled, str, NULL )) free( str );
-    }
-
-    if (extensions && !*exts_list) *exts_list = filter_extensions_list( extensions, disabled, enabled );
-    return exts_list && *exts_list;
-}
-
 static int string_array_cmp( const void *p1, const void *p2 )
 {
     const char *const *s1 = p1;
@@ -742,6 +667,52 @@ static BOOL is_extension_supported( struct context *ctx, const char *extension )
 {
     return bsearch( &extension, ctx->extension_array, ctx->extension_count,
                     sizeof(ctx->extension_array[0]), string_array_cmp ) != NULL;
+}
+
+/* build the extension string by filtering out the disabled extensions */
+static GLubyte *filter_extensions( struct context *ctx, const char *extensions )
+{
+    const char *end, **extra;
+    size_t size, len;
+    char *p, *str;
+
+    size = strlen( extensions ) + 2;
+    for (extra = legacy_extensions; *extra; extra++) size += strlen( *extra ) + 1;
+    if (!(p = str = malloc( size ))) return NULL;
+
+    TRACE( "GL_EXTENSIONS:\n" );
+
+    for (;;)
+    {
+        while (*extensions == ' ') extensions++;
+        if (!*extensions) break;
+        len = (end = strchr( extensions, ' ' )) ? end - extensions : strlen( extensions );
+        memcpy( p, extensions, len );
+        p[len] = 0;
+        if (is_extension_supported( ctx, p ))
+        {
+            TRACE( "++ %s\n", p );
+            p += len;
+            *p++ = ' ';
+        }
+        else
+        {
+            TRACE( "-- %s (disabled in context)\n", p );
+        }
+        extensions = end;
+    }
+
+    for (extra = legacy_extensions; *extra; extra++)
+    {
+        size = strlen( *extra );
+        memcpy( p, *extra, size );
+        p += size;
+        *p++ = ' ';
+    }
+
+    if (p != str) --p;
+    *p = 0;
+    return (GLubyte *)str;
 }
 
 /* Check if any GL extension from the list is supported */
@@ -861,7 +832,7 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
         {
             struct context *ctx = get_current_context( teb, NULL, NULL );
             GLubyte **extensions = &ctx->extensions;
-            if (*extensions || filter_extensions( teb, (const char *)ret, extensions )) return *extensions;
+            if (*extensions || (*extensions = filter_extensions( ctx, (const char *)ret ))) return *extensions;
         }
         else if (name == GL_VERSION)
         {
