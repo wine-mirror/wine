@@ -16440,11 +16440,11 @@ START_TEST(d2d1)
     queue_test(test_bitmap_map);
     queue_test(test_bitmap_create);
     queue_test(test_effect_custom_pixel_shader);
-    queue_test(test_get_effect_properties);
+    queue_d3d10_test(test_get_effect_properties);
     queue_test(test_effect_vertex_buffer);
-    queue_test(test_compute_geometry_area);
+    queue_d3d10_test(test_compute_geometry_area);
     queue_test(test_wic_target_format);
-    queue_test(test_effect_blob_property);
+    queue_d3d10_test(test_effect_blob_property);
     queue_test(test_get_dxgi_device);
     queue_test(test_no_target);
     queue_test(test_mesh);
