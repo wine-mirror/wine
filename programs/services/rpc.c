@@ -58,6 +58,7 @@ typedef enum
     SC_HTYPE_DONT_CARE = 0,
     SC_HTYPE_MANAGER,
     SC_HTYPE_SERVICE,
+    SC_HTYPE_LOCK,
     SC_HTYPE_NOTIFY
 } SC_HANDLE_TYPE;
 
@@ -89,6 +90,11 @@ struct sc_service_handle       /* service handle */
     BOOL status_notified;
     struct service_entry *service_entry;
     struct sc_notify_handle *notify;
+};
+
+struct sc_lock_handle
+{
+    struct sc_handle hdr;
 };
 
 static void sc_notify_retain(struct sc_notify_handle *notify)
@@ -264,6 +270,17 @@ static DWORD validate_notify_handle(SC_RPC_HANDLE handle, DWORD needed_access, s
     return err;
 }
 
+static DWORD validate_lock_handle(SC_RPC_HANDLE handle, struct sc_lock_handle **lock)
+{
+    struct sc_handle *hdr = handle;
+
+    if (hdr->type != SC_HTYPE_LOCK)
+        return ERROR_INVALID_SERVICE_LOCK;
+
+    *lock = (struct sc_lock_handle *)hdr;
+    return ERROR_SUCCESS;
+}
+
 DWORD __cdecl svcctl_OpenSCManagerW(
     MACHINE_HANDLEW MachineName, /* Note: this parameter is ignored */
     LPCWSTR DatabaseName,
@@ -321,6 +338,12 @@ static void SC_RPC_HANDLE_destroy(SC_RPC_HANDLE handle)
             service_unlock(service->service_entry);
             release_service(service->service_entry);
             free(service);
+            break;
+        }
+        case SC_HTYPE_LOCK:
+        {
+            struct sc_lock_handle *lock = (struct sc_lock_handle *)hdr;
+            free(lock);
             break;
         }
         default:
@@ -1407,19 +1430,41 @@ void __RPC_USER SC_RPC_LOCK_rundown(SC_RPC_LOCK hLock)
 {
 }
 
-DWORD __cdecl svcctl_LockServiceDatabase(SC_RPC_HANDLE manager, SC_RPC_LOCK *lock)
+DWORD __cdecl svcctl_LockServiceDatabase(SC_RPC_HANDLE hmngr, SC_RPC_LOCK *handle)
 {
-    TRACE("(%p, %p)\n", manager, lock);
+    DWORD err;
+    struct sc_manager_handle *manager;
+    struct sc_lock_handle *lock;
 
-    *lock = (SC_RPC_LOCK)0xdeadbeef;
+    TRACE("(%p, %p)\n", hmngr, handle);
+
+    if ((err = validate_scm_handle(hmngr, SC_MANAGER_LOCK, &manager)) != ERROR_SUCCESS)
+        return err;
+
+    if (!(lock = malloc(sizeof(*lock))))
+        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+
+    lock->hdr.type = SC_HTYPE_LOCK;
+    lock->hdr.access = 0;
+
+    *handle = &lock->hdr;
+
     return ERROR_SUCCESS;
 }
 
-DWORD __cdecl svcctl_UnlockServiceDatabase(SC_RPC_LOCK *lock)
+DWORD __cdecl svcctl_UnlockServiceDatabase(SC_RPC_LOCK *handle)
 {
-    TRACE("(&%p)\n", *lock);
+    DWORD err;
+    struct sc_lock_handle *lock;
 
-    *lock = NULL;
+    TRACE("(&%p)\n", *handle);
+
+    if ((err = validate_lock_handle(*handle, &lock)) != ERROR_SUCCESS)
+        return err;
+
+    SC_RPC_HANDLE_destroy(*handle);
+    *handle = NULL;
+
     return ERROR_SUCCESS;
 }
 
