@@ -1630,14 +1630,14 @@ static void test_session(void)
 
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eCapture,
             eMultimedia, &cap_dev);
-    if(hr == S_OK){
+    if (hr == S_OK)
+    {
+        WAVEFORMATEX *cap_pwfx;
+
         hr = IMMDevice_Activate(cap_dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
                 NULL, (void**)&cap_ac);
         ok(hr == S_OK, "Activate failed: %08lx\n", hr);
         IMMDevice_Release(cap_dev);
-    }
-    if(hr == S_OK){
-        WAVEFORMATEX *cap_pwfx;
 
         hr = IAudioClient_GetMixFormat(cap_ac, &cap_pwfx);
         ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
@@ -1646,13 +1646,13 @@ static void test_session(void)
                 0, 5000000, 0, cap_pwfx, &ses1_guid);
         ok(hr == S_OK, "Initialize failed for capture in rendering session: %08lx\n", hr);
         CoTaskMemFree(cap_pwfx);
-    }
-    if(hr == S_OK){
+
         hr = IAudioClient_GetService(cap_ac, &IID_IAudioSessionControl, (void**)&cap_ctl);
         ok(hr == S_OK, "GetService failed: %08lx\n", hr);
         if(FAILED(hr))
             cap_ctl = NULL;
-    }else
+    }
+    else
         skip("No capture session: %08lx; skipping capture device in render session tests\n", hr);
 
     hr = IAudioClient_GetService(ses1_ac1, &IID_IAudioSessionControl2, (void**)&ses1_ctl);
