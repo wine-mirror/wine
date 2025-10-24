@@ -931,8 +931,8 @@ void WINAPI RtlWakeAddressAll( const void *addr )
 {
     struct futex_queue *queue = get_futex_queue( addr );
     struct futex_entry *entry, *next;
-    unsigned int count = 0, i;
-    DWORD tids[256];
+    unsigned int count = 0;
+    HANDLE tids[256];
 
     TRACE("%p\n", addr);
 
@@ -949,19 +949,20 @@ void WINAPI RtlWakeAddressAll( const void *addr )
         {
             entry->addr = NULL;
             list_remove( &entry->entry );
-            /* Try to buffer wakes, so that we don't make a system call while
-             * holding a spinlock. */
-            if (count < ARRAY_SIZE(tids))
-                tids[count++] = entry->tid;
-            else
-                NtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)entry->tid );
+            if (count == ARRAY_SIZE(tids))
+            {
+                NtAlertMultipleThreadByThreadId( tids, count, NULL, NULL );
+                count = 0;
+            }
+            tids[count++] = (HANDLE)(ULONG_PTR)entry->tid;
         }
     }
 
+    /* Try not to make a system call while holding a spinlock (even if that can be responsible for spurious wake
+     * up scenario). */
     spin_unlock( &queue->lock );
-
-    for (i = 0; i < count; ++i)
-        NtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tids[i] );
+    if (count)
+        NtAlertMultipleThreadByThreadId( tids, count, NULL, NULL );
 }
 
 /***********************************************************************
