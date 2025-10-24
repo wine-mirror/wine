@@ -1038,7 +1038,7 @@ static void rename_key( struct key *key, const struct unicode_str *new_name )
     for (cur_index = 0; cur_index <= parent->last_subkey; cur_index++)
         if (parent->subkeys[cur_index] == key) break;
 
-    if (cur_index < index && (index - cur_index) > 1)
+    if (cur_index < index)
     {
         --index;
         for (i = cur_index; i < index; ++i) parent->subkeys[i] = parent->subkeys[i+1];
