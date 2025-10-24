@@ -270,11 +270,11 @@ static struct list compile_commands = LIST_INIT( compile_commands );
 
 struct install_command
 {
+    struct strarray args;    /* command line arguments */
     const char     *file;    /* source file name */
     const char     *target;  /* target to build if any */
     const char     *dir;     /* dest directory */
     const char     *dest;    /* dest file name if different from file */
-    char            type;    /* type of install */
 };
 
 static struct array install_commands[NB_INSTALL_RULES];
@@ -2376,14 +2376,18 @@ static struct install_command *add_install_command( struct makefile *make, const
 static void install_data_file( struct makefile *make, const char *target,
                                const char *obj, const char *dir, const char *dst )
 {
+    struct strarray args = empty_strarray;
     struct install_command *cmd;
 
+    strarray_add( &args, "-m 644" );
+    strarray_add( &args, "$(INSTALL_DATA_FLAGS)" );
+
     if (!(cmd = add_install_command( make, target ))) return;
+    cmd->args   = args;
     cmd->file   = obj_dir_path( make, obj );
     cmd->target = cmd->file;
     cmd->dir    = dir;
     cmd->dest   = dst;
-    cmd->type   = 'd';
 }
 
 
@@ -2393,12 +2397,16 @@ static void install_data_file( struct makefile *make, const char *target,
 static void install_data_file_src( struct makefile *make, const char *target,
                                    const char *src, const char *dir )
 {
+    struct strarray args = empty_strarray;
     struct install_command *cmd;
 
+    strarray_add( &args, "-m 644" );
+    strarray_add( &args, "$(INSTALL_DATA_FLAGS)" );
+
     if (!(cmd = add_install_command( make, target ))) return;
+    cmd->args   = args;
     cmd->file   = src_dir_path( make, src );
     cmd->dir    = dir;
-    cmd->type   = 'D';
 }
 
 
@@ -2429,13 +2437,18 @@ static void install_header( struct makefile *make, const char *target, const cha
 static void install_program( struct makefile *make, const char *target,
                              unsigned int arch, const char *obj, const char *dir )
 {
+    struct strarray args = empty_strarray;
     struct install_command *cmd;
 
+    if (arch) strarray_add( &args, "-m 644" );
+    strarray_add( &args, strip_progs[arch] );
+    strarray_add( &args, "$(INSTALL_PROGRAM_FLAGS)" );
+
     if (!(cmd = add_install_command( make, target ))) return;
+    cmd->args   = args;
     cmd->file   = obj_dir_path( make, obj );
     cmd->target = cmd->file;
     cmd->dir    = dir;
-    cmd->type   = '0' + arch;
 }
 
 
@@ -2444,12 +2457,15 @@ static void install_program( struct makefile *make, const char *target,
  */
 static void install_script( struct makefile *make, const char *src )
 {
+    struct strarray args = empty_strarray;
     struct install_command *cmd;
 
+    strarray_add( &args, "$(INSTALL_SCRIPT_FLAGS)" );
+
     if (!(cmd = add_install_command( make, src ))) return;
+    cmd->args   = args;
     cmd->file   = src_dir_path( make, src );
     cmd->dir    = "$(bindir)";
-    cmd->type   = 'S';
 }
 
 
@@ -2459,23 +2475,28 @@ static void install_script( struct makefile *make, const char *src )
 static void install_program_symlink( struct makefile *make, const char *target,
                                      const char *obj, const char *dst )
 {
+    struct strarray args = empty_strarray;
     struct install_command *cmd;
-
-    if (!(cmd = add_install_command( make, target ))) return;
-    cmd->dir    = "$(bindir)";
-    cmd->dest   = dst;
 
     if (symlinks_supported)
     {
+        strarray_add( &args, "-L" );
+
+        if (!(cmd = add_install_command( make, target ))) return;
         cmd->file = get_basename( obj );
-        cmd->type = 'y';
     }
     else
     {
+        strarray_add( &args, strip_progs[0] );
+        strarray_add( &args, "$(INSTALL_PROGRAM_FLAGS)" );
+
+        if (!(cmd = add_install_command( make, target ))) return;
         cmd->file   = obj;
         cmd->target = cmd->file;
-        cmd->type   = 'p';
     }
+    cmd->args   = args;
+    cmd->dir    = "$(bindir)";
+    cmd->dest   = dst;
 }
 
 
@@ -2485,23 +2506,28 @@ static void install_program_symlink( struct makefile *make, const char *target,
 static void install_data_symlink( struct makefile *make, const char *target, const char *obj,
                                   const char *link_name, const char *dir, const char *dst )
 {
+    struct strarray args = empty_strarray;
     struct install_command *cmd;
-
-    if (!(cmd = add_install_command( make, target ))) return;
-    cmd->dir    = dir;
-    cmd->dest   = dst;
 
     if (symlinks_supported)
     {
+        strarray_add( &args, "-L" );
+
+        if (!(cmd = add_install_command( make, target ))) return;
         cmd->file = link_name;
-        cmd->type = 'y';
     }
     else
     {
+        strarray_add( &args, "-m 644" );
+        strarray_add( &args, "$(INSTALL_DATA_FLAGS)" );
+
+        if (!(cmd = add_install_command( make, target ))) return;
         cmd->file   = obj_dir_path( make, obj );
         cmd->target = cmd->file;
-        cmd->type   = 'd';
     }
+    cmd->args   = args;
+    cmd->dir    = dir;
+    cmd->dest   = dst;
 }
 
 
@@ -2643,38 +2669,23 @@ static void output_srcdir_symlink( struct makefile *make, const char *obj )
  */
 static void output_install_commands( struct array commands )
 {
-    unsigned int arch;
-
     ARRAY_FOR_EACH( cmd, &commands, const struct install_command )
     {
-        switch (cmd->type)
+        struct strarray args = cmd->args;
+
+        if (cmd->dest)
         {
-        case '1': case '2': case '3': case '4': case '5':
-        case '6': case '7': case '8': case '9': /* arch-dependent program */
-            arch = cmd->type - '0';
-            output( "\t%s --strip-program=%s -m 644 $(INSTALL_PROGRAM_FLAGS)", install, strip_progs[arch] );
-            break;
-        case 'd':  /* data file */
-        case 'D':  /* data file in source dir */
-            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS)", install );
-            break;
-        case '0':  /* native arch program file */
-        case 'p':  /* program file */
-        case 't':  /* tools file */
-            output( "\t%s --strip-program=\"$(STRIP)\" $(INSTALL_PROGRAM_FLAGS)", install );
-            break;
-        case 's':  /* script */
-        case 'S':  /* script in source dir */
-            output( "\t%s $(INSTALL_SCRIPT_FLAGS)", install );
-            break;
-        case 'y':  /* symlink */
-            output( "\t%s -L", install );
-            break;
-        default:
-            assert(0);
+            strarray_add( &args, cmd->file );
+            strarray_add( &args, strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ));
         }
-        if (cmd->dest) output( " %s $(DESTDIR)%s/%s\n", cmd->file, cmd->dir, cmd->dest );
-        else output( " -t $(DESTDIR)%s %s\n", cmd->dir, cmd->file );
+        else
+        {
+            strarray_add( &args, strmake( "-t $(DESTDIR)%s", cmd->dir ));
+            strarray_add( &args, cmd->file );
+        }
+        output( "\t%s", install );
+        output_filenames( args );
+        output( "\n" );
     }
 }
 
@@ -4755,7 +4766,7 @@ int main( int argc, char *argv[] )
 
     arch_dirs[0] = "";
     arch_install_dirs[0] = unix_lib_supported ? strmake( "$(libdir)/wine/%s-unix", archs.str[0] ) : "$(libdir)/wine";
-    strip_progs[0] = "\"$(STRIP)\"";
+    strip_progs[0] = "--strip-program=\"$(STRIP)\"";
 
     for (arch = 1; arch < archs.count; arch++)
     {
@@ -4764,7 +4775,7 @@ int main( int argc, char *argv[] )
         strarray_add( &target_flags[arch], target );
         arch_dirs[arch] = strmake( "%s-windows/", archs.str[arch] );
         arch_install_dirs[arch] = strmake( "$(libdir)/wine/%s-windows", archs.str[arch] );
-        strip_progs[arch] = strmake( "\"%s --builtin --strip-cmd=%s\"",
+        strip_progs[arch] = strmake( "--strip-program=\"%s --builtin --strip-cmd=%s\"",
                                      winebuild, get_expanded_arch_var( top_makefile, "STRIP", arch ));
         dll_ext[arch] = "";
     }
