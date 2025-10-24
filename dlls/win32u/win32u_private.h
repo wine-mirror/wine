@@ -169,7 +169,6 @@ extern UINT set_thread_dpi_awareness_context( UINT context );
 extern UINT get_thread_dpi_awareness_context(void);
 extern RECT get_virtual_screen_rect( UINT dpi, MONITOR_DPI_TYPE type );
 extern BOOL is_exiting_thread( DWORD tid );
-extern BOOL is_window_rect_full_screen( const RECT *rect, UINT dpi );
 extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to );
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to );
 extern HRGN map_dpi_region( HRGN region, UINT dpi_from, UINT dpi_to );

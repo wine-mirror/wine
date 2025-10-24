@@ -2640,6 +2640,12 @@ static BOOL is_captured_by_system(void)
     return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) && info.hwndCapture && (info.flags & (GUI_INMOVESIZE | GUI_INMENUMODE));
 }
 
+static BOOL is_fullscreen( const MONITORINFO *info, const RECT *rect )
+{
+    return rect->left <= info->rcMonitor.left && rect->right >= info->rcMonitor.right &&
+           rect->top <= info->rcMonitor.top && rect->bottom >= info->rcMonitor.bottom;
+}
+
 /***********************************************************************
  *      clip_fullscreen_window
  *
@@ -2649,9 +2655,9 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     MONITORINFO monitor_info = {.cbSize = sizeof(MONITORINFO)};
-    RECT rect, virtual_rect;
+    RECT monitor_rect, window_rect, virtual_rect;
     DWORD style;
-    UINT dpi, ctx;
+    UINT ctx;
     BOOL ret;
 
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
@@ -2663,18 +2669,17 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     /* maximized windows don't count as full screen */
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
 
-    dpi = get_dpi_for_window( hwnd );
-    if (!get_window_rect( hwnd, &rect, dpi )) return FALSE;
-    if (!is_window_rect_full_screen( &rect, dpi )) return FALSE;
+    ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
+    ret = get_window_rect( hwnd, &window_rect, get_thread_dpi() );
+    monitor_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTONEAREST );
+    virtual_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
+    monitor_rect = map_rect_virt_to_raw( monitor_info.rcMonitor, get_thread_dpi() );
+    set_thread_dpi_awareness_context( ctx );
+
+    if (!ret || !is_fullscreen( &monitor_info, &window_rect )) return FALSE;
     if (is_captured_by_system()) return FALSE;
     if (NtGetTickCount() - thread_info->clipping_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_info->clipping_cursor) return FALSE;  /* already clipping */
-
-    ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
-    monitor_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTONEAREST );
-    virtual_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
-    rect = map_rect_virt_to_raw( monitor_info.rcMonitor, get_thread_dpi() );
-    set_thread_dpi_awareness_context( ctx );
 
     if (!grab_fullscreen)
     {
@@ -2687,7 +2692,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     SERVER_START_REQ( set_cursor )
     {
         req->flags = SET_CURSOR_CLIP | SET_CURSOR_FSCLIP;
-        req->clip  = wine_server_rectangle( rect );
+        req->clip  = wine_server_rectangle( monitor_rect );
         ret = !wine_server_call( req );
     }
     SERVER_END_REQ;

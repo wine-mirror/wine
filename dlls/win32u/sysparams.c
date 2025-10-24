@@ -2929,32 +2929,6 @@ RECT get_virtual_screen_rect( UINT dpi, MONITOR_DPI_TYPE type )
     return rect;
 }
 
-BOOL is_window_rect_full_screen( const RECT *rect, UINT dpi )
-{
-    struct monitor *monitor;
-    BOOL ret = FALSE;
-
-    if (!lock_display_devices( FALSE )) return FALSE;
-
-    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
-    {
-        RECT monrect;
-
-        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
-
-        monrect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
-        if (rect->left <= monrect.left && rect->right >= monrect.right &&
-            rect->top <= monrect.top && rect->bottom >= monrect.bottom)
-        {
-            ret = TRUE;
-            break;
-        }
-    }
-
-    unlock_display_devices();
-    return ret;
-}
-
 static UINT get_display_index( const UNICODE_STRING *name )
 {
     static const WCHAR displayW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
