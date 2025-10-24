@@ -2886,14 +2886,14 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
     if (!d2d_path_geometry_add_figure(geometry))
     {
         ERR("Failed to add figure.\n");
-        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+        d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
         return;
     }
 
     figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
     if (!d2d_figure_begin(figure, start_point, figure_begin))
     {
-        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+        d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
         return;
     }
 
@@ -2917,6 +2917,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *ifac
     if (!d2d_figure_add_lines(figure, points, count))
     {
         ERR("Failed to add vertex.\n");
+        d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
         return;
     }
 
@@ -2940,7 +2941,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
     if (!d2d_figure_add_beziers(figure, beziers, count))
     {
         ERR("Failed to add Bézier curves.\n");
-        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+        d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
         return;
     }
 
@@ -2969,7 +2970,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
     if (!d2d_geometry_add_figure_outline(geometry, figure, figure_end))
     {
         ERR("Failed to add figure outline.\n");
-        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+        d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
         return;
     }
 
@@ -3269,7 +3270,7 @@ done:
         geometry->fill.bezier_vertices = NULL;
         geometry->fill.bezier_vertex_count = 0;
         d2d_path_geometry_free_figures(geometry);
-        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+        d2d_geometry_set_error(geometry, hr);
     }
     return hr;
 }
@@ -3322,7 +3323,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
         if (!d2d_figure_add_original_bezier_controls(figure, 2, p))
         {
             ERR("Failed to add cubic Bézier controls.\n");
-            d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+            d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
             return;
         }
 
@@ -3333,14 +3334,14 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
         if (!d2d_figure_add_bezier_controls(figure, 1, &beziers[i].point1))
         {
             ERR("Failed to add bezier.\n");
-            d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+            d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
             return;
         }
 
         if (!d2d_figure_add_vertex(figure, beziers[i].point2))
         {
             ERR("Failed to add bezier vertex.\n");
-            d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+            d2d_geometry_set_error(geometry, E_OUTOFMEMORY);
             return;
         }
 
