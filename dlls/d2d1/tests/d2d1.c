@@ -347,7 +347,7 @@ struct figure
 
 struct geometry_sink
 {
-    ID2D1SimplifiedGeometrySink ID2D1SimplifiedGeometrySink_iface;
+    ID2D1GeometrySink ID2D1GeometrySink_iface;
 
     struct geometry_figure
     {
@@ -359,11 +359,15 @@ struct geometry_sink
             enum
             {
                 SEGMENT_BEZIER,
+                SEGMENT_QUADRATIC_BEZIER,
+                SEGMENT_ARC,
                 SEGMENT_LINE,
             } type;
             union
             {
                 D2D1_BEZIER_SEGMENT bezier;
+                D2D1_QUADRATIC_BEZIER_SEGMENT quadratic_bezier;
+                D2D1_ARC_SEGMENT arc;
                 D2D1_POINT_2F line;
             } u;
             DWORD flags;
@@ -830,6 +834,24 @@ static BOOL compare_bezier_segment(const D2D1_BEZIER_SEGMENT *b, float x1, float
     return compare_point(&b->point1, x1, y1, ulps)
             && compare_point(&b->point2, x2, y2, ulps)
             && compare_point(&b->point3, x3, y3, ulps);
+}
+
+static BOOL compare_quadratic_bezier_segment(const D2D1_QUADRATIC_BEZIER_SEGMENT *b, float x1, float y1,
+        float x2, float y2, unsigned int ulps)
+{
+    return compare_point(&b->point1, x1, y1, ulps)
+            && compare_point(&b->point2, x2, y2, ulps);
+}
+
+static BOOL compare_arc_segment(const D2D1_ARC_SEGMENT *a, float x, float y, float width, float height,
+        float angle, D2D1_SWEEP_DIRECTION sweep_direction, D2D1_ARC_SIZE arc_size, unsigned int ulps)
+{
+    return compare_point(&a->point, x, y, ulps)
+            && compare_float(a->size.width, width, ulps)
+            && compare_float(a->size.height, height, ulps)
+            && compare_float(a->rotationAngle, angle, ulps)
+            && a->sweepDirection == sweep_direction
+            && a->arcSize == arc_size;
 }
 
 static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
@@ -1418,15 +1440,16 @@ static void check_bitmap_surface_(unsigned int line, ID2D1Bitmap *bitmap, BOOL h
     ID2D1Bitmap1_Release(bitmap1);
 }
 
-static inline struct geometry_sink *impl_from_ID2D1SimplifiedGeometrySink(ID2D1SimplifiedGeometrySink *iface)
+static inline struct geometry_sink *impl_from_ID2D1GeometrySink(ID2D1GeometrySink *iface)
 {
-    return CONTAINING_RECORD(iface, struct geometry_sink, ID2D1SimplifiedGeometrySink_iface);
+    return CONTAINING_RECORD(iface, struct geometry_sink, ID2D1GeometrySink_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE geometry_sink_QueryInterface(ID2D1SimplifiedGeometrySink *iface,
+static HRESULT STDMETHODCALLTYPE geometry_sink_QueryInterface(ID2D1GeometrySink *iface,
         REFIID iid, void **out)
 {
-    if (IsEqualGUID(iid, &IID_ID2D1SimplifiedGeometrySink)
+    if (IsEqualGUID(iid, &IID_ID2D1GeometrySink)
+            || IsEqualGUID(iid, &IID_ID2D1SimplifiedGeometrySink)
             || IsEqualGUID(iid, &IID_IUnknown))
     {
         *out = iface;
@@ -1437,35 +1460,35 @@ static HRESULT STDMETHODCALLTYPE geometry_sink_QueryInterface(ID2D1SimplifiedGeo
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE geometry_sink_AddRef(ID2D1SimplifiedGeometrySink *iface)
+static ULONG STDMETHODCALLTYPE geometry_sink_AddRef(ID2D1GeometrySink *iface)
 {
     return 0;
 }
 
-static ULONG STDMETHODCALLTYPE geometry_sink_Release(ID2D1SimplifiedGeometrySink *iface)
+static ULONG STDMETHODCALLTYPE geometry_sink_Release(ID2D1GeometrySink *iface)
 {
     return 0;
 }
 
-static void STDMETHODCALLTYPE geometry_sink_SetFillMode(ID2D1SimplifiedGeometrySink *iface, D2D1_FILL_MODE mode)
+static void STDMETHODCALLTYPE geometry_sink_SetFillMode(ID2D1GeometrySink *iface, D2D1_FILL_MODE mode)
 {
-    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
 
     sink->fill_mode = mode;
 }
 
-static void STDMETHODCALLTYPE geometry_sink_SetSegmentFlags(ID2D1SimplifiedGeometrySink *iface,
+static void STDMETHODCALLTYPE geometry_sink_SetSegmentFlags(ID2D1GeometrySink *iface,
         D2D1_PATH_SEGMENT flags)
 {
-    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
 
     sink->segment_flags = flags;
 }
 
-static void STDMETHODCALLTYPE geometry_sink_BeginFigure(ID2D1SimplifiedGeometrySink *iface,
+static void STDMETHODCALLTYPE geometry_sink_BeginFigure(ID2D1GeometrySink *iface,
         D2D1_POINT_2F start_point, D2D1_FIGURE_BEGIN figure_begin)
 {
-    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
     struct geometry_figure *figure;
 
     if (sink->figure_count == sink->figures_size)
@@ -1494,10 +1517,10 @@ static struct geometry_segment *geometry_figure_add_segment(struct geometry_figu
     return &figure->segments[figure->segment_count++];
 }
 
-static void STDMETHODCALLTYPE geometry_sink_AddLines(ID2D1SimplifiedGeometrySink *iface,
+static void STDMETHODCALLTYPE geometry_sink_AddLines(ID2D1GeometrySink *iface,
         const D2D1_POINT_2F *points, UINT32 count)
 {
-    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
     struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
     struct geometry_segment *segment;
     unsigned int i;
@@ -1511,10 +1534,10 @@ static void STDMETHODCALLTYPE geometry_sink_AddLines(ID2D1SimplifiedGeometrySink
     }
 }
 
-static void STDMETHODCALLTYPE geometry_sink_AddBeziers(ID2D1SimplifiedGeometrySink *iface,
+static void STDMETHODCALLTYPE geometry_sink_AddBeziers(ID2D1GeometrySink *iface,
         const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
 {
-    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
     struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
     struct geometry_segment *segment;
     unsigned int i;
@@ -1528,25 +1551,71 @@ static void STDMETHODCALLTYPE geometry_sink_AddBeziers(ID2D1SimplifiedGeometrySi
     }
 }
 
-static void STDMETHODCALLTYPE geometry_sink_EndFigure(ID2D1SimplifiedGeometrySink *iface,
+static void STDMETHODCALLTYPE geometry_sink_EndFigure(ID2D1GeometrySink *iface,
         D2D1_FIGURE_END figure_end)
 {
-    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
     struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
 
     figure->end = figure_end;
 }
 
-static HRESULT STDMETHODCALLTYPE geometry_sink_Close(ID2D1SimplifiedGeometrySink *iface)
+static HRESULT STDMETHODCALLTYPE geometry_sink_Close(ID2D1GeometrySink *iface)
 {
-    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
 
     sink->closed = TRUE;
 
     return S_OK;
 }
 
-static const struct ID2D1SimplifiedGeometrySinkVtbl geometry_sink_vtbl =
+static void STDMETHODCALLTYPE geometry_sink_AddLine(ID2D1GeometrySink *iface, D2D1_POINT_2F point)
+{
+    geometry_sink_AddLines(iface, &point, 1);
+}
+
+static void STDMETHODCALLTYPE geometry_sink_AddBezier(ID2D1GeometrySink *iface,
+        const D2D1_BEZIER_SEGMENT *bezier)
+{
+    geometry_sink_AddBeziers(iface, bezier, 1);
+}
+
+static void STDMETHODCALLTYPE geometry_sink_AddQuadraticBezier(ID2D1GeometrySink *iface,
+        const D2D1_QUADRATIC_BEZIER_SEGMENT *bezier)
+{
+    ID2D1GeometrySink_AddQuadraticBeziers(iface, bezier, 1);
+}
+
+static void STDMETHODCALLTYPE geometry_sink_AddQuadraticBeziers(ID2D1GeometrySink *iface,
+        const D2D1_QUADRATIC_BEZIER_SEGMENT *beziers, UINT32 count)
+{
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
+    struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
+    struct geometry_segment *segment;
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
+    {
+        segment = geometry_figure_add_segment(figure);
+        segment->type = SEGMENT_QUADRATIC_BEZIER;
+        segment->u.quadratic_bezier = beziers[i];
+        segment->flags = sink->segment_flags;
+    }
+}
+
+static void STDMETHODCALLTYPE geometry_sink_AddArc(ID2D1GeometrySink *iface,
+        const D2D1_ARC_SEGMENT *arc)
+{
+    struct geometry_sink *sink = impl_from_ID2D1GeometrySink(iface);
+    struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
+    struct geometry_segment *segment = geometry_figure_add_segment(figure);
+
+    segment->type = SEGMENT_ARC;
+    segment->u.arc = *arc;
+    segment->flags = sink->segment_flags;
+}
+
+static const struct ID2D1GeometrySinkVtbl geometry_sink_vtbl =
 {
     geometry_sink_QueryInterface,
     geometry_sink_AddRef,
@@ -1558,12 +1627,17 @@ static const struct ID2D1SimplifiedGeometrySinkVtbl geometry_sink_vtbl =
     geometry_sink_AddBeziers,
     geometry_sink_EndFigure,
     geometry_sink_Close,
+    geometry_sink_AddLine,
+    geometry_sink_AddBezier,
+    geometry_sink_AddQuadraticBezier,
+    geometry_sink_AddQuadraticBeziers,
+    geometry_sink_AddArc,
 };
 
 static void geometry_sink_init(struct geometry_sink *sink)
 {
     memset(sink, 0, sizeof(*sink));
-    sink->ID2D1SimplifiedGeometrySink_iface.lpVtbl = &geometry_sink_vtbl;
+    sink->ID2D1GeometrySink_iface.lpVtbl = &geometry_sink_vtbl;
     sink->figures_size = 4;
     sink->figures = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sink->figures_size * sizeof(*sink->figures));
@@ -1657,6 +1731,36 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
                             expected_segment->u.bezier.point2.x, expected_segment->u.bezier.point2.y,
                             expected_segment->u.bezier.point3.x, expected_segment->u.bezier.point3.y);
                     break;
+               case SEGMENT_QUADRATIC_BEZIER:
+                    match = compare_quadratic_bezier_segment(&segment->u.quadratic_bezier,
+                            expected_segment->u.bezier.point1.x, expected_segment->u.bezier.point1.y,
+                            expected_segment->u.bezier.point2.x, expected_segment->u.bezier.point2.y,
+                            ulps);
+                    ok_(__FILE__, line)(match, "Got unexpected figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e}, "
+                            "expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                            i, j, segment->u.bezier.point1.x, segment->u.bezier.point1.y,
+                            segment->u.bezier.point2.x, segment->u.bezier.point2.y,
+                            expected_segment->u.bezier.point1.x, expected_segment->u.bezier.point1.y,
+                            expected_segment->u.bezier.point2.x, expected_segment->u.bezier.point2.y);
+                    break;
+               case SEGMENT_ARC:
+                    match = compare_arc_segment(&segment->u.arc,
+                            expected_segment->u.arc.point.x, expected_segment->u.arc.point.y,
+                            expected_segment->u.arc.size.width, expected_segment->u.arc.size.height,
+                            expected_segment->u.arc.rotationAngle, expected_segment->u.arc.sweepDirection,
+                            expected_segment->u.arc.arcSize, ulps);
+                    ok_(__FILE__, line)(match, "Got unexpected figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e, %.8e, %u, %u}, "
+                            "expected {%.8e, %.8e, %.8e, %.8e, %.8e, %u, %u}.\n",
+                            i, j, segment->u.arc.point.x, segment->u.arc.point.y,
+                            segment->u.arc.size.width, segment->u.arc.size.height,
+                            segment->u.arc.rotationAngle, segment->u.arc.sweepDirection, segment->u.arc.arcSize,
+                            expected_segment->u.arc.point.x, expected_segment->u.arc.point.y,
+                            expected_segment->u.arc.size.width, expected_segment->u.arc.size.height,
+                            expected_segment->u.arc.rotationAngle, expected_segment->u.arc.sweepDirection,
+                            expected_segment->u.arc.arcSize);
+                    break;
             }
         }
 
@@ -1676,6 +1780,20 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
                             segment->u.bezier.point2.x, segment->u.bezier.point2.y,
                             segment->u.bezier.point3.x, segment->u.bezier.point3.y);
                     break;
+                case SEGMENT_QUADRATIC_BEZIER:
+                    ok_(__FILE__, line)(FALSE, "Missing figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e}\n",
+                            i, j, segment->u.bezier.point1.x, segment->u.bezier.point1.y,
+                            segment->u.bezier.point2.x, segment->u.bezier.point2.y);
+                    break;
+                case SEGMENT_ARC:
+                    ok_(__FILE__, line)(FALSE, "Missing figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e, %.8e, %u, %u}\n",
+                            i, j, segment->u.arc.point.x, segment->u.arc.point.y,
+                            segment->u.arc.size.width, segment->u.arc.size.height,
+                            segment->u.arc.rotationAngle, segment->u.arc.sweepDirection,
+                            segment->u.arc.arcSize);
+                    break;
             }
         }
 
@@ -1694,6 +1812,20 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
                             i, j, segment->u.bezier.point1.x, segment->u.bezier.point1.y,
                             segment->u.bezier.point2.x, segment->u.bezier.point2.y,
                             segment->u.bezier.point3.x, segment->u.bezier.point3.y);
+                    break;
+                case SEGMENT_QUADRATIC_BEZIER:
+                    ok_(__FILE__, line)(FALSE, "Got unexpected figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e}\n",
+                            i, j, segment->u.bezier.point1.x, segment->u.bezier.point1.y,
+                            segment->u.bezier.point2.x, segment->u.bezier.point2.y);
+                    break;
+                case SEGMENT_ARC:
+                    ok_(__FILE__, line)(FALSE, "Got unexpected figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e, %.8e, %u, %u}\n",
+                            i, j, segment->u.arc.point.x, segment->u.arc.point.y,
+                            segment->u.arc.size.width, segment->u.arc.size.height,
+                            segment->u.arc.rotationAngle, segment->u.arc.sweepDirection,
+                            segment->u.arc.arcSize);
                     break;
             }
         }
@@ -4010,13 +4142,13 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 6, &expected_figures[0], 0);
     geometry_sink_cleanup(&simplify_sink);
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 6, &expected_figures[0], 0);
     geometry_sink_cleanup(&simplify_sink);
@@ -4029,7 +4161,7 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 6, &expected_figures[6], 0);
     geometry_sink_cleanup(&simplify_sink);
@@ -4044,7 +4176,7 @@ static void test_path_geometry(BOOL d3d11)
             tmp_matrix._22, tmp_matrix._31, tmp_matrix._32);
     geometry_sink_init(&simplify_sink);
     hr = ID2D1Geometry_Simplify(tmp_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            &tmp_matrix, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            &tmp_matrix, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 6, &expected_figures[6], 0);
     geometry_sink_cleanup(&simplify_sink);
@@ -4121,7 +4253,7 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_WINDING, 6, &expected_figures[0], 0);
     geometry_sink_cleanup(&simplify_sink);
@@ -4160,19 +4292,19 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 4, &expected_figures[12], 1);
     geometry_sink_cleanup(&simplify_sink);
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 100.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 100.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 4, &expected_figures[20], 1);
     geometry_sink_cleanup(&simplify_sink);
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 10.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 10.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 4, &expected_figures[24], 1);
     geometry_sink_cleanup(&simplify_sink);
@@ -4187,7 +4319,7 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 4, &expected_figures[16], 4);
     geometry_sink_cleanup(&simplify_sink);
@@ -4263,19 +4395,19 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_WINDING, 4, &expected_figures[12], 1);
     geometry_sink_cleanup(&simplify_sink);
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 100.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 100.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_WINDING, 4, &expected_figures[20], 1);
     geometry_sink_cleanup(&simplify_sink);
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 10.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 10.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_WINDING, 4, &expected_figures[24], 1);
     geometry_sink_cleanup(&simplify_sink);
@@ -4383,7 +4515,7 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[28], 1);
     geometry_sink_cleanup(&simplify_sink);
@@ -4432,7 +4564,7 @@ static void test_path_geometry(BOOL d3d11)
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            NULL, 0.0f, &simplify_sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&simplify_sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&simplify_sink, D2D1_FILL_MODE_ALTERNATE, 4, &expected_figures[29], 1);
     geometry_sink_cleanup(&simplify_sink);
@@ -4626,13 +4758,13 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[0], 0);
     geometry_sink_cleanup(&sink);
     geometry_sink_init(&sink);
     hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[0], 0);
     geometry_sink_cleanup(&sink);
@@ -4648,7 +4780,7 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            &matrix, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[1], 1);
     geometry_sink_cleanup(&sink);
@@ -4663,7 +4795,7 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            &matrix, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[2], 0);
     geometry_sink_cleanup(&sink);
@@ -4678,7 +4810,7 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            &matrix, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[3], 0);
     geometry_sink_cleanup(&sink);
@@ -4697,13 +4829,13 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[4], 1);
     geometry_sink_cleanup(&sink);
     geometry_sink_init(&sink);
     hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            NULL, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[4], 1);
     geometry_sink_cleanup(&sink);
@@ -4718,7 +4850,7 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
-            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            &matrix, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[5], 4);
     geometry_sink_cleanup(&sink);
@@ -4732,7 +4864,7 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            &matrix, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[6], 1);
     geometry_sink_cleanup(&sink);
@@ -4746,7 +4878,7 @@ static void test_rectangle_geometry(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
     geometry_sink_init(&sink);
     hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+            &matrix, 0.0f, (ID2D1SimplifiedGeometrySink *)&sink.ID2D1GeometrySink_iface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[7], 1);
     geometry_sink_cleanup(&sink);
