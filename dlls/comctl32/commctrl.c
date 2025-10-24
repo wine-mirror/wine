@@ -3145,3 +3145,52 @@ LRESULT COMCTL32_ThemeChanged(HWND hwnd, const WCHAR *theme_class, BOOL invalida
         InvalidateRect(hwnd, NULL, erase);
     return 0;
 }
+
+/* A helper to handle WM_NCPAINT messages
+ *
+ * If theme_class is specified, open the specified theme class. Otherwise, get the theme class from
+ * the window.
+ */
+LRESULT COMCTL32_NCPaint(HWND hwnd, WPARAM wp, LPARAM lp, const WCHAR *theme_class)
+{
+    HRGN region = (HRGN)wp, clipRgn;
+    INT cxEdge, cyEdge;
+    HTHEME theme;
+    LONG exStyle;
+    HDC dc;
+    RECT r;
+
+    exStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
+    if (!(exStyle & WS_EX_CLIENTEDGE))
+        return DefWindowProcW(hwnd, WM_NCPAINT, wp, lp);
+
+    if (theme_class)
+        theme = OpenThemeDataForDpi(NULL, theme_class, GetDpiForWindow(hwnd));
+    else
+        theme = GetWindowTheme(hwnd);
+    if (!theme)
+        return DefWindowProcW(hwnd, WM_NCPAINT, wp, lp);
+
+    cxEdge = GetSystemMetrics(SM_CXEDGE);
+    cyEdge = GetSystemMetrics(SM_CYEDGE);
+    GetWindowRect(hwnd, &r);
+
+    /* New clipping region passed to default proc to exclude border */
+    clipRgn = CreateRectRgn(r.left + cxEdge, r.top + cyEdge, r.right - cxEdge, r.bottom - cyEdge);
+    if (region != (HRGN)1)
+        CombineRgn(clipRgn, clipRgn, region, RGN_AND);
+    OffsetRect(&r, -r.left, -r.top);
+
+    dc = GetDCEx(hwnd, region, DCX_WINDOW | DCX_INTERSECTRGN);
+    if (IsThemeBackgroundPartiallyTransparent(theme, 0, 0))
+        DrawThemeParentBackground(hwnd, dc, &r);
+    DrawThemeBackground(theme, dc, 0, 0, &r, 0);
+    ReleaseDC(hwnd, dc);
+    if (theme_class)
+        CloseThemeData(theme);
+
+    /* Call default proc to get the scrollbars etc. also painted */
+    DefWindowProcW(hwnd, WM_NCPAINT, (WPARAM)clipRgn, 0);
+    DeleteObject(clipRgn);
+    return 0;
+}

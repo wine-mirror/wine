@@ -196,6 +196,7 @@ void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark
 void COMCTL32_EnsureBitmapSize(HBITMAP *pBitmap, int cxMinWidth, int cyMinHeight, COLORREF crBackground);
 void COMCTL32_GetFontMetrics(HFONT hFont, TEXTMETRICW *ptm);
 BOOL COMCTL32_IsReflectedMessage(UINT uMsg);
+LRESULT COMCTL32_NCPaint(HWND hwnd, WPARAM wp, LPARAM lp, const WCHAR *theme_class);
 LRESULT COMCTL32_SetVersion(INT *current_version, INT new_version);
 LRESULT COMCTL32_ThemeChanged(HWND hwnd, const WCHAR *theme_class, BOOL invalidate, BOOL erase);
 INT  Str_GetPtrWtoA(LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
