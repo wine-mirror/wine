@@ -4991,10 +4991,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         break;
 
     case WM_THEMECHANGED:
-        CloseThemeData(GetWindowTheme(hwnd));
-        COMCTL32_OpenThemeForWindow(hwnd, WC_EDITW);
-        InvalidateRect(hwnd, NULL, TRUE);
-        break;
+        return COMCTL32_ThemeChanged(hwnd, WC_EDITW, TRUE, TRUE);
 
     default:
         result = DefWindowProcW(hwnd, msg, wParam, lParam);

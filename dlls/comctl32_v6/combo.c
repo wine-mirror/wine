@@ -1692,10 +1692,7 @@ static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam
         break;
 
     case WM_THEMECHANGED:
-        COMCTL32_CloseThemeForWindow( hwnd );
-        COMCTL32_OpenThemeForWindow( hwnd, WC_COMBOBOXW );
-        InvalidateRect( hwnd, NULL, TRUE );
-        break;
+        return COMCTL32_ThemeChanged( hwnd, WC_COMBOBOXW, TRUE, TRUE );
 
     case WM_PRINTCLIENT:
     case WM_PAINT:

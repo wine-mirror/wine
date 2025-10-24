@@ -549,10 +549,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         break;
 
     case WM_THEMECHANGED:
-        COMCTL32_CloseThemeForWindow( hWnd );
-        COMCTL32_OpenThemeForWindow( hWnd, WC_BUTTONW );
-        InvalidateRect( hWnd, NULL, TRUE );
-        break;
+        return COMCTL32_ThemeChanged( hWnd, WC_BUTTONW, TRUE, TRUE );
 
     case WM_ERASEBKGND:
         if (btn_type == BS_OWNERDRAW)

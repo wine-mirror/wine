@@ -527,8 +527,7 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
         break;
 
     case WM_THEMECHANGED:
-        InvalidateRect( hwnd, 0, TRUE );
-        break;
+        return COMCTL32_ThemeChanged( hwnd, NULL, TRUE, TRUE );
 
     case WM_NCCREATE:
         {

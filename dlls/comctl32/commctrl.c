@@ -3131,3 +3131,17 @@ LRESULT COMCTL32_SetVersion(INT *current_version, INT new_version)
     return old_version;
 #endif
 }
+
+/* A helper to handle WM_THEMECHANGED messages */
+LRESULT COMCTL32_ThemeChanged(HWND hwnd, const WCHAR *theme_class, BOOL invalidate, BOOL erase)
+{
+    if (theme_class)
+    {
+        COMCTL32_CloseThemeForWindow(hwnd);
+        COMCTL32_OpenThemeForWindow(hwnd, theme_class);
+    }
+
+    if (invalidate)
+        InvalidateRect(hwnd, NULL, erase);
+    return 0;
+}

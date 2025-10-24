@@ -3156,10 +3156,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
 	break;
 
     case WM_THEMECHANGED:
-        COMCTL32_CloseThemeForWindow( hwnd );
-        COMCTL32_OpenThemeForWindow( hwnd, WC_LISTBOXW );
-        InvalidateRect( hwnd, NULL, TRUE );
-        break;
+        return COMCTL32_ThemeChanged( hwnd, WC_LISTBOXW, TRUE, TRUE );
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
