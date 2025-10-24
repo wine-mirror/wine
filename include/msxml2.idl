@@ -3257,15 +3257,6 @@ coclass SAXXMLReader40
 }
 
 [
-    uuid(88d96a0c-f192-11d4-a65f-0040963251e5)
-]
-coclass SAXXMLReader60
-{
-    [default] interface IVBSAXXMLReader;
-    interface ISAXXMLReader;
-}
-
-[
     helpstring("SAX XML Reader"),
     progid("Msxml2.SAXXMLReader"),
     vi_progid("Msxml2.SAXXMLReader"),
