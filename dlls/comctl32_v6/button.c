@@ -51,8 +51,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "uxtheme.h"
-#include "vssym32.h"
 #include "wine/debug.h"
 
 #include "comctl32.h"

@@ -138,8 +138,6 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
-#include "uxtheme.h"
-#include "vsstyle.h"
 #include "shlwapi.h"
 
 #include "wine/debug.h"

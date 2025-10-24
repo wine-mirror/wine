@@ -36,7 +36,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "commctrl.h"
-#include "uxtheme.h"
 
 #include "wine/debug.h"
 

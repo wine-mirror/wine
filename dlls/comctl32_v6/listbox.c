@@ -29,8 +29,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "commctrl.h"
-#include "uxtheme.h"
-#include "vssym32.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 

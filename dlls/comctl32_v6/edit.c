@@ -42,8 +42,6 @@
 #include "imm.h"
 #include "usp10.h"
 #include "commctrl.h"
-#include "uxtheme.h"
-#include "vsstyle.h"
 #include "comctl32.h"
 #include "wine/debug.h"
 

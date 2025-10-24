@@ -34,6 +34,9 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "commctrl.h"
+#include "uxtheme.h"
+#include "vsstyle.h"
+#include "vssym32.h"
 
 extern HMODULE COMCTL32_hModule;
 extern HBRUSH  COMCTL32_hPattern55AABrush;

@@ -43,8 +43,6 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
-#include "uxtheme.h"
-#include "vsstyle.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(datetime);
