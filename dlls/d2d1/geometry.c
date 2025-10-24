@@ -2859,6 +2859,15 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_SetSegmentFlags(ID2D1GeometrySin
         FIXME("Ignoring flags %#x.\n", flags);
 }
 
+static void d2d_geometry_set_error(struct d2d_geometry *geometry, HRESULT code)
+{
+    if (geometry->u.path.state == D2D_GEOMETRY_STATE_ERROR)
+        return;
+
+    geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+    geometry->u.path.code = code;
+}
+
 static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *iface,
         D2D1_POINT_2F start_point, D2D1_FIGURE_BEGIN figure_begin)
 {
@@ -2870,21 +2879,21 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_OPEN)
     {
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
     if (!d2d_path_geometry_add_figure(geometry))
     {
         ERR("Failed to add figure.\n");
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
     figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
     if (!d2d_figure_begin(figure, start_point, figure_begin))
     {
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
@@ -2901,7 +2910,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *ifac
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
@@ -2924,14 +2933,14 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
     if (!d2d_figure_add_beziers(figure, beziers, count))
     {
         ERR("Failed to add Bézier curves.\n");
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
@@ -2947,7 +2956,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
@@ -2960,7 +2969,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
     if (!d2d_geometry_add_figure_outline(geometry, figure, figure_end))
     {
         ERR("Failed to add figure outline.\n");
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
@@ -3235,12 +3244,15 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
 
     TRACE("iface %p.\n", iface);
 
-    if (geometry->u.path.state != D2D_GEOMETRY_STATE_OPEN)
-    {
-        if (geometry->u.path.state != D2D_GEOMETRY_STATE_CLOSED)
-            geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+    if (geometry->u.path.state == D2D_GEOMETRY_STATE_CLOSED)
         return D2DERR_WRONG_STATE;
-    }
+
+    if (geometry->u.path.state != D2D_GEOMETRY_STATE_OPEN)
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
+
+    if (geometry->u.path.state == D2D_GEOMETRY_STATE_ERROR)
+        return geometry->u.path.code;
+
     geometry->u.path.state = D2D_GEOMETRY_STATE_CLOSED;
 
     if (!d2d_geometry_intersect_self(geometry))
@@ -3257,7 +3269,7 @@ done:
         geometry->fill.bezier_vertices = NULL;
         geometry->fill.bezier_vertex_count = 0;
         d2d_path_geometry_free_figures(geometry);
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
     }
     return hr;
 }
@@ -3295,7 +3307,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 
@@ -3310,7 +3322,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
         if (!d2d_figure_add_original_bezier_controls(figure, 2, p))
         {
             ERR("Failed to add cubic Bézier controls.\n");
-            geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+            d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
             return;
         }
 
@@ -3321,14 +3333,14 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
         if (!d2d_figure_add_bezier_controls(figure, 1, &beziers[i].point1))
         {
             ERR("Failed to add bezier.\n");
-            geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+            d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
             return;
         }
 
         if (!d2d_figure_add_vertex(figure, beziers[i].point2))
         {
             ERR("Failed to add bezier vertex.\n");
-            geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+            d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
             return;
         }
 
@@ -3346,7 +3358,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddArc(ID2D1GeometrySink *iface,
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
-        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        d2d_geometry_set_error(geometry, D2DERR_WRONG_STATE);
         return;
     }
 

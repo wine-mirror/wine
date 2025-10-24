@@ -580,6 +580,7 @@ struct d2d_geometry
             size_t figure_count;
 
             enum d2d_geometry_state state;
+            HRESULT code;
             D2D1_FILL_MODE fill_mode;
             UINT32 segment_count;
 
