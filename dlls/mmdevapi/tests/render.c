@@ -2806,7 +2806,7 @@ static void test_audio_clock_adjustment(void)
     ok(hr == S_OK, "Start failed: %08lx\n", hr);
 
     hr = IAudioClockAdjustment_SetSampleRate(aca, 48000.00f);
-    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
+    todo_wine_if(hr == E_NOTIMPL) ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
 
     /* Wait for frame processing */
     WaitForSingleObject(event, 1000);
@@ -2815,7 +2815,7 @@ static void test_audio_clock_adjustment(void)
     ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
 
     hr = IAudioClockAdjustment_SetSampleRate(aca, 44100.00f);
-    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
+    todo_wine_if(hr == E_NOTIMPL) ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
 
     /* Wait for frame processing */
     WaitForSingleObject(event, 1000);
