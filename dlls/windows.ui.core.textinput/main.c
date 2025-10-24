@@ -117,7 +117,8 @@ static HRESULT WINAPI core_input_view_add_OcclusionsChanged(ICoreInputView *ifac
                                                             EventRegistrationToken *token)
 {
     FIXME("iface %p, handler %p, token %p stub!\n", iface, handler, token);
-    return E_NOTIMPL;
+    token->value = 0xdeadbeef;
+    return S_OK;
 }
 
 static HRESULT WINAPI core_input_view_remove_OcclusionsChanged(ICoreInputView *iface,
