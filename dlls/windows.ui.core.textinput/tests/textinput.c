@@ -63,6 +63,7 @@ static void test_CoreInputViewStatics(void)
     check_interface(factory, &IID_IUnknown, TRUE);
     check_interface(factory, &IID_IInspectable, TRUE);
     check_interface(factory, &IID_IActivationFactory, TRUE);
+    check_interface(factory, &IID_ICoreInputViewStatics, TRUE);
     check_interface(factory, &IID_IAgileObject, FALSE);
 
     ref = IActivationFactory_Release(factory);

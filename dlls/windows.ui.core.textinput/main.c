@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(coreinputview);
 struct core_input_view_statics
 {
     IActivationFactory IActivationFactory_iface;
+    ICoreInputViewStatics ICoreInputViewStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface(IActivationFactory *iface, REFIID i
     {
         *out = &impl->IActivationFactory_iface;
         IActivationFactory_AddRef(*out);
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_ICoreInputViewStatics))
+    {
+        *out = &impl->ICoreInputViewStatics_iface;
+        ICoreInputViewStatics_AddRef(*out);
         return S_OK;
     }
 
@@ -106,9 +114,33 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE(core_input_view_statics, ICoreInputViewStatics, struct core_input_view_statics,
+                    IActivationFactory_iface)
+
+static HRESULT WINAPI core_input_view_statics_GetForCurrentView(ICoreInputViewStatics *iface,
+                                                                ICoreInputView **result)
+{
+    FIXME("iface %p, result %p stub!\n", iface, result);
+    return E_NOTIMPL;
+}
+
+static const struct ICoreInputViewStaticsVtbl core_input_view_statics_vtbl =
+{
+    core_input_view_statics_QueryInterface,
+    core_input_view_statics_AddRef,
+    core_input_view_statics_Release,
+    /* IInspectable methods */
+    core_input_view_statics_GetIids,
+    core_input_view_statics_GetRuntimeClassName,
+    core_input_view_statics_GetTrustLevel,
+    /* ICoreInputViewStatics methods */
+    core_input_view_statics_GetForCurrentView,
+};
+
 static struct core_input_view_statics core_input_view_statics =
 {
     {&factory_vtbl},
+    {&core_input_view_statics_vtbl},
     1,
 };
 
