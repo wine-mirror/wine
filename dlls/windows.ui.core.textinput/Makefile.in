@@ -4,4 +4,5 @@ IMPORTS = combase
 SOURCES = \
 	classes.idl \
 	main.c \
-	vector.c
+	vector.c \
+	weakref.c

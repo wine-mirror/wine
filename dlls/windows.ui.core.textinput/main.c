@@ -19,6 +19,7 @@
 
 #include "initguid.h"
 #include "private.h"
+#include "weakref.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreinputview);
 
@@ -28,7 +29,7 @@ struct core_input_view
     ICoreInputView2 ICoreInputView2_iface;
     ICoreInputView3 ICoreInputView3_iface;
     ICoreInputView4 ICoreInputView4_iface;
-    LONG ref;
+    struct weak_reference_source weak_reference_source;
 };
 
 static inline struct core_input_view *impl_from_ICoreInputView(ICoreInputView *iface)
@@ -63,6 +64,10 @@ static HRESULT WINAPI core_input_view_QueryInterface(ICoreInputView *iface, REFI
     {
         *out = &impl->ICoreInputView4_iface;
     }
+    else if (IsEqualGUID(iid, &IID_IWeakReferenceSource))
+    {
+        *out = &impl->weak_reference_source.IWeakReferenceSource_iface;
+    }
 
     if (*out)
     {
@@ -77,7 +82,7 @@ static HRESULT WINAPI core_input_view_QueryInterface(ICoreInputView *iface, REFI
 static ULONG WINAPI core_input_view_AddRef(ICoreInputView *iface)
 {
     struct core_input_view *impl = impl_from_ICoreInputView(iface);
-    ULONG ref = InterlockedIncrement(&impl->ref);
+    ULONG ref = weak_reference_strong_add_ref(&impl->weak_reference_source);
     TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
@@ -85,7 +90,7 @@ static ULONG WINAPI core_input_view_AddRef(ICoreInputView *iface)
 static ULONG WINAPI core_input_view_Release(ICoreInputView *iface)
 {
     struct core_input_view *impl = impl_from_ICoreInputView(iface);
-    ULONG ref = InterlockedDecrement(&impl->ref);
+    ULONG ref = weak_reference_strong_release(&impl->weak_reference_source);
 
     TRACE("iface %p, ref %lu.\n", iface, ref);
 
@@ -424,6 +429,7 @@ static HRESULT WINAPI core_input_view_statics_GetForCurrentView(ICoreInputViewSt
                                                                 ICoreInputView **result)
 {
     struct core_input_view *view;
+    HRESULT hr;
 
     FIXME("iface %p, result %p semi-stub.\n", iface, result);
 
@@ -437,7 +443,14 @@ static HRESULT WINAPI core_input_view_statics_GetForCurrentView(ICoreInputViewSt
     view->ICoreInputView2_iface.lpVtbl = &core_input_view2_vtbl;
     view->ICoreInputView3_iface.lpVtbl = &core_input_view3_vtbl;
     view->ICoreInputView4_iface.lpVtbl = &core_input_view4_vtbl;
-    view->ref = 1;
+
+    if (FAILED(hr = weak_reference_source_init(&view->weak_reference_source,
+                                               (IUnknown *)&view->ICoreInputView_iface)))
+    {
+        *result = NULL;
+        free(view);
+        return hr;
+    }
 
     *result = &view->ICoreInputView_iface;
     return S_OK;

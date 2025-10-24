@@ -23,6 +23,7 @@
 #include "winbase.h"
 #include "winstring.h"
 #include "roapi.h"
+#include "weakreference.h"
 #include "wine/test.h"
 
 #define WIDL_using_Windows_UI_ViewManagement_Core
@@ -104,6 +105,7 @@ static void test_CoreInputView(void)
     check_interface(core_input_view, &IID_IUnknown, TRUE);
     check_interface(core_input_view, &IID_IInspectable, TRUE);
     check_interface(core_input_view, &IID_IAgileObject, TRUE);
+    check_interface(core_input_view, &IID_IWeakReferenceSource, TRUE);
     check_interface(core_input_view, &IID_ICoreInputView, TRUE);
     check_interface(core_input_view, &IID_ICoreInputView2, TRUE);
     check_interface(core_input_view, &IID_ICoreInputView3, TRUE);
