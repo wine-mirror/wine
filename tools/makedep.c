@@ -239,7 +239,6 @@ struct makefile
     struct strarray ok_files[MAX_ARCHS];
     struct strarray res_files[MAX_ARCHS];
     struct strarray all_targets[MAX_ARCHS];
-    struct array    install_commands[NB_INSTALL_RULES];
 };
 
 static struct makefile *top_makefile;
@@ -278,6 +277,8 @@ struct install_command
     const char     *dest;    /* dest file name if different from file */
     char            type;    /* type of install */
 };
+
+static struct array install_commands[NB_INSTALL_RULES];
 
 static const char Usage[] =
     "Usage: makedep [options]\n"
@@ -2361,7 +2362,7 @@ static struct install_command *add_install_command( struct makefile *make, const
             strarray_exists( top_install[i], make->obj_dir ) ||
             strarray_exists( top_install[i], obj_dir_path( make, target )))
         {
-            cmd = ARRAY_ADD( &make->install_commands[i], struct install_command );
+            cmd = ARRAY_ADD( &install_commands[i], struct install_command );
             memset( cmd, 0, sizeof(*cmd) );
             break;
         }
@@ -2641,11 +2642,11 @@ static void output_srcdir_symlink( struct makefile *make, const char *obj )
 /*******************************************************************
  *         output_install_commands
  */
-static void output_install_commands( struct makefile *make, enum install_rules rules )
+static void output_install_commands( struct makefile *make, struct array commands )
 {
     unsigned int arch;
 
-    ARRAY_FOR_EACH( cmd, &make->install_commands[rules], const struct install_command )
+    ARRAY_FOR_EACH( cmd, &commands, const struct install_command )
     {
         const char *dest = strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ? cmd->dest : get_basename( cmd->file ));
 
@@ -2685,22 +2686,26 @@ static void output_install_commands( struct makefile *make, enum install_rules r
 /*******************************************************************
  *         output_install_rules
  */
-static void output_install_rules( struct makefile *make, enum install_rules rules )
+static void output_install_rules( struct makefile *make )
 {
-    struct strarray targets = empty_strarray;
+    for (int i = 0; i < NB_INSTALL_RULES; i++)
+    {
+        struct strarray targets = empty_strarray;
 
-    if (!make->install_commands[rules].count) return;
+        if (!install_commands[i].count) continue;
 
-    ARRAY_FOR_EACH( cmd, &make->install_commands[rules], const struct install_command )
-        if (cmd->target) strarray_add_uniq( &targets, cmd->target );
+        ARRAY_FOR_EACH( cmd, &install_commands[i], const struct install_command )
+            if (cmd->target) strarray_add_uniq( &targets, cmd->target );
 
-    output( "%s %s::", obj_dir_path( make, "install" ), obj_dir_path( make, install_targets[rules] ));
-    output_filenames( targets );
-    output_filename( install );
-    output( "\n" );
-    output_install_commands( make, rules );
-    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "install" ));
-    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, install_targets[rules] ));
+        if (strcmp( install_targets[i], "install-test" )) output( "install " );
+        output( "%s::", install_targets[i] );
+        output_filenames( targets );
+        output_filename( install );
+        output( "\n" );
+        output_install_commands( make, install_commands[i] );
+        strarray_add_uniq( &make->phony_targets, "install" );
+        strarray_add_uniq( &make->phony_targets, install_targets[i] );
+    }
 }
 
 
@@ -3850,10 +3855,9 @@ static void output_subdirs( struct makefile *make )
     struct strarray distclean_files = empty_strarray;
     struct strarray distclean_dirs = empty_strarray;
     struct strarray dependencies = empty_strarray;
-    struct strarray install_deps[NB_INSTALL_RULES] = { empty_strarray };
     struct strarray tooldeps_deps = empty_strarray;
     struct strarray buildtest_deps = empty_strarray;
-    unsigned int i, j, arch;
+    unsigned int i, arch;
 
     strarray_addall( &clean_files, make->clean_files );
     strarray_addall( &distclean_files, make->distclean_files );
@@ -3887,9 +3891,6 @@ static void output_subdirs( struct makefile *make )
             strarray_add( &tooldeps_deps, obj_dir_path( submakes[i], "all" ));
         if (submakes[i]->testdll)
             strarray_add( &buildtest_deps, obj_dir_path( submakes[i], "all" ));
-        for (j = 0; j < NB_INSTALL_RULES; j++)
-            if (submakes[i]->install_commands[j].count)
-                strarray_add( &install_deps[j], obj_dir_path( submakes[i], install_targets[j] ));
     }
     strarray_addall( &dependencies, makefile_deps );
     output( "all:" );
@@ -3900,19 +3901,7 @@ static void output_subdirs( struct makefile *make )
     output( "\n" );
     output_filenames( dependencies );
     output( ":\n" );
-    for (j = 0; j < NB_INSTALL_RULES; j++)
-    {
-        if (!install_deps[j].count) continue;
-        if (strcmp( install_targets[j], "install-test" ))
-        {
-            output( "install " );
-            strarray_add_uniq( &make->phony_targets, "install" );
-        }
-        output( "%s::", install_targets[j] );
-        output_filenames( install_deps[j] );
-        output( "\n" );
-        strarray_add_uniq( &make->phony_targets, install_targets[j] );
-    }
+    output_install_rules( make );
     output_uninstall_rules( make );
     if (buildtest_deps.count)
     {
@@ -4100,8 +4089,6 @@ static void output_sources( struct makefile *make )
         output( "\n" );
         strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "all" ));
     }
-    for (i = 0; i < NB_INSTALL_RULES; i++) output_install_rules( make, i );
-
     if (make->clean_files.count)
     {
         output( "%s::\n", obj_dir_path( make, "clean" ));
@@ -4308,17 +4295,11 @@ static void output_stub_makefile( struct makefile *make )
 {
     struct strarray targets = empty_strarray;
     const char *make_var = strarray_get_value( top_makefile->vars, "MAKE" );
-    unsigned int i, arch;
+    unsigned int arch;
 
     for (arch = 0; arch < archs.count; arch++)
         if (make->all_targets[arch].count) strarray_add_uniq( &targets, "all" );
 
-    for (i = 0; i < NB_INSTALL_RULES; i++)
-    {
-        if (!make->install_commands[i].count) continue;
-        strarray_add_uniq( &targets, "install" );
-        strarray_add( &targets, install_targets[i] );
-    }
     if (make->clean_files.count) strarray_add( &targets, "clean" );
     if (make->test_files.count)
     {
