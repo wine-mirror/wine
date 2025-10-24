@@ -1279,6 +1279,22 @@ static void test_setchannelvolumes(IXAudio2 *xa)
     IXAudio2MasteringVoice_DestroyVoice(master);
 }
 
+#if XAUDIO2_VER >= 8
+static void test_XAudio2CreateWithVersionInfo(void)
+{
+    IXAudio2 *audio;
+    HRESULT hr;
+
+    hr = XAudio2CreateWithVersionInfo(&audio, 0, XAUDIO2_DEFAULT_PROCESSOR, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IXAudio2_Release(audio);
+
+    hr = XAudio2CreateWithVersionInfo(&audio, 0, XAUDIO2_DEFAULT_PROCESSOR, ~0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IXAudio2_Release(audio);
+}
+#endif
+
 static UINT32 check_has_devices(IXAudio2 *xa)
 {
     HRESULT hr;
@@ -1304,6 +1320,10 @@ START_TEST(xaudio2)
 
     if (!(audio = create_xaudio2()))
         return;
+
+#if XAUDIO2_VER >= 8
+    test_XAudio2CreateWithVersionInfo();
+#endif
 
     test_interfaces(audio);
 
