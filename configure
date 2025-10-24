@@ -4309,7 +4309,6 @@ ac_config_headers="$ac_config_headers include/config.h"
 
 
 
-libwine_version="1.0"
 
 
 # Check whether --enable-archs was given.
