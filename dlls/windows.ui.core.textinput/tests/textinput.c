@@ -26,6 +26,7 @@
 #include "wine/test.h"
 
 #define WIDL_using_Windows_UI_ViewManagement_Core
+#define WIDL_using_Windows_Foundation_Collections
 #include "windows.ui.viewmanagement.core.h"
 
 #define check_interface(obj, iid, supported) _check_interface(__LINE__, obj, iid, supported)
@@ -73,6 +74,7 @@ static void test_CoreInputViewStatics(void)
 static void test_CoreInputView(void)
 {
     ICoreInputViewStatics *core_input_view_statics;
+    IVectorView_CoreInputViewOcclusion *occlusions;
     ICoreInputView *core_input_view;
     IActivationFactory *factory;
     HSTRING str = NULL;
@@ -106,6 +108,10 @@ static void test_CoreInputView(void)
     check_interface(core_input_view, &IID_ICoreInputView2, TRUE);
     check_interface(core_input_view, &IID_ICoreInputView3, TRUE);
     check_interface(core_input_view, &IID_ICoreInputView4, TRUE);
+
+    hr = ICoreInputView_GetCoreInputViewOcclusions(core_input_view, &occlusions);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    IVectorView_CoreInputViewOcclusion_Release(occlusions);
 
     ICoreInputView_Release(core_input_view);
 

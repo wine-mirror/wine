@@ -56,6 +56,7 @@ namespace Windows.UI.ViewManagement.Core
     {
         interface Windows.Foundation.Collections.IIterable<Windows.UI.ViewManagement.Core.CoreInputViewOcclusion *>;
         interface Windows.Foundation.Collections.IIterator<Windows.UI.ViewManagement.Core.CoreInputViewOcclusion *>;
+        interface Windows.Foundation.Collections.IVector<Windows.UI.ViewManagement.Core.CoreInputViewOcclusion *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.UI.ViewManagement.Core.CoreInputViewOcclusion *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.Core.CoreInputView *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.Core.CoreInputView *, Windows.UI.ViewManagement.Core.CoreInputViewHidingEventArgs *>;

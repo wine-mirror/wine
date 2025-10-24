@@ -32,6 +32,15 @@
 #define WIDL_using_Windows_UI_ViewManagement_Core
 #include "windows.ui.viewmanagement.core.h"
 
+struct vector_iids
+{
+    const GUID *vector;
+    const GUID *view;
+    const GUID *iterable;
+    const GUID *iterator;
+};
+extern HRESULT vector_create(const struct vector_iids *iids, void **out);
+
 #define DEFINE_IINSPECTABLE_(pfx, iface_type, impl_type, impl_from, iface_mem, expr)        \
     static inline impl_type *impl_from(iface_type *iface)                                   \
     {                                                                                       \

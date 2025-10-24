@@ -130,8 +130,25 @@ static HRESULT WINAPI core_input_view_remove_OcclusionsChanged(ICoreInputView *i
 static HRESULT WINAPI core_input_view_GetCoreInputViewOcclusions(ICoreInputView *iface,
                                                                  IVectorView_CoreInputViewOcclusion **result)
 {
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_CoreInputViewOcclusion,
+        .view = &IID_IVectorView_CoreInputViewOcclusion,
+        .iterable = &IID_IIterable_CoreInputViewOcclusion,
+        .iterator = &IID_IIterator_CoreInputViewOcclusion,
+    };
+    IVector_CoreInputViewOcclusion *vector;
+    HRESULT hr;
+
     FIXME("iface %p, result %p stub!\n", iface, result);
-    return E_NOTIMPL;
+
+    if (SUCCEEDED(hr = vector_create(&iids, (void **)&vector)))
+    {
+        hr = IVector_CoreInputViewOcclusion_GetView(vector, result);
+        IVector_CoreInputViewOcclusion_Release(vector);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI core_input_view_TryShowPrimaryView(ICoreInputView *iface, boolean *result)
