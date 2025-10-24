@@ -705,12 +705,36 @@ static int DATETIME_GetFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int co
     return size.cx;
 }
 
-static void 
-DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
+static void DATETIME_DrawBackground (DATETIME_INFO *infoPtr, HDC hdc)
 {
     HTHEME theme;
-    int state;
 
+    theme = GetWindowTheme(infoPtr->hwndSelf);
+    if (theme)
+    {
+        int state;
+
+        if (infoPtr->dwStyle & WS_DISABLED)
+            state = ABS_DOWNDISABLED;
+        else if (infoPtr->bCalDepressed)
+            state = ABS_DOWNPRESSED;
+        else if (infoPtr->bCalHot)
+            state = ABS_DOWNHOT;
+        else
+            state = ABS_DOWNNORMAL;
+
+        DrawThemeBackground(theme, hdc, SBP_ARROWBTN, state, &infoPtr->calbutton, NULL);
+        return;
+    }
+
+    DrawFrameControl(hdc, &infoPtr->calbutton, DFC_SCROLL, DFCS_SCROLLDOWN |
+                     (infoPtr->bCalDepressed ? DFCS_PUSHED : 0) |
+                     (infoPtr->dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0));
+}
+
+static void
+DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
+{
     TRACE("\n");
 
     if (infoPtr->dateValid) {
@@ -777,26 +801,7 @@ DATETIME_Refresh (DATETIME_INFO *infoPtr, HDC hdc)
     if (infoPtr->dwStyle & DTS_UPDOWN)
         return;
 
-    theme = GetWindowTheme(infoPtr->hwndSelf);
-    if (theme)
-    {
-        if (infoPtr->dwStyle & WS_DISABLED)
-            state = ABS_DOWNDISABLED;
-        else if (infoPtr->bCalDepressed)
-            state = ABS_DOWNPRESSED;
-        else if (infoPtr->bCalHot)
-            state = ABS_DOWNHOT;
-        else
-            state = ABS_DOWNNORMAL;
-
-        DrawThemeBackground(theme, hdc, SBP_ARROWBTN, state, &infoPtr->calbutton, NULL);
-    }
-    else
-    {
-        DrawFrameControl(hdc, &infoPtr->calbutton, DFC_SCROLL,
-                         DFCS_SCROLLDOWN | (infoPtr->bCalDepressed ? DFCS_PUSHED : 0) |
-                         (infoPtr->dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0) );
-    }
+    DATETIME_DrawBackground(infoPtr, hdc);
 }
 
 
