@@ -3830,7 +3830,6 @@ static void test_path_geometry(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1GeometrySink_SetSegmentFlags(sink, 0xff);
     hr = ID2D1GeometrySink_Close(sink);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ID2D1GeometrySink_Release(sink);
     ID2D1PathGeometry_Release(geometry);

@@ -2851,14 +2851,6 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_SetFillMode(ID2D1GeometrySink *i
     geometry->u.path.fill_mode = mode;
 }
 
-static void STDMETHODCALLTYPE d2d_geometry_sink_SetSegmentFlags(ID2D1GeometrySink *iface, D2D1_PATH_SEGMENT flags)
-{
-    TRACE("iface %p, flags %#x.\n", iface, flags);
-
-    if (flags != D2D1_PATH_SEGMENT_NONE)
-        FIXME("Ignoring flags %#x.\n", flags);
-}
-
 static void d2d_geometry_set_error(struct d2d_geometry *geometry, HRESULT code)
 {
     if (geometry->u.path.state == D2D_GEOMETRY_STATE_ERROR)
@@ -2866,6 +2858,22 @@ static void d2d_geometry_set_error(struct d2d_geometry *geometry, HRESULT code)
 
     geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
     geometry->u.path.code = code;
+}
+
+static void STDMETHODCALLTYPE d2d_geometry_sink_SetSegmentFlags(ID2D1GeometrySink *iface, D2D1_PATH_SEGMENT flags)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    if (flags & ~(D2D1_PATH_SEGMENT_FORCE_UNSTROKED | D2D1_PATH_SEGMENT_FORCE_ROUND_LINE_JOIN))
+    {
+        d2d_geometry_set_error(geometry, E_INVALIDARG);
+        return;
+    }
+
+    if (flags != D2D1_PATH_SEGMENT_NONE)
+        FIXME("Ignoring flags %#x.\n", flags);
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *iface,
