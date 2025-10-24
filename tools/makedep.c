@@ -420,21 +420,23 @@ static void output_filenames( struct strarray array )
 
 
 /*******************************************************************
- *         output_rm_filenames
+ *         output_multifiles_command
  */
-static void output_rm_filenames( struct strarray array, const char *command )
+static void output_multifiles_command( struct strarray files, const char *command, struct strarray args )
 {
     static const unsigned int max_cmdline = 30000;  /* to be on the safe side */
     unsigned int len = 0;
 
-    if (!array.count) return;
+    if (!files.count) return;
     output( "\t%s", command );
-    STRARRAY_FOR_EACH( file, &array )
+    output_filenames( args );
+    STRARRAY_FOR_EACH( file, &files )
     {
         if (len > max_cmdline)
         {
             output( "\n" );
             output( "\t%s", command );
+            output_filenames( args );
             len = 0;
         }
         output_filename( file );
@@ -2774,7 +2776,7 @@ static void output_uninstall_rules( struct makefile *make )
     }
 
     output( "uninstall::\n" );
-    output_rm_filenames( uninstall_files, "rm -f" );
+    output_multifiles_command( uninstall_files, "rm -f", empty_strarray );
     strarray_add_uniq( &make->phony_targets, "uninstall" );
 
     if (!uninstall_dirs.count) return;
@@ -3955,14 +3957,14 @@ static void output_subdirs( struct makefile *make )
     if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
 
     output( "clean::\n");
-    output_rm_filenames( clean_files, "rm -f" );
+    output_multifiles_command( clean_files, "rm -f", empty_strarray );
     output( "testclean::\n");
-    output_rm_filenames( testclean_files, "rm -f" );
+    output_multifiles_command( testclean_files, "rm -f", empty_strarray );
     output( "distclean:: clean\n");
-    output_rm_filenames( distclean_files, "rm -f" );
-    output_rm_filenames( distclean_dirs, "-rmdir 2>/dev/null" );
+    output_multifiles_command( distclean_files, "rm -f", empty_strarray );
+    output_multifiles_command( distclean_dirs, "-rmdir 2>/dev/null", empty_strarray );
     output( "maintainer-clean::\n");
-    output_rm_filenames( make->maintainerclean_files, "rm -f" );
+    output_multifiles_command( make->maintainerclean_files, "rm -f", empty_strarray );
     strarray_add_uniq( &make->phony_targets, "distclean" );
     strarray_add_uniq( &make->phony_targets, "testclean" );
     strarray_add_uniq( &make->phony_targets, "maintainer-clean" );
