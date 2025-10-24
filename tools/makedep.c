@@ -271,8 +271,8 @@ static struct list compile_commands = LIST_INIT( compile_commands );
 struct install_command
 {
     struct strarray args;    /* command line arguments */
-    const char     *file;    /* source file name */
-    const char     *target;  /* target to build if any */
+    struct strarray files;   /* source file names */
+    struct strarray targets; /* targets to build if any */
     const char     *dir;     /* dest directory */
     const char     *dest;    /* dest file name if different from file */
 };
@@ -2348,9 +2348,30 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
 
 /*******************************************************************
+ *         find_install_command
+ */
+static struct install_command *find_install_command( enum install_rules rules, struct strarray args,
+                                                     const char *dir )
+{
+    unsigned int i;
+
+    ARRAY_FOR_EACH( cmd, &install_commands[rules], struct install_command )
+    {
+        if (strcmp( cmd->dir, dir )) continue;
+        if (args.count != cmd->args.count) continue;
+        for (i = 0; i < args.count; i++) if (strcmp( args.str[i], cmd->args.str[i] )) break;
+        if (i == args.count) return cmd;
+    }
+    return NULL;
+}
+
+
+/*******************************************************************
  *         add_install_command
  */
-static struct install_command *add_install_command( struct makefile *make, const char *target )
+static struct install_command *add_install_command( struct makefile *make, const char *target,
+                                                    struct strarray args, const char *dir,
+                                                    const char *dest )
 {
     unsigned int i;
     struct install_command *cmd = NULL;
@@ -2363,8 +2384,13 @@ static struct install_command *add_install_command( struct makefile *make, const
             strarray_exists( top_install[i], make->obj_dir ) ||
             strarray_exists( top_install[i], obj_dir_path( make, target )))
         {
+            if (!dest && (cmd = find_install_command( i, args, dir ))) return cmd;
             cmd = ARRAY_ADD( &install_commands[i], struct install_command );
-            memset( cmd, 0, sizeof(*cmd) );
+            cmd->args = args;
+            cmd->dir  = dir;
+            cmd->dest = dest;
+            cmd->files = empty_strarray;
+            cmd->targets = empty_strarray;
             break;
         }
     }
@@ -2384,12 +2410,12 @@ static void install_data_file( struct makefile *make, const char *target,
     strarray_add( &args, "-m 644" );
     strarray_add( &args, "$(INSTALL_DATA_FLAGS)" );
 
-    if (!(cmd = add_install_command( make, target ))) return;
-    cmd->args   = args;
-    cmd->file   = obj_dir_path( make, obj );
-    cmd->target = cmd->file;
-    cmd->dir    = dir;
-    cmd->dest   = dst;
+    if ((cmd = add_install_command( make, target, args, dir, dst )))
+    {
+        char *file = obj_dir_path( make, obj );
+        strarray_add( &cmd->files, file );
+        strarray_add( &cmd->targets, file );
+    }
 }
 
 
@@ -2405,10 +2431,8 @@ static void install_data_file_src( struct makefile *make, const char *target,
     strarray_add( &args, "-m 644" );
     strarray_add( &args, "$(INSTALL_DATA_FLAGS)" );
 
-    if (!(cmd = add_install_command( make, target ))) return;
-    cmd->args   = args;
-    cmd->file   = src_dir_path( make, src );
-    cmd->dir    = dir;
+    if (!(cmd = add_install_command( make, target, args, dir, NULL ))) return;
+    strarray_add( &cmd->files, src_dir_path( make, src ));
 }
 
 
@@ -2446,11 +2470,12 @@ static void install_program( struct makefile *make, const char *target,
     strarray_add( &args, strip_progs[arch] );
     strarray_add( &args, "$(INSTALL_PROGRAM_FLAGS)" );
 
-    if (!(cmd = add_install_command( make, target ))) return;
-    cmd->args   = args;
-    cmd->file   = obj_dir_path( make, obj );
-    cmd->target = cmd->file;
-    cmd->dir    = dir;
+    if ((cmd = add_install_command( make, target, args, dir, NULL )))
+    {
+        char *file = obj_dir_path( make, obj );
+        strarray_add( &cmd->files, file );
+        strarray_add( &cmd->targets, file );
+    }
 }
 
 
@@ -2464,10 +2489,8 @@ static void install_script( struct makefile *make, const char *src )
 
     strarray_add( &args, "$(INSTALL_SCRIPT_FLAGS)" );
 
-    if (!(cmd = add_install_command( make, src ))) return;
-    cmd->args   = args;
-    cmd->file   = src_dir_path( make, src );
-    cmd->dir    = "$(bindir)";
+    if (!(cmd = add_install_command( make, src, args, "$(bindir)", NULL ))) return;
+    strarray_add( &cmd->files, src_dir_path( make, src ));
 }
 
 
@@ -2484,21 +2507,18 @@ static void install_program_symlink( struct makefile *make, const char *target,
     {
         strarray_add( &args, "-L" );
 
-        if (!(cmd = add_install_command( make, target ))) return;
-        cmd->file = get_basename( obj );
+        if (!(cmd = add_install_command( make, target, args, "$(bindir)", dst ))) return;
+        strarray_add( &cmd->files, get_basename( obj ));
     }
     else
     {
         strarray_add( &args, strip_progs[0] );
         strarray_add( &args, "$(INSTALL_PROGRAM_FLAGS)" );
 
-        if (!(cmd = add_install_command( make, target ))) return;
-        cmd->file   = obj;
-        cmd->target = cmd->file;
+        if (!(cmd = add_install_command( make, target, args, "$(bindir)", dst ))) return;
+        strarray_add( &cmd->files, obj );
+        strarray_add( &cmd->targets, obj );
     }
-    cmd->args   = args;
-    cmd->dir    = "$(bindir)";
-    cmd->dest   = dst;
 }
 
 
@@ -2515,21 +2535,21 @@ static void install_data_symlink( struct makefile *make, const char *target, con
     {
         strarray_add( &args, "-L" );
 
-        if (!(cmd = add_install_command( make, target ))) return;
-        cmd->file = link_name;
+        if (!(cmd = add_install_command( make, target, args, dir, dst ))) return;
+        strarray_add( &cmd->files, link_name );
     }
     else
     {
         strarray_add( &args, "-m 644" );
         strarray_add( &args, "$(INSTALL_DATA_FLAGS)" );
 
-        if (!(cmd = add_install_command( make, target ))) return;
-        cmd->file   = obj_dir_path( make, obj );
-        cmd->target = cmd->file;
+        if ((cmd = add_install_command( make, target, args, dir, dst )))
+        {
+            char *file = obj_dir_path( make, obj );
+            strarray_add( &cmd->files, file );
+            strarray_add( &cmd->targets, file );
+        }
     }
-    cmd->args   = args;
-    cmd->dir    = dir;
-    cmd->dest   = dst;
 }
 
 
@@ -2673,21 +2693,23 @@ static void output_install_commands( struct array commands )
 {
     ARRAY_FOR_EACH( cmd, &commands, const struct install_command )
     {
-        struct strarray args = cmd->args;
-
         if (cmd->dest)
         {
-            strarray_add( &args, cmd->file );
-            strarray_add( &args, strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ));
+            assert( cmd->files.count == 1 );
+            output( "\t%s", install );
+            output_filenames( cmd->args );
+            output_filenames( cmd->files );
+            output_filename( strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ));
+            output( "\n" );
         }
         else
         {
+            struct strarray args = empty_strarray;
+
+            strarray_addall( &args, cmd->args );
             strarray_add( &args, strmake( "-t $(DESTDIR)%s", cmd->dir ));
-            strarray_add( &args, cmd->file );
+            output_multifiles_command( cmd->files, install, args );
         }
-        output( "\t%s", install );
-        output_filenames( args );
-        output( "\n" );
     }
 }
 
@@ -2704,7 +2726,7 @@ static void output_install_rules( struct makefile *make )
         if (!install_commands[i].count) continue;
 
         ARRAY_FOR_EACH( cmd, &install_commands[i], const struct install_command )
-            if (cmd->target) strarray_add_uniq( &targets, cmd->target );
+            strarray_addall_uniq( &targets, cmd->targets );
 
         if (strcmp( install_targets[i], "install-test" )) output( "install " );
         output( "%s::", install_targets[i] );
@@ -2771,7 +2793,8 @@ static void output_uninstall_rules( struct makefile *make )
             if (cmd->dest)
                 strarray_add( &uninstall_files, strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ));
             else
-                strarray_add( &uninstall_files, strmake( "$(DESTDIR)%s/%s", cmd->dir, get_basename( cmd->file )));
+                STRARRAY_FOR_EACH( file, &cmd->files )
+                    strarray_add( &uninstall_files, strmake( "$(DESTDIR)%s/%s", cmd->dir, get_basename( file )));
         }
     }
 
