@@ -1659,7 +1659,6 @@ static LRESULT COMBO_GetComboBoxInfo(const HEADCOMBO *lphc, COMBOBOXINFO *pcbi)
 static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     HEADCOMBO *lphc = (HEADCOMBO *)GetWindowLongPtrW( hwnd, 0 );
-    HTHEME theme;
 
     TRACE("[%p]: msg %#x, wp %Ix, lp %Ix\n", hwnd, message, wParam, lParam );
 
@@ -1689,13 +1688,11 @@ static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam
     }
 
     case WM_DESTROY:
-        theme = GetWindowTheme( hwnd );
-        CloseThemeData( theme );
+        COMCTL32_CloseThemeForWindow( hwnd );
         break;
 
     case WM_THEMECHANGED:
-        theme = GetWindowTheme( hwnd );
-        CloseThemeData( theme );
+        COMCTL32_CloseThemeForWindow( hwnd );
         COMCTL32_OpenThemeForWindow( hwnd, WC_COMBOBOXW );
         InvalidateRect( hwnd, NULL, TRUE );
         break;

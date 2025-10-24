@@ -3110,6 +3110,11 @@ void COMCTL32_OpenThemeForWindow(HWND hwnd, const WCHAR *theme_class)
     OpenThemeData(hwnd, theme_class);
 }
 
+void COMCTL32_CloseThemeForWindow(HWND hwnd)
+{
+    CloseThemeData(GetWindowTheme(hwnd));
+}
+
 /* A helper to handle CCM_SETVERSION messages */
 LRESULT COMCTL32_SetVersion(INT *current_version, INT new_version)
 {

@@ -2665,8 +2665,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
  */
 static BOOL LISTBOX_Destroy( LB_DESCR *descr )
 {
-    HTHEME theme = GetWindowTheme( descr->self );
-    CloseThemeData( theme );
+    COMCTL32_CloseThemeForWindow( descr->self );
     LISTBOX_ResetContent( descr );
     SetWindowLongPtrW( descr->self, 0, 0 );
     HeapFree( GetProcessHeap(), 0, descr );
@@ -2681,7 +2680,6 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
 {
     LB_DESCR *descr = (LB_DESCR *)GetWindowLongPtrW( hwnd, 0 );
     HEADCOMBO *lphc = NULL;
-    HTHEME theme;
     LRESULT ret;
 
     if (!descr)
@@ -3158,8 +3156,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
 	break;
 
     case WM_THEMECHANGED:
-        theme = GetWindowTheme( hwnd );
-        CloseThemeData( theme );
+        COMCTL32_CloseThemeForWindow( hwnd );
         COMCTL32_OpenThemeForWindow( hwnd, WC_LISTBOXW );
         InvalidateRect( hwnd, NULL, TRUE );
         break;

@@ -4461,10 +4461,8 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, const WCHAR *name)
 static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 {
     LINEDEF *pc, *pp;
-    HTHEME theme;
 
-    theme = GetWindowTheme(es->hwndSelf);
-    CloseThemeData(theme);
+    COMCTL32_CloseThemeForWindow(es->hwndSelf);
 
     /* The app can own the text buffer handle */
     if (es->hloc32W && (es->hloc32W != es->hlocapp))

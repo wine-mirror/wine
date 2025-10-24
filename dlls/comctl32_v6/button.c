@@ -545,13 +545,11 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     }
 
     case WM_DESTROY:
-        theme = GetWindowTheme( hWnd );
-        CloseThemeData( theme );
+        COMCTL32_CloseThemeForWindow( hWnd );
         break;
 
     case WM_THEMECHANGED:
-        theme = GetWindowTheme( hWnd );
-        CloseThemeData( theme );
+        COMCTL32_CloseThemeForWindow( hWnd );
         COMCTL32_OpenThemeForWindow( hWnd, WC_BUTTONW );
         InvalidateRect( hWnd, NULL, TRUE );
         break;

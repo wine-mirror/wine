@@ -187,6 +187,7 @@ typedef struct
 extern COMCTL32_SysColor  comctl32_color;
 
 /* Internal function */
+void COMCTL32_CloseThemeForWindow(HWND hwnd);
 HWND COMCTL32_CreateToolTip(HWND);
 void COMCTL32_DrawStatusText(HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style, BOOL draw_background);
 void COMCTL32_OpenThemeForWindow(HWND hwnd, const WCHAR *theme_class);
