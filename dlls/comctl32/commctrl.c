@@ -3107,12 +3107,16 @@ LRESULT COMCTL32_forward_notify_to_ansi_window(HWND hwnd_notify, NMHDR *hdr, WCH
 
 void COMCTL32_OpenThemeForWindow(HWND hwnd, const WCHAR *theme_class)
 {
+#if __WINE_COMCTL32_VERSION == 6
     OpenThemeData(hwnd, theme_class);
+#endif
 }
 
 void COMCTL32_CloseThemeForWindow(HWND hwnd)
 {
+#if __WINE_COMCTL32_VERSION == 6
     CloseThemeData(GetWindowTheme(hwnd));
+#endif
 }
 
 /* A helper to handle CCM_SETVERSION messages */
@@ -3135,6 +3139,7 @@ LRESULT COMCTL32_SetVersion(INT *current_version, INT new_version)
 /* A helper to handle WM_THEMECHANGED messages */
 LRESULT COMCTL32_ThemeChanged(HWND hwnd, const WCHAR *theme_class, BOOL invalidate, BOOL erase)
 {
+#if __WINE_COMCTL32_VERSION == 6
     if (theme_class)
     {
         COMCTL32_CloseThemeForWindow(hwnd);
@@ -3144,6 +3149,9 @@ LRESULT COMCTL32_ThemeChanged(HWND hwnd, const WCHAR *theme_class, BOOL invalida
     if (invalidate)
         InvalidateRect(hwnd, NULL, erase);
     return 0;
+#else
+    return DefWindowProcW(hwnd, WM_THEMECHANGED, 0, 0);
+#endif
 }
 
 /* A helper to handle WM_NCPAINT messages
@@ -3153,6 +3161,7 @@ LRESULT COMCTL32_ThemeChanged(HWND hwnd, const WCHAR *theme_class, BOOL invalida
  */
 LRESULT COMCTL32_NCPaint(HWND hwnd, WPARAM wp, LPARAM lp, const WCHAR *theme_class)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HRGN region = (HRGN)wp, clipRgn;
     INT cxEdge, cyEdge;
     HTHEME theme;
@@ -3193,4 +3202,7 @@ LRESULT COMCTL32_NCPaint(HWND hwnd, WPARAM wp, LPARAM lp, const WCHAR *theme_cla
     DefWindowProcW(hwnd, WM_NCPAINT, (WPARAM)clipRgn, 0);
     DeleteObject(clipRgn);
     return 0;
+#else
+    return DefWindowProcW(hwnd, WM_NCPAINT, wp, lp);
+#endif
 }
