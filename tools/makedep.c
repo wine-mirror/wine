@@ -227,7 +227,6 @@ struct makefile
     struct strarray clean_files;
     struct strarray distclean_files;
     struct strarray maintainerclean_files;
-    struct strarray uninstall_files;
     struct strarray unixobj_files;
     struct strarray font_files;
     struct strarray debug_files;
@@ -2642,14 +2641,12 @@ static void output_srcdir_symlink( struct makefile *make, const char *obj )
 /*******************************************************************
  *         output_install_commands
  */
-static void output_install_commands( struct makefile *make, struct array commands )
+static void output_install_commands( struct array commands )
 {
     unsigned int arch;
 
     ARRAY_FOR_EACH( cmd, &commands, const struct install_command )
     {
-        const char *dest = strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ? cmd->dest : get_basename( cmd->file ));
-
         switch (cmd->type)
         {
         case '1': case '2': case '3': case '4': case '5':
@@ -2678,7 +2675,6 @@ static void output_install_commands( struct makefile *make, struct array command
         }
         if (cmd->dest) output( " %s $(DESTDIR)%s/%s\n", cmd->file, cmd->dir, cmd->dest );
         else output( " -t $(DESTDIR)%s %s\n", cmd->dir, cmd->file );
-        strarray_add( &make->uninstall_files, dest );
     }
 }
 
@@ -2702,7 +2698,7 @@ static void output_install_rules( struct makefile *make )
         output_filenames( targets );
         output_filename( install );
         output( "\n" );
-        output_install_commands( make, install_commands[i] );
+        output_install_commands( install_commands[i] );
         strarray_add_uniq( &make->phony_targets, "install" );
         strarray_add_uniq( &make->phony_targets, install_targets[i] );
     }
@@ -2751,29 +2747,40 @@ static void output_uninstall_rules( struct makefile *make )
     static const char *dirs_order[] =
         { "$(includedir)", "$(mandir)", "$(datadir)" };
 
-    struct strarray uninstall_dirs;
+    struct strarray uninstall_dirs = empty_strarray, uninstall_files = empty_strarray;
     unsigned int i, j;
 
-    if (!make->uninstall_files.count) return;
+    for (i = 0; i < NB_INSTALL_RULES; i++)
+    {
+        ARRAY_FOR_EACH( cmd, &install_commands[i], const struct install_command )
+        {
+            strarray_add_uniq( &uninstall_dirs, cmd->dir );
+            if (cmd->dest)
+                strarray_add( &uninstall_files, strmake( "$(DESTDIR)%s/%s", cmd->dir, cmd->dest ));
+            else
+                strarray_add( &uninstall_files, strmake( "$(DESTDIR)%s/%s", cmd->dir, get_basename( cmd->file )));
+        }
+    }
+
     output( "uninstall::\n" );
-    output_rm_filenames( make->uninstall_files, "rm -f" );
+    output_rm_filenames( uninstall_files, "rm -f" );
     strarray_add_uniq( &make->phony_targets, "uninstall" );
 
-    if (!subdirs.count) return;
-    uninstall_dirs = get_removable_dirs( make->uninstall_files );
+    if (!uninstall_dirs.count) return;
+    strarray_addall_uniq( &uninstall_dirs, get_removable_dirs( uninstall_dirs ));
+    strarray_qsort( &uninstall_dirs, cmp_string_length );
     output( "\t-rmdir" );
     for (i = 0; i < ARRAY_SIZE(dirs_order); i++)
     {
         for (j = 0; j < uninstall_dirs.count; j++)
         {
             if (!uninstall_dirs.str[j]) continue;
-            if (strncmp( uninstall_dirs.str[j] + strlen("$(DESTDIR)"), dirs_order[i], strlen(dirs_order[i]) ))
-                continue;
-            output_filename( uninstall_dirs.str[j] );
+            if (strncmp( uninstall_dirs.str[j], dirs_order[i], strlen(dirs_order[i]) )) continue;
+            output_filename( strmake( "$(DESTDIR)%s", uninstall_dirs.str[j] ));
             uninstall_dirs.str[j] = NULL;
         }
     }
-    STRARRAY_FOR_EACH( dir, &uninstall_dirs ) if (dir) output_filename( dir );
+    STRARRAY_FOR_EACH( dir, &uninstall_dirs ) if (dir) output_filename( strmake( "$(DESTDIR)%s", dir ));
     output( "\n" );
 }
 
@@ -3869,7 +3876,6 @@ static void output_subdirs( struct makefile *make )
         strarray_addall( &subclean, get_removable_dirs( submakes[i]->distclean_files ));
         strarray_add( &makefile_deps, src_dir_path( submakes[i], "Makefile.in" ));
         strarray_addall_uniq( &make->phony_targets, submakes[i]->phony_targets );
-        strarray_addall_uniq( &make->uninstall_files, submakes[i]->uninstall_files );
         strarray_addall_uniq( &dependencies, submakes[i]->dependencies );
         strarray_addall_path( &clean_files, submakes[i]->obj_dir, submakes[i]->clean_files );
         strarray_addall_path( &sast_files, submakes[i]->obj_dir, submakes[i]->sast_files );
