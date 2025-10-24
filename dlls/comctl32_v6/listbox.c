@@ -2653,7 +2653,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 	}
     }
 
-    OpenThemeData( descr->self, WC_LISTBOXW );
+    COMCTL32_OpenThemeForWindow( descr->self, WC_LISTBOXW );
 
     TRACE("owner: %p, style: %08x, width: %d, height: %d\n", descr->owner, descr->style, descr->width, descr->height);
     return TRUE;
@@ -3160,7 +3160,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
     case WM_THEMECHANGED:
         theme = GetWindowTheme( hwnd );
         CloseThemeData( theme );
-        OpenThemeData( hwnd, WC_LISTBOXW );
+        COMCTL32_OpenThemeForWindow( hwnd, WC_LISTBOXW );
         InvalidateRect( hwnd, NULL, TRUE );
         break;
 

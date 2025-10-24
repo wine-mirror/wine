@@ -536,7 +536,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             SetWindowLongW( hWnd, GWL_STYLE, style );
         }
         infoPtr->state = BST_UNCHECKED;
-        OpenThemeData( hWnd, WC_BUTTONW );
+        COMCTL32_OpenThemeForWindow( hWnd, WC_BUTTONW );
 
         parent = GetParent( hWnd );
         if (parent)
@@ -552,7 +552,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     case WM_THEMECHANGED:
         theme = GetWindowTheme( hWnd );
         CloseThemeData( theme );
-        OpenThemeData( hWnd, WC_BUTTONW );
+        COMCTL32_OpenThemeForWindow( hWnd, WC_BUTTONW );
         InvalidateRect( hWnd, NULL, TRUE );
         break;
 

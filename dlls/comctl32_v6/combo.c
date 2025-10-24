@@ -397,7 +397,7 @@ static void CBGetDroppedControlRect( LPHEADCOMBO lphc, LPRECT lpRect)
  */
 static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG style )
 {
-  OpenThemeData( hwnd, WC_COMBOBOXW );
+  COMCTL32_OpenThemeForWindow( hwnd, WC_COMBOBOXW );
   if( !CB_GETTYPE(lphc) ) lphc->dwStyle |= CBS_SIMPLE;
   if( CB_GETTYPE(lphc) != CBS_DROPDOWNLIST ) lphc->wState |= CBF_EDIT;
 
@@ -1696,7 +1696,7 @@ static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam
     case WM_THEMECHANGED:
         theme = GetWindowTheme( hwnd );
         CloseThemeData( theme );
-        OpenThemeData( hwnd, WC_COMBOBOXW );
+        COMCTL32_OpenThemeForWindow( hwnd, WC_COMBOBOXW );
         InvalidateRect( hwnd, NULL, TRUE );
         break;
 

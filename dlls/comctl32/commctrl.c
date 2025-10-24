@@ -3105,6 +3105,11 @@ LRESULT COMCTL32_forward_notify_to_ansi_window(HWND hwnd_notify, NMHDR *hdr, WCH
     return SendMessageW(hwnd_notify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
 }
 
+void COMCTL32_OpenThemeForWindow(HWND hwnd, const WCHAR *theme_class)
+{
+    OpenThemeData(hwnd, theme_class);
+}
+
 /* A helper to handle CCM_SETVERSION messages */
 LRESULT COMCTL32_SetVersion(INT *current_version, INT new_version)
 {

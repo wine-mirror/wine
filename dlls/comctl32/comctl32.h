@@ -189,6 +189,7 @@ extern COMCTL32_SysColor  comctl32_color;
 /* Internal function */
 HWND COMCTL32_CreateToolTip(HWND);
 void COMCTL32_DrawStatusText(HDC hdc, LPCRECT lprc, LPCWSTR text, UINT style, BOOL draw_background);
+void COMCTL32_OpenThemeForWindow(HWND hwnd, const WCHAR *theme_class);
 VOID COMCTL32_RefreshSysColors(void);
 void COMCTL32_DrawInsertMark(HDC hDC, const RECT *lpRect, COLORREF clrInsertMark, BOOL bHorizontal);
 void COMCTL32_EnsureBitmapSize(HBITMAP *pBitmap, int cxMinWidth, int cyMinHeight, COLORREF crBackground);
