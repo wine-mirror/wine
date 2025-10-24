@@ -3392,6 +3392,14 @@ static unsigned int handle_to_index( HANDLE handle, unsigned int *block_idx )
     return idx % TID_ALERT_BLOCK_SIZE;
 }
 
+static BOOL is_alert_tid_valid( HANDLE tid )
+{
+    unsigned int block_idx;
+
+    handle_to_index( tid, &block_idx );
+    return block_idx <= ARRAY_SIZE(tid_alert_blocks);
+}
+
 static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 {
     unsigned int block_idx, idx = handle_to_index( tid, &block_idx );
@@ -3459,6 +3467,25 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 #endif
 
     return entry;
+}
+
+
+/***********************************************************************
+ *             NtAlertMultipleThreadByThreadId (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAlertMultipleThreadByThreadId( HANDLE *tids, ULONG count, void *unk1, void *unk2 )
+{
+    unsigned int i;
+
+    TRACE( "%p %d %p %p\n", tids, (int)count, unk1, unk2 );
+
+    if (unk1 || unk2) FIXME( "unk1 %p, unk2 %p.\n", unk1, unk2 );
+    for (i = 0; i < count; ++i)
+    {
+        if (!is_alert_tid_valid( tids[i] )) return STATUS_INVALID_CID;
+    }
+    for (i = 0; i < count; ++i) NtAlertThreadByThreadId( tids[i] );
+    return STATUS_SUCCESS;
 }
 
 

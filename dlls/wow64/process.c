@@ -270,6 +270,26 @@ void put_vm_counters( VM_COUNTERS_EX32 *info32, const VM_COUNTERS_EX *info, ULON
 
 
 /**********************************************************************
+ *           wow64_NtAlertMultipleThreadByThreadId
+ */
+NTSTATUS WINAPI wow64_NtAlertMultipleThreadByThreadId( UINT *args )
+{
+    LONG *handles_ptr = get_ptr( &args );
+    ULONG count = get_ulong( &args );
+    void *unk1 = get_ptr( &args );
+    void *unk2 = get_ptr( &args );
+    HANDLE handles_buf[256], *handles;
+    unsigned int i;
+
+    if (count <= ARRAY_SIZE(handles_buf)) handles = handles_buf;
+    else                                  handles = Wow64AllocateTemp( count * sizeof(*handles) );
+    for (i = 0; i < count; ++i) handles[i] = (HANDLE)(ULONG_PTR)handles_ptr[i];
+
+    return NtAlertMultipleThreadByThreadId( handles, count, unk1, unk2 );
+}
+
+
+/**********************************************************************
  *           wow64_NtAlertResumeThread
  */
 NTSTATUS WINAPI wow64_NtAlertResumeThread( UINT *args )

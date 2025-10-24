@@ -27,6 +27,7 @@
 #include "setjmp.h"
 #include "wine/test.h"
 
+static NTSTATUS (WINAPI *pNtAlertMultipleThreadByThreadId)( HANDLE *, ULONG, void *, void * );
 static NTSTATUS (WINAPI *pNtAlertThreadByThreadId)( HANDLE );
 static NTSTATUS (WINAPI *pNtClose)( HANDLE );
 static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const OBJECT_ATTRIBUTES *, EVENT_TYPE, BOOLEAN);
@@ -780,12 +781,22 @@ static DWORD WINAPI tid_alert_thread( void *arg )
     return 0;
 }
 
+static DWORD WINAPI tid_wait_alert_thread( void *arg )
+{
+    NTSTATUS ret;
+
+    ret = pNtWaitForAlertByThreadId( (void *)0x123, NULL );
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
+    return 0;
+}
+
 static void test_tid_alert( char **argv )
 {
     LARGE_INTEGER timeout = {{0}};
     char cmdline[MAX_PATH];
     STARTUPINFOA si = {0};
     PROCESS_INFORMATION pi;
+    HANDLE tids[2];
     HANDLE thread;
     NTSTATUS ret;
     DWORD tid;
@@ -846,6 +857,43 @@ static void test_tid_alert( char **argv )
     ok(!WaitForSingleObject( pi.hProcess, 1000 ), "wait failed\n");
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
+
+    if (!pNtAlertMultipleThreadByThreadId)
+    {
+        win_skip( "NtAlertMultipleThreadByThreadId is not avaliable.\n" );
+        return;
+    }
+
+    timeout.QuadPart = 0;
+    ret = pNtAlertMultipleThreadByThreadId( NULL, 0, NULL, NULL );
+    ok( !ret, "got %#lx.\n", ret );
+    ret = pNtAlertMultipleThreadByThreadId( NULL, 1, NULL, NULL );
+    ok( ret == STATUS_ACCESS_VIOLATION, "got %#lx.\n", ret );
+
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
+    tids[0] = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
+    tids[1] = (HANDLE)0xdeadbeef;
+    ret = pNtAlertMultipleThreadByThreadId( tids, 2, NULL, NULL );
+    ok( ret == STATUS_INVALID_CID, "got %#lx.\n", ret );
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
+    tids[1] = tids[0];
+    ret = pNtAlertMultipleThreadByThreadId( tids, 2, NULL, NULL );
+    ok( !ret, "got %#lx.\n", ret );
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
+
+    thread = CreateThread( NULL, 0, tid_wait_alert_thread, (HANDLE)(DWORD_PTR)GetCurrentThreadId(), 0, &tid );
+    tids[1] = (HANDLE)(ULONG_PTR)tid;
+    ret = pNtAlertMultipleThreadByThreadId( tids, 2, NULL, NULL );
+    ok( !ret, "got %#lx.\n", ret );
+    ret = pNtWaitForAlertByThreadId( (HANDLE)(ULONG_PTR)GetCurrentThreadId(), &timeout );
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
 }
 
 struct test_completion_port_scheduling_param
@@ -1370,6 +1418,7 @@ START_TEST(sync)
 
     if (argc > 2) return;
 
+    pNtAlertMultipleThreadByThreadId = (void *)GetProcAddress(module, "NtAlertMultipleThreadByThreadId");
     pNtAlertThreadByThreadId        = (void *)GetProcAddress(module, "NtAlertThreadByThreadId");
     pNtClose                        = (void *)GetProcAddress(module, "NtClose");
     pNtCreateEvent                  = (void *)GetProcAddress(module, "NtCreateEvent");
