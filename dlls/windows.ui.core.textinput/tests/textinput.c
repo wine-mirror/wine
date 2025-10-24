@@ -70,6 +70,51 @@ static void test_CoreInputViewStatics(void)
     ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 }
 
+static void test_CoreInputView(void)
+{
+    ICoreInputViewStatics *core_input_view_statics;
+    ICoreInputView *core_input_view;
+    IActivationFactory *factory;
+    HSTRING str = NULL;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString(RuntimeClass_Windows_UI_ViewManagement_Core_CoreInputView,
+                             wcslen(RuntimeClass_Windows_UI_ViewManagement_Core_CoreInputView), &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    WindowsDeleteString(str);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "got hr %#lx.\n", hr);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n",
+                 wine_dbgstr_w(RuntimeClass_Windows_UI_ViewManagement_Core_CoreInputView));
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_ICoreInputViewStatics,
+                                           (void **)&core_input_view_statics);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ICoreInputViewStatics_GetForCurrentView(core_input_view_statics, &core_input_view);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_interface(core_input_view, &IID_IUnknown, TRUE);
+    check_interface(core_input_view, &IID_IInspectable, TRUE);
+    check_interface(core_input_view, &IID_IAgileObject, TRUE);
+    check_interface(core_input_view, &IID_ICoreInputView, TRUE);
+    check_interface(core_input_view, &IID_ICoreInputView2, TRUE);
+    check_interface(core_input_view, &IID_ICoreInputView3, TRUE);
+    check_interface(core_input_view, &IID_ICoreInputView4, TRUE);
+
+    ICoreInputView_Release(core_input_view);
+
+    ref = ICoreInputViewStatics_Release(core_input_view_statics);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ref = IActivationFactory_Release(factory);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+}
+
 START_TEST(textinput)
 {
     HRESULT hr;
@@ -78,6 +123,7 @@ START_TEST(textinput)
     ok(hr == S_OK, "RoInitialize failed, hr %#lx\n", hr);
 
     test_CoreInputViewStatics();
+    test_CoreInputView();
 
     RoUninitialize();
 }

@@ -27,6 +27,8 @@
 #include "activation.h"
 #include "wine/debug.h"
 
+#define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
 #define WIDL_using_Windows_UI_ViewManagement_Core
 #include "windows.ui.viewmanagement.core.h"
 
