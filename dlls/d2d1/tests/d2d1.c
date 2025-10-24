@@ -3823,6 +3823,18 @@ static void test_path_geometry(BOOL d3d11)
     ok(!count, "Got unexpected segment count %u.\n", count);
     ID2D1PathGeometry_Release(geometry);
 
+    /* Invalid segment flags. */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GeometrySink_SetSegmentFlags(sink, 0xff);
+    hr = ID2D1GeometrySink_Close(sink);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+    ID2D1PathGeometry_Release(geometry);
+
     /* Open() when closed. */
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -16477,6 +16489,62 @@ static void test_geometry_realization(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_path_geometry_stream(BOOL d3d11)
+{
+    static const struct geometry_segment expected_segments[] =
+    {
+        /* Figure 0. */
+        {SEGMENT_LINE,   {{{165.0f, 300.0f}}}},
+        {SEGMENT_LINE,   {{{235.0f, 300.0f}}}},
+        {SEGMENT_LINE,   {{{235.0f,  20.0f}}}},
+    };
+    static const struct expected_geometry_figure expected_figures[] =
+    {
+        /* 0 */
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, { 15.0f, 20.0f}, 3, &expected_segments[0]},
+    };
+    struct geometry_sink stream_sink;
+    struct d2d1_test_context ctx;
+    ID2D1PathGeometry *geometry;
+    ID2D1GeometrySink *sink;
+    D2D1_POINT_2F point;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    geometry_sink_init(&stream_sink);
+
+    hr = ID2D1Factory_CreatePathGeometry(ctx.factory, &geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1PathGeometry_Stream(geometry, &stream_sink.ID2D1GeometrySink_iface);
+    todo_wine
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    set_point(&point, 15.0f, 20.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 165.0f, 300.0f);
+    line_to(sink, 235.0f, 300.0f);
+    line_to(sink, 235.0f, 20.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    hr = ID2D1PathGeometry_Stream(geometry, &stream_sink.ID2D1GeometrySink_iface);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        geometry_sink_check(&stream_sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[0], 1);
+    geometry_sink_cleanup(&stream_sink);
+    ID2D1PathGeometry_Release(geometry);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -16581,6 +16649,7 @@ START_TEST(d2d1)
     queue_test(test_no_target);
     queue_test(test_mesh);
     queue_test(test_geometry_realization);
+    queue_d3d10_test(test_path_geometry_stream);
 
     run_queued_tests();
 }
