@@ -2753,6 +2753,26 @@ static void test_saxreader_properties(void)
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
     ok(V_BSTR(&v) == NULL, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
 
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-encoding"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    todo_wine
+    ok(!V_BSTR(&v), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("charset"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    todo_wine
+    ok(!V_BSTR(&v), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
     /* stream with declaration */
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = _bstr_("<?xml version=\"1.0\"?><element></element>");
@@ -2773,6 +2793,34 @@ static void test_saxreader_properties(void)
     ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
     ok(!lstrcmpW(V_BSTR(&v), L"1.0"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    /* Encoding specified */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("<?xml version=\"1.0\" encoding=\"uTf-16\"?><element></element>");
+    hr = ISAXXMLReader_parse(reader, v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-encoding"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+        ok(!wcscmp(V_BSTR(&v), L"uTf-16"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+        VariantClear(&v);
+    }
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("charset"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    todo_wine
+    ok(!V_BSTR(&v), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
 
     ISAXXMLReader_Release(reader);
     free_bstrs();

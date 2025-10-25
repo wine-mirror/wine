@@ -4676,6 +4676,90 @@ static void test_saxreader_features(void)
     ISAXXMLReader_Release(reader);
 }
 
+static void test_saxreader_properties(void)
+{
+    ISAXXMLReader *reader;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void **)&reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* xmldecl-version property */
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-version"), &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(V_BSTR(&v) == NULL, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    /* stream without declaration */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("<element></element>");
+    hr = ISAXXMLReader_parse(reader, v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-version"), &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(V_BSTR(&v) == NULL, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-encoding"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    todo_wine
+    ok(!V_BSTR(&v), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    /* stream with declaration */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("<?xml version=\"1.0\"?><element></element>");
+    hr = ISAXXMLReader_parse(reader, v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* VT_BSTR|VT_BYREF input type */
+    str = _bstr_("<?xml version=\"1.0\"?><element></element>");
+    V_VT(&v) = VT_BSTR|VT_BYREF;
+    V_BSTRREF(&v) = &str;
+    hr = ISAXXMLReader_parse(reader, v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-version"), &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), L"1.0"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    /* Encoding specified */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("<?xml version=\"1.0\" encoding=\"uTf-16\"?><element></element>");
+    hr = ISAXXMLReader_parse(reader, v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_EMPTY;
+    V_BSTR(&v) = (void*)0xdeadbeef;
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("xmldecl-encoding"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(V_VT(&v) == VT_BSTR, "got %d\n", V_VT(&v));
+        ok(!wcscmp(V_BSTR(&v), L"uTf-16"), "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+        VariantClear(&v);
+    }
+
+    ISAXXMLReader_Release(reader);
+    free_bstrs();
+}
+
 START_TEST(saxreader)
 {
     HRESULT hr;
@@ -4690,6 +4774,7 @@ START_TEST(saxreader)
     if (is_class_supported(&CLSID_SAXXMLReader60))
     {
         test_saxreader();
+        test_saxreader_properties();
         test_saxreader_features();
         test_saxreader_encoding();
         test_saxreader_dispex();
