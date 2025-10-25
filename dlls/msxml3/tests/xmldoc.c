@@ -27,6 +27,7 @@
 #include "msxml2did.h"
 #include "ocidl.h"
 
+#include "xmlparser.h"
 #include "wine/test.h"
 
 /* Deprecated Error Code */
@@ -75,6 +76,33 @@ static void create_stream_on_file(IStream **stream, LPCSTR path)
 
     CloseHandle(hfile);
     GlobalUnlock(hglobal);
+}
+
+static HRESULT load_document(IXMLDocument *doc, const void *data, unsigned int size)
+{
+    IPersistStreamInit *stream_init;
+    LARGE_INTEGER zero = { 0 };
+    IStream *stream;
+    HRESULT hr;
+
+    hr = IXMLDocument_QueryInterface(doc, &IID_IPersistStreamInit, (void **)&stream_init);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!stream, "Failed to create a stream.\n");
+
+    hr = IStream_Write(stream, data, size, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IPersistStreamInit_Load(stream_init, stream);
+
+    IPersistStreamInit_Release(stream_init);
+    IStream_Release(stream);
+
+    return hr;
 }
 
 static void test_xmldoc(void)
@@ -1073,6 +1101,74 @@ static void test_xmlelem(void)
     IXMLDocument_Release(doc);
 }
 
+static const char doc_data1[] =
+    "<?xml version=\"1.0\" encoding=\"uTf-8\"?><a/>";
+
+static const char doc_data2[] =
+    "<?xml version=\"1.0\"?><a/>";
+
+static const char doc_data3[] =
+    "<?xml version=\"1.0\" encoding=\"bad\"?><a/>";
+
+static void test_xmldoc_charset(void)
+{
+    IXMLDocument *doc;
+    HRESULT hr;
+    BSTR s;
+
+    hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_charset(doc, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_charset(doc, &s);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(s, L"UTF-8"), "Unexpected %s.\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+    }
+
+    hr = load_document(doc, doc_data1, sizeof(doc_data1) - 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_charset(doc, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_charset(doc, &s);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(s, L"uTf-8"), "Unexpected %s.\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+    }
+
+    /* Unspecified encoding, single-byte data */
+    hr = load_document(doc, doc_data2, sizeof(doc_data2) - 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_charset(doc, &s);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(s, L"UTF-8"), "Unexpected %s.\n", wine_dbgstr_w(s));
+        SysFreeString(s);
+    }
+
+    /* Invalid encoding */
+    hr = load_document(doc, doc_data3, sizeof(doc_data3) - 1);
+    todo_wine
+    ok(hr == XML_E_INVALIDENCODING, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDocument_Release(doc);
+}
+
 START_TEST(xmldoc)
 {
     HRESULT hr;
@@ -1087,6 +1183,7 @@ START_TEST(xmldoc)
     }
 
     test_xmldoc();
+    test_xmldoc_charset();
     test_createElement();
     test_persiststreaminit();
     test_xmlelem();
