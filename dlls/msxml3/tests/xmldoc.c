@@ -1206,14 +1206,11 @@ static void test_xmldoc_version(void)
     hr = IXMLDocument_get_version(doc, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    if (strcmp(winetest_platform, "wine"))
-    {
-        s = NULL;
-        hr = IXMLDocument_get_version(doc, &s);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!wcscmp(s, L"1.0"), "Unexpected version %s.\n", wine_dbgstr_w(s));
-        SysFreeString(s);
-    }
+    s = NULL;
+    hr = IXMLDocument_get_version(doc, &s);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(s, L"1.0"), "Unexpected version %s.\n", wine_dbgstr_w(s));
+    SysFreeString(s);
 
     hr = load_document(doc, "<a/>", 4);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
