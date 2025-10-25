@@ -207,13 +207,6 @@ static void test_xmldoc(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(element != NULL, "Expected non-NULL element\n");
 
-    /* ::root() returns new instance each time */
-    hr = IXMLDocument_get_root(doc, &child);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(child != NULL, "Expected non-NULL element\n");
-    ok(child != element, "Expected new element instance\n");
-    IXMLElement_Release(child);
-
     hr = IXMLElement_get_type(element, &type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(type == XMLELEMTYPE_ELEMENT, "Unexpected type %ld.\n", type);
@@ -1296,6 +1289,113 @@ static void test_xmldoc_doctype(void)
     IXMLDocument_Release(doc);
 }
 
+static const char doc_data8[] =
+    "<?xml version=\"1.0\"?><a><b><c/></b><e/></a>";
+
+static void test_xmldoc_root(void)
+{
+    IXMLElement *element, *element2;
+    IXMLElementCollection *c, *c2;
+    IXMLElement *child, *parent;
+    IXMLDocument *doc;
+    LONG type, count;
+    IDispatch *disp;
+    HRESULT hr;
+    VARIANT v;
+    BSTR s;
+
+    hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_root(doc, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    element = (void *)1;
+    hr = IXMLDocument_get_root(doc, &element);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(!element, "Unexpected pointer.\n");
+
+    hr = load_document(doc, doc_data8, sizeof(doc_data8) - 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_root(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    parent = (void *)1;
+    hr = IXMLElement_get_parent(element, &parent);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!parent, "Unexpected pointer.\n");
+
+    hr = IXMLDocument_get_root(doc, &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(element != element2, "Unexpected pointer.\n");
+
+    hr = IXMLElement_get_type(element, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == XMLELEMTYPE_ELEMENT, "Unexpected type %ld.\n", type);
+
+    hr = IXMLElement_get_tagName(element, &s);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(s, L"A"), "Unexpected name %s.\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
+    s = SysAllocString(L"d");
+    hr = IXMLElement_put_tagName(element, s);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(s);
+
+    hr = IXMLElement_get_tagName(element2, &s);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(s, L"D"), "Unexpected name %s.\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
+    s = SysAllocString(L"text");
+    hr = IXMLElement_put_text(element, s);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(s);
+
+    hr = IXMLElement_get_children(element, &c);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLElement_get_children(element, &c2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(c != c2, "Unexpected instance.\n");
+
+    hr = IXMLElementCollection_get_length(c, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %ld.\n", count);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0;
+    hr = IXMLElementCollection_item(c, v, v, &disp);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDispatch_QueryInterface(disp, &IID_IXMLElement, (void **)&child);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLElement_removeChild(element, child);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLElement_Release(child);
+    IDispatch_Release(disp);
+
+    hr = IXMLElementCollection_get_length(c, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %ld.\n", count);
+
+    hr = IXMLElementCollection_get_length(c2, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %ld.\n", count);
+
+    IXMLElementCollection_Release(c2);
+    IXMLElementCollection_Release(c);
+
+    IXMLElement_Release(element2);
+    IXMLElement_Release(element);
+
+    IXMLDocument_Release(doc);
+}
+
 START_TEST(xmldoc)
 {
     HRESULT hr;
@@ -1313,6 +1413,7 @@ START_TEST(xmldoc)
     test_xmldoc_charset();
     test_xmldoc_version();
     test_xmldoc_doctype();
+    test_xmldoc_root();
     test_createElement();
     test_persiststreaminit();
     test_xmlelem();
