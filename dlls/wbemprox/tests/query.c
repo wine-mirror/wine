@@ -2594,8 +2594,6 @@ static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
     IWbemServices *services;
     IEnumWbemClassObject *iter;
     IWbemClassObject *obj;
-    VARIANT val;
-    CIMTYPE type;
     ULONG count;
     HRESULT hr;
 
@@ -2608,12 +2606,7 @@ static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
     hr = IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &obj, &count );
     ok( hr == S_OK, "got %#lx\n", hr );
 
-    type = 0;
-    VariantInit( &val );
-    hr = IWbemClassObject_Get( obj, L"SMBiosData", 0, &val, &type, NULL );
-    ok( hr == S_OK, "got %#lx\n", hr );
-    ok( V_VT( &val ) == (VT_UI1 | VT_ARRAY), "got %#x\n", V_VT(&val) );
-    ok( type == (CIM_UINT8 | CIM_FLAG_ARRAY), "got %#lx\n", type );
+    check_property( obj, L"SMBiosData", VT_ARRAY | VT_UI1, CIM_FLAG_ARRAY | CIM_UINT8 );
 
     IWbemClassObject_Release( obj );
     IEnumWbemClassObject_Release( iter );
