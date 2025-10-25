@@ -4419,9 +4419,7 @@ static void test_shared_memory(BOOL is_child)
         sprintf(cmdline, "\"%s\" virtual sharedmem", argv[0]);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %ld\n", cmdline, GetLastError());
-        wait_child_process(pi.hProcess);
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+        wait_child_process(&pi);
     }
 
     UnmapViewOfFile(p);
@@ -4459,9 +4457,7 @@ static void test_shared_memory_ro(BOOL is_child, DWORD child_access)
         sprintf(cmdline, "\"%s\" virtual sharedmemro %lx", argv[0], child_access);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %ld\n", cmdline, GetLastError());
-        wait_child_process(pi.hProcess);
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+        wait_child_process(&pi);
 
         if(child_access & FILE_MAP_WRITE)
             ok(*p == 0xdeadbeef, "*p = %lx, expected 0xdeadbeef\n", *p);

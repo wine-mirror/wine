@@ -1208,14 +1208,14 @@ static void test_Toolhelp(void)
     get_file_name(resfile);
     sprintf(buffer, "\"%s\" process nested \"%s\"", selfname, resfile);
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed\n");
-    wait_child_process(&info);
+    ret = WaitForSingleObject(info.hProcess, 1000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
 
     process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, info.dwProcessId);
     ok(process != NULL, "OpenProcess failed %lu\n", GetLastError());
     CloseHandle(process);
 
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_child_process(&info);
 
     for (i = 0; i < 20; i++)
     {
@@ -2674,6 +2674,7 @@ static void test_IsProcessInJob(void)
     HANDLE job, job2;
     PROCESS_INFORMATION pi;
     BOOL ret, out;
+    DWORD dwret;
 
     if (!pIsProcessInJob)
     {
@@ -2726,7 +2727,8 @@ static void test_IsProcessInJob(void)
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
     TerminateProcess(pi.hProcess, 0);
-    wait_child_process(pi.hProcess);
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", dwret);
 
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
@@ -2735,8 +2737,7 @@ static void test_IsProcessInJob(void)
     test_assigned_proc(job, 0);
     test_accounting(job, 1, 0, 0);
 
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    wait_child_process(&pi);
     CloseHandle(job);
     CloseHandle(job2);
 }
@@ -2780,7 +2781,8 @@ static void test_TerminateJobObject(void)
 
     /* Test adding an already terminated process to a job object */
     create_process("exit", &pi);
-    wait_child_process(pi.hProcess);
+    dwret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(dwret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", dwret);
 
     SetLastError(0xdeadbeef);
     ret = pAssignProcessToJobObject(job, pi.hProcess);
@@ -2789,9 +2791,7 @@ static void test_TerminateJobObject(void)
     test_assigned_proc(job, 0);
     test_accounting(job, 1, 0, 0);
 
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
+    wait_child_process(&pi);
     CloseHandle(job);
 }
 
@@ -2970,19 +2970,15 @@ static void test_CompletionPort(void)
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
 
     TerminateProcess(pi.hProcess, 0);
-    wait_child_process(pi.hProcess);
+    wait_child_process(&pi);
 
     test_completion(port, JOB_OBJECT_MSG_EXIT_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
     TerminateProcess(pi2.hProcess, 0);
-    wait_child_process(pi2.hProcess);
-    CloseHandle(pi2.hProcess);
-    CloseHandle(pi2.hThread);
+    wait_child_process(&pi2);
 
     test_completion(port, JOB_OBJECT_MSG_EXIT_PROCESS, (DWORD_PTR)job, pi2.dwProcessId, 0);
     test_completion(port, JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, (DWORD_PTR)job, 0, 100);
 
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
     CloseHandle(job);
     CloseHandle(port);
 }

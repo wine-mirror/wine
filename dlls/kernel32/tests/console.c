@@ -4312,9 +4312,7 @@ static void test_FreeConsole(HANDLE input, HANDLE orig_output)
     /* Test that our handles are now designaled in the child. */
     SetEvent(parent_event);
 
-    CloseHandle(info.hThread);
-    wait_child_process(info.hProcess);
-    CloseHandle(info.hProcess);
+    wait_child_process(&info);
 
     ret = WriteConsoleInputW(input, &ir, 1, &size);
     ok(ret, "got error %lu\n", GetLastError());
