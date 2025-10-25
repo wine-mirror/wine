@@ -66,9 +66,7 @@ static void run_child_test(const char *name)
     sprintf(path_name, "%s info %s", argv[0], name);
     ok(CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
             "CreateProcess failed.\n" );
-    wait_child_process(info.hProcess);
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_child_process(&info);
 }
 
 static HRESULT get_component_info(const GUID *clsid, IWICComponentInfo **result)
