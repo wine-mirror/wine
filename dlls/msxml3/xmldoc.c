@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _xmldoc
 {
-    IXMLDocument IXMLDocument_iface;
+    IXMLDocument2 IXMLDocument2_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     LONG ref;
     HRESULT error;
@@ -59,9 +59,9 @@ typedef struct _xmldoc
     IStream *stream;
 } xmldoc;
 
-static inline xmldoc *impl_from_IXMLDocument(IXMLDocument *iface)
+static inline xmldoc *impl_from_IXMLDocument2(IXMLDocument2 *iface)
 {
-    return CONTAINING_RECORD(iface, xmldoc, IXMLDocument_iface);
+    return CONTAINING_RECORD(iface, xmldoc, IXMLDocument2_iface);
 }
 
 static inline xmldoc *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
@@ -69,15 +69,16 @@ static inline xmldoc *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
     return CONTAINING_RECORD(iface, xmldoc, IPersistStreamInit_iface);
 }
 
-static HRESULT WINAPI xmldoc_QueryInterface(IXMLDocument *iface, REFIID riid, void** ppvObject)
+static HRESULT WINAPI xmldoc_QueryInterface(IXMLDocument2 *iface, REFIID riid, void** ppvObject)
 {
-    xmldoc *This = impl_from_IXMLDocument(iface);
+    xmldoc *This = impl_from_IXMLDocument2(iface);
 
     TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown)  ||
         IsEqualGUID(riid, &IID_IDispatch) ||
-        IsEqualGUID(riid, &IID_IXMLDocument))
+        IsEqualGUID(riid, &IID_IXMLDocument) ||
+        IsEqualGUID(riid, &IID_IXMLDocument2))
     {
         *ppvObject = iface;
     }
@@ -93,22 +94,22 @@ static HRESULT WINAPI xmldoc_QueryInterface(IXMLDocument *iface, REFIID riid, vo
         return E_NOINTERFACE;
     }
 
-    IXMLDocument_AddRef(iface);
+    IXMLDocument2_AddRef(iface);
 
     return S_OK;
 }
 
-static ULONG WINAPI xmldoc_AddRef(IXMLDocument *iface)
+static ULONG WINAPI xmldoc_AddRef(IXMLDocument2 *iface)
 {
-    xmldoc *This = impl_from_IXMLDocument(iface);
+    xmldoc *This = impl_from_IXMLDocument2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
     TRACE("%p, refcount %ld.\n", iface, ref);
     return ref;
 }
 
-static ULONG WINAPI xmldoc_Release(IXMLDocument *iface)
+static ULONG WINAPI xmldoc_Release(IXMLDocument2 *iface)
 {
-    xmldoc *This = impl_from_IXMLDocument(iface);
+    xmldoc *This = impl_from_IXMLDocument2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p, refcount %ld.\n", iface, ref);
@@ -123,26 +124,24 @@ static ULONG WINAPI xmldoc_Release(IXMLDocument *iface)
     return ref;
 }
 
-static HRESULT WINAPI xmldoc_GetTypeInfoCount(IXMLDocument *iface, UINT* pctinfo)
+static HRESULT WINAPI xmldoc_GetTypeInfoCount(IXMLDocument2 *iface, UINT* pctinfo)
 {
-    xmldoc *This = impl_from_IXMLDocument(iface);
-
-    TRACE("(%p)->(%p)\n", This, pctinfo);
+    TRACE("%p, %p.\n", iface, pctinfo);
 
     *pctinfo = 1;
 
     return S_OK;
 }
 
-static HRESULT WINAPI xmldoc_GetTypeInfo(IXMLDocument *iface, UINT iTInfo,
+static HRESULT WINAPI xmldoc_GetTypeInfo(IXMLDocument2 *iface, UINT iTInfo,
                                          LCID lcid, ITypeInfo** ppTInfo)
 {
     TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
 
-    return get_typeinfo(IXMLDocument_tid, ppTInfo);
+    return get_typeinfo(IXMLDocument2_tid, ppTInfo);
 }
 
-static HRESULT WINAPI xmldoc_GetIDsOfNames(IXMLDocument *iface, REFIID riid,
+static HRESULT WINAPI xmldoc_GetIDsOfNames(IXMLDocument2 *iface, REFIID riid,
                                            LPOLESTR* rgszNames, UINT cNames,
                                            LCID lcid, DISPID* rgDispId)
 {
@@ -155,7 +154,7 @@ static HRESULT WINAPI xmldoc_GetIDsOfNames(IXMLDocument *iface, REFIID riid,
     if(!rgszNames || cNames == 0 || !rgDispId)
         return E_INVALIDARG;
 
-    hr = get_typeinfo(IXMLDocument_tid, &typeinfo);
+    hr = get_typeinfo(IXMLDocument2_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
@@ -165,7 +164,7 @@ static HRESULT WINAPI xmldoc_GetIDsOfNames(IXMLDocument *iface, REFIID riid,
     return hr;
 }
 
-static HRESULT WINAPI xmldoc_Invoke(IXMLDocument *iface, DISPID dispIdMember,
+static HRESULT WINAPI xmldoc_Invoke(IXMLDocument2 *iface, DISPID dispIdMember,
                                     REFIID riid, LCID lcid, WORD wFlags,
                                     DISPPARAMS* pDispParams, VARIANT* pVarResult,
                                     EXCEPINFO* pExcepInfo, UINT* puArgErr)
@@ -176,7 +175,7 @@ static HRESULT WINAPI xmldoc_Invoke(IXMLDocument *iface, DISPID dispIdMember,
     TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    hr = get_typeinfo(IXMLDocument_tid, &typeinfo);
+    hr = get_typeinfo(IXMLDocument2_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
@@ -186,9 +185,9 @@ static HRESULT WINAPI xmldoc_Invoke(IXMLDocument *iface, DISPID dispIdMember,
     return hr;
 }
 
-static HRESULT WINAPI xmldoc_get_root(IXMLDocument *iface, IXMLElement **p)
+static HRESULT WINAPI xmldoc_get_root(IXMLDocument2 *iface, IXMLElement2 **p)
 {
-    xmldoc *This = impl_from_IXMLDocument(iface);
+    xmldoc *This = impl_from_IXMLDocument2(iface);
     xmlNodePtr root;
 
     TRACE("(%p, %p)\n", iface, p);
@@ -204,25 +203,25 @@ static HRESULT WINAPI xmldoc_get_root(IXMLDocument *iface, IXMLElement **p)
     return XMLElement_create(root, (LPVOID *)p, FALSE);
 }
 
-static HRESULT WINAPI xmldoc_get_fileSize(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_fileSize(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_put_fileModifiedDate(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_put_fileModifiedDate(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_get_fileUpdatedDate(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_fileUpdatedDate(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_get_URL(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_URL(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
@@ -346,7 +345,7 @@ static const struct IBindStatusCallbackVtbl bsc_vtbl =
 
 static bsc xmldoc_bsc = { { &bsc_vtbl } };
 
-static HRESULT WINAPI xmldoc_put_URL(IXMLDocument *iface, BSTR p)
+static HRESULT WINAPI xmldoc_put_URL(IXMLDocument2 *iface, BSTR p)
 {
     WCHAR url[INTERNET_MAX_URL_LENGTH];
     IStream *stream;
@@ -392,7 +391,7 @@ static HRESULT WINAPI xmldoc_put_URL(IXMLDocument *iface, BSTR p)
     if (FAILED(hr))
         return hr;
 
-    hr = IXMLDocument_QueryInterface(iface, &IID_IPersistStreamInit, (LPVOID *)&persist);
+    hr = IXMLDocument2_QueryInterface(iface, &IID_IPersistStreamInit, (LPVOID *)&persist);
     if (FAILED(hr))
     {
         IStream_Release(stream);
@@ -406,33 +405,33 @@ static HRESULT WINAPI xmldoc_put_URL(IXMLDocument *iface, BSTR p)
     return hr;
 }
 
-static HRESULT WINAPI xmldoc_get_mimeType(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_mimeType(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_get_readyState(IXMLDocument *iface, LONG *p)
+static HRESULT WINAPI xmldoc_get_readyState(IXMLDocument2 *iface, LONG *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_get_charset(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_charset(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_put_charset(IXMLDocument *iface, BSTR p)
+static HRESULT WINAPI xmldoc_put_charset(IXMLDocument2 *iface, BSTR p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_get_version(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_version(IXMLDocument2 *iface, BSTR *p)
 {
-    xmldoc *This = impl_from_IXMLDocument(iface);
+    xmldoc *This = impl_from_IXMLDocument2(iface);
 
     TRACE("(%p, %p)\n", This, p);
 
@@ -442,9 +441,9 @@ static HRESULT WINAPI xmldoc_get_version(IXMLDocument *iface, BSTR *p)
     return S_OK;
 }
 
-static HRESULT WINAPI xmldoc_get_doctype(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_doctype(IXMLDocument2 *iface, BSTR *p)
 {
-    xmldoc *This = impl_from_IXMLDocument(iface);
+    xmldoc *This = impl_from_IXMLDocument2(iface);
     xmlDtd *dtd;
 
     TRACE("(%p, %p)\n", This, p);
@@ -460,7 +459,7 @@ static HRESULT WINAPI xmldoc_get_doctype(IXMLDocument *iface, BSTR *p)
     return S_OK;
 }
 
-static HRESULT WINAPI xmldoc_get_dtdURl(IXMLDocument *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_dtdURl(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
@@ -489,8 +488,8 @@ static xmlElementType type_msxml_to_libxml(LONG type)
     return -1; /* FIXME: what is OTHER in msxml? */
 }
 
-static HRESULT WINAPI xmldoc_createElement(IXMLDocument *iface, VARIANT vType,
-                                           VARIANT var1, IXMLElement **ppElem)
+static HRESULT WINAPI xmldoc_createElement(IXMLDocument2 *iface, VARIANT vType,
+                                           VARIANT var1, IXMLElement2 **ppElem)
 {
     xmlNodePtr node;
     static const xmlChar empty[] = "\0";
@@ -516,7 +515,21 @@ static HRESULT WINAPI xmldoc_createElement(IXMLDocument *iface, VARIANT vType,
     return XMLElement_create(node, (LPVOID *)ppElem, TRUE);
 }
 
-static const struct IXMLDocumentVtbl xmldoc_vtbl =
+static HRESULT WINAPI xmldoc_get_async(IXMLDocument2 *iface, VARIANT_BOOL *v)
+{
+    FIXME("%p, %p stub\n", iface, v);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xmldoc_put_async(IXMLDocument2 *iface, VARIANT_BOOL v)
+{
+    FIXME("%p, %#x stub\n", iface, v);
+
+    return E_NOTIMPL;
+}
+
+static const struct IXMLDocument2Vtbl xmldoc_vtbl =
 {
     xmldoc_QueryInterface,
     xmldoc_AddRef,
@@ -538,7 +551,9 @@ static const struct IXMLDocumentVtbl xmldoc_vtbl =
     xmldoc_get_version,
     xmldoc_get_doctype,
     xmldoc_get_dtdURl,
-    xmldoc_createElement
+    xmldoc_createElement,
+    xmldoc_get_async,
+    xmldoc_put_async,
 };
 
 /************************************************************************
@@ -547,29 +562,28 @@ static const struct IXMLDocumentVtbl xmldoc_vtbl =
 static HRESULT WINAPI xmldoc_IPersistStreamInit_QueryInterface(
     IPersistStreamInit *iface, REFIID riid, LPVOID *ppvObj)
 {
-    xmldoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDocument_QueryInterface(&this->IXMLDocument_iface, riid, ppvObj);
+    xmldoc *doc = impl_from_IPersistStreamInit(iface);
+    return IXMLDocument2_QueryInterface(&doc->IXMLDocument2_iface, riid, ppvObj);
 }
 
 static ULONG WINAPI xmldoc_IPersistStreamInit_AddRef(
     IPersistStreamInit *iface)
 {
-    xmldoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDocument_AddRef(&this->IXMLDocument_iface);
+    xmldoc *doc = impl_from_IPersistStreamInit(iface);
+    return IXMLDocument2_AddRef(&doc->IXMLDocument2_iface);
 }
 
 static ULONG WINAPI xmldoc_IPersistStreamInit_Release(
     IPersistStreamInit *iface)
 {
-    xmldoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDocument_Release(&this->IXMLDocument_iface);
+    xmldoc *doc = impl_from_IPersistStreamInit(iface);
+    return IXMLDocument2_Release(&doc->IXMLDocument2_iface);
 }
 
 static HRESULT WINAPI xmldoc_IPersistStreamInit_GetClassID(
     IPersistStreamInit *iface, CLSID *classid)
 {
-    xmldoc *this = impl_from_IPersistStreamInit(iface);
-    TRACE("(%p,%p)\n", this, classid);
+    TRACE("%p, %p.\n", iface, classid);
 
     if (!classid) return E_POINTER;
 
@@ -691,14 +705,14 @@ HRESULT XMLDocument_create(LPVOID *ppObj)
     if(!doc)
         return E_OUTOFMEMORY;
 
-    doc->IXMLDocument_iface.lpVtbl = &xmldoc_vtbl;
+    doc->IXMLDocument2_iface.lpVtbl = &xmldoc_vtbl;
     doc->IPersistStreamInit_iface.lpVtbl = &xmldoc_IPersistStreamInit_VTable;
     doc->ref = 1;
     doc->error = S_OK;
     doc->xmldoc = NULL;
     doc->stream = NULL;
 
-    *ppObj = &doc->IXMLDocument_iface;
+    *ppObj = &doc->IXMLDocument2_iface;
 
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;

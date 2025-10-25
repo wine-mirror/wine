@@ -127,11 +127,11 @@ static void test_xmldoc(void)
     IPersistStreamInit *psi = NULL;
     IXMLDocument *doc = NULL;
     IStream *stream = NULL;
-    IUnknown *unk1, *unk2;
     VARIANT vIndex, vName;
     LONG type, num_child;
     IXMLDocument2 *doc2;
     CHAR path[MAX_PATH];
+    TYPEATTR *tattr;
     IDispatch *disp;
     ITypeInfo *ti;
     HRESULT hr;
@@ -144,7 +144,6 @@ static void test_xmldoc(void)
     check_interface(doc, &IID_IUnknown, TRUE);
     check_interface(doc, &IID_IDispatch, TRUE);
     check_interface(doc, &IID_IXMLDocument, TRUE);
-    todo_wine
     check_interface(doc, &IID_IXMLDocument2, TRUE);
     check_interface(doc, &IID_IPersistStreamInit, TRUE);
     check_interface(doc, &IID_IPersistStream, TRUE);
@@ -155,26 +154,18 @@ static void test_xmldoc(void)
     check_interface(doc, &IID_IXMLDOMDocument, FALSE);
 
     hr = IXMLDocument_QueryInterface(doc, &IID_IXMLDocument2, (void **)&doc2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IXMLDocument2_QueryInterface(doc2, &IID_IDispatch, (void **)&disp);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(disp == (IDispatch *)doc2, "Unexpected pointer.\n");
-        IDispatch_Release(disp);
-        hr = IXMLDocument2_QueryInterface(doc2, &IID_IUnknown, (void **)&unk2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(unk2 != (IUnknown *)doc2, "Unexpected pointer.\n");
-        IXMLDocument2_Release(doc2);
-
-        hr = IXMLDocument_QueryInterface(doc, &IID_IUnknown, (void **)&unk1);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(unk1 != (IUnknown *)doc, "Unexpected pointer.\n");
-        ok(unk1 == unk2, "Unexpected pointer.\n");
-        IUnknown_Release(unk1);
-        IUnknown_Release(unk2);
-    }
+    hr = IXMLDocument2_QueryInterface(doc2, &IID_IDispatch, (void **)&disp);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(disp == (IDispatch *)doc2, "Unexpected pointer.\n");
+    hr = IDispatch_GetTypeInfo(disp, 0, 0, &ti);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(ti, &tattr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&tattr->guid, &IID_IXMLDocument2), "Unexpected guid %s.\n", wine_dbgstr_guid(&tattr->guid));
+    ITypeInfo_ReleaseTypeAttr(ti, tattr);
+    ITypeInfo_Release(ti);
+    IDispatch_Release(disp);
 
     /* IDispatch */
     hr = IXMLDocument_QueryInterface(doc, &IID_IDispatch, (void**)&disp);
