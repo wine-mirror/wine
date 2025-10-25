@@ -455,7 +455,14 @@ static const struct column col_quickfixengineering[] =
 };
 static const struct column col_rawsmbiostables[] =
 {
-    { L"SMBiosData", CIM_UINT8|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
+    { L"Active",              CIM_BOOLEAN },
+    { L"DmiRevision",         CIM_UINT8 },
+    { L"InstanceName",        CIM_STRING|COL_FLAG_KEY },
+    { L"Size",                CIM_UINT32 },
+    { L"SMBiosData",          CIM_UINT8|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
+    { L"SmbiosMajorVersion",  CIM_UINT8 },
+    { L"SmbiosMinorVersion",  CIM_UINT8 },
+    { L"Used20CallingMethod", CIM_BOOLEAN },
 };
 static const struct column col_service[] =
 {
@@ -1025,7 +1032,14 @@ struct record_quickfixengineering
 };
 struct record_rawsmbiostables
 {
+    int          active;
+    UINT8        dmi_revision;
+    const WCHAR *instance_name;
+    UINT32       size;
     const struct array *smbiosdata;
+    UINT8        major_version;
+    UINT8        minor_version;
+    int          used_20_calling_method;
 };
 struct record_service
 {
@@ -1806,7 +1820,14 @@ static enum fill_status fill_rawbiosdata( struct table *table, const struct expr
     GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     rec = (struct record_rawsmbiostables *)table->data;
+    rec->active = -1;
+    rec->dmi_revision = buf->Revision;
+    rec->instance_name = L"SMBiosData";
     rec->smbiosdata = get_rawbiosdata( (char *)buf + FIELD_OFFSET( RawSMBIOSData, SMBIOSTableData ), buf->Length );
+    rec->size = rec->smbiosdata ? buf->Length : 0;
+    rec->major_version = buf->MajorVersion;
+    rec->minor_version = buf->MinorVersion;
+    rec->used_20_calling_method = buf->Used20CallingMethod ? -1 : 0;
 
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
