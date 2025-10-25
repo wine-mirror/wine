@@ -13781,9 +13781,7 @@ static void test_startupinfo_showwindow( char **argv )
         sprintf( cmdline, "%s %s showwindow_proc %d", argv[0], argv[1], i );
         ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &sa, &info );
         ok( ret, "got error %lu\n", GetLastError() );
-        wait_child_process( info.hProcess );
-        CloseHandle( info.hProcess );
-        CloseHandle( info.hThread );
+        wait_child_process( &info );
     }
 }
 
