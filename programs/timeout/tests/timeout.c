@@ -152,9 +152,7 @@ static void test_ctrlc_intermediate(int argc, char** argv, const char* name)
                       CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE,
                       NULL, NULL, &startup, &info),
         "CreateProcess failed.\n");
-    wait_child_process(info.hProcess);
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_child_process(&info);
 }
 
 START_TEST(timeout)
