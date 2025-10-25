@@ -2606,7 +2606,14 @@ static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
     hr = IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &obj, &count );
     ok( hr == S_OK, "got %#lx\n", hr );
 
+    check_property( obj, L"Active", VT_BOOL, CIM_BOOLEAN );
+    check_property( obj, L"DmiRevision", VT_UI1, CIM_UINT8 );
+    check_property( obj, L"InstanceName", VT_BSTR, CIM_STRING );
+    check_property( obj, L"Size", VT_I4, CIM_UINT32 );
     check_property( obj, L"SMBiosData", VT_ARRAY | VT_UI1, CIM_FLAG_ARRAY | CIM_UINT8 );
+    check_property( obj, L"SmbiosMajorVersion", VT_UI1, CIM_UINT8 );
+    check_property( obj, L"SmbiosMinorVersion", VT_UI1, CIM_UINT8 );
+    check_property( obj, L"Used20CallingMethod", VT_BOOL, CIM_BOOLEAN );
 
     IWbemClassObject_Release( obj );
     IEnumWbemClassObject_Release( iter );
