@@ -586,14 +586,14 @@ static BOOL pe_load_dwarf(struct module* module)
  * loads a .dbg file
  */
 static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
-                             const char* dbg_name, DWORD timestamp)
+                             const WCHAR* dbg_name, DWORD timestamp)
 {
     HANDLE                              hFile = INVALID_HANDLE_VALUE, hMap = 0;
     const BYTE*                         dbg_mapping = NULL;
     BOOL                                ret = FALSE;
     SYMSRV_INDEX_INFOW                  info;
 
-    TRACE("Processing DBG file %s\n", debugstr_a(dbg_name));
+    TRACE("Processing DBG file %s\n", debugstr_w(dbg_name));
 
     if (path_find_symbol_file(pcs, module, dbg_name, FALSE, NULL, timestamp, 0, &info, &module->module.DbgUnmatched) &&
         (hFile = CreateFileW(info.dbgfile, GENERIC_READ, FILE_SHARE_READ, NULL,
@@ -619,7 +619,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
                                       hdr->DebugDirectorySize / sizeof(*dbg));
     }
     else
-        ERR("Couldn't find .DBG file %s (%s)\n", debugstr_a(dbg_name), debugstr_w(info.dbgfile));
+        ERR("Couldn't find .DBG file %s (%s)\n", debugstr_w(dbg_name), debugstr_w(info.dbgfile));
 
     if (dbg_mapping) UnmapViewOfFile(dbg_mapping);
     if (hMap) CloseHandle(hMap);
@@ -655,7 +655,12 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
         {
             misc = (const IMAGE_DEBUG_MISC *)((const char *)mapping + dbg->PointerToRawData);
             if (misc->DataType == IMAGE_DEBUG_MISC_EXENAME)
-                ret = pe_load_dbg_file(pcs, module, (const char*)misc->Data, nth->FileHeader.TimeDateStamp);
+            {
+                WCHAR buffer[MAX_PATH];
+
+                MultiByteToWideChar(CP_ACP, 0, (const char*)misc->Data, -1, buffer, ARRAY_SIZE(buffer));
+                ret = pe_load_dbg_file(pcs, module, buffer, nth->FileHeader.TimeDateStamp);
+            }
             else
                 misc = NULL;
         }

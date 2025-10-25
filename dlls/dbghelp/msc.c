@@ -3743,6 +3743,7 @@ static void pdb_process_symbol_imports(const struct process *pcs,
         last = (const char*)imp + symbols->pdbimport_size;
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
         {
+            WCHAR               buffer[MAX_PATH];
             SYMSRV_INDEX_INFOW info;
             BOOL line_info;
 
@@ -3750,7 +3751,8 @@ static void pdb_process_symbol_imports(const struct process *pcs,
             if (i >= CV_MAX_MODULES) FIXME("Out of bounds!!!\n");
             TRACE("got for %s: age=%u ts=%x\n",
                   debugstr_a(imp->filename), imp->Age, imp->TimeDateStamp);
-            if (path_find_symbol_file(pcs, msc_dbg->module, imp->filename, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
+            MultiByteToWideChar(CP_ACP, 0, imp->filename, -1, buffer, ARRAY_SIZE(buffer));
+            if (path_find_symbol_file(pcs, msc_dbg->module, buffer, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
                                       &msc_dbg->module->module.PdbUnmatched))
                 pdb_process_internal(pcs, msc_dbg, info.pdbfile, pdb_module_info, i, &line_info);
             i++;
@@ -3998,7 +4000,7 @@ static BOOL old_pdb_process_file(const struct process *pcs,
 
 static BOOL pdb_process_file(const struct process *pcs,
                              const struct msc_debug_info *msc_dbg,
-                             const char *filename, const GUID *guid, DWORD timestamp, DWORD age)
+                             const WCHAR *filename, const GUID *guid, DWORD timestamp, DWORD age)
 {
     SYMSRV_INDEX_INFOW          info;
     BOOL                        unmatched, has_linenumber_info, ret;
@@ -4147,7 +4149,10 @@ static BOOL codeview_process_info(const struct process *pcs,
     case CODEVIEW_NB10_SIG:
     {
         const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)msc_dbg->root;
-        ret = pdb_process_file(pcs, msc_dbg, pdb->name, NULL, pdb->timestamp, pdb->age);
+        WCHAR buffer[MAX_PATH];
+
+        MultiByteToWideChar(CP_ACP, 0, pdb->name, -1, buffer, ARRAY_SIZE(buffer));
+        ret = pdb_process_file(pcs, msc_dbg, buffer, NULL, pdb->timestamp, pdb->age);
         break;
     }
     case CODEVIEW_RSDS_SIG:
@@ -4160,7 +4165,12 @@ static BOOL codeview_process_info(const struct process *pcs,
          * Don't search for the .pdb file in that case.
          */
         if (rsds->name[0])
-            ret = pdb_process_file(pcs, msc_dbg, rsds->name, &rsds->guid, 0, rsds->age);
+        {
+            WCHAR buffer[MAX_PATH];
+
+            MultiByteToWideChar(CP_ACP, 0, rsds->name, -1, buffer, ARRAY_SIZE(buffer));
+            ret = pdb_process_file(pcs, msc_dbg, buffer, &rsds->guid, 0, rsds->age);
+        }
         else
             ret = TRUE;
         break;
@@ -4274,13 +4284,13 @@ typedef struct _FPO_DATA
     if (!ret && module->module.SymType == SymDeferred)
     {
         SYMSRV_INDEX_INFOW info = {.sizeofstruct = sizeof(info)};
-        char buffer[MAX_PATH];
-        char *ext;
+        WCHAR buffer[MAX_PATH];
+        WCHAR *ext;
         DWORD options;
 
-        WideCharToMultiByte(CP_ACP, 0, module->module.LoadedImageName, -1, buffer, ARRAY_SIZE(buffer), 0, NULL);
-        ext = strrchr(buffer, '.');
-        if (ext) strcpy(ext + 1, "pdb"); else strcat(buffer, ".pdb");
+        wcscpy(buffer, module->module.LoadedImageName);
+        ext = wcsrchr(buffer, '.');
+        if (ext) wcscpy(ext + 1, L"pdb"); else wcscat(buffer, L".pdb");
         options = SymGetOptions();
         SymSetOptions(options | SYMOPT_LOAD_ANYTHING);
         ret = pdb_process_file(pcs, &msc_dbg, buffer, &null_guid, 0, 0);

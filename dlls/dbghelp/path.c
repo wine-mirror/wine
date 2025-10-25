@@ -507,7 +507,7 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
 }
 
 BOOL path_find_symbol_file(const struct process* pcs, const struct module* module,
-                           PCSTR full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
+                           const WCHAR *full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
                            SYMSRV_INDEX_INFOW *info, BOOL* is_unmatched)
 {
     struct module_find  mf;
@@ -517,7 +517,7 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
     WCHAR               buffer[MAX_PATH];
 
     TRACE("(pcs = %p, full_path = %s, guid = %s, dw1 = 0x%08lx, dw2 = 0x%08lx)\n",
-          pcs, debugstr_a(full_path), debugstr_guid(guid), dw1, dw2);
+          pcs, debugstr_w(full_path), debugstr_guid(guid), dw1, dw2);
 
     mf.info = info;
     mf.guid = guid;
@@ -526,7 +526,8 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
     mf.matched = 0;
     mf.buffer = is_pdb ? info->pdbfile : info->dbgfile;
 
-    MultiByteToWideChar(CP_ACP, 0, full_path, -1, info->file, MAX_PATH);
+    if (wcslen(full_path) + 1 >= ARRAY_SIZE(info->file)) return FALSE;
+    wcscpy(info->file, full_path);
     filename = file_name(info->file);
     mf.is_pdb = is_pdb;
     *is_unmatched = FALSE;
