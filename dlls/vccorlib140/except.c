@@ -34,6 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vccorlib);
 
 extern void WINAPI DECLSPEC_NORETURN _CxxThrowException(void *, const cxx_exception_type *);
+extern const void **__cdecl __current_exception(void);
 
 #ifdef _WIN64
 #define EXCEPTION_REF_NAME(name) ".PE$AAV" #name "Exception@Platform@@"
@@ -513,4 +514,26 @@ void init_exception(void *base)
     INIT_RTTI(name##Exception_Closable, base);
     WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
+}
+
+HRESULT WINAPI __abi_translateCurrentException(bool unknown)
+{
+    const struct Exception *excp;
+    const EXCEPTION_RECORD *record;
+    const cxx_exception_type *type;
+
+    FIXME("(%d): semi-stub!\n", unknown);
+
+    record = *__current_exception();
+    /* Native aborts if:
+     * There is no exception being currently handled.
+     * There is no associated exception object (_CxxThrowException(NULL, ...) was called).
+     * There is no associated cxx_exception_type param (_CxxThrowException(..., NULL) was called).
+     * A non C++/CX exception has been thrown. */
+    if (!record || !record->ExceptionInformation[1] ||
+        !(excp = *(struct Exception **)record->ExceptionInformation[1]) ||
+        !(type = (cxx_exception_type *)record->ExceptionInformation[2]) ||
+        !(type->flags & TYPE_FLAG_WINRT))
+        abort();
+    return excp->inner.hr;
 }

@@ -338,9 +338,8 @@
 @ stdcall -arch=win64 ?__abi_make_type_id@@YAPE$AAVType@Platform@@AEBU__abi_type_descriptor@@@Z(ptr) __abi_make_type_id
 @ stub -arch=win32 ??0IntPtr@Platform@@QAA@PAX@Z
 @ stub -arch=win64 ??0IntPtr@Platform@@QEAA@PEAX@Z
-@ stub -arch=i386 ?__abi_translateCurrentException@@YGJ_N@Z
-@ stub -arch=arm ?__abi_translateCurrentException@@YAJ_N@Z
-@ stub -arch=win64 ?__abi_translateCurrentException@@YAJ_N@Z
+@ stdcall -arch=i386 ?__abi_translateCurrentException@@YGJ_N@Z(long) __abi_translateCurrentException
+@ stdcall -arch=arm,win64 ?__abi_translateCurrentException@@YAJ_N@Z(long) __abi_translateCurrentException
 @ stub -arch=i386 ?__getActivationFactoryByHSTRING@@YGJPAUHSTRING__@@AAVGuid@Platform@@PAPAX@Z
 @ stub -arch=arm ?__getActivationFactoryByHSTRING@@YAJPAUHSTRING__@@AAVGuid@Platform@@PAPAX@Z
 @ stub -arch=win64 ?__getActivationFactoryByHSTRING@@YAJPEAUHSTRING__@@AEAVGuid@Platform@@PEAPEAX@Z
