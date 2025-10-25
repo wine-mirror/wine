@@ -130,9 +130,7 @@ static void run_in_process_( const char *file, int line, const char *args )
     ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
     if (!ret) return;
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+    wait_child_process( &info );
 }
 
 #define check_d3dkmt_global( a ) check_d3dkmt_global_( __LINE__, a )
