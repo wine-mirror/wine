@@ -717,8 +717,7 @@ void winetest_wait_child_process( const PROCESS_INFORMATION *info )
 
         if (!CloseHandle( info->hProcess ))
             ok( 0, "failed to close process handle, error %lu\n", GetLastError() );
-        if (!CloseHandle( info->hThread ))
-            ok( 0, "failed to close thread handle, error %lu\n", GetLastError() );
+        CloseHandle( info->hThread );
     }
 }
 
