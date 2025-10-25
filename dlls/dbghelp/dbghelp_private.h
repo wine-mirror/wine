@@ -827,6 +827,7 @@ extern BOOL         module_is_wine_host(const WCHAR* module_name, const WCHAR* e
 extern BOOL         module_refresh_list(struct process *pcs);
 
 /* msc.c */
+extern BOOL         pdb_load_debug_info(struct module *module, const SYMSRV_INDEX_INFOW *info, BOOL unmatched);
 extern BOOL         pe_load_debug_directory(struct module* module,
                                             const BYTE* mapping,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
@@ -857,6 +858,7 @@ extern BOOL         pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, 
                                                     const char* cmd, WOW64_CONTEXT *context);
 
 /* pe_module.c */
+extern unsigned     pe_clone_sections_table(struct module *module, IMAGE_SECTION_HEADER **sections);
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD64 base, IMAGE_NT_HEADERS* nth, BOOL* is_builtin);
 extern struct module*
                     pe_load_native_module(struct process* pcs, const WCHAR* name,

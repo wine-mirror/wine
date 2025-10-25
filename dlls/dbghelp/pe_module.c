@@ -219,6 +219,26 @@ static const struct image_file_map_ops pe_file_map_ops =
     pe_unmap_file,
 };
 
+unsigned pe_clone_sections_table(struct module *module, IMAGE_SECTION_HEADER **sections)
+{
+    void*                       mapping;
+    struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
+    IMAGE_NT_HEADERS*           nt_header;
+    unsigned                    num;
+
+    if (!(mapping = pe_map_full(fmap, &nt_header))) return 0;
+
+    if ((num = nt_header->FileHeader.NumberOfSections))
+    {
+        if ((*sections = HeapAlloc(GetProcessHeap(), 0, num * sizeof(**sections))))
+            memcpy(*sections, IMAGE_FIRST_SECTION( nt_header ), num * sizeof(**sections));
+        else
+            num = 0;
+    }
+    pe_unmap_full(fmap);
+    return num;
+}
+
 /******************************************************************
  *		pe_is_valid_pointer_table
  *
@@ -477,7 +497,7 @@ static BOOL pe_load_coff_symbol_table(struct module* module)
 
     numsym = fmap->u.pe.file_header.NumberOfSymbols;
     if (!fmap->u.pe.file_header.PointerToSymbolTable || !numsym)
-        return TRUE;
+        return FALSE;
     if (!(mapping = pe_map_full(fmap, NULL))) return FALSE;
     isym = (const IMAGE_SYMBOL*)(mapping + fmap->u.pe.file_header.PointerToSymbolTable);
     /* FIXME: no way to get strtable size */
@@ -585,17 +605,15 @@ static BOOL pe_load_dwarf(struct module* module)
  *
  * loads a .dbg file
  */
-static BOOL pe_load_dbg_file(struct module* module, const WCHAR* dbg_name, DWORD timestamp)
+static BOOL pe_load_dbg_file(struct module* module, const WCHAR* dbg_name)
 {
     HANDLE                              hFile = INVALID_HANDLE_VALUE, hMap = 0;
     const BYTE*                         dbg_mapping = NULL;
     BOOL                                ret = FALSE;
-    SYMSRV_INDEX_INFOW                  info;
 
     TRACE("Processing DBG file %s\n", debugstr_w(dbg_name));
 
-    if (path_find_symbol_file(module, dbg_name, FALSE, NULL, timestamp, 0, &info, &module->module.DbgUnmatched) &&
-        (hFile = CreateFileW(info.dbgfile, GENERIC_READ, FILE_SHARE_READ, NULL,
+    if ((hFile = CreateFileW(dbg_name, GENERIC_READ, FILE_SHARE_READ, NULL,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
         ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
         ((dbg_mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL))
@@ -617,8 +635,6 @@ static BOOL pe_load_dbg_file(struct module* module, const WCHAR* dbg_name, DWORD
                                       hdr->NumberOfSections, dbg,
                                       hdr->DebugDirectorySize / sizeof(*dbg));
     }
-    else
-        ERR("Couldn't find .DBG file %s (%s)\n", debugstr_w(dbg_name), debugstr_w(info.dbgfile));
 
     if (dbg_mapping) UnmapViewOfFile(dbg_mapping);
     if (hMap) CloseHandle(hMap);
@@ -646,28 +662,7 @@ static BOOL pe_load_msc_debug_info(struct module* module)
     nDbg = dbg ? nDbg / sizeof(IMAGE_DEBUG_DIRECTORY) : 0;
 
     /* Parse debug directory */
-    if (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED)
-    {
-        /* Debug info is stripped to .DBG file */
-        const IMAGE_DEBUG_MISC *misc = NULL;
-        if (nDbg == 1 && dbg->Type == IMAGE_DEBUG_TYPE_MISC)
-        {
-            misc = (const IMAGE_DEBUG_MISC *)((const char *)mapping + dbg->PointerToRawData);
-            if (misc->DataType == IMAGE_DEBUG_MISC_EXENAME)
-            {
-                WCHAR buffer[MAX_PATH];
-
-                MultiByteToWideChar(CP_ACP, 0, (const char*)misc->Data, -1, buffer, ARRAY_SIZE(buffer));
-                ret = pe_load_dbg_file(module, buffer, nth->FileHeader.TimeDateStamp);
-            }
-            else
-                misc = NULL;
-        }
-        if (!misc)
-            WARN("-Debug info stripped, but no .DBG file in module %s\n",
-                 debugstr_w(module->modulename));
-    }
-    else
+    if (!(nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED))
     {
         /* Debug info is embedded into PE module */
         ret = pe_load_debug_directory(module, mapping, IMAGE_FIRST_SECTION( nth ),
@@ -765,32 +760,97 @@ static BOOL pe_load_export_debug_info(struct module* module)
  */
 BOOL pe_load_debug_info(struct module* module)
 {
-    BOOL                ret = FALSE;
+    SYMSRV_INDEX_INFOW srv_info = {.sizeofstruct = sizeof(srv_info)};
+    SYMSRV_INDEX_INFOW alt_srv_info;
+    BOOL ret = FALSE;
 
     if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
     {
-        if (!module->dont_load_symbols)
+        /* do we have .pdb or .dbg link in module's image? */
+        if (SymSrvGetFileIndexInfoW(module->module.LoadedImageName, &srv_info, 0))
         {
-            ret = image_check_alternate(&module->format_info[DFI_PE]->u.pe_info->fmap, module);
-            ret = pe_load_stabs(module) || ret;
-            ret = pe_load_dwarf(module) || ret;
+            if (!module->dont_load_symbols)
+            {
+                BOOL unmatched;
+
+                if (srv_info.pdbfile[0])
+                {
+                    if (path_find_symbol_file(module, srv_info.pdbfile, TRUE, srv_info.sig ? NULL : &srv_info.guid,
+                                              srv_info.sig, srv_info.age, &alt_srv_info, &unmatched))
+                    {
+                        ret = pdb_load_debug_info(module, &alt_srv_info, unmatched);
+                        /* FIXME module->module.CVData is not filled in from image */
+                    }
+                    else
+                        WARN("Couldn't find .pdb file %s for %s\n", debugstr_w(srv_info.pdbfile), debugstr_w(module->modulename));
+                }
+                else if (srv_info.stripped && srv_info.dbgfile[0])
+                {
+                    if (path_find_symbol_file(module, srv_info.dbgfile, FALSE, NULL, srv_info.timestamp, 0,
+                                              &alt_srv_info, &unmatched))
+                    {
+                        ret = pe_load_dbg_file(module, alt_srv_info.dbgfile);
+                        module->module.DbgUnmatched = unmatched;
+                    }
+                    else
+                        WARN("Couldn't find .DBG file %s (%s)\n", debugstr_w(srv_info.dbgfile), debugstr_w(module->modulename));
+                }
+            }
+            if (!ret)
+            {
+                module->module.SymType = SymNone;
+                module->module.PdbSig70 = srv_info.guid;
+                module->module.PdbSig = srv_info.sig;
+                module->module.PdbAge = srv_info.age;
+            }
         }
-        ret = pe_load_msc_debug_info(module) || ret;
-        ret = ret || pe_load_coff_symbol_table(module); /* FIXME */
-        /* if we still have no debug info (we could only get SymExport at this
-         * point), then do the SymExport except if we have an ELF container,
-         * in which case we'll rely on the export's on the ELF side
-         */
+        if (!ret && !module->dont_load_symbols) /* didn't find direct .dbg or .pdb info, try other potential formats */
+        {
+            image_check_alternate(&module->format_info[DFI_PE]->u.pe_info->fmap, module);
+            ret = pe_load_dwarf(module) ||
+                pe_load_stabs(module) ||
+                pe_load_msc_debug_info(module) ||
+                pe_load_coff_symbol_table(module);
+        }
+        if (!ret) /* we haven't found yet any debug information, fallback to unmatched pdb */
+        {
+            static GUID null_guid;
+            WCHAR buffer[MAX_PATH];
+            WCHAR *ext;
+            DWORD options;
+            BOOL unmatched;
+
+            wcscpy(buffer, module->module.LoadedImageName);
+            ext = wcsrchr(buffer, '.');
+            if (ext) wcscpy(ext + 1, L"pdb"); else wcscat(buffer, L".pdb");
+            options = SymGetOptions();
+            SymSetOptions(options | SYMOPT_LOAD_ANYTHING);
+            if (path_find_symbol_file(module, buffer, TRUE, &null_guid,
+                                      0, 0, &alt_srv_info, &unmatched))
+            {
+                if (!module->dont_load_symbols && module->module.SymType == SymDeferred)
+                {
+                    ret = pdb_load_debug_info(module, &alt_srv_info, unmatched);
+                }
+                else
+                {
+                    if (module->module.SymType == SymDeferred)
+                        module->module.TimeDateStamp = 0;
+                    module->module.SymType = SymNone;
+                }
+            } else if (module->module.SymType == SymNone)
+                module->module.TimeDateStamp = 0;
+            SymSetOptions(options);
+        }
     }
     /* FIXME:
      * - only loading export debug info in last resort when none of the available formats succeeded
      *   (assuming export debug info is a subset of actual debug infomation).
      */
-    if (module->module.SymType == SymDeferred)
+    if (!ret)
     {
         ret = pe_load_export_debug_info(module) || ret;
-        if (module->module.SymType == SymDeferred)
-            module->module.SymType = SymNone;
+        module->module.SymType = SymNone;
     }
     return ret;
 }

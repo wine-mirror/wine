@@ -48,8 +48,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_msc);
 
-static const GUID null_guid;
-
 struct pdb_stream_name
 {
     const char* name;
@@ -3994,58 +3992,47 @@ static BOOL old_pdb_process_file(const struct msc_debug_info *msc_dbg,
     return ret;
 }
 
-static BOOL pdb_process_file(const struct msc_debug_info *msc_dbg,
-                             const WCHAR *filename, const GUID *guid, DWORD timestamp, DWORD age)
-{
-    SYMSRV_INDEX_INFOW          info;
-    BOOL                        unmatched, has_linenumber_info, ret;
-
-    if (!msc_dbg->module->dont_load_symbols &&
-        path_find_symbol_file(msc_dbg->module, filename, TRUE, guid, timestamp, age, &info, &unmatched))
-    {
-        if (getenv("WINE_DBGHELP_OLD_PDB")) /* keep using old pdb reader */
-            ret = old_pdb_process_file(msc_dbg, info.pdbfile, &has_linenumber_info);
-        else
-            ret = pdb_init_modfmt(msc_dbg, info.pdbfile, &has_linenumber_info);
-
-        if (ret)
-        {
-            msc_dbg->module->module.SymType = SymPdb;
-            msc_dbg->module->module.PdbSig = info.sig;
-            msc_dbg->module->module.PdbAge = info.age;
-            msc_dbg->module->module.PdbSig70 = info.guid;
-            msc_dbg->module->module.PdbUnmatched = unmatched;
-            wcscpy(msc_dbg->module->module.LoadedPdbName, info.pdbfile);
-
-            /* FIXME: we could have a finer grain here */
-            msc_dbg->module->module.LineNumbers = has_linenumber_info;
-            msc_dbg->module->module.GlobalSymbols = TRUE;
-            msc_dbg->module->module.TypeInfo = TRUE;
-            msc_dbg->module->module.SourceIndexed = TRUE;
-            msc_dbg->module->module.Publics = TRUE;
-
-            return TRUE;
-        }
-    }
-    msc_dbg->module->module.SymType = SymNone;
-    if (guid)
-        msc_dbg->module->module.PdbSig70 = *guid;
-    else
-        memset(&msc_dbg->module->module.PdbSig70, 0, sizeof(GUID));
-    msc_dbg->module->module.PdbSig = 0;
-    msc_dbg->module->module.PdbAge = age;
-    return FALSE;
-}
-
-/*========================================================================
- * Process CodeView debug information.
- */
-
 #define MAKESIG(a,b,c,d)        ((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
 #define CODEVIEW_NB09_SIG       MAKESIG('N','B','0','9')
 #define CODEVIEW_NB10_SIG       MAKESIG('N','B','1','0')
 #define CODEVIEW_NB11_SIG       MAKESIG('N','B','1','1')
 #define CODEVIEW_RSDS_SIG       MAKESIG('R','S','D','S')
+
+BOOL pdb_load_debug_info(struct module *module, const SYMSRV_INDEX_INFOW *info, BOOL unmatched)
+{
+    BOOL                        has_linenumber_info, ret;
+    struct msc_debug_info       msc_dbg = {.module = module};
+
+    msc_dbg.nsect = pe_clone_sections_table(module, (IMAGE_SECTION_HEADER**)&msc_dbg.sectp);
+    if (!msc_dbg.nsect) return FALSE;
+    if (getenv("WINE_DBGHELP_OLD_PDB")) /* keep using old pdb reader */
+        ret = old_pdb_process_file(&msc_dbg, info->pdbfile, &has_linenumber_info);
+    else
+        ret = pdb_init_modfmt(&msc_dbg, info->pdbfile, &has_linenumber_info);
+
+    HeapFree(GetProcessHeap(), 0, (void*)msc_dbg.sectp);
+    if (ret)
+    {
+        module->module.SymType = SymPdb;
+        module->module.PdbSig70 = info->guid;
+        module->module.PdbSig = info->sig;
+        module->module.PdbAge = info->age;
+        module->module.PdbUnmatched = unmatched;
+        wcscpy(module->module.LoadedPdbName, info->pdbfile);
+        module->module.CVSig = info->sig ? CODEVIEW_NB10_SIG : CODEVIEW_RSDS_SIG;
+        /* FIXME: we could have a finer grain here */
+        module->module.LineNumbers = has_linenumber_info;
+        module->module.GlobalSymbols = TRUE;
+        module->module.TypeInfo = TRUE;
+        module->module.SourceIndexed = TRUE;
+        module->module.Publics = TRUE;
+    }
+    return ret;
+}
+
+/*========================================================================
+ * Process CodeView debug information.
+ */
 
 static BOOL codeview_process_info(const struct msc_debug_info *msc_dbg)
 {
@@ -4141,46 +4128,15 @@ static BOOL codeview_process_info(const struct msc_debug_info *msc_dbg)
     }
 
     case CODEVIEW_NB10_SIG:
-    {
-        const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)msc_dbg->root;
-        WCHAR buffer[MAX_PATH];
-
-        MultiByteToWideChar(CP_ACP, 0, pdb->name, -1, buffer, ARRAY_SIZE(buffer));
-        ret = pdb_process_file(msc_dbg, buffer, NULL, pdb->timestamp, pdb->age);
-        break;
-    }
     case CODEVIEW_RSDS_SIG:
-    {
-        const OMFSignatureRSDS* rsds = (const OMFSignatureRSDS*)msc_dbg->root;
-
-        TRACE("Got RSDS type of PDB file: guid=%s age=%08x name=%s\n",
-              wine_dbgstr_guid(&rsds->guid), rsds->age, debugstr_a(rsds->name));
-        /* gcc/mingw and clang can emit build-id information, but with an empty PDB filename.
-         * Don't search for the .pdb file in that case.
-         */
-        if (rsds->name[0])
-        {
-            WCHAR buffer[MAX_PATH];
-
-            MultiByteToWideChar(CP_ACP, 0, rsds->name, -1, buffer, ARRAY_SIZE(buffer));
-            ret = pdb_process_file(msc_dbg, buffer, &rsds->guid, 0, rsds->age);
-        }
-        else
-            ret = TRUE;
+        /* should be loaded directly through pe_load_debug_info() */
         break;
-    }
     default:
         ERR("Unknown CODEVIEW signature %08lx in module %s\n",
             *signature, debugstr_w(msc_dbg->module->modulename));
         break;
     }
-    if (ret)
-    {
-        msc_dbg->module->module.CVSig = *signature;
-        if (*signature == CODEVIEW_RSDS_SIG)
-            memcpy(msc_dbg->module->module.CVData, msc_dbg->root,
-                   sizeof(msc_dbg->module->module.CVData));
-    }
+
     return ret;
 }
 
@@ -4273,25 +4229,6 @@ typedef struct _FPO_DATA
         ret = FALSE;
     }
     __ENDTRY
-
-    /* we haven't found yet any debug information, fallback to unmatched pdb */
-    if (!ret && module->module.SymType == SymDeferred)
-    {
-        SYMSRV_INDEX_INFOW info = {.sizeofstruct = sizeof(info)};
-        WCHAR buffer[MAX_PATH];
-        WCHAR *ext;
-        DWORD options;
-
-        wcscpy(buffer, module->module.LoadedImageName);
-        ext = wcsrchr(buffer, '.');
-        if (ext) wcscpy(ext + 1, L"pdb"); else wcscat(buffer, L".pdb");
-        options = SymGetOptions();
-        SymSetOptions(options | SYMOPT_LOAD_ANYTHING);
-        ret = pdb_process_file(&msc_dbg, buffer, &null_guid, 0, 0);
-        SymSetOptions(options);
-        if (!ret && module->dont_load_symbols)
-            module->module.TimeDateStamp = 0;
-    }
 
     return ret;
 }

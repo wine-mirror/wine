@@ -4382,7 +4382,7 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
         dwarf2_modfmt->module->module.SourceIndexed = TRUE;
         dwarf2_modfmt->module->module.Publics = TRUE;
     }
-
+    else ret = FALSE;
     dwarf2_unload_CU_module(&module_ctx);
 leave:
 
