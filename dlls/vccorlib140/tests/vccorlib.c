@@ -579,8 +579,7 @@ static void test_Allocate(void)
     /* AllocateException allocates additional space for two pointer-width fields, with the second field used as the
      * back-pointer to the exception data. */
     addr = pAllocateException(0);
-    todo_wine ok(!!addr, "got addr %p\n", addr);
-    if (!addr) return;
+    ok(!!addr, "got addr %p\n", addr);
     ptr = (void **)((ULONG_PTR)addr - sizeof(void *));
     *ptr = NULL; /* The write should succeed. */
     base = (void **)((ULONG_PTR)addr - 2 * sizeof(void *));
@@ -844,8 +843,7 @@ static void test_AllocateWithWeakRef(void)
 
     /* AllocateExceptionWithWeakRef will not store the control block inline, regardless of the size. */
     object = pAllocateExceptionWithWeakRef(offsetof(struct unknown_impl, weakref), sizeof(struct unknown_impl));
-    todo_wine ok(object != NULL, "got object %p\n", object);
-    if (!object) return;
+    ok(object != NULL, "got object %p\n", object);
 
     object->strong_ref_free_val = -100;
     ok(object->weakref != NULL, "got weakref %p\n", object->weakref);

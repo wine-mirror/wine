@@ -101,10 +101,21 @@ void *__cdecl Allocate(size_t size)
     return addr;
 }
 
+struct exception_alloc
+{
+    void *unknown;
+    void *exception_inner;
+    char data[0];
+};
+
 void *__cdecl AllocateException(size_t size)
 {
-    FIXME("(%Iu): stub!\n", size);
-    return NULL;
+    struct exception_alloc *base;
+
+    TRACE("(%Iu)\n", size);
+
+    base = Allocate(offsetof(struct exception_alloc, data[size]));
+    return &base->data;
 }
 
 void __cdecl Free(void *addr)
@@ -116,7 +127,11 @@ void __cdecl Free(void *addr)
 
 void __cdecl FreeException(void *addr)
 {
-    FIXME("(%p): stub!\n", addr);
+    struct exception_alloc *base = CONTAINING_RECORD(addr, struct exception_alloc, data);
+
+    TRACE("(%p)\n", addr);
+
+    Free(base);
 }
 
 struct control_block
@@ -236,8 +251,23 @@ void *__cdecl AllocateWithWeakRef(ptrdiff_t offset, size_t size)
 
 void *__cdecl AllocateExceptionWithWeakRef(ptrdiff_t offset, size_t size)
 {
-    FIXME("(%Iu, %Iu): stub!\n", offset, size);
-    return NULL;
+    struct control_block *weakref;
+    void *excp;
+
+    TRACE("(%Iu, %Iu)\n", offset, size);
+
+    /* AllocateExceptionWithWeakRef does not store the control block inline, regardless of size. */
+    weakref = Allocate(sizeof(*weakref));
+    excp = AllocateException(size);
+    *(struct control_block **)((char *)excp + offset) = weakref;
+    weakref->IWeakReference_iface.lpVtbl = &control_block_vtbl;
+    weakref->object = excp;
+    weakref->ref_strong = weakref->ref_weak = 1;
+    weakref->is_inline = FALSE;
+    weakref->unknown = 0;
+    weakref->is_exception = TRUE;
+
+    return excp;
 }
 
 DEFINE_THISCALL_WRAPPER(control_block_ReleaseTarget, 4)
@@ -249,7 +279,12 @@ void __thiscall control_block_ReleaseTarget(struct control_block *weakref)
 
     if (weakref->is_inline || ReadNoFence(&weakref->ref_strong) >= 0) return;
     if ((object = InterlockedCompareExchangePointer((void *)&weakref->object, NULL, weakref->object)))
-        Free(object);
+    {
+        if (weakref->is_exception)
+            FreeException(object);
+        else
+            Free(object);
+    }
 }
 
 struct __abi_type_descriptor
