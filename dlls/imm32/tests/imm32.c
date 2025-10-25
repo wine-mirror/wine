@@ -8071,9 +8071,7 @@ static void test_ime_ui_window( const char *argv0 )
     startup.cb = sizeof(startup);
     CreateProcessA( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hProcess );
-    CloseHandle( info.hThread );
+    wait_child_process( &info );
 }
 
 START_TEST(imm32)
