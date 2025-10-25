@@ -30,6 +30,21 @@
 #include "xmlparser.h"
 #include "wine/test.h"
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 /* Deprecated Error Code */
 #define XML_E_INVALIDATROOTLEVEL    0xc00ce556
 
@@ -112,8 +127,10 @@ static void test_xmldoc(void)
     IPersistStreamInit *psi = NULL;
     IXMLDocument *doc = NULL;
     IStream *stream = NULL;
+    IUnknown *unk1, *unk2;
     VARIANT vIndex, vName;
     LONG type, num_child;
+    IXMLDocument2 *doc2;
     CHAR path[MAX_PATH];
     IDispatch *disp;
     ITypeInfo *ti;
@@ -124,9 +141,45 @@ static void test_xmldoc(void)
                           &IID_IXMLDocument, (void**)&doc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    check_interface(doc, &IID_IUnknown, TRUE);
+    check_interface(doc, &IID_IDispatch, TRUE);
+    check_interface(doc, &IID_IXMLDocument, TRUE);
+    todo_wine
+    check_interface(doc, &IID_IXMLDocument2, TRUE);
+    check_interface(doc, &IID_IPersistStreamInit, TRUE);
+    check_interface(doc, &IID_IPersistStream, TRUE);
+    todo_wine
+    check_interface(doc, &IID_IPersistMoniker, TRUE);
+    todo_wine
+    check_interface(doc, &IID_IXMLError, TRUE);
+    check_interface(doc, &IID_IXMLDOMDocument, FALSE);
+
+    hr = IXMLDocument_QueryInterface(doc, &IID_IXMLDocument2, (void **)&doc2);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IXMLDocument2_QueryInterface(doc2, &IID_IDispatch, (void **)&disp);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(disp == (IDispatch *)doc2, "Unexpected pointer.\n");
+        IDispatch_Release(disp);
+        hr = IXMLDocument2_QueryInterface(doc2, &IID_IUnknown, (void **)&unk2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(unk2 != (IUnknown *)doc2, "Unexpected pointer.\n");
+        IXMLDocument2_Release(doc2);
+
+        hr = IXMLDocument_QueryInterface(doc, &IID_IUnknown, (void **)&unk1);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(unk1 != (IUnknown *)doc, "Unexpected pointer.\n");
+        ok(unk1 == unk2, "Unexpected pointer.\n");
+        IUnknown_Release(unk1);
+        IUnknown_Release(unk2);
+    }
+
     /* IDispatch */
     hr = IXMLDocument_QueryInterface(doc, &IID_IDispatch, (void**)&disp);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(disp == (IDispatch *)doc, "Unexpected pointer.\n");
 
     /* just to make sure we're on right type data */
     hr = IDispatch_GetTypeInfo(disp, 0, 0, &ti);
@@ -139,9 +192,6 @@ static void test_xmldoc(void)
 
     ITypeInfo_Release(ti);
     IDispatch_Release(disp);
-
-    hr = IXMLDocument_QueryInterface(doc, &IID_IXMLDOMDocument, (void**)&disp);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
 
     create_xml_file("bank.xml");
     GetFullPathNameA("bank.xml", MAX_PATH, path, NULL);
