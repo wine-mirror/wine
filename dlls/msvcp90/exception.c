@@ -1183,11 +1183,6 @@ __ASM_GLOBAL_FUNC( call_copy_ctor,
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
-extern void call_dtor( void *func, void *this );
-__ASM_GLOBAL_FUNC( call_dtor,
-                   "movl 8(%esp),%ecx\n\t"
-                   "call *4(%esp)\n\t"
-                   "ret" )
 #else
 static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
 {
@@ -1196,10 +1191,6 @@ static inline void call_copy_ctor( void *func, void *this, void *src, int has_vb
         ((void (__thiscall*)(void*, void*, BOOL))func)(this, src, 1);
     else
         ((void (__thiscall*)(void*, void*))func)(this, src);
-}
-static inline void call_dtor( void *func, void *this )
-{
-    ((void (__thiscall*)(void*))func)( this );
 }
 #endif
 
@@ -1264,11 +1255,9 @@ void __cdecl __ExceptionPtrDestroy(exception_ptr *ep)
     {
         if (ep->rec->ExceptionCode == CXX_EXCEPTION)
         {
-            const cxx_exception_type *type = (void*)ep->rec->ExceptionInformation[2];
             void *obj = (void*)ep->rec->ExceptionInformation[1];
-            uintptr_t base = cxx_rva_base( type );
 
-            if (type && type->destructor) call_dtor( cxx_rva(type->destructor, base), obj );
+            __DestructExceptionObject(ep->rec);
             HeapFree(GetProcessHeap(), 0, obj);
         }
 

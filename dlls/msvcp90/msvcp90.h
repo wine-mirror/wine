@@ -733,6 +733,7 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
 #endif
 
+void CDECL __DestructExceptionObject(EXCEPTION_RECORD*);
 void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*);
 void __cdecl DECLSPEC_NORETURN _Xinvalid_argument(const char*);
 void __cdecl DECLSPEC_NORETURN _Xlength_error(const char*);

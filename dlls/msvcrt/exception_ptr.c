@@ -81,11 +81,9 @@ void __cdecl __ExceptionPtrDestroy(exception_ptr *ep)
     {
         if (ep->rec->ExceptionCode == CXX_EXCEPTION)
         {
-            const cxx_exception_type *type = (void*)ep->rec->ExceptionInformation[2];
             void *obj = (void*)ep->rec->ExceptionInformation[1];
-            uintptr_t base = cxx_rva_base( type );
 
-            if (type && type->destructor) call_dtor( cxx_rva(type->destructor, base), obj );
+            __DestructExceptionObject(ep->rec);
             HeapFree(GetProcessHeap(), 0, obj);
         }
 
