@@ -278,10 +278,14 @@ my %map_default_fbo_thunks =
     );
 my %manual_wow64_wrappers =
     (
+     "glBufferStorage" => 0,
      "glClientWaitSync" => 0,
      "glDeleteBuffers" => 0,
      "glDeleteSync" => 0,
      "glFenceSync" => 0,
+     "glFlushMappedBufferRange" => 0,
+     "glFlushMappedNamedBufferRange" => 0,
+     "glFlushMappedNamedBufferRangeEXT" => 0,
      "glGetBufferPointerv" => 0,
      "glGetBufferPointervARB" => 0,
      "glGetError" => 0,
@@ -296,6 +300,8 @@ my %manual_wow64_wrappers =
      "glMapNamedBufferEXT" => 0,
      "glMapNamedBufferRange" => 0,
      "glMapNamedBufferRangeEXT" => 0,
+     "glNamedBufferStorage" => 0,
+     "glNamedBufferStorageEXT" => 0,
      "glUnmapBuffer" => 0,
      "glUnmapBufferARB" => 0,
      "glUnmapNamedBuffer" => 0,

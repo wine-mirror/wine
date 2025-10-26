@@ -2176,6 +2176,27 @@ void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers )
     pthread_mutex_unlock( &wgl_lock );
 }
 
+void wow64_glBufferStorage( TEB *teb, GLenum target, GLsizeiptr size, const void *data, GLbitfield flags )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    funcs->p_glBufferStorage( target, size, data, flags );
+}
+
+void wow64_glNamedBufferStorage( TEB *teb, GLuint name, GLsizeiptr size, const void *data, GLbitfield flags )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    funcs->p_glNamedBufferStorage( name, size, data, flags );
+}
+
+void wow64_glNamedBufferStorageEXT( TEB *teb, GLuint name, GLsizeiptr size, const void *data, GLbitfield flags )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    funcs->p_glNamedBufferStorageEXT( name, size, data, flags );
+}
+
 static BOOL wow64_gl_get_buffer_pointer_v( TEB *teb, GLenum target, GLuint name, GLenum pname, PTR32 *wow_ptr )
 {
     struct buffer *buffer;
@@ -2381,6 +2402,27 @@ GLboolean wow64_glUnmapNamedBufferEXT( TEB *teb, GLuint buffer )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     return wow64_gl_unmap_named_buffer( teb, buffer, funcs->p_glUnmapNamedBufferEXT );
+}
+
+void wow64_glFlushMappedBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeiptr length )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    funcs->p_glFlushMappedBufferRange( target, offset, length );
+}
+
+void wow64_glFlushMappedNamedBufferRange( TEB *teb, GLuint name, GLintptr offset, GLsizeiptr length )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    funcs->p_glFlushMappedNamedBufferRange( name, offset, length );
+}
+
+void wow64_glFlushMappedNamedBufferRangeEXT( TEB *teb, GLuint name, GLintptr offset, GLsizeiptr length )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    funcs->p_glFlushMappedNamedBufferRangeEXT( name, offset, length );
 }
 
 NTSTATUS wow64_thread_attach( void *args )

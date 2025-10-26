@@ -48,10 +48,14 @@ extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb, HPBUFFERARB hPbuffer, const i
 
 #ifdef _WIN64
 extern GLenum wow64_glGetError( TEB *teb );
+extern void wow64_glBufferStorage( TEB *teb, GLenum target, GLsizeiptr size, const void *data, GLbitfield flags );
 extern GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout );
 extern void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers );
 extern void wow64_glDeleteSync( TEB *teb, GLsync sync );
 extern GLsync wow64_glFenceSync( TEB *teb, GLenum condition, GLbitfield flags );
+extern void wow64_glFlushMappedBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeiptr length );
+extern void wow64_glFlushMappedNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length );
+extern void wow64_glFlushMappedNamedBufferRangeEXT( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length );
 extern void wow64_glGetBufferPointerv( TEB *teb, GLenum target, GLenum pname, PTR32 *params );
 extern void wow64_glGetBufferPointervARB( TEB *teb, GLenum target, GLenum pname, PTR32 *params );
 extern void wow64_glGetNamedBufferPointerv( TEB *teb, GLuint buffer, GLenum pname, PTR32 *params );
@@ -65,6 +69,8 @@ extern PTR32 wow64_glMapNamedBuffer( TEB *teb, GLuint buffer, GLenum access );
 extern PTR32 wow64_glMapNamedBufferEXT( TEB *teb, GLuint buffer, GLenum access );
 extern PTR32 wow64_glMapNamedBufferRange( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access );
 extern PTR32 wow64_glMapNamedBufferRangeEXT( TEB *teb, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access );
+extern void wow64_glNamedBufferStorage( TEB *teb, GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags );
+extern void wow64_glNamedBufferStorageEXT( TEB *teb, GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags );
 extern GLboolean wow64_glUnmapBuffer( TEB *teb, GLenum target );
 extern GLboolean wow64_glUnmapBufferARB( TEB *teb, GLenum target );
 extern GLboolean wow64_glUnmapNamedBuffer( TEB *teb, GLuint buffer );
