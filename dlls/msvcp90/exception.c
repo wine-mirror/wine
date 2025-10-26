@@ -1199,6 +1199,27 @@ static inline void call_dtor( void *func, void *this )
 }
 #endif
 
+/* copy the exception object where the catch block wants it */
+static inline void copy_exception( void *object, void **dest, UINT catch_flags,
+                                   const cxx_type_info *type, uintptr_t base )
+{
+    if (type->flags & CLASS_IS_SIMPLE_TYPE)
+    {
+        memmove( dest, object, type->size );
+        /* if it is a pointer, adjust it */
+        if (type->size == sizeof(void*)) *dest = get_this_pointer( &type->offsets, *dest );
+    }
+    else  /* copy the object */
+    {
+        if (type->copy_ctor)
+            call_copy_ctor( cxx_rva( type->copy_ctor, base ), dest,
+                            get_this_pointer( &type->offsets, object ),
+                            (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS) );
+        else
+            memmove( dest, get_this_pointer( &type->offsets, object ), type->size );
+    }
+}
+
 int __cdecl __uncaught_exceptions(void)
 {
     return *__processing_throw();
@@ -1317,18 +1338,7 @@ void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
         const cxx_type_info *ti = cxx_rva( table->info[0], base );
         void **data = HeapAlloc(GetProcessHeap(), 0, ti->size);
 
-        if (ti->flags & CLASS_IS_SIMPLE_TYPE)
-        {
-            memcpy(data, obj, ti->size);
-            if (ti->size == sizeof(void *)) *data = get_this_pointer(&ti->offsets, *data);
-        }
-        else if (ti->copy_ctor)
-        {
-            call_copy_ctor(cxx_rva(ti->copy_ctor, base), data, get_this_pointer(&ti->offsets, obj),
-                    ti->flags & CLASS_HAS_VIRTUAL_BASE_CLASS);
-        }
-        else
-            memcpy(data, get_this_pointer(&ti->offsets, obj), ti->size);
+        copy_exception(obj, data, 0, ti, base);
         ep->rec->ExceptionInformation[1] = (ULONG_PTR)data;
     }
     return;
@@ -1372,18 +1382,7 @@ void __cdecl __ExceptionPtrCopyException(exception_ptr *ep,
     table = cxx_rva( type->type_info_table, base );
     ti = cxx_rva( table->info[0], base );
     data = HeapAlloc(GetProcessHeap(), 0, ti->size);
-    if (ti->flags & CLASS_IS_SIMPLE_TYPE)
-    {
-        memcpy(data, object, ti->size);
-        if (ti->size == sizeof(void *)) *data = get_this_pointer(&ti->offsets, *data);
-    }
-    else if (ti->copy_ctor)
-    {
-        call_copy_ctor( cxx_rva(ti->copy_ctor, base), data, get_this_pointer(&ti->offsets, object),
-                        ti->flags & CLASS_HAS_VIRTUAL_BASE_CLASS );
-    }
-    else
-        memcpy(data, get_this_pointer(&ti->offsets, object), ti->size);
+    copy_exception(object, data, 0, ti, base);
     ep->rec->ExceptionInformation[1] = (ULONG_PTR)data;
 }
 
