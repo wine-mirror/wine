@@ -2798,6 +2798,50 @@ static void test_DrawThemeEdge(void)
     DestroyWindow(hwnd);
 }
 
+static void test_DrawThemeTextEx(void)
+{
+    DTTOPTS options;
+    HTHEME htheme;
+    HRESULT hr;
+    RECT rect;
+    HWND hwnd;
+    HDC hdc;
+
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    htheme = OpenThemeData(hwnd, L"Button");
+    if (!htheme)
+    {
+        skip("Theming is inactive.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    hdc = GetDC(hwnd);
+    SetRect(&rect, 0, 0, 1, 1);
+
+    hr = DrawThemeTextEx(NULL, hdc, 0, 0, L"Wine", -1, DT_CENTER, &rect, NULL);
+    ok(hr == E_HANDLE, "Got unexpected hr %#lx.\n", hr);
+
+    hr = DrawThemeTextEx(htheme, hdc, 0, 0, L"Wine", -1, DT_CENTER, &rect, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    options.dwSize = sizeof(options);
+    options.dwFlags = DTT_FONTPROP;
+    options.iFontPropId = TMT_BODYFONT;
+    hr = DrawThemeTextEx(htheme, hdc, 0, 0, L"Wine", -1, DT_CENTER, &rect, &options);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    options.dwFlags = DTT_TEXTCOLOR;
+    options.crText = RGB(100, 100, 100);
+    hr = DrawThemeTextEx(htheme, hdc, 0, 0, L"Wine", -1, DT_CENTER, &rect, &options);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ReleaseDC(hwnd, hdc);
+    CloseThemeData(htheme);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(system)
 {
     ULONG_PTR ctx_cookie;
@@ -2827,6 +2871,7 @@ START_TEST(system)
     test_ShouldSystemUseDarkMode();
     test_ShouldAppsUseDarkMode();
     test_DrawThemeEdge();
+    test_DrawThemeTextEx();
 
     if (load_v6_module(&ctx_cookie, &ctx))
     {
