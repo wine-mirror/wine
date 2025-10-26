@@ -527,10 +527,10 @@ static BOOL pe_load_coff_symbol_table(struct module* module)
 /******************************************************************
  *		pe_load_stabs
  *
- * look for stabs information in PE header (it's how the mingw compiler provides 
+ * look for stabs information in PE header (it's how the mingw compiler provides
  * its debugging information)
  */
-static BOOL pe_load_stabs(const struct process* pcs, struct module* module)
+static BOOL pe_load_stabs(struct module* module)
 {
     struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     struct image_section_map    sect_stabs, sect_stabstr;
@@ -585,8 +585,7 @@ static BOOL pe_load_dwarf(struct module* module)
  *
  * loads a .dbg file
  */
-static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
-                             const WCHAR* dbg_name, DWORD timestamp)
+static BOOL pe_load_dbg_file(struct module* module, const WCHAR* dbg_name, DWORD timestamp)
 {
     HANDLE                              hFile = INVALID_HANDLE_VALUE, hMap = 0;
     const BYTE*                         dbg_mapping = NULL;
@@ -595,7 +594,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
 
     TRACE("Processing DBG file %s\n", debugstr_w(dbg_name));
 
-    if (path_find_symbol_file(pcs, module, dbg_name, FALSE, NULL, timestamp, 0, &info, &module->module.DbgUnmatched) &&
+    if (path_find_symbol_file(module, dbg_name, FALSE, NULL, timestamp, 0, &info, &module->module.DbgUnmatched) &&
         (hFile = CreateFileW(info.dbgfile, GENERIC_READ, FILE_SHARE_READ, NULL,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
         ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
@@ -614,7 +613,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
              hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) +
              hdr->ExportedNamesSize);
 
-        ret = pe_load_debug_directory(pcs, module, dbg_mapping, sectp,
+        ret = pe_load_debug_directory(module, dbg_mapping, sectp,
                                       hdr->NumberOfSections, dbg,
                                       hdr->DebugDirectorySize / sizeof(*dbg));
     }
@@ -632,7 +631,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
  *
  * Process MSC debug information in PE file.
  */
-static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* module)
+static BOOL pe_load_msc_debug_info(struct module* module)
 {
     struct image_file_map*      fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     BOOL                        ret = FALSE;
@@ -659,7 +658,7 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
                 WCHAR buffer[MAX_PATH];
 
                 MultiByteToWideChar(CP_ACP, 0, (const char*)misc->Data, -1, buffer, ARRAY_SIZE(buffer));
-                ret = pe_load_dbg_file(pcs, module, buffer, nth->FileHeader.TimeDateStamp);
+                ret = pe_load_dbg_file(module, buffer, nth->FileHeader.TimeDateStamp);
             }
             else
                 misc = NULL;
@@ -671,7 +670,7 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
     else
     {
         /* Debug info is embedded into PE module */
-        ret = pe_load_debug_directory(pcs, module, mapping, IMAGE_FIRST_SECTION( nth ),
+        ret = pe_load_debug_directory(module, mapping, IMAGE_FIRST_SECTION( nth ),
                                       nth->FileHeader.NumberOfSections, dbg, nDbg);
     }
     pe_unmap_full(fmap);
@@ -681,7 +680,7 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
 /***********************************************************************
  *			pe_load_export_debug_info
  */
-static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* module)
+static BOOL pe_load_export_debug_info(struct module* module)
 {
     struct image_file_map*              fmap = &module->format_info[DFI_PE]->u.pe_info->fmap;
     unsigned int 		        i;
@@ -764,7 +763,7 @@ static BOOL pe_load_export_debug_info(const struct process* pcs, struct module* 
  *		pe_load_debug_info
  *
  */
-BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
+BOOL pe_load_debug_info(struct module* module)
 {
     BOOL                ret = FALSE;
 
@@ -773,10 +772,10 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
         if (!module->dont_load_symbols)
         {
             ret = image_check_alternate(&module->format_info[DFI_PE]->u.pe_info->fmap, module);
-            ret = pe_load_stabs(pcs, module) || ret;
+            ret = pe_load_stabs(module) || ret;
             ret = pe_load_dwarf(module) || ret;
         }
-        ret = pe_load_msc_debug_info(pcs, module) || ret;
+        ret = pe_load_msc_debug_info(module) || ret;
         ret = ret || pe_load_coff_symbol_table(module); /* FIXME */
         /* if we still have no debug info (we could only get SymExport at this
          * point), then do the SymExport except if we have an ELF container,
@@ -789,7 +788,7 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
      */
     if (module->module.SymType == SymDeferred)
     {
-        ret = pe_load_export_debug_info(pcs, module) || ret;
+        ret = pe_load_export_debug_info(module) || ret;
         if (module->module.SymType == SymDeferred)
             module->module.SymType = SymNone;
     }

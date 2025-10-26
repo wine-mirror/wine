@@ -3604,8 +3604,7 @@ static BOOL pdb_init(struct pdb_file_info* pdb_file, const char* image)
     return pdb_file->stream_dict != NULL;
 }
 
-static BOOL pdb_process_internal(const struct process *pcs,
-                                 const struct msc_debug_info *msc_dbg,
+static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
                                  const WCHAR *filename,
                                  struct old_pdb_module_info *pdb_module_info,
                                  unsigned module_index,
@@ -3720,8 +3719,7 @@ DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
     return ERROR_BAD_FORMAT;
 }
 
-static void pdb_process_symbol_imports(const struct process *pcs,
-                                       const struct msc_debug_info *msc_dbg,
+static void pdb_process_symbol_imports(const struct msc_debug_info *msc_dbg,
                                        const PDB_SYMBOLS *symbols,
                                        const void *symbols_image,
                                        const char *image,
@@ -3752,9 +3750,9 @@ static void pdb_process_symbol_imports(const struct process *pcs,
             TRACE("got for %s: age=%u ts=%x\n",
                   debugstr_a(imp->filename), imp->Age, imp->TimeDateStamp);
             MultiByteToWideChar(CP_ACP, 0, imp->filename, -1, buffer, ARRAY_SIZE(buffer));
-            if (path_find_symbol_file(pcs, msc_dbg->module, buffer, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
+            if (path_find_symbol_file(msc_dbg->module, buffer, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
                                       &msc_dbg->module->module.PdbUnmatched))
-                pdb_process_internal(pcs, msc_dbg, info.pdbfile, pdb_module_info, i, &line_info);
+                pdb_process_internal(msc_dbg, info.pdbfile, pdb_module_info, i, &line_info);
             i++;
             imp = (const PDB_SYMBOL_IMPORT*)((const char*)first + ((ptr - (const char*)first + strlen(ptr) + 1 + 3) & ~3));
         }
@@ -3770,8 +3768,7 @@ static void pdb_process_symbol_imports(const struct process *pcs,
     cv_current_module->allowed = TRUE;
 }
 
-static BOOL pdb_process_internal(const struct process *pcs,
-                                 const struct msc_debug_info *msc_dbg,
+static BOOL pdb_process_internal(const struct msc_debug_info *msc_dbg,
                                  const WCHAR *filename,
                                  struct old_pdb_module_info *pdb_module_info,
                                  unsigned module_index,
@@ -3846,7 +3843,7 @@ static BOOL pdb_process_internal(const struct process *pcs,
 
         files_image = pdb_read_strings(pdb_file);
 
-        pdb_process_symbol_imports(pcs, msc_dbg, &symbols, symbols_image, image,
+        pdb_process_symbol_imports(msc_dbg, &symbols, symbols_image, image,
                                    pdb_module_info, module_index);
         pdb_process_types(msc_dbg, pdb_file);
 
@@ -3944,7 +3941,7 @@ static BOOL pdb_process_internal(const struct process *pcs,
         pdb_free(ipi_image);
     }
     else
-        pdb_process_symbol_imports(pcs, msc_dbg, NULL, NULL, image,
+        pdb_process_symbol_imports(msc_dbg, NULL, NULL, image,
                                    pdb_module_info, module_index);
 
     pdb_free(symbols_image);
@@ -3967,8 +3964,7 @@ static const struct module_format_vtable old_pdb_module_format_vtable =
     pdb_location_compute,
 };
 
-static BOOL old_pdb_process_file(const struct process *pcs,
-                                 const struct msc_debug_info *msc_dbg,
+static BOOL old_pdb_process_file(const struct msc_debug_info *msc_dbg,
                                  const WCHAR *filename, BOOL *has_linenumber_info)
 {
     struct module_format*       modfmt;
@@ -3987,7 +3983,7 @@ static BOOL old_pdb_process_file(const struct process *pcs,
 
     memset(cv_zmodules, 0, sizeof(cv_zmodules));
     codeview_init_basic_types(msc_dbg->module);
-    ret = pdb_process_internal(pcs, msc_dbg, filename,
+    ret = pdb_process_internal(msc_dbg, filename,
                                msc_dbg->module->format_info[DFI_OLD_PDB]->u.old_pdb_info, -1, has_linenumber_info);
     codeview_clear_type_table();
     if (!ret)
@@ -3998,20 +3994,19 @@ static BOOL old_pdb_process_file(const struct process *pcs,
     return ret;
 }
 
-static BOOL pdb_process_file(const struct process *pcs,
-                             const struct msc_debug_info *msc_dbg,
+static BOOL pdb_process_file(const struct msc_debug_info *msc_dbg,
                              const WCHAR *filename, const GUID *guid, DWORD timestamp, DWORD age)
 {
     SYMSRV_INDEX_INFOW          info;
     BOOL                        unmatched, has_linenumber_info, ret;
 
     if (!msc_dbg->module->dont_load_symbols &&
-        path_find_symbol_file(pcs, msc_dbg->module, filename, TRUE, guid, timestamp, age, &info, &unmatched))
+        path_find_symbol_file(msc_dbg->module, filename, TRUE, guid, timestamp, age, &info, &unmatched))
     {
         if (getenv("WINE_DBGHELP_OLD_PDB")) /* keep using old pdb reader */
-            ret = old_pdb_process_file(pcs, msc_dbg, info.pdbfile, &has_linenumber_info);
+            ret = old_pdb_process_file(msc_dbg, info.pdbfile, &has_linenumber_info);
         else
-            ret = pdb_init_modfmt(pcs, msc_dbg, info.pdbfile, &has_linenumber_info);
+            ret = pdb_init_modfmt(msc_dbg, info.pdbfile, &has_linenumber_info);
 
         if (ret)
         {
@@ -4052,8 +4047,7 @@ static BOOL pdb_process_file(const struct process *pcs,
 #define CODEVIEW_NB11_SIG       MAKESIG('N','B','1','1')
 #define CODEVIEW_RSDS_SIG       MAKESIG('R','S','D','S')
 
-static BOOL codeview_process_info(const struct process *pcs,
-                                  const struct msc_debug_info *msc_dbg)
+static BOOL codeview_process_info(const struct msc_debug_info *msc_dbg)
 {
     const DWORD*                signature = (const DWORD*)msc_dbg->root;
     BOOL                        ret = FALSE;
@@ -4152,7 +4146,7 @@ static BOOL codeview_process_info(const struct process *pcs,
         WCHAR buffer[MAX_PATH];
 
         MultiByteToWideChar(CP_ACP, 0, pdb->name, -1, buffer, ARRAY_SIZE(buffer));
-        ret = pdb_process_file(pcs, msc_dbg, buffer, NULL, pdb->timestamp, pdb->age);
+        ret = pdb_process_file(msc_dbg, buffer, NULL, pdb->timestamp, pdb->age);
         break;
     }
     case CODEVIEW_RSDS_SIG:
@@ -4169,7 +4163,7 @@ static BOOL codeview_process_info(const struct process *pcs,
             WCHAR buffer[MAX_PATH];
 
             MultiByteToWideChar(CP_ACP, 0, rsds->name, -1, buffer, ARRAY_SIZE(buffer));
-            ret = pdb_process_file(pcs, msc_dbg, buffer, &rsds->guid, 0, rsds->age);
+            ret = pdb_process_file(msc_dbg, buffer, &rsds->guid, 0, rsds->age);
         }
         else
             ret = TRUE;
@@ -4193,7 +4187,7 @@ static BOOL codeview_process_info(const struct process *pcs,
 /*========================================================================
  * Process debug directory.
  */
-BOOL pe_load_debug_directory(const struct process* pcs, struct module* module, 
+BOOL pe_load_debug_directory(struct module* module,
                              const BYTE* mapping,
                              const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                              const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg)
@@ -4229,7 +4223,7 @@ BOOL pe_load_debug_directory(const struct process* pcs, struct module* module,
             if (dbg[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW)
             {
                 msc_dbg.root = mapping + dbg[i].PointerToRawData;
-                if ((ret = codeview_process_info(pcs, &msc_dbg))) goto done;
+                if ((ret = codeview_process_info(&msc_dbg))) goto done;
             }
         }
     
@@ -4293,7 +4287,7 @@ typedef struct _FPO_DATA
         if (ext) wcscpy(ext + 1, L"pdb"); else wcscat(buffer, L".pdb");
         options = SymGetOptions();
         SymSetOptions(options | SYMOPT_LOAD_ANYTHING);
-        ret = pdb_process_file(pcs, &msc_dbg, buffer, &null_guid, 0, 0);
+        ret = pdb_process_file(&msc_dbg, buffer, &null_guid, 0, 0);
         SymSetOptions(options);
         if (!ret && module->dont_load_symbols)
             module->module.TimeDateStamp = 0;

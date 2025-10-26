@@ -4844,8 +4844,7 @@ static struct module_format_vtable pdb_module_format_vtable =
     pdb_method_enumerate_sources,
 };
 
-BOOL pdb_init_modfmt(const struct process *pcs,
-                     const struct msc_debug_info *msc_dbg,
+BOOL pdb_init_modfmt(const struct msc_debug_info *msc_dbg,
                      const WCHAR *filename, BOOL *has_linenumber_info)
 {
     struct module_format     *modfmt;

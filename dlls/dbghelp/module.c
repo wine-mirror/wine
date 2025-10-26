@@ -339,7 +339,7 @@ BOOL module_load_debug(struct module* module)
             idslW64.hFile = INVALID_HANDLE_VALUE;
 
             pcs_callback(module->process, CBA_DEFERRED_SYMBOL_LOAD_START, &idslW64);
-            ret = pe_load_debug_info(module->process, module);
+            ret = pe_load_debug_info(module);
             pcs_callback(module->process,
                          ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
                          &idslW64);

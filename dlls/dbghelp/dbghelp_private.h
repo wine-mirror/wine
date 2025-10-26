@@ -827,8 +827,7 @@ extern BOOL         module_is_wine_host(const WCHAR* module_name, const WCHAR* e
 extern BOOL         module_refresh_list(struct process *pcs);
 
 /* msc.c */
-extern BOOL         pe_load_debug_directory(const struct process* pcs,
-                                            struct module* module,
+extern BOOL         pe_load_debug_directory(struct module* module,
                                             const BYTE* mapping,
                                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
@@ -839,7 +838,7 @@ extern DWORD        dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX
 extern BOOL         old_pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context);
 
 /* path.c */
-extern BOOL         path_find_symbol_file(const struct process *pcs, const struct module *module,
+extern BOOL         path_find_symbol_file(const struct module *module,
                                           const WCHAR *full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
                                           SYMSRV_INDEX_INFOW *info, BOOL *unmatched);
 extern WCHAR *get_dos_file_name(const WCHAR *filename) __WINE_DEALLOC(HeapFree, 3) __WINE_MALLOC;
@@ -850,7 +849,7 @@ extern const WCHAR* file_name(const WCHAR* str);
 extern const char* file_nameA(const char* str);
 
 /* pdb.c */
-extern BOOL         pdb_init_modfmt(const struct process *pcs, const struct msc_debug_info *msc_dbg,
+extern BOOL         pdb_init_modfmt(const struct msc_debug_info *msc_dbg,
                                     const WCHAR *filename, BOOL *has_linenumber_info);
 extern BOOL         pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip, union ctx *context);
 struct _PDB_FPO_DATA;
@@ -865,8 +864,7 @@ extern struct module*
 extern struct module*
                     pe_load_builtin_module(struct process* pcs, const WCHAR* name,
                                            DWORD64 base, DWORD64 size);
-extern BOOL         pe_load_debug_info(const struct process* pcs,
-                                       struct module* module);
+extern BOOL         pe_load_debug_info(struct module* module);
 extern const char*  pe_map_directory(struct module* module, int dirno, DWORD* size);
 extern BOOL         pe_unmap_directory(struct module* module, int dirno, const char*);
 extern DWORD        pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
