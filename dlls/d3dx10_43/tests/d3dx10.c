@@ -4069,8 +4069,7 @@ static void test_get_image_info(void)
 
         hr2 = 0xdeadbeef;
         hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, &hr2);
-        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP)
-                || broken(hr == D3DX10_ERR_INVALID_DATA) /* Vista */,
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
         if (hr == S_OK)
@@ -4078,8 +4077,7 @@ static void test_get_image_info(void)
 
         hr2 = 0xdeadbeef;
         hr = D3DX10GetImageInfoFromResourceA(resource_module, get_str_a(test_resource_name), NULL, &image_info, &hr2);
-        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP)
-                || broken(hr == D3DX10_ERR_INVALID_DATA) /* Vista */,
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#lx.\n", hr);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
         if (hr == S_OK)
