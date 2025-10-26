@@ -26,7 +26,34 @@
 #include <winbase.h>
 #include <verrsrc.h>
 #include <dbghelp.h>
+#include <unknwn.h>
 #include "wine/test.h"
+
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(iunknown_except_Release);
 
 typedef unsigned char MSVCRT_bool;
 
@@ -46,6 +73,8 @@ typedef struct _type_info_list
     SLIST_ENTRY entry;
     char name[1];
 } type_info_list;
+
+void CDECL __DestructExceptionObject(EXCEPTION_RECORD*);
 
 static void* (CDECL *p_malloc)(size_t);
 static void (CDECL *p___std_exception_copy)(const __std_exception_data*, __std_exception_data*);
@@ -239,10 +268,66 @@ static void test___unDName(void)
     }
 }
 
+static HRESULT WINAPI iunknown_except_QueryInterface(IUnknown *iface,
+        REFIID riid, void**ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI iunknown_except_AddRef(IUnknown *iface)
+{
+    ok(0, "unexpected call\n");
+    return 2;
+}
+
+static ULONG WINAPI iunknown_except_Release(IUnknown *iface)
+{
+    CHECK_EXPECT(iunknown_except_Release);
+    return 1;
+}
+
+static IUnknownVtbl iunknown_except_vtbl = {
+    iunknown_except_QueryInterface,
+    iunknown_except_AddRef,
+    iunknown_except_Release
+};
+
+static IUnknown iunknown_except = { &iunknown_except_vtbl };
+
+static void test___DestructExceptionObject(void)
+{
+    IUnknown *piunk = &iunknown_except;
+    EXCEPTION_RECORD rec;
+    struct
+    {
+        UINT flags;
+        UINT arch_specific_data[8];
+    } info = { 0x10 };
+
+    __DestructExceptionObject(NULL);
+
+    memset(&rec, 0, sizeof(rec));
+    rec.ExceptionCode = 0xe06d7363;
+#ifdef __i386__
+    rec.NumberParameters = 3;
+#else
+    rec.NumberParameters = 4;
+#endif
+    rec.ExceptionInformation[0] = 0x19930520;
+    rec.ExceptionInformation[1] = (ULONG_PTR)&piunk;
+    rec.ExceptionInformation[2] = (ULONG_PTR)&info;
+    rec.ExceptionInformation[3] = (ULONG_PTR)GetModuleHandleA(NULL);
+    SET_EXPECT(iunknown_except_Release);
+    __DestructExceptionObject(&rec);
+    CHECK_CALLED(iunknown_except_Release);
+}
+
 START_TEST(cpp)
 {
     if (!init()) return;
     test___std_exception();
     test___std_type_info();
     test___unDName();
+    test___DestructExceptionObject();
 }

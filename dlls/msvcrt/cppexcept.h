@@ -136,6 +136,7 @@ typedef struct
 #define TYPE_FLAG_CONST      1
 #define TYPE_FLAG_VOLATILE   2
 #define TYPE_FLAG_REFERENCE  8
+#define TYPE_FLAG_IUNKNOWN  16
 
 void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*);
 

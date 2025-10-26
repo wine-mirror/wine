@@ -26,6 +26,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#define COBJMACROS
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -33,6 +35,7 @@
 #include "winternl.h"
 #include "msvcrt.h"
 #include "excpt.h"
+#include "unknwn.h"
 #include "wincon.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -949,17 +952,20 @@ BOOL __cdecl _IsExceptionObjectToBeDestroyed(const void *obj)
  */
 void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
 {
-    cxx_exception_type *info = (cxx_exception_type*) rec->ExceptionInformation[2];
-    void *object = (void*)rec->ExceptionInformation[1];
+    cxx_exception_type *info;
+    void *object;
 
     TRACE("(%p)\n", rec);
 
-    if (!is_cxx_exception( rec )) return;
+    if (!rec || !is_cxx_exception( rec )) return;
+    info = (cxx_exception_type*)rec->ExceptionInformation[2];
+    if (!info) return;
+    object = (void*)rec->ExceptionInformation[1];
 
-    if (!info || !info->destructor)
-        return;
-
-    call_dtor( cxx_rva( info->destructor, rec->ExceptionInformation[3] ), object );
+    if (info->destructor)
+        call_dtor( cxx_rva( info->destructor, rec->ExceptionInformation[3] ), object );
+    else if (info->flags & TYPE_FLAG_IUNKNOWN && *(IUnknown**)object)
+        IUnknown_Release( *(IUnknown**)object );
 }
 
 /*********************************************************************
