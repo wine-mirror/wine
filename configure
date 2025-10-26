@@ -1011,6 +1011,7 @@ enable_capi2032
 enable_cards
 enable_cdosys
 enable_cfgmgr32
+enable_chakra
 enable_clusapi
 enable_cng_sys
 enable_colorcnv
@@ -22360,6 +22361,7 @@ wine_fn_config_makefile dlls/cards enable_cards
 wine_fn_config_makefile dlls/cdosys enable_cdosys
 wine_fn_config_makefile dlls/cfgmgr32 enable_cfgmgr32
 wine_fn_config_makefile dlls/cfgmgr32/tests enable_tests
+wine_fn_config_makefile dlls/chakra enable_chakra
 wine_fn_config_makefile dlls/clusapi enable_clusapi
 wine_fn_config_makefile dlls/cng.sys enable_cng_sys
 wine_fn_config_makefile dlls/colorcnv enable_colorcnv

@@ -1,0 +1,4 @@
+MODULE = chakra.dll
+
+SOURCES = \
+	chakra.c
