@@ -29,138 +29,131 @@
     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
 #endif
 
-static unsigned int get_bpp_from_format(DXGI_FORMAT format)
+/* dds_header.flags */
+#define DDS_CAPS 0x00000001
+#define DDS_HEIGHT 0x00000002
+#define DDS_WIDTH 0x00000004
+#define DDS_PITCH 0x00000008
+#define DDS_PIXELFORMAT 0x00001000
+#define DDS_MIPMAPCOUNT 0x00020000
+#define DDS_LINEARSIZE 0x00080000
+#define DDS_DEPTH 0x00800000
+
+/* dds_header.caps */
+#define DDSCAPS_ALPHA    0x00000002
+#define DDS_CAPS_COMPLEX 0x00000008
+#define DDS_CAPS_TEXTURE 0x00001000
+
+/* dds_header.caps2 */
+#define DDS_CAPS2_VOLUME  0x00200000
+#define DDS_CAPS2_CUBEMAP 0x00000200
+#define DDS_CAPS2_CUBEMAP_POSITIVEX 0x00000400
+#define DDS_CAPS2_CUBEMAP_NEGATIVEX 0x00000800
+#define DDS_CAPS2_CUBEMAP_POSITIVEY 0x00001000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEY 0x00002000
+#define DDS_CAPS2_CUBEMAP_POSITIVEZ 0x00004000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEZ 0x00008000
+#define DDS_CAPS2_CUBEMAP_ALL_FACES ( DDS_CAPS2_CUBEMAP_POSITIVEX | DDS_CAPS2_CUBEMAP_NEGATIVEX \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEY | DDS_CAPS2_CUBEMAP_NEGATIVEY \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEZ | DDS_CAPS2_CUBEMAP_NEGATIVEZ )
+
+/* dds_pixel_format.flags */
+#define DDS_PF_ALPHA 0x00000001
+#define DDS_PF_ALPHA_ONLY 0x00000002
+#define DDS_PF_FOURCC 0x00000004
+#define DDS_PF_INDEXED 0x00000020
+#define DDS_PF_RGB 0x00000040
+#define DDS_PF_LUMINANCE 0x00020000
+#define DDS_PF_BUMPLUMINANCE 0x00040000
+#define DDS_PF_BUMPDUDV 0x00080000
+
+struct dds_pixel_format
 {
-    switch (format)
-    {
-        case DXGI_FORMAT_R32G32B32A32_TYPELESS:
-        case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        case DXGI_FORMAT_R32G32B32A32_UINT:
-        case DXGI_FORMAT_R32G32B32A32_SINT:
-            return 128;
-        case DXGI_FORMAT_R32G32B32_TYPELESS:
-        case DXGI_FORMAT_R32G32B32_FLOAT:
-        case DXGI_FORMAT_R32G32B32_UINT:
-        case DXGI_FORMAT_R32G32B32_SINT:
-            return 96;
-        case DXGI_FORMAT_R16G16B16A16_TYPELESS:
-        case DXGI_FORMAT_R16G16B16A16_FLOAT:
-        case DXGI_FORMAT_R16G16B16A16_UNORM:
-        case DXGI_FORMAT_R16G16B16A16_UINT:
-        case DXGI_FORMAT_R16G16B16A16_SNORM:
-        case DXGI_FORMAT_R16G16B16A16_SINT:
-        case DXGI_FORMAT_R32G32_TYPELESS:
-        case DXGI_FORMAT_R32G32_FLOAT:
-        case DXGI_FORMAT_R32G32_UINT:
-        case DXGI_FORMAT_R32G32_SINT:
-        case DXGI_FORMAT_R32G8X24_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
-        case DXGI_FORMAT_Y416:
-        case DXGI_FORMAT_Y210:
-        case DXGI_FORMAT_Y216:
-            return 64;
-        case DXGI_FORMAT_R10G10B10A2_TYPELESS:
-        case DXGI_FORMAT_R10G10B10A2_UNORM:
-        case DXGI_FORMAT_R10G10B10A2_UINT:
-        case DXGI_FORMAT_R11G11B10_FLOAT:
-        case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        case DXGI_FORMAT_R8G8B8A8_UINT:
-        case DXGI_FORMAT_R8G8B8A8_SNORM:
-        case DXGI_FORMAT_R8G8B8A8_SINT:
-        case DXGI_FORMAT_R16G16_TYPELESS:
-        case DXGI_FORMAT_R16G16_FLOAT:
-        case DXGI_FORMAT_R16G16_UNORM:
-        case DXGI_FORMAT_R16G16_UINT:
-        case DXGI_FORMAT_R16G16_SNORM:
-        case DXGI_FORMAT_R16G16_SINT:
-        case DXGI_FORMAT_R32_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT:
-        case DXGI_FORMAT_R32_FLOAT:
-        case DXGI_FORMAT_R32_UINT:
-        case DXGI_FORMAT_R32_SINT:
-        case DXGI_FORMAT_R24G8_TYPELESS:
-        case DXGI_FORMAT_D24_UNORM_S8_UINT:
-        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
-        case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
-        case DXGI_FORMAT_R8G8_B8G8_UNORM:
-        case DXGI_FORMAT_G8R8_G8B8_UNORM:
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-        case DXGI_FORMAT_B8G8R8X8_UNORM:
-        case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-        case DXGI_FORMAT_B8G8R8A8_TYPELESS:
-        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        case DXGI_FORMAT_B8G8R8X8_TYPELESS:
-        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        case DXGI_FORMAT_AYUV:
-        case DXGI_FORMAT_Y410:
-        case DXGI_FORMAT_YUY2:
-            return 32;
-        case DXGI_FORMAT_P010:
-        case DXGI_FORMAT_P016:
-            return 24;
-        case DXGI_FORMAT_R8G8_TYPELESS:
-        case DXGI_FORMAT_R8G8_UNORM:
-        case DXGI_FORMAT_R8G8_UINT:
-        case DXGI_FORMAT_R8G8_SNORM:
-        case DXGI_FORMAT_R8G8_SINT:
-        case DXGI_FORMAT_R16_TYPELESS:
-        case DXGI_FORMAT_R16_FLOAT:
-        case DXGI_FORMAT_D16_UNORM:
-        case DXGI_FORMAT_R16_UNORM:
-        case DXGI_FORMAT_R16_UINT:
-        case DXGI_FORMAT_R16_SNORM:
-        case DXGI_FORMAT_R16_SINT:
-        case DXGI_FORMAT_B5G6R5_UNORM:
-        case DXGI_FORMAT_B5G5R5A1_UNORM:
-        case DXGI_FORMAT_A8P8:
-        case DXGI_FORMAT_B4G4R4A4_UNORM:
-            return 16;
-        case DXGI_FORMAT_NV12:
-        case DXGI_FORMAT_420_OPAQUE:
-        case DXGI_FORMAT_NV11:
-            return 12;
-        case DXGI_FORMAT_R8_TYPELESS:
-        case DXGI_FORMAT_R8_UNORM:
-        case DXGI_FORMAT_R8_UINT:
-        case DXGI_FORMAT_R8_SNORM:
-        case DXGI_FORMAT_R8_SINT:
-        case DXGI_FORMAT_A8_UNORM:
-        case DXGI_FORMAT_AI44:
-        case DXGI_FORMAT_IA44:
-        case DXGI_FORMAT_P8:
-        case DXGI_FORMAT_BC2_TYPELESS:
-        case DXGI_FORMAT_BC2_UNORM:
-        case DXGI_FORMAT_BC2_UNORM_SRGB:
-        case DXGI_FORMAT_BC3_TYPELESS:
-        case DXGI_FORMAT_BC3_UNORM:
-        case DXGI_FORMAT_BC3_UNORM_SRGB:
-        case DXGI_FORMAT_BC5_TYPELESS:
-        case DXGI_FORMAT_BC5_UNORM:
-        case DXGI_FORMAT_BC5_SNORM:
-        case DXGI_FORMAT_BC6H_TYPELESS:
-        case DXGI_FORMAT_BC6H_UF16:
-        case DXGI_FORMAT_BC6H_SF16:
-        case DXGI_FORMAT_BC7_TYPELESS:
-        case DXGI_FORMAT_BC7_UNORM:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:
-            return 8;
-        case DXGI_FORMAT_BC1_TYPELESS:
-        case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:
-        case DXGI_FORMAT_BC4_TYPELESS:
-        case DXGI_FORMAT_BC4_UNORM:
-        case DXGI_FORMAT_BC4_SNORM:
-            return 4;
-        case DXGI_FORMAT_R1_UNORM:
-            return 1;
-        default:
-            return 0;
-    }
+    DWORD size;
+    DWORD flags;
+    DWORD fourcc;
+    DWORD bpp;
+    DWORD rmask;
+    DWORD gmask;
+    DWORD bmask;
+    DWORD amask;
+};
+
+struct dds_header
+{
+    DWORD size;
+    DWORD flags;
+    DWORD height;
+    DWORD width;
+    DWORD pitch_or_linear_size;
+    DWORD depth;
+    DWORD miplevels;
+    DWORD reserved[11];
+    struct dds_pixel_format pixel_format;
+    DWORD caps;
+    DWORD caps2;
+    DWORD caps3;
+    DWORD caps4;
+    DWORD reserved2;
+};
+
+#define DDS_RESOURCE_MISC_TEXTURECUBE 0x04
+struct dds_header_dxt10
+{
+    uint32_t dxgi_format;
+    uint32_t resource_dimension;
+    uint32_t misc_flag;
+    uint32_t array_size;
+    uint32_t misc_flags2;
+};
+
+static void fill_dds_header(struct dds_header *header)
+{
+    memset(header, 0, sizeof(*header));
+
+    header->size = sizeof(*header);
+    header->flags = DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT;
+    header->height = 4;
+    header->width = 4;
+    header->pixel_format.size = sizeof(header->pixel_format);
+    /* X8R8G8B8 */
+    header->pixel_format.flags = DDS_PF_RGB;
+    header->pixel_format.fourcc = 0;
+    header->pixel_format.bpp = 32;
+    header->pixel_format.rmask = 0xff0000;
+    header->pixel_format.gmask = 0x00ff00;
+    header->pixel_format.bmask = 0x0000ff;
+    header->pixel_format.amask = 0;
+    header->caps = DDS_CAPS_TEXTURE;
+}
+
+static void set_dxt10_dds_header(struct dds_header *header, uint32_t append_flags, uint32_t width, uint32_t height,
+        uint32_t depth, uint32_t mip_levels, uint32_t pitch, uint32_t caps, uint32_t caps2)
+{
+    memset(header, 0, sizeof(*header));
+
+    header->size = sizeof(*header);
+    header->flags = DDS_CAPS | DDS_PIXELFORMAT | append_flags;
+    header->height = height;
+    header->width = width;
+    header->depth = depth;
+    header->miplevels = mip_levels;
+    header->pitch_or_linear_size = pitch;
+    header->pixel_format.size = sizeof(header->pixel_format);
+    header->pixel_format.flags = DDS_PF_FOURCC;
+    header->pixel_format.fourcc = MAKEFOURCC('D','X','1','0');
+    header->caps = caps;
+    header->caps2 = caps2;
+}
+
+static void set_dds_header_dxt10(struct dds_header_dxt10 *dxt10, DXGI_FORMAT format, uint32_t resource_dimension,
+        uint32_t misc_flag, uint32_t array_size, uint32_t misc_flags2)
+{
+    dxt10->dxgi_format = format;
+    dxt10->resource_dimension = resource_dimension;
+    dxt10->misc_flag = misc_flag;
+    dxt10->array_size = array_size;
+    dxt10->misc_flags2 = misc_flags2;
 }
 
 /* 1x1 bmp (1 bpp) */
@@ -384,6 +377,179 @@ static const unsigned char noimage[4] =
     0x11,0x22,0x33,0x44
 };
 
+static WCHAR temp_dir[MAX_PATH];
+
+static unsigned int get_bpp_from_format(DXGI_FORMAT format)
+{
+    switch (format)
+    {
+        case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+        case DXGI_FORMAT_R32G32B32A32_FLOAT:
+        case DXGI_FORMAT_R32G32B32A32_UINT:
+        case DXGI_FORMAT_R32G32B32A32_SINT:
+            return 128;
+        case DXGI_FORMAT_R32G32B32_TYPELESS:
+        case DXGI_FORMAT_R32G32B32_FLOAT:
+        case DXGI_FORMAT_R32G32B32_UINT:
+        case DXGI_FORMAT_R32G32B32_SINT:
+            return 96;
+        case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+        case DXGI_FORMAT_R16G16B16A16_FLOAT:
+        case DXGI_FORMAT_R16G16B16A16_UNORM:
+        case DXGI_FORMAT_R16G16B16A16_UINT:
+        case DXGI_FORMAT_R16G16B16A16_SNORM:
+        case DXGI_FORMAT_R16G16B16A16_SINT:
+        case DXGI_FORMAT_R32G32_TYPELESS:
+        case DXGI_FORMAT_R32G32_FLOAT:
+        case DXGI_FORMAT_R32G32_UINT:
+        case DXGI_FORMAT_R32G32_SINT:
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+        case DXGI_FORMAT_Y416:
+        case DXGI_FORMAT_Y210:
+        case DXGI_FORMAT_Y216:
+            return 64;
+        case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+        case DXGI_FORMAT_R10G10B10A2_UNORM:
+        case DXGI_FORMAT_R10G10B10A2_UINT:
+        case DXGI_FORMAT_R11G11B10_FLOAT:
+        case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        case DXGI_FORMAT_R8G8B8A8_UINT:
+        case DXGI_FORMAT_R8G8B8A8_SNORM:
+        case DXGI_FORMAT_R8G8B8A8_SINT:
+        case DXGI_FORMAT_R16G16_TYPELESS:
+        case DXGI_FORMAT_R16G16_FLOAT:
+        case DXGI_FORMAT_R16G16_UNORM:
+        case DXGI_FORMAT_R16G16_UINT:
+        case DXGI_FORMAT_R16G16_SNORM:
+        case DXGI_FORMAT_R16G16_SINT:
+        case DXGI_FORMAT_R32_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT:
+        case DXGI_FORMAT_R32_FLOAT:
+        case DXGI_FORMAT_R32_UINT:
+        case DXGI_FORMAT_R32_SINT:
+        case DXGI_FORMAT_R24G8_TYPELESS:
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
+        case DXGI_FORMAT_R8G8_B8G8_UNORM:
+        case DXGI_FORMAT_G8R8_G8B8_UNORM:
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+        case DXGI_FORMAT_B8G8R8X8_UNORM:
+        case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+        case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        case DXGI_FORMAT_AYUV:
+        case DXGI_FORMAT_Y410:
+        case DXGI_FORMAT_YUY2:
+            return 32;
+        case DXGI_FORMAT_P010:
+        case DXGI_FORMAT_P016:
+            return 24;
+        case DXGI_FORMAT_R8G8_TYPELESS:
+        case DXGI_FORMAT_R8G8_UNORM:
+        case DXGI_FORMAT_R8G8_UINT:
+        case DXGI_FORMAT_R8G8_SNORM:
+        case DXGI_FORMAT_R8G8_SINT:
+        case DXGI_FORMAT_R16_TYPELESS:
+        case DXGI_FORMAT_R16_FLOAT:
+        case DXGI_FORMAT_D16_UNORM:
+        case DXGI_FORMAT_R16_UNORM:
+        case DXGI_FORMAT_R16_UINT:
+        case DXGI_FORMAT_R16_SNORM:
+        case DXGI_FORMAT_R16_SINT:
+        case DXGI_FORMAT_B5G6R5_UNORM:
+        case DXGI_FORMAT_B5G5R5A1_UNORM:
+        case DXGI_FORMAT_A8P8:
+        case DXGI_FORMAT_B4G4R4A4_UNORM:
+            return 16;
+        case DXGI_FORMAT_NV12:
+        case DXGI_FORMAT_420_OPAQUE:
+        case DXGI_FORMAT_NV11:
+            return 12;
+        case DXGI_FORMAT_R8_TYPELESS:
+        case DXGI_FORMAT_R8_UNORM:
+        case DXGI_FORMAT_R8_UINT:
+        case DXGI_FORMAT_R8_SNORM:
+        case DXGI_FORMAT_R8_SINT:
+        case DXGI_FORMAT_A8_UNORM:
+        case DXGI_FORMAT_AI44:
+        case DXGI_FORMAT_IA44:
+        case DXGI_FORMAT_P8:
+        case DXGI_FORMAT_BC2_TYPELESS:
+        case DXGI_FORMAT_BC2_UNORM:
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+        case DXGI_FORMAT_BC3_TYPELESS:
+        case DXGI_FORMAT_BC3_UNORM:
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+        case DXGI_FORMAT_BC5_TYPELESS:
+        case DXGI_FORMAT_BC5_UNORM:
+        case DXGI_FORMAT_BC5_SNORM:
+        case DXGI_FORMAT_BC6H_TYPELESS:
+        case DXGI_FORMAT_BC6H_UF16:
+        case DXGI_FORMAT_BC6H_SF16:
+        case DXGI_FORMAT_BC7_TYPELESS:
+        case DXGI_FORMAT_BC7_UNORM:
+        case DXGI_FORMAT_BC7_UNORM_SRGB:
+            return 8;
+        case DXGI_FORMAT_BC1_TYPELESS:
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+        case DXGI_FORMAT_BC4_TYPELESS:
+        case DXGI_FORMAT_BC4_UNORM:
+        case DXGI_FORMAT_BC4_SNORM:
+            return 4;
+        case DXGI_FORMAT_R1_UNORM:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static BOOL create_file(const WCHAR *filename, const void *data, unsigned int size, WCHAR *out_path)
+{
+    WCHAR path[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+
+    if (!temp_dir[0])
+        GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, filename);
+
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    if (file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (WriteFile(file, data, size, &written, NULL))
+    {
+        CloseHandle(file);
+
+        if (out_path)
+            lstrcpyW(out_path, path);
+        return TRUE;
+    }
+
+    CloseHandle(file);
+    return FALSE;
+}
+
+static BOOL delete_file(const WCHAR *filename)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, filename);
+    return DeleteFileW(path);
+}
+
 #define check_image_info_values(info, width, height, depth, array_size, mip_levels, misc_flags, format, resource_dimension, \
                                 image_file_format, wine_todo) \
     check_image_info_values_(__LINE__, info, width, height, depth, array_size, mip_levels, misc_flags, format, resource_dimension, \
@@ -423,63 +589,6 @@ static inline void check_image_info_values_(unsigned int line, const D3DX11_IMAG
                 resource_dimension, info->ResourceDimension);
     ok_(__FILE__, line)(info->ImageFileFormat == image_file_format, "Expected image_file_format %d, got %d.\n",
             image_file_format, info->ImageFileFormat);
-}
-
-static WCHAR temp_dir[MAX_PATH];
-
-static BOOL create_file(const WCHAR *filename, const char *data, unsigned int size, WCHAR *out_path)
-{
-    WCHAR path[MAX_PATH];
-    DWORD written;
-    HANDLE file;
-
-    if (!temp_dir[0])
-        GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
-    lstrcpyW(path, temp_dir);
-    lstrcatW(path, filename);
-
-    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-    if (file == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    if (WriteFile(file, data, size, &written, NULL))
-    {
-        CloseHandle(file);
-
-        if (out_path)
-            lstrcpyW(out_path, path);
-        return TRUE;
-    }
-
-    CloseHandle(file);
-    return FALSE;
-}
-
-static void delete_file(const WCHAR *filename)
-{
-    WCHAR path[MAX_PATH];
-
-    lstrcpyW(path, temp_dir);
-    lstrcatW(path, filename);
-    DeleteFileW(path);
-}
-
-static BOOL create_directory(const WCHAR *dir)
-{
-    WCHAR path[MAX_PATH];
-
-    lstrcpyW(path, temp_dir);
-    lstrcatW(path, dir);
-    return CreateDirectoryW(path, NULL);
-}
-
-static void delete_directory(const WCHAR *dir)
-{
-    WCHAR path[MAX_PATH];
-
-    lstrcpyW(path, temp_dir);
-    lstrcatW(path, dir);
-    RemoveDirectoryW(path);
 }
 
 static void test_D3DX11CreateAsyncMemoryLoader(void)
@@ -528,27 +637,9 @@ static void test_D3DX11CreateAsyncMemoryLoader(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 }
 
-static void create_testfile(WCHAR *path, const void *data, int data_len)
-{
-    DWORD written;
-    HANDLE file;
-    BOOL ret;
-
-    GetTempPathW(MAX_PATH, path);
-    lstrcatW(path, L"asyncloader.data");
-
-    file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Test file creation failed, at %s, error %ld.\n",
-            wine_dbgstr_w(path), GetLastError());
-
-    ret = WriteFile(file, data, data_len, &written, NULL);
-    ok(ret, "Write to test file failed.\n");
-
-    CloseHandle(file);
-}
-
 static void test_D3DX11CreateAsyncFileLoader(void)
 {
+    static const WCHAR test_filename[] = L"asyncloader.data";
     static const char test_data1[] = "test data";
     static const char test_data2[] = "more test data";
     ID3DX11DataLoader *loader;
@@ -580,12 +671,12 @@ static void test_D3DX11CreateAsyncFileLoader(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Test file sharing using dummy empty file. */
-    create_testfile(path, test_data1, sizeof(test_data1));
+    create_file(test_filename, test_data1, sizeof(test_data1), path);
 
     hr = D3DX11CreateAsyncFileLoaderW(path, &loader);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ret = DeleteFileW(path);
+    ret = delete_file(test_filename);
     ok(ret, "Got unexpected ret %#x, error %ld.\n", ret, GetLastError());
 
     /* File was removed before Load(). */
@@ -593,7 +684,7 @@ static void test_D3DX11CreateAsyncFileLoader(void)
     ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
 
     /* Create it again. */
-    create_testfile(path, test_data1, sizeof(test_data1));
+    create_file(test_filename, test_data1, sizeof(test_data1), path);
     hr = ID3DX11DataLoader_Load(loader);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -618,7 +709,7 @@ static void test_D3DX11CreateAsyncFileLoader(void)
         ok(!memcmp(ptr, test_data1, size), "Got unexpected file data.\n");
 
     /* Create it again, with different data. */
-    create_testfile(path, test_data2, sizeof(test_data2));
+    create_file(test_filename, test_data2, sizeof(test_data2), NULL);
 
     hr = ID3DX11DataLoader_Load(loader);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -634,7 +725,7 @@ static void test_D3DX11CreateAsyncFileLoader(void)
     hr = ID3DX11DataLoader_Destroy(loader);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ret = DeleteFileW(path);
+    ret = delete_file(test_filename);
     ok(ret, "Got unexpected ret %#x, error %ld.\n", ret, GetLastError());
 }
 
@@ -660,266 +751,6 @@ static void test_D3DX11CreateAsyncResourceLoader(void)
 
     hr = D3DX11CreateAsyncResourceLoaderW(NULL, L"noname", &loader);
     ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#lx.\n", hr);
-}
-
-static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE include_type,
-        const char *filename, const void *parent_data, const void **data, UINT *bytes)
-{
-    static const char include1[] =
-        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
-    static const char include2[] =
-        "#include \"include1.h\"\n"
-        "float4 light_color = LIGHT;\n";
-    char *buffer;
-
-    trace("filename %s.\n", filename);
-    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
-
-    if (!strcmp(filename, "include1.h"))
-    {
-        buffer = malloc(strlen(include1));
-        memcpy(buffer, include1, strlen(include1));
-        *bytes = strlen(include1);
-        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
-        ok(!strncmp(include2, parent_data, strlen(include2)),
-                "Unexpected parent_data value.\n");
-    }
-    else if (!strcmp(filename, "include\\include2.h"))
-    {
-        buffer = malloc(strlen(include2));
-        memcpy(buffer, include2, strlen(include2));
-        *bytes = strlen(include2);
-        ok(!parent_data, "Unexpected parent_data value.\n");
-        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
-    }
-    else
-    {
-        ok(0, "Unexpected #include for file %s.\n", filename);
-        return E_INVALIDARG;
-    }
-
-    *data = buffer;
-    return S_OK;
-}
-
-static HRESULT WINAPI test_d3dinclude_close(ID3DInclude *iface, const void *data)
-{
-    free((void *)data);
-    return S_OK;
-}
-
-static const struct ID3DIncludeVtbl test_d3dinclude_vtbl =
-{
-    test_d3dinclude_open,
-    test_d3dinclude_close
-};
-
-struct test_d3dinclude
-{
-    ID3DInclude ID3DInclude_iface;
-};
-
-static void test_D3DX11CompileFromFile(void)
-{
-    struct test_d3dinclude include = {{&test_d3dinclude_vtbl}};
-    WCHAR filename[MAX_PATH], directory[MAX_PATH];
-    ID3D10Blob *blob = NULL, *errors = NULL;
-    CHAR filename_a[MAX_PATH];
-    HRESULT hr, result;
-    DWORD len;
-    static const char ps_code[] =
-        "#include \"include\\include2.h\"\n"
-        "\n"
-        "float4 main() : COLOR\n"
-        "{\n"
-        "    return light_color;\n"
-        "}";
-    static const char include1[] =
-        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
-    static const char include1_wrong[] =
-        "#define LIGHT nope\n";
-    static const char include2[] =
-        "#include \"include1.h\"\n"
-        "float4 light_color = LIGHT;\n";
-
-    create_file(L"source.ps", ps_code, strlen(ps_code), filename);
-    create_directory(L"include");
-    create_file(L"include\\include1.h", include1_wrong, strlen(include1_wrong), NULL);
-    create_file(L"include1.h", include1, strlen(include1), NULL);
-    create_file(L"include\\include2.h", include2, strlen(include2), NULL);
-
-    hr = D3DX11CompileFromFileW(filename, NULL, &include.ID3DInclude_iface,
-            "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
-    ID3D10Blob_Release(blob);
-    blob = NULL;
-
-    /* Windows always seems to resolve includes from the initial file location
-     * instead of using the immediate parent, as it would be the case for
-     * standard C preprocessor includes. */
-    hr = D3DX11CompileFromFileW(filename, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
-    ID3D10Blob_Release(blob);
-    blob = NULL;
-
-    len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
-    hr = D3DX11CompileFromFileA(filename_a, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
-    ID3D10Blob_Release(blob);
-    blob = NULL;
-
-    GetCurrentDirectoryW(MAX_PATH, directory);
-    SetCurrentDirectoryW(temp_dir);
-
-    hr = D3DX11CompileFromFileW(L"source.ps", NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
-    ID3D10Blob_Release(blob);
-    blob = NULL;
-
-    SetCurrentDirectoryW(directory);
-
-    delete_file(L"source.ps");
-    delete_file(L"include\\include1.h");
-    delete_file(L"include1.h");
-    delete_file(L"include\\include2.h");
-    delete_directory(L"include");
-}
-
-/* dds_header.flags */
-#define DDS_CAPS 0x00000001
-#define DDS_HEIGHT 0x00000002
-#define DDS_WIDTH 0x00000004
-#define DDS_PITCH 0x00000008
-#define DDS_PIXELFORMAT 0x00001000
-#define DDS_MIPMAPCOUNT 0x00020000
-#define DDS_LINEARSIZE 0x00080000
-#define DDS_DEPTH 0x00800000
-
-/* dds_header.caps */
-#define DDSCAPS_ALPHA    0x00000002
-#define DDS_CAPS_COMPLEX 0x00000008
-#define DDS_CAPS_TEXTURE 0x00001000
-
-/* dds_header.caps2 */
-#define DDS_CAPS2_VOLUME  0x00200000
-#define DDS_CAPS2_CUBEMAP 0x00000200
-#define DDS_CAPS2_CUBEMAP_POSITIVEX 0x00000400
-#define DDS_CAPS2_CUBEMAP_NEGATIVEX 0x00000800
-#define DDS_CAPS2_CUBEMAP_POSITIVEY 0x00001000
-#define DDS_CAPS2_CUBEMAP_NEGATIVEY 0x00002000
-#define DDS_CAPS2_CUBEMAP_POSITIVEZ 0x00004000
-#define DDS_CAPS2_CUBEMAP_NEGATIVEZ 0x00008000
-#define DDS_CAPS2_CUBEMAP_ALL_FACES ( DDS_CAPS2_CUBEMAP_POSITIVEX | DDS_CAPS2_CUBEMAP_NEGATIVEX \
-                                    | DDS_CAPS2_CUBEMAP_POSITIVEY | DDS_CAPS2_CUBEMAP_NEGATIVEY \
-                                    | DDS_CAPS2_CUBEMAP_POSITIVEZ | DDS_CAPS2_CUBEMAP_NEGATIVEZ )
-
-/* dds_pixel_format.flags */
-#define DDS_PF_ALPHA 0x00000001
-#define DDS_PF_ALPHA_ONLY 0x00000002
-#define DDS_PF_FOURCC 0x00000004
-#define DDS_PF_INDEXED 0x00000020
-#define DDS_PF_RGB 0x00000040
-#define DDS_PF_LUMINANCE 0x00020000
-#define DDS_PF_BUMPLUMINANCE 0x00040000
-#define DDS_PF_BUMPDUDV 0x00080000
-
-struct dds_pixel_format
-{
-    DWORD size;
-    DWORD flags;
-    DWORD fourcc;
-    DWORD bpp;
-    DWORD rmask;
-    DWORD gmask;
-    DWORD bmask;
-    DWORD amask;
-};
-
-struct dds_header
-{
-    DWORD size;
-    DWORD flags;
-    DWORD height;
-    DWORD width;
-    DWORD pitch_or_linear_size;
-    DWORD depth;
-    DWORD miplevels;
-    DWORD reserved[11];
-    struct dds_pixel_format pixel_format;
-    DWORD caps;
-    DWORD caps2;
-    DWORD caps3;
-    DWORD caps4;
-    DWORD reserved2;
-};
-
-#define DDS_RESOURCE_MISC_TEXTURECUBE 0x04
-struct dds_header_dxt10
-{
-    DWORD dxgi_format;
-    DWORD resource_dimension;
-    DWORD misc_flag;
-    DWORD array_size;
-    DWORD misc_flags2;
-};
-
-/* fills dds_header with reasonable default values */
-static void fill_dds_header(struct dds_header *header)
-{
-    memset(header, 0, sizeof(*header));
-
-    header->size = sizeof(*header);
-    header->flags = DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT;
-    header->height = 4;
-    header->width = 4;
-    header->pixel_format.size = sizeof(header->pixel_format);
-    /* X8R8G8B8 */
-    header->pixel_format.flags = DDS_PF_RGB;
-    header->pixel_format.fourcc = 0;
-    header->pixel_format.bpp = 32;
-    header->pixel_format.rmask = 0xff0000;
-    header->pixel_format.gmask = 0x00ff00;
-    header->pixel_format.bmask = 0x0000ff;
-    header->pixel_format.amask = 0;
-    header->caps = DDS_CAPS_TEXTURE;
-}
-
-static void set_dxt10_dds_header(struct dds_header *header, uint32_t append_flags, uint32_t width, uint32_t height,
-        uint32_t depth, uint32_t mip_levels, uint32_t pitch, uint32_t caps, uint32_t caps2)
-{
-    memset(header, 0, sizeof(*header));
-
-    header->size = sizeof(*header);
-    header->flags = DDS_CAPS | DDS_PIXELFORMAT | append_flags;
-    header->height = height;
-    header->width = width;
-    header->depth = depth;
-    header->miplevels = mip_levels;
-    header->pitch_or_linear_size = pitch;
-    header->pixel_format.size = sizeof(header->pixel_format);
-    header->pixel_format.flags = DDS_PF_FOURCC;
-    header->pixel_format.fourcc = MAKEFOURCC('D','X','1','0');
-    header->caps = caps;
-    header->caps2 = caps2;
-}
-
-static void set_dds_header_dxt10(struct dds_header_dxt10 *dxt10, DXGI_FORMAT format, uint32_t resource_dimension,
-        uint32_t misc_flag, uint32_t array_size, uint32_t misc_flags2)
-{
-    dxt10->dxgi_format = format;
-    dxt10->resource_dimension = resource_dimension;
-    dxt10->misc_flag = misc_flag;
-    dxt10->array_size = array_size;
-    dxt10->misc_flags2 = misc_flags2;
 }
 
 static void check_dds_pixel_format_image_info(unsigned int line, DWORD flags, DWORD fourcc, DWORD bpp,
@@ -1544,6 +1375,156 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     todo_wine check_dds_dxt10_format(DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_UF16, FALSE);
     todo_wine check_dds_dxt10_format(DXGI_FORMAT_BC6H_SF16, DXGI_FORMAT_BC6H_SF16, FALSE);
     todo_wine check_dds_dxt10_format(DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM, FALSE);
+}
+
+static BOOL create_directory(const WCHAR *dir)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, dir);
+    return CreateDirectoryW(path, NULL);
+}
+
+static void delete_directory(const WCHAR *dir)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, dir);
+    RemoveDirectoryW(path);
+}
+
+static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE include_type,
+        const char *filename, const void *parent_data, const void **data, UINT *bytes)
+{
+    static const char include1[] =
+        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "float4 light_color = LIGHT;\n";
+    char *buffer;
+
+    trace("filename %s.\n", filename);
+    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+
+    if (!strcmp(filename, "include1.h"))
+    {
+        buffer = malloc(strlen(include1));
+        memcpy(buffer, include1, strlen(include1));
+        *bytes = strlen(include1);
+        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
+        ok(!strncmp(include2, parent_data, strlen(include2)),
+                "Unexpected parent_data value.\n");
+    }
+    else if (!strcmp(filename, "include\\include2.h"))
+    {
+        buffer = malloc(strlen(include2));
+        memcpy(buffer, include2, strlen(include2));
+        *bytes = strlen(include2);
+        ok(!parent_data, "Unexpected parent_data value.\n");
+        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
+    }
+    else
+    {
+        ok(0, "Unexpected #include for file %s.\n", filename);
+        return E_INVALIDARG;
+    }
+
+    *data = buffer;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_d3dinclude_close(ID3DInclude *iface, const void *data)
+{
+    free((void *)data);
+    return S_OK;
+}
+
+static const struct ID3DIncludeVtbl test_d3dinclude_vtbl =
+{
+    test_d3dinclude_open,
+    test_d3dinclude_close
+};
+
+struct test_d3dinclude
+{
+    ID3DInclude ID3DInclude_iface;
+};
+
+static void test_D3DX11CompileFromFile(void)
+{
+    struct test_d3dinclude include = {{&test_d3dinclude_vtbl}};
+    WCHAR filename[MAX_PATH], directory[MAX_PATH];
+    ID3D10Blob *blob = NULL, *errors = NULL;
+    CHAR filename_a[MAX_PATH];
+    HRESULT hr, result;
+    DWORD len;
+    static const char ps_code[] =
+        "#include \"include\\include2.h\"\n"
+        "\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return light_color;\n"
+        "}";
+    static const char include1[] =
+        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
+    static const char include1_wrong[] =
+        "#define LIGHT nope\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "float4 light_color = LIGHT;\n";
+
+    create_file(L"source.ps", ps_code, strlen(ps_code), filename);
+    create_directory(L"include");
+    create_file(L"include\\include1.h", include1_wrong, strlen(include1_wrong), NULL);
+    create_file(L"include1.h", include1, strlen(include1), NULL);
+    create_file(L"include\\include2.h", include2, strlen(include2), NULL);
+
+    hr = D3DX11CompileFromFileW(filename, NULL, &include.ID3DInclude_iface,
+            "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
+
+    /* Windows always seems to resolve includes from the initial file location
+     * instead of using the immediate parent, as it would be the case for
+     * standard C preprocessor includes. */
+    hr = D3DX11CompileFromFileW(filename, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
+
+    len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
+    hr = D3DX11CompileFromFileA(filename_a, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
+
+    GetCurrentDirectoryW(MAX_PATH, directory);
+    SetCurrentDirectoryW(temp_dir);
+
+    hr = D3DX11CompileFromFileW(L"source.ps", NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
+
+    SetCurrentDirectoryW(directory);
+
+    delete_file(L"source.ps");
+    delete_file(L"include\\include1.h");
+    delete_file(L"include1.h");
+    delete_file(L"include\\include2.h");
+    delete_directory(L"include");
 }
 
 START_TEST(d3dx11)
