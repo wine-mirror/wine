@@ -2000,6 +2000,29 @@ static void libxml_cdatablock(void *ctx, const xmlChar *value, int len)
         format_error_message_from_id(locator, hr);
 }
 
+static void libxml_pi(void *ctx, const xmlChar *_target, const xmlChar *_data)
+{
+    saxlocator *locator = ctx;
+    struct saxcontenthandler_iface *handler = saxreader_get_contenthandler(locator->saxreader);
+    BSTR target, data;
+    HRESULT hr = S_OK;
+
+    update_position(locator, FALSE);
+    if (!saxreader_has_handler(locator, SAXContentHandler)) return;
+
+    target = pooled_bstr_from_xmlChar(&locator->saxreader->pool, _target);
+    data = pooled_bstr_from_xmlChar(&locator->saxreader->pool, _data);
+
+    if (locator->vbInterface)
+        hr = IVBSAXContentHandler_processingInstruction(handler->vbhandler, &target, &data);
+    else
+        hr = ISAXContentHandler_processingInstruction(handler->handler, target, SysStringLen(target),
+                data, SysStringLen(data));
+
+    if (FAILED(hr))
+        format_error_message_from_id(locator, hr);
+}
+
 static xmlParserInputPtr libxmlresolveentity(void *ctx, const xmlChar *publicid, const xmlChar *systemid)
 {
     FIXME("entity resolving not implemented, %s, %s\n", publicid, systemid);
@@ -3377,6 +3400,7 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, LPVOID *ppObj)
     reader->sax.fatalError = libxmlFatalError;
     reader->sax.cdataBlock = libxml_cdatablock;
     reader->sax.resolveEntity = libxmlresolveentity;
+    reader->sax.processingInstruction = libxml_pi;
 
     *ppObj = &reader->IVBSAXXMLReader_iface;
 
