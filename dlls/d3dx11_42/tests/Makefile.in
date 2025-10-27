@@ -1,5 +1,5 @@
 TESTDLL = d3dx11_42.dll
-IMPORTS = d3dx11_42
+IMPORTS = d3dx11_42 ole32
 PARENTSRC = ../../d3dx11_43/tests
 
 SOURCES = \
