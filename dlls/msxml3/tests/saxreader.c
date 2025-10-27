@@ -595,6 +595,9 @@ static const char test2_cdata_xml[] =
 static const char test3_cdata_xml[] =
 "<?xml version=\"1.0\" ?><a><![CDATA[Some text data]]></a>";
 
+static const char test_pi_xml[] =
+"<?xml version=\"1.0\" ?><a><?t some text ?></a>";
+
 static struct call_entry content_handler_test1[] = {
     { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
     { CH_STARTDOCUMENT, 0, 0, S_OK },
@@ -925,6 +928,28 @@ static struct call_entry cdata_test3[] = {
     { LH_ENDCDATA, 1, 35, S_OK },
     { CH_ENDELEMENT, 1, 54, S_OK, "", "a", "a" },
     { CH_ENDDOCUMENT, 0, 0, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct call_entry pi_test[] =
+{
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, S_OK },
+    { CH_STARTDOCUMENT, 0, 0, S_OK },
+    { CH_STARTELEMENT, 1, 26, S_OK, "", "a", "a" },
+    { CH_PROCESSINGINSTRUCTION, 1, 30, S_OK, "t", "some text " },
+    { CH_ENDELEMENT, 1, 44, S_OK, "", "a", "a" },
+    { CH_ENDDOCUMENT, 0, 0, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct call_entry pi_test_v4[] =
+{
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTELEMENT, 1, 25, S_OK, "", "a", "a" },
+    { CH_PROCESSINGINSTRUCTION, 1, 41, S_OK, "t", "some text " },
+    { CH_ENDELEMENT, 1, 45, S_OK, "", "a", "a" },
+    { CH_ENDDOCUMENT, 1, 45, S_OK },
     { CH_ENDTEST }
 };
 
@@ -2512,6 +2537,22 @@ static void test_saxreader(void)
         ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, seqname, TRUE);
 
         IStream_Release(stream);
+
+        /* PI */
+        V_VT(&var) = VT_UNKNOWN;
+        V_UNKNOWN(&var) = (IUnknown *)create_test_stream(test_pi_xml, -1);
+
+        if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40))
+            test_seq = pi_test_v4;
+        else
+            test_seq = pi_test;
+
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        sprintf(seqname, "%s: pi test", table->name);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, seqname, TRUE);
+        VariantClear(&var);
 
         ISAXXMLReader_Release(reader);
         table++;

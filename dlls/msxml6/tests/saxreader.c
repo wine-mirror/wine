@@ -534,6 +534,9 @@ static const char test2_cdata_xml[] =
 static const char test3_cdata_xml[] =
 "<?xml version=\"1.0\" ?><a><![CDATA[Some text data]]></a>";
 
+static const char test_pi_xml[] =
+"<?xml version=\"1.0\" ?><a><?t some text ?></a>";
+
 struct class_support
 {
     const GUID *clsid;
@@ -3791,6 +3794,17 @@ static struct call_entry cdata_test3_alt[] =
     { CH_ENDTEST }
 };
 
+static struct call_entry pi_test[] =
+{
+    { CH_PUTDOCUMENTLOCATOR, 1, 0, S_OK },
+    { CH_STARTDOCUMENT, 1, 22, S_OK },
+    { CH_STARTELEMENT, 1, 25, S_OK, "", "a", "a" },
+    { CH_PROCESSINGINSTRUCTION, 1, 41, S_OK, "t", "some text " },
+    { CH_ENDELEMENT, 1, 45, S_OK, "", "a", "a" },
+    { CH_ENDDOCUMENT, 1, 45, S_OK },
+    { CH_ENDTEST }
+};
+
 static int read_cnt;
 
 static HRESULT WINAPI instream_Read(IStream *iface, void *pv, ULONG cb, ULONG *pcbRead)
@@ -4578,6 +4592,16 @@ static void test_saxreader(void)
     ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "cdata test 3", TRUE);
 
     IStream_Release(stream);
+
+    /* PI */
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown *)create_test_stream(test_pi_xml, -1);
+    test_seq = pi_test;
+    set_expected_seq(test_seq);
+    hr = ISAXXMLReader_parse(reader, var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "pi test 1", TRUE);
+    VariantClear(&var);
 
     ISAXXMLReader_Release(reader);
 
