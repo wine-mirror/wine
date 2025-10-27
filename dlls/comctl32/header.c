@@ -378,24 +378,34 @@ static void HEADER_GetItemTextRect(const HEADER_ITEM *item, HWND hwnd, HDC hdc, 
     DrawTextW(hdc, item->pszText, -1, rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_CALCRECT);
 }
 
+static void HEADER_DrawItemText(const HEADER_ITEM *item, HWND hwnd, HDC hdc, BOOL hot_track, RECT *rect)
+{
+    HTHEME theme = GetWindowTheme(hwnd);
+
+    if (theme)
+    {
+        int state = item->bDown ? HIS_PRESSED : (hot_track ? HIS_HOT : HIS_NORMAL);
+        DrawThemeText(theme, hdc, HP_HEADERITEM, state, item->pszText, -1,
+                      DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE, 0, rect);
+        return;
+    }
+
+    DrawTextW(hdc, item->pszText, -1, rect, DT_LEFT | DT_END_ELLIPSIS | DT_VCENTER | DT_SINGLELINE);
+}
+
 static INT
 HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESULT lCDFlags)
 {
     HEADER_ITEM *phdi = &infoPtr->items[iItem];
     RECT r;
     INT  oldBkMode;
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     NMCUSTOMDRAW nmcd;
-    int state = 0;
 
     TRACE("DrawItem(iItem %d bHotTrack %d unicode flag %d)\n", iItem, bHotTrack, (infoPtr->nNotifyFormat == NFR_UNICODE));
 
     r = phdi->rect;
     if (r.right - r.left == 0)
 	return phdi->rect.right;
-
-    if (theme)
-        state = (phdi->bDown) ? HIS_PRESSED : (bHotTrack ? HIS_HOT : HIS_NORMAL);
 
     /* Set the colors before sending NM_CUSTOMDRAW so that it can change them */
     SetTextColor(hdc, (bHotTrack && !COMCTL32_IsThemed(infoPtr->hwndSelf)) ? comctl32_color.clrHighlight : comctl32_color.clrBtnText);
@@ -587,14 +597,7 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 	    oldBkMode = SetBkMode(hdc, TRANSPARENT);
 	    r.left  = tx;
 	    r.right = tx + tw;
-	    if (theme) {
-		DrawThemeText(theme, hdc, HP_HEADERITEM, state, phdi->pszText,
-			    -1, DT_LEFT|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE,
-			    0, &r);
-	    } else {
-		DrawTextW (hdc, phdi->pszText, -1,
-			&r, DT_LEFT|DT_END_ELLIPSIS|DT_VCENTER|DT_SINGLELINE);
-	    }
+	    HEADER_DrawItemText(phdi, infoPtr->hwndSelf, hdc, bHotTrack, &r);
 	    if (oldBkMode != TRANSPARENT)
 	        SetBkMode(hdc, oldBkMode);
         }
