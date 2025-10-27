@@ -417,6 +417,12 @@ static void test_ldap_server_control( void )
     }
 
     ret = ldap_connect( ld, NULL );
+    if (ret == LDAP_SERVER_DOWN)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
     ok( !ret, "ldap_connect failed %#lx\n", ret );
 
     /* test setting a not supported server control */
