@@ -7,7 +7,7 @@
 @ stub TdhEnumerateManifestProviderEvents
 @ stub TdhEnumerateProviderFieldInformation
 @ stub TdhEnumerateProviderFilters
-@ stub TdhEnumerateProviders
+@ stdcall TdhEnumerateProviders(ptr ptr)
 @ stub TdhEnumerateRemoteWBEMProviderFieldInformation
 @ stub TdhEnumerateRemoteWBEMProviders
 @ stub TdhFormatProperty

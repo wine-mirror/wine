@@ -785,6 +785,7 @@ SOURCES = \
 	tchar.h \
 	tcpestats.h \
 	tcpmib.h \
+	tdh.h \
 	textserv.h \
 	textstor.idl \
 	threadpoolapiset.h \

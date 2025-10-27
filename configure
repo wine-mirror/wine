@@ -23000,6 +23000,7 @@ wine_fn_config_makefile dlls/taskschd enable_taskschd
 wine_fn_config_makefile dlls/taskschd/tests enable_tests
 wine_fn_config_makefile dlls/tbs enable_tbs
 wine_fn_config_makefile dlls/tdh enable_tdh
+wine_fn_config_makefile dlls/tdh/tests enable_tests
 wine_fn_config_makefile dlls/tdi.sys enable_tdi_sys
 wine_fn_config_makefile dlls/threadpoolwinrt enable_threadpoolwinrt
 wine_fn_config_makefile dlls/threadpoolwinrt/tests enable_tests

@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "tdh.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(tdh);
@@ -37,4 +38,20 @@ ULONG WINAPI TdhLoadManifestFromBinary(LPWSTR binary)
 {
     FIXME("(%s): stub\n", debugstr_w(binary));
     return STATUS_SUCCESS;
+}
+
+ULONG WINAPI TdhEnumerateProviders( PROVIDER_ENUMERATION_INFO *buffer, ULONG *buffer_size )
+{
+    FIXME( "%p %p semi-stub.\n", buffer, buffer_size );
+
+    if (!buffer_size) return ERROR_INVALID_PARAMETER;
+    if (*buffer_size && !buffer) return ERROR_INVALID_PARAMETER;
+
+    if (*buffer_size < offsetof(PROVIDER_ENUMERATION_INFO, TraceProviderInfoArray))
+    {
+        *buffer_size = offsetof(PROVIDER_ENUMERATION_INFO, TraceProviderInfoArray);
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+    buffer->NumberOfProviders = 0;
+    return ERROR_SUCCESS;
 }
