@@ -619,6 +619,28 @@ HEADER_DrawHotDivider(const HEADER_INFO *infoPtr, HDC hdc)
     DeleteObject(brush);
 }
 
+static void HEADER_DrawRestBackground(HEADER_INFO *infoPtr, HDC hdc, RECT *rect)
+{
+    HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
+
+    if (theme)
+    {
+        DrawThemeBackground(theme, hdc, HP_HEADERITEM, HIS_NORMAL, rect, NULL);
+        return;
+    }
+
+    if (infoPtr->dwStyle & HDS_FLAT)
+    {
+        FillRect(hdc, rect, GetSysColorBrush(COLOR_3DFACE));
+        return;
+    }
+
+    if (infoPtr->dwStyle & HDS_BUTTONS)
+        DrawEdge(hdc, rect, EDGE_RAISED, BF_TOP | BF_LEFT | BF_BOTTOM | BF_SOFT | BF_MIDDLE);
+    else
+        DrawEdge(hdc, rect, EDGE_ETCHED, BF_BOTTOM | BF_MIDDLE);
+}
+
 static void
 HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
 {
@@ -628,7 +650,6 @@ HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
     UINT i;
     INT x;
     LRESULT lCDFlags;
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (!infoPtr->bRectsValid)
         HEADER_SetItemBounds(infoPtr);
@@ -659,22 +680,8 @@ HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
 
     rcRest = rect;
     rcRest.left = x;
-    if ((x <= rect.right) && RectVisible(hdc, &rcRest) && (infoPtr->uNumItem > 0)) {
-        if (theme != NULL) {
-            DrawThemeBackground(theme, hdc, HP_HEADERITEM, HIS_NORMAL, &rcRest, NULL);
-        }
-        else if (infoPtr->dwStyle & HDS_FLAT) {
-            hbrBk = GetSysColorBrush(COLOR_3DFACE);
-            FillRect(hdc, &rcRest, hbrBk);
-        }
-        else
-        {
-            if (infoPtr->dwStyle & HDS_BUTTONS)
-                DrawEdge (hdc, &rcRest, EDGE_RAISED, BF_TOP|BF_LEFT|BF_BOTTOM|BF_SOFT|BF_MIDDLE);
-            else
-                DrawEdge (hdc, &rcRest, EDGE_ETCHED, BF_BOTTOM|BF_MIDDLE);
-        }
-    }
+    if ((x <= rect.right) && RectVisible(hdc, &rcRest) && (infoPtr->uNumItem > 0))
+        HEADER_DrawRestBackground(infoPtr, hdc, &rcRest);
 
     if (infoPtr->iHotDivider != -1)
         HEADER_DrawHotDivider(infoPtr, hdc);
