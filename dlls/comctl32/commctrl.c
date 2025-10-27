@@ -3206,3 +3206,8 @@ LRESULT COMCTL32_NCPaint(HWND hwnd, WPARAM wp, LPARAM lp, const WCHAR *theme_cla
     return DefWindowProcW(hwnd, WM_NCPAINT, wp, lp);
 #endif
 }
+
+BOOL COMCTL32_IsThemed(HWND hwnd)
+{
+    return !!GetWindowTheme(hwnd);
+}

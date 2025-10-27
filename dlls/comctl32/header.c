@@ -306,7 +306,7 @@ HEADER_FillItemFrame(HEADER_INFO *infoPtr, HDC hdc, RECT *r, const HEADER_ITEM *
 static void
 HEADER_DrawItemFrame(HEADER_INFO *infoPtr, HDC hdc, RECT *r, const HEADER_ITEM *item)
 {
-    if (GetWindowTheme(infoPtr->hwndSelf)) return;
+    if (COMCTL32_IsThemed(infoPtr->hwndSelf)) return;
 
     if (!(infoPtr->dwStyle & HDS_FLAT))
     {
@@ -383,7 +383,7 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
         state = (phdi->bDown) ? HIS_PRESSED : (bHotTrack ? HIS_HOT : HIS_NORMAL);
 
     /* Set the colors before sending NM_CUSTOMDRAW so that it can change them */
-    SetTextColor(hdc, (bHotTrack && !theme) ? comctl32_color.clrHighlight : comctl32_color.clrBtnText);
+    SetTextColor(hdc, (bHotTrack && !COMCTL32_IsThemed(infoPtr->hwndSelf)) ? comctl32_color.clrHighlight : comctl32_color.clrBtnText);
     SetBkColor(hdc, comctl32_color.clr3dFace);
 
     if (lCDFlags & CDRF_NOTIFYITEMDRAW && !(phdi->fmt & HDF_OWNERDRAW))
@@ -633,7 +633,7 @@ HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
     hOldFont = SelectObject (hdc, hFont);
 
     /* draw Background */
-    if (infoPtr->uNumItem == 0 && theme == NULL) {
+    if (infoPtr->uNumItem == 0 && !COMCTL32_IsThemed(infoPtr->hwndSelf)) {
         hbrBk = GetSysColorBrush(COLOR_3DFACE);
         FillRect(hdc, &rect, hbrBk);
     }
@@ -1878,7 +1878,7 @@ HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
     /* With theming, hottracking is always enabled */
     BOOL  hotTrackEnabled =
         ((infoPtr->dwStyle & HDS_BUTTONS) && (infoPtr->dwStyle & HDS_HOTTRACK))
-        || (GetWindowTheme (infoPtr->hwndSelf) != NULL);
+        || COMCTL32_IsThemed (infoPtr->hwndSelf);
     INT oldHotItem = infoPtr->iHotItem;
 
     pt.x = (INT)(SHORT)LOWORD(lParam);
