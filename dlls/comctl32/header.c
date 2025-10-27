@@ -363,6 +363,21 @@ static HRGN create_sort_arrow( INT x, INT y, INT h, BOOL is_up )
     return rgn;
 }
 
+static void HEADER_GetItemTextRect(const HEADER_ITEM *item, HWND hwnd, HDC hdc, BOOL hot_track, RECT *rect)
+{
+    HTHEME theme = GetWindowTheme(hwnd);
+
+    if (theme)
+    {
+        int state = item->bDown ? HIS_PRESSED : (hot_track ? HIS_HOT : HIS_NORMAL);
+        GetThemeTextExtent(theme, hdc, HP_HEADERITEM, state, item->pszText, -1,
+                           DT_LEFT | DT_VCENTER | DT_SINGLELINE, NULL, rect);
+        return;
+    }
+
+    DrawTextW(hdc, item->pszText, -1, rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_CALCRECT);
+}
+
 static INT
 HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESULT lCDFlags)
 {
@@ -462,14 +477,7 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 	    RECT textRect;
 
             SetRectEmpty(&textRect);
-
-	    if (theme) {
-		GetThemeTextExtent(theme, hdc, HP_HEADERITEM, state, phdi->pszText, -1,
-		    DT_LEFT|DT_VCENTER|DT_SINGLELINE, NULL, &textRect);
-	    } else {
-		DrawTextW (hdc, phdi->pszText, -1,
-			&textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
-	    }
+	    HEADER_GetItemTextRect(phdi, infoPtr->hwndSelf, hdc, bHotTrack, &textRect);
 	    cw = textRect.right - textRect.left + 2 * infoPtr->iMargin;
 	}
 
