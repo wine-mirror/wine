@@ -1003,9 +1003,9 @@ static BOOL proximity_event( HWND hwnd, XEvent *event )
 }
 
 /***********************************************************************
- *           x11drv_tablet_attach_queue
+ *           tablet_attach_queue
  */
-NTSTATUS x11drv_tablet_attach_queue( void *owner )
+static BOOL tablet_attach_queue( HWND owner )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     int             num_devices;
@@ -1017,7 +1017,7 @@ NTSTATUS x11drv_tablet_attach_queue( void *owner )
     XEventClass     event_list[7];
     Window          win = X11DRV_get_whole_window( owner );
 
-    if (!win || !xinput_handle) return 0;
+    if (!win || !xinput_handle) return FALSE;
 
     TRACE("Creating context for window %p (%lx)  %i cursors\n", owner, win, gNumCursors);
 
@@ -1091,7 +1091,7 @@ NTSTATUS x11drv_tablet_attach_queue( void *owner )
     X11DRV_check_error();
 
     if (NULL != devices) pXFreeDeviceList(devices);
-    return 0;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1550,12 +1550,25 @@ NTSTATUS x11drv_tablet_info( void *arg )
     return rc;
 }
 
+/***********************************************************************
+ *           X11DRV_WintabProc
+ */
+LRESULT X11DRV_WintabProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *buffer )
+{
+    switch (msg)
+    {
+    case NtUserWintabAttach:
+        return tablet_attach_queue( hwnd );
+    }
+    return 0;
+}
+
 #else /* SONAME_LIBXI */
 
 /***********************************************************************
- *           x11drv_tablet_attach_queue
+ *           X11DRV_WintabProc
  */
-NTSTATUS x11drv_tablet_attach_queue( void *owner )
+LRESULT X11DRV_WintabProc( HWND hwmd, UINT msg, WPARAM wparam, LPARAM lparam, void *buffer )
 {
     return 0;
 }

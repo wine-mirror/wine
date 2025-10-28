@@ -44,7 +44,6 @@ CRITICAL_SECTION csTablet = { &csTablet_debug, -1, 0, 0, 0, 0 };
 
 int  (CDECL *pLoadTabletInfo)(HWND hwnddefault) = NULL;
 int  (CDECL *pGetCurrentPacket)(LPWTPACKET packet) = NULL;
-int  (CDECL *pAttachEventQueueToTablet)(HWND hOwner) = NULL;
 UINT (CDECL *pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
 
 static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
@@ -108,7 +107,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             {
                 HMODULE module = load_graphics_driver();
                 pLoadTabletInfo = (void *)GetProcAddress(module, "LoadTabletInfo");
-                pAttachEventQueueToTablet = (void *)GetProcAddress(module, "AttachEventQueueToTablet");
                 pGetCurrentPacket = (void *)GetProcAddress(module, "GetCurrentPacket");
                 pWTInfoW = (void *)GetProcAddress(module, "WTInfoW");
             }

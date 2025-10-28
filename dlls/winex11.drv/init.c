@@ -671,6 +671,7 @@ static const struct user_driver_funcs x11drv_funcs =
     .pMoveWindowBits = X11DRV_MoveWindowBits,
     .pWindowPosChanged = X11DRV_WindowPosChanged,
     .pSystemParametersInfo = X11DRV_SystemParametersInfo,
+    .pWintabProc = X11DRV_WintabProc,
     .pVulkanInit = X11DRV_VulkanInit,
     .pOpenGLInit = X11DRV_OpenGLInit,
     .pThreadDetach = X11DRV_ThreadDetach,

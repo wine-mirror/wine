@@ -806,7 +806,6 @@ BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     x11drv_init,
-    x11drv_tablet_attach_queue,
     x11drv_tablet_get_packet,
     x11drv_tablet_info,
     x11drv_tablet_load_info,
@@ -837,7 +836,6 @@ static NTSTATUS x11drv_wow64_tablet_info( void *arg )
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     x11drv_init,
-    x11drv_tablet_attach_queue,
     x11drv_tablet_get_packet,
     x11drv_wow64_tablet_info,
     x11drv_tablet_load_info,

@@ -251,6 +251,7 @@ extern void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hi
                                      const struct window_rects *new_rects, struct window_surface *surface );
 extern BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param,
                                          UINT flags );
+extern LRESULT X11DRV_WintabProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *buffer );
 extern void X11DRV_ThreadDetach(void);
 
 /* X11 driver internal functions */
@@ -897,7 +898,6 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 
 /* unixlib interface */
 
-extern NTSTATUS x11drv_tablet_attach_queue( void *arg );
 extern NTSTATUS x11drv_tablet_get_packet( void *arg );
 extern NTSTATUS x11drv_tablet_load_info( void *arg );
 extern NTSTATUS x11drv_tablet_info( void *arg );

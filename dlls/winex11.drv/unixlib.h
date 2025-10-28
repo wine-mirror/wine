@@ -23,7 +23,6 @@
 enum x11drv_funcs
 {
     unix_init,
-    unix_tablet_attach_queue,
     unix_tablet_get_packet,
     unix_tablet_info,
     unix_tablet_load_info,

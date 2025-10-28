@@ -26,7 +26,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "winnls.h"
 
 #include "wintab.h"
@@ -481,7 +481,7 @@ HCTX WINAPI WTOpenW(HWND hWnd, LPLOGCONTEXTW lpLogCtx, BOOL fEnable)
     gOpenContexts = newcontext;
     LeaveCriticalSection(&csTablet);
 
-    pAttachEventQueueToTablet(hWnd);
+    NtUserMessageCall(hWnd, NtUserWintabAttach, 0, 0, NULL, NtUserWintabDriverCall, FALSE);
 
     TABLET_PostTabletMessage(newcontext, _WT_CTXOPEN(newcontext->context.lcMsgBase), (WPARAM)newcontext->handle,
                       newcontext->context.lcStatus, TRUE);
