@@ -578,6 +578,7 @@ static void test_sequencer_source(void)
 struct test_handler
 {
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
+    LONG refcount;
 
     ULONG set_current_count;
     IMFMediaType *current_type;
@@ -608,12 +609,25 @@ static HRESULT WINAPI test_handler_QueryInterface(IMFMediaTypeHandler *iface, RE
 
 static ULONG WINAPI test_handler_AddRef(IMFMediaTypeHandler *iface)
 {
-    return 2;
+    struct test_handler *impl = impl_from_IMFMediaTypeHandler(iface);
+    return InterlockedIncrement(&impl->refcount);
 }
 
 static ULONG WINAPI test_handler_Release(IMFMediaTypeHandler *iface)
 {
-    return 1;
+    struct test_handler *impl = impl_from_IMFMediaTypeHandler(iface);
+    ULONG refcount = InterlockedDecrement(&impl->refcount);
+
+    if (!refcount)
+    {
+        if (impl->current_type)
+            IMFMediaType_Release(impl->current_type);
+        /* references to invalid_type and media_types are not held. */
+
+        free(impl);
+    }
+
+    return refcount;
 }
 
 static HRESULT WINAPI test_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
@@ -720,11 +734,31 @@ static const IMFMediaTypeHandlerVtbl test_handler_vtbl =
     test_handler_GetMajorType,
 };
 
-static const struct test_handler test_handler = {.IMFMediaTypeHandler_iface.lpVtbl = &test_handler_vtbl};
+static struct test_handler *create_test_handler(void)
+{
+    struct test_handler *handler;
+
+    handler = calloc(1, sizeof(*handler));
+    handler->IMFMediaTypeHandler_iface.lpVtbl = &test_handler_vtbl;
+    handler->refcount = 1;
+
+    return handler;
+};
+
+static void test_handler_clear_current_type(struct test_handler *handler)
+{
+    if (handler->current_type)
+    {
+        IMFMediaType_Release(handler->current_type);
+        handler->current_type = NULL;
+    }
+}
 
 struct test_media_sink
 {
     IMFMediaSink IMFMediaSink_iface;
+    LONG refcount;
+    IMFMediaTypeHandler *handler;
     IMFPresentationClock *clock;
     IMFStreamSink *stream;
     BOOL shutdown;
@@ -750,12 +784,25 @@ static HRESULT WINAPI test_media_sink_QueryInterface(IMFMediaSink *iface, REFIID
 
 static ULONG WINAPI test_media_sink_AddRef(IMFMediaSink *iface)
 {
-    return 2;
+    struct test_media_sink *sink = impl_from_IMFMediaSink(iface);
+    return InterlockedIncrement(&sink->refcount);
 }
 
 static ULONG WINAPI test_media_sink_Release(IMFMediaSink *iface)
 {
-    return 1;
+    struct test_media_sink *sink = impl_from_IMFMediaSink(iface);
+    ULONG refcount = InterlockedDecrement(&sink->refcount);
+
+    if (!refcount)
+    {
+        if (!sink->shutdown)
+            IMFMediaSink_Shutdown(iface);
+        if (sink->handler)
+            IMFMediaTypeHandler_Release(sink->handler);
+        free(sink);
+    }
+
+    return refcount;
 }
 
 static HRESULT WINAPI test_media_sink_GetCharacteristics(IMFMediaSink *iface, DWORD *characteristics)
@@ -854,6 +901,18 @@ static HRESULT WINAPI test_media_sink_GetPresentationClock(IMFMediaSink *iface, 
 static HRESULT WINAPI test_media_sink_Shutdown(IMFMediaSink *iface)
 {
     struct test_media_sink *sink = impl_from_IMFMediaSink(iface);
+
+    if (sink->clock)
+    {
+        IMFPresentationClock_Release(sink->clock);
+        sink->clock = NULL;
+    }
+    if (sink->stream)
+    {
+        IMFStreamSink_Release(sink->stream);
+        sink->stream = NULL;
+    }
+
     ok(!sink->shutdown, "Unexpected call.\n");
     sink->shutdown = TRUE;
     return S_OK;
@@ -923,12 +982,11 @@ static const IMFMediaSinkVtbl test_media_sink_vtbl =
     test_media_sink_Shutdown,
 };
 
-static const struct test_media_sink test_media_sink = {.IMFMediaSink_iface.lpVtbl = &test_media_sink_vtbl};
-
 struct test_stream_sink
 {
     IMFStreamSink IMFStreamSink_iface;
     IMFGetService IMFGetService_iface;
+    LONG refcount;
     IMFMediaTypeHandler *handler;
     IMFMediaSink *media_sink;
 
@@ -974,12 +1032,30 @@ static HRESULT WINAPI test_stream_sink_QueryInterface(IMFStreamSink *iface, REFI
 
 static ULONG WINAPI test_stream_sink_AddRef(IMFStreamSink *iface)
 {
-    return 2;
+    struct test_stream_sink *sink = impl_from_IMFStreamSink(iface);
+    return InterlockedIncrement(&sink->refcount);
 }
 
 static ULONG WINAPI test_stream_sink_Release(IMFStreamSink *iface)
 {
-    return 1;
+    struct test_stream_sink *sink = impl_from_IMFStreamSink(iface);
+    ULONG refcount = InterlockedDecrement(&sink->refcount);
+
+    if (!refcount)
+    {
+        if (sink->handler)
+            IMFMediaTypeHandler_Release(sink->handler);
+        if (sink->media_sink)
+            IMFMediaSink_Release(sink->media_sink);
+        if (sink->event_queue)
+        {
+            IMFMediaEventQueue_Shutdown(sink->event_queue);
+            IMFMediaEventQueue_Release(sink->event_queue);
+        }
+        free(sink);
+    }
+
+    return refcount;
 }
 
 static HRESULT WINAPI test_stream_sink_GetEvent(IMFStreamSink *iface, DWORD flags, IMFMediaEvent **event)
@@ -1156,11 +1232,47 @@ static const IMFGetServiceVtbl test_stream_sink_get_service_vtbl =
     test_stream_sink_get_service_GetService,
 };
 
-static const struct test_stream_sink test_stream_sink =
+static struct test_stream_sink *create_test_stream_sink(IMFMediaSink *media_sink,
+        IMFMediaTypeHandler *handler, BOOL create_queue)
 {
-    .IMFStreamSink_iface.lpVtbl = &test_stream_sink_vtbl,
-    .IMFGetService_iface.lpVtbl = &test_stream_sink_get_service_vtbl,
-};
+    struct test_stream_sink *sink;
+
+    sink = calloc(1, sizeof(*sink));
+    sink->IMFStreamSink_iface.lpVtbl = &test_stream_sink_vtbl,
+    sink->IMFGetService_iface.lpVtbl = &test_stream_sink_get_service_vtbl,
+    sink->refcount = 1;
+    if (handler)
+        IMFMediaTypeHandler_AddRef(sink->handler = handler);
+    if (media_sink)
+        IMFMediaSink_AddRef(sink->media_sink = media_sink);
+    if (create_queue)
+        MFCreateEventQueue(&sink->event_queue);
+
+    return sink;
+}
+
+static void reset_test_media_sink(struct test_media_sink *sink)
+{
+    if (sink->shutdown)
+    {
+        sink->stream = &create_test_stream_sink(&sink->IMFMediaSink_iface, sink->handler, TRUE)->IMFStreamSink_iface;
+        sink->shutdown = FALSE;
+    }
+}
+
+static struct test_media_sink *create_test_media_sink(IMFMediaTypeHandler *handler)
+{
+    struct test_media_sink *sink;
+
+    sink = calloc(1, sizeof(*sink));
+    sink->IMFMediaSink_iface.lpVtbl = &test_media_sink_vtbl;
+    sink->refcount = 1;
+    if (handler)
+        IMFMediaTypeHandler_AddRef(sink->handler = handler);
+    sink->stream = &create_test_stream_sink(&sink->IMFMediaSink_iface, handler, TRUE)->IMFStreamSink_iface;
+
+    return sink;
+}
 
 struct test_callback
 {
@@ -2276,14 +2388,13 @@ static void test_media_session_events(void)
         ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 2 * 8),
     };
 
-    struct test_stream_sink stream_sink = test_stream_sink;
-    struct test_media_sink media_sink = test_media_sink;
-    struct test_handler handler = test_handler;
     struct test_stub_source *source_impl;
     IMFAsyncCallback *callback, *callback2;
     IMFMediaType *input_type, *output_type;
     IMFTopologyNode *src_node, *sink_node;
+    struct test_media_sink *media_sink;
     IMFPresentationDescriptor *pd;
+    struct test_handler *handler;
     IMFMediaSession *session;
     IMFStreamDescriptor *sd;
     IMFAsyncResult *result;
@@ -2294,8 +2405,8 @@ static void test_media_session_events(void)
     HRESULT hr;
     ULONG ref;
 
-    stream_sink.handler = &handler.IMFMediaTypeHandler_iface;
-    stream_sink.media_sink = &media_sink.IMFMediaSink_iface;
+    handler = create_test_handler();
+    media_sink = create_test_media_sink(&handler->IMFMediaTypeHandler_iface);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Startup failure, hr %#lx.\n", hr);
@@ -2423,13 +2534,13 @@ static void test_media_session_events(void)
 
     hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sink_node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    init_sink_node(&stream_sink.IMFStreamSink_iface, -1, sink_node);
+    init_sink_node(media_sink->stream, -1, sink_node);
 
     hr = MFCreateMediaType(&output_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     init_media_type(output_type, audio_pcm_48000, -1);
-    handler.media_types_count = 1;
-    handler.media_types = &output_type;
+    handler->media_types_count = 1;
+    handler->media_types = &output_type;
 
     hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &src_node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2461,15 +2572,13 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!media_sink.shutdown, "media sink is shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(!media_sink->shutdown, "media sink is shutdown.\n");
+    reset_test_media_sink(media_sink);
 
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
 
-    if (handler.current_type)
-        IMFMediaType_Release(handler.current_type);
-    handler.current_type = NULL;
+    test_handler_clear_current_type(handler);
 
 
     /* SetTopology without a current output type */
@@ -2487,9 +2596,9 @@ static void test_media_session_events(void)
     ok(propvar.punkVal == (IUnknown *)topology, "got punkVal %p\n", propvar.punkVal);
     PropVariantClear(&propvar);
 
-    ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-    ok(!handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
-    handler.enum_count = handler.set_current_count = 0;
+    ok(!handler->enum_count, "got %lu GetMediaTypeByIndex\n", handler->enum_count);
+    ok(!handler->set_current_count, "got %lu SetCurrentMediaType\n", handler->set_current_count);
+    handler->enum_count = handler->set_current_count = 0;
 
     hr = IMFMediaSession_ClearTopologies(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2499,15 +2608,13 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "media sink didn't shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(media_sink->shutdown, "media sink didn't shutdown.\n");
+    reset_test_media_sink(media_sink);
 
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
 
-    if (handler.current_type)
-        IMFMediaType_Release(handler.current_type);
-    handler.current_type = NULL;
+    test_handler_clear_current_type(handler);
 
 
     /* SetTopology without a current output type */
@@ -2529,9 +2636,9 @@ static void test_media_session_events(void)
     PropVariantClear(&propvar);
 
     todo_wine
-    ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-    ok(handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
-    handler.enum_count = handler.set_current_count = 0;
+    ok(!handler->enum_count, "got %lu GetMediaTypeByIndex\n", handler->enum_count);
+    ok(handler->set_current_count, "got %lu SetCurrentMediaType\n", handler->set_current_count);
+    handler->enum_count = handler->set_current_count = 0;
 
     hr = IMFMediaSession_ClearTopologies(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2541,20 +2648,18 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "media sink didn't shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(media_sink->shutdown, "media sink didn't shutdown.\n");
+    reset_test_media_sink(media_sink);
 
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
 
-    if (handler.current_type)
-        IMFMediaType_Release(handler.current_type);
-    handler.current_type = NULL;
+    test_handler_clear_current_type(handler);
 
 
     /* SetTopology without a current output type, refusing input type */
 
-    handler.invalid_type = input_type;
+    handler->invalid_type = input_type;
 
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2567,9 +2672,9 @@ static void test_media_session_events(void)
     ok(propvar.punkVal != (IUnknown *)topology, "got punkVal %p\n", propvar.punkVal);
     PropVariantClear(&propvar);
 
-    ok(handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-    ok(handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
-    handler.enum_count = handler.set_current_count = 0;
+    ok(handler->enum_count, "got %lu GetMediaTypeByIndex\n", handler->enum_count);
+    ok(handler->set_current_count, "got %lu SetCurrentMediaType\n", handler->set_current_count);
+    handler->enum_count = handler->set_current_count = 0;
 
     hr = IMFMediaSession_ClearTopologies(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2579,21 +2684,19 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "media sink didn't shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(media_sink->shutdown, "media sink didn't shutdown.\n");
+    reset_test_media_sink(media_sink);
 
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
 
-    if (handler.current_type)
-        IMFMediaType_Release(handler.current_type);
-    handler.current_type = NULL;
+    test_handler_clear_current_type(handler);
 
 
     /* SetTopology without a current output type, refusing input type, requiring a converter */
 
-    handler.media_types_count = 0;
-    handler.invalid_type = input_type;
+    handler->media_types_count = 0;
+    handler->invalid_type = input_type;
 
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2606,9 +2709,9 @@ static void test_media_session_events(void)
     ok(propvar.punkVal != (IUnknown *)topology, "got punkVal %p\n", propvar.punkVal);
     PropVariantClear(&propvar);
 
-    ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-    ok(handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
-    handler.enum_count = handler.set_current_count = 0;
+    ok(!handler->enum_count, "got %lu GetMediaTypeByIndex\n", handler->enum_count);
+    ok(handler->set_current_count, "got %lu SetCurrentMediaType\n", handler->set_current_count);
+    handler->enum_count = handler->set_current_count = 0;
 
     hr = IMFMediaSession_ClearTopologies(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2618,21 +2721,19 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "media sink didn't shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(media_sink->shutdown, "media sink didn't shutdown.\n");
+    reset_test_media_sink(media_sink);
 
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
 
-    if (handler.current_type)
-        IMFMediaType_Release(handler.current_type);
-    handler.current_type = NULL;
+    test_handler_clear_current_type(handler);
 
 
     /* SetTopology with a current output type */
 
-    handler.media_types_count = 1;
-    IMFMediaType_AddRef((handler.current_type = output_type));
+    handler->media_types_count = 1;
+    IMFMediaType_AddRef((handler->current_type = output_type));
 
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2645,9 +2746,9 @@ static void test_media_session_events(void)
     ok(propvar.punkVal != (IUnknown *)topology, "got punkVal %p\n", propvar.punkVal);
     PropVariantClear(&propvar);
 
-    ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-    ok(handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
-    handler.enum_count = handler.set_current_count = 0;
+    ok(!handler->enum_count, "got %lu GetMediaTypeByIndex\n", handler->enum_count);
+    ok(handler->set_current_count, "got %lu SetCurrentMediaType\n", handler->set_current_count);
+    handler->enum_count = handler->set_current_count = 0;
 
     hr = IMFMediaSession_ClearTopologies(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2657,8 +2758,8 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "media sink didn't shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(media_sink->shutdown, "media sink didn't shutdown.\n");
+    reset_test_media_sink(media_sink);
 
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
@@ -2701,8 +2802,8 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "media sink didn't shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(media_sink->shutdown, "media sink didn't shutdown.\n");
+    reset_test_media_sink(media_sink);
 
     source_impl->begin_get_event_res = E_NOTIMPL;
 
@@ -2750,8 +2851,7 @@ static void test_media_session_events(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "media sink didn't shutdown.\n");
-    media_sink.shutdown = FALSE;
+    ok(media_sink->shutdown, "media sink didn't shutdown.\n");
 
     source_impl->begin_get_event_res = E_NOTIMPL;
 
@@ -2760,14 +2860,13 @@ static void test_media_session_events(void)
     CLEAR_CALLED(test_stub_source_Start);
 
 skip_invalid:
+    IMFMediaTypeHandler_Release(&handler->IMFMediaTypeHandler_iface);
+    IMFMediaSink_Release(&media_sink->IMFMediaSink_iface);
+
     /* sometimes briefly leaking */
     IMFMediaSession_Release(session);
 
     IMFAsyncCallback_Release(callback);
-
-    if (handler.current_type)
-        IMFMediaType_Release(handler.current_type);
-    handler.current_type = NULL;
 
     hr = IMFTopology_Clear(topology);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -6029,7 +6128,7 @@ static void test_MFGetTopoNodeCurrentType(void)
     };
     IMFMediaType *media_type, *input_types[2], *output_types[2];
     IMFStreamDescriptor *input_descriptor, *output_descriptor;
-    struct test_stream_sink stream_sink = test_stream_sink;
+    struct test_stream_sink *stream_sink;
     IMFMediaTypeHandler *input_handler, *output_handler;
     IMFTransform *transform;
     IMFTopologyNode *node;
@@ -6184,8 +6283,8 @@ static void test_MFGetTopoNodeCurrentType(void)
     hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#lx.\n", hr);
 
-    stream_sink.handler = output_handler;
-    hr = IMFTopologyNode_SetObject(node, (IUnknown *)&stream_sink.IMFStreamSink_iface);
+    stream_sink = create_test_stream_sink(NULL, output_handler, FALSE);
+    hr = IMFTopologyNode_SetObject(node, (IUnknown *)&stream_sink->IMFStreamSink_iface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#lx.\n", hr);
@@ -6199,6 +6298,7 @@ static void test_MFGetTopoNodeCurrentType(void)
 
     ref = IMFTopologyNode_Release(node);
     ok(ref == 0, "Release returned %ld\n", ref);
+    IMFStreamSink_Release(&stream_sink->IMFStreamSink_iface);
 
 
     /* Transform node. */
@@ -8074,13 +8174,12 @@ static void test_media_session_seek(void)
     static const struct object_state_record expected_seek_start_pending_request_records = {{SOURCE_STOP, MFT_FLUSH, SOURCE_START, MFT_PROCESS_OUTPUT, SOURCE_REQUEST_SAMPLE, SINK_FLUSH, SINK_ON_CLOCK_START}, 7};
 
     IMFClockStateSink test_seek_clock_sink = {&test_seek_clock_sink_vtbl};
-    struct test_stream_sink stream_sink = test_stream_sink;
-    struct test_media_sink media_sink = test_media_sink;
     MFT_OUTPUT_STREAM_INFO output_stream_info = {0};
-    struct test_handler handler = test_handler;
     IMFPresentationClock *presentation_clock;
     struct test_callback *test_callback;
+    struct test_media_sink *media_sink;
     struct test_source *media_source;
+    struct test_handler *handler;
     IMFAsyncCallback *callback;
     IMFMediaSession *session;
     IMFMediaSource *source;
@@ -8093,10 +8192,9 @@ static void test_media_session_seek(void)
     HRESULT hr;
     INT i;
 
-    stream_sink.handler = &handler.IMFMediaTypeHandler_iface;
-    stream_sink.media_sink = &media_sink.IMFMediaSink_iface;
-    media_sink.stream = &stream_sink.IMFStreamSink_iface;
-    MFCreateEventQueue(&stream_sink.event_queue);
+    handler = create_test_handler();
+    media_sink = create_test_media_sink(&handler->IMFMediaTypeHandler_iface);
+    IMFMediaTypeHandler_Release(&handler->IMFMediaTypeHandler_iface);
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -8124,7 +8222,7 @@ static void test_media_session_seek(void)
     IMFMediaType_Release(type);
 
     SET_EXPECT(test_transform_ProcessMessage_BEGIN_STREAMING);
-    topology = create_test_topology_unk(source, (IUnknown*)&stream_sink.IMFStreamSink_iface, (IUnknown*) mft, NULL);
+    topology = create_test_topology_unk(source, (IUnknown*)media_sink->stream, (IUnknown*) mft, NULL);
     hr = IMFMediaSession_SetTopology(session, 0, topology);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFTopology_Release(topology);
@@ -8163,7 +8261,7 @@ static void test_media_session_seek(void)
     ok(status == MF_TOPOSTATUS_STARTED_SOURCE, "Unexpected status %d.\n", status);
     PropVariantClear(&propvar);
 
-    hr = IMFStreamSink_QueueEvent(&stream_sink.IMFStreamSink_iface, MEStreamSinkStarted, &GUID_NULL, S_OK, &propvar);
+    hr = IMFStreamSink_QueueEvent(media_sink->stream, MEStreamSinkStarted, &GUID_NULL, S_OK, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = wait_media_event(session, callback, MESessionStarted, 1000, &propvar);
@@ -8186,7 +8284,7 @@ static void test_media_session_seek(void)
     SET_EXPECT(test_transform_ProcessOutput);
     SET_EXPECT(test_transform_ProcessInput);
     SET_EXPECT(test_stream_sink_ProcessSample);
-    IMFStreamSink_QueueEvent(&stream_sink.IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, &propvar);
+    IMFStreamSink_QueueEvent(media_sink->stream, MEStreamSinkRequestSample, &GUID_NULL, S_OK, &propvar);
 
     Sleep(20);
 
@@ -8218,7 +8316,7 @@ static void test_media_session_seek(void)
 
     Sleep(20);
 
-    hr = IMFStreamSink_QueueEvent(&stream_sink.IMFStreamSink_iface, MEStreamSinkPaused, &GUID_NULL, S_OK, &propvar);
+    hr = IMFStreamSink_QueueEvent(media_sink->stream, MEStreamSinkPaused, &GUID_NULL, S_OK, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = wait_media_event(session, callback, MESessionPaused, 1000, &propvar);
@@ -8239,7 +8337,7 @@ static void test_media_session_seek(void)
 
     Sleep(20);
 
-    hr = IMFStreamSink_QueueEvent(&stream_sink.IMFStreamSink_iface, MEStreamSinkStarted, &GUID_NULL, S_OK, &propvar);
+    hr = IMFStreamSink_QueueEvent(media_sink->stream, MEStreamSinkStarted, &GUID_NULL, S_OK, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = wait_media_event(session, callback, MESessionStarted, 1000, &propvar);
@@ -8262,7 +8360,7 @@ static void test_media_session_seek(void)
     memset(&actual_object_state_record, 0, sizeof(actual_object_state_record));
     SET_EXPECT(test_media_stream_RequestSample);
     SET_EXPECT(test_transform_ProcessOutput);
-    IMFStreamSink_QueueEvent(&stream_sink.IMFStreamSink_iface, MEStreamSinkRequestSample, &GUID_NULL, S_OK, &propvar);
+    IMFStreamSink_QueueEvent(media_sink->stream, MEStreamSinkRequestSample, &GUID_NULL, S_OK, &propvar);
 
     Sleep(20);
 
@@ -8277,7 +8375,7 @@ static void test_media_session_seek(void)
 
     Sleep(20);
 
-    hr = IMFStreamSink_QueueEvent(&stream_sink.IMFStreamSink_iface, MEStreamSinkPaused, &GUID_NULL, S_OK, &propvar);
+    hr = IMFStreamSink_QueueEvent(media_sink->stream, MEStreamSinkPaused, &GUID_NULL, S_OK, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = wait_media_event(session, callback, MESessionPaused, 1000, &propvar);
@@ -8300,7 +8398,7 @@ static void test_media_session_seek(void)
 
     Sleep(20);
 
-    hr = IMFStreamSink_QueueEvent(&stream_sink.IMFStreamSink_iface, MEStreamSinkStarted, &GUID_NULL, S_OK, &propvar);
+    hr = IMFStreamSink_QueueEvent(media_sink->stream, MEStreamSinkStarted, &GUID_NULL, S_OK, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = wait_media_event(session, callback, MESessionStarted, 1000, &propvar);
@@ -8325,15 +8423,14 @@ static void test_media_session_seek(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(media_sink.shutdown, "Media sink didn't shutdown.\n");
+    ok(media_sink->shutdown, "Media sink didn't shutdown.\n");
 
     hr = IMFMediaSource_Shutdown(source);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaSession_Release(session);
     IMFMediaSource_Release(source);
-    IMFMediaEventQueue_Release(stream_sink.event_queue);
-    if (media_sink.clock) IMFPresentationClock_Release(media_sink.clock);
+    IMFMediaSink_Release(&media_sink->IMFMediaSink_iface);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
