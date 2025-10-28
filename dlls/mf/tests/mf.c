@@ -1170,7 +1170,9 @@ struct test_callback
     HANDLE event;
     IMFMediaEvent *media_event;
     BOOL check_media_event;
-    BOOL timed_out;
+
+    CRITICAL_SECTION cs;
+    BOOL subscribed;
 };
 
 static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -1208,6 +1210,7 @@ static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
         if (callback->media_event)
             IMFMediaEvent_Release(callback->media_event);
         CloseHandle(callback->event);
+        DeleteCriticalSection(&callback->cs);
         free(callback);
     }
 
@@ -1238,13 +1241,23 @@ static HRESULT WINAPI testcallback_Invoke(IMFAsyncCallback *iface, IMFAsyncResul
 
         hr = IMFAsyncResult_GetState(result, &object);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        EnterCriticalSection(&callback->cs);
+
         hr = IMFMediaEventGenerator_EndGetEvent((IMFMediaEventGenerator *)object,
                 result, &callback->media_event);
+        callback->subscribed = FALSE;
+        SetEvent(callback->event);
+
+        LeaveCriticalSection(&callback->cs);
+
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         IUnknown_Release(object);
     }
-
-    SetEvent(callback->event);
+    else
+    {
+        SetEvent(callback->event);
+    }
 
     return S_OK;
 }
@@ -1268,6 +1281,7 @@ static IMFAsyncCallback *create_test_callback(BOOL check_media_event)
     callback->refcount = 1;
     callback->check_media_event = check_media_event;
     callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
+    InitializeCriticalSection(&callback->cs);
     callback->event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(!!callback->event, "CreateEventW failed, error %lu\n", GetLastError());
 
@@ -1286,10 +1300,22 @@ static HRESULT gen_wait_media_event_(int line, IMFMediaEventGenerator *event_gen
 
     do
     {
-        hr = IMFMediaEventGenerator_BeginGetEvent(event_generator, &impl->IMFAsyncCallback_iface, (IUnknown *)event_generator);
-        ok_(__FILE__, line)(hr == S_OK || (impl->timed_out && (hr == MF_E_MULTIPLE_SUBSCRIBERS || hr == MF_S_MULTIPLE_BEGIN)), "Unexpected hr %#lx.\n", hr);
-        ret = WaitForSingleObject(impl->event, timeout);
-        impl->timed_out = FALSE;
+        ret = WAIT_TIMEOUT;
+        EnterCriticalSection(&impl->cs);
+        if (!impl->subscribed && (ret = WaitForSingleObject(impl->event, 0)) != WAIT_OBJECT_0)
+        {
+            impl->subscribed = TRUE;
+            hr = IMFMediaEventGenerator_BeginGetEvent(event_generator, &impl->IMFAsyncCallback_iface, (IUnknown *)event_generator);
+            LeaveCriticalSection(&impl->cs);
+            ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ret = WaitForSingleObject(impl->event, timeout);
+        }
+        else
+        {
+            LeaveCriticalSection(&impl->cs);
+            if (ret != WAIT_OBJECT_0)
+                ret = WaitForSingleObject(impl->event, timeout);
+        }
         ok_(__FILE__, line)(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
         hr = IMFMediaEvent_GetType(impl->media_event, &type);
         ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1329,15 +1355,26 @@ static HRESULT gen_wait_media_event_until_blocking_(int line, IMFMediaEventGener
 
     do
     {
-        hr = IMFMediaEventGenerator_BeginGetEvent(event_generator, &impl->IMFAsyncCallback_iface, (IUnknown *)event_generator);
-        ok_(__FILE__, line)(hr == S_OK || (impl->timed_out && (hr == MF_E_MULTIPLE_SUBSCRIBERS || hr == MF_S_MULTIPLE_BEGIN)), "Unexpected hr %#lx.\n", hr);
-        ret = WaitForSingleObject(impl->event, timeout);
-        if (ret == WAIT_TIMEOUT)
+        ret = WAIT_TIMEOUT;
+        EnterCriticalSection(&impl->cs);
+        if (!impl->subscribed && (ret = WaitForSingleObject(impl->event, 0)) != WAIT_OBJECT_0)
         {
-            impl->timed_out = TRUE;
-            return WAIT_TIMEOUT;
+            impl->subscribed = TRUE;
+            hr = IMFMediaEventGenerator_BeginGetEvent(event_generator, &impl->IMFAsyncCallback_iface, (IUnknown *)event_generator);
+            LeaveCriticalSection(&impl->cs);
+            ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ret = WaitForSingleObject(impl->event, timeout);
         }
-        impl->timed_out = FALSE;
+        else
+        {
+            LeaveCriticalSection(&impl->cs);
+            if (ret != WAIT_OBJECT_0)
+                ret = WaitForSingleObject(impl->event, timeout);
+        }
+
+        if (ret == WAIT_TIMEOUT)
+            return WAIT_TIMEOUT;
+
         hr = IMFMediaEvent_GetType(impl->media_event, &type);
         ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     } while (type != expect_type);
