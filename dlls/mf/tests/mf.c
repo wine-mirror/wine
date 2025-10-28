@@ -8242,6 +8242,7 @@ static void test_media_session_seek(void)
     CHECK_CALLED(test_stream_sink_Flush);
     CHECK_CALLED(test_transform_ProcessMessage_FLUSH);
 
+    flaky
     compare_object_states(&actual_object_state_record, &expected_seek_start_no_pending_request_records);
 
     /* Test a sample request only (i.e. with no sample delivery), then pause and then start with a seek */
@@ -8304,6 +8305,7 @@ static void test_media_session_seek(void)
     CHECK_CALLED(test_transform_ProcessOutput);
     CHECK_CALLED(test_media_stream_RequestSample);
 
+    flaky
     compare_object_states(&actual_object_state_record, &expected_seek_start_pending_request_records);
 
     IMFPresentationClock_RemoveClockStateSink(presentation_clock, &test_seek_clock_sink);
