@@ -68,8 +68,8 @@
 @ stub -arch=win64 ?FlushFactoryCache@@YAXXZ
 @ cdecl -arch=win32 ?Free@Heap@Details@Platform@@SAXPAX@Z(ptr) Free
 @ cdecl -arch=win64 ?Free@Heap@Details@Platform@@SAXPEAX@Z(ptr) Free
-@ stub -arch=win32 ?FreeException@Heap@Details@Platform@@SAXPAX@Z
-@ stub -arch=win64 ?FreeException@Heap@Details@Platform@@SAXPEAX@Z
+@ cdecl -arch=win32 ?FreeException@Heap@Details@Platform@@SAXPAX@Z(ptr) FreeException
+@ cdecl -arch=win64 ?FreeException@Heap@Details@Platform@@SAXPEAX@Z(ptr) FreeException
 @ stub -arch=i386 ?GetActivationFactory@Details@Platform@@YGJPAVModuleBase@1WRL@Microsoft@@PAUHSTRING__@@PAPAUIActivationFactory@@@Z
 @ stub -arch=arm ?GetActivationFactory@Details@Platform@@YAJPAVModuleBase@1WRL@Microsoft@@PAUHSTRING__@@PAPAUIActivationFactory@@@Z
 @ stub -arch=win64 ?GetActivationFactory@Details@Platform@@YAJPEAVModuleBase@1WRL@Microsoft@@PEAUHSTRING__@@PEAPEAUIActivationFactory@@@Z
@@ -507,10 +507,10 @@
 @ cdecl -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K@Z(long) Allocate
 @ cdecl -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXII@Z(long long) AllocateWithWeakRef
 @ cdecl -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K0@Z(long long) AllocateWithWeakRef
-@ stub -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXI@Z
+@ cdecl -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXI@Z(long) AllocateException
 @ stub -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K0@Z
 @ stub -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXII@Z
-@ stub -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K@Z
+@ cdecl -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K@Z(long) AllocateException
 @ stub ?Compare@Duration@Xaml@UI@Windows@@SAHV1234@0@Z
 @ stub -arch=win32 ??0COMException@Platform@@Q$AAA@HP$AAVString@1@@Z
 @ stub -arch=win64 ??0COMException@Platform@@QE$AAA@HPE$AAVString@1@@Z

@@ -101,11 +101,22 @@ void *__cdecl Allocate(size_t size)
     return addr;
 }
 
+void *__cdecl AllocateException(size_t size)
+{
+    FIXME("(%Iu): stub!\n", size);
+    return NULL;
+}
+
 void __cdecl Free(void *addr)
 {
     TRACE("(%p)\n", addr);
 
     free(addr);
+}
+
+void __cdecl FreeException(void *addr)
+{
+    FIXME("(%p): stub!\n", addr);
 }
 
 struct control_block

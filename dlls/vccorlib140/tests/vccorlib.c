@@ -130,6 +130,8 @@ static int (__cdecl *p_platform_type_GetTypeCode)(void *);
 static HSTRING (__cdecl *p_platform_type_ToString)(void *);
 static HSTRING (__cdecl *p_platform_type_get_FullName)(void *);
 static void *(WINAPI *pCreateValue)(int type, const void *);
+static void *(__cdecl *pAllocateException)(size_t);
+static void (__cdecl *pFreeException)(void *);
 
 static void *(__cdecl *p__RTtypeid)(const void *);
 static const char *(__thiscall *p_type_info_name)(void *);
@@ -173,6 +175,8 @@ static BOOL init(void)
     p_platform_type_ToString = (void *)GetProcAddress(hmod, "?ToString@Type@Platform@@U$AAAP$AAVString@2@XZ");
     p_platform_type_get_FullName = (void *)GetProcAddress(hmod, "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
     pCreateValue = (void *)GetProcAddress(hmod, "?CreateValue@Details@Platform@@YAP$AAVObject@2@W4TypeCode@2@PBX@Z");
+    pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPAXI@Z");
+    pFreeException = (void *)GetProcAddress(hmod, "?FreeException@Heap@Details@Platform@@SAXPAX@Z");
     p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBAPBDXZ");
     p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBAPBDXZ");
     p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QBAHABV0@@Z");
@@ -198,6 +202,8 @@ static BOOL init(void)
                 "?get@FullName@Type@Platform@@QE$AAAPE$AAVString@3@XZ");
         pCreateValue = (void *)GetProcAddress(hmod,
                 "?CreateValue@Details@Platform@@YAPE$AAVObject@2@W4TypeCode@2@PEBX@Z");
+        pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPEAX_K@Z");
+        pFreeException = (void *)GetProcAddress(hmod, "?FreeException@Heap@Details@Platform@@SAXPEAX@Z");
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QEBAPEBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QEBAPEBDXZ");
         p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QEBAHAEBV0@@Z");
@@ -222,6 +228,8 @@ static BOOL init(void)
                 "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
         pCreateValue = (void *)GetProcAddress(hmod,
                 "?CreateValue@Details@Platform@@YGP$AAVObject@2@W4TypeCode@2@PBX@Z");
+        pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPAXI@Z");
+        pFreeException = (void *)GetProcAddress(hmod, "?FreeException@Heap@Details@Platform@@SAXPAX@Z");
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBEPBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBEPBDXZ");
         p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QBEHABV0@@Z");
@@ -240,6 +248,8 @@ static BOOL init(void)
     ok(p_platform_type_ToString != NULL, "Platform::Type::ToString not available\n");
     ok(p_platform_type_get_FullName != NULL, "Platform::Type::FullName not available\n");
     ok(pCreateValue != NULL, "CreateValue not available\n");
+    ok(pAllocateException != NULL, "AllocateException not available\n");
+    ok(pFreeException != NULL, "FreeException not available\n");
 
     ok(p_type_info_name != NULL, "type_info::name not available\n");
     ok(p_type_info_raw_name != NULL, "type_info::raw_name not available\n");
@@ -444,7 +454,7 @@ static void test_GetIidsFn(void)
 
 static void test_Allocate(void)
 {
-    void *addr;
+    void *addr, **ptr, **base;
 
     addr = pAllocate(0);
     ok(!!addr, "got addr %p\n", addr);
@@ -454,6 +464,35 @@ static void test_Allocate(void)
     ok(!!addr, "got addr %p\n", addr);
     pFree(addr);
     pFree(NULL);
+
+    /* AllocateException allocates additional space for two pointer-width fields, with the second field used as the
+     * back-pointer to the exception data. */
+    addr = pAllocateException(0);
+    todo_wine ok(!!addr, "got addr %p\n", addr);
+    if (!addr) return;
+    ptr = (void **)((ULONG_PTR)addr - sizeof(void *));
+    *ptr = NULL; /* The write should succeed. */
+    base = (void **)((ULONG_PTR)addr - 2 * sizeof(void *));
+    *base = NULL;
+    /* Since base is the actual allocation base, Free(base) should succeed. */
+    pFree(base);
+
+    addr = pAllocateException(sizeof(void *));
+    ok(!!addr, "got addr %p\n", addr);
+    ptr = (void **)((ULONG_PTR)addr - sizeof(void *));
+    *ptr = NULL;
+    base = (void **)((ULONG_PTR)addr - 2 * sizeof(void *));
+    *base = NULL;
+    /* FreeException will derive the allocation base itself. */
+    pFreeException(addr);
+
+    /* Do what AllocateException does, manually. */
+    base = pAllocate(sizeof(void *) * 2 + sizeof(UINT32));
+    ok(!!base, "got base %p\n", base);
+    /* addr is what AllocateException would return. */
+    addr = (void *)((ULONG_PTR)base + sizeof(void *) * 2);
+    /* FreeException should succeed with addr. */
+    pFreeException(addr);
 }
 
 #define test_refcount(a, b) test_refcount_(__LINE__, (a), (b))
