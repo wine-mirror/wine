@@ -131,6 +131,7 @@ static HSTRING (__cdecl *p_platform_type_ToString)(void *);
 static HSTRING (__cdecl *p_platform_type_get_FullName)(void *);
 static void *(WINAPI *pCreateValue)(int type, const void *);
 static void *(__cdecl *pAllocateException)(size_t);
+static void *(__cdecl *pAllocateExceptionWithWeakRef)(ptrdiff_t, size_t);
 static void (__cdecl *pFreeException)(void *);
 
 static void *(__cdecl *p__RTtypeid)(const void *);
@@ -176,6 +177,8 @@ static BOOL init(void)
     p_platform_type_get_FullName = (void *)GetProcAddress(hmod, "?get@FullName@Type@Platform@@Q$AAAP$AAVString@3@XZ");
     pCreateValue = (void *)GetProcAddress(hmod, "?CreateValue@Details@Platform@@YAP$AAVObject@2@W4TypeCode@2@PBX@Z");
     pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPAXI@Z");
+    pAllocateExceptionWithWeakRef = (void *)GetProcAddress(hmod,
+            "?AllocateException@Heap@Details@Platform@@SAPAXII@Z");
     pFreeException = (void *)GetProcAddress(hmod, "?FreeException@Heap@Details@Platform@@SAXPAX@Z");
     p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBAPBDXZ");
     p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBAPBDXZ");
@@ -203,6 +206,8 @@ static BOOL init(void)
         pCreateValue = (void *)GetProcAddress(hmod,
                 "?CreateValue@Details@Platform@@YAPE$AAVObject@2@W4TypeCode@2@PEBX@Z");
         pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPEAX_K@Z");
+        pAllocateExceptionWithWeakRef = (void *)GetProcAddress(hmod,
+                "?AllocateException@Heap@Details@Platform@@SAPEAX_K0@Z");
         pFreeException = (void *)GetProcAddress(hmod, "?FreeException@Heap@Details@Platform@@SAXPEAX@Z");
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QEBAPEBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QEBAPEBDXZ");
@@ -229,6 +234,8 @@ static BOOL init(void)
         pCreateValue = (void *)GetProcAddress(hmod,
                 "?CreateValue@Details@Platform@@YGP$AAVObject@2@W4TypeCode@2@PBX@Z");
         pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPAXI@Z");
+        pAllocateExceptionWithWeakRef = (void *)GetProcAddress(hmod,
+                    "?AllocateException@Heap@Details@Platform@@SAPAXII@Z");
         pFreeException = (void *)GetProcAddress(hmod, "?FreeException@Heap@Details@Platform@@SAXPAX@Z");
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBEPBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBEPBDXZ");
@@ -249,6 +256,7 @@ static BOOL init(void)
     ok(p_platform_type_get_FullName != NULL, "Platform::Type::FullName not available\n");
     ok(pCreateValue != NULL, "CreateValue not available\n");
     ok(pAllocateException != NULL, "AllocateException not available\n");
+    ok(pAllocateExceptionWithWeakRef != NULL, "AllocateExceptionWithWeakRef not available.\n");
     ok(pFreeException != NULL, "FreeException not available\n");
 
     ok(p_type_info_name != NULL, "type_info::name not available\n");
@@ -512,9 +520,10 @@ struct control_block
     LONG ref_strong;
     IUnknown *object;
     bool is_inline;
-    UINT16 unknown;
+    bool unknown;
+    bool is_exception;
 #ifdef _WIN32
-    char _padding[4];
+    char _padding[5];
 #endif
 };
 
@@ -646,6 +655,7 @@ static void test_AllocateWithWeakRef_inline(void)
     ok(object->weakref->object == &object->IUnknown_iface, "got object %p != %p\n", object->weakref->object,
        &object->IUnknown_iface);
     ok(object->weakref->unknown == 0, "got unknown %d\n", object->weakref->unknown);
+    ok(!object->weakref->is_exception, "got is_exception %d\n", object->weakref->is_exception);
     /* The object is allocate within the weakref. */
     ok((char *)object->weakref == ((char *)object - sizeof(struct control_block)), "got %p != %p\n", object->weakref,
        (char *)object - sizeof(struct control_block));
@@ -703,6 +713,49 @@ static void test_AllocateWithWeakRef(void)
     ok(object->weakref->object == &object->IUnknown_iface, "got object %p != %p\n", object->weakref->object,
        &object->IUnknown_iface);
     ok(object->weakref->unknown == 0, "got unknown %d\n", object->weakref->unknown);
+    ok(!object->weakref->is_exception, "got is_exception %d\n", object->weakref->is_exception);
+
+    hr = IWeakReference_Resolve(weakref, &IID_IAgileObject, (IInspectable **)&out);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    test_refcount(&object->IUnknown_iface, 2);
+    IUnknown_Release(out);
+
+    call_func1(pReleaseTarget, object->weakref);
+    hr = IWeakReference_Resolve(weakref, &IID_IAgileObject, (IInspectable **)&out);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    test_refcount(&object->IUnknown_iface, 2);
+    IUnknown_Release(out);
+
+    count = IWeakReference_AddRef(weakref);
+    ok(count == 2, "got count %lu\n", count);
+
+    count = IUnknown_Release(&object->IUnknown_iface);
+    ok(count == 0, "got count %lu\n", count);
+    test_refcount(weakref, 1);
+    out = (IUnknown *)0xdeadbeef;
+    hr = IWeakReference_Resolve(weakref, &IID_IAgileObject, (IInspectable **)&out);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(out == (IUnknown *)0xdeadbeef, "got out %p\n", out);
+    count = IWeakReference_Release(weakref);
+    ok(count == 0, "got count %lu\n", count);
+
+    /* AllocateExceptionWithWeakRef will not store the control block inline, regardless of the size. */
+    object = pAllocateExceptionWithWeakRef(offsetof(struct unknown_impl, weakref), sizeof(struct unknown_impl));
+    todo_wine ok(object != NULL, "got object %p\n", object);
+    if (!object) return;
+
+    object->strong_ref_free_val = -100;
+    ok(object->weakref != NULL, "got weakref %p\n", object->weakref);
+    object->IUnknown_iface.lpVtbl = &unknown_impl_vtbl;
+    weakref = &object->weakref->IWeakReference_iface;
+
+    test_refcount(weakref, 1);
+    ok(!object->weakref->is_inline, "got is_inline %d\n", object->weakref->is_inline);
+    ok(object->weakref->ref_strong == 1, "got ref_strong %lu\n", object->weakref->ref_strong);
+    ok(object->weakref->object == &object->IUnknown_iface, "got object %p != %p\n", object->weakref->object,
+       &object->IUnknown_iface);
+    ok(object->weakref->unknown == 0, "got unknown %d\n", object->weakref->unknown);
+    ok(object->weakref->is_exception, "got is_exception %d\n", object->weakref->is_exception);
 
     hr = IWeakReference_Resolve(weakref, &IID_IAgileObject, (IInspectable **)&out);
     ok(hr == S_OK, "got hr %#lx\n", hr);

@@ -126,9 +126,10 @@ struct control_block
     LONG ref_strong;
     IUnknown *object;
     bool is_inline;
-    UINT16 unknown;
+    bool unknown;
+    bool is_exception;
 #ifdef _WIN32
-    char _padding[4];
+    char _padding[5];
 #endif
 };
 
@@ -228,8 +229,15 @@ void *__cdecl AllocateWithWeakRef(ptrdiff_t offset, size_t size)
     weakref->object = object;
     weakref->ref_strong = weakref->ref_weak = 1;
     weakref->unknown = 0;
+    weakref->is_exception = FALSE;
 
     return weakref->object;
+}
+
+void *__cdecl AllocateExceptionWithWeakRef(ptrdiff_t offset, size_t size)
+{
+    FIXME("(%Iu, %Iu): stub!\n", offset, size);
+    return NULL;
 }
 
 DEFINE_THISCALL_WRAPPER(control_block_ReleaseTarget, 4)

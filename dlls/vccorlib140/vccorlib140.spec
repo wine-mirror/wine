@@ -508,8 +508,8 @@
 @ cdecl -arch=win32 ?Allocate@Heap@Details@Platform@@SAPAXII@Z(long long) AllocateWithWeakRef
 @ cdecl -arch=win64 ?Allocate@Heap@Details@Platform@@SAPEAX_K0@Z(long long) AllocateWithWeakRef
 @ cdecl -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXI@Z(long) AllocateException
-@ stub -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K0@Z
-@ stub -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXII@Z
+@ cdecl -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K0@Z(long long) AllocateExceptionWithWeakRef
+@ cdecl -arch=win32 ?AllocateException@Heap@Details@Platform@@SAPAXII@Z(long long) AllocateExceptionWithWeakRef
 @ cdecl -arch=win64 ?AllocateException@Heap@Details@Platform@@SAPEAX_K@Z(long) AllocateException
 @ stub ?Compare@Duration@Xaml@UI@Windows@@SAHV1234@0@Z
 @ stub -arch=win32 ??0COMException@Platform@@Q$AAA@HP$AAVString@1@@Z
