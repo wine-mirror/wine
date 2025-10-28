@@ -152,7 +152,6 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd);
 
 /* X11drv functions */
 extern int  (CDECL *pLoadTabletInfo)(HWND hwnddefault);
-extern int  (CDECL *pGetCurrentPacket)(LPWTPACKET packet);
 extern UINT (CDECL *pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput);
 
 extern HWND hwndDefault;

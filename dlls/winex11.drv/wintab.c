@@ -1094,16 +1094,6 @@ static BOOL tablet_attach_queue( HWND owner )
     return TRUE;
 }
 
-/***********************************************************************
- *           x11drv_tablet_get_packet
- */
-NTSTATUS x11drv_tablet_get_packet( void *packet )
-{
-    *(WTPACKET *)packet = gMsgPacket;
-    return 1;
-}
-
-
 static inline int CopyTabletData(LPVOID target, LPCVOID src, INT size)
 {
     /*
@@ -1559,6 +1549,9 @@ LRESULT X11DRV_WintabProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, vo
     {
     case NtUserWintabAttach:
         return tablet_attach_queue( hwnd );
+    case NtUserWintabPacket:
+        *(WTPACKET *)buffer = gMsgPacket;
+        return 1;
     }
     return 0;
 }
@@ -1569,14 +1562,6 @@ LRESULT X11DRV_WintabProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, vo
  *           X11DRV_WintabProc
  */
 LRESULT X11DRV_WintabProc( HWND hwmd, UINT msg, WPARAM wparam, LPARAM lparam, void *buffer )
-{
-    return 0;
-}
-
-/***********************************************************************
- *           x11drv_tablet_get_packet
- */
-NTSTATUS x11drv_tablet_get_packet( void *arg )
 {
     return 0;
 }
