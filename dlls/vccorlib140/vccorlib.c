@@ -576,6 +576,55 @@ void *WINAPI CreateValue(int typecode, const void *val)
     return obj;
 }
 
+void *__cdecl CreateExceptionWithMessage(HRESULT hr, HSTRING msg)
+{
+    FIXME("(%#lx, %s): stub!\n", hr, debugstr_hstring(msg));
+    return NULL;
+}
+
+void *__cdecl CreateException(HRESULT hr)
+{
+    FIXME("(%#lx): stub!\n", hr);
+    return NULL;
+}
+
+void WINAPI __abi_WinRTraiseCOMException(HRESULT hr)
+{
+    FIXME("(%#lx): stub!\n", hr);
+}
+
+#define WINRT_EXCEPTIONS                                     \
+    WINRT_EXCEPTION(AccessDenied, E_ACCESSDENIED)            \
+    WINRT_EXCEPTION(ChangedState, E_CHANGED_STATE)           \
+    WINRT_EXCEPTION(ClassNotRegistered, REGDB_E_CLASSNOTREG) \
+    WINRT_EXCEPTION(Disconnected, RPC_E_DISCONNECTED)        \
+    WINRT_EXCEPTION(Failure, E_FAIL)                         \
+    WINRT_EXCEPTION(InvalidArgument, E_INVALIDARG)           \
+    WINRT_EXCEPTION(InvalidCast, E_NOINTERFACE)              \
+    WINRT_EXCEPTION(NotImplemented, E_NOTIMPL)               \
+    WINRT_EXCEPTION(NullReference, E_POINTER)                \
+    WINRT_EXCEPTION(ObjectDisposed, RO_E_CLOSED)             \
+    WINRT_EXCEPTION(OperationCanceled, E_ABORT)              \
+    WINRT_EXCEPTION(OutOfBounds, E_BOUNDS)                   \
+    WINRT_EXCEPTION(OutOfMemory, E_OUTOFMEMORY)              \
+    WINRT_EXCEPTION(WrongThread, RPC_E_WRONG_THREAD)
+
+#define WINRT_EXCEPTION(name, hr)                          \
+    void WINAPI __abi_WinRTraise##name##Exception(void)    \
+    {                                                      \
+        FIXME("(): stub!\n");                              \
+    }
+
+WINRT_EXCEPTIONS
+
+#undef WINRT_EXCEPTION
+
+HSTRING __cdecl platform_exception_get_Message(void *excp)
+{
+    FIXME("(%p): stub!\n", excp);
+    return NULL;
+}
+
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
