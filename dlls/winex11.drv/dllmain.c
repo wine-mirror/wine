@@ -21,9 +21,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "ntgdi.h"
-#include "unixlib.h"
-#include "wine/debug.h"
+#include "wine/unixlib.h"
 
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
@@ -31,7 +29,5 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 
     DisableThreadLibraryCalls( instance );
     if (__wine_init_unix_call()) return FALSE;
-    if (X11DRV_CALL( init, NULL )) return FALSE;
-
-    return TRUE;
+    return !WINE_UNIX_CALL( 0, NULL );
 }
