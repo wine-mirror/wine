@@ -3799,6 +3799,9 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
             params.dest_tid = params32->dest_tid;
             return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, type, ansi );
         }
+
+    case NtUserWintabDriverCall:
+        return NtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
     }
 
     return message_call_32to64( hwnd, msg, wparam, lparam, result_info, type, ansi );

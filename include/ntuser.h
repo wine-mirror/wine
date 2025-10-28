@@ -422,6 +422,16 @@ enum
     NtUserSystemTrayCall      = 0x0306,
     NtUserDragDropCall        = 0x0307,
     NtUserPostDdeCall         = 0x0308,
+    NtUserWintabDriverCall    = 0x0309,
+};
+
+/* NtUserWintabDriverCall codes */
+enum
+{
+    NtUserWintabAttach,
+    NtUserWintabInfo,
+    NtUserWintabInit,
+    NtUserWintabPacket,
 };
 
 /* NtUserThunkedMenuItemInfo codes */

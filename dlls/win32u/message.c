@@ -4707,6 +4707,9 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     case NtUserPostDdeCall:
         return post_dde_message_call( hwnd, msg, wparam, lparam, result_info );
 
+    case NtUserWintabDriverCall:
+        return user_driver->pWintabProc( hwnd, msg, wparam, lparam, result_info );
+
     default:
         FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, (long)wparam, lparam, result_info, type, ansi );
     }
