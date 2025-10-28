@@ -485,7 +485,7 @@ static void disable_system_cursors(void)
 /***********************************************************************
  *           x11drv_tablet_load_info
  */
-NTSTATUS x11drv_tablet_load_info( void *hwnd )
+static BOOL load_tablet_info( HWND hwnd )
 {
     static const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
     static const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
@@ -1546,6 +1546,8 @@ LRESULT X11DRV_WintabProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, vo
         return tablet_attach_queue( hwnd );
     case NtUserWintabInfo:
         return get_tablet_info( wparam, lparam, buffer );
+    case NtUserWintabInit:
+        return load_tablet_info( hwnd );
     case NtUserWintabPacket:
         *(WTPACKET *)buffer = gMsgPacket;
         return 1;

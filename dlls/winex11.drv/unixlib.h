@@ -23,7 +23,6 @@
 enum x11drv_funcs
 {
     unix_init,
-    unix_tablet_load_info,
     unix_funcs_count,
 };
 

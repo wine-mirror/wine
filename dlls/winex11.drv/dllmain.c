@@ -35,11 +35,3 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 
     return TRUE;
 }
-
-/***********************************************************************
- *           LoadTabletInfo (winex11.@)
- */
-BOOL CDECL X11DRV_LoadTabletInfo( HWND hwnd )
-{
-    return X11DRV_CALL( tablet_load_info, hwnd );
-}

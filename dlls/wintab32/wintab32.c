@@ -42,8 +42,6 @@ static CRITICAL_SECTION_DEBUG csTablet_debug =
 };
 CRITICAL_SECTION csTablet = { &csTablet_debug, -1, 0, 0, 0, 0 };
 
-int  (CDECL *pLoadTabletInfo)(HWND hwnddefault) = NULL;
-
 static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
 
@@ -66,30 +64,6 @@ static VOID TABLET_Unregister(void)
     UnregisterClassW(L"WineTabletClass", NULL);
 }
 
-static HMODULE load_graphics_driver(void)
-{
-    static const WCHAR key_pathW[] = L"System\\CurrentControlSet\\Control\\Video\\{";
-    static const WCHAR displayW[] = L"}\\0000";
-
-    HMODULE ret = 0;
-    HKEY hkey;
-    DWORD size;
-    WCHAR path[MAX_PATH];
-    WCHAR key[ARRAY_SIZE(key_pathW) + ARRAY_SIZE(displayW) + 40];
-    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), L"__wine_display_device_guid" ));
-
-    if (!guid_atom) return 0;
-    memcpy( key, key_pathW, sizeof(key_pathW) );
-    if (!GlobalGetAtomNameW( guid_atom, key + lstrlenW(key), 40 )) return 0;
-    lstrcatW( key, displayW );
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
-    size = sizeof(path);
-    if (!RegQueryValueExW( hkey, L"GraphicsDriver", NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
-    RegCloseKey( hkey );
-    TRACE( "%s %p\n", debugstr_w(path), ret );
-    return ret;
-}
-
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
     TRACE("%p, %lx, %p\n",hInstDLL,fdwReason,lpReserved);
@@ -101,12 +75,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             TABLET_Register();
             hwndDefault = CreateWindowW(L"WineTabletClass", L"Tablet",
                                         WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);
-            if (hwndDefault)
-            {
-                HMODULE module = load_graphics_driver();
-                pLoadTabletInfo = (void *)GetProcAddress(module, "LoadTabletInfo");
-            }
-            else
+            if (!hwndDefault)
                 return FALSE;
             break;
         case DLL_PROCESS_DETACH:

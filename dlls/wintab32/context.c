@@ -149,7 +149,7 @@ static inline BOOL LoadTablet(void)
 
     if (loaded == TI_START)
     {
-        if (pLoadTabletInfo && pLoadTabletInfo(hwndDefault))
+        if (NtUserMessageCall(hwndDefault, NtUserWintabInit, 0, 0, NULL, NtUserWintabDriverCall, FALSE))
         {
             TRACE("Initialized the tablet to hwnd %p\n", hwndDefault);
             loaded = TI_OK;

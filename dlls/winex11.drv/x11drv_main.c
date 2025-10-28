@@ -806,7 +806,6 @@ BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     x11drv_init,
-    x11drv_tablet_load_info,
 };
 
 
@@ -818,7 +817,6 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     x11drv_init,
-    x11drv_tablet_load_info,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
