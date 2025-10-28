@@ -800,7 +800,7 @@ static HRESULT WINAPI test_media_sink_GetStreamSinkCount(IMFMediaSink *iface, DW
 static HRESULT WINAPI test_media_sink_GetStreamSinkByIndex(IMFMediaSink *iface, DWORD index, IMFStreamSink **sink)
 {
     struct test_media_sink *sink_impl = impl_from_IMFMediaSink(iface);
-    if (sink_impl->stream)
+    if (!index && sink_impl->stream)
     {
         IMFStreamSink_AddRef(*sink = sink_impl->stream);
         return S_OK;
