@@ -1425,6 +1425,142 @@ static void test_scsi_pass_through(HANDLE device)
     ok(!memcmp(buf.packet.Cdb, packet.Cdb, sizeof(packet.Cdb)), "got unexpected Cdb\n");
 }
 
+static void test_scsi_pass_through_direct(HANDLE device)
+{
+    struct scsi_pass_through_direct_buffer {
+        SCSI_PASS_THROUGH_DIRECT packet;
+        UCHAR sense[32];
+    } buf;
+    SCSI_PASS_THROUGH_DIRECT packet;
+    UCHAR data[2048];
+    UCHAR sense_key;
+    DWORD size;
+    BOOL ret;
+
+    /* Test INQUIRY with different I/O buffer */
+    memset(&packet, 0, sizeof(packet));
+    packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
+    packet.CdbLength = sizeof(inquiry_cmd);
+    packet.DataIn = SCSI_IOCTL_DATA_IN;
+    packet.DataTransferLength = inquiry_cmd[4];
+    packet.SenseInfoLength = 0;
+    packet.TimeOutValue = 2;
+    packet.DataBuffer = data;
+    packet.SenseInfoOffset = 0;
+    memcpy(packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd));
+
+    memset(&buf, 0xcc, sizeof(buf));
+    memset(data, 0xcc, sizeof(data));
+    size = 0xdeadbeef;
+    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
+            &packet, sizeof(packet), &buf.packet, sizeof(buf.packet), &size, NULL);
+    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
+
+    ok(size == sizeof(SCSI_PASS_THROUGH_DIRECT), "unexpected size %lu\n", size);
+
+    ok((data[0] & 0x1f) == READ_ONLY_DIRECT_ACCESS_DEVICE, "unexpected device type %d\n", data[0] & 0x1f);
+    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH_DIRECT), "got Length %u\n", buf.packet.Length);
+    ok(buf.packet.ScsiStatus == SCSISTAT_GOOD, "got ScsiStatus %u\n", buf.packet.ScsiStatus);
+    ok(buf.packet.CdbLength == sizeof(inquiry_cmd), "got CdbLength %u\n", buf.packet.CdbLength);
+    ok(buf.packet.DataIn == SCSI_IOCTL_DATA_IN, "got DataIn %u\n", buf.packet.DataIn);
+    ok(buf.packet.DataTransferLength == packet.Cdb[4], "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
+    ok(!buf.packet.SenseInfoLength, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
+    ok(buf.packet.TimeOutValue == packet.TimeOutValue, "got TimeOutValue %lu\n", buf.packet.TimeOutValue);
+    ok(buf.packet.DataBuffer == packet.DataBuffer, "got DataBuffer %p\n", buf.packet.DataBuffer);
+    ok(buf.packet.SenseInfoOffset == packet.SenseInfoOffset, "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
+    ok(!memcmp(buf.packet.Cdb, packet.Cdb, sizeof(packet.Cdb)), "got unexpected Cdb\n");
+
+    /* Expect error due to insufficient output buffer size */
+    memset(&buf, 0xcc, sizeof(buf));
+    memset(data, 0xcc, sizeof(data));
+    packet.SenseInfoLength = 18;
+    packet.SenseInfoOffset = offsetof(struct scsi_pass_through_direct_buffer, sense);
+    size = 0xdeadbeef;
+    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
+            &packet, sizeof(packet), &buf.packet, sizeof(buf.packet), &size, NULL);
+    todo_wine ok(!ret, "DeviceIoControl succeeded\n");
+
+    /* Expect error due to insufficient input length */
+    packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT) - 10;
+
+    memset(&buf, 0xcc, sizeof(buf));
+    memset(data, 0xcc, sizeof(data));
+    size = 0xdeadbeef;
+    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
+            &packet, sizeof(packet), &buf, sizeof(buf), &size, NULL);
+    ok(!ret, "DeviceIoControl succeeded\n");
+
+    /* Test INQUIRY with same I/O buffer */
+    memset(&buf, 0xcc, sizeof(buf));
+    memset(data, 0xcc, sizeof(data));
+    buf.packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
+    buf.packet.CdbLength = sizeof(inquiry_cmd);
+    buf.packet.DataIn = SCSI_IOCTL_DATA_IN;
+    buf.packet.DataTransferLength = inquiry_cmd[4];
+    buf.packet.SenseInfoLength = 18;
+    buf.packet.TimeOutValue = 2;
+    buf.packet.DataBuffer = data;
+    buf.packet.SenseInfoOffset = offsetof(struct scsi_pass_through_direct_buffer, sense);
+    memcpy(buf.packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd));
+
+    size = 0xdeadbeef;
+    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
+            &buf, sizeof(buf), &buf, sizeof(buf), &size, NULL);
+    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
+
+    trace("size %lu, sense %lu+%u, data %lu\n",
+            size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength, buf.packet.DataTransferLength);
+    ok(size == sizeof(SCSI_PASS_THROUGH_DIRECT), "unexpected size %lu\n", size);
+
+    ok((data[0] & 0x1f) == READ_ONLY_DIRECT_ACCESS_DEVICE, "unexpected device type %d\n", data[0] & 0x1f);
+    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH_DIRECT), "got Length %u\n", buf.packet.Length);
+    ok(buf.packet.ScsiStatus == SCSISTAT_GOOD, "got ScsiStatus %u\n", buf.packet.ScsiStatus);
+    ok(buf.packet.CdbLength == sizeof(inquiry_cmd), "got CdbLength %u\n", buf.packet.CdbLength);
+    ok(buf.packet.DataIn == SCSI_IOCTL_DATA_IN, "got DataIn %u\n", buf.packet.DataIn);
+    ok(buf.packet.DataTransferLength == packet.Cdb[4], "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
+    ok(!buf.packet.SenseInfoLength, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
+    ok(buf.packet.DataBuffer == data, "got DataBuffer %p\n", buf.packet.DataBuffer);
+    ok(buf.packet.SenseInfoOffset == offsetof(struct scsi_pass_through_direct_buffer, sense), "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
+    ok(!memcmp(buf.packet.Cdb, inquiry_cmd, sizeof(inquiry_cmd)), "got unexpected Cdb\n");
+
+    /* Test sense buffer */
+    memset(&packet, 0, sizeof(packet));
+    packet.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
+    packet.CdbLength = sizeof(read_cmd);
+    packet.DataIn = SCSI_IOCTL_DATA_IN;
+    packet.DataTransferLength = sizeof(data);
+    packet.SenseInfoLength = 18;
+    packet.TimeOutValue = 2;
+    packet.DataBuffer = data;
+    packet.SenseInfoOffset = offsetof(struct scsi_pass_through_direct_buffer, sense);
+    memcpy(packet.Cdb, read_cmd, sizeof(read_cmd));
+
+    memset(&buf, 0xcc, sizeof(buf));
+    memset(data, 0xcc, sizeof(data));
+    size = 0xdeadbeef;
+    ret = DeviceIoControl(device, IOCTL_SCSI_PASS_THROUGH_DIRECT,
+            &packet, sizeof(packet), &buf, sizeof(buf), &size, NULL);
+    ok(ret, "DeviceIoControl failed, last=%ld\n", GetLastError());
+
+    trace("size %lu, sense %lu+%u, data %lu\n",
+            size, buf.packet.SenseInfoOffset, buf.packet.SenseInfoLength, buf.packet.DataTransferLength);
+    todo_wine ok(size == buf.packet.SenseInfoOffset + buf.packet.SenseInfoLength, "unexpected size %lu\n", size);
+
+    ok(buf.packet.Length == sizeof(SCSI_PASS_THROUGH_DIRECT), "got Length %u\n", buf.packet.Length);
+    ok(buf.packet.ScsiStatus == SCSISTAT_CHECK_CONDITION, "got ScsiStatus %d\n", buf.packet.ScsiStatus);
+    ok(buf.packet.CdbLength == packet.CdbLength, "got CdbLength %u\n", buf.packet.CdbLength);
+    ok(buf.packet.SenseInfoLength == 18, "got SenseInfoLength %u\n", buf.packet.SenseInfoLength);
+    ok((buf.sense[0] & 0x7f) == 0x70, "got Response Code %#x\n", buf.sense[0]);
+    sense_key = buf.sense[2] & 0xf;
+    ok(sense_key == SCSI_SENSE_NOT_READY || sense_key == SCSI_SENSE_ILLEGAL_REQUEST, "got Additional Sense Code %#x\n", sense_key);
+    ok(buf.packet.DataIn == packet.DataIn, "got DataIn %u\n", buf.packet.DataIn);
+    ok(!buf.packet.DataTransferLength || buf.packet.DataTransferLength == sizeof(data), "got DataTransferLength %lu\n", buf.packet.DataTransferLength);
+    ok(buf.packet.TimeOutValue == packet.TimeOutValue, "got TimeOutValue %lu\n", buf.packet.TimeOutValue);
+    ok(buf.packet.DataBuffer == packet.DataBuffer, "got DataBuffer %p\n", buf.packet.DataBuffer);
+    ok(buf.packet.SenseInfoOffset == packet.SenseInfoOffset, "got SenseInfoOffset %lu\n", buf.packet.SenseInfoOffset);
+    ok(!memcmp(buf.packet.Cdb, packet.Cdb, sizeof(packet.Cdb)), "got unexpected Cdb\n");
+}
+
 static void test_cdrom_ioctl(void)
 {
     char drive_letter, drive_path[] = "A:\\", drive_full_path[] = "\\\\.\\A:";
@@ -1474,6 +1610,7 @@ static void test_cdrom_ioctl(void)
         }
 
         test_scsi_pass_through(handle);
+        test_scsi_pass_through_direct(handle);
 
         CloseHandle(handle);
     }
