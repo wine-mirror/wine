@@ -27,7 +27,6 @@
 #include <winternl.h>
 #include <winreg.h>
 #include "wine/test.h"
-#include "wine/heap.h"
 #include "wine/rbtree.h"
 
 #ifndef STATUS_DEBUGGER_INACTIVE
@@ -95,7 +94,7 @@ static DWORD save_value(HKEY hkey, const char *value, reg_save_value *saved)
     ret=RegQueryValueExA(hkey, value, NULL, &saved->type, NULL, &saved->size);
     if (ret == ERROR_SUCCESS)
     {
-        saved->data=HeapAlloc(GetProcessHeap(), 0, saved->size);
+        saved->data=malloc(saved->size);
         RegQueryValueExA(hkey, value, NULL, &saved->type, saved->data, &saved->size);
     }
     return ret;
@@ -106,7 +105,7 @@ static void restore_value(HKEY hkey, reg_save_value *saved)
     if (saved->data)
     {
         RegSetValueExA(hkey, saved->name, 0, saved->type, saved->data, saved->size);
-        HeapFree(GetProcessHeap(), 0, saved->data);
+        free(saved->data);
     }
     else
         RegDeleteValueA(hkey, saved->name);
@@ -119,13 +118,13 @@ static void get_events(const char* name, HANDLE *start_event, HANDLE *done_event
 
     basename=strrchr(name, '\\');
     basename=(basename ? basename+1 : name);
-    event_name=HeapAlloc(GetProcessHeap(), 0, 6+strlen(basename)+1);
+    event_name = malloc(6+strlen(basename)+1);
 
     sprintf(event_name, "start_%s", basename);
     *start_event=CreateEventA(NULL, 0,0, event_name);
     sprintf(event_name, "done_%s", basename);
     *done_event=CreateEventA(NULL, 0,0, event_name);
-    HeapFree(GetProcessHeap(), 0, event_name);
+    free(event_name);
 }
 
 static void save_blackbox(const char* logfile, void* blackbox, int size, const char *dbgtrace)
@@ -255,7 +254,7 @@ static void add_thread(struct debugger_context *ctx, DWORD tid)
 {
     struct debuggee_thread *thread;
     if (!ctx->thread_cnt++) wine_rb_init(&ctx->threads, debuggee_thread_compare);
-    thread = heap_alloc(sizeof(*thread));
+    thread = malloc(sizeof(*thread));
     thread->tid = tid;
     thread->tag = ctx->thread_tag;
     thread->handle = NULL;
@@ -276,7 +275,7 @@ static void remove_thread(struct debugger_context *ctx, DWORD tid)
 
     wine_rb_remove(&ctx->threads, &thread->entry);
     if (thread->handle) CloseHandle(thread->handle);
-    heap_free(thread);
+    free(thread);
 }
 
 static void *get_ip(const CONTEXT *ctx)
@@ -646,13 +645,13 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
 
     get_file_name(dbglog);
     get_events(dbglog, &start_event, &done_event);
-    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(dbgtasks)+1+strlen(dbglog)+2+34+1);
+    cmd = malloc(strlen(argv0)+10+strlen(dbgtasks)+1+strlen(dbglog)+2+34+1);
     sprintf(cmd, "%s debugger %s \"%s\" %%ld %%ld", argv0, dbgtasks, dbglog);
     ret=RegSetValueExA(hkey, "debugger", 0, REG_SZ, (BYTE*)cmd, strlen(cmd)+1);
     ok(ret == ERROR_SUCCESS, "unable to set AeDebug/debugger: ret=%ld\n", ret);
-    HeapFree(GetProcessHeap(), 0, cmd);
+    free(cmd);
 
-    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(argv0) + 16);
+    cmd = malloc(strlen(argv0) + 16);
     sprintf(cmd, "%s debugger crash", argv0);
 
     trace("running %s...\n", dbgtasks);
@@ -662,7 +661,7 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     startup.wShowWindow = SW_SHOWNORMAL;
     ret=CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess: err=%ld\n", GetLastError());
-    HeapFree(GetProcessHeap(), 0, cmd);
+    free(cmd);
     CloseHandle(info.hThread);
 
     /* The process exits... */
@@ -743,7 +742,7 @@ static void crash_and_winedbg(HKEY hkey, const char* argv0)
     ret=RegSetValueExA(hkey, "auto", 0, REG_SZ, (BYTE*)"1", 2);
     ok(ret == ERROR_SUCCESS, "unable to set AeDebug/auto: ret=%ld\n", ret);
 
-    cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+15+1);
+    cmd = malloc(strlen(argv0)+15+1);
     sprintf(cmd, "%s debugger crash", argv0);
 
     memset(&startup, 0, sizeof(startup));
@@ -752,7 +751,7 @@ static void crash_and_winedbg(HKEY hkey, const char* argv0)
     startup.wShowWindow = SW_SHOWNORMAL;
     ret=CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess: err=%ld\n", GetLastError());
-    HeapFree(GetProcessHeap(), 0, cmd);
+    free(cmd);
     CloseHandle(info.hThread);
 
     trace("waiting for child exit...\n");
@@ -1045,7 +1044,7 @@ static void test_debug_loop(int argc, char **argv)
     ok(!ret, "DebugActiveProcess() succeeded on own process.\n");
 
     get_file_name(blackbox_file);
-    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(argv[0]) + strlen(arguments) + strlen(blackbox_file) + 2 + 10);
+    cmd = malloc(strlen(argv[0]) + strlen(arguments) + strlen(blackbox_file) + 2 + 10);
     sprintf(cmd, "%s%s%08lx \"%s\"", argv[0], arguments, pid, blackbox_file);
 
     memset(&si, 0, sizeof(si));
@@ -1053,7 +1052,7 @@ static void test_debug_loop(int argc, char **argv)
     ret = CreateProcessA(NULL, cmd, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed, last error %#lx.\n", GetLastError());
 
-    HeapFree(GetProcessHeap(), 0, cmd);
+    free(cmd);
 
     ret = pCheckRemoteDebuggerPresent(pi.hProcess, &debug);
     ok(ret, "CheckRemoteDebuggerPresent failed, last error %#lx.\n", GetLastError());
@@ -1307,7 +1306,7 @@ static void doChildren(int argc, char **argv)
     WaitForSingleObject(event, INFINITE);
     CloseHandle(event);
 
-    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(argv[0]) + strlen(arguments) + 2);
+    cmd = malloc(strlen(argv[0]) + strlen(arguments) + 2);
     sprintf(cmd, "%s %s", argv[0], arguments);
 
     memset(&si, 0, sizeof(si));
@@ -1326,7 +1325,7 @@ static void doChildren(int argc, char **argv)
     blackbox.failures = child_failures;
     save_blackbox(blackbox_file, &blackbox, sizeof(blackbox), NULL);
 
-    HeapFree(GetProcessHeap(), 0, cmd);
+    free(cmd);
 }
 
 static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, BOOL pass_exception)
@@ -1349,7 +1348,7 @@ static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, 
     }
 
     get_file_name(blackbox_file);
-    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(name) + strlen(arguments) + strlen(blackbox_file) + 5);
+    cmd = malloc(strlen(name) + strlen(arguments) + strlen(blackbox_file) + 5);
     sprintf(cmd, "%s %s \"%s\"", name, arguments, blackbox_file);
 
     p = strrchr(blackbox_file, '\\');
@@ -1371,7 +1370,7 @@ static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, 
 
     ret = CreateProcessA(NULL, cmd, NULL, NULL, FALSE, flag, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed, last error %ld.\n", GetLastError());
-    HeapFree(GetProcessHeap(), 0, cmd);
+    free(cmd);
     if (!flag)
     {
         WaitForSingleObject(event_init, INFINITE);
@@ -1619,14 +1618,14 @@ static void test_debugger(const char *argv0)
     event = CreateEventW(&sa, FALSE, FALSE, NULL);
     ok(event != NULL, "CreateEvent failed: %lu\n", GetLastError());
 
-    cmd = heap_alloc(strlen(argv0) + strlen(arguments) + 16);
+    cmd = malloc(strlen(argv0) + strlen(arguments) + 16);
     sprintf(cmd, "%s%s%lx %u\n", argv0, arguments, (DWORD)(DWORD_PTR)event, OP_BP ? 3 : 1);
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
     ret = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed, last error %#lx.\n", GetLastError());
-    heap_free(cmd);
+    free(cmd);
 
     next_event(&ctx, WAIT_EVENT_TIMEOUT);
     ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx.ev.dwDebugEventCode);
@@ -2292,7 +2291,7 @@ static void test_kill_on_exit(const char *argv0)
     event = CreateEventW(&sa, FALSE, FALSE, NULL);
     ok(event != NULL, "CreateEvent failed: %lu\n", GetLastError());
 
-    cmd = heap_alloc(strlen(argv0) + strlen(arguments) + 16);
+    cmd = malloc(strlen(argv0) + strlen(arguments) + 16);
     sprintf(cmd, "%s%s%lx\n", argv0, arguments, (DWORD)(DWORD_PTR)event);
 
     status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, 0 );
@@ -2419,7 +2418,7 @@ static void test_kill_on_exit(const char *argv0)
     CloseHandle( thread );
 
     CloseHandle( event );
-    heap_free(cmd);
+    free(cmd);
 }
 
 static void test_OutputDebugString(void)
