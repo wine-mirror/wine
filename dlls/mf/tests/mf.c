@@ -8315,9 +8315,13 @@ static void test_media_session_seek(void)
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_sink.shutdown, "Media sink didn't shutdown.\n");
+
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaSession_Release(session);
-
+    IMFMediaSource_Release(source);
     IMFMediaEventQueue_Release(stream_sink.event_queue);
     if (media_sink.clock) IMFPresentationClock_Release(media_sink.clock);
 
