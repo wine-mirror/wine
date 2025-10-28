@@ -609,15 +609,48 @@ void WINAPI __abi_WinRTraiseCOMException(HRESULT hr)
     WINRT_EXCEPTION(OutOfMemory, E_OUTOFMEMORY)              \
     WINRT_EXCEPTION(WrongThread, RPC_E_WRONG_THREAD)
 
-#define WINRT_EXCEPTION(name, hr)                          \
-    void WINAPI __abi_WinRTraise##name##Exception(void)    \
-    {                                                      \
-        FIXME("(): stub!\n");                              \
+#define WINRT_EXCEPTION(name, hr)                                                  \
+    void WINAPI __abi_WinRTraise##name##Exception(void)                            \
+    {                                                                              \
+        FIXME("(): stub!\n");                                                      \
+    }                                                                              \
+    void *__cdecl platform_##name##Exception_ctor(void *this)                      \
+    {                                                                              \
+        FIXME("(%p): stub!\n", this);                                              \
+        return this;                                                               \
+    }                                                                              \
+    void *__cdecl platform_##name##Exception_hstring_ctor(void *this, HSTRING msg) \
+    {                                                                              \
+        FIXME("(%p, %s): stub!\n", this, debugstr_hstring(msg));                   \
+        return this;                                                               \
     }
 
 WINRT_EXCEPTIONS
-
 #undef WINRT_EXCEPTION
+
+void *__cdecl platform_Exception_ctor(void *this, HRESULT hr)
+{
+    FIXME("(%p, %#lx): stub!\n", this, hr);
+    return this;
+}
+
+void *__cdecl platform_Exception_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
+{
+    FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
+    return this;
+}
+
+void *__cdecl platform_COMException_ctor(void *this, HRESULT hr)
+{
+    FIXME("(%p, %#lx): stub!\n", this, hr);
+    return this;
+}
+
+void *__cdecl platform_COMException_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
+{
+    FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
+    return this;
+}
 
 HSTRING __cdecl platform_exception_get_Message(void *excp)
 {
