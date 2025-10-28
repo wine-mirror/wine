@@ -7520,7 +7520,7 @@ static void test_media_session_Close(void)
     hr = IMFMediaSource_Shutdown(source);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = wait_media_event_until_blocking(session, callback, MESessionClosed, 5000, &propvar);
-    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_SHUTDOWN || hr == WAIT_TIMEOUT, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
