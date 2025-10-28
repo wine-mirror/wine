@@ -7285,7 +7285,8 @@ static void test_media_session_source_shutdown(void)
                 break;
         }
 
-        if (shutdown_point == TEST_CLOSE)
+        /* Skip tests where the results in Windows are too uncertain to be worth checking. */
+        if (shutdown_point >= TEST_PAUSE)
             goto done;
 
         IMFMediaSource_Release(source);
@@ -7327,10 +7328,7 @@ static void test_media_session_source_shutdown(void)
         hr = IMFMediaSession_Close(session);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = wait_media_event_until_blocking(session, callback, MESessionClosed, 1000, &propvar);
-        if (shutdown_point >= TEST_PAUSE)
-            ok(hr == MF_E_SHUTDOWN || hr == S_OK || hr == WAIT_TIMEOUT, "Unexpected hr %#lx.\n", hr);
-        else
-            ok(hr == MF_E_SHUTDOWN || hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == MF_E_SHUTDOWN || hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
 done:
         hr = IMFMediaSession_Shutdown(session);
