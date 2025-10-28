@@ -450,6 +450,166 @@ static const IUnknownVtbl unk_agile_vtbl =
     unk_Release
 };
 
+/* IUnknown implementation that has affinity to the STA it was created in. */
+struct unk_ctx_impl
+{
+    IUnknown IUnknown_iface;
+    BOOL todo;
+    UINT64 apt_id; /* Identifier of the apartment this object belongs to. */
+    ULONG_PTR context; /* The COM context this object belongs to. */
+    APTTYPE type; /* APTTYPE of the apartment this object belongs to. */
+    DWORD thread_id;
+    GUID com_thread_id;
+    LONG ref;
+};
+
+static inline struct unk_ctx_impl *impl_unk_ctx_impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct unk_ctx_impl, IUnknown_iface);
+}
+
+/* If true, the method call is being made from the test thread. */
+static BOOL caller_test_thread;
+
+#define test_apartment_context(impl) test_apartment_context_(__LINE__, impl)
+static void test_apartment_context_(int line, const struct unk_ctx_impl *impl)
+{
+    APTTYPEQUALIFIER qualifier;
+    ULONG_PTR cur_ctx;
+    UINT64 cur_id;
+    APTTYPE type;
+    HRESULT hr;
+
+    hr = CoGetContextToken(&cur_ctx);
+    ok_(__FILE__, line)(hr == S_OK, "CoGetContextToken failed, got hr %#lx\n", hr);
+    /* As this object has apartment-affinity, its methods can only be called from the apartment and context it was
+     * created in. */
+    todo_wine_if(impl->todo) ok_(__FILE__, line)(cur_ctx == impl->context, "got cur_ctx %#Ix != %#Ix\n", cur_ctx, impl->context);
+
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok_(__FILE__, line)(hr == S_OK, "CoGetApartmentType failed, got hr %#lx\n", hr);
+    todo_wine_if(impl->todo) ok_(__FILE__, line)(type == impl->type, "got type %d\n", type);
+
+    hr = RoGetApartmentIdentifier(&cur_id);
+    /* win10 and below fail with ERROR_API_UNAVAILABLE */
+    ok_(__FILE__, line)(hr == S_OK || broken(hr == HRESULT_FROM_WIN32(ERROR_API_UNAVAILABLE)),
+                        "RoGetApartmentIdentifier failed, got hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+        ok_(__FILE__, line)(cur_id == impl->apt_id, "got cur_id %#I64x != %#I64x\n", cur_id, impl->apt_id);
+
+    if (caller_test_thread)
+    {
+        DWORD cur_tid = GetCurrentThreadId();
+        IUnknown *unk = (IUnknown *)cur_ctx;
+        GUID ctx_com_tid, cur_com_tid;
+        IComThreadingInfo *info;
+
+        hr = IUnknown_QueryInterface(unk, &IID_IComThreadingInfo, (void **)&info);
+        ok_(__FILE__, line)(hr == S_OK, "QueryInterface failed, got hr %#lx\n", hr);
+
+        hr = IComThreadingInfo_GetCurrentLogicalThreadId(info, &ctx_com_tid);
+        ok_(__FILE__, line)(hr == S_OK, "GetCurrentLogicalThreadId failed, got hr %#lx\n", hr);
+
+        hr = CoGetCurrentLogicalThreadId(&cur_com_tid);
+        ok_(__FILE__, line)(hr == S_OK, "CoGetCurrentLogicalThreadId failed, got hr %#lx\n", hr);
+        ok_(__FILE__, line)(IsEqualGUID(&cur_com_tid, &ctx_com_tid), "Got cur_com_tid %s != %s.\n",
+                            debugstr_guid(&cur_com_tid), debugstr_guid(&ctx_com_tid));
+        IComThreadingInfo_Release(info);
+
+        /* If this object belongs to an STA, we should now be in the same thread that the object was created in. */
+        if (impl->type == APTTYPE_STA || impl->type == APTTYPE_MAINSTA)
+        {
+            todo_wine ok(cur_tid == impl->thread_id, "Got cur_tid %lu != %lu\n", cur_tid, impl->thread_id);
+            ok(!IsEqualGUID(&ctx_com_tid, &impl->com_thread_id), "Got cur_com_tid %s != %s\n",
+               debugstr_guid(&ctx_com_tid), debugstr_guid(&impl->com_thread_id));
+        }
+        else
+            /* If this object belongs to a MTA, then the method call will be made from the same thread as that of the
+             * caller. */
+            ok(cur_tid != impl->thread_id, "Got cur_tid %lu\n", cur_tid);
+    }
+}
+
+static HRESULT WINAPI unk_ctx_impl_QueryInterface(IUnknown *iface, const GUID *iid, void **out)
+{
+    struct unk_ctx_impl *impl = impl_unk_ctx_impl_from_IUnknown(iface);
+
+    if (winetest_debug > 1)
+        trace("(%p, %s, %p)\n", iface, debugstr_guid(iid), out);
+
+    test_apartment_context(impl);
+    if (IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = &impl->IUnknown_iface;
+        IUnknown_AddRef((IUnknown *)*out);
+        return S_OK;
+    }
+
+    *out = NULL;
+    if (winetest_debug > 1)
+        trace("%s not implemeneted, returning E_NOINTERFACE\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI unk_ctx_impl_AddRef(IUnknown *iface)
+{
+    struct unk_ctx_impl *impl = impl_unk_ctx_impl_from_IUnknown(iface);
+
+    test_apartment_context(impl);
+    return InterlockedIncrement(&impl->ref);
+}
+
+static ULONG WINAPI unk_ctx_impl_Release(IUnknown *iface)
+{
+    struct unk_ctx_impl *impl = impl_unk_ctx_impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    test_apartment_context(impl);
+    if (!ref) free(impl);
+    return ref;
+}
+
+static const IUnknownVtbl unk_ctx_impl_IUnknown_vtbl =
+{
+    unk_ctx_impl_QueryInterface,
+    unk_ctx_impl_AddRef,
+    unk_ctx_impl_Release,
+};
+
+static IUnknown *unk_ctx_impl_create(void)
+{
+    APTTYPEQUALIFIER qualifier;
+    struct unk_ctx_impl *impl;
+    UINT64 apt_id = 0;
+    ULONG_PTR context;
+    APTTYPE type;
+    HRESULT hr;
+    GUID id;
+
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    hr = CoGetContextToken(&context);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    hr = RoGetApartmentIdentifier(&apt_id);
+    /* win10 and below fail with ERROR_API_UNAVAILABLE */
+    ok(hr == S_OK || broken(hr == HRESULT_FROM_WIN32(ERROR_API_UNAVAILABLE)), "got hr %#lx\n", hr);
+
+    hr = CoGetCurrentLogicalThreadId(&id);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    if (!(impl = calloc(1, sizeof(*impl)))) return NULL;
+    impl->IUnknown_iface.lpVtbl = &unk_ctx_impl_IUnknown_vtbl;
+    impl->context = context;
+    impl->type = type;
+    impl->apt_id = apt_id;
+    impl->com_thread_id = id;
+    impl->thread_id = GetCurrentThreadId();
+    impl->ref = 1;
+    return &impl->IUnknown_iface;
+}
+
 struct test_RoGetAgileReference_thread_param
 {
     enum AgileReferenceOptions option;
@@ -499,12 +659,42 @@ static DWORD CALLBACK test_RoGetAgileReference_thread_proc(void *arg)
     return 0;
 }
 
+struct test_agile_resolve_context_params
+{
+    RO_INIT_TYPE from_type;
+    RO_INIT_TYPE to_type;
+    IAgileReference *ref;
+};
+
+static DWORD CALLBACK test_agile_resolve_context(void *arg)
+{
+    struct test_agile_resolve_context_params *params = arg;
+    IUnknown *unknown;
+    HRESULT hr;
+
+    caller_test_thread = TRUE;
+    hr = RoInitialize(params->to_type);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    winetest_push_context("from_type=%d, to_type=%d", params->from_type, params->to_type);
+    hr = IAgileReference_Resolve(params->ref, &IID_IUnknown, (void **)&unknown);
+    todo_wine_if(params->to_type == RO_INIT_MULTITHREADED) ok(hr == S_OK, "got hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unknown);
+    winetest_pop_context();
+
+    RoUninitialize();
+    caller_test_thread = FALSE;
+    return 0;
+}
+
 static void test_RoGetAgileReference(void)
 {
     struct test_RoGetAgileReference_thread_param param;
     struct unk_impl unk_no_marshal_obj = {{&unk_no_marshal_vtbl}, 1};
     struct unk_impl unk_obj = {{&unk_vtbl}, 1};
     struct unk_impl unk_agile_obj = {{&unk_agile_vtbl}, 1};
+    struct unk_ctx_impl *unk_ctx_impl;
     enum AgileReferenceOptions option;
     IAgileReference *agile_reference;
     RO_INIT_TYPE from_type, to_type;
@@ -623,6 +813,43 @@ static void test_RoGetAgileReference(void)
             RoUninitialize();
             winetest_pop_context();
         }
+    }
+
+    /* Tests specific to delayed marshaling */
+    for (from_type = RO_INIT_SINGLETHREADED; from_type <= RO_INIT_MULTITHREADED; from_type++)
+    {
+        winetest_push_context("from_type=%d", from_type);
+        hr = RoInitialize(from_type);
+        ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+        unknown = unk_ctx_impl_create();
+        ok(unknown != NULL, "got unknown %p.\n", unknown);
+
+        unk_ctx_impl = impl_unk_ctx_impl_from_IUnknown(unknown);
+        hr = RoGetAgileReference(AGILEREFERENCE_DELAYEDMARSHAL, &IID_IUnknown, unknown, &agile_reference);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        EXPECT_REF(unknown, 2);
+
+        for (to_type = RO_INIT_SINGLETHREADED; to_type <= RO_INIT_MULTITHREADED; to_type++)
+        {
+            struct test_agile_resolve_context_params params = {from_type, to_type, agile_reference};
+
+            winetest_push_context("to_type=%d", to_type);
+            unk_ctx_impl->todo = TRUE;
+            thread = CreateThread(NULL, 0, test_agile_resolve_context, &params, 0, NULL);
+            flush_events();
+            ret = WaitForSingleObject(thread, INFINITE);
+            ok(!ret, "got ret %lu\n", ret);
+            CloseHandle(thread);
+            unk_ctx_impl->todo = FALSE;
+            winetest_pop_context();
+        }
+
+        IAgileReference_Release(agile_reference);
+        EXPECT_REF(unknown, 1);
+        IUnknown_Release(unknown);
+        RoUninitialize();
+        winetest_pop_context();
     }
 }
 
