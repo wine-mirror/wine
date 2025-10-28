@@ -355,7 +355,7 @@ static NTSTATUS linux_pulse_event_obj( int obj, LONG *prev_state )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS linux_query_event_obj( int obj, enum inproc_sync_type type, EVENT_BASIC_INFORMATION *info )
+static NTSTATUS linux_query_event_obj( int obj, EVENT_BASIC_INFORMATION *info )
 {
     struct ntsync_event_args args = {0};
     if (ioctl( obj, NTSYNC_IOC_EVENT_READ, &args ) < 0) return errno_to_status( errno );
@@ -477,7 +477,7 @@ static NTSTATUS linux_pulse_event_obj( int obj, LONG *prev_state )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS linux_query_event_obj( int obj, enum inproc_sync_type type, EVENT_BASIC_INFORMATION *info )
+static NTSTATUS linux_query_event_obj( int obj, EVENT_BASIC_INFORMATION *info )
 {
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -836,7 +836,7 @@ static NTSTATUS inproc_query_event( HANDLE handle, EVENT_BASIC_INFORMATION *info
 
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     if ((ret = get_inproc_sync( handle, INPROC_SYNC_EVENT, EVENT_QUERY_STATE, &stack, &sync ))) return ret;
-    ret = linux_query_event_obj( sync->fd, sync->type, info );
+    ret = linux_query_event_obj( sync->fd, info );
     release_inproc_sync( sync );
     return ret;
 }
