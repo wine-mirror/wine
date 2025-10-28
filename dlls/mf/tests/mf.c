@@ -3052,6 +3052,12 @@ static HRESULT WINAPI test_grabber_callback_OnProcessSample(IMFSampleGrabberSink
     HRESULT hr;
     DWORD res;
 
+    if (grabber->ready_event && !grabber->done_event)
+    {
+        SetEvent(grabber->ready_event);
+        return S_OK;
+    }
+
     if (!grabber->ready_event)
         return E_NOTIMPL;
 
@@ -6702,6 +6708,7 @@ static void test_h264_output_alignment(void)
     UINT64 frame_size;
     UINT32 status;
     HRESULT hr;
+    DWORD ret;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -6715,6 +6722,8 @@ static void test_h264_output_alignment(void)
     }
 
     grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
+    grabber_callback->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!grabber_callback->ready_event, "CreateEventW failed, error %lu\n", GetLastError());
 
     hr = MFCreateMediaType(&output_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -6771,9 +6780,9 @@ static void test_h264_output_alignment(void)
     hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    /* frame size change occurs before MESessionStarted */
-    hr = wait_media_event(session, callback, MESessionStarted, 5000, &propvar);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* frame size change occurs before the first sample is delivered */
+    ret = WaitForSingleObject(grabber_callback->ready_event, 1000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
     frame_size = get_current_media_type_frame_size(transform);
     todo_wine
     ok(frame_size == (((UINT64)64 << 32) | 80), "Unexpected frame size %#llx\n", frame_size);
