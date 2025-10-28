@@ -256,36 +256,6 @@ C_ASSERT(sizeof(internal_dvd_manufacturer_descriptor) == 2053);
 static NTSTATUS CDROM_ReadTOC(int, int, CDROM_TOC*);
 static NTSTATUS CDROM_GetStatusCode(int);
 
-
-#ifdef linux
-
-# ifndef IDE6_MAJOR
-#  define IDE6_MAJOR 88
-# endif
-# ifndef IDE7_MAJOR
-#  define IDE7_MAJOR 89
-# endif
-
-# ifdef CDROM_SEND_PACKET
-/* structure for CDROM_PACKET_COMMAND ioctl */
-/* not all Linux versions have all the fields, so we define the
- * structure ourselves to make sure */
-struct linux_cdrom_generic_command
-{
-    unsigned char          cmd[CDROM_PACKET_SIZE];
-    unsigned char         *buffer;
-    unsigned int           buflen;
-    int                    stat;
-    struct request_sense  *sense;
-    unsigned char          data_direction;
-    int                    quiet;
-    int                    timeout;
-    void                  *reserved[1];
-};
-# endif  /* CDROM_SEND_PACKET */
-
-#endif  /* linux */
-
 /* FIXME: this is needed because we can't open simultaneously several times /dev/cdrom
  * this should be removed when a proper device interface is implemented
  *
