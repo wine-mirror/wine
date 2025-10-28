@@ -43,7 +43,6 @@ static CRITICAL_SECTION_DEBUG csTablet_debug =
 CRITICAL_SECTION csTablet = { &csTablet_debug, -1, 0, 0, 0, 0 };
 
 int  (CDECL *pLoadTabletInfo)(HWND hwnddefault) = NULL;
-UINT (CDECL *pWTInfoW)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
 
 static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
@@ -106,7 +105,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             {
                 HMODULE module = load_graphics_driver();
                 pLoadTabletInfo = (void *)GetProcAddress(module, "LoadTabletInfo");
-                pWTInfoW = (void *)GetProcAddress(module, "WTInfoW");
             }
             else
                 return FALSE;

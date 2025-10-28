@@ -43,15 +43,3 @@ BOOL CDECL X11DRV_LoadTabletInfo( HWND hwnd )
 {
     return X11DRV_CALL( tablet_load_info, hwnd );
 }
-
-/***********************************************************************
- *          WTInfoW (winex11.@)
- */
-UINT CDECL X11DRV_WTInfoW( UINT category, UINT index, void *output )
-{
-    struct tablet_info_params params;
-    params.category = category;
-    params.index = index;
-    params.output = output;
-    return X11DRV_CALL( tablet_info, &params );
-}

@@ -899,7 +899,6 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 /* unixlib interface */
 
 extern NTSTATUS x11drv_tablet_load_info( void *arg );
-extern NTSTATUS x11drv_tablet_info( void *arg );
 
 /* GDI helpers */
 

@@ -806,7 +806,6 @@ BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     x11drv_init,
-    x11drv_tablet_info,
     x11drv_tablet_load_info,
 };
 
@@ -816,26 +815,9 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 #ifdef _WIN64
 
-static NTSTATUS x11drv_wow64_tablet_info( void *arg )
-{
-    struct
-    {
-        UINT category;
-        UINT index;
-        ULONG output;
-    } *params32 = arg;
-    struct tablet_info_params params;
-
-    params.category = params32->category;
-    params.index = params32->index;
-    params.output = UlongToPtr( params32->output );
-    return x11drv_tablet_info( &params );
-}
-
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     x11drv_init,
-    x11drv_wow64_tablet_info,
     x11drv_tablet_load_info,
 };
 

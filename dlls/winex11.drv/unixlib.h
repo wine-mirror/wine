@@ -23,17 +23,8 @@
 enum x11drv_funcs
 {
     unix_init,
-    unix_tablet_info,
     unix_tablet_load_info,
     unix_funcs_count,
 };
 
 #define X11DRV_CALL(func, params) WINE_UNIX_CALL( unix_ ## func, params )
-
-/* x11drv_tablet_info params */
-struct tablet_info_params
-{
-    UINT category;
-    UINT index;
-    void *output;
-};

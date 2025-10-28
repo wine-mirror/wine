@@ -1106,15 +1106,10 @@ static inline int CopyTabletData(LPVOID target, LPCVOID src, INT size)
 }
 
 /***********************************************************************
- *           x11drv_tablet_info
+ *           get_tablet_info
  */
-NTSTATUS x11drv_tablet_info( void *arg )
+static UINT get_tablet_info( UINT wCategory, UINT nIndex, void *lpOutput )
 {
-    struct tablet_info_params *params = arg;
-    UINT wCategory = params->category;
-    UINT nIndex = params->index;
-    void *lpOutput = params->output;
-
     /*
      * It is valid to call WTInfoA with lpOutput == NULL, as per standard.
      * lpOutput == NULL signifies the user only wishes
@@ -1549,6 +1544,8 @@ LRESULT X11DRV_WintabProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, vo
     {
     case NtUserWintabAttach:
         return tablet_attach_queue( hwnd );
+    case NtUserWintabInfo:
+        return get_tablet_info( wparam, lparam, buffer );
     case NtUserWintabPacket:
         *(WTPACKET *)buffer = gMsgPacket;
         return 1;
