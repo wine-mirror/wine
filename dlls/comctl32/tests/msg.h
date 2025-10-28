@@ -20,7 +20,6 @@
 
 #include <assert.h>
 #include <windows.h>
-#include "wine/heap.h"
 #include "wine/test.h"
 
 /* undocumented SWP flags - from SDK 3.1 */

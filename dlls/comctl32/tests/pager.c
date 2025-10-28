@@ -270,7 +270,7 @@ static const struct message set_pos_empty_seq[] = {
 static CHAR *heap_strdup(const CHAR *str)
 {
     int len = lstrlenA(str) + 1;
-    CHAR *ret = heap_alloc(len * sizeof(CHAR));
+    CHAR *ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR));
     lstrcpyA(ret, str);
     return ret;
 }

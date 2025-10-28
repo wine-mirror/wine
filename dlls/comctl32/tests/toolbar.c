@@ -292,7 +292,7 @@ static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
             if (save->iItem == -1)
             {
                 save->cbData = save->cbData * 2 + 11 * sizeof(DWORD);
-                save->pData = heap_alloc( save->cbData );
+                save->pData = HeapAlloc( GetProcessHeap(), 0, save->cbData );
                 save->pData[0] = 0xcafe;
                 save->pCurrent = save->pData + 1;
             }
@@ -368,7 +368,7 @@ static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
 
                 if (restore->iItem == 0)
                 {
-                    restore->tbButton.iString = (INT_PTR)heap_alloc_zero( 8 );
+                    restore->tbButton.iString = (INT_PTR)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 8 );
                     strcpy( (char *)restore->tbButton.iString, "foo" );
                 }
                 else if (restore->iItem == 1)
@@ -398,7 +398,7 @@ static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
             {
             case 0:
                 tb->tbButton.idCommand = 7;
-                alloced_str = heap_alloc_zero( 8 );
+                alloced_str = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 8 );
                 strcpy( alloced_str, "foo" );
                 tb->tbButton.iString = (INT_PTR)alloced_str;
                 return 1;
@@ -1147,7 +1147,7 @@ static tbsize_result_t init_tbsize_result(int nButtonsAlloc, int cleft, int ctop
     ret.szMin.cx = minx;
     ret.szMin.cy = miny;
     ret.nButtons = 0;
-    ret.prcButtons = heap_alloc_zero(nButtonsAlloc * sizeof(*ret.prcButtons));
+    ret.prcButtons = calloc( nButtonsAlloc, sizeof(*ret.prcButtons) );
 
     return ret;
 }
@@ -1169,7 +1169,7 @@ static void init_tbsize_results(void) {
     int fontheight = system_font_height();
     int buttonwidth;
 
-    tbsize_results = heap_alloc_zero(tbsize_results_num * sizeof(*tbsize_results));
+    tbsize_results = calloc( tbsize_results_num, sizeof(*tbsize_results) );
 
     tbsize_results[0] = init_tbsize_result(5, 0, 0 ,672 ,26, 100 ,22);
     tbsize_addbutton(&tbsize_results[0],   0,   2,  23,  24);
@@ -1427,8 +1427,8 @@ static void free_tbsize_results(void) {
     int i;
 
     for (i = 0; i < tbsize_results_num; i++)
-        heap_free(tbsize_results[i].prcButtons);
-    heap_free(tbsize_results);
+        free(tbsize_results[i].prcButtons);
+    free(tbsize_results);
     tbsize_results = NULL;
 }
 
