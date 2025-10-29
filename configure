@@ -12365,7 +12365,9 @@ then :
 fi
 fi
 FAUDIO_PE_LIBS=${FAUDIO_PE_LIBS:-"-lFAudio"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$FAUDIO_PE_CFLAGS$FAUDIO_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FAUDIO_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW FAudio.h" >&5
 printf %s "checking for MinGW FAudio.h... " >&6; }
@@ -12466,6 +12468,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$FAUDIO_PE_LIBS" = "x"
     then
@@ -12487,7 +12490,9 @@ then :
 fi
 fi
 FLUIDSYNTH_PE_LIBS=${FLUIDSYNTH_PE_LIBS:-"-lfluidsynth"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$FLUIDSYNTH_PE_CFLAGS$FLUIDSYNTH_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FLUIDSYNTH_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW fluidsynth.h" >&5
 printf %s "checking for MinGW fluidsynth.h... " >&6; }
@@ -12588,6 +12593,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$FLUIDSYNTH_PE_LIBS" = "x"
     then
@@ -12609,7 +12615,9 @@ then :
 fi
 fi
 
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$JPEG_PE_CFLAGS$JPEG_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $JPEG_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW jpeglib.h" >&5
 printf %s "checking for MinGW jpeglib.h... " >&6; }
@@ -12711,6 +12719,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$JPEG_PE_LIBS" = "x"
     then
@@ -12732,7 +12741,9 @@ then :
 fi
 fi
 LCMS2_PE_LIBS=${LCMS2_PE_LIBS:-"-llcms2"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$LCMS2_PE_CFLAGS$LCMS2_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $LCMS2_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW lcms2.h" >&5
 printf %s "checking for MinGW lcms2.h... " >&6; }
@@ -12833,6 +12844,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$LCMS2_PE_LIBS" = "x"
     then
@@ -12854,7 +12866,9 @@ then :
 fi
 fi
 MPG123_PE_LIBS=${MPG123_PE_LIBS:-"-lmpg123"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$MPG123_PE_CFLAGS$MPG123_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $MPG123_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW mpg123.h" >&5
 printf %s "checking for MinGW mpg123.h... " >&6; }
@@ -12955,6 +12969,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$MPG123_PE_LIBS" = "x"
     then
@@ -12976,7 +12991,9 @@ then :
 fi
 fi
 
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$PNG_PE_CFLAGS$PNG_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $PNG_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW png.h" >&5
 printf %s "checking for MinGW png.h... " >&6; }
@@ -13077,6 +13094,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$PNG_PE_LIBS" = "x"
     then
@@ -13098,7 +13116,9 @@ then :
 fi
 fi
 
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$TIFF_PE_CFLAGS$TIFF_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $TIFF_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW tiffio.h" >&5
 printf %s "checking for MinGW tiffio.h... " >&6; }
@@ -13199,6 +13219,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$TIFF_PE_LIBS" = "x"
     then
@@ -13220,7 +13241,9 @@ then :
 fi
 fi
 XML2_PE_LIBS=${XML2_PE_LIBS:-"-lxml2"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$XML2_PE_CFLAGS$XML2_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XML2_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxml/parser.h" >&5
 printf %s "checking for MinGW libxml/parser.h... " >&6; }
@@ -13405,6 +13428,7 @@ fi
             XML2_PE_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$XML2_PE_LIBS" = "x"
     then
@@ -13426,7 +13450,9 @@ then :
 fi
 fi
 XSLT_PE_LIBS=${XSLT_PE_LIBS:-"-lxslt"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$XSLT_PE_CFLAGS$XSLT_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XSLT_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW libxslt/pattern.h" >&5
 printf %s "checking for MinGW libxslt/pattern.h... " >&6; }
@@ -13571,6 +13597,7 @@ fi
             XSLT_PE_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$XSLT_PE_LIBS" = "x"
     then
@@ -13592,7 +13619,9 @@ then :
 fi
 fi
 VKD3D_PE_LIBS=${VKD3D_PE_LIBS:-"-lvkd3d-utils -lvkd3d -lvkd3d-shader"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$VKD3D_PE_CFLAGS$VKD3D_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $VKD3D_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW vkd3d_utils.h" >&5
 printf %s "checking for MinGW vkd3d_utils.h... " >&6; }
@@ -13798,6 +13827,7 @@ fi
             VKD3D_PE_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$VKD3D_PE_LIBS" = "x"
     then
@@ -13819,7 +13849,9 @@ then :
 fi
 fi
 ZLIB_PE_LIBS=${ZLIB_PE_LIBS:-"-lz"}
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$ZLIB_PE_CFLAGS$ZLIB_PE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ZLIB_PE_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for MinGW zlib.h" >&5
 printf %s "checking for MinGW zlib.h... " >&6; }
@@ -13920,6 +13952,7 @@ else case e in #(
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$ZLIB_PE_LIBS" = "x"
     then
@@ -14337,7 +14370,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$EGL_CFLAGS$EGL_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $EGL_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
 printf %s "checking for -lEGL... " >&6; }
@@ -14403,6 +14438,7 @@ printf "%s\n" "#define SONAME_LIBEGL \"$ac_cv_lib_soname_EGL\"" >>confdefs.h
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test -z "$ac_cv_lib_soname_EGL"
@@ -16132,7 +16168,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$WAYLAND_CLIENT_CFLAGS$WAYLAND_CLIENT_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $WAYLAND_CLIENT_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "wayland-client.h" "ac_cv_header_wayland_client_h" "$ac_includes_default"
 if test "x$ac_cv_header_wayland_client_h" = xyes
@@ -16237,6 +16275,7 @@ fi
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     rm -f conftest.err
 if ${XKBCOMMON_CFLAGS:+false} :
@@ -16263,7 +16302,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$XKBCOMMON_CFLAGS$XKBCOMMON_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XKBCOMMON_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for xkb_context_new in -lxkbcommon" >&5
 printf %s "checking for xkb_context_new in -lxkbcommon... " >&6; }
@@ -16317,6 +16358,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     rm -f conftest.err
 if ${XKBREGISTRY_CFLAGS:+false} :
@@ -16343,7 +16385,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$XKBREGISTRY_CFLAGS$XKBREGISTRY_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XKBREGISTRY_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for rxkb_context_new in -lxkbregistry" >&5
 printf %s "checking for rxkb_context_new in -lxkbregistry... " >&6; }
@@ -16397,6 +16441,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     if test "x$with_opengl" != "xno"
     then
@@ -16425,7 +16470,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$WAYLAND_EGL_CFLAGS$WAYLAND_EGL_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $WAYLAND_EGL_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "wayland-egl.h" "ac_cv_header_wayland_egl_h" "$ac_includes_default"
 if test "x$ac_cv_header_wayland_egl_h" = xyes
@@ -16486,6 +16533,7 @@ fi
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
         if test "x$with_wayland" != "x"
         then
@@ -16753,7 +16801,7 @@ then :
 fi
 fi
 
-
+INOTIFY_LIBS=${INOTIFY_LIBS:-"-linotify"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libinotify cflags: $INOTIFY_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libinotify libs: $INOTIFY_LIBS" >&5
 if test -s conftest.err; then
@@ -16761,7 +16809,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$INOTIFY_CFLAGS$INOTIFY_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $INOTIFY_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "sys/inotify.h" "ac_cv_header_sys_inotify_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_inotify_h" = xyes
@@ -16822,6 +16872,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "$ac_cv_header_sys_inotify_h" != "yes"
@@ -16862,7 +16913,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$DBUS_CFLAGS$DBUS_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $DBUS_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "dbus/dbus.h" "ac_cv_header_dbus_dbus_h" "$ac_includes_default"
 if test "x$ac_cv_header_dbus_dbus_h" = xyes
@@ -16936,6 +16989,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 case $host_os in
@@ -16979,7 +17033,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$GNUTLS_CFLAGS$GNUTLS_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gnutls/gnutls.h" "ac_cv_header_gnutls_gnutls_h" "$ac_includes_default"
 if test "x$ac_cv_header_gnutls_gnutls_h" = xyes
@@ -17086,6 +17142,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"
@@ -17128,7 +17185,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$HWLOC_CFLAGS$HWLOC_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $HWLOC_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "hwloc.h" "ac_cv_header_hwloc_h" "$ac_includes_default"
 if test "x$ac_cv_header_hwloc_h" = xyes
@@ -17192,6 +17251,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
         if test "$ac_cv_lib_hwloc_hwloc_topology_init" != "yes"
 then :
@@ -17234,7 +17294,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$SANE_CFLAGS$SANE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "sane/sane.h" "ac_cv_header_sane_sane_h" "$ac_includes_default"
 if test "x$ac_cv_header_sane_sane_h" = xyes
@@ -17290,6 +17352,7 @@ fi
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "$ac_cv_lib_sane_sane_init" != "yes"
@@ -17330,7 +17393,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$USB_CFLAGS$USB_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $USB_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "libusb.h" "ac_cv_header_libusb_h" "$ac_includes_default"
 if test "x$ac_cv_header_libusb_h" = xyes
@@ -17392,6 +17457,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "$ac_cv_lib_usb_1_0_libusb_interrupt_event_handler" != "yes"
@@ -17509,7 +17575,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$GPHOTO2_CFLAGS$GPHOTO2_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gphoto2-camera.h" "ac_cv_header_gphoto2_camera_h" "$ac_includes_default"
 if test "x$ac_cv_header_gphoto2_camera_h" = xyes
@@ -17565,6 +17633,7 @@ fi
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
     rm -f conftest.err
 if ${GPHOTO2_PORT_CFLAGS:+false} :
@@ -17591,7 +17660,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$GPHOTO2_PORT_CFLAGS$GPHOTO2_PORT_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_PORT_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gphoto2-port.h" "ac_cv_header_gphoto2_port_h" "$ac_includes_default"
 if test "x$ac_cv_header_gphoto2_port_h" = xyes
@@ -17655,6 +17726,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"
@@ -17806,7 +17878,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$FREETYPE_CFLAGS$FREETYPE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FREETYPE_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "ft2build.h" "ac_cv_header_ft2build_h" "$ac_includes_default"
 if test "x$ac_cv_header_ft2build_h" = xyes
@@ -17898,6 +17972,7 @@ fi
             FREETYPE_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_freetype" = x
@@ -18027,7 +18102,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$PULSE_CFLAGS$PULSE_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $PULSE_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "pulse/pulseaudio.h" "ac_cv_header_pulse_pulseaudio_h" "$ac_includes_default"
 if test "x$ac_cv_header_pulse_pulseaudio_h" = xyes
@@ -18089,6 +18166,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test -z "$PULSE_LIBS"
@@ -18129,7 +18207,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$FFMPEG_CFLAGS$FFMPEG_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FFMPEG_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "libavutil/avutil.h" "ac_cv_header_libavutil_avutil_h" "$ac_includes_default"
 if test "x$ac_cv_header_libavutil_avutil_h" = xyes
@@ -18315,6 +18395,7 @@ fi
             FFMPEG_LIBS=""
          fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$FFMPEG_LIBS" = x
@@ -18355,7 +18436,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$GSTREAMER_CFLAGS$GSTREAMER_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GSTREAMER_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gst/gst.h" "ac_cv_header_gst_gst_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_gst_h" = xyes
@@ -18437,6 +18520,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes
@@ -18479,7 +18563,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$ALSA_CFLAGS$ALSA_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ALSA_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for snd_pcm_hw_params_get_access_mask in -lasound" >&5
 printf %s "checking for snd_pcm_hw_params_get_access_mask in -lasound... " >&6; }
@@ -18533,6 +18619,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test -z "$ALSA_LIBS"
@@ -18660,7 +18747,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$UDEV_CFLAGS$UDEV_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $UDEV_CFLAGS"
        for ac_header in libudev.h
 do :
@@ -18728,6 +18817,7 @@ fi
 
 done
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$UDEV_LIBS" = "x"
@@ -18770,7 +18860,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$UNWIND_CFLAGS$UNWIND_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $UNWIND_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for unw_step" >&5
 printf %s "checking for unw_step... " >&6; }
@@ -18849,6 +18941,7 @@ printf "%s\n" "#define HAVE_LIBUNWIND 1" >>confdefs.h
 
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
   fi
   case $host in
@@ -18893,7 +18986,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$SDL2_CFLAGS$SDL2_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SDL2_CFLAGS"
        for ac_header in SDL.h
 do :
@@ -18968,6 +19063,7 @@ fi
 
 done
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_SDL2" = "x"
@@ -19008,7 +19104,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$CAPI20_CFLAGS$CAPI20_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $CAPI20_CFLAGS"
     ac_fn_c_check_header_compile "$LINENO" "capi20.h" "ac_cv_header_capi20_h" "#define __user
 "
@@ -19080,6 +19178,7 @@ fi
 
     fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_capi20_capi20_register" != xyes
@@ -19120,7 +19219,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$CUPS_CFLAGS$CUPS_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $CUPS_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "cups/cups.h" "ac_cv_header_cups_cups_h" "$ac_includes_default"
 if test "x$ac_cv_header_cups_cups_h" = xyes
@@ -19205,6 +19306,7 @@ fi
                             CUPS_LIBS=""
                         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_cups" = "x"
@@ -19245,7 +19347,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$FONTCONFIG_CFLAGS$FONTCONFIG_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FONTCONFIG_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "fontconfig/fontconfig.h" "ac_cv_header_fontconfig_fontconfig_h" "$ac_includes_default"
 if test "x$ac_cv_header_fontconfig_fontconfig_h" = xyes
@@ -19319,6 +19423,7 @@ esac
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_fontconfig" = "x"
@@ -19359,7 +19464,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$KRB5_CFLAGS$KRB5_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $KRB5_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "krb5/krb5.h" "ac_cv_header_krb5_krb5_h" "$ac_includes_default"
 if test "x$ac_cv_header_krb5_krb5_h" = xyes
@@ -19437,6 +19544,7 @@ fi
              KRB5_CFLAGS=""
          fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_krb5" = "x"
@@ -19478,7 +19586,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$GSSAPI_CFLAGS$GSSAPI_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GSSAPI_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gssapi/gssapi.h" "ac_cv_header_gssapi_gssapi_h" "$ac_includes_default"
 if test "x$ac_cv_header_gssapi_gssapi_h" = xyes
@@ -19562,6 +19672,7 @@ fi
             GSSAPI_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_gssapi_krb5" = "x"
@@ -19723,7 +19834,9 @@ if test -s conftest.err; then
      cat conftest.err >&5
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+if test -n "$NETAPI_CFLAGS$NETAPI_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $NETAPI_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lnetapi" >&5
 printf %s "checking for -lnetapi... " >&6; }
@@ -19790,6 +19903,7 @@ printf "%s\n" "#define SONAME_LIBNETAPI \"$ac_cv_lib_soname_netapi\"" >>confdefs
 esac
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
+fi
 
 fi
 if test "x$ac_cv_lib_soname_netapi" = "x"

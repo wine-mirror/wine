@@ -113,10 +113,10 @@ if test -s conftest.err; then
      cat conftest.err >&AS_MESSAGE_LOG_FD
 fi
 rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
+AS_IF([test -n "$ac_cflags$ac_libs"],[ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
 $6
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_CPPFLAGS])
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
 
@@ -135,10 +135,10 @@ AS_VAR_IF([ac_libs],[],
       [AS_VAR_SET_IF([MINGW_PKG_CONFIG],
       [ac_libs=`$MINGW_PKG_CONFIG --libs [$2] 2>/dev/null`])])
 m4_ifval([$3],[ac_libs=[$]{ac_libs:-"$3"}])
-ac_save_CPPFLAGS=$CPPFLAGS
+AS_IF([test -n "$ac_cflags$ac_libs"],[ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
 $4
-CPPFLAGS=$ac_save_CPPFLAGS
+CPPFLAGS=$ac_save_CPPFLAGS])
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
 
