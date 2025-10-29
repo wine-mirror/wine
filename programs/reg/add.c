@@ -52,10 +52,12 @@ static BOOL get_regdata(const WCHAR *data, DWORD reg_type, WCHAR separator,
                         BYTE **data_bytes, DWORD *size_bytes)
 {
     static const WCHAR empty;
+    int base;
 
     *size_bytes = 0;
 
     if (!data) data = &empty;
+    base = data[0] && towlower(data[1]) == 'x' ? 16 : 10;
 
     switch (reg_type)
     {
@@ -74,7 +76,7 @@ static BOOL get_regdata(const WCHAR *data, DWORD reg_type, WCHAR separator,
         {
             LPWSTR rest;
             unsigned long val;
-            val = wcstoul(data, &rest, (towlower(data[1]) == 'x') ? 16 : 10);
+            val = wcstoul(data, &rest, base);
             if (*rest || data[0] == '-' || (val == ~0u && errno == ERANGE)) {
                 output_message(STRING_MISSING_NUMBER);
                 return FALSE;
@@ -89,7 +91,7 @@ static BOOL get_regdata(const WCHAR *data, DWORD reg_type, WCHAR separator,
             WCHAR *rest;
             UINT64 val;
 
-            val = _wcstoui64(data, &rest, (towlower(data[1]) == 'x') ? 16 : 10);
+            val = _wcstoui64(data, &rest, base);
             if (*rest || (val == ~0ull && errno == ERANGE))
             {
                 output_message(STRING_MISSING_NUMBER);
