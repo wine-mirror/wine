@@ -1912,13 +1912,14 @@ NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *pa
 
 /* create a serial or parallel port */
 static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_path,
-                                const char *dosdevices_path, HKEY windows_ports_key )
+                                const char *dosdevices_path, HKEY *windows_ports_key )
 {
     const WCHAR *dos_name_format, *nt_name_format, *reg_value_format, *symlink_format, *default_device;
     WCHAR dos_name[7], reg_value[256], nt_buffer[32], symlink_buffer[32];
     UNICODE_STRING nt_name, symlink_name, default_name;
     DEVICE_OBJECT *dev_obj;
     NTSTATUS status;
+    const WCHAR *windows_ports_key_name;
     struct set_dosdev_symlink_params params = { dosdevices_path, unix_path };
 
     /* create DOS device */
@@ -1931,6 +1932,7 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
         reg_value_format = L"COM%u";
         symlink_format = L"\\DosDevices\\COM%u";
         default_device = L"\\DosDevices\\AUX";
+        windows_ports_key_name = L"HARDWARE\\DEVICEMAP\\SERIALCOMM";
     }
     else
     {
@@ -1939,6 +1941,7 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
         reg_value_format = L"\\DosDevices\\LPT%u";
         symlink_format = L"\\DosDevices\\LPT%u";
         default_device = L"\\DosDevices\\PRN";
+        windows_ports_key_name = L"HARDWARE\\DEVICEMAP\\PARALLEL PORTS";
     }
 
     swprintf( dos_name, ARRAY_SIZE(dos_name), dos_name_format, n );
@@ -1964,8 +1967,12 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     /* TODO: store information about the Unix device in the NT device */
 
     /* create registry entry */
+    if (!*windows_ports_key)
+        RegCreateKeyExW( HKEY_LOCAL_MACHINE, windows_ports_key_name, 0, NULL, REG_OPTION_VOLATILE,
+                         KEY_ALL_ACCESS, NULL, windows_ports_key, NULL );
+
     swprintf( reg_value, ARRAY_SIZE(reg_value), reg_value_format, n );
-    RegSetValueExW( windows_ports_key, nt_name.Buffer, 0, REG_SZ,
+    RegSetValueExW( *windows_ports_key, nt_name.Buffer, 0, REG_SZ,
                     (BYTE *)reg_value, (lstrlenW( reg_value ) + 1) * sizeof(WCHAR) );
 
     return TRUE;
@@ -1974,7 +1981,6 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
 /* find and create serial or parallel ports */
 static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
 {
-    const WCHAR *windows_ports_key_name;
     const char *dosdev_fmt;
     char dosdev[8];
     HKEY wine_ports_key = NULL, windows_ports_key = NULL;
@@ -1989,13 +1995,11 @@ static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
     if (driver == serial_driver)
     {
         dosdev_fmt = "com%u";
-        windows_ports_key_name = L"HARDWARE\\DEVICEMAP\\SERIALCOMM";
         port_prefix = L"COM";
     }
     else
     {
         dosdev_fmt = "lpt%u";
-        windows_ports_key_name = L"HARDWARE\\DEVICEMAP\\PARALLEL PORTS";
         port_prefix = L"LPT";
     }
 
@@ -2003,8 +2007,6 @@ static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\Ports", 0, NULL, 0,
                      KEY_QUERY_VALUE, NULL, &wine_ports_key, NULL );
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, windows_ports_key_name, 0, NULL, REG_OPTION_VOLATILE,
-                     KEY_ALL_ACCESS, NULL, &windows_ports_key, NULL );
 
     /* add user-defined serial ports */
     memset(used, 0, sizeof(used));
@@ -2028,7 +2030,7 @@ static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
 
         used[n - 1] = TRUE;
         sprintf( dosdev, dosdev_fmt, n );
-        create_port_device( driver, n, unix_path, dosdev, windows_ports_key );
+        create_port_device( driver, n, unix_path, dosdev, &windows_ports_key );
     }
 
     /* look for ports in the usual places */
@@ -2038,7 +2040,7 @@ static void create_port_devices( DRIVER_OBJECT *driver, const char *devices )
         while (n <= MAX_PORTS && used[n - 1]) n++;
         if (n > MAX_PORTS) break;
         sprintf( dosdev, dosdev_fmt, n );
-        create_port_device( driver, n, devices, dosdev, windows_ports_key );
+        create_port_device( driver, n, devices, dosdev, &windows_ports_key );
     }
 
     RegCloseKey( wine_ports_key );
