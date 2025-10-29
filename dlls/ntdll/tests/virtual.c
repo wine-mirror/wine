@@ -1439,12 +1439,13 @@ static void test_NtMapViewOfSection(void)
     static const char data[] = "test data for NtMapViewOfSection";
     char buffer[sizeof(data)];
     HANDLE file, mapping, process;
-    void *ptr, *ptr2;
+    void *ptr, *ptr2, *mem, *mem2;
     BOOL ret;
     DWORD status, written;
-    SIZE_T size, result;
+    SIZE_T size, size2, result;
     LARGE_INTEGER offset;
     ULONG_PTR zero_bits;
+    SYSTEM_INFO si;
 
     if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
 
@@ -1697,6 +1698,57 @@ static void test_NtMapViewOfSection(void)
         NtClose(mapping);
         CloseHandle(file);
     }
+
+    /* image offset */
+
+    GetSystemInfo(&si);
+
+    file = CreateFileA("c:\\windows\\system32\\ntdll.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to open ntdll.dll\n");
+
+    mapping = CreateFileMappingA(file, NULL, PAGE_READONLY|SEC_IMAGE, 0, 0, NULL);
+    ok(mapping != 0, "CreateFileMapping failed\n");
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, process, &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READONLY);
+    ok(status == STATUS_IMAGE_NOT_AT_BASE, "NtMapViewOfSection returned %08lx\n", status);
+
+    ptr2 = NULL;
+    size2 = 0;
+    offset.QuadPart = si.dwAllocationGranularity;
+    status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset, &size2, 1, 0, PAGE_READONLY);
+    ok(status == STATUS_IMAGE_NOT_AT_BASE, "NtMapViewOfSection returned %08lx\n", status);
+
+    todo_wine
+    ok(size2 == size - si.dwAllocationGranularity, "got unexpected sizes %Ix, %Ix\n", size, size2);
+    size2 = size - si.dwAllocationGranularity;
+
+    mem = malloc(size2);
+    ret = ReadProcessMemory(process, (char*)ptr + si.dwAllocationGranularity, mem, size2, &result);
+    ok(ret, "ReadProcessMemory failed\n");
+    ok(size2 == result, "ReadProcessMemory didn't read all data (%Ix)\n", result);
+
+    mem2 = malloc(size2);
+    ret = ReadProcessMemory(process, ptr2, mem2, size2, &result);
+    ok(ret, "ReadProcessMemory failed\n");
+    ok(size2 == result, "ReadProcessMemory didn't read all data (%Ix)\n", result);
+
+    todo_wine
+    ok(memcmp(mem, mem2, size2) == 0, "memory does not match\n");
+
+    free(mem);
+    free(mem2);
+
+    status = NtUnmapViewOfSection(process, ptr);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+
+    status = NtUnmapViewOfSection(process, ptr2);
+    ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+
+    NtClose(mapping);
+    CloseHandle(file);
 
     TerminateProcess(process, 0);
     CloseHandle(process);
