@@ -1642,11 +1642,7 @@ then
         [AC_CHECK_HEADERS([ft2build.h])
         if test "$ac_cv_header_ft2build_h" = "yes"
         then
-            WINE_CHECK_SONAME(freetype,FT_Init_FreeType,
-                [AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
-                 AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <ft2build.h>
-#include FT_MODULE_H])],
-                [FREETYPE_LIBS=""],[$FREETYPE_LIBS])
+            WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,[FREETYPE_LIBS=""],[$FREETYPE_LIBS])
         else
             FREETYPE_CFLAGS=""
             FREETYPE_LIBS=""

@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef HAVE_FREETYPE
+#ifdef SONAME_LIBFREETYPE
 
 #ifdef HAVE_FT2BUILD_H
 #include <ft2build.h>
@@ -1036,7 +1036,7 @@ done:
     exit(0);
 }
 
-#else /* HAVE_FREETYPE */
+#else /* SONAME_LIBFREETYPE */
 
 int main(int argc, char **argv)
 {
@@ -1044,4 +1044,4 @@ int main(int argc, char **argv)
     exit(1);
 }
 
-#endif /* HAVE_FREETYPE */
+#endif /* SONAME_LIBFREETYPE */

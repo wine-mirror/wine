@@ -3232,65 +3232,6 @@ printf "%s\n" "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_member
-
-# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
-# -------------------------------------------
-# Tests whether TYPE exists after having included INCLUDES, setting cache
-# variable VAR accordingly.
-ac_fn_c_check_type ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-printf %s "checking for $2... " >&6; }
-if eval test \${$3+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) eval "$3=no"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main (void)
-{
-if (sizeof ($2))
-	 return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main (void)
-{
-if (sizeof (($2)))
-	    return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-
-else case e in #(
-  e) eval "$3=yes" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-eval ac_res=\$$3
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_type
 ac_configure_args_raw=
 for ac_arg
 do
@@ -17951,20 +17892,7 @@ printf "%s\n" "$ac_cv_lib_soname_freetype" >&6; }
 
 printf "%s\n" "#define SONAME_LIBFREETYPE \"$ac_cv_lib_soname_freetype\"" >>confdefs.h
 
-
-printf "%s\n" "#define HAVE_FREETYPE 1" >>confdefs.h
-
-                 ac_fn_c_check_type "$LINENO" "FT_TrueTypeEngineType" "ac_cv_type_FT_TrueTypeEngineType" "#include <ft2build.h>
-#include FT_MODULE_H
-"
-if test "x$ac_cv_type_FT_TrueTypeEngineType" = xyes
-then :
-
-printf "%s\n" "#define HAVE_FT_TRUETYPEENGINETYPE 1" >>confdefs.h
-
-
-fi
- ;;
+        ;;
 esac
 fi
         else

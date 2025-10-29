@@ -56,9 +56,7 @@
 #include FT_TRIGONOMETRY_H
 #include FT_MODULE_H
 #include FT_WINFONTS_H
-#ifdef FT_LCD_FILTER_H
 #include FT_LCD_FILTER_H
-#endif
 #endif /* HAVE_FT2BUILD_H */
 
 #include "ntstatus.h"
@@ -73,18 +71,9 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
-#ifdef HAVE_FREETYPE
+#ifdef SONAME_LIBFREETYPE
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
-
-#ifndef HAVE_FT_TRUETYPEENGINETYPE
-typedef enum
-{
-    FT_TRUETYPE_ENGINE_TYPE_NONE = 0,
-    FT_TRUETYPE_ENGINE_TYPE_UNPATENTED,
-    FT_TRUETYPE_ENGINE_TYPE_PATENTED
-} FT_TrueTypeEngineType;
-#endif
 
 static FT_Library library = 0;
 typedef struct
@@ -107,8 +96,10 @@ MAKE_FUNCPTR(FT_Get_Next_Char);
 MAKE_FUNCPTR(FT_Get_Sfnt_Name);
 MAKE_FUNCPTR(FT_Get_Sfnt_Name_Count);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
+MAKE_FUNCPTR(FT_Get_TrueType_Engine_Type);
 MAKE_FUNCPTR(FT_Get_WinFNT_Header);
 MAKE_FUNCPTR(FT_Init_FreeType);
+MAKE_FUNCPTR(FT_Library_SetLcdFilter);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_Load_Sfnt_Table);
@@ -121,22 +112,18 @@ MAKE_FUNCPTR(FT_MulFix);
 #endif
 MAKE_FUNCPTR(FT_New_Face);
 MAKE_FUNCPTR(FT_New_Memory_Face);
+MAKE_FUNCPTR(FT_Outline_Embolden);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_Get_CBox);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
+MAKE_FUNCPTR(FT_Property_Set);
 MAKE_FUNCPTR(FT_Render_Glyph);
 MAKE_FUNCPTR(FT_Set_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Length);
 MAKE_FUNCPTR(FT_Vector_Transform);
 MAKE_FUNCPTR(FT_Vector_Unit);
-static FT_Error (*pFT_Outline_Embolden)(FT_Outline *, FT_Pos);
-static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
-#ifdef FT_LCD_FILTER_H
-static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
-#endif
-static FT_Error (*pFT_Property_Set)(FT_Library, const FT_String *, const FT_String *, const void *);
 
 #ifdef SONAME_LIBFONTCONFIG
 #include <fontconfig/fontconfig.h>
@@ -298,13 +285,8 @@ static BOOL is_hinting_enabled(void)
 
     if (enabled == -1)
     {
-        /* Use the >= 2.2.0 function if available */
-        if (pFT_Get_TrueType_Engine_Type)
-        {
-            FT_TrueTypeEngineType type = pFT_Get_TrueType_Engine_Type(library);
-            enabled = (type == FT_TRUETYPE_ENGINE_TYPE_PATENTED);
-        }
-        else enabled = FALSE;
+        FT_TrueTypeEngineType type = pFT_Get_TrueType_Engine_Type(library);
+        enabled = (type == FT_TRUETYPE_ENGINE_TYPE_PATENTED);
         TRACE("hinting is %senabled\n", enabled ? "" : "NOT ");
     }
     return enabled;
@@ -318,11 +300,8 @@ static BOOL is_subpixel_rendering_enabled( void )
         /* FreeType >= 2.8.1 offers LCD-optimezed rendering without lcd filters. */
         if (FT_SimpleVersion >= FT_VERSION_VALUE(2, 8, 1))
             enabled = TRUE;
-#ifdef FT_LCD_FILTER_H
-        else if (pFT_Library_SetLcdFilter &&
-                 pFT_Library_SetLcdFilter( NULL, 0 ) != FT_Err_Unimplemented_Feature)
+        else if (pFT_Library_SetLcdFilter( NULL, 0 ) != FT_Err_Unimplemented_Feature)
             enabled = TRUE;
-#endif
         else enabled = FALSE;
 
         TRACE("subpixel rendering is %senabled\n", enabled ? "" : "NOT ");
@@ -769,13 +748,6 @@ static FT_Face new_ft_face( const char *file, void *font_data_ptr, UINT font_dat
     {
         WARN("Unable to load font %s/%p err = %x\n", debugstr_a(file), font_data_ptr, err);
         return NULL;
-    }
-
-    /* There are too many bugs in FreeType < 2.1.9 for bitmap font support */
-    if (!FT_IS_SCALABLE( ft_face ) && FT_SimpleVersion < FT_VERSION_VALUE(2, 1, 9))
-    {
-        WARN("FreeType version < 2.1.9, skipping bitmap font %s/%p\n", debugstr_a(file), font_data_ptr);
-        goto fail;
     }
 
     if (!FT_IS_SFNT( ft_face ))
@@ -1502,8 +1474,10 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Get_Sfnt_Name)
     LOAD_FUNCPTR(FT_Get_Sfnt_Name_Count)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
+    LOAD_FUNCPTR(FT_Get_TrueType_Engine_Type)
     LOAD_FUNCPTR(FT_Get_WinFNT_Header)
     LOAD_FUNCPTR(FT_Init_FreeType)
+    LOAD_FUNCPTR(FT_Library_SetLcdFilter)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_Load_Sfnt_Table)
@@ -1514,10 +1488,12 @@ static BOOL init_freetype(void)
 #endif
     LOAD_FUNCPTR(FT_New_Face)
     LOAD_FUNCPTR(FT_New_Memory_Face)
+    LOAD_FUNCPTR(FT_Outline_Embolden)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
     LOAD_FUNCPTR(FT_Outline_Get_CBox)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
+    LOAD_FUNCPTR(FT_Property_Set)
     LOAD_FUNCPTR(FT_Render_Glyph)
     LOAD_FUNCPTR(FT_Set_Charmap)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
@@ -1525,13 +1501,6 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Vector_Transform)
     LOAD_FUNCPTR(FT_Vector_Unit)
 #undef LOAD_FUNCPTR
-    /* Don't warn if these ones are missing */
-    pFT_Outline_Embolden = dlsym(ft_handle, "FT_Outline_Embolden");
-    pFT_Get_TrueType_Engine_Type = dlsym(ft_handle, "FT_Get_TrueType_Engine_Type");
-#ifdef FT_LCD_FILTER_H
-    pFT_Library_SetLcdFilter = dlsym(ft_handle, "FT_Library_SetLcdFilter");
-#endif
-    pFT_Property_Set = dlsym(ft_handle, "FT_Property_Set");
 
     if(pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
@@ -1547,16 +1516,13 @@ static BOOL init_freetype(void)
                        ((FT_Version.patch      ) & 0x0000ff);
 
     /* In FreeType < 2.8.1 v40's FT_LOAD_TARGET_MONO has broken advance widths. */
-    if (pFT_Property_Set && FT_SimpleVersion < FT_VERSION_VALUE(2, 8, 1))
+    if (FT_SimpleVersion < FT_VERSION_VALUE(2, 8, 1))
     {
         FT_UInt interpreter_version = 35;
         pFT_Property_Set( library, "truetype", "interpreter-version", &interpreter_version );
     }
 
-#ifdef FT_LCD_FILTER_H
-    if (pFT_Library_SetLcdFilter)
-        pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
-#endif
+    pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
 
     return TRUE;
 
@@ -1564,7 +1530,7 @@ sym_not_found:
     WINE_MESSAGE(
       "Wine cannot find certain functions that it needs inside the FreeType\n"
       "font library.  To enable Wine to use TrueType fonts please upgrade\n"
-      "FreeType to at least version 2.1.4.\n"
+      "FreeType to at least version 2.5.0.\n"
       "http://www.freetype.org\n");
     dlclose(ft_handle);
     ft_handle = NULL;
@@ -2397,8 +2363,6 @@ static BOOL get_bold_glyph_outline(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metri
 
     if(glyph->format != FT_GLYPH_FORMAT_OUTLINE)
         return FALSE;
-    if(!pFT_Outline_Embolden)
-        return FALSE;
 
     strength = pFT_MulDiv(ppem, 1 << 6, 24);
     err = pFT_Outline_Embolden(&glyph->outline, strength);
@@ -3155,10 +3119,6 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT 
     matrices = get_transform_matrices( font, tategaki, lpmat, transform_matrices );
 
     vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
-    /* there is a freetype bug where vertical metrics are only
-       properly scaled and correct in 2.4.0 or greater */
-    if (vertical_metrics && FT_SimpleVersion < FT_VERSION_VALUE(2, 4, 0))
-        vertical_metrics = FALSE;
 
     if (matrices || format != GGO_BITMAP) load_flags |= FT_LOAD_NO_BITMAP;
     if (vertical_metrics) load_flags |= FT_LOAD_VERTICAL_LAYOUT;
@@ -3941,11 +3901,11 @@ const struct font_backend_funcs *init_freetype_lib(void)
     return &font_funcs;
 }
 
-#else /* HAVE_FREETYPE */
+#else /* SONAME_LIBFREETYPE */
 
 const struct font_backend_funcs *init_freetype_lib(void)
 {
     return NULL;
 }
 
-#endif /* HAVE_FREETYPE */
+#endif /* SONAME_LIBFREETYPE */
