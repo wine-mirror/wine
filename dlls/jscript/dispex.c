@@ -108,7 +108,7 @@ static inline BOOL is_function_prop(dispex_prop_t *prop)
     return ret;
 }
 
-static DWORD get_flags(jsdisp_t *This, dispex_prop_t *prop)
+static BOOL is_enumerable(jsdisp_t *This, dispex_prop_t *prop)
 {
     if(prop->type == PROP_PROTREF) {
         dispex_prop_t *parent = NULL;
@@ -118,13 +118,13 @@ static DWORD get_flags(jsdisp_t *This, dispex_prop_t *prop)
 
         if(!parent || parent->type == PROP_DELETED) {
             prop->type = PROP_DELETED;
-            return 0;
+            return FALSE;
         }
 
-        return get_flags(This->prototype, parent);
+        return is_enumerable(This->prototype, parent);
     }
 
-    return prop->flags;
+    return !!(prop->flags & PROPF_ENUMERABLE);
 }
 
 static const builtin_prop_t *find_builtin_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens)
@@ -3170,7 +3170,7 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
             continue;
         if(enum_type != JSDISP_ENUM_ALL && iter->type == PROP_PROTREF)
             continue;
-        if(enum_type != JSDISP_ENUM_OWN && !(get_flags(obj, iter) & PROPF_ENUMERABLE))
+        if(enum_type != JSDISP_ENUM_OWN && !is_enumerable(obj, iter))
             continue;
         *ret = prop_to_id(obj, iter);
         return S_OK;
