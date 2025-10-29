@@ -321,6 +321,86 @@ static void test_namespaces_as_attributes(void)
     free_bstrs();
 }
 
+static const WCHAR *leading_spaces_xmldata[] =
+{
+    L"\n<?xml version=\"1.0\" encoding=\"UTF-16\" ?><root/>",
+    L" <?xml version=\"1.0\"?><root/>",
+    L"\n<?xml version=\"1.0\"?><root/>",
+    L"\t<?xml version=\"1.0\"?><root/>",
+    L"\r\n<?xml version=\"1.0\"?><root/>",
+    L"\r<?xml version=\"1.0\"?><root/>",
+    L"\r\r\r\r\t\t \n\n <?xml version=\"1.0\"?><root/>",
+    0
+};
+
+static void test_leading_spaces(void)
+{
+    WCHAR path[MAX_PATH];
+    IXMLDOMDocument *doc;
+    const WCHAR **data;
+    VARIANT_BOOL b;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    GetTempPathW(MAX_PATH, path);
+    lstrcatW(path, L"leading_spaces.xml");
+
+    data = leading_spaces_xmldata;
+    while (*data)
+    {
+        IStream *stream;
+        DWORD written;
+        HANDLE file;
+
+        /* IStream */
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IStream_Write(stream, *data, lstrlenW(*data) * sizeof(WCHAR), NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        V_VT(&var) = VT_UNKNOWN;
+        V_UNKNOWN(&var) = (IUnknown *)stream;
+        b = 0xc;
+        hr = IXMLDOMDocument_load(doc, var, &b);
+        todo_wine
+        ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+        ok(b == VARIANT_FALSE, "Unexpected %d.\n", b);
+
+        IStream_Release(stream);
+
+        /* Disk file */
+        file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+        ok(file != INVALID_HANDLE_VALUE, "Failed to create a file %s: %lu.\n", debugstr_w(path), GetLastError());
+
+        WriteFile(file, *data, lstrlenW(*data) * sizeof(WCHAR), &written, NULL);
+        CloseHandle(file);
+
+        b = 0xc;
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = _bstr_(path);
+        hr = IXMLDOMDocument_load(doc, var, &b);
+        ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+        ok(b == VARIANT_FALSE, "Unexpected %d.\n", b);
+
+        DeleteFileW(path);
+
+        /* WCHAR buffer */
+        b = 0xc;
+        hr = IXMLDOMDocument_loadXML(doc, _bstr_(*data), &b);
+        ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+        ok(b == VARIANT_FALSE, "Unexpected %d.\n", b);
+
+        data++;
+    }
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -339,6 +419,7 @@ START_TEST(domdoc)
 
     test_namespaces_as_attributes();
     test_create_attribute();
+    test_leading_spaces();
 
     CoUninitialize();
 }

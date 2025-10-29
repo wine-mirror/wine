@@ -1412,7 +1412,6 @@ static const struct leading_spaces_t leading_spaces_classdata[] = {
     { &CLSID_DOMDocument26, "CLSID_DOMDocument26", {{VARIANT_FALSE, S_FALSE }, {VARIANT_TRUE,  S_OK } }},
     { &CLSID_DOMDocument30, "CLSID_DOMDocument30", {{VARIANT_FALSE, S_FALSE }, {VARIANT_FALSE, S_FALSE } }},
     { &CLSID_DOMDocument40, "CLSID_DOMDocument40", {{VARIANT_FALSE, S_FALSE }, {VARIANT_FALSE, S_FALSE } }},
-    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", {{VARIANT_FALSE, S_FALSE }, {VARIANT_FALSE, S_FALSE } }},
     { NULL }
 };
 
