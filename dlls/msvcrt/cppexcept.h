@@ -142,6 +142,19 @@ typedef struct
 #define TYPE_FLAG_REFERENCE  8
 #define TYPE_FLAG_WINRT     16
 
+typedef struct winrt_exception_info
+{
+    BSTR description;
+    BSTR restricted_desc;
+    void *unknown1;
+    void *unknown2;
+    HRESULT hr;
+    void *error_info; /* IRestrictedErrorInfo */
+    const cxx_exception_type *exception_type;
+    UINT32 unknown3;
+    void (*WINAPI set_exception_info)(struct winrt_exception_info **);
+} winrt_exception_info;
+
 void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*);
 
 static inline BOOL is_cxx_exception( EXCEPTION_RECORD *rec )

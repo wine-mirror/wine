@@ -903,6 +903,16 @@ void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
 {
     ULONG_PTR args[CXX_EXCEPTION_PARAMS];
 
+    if (type && type->flags & TYPE_FLAG_WINRT)
+    {
+        /* This is a WinRT exception, which contains a pointer to winrt_exception_info just before the object.
+         * We use the exception_type field inside that struct as the actual value for exception type. */
+         winrt_exception_info **info = *(winrt_exception_info ***)object - 1;
+
+         type = (*info)->exception_type;
+         (*info)->set_exception_info( info );
+    }
+
     args[0] = CXX_FRAME_MAGIC_VC6;
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
