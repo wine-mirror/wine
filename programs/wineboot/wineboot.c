@@ -1431,7 +1431,7 @@ static BOOL start_services_process(void)
     HANDLE wait_handles[2];
 
     if (!CreateProcessW(L"C:\\windows\\system32\\services.exe", NULL,
-                        NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
+                        NULL, NULL, TRUE, DETACHED_PROCESS, NULL, L"C:\\windows\\system32", &si, &pi))
     {
         WINE_ERR("Couldn't start services.exe: error %lu\n", GetLastError());
         return FALSE;
