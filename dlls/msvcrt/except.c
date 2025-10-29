@@ -964,7 +964,7 @@ void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
 
     if (info->destructor)
         call_dtor( cxx_rva( info->destructor, rec->ExceptionInformation[3] ), object );
-    else if (info->flags & TYPE_FLAG_IUNKNOWN && *(IUnknown**)object)
+    else if (info->flags & TYPE_FLAG_WINRT && *(IUnknown**)object)
         IUnknown_Release( *(IUnknown**)object );
 }
 
