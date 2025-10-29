@@ -907,6 +907,7 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, WAIT_TYPE type,
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
 
     assert( count <= ARRAY_SIZE(syncs) );
+    objs[0] = -1;  /* make gcc happy, otherwise it thinks objs is not initialized */
     for (int i = 0; i < count; ++i)
     {
         if ((ret = get_inproc_sync( handles[i], INPROC_SYNC_UNKNOWN, SYNCHRONIZE, &stack[i], &syncs[i] )))
@@ -2338,7 +2339,24 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, WA
  */
 NTSTATUS WINAPI NtWaitForSingleObject( HANDLE handle, BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    return NtWaitForMultipleObjects( 1, &handle, FALSE, alertable, timeout );
+    union select_op select_op;
+    UINT flags = SELECT_INTERRUPTIBLE;
+    unsigned int ret;
+
+    TRACE( "handle %p, alertable %u, timeout %s\n", handle, alertable, debugstr_timeout(timeout) );
+
+    if ((ret = inproc_wait( 1, &handle, WaitAny, alertable, timeout )) != STATUS_NOT_IMPLEMENTED)
+    {
+        TRACE( "-> %#x\n", ret );
+        return ret;
+    }
+
+    if (alertable) flags |= SELECT_ALERTABLE;
+    select_op.wait.op = SELECT_WAIT;
+    select_op.wait.handles[0] = wine_server_obj_handle( handle );
+    ret = server_wait( &select_op, offsetof( union select_op, wait.handles[1] ), flags, timeout );
+    TRACE( "-> %#x\n", ret );
+    return ret;
 }
 
 
