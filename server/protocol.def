@@ -1852,6 +1852,7 @@ enum server_fd_type
     obj_handle_t mapping;       /* file mapping handle */
     client_ptr_t base;          /* view base address (page-aligned) */
     mem_size_t   size;          /* view size */
+    mem_size_t   offset;        /* offset into the image */
     unsigned int entry;         /* entry point in mapped view */
     unsigned short machine;     /* machine in the mapped view */
 @END

@@ -214,7 +214,7 @@ extern char *get_alternate_wineloader( WORD machine );
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const struct pe_image_info *pe_info );
 extern NTSTATUS load_builtin( const struct pe_image_info *image_info, UNICODE_STRING *nt_name,
                               ANSI_STRING *exp_name, USHORT machine, SECTION_IMAGE_INFORMATION *info,
-                              void **module, SIZE_T *size, ULONG_PTR limit_low, ULONG_PTR limit_high );
+                              void **module, SIZE_T *size, ULONG_PTR limit_low, ULONG_PTR limit_high, off_t offset );
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine );
 extern NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **module );
 extern NTSTATUS load_start_exe( UNICODE_STRING *nt_name, void **module );
@@ -280,7 +280,7 @@ extern ULONG_PTR get_system_affinity_mask(void);
 extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 );
 extern NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size,
                                             SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
-                                            ULONG_PTR limit_high, WORD machine, BOOL prefer_native );
+                                            ULONG_PTR limit_high, WORD machine, BOOL prefer_native, off_t offset );
 extern NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size,
                                     SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
                                     ULONG_PTR limit_high, USHORT machine );
