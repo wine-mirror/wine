@@ -4556,6 +4556,32 @@ sync_test("constructors", function() {
     HTMLMetaElement.prototype.constructor = old;
 });
 
+sync_test("typed arrays", function() {
+    if (document.documentMode < 10)
+        return;
+
+    function check(constr) {
+        ok(Object.getPrototypeOf(constr) === Function.prototype, "unexpected " + constr + " porototype " + Object.getPrototypeOf(constr));
+        ok(Object.getPrototypeOf(constr.prototype) === Object.prototype,
+           "unexpected " + constr + " porototype's prototype " + Object.getPrototypeOf(constr.prototype));
+        test_own_props(constr, constr,
+                       ["BYTES_PER_ELEMENT", "arguments", "caller", "length", "prototype"],
+                       ["BYTES_PER_ELEMENT", "arguments", "caller"]);
+        test_own_props(constr.prototype, constr + ".prototype",
+                       ["BYTES_PER_ELEMENT", "buffer", "byteLength", "byteOffset", "constructor", "length", "set", "subarray"],
+                       ["BYTES_PER_ELEMENT"]);
+    }
+
+    check(Int8Array);
+    check(Int16Array);
+    check(Int32Array);
+    check(Uint8Array);
+    check(Uint16Array);
+    check(Uint32Array);
+    check(Float32Array);
+    check(Float64Array);
+});
+
 async_test("window own props", function() {
     if(!Object.getOwnPropertyNames) {
         next_test();
@@ -4631,7 +4657,7 @@ async_test("window own props", function() {
             "CompositionEvent", "ControlRangeCollection", "Coordinates", ["Crypto",11], ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
             "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
             ["DeviceOrientationEvent",11], ["DeviceRotationRate",11], ["DOMError",10], "DOMException", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11],
-            "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10], ["Float32Array",10], ["Float64Array",10],
+            "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10],
             "FocusEvent", ["FormData",10], "Geolocation", "GetObject", ["HTMLAllCollection",11], "HTMLAppletElement", "HTMLAreasCollection", "HTMLAudioElement", "HTMLBaseElement",
             "HTMLBaseFontElement", "HTMLBGSoundElement", "HTMLBlockElement", "HTMLBRElement", "HTMLCanvasElement", ["HTMLDataListElement",10], "HTMLDDElement", "HTMLDirectoryElement",
             "HTMLDivElement", "HTMLDListElement", "HTMLDTElement", "HTMLFieldSetElement", "HTMLFontElement", "HTMLFrameSetElement", "HTMLHeadingElement", "HTMLHRElement", "HTMLIsIndexElement",
@@ -4639,7 +4665,7 @@ async_test("window own props", function() {
             "HTMLOptGroupElement", "HTMLParagraphElement", "HTMLParamElement", "HTMLPhraseElement", "HTMLPreElement", ["HTMLProgressElement",10], "HTMLQuoteElement", "HTMLSourceElement",
             "HTMLSpanElement", "HTMLTableCaptionElement", "HTMLTableColElement", "HTMLTableHeaderCellElement", "HTMLTableSectionElement", ["HTMLTrackElement",10], "HTMLUListElement",
             "HTMLVideoElement", ["IDBCursor",10], ["IDBCursorWithValue",10], ["IDBDatabase",10], ["IDBFactory",10], ["IDBIndex",10], ["IDBKeyRange",10], ["IDBObjectStore",10], ["IDBOpenDBRequest",10],
-            ["IDBRequest",10], ["IDBTransaction",10], ["IDBVersionChangeEvent",10], "ImageData", ["Int16Array",10], ["Int32Array",10], ["Int8Array",10], ["Intl",11], ["Key",11], ["KeyOperation",11],
+            ["IDBRequest",10], ["IDBTransaction",10], ["IDBVersionChangeEvent",10], "ImageData", ["Intl",11], ["Key",11], ["KeyOperation",11],
             ["KeyPair",11], "Location", "MediaError", "MediaList", ["MediaSource",11], ["MessageChannel",10], ["MessagePort",10], ["MimeType",11], ["MimeTypeArray",9,10], "MouseWheelEvent",
             "MSBehaviorUrnsCollection", ["MSBlobBuilder",10], "MSCompatibleInfo", "MSCompatibleInfoCollection", ["MSCSSMatrix",10], ["MSGesture",10], ["MSGestureEvent",10], ["MSGraphicsTrust",11],
             ["MSInputMethodContext",11], ["MSManipulationEvent",10], ["MSMediaKeyError",11], ["MSMediaKeyMessageEvent",11], ["MSMediaKeyNeededEvent",11], ["MSMediaKeys",11], ["MSMediaKeySession",11],
@@ -4662,8 +4688,8 @@ async_test("window own props", function() {
             "SVGPatternElement", "SVGPoint", "SVGPointList", "SVGPolygonElement", "SVGPolylineElement", "SVGPreserveAspectRatio", "SVGRadialGradientElement", "SVGRect", "SVGRectElement",
             "SVGScriptElement", "SVGStopElement", "SVGStringList", "SVGStyleElement", "SVGSwitchElement", "SVGSymbolElement", "SVGTextElement", "SVGTextPathElement", "SVGTitleElement",
             "SVGTransform", "SVGTransformList", "SVGUnitTypes", "SVGUseElement", "SVGViewElement", "SVGZoomAndPan", "SVGZoomEvent", "TextEvent", "TextMetrics", "TextRangeCollection", ["TextTrack",10],
-            ["TextTrackCue",10], ["TextTrackCueList",10], ["TextTrackList",10], "TimeRanges", ["TrackEvent",10], ["TransitionEvent",10], "TreeWalker", ["Uint16Array",10], ["Uint32Array",10],
-            ["Uint8Array",10], ["Uint8ClampedArray",11], ["URL",10], ["ValidityState",10], ["VideoPlaybackQuality",11], ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11],
+            ["TextTrackCue",10], ["TextTrackCueList",10], ["TextTrackList",10], "TimeRanges", ["TrackEvent",10], ["TransitionEvent",10], "TreeWalker",
+            ["Uint8ClampedArray",11], ["URL",10], ["ValidityState",10], ["VideoPlaybackQuality",11], ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11],
             ["WebGLFramebuffer",11], ["WebGLObject",11], ["WebGLProgram",11], ["WebGLRenderbuffer",11], ["WebGLRenderingContext",11], ["WebGLShader",11], ["WebGLShaderPrecisionFormat",11],
             ["WebGLTexture",11], ["WebGLUniformLocation",11], ["WEBGL_compressed_texture_s3tc",11], ["WEBGL_debug_renderer_info",11], ["WebSocket",10], "WheelEvent", ["Worker",10],
             ["XMLHttpRequestEventTarget",10], "XMLSerializer"

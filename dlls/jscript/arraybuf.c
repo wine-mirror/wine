@@ -684,6 +684,108 @@ static const builtin_info_t DataViewConstr_info = {
     .call  = Function_value,
 };
 
+/* NOTE: Keep in sync with the JSCLASS ordering of typed arrays */
+#define ALL_TYPED_ARRAYS \
+    X(Int8Array)         \
+    X(Int16Array)        \
+    X(Int32Array)        \
+    X(Uint8Array)        \
+    X(Uint16Array)       \
+    X(Uint32Array)       \
+    X(Float32Array)      \
+    X(Float64Array)
+
+enum {
+#define X(name) name ##_desc_idx,
+ALL_TYPED_ARRAYS
+#undef X
+};
+
+static HRESULT TypedArray_get_buffer(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT TypedArray_get_byteLength(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT TypedArray_get_byteOffset(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT TypedArray_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+#define X(name)                                                                         \
+static HRESULT name##_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r) \
+{                                                                                       \
+    FIXME("\n");                                                                        \
+    return E_NOTIMPL;                                                                   \
+}                                                                                       \
+                                                                                        \
+static HRESULT name##_subarray(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r) \
+{                                                                                       \
+    FIXME("\n");                                                                        \
+    return E_NOTIMPL;                                                                   \
+}                                                                                       \
+                                                                                        \
+static const builtin_prop_t name##_props[] = {                                          \
+    {L"buffer",                NULL, 0,                    TypedArray_get_buffer},      \
+    {L"byteLength",            NULL, 0,                    TypedArray_get_byteLength},  \
+    {L"byteOffset",            NULL, 0,                    TypedArray_get_byteOffset},  \
+    {L"length",                NULL, 0,                    TypedArray_get_length},      \
+    {L"set",                   name##_set,                 PROPF_METHOD|2},             \
+    {L"subarray",              name##_subarray,            PROPF_METHOD|2},             \
+};                                                                                      \
+                                                                                        \
+static const builtin_info_t name##_info =                                               \
+{                                                                                       \
+    .class          = FIRST_TYPEDARRAY_JSCLASS + name ##_desc_idx,                      \
+    .props_cnt      = ARRAY_SIZE(name##_props),                                         \
+    .props          = name##_props,                                                     \
+};                                                                                      \
+                                                                                        \
+static HRESULT name ## Constr_value(script_ctx_t *ctx, jsval_t jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r) \
+{                                                                                       \
+    FIXME("\n");                                                                        \
+    return E_NOTIMPL;                                                                   \
+}
+ALL_TYPED_ARRAYS
+#undef X
+
+static const builtin_info_t TypedArrayConstr_info = {
+    .class = JSCLASS_FUNCTION,
+    .call  = Function_value,
+};
+
+static HRESULT init_typed_array_constructor(script_ctx_t *ctx, builtin_invoke_t func, const WCHAR *name,
+                                            const builtin_info_t *info, unsigned int type_idx)
+{
+    jsdisp_t *prototype;
+    HRESULT hres;
+
+    hres = create_dispex(ctx, info, ctx->object_prototype, &prototype);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_builtin_constructor(ctx, func, name, &TypedArrayConstr_info, PROPF_CONSTR|1, prototype, &ctx->typedarr_constr[type_idx]);
+    jsdisp_release(prototype);
+    if(FAILED(hres))
+        return hres;
+
+    return jsdisp_define_data_property(ctx->global, name, PROPF_CONFIGURABLE | PROPF_WRITABLE,
+                                       jsval_obj(ctx->typedarr_constr[type_idx]));
+}
+
 HRESULT init_arraybuf_constructors(script_ctx_t *ctx)
 {
     static const struct {
@@ -766,6 +868,15 @@ HRESULT init_arraybuf_constructors(script_ctx_t *ctx)
 
     hres = jsdisp_define_data_property(ctx->global, L"DataView", PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                        jsval_obj(ctx->dataview_constr));
+    if(FAILED(hres))
+        return hres;
+
+#define X(name) \
+    hres = init_typed_array_constructor(ctx, name##Constr_value, L"" #name, &name##_info, name##_desc_idx); \
+    if(FAILED(hres)) \
+        return hres;
+    ALL_TYPED_ARRAYS
+#undef X
 
     return hres;
 }
