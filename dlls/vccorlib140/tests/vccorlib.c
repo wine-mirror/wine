@@ -1255,9 +1255,9 @@ typedef struct
 struct exception_inner
 {
     /* This only gets set when the exception is thrown. */
-    BSTR message1;
+    BSTR description;
     /* Likewise, but can also be set by CreateExceptionWithMessage. */
-    BSTR message2;
+    BSTR restricted_desc;
     void *unknown1;
     void *unknown2;
     HRESULT hr;
@@ -1265,7 +1265,8 @@ struct exception_inner
     IRestrictedErrorInfo *error_info;
     const cxx_exception_type *exception_type;
     UINT32 unknown3;
-    void *unknown4;
+    /* Called before the exception is thrown by _CxxThrowException. */
+    void (*WINAPI set_exception_info)(struct exception_inner **);
 };
 
 struct platform_exception
@@ -1351,6 +1352,7 @@ static void test_exceptions(void)
         const cxx_type_info_table *type_info_table;
         const char *rtti_name, *rtti_raw_name;
         const struct exception_inner *inner;
+        IRestrictedErrorInfo *error_info;
         const rtti_type_info *rtti_info;
         const cxx_exception_type *type;
         struct platform_exception *obj;
@@ -1360,6 +1362,7 @@ static void test_exceptions(void)
         INT32 j, ret = 0;
         void *type_info;
         WCHAR buf[256];
+        BOOL desc_todo;
         IUnknown *out;
         HSTRING str;
         ULONG count;
@@ -1447,6 +1450,7 @@ static void test_exceptions(void)
         str = p_platform_exception_get_Message(obj);
         ret = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, cur_test->hr, 0, buf, ARRAY_SIZE(buf), NULL);
         ok(!!str == !!ret, "got str %s\n", debugstr_hstring(str));
+        desc_todo = !ret;
         if(ret)
         {
             bufW = WindowsGetStringRawBuffer(str, NULL);
@@ -1456,8 +1460,8 @@ static void test_exceptions(void)
 
         inner = *(const struct exception_inner **)((ULONG_PTR)obj - sizeof(ULONG_PTR));
         ok(inner == &obj->inner, "got inner %p != %p\n", inner, &obj->inner);
-        ok(inner->message1 == NULL, "got message1 %p\n", inner->message1);
-        ok(inner->message2 == NULL, "got message2 %p\n", inner->message2);
+        ok(inner->description == NULL, "got description %p\n", inner->description);
+        ok(inner->restricted_desc == NULL, "got restricted_desc %p\n", inner->restricted_desc);
         ok(inner->unknown1 == NULL, "got unknown1 %p\n", inner->unknown1);
         ok(inner->unknown2 == NULL, "got unknown2 %p\n", inner->unknown2);
         ok(inner->hr == cur_test->hr, "got hr %#lx != %#lx\n", inner->hr, cur_test->hr);
@@ -1467,6 +1471,32 @@ static void test_exceptions(void)
             ok(inner->unknown3 == 64, "got unknown3 %u\n", inner->unknown3);
         else
             ok(inner->unknown3 == 32, "got unknown3 %u \n", inner->unknown3);
+        ok(obj->inner.set_exception_info != NULL, "got inner.set_exception_info %p\n",
+            obj->inner.set_exception_info);
+        obj->inner.set_exception_info((struct exception_inner **)((ULONG_PTR)obj - sizeof(ULONG_PTR)));
+        todo_wine_if(desc_todo)
+        ok(inner->description != NULL, "got description %p\n", inner->description);
+        todo_wine_if(desc_todo)
+        ok(inner->restricted_desc != NULL, "got restricted_desc %p\n", inner->restricted_desc);
+        todo_wine ok(inner->error_info != NULL, "got error_info %p\n", inner->error_info);
+        if ((error_info = inner->error_info))
+        {
+            BSTR desc, restricted_desc, sid;
+            HRESULT code;
+
+            IRestrictedErrorInfo_AddRef(error_info);
+            test_refcount(error_info, 2);
+
+            hr = IRestrictedErrorInfo_GetErrorDetails(error_info, &desc, &code, &restricted_desc, &sid);
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            ok(!wcscmp(desc, inner->description), "got desc %s != %s\n", debugstr_w(desc), debugstr_w(inner->description));
+            ok(!wcscmp(restricted_desc, inner->restricted_desc), "got restricted_desc %s != %s\n",
+                debugstr_w(restricted_desc), debugstr_w(inner->restricted_desc));
+            ok(code == inner->hr, "got code %#lx != %#lx\n", code, inner->hr);
+            SysFreeString(desc);
+            SysFreeString(restricted_desc);
+            SysFreeString(sid);
+        }
 
         type = inner->exception_type;
         ok(type->flags == TYPE_FLAG_IUNKNOWN, "got flags %#x\n", type->flags);
@@ -1502,6 +1532,12 @@ static void test_exceptions(void)
         count = IInspectable_Release(inspectable);
         ok(count == 0, "got count %lu\n", count);
 
+        if (error_info)
+        {
+            count = IRestrictedErrorInfo_Release(error_info);
+            ok(count == 0, "got count %lu\n", count);
+        }
+
         /* Create an Exception object with a custom message. */
         inspectable = pCreateExceptionWithMessage(cur_test->hr, msg);
         ok(inspectable != NULL, "got excp %p\n", inspectable);
@@ -1512,13 +1548,13 @@ static void test_exceptions(void)
         WindowsDeleteString(str);
 
         inner = (const struct exception_inner *)*(ULONG_PTR *)((ULONG_PTR)inspectable - sizeof(ULONG_PTR));
-        ok(inner->message1 == NULL, "got message1 %p\n", inner->message1);
-        ok(inner->message2 != NULL, "got message2 %p\n", inner->message2);
+        ok(inner->description == NULL, "got description %p\n", inner->description);
+        ok(inner->restricted_desc != NULL, "got restricted_desc %p\n", inner->restricted_desc);
         ok(inner->unknown1 == NULL, "got unknown3 %p\n", inner->unknown1);
         ok(inner->unknown2 == NULL, "got unknown4 %p\n", inner->unknown2);
-        ok(!wcscmp(inner->message2, msg_bufW), "got message2 %s != %s\n", debugstr_w(inner->message2),
+        ok(!wcscmp(inner->restricted_desc, msg_bufW), "got restricted_desc %s != %s\n", debugstr_w(inner->restricted_desc),
            debugstr_w(msg_bufW));
-        ret = SysStringLen(inner->message2); /* Verify that message2 is a BSTR. */
+        ret = SysStringLen(inner->restricted_desc); /* Verify that restricted_desc is a BSTR. */
         ok(ret == wcslen(msg_bufW), "got ret %u != %Iu\n", ret, wcslen(msg_bufW));
 
         count = IInspectable_Release(inspectable);
@@ -1545,13 +1581,38 @@ static void test_exceptions(void)
 
             inner = *(const struct exception_inner **)((ULONG_PTR)obj - sizeof(ULONG_PTR));
             ok(inner == &obj->inner, "got inner %p != %p\n", inner, &obj->inner);
-            ok(inner->message1 == NULL, "got message1 %p\n", inner->message1);
-            ok(inner->message2 == NULL, "got message2 %p\n", inner->message2);
+            ok(inner->description == NULL, "got description %p\n", inner->description);
+            ok(inner->restricted_desc == NULL, "got restricted_desc %p\n", inner->restricted_desc);
             ok(inner->unknown1 == NULL, "got unknown1 %p\n", inner->unknown1);
             ok(inner->unknown2 == NULL, "got unknown2 %p\n", inner->unknown2);
+            ok(inner->error_info == NULL, "got error_info %p\n", inner->error_info);
             ok(obj->inner.exception_type == type, "got inner.exception_type %p != %p\n", obj->inner.exception_type,
                type);
             ok(obj->inner.hr == cur_test->hr, "got inner.hr %#lx != %#lx", obj->inner.hr, cur_test->hr);
+            ok(obj->inner.set_exception_info != NULL, "got inner.set_exception_info %p\n",
+               obj->inner.set_exception_info);
+
+            obj->inner.set_exception_info((struct exception_inner **)((ULONG_PTR)obj - sizeof(ULONG_PTR)));
+            todo_wine_if(desc_todo)
+            ok(inner->description != NULL, "got description %p\n", inner->description);
+            todo_wine_if(desc_todo)
+            ok(inner->restricted_desc != NULL, "got restricted_desc %p\n", inner->restricted_desc);
+            todo_wine ok(inner->error_info != NULL, "got error_info %p\n", inner->error_info);
+            if (inner->error_info)
+            {
+                BSTR desc, restricted_desc, sid;
+                HRESULT code;
+
+                hr = IRestrictedErrorInfo_GetErrorDetails(inner->error_info, &desc, &code, &restricted_desc, &sid);
+                ok(hr == S_OK, "got hr %#lx\n", hr);
+                ok(!wcscmp(desc, inner->description), "got desc %s != %s\n", debugstr_w(desc), debugstr_w(inner->description));
+                ok(!wcscmp(restricted_desc, inner->restricted_desc), "got restricted_desc %s != %s\n",
+                   debugstr_w(restricted_desc), debugstr_w(inner->restricted_desc));
+                ok(code == inner->hr, "got code %#lx != %#lx\n", code, inner->hr);
+                SysFreeString(desc);
+                SysFreeString(restricted_desc);
+                SysFreeString(sid);
+            }
 
             count = IInspectable_Release(inspectable);
             ok(count == 0, "got count %lu\n", count);
@@ -1576,17 +1637,45 @@ static void test_exceptions(void)
 
             inner = *(const struct exception_inner **)((ULONG_PTR)obj - sizeof(ULONG_PTR));
             ok(inner == &obj->inner, "got inner %p != %p\n", inner, &obj->inner);
-            ok(inner->message1 == NULL, "got message1 %p\n", inner->message1);
-            ok(inner->message2 != NULL, "got message2 %p\n", inner->message2);
-            ok(!wcscmp(inner->message2, msg_bufW), "got message2 %s != %s\n", debugstr_w(inner->message2),
-               debugstr_w(msg_bufW));
-            ret = SysStringLen(inner->message2); /* Verify that message2 is a BSTR. */
+            ok(inner->description == NULL, "got description %p\n", inner->description);
+            ok(inner->restricted_desc != NULL, "got restricted_desc %p\n", inner->restricted_desc);
+            ok(!wcscmp(inner->restricted_desc, msg_bufW), "got restricted_desc %s != %s\n",
+               debugstr_w(inner->restricted_desc), debugstr_w(msg_bufW));
+            ret = SysStringLen(inner->restricted_desc); /* Verify that restricted_desc is a BSTR. */
             ok(ret == wcslen(msg_bufW), "got ret %u != %Iu\n", ret, wcslen(msg_bufW));
             ok(inner->unknown1 == NULL, "got unknown1 %p\n", inner->unknown1);
             ok(inner->unknown2 == NULL, "got unknown2 %p\n", inner->unknown2);
+            ok(inner->error_info == NULL, "got error_info %p\n", inner->error_info);
             ok(obj->inner.exception_type == type, "got inner.exception_type %p != %p\n", obj->inner.exception_type,
                type);
             ok(obj->inner.hr == cur_test->hr, "got inner.hr %#lx != %#lx", obj->inner.hr, cur_test->hr);
+            ok(obj->inner.set_exception_info != NULL, "got inner.set_exception_info %p\n",
+                obj->inner.set_exception_info);
+
+            obj->inner.set_exception_info((struct exception_inner **)((ULONG_PTR)obj - sizeof(ULONG_PTR)));
+            todo_wine_if(desc_todo)
+            ok(inner->description != NULL, "got description %p\n", inner->description);
+            ok(inner->restricted_desc != NULL, "got restricted_desc %p\n", inner->restricted_desc);
+            /* restricted_desc should not change. */
+            ok(!wcscmp(inner->restricted_desc, msg_bufW), "got restricted_desc %s != %s\n",
+               debugstr_w(inner->restricted_desc), debugstr_w(msg_bufW));
+            todo_wine ok(inner->error_info != NULL, "got error_info %p\n", inner->error_info);
+            if (inner->error_info)
+            {
+                BSTR desc, restricted_desc, sid;
+                HRESULT code;
+
+                hr = IRestrictedErrorInfo_GetErrorDetails(inner->error_info, &desc, &code, &restricted_desc, &sid);
+                ok(hr == S_OK, "got hr %#lx\n", hr);
+                ok(!wcscmp(desc, inner->description), "got desc %s != %s\n", debugstr_w(desc),
+                   debugstr_w(inner->description));
+                ok(!wcscmp(restricted_desc, inner->restricted_desc), "got restricted_desc %s != %s\n",
+                   debugstr_w(restricted_desc), debugstr_w(inner->restricted_desc));
+                ok(code == inner->hr, "got code %#lx != %#lx\n", code, inner->hr);
+                SysFreeString(desc);
+                SysFreeString(restricted_desc);
+                SysFreeString(sid);
+            }
 
             count = IInspectable_Release(inspectable);
             ok(count == 0, "got count %lu\n", count);
