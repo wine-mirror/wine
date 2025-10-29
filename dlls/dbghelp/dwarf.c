@@ -4397,7 +4397,7 @@ leave:
     image_unmap_section(&debug_str_sect);
     image_unmap_section(&debug_line_sect);
     image_unmap_section(&debug_ranges_sect);
-    if (!ret) image_unmap_section(&eh_frame_sect);
+    if (!module->format_info[DFI_DWARF]) image_unmap_section(&eh_frame_sect);
 
     return ret;
 }
