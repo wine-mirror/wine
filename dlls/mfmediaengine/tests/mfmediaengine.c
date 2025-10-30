@@ -1284,6 +1284,7 @@ struct test_transfer_notify
     IMFMediaEngineEx *media_engine;
     HANDLE ready_event, frame_ready_event;
     HRESULT error;
+    BOOL autoplay;
 };
 
 static struct test_transfer_notify *impl_from_test_transfer_notify(IMFMediaEngineNotify *iface)
@@ -1337,8 +1338,11 @@ static HRESULT WINAPI test_transfer_notify_EventNotify(IMFMediaEngineNotify *ifa
     switch (event)
     {
     case MF_MEDIA_ENGINE_EVENT_CANPLAY:
-        hr = IMFMediaEngineEx_Play(media_engine);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (notify->autoplay)
+        {
+            hr = IMFMediaEngineEx_Play(media_engine);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        }
         break;
 
     case MF_MEDIA_ENGINE_EVENT_FORMATCHANGE:
@@ -1386,18 +1390,49 @@ static struct test_transfer_notify *create_transfer_notify(void)
     object->frame_ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(!!object->frame_ready_event, "Failed to create an event, error %lu.\n", GetLastError());
 
+    object->autoplay = TRUE;
+
     return object;
+}
+
+#define compare_rgb32(texture, dst_rect, rb_texture, filename) compare_rgb32_(__LINE__, texture, dst_rect, rb_texture, filename)
+static DWORD compare_rgb32_(int line, ID3D11Texture2D *texture, const RECT *dst_rect, ID3D11Texture2D *rb_texture, const WCHAR *filename)
+{
+    D3D11_MAPPED_SUBRESOURCE map_desc;
+    ID3D11DeviceContext *context;
+    D3D11_TEXTURE2D_DESC desc;
+    ID3D11Device *device;
+    HRESULT hr;
+    DWORD res;
+
+    ID3D11Texture2D_GetDesc(texture, &desc);
+    ID3D11Texture2D_GetDevice(texture, &device);
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)rb_texture,
+            0, 0, 0, 0, (ID3D11Resource *)texture, 0, NULL);
+
+    memset(&map_desc, 0, sizeof(map_desc));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)rb_texture, 0, D3D11_MAP_READ, 0, &map_desc);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(!!map_desc.pData, "got pData %p\n", map_desc.pData);
+    ok_(__FILE__, line)(map_desc.DepthPitch == desc.Width * desc.Height * 4, "got DepthPitch %u\n", map_desc.DepthPitch);
+    ok_(__FILE__, line)(map_desc.RowPitch == desc.Width * 4, "got RowPitch %u\n", map_desc.RowPitch);
+    res = check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, dst_rect);
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)rb_texture, 0);
+
+    ID3D11DeviceContext_Release(context);
+    ID3D11Device_Release(device);
+    return res;
 }
 
 static void test_TransferVideoFrame(void)
 {
     struct test_transfer_notify *notify;
     ID3D11Texture2D *texture = NULL, *rb_texture;
-    D3D11_MAPPED_SUBRESOURCE map_desc;
     IMFMediaEngineEx *media_engine = NULL;
     IWICImagingFactory *factory = NULL;
     IMFDXGIDeviceManager *manager;
-    ID3D11DeviceContext *context;
     D3D11_TEXTURE2D_DESC desc;
     IWICBitmap *bitmap = NULL;
     IMFByteStream *stream;
@@ -1412,6 +1447,7 @@ static void test_TransferVideoFrame(void)
     stream = load_resource(L"i420-64x64.avi", L"video/avi");
 
     notify = create_transfer_notify();
+    notify->autoplay = FALSE;
 
     if (!(device = create_d3d11_device()))
     {
@@ -1452,13 +1488,19 @@ static void test_TransferVideoFrame(void)
             WICBitmapCacheOnLoad, &bitmap);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    /* show that we don't receive a frame prior to setting the byte stream */
+    res = WaitForSingleObject(notify->frame_ready_event, 100);
+    ok(res == WAIT_TIMEOUT, "Unexpected res %#lx.\n", res);
+
     url = SysAllocString(L"i420-64x64.avi");
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, stream, url);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(url);
     IMFByteStream_Release(stream);
 
+    /* now that byte stream is set, we will recieve a frame */
     res = WaitForSingleObject(notify->frame_ready_event, 5000);
+    todo_wine
     ok(!res, "Unexpected res %#lx.\n", res);
 
     if (FAILED(notify->error))
@@ -1472,17 +1514,7 @@ static void test_TransferVideoFrame(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(res == 2, "Unexpected stream count %lu.\n", res);
 
-    /* FIXME: Wine first video frame is often full of garbage, wait for another update */
-    res = WaitForSingleObject(notify->ready_event, 500);
-    /* It's also missing the MF_MEDIA_ENGINE_EVENT_TIMEUPDATE notifications */
-    todo_wine
-    ok(!res, "Unexpected res %#lx.\n", res);
-
-    SetRect(&dst_rect, 0, 0, desc.Width, desc.Height);
-    IMFMediaEngineEx_OnVideoStreamTick(notify->media_engine, &pts);
-    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, &dst_rect, NULL);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
+    /* create the readback texture */
     ID3D11Texture2D_GetDesc(texture, &desc);
     desc.Usage = D3D11_USAGE_STAGING;
     desc.BindFlags = 0;
@@ -1491,26 +1523,45 @@ static void test_TransferVideoFrame(void)
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &rb_texture);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    ID3D11Device_GetImmediateContext(device, &context);
-    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)rb_texture,
-            0, 0, 0, 0, (ID3D11Resource *)texture, 0, NULL);
-
-    memset(&map_desc, 0, sizeof(map_desc));
-    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)rb_texture, 0, D3D11_MAP_READ, 0, &map_desc);
+    /* confirm we have a frame available before calling play */
+    pts = 0;
+    hr = IMFMediaEngineEx_OnVideoStreamTick(media_engine, &pts);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!!map_desc.pData, "got pData %p\n", map_desc.pData);
-    ok(map_desc.DepthPitch == 16384, "got DepthPitch %u\n", map_desc.DepthPitch);
-    ok(map_desc.RowPitch == desc.Width * 4, "got RowPitch %u\n", map_desc.RowPitch);
-    res = check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, &dst_rect);
-    ok(res == 0, "Unexpected %lu%% diff\n", res);
-    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)rb_texture, 0);
+    todo_wine
+    ok(pts == 0, "Unexpected timestamp.\n");
 
+    /* confirm we can transfer a frame before calling play */
+    SetRect(&dst_rect, 0, 0, desc.Width, desc.Height);
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, &dst_rect, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    res = compare_rgb32(texture, &dst_rect, rb_texture, L"rgb32frame.bmp");
+    todo_wine
+    ok(res == 0, "Unexpected %lu%% diff\n", res);
+
+    hr = IMFMediaEngineEx_Play(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* FIXME: Wine first video frame is often full of garbage, wait for another update */
+    res = WaitForSingleObject(notify->ready_event, 500);
+    /* It's also missing the MF_MEDIA_ENGINE_EVENT_TIMEUPDATE notifications */
+    todo_wine
+    ok(!res, "Unexpected res %#lx.\n", res);
+
+    IMFMediaEngineEx_OnVideoStreamTick(notify->media_engine, &pts);
+    hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, &dst_rect, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    res = compare_rgb32(texture, &dst_rect, rb_texture, L"rgb32frame.bmp");
+    ok(res == 0, "Unexpected %lu%% diff\n", res);
+
+    /* Test audio session */
     hr = IMFMediaEngineEx_SetVolume(media_engine, 0.5);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     test_audio_session(FALSE);
 
-    ID3D11DeviceContext_Release(context);
     ID3D11Texture2D_Release(rb_texture);
 
     hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)bitmap, NULL, &dst_rect, NULL);
