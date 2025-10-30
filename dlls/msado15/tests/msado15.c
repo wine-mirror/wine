@@ -93,6 +93,7 @@ static BOOL is_eof( _Recordset *recordset )
 
 static void test_Recordset(void)
 {
+    ADORecordsetConstruction *recordset_constr;
     _Recordset *recordset;
     IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
@@ -109,6 +110,7 @@ static void test_Recordset(void)
     HRESULT hr;
     VARIANT bookmark, filter, active;
     EditModeEnum editmode;
+    IUnknown *rowset;
     LONG cache_size;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
@@ -303,10 +305,23 @@ static void test_Recordset(void)
 
     Properties_Release(props);
 
+    hr = _Recordset_QueryInterface(recordset, &IID_ADORecordsetConstruction, (void**)&recordset_constr);
+    ok(hr == S_OK, "failed %lx\n", hr);
+    rowset = (IUnknown *)0xdeadbeef;
+    hr = ADORecordsetConstruction_get_Rowset(recordset_constr, &rowset);
+    ok(hr == S_OK, "failed %08lx\n", hr);
+    ok(!rowset, "rowset = %p\n", rowset);
+
     hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( is_eof( recordset ), "not eof\n" );
     ok( is_bof( recordset ), "not bof\n" );
+
+    hr = ADORecordsetConstruction_get_Rowset(recordset_constr, &rowset);
+    ok(hr == S_OK, "failed %08lx\n", hr);
+    ok(!!rowset, "rowset = NULL\n");
+    IUnknown_Release(rowset);
+    ADORecordsetConstruction_Release(recordset_constr);
 
     V_VT(&active) = VT_UNKNOWN;
     V_UNKNOWN(&active) = (IUnknown *)0xdeadbeef;

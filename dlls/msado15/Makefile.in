@@ -8,4 +8,5 @@ SOURCES = \
 	msado15_classes.idl \
 	msado15_tlb.idl \
 	recordset.c \
+	rowset.c \
 	stream.c

@@ -26,6 +26,8 @@ HRESULT Connection_create( void ** );
 HRESULT Recordset_create( void ** );
 HRESULT Stream_create( void ** );
 
+HRESULT create_mem_rowset( IUnknown ** );
+
 typedef enum tid_t {
     ADORecordsetConstruction_tid,
     Command_tid,

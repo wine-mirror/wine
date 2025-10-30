@@ -2178,19 +2178,30 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
 
-    if (get_column_count( recordset ))
-    {
-        recordset->state = adStateOpen;
-        return S_OK;
-    }
-
     if (V_VT(&active_connection) != VT_ERROR || V_ERROR(&active_connection) != DISP_E_PARAMNOTFOUND)
     {
         hr = _Recordset_put_ActiveConnection( iface, active_connection );
         if (FAILED(hr))
             return hr;
     }
-    else if (!recordset->active_connection)
+
+    if (get_column_count(recordset))
+    {
+        if (recordset->active_connection)
+        {
+            FIXME("adding new table\n");
+            return E_NOTIMPL;
+        }
+
+        hr = create_mem_rowset(&rowset);
+        if (FAILED(hr))
+            return hr;
+        hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
+        IUnknown_Release(rowset);
+        return hr;
+    }
+
+    if (!recordset->active_connection)
         return MAKE_ADO_HRESULT( adErrInvalidConnection );
 
     if (V_VT(&source) != VT_BSTR)
@@ -2235,7 +2246,6 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
     recordset->cursor_type = cursor_type;
-    recordset->state = adStateOpen;
 
     IUnknown_Release(rowset);
 
@@ -2799,9 +2809,14 @@ static HRESULT WINAPI rsconstruction_get_Rowset(ADORecordsetConstruction *iface,
 
     TRACE( "%p, %p\n", recordset, row_set );
 
+    if (!recordset->row_set)
+    {
+        *row_set = NULL;
+        return S_OK;
+    }
+
     hr = IRowset_QueryInterface(recordset->row_set, &IID_IUnknown, (void**)row_set);
     if ( FAILED(hr) ) return E_FAIL;
-
     return S_OK;
 }
 
