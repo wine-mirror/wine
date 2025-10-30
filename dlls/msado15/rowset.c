@@ -248,8 +248,11 @@ static HRESULT WINAPI rowset_GetExactPosition(IRowsetExactScroll *iface, HCHAPTE
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll(iface);
 
-    FIXME("%p, %Id, %Iu, %p, %p, %p\n", rowset, chapter, bookmark_cnt, bookmarks, position, rows);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %Iu, %p, %p, %p\n", rowset, chapter, bookmark_cnt, bookmarks, position, rows);
+
+    if (position) FIXME("not setting position\n");
+    if (rows) *rows = rowset->row_cnt;
+    return S_OK;
 }
 
 static const struct IRowsetExactScrollVtbl rowset_vtbl =

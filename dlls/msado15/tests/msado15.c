@@ -1110,10 +1110,10 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT( rowset_QI_IRowsetExactScroll );
     if (exact_scroll) SET_EXPECT( rowset_GetExactPosition );
     hr = _Recordset_get_RecordCount( recordset, &size );
-    todo_wine CHECK_CALLED( rowset_QI_IRowsetExactScroll );
-    if (exact_scroll) todo_wine CHECK_CALLED( rowset_GetExactPosition );
+    CHECK_CALLED( rowset_QI_IRowsetExactScroll );
+    if (exact_scroll) CHECK_CALLED( rowset_GetExactPosition );
     ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine ok( size == (exact_scroll ? 3 : -1), "size = %Id\n", size );
+    ok( size == (exact_scroll ? 3 : -1), "size = %Id\n", size );
 
     if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
     else SET_EXPECT( rowset_GetRowsAt );

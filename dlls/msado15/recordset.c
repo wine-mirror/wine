@@ -81,6 +81,7 @@ struct recordset
     CursorLocationEnum cursor_location;
     CursorTypeEnum     cursor_type;
     IRowset           *row_set;
+    IRowsetExactScroll *rowset_es;
     IRowsetChange     *rowset_change;
     IAccessor         *accessor;
     EditModeEnum      editmode;
@@ -1272,6 +1273,9 @@ static void close_recordset( struct recordset *recordset )
 
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = NULL;
+    if ( recordset->rowset_es && recordset->rowset_es != NO_INTERFACE )
+        IRowsetExactScroll_Release( recordset->rowset_es );
+    recordset->rowset_es = NULL;
     if ( recordset->rowset_change && recordset->rowset_change != NO_INTERFACE )
         IRowsetChange_Release( recordset->rowset_change );
     recordset->rowset_change = NULL;
@@ -1630,10 +1634,28 @@ static HRESULT WINAPI recordset_put_MaxRecords( _Recordset *iface, ADO_LONGPTR m
 static HRESULT WINAPI recordset_get_RecordCount( _Recordset *iface, ADO_LONGPTR *count )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    DBCOUNTITEM rows;
+    HRESULT hr;
 
     TRACE( "%p, %p\n", recordset, count );
 
-    *count = recordset->count;
+    *count = -1;
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->rowset_es)
+    {
+        hr = IUnknown_QueryInterface( recordset->row_set, &IID_IRowsetExactScroll,
+                (void**)&recordset->rowset_es );
+        if (FAILED(hr) || !recordset->rowset_es)
+            recordset->rowset_es = NO_INTERFACE;
+    }
+    if (recordset->rowset_es == NO_INTERFACE)
+        return S_OK;
+
+    hr = IRowsetExactScroll_GetExactPosition( recordset->rowset_es, 0, 0, 0, 0, &rows );
+    if (SUCCEEDED(hr))
+        *count = rows;
     return S_OK;
 }
 
