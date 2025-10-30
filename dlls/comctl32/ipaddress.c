@@ -186,20 +186,29 @@ static void IPADDRESS_DrawBackground (const IPADDRESS_INFO *infoPtr, HDC hdc, RE
     DrawEdge(hdc, rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 }
 
+static void IPADDRESS_DrawDot (const IPADDRESS_INFO *infoPtr, HDC hdc, RECT *rect)
+{
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
+
+    if (theme)
+    {
+        int state = IPADDRESS_GetThemeTextState(infoPtr);
+        DrawThemeText(theme, hdc, EP_EDITTEXT, state, L".", 1, DT_SINGLELINE | DT_CENTER | DT_BOTTOM, 0, rect);
+        return;
+    }
+
+    DrawTextW(hdc, L".", 1, rect, DT_SINGLELINE | DT_CENTER | DT_BOTTOM);
+}
+
 static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
 {
     RECT rect, rcPart;
     COLORREF bgCol, fgCol;
-    HTHEME theme;
-    int i, state = ETS_NORMAL;
+    int i;
 
     TRACE("\n");
 
     GetClientRect (infoPtr->Self, &rect);
-
-    theme = GetWindowTheme (infoPtr->Self);
-    if (theme)
-        state = IPADDRESS_GetThemeTextState(infoPtr);
     IPADDRESS_DrawBackground(infoPtr, hdc, &rect);
 
     IPADDRESS_GetTextColors(infoPtr, &bgCol, &fgCol);
@@ -214,10 +223,7 @@ static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
         MapWindowPoints( 0, infoPtr->Self, (POINT *)&rcPart, 2 );
         rect.right = rcPart.left;
 
-        if (theme)
-            DrawThemeText(theme, hdc, EP_EDITTEXT, state, L".", 1, DT_SINGLELINE | DT_CENTER | DT_BOTTOM, 0, &rect);
-        else
-            DrawTextW(hdc, L".", 1, &rect, DT_SINGLELINE | DT_CENTER | DT_BOTTOM);
+        IPADDRESS_DrawDot(infoPtr, hdc, &rect);
     }
 
     return 0;
