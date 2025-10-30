@@ -72,6 +72,18 @@ static float _effect_get_float_prop(ID2D1Effect *effect, UINT32 prop, int line)
     return v;
 }
 
+#define effect_get_vec4_prop(a,b) _effect_get_vec4_prop(a,b,__LINE__)
+static D2D_VECTOR_4F _effect_get_vec4_prop(ID2D1Effect *effect, UINT32 prop, int line)
+{
+    D2D_VECTOR_4F v = { 123321.0f, 123321.0f, 123321.0f, 123321.0f };
+    HRESULT hr;
+
+    hr = ID2D1Effect_GetValue(effect, prop, D2D1_PROPERTY_TYPE_VECTOR4, (BYTE *)&v, sizeof(v));
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    return v;
+}
+
 #define effect_get_vec3_prop(a,b) _effect_get_vec3_prop(a,b,__LINE__)
 static D2D_VECTOR_3F _effect_get_vec3_prop(ID2D1Effect *effect, UINT32 prop, int line)
 {
@@ -103,6 +115,18 @@ static UINT32 _effect_get_enum_prop(ID2D1Effect *effect, UINT32 prop, int line)
     HRESULT hr;
 
     hr = ID2D1Effect_GetValue(effect, prop, D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&v, sizeof(v));
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    return v;
+}
+
+#define effect_get_bool_prop(a,b) _effect_get_bool_prop(a,b,__LINE__)
+static UINT32 _effect_get_bool_prop(ID2D1Effect *effect, UINT32 prop, int line)
+{
+    UINT32 v = 123321;
+    HRESULT hr;
+
+    hr = ID2D1Effect_GetValue(effect, prop, D2D1_PROPERTY_TYPE_BOOL, (BYTE *)&v, sizeof(v));
     ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     return v;
@@ -13443,6 +13467,59 @@ static void test_effect_point_specular(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_arithmetic_composite(BOOL d3d11)
+{
+    static const struct effect_property properties[] =
+    {
+        { L"Coefficients", D2D1_ARITHMETICCOMPOSITE_PROP_COEFFICIENTS, D2D1_PROPERTY_TYPE_VECTOR4 },
+        { L"ClampOutput", D2D1_ARITHMETICCOMPOSITE_PROP_CLAMP_OUTPUT, D2D1_PROPERTY_TYPE_BOOL },
+    };
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    unsigned int count, i;
+    ID2D1Effect *effect;
+    D2D_VECTOR_4F vec4;
+    WCHAR name[64];
+    HRESULT hr;
+    UINT32 v;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    context = ctx.context;
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1ArithmeticComposite, &effect);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+    {
+        release_test_context(&ctx);
+        return;
+    }
+
+    check_system_properties(effect);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(count == 2, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(properties); ++i)
+    {
+        hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(name, properties[i].name), "Unexpected name %s.\n", wine_dbgstr_w(name));
+    }
+
+    vec4 = effect_get_vec4_prop(effect, D2D1_ARITHMETICCOMPOSITE_PROP_COEFFICIENTS);
+    ok(vec4.x == 1.0f && vec4.y == 0.0f && vec4.z == 0.0f && vec4.w == 0.0f,
+            "Unexpected value {%.8e,%.8e,%.8e,%.8e}.\n", vec4.x, vec4.y, vec4.z, vec4.w);
+
+    v = effect_get_bool_prop(effect, D2D1_ARITHMETICCOMPOSITE_PROP_CLAMP_OUTPUT);
+    ok(!v, "Unexpected value %#x.\n", v);
+
+    ID2D1Effect_Release(effect);
+    release_test_context(&ctx);
+}
+
 static void test_registered_effects(BOOL d3d11)
 {
     UINT32 ret, count, count2, count3;
@@ -16818,6 +16895,7 @@ START_TEST(d2d1)
     queue_test(test_registered_effects);
     queue_d3d10_test(test_effect_gaussian_blur);
     queue_d3d10_test(test_effect_point_specular);
+    queue_d3d10_test(test_effect_arithmetic_composite);
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);
     queue_test(test_blend_transform);
