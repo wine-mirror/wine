@@ -35,19 +35,6 @@
 #include "wine/list.h"
 #include "wine/rbtree.h"
 
-/*
- * This is Wine jscript extension for ES5 compatible mode. Native IE9+ implements
- * a separated JavaScript enging in side MSHTML. We implement its features here
- * and enable it when HTML flag is specified in SCRIPTPROP_INVOKEVERSIONING property.
- */
-#define SCRIPTLANGUAGEVERSION_HTML 0x400
-
-/*
- * This is Wine jscript extension for ES5 and ES6 compatible mode. Allowed only in HTML mode.
- */
-#define SCRIPTLANGUAGEVERSION_ES5  0x102
-#define SCRIPTLANGUAGEVERSION_ES6  0x103
-
 typedef struct _jsval_t jsval_t;
 typedef struct _jsstr_t jsstr_t;
 typedef struct _jsexcept_t jsexcept_t;

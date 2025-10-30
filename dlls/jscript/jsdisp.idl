@@ -78,6 +78,10 @@ interface IWineJSDispatchHost : IDispatchEx
     HRESULT ToString(BSTR *str);
 }
 
+const unsigned int SCRIPTLANGUAGEVERSION_HTML  = 0x400;
+const unsigned int SCRIPTLANGUAGEVERSION_ES5   = 0x102;
+const unsigned int SCRIPTLANGUAGEVERSION_ES6   = 0x103;
+
 [
     object,
     uuid(d359f2fe-5531-741b-a41a-5cf92edc971d),

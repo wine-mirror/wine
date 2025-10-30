@@ -62,11 +62,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #endif
 
-/* See jscript.h in jscript.dll. */
-#define SCRIPTLANGUAGEVERSION_HTML 0x400
-#define SCRIPTLANGUAGEVERSION_ES5  0x102
-#define SCRIPTLANGUAGEVERSION_ES6  0x103
-
 struct ScriptHost {
     IActiveScriptSite              IActiveScriptSite_iface;
     IActiveScriptSiteInterruptPoll IActiveScriptSiteInterruptPoll_iface;
