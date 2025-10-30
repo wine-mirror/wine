@@ -2319,6 +2319,12 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, WA
         TRACE( "}, timeout %s\n", debugstr_timeout(timeout) );
     }
 
+    /* Reject pseudo-handles up front. These are not valid for multi-object waits. */
+    for (i = 0; i < count; i++)
+    {
+        if (is_pseudo_handle( handles[i] )) return STATUS_INVALID_HANDLE;
+    }
+
     if ((ret = inproc_wait( count, handles, type, alertable, timeout )) != STATUS_NOT_IMPLEMENTED)
     {
         TRACE( "-> %#x\n", ret );

@@ -1432,26 +1432,26 @@ static void test_WaitForMultipleObjects(void)
     maxevents[0] = GetCurrentProcess();
     SetLastError(0xdeadbeef);
     r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
-    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
-                 "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
+    ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
     maxevents[0] = GetCurrentThread();
     SetLastError(0xdeadbeef);
     r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
-    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
-                 "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
+    ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
     timeout.QuadPart = -1000000;
     maxevents[0] = GetCurrentProcess();
     status = pNtWaitForMultipleObjects(1, maxevents, WaitAny, FALSE, &timeout);
-    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
 
     timeout.QuadPart = -1000000;
     maxevents[0] = GetCurrentThread();
     status = pNtWaitForMultipleObjects(1, maxevents, WaitAny, FALSE, &timeout);
-    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
 }
 
 static BOOL g_initcallback_ret, g_initcallback_called;
