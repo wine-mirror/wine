@@ -1088,6 +1088,8 @@ static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum typ
 
     TRACE( "%p, %s, %u, %Id, %d\n", fields, debugstr_w(name), type, size, attr );
 
+    if (fields_get_recordset(fields)->state != adStateClosed) return MAKE_ADO_HRESULT( adErrIllegalOperation );
+
     memset( &colinfo, 0, sizeof(colinfo) );
     colinfo.pwszName = name;
     colinfo.wType = type;
