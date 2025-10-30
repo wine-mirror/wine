@@ -130,6 +130,7 @@ static int IPADDRESS_GetPartIndex(const IPADDRESS_INFO *infoPtr, HWND hwnd)
     return -1;
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 static int IPADDRESS_GetThemeTextState (const IPADDRESS_INFO *infoPtr)
 {
     if (!infoPtr->Enabled)
@@ -141,10 +142,12 @@ static int IPADDRESS_GetThemeTextState (const IPADDRESS_INFO *infoPtr)
     else
         return ETS_NORMAL;
 }
+#endif
 
 static void IPADDRESS_GetTextColors (const IPADDRESS_INFO *infoPtr, COLORREF *background_color,
                                      COLORREF *foreground_color)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->Self);
 
     if (theme)
@@ -154,6 +157,7 @@ static void IPADDRESS_GetTextColors (const IPADDRESS_INFO *infoPtr, COLORREF *ba
         GetThemeColor(theme, EP_EDITTEXT, state, TMT_TEXTCOLOR, foreground_color);
         return;
     }
+#endif
 
     if (infoPtr->Enabled)
     {
@@ -170,6 +174,7 @@ static void IPADDRESS_GetTextColors (const IPADDRESS_INFO *infoPtr, COLORREF *ba
 static void IPADDRESS_DrawBackground (const IPADDRESS_INFO *infoPtr, HDC hdc, RECT *rect)
 {
     COLORREF background_color, foreground_color;
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->Self);
 
     if (theme)
@@ -180,6 +185,7 @@ static void IPADDRESS_DrawBackground (const IPADDRESS_INFO *infoPtr, HDC hdc, RE
         DrawThemeBackground(theme, hdc, EP_EDITTEXT, state, rect, 0);
         return;
     }
+#endif
 
     IPADDRESS_GetTextColors(infoPtr, &background_color, &foreground_color);
     FillRect(hdc, rect, (HBRUSH)(DWORD_PTR)(background_color + 1));
@@ -188,6 +194,7 @@ static void IPADDRESS_DrawBackground (const IPADDRESS_INFO *infoPtr, HDC hdc, RE
 
 static void IPADDRESS_DrawDot (const IPADDRESS_INFO *infoPtr, HDC hdc, RECT *rect)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->Self);
 
     if (theme)
@@ -196,6 +203,7 @@ static void IPADDRESS_DrawDot (const IPADDRESS_INFO *infoPtr, HDC hdc, RECT *rec
         DrawThemeText(theme, hdc, EP_EDITTEXT, state, L".", 1, DT_SINGLELINE | DT_CENTER | DT_BOTTOM, 0, rect);
         return;
     }
+#endif
 
     DrawTextW(hdc, L".", 1, rect, DT_SINGLELINE | DT_CENTER | DT_BOTTOM);
 }
@@ -285,7 +293,7 @@ static LRESULT IPADDRESS_Create (HWND hwnd, const CREATESTRUCTA *lpCreate)
     }
 
     IPADDRESS_UpdateText (infoPtr);
-    OpenThemeData (infoPtr->Self, WC_EDITW);
+    COMCTL32_OpenThemeForWindow (infoPtr->Self, WC_EDITW);
 
     return 0;
 }
@@ -293,7 +301,6 @@ static LRESULT IPADDRESS_Create (HWND hwnd, const CREATESTRUCTA *lpCreate)
 
 static LRESULT IPADDRESS_Destroy (IPADDRESS_INFO *infoPtr)
 {
-    HTHEME theme;
     int i;
 
     TRACE("\n");
@@ -306,8 +313,7 @@ static LRESULT IPADDRESS_Destroy (IPADDRESS_INFO *infoPtr)
     if (infoPtr->hFont)
         DeleteObject (infoPtr->hFont);
     SetWindowLongPtrW (infoPtr->Self, 0, 0);
-    theme = GetWindowTheme (infoPtr->Self);
-    CloseThemeData (theme);
+    COMCTL32_CloseThemeForWindow (infoPtr->Self);
     Free (infoPtr);
     return 0;
 }
@@ -492,15 +498,6 @@ static BOOL IPADDRESS_GotoNextField (const IPADDRESS_INFO *infoPtr, int cur, int
     return FALSE;
 }
 
-static LRESULT IPADDRESS_ThemeChanged (const IPADDRESS_INFO *infoPtr)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
-    CloseThemeData (theme);
-    theme = OpenThemeData (theme, WC_EDITW);
-    InvalidateRect (infoPtr->Self, NULL, TRUE);
-    return 0;
-}
-
 /*
  * period: move and select the text in the next field to the right if
  *         the current field is not empty(l!=0), we are not in the
@@ -663,7 +660,7 @@ IPADDRESS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return 0;
 
         case WM_THEMECHANGED:
-            return IPADDRESS_ThemeChanged (infoPtr);
+            return COMCTL32_ThemeChanged (infoPtr->Self, WC_EDITW, TRUE, TRUE);
 
         case IPM_CLEARADDRESS:
             return IPADDRESS_ClearAddress (infoPtr);
