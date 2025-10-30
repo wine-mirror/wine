@@ -2232,8 +2232,8 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
 
     if (!refcount)
     {
-        session_clear_queued_topologies(session);
-        session_clear_presentation(session);
+        if (SUCCEEDED(session_is_shut_down(session)))
+            IMFMediaSession_Shutdown(iface);
         session_clear_command_list(session);
         if (session->presentation.current_topology)
             IMFTopology_Release(session->presentation.current_topology);
@@ -2504,8 +2504,6 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
         if (session->quality_manager)
             IMFQualityManager_Shutdown(session->quality_manager);
         MFShutdownObject((IUnknown *)session->clock);
-        IMFPresentationClock_Release(session->clock);
-        session->clock = NULL;
         session_clear_presentation(session);
         session_clear_queued_topologies(session);
         session_submit_simple_command(session, SESSION_CMD_SHUTDOWN);
