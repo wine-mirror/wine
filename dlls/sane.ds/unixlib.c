@@ -266,10 +266,21 @@ static NTSTATUS open_ds( void *args )
         return STATUS_DEVICE_NOT_CONNECTED;
     }
     status = sane_open( device_list[i]->name, &device_handle );
-    if (status == SANE_STATUS_GOOD) return STATUS_SUCCESS;
+    if (status != SANE_STATUS_GOOD)
+    {
+	ERR("sane_open(%s): %s\n", device_list[i]->name, sane_strstatus (status));
+	return STATUS_DEVICE_NOT_CONNECTED;
+    }
 
-    ERR("sane_open(%s): %s\n", device_list[i]->name, sane_strstatus (status));
-    return STATUS_DEVICE_NOT_CONNECTED;
+    /* return the Identity of the device */
+    id->ProtocolMajor = TWON_PROTOCOLMAJOR;
+    id->ProtocolMinor = TWON_PROTOCOLMINOR;
+    id->SupportedGroups = DG_CONTROL | DG_IMAGE | DF_DS2;
+    copy_sane_short_name(device_list[i]->name, id->ProductName, sizeof(id->ProductName) - 1);
+    lstrcpynA (id->Manufacturer, device_list[i]->vendor, sizeof(id->Manufacturer) - 1);
+    lstrcpynA (id->ProductFamily, device_list[i]->model, sizeof(id->ProductFamily) - 1);
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS close_ds( void *args )
