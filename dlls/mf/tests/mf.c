@@ -3761,6 +3761,27 @@ static IMFSampleGrabberSinkCallback *create_test_grabber_callback(void)
     return &grabber->IMFSampleGrabberSinkCallback_iface;
 }
 
+static struct test_grabber_callback *create_activated_test_grabber_callback(IMFMediaType *output_type,
+        IMFStreamSink **stream_sink)
+{
+    struct test_grabber_callback *grabber_callback;
+    IMFActivate *sink_activate;
+    IMFMediaSink *sink;
+    HRESULT hr;
+
+    grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
+    hr = MFCreateSampleGrabberSinkActivate(output_type, &grabber_callback->IMFSampleGrabberSinkCallback_iface, &sink_activate);
+    ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
+    hr = IMFActivate_ActivateObject(sink_activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Failed to activate, hr %#lx.\n", hr);
+    IMFActivate_Release(sink_activate);
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSink_Release(sink);
+
+    return grabber_callback;
+}
+
 static HRESULT WINAPI testshutdown_QueryInterface(IMFShutdown *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFShutdown) ||
@@ -9238,13 +9259,11 @@ static void test_h264_output_alignment(void)
     IMFTopology *topology, *resolved_topology;
     struct test_callback *test_callback;
     IMFMediaTypeHandler *handler;
-    IMFActivate *sink_activate;
     IMFTopoLoader *topo_loader;
     IMFStreamSink *stream_sink;
     IMFAsyncCallback *callback;
     IMFMediaType *output_type;
     IMFMediaSession *session;
-    IMFMediaSink *media_sink;
     IMFTransform *transform;
     IMFMediaSource *source;
     PROPVARIANT propvar;
@@ -9264,21 +9283,15 @@ static void test_h264_output_alignment(void)
         return;
     }
 
-    grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
-    grabber_callback->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    ok(!!grabber_callback->ready_event, "CreateEventW failed, error %lu\n", GetLastError());
-
     hr = MFCreateMediaType(&output_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     init_media_type(output_type, video_nv12_desc, -1);
-    hr = MFCreateSampleGrabberSinkActivate(output_type, &grabber_callback->IMFSampleGrabberSinkCallback_iface, &sink_activate);
-    ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
-    IMFMediaType_Release(output_type);
 
-    IMFActivate_ActivateObject(sink_activate, &IID_IMFMediaSink, (void **)&media_sink);
-    hr = IMFMediaSink_GetStreamSinkByIndex(media_sink, 0, &stream_sink);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IMFActivate_Release(sink_activate);
+    grabber_callback = create_activated_test_grabber_callback(output_type, &stream_sink);
+    IMFMediaType_Release(output_type);
+    grabber_callback->ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!grabber_callback->ready_event, "CreateEventW failed, error %lu\n", GetLastError());
+
     topology = create_test_topology_unk(source, (IUnknown *)stream_sink, NULL, NULL);
     hr = MFCreateTopoLoader(&topo_loader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -9351,7 +9364,6 @@ static void test_h264_output_alignment(void)
     IMFAsyncCallback_Release(callback);
     IMFMediaSession_Release(session);
     IMFStreamSink_Release(stream_sink);
-    IMFMediaSink_Release(media_sink);
     IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
     IMFMediaSource_Release(source);
 
