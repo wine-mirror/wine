@@ -167,6 +167,25 @@ static void IPADDRESS_GetTextColors (const IPADDRESS_INFO *infoPtr, COLORREF *ba
     }
 }
 
+static void IPADDRESS_DrawBackground (const IPADDRESS_INFO *infoPtr, HDC hdc, RECT *rect)
+{
+    COLORREF background_color, foreground_color;
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
+
+    if (theme)
+    {
+        int state = IPADDRESS_GetThemeTextState(infoPtr);
+        if (IsThemeBackgroundPartiallyTransparent(theme, EP_EDITTEXT, state))
+            DrawThemeParentBackground(infoPtr->Self, hdc, rect);
+        DrawThemeBackground(theme, hdc, EP_EDITTEXT, state, rect, 0);
+        return;
+    }
+
+    IPADDRESS_GetTextColors(infoPtr, &background_color, &foreground_color);
+    FillRect(hdc, rect, (HBRUSH)(DWORD_PTR)(background_color + 1));
+    DrawEdge(hdc, rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+}
+
 static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
 {
     RECT rect, rcPart;
@@ -179,18 +198,11 @@ static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
     GetClientRect (infoPtr->Self, &rect);
 
     theme = GetWindowTheme (infoPtr->Self);
-    IPADDRESS_GetTextColors(infoPtr, &bgCol, &fgCol);
-
-    if (theme) {
+    if (theme)
         state = IPADDRESS_GetThemeTextState(infoPtr);
-        if (IsThemeBackgroundPartiallyTransparent (theme, EP_EDITTEXT, state))
-            DrawThemeParentBackground(infoPtr->Self, hdc, &rect);
-        DrawThemeBackground (theme, hdc, EP_EDITTEXT, state, &rect, 0);
-    } else {
-        FillRect (hdc, &rect, (HBRUSH)(DWORD_PTR)(bgCol+1));
-        DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
-    }
-    
+    IPADDRESS_DrawBackground(infoPtr, hdc, &rect);
+
+    IPADDRESS_GetTextColors(infoPtr, &bgCol, &fgCol);
     SetBkColor  (hdc, bgCol);
     SetTextColor(hdc, fgCol);
 
