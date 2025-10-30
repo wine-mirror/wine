@@ -130,6 +130,17 @@ static int IPADDRESS_GetPartIndex(const IPADDRESS_INFO *infoPtr, HWND hwnd)
     return -1;
 }
 
+static int IPADDRESS_GetThemeTextState (const IPADDRESS_INFO *infoPtr)
+{
+    if (!infoPtr->Enabled)
+        return ETS_DISABLED;
+    else if (GetWindowLongW(infoPtr->Self, GWL_STYLE) & ES_READONLY)
+        return ETS_READONLY;
+    else if (GetFocus() == infoPtr->Self)
+        return ETS_FOCUSED;
+    else
+        return ETS_NORMAL;
+}
 
 static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
 {
@@ -145,15 +156,7 @@ static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
     theme = GetWindowTheme (infoPtr->Self);
 
     if (theme) {
-        DWORD dwStyle = GetWindowLongW (infoPtr->Self, GWL_STYLE);
-
-        if (!infoPtr->Enabled)
-            state = ETS_DISABLED;
-        else if (dwStyle & ES_READONLY)
-            state = ETS_READONLY;
-        else if (GetFocus() == infoPtr->Self)
-            state = ETS_FOCUSED;
-
+        state = IPADDRESS_GetThemeTextState(infoPtr);
         GetThemeColor(theme, EP_EDITTEXT, state, TMT_FILLCOLOR, &bgCol);
         GetThemeColor(theme, EP_EDITTEXT, state, TMT_TEXTCOLOR, &fgCol);
 
