@@ -80,7 +80,8 @@ interface IWineJSDispatchHost : IDispatchEx
 
 const unsigned int SCRIPTLANGUAGEVERSION_HTML  = 0x400;
 const unsigned int SCRIPTLANGUAGEVERSION_ES5   = 0x102;
-const unsigned int SCRIPTLANGUAGEVERSION_ES6   = 0x103;
+const unsigned int SCRIPTLANGUAGEVERSION_ES5_1 = 0x103;
+const unsigned int SCRIPTLANGUAGEVERSION_ES6   = 0x104;
 
 [
     object,

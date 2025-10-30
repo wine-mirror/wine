@@ -700,7 +700,7 @@ HRESULT init_arraybuf_constructors(script_ctx_t *ctx)
     HRESULT hres;
     unsigned i;
 
-    if(ctx->version < SCRIPTLANGUAGEVERSION_ES5)
+    if(ctx->version < SCRIPTLANGUAGEVERSION_ES5_1)
         return S_OK;
 
     if(!(arraybuf = calloc(1, FIELD_OFFSET(ArrayBufferInstance, buf[0]))))

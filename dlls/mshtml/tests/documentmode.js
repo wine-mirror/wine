@@ -4626,10 +4626,10 @@ async_test("window own props", function() {
             ["Worker",10], ["XDomainRequest",0,10], ["XMLDocument",11], "XMLHttpRequest", ["XMLHttpRequestEventTarget",10], "XMLSerializer", "decodeURI", "decodeURIComponent", "encodeURI",
             "encodeURIComponent", "escape", "eval", "isFinite", "isNaN", "parseFloat", "parseInt", "testprop", "undefined", "unescape"
         ], [
-            ["AesGcmEncryptResult",11], ["ANGLE_instanced_arrays",11], ["AnimationEvent",10], ["ApplicationCache",10], ["ArrayBuffer",9,9], "Audio", ["AudioTrack",10], ["AudioTrackList",10],
+            ["AesGcmEncryptResult",11], ["ANGLE_instanced_arrays",11], ["AnimationEvent",10], ["ApplicationCache",10], "Audio", ["AudioTrack",10], ["AudioTrackList",10],
             "BeforeUnloadEvent", ["Blob",10], "BookmarkCollection", "CanvasGradient", "CanvasPattern", "CanvasPixelArray", "CanvasRenderingContext2D", "CDATASection", ["CloseEvent",10],
             "CompositionEvent", "ControlRangeCollection", "Coordinates", ["Crypto",11], ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
-            "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", ["DataView",9,9], "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
+            "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
             ["DeviceOrientationEvent",11], ["DeviceRotationRate",11], ["DOMError",10], "DOMException", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11],
             "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10], ["Float32Array",10], ["Float64Array",10],
             "FocusEvent", ["FormData",10], "Geolocation", "GetObject", ["HTMLAllCollection",11], "HTMLAppletElement", "HTMLAreasCollection", "HTMLAudioElement", "HTMLBaseElement",
