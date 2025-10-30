@@ -1453,7 +1453,7 @@ static BOOL x11drv_surface_swap( struct opengl_drawable *base )
 
     TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
 
-    if ((offscreen = InterlockedCompareExchange( &base->client->offscreen, 0, 0 )) ||
+    if (!(offscreen = InterlockedCompareExchange( &base->client->offscreen, 0, 0 )) ||
         !ctx || !pglXSwapBuffersMscOML) pglXSwapBuffers( gdi_display, gl->drawable );
     else
     {
