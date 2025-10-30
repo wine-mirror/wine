@@ -142,6 +142,31 @@ static int IPADDRESS_GetThemeTextState (const IPADDRESS_INFO *infoPtr)
         return ETS_NORMAL;
 }
 
+static void IPADDRESS_GetTextColors (const IPADDRESS_INFO *infoPtr, COLORREF *background_color,
+                                     COLORREF *foreground_color)
+{
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
+
+    if (theme)
+    {
+        int state = IPADDRESS_GetThemeTextState(infoPtr);
+        GetThemeColor(theme, EP_EDITTEXT, state, TMT_FILLCOLOR, background_color);
+        GetThemeColor(theme, EP_EDITTEXT, state, TMT_TEXTCOLOR, foreground_color);
+        return;
+    }
+
+    if (infoPtr->Enabled)
+    {
+        *background_color = comctl32_color.clrWindow;
+        *foreground_color = comctl32_color.clrWindowText;
+    }
+    else
+    {
+        *background_color = comctl32_color.clr3dFace;
+        *foreground_color = comctl32_color.clrGrayText;
+    }
+}
+
 static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
 {
     RECT rect, rcPart;
@@ -154,24 +179,14 @@ static LRESULT IPADDRESS_Draw (const IPADDRESS_INFO *infoPtr, HDC hdc)
     GetClientRect (infoPtr->Self, &rect);
 
     theme = GetWindowTheme (infoPtr->Self);
+    IPADDRESS_GetTextColors(infoPtr, &bgCol, &fgCol);
 
     if (theme) {
         state = IPADDRESS_GetThemeTextState(infoPtr);
-        GetThemeColor(theme, EP_EDITTEXT, state, TMT_FILLCOLOR, &bgCol);
-        GetThemeColor(theme, EP_EDITTEXT, state, TMT_TEXTCOLOR, &fgCol);
-
         if (IsThemeBackgroundPartiallyTransparent (theme, EP_EDITTEXT, state))
             DrawThemeParentBackground(infoPtr->Self, hdc, &rect);
         DrawThemeBackground (theme, hdc, EP_EDITTEXT, state, &rect, 0);
     } else {
-        if (infoPtr->Enabled) {
-            bgCol = comctl32_color.clrWindow;
-            fgCol = comctl32_color.clrWindowText;
-        } else {
-            bgCol = comctl32_color.clr3dFace;
-            fgCol = comctl32_color.clrGrayText;
-        }
-
         FillRect (hdc, &rect, (HBRUSH)(DWORD_PTR)(bgCol+1));
         DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
     }
