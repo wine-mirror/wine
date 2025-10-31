@@ -749,8 +749,10 @@ static HRESULT WINAPI loader_ClearCache(IDirectMusicLoader8 *iface, REFGUID clas
             (obj->Desc.dwValidData & DMUS_OBJ_LOADED)) {
             /* basically, wrap to ReleaseObject for each object found */
             IDirectMusicLoader8_ReleaseObject(iface, obj->pObject);
-            list_remove(&obj->entry);
-            free(obj);
+            if (!IsEqualGUID(&GUID_DefaultGMCollection, &obj->Desc.guidObject)) {
+                list_remove(&obj->entry);
+                free(obj);
+            }
         }
     }
 
