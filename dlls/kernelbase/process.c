@@ -114,15 +114,12 @@ static WCHAR *get_file_name( WCHAR *cmdline, WCHAR *buffer, DWORD buflen )
             ret = cmdline;
             break;
         }
+        if (GetLastError() != ERROR_FILE_NOT_FOUND) break;
         if (!first_space) first_space = pos;
         if (!(*pos++ = *p++)) break;
     }
 
-    if (!ret)
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-    }
-    else if (first_space)  /* build a new command-line with quotes */
+    if (ret && first_space)  /* build a new command-line with quotes */
     {
         if (!(ret = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(cmdline) + 3) * sizeof(WCHAR) )))
             goto done;
