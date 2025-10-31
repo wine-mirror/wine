@@ -38,7 +38,10 @@ static char mdbpath[MAX_PATH];
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
 #define SET_EXPECT(func) \
-    expect_ ## func = TRUE
+    do { \
+        called_ ## func = FALSE; \
+        expect_ ## func = TRUE; \
+    } while(0)
 
 #define CHECK_EXPECT2(func) \
     do { \
@@ -68,6 +71,7 @@ DEFINE_EXPECT(rowset_QI_IRowset);
 DEFINE_EXPECT(rowset_QI_IRowsetExactScroll);
 DEFINE_EXPECT(rowset_QI_IRowsetInfo);
 DEFINE_EXPECT(rowset_QI_IColumnsInfo);
+DEFINE_EXPECT(rowset_QI_IRowsetChange);
 DEFINE_EXPECT(rowset_QI_IDBAsynchStatus);
 DEFINE_EXPECT(rowset_QI_IAccessor);
 DEFINE_EXPECT(rowset_info_GetProperties);
@@ -76,6 +80,10 @@ DEFINE_EXPECT(rowset_GetNextRows);
 DEFINE_EXPECT(rowset_ReleaseRows);
 DEFINE_EXPECT(rowset_GetRowsAt);
 DEFINE_EXPECT(rowset_GetExactPosition);
+DEFINE_EXPECT(rowset_change_InsertRow);
+DEFINE_EXPECT(accessor_AddRefAccessor);
+DEFINE_EXPECT(accessor_CreateAccessor);
+DEFINE_EXPECT(accessor_ReleaseAccessor);
 
 static BOOL is_bof( _Recordset *recordset )
 {
@@ -508,6 +516,8 @@ struct test_rowset
     IRowsetExactScroll IRowsetExactScroll_iface;
     IRowsetInfo IRowsetInfo_iface;
     IColumnsInfo IColumnsInfo_iface;
+    IRowsetChange IRowsetChange_iface;
+    IAccessor IAccessor_iface;
     LONG refs;
     BOOL exact_scroll;
 };
@@ -525,6 +535,16 @@ static inline struct test_rowset *impl_from_IRowsetInfo( IRowsetInfo *iface )
 static inline struct test_rowset *impl_from_IColumnsInfo( IColumnsInfo *iface )
 {
     return CONTAINING_RECORD( iface, struct test_rowset, IColumnsInfo_iface );
+}
+
+static inline struct test_rowset *impl_from_IRowsetChange( IRowsetChange *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IRowsetChange_iface );
+}
+
+static inline struct test_rowset *impl_from_IAccessor( IAccessor *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IAccessor_iface );
 }
 
 static HRESULT WINAPI rowset_info_QueryInterface(IRowsetInfo *iface, REFIID riid, void **obj)
@@ -647,6 +667,133 @@ static const struct IColumnsInfoVtbl column_info =
     column_info_MapColumnIDs,
 };
 
+static HRESULT WINAPI rowset_change_QueryInterface(IRowsetChange *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IRowsetChange( iface );
+    return IRowsetExactScroll_QueryInterface(&rowset->IRowsetExactScroll_iface, riid, obj);
+}
+
+static ULONG WINAPI rowset_change_AddRef(IRowsetChange *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowsetChange( iface );
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI rowset_change_Release(IRowsetChange *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowsetChange( iface );
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT WINAPI rowset_change_DeleteRows(IRowsetChange *iface, HCHAPTER reserved,
+        DBCOUNTITEM count, const HROW rows[], DBROWSTATUS status[])
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface,
+        HROW row, HACCESSOR accessor, void *data)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface,
+        HCHAPTER reserved, HACCESSOR accessor, void *data, HROW *row)
+{
+    CHECK_EXPECT(rowset_change_InsertRow);
+    ok(!reserved, "reserved = %Id\n", reserved);
+    ok(accessor == 1, "accessor = %Id\n", accessor);
+    ok(!data, "data = %p\n", data);
+    ok(row != NULL, "row = NULL\n");
+
+    *row = 10;
+    return S_OK;
+}
+
+static const struct IRowsetChangeVtbl rowset_change =
+{
+    rowset_change_QueryInterface,
+    rowset_change_AddRef,
+    rowset_change_Release,
+    rowset_change_DeleteRows,
+    rowset_change_SetData,
+    rowset_change_InsertRow
+};
+
+static HRESULT WINAPI accessor_QueryInterface(IAccessor *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IAccessor( iface );
+    return IRowsetExactScroll_QueryInterface(&rowset->IRowsetExactScroll_iface, riid, obj);
+}
+
+static ULONG WINAPI accessor_AddRef(IAccessor *iface)
+{
+    struct test_rowset *rowset = impl_from_IAccessor( iface );
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI accessor_Release(IAccessor *iface)
+{
+    struct test_rowset *rowset = impl_from_IAccessor( iface );
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT WINAPI accessor_AddRefAccessor(IAccessor *iface,
+        HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
+{
+    CHECK_EXPECT2(accessor_AddRefAccessor);
+    ok(hAccessor == 1, "hAccessor = %Id\n", hAccessor);
+    ok(pcRefCount != NULL, "pcRefCount == NULL\n");
+
+    *pcRefCount = 2;
+    return S_OK;
+}
+
+static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS dwAccessorFlags,
+        DBCOUNTITEM cBindings, const DBBINDING rgBindings[], DBLENGTH cbRowSize,
+        HACCESSOR *phAccessor, DBBINDSTATUS rgStatus[])
+{
+    CHECK_EXPECT(accessor_CreateAccessor);
+    ok(dwAccessorFlags == DBACCESSOR_ROWDATA, "dwAccessorFlags = %lx\n", dwAccessorFlags);
+    ok(cBindings == 0, "cBindings = %Iu\n", cBindings);
+    ok(cbRowSize == 0, "cbRowSize = %Iu\n", cbRowSize);
+    ok(phAccessor != NULL, "pHAccessor = NULL\n");
+    ok(!rgStatus, "rgStatus != NULL\n");
+
+    *phAccessor = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor,
+        DBACCESSORFLAGS *pdwAccessorFlags, DBCOUNTITEM *pcBindings, DBBINDING **prgBindings)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI accessor_ReleaseAccessor(IAccessor *iface,
+        HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
+{
+    CHECK_EXPECT2(accessor_ReleaseAccessor);
+    ok(hAccessor == 1, "hAccessor = %Id\n", hAccessor);
+
+    if (pcRefCount) *pcRefCount = 1;
+    return S_OK;
+}
+
+static const struct IAccessorVtbl accessor =
+{
+    accessor_QueryInterface,
+    accessor_AddRef,
+    accessor_Release,
+    accessor_AddRefAccessor,
+    accessor_CreateAccessor,
+    accessor_GetBindings,
+    accessor_ReleaseAccessor
+};
+
 static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID riid, void **obj)
 {
     struct test_rowset *rowset = impl_from_IRowsetExactScroll( iface );
@@ -677,6 +824,11 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
         CHECK_EXPECT(rowset_QI_IColumnsInfo);
         *obj = &rowset->IColumnsInfo_iface;
     }
+    else if (IsEqualIID(riid, &IID_IRowsetChange))
+    {
+        CHECK_EXPECT(rowset_QI_IRowsetChange);
+        *obj = &rowset->IRowsetChange_iface;
+    }
     else if (IsEqualIID(riid, &IID_IDBAsynchStatus))
     {
         CHECK_EXPECT(rowset_QI_IDBAsynchStatus);
@@ -685,7 +837,7 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     else if (IsEqualIID(riid, &IID_IAccessor))
     {
         CHECK_EXPECT(rowset_QI_IAccessor);
-        return E_NOINTERFACE;
+        *obj = &rowset->IAccessor_iface;
     }
     else if (IsEqualIID(riid, &UKN_INTERFACE))
     {
@@ -874,7 +1026,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     HRESULT hr;
     LONG count, state;
     unsigned char prec, scale;
-    VARIANT index;
+    VARIANT index, missing;
     ADO_LONGPTR size;
     DataTypeEnum type;
 
@@ -895,6 +1047,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     testrowset.IRowsetExactScroll_iface.lpVtbl = &rowset_vtbl;
     testrowset.IRowsetInfo_iface.lpVtbl = &rowset_info;
     testrowset.IColumnsInfo_iface.lpVtbl = &column_info;
+    testrowset.IRowsetChange_iface.lpVtbl = &rowset_change;
+    testrowset.IAccessor_iface.lpVtbl = &accessor;
     testrowset.refs = 1;
     testrowset.exact_scroll = exact_scroll;
 
@@ -988,11 +1142,32 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     else todo_wine CHECK_CALLED( rowset_GetRowsAt );
     ok( hr == MAKE_ADO_HRESULT(adErrNoCurrentRecord), "got %08lx\n", hr );
 
+    V_VT( &missing ) = VT_ERROR;
+    V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
+    SET_EXPECT(rowset_QI_IRowsetChange);
+    SET_EXPECT(rowset_QI_IAccessor);
+    SET_EXPECT(accessor_CreateAccessor);
+    SET_EXPECT(accessor_AddRefAccessor);
+    SET_EXPECT(rowset_change_InsertRow);
+    SET_EXPECT(accessor_ReleaseAccessor);
+    hr = _Recordset_AddNew( recordset, missing, missing );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine CHECK_CALLED(rowset_QI_IRowsetChange);
+    todo_wine CHECK_CALLED(rowset_QI_IAccessor);
+    todo_wine CHECK_CALLED(accessor_CreateAccessor);
+    todo_wine CHECK_CALLED(accessor_AddRefAccessor);
+    todo_wine CHECK_CALLED(rowset_change_InsertRow);
+    todo_wine CHECK_CALLED(accessor_ReleaseAccessor);
+
     Fields_Release(fields);
     ADORecordsetConstruction_Release(construct);
+    SET_EXPECT( rowset_ReleaseRows );
     SET_EXPECT( rowset_QI_IAccessor );
+    SET_EXPECT(accessor_ReleaseAccessor);
     ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
+    todo_wine CHECK_CALLED(rowset_ReleaseRows );
     todo_wine CHECK_CALLED( rowset_QI_IAccessor );
+    todo_wine CHECK_CALLED(accessor_ReleaseAccessor);
     ok( testrowset.refs == 1, "got %ld\n", testrowset.refs );
 }
 
