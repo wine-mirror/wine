@@ -1860,18 +1860,6 @@ static void test_SearchPathA(void)
 
 static void test_SearchPathW(void)
 {
-    static const WCHAR fileext2W[] = {'t','e','s','t','f','i','l','e','.','e','x','t','.','e','x','t','2',0};
-    static const WCHAR fileextW[] = {'t','e','s','t','f','i','l','e','.','e','x','t',0};
-    static const WCHAR testdeprelW[] = {'.','/','t','e','s','t','d','e','p','.','d','l','l',0};
-    static const WCHAR testdepW[] = {'t','e','s','t','d','e','p','.','d','l','l',0};
-    static const WCHAR testdep1W[] = {'t','e','s','t','d','e','p',0};
-    static const WCHAR kernel32dllW[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
-    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
-    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
-    static const WCHAR ext2W[] = {'.','e','x','t','2',0};
-    static const WCHAR extW[] = {'.','e','x','t',0};
-    static const WCHAR dllW[] = {'.','d','l','l',0};
-    static const WCHAR fileW[] = { 0 };
     WCHAR pathW[MAX_PATH], buffW[MAX_PATH], path2W[MAX_PATH];
     WCHAR *ptrW = NULL;
     ULONG_PTR cookie;
@@ -1888,29 +1876,53 @@ static void test_SearchPathW(void)
 
     /* empty filename */
     SetLastError(0xdeadbeef);
-    ret = SearchPathW(pathW, fileW, NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
+    ret = SearchPathW(pathW, L"", NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
     ok(ret == 0, "Expected failure, got %ld\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
+    ret = SearchPathW(pathW, L" ", NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
+    ok(ret == 0, "Expected failure, got %ld\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+      "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SearchPathW(pathW, L"    ", NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
+    ok(ret == 0, "Expected failure, got %ld\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+      "Expected ERROR_INVALID_PARAMETER, got %lx\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SearchPathW(pathW, L"\t", NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
+    ok(ret == 0, "Expected failure, got %ld\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+      "Expected ERROR_FILE_NOT_FOUND, got %lx\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SearchPathW(pathW, L" abc", NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
+    ok(ret == 0, "Expected failure, got %ld\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+      "Expected ERROR_FILE_NOT_FOUND, got %lx\n", GetLastError());
+
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
     lstrcpyW(path2W, pathW);
-    lstrcatW(path2W, fileext2W);
+    lstrcatW(path2W, L"testfile.ext.ext2");
 
     handle = CreateFileW(path2W, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(handle != INVALID_HANDLE_VALUE, "Failed to create test file.\n");
     CloseHandle(handle);
 
     buffW[0] = 0;
-    ret = SearchPathW(pathW, fileextW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(pathW, L"testfile.ext", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "Unexpected return value %lu.\n", ret);
 
     buffW[0] = 0;
-    ret = SearchPathW(pathW, fileextW, ext2W, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(pathW, L"testfile.ext", L".ext2", ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "Unexpected return value %lu.\n", ret);
 
     buffW[0] = 0;
-    ret = SearchPathW(pathW, fileext2W, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(pathW, L"testfile.ext.ext2", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(path2W), "got %ld\n", ret);
 
     DeleteFileW(path2W);
@@ -1925,15 +1937,15 @@ static void test_SearchPathW(void)
     delete_manifest_file("main.manifest");
 
     /* search fails without active context */
-    ret = SearchPathW(NULL, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"testdep.dll", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret == 0, "got %ld\n", ret);
 
-    ret = SearchPathW(NULL, kernel32dllW, NULL, ARRAY_SIZE(path2W), path2W, NULL);
+    ret = SearchPathW(NULL, L"kernel32.dll", NULL, ARRAY_SIZE(path2W), path2W, NULL);
     ok(ret && ret == lstrlenW(path2W), "got %ld\n", ret);
 
     /* full path, name without 'dll' extension */
     GetSystemDirectoryW(pathW, ARRAY_SIZE(pathW));
-    ret = SearchPathW(pathW, kernel32W, NULL, ARRAY_SIZE(path2W), path2W, NULL);
+    ret = SearchPathW(pathW, L"kernel32", NULL, ARRAY_SIZE(path2W), path2W, NULL);
     ok(ret == 0, "got %ld\n", ret);
 
     GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
@@ -1942,33 +1954,33 @@ static void test_SearchPathW(void)
     ok(ret, "failed to activate context, %lu\n", GetLastError());
 
     /* works when activated */
-    ret = SearchPathW(NULL, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"testdep.dll", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %ld\n", ret);
 
-    ret = SearchPathW(NULL, testdepW, extW, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"testdep.dll", L".ext", ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %ld\n", ret);
 
-    ret = SearchPathW(NULL, testdep1W, dllW, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"testdep", L".dll", ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %ld\n", ret);
 
-    ret = SearchPathW(NULL, testdep1W, extW, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"testdep", L".ext", ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "got %ld\n", ret);
 
     /* name contains path */
-    ret = SearchPathW(NULL, testdeprelW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"./testdep.dll", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "got %ld\n", ret);
 
     /* fails with specified path that doesn't contain this file */
-    ret = SearchPathW(pathW, testdepW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(pathW, L"testdep.dll", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(!ret, "got %ld\n", ret);
 
     /* path is redirected for wellknown names too, meaning it takes precedence over normal search order */
-    ret = SearchPathW(NULL, kernel32dllW, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"kernel32.dll", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %ld\n", ret);
     ok(lstrcmpW(buffW, path2W), "got wrong path %s, %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(path2W));
 
     /* path is built using on manifest file name */
-    ret = SearchPathW(NULL, ole32W, NULL, ARRAY_SIZE(buffW), buffW, NULL);
+    ret = SearchPathW(NULL, L"ole32", NULL, ARRAY_SIZE(buffW), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %ld\n", ret);
 
     ret = DeactivateActCtx(0, cookie);

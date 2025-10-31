@@ -2769,7 +2769,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR 
     DWORD ret = 0;
     WCHAR *name_ext;
 
-    if (!name || !name[0])
+    if (!name || !name[wcsspn(name, L" ")])
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
