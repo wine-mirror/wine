@@ -1468,6 +1468,65 @@ static void test_xmlelem_attributes(void)
     IXMLDocument2_Release(doc);
 }
 
+static const char doc_data10[] =
+    "<?xml version=\"1.0\"?><a><!-- sometext --></a>";
+
+static void test_comments(void)
+{
+    IXMLElement *root, *child;
+    IXMLElementCollection *c;
+    IXMLDocument *doc;
+    LONG type, count;
+    IDispatch *disp;
+    HRESULT hr;
+    VARIANT v;
+    BSTR s;
+
+    hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = load_document(doc, doc_data10, sizeof(doc_data10) - 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument_get_root(doc, &root);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLElement_get_children(root, &c);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLElementCollection_get_length(c, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %ld.\n", count);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0;
+    hr = IXMLElementCollection_item(c, v, v, &disp);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDispatch_QueryInterface(disp, &IID_IXMLElement, (void **)&child);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLElement_get_type(child, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == XMLELEMTYPE_COMMENT, "Unexpected type %ld.\n", type);
+
+    s = (void *)1;
+    hr = IXMLElement_get_tagName(child, &s);
+    todo_wine
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!s, "Unexpected pointer %p.\n", s);
+
+    s = NULL;
+    hr = IXMLElement_get_text(child, &s);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(s, L" sometext "), "Unexpected text %s.\n", debugstr_w(s));
+    SysFreeString(s);
+
+    IXMLElement_Release(child);
+    IDispatch_Release(disp);
+
+    IXMLDocument_Release(doc);
+}
+
 START_TEST(xmldoc)
 {
     HRESULT hr;
@@ -1492,6 +1551,7 @@ START_TEST(xmldoc)
     test_xmlelem_collection();
     test_xmlelem_children();
     test_xmlelem_attributes();
+    test_comments();
 
     CoUninitialize();
 }
