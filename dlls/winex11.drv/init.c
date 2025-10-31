@@ -352,7 +352,7 @@ static void client_surface_update_offscreen( HWND hwnd, struct x11drv_client_sur
     }
     else
     {
-        static const WCHAR displayW[] = {'D','I','S','P','L','A','Y'};
+        static const WCHAR displayW[] = {'D','I','S','P','L','A','Y', 0};
         UNICODE_STRING device_str = RTL_CONSTANT_STRING(displayW);
         surface->hdc_dst = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
         surface->hdc_src = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
