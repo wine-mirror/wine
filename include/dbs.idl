@@ -991,3 +991,16 @@ typedef enum tagDBBOOKMARK {
 } DBBOOKMARK;
 
 cpp_quote("#define STD_BOOKMARKLENGTH 1")
+
+typedef struct tagDBCOLUMNDESC {
+    LPOLESTR pwszTypeName;
+    ITypeInfo *pTypeInfo;
+    [size_is(cPropertySets)] DBPROPSET *rgPropertySets;
+    CLSID *pclsid;
+    ULONG cPropertySets;
+    DBLENGTH ulColumnSize;
+    DBID dbcid;
+    DBTYPE wType;
+    BYTE bPrecision;
+    BYTE bScale;
+} DBCOLUMNDESC;
