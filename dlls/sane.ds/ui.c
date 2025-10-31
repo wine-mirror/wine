@@ -299,6 +299,10 @@ static int create_item(HDC hdc, const struct option_descriptor *opt,
 
         tpl->cx = ctl_cx;
     }
+    if (class == 0x0085 && (styles & CBS_DROPDOWNLIST))
+    {   /* Drop-Down ComboBox */
+        tpl->cy *= 10;
+    }
     ptr = (WORD *)(tpl + 1);
     *ptr++ = 0xffff;
     *ptr++ = class;
