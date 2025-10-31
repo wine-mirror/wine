@@ -1396,6 +1396,78 @@ static void test_xmldoc_root(void)
     IXMLDocument_Release(doc);
 }
 
+static const char doc_data9[] =
+    "<?xml version=\"1.0\"?><a attr1=\"value0\" attr2=\"value1\" />";
+
+static void test_xmlelem_attributes(void)
+{
+    IXMLElementCollection *c;
+    IXMLAttribute *attr;
+    IXMLElement2 *root;
+    IXMLDocument2 *doc;
+    IDispatch *disp;
+    VARIANT v, v2;
+    HRESULT hr;
+    BSTR s;
+
+    hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDocument2, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = load_document((IXMLDocument *)doc, doc_data9, sizeof(doc_data9) - 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDocument2_get_root(doc, &root);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLElement2_get_attributes(root, &c);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        IXMLDocument2_Release(doc);
+        return;
+    }
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0;
+    V_VT(&v2) = VT_NULL;
+    hr = IXMLElementCollection_item(c, v, v2, &disp);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDispatch_QueryInterface(disp, &IID_IXMLAttribute, (void **)&attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLAttribute_get_name(attr, &s);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(s, L"ATTR1"), "Unexpected name %s.\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+    IXMLAttribute_Release(attr);
+    IDispatch_Release(disp);
+
+    s = SysAllocString(L"aTtr1");
+    hr = IXMLElement2_removeAttribute(root, s);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(s);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0;
+    V_VT(&v2) = VT_NULL;
+    hr = IXMLElementCollection_item(c, v, v2, &disp);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDispatch_QueryInterface(disp, &IID_IXMLAttribute, (void **)&attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLAttribute_get_name(attr, &s);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(s, L"ATTR2"), "Unexpected name %s.\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+    IXMLAttribute_Release(attr);
+    IDispatch_Release(disp);
+
+    IXMLElementCollection_Release(c);
+
+    IXMLElement2_Release(root);
+
+    IXMLDocument2_Release(doc);
+}
+
 START_TEST(xmldoc)
 {
     HRESULT hr;
@@ -1419,6 +1491,7 @@ START_TEST(xmldoc)
     test_xmlelem();
     test_xmlelem_collection();
     test_xmlelem_children();
+    test_xmlelem_attributes();
 
     CoUninitialize();
 }
