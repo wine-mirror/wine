@@ -3092,6 +3092,64 @@ static void test_virtual_unwind_x86(void)
     };
 #endif
 
+    static const BYTE function_6_1[] =
+    {
+        0x55,                     /* 00: push %rbp */
+        0x90,                     /* 01: nop */
+        0x5d,                     /* 02: pop %rbp */
+        0xeb, 0x02,               /* 03: jmp 06 */
+        0x90,                     /* 04: nop */
+        0xc3,                     /* 05: ret */
+     };
+
+    static const BYTE function_6_2[] =
+    {
+        0x55,                     /* 00: push %rbp */
+        0x90,                     /* 01: nop */
+        0x5d,                     /* 02: pop %rbp */
+        0xeb, 0x01,               /* 03: jmp 05 */
+        0x90,                     /* 04: nop */
+        0xc3,                     /* 05: ret */
+     };
+
+    static const BYTE function_6_3[] =
+    {
+        0x55,                     /* 00: push %rbp */
+        0x90,                     /* 01: nop */
+        0x5d,                     /* 02: pop %rbp */
+        0xe9, 0x55, 0x55, 0x55, 0x55, /* 03: jmp away */
+        0x90,                     /* 07: nop */
+        0xc3,                     /* 08: ret */
+     };
+
+    static const BYTE unwind_info_6[] =
+    {
+        1,                             /* version + flags */
+        0x1,                           /* prolog size */
+        1,                             /* opcode count */
+        0,                             /* frame reg */
+
+        0x01, UWOP(PUSH_NONVOL, rbp),  /* 02: push %rbp */
+    };
+
+    static const struct results_x86 results_6_epilogue[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x00,  0x00,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+        { 0x01,  0x00,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x02,  0x00,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x03,  0x00,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+    };
+
+    static const struct results_x86 results_6_body[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x00,  0x00,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+        { 0x01,  0x00,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x02,  0x00,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x03,  0x00,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+    };
+
     static const struct unwind_test_x86 tests[] =
     {
         { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0), broken_results_0 },
@@ -3104,6 +3162,9 @@ static void test_virtual_unwind_x86(void)
 #if 0  /* crashes before Win10 21H2 */
         { function_5, sizeof(function_5), NULL,          results_5, ARRAY_SIZE(results_5) },
 #endif
+        { function_6_1, sizeof(function_6_1), unwind_info_6, results_6_epilogue, ARRAY_SIZE(results_6_epilogue) },
+        { function_6_2, sizeof(function_6_2), unwind_info_6, results_6_body, ARRAY_SIZE(results_6_body) },
+        { function_6_3, sizeof(function_6_3), unwind_info_6, results_6_epilogue, ARRAY_SIZE(results_6_epilogue) },
     };
     unsigned int i;
 

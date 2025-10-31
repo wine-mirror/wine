@@ -1905,14 +1905,10 @@ static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *fu
             return TRUE;
         case 0xe9: /* jmp nnnn */
             pc += 5 + *(LONG *)(pc + 1);
-            if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress)
-                continue;
-            break;
+            return !(pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress);
         case 0xeb: /* jmp n */
             pc += 2 + (signed char)pc[1];
-            if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress)
-                continue;
-            break;
+            return !(pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress);
         case 0xf3: /* rep; ret (for amd64 prediction bug) */
             return pc[1] == 0xc3;
         }
@@ -1967,17 +1963,13 @@ static void interpret_epilog( BYTE *pc, CONTEXT *context, KNONVOLATILE_CONTEXT_P
             context->Rip = *(ULONG64 *)context->Rsp;
             context->Rsp += sizeof(ULONG64) + *(WORD *)(pc + 1);
             return;
+        case 0xe9: /* jmp nnnn */
+        case 0xeb: /* jmp n */
         case 0xc3: /* ret */
         case 0xf3: /* rep; ret */
             context->Rip = *(ULONG64 *)context->Rsp;
             context->Rsp += sizeof(ULONG64);
             return;
-        case 0xe9: /* jmp nnnn */
-            pc += 5 + *(LONG *)(pc + 1);
-            continue;
-        case 0xeb: /* jmp n */
-            pc += 2 + (signed char)pc[1];
-            continue;
         }
         return;
     }
