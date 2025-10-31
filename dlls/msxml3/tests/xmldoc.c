@@ -915,10 +915,10 @@ cleanup:
 
 static void test_xmlelem(void)
 {
+    IXMLElement *child, *child2, *child3, *child4;
     HRESULT hr;
     IXMLDocument *doc = NULL;
     IXMLElement *element = NULL, *parent;
-    IXMLElement *child, *child2;
     IXMLElementCollection *children;
     VARIANT vType, vName;
     VARIANT vIndex, vValue;
@@ -1108,7 +1108,109 @@ static void test_xmlelem(void)
     ok(!lstrcmpW(str, L"next"), "Expected 'val'\n");
     SysFreeString(str);
 
+    V_VT(&vType) = VT_I4;
+    V_I4(&vType) = XMLELEMTYPE_ELEMENT;
+    V_VT(&vName) = VT_NULL;
+    hr = IXMLDocument_createElement(doc, vType, vName, &child3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!child3, "Expected non-NULL child\n");
+    str = SysAllocString(L"e2");
+    hr = IXMLElement_put_tagName(child3, str);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+    hr = IXMLElement_addChild(element, child3, 0, -1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&vType) = VT_I4;
+    V_I4(&vType) = XMLELEMTYPE_TEXT;
+    V_VT(&vName) = VT_NULL;
+    hr = IXMLDocument_createElement(doc, vType, vName, &child4);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!child4, "Expected non-NULL child\n");
+
+    str = SysAllocString(L"text4");
+    hr = IXMLElement_put_text(child4, str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+    hr = IXMLElement_addChild(child3, child4, 0, -1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IXMLElement_Release(child4);
+
+    IXMLElement_Release(child3);
+
+    hr = IXMLElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"text4next"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLElementCollection_get_length(children, &num_child);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(num_child == 2, "Unexpected length %ld.\n", num_child);
+
+    V_VT(&vType) = VT_I4;
+    V_I4(&vType) = XMLELEMTYPE_TEXT;
+    V_VT(&vName) = VT_NULL;
+    hr = IXMLDocument_createElement(doc, vType, vName, &child3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!child3, "Expected non-NULL child\n");
+    str = SysAllocString(L"text3");
+    hr = IXMLElement_put_text(child3, str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+    hr = IXMLElement_addChild(element, child3, 0, -1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLElement_Release(child3);
+
+    hr = IXMLElementCollection_get_length(children, &num_child);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(num_child == 3, "Unexpected length %ld.\n", num_child);
+
+    hr = IXMLElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"text3text4next"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
     IXMLElement_Release(child2);
+
+    /* Check order */
+    V_VT(&vIndex) = VT_I4;
+    V_I4(&vIndex) = 0;
+    V_VT(&vName) = VT_ERROR;
+    V_ERROR(&vName) = DISP_E_PARAMNOTFOUND;
+    hr = IXMLElementCollection_item(children, vIndex, vName, (IDispatch **)&child2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!child2, "Expected non-NULL child\n");
+    hr = IXMLElement_get_type(child2, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == XMLELEMTYPE_TEXT, "Unexpected type %ld.\n", type);
+    hr = IXMLElement_get_text(child2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"text3"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLElement_Release(child2);
+
+    V_VT(&vIndex) = VT_I4;
+    V_I4(&vIndex) = 1;
+    V_VT(&vName) = VT_ERROR;
+    V_ERROR(&vName) = DISP_E_PARAMNOTFOUND;
+    hr = IXMLElementCollection_item(children, vIndex, vName, (IDispatch **)&child2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!child2, "Expected non-NULL child\n");
+    hr = IXMLElement_get_type(child2, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == XMLELEMTYPE_ELEMENT, "Unexpected type %ld.\n", type);
+    hr = IXMLElement_get_text(child2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"text4"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLElement_Release(child2);
+
     IXMLElementCollection_Release(children);
     IXMLElement_Release(parent);
     IXMLElement_Release(child);
