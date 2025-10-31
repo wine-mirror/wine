@@ -26,6 +26,7 @@ struct band_entry
     struct list entry;
     DMUS_IO_BAND_ITEM_HEADER2 head;
     IDirectMusicBand *band;
+    BOOL std_midi;
 };
 
 static void band_entry_destroy(struct band_entry *entry)
@@ -41,6 +42,7 @@ struct band_track
     LONG ref;
     DMUS_IO_BAND_TRACK_HEADER header;
     struct list bands;
+    BOOL std_midi;
 };
 
 static inline struct band_track *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
@@ -130,6 +132,8 @@ static HRESULT WINAPI band_track_InitPlay(IDirectMusicTrack8 *iface,
     {
         LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
         {
+            if (entry->std_midi && !This->std_midi)
+                continue;
             if (FAILED(hr = IDirectMusicBand_Download(entry->band, performance)))
                 return hr;
         }
@@ -150,6 +154,8 @@ static HRESULT WINAPI band_track_EndPlay(IDirectMusicTrack8 *iface, void *state_
     {
         LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
         {
+            if (entry->std_midi && !This->std_midi)
+                continue;
             if (FAILED(hr = IDirectMusicBand_Unload(entry->band, NULL)))
                 return hr;
         }
@@ -188,6 +194,9 @@ static HRESULT WINAPI band_track_Play(IDirectMusicTrack8 *iface, void *state_dat
             if (music_time < start_time || music_time >= end_time) continue;
             music_time += time_offset;
         }
+
+        if (entry->std_midi && !This->std_midi)
+            continue;
 
         if (FAILED(hr = band_send_messages(entry->band, performance, graph, music_time, track_id)))
             break;
@@ -248,7 +257,7 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         if (!band_param)
             return E_POINTER;
         return band_track_add_band((IDirectMusicTrack *)&This->IDirectMusicTrack8_iface, time,
-                band_param->mtTimePhysical, band_param->pBand);
+                band_param->mtTimePhysical, band_param->pBand, FALSE);
     }
     else if (IsEqualGUID(type, &GUID_Clear_All_Bands))
         FIXME("GUID_Clear_All_Bands not handled yet\n");
@@ -285,7 +294,11 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
         }
 
         LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
+        {
+            if (entry->std_midi && !This->std_midi)
+                continue;
             if (FAILED(hr = IDirectMusicBand_Download(entry->band, performance))) break;
+        }
 
         IDirectMusicPerformance_Release(performance);
     }
@@ -294,14 +307,18 @@ static HRESULT WINAPI band_track_SetParam(IDirectMusicTrack8 *iface, REFGUID typ
     else if (IsEqualGUID(type, &GUID_IDirectMusicBand))
         FIXME("GUID_IDirectMusicBand not handled yet\n");
     else if (IsEqualGUID(type, &GUID_StandardMIDIFile))
-        FIXME("GUID_StandardMIDIFile not handled yet\n");
+        This->std_midi = TRUE;
     else if (IsEqualGUID(type, &GUID_Unload) || IsEqualGUID(type, &GUID_UnloadFromAudioPath))
     {
         struct band_entry *entry;
         HRESULT hr;
 
         LIST_FOR_EACH_ENTRY(entry, &This->bands, struct band_entry, entry)
+        {
+            if (entry->std_midi && !This->std_midi)
+                continue;
             if (FAILED(hr = IDirectMusicBand_Unload(entry->band, NULL))) break;
+        }
     }
 
     return S_OK;
@@ -652,7 +669,7 @@ HRESULT create_dmbandtrack(REFIID lpcGUID, void **ppobj)
 }
 
 HRESULT band_track_add_band(IDirectMusicTrack *iface, MUSIC_TIME time, MUSIC_TIME time_physical,
-        IDirectMusicBand *band)
+        IDirectMusicBand *band, BOOL std_midi)
 {
     struct band_track *This = impl_from_IDirectMusicTrack8((IDirectMusicTrack8 *)iface);
     struct band_entry *new_entry = NULL, *entry, *next_entry;
@@ -666,6 +683,7 @@ HRESULT band_track_add_band(IDirectMusicTrack *iface, MUSIC_TIME time, MUSIC_TIM
     new_entry->band = band;
     new_entry->head.lBandTimeLogical = time;
     new_entry->head.lBandTimePhysical = time_physical;
+    new_entry->std_midi = std_midi;
     IDirectMusicBand_AddRef(new_entry->band);
 
     if (list_empty(&This->bands))

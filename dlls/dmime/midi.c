@@ -62,6 +62,7 @@ struct midi_parser
     struct list seqtrack_items;
     /* Track the initial note on event generated for a note that is currently on. NULL if the note is off. */
     struct midi_seqtrack_item *note_states[128 * 16];
+    BOOL has_program_change[16];
 
     IDirectMusicTrack *chordtrack;
     IDirectMusicTrack *bandtrack;
@@ -251,12 +252,11 @@ static HRESULT midi_parser_handle_set_tempo(struct midi_parser *parser, struct m
     return IDirectMusicTrack_SetParam(parser->tempotrack, &GUID_TempoParam, dmusic_time, &tempo);
 }
 
-static HRESULT midi_parser_handle_program_change(struct midi_parser *parser, struct midi_event *event)
+static HRESULT midi_parser_handle_program_change(struct midi_parser *parser, struct midi_event *event, BOOL std_midi)
 {
     HRESULT hr;
     DMUS_IO_INSTRUMENT instrument;
     IDirectMusicBand *band;
-    DMUS_BAND_PARAM band_param;
     MUSIC_TIME dmusic_time = (ULONGLONG)parser->time * DMUS_PPQ / parser->division;
     instrument.dwPChannel = event->status & 0xf;
     instrument.dwFlags = DMUS_IO_INST_PATCH;
@@ -269,13 +269,14 @@ static HRESULT midi_parser_handle_program_change(struct midi_parser *parser, str
     if (SUCCEEDED(hr))
     {
         TRACE("Adding band at time %lu\n", dmusic_time);
-        band_param.pBand = band;
-        band_param.mtTimePhysical = dmusic_time;
-        hr = IDirectMusicTrack_SetParam(parser->bandtrack, &GUID_BandParam, dmusic_time, &band_param);
+        hr = band_track_add_band(parser->bandtrack, dmusic_time, dmusic_time, band, std_midi);
     }
     else WARN("Failed to add instrument to band\n");
 
     IDirectMusicBand_Release(band);
+
+    parser->has_program_change[instrument.dwPChannel] = TRUE;
+
     return hr;
 }
 
@@ -436,7 +437,7 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
                     hr = midi_parser_handle_control(parser, &event);
                     break;
                 case MIDI_PROGRAM_CHANGE:
-                    hr = midi_parser_handle_program_change(parser, &event);
+                    hr = midi_parser_handle_program_change(parser, &event, FALSE);
                     break;
                 default:
                     FIXME("Unhandled MIDI event type %#02x at time +%lu\n", event.status, parser->time);
@@ -461,6 +462,22 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
     }
 
     TRACE("End of file\n");
+
+    parser->time = 0;
+    for (i = 0; i < 16; ++i)
+    {
+        struct midi_event event = { .status = MIDI_PROGRAM_CHANGE | i };
+
+        if (parser->has_program_change[i])
+            continue;
+
+        if (FAILED(hr = midi_parser_handle_program_change(parser, &event, TRUE)))
+        {
+            if (collection)
+                IDirectMusicCollection_Release(collection);
+            return hr;
+        }
+    }
 
     if ((seq_items = calloc(parser->seqtrack_items_count, sizeof(DMUS_IO_SEQ_ITEM))) == NULL)
     {

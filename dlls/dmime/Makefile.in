@@ -9,6 +9,7 @@ VER_PRODUCTVERSION      = 5,3,1,904
 SOURCES = \
 	audiopath.c \
 	band.c \
+	bandtrack.c \
 	dmime.idl \
 	dmime_main.c \
 	dmobject.c \
