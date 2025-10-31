@@ -451,12 +451,21 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
         parser->time = 0;
         memset(parser->note_states, 0, sizeof(parser->note_states));
     }
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr))
+    {
+        if (collection)
+            IDirectMusicCollection_Release(collection);
+        return hr;
+    }
 
     TRACE("End of file\n");
 
     if ((seq_items = calloc(parser->seqtrack_items_count, sizeof(DMUS_IO_SEQ_ITEM))) == NULL)
+    {
+        if (collection)
+            IDirectMusicCollection_Release(collection);
         return E_OUTOFMEMORY;
+    }
 
     i = 0;
     LIST_FOR_EACH_ENTRY(item, &parser->seqtrack_items, struct midi_seqtrack_item, entry)
@@ -465,7 +474,11 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
     qsort(seq_items, parser->seqtrack_items_count, sizeof(DMUS_IO_SEQ_ITEM), midi_seqtrack_item_compare);
 
     music_length = (ULONGLONG)music_length * DMUS_PPQ / parser->division + 1;
-    if (collection) IDirectMusicTrack_SetParam(parser->bandtrack, &GUID_ConnectToDLSCollection, 0, collection);
+    if (collection)
+    {
+        IDirectMusicTrack_SetParam(parser->bandtrack, &GUID_ConnectToDLSCollection, 0, collection);
+        IDirectMusicCollection_Release(collection);
+    }
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_SetLength(segment, music_length);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->bandtrack, 0xffff);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->chordtrack, 0xffff);

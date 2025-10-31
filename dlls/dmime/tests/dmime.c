@@ -2035,7 +2035,7 @@ static void test_midi(void)
     IDirectMusicSegment_Release(segment);
     IDirectMusicLoader8_Release(loader);
     ref = IDirectMusicCollection_Release(collection);
-    todo_wine ok(!ref, "collection ref count got %ld expected 0\n", ref);
+    ok(!ref, "collection ref count got %ld expected 0\n", ref);
 }
 
 static void _add_track(IDirectMusicSegment8 *seg, REFCLSID class, const char *name, DWORD group)
