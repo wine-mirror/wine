@@ -3129,7 +3129,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 
     old_rects = data->rects;
     was_fullscreen = data->is_fullscreen;
-    if (!(new_style & WS_MINIMIZE)) data->rects = *new_rects;
+    if (!(new_style & WS_MINIMIZE) || is_virtual_desktop()) data->rects = *new_rects;
     data->is_fullscreen = fullscreen;
 
     TRACE( "win %p/%lx new_rects %s style %08x flags %08x\n", hwnd, data->whole_window,
