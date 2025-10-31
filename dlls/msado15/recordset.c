@@ -2178,15 +2178,48 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     if (get_column_count(recordset))
     {
+        DBCOLUMNINFO *info;
+        int i;
+
         if (recordset->active_connection)
         {
             FIXME("adding new table\n");
             return E_NOTIMPL;
         }
 
-        hr = create_mem_rowset(&rowset);
+        info = calloc(recordset->fields.count + 1, sizeof(*info));
+        if (!info)
+            return E_OUTOFMEMORY;
+
+        info[0].dwFlags = DBCOLUMNFLAGS_ISBOOKMARK | DBCOLUMNFLAGS_ISFIXEDLENGTH;
+        info[0].ulColumnSize = sizeof(unsigned int);
+        info[0].wType = DBTYPE_UI4;
+        info[0].bPrecision = 10;
+        info[0].bScale = 255;
+        info[0].columnid.eKind = DBKIND_GUID_PROPID;
+        info[0].columnid.uGuid.guid = DBCOL_SPECIALCOL;
+        info[0].columnid.uName.ulPropid = 2 /* PROPID_DBBMK_BOOKMARK */;
+
+        for (i = 1; i <= recordset->fields.count; i++)
+        {
+            struct field *field = recordset->fields.field[i - 1];
+
+            info[i].pwszName = field->name;
+            info[i].iOrdinal = i;
+            info[i].dwFlags = field->attrs;
+            info[i].ulColumnSize = field->defined_size;
+            info[i].wType = field->type;
+            info[i].bPrecision = field->prec;
+            info[i].bScale = field->scale;
+            info[i].columnid.eKind = DBKIND_NAME;
+            info[i].columnid.uName.pwszName = field->name;
+        }
+
+        hr = create_mem_rowset(recordset->fields.count + 1, info, &rowset);
+        free(info);
         if (FAILED(hr))
             return hr;
+
         hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
         IUnknown_Release(rowset);
         return hr;

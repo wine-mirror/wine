@@ -27,12 +27,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 struct rowset
 {
     IRowset IRowset_iface;
+    IColumnsInfo IColumnsInfo_iface;
     LONG refs;
+
+    int columns_cnt;
+    DBCOLUMNINFO *columns;
+    OLECHAR *columns_buf;
 };
 
 static inline struct rowset *impl_from_IRowset(IRowset *iface)
 {
     return CONTAINING_RECORD(iface, struct rowset, IRowset_iface);
+}
+
+static inline struct rowset *impl_from_IColumnsInfo(IColumnsInfo *iface)
+{
+    return CONTAINING_RECORD(iface, struct rowset, IColumnsInfo_iface);
 }
 
 static HRESULT WINAPI rowset_QueryInterface(IRowset *iface, REFIID riid, void **ppv)
@@ -46,6 +56,10 @@ static HRESULT WINAPI rowset_QueryInterface(IRowset *iface, REFIID riid, void **
        IsEqualGUID(&IID_IRowset, riid))
     {
         *ppv = &rowset->IRowset_iface;
+    }
+    else if(IsEqualGUID(&IID_IColumnsInfo, riid))
+    {
+        *ppv = &rowset->IColumnsInfo_iface;
     }
 
     if(*ppv)
@@ -79,6 +93,8 @@ static ULONG WINAPI rowset_Release(IRowset *iface)
     {
         TRACE("destroying %p\n", rowset);
 
+        CoTaskMemFree(rowset->columns);
+        CoTaskMemFree(rowset->columns_buf);
         free(rowset);
     }
     return refs;
@@ -139,15 +155,120 @@ static const struct IRowsetVtbl rowset_vtbl =
     rowset_RestartPosition
 };
 
-HRESULT create_mem_rowset(IUnknown **ret)
+static HRESULT WINAPI columns_info_QueryInterface(IColumnsInfo *iface, REFIID riid, void **out)
+{
+    struct rowset *rowset = impl_from_IColumnsInfo(iface);
+    return IRowset_QueryInterface(&rowset->IRowset_iface, riid, out);
+}
+
+static ULONG WINAPI columns_info_AddRef(IColumnsInfo *iface)
+{
+    struct rowset *rowset = impl_from_IColumnsInfo(iface);
+    return IRowset_AddRef(&rowset->IRowset_iface);
+}
+
+static ULONG  WINAPI columns_info_Release(IColumnsInfo *iface)
+{
+    struct rowset *rowset = impl_from_IColumnsInfo(iface);
+    return IRowset_Release(&rowset->IRowset_iface);
+}
+
+static HRESULT copy_column_info(DBCOLUMNINFO **dest, const DBCOLUMNINFO *src, int count, OLECHAR **buf)
+{
+    size_t len;
+    int i;
+
+    *dest = CoTaskMemAlloc(sizeof(**dest) * count);
+    if (!*dest)
+        return E_OUTOFMEMORY;
+    memcpy(*dest, src, sizeof(**dest) * count);
+
+    len = 0;
+    for (i = 0; i < count; i++)
+    {
+        if (src[i].pwszName) len += wcslen(src[i].pwszName) + 1;
+        if (src[i].columnid.eKind == DBKIND_GUID_NAME || src[i].columnid.eKind == DBKIND_NAME ||
+                src[i].columnid.eKind == DBKIND_PGUID_NAME)
+            len += wcslen(src[i].columnid.uName.pwszName) + 1;
+    }
+    *buf = CoTaskMemAlloc(sizeof(**buf) * len);
+    if (!*buf)
+    {
+        CoTaskMemFree(*dest);
+        *dest = NULL;
+        return E_OUTOFMEMORY;
+    }
+    len = 0;
+    for (i = 0; i < count; i++)
+    {
+        if (src[i].pwszName)
+        {
+            wcscpy(*buf + len, src[i].pwszName);
+            (*dest)[i].pwszName = *buf + len;
+            len += wcslen(src[i].pwszName) + 1;
+        }
+        if (src[i].columnid.eKind == DBKIND_GUID_NAME || src[i].columnid.eKind == DBKIND_NAME ||
+                src[i].columnid.eKind == DBKIND_PGUID_NAME)
+        {
+            wcscpy(*buf + len, src[i].columnid.uName.pwszName);
+            (*dest)[i].columnid.uName.pwszName = *buf + len;
+            len += wcslen(src[i].columnid.uName.pwszName) + 1;
+        }
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI columns_info_GetColumnInfo(IColumnsInfo *iface,
+        DBORDINAL *columns, DBCOLUMNINFO **colinfo, OLECHAR **strbuf)
+{
+    struct rowset *rowset = impl_from_IColumnsInfo(iface);
+
+    TRACE("%p, %p, %p, %p\n", rowset, columns, colinfo, strbuf);
+
+    if (!columns || !colinfo || !strbuf)
+        return E_INVALIDARG;
+
+    *columns = rowset->columns_cnt;
+    return copy_column_info(colinfo, rowset->columns, rowset->columns_cnt, strbuf);
+}
+
+static HRESULT WINAPI columns_info_MapColumnIDs(IColumnsInfo *iface,
+        DBORDINAL column_ids, const DBID *dbids, DBORDINAL *columns)
+{
+    struct rowset *rowset = impl_from_IColumnsInfo(iface);
+
+    FIXME("%p, %Iu, %p, %p\n", rowset, column_ids, dbids, columns);
+    return E_NOTIMPL;
+}
+
+static struct IColumnsInfoVtbl columns_info_vtbl =
+{
+    columns_info_QueryInterface,
+    columns_info_AddRef,
+    columns_info_Release,
+    columns_info_GetColumnInfo,
+    columns_info_MapColumnIDs
+};
+
+HRESULT create_mem_rowset(int count, const DBCOLUMNINFO *info, IUnknown **ret)
 {
     struct rowset *rowset;
+    HRESULT hr;
 
-    rowset = malloc(sizeof(*rowset));
+    rowset = calloc(1, sizeof(*rowset));
     if (!rowset) return E_OUTOFMEMORY;
 
     rowset->IRowset_iface.lpVtbl = &rowset_vtbl;
+    rowset->IColumnsInfo_iface.lpVtbl = &columns_info_vtbl;
     rowset->refs = 1;
+
+    rowset->columns_cnt = count;
+    hr = copy_column_info(&rowset->columns, info, count, &rowset->columns_buf);
+    if (FAILED(hr))
+    {
+        IRowset_Release(&rowset->IRowset_iface);
+        return E_OUTOFMEMORY;
+    }
 
     *ret = (IUnknown *)&rowset->IRowset_iface;
     return S_OK;
