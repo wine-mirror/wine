@@ -2083,7 +2083,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
             {
                 TRACE("inside epilog.\n");
                 interpret_epilog( (BYTE *)pc, context, ctx_ptr );
-                *frame_ret = frame;
+                *frame_ret = info->frame_reg ? context->Rsp - 8 : frame;
                 *handler_ret = NULL;
                 return STATUS_SUCCESS;
             }
