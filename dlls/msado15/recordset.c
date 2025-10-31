@@ -32,12 +32,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
+struct recordset;
+
+struct field
+{
+    Field               Field_iface;
+    ISupportErrorInfo   ISupportErrorInfo_iface;
+    Properties          Properties_iface;
+    LONG                refs;
+    WCHAR              *name;
+    DataTypeEnum        type;
+    LONG                defined_size;
+    LONG                attrs;
+    LONG                index;
+    unsigned char       prec;
+    unsigned char       scale;
+    struct recordset   *recordset;
+
+    /* Field Properties */
+    VARIANT             optimize;
+};
+
 struct fields
 {
     Fields              Fields_iface;
     ISupportErrorInfo   ISupportErrorInfo_iface;
     LONG                refs;
-    Field             **field;
+    struct field      **field;
     ULONG               count;
     ULONG               allocated;
 };
@@ -65,25 +86,6 @@ struct recordset
 
     DBTYPE            *columntypes;
     HACCESSOR         *haccessors;
-};
-
-struct field
-{
-    Field               Field_iface;
-    ISupportErrorInfo   ISupportErrorInfo_iface;
-    Properties          Properties_iface;
-    LONG                refs;
-    WCHAR              *name;
-    DataTypeEnum        type;
-    LONG                defined_size;
-    LONG                attrs;
-    LONG                index;
-    unsigned char       prec;
-    unsigned char       scale;
-    struct recordset   *recordset;
-
-    /* Field Properties */
-    VARIANT             optimize;
 };
 
 static inline struct field *impl_from_Field( Field *iface )
@@ -809,25 +811,22 @@ static struct PropertiesVtbl field_properties_vtbl =
     field_props_get_Item
 };
 
-static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *recordset, Field **obj )
+static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *recordset, struct field **field )
 {
-    struct field *field;
-
-    if (!(field = calloc( 1, sizeof(*field) ))) return E_OUTOFMEMORY;
-    field->Field_iface.lpVtbl = &field_vtbl;
-    field->ISupportErrorInfo_iface.lpVtbl = &field_supporterrorinfo_vtbl;
-    field->Properties_iface.lpVtbl = &field_properties_vtbl;
-    field->refs = 1;
-    if (!(field->name = wcsdup( name )))
+    if (!(*field = calloc( 1, sizeof(**field) ))) return E_OUTOFMEMORY;
+    (*field)->Field_iface.lpVtbl = &field_vtbl;
+    (*field)->ISupportErrorInfo_iface.lpVtbl = &field_supporterrorinfo_vtbl;
+    (*field)->Properties_iface.lpVtbl = &field_properties_vtbl;
+    (*field)->refs = 1;
+    if (!((*field)->name = wcsdup( name )))
     {
-        free( field );
+        free( *field );
         return E_OUTOFMEMORY;
     }
-    field->index = index;
-    field->recordset = recordset;
+    (*field)->index = index;
+    (*field)->recordset = recordset;
 
-    *obj = &field->Field_iface;
-    TRACE( "returning iface %p\n", *obj );
+    TRACE( "returning field %p\n", *field );
     return S_OK;
 }
 
@@ -995,14 +994,7 @@ static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
 
     for (i = 0; i < fields->count; i++)
     {
-        BSTR name;
-        BOOL match;
-        HRESULT hr;
-
-        if ((hr = Field_get_Name( fields->field[i], &name )) != S_OK) return hr;
-        match = !wcsicmp( V_BSTR( index ), name );
-        SysFreeString( name );
-        if (match)
+        if (!wcsicmp( V_BSTR(index), fields->field[i]->name ))
         {
             *ret = i;
             return S_OK;
@@ -1038,8 +1030,8 @@ static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj
 
     if ((hr = map_index( fields, &index, &i )) != S_OK) return hr;
 
-    Field_AddRef( fields->field[i] );
-    *obj = fields->field[i];
+    Field_AddRef( &fields->field[i]->Field_iface );
+    *obj = &fields->field[i]->Field_iface;
     return S_OK;
 }
 
@@ -1047,7 +1039,7 @@ static BOOL resize_fields( struct fields *fields, ULONG count )
 {
     if (count > fields->allocated)
     {
-        Field **tmp;
+        struct field **tmp;
         ULONG new_size = max( count, fields->allocated * 2 );
         if (!(tmp = realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
         fields->field = tmp;
@@ -1060,20 +1052,20 @@ static BOOL resize_fields( struct fields *fields, ULONG count )
 
 static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
 {
-    Field *field;
+    struct field *field;
     HRESULT hr;
 
     hr = Field_create( info->pwszName, fields->count, fields_get_recordset(fields), &field );
     if (hr != S_OK) return hr;
-    Field_put_Type( field, info->wType );
-    Field_put_DefinedSize( field, info->ulColumnSize );
-    if (info->dwFlags != adFldUnspecified) Field_put_Attributes( field, info->dwFlags );
-    Field_put_Precision( field, info->bPrecision );
-    Field_put_NumericScale( field, info->bScale );
+    field->type = info->wType;
+    field->defined_size = info->ulColumnSize;
+    if (info->dwFlags != adFldUnspecified) field->attrs = info->dwFlags;
+    field->prec = info->bPrecision;
+    field->scale = info->bScale;
 
     if (!(resize_fields( fields, fields->count + 1 )))
     {
-        Field_Release( field );
+        Field_Release( &field->Field_iface );
         return E_OUTOFMEMORY;
     }
 
@@ -1272,9 +1264,8 @@ static void close_recordset( struct recordset *recordset )
 
     for (i = 0; i < col_count; i++)
     {
-        struct field *field = impl_from_Field( recordset->fields.field[i] );
-        field->recordset = NULL;
-        Field_Release(&field->Field_iface);
+        recordset->fields.field[i]->recordset = NULL;
+        Field_Release(&recordset->fields.field[i]->Field_iface);
 
         if (recordset->haccessors)
             IAccessor_ReleaseAccessor(accessor, recordset->haccessors[i], NULL);
