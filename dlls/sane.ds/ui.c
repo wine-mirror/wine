@@ -1148,7 +1148,7 @@ HWND ScanningDialogBox(HWND dialog, LONG progress)
 
     if (progress == -1)
     {
-        EndDialog(dialog,0);
+        DestroyWindow(dialog);
         return NULL;
     }
 
