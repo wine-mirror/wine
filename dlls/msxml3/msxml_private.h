@@ -162,8 +162,6 @@ extern void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node);
 extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc);
 extern MSXML_VERSION xmldoc_version( xmlDocPtr doc );
 
-extern HRESULT XMLElement_create( xmlNodePtr node, LPVOID *ppObj, BOOL own );
-
 extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap);
 extern void wineXmlCallbackError(char const* caller, const xmlError* err);
 
