@@ -260,7 +260,7 @@ static HRESULT midi_parser_handle_program_change(struct midi_parser *parser, str
     MUSIC_TIME dmusic_time = (ULONGLONG)parser->time * DMUS_PPQ / parser->division;
     instrument.dwPChannel = event->status & 0xf;
     instrument.dwFlags = DMUS_IO_INST_PATCH;
-    instrument.dwPatch = event->data[0];
+    instrument.dwPatch = event->data[0] | (instrument.dwPChannel == 9 ? F_INSTRUMENT_DRUMS : 0);
     if (FAILED(hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER,
                        &IID_IDirectMusicBand, (void **)&band)))
         return hr;
