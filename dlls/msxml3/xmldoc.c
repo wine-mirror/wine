@@ -1258,7 +1258,7 @@ static HRESULT WINAPI xmldoc_get_doctype(IXMLDocument2 *iface, BSTR *p)
     return S_OK;
 }
 
-static HRESULT WINAPI xmldoc_get_dtdURl(IXMLDocument2 *iface, BSTR *p)
+static HRESULT WINAPI xmldoc_get_dtdURL(IXMLDocument2 *iface, BSTR *p)
 {
     FIXME("(%p, %p): stub\n", iface, p);
     return E_NOTIMPL;
@@ -1349,7 +1349,7 @@ static const struct IXMLDocument2Vtbl xmldoc_vtbl =
     xmldoc_put_charset,
     xmldoc_get_version,
     xmldoc_get_doctype,
-    xmldoc_get_dtdURl,
+    xmldoc_get_dtdURL,
     xmldoc_createElement,
     xmldoc_get_async,
     xmldoc_put_async,

@@ -164,7 +164,7 @@ interface IXMLDocument : IDispatch
     HRESULT doctype( [retval, out] BSTR *p );
 
     [propget, id(DISPID_XMLDOCUMENT_DTDURL)]
-    HRESULT dtdURl( [retval, out] BSTR *p );
+    HRESULT dtdURL( [retval, out] BSTR *p );
 
     [id(DISPID_XMLDOCUMENT_CREATEELEMENT)]
     HRESULT createElement(
