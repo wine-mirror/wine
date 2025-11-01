@@ -2143,7 +2143,7 @@ static void test_getstring(void)
     expect(-1, r);
     r = SendMessageW(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), 0);
     expect(-1, r);
-    r = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"STR");
+    r = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"STR\0");
     expect(0, r);
     r = SendMessageA(hToolbar, TB_GETSTRINGA, MAKEWPARAM(0, 0), 0);
     ok(r == 3, "Unexpected return value %d.\n", r);
