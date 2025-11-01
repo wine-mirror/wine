@@ -442,9 +442,8 @@ struct Exception *__cdecl CreateException(HRESULT hr)
 }
 
 static void DECLSPEC_NORETURN throw_exception(struct Exception *excp, const cxx_exception_type *type)
- {
-    /* Thrown exceptions have a refcount of 2. */
-    IInspectable_AddRef(&excp->IInspectable_iface);
+{
+    /* TODO: figure out what native does with refcount */
     _CxxThrowException(&excp, type);
 }
 

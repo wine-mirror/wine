@@ -92,9 +92,8 @@ void *__cdecl Allocate(size_t size)
     TRACE("(%Iu)\n", size);
 
     addr = malloc(size);
-    /* TODO: Throw a COMException on allocation failure. */
     if (!addr)
-        FIXME("allocation failure\n");
+        __abi_WinRTraiseOutOfMemoryException();
     return addr;
 }
 
@@ -397,8 +396,7 @@ static const char *debugstr_abi_type_descriptor(const struct __abi_type_descript
 void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
 {
     /* TODO:
-     * Implement IEquatable and IPrintable.
-     * Throw a COMException if CoCreateFreeThreadedMarshaler fails. */
+     * Implement IEquatable and IPrintable. */
     struct platform_type *obj;
     HRESULT hr;
 
@@ -412,9 +410,8 @@ void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&obj->IInspectable_iface, &obj->marshal);
     if (FAILED(hr))
     {
-        FIXME("CoCreateFreeThreadedMarshaler failed: %#lx\n", hr);
         Free(obj);
-        return NULL;
+        __abi_WinRTraiseCOMException(hr);
     }
     return &obj->IInspectable_iface;
 }
@@ -440,10 +437,9 @@ HSTRING __cdecl platform_type_ToString(struct platform_type *this)
 
     TRACE("(%p)\n", this);
 
-    /* TODO: Throw a COMException if this fails */
     hr = WindowsCreateString(this->desc->name, this->desc->name ? wcslen(this->desc->name) : 0, &str);
     if (FAILED(hr))
-        FIXME("WindowsCreateString failed: %#lx\n", hr);
+        __abi_WinRTraiseCOMException(hr);
     return str;
 }
 
@@ -512,10 +508,7 @@ void *WINAPI CreateValue(int typecode, const void *val)
     hr = GetActivationFactoryByPCWSTR(RuntimeClass_Windows_Foundation_PropertyValue, &IID_IPropertyValueStatics,
                                       (void **)&statics);
     if (FAILED(hr))
-    {
-        FIXME("GetActivationFactoryByPCWSTR failed: %#lx\n", hr);
-        return NULL;
-    }
+        __abi_WinRTraiseCOMException(hr);
     switch (typecode)
     {
     case TYPECODE_BOOLEAN:
@@ -580,10 +573,7 @@ void *WINAPI CreateValue(int typecode, const void *val)
 
     IPropertyValueStatics_Release(statics);
     if (FAILED(hr))
-    {
-        FIXME("Failed to create IPropertyValue object: %#lx\n", hr);
-        return NULL;
-    }
+        __abi_WinRTraiseCOMException(hr);
     return obj;
 }
 
