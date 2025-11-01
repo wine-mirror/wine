@@ -6004,6 +6004,27 @@ static unsigned int opentype_is_default_ignorable(unsigned int codepoint)
             (codepoint >= 0xe0000 && codepoint <= 0xe0fff);
 }
 
+/*
+    * 0009..000D # TABs, FF, CR
+    * 0020       # SPACE
+    * 0085       # NL
+    * 00A0       # NBSP
+    * 1680       # OGHAM SPACE MARK
+    * 2000..200A # NQSP, MQSP, ENSP, EMSP, 3/MSP, 4/MSP, 6/MSP, FSP, PSP, THSP, HSP
+    * 2028..2029 # LSEP, PSEP
+    * 202F       # NNBSP
+    * 205F       # MMSP
+    * 3000       # IDSP
+*/
+bool opentype_is_whitespace(unsigned int codepoint)
+{
+    return (codepoint >= 0x9 && codepoint <= 0xd) ||
+            codepoint == 0x20 || codepoint == 0x85 || codepoint == 0xa0 ||
+            codepoint == 0x1680 || (codepoint >= 0x2000 && codepoint <= 0x200a) ||
+            codepoint == 0x2028 || codepoint == 0x2029 || codepoint == 0x202f ||
+            codepoint == 0x205f || codepoint == 0x3000;
+}
+
 static unsigned int opentype_is_diacritic(unsigned int codepoint)
 {
     WCHAR ch = codepoint;

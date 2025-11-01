@@ -921,7 +921,7 @@ static HRESULT analyze_linebreaks(IDWriteTextAnalysisSource *source, UINT32 posi
 
         breakpoints[index].breakConditionBefore = DWRITE_BREAK_CONDITION_NEUTRAL;
         breakpoints[index].breakConditionAfter  = DWRITE_BREAK_CONDITION_NEUTRAL;
-        breakpoints[index].isWhitespace = context.ch < 0xffff ? !!iswspace(context.ch) : 0;
+        breakpoints[index].isWhitespace = opentype_is_whitespace(context.ch);
         breakpoints[index].isSoftHyphen = context.ch == 0x00ad /* Unicode Soft Hyphen */;
         breakpoints[index].padding = 0;
         ++index;
