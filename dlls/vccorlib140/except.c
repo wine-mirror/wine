@@ -306,9 +306,26 @@ struct Exception *__cdecl Exception_ctor(struct Exception *this, HRESULT hr)
     return this;
 }
 
-void *__cdecl Exception_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
+struct Exception *__cdecl Exception_hstring_ctor(struct Exception *this, HRESULT hr, HSTRING msg)
 {
-    FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
+    const WCHAR *buf;
+    BOOL has_null;
+    UINT32 len;
+
+    TRACE("(%p, %#lx, %s)\n", this, hr, debugstr_hstring(msg));
+
+    Exception_ctor(this, hr);
+    if (WindowsIsStringEmpty(msg)) return this;
+
+    /* Native throws InvalidArgumentException if msg has an embedded NUL byte. */
+    if (FAILED(hr = WindowsStringHasEmbeddedNull(msg, &has_null)))
+        __abi_WinRTraiseCOMException(hr);
+    else if (has_null)
+        __abi_WinRTraiseInvalidArgumentException();
+
+    buf = WindowsGetStringRawBuffer(msg, &len);
+    if (len && !(this->inner.restricted_desc = SysAllocStringLen(buf, len)))
+        __abi_WinRTraiseOutOfMemoryException();
     return this;
 }
 
