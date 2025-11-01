@@ -2859,8 +2859,10 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, da
         set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
         return;
     }
-    if (!(name = mem_alloc( len + 1 ))) return;
+    if (!(name = mem_alloc( len + 2 ))) return;
     memcpy( name, nameptr, len );
+    if (fd->unix_name[strlen( fd->unix_name ) - 1] == '?' && name[len - 1] != '?')
+        name[len++] = '?';
     name[len] = 0;
 
     if (root)
