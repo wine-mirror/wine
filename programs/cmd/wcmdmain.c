@@ -3270,8 +3270,7 @@ struct command_rebuild
 
 struct rebuild_flags
 {
-    unsigned precedence : 3,
-             depth;
+    unsigned depth;
 };
 
 static BOOL rebuild_append(struct command_rebuild *rb, const WCHAR *toappend)
@@ -3371,25 +3370,23 @@ static BOOL rebuild_command_binary(struct command_rebuild *rb, const CMD_NODE *n
 
     switch (node->op)
     {
-    case CMD_PIPE:       op_string = L"|";  new_rbflags.precedence = 4; break;
-    case CMD_CONCAT:     op_string = L"&";  new_rbflags.precedence = 3; break;
-    case CMD_ONFAILURE:  op_string = L"||"; new_rbflags.precedence = 2; break;
-    case CMD_ONSUCCESS:  op_string = L"&&"; new_rbflags.precedence = 1; break;
+    case CMD_PIPE:       op_string = L"|";  break;
+    case CMD_CONCAT:     op_string = L"&";  break;
+    case CMD_ONFAILURE:  op_string = L"||"; break;
+    case CMD_ONSUCCESS:  op_string = L"&&"; break;
     default: return FALSE;
     }
 
-    return ((new_rbflags.precedence >= rbflags.precedence) || rebuild_append(rb, L"(")) &&
-        rebuild_append_command(rb, node->left, new_rbflags) &&
+    return rebuild_append_command(rb, node->left, new_rbflags) &&
         ((node->left->op == CMD_SINGLE && node->op == CMD_CONCAT) ? rebuild_append(rb, L" ") : TRUE) &&
         rebuild_append(rb, op_string) &&
-        rebuild_append_command(rb, node->right, new_rbflags) &&
-        ((new_rbflags.precedence >= rbflags.precedence) || rebuild_append(rb, L")"));
+        rebuild_append_command(rb, node->right, new_rbflags);
 }
 
 static BOOL rebuild_command_if(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
 {
     const WCHAR *unop = NULL, *binop = NULL;
-    struct rebuild_flags new_rbflags = {.precedence = 0, .depth = rbflags.depth + 1};
+    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1};
     BOOL ret;
 
     ret = rebuild_append(rb, L"if ");
@@ -3450,7 +3447,7 @@ static const WCHAR *state_to_delim(int state)
 static BOOL rebuild_command_for(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
 {
     const CMD_FOR_CONTROL *for_ctrl = &node->for_ctrl;
-    struct rebuild_flags new_rflags = {.precedence = 0, .depth = rbflags.depth + 1};
+    struct rebuild_flags new_rflags = {.depth = rbflags.depth + 1};
     const WCHAR *opt = NULL;
     BOOL ret;
 
@@ -3544,7 +3541,7 @@ static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *n
         break;
     case CMD_BLOCK:
         {
-            struct rebuild_flags new_rbflags = {.precedence = 0, .depth = rbflags.depth = 1};
+            struct rebuild_flags new_rbflags = {.depth = rbflags.depth = 1};
             ret = rebuild_append(rb, L"( ") &&
                 rebuild_append_command(rb, node->block, new_rbflags) &&
                 rebuild_append(rb, L" ) ");
