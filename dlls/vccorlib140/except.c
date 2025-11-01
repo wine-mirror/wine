@@ -110,25 +110,6 @@ void WINAPI __abi_WinRTraiseCOMException(HRESULT hr)
     WINRT_EXCEPTION(OutOfMemory, E_OUTOFMEMORY)              \
     WINRT_EXCEPTION(WrongThread, RPC_E_WRONG_THREAD)
 
-#define WINRT_EXCEPTION(name, hr)                                                  \
-    void WINAPI __abi_WinRTraise##name##Exception(void)                            \
-    {                                                                              \
-        FIXME("(): stub!\n");                                                      \
-    }                                                                              \
-    void *__cdecl name##Exception_ctor(void *this)                      \
-    {                                                                              \
-        FIXME("(%p): stub!\n", this);                                              \
-        return this;                                                               \
-    }                                                                              \
-    void *__cdecl name##Exception_hstring_ctor(void *this, HSTRING msg) \
-    {                                                                              \
-        FIXME("(%p, %s): stub!\n", this, debugstr_hstring(msg));                   \
-        return this;                                                               \
-    }
-
-WINRT_EXCEPTIONS
-#undef WINRT_EXCEPTION
-
 static inline struct Exception *impl_Exception_from_IInspectable(IInspectable *iface)
 {
     return CONTAINING_RECORD(iface, struct Exception, IInspectable_iface);
@@ -379,10 +360,84 @@ struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRES
     return this;
 }
 
-HSTRING __cdecl Exception_get_Message(void *excp)
+#define WINRT_EXCEPTION(name, hr)                                                               \
+    DEFINE_RTTI_DATA(name##Exception_ref, 0, EXCEPTION_REF_NAME(name),                          \
+            COMException_ref_rtti_base_descriptor, Exception_ref_rtti_base_descriptor);         \
+    typedef COMException_ref name##Exception_ref;                                               \
+    DEFINE_CXX_TYPE(name##Exception_ref, COMException_ref_cxx_type_info,                        \
+            Exception_ref_cxx_type_info);                                                       \
+                                                                                                \
+    DEFINE_RTTI_DATA(name##Exception, 0, ".?AV" #name "Exception@Platform@@");                  \
+    COM_VTABLE_RTTI_START(IInspectable, name##Exception)                                        \
+    COM_VTABLE_ENTRY(Exception_QueryInterface)                                                  \
+    COM_VTABLE_ENTRY(Exception_AddRef)                                                          \
+    COM_VTABLE_ENTRY(Exception_Release)                                                         \
+    COM_VTABLE_ENTRY(Exception_GetIids)                                                         \
+    COM_VTABLE_ENTRY(Exception_GetRuntimeClassName)                                             \
+    COM_VTABLE_ENTRY(Exception_GetTrustLevel)                                                   \
+    COM_VTABLE_RTTI_END;                                                                        \
+                                                                                                \
+    DEFINE_RTTI_DATA(name##Exception_Closable, offsetof(struct Exception, IClosable_iface),     \
+            ".?AV" #name "Exception@Platform@@");                                               \
+    COM_VTABLE_RTTI_START(IClosable, name##Exception_Closable)                                  \
+    COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)                                         \
+    COM_VTABLE_ENTRY(Exception_Closable_AddRef)                                                 \
+    COM_VTABLE_ENTRY(Exception_Closable_Release)                                                \
+    COM_VTABLE_ENTRY(Exception_Closable_GetIids)                                                \
+    COM_VTABLE_ENTRY(Exception_Closable_GetRuntimeClassName)                                    \
+    COM_VTABLE_ENTRY(Exception_Closable_GetTrustLevel)                                          \
+    COM_VTABLE_ENTRY(Exception_Closable_Close)                                                  \
+    COM_VTABLE_RTTI_END;                                                                        \
+                                                                                                \
+    struct Exception *__cdecl name##Exception_ctor(struct Exception *this)                      \
+    {                                                                                           \
+        TRACE("(%p)\n", this);                                                                  \
+        Exception_ctor(this, hr);                                                               \
+        this->IInspectable_iface.lpVtbl = &name##Exception_vtable.vtable;                       \
+        this->IClosable_iface.lpVtbl = &name##Exception_Closable_vtable.vtable;                 \
+        this->inner.exception_type = &name##Exception_ref_exception_type;                       \
+        return this;                                                                            \
+    }                                                                                           \
+                                                                                                \
+    struct Exception *__cdecl name##Exception_hstring_ctor(struct Exception *this, HSTRING msg) \
+    {                                                                                           \
+        TRACE("(%p, %s)\n", this, debugstr_hstring(msg));                                       \
+        Exception_hstring_ctor(this, hr, msg);                                                  \
+        this->IInspectable_iface.lpVtbl = &name##Exception_vtable.vtable;                       \
+        this->IClosable_iface.lpVtbl = &name##Exception_Closable_vtable.vtable;                 \
+        this->inner.exception_type = &name##Exception_ref_exception_type;                       \
+        return this;                                                                            \
+    }                                                                                           \
+                                                                                                \
+    void WINAPI __abi_WinRTraise##name##Exception(void)                                         \
+    {                                                                                           \
+        FIXME("(): stub!\n");                                                                   \
+    }
+WINRT_EXCEPTIONS
+#undef WINRT_EXCEPTION
+
+HSTRING __cdecl Exception_get_Message(struct Exception *this)
 {
-    FIXME("(%p): stub!\n", excp);
-    return NULL;
+    HSTRING msg = NULL;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)\n", this);
+
+    if (this->inner.restricted_desc)
+        hr = WindowsCreateString(this->inner.restricted_desc, wcslen(this->inner.restricted_desc), &msg);
+    else
+    {
+        WCHAR buf[256];
+
+        if (FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, this->inner.hr, 0, buf, ARRAY_SIZE(buf), NULL))
+            hr = WindowsCreateString(buf, wcslen(buf), &msg);
+        else
+            ERR("FormatMessageW failed: %lu\n", GetLastError());
+    }
+
+    if (FAILED(hr))
+        __abi_WinRTraiseCOMException(hr);
+    return msg;
 }
 
 void init_exception(void *base)
@@ -396,4 +451,12 @@ void init_exception(void *base)
     INIT_CXX_TYPE(COMException_ref, base);
     INIT_RTTI(COMException, base);
     INIT_RTTI(COMException_Closable, base);
+
+#define WINRT_EXCEPTION(name, hr)           \
+    INIT_RTTI(name##Exception_ref, base);      \
+    INIT_CXX_TYPE(name##Exception_ref, base);  \
+    INIT_RTTI(name##Exception, base);          \
+    INIT_RTTI(name##Exception_Closable, base);
+    WINRT_EXCEPTIONS
+#undef WINRT_EXCEPTION
 }

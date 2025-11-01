@@ -44,6 +44,8 @@ struct control_block
 void __cdecl FreeException(void *);
 
 void init_exception(void *);
+void WINAPI __abi_WinRTraiseInvalidArgumentException(void);
+void WINAPI __abi_WinRTraiseOutOfMemoryException(void);
 
 #define COM_VTABLE_RTTI_START(iface, type)                                                                             \
     static const struct                                                                                                \
