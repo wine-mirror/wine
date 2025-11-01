@@ -60,12 +60,12 @@ void WINAPI __abi_WinRTraiseCOMException(HRESULT hr)
     {                                                                              \
         FIXME("(): stub!\n");                                                      \
     }                                                                              \
-    void *__cdecl platform_##name##Exception_ctor(void *this)                      \
+    void *__cdecl name##Exception_ctor(void *this)                      \
     {                                                                              \
         FIXME("(%p): stub!\n", this);                                              \
         return this;                                                               \
     }                                                                              \
-    void *__cdecl platform_##name##Exception_hstring_ctor(void *this, HSTRING msg) \
+    void *__cdecl name##Exception_hstring_ctor(void *this, HSTRING msg) \
     {                                                                              \
         FIXME("(%p, %s): stub!\n", this, debugstr_hstring(msg));                   \
         return this;                                                               \
@@ -74,31 +74,31 @@ void WINAPI __abi_WinRTraiseCOMException(HRESULT hr)
 WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
 
-void *__cdecl platform_Exception_ctor(void *this, HRESULT hr)
+void *__cdecl Exception_ctor(void *this, HRESULT hr)
 {
     FIXME("(%p, %#lx): stub!\n", this, hr);
     return this;
 }
 
-void *__cdecl platform_Exception_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
+void *__cdecl Exception_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
 {
     FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
     return this;
 }
 
-void *__cdecl platform_COMException_ctor(void *this, HRESULT hr)
+void *__cdecl COMException_ctor(void *this, HRESULT hr)
 {
     FIXME("(%p, %#lx): stub!\n", this, hr);
     return this;
 }
 
-void *__cdecl platform_COMException_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
+void *__cdecl COMException_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
 {
     FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
     return this;
 }
 
-HSTRING __cdecl platform_exception_get_Message(void *excp)
+HSTRING __cdecl Exception_get_Message(void *excp)
 {
     FIXME("(%p): stub!\n", excp);
     return NULL;
