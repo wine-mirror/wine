@@ -26,11 +26,14 @@
 #define WIDL_using_Windows_Foundation
 #include "windows.foundation.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 #include "cxx.h"
 #include "private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vccorlib);
+
+extern void WINAPI DECLSPEC_NORETURN _CxxThrowException(void *, const cxx_exception_type *);
 
 #ifdef _WIN64
 #define EXCEPTION_REF_NAME(name) ".PE$AAV" #name "Exception@Platform@@"
@@ -76,23 +79,6 @@ struct Exception
      * UINTPTR_MAX/-1 */
     IUnknown *marshal;
 };
-
-void *__cdecl CreateExceptionWithMessage(HRESULT hr, HSTRING msg)
-{
-    FIXME("(%#lx, %s): stub!\n", hr, debugstr_hstring(msg));
-    return NULL;
-}
-
-void *__cdecl CreateException(HRESULT hr)
-{
-    FIXME("(%#lx): stub!\n", hr);
-    return NULL;
-}
-
-void WINAPI __abi_WinRTraiseCOMException(HRESULT hr)
-{
-    FIXME("(%#lx): stub!\n", hr);
-}
 
 #define WINRT_EXCEPTIONS                                     \
     WINRT_EXCEPTION(AccessDenied, E_ACCESSDENIED)            \
@@ -263,6 +249,8 @@ static void WINAPI set_exception_info(struct exception_inner **inner)
     info->error_info = NULL;
 }
 
+/* Note: All exception constructors should only throw exceptions *after* all fields have been initialized.
+ * This is because the cleanup code in CreateException(WithMessage) calls Release. */
 struct Exception *__cdecl Exception_ctor(struct Exception *this, HRESULT hr)
 {
     struct exception_alloc *base = CONTAINING_RECORD(this, struct exception_alloc, data);
@@ -407,14 +395,81 @@ struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRES
         this->IClosable_iface.lpVtbl = &name##Exception_Closable_vtable.vtable;                 \
         this->inner.exception_type = &name##Exception_ref_exception_type;                       \
         return this;                                                                            \
-    }                                                                                           \
-                                                                                                \
-    void WINAPI __abi_WinRTraise##name##Exception(void)                                         \
-    {                                                                                           \
-        FIXME("(): stub!\n");                                                                   \
     }
 WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
+
+/* This is only executed once AllocateExceptionWithWeakRef succeeds, we can assume excp and excp->control_block are
+ * valid. */
+static void CALLBACK create_exception_cleanup(BOOL normal, void *excp)
+{
+    IInspectable_Release(excp);
+}
+
+struct Exception *__cdecl CreateExceptionWithMessage(HRESULT code, HSTRING msg)
+{
+    struct Exception *ret;
+
+    TRACE("(%#lx, %s)\n", code, debugstr_hstring(msg));
+
+    ret = AllocateExceptionWithWeakRef(offsetof(struct Exception, control_block), sizeof(*ret));
+
+#define WINRT_EXCEPTION(name, h) \
+    case (h): \
+        name##Exception_hstring_ctor(ret, msg); \
+        break;
+    __TRY
+    {
+        switch (code)
+        {
+        WINRT_EXCEPTIONS;
+        default:
+            COMException_hstring_ctor(ret, code, msg);
+            break;
+        }
+        /* Increment the refcount for create_exception_cleanup. */
+        IInspectable_AddRef(&ret->IInspectable_iface);
+    }
+    __FINALLY_CTX(create_exception_cleanup, &ret->IInspectable_iface)
+#undef WINRT_EXCEPTION
+    return ret;
+}
+
+struct Exception *__cdecl CreateException(HRESULT hr)
+{
+    TRACE("(%#lx)\n", hr);
+    return CreateExceptionWithMessage(hr, NULL);
+}
+
+static void DECLSPEC_NORETURN throw_exception(struct Exception *excp, const cxx_exception_type *type)
+ {
+    /* Thrown exceptions have a refcount of 2. */
+    IInspectable_AddRef(&excp->IInspectable_iface);
+    _CxxThrowException(&excp, type);
+}
+
+#define WINRT_EXCEPTION(name, hr)                                                   \
+    void WINAPI DECLSPEC_NORETURN __abi_WinRTraise##name##Exception(void)           \
+    {                                                                               \
+        FIXME("(): semi-stub!\n");                                                  \
+        throw_exception(CreateException(hr), &name##Exception_ref_exception_type);  \
+    }
+WINRT_EXCEPTIONS
+#undef WINRT_EXCEPTION
+
+void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseCOMException(HRESULT hr)
+{
+    FIXME("(%#lx): semi-stub!\n", hr);
+
+    switch (hr)
+    {
+#define WINRT_EXCEPTION(name, code) case (code): __abi_WinRTraise##name##Exception();
+    WINRT_EXCEPTIONS;
+#undef WINRT_EXCEPTION
+    default:
+        throw_exception(CreateException(hr), &COMException_ref_exception_type);
+    }
+}
 
 HSTRING __cdecl Exception_get_Message(struct Exception *this)
 {

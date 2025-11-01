@@ -1373,17 +1373,12 @@ static void test_exceptions(void)
 
         cur_test = &test_cases[i];
         obj = pCreateException(cur_test->hr);
-        todo_wine ok(obj != NULL, "got obj %p\n", obj);
-        if (!obj)
-        {
-            winetest_pop_context();
-            continue;
-        }
+        ok(obj != NULL, "got obj %p\n", obj);
 
         inspectable = (IInspectable *)obj;
         /* Verify that the IMarshal field is lazily-initialized. */
         ok((ULONG_PTR)obj->marshal == UINTPTR_MAX, "got marshal %p\n", obj->marshal);
-        todo_wine check_interface(inspectable, &IID_IMarshal);
+        check_interface(inspectable, &IID_IMarshal);
         ok(obj->marshal != NULL && (ULONG_PTR)obj->marshal != UINTPTR_MAX, "got marshal %p\n", obj->marshal);
 
         test_interface_layout(obj, &IID_IUnknown, &obj->IInspectable_iface);
@@ -1514,7 +1509,7 @@ static void test_exceptions(void)
 
             cxx_info = (cxx_type_info *)(base + type_info_table->info[j]);
             if (j == type_info_table->count - 1)
-                ok(cxx_info->flags == CLASS_IS_SIMPLE_TYPE, "got flags %u\n", cxx_info->flags);
+                todo_wine ok(cxx_info->flags == CLASS_IS_SIMPLE_TYPE, "got flags %u\n", cxx_info->flags);
             else
                 ok(cxx_info->flags == (CLASS_IS_SIMPLE_TYPE | CLASS_IS_IUNKNOWN), "got flags %u\n", cxx_info->flags);
             ok(cxx_info->size == sizeof(void *), "got size %u\n", cxx_info->size);
