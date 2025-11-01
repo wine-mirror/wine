@@ -329,15 +329,53 @@ struct Exception *__cdecl Exception_hstring_ctor(struct Exception *this, HRESULT
     return this;
 }
 
-void *__cdecl COMException_ctor(void *this, HRESULT hr)
+DEFINE_RTTI_DATA(COMException_ref, 0, EXCEPTION_REF_NAME(COM), Exception_ref_rtti_base_descriptor);
+typedef struct Exception *COMException_ref;
+DEFINE_CXX_TYPE(COMException_ref, Exception_ref_cxx_type_info);
+
+DEFINE_RTTI_DATA(COMException, 0, ".?AVCOMException@Platform@@");
+COM_VTABLE_RTTI_START(IInspectable, COMException)
+COM_VTABLE_ENTRY(Exception_QueryInterface)
+COM_VTABLE_ENTRY(Exception_AddRef)
+COM_VTABLE_ENTRY(Exception_Release)
+COM_VTABLE_ENTRY(Exception_GetIids)
+COM_VTABLE_ENTRY(Exception_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_GetTrustLevel)
+COM_VTABLE_RTTI_END;
+
+DEFINE_RTTI_DATA(COMException_Closable, offsetof(struct Exception, IClosable_iface),
+                 ".?AVCOMException@Platform@@")
+COM_VTABLE_RTTI_START(IClosable, COMException_Closable)
+COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)
+COM_VTABLE_ENTRY(Exception_Closable_AddRef)
+COM_VTABLE_ENTRY(Exception_Closable_Release)
+COM_VTABLE_ENTRY(Exception_Closable_GetIids)
+COM_VTABLE_ENTRY(Exception_Closable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_Closable_GetTrustLevel)
+COM_VTABLE_ENTRY(Exception_Closable_Close)
+COM_VTABLE_RTTI_END;
+
+struct Exception *__cdecl COMException_ctor(struct Exception *this, HRESULT hr)
 {
-    FIXME("(%p, %#lx): stub!\n", this, hr);
+    TRACE("(%p, %#lx)\n", this, hr);
+
+    Exception_ctor(this, hr);
+
+    this->IInspectable_iface.lpVtbl = &COMException_vtable.vtable;
+    this->IClosable_iface.lpVtbl = &COMException_Closable_vtable.vtable;
+    this->inner.exception_type = &COMException_ref_exception_type;
     return this;
 }
 
-void *__cdecl COMException_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
+struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRESULT hr, HSTRING msg)
 {
-    FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
+    TRACE("(%p, %#lx, %s)\n", this, hr, debugstr_hstring(msg));
+
+    Exception_hstring_ctor(this, hr, msg);
+
+    this->IInspectable_iface.lpVtbl = &COMException_vtable.vtable;
+    this->IClosable_iface.lpVtbl = &COMException_Closable_vtable.vtable;
+    this->inner.exception_type = &COMException_ref_exception_type;
     return this;
 }
 
@@ -353,4 +391,9 @@ void init_exception(void *base)
     INIT_CXX_TYPE(Exception_ref, base);
     INIT_RTTI(Exception, base);
     INIT_RTTI(Exception_Closable, base);
+
+    INIT_RTTI(COMException_ref, base);
+    INIT_CXX_TYPE(COMException_ref, base);
+    INIT_RTTI(COMException, base);
+    INIT_RTTI(COMException_Closable, base);
 }
