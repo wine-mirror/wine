@@ -1,5 +1,5 @@
 MODULE = vccorlib140.dll
-IMPORTS = combase
+IMPORTS = combase oleaut32
 
 SOURCES = \
 	except.c \

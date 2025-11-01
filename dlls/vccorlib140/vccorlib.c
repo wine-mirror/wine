@@ -19,11 +19,8 @@
 
 #define COBJMACROS
 
-#include <stdbool.h>
-
 #include "initguid.h"
 #include "roapi.h"
-#include "weakreference.h"
 #include "winstring.h"
 #define WIDL_using_Windows_Foundation
 #include "windows.foundation.h"
@@ -101,13 +98,6 @@ void *__cdecl Allocate(size_t size)
     return addr;
 }
 
-struct exception_alloc
-{
-    void *unknown;
-    void *exception_inner;
-    char data[0];
-};
-
 void *__cdecl AllocateException(size_t size)
 {
     struct exception_alloc *base;
@@ -133,20 +123,6 @@ void __cdecl FreeException(void *addr)
 
     Free(base);
 }
-
-struct control_block
-{
-    IWeakReference IWeakReference_iface;
-    LONG ref_weak;
-    LONG ref_strong;
-    IUnknown *object;
-    bool is_inline;
-    bool unknown;
-    bool is_exception;
-#ifdef _WIN32
-    char _padding[5];
-#endif
-};
 
 static inline struct control_block *impl_from_IWeakReference(IWeakReference *iface)
 {
@@ -614,6 +590,9 @@ void *WINAPI CreateValue(int typecode, const void *val)
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
+    {
+        init_exception(inst);
         init_platform_type(inst);
+    }
     return TRUE;
 }

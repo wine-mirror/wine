@@ -148,63 +148,61 @@ static void init_ ## name ## _rtti(char *base) \
 
 #ifndef CXX_USE_RVA
 
-#define DEFINE_CXX_TYPE(type, dtor, ...)  \
+#define DEFINE_CXX_TYPE(type, ...)  \
 static const cxx_type_info type ## _cxx_type_info[1] = \
-    { { 0, &type ##_type_info, { 0, -1, 0 }, sizeof(type), THISCALL(type ##_copy_ctor) } }; \
+    { { CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT, &type ##_type_info, { 0, -1, 0 }, sizeof(type), NULL } }; \
 \
 static const cxx_type_info_table type ## _cxx_type_table = \
     { ARRAY_SIZE(((const void *[]){ NULL, __VA_ARGS__ })), { type ## _cxx_type_info, __VA_ARGS__ } }; \
 \
 static const cxx_exception_type type ## _exception_type = \
-    { 0, THISCALL(dtor), NULL, & type ## _cxx_type_table };
+    { TYPE_FLAG_WINRT, NULL, NULL, & type ## _cxx_type_table };
 
 #define INIT_CXX_TYPE(name,base) (void)name ## _exception_type
 
 #elif defined __WINE_PE_BUILD
 
-#define DEFINE_CXX_TYPE2(type, dtor, ...) \
+#define DEFINE_CXX_TYPE2(type, ...) \
 extern const cxx_type_info type ## _cxx_type_info[1]; \
 extern const cxx_exception_type type ## _exception_type; \
 void __asm_dummy_ ## type ## _exception_type(void) \
 { \
     asm( ".balign 4\n\t" \
          __ASM_GLOBL(#type "_cxx_type_info") "\n\t" \
-         ".long 0\n\t" \
+         ".long 9\n\t" \
          ".rva " #type "_type_info\n\t" \
          ".long 0, -1, 0, %c0\n\t" \
-         ".rva " #type "_copy_ctor\n" \
+         ".long 0\n\t" \
          #type "_type_table:\n\t" \
          ".long %c1\n\t" \
          ".rva " #__VA_ARGS__ "\n\t" \
          __ASM_GLOBL(#type "_exception_type") "\n\t" \
+         ".long 16\n\t" \
          ".long 0\n\t" \
-         ".rva " #dtor "\n\t" \
          ".long 0\n\t" \
          ".rva " #type "_type_table\n\t" \
          :: "i"(sizeof(type)), "i"(ARRAY_SIZE(((const void *[]){ &__VA_ARGS__ }))) ); \
 }
-#define DEFINE_CXX_TYPE(type, dtor, ...) \
-    DEFINE_CXX_TYPE2(type, dtor, type ## _cxx_type_info, ##__VA_ARGS__)
+#define DEFINE_CXX_TYPE(type, ...) \
+    DEFINE_CXX_TYPE2(type, type ## _cxx_type_info, ##__VA_ARGS__)
 
 #define INIT_CXX_TYPE(name,base) /* nothing to do */
 
 #else  /* CXX_USE_RVA */
 
-#define DEFINE_CXX_TYPE(type, dtor, ...)  \
+#define DEFINE_CXX_TYPE(type, ...)  \
 static cxx_type_info type ## _cxx_type_info[1] = \
-    { { 0, 0xdeadbeef, { 0, -1, 0 }, sizeof(type), 0xdeadbeef } }; \
+    { { CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT, 0xdeadbeef, { 0, -1, 0 }, sizeof(type), 0 } }; \
 \
 static const void * const type ## _cxx_type_classes[] = { type ## _cxx_type_info, __VA_ARGS__ }; \
 static cxx_type_info_table type ## _cxx_type_table = { ARRAY_SIZE(type ## _cxx_type_classes) }; \
-static cxx_exception_type type ##_exception_type; \
+static cxx_exception_type type ##_exception_type = { TYPE_FLAG_WINRT }; \
 \
 static void init_ ## type ## _cxx(char *base) \
 { \
     type ## _cxx_type_info[0].type_info = (char *)&type ## _type_info - base; \
-    type ## _cxx_type_info[0].copy_ctor = (char *)type ## _copy_ctor - base; \
     for (unsigned int i = 0; i < ARRAY_SIZE(type ## _cxx_type_classes); i++) \
         type ## _cxx_type_table.info[i] = (char *)type ## _cxx_type_classes[i] - base; \
-    type ## _exception_type.destructor      = (char *)dtor - base; \
     type ## _exception_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
 }
 

@@ -16,6 +16,35 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdbool.h>
+
+#include "weakreference.h"
+
+struct exception_alloc
+{
+    void *unknown;
+    void *exception_inner;
+    char data[0];
+};
+
+struct control_block
+{
+    IWeakReference IWeakReference_iface;
+    LONG ref_weak;
+    LONG ref_strong;
+    IUnknown *object;
+    bool is_inline;
+    bool unknown;
+    bool is_exception;
+#ifdef _WIN32
+    char _padding[5];
+#endif
+};
+
+void __cdecl FreeException(void *);
+
+void init_exception(void *);
+
 #define COM_VTABLE_RTTI_START(iface, type)                                                                             \
     static const struct                                                                                                \
     {                                                                                                                  \
