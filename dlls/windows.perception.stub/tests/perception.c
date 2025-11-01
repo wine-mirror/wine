@@ -231,13 +231,11 @@ static void test_HolographicSpaceStatics(void)
 
     holographic_space = (void *)0xdeadbeef;
     hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, NULL, &IID_IHolographicSpaceInterop, (void **)&holographic_space );
-    todo_wine
     ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     todo_wine
     ok( holographic_space == (void *)0xdeadbeef, "got holographic_space %p.\n", holographic_space );
     hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, (void *)0xdeadbeef, &IID_IHolographicSpaceInterop, (void **)&holographic_space );
     ok( IsWindowVisible( (void *)0xdeadbeef ) == FALSE, "got IsWindowVisible %d\n", IsWindowVisible( (void *)0xdeadbeef ) );
-    todo_wine
     ok( hr == E_INVALIDARG || broken(hr == E_ACCESSDENIED) /* w1064v1709 */ || broken(hr == E_NOINTERFACE) /* w11 */, "got hr %#lx.\n", hr );
     ok( holographic_space == NULL, "got holographic_space %p.\n", holographic_space );
     if (hr == E_ACCESSDENIED) goto cleanup;
@@ -247,30 +245,27 @@ static void test_HolographicSpaceStatics(void)
 
     holographic_space = (void *)0xdeadbeef;
     hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, window, &IID_IHolographicSpace, (void **)&holographic_space );
-    todo_wine
     ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     ok( holographic_space == NULL, "got holographic_space %p.\n", holographic_space );
 
     ShowWindow( window, SW_HIDE );
     ok( IsWindowVisible( window ) == FALSE, "got IsWindowVisible %d\n", IsWindowVisible( window ) );
     hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, window, &IID_IHolographicSpace, (void **)&holographic_space );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ok( IsWindowVisible( window ) == FALSE, "got IsWindowVisible %d\n", IsWindowVisible( window ) );
 
-    if (SUCCEEDED(hr))
-    {
-        check_interface( holographic_space, &IID_IUnknown, FALSE );
-        check_interface( holographic_space, &IID_IInspectable, FALSE );
-        check_interface( holographic_space, &IID_IAgileObject, FALSE );
+    check_interface( holographic_space, &IID_IUnknown, FALSE );
+    check_interface( holographic_space, &IID_IInspectable, FALSE );
+    check_interface( holographic_space, &IID_IAgileObject, FALSE );
 
-        ref = IHolographicSpace_Release( holographic_space );
-        ok( ref == 0, "got ref %ld.\n", ref );
+    ref = IHolographicSpace_Release( holographic_space );
+    ok( ref == 0, "got ref %ld.\n", ref );
 
-        hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, window, &IID_IHolographicSpace, (void **)&holographic_space );
-        todo_wine
-        ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
-    }
+    hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, window, &IID_IHolographicSpace, (void **)&holographic_space );
+    todo_wine
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IHolographicSpace_Release( holographic_space );
+
     DestroyWindow( window );
 cleanup:
     ref = IHolographicSpaceInterop_Release( holographic_space_interop );
