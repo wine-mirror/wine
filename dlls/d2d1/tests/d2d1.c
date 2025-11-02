@@ -13525,6 +13525,61 @@ static void test_effect_arithmetic_composite(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_shadow(BOOL d3d11)
+{
+    static const struct effect_property properties[] =
+    {
+        { L"BlurStandardDeviation", D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, D2D1_PROPERTY_TYPE_FLOAT },
+        { L"Color", D2D1_SHADOW_PROP_COLOR, D2D1_PROPERTY_TYPE_VECTOR4 },
+        { L"Optimization", D2D1_SHADOW_PROP_OPTIMIZATION, D2D1_PROPERTY_TYPE_ENUM },
+    };
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    unsigned int count, i;
+    ID2D1Effect *effect;
+    D2D_VECTOR_4F vec4;
+    WCHAR name[64];
+    HRESULT hr;
+    UINT32 v;
+    float f;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    context = ctx.context;
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Shadow, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_system_properties(effect);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(count == 3, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(properties); ++i)
+    {
+        hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(name, properties[i].name), "Unexpected name %s.\n", wine_dbgstr_w(name));
+    }
+
+    f = effect_get_float_prop(effect, D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION);
+    todo_wine
+    ok(f == 3.0f, "Unexpected value %.8e.\n", f);
+
+    vec4 = effect_get_vec4_prop(effect, D2D1_SHADOW_PROP_COLOR);
+    todo_wine
+    ok(vec4.x == 0.0f && vec4.y == 0.0f && vec4.z == 0.0f && vec4.w == 1.0f,
+            "Unexpected value {%.8e,%.8e,%.8e,%.8e}.\n", vec4.x, vec4.y, vec4.z, vec4.w);
+
+    v = effect_get_enum_prop(effect, D2D1_SHADOW_PROP_OPTIMIZATION);
+    todo_wine
+    ok(v == D2D1_SHADOW_OPTIMIZATION_BALANCED, "Unexpected value %#x.\n", v);
+
+    ID2D1Effect_Release(effect);
+    release_test_context(&ctx);
+}
+
 static void test_registered_effects(BOOL d3d11)
 {
     UINT32 ret, count, count2, count3;
@@ -16901,6 +16956,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_effect_gaussian_blur);
     queue_d3d10_test(test_effect_point_specular);
     queue_d3d10_test(test_effect_arithmetic_composite);
+    queue_d3d10_test(test_effect_shadow);
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);
     queue_test(test_blend_transform);

@@ -1057,6 +1057,9 @@ L"<?xml version='1.0'?>                                                   \
     <Inputs >                                                             \
       <Input name='Source'/>                                              \
     </Inputs>                                                             \
+    <Property name='BlurStandardDeviation' type='float' />                \
+    <Property name='Color' type='vector4' />                              \
+    <Property name='Optimization' type='enum' />                          \
   </Effect>";
 
 static const WCHAR grayscale_description[] =
