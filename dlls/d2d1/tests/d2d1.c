@@ -11564,6 +11564,7 @@ static void test_builtin_effect(BOOL d3d11)
         {&CLSID_D2D1Grayscale,               3, 1, 1, 1},
         {&CLSID_D2D1ColorMatrix,             1, 1, 1, 1},
         {&CLSID_D2D1Flood,                   1, 0, 0, 0},
+        {&CLSID_D2D1GaussianBlur,            1, 1, 1, 1},
     };
 
     if (!init_test_context(&ctx, d3d11))
@@ -13345,6 +13346,7 @@ static void test_effect_gaussian_blur(BOOL d3d11)
     };
     struct d2d1_test_context ctx;
     ID2D1DeviceContext *context;
+    ID2D1Properties *subprops;
     unsigned int count, i;
     ID2D1Effect *effect;
     WCHAR name[64];
@@ -13358,13 +13360,7 @@ static void test_effect_gaussian_blur(BOOL d3d11)
     context = ctx.context;
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1GaussianBlur, &effect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-    {
-        release_test_context(&ctx);
-        return;
-    }
 
     check_system_properties(effect);
 
@@ -13376,12 +13372,24 @@ static void test_effect_gaussian_blur(BOOL d3d11)
         hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(!wcscmp(name, properties[i].name), "Unexpected name %s.\n", wine_dbgstr_w(name));
+
+        hr = ID2D1Effect_GetSubProperties(effect, properties[i].index, &subprops);
+        todo_wine
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            count = ID2D1Properties_GetPropertyCount(subprops);
+            ok(!count, "Got unexpected property count %u.\n", count);
+            ID2D1Properties_Release(subprops);
+        }
     }
 
     f = effect_get_float_prop(effect, D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION);
+    todo_wine
     ok(f == 3.0f, "Unexpected value %.8e.\n", f);
 
     v = effect_get_enum_prop(effect, D2D1_GAUSSIANBLUR_PROP_OPTIMIZATION);
+    todo_wine
     ok(v == D2D1_GAUSSIANBLUR_OPTIMIZATION_BALANCED, "Unexpected value %u.\n", v);
 
     v = effect_get_enum_prop(effect, D2D1_GAUSSIANBLUR_PROP_BORDER_MODE);
