@@ -11566,6 +11566,7 @@ static void test_builtin_effect(BOOL d3d11)
         {&CLSID_D2D1Flood,                   1, 0, 0, 0},
         {&CLSID_D2D1GaussianBlur,            1, 1, 1, 1},
         {&CLSID_D2D1PointSpecular,           1, 1, 1, 1},
+        {&CLSID_D2D1ArithmeticComposite,     1, 2, 2, 2},
     };
 
     if (!init_test_context(&ctx, d3d11))
@@ -13498,13 +13499,7 @@ static void test_effect_arithmetic_composite(BOOL d3d11)
     context = ctx.context;
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1ArithmeticComposite, &effect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-    {
-        release_test_context(&ctx);
-        return;
-    }
 
     check_system_properties(effect);
 
@@ -13519,6 +13514,7 @@ static void test_effect_arithmetic_composite(BOOL d3d11)
     }
 
     vec4 = effect_get_vec4_prop(effect, D2D1_ARITHMETICCOMPOSITE_PROP_COEFFICIENTS);
+    todo_wine
     ok(vec4.x == 1.0f && vec4.y == 0.0f && vec4.z == 0.0f && vec4.w == 0.0f,
             "Unexpected value {%.8e,%.8e,%.8e,%.8e}.\n", vec4.x, vec4.y, vec4.z, vec4.w);
 

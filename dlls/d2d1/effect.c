@@ -1128,6 +1128,21 @@ L"<?xml version='1.0'?>                                                   \
     <Property name='ScaleMode' type='enum' />                             \
   </Effect>";
 
+static const WCHAR arithmetic_composite_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Arithmetic Composite'/> \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Arithmetic Composite'/> \
+    <Inputs minimum='2' maximum='2' >                                     \
+      <Input name='Source1'/>                                             \
+      <Input name='Source2'/>                                             \
+    </Inputs>                                                             \
+    <Property name='Coefficients' type='vector4' />                       \
+    <Property name='ClampOutput' type='bool' />                           \
+  </Effect>";
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1147,6 +1162,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1Flood, flood_description },
         { &CLSID_D2D1GaussianBlur, gaussian_blur_description },
         { &CLSID_D2D1PointSpecular, point_specular_description },
+        { &CLSID_D2D1ArithmeticComposite, arithmetic_composite_description },
     };
     unsigned int i;
     HRESULT hr;
