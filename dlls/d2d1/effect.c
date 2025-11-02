@@ -1109,6 +1109,25 @@ L"<?xml version='1.0'?>                                                   \
     <Property name='BorderMode' type='enum' />                            \
   </Effect>";
 
+static const WCHAR point_specular_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Point Specular'/>   \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Point Specular'/>   \
+    <Inputs>                                                              \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+    <Property name='LightPosition' type='vector3' />                      \
+    <Property name='SpecularExponent' type='float' />                     \
+    <Property name='SpecularConstant' type='float' />                     \
+    <Property name='SurfaceScale' type='float' />                         \
+    <Property name='Color' type='vector3' />                              \
+    <Property name='KernelUnitLength' type='vector2' />                   \
+    <Property name='ScaleMode' type='enum' />                             \
+  </Effect>";
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1127,6 +1146,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1ColorMatrix, color_matrix_description },
         { &CLSID_D2D1Flood, flood_description },
         { &CLSID_D2D1GaussianBlur, gaussian_blur_description },
+        { &CLSID_D2D1PointSpecular, point_specular_description },
     };
     unsigned int i;
     HRESULT hr;

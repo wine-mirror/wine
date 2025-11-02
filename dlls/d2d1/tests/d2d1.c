@@ -11565,6 +11565,7 @@ static void test_builtin_effect(BOOL d3d11)
         {&CLSID_D2D1ColorMatrix,             1, 1, 1, 1},
         {&CLSID_D2D1Flood,                   1, 0, 0, 0},
         {&CLSID_D2D1GaussianBlur,            1, 1, 1, 1},
+        {&CLSID_D2D1PointSpecular,           1, 1, 1, 1},
     };
 
     if (!init_test_context(&ctx, d3d11))
@@ -13428,13 +13429,7 @@ static void test_effect_point_specular(BOOL d3d11)
     context = ctx.context;
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1PointSpecular, &effect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-    {
-        release_test_context(&ctx);
-        return;
-    }
 
     check_system_properties(effect);
 
@@ -13453,22 +13448,28 @@ static void test_effect_point_specular(BOOL d3d11)
             vec3.x, vec3.y, vec3.z);
 
     f = effect_get_float_prop(effect, D2D1_POINTSPECULAR_PROP_SPECULAR_EXPONENT);
+    todo_wine
     ok(f == 1.0f, "Unexpected value %.8e.\n", f);
 
     f = effect_get_float_prop(effect, D2D1_POINTSPECULAR_PROP_SPECULAR_CONSTANT);
+    todo_wine
     ok(f == 1.0f, "Unexpected value %.8e.\n", f);
 
     f = effect_get_float_prop(effect, D2D1_POINTSPECULAR_PROP_SURFACE_SCALE);
+    todo_wine
     ok(f == 1.0f, "Unexpected value %.8e.\n", f);
 
     vec3 = effect_get_vec3_prop(effect, D2D1_POINTSPECULAR_PROP_COLOR);
+    todo_wine
     ok(vec3.x == 1.0f && vec3.y == 1.0f && vec3.z == 1.0f, "Unexpected value {%.8e,%.8e,%.8e}.\n",
             vec3.x, vec3.y, vec3.z);
 
     vec2 = effect_get_vec2_prop(effect, D2D1_POINTSPECULAR_PROP_KERNEL_UNIT_LENGTH);
+    todo_wine
     ok(vec2.x == 1.0f && vec2.y == 1.0f, "Unexpected value {%.8e,%.8e}.\n", vec2.x, vec2.y);
 
     v = effect_get_enum_prop(effect, D2D1_POINTSPECULAR_PROP_SCALE_MODE);
+    todo_wine
     ok(v == D2D1_POINTSPECULAR_SCALE_MODE_LINEAR, "Unexpected value %u.\n", v);
 
     ID2D1Effect_Release(effect);
