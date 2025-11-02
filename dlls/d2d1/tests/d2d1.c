@@ -16890,14 +16890,14 @@ START_TEST(d2d1)
     queue_d3d10_test(test_colour_space);
     queue_test(test_geometry_group);
     queue_test(test_mt_factory);
-    queue_test(test_effect_register);
+    queue_d3d10_test(test_effect_register);
     queue_test(test_effect_context);
-    queue_test(test_effect_properties);
-    queue_test(test_builtin_effect);
+    queue_d3d10_test(test_effect_properties);
+    queue_d3d10_test(test_builtin_effect);
     queue_test(test_effect_2d_affine);
     queue_test(test_effect_crop);
     queue_test(test_effect_grayscale);
-    queue_test(test_registered_effects);
+    queue_d3d10_test(test_registered_effects);
     queue_d3d10_test(test_effect_gaussian_blur);
     queue_d3d10_test(test_effect_point_specular);
     queue_d3d10_test(test_effect_arithmetic_composite);
