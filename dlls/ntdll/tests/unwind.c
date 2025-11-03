@@ -3122,6 +3122,16 @@ static void test_virtual_unwind_x86(void)
         0xc3,                     /* 08: ret */
      };
 
+    BYTE function_tail_jump_ff[] =
+    {
+        0x55,                     /* 00: push %rbp */
+        0x90,                     /* 01: nop */
+        0x5d,                     /* 02: pop %rbp */
+        0x48, 0xff, 0x25,         /* 03: space for rex prefix and 0xff jump opcode */
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xc3,                     /* ret */
+     };
+
     static const BYTE unwind_info_6[] =
     {
         1,                             /* version + flags */
@@ -3166,7 +3176,43 @@ static void test_virtual_unwind_x86(void)
         { function_6_2, sizeof(function_6_2), unwind_info_6, results_6_body, ARRAY_SIZE(results_6_body) },
         { function_6_3, sizeof(function_6_3), unwind_info_6, results_6_epilogue, ARRAY_SIZE(results_6_epilogue) },
     };
-    unsigned int i;
+
+    struct unwind_test_x86 jump_test = { function_tail_jump_ff, sizeof(function_tail_jump_ff), unwind_info_6,
+                                         results_6_epilogue, ARRAY_SIZE(results_6_epilogue) };
+
+    unsigned int i, rex_prefix, ind;
+
+    for (rex_prefix = 0; rex_prefix <= 8; ++rex_prefix)
+    {
+        for (i = 0; i < 256; ++i)
+        {
+            unsigned int ext;
+            int expected;
+
+            ind = 3;
+            if (rex_prefix) function_tail_jump_ff[ind++] = 0x40 | rex_prefix;
+            function_tail_jump_ff[ind++] = 0xff;
+            function_tail_jump_ff[ind++] = i;
+            ext = (i >> 3) & 0x7;
+            memset( function_tail_jump_ff + ind, 0, sizeof(function_tail_jump_ff) - ind );
+            if (((rex_prefix == 8 || !rex_prefix) && i == 0x25)
+                || (rex_prefix == 8 && ext == 4))
+            {
+                jump_test.results = results_6_epilogue;
+                jump_test.nb_results = ARRAY_SIZE(results_6_epilogue);
+                expected = 1;
+            }
+            else
+            {
+                jump_test.results = results_6_body;
+                jump_test.nb_results = ARRAY_SIZE(results_6_body);
+                expected = 0;
+            }
+            winetest_push_context( "rex %#x, byte %#x, expected %d", rex_prefix, i, expected );
+            call_virtual_unwind_x86( 0, &jump_test );
+            winetest_pop_context();
+        }
+    }
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
         call_virtual_unwind_x86( i, &tests[i] );
