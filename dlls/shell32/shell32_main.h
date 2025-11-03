@@ -35,7 +35,6 @@
 #include "shlobj.h"
 #include "shellapi.h"
 #include "shlwapi.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 /*******************************************
