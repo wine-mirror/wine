@@ -71,6 +71,7 @@ struct _IMAGELIST
     INT         nOvlIdx[MAX_OVERLAYIMAGE]; /* 38: overlay images index */
 
     /* not yet found out */
+    DWORD   magic;
     HBRUSH  hbrBlend25;
     HBRUSH  hbrBlend50;
     INT     cInitial;
@@ -3214,6 +3215,7 @@ static ULONG WINAPI ImageListImpl_Release(IImageList2 *iface)
         if (This->hbrBlend50) DeleteObject (This->hbrBlend50);
 
         This->IImageList2_iface.lpVtbl = NULL;
+        This->magic = 0;
         Free(This->item_flags);
         Free(This);
     }
@@ -3797,7 +3799,7 @@ static BOOL is_valid(HIMAGELIST himl)
     BOOL valid;
     __TRY
     {
-        valid = himl && himl->IImageList2_iface.lpVtbl == &ImageListImpl_Vtbl;
+        valid = himl && himl->magic == IMAGELIST_MAGIC;
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -3844,6 +3846,7 @@ static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID ii
     if (!This) return E_OUTOFMEMORY;
 
     This->IImageList2_iface.lpVtbl = &ImageListImpl_Vtbl;
+    This->magic = IMAGELIST_MAGIC;
     This->ref = 1;
 
     ret = IImageList2_QueryInterface(&This->IImageList2_iface, iid, ppv);

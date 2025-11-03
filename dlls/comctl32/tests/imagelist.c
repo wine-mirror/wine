@@ -2938,13 +2938,10 @@ static void test_imagelist_interop(void)
     cx = 0;
     cy = 0;
     ret = pImageList_GetIconSize(himl, &cx, &cy);
-    todo_wine
     ok(ret, "ImageList_GetIconSize failed.\n");
-    todo_wine
     ok(cx == 1 && cy == 1, "Got unexpected size %dx%d.\n", cx, cy);
 
     ret = pImageList_Destroy(himl);
-    todo_wine
     ok(ret, "ImageList_Destroy failed.\n");
 
     /* Create a v6 imagelist and use it with v5 imagelist functions */
@@ -2954,13 +2951,10 @@ static void test_imagelist_interop(void)
     cx = 0;
     cy = 0;
     ret = pImageList_GetIconSize_v5(himl, &cx, &cy);
-    todo_wine
     ok(ret, "ImageList_GetIconSize failed.\n");
-    todo_wine
     ok(cx == 1 && cy == 1, "Got unexpected size %dx%d.\n", cx, cy);
 
     ret = pImageList_Destroy_v5(himl);
-    todo_wine
     ok(ret, "ImageList_Destroy failed.\n");
 
     FreeLibrary(comctl32_v5);
