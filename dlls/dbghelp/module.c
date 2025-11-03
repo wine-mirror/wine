@@ -31,7 +31,6 @@
 #include "psapi.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -446,7 +445,7 @@ static BOOL image_check_debug_link_crc(const WCHAR* file, struct image_file_map*
 
     path = get_dos_file_name(file);
     handle = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    heap_free(path);
+    HeapFree(GetProcessHeap(), 0, path);
     if (handle == INVALID_HANDLE_VALUE) return FALSE;
 
     crc = calc_crc32(handle);
@@ -478,7 +477,7 @@ static BOOL image_check_debug_link_gnu_id(const WCHAR* file, struct image_file_m
 
     path = get_dos_file_name(file);
     handle = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    heap_free(path);
+    HeapFree(GetProcessHeap(), 0, path);
     if (handle == INVALID_HANDLE_VALUE) return FALSE;
 
     TRACE("Located debug information file at %s\n", debugstr_w(file));

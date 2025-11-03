@@ -37,7 +37,6 @@
 #include "ddk/mountmgr.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 struct dyld_image_info32
 {
