@@ -29,7 +29,6 @@
 #include "shlobj.h"
 #include "winreg.h"
 #include "winnls.h"
-#include "wine/heap.h"
 
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))

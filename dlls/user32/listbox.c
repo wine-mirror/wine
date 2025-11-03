@@ -31,7 +31,6 @@
 #include "controls.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(listbox);
 
@@ -149,7 +148,7 @@ static BOOL resize_storage(LB_DESCR *descr, UINT items_size)
         items_size = (items_size + LB_ARRAY_GRANULARITY - 1) & ~(LB_ARRAY_GRANULARITY - 1);
         if ((descr->style & (LBS_NODATA | LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) != LBS_NODATA)
         {
-            items = heap_realloc(descr->u.items, items_size * get_sizeof_item(descr));
+            items = realloc(descr->u.items, items_size * get_sizeof_item(descr));
             if (!items)
             {
                 SEND_NOTIFICATION(descr, LBN_ERRSPACE);
@@ -1802,7 +1801,7 @@ static void LISTBOX_ResetContent( LB_DESCR *descr )
 
     if (!(descr->style & LBS_NODATA))
         for (i = descr->nb_items - 1; i >= 0; i--) LISTBOX_DeleteItem(descr, i);
-    HeapFree( GetProcessHeap(), 0, descr->u.items );
+    free( descr->u.items );
     descr->nb_items      = 0;
     descr->top_item      = 0;
     descr->selected_item = -1;
