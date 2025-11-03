@@ -28,7 +28,6 @@
 #include "ddk/wdm.h"
 #include "wine/svcctl.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
@@ -64,7 +63,7 @@ static DWORD device_handler( DWORD ctrl, const WCHAR *driver_name )
     DWORD result = NO_ERROR;
     WCHAR *str;
 
-    if (!(str = heap_alloc( sizeof(servicesW) + lstrlenW(driver_name)*sizeof(WCHAR) )))
+    if (!(str = malloc( sizeof(servicesW) + lstrlenW(driver_name)*sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
 
     lstrcpyW( str, servicesW );
@@ -90,7 +89,7 @@ static DWORD device_handler( DWORD ctrl, const WCHAR *driver_name )
         break;
     }
 
-    RtlFreeUnicodeString( &service_name );
+    free( str );
     return result;
 }
 
