@@ -45,6 +45,7 @@ static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
 
 static HMODULE hComctl32;
+static BOOL todo_create_v5_window;
 
 /* For message tests */
 enum seq_index
@@ -415,7 +416,10 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
         ok( !wc.hInstance, "System class %s has hInstance %p\n", name, wc.hInstance );
 
         hwnd = CreateWindowA(name, 0, 0, 0, 0, 0, 0, 0, NULL, GetModuleHandleA(NULL), 0);
+        todo_wine_if(todo_create_v5_window)
         ok( hwnd != NULL, "Failed to create window for class %s.\n", name );
+        if (!hwnd)
+            return;
         GetClassNameA(hwnd, buff, ARRAY_SIZE(buff));
         ok( !strcmp(name, buff), "Unexpected class name %s, expected %s.\n", buff, name );
 
@@ -1448,5 +1452,10 @@ START_TEST(misc)
     test_CCM_SETVERSION(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
+
+    /* Now that v6 manifest is deactivated, test that comctl32 v5 windows can be created */
+    todo_create_v5_window = TRUE;
+    test_comctl32_classes(FALSE);
+
     FreeLibrary(hComctl32);
 }
