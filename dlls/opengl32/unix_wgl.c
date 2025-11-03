@@ -2370,6 +2370,17 @@ static void flush_buffer( TEB *teb, struct buffer *buffer, size_t offset, size_t
     if (vr) ERR( "vkFlushMappedMemoryRanges failed: %x\n", vr );
 }
 
+static int find_vk_memory_type( struct vk_device *vk_device, uint32_t flags, uint32_t mask )
+{
+    uint32_t i;
+    flags &= mask;
+    for (i = 0; i < vk_device->memory_properties.memoryTypeCount; i++)
+    {
+        if ((vk_device->memory_properties.memoryTypes[i].propertyFlags & mask) == flags) return i;
+    }
+    return -1;
+}
+
 static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint name, size_t size, const void *data, GLbitfield flags )
 {
     VkExportMemoryAllocateInfo export_alloc =
@@ -2390,27 +2401,26 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
     };
     struct opengl_funcs *funcs = teb->glTable;
     GLuint buffer_name = name ? name : get_target_name( teb, target );
+    uint32_t type_mask = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    uint32_t desired_type = type_mask;
     struct context *ctx = get_current_context( teb, NULL, NULL );
     struct vk_device *vk_device;
     struct buffer *buffer;
-    uint32_t i;
-    int fd;
+    int fd, memory_type;
     VkResult vr;
 
     if (!(vk_device = ctx->buffers->vk_device) || !vk_device->vk_device) return NULL;
 
-    /* FIXME: For now, just use any host-visible coherent memory type. We can do better and take into account GL flags. */
-    for (i = 0; i < vk_device->memory_properties.memoryTypeCount; i++)
-    {
-        static const uint32_t mask = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        if ((vk_device->memory_properties.memoryTypes[i].propertyFlags & mask) == mask) break;
-    }
-    if (i == vk_device->memory_properties.memoryTypeCount)
+    if (flags & GL_CLIENT_STORAGE_BIT) desired_type &= ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    memory_type = find_vk_memory_type( vk_device, desired_type, type_mask );
+    if (memory_type == -1) /* if we can’t find a matching type, try ignoring GL_CLIENT_STORAGE_BIT */
+        memory_type = find_vk_memory_type( vk_device, desired_type, type_mask & ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+    if (memory_type == -1)
     {
         WARN( "Could not find memory type\n" );
         return NULL;
     }
-    alloc_info.memoryTypeIndex = i;
+    alloc_info.memoryTypeIndex = memory_type;
 
     if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
     buffer->name = buffer_name;
