@@ -36,7 +36,6 @@
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "evcode.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 
@@ -206,7 +205,7 @@ static ULONG WINAPI EnumFilters_Release(IEnumFilters *iface)
     if (!ref)
     {
         IUnknown_Release(enum_filters->graph->outer_unk);
-        heap_free(enum_filters);
+        free(enum_filters);
     }
 
     return ref;
@@ -300,7 +299,7 @@ static HRESULT create_enum_filters(struct filter_graph *graph, struct list *curs
 {
     struct enum_filters *enum_filters;
 
-    if (!(enum_filters = heap_alloc(sizeof(*enum_filters))))
+    if (!(enum_filters = malloc(sizeof(*enum_filters))))
         return E_OUTOFMEMORY;
 
     enum_filters->IEnumFilters_iface.lpVtbl = &EnumFilters_vtbl;
@@ -618,12 +617,12 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
     if (!filter)
         return E_POINTER;
 
-    if (!(entry = heap_alloc(sizeof(*entry))))
+    if (!(entry = malloc(sizeof(*entry))))
         return E_OUTOFMEMORY;
 
     if (!(entry->name = CoTaskMemAlloc((name ? wcslen(name) + 6 : 5) * sizeof(WCHAR))))
     {
-        heap_free(entry);
+        free(entry);
         return E_OUTOFMEMORY;
     }
 
@@ -648,7 +647,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
         if (i == 10000)
         {
             CoTaskMemFree(entry->name);
-            heap_free(entry);
+            free(entry);
             return VFW_E_DUPLICATE_NAME;
         }
     }
@@ -659,7 +658,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
             (IFilterGraph *)&graph->IFilterGraph2_iface, entry->name)))
     {
         CoTaskMemFree(entry->name);
-        heap_free(entry);
+        free(entry);
         return hr;
     }
 
@@ -741,7 +740,7 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
                     IMediaSeeking_Release(entry->seeking);
                 list_remove(&entry->entry);
                 CoTaskMemFree(entry->name);
-                heap_free(entry);
+                free(entry);
                 This->version++;
                 /* Invalidate interfaces in the cache */
                 for (i = 0; i < This->nItfCacheEntries; i++)
