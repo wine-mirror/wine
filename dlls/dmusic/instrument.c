@@ -26,6 +26,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 static const GUID IID_IDirectMusicInstrumentPRIVATE = { 0xbcb20080, 0xa40c, 0x11d1, { 0x86, 0xbc, 0x00, 0xc0, 0x4f, 0xbf, 0x8f, 0xef } };
 
+struct downloaded_wave
+{
+    struct list entry;
+
+    DWORD index;
+    DWORD id;
+};
+
 #define CONN_SRC_CC2  0x0082
 #define CONN_SRC_RPN0 0x0100
 
@@ -76,6 +84,7 @@ struct instrument
     INSTHEADER header;
     IDirectMusicDownload *download;
     struct collection *collection;
+    struct list downloaded_waves;
     struct list articulations;
     struct list regions;
 };
@@ -237,6 +246,7 @@ static HRESULT instrument_create(struct collection *collection, IDirectMusicInst
     instrument->IDirectMusicDownloadedInstrument_iface.lpVtbl = &downloaded_instrument_vtbl;
     instrument->ref = 1;
     collection_internal_addref((instrument->collection = collection));
+    list_init(&instrument->downloaded_waves);
     list_init(&instrument->articulations);
     list_init(&instrument->regions);
 
@@ -742,6 +752,7 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
         IDirectMusicDownloadedInstrument **downloaded)
 {
     struct instrument *This = impl_from_IDirectMusicInstrument(iface);
+    struct downloaded_wave *downloaded_wave;
     struct articulation *articulation;
     struct download_buffer *buffer;
     IDirectMusicDownload *download;
@@ -824,12 +835,34 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
             dmus_region->WSMP = region->wave_sample;
             dmus_region->WLOOP[0] = region->wave_loop;
 
-            if (SUCCEEDED(hr = collection_get_wave(This->collection, region->wave_link.ulTableIndex, &wave)))
+            LIST_FOR_EACH_ENTRY(downloaded_wave, &This->downloaded_waves, struct downloaded_wave, entry)
             {
-                hr = wave_download_to_port(wave, port, &dmus_region->WaveLink.ulTableIndex);
-                IDirectMusicObject_Release(wave);
+                if (downloaded_wave->index == region->wave_link.ulTableIndex)
+                    break;
             }
-            if (FAILED(hr)) goto failed;
+            if (&downloaded_wave->entry == &This->downloaded_waves)
+            {
+                downloaded_wave = calloc(1, sizeof(struct downloaded_wave));
+                if (!downloaded_wave)
+                {
+                    hr = E_OUTOFMEMORY;
+                    goto failed;
+                }
+                downloaded_wave->index = region->wave_link.ulTableIndex;
+                if (SUCCEEDED(hr = collection_get_wave(This->collection, region->wave_link.ulTableIndex, &wave)))
+                {
+                    hr = wave_download_to_port(wave, port, &downloaded_wave->id);
+                    IDirectMusicObject_Release(wave);
+                }
+                if (FAILED(hr))
+                {
+                    free(downloaded_wave);
+                    goto failed;
+                }
+                list_add_tail(&This->downloaded_waves, &downloaded_wave->entry);
+            }
+
+            dmus_region->WaveLink.ulTableIndex = downloaded_wave->id;
 
             write_articulation_download(&region->articulations, buffer->offsets, &ptr, index,
                     &dmus_region->ulRegionArtIdx, &index);
@@ -854,35 +887,30 @@ failed:
 HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDirectMusicPortDownload *port)
 {
     struct instrument *This = impl_from_IDirectMusicDownloadedInstrument(iface);
-    struct download_buffer *buffer;
-    DWORD size;
     HRESULT hr;
 
     if (!This->download) return DMUS_E_NOT_DOWNLOADED_TO_PORT;
 
     if (FAILED(hr = IDirectMusicPortDownload_Unload(port, This->download)))
         WARN("Failed to unload instrument download buffer, hr %#lx\n", hr);
-    else if (SUCCEEDED(hr = IDirectMusicDownload_GetBuffer(This->download, (void **)&buffer, &size)))
+    else
     {
+        struct downloaded_wave *downloaded_wave;
         IDirectMusicDownload *wave_download;
-        DMUS_INSTRUMENT *instrument;
-        BYTE *ptr = (BYTE *)buffer;
-        DMUS_REGION *region;
-        UINT index;
+        void *next;
 
-        instrument = (DMUS_INSTRUMENT *)(ptr + buffer->offsets[0]);
-        for (index = instrument->ulFirstRegionIdx; index; index = region->ulNextRegionIdx)
+        LIST_FOR_EACH_ENTRY_SAFE(downloaded_wave, next, &This->downloaded_waves, struct downloaded_wave, entry)
         {
-            region = (DMUS_REGION *)(ptr + buffer->offsets[index]);
-
-            if (FAILED(hr = IDirectMusicPortDownload_GetBuffer(port, region->WaveLink.ulTableIndex, &wave_download)))
-                WARN("Failed to get wave download with id %#lx, hr %#lx\n", region->WaveLink.ulTableIndex, hr);
+            if (FAILED(hr = IDirectMusicPortDownload_GetBuffer(port, downloaded_wave->id, &wave_download)))
+                WARN("Failed to get wave download with id %#lx, hr %#lx\n", downloaded_wave->id, hr);
             else
             {
                 if (FAILED(hr = IDirectMusicPortDownload_Unload(port, wave_download)))
                     WARN("Failed to unload wave download buffer, hr %#lx\n", hr);
                 IDirectMusicDownload_Release(wave_download);
             }
+            list_remove(&downloaded_wave->entry);
+            free(downloaded_wave);
         }
     }
 
