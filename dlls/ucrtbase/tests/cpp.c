@@ -24,6 +24,8 @@
 
 #include <windef.h>
 #include <winbase.h>
+#include <winternl.h>
+#include <rtlsupportapi.h>
 #include <verrsrc.h>
 #include <dbghelp.h>
 #include <unknwn.h>
@@ -323,6 +325,84 @@ static void test___DestructExceptionObject(void)
     CHECK_CALLED(iunknown_except_Release);
 }
 
+#ifdef __x86_64__
+EXCEPTION_DISPOSITION WINAPI __C_specific_handler(EXCEPTION_RECORD*,void*,CONTEXT*,DISPATCHER_CONTEXT*);
+DEFINE_EXPECT(filter);
+static CONTEXT ctx;
+
+static ULONG WINAPI iunknown_except2_Release(IUnknown *iface)
+{
+    CHECK_EXPECT(iunknown_except_Release);
+    NtContinue(&ctx, FALSE);
+    return 1;
+}
+
+static IUnknownVtbl iunknown_except2_vtbl = {
+    iunknown_except_QueryInterface,
+    iunknown_except_AddRef,
+    iunknown_except2_Release
+};
+
+static IUnknown iunknown_except2 = { &iunknown_except2_vtbl };
+
+static LONG WINAPI filter(struct _EXCEPTION_POINTERS *ep, void *frame)
+{
+    CHECK_EXPECT(filter);
+
+    ok(frame == (void*)0x1234, "frame = %p\n", (void*)frame);
+    SET_EXPECT(iunknown_except_Release);
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static void test___C_specific_handler(void)
+{
+    struct
+    {
+        UINT flags;
+        UINT arch_specific_data[8];
+    } info = { 0x10 };
+    IUnknown *piunk = &iunknown_except2;
+    DISPATCHER_CONTEXT dispatch;
+    SCOPE_TABLE scope_table;
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    LONG pass = 0;
+
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&ctx);
+    if (InterlockedIncrement(&pass) == 3)
+    {
+        CHECK_CALLED(filter);
+        CHECK_CALLED(iunknown_except_Release);
+        return;
+    }
+
+    memset(&rec, 0, sizeof(rec));
+    rec.ExceptionCode = 0xe06d7363;
+    rec.NumberParameters = 4;
+    rec.ExceptionInformation[0] = 0x19930520;
+    rec.ExceptionInformation[1] = (ULONG_PTR)&piunk;
+    rec.ExceptionInformation[2] = (ULONG_PTR)&info;
+    rec.ExceptionInformation[3] = (ULONG_PTR)GetModuleHandleA(NULL);
+
+    memset(&dispatch, 0, sizeof(dispatch));
+    dispatch.ImageBase = (ULONG_PTR)GetModuleHandleA(NULL);
+    dispatch.ControlPc = dispatch.ImageBase + 0x200;
+    dispatch.HandlerData = &scope_table;
+    dispatch.ContextRecord = &context;
+    scope_table.Count = 1;
+    scope_table.ScopeRecord[0].BeginAddress = 0x200;
+    scope_table.ScopeRecord[0].EndAddress = 0x400;
+    scope_table.ScopeRecord[0].HandlerAddress = (ULONG_PTR)filter - dispatch.ImageBase;
+    scope_table.ScopeRecord[0].JumpTarget = 1;
+    memset(&context, 0, sizeof(context));
+
+    SET_EXPECT(filter);
+    __C_specific_handler(&rec, (void*)0x1234, &context, &dispatch);
+    ok(0, "should not be reached\n");
+}
+#endif
+
 START_TEST(cpp)
 {
     if (!init()) return;
@@ -330,4 +410,7 @@ START_TEST(cpp)
     test___std_type_info();
     test___unDName();
     test___DestructExceptionObject();
+#ifdef __x86_64__
+    test___C_specific_handler();
+#endif
 }
