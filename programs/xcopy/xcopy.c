@@ -359,7 +359,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
     /* Search 1 - Look for matching files */
     h = FindFirstFileW(inputpath, finddata);
-    while (h != INVALID_HANDLE_VALUE && findres) {
+    while (h != INVALID_HANDLE_VALUE && !ret && findres) {
 
         skipFile = FALSE;
 
@@ -550,11 +550,9 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                            copyFrom, copyTo, error);
                     XCOPY_FailMessage(error);
 
-                    if (flags & OPT_IGNOREERRORS) {
-                        skipFile = TRUE;
-                    } else {
+                    skipFile = TRUE;
+                    if (!(flags & OPT_IGNOREERRORS)) {
                         ret = RC_WRITEERROR;
-                        goto cleanup;
                     }
                 } else {
 
@@ -580,12 +578,14 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
         }
 
         /* Find next file */
-        findres = FindNextFileW(h, finddata);
+        if (!ret) {
+            findres = FindNextFileW(h, finddata);
+        }
     }
     FindClose(h);
 
     /* Search 2 - do subdirs */
-    if (flags & OPT_RECURSIVE) {
+    if (!ret && (flags & OPT_RECURSIVE)) {
 
         /* If /E is supplied, create the directory now */
         if ((flags & OPT_EMPTYDIR) &&
@@ -627,8 +627,6 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
         }
         FindClose(h);
     }
-
-cleanup:
 
     /* free up memory */
     HeapFree(GetProcessHeap(), 0, finddata);
