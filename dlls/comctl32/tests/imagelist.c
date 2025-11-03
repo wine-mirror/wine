@@ -36,6 +36,7 @@
 #include "initguid.h"
 #include "commoncontrols.h"
 #include "shellapi.h"
+#include "shlwapi.h"
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -2896,6 +2897,75 @@ static void init_functions(void)
 #undef X2
 }
 
+static void test_imagelist_interop(void)
+{
+    HRESULT (WINAPI *pDllGetVersion_v5)(DLLVERSIONINFO *);
+    HRESULT (WINAPI *pDllGetVersion_v6)(DLLVERSIONINFO *);
+    HIMAGELIST (WINAPI *pImageList_Create_v5)(int, int, UINT, int, int);
+    BOOL (WINAPI *pImageList_Destroy_v5)(HIMAGELIST);
+    BOOL (WINAPI *pImageList_GetIconSize_v5)(HIMAGELIST, int *, int *);
+    DLLVERSIONINFO info;
+    HMODULE comctl32_v5;
+    HIMAGELIST himl;
+    HRESULT hr;
+    INT cx, cy;
+    BOOL ret;
+
+    comctl32_v5 = LoadLibraryW(L"C:\\windows\\system32\\comctl32.dll");
+    ok(!!comctl32_v5, "Failed to load comctl32 v5.\n");
+
+    pDllGetVersion_v5 = (void *)GetProcAddress(comctl32_v5, "DllGetVersion");
+    pDllGetVersion_v6 = (void *)GetProcAddress(GetModuleHandleA("comctl32.dll"), "DllGetVersion");
+    pImageList_Create_v5 = (void *)GetProcAddress(comctl32_v5, "ImageList_Create");
+    pImageList_Destroy_v5 = (void *)GetProcAddress(comctl32_v5, "ImageList_Destroy");
+    pImageList_GetIconSize_v5 = (void *)GetProcAddress(comctl32_v5, "ImageList_GetIconSize");
+
+    /* Make sure we are testing the correct versions of comctl32 */
+    info.cbSize = sizeof(info);
+    hr = pDllGetVersion_v5(&info);
+    ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
+    ok(info.dwMajorVersion == 5, "Got unexpected major version %lu.\n", info.dwMajorVersion);
+
+    info.cbSize = sizeof(info);
+    hr = pDllGetVersion_v6(&info);
+    ok(hr == S_OK, "DllGetVersion failed, hr %#lx.\n", hr);
+    ok(info.dwMajorVersion == 6, "Got unexpected major version %lu.\n", info.dwMajorVersion);
+
+    /* Create a v5 imagelist and use it with v6 imagelist functions */
+    himl = pImageList_Create_v5(1, 1, ILC_COLOR, 0, 1);
+    ok(!!himl, "ImageList_Create failed.\n");
+
+    cx = 0;
+    cy = 0;
+    ret = pImageList_GetIconSize(himl, &cx, &cy);
+    todo_wine
+    ok(ret, "ImageList_GetIconSize failed.\n");
+    todo_wine
+    ok(cx == 1 && cy == 1, "Got unexpected size %dx%d.\n", cx, cy);
+
+    ret = pImageList_Destroy(himl);
+    todo_wine
+    ok(ret, "ImageList_Destroy failed.\n");
+
+    /* Create a v6 imagelist and use it with v5 imagelist functions */
+    himl = pImageList_Create(1, 1, ILC_COLOR, 0, 1);
+    ok(!!himl, "ImageList_Create failed.\n");
+
+    cx = 0;
+    cy = 0;
+    ret = pImageList_GetIconSize_v5(himl, &cx, &cy);
+    todo_wine
+    ok(ret, "ImageList_GetIconSize failed.\n");
+    todo_wine
+    ok(cx == 1 && cy == 1, "Got unexpected size %dx%d.\n", cx, cy);
+
+    ret = pImageList_Destroy_v5(himl);
+    todo_wine
+    ok(ret, "ImageList_Destroy failed.\n");
+
+    FreeLibrary(comctl32_v5);
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -2945,6 +3015,7 @@ START_TEST(imagelist)
     test_ImageList_DrawIndirect();
     test_shell_imagelist();
     test_iimagelist();
+    test_imagelist_interop();
 
     test_IImageList_Add_Remove();
     test_IImageList_Get_SetImageCount();
