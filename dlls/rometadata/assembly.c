@@ -835,7 +835,7 @@ void assembly_free(assembly_t *assembly)
     ULONG i;
 
     for (i = 0; i < TABLE_MAX; i++) free(assembly->tables[i].columns_size);
-    if (assembly->map) UnmapViewOfFile(assembly->map);
+    if (assembly->data) UnmapViewOfFile(assembly->data);
     CloseHandle(assembly->map);
     CloseHandle(assembly->file);
     free(assembly);
