@@ -260,11 +260,8 @@ static void test_HolographicSpaceStatics(void)
     check_interface( holographic_space, &IID_IAgileObject, FALSE );
 
     hr = IHolographicSpace_get_PrimaryAdapterId( holographic_space, &adapter_id );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( adapter_id.LowPart == 0, "got adapter_id.LowPart %u.\n", adapter_id.LowPart );
-    todo_wine
     ok( adapter_id.HighPart == 0, "got adapter_id.HighPart %u.\n", adapter_id.HighPart );
 
     ref = IHolographicSpace_Release( holographic_space );

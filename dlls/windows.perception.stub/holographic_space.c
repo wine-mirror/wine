@@ -272,8 +272,12 @@ static HRESULT WINAPI holographic_space_GetTrustLevel( IHolographicSpace *iface,
 
 static HRESULT WINAPI holographic_space_get_PrimaryAdapterId( IHolographicSpace *iface, HolographicAdapterId *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    value->LowPart = 0;
+    value->HighPart = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI holographic_space_SetDirect3D11Device( IHolographicSpace *iface, IDirect3DDevice *value )
