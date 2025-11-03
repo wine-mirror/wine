@@ -198,11 +198,6 @@ void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load
 
     if (IS_INTRESOURCE( name->Buffer ) || is_builtin_class( name->Buffer )) return;
 
-    if (is_comctl32_class( name->Buffer ))
-    {
-        if (load && !(hmod = GetModuleHandleW( L"comctl32" ))) hmod = LoadLibraryW( L"comctl32" );
-    }
-
     if (!RtlFindActivationContextSectionString( 0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION, name, &data ))
     {
         struct wndclass_redirect_data
@@ -227,6 +222,12 @@ void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load
         memcpy( name->Buffer, ptr, wndclass->name_len );
         name->Length = wndclass->name_len;
         name->Buffer[name->Length / sizeof(WCHAR)] = 0;
+    }
+    /* comctl32 v5 */
+    else if (load && is_comctl32_class( name->Buffer ))
+    {
+        hmod = GetModuleHandleW( L"C:\\windows\\system32\\comctl32.dll" );
+        if (!hmod) hmod = LoadLibraryW( L"C:\\windows\\system32\\comctl32.dll" );
     }
 
     if (load && hmod)
