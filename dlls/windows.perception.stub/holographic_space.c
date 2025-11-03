@@ -22,6 +22,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(perception);
 
+static EventRegistrationToken dummy_cookie = {.value = 0xdeadbeef};
+
 struct holographic_space_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -283,33 +285,39 @@ static HRESULT WINAPI holographic_space_get_PrimaryAdapterId( IHolographicSpace 
 static HRESULT WINAPI holographic_space_SetDirect3D11Device( IHolographicSpace *iface, IDirect3DDevice *value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+
+    if (!value) return E_INVALIDARG;
+    return S_OK;
 }
 
 static HRESULT WINAPI holographic_space_add_CameraAdded( IHolographicSpace *iface, ITypedEventHandler_HolographicSpace_HolographicSpaceCameraAddedEventArgs *handler,
                                                          EventRegistrationToken *cookie )
 {
     FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
-    return E_NOTIMPL;
+
+    *cookie = dummy_cookie;
+    return S_OK;
 }
 
 static HRESULT WINAPI holographic_space_remove_CameraAdded( IHolographicSpace *iface, EventRegistrationToken cookie )
 {
     FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI holographic_space_add_CameraRemoved( IHolographicSpace *iface, ITypedEventHandler_HolographicSpace_HolographicSpaceCameraRemovedEventArgs *handler,
                                                            EventRegistrationToken *cookie )
 {
     FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
-    return E_NOTIMPL;
+
+    *cookie = dummy_cookie;
+    return S_OK;
 }
 
 static HRESULT WINAPI holographic_space_remove_CameraRemoved( IHolographicSpace *iface, EventRegistrationToken cookie )
 {
     FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI holographic_space_CreateNextFrame( IHolographicSpace *iface, IHolographicFrame **value )

@@ -264,6 +264,9 @@ static void test_HolographicSpaceStatics(void)
     ok( adapter_id.LowPart == 0, "got adapter_id.LowPart %u.\n", adapter_id.LowPart );
     ok( adapter_id.HighPart == 0, "got adapter_id.HighPart %u.\n", adapter_id.HighPart );
 
+    hr = IHolographicSpace_SetDirect3D11Device( holographic_space, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+
     ref = IHolographicSpace_Release( holographic_space );
     ok( ref == 0, "got ref %ld.\n", ref );
 
