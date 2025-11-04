@@ -2381,7 +2381,10 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     ucontext_t *ucontext = init_handler( sigcontext );
-    EXCEPTION_RECORD rec = { 0 };
+    EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)RIP_sig(ucontext) };
+    struct xcontext context;
+
+    save_context( &context, sigcontext );
 
     switch (siginfo->si_code)
     {
@@ -2408,7 +2411,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     case FPE_FLTINV:
     default:
-        if (FPU_sig(ucontext) && FPU_sig(ucontext)->StatusWord & 0x40)
+        if (context.c.FltSave.StatusWord & 0x40)
             rec.ExceptionCode = EXCEPTION_FLT_STACK_CHECK;
         else
             rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
@@ -2419,10 +2422,10 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     {
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = 0;
-        rec.ExceptionInformation[1] = FPU_sig(ucontext) ? FPU_sig(ucontext)->MxCsr : 0;
+        rec.ExceptionInformation[1] = context.c.FltSave.MxCsr;
         if (CS_sig(ucontext) != cs64_sel) rec.ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
     }
-    setup_exception( ucontext, &rec );
+    setup_raise_exception( sigcontext, &rec, &context );
 }
 
 
