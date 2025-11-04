@@ -43,3 +43,7 @@ test2.mpg RCDATA "test2.mpg"
 /* ffmpeg -f lavfi -i smptebars -t 5 -r 1 -f avi -vcodec cinepak -pix_fmt rgb24 -vf scale=32x24 test_cinepak.avi */
 /* @makedep: test_cinepak.avi */
 test_cinepak.avi RCDATA "test_cinepak.avi"
+
+/* ffmpeg -f lavfi -i smptebars -t 2 -r 1 -f avi -vcodec rawvideo -pix_fmt rgb32 -vf scale=32x24,vflip -flipped_raw_rgb 1 test_32bpp.avi */
+/* @makedep: test_32bpp.avi */
+test_32bpp.avi RCDATA "test_32bpp.avi"
