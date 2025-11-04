@@ -1810,16 +1810,12 @@ static void test_32bpp_media_types(void)
             wine_dbgstr_guid(&pmt->formattype));
     ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
     ok(pmt->cbFormat == sizeof(VIDEOINFOHEADER), "Got format size %lu.\n", pmt->cbFormat);
-    todo_wine ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
-
-    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
-    ok(vih->bmiHeader.biSize == expect_vih.bmiHeader.biSize, "Got biSize %lu.\n", vih->bmiHeader.biSize);
-    ok(vih->bmiHeader.biWidth == expect_vih.bmiHeader.biWidth, "Got biWidth %ld.\n", vih->bmiHeader.biWidth);
-    todo_wine ok(vih->bmiHeader.biHeight == expect_vih.bmiHeader.biHeight, "Got biHeight %ld.\n", vih->bmiHeader.biHeight);
+    ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
 
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
     vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
@@ -1843,16 +1839,12 @@ static void test_32bpp_media_types(void)
             wine_dbgstr_guid(&pmt->formattype));
     ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
     ok(pmt->cbFormat == sizeof(VIDEOINFOHEADER), "Got format size %lu.\n", pmt->cbFormat);
-    todo_wine ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
-
-    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
-    ok(vih->bmiHeader.biSize == expect_vih.bmiHeader.biSize, "Got biSize %lu.\n", vih->bmiHeader.biSize);
-    ok(vih->bmiHeader.biWidth == expect_vih.bmiHeader.biWidth, "Got biWidth %ld.\n", vih->bmiHeader.biWidth);
-    todo_wine ok(vih->bmiHeader.biHeight == expect_vih.bmiHeader.biHeight, "Got biHeight %ld.\n", vih->bmiHeader.biHeight);
+    ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
 
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
     vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
