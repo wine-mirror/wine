@@ -133,15 +133,6 @@ typedef struct
 #define FUNC_DESCR_SYNCHRONOUS  1 /* synchronous exceptions only (built with /EHs and /EHsc) */
 #define FUNC_DESCR_NOEXCEPT     4 /* noexcept function */
 
-#define CLASS_IS_SIMPLE_TYPE          1
-#define CLASS_HAS_VIRTUAL_BASE_CLASS  4
-#define CLASS_IS_WINRT                8
-
-#define TYPE_FLAG_CONST      1
-#define TYPE_FLAG_VOLATILE   2
-#define TYPE_FLAG_REFERENCE  8
-#define TYPE_FLAG_WINRT     16
-
 typedef struct winrt_exception_info
 {
     BSTR description;
