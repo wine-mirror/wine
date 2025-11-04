@@ -2436,6 +2436,19 @@ static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
+
+    /* For 32 bpp AVI files, also accept ARGB32 format. */
+    if (hr == S_FALSE
+        && format.major_type == WG_MAJOR_TYPE_VIDEO
+        && format.u.video.format == WG_VIDEO_FORMAT_BGRx)
+    {
+        format.u.video.format = WG_VIDEO_FORMAT_BGRA;
+        if (!amt_from_wg_format(&pad_mt, &format, false))
+            return E_OUTOFMEMORY;
+        hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
+        FreeMediaType(&pad_mt);
+    }
+
     return hr;
 }
 
@@ -2444,9 +2457,20 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
 {
     struct wg_format format;
 
-    if (index > 0)
+    if (index > 1)
         return VFW_S_NO_MORE_ITEMS;
+
     wg_parser_stream_get_current_format(pin->wg_stream, &format);
+    if (format.major_type == WG_MAJOR_TYPE_VIDEO
+        && format.u.video.format == WG_VIDEO_FORMAT_BGRx)
+    {
+        /* Offer ARGB32 format as the first candidate for 32 bpp AVI files. */
+        if (index == 0)
+            format.u.video.format = WG_VIDEO_FORMAT_BGRA;
+    }
+    else if (index > 0)
+        return VFW_S_NO_MORE_ITEMS;
+
     if (!amt_from_wg_format(mt, &format, false))
         return E_OUTOFMEMORY;
     return S_OK;

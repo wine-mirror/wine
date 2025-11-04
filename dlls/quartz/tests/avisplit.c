@@ -1802,7 +1802,7 @@ static void test_32bpp_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
             wine_dbgstr_guid(&pmt->majortype));
-    todo_wine ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_ARGB32), "Got subtype %s\n",
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_ARGB32), "Got subtype %s\n",
             wine_dbgstr_guid(&pmt->subtype));
     ok(!pmt->bFixedSizeSamples, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
     ok(pmt->lSampleSize == 1, "Got sample size %lu.\n", pmt->lSampleSize);
@@ -1828,7 +1828,7 @@ static void test_32bpp_media_types(void)
 
     /* 2: RGB32 */
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_FALSE) goto done;
 
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
