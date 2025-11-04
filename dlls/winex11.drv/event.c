@@ -1346,12 +1346,25 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
 void X11DRV_ActivateWindow( HWND hwnd, HWND previous )
 {
     struct x11drv_win_data *data;
+    BOOL flush = FALSE;
 
-    if (!is_virtual_desktop()) set_net_active_window( hwnd, previous );
+    if (!is_virtual_desktop())
+    {
+        set_net_active_window( hwnd, previous );
+        flush = TRUE;
+    }
 
-    if (!(data = get_win_data( hwnd ))) return;
-    if (!data->managed || data->embedder) set_input_focus( data );
-    release_win_data( data );
+    if ((data = get_win_data( hwnd )))
+    {
+        if (!data->managed || data->embedder)
+        {
+            set_input_focus( data );
+            flush = TRUE;
+        }
+        release_win_data( data );
+    }
+
+    if (flush) XFlush( x11drv_thread_data()->display );
 }
 
 static void drag_drop_enter( UINT entries_size, struct format_entry *entries )
