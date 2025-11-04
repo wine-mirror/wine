@@ -920,28 +920,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (NSRect) firstRectForCharacterRange:(NSRange)aRange actualRange:(NSRangePointer)actualRange
     {
-        macdrv_query* query;
         WineWindow* window = (WineWindow*)[self window];
         NSRect ret;
 
         aRange = NSIntersectionRange(aRange, NSMakeRange(0, [markedText length]));
 
-        query = macdrv_create_query();
-        query->type = QUERY_IME_CHAR_RECT;
-        query->window = (macdrv_window)[window retain];
-        query->ime_char_rect.himc = [window himc];
-        query->ime_char_rect.range = CFRangeMake(aRange.location, aRange.length);
+        pthread_mutex_lock(&ime_composition_rect_mutex);
+        ret = NSRectFromCGRect(cgrect_mac_from_win(ime_composition_rect));
+        pthread_mutex_unlock(&ime_composition_rect_mutex);
 
-        if ([window.queue query:query timeout:0.3 flags:WineQueryNoPreemptWait])
-        {
-            aRange = NSMakeRange(query->ime_char_rect.range.location, query->ime_char_rect.range.length);
-            ret = NSRectFromCGRect(cgrect_mac_from_win(query->ime_char_rect.rect));
-            [[WineApplicationController sharedController] flipRect:&ret];
-        }
-        else
-            ret = NSMakeRect(100, 100, aRange.length ? 1 : 0, 12);
-
-        macdrv_release_query(query);
+        [[WineApplicationController sharedController] flipRect:&ret];
 
         if (actualRange)
             *actualRange = aRange;

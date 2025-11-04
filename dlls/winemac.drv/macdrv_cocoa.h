@@ -415,7 +415,6 @@ enum {
     QUERY_DRAG_DROP_LEAVE,
     QUERY_DRAG_DROP_DRAG,
     QUERY_DRAG_DROP_DROP,
-    QUERY_IME_CHAR_RECT,
     QUERY_PASTEBOARD_DATA,
     QUERY_RESIZE_SIZE,
     QUERY_RESIZE_START,
@@ -436,11 +435,6 @@ typedef struct macdrv_query {
             uint32_t            ops;
             CFTypeRef           pasteboard;
         }                                           drag_drop;
-        struct {
-            void   *himc;
-            CFRange range;
-            CGRect  rect;
-        }                                           ime_char_rect;
         struct {
             CFStringRef type;
         }                                           pasteboard_data;
@@ -578,6 +572,9 @@ extern void macdrv_destroy_status_item(macdrv_status_item s);
 extern void macdrv_set_status_item_image(macdrv_status_item s, CGImageRef cgimage);
 extern void macdrv_set_status_item_tooltip(macdrv_status_item s, CFStringRef cftip);
 
+/* ime */
+extern pthread_mutex_t ime_composition_rect_mutex;
+extern CGRect ime_composition_rect;
 extern void macdrv_clear_ime_text(void);
 
 #endif  /* __WINE_MACDRV_COCOA_H */

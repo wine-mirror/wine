@@ -36,8 +36,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(imm);
 
-static pthread_mutex_t ime_mutex = PTHREAD_MUTEX_INITIALIZER;
-static RECT ime_composition_rect;
+pthread_mutex_t ime_composition_rect_mutex = PTHREAD_MUTEX_INITIALIZER;
+CGRect ime_composition_rect;
 
 /* return the name of an Mac event */
 static const char *dbgstr_event(int type)
@@ -290,38 +290,15 @@ static BOOL query_drag_drop_drag(macdrv_query *query)
 }
 
 
-/**************************************************************************
- *              query_ime_char_rect
- */
-BOOL query_ime_char_rect(macdrv_query* query)
-{
-    HWND hwnd = macdrv_get_window_hwnd(query->window);
-    void *himc = query->ime_char_rect.himc;
-    CFRange *range = &query->ime_char_rect.range;
-
-    TRACE_(imm)("win %p/%p himc %p range %ld-%ld\n", hwnd, query->window, himc, range->location,
-                range->length);
-
-    pthread_mutex_lock(&ime_mutex);
-    query->ime_char_rect.rect = cgrect_from_rect(ime_composition_rect);
-    pthread_mutex_unlock(&ime_mutex);
-
-    TRACE_(imm)(" -> range %ld-%ld rect %s\n", range->location,
-                range->length, wine_dbgstr_cgrect(query->ime_char_rect.rect));
-
-    return TRUE;
-}
-
-
 /***********************************************************************
  *      SetIMECompositionRect (MACDRV.@)
  */
 BOOL macdrv_SetIMECompositionRect(HWND hwnd, RECT rect)
 {
     TRACE("hwnd %p, rect %s\n", hwnd, wine_dbgstr_rect(&rect));
-    pthread_mutex_lock(&ime_mutex);
-    ime_composition_rect = rect;
-    pthread_mutex_unlock(&ime_mutex);
+    pthread_mutex_lock(&ime_composition_rect_mutex);
+    ime_composition_rect = cgrect_from_rect(rect);
+    pthread_mutex_unlock(&ime_composition_rect_mutex);
     return TRUE;
 }
 
@@ -363,10 +340,6 @@ static void macdrv_query_event(HWND hwnd, const macdrv_event *event)
         case QUERY_DRAG_DROP_DROP:
             TRACE("QUERY_DRAG_DROP_DROP\n");
             success = query_drag_drop_drop(query);
-            break;
-        case QUERY_IME_CHAR_RECT:
-            TRACE("QUERY_IME_CHAR_RECT\n");
-            success = query_ime_char_rect(query);
             break;
         case QUERY_PASTEBOARD_DATA:
             TRACE("QUERY_PASTEBOARD_DATA\n");
