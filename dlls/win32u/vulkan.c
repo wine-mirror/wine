@@ -1467,7 +1467,7 @@ static VkResult acquire_keyed_mutexes( VkWin32KeyedMutexAcquireReleaseInfoKHR *m
         {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = memory->semaphore,
-            .stageMask = 0,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
 
@@ -1522,7 +1522,7 @@ static VkResult release_keyed_mutexes( VkWin32KeyedMutexAcquireReleaseInfoKHR *m
         {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
             .semaphore = memory->semaphore,
-            .stageMask = 0,
+            .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
             .deviceIndex = 0,
         };
 
