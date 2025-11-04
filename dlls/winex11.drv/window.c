@@ -3383,7 +3383,10 @@ void X11DRV_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
     if (!(data = get_win_data( hwnd ))) return;
 
     if (data->whole_window)
+    {
         sync_window_opacity( data->display, data->whole_window, alpha, flags );
+        XFlush( data->display );
+    }
 
     release_win_data( data );
 }
