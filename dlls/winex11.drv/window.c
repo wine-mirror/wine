@@ -2503,12 +2503,17 @@ void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
     struct x11drv_win_data *data;
     DWORD changed = style->styleNew ^ style->styleOld;
+    BOOL flush = FALSE;
 
     if (hwnd == NtUserGetDesktopWindow()) return;
     if (!(data = get_win_data( hwnd ))) return;
     if (!data->whole_window) goto done;
 
-    if (offset == GWL_STYLE && (changed & WS_DISABLED)) set_wm_hints( data );
+    if (offset == GWL_STYLE && (changed & WS_DISABLED))
+    {
+        set_wm_hints( data );
+        flush = TRUE;
+    }
 
     if (offset == GWL_EXSTYLE)
     {
@@ -2519,7 +2524,10 @@ void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
             sync_window_opacity( data->display, data->whole_window, 0, 0 );
         }
         if (changed & WS_EX_TRANSPARENT) sync_window_style( data );
+        flush = TRUE;
     }
+
+    if (flush) XFlush( data->display );
 done:
     release_win_data( data );
 }
