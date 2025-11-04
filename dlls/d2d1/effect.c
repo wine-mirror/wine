@@ -1099,6 +1099,7 @@ L"<?xml version='1.0'?>                                                   \
     <Property name='Description' type='string' value='Flood'/>            \
     <Inputs minimum='0' maximum='0' >                                     \
     </Inputs>                                                             \
+    <Property name='Color' type='vector4' />                              \
   </Effect>";
 
 static const WCHAR gaussian_blur_description[] =
