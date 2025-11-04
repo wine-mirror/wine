@@ -2798,6 +2798,7 @@ void X11DRV_SystrayDockInit( HWND hwnd )
         systray_atom = XInternAtom( display, systray_buffer, False );
     }
     XSelectInput( display, root_window, StructureNotifyMask | PropertyChangeMask );
+    XFlush( display );
 }
 
 
