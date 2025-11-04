@@ -12900,7 +12900,9 @@ static void check_enum_property(ID2D1Effect *effect, UINT32 property,
     ok(prop_type == D2D1_PROPERTY_TYPE_ENUM, "Unexpected type %d.\n", prop_type);
 
     hr = ID2D1Effect_GetSubProperties(effect, property, &subproperties);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
 
     prop_type = ID2D1Properties_GetType(subproperties, D2D1_SUBPROPERTY_FIELDS);
     ok(prop_type == D2D1_PROPERTY_TYPE_ARRAY, "Unexpected type %d.\n", prop_type);
@@ -12952,8 +12954,22 @@ static void check_enum_property(ID2D1Effect *effect, UINT32 property,
     ID2D1Properties_Release(subproperties);
 }
 
+struct effect_property
+{
+    const WCHAR *name;
+    UINT32 index;
+    D2D1_PROPERTY_TYPE type;
+};
+
 static void test_effect_2d_affine(BOOL d3d11)
 {
+    static const struct effect_property properties[] =
+    {
+        { L"InterpolationMode", D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE, D2D1_PROPERTY_TYPE_ENUM },
+        { L"BorderMode", D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, D2D1_PROPERTY_TYPE_ENUM },
+        { L"TransformMatrix", D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX, D2D1_PROPERTY_TYPE_MATRIX_3X2 },
+        { L"Sharpness", D2D1_2DAFFINETRANSFORM_PROP_SHARPNESS, D2D1_PROPERTY_TYPE_FLOAT },
+    };
     D2D1_MATRIX_3X2_F rotate, scale, skew;
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     unsigned int i, x, y, w, h, count;
@@ -12966,6 +12982,7 @@ static void test_effect_2d_affine(BOOL d3d11)
     ID2D1Bitmap1 *bitmap;
     ID2D1Effect *effect;
     ID2D1Image *output;
+    WCHAR name[64];
     UINT32 value;
     BOOL match;
     HRESULT hr;
@@ -13056,29 +13073,29 @@ static void test_effect_2d_affine(BOOL d3d11)
     check_system_properties(effect);
 
     count = ID2D1Effect_GetPropertyCount(effect);
-    todo_wine ok(count == 4, "Got unexpected property count %u.\n", count);
+    ok(count == 4, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(properties); ++i)
+    {
+        hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(name, properties[i].name), "Unexpected name %s.\n", wine_dbgstr_w(name));
+    }
 
     hr = ID2D1Effect_GetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE,
             D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&value, sizeof(value));
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(value == D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR, "Unexpected value %u.\n", value);
-        check_enum_property(effect, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE, interp_modes,
-                ARRAY_SIZE(interp_modes));
-    }
+    todo_wine
+    ok(value == D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR, "Unexpected value %u.\n", value);
+    check_enum_property(effect, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE, interp_modes,
+            ARRAY_SIZE(interp_modes));
 
     hr = ID2D1Effect_GetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, D2D1_PROPERTY_TYPE_ENUM,
             (BYTE *)&value, sizeof(value));
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(value == D2D1_BORDER_MODE_SOFT, "Unexpected value %u.\n", value);
-        check_enum_property(effect, D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, border_modes,
-                ARRAY_SIZE(border_modes));
-    }
+    ok(value == D2D1_BORDER_MODE_SOFT, "Unexpected value %u.\n", value);
+    check_enum_property(effect, D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE, border_modes,
+            ARRAY_SIZE(border_modes));
 
     for (i = 0; i < ARRAY_SIZE(effect_2d_affine_tests); ++i)
     {
@@ -13110,6 +13127,7 @@ static void test_effect_2d_affine(BOOL d3d11)
         ID2D1Effect_GetOutput(effect, &output);
 
         hr = ID2D1DeviceContext_GetImageLocalBounds(context, output, &output_bounds);
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         todo_wine
         ok(compare_rect(&output_bounds, test->bounds.left, test->bounds.top, test->bounds.right, test->bounds.bottom, 1),
@@ -13330,13 +13348,6 @@ static void test_effect_grayscale(BOOL d3d11)
     ID2D1Effect_Release(effect);
     release_test_context(&ctx);
 }
-
-struct effect_property
-{
-    const WCHAR *name;
-    UINT32 index;
-    D2D1_PROPERTY_TYPE type;
-};
 
 static void test_effect_gaussian_blur(BOOL d3d11)
 {
