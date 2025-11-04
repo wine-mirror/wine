@@ -3033,6 +3033,7 @@ void X11DRV_SetCapture( HWND hwnd, UINT flags )
             XGrabPointer( data->display, data->whole_window, False,
                           PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                           GrabModeAsync, GrabModeAsync, None, None, CurrentTime );
+            XFlush( data->display );
             thread_data->grab_hwnd = data->hwnd;
         }
         release_win_data( data );
