@@ -3351,7 +3351,10 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
         set_window_visual( data, &default_visual, FALSE );
 
         if (data->whole_window)
+        {
             sync_window_opacity( data->display, data->whole_window, alpha, flags );
+            XFlush( data->display );
+        }
 
         data->layered = TRUE;
         release_win_data( data );
@@ -3364,6 +3367,7 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
             sync_window_opacity( gdi_display, win, alpha, flags );
             if (flags & LWA_COLORKEY)
                 FIXME( "LWA_COLORKEY not supported on foreign process window %p\n", hwnd );
+            XFlush( gdi_display );
         }
     }
 }
