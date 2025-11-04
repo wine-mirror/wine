@@ -1559,7 +1559,7 @@ LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, 
     return set_window_long( hwnd, offset, sizeof(LONG_PTR), newval, ansi );
 }
 
-BOOL set_window_pixel_format( HWND hwnd, int format, BOOL internal )
+BOOL set_window_pixel_format( HWND hwnd, int format )
 {
     WND *win = get_win_ptr( hwnd );
 
@@ -1568,20 +1568,14 @@ BOOL set_window_pixel_format( HWND hwnd, int format, BOOL internal )
         WARN( "setting format %d on win %p not supported\n", format, hwnd );
         return FALSE;
     }
-    if (internal)
-        win->internal_pixel_format = format;
-    else
-    {
-        win->internal_pixel_format = 0;
-        win->pixel_format = format;
-    }
+    win->pixel_format = format;
     release_win_ptr( win );
 
     update_window_state( hwnd );
     return TRUE;
 }
 
-int get_window_pixel_format( HWND hwnd, BOOL internal )
+int get_window_pixel_format( HWND hwnd )
 {
     WND *win = get_win_ptr( hwnd );
     int ret;
@@ -1592,7 +1586,7 @@ int get_window_pixel_format( HWND hwnd, BOOL internal )
         return -1;
     }
 
-    ret = internal && win->internal_pixel_format ? win->internal_pixel_format : win->pixel_format;
+    ret = win->pixel_format;
     release_win_ptr( win );
 
     return ret;
@@ -1605,7 +1599,7 @@ static int window_has_client_surface( HWND hwnd )
     BOOL ret;
 
     if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
-    ret = win->pixel_format || win->internal_pixel_format;
+    ret = win->pixel_format || win->current_drawable;
     release_win_ptr( win );
     if (ret) return TRUE;
 
@@ -2233,7 +2227,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         }
         if (new_surface) req->paint_flags |= SET_WINPOS_PAINT_SURFACE;
         if (is_layered) req->paint_flags |= SET_WINPOS_LAYERED_WINDOW;
-        if (win->pixel_format || win->internal_pixel_format)
+        if (win->pixel_format || win->current_drawable)
             req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
 
         if ((ret = !wine_server_call( req )))

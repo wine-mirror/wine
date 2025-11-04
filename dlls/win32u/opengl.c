@@ -1295,7 +1295,7 @@ static int win32u_wglGetPixelFormat( HDC hdc )
     HWND hwnd;
 
     if ((hwnd = NtUserWindowFromDC( hdc )))
-        format = get_window_pixel_format( hwnd, FALSE );
+        format = get_window_pixel_format( hwnd );
     else if ((format = get_dc_pixel_format( hdc )) < 0)
     {
         WARN( "Invalid DC handle %p\n", hdc );
@@ -1495,7 +1495,7 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMAT
 
         TRACE( "%p/%p format %d\n", hdc, hwnd, new_format );
 
-        if ((old_format = get_window_pixel_format( hwnd, FALSE ))) return old_format == new_format;
+        if ((old_format = get_window_pixel_format( hwnd ))) return old_format == new_format;
 
         if ((drawable = get_window_unused_drawable( hwnd, new_format )))
         {
@@ -1504,7 +1504,7 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMAT
             opengl_drawable_release( drawable );
         }
 
-        return set_window_pixel_format( hwnd, new_format, FALSE );
+        return set_window_pixel_format( hwnd, new_format );
     }
 
     TRACE( "%p/%p format %d\n", hdc, hwnd, new_format );
@@ -1532,7 +1532,7 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
     HWND hwnd;
 
     if (!(hwnd = NtUserWindowFromDC( hdc )) || !is_cache_dc( hdc )) return FALSE;
-    if (format && get_window_pixel_format( hwnd, FALSE ) == format) return TRUE;
+    if (format && get_window_pixel_format( hwnd ) == format) return TRUE;
 
     TRACE( "%p/%p format %d\n", hdc, hwnd, format );
 
@@ -1732,7 +1732,7 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
     }
 
     if ((format = get_dc_pixel_format( draw_hdc )) <= 0 &&
-        (format = get_window_pixel_format( NtUserWindowFromDC( draw_hdc ), FALSE )) <= 0)
+        (format = get_window_pixel_format( NtUserWindowFromDC( draw_hdc ) )) <= 0)
     {
         WARN( "Invalid draw_hdc %p format %u\n", draw_hdc, format );
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
@@ -2194,7 +2194,7 @@ static BOOL win32u_wgl_context_reset( struct wgl_context *context, HDC hdc, stru
     if (!hdc) return TRUE;
 
     if ((format = get_dc_pixel_format( hdc )) <= 0 &&
-        (format = get_window_pixel_format( NtUserWindowFromDC( hdc ), FALSE )) <= 0)
+        (format = get_window_pixel_format( NtUserWindowFromDC( hdc ) )) <= 0)
     {
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
