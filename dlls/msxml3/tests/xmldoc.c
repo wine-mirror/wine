@@ -956,6 +956,7 @@ static void test_xmlelem(void)
 
     hr = IXMLElement_get_tagName(element, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(!str, "Expected empty tag name, got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
@@ -1116,7 +1117,6 @@ static void test_xmlelem(void)
     ok(!!child3, "Expected non-NULL child\n");
     str = SysAllocString(L"e2");
     hr = IXMLElement_put_tagName(child3, str);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
     hr = IXMLElement_addChild(element, child3, 0, -1);
@@ -1142,7 +1142,6 @@ static void test_xmlelem(void)
 
     hr = IXMLElement_get_text(element, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!lstrcmpW(str, L"text4next"), "Unexpected text %s.\n", debugstr_w(str));
     SysFreeString(str);
 
@@ -1170,7 +1169,6 @@ static void test_xmlelem(void)
 
     hr = IXMLElement_get_text(element, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!lstrcmpW(str, L"text3text4next"), "Unexpected text %s.\n", debugstr_w(str));
     SysFreeString(str);
 
@@ -1189,7 +1187,6 @@ static void test_xmlelem(void)
     ok(type == XMLELEMTYPE_TEXT, "Unexpected type %ld.\n", type);
     hr = IXMLElement_get_text(child2, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!lstrcmpW(str, L"text3"), "Unexpected text %s.\n", debugstr_w(str));
     SysFreeString(str);
 
@@ -1425,9 +1422,7 @@ static void test_xmldoc_root(void)
 
     parent = (void *)1;
     hr = IXMLElement_get_parent(element, &parent);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!parent, "Unexpected pointer.\n");
 
     hr = IXMLDocument_get_root(doc, &element2);
@@ -1445,13 +1440,11 @@ static void test_xmldoc_root(void)
 
     s = SysAllocString(L"d");
     hr = IXMLElement_put_tagName(element, s);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(s);
 
     hr = IXMLElement_get_tagName(element2, &s);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(s, L"D"), "Unexpected name %s.\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
@@ -1612,9 +1605,7 @@ static void test_comments(void)
 
     s = (void *)1;
     hr = IXMLElement_get_tagName(child, &s);
-    todo_wine
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!s, "Unexpected pointer %p.\n", s);
 
     s = NULL;
@@ -1657,7 +1648,6 @@ static void test_pi(void)
 
     hr = IXMLElementCollection_get_length(c, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 2, "Unexpected count %ld.\n", count);
 
     V_VT(&v) = VT_I4;
@@ -1679,7 +1669,6 @@ static void test_pi(void)
     s = NULL;
     hr = IXMLElement_get_text(child, &s);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(s && !*s, "Unexpected text %s.\n", debugstr_w(s));
     SysFreeString(s);
 
@@ -1689,10 +1678,8 @@ static void test_pi(void)
     V_VT(&v) = VT_I4;
     V_I4(&v) = 1;
     hr = IXMLElementCollection_item(c, v, v, &disp);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
+
     hr = IDispatch_QueryInterface(disp, &IID_IXMLElement, (void **)&child);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLElement_get_type(child, &type);
@@ -1724,7 +1711,6 @@ if (hr == S_OK)
 
     IXMLElement_Release(child);
     IDispatch_Release(disp);
-}
 
     IXMLDocument_Release(doc);
 }
@@ -1767,11 +1753,8 @@ static void test_cdata(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLElement_get_type(child, &type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(type == XMLELEMTYPE_TEXT, "Unexpected type %ld.\n", type);
 
-if (type == XMLELEMTYPE_TEXT)
-{
     s = (void *)1;
     hr = IXMLElement_get_tagName(child, &s);
     ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
@@ -1782,7 +1765,7 @@ if (type == XMLELEMTYPE_TEXT)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(s, L" cdata-text  "), "Unexpected text %s.\n", debugstr_w(s));
     SysFreeString(s);
-}
+
     IXMLElement_Release(child);
     IDispatch_Release(disp);
 
