@@ -3030,7 +3030,6 @@ void X11DRV_SetCapture( HWND hwnd, UINT flags )
         if (!(data = get_win_data( NtUserGetAncestor( hwnd, GA_ROOT )))) return;
         if (data->whole_window)
         {
-            XFlush( gdi_display );
             XGrabPointer( data->display, data->whole_window, False,
                           PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                           GrabModeAsync, GrabModeAsync, None, None, CurrentTime );
@@ -3041,7 +3040,6 @@ void X11DRV_SetCapture( HWND hwnd, UINT flags )
     else  /* release capture */
     {
         if (!(data = get_win_data( thread_data->grab_hwnd ))) return;
-        XFlush( gdi_display );
         XUngrabPointer( data->display, CurrentTime );
         XFlush( data->display );
         thread_data->grab_hwnd = NULL;
