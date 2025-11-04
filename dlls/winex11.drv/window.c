@@ -2489,6 +2489,7 @@ void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
     {
         Display *display = thread_init_display();
         sync_window_text( display, win, text );
+        XFlush( display );
     }
 }
 
