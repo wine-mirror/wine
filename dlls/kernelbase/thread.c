@@ -89,13 +89,13 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
                                                       LPVOID param, DWORD flags,
                                                       LPPROC_THREAD_ATTRIBUTE_LIST attributes, DWORD *id )
 {
-    ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[2] ) / sizeof(ULONG_PTR)];
+    ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[3] ) / sizeof(ULONG_PTR)];
     PS_ATTRIBUTE_LIST *attr_list = (PS_ATTRIBUTE_LIST *)buffer;
     struct _ACTIVATION_CONTEXT *actctx;
     HANDLE handle;
     CLIENT_ID client_id;
     TEB *teb;
-    ULONG ret;
+    ULONG count = 0, ret;
     OBJECT_ATTRIBUTES attr;
     SIZE_T stack_reserve = 0, stack_commit = 0;
     GROUP_AFFINITY *group_affinity = NULL;
@@ -118,15 +118,25 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
 
-    attr_list->TotalLength = sizeof(buffer);
-    attr_list->Attributes[0].Attribute    = PS_ATTRIBUTE_CLIENT_ID;
-    attr_list->Attributes[0].Size         = sizeof(client_id);
-    attr_list->Attributes[0].ValuePtr     = &client_id;
-    attr_list->Attributes[0].ReturnLength = NULL;
-    attr_list->Attributes[1].Attribute    = PS_ATTRIBUTE_TEB_ADDRESS;
-    attr_list->Attributes[1].Size         = sizeof(teb);
-    attr_list->Attributes[1].ValuePtr     = &teb;
-    attr_list->Attributes[1].ReturnLength = NULL;
+    attr_list->Attributes[count].Attribute    = PS_ATTRIBUTE_CLIENT_ID;
+    attr_list->Attributes[count].Size         = sizeof(client_id);
+    attr_list->Attributes[count].ValuePtr     = &client_id;
+    attr_list->Attributes[count].ReturnLength = NULL;
+    count++;
+    attr_list->Attributes[count].Attribute    = PS_ATTRIBUTE_TEB_ADDRESS;
+    attr_list->Attributes[count].Size         = sizeof(teb);
+    attr_list->Attributes[count].ValuePtr     = &teb;
+    attr_list->Attributes[count].ReturnLength = NULL;
+    count++;
+    if (group_affinity)
+    {
+        attr_list->Attributes[count].Attribute    = PS_ATTRIBUTE_GROUP_AFFINITY;
+        attr_list->Attributes[count].Size         = sizeof(*group_affinity);
+        attr_list->Attributes[count].ValuePtr     = group_affinity;
+        attr_list->Attributes[count].ReturnLength = NULL;
+        count++;
+    }
+    attr_list->TotalLength = offsetof( PS_ATTRIBUTE_LIST, Attributes[count] );
 
     InitializeObjectAttributes( &attr, NULL, 0, NULL, sa ? sa->lpSecurityDescriptor : NULL );
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
@@ -150,13 +160,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
     }
 
     if (id) *id = HandleToULong( client_id.UniqueThread );
-    if (group_affinity && !SetThreadGroupAffinity(handle, group_affinity, NULL))
-    {
-        NtTerminateThread( handle, 0 );
-        NtClose( handle );
-        handle = 0;
-    }
-    else if (!(flags & CREATE_SUSPENDED)) NtResumeThread( handle, &ret );
+    if (!(flags & CREATE_SUSPENDED)) NtResumeThread( handle, &ret );
     return handle;
 }
 

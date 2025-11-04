@@ -1275,9 +1275,10 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE
  *
  * Update the output attributes.
  */
-static void update_attr_list( PS_ATTRIBUTE_LIST *attr, const CLIENT_ID *id, TEB *teb )
+static NTSTATUS update_attr_list( PS_ATTRIBUTE_LIST *attr, HANDLE thread, const CLIENT_ID *id, TEB *teb )
 {
     SIZE_T i, count = (attr->TotalLength - sizeof(attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
+    NTSTATUS status = STATUS_SUCCESS;
 
     for (i = 0; i < count; i++)
     {
@@ -1293,7 +1294,20 @@ static void update_attr_list( PS_ATTRIBUTE_LIST *attr, const CLIENT_ID *id, TEB 
             memcpy( attr->Attributes[i].ValuePtr, &teb, size );
             if (attr->Attributes[i].ReturnLength) *attr->Attributes[i].ReturnLength = size;
         }
+        else if (attr->Attributes[i].Attribute == PS_ATTRIBUTE_GROUP_AFFINITY)
+        {
+            GROUP_AFFINITY *aff = attr->Attributes[i].ValuePtr;
+            status = NtSetInformationThread( thread, ThreadGroupInformation, aff, sizeof(*aff) );
+            if (status) break;
+        }
     }
+
+    if (status)
+    {
+        NtTerminateThread( thread, status );
+        NtClose( thread );
+    }
+    return status;
 }
 
 /***********************************************************************
@@ -1356,16 +1370,16 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
-        if (result.create_thread.status == STATUS_SUCCESS)
+        if (!(status = result.create_thread.status))
         {
             CLIENT_ID client_id;
             TEB *teb = wine_server_get_ptr( result.create_thread.teb );
             *handle = wine_server_ptr_handle( result.create_thread.handle );
             client_id.UniqueProcess = ULongToHandle( result.create_thread.pid );
             client_id.UniqueThread  = ULongToHandle( result.create_thread.tid );
-            if (attr_list) update_attr_list( attr_list, &client_id, teb );
+            if (attr_list) status = update_attr_list( attr_list, *handle, &client_id, teb );
         }
-        return result.create_thread.status;
+        return status;
     }
 
     if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
@@ -1449,8 +1463,8 @@ done:
         close( request_pipe[1] );
         return status;
     }
-    if (attr_list) update_attr_list( attr_list, &teb->ClientId, teb );
-    return STATUS_SUCCESS;
+    if (attr_list) status = update_attr_list( attr_list, *handle, &teb->ClientId, teb );
+    return status;
 }
 
 
