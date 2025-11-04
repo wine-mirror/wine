@@ -3862,7 +3862,6 @@ static void _check_redirected_flag(int line, HMODULE module, BOOL redirected)
             continue;
 
         if (redirected)
-            todo_wine
             ok_(__FILE__, line)(mod->Flags & LDR_REDIRECTED, "Got unexpected flags %#lx.\n", mod->Flags);
         else
             ok_(__FILE__, line)(!(mod->Flags & LDR_REDIRECTED), "Got unexpected flags %#lx.\n", mod->Flags);
@@ -3911,7 +3910,6 @@ static void test_one_with_sxs_and_GetModuleHandleA(void)
 
     /* Normal loaded dll should be found while context is inactive */
     module_temp = GetModuleHandleA("sxs_dll.dll");
-    todo_wine
     ok(module_temp == module, "Got unexpected module.\n");
 
     if (module)
@@ -3919,7 +3917,6 @@ static void test_one_with_sxs_and_GetModuleHandleA(void)
 
     /* Loaded SxS dll can't be found while context is inactive */
     module_temp = GetModuleHandleA("sxs_dll.dll");
-    todo_wine
     ok(module_temp == NULL, "Got unexpected module.\n");
 
     if (dll.module)
