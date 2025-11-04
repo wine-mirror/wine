@@ -3302,6 +3302,8 @@ void X11DRV_SetWindowIcons( HWND hwnd, HICON icon, const ICONINFO *ii, HICON ico
     if (!(data = get_win_data( hwnd ))) return;
     set_window_icon_data( data, icon, ii, icon_small, ii_small );
     set_wm_hints( data );
+
+    XFlush( data->display );
     release_win_data( data );
 }
 
