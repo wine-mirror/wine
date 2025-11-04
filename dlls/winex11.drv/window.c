@@ -3590,6 +3590,7 @@ void X11DRV_FlashWindowEx( FLASHWINFO *pfinfo )
 
         XSendEvent( data->display, DefaultRootWindow( data->display ), False,
                     SubstructureNotifyMask, &xev );
+        XFlush( data->display );
     }
     release_win_data( data );
 }
