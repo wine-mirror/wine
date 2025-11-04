@@ -2822,7 +2822,11 @@ BOOL X11DRV_SystrayDockRemove( HWND hwnd )
 
     if ((data = get_win_data( hwnd )))
     {
-        if ((ret = data->embedded)) window_set_wm_state( data, WithdrawnState, FALSE );
+        if ((ret = data->embedded))
+        {
+            window_set_wm_state( data, WithdrawnState, FALSE );
+            XFlush( data->display );
+        }
         release_win_data( data );
     }
 
