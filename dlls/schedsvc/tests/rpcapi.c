@@ -26,37 +26,6 @@
 
 #include "wine/test.h"
 
-static BOOL is_process_elevated(void)
-{
-    HANDLE token;
-    if (OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token ))
-    {
-        TOKEN_ELEVATION_TYPE type;
-        DWORD size;
-        BOOL ret;
-
-        ret = GetTokenInformation( token, TokenElevationType, &type, sizeof(type), &size );
-        CloseHandle( token );
-        return (ret && type == TokenElevationTypeFull);
-    }
-    return FALSE;
-}
-
-static BOOL check_win_version(int min_major, int min_minor)
-{
-    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
-    NTSTATUS (WINAPI *pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
-    RTL_OSVERSIONINFOEXW rtlver;
-
-    rtlver.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
-    pRtlGetVersion = (void *)GetProcAddress(hntdll, "RtlGetVersion");
-    pRtlGetVersion(&rtlver);
-    return rtlver.dwMajorVersion > min_major ||
-           (rtlver.dwMajorVersion == min_major &&
-            rtlver.dwMinorVersion >= min_minor);
-}
-#define is_win8_plus() check_win_version(6, 2)
-
 extern handle_t schrpc_handle;
 
 static LONG CALLBACK rpc_exception_filter(EXCEPTION_POINTERS *ptrs)
@@ -174,12 +143,6 @@ START_TEST(rpcapi)
 
     hr = SchRpcDelete(L"", 0);
     ok(hr == E_ACCESSDENIED /* win7 */ || hr == E_INVALIDARG /* vista */, "expected E_ACCESSDENIED, got %#lx\n", hr);
-
-    if (!is_process_elevated() && !is_win8_plus())
-    {
-        win_skip("Skipping because deleting anything requires elevated privileges on Windows 7\n");
-        return;
-    }
 
     hr = SchRpcCreateFolder(L"\\Wine", NULL, 0);
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
