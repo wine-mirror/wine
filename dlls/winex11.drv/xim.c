@@ -553,6 +553,7 @@ BOOL X11DRV_SetIMECompositionRect( HWND hwnd, RECT rect )
         XFree( attr );
     }
 
+    XFlush( data->display );
     release_win_data( data );
     return TRUE;
 }
