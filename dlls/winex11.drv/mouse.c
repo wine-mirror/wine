@@ -194,7 +194,7 @@ static Cursor get_empty_cursor(void)
 /***********************************************************************
  *		set_window_cursor
  */
-void set_window_cursor( Window window, HCURSOR handle )
+static void set_window_cursor( Window window, HCURSOR handle )
 {
     Cursor cursor, prev;
 
