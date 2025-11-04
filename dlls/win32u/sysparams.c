@@ -1359,6 +1359,7 @@ const char *gpu_device_name( UINT16 vendor, UINT16 device, const char *default_n
     case MAKELONG(0x1002, 0x731f): return "Radeon RX 5700 / 5700 XT";
     case MAKELONG(0x1002, 0x7340): return "Radeon RX 5500M";
     case MAKELONG(0x1002, 0x73bf): return "Radeon RX 6800/6800 XT / 6900 XT";
+    case MAKELONG(0x1002, 0x7480): return "AMD Radeon RX 7600 XT";
     case MAKELONG(0x1002, 0x7590): return "AMD Radeon RX 9060 XT";
     case MAKELONG(0x1002, 0x73a1): return "Radeon Pro V620";
     case MAKELONG(0x1002, 0x73ae): return "Radeon Pro V620 VF";
