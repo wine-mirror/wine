@@ -850,7 +850,6 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL ge
     if (!provider_resources->nproviders)
     {
         WARN("XRandR implementation doesn't report any providers, faking one.\n");
-        gpus[0].name = strdup( "Wine GPU" );
         *new_gpus = gpus;
         *count = 1;
         ret = TRUE;
