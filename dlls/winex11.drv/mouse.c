@@ -1438,8 +1438,8 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
  */
 BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
 {
-    if (!reset && clip && grab_clipping_window( clip )) return TRUE;
-    ungrab_clipping_window();
+    if (reset || !clip || !grab_clipping_window( clip )) ungrab_clipping_window();
+    XFlush( x11drv_thread_data()->display );
     return TRUE;
 }
 
