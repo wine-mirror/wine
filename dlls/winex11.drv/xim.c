@@ -330,6 +330,7 @@ void X11DRV_NotifyIMEStatus( HWND hwnd, UINT status )
     }
 
     if (!status) XFree( XmbResetIC( xic ) );
+    XFlush( x11drv_thread_data()->display );
 }
 
 /***********************************************************************
