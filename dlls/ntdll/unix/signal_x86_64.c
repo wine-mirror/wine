@@ -191,8 +191,8 @@ __ASM_GLOBAL_FUNC( modify_ldt,
 #define EFL_sig(context)     ((context)->uc_mcontext.gregs[REG_EFL])
 #define TRAP_sig(context)    ((context)->uc_mcontext.gregs[REG_TRAPNO])
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
-#define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.fpregs))
-#define XState_sig(fpu)      (((unsigned int *)fpu->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSAVE_AREA_HEADER *)(fpu + 1) : NULL)
+#define FPU_sig(context)     ((void *)((context)->uc_mcontext.fpregs))
+#define XState_sig(fpu)      (((unsigned int *)((XMM_SAVE_AREA32 *)fpu)->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSAVE_AREA_HEADER *)(((XMM_SAVE_AREA32 *)fpu) + 1) : NULL)
 
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
 
@@ -224,7 +224,7 @@ __ASM_GLOBAL_FUNC( modify_ldt,
 #define RSP_sig(context)     ((context)->uc_mcontext.mc_rsp)
 #define TRAP_sig(context)    ((context)->uc_mcontext.mc_trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext.mc_err)
-#define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.mc_fpstate))
+#define FPU_sig(context)     ((void *)((context)->uc_mcontext.mc_fpstate))
 #define XState_sig(context)  NULL
 
 #elif defined(__NetBSD__)
@@ -255,7 +255,7 @@ __ASM_GLOBAL_FUNC( modify_ldt,
 #define RSP_sig(context)    (*((unsigned long*)&(context)->uc_mcontext.__gregs[_REG_URSP]))
 #define TRAP_sig(context)   ((context)->uc_mcontext.__gregs[_REG_TRAPNO])
 #define ERROR_sig(context)  ((context)->uc_mcontext.__gregs[_REG_ERR])
-#define FPU_sig(context)    ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.__fpregs))
+#define FPU_sig(context)    ((void *)((context)->uc_mcontext.__fpregs))
 #define XState_sig(context) NULL
 
 #elif defined (__APPLE__)
@@ -331,15 +331,15 @@ _STRUCT_MCONTEXT_AVX64_FULL
  * This changes the offset of the FPU state.
  * Checking mcsize is the only way to determine which mcontext is in use.
  */
-static inline XMM_SAVE_AREA32 *FPU_sig( const ucontext_t *context )
+static inline void *FPU_sig( const ucontext_t *context )
 {
     if (context->uc_mcsize == sizeof(_STRUCT_MCONTEXT64_FULL) ||
         context->uc_mcsize == sizeof(_STRUCT_MCONTEXT_AVX64_FULL) ||
         context->uc_mcsize == SIZEOF_STRUCT_MCONTEXT_AVX512_64_FULL)
     {
-        return (XMM_SAVE_AREA32 *)&((_STRUCT_MCONTEXT64_FULL *)context->uc_mcontext)->__fs.__fpu_fcw;
+        return &((_STRUCT_MCONTEXT64_FULL *)context->uc_mcontext)->__fs.__fpu_fcw;
     }
-    return (XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw;
+    return &(context)->uc_mcontext->__fs.__fpu_fcw;
 }
 
 static inline const WORD *SS_sig_ptr( const ucontext_t *context )
@@ -1007,7 +1007,7 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
         XSAVE_AREA_HEADER *xs;
 
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
-        context->FltSave = *FPU_sig(sigcontext);
+        memcpy( &context->FltSave, FPU_sig(sigcontext), sizeof(context->FltSave) );
         context->MxCsr = context->FltSave.MxCsr;
         if (xstate_extended_features && (xs = XState_sig(FPU_sig(sigcontext))))
         {
@@ -1048,7 +1048,7 @@ static void fixup_frame_fpu_state( struct syscall_frame *frame, const ucontext_t
         frame->xstate.CompactionMask = 0x8000000000000000 | user_shared_data->XState.EnabledFeatures;
 
     if (!FPU_sig(sigcontext)) return;
-    xsave = *FPU_sig(sigcontext);
+    memcpy( &xsave, FPU_sig(sigcontext), sizeof(xsave) );
     memcpy( &xsave.XmmRegisters[6], &frame->xsave.XmmRegisters[6], 10 * sizeof(*xsave.XmmRegisters) );
     xsave.MxCsr = frame->xsave.MxCsr;
     frame->xsave = xsave;
@@ -1072,7 +1072,7 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     amd64_thread_data()->dr6 = context->Dr6;
     amd64_thread_data()->dr7 = context->Dr7;
     set_sigcontext( context, sigcontext );
-    if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->FltSave;
+    if (FPU_sig(sigcontext)) memcpy( FPU_sig(sigcontext), &context->FltSave, sizeof(context->FltSave) );
     leave_handler( sigcontext );
 }
 
