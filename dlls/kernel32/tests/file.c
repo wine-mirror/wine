@@ -2288,6 +2288,9 @@ static void test_LockFile(void)
     OVERLAPPED overlapped;
     int limited_LockFile;
     int limited_UnLockFile;
+    LARGE_INTEGER count, offset;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
     BOOL ret;
 
     handle = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
@@ -2306,6 +2309,17 @@ static void test_LockFile(void)
         ok( 0, "couldn't open file \"%s\" (err=%ld)\n", filename, GetLastError() );
         goto cleanup;
     }
+
+    count.QuadPart = 0;
+    offset.QuadPart = 0;
+    status = NtUnlockFile( handle, NULL, &count, &offset, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status );
+    memset( &iosb, 0xcc, sizeof(iosb) );
+    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
+    todo_wine_if(NT_ERROR(status)) ok( status == STATUS_RANGE_NOT_LOCKED, "got %#lx.\n", status );
+    ok( iosb.Status == status, "got %lu.\n", iosb.Status);
+    ok( !iosb.Information, "got %Iu.\n", iosb.Information);
+
     ok( WriteFile( handle, sillytext, strlen(sillytext), &written, NULL ), "write failed\n" );
 
     ok( LockFile( handle, 0, 0, 0, 0 ), "LockFile failed\n" );
@@ -2328,6 +2342,16 @@ static void test_LockFile(void)
     ok( UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 failed\n" );
     ok( !UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 again succeeded\n" );
     ok( UnlockFile( handle, 5, 0, 5, 0 ), "UnlockFile 5,5 failed\n" );
+
+    ret = LockFile( handle, 5, 0, 5, 0 );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    count.QuadPart = 5;
+    offset.QuadPart = 5;
+    memset( &iosb, 0xcc, sizeof(iosb) );
+    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
+    ok( !status, "got %#lx.\n", status );
+    ok( iosb.Status == status, "got %lu.\n", iosb.Status);
+    ok( !iosb.Information, "got %Iu.\n", iosb.Information);
 
     overlapped.Offset = 100;
     overlapped.OffsetHigh = 0;

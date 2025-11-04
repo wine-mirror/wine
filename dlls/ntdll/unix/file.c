@@ -6615,13 +6615,14 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_I
 {
     unsigned int status;
 
-    TRACE( "%p %s %s\n",
-           handle, wine_dbgstr_longlong(offset->QuadPart), wine_dbgstr_longlong(count->QuadPart) );
+    TRACE( "%p %p %s %s\n",
+           handle, io_status, wine_dbgstr_longlong(offset->QuadPart), wine_dbgstr_longlong(count->QuadPart) );
 
-    if (io_status || key)
+    io_status->Information = 0;
+    if (key)
     {
         FIXME("Unimplemented yet parameter\n");
-        return STATUS_NOT_IMPLEMENTED;
+        return (io_status->Status = STATUS_NOT_IMPLEMENTED);
     }
 
     SERVER_START_REQ( unlock_file )
@@ -6632,7 +6633,8 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_I
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
-    return status;
+
+    return (io_status->Status = status);
 }
 
 
