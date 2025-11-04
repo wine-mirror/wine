@@ -2906,6 +2906,7 @@ BOOL X11DRV_SystrayDockInsert( HWND hwnd, UINT cx, UINT cy, void *icon )
     ev.xclient.data.l[3] = 0;
     ev.xclient.data.l[4] = 0;
     XSendEvent( display, systray_window, False, NoEventMask, &ev );
+    XFlush( display );
 
     return TRUE;
 }
