@@ -90,11 +90,6 @@ static BOOL nores_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_
     return TRUE;
 }
 
-static void nores_free_modes(DEVMODEW *modes)
-{
-    free(modes);
-}
-
 static BOOL nores_get_current_mode(x11drv_settings_id id, DEVMODEW *mode)
 {
     RECT primary = get_host_primary_monitor_rect();
@@ -140,7 +135,6 @@ void X11DRV_Settings_Init(void)
     nores_handler.priority = 1;
     nores_handler.get_id = nores_get_id;
     nores_handler.get_modes = nores_get_modes;
-    nores_handler.free_modes = nores_free_modes;
     nores_handler.get_current_mode = nores_get_current_mode;
     nores_handler.set_current_mode = nores_set_current_mode;
     X11DRV_Settings_SetHandler(&nores_handler);
@@ -184,18 +178,18 @@ static DEVMODEW *get_full_mode(x11drv_settings_id id, DEVMODEW *dev_mode)
 
     if (!found_mode || mode_idx == mode_count)
     {
-        settings_handler.free_modes(modes);
+        free( modes );
         return NULL;
     }
 
     if (!(full_mode = malloc(sizeof(*found_mode) + found_mode->dmDriverExtra)))
     {
-        settings_handler.free_modes(modes);
+        free( modes );
         return NULL;
     }
 
     memcpy(full_mode, found_mode, sizeof(*found_mode) + found_mode->dmDriverExtra);
-    settings_handler.free_modes(modes);
+    free( modes );
 
     full_mode->dmFields |= DM_POSITION;
     full_mode->dmPosition = dev_mode->dmPosition;
@@ -456,7 +450,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             if (settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count, FALSE ))
             {
                 device_manager->add_modes( &current_mode, mode_count, modes, param );
-                settings_handler.free_modes( modes );
+                free( modes );
             }
         }
 

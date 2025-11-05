@@ -94,7 +94,7 @@ static BOOL xf86vm_get_id(const WCHAR *device_name, BOOL is_primary, x11drv_sett
 static void add_xf86vm_mode( DEVMODEW *mode, DWORD depth, const XF86VidModeModeInfo *mode_info, BOOL full )
 {
     mode->dmSize = sizeof(*mode);
-    mode->dmDriverExtra = full ? sizeof(mode_info) : 0;
+    mode->dmDriverExtra = full ? sizeof(*mode_info) : 0;
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS;
     if (mode_info->htotal && mode_info->vtotal)
     {
@@ -106,7 +106,13 @@ static void add_xf86vm_mode( DEVMODEW *mode, DWORD depth, const XF86VidModeModeI
     mode->dmPelsWidth = mode_info->hdisplay;
     mode->dmPelsHeight = mode_info->vdisplay;
     mode->dmDisplayFlags = 0;
-    if (full) memcpy( mode + 1, &mode_info, sizeof(mode_info) );
+    if (full)
+    {
+        XF86VidModeModeInfo extra = *mode_info;
+        extra.private = NULL;
+        extra.privsize = 0;
+        memcpy( mode + 1, &extra, sizeof(extra) );
+    }
 }
 
 static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count, BOOL full )
@@ -115,8 +121,6 @@ static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new
     XF86VidModeModeInfo **xf86vm_modes;
     UINT depth_idx, mode_idx = 0;
     DEVMODEW *modes, *mode;
-    SIZE_T size;
-    BYTE *ptr;
     Bool ret;
 
     X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
@@ -124,20 +128,14 @@ static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new
     if (X11DRV_check_error() || !ret || !xf86vm_mode_count)
         return FALSE;
 
-    /* Put a XF86VidModeModeInfo ** at the start to store the XF86VidMode modes pointer */
-    size = sizeof(XF86VidModeModeInfo **);
     /* Display modes in different color depth, with a XF86VidModeModeInfo * at the end of each
      * DEVMODEW as driver private data */
-    size += (xf86vm_mode_count * DEPTH_COUNT) * (sizeof(DEVMODEW) + sizeof(XF86VidModeModeInfo *));
-    ptr = calloc(1, size);
-    if (!ptr)
+    if (!(modes = calloc( 1, (xf86vm_mode_count * DEPTH_COUNT) * (sizeof(DEVMODEW) + sizeof(XF86VidModeModeInfo)) )))
     {
         RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
+        XFree( xf86vm_modes );
         return FALSE;
     }
-
-    memcpy(ptr, &xf86vm_modes, sizeof(xf86vm_modes));
-    modes = (DEVMODEW *)(ptr + sizeof(xf86vm_modes));
 
     for (depth_idx = 0, mode = modes; depth_idx < DEPTH_COUNT; ++depth_idx)
     {
@@ -151,20 +149,9 @@ static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new
 
     *new_modes = modes;
     *mode_count = mode_idx;
+
+    XFree( xf86vm_modes );
     return TRUE;
-}
-
-static void xf86vm_free_modes(DEVMODEW *modes)
-{
-    XF86VidModeModeInfo **xf86vm_modes;
-
-    if (modes)
-    {
-        BYTE *ptr = (BYTE *)modes - sizeof(xf86vm_modes);
-        memcpy(&xf86vm_modes, ptr, sizeof(xf86vm_modes));
-        XFree(xf86vm_modes);
-        free(ptr);
-    }
 }
 
 static BOOL xf86vm_get_current_mode(x11drv_settings_id id, DEVMODEW *mode)
@@ -210,7 +197,7 @@ static BOOL xf86vm_get_current_mode(x11drv_settings_id id, DEVMODEW *mode)
 
 static LONG xf86vm_set_current_mode(x11drv_settings_id id, const DEVMODEW *mode)
 {
-    XF86VidModeModeInfo *xf86vm_mode;
+    XF86VidModeModeInfo xf86vm_mode;
     Bool ret;
 
     if (id.id != 1)
@@ -229,10 +216,11 @@ static LONG xf86vm_set_current_mode(x11drv_settings_id id, const DEVMODEW *mode)
         WARN("Cannot change screen bit depth from %dbits to %dbits!\n",
              screen_bpp, mode->dmBitsPerPel);
 
-    assert(mode->dmDriverExtra == sizeof(XF86VidModeModeInfo *));
-    memcpy(&xf86vm_mode, (BYTE *)mode + sizeof(*mode), sizeof(xf86vm_mode));
+    assert( mode->dmDriverExtra == sizeof(XF86VidModeModeInfo) );
+    memcpy( &xf86vm_mode, (BYTE *)mode + sizeof(*mode), sizeof(xf86vm_mode) );
+
     X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
-    ret = pXF86VidModeSwitchToMode(gdi_display, DefaultScreen(gdi_display), xf86vm_mode);
+    ret = pXF86VidModeSwitchToMode( gdi_display, DefaultScreen(gdi_display), &xf86vm_mode );
     if (X11DRV_check_error() || !ret)
         return DISP_CHANGE_FAILED;
 #if 0 /* it is said that SetViewPort causes problems with some X servers */
@@ -307,7 +295,6 @@ void X11DRV_XF86VM_Init(void)
   xf86vm_handler.priority = 100;
   xf86vm_handler.get_id = xf86vm_get_id;
   xf86vm_handler.get_modes = xf86vm_get_modes;
-  xf86vm_handler.free_modes = xf86vm_free_modes;
   xf86vm_handler.get_current_mode = xf86vm_get_current_mode;
   xf86vm_handler.set_current_mode = xf86vm_set_current_mode;
   X11DRV_Settings_SetHandler(&xf86vm_handler);

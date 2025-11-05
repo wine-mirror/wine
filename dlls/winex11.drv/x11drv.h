@@ -783,9 +783,6 @@ struct x11drv_settings_handler
      * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
     BOOL (*get_modes)(x11drv_settings_id id, DWORD flags, DEVMODEW **modes, UINT *mode_count, BOOL full);
 
-    /* free_modes() will be called to free the mode list returned from get_modes() */
-    void (*free_modes)(DEVMODEW *modes);
-
     /* get_current_mode() will be called to get the current display mode of the device of id
      *
      * Following fields in DEVMODE must be valid:

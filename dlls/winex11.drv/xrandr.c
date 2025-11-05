@@ -317,11 +317,6 @@ static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
     return TRUE;
 }
 
-static void xrandr10_free_modes( DEVMODEW *modes )
-{
-    free( modes );
-}
-
 static BOOL xrandr10_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
 {
     XRRScreenConfiguration *screen_config;
@@ -1474,11 +1469,6 @@ done:
     return ret;
 }
 
-static void xrandr14_free_modes( DEVMODEW *modes )
-{
-    free( modes );
-}
-
 static BOOL xrandr14_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
 {
     struct current_mode *mode_ptr = NULL;
@@ -1723,7 +1713,6 @@ void X11DRV_XRandR_Init(void)
     settings_handler.priority = 200;
     settings_handler.get_id = xrandr10_get_id;
     settings_handler.get_modes = xrandr10_get_modes;
-    settings_handler.free_modes = xrandr10_free_modes;
     settings_handler.get_current_mode = xrandr10_get_current_mode;
     settings_handler.set_current_mode = xrandr10_set_current_mode;
     X11DRV_Settings_SetHandler( &settings_handler );
@@ -1781,7 +1770,6 @@ void X11DRV_XRandR_Init(void)
         settings_handler.priority = 300;
         settings_handler.get_id = xrandr14_get_id;
         settings_handler.get_modes = xrandr14_get_modes;
-        settings_handler.free_modes = xrandr14_free_modes;
         settings_handler.get_current_mode = xrandr14_get_current_mode;
         settings_handler.set_current_mode = xrandr14_set_current_mode;
         X11DRV_Settings_SetHandler( &settings_handler );
