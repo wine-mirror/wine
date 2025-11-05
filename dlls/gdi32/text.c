@@ -439,7 +439,7 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
                 for (i = 0; i < uCount; i++)
                     lpOrder[i] = i;
             }
-            return TRUE;
+            return FALSE;
         }
     }
 
@@ -975,8 +975,11 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
         bidi_flags = (dc_attr->text_align & TA_RTLREADING) || (flags & ETO_RTLREADING)
             ? WINE_GCPW_FORCE_RTL : WINE_GCPW_FORCE_LTR;
 
-        BIDI_Reorder( hdc, str, count, GCP_REORDER, bidi_flags, NULL, 0, NULL,
-                      &glyphs, &glyphs_count, NULL );
+        if (BIDI_Reorder( hdc, str, count, GCP_REORDER, bidi_flags, NULL, 0, NULL,
+                      &glyphs, &glyphs_count, NULL ))
+        {
+            dx = NULL;
+        }
 
         flags |= ETO_IGNORELANGUAGE;
         if (glyphs)
