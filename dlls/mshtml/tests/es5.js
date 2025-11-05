@@ -2101,6 +2101,9 @@ sync_test("ArrayBuffers & Views", function() {
         ok(constr.prototype.set.length === 2, name + ".prototype.set.length = " + constr.prototype.set.length);
         ok(constr.prototype.subarray.length === 2, name + ".prototype.subarray.length = " + constr.prototype.subarray.length);
 
+        test_own_data_prop_desc(constr, "BYTES_PER_ELEMENT", false, false, false);
+        ok(constr.BYTES_PER_ELEMENT === typeSz, name + ".BYTES_PER_ELEMENT = " + constr.BYTES_PER_ELEMENT);
+
         r = Object.getPrototypeOf(constr);
         ok(r === Function.prototype, name + "'s prototype is not Function.prototype: " + r);
         test_own_data_prop_desc(constr.prototype, "byteLength", false, false, false);

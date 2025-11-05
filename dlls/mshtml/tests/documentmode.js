@@ -4566,7 +4566,7 @@ sync_test("typed arrays", function() {
            "unexpected " + constr + " porototype's prototype " + Object.getPrototypeOf(constr.prototype));
         test_own_props(constr, constr,
                        ["BYTES_PER_ELEMENT", "arguments", "caller", "length", "prototype"],
-                       ["BYTES_PER_ELEMENT", "arguments", "caller"]);
+                       ["arguments", "caller"]);
         test_own_props(constr.prototype, constr + ".prototype",
                        ["BYTES_PER_ELEMENT", "buffer", "byteLength", "byteOffset", "constructor", "length", "set", "subarray"],
                        ["BYTES_PER_ELEMENT"]);

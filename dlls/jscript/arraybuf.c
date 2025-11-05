@@ -1026,6 +1026,11 @@ static HRESULT init_typed_array_constructor(script_ctx_t *ctx, builtin_invoke_t 
     if(FAILED(hres))
         return hres;
 
+    hres = jsdisp_define_data_property(ctx->typedarr_constr[type_idx], L"BYTES_PER_ELEMENT", 0,
+                                       jsval_number(typed_array_descs[type_idx].size));
+    if(FAILED(hres))
+        return hres;
+
     return jsdisp_define_data_property(ctx->global, name, PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                        jsval_obj(ctx->typedarr_constr[type_idx]));
 }
