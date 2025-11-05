@@ -388,7 +388,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
     ok(ARRAY_SIZE(found) >= num_expected, "Internal: bump found[] size\n");
 
     hSnapshot = pCreateToolhelp32Snapshot( TH32CS_SNAPMODULE, pid );
-    ok(hSnapshot != NULL, "Cannot create snapshot\n");
+    ok(hSnapshot != INVALID_HANDLE_VALUE, "Cannot create snapshot\n");
 
     for (i = 0; i < num_expected; i++) found[i] = 0;
     me.dwSize = sizeof(me);
