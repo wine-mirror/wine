@@ -757,6 +757,14 @@ static const struct typed_array_desc typed_array_descs[NUM_TYPEDARRAY_TYPES] = {
     [Float64Array_desc_idx]      = { 8, get_f64, set_f64        }
 };
 
+static inline TypedArrayInstance *typedarr_this(jsval_t vthis, jsclass_t class)
+{
+    jsdisp_t *jsdisp = is_object_instance(vthis) ? to_jsdisp(get_object(vthis)) : NULL;
+    return (jsdisp && is_class(jsdisp, class)) ? typedarr_from_jsdisp(jsdisp) : NULL;
+}
+
+static HRESULT create_typedarr(const builtin_info_t*,script_ctx_t*,ArrayBufferInstance*,DWORD,DWORD,jsdisp_t**);
+
 static HRESULT TypedArray_get_buffer(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 {
     TRACE("%p\n", jsthis);
@@ -812,6 +820,54 @@ static HRESULT fill_typedarr_data_from_object(const struct typed_array_desc *des
         desc->set(&data[i * desc->size], n);
     }
 
+    return S_OK;
+}
+
+static HRESULT TypedArray_subarray(const builtin_info_t *info, script_ctx_t *ctx, jsval_t vthis, WORD flags,
+        unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    TypedArrayInstance *typedarr;
+    DWORD begin = 0, end;
+    jsdisp_t *obj;
+    HRESULT hres;
+    double n;
+
+    if(!(typedarr = typedarr_this(vthis, info->class)))
+        return JS_E_NOT_TYPEDARRAY;
+    if(!argc)
+        return JS_E_TYPEDARRAY_INVALID_SUBARRAY;
+    if(!r)
+        return S_OK;
+
+    hres = to_integer(ctx, argv[0], &n);
+    if(FAILED(hres))
+        return hres;
+    end = typedarr->length;
+    if(n < 0.0)
+        n += typedarr->length;
+    if(n >= 0.0)
+        begin = n < typedarr->length ? n : typedarr->length;
+
+    if(argc > 1 && !is_undefined(argv[1])) {
+        hres = to_integer(ctx, argv[1], &n);
+        if(FAILED(hres))
+            return hres;
+        if(n < 0.0)
+            n += typedarr->length;
+        if(n >= 0.0) {
+            end = n < typedarr->length ? n : typedarr->length;
+            end = end < begin ? begin : end;
+        }else
+            end = begin;
+    }
+
+    hres = create_typedarr(info, ctx, typedarr->buffer,
+                           typedarr->offset + begin * typed_array_descs[info->class - FIRST_TYPEDARRAY_JSCLASS].size,
+                           end - begin, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    *r = jsval_obj(obj);
     return S_OK;
 }
 
@@ -1031,8 +1087,8 @@ static HRESULT name##_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
                                                                                         \
 static HRESULT name##_subarray(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r) \
 {                                                                                       \
-    FIXME("\n");                                                                        \
-    return E_NOTIMPL;                                                                   \
+    TRACE("\n");                                                                        \
+    return TypedArray_subarray(&name##_info, ctx, vthis, flags, argc, argv, r);         \
 }                                                                                       \
                                                                                         \
 static HRESULT name##_prop_get(jsdisp_t *dispex, unsigned idx, jsval_t *r)              \

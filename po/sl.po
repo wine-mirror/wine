@@ -4167,15 +4167,15 @@ msgstr "Pogojno kodno prevajanje je izklopljeno"
 msgid "Expected '@'"
 msgstr "Pričakovan je bil ';'"
 
-#: dlls/jscript/jscript.rc:95
+#: dlls/jscript/jscript.rc:96
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:96
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:97 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:98 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -4328,42 +4328,46 @@ msgid "Invalid offset/length when creating typed array"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:87
 #, fuzzy
 #| msgid "'[object]' is not a date object"
 msgid "'this' is not a DataView object"
 msgstr "'[object]' ni predmet datuma"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "DataView operation access beyond specified buffer length"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "DataView constructor argument offset is invalid"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 #, fuzzy
 #| msgid "'[object]' is not a date object"
 msgid "'this' is not a | object"
 msgstr "'[object]' ni predmet datuma"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 #, fuzzy
 #| msgid "'[object]' is not a date object"
 msgid "'key' is not an object"
 msgstr "'[object]' ni predmet datuma"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:93
 #, fuzzy
 #| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
 msgstr "Pričakovan je bil predmet polja"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:94
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

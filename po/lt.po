@@ -4044,15 +4044,15 @@ msgstr "Sąlyginis kompiliavimas išjungtas"
 msgid "Expected '@'"
 msgstr "Tikėtasi „@“"
 
-#: dlls/jscript/jscript.rc:95
+#: dlls/jscript/jscript.rc:96
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript kompiliavimo klaida"
 
-#: dlls/jscript/jscript.rc:96
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: dlls/jscript/jscript.rc:97 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:98 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
@@ -4193,35 +4193,39 @@ msgid "Invalid offset/length when creating typed array"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:87
 msgid "'this' is not a DataView object"
 msgstr "„Šis“ nėra DataView objektas"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 "DataView metode nenurodytas reikalingas argumentas poslinkis ar reikšmė"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView operacijos kreiptis už nurodyto buferio ilgio"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView konstruktoriaus argumentas poslinkis yra netinkamas"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "'this' is not a | object"
 msgstr "„Šis“ nėra | objektas"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "'key' is not an object"
 msgstr "„raktas“ nėra objektas"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:93
 msgid "ArrayBuffer object expected"
 msgstr "Tikėtasi ArrayBuffer objekto"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:94
 msgid "Property cannot have both accessors and a value"
 msgstr "Savybė negali turėti ir kreipiklių, ir reikšmės"
 

@@ -4037,15 +4037,15 @@ msgstr "Conditional compilation is turned off"
 msgid "Expected '@'"
 msgstr "Expected '@'"
 
-#: dlls/jscript/jscript.rc:95
+#: dlls/jscript/jscript.rc:96
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript compilation error"
 
-#: dlls/jscript/jscript.rc:96
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime error"
 
-#: dlls/jscript/jscript.rc:97 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:98 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Unknown runtime error"
 
@@ -4182,34 +4182,38 @@ msgid "Invalid offset/length when creating typed array"
 msgstr "Invalid offset/length when creating typed array"
 
 #: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr "Invalid begin/end value in typed array subarray method"
+
+#: dlls/jscript/jscript.rc:87
 msgid "'this' is not a DataView object"
 msgstr "'this' is not a DataView object"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr "Required argument offset or value in DataView method is not specified"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView operation access beyond specified buffer length"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView constructor argument offset is invalid"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "'this' is not a | object"
 msgstr "'this' is not a | object"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "'key' is not an object"
 msgstr "'key' is not an object"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:93
 msgid "ArrayBuffer object expected"
 msgstr "ArrayBuffer object expected"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:94
 msgid "Property cannot have both accessors and a value"
 msgstr "Property cannot have both accessors and a value"
 

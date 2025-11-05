@@ -4053,15 +4053,15 @@ msgstr "조건부 컴파일이 해제되었습니다"
 msgid "Expected '@'"
 msgstr "'@'가 필요합니다"
 
-#: dlls/jscript/jscript.rc:95
+#: dlls/jscript/jscript.rc:96
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript 컴파일 오류"
 
-#: dlls/jscript/jscript.rc:96
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 런타임 오류"
 
-#: dlls/jscript/jscript.rc:97 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:98 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "알 수 없는 런타임 오류"
 
@@ -4203,38 +4203,42 @@ msgid "Invalid offset/length when creating typed array"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:87
 #, fuzzy
 #| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
 msgstr "'this'는 '|' 개체가 아닙니다"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "DataView operation access beyond specified buffer length"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "DataView constructor argument offset is invalid"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "'this' is not a | object"
 msgstr "'this'는 '|' 개체가 아닙니다"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "'key' is not an object"
 msgstr "'key'는 개체가 아닙니다"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:93
 #, fuzzy
 #| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
 msgstr "배열 개체가 필요합니다"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:94
 msgid "Property cannot have both accessors and a value"
 msgstr "속성에 접근자와 값을 둘 다 지정할 수는 없습니다"
 

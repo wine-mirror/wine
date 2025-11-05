@@ -36,6 +36,7 @@ var JS_E_NONWRITABLE_MODIFIED = 0x800a13d7;
 var JS_E_TYPEDARRAY_BAD_CTOR_ARG = 0x800a13da;
 var JS_E_NOT_TYPEDARRAY = 0x800a13db;
 var JS_E_TYPEDARRAY_INVALID_OFFSLEN = 0x800a13dc;
+var JS_E_TYPEDARRAY_INVALID_SUBARRAY = 0x800a13dd;
 var JS_E_NOT_DATAVIEW = 0x800a13df;
 var JS_E_DATAVIEW_NO_ARGUMENT = 0x800a13e0;
 var JS_E_DATAVIEW_INVALID_ACCESS = 0x800a13e1;
@@ -2316,6 +2317,55 @@ sync_test("ArrayBuffers & Views", function() {
             for(var j = 0; j < 4; j++)
                 ok(arr[j] === [1, 3, 0, 12][j], r + "[" + j + "] = " + arr[j]);
 
+        arr = constr(10);
+        r = name + "(10)";
+        try {
+            arr.subarray.call(null, 0);
+            ok(false, r + ": calling subarray with null context did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_NOT_TYPEDARRAY, r + ": calling subarray with null context threw " + n);
+        }
+        try {
+            arr.subarray.call({}, 0);
+            ok(false, r + ": calling subarray with an object context did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_NOT_TYPEDARRAY, r + ": calling subarray with an object context threw " + n);
+        }
+        try {
+            arr.subarray();
+            ok(false, r + " subarray() did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_SUBARRAY, r + " subarray() threw " + n);
+        }
+        arr2 = arr.subarray(4);
+        ok(arr2.byteLength === 6 * typeSz, r + ".subarray(4).byteLength = " + arr2.byteLength);
+        ok(arr2.byteOffset === 4 * typeSz, r + ".subarray(4).byteOffset = " + arr2.byteOffset);
+        ok(arr2.length === 6, r + ".subarray(4).length = " + arr2.length);
+        ok(arr2.buffer === arr.buffer, r + ".subarray(4).buffer = " + arr2.buffer);
+        arr2 = arr.subarray(4, 2);
+        ok(arr2.byteLength === 0, r + ".subarray(4, 2).byteLength = " + arr2.byteLength);
+        ok(arr2.byteOffset === 4 * typeSz, r + ".subarray(4, 2).byteOffset = " + arr2.byteOffset);
+        ok(arr2.length === 0, r + ".subarray(4, 2).length = " + arr2.length);
+        ok(arr2.buffer === arr.buffer, r + ".subarray(4, 2).buffer = " + arr2.buffer);
+        arr2 = arr.subarray(-3, 100);
+        ok(arr2.byteLength === 3 * typeSz, r + ".subarray(-3, 100).byteLength = " + arr2.byteLength);
+        ok(arr2.byteOffset === 7 * typeSz, r + ".subarray(-3, 100).byteOffset = " + arr2.byteOffset);
+        ok(arr2.length === 3, r + ".subarray(-3, 100).length = " + arr2.length);
+        ok(arr2.buffer === arr.buffer, r + ".subarray(-3, 100).buffer = " + arr2.buffer);
+        arr2 = arr.subarray(42, -1);
+        ok(arr2.byteLength === 0, r + ".subarray(42, -1).byteLength = " + arr2.byteLength);
+        ok(arr2.byteOffset === 10 * typeSz, r + ".subarray(42, -1).byteOffset = " + arr2.byteOffset);
+        ok(arr2.length === 0, r + ".subarray(42, -1).length = " + arr2.length);
+        ok(arr2.buffer === arr.buffer, r + ".subarray(42, -1).buffer = " + arr2.buffer);
+        arr2 = arr.subarray(2, -3);
+        ok(arr2.byteLength === 5 * typeSz, r + ".subarray(2, -3).byteLength = " + arr2.byteLength);
+        ok(arr2.byteOffset === 2 * typeSz, r + ".subarray(2, -3).byteOffset = " + arr2.byteOffset);
+        ok(arr2.length === 5, r + ".subarray(2, -3).length = " + arr2.length);
+        ok(arr2.buffer === arr.buffer, r + ".subarray(2, -3).buffer = " + arr2.buffer);
+
         arr = constr(buf, typeSz, 2);
         name = name + "(buf, " + typeSz + ", 2)";
         ok(arr.byteLength === 2 * typeSz, name + ".byteLength = " + arr.byteLength);
@@ -2337,6 +2387,11 @@ sync_test("ArrayBuffers & Views", function() {
         ok(arr2.byteOffset === 0, name + " copy.byteOffset = " + arr2.byteOffset);
         ok(arr2.length === arr.length, name + " copy.length = " + arr2.length);
         ok(arr2.buffer !== arr.buffer, name + " copy.buffer = " + arr2.buffer);
+        arr2 = arr.subarray(undefined, "1");
+        ok(arr2.byteLength === typeSz, name + " subarray(undefined, '1').byteLength = " + arr2.byteLength);
+        ok(arr2.byteOffset === arr.byteOffset, name + " subarray(undefined, '1').byteOffset = " + arr2.byteOffset);
+        ok(arr2.length === 1, name + " subarray(undefined, '1').length = " + arr2.length);
+        ok(arr2.buffer === arr.buffer, name + " subarray(undefined, '1').buffer = " + arr2.buffer);
     }
 
     arr = new Float32Array(3);
@@ -2389,6 +2444,18 @@ sync_test("ArrayBuffers & Views", function() {
     arr[1] = 33333333333;
     ok(arr[0] == 4145490148, "32-bit unsigned arr[0] after overflow = " + arr[0]);
     ok(arr[1] == 3268562261, "32-bit unsigned arr[1] after overflow = " + arr[1]);
+
+    /* methods are incompatible, even though thrown error is not explicit */
+    arr2 = new Int32Array();
+
+    ok(Uint16Array.prototype.subarray !== Int32Array.prototype.subarray, "Uint16Array and Int32Array have same subarray methods");
+    try {
+        Uint32Array.prototype.subarray.call(arr2, 0);
+        ok(false, "calling Uint32Array's subarray with Int32Array context did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_NOT_TYPEDARRAY, "calling Uint32Array's subarray with Int32Array context threw " + n);
+    }
 });
 
 sync_test("builtin_context", function() {
