@@ -7030,6 +7030,17 @@ static void test_factory_check_feature_support(void)
 
 static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
 {
+    static const struct
+    {
+        DXGI_SWAP_EFFECT effect;
+        HRESULT expected;
+    } effects[] =
+    {
+        {DXGI_SWAP_EFFECT_DISCARD,         DXGI_ERROR_INVALID_CALL},
+        {DXGI_SWAP_EFFECT_SEQUENTIAL,      DXGI_ERROR_INVALID_CALL},
+        {DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, S_OK},
+        {DXGI_SWAP_EFFECT_FLIP_DISCARD,    S_OK},
+    };
     DXGI_SWAP_CHAIN_DESC1 swapchain_desc;
     HANDLE semaphore, semaphore2;
     IDXGISwapChain2 *swapchain2;
@@ -7101,9 +7112,22 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     ref_count = IDXGISwapChain2_Release(swapchain2);
     ok(!ref_count, "Swap chain has %lu references left.\n", ref_count);
 
-    /* test swap chain with waitable object */
+    /* test waitable object compability with effects */
     swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+    for (i = 0; i < ARRAY_SIZE(effects); ++i)
+    {
+        swapchain_desc.SwapEffect = effects[i].effect;
+        hr = IDXGIFactory2_CreateSwapChainForHwnd(factory2, device,
+                window, &swapchain_desc, NULL, NULL, &swapchain1);
+        todo_wine_if(!is_d3d12 && i < 2)
+        ok(hr == effects[i].expected, "Effect %#x: got hr %#lx, expected %#lx.\n",
+                effects[i].effect, hr, effects[i].expected);
+        if (SUCCEEDED(hr))
+            IDXGISwapChain1_Release(swapchain1);
+    }
 
+    /* test swap chain with waitable object */
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     hr = IDXGIFactory2_CreateSwapChainForHwnd(factory2, device,
             window, &swapchain_desc, NULL, NULL, &swapchain1);
     ok(hr == S_OK, "Failed to create swap chain, hr %#lx.\n", hr);
