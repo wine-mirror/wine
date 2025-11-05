@@ -515,7 +515,7 @@ static int process_events( DWORD mask )
         next = LIST_ENTRY( event_queue.next, struct java_event, entry );
     }
     current_event = previous;
-    return !check_fd_events( event_pipe[0], POLLIN );
+    return list_empty( &event_queue ) && !check_fd_events( event_pipe[0], POLLIN );
 }
 
 
