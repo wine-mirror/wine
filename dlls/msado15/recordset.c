@@ -270,7 +270,7 @@ static HRESULT WINAPI field_get_Type( Field *iface, DataTypeEnum *type )
 
 static LONG get_column_count( struct recordset *recordset )
 {
-    return recordset->fields.count;
+    return recordset->fields.count == -1 ? 0 : recordset->fields.count;
 }
 
 static HRESULT WINAPI field_get_Value( Field *iface, VARIANT *val )
@@ -955,12 +955,115 @@ static HRESULT WINAPI fields_Invoke( Fields *iface, DISPID member, REFIID riid, 
     return hr;
 }
 
+static BOOL resize_fields( struct fields *fields, ULONG count )
+{
+    if (count > fields->allocated)
+    {
+        struct field **tmp;
+        ULONG new_size = max( count, fields->allocated * 2 );
+        if (!(tmp = realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
+        fields->field = tmp;
+        fields->allocated = new_size;
+    }
+
+    return TRUE;
+}
+
+static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
+{
+    struct field *field;
+    HRESULT hr;
+
+    hr = Field_create( info->pwszName, fields->count, fields_get_recordset(fields), &field );
+    if (hr != S_OK) return hr;
+    field->type = info->wType;
+    field->defined_size = info->ulColumnSize;
+    if (info->dwFlags != adFldUnspecified) field->attrs = info->dwFlags;
+    field->prec = info->bPrecision;
+    field->scale = info->bScale;
+
+    if (!(resize_fields( fields, fields->count + 1 )))
+    {
+        Field_Release( &field->Field_iface );
+        return E_OUTOFMEMORY;
+    }
+
+    fields->field[fields->count++] = field;
+    return S_OK;
+}
+
+static HRESULT init_fields( struct fields *fields )
+{
+    struct recordset *rec = fields_get_recordset( fields );
+    DBCOLUMNINFO *colinfo = NULL;
+    OLECHAR *strbuf = NULL;
+    DBORDINAL i, columns;
+    IColumnsInfo *info;
+    HRESULT hr;
+
+    if (fields->count != -1) return S_OK;
+
+    if (!rec->row_set)
+    {
+        fields->count = 0;
+        return S_OK;
+    }
+
+    hr = IRowset_QueryInterface( rec->row_set, &IID_IColumnsInfo, (void **)&info );
+    if (FAILED(hr) || !info)
+    {
+        fields->count = 0;
+        return S_OK;
+    }
+
+    hr = IColumnsInfo_GetColumnInfo( info, &columns, &colinfo, &strbuf );
+    IColumnsInfo_Release( info );
+    if (FAILED(hr)) return hr;
+
+    if (!resize_fields( fields, columns ))
+    {
+        CoTaskMemFree( colinfo );
+        CoTaskMemFree( strbuf );
+        return E_OUTOFMEMORY;
+    }
+
+    fields->count = 0;
+    for (i = 0; i < columns; i++)
+    {
+        TRACE("Adding Column %Iu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
+                "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
+                i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
+                colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
+                colinfo[i].bPrecision, colinfo[i].bScale);
+
+        hr = append_field(fields, &colinfo[i]);
+        if (FAILED(hr))
+        {
+            for (; i > 0; i--)
+                Field_Release(&fields->field[i - 1]->Field_iface);
+            fields->count = -1;
+
+            CoTaskMemFree( colinfo );
+            CoTaskMemFree( strbuf );
+
+            ERR("Failed to add Field name - 0x%08lx\n", hr);
+            return hr;
+        }
+    }
+
+    CoTaskMemFree( colinfo );
+    CoTaskMemFree( strbuf );
+    return S_OK;
+}
+
 static HRESULT WINAPI fields_get_Count( Fields *iface, LONG *count )
 {
     struct fields *fields = impl_from_Fields( iface );
+    HRESULT hr;
 
     TRACE( "%p, %p\n", fields, count );
 
+    if ((hr = init_fields( fields )) != S_OK) return hr;
     *count = fields->count;
     return S_OK;
 }
@@ -1035,6 +1138,7 @@ static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj
 
     TRACE( "%p, %s, %p\n", fields, debugstr_variant(&index), obj );
 
+    if ((hr = init_fields( fields )) != S_OK) return hr;
     if ((hr = map_index( fields, &index, &i )) != S_OK) return hr;
 
     Field_AddRef( &fields->field[i]->Field_iface );
@@ -1042,52 +1146,16 @@ static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj
     return S_OK;
 }
 
-static BOOL resize_fields( struct fields *fields, ULONG count )
-{
-    if (count > fields->allocated)
-    {
-        struct field **tmp;
-        ULONG new_size = max( count, fields->allocated * 2 );
-        if (!(tmp = realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
-        fields->field = tmp;
-        fields->allocated = new_size;
-    }
-
-    fields->count = count;
-    return TRUE;
-}
-
-static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
-{
-    struct field *field;
-    HRESULT hr;
-
-    hr = Field_create( info->pwszName, fields->count, fields_get_recordset(fields), &field );
-    if (hr != S_OK) return hr;
-    field->type = info->wType;
-    field->defined_size = info->ulColumnSize;
-    if (info->dwFlags != adFldUnspecified) field->attrs = info->dwFlags;
-    field->prec = info->bPrecision;
-    field->scale = info->bScale;
-
-    if (!(resize_fields( fields, fields->count + 1 )))
-    {
-        Field_Release( &field->Field_iface );
-        return E_OUTOFMEMORY;
-    }
-
-    fields->field[fields->count - 1] = field;
-    return S_OK;
-}
-
 static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum type, ADO_LONGPTR size, FieldAttributeEnum attr )
 {
     struct fields *fields = impl_from_Fields( iface );
     DBCOLUMNINFO colinfo;
+    HRESULT hr;
 
     TRACE( "%p, %s, %u, %Id, %d\n", fields, debugstr_w(name), type, size, attr );
 
     if (fields_get_recordset(fields)->state != adStateClosed) return MAKE_ADO_HRESULT( adErrIllegalOperation );
+    if ((hr = init_fields( fields )) != S_OK) return hr;
 
     memset( &colinfo, 0, sizeof(colinfo) );
     colinfo.pwszName = name;
@@ -1187,50 +1255,12 @@ static const ISupportErrorInfoVtbl fields_supporterrorinfo_vtbl =
     fields_supporterrorinfo_InterfaceSupportsErrorInfo
 };
 
-static void map_rowset_fields(struct recordset *recordset, struct fields *fields)
-{
-    HRESULT hr;
-    IColumnsInfo *columninfo;
-    DBORDINAL columns, i;
-    DBCOLUMNINFO *colinfo;
-    OLECHAR *stringsbuffer;
-
-    /* Not Finding the interface or GetColumnInfo failing just causes 0 Fields to be returned */
-    hr = IRowset_QueryInterface(recordset->row_set, &IID_IColumnsInfo, (void**)&columninfo);
-    if (FAILED(hr))
-        return;
-
-    hr = IColumnsInfo_GetColumnInfo(columninfo, &columns, &colinfo, &stringsbuffer);
-    if (SUCCEEDED(hr))
-    {
-        for (i=0; i < columns; i++)
-        {
-            TRACE("Adding Column %Iu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
-                  "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
-                  i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
-                  colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
-                  colinfo[i].bPrecision, colinfo[i].bScale);
-
-            hr = append_field(fields, &colinfo[i]);
-            if (FAILED(hr))
-            {
-                ERR("Failed to add Field name - 0x%08lx\n", hr);
-                return;
-            }
-        }
-
-        CoTaskMemFree(colinfo);
-        CoTaskMemFree(stringsbuffer);
-    }
-
-    IColumnsInfo_Release(columninfo);
-}
-
-static void fields_init( struct recordset *recordset )
+static void Fields_create( struct recordset *recordset )
 {
     memset( &recordset->fields, 0, sizeof(recordset->fields) );
     recordset->fields.Fields_iface.lpVtbl = &fields_vtbl;
     recordset->fields.ISupportErrorInfo_iface.lpVtbl = &fields_supporterrorinfo_vtbl;
+    recordset->fields.count = -1;
 }
 
 static inline struct recordset *impl_from_Recordset( _Recordset *iface )
@@ -1304,7 +1334,7 @@ static void close_recordset( struct recordset *recordset )
         free(recordset->haccessors);
         recordset->haccessors = NULL;
     }
-    recordset->fields.count = 0;
+    recordset->fields.count = -1;
 
     for (row = 0; row < recordset->count; row++)
         for (col = 0; col < col_count; col++) VariantClear( &recordset->data[row * col_count + col] );
@@ -2036,14 +2066,14 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
         DBBYTEOFFSET datasize)
 {
     IRowset *rowset2;
-    DBORDINAL columns;
+    LONG columns;
     HRESULT hr;
     DBCOUNTITEM obtained;
     HROW *row = NULL;
     int datarow = 0, datacol;
     char *data;
 
-    columns = get_column_count(recordset);
+    hr = Fields_get_Count(&recordset->fields.Fields_iface, &columns);
 
     hr = IUnknown_QueryInterface(rowset, &IID_IRowset, (void**)&rowset2);
     if (FAILED(hr))
@@ -2268,7 +2298,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
             return hr;
     }
 
-    if (get_column_count(recordset))
+    if (recordset->fields.count != -1)
     {
         DBCOLUMNINFO *info;
         int i;
@@ -2952,9 +2982,6 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = rowset;
 
-    if ( !get_column_count(recordset) )
-        map_rowset_fields(recordset, &recordset->fields);
-
     recordset->state = adStateOpen;
     return S_OK;
 }
@@ -3024,7 +3051,7 @@ HRESULT Recordset_create( void **obj )
     VariantInit( &recordset->filter );
     recordset->columntypes = NULL;
     recordset->haccessors = NULL;
-    fields_init( recordset );
+    Fields_create( recordset );
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );

@@ -1067,10 +1067,10 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     todo_wine CHECK_CALLED( rowset_QI_IRowsetExactScroll );
     todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
     todo_wine CHECK_CALLED( rowset_info_GetProperties );
-    if (exact_scroll) CHECK_CALLED( rowset_QI_IColumnsInfo );
-    else todo_wine CHECK_NOT_CALLED( rowset_QI_IColumnsInfo );
-    if (exact_scroll) CHECK_CALLED( column_info_GetColumnInfo );
-    else todo_wine CHECK_NOT_CALLED( column_info_GetColumnInfo );
+    if (exact_scroll) todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
+    else CHECK_NOT_CALLED( rowset_QI_IColumnsInfo );
+    if (exact_scroll) todo_wine CHECK_CALLED( column_info_GetColumnInfo );
+    else CHECK_NOT_CALLED( column_info_GetColumnInfo );
     ok( hr == S_OK, "got %08lx\n", hr );
 
     hr = _Recordset_get_State( recordset, &state );
@@ -1081,8 +1081,13 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT( rowset_QI_IColumnsInfo );
     SET_EXPECT( column_info_GetColumnInfo );
     hr = Fields_get_Count( fields, &count );
-    todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
-    todo_wine CHECK_CALLED( column_info_GetColumnInfo );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED( rowset_QI_IColumnsInfo );
+    CHECK_CALLED( column_info_GetColumnInfo );
+    ok( count == 1, "got %ld\n", count );
+
+    hr = Fields_get_Count( fields, &count );
+    ok( hr == S_OK, "got %08lx\n", hr );
     ok( count == 1, "got %ld\n", count );
 
     V_VT( &index ) = VT_BSTR;
