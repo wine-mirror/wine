@@ -1152,12 +1152,12 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT(accessor_ReleaseAccessor);
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine CHECK_CALLED(rowset_QI_IRowsetChange);
-    todo_wine CHECK_CALLED(rowset_QI_IAccessor);
-    todo_wine CHECK_CALLED(accessor_CreateAccessor);
-    todo_wine CHECK_CALLED(accessor_AddRefAccessor);
-    todo_wine CHECK_CALLED(rowset_change_InsertRow);
-    todo_wine CHECK_CALLED(accessor_ReleaseAccessor);
+    CHECK_CALLED(rowset_QI_IRowsetChange);
+    CHECK_CALLED(rowset_QI_IAccessor);
+    CHECK_CALLED(accessor_CreateAccessor);
+    CHECK_CALLED(accessor_AddRefAccessor);
+    CHECK_CALLED(rowset_change_InsertRow);
+    CHECK_CALLED(accessor_ReleaseAccessor);
 
     Fields_Release(fields);
     ADORecordsetConstruction_Release(construct);
@@ -1165,9 +1165,9 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT( rowset_QI_IAccessor );
     SET_EXPECT(accessor_ReleaseAccessor);
     ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
-    todo_wine CHECK_CALLED(rowset_ReleaseRows );
+    CHECK_CALLED(rowset_ReleaseRows );
     todo_wine CHECK_CALLED( rowset_QI_IAccessor );
-    todo_wine CHECK_CALLED(accessor_ReleaseAccessor);
+    CHECK_CALLED(accessor_ReleaseAccessor);
     ok( testrowset.refs == 1, "got %ld\n", testrowset.refs );
 }
 

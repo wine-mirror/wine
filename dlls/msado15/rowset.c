@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 #include "oledb.h"
+#include "oledberr.h"
 #include "unknwn.h"
 
 #include "wine/debug.h"
@@ -35,6 +36,13 @@ struct rowset
     int columns_cnt;
     DBCOLUMNINFO *columns;
     OLECHAR *columns_buf;
+
+    int row_cnt;
+};
+
+struct accessor
+{
+    LONG refs;
 };
 
 static inline struct rowset *impl_from_IRowsetExactScroll(IRowsetExactScroll *iface)
@@ -154,8 +162,15 @@ static HRESULT WINAPI rowset_ReleaseRows(IRowsetExactScroll *iface, DBCOUNTITEM 
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll(iface);
 
-    FIXME("%p, %Id, %p, %p, %p, %p\n", rowset, count, rows, options, ref_counts, status);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %p, %p, %p, %p\n", rowset, count, rows, options, ref_counts, status);
+
+    if (options || ref_counts || status)
+    {
+        FIXME("unhandled parameters\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_RestartPosition(IRowsetExactScroll *iface, HCHAPTER reserved)
@@ -391,8 +406,17 @@ static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER res
 {
     struct rowset *rowset = impl_from_IRowsetChange(iface);
 
-    FIXME("%p, %Iu, %Id, %p, %p\n", rowset, reserved, accessor, data, row);
-    return E_NOTIMPL;
+    TRACE("%p, %Iu, %Id, %p, %p\n", rowset, reserved, accessor, data, row);
+
+    if (data)
+    {
+        FIXME("setting data not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    rowset->row_cnt++;
+    if (row) *row = rowset->row_cnt;
+    return S_OK;
 }
 
 static struct IRowsetChangeVtbl rowset_change_vtbl =
@@ -425,10 +449,17 @@ static ULONG WINAPI accessor_Release(IAccessor *iface)
 
 static HRESULT WINAPI accessor_AddRefAccessor(IAccessor *iface, HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
 {
+    struct accessor *accessor = (struct accessor *)hAccessor;
     struct rowset *rowset = impl_from_IAccessor(iface);
+    LONG ref;
 
-    FIXME("%p, %Id, %p\n", rowset, hAccessor, pcRefCount);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %p\n", rowset, hAccessor, pcRefCount);
+
+    if (!hAccessor) return DB_E_BADACCESSORHANDLE;
+
+    ref = InterlockedIncrement(&accessor->refs);
+    if (pcRefCount) *pcRefCount = ref;
+    return S_OK;
 }
 
 static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS dwAccessorFlags,
@@ -436,10 +467,31 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
         HACCESSOR *phAccessor, DBBINDSTATUS rgStatus[])
 {
     struct rowset *rowset = impl_from_IAccessor(iface);
+    struct accessor *accessor;
 
-    FIXME("%p, %lx, %Iu, %p %Id, %p %p\n", rowset, dwAccessorFlags, cBindings,
+    TRACE("%p, %lx, %Iu, %p %Id, %p %p\n", rowset, dwAccessorFlags, cBindings,
             rgBindings, cbRowSize, phAccessor, rgStatus);
-    return E_NOTIMPL;
+
+    if (!phAccessor) return E_INVALIDARG;
+    *phAccessor = 0;
+
+    if (cBindings || cbRowSize)
+    {
+        FIXME("accessing data not implemented\n");
+        return E_NOTIMPL;
+    }
+    if (dwAccessorFlags != DBACCESSOR_ROWDATA)
+    {
+        FIXME("unsupported flags %lx\n", dwAccessorFlags);
+        return E_NOTIMPL;
+    }
+
+    accessor = calloc(1, sizeof(*accessor));
+    if (!accessor) return E_OUTOFMEMORY;
+    accessor->refs = 1;
+
+    *phAccessor = (HACCESSOR)accessor;
+    return S_OK;
 }
 
 static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor,
@@ -454,10 +506,20 @@ static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor
 static HRESULT WINAPI accessor_ReleaseAccessor(IAccessor *iface,
         HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
 {
+    struct accessor *accessor = (struct accessor *)hAccessor;
     struct rowset *rowset = impl_from_IAccessor(iface);
+    LONG ref;
 
-    FIXME("%p, %Id, %p\n", rowset, hAccessor, pcRefCount);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %p\n", rowset, hAccessor, pcRefCount);
+
+    if (!hAccessor) return DB_E_BADACCESSORHANDLE;
+
+    ref = InterlockedDecrement(&accessor->refs);
+    if (!ref)
+        free(accessor);
+
+    if (pcRefCount) *pcRefCount = ref;
+    return S_OK;
 }
 
 static struct IAccessorVtbl accessor_vtbl =

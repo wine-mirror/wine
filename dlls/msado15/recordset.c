@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
+#define NO_INTERFACE ((void*)-1)
+
 struct recordset;
 
 struct field
@@ -79,12 +81,16 @@ struct recordset
     CursorLocationEnum cursor_location;
     CursorTypeEnum     cursor_type;
     IRowset           *row_set;
+    IRowsetChange     *rowset_change;
+    IAccessor         *accessor;
     EditModeEnum      editmode;
+    HROW               current_row;
     LONG               cache_size;
     ADO_LONGPTR        max_records;
     VARIANT            filter;
 
     DBTYPE            *columntypes;
+    HACCESSOR          hacc_empty; /* haccessor for adding empty rows */
     HACCESSOR         *haccessors;
 };
 
@@ -1253,8 +1259,25 @@ static void close_recordset( struct recordset *recordset )
     if (recordset->haccessors)
         IRowset_QueryInterface(recordset->row_set, &IID_IAccessor, (void**)&accessor);
 
+    if ( recordset->current_row )
+    {
+        IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL );
+        recordset->current_row = 0;
+    }
+    if ( recordset->hacc_empty )
+    {
+        IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, NULL );
+        recordset->hacc_empty = 0;
+    }
+
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = NULL;
+    if ( recordset->rowset_change && recordset->rowset_change != NO_INTERFACE )
+        IRowsetChange_Release( recordset->rowset_change );
+    recordset->rowset_change = NULL;
+    if (recordset->accessor && recordset->accessor != NO_INTERFACE )
+        IAccessor_Release( recordset->accessor );
+    recordset->accessor = NULL;
 
     VariantClear( &recordset->filter );
 
@@ -1653,12 +1676,59 @@ static BOOL resize_recordset( struct recordset *recordset, ULONG row_count )
 static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, VARIANT values )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    DBREFCOUNT refcount;
+    HRESULT hr;
 
     TRACE( "%p, %s, %s\n", recordset, debugstr_variant(&field_list), debugstr_variant(&values) );
     if (V_VT(&field_list) != VT_ERROR)
         FIXME( "ignoring field list and values\n" );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->rowset_change)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetChange,
+                (void **)&recordset->rowset_change );
+        if (FAILED(hr) || !recordset->rowset_change)
+            recordset->rowset_change = NO_INTERFACE;
+    }
+    if (recordset->rowset_change == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    if (!recordset->accessor)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
+        if (FAILED(hr) || !recordset->accessor)
+            recordset->accessor = NO_INTERFACE;
+    }
+    if (recordset->accessor == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    if (!recordset->hacc_empty)
+    {
+        hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+                0, NULL, 0, &recordset->hacc_empty, NULL );
+        if (FAILED(hr) || !recordset->hacc_empty)
+            return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    }
+
+    hr = IAccessor_AddRefAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
+    if (FAILED(hr))
+        return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    if (recordset->current_row)
+    {
+        hr = IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL );
+        if (FAILED(hr))
+        {
+            IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
+            return hr;
+        }
+    }
+    hr = IRowsetChange_InsertRow( recordset->rowset_change, 0,
+            recordset->hacc_empty, NULL, &recordset->current_row );
+    IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
+    if (FAILED(hr))
+        return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
 
     if (!resize_recordset( recordset, recordset->count + 1 )) return E_OUTOFMEMORY;
     recordset->index = recordset->count - 1;
