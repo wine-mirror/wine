@@ -1614,6 +1614,17 @@ uint32_t FAudioVoice_SetEffectParameters(
 		return 0;
 	}
 
+	if (voice->effects.parameters == NULL)
+	{
+		/* Cannot set parameters if there is no effect chain! */
+		LOG_ERROR(
+			voice->audio,
+			"Setting effect parameters on voice with no effect chain: %p",
+			(void*) voice
+		);
+		return FAUDIO_E_INVALID_CALL;
+	}
+
 	if (voice->effects.parameters[EffectIndex] == NULL)
 	{
 		voice->effects.parameters[EffectIndex] = voice->audio->pMalloc(

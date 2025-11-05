@@ -343,7 +343,6 @@ void FAudio_PlatformInit(
 	struct FAudioAudioClientThreadArgs *args;
 	struct FAudioWin32PlatformData *data;
 	REFERENCE_TIME duration;
-	WAVEFORMATEX *closest;
 	IMMDevice *device = NULL;
 	HRESULT hr;
 	HANDLE audioEvent = NULL;
@@ -410,25 +409,10 @@ void FAudio_PlatformInit(
 	if (flags & FAUDIO_1024_QUANTUM) duration = 213333;
 	else duration = 100000;
 
-	hr = IAudioClient_IsFormatSupported(
-		data->client,
-		AUDCLNT_SHAREMODE_SHARED,
-		&args->format.Format,
-		&closest
-	);
-	FAudio_assert(!FAILED(hr) && "Failed to find supported audio format!");
-
-	if (closest)
-	{
-		if (closest->wFormatTag != WAVE_FORMAT_EXTENSIBLE) args->format.Format = *closest;
-		else args->format = *(WAVEFORMATEXTENSIBLE *)closest;
-		CoTaskMemFree(closest);
-	}
-
 	hr = IAudioClient_Initialize(
 		data->client,
 		AUDCLNT_SHAREMODE_SHARED,
-		AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+		AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
 		duration * 3,
 		0,
 		&args->format.Format,

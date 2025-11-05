@@ -837,7 +837,7 @@ static inline uint32_t GetMask(uint16_t channels)
 	if (channels == 4) return SPEAKER_QUAD;
 	if (channels == 5) return SPEAKER_4POINT1;
 	if (channels == 6) return SPEAKER_5POINT1;
-	if (channels == 8) return SPEAKER_7POINT1;
+	if (channels == 8) return SPEAKER_7POINT1_SURROUND;
 	FAudio_assert(0 && "Unrecognized speaker layout!");
 	return 0;
 }
