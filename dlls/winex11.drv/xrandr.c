@@ -238,31 +238,30 @@ static BOOL xrandr10_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
     return TRUE;
 }
 
-static void add_xrandr10_mode( DEVMODEW *mode, DWORD depth, DWORD width, DWORD height,
+static void add_xrandr10_mode( struct x11drv_mode *mode, DWORD depth, DWORD width, DWORD height,
                                DWORD frequency, SizeID size_id )
 {
-    mode->dmSize = sizeof(*mode);
-    mode->dmDriverExtra = sizeof(SizeID);
-    mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH |
+    mode->mode.dmSize = sizeof(*mode);
+    mode->mode.dmDriverExtra = sizeof(*mode) - sizeof(mode->mode);
+    mode->mode.dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH |
                      DM_PELSHEIGHT | DM_DISPLAYFLAGS;
     if (frequency)
     {
-        mode->dmFields |= DM_DISPLAYFREQUENCY;
-        mode->dmDisplayFrequency = frequency;
+        mode->mode.dmFields |= DM_DISPLAYFREQUENCY;
+        mode->mode.dmDisplayFrequency = frequency;
     }
-    mode->dmDisplayOrientation = DMDO_DEFAULT;
-    mode->dmBitsPerPel = depth;
-    mode->dmPelsWidth = width;
-    mode->dmPelsHeight = height;
-    mode->dmDisplayFlags = 0;
-    memcpy( mode + 1, &size_id, sizeof(size_id) );
+    mode->mode.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->mode.dmBitsPerPel = depth;
+    mode->mode.dmPelsWidth = width;
+    mode->mode.dmPelsHeight = height;
+    mode->mode.dmDisplayFlags = 0;
+    mode->size_id = size_id;
 }
 
-static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *new_mode_count )
+static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, struct x11drv_mode **new_modes, UINT *new_mode_count )
 {
-    INT size_idx, depth_idx, rate_idx, mode_idx = 0;
-    INT size_count, rate_count, mode_count = 0;
-    DEVMODEW *modes, *mode;
+    INT size_idx, depth_idx, rate_idx, size_count, rate_count, mode_count = 0;
+    struct x11drv_mode *modes, *mode;
     XRRScreenSize *sizes;
     short *rates;
 
@@ -279,10 +278,7 @@ static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
             ++mode_count;
     }
 
-    /* Allocate space for reported modes in three depths, and put an SizeID at the end of DEVMODEW as
-     * driver private data */
-    modes = calloc( mode_count * DEPTH_COUNT, sizeof(*modes) + sizeof(SizeID) );
-    if (!modes)
+    if (!(modes = calloc( mode_count * DEPTH_COUNT, sizeof(*modes) )))
     {
         RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
@@ -295,25 +291,21 @@ static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
             rates = pXRRRates( gdi_display, DefaultScreen( gdi_display ), size_idx, &rate_count );
             if (!rate_count)
             {
-                add_xrandr10_mode( mode, depths[depth_idx], sizes[size_idx].width,
+                add_xrandr10_mode( mode++, depths[depth_idx], sizes[size_idx].width,
                                    sizes[size_idx].height, 0, size_idx );
-                mode = NEXT_DEVMODEW( mode );
-                mode_idx++;
                 continue;
             }
 
             for (rate_idx = 0; rate_idx < rate_count; ++rate_idx)
             {
-                add_xrandr10_mode( mode, depths[depth_idx], sizes[size_idx].width,
+                add_xrandr10_mode( mode++, depths[depth_idx], sizes[size_idx].width,
                                    sizes[size_idx].height, rates[rate_idx], size_idx );
-                mode = NEXT_DEVMODEW( mode );
-                mode_idx++;
             }
         }
     }
 
     *new_modes = modes;
-    *new_mode_count = mode_idx;
+    *new_mode_count = mode - modes;
     return TRUE;
 }
 
@@ -359,13 +351,15 @@ static BOOL xrandr10_get_current_mode( x11drv_settings_id id, DEVMODEW *mode )
     return TRUE;
 }
 
-static LONG xrandr10_set_current_mode( x11drv_settings_id id, const DEVMODEW *mode )
+static LONG xrandr10_set_current_mode( x11drv_settings_id id, const struct x11drv_mode *full_mode )
 {
+    const DEVMODEW *mode = &full_mode->mode;
     XRRScreenConfiguration *screen_config;
     Rotation rotation;
-    SizeID size_id;
     Window root;
     Status stat;
+
+    assert( sizeof(*full_mode) == sizeof(full_mode->mode) + full_mode->mode.dmDriverExtra );
 
     if (id.id != 1)
     {
@@ -387,14 +381,11 @@ static LONG xrandr10_set_current_mode( x11drv_settings_id id, const DEVMODEW *mo
     screen_config = pXRRGetScreenInfo( gdi_display, root );
     pXRRConfigCurrentConfiguration( screen_config, &rotation );
 
-    assert( mode->dmDriverExtra == sizeof(SizeID) );
-    memcpy( &size_id, (BYTE *)mode + sizeof(*mode), sizeof(size_id) );
-
     if (mode->dmFields & DM_DISPLAYFREQUENCY && mode->dmDisplayFrequency)
-        stat = pXRRSetScreenConfigAndRate( gdi_display, screen_config, root, size_id, rotation,
+        stat = pXRRSetScreenConfigAndRate( gdi_display, screen_config, root, full_mode->size_id, rotation,
                                            mode->dmDisplayFrequency, CurrentTime );
     else
-        stat = pXRRSetScreenConfig( gdi_display, screen_config, root, size_id, rotation, CurrentTime );
+        stat = pXRRSetScreenConfig( gdi_display, screen_config, root, full_mode->size_id, rotation, CurrentTime );
     pXRRFreeScreenConfigInfo( screen_config );
 
     if (stat != RRSetConfigSuccess)
@@ -1329,46 +1320,46 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
     return TRUE;
 }
 
-static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, DWORD frequency,
+static void add_xrandr14_mode( struct x11drv_mode *mode, XRRModeInfo *info, DWORD depth, DWORD frequency,
                                DWORD orientation )
 {
-    mode->dmSize = sizeof(*mode);
-    mode->dmDriverExtra = sizeof(RRMode);
-    mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH |
+    mode->mode.dmSize = sizeof(*mode);
+    mode->mode.dmDriverExtra = sizeof(*mode) - sizeof(mode->mode);
+    mode->mode.dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH |
                      DM_PELSHEIGHT | DM_DISPLAYFLAGS;
     if (frequency)
     {
-        mode->dmFields |= DM_DISPLAYFREQUENCY;
-        mode->dmDisplayFrequency = frequency;
+        mode->mode.dmFields |= DM_DISPLAYFREQUENCY;
+        mode->mode.dmDisplayFrequency = frequency;
     }
     if (orientation == DMDO_DEFAULT || orientation == DMDO_180)
     {
-        mode->dmPelsWidth = info->width;
-        mode->dmPelsHeight = info->height;
+        mode->mode.dmPelsWidth = info->width;
+        mode->mode.dmPelsHeight = info->height;
     }
     else
     {
-        mode->dmPelsWidth = info->height;
-        mode->dmPelsHeight = info->width;
+        mode->mode.dmPelsWidth = info->height;
+        mode->mode.dmPelsHeight = info->width;
     }
-    mode->dmDisplayOrientation = orientation;
-    mode->dmBitsPerPel = depth;
-    mode->dmDisplayFlags = 0;
-    memcpy( mode + 1, &info->id, sizeof(info->id) );
+    mode->mode.dmDisplayOrientation = orientation;
+    mode->mode.dmBitsPerPel = depth;
+    mode->mode.dmDisplayFlags = 0;
+    mode->rr_mode = info->id;
 }
 
-static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
+static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, struct x11drv_mode **new_modes, UINT *mode_count )
 {
     DWORD frequency, orientation, orientation_count;
     XRRScreenResources *screen_resources;
     XRROutputInfo *output_info = NULL;
     RROutput output = (RROutput)id.id;
+    struct x11drv_mode *mode, *modes;
     XRRCrtcInfo *crtc_info = NULL;
-    UINT depth_idx, mode_idx = 0;
     XRRModeInfo *mode_info;
-    DEVMODEW *mode, *modes;
     Rotation rotations;
     BOOL ret = FALSE;
+    UINT depth_idx;
     RRCrtc crtc;
     INT i, j;
 
@@ -1422,12 +1413,7 @@ static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
     }
     orientation_count = get_orientation_count( rotations );
 
-    /* Allocate space for display modes in different color depths and orientations.
-     * Store a RRMode at the end of each DEVMODEW as private driver data */
-    modes = calloc( output_info->nmode * DEPTH_COUNT * orientation_count,
-                    sizeof(*modes) + sizeof(RRMode) );
-    if (!modes)
-        goto done;
+    if (!(modes = calloc( output_info->nmode * DEPTH_COUNT * orientation_count, sizeof(*modes) ))) goto done;
 
     for (i = 0, mode = modes; i < output_info->nmode; ++i)
     {
@@ -1443,12 +1429,8 @@ static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
             {
                 for (orientation = DMDO_DEFAULT; orientation <= DMDO_270; ++orientation)
                 {
-                    if (!((1 << orientation) & rotations))
-                        continue;
-
-                    add_xrandr14_mode( mode, mode_info, depths[depth_idx], frequency, orientation );
-                    mode = NEXT_DEVMODEW( mode );
-                    ++mode_idx;
+                    if (!((1 << orientation) & rotations)) continue;
+                    add_xrandr14_mode( mode++, mode_info, depths[depth_idx], frequency, orientation );
                 }
             }
 
@@ -1458,7 +1440,7 @@ static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
 
     ret = TRUE;
     *new_modes = modes;
-    *mode_count = mode_idx;
+    *mode_count = mode - modes;
 done:
     if (crtc_info)
         pXRRFreeCrtcInfo( crtc_info );
@@ -1575,8 +1557,9 @@ done:
     return ret;
 }
 
-static LONG xrandr14_set_current_mode( x11drv_settings_id id, const DEVMODEW *mode )
+static LONG xrandr14_set_current_mode( x11drv_settings_id id, const struct x11drv_mode *full_mode )
 {
+    const DEVMODEW *mode = &full_mode->mode;
     unsigned int screen_width, screen_height;
     RROutput output = (RROutput)id.id, *outputs;
     XRRScreenResources *screen_resources;
@@ -1587,7 +1570,8 @@ static LONG xrandr14_set_current_mode( x11drv_settings_id id, const DEVMODEW *mo
     INT output_count;
     RRCrtc crtc = 0;
     Status status;
-    RRMode rrmode;
+
+    assert( sizeof(*full_mode) == sizeof(full_mode->mode) + full_mode->mode.dmDriverExtra );
 
     if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
         WARN("Cannot change screen color depth from %ubits to %ubits!\n",
@@ -1640,9 +1624,6 @@ static LONG xrandr14_set_current_mode( x11drv_settings_id id, const DEVMODEW *mo
     if (!crtc_info)
         goto done;
 
-    assert( mode->dmDriverExtra == sizeof(RRMode) );
-    memcpy( &rrmode, (BYTE *)mode + sizeof(*mode), sizeof(rrmode) );
-
     if (crtc_info->noutput)
     {
         outputs = crtc_info->outputs;
@@ -1670,7 +1651,7 @@ static LONG xrandr14_set_current_mode( x11drv_settings_id id, const DEVMODEW *mo
     set_screen_size( screen_width, screen_height );
 
     status = pXRRSetCrtcConfig( gdi_display, screen_resources, crtc, CurrentTime,
-                                mode->dmPosition.x, mode->dmPosition.y, rrmode,
+                                mode->dmPosition.x, mode->dmPosition.y, full_mode->rr_mode,
                                 rotation, outputs, output_count );
     if (status == RRSetConfigSuccess)
         ret = DISP_CHANGE_SUCCESSFUL;

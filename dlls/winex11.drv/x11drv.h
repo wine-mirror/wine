@@ -38,6 +38,9 @@
 #include <X11/extensions/XInput2.h>
 #endif
 
+#undef Status  /* avoid conflict with wintrnl.h */
+typedef int Status;
+
 #define BOOL X_BOOL
 #define BYTE X_BYTE
 #define INT8 X_INT8
@@ -46,6 +49,12 @@
 #define INT64 X_INT64
 #include <X11/Xmd.h>
 #include <X11/Xproto.h>
+#ifdef HAVE_X11_EXTENSIONS_XF86VMODE_H
+#include <X11/extensions/xf86vmode.h>
+#endif
+#ifdef HAVE_X11_EXTENSIONS_XRANDR_H
+#include <X11/extensions/Xrandr.h>
+#endif
 #undef BOOL
 #undef BYTE
 #undef INT8
@@ -53,9 +62,6 @@
 #undef INT32
 #undef INT64
 #undef LONG64
-
-#undef Status  /* avoid conflict with wintrnl.h */
-typedef int Status;
 
 /* avoid conflict with processthreadsapi.h */
 #undef ControlMask
@@ -757,6 +763,21 @@ extern const unsigned int *depths;
 /* Use a distinct type for the settings id, to avoid mixups other types of ids */
 typedef struct { ULONG_PTR id; } x11drv_settings_id;
 
+struct x11drv_mode
+{
+    DEVMODEW    mode;
+    union
+    {
+#ifdef HAVE_X11_EXTENSIONS_XF86VMODE_H
+        XF86VidModeModeInfo mode_info;
+#endif
+#ifdef HAVE_X11_EXTENSIONS_XRANDR_H
+        SizeID              size_id;
+        RRMode              rr_mode;
+#endif
+    };
+};
+
 /* Required functions for changing and enumerating display settings */
 struct x11drv_settings_handler
 {
@@ -781,7 +802,7 @@ struct x11drv_settings_handler
      * dmDisplayFlags and dmDisplayFrequency
      *
      * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
-    BOOL (*get_modes)(x11drv_settings_id id, DWORD flags, DEVMODEW **modes, UINT *mode_count);
+    BOOL (*get_modes)(x11drv_settings_id id, DWORD flags, struct x11drv_mode **modes, UINT *mode_count);
 
     /* get_current_mode() will be called to get the current display mode of the device of id
      *
@@ -796,7 +817,7 @@ struct x11drv_settings_handler
      * mode must be a valid mode from get_modes() with optional fields, such as dmPosition set.
      *
      * Return DISP_CHANGE_*, same as ChangeDisplaySettingsExW() return values */
-    LONG (*set_current_mode)(x11drv_settings_id id, const DEVMODEW *mode);
+    LONG (*set_current_mode)(x11drv_settings_id id, const struct x11drv_mode *mode);
 };
 
 #define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))

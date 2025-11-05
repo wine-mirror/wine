@@ -62,10 +62,10 @@ static BOOL nores_get_id(const WCHAR *device_name, BOOL is_primary, x11drv_setti
     return TRUE;
 }
 
-static BOOL nores_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
+static BOOL nores_get_modes( x11drv_settings_id id, DWORD flags, struct x11drv_mode **new_modes, UINT *mode_count )
 {
     RECT primary = get_host_primary_monitor_rect();
-    DEVMODEW *modes;
+    struct x11drv_mode *modes;
 
     modes = calloc(1, sizeof(*modes));
     if (!modes)
@@ -74,16 +74,16 @@ static BOOL nores_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_
         return FALSE;
     }
 
-    modes[0].dmSize = sizeof(*modes);
-    modes[0].dmDriverExtra = 0;
-    modes[0].dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
-                        DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
-    modes[0].dmDisplayOrientation = DMDO_DEFAULT;
-    modes[0].dmBitsPerPel = screen_bpp;
-    modes[0].dmPelsWidth = primary.right;
-    modes[0].dmPelsHeight = primary.bottom;
-    modes[0].dmDisplayFlags = 0;
-    modes[0].dmDisplayFrequency = 60;
+    modes[0].mode.dmSize = sizeof(*modes);
+    modes[0].mode.dmDriverExtra = 0;
+    modes[0].mode.dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
+                             DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
+    modes[0].mode.dmDisplayOrientation = DMDO_DEFAULT;
+    modes[0].mode.dmBitsPerPel = screen_bpp;
+    modes[0].mode.dmPelsWidth = primary.right;
+    modes[0].mode.dmPelsHeight = primary.bottom;
+    modes[0].mode.dmDisplayFlags = 0;
+    modes[0].mode.dmDisplayFrequency = 60;
 
     *new_modes = modes;
     *mode_count = 1;
@@ -118,7 +118,7 @@ static BOOL nores_get_current_mode(x11drv_settings_id id, DEVMODEW *mode)
     return TRUE;
 }
 
-static LONG nores_set_current_mode(x11drv_settings_id id, const DEVMODEW *mode)
+static LONG nores_set_current_mode( x11drv_settings_id id, const struct x11drv_mode *mode )
 {
     WARN("NoRes settings handler, ignoring mode change request.\n");
     return DISP_CHANGE_SUCCESSFUL;
@@ -175,8 +175,9 @@ static BOOL is_same_devmode( const DEVMODEW *a, const DEVMODEW *b )
  * Return NULL on failure. Caller should call free_full_mode() to free the returned mode. */
 static DEVMODEW *get_full_mode(x11drv_settings_id id, DEVMODEW *dev_mode)
 {
-    DEVMODEW *modes, *full_mode, *found_mode = NULL;
+    DEVMODEW *full_mode, *found_mode = NULL;
     UINT mode_count, mode_idx;
+    struct x11drv_mode *modes;
 
     if (is_detached_mode(dev_mode))
         return dev_mode;
@@ -185,7 +186,7 @@ static DEVMODEW *get_full_mode(x11drv_settings_id id, DEVMODEW *dev_mode)
 
     for (mode_idx = 0; mode_idx < mode_count; ++mode_idx)
     {
-        found_mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * mode_idx);
+        found_mode = &modes[mode_idx].mode;
         if (is_same_devmode( found_mode, dev_mode )) break;
     }
 
@@ -242,7 +243,7 @@ static LONG apply_display_settings( DEVMODEW *displays, x11drv_settings_id *ids,
               full_mode->dmPelsHeight, full_mode->dmDisplayFrequency,
               full_mode->dmBitsPerPel, full_mode->dmDisplayOrientation);
 
-        ret = settings_handler.set_current_mode(*id, full_mode);
+        ret = settings_handler.set_current_mode(*id, (struct x11drv_mode *)full_mode);
         free_full_mode(full_mode);
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return ret;
@@ -416,7 +417,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     struct gdi_monitor *monitors;
     struct x11drv_gpu *gpus;
     INT gpu, adapter, monitor;
-    DEVMODEW *modes;
+    struct x11drv_mode *modes;
     UINT mode_count;
 
     TRACE( "via %s\n", debugstr_a(host_handler.name) );
@@ -462,8 +463,8 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             settings_handler.get_current_mode( settings_id, &current_mode );
             if (settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count ))
             {
-                strip_driver_extra( modes, mode_count );
-                device_manager->add_modes( &current_mode, mode_count, modes, param );
+                strip_driver_extra( &modes->mode, mode_count );
+                device_manager->add_modes( &current_mode, mode_count, &modes->mode, param );
                 free( modes );
             }
         }
