@@ -885,8 +885,38 @@ static HRESULT TypedArrayConstr_value(const builtin_info_t *info, script_ctx_t *
                 if(!obj)
                     return JS_E_TYPEDARRAY_BAD_CTOR_ARG;
 
-                FIXME("Construction from object not implemented\n");
-                return E_NOTIMPL;
+                if(obj->builtin_info->class == JSCLASS_ARRAYBUFFER) {
+                    buffer = arraybuf_from_jsdisp(obj);
+                    if(argc > 1) {
+                        hres = to_integer(ctx, argv[1], &n);
+                        if(FAILED(hres))
+                            return hres;
+                        if(n < 0.0 || n > buffer->size)
+                            return JS_E_TYPEDARRAY_INVALID_OFFSLEN;
+                        offset = n;
+                        if(offset % elem_size)
+                            return JS_E_TYPEDARRAY_INVALID_OFFSLEN;
+                    }
+                    if(argc > 2 && !is_undefined(argv[2])) {
+                        hres = to_integer(ctx, argv[2], &n);
+                        if(FAILED(hres))
+                            return hres;
+                        if(n < 0.0 || n > UINT_MAX)
+                            return JS_E_TYPEDARRAY_INVALID_OFFSLEN;
+                        length = n;
+                        if(offset + length * elem_size > buffer->size)
+                            return JS_E_TYPEDARRAY_INVALID_OFFSLEN;
+                    }else {
+                        length = buffer->size - offset;
+                        if(length % elem_size)
+                            return JS_E_TYPEDARRAY_INVALID_OFFSLEN;
+                        length /= elem_size;
+                    }
+                    jsdisp_addref(&buffer->dispex);
+                }else {
+                    FIXME("Construction from object not implemented\n");
+                    return E_NOTIMPL;
+                }
             }else if(is_number(argv[0])) {
                 hres = to_integer(ctx, argv[0], &n);
                 if(FAILED(hres))

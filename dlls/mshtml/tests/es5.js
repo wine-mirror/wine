@@ -2111,12 +2111,34 @@ sync_test("ArrayBuffers & Views", function() {
         test_own_data_prop_desc(constr.prototype, "length", false, false, false);
         test_own_data_prop_desc(constr.prototype, "buffer", false, false, false);
 
+        buf = ArrayBuffer(34);
         try {
             new constr(-1);
             ok(false, "new " + name + "(-1) did not throw exception");
         }catch(ex) {
             var n = ex.number >>> 0;
             ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, "new " + name + "(-1) threw " + n);
+        }
+        try {
+            new constr(buf, -1);
+            ok(false, "new " + name + "(buf, -1) did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, "new " + name + "(buf, -1) threw " + n);
+        }
+        try {
+            new constr(buf, 36);
+            ok(false, "new " + name + "(buf, 36) did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, "new " + name + "(buf, 36) threw " + n);
+        }
+        try {
+            new constr(buf, 32, 4);
+            ok(false, "new " + name + "(buf, 32, 4) did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, "new " + name + "(buf, 32, 4) threw " + n);
         }
         try {
             new constr('9');
@@ -2131,6 +2153,26 @@ sync_test("ArrayBuffers & Views", function() {
         }catch(ex) {
             var n = ex.number >>> 0;
             ok(n === JS_E_TYPEDARRAY_BAD_CTOR_ARG, "new " + name + "(null) threw " + n);
+        }
+        if(typeSz > 1) {
+            /* test misalignment */
+            var a = typeSz >>> 1;
+            try {
+                new constr(buf, a, 1);
+                ok(false, "new " + name + "(buf, " + a + ", 1) did not throw exception");
+            }catch(ex) {
+                var n = ex.number >>> 0;
+                ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, "new " + name + "(buf, " + a + ", 1) threw " + n);
+            }
+            a += typeSz;
+            var b = new ArrayBuffer(a);
+            try {
+                new constr(b);
+                ok(false, "new " + name + "(new ArrayBuffer(" + a + ")) did not throw exception");
+            }catch(ex) {
+                var n = ex.number >>> 0;
+                ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, "new " + name + "(new ArrayBuffer(" + a + ")) threw " + n);
+            }
         }
 
         arr = new constr();
@@ -2236,6 +2278,22 @@ sync_test("ArrayBuffers & Views", function() {
         arr = constr.prototype;
         delete arr[-1];
         delete arr.foo;
+
+        arr = constr(buf, typeSz, 2);
+        name = name + "(buf, " + typeSz + ", 2)";
+        ok(arr.byteLength === 2 * typeSz, name + ".byteLength = " + arr.byteLength);
+        ok(arr.byteOffset === typeSz, name + ".byteOffset = " + arr.byteOffset);
+        ok(arr.length === 2, name + ".length = " + arr.length);
+        ok(arr.buffer === buf, name + ".buffer = " + arr.buffer);
+        view = DataView(buf);
+        view["set" + types[i][0]](typeSz, 10, true);
+        ok(arr[0] === 10, "arr[0] after DataView(buf).set" + types[i][0] + " = " + arr[0]);
+        arr[0] = 12;
+        r = view["get" + types[i][0]](typeSz, true);
+        ok(r === 12, "DataView(buf).get" + types[i][0] + " after arr[0] set = " + r);
+        Object.freeze(arr);
+        todo_wine.
+        ok(Object.isFrozen(arr) === true, name + " not frozen");
     }
 
     arr = new Int8Array(2);
