@@ -789,6 +789,32 @@ static HRESULT TypedArray_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_
     return S_OK;
 }
 
+static HRESULT fill_typedarr_data_from_object(const struct typed_array_desc *desc, script_ctx_t *ctx, BYTE *data, jsdisp_t *obj, DWORD length)
+{
+    HRESULT hres;
+    jsval_t val;
+    UINT32 i;
+
+    for(i = 0; i < length; i++) {
+        double n;
+
+        hres = jsdisp_get_idx(obj, i, &val);
+        if(FAILED(hres)) {
+            if(hres != DISP_E_UNKNOWNNAME)
+                return hres;
+            val = jsval_undefined();
+        }
+
+        hres = to_number(ctx, val, &n);
+        jsval_release(val);
+        if(FAILED(hres))
+            return hres;
+        desc->set(&data[i * desc->size], n);
+    }
+
+    return S_OK;
+}
+
 static void TypedArray_destructor(jsdisp_t *dispex)
 {
     TypedArrayInstance *typedarr = typedarr_from_jsdisp(dispex);
@@ -926,8 +952,35 @@ static HRESULT TypedArrayConstr_value(const builtin_info_t *info, script_ctx_t *
                     }
                     jsdisp_addref(&buffer->dispex);
                 }else {
-                    FIXME("Construction from object not implemented\n");
-                    return E_NOTIMPL;
+                    jsval_t val;
+                    UINT32 len;
+                    DWORD size;
+
+                    hres = jsdisp_propget_name(obj, L"length", &val);
+                    if(FAILED(hres))
+                        return hres;
+                    if(is_undefined(val))
+                        return JS_E_TYPEDARRAY_BAD_CTOR_ARG;
+
+                    hres = to_uint32(ctx, val, &len);
+                    jsval_release(val);
+                    if(FAILED(hres))
+                        return hres;
+
+                    length = len;
+                    size = length * elem_size;
+                    if(size < length || size > (UINT_MAX - FIELD_OFFSET(ArrayBufferInstance, buf[0])))
+                        return E_OUTOFMEMORY;
+
+                    hres = create_arraybuf(ctx, size, &buffer);
+                    if(FAILED(hres))
+                        return hres;
+
+                    hres = fill_typedarr_data_from_object(desc, ctx, buffer->buf, obj, length);
+                    if(FAILED(hres)) {
+                        jsdisp_release(&buffer->dispex);
+                        return hres;
+                    }
                 }
             }else if(is_number(argv[0])) {
                 hres = to_integer(ctx, argv[0], &n);
