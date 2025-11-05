@@ -163,6 +163,8 @@ static void *(__cdecl *p_platform_COMException_hstring_ctor)(void *, HRESULT, HS
     static void *(__cdecl *p_platform_##name##Exception_hstring_ctor)(void *, HSTRING);
 WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
+static IWeakReference *(WINAPI *p_GetWeakReference)(IUnknown *);
+static IUnknown *(WINAPI *p_ResolveWeakReference)(const GUID *, IWeakReference **);
 
 static void *(__cdecl *p__RTtypeid)(const void *);
 static const char *(__thiscall *p_type_info_name)(void *);
@@ -230,6 +232,11 @@ static BOOL init(void)
     } while(0);
     WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
+    p_GetWeakReference = (void *)GetProcAddress(hmod,
+            "?GetWeakReference@Details@Platform@@YAPAU__abi_IUnknown@@Q$ADVObject@2@@Z");
+    p_ResolveWeakReference = (void *)GetProcAddress(hmod,
+            "?ResolveWeakReference@Details@Platform@@YAP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z");
+
     p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBAPBDXZ");
     p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBAPBDXZ");
     p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QBAHABV0@@Z");
@@ -279,6 +286,11 @@ static BOOL init(void)
     } while(0);
         WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
+        p_GetWeakReference = (void *)GetProcAddress(hmod,
+                "?GetWeakReference@Details@Platform@@YAPEAU__abi_IUnknown@@QE$ADVObject@2@@Z");
+        p_ResolveWeakReference = (void *)GetProcAddress(hmod,
+                "?ResolveWeakReference@Details@Platform@@YAPE$AAVObject@2@AEBU_GUID@@PEAPEAU__abi_IUnknown@@@Z");
+
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QEBAPEBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QEBAPEBDXZ");
         p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QEBAHAEBV0@@Z");
@@ -327,6 +339,11 @@ static BOOL init(void)
     } while(0);
         WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
+        p_GetWeakReference = (void *)GetProcAddress(hmod,
+               "?GetWeakReference@Details@Platform@@YGPAU__abi_IUnknown@@Q$ADVObject@2@@Z");
+        p_ResolveWeakReference = (void *)GetProcAddress(hmod,
+                "?ResolveWeakReference@Details@Platform@@YGP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z");
+
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBEPBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBEPBDXZ");
         p_type_info_opequals_equals = (void *)GetProcAddress(msvcrt, "??8type_info@@QBEHABV0@@Z");
@@ -361,6 +378,8 @@ static BOOL init(void)
     } while(0);
     WINRT_EXCEPTIONS
 #undef WINRT_EXCEPTION
+    ok(p_GetWeakReference != NULL, "GetWeakReference not available.\n");
+    ok(p_ResolveWeakReference != NULL, "ResolveWeakReference is not available.\n");
 
     ok(p_type_info_name != NULL, "type_info::name not available\n");
     ok(p_type_info_raw_name != NULL, "type_info::raw_name not available\n");
@@ -881,6 +900,123 @@ static void test_AllocateWithWeakRef(void)
     ok(out == (IUnknown *)0xdeadbeef, "got out %p\n", out);
     count = IWeakReference_Release(weakref);
     ok(count == 0, "got count %lu\n", count);
+}
+
+struct weakref_src_impl
+{
+    IWeakReferenceSource IWeakReferenceSource_iface;
+    struct control_block *block;
+};
+
+static inline struct weakref_src_impl *impl_from_IWeakReferenceSource(IWeakReferenceSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct weakref_src_impl, IWeakReferenceSource_iface);
+}
+
+static HRESULT WINAPI weakref_src_QueryInterface(IWeakReferenceSource *iface, const GUID *iid, void **out)
+{
+    struct weakref_src_impl *impl = impl_from_IWeakReferenceSource(iface);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IWeakReferenceSource))
+    {
+        IWeakReferenceSource_AddRef((*out = &impl->IWeakReferenceSource_iface));
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI weakref_src_AddRef(IWeakReferenceSource *iface)
+{
+    struct weakref_src_impl *impl = impl_from_IWeakReferenceSource(iface);
+    return InterlockedIncrement(&impl->block->ref_strong);
+}
+
+static ULONG WINAPI weakref_src_Release(IWeakReferenceSource *iface)
+{
+    struct weakref_src_impl *impl = impl_from_IWeakReferenceSource(iface);
+    ULONG ref = InterlockedDecrement(&impl->block->ref_strong);
+
+    if (!ref)
+    {
+        struct control_block *block = impl->block;
+        /* ReleaseTarget only frees the object if ref_strong < 0. */
+        WriteNoFence(&impl->block->ref_strong, -1);
+        call_func1(pReleaseTarget, block);
+        IWeakReference_Release(&block->IWeakReference_iface);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI weakref_src_GetWeakReference(IWeakReferenceSource *iface, IWeakReference **out)
+{
+    struct weakref_src_impl *impl = impl_from_IWeakReferenceSource(iface);
+    IWeakReference_AddRef((*out = &impl->block->IWeakReference_iface));
+    return S_OK;
+}
+
+static const IWeakReferenceSourceVtbl weakref_src_vtbl =
+{
+    weakref_src_QueryInterface,
+    weakref_src_AddRef,
+    weakref_src_Release,
+    weakref_src_GetWeakReference,
+};
+
+static void test_GetWeakReference(void)
+{
+    struct weakref_src_impl *obj;
+    struct control_block *block;
+    IWeakReference *weakref;
+    IUnknown *unk;
+    ULONG count;
+    HRESULT hr;
+
+    obj = pAllocateWithWeakRef(offsetof(struct weakref_src_impl, block), sizeof(*obj));
+    ok(obj != NULL, "got impl %p\n", obj);
+    obj->IWeakReferenceSource_iface.lpVtbl = &weakref_src_vtbl;
+    block = obj->block;
+
+    /* This is just a wrapper around QueryInterface(IID_IWeakReferenceSource) + IWeakReferenceSource::GetWeakReference. */
+    weakref = p_GetWeakReference((IUnknown *)&obj->IWeakReferenceSource_iface);
+    todo_wine ok(weakref == &obj->block->IWeakReference_iface, "got weakref %p != %p\n", weakref,
+                 &obj->block->IWeakReference_iface);
+    todo_wine ok(obj->block->ref_weak == 2, "got ref_weak %lu\n", obj->block->ref_weak);
+    ok(obj->block->ref_strong == 1, "got ref_strong %lu\n", obj->block->ref_strong);
+    if (!weakref)
+    {
+        skip("GetWeakReference failed.\n");
+        IWeakReferenceSource_Release(&obj->IWeakReferenceSource_iface);
+        return;
+    }
+
+    hr = IWeakReference_Resolve(weakref, &IID_IUnknown, (IInspectable **)&unk);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(unk != NULL, "got unk %p\n", unk);
+    count = IUnknown_Release(unk);
+    ok(count == 1, "got count %lu\n", count);
+
+    /* Wrapper around IWeakReference_Resolve(*weakref, ...). */
+    unk = p_ResolveWeakReference(&IID_IUnknown, &weakref);
+    ok(unk != NULL, "got unk %p\n", unk);
+    IUnknown_Release(unk);
+    count = IUnknown_Release(unk);
+    ok(count == 0, "got count %lu\n", count);
+    ok(block->ref_weak == 1, "got ref_weak %lu\n", block->ref_weak);
+
+    unk = NULL;
+    hr = IWeakReference_Resolve(weakref, &IID_IUnknown, (IInspectable **)&unk);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(unk == NULL, "got unk %p\n", unk);
+
+    count = IWeakReference_Release(weakref);
+    ok(count == 0, "got count %lu\n", count);
+
+    /* ResolveWeakReference returns NULL if *weakref is NULL. */
+    weakref = NULL;
+    unk = p_ResolveWeakReference(&IID_IUnknown, &weakref);
+    ok(unk == NULL, "got unk %p.\n", unk);
 }
 
 #define check_interface(o, i) check_interface_(__LINE__, (o), (i))
@@ -1694,4 +1830,5 @@ START_TEST(vccorlib)
     test___abi_make_type_id();
     test_CreateValue();
     test_exceptions();
+    test_GetWeakReference();
 }

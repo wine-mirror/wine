@@ -179,9 +179,9 @@
 @ stub -arch=win64 ?GetType@uint8@default@@QEAAPE$AAVType@Platform@@XZ
 @ cdecl -arch=win32 ?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@P$AAV12@@Z(ptr) platform_type_GetTypeCode
 @ cdecl -arch=win64 ?GetTypeCode@Type@Platform@@SA?AW4TypeCode@2@PE$AAV12@@Z(ptr) platform_type_GetTypeCode
-@ stub -arch=i386 ?GetWeakReference@Details@Platform@@YGPAU__abi_IUnknown@@Q$ADVObject@2@@Z
-@ stub -arch=arm ?GetWeakReference@Details@Platform@@YAPAU__abi_IUnknown@@Q$ADVObject@2@@Z
-@ stub -arch=win64 ?GetWeakReference@Details@Platform@@YAPEAU__abi_IUnknown@@QE$ADVObject@2@@Z
+@ stdcall -arch=i386 ?GetWeakReference@Details@Platform@@YGPAU__abi_IUnknown@@Q$ADVObject@2@@Z(ptr) GetWeakReference
+@ stdcall -arch=arm ?GetWeakReference@Details@Platform@@YAPAU__abi_IUnknown@@Q$ADVObject@2@@Z(ptr) GetWeakReference
+@ stdcall -arch=win64 ?GetWeakReference@Details@Platform@@YAPEAU__abi_IUnknown@@QE$ADVObject@2@@Z(ptr) GetWeakReference
 @ stub -arch=i386 ?InitControlBlock@ControlBlock@Details@Platform@@AAEXPAX_N11@Z
 @ stub -arch=arm ?InitControlBlock@ControlBlock@Details@Platform@@AAAXPAX_N11@Z
 @ stub -arch=win64 ?InitControlBlock@ControlBlock@Details@Platform@@AEAAXPEAX_N11@Z
@@ -209,9 +209,9 @@
 @ thiscall -arch=i386 ?ReleaseTarget@ControlBlock@Details@Platform@@AAEXXZ(ptr) control_block_ReleaseTarget
 @ cdecl -arch=arm ?ReleaseTarget@ControlBlock@Details@Platform@@AAAXXZ(ptr) control_block_ReleaseTarget
 @ cdecl -arch=win64 ?ReleaseTarget@ControlBlock@Details@Platform@@AEAAXXZ(ptr) control_block_ReleaseTarget
-@ stub -arch=i386 ?ResolveWeakReference@Details@Platform@@YGP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z
-@ stub -arch=arm ?ResolveWeakReference@Details@Platform@@YAP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z
-@ stub -arch=win64 ?ResolveWeakReference@Details@Platform@@YAPE$AAVObject@2@AEBU_GUID@@PEAPEAU__abi_IUnknown@@@Z
+@ stdcall -arch=i386 ?ResolveWeakReference@Details@Platform@@YGP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z(ptr ptr) ResolveWeakReference
+@ stdcall -arch=arm ?ResolveWeakReference@Details@Platform@@YAP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z(ptr ptr) ResolveWeakReference
+@ stdcall -arch=win64 ?ResolveWeakReference@Details@Platform@@YAPE$AAVObject@2@AEBU_GUID@@PEAPEAU__abi_IUnknown@@@Z(ptr ptr) ResolveWeakReference
 @ stub -arch=i386 ?RunApplicationServer@Details@Platform@@YGXPAPAVModuleBase@1WRL@Microsoft@@PAPAU__abi_Module@@PB_W@Z
 @ stub -arch=arm ?RunApplicationServer@Details@Platform@@YAXPAPAVModuleBase@1WRL@Microsoft@@PAPAU__abi_Module@@PB_W@Z
 @ stub -arch=win64 ?RunApplicationServer@Details@Platform@@YAXPEAPEAVModuleBase@1WRL@Microsoft@@PEAPEAU__abi_Module@@PEB_W@Z

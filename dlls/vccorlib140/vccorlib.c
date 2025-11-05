@@ -262,6 +262,18 @@ void __thiscall control_block_ReleaseTarget(struct control_block *weakref)
     }
 }
 
+IWeakReference *WINAPI GetWeakReference(IUnknown *obj)
+{
+    FIXME("(%p): stub!\n", obj);
+    return NULL;
+}
+
+IUnknown *WINAPI ResolveWeakReference(const GUID *iid, IWeakReference **weakref)
+{
+    FIXME("(%s, %p): stub!\n", debugstr_guid(iid), weakref);
+    return NULL;
+}
+
 struct __abi_type_descriptor
 {
     const WCHAR *name;
