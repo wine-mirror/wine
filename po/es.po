@@ -4099,15 +4099,15 @@ msgstr "La compilación condicional está desactivada"
 msgid "Expected '@'"
 msgstr "Esperado '@'"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:95
 msgid "Microsoft JScript compilation error"
 msgstr "Error de compilación Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:96
 msgid "Microsoft JScript runtime error"
 msgstr "Error de ejecución  Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:94 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:97 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Error desconocido en tiempo de ejecución"
 
@@ -4239,43 +4239,57 @@ msgstr "No se puede redefinir la propiedad no configurable '|'"
 msgid "Cannot modify non-writable property '|'"
 msgstr "No se puede modificar la propiedad no modificable '|'"
 
+#: dlls/jscript/jscript.rc:84
+msgid "Typed array constructor argument is invalid"
+msgstr ""
+
 #: dlls/jscript/jscript.rc:83
+#, fuzzy
+#| msgid "'this' is not a Map object"
+msgid "'this' is not a typed array object"
+msgstr "'[this]' no es un objeto Map"
+
+#: dlls/jscript/jscript.rc:85
+msgid "Invalid offset/length when creating typed array"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:86
 #, fuzzy
 #| msgid "'this' is not a Map object"
 msgid "'this' is not a DataView object"
 msgstr "'[this]' no es un objeto Map"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:87
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:88
 msgid "DataView operation access beyond specified buffer length"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:89
 msgid "DataView constructor argument offset is invalid"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:90
 #, fuzzy
 #| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
 msgstr "'[this]' no es un objeto Map"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:91
 #, fuzzy
 #| msgid "'this' is not a Map object"
 msgid "'key' is not an object"
 msgstr "'[this]' no es un objeto Map"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:92
 #, fuzzy
 #| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
 msgstr "Objeto array esperado"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:93
 msgid "Property cannot have both accessors and a value"
 msgstr "La propiedad no puede tener tanto descriptores de acceso como un valor"
 
