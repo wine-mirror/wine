@@ -7962,6 +7962,8 @@ static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
     IDXGIDevice *device;
     ULONG refcount;
 
+    winetest_push_context("d3d10");
+
     if (!(device = create_device(0)))
     {
         skip("Failed to create Direct3D 10 device.\n");
@@ -7972,6 +7974,8 @@ static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    winetest_pop_context();
 }
 
 static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
@@ -7979,6 +7983,8 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
     ID3D12CommandQueue *queue;
     ID3D12Device *device;
     ULONG refcount;
+
+    winetest_push_context("d3d12");
 
     if (!(device = create_d3d12_device()))
     {
@@ -7996,6 +8002,8 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
     ok(!refcount, "Command queue has %lu references left.\n", refcount);
     refcount = ID3D12Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    winetest_pop_context();
 }
 
 static void test_subresource_surface(void)
