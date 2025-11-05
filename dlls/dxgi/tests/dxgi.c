@@ -907,8 +907,9 @@ static IDXGIAdapter *get_adapter_(unsigned int line, IUnknown *device, BOOL is_d
     return adapter;
 }
 
-#define create_swapchain(a, b, c, d) create_swapchain_(__LINE__, a, b, c, d)
-static IDXGISwapChain *create_swapchain_(unsigned int line, IUnknown *device, BOOL is_d3d12, HWND window, UINT flags)
+#define create_swapchain(a, b, c, d, e) create_swapchain_(__LINE__, a, b, c, d, e)
+static IDXGISwapChain *create_swapchain_(unsigned int line, IUnknown *device, BOOL is_d3d12,
+        HWND window, UINT flags, DXGI_SWAP_EFFECT swap_effect)
 {
     DXGI_SWAP_CHAIN_DESC desc;
     IDXGISwapChain *swapchain;
@@ -925,10 +926,10 @@ static IDXGISwapChain *create_swapchain_(unsigned int line, IUnknown *device, BO
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
     desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    desc.BufferCount = is_d3d12 ? 2 : 1;
+    desc.BufferCount = 2;
     desc.OutputWindow = window;
     desc.Windowed = TRUE;
-    desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+    desc.SwapEffect = swap_effect;
     desc.Flags = flags;
 
     get_factory(device, is_d3d12, &factory);
@@ -7774,10 +7775,15 @@ done:
 
 static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
 {
-    static const UINT test_flags[] =
+    static const struct
     {
-        0,
-        DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT,
+        UINT flags;
+        DXGI_SWAP_EFFECT swap_effect;
+    } tests[] =
+    {
+        {0,                                                  DXGI_SWAP_EFFECT_DISCARD},
+        {0,                                                  DXGI_SWAP_EFFECT_FLIP_DISCARD},
+        {DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT, DXGI_SWAP_EFFECT_FLIP_DISCARD},
     };
 
     UINT present_count, expected;
@@ -7791,14 +7797,21 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
 
     window = create_window();
 
-    for (i = 0; i < ARRAY_SIZE(test_flags); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        UINT flags = test_flags[i];
+        DXGI_SWAP_EFFECT swap_effect = tests[i].swap_effect;
+        UINT flags = tests[i].flags;
+
+        /* D3D12 only supports flip swap effects. */
+        if (is_d3d12 && (swap_effect == DXGI_SWAP_EFFECT_DISCARD))
+            continue;
 
         if (!is_d3d12 && (flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
             continue;
 
-        swapchain = create_swapchain(device, is_d3d12, window, flags);
+        winetest_push_context("test %u", i);
+
+        swapchain = create_swapchain(device, is_d3d12, window, flags, swap_effect);
 
         present_count = ~0u;
         hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
@@ -7828,10 +7841,13 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
 
         ShowWindow(window, SW_MINIMIZE);
         hr = IDXGISwapChain_Present(swapchain, 0, 0);
-        ok(hr == (is_d3d12 ? S_OK : DXGI_STATUS_OCCLUDED), "Got unexpected hr %#lx.\n", hr);
-        expected = present_count + !!is_d3d12;
+        todo_wine_if(!is_d3d12 && is_flip_model(swap_effect))
+        ok(hr == (is_flip_model(swap_effect) ? S_OK : DXGI_STATUS_OCCLUDED),
+                "Got unexpected hr %#lx.\n", hr);
+        expected = present_count + !!is_flip_model(swap_effect);
         hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(!is_d3d12 && is_flip_model(swap_effect))
         ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
 
         ShowWindow(window, SW_NORMAL);
@@ -7879,6 +7895,8 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
         }
 
         IDXGISwapChain_Release(swapchain);
+
+        winetest_pop_context();
     }
 
     DestroyWindow(window);
