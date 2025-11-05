@@ -66,20 +66,60 @@ static WCHAR *fetch_string( HANDLE hProcess, UNICODE_STRING* us)
         }
     }
     us->Buffer = local;
+    us->MaximumLength = us->Length;
     return local;
+}
+
+typedef struct _LDR_DATA_TABLE_ENTRY32
+{
+    LIST_ENTRY32        InLoadOrderLinks;
+    LIST_ENTRY32        InMemoryOrderLinks;
+    LIST_ENTRY32        InInitializationOrderLinks;
+    DWORD               DllBase;
+    DWORD               EntryPoint;
+    ULONG               SizeOfImage;
+    UNICODE_STRING32    FullDllName;
+    UNICODE_STRING32    BaseDllName;
+} LDR_DATA_TABLE_ENTRY32;
+
+typedef LIST_ENTRY32 *PLIST_ENTRY32;
+
+static inline void ldr_data_table_entry_32to64(LDR_DATA_TABLE_ENTRY *dst, LDR_DATA_TABLE_ENTRY32 *src)
+{
+    dst->BaseDllName.Buffer = (PWSTR)(DWORD_PTR)src->BaseDllName.Buffer;
+    dst->BaseDllName.Length = src->BaseDllName.Length;
+    dst->FullDllName.Buffer = (PWSTR)(DWORD_PTR)src->FullDllName.Buffer;
+    dst->FullDllName.Length = src->FullDllName.Length;
+    dst->DllBase = (void *)(DWORD_PTR)src->DllBase;
+    dst->SizeOfImage = src->SizeOfImage;
 }
 
 static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr_mod, ULONG *num )
 {
+    static const BOOL           is_win64 = (sizeof(void *) > sizeof(int));
     HANDLE                      hProcess;
     PROCESS_BASIC_INFORMATION   pbi;
     PPEB_LDR_DATA               pLdrData;
     PLIST_ENTRY                 head, curr;
+    PLIST_ENTRY32               head32, curr32;
     BOOL                        ret = FALSE;
+    BOOL                        target_wow64;
+    /* On old WoW64, if TH32CS_SNAPMODULE32 is not set, we will return nothing. But other similar
+     * functions, like EnumProcessModules, will at least return the main module for the 64-bit
+     * portion of the modules. Here we do the same to be consistent. */
+    BOOL                        old_wow64_need_main_module = FALSE;
+    BOOL                        wow64_32bit_module_requested;
+    BOOL                        is_wow64;
+    PEB32*                      peb32;
+    DWORD                       pLdrData32, tmp;
+    WCHAR                       system32[MAX_PATH] = {}, syswow64[MAX_PATH] = {};
+    int                         system32_len = 0, syswow64_len = 0;
 
     *num = 0;
 
     if (!(flags & TH32CS_SNAPMODULE)) return TRUE;
+
+    if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) return FALSE;
 
     if (process)
     {
@@ -88,6 +128,20 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
     }
     else
         hProcess = GetCurrentProcess();
+
+    if (hProcess != GetCurrentProcess())
+    {
+        if (!IsWow64Process( hProcess, &target_wow64 )) return FALSE;
+    }
+    else target_wow64 = is_wow64;
+
+    if (is_wow64 && !target_wow64)
+    {
+        SetLastError( ERROR_PARTIAL_COPY );
+        goto out;
+    }
+
+    wow64_32bit_module_requested = (flags & TH32CS_SNAPMODULE32) && is_win64 && target_wow64;
 
     if (set_ntstatus( NtQueryInformationProcess( hProcess, ProcessBasicInformation,
                                                  &pbi, sizeof(pbi), NULL )))
@@ -100,7 +154,7 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
             goto out;
         }
 
-        /* pLdrData is NULL on "old" wow64. Don't fail, just return an empty modules list. */
+        /* pLdrData is NULL on "old" wow64 configuration. Don't fail. */
         if (pLdrData)
         {
             head = &pLdrData->InLoadOrderModuleList;
@@ -130,8 +184,110 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
                     HeapFree( GetProcessHeap(), 0, (*ldr_mod)[*num].BaseDllName.Buffer );
             }
         }
-        ret = TRUE;
+        else old_wow64_need_main_module = TRUE;
     }
+
+    if (!wow64_32bit_module_requested && !old_wow64_need_main_module)
+    {
+        ret = TRUE;
+        goto out;
+    }
+
+    /* need system directory paths for path rewrites when querying 32bit modules from a 64bit
+     * process */
+    if (!(system32_len = GetSystemDirectoryW(system32, ARRAY_SIZE(system32))) ||
+        !(syswow64_len = GetSystemWow64DirectoryW(syswow64, ARRAY_SIZE(syswow64))))
+    {
+        goto out;
+    }
+
+    if (!set_ntstatus( NtQueryInformationProcess( hProcess, ProcessWow64Information,
+                                                  &peb32, sizeof(peb32), NULL )) ||
+        !ReadProcessMemory( hProcess, &peb32->LdrData, &pLdrData32, sizeof(pLdrData32), NULL ) ||
+        !ReadProcessMemory( hProcess,
+                            &((PPEB_LDR_DATA32)(DWORD_PTR)pLdrData32)->InLoadOrderModuleList.Flink,
+                            &tmp, sizeof(tmp), NULL ))
+    {
+        goto out;
+    }
+
+    curr32 = (PLIST_ENTRY32)(DWORD_PTR)tmp;
+    head32 = &((PPEB_LDR_DATA32)(DWORD_PTR)pLdrData32)->InLoadOrderModuleList;
+    while (curr32 != head32)
+    {
+        LDR_DATA_TABLE_ENTRY32 entry32;
+        LDR_DATA_TABLE_ENTRY*  out_entry;
+        int full_dll_name_len;
+        if (!*num)
+            *ldr_mod = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LDR_DATA_TABLE_ENTRY) );
+        else
+            *ldr_mod = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, *ldr_mod,
+                                    (*num + 1) * sizeof(LDR_DATA_TABLE_ENTRY) );
+        out_entry = &(*ldr_mod)[*num];
+        if (!ReadProcessMemory( hProcess,
+                                CONTAINING_RECORD(curr32, LDR_DATA_TABLE_ENTRY32, InLoadOrderLinks),
+                                &entry32, sizeof(entry32), NULL ))
+            break;
+
+        curr32 = (PLIST_ENTRY32)(DWORD_PTR)entry32.InLoadOrderLinks.Flink;
+        ldr_data_table_entry_32to64(out_entry, &entry32);
+        if (!fetch_string( hProcess, &out_entry->BaseDllName )) continue;
+        if (!fetch_string( hProcess, &out_entry->FullDllName ))
+        {
+            HeapFree( GetProcessHeap(), 0, out_entry->BaseDllName.Buffer );
+            continue;
+        }
+
+        /* rewrite path in system32 into syswow64 for 32bit modules */
+        full_dll_name_len = out_entry->FullDllName.Length / sizeof(WCHAR);
+        if (full_dll_name_len >= system32_len &&
+            CompareStringW( LOCALE_INVARIANT, NORM_IGNORECASE,
+                            system32, system32_len,
+                            out_entry->FullDllName.Buffer, system32_len ) == CSTR_EQUAL)
+        {
+            int new_len = full_dll_name_len - system32_len + syswow64_len;
+            WCHAR *new_path = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, new_len * sizeof(WCHAR) );
+
+            if (!new_path)
+            {
+                HeapFree( GetProcessHeap(), 0, out_entry->BaseDllName.Buffer );
+                HeapFree( GetProcessHeap(), 0, out_entry->FullDllName.Buffer );
+                continue;
+            }
+
+            lstrcpyW( new_path, syswow64 );
+            memcpy( new_path + syswow64_len, out_entry->FullDllName.Buffer + system32_len,
+                    out_entry->FullDllName.Length - system32_len * sizeof(WCHAR) );
+            HeapFree( GetProcessHeap(), 0, out_entry->FullDllName.Buffer );
+            out_entry->FullDllName.Buffer = new_path;
+            out_entry->FullDllName.MaximumLength = out_entry->FullDllName.Length = new_len * sizeof(WCHAR);
+        }
+
+        (*num)++;
+        if (!wow64_32bit_module_requested)
+            /* In this case, we only needed the main module once, and none of the 32-bit modules. */
+            break;
+        if (old_wow64_need_main_module && *num == 1)
+        {
+            /* When 32bit modules are requested on old WoW64, we are expected to return the main
+             * module twice, once for the 64-bit portion, once for the 32-bit portion */
+            LDR_DATA_TABLE_ENTRY *prev_entry;
+            *ldr_mod = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, *ldr_mod,
+                                    (*num + 1) * sizeof(LDR_DATA_TABLE_ENTRY) );
+            out_entry = &(*ldr_mod)[1];
+            prev_entry = &(*ldr_mod)[0];
+            *out_entry = *prev_entry;
+
+            out_entry->BaseDllName.Buffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    out_entry->BaseDllName.MaximumLength );
+            RtlCopyUnicodeString(&out_entry->BaseDllName, &prev_entry->BaseDllName);
+            out_entry->FullDllName.Buffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    out_entry->FullDllName.MaximumLength );
+            RtlCopyUnicodeString(&out_entry->FullDllName, &prev_entry->FullDllName);
+            (*num)++;
+        }
+    }
+    ret = TRUE;
 
 out:
     if (process) CloseHandle( hProcess );
@@ -297,7 +453,7 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     HANDLE              hSnapShot = 0;
 
     TRACE("%lx,%lx\n", flags, process );
-    if (!(flags & (TH32CS_SNAPPROCESS|TH32CS_SNAPTHREAD|TH32CS_SNAPMODULE)))
+    if (!(flags & (TH32CS_SNAPPROCESS|TH32CS_SNAPTHREAD|TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32)))
     {
         FIXME("flags %lx not implemented\n", flags );
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );

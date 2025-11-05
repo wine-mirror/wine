@@ -474,13 +474,7 @@ static void test_module32_only(DWORD pid)
     MODULEENTRY32 me;
 
     hSnapshot = create_toolhelp_snapshot( TH32CS_SNAPMODULE32, pid );
-    todo_wine ok(hSnapshot != INVALID_HANDLE_VALUE, "Cannot create snapshot\n");
-    if (hSnapshot == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        skip("Cannot create snapshot handle\n");
-        return;
-    }
-
+    ok(hSnapshot != INVALID_HANDLE_VALUE, "Cannot create snapshot\n");
     ok(!pModule32First( hSnapshot, &me ), "Got unexpected module entry\n");
     CloseHandle( hSnapshot );
 }
@@ -502,11 +496,6 @@ static void test_module(DWORD pid, struct expected_module expected[], unsigned n
 
     hSnapshot = create_toolhelp_snapshot( snapshot_flags, pid );
     ok(hSnapshot != INVALID_HANDLE_VALUE, "Cannot create snapshot %#lx\n", GetLastError());
-    if (hSnapshot == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        skip("CreateToolhelp32Snapshot doesn't support requested flags\n");
-        return;
-    }
 
     for (i = 0; i < num_expected; i++) found[i] = 0;
     me.dwSize = sizeof(me);
@@ -522,10 +511,9 @@ static void test_module(DWORD pid, struct expected_module expected[], unsigned n
             num++;
         } while (pModule32Next( hSnapshot, &me ));
     }
-    todo_if(winetest_platform_is_wine && module32 && is_win64)
     ok(found[0] == expected_main_exe_count, "Main exe was found %d time(s)\n", found[0]);
     for (i = 1; i < num_expected; i++)
-        todo_if((winetest_platform_is_wine && expected[i].wow64 == 1) || (is_old_wow && !expected[i].wow64))
+        todo_if(is_old_wow && !expected[i].wow64)
         ok(found[i] == 1, "Module %s is %s\n",
            expected[i].module, found[i] ? "listed more than once" : "not listed");
 
@@ -543,10 +531,9 @@ static void test_module(DWORD pid, struct expected_module expected[], unsigned n
             num--;
         } while (pModule32Next( hSnapshot, &me ));
     }
-    todo_if(winetest_platform_is_wine && module32 && is_win64)
     ok(found[0] == expected_main_exe_count, "Main exe was found %d time(s)\n", found[0]);
     for (i = 1; i < num_expected; i++)
-        todo_if((winetest_platform_is_wine && expected[i].wow64 == 1) || (is_old_wow && !expected[i].wow64))
+        todo_if(is_old_wow && !expected[i].wow64)
         ok(found[i] == 1, "Module %s is %s\n",
            expected[i].module, found[i] ? "listed more than once" : "not listed");
     ok(!num, "mismatch in counting\n");
