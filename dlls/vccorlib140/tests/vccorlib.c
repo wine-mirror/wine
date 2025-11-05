@@ -980,16 +980,10 @@ static void test_GetWeakReference(void)
 
     /* This is just a wrapper around QueryInterface(IID_IWeakReferenceSource) + IWeakReferenceSource::GetWeakReference. */
     weakref = p_GetWeakReference((IUnknown *)&obj->IWeakReferenceSource_iface);
-    todo_wine ok(weakref == &obj->block->IWeakReference_iface, "got weakref %p != %p\n", weakref,
+    ok(weakref == &obj->block->IWeakReference_iface, "got weakref %p != %p\n", weakref,
                  &obj->block->IWeakReference_iface);
-    todo_wine ok(obj->block->ref_weak == 2, "got ref_weak %lu\n", obj->block->ref_weak);
+    ok(obj->block->ref_weak == 2, "got ref_weak %lu\n", obj->block->ref_weak);
     ok(obj->block->ref_strong == 1, "got ref_strong %lu\n", obj->block->ref_strong);
-    if (!weakref)
-    {
-        skip("GetWeakReference failed.\n");
-        IWeakReferenceSource_Release(&obj->IWeakReferenceSource_iface);
-        return;
-    }
 
     hr = IWeakReference_Resolve(weakref, &IID_IUnknown, (IInspectable **)&unk);
     ok(hr == S_OK, "got hr %#lx\n", hr);
