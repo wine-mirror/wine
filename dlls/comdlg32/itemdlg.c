@@ -498,7 +498,7 @@ static void fill_filename_from_selection(FileDialogImpl *This)
     if(FAILED(hr) || !item_count)
         return;
 
-    names = HeapAlloc(GetProcessHeap(), 0, item_count*sizeof(LPWSTR));
+    names = malloc(item_count*sizeof(LPWSTR));
 
     /* Get names of the selected items */
     valid_count = 0; len_total = 0;
@@ -532,7 +532,7 @@ static void fill_filename_from_selection(FileDialogImpl *This)
     }
     else if(valid_count > 1)
     {
-        LPWSTR string = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len_total);
+        LPWSTR string = malloc(sizeof(WCHAR)*len_total);
         LPWSTR cur_point = string;
 
         for(i = 0; i < valid_count; i++)
@@ -548,10 +548,10 @@ static void fill_filename_from_selection(FileDialogImpl *This)
         *(cur_point-1) = '\0';
 
         set_file_name(This, string);
-        HeapFree(GetProcessHeap(), 0, string);
+        free(string);
     }
 
-    HeapFree(GetProcessHeap(), 0, names);
+    free(names);
     return;
 }
 
@@ -622,13 +622,13 @@ static HRESULT on_default_action(FileDialogImpl *This)
     if(FAILED(hr))
     {
         ERR("Failed to get pidl for current directory.\n");
-        HeapFree(GetProcessHeap(), 0, files);
+        free(files);
         return hr;
     }
 
     TRACE("Acting on %d file(s).\n", file_count);
 
-    pidla = HeapAlloc(GetProcessHeap(), 0, sizeof(LPITEMIDLIST) * file_count);
+    pidla = malloc(sizeof(LPITEMIDLIST) * file_count);
     open_action = ONOPEN_OPEN;
     fn_iter = files;
 
@@ -794,11 +794,11 @@ static HRESULT on_default_action(FileDialogImpl *This)
     }
 
     /* Clean up */
-    HeapFree(GetProcessHeap(), 0, files);
+    free(files);
     ILFree(current_folder);
     for(i = 0; i < file_count; i++)
         ILFree(pidla[i]);
-    HeapFree(GetProcessHeap(), 0, pidla);
+    free(pidla);
 
     /* Success closes the dialog */
     return ret;
@@ -840,8 +840,8 @@ static void show_opendropdown(FileDialogImpl *This)
 static void item_free(cctrl_item *item)
 {
     DestroyWindow(item->hwnd);
-    HeapFree(GetProcessHeap(), 0, item->label);
-    HeapFree(GetProcessHeap(), 0, item);
+    free(item->label);
+    free(item);
 }
 
 static cctrl_item* get_item(customctrl* parent, DWORD itemid, CDCONTROLSTATEF visible_flags, DWORD* position)
@@ -886,13 +886,13 @@ static HRESULT add_item(customctrl* parent, DWORD itemid, LPCWSTR label, cctrl_i
     if (get_item(parent, itemid, 0, NULL))
         return E_INVALIDARG;
 
-    item = HeapAlloc(GetProcessHeap(), 0, sizeof(*item));
-    label_copy = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(label)+1)*sizeof(WCHAR));
+    item = malloc(sizeof(*item));
+    label_copy = malloc((lstrlenW(label)+1)*sizeof(WCHAR));
 
     if (!item || !label_copy)
     {
-        HeapFree(GetProcessHeap(), 0, item);
-        HeapFree(GetProcessHeap(), 0, label_copy);
+        free(item);
+        free(label_copy);
         return E_OUTOFMEMORY;
     }
 
@@ -965,7 +965,7 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
     TRACE("\n");
 
     len = SendMessageW(hctrl, WM_GETTEXTLENGTH, 0, 0);
-    text = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
+    text = malloc(sizeof(WCHAR)*(len+1));
     if(!text) return;
     SendMessageW(hctrl, WM_GETTEXT, len+1, (LPARAM)text);
 
@@ -994,7 +994,7 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
     SetWindowPos(hctrl, NULL, 0, 0, final_width, final_height,
                  SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 
-    HeapFree(GetProcessHeap(), 0, text);
+    free(text);
 }
 
 static UINT ctrl_get_height(customctrl *ctrl) {
@@ -1029,7 +1029,7 @@ static void ctrl_free(customctrl *ctrl)
     }
 
     DestroyWindow(ctrl->hwnd);
-    HeapFree(GetProcessHeap(), 0, ctrl);
+    free(ctrl);
 }
 
 static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
@@ -1267,7 +1267,7 @@ static HRESULT cctrl_create_new(FileDialogImpl *This, DWORD id,
 
     SetPropW(ns_hwnd, L"nfs_child", control_hwnd);
 
-    ctrl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(customctrl));
+    ctrl = calloc(1, sizeof(customctrl));
     if(!ctrl)
         return E_OUTOFMEMORY;
 
@@ -2491,7 +2491,7 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
             LocalFree((void*)This->filterspecs[i].pszName);
             LocalFree((void*)This->filterspecs[i].pszSpec);
         }
-        HeapFree(GetProcessHeap(), 0, This->filterspecs);
+        free(This->filterspecs);
 
         DestroyWindow(This->cctrls_hwnd);
 
@@ -2512,7 +2512,7 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
         DestroyMenu(This->hmenu_opendropdown);
         DeleteObject(This->hfont_opendropdown);
 
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -2544,7 +2544,7 @@ static HRESULT WINAPI IFileDialog2_fnSetFileTypes(IFileDialog2 *iface, UINT cFil
     if(!cFileTypes)
         return S_OK;
 
-    This->filterspecs = HeapAlloc(GetProcessHeap(), 0, sizeof(COMDLG_FILTERSPEC)*cFileTypes);
+    This->filterspecs = malloc(sizeof(COMDLG_FILTERSPEC)*cFileTypes);
     for(i = 0; i < cFileTypes; i++)
     {
         This->filterspecs[i].pszName = StrDupW(rgFilterSpec[i].pszName);
@@ -2619,7 +2619,7 @@ static HRESULT WINAPI IFileDialog2_fnAdvise(IFileDialog2 *iface, IFileDialogEven
     if(!pfde || !pdwCookie)
         return E_INVALIDARG;
 
-    client = HeapAlloc(GetProcessHeap(), 0, sizeof(events_client));
+    client = malloc(sizeof(events_client));
     client->pfde = pfde;
     client->cookie = ++This->events_next_cookie;
 
@@ -2650,7 +2650,7 @@ static HRESULT WINAPI IFileDialog2_fnUnadvise(IFileDialog2 *iface, DWORD dwCooki
     {
         list_remove(&found->entry);
         IFileDialogEvents_Release(found->pfde);
-        HeapFree(GetProcessHeap(), 0, found);
+        free(found);
         return S_OK;
     }
 
@@ -4767,7 +4767,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     if(pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    fdimpl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FileDialogImpl));
+    fdimpl = calloc(1, sizeof(FileDialogImpl));
     if(!fdimpl)
         return E_OUTOFMEMORY;
 

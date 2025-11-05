@@ -38,7 +38,6 @@
 #include "shlguid.h"
 #include "servprov.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -157,7 +156,7 @@ IShellBrowser * IShellBrowserImpl_Construct(HWND hwndOwner)
     FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwndOwner);
     IShellBrowserImpl *sb;
 
-    sb = heap_alloc(sizeof(*sb));
+    sb = malloc(sizeof(*sb));
 
     /* Initialisation of the member variables */
     sb->ref=1;
@@ -230,7 +229,7 @@ static ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
     TRACE("(%p,%lu)\n", This, ref + 1);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
