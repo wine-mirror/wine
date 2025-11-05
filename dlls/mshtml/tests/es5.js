@@ -1826,6 +1826,13 @@ sync_test("ArrayBuffers & Views", function() {
     test_readonly(buf, "byteLength", 10);
     test_own_data_prop_desc(buf, "byteLength", false, false, false);
 
+    ok(ArrayBuffer.isView() === false, "ArrayBuffer.isView() returned true");
+    ok(ArrayBuffer.isView([]) === false, "ArrayBuffer.isView([]) returned true");
+    ok(ArrayBuffer.isView({}) === false, "ArrayBuffer.isView({}) returned true");
+    ok(ArrayBuffer.isView(undefined) === false, "ArrayBuffer.isView(undefined) returned true");
+    ok(ArrayBuffer.isView(null) === false, "ArrayBuffer.isView(null) returned true");
+    ok(ArrayBuffer.isView(buf) === false, "ArrayBuffer.isView(ArrayBuffer) returned true");
+
     test_own_props("DataView.prototype", [
         "buffer", "byteLength", "byteOffset",
         "getInt8",  "setInt8",  "getUint8",  "setUint8",
@@ -1945,6 +1952,9 @@ sync_test("ArrayBuffers & Views", function() {
     ok(view.buffer === buf,  "DataView(buf).buffer = " + view.buffer);
     ok(view.byteLength === 10, "DataView(buf).byteLength = " + view.byteLength);
     ok(view.byteOffset === 0,  "DataView(buf).byteOffset = " + view.byteOffset);
+
+    ok(ArrayBuffer.isView(DataView) === false, "ArrayBuffer.isView(DataView) returned true");
+    ok(ArrayBuffer.isView(view) === true, "ArrayBuffer.isView(DataView(buf)) returned false");
 
     for(i = 0; i < 10; i++) {
         r = view.getInt8(i);
@@ -2080,6 +2090,8 @@ sync_test("ArrayBuffers & Views", function() {
     ok(buf2.byteLength === 9, "buf.slice(-9).byteLength = " + buf2.byteLength);
     view2 = DataView(buf2, 1);
     ok(view2.byteLength === 8, "buf.slice(-9) view(1).byteLength = " + view2.byteLength);
+    ok(ArrayBuffer.isView(buf2) === false, "ArrayBuffer.isView(buf.slice(-9)) returned true");
+    ok(ArrayBuffer.isView(view2) === true, "ArrayBuffer.isView(DataView(buf.slice(-9))) returned false");
 
     r = view2.getUint32(0);
     ok(r === 4294967040, "buf.slice(-9) view(1).getUint32(0) returned " + r);
@@ -2188,6 +2200,7 @@ sync_test("ArrayBuffers & Views", function() {
         test_own_data_prop_desc(arr, "length", false, false, false);
         test_own_data_prop_desc(arr, "buffer", false, false, false);
 
+        ok(ArrayBuffer.isView(arr) === true, "ArrayBuffer.isView(" + name + "()) returned false");
         Object.freeze(arr);
         ok(Object.isFrozen(arr) === true, name + "() not frozen");
 
