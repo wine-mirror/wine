@@ -223,7 +223,7 @@ static LONG xf86vm_set_current_mode( x11drv_settings_id id, const struct x11drv_
 #else
     XWarpPointer(gdi_display, None, DefaultRootWindow(gdi_display), 0, 0, 0, 0, 0, 0);
 #endif
-    XFlush(gdi_display);
+
     return DISP_CHANGE_SUCCESSFUL;
 }
 

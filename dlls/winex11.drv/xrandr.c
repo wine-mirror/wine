@@ -391,7 +391,6 @@ static LONG xrandr10_set_current_mode( x11drv_settings_id id, const struct x11dr
     if (stat != RRSetConfigSuccess)
         return DISP_CHANGE_FAILED;
 
-    XFlush( gdi_display );
     return DISP_CHANGE_SUCCESSFUL;
 }
 
@@ -1581,8 +1580,6 @@ static LONG xrandr14_set_current_mode( x11drv_settings_id id, const struct x11dr
     if (!screen_resources)
         return ret;
 
-    XGrabServer( gdi_display );
-
     output_info = pXRRGetOutputInfo( gdi_display, screen_resources, output );
     if (!output_info || output_info->connection != RR_Connected)
         goto done;
@@ -1657,8 +1654,6 @@ static LONG xrandr14_set_current_mode( x11drv_settings_id id, const struct x11dr
         ret = DISP_CHANGE_SUCCESSFUL;
 
 done:
-    XUngrabServer( gdi_display );
-    XFlush( gdi_display );
     if (crtc_info)
         pXRRFreeCrtcInfo( crtc_info );
     if (output_info)

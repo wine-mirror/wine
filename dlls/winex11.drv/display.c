@@ -238,6 +238,8 @@ LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HW
         if ((ret = x11drv_mode_from_devmode( ids[count], mode, modes + count ))) goto done;
     }
 
+    XGrabServer( gdi_display );
+
     /* Detach displays first to free up CRTCs */
     TRACE( "Using %s\n", settings_handler.name );
     for (UINT i = 0; !ret && i < count; i++)
@@ -252,6 +254,9 @@ LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HW
         TRACE( "  setting %s mode %s\n", debugstr_w(modes[i].mode.dmDeviceName), debugstr_devmodew(&modes[i].mode) );
         ret = settings_handler.set_current_mode( ids[i], modes + i );
     }
+
+    XUngrabServer( gdi_display );
+    XFlush( gdi_display );
 
 done:
     free( modes );
