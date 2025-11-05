@@ -729,7 +729,7 @@ static BOOL is_extension_supported( struct context *ctx, const char *extension )
 static GLubyte *filter_extensions( struct context *ctx, const char *extensions )
 {
     const char *end, **extra;
-    size_t size, len;
+    size_t size;
     char *p, *str;
 
     size = strlen( extensions ) + 2;
@@ -742,13 +742,15 @@ static GLubyte *filter_extensions( struct context *ctx, const char *extensions )
     {
         while (*extensions == ' ') extensions++;
         if (!*extensions) break;
-        len = (end = strchr( extensions, ' ' )) ? end - extensions : strlen( extensions );
-        memcpy( p, extensions, len );
-        p[len] = 0;
+
+        if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
+        memcpy( p, extensions, end - extensions );
+        p[end - extensions] = 0;
+
         if (is_extension_supported( ctx, p ))
         {
             TRACE( "++ %s\n", p );
-            p += len;
+            p += end - extensions;
             *p++ = ' ';
         }
         else
