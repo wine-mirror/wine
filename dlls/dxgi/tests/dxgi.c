@@ -7806,9 +7806,6 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
         if (is_d3d12 && (swap_effect == DXGI_SWAP_EFFECT_DISCARD))
             continue;
 
-        if (!is_d3d12 && (flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
-            continue;
-
         winetest_push_context("test %u", i);
 
         swapchain = create_swapchain(device, is_d3d12, window, flags, swap_effect);
