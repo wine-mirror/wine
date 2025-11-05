@@ -91,10 +91,12 @@ static BOOL xf86vm_get_id(const WCHAR *device_name, BOOL is_primary, x11drv_sett
     return TRUE;
 }
 
-static void add_xf86vm_mode( DEVMODEW *mode, DWORD depth, const XF86VidModeModeInfo *mode_info, BOOL full )
+static void add_xf86vm_mode( DEVMODEW *mode, DWORD depth, const XF86VidModeModeInfo *mode_info )
 {
+    XF86VidModeModeInfo extra = *mode_info;
+
     mode->dmSize = sizeof(*mode);
-    mode->dmDriverExtra = full ? sizeof(*mode_info) : 0;
+    mode->dmDriverExtra = sizeof(*mode_info);
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS;
     if (mode_info->htotal && mode_info->vtotal)
     {
@@ -106,16 +108,13 @@ static void add_xf86vm_mode( DEVMODEW *mode, DWORD depth, const XF86VidModeModeI
     mode->dmPelsWidth = mode_info->hdisplay;
     mode->dmPelsHeight = mode_info->vdisplay;
     mode->dmDisplayFlags = 0;
-    if (full)
-    {
-        XF86VidModeModeInfo extra = *mode_info;
-        extra.private = NULL;
-        extra.privsize = 0;
-        memcpy( mode + 1, &extra, sizeof(extra) );
-    }
+
+    extra.private = NULL;
+    extra.privsize = 0;
+    memcpy( mode + 1, &extra, sizeof(extra) );
 }
 
-static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count, BOOL full )
+static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
 {
     INT xf86vm_mode_idx, xf86vm_mode_count;
     XF86VidModeModeInfo **xf86vm_modes;
@@ -141,7 +140,7 @@ static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new
     {
         for (xf86vm_mode_idx = 0; xf86vm_mode_idx < xf86vm_mode_count; ++xf86vm_mode_idx)
         {
-            add_xf86vm_mode( mode, depths[depth_idx], xf86vm_modes[xf86vm_mode_idx], full );
+            add_xf86vm_mode( mode, depths[depth_idx], xf86vm_modes[xf86vm_mode_idx] );
             mode = NEXT_DEVMODEW( mode );
             mode_idx++;
         }

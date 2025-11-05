@@ -62,7 +62,7 @@ static BOOL nores_get_id(const WCHAR *device_name, BOOL is_primary, x11drv_setti
     return TRUE;
 }
 
-static BOOL nores_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count, BOOL full )
+static BOOL nores_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
 {
     RECT primary = get_host_primary_monitor_rect();
     DEVMODEW *modes;
@@ -140,6 +140,19 @@ void X11DRV_Settings_Init(void)
     X11DRV_Settings_SetHandler(&nores_handler);
 }
 
+static void strip_driver_extra( DEVMODEW *modes, UINT count )
+{
+    DEVMODEW *mode, *next;
+    UINT i;
+
+    for (i = 0, mode = modes; i < count; i++, mode = next)
+    {
+        next = NEXT_DEVMODEW(mode);
+        mode->dmDriverExtra = 0;
+        memcpy( modes + i, mode, sizeof(*mode) );
+    }
+}
+
 BOOL is_detached_mode(const DEVMODEW *mode)
 {
     return mode->dmFields & DM_POSITION &&
@@ -168,7 +181,7 @@ static DEVMODEW *get_full_mode(x11drv_settings_id id, DEVMODEW *dev_mode)
     if (is_detached_mode(dev_mode))
         return dev_mode;
 
-    if (!settings_handler.get_modes( id, EDS_ROTATEDMODE, &modes, &mode_count, TRUE )) return NULL;
+    if (!settings_handler.get_modes( id, EDS_ROTATEDMODE, &modes, &mode_count )) return NULL;
 
     for (mode_idx = 0; mode_idx < mode_count; ++mode_idx)
     {
@@ -447,8 +460,9 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             if (!settings_handler.get_id( devname, is_primary, &settings_id )) break;
 
             settings_handler.get_current_mode( settings_id, &current_mode );
-            if (settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count, FALSE ))
+            if (settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count ))
             {
+                strip_driver_extra( modes, mode_count );
                 device_manager->add_modes( &current_mode, mode_count, modes, param );
                 free( modes );
             }
