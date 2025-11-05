@@ -7119,7 +7119,6 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
         swapchain_desc.SwapEffect = effects[i].effect;
         hr = IDXGIFactory2_CreateSwapChainForHwnd(factory2, device,
                 window, &swapchain_desc, NULL, NULL, &swapchain1);
-        todo_wine_if(!is_d3d12 && i < 2)
         ok(hr == effects[i].expected, "Effect %#x: got hr %#lx, expected %#lx.\n",
                 effects[i].effect, hr, effects[i].expected);
         if (SUCCEEDED(hr))
