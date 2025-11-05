@@ -30,7 +30,6 @@
 #include "evntprov.h"
 #include "ddk/csq.h"
 #include "wine/server.h"
-#include "wine/heap.h"
 #include "wine/svcctl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
@@ -4086,7 +4085,7 @@ static BOOLEAN get_drv_name( UNICODE_STRING *drv_name, const UNICODE_STRING *ser
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     WCHAR *str;
 
-    if (!(str = heap_alloc( sizeof(driverW) + service_name->Length - lstrlenW(servicesW)*sizeof(WCHAR) )))
+    if (!(str = HeapAlloc( GetProcessHeap(), 0, sizeof(driverW) + service_name->Length - lstrlenW(servicesW)*sizeof(WCHAR) )))
         return FALSE;
 
     lstrcpyW( str, driverW );
@@ -4510,27 +4509,18 @@ void WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE routine, void *context)
     reverse_barrier.TotalProcessors = cpu_count;
     cpu_count_barrier = cpu_count;
 
-    if (contexts)
+    if (last_cpu_count < cpu_count)
     {
-        if (last_cpu_count < cpu_count)
+        struct generic_call_dpc_context *new_contexts;
+        if (!(new_contexts = realloc(contexts, sizeof(*contexts) * cpu_count)))
         {
-            static struct generic_call_dpc_context *new_contexts;
-            if (!(new_contexts = heap_realloc(contexts, sizeof(*contexts) * cpu_count)))
-            {
-                ERR("No memory.\n");
-                LeaveCriticalSection(&dpc_call_cs);
-                return;
-            }
-            contexts = new_contexts;
-            SetThreadpoolThreadMinimum(dpc_call_tp, cpu_count);
-            SetThreadpoolThreadMaximum(dpc_call_tp, cpu_count);
+            ERR("No memory.\n");
+            LeaveCriticalSection(&dpc_call_cs);
+            return;
         }
-    }
-    else if (!(contexts = heap_alloc(sizeof(*contexts) * cpu_count)))
-    {
-        ERR("No memory.\n");
-        LeaveCriticalSection(&dpc_call_cs);
-        return;
+        contexts = new_contexts;
+        SetThreadpoolThreadMinimum(dpc_call_tp, cpu_count);
+        SetThreadpoolThreadMaximum(dpc_call_tp, cpu_count);
     }
 
     memset(contexts, 0, sizeof(*contexts) * cpu_count);
