@@ -544,7 +544,7 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
     XFlush( gdi_display );
     if (count) TRACE( "processed %d events\n", count );
 
-    if (check_fd_events( ConnectionNumber( data->display ), POLLIN )) return FALSE;
+    if (mask != QS_ALLINPUT || check_fd_events( ConnectionNumber( data->display ), POLLIN )) return FALSE;
     XFlush( data->display ); /* all events have been processed, flush any pending request */
     return TRUE;
 }
