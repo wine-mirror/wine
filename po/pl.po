@@ -4061,15 +4061,15 @@ msgstr "Warunkowa kompilacja jest wyłączona"
 msgid "Expected '@'"
 msgstr "Oczekiwano '@'"
 
-#: dlls/jscript/jscript.rc:96
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
 msgstr "Błąd kompilacji Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:97
+#: dlls/jscript/jscript.rc:98
 msgid "Microsoft JScript runtime error"
 msgstr "Błąd biblioteki uruchomieniowej Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:98 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nieznany błąd biblioteki uruchomieniowej"
 
@@ -4214,35 +4214,41 @@ msgid "Invalid begin/end value in typed array subarray method"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:87
+#, fuzzy
+#| msgid "Invalid module type for %1.\n"
+msgid "Invalid source in typed array set"
+msgstr "Niepoprawny typ modułu dla %1.\n"
+
+#: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
 msgstr "'this' nie jest obiektem DataView"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 "Wymagany argument offset lub wartość w metodzie DataView nie jest określona"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
 msgstr "Dostęp do operacji DataView poza określoną długością bufora"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
 msgstr "Argument przesunięcia konstruktora DataView jest nieprawidłowy"
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
 msgstr "'this' nie jest obiektem |"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:93
 msgid "'key' is not an object"
 msgstr "'key' nie jest obiektem"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
 msgstr "Oczekiwano obiektu ArrayBuffer"
 
-#: dlls/jscript/jscript.rc:94
+#: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
 msgstr "Własność nie może mieć zarówno akcesorów i wartości"
 

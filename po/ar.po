@@ -4120,15 +4120,15 @@ msgstr "البناء الشرطي معطل"
 msgid "Expected '@'"
 msgstr "متوقع ';'"
 
-#: dlls/jscript/jscript.rc:96
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:97
+#: dlls/jscript/jscript.rc:98
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:98 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -4282,41 +4282,47 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:87
 #, fuzzy
+#| msgid "Invalid module type for %1.\n"
+msgid "Invalid source in typed array set"
+msgstr "نوع الوحدة غي سليم في %1.\n"
+
+#: dlls/jscript/jscript.rc:88
+#, fuzzy
 #| msgid "'[object]' is not a date object"
 msgid "'this' is not a DataView object"
 msgstr "'[object]' ليس عنصر تاريخ"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:91
+#: dlls/jscript/jscript.rc:92
 #, fuzzy
 #| msgid "'[object]' is not a date object"
 msgid "'this' is not a | object"
 msgstr "'[object]' ليس عنصر تاريخ"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:93
 #, fuzzy
 #| msgid "'[object]' is not a date object"
 msgid "'key' is not an object"
 msgstr "'[object]' ليس عنصر تاريخ"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:94
 #, fuzzy
 #| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
 msgstr "عنصر مصفوفة متوقع"
 
-#: dlls/jscript/jscript.rc:94
+#: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

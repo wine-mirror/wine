@@ -37,6 +37,7 @@ var JS_E_TYPEDARRAY_BAD_CTOR_ARG = 0x800a13da;
 var JS_E_NOT_TYPEDARRAY = 0x800a13db;
 var JS_E_TYPEDARRAY_INVALID_OFFSLEN = 0x800a13dc;
 var JS_E_TYPEDARRAY_INVALID_SUBARRAY = 0x800a13dd;
+var JS_E_TYPEDARRAY_INVALID_SOURCE = 0x800a13de;
 var JS_E_NOT_DATAVIEW = 0x800a13df;
 var JS_E_DATAVIEW_NO_ARGUMENT = 0x800a13e0;
 var JS_E_DATAVIEW_INVALID_ACCESS = 0x800a13e1;
@@ -2366,6 +2367,87 @@ sync_test("ArrayBuffers & Views", function() {
         ok(arr2.length === 5, r + ".subarray(2, -3).length = " + arr2.length);
         ok(arr2.buffer === arr.buffer, r + ".subarray(2, -3).buffer = " + arr2.buffer);
 
+        try {
+            arr.set.call(null, [1]);
+            ok(false, name + ": calling set with null context did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_NOT_TYPEDARRAY, name + ": calling set with null context threw " + n);
+        }
+        try {
+            arr.set.call({}, [1]);
+            ok(false, name + ": calling set with an object context did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_NOT_TYPEDARRAY, name + ": calling set with an object context threw " + n);
+        }
+        try {
+            arr.set();
+            ok(false, name + ".set() did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_SOURCE, name + ".set() threw " + n);
+        }
+        try {
+            arr.set(null);
+            ok(false, name + ".set(null) did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_SOURCE, name + ".set(null) threw " + n);
+        }
+        try {
+            arr.set([1,2,3], 8);
+            ok(false, name + ".set([1,2,3], 8) did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, name + ".set([1,2,3], 8) threw " + n);
+        }
+        try {
+            arr.set([99], -3);
+            ok(false, name + ".set([99], -3) did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_TYPEDARRAY_INVALID_OFFSLEN, name + ".set([99], -3) threw " + n);
+        }
+
+        r = arr.set(5);
+        ok(r === undefined, name + ".set(5) returned " + r);
+        for(var j = 0; j < 10; j++)
+            ok(arr[j] === 0, name + ".set(5): arr[" + j + "] = " + arr[j]);
+
+        r = arr.set({});
+        ok(r === undefined, name + ".set({}) returned " + r);
+        for(var j = 0; j < 10; j++)
+            ok(arr[j] === 0, name + ".set({}): arr[" + j + "] = " + arr[j]);
+
+        r = arr.set("12");
+        ok(r === undefined, name + ".set('12') returned " + r);
+        for(var j = 0; j < 10; j++)
+            ok(arr[j] === [ 1, 2, 0, 0, 0, 0, 0, 0, 0, 0 ][j], name + ".set('12'): arr[" + j + "] = " + arr[j]);
+
+        arr2 = { length: 2 };
+        arr2[0] = 9;
+        arr2[1] = 7;
+        r = arr.set(arr2);
+        ok(r === undefined, name + ".set(array-like obj) returned " + r);
+        for(var j = 0; j < 10; j++)
+            ok(arr[j] === [ 9, 7, 0, 0, 0, 0, 0, 0, 0, 0 ][j], name + ".set(array-like obj): arr[" + j + "] = " + arr[j]);
+
+        r = arr.set([12, 10, 11], 3);
+        ok(r === undefined, name + ".set([12, 10, 11], 3) returned " + r);
+        for(var j = 0; j < 10; j++)
+            ok(arr[j] === [ 9, 7, 0, 12, 10, 11, 0, 0, 0, 0 ][j], name + ".set([12, 10, 11], 3): arr[" + j + "] = " + arr[j]);
+
+        r = arr.set(arr.subarray(4, 6), 5);
+        ok(r === undefined, name + ".set(arr.subarray(4, 2), 5) returned " + r);
+        for(var j = 0; j < 10; j++)
+            ok(arr[j] === [ 9, 7, 0, 12, 10, 10, 11, 0, 0, 0 ][j], name + ".set(arr.subarray(4, 2), 5): arr[" + j + "] = " + arr[j]);
+
+        r = arr.set(arr.subarray(3, 7), 2);
+        ok(r === undefined, name + ".set(arr.subarray(3, 7), 2) returned " + r);
+        for(var j = 0; j < 10; j++)
+            ok(arr[j] === [ 9, 7, 12, 10, 10, 11, 11, 0, 0, 0 ][j], name + ".set(arr.subarray(3, 7), 2): arr[" + j + "] = " + arr[j]);
+
         arr = constr(buf, typeSz, 2);
         name = name + "(buf, " + typeSz + ", 2)";
         ok(arr.byteLength === 2 * typeSz, name + ".byteLength = " + arr.byteLength);
@@ -2445,10 +2527,33 @@ sync_test("ArrayBuffers & Views", function() {
     ok(arr[0] == 4145490148, "32-bit unsigned arr[0] after overflow = " + arr[0]);
     ok(arr[1] == 3268562261, "32-bit unsigned arr[1] after overflow = " + arr[1]);
 
+    arr = new Int8Array(12);
+    arr.set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    for(var j = 0; j < 12; j++)
+        ok(arr[j] === j + 1, "sequential arr[" + j + "] = " + arr[j]);
+    arr2 = new Int32Array(arr.buffer);
+    ok(arr2.buffer === arr.buffer, "arr2.buffer = " + arr2.buffer);
+    for(var j = 0; j < 3; j++)
+        ok(arr2[j] === [ 0x04030201, 0x08070605, 0x0c0b0a09 ][j], "sequential 32-bit arr[" + j + "] = " + arr2[j]);
+
+    /* test overlap */
+    arr2.set(arr.subarray(1, 4));
+    for(var j = 0; j < 3; j++)
+        ok(arr2[j] === j + 2, "arr with overlap[" + j + "] = " + arr[j]);
+
     /* methods are incompatible, even though thrown error is not explicit */
+    arr = new Int8Array();
     arr2 = new Int32Array();
 
     ok(Uint16Array.prototype.subarray !== Int32Array.prototype.subarray, "Uint16Array and Int32Array have same subarray methods");
+    ok(Int8Array.prototype.set !== Float32Array.prototype.set, "Int8Array and Float32Array have same set methods");
+    try {
+        Uint8Array.prototype.set.call(arr, [12, 50]);
+        ok(false, "calling Uint8Array's set with Int8Array context did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_NOT_TYPEDARRAY, "calling Uint8Array's set with Int8Array context threw " + n);
+    }
     try {
         Uint32Array.prototype.subarray.call(arr2, 0);
         ok(false, "calling Uint32Array's subarray with Int32Array context did not throw exception");

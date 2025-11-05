@@ -823,6 +823,87 @@ static HRESULT fill_typedarr_data_from_object(const struct typed_array_desc *des
     return S_OK;
 }
 
+static HRESULT TypedArray_set(const builtin_info_t *info, script_ctx_t *ctx, jsval_t vthis, WORD flags,
+        unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    const struct typed_array_desc *desc = &typed_array_descs[info->class - FIRST_TYPEDARRAY_JSCLASS];
+    TypedArrayInstance *typedarr;
+    DWORD begin = 0, size;
+    BYTE *dest, *data;
+    IDispatch *disp;
+    jsdisp_t *obj;
+    HRESULT hres;
+    jsval_t val;
+    UINT32 len;
+    double n;
+
+    if(!(typedarr = typedarr_this(vthis, info->class)))
+        return JS_E_NOT_TYPEDARRAY;
+    if(!argc)
+        return JS_E_TYPEDARRAY_INVALID_SOURCE;
+
+    hres = to_object(ctx, argv[0], &disp);
+    if(FAILED(hres))
+        return JS_E_TYPEDARRAY_INVALID_SOURCE;
+
+    if(!(obj = to_jsdisp(disp))) {
+        FIXME("Non-JS array object\n");
+        hres = JS_E_TYPEDARRAY_INVALID_SOURCE;
+        goto done;
+    }
+
+    hres = jsdisp_propget_name(obj, L"length", &val);
+    if(FAILED(hres))
+        goto done;
+
+    hres = to_uint32(ctx, val, &len);
+    jsval_release(val);
+    if(FAILED(hres))
+        goto done;
+
+    if(argc > 1) {
+        hres = to_integer(ctx, argv[1], &n);
+        if(FAILED(hres))
+            goto done;
+        if(n < 0.0 || n > typedarr->length) {
+            hres = JS_E_TYPEDARRAY_INVALID_OFFSLEN;
+            goto done;
+        }
+        begin = n;
+    }
+
+    if(len > typedarr->length - begin) {
+        hres = JS_E_TYPEDARRAY_INVALID_OFFSLEN;
+        goto done;
+    }
+    size = len * desc->size;
+    dest = data = &typedarr->buffer->buf[typedarr->offset + begin * desc->size];
+
+    /* If they overlap, make a temporary copy */
+    if(obj->builtin_info->class >= FIRST_TYPEDARRAY_JSCLASS && obj->builtin_info->class <= LAST_TYPEDARRAY_JSCLASS) {
+        TypedArrayInstance *src_arr = typedarr_from_jsdisp(obj);
+        const BYTE *src = src_arr->buffer->buf + src_arr->offset;
+
+        if(dest < src + len * typed_array_descs[obj->builtin_info->class - FIRST_TYPEDARRAY_JSCLASS].size &&
+           dest + size > src) {
+            if(!(data = malloc(size))) {
+                hres = E_OUTOFMEMORY;
+                goto done;
+            }
+        }
+    }
+
+    hres = fill_typedarr_data_from_object(desc, ctx, data, obj, len);
+    if(SUCCEEDED(hres) && dest != data) {
+        memcpy(dest, data, size);
+        free(data);
+    }
+
+done:
+    IDispatch_Release(disp);
+    return hres;
+}
+
 static HRESULT TypedArray_subarray(const builtin_info_t *info, script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
@@ -1081,8 +1162,8 @@ static const builtin_info_t name##_info;                                        
                                                                                         \
 static HRESULT name##_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r) \
 {                                                                                       \
-    FIXME("\n");                                                                        \
-    return E_NOTIMPL;                                                                   \
+    TRACE("\n");                                                                        \
+    return TypedArray_set(&name##_info, ctx, vthis, flags, argc, argv, r);              \
 }                                                                                       \
                                                                                         \
 static HRESULT name##_subarray(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r) \

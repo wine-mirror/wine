@@ -499,6 +499,7 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_NONWRITABLE_MODIFIED:
         case JS_E_TYPEDARRAY_BAD_CTOR_ARG:
         case JS_E_NOT_TYPEDARRAY:
+        case JS_E_TYPEDARRAY_INVALID_SOURCE:
         case JS_E_NOT_DATAVIEW:
         case JS_E_DATAVIEW_NO_ARGUMENT:
         case JS_E_WRONG_THIS:
