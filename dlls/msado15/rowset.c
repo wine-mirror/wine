@@ -28,6 +28,7 @@ struct rowset
 {
     IRowsetExactScroll IRowsetExactScroll_iface;
     IColumnsInfo IColumnsInfo_iface;
+    IRowsetChange IRowsetChange_iface;
     LONG refs;
 
     int columns_cnt;
@@ -43,6 +44,11 @@ static inline struct rowset *impl_from_IRowsetExactScroll(IRowsetExactScroll *if
 static inline struct rowset *impl_from_IColumnsInfo(IColumnsInfo *iface)
 {
     return CONTAINING_RECORD(iface, struct rowset, IColumnsInfo_iface);
+}
+
+static inline struct rowset *impl_from_IRowsetChange(IRowsetChange *iface)
+{
+    return CONTAINING_RECORD(iface, struct rowset, IRowsetChange_iface);
 }
 
 static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID riid, void **ppv)
@@ -63,6 +69,10 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     else if(IsEqualGUID(&IID_IColumnsInfo, riid))
     {
         *ppv = &rowset->IColumnsInfo_iface;
+    }
+    else if(IsEqualGUID(&IID_IRowsetChange, riid))
+    {
+        *ppv = &rowset->IRowsetChange_iface;
     }
 
     if(*ppv)
@@ -331,6 +341,60 @@ static struct IColumnsInfoVtbl columns_info_vtbl =
     columns_info_MapColumnIDs
 };
 
+static HRESULT WINAPI rowset_change_QueryInterface(IRowsetChange *iface, REFIID riid, void **ppv)
+{
+    struct rowset *rowset = impl_from_IRowsetChange(iface);
+    return IRowsetExactScroll_QueryInterface(&rowset->IRowsetExactScroll_iface, riid, ppv);
+}
+
+static ULONG WINAPI rowset_change_AddRef(IRowsetChange *iface)
+{
+    struct rowset *rowset = impl_from_IRowsetChange(iface);
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI rowset_change_Release(IRowsetChange *iface)
+{
+    struct rowset *rowset = impl_from_IRowsetChange(iface);
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT WINAPI rowset_change_DeleteRows(IRowsetChange *iface, HCHAPTER reserved,
+        DBCOUNTITEM count, const HROW rows[], DBROWSTATUS status[])
+{
+    struct rowset *rowset = impl_from_IRowsetChange(iface);
+
+    FIXME("%p, %Iu, %Iu, %p, %p\n", rowset, reserved, count, rows, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface, HROW row, HACCESSOR accessor, void *data)
+{
+    struct rowset *rowset = impl_from_IRowsetChange(iface);
+
+    FIXME("%p, %Id, %Id, %p\n", rowset, row, accessor, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER reserved,
+        HACCESSOR accessor, void *data, HROW *row)
+{
+    struct rowset *rowset = impl_from_IRowsetChange(iface);
+
+    FIXME("%p, %Iu, %Id, %p, %p\n", rowset, reserved, accessor, data, row);
+    return E_NOTIMPL;
+}
+
+static struct IRowsetChangeVtbl rowset_change_vtbl =
+{
+    rowset_change_QueryInterface,
+    rowset_change_AddRef,
+    rowset_change_Release,
+    rowset_change_DeleteRows,
+    rowset_change_SetData,
+    rowset_change_InsertRow
+};
+
 HRESULT create_mem_rowset(int count, const DBCOLUMNINFO *info, IUnknown **ret)
 {
     struct rowset *rowset;
@@ -341,6 +405,7 @@ HRESULT create_mem_rowset(int count, const DBCOLUMNINFO *info, IUnknown **ret)
 
     rowset->IRowsetExactScroll_iface.lpVtbl = &rowset_vtbl;
     rowset->IColumnsInfo_iface.lpVtbl = &columns_info_vtbl;
+    rowset->IRowsetChange_iface.lpVtbl = &rowset_change_vtbl;
     rowset->refs = 1;
 
     rowset->columns_cnt = count;
