@@ -794,6 +794,11 @@ static void test_FindMimeFromData(void)
     ok(!lstrcmpW(mime, L"text/plain"), "wrong mime: %s\n", wine_dbgstr_w(mime));
     CoTaskMemFree(mime);
 
+    hres = pFindMimeFromData(NULL, L"winexml://content/brew=1", data1, 0, L"text/html; charset=unicode", 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08lx\n", hres);
+    ok(!lstrcmpW(mime, L"text/html"), "wrong mime: %s\n", wine_dbgstr_w(mime));
+    CoTaskMemFree(mime);
+
     hres = pFindMimeFromData(NULL, NULL, data1, 0, L"text/plain", 0, NULL, 0);
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08lx, expected E_INVALIDARG\n", hres);
 }
