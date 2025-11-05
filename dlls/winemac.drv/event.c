@@ -522,5 +522,5 @@ BOOL macdrv_ProcessEvents(DWORD mask)
     }
 
     if (count) TRACE("processed %d events\n", count);
-    return !check_fd_events(macdrv_get_event_queue_fd(data->queue), POLLIN);
+    return mask == QS_ALLINPUT && !check_fd_events(macdrv_get_event_queue_fd(data->queue), POLLIN);
 }
