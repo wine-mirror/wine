@@ -68,11 +68,14 @@
 
 #ifndef RTTI_USE_RVA
 
-#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+#define DEFINE_RTTI_BASE(name, this_off, base_classes, mangled_name) \
 static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
 static const rtti_base_descriptor name ## _rtti_base_descriptor[1] = \
-    { { &name ##_type_info, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0}, 64 } }; \
+    { { &name ##_type_info, base_classes, { this_off, -1, 0}, 64 } };
+
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+DEFINE_RTTI_BASE(name, 0, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), mangled_name ) \
 \
 static const rtti_base_array name ## _rtti_base_array = \
     { { name ## _rtti_base_descriptor, __VA_ARGS__ } }; \
@@ -83,20 +86,29 @@ static const rtti_object_hierarchy name ## _hierarchy = \
 const rtti_object_locator name ## _rtti = \
     { 0, off, 0, &name ## _type_info, &name ## _hierarchy };
 
+#define INIT_RTTI_BASE(name,base) /* nothing to do */
 #define INIT_RTTI(name,base) /* nothing to do */
 
 #elif defined __WINE_PE_BUILD
 
-#define DEFINE_RTTI_DATA2(name, off, mangled_name, ...) \
-extern const rtti_object_locator name##_rtti; \
+#define DEFINE_RTTI_BASE(name, this_off, base_classes, mangled_name) \
 type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 extern const rtti_base_descriptor name ## _rtti_base_descriptor[1]; \
-void __asm_dummy_ ## name ## _rtti(void) \
+void __asm_dummy_ ## name ## _rtti_base(void) \
 { \
     asm( ".balign 4\n\t" \
          __ASM_GLOBL(#name "_rtti_base_descriptor") "\n\t" \
          ".rva " #name "_type_info\n\t" \
-         ".long %c0-1, 0, -1, 0, 64\n" \
+         ".long %c0, %c1, -1, 0, 64\n" \
+         :: "i"(base_classes), "i"(this_off) ); \
+}
+
+#define DEFINE_RTTI_DATA2(name, off, mangled_name, ...) \
+extern const rtti_object_locator name##_rtti; \
+DEFINE_RTTI_BASE(name, 0, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ }))-1, mangled_name) \
+void __asm_dummy_ ## name ## _rtti(void) \
+{ \
+    asm( ".balign 4\n\t" \
          #name "_rtti_base_array:\n\t" \
          ".rva " #__VA_ARGS__ "\n" \
          #name "_rtti_hierarchy:\n\t" \
@@ -112,15 +124,24 @@ void __asm_dummy_ ## name ## _rtti(void) \
 #define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
     DEFINE_RTTI_DATA2(name, off, mangled_name, name ## _rtti_base_descriptor, ##__VA_ARGS__)
 
+#define INIT_RTTI_BASE(name,base) /* nothing to do */
 #define INIT_RTTI(name,base) /* nothing to do */
 
 #else  /* RTTI_USE_RVA */
 
-#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+#define DEFINE_RTTI_BASE(name, this_off, base_classes, mangled_name) \
 static type_info name ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
 \
 static rtti_base_descriptor name ## _rtti_base_descriptor[1] = \
-    { { 0xdeadbeef, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), { 0, -1, 0}, 64 } }; \
+    { { 0xdeadbeef, base_classes, { this_off, -1, 0}, 64 } }; \
+\
+static void init_ ## name ## _rtti_base(char *base) \
+{ \
+    name ## _rtti_base_descriptor[0].type_descriptor = (char*)&name ## _type_info - base; \
+}
+
+#define DEFINE_RTTI_DATA(name, off, mangled_name, ...) \
+DEFINE_RTTI_BASE(name, 0, ARRAY_SIZE(((const void *[]){ __VA_ARGS__ })), mangled_name); \
 \
 static rtti_base_array name ## _rtti_base_array; \
 \
@@ -133,7 +154,7 @@ rtti_object_locator name ## _rtti = \
 static void init_ ## name ## _rtti(char *base) \
 { \
     const void * const name ## _rtti_bases[] = { name ## _rtti_base_descriptor, __VA_ARGS__ }; \
-    name ## _rtti_base_descriptor[0].type_descriptor = (char*)&name ## _type_info - base; \
+    init_ ## name ## _rtti_base(base); \
     for (unsigned int i = 0; i < ARRAY_SIZE(name ## _rtti_bases); i++) \
         name ## _rtti_base_array.bases[i] = (char*)name ## _rtti_bases[i] - base; \
     name ## _hierarchy.base_classes = (char*)&name ## _rtti_base_array - base; \
@@ -142,6 +163,7 @@ static void init_ ## name ## _rtti(char *base) \
     name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
 }
 
+#define INIT_RTTI_BASE(name,base) init_ ## name ## _rtti_base((void *)(base))
 #define INIT_RTTI(name,base) init_ ## name ## _rtti((void *)(base))
 
 #endif  /* RTTI_USE_RVA */

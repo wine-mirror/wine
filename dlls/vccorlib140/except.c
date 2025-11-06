@@ -205,7 +205,18 @@ DEFINE_RTTI_DATA(Exception_ref, 0, EXCEPTION_REF_NAME());
 typedef struct Exception *Exception_ref;
 DEFINE_CXX_TYPE(Exception_ref);
 
-DEFINE_RTTI_DATA(Exception, 0, "?.AVException@Platform@@");
+DEFINE_RTTI_BASE(Exception_IClosable, offsetof(struct Exception, IClosable_iface),
+        1, ".?AUIDisposable@Platform@@");
+DEFINE_RTTI_BASE(Exception_IEquatable, offsetof(struct Exception, IEquatable_iface),
+        1, ".?AUIEquatable@Details@Platform@@");
+DEFINE_RTTI_BASE(Exception_IPrintable, offsetof(struct Exception, IPrintable_iface),
+        1, ".?AUIPrintable@Details@Platform@@");
+DEFINE_RTTI_BASE(Exception_Object, 0, 0, ".?AVObject@Platform@@");
+DEFINE_RTTI_DATA(Exception, 0, ".?AVException@Platform@@",
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor);
 COM_VTABLE_RTTI_START(IInspectable, Exception)
 COM_VTABLE_ENTRY(Exception_QueryInterface)
 COM_VTABLE_ENTRY(Exception_AddRef)
@@ -225,7 +236,11 @@ static HRESULT WINAPI Exception_Closable_Close(IClosable *iface)
 }
 
 DEFINE_RTTI_DATA(Exception_Closable, offsetof(struct Exception, IClosable_iface),
-        "?.AVException@Platform@@")
+        ".?AVException@Platform@@",
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor)
 COM_VTABLE_RTTI_START(IClosable, Exception_Closable)
 COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)
 COM_VTABLE_ENTRY(Exception_Closable_AddRef)
@@ -303,7 +318,12 @@ DEFINE_RTTI_DATA(COMException_ref, 0, EXCEPTION_REF_NAME(COM), Exception_ref_rtt
 typedef struct Exception *COMException_ref;
 DEFINE_CXX_TYPE(COMException_ref, Exception_ref_cxx_type_info);
 
-DEFINE_RTTI_DATA(COMException, 0, ".?AVCOMException@Platform@@");
+DEFINE_RTTI_DATA(COMException, 0, ".?AVCOMException@Platform@@",
+        Exception_rtti_base_descriptor,
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor);
 COM_VTABLE_RTTI_START(IInspectable, COMException)
 COM_VTABLE_ENTRY(Exception_QueryInterface)
 COM_VTABLE_ENTRY(Exception_AddRef)
@@ -314,7 +334,12 @@ COM_VTABLE_ENTRY(Exception_GetTrustLevel)
 COM_VTABLE_RTTI_END;
 
 DEFINE_RTTI_DATA(COMException_Closable, offsetof(struct Exception, IClosable_iface),
-                 ".?AVCOMException@Platform@@")
+        ".?AVCOMException@Platform@@",
+        Exception_rtti_base_descriptor,
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor)
 COM_VTABLE_RTTI_START(IClosable, COMException_Closable)
 COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)
 COM_VTABLE_ENTRY(Exception_Closable_AddRef)
@@ -356,7 +381,13 @@ struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRES
     DEFINE_CXX_TYPE(name##Exception_ref, COMException_ref_cxx_type_info,                        \
             Exception_ref_cxx_type_info);                                                       \
                                                                                                 \
-    DEFINE_RTTI_DATA(name##Exception, 0, ".?AV" #name "Exception@Platform@@");                  \
+    DEFINE_RTTI_DATA(name##Exception, 0, ".?AV" #name "Exception@Platform@@",                   \
+            COMException_rtti_base_descriptor,                                                  \
+            Exception_rtti_base_descriptor,                                                     \
+            Exception_Object_rtti_base_descriptor,                                              \
+            Exception_IPrintable_rtti_base_descriptor,                                          \
+            Exception_IEquatable_rtti_base_descriptor,                                          \
+            Exception_IClosable_rtti_base_descriptor);                                          \
     COM_VTABLE_RTTI_START(IInspectable, name##Exception)                                        \
     COM_VTABLE_ENTRY(Exception_QueryInterface)                                                  \
     COM_VTABLE_ENTRY(Exception_AddRef)                                                          \
@@ -367,7 +398,13 @@ struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRES
     COM_VTABLE_RTTI_END;                                                                        \
                                                                                                 \
     DEFINE_RTTI_DATA(name##Exception_Closable, offsetof(struct Exception, IClosable_iface),     \
-            ".?AV" #name "Exception@Platform@@");                                               \
+            ".?AV" #name "Exception@Platform@@",                                                \
+            COMException_rtti_base_descriptor,                                                  \
+            Exception_rtti_base_descriptor,                                                     \
+            Exception_Object_rtti_base_descriptor,                                              \
+            Exception_IPrintable_rtti_base_descriptor,                                          \
+            Exception_IEquatable_rtti_base_descriptor,                                          \
+            Exception_IClosable_rtti_base_descriptor);                                          \
     COM_VTABLE_RTTI_START(IClosable, name##Exception_Closable)                                  \
     COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)                                         \
     COM_VTABLE_ENTRY(Exception_Closable_AddRef)                                                 \
@@ -499,6 +536,10 @@ void init_exception(void *base)
 {
     INIT_RTTI(Exception_ref, base);
     INIT_CXX_TYPE(Exception_ref, base);
+    INIT_RTTI_BASE(Exception_IClosable, base);
+    INIT_RTTI_BASE(Exception_IEquatable, base);
+    INIT_RTTI_BASE(Exception_IPrintable, base);
+    INIT_RTTI_BASE(Exception_Object, base);
     INIT_RTTI(Exception, base);
     INIT_RTTI(Exception_Closable, base);
 
