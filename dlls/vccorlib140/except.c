@@ -37,10 +37,13 @@ extern void WINAPI DECLSPEC_NORETURN _CxxThrowException(void *, const cxx_except
 extern const void **__cdecl __current_exception(void);
 
 #ifdef _WIN64
-#define EXCEPTION_REF_NAME(name) ".PE$AAV" #name "Exception@Platform@@"
+#define REF_NAME(name) ".PE" name
 #else
-#define EXCEPTION_REF_NAME(name) ".P$AAV" #name "Exception@Platform@@"
+#define REF_NAME(name) ".P" name
 #endif
+
+#define CLASS_REF_NAME(name) REF_NAME("$AAV" name "@Platform@@")
+#define INTERFACE_REF_NAME(name) REF_NAME("$AAU" name "@Platform@@")
 
 /* Data members of the "Exception" C++/CX class.
  * A back-pointer to this struct is stored just before the IInspectable vtable of an Exception object.
@@ -201,9 +204,24 @@ static HRESULT WINAPI Exception_GetTrustLevel(IInspectable *iface, TrustLevel *l
     return E_NOTIMPL;
 }
 
-DEFINE_RTTI_DATA(Exception_ref, 0, EXCEPTION_REF_NAME());
+DEFINE_CXX_BASE(Exception_void_ref, CLASS_IS_SIMPLE_TYPE,
+        0, REF_NAME("AX"));
+DEFINE_CXX_BASE(Exception_IClosable_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        offsetof(struct Exception, IClosable_iface), INTERFACE_REF_NAME("IDisposable"));
+DEFINE_CXX_BASE(Exception_IEquatable_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        offsetof(struct Exception, IEquatable_iface), INTERFACE_REF_NAME("IEquatable"));
+DEFINE_CXX_BASE(Exception_IPrintable_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        offsetof(struct Exception, IPrintable_iface), INTERFACE_REF_NAME("IPrintable"));
+DEFINE_CXX_BASE(Exception_Object_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        0, CLASS_REF_NAME("Object"));
+type_info Exception_ref_type_info = { &type_info_vtable, NULL, CLASS_REF_NAME("Exception") };
 typedef struct Exception *Exception_ref;
-DEFINE_CXX_TYPE(Exception_ref);
+DEFINE_CXX_TYPE(Exception_ref,
+        Exception_Object_ref_cxx_type_info,
+        Exception_IPrintable_ref_cxx_type_info,
+        Exception_IEquatable_ref_cxx_type_info,
+        Exception_IClosable_ref_cxx_type_info,
+        Exception_void_ref_cxx_type_info);
 
 DEFINE_RTTI_BASE(Exception_IClosable, offsetof(struct Exception, IClosable_iface),
         1, ".?AUIDisposable@Platform@@");
@@ -314,9 +332,15 @@ struct Exception *__cdecl Exception_hstring_ctor(struct Exception *this, HRESULT
     return this;
 }
 
-DEFINE_RTTI_DATA(COMException_ref, 0, EXCEPTION_REF_NAME(COM), Exception_ref_rtti_base_descriptor);
+type_info COMException_ref_type_info = { &type_info_vtable, NULL, CLASS_REF_NAME("COMException") };
 typedef struct Exception *COMException_ref;
-DEFINE_CXX_TYPE(COMException_ref, Exception_ref_cxx_type_info);
+DEFINE_CXX_TYPE(COMException_ref,
+        Exception_ref_cxx_type_info,
+        Exception_Object_ref_cxx_type_info,
+        Exception_IPrintable_ref_cxx_type_info,
+        Exception_IEquatable_ref_cxx_type_info,
+        Exception_IClosable_ref_cxx_type_info,
+        Exception_void_ref_cxx_type_info);
 
 DEFINE_RTTI_DATA(COMException, 0, ".?AVCOMException@Platform@@",
         Exception_rtti_base_descriptor,
@@ -375,11 +399,17 @@ struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRES
 }
 
 #define WINRT_EXCEPTION(name, hr)                                                               \
-    DEFINE_RTTI_DATA(name##Exception_ref, 0, EXCEPTION_REF_NAME(name),                          \
-            COMException_ref_rtti_base_descriptor, Exception_ref_rtti_base_descriptor);         \
+    type_info name ## Exception_ref ## _type_info =                                             \
+        { &type_info_vtable, NULL, CLASS_REF_NAME(#name "Exception") };                         \
     typedef COMException_ref name##Exception_ref;                                               \
-    DEFINE_CXX_TYPE(name##Exception_ref, COMException_ref_cxx_type_info,                        \
-            Exception_ref_cxx_type_info);                                                       \
+    DEFINE_CXX_TYPE(name##Exception_ref,                                                        \
+            COMException_ref_cxx_type_info,                                                     \
+            Exception_ref_cxx_type_info,                                                        \
+            Exception_Object_ref_cxx_type_info,                                                 \
+            Exception_IPrintable_ref_cxx_type_info,                                             \
+            Exception_IEquatable_ref_cxx_type_info,                                             \
+            Exception_IClosable_ref_cxx_type_info,                                              \
+            Exception_void_ref_cxx_type_info);                                                  \
                                                                                                 \
     DEFINE_RTTI_DATA(name##Exception, 0, ".?AV" #name "Exception@Platform@@",                   \
             COMException_rtti_base_descriptor,                                                  \
@@ -534,7 +564,11 @@ HSTRING __cdecl Exception_get_Message(struct Exception *this)
 
 void init_exception(void *base)
 {
-    INIT_RTTI(Exception_ref, base);
+    INIT_CXX_BASE(Exception_void_ref, base);
+    INIT_CXX_BASE(Exception_IClosable_ref, base);
+    INIT_CXX_BASE(Exception_IEquatable_ref, base);
+    INIT_CXX_BASE(Exception_IPrintable_ref, base);
+    INIT_CXX_BASE(Exception_Object_ref, base);
     INIT_CXX_TYPE(Exception_ref, base);
     INIT_RTTI_BASE(Exception_IClosable, base);
     INIT_RTTI_BASE(Exception_IEquatable, base);
@@ -543,13 +577,11 @@ void init_exception(void *base)
     INIT_RTTI(Exception, base);
     INIT_RTTI(Exception_Closable, base);
 
-    INIT_RTTI(COMException_ref, base);
     INIT_CXX_TYPE(COMException_ref, base);
     INIT_RTTI(COMException, base);
     INIT_RTTI(COMException_Closable, base);
 
 #define WINRT_EXCEPTION(name, hr)           \
-    INIT_RTTI(name##Exception_ref, base);      \
     INIT_CXX_TYPE(name##Exception_ref, base);  \
     INIT_RTTI(name##Exception, base);          \
     INIT_RTTI(name##Exception_Closable, base);

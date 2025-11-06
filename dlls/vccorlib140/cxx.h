@@ -180,7 +180,13 @@ static const cxx_type_info_table type ## _cxx_type_table = \
 static const cxx_exception_type type ## _exception_type = \
     { TYPE_FLAG_WINRT, NULL, NULL, & type ## _cxx_type_table };
 
-#define INIT_CXX_TYPE(name,base) (void)name ## _exception_type
+#define DEFINE_CXX_BASE(type, flags, off, mangled_name) \
+static type_info type ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
+static const cxx_type_info type ## _cxx_type_info[1] = \
+    { { flags, &type ##_type_info, { off, -1, 0 }, sizeof(void*), NULL } };
+
+#define INIT_CXX_TYPE(name,base) /* nothing to do */
+#define INIT_CXX_BASE(name,base) /* nothing to do */
 
 #elif defined __WINE_PE_BUILD
 
@@ -208,7 +214,22 @@ void __asm_dummy_ ## type ## _exception_type(void) \
 #define DEFINE_CXX_TYPE(type, ...) \
     DEFINE_CXX_TYPE2(type, type ## _cxx_type_info, ##__VA_ARGS__)
 
+#define DEFINE_CXX_BASE(type, flags, off, mangled_name) \
+type_info type ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
+extern const cxx_type_info type ## _cxx_type_info[1]; \
+void __asm_dummy_ ## type ## _exception_type(void) \
+{\
+    asm( ".balign 4\n\t" \
+         __ASM_GLOBL(#type "_cxx_type_info") "\n\t" \
+         ".long %c0\n\t" \
+         ".rva " #type "_type_info\n\t" \
+         ".long %c1, -1, 0, %c2\n\t" \
+         ".long 0\n\t" \
+         :: "i"(flags), "i"(off), "i"(sizeof(void *)) ); \
+}
+
 #define INIT_CXX_TYPE(name,base) /* nothing to do */
+#define INIT_CXX_BASE(name,base) /* nothing to do */
 
 #else  /* CXX_USE_RVA */
 
@@ -228,7 +249,18 @@ static void init_ ## type ## _cxx(char *base) \
     type ## _exception_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
 }
 
+#define DEFINE_CXX_BASE(type, flags, off, mangled_name) \
+static type_info type ## _type_info = { &type_info_vtable, NULL, mangled_name }; \
+static cxx_type_info type ## _cxx_type_info[1] = \
+    { { flags, 0xdeadbeef, { off, -1, 0 }, sizeof(void *), 0 } }; \
+\
+static void init_ ## type ## _cxx_base(char *base) \
+{ \
+    type ## _cxx_type_info[0].type_info = (char *)&type ## _type_info - base; \
+}
+
 #define INIT_CXX_TYPE(name,base) init_ ## name ## _cxx((void *)(base))
+#define INIT_CXX_BASE(name,base) init_ ## name ## _cxx_base((void *)(base))
 
 #endif  /* CXX_USE_RVA */
 
@@ -364,7 +396,7 @@ typedef struct
 typedef struct
 {
     UINT count;
-    const cxx_type_info *info[5];
+    const cxx_type_info *info[10];
 } cxx_type_info_table;
 
 typedef struct
@@ -389,7 +421,7 @@ typedef struct
 typedef struct
 {
     UINT count;
-    unsigned int info[5];
+    unsigned int info[10];
 } cxx_type_info_table;
 
 typedef struct

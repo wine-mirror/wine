@@ -1639,7 +1639,7 @@ static void test_exceptions(void)
 
             cxx_info = (cxx_type_info *)(base + type_info_table->info[j]);
             if (j == type_info_table->count - 1)
-                todo_wine ok(cxx_info->flags == CLASS_IS_SIMPLE_TYPE, "got flags %u\n", cxx_info->flags);
+                ok(cxx_info->flags == CLASS_IS_SIMPLE_TYPE, "got flags %u\n", cxx_info->flags);
             else
                 ok(cxx_info->flags == (CLASS_IS_SIMPLE_TYPE | CLASS_IS_IUNKNOWN), "got flags %u\n", cxx_info->flags);
             ok(cxx_info->size == sizeof(void *), "got size %u\n", cxx_info->size);
