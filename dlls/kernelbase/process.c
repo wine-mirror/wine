@@ -64,6 +64,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, DWORD buflen )
         HANDLE handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                      NULL, OPEN_EXISTING, 0, 0 );
         if ((ret = (handle != INVALID_HANDLE_VALUE))) CloseHandle( handle );
+        else SetLastError( ERROR_FILE_NOT_FOUND );
     }
     RtlReleasePath( load_path );
     return ret;
