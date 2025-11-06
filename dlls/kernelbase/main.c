@@ -30,7 +30,6 @@
 
 #include "wine/debug.h"
 #include "kernelbase.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kernelbase);
@@ -221,7 +220,8 @@ PERF_COUNTERSET_INSTANCE WINAPI *PerfCreateInstance( HANDLE handle, const GUID *
 
     size = (sizeof(PERF_COUNTERSET_INSTANCE) + template->counterset.NumCounters * sizeof(UINT64)
             + (lstrlenW( name ) + 1) * sizeof(WCHAR) + 7) & ~7;
-    inst = heap_alloc_zero( offsetof(struct counterset_instance, instance) + size );
+    inst = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                      offsetof(struct counterset_instance, instance) + size );
     if (!inst)
     {
         SetLastError( ERROR_OUTOFMEMORY );
@@ -255,7 +255,7 @@ ULONG WINAPI PerfDeleteInstance(HANDLE provider, PERF_COUNTERSET_INSTANCE *block
 
     inst = CONTAINING_RECORD(block, struct counterset_instance, instance);
     list_remove( &inst->entry );
-    heap_free( inst );
+    HeapFree( GetProcessHeap(), 0, inst );
 
     return ERROR_SUCCESS;
 }
@@ -284,16 +284,17 @@ ULONG WINAPI PerfSetCounterSetInfo( HANDLE handle, PERF_COUNTERSET_INFO *templat
     }
 
     size = offsetof( struct counterset_template, counter[template->NumCounters] );
-    if (!(new = heap_alloc( size ))) return ERROR_OUTOFMEMORY;
+    if (!(new = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_OUTOFMEMORY;
 
     if (prov->counterset_count)
-        new_array = heap_realloc( prov->countersets, sizeof(*prov->countersets) * (prov->counterset_count + 1) );
+        new_array = HeapReAlloc( GetProcessHeap(), 0, prov->countersets,
+                                 sizeof(*prov->countersets) * (prov->counterset_count + 1) );
     else
-        new_array = heap_alloc( sizeof(*prov->countersets) );
+        new_array = HeapAlloc( GetProcessHeap(), 0, sizeof(*prov->countersets) );
 
     if (!new_array)
     {
-        heap_free( new );
+        HeapFree( GetProcessHeap(), 0, new );
         return ERROR_OUTOFMEMORY;
     }
     memcpy( new, template, size );
@@ -425,7 +426,7 @@ ULONG WINAPI PerfStartProviderEx( GUID *guid, PERF_PROVIDER_CONTEXT *context, HA
     if (context->MemAllocRoutine || context->MemFreeRoutine)
         FIXME("Memory allocation routine is not supported.\n");
 
-    if (!(prov = heap_alloc_zero( sizeof(*prov) ))) return ERROR_OUTOFMEMORY;
+    if (!(prov = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*prov) ))) return ERROR_OUTOFMEMORY;
     list_init( &prov->instance_list );
     memcpy( &prov->guid, guid, sizeof(prov->guid) );
     prov->callback = context->ControlCallback;
@@ -451,13 +452,13 @@ ULONG WINAPI PerfStopProvider(HANDLE handle)
     LIST_FOR_EACH_ENTRY_SAFE(inst, next, &prov->instance_list, struct counterset_instance, entry)
     {
         list_remove( &inst->entry );
-        heap_free( inst );
+        HeapFree( GetProcessHeap(), 0, inst );
     }
 
     for (i = 0; i < prov->counterset_count; ++i)
-        heap_free( prov->countersets[i] );
-    heap_free( prov->countersets );
-    heap_free( prov );
+        HeapFree( GetProcessHeap(), 0, prov->countersets[i] );
+    HeapFree( GetProcessHeap(), 0, prov->countersets );
+    HeapFree( GetProcessHeap(), 0, prov );
     return STATUS_SUCCESS;
 }
 
@@ -532,7 +533,7 @@ HRESULT WINAPI GetAcceptLanguagesA(LPSTR langbuf, DWORD *buflen)
         return E_FAIL;
 
     buflenW = *buflen;
-    langbufW = heap_alloc(sizeof(WCHAR) * buflenW);
+    langbufW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * buflenW);
     hr = GetAcceptLanguagesW(langbufW, &buflenW);
 
     if (hr == S_OK)
@@ -555,7 +556,7 @@ HRESULT WINAPI GetAcceptLanguagesA(LPSTR langbuf, DWORD *buflen)
     }
     *buflen = buflenW ? convlen : 0;
 
-    heap_free(langbufW);
+    HeapFree(GetProcessHeap(), 0, langbufW);
     return hr;
 }
 
@@ -602,7 +603,7 @@ HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
 
     mystrlen = (*buflen > 20) ? *buflen : 20 ;
     len = mystrlen * sizeof(WCHAR);
-    mystr = heap_alloc(len);
+    mystr = HeapAlloc(GetProcessHeap(), 0, len);
     mystr[0] = 0;
     RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\International",
                   0, KEY_QUERY_VALUE, &mykey);
@@ -614,7 +615,7 @@ HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
     {
         lstrcpyW(langbuf, mystr);
         *buflen = len;
-        heap_free(mystr);
+        HeapFree(GetProcessHeap(), 0, mystr);
         return S_OK;
     }
 
@@ -624,7 +625,7 @@ HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
     len = lstrlenW(mystr);
 
     memcpy(langbuf, mystr, min(*buflen, len + 1)*sizeof(WCHAR));
-    heap_free(mystr);
+    HeapFree(GetProcessHeap(), 0, mystr);
 
     if (*buflen > len)
     {

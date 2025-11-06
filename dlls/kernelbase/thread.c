@@ -33,7 +33,6 @@
 #include "wine/exception.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
@@ -511,7 +510,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **de
     if (status != STATUS_BUFFER_TOO_SMALL)
         return HRESULT_FROM_NT(status);
 
-    if (!(info = heap_alloc( length )))
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, length )))
         return HRESULT_FROM_NT(STATUS_NO_MEMORY);
 
     status = NtQueryInformationThread( thread, ThreadNameInformation, info, length, &length );
@@ -527,7 +526,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **de
         }
     }
 
-    heap_free(info);
+    HeapFree(GetProcessHeap(), 0, info);
 
     return HRESULT_FROM_NT(status);
 }
