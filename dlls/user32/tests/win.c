@@ -14174,6 +14174,98 @@ static void test_tile_windows(void)
     DestroyWindow(parent);
 }
 
+static void test_GW_ENABLEDPOPUP(void)
+{
+    HWND parent, parent2, hwnd, hwnd2;
+    HWND popup, popup2;
+
+    parent = CreateWindowA("static", "parent", WS_OVERLAPPEDWINDOW, 0, 0, 600, 300, NULL, 0, 0, NULL);
+    ok(!!parent, "failed to create window, error %lu\n", GetLastError());
+
+    parent2 = CreateWindowA("static", "parent2", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 600, 300, NULL, 0, 0, NULL);
+    ok(!!parent2, "failed to create window, error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    ok(!hwnd, "Unexpected value %p.\n", hwnd);
+    ok(GetLastError() == 0xdeadbeef, "Unexpected error %ld.\n", GetLastError());
+
+    hwnd2 = CreateWindowA("static", "owned1", WS_OVERLAPPEDWINDOW, 0, 0, 600, 300, parent, 0, 0, NULL);
+    ok(!!hwnd2, "failed to create window, error %lu\n", GetLastError());
+    ok(GetWindow(hwnd2, GW_OWNER) == parent, "Unexpected owner.\n");
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    ok(!hwnd, "Unexpected value %p.\n", hwnd);
+    ShowWindow(hwnd2, SW_SHOW);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
+    EnableWindow(hwnd2, FALSE);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    ok(!hwnd, "Unexpected value %p.\n", hwnd);
+    EnableWindow(hwnd2, TRUE);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
+
+    popup = CreateWindowA("static", "popup", WS_POPUP, 0, 0, 16, 16, parent, 0, 0, NULL);
+    ok(!!popup, "Failed to create window, error %lu.\n", GetLastError());
+    ok(GetWindow(popup, GW_OWNER) == parent, "Unexpected owner.\n");
+    ok(IsWindowEnabled(popup), "Unexpected state.\n");
+    ok(!IsWindowVisible(popup), "Unexpected state.\n");
+
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
+
+    ShowWindow(popup, SW_SHOW);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
+    EnableWindow(popup, FALSE);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
+    EnableWindow(popup, TRUE);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
+
+    popup2 = CreateWindowA("static", "popup2", WS_POPUP, 0, 0, 16, 16, parent, 0, 0, NULL);
+    ok(!!popup2, "Failed to create window, error %lu.\n", GetLastError());
+    ok(GetWindow(popup2, GW_OWNER) == parent, "Unexpected owner.\n");
+
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
+
+    ShowWindow(popup2, SW_SHOW);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == popup2, "Unexpected value %p.\n", hwnd);
+
+    ShowWindow(popup2, SW_HIDE);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
+
+    ShowWindow(popup2, SW_SHOW);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == popup2, "Unexpected value %p.\n", hwnd);
+    EnableWindow(popup2, FALSE);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    todo_wine
+    ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
+
+    /* No longer a top-most window */
+    SetParent(parent, parent2);
+    hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
+    ok(!hwnd, "Unexpected value %p.\n", hwnd);
+
+    DestroyWindow(parent);
+    DestroyWindow(parent2);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -14369,6 +14461,7 @@ START_TEST(win)
     test_startupinfo_showwindow(argv);
     test_cascade_windows();
     test_tile_windows();
+    test_GW_ENABLEDPOPUP();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
