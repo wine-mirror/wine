@@ -2703,7 +2703,7 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
     NTSTATUS status;
     CONTEXT context;
     PEXCEPTION_ROUTINE handler;
-    RUNTIME_FUNCTION runtime_func;
+    RUNTIME_FUNCTION runtime_func, *chained_func = NULL;
     KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
     UINT i, j, k, broken_k;
     ULONG64 fake_stack[256];
@@ -2714,13 +2714,33 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
     if (test->unwind_info)
     {
         UINT handler_offset = 4 + 2 * test->unwind_info[2];
+        const BYTE *chained_info;
         UINT unwind_size;
 
         handler_offset = (handler_offset + 3) & ~3;
+        if (test->unwind_info[0] & (UNW_FLAG_CHAININFO << 3))
+        {
+            chained_func = (RUNTIME_FUNCTION *)((char *)code_mem + unwind_offset + handler_offset);
+            chained_info = test->unwind_info + handler_offset + sizeof(RUNTIME_FUNCTION);
+            handler_offset += sizeof(RUNTIME_FUNCTION) + 4 + 2 * chained_info[2];
+            handler_offset = (handler_offset + 3) & ~3;
+        }
         unwind_size = handler_offset + 8;
         memcpy( (char *)code_mem + unwind_offset, test->unwind_info, unwind_size );
-        runtime_func.BeginAddress = code_offset;
-        runtime_func.EndAddress = code_offset + test->function_size;
+        if (chained_func)
+        {
+            runtime_func.BeginAddress = code_offset + chained_func->BeginAddress;
+            runtime_func.EndAddress = code_offset + chained_func->EndAddress;
+
+            chained_func->EndAddress = code_offset + chained_func->BeginAddress;
+            chained_func->BeginAddress = code_offset;
+            chained_func->UnwindData = unwind_offset + (chained_info - test->unwind_info);
+        }
+        else
+        {
+            runtime_func.BeginAddress = code_offset;
+            runtime_func.EndAddress = code_offset + test->function_size;
+        }
         runtime_func.UnwindData = unwind_offset;
     }
 
@@ -3160,6 +3180,104 @@ static void test_virtual_unwind_x86(void)
         { 0x03,  0x00,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
     };
 
+    static const BYTE function_7[] =
+    {
+        0x48, 0x83, 0xec, 0x30,                    /* 00: sub $0x30,%rsp */
+        0x48, 0x89, 0x5c, 0x24, 0x10,              /* 04: mov %rbx,0x10(%rsp) */
+        0x90,                                      /* 09: nop */
+        0xe9, 0x0b, 0x00, 0x00, 0x00,              /* 0a: jmp chained */
+        0x90,                                      /* 0f: nop */
+        0x48, 0x8b, 0x5c, 0x24, 0x10,              /* 10: mov 0x10(%rsp),%rbx */
+        0x48, 0x83, 0xc4, 0x30,                    /* 15: add $0x30,%rsp */
+        0xc3,                                      /* 19: ret */
+        /* chained: */
+        0x55,                                      /* 00: / 1a: push %rbp */
+        0x48, 0x83, 0xec, 0x50,                    /* 01: / 1b: sub $0x50,%rsp */
+        0x48, 0x8d, 0x6c, 0x24, 0x30,              /* 05: / 1f: lea 0x30(%rsp),%rbp */
+        0x48, 0x89, 0x5d, 0x10,                    /* 0a: / 24: mov %rbx,0x10(%rbp) */
+        0xe9, 0xe3, 0xff, 0xff, 0xff,              /* 0e: / 28: jmp 10 */
+        0xe9, 0x00, 0x00, 0x00, 0x00,              /* 13: / 2d: jmp 18 */
+        0x90,                                      /* 18: / 32: nop */
+        0x48, 0x8b, 0x5d, 0x10,                    /* 19: / 33: mov 0x10(%rbp),%rbx */
+        0x48, 0x83, 0xc4, 0x50,                    /* 1d: / 37: add $0x50,%rsp */
+        0x5d,                                      /* 21: / 3b: pop %rbp */
+        0xc3,                                      /* 22: / 3c: ret */
+    };
+    C_ASSERT(sizeof(function_7) == 0x3d);
+
+    static const BYTE unwind_info_7[] =
+    {
+        1 | (UNW_FLAG_CHAININFO << 3), /* version + flags */
+        0x0e,                          /* prolog size */
+        5,                             /* opcode count */
+        (0x03 << 4) | rbp,             /* frame reg rbp offset 0x30 */
+
+        0x0e, UWOP(SAVE_NONVOL, rbx), 0x2, 0,  /* 16: mov %rbx,0x10(%rbp) */
+        0x0f, UWOP(SET_FPREG, rbp),            /* 0f: lea 0x30(%rsp),rbp */
+        0x05, UWOP(ALLOC_SMALL, 5),            /* 0a: sub $0x30,%rsp */
+        0x01, UWOP(PUSH_NONVOL, rbp),          /* 03: push %rbp */
+
+        /* align */
+        0x00, 0x00,
+
+        /* chained runtime function, adjusted in test code */
+        0x1a, 0x00, 0x00, 0x00, /* inner function BeginAddress offset from the whole function start */
+        0x3d, 0x00, 0x00, 0x00, /* inner function EndAddress  offset from the whole function start */
+        0x00, 0x00, 0x00, 0x00, /* UnwindData */
+
+        /* chained unwind data */
+        1,                             /* version + flags */
+        0x09,                          /* prolog size */
+        3,                             /* opcode count */
+        0,                             /* frame reg rbp offset 0x30 */
+
+        0x09, UWOP(SAVE_NONVOL, rbx), 0x2, 0,  /* 16: mov %rbx,0x10(%rsp) */
+        0x04, UWOP(ALLOC_SMALL, 5),            /* 0a: sub $0x30,%rsp */
+
+        /* align */
+        0x00, 0x00,
+
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+    };
+
+    static const struct results_x86 results_7[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x1a,  0x30,  FALSE, 0x030, 0x000, { {rsp,0x038}, {rbx,0x010}, {-1,-1} }},
+        { 0x1b,  0x30,  FALSE, 0x038, 0x000, { {rsp,0x040}, {rbx,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x1f,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x24,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+
+        /* jump to chained function, handled as tail jump or immediate return */
+        { 0x28,  0x30,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+        /* jump inside inner function, no special handling */
+        { 0x2d,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+
+        { 0x32,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x33,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x37,  0x30,  FALSE, 0x058, 0x058, { {rsp,0x060}, {rbp,0x050}, {-1,-1} }},
+        { 0x3b,  0x30,  FALSE, 0x008, 0x008, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x3c,  0x30,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+    };
+
+    static const struct results_x86 broken_results_7[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x1a,  0x30,  FALSE, 0x030, 0x000, { {rsp,0x038}, {rbx,0x010}, {-1,-1} }},
+        { 0x1b,  0x30,  FALSE, 0x038, 0x000, { {rsp,0x040}, {rbx,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x1f,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x24,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x28,  0x30,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+        { 0x2d,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x32,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x33,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        /* Before Win11 output frame in epilogue is set with fpreg even after it is popped. */
+        { 0x37,  0x30,  FALSE, 0x058, 0x000, { {rsp,0x060}, {rbp,0x050}, {-1,-1} }},
+        { 0x3b,  0x30,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x3c,  0x30,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+    };
+
     static const struct unwind_test_x86 tests[] =
     {
         { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0), broken_results_0 },
@@ -3175,6 +3293,7 @@ static void test_virtual_unwind_x86(void)
         { function_6_1, sizeof(function_6_1), unwind_info_6, results_6_epilogue, ARRAY_SIZE(results_6_epilogue) },
         { function_6_2, sizeof(function_6_2), unwind_info_6, results_6_body, ARRAY_SIZE(results_6_body) },
         { function_6_3, sizeof(function_6_3), unwind_info_6, results_6_epilogue, ARRAY_SIZE(results_6_epilogue) },
+        { function_7, sizeof(function_7), unwind_info_7, results_7, ARRAY_SIZE(results_7), broken_results_7 },
     };
 
     struct unwind_test_x86 jump_test = { function_tail_jump_ff, sizeof(function_tail_jump_ff), unwind_info_6,

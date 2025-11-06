@@ -2019,7 +2019,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
     ULONG64 frame, off;
     struct UNWIND_INFO *info;
     unsigned int i, prolog_offset;
-    BOOL mach_frame = FALSE;
+    BOOL mach_frame = FALSE, chained = FALSE;
 
 #ifdef __arm64ec__
     if (RtlIsEcCode( pc ))
@@ -2078,7 +2078,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
         {
             prolog_offset = ~0;
             /* Since Win10 1809 epilogue does not have a special treatment in case of zero opcode count. */
-            if (info->count && is_inside_epilog( (BYTE *)pc, base, function ))
+            if (!chained && info->count && is_inside_epilog( (BYTE *)pc, base, function ))
             {
                 TRACE("inside epilog.\n");
                 interpret_epilog( (BYTE *)pc, context, ctx_ptr );
@@ -2154,6 +2154,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
 
         if (!(info->flags & UNW_FLAG_CHAININFO)) break;
         function = &handler_data->chain;  /* restart with the chained info */
+        chained = TRUE;
     }
 
     if (!mach_frame)
