@@ -290,9 +290,9 @@
 @ stub -arch=win64 ?__abi_FailFast@@YAXXZ
 @ stub -arch=win32 ??0GridLength@Xaml@UI@Windows@@QAA@NW4GridUnitType@123@@Z
 @ stub -arch=win64 ??0GridLength@Xaml@UI@Windows@@QEAA@NW4GridUnitType@123@@Z
-@ stub -arch=i386 ?__abi_ObjectToString@__abi_details@@YGP$AAVString@Platform@@P$AAVObject@3@_N@Z
-@ stub -arch=arm ?__abi_ObjectToString@__abi_details@@YAP$AAVString@Platform@@P$AAVObject@3@_N@Z
-@ stub -arch=win64 ?__abi_ObjectToString@__abi_details@@YAPE$AAVString@Platform@@PE$AAVObject@3@_N@Z
+@ stdcall -arch=i386 ?__abi_ObjectToString@__abi_details@@YGP$AAVString@Platform@@P$AAVObject@3@_N@Z(ptr long) __abi_ObjectToString
+@ stdcall -arch=arm ?__abi_ObjectToString@__abi_details@@YAP$AAVString@Platform@@P$AAVObject@3@_N@Z(ptr long) __abi_ObjectToString
+@ stdcall -arch=win64 ?__abi_ObjectToString@__abi_details@@YAPE$AAVString@Platform@@PE$AAVObject@3@_N@Z(ptr long) __abi_ObjectToString
 @ stub -arch=win32 ?__abi_Resolve@ControlBlock@Details@Platform@@UAGJAAVGuid@3@PAPAU__abi_IInspectable@@@Z
 @ stub -arch=win64 ?__abi_Resolve@ControlBlock@Details@Platform@@UEAAJAEAVGuid@3@PEAPEAU__abi_IInspectable@@@Z
 @ stdcall -arch=i386 ?__abi_WinRTraiseAccessDeniedException@@YGXXZ() __abi_WinRTraiseAccessDeniedException

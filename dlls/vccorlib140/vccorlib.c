@@ -611,6 +611,12 @@ void *WINAPI CreateValue(int typecode, const void *val)
     return obj;
 }
 
+HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
+{
+    FIXME("(%p, %d): stub!\n", obj, try_stringable);
+    return NULL;
+}
+
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
