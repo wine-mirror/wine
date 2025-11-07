@@ -798,6 +798,8 @@ static INT_PTR InitializeDialog(HWND hwnd)
     int optcount;
     HWND control;
     int i;
+    int o;
+    int *opt_order=NULL;
 
     rc = sane_option_get_value( 0, &optcount );
     if (rc != TWCC_SUCCESS)
@@ -808,16 +810,48 @@ static INT_PTR InitializeDialog(HWND hwnd)
     else
         gOptCount = optcount;
 
-    for ( i = 1; i < optcount; i++)
+    /* Determine the order in which options shall be set in sane */
+    opt_order = malloc((optcount+1) * sizeof(int));
+    if (!opt_order)
+    {
+        ERR("Out of memory allocation opt_order\n");
+        return FALSE;
+    }
+
+    for ( o = 0; o < optcount; o++)
+    {
+        opt_order[o] = o;
+    }
+
+    for ( o = 1; o < optcount; o++)
     {
         struct option_descriptor opt;
+        opt.optno = opt_order[o];
+        SANE_CALL( option_get_descriptor, &opt );
+
+        if (!strcmp(opt.name, "source"))
+        {
+            /* Source (adf, flatbed) must be set before resolution
+             * so process it first */
+            memmove(opt_order+2,
+                    opt_order+1,
+                    (o-1) * sizeof(int));
+            opt_order[1] = opt.optno;
+        }
+    }
+
+    for ( o = 1; o < optcount; o++)
+    {
+        struct option_descriptor opt;
+
+        opt.optno =
+          i = opt_order[o];
 
         control = GetDlgItem(hwnd,i+ID_BASE);
 
         if (!control)
             continue;
 
-        opt.optno = i;
         SANE_CALL( option_get_descriptor, &opt );
 
         TRACE("%i %s %i %i\n",i,debugstr_w(opt.title),opt.type,opt.constraint_type);
@@ -829,6 +863,9 @@ static INT_PTR InitializeDialog(HWND hwnd)
         {
             CHAR buffer[255];
             WCHAR *p;
+            char oldvalue[256];
+
+            sane_option_get_value(opt.optno, oldvalue);
 
             for (p = opt.constraint.strings; *p; p += lstrlenW(p) + 1)
                 SendMessageW( control,CB_ADDSTRING,0, (LPARAM)p );
@@ -841,7 +878,8 @@ static INT_PTR InitializeDialog(HWND hwnd)
                     WideCharToMultiByte(CP_UTF8, 0, p, -1, param, sizeof(param), NULL, NULL);
                     if (!strcmp(param, buffer))
                     {
-                        sane_option_set_value(opt.optno, buffer, NULL);
+                        if (strcmp(param, oldvalue))
+                            sane_option_set_value(opt.optno, buffer, NULL);
                         break;
                     }
                 }
@@ -964,6 +1002,8 @@ static INT_PTR InitializeDialog(HWND hwnd)
             }
         }
     }
+
+    free(opt_order);
 
     return TRUE;
 }
