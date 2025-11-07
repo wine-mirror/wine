@@ -325,6 +325,14 @@ static void PROGRESS_DrawBackground (const PROGRESS_INFO *infoPtr, HDC hdc, Prog
     InflateRect (&pdi->rect, -1, -1);
 }
 
+static BOOL PROGRESS_IsSmooth(HWND hwnd)
+{
+    if (GetWindowTheme(hwnd))
+        return FALSE;
+
+    return GetWindowLongW(hwnd, GWL_STYLE) & PBS_SMOOTH;
+}
+
 /***********************************************************************
  * PROGRESS_Draw
  * Draws the progress bar.
@@ -362,7 +370,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     PROGRESS_DrawBackground (infoPtr, hdc, &pdi);
 
     /* compute some drawing parameters */
-    barSmooth = (dwStyle & PBS_SMOOTH) && !pdi.theme;
+    barSmooth = PROGRESS_IsSmooth(infoPtr->Self);
     drawProcs = &((pdi.theme ? drawProcThemed : drawProcClassic)[(barSmooth ? 0 : 4)
         + ((dwStyle & PBS_VERTICAL) ? 2 : 0)]);
     barSize = get_bar_size( dwStyle, &pdi.rect );
@@ -443,8 +451,7 @@ static void PROGRESS_UpdateMarquee (PROGRESS_INFO *infoPtr)
     LONG style = GetWindowLongW (infoPtr->Self, GWL_STYLE);
     RECT rect;
     int ledWidth, leds;
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
-    BOOL smooth = (style & PBS_SMOOTH) && !theme;
+    BOOL smooth = PROGRESS_IsSmooth (infoPtr->Self);
 
     get_client_rect (infoPtr->Self, &rect);
 
