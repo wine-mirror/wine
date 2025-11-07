@@ -238,10 +238,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
         }
 
         if (pImageMemXfer->Memory.Flags & TWMF_HANDLE)
-        {
-            FIXME("Memory Handle, may not be locked correctly\n");
-            buffer = LocalLock(pImageMemXfer->Memory.TheMem);
-        }
+            buffer = GlobalLock(pImageMemXfer->Memory.TheMem);
         else
             buffer = pImageMemXfer->Memory.TheMem;
        
@@ -286,7 +283,7 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
     }
 
     if (pImageMemXfer->Memory.Flags & TWMF_HANDLE)
-        LocalUnlock(pImageMemXfer->Memory.TheMem);
+        GlobalUnlock(pImageMemXfer->Memory.TheMem);
     
     return twRC;
 }
