@@ -237,28 +237,31 @@ static const ProgressDrawProc drawProcClassic[8] = {
 /* draw themed horizontal bar from 'start' to 'end' */
 static void draw_theme_bar_H (const ProgressDrawInfo* di, int start, int end)
 {
+    HTHEME theme = GetWindowTheme (di->infoPtr->Self);
     RECT r;
     r.left = di->rect.left + start;
     r.top = di->rect.top;
     r.bottom = di->rect.bottom;
     r.right = di->rect.left + end;
-    DrawThemeBackground (di->theme, di->hdc, PP_FILL, di->infoPtr->State, &r, NULL);
+    DrawThemeBackground (theme, di->hdc, PP_FILL, di->infoPtr->State, &r, NULL);
 }
 
 /* draw themed vertical bar from 'start' to 'end' */
 static void draw_theme_bar_V (const ProgressDrawInfo* di, int start, int end)
 {
+    HTHEME theme = GetWindowTheme (di->infoPtr->Self);
     RECT r;
     r.left = di->rect.left;
     r.right = di->rect.right;
     r.bottom = di->rect.bottom - start;
     r.top = di->rect.bottom - end;
-    DrawThemeBackground (di->theme, di->hdc, PP_FILLVERT, di->infoPtr->State, &r, NULL);
+    DrawThemeBackground (theme, di->hdc, PP_FILLVERT, di->infoPtr->State, &r, NULL);
 }
 
 /* draw themed horizontal background from 'start' to 'end' */
 static void draw_theme_bkg_H (const ProgressDrawInfo* di, int start, int end)
 {
+    HTHEME theme = GetWindowTheme (di->infoPtr->Self);
     RECT bgrect, r;
 
     SetRect(&r, di->rect.left + start, di->rect.top, di->rect.left + end, di->rect.bottom);
@@ -266,12 +269,13 @@ static void draw_theme_bkg_H (const ProgressDrawInfo* di, int start, int end)
     MapWindowPoints(di->infoPtr->Self, 0, (POINT *)&bgrect, 2);
     OffsetRect(&bgrect, -bgrect.left, -bgrect.top);
 
-    DrawThemeBackground (di->theme, di->hdc, PP_BAR, 0, &bgrect, &r);
+    DrawThemeBackground (theme, di->hdc, PP_BAR, 0, &bgrect, &r);
 }
 
 /* draw themed vertical background from 'start' to 'end' */
 static void draw_theme_bkg_V (const ProgressDrawInfo* di, int start, int end)
 {
+    HTHEME theme = GetWindowTheme (di->infoPtr->Self);
     RECT bgrect, r;
 
     SetRect(&r, di->rect.left, di->rect.bottom - end, di->rect.right, di->rect.bottom - start);
@@ -279,7 +283,7 @@ static void draw_theme_bkg_V (const ProgressDrawInfo* di, int start, int end)
     MapWindowPoints(di->infoPtr->Self, 0, (POINT *)&bgrect, 2);
     OffsetRect(&bgrect, -bgrect.left, -bgrect.top);
 
-    DrawThemeBackground (di->theme, di->hdc, PP_BARVERT, 0, &bgrect, &r);
+    DrawThemeBackground (theme, di->hdc, PP_BARVERT, 0, &bgrect, &r);
 }
 
 /* drawing functions for themed style */
