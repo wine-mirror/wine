@@ -139,13 +139,13 @@ static void PROGRESS_Invalidate( const PROGRESS_INFO *infoPtr, INT old, INT new 
 /* Information for a progress bar drawing helper */
 typedef struct tagProgressDrawInfo
 {
+    const PROGRESS_INFO *infoPtr;
     HDC hdc;
     RECT rect;
     HBRUSH hbrBar;
     HBRUSH hbrBk;
     int ledW, ledGap;
     HTHEME theme;
-    RECT bgRect;
     UINT state;
 } ProgressDrawInfo;
 
@@ -263,7 +263,8 @@ static void draw_theme_bkg_H (const ProgressDrawInfo* di, int start, int end)
     RECT bgrect, r;
 
     SetRect(&r, di->rect.left + start, di->rect.top, di->rect.left + end, di->rect.bottom);
-    bgrect = di->bgRect;
+    GetWindowRect(di->infoPtr->Self, &bgrect);
+    MapWindowPoints(di->infoPtr->Self, 0, (POINT *)&bgrect, 2);
     OffsetRect(&bgrect, -bgrect.left, -bgrect.top);
 
     DrawThemeBackground (di->theme, di->hdc, PP_BAR, 0, &bgrect, &r);
@@ -275,7 +276,8 @@ static void draw_theme_bkg_V (const ProgressDrawInfo* di, int start, int end)
     RECT bgrect, r;
 
     SetRect(&r, di->rect.left, di->rect.bottom - end, di->rect.right, di->rect.bottom - start);
-    bgrect = di->bgRect;
+    GetWindowRect(di->infoPtr->Self, &bgrect);
+    MapWindowPoints(di->infoPtr->Self, 0, (POINT *)&bgrect, 2);
     OffsetRect(&bgrect, -bgrect.left, -bgrect.top);
 
     DrawThemeBackground (di->theme, di->hdc, PP_BARVERT, 0, &bgrect, &r);
@@ -334,6 +336,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 
     TRACE("(infoPtr=%p, hdc=%p)\n", infoPtr, hdc);
 
+    pdi.infoPtr = infoPtr;
     pdi.hdc = hdc;
     pdi.state = infoPtr->State;
     pdi.theme = GetWindowTheme (infoPtr->Self);
@@ -361,11 +364,6 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     drawProcs = &((pdi.theme ? drawProcThemed : drawProcClassic)[(barSmooth ? 0 : 4)
         + ((dwStyle & PBS_VERTICAL) ? 2 : 0)]);
     barSize = get_bar_size( dwStyle, &pdi.rect );
-    if (pdi.theme)
-    {
-        GetWindowRect( infoPtr->Self, &pdi.bgRect );
-        MapWindowPoints( infoPtr->Self, 0, (POINT*)&pdi.bgRect, 2 );
-    }
 
     if (!barSmooth)
         pdi.ledW = get_led_size( infoPtr, dwStyle, &pdi.rect);
