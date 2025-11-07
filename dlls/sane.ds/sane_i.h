@@ -45,6 +45,7 @@ struct tagActiveDS
 
     /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
+    TW_INT16            capXferCount;           /* ICAP_XFERCOUNT */
     BOOL                PixelTypeSet;
     TW_UINT16		defaultPixelType;		/* ICAP_PIXELTYPE */
     BOOL                XResolutionSet;
