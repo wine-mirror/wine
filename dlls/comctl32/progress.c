@@ -146,7 +146,6 @@ typedef struct tagProgressDrawInfo
     HBRUSH hbrBk;
     int ledW, ledGap;
     HTHEME theme;
-    UINT state;
 } ProgressDrawInfo;
 
 typedef void (*ProgressDrawProc)(const ProgressDrawInfo* di, int start, int end);
@@ -243,7 +242,7 @@ static void draw_theme_bar_H (const ProgressDrawInfo* di, int start, int end)
     r.top = di->rect.top;
     r.bottom = di->rect.bottom;
     r.right = di->rect.left + end;
-    DrawThemeBackground (di->theme, di->hdc, PP_FILL, di->state, &r, NULL);
+    DrawThemeBackground (di->theme, di->hdc, PP_FILL, di->infoPtr->State, &r, NULL);
 }
 
 /* draw themed vertical bar from 'start' to 'end' */
@@ -254,7 +253,7 @@ static void draw_theme_bar_V (const ProgressDrawInfo* di, int start, int end)
     r.right = di->rect.right;
     r.bottom = di->rect.bottom - start;
     r.top = di->rect.bottom - end;
-    DrawThemeBackground (di->theme, di->hdc, PP_FILLVERT, di->state, &r, NULL);
+    DrawThemeBackground (di->theme, di->hdc, PP_FILLVERT, di->infoPtr->State, &r, NULL);
 }
 
 /* draw themed horizontal background from 'start' to 'end' */
@@ -338,7 +337,6 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 
     pdi.infoPtr = infoPtr;
     pdi.hdc = hdc;
-    pdi.state = infoPtr->State;
     pdi.theme = GetWindowTheme (infoPtr->Self);
 
     /* get the required bar brush */
