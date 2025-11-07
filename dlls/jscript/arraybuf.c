@@ -18,6 +18,7 @@
 
 
 #include <limits.h>
+#include <math.h>
 
 #include "jscript.h"
 
@@ -715,6 +716,7 @@ static const builtin_info_t DataViewConstr_info = {
     X(Int16Array)        \
     X(Int32Array)        \
     X(Uint8Array)        \
+    X(Uint8ClampedArray) \
     X(Uint16Array)       \
     X(Uint32Array)       \
     X(Float32Array)      \
@@ -746,11 +748,17 @@ static void set_f32(void *p, double v) { *(float *)p = v; }
 static double get_f64(const void *p) { return *(const double *)p; }
 static void set_f64(void *p, double v) { *(double *)p = v; }
 
+static void set_clamped_u8(void *p, double v)
+{
+    *(UINT8 *)p = v >= 255.0 ? 255 : v > 0 ? lround(v) : 0;
+}
+
 static const struct typed_array_desc typed_array_descs[NUM_TYPEDARRAY_TYPES] = {
     [Int8Array_desc_idx]         = { 1, get_s8,  set_u8         },
     [Int16Array_desc_idx]        = { 2, get_s16, set_u16        },
     [Int32Array_desc_idx]        = { 4, get_s32, set_u32        },
     [Uint8Array_desc_idx]        = { 1, get_u8,  set_u8         },
+    [Uint8ClampedArray_desc_idx] = { 1, get_u8,  set_clamped_u8 },
     [Uint16Array_desc_idx]       = { 2, get_u16, set_u16        },
     [Uint32Array_desc_idx]       = { 4, get_u32, set_u32        },
     [Float32Array_desc_idx]      = { 4, get_f32, set_f32        },

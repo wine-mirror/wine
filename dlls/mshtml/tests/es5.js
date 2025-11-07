@@ -2561,6 +2561,18 @@ sync_test("ArrayBuffers & Views", function() {
         var n = ex.number >>> 0;
         ok(n === JS_E_NOT_TYPEDARRAY, "calling Uint32Array's subarray with Int32Array context threw " + n);
     }
+
+    /* clamped array */
+    arr = new Uint8ClampedArray(7);
+    arr2 = new Uint8Array(7);
+    arr.set ([42, -1, 999, 0.9, NaN, Infinity, -Infinity]);
+    arr2.set([42, -1, 999, 0.9, NaN, Infinity, -Infinity]);
+    for(var j = 0; j < 7; j++) {
+        ok(arr[j] ===  [42, 0, 255, 1, 0, 255, 0][j], "clamped arr[" + j + "] = " + arr[j]);
+        ok(arr2[j] === [42, 255, 231, 0, 0, 0, 0][j], "non-clamped arr[" + j + "] = " + arr2[j]);
+    }
+    r = Object.prototype.toString.call(arr);
+    ok(r === "[object Uint8ClampedArray]", "Object toString for Uint8ClampedArray = " + r);
 });
 
 sync_test("builtin_context", function() {
@@ -2683,6 +2695,7 @@ sync_test("globals override", function() {
         "SyntaxError",
         "TypeError",
         "Uint8Array",
+        "Uint8ClampedArray",
         "Uint16Array",
         "Uint32Array",
         "unescape",
