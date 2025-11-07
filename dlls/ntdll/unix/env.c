@@ -917,6 +917,13 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
     *size = 1;
     for (e = environ; *e; e++) *size += strlen(*e) + 6;
 
+    if (*size > 30000)  /* Windows is limited to 32767, and we need some space for the Wine variables */
+    {
+        ERR( "Unix environment too large, not importing it.\n");
+        *size = *pos = 0;
+        return NULL;
+    }
+
     env = malloc( *size * sizeof(WCHAR) );
     ptr = env;
     end = env + *size - 1;
