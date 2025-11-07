@@ -1843,6 +1843,32 @@ static int get_opcode_size( struct opcode op )
     }
 }
 
+static void *get_main_function_start( const RUNTIME_FUNCTION *f, ULONG_PTR base )
+{
+    const struct UNWIND_INFO *info;
+    const union handler_data *data;
+
+    while (f->UnwindData)
+    {
+        info = (const struct UNWIND_INFO *)((char *)base + f->UnwindData);
+        if (!(info->flags & UNW_FLAG_CHAININFO)) break;
+
+        data = (union handler_data *)&info->opcodes[(info->count + 1) & ~1];
+        f = &data->chain;
+    }
+    return (char *)base + f->BeginAddress;
+}
+
+static BOOL is_address_in_function( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *function )
+{
+    RUNTIME_FUNCTION *f;
+    ULONG_PTR pc_base;
+
+    if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress) return TRUE;
+    if (!(f = RtlLookupFunctionEntry( (ULONG_PTR)pc, &pc_base, NULL ))) return FALSE;
+    return get_main_function_start( f, pc_base ) == get_main_function_start( function, base );
+}
+
 static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *function )
 {
     /* add or lea must be the first instruction, and it must have a rex.W prefix */
@@ -1907,10 +1933,10 @@ static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *fu
             return TRUE;
         case 0xe9: /* jmp nnnn */
             pc += 5 + *(LONG *)(pc + 1);
-            return !(pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress);
+            return !is_address_in_function( pc, base, function );
         case 0xeb: /* jmp n */
             pc += 2 + (signed char)pc[1];
-            return !(pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress);
+            return !is_address_in_function( pc, base, function );
         case 0xf3: /* rep; ret (for amd64 prediction bug) */
             return pc[1] == 0xc3;
         case 0xff: /* jmp */

@@ -2695,9 +2695,10 @@ static const char * const reg_names_x86[16] =
 
 #define UWOP(code,info) (UWOP_##code | ((info) << 4))
 
+static const int code_offset = 1024;
+
 static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *test )
 {
-    static const int code_offset = 1024;
     static const int unwind_offset = 2048;
     void *data;
     NTSTATUS status;
@@ -3278,6 +3279,43 @@ static void test_virtual_unwind_x86(void)
         { 0x3c,  0x30,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
     };
 
+    static const struct results_x86 results_7_chain_jmp_detected[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x1a,  0x30,  FALSE, 0x030, 0x000, { {rsp,0x038}, {rbx,0x010}, {-1,-1} }},
+        { 0x1b,  0x30,  FALSE, 0x038, 0x000, { {rsp,0x040}, {rbx,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x1f,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x24,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+
+        /* jump to chained function, no special handling */
+        { 0x2d,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        /* jump inside inner function, no special handling */
+        { 0x2d,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+
+        { 0x32,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x33,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x37,  0x30,  FALSE, 0x058, 0x058, { {rsp,0x060}, {rbp,0x050}, {-1,-1} }},
+        { 0x3b,  0x30,  FALSE, 0x008, 0x008, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x3c,  0x30,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+    };
+
+    static const struct results_x86 broken_results_7_chain_jmp_detected[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x1a,  0x30,  FALSE, 0x030, 0x000, { {rsp,0x038}, {rbx,0x010}, {-1,-1} }},
+        { 0x1b,  0x30,  FALSE, 0x038, 0x000, { {rsp,0x040}, {rbx,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x1f,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x24,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x2d,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x2d,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x32,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        { 0x33,  0x30,  FALSE, 0x068, 0x000, { {rsp,0x070}, {rbx,0x010}, {rbp,0x030}, {-1,-1} }},
+        /* Before Win11 output frame in epilogue is set with fpreg even after it is popped. */
+        { 0x37,  0x30,  FALSE, 0x058, 0x000, { {rsp,0x060}, {rbp,0x050}, {-1,-1} }},
+        { 0x3b,  0x30,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x3c,  0x30,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+    };
+
     static const struct unwind_test_x86 tests[] =
     {
         { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0), broken_results_0 },
@@ -3296,10 +3334,12 @@ static void test_virtual_unwind_x86(void)
         { function_7, sizeof(function_7), unwind_info_7, results_7, ARRAY_SIZE(results_7), broken_results_7 },
     };
 
-    struct unwind_test_x86 jump_test = { function_tail_jump_ff, sizeof(function_tail_jump_ff), unwind_info_6,
+    struct unwind_test_x86 test_data = { function_tail_jump_ff, sizeof(function_tail_jump_ff), unwind_info_6,
                                          results_6_epilogue, ARRAY_SIZE(results_6_epilogue) };
 
     unsigned int i, rex_prefix, ind;
+    RUNTIME_FUNCTION rtf;
+    BOOL bret;
 
     for (rex_prefix = 0; rex_prefix <= 8; ++rex_prefix)
     {
@@ -3317,24 +3357,74 @@ static void test_virtual_unwind_x86(void)
             if (((rex_prefix == 8 || !rex_prefix) && i == 0x25)
                 || (rex_prefix == 8 && ext == 4))
             {
-                jump_test.results = results_6_epilogue;
-                jump_test.nb_results = ARRAY_SIZE(results_6_epilogue);
+                test_data.results = results_6_epilogue;
+                test_data.nb_results = ARRAY_SIZE(results_6_epilogue);
                 expected = 1;
             }
             else
             {
-                jump_test.results = results_6_body;
-                jump_test.nb_results = ARRAY_SIZE(results_6_body);
+                test_data.results = results_6_body;
+                test_data.nb_results = ARRAY_SIZE(results_6_body);
                 expected = 0;
             }
             winetest_push_context( "rex %#x, byte %#x, expected %d", rex_prefix, i, expected );
-            call_virtual_unwind_x86( 0, &jump_test );
+            call_virtual_unwind_x86( 0, &test_data );
             winetest_pop_context();
         }
     }
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
         call_virtual_unwind_x86( i, &tests[i] );
+
+    /* jmp is out of the current function but jump destination function has the same start address */
+    rtf.BeginAddress = code_offset;
+    rtf.EndAddress = code_offset + sizeof(function_6_1) + 1;
+    rtf.UnwindData = 0;
+    bret = RtlAddFunctionTable( &rtf, 1, (ULONG_PTR)code_mem );
+    ok( bret, "RtlAddFunctionTable failed.\n"  );
+    test_data.function = function_6_1;
+    test_data.function_size = sizeof(function_6_1);
+    test_data.unwind_info = unwind_info_6;
+    test_data.results = results_6_body;
+    test_data.nb_results = ARRAY_SIZE(results_6_body);
+    test_data.broken_results = results_6_epilogue; /* before Win10 2009. */
+    winetest_push_context( "line %d", __LINE__ );
+    call_virtual_unwind_x86( 0, &test_data );
+    winetest_pop_context();
+    bret = RtlDeleteFunctionTable( &rtf );
+    ok( bret, "RtlDeleteFunctionTable failed.\n"  );
+
+    /* jump destination is in a function which range covers our function but the start address is different */
+    rtf.BeginAddress = code_offset - 1;
+    rtf.EndAddress = code_offset + sizeof(function_6_1) + 1;
+    rtf.UnwindData = 0;
+    bret = RtlAddFunctionTable( &rtf, 1, (ULONG_PTR)code_mem );
+    ok( bret, "RtlAddFunctionTable failed.\n"  );
+    test_data.results = results_6_epilogue;
+    test_data.nb_results = ARRAY_SIZE(results_6_epilogue);
+    winetest_push_context( "line %d", __LINE__ );
+    call_virtual_unwind_x86( 0, &test_data );
+    winetest_pop_context();
+    bret = RtlDeleteFunctionTable( &rtf );
+    ok( bret, "RtlDeleteFunctionTable failed.\n"  );
+
+    /* jump destination is in a chained function */
+    rtf.BeginAddress = code_offset;
+    rtf.EndAddress = code_offset + 0x1a;
+    rtf.UnwindData = 0;
+    bret = RtlAddFunctionTable( &rtf, 1, (ULONG_PTR)code_mem );
+    ok( bret, "RtlAddFunctionTable failed.\n"  );
+    test_data.function = function_7;
+    test_data.function_size = sizeof(function_7);
+    test_data.unwind_info = unwind_info_7;
+    test_data.results = results_7_chain_jmp_detected;
+    test_data.nb_results = ARRAY_SIZE(results_7_chain_jmp_detected);
+    test_data.broken_results = broken_results_7_chain_jmp_detected;
+    winetest_push_context( "line %d", __LINE__ );
+    call_virtual_unwind_x86( 0, &test_data );
+    winetest_pop_context();
+    bret = RtlDeleteFunctionTable( &rtf );
+    ok( bret, "RtlDeleteFunctionTable failed.\n"  );
 }
 
 #endif  /* __x86_64__ */
