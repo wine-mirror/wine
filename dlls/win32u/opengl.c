@@ -2183,6 +2183,7 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
 
     if (!draw->client) return flush_memory_pbuffer( flush );
     interval = get_window_swap_interval( draw->client->hwnd );
+    if (force_swap) interval = 0;
 
     TRACE( "context %p, hwnd %p, interval %d, flush %p\n", context, draw->client->hwnd, interval, flush );
 
