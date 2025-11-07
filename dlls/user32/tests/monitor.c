@@ -2039,7 +2039,7 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         color_info.header.adapterId = pi[i].targetInfo.adapterId;
         color_info.header.id = pi[i].targetInfo.id;
         ret = pDisplayConfigGetDeviceInfo(&color_info.header);
-        todo_wine ok(!ret || broken(ret == ERROR_INVALID_PARAMETER) /* before Win10 1709 */,
+        ok(!ret || broken(ret == ERROR_INVALID_PARAMETER) /* before Win10 1709 */,
                 "Expected 0, got %ld\n", ret);
 
         /* Check corresponding modes */

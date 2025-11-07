@@ -7769,11 +7769,42 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
         unlock_display_devices();
         return ret;
     }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO:
+    {
+        DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO *color_info = (DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO *)packet;
+        struct monitor *monitor;
+
+        FIXME( "DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO semi-stub.\n" );
+
+        if (packet->size < sizeof(*color_info))
+            return STATUS_INVALID_PARAMETER;
+
+        if (!lock_display_devices( FALSE )) return STATUS_UNSUCCESSFUL;
+
+        LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+        {
+            if (color_info->header.id != monitor->output_id) continue;
+            if (memcmp( &color_info->header.adapterId, &monitor->source->gpu->luid,
+                        sizeof(monitor->source->gpu->luid) ))
+                continue;
+
+            color_info->advancedColorSupported = 0;
+            color_info->advancedColorEnabled = 0;
+            color_info->wideColorEnforced = 0;
+            color_info->advancedColorForceDisabled = 0;
+            color_info->colorEncoding = DISPLAYCONFIG_COLOR_ENCODING_RGB;
+            color_info->bitsPerColorChannel = 8;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        unlock_display_devices();
+        return ret;
+    }
     case DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE:
     case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE:
     case DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION:
     case DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION:
-    case DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO:
     case DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE:
     case DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL:
     default:
