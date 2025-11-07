@@ -46,7 +46,6 @@ static inline MACDRV_PDEVICE *get_macdrv_dev(PHYSDEV dev)
 static CGRect desktop_rect;     /* virtual desktop rectangle */
 static int horz_size;           /* horz. size of screen in millimeters */
 static int vert_size;           /* vert. size of screen in millimeters */
-static int bits_per_pixel;      /* pixel depth of screen */
 static bool device_data_valid;  /* do the above variables have up-to-date values? */
 
 bool retina_on = false;
@@ -112,32 +111,12 @@ static void device_init(void)
 {
     CGDirectDisplayID mainDisplay = CGMainDisplayID();
     CGSize size_mm = CGDisplayScreenSize(mainDisplay);
-    CGDisplayModeRef mode = CGDisplayCopyDisplayMode(mainDisplay);
 
     check_retina_status();
 
     /* Initialize device caps */
     horz_size = size_mm.width;
     vert_size = size_mm.height;
-
-    bits_per_pixel = 32;
-    if (mode)
-    {
-        CFStringRef pixelEncoding = CGDisplayModeCopyPixelEncoding(mode);
-
-        if (pixelEncoding)
-        {
-            if (CFEqual(pixelEncoding, CFSTR(IO32BitDirectPixels)))
-                bits_per_pixel = 32;
-            else if (CFEqual(pixelEncoding, CFSTR(IO16BitDirectPixels)))
-                bits_per_pixel = 16;
-            else if (CFEqual(pixelEncoding, CFSTR(IO8BitIndexedPixels)))
-                bits_per_pixel = 8;
-            CFRelease(pixelEncoding);
-        }
-
-        CGDisplayModeRelease(mode);
-    }
 
     compute_desktop_rect();
 
@@ -233,9 +212,6 @@ static INT macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
         break;
     case VERTSIZE:
         ret = vert_size;
-        break;
-    case BITSPIXEL:
-        ret = bits_per_pixel;
         break;
     case HORZRES:
     case VERTRES:
