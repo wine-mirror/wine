@@ -14197,14 +14197,12 @@ static void test_GW_ENABLEDPOPUP(void)
     ok(!hwnd, "Unexpected value %p.\n", hwnd);
     ShowWindow(hwnd2, SW_SHOW);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
     EnableWindow(hwnd2, FALSE);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
     ok(!hwnd, "Unexpected value %p.\n", hwnd);
     EnableWindow(hwnd2, TRUE);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
 
     popup = CreateWindowA("static", "popup", WS_POPUP, 0, 0, 16, 16, parent, 0, 0, NULL);
@@ -14214,20 +14212,16 @@ static void test_GW_ENABLEDPOPUP(void)
     ok(!IsWindowVisible(popup), "Unexpected state.\n");
 
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
 
     ShowWindow(popup, SW_SHOW);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
     EnableWindow(popup, FALSE);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == hwnd2, "Unexpected value %p.\n", hwnd);
     EnableWindow(popup, TRUE);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
 
     popup2 = CreateWindowA("static", "popup2", WS_POPUP, 0, 0, 16, 16, parent, 0, 0, NULL);
@@ -14235,26 +14229,21 @@ static void test_GW_ENABLEDPOPUP(void)
     ok(GetWindow(popup2, GW_OWNER) == parent, "Unexpected owner.\n");
 
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
 
     ShowWindow(popup2, SW_SHOW);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == popup2, "Unexpected value %p.\n", hwnd);
 
     ShowWindow(popup2, SW_HIDE);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
 
     ShowWindow(popup2, SW_SHOW);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == popup2, "Unexpected value %p.\n", hwnd);
     EnableWindow(popup2, FALSE);
     hwnd = GetWindow(parent, GW_ENABLEDPOPUP);
-    todo_wine
     ok(hwnd == popup, "Unexpected value %p.\n", hwnd);
 
     /* No longer a top-most window */

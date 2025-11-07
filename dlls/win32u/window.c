@@ -643,6 +643,27 @@ HWND get_window_relative( HWND hwnd, UINT rel )
 {
     HWND retval = 0;
 
+    if (rel == GW_ENABLEDPOPUP)
+    {
+        HWND *list;
+        int i;
+
+        if (NtUserGetAncestor( hwnd, GA_ROOT ) != hwnd) return NULL;
+        if (!(list = list_window_children( 0 ))) return NULL;
+
+        for (i = 0; !retval && list[i]; i++)
+        {
+            if (get_window_relative( list[i], GW_OWNER ) != hwnd) continue;
+            if (!is_window_visible( list[i] )) continue;
+            if (!is_window_enabled( list[i] )) continue;
+            retval = list[i];
+        }
+
+        free(list);
+
+        return retval;
+    }
+
     if (rel == GW_OWNER)  /* this one may be available locally */
     {
         WND *win = get_win_ptr( hwnd );
