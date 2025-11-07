@@ -16069,7 +16069,7 @@ msgstr "Fine del file.\n"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%1!d! file copiato/i\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
 #, fuzzy
 #| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"

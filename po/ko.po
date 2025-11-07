@@ -14747,7 +14747,7 @@ msgstr "파일 끝.\n"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%1!d! 파일이 복사되었습니다\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
 #, fuzzy
 #| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"

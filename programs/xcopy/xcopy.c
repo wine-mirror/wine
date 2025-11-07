@@ -326,6 +326,35 @@ static BOOL XCOPY_ProcessExcludeList(WCHAR* parms) {
 }
 
 /* =========================================================================
+ * XCOPY_IsSameFile
+ *
+ * Checks if the two paths reference to the same file.
+ * Copied from WCMD builtins.c, and tab-adjusted.
+ * ========================================================================= */
+static BOOL XCOPY_IsSameFile(const WCHAR *name1, const WCHAR *name2)
+{
+    BOOL ret = FALSE;
+    HANDLE file1 = INVALID_HANDLE_VALUE, file2 = INVALID_HANDLE_VALUE;
+    BY_HANDLE_FILE_INFORMATION info1, info2;
+
+    file1 = CreateFileW(name1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+    if (file1 != INVALID_HANDLE_VALUE && GetFileInformationByHandle(file1, &info1)) {
+        file2 = CreateFileW(name2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+        if (file2 != INVALID_HANDLE_VALUE && GetFileInformationByHandle(file2, &info2)) {
+            ret = info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
+                && info1.nFileIndexHigh == info2.nFileIndexHigh
+                && info1.nFileIndexLow == info2.nFileIndexLow;
+        }
+    }
+
+    if (file1 != INVALID_HANDLE_VALUE)
+        CloseHandle(file1);
+    if (file2 != INVALID_HANDLE_VALUE)
+        CloseHandle(file2);
+    return ret;
+}
+
+/* =========================================================================
    XCOPY_DoCopy - Recursive function to copy files based on input parms
      of a stem and a spec
 
@@ -491,7 +520,9 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
             }
 
             if (!skipFile &&
-                destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT)) {
+                destAttribs != INVALID_FILE_ATTRIBUTES && !(flags & OPT_NOPROMPT) &&
+                !XCOPY_IsSameFile(copyFrom, copyTo)) {
+
                 DWORD count;
                 char  answer[10];
                 BOOL  answered = FALSE;
@@ -526,7 +557,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* Output a status message */
             if (!skipFile) {
-                if (!(flags & OPT_QUIET)) {
+                if (!(flags & OPT_QUIET) && !(flags & OPT_SRCPROMPT)) {
                     if (flags & OPT_FULL)
                         XCOPY_wprintf(L"%1 -> %2\n", copyFrom, copyTo);
                     else
@@ -544,18 +575,21 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 if (flags & OPT_SIMULATE || flags & OPT_NOCOPY) {
                     /* Skip copy */
                 } else if (CopyFileW(copyFrom, copyTo, FALSE) == 0) {
-
-                    DWORD error = GetLastError();
-                    XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
-                           copyFrom, copyTo, error);
-                    XCOPY_FailMessage(error);
-
                     skipFile = TRUE;
-                    if (!(flags & OPT_IGNOREERRORS)) {
+                    if (XCOPY_IsSameFile(copyFrom, copyTo)) {
+                        XCOPY_wprintf(XCOPY_LoadMessage(STRING_NOCOPYTOSELF));
                         ret = RC_WRITEERROR;
+                    } else {
+                        DWORD error = GetLastError();
+                        XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
+                               copyFrom, copyTo, error);
+                        XCOPY_FailMessage(error);
+
+                        if (!(flags & OPT_IGNOREERRORS)) {
+                            ret = RC_WRITEERROR;
+                        }
                     }
                 } else {
-
                     if (!skipFile) {
                         /* If keeping attributes, update the destination attributes
                            otherwise remove the read only attribute                 */

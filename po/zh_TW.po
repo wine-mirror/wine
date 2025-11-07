@@ -14654,7 +14654,7 @@ msgstr "檔案結尾。\n"
 msgid "%t%1!u! file(s) copied\n"
 msgstr "已複製 %1!d! 個檔案\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
 #, fuzzy
 #| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"

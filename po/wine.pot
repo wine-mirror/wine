@@ -14129,7 +14129,7 @@ msgstr ""
 msgid "%t%1!u! file(s) copied\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
 msgid "File cannot be copied onto itself.\n"
 msgstr ""
 
