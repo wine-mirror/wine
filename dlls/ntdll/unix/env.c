@@ -491,11 +491,9 @@ const WCHAR *ntdll_get_data_dir(void)
  */
 char **build_envp( const WCHAR *envW )
 {
-    static const char * const unix_vars[] = { "PATH", "TEMP", "TMP", "HOME" };
     char **envp;
     char *env, *p;
     int count = 1, length, lenW;
-    unsigned int i;
 
     lenW = get_env_length( envW );
     if (!(env = malloc( lenW * 3 ))) return NULL;
@@ -507,29 +505,11 @@ char **build_envp( const WCHAR *envW )
         if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
     }
 
-    for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
-    {
-        if (!(p = getenv(unix_vars[i]))) continue;
-        length += strlen(unix_vars[i]) + strlen(p) + 2;
-        count++;
-    }
-
     if ((envp = malloc( count * sizeof(*envp) + length )))
     {
         char **envptr = envp;
         char *dst = (char *)(envp + count);
 
-        /* some variables must not be modified, so we get them directly from the unix env */
-        for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
-        {
-            if (!(p = getenv( unix_vars[i] ))) continue;
-            *envptr++ = strcpy( dst, unix_vars[i] );
-            strcat( dst, "=" );
-            strcat( dst, p );
-            dst += strlen(dst) + 1;
-        }
-
-        /* now put the Windows environment strings */
         for (p = env; *p; p += strlen(p) + 1)
         {
             if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
@@ -541,6 +521,7 @@ char **build_envp( const WCHAR *envW )
             }
             else
             {
+                if (STARTS_WITH( p, "UNIX_" )) p += 5;
                 *envptr++ = strcpy( dst, p );
             }
             dst += strlen(dst) + 1;
