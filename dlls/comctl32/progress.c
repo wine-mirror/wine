@@ -295,6 +295,31 @@ static const ProgressDrawProc drawProcThemed[8] = {
     draw_theme_bar_V, draw_theme_bkg_V,
 };
 
+static void PROGRESS_DrawBackground (const PROGRESS_INFO *infoPtr, HDC hdc, ProgressDrawInfo *pdi)
+{
+    HTHEME theme = GetWindowTheme (infoPtr->Self);
+
+    if (theme)
+    {
+        int part = (GetWindowLongW (infoPtr->Self, GWL_STYLE) & PBS_VERTICAL) ? PP_BARVERT : PP_BAR;
+        RECT content_rect;
+
+        GetThemeBackgroundContentRect (theme, hdc, part, 0, &pdi->rect, &content_rect);
+
+        /* Exclude content rect - content background will be drawn later */
+        ExcludeClipRect (hdc, content_rect.left, content_rect.top, content_rect.right, content_rect.bottom);
+        if (IsThemeBackgroundPartiallyTransparent (theme, part, 0))
+            DrawThemeParentBackground (infoPtr->Self, hdc, NULL);
+        DrawThemeBackground (theme, hdc, part, 0, &pdi->rect, NULL);
+        SelectClipRgn (hdc, NULL);
+        pdi->rect = content_rect;
+        return;
+    }
+
+    FrameRect (hdc, &pdi->rect, pdi->hbrBk);
+    InflateRect (&pdi->rect, -1, -1);
+}
+
 /***********************************************************************
  * PROGRESS_Draw
  * Draws the progress bar.
@@ -329,27 +354,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 
     /* get client rectangle */
     GetClientRect (infoPtr->Self, &pdi.rect);
-    if (!pdi.theme) {
-        FrameRect( hdc, &pdi.rect, pdi.hbrBk );
-        InflateRect(&pdi.rect, -1, -1);
-    }
-    else
-    {
-        RECT cntRect;
-        int part = (dwStyle & PBS_VERTICAL) ? PP_BARVERT : PP_BAR;
-        
-        GetThemeBackgroundContentRect (pdi.theme, hdc, part, 0, &pdi.rect, 
-            &cntRect);
-        
-        /* Exclude content rect - content background will be drawn later */
-        ExcludeClipRect (hdc, cntRect.left, cntRect.top, 
-            cntRect.right, cntRect.bottom);
-        if (IsThemeBackgroundPartiallyTransparent (pdi.theme, part, 0))
-            DrawThemeParentBackground (infoPtr->Self, hdc, NULL);
-        DrawThemeBackground (pdi.theme, hdc, part, 0, &pdi.rect, NULL);
-        SelectClipRgn (hdc, NULL);
-        pdi.rect = cntRect;
-    }
+    PROGRESS_DrawBackground (infoPtr, hdc, &pdi);
 
     /* compute some drawing parameters */
     barSmooth = (dwStyle & PBS_SMOOTH) && !pdi.theme;
