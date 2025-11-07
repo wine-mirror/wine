@@ -562,6 +562,12 @@ HSTRING __cdecl Exception_get_Message(struct Exception *this)
     return msg;
 }
 
+HSTRING __cdecl Exception_ToString(struct Exception *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
 void init_exception(void *base)
 {
     INIT_CXX_BASE(Exception_void_ref, base);

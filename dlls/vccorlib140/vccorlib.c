@@ -617,6 +617,84 @@ HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
     return NULL;
 }
 
+HSTRING __cdecl Guid_ToString(const GUID *this)
+{
+    FIXME("(%s): stub!\n", debugstr_guid(this));
+    return NULL;
+}
+
+HSTRING __cdecl Boolean_ToString(const boolean *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl char16_ToString(const WCHAR *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl float32_ToString(const FLOAT *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl float64_ToString(const DOUBLE *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl int16_ToString(const INT16 *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl int32_ToString(const INT32 *this)
+{
+    FIXME("(%p): stub\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl int64_ToString(const INT64 *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl int8_ToString(const INT8 *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl uint16_ToString(const UINT16 *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl uint32_ToString(const UINT32 *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+HSTRING __cdecl uint64_ToString(const UINT64 *this)
+{
+   FIXME("(%p): stub!\n", this);
+   return NULL;
+}
+
+HSTRING __cdecl uint8_ToString(const UINT8 *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)

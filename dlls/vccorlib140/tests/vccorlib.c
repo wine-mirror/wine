@@ -151,6 +151,7 @@ static void *(WINAPI *pCreateValue)(int type, const void *);
 static void *(__cdecl *pCreateException)(HRESULT);
 static void *(__cdecl *pCreateExceptionWithMessage)(HRESULT, HSTRING);
 static HSTRING (__cdecl *p_platform_exception_get_Message)(void *);
+static HSTRING (__cdecl *p_platform_exception_ToString)(void *);
 static void *(__cdecl *pAllocateException)(size_t);
 static void *(__cdecl *pAllocateExceptionWithWeakRef)(ptrdiff_t, size_t);
 static void (__cdecl *pFreeException)(void *);
@@ -166,6 +167,19 @@ WINRT_EXCEPTIONS
 static IWeakReference *(WINAPI *p_GetWeakReference)(IUnknown *);
 static IUnknown *(WINAPI *p_ResolveWeakReference)(const GUID *, IWeakReference **);
 static void *(WINAPI *p__abi_ObjectToString)(void *, bool stringable);
+static HSTRING (*__cdecl p_Boolean_ToString)(const boolean *);
+static HSTRING (*__cdecl p_Guid_ToString)(const GUID *);
+static HSTRING (__cdecl *p_char16_ToString)(const WCHAR *);
+static HSTRING (__cdecl *p_float32_ToString)(const FLOAT *);
+static HSTRING (__cdecl *p_float64_ToString)(const DOUBLE *);
+static HSTRING (__cdecl *p_int16_ToString)(const INT16 *);
+static HSTRING (__cdecl *p_int32_ToString)(const INT32 *);
+static HSTRING (__cdecl *p_int64_ToString)(const INT64 *);
+static HSTRING (__cdecl *p_int8_ToString)(const INT8 *);
+static HSTRING (__cdecl *p_uint16_ToString)(const UINT16 *);
+static HSTRING (__cdecl *p_uint32_ToString)(const UINT32 *);
+static HSTRING (__cdecl *p_uint64_ToString)(const UINT64 *);
+static HSTRING (__cdecl *p_uint8_ToString)(const UINT8 *);
 
 static void *(__cdecl *p__RTtypeid)(const void *);
 static const char *(__thiscall *p_type_info_name)(void *);
@@ -216,6 +230,8 @@ static BOOL init(void)
             "?CreateException@Exception@Platform@@SAP$AAV12@HP$AAVString@2@@Z");
     p_platform_exception_get_Message = (void *)GetProcAddress(hmod,
             "?get@Message@Exception@Platform@@Q$AAAP$AAVString@3@XZ");
+    p_platform_exception_ToString = (void *)GetProcAddress(hmod,
+            "?ToString@Exception@Platform@@U$AAAP$AAVString@2@XZ");
     pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPAXI@Z");
     pAllocateExceptionWithWeakRef = (void *)GetProcAddress(hmod,
             "?AllocateException@Heap@Details@Platform@@SAPAXII@Z");
@@ -239,6 +255,19 @@ static BOOL init(void)
             "?ResolveWeakReference@Details@Platform@@YAP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z");
     p__abi_ObjectToString = (void *)GetProcAddress(hmod,
             "?__abi_ObjectToString@__abi_details@@YAP$AAVString@Platform@@P$AAVObject@3@_N@Z");
+    p_Boolean_ToString = (void *)GetProcAddress(hmod, "?ToString@Boolean@Platform@@QAAP$AAVString@2@XZ");
+    p_Guid_ToString = (void *)GetProcAddress(hmod, "?ToString@Guid@Platform@@QAAP$AAVString@2@XZ");
+    p_char16_ToString = (void *)GetProcAddress(hmod, "?ToString@char16@default@@QAAP$AAVString@Platform@@XZ");
+    p_float32_ToString = (void *)GetProcAddress(hmod, "?ToString@float32@default@@QAAP$AAVString@Platform@@XZ");
+    p_float64_ToString = (void *)GetProcAddress(hmod, "?ToString@float64@default@@QAAP$AAVString@Platform@@XZ");
+    p_int16_ToString = (void *)GetProcAddress(hmod, "?ToString@int16@default@@QAAP$AAVString@Platform@@XZ");
+    p_int32_ToString = (void *)GetProcAddress(hmod, "?ToString@int32@default@@QAAP$AAVString@Platform@@XZ");
+    p_int64_ToString = (void *)GetProcAddress(hmod, "?ToString@int64@default@@QAAP$AAVString@Platform@@XZ");
+    p_int8_ToString = (void *)GetProcAddress(hmod, "?ToString@int8@default@@QAAP$AAVString@Platform@@XZ");
+    p_uint16_ToString = (void *)GetProcAddress(hmod, "?ToString@uint16@default@@QAAP$AAVString@Platform@@XZ");
+    p_uint32_ToString = (void *)GetProcAddress(hmod, "?ToString@uint32@default@@QAAP$AAVString@Platform@@XZ");
+    p_uint64_ToString = (void *)GetProcAddress(hmod, "?ToString@uint64@default@@QAAP$AAVString@Platform@@XZ");
+    p_uint8_ToString = (void *)GetProcAddress(hmod, "?ToString@uint8@default@@QAAP$AAVString@Platform@@XZ");
 
     p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBAPBDXZ");
     p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBAPBDXZ");
@@ -271,6 +300,8 @@ static BOOL init(void)
                 "?CreateException@Exception@Platform@@SAPE$AAV12@HPE$AAVString@2@@Z");
         p_platform_exception_get_Message = (void *)GetProcAddress(hmod,
                 "?get@Message@Exception@Platform@@QE$AAAPE$AAVString@3@XZ");
+        p_platform_exception_ToString = (void *)GetProcAddress(hmod,
+                "?ToString@Exception@Platform@@UE$AAAPE$AAVString@2@XZ");
         pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPEAX_K@Z");
         pAllocateExceptionWithWeakRef = (void *)GetProcAddress(hmod,
                 "?AllocateException@Heap@Details@Platform@@SAPEAX_K0@Z");
@@ -295,6 +326,19 @@ static BOOL init(void)
                 "?ResolveWeakReference@Details@Platform@@YAPE$AAVObject@2@AEBU_GUID@@PEAPEAU__abi_IUnknown@@@Z");
         p__abi_ObjectToString = (void *)GetProcAddress(hmod,
                 "?__abi_ObjectToString@__abi_details@@YAPE$AAVString@Platform@@PE$AAVObject@3@_N@Z");
+        p_Boolean_ToString = (void *)GetProcAddress(hmod, "?ToString@Boolean@Platform@@QEAAPE$AAVString@2@XZ");
+        p_Guid_ToString = (void *)GetProcAddress(hmod, "?ToString@Guid@Platform@@QEAAPE$AAVString@2@XZ");
+        p_char16_ToString = (void *)GetProcAddress(hmod, "?ToString@char16@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_float32_ToString = (void *)GetProcAddress(hmod, "?ToString@float32@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_float64_ToString = (void *)GetProcAddress(hmod, "?ToString@float64@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_int16_ToString = (void *)GetProcAddress(hmod, "?ToString@int16@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_int32_ToString = (void *)GetProcAddress(hmod, "?ToString@int32@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_int64_ToString = (void *)GetProcAddress(hmod, "?ToString@int64@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_int8_ToString = (void *)GetProcAddress(hmod, "?ToString@int8@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_uint16_ToString = (void *)GetProcAddress(hmod, "?ToString@uint16@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_uint32_ToString = (void *)GetProcAddress(hmod, "?ToString@uint32@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_uint64_ToString = (void *)GetProcAddress(hmod, "?ToString@uint64@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_uint8_ToString = (void *)GetProcAddress(hmod, "?ToString@uint8@default@@QEAAPE$AAVString@Platform@@XZ");
 
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QEBAPEBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QEBAPEBDXZ");
@@ -326,6 +370,8 @@ static BOOL init(void)
                 "?CreateException@Exception@Platform@@SAP$AAV12@HP$AAVString@2@@Z");
         p_platform_exception_get_Message = (void *)GetProcAddress(hmod,
                     "?get@Message@Exception@Platform@@Q$AAAP$AAVString@3@XZ");
+        p_platform_exception_ToString = (void *)GetProcAddress(hmod,
+                    "?ToString@Exception@Platform@@U$AAAP$AAVString@2@XZ");
         pAllocateException = (void *)GetProcAddress(hmod, "?AllocateException@Heap@Details@Platform@@SAPAXI@Z");
         pAllocateExceptionWithWeakRef = (void *)GetProcAddress(hmod,
                     "?AllocateException@Heap@Details@Platform@@SAPAXII@Z");
@@ -350,6 +396,19 @@ static BOOL init(void)
                 "?ResolveWeakReference@Details@Platform@@YGP$AAVObject@2@ABU_GUID@@PAPAU__abi_IUnknown@@@Z");
         p__abi_ObjectToString = (void *)GetProcAddress(hmod,
                 "?__abi_ObjectToString@__abi_details@@YGP$AAVString@Platform@@P$AAVObject@3@_N@Z");
+        p_Boolean_ToString = (void *)GetProcAddress(hmod, "?ToString@Boolean@Platform@@QAAP$AAVString@2@XZ");
+        p_Guid_ToString = (void *)GetProcAddress(hmod, "?ToString@Guid@Platform@@QAAP$AAVString@2@XZ");
+        p_char16_ToString = (void *)GetProcAddress(hmod, "?ToString@char16@default@@QAAP$AAVString@Platform@@XZ");
+        p_float32_ToString = (void *)GetProcAddress(hmod, "?ToString@float32@default@@QAAP$AAVString@Platform@@XZ");
+        p_float64_ToString = (void *)GetProcAddress(hmod, "?ToString@float64@default@@QAAP$AAVString@Platform@@XZ");
+        p_int16_ToString = (void *)GetProcAddress(hmod, "?ToString@int16@default@@QAAP$AAVString@Platform@@XZ");
+        p_int32_ToString = (void *)GetProcAddress(hmod, "?ToString@int32@default@@QAAP$AAVString@Platform@@XZ");
+        p_int64_ToString = (void *)GetProcAddress(hmod, "?ToString@int64@default@@QAAP$AAVString@Platform@@XZ");
+        p_int8_ToString = (void *)GetProcAddress(hmod, "?ToString@int8@default@@QAAP$AAVString@Platform@@XZ");
+        p_uint16_ToString = (void *)GetProcAddress(hmod, "?ToString@uint16@default@@QAAP$AAVString@Platform@@XZ");
+        p_uint32_ToString = (void *)GetProcAddress(hmod, "?ToString@uint32@default@@QAAP$AAVString@Platform@@XZ");
+        p_uint64_ToString = (void *)GetProcAddress(hmod, "?ToString@uint64@default@@QAAP$AAVString@Platform@@XZ");
+        p_uint8_ToString = (void *)GetProcAddress(hmod, "?ToString@uint8@default@@QAAP$AAVString@Platform@@XZ");
 
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBEPBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBEPBDXZ");
@@ -372,6 +431,7 @@ static BOOL init(void)
     ok(pCreateException != NULL, "CreateException not available\n");
     ok(pCreateExceptionWithMessage != NULL, "CreateExceptionWithMessage not available\n");
     ok(p_platform_exception_get_Message != NULL, "Platform::Exception::Message::get not available\n");
+    ok(p_platform_exception_ToString != NULL, "Platform::Exception::ToString not available\n");
     ok(pAllocateException != NULL, "AllocateException not available\n");
     ok(pAllocateExceptionWithWeakRef != NULL, "AllocateExceptionWithWeakRef not available.\n");
     ok(pFreeException != NULL, "FreeException not available\n");
@@ -388,6 +448,19 @@ static BOOL init(void)
     ok(p_GetWeakReference != NULL, "GetWeakReference not available.\n");
     ok(p_ResolveWeakReference != NULL, "ResolveWeakReference is not available.\n");
     ok(p__abi_ObjectToString != NULL, "__abi_ObjectToString not available.\n");
+    ok(p_Boolean_ToString != NULL, "Platform::Boolean::ToString not available.\n");
+    ok(p_Guid_ToString != NULL, "Platform::Guid::ToString not available.\n");
+    ok(p_char16_ToString != NULL, "default::char16::ToString not available.\n");
+    ok(p_float32_ToString != NULL, "default::float32::ToString not available.\n");
+    ok(p_float64_ToString != NULL, "default::float64::ToString not available.\n");
+    ok(p_int16_ToString != NULL, "default::int16::ToString not available.\n");
+    ok(p_int32_ToString != NULL, "default::int32::ToString not available.\n");
+    ok(p_int64_ToString != NULL, "default::int64::ToString not available.\n");
+    ok(p_int8_ToString != NULL, "default::int8::ToString not available.\n");
+    ok(p_uint16_ToString != NULL, "default::uint16::ToString not available.\n");
+    ok(p_uint32_ToString != NULL, "default::uint32::ToString not available.\n");
+    ok(p_uint64_ToString != NULL, "default::uint64::ToString not available.\n");
+    ok(p_uint8_ToString != NULL, "default::uint8::ToString not available.\n");
 
     ok(p_type_info_name != NULL, "type_info::name not available\n");
     ok(p_type_info_raw_name != NULL, "type_info::raw_name not available\n");
@@ -1644,12 +1717,17 @@ static void test_exceptions(void)
         {
             bufW = WindowsGetStringRawBuffer(str, NULL);
             ok(!wcscmp(bufW, buf), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(buf));
+            WindowsDeleteString(str);
 
             str = p__abi_ObjectToString(obj, TRUE);
             bufW = WindowsGetStringRawBuffer(str, NULL);
             todo_wine ok(!wcscmp(bufW, buf), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(buf));
+            WindowsDeleteString(str);
+
+            str = p_platform_exception_ToString(obj);
+            bufW = WindowsGetStringRawBuffer(str, NULL);
+            todo_wine ok(!wcscmp(bufW, buf), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(buf));
         }
-        WindowsDeleteString(str);
 
         inner = *(const struct exception_inner **)((ULONG_PTR)obj - sizeof(ULONG_PTR));
         ok(inner == &obj->inner, "got inner %p != %p\n", inner, &obj->inner);
@@ -1747,6 +1825,12 @@ static void test_exceptions(void)
         WindowsDeleteString(str);
 
         str = p__abi_ObjectToString(inspectable, TRUE);
+        hr = WindowsCompareStringOrdinal(str, msg, &ret);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(!ret, "got str %s != %s\n", debugstr_hstring(str), debugstr_hstring(msg));
+        WindowsDeleteString(str);
+
+        str = p_platform_exception_ToString(inspectable);
         hr = WindowsCompareStringOrdinal(str, msg, &ret);
         ok(hr == S_OK, "got hr %#lx\n", hr);
         todo_wine ok(!ret, "got str %s != %s\n", debugstr_hstring(str), debugstr_hstring(msg));
@@ -2030,6 +2114,65 @@ static void test___abi_ObjectToString(void)
     ok(impl.ref == 1, "got ref %lu\n", impl.ref);
 }
 
+#define test_hstring(str, exp_str) test_hstring_(__LINE__, str, (exp_str))
+static void test_hstring_(int line, HSTRING str, const WCHAR *exp_str)
+{
+    const WCHAR *buf;
+    buf = WindowsGetStringRawBuffer(str, NULL);
+    ok_(__FILE__, line)(!wcscmp(buf, exp_str), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(exp_str));
+    WindowsDeleteString(str);
+}
+
+static void test_ToString(void)
+{
+    static const UINT64 uint64 = 0xdeadbeefdeadbeef;
+    static const INT64 int64 = 0xdeadbeefdeadbeef;
+    static const GUID guid = IID_IInspectable;
+    static const DOUBLE float64 = 2.71828182;
+    static const FLOAT float32 = 2.71828182;
+    static const UINT32 uint32 = 0xdeadbeef;
+    static const INT32 int32 = 0xdeadbeef;
+    static const UINT16 uint16 = 0xbeef;
+    static const INT16 int16 = 0xbeef;
+    static const WCHAR char16 = L'a';
+    static const UINT8 uint8 = 0xff;
+    static const INT8 int8 = 0xff;
+    boolean bool_val = true;
+    HSTRING str;
+
+    str = p_uint64_ToString(&uint64);
+    todo_wine test_hstring(str, L"16045690984833335023");
+    str = p_int64_ToString(&int64);
+    todo_wine test_hstring(str, L"-2401053088876216593");
+    str = p_float64_ToString(&float64);
+    todo_wine test_hstring(str, L"2.71828");
+    str = p_float32_ToString(&float32);
+    todo_wine test_hstring(str, L"2.71828");
+    str = p_uint32_ToString(&uint32);
+    todo_wine test_hstring(str, L"3735928559");
+    str = p_int32_ToString(&int32);
+    todo_wine test_hstring(str, L"-559038737");
+    str = p_uint16_ToString(&uint16);
+    todo_wine test_hstring(str, L"48879");
+    str = p_int16_ToString(&int16);
+    todo_wine test_hstring(str, L"-16657");
+    str = p_int8_ToString(&int8);
+    todo_wine test_hstring(str, L"-1");
+    str = p_uint8_ToString(&uint8);
+    todo_wine test_hstring(str, L"255");
+    str = p_char16_ToString(&char16);
+    todo_wine test_hstring(str, L"a");
+
+    str = p_Boolean_ToString(&bool_val);
+    todo_wine test_hstring(str, L"true");
+    bool_val = false;
+    str = p_Boolean_ToString(&bool_val);
+    todo_wine test_hstring(str, L"false");
+
+    str = p_Guid_ToString(&guid);
+    todo_wine test_hstring(str, L"{af86e2e0-b12d-4c6a-9c5a-d7aa65101e90}");
+}
+
 START_TEST(vccorlib)
 {
     if(!init())
@@ -2046,4 +2189,5 @@ START_TEST(vccorlib)
     test_exceptions();
     test_GetWeakReference();
     test___abi_ObjectToString();
+    test_ToString();
 }
