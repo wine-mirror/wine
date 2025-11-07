@@ -1643,7 +1643,7 @@ static void test_exceptions(void)
         test_interface_layout(obj, &IID_IUnknown, &obj->IInspectable_iface);
         test_interface_layout(obj, &IID_IInspectable, &obj->IInspectable_iface);
         test_interface_layout(obj, &IID_IAgileObject, &obj->IInspectable_iface);
-        todo_wine test_interface_layout(obj, &IID_IPrintable, &obj->IPrintable_iface);
+        test_interface_layout(obj, &IID_IPrintable, &obj->IPrintable_iface);
         todo_wine test_interface_layout(obj, &IID_IEquatable, &obj->IEquatable_iface);
         test_interface_layout(obj, &IID_IClosable, &obj->IClosable_iface);
 
@@ -1720,7 +1720,7 @@ static void test_exceptions(void)
 
             str = p__abi_ObjectToString(obj, TRUE);
             bufW = WindowsGetStringRawBuffer(str, NULL);
-            todo_wine ok(!wcscmp(bufW, buf), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(buf));
+            ok(!wcscmp(bufW, buf), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(buf));
             WindowsDeleteString(str);
 
             str = p_platform_exception_ToString(obj);
@@ -1826,7 +1826,7 @@ static void test_exceptions(void)
         str = p__abi_ObjectToString(inspectable, TRUE);
         hr = WindowsCompareStringOrdinal(str, msg, &ret);
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(!ret, "got str %s != %s\n", debugstr_hstring(str), debugstr_hstring(msg));
+        ok(!ret, "got str %s != %s\n", debugstr_hstring(str), debugstr_hstring(msg));
         WindowsDeleteString(str);
 
         str = p_platform_exception_ToString(inspectable);
@@ -1862,7 +1862,7 @@ static void test_exceptions(void)
             test_interface_layout(obj, &IID_IUnknown, &obj->IInspectable_iface);
             test_interface_layout(obj, &IID_IInspectable, &obj->IInspectable_iface);
             test_interface_layout(obj, &IID_IAgileObject, &obj->IInspectable_iface);
-            todo_wine test_interface_layout(obj, &IID_IPrintable, &obj->IPrintable_iface);
+            test_interface_layout(obj, &IID_IPrintable, &obj->IPrintable_iface);
             todo_wine test_interface_layout(obj, &IID_IEquatable, &obj->IEquatable_iface);
             test_interface_layout(obj, &IID_IClosable, &obj->IClosable_iface);
             ok((ULONG_PTR)obj->marshal == UINTPTR_MAX, "got marshal %p\n", obj->marshal);
@@ -1918,7 +1918,7 @@ static void test_exceptions(void)
             test_interface_layout(obj, &IID_IUnknown, &obj->IInspectable_iface);
             test_interface_layout(obj, &IID_IInspectable, &obj->IInspectable_iface);
             test_interface_layout(obj, &IID_IAgileObject, &obj->IInspectable_iface);
-            todo_wine test_interface_layout(obj, &IID_IPrintable, &obj->IPrintable_iface);
+            test_interface_layout(obj, &IID_IPrintable, &obj->IPrintable_iface);
             todo_wine test_interface_layout(obj, &IID_IEquatable, &obj->IEquatable_iface);
             test_interface_layout(obj, &IID_IClosable, &obj->IClosable_iface);
             ok((ULONG_PTR)obj->marshal == UINTPTR_MAX, "got marshal %p\n", obj->marshal);
