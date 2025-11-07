@@ -3264,6 +3264,24 @@ sync_test("nullDisp", function() {
     r = (nullDisp instanceof Object);
     ok(r === false, "nullDisp instance of Object");
 
+    try {
+        r = Object.prototype.valueOf.call(null);
+        ok(v < 10, "expected exception calling valueOf on null");
+        ok(r === null, "valueOf null != null");
+    }catch(e) {
+        ok(v >= 10, "did not expect exception calling valueOf on null");
+        ok(e.number === 0xa138f - 0x80000000, "valueOf on null threw " + e.number);
+    }
+
+    try {
+        r = Object.prototype.valueOf.call(nullDisp);
+        ok(v < 10, "expected exception calling valueOf on nullDisp");
+        ok(r === nullDisp, "valueOf on nullDisp != nullDisp");
+    }catch(e) {
+        ok(v >= 10, "did not expect exception calling valueOf on nullDisp");
+        ok(e.number === 0xa138f - 0x80000000, "valueOf on nullDisp threw " + e.number);
+    }
+
     if(v >= 8) {
         r = JSON.stringify.call(null, nullDisp);
         ok(r === "null", "JSON.stringify(nullDisp) returned " + r);

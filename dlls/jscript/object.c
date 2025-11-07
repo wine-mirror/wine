@@ -146,8 +146,10 @@ static HRESULT Object_valueOf(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
 
     TRACE("\n");
 
-    if(is_null_disp(vthis)) {
-        if(r) *r = jsval_null_disp();
+    if(is_null(vthis)) {
+        if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5_1 || (!ctx->html_mode && !is_null_disp(vthis)))
+            return JS_E_OBJECT_EXPECTED;
+        if(r) *r = vthis;
         return S_OK;
     }
 
