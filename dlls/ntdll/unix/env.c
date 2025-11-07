@@ -934,7 +934,7 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
 
     /* estimate needed size */
     *size = 1;
-    for (e = environ; *e; e++) *size += strlen(*e) + 1;
+    for (e = environ; *e; e++) *size += strlen(*e) + 6;
 
     env = malloc( *size * sizeof(WCHAR) );
     ptr = env;
@@ -944,7 +944,7 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
         char *str = *e;
 
         /* skip Unix special variables and use the Wine variants instead */
-        if (!strncmp( str, "WINE", 4 ))
+        if (STARTS_WITH( str, "WINE" ))
         {
             if (is_special_env_var( str + 4 )) str += 4;
             else if (!strcmp( str, "WINEDLLOVERRIDES=help" ))
@@ -953,7 +953,12 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
                 exit(0);
             }
         }
-        else if (is_special_env_var( str )) continue;  /* skip it */
+        else if (is_special_env_var( str )) /* prefix it with UNIX_ */
+        {
+            static const WCHAR unixW[] = {'U','N','I','X','_'};
+            memcpy( ptr, unixW, sizeof(unixW) );
+            ptr += ARRAY_SIZE(unixW);
+        }
 
         if (is_dynamic_env_var( str )) continue;
         ptr += ntdll_umbstowcs( str, strlen(str) + 1, ptr, end - ptr );
