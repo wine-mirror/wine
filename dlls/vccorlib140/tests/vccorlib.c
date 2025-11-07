@@ -1164,8 +1164,7 @@ static void test___abi_make_type_id(void)
 
     str = p__abi_ObjectToString(type_obj, FALSE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(buf && !wcscmp(buf, L"Platform.Type"), "got buf %s != %s\n", debugstr_w(buf),
-                 debugstr_w(L"Platform.Type"));
+    ok(buf && !wcscmp(buf, L"Platform.Type"), "got buf %s != %s\n", debugstr_w(buf), debugstr_w(L"Platform.Type"));
     WindowsDeleteString(str);
 
     str = p__abi_ObjectToString(type_obj, TRUE);
@@ -1353,12 +1352,12 @@ static void test_CreateValue(void)
         {
             str = p__abi_ObjectToString(obj, FALSE);
             buf = WindowsGetStringRawBuffer(str, NULL);
-            todo_wine ok(!wcscmp(buf, exp_str), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(exp_str));
+            ok(!wcscmp(buf, exp_str), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(exp_str));
             WindowsDeleteString(str);
 
             str = p__abi_ObjectToString(obj, TRUE);
             buf = WindowsGetStringRawBuffer(str, NULL);
-            todo_wine ok(!wcscmp(buf, exp_str), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(exp_str));
+            ok(!wcscmp(buf, exp_str), "got str %s != %s\n", debugstr_hstring(str), debugstr_w(exp_str));
             WindowsDeleteString(str);
         }
         WindowsDeleteString(name);
@@ -1452,12 +1451,12 @@ static void test_CreateValue(void)
 
         str = p__abi_ObjectToString(obj, TRUE);
         buf = WindowsGetStringRawBuffer(str, NULL);
-        todo_wine ok(!wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
+        ok(!wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
         WindowsDeleteString(str);
 
         str = p__abi_ObjectToString(obj, FALSE);
         buf = WindowsGetStringRawBuffer(str, NULL);
-        todo_wine ok(!wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
+        ok(!wcscmp(buf, L"foo"), "got buf %s\n", debugstr_w(buf));
         WindowsDeleteString(str);
 
         count = IPropertyValue_Release(obj);
@@ -1658,8 +1657,8 @@ static void test_exceptions(void)
         str = p__abi_ObjectToString(obj, FALSE);
         ok(hr == S_OK, "got hr %#lx\n", hr);
         bufW = WindowsGetStringRawBuffer(str, NULL);
-        todo_wine ok(!wcscmp(cur_test->exp_winrt_name, bufW), "got str %s != %s\n", debugstr_hstring(str),
-                     debugstr_w(cur_test->exp_winrt_name));
+        ok(!wcscmp(cur_test->exp_winrt_name, bufW), "got str %s != %s\n", debugstr_hstring(str),
+           debugstr_w(cur_test->exp_winrt_name));
         WindowsDeleteString(str);
 
         /* Verify control block fields. */
@@ -1820,8 +1819,8 @@ static void test_exceptions(void)
 
         str = p__abi_ObjectToString(inspectable, FALSE);
         bufW = WindowsGetStringRawBuffer(str, NULL);
-        todo_wine ok(!wcscmp(cur_test->exp_winrt_name, bufW), "got str %s != %s\n", debugstr_hstring(str),
-                     debugstr_w(cur_test->exp_winrt_name));
+        ok(!wcscmp(cur_test->exp_winrt_name, bufW), "got str %s != %s\n", debugstr_hstring(str),
+           debugstr_w(cur_test->exp_winrt_name));
         WindowsDeleteString(str);
 
         str = p__abi_ObjectToString(inspectable, TRUE);
@@ -2080,11 +2079,11 @@ static void test___abi_ObjectToString(void)
     impl.have_inspectable = TRUE;
     str = p__abi_ObjectToString(&impl.IStringable_iface, TRUE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
+    ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
     WindowsDeleteString(str);
     str = p__abi_ObjectToString(&impl.IStringable_iface, FALSE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
+    ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
     WindowsDeleteString(str);
 
     /* The second parameter controls whether the IStringable/IPrintable interfaces should be used for getting the string
@@ -2092,11 +2091,11 @@ static void test___abi_ObjectToString(void)
     impl.have_stringable = TRUE;
     str = p__abi_ObjectToString(&impl.IStringable_iface, TRUE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(!wcscmp(buf, stringable_val), "Got str %s\n", debugstr_hstring(str));
+    ok(!wcscmp(buf, stringable_val), "Got str %s\n", debugstr_hstring(str));
     WindowsDeleteString(str);
     str = p__abi_ObjectToString(&impl.IStringable_iface, FALSE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
+    ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
     WindowsDeleteString(str);
 
     /* IPrintable seems to be a C++/CX specific alias for IStringable. */
@@ -2104,11 +2103,11 @@ static void test___abi_ObjectToString(void)
     impl.have_printable = TRUE;
     str = p__abi_ObjectToString(&impl.IStringable_iface, TRUE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(!wcscmp(buf, stringable_val), "Got str %s\n", debugstr_hstring(str));
+    ok(!wcscmp(buf, stringable_val), "Got str %s\n", debugstr_hstring(str));
     WindowsDeleteString(str);
     str = p__abi_ObjectToString(&impl.IStringable_iface, FALSE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
+    ok(!wcscmp(buf, class_name), "Got str %s\n", debugstr_hstring(str));
     WindowsDeleteString(str);
 
     ok(impl.ref == 1, "got ref %lu\n", impl.ref);

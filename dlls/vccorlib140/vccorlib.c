@@ -611,12 +611,6 @@ void *WINAPI CreateValue(int typecode, const void *val)
     return obj;
 }
 
-HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
-{
-    FIXME("(%p, %d): stub!\n", obj, try_stringable);
-    return NULL;
-}
-
 static HRESULT hstring_sprintf(HSTRING *out, const WCHAR *fmt, ...)
 {
     WCHAR buf[100];
@@ -788,6 +782,81 @@ HSTRING __cdecl uint8_ToString(const UINT8 *this)
     if (FAILED((hr = hstring_sprintf(&str, L"%hhu", *this))))
         __abi_WinRTraiseCOMException(hr);
     return str;
+}
+
+HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
+{
+    IInspectable *inspectable;
+    IPropertyValue *propval;
+    IStringable *stringable;
+    HSTRING val = NULL;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %d)\n", obj, try_stringable);
+
+    if (!obj) return NULL;
+    /* If try_stringable is true, native will first query for IStringable, and then IPrintable (which is just an alias
+     * for IStringable). */
+    if (try_stringable && (SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IStringable, (void **)&stringable)) ||
+                           SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IPrintable, (void **)&stringable))))
+    {
+        hr = IStringable_ToString(stringable, &val);
+        IStringable_Release(stringable);
+    }
+    /* Next, native checks if this is an boxed type (IPropertyValue) storing a numeric-like or string value. */
+    else if (SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IPropertyValue, (void **)&propval)))
+    {
+        PropertyType type;
+
+        if (SUCCEEDED((hr = IPropertyValue_get_Type(propval, &type))))
+        {
+#define PROPVAL_SIMPLE(prop_type, pfx, c_type)                                        \
+    case PropertyType_##prop_type:                                                    \
+    {                                                                                 \
+        c_type prop_type_##val;                                                       \
+        if (SUCCEEDED(hr = IPropertyValue_Get##prop_type(propval, &prop_type_##val))) \
+        {                                                                             \
+           IPropertyValue_Release(propval);                                           \
+           return pfx##_ToString(&prop_type_##val);                                   \
+        }                                                                             \
+        break;                                                                        \
+    }
+            switch (type)
+            {
+            PROPVAL_SIMPLE(Char16, char16, WCHAR)
+            PROPVAL_SIMPLE(UInt8, uint8, UINT8)
+            PROPVAL_SIMPLE(Int16, int16, INT16)
+            PROPVAL_SIMPLE(UInt16, uint16, UINT16)
+            PROPVAL_SIMPLE(Int32, int32, INT32)
+            PROPVAL_SIMPLE(UInt32, uint32, UINT32)
+            PROPVAL_SIMPLE(Int64, int64, INT64)
+            PROPVAL_SIMPLE(UInt64, uint64, UINT64)
+            PROPVAL_SIMPLE(Single, float32, FLOAT)
+            PROPVAL_SIMPLE(Double, float64, DOUBLE)
+            PROPVAL_SIMPLE(Boolean, Boolean, boolean)
+            PROPVAL_SIMPLE(Guid, Guid, GUID)
+            case PropertyType_String:
+                hr = IPropertyValue_GetString(propval, &val);
+                break;
+            default:
+                /* For other types, use the WinRT class name. */
+                hr = IPropertyValue_GetRuntimeClassName(propval, &val);
+            }
+#undef PROPVAL_SIMPLE
+        }
+        IPropertyValue_Release(propval);
+    }
+    /* Finally, if this is an IInspectable, use the WinRT class name. Otherwise, return NULL. */
+    else if (SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IInspectable, (void **)&inspectable)))
+    {
+        hr = IInspectable_GetRuntimeClassName(inspectable, &val);
+        IInspectable_Release(inspectable);
+    }
+
+    if (FAILED(hr))
+        __abi_WinRTraiseCOMException(hr);
+
+    return val;
 }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)

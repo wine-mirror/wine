@@ -94,3 +94,5 @@ void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseOutOfMemoryException(void);
     DEFINE_IINSPECTABLE_(pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface)
 #define DEFINE_IINSPECTABLE_OUTER(pfx, iface_type, impl_type, outer_iface)                                             \
     DEFINE_IINSPECTABLE_(pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, impl->outer_iface)
+
+DEFINE_GUID(IID_IPrintable,0xde0cbaeb,0x8065,0x4a45,0x96,0xb1,0xc9,0xd4,0x43,0xf9,0xba,0xb3);
