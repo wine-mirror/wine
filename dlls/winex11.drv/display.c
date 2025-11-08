@@ -43,6 +43,18 @@ static const unsigned int depths_24[]  = {8, 16, 24};
 static const unsigned int depths_32[]  = {8, 16, 32};
 const unsigned int *depths;
 
+static const char *debugstr_devmodew( const DEVMODEW *devmode )
+{
+    char position[32] = {0};
+    if (devmode->dmFields & DM_POSITION) snprintf( position, sizeof(position), " at %s", wine_dbgstr_point( (POINT *)&devmode->dmPosition ) );
+    return wine_dbg_sprintf( "%ux%u %ubits %uHz rotated %u degrees %sstretched %sinterlaced%s",
+                             devmode->dmPelsWidth, devmode->dmPelsHeight, devmode->dmBitsPerPel,
+                             devmode->dmDisplayFrequency, devmode->dmDisplayOrientation * 90,
+                             devmode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un",
+                             devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-",
+                             position );
+}
+
 void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
 {
     if (new_handler->priority > settings_handler.priority)
@@ -171,85 +183,26 @@ static BOOL is_same_devmode( const DEVMODEW *a, const DEVMODEW *b )
            a->dmDisplayFrequency == b->dmDisplayFrequency;
 }
 
-/* Get the full display mode with all the necessary fields set.
- * Return NULL on failure. Caller should call free_full_mode() to free the returned mode. */
-static DEVMODEW *get_full_mode(x11drv_settings_id id, DEVMODEW *dev_mode)
+static DWORD x11drv_mode_from_devmode( x11drv_settings_id id, DEVMODEW *mode, struct x11drv_mode *full )
 {
-    DEVMODEW *full_mode, *found_mode = NULL;
-    UINT mode_count, mode_idx;
     struct x11drv_mode *modes;
+    UINT count, i;
 
-    if (is_detached_mode(dev_mode))
-        return dev_mode;
+    full->mode = *mode;
+    if (is_detached_mode( mode )) return DISP_CHANGE_SUCCESSFUL;
 
-    if (!settings_handler.get_modes( id, EDS_ROTATEDMODE, &modes, &mode_count )) return NULL;
-
-    for (mode_idx = 0; mode_idx < mode_count; ++mode_idx)
+    if (!settings_handler.get_modes( id, EDS_ROTATEDMODE, &modes, &count )) return DISP_CHANGE_BADMODE;
+    for (i = 0; i < count; i++) if (is_same_devmode( &modes[i].mode, mode )) break;
+    if (i < count)
     {
-        found_mode = &modes[mode_idx].mode;
-        if (is_same_devmode( found_mode, dev_mode )) break;
+        *full = modes[i];
+        full->mode.dmFields |= DM_POSITION;
+        full->mode.dmPosition = mode->dmPosition;
+        memcpy( full->mode.dmDeviceName, mode->dmDeviceName, sizeof(mode->dmDeviceName) );
     }
-
-    if (!found_mode || mode_idx == mode_count)
-    {
-        free( modes );
-        return NULL;
-    }
-
-    if (!(full_mode = malloc(sizeof(*found_mode) + found_mode->dmDriverExtra)))
-    {
-        free( modes );
-        return NULL;
-    }
-
-    memcpy(full_mode, found_mode, sizeof(*found_mode) + found_mode->dmDriverExtra);
     free( modes );
 
-    full_mode->dmFields |= DM_POSITION;
-    full_mode->dmPosition = dev_mode->dmPosition;
-    return full_mode;
-}
-
-static void free_full_mode(DEVMODEW *mode)
-{
-    if (!is_detached_mode(mode))
-        free(mode);
-}
-
-static LONG apply_display_settings( DEVMODEW *displays, x11drv_settings_id *ids, BOOL do_attach )
-{
-    DEVMODEW *full_mode;
-    BOOL attached_mode;
-    LONG count, ret;
-    DEVMODEW *mode;
-
-    for (count = 0, mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode), count++)
-    {
-        x11drv_settings_id *id = ids + count;
-
-        attached_mode = !is_detached_mode(mode);
-        if ((attached_mode && !do_attach) || (!attached_mode && do_attach))
-            continue;
-
-        /* FIXME: get a full mode again because X11 driver extra data isn't portable */
-        full_mode = get_full_mode(*id, mode);
-        if (!full_mode)
-            return DISP_CHANGE_BADMODE;
-
-        TRACE("handler:%s changing %s to position:(%d,%d) resolution:%ux%u frequency:%uHz "
-              "depth:%ubits orientation:%#x.\n", settings_handler.name,
-              wine_dbgstr_w(mode->dmDeviceName),
-              full_mode->dmPosition.x, full_mode->dmPosition.y, full_mode->dmPelsWidth,
-              full_mode->dmPelsHeight, full_mode->dmDisplayFrequency,
-              full_mode->dmBitsPerPel, full_mode->dmDisplayOrientation);
-
-        ret = settings_handler.set_current_mode(*id, (struct x11drv_mode *)full_mode);
-        free_full_mode(full_mode);
-        if (ret != DISP_CHANGE_SUCCESSFUL)
-            return ret;
-    }
-
-    return DISP_CHANGE_SUCCESSFUL;
+    return i < count ? DISP_CHANGE_SUCCESSFUL : DISP_CHANGE_BADMODE;
 }
 
 /***********************************************************************
@@ -259,7 +212,8 @@ static LONG apply_display_settings( DEVMODEW *displays, x11drv_settings_id *ids,
 LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
     INT left_most = INT_MAX, top_most = INT_MAX;
-    LONG count, ret = DISP_CHANGE_BADPARAM;
+    LONG count, ret = DISP_CHANGE_FAILED;
+    struct x11drv_mode *modes;
     x11drv_settings_id *ids;
     DEVMODEW *mode;
 
@@ -273,19 +227,34 @@ LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HW
     }
 
     if (!(ids = calloc( count, sizeof(*ids) ))) return DISP_CHANGE_FAILED;
+    if (!(modes = calloc( count, sizeof(*modes) ))) goto done;
+
     for (count = 0, mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode), count++)
     {
-        if (!settings_handler.get_id( mode->dmDeviceName, !wcsicmp( mode->dmDeviceName, primary_name ), ids + count )) goto done;
+        BOOL is_primary = !wcsicmp( mode->dmDeviceName, primary_name );
+        if (!settings_handler.get_id( mode->dmDeviceName, is_primary, ids + count )) goto done;
         mode->dmPosition.x -= left_most;
         mode->dmPosition.y -= top_most;
+        if ((ret = x11drv_mode_from_devmode( ids[count], mode, modes + count ))) goto done;
     }
 
     /* Detach displays first to free up CRTCs */
-    ret = apply_display_settings( displays, ids, FALSE );
-    if (ret == DISP_CHANGE_SUCCESSFUL)
-        ret = apply_display_settings( displays, ids, TRUE );
+    TRACE( "Using %s\n", settings_handler.name );
+    for (UINT i = 0; !ret && i < count; i++)
+    {
+        if (!is_detached_mode( &modes[i].mode )) continue;
+        TRACE( "  setting %s mode %s\n", debugstr_w(modes[i].mode.dmDeviceName), debugstr_devmodew(&modes[i].mode) );
+        ret = settings_handler.set_current_mode( ids[i], modes + i );
+    }
+    for (UINT i = 0; !ret && i < count; i++)
+    {
+        if (is_detached_mode( &modes[i].mode )) continue;
+        TRACE( "  setting %s mode %s\n", debugstr_w(modes[i].mode.dmDeviceName), debugstr_devmodew(&modes[i].mode) );
+        ret = settings_handler.set_current_mode( ids[i], modes + i );
+    }
 
 done:
+    free( modes );
     free( ids );
     return ret;
 }
