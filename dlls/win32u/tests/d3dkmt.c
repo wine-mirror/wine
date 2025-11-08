@@ -38,7 +38,7 @@
 
 #include "d3d9.h"
 #include "dxgi1_3.h"
-#include "d3d11_1.h"
+#include "d3d11_4.h"
 #include "d3d12.h"
 
 #include "wine/vulkan.h"
@@ -3411,22 +3411,22 @@ static IDXGIAdapter *create_dxgi_adapter( IDXGIFactory3 *dxgi, LUID *luid )
     return adapter;
 }
 
-static ID3D11Device1 *create_d3d11_device( IDXGIAdapter *adapter )
+static void *create_d3d11_device( IDXGIAdapter *adapter, const GUID *iid )
 {
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
-    ID3D11Device1 *device1;
     ID3D11Device *device;
     HRESULT hr;
+    void *ret;
 
     hr = D3D11CreateDevice( adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, &feature_level, 1,
                             D3D11_SDK_VERSION, &device, NULL, NULL );
     ok_hr( S_OK, hr );
 
-    hr = ID3D11Device_QueryInterface( device, &IID_ID3D11Device1, (void **)&device1 );
+    hr = ID3D11Device_QueryInterface( device, iid, &ret );
     ok_hr( S_OK, hr );
     ID3D11Device_Release( device );
 
-    return device1;
+    return ret;
 }
 
 struct vulkan_device
@@ -3471,15 +3471,15 @@ static VkResult create_vulkan_instance( uint32_t extension_count, const char *co
 
 static void get_vulkan_physical_device_luid( VkInstance instance, VkPhysicalDevice physical_device, LUID *luid )
 {
-    PFN_vkGetPhysicalDeviceProperties2 p_vkGetPhysicalDeviceProperties2;
+    PFN_vkGetPhysicalDeviceProperties2 p_vkGetPhysicalDeviceProperties2KHR;
 
     VkPhysicalDeviceIDProperties id_props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
     VkPhysicalDeviceVulkan11Properties vk11_props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES, .pNext = &id_props};
     VkPhysicalDeviceProperties2 props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &vk11_props};
 
-    if (!(p_vkGetPhysicalDeviceProperties2 = (void *)p_vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceProperties2" ))) return;
+    if (!(p_vkGetPhysicalDeviceProperties2KHR = (void *)p_vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceProperties2KHR" ))) return;
 
-    p_vkGetPhysicalDeviceProperties2( physical_device, &props );
+    p_vkGetPhysicalDeviceProperties2KHR( physical_device, &props );
     ok_u4( props.properties.apiVersion, !=, 0 );
     ok_u4( props.properties.driverVersion, !=, 0 );
     ok_u4( props.properties.vendorID, !=, 0 );
@@ -3553,6 +3553,126 @@ static VkExternalMemoryHandleTypeFlags get_vulkan_external_image_types( VkInstan
     return handle_types;
 }
 
+static void check_external_image_types( struct vulkan_device *dev )
+{
+    PFN_vkEnumeratePhysicalDevices p_vkEnumeratePhysicalDevices;
+    VkPhysicalDevice *physical_devices;
+    uint32_t count;
+    VkResult vr;
+
+    p_vkEnumeratePhysicalDevices = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkEnumeratePhysicalDevices" );
+    vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, NULL );
+    ok_vk( VK_SUCCESS, vr );
+
+    physical_devices = calloc( count, sizeof(*physical_devices) );
+    ok_ptr( physical_devices, !=, NULL );
+    vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, physical_devices );
+    ok_vk( VK_SUCCESS, vr );
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        static const VkExternalMemoryHandleTypeFlags expect_export_types = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
+        static const VkExternalMemoryHandleTypeFlags expect_import_types = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT |
+                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        VkExternalMemoryHandleTypeFlags types;
+
+        winetest_push_context( "export" );
+        types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT_KHR );
+        ok( !(~types & expect_export_types), "got types %#x\n", types );
+        winetest_pop_context();
+
+        winetest_push_context( "import" );
+        types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT_KHR );
+        ok( !(~types & expect_import_types), "got types %#x\n", types );
+        winetest_pop_context();
+    }
+
+    free( physical_devices );
+}
+
+static VkExternalSemaphoreHandleTypeFlags get_vulkan_external_semaphore_types( VkInstance instance, VkPhysicalDevice physical_device,
+                                                                               VkExternalSemaphoreFeatureFlags feature_flags )
+{
+    static const VkExternalSemaphoreHandleTypeFlagBits bits[] =
+    {
+        VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT,
+        VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT,
+        VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT,
+        VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT,
+        VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT,
+    };
+
+    VkPhysicalDeviceExternalSemaphoreInfo external_info = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO};
+
+    PFN_vkGetPhysicalDeviceExternalSemaphoreProperties p_vkGetPhysicalDeviceExternalSemaphoreProperties;
+    VkExternalSemaphoreHandleTypeFlags handle_types = 0;
+
+    if (!(p_vkGetPhysicalDeviceExternalSemaphoreProperties = (void *)p_vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceExternalSemaphoreProperties" ))) return 0;
+
+    for (const VkExternalSemaphoreHandleTypeFlagBits *bit = bits; bit < bits + ARRAY_SIZE(bits); bit++)
+    {
+        VkExternalSemaphoreProperties external_props = {.sType = VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES};
+
+        winetest_push_context( "%#x", *bit );
+
+        external_info.handleType = *bit;
+        p_vkGetPhysicalDeviceExternalSemaphoreProperties( physical_device, &external_info, &external_props );
+        if (!(~external_props.externalSemaphoreFeatures & feature_flags))
+        {
+            ok_u4( external_props.compatibleHandleTypes, ==, external_info.handleType );
+            handle_types |= external_info.handleType;
+        }
+
+        winetest_pop_context();
+    }
+
+    return handle_types;
+}
+
+static void check_external_semaphore_types( struct vulkan_device *dev )
+{
+    PFN_vkEnumeratePhysicalDevices p_vkEnumeratePhysicalDevices;
+    VkPhysicalDevice *physical_devices;
+    uint32_t count;
+    VkResult vr;
+
+    p_vkEnumeratePhysicalDevices = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkEnumeratePhysicalDevices" );
+    vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, NULL );
+    ok_vk( VK_SUCCESS, vr );
+
+    physical_devices = calloc( count, sizeof(*physical_devices) );
+    ok_ptr( physical_devices, !=, NULL );
+    vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, physical_devices );
+    ok_vk( VK_SUCCESS, vr );
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        static const VkExternalSemaphoreHandleTypeFlags expect_export_types = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT |
+                                                                              VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
+        static const VkExternalSemaphoreHandleTypeFlags expect_import_types = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT |
+                                                                              VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT |
+                                                                              VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT;
+        VkExternalMemoryHandleTypeFlags types;
+
+        winetest_push_context( "export" );
+        types = get_vulkan_external_semaphore_types( dev->instance, physical_devices[i], VK_EXTERNAL_SEMAPHORE_FEATURE_EXPORTABLE_BIT_KHR );
+        ok( !(~types & expect_export_types), "got types %#x\n", types );
+        winetest_pop_context();
+
+        winetest_push_context( "import" );
+        types = get_vulkan_external_semaphore_types( dev->instance, physical_devices[i], VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT_KHR );
+        ok( !(~types & expect_import_types), "got types %#x\n", types );
+        winetest_pop_context();
+    }
+
+    free( physical_devices );
+}
+
 static void destroy_vulkan_device( struct vulkan_device *dev )
 {
     if (dev->instance)
@@ -3589,20 +3709,13 @@ static uint32_t get_vulkan_queue_family( VkInstance instance, VkPhysicalDevice p
     return i;
 }
 
-static struct vulkan_device *create_vulkan_device( LUID *luid )
+static VkResult create_vulkan_device( LUID *luid, const char **device_extensions, UINT device_extensions_count, struct vulkan_device **device )
 {
     static const char *instance_extensions[] =
     {
         "VK_KHR_external_memory_capabilities",
+        "VK_KHR_external_semaphore_capabilities",
         "VK_KHR_get_physical_device_properties2",
-    };
-    static const char *device_extensions[] =
-    {
-        "VK_KHR_get_memory_requirements2",
-        "VK_KHR_dedicated_allocation",
-        "VK_KHR_external_memory",
-        "VK_KHR_external_memory_win32",
-        "VK_KHR_win32_keyed_mutex",
     };
 
     VkDeviceQueueCreateInfo queue_info = {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
@@ -3615,14 +3728,14 @@ static struct vulkan_device *create_vulkan_device( LUID *luid )
     struct vulkan_device *dev;
     float priority = 0.0f;
     uint32_t count;
-    BOOL is_wow64;
     VkResult vr;
 
+    *device = NULL;
     dev = calloc( 1, sizeof(*dev) );
     ok_ptr( dev, !=, NULL );
 
     vr = create_vulkan_instance( ARRAY_SIZE(instance_extensions), instance_extensions, &dev->instance );
-    if (vr != VK_SUCCESS) return NULL;
+    if (vr != VK_SUCCESS) return vr;
 
     p_vkEnumeratePhysicalDevices = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkEnumeratePhysicalDevices" );
     vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, NULL );
@@ -3632,29 +3745,6 @@ static struct vulkan_device *create_vulkan_device( LUID *luid )
     ok_ptr( physical_devices, !=, NULL );
     vr = p_vkEnumeratePhysicalDevices( dev->instance, &count, physical_devices );
     ok_vk( VK_SUCCESS, vr );
-
-    for (uint32_t i = 0; i < count; ++i)
-    {
-        static const VkExternalMemoryHandleTypeFlags expect_export_types = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT |
-                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
-        static const VkExternalMemoryHandleTypeFlags expect_import_types = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT |
-                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT |
-                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT |
-                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT |
-                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT |
-                                                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
-        VkExternalMemoryHandleTypeFlags types;
-
-        winetest_push_context( "export" );
-        types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT_KHR );
-        ok( !(~types & expect_export_types), "got types %#x\n", types );
-        winetest_pop_context();
-
-        winetest_push_context( "import" );
-        types = get_vulkan_external_image_types( dev->instance, physical_devices[i], VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT_KHR );
-        ok( !(~types & expect_import_types), "got types %#x\n", types );
-        winetest_pop_context();
-    }
 
     for (uint32_t i = 0; i < count; ++i)
     {
@@ -3674,27 +3764,24 @@ static struct vulkan_device *create_vulkan_device( LUID *luid )
     queue_info.queueCount = 1;
     queue_info.pQueuePriorities = &priority;
 
-    create_info.enabledExtensionCount = ARRAY_SIZE(device_extensions);
+    create_info.enabledExtensionCount = device_extensions_count;
     create_info.ppEnabledExtensionNames = device_extensions;
     create_info.queueCreateInfoCount = 1;
     create_info.pQueueCreateInfos = &queue_info;
 
     p_vkCreateDevice = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkCreateDevice" );
     vr = p_vkCreateDevice( dev->physical_device, &create_info, NULL, &dev->device );
-    /* currently fails on llvmpipe on WOW64 without placed memory */
-    todo_wine_if(IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64 && vr == VK_ERROR_EXTENSION_NOT_PRESENT)
-    ok_vk( VK_SUCCESS, vr );
     if (vr != VK_SUCCESS)
     {
         PFN_vkDestroyInstance p_vkDestroyInstance;
         p_vkDestroyInstance = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkDestroyInstance" );
         p_vkDestroyInstance( dev->instance, NULL );
         free( dev );
-        return NULL;
+        dev = NULL;
     }
-    ok_ptr( dev->device, !=, VK_NULL_HANDLE );
 
-    return dev;
+    *device = dev;
+    return vr;
 }
 
 static uint32_t find_vulkan_memory_type( VkInstance instance, VkPhysicalDevice physical_device, VkMemoryPropertyFlagBits flags, uint32_t mask )
@@ -3999,6 +4086,74 @@ static VkResult import_vulkan_image( struct vulkan_device *dev, UINT width, UINT
     return VK_SUCCESS;
 }
 
+static void destroy_vulkan_semaphore( struct vulkan_device *dev, VkSemaphore semaphore )
+{
+    PFN_vkDestroySemaphore p_vkDestroySemaphore;
+    p_vkDestroySemaphore = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroySemaphore" );
+    p_vkDestroySemaphore( dev->device, semaphore, NULL );
+}
+
+static VkSemaphore export_vulkan_semaphore( struct vulkan_device *dev, uint64_t value, VkSemaphoreType type,
+                                            UINT handle_type, HANDLE *handle )
+{
+    VkExportSemaphoreCreateInfo export_info = {.sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO};
+    VkSemaphoreTypeCreateInfo type_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO, .pNext = &export_info};
+    VkSemaphoreCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, .pNext = &type_info};
+
+    VkSemaphoreGetWin32HandleInfoKHR get_handle_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR};
+
+    PFN_vkGetSemaphoreWin32HandleKHR p_vkGetSemaphoreWin32HandleKHR;
+    PFN_vkCreateSemaphore p_vkCreateSemaphore;
+    VkSemaphore semaphore;
+    VkResult vr;
+
+    p_vkCreateSemaphore = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateSemaphore" );
+    p_vkGetSemaphoreWin32HandleKHR = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetSemaphoreWin32HandleKHR" );
+
+    export_info.handleTypes = handle_type;
+    type_info.semaphoreType = type;
+    type_info.initialValue = value;
+    vr = p_vkCreateSemaphore( dev->device, &create_info, NULL, &semaphore );
+    ok_vk( VK_SUCCESS, vr );
+
+    get_handle_info.semaphore = semaphore;
+    get_handle_info.handleType = handle_type;
+    vr = p_vkGetSemaphoreWin32HandleKHR( dev->device, &get_handle_info, handle );
+    ok_vk( VK_SUCCESS, vr );
+
+    return semaphore;
+}
+
+static VkResult import_vulkan_semaphore( struct vulkan_device *dev, VkSemaphoreType type, const WCHAR *name,
+                                         HANDLE handle, UINT handle_type, VkSemaphore *out )
+{
+    VkSemaphoreTypeCreateInfo type_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO};
+    VkSemaphoreCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, .pNext = &type_info};
+    VkImportSemaphoreWin32HandleInfoKHR import_info = {.sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR};
+
+    PFN_vkCreateSemaphore p_vkCreateSemaphore;
+    PFN_vkImportSemaphoreWin32HandleKHR p_vkImportSemaphoreWin32HandleKHR;
+    VkSemaphore semaphore;
+
+    VkResult vr;
+
+    p_vkCreateSemaphore = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateSemaphore" );
+    p_vkImportSemaphoreWin32HandleKHR = (void *)p_vkGetDeviceProcAddr( dev->device, "vkImportSemaphoreWin32HandleKHR" );
+
+    type_info.semaphoreType = type;
+    create_info.flags = 0;
+    vr = p_vkCreateSemaphore( dev->device, &create_info, NULL, &semaphore );
+    ok_vk( VK_SUCCESS, vr );
+
+    import_info.semaphore = semaphore;
+    import_info.handleType = handle_type;
+    import_info.handle = name ? NULL : handle;
+    import_info.name = name;
+    vr = p_vkImportSemaphoreWin32HandleKHR( dev->device, &import_info );
+    *out = semaphore;
+    return vr;
+}
+
 C_ASSERT( sizeof(GUID) == GL_UUID_SIZE_EXT );
 C_ASSERT( sizeof(LUID) == GL_LUID_SIZE_EXT );
 
@@ -4205,6 +4360,19 @@ static HRESULT get_d3d12_shared_handle( ID3D12Device *d3d12, IUnknown *obj, cons
     return hr;
 }
 
+static HRESULT open_d3d12_named_shared_handle( ID3D12Device *d3d12, const WCHAR *name, const GUID *iid, void **obj )
+{
+    HANDLE handle;
+    HRESULT hr;
+
+    hr = ID3D12Device_OpenSharedHandleByName( d3d12, name, GENERIC_ALL, &handle );
+    ok_hr( S_OK, hr );
+    hr = ID3D12Device_OpenSharedHandle( d3d12, handle, iid, obj );
+    CloseHandle( handle );
+
+    return hr;
+}
+
 static void test_shared_keyed_mutex( LUID luid, struct vulkan_device *vulkan_imp, struct vulkan_image *img, HANDLE handle, BOOL shared )
 {
     uint64_t release_key = 0, acquire_key = 0;
@@ -4391,16 +4559,26 @@ static void test_shared_keyed_mutex( LUID luid, struct vulkan_device *vulkan_imp
 
 static void test_shared_resources(void)
 {
+    static const char *device_extensions[] =
+    {
+        "VK_KHR_get_memory_requirements2",
+        "VK_KHR_dedicated_allocation",
+        "VK_KHR_external_memory",
+        "VK_KHR_external_memory_win32",
+        "VK_KHR_win32_keyed_mutex",
+    };
+
     struct vulkan_device *vulkan_imp = NULL, *vulkan_exp = NULL;
     struct opengl_device *opengl_imp = NULL;
     IDirect3DDevice9Ex *d3d9_exp = NULL, *d3d9_imp = NULL;
     ID3D11Device1 *d3d11_exp = NULL, *d3d11_imp = NULL;
     ID3D10Device *d3d10_exp = NULL, *d3d10_imp = NULL;
     ID3D12Device *d3d12_exp = NULL, *d3d12_imp = NULL;
+    BOOL stencil_broken, is_wow64 = FALSE;
     IDXGIFactory3 *dxgi = NULL;
     IDXGIAdapter *adapter;
-    BOOL stencil_broken;
     LUID luid = {0};
+    VkResult vr;
     HRESULT hr;
     HWND hwnd;
     MSG msg;
@@ -4416,10 +4594,16 @@ static void test_shared_resources(void)
         return;
     }
 
-    trace( "adapter luid %s\n", debugstr_luid( &luid ) );
+    vr = create_vulkan_device( &luid, device_extensions, ARRAY_SIZE(device_extensions), &vulkan_exp );
+    /* currently fails on llvmpipe on WOW64 without placed memory */
+    todo_wine_if(IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64 && vr == VK_ERROR_EXTENSION_NOT_PRESENT)
+    ok_vk( VK_SUCCESS, vr );
 
-    vulkan_exp = create_vulkan_device( &luid );
-    vulkan_imp = create_vulkan_device( &luid );
+    vr = create_vulkan_device( &luid, device_extensions, ARRAY_SIZE(device_extensions), &vulkan_imp );
+    if (vulkan_exp) ok_vk( VK_SUCCESS, vr );
+    else ok_vk( VK_ERROR_EXTENSION_NOT_PRESENT, vr );
+
+    if (vulkan_exp) check_external_image_types( vulkan_exp );
 
     d3d9_exp = create_d3d9ex_device( hwnd, &luid, &stencil_broken );
     ok_ptr( d3d9_exp, !=, NULL );
@@ -4439,9 +4623,9 @@ static void test_shared_resources(void)
                             D3D10_SDK_VERSION, &d3d10_exp );
     ok_hr( S_OK, hr );
 
-    d3d11_imp = create_d3d11_device( adapter );
+    d3d11_imp = create_d3d11_device( adapter, &IID_ID3D11Device1 );
     ok_ptr( d3d11_imp, !=, NULL );
-    d3d11_exp = create_d3d11_device( adapter );
+    d3d11_exp = create_d3d11_device( adapter, &IID_ID3D11Device1 );
     ok_ptr( d3d11_exp, !=, NULL );
 
     hr = D3D12CreateDevice( (IUnknown *)adapter, D3D_FEATURE_LEVEL_12_0,
@@ -4452,6 +4636,8 @@ static void test_shared_resources(void)
     todo_wine ok_hr( S_OK, hr );
 
     IDXGIAdapter_Release( adapter );
+
+    trace( "adapter luid %s\n", debugstr_luid( &luid ) );
 
 #define MAKETEST(api, dim, idx) (((api & 7) << 7) | ((dim & 7) << 4) | (idx & 15))
 #define GET_API(test) ((test >> 7) & 7)
@@ -5323,20 +5509,13 @@ static void test_shared_resources(void)
         {
             hr = ID3D12Device_OpenSharedHandle( d3d12_imp, handle, &IID_ID3D12Resource, (void **)&import );
             ok_hr( S_OK, hr );
-            ok_ptr( import, !=, NULL );
-            if (import) ok_ref( 0, IUnknown_Release( import ) );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
 
             if (name)
             {
-                HANDLE other = 0;
-
-                hr = ID3D12Device_OpenSharedHandleByName( d3d12_imp, name, GENERIC_ALL, &other );
+                hr = open_d3d12_named_shared_handle( d3d12_imp, name, &IID_ID3D12Resource, (void **)&import );
                 ok_hr( S_OK, hr );
-                hr = ID3D12Device_OpenSharedHandle( d3d12_imp, other, &IID_ID3D12Resource, (void **)&import );
-                ok_hr( S_OK, hr );
-                if (other) CloseHandle( other );
-
-                if (import) ok_ref( 0, IUnknown_Release( import ) );
+                if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
             }
         }
 
@@ -5561,6 +5740,789 @@ skip_tests:
     DestroyWindow( hwnd );
 }
 
+static BOOL has_timeline_semaphore( struct vulkan_device *dev )
+{
+    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timeline_features = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR};
+    VkPhysicalDeviceFeatures2KHR features = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR, .pNext = &timeline_features};
+    PFN_vkGetPhysicalDeviceFeatures2KHR p_vkGetPhysicalDeviceFeatures2KHR;
+
+    p_vkGetPhysicalDeviceFeatures2KHR = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkGetPhysicalDeviceFeatures2KHR" );
+    p_vkGetPhysicalDeviceFeatures2KHR( dev->physical_device, &features );
+
+    return timeline_features.timelineSemaphore;
+}
+
+static UINT64 get_timeline_semaphore_limit( struct vulkan_device *dev )
+{
+    VkPhysicalDeviceTimelineSemaphorePropertiesKHR timeline_props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES_KHR};
+    VkPhysicalDeviceProperties2KHR props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR, .pNext = &timeline_props};
+    PFN_vkGetPhysicalDeviceProperties2KHR p_vkGetPhysicalDeviceProperties2KHR;
+
+    p_vkGetPhysicalDeviceProperties2KHR = (void *)p_vkGetInstanceProcAddr( dev->instance, "vkGetPhysicalDeviceProperties2KHR" );
+    p_vkGetPhysicalDeviceProperties2KHR( dev->physical_device, &props );
+
+    return timeline_props.maxTimelineSemaphoreValueDifference;
+}
+
+static void test_vulkan_semaphore_from_d3d12_fence( struct vulkan_device *dev, ID3D12Fence *fence, HANDLE handle )
+{
+    VkFenceCreateInfo fence_info = {.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    uint32_t index, stage_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    VkTimelineSemaphoreSubmitInfo timeline_info;
+    PFN_vkGetDeviceQueue p_vkGetDeviceQueue;
+    PFN_vkWaitForFences p_vkWaitForFences;
+    VkD3D12FenceSubmitInfoKHR d3d12_info;
+    PFN_vkDestroyFence p_vkDestroyFence;
+    PFN_vkCreateFence p_vkCreateFence;
+    PFN_vkQueueSubmit p_vkQueueSubmit;
+    uint64_t wait_values, signal_values;
+    VkSubmitInfo submit;
+    VkFence vk_fence;
+    VkQueue vk_queue;
+    VkSemaphore sem;
+    UINT64 value;
+    VkResult vr;
+    HRESULT hr;
+
+    p_vkGetDeviceQueue = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetDeviceQueue" );
+    p_vkWaitForFences = (void *)p_vkGetDeviceProcAddr( dev->device, "vkWaitForFences" );
+    p_vkDestroyFence = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroyFence" );
+    p_vkCreateFence = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateFence" );
+    p_vkQueueSubmit = (void *)p_vkGetDeviceProcAddr( dev->device, "vkQueueSubmit" );
+
+    index = get_vulkan_queue_family( dev->instance, dev->physical_device );
+    p_vkGetDeviceQueue( dev->device, index, 0, &vk_queue );
+
+
+    /* test importing as binary semaphore with d3d12 fence submits */
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0 );
+    vr = import_vulkan_semaphore( dev, VK_SEMAPHORE_TYPE_BINARY, NULL, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &sem );
+    ok_vk( VK_SUCCESS, vr );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pWaitSemaphores = &sem;
+    submit.pWaitDstStageMask = &stage_mask;
+    submit.waitSemaphoreCount = 1;
+    submit.pNext = &d3d12_info;
+    memset( &d3d12_info, 0, sizeof(d3d12_info) );
+    d3d12_info.sType = VK_STRUCTURE_TYPE_D3D12_FENCE_SUBMIT_INFO_KHR;
+    d3d12_info.pWaitSemaphoreValues = &wait_values;
+    d3d12_info.waitSemaphoreValuesCount = 1;
+    wait_values = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 100 * 1000000 );
+    ok_vk( VK_TIMEOUT, vr );
+
+    hr = ID3D12Fence_Signal( fence, 1 );
+    ok_hr( S_OK, hr );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 1 );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &sem;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &d3d12_info;
+    memset( &d3d12_info, 0, sizeof(d3d12_info) );
+    d3d12_info.sType = VK_STRUCTURE_TYPE_D3D12_FENCE_SUBMIT_INFO_KHR;
+    d3d12_info.pSignalSemaphoreValues = &signal_values;
+    d3d12_info.signalSemaphoreValuesCount = 1;
+    signal_values = 2;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 2 );
+
+    signal_values = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_UNKNOWN) /* AMD */, "got vr %d\n", vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok( value == 1 || broken(value == 2) /* AMD */, "got value %#I64x\n", value );
+
+    destroy_vulkan_semaphore( dev, sem );
+    hr = ID3D12Fence_Signal( fence, 0 );
+    ok_hr( S_OK, hr );
+
+
+    /* test importing as timeline semaphore with d3d12 fence submits */
+
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0 );
+    vr = import_vulkan_semaphore( dev, VK_SEMAPHORE_TYPE_TIMELINE, NULL, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &sem );
+    ok_vk( VK_SUCCESS, vr );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pWaitSemaphores = &sem;
+    submit.pWaitDstStageMask = &stage_mask;
+    submit.waitSemaphoreCount = 1;
+    submit.pNext = &d3d12_info;
+    memset( &d3d12_info, 0, sizeof(d3d12_info) );
+    d3d12_info.sType = VK_STRUCTURE_TYPE_D3D12_FENCE_SUBMIT_INFO_KHR;
+    d3d12_info.pWaitSemaphoreValues = &wait_values;
+    d3d12_info.waitSemaphoreValuesCount = 1;
+    wait_values = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 100 * 1000000 );
+    ok_vk( VK_TIMEOUT, vr );
+
+    hr = ID3D12Fence_Signal( fence, 1 );
+    ok_hr( S_OK, hr );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 1 );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &sem;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &d3d12_info;
+    memset( &d3d12_info, 0, sizeof(d3d12_info) );
+    d3d12_info.sType = VK_STRUCTURE_TYPE_D3D12_FENCE_SUBMIT_INFO_KHR;
+    d3d12_info.pSignalSemaphoreValues = &signal_values;
+    d3d12_info.signalSemaphoreValuesCount = 1;
+    signal_values = 2;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 2 );
+
+    signal_values = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_UNKNOWN) /* AMD */, "got vr %d\n", vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok( value == 1 || broken(value == 2) /* AMD */, "got value %#I64x\n", value );
+
+    destroy_vulkan_semaphore( dev, sem );
+    hr = ID3D12Fence_Signal( fence, 0 );
+    ok_hr( S_OK, hr );
+
+
+    /* test importing as timeline semaphore with timeline submits */
+
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0 );
+    vr = import_vulkan_semaphore( dev, VK_SEMAPHORE_TYPE_TIMELINE, NULL, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &sem );
+    ok_vk( VK_SUCCESS, vr );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pWaitSemaphores = &sem;
+    submit.pWaitDstStageMask = &stage_mask;
+    submit.waitSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset( &timeline_info, 0, sizeof(timeline_info) );
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pWaitSemaphoreValues = &wait_values;
+    timeline_info.waitSemaphoreValueCount = 1;
+    wait_values = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 100 * 1000000 );
+    ok_vk( VK_TIMEOUT, vr );
+
+    hr = ID3D12Fence_Signal( fence, 1 );
+    ok_hr( S_OK, hr );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 1 );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &sem;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset( &timeline_info, 0, sizeof(timeline_info) );
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pSignalSemaphoreValues = &signal_values;
+    timeline_info.signalSemaphoreValueCount = 1;
+    signal_values = 2;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 2 );
+
+    signal_values = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_UNKNOWN) /* AMD */, "got vr %d\n", vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok( value == 1 || broken(value == 2) /* AMD */, "got value %#I64x\n", value );
+
+    destroy_vulkan_semaphore( dev, sem );
+    hr = ID3D12Fence_Signal( fence, 0 );
+    ok_hr( S_OK, hr );
+
+
+    /* test larger than maxTimelineSemaphoreValueDifference values */
+
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0 );
+    vr = import_vulkan_semaphore( dev, VK_SEMAPHORE_TYPE_TIMELINE, NULL, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &sem );
+    ok_vk( VK_SUCCESS, vr );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pWaitSemaphores = &sem;
+    submit.pWaitDstStageMask = &stage_mask;
+    submit.waitSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset( &timeline_info, 0, sizeof(timeline_info) );
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pWaitSemaphoreValues = &wait_values;
+    timeline_info.waitSemaphoreValueCount = 1;
+    wait_values = 0x7fffffffffffffffull;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 100 * 1000000 );
+    ok_vk( VK_TIMEOUT, vr );
+
+    hr = ID3D12Fence_Signal( fence, 0x7fffffffffffffffull );
+    ok_hr( S_OK, hr );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0x7fffffffffffffffull );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &sem;
+    submit.signalSemaphoreCount = 1;
+    submit.pNext = &timeline_info;
+    memset( &timeline_info, 0, sizeof(timeline_info) );
+    timeline_info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+    timeline_info.pSignalSemaphoreValues = &signal_values;
+    timeline_info.signalSemaphoreValueCount = 1;
+    signal_values = 0xffffffffffffffffull;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0xffffffffffffffffull );
+
+    signal_values = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_UNKNOWN) /* AMD */, "got vr %d\n", vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 1000 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok( value == 1 || broken(value == 0xffffffffffffffffull) /* AMD */, "got value %#I64x\n", value );
+
+    destroy_vulkan_semaphore( dev, sem );
+    hr = ID3D12Fence_Signal( fence, 0 );
+    ok_hr( S_OK, hr );
+}
+
+static void test_d3d12_fence_from_vulkan_timeline( ID3D12Device *device, struct vulkan_device *dev, VkSemaphore sem, HANDLE handle )
+{
+    VkSemaphoreSignalInfo signal_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO};
+    VkSemaphoreWaitInfo wait_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO};
+    PFN_vkGetSemaphoreCounterValue p_vkGetSemaphoreCounterValue;
+    PFN_vkSignalSemaphore p_vkSignalSemaphore;
+    PFN_vkWaitSemaphores p_vkWaitSemaphores;
+    uint64_t wait_values;
+    ID3D12Fence *fence;
+    uint64_t value;
+    HANDLE event;
+    VkResult vr;
+    HRESULT hr;
+    DWORD ret;
+
+    p_vkGetSemaphoreCounterValue = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetSemaphoreCounterValue" );
+    p_vkSignalSemaphore = (void *)p_vkGetDeviceProcAddr( dev->device, "vkSignalSemaphore" );
+    p_vkWaitSemaphores = (void *)p_vkGetDeviceProcAddr( dev->device, "vkWaitSemaphores" );
+
+    hr = ID3D12Device_OpenSharedHandle( device, handle, &IID_ID3D12Fence, (void **)&fence );
+    if (FAILED(hr))
+    {
+        skip( "Failed to import vulkan semaphore as D3D12 fence, skipping tests\n" );
+        return;
+    }
+    ok_hr( S_OK, hr );
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok_ptr( event, !=, NULL );
+
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0 );
+
+    hr = ID3D12Fence_SetEventOnCompletion( fence, 1, event );
+    ok_hr( S_OK, hr );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( WAIT_TIMEOUT, ret );
+
+    signal_info.semaphore = sem;
+    signal_info.value = 2;
+    vr = p_vkSignalSemaphore( dev->device, &signal_info );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkGetSemaphoreCounterValue( dev->device, sem, &value );
+    ok_x8( value, ==, 2 );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( 0, ret );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 2 );
+    hr = ID3D12Fence_SetEventOnCompletion( fence, 1, event );
+    ok_hr( S_OK, hr );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( 0, ret );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 2 );
+
+    /* rewinding timeline semaphore works */
+    signal_info.semaphore = sem;
+    signal_info.value = 1;
+    vr = p_vkSignalSemaphore( dev->device, &signal_info );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkGetSemaphoreCounterValue( dev->device, sem, &value );
+    ok_x8( value, ==, 1 );
+    hr = ID3D12Fence_SetEventOnCompletion( fence, 2, event );
+    ok_hr( S_OK, hr );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( WAIT_TIMEOUT, ret );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 1 );
+    signal_info.semaphore = sem;
+    signal_info.value = 2;
+    vr = p_vkSignalSemaphore( dev->device, &signal_info );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkGetSemaphoreCounterValue( dev->device, sem, &value );
+    ok_x8( value, ==, 2 );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( 0, ret );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 2 );
+
+    hr = ID3D12Fence_Signal( fence, 4 );
+    ok_hr( S_OK, hr );
+    vr = p_vkGetSemaphoreCounterValue( dev->device, sem, &value );
+    ok_x8( value, ==, 4 );
+    hr = ID3D12Fence_Signal( fence, 3 );
+    ok_hr( S_OK, hr );
+    vr = p_vkGetSemaphoreCounterValue( dev->device, sem, &value );
+    ok_x8( value, ==, 3 );
+    wait_info.semaphoreCount = 1;
+    wait_info.pSemaphores = &sem;
+    wait_info.pValues = &wait_values;
+    wait_values = 4;
+    vr = p_vkWaitSemaphores( dev->device, &wait_info, 100 * 1000000 );
+    ok_vk( VK_TIMEOUT, vr );
+
+    hr = ID3D12Fence_Signal( fence, 5 );
+    ok_hr( S_OK, hr );
+    vr = p_vkWaitSemaphores( dev->device, &wait_info, 100 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkGetSemaphoreCounterValue( dev->device, sem, &value );
+    ok_x8( value, ==, 5 );
+
+    CloseHandle( event );
+    ID3D12Fence_Release( fence );
+}
+
+static void test_d3d12_fence_from_vulkan_binary( ID3D12Device *device, struct vulkan_device *dev, VkSemaphore sem, HANDLE handle )
+{
+    VkFenceCreateInfo fence_info = {.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    uint32_t index, stage_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    PFN_vkGetDeviceQueue p_vkGetDeviceQueue;
+    PFN_vkWaitForFences p_vkWaitForFences;
+    PFN_vkDestroyFence p_vkDestroyFence;
+    PFN_vkCreateFence p_vkCreateFence;
+    PFN_vkQueueSubmit p_vkQueueSubmit;
+    VkSubmitInfo submit;
+    ID3D12Fence *fence;
+    VkFence vk_fence;
+    VkQueue vk_queue;
+    HANDLE event;
+    UINT64 value;
+    VkResult vr;
+    HRESULT hr;
+    DWORD ret;
+
+    p_vkGetDeviceQueue = (void *)p_vkGetDeviceProcAddr( dev->device, "vkGetDeviceQueue" );
+    p_vkWaitForFences = (void *)p_vkGetDeviceProcAddr( dev->device, "vkWaitForFences" );
+    p_vkDestroyFence = (void *)p_vkGetDeviceProcAddr( dev->device, "vkDestroyFence" );
+    p_vkCreateFence = (void *)p_vkGetDeviceProcAddr( dev->device, "vkCreateFence" );
+    p_vkQueueSubmit = (void *)p_vkGetDeviceProcAddr( dev->device, "vkQueueSubmit" );
+
+    index = get_vulkan_queue_family( dev->instance, dev->physical_device );
+    p_vkGetDeviceQueue( dev->device, index, 0, &vk_queue );
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok_ptr( event, !=, NULL );
+
+    hr = ID3D12Device_OpenSharedHandle( device, handle, &IID_ID3D12Fence, (void **)&fence );
+    ok_hr( S_OK, hr );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0 );
+
+    hr = ID3D12Fence_SetEventOnCompletion( fence, 1, event );
+    ok_hr( S_OK, hr );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( WAIT_TIMEOUT, ret );
+
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pSignalSemaphores = &sem;
+    submit.signalSemaphoreCount = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 100 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 1 );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( 0, ret );
+
+
+    hr = ID3D12Fence_Signal( fence, 0 );
+    ok_hr( S_OK, hr );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 0 );
+    hr = ID3D12Fence_SetEventOnCompletion( fence, 1, event );
+    ok_hr( S_OK, hr );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( WAIT_TIMEOUT, ret );
+
+    memset( &submit, 0, sizeof(submit) );
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.pWaitSemaphores = &sem;
+    submit.pWaitDstStageMask = &stage_mask;
+    submit.waitSemaphoreCount = 1;
+    vr = p_vkCreateFence( dev->device, &fence_info, NULL, &vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkQueueSubmit( vk_queue, 1, &submit, vk_fence );
+    ok_vk( VK_SUCCESS, vr );
+    vr = p_vkWaitForFences( dev->device, 1, &vk_fence, VK_FALSE, 100 * 1000000 );
+    ok_vk( VK_SUCCESS, vr );
+
+    hr = ID3D12Fence_Signal( fence, 2 );
+    ok_hr( S_OK, hr );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( 0, ret );
+    value = ID3D12Fence_GetCompletedValue( fence );
+    ok_x8( value, ==, 2 );
+
+    p_vkDestroyFence( dev->device, vk_fence, NULL );
+
+
+    CloseHandle( event );
+    ID3D12Fence_Release( fence );
+}
+
+static void test_shared_fences(void)
+{
+    static const char *device_extensions[] =
+    {
+        "VK_KHR_timeline_semaphore",
+        "VK_KHR_external_semaphore",
+        "VK_KHR_external_semaphore_win32",
+    };
+
+    struct vulkan_device *vulkan_imp = NULL, *vulkan_exp = NULL;
+    ID3D11Device5 *d3d11_exp = NULL, *d3d11_imp = NULL;
+    ID3D12Device *d3d12_exp = NULL, *d3d12_imp = NULL;
+    BOOL has_timeline = FALSE, vk_export_broken;
+    DXGI_ADAPTER_DESC adapter_desc;
+    IDXGIFactory3 *dxgi = NULL;
+    UINT64 max_timeline = -1;
+    IDXGIAdapter *adapter;
+    LUID luid = {0};
+    VkResult vr;
+    HRESULT hr;
+
+    vr = create_vulkan_device( &luid, device_extensions, ARRAY_SIZE(device_extensions), &vulkan_exp );
+    todo_wine ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED || vr == VK_ERROR_INCOMPATIBLE_DRIVER) /* no GPU */, "got vr %d\n", vr );
+    if (vr == VK_SUCCESS)
+    {
+        has_timeline = has_timeline_semaphore( vulkan_exp );
+        ok( has_timeline, "got has_timeline %u\n", has_timeline );
+        max_timeline = get_timeline_semaphore_limit( vulkan_exp );
+        ok( max_timeline <= 0xffffffff, "got max_timeline %I64d\n", max_timeline );
+        check_external_semaphore_types( vulkan_exp );
+    }
+    vr = create_vulkan_device( &luid, device_extensions, ARRAY_SIZE(device_extensions), &vulkan_imp );
+    if (vulkan_exp) todo_wine ok_vk( VK_SUCCESS, vr );
+
+    hr = CreateDXGIFactory1( &IID_IDXGIFactory3, (void **)&dxgi );
+    ok_hr( S_OK, hr );
+    adapter = create_dxgi_adapter( dxgi, &luid );
+    ok_ptr( adapter, !=, NULL );
+    IDXGIFactory3_Release( dxgi );
+
+    d3d11_imp = create_d3d11_device( adapter, &IID_ID3D11Device5 );
+    ok_ptr( d3d11_imp, !=, NULL );
+    d3d11_exp = create_d3d11_device( adapter, &IID_ID3D11Device5 );
+    ok_ptr( d3d11_exp, !=, NULL );
+
+    hr = D3D12CreateDevice( (IUnknown *)adapter, D3D_FEATURE_LEVEL_12_0,
+                            &IID_ID3D12Device, (void **)&d3d12_imp );
+    todo_wine ok_hr( S_OK, hr );
+    hr = D3D12CreateDevice( (IUnknown *)adapter, D3D_FEATURE_LEVEL_12_0,
+                            &IID_ID3D12Device, (void **)&d3d12_exp );
+    todo_wine ok_hr( S_OK, hr );
+
+    hr = IDXGIAdapter_GetDesc( adapter, &adapter_desc );
+    ok_hr( S_OK, hr );
+    vk_export_broken = !winetest_platform_is_wine && adapter_desc.VendorId == 0x1002;
+
+    IDXGIAdapter_Release( adapter );
+
+    trace( "adapter luid %s\n", debugstr_luid( &luid ) );
+
+#define MAKETEST(api, idx) (((api & 7) << 4) | (idx & 15))
+#define GET_API(test) ((test >> 4) & 7)
+
+    for (UINT test = 0; test <= MAKETEST(7,0xf); test++)
+    {
+        IUnknown *export = NULL, *import = NULL;
+        const WCHAR *name = NULL;
+        HANDLE handle = NULL;
+        WCHAR path[MAX_PATH];
+        VkSemaphore sem = 0;
+
+        winetest_push_context( "%u:%u", GET_API(test), test & 15 );
+
+        switch (test)
+        {
+        case MAKETEST(0, 0):
+            hr = ID3D11Device5_CreateFence( d3d11_exp, 0, D3D11_FENCE_FLAG_SHARED, &IID_ID3D11Fence, (void **)&export );
+            todo_wine ok_hr( S_OK, hr );
+            if (!export) break;
+            hr = ID3D11Fence_CreateSharedHandle( (ID3D11Fence *)export, NULL, GENERIC_ALL, NULL, &handle );
+            ok_hr( S_OK, hr );
+            break;
+        case MAKETEST(0, 1):
+            hr = ID3D11Device5_CreateFence( d3d11_exp, 0, D3D11_FENCE_FLAG_SHARED, &IID_ID3D11Fence, (void **)&export );
+            todo_wine ok_hr( S_OK, hr );
+            if (!export) break;
+            name = L"__winetest_d3d11_fence";
+            hr = ID3D11Fence_CreateSharedHandle( (ID3D11Fence *)export, NULL, GENERIC_ALL, name, &handle );
+            ok_hr( S_OK, hr );
+            break;
+
+        case MAKETEST(1, 0):
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateFence( d3d12_exp, 0, D3D12_FENCE_FLAG_SHARED, &IID_ID3D12Fence, (void **)&export );
+            ok_hr( S_OK, hr );
+            if (!export) break;
+            hr = get_d3d12_shared_handle( d3d12_exp, export, NULL, &handle );
+            ok_hr( S_OK, hr );
+            if (vulkan_imp) test_vulkan_semaphore_from_d3d12_fence( vulkan_imp, (ID3D12Fence *)export, handle );
+            break;
+        case MAKETEST(1, 1):
+            if (!d3d12_exp) break;
+            hr = ID3D12Device_CreateFence( d3d12_exp, 0, D3D12_FENCE_FLAG_SHARED, &IID_ID3D12Fence, (void **)&export );
+            ok_hr( S_OK, hr );
+            if (!export) break;
+            name = L"__winetest_d3d12_fence";
+            hr = get_d3d12_shared_handle( d3d12_exp, export, name, &handle );
+            ok_hr( S_OK, hr );
+            break;
+
+        /* VK_SEMAPHORE_TYPE_TIMELINE + VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT crashes on windows */
+        case MAKETEST(2, 0):
+            if (!vulkan_exp || vk_export_broken /* AMD crashes on export */) break;
+            sem = export_vulkan_semaphore( vulkan_exp, 0, VK_SEMAPHORE_TYPE_TIMELINE, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
+            if (sem && d3d12_imp) test_d3d12_fence_from_vulkan_timeline( d3d12_imp, vulkan_exp, sem, handle );
+            break;
+        case MAKETEST(2, 1):
+            if (!vulkan_exp || vk_export_broken /* AMD crashes on export */) break;
+            sem = export_vulkan_semaphore( vulkan_exp, 0, VK_SEMAPHORE_TYPE_TIMELINE, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT, &handle );
+            if (sem && d3d12_imp) test_d3d12_fence_from_vulkan_timeline( d3d12_imp, vulkan_exp, sem, handle );
+            break;
+        case MAKETEST(2, 2):
+            if (!vulkan_exp || vk_export_broken /* AMD crashes on export */) break;
+            sem = export_vulkan_semaphore( vulkan_exp, 0, VK_SEMAPHORE_TYPE_TIMELINE, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &handle );
+            if (sem && d3d12_imp) test_d3d12_fence_from_vulkan_timeline( d3d12_imp, vulkan_exp, sem, handle );
+            break;
+
+        case MAKETEST(2, 3):
+            if (!vulkan_exp) break;
+            sem = export_vulkan_semaphore( vulkan_exp, 0, VK_SEMAPHORE_TYPE_BINARY, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &handle );
+            break;
+        case MAKETEST(2, 4):
+            if (!vulkan_exp) break;
+            sem = export_vulkan_semaphore( vulkan_exp, 0, VK_SEMAPHORE_TYPE_BINARY, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
+            if (sem && d3d12_imp) /* D3D12 fence doesn't work when exporting as OPAQUE_WIN32_BIT */
+            {
+                ID3D12Fence *fence;
+                UINT64 value;
+
+                hr = ID3D12Device_OpenSharedHandle( d3d12_imp, handle, &IID_ID3D12Fence, (void **)&fence );
+                ok_hr( S_OK, hr );
+                value = ID3D12Fence_GetCompletedValue( fence );
+                ok_x8( value, ==, -1 );
+                ID3D12Fence_Release( fence );
+            }
+            break;
+        case MAKETEST(2, 5):
+            if (!vulkan_exp || vk_export_broken /* AMD crashes */) break;
+            sem = export_vulkan_semaphore( vulkan_exp, 0, VK_SEMAPHORE_TYPE_BINARY, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT, &handle );
+            if (sem && d3d12_imp) test_d3d12_fence_from_vulkan_binary( d3d12_imp, vulkan_exp, sem, handle );
+            break;
+        case MAKETEST(2, 6):
+            if (!vulkan_exp || vk_export_broken /* AMD crashes */) break;
+            sem = export_vulkan_semaphore( vulkan_exp, 0, VK_SEMAPHORE_TYPE_BINARY, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &handle );
+            if (sem && d3d12_imp) test_d3d12_fence_from_vulkan_binary( d3d12_imp, vulkan_exp, sem, handle );
+            break;
+        }
+        if (!handle) goto skip_tests;
+
+        if (name)
+        {
+            swprintf( path, ARRAY_SIZE(path), L"\\Sessions\\1\\BaseNamedObjects\\%s", name );
+            check_object_name( handle, path );
+        }
+
+        if (d3d11_imp)
+        {
+            hr = ID3D11Device5_OpenSharedFence( d3d11_imp, handle, &IID_ID3D11Fence, (void **)&import );
+            if (is_d3dkmt_handle( handle )) todo_wine ok_hr( E_INVALIDARG, hr );
+            else todo_wine ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+        }
+
+        if (d3d12_imp)
+        {
+            hr = ID3D12Device_OpenSharedHandle( d3d12_imp, handle, &IID_ID3D12Fence, (void **)&import );
+            if (is_d3dkmt_handle( handle )) ok_hr( E_HANDLE, hr );
+            else ok_hr( S_OK, hr );
+            if (hr == S_OK) ok_ref( 0, IUnknown_Release( import ) );
+
+            if (name)
+            {
+                hr = open_d3d12_named_shared_handle( d3d12_imp, name, &IID_ID3D12Fence, (void **)&import );
+                ok_hr( S_OK, hr );
+                ok_ref( 0, IUnknown_Release( import ) );
+            }
+        }
+
+        if (vulkan_imp)
+        {
+            VkSemaphore sem_imp;
+            VkResult vr;
+
+            if (is_d3dkmt_handle( handle ))
+            {
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_BINARY, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &sem_imp );
+                ok_vk( VK_SUCCESS, vr );
+                destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_TIMELINE, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT, &sem_imp );
+                ok_vk( VK_SUCCESS, vr );
+                destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+            }
+            else
+            {
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_BINARY, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT, &sem_imp );
+                if (test == MAKETEST(2, 4)) ok_vk( VK_SUCCESS, vr );
+                else ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED) /* NVIDIA */, "got %d\n", vr );
+                if (vr == VK_SUCCESS) destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_BINARY, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT, &sem_imp );
+                if (test != MAKETEST(2, 4)) ok_vk( VK_SUCCESS, vr );
+                else ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED) /* NVIDIA */, "got %d\n", vr );
+                if (vr == VK_SUCCESS) destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_BINARY, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &sem_imp );
+                if (test != MAKETEST(2, 4)) ok_vk( VK_SUCCESS, vr );
+                else ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED) /* NVIDIA */, "got %d\n", vr );
+                if (vr == VK_SUCCESS) destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+
+
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_TIMELINE, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT, &sem_imp );
+                if (test != MAKETEST(2, 4)) ok_vk( VK_SUCCESS, vr );
+                else ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED) /* NVIDIA */, "got %d\n", vr );
+                if (vr == VK_SUCCESS) destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_TIMELINE, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT, &sem_imp );
+                if (test != MAKETEST(2, 4)) ok_vk( VK_SUCCESS, vr );
+                else ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED) /* NVIDIA */, "got %d\n", vr );
+                if (vr == VK_SUCCESS) destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+
+                vr = import_vulkan_semaphore( vulkan_imp, VK_SEMAPHORE_TYPE_TIMELINE, name, handle, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT, &sem_imp );
+                if (test != MAKETEST(2, 4)) ok_vk( VK_SUCCESS, vr );
+                else ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED) /* NVIDIA */, "got %d\n", vr );
+                if (vr == VK_SUCCESS) destroy_vulkan_semaphore( vulkan_imp, sem_imp );
+            }
+        }
+
+skip_tests:
+        if (handle && !is_d3dkmt_handle( handle )) CloseHandle( handle );
+        if (export) ok_ref( 0, IUnknown_Release( export ) );
+        if (sem) destroy_vulkan_semaphore( vulkan_exp, sem );
+        winetest_pop_context();
+    }
+
+#undef GET_API
+#undef MAKETEST
+
+    if (d3d12_imp) ID3D12Device_Release( d3d12_imp );
+    if (d3d12_exp) ok_ref( 0, ID3D12Device_Release( d3d12_exp ) );
+    if (vulkan_imp) destroy_vulkan_device( vulkan_imp );
+    if (vulkan_exp) destroy_vulkan_device( vulkan_exp );
+}
+
 START_TEST( d3dkmt )
 {
     char **argv;
@@ -5593,4 +6555,5 @@ START_TEST( d3dkmt )
     test_D3DKMTCreateAllocation();
     test_D3DKMTShareObjects();
     test_shared_resources();
+    test_shared_fences();
 }
