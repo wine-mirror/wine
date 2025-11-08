@@ -1135,7 +1135,7 @@ static void test___abi_make_type_id(void)
     check_interface(type_obj, &IID_IMarshal);
     check_interface(type_obj, &IID_IAgileObject);
     todo_wine check_interface(type_obj, &IID_IEquatable);
-    todo_wine check_interface(type_obj, &IID_IPrintable);
+    check_interface(type_obj, &IID_IPrintable);
 
     hr = IInspectable_GetRuntimeClassName(type_obj, &str);
     ok(hr == S_OK, "got hr %#lx\n", hr);
@@ -1169,7 +1169,7 @@ static void test___abi_make_type_id(void)
 
     str = p__abi_ObjectToString(type_obj, TRUE);
     buf = WindowsGetStringRawBuffer(str, NULL);
-    todo_wine ok(buf && !wcscmp(buf, L"foo"), "got buf %s != %s\n", debugstr_w(buf), debugstr_w(L"foo"));
+    ok(buf && !wcscmp(buf, L"foo"), "got buf %s != %s\n", debugstr_w(buf), debugstr_w(L"foo"));
     WindowsDeleteString(str);
 
     type_obj2 = p___abi_make_type_id(&desc);
@@ -1205,7 +1205,7 @@ static void test___abi_make_type_id(void)
     check_interface(type_obj2, &IID_IMarshal);
     check_interface(type_obj2, &IID_IAgileObject);
     todo_wine check_interface(type_obj2, &IID_IEquatable);
-    todo_wine check_interface(type_obj2, &IID_IPrintable);
+    check_interface(type_obj2, &IID_IPrintable);
 
     equals = p_platform_type_Equals_Object(type_obj2, type_obj);
     ok(equals, "got equals %d\n", equals);

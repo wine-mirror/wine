@@ -305,6 +305,7 @@ struct __abi_type_descriptor
 struct platform_type
 {
     IInspectable IInspectable_iface;
+    IStringable IPrintable_iface;
     IClosable IClosable_iface;
     IUnknown *marshal;
     const struct __abi_type_descriptor *desc;
@@ -327,6 +328,11 @@ HRESULT WINAPI platform_type_QueryInterface(IInspectable *iface, const GUID *iid
         IsEqualGUID(iid, &IID_IAgileObject))
     {
         IInspectable_AddRef((*out = &impl->IInspectable_iface));
+        return S_OK;
+    }
+    if (IsEqualGUID(iid, &IID_IPrintable))
+    {
+        IStringable_AddRef((*out = &impl->IPrintable_iface));
         return S_OK;
     }
     if (IsEqualGUID(iid, &IID_IClosable))
@@ -394,6 +400,29 @@ COM_VTABLE_ENTRY(platform_type_GetRuntimeClassName)
 COM_VTABLE_ENTRY(platform_type_GetTrustLevel)
 COM_VTABLE_RTTI_END;
 
+DEFINE_IINSPECTABLE_(platform_type_printable, IStringable, struct platform_type,
+    impl_platform_type_from_IStringable, IPrintable_iface, &impl->IInspectable_iface);
+
+static HRESULT WINAPI platform_type_printable_ToString(IStringable *iface, HSTRING *str)
+{
+    struct platform_type *impl = impl_platform_type_from_IStringable(iface);
+
+    TRACE("(%p, %p)\n", iface, str);
+
+    return WindowsCreateString(impl->desc->name, impl->desc->name ? wcslen(impl->desc->name ) : 0, str);
+}
+
+DEFINE_RTTI_DATA(platform_type_printable, offsetof(struct platform_type, IPrintable_iface), ".?AVType@Platform@@");
+COM_VTABLE_RTTI_START(IStringable, platform_type_printable)
+COM_VTABLE_ENTRY(platform_type_printable_QueryInterface)
+COM_VTABLE_ENTRY(platform_type_printable_AddRef)
+COM_VTABLE_ENTRY(platform_type_printable_Release)
+COM_VTABLE_ENTRY(platform_type_printable_GetIids)
+COM_VTABLE_ENTRY(platform_type_printable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(platform_type_printable_GetTrustLevel)
+COM_VTABLE_ENTRY(platform_type_printable_ToString)
+COM_VTABLE_RTTI_END;
+
 DEFINE_IINSPECTABLE(platform_type_closable, IClosable, struct platform_type, IInspectable_iface);
 
 static HRESULT WINAPI platform_type_closable_Close(IClosable *iface)
@@ -417,6 +446,7 @@ static void init_platform_type(void *base)
 {
     INIT_RTTI(type_info, base);
     INIT_RTTI(platform_type, base);
+    INIT_RTTI(platform_type_printable, base);
     INIT_RTTI(platform_type_closable, base);
 }
 
@@ -430,7 +460,7 @@ static const char *debugstr_abi_type_descriptor(const struct __abi_type_descript
 void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
 {
     /* TODO:
-     * Implement IEquatable and IPrintable. */
+     * Implement IEquatable. */
     struct platform_type *obj;
     HRESULT hr;
 
@@ -438,6 +468,7 @@ void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
 
     obj = Allocate(sizeof(*obj));
     obj->IInspectable_iface.lpVtbl = &platform_type_vtable.vtable;
+    obj->IPrintable_iface.lpVtbl = &platform_type_printable_vtable.vtable;
     obj->IClosable_iface.lpVtbl = &platform_type_closable_vtable.vtable;
     obj->desc = desc;
     obj->ref = 1;
@@ -471,8 +502,7 @@ HSTRING __cdecl platform_type_ToString(struct platform_type *this)
 
     TRACE("(%p)\n", this);
 
-    hr = WindowsCreateString(this->desc->name, this->desc->name ? wcslen(this->desc->name) : 0, &str);
-    if (FAILED(hr))
+    if (FAILED(hr = IStringable_ToString(&this->IPrintable_iface, &str)))
         __abi_WinRTraiseCOMException(hr);
     return str;
 }
