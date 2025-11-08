@@ -2234,16 +2234,14 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         if (foreground) NtUserSetForegroundWindow( foreground );
         switch (LOWORD(state_cmd))
         {
-        case SC_MAXIMIZE:
-        case SC_MINIMIZE:
-            send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
-            break;
         case SC_RESTORE:
             if (HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
             NtUserSetInternalWindowPos( hwnd, SW_SHOW, &window_rect, NULL );
+            /* fallthrough */
+        default:
             send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
             break;
-        default:
+        case 0:
             if (!swp_flags) break;
             NtUserSetWindowPos( hwnd, 0, window_rect.left, window_rect.top, window_rect.right - window_rect.left,
                                 window_rect.bottom - window_rect.top, swp_flags );
