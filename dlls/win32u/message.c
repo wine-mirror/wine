@@ -2232,14 +2232,13 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         window_rect = map_rect_raw_to_virt( window_rect, get_thread_dpi() );
 
         if (foreground) NtUserSetForegroundWindow( foreground );
-        switch (LOWORD(state_cmd))
+        switch (state_cmd)
         {
         case SC_RESTORE:
-            if (HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
             NtUserSetInternalWindowPos( hwnd, SW_SHOW, &window_rect, NULL );
             /* fallthrough */
         default:
-            send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+            send_message( hwnd, WM_SYSCOMMAND, state_cmd, 0 );
             break;
         case 0:
             if (!swp_flags) break;
