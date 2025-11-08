@@ -128,9 +128,9 @@ static HRESULT DSOUND_WaveFormat(DirectSoundDevice *device, IAudioClient *client
         wfe.Samples.wValidBitsPerSample = wfe.Format.wBitsPerSample = 32;
 
         if (wfe.Format.nChannels < device->num_speakers) {
-            device->speaker_config = DSOUND_FindSpeakerConfig(device->mmdevice, mixwfe->Format.nChannels);
+            device->speaker_config = DSOUND_FindSpeakerConfig(device->mmdevice, wfe.Format.nChannels);
             DSOUND_ParseSpeakerConfig(device);
-        } else if (mixwfe->Format.nChannels > device->num_speakers) {
+        } else if (wfe.Format.nChannels > device->num_speakers) {
             wfe.Format.nChannels = device->num_speakers;
             wfe.dwChannelMask = speaker_config_to_channel_mask(device->speaker_config);
         }
