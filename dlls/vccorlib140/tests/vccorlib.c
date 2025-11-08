@@ -2141,36 +2141,36 @@ static void test_ToString(void)
     HSTRING str;
 
     str = p_uint64_ToString(&uint64);
-    todo_wine test_hstring(str, L"16045690984833335023");
+    test_hstring(str, L"16045690984833335023");
     str = p_int64_ToString(&int64);
-    todo_wine test_hstring(str, L"-2401053088876216593");
+    test_hstring(str, L"-2401053088876216593");
     str = p_float64_ToString(&float64);
-    todo_wine test_hstring(str, L"2.71828");
+    test_hstring(str, L"2.71828");
     str = p_float32_ToString(&float32);
-    todo_wine test_hstring(str, L"2.71828");
+    test_hstring(str, L"2.71828");
     str = p_uint32_ToString(&uint32);
-    todo_wine test_hstring(str, L"3735928559");
+    test_hstring(str, L"3735928559");
     str = p_int32_ToString(&int32);
-    todo_wine test_hstring(str, L"-559038737");
+    test_hstring(str, L"-559038737");
     str = p_uint16_ToString(&uint16);
-    todo_wine test_hstring(str, L"48879");
+    test_hstring(str, L"48879");
     str = p_int16_ToString(&int16);
-    todo_wine test_hstring(str, L"-16657");
+    test_hstring(str, L"-16657");
     str = p_int8_ToString(&int8);
-    todo_wine test_hstring(str, L"-1");
+    test_hstring(str, L"-1");
     str = p_uint8_ToString(&uint8);
-    todo_wine test_hstring(str, L"255");
+    test_hstring(str, L"255");
     str = p_char16_ToString(&char16);
-    todo_wine test_hstring(str, L"a");
+    test_hstring(str, L"a");
 
     str = p_Boolean_ToString(&bool_val);
-    todo_wine test_hstring(str, L"true");
+    test_hstring(str, L"true");
     bool_val = false;
     str = p_Boolean_ToString(&bool_val);
-    todo_wine test_hstring(str, L"false");
+    test_hstring(str, L"false");
 
     str = p_Guid_ToString(&guid);
-    todo_wine test_hstring(str, L"{af86e2e0-b12d-4c6a-9c5a-d7aa65101e90}");
+    test_hstring(str, L"{af86e2e0-b12d-4c6a-9c5a-d7aa65101e90}");
 }
 
 START_TEST(vccorlib)

@@ -617,82 +617,177 @@ HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
     return NULL;
 }
 
+static HRESULT hstring_sprintf(HSTRING *out, const WCHAR *fmt, ...)
+{
+    WCHAR buf[100];
+    va_list args;
+    int len;
+
+    va_start(args, fmt);
+    len = vswprintf(buf, ARRAY_SIZE(buf), fmt, args);
+    va_end(args);
+    return WindowsCreateString(buf, len, out);
+}
+
 HSTRING __cdecl Guid_ToString(const GUID *this)
 {
-    FIXME("(%s): stub!\n", debugstr_guid(this));
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%s)\n", debugstr_guid(this));
+
+    hr = hstring_sprintf(&str, L"{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}", this->Data1, this->Data2,
+                         this->Data3, this->Data4[0], this->Data4[1], this->Data4[2], this->Data4[3], this->Data4[4],
+                         this->Data4[5], this->Data4[6], this->Data4[7]);
+    if (FAILED(hr))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl Boolean_ToString(const boolean *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    const WCHAR *strW;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    strW = *this ? L"true" : L"false";
+    if (FAILED((hr = WindowsCreateString(strW, wcslen(strW), &str))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl char16_ToString(const WCHAR *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p): stub!\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%c", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl float32_ToString(const FLOAT *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%g", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl float64_ToString(const DOUBLE *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%g", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl int16_ToString(const INT16 *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hd", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl int32_ToString(const INT32 *this)
 {
-    FIXME("(%p): stub\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I32d", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl int64_ToString(const INT64 *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I64d", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl int8_ToString(const INT8 *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hhd", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl uint16_ToString(const UINT16 *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hu", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl uint32_ToString(const UINT32 *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I32u", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl uint64_ToString(const UINT64 *this)
 {
-   FIXME("(%p): stub!\n", this);
-   return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I64u", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 HSTRING __cdecl uint8_ToString(const UINT8 *this)
 {
-    FIXME("(%p): stub!\n", this);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hhu", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
