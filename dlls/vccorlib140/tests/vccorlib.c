@@ -29,6 +29,7 @@
 #include "objbase.h"
 #include "weakreference.h"
 #include "restrictederrorinfo.h"
+#include "roapi.h"
 #define WIDL_using_Windows_Foundation
 #include "windows.foundation.h"
 #include "winstring.h"
@@ -134,6 +135,12 @@ struct __abi_type_descriptor
     int type_id;
 };
 
+struct EventLock
+{
+    SRWLOCK targets_ptr_lock;
+    SRWLOCK add_remove_lock;
+};
+
 static HRESULT (__cdecl *pInitializeData)(int);
 static void (__cdecl *pUninitializeData)(int);
 static HRESULT (WINAPI *pGetActivationFactoryByPCWSTR)(const WCHAR *, const GUID *, void **);
@@ -180,6 +187,14 @@ static HSTRING (__cdecl *p_uint16_ToString)(const UINT16 *);
 static HSTRING (__cdecl *p_uint32_ToString)(const UINT32 *);
 static HSTRING (__cdecl *p_uint64_ToString)(const UINT64 *);
 static HSTRING (__cdecl *p_uint8_ToString)(const UINT8 *);
+static void *(__cdecl *p_Delegate_ctor)(IInspectable *);
+static void (WINAPI *p_EventSourceInitialize)(IInspectable **);
+static void (WINAPI *p_EventSourceUninitialize)(IInspectable **);
+static EventRegistrationToken (WINAPI *p_EventSourceAdd)(IInspectable **, struct EventLock *, IUnknown *);
+static void (WINAPI *p_EventSourceRemove)(IInspectable **, struct EventLock *, EventRegistrationToken);
+static IInspectable *(WINAPI *p_EventSourceGetTargetArray)(IInspectable *, struct EventLock *);
+static IInspectable *(WINAPI *p_EventSourceGetTargetArrayEvent)(IInspectable *, ULONG, const GUID *, EventRegistrationToken *);
+static ULONG (WINAPI *p_EventSourceGetTargetArraySize)(IInspectable *);
 
 static void *(__cdecl *p__RTtypeid)(const void *);
 static const char *(__thiscall *p_type_info_name)(void *);
@@ -268,6 +283,19 @@ static BOOL init(void)
     p_uint32_ToString = (void *)GetProcAddress(hmod, "?ToString@uint32@default@@QAAP$AAVString@Platform@@XZ");
     p_uint64_ToString = (void *)GetProcAddress(hmod, "?ToString@uint64@default@@QAAP$AAVString@Platform@@XZ");
     p_uint8_ToString = (void *)GetProcAddress(hmod, "?ToString@uint8@default@@QAAP$AAVString@Platform@@XZ");
+    p_Delegate_ctor = (void *)GetProcAddress(hmod, "??0Delegate@Platform@@Q$AAA@XZ");
+    p_EventSourceInitialize = (void *)GetProcAddress(hmod, "?EventSourceInitialize@Details@Platform@@YAXPAPAX@Z");
+    p_EventSourceUninitialize = (void *)GetProcAddress(hmod, "?EventSourceUninitialize@Details@Platform@@YAXPAPAX@Z");
+    p_EventSourceAdd = (void *)GetProcAddress(hmod,
+            "?EventSourceAdd@Details@Platform@@YA?AVEventRegistrationToken@Foundation@Windows@@PAPAXPAUEventLock@12@P$AAVDelegate@2@@Z");
+    p_EventSourceRemove = (void *)GetProcAddress(hmod,
+            "?EventSourceRemove@Details@Platform@@YAXPAPAXPAUEventLock@12@VEventRegistrationToken@Foundation@Windows@@@Z");
+    p_EventSourceGetTargetArray = (void *)GetProcAddress(hmod,
+            "?EventSourceGetTargetArray@Details@Platform@@YAPAXPAXPAUEventLock@12@@Z");
+    p_EventSourceGetTargetArrayEvent = (void *)GetProcAddress(hmod,
+            "?EventSourceGetTargetArrayEvent@Details@Platform@@YAPAXPAXIPBXPA_J@Z");
+    p_EventSourceGetTargetArraySize = (void *)GetProcAddress(hmod,
+            "?EventSourceGetTargetArraySize@Details@Platform@@YAIPAX@Z");
 
     p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBAPBDXZ");
     p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBAPBDXZ");
@@ -339,6 +367,21 @@ static BOOL init(void)
         p_uint32_ToString = (void *)GetProcAddress(hmod, "?ToString@uint32@default@@QEAAPE$AAVString@Platform@@XZ");
         p_uint64_ToString = (void *)GetProcAddress(hmod, "?ToString@uint64@default@@QEAAPE$AAVString@Platform@@XZ");
         p_uint8_ToString = (void *)GetProcAddress(hmod, "?ToString@uint8@default@@QEAAPE$AAVString@Platform@@XZ");
+        p_Delegate_ctor = (void *)GetProcAddress(hmod, "??0Delegate@Platform@@QE$AAA@XZ");
+        p_EventSourceInitialize = (void *)GetProcAddress(hmod,
+                "?EventSourceInitialize@Details@Platform@@YAXPEAPEAX@Z");
+        p_EventSourceUninitialize = (void *)GetProcAddress(hmod,
+                "?EventSourceUninitialize@Details@Platform@@YAXPEAPEAX@Z");
+        p_EventSourceAdd = (void *)GetProcAddress(hmod,
+                "?EventSourceAdd@Details@Platform@@YA?AVEventRegistrationToken@Foundation@Windows@@PEAPEAXPEAUEventLock@12@PE$AAVDelegate@2@@Z");
+        p_EventSourceRemove = (void *)GetProcAddress(hmod,
+                "?EventSourceRemove@Details@Platform@@YAXPEAPEAXPEAUEventLock@12@VEventRegistrationToken@Foundation@Windows@@@Z");
+        p_EventSourceGetTargetArray = (void *)GetProcAddress(hmod,
+                "?EventSourceGetTargetArray@Details@Platform@@YAPEAXPEAXPEAUEventLock@12@@Z");
+        p_EventSourceGetTargetArrayEvent = (void *)GetProcAddress(hmod,
+                "?EventSourceGetTargetArrayEvent@Details@Platform@@YAPEAXPEAXIPEBXPEA_J@Z");
+        p_EventSourceGetTargetArraySize = (void *)GetProcAddress(hmod,
+                "?EventSourceGetTargetArraySize@Details@Platform@@YAIPEAX@Z");
 
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QEBAPEBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QEBAPEBDXZ");
@@ -409,6 +452,20 @@ static BOOL init(void)
         p_uint32_ToString = (void *)GetProcAddress(hmod, "?ToString@uint32@default@@QAAP$AAVString@Platform@@XZ");
         p_uint64_ToString = (void *)GetProcAddress(hmod, "?ToString@uint64@default@@QAAP$AAVString@Platform@@XZ");
         p_uint8_ToString = (void *)GetProcAddress(hmod, "?ToString@uint8@default@@QAAP$AAVString@Platform@@XZ");
+        p_Delegate_ctor = (void *)GetProcAddress(hmod, "??0Delegate@Platform@@Q$AAA@XZ");
+        p_EventSourceInitialize = (void *)GetProcAddress(hmod, "?EventSourceInitialize@Details@Platform@@YGXPAPAX@Z");
+        p_EventSourceUninitialize = (void *)GetProcAddress(hmod,
+                "?EventSourceUninitialize@Details@Platform@@YGXPAPAX@Z");
+        p_EventSourceAdd = (void *)GetProcAddress(hmod,
+                "?EventSourceAdd@Details@Platform@@YG?AVEventRegistrationToken@Foundation@Windows@@PAPAXPAUEventLock@12@P$AAVDelegate@2@@Z");
+        p_EventSourceRemove = (void *)GetProcAddress(hmod,
+                "?EventSourceRemove@Details@Platform@@YGXPAPAXPAUEventLock@12@VEventRegistrationToken@Foundation@Windows@@@Z");
+        p_EventSourceGetTargetArray = (void *)GetProcAddress(hmod,
+                "?EventSourceGetTargetArray@Details@Platform@@YGPAXPAXPAUEventLock@12@@Z");
+        p_EventSourceGetTargetArrayEvent = (void *)GetProcAddress(hmod,
+                "?EventSourceGetTargetArrayEvent@Details@Platform@@YGPAXPAXIPBXPA_J@Z");
+        p_EventSourceGetTargetArraySize = (void *)GetProcAddress(hmod,
+                "?EventSourceGetTargetArraySize@Details@Platform@@YGIPAX@Z");
 
         p_type_info_name = (void *)GetProcAddress(msvcrt, "?name@type_info@@QBEPBDXZ");
         p_type_info_raw_name = (void *)GetProcAddress(msvcrt, "?raw_name@type_info@@QBEPBDXZ");
@@ -461,6 +518,13 @@ static BOOL init(void)
     ok(p_uint32_ToString != NULL, "default::uint32::ToString not available.\n");
     ok(p_uint64_ToString != NULL, "default::uint64::ToString not available.\n");
     ok(p_uint8_ToString != NULL, "default::uint8::ToString not available.\n");
+    ok(p_Delegate_ctor != NULL, "Platform::Delegate not available.\n");
+    ok(p_EventSourceInitialize != NULL, "Platform::EventSourceInitialize not available.\n");
+    ok(p_EventSourceAdd != NULL, "Platform::Details::EventSourceAdd not available.\n");
+    ok(p_EventSourceRemove != NULL, "Platform::Details::EventSourceRemove not available.\n");
+    ok(p_EventSourceGetTargetArray != NULL, "Platform::Details::EventSourceGetTargetArray not available.\n");
+    ok(p_EventSourceGetTargetArrayEvent != NULL, "Platform::Details::EventSourceGetTargetArrayEvent not available.\n");
+    ok(p_EventSourceGetTargetArraySize != NULL, "Platform::Details::EventSourceGetTargetArrayEvent not available.\n");
 
     ok(p_type_info_name != NULL, "type_info::name not available\n");
     ok(p_type_info_raw_name != NULL, "type_info::raw_name not available\n");
@@ -1469,7 +1533,7 @@ static void test_CreateValue(void)
         ok(obj == NULL, "got obj %p\n", obj);
     }
 
-    pUninitializeData(0);
+    pUninitializeData(1);
 }
 
 #define CLASS_IS_SIMPLE_TYPE          1
@@ -2172,6 +2236,406 @@ static void test_ToString(void)
     test_hstring(str, L"{af86e2e0-b12d-4c6a-9c5a-d7aa65101e90}");
 }
 
+#define test_rtti_names(obj, pretty, mangled) test_rtti_names_(__LINE__, obj, pretty, mangled)
+static void test_rtti_names_(int line, void *obj, const char *exp_pretty_name, const char *exp_mangled_name)
+{
+    const char *pretty_name, *mangled_name;
+    void *type_info;
+
+    type_info = p__RTtypeid(obj);
+    ok_(__FILE__, line)(type_info != NULL, "got type_info %p\n", type_info);
+
+    pretty_name = (char *)call_func1(p_type_info_name, type_info);
+    ok(!strcmp(pretty_name, exp_pretty_name), "got pretty_name %s != %s.\n", debugstr_a(pretty_name),
+       debugstr_a(exp_pretty_name));
+
+    mangled_name = (char *)call_func1(p_type_info_raw_name, type_info);
+    ok(!strcmp(mangled_name, exp_mangled_name), "got mangled_name %s != %s.\n", debugstr_a(mangled_name),
+       debugstr_a(exp_mangled_name));
+}
+
+static void test_Delegate(void)
+{
+    IInspectable delegate = {.lpVtbl = NULL};
+
+    p_Delegate_ctor(&delegate);
+    todo_wine ok(delegate.lpVtbl != NULL, "got lpVtbl %p.\n", delegate.lpVtbl);
+    if (!delegate.lpVtbl)
+    {
+        skip("Platform::Delegate failed.\n");
+        return;
+    }
+    test_rtti_names(&delegate, "class Platform::Delegate", ".?AVDelegate@Platform@@");
+}
+
+struct delegate
+{
+    IInspectable IInspectable_iface;
+    bool agile;
+    LONG ref;
+};
+
+static inline struct delegate *impl_delegate_from_IInspectable(IInspectable *iface)
+{
+    return CONTAINING_RECORD(iface, struct delegate, IInspectable_iface);
+}
+
+static HRESULT WINAPI delegate_QueryInterface(IInspectable *iface, const GUID *iid, void **out)
+{
+    struct delegate *impl = impl_delegate_from_IInspectable(iface);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        (impl->agile && IsEqualGUID(iid, &IID_IAgileObject)))
+    {
+        IInspectable_AddRef((*out = &impl->IInspectable_iface));
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI delegate_AddRef(IInspectable *iface)
+{
+    struct delegate *impl = impl_delegate_from_IInspectable(iface);
+    return InterlockedIncrement(&impl->ref);
+}
+
+static ULONG WINAPI delegate_Release(IInspectable *iface)
+{
+    struct delegate *impl = impl_delegate_from_IInspectable(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    if (!ref) pFree(impl);
+    return ref;
+}
+
+static HRESULT WINAPI delegate_GetIids(IInspectable *iface, ULONG *count, GUID **iids)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI delegate_GetRuntimeClassName(IInspectable *iface, HSTRING *str)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI delegate_GetTrustLevel(IInspectable *iface, TrustLevel *level)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IInspectableVtbl delegate_vtbl =
+{
+    /* IUnknown */
+    delegate_QueryInterface,
+    delegate_AddRef,
+    delegate_Release,
+    /* IInspectable */
+    delegate_GetIids,
+    delegate_GetRuntimeClassName,
+    delegate_GetTrustLevel
+};
+
+static IInspectable *delegate_create(bool agile)
+{
+    struct delegate *impl;
+
+    impl = pAllocate(sizeof(*impl));
+    /* Using the Platform::Delegate constructor doesn't seem to be necessary. */
+    impl->IInspectable_iface.lpVtbl = &delegate_vtbl;
+    impl->agile = agile;
+    impl->ref = 1;
+    return &impl->IInspectable_iface;
+}
+
+static void test_EventSource(void)
+{
+    IInspectable *event_source = (IInspectable *)0xdeadbeef, *obj, *old, *delegate1, *delegate2;
+    struct EventLock lock = {SRWLOCK_INIT, SRWLOCK_INIT};
+    EventRegistrationToken token1 = {0}, token2 = {0};
+    HSTRING str;
+    ULONG count;
+    HRESULT hr;
+    IID *iids;
+
+    /* EventSourceTargetAdd will marshal stored delegate, so COM needs to be initialized. */
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    p_EventSourceInitialize(&event_source);
+    todo_wine ok(event_source == NULL, "got event_source %p.\n", event_source);
+
+    event_source = NULL;
+    delegate1 = delegate_create(FALSE);
+    token1 = p_EventSourceAdd(&event_source, &lock, (IUnknown *)delegate1);
+    todo_wine ok(token1.value != 0, "got token1.value {%#I64x}\n", token1.value);
+    todo_wine ok(event_source != NULL, "got event_source %p\n", event_source);
+    /* EventSourceAdd takes a reference to the delegate. */
+    todo_wine test_refcount(delegate1, 2);
+    if (!event_source)
+    {
+        skip("EventSourceAdd failed\n");
+        IInspectable_Release(delegate1);
+        RoUninitialize();
+        return;
+    }
+    delegate2 = delegate_create(FALSE);
+    old = event_source;
+    IInspectable_AddRef(old);
+    /* EventSourceAdd/Remove have CoW semantics and create a new object on modification, releasing the old one. */
+    token2 = p_EventSourceAdd(&event_source, &lock, (IUnknown *)delegate2);
+    ok(event_source != old, "got event_source %p\n", event_source);
+    ok(token1.value != token2.value, "got token.value {%#I64x}\n", token1.value);
+    ok(event_source && event_source != old, "got event_source %p\n", event_source);
+    count = IInspectable_Release(old);
+    ok(count == 0, "got count %lu\n", count);
+    test_refcount(delegate1, 2);
+    count = IInspectable_Release(delegate2);
+    ok(count == 1, "got count %lu\n", count);
+
+    test_rtti_names(event_source, "class Platform::Details::EventTargetArray",
+        ".?AVEventTargetArray@Details@Platform@@");
+    test_refcount(event_source, 1);
+    check_interface(event_source, &IID_IUnknown);
+    check_interface(event_source, &IID_IInspectable);
+    check_interface(event_source, &IID_IAgileObject);
+    check_interface(event_source, &IID_IWeakReferenceSource);
+    check_interface(event_source, &IID_IMarshal);
+
+    hr = IInspectable_GetIids(event_source, &count, &iids);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(count == 2, "got count %lu\n", count);
+    ok(iids != NULL, "got iids %p\n", iids);
+    ok(IsEqualGUID(&iids[0], &IID_IInspectable), "got iids[0] %s\n", debugstr_guid(&iids[0]));
+    ok(IsEqualGUID(&iids[1], &IID_IWeakReferenceSource), "got iids[1] %s\n", debugstr_guid(&iids[1]));
+
+    hr = IInspectable_GetRuntimeClassName(event_source, &str);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(WindowsIsStringEmpty(str), "got str %s\n", debugstr_hstring(str));
+    WindowsDeleteString(str);
+
+    IInspectable_AddRef((old = event_source));
+    /* Similarly, EventSourceRemove should create a new object, releasing the old one. */
+    p_EventSourceRemove(&event_source, &lock, token1);
+    ok(event_source != old, "got event_source %p\n", event_source);
+    test_refcount(event_source, 1);
+    test_refcount(old, 1);
+    /* The older object should still have a reference to delegate1. */
+    test_refcount(delegate1, 2);
+    /* EventSourceUninitialize calls Release, and sets the argument to NULL. */
+    IInspectable_AddRef((obj = old));
+    p_EventSourceUninitialize(&obj);
+    ok(obj == NULL, "got obj %p\n", obj);
+    count = IInspectable_Release(old);
+    ok(count == 0, "got count %lu\n", count);
+    /* Releasing an EventSource also releases the delegates it holds references to. */
+    count = IInspectable_Release(delegate1);
+    ok(count == 0, "got count %lu\n", count);
+    /* Unintializing an empty EventSource should not fail. */
+    obj = NULL;
+    p_EventSourceUninitialize(&obj);
+
+    /* Passing invalid token values should do nothing. */
+    old = event_source;
+    p_EventSourceRemove(&event_source, &lock, token1);
+    ok(event_source == old, "got event_source %p != %p\n", event_source, old);
+    test_refcount(event_source, 1);
+    token1.value = 0;
+    p_EventSourceRemove(&event_source, &lock, token1);
+    ok(event_source == old, "got event_source %p != %p\n", event_source, old);
+    /* Calling EventSourceRemove on an empty EventSource should not fail. */
+    obj = NULL;
+    p_EventSourceRemove(&obj, &lock, token1);
+    ok(obj == NULL, "got obj %p\n", obj);
+
+    /* Verifies targets_ptr_lock is not acquired exclusively. */
+    AcquireSRWLockShared(&lock.targets_ptr_lock);
+    /* Verifies add_remove_lock is not acquired. */
+    AcquireSRWLockExclusive(&lock.add_remove_lock);
+    /* All this seems to do is increase the reference count. */
+    obj = p_EventSourceGetTargetArray(event_source, &lock);
+    ReleaseSRWLockExclusive(&lock.add_remove_lock);
+    ReleaseSRWLockShared(&lock.targets_ptr_lock);
+    todo_wine ok(obj == event_source, "got obj %p != %p\n", obj, event_source);
+    count = IInspectable_Release(obj);
+    ok(count == 1, "got count == %lu\n", count);
+    /* Passing NULL should not fail. */
+    obj = p_EventSourceGetTargetArray(NULL, &lock);
+    ok(obj == NULL, "got obj %p\n", obj);
+
+    /* Returns the number of delegates stored. */
+    count = p_EventSourceGetTargetArraySize(event_source);
+    todo_wine ok(count == 1, "got count %lu\n", count);
+
+    token1.value = 0;
+    /* Returns a stored delegate and the assoicated token through its index. */
+    obj = p_EventSourceGetTargetArrayEvent(event_source, 0, &IID_IUnknown, &token1);
+    /* We're in the same apartment/thread, so we should get back the same interface pointer. */
+    todo_wine ok(obj == delegate2, "got obj %p != %p\n", obj, delegate2);
+    todo_wine ok(token1.value == token2.value, "got token1 {%#I64x} != {%#I64x}\n", token1.value, token2.value);
+    /* EventSourceGetTargetArrayEvent should increase the refcount on the returned delegate. */
+    count = IInspectable_Release(obj);
+    ok(count == 1, "got count %lu\n", count);
+
+    IInspectable_AddRef(delegate2);
+    p_EventSourceRemove(&event_source, &lock, token2);
+    ok(event_source == NULL, "got event_source %p\n", event_source);
+    /* Ensure no delegate references have leaked. */
+    count = IInspectable_Release(delegate2);
+    ok(count == 0, "got count %lu\n", count);
+
+    RoUninitialize();
+}
+
+static void flush_events(void)
+{
+    int diff = 200;
+    DWORD time;
+    MSG msg;
+
+    time = GetTickCount() + diff;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
+}
+
+struct test_EventSource_marshal_data
+{
+    RO_INIT_TYPE from_apt;
+    RO_INIT_TYPE to_apt;
+    IInspectable *source;
+    EventRegistrationToken agile_token;
+    EventRegistrationToken non_agile_token;
+    void *agile_delegate;
+    void *non_agile_delegate;
+};
+
+static CALLBACK DWORD test_EventSource_marshal_proc(void *params)
+{
+    struct test_EventSource_marshal_data *data = params;
+    EventRegistrationToken token = {0};
+    ULONG count;
+    IInspectable *delegate;
+    HRESULT hr;
+
+    winetest_push_context("from_apt=%d: to_apt=%d", data->from_apt, data->to_apt);
+    hr = RoInitialize(data->to_apt);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    /* Get the agile delegate. */
+    delegate = p_EventSourceGetTargetArrayEvent(data->source, 0, &IID_IUnknown, &token);
+    ok(token.value == data->agile_token.value, "got token {%#I64x} != {%#I64x}\n", token.value,
+       data->agile_token.value);
+    /* Because the delegate implemented IAgileObject, we should get the same pointer, regardless of the apartment it
+     * belongs to. */
+    ok(delegate == data->agile_delegate, "got delegate %p != %p\n", delegate, data->agile_delegate);
+    count = IInspectable_Release(delegate);
+    ok(count == 1, "got count %lu\n", count);
+
+    /* Get the non-agile delegate. */
+    token.value = 0;
+    delegate = p_EventSourceGetTargetArrayEvent(data->source, 1, &IID_IUnknown, &token);
+    ok(token.value == data->non_agile_token.value, "got token {%#I64x} != {%#I64x}\n", token.value,
+       data->agile_token.value);
+    /* If the object belongs to a STA or a different apartment type, we should get back a marshaled pointer. */
+    if (data->from_apt == RO_INIT_SINGLETHREADED || data->from_apt != data->to_apt)
+    {
+        ok(delegate != data->non_agile_delegate, "got delegate %p\n", delegate);
+        count = IInspectable_Release(delegate);
+        ok(count == 0, "got count %lu\n", count);
+    }
+    else /* Otherwise, we get back the same pointer. */
+    {
+        ok(delegate == data->non_agile_delegate, "got delegate %p\n", delegate);
+        count = IInspectable_Release(delegate);
+        ok(count == 1, "got count %lu\n", count);
+    }
+
+    RoUninitialize();
+    winetest_pop_context();
+    return 0;
+}
+
+static void test_EventSource_marshaling(void)
+{
+    RO_INIT_TYPE from_apt, to_apt;
+
+    for (from_apt = RO_INIT_SINGLETHREADED; from_apt <= RO_INIT_MULTITHREADED; from_apt++)
+    {
+        HRESULT hr;
+
+        winetest_push_context("from_apt=%d", from_apt);
+        hr = RoInitialize(from_apt);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+
+        for (to_apt = RO_INIT_SINGLETHREADED; to_apt <= RO_INIT_MULTITHREADED; to_apt++)
+        {
+            struct EventLock lock = {SRWLOCK_INIT, SRWLOCK_INIT};
+            struct test_EventSource_marshal_data data = {0};
+            DWORD count, ret;
+            HANDLE thread;
+
+            data.from_apt = from_apt;
+            data.to_apt = to_apt;
+            winetest_push_context("to_apt=%d", to_apt);
+            p_EventSourceInitialize(&data.source);
+
+            data.agile_delegate = delegate_create(TRUE);
+            data.agile_token = p_EventSourceAdd(&data.source, &lock, (IUnknown *)data.agile_delegate);
+            todo_wine ok(data.source != NULL, "got source %p\n", data.source);
+            todo_wine ok(data.agile_token.value != 0, "got agile_token {%#I64x}\n", data.agile_token.value);
+            count = IInspectable_Release(data.agile_delegate);
+            todo_wine ok(count == 1, "got count %lu\n", count);
+            if (!data.source)
+            {
+                skip("EventSourceAdd failed\n");
+                winetest_pop_context();
+                continue;
+            }
+
+            data.non_agile_delegate = delegate_create(FALSE);
+            data.non_agile_token = p_EventSourceAdd(&data.source, &lock, (IUnknown *)data.non_agile_delegate);
+            ok(data.non_agile_token.value != 0, "got non_agile_token {%#I64x}\n", data.non_agile_token.value);
+            count = IInspectable_Release(data.non_agile_delegate);
+            ok(count == 1, "got count %lu\n", count);
+
+            count = p_EventSourceGetTargetArraySize(data.source);
+            ok(count == 2, "got size %lu\n", count);
+
+            thread = CreateThread(NULL, 0, test_EventSource_marshal_proc, &data, 0, NULL);
+            ok(thread != NULL, "CreateThread failed: %lu\n", GetLastError());
+            if (from_apt == RO_INIT_SINGLETHREADED)
+                flush_events();
+            ret = WaitForSingleObject(thread, INFINITE);
+            ok(!ret, "WaitForSingleObject returned %lu\n", ret);
+            CloseHandle(thread);
+
+            IInspectable_AddRef(data.agile_delegate);
+            IInspectable_AddRef(data.non_agile_delegate);
+            p_EventSourceUninitialize(&data.source);
+            /* Ensure no references have leaked. */
+            count = IInspectable_Release(data.agile_delegate);
+            ok(count == 0, "got count %lu\n", count);
+            count = IInspectable_Release(data.non_agile_delegate);
+            ok(count == 0, "got count %lu\n", count);
+            winetest_pop_context();
+        }
+
+        RoUninitialize();
+        winetest_pop_context();
+    }
+}
+
 START_TEST(vccorlib)
 {
     if(!init())
@@ -2189,4 +2653,7 @@ START_TEST(vccorlib)
     test_GetWeakReference();
     test___abi_ObjectToString();
     test_ToString();
+    test_Delegate();
+    test_EventSource();
+    test_EventSource_marshaling();
 }
