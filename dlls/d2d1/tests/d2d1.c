@@ -5356,8 +5356,12 @@ static void test_shared_bitmap(BOOL d3d11)
     struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain2;
     D2D1_SIZE_U size = {4, 4};
+    IWICBitmapLock *wic_lock;
     IDXGISurface1 *surface3;
+    ID2D1Bitmap1 *bitmap3;
     IDXGIDevice *device2;
+    WICRect wic_rect;
+    ULONG refcount;
     HWND window2;
     HRESULT hr;
 
@@ -5635,8 +5639,55 @@ static void test_shared_bitmap(BOOL d3d11)
     }
 
     ID2D1RenderTarget_Release(rt2);
-
     ID2D1Bitmap_Release(bitmap1);
+
+    /* Using IWICBitmapLock */
+    wic_rect.X = wic_rect.Y = 0;
+    wic_rect.Width = 32;
+    wic_rect.Height = 16;
+    hr = IWICBitmap_Lock(wic_bitmap1, &wic_rect, WICBitmapLockRead, &wic_lock);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    refcount = get_refcount(wic_lock);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(ctx.rt, &IID_IWICBitmapLock, wic_lock, NULL, &bitmap1);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(get_refcount(wic_lock) > refcount, "Unexpected refcount.\n");
+if (hr == S_OK)
+{
+    size = ID2D1Bitmap_GetPixelSize(bitmap1);
+    ok(size.width == 32 && size.height == 16, "Unexpected size.\n");
+    check_bitmap_options(bitmap1, 0);
+    if (SUCCEEDED(ID2D1Bitmap_QueryInterface(bitmap1, &IID_ID2D1Bitmap1, (void **)&bitmap3)))
+    {
+        D2D1_MAPPED_RECT mapped_rect;
+        IDXGIResource *resource;
+        IDXGISurface *surface;
+        UINT usage;
+
+        hr = ID2D1Bitmap1_Map(bitmap3, D2D1_MAP_OPTIONS_READ, &mapped_rect);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap3, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_GetSurface(bitmap3, &surface);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = IDXGISurface_QueryInterface(surface, &IID_IDXGIResource, (void **)&resource);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IDXGIResource_GetUsage(resource, &usage);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(usage == DXGI_USAGE_SHADER_INPUT, "Unexpected usage %#x.\n", usage);
+        IDXGIResource_Release(resource);
+
+        IDXGISurface_Release(surface);
+        ID2D1Bitmap1_Release(bitmap3);
+    }
+    ID2D1Bitmap_Release(bitmap1);
+}
+    IWICBitmapLock_Release(wic_lock);
+
     ID2D1RenderTarget_Release(rt1);
     ID2D1Factory_Release(factory2);
     ID2D1Factory_Release(factory1);
