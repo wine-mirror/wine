@@ -1898,6 +1898,151 @@ static void test_D3DKMTCreateSynchronizationObject( void )
     ok_nt( STATUS_SUCCESS, status );
 }
 
+static void test_D3DKMTSignalSynchronizationObject(void)
+{
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter = {0};
+    D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU signal = {0};
+    D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU wait = {0};
+    D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroy = {0};
+    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 create2 = {0};
+    D3DKMT_DESTROYDEVICE destroy_device = {0};
+    D3DKMT_CREATEDEVICE create_device = {0};
+    D3DKMT_CLOSEADAPTER close_adapter = {0};
+    UINT64 wait_value, signal_value;
+    D3DKMT_HANDLE next_local = 0;
+    NTSTATUS status;
+    HANDLE event;
+    DWORD ret;
+
+    wcscpy( open_adapter.DeviceName, L"\\\\.\\DISPLAY1" );
+    status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( open_adapter.hAdapter, &next_local );
+    create_device.hAdapter = open_adapter.hAdapter;
+    status = D3DKMTCreateDevice( &create_device );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create_device.hDevice, &next_local );
+    create2.hDevice = create_device.hDevice;
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok_ptr( event, !=, NULL );
+
+    wait.hDevice = create_device.hDevice;
+    wait.ObjectCount = 1;
+    wait.ObjectHandleArray = &create2.hSyncObject;
+    wait.FenceValueArray = &wait_value;
+    wait.hAsyncEvent = event;
+    wait_value = 0;
+
+    signal.hDevice = create_device.hDevice;
+    signal.ObjectCount = 1;
+    signal.ObjectHandleArray = &create2.hSyncObject;
+    signal.FenceValueArray = &signal_value;
+    signal_value = 0;
+
+
+    create2.Info.Type = D3DDDI_SYNCHRONIZATION_MUTEX;
+    create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
+    status = D3DKMTCreateSynchronizationObject2( &create2 );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+    status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    destroy.hSyncObject = create2.hSyncObject;
+    status = D3DKMTDestroySynchronizationObject( &destroy );
+    ok_nt( STATUS_SUCCESS, status );
+
+    create2.Info.Type = D3DDDI_SEMAPHORE;
+    create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
+    status = D3DKMTCreateSynchronizationObject2( &create2 );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+    status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    destroy.hSyncObject = create2.hSyncObject;
+    status = D3DKMTDestroySynchronizationObject( &destroy );
+    ok_nt( STATUS_SUCCESS, status );
+
+    create2.Info.Type = D3DDDI_FENCE;
+    create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
+    status = D3DKMTCreateSynchronizationObject2( &create2 );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+    status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    destroy.hSyncObject = create2.hSyncObject;
+    status = D3DKMTDestroySynchronizationObject( &destroy );
+    ok_nt( STATUS_SUCCESS, status );
+
+
+    create2.Info.Type = D3DDDI_MONITORED_FENCE;
+    create2.Info.Fence.FenceValue = 1;
+    create2.hSyncObject = create2.Info.SharedHandle = 0x1eadbeed;
+    status = D3DKMTCreateSynchronizationObject2( &create2 );
+    ok_nt( STATUS_SUCCESS, status );
+    check_d3dkmt_local( create2.hSyncObject, &next_local );
+
+    status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
+    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ret = WaitForSingleObject( event, 100 );
+    todo_wine ok_ret( 0, ret );
+    wait_value = 1;
+    status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
+    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ret = WaitForSingleObject( event, 100 );
+    todo_wine ok_ret( 0, ret );
+    wait_value = 2;
+    status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
+    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( WAIT_TIMEOUT, ret );
+
+    signal_value = 2;
+    status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
+    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ret = WaitForSingleObject( event, 100 );
+    todo_wine ok_ret( 0, ret );
+
+    signal_value = 1;
+    status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, status );
+    signal.Flags.AllowFenceRewind = 1;
+    status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
+    todo_wine ok_nt( STATUS_SUCCESS, status );
+    signal.Flags.AllowFenceRewind = 0;
+
+    status = D3DKMTWaitForSynchronizationObjectFromCpu( &wait );
+    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ret = WaitForSingleObject( event, 100 );
+    ok_ret( WAIT_TIMEOUT, ret );
+
+    signal_value = 2;
+    status = D3DKMTSignalSynchronizationObjectFromCpu( &signal );
+    todo_wine ok_nt( STATUS_SUCCESS, status );
+    ret = WaitForSingleObject( event, 100 );
+    todo_wine ok_ret( 0, ret );
+
+    destroy.hSyncObject = create2.hSyncObject;
+    status = D3DKMTDestroySynchronizationObject( &destroy );
+    ok_nt( STATUS_SUCCESS, status );
+
+
+    CloseHandle( event );
+
+    destroy_device.hDevice = create_device.hDevice;
+    status = D3DKMTDestroyDevice( &destroy_device );
+    ok_nt( STATUS_SUCCESS, status );
+    close_adapter.hAdapter = open_adapter.hAdapter;
+    status = D3DKMTCloseAdapter( &close_adapter );
+    ok_nt( STATUS_SUCCESS, status );
+}
+
 static void test_D3DKMTCreateKeyedMutex( void )
 {
     D3DKMT_DESTROYKEYEDMUTEX destroy = {0};
@@ -5442,6 +5587,7 @@ START_TEST( d3dkmt )
     test_D3DKMTQueryVideoMemoryInfo();
     test_gpu_device_properties();
     test_D3DKMTCreateSynchronizationObject();
+    test_D3DKMTSignalSynchronizationObject();
     test_D3DKMTCreateKeyedMutex();
     test_D3DKMTAcquireKeyedMutex();
     test_D3DKMTCreateAllocation();
