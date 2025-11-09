@@ -731,7 +731,10 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         frame.size.width *= scale;
         frame.size.height *= scale;
         [self setFrame:frame];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         [self setWantsBestResolutionOpenGLSurface:mode];
+#pragma clang diagnostic pop
         [self updateGLContexts];
         [self setLayerRetinaProperties:mode];
 
@@ -3736,11 +3739,14 @@ macdrv_view macdrv_create_view(CGRect rect)
         view = [[WineContentView alloc] initWithFrame:NSRectFromCGRect(cgrect_mac_from_win(rect))];
         [view setAutoresizingMask:NSViewNotSizable];
         [view setHidden:YES];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         [view setWantsBestResolutionOpenGLSurface:retina_on];
         [nc addObserver:view
                selector:@selector(updateGLContexts)
                    name:NSViewGlobalFrameDidChangeNotification
                  object:view];
+#pragma clang diagnostic pop
         [nc addObserver:view
                selector:@selector(updateGLContexts)
                    name:NSApplicationDidChangeScreenParametersNotification
@@ -3766,9 +3772,12 @@ void macdrv_dispose_view(macdrv_view v)
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
         WineWindow* window = (WineWindow*)[view window];
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         [nc removeObserver:view
                       name:NSViewGlobalFrameDidChangeNotification
                     object:view];
+#pragma clang diagnostic pop
         [nc removeObserver:view
                       name:NSApplicationDidChangeScreenParametersNotification
                     object:NSApp];

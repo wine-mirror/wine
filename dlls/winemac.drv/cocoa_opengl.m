@@ -31,6 +31,7 @@
 
 @interface WineOpenGLContext ()
 @property (retain, nonatomic) NSView* latentView;
+@property (nullable, weak) NSView *view;    /* redeclare this to avoid NSOpenGLContext's deprecation warnings */
 
     + (NSView*) dummyView;
     - (void) wine_updateBackingSize:(const CGSize*)size;
@@ -39,6 +40,7 @@
 
 
 @implementation WineOpenGLContext
+@dynamic view;
 @synthesize latentView, needsUpdate, needsReattach;
 
     - (void) dealloc
@@ -82,6 +84,8 @@
             macdrv_set_view_backing_size((macdrv_view)self.view, view_backing);
 
             NSView* save = self.view;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             if ([NSThread isMainThread])
             {
                 [super clearDrawable];
@@ -91,6 +95,7 @@
                 [super clearDrawable];
                 [super setView:save];
             });
+#pragma clang diagnostic pop
         }
     }
 
