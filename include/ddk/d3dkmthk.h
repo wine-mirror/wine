@@ -812,22 +812,6 @@ typedef struct _D3DKMT_CREATEKEYEDMUTEX
     D3DKMT_HANDLE hKeyedMutex;
 } D3DKMT_CREATEKEYEDMUTEX;
 
-typedef struct _D3DDDICB_SIGNALFLAGS
-{
-    union
-    {
-        struct
-        {
-            UINT SignalAtSubmission : 1;
-            UINT EnqueueCpuEvent : 1;
-            UINT AllowFenceRewind : 1;
-            UINT Reserved : 28;
-            UINT DXGK_SIGNAL_FLAG_INTERNAL0 : 1;
-        };
-        UINT Value;
-    };
-} D3DDDICB_SIGNALFLAGS;
-
 typedef struct _D3DKMT_CREATEKEYEDMUTEX2_FLAGS
 {
     union
@@ -919,121 +903,12 @@ typedef struct _D3DKMT_OPENNTHANDLEFROMNAME
     HANDLE hNtHandle;
 } D3DKMT_OPENNTHANDLEFROMNAME;
 
-typedef ULONGLONG D3DGPU_VIRTUAL_ADDRESS;
-
-#ifndef D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
-#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
-#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 Reserved0
-#endif
-
-typedef struct _D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS
-{
-    union
-    {
-        struct
-        {
-            UINT Shared : 1;
-            UINT NtSecuritySharing : 1;
-            UINT CrossAdapter : 1;
-            UINT TopOfPipeline : 1;
-            UINT NoSignal : 1;
-            UINT NoWait : 1;
-            UINT NoSignalMaxValueOnTdr : 1;
-            UINT NoGPUAccess : 1;
-            UINT Reserved : 23;
-            UINT D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 : 1;
-        };
-        UINT Value;
-    };
-} D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS;
-
-typedef UINT D3DDDI_VIDEO_PRESENT_TARGET_ID;
-
-typedef enum _D3DDDI_SYNCHRONIZATIONOBJECT_TYPE
-{
-    D3DDDI_SYNCHRONIZATION_MUTEX = 1,
-    D3DDDI_SEMAPHORE = 2,
-    D3DDDI_FENCE = 3,
-    D3DDDI_CPU_NOTIFICATION = 4,
-    D3DDDI_MONITORED_FENCE = 5,
-    D3DDDI_PERIODIC_MONITORED_FENCE = 6,
-    D3DDDI_SYNCHRONIZATION_TYPE_LIMIT
-} D3DDDI_SYNCHRONIZATIONOBJECT_TYPE;
-
-typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO
-{
-    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
-    union
-    {
-        struct
-        {
-            BOOL InitialState;
-        } SynchronizationMutex;
-        struct
-        {
-            UINT MaxCount;
-            UINT InitialCount;
-        } Semaphore;
-        struct
-        {
-            UINT Reserved[16];
-        } Reserved;
-    };
-} D3DDDI_SYNCHRONIZATIONOBJECTINFO;
-
 typedef struct _D3DKMT_CREATESYNCHRONIZATIONOBJECT
 {
     D3DKMT_HANDLE hDevice;
     D3DDDI_SYNCHRONIZATIONOBJECTINFO Info;
     D3DKMT_HANDLE hSyncObject;
 } D3DKMT_CREATESYNCHRONIZATIONOBJECT;
-
-typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO2
-{
-    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
-    D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS Flags;
-    union
-    {
-        struct
-        {
-            BOOL InitialState;
-        } SynchronizationMutex;
-        struct
-        {
-            UINT MaxCount;
-            UINT InitialCount;
-        } Semaphore;
-        struct
-        {
-            UINT64 FenceValue;
-        } Fence;
-        struct
-        {
-            HANDLE Event;
-        } CPUNotification;
-        struct
-        {
-            UINT64 InitialFenceValue;
-            void *FenceValueCPUVirtualAddress;
-            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
-            UINT EngineAffinity;
-        } MonitoredFence;
-        struct
-        {
-            D3DKMT_HANDLE hAdapter;
-            D3DDDI_VIDEO_PRESENT_TARGET_ID VidPnTargetId;
-            UINT64 Time;
-            void *FenceValueCPUVirtualAddress;
-            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
-            UINT EngineAffinity;
-        } PeriodicMonitoredFence;
-        struct
-        {
-            UINT64 Reserved[8];
-        } Reserved;
-    };
-    D3DKMT_HANDLE SharedHandle;
-} D3DDDI_SYNCHRONIZATIONOBJECTINFO2;
 
 typedef struct _D3DKMT_CREATESYNCHRONIZATIONOBJECT2
 {
@@ -1085,6 +960,25 @@ typedef struct _D3DKMT_DESTROYSYNCHRONIZATIONOBJECT
 {
     D3DKMT_HANDLE hSyncObject;
 } D3DKMT_DESTROYSYNCHRONIZATIONOBJECT;
+
+typedef struct _D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU
+{
+    D3DKMT_HANDLE hDevice;
+    UINT ObjectCount;
+    const D3DKMT_HANDLE *ObjectHandleArray;
+    const UINT64 *FenceValueArray;
+    D3DDDICB_SIGNALFLAGS Flags;
+} D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU;
+
+typedef struct _D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU
+{
+    D3DKMT_HANDLE hDevice;
+    UINT ObjectCount;
+    const D3DKMT_HANDLE *ObjectHandleArray;
+    const UINT64 *FenceValueArray;
+    HANDLE hAsyncEvent;
+    D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS Flags;
+} D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU;
 
 typedef struct _D3DKMT_CREATESTANDARDALLOCATIONFLAGS
 {
@@ -1375,6 +1269,9 @@ NTSTATUS WINAPI D3DKMTReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 *params );
 NTSTATUS WINAPI D3DKMTSetQueuedLimit(D3DKMT_SETQUEUEDLIMIT *desc);
 NTSTATUS WINAPI D3DKMTSetVidPnSourceOwner(const D3DKMT_SETVIDPNSOURCEOWNER *desc);
 NTSTATUS WINAPI D3DKMTShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr, UINT access, HANDLE *handle );
+NTSTATUS WINAPI D3DKMTSignalSynchronizationObjectFromCpu( const D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *params );
+NTSTATUS WINAPI D3DKMTWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params );
+
 
 #ifdef __cplusplus
 }

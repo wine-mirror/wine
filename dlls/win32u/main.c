@@ -441,6 +441,16 @@ NTSTATUS SYSCALL_API NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *ha
     SYSCALL_FUNC( NtGdiDdDDIShareObjects );
 }
 
+NTSTATUS SYSCALL_API NtGdiDdDDISignalSynchronizationObjectFromCpu( const D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *params )
+{
+    SYSCALL_FUNC( NtGdiDdDDISignalSynchronizationObjectFromCpu );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params )
+{
+    SYSCALL_FUNC( NtGdiDdDDIWaitForSynchronizationObjectFromCpu );
+}
+
 BOOL SYSCALL_API NtGdiDeleteClientObj( HGDIOBJ handle )
 {
     SYSCALL_FUNC( NtGdiDeleteClientObj );

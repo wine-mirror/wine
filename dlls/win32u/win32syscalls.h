@@ -374,7 +374,7 @@
     SYSCALL_ENTRY( 0x1172, NtGdiDdDDISharedPrimaryLockNotification, 0 ) \
     SYSCALL_ENTRY( 0x1173, NtGdiDdDDISharedPrimaryUnLockNotification, 0 ) \
     SYSCALL_ENTRY( 0x1174, NtGdiDdDDISignalSynchronizationObject, 0 ) \
-    SYSCALL_ENTRY( 0x1175, NtGdiDdDDISignalSynchronizationObjectFromCpu, 0 ) \
+    SYSCALL_ENTRY( 0x1175, NtGdiDdDDISignalSynchronizationObjectFromCpu, 4 ) \
     SYSCALL_ENTRY( 0x1176, NtGdiDdDDISignalSynchronizationObjectFromGpu, 0 ) \
     SYSCALL_ENTRY( 0x1177, NtGdiDdDDISignalSynchronizationObjectFromGpu2, 0 ) \
     SYSCALL_ENTRY( 0x1178, NtGdiDdDDISubmitCommand, 0 ) \
@@ -390,7 +390,7 @@
     SYSCALL_ENTRY( 0x1182, NtGdiDdDDIUpdateOverlay, 0 ) \
     SYSCALL_ENTRY( 0x1183, NtGdiDdDDIWaitForIdle, 0 ) \
     SYSCALL_ENTRY( 0x1184, NtGdiDdDDIWaitForSynchronizationObject, 0 ) \
-    SYSCALL_ENTRY( 0x1185, NtGdiDdDDIWaitForSynchronizationObjectFromCpu, 0 ) \
+    SYSCALL_ENTRY( 0x1185, NtGdiDdDDIWaitForSynchronizationObjectFromCpu, 4 ) \
     SYSCALL_ENTRY( 0x1186, NtGdiDdDDIWaitForSynchronizationObjectFromGpu, 0 ) \
     SYSCALL_ENTRY( 0x1187, NtGdiDdDDIWaitForVerticalBlankEvent, 0 ) \
     SYSCALL_ENTRY( 0x1188, NtGdiDdDDIWaitForVerticalBlankEvent2, 0 ) \
@@ -1916,7 +1916,7 @@
     SYSCALL_ENTRY( 0x1172, NtGdiDdDDISharedPrimaryLockNotification, 0 ) \
     SYSCALL_ENTRY( 0x1173, NtGdiDdDDISharedPrimaryUnLockNotification, 0 ) \
     SYSCALL_ENTRY( 0x1174, NtGdiDdDDISignalSynchronizationObject, 0 ) \
-    SYSCALL_ENTRY( 0x1175, NtGdiDdDDISignalSynchronizationObjectFromCpu, 0 ) \
+    SYSCALL_ENTRY( 0x1175, NtGdiDdDDISignalSynchronizationObjectFromCpu, 8 ) \
     SYSCALL_ENTRY( 0x1176, NtGdiDdDDISignalSynchronizationObjectFromGpu, 0 ) \
     SYSCALL_ENTRY( 0x1177, NtGdiDdDDISignalSynchronizationObjectFromGpu2, 0 ) \
     SYSCALL_ENTRY( 0x1178, NtGdiDdDDISubmitCommand, 0 ) \
@@ -1932,7 +1932,7 @@
     SYSCALL_ENTRY( 0x1182, NtGdiDdDDIUpdateOverlay, 0 ) \
     SYSCALL_ENTRY( 0x1183, NtGdiDdDDIWaitForIdle, 0 ) \
     SYSCALL_ENTRY( 0x1184, NtGdiDdDDIWaitForSynchronizationObject, 0 ) \
-    SYSCALL_ENTRY( 0x1185, NtGdiDdDDIWaitForSynchronizationObjectFromCpu, 0 ) \
+    SYSCALL_ENTRY( 0x1185, NtGdiDdDDIWaitForSynchronizationObjectFromCpu, 8 ) \
     SYSCALL_ENTRY( 0x1186, NtGdiDdDDIWaitForSynchronizationObjectFromGpu, 0 ) \
     SYSCALL_ENTRY( 0x1187, NtGdiDdDDIWaitForVerticalBlankEvent, 0 ) \
     SYSCALL_ENTRY( 0x1188, NtGdiDdDDIWaitForVerticalBlankEvent2, 0 ) \
@@ -3384,7 +3384,6 @@
     SYSCALL_STUB( NtGdiDdDDISharedPrimaryLockNotification ) \
     SYSCALL_STUB( NtGdiDdDDISharedPrimaryUnLockNotification ) \
     SYSCALL_STUB( NtGdiDdDDISignalSynchronizationObject ) \
-    SYSCALL_STUB( NtGdiDdDDISignalSynchronizationObjectFromCpu ) \
     SYSCALL_STUB( NtGdiDdDDISignalSynchronizationObjectFromGpu ) \
     SYSCALL_STUB( NtGdiDdDDISignalSynchronizationObjectFromGpu2 ) \
     SYSCALL_STUB( NtGdiDdDDISubmitCommand ) \
@@ -3400,7 +3399,6 @@
     SYSCALL_STUB( NtGdiDdDDIUpdateOverlay ) \
     SYSCALL_STUB( NtGdiDdDDIWaitForIdle ) \
     SYSCALL_STUB( NtGdiDdDDIWaitForSynchronizationObject ) \
-    SYSCALL_STUB( NtGdiDdDDIWaitForSynchronizationObjectFromCpu ) \
     SYSCALL_STUB( NtGdiDdDDIWaitForSynchronizationObjectFromGpu ) \
     SYSCALL_STUB( NtGdiDdDDIWaitForVerticalBlankEvent ) \
     SYSCALL_STUB( NtGdiDdDDIWaitForVerticalBlankEvent2 ) \
