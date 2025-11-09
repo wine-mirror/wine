@@ -1850,6 +1850,7 @@ static void test_DdeCreateDataHandle(void)
     HSZ item;
     LPBYTE ptr;
     WCHAR item_str[] = {'i','t','e','m',0};
+    const char* data1234 = "data1234";
 
     dde_inst = 0;
     dde_inst2 = 0;
@@ -1940,18 +1941,16 @@ static void test_DdeCreateDataHandle(void)
 
     /* cbOff is non-zero */
     DdeGetLastError(dde_inst);
-    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)"data", 5, 2, item, CF_TEXT, 0);
+    hdata = DdeCreateDataHandle(dde_inst, (LPBYTE)(data1234 + 2), 5, 2, item, CF_TEXT, 0);
     err = DdeGetLastError(dde_inst);
     ok(hdata != NULL, "Expected non-NULL hdata\n");
     ok(err == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", err);
 
     ptr = DdeAccessData(hdata, &size);
     ok(ptr != NULL, "Expected non-NULL ptr\n");
+    ok(!memcmp(ptr, "\0\0ta1234", size), "Expected %s, got %s\n",
+       wine_dbgstr_an("\0\0ta1234", 7), wine_dbgstr_an((char*)ptr, 7));
     ok(size == 7, "Expected 7, got %ld\n", size);
-    todo_wine
-    {
-        ok(ptr && !*ptr, "Expected 0, got %d\n", lstrlenA((LPSTR)ptr));
-    }
 
     ret = DdeUnaccessData(hdata);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
