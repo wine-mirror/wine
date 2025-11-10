@@ -177,10 +177,8 @@ static ORDDEF *add_entry_point( DLLSPEC *spec )
 static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
 {
     char *endptr;
-    unsigned int *value_array;
-    int n_values;
-    int value_array_size;
     const char *token;
+    struct array values = empty_array;
 
     if (spec->type == SPEC_WIN32)
     {
@@ -195,38 +193,20 @@ static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
         return 0;
     }
 
-    n_values = 0;
-    value_array_size = 25;
-    value_array = xmalloc(sizeof(*value_array) * value_array_size);
-
     for (;;)
     {
-        if (!(token = GetToken(0)))
-        {
-            free( value_array );
-            return 0;
-        }
-	if (*token == ')')
-	    break;
+        if (!(token = GetToken(0))) return 0;
+	if (*token == ')') break;
 
-	value_array[n_values++] = strtoul(token, &endptr, 0);
-	if (n_values == value_array_size)
-	{
-	    value_array_size += 25;
-	    value_array = xrealloc(value_array,
-				   sizeof(*value_array) * value_array_size);
-	}
-
+        *ARRAY_ADD( &values, unsigned int ) = strtoul(token, &endptr, 0);
 	if (endptr == NULL || *endptr != '\0')
         {
             error( "Expected number value, got '%s'\n", token );
-            free( value_array );
             return 0;
         }
     }
 
-    odp->u.var.n_values = n_values;
-    odp->u.var.values = xrealloc(value_array, sizeof(*value_array) * n_values);
+    odp->u.var = values;
     return 1;
 }
 
@@ -413,7 +393,7 @@ static int parse_spec_equate( ORDDEF *odp, DLLSPEC *spec )
         error( "Value %d for absolute symbol doesn't fit in 16 bits\n", value );
         value = 0;
     }
-    odp->u.abs.value = value;
+    odp->u.abs = value;
     return 1;
 }
 

@@ -120,8 +120,7 @@ static void output_entries( DLLSPEC *spec, int first, int count )
             output( "\t.short .L__wine_%s_%u-.L__wine_spec_data_segment\n", spec->c_name, first + i );
             break;
         case TYPE_ABS:
-            output( "\t.short 0x%04x  /* %s */\n",
-                     odp->u.abs.value, odp->name );
+            output( "\t.short 0x%04x  /* %s */\n", odp->u.abs, odp->name );
             break;
         default:
             assert(0);
@@ -742,9 +741,8 @@ static void output_module16( DLLSPEC *spec )
         if (!odp || odp->type != TYPE_VARIABLE) continue;
         output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\t.long " );
-        for (j = 0; j < odp->u.var.n_values-1; j++)
-            output( "0x%08x,", odp->u.var.values[j] );
-        output( "0x%08x\n", odp->u.var.values[j] );
+        ARRAY_FOR_EACH( val, &odp->u.var, unsigned int ) output( "0x%08x,", *val );
+        output( "0\n" );
     }
     output( ".L__wine_spec_data_segment_end:\n" );
 

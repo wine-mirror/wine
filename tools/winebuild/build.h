@@ -67,21 +67,10 @@ enum arg_type
 
 typedef struct
 {
-    int n_values;
-    unsigned int *values;
-} ORD_VARIABLE;
-
-typedef struct
-{
     int           nb_args;
     int           args_str_offset;
     enum arg_type args[MAX_ARGUMENTS];
 } ORD_FUNCTION;
-
-typedef struct
-{
-    unsigned short value;
-} ORD_ABS;
 
 typedef struct
 {
@@ -95,9 +84,9 @@ typedef struct
     char       *export_name;  /* name exported under for noname exports */
     union
     {
-        ORD_VARIABLE   var;
+        struct array   var;
+        unsigned short abs;
         ORD_FUNCTION   func;
-        ORD_ABS        abs;
     } u;
 } ORDDEF;
 
