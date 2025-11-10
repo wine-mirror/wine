@@ -145,7 +145,6 @@ typedef struct tagProgressDrawInfo
     HBRUSH hbrBar;
     HBRUSH hbrBk;
     int ledW, ledGap;
-    HTHEME theme;
 } ProgressDrawInfo;
 
 typedef void (*ProgressDrawProc)(const ProgressDrawInfo* di, int start, int end);
@@ -333,6 +332,16 @@ static BOOL PROGRESS_IsSmooth(HWND hwnd)
     return GetWindowLongW(hwnd, GWL_STYLE) & PBS_SMOOTH;
 }
 
+static const ProgressDrawProc *PROGRESS_GetDrawProcs(HWND hwnd, BOOL smooth, DWORD style)
+{
+    int proc_idx = (smooth ? 0 : 4) + ((style & PBS_VERTICAL) ? 2 : 0);
+
+    if (GetWindowTheme(hwnd))
+        return &drawProcThemed[proc_idx];
+
+    return &drawProcClassic[proc_idx];
+}
+
 /***********************************************************************
  * PROGRESS_Draw
  * Draws the progress bar.
@@ -349,7 +358,6 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 
     pdi.infoPtr = infoPtr;
     pdi.hdc = hdc;
-    pdi.theme = GetWindowTheme (infoPtr->Self);
 
     /* get the required bar brush */
     if (infoPtr->ColorBar == CLR_DEFAULT)
@@ -371,8 +379,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 
     /* compute some drawing parameters */
     barSmooth = PROGRESS_IsSmooth(infoPtr->Self);
-    drawProcs = &((pdi.theme ? drawProcThemed : drawProcClassic)[(barSmooth ? 0 : 4)
-        + ((dwStyle & PBS_VERTICAL) ? 2 : 0)]);
+    drawProcs = PROGRESS_GetDrawProcs(infoPtr->Self, barSmooth, dwStyle);
     barSize = get_bar_size( dwStyle, &pdi.rect );
 
     if (!barSmooth)
