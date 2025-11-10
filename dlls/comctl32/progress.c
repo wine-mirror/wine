@@ -586,7 +586,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         theme = OpenThemeData (hwnd, themeClass);
 
 	dwExStyle &= ~(WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
-	if (!theme) dwExStyle |= WS_EX_STATICEDGE;
+	if (!COMCTL32_IsThemed (hwnd)) dwExStyle |= WS_EX_STATICEDGE;
         SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle);
 	/* Force recalculation of a non-client area */
 	SetWindowPos(hwnd, 0, 0, 0, 0, 0,
@@ -654,7 +654,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         theme = OpenThemeData (hwnd, themeClass);
         
         /* WS_EX_STATICEDGE disappears when the control is themed */
-        if (theme)
+        if (COMCTL32_IsThemed (hwnd))
             dwExStyle &= ~WS_EX_STATICEDGE;
         else
             dwExStyle |= WS_EX_STATICEDGE;
