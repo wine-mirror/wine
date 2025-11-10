@@ -936,7 +936,19 @@ static HRESULT d2d_transform_graph_create(UINT32 input_count, struct d2d_transfo
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_effect_impl_QueryInterface(ID2D1EffectImpl *iface, REFIID iid, void **out)
+struct d2d_effect_impl
+{
+    ID2D1EffectImpl ID2D1EffectImpl_iface;
+    LONG refcount;
+};
+
+static inline struct d2d_effect_impl *impl_from_ID2D1EffectImpl(ID2D1EffectImpl *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_effect_impl, ID2D1EffectImpl_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_effect_impl_QueryInterface(ID2D1EffectImpl *iface,
+        REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
@@ -954,12 +966,19 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_impl_QueryInterface(ID2D1EffectImpl 
 
 static ULONG STDMETHODCALLTYPE d2d_effect_impl_AddRef(ID2D1EffectImpl *iface)
 {
-    return 2;
+    struct d2d_effect_impl *effect = impl_from_ID2D1EffectImpl(iface);
+    return InterlockedIncrement(&effect->refcount);
 }
 
 static ULONG STDMETHODCALLTYPE d2d_effect_impl_Release(ID2D1EffectImpl *iface)
 {
-    return 1;
+    struct d2d_effect_impl *effect = impl_from_ID2D1EffectImpl(iface);
+    LONG refcount = InterlockedDecrement(&effect->refcount);
+
+    if (!refcount)
+        free(effect);
+
+    return refcount;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_impl_Initialize(ID2D1EffectImpl *iface,
@@ -988,11 +1007,17 @@ static const ID2D1EffectImplVtbl d2d_effect_impl_vtbl =
     d2d_effect_impl_SetGraph,
 };
 
-static HRESULT STDMETHODCALLTYPE builtin_factory_stub(IUnknown **effect_impl)
+static HRESULT d2d_effect_create_impl(IUnknown **effect_impl)
 {
-    static ID2D1EffectImpl builtin_stub = { &d2d_effect_impl_vtbl };
+    struct d2d_effect_impl *object;
 
-    *effect_impl = (IUnknown *)&builtin_stub;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1EffectImpl_iface.lpVtbl = &d2d_effect_impl_vtbl;
+    object->refcount = 1;
+
+    *effect_impl = (IUnknown *)&object->ID2D1EffectImpl_iface;
 
     return S_OK;
 }
@@ -1013,6 +1038,11 @@ L"<?xml version='1.0'?>                                                      \
     <Property name='Sharpness' type='float' />                               \
   </Effect>";
 
+static HRESULT __stdcall _2d_affine_transform_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
+
 static const WCHAR _3d_perspective_transform_description[] =
 L"<?xml version='1.0'?>                                                           \
   <Effect>                                                                        \
@@ -1024,6 +1054,11 @@ L"<?xml version='1.0'?>                                                         
       <Input name='Source'/>                                                      \
     </Inputs>                                                                     \
   </Effect>";
+
+static HRESULT __stdcall _3d_perspective_transform_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
 
 static const WCHAR composite_description[] =
 L"<?xml version='1.0'?>                                                   \
@@ -1038,6 +1073,11 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
   </Effect>";
 
+static HRESULT __stdcall composite_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
+
 static const WCHAR crop_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
@@ -1050,6 +1090,11 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
     <Property name='Rect' type='vector4' />                               \
   </Effect>";
+
+static HRESULT __stdcall crop_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
 
 static const WCHAR shadow_description[] =
 L"<?xml version='1.0'?>                                                   \
@@ -1066,6 +1111,11 @@ L"<?xml version='1.0'?>                                                   \
     <Property name='Optimization' type='enum' />                          \
   </Effect>";
 
+static HRESULT __stdcall shadow_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
+
 static const WCHAR grayscale_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
@@ -1077,6 +1127,11 @@ L"<?xml version='1.0'?>                                                   \
       <Input name='Source'/>                                              \
     </Inputs>                                                             \
   </Effect>";
+
+static HRESULT __stdcall grayscale_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
 
 static const WCHAR color_matrix_description[] =
 L"<?xml version='1.0'?>                                                   \
@@ -1090,6 +1145,11 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
   </Effect>";
 
+static HRESULT __stdcall color_matrix_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
+
 static const WCHAR flood_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
@@ -1101,6 +1161,11 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
     <Property name='Color' type='vector4' />                              \
   </Effect>";
+
+static HRESULT __stdcall flood_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
 
 static const WCHAR gaussian_blur_description[] =
 L"<?xml version='1.0'?>                                                   \
@@ -1116,6 +1181,11 @@ L"<?xml version='1.0'?>                                                   \
     <Property name='Optimization' type='enum' />                          \
     <Property name='BorderMode' type='enum' />                            \
   </Effect>";
+
+static HRESULT __stdcall gaussian_blur_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
 
 static const WCHAR point_specular_description[] =
 L"<?xml version='1.0'?>                                                   \
@@ -1136,6 +1206,11 @@ L"<?xml version='1.0'?>                                                   \
     <Property name='ScaleMode' type='enum' />                             \
   </Effect>";
 
+static HRESULT __stdcall point_specular_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
+
 static const WCHAR arithmetic_composite_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
@@ -1151,36 +1226,46 @@ L"<?xml version='1.0'?>                                                   \
     <Property name='ClampOutput' type='bool' />                           \
   </Effect>";
 
+static HRESULT __stdcall arithmetic_composite_factory(IUnknown **effect)
+{
+    return d2d_effect_create_impl(effect);
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
     {
         const CLSID *clsid;
         const WCHAR *description;
+        PD2D1_EFFECT_FACTORY factory;
     }
     builtin_effects[] =
     {
-        { &CLSID_D2D12DAffineTransform, _2d_affine_transform_description },
-        { &CLSID_D2D13DPerspectiveTransform, _3d_perspective_transform_description},
-        { &CLSID_D2D1Composite, composite_description },
-        { &CLSID_D2D1Crop, crop_description },
-        { &CLSID_D2D1Shadow, shadow_description },
-        { &CLSID_D2D1Grayscale, grayscale_description },
-        { &CLSID_D2D1ColorMatrix, color_matrix_description },
-        { &CLSID_D2D1Flood, flood_description },
-        { &CLSID_D2D1GaussianBlur, gaussian_blur_description },
-        { &CLSID_D2D1PointSpecular, point_specular_description },
-        { &CLSID_D2D1ArithmeticComposite, arithmetic_composite_description },
+#define X(name) name##_description, name##_factory
+        { &CLSID_D2D12DAffineTransform, X(_2d_affine_transform) },
+        { &CLSID_D2D13DPerspectiveTransform, X(_3d_perspective_transform) },
+        { &CLSID_D2D1Composite, X(composite) },
+        { &CLSID_D2D1Crop, X(crop) },
+        { &CLSID_D2D1Shadow, X(shadow) },
+        { &CLSID_D2D1Grayscale, X(grayscale) },
+        { &CLSID_D2D1ColorMatrix, X(color_matrix) },
+        { &CLSID_D2D1Flood, X(flood) },
+        { &CLSID_D2D1GaussianBlur, X(gaussian_blur) },
+        { &CLSID_D2D1PointSpecular, X(point_specular) },
+        { &CLSID_D2D1ArithmeticComposite, X(arithmetic_composite) },
+#undef X
     };
     unsigned int i;
     HRESULT hr;
 
     for (i = 0; i < ARRAY_SIZE(builtin_effects); ++i)
     {
-        if (FAILED(hr = d2d_factory_register_builtin_effect(factory, builtin_effects[i].clsid, builtin_effects[i].description,
-                NULL, 0, builtin_factory_stub)))
+        const struct builtin_description *desc = &builtin_effects[i];
+
+        if (FAILED(hr = d2d_factory_register_builtin_effect(factory, desc->clsid, desc->description,
+                NULL, 0, desc->factory)))
         {
-            WARN("Failed to register the effect %s, hr %#lx.\n", wine_dbgstr_guid(builtin_effects[i].clsid), hr);
+            WARN("Failed to register the effect %s, hr %#lx.\n", wine_dbgstr_guid(desc->clsid), hr);
         }
     }
 }
