@@ -149,8 +149,6 @@ typedef struct
     SPEC_TYPE        type;               /* type of dll (Win16/Win32) */
     int              stack_size;         /* exe stack size */
     int              heap_size;          /* exe heap size */
-    int              nb_entry_points;    /* number of used entry points */
-    int              alloc_entry_points; /* number of allocated entry points */
     unsigned int     nb_resources;       /* number of resources */
     int              characteristics;    /* characteristics for the PE header */
     int              dll_characteristics;/* DLL characteristics for the PE header */
@@ -158,7 +156,7 @@ typedef struct
     int              subsystem_major;    /* subsystem version major number */
     int              subsystem_minor;    /* subsystem version minor number */
     int              unicode_app;        /* default to unicode entry point */
-    ORDDEF          *entry_points;       /* spec entry points */
+    struct array     entry_points;       /* spec entry points */
     struct exports   exports;            /* dll exports */
     struct exports   native_exports;     /* dll native exports */
     struct resource *resources;          /* array of dll resources (format differs between Win16/Win32) */

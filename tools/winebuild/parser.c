@@ -163,15 +163,8 @@ static const char * GetToken( int allow_eol )
 
 static ORDDEF *add_entry_point( DLLSPEC *spec )
 {
-    ORDDEF *ret;
+    ORDDEF *ret = ARRAY_ADD( &spec->entry_points, ORDDEF );
 
-    if (spec->nb_entry_points == spec->alloc_entry_points)
-    {
-        spec->alloc_entry_points += 128;
-        spec->entry_points = xrealloc( spec->entry_points,
-                                       spec->alloc_entry_points * sizeof(*spec->entry_points) );
-    }
-    ret = &spec->entry_points[spec->nb_entry_points++];
     memset( ret, 0, sizeof(*ret) );
     return ret;
 }
@@ -711,7 +704,7 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     return 1;
 
 error:
-    spec->nb_entry_points--;
+    spec->entry_points.count--;
     free( odp->name );
     return 0;
 }
@@ -960,12 +953,9 @@ static void assign_ordinals( struct exports *exports )
 
 static void assign_exports( DLLSPEC *spec, unsigned int cpu, struct exports *exports )
 {
-    unsigned int i;
-
-    exports->entry_points = xmalloc( spec->nb_entry_points * sizeof(*exports->entry_points) );
-    for (i = 0; i < spec->nb_entry_points; i++)
+    exports->entry_points = xmalloc( spec->entry_points.count * sizeof(*exports->entry_points) );
+    ARRAY_FOR_EACH( entry, &spec->entry_points, ORDDEF )
     {
-        ORDDEF *entry = &spec->entry_points[i];
         if ((entry->flags & FLAG_CPU_MASK) && !(entry->flags & FLAG_CPU(cpu)))
             continue;
         exports->entry_points[exports->nb_entry_points++] = entry;
@@ -1253,7 +1243,7 @@ static int parse_def_export( char *name, DLLSPEC *spec )
     return 1;
 
 error:
-    spec->nb_entry_points--;
+    spec->entry_points.count--;
     free( odp->name );
     return 0;
 }
