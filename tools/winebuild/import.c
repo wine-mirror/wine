@@ -569,7 +569,6 @@ void read_undef_symbols( DLLSPEC *spec, struct strarray files )
             strarray_add( &undef_symbols, xstrdup( p ));
     }
     if ((err = pclose( f ))) warning( "%s failed with status %d\n", cmd, err );
-    free( cmd );
 }
 
 void resolve_dll_imports( DLLSPEC *spec, struct list *list )
@@ -1029,7 +1028,6 @@ static void output_external_link_imports( DLLSPEC *spec )
     {
         char *buffer = strmake( "__wine_spec_ext_link_%s", imp );
         output_import_thunk( buffer, ".L__wine_spec_external_links", pos );
-        free( buffer );
         pos += get_ptr_size();
     }
     output_function_size( "__wine_spec_external_link_thunks" );
@@ -1599,8 +1597,6 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             /* reference head object to always pull its sections */
             output_import_section( 7, is_delay );
             output_rva( "%s", asm_name( import_desc ) );
-
-            free( imp_name );
             break;
 
         default:
@@ -1612,11 +1608,6 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
     assemble_files( strmake( "%s_syms", dll_name ) );
     strarray_addall( &objs, as_files );
     as_files = objs;
-
-    free( import_desc );
-    free( import_name );
-    free( delay_load );
-    free( dll_name );
 
     output_static_lib( output_file_name, files, 1 );
 }
@@ -1671,8 +1662,6 @@ static void build_unix_import_lib( DLLSPEC *spec, struct strarray files )
     }
 
     assemble_files( spec->file_name );
-    free( dll_name );
-
     output_static_lib( output_file_name, files, 1 );
 }
 

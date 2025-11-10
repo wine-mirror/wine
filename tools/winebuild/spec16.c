@@ -222,16 +222,12 @@ static void output_resident_name( const char *string, int ordinal )
  */
 static const char *get_callfrom16_name( const ORDDEF *odp )
 {
-    static char *buffer;
-
-    free( buffer );
-    buffer = strmake( "%s_%s_%s",
-                      (odp->type == TYPE_PASCAL) ? "p" :
-                      (odp->type == TYPE_VARARGS) ? "v" : "c",
-                      (odp->flags & FLAG_REGISTER) ? "regs" :
-                      (odp->flags & FLAG_RET16) ? "word" : "long",
-                      get_args_str(odp) );
-    return buffer;
+    return strmake( "%s_%s_%s",
+                    (odp->type == TYPE_PASCAL) ? "p" :
+                    (odp->type == TYPE_VARARGS) ? "v" : "c",
+                    (odp->flags & FLAG_REGISTER) ? "regs" :
+                    (odp->flags & FLAG_RET16) ? "word" : "long",
+                    get_args_str(odp) );
 }
 
 
@@ -440,7 +436,6 @@ static void output_call16_function( ORDDEF *odp )
     output( "\tret\n" );
     output_cfi( ".cfi_endproc" );
     output_function_size( name );
-    free( name );
 }
 
 
