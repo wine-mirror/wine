@@ -569,10 +569,11 @@ static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG 
         const DBPROPIDSET propertyidsets[], ULONG *out_count, DBPROPSET **propertysets1)
 {
     CHECK_EXPECT(rowset_info_GetProperties);
-    ok( count == 2, "got %ld\n", count );
+    todo_wine ok( count == 2, "got %ld\n", count );
 
     ok( IsEqualIID(&DBPROPSET_ROWSET, &propertyidsets[0].guidPropertySet), "got %s\n", wine_dbgstr_guid(&propertyidsets[0].guidPropertySet));
-    ok( propertyidsets[0].cPropertyIDs == 17, "got %ld\n", propertyidsets[0].cPropertyIDs );
+    todo_wine ok( propertyidsets[0].cPropertyIDs == 17, "got %ld\n", propertyidsets[0].cPropertyIDs );
+    if (count < 2) return E_NOTIMPL;
 
     ok( IsEqualIID(&DBPROPSET_PROVIDERROWSET, &propertyidsets[1].guidPropertySet), "got %s\n", wine_dbgstr_guid(&propertyidsets[1].guidPropertySet));
     ok( propertyidsets[1].cPropertyIDs == 1, "got %ld\n", propertyidsets[1].cPropertyIDs );
@@ -1063,10 +1064,10 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT( column_info_GetColumnInfo );
     hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
     CHECK_CALLED( rowset_QI_IRowset );
-    todo_wine CHECK_CALLED( rowset_QI_IRowsetInfo );
+    CHECK_CALLED( rowset_QI_IRowsetInfo );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetExactScroll );
     todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
-    todo_wine CHECK_CALLED( rowset_info_GetProperties );
+    CHECK_CALLED( rowset_info_GetProperties );
     if (exact_scroll) todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
     else CHECK_NOT_CALLED( rowset_QI_IColumnsInfo );
     if (exact_scroll) todo_wine CHECK_CALLED( column_info_GetColumnInfo );
