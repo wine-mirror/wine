@@ -564,13 +564,53 @@ static ULONG WINAPI rowset_info_Release(IRowsetInfo *iface)
     return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
 }
 
-static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG cPropertyIDSets,
-        const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertySets, DBPROPSET **prgPropertySets)
+static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG propidsets_count,
+        const DBPROPIDSET propidsets[], ULONG *count, DBPROPSET **propsets)
 {
     struct rowset *rowset = impl_from_IRowsetInfo(iface);
+    ULONG i, j, c = 0;
+    DBPROP *prop;
 
-    FIXME("%p, %lu, %p, %p, %p\n", rowset, cPropertyIDSets, rgPropertyIDSets, pcPropertySets, prgPropertySets);
-    return E_NOTIMPL;
+    TRACE("%p, %lu, %p, %p, %p\n", rowset, propidsets_count, propidsets, count, propsets);
+
+    for (i = 0; i <propidsets_count; i++)
+    {
+        if (!IsEqualGUID(&DBPROPSET_ROWSET, &propidsets[i].guidPropertySet))
+        {
+            FIXME("property set: %s\n", wine_dbgstr_guid(&propidsets[i].guidPropertySet));
+            return E_NOTIMPL;
+        }
+
+        for (j = 0; j < propidsets[i].cPropertyIDs; j++)
+        {
+            if (propidsets[i].rgPropertyIDs[j] != DBPROP_BOOKMARKS)
+            {
+                FIXME("DBPROPSET_ROWSET property %lu\n", propidsets[i].rgPropertyIDs[j]);
+                return E_NOTIMPL;
+            }
+            c++;
+        }
+    }
+    if (c != 1) return E_NOTIMPL;
+
+    prop = CoTaskMemAlloc(sizeof(*prop));
+    if (!prop) return E_OUTOFMEMORY;
+    *propsets = CoTaskMemAlloc(sizeof(**propsets));
+    if (!*propsets)
+    {
+        CoTaskMemFree(prop);
+        return E_OUTOFMEMORY;
+    }
+
+    *count = 1;
+    (*propsets)->rgProperties = prop;
+    (*propsets)->cProperties = 1;
+    (*propsets)->guidPropertySet = DBPROPSET_ROWSET;
+    memset(prop, 0, sizeof(*prop));
+    prop->dwPropertyID = DBPROP_BOOKMARKS;
+    V_VT(&prop->vValue) = VT_BOOL;
+    V_BOOL(&prop->vValue) = VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_info_GetReferencedRowset(IRowsetInfo *iface,
