@@ -597,42 +597,6 @@ DLLSPEC *alloc_dll_spec(void)
 }
 
 
-static void free_exports( struct exports *entries )
-{
-    free( entries->entry_points );
-    free( entries->names );
-    free( entries->ordinals );
-}
-
-
-/*******************************************************************
- *         free_dll_spec
- *
- * Free dll spec file descriptor
- */
-void free_dll_spec( DLLSPEC *spec )
-{
-    int i;
-
-    for (i = 0; i < spec->nb_entry_points; i++)
-    {
-        ORDDEF *odp = &spec->entry_points[i];
-        free( odp->name );
-        free( odp->export_name );
-        free( odp->link_name );
-    }
-    free_exports( &spec->exports );
-    free_exports( &spec->native_exports );
-    free( spec->file_name );
-    free( spec->dll_name );
-    free( spec->c_name );
-    free( spec->init_func );
-    free( spec->entry_points );
-    free( spec->resources );
-    free( spec );
-}
-
-
 /*******************************************************************
  *         make_c_identifier
  *

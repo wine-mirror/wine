@@ -370,16 +370,6 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec, unsigned int *dir_si
     return tree;
 }
 
-/* free the resource tree */
-static void free_resource_tree( struct res_tree *tree )
-{
-    unsigned int i;
-
-    for (i = 0; i < tree->nb_types; i++) free( tree->types[i].names );
-    free( tree->types );
-    free( tree );
-}
-
 /* output a Unicode string */
 static void output_string( const struct string_id *str )
 {
@@ -481,7 +471,6 @@ void output_resources( DLLSPEC *spec )
         output( ".L__wine_spec_resources_end:\n" );
         output( "\t.byte 0\n" );
     }
-    free_resource_tree( tree );
 }
 
 /* output a Unicode string in binary format */
@@ -584,8 +573,6 @@ void output_bin_resources( DLLSPEC *spec, unsigned int start_rva )
         put_data( res->data, res->data_size );
         align_output( 4 );
     }
-
-    free_resource_tree( tree );
 }
 
 static unsigned int get_resource_header_size( const struct resource *res )

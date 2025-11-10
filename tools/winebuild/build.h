@@ -283,7 +283,6 @@ extern void dump_bytes( const void *buffer, unsigned int size );
 extern int remove_stdcall_decoration( char *name );
 extern void assemble_file( const char *src_file, const char *obj_file );
 extern DLLSPEC *alloc_dll_spec(void);
-extern void free_dll_spec( DLLSPEC *spec );
 extern char *make_c_identifier( const char *str );
 extern const char *get_abi_name( const ORDDEF *odp, const char *name );
 extern const char *get_link_name( const ORDDEF *odp );

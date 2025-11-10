@@ -807,7 +807,6 @@ void output_spec16_file( DLLSPEC *spec16 )
     }
     output_gnu_stack_note();
     close_output_file();
-    free_dll_spec( spec32 );
 }
 
 /*******************************************************************

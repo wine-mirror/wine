@@ -263,17 +263,6 @@ static char *decode_dll_name( const char **name )
     return ret;
 }
 
-/* free an import structure */
-static void free_imports( struct import *imp )
-{
-    free( imp->exports );
-    free( imp->imports );
-    free( imp->dll_name );
-    free( imp->c_name );
-    free( imp->full_name );
-    free( imp );
-}
-
 /* check whether a given dll is imported in delayed mode */
 static int is_delayed_import( const char *name )
 {
@@ -614,7 +603,6 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
             if (check_unused( imp, &spec->exports ))
                 warning( "winebuild: %s imported but no symbols used\n", imp->dll_name );
             list_remove( &imp->entry );
-            free_imports( imp );
         }
     }
 }

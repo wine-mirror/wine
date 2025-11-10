@@ -194,13 +194,6 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec )
     return tree;
 }
 
-/* free the resource tree */
-static void free_resource_tree( struct res_tree *tree )
-{
-    free( tree->types );
-    free( tree );
-}
-
 /* output a string preceded by its length */
 static void output_string( const char *str )
 {
@@ -267,8 +260,6 @@ void output_res16_directory( DLLSPEC *spec )
             if (res->name.str) output_string( res->name.str );
     }
     output( "\t.byte 0\n" );  /* names terminator */
-
-    free_resource_tree( tree );
 }
 
 /* output the resource data in binary format */
@@ -324,6 +315,4 @@ void output_bin_res16_directory( DLLSPEC *spec, unsigned int data_offset )
             if (res->name.str) output_bin_string( res->name.str );
     }
     put_byte( 0 );  /* names terminator */
-
-    free_resource_tree( tree );
 }

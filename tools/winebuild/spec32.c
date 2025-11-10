@@ -1427,7 +1427,6 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
         output( "\n" );
     }
     if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
-    if (spec32) free_dll_spec( spec32 );
 }
 
 
