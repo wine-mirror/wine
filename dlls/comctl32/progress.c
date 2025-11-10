@@ -65,6 +65,7 @@ typedef struct
 static inline int get_led_size ( const PROGRESS_INFO *infoPtr, LONG style,
                                  const RECT* rect )
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->Self);
     if (theme)
     {
@@ -72,6 +73,7 @@ static inline int get_led_size ( const PROGRESS_INFO *infoPtr, LONG style,
         if (SUCCEEDED( GetThemeInt( theme, 0, 0, TMT_PROGRESSCHUNKSIZE, &chunkSize )))
             return chunkSize;
     }
+#endif
 
     if (style & PBS_VERTICAL)
         return MulDiv (rect->right - rect->left, 2, 3);
@@ -82,6 +84,7 @@ static inline int get_led_size ( const PROGRESS_INFO *infoPtr, LONG style,
 /* Helper to obtain gap between progress bar chunks */
 static inline int get_led_gap ( const PROGRESS_INFO *infoPtr )
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->Self);
     if (theme)
     {
@@ -89,6 +92,7 @@ static inline int get_led_gap ( const PROGRESS_INFO *infoPtr )
         if (SUCCEEDED( GetThemeInt( theme, 0, 0, TMT_PROGRESSSPACESIZE, &spaceSize )))
             return spaceSize;
     }
+#endif
 
     return LED_GAP;
 }
@@ -96,16 +100,21 @@ static inline int get_led_gap ( const PROGRESS_INFO *infoPtr )
 /* Get client rect. Takes into account that theming needs no adjustment. */
 static inline void get_client_rect (HWND hwnd, RECT* rect)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (hwnd);
-    GetClientRect (hwnd, rect);
-    if (!theme)
-        InflateRect(rect, -1, -1);
-    else
+
+    if (theme)
     {
         DWORD dwStyle = GetWindowLongW (hwnd, GWL_STYLE);
         int part = (dwStyle & PBS_VERTICAL) ? PP_BARVERT : PP_BAR;
+        GetClientRect (hwnd, rect);
         GetThemeBackgroundContentRect (theme, 0, part, 0, rect, rect);
+        return;
     }
+#endif
+
+    GetClientRect (hwnd, rect);
+    InflateRect (rect, -1, -1);
 }
 
 /* Compute the extend of the bar */
@@ -233,6 +242,7 @@ static const ProgressDrawProc drawProcClassic[8] = {
     draw_chunk_bar_V, draw_solid_bkg_V,
 };
 
+#if __WINE_COMCTL32_VERSION == 6
 /* draw themed horizontal bar from 'start' to 'end' */
 static void draw_theme_bar_H (const ProgressDrawInfo* di, int start, int end)
 {
@@ -298,9 +308,11 @@ static const ProgressDrawProc drawProcThemed[8] = {
     /* Vertical */
     draw_theme_bar_V, draw_theme_bkg_V,
 };
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 static void PROGRESS_DrawBackground (const PROGRESS_INFO *infoPtr, HDC hdc, ProgressDrawInfo *pdi)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->Self);
 
     if (theme)
@@ -319,6 +331,7 @@ static void PROGRESS_DrawBackground (const PROGRESS_INFO *infoPtr, HDC hdc, Prog
         pdi->rect = content_rect;
         return;
     }
+#endif
 
     FrameRect (hdc, &pdi->rect, pdi->hbrBk);
     InflateRect (&pdi->rect, -1, -1);
@@ -326,8 +339,10 @@ static void PROGRESS_DrawBackground (const PROGRESS_INFO *infoPtr, HDC hdc, Prog
 
 static BOOL PROGRESS_IsSmooth(HWND hwnd)
 {
+#if __WINE_COMCTL32_VERSION == 6
     if (GetWindowTheme(hwnd))
         return FALSE;
+#endif
 
     return GetWindowLongW(hwnd, GWL_STYLE) & PBS_SMOOTH;
 }
@@ -336,8 +351,10 @@ static const ProgressDrawProc *PROGRESS_GetDrawProcs(HWND hwnd, BOOL smooth, DWO
 {
     int proc_idx = (smooth ? 0 : 4) + ((style & PBS_VERTICAL) ? 2 : 0);
 
+#if __WINE_COMCTL32_VERSION == 6
     if (GetWindowTheme(hwnd))
         return &drawProcThemed[proc_idx];
+#endif
 
     return &drawProcClassic[proc_idx];
 }
@@ -563,6 +580,7 @@ static UINT PROGRESS_SetState (HWND hwnd, PROGRESS_INFO *infoPtr, UINT state)
 
 static LRESULT PROGRESS_ThemeChanged(HWND hwnd)
 {
+#if __WINE_COMCTL32_VERSION == 6
     DWORD style = GetWindowLongW(hwnd, GWL_EXSTYLE);
 
     CloseThemeData(GetWindowTheme(hwnd));
@@ -577,6 +595,9 @@ static LRESULT PROGRESS_ThemeChanged(HWND hwnd)
 
     InvalidateRect(hwnd, NULL, TRUE);
     return 0;
+#else
+    return DefWindowProcW(hwnd, WM_THEMECHANGED, 0, 0);
+#endif
 }
 
 /***********************************************************************
@@ -586,8 +607,6 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
                                          WPARAM wParam, LPARAM lParam)
 {
     PROGRESS_INFO *infoPtr;
-    static const WCHAR themeClass[] = L"Progress";
-    HTHEME theme;
 
     TRACE("hwnd %p, msg %04x, wparam %Ix, lParam %Ix\n", hwnd, message, wParam, lParam);
 
@@ -601,7 +620,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     {
 	DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
 
-        theme = OpenThemeData (hwnd, themeClass);
+        COMCTL32_OpenThemeForWindow (hwnd, L"Progress");
 
 	dwExStyle &= ~(WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
 	if (!COMCTL32_IsThemed (hwnd)) dwExStyle |= WS_EX_STATICEDGE;
@@ -636,8 +655,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         TRACE("Progress Ctrl destruction, hwnd=%p\n", hwnd);
         Free (infoPtr);
         SetWindowLongPtrW(hwnd, 0, 0);
-        theme = GetWindowTheme (hwnd);
-        CloseThemeData (theme);
+        COMCTL32_CloseThemeForWindow (hwnd);
         return 0;
 
     case WM_ERASEBKGND:
