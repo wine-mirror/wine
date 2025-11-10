@@ -259,13 +259,18 @@ static void test_audioclient(void)
             CoTaskMemFree(pwfx2);
         }
 
+        pwfx2 = (WAVEFORMATEX*)0xDEADF00D;
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, &pwfx2);
         ok(hr == S_OK, "Valid IsFormatSupported(Shared) call returns %08lx\n", hr);
         ok(pwfx2 == NULL, "pwfx2 is non-null\n");
-        CoTaskMemFree(pwfx2);
 
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, NULL, NULL);
         ok(hr == E_POINTER, "IsFormatSupported(NULL) call returns %08lx\n", hr);
+
+        pwfx2 = (WAVEFORMATEX*)0xDEADF00D;
+        hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, NULL, &pwfx2);
+        ok(hr == E_POINTER, "IsFormatSupported(NULL) call returns %08lx\n", hr);
+        ok(pwfx2 == NULL, "pwfx2 is non-null\n");
 
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, NULL);
         ok(hr == E_POINTER, "IsFormatSupported(Shared,NULL) call returns %08lx\n", hr);
