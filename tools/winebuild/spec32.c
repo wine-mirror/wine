@@ -813,7 +813,7 @@ void output_module( DLLSPEC *spec )
         data_dirs[0] = ".L__wine_spec_exports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
     if (has_imports())
         data_dirs[1] = ".L__wine_spec_imports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
-    if (spec->nb_resources)
+    if (spec->resources.count)
         data_dirs[2] = ".L__wine_spec_resources"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
     if (has_delay_imports())
         data_dirs[13] = ".L__wine_spec_delay_imports"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT] */

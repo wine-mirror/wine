@@ -748,7 +748,7 @@ static void output_module16( DLLSPEC *spec )
 
     /* resource data */
 
-    if (spec->nb_resources)
+    if (spec->resources.count)
     {
         output( "\n.L__wine_spec_resource_data:\n" );
         output_res16_data( spec );
@@ -822,7 +822,7 @@ void output_fake_module16( DLLSPEC *spec )
 
     rsrctab = lfanew;
     restab = segtab + 8 * cseg;
-    if (spec->nb_resources)
+    if (spec->resources.count)
     {
         output_bin_res16_directory( spec, 0 );
         align_output( 2 );
@@ -918,7 +918,7 @@ void output_fake_module16( DLLSPEC *spec )
     put_word( sizeof(data_segment) );
 
     /* resource directory */
-    if (spec->nb_resources)
+    if (spec->resources.count)
     {
         output_bin_res16_directory( spec, rsrcdata );
         align_output( 2 );
