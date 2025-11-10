@@ -895,6 +895,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
     {
         init_exception(inst);
         init_platform_type(inst);
+        init_delegate(inst);
     }
     return TRUE;
 }

@@ -43,11 +43,16 @@ struct control_block
 
 void *__cdecl AllocateExceptionWithWeakRef(ptrdiff_t, size_t);
 void __cdecl FreeException(void *);
+void *__cdecl AllocateWithWeakRef(ptrdiff_t, size_t);
+
+void __thiscall control_block_ReleaseTarget(struct control_block *);
 
 void init_exception(void *);
 void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseCOMException(HRESULT);
 void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseInvalidArgumentException(void);
 void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseOutOfMemoryException(void);
+
+void init_delegate(void *base);
 
 #define COM_VTABLE_RTTI_START(iface, type)                                                                             \
     static const struct                                                                                                \

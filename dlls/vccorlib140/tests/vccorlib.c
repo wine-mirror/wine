@@ -2368,22 +2368,15 @@ static void test_EventSource(void)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
 
     p_EventSourceInitialize(&event_source);
-    todo_wine ok(event_source == NULL, "got event_source %p.\n", event_source);
+    ok(event_source == NULL, "got event_source %p.\n", event_source);
 
     event_source = NULL;
     delegate1 = delegate_create(FALSE);
     token1 = p_EventSourceAdd(&event_source, &lock, (IUnknown *)delegate1);
-    todo_wine ok(token1.value != 0, "got token1.value {%#I64x}\n", token1.value);
-    todo_wine ok(event_source != NULL, "got event_source %p\n", event_source);
+    ok(token1.value != 0, "got token1.value {%#I64x}\n", token1.value);
+    ok(event_source != NULL, "got event_source %p\n", event_source);
     /* EventSourceAdd takes a reference to the delegate. */
     todo_wine test_refcount(delegate1, 2);
-    if (!event_source)
-    {
-        skip("EventSourceAdd failed\n");
-        IInspectable_Release(delegate1);
-        RoUninitialize();
-        return;
-    }
     delegate2 = delegate_create(FALSE);
     old = event_source;
     IInspectable_AddRef(old);
@@ -2394,9 +2387,9 @@ static void test_EventSource(void)
     ok(event_source && event_source != old, "got event_source %p\n", event_source);
     count = IInspectable_Release(old);
     ok(count == 0, "got count %lu\n", count);
-    test_refcount(delegate1, 2);
+    todo_wine test_refcount(delegate1, 2);
     count = IInspectable_Release(delegate2);
-    ok(count == 1, "got count %lu\n", count);
+    todo_wine ok(count == 1, "got count %lu\n", count);
 
     test_rtti_names(event_source, "class Platform::Details::EventTargetArray",
         ".?AVEventTargetArray@Details@Platform@@");
@@ -2426,7 +2419,7 @@ static void test_EventSource(void)
     test_refcount(event_source, 1);
     test_refcount(old, 1);
     /* The older object should still have a reference to delegate1. */
-    test_refcount(delegate1, 2);
+    todo_wine test_refcount(delegate1, 2);
     /* EventSourceUninitialize calls Release, and sets the argument to NULL. */
     IInspectable_AddRef((obj = old));
     p_EventSourceUninitialize(&obj);
@@ -2461,7 +2454,7 @@ static void test_EventSource(void)
     obj = p_EventSourceGetTargetArray(event_source, &lock);
     ReleaseSRWLockExclusive(&lock.add_remove_lock);
     ReleaseSRWLockShared(&lock.targets_ptr_lock);
-    todo_wine ok(obj == event_source, "got obj %p != %p\n", obj, event_source);
+    ok(obj == event_source, "got obj %p != %p\n", obj, event_source);
     count = IInspectable_Release(obj);
     ok(count == 1, "got count == %lu\n", count);
     /* Passing NULL should not fail. */
@@ -2470,17 +2463,17 @@ static void test_EventSource(void)
 
     /* Returns the number of delegates stored. */
     count = p_EventSourceGetTargetArraySize(event_source);
-    todo_wine ok(count == 1, "got count %lu\n", count);
+    ok(count == 1, "got count %lu\n", count);
 
     token1.value = 0;
     /* Returns a stored delegate and the assoicated token through its index. */
     obj = p_EventSourceGetTargetArrayEvent(event_source, 0, &IID_IUnknown, &token1);
     /* We're in the same apartment/thread, so we should get back the same interface pointer. */
-    todo_wine ok(obj == delegate2, "got obj %p != %p\n", obj, delegate2);
-    todo_wine ok(token1.value == token2.value, "got token1 {%#I64x} != {%#I64x}\n", token1.value, token2.value);
+    ok(obj == delegate2, "got obj %p != %p\n", obj, delegate2);
+    ok(token1.value == token2.value, "got token1 {%#I64x} != {%#I64x}\n", token1.value, token2.value);
     /* EventSourceGetTargetArrayEvent should increase the refcount on the returned delegate. */
     count = IInspectable_Release(obj);
-    ok(count == 1, "got count %lu\n", count);
+    todo_wine ok(count == 1, "got count %lu\n", count);
 
     IInspectable_AddRef(delegate2);
     p_EventSourceRemove(&event_source, &lock, token2);
@@ -2558,7 +2551,7 @@ static CALLBACK DWORD test_EventSource_marshal_proc(void *params)
     {
         ok(delegate == data->non_agile_delegate, "got delegate %p\n", delegate);
         count = IInspectable_Release(delegate);
-        ok(count == 1, "got count %lu\n", count);
+        todo_wine ok(count == 1, "got count %lu\n", count);
     }
 
     RoUninitialize();
@@ -2592,22 +2585,16 @@ static void test_EventSource_marshaling(void)
 
             data.agile_delegate = delegate_create(TRUE);
             data.agile_token = p_EventSourceAdd(&data.source, &lock, (IUnknown *)data.agile_delegate);
-            todo_wine ok(data.source != NULL, "got source %p\n", data.source);
-            todo_wine ok(data.agile_token.value != 0, "got agile_token {%#I64x}\n", data.agile_token.value);
+            ok(data.source != NULL, "got source %p\n", data.source);
+            ok(data.agile_token.value != 0, "got agile_token {%#I64x}\n", data.agile_token.value);
             count = IInspectable_Release(data.agile_delegate);
-            todo_wine ok(count == 1, "got count %lu\n", count);
-            if (!data.source)
-            {
-                skip("EventSourceAdd failed\n");
-                winetest_pop_context();
-                continue;
-            }
+            ok(count == 1, "got count %lu\n", count);
 
             data.non_agile_delegate = delegate_create(FALSE);
             data.non_agile_token = p_EventSourceAdd(&data.source, &lock, (IUnknown *)data.non_agile_delegate);
             ok(data.non_agile_token.value != 0, "got non_agile_token {%#I64x}\n", data.non_agile_token.value);
             count = IInspectable_Release(data.non_agile_delegate);
-            ok(count == 1, "got count %lu\n", count);
+            todo_wine ok(count == 1, "got count %lu\n", count);
 
             count = p_EventSourceGetTargetArraySize(data.source);
             ok(count == 2, "got size %lu\n", count);
