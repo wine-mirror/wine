@@ -561,6 +561,24 @@ static UINT PROGRESS_SetState (HWND hwnd, PROGRESS_INFO *infoPtr, UINT state)
     return prev_state;
 }
 
+static LRESULT PROGRESS_ThemeChanged(HWND hwnd)
+{
+    DWORD style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+
+    CloseThemeData(GetWindowTheme(hwnd));
+    OpenThemeData(hwnd, L"Progress");
+
+    /* WS_EX_STATICEDGE disappears when the control is themed */
+    if (COMCTL32_IsThemed(hwnd))
+        style &= ~WS_EX_STATICEDGE;
+    else
+        style |= WS_EX_STATICEDGE;
+    SetWindowLongW(hwnd, GWL_EXSTYLE, style);
+
+    InvalidateRect(hwnd, NULL, TRUE);
+    return 0;
+}
+
 /***********************************************************************
  *           ProgressWindowProc
  */
@@ -646,23 +664,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         return 0;
 
     case WM_THEMECHANGED:
-    {
-        DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
-        
-        theme = GetWindowTheme (hwnd);
-        CloseThemeData (theme);
-        theme = OpenThemeData (hwnd, themeClass);
-        
-        /* WS_EX_STATICEDGE disappears when the control is themed */
-        if (COMCTL32_IsThemed (hwnd))
-            dwExStyle &= ~WS_EX_STATICEDGE;
-        else
-            dwExStyle |= WS_EX_STATICEDGE;
-        SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle);
-        
-        InvalidateRect (hwnd, NULL, TRUE);
-        return 0;
-    }
+        return PROGRESS_ThemeChanged (hwnd);
 
     case PBM_DELTAPOS:
     {
