@@ -119,9 +119,7 @@ struct apiset_entry
 
 struct apiset
 {
-    unsigned int count;
-    unsigned int size;
-    struct apiset_entry *entries;
+    struct array entries;
     unsigned int str_pos;
     unsigned int str_size;
     char *strings;

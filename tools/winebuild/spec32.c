@@ -1018,33 +1018,32 @@ static int apiset_hash_cmp( const void *h1, const void *h2 )
 static void output_apiset_section( const struct apiset *apiset )
 {
     struct apiset_hash_entry *hash;
-    struct apiset_entry *e;
-    unsigned int i, j, str_pos, value_pos, hash_pos, size;
+    unsigned int i, j, str_pos, value_pos, hash_pos, size, count = apiset->entries.count;
 
     init_output_buffer();
 
-    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
+    value_pos = 0x1c /* header */ + count * 0x18; /* names */
     str_pos = value_pos;
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
         str_pos += 0x14 * max( 1, e->val_count );  /* values */
 
     hash_pos = str_pos + ((apiset->str_pos * 2 + 3) & ~3);
-    size = hash_pos + apiset->count * 8;  /* hashes */
+    size = hash_pos + count * 8;  /* hashes */
 
     /* header */
 
     put_dword( 6 );      /* Version */
     put_dword( size );   /* Size */
     put_dword( 0 );      /* Flags */
-    put_dword( apiset->count );  /* Count */
+    put_dword( count );  /* Count */
     put_dword( 0x1c );   /* EntryOffset */
     put_dword( hash_pos ); /* HashOffset */
     put_dword( apiset_hash_factor );   /* HashFactor */
 
     /* name entries */
 
-    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    value_pos = 0x1c /* header */ + count * 0x18; /* names */
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
     {
         put_dword( 1 );  /* Flags */
         put_dword( str_pos + e->name_off * 2 );  /* NameOffset */
@@ -1057,7 +1056,7 @@ static void output_apiset_section( const struct apiset *apiset )
 
     /* values */
 
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
     {
         if (!e->val_count)
         {
@@ -1092,14 +1091,16 @@ static void output_apiset_section( const struct apiset *apiset )
 
     /* hash table */
 
-    hash = xmalloc( apiset->count * sizeof(*hash) );
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    hash = xmalloc( count * sizeof(*hash) );
+    i = 0;
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
     {
         hash[i].hash = e->hash;
         hash[i].index = i;
+        i++;
     }
-    qsort( hash, apiset->count, sizeof(*hash), apiset_hash_cmp );
-    for (i = 0; i < apiset->count; i++)
+    qsort( hash, count, sizeof(*hash), apiset_hash_cmp );
+    for (i = 0; i < count; i++)
     {
         put_dword( hash[i].hash );
         put_dword( hash[i].index );
@@ -1347,7 +1348,7 @@ void output_data_module( DLLSPEC *spec )
     pe.section_align = pe.file_align = get_section_alignment();
 
     output_pe_exports( spec );
-    if (spec->apiset.count) output_apiset_section( &spec->apiset );
+    if (spec->apiset.entries.count) output_apiset_section( &spec->apiset );
     output_pe_file( spec, builtin_signature );
 }
 

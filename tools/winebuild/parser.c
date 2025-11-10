@@ -748,27 +748,20 @@ static unsigned int apiset_add_str( struct apiset *apiset, const char *str, unsi
     return ret - apiset->strings;
 }
 
-static void add_apiset( struct apiset *apiset, const char *api )
+static struct apiset_entry *add_apiset( struct apiset *apiset, const char *api )
 {
-    struct apiset_entry *entry;
+    struct apiset_entry *entry = ARRAY_ADD( &apiset->entries, struct apiset_entry );
 
-    if (apiset->count == apiset->size)
-    {
-        apiset->size = max( apiset->size * 2, 64 );
-        apiset->entries = xrealloc( apiset->entries, apiset->size * sizeof(*apiset->entries) );
-    }
-    entry = &apiset->entries[apiset->count++];
     entry->name_len = strlen( api );
     entry->name_off = apiset_add_str( apiset, api, entry->name_len );
     entry->hash = apiset_hash( api );
     entry->hash_len = apiset_hash_len( api );
     entry->val_count = 0;
+    return entry;
 }
 
-static void add_apiset_value( struct apiset *apiset, const char *value )
+static void add_apiset_value( struct apiset *apiset, struct apiset_entry *entry, const char *value )
 {
-    struct apiset_entry *entry = &apiset->entries[apiset->count - 1];
-
     if (entry->val_count < ARRAY_SIZE(entry->values) - 1)
     {
         struct apiset_value *val = &entry->values[entry->val_count++];
@@ -798,7 +791,7 @@ static int parse_spec_apiset( DLLSPEC *spec )
 {
     struct apiset_entry *entry;
     const char *token;
-    unsigned int i, hash;
+    unsigned int hash;
 
     if (!data_only)
     {
@@ -815,7 +808,7 @@ static int parse_spec_apiset( DLLSPEC *spec )
     }
 
     hash = apiset_hash( token );
-    for (i = 0, entry = spec->apiset.entries; i < spec->apiset.count; i++, entry++)
+    ARRAY_FOR_EACH( entry, &spec->apiset.entries, struct apiset_entry )
     {
         if (entry->name_len == strlen( token ) &&
             !strncmp( spec->apiset.strings + entry->name_off, token, entry->name_len ))
@@ -830,7 +823,8 @@ static int parse_spec_apiset( DLLSPEC *spec )
             return 0;
         }
     }
-    add_apiset( &spec->apiset, token );
+
+    entry = add_apiset( &spec->apiset, token );
 
     if (!(token = GetToken(0)) || strcmp( token, "=" ))
     {
@@ -838,7 +832,7 @@ static int parse_spec_apiset( DLLSPEC *spec )
         return 0;
     }
 
-    while ((token = GetToken(1))) add_apiset_value( &spec->apiset, token );
+    while ((token = GetToken(1))) add_apiset_value( &spec->apiset, entry, token );
     return 1;
 }
 
