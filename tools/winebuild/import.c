@@ -137,9 +137,7 @@ struct import
     ino_t               ino;
     ORDDEF            **exports;     /* functions exported from this dll */
     int                 nb_exports;  /* number of exported functions */
-    struct import_func *imports;     /* functions we want to import from this dll */
-    int                 nb_imports;  /* number of imported functions */
-    int                 max_imports; /* size of imports array */
+    struct array        imports;     /* functions we want to import from this dll */
 };
 
 static struct strarray undef_symbols;    /* list of undefined symbols */
@@ -337,17 +335,12 @@ static struct import *add_static_import_dll( const char *name )
 static void add_import_func( struct import *imp, const char *name, const char *export_name,
                              int ordinal, int hint )
 {
-    if (imp->nb_imports == imp->max_imports)
-    {
-        imp->max_imports *= 2;
-        if (imp->max_imports < 32) imp->max_imports = 32;
-        imp->imports = xrealloc( imp->imports, imp->max_imports * sizeof(*imp->imports) );
-    }
-    imp->imports[imp->nb_imports].name = name;
-    imp->imports[imp->nb_imports].export_name = export_name;
-    imp->imports[imp->nb_imports].ordinal = ordinal;
-    imp->imports[imp->nb_imports].hint = hint;
-    imp->nb_imports++;
+    struct import_func *func = ARRAY_ADD( &imp->imports, struct import_func );
+
+    func->name = name;
+    func->export_name = export_name;
+    func->ordinal = ordinal;
+    func->hint = hint;
 }
 
 /* add an import for an undefined function of the form __wine$func$ */
@@ -596,7 +589,7 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
                 }
             }
         }
-        if (!imp->nb_imports)
+        if (!imp->imports.count)
         {
             /* the dll is not used, get rid of it */
             if (check_unused( imp, &spec->exports ))
@@ -698,7 +691,7 @@ static void output_immediate_imports(void)
         output( "\t.long 0\n" );     /* ForwarderChain */
         output_rva( ".L__wine_spec_import_name_%s", import->c_name ); /* Name */
         output_rva( ".L__wine_spec_import_data_ptrs + %d", j * get_ptr_size() );  /* FirstThunk */
-        j += import->nb_imports + 1;
+        j += import->imports.count + 1;
     }
     output( "\t.long 0\n" );     /* OriginalFirstThunk */
     output( "\t.long 0\n" );     /* TimeDateStamp */
@@ -713,9 +706,8 @@ static void output_immediate_imports(void)
         output( ".L__wine_spec_import_data_%s:\n", i ? "ptrs" : "names" );
         LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
         {
-            for (j = 0; j < import->nb_imports; j++)
+            ARRAY_FOR_EACH( func, &import->imports, struct import_func )
             {
-                struct import_func *func = &import->imports[j];
                 if (i)
                 {
                     if (func->name) output( "__imp_%s:\n", asm_name( func->name ));
@@ -731,9 +723,8 @@ static void output_immediate_imports(void)
 
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        for (j = 0; j < import->nb_imports; j++)
+        ARRAY_FOR_EACH( func, &import->imports, struct import_func )
         {
-            struct import_func *func = &import->imports[j];
             if (!func->name) continue;
             output( "\t.balign 2\n" );
             output( ".L__wine_spec_import_data_%s_%s:\n", import->c_name, func->name );
@@ -752,7 +743,7 @@ static void output_immediate_imports(void)
 /* output the import thunks of a Win32 module */
 static void output_immediate_import_thunks(void)
 {
-    int j, pos;
+    int pos;
     struct import *import;
     static const char import_thunks[] = "__wine_spec_import_thunks";
 
@@ -766,11 +757,11 @@ static void output_immediate_import_thunks(void)
     pos = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_imports, struct import, entry )
     {
-        for (j = 0; j < import->nb_imports; j++, pos += get_ptr_size())
+        ARRAY_FOR_EACH( func, &import->imports, struct import_func )
         {
-            struct import_func *func = &import->imports[j];
             output_import_thunk( func->name ? func->name : func->export_name,
                                  ".L__wine_spec_import_data_ptrs", pos );
+            pos += get_ptr_size();
         }
         pos += get_ptr_size();
     }
@@ -780,7 +771,7 @@ static void output_immediate_import_thunks(void)
 /* output the delayed import table of a Win32 module */
 static void output_delayed_imports( const DLLSPEC *spec )
 {
-    int j, iat_pos, int_pos, mod_pos;
+    int iat_pos, int_pos, mod_pos;
     struct import *import;
 
     if (list_empty( &dll_delayed )) return;
@@ -803,8 +794,8 @@ static void output_delayed_imports( const DLLSPEC *spec )
         output( "\t.long 0\n" );                                /* BoundImportAddressTableRVA */
         output( "\t.long 0\n" );                                /* UnloadInformationTableRVA */
         output( "\t.long 0\n" );                                /* TimeDateStamp */
-        iat_pos += import->nb_imports * get_ptr_size();
-        int_pos += (import->nb_imports + 1) * get_ptr_size();
+        iat_pos += import->imports.count * get_ptr_size();
+        int_pos += (import->imports.count + 1) * get_ptr_size();
         mod_pos += get_ptr_size();
     }
     output( "\t.long 0,0,0,0,0,0,0,0\n" );
@@ -813,9 +804,8 @@ static void output_delayed_imports( const DLLSPEC *spec )
     output( "\n.L__wine_delay_IAT:\n" );
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        for (j = 0; j < import->nb_imports; j++)
+        ARRAY_FOR_EACH( func, &import->imports, struct import_func )
         {
-            struct import_func *func = &import->imports[j];
             const char *name = func->name ? func->name : func->export_name;
             output( "__imp_%s:\n", asm_name( name ));
             output( "\t%s __wine_delay_imp_%s_%s\n",
@@ -826,12 +816,9 @@ static void output_delayed_imports( const DLLSPEC *spec )
     output( "\n.L__wine_delay_INT:\n" );
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        for (j = 0; j < import->nb_imports; j++)
-        {
-            struct import_func *func = &import->imports[j];
+        ARRAY_FOR_EACH( func, &import->imports, struct import_func )
             output_thunk_rva( func->name ? -1 : func->ordinal,
                                 ".L__wine_delay_data_%s_%s", import->c_name, func->name );
-        }
         output( "\t%s 0\n", get_asm_ptr_keyword() );
     }
 
@@ -849,9 +836,8 @@ static void output_delayed_imports( const DLLSPEC *spec )
 
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        for (j = 0; j < import->nb_imports; j++)
+        ARRAY_FOR_EACH( func, &import->imports, struct import_func )
         {
-            struct import_func *func = &import->imports[j];
             if (!func->name) continue;
             output( "\t.balign 2\n" );
             output( ".L__wine_delay_data_%s_%s:\n", import->c_name, func->name );
@@ -864,7 +850,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
 /* output the delayed import thunks of a Win32 module */
 static void output_delayed_import_thunks( const DLLSPEC *spec )
 {
-    int j, pos, iat_pos;
+    int pos, iat_pos;
     struct import *import;
     static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
     static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
@@ -950,9 +936,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output_function_size( module_func );
         output( "\n" );
 
-        for (j = 0; j < import->nb_imports; j++)
+        ARRAY_FOR_EACH( func, &import->imports, struct import_func )
         {
-            struct import_func *func = &import->imports[j];
             const char *name = func->name ? func->name : func->export_name;
 
             output( "__wine_delay_imp_%s_%s:\n", import->c_name, name );
@@ -987,11 +972,11 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     pos = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        for (j = 0; j < import->nb_imports; j++, pos += get_ptr_size())
+        ARRAY_FOR_EACH( func, &import->imports, struct import_func )
         {
-            struct import_func *func = &import->imports[j];
             output_import_thunk( func->name ? func->name : func->export_name,
                                  ".L__wine_delay_IAT", pos );
+            pos += get_ptr_size();
         }
     }
     output_function_size( delayed_import_thunks );
