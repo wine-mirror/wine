@@ -1292,7 +1292,6 @@ static void test_page_dialog_texture(void)
 
     /* Test that theme dialog texture is enabled for comctl32 v6, even when theming is off */
     ret = pIsThemeDialogTextureEnabled(sheethwnd);
-    todo_wine_if(!is_v6)
     ok(ret == is_v6, "Wrong theme dialog texture status.\n");
 
     hwnd = CreateWindowA(WC_EDITA, "child", WS_POPUP | WS_VISIBLE, 1, 2, 50, 50, 0, 0, 0, NULL);
