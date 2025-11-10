@@ -512,7 +512,8 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
         if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, (len + 8) * sizeof(WCHAR) ))) goto failed;
         res = GetFinalPathNameByHandleW( handle, buffer, len + 8, VOLUME_NAME_DOS );
         if (!res || res > len + 8) goto failed;
-        wcscat( buffer, nt_name.Buffer + nt_name.Length / sizeof(WCHAR) );
+        if (buffer[res - 1] == '\\' && nt_name.Buffer[nt_name.Length / sizeof(WCHAR)] == '\\') res--;
+        wcscpy( buffer + res, nt_name.Buffer + nt_name.Length / sizeof(WCHAR) );
         NtClose( handle );
         RtlFreeHeap( GetProcessHeap(), 0, nt_str );
     }
