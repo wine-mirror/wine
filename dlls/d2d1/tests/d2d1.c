@@ -12179,6 +12179,16 @@ static void test_effect_register(BOOL d3d11)
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         }
 
+        /* Zero binding count, non-NULL bindings array */
+        hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+                test->effect_xml, test->binding, 0, effect_impl_create);
+        ok(hr == S_OK, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
+        hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ID2D1Effect_Release(effect);
+        hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
         winetest_pop_context();
     }
 
