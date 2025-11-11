@@ -265,6 +265,11 @@ static inline BOOL button_has_ddarrow(const TOOLBAR_INFO *infoPtr, const TBUTTON
         (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN);
 }
 
+static BOOL TOOLBAR_IsThemed(const TOOLBAR_INFO *infoPtr)
+{
+    return !!infoPtr->hTheme;
+}
+
 static LPWSTR
 TOOLBAR_GetText(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr)
 {
@@ -772,7 +777,7 @@ TOOLBAR_DrawImage(const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, I
     }
     else if (tbcd->nmcd.uItemState & CDIS_CHECKED ||
       ((tbcd->nmcd.uItemState & CDIS_HOT) 
-      && ((infoPtr->dwStyle & TBSTYLE_FLAT) || infoPtr->hTheme)))
+      && ((infoPtr->dwStyle & TBSTYLE_FLAT) || TOOLBAR_IsThemed(infoPtr))))
     {
         /* if hot, attempt to draw with hot image list, if fails, 
            use default image list */
@@ -969,6 +974,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
 {
     DWORD dwStyle = infoPtr->dwStyle;
     BOOL hasDropDownArrow = button_has_ddarrow( infoPtr, btnPtr );
+    BOOL isThemed = TOOLBAR_IsThemed(infoPtr);
     BOOL drawSepDropDownArrow = hasDropDownArrow && 
                                 (~btnPtr->fsStyle & BTNS_WHOLEDROPDOWN);
     RECT rc, rcArrow, rcBitmap, rcText;
@@ -979,7 +985,6 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
     INT oldBkMode;
     DWORD dwItemCustDraw;
     DWORD dwItemCDFlag;
-    HTHEME theme = infoPtr->hTheme;
 
     rc = btnPtr->rect;
     rcArrow = rc;
@@ -1104,11 +1109,11 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
         (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED)))
         OffsetRect(&rcText, 1, 1);
 
-    if (!theme && !(tbcd.nmcd.uItemState & CDIS_HOT) &&
+    if (!isThemed && !(tbcd.nmcd.uItemState & CDIS_HOT) &&
         ((tbcd.nmcd.uItemState & CDIS_CHECKED) || (tbcd.nmcd.uItemState & CDIS_INDETERMINATE)))
         TOOLBAR_DrawPattern (&rc, &tbcd);
 
-    if (((infoPtr->dwStyle & TBSTYLE_FLAT) || theme) && (tbcd.nmcd.uItemState & CDIS_HOT))
+    if (((infoPtr->dwStyle & TBSTYLE_FLAT) || isThemed) && (tbcd.nmcd.uItemState & CDIS_HOT))
     {
         if ( dwItemCDFlag & TBCDRF_HILITEHOTTRACK )
         {
@@ -3523,7 +3528,7 @@ TOOLBAR_GetHotImageList (const TOOLBAR_INFO *infoPtr, WPARAM wParam)
 static LRESULT
 TOOLBAR_GetHotItem (const TOOLBAR_INFO *infoPtr)
 {
-    if (!((infoPtr->dwStyle & TBSTYLE_FLAT) || infoPtr->hTheme))
+    if (!((infoPtr->dwStyle & TBSTYLE_FLAT) || TOOLBAR_IsThemed(infoPtr)))
 	return -1;
 
     if (infoPtr->nHotItem < 0)
@@ -5407,7 +5412,7 @@ TOOLBAR_EraseBackground (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     /* If the toolbar is "transparent" then pass the WM_ERASEBKGND up
      * to my parent for processing.
      */
-    if (infoPtr->hTheme || (infoPtr->dwStyle & TBSTYLE_TRANSPARENT)) {
+    if (TOOLBAR_IsThemed(infoPtr) || (infoPtr->dwStyle & TBSTYLE_TRANSPARENT)) {
 	POINT pt, ptorig;
 	HDC hdc = (HDC)wParam;
 	HWND parent;
@@ -5959,7 +5964,7 @@ TOOLBAR_MouseMove (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if ((infoPtr->dwStyle & TBSTYLE_TOOLTIPS) && (infoPtr->hwndToolTip == NULL))
         TOOLBAR_TooltipCreateControl(infoPtr);
     
-    if ((infoPtr->dwStyle & TBSTYLE_FLAT) || infoPtr->hTheme) {
+    if ((infoPtr->dwStyle & TBSTYLE_FLAT) || TOOLBAR_IsThemed(infoPtr)) {
         /* fill in the TRACKMOUSEEVENT struct */
         trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
         trackinfo.dwFlags = TME_QUERY;
@@ -5987,7 +5992,7 @@ TOOLBAR_MouseMove (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     nHit = TOOLBAR_InternalHitTest (infoPtr, &pt, &button);
 
-    if (((infoPtr->dwStyle & TBSTYLE_FLAT) || infoPtr->hTheme) && (!infoPtr->bAnchor || button))
+    if (((infoPtr->dwStyle & TBSTYLE_FLAT) || TOOLBAR_IsThemed(infoPtr)) && (!infoPtr->bAnchor || button))
         TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE);
 
     if (infoPtr->nOldHit != nHit)
