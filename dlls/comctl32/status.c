@@ -113,15 +113,16 @@ STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
 }
 
 static void
-STATUSBAR_DrawSizeGrip (HTHEME theme, HDC hdc, LPRECT lpRect)
+STATUSBAR_DrawSizeGrip (HWND hwnd, HDC hdc, LPRECT lpRect)
 {
     RECT rc = *lpRect;
-
-    TRACE("draw size grip %s\n", wine_dbgstr_rect(lpRect));
+    HTHEME theme = GetWindowTheme(hwnd);
 
     if (theme)
     {
         SIZE gripperSize;
+
+        TRACE("draw size grip %s\n", wine_dbgstr_rect(lpRect));
         if (SUCCEEDED (GetThemePartSize (theme, hdc, SP_GRIPPER, 0, lpRect, 
             TS_DRAW, &gripperSize)))
         {
@@ -132,6 +133,7 @@ STATUSBAR_DrawSizeGrip (HTHEME theme, HDC hdc, LPRECT lpRect)
         }
     }
 
+    TRACE("draw size grip %s\n", wine_dbgstr_rect(lpRect));
     rc.left = max( rc.left, rc.right - GetSystemMetrics(SM_CXVSCROLL) - 1 );
     rc.top  = max( rc.top, rc.bottom - GetSystemMetrics(SM_CYHSCROLL) - 1 );
     DrawFrameControl( hdc, &rc, DFC_SCROLL, DFCS_SCROLLSIZEGRIP );
@@ -250,7 +252,7 @@ STATUSBAR_Refresh (STATUS_INFO *infoPtr, HDC hdc)
 
     if ((GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
             && !(GetWindowLongW (infoPtr->Notify, GWL_STYLE) & WS_MAXIMIZE))
-	    STATUSBAR_DrawSizeGrip (theme, hdc, &rect);
+	    STATUSBAR_DrawSizeGrip (infoPtr->Self, hdc, &rect);
 
     return 0;
 }
