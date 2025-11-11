@@ -805,7 +805,7 @@ TOOLBAR_DrawImage(const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, I
 
 /* draws a blank frame for a toolbar button */
 static void
-TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, const RECT *rect, DWORD dwItemCDFlag)
+TOOLBAR_DrawFlatButtonFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, const RECT *rect, DWORD dwItemCDFlag)
 {
     HDC hdc = tbcd->nmcd.hdc;
     RECT rc = *rect;
@@ -906,6 +906,36 @@ TOOLBAR_DrawSeparator (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hd
     {
         FIXME("Draw some kind of separator: fsStyle=%x\n", btnPtr->fsStyle);
     }
+}
+
+static void TOOLBAR_DrawButtonFrame (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
+                                     const NMTBCUSTOMDRAW *tbcd, HDC hdc, const RECT *rect,
+                                     DWORD dwItemCDFlag, BOOL drawSepDropDownArrow)
+{
+    if (infoPtr->hTheme)
+    {
+        if (!(dwItemCDFlag & TBCDRF_NOBACKGROUND))
+        {
+            int partId = drawSepDropDownArrow ? TP_SPLITBUTTON : TP_BUTTON;
+            int stateId = TS_NORMAL;
+
+            if (tbcd->nmcd.uItemState & CDIS_DISABLED)
+                stateId = TS_DISABLED;
+            else if (tbcd->nmcd.uItemState & CDIS_SELECTED)
+                stateId = TS_PRESSED;
+            else if (tbcd->nmcd.uItemState & CDIS_CHECKED)
+                stateId = (tbcd->nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_CHECKED;
+            else if ((tbcd->nmcd.uItemState & CDIS_HOT)
+                     || (drawSepDropDownArrow && btnPtr->bDropDownPressed))
+                stateId = TS_HOT;
+
+            DrawThemeBackground(infoPtr->hTheme, hdc, partId, stateId, rect, NULL);
+        }
+
+        return;
+    }
+
+    TOOLBAR_DrawFlatButtonFrame(infoPtr, tbcd, rect, dwItemCDFlag);
 }
 
 /* draws a complete toolbar button */
@@ -1067,28 +1097,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
         }
     }
 
-    if (theme)
-    {
-        if (!(dwItemCDFlag & TBCDRF_NOBACKGROUND))
-        {
-            int partId = drawSepDropDownArrow ? TP_SPLITBUTTON : TP_BUTTON;
-            int stateId = TS_NORMAL;
-
-            if (tbcd.nmcd.uItemState & CDIS_DISABLED)
-                stateId = TS_DISABLED;
-            else if (tbcd.nmcd.uItemState & CDIS_SELECTED)
-                stateId = TS_PRESSED;
-            else if (tbcd.nmcd.uItemState & CDIS_CHECKED)
-                stateId = (tbcd.nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_CHECKED;
-            else if ((tbcd.nmcd.uItemState & CDIS_HOT)
-                     || (drawSepDropDownArrow && btnPtr->bDropDownPressed))
-                stateId = TS_HOT;
-
-            DrawThemeBackground(theme, hdc, partId, stateId, &rc, NULL);
-        }
-    }
-    else
-        TOOLBAR_DrawFrame(infoPtr, &tbcd, &rc, dwItemCDFlag);
+    TOOLBAR_DrawButtonFrame(infoPtr, btnPtr, &tbcd, hdc, &rc, dwItemCDFlag, drawSepDropDownArrow);
 
     if (drawSepDropDownArrow)
     {
