@@ -3336,34 +3336,31 @@ REBAR_NCPaint (const REBAR_INFO *infoPtr)
 {
     RECT rcWindow;
     HDC hdc;
-    HTHEME theme;
 
     if (infoPtr->dwStyle & WS_MINIMIZE)
 	return 0; /* Nothing to do */
 
-    if (infoPtr->dwStyle & WS_BORDER) {
+    if (!(infoPtr->dwStyle & WS_BORDER) && !COMCTL32_IsThemed (infoPtr->hwndSelf))
+        return 0;
 
-	/* adjust rectangle and draw the necessary edge */
-	if (!(hdc = GetDCEx( infoPtr->hwndSelf, 0, DCX_USESTYLE | DCX_WINDOW )))
-	    return 0;
-	GetWindowRect (infoPtr->hwndSelf, &rcWindow);
-	OffsetRect (&rcWindow, -rcWindow.left, -rcWindow.top);
-        TRACE("rect (%s)\n", wine_dbgstr_rect(&rcWindow));
-	DrawEdge (hdc, &rcWindow, EDGE_ETCHED, BF_RECT);
-	ReleaseDC( infoPtr->hwndSelf, hdc );
-    }
-    else if ((theme = GetWindowTheme (infoPtr->hwndSelf)))
+    /* adjust rectangle and draw the necessary edge */
+    if (!(hdc = GetDCEx (infoPtr->hwndSelf, 0, DCX_USESTYLE | DCX_WINDOW)))
+        return 0;
+
+    GetWindowRect (infoPtr->hwndSelf, &rcWindow);
+    OffsetRect (&rcWindow, -rcWindow.left, -rcWindow.top);
+    TRACE("rect (%s)\n", wine_dbgstr_rect(&rcWindow));
+
+    if (!(infoPtr->dwStyle & WS_BORDER))
     {
-        /* adjust rectangle and draw the necessary edge */
-        if (!(hdc = GetDCEx( infoPtr->hwndSelf, 0, DCX_USESTYLE | DCX_WINDOW )))
-            return 0;
-        GetWindowRect (infoPtr->hwndSelf, &rcWindow);
-        OffsetRect (&rcWindow, -rcWindow.left, -rcWindow.top);
-        TRACE("rect (%s)\n", wine_dbgstr_rect(&rcWindow));
+        HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
         DrawThemeEdge (theme, hdc, 0, 0, &rcWindow, BDR_RAISEDINNER, BF_TOP, NULL);
-        ReleaseDC( infoPtr->hwndSelf, hdc );
+        ReleaseDC (infoPtr->hwndSelf, hdc);
+        return 0;
     }
 
+    DrawEdge (hdc, &rcWindow, EDGE_ETCHED, BF_RECT);
+    ReleaseDC (infoPtr->hwndSelf, hdc);
     return 0;
 }
 
