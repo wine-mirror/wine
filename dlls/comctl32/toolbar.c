@@ -876,6 +876,38 @@ TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, 
         TOOLBAR_DrawArrow(hdc, rcArrow->left + offset, rcArrow->top + offset + (rcArrow->bottom - rcArrow->top - ARROW_HEIGHT) / 2, comctl32_color.clrBtnText);
 }
 
+static void
+TOOLBAR_DrawSeparator (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, const RECT *rect)
+{
+    if (infoPtr->hTheme)
+    {
+        int part = (infoPtr->dwStyle & CCS_VERT) ? TP_SEPARATORVERT : TP_SEPARATOR;
+        DrawThemeBackground (infoPtr->hTheme, hdc, part, 0, rect, NULL);
+        return;
+    }
+
+    /* with the FLAT style, iBitmap is the width and has already been taken into consideration in
+     * calculating the width so now we need to draw the vertical separator empirical tests show that
+     * iBitmap can/will be non-zero when drawing the vertical bar... */
+    if ((infoPtr->dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */)
+    {
+        if (infoPtr->dwStyle & CCS_VERT)
+        {
+            RECT rcsep = *rect;
+            InflateRect (&rcsep, -infoPtr->szPadding.cx, -infoPtr->szPadding.cy);
+            TOOLBAR_DrawFlatHorizontalSeparator (&rcsep, hdc, infoPtr);
+        }
+        else
+        {
+            TOOLBAR_DrawFlatSeparator (rect, hdc, infoPtr);
+        }
+    }
+    else if (btnPtr->fsStyle != BTNS_SEP)
+    {
+        FIXME("Draw some kind of separator: fsStyle=%x\n", btnPtr->fsStyle);
+    }
+}
+
 /* draws a complete toolbar button */
 static void
 TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, DWORD dwBaseCustDraw)
@@ -898,33 +930,10 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
     rcArrow = rc;
 
     /* separator - doesn't send NM_CUSTOMDRAW */
-    if (btnPtr->fsStyle & BTNS_SEP) {
-        if (theme)
-        {
-            DrawThemeBackground (theme, hdc, 
-                (dwStyle & CCS_VERT) ? TP_SEPARATORVERT : TP_SEPARATOR, 0, 
-                &rc, NULL);
-        }
-        else
-        /* with the FLAT style, iBitmap is the width and has already */
-        /* been taken into consideration in calculating the width    */
-        /* so now we need to draw the vertical separator             */
-        /* empirical tests show that iBitmap can/will be non-zero    */
-        /* when drawing the vertical bar...      */
-        if ((dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */) {
-            if (dwStyle & CCS_VERT) {
-                RECT rcsep = rc;
-                InflateRect(&rcsep, -infoPtr->szPadding.cx, -infoPtr->szPadding.cy);
-                TOOLBAR_DrawFlatHorizontalSeparator (&rcsep, hdc, infoPtr);
-            }
-	    else
-		TOOLBAR_DrawFlatSeparator (&rc, hdc, infoPtr);
-	}
-	else if (btnPtr->fsStyle != BTNS_SEP) {
-	    FIXME("Draw some kind of separator: fsStyle=%x\n",
-		  btnPtr->fsStyle);
-	}
-	return;
+    if (btnPtr->fsStyle & BTNS_SEP)
+    {
+        TOOLBAR_DrawSeparator (infoPtr, btnPtr, hdc, &rc);
+        return;
     }
 
     /* get a pointer to the text */
