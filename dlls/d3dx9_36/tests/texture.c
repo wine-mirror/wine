@@ -1243,7 +1243,7 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DTexture9_LockRect(tex, 1, &lock_rect, NULL, D3DLOCK_READONLY);
-    todo_wine check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, a8r8g8b8_16_16_linear_filter_8_8, 8, 8, 1,
+    check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, a8r8g8b8_16_16_linear_filter_8_8, 8, 8, 1,
             D3DFMT_A8R8G8B8, 0);
     IDirect3DTexture9_UnlockRect(tex, 1);
     IDirect3DTexture9_Release(tex);
@@ -1310,12 +1310,12 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_LockBox(voltex, 1, &lock_box, NULL, D3DLOCK_READONLY);
     if (sizeof(void *) == 4)
     {
-        todo_wine check_test_readback(lock_box.pBits, lock_box.RowPitch, lock_box.SlicePitch,
-                a8r8g8b8_8_8_8_box_filter_4_4_4_32bit, 4, 4, 4, D3DFMT_A8R8G8B8, 0);
+        check_test_readback(lock_box.pBits, lock_box.RowPitch, lock_box.SlicePitch,
+                a8r8g8b8_8_8_8_box_filter_4_4_4_32bit, 4, 4, 4, D3DFMT_A8R8G8B8, 1);
     }
     else
     {
-        todo_wine check_test_readback(lock_box.pBits, lock_box.RowPitch, lock_box.SlicePitch,
+        check_test_readback(lock_box.pBits, lock_box.RowPitch, lock_box.SlicePitch,
                 a8r8g8b8_8_8_8_linear_filter_4_4_4, 4, 4, 4, D3DFMT_A8R8G8B8, 0);
     }
     IDirect3DVolumeTexture9_UnlockBox(voltex, 1);

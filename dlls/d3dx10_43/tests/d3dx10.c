@@ -5423,6 +5423,7 @@ static void test_image_filters(void)
             const void *expected_dst_data;
             const void *expected_dst_data_32;
             BOOL todo;
+            uint32_t max_diff;
         }
         filter_expected[4];
     } tests[] =
@@ -5433,7 +5434,7 @@ static void test_image_filters(void)
                 { a8r8g8b8_16_16_point_filter_8_8 },
                 { a8r8g8b8_16_16_linear_filter_8_8, .todo = TRUE },
                 { a8r8g8b8_16_16_triangle_filter_8_8, a8r8g8b8_16_16_triangle_filter_8_8_32bit, .todo = TRUE },
-                { a8r8g8b8_16_16_box_filter_8_8, .todo = TRUE },
+                { a8r8g8b8_16_16_box_filter_8_8 },
             },
         },
         {
@@ -5504,7 +5505,7 @@ static void test_image_filters(void)
                 { a8r8g8b8_8_8_8_point_filter_4_4_4 },
                 { a8r8g8b8_8_8_8_linear_filter_4_4_4, .todo = TRUE },
                 { a8r8g8b8_8_8_8_triangle_filter_4_4_4, .todo = TRUE },
-                { a8r8g8b8_8_8_8_box_filter_4_4_4, .todo = TRUE },
+                { a8r8g8b8_8_8_8_box_filter_4_4_4, .max_diff = 1 },
             },
         },
         {
@@ -5586,7 +5587,7 @@ static void test_image_filters(void)
 
             get_resource_readback(resource, 0, &rb);
             todo_wine_if(tests[i].filter_expected[j].todo) check_test_readback(&rb, expected_dst, tests[i].dst_width,
-                    tests[i].dst_height, tests[i].dst_depth, tests[i].format, 0);
+                    tests[i].dst_height, tests[i].dst_depth, tests[i].format, tests[i].filter_expected[j].max_diff);
             release_resource_readback(&rb);
             ID3D10Resource_Release(resource);
 

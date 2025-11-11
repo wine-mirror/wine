@@ -24,12 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-/* Returns TRUE if num is a power of 2, FALSE if not, or if 0 */
-static BOOL is_pow2(UINT num)
-{
-    return !(num & (num - 1));
-}
-
 static HRESULT get_surface(D3DRESOURCETYPE type, struct IDirect3DBaseTexture9 *tex,
         int face, UINT level, struct IDirect3DSurface9 **surf)
 {

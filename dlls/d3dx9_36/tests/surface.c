@@ -5172,7 +5172,7 @@ static void test_image_filters(void)
                 { a8r8g8b8_16_16_linear_filter_8_8, .todo = TRUE },
                 { a8r8g8b8_16_16_triangle_filter_8_8, a8r8g8b8_16_16_triangle_filter_8_8_32bit, .todo = TRUE },
                 /* Linear and box filters match. */
-                { a8r8g8b8_16_16_linear_filter_8_8, .todo = TRUE },
+                { a8r8g8b8_16_16_linear_filter_8_8 },
             },
         },
         {

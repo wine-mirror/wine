@@ -684,6 +684,7 @@ static void test_image_filters(void)
             const void *expected_dst_data;
             const void *expected_dst_data_32;
             BOOL todo;
+            uint32_t max_diff;
         }
         filter_expected[4];
     } tests[] =
@@ -700,7 +701,10 @@ static void test_image_filters(void)
                 /* Linear and box filters match on 64bit, but not 32bit. */
                 {
                     a8r8g8b8_8_8_8_linear_filter_4_4_4, a8r8g8b8_8_8_8_box_filter_4_4_4_32bit,
-                    .todo = TRUE
+#ifndef _WIN64
+                    /* We match exactly on 64-bit, but not 32-bit. */
+                    .max_diff = 1
+#endif
                 },
             },
         },
@@ -756,7 +760,7 @@ static void test_image_filters(void)
             IDirect3DVolume9_LockBox(volume, &locked_box, NULL, D3DLOCK_READONLY);
             todo_wine_if(tests[i].filter_expected[j].todo) check_test_readback(locked_box.pBits, locked_box.RowPitch,
                     locked_box.SlicePitch, expected_dst, tests[i].dst_width, tests[i].dst_height, tests[i].dst_depth,
-                    tests[i].format, 0);
+                    tests[i].format, tests[i].filter_expected[j].max_diff);
             IDirect3DVolume9_UnlockBox(volume);
 
             winetest_pop_context();
