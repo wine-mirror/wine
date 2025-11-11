@@ -481,7 +481,7 @@ static void update_min_band_height(const REBAR_INFO *infoPtr, REBAR_BAND *lpBand
 }
 
 static void
-REBAR_DrawChevron (HDC hdc, INT left, INT top, INT colorRef)
+REBAR_DrawFlatChevron (HDC hdc, INT left, INT top, INT colorRef)
 {
     INT x, y;
     HPEN hPen, hOldPen;
@@ -575,13 +575,47 @@ REBAR_DrawGripper (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     DrawEdge (hdc, &lpBand->rcGripper, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
 }
 
+static void
+REBAR_DrawChevron (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
+{
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+
+    if (theme)
+    {
+        int stateId;
+
+        if (lpBand->fDraw & DRAW_CHEVRONPUSHED)
+            stateId = CHEVS_PRESSED;
+        else if (lpBand->fDraw & DRAW_CHEVRONHOT)
+            stateId = CHEVS_HOT;
+        else
+            stateId = CHEVS_NORMAL;
+        DrawThemeBackground (theme, hdc, RP_CHEVRON, stateId, &lpBand->rcChevron, NULL);
+        return;
+    }
+
+    if (lpBand->fDraw & DRAW_CHEVRONPUSHED)
+    {
+        DrawEdge (hdc, &lpBand->rcChevron, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE);
+        REBAR_DrawFlatChevron (hdc, lpBand->rcChevron.left + 1, lpBand->rcChevron.top + 11, COLOR_WINDOWFRAME);
+    }
+    else if (lpBand->fDraw & DRAW_CHEVRONHOT)
+    {
+        DrawEdge (hdc, &lpBand->rcChevron, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
+        REBAR_DrawFlatChevron (hdc, lpBand->rcChevron.left, lpBand->rcChevron.top + 10, COLOR_WINDOWFRAME);
+    }
+    else
+    {
+        REBAR_DrawFlatChevron (hdc, lpBand->rcChevron.left, lpBand->rcChevron.top + 10, COLOR_WINDOWFRAME);
+    }
+}
+
 static VOID
 REBAR_DrawBand (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
     HFONT hOldFont = 0;
     INT oldBkMode = 0;
     NMCUSTOMDRAW nmcd;
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     RECT rcBand;
 
     translate_rect(infoPtr, &rcBand, &lpBand->rcBand);
@@ -646,34 +680,7 @@ REBAR_DrawBand (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     }
 
     if (!IsRectEmpty(&lpBand->rcChevron))
-    {
-        if (theme)
-        {
-            int stateId; 
-            if (lpBand->fDraw & DRAW_CHEVRONPUSHED)
-                stateId = CHEVS_PRESSED;
-            else if (lpBand->fDraw & DRAW_CHEVRONHOT)
-                stateId = CHEVS_HOT;
-            else
-                stateId = CHEVS_NORMAL;
-            DrawThemeBackground (theme, hdc, RP_CHEVRON, stateId, &lpBand->rcChevron, NULL);
-        }
-        else
-        {
-            if (lpBand->fDraw & DRAW_CHEVRONPUSHED)
-            {
-                DrawEdge(hdc, &lpBand->rcChevron, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE);
-                REBAR_DrawChevron(hdc, lpBand->rcChevron.left+1, lpBand->rcChevron.top + 11, COLOR_WINDOWFRAME);
-            }
-            else if (lpBand->fDraw & DRAW_CHEVRONHOT)
-            {
-                DrawEdge(hdc, &lpBand->rcChevron, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
-                REBAR_DrawChevron(hdc, lpBand->rcChevron.left, lpBand->rcChevron.top + 10, COLOR_WINDOWFRAME);
-            }
-            else
-                REBAR_DrawChevron(hdc, lpBand->rcChevron.left, lpBand->rcChevron.top + 10, COLOR_WINDOWFRAME);
-        }
-    }
+        REBAR_DrawChevron (hdc, infoPtr, lpBand);
 
     if (lpBand->uCDret == (CDRF_NOTIFYPOSTPAINT | CDRF_NOTIFYITEMDRAW)) {
 	nmcd.dwDrawStage = CDDS_ITEMPOSTPAINT;
