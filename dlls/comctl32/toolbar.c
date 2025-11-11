@@ -140,7 +140,6 @@ typedef struct
     INT      iListGap;        /* default gap between text and image for toolbar with list style */
     HFONT    hDefaultFont;
     HFONT    hFont;           /* text font */
-    HTHEME   hTheme;          /* theme */
     HIMAGELIST himlInt;       /* image list created internally */
     PIMLENTRY *himlDef;       /* default image list array */
     INT       cimlDef;        /* default image list array count */
@@ -170,6 +169,9 @@ typedef struct
     TBUTTON_INFO *buttons;      /* pointer to button array */
     LPWSTR       *strings;      /* pointer to string array */
     TBITMAP_INFO *bitmaps;
+#if __WINE_COMCTL32_VERSION == 6
+    HTHEME   hTheme;            /* theme */
+#endif
 } TOOLBAR_INFO, *PTOOLBAR_INFO;
 
 
@@ -231,8 +233,6 @@ typedef enum
 #define GETHOTIMAGELIST(infoPtr, id) TOOLBAR_GetImageList(infoPtr->himlHot, infoPtr->cimlHot, id)
 #define GETDISIMAGELIST(infoPtr, id) TOOLBAR_GetImageList(infoPtr->himlDis, infoPtr->cimlDis, id)
 
-static const WCHAR themeClass[] = L"Toolbar";
-
 static BOOL TOOLBAR_GetButtonInfo(const TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb);
 static BOOL TOOLBAR_IsButtonRemovable(const TOOLBAR_INFO *infoPtr, int iItem, const CUSTOMBUTTON *btnInfo);
 static HIMAGELIST TOOLBAR_GetImageList(const PIMLENTRY *pies, INT cies, INT id);
@@ -267,7 +267,11 @@ static inline BOOL button_has_ddarrow(const TOOLBAR_INFO *infoPtr, const TBUTTON
 
 static BOOL TOOLBAR_IsThemed(const TOOLBAR_INFO *infoPtr)
 {
+#if __WINE_COMCTL32_VERSION == 6
     return !!infoPtr->hTheme;
+#else
+    return FALSE;
+#endif
 }
 
 static LPWSTR
@@ -884,12 +888,14 @@ TOOLBAR_DrawFlatSepDropDownArrow(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDR
 static void
 TOOLBAR_DrawSeparator (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, const RECT *rect)
 {
+#if __WINE_COMCTL32_VERSION == 6
     if (infoPtr->hTheme)
     {
         int part = (infoPtr->dwStyle & CCS_VERT) ? TP_SEPARATORVERT : TP_SEPARATOR;
         DrawThemeBackground (infoPtr->hTheme, hdc, part, 0, rect, NULL);
         return;
     }
+#endif
 
     /* with the FLAT style, iBitmap is the width and has already been taken into consideration in
      * calculating the width so now we need to draw the vertical separator empirical tests show that
@@ -917,6 +923,7 @@ static void TOOLBAR_DrawButtonFrame (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *
                                      const NMTBCUSTOMDRAW *tbcd, HDC hdc, const RECT *rect,
                                      DWORD dwItemCDFlag, BOOL drawSepDropDownArrow)
 {
+#if __WINE_COMCTL32_VERSION == 6
     if (infoPtr->hTheme)
     {
         if (!(dwItemCDFlag & TBCDRF_NOBACKGROUND))
@@ -939,6 +946,7 @@ static void TOOLBAR_DrawButtonFrame (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *
 
         return;
     }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
     TOOLBAR_DrawFlatButtonFrame(infoPtr, tbcd, rect, dwItemCDFlag);
 }
@@ -947,6 +955,7 @@ static void TOOLBAR_DrawSepDropDownArrow (const TOOLBAR_INFO *infoPtr, TBUTTON_I
                                           const NMTBCUSTOMDRAW *tbcd, HDC hdc, RECT *rect,
                                           DWORD dwItemCDFlag)
 {
+#if __WINE_COMCTL32_VERSION == 6
     if (infoPtr->hTheme)
     {
         int stateId = TS_NORMAL;
@@ -964,6 +973,7 @@ static void TOOLBAR_DrawSepDropDownArrow (const TOOLBAR_INFO *infoPtr, TBUTTON_I
         DrawThemeBackground(infoPtr->hTheme, hdc, TP_SPLITBUTTONDROPDOWN, stateId, rect, NULL);
         return;
     }
+#endif
 
     TOOLBAR_DrawFlatSepDropDownArrow(infoPtr, tbcd, rect, btnPtr->bDropDownPressed, dwItemCDFlag);
 }
@@ -5322,7 +5332,10 @@ TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 
     SystemParametersInfoW (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
     infoPtr->hFont = infoPtr->hDefaultFont = CreateFontIndirectW (&logFont);
-    infoPtr->hTheme = OpenThemeDataForDpi (NULL, themeClass, GetDpiForWindow (hwnd));
+
+#if __WINE_COMCTL32_VERSION == 6
+    infoPtr->hTheme = OpenThemeDataForDpi (NULL, L"Toolbar", GetDpiForWindow (hwnd));
+#endif
 
     TOOLBAR_CheckStyle (infoPtr);
 
@@ -5367,7 +5380,9 @@ TOOLBAR_Destroy (TOOLBAR_INFO *infoPtr)
     /* delete default font */
     DeleteObject (infoPtr->hDefaultFont);
 
+#if __WINE_COMCTL32_VERSION == 6
     CloseThemeData (infoPtr->hTheme);
+#endif
 
     /* free toolbar info data */
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
@@ -6570,10 +6585,14 @@ TOOLBAR_SysColorChange (void)
 /* update theme after a WM_THEMECHANGED message */
 static LRESULT theme_changed (TOOLBAR_INFO *infoPtr)
 {
+#if __WINE_COMCTL32_VERSION == 6
     CloseThemeData (infoPtr->hTheme);
-    infoPtr->hTheme = OpenThemeDataForDpi (NULL, themeClass, GetDpiForWindow (infoPtr->hwndSelf));
+    infoPtr->hTheme = OpenThemeDataForDpi (NULL, L"Toolbar", GetDpiForWindow (infoPtr->hwndSelf));
     InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
     return 0;
+#else
+    return DefWindowProcW(infoPtr->hwndSelf, WM_THEMECHANGED, 0, 0);
+#endif
 }
 
 
