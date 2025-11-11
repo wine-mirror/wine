@@ -49,6 +49,7 @@
 #define DB_E_NOTFOUND                       0x80040e19
 
 #define DB_E_UNSUPPORTEDCONVERSION          0x80040e1d
+#define DB_E_BADSTARTPOSITION               0x80040e1e
 
 #define DB_E_ERRORSOCCURRED                 0x80040e21
 

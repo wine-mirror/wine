@@ -38,6 +38,8 @@ struct rowset
     DBCOLUMNINFO *columns;
     OLECHAR *columns_buf;
 
+    BOOL backward_fetch;
+    int index;
     int row_cnt;
 };
 
@@ -158,13 +160,50 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCES
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER reserved,
+static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER chapter,
         DBROWOFFSET offset, DBROWCOUNT count, DBCOUNTITEM *obtained, HROW **rows)
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll( iface );
+    int i, row_count;
 
-    FIXME("%p, %Id, %Id, %Id, %p, %p\n", rowset, reserved, offset, count, obtained, rows);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %Id, %Id, %p, %p\n", rowset, chapter, offset, count, obtained, rows);
+
+    if (!obtained || !rows) return E_INVALIDARG;
+    *obtained = 0;
+
+    if (chapter != DB_NULL_HCHAPTER)
+    {
+        FIXME("chapter = %Id\n", chapter);
+        return E_NOTIMPL;
+    }
+
+    if (rowset->backward_fetch) offset = -offset;
+    if (rowset->index + offset < 0 || rowset->index + offset > rowset->row_cnt)
+        return DB_E_BADSTARTPOSITION;
+
+    if (count > 0) row_count = min(rowset->row_cnt - rowset->index - offset, count);
+    else row_count = min(rowset->index + offset, -count);
+
+    /* don't apply offset if no rows were fetched */
+    if (!row_count) return count ? DB_S_ENDOFROWSET : S_OK;
+
+    if (!*rows)
+    {
+        *rows = CoTaskMemAlloc(sizeof(**rows) * row_count);
+        if (!*rows) return E_OUTOFMEMORY;
+    }
+
+    rowset->index += offset;
+    for (i = 0; i < row_count; i++)
+    {
+        if (count < 0) rowset->index--;
+        (*rows)[i] = rowset->index + 1;
+        if (count > 0) rowset->index++;
+    }
+
+    *obtained = row_count;
+    rowset->backward_fetch = (count < 0);
+    return row_count == count || row_count == -count ? S_OK : DB_S_ENDOFROWSET;
 }
 
 static HRESULT WINAPI rowset_ReleaseRows(IRowsetExactScroll *iface, DBCOUNTITEM count, const HROW rows[],
