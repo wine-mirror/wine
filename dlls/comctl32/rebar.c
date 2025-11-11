@@ -556,6 +556,25 @@ REBAR_Notify_NMREBAR (const REBAR_INFO *infoPtr, UINT uBand, UINT code)
     return REBAR_Notify ((NMHDR *)&notify_rebar, infoPtr, code);
 }
 
+static void
+REBAR_DrawGripper (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
+{
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+
+    if (theme)
+    {
+        RECT rcGripper = lpBand->rcGripper;
+        int partId = (infoPtr->dwStyle & CCS_VERT) ? RP_GRIPPERVERT : RP_GRIPPER;
+        GetThemeBackgroundExtent (theme, hdc, partId, 0, &rcGripper, &rcGripper);
+        OffsetRect (&rcGripper, lpBand->rcGripper.left - rcGripper.left,
+                    lpBand->rcGripper.top - rcGripper.top);
+        DrawThemeBackground (theme, hdc, partId, 0, &rcGripper, NULL);
+        return;
+    }
+
+    DrawEdge (hdc, &lpBand->rcGripper, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
+}
+
 static VOID
 REBAR_DrawBand (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
@@ -591,19 +610,7 @@ REBAR_DrawBand (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 
     /* draw gripper */
     if (lpBand->fDraw & DRAW_GRIPPER)
-    {
-        if (theme)
-        {
-            RECT rcGripper = lpBand->rcGripper;
-            int partId = (infoPtr->dwStyle & CCS_VERT) ? RP_GRIPPERVERT : RP_GRIPPER;
-            GetThemeBackgroundExtent (theme, hdc, partId, 0, &rcGripper, &rcGripper);
-            OffsetRect (&rcGripper, lpBand->rcGripper.left - rcGripper.left,
-                lpBand->rcGripper.top - rcGripper.top);
-            DrawThemeBackground (theme, hdc, partId, 0, &rcGripper, NULL);
-        }
-        else
-            DrawEdge (hdc, &lpBand->rcGripper, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
-    }
+        REBAR_DrawGripper (hdc, infoPtr, lpBand);
 
     /* draw caption image */
     if (lpBand->fDraw & DRAW_IMAGE) {
