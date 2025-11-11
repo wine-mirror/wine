@@ -1853,6 +1853,46 @@ REBAR_CommonSetupBand(HWND hwnd, const REBARBANDINFOW *lprbbi, REBAR_BAND *lpBan
     return uChanged;
 }
 
+static void REBAR_DrawBandBackground (const REBAR_INFO *infoPtr, REBAR_BAND *lpBand, HDC hdc,
+                                      const RECT *client_rect, const RECT *band_rect)
+{
+    COLORREF old_color, new_color;
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+
+    if (theme)
+    {
+        /* When themed, the background color is ignored (but not a background bitmap) */
+        DrawThemeBackground (theme, hdc, 0, 0, client_rect, band_rect);
+        return;
+    }
+
+    if (lpBand->clrBack != CLR_NONE)
+    {
+        new_color = (lpBand->clrBack == CLR_DEFAULT) ? infoPtr->clrBtnFace : lpBand->clrBack;
+#if GLATESTING
+        /* testing only - make background green to see it */
+        new_color = RGB(0, 128, 0);
+#endif
+    }
+    else
+    {
+        /* In the absence of documentation for Rebar vs. CLR_NONE, we will use the default BtnFace
+         * color. Note documentation exists for Listview and Imagelist. */
+        new_color = infoPtr->clrBtnFace;
+#if GLATESTING
+        /* testing only - make background green to see it */
+        new_color = RGB(0, 128, 0);
+#endif
+    }
+    old_color = SetBkColor(hdc, new_color);
+    TRACE("%s background color %#lx, band %s\n",
+          (lpBand->clrBack == CLR_NONE) ? "none" : ((lpBand->clrBack == CLR_DEFAULT) ? "dft" : ""),
+          GetBkColor (hdc), wine_dbgstr_rect (band_rect));
+    ExtTextOutW (hdc, 0, 0, ETO_OPAQUE, band_rect, NULL, 0, 0);
+    if (lpBand->clrBack != CLR_NONE)
+        SetBkColor (hdc, old_color);
+}
+
 static LRESULT REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, HDC hdc)
      /* Function:  This erases the background rectangle by drawing  */
      /*  each band with its background color (or the default) and   */
@@ -1863,8 +1903,6 @@ static LRESULT REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, HDC hdc)
     UINT i;
     INT oldrow;
     RECT cr;
-    COLORREF old = CLR_NONE, new;
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     GetClientRect (infoPtr->hwndSelf, &cr);
 
@@ -1915,43 +1953,7 @@ static LRESULT REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, HDC hdc)
 	}
 
 	/* draw the actual background */
-	if (lpBand->clrBack != CLR_NONE) {
-	    new = (lpBand->clrBack == CLR_DEFAULT) ? infoPtr->clrBtnFace :
-		    lpBand->clrBack;
-#if GLATESTING
-	    /* testing only - make background green to see it */
-	    new = RGB(0,128,0);
-#endif
-	}
-	else {
-	    /* In the absence of documentation for Rebar vs. CLR_NONE,
-	     * we will use the default BtnFace color. Note documentation
-	     * exists for Listview and Imagelist.
-	     */
-	    new = infoPtr->clrBtnFace;
-#if GLATESTING
-	    /* testing only - make background green to see it */
-	    new = RGB(0,128,0);
-#endif
-	}
-
-        if (theme)
-        {
-            /* When themed, the background color is ignored (but not a
-             * background bitmap */
-            DrawThemeBackground (theme, hdc, 0, 0, &cr, &rcBand);
-        }
-        else
-        {
-            old = SetBkColor (hdc, new);
-            TRACE("%s background color %#lx, band %s\n",
-                  (lpBand->clrBack == CLR_NONE) ? "none" :
-                    ((lpBand->clrBack == CLR_DEFAULT) ? "dft" : ""),
-                  GetBkColor(hdc), wine_dbgstr_rect(&rcBand));
-            ExtTextOutW (hdc, 0, 0, ETO_OPAQUE, &rcBand, NULL, 0, 0);
-            if (lpBand->clrBack != CLR_NONE)
-                SetBkColor (hdc, old);
-        }
+        REBAR_DrawBandBackground (infoPtr, lpBand, hdc, &cr, &rcBand);
     }
     return TRUE;
 }
