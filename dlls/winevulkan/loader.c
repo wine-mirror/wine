@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 #define WINE_VULKAN_ICD_VERSION 4
 
 static HINSTANCE hinstance;
+static BOOL get_device_proc_addr_instance_procs = FALSE;
 
 VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
 {
@@ -154,7 +155,7 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
      * https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/issues/2323
      * https://github.com/KhronosGroup/Vulkan-Docs/issues/655
      */
-    if ((device->quirks & WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR)
+    if (get_device_proc_addr_instance_procs
         && ((func = wine_vk_get_instance_proc_addr(name))
              || (func = wine_vk_get_phys_dev_proc_addr(name))))
     {
@@ -324,6 +325,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *ret)
 {
     struct vkCreateInstance_params params;
+    const VkApplicationInfo *app_info;
     struct VkInstance_T *instance;
     uint32_t phys_dev_count = 8, i;
     NTSTATUS status;
@@ -332,6 +334,16 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     if (!wine_vk_init_once())
         return VK_ERROR_INITIALIZATION_FAILED;
+
+    if ((app_info = create_info->pApplicationInfo))
+    {
+        TRACE("Application name %s, application version %#x.\n", debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
+        TRACE("Engine name %s, engine version %#x.\n", debugstr_a(app_info->pEngineName), app_info->engineVersion);
+        TRACE("API version %#x.\n", app_info->apiVersion);
+
+        if (app_info->pEngineName && !strcmp(app_info->pEngineName, "idTech"))
+            get_device_proc_addr_instance_procs = TRUE;
+    }
 
     for (;;)
     {

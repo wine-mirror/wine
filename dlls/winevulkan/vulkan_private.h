@@ -74,8 +74,6 @@ struct wine_instance
 
     struct wine_debug_report_callback default_callback;
 
-    unsigned int quirks;
-
     struct rb_tree objects;
     pthread_rwlock_t objects_lock;
 };

@@ -980,8 +980,6 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
         wine_vk_device_init_queues(device, create_info_host.pQueueCreateInfos + i);
 
-    client_device->quirks = CONTAINING_RECORD(instance, struct wine_instance, obj)->quirks;
-
     TRACE("Created device %p, host_device %p.\n", device, device->obj.host.device);
     for (i = 0; i < device->queue_count; i++)
     {
@@ -999,7 +997,6 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
                                void *client_ptr)
 {
     VkInstanceCreateInfo create_info_host;
-    const VkApplicationInfo *app_info;
     struct conversion_context ctx;
     struct wine_instance *instance;
     VkInstance host_instance, client_instance = client_ptr;
@@ -1056,18 +1053,6 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         free(instance->utils_messengers);
         free(instance);
         return res;
-    }
-
-    if ((app_info = create_info->pApplicationInfo))
-    {
-        TRACE("Application name %s, application version %#x.\n",
-                debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
-        TRACE("Engine name %s, engine version %#x.\n", debugstr_a(app_info->pEngineName),
-                app_info->engineVersion);
-        TRACE("API version %#x.\n", app_info->apiVersion);
-
-        if (app_info->pEngineName && !strcmp(app_info->pEngineName, "idTech"))
-            instance->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
     }
 
     TRACE("Created instance %p, host_instance %p.\n", instance, instance->obj.host.instance);

@@ -40,8 +40,6 @@
 /* Magic value defined by Vulkan ICD / Loader spec */
 #define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
 
-#define WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR 0x00000001
-
 struct VkPhysicalDevice_T
 {
     struct vulkan_client_object obj;
@@ -62,7 +60,6 @@ struct VkQueue_T
 struct VkDevice_T
 {
     struct vulkan_client_object obj;
-    unsigned int quirks;
     struct VkQueue_T queues[1];
 };
 
