@@ -3534,6 +3534,11 @@ static inline bool wined3d_texture_is_full_rect(const struct wined3d_texture *te
     return true;
 }
 
+static inline void wined3d_texture_set_dirty(struct wined3d_texture *texture)
+{
+    texture->flags &= ~(WINED3D_TEXTURE_RGB_VALID | WINED3D_TEXTURE_SRGB_VALID);
+}
+
 static const uint32_t wined3d_texture_sysmem_locations = WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_BUFFER;
 
 HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
