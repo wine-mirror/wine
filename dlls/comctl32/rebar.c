@@ -300,8 +300,6 @@ static const char * const band_maskname[] = {
     "RBBIM_CHEVRONSTATE",  /*    0x00002000 */
     NULL };
 
-static const WCHAR themeClass[] = L"Rebar";
-
 static CHAR *
 REBAR_FmtStyle(char *buffer, UINT style)
 {
@@ -559,6 +557,7 @@ REBAR_Notify_NMREBAR (const REBAR_INFO *infoPtr, UINT uBand, UINT code)
 static void
 REBAR_DrawGripper (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (theme)
@@ -571,6 +570,7 @@ REBAR_DrawGripper (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
         DrawThemeBackground (theme, hdc, partId, 0, &rcGripper, NULL);
         return;
     }
+#endif
 
     DrawEdge (hdc, &lpBand->rcGripper, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
 }
@@ -578,6 +578,7 @@ REBAR_DrawGripper (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 static void
 REBAR_DrawChevron (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (theme)
@@ -593,6 +594,7 @@ REBAR_DrawChevron (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
         DrawThemeBackground (theme, hdc, RP_CHEVRON, stateId, &lpBand->rcChevron, NULL);
         return;
     }
+#endif
 
     if (lpBand->fDraw & DRAW_CHEVRONPUSHED)
     {
@@ -613,6 +615,7 @@ REBAR_DrawChevron (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 static void
 REBAR_DrawBandSeparator (HWND hwnd, HDC hdc, RECT *rect, UINT flags)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (hwnd);
 
     if (theme)
@@ -620,6 +623,7 @@ REBAR_DrawBandSeparator (HWND hwnd, HDC hdc, RECT *rect, UINT flags)
         DrawThemeEdge (theme, hdc, RP_BAND, 0, rect, EDGE_ETCHED, flags, NULL);
         return;
     }
+#endif
 
     DrawEdge (hdc, rect, EDGE_ETCHED, flags);
 }
@@ -1857,6 +1861,8 @@ static void REBAR_DrawBandBackground (const REBAR_INFO *infoPtr, REBAR_BAND *lpB
                                       const RECT *client_rect, const RECT *band_rect)
 {
     COLORREF old_color, new_color;
+
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (theme)
@@ -1865,6 +1871,7 @@ static void REBAR_DrawBandBackground (const REBAR_INFO *infoPtr, REBAR_BAND *lpB
         DrawThemeBackground (theme, hdc, 0, 0, client_rect, band_rect);
         return;
     }
+#endif
 
     if (lpBand->clrBack != CLR_NONE)
     {
@@ -2937,7 +2944,7 @@ REBAR_Create (REBAR_INFO *infoPtr, LPCREATESTRUCTW cs)
 	      cs->x, cs->y, cs->cx, cs->cy);
     }
 
-    OpenThemeData(infoPtr->hwndSelf, themeClass);
+    COMCTL32_OpenThemeForWindow(infoPtr->hwndSelf, L"Rebar");
 
     TRACE("created!\n");
     return 0;
@@ -2972,8 +2979,8 @@ REBAR_Destroy (REBAR_INFO *infoPtr)
     DestroyCursor (infoPtr->hcurDrag);
     if (infoPtr->hDefaultFont) DeleteObject (infoPtr->hDefaultFont);
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
-    
-    CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
+
+    COMCTL32_CloseThemeForWindow (infoPtr->hwndSelf);
 
     /* free rebar info data */
     Free (infoPtr);
@@ -3351,6 +3358,7 @@ REBAR_NCPaint (const REBAR_INFO *infoPtr)
     OffsetRect (&rcWindow, -rcWindow.left, -rcWindow.top);
     TRACE("rect (%s)\n", wine_dbgstr_rect(&rcWindow));
 
+#if __WINE_COMCTL32_VERSION == 6
     if (!(infoPtr->dwStyle & WS_BORDER))
     {
         HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
@@ -3358,6 +3366,7 @@ REBAR_NCPaint (const REBAR_INFO *infoPtr)
         ReleaseDC (infoPtr->hwndSelf, hdc);
         return 0;
     }
+#endif
 
     DrawEdge (hdc, &rcWindow, EDGE_ETCHED, BF_RECT);
     ReleaseDC (infoPtr->hwndSelf, hdc);
@@ -3518,14 +3527,6 @@ REBAR_StyleChanged (REBAR_INFO *infoPtr, INT nType, const STYLESTRUCT *lpStyle)
     return FALSE;
 }
 
-/* update theme after a WM_THEMECHANGED message */
-static LRESULT theme_changed (REBAR_INFO* infoPtr)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
-    CloseThemeData (theme);
-    OpenThemeData(infoPtr->hwndSelf, themeClass);
-    return 0;
-}
 
 static LRESULT
 REBAR_WindowPosChanged (const REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
@@ -3739,7 +3740,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_StyleChanged (infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
         case WM_THEMECHANGED:
-            return theme_changed (infoPtr);
+            return COMCTL32_ThemeChanged (infoPtr->hwndSelf, L"Rebar", FALSE, FALSE);
 
         case WM_SYSCOLORCHANGE:
             COMCTL32_RefreshSysColors();
