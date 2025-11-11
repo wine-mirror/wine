@@ -966,22 +966,21 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
  	*      uFlags[in]  -  flags on call to SHAddToRecentDocs
 	*      pv[in]      -  document path/pidl on call to SHAddToRecentDocs
 	*/
-	IShellLinkA *psl = NULL;
+	IShellLinkW *psl = NULL;
 	IPersistFile *pPf = NULL;
 	HRESULT hres;
-	CHAR desc[MAX_PATH];
-	WCHAR widelink[MAX_PATH];
+	WCHAR desc[MAX_PATH], *path, *widelink, *doc_nameW;
 
 	CoInitialize(0);
 
 	hres = CoCreateInstance( &CLSID_ShellLink,
 				 NULL,
 				 CLSCTX_INPROC_SERVER,
-				 &IID_IShellLinkA,
+				 &IID_IShellLinkW,
 				 (LPVOID )&psl);
 	if(SUCCEEDED(hres)) {
 
-	    hres = IShellLinkA_QueryInterface(psl, &IID_IPersistFile,
+	    hres = IShellLinkW_QueryInterface(psl, &IID_IPersistFile,
 					     (LPVOID *)&pPf);
 	    if(FAILED(hres)) {
 		/* bombed */
@@ -990,42 +989,64 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 	    }
 
 	    /* Set the document path or pidl */
-	    if (uFlags == SHARD_PIDL) {
-                hres = IShellLinkA_SetIDList(psl, pv);
-	    } else {
-                hres = IShellLinkA_SetPath(psl, pv);
-	    }
+        if (uFlags == SHARD_PIDL) hres = IShellLinkW_SetIDList(psl, pv);
+        else if (uFlags == SHARD_PATHW) hres = IShellLinkW_SetPath(psl, pv);
+        else if (uFlags == SHARD_PATHA)
+        {
+            if (!(path = strdupAtoW(pv)))
+            {
+                IPersistFile_Release(pPf);
+                IShellLinkW_Release(psl);
+                goto fail;
+            }
+            hres = IShellLinkW_SetPath(psl, path);
+            free(path);
+        }
+        else FIXME("unsupported flags %08x\n", uFlags);
+
 	    if(FAILED(hres)) {
 		/* bombed */
 		ERR("failed Set{IDList|Path} %08lx\n", hres);
 		goto fail;
 	    }
 
-	    lstrcpyA(desc, "Shortcut to ");
-	    lstrcatA(desc, doc_name);
-	    hres = IShellLinkA_SetDescription(psl, desc);
+        wcscpy(desc, L"Shortcut to ");
+        if (!(doc_nameW = strdupAtoW(doc_name)))
+        {
+            IPersistFile_Release(pPf);
+            IShellLinkW_Release(psl);
+            goto fail;
+        }
+        wcscat(desc, doc_nameW);
+        free(doc_nameW);
+        hres = IShellLinkW_SetDescription(psl, desc);
 	    if(FAILED(hres)) {
 		/* bombed */
 		ERR("failed SetDescription %08lx\n", hres);
 		goto fail;
 	    }
 
-	    MultiByteToWideChar(CP_ACP, 0, new_lnk_filepath, -1,
-				widelink, MAX_PATH);
+        if (!(widelink = strdupAtoW(new_lnk_filepath)))
+        {
+            IPersistFile_Release(pPf);
+            IShellLinkW_Release(psl);
+            goto fail;
+        }
 	    /* create the short cut */
 	    hres = IPersistFile_Save(pPf, widelink, TRUE);
 	    if(FAILED(hres)) {
 		/* bombed */
 		ERR("failed IPersistFile::Save %08lx\n", hres);
 		IPersistFile_Release(pPf);
-		IShellLinkA_Release(psl);
+		IShellLinkW_Release(psl);
+        free(widelink);
 		goto fail;
 	    }
 	    hres = IPersistFile_SaveCompleted(pPf, widelink);
 	    IPersistFile_Release(pPf);
-	    IShellLinkA_Release(psl);
-	    TRACE("shortcut %s has been created, result=%08lx\n",
-		  new_lnk_filepath, hres);
+	    IShellLinkW_Release(psl);
+        free(widelink);
+	    TRACE("shortcut %s has been created, result=%08lx\n", new_lnk_filepath, hres);
 	}
 	else {
 	    ERR("CoCreateInstance failed, hres=%08lx\n", hres);
