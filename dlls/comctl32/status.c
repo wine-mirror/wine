@@ -140,33 +140,41 @@ STATUSBAR_DrawSizeGrip (HWND hwnd, HDC hdc, LPRECT lpRect)
 }
 
 static void
+STATUSBAR_DrawPartBackground (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part,
+                              int itemID, RECT *rect)
+{
+    UINT border;
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
+
+    if (theme)
+    {
+        int themePart = SP_PANE;
+
+        if ((GetWindowLongW(infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
+            && (infoPtr->simple || (itemID == (infoPtr->numParts - 1))))
+            themePart = SP_GRIPPERPANE;
+        DrawThemeBackground(theme, hdc, themePart, 0, rect, NULL);
+        return;
+    }
+
+    if (part->style & SBT_POPOUT)
+        border = BDR_RAISEDOUTER;
+    else if (part->style & SBT_NOBORDERS)
+        border = 0;
+    else
+        border = BDR_SUNKENOUTER;
+    DrawEdge(hdc, rect, border, BF_RECT | BF_ADJUST);
+}
+
+static void
 STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part, int itemID)
 {
     RECT r = part->bound;
-    UINT border;
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
-    int themePart = SP_PANE;
     int x = 0;
 
     TRACE("part bound %s\n", wine_dbgstr_rect(&r));
 
-    if (theme)
-    {
-        if ((GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
-            && (infoPtr->simple || (itemID == (infoPtr->numParts-1))))
-            themePart = SP_GRIPPERPANE;
-        DrawThemeBackground(theme, hdc, themePart, 0, &r, NULL);
-    }
-    else
-    {
-        if (part->style & SBT_POPOUT)
-            border = BDR_RAISEDOUTER;
-        else if (part->style & SBT_NOBORDERS)
-            border = 0;
-        else
-            border = BDR_SUNKENOUTER;
-        DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
-    }
+    STATUSBAR_DrawPartBackground(infoPtr, hdc, part, itemID, &r);
 
     if (part->hIcon) {
         INT cy = r.bottom - r.top;
