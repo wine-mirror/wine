@@ -4554,13 +4554,6 @@ struct wined3d_rational
     UINT denominator;
 };
 
-struct wined3d_color_key_conversion
-{
-    enum wined3d_format_id dst_format;
-    void (*convert)(const BYTE *src, unsigned int src_pitch, BYTE *dst, unsigned int dst_pitch,
-            unsigned int width, unsigned int height, const struct wined3d_color_key *colour_key);
-};
-
 enum wined3d_channel_type
 {
     WINED3D_CHANNEL_TYPE_NONE,
@@ -4638,8 +4631,6 @@ void wined3d_format_get_float_color_key(const struct wined3d_format *format,
         const struct wined3d_color_key *key, struct wined3d_color *float_colors);
 BOOL wined3d_format_is_depth_view(enum wined3d_format_id resource_format_id,
         enum wined3d_format_id view_format_id);
-const struct wined3d_color_key_conversion * wined3d_format_get_color_key_conversion(
-        const struct wined3d_texture *texture, BOOL need_alpha_ck);
 uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct wined3d_uvec4 *value);
 BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1,
         enum wined3d_format_id format2);

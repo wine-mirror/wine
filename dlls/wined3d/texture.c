@@ -956,13 +956,6 @@ static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
     texture->update_map_binding = 0;
 }
 
-static void wined3d_texture_set_map_binding(struct wined3d_texture *texture, DWORD map_binding)
-{
-    texture->update_map_binding = map_binding;
-    if (!texture->resource.map_count)
-        wined3d_texture_update_map_binding(texture);
-}
-
 /* A GL context is provided by the caller */
 static void gltexture_delete(struct wined3d_device *device, const struct wined3d_gl_info *gl_info,
         struct gl_texture *tex)
@@ -2032,9 +2025,7 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
     DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_resource *resource = &texture_gl->t.resource;
-    const struct wined3d_device *device = resource->device;
     const struct wined3d_format *format = resource->format;
-    const struct wined3d_color_key_conversion *conversion;
     const struct wined3d_format_gl *format_gl;
     GLenum internal;
 
@@ -2053,12 +2044,6 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
     else if (format->conv_byte_count)
     {
         texture_gl->t.flags |= WINED3D_TEXTURE_CONVERTED;
-    }
-    else if ((conversion = wined3d_format_get_color_key_conversion(&texture_gl->t, TRUE)))
-    {
-        texture_gl->t.flags |= WINED3D_TEXTURE_CONVERTED;
-        format = wined3d_get_format(device->adapter, conversion->dst_format, resource->bind_flags);
-        TRACE("Using format %s for color key conversion.\n", debug_d3dformat(format->id));
     }
     format_gl = wined3d_format_gl(format);
 
@@ -2937,14 +2922,12 @@ static BOOL wined3d_texture_load_renderbuffer(struct wined3d_texture *texture,
 static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_gl,
         unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl, BOOL srgb)
 {
-    unsigned int width, height, level, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
     struct wined3d_device *device = texture_gl->t.resource.device;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    const struct wined3d_color_key_conversion *conversion;
+    unsigned int level, src_row_pitch, src_slice_pitch;
     struct wined3d_texture_sub_resource *sub_resource;
     const struct wined3d_format *format;
     struct wined3d_bo_address data;
-    BYTE *src_mem, *dst_mem = NULL;
     struct wined3d_box src_box;
     DWORD dst_location;
     BOOL depth;
@@ -3027,49 +3010,10 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
     wined3d_texture_get_pitch(&texture_gl->t, level, &src_row_pitch, &src_slice_pitch);
 
     format = texture_gl->t.resource.format;
-    if ((conversion = wined3d_format_get_color_key_conversion(&texture_gl->t, TRUE)))
-        format = wined3d_get_format(device->adapter, conversion->dst_format, texture_gl->t.resource.bind_flags);
-
-    /* Don't use PBOs for converted surfaces. During PBO conversion we look at
-     * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
-     * getting called. */
-    if (conversion && sub_resource->bo)
-    {
-        TRACE("Removing the pbo attached to texture %p, %u.\n", texture_gl, sub_resource_idx);
-
-        wined3d_texture_load_location(&texture_gl->t, sub_resource_idx, &context_gl->c, WINED3D_LOCATION_SYSMEM);
-        wined3d_texture_set_map_binding(&texture_gl->t, WINED3D_LOCATION_SYSMEM);
-    }
 
     wined3d_texture_get_memory(&texture_gl->t, sub_resource_idx, &context_gl->c, &data);
-    if (conversion)
-    {
-        width = src_box.right - src_box.left;
-        height = src_box.bottom - src_box.top;
-        wined3d_format_calculate_pitch(format, device->surface_alignment,
-                width, height, &dst_row_pitch, &dst_slice_pitch);
-
-        src_mem = wined3d_context_gl_map_bo_address(context_gl, &data, src_slice_pitch, WINED3D_MAP_READ);
-        if (!(dst_mem = malloc(dst_slice_pitch)))
-        {
-            ERR("Out of memory (%u).\n", dst_slice_pitch);
-            return FALSE;
-        }
-        conversion->convert(src_mem, src_row_pitch, dst_mem, dst_row_pitch,
-                width, height, &texture_gl->t.async.gl_color_key);
-        src_row_pitch = dst_row_pitch;
-        src_slice_pitch = dst_slice_pitch;
-        wined3d_context_gl_unmap_bo_address(context_gl, &data, 0, NULL);
-
-        data.buffer_object = 0;
-        data.addr = dst_mem;
-    }
-
     wined3d_texture_gl_upload_data(&context_gl->c, wined3d_const_bo_address(&data), format, &src_box,
             src_row_pitch, src_slice_pitch, &texture_gl->t, sub_resource_idx, dst_location, 0, 0, 0);
-
-    free(dst_mem);
-
     return TRUE;
 }
 
