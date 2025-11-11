@@ -84,9 +84,17 @@ struct recordset
     IRowsetExactScroll *rowset_es;
     IRowsetChange     *rowset_change;
     IAccessor         *accessor;
-    EditModeEnum      editmode;
+    EditModeEnum       editmode;
     HROW               current_row;
-    LONG               cache_size;
+    struct
+    {
+        LONG           max_size;
+        LONG           alloc;
+        LONG           size;
+        LONG           fetched;
+        LONG           pos;
+        HROW          *rows;
+    } cache;
     ADO_LONGPTR        max_records;
     VARIANT            filter;
     BOOL               use_bookmarks;
@@ -104,6 +112,26 @@ static inline struct field *impl_from_Field( Field *iface )
 static inline struct field *impl_from_Properties( Properties *iface )
 {
     return CONTAINING_RECORD( iface, struct field, Properties_iface );
+}
+
+static void cache_release( struct recordset *recordset )
+{
+    if (!recordset->cache.fetched) return;
+    IRowset_ReleaseRows( recordset->row_set, recordset->cache.fetched,
+            recordset->cache.rows, NULL, NULL, NULL );
+    recordset->cache.fetched = 0;
+    recordset->cache.pos = 0;
+    recordset->current_row = DB_NULL_HROW;
+}
+
+static void cache_add( struct recordset *recordset, HROW row )
+{
+    assert( !recordset->cache.fetched );
+    assert( !recordset->cache.pos );
+
+    recordset->cache.rows[0] = row;
+    recordset->cache.fetched = 1;
+    recordset->current_row = row;
 }
 
 static ULONG WINAPI field_AddRef( Field *iface )
@@ -1294,11 +1322,8 @@ static void close_recordset( struct recordset *recordset )
     if (recordset->haccessors)
         IRowset_QueryInterface(recordset->row_set, &IID_IAccessor, (void**)&accessor);
 
-    if ( recordset->current_row )
-    {
-        IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL );
-        recordset->current_row = 0;
-    }
+    cache_release( recordset );
+    recordset->current_row = DB_NULL_HROW;
     if ( recordset->hacc_empty )
     {
         IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, NULL );
@@ -1359,6 +1384,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
         TRACE( "destroying %p\n", recordset );
         close_recordset( recordset );
         free( recordset->fields.field );
+        free( recordset->cache.rows );
         free( recordset );
     }
     return refs;
@@ -1582,16 +1608,62 @@ static HRESULT WINAPI recordset_get_CacheSize( _Recordset *iface, LONG *size )
     struct recordset *recordset = impl_from_Recordset( iface );
     TRACE( "%p, %p\n", iface, size );
 
-    *size = recordset->cache_size;
+    *size = recordset->cache.size;
     return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_CacheSize( _Recordset *iface, LONG size )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+
     TRACE( "%p, %ld\n", iface, size );
 
-    recordset->cache_size = size;
+    if (size < 1) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (!recordset->cache.max_size && recordset->row_set)
+    {
+        DBPROPSET *propset = NULL;
+        IRowsetInfo *info;
+        HRESULT hr;
+
+        recordset->cache.max_size = LONG_MAX;
+
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetInfo, (void **)&info );
+        if (SUCCEEDED( hr ))
+        {
+            DBPROPIDSET propidset;
+            DBPROPID id[1];
+            ULONG count;
+
+            propidset.rgPropertyIDs = id;
+            propidset.cPropertyIDs = ARRAY_SIZE(id);
+            propidset.guidPropertySet = DBPROPSET_ROWSET;
+            id[0] = DBPROP_MAXOPENROWS;
+            hr = IRowsetInfo_GetProperties( info, 1, &propidset, &count, &propset );
+            IRowsetInfo_Release( info );
+            if (FAILED( hr )) propset = NULL;
+        }
+        if (propset)
+        {
+            if (V_VT(&propset->rgProperties[0].vValue) == VT_I4)
+                recordset->cache.max_size = V_I4(&propset->rgProperties[0].vValue);
+            CoTaskMemFree( propset->rgProperties );
+            CoTaskMemFree( propset );
+        }
+    }
+
+    if (recordset->cache.max_size && recordset->cache.max_size < size)
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (size > recordset->cache.alloc)
+    {
+        HROW *rows = realloc( recordset->cache.rows, sizeof(*rows) * size );
+        if (!rows) return E_OUTOFMEMORY;
+        recordset->cache.alloc = size;
+        recordset->cache.rows = rows;
+    }
+
+    recordset->cache.size = size;
     return S_OK;
 }
 
@@ -1735,6 +1807,7 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     struct recordset *recordset = impl_from_Recordset( iface );
     DBREFCOUNT refcount;
     HRESULT hr;
+    HROW row;
 
     TRACE( "%p, %s, %s\n", recordset, debugstr_variant(&field_list), debugstr_variant(&values) );
     if (V_VT(&field_list) != VT_ERROR)
@@ -1772,20 +1845,13 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     hr = IAccessor_AddRefAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
     if (FAILED(hr))
         return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
-    if (recordset->current_row)
-    {
-        hr = IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL );
-        if (FAILED(hr))
-        {
-            IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
-            return hr;
-        }
-    }
+    cache_release( recordset );
     hr = IRowsetChange_InsertRow( recordset->rowset_change, 0,
-            recordset->hacc_empty, NULL, &recordset->current_row );
+            recordset->hacc_empty, NULL, &row );
     IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
     if (FAILED(hr))
         return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    cache_add( recordset, row );
 
     if (!resize_recordset( recordset, recordset->count + 1 )) return E_OUTOFMEMORY;
     recordset->index = recordset->count - 1;
@@ -3076,7 +3142,9 @@ HRESULT Recordset_create( void **obj )
     recordset->cursor_type = adOpenForwardOnly;
     recordset->row_set = NULL;
     recordset->editmode = adEditNone;
-    recordset->cache_size = 1;
+    recordset->cache.alloc = 1;
+    recordset->cache.size = 1;
+    recordset->cache.rows = malloc( sizeof(*recordset->cache.rows) );
     recordset->max_records = 0;
     VariantInit( &recordset->filter );
     recordset->columntypes = NULL;
