@@ -211,12 +211,16 @@ HICON alloc_cursoricon_handle( BOOL is_icon );
 /* dce.c */
 extern void free_dce( struct dce *dce, HWND hwnd );
 extern void invalidate_dce( WND *win, const RECT *old_rect );
+extern BOOL is_cache_dc( HDC hdc );
 
 /* message.c */
 extern void check_for_events( UINT flags );
 
 /* systray.c */
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
+
+/* opengl.c */
+extern BOOL set_dc_pixel_format_internal( HDC hdc, int format );
 
 /* vulkan.c */
 extern struct vulkan_instance *vulkan_instance_create( const struct vulkan_instance_extensions *extensions );

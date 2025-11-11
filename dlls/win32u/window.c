@@ -1589,7 +1589,7 @@ int get_window_pixel_format( HWND hwnd, BOOL internal )
     if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
     {
         WARN( "getting format on win %p not supported\n", hwnd );
-        return 0;
+        return -1;
     }
 
     ret = internal && win->internal_pixel_format ? win->internal_pixel_format : win->pixel_format;

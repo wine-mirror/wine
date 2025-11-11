@@ -1102,6 +1102,7 @@ void free_dce( struct dce *dce, HWND hwnd )
             {
                 WARN( "GetDC() without ReleaseDC() for window %p\n", hwnd );
                 dce->count = 0;
+                set_dc_pixel_format_internal( dce->hdc, 0 );
                 set_dce_flags( dce->hdc, DCHF_DISABLEDC );
             }
         }
@@ -1115,6 +1116,18 @@ void free_dce( struct dce *dce, HWND hwnd )
         NtGdiDeleteObjectApp( dce_to_free->hdc );
         free( dce_to_free );
     }
+}
+
+BOOL is_cache_dc( HDC hdc )
+{
+    BOOL ret = FALSE;
+    struct dce *dce;
+
+    user_lock();
+    if ((dce = get_dc_dce( hdc ))) ret = !!(dce->flags & DCX_CACHE);
+    user_unlock();
+
+    return ret;
 }
 
 /***********************************************************************
@@ -1224,6 +1237,7 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
         if (dce->flags & DCX_CACHE)
         {
             dce->count = 0;
+            set_dc_pixel_format_internal( hdc, 0 );
             set_dce_flags( dce->hdc, DCHF_DISABLEDC );
         }
         ret = TRUE;

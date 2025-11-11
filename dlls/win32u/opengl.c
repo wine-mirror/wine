@@ -1288,39 +1288,27 @@ static const char *win32u_wglGetExtensionsStringEXT(void)
     return wgl_extensions;
 }
 
-static int get_dc_pixel_format( HDC hdc, BOOL internal )
+static int win32u_wglGetPixelFormat( HDC hdc )
 {
-    int ret = 0;
+    BOOL is_display = is_dc_display( hdc );
+    int format;
     HWND hwnd;
-    DC *dc;
 
     if ((hwnd = NtUserWindowFromDC( hdc )))
-        ret = get_window_pixel_format( hwnd, internal );
-    else if ((dc = get_dc_ptr( hdc )))
-    {
-        BOOL is_display = dc->is_display;
-        ret = dc->pixel_format;
-        release_dc_ptr( dc );
-
-        /* Offscreen formats can't be used with traditional WGL calls. As has been
-         * verified on Windows GetPixelFormat doesn't fail but returns 1.
-         */
-        if (is_display && ret >= 0 && ret > onscreen_count) ret = 1;
-    }
-    else
+        format = get_window_pixel_format( hwnd, FALSE );
+    else if ((format = get_dc_pixel_format( hdc )) < 0)
     {
         WARN( "Invalid DC handle %p\n", hdc );
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return -1;
     }
 
-    TRACE( "%p/%p -> %d\n", hdc, hwnd, ret );
-    return ret;
-}
+    /* Offscreen formats can't be used with traditional WGL calls. As has been
+     * verified on Windows GetPixelFormat doesn't fail but returns 1.
+     */
+    if (is_display && format > onscreen_count) format = 1;
 
-static int win32u_wglGetPixelFormat( HDC hdc )
-{
-    int format = get_dc_pixel_format( hdc, FALSE );
+    TRACE( "%p/%p -> %d\n", hdc, hwnd, format );
     return format > 0 ? format : 0;
 }
 
@@ -1528,9 +1516,26 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int format, const PIXELFORMATDESC
     return set_dc_pixel_format( hdc, format, FALSE );
 }
 
+BOOL set_dc_pixel_format_internal( HDC hdc, int format )
+{
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    dc->pixel_format = format;
+    release_dc_ptr( dc );
+
+    return TRUE;
+}
+
 static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
 {
-    return set_dc_pixel_format( hdc, format, TRUE );
+    HWND hwnd;
+
+    if (!(hwnd = NtUserWindowFromDC( hdc )) || !is_cache_dc( hdc )) return FALSE;
+    if (format && get_window_pixel_format( hwnd, FALSE ) == format) return TRUE;
+
+    if (!set_dc_pixel_format( hdc, format, TRUE )) return FALSE;
+    return set_dc_pixel_format_internal( hdc, format );
 }
 
 static PROC win32u_wglGetProcAddress( const char *name )
@@ -1703,10 +1708,12 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         return TRUE;
     }
 
-    if ((format = get_dc_pixel_format( draw_hdc, TRUE )) <= 0)
+    if ((format = get_dc_pixel_format( draw_hdc )) <= 0 &&
+        (format = get_window_pixel_format( NtUserWindowFromDC( draw_hdc ), FALSE )) <= 0)
     {
         WARN( "Invalid draw_hdc %p format %u\n", draw_hdc, format );
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
     if (context->format != format)
@@ -2163,9 +2170,11 @@ static BOOL win32u_wgl_context_reset( struct wgl_context *context, HDC hdc, stru
     context->driver_private = NULL;
     if (!hdc) return TRUE;
 
-    if ((format = get_dc_pixel_format( hdc, TRUE )) <= 0)
+    if ((format = get_dc_pixel_format( hdc )) <= 0 &&
+        (format = get_window_pixel_format( NtUserWindowFromDC( hdc ), FALSE )) <= 0)
     {
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
     if (!driver_funcs->p_context_create( format, share_private, attribs, &context->driver_private ))

@@ -326,6 +326,29 @@ void release_dc_ptr( DC *dc )
     if (ref) dc->thread = GetCurrentThreadId();  /* we still own it */
 }
 
+BOOL is_dc_display( HDC hdc )
+{
+    int ret;
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    ret = dc->is_display;
+    release_dc_ptr( dc );
+
+    return ret;
+}
+
+int get_dc_pixel_format( HDC hdc )
+{
+    int ret;
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return -1;
+    ret = dc->pixel_format;
+    release_dc_ptr( dc );
+
+    return ret;
+}
 
 static void set_bk_color( DC *dc, COLORREF color )
 {
