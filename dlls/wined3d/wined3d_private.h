@@ -3979,10 +3979,13 @@ void wined3d_rendertarget_view_get_box(struct wined3d_rendertarget_view *view,
         struct wined3d_box *box);
 void wined3d_rendertarget_view_invalidate_location(struct wined3d_rendertarget_view *view,
         uint32_t location);
+bool wined3d_rendertarget_view_is_full_clear(const struct wined3d_rendertarget_view *rtv,
+        const RECT *draw_rect, const RECT *clear_rect);
 void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *view,
         struct wined3d_context *context, uint32_t location);
 void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view *view,
         struct wined3d_context *context, uint32_t location);
+bool wined3d_rendertarget_view_use_cpu_clear(struct wined3d_rendertarget_view *view);
 void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view,
         uint32_t location);
 DWORD wined3d_rendertarget_view_get_locations(const struct wined3d_rendertarget_view *view)
