@@ -1704,7 +1704,7 @@ static LRESULT CALLBACK test_measure_item_wnd_proc(HWND hwnd, UINT msg, WPARAM w
         if (m->itemID == -1)
         {
             expected = get_font_height(GetStockObject(SYSTEM_FONT)) + 2;
-            todo_wine ok(m->itemHeight == expected, "got %u, expected %u.\n", m->itemHeight, expected);
+            ok(m->itemHeight == expected, "got %u, expected %u.\n", m->itemHeight, expected);
             m->itemHeight = expected + 4;
         }
         return TRUE;
@@ -1745,7 +1745,7 @@ static void test_combo_measureitem(DWORD style)
     expected = get_font_height(GetStockObject(SYSTEM_FONT)) + 8;
     if (style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE))
         expected += 4;
-    todo_wine_if(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) expect_rect(r, 0, 0, 100, expected);
+    expect_rect(r, 0, 0, 100, expected);
 
     DestroyWindow(combo);
     DestroyWindow(parent);

@@ -239,10 +239,10 @@ static INT CBGetTextAreaHeight(HEADCOMBO *lphc, BOOL clip_item_height)
     measureItem.CtlID      = id;
     measureItem.itemID     = -1;
     measureItem.itemWidth  = clientRect.right;
-    measureItem.itemHeight = item_height - 6; /* ownerdrawn cb is taller */
+    measureItem.itemHeight = item_height - 2; /* ownerdrawn cb is taller */
     measureItem.itemData   = 0;
     SendMessageW(lphc->owner, WM_MEASUREITEM, id, (LPARAM)&measureItem);
-    item_height = 6 + measureItem.itemHeight;
+    item_height = 2 + measureItem.itemHeight;
 
     /*
      * Send a second one in the case of a fixed ownerdraw list to calculate the
