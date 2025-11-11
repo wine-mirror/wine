@@ -3400,7 +3400,11 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 GdipSetMatrixElements(&dst_to_src, m11, m12, m21, m22, mdx, mdy);
 
                 stat = GdipInvertMatrix(&dst_to_src);
-                if (stat != Ok) return stat;
+                if (stat != Ok)
+                {
+                    free(src_data);
+                    return stat;
+                }
 
                 dst_stride = sizeof(ARGB) * (dst_area.right - dst_area.left);
                 x_dx = dst_to_src.matrix[0];
