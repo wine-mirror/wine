@@ -610,6 +610,20 @@ REBAR_DrawChevron (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     }
 }
 
+static void
+REBAR_DrawBandSeparator (HWND hwnd, HDC hdc, RECT *rect, UINT flags)
+{
+    HTHEME theme = GetWindowTheme (hwnd);
+
+    if (theme)
+    {
+        DrawThemeEdge (theme, hdc, RP_BAND, 0, rect, EDGE_ETCHED, flags, NULL);
+        return;
+    }
+
+    DrawEdge (hdc, rect, EDGE_ETCHED, flags);
+}
+
 static VOID
 REBAR_DrawBand (HDC hdc, const REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 {
@@ -1870,18 +1884,12 @@ static LRESULT REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, HDC hdc)
 		if (infoPtr->dwStyle & CCS_VERT) {
 		    rcRowSep.right += SEP_WIDTH_SIZE;
 		    rcRowSep.bottom = infoPtr->calcSize.cx;
-                    if (theme)
-                        DrawThemeEdge (theme, hdc, RP_BAND, 0, &rcRowSep, EDGE_ETCHED, BF_RIGHT, NULL);
-                    else
-		        DrawEdge (hdc, &rcRowSep, EDGE_ETCHED, BF_RIGHT);
+                    REBAR_DrawBandSeparator (infoPtr->hwndSelf, hdc, &rcRowSep, BF_RIGHT);
 		}
 		else {
 		    rcRowSep.bottom += SEP_WIDTH_SIZE;
 		    rcRowSep.right = infoPtr->calcSize.cx;
-                    if (theme)
-                        DrawThemeEdge (theme, hdc, RP_BAND, 0, &rcRowSep, EDGE_ETCHED, BF_BOTTOM, NULL);
-                    else
-		        DrawEdge (hdc, &rcRowSep, EDGE_ETCHED, BF_BOTTOM);
+                    REBAR_DrawBandSeparator (infoPtr->hwndSelf, hdc, &rcRowSep, BF_BOTTOM);
 		}
                 TRACE ("drawing band separator bottom (%s)\n",
                        wine_dbgstr_rect(&rcRowSep));
@@ -1895,18 +1903,12 @@ static LRESULT REBAR_EraseBkGnd (const REBAR_INFO *infoPtr, HDC hdc)
 	    if (infoPtr->dwStyle & CCS_VERT) {
                 rcSep.bottom = rcSep.top;
 		rcSep.top -= SEP_WIDTH_SIZE;
-                if (theme)
-                    DrawThemeEdge (theme, hdc, RP_BAND, 0, &rcSep, EDGE_ETCHED, BF_BOTTOM, NULL);
-                else
-		    DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_BOTTOM);
+                REBAR_DrawBandSeparator (infoPtr->hwndSelf, hdc, &rcSep, BF_BOTTOM);
 	    }
 	    else {
                 rcSep.right = rcSep.left;
 		rcSep.left -= SEP_WIDTH_SIZE;
-                if (theme)
-                    DrawThemeEdge (theme, hdc, RP_BAND, 0, &rcSep, EDGE_ETCHED, BF_RIGHT, NULL);
-                else
-		    DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_RIGHT);
+                REBAR_DrawBandSeparator (infoPtr->hwndSelf, hdc, &rcSep, BF_RIGHT);
 	    }
             TRACE("drawing band separator right (%s)\n",
                   wine_dbgstr_rect(&rcSep));
