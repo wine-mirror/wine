@@ -212,14 +212,32 @@ STATUSBAR_RefreshPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPA
     STATUSBAR_DrawPart (infoPtr, hdc, part, itemID);
 }
 
+static void
+STATUSBAR_DrawBackground (const STATUS_INFO *infoPtr, HDC hdc, const RECT *rect)
+{
+    HBRUSH brush;
+    HTHEME theme = GetWindowTheme (infoPtr->Self);
+
+    if (theme)
+    {
+        DrawThemeBackground (theme, hdc, 0, 0, rect, NULL);
+        return;
+    }
+
+    if (infoPtr->clrBk != CLR_DEFAULT)
+        brush = CreateSolidBrush (infoPtr->clrBk);
+    else
+        brush = GetSysColorBrush (COLOR_3DFACE);
+    FillRect (hdc, rect, brush);
+    if (infoPtr->clrBk != CLR_DEFAULT)
+        DeleteObject (brush);
+}
 
 static LRESULT
 STATUSBAR_Refresh (STATUS_INFO *infoPtr, HDC hdc)
 {
     RECT   rect;
-    HBRUSH hbrBk;
     HFONT  hOldFont;
-    HTHEME theme;
 
     TRACE("\n");
     if (!IsWindowVisible(infoPtr->Self))
@@ -228,21 +246,7 @@ STATUSBAR_Refresh (STATUS_INFO *infoPtr, HDC hdc)
     STATUSBAR_SetPartBounds(infoPtr);
 
     GetClientRect (infoPtr->Self, &rect);
-
-    if ((theme = GetWindowTheme (infoPtr->Self)))
-    {
-        DrawThemeBackground(theme, hdc, 0, 0, &rect, NULL);
-    }
-    else
-    {
-        if (infoPtr->clrBk != CLR_DEFAULT)
-            hbrBk = CreateSolidBrush (infoPtr->clrBk);
-        else
-            hbrBk = GetSysColorBrush (COLOR_3DFACE);
-        FillRect(hdc, &rect, hbrBk);
-        if (infoPtr->clrBk != CLR_DEFAULT)
-            DeleteObject (hbrBk);
-    }
+    STATUSBAR_DrawBackground (infoPtr, hdc, &rect);
 
     hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
 
