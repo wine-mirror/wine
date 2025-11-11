@@ -3534,6 +3534,8 @@ static inline bool wined3d_texture_is_full_rect(const struct wined3d_texture *te
     return true;
 }
 
+static const uint32_t wined3d_texture_sysmem_locations = WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_BUFFER;
+
 HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const struct wined3d_box *dst_box, struct wined3d_texture *src_texture,
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, uint32_t flags,
@@ -3544,6 +3546,12 @@ void wined3d_texture_download_from_texture(struct wined3d_texture *dst_texture, 
         struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx);
 void wined3d_texture_get_bo_address(const struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_bo_address *data, uint32_t location);
+void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        struct wined3d_context *context, struct wined3d_bo_address *data);
+HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
+        unsigned int layer_count, unsigned int level_count, uint32_t flags, struct wined3d_device *device,
+        void *parent, const struct wined3d_parent_ops *parent_ops, void *sub_resources,
+        const struct wined3d_texture_ops *texture_ops);
 void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, uint32_t location);
 void wined3d_texture_load(struct wined3d_texture *texture,
