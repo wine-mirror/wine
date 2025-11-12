@@ -791,6 +791,21 @@ static HRESULT WINAPI ImagingFactory_CreateBitmapFromHBITMAP(IWICImagingFactory2
         bmi->bmiHeader.biHeight = -bm.bmHeight;
         GetDIBits(hdc, hbm, 0, bm.bmHeight, buffer, bmi, DIB_RGB_COLORS);
 
+        if (!hpal &&
+            (IsEqualGUID(&format, &GUID_WICPixelFormat1bppIndexed) ||
+            IsEqualGUID(&format, &GUID_WICPixelFormat4bppIndexed) ||
+            IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed)))
+        {
+            num_palette_entries = bmi->bmiHeader.biClrUsed ? bmi->bmiHeader.biClrUsed : (UINT)(1 << bmi->bmiHeader.biBitCount);
+            for (UINT i = 0; i < num_palette_entries; i++)
+            {
+                entry[i].peRed = bmi->bmiColors[i].rgbRed;
+                entry[i].peGreen = bmi->bmiColors[i].rgbGreen;
+                entry[i].peBlue = bmi->bmiColors[i].rgbBlue;
+                entry[i].peFlags = 0;
+            }
+        }
+
         DeleteDC(hdc);
         IWICBitmapLock_Release(lock);
 
