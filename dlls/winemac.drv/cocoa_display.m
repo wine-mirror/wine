@@ -37,11 +37,11 @@ static uint64_t integrated_gpu_id;
  * Converts an NSRect in Cocoa's y-goes-up-from-bottom coordinate system
  * to a CGRect in y-goes-down-from-top coordinates.
  */
-static inline void convert_display_rect(CGRect* out_rect, NSRect in_rect,
-                                        NSRect primary_frame)
+static inline CGRect convert_display_rect(NSRect in_rect, NSRect primary_frame)
 {
-    *out_rect = NSRectToCGRect(in_rect);
-    out_rect->origin.y = NSMaxY(primary_frame) - NSMaxY(in_rect);
+    CGRect out_rect = NSRectToCGRect(in_rect);
+    out_rect.origin.y = NSMaxY(primary_frame) - NSMaxY(in_rect);
+    return out_rect;
 }
 
 
@@ -83,11 +83,8 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
                     primary_frame = frame;
 
                 disps[i].displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
-                convert_display_rect(&disps[i].frame, frame, primary_frame);
-                convert_display_rect(&disps[i].work_frame, visible_frame,
-                                     primary_frame);
-                disps[i].frame = cgrect_win_from_mac(disps[i].frame);
-                disps[i].work_frame = cgrect_win_from_mac(disps[i].work_frame);
+                disps[i].frame = cgrect_win_from_mac(convert_display_rect(frame, primary_frame));
+                disps[i].work_frame = cgrect_win_from_mac(convert_display_rect(visible_frame, primary_frame));
             }
 
             *displays = disps;
