@@ -59,7 +59,7 @@ struct dsound_render
      * to immediately unblock the streaming thread. */
     HANDLE flush_event;
     REFERENCE_TIME stream_start;
-    BOOL eos;
+    BOOL eos, eos_complete_pending;
 
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -348,6 +348,22 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
     return send_sample_data(filter, start, pbSrcStream, cbSrcStream);
 }
 
+static void complete_eos(struct dsound_render *filter)
+{
+    IFilterGraph *graph = filter->filter.graph;
+    IMediaEventSink *event_sink;
+
+    if (filter->filter.state == State_Running && graph
+            && SUCCEEDED(IFilterGraph_QueryInterface(graph,
+            &IID_IMediaEventSink, (void **)&event_sink)))
+    {
+        IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
+                (LONG_PTR)&filter->filter.IBaseFilter_iface);
+        IMediaEventSink_Release(event_sink);
+    }
+    SetEvent(filter->state_event);
+}
+
 static DWORD WINAPI render_thread_run(void *arg)
 {
     struct dsound_render *filter = arg;
@@ -360,14 +376,18 @@ static DWORD WINAPI render_thread_run(void *arg)
     {
         IMediaSample *sample;
 
-        if (filter->eos)
+        if (filter->eos && (filter->filter.state == State_Stopped || !filter->queued_sample_count))
         {
+            BOOL complete_pending;
+
+            complete_pending = filter->eos_complete_pending;
+            filter->eos_complete_pending = FALSE;
             LeaveCriticalSection(&filter->render_cs);
-            TRACE("Got EOS.\n");
             /* Clear the buffer. */
             send_sample_data(filter, -1, NULL, filter->buf_size);
-
-            TRACE("Render thread exiting.\n");
+            if (complete_pending)
+                complete_eos(filter);
+            TRACE("Render thread exiting on EOS.\n");
             return 0;
         }
 
@@ -509,24 +529,15 @@ static void dsound_render_sink_disconnect(struct strmbase_sink *iface)
 static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
 {
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
-    IFilterGraph *graph = filter->filter.graph;
-    IMediaEventSink *event_sink;
+    BOOL complete_pending;
 
     EnterCriticalSection(&filter->render_cs);
     filter->eos = TRUE;
+    filter->eos_complete_pending = complete_pending = (filter->filter.state == State_Running);
     LeaveCriticalSection(&filter->render_cs);
     WakeConditionVariable(&filter->render_cv);
-
-    if (filter->filter.state == State_Running && graph
-            && SUCCEEDED(IFilterGraph_QueryInterface(graph,
-            &IID_IMediaEventSink, (void **)&event_sink)))
-    {
-        IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
-                (LONG_PTR)&filter->filter.IBaseFilter_iface);
-        IMediaEventSink_Release(event_sink);
-    }
-    SetEvent(filter->state_event);
-
+    if (!complete_pending)
+        complete_eos(filter);
     return S_OK;
 }
 
