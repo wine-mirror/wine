@@ -855,7 +855,6 @@ struct sec_data
     unsigned int flags;
     unsigned int file_size;
     unsigned int virt_size;
-    unsigned int filepos;
     unsigned int rva;
 };
 
@@ -901,10 +900,9 @@ static unsigned int current_rva(void)
     return pe.sec[pe.sec_count - 1].rva + pe.sec[pe.sec_count - 1].virt_size;
 }
 
-static unsigned int current_filepos(void)
+static unsigned int align_pos( unsigned int pos, unsigned int align )
 {
-    if (!pe.sec_count) return max( 0x400, pe.file_align );
-    return pe.sec[pe.sec_count - 1].filepos + pe.sec[pe.sec_count - 1].file_size;
+    return (pos + align - 1) & ~(align - 1);
 }
 
 static unsigned int flush_output_to_section( const char *name, int dir_idx, unsigned int flags )
@@ -919,9 +917,8 @@ static unsigned int flush_output_to_section( const char *name, int dir_idx, unsi
     sec->size      = output_buffer_pos;
     sec->flags     = flags;
     sec->rva       = current_rva();
-    sec->filepos   = current_filepos();
-    sec->file_size = (sec->size + pe.file_align - 1) & ~(pe.file_align - 1);
-    sec->virt_size = (sec->size + pe.section_align - 1) & ~(pe.section_align - 1);
+    sec->file_size = align_pos( sec->size, pe.file_align );
+    sec->virt_size = align_pos( sec->size, pe.section_align );
     if (dir_idx >= 0) set_dir( dir_idx, sec->rva, sec->size );
     init_output_buffer();
     pe.sec_count++;
@@ -1114,7 +1111,7 @@ static void output_apiset_section( const struct apiset *apiset )
 static void output_pe_file( DLLSPEC *spec, const char signature[32] )
 {
     const unsigned int lfanew = 0x40 + 32;
-    unsigned int i, code_size = 0, data_size = 0;
+    unsigned int i, filepos, code_size = 0, data_size = 0;
 
     init_output_buffer();
 
@@ -1236,18 +1233,20 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     }
 
     /* sections */
+    filepos = align_pos( output_buffer_pos + pe.sec_count * 40, pe.file_align );
     for (i = 0; i < pe.sec_count; i++)
     {
         put_data( pe.sec[i].name, 8 );    /* Name */
         put_dword( pe.sec[i].size );      /* VirtualSize */
         put_dword( pe.sec[i].rva );       /* VirtualAddress */
         put_dword( pe.sec[i].file_size ); /* SizeOfRawData */
-        put_dword( pe.sec[i].filepos );   /* PointerToRawData */
+        put_dword( filepos );             /* PointerToRawData */
         put_dword( 0 );                   /* PointerToRelocations */
         put_dword( 0 );                   /* PointerToLinenumbers */
         put_word( 0 );                    /* NumberOfRelocations */
         put_word( 0 );                    /* NumberOfLinenumbers */
         put_dword( pe.sec[i].flags );     /* Characteristics  */
+        filepos += pe.sec[i].file_size;
     }
     align_output( pe.file_align );
 
