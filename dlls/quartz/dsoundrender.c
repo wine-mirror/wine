@@ -34,11 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-/* NOTE: buffer can still be filled completely,
- * but we start waiting until only this amount is buffered
- */
-static const REFERENCE_TIME DSoundRenderer_Max_Fill = 150 * 10000;
-
 struct dsound_render
 {
     struct strmbase_filter filter;
@@ -155,7 +150,7 @@ static void update_positions(struct dsound_render *filter, DWORD *seqwritepos, D
         *seqwritepos = filter->writepos;
 }
 
-static HRESULT get_write_pos(struct dsound_render *filter,
+static void get_write_pos(struct dsound_render *filter,
         DWORD *ret_writepos, REFERENCE_TIME write_at, DWORD *pfree)
 {
     DWORD writepos, min_writepos, playpos;
@@ -210,8 +205,6 @@ static HRESULT get_write_pos(struct dsound_render *filter,
         WARN("Delta too big %s/%s, too far ahead.\n", debugstr_time(delta_t), debugstr_time(max_lag));
         aheadbytes = pos_from_time(filter, delta_t);
         WARN("Advancing %lu bytes.\n", aheadbytes);
-        if (delta_t >= DSoundRenderer_Max_Fill)
-            return S_FALSE;
         *ret_writepos = (min_writepos + aheadbytes) % filter->buf_size;
     }
 end:
@@ -219,13 +212,6 @@ end:
         *pfree = playpos - *ret_writepos;
     else
         *pfree = filter->buf_size + playpos - *ret_writepos;
-    if (time_from_pos(filter, filter->buf_size - *pfree) >= DSoundRenderer_Max_Fill)
-    {
-        TRACE("Blocked: too full %s / %s\n", debugstr_time(time_from_pos(filter, filter->buf_size - *pfree)),
-                debugstr_time(DSoundRenderer_Max_Fill));
-        return S_FALSE;
-    }
-    return S_OK;
 }
 
 static HRESULT send_sample_data(struct dsound_render *filter,
@@ -239,9 +225,30 @@ static HRESULT send_sample_data(struct dsound_render *filter,
         BYTE *buf1, *buf2;
 
         if (filter->filter.state == State_Running)
-            hr = get_write_pos(filter, &writepos, tStart, &free);
+        {
+            get_write_pos(filter, &writepos, tStart, &free);
+            hr = free ? S_OK : S_FALSE;
+        }
         else
+        {
             hr = S_FALSE;
+        }
+
+        if (hr == S_OK)
+        {
+            hr = IDirectSoundBuffer_Lock(filter->dsbuffer, writepos, min(free, size),
+                    (void **)&buf1, &size1, (void **)&buf2, &size2, 0);
+            if (hr != DS_OK)
+            {
+                ERR("Failed to lock sound buffer, hr %#lx.\n", hr);
+                break;
+            }
+            if (!(size1 + size2))
+            {
+                IDirectSoundBuffer_Unlock(filter->dsbuffer, buf1, size1, buf2, size2);
+                hr = S_FALSE;
+            }
+        }
 
         if (hr != S_OK)
         {
@@ -253,14 +260,6 @@ static HRESULT send_sample_data(struct dsound_render *filter,
             continue;
         }
         tStart = -1;
-
-        hr = IDirectSoundBuffer_Lock(filter->dsbuffer, writepos, min(free, size),
-                (void **)&buf1, &size1, (void **)&buf2, &size2, 0);
-        if (hr != DS_OK)
-        {
-            ERR("Failed to lock sound buffer, hr %#lx.\n", hr);
-            break;
-        }
 
         if (data)
         {
