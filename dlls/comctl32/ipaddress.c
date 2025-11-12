@@ -147,18 +147,6 @@ static int IPADDRESS_GetThemeTextState (const IPADDRESS_INFO *infoPtr)
 static void IPADDRESS_GetTextColors (const IPADDRESS_INFO *infoPtr, COLORREF *background_color,
                                      COLORREF *foreground_color)
 {
-#if __WINE_COMCTL32_VERSION == 6
-    HTHEME theme = GetWindowTheme(infoPtr->Self);
-
-    if (theme)
-    {
-        int state = IPADDRESS_GetThemeTextState(infoPtr);
-        GetThemeColor(theme, EP_EDITTEXT, state, TMT_FILLCOLOR, background_color);
-        GetThemeColor(theme, EP_EDITTEXT, state, TMT_TEXTCOLOR, foreground_color);
-        return;
-    }
-#endif
-
     if (infoPtr->Enabled)
     {
         *background_color = comctl32_color.clrWindow;
