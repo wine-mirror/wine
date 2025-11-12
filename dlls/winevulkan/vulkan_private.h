@@ -29,27 +29,12 @@
 
 extern const struct vulkan_funcs *vk_funcs;
 
-struct wine_debug_utils_messenger;
-
-struct wine_debug_report_callback
-{
-    VULKAN_OBJECT_HEADER( VkDebugReportCallbackEXT, debug_callback );
-    struct vulkan_instance *instance;
-
-    UINT64 user_callback; /* client pointer */
-    UINT64 user_data; /* client pointer */
-};
-
-struct wine_debug_report_callback;
-
 struct wine_instance
 {
     struct vulkan_instance obj;
 
-    struct wine_debug_utils_messenger *utils_messengers;
-    uint32_t utils_messenger_count;
-
-    struct wine_debug_report_callback default_callback;
+    struct list utils_messengers;
+    struct list report_callbacks;
 
     struct rb_tree objects;
     pthread_rwlock_t objects_lock;
@@ -64,27 +49,6 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
 {
     struct vulkan_client_object *client = &command_pool_from_handle(handle)->obj;
     return (struct wine_cmd_pool *)(UINT_PTR)client->unix_handle;
-}
-
-struct wine_debug_utils_messenger
-{
-    VULKAN_OBJECT_HEADER( VkDebugUtilsMessengerEXT, debug_messenger );
-    struct vulkan_instance *instance;
-
-    UINT64 user_callback; /* client pointer */
-    UINT64 user_data; /* client pointer */
-};
-
-static inline struct wine_debug_utils_messenger *wine_debug_utils_messenger_from_handle(
-        VkDebugUtilsMessengerEXT handle)
-{
-    return (struct wine_debug_utils_messenger *)(uintptr_t)handle;
-}
-
-static inline struct wine_debug_report_callback *wine_debug_report_callback_from_handle(
-        VkDebugReportCallbackEXT handle)
-{
-    return (struct wine_debug_report_callback *)(uintptr_t)handle;
 }
 
 BOOL wine_vk_is_type_wrapped(VkObjectType type);

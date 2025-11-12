@@ -9848,9 +9848,9 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
     case VK_OBJECT_TYPE_COMMAND_POOL:
         return (uint64_t) wine_cmd_pool_from_handle(handle)->host.command_pool;
     case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT:
-        return (uint64_t) wine_debug_report_callback_from_handle(handle)->host.debug_callback;
+        return (uint64_t) vulkan_debug_report_callback_from_handle(handle)->host.debug_callback;
     case VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT:
-        return (uint64_t) wine_debug_utils_messenger_from_handle(handle)->host.debug_messenger;
+        return (uint64_t) vulkan_debug_utils_messenger_from_handle(handle)->host.debug_messenger;
     case VK_OBJECT_TYPE_DEFERRED_OPERATION_KHR:
         return (uint64_t) wine_deferred_operation_from_handle(handle)->host.deferred_operation;
     case VK_OBJECT_TYPE_DEVICE:

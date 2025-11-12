@@ -55,21 +55,6 @@ static BOOL use_external_memory(void)
 
 static ULONG_PTR zero_bits = 0;
 
-#define wine_vk_count_struct(s, t) wine_vk_count_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
-static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
-{
-    const VkBaseInStructure *header;
-    uint32_t result = 0;
-
-    for (header = s; header; header = header->pNext)
-    {
-        if (header->sType == t)
-            result++;
-    }
-
-    return result;
-}
-
 const struct vulkan_funcs *vk_funcs;
 
 static int vulkan_object_compare(const void *key, const struct rb_entry *entry)
@@ -154,7 +139,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 {
     const VkDeviceAddressBindingCallbackDataEXT *address = NULL;
     struct wine_vk_debug_utils_params *params;
-    struct wine_debug_utils_messenger *object;
+    struct vulkan_debug_utils_messenger *object;
     struct debug_utils_object dummy_object, *objects;
     struct debug_utils_label dummy_label, *labels;
     UINT size, strings_len;
@@ -261,7 +246,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     uint64_t object_handle, size_t location, int32_t code, const char *layer_prefix, const char *message, void *user_data)
 {
     struct wine_vk_debug_report_params *params;
-    struct wine_debug_report_callback *object;
+    struct vulkan_debug_report_callback *object;
     UINT strings_len;
     ULONG ret_len;
     void *ret_ptr;
@@ -499,6 +484,28 @@ failed:
     return res ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS;
 }
 
+static void free_debug_utils_messengers(struct list *messengers)
+{
+    struct vulkan_debug_utils_messenger *messenger, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(messenger, next, messengers, struct vulkan_debug_utils_messenger, entry)
+    {
+        list_remove(&messenger->entry);
+        free(messenger);
+    }
+}
+
+static void free_debug_report_callbacks(struct list *callbacks)
+{
+    struct vulkan_debug_report_callback *callback, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(callback, next, callbacks, struct vulkan_debug_report_callback, entry)
+    {
+        list_remove(&callback->entry);
+        free(callback);
+    }
+}
+
 /* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.
  * This function takes care of extensions handled at winevulkan layer, a Wine graphics
  * driver is responsible for handling e.g. surface extensions.
@@ -506,42 +513,30 @@ failed:
 static VkResult wine_vk_instance_convert_create_info(struct conversion_context *ctx,
         const VkInstanceCreateInfo *src, VkInstanceCreateInfo *dst, struct wine_instance *instance)
 {
-    VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger;
     VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
-    VkBaseInStructure *header;
+    VkBaseInStructure *header = (VkBaseInStructure *)dst;
     const char **extensions;
     uint32_t count = 0;
-    unsigned int i;
 
     *dst = *src;
 
-    instance->utils_messenger_count = wine_vk_count_struct(dst, DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-    instance->utils_messengers =  calloc(instance->utils_messenger_count, sizeof(*instance->utils_messengers));
-    header = (VkBaseInStructure *) dst;
-    for (i = 0; i < instance->utils_messenger_count; i++)
+    while ((header = find_next_struct(header->pNext, VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)))
     {
-        header = find_next_struct(header->pNext, VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-        debug_utils_messenger = (VkDebugUtilsMessengerCreateInfoEXT *) header;
+        VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger = (VkDebugUtilsMessengerCreateInfoEXT *)header;
+        struct vulkan_debug_utils_messenger *messenger = debug_utils_messenger->pUserData;
 
-        instance->utils_messengers[i].instance = &instance->obj;
-        instance->utils_messengers[i].host.debug_messenger = VK_NULL_HANDLE;
-        instance->utils_messengers[i].user_callback = (UINT_PTR)debug_utils_messenger->pfnUserCallback;
-        instance->utils_messengers[i].user_data = (UINT_PTR)debug_utils_messenger->pUserData;
-
-        /* convert_VkInstanceCreateInfo_* already copied the chain, so we can modify it in-place. */
-        debug_utils_messenger->pfnUserCallback = (void *) &debug_utils_callback_conversion;
-        debug_utils_messenger->pUserData = &instance->utils_messengers[i];
+        list_remove(&messenger->entry);
+        list_add_tail(&instance->utils_messengers, &messenger->entry);
+        messenger->instance = &instance->obj;
     }
 
     if ((debug_report_callback = find_next_struct(dst->pNext, VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)))
     {
-        instance->default_callback.instance = &instance->obj;
-        instance->default_callback.host.debug_callback = VK_NULL_HANDLE;
-        instance->default_callback.user_callback = (UINT_PTR)debug_report_callback->pfnCallback;
-        instance->default_callback.user_data = (UINT_PTR)debug_report_callback->pUserData;
+        struct vulkan_debug_report_callback *callback = debug_report_callback->pUserData;
 
-        debug_report_callback->pfnCallback = (void *) &debug_report_callback_conversion;
-        debug_report_callback->pUserData = &instance->default_callback;
+        list_remove(&callback->entry);
+        list_add_tail(&instance->report_callbacks, &callback->entry);
+        callback->instance = &instance->obj;
     }
 
     /* ICDs don't support any layers, so nothing to copy. Modern versions of the loader
@@ -709,10 +704,14 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
     return res;
 }
 
-VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
+VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *client_create_info,
                                const VkAllocationCallbacks *allocator, VkInstance *ret,
                                void *client_ptr)
 {
+    VkInstanceCreateInfo *create_info = (VkInstanceCreateInfo *)client_create_info; /* cast away const, chain has been copied in the thunks */
+    struct list utils_messengers = LIST_INIT(utils_messengers), report_callbacks = LIST_INIT(report_callbacks);
+    VkBaseInStructure *header = (VkBaseInStructure *)create_info;
+    VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
     VkInstanceCreateInfo create_info_host;
     struct conversion_context ctx;
     struct wine_instance *instance;
@@ -721,8 +720,34 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     unsigned int i;
     VkResult res;
 
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    while ((header = find_next_struct(header->pNext, VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)))
+    {
+        VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger = (VkDebugUtilsMessengerCreateInfoEXT *)header;
+        struct vulkan_debug_utils_messenger *utils_messenger;
+
+        if (!(utils_messenger = calloc(1, sizeof(*utils_messenger)))) goto failed;
+        utils_messenger->host.debug_messenger = VK_NULL_HANDLE;
+        utils_messenger->user_callback = (UINT_PTR)debug_utils_messenger->pfnUserCallback;
+        utils_messenger->user_data = (UINT_PTR)debug_utils_messenger->pUserData;
+
+        debug_utils_messenger->pfnUserCallback = (void *)&debug_utils_callback_conversion;
+        debug_utils_messenger->pUserData = utils_messenger;
+        list_add_tail(&utils_messengers, &utils_messenger->entry);
+    }
+
+    if ((debug_report_callback = find_next_struct(create_info->pNext, VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)))
+    {
+        struct vulkan_debug_report_callback *report_callback;
+
+        if (!(report_callback = calloc(1, sizeof(*report_callback)))) goto failed;
+        report_callback->host.debug_callback = VK_NULL_HANDLE;
+        report_callback->user_callback = (UINT_PTR)debug_report_callback->pfnCallback;
+        report_callback->user_data = (UINT_PTR)debug_report_callback->pUserData;
+
+        debug_report_callback->pfnCallback = (void *)&debug_report_callback_conversion;
+        debug_report_callback->pUserData = report_callback;
+        list_add_tail(&report_callbacks, &report_callback->entry);
+    }
 
     if (!(instance = calloc(1, sizeof(*instance) + sizeof(*physical_devices) * client_instance->phys_dev_count)))
     {
@@ -731,6 +756,8 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     }
     physical_devices = (struct vulkan_physical_device *)(instance + 1);
     instance->obj.extensions = client_instance->extensions;
+    list_init(&instance->utils_messengers);
+    list_init(&instance->report_callbacks);
 
     init_conversion_context(&ctx);
     res = wine_vk_instance_convert_create_info(&ctx, create_info, &create_info_host, instance);
@@ -740,7 +767,8 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);
-        free(instance->utils_messengers);
+        free_debug_utils_messengers(&instance->utils_messengers);
+        free_debug_report_callbacks(&instance->report_callbacks);
         free(instance);
         return res;
     }
@@ -768,7 +796,8 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     {
         ERR("Failed to load physical devices, res=%d\n", res);
         instance->obj.p_vkDestroyInstance(instance->obj.host.instance, NULL /* allocator */);
-        free(instance->utils_messengers);
+        free_debug_utils_messengers(&instance->utils_messengers);
+        free_debug_report_callbacks(&instance->report_callbacks);
         free(instance);
         return res;
     }
@@ -784,6 +813,11 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     *ret = client_instance;
     return VK_SUCCESS;
+
+failed:
+    free_debug_utils_messengers(&utils_messengers);
+    free_debug_report_callbacks(&report_callbacks);
+    return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
 
 void wine_vkDestroyInstance(VkInstance client_instance, const VkAllocationCallbacks *allocator)
@@ -802,7 +836,8 @@ void wine_vkDestroyInstance(VkInstance client_instance, const VkAllocationCallba
     vulkan_instance_remove_object(&instance->obj, &instance->obj.obj);
 
     if (instance->objects.compare) pthread_rwlock_destroy(&instance->objects_lock);
-    free(instance->utils_messengers);
+    free_debug_utils_messengers(&instance->utils_messengers);
+    free_debug_report_callbacks(&instance->report_callbacks);
     free(instance);
 }
 
@@ -1207,7 +1242,7 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance client_instance,
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
     VkDebugUtilsMessengerCreateInfoEXT wine_create_info;
     VkDebugUtilsMessengerEXT host_debug_messenger;
-    struct wine_debug_utils_messenger *object;
+    struct vulkan_debug_utils_messenger *object;
     VkResult res;
 
     if (allocator)
@@ -1242,9 +1277,9 @@ void wine_vkDestroyDebugUtilsMessengerEXT(VkInstance client_instance, VkDebugUti
                                           const VkAllocationCallbacks *allocator)
 {
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
-    struct wine_debug_utils_messenger *object;
+    struct vulkan_debug_utils_messenger *object;
 
-    object = wine_debug_utils_messenger_from_handle(messenger);
+    object = vulkan_debug_utils_messenger_from_handle(messenger);
 
     if (!object)
         return;
@@ -1263,7 +1298,7 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance client_instance,
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
     VkDebugReportCallbackCreateInfoEXT wine_create_info;
     VkDebugReportCallbackEXT host_debug_callback;
-    struct wine_debug_report_callback *object;
+    struct vulkan_debug_report_callback *object;
     VkResult res;
 
     if (allocator)
@@ -1298,9 +1333,9 @@ void wine_vkDestroyDebugReportCallbackEXT(VkInstance client_instance, VkDebugRep
                                           const VkAllocationCallbacks *allocator)
 {
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
-    struct wine_debug_report_callback *object;
+    struct vulkan_debug_report_callback *object;
 
-    object = wine_debug_report_callback_from_handle(callback);
+    object = vulkan_debug_report_callback_from_handle(callback);
 
     if (!object)
         return;

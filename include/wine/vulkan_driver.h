@@ -86,6 +86,7 @@ struct VkDevice_T
 #ifdef WINE_UNIX_LIB
 
 #include "wine/rbtree.h"
+#include "wine/list.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
 #define WINE_VULKAN_DRIVER_VERSION 47
@@ -117,6 +118,36 @@ static inline void vulkan_object_init_ptr( struct vulkan_object *obj, UINT64 hos
     obj->host_handle = host_handle;
     obj->client_handle = (UINT_PTR)client;
     client->unix_handle = (UINT_PTR)obj;
+}
+
+struct vulkan_debug_utils_messenger
+{
+    VULKAN_OBJECT_HEADER( VkDebugUtilsMessengerEXT, debug_messenger );
+    struct vulkan_instance *instance;
+    struct list entry; /* entry in instance list if static */
+
+    UINT64 user_callback; /* client pointer */
+    UINT64 user_data; /* client pointer */
+};
+
+static inline struct vulkan_debug_utils_messenger *vulkan_debug_utils_messenger_from_handle( VkDebugUtilsMessengerEXT handle )
+{
+    return (struct vulkan_debug_utils_messenger *)(UINT_PTR)handle;
+}
+
+struct vulkan_debug_report_callback
+{
+    VULKAN_OBJECT_HEADER( VkDebugReportCallbackEXT, debug_callback );
+    struct vulkan_instance *instance;
+    struct list entry; /* entry in instance list if static */
+
+    UINT64 user_callback; /* client pointer */
+    UINT64 user_data; /* client pointer */
+};
+
+static inline struct vulkan_debug_report_callback *vulkan_debug_report_callback_from_handle( VkDebugReportCallbackEXT handle )
+{
+    return (struct vulkan_debug_report_callback *)(UINT_PTR)handle;
 }
 
 struct vulkan_instance
