@@ -309,6 +309,8 @@ STRUCT_CHAIN_CONVERSIONS = {
     "VkBufferCreateInfo": {},
     "VkImageCreateInfo": {},
     "VkPhysicalDeviceExternalBufferInfo": {},
+    "VkPhysicalDeviceExternalFenceInfo": {},
+    "VkPhysicalDeviceExternalSemaphoreInfo": {},
     "VkPhysicalDeviceImageFormatInfo2": {},
     "VkCommandBufferSubmitInfo": {},
     "VkSemaphoreCreateInfo": {},
