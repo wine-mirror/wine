@@ -351,6 +351,7 @@ sync_test("builtin_toString", function() {
         test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
     if(v >= 11) {
+        test("crypto", window.msCrypto, "Crypto");
         test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver");
     }
     if(v >= 9) {
@@ -983,6 +984,7 @@ sync_test("window_props", function() {
     test_exposed("performance", true);
     test_exposed("console", v >= 10);
     test_exposed("matchMedia", v >= 10);
+    test_exposed("msCrypto", v >= 11);
     test_exposed("Document", v >= 9);
     test_exposed("HTMLDocument", v === 8 || v >= 11, v === 8);
     test_exposed("XMLDocument", v >= 11);
@@ -4111,6 +4113,12 @@ sync_test("prototypes", function() {
     }else {
         ok(!("Console" in window), "Console found in window");
     }
+    if(v >= 11) {
+        check(msCrypto, Crypto.prototype, "crypto");
+        check(Crypto.prototype, Object.prototype, "crypto prototype");
+    }else {
+        ok(!("msCrypto" in window), "msCrypto found in window");
+    }
     if(v >= 10) {
         check(window.matchMedia("(hover:hover)"), MediaQueryList.prototype, "media query");
         check(MediaQueryList.prototype, Object.prototype, "media query prototype");
@@ -4169,6 +4177,8 @@ sync_test("prototype props", function() {
     check(Attr, [ "expando", "name", "ownerElement", "specified", "value" ]);
     check(CharacterData, [ "appendData", "data", "deleteData", "insertData", "length", "replaceData", "substringData" ]);
     check(Comment, [ "text" ]);
+    if(v >= 11)
+        check(Crypto, [ "getRandomValues", "subtle" ]);
     check(CSSStyleDeclaration, [
         ["alignContent",11], ["alignItems",11], ["alignSelf",11], "alignmentBaseline", ["animation",10], ["animationDelay",10],
         ["animationDirection",10], ["animationDuration",10], ["animationFillMode",10], ["animationIterationCount",10], ["animationName",10],
@@ -4672,7 +4682,7 @@ async_test("window own props", function() {
         ], [
             ["AesGcmEncryptResult",11], ["ANGLE_instanced_arrays",11], ["AnimationEvent",10], ["ApplicationCache",10], "Audio", ["AudioTrack",10], ["AudioTrackList",10],
             "BeforeUnloadEvent", ["Blob",10], "BookmarkCollection", "CanvasGradient", "CanvasPattern", "CanvasPixelArray", "CanvasRenderingContext2D", "CDATASection", ["CloseEvent",10],
-            "CompositionEvent", "ControlRangeCollection", "Coordinates", ["Crypto",11], ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
+            "CompositionEvent", "ControlRangeCollection", "Coordinates", ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
             "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
             ["DeviceOrientationEvent",11], ["DeviceRotationRate",11], ["DOMError",10], "DOMException", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11],
             "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10],

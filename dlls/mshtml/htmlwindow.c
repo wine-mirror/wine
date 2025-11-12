@@ -3190,6 +3190,24 @@ static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, 
     return S_OK;
 }
 
+static HRESULT WINAPI window_private_get_msCrypto(IWineHTMLWindowPrivate *iface, IDispatch **crypto)
+{
+    HTMLInnerWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface)->inner_window;
+
+    TRACE("iface %p, crypto %p.\n", iface, crypto);
+
+    if(!This->crypto) {
+        HRESULT hres = create_crypto(This, &This->crypto);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *crypto = (IDispatch*)This->crypto;
+    if(This->crypto)
+        IWineMSHTMLCrypto_AddRef(This->crypto);
+    return S_OK;
+}
+
 static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_QueryInterface,
     window_private_AddRef,
@@ -3202,6 +3220,7 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_cancelAnimationFrame,
     window_private_get_console,
     window_private_matchMedia,
+    window_private_get_msCrypto,
 };
 
 static inline HTMLWindow *impl_from_IWineHTMLWindowCompatPrivateVtbl(IWineHTMLWindowCompatPrivate *iface)
@@ -3717,6 +3736,8 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
         note_cc_edge((nsISupports*)This->session_storage, "session_storage", cb);
     if(This->local_storage)
         note_cc_edge((nsISupports*)This->local_storage, "local_storage", cb);
+    if(This->crypto)
+        note_cc_edge((nsISupports*)This->crypto, "crypto", cb);
     if(This->dom_window)
         note_cc_edge((nsISupports*)This->dom_window, "dom_window", cb);
     traverse_variant(&This->performance, "performance", cb);
@@ -3761,6 +3782,11 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
         IHTMLStorage *local_storage = This->local_storage;
         This->local_storage = NULL;
         IHTMLStorage_Release(local_storage);
+    }
+    if(This->crypto) {
+        IWineMSHTMLCrypto *crypto = This->crypto;
+        This->crypto = NULL;
+        IWineMSHTMLCrypto_Release(crypto);
     }
     unlink_variant(&This->performance);
     unlink_ref(&This->dom_window);
@@ -4238,13 +4264,17 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
         {DISPID_UNKNOWN}
     };
     const dispex_hook_t *const window6_hooks = window6_ie9_hooks + 1;
+    static const dispex_hook_t private_ie10_hooks[] = {
+        {DISPID_IWINEHTMLWINDOWPRIVATE_MSCRYPTO},
+        {DISPID_UNKNOWN}
+    };
 
     if(compat_mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLWindow7_tid, NULL);
     else
         dispex_info_add_interface(info, IWineHTMLWindowCompatPrivate_tid, NULL);
     if(compat_mode >= COMPAT_MODE_IE10)
-        dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid, NULL);
+        dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid, compat_mode < COMPAT_MODE_IE11 ? private_ie10_hooks : NULL);
 
     dispex_info_add_interface(info, IHTMLWindow6_tid, compat_mode >= COMPAT_MODE_IE9  ? window6_ie9_hooks : window6_hooks);
     if(compat_mode < COMPAT_MODE_IE9)
