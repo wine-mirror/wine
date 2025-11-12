@@ -380,7 +380,7 @@ static DWORD WINAPI render_thread_run(void *arg)
         {
             BOOL complete_pending;
 
-            complete_pending = filter->eos_complete_pending;
+            complete_pending = WaitForSingleObject(filter->flush_event, 0) && filter->eos_complete_pending;
             filter->eos_complete_pending = FALSE;
             LeaveCriticalSection(&filter->render_cs);
             /* Clear the buffer. */
@@ -554,6 +554,7 @@ static HRESULT dsound_render_sink_end_flush(struct strmbase_sink *iface)
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
 
     EnterCriticalSection(&filter->filter.stream_cs);
+    filter->eos_complete_pending = FALSE;
     if (filter->eos && filter->filter.state != State_Stopped)
     {
         WaitForSingleObject(filter->render_thread, INFINITE);
