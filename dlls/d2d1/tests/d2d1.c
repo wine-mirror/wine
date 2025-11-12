@@ -13146,7 +13146,6 @@ static void test_effect_2d_affine(BOOL d3d11)
     hr = ID2D1Effect_GetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE,
             D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&value, sizeof(value));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value == D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR, "Unexpected value %u.\n", value);
     check_enum_property(effect, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE, interp_modes,
             ARRAY_SIZE(interp_modes));
@@ -13177,7 +13176,6 @@ static void test_effect_2d_affine(BOOL d3d11)
         ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)bitmap, FALSE);
         hr = ID2D1Effect_SetValue(effect, D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX,
                 D2D1_PROPERTY_TYPE_MATRIX_3X2, (const BYTE *)test->matrix, sizeof(*test->matrix));
-        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         if (hr == D2DERR_INVALID_PROPERTY)
         {
@@ -13459,11 +13457,9 @@ static void test_effect_gaussian_blur(BOOL d3d11)
     }
 
     f = effect_get_float_prop(effect, D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION);
-    todo_wine
     ok(f == 3.0f, "Unexpected value %.8e.\n", f);
 
     v = effect_get_enum_prop(effect, D2D1_GAUSSIANBLUR_PROP_OPTIMIZATION);
-    todo_wine
     ok(v == D2D1_GAUSSIANBLUR_OPTIMIZATION_BALANCED, "Unexpected value %u.\n", v);
 
     v = effect_get_enum_prop(effect, D2D1_GAUSSIANBLUR_PROP_BORDER_MODE);
@@ -13521,28 +13517,22 @@ static void test_effect_point_specular(BOOL d3d11)
             vec3.x, vec3.y, vec3.z);
 
     f = effect_get_float_prop(effect, D2D1_POINTSPECULAR_PROP_SPECULAR_EXPONENT);
-    todo_wine
     ok(f == 1.0f, "Unexpected value %.8e.\n", f);
 
     f = effect_get_float_prop(effect, D2D1_POINTSPECULAR_PROP_SPECULAR_CONSTANT);
-    todo_wine
     ok(f == 1.0f, "Unexpected value %.8e.\n", f);
 
     f = effect_get_float_prop(effect, D2D1_POINTSPECULAR_PROP_SURFACE_SCALE);
-    todo_wine
     ok(f == 1.0f, "Unexpected value %.8e.\n", f);
 
     vec3 = effect_get_vec3_prop(effect, D2D1_POINTSPECULAR_PROP_COLOR);
-    todo_wine
     ok(vec3.x == 1.0f && vec3.y == 1.0f && vec3.z == 1.0f, "Unexpected value {%.8e,%.8e,%.8e}.\n",
             vec3.x, vec3.y, vec3.z);
 
     vec2 = effect_get_vec2_prop(effect, D2D1_POINTSPECULAR_PROP_KERNEL_UNIT_LENGTH);
-    todo_wine
     ok(vec2.x == 1.0f && vec2.y == 1.0f, "Unexpected value {%.8e,%.8e}.\n", vec2.x, vec2.y);
 
     v = effect_get_enum_prop(effect, D2D1_POINTSPECULAR_PROP_SCALE_MODE);
-    todo_wine
     ok(v == D2D1_POINTSPECULAR_SCALE_MODE_LINEAR, "Unexpected value %u.\n", v);
 
     ID2D1Effect_Release(effect);
@@ -13586,7 +13576,6 @@ static void test_effect_arithmetic_composite(BOOL d3d11)
     }
 
     vec4 = effect_get_vec4_prop(effect, D2D1_ARITHMETICCOMPOSITE_PROP_COEFFICIENTS);
-    todo_wine
     ok(vec4.x == 1.0f && vec4.y == 0.0f && vec4.z == 0.0f && vec4.w == 0.0f,
             "Unexpected value {%.8e,%.8e,%.8e,%.8e}.\n", vec4.x, vec4.y, vec4.z, vec4.w);
 
@@ -13636,16 +13625,13 @@ static void test_effect_shadow(BOOL d3d11)
     }
 
     f = effect_get_float_prop(effect, D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION);
-    todo_wine
     ok(f == 3.0f, "Unexpected value %.8e.\n", f);
 
     vec4 = effect_get_vec4_prop(effect, D2D1_SHADOW_PROP_COLOR);
-    todo_wine
     ok(vec4.x == 0.0f && vec4.y == 0.0f && vec4.z == 0.0f && vec4.w == 1.0f,
             "Unexpected value {%.8e,%.8e,%.8e,%.8e}.\n", vec4.x, vec4.y, vec4.z, vec4.w);
 
     v = effect_get_enum_prop(effect, D2D1_SHADOW_PROP_OPTIMIZATION);
-    todo_wine
     ok(v == D2D1_SHADOW_OPTIMIZATION_BALANCED, "Unexpected value %#x.\n", v);
 
     ID2D1Effect_Release(effect);
@@ -13692,7 +13678,6 @@ static void test_effect_flood(BOOL d3d11)
     }
 
     vec4 = effect_get_vec4_prop(effect, D2D1_FLOOD_PROP_COLOR);
-    todo_wine
     ok(vec4.x == 0.0f && vec4.y == 0.0f && vec4.z == 0.0f && vec4.w == 1.0f,
             "Unexpected value {%.8e,%.8e,%.8e,%.8e}.\n", vec4.x, vec4.y, vec4.z, vec4.w);
 
@@ -13709,7 +13694,6 @@ static void test_effect_flood(BOOL d3d11)
     set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
     hr = ID2D1Effect_SetValue(effect, D2D1_FLOOD_PROP_COLOR, D2D1_PROPERTY_TYPE_VECTOR4,
             (const BYTE *)&color, sizeof(color));
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1DeviceContext_BeginDraw(context);
