@@ -3706,6 +3706,7 @@ void virtual_init(void)
             if (preload_reserve_start)
                 address_space_start = min( address_space_start, preload_reserve_start );
         }
+        unsetenv( "WINEPRELOADRESERVE" );
     }
 
     /* try to find space in a reserved area for the views and pages protection table */
