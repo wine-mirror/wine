@@ -19,6 +19,14 @@
 
 #include <limits.h>
 #include <math.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "ntsecapi.h"
 
 #include "jscript.h"
 
@@ -1387,4 +1395,30 @@ HRESULT init_arraybuf_constructors(script_ctx_t *ctx)
     }
 
     return hres;
+}
+
+HRESULT typed_array_get_random_values(jsdisp_t *obj)
+{
+    TypedArrayInstance *typedarr;
+    DWORD size;
+
+    if(!obj || obj->builtin_info->class < FIRST_TYPEDARRAY_JSCLASS || obj->builtin_info->class > LAST_TYPEDARRAY_JSCLASS)
+        return E_INVALIDARG;
+
+    if(obj->builtin_info->class == JSCLASS_FLOAT32ARRAY || obj->builtin_info->class == JSCLASS_FLOAT64ARRAY) {
+        /* FIXME: Return TypeMismatchError */
+        return E_FAIL;
+    }
+
+    typedarr = typedarr_from_jsdisp(obj);
+    size = typedarr->length * typed_array_descs[obj->builtin_info->class - FIRST_TYPEDARRAY_JSCLASS].size;
+    if(size > 65536) {
+        /* FIXME: Return QuotaExceededError */
+        return E_FAIL;
+    }
+
+    if(!RtlGenRandom(&typedarr->buffer->buf[typedarr->offset], size))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return S_OK;
 }

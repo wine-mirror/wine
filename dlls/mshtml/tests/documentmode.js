@@ -3703,6 +3703,82 @@ sync_test("__defineSetter__", function() {
     ok(x.setterVal === 9, "x.setterVal after setting bar = " + x.setterVal);
 });
 
+sync_test("Crypto", function() {
+    if(!window.msCrypto) return;
+
+    var list = [
+        [ "Int8Array",    65536 ],
+        [ "Uint8Array",   65536 ],
+        [ "Int16Array",   32768 ],
+        [ "Uint16Array",  32768 ],
+        [ "Int32Array",   16384 ],
+        [ "Uint32Array",  16384 ]
+    ];
+    for(var i = 0; i < list.length; i++) {
+        var constr = list[i][0];
+        arr = (window[constr])(list[i][1]);
+
+        ok(arr[0] === 0, constr + "[0] = " + arr[0]);
+        ok(arr[1] === 0, constr + "[1] = " + arr[1]);
+        r = msCrypto.getRandomValues(arr);
+        ok(r === arr, "getRandomValues returned " + r);
+
+        arr = (window[constr])(list[i][1]+1);
+        try {
+            msCrypto.getRandomValues(arr);
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            todo_wine.
+            ok(ex.name === "QuotaExceededError", "getRandomValues(oversized " + constr + ") threw " + ex.name);
+            todo_wine.
+            ok(n === 0, "getRandomValues(oversized " + constr + ") threw code " + n);
+            todo_wine.
+            ok(ex.message === "QuotaExceededError", "getRandomValues(oversized " + constr + ") threw message " + ex.message);
+        }
+    }
+
+    try {
+        msCrypto.getRandomValues(null);
+        ok(false, "getRandomValues(null) did not throw exception");
+    }catch(e) {
+        ok(e.number === 0x70057 - 0x80000000, "getRandomValues(null) threw " + e.number);
+    }
+    try {
+        msCrypto.getRandomValues(external.nullDisp);
+        ok(false, "getRandomValues(nullDisp) did not throw exception");
+    }catch(e) {
+        ok(e.number === 0x70057 - 0x80000000, "getRandomValues(nullDisp) threw " + e.number);
+    }
+    try {
+        msCrypto.getRandomValues([1,2,3]);
+        ok(false, "getRandomValues([1,2,3]) did not throw exception");
+    }catch(e) {
+        ok(e.number === 0x70057 - 0x80000000, "getRandomValues([1,2,3]) threw " + e.number);
+    }
+    arr = Float32Array(2);
+    try {
+        msCrypto.getRandomValues(arr);
+        ok(false, "getRandomValues(Float32Array) did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        todo_wine.
+        ok(ex.name === "TypeMismatchError", "getRandomValues(Float32Array) threw " + ex.name);
+        todo_wine.
+        ok(n === 0, "getRandomValues(Float32Array) threw code " + n);
+    }
+    arr = Float64Array(2);
+    try {
+        msCrypto.getRandomValues(arr);
+        ok(false, "getRandomValues(Float64Array) did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        todo_wine.
+        ok(ex.name === "TypeMismatchError", "getRandomValues(Float64Array) threw " + ex.name);
+        todo_wine.
+        ok(n === 0, "getRandomValues(Float64Array) threw code " + n);
+    }
+});
+
 sync_test("MutationObserver", function() {
     if (!window.MutationObserver) {
         return;

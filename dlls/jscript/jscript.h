@@ -494,6 +494,7 @@ HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,jsstr_t*,jsval_t*);
 
 BOOL bool_obj_value(jsdisp_t*);
 unsigned array_get_length(jsdisp_t*);
+HRESULT typed_array_get_random_values(jsdisp_t*);
 HRESULT localize_number(script_ctx_t*,DOUBLE,BOOL,jsstr_t**);
 
 BOOL is_builtin_eval_func(jsdisp_t*);

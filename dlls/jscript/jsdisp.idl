@@ -56,6 +56,7 @@ interface IWineJSDispatch : IDispatchEx
     HRESULT DefineProperty(const WCHAR *name, unsigned int flags, VARIANT *v);
     HRESULT UpdateProperty(struct property_info *desc);
     HRESULT GetScriptGlobal(IWineJSDispatchHost **ret);
+    HRESULT GetRandomValues();
 }
 
 [

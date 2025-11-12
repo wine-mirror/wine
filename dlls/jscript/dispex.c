@@ -2430,6 +2430,13 @@ static HRESULT WINAPI WineJSDispatch_GetScriptGlobal(IWineJSDispatch *iface, IWi
    return S_OK;
 }
 
+static HRESULT WINAPI WineJSDispatch_GetRandomValues(IWineJSDispatch *iface)
+{
+    jsdisp_t *This = impl_from_IWineJSDispatch(iface);
+
+    return typed_array_get_random_values(This);
+}
+
 static IWineJSDispatchVtbl DispatchExVtbl = {
     DispatchEx_QueryInterface,
     DispatchEx_AddRef,
@@ -2451,6 +2458,7 @@ static IWineJSDispatchVtbl DispatchExVtbl = {
     WineJSDispatch_DefineProperty,
     WineJSDispatch_UpdateProperty,
     WineJSDispatch_GetScriptGlobal,
+    WineJSDispatch_GetRandomValues,
 };
 
 jsdisp_t *as_jsdisp(IDispatch *disp)
