@@ -1256,7 +1256,8 @@ static VkResult win32u_vkCreateSwapchainKHR( VkDevice client_device, const VkSwa
      */
     if (NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetWinMonitorDpi( surface->hwnd, MDT_RAW_DPI ) ) &&
         !extents_equals( &create_info_host.imageExtent, &client_rect ) &&
-        instance->extensions.has_VK_EXT_surface_maintenance1 && physical_device->has_swapchain_maintenance1)
+        instance->extensions.has_VK_EXT_surface_maintenance1 &&
+        physical_device->extensions.has_VK_KHR_swapchain_maintenance1)
     {
         scaling.scalingBehavior = VK_PRESENT_SCALING_STRETCH_BIT_EXT;
         create_info_host.pNext = &scaling;
@@ -2271,6 +2272,11 @@ static void win32u_map_instance_extensions( struct vulkan_instance_extensions *e
     return driver_funcs->p_map_instance_extensions( extensions );
 }
 
+static void win32u_map_device_extensions( struct vulkan_device_extensions *extensions )
+{
+    return driver_funcs->p_map_device_extensions( extensions );
+}
+
 static struct vulkan_funcs vulkan_funcs =
 {
     .p_vkAcquireNextImage2KHR = win32u_vkAcquireNextImage2KHR,
@@ -2322,6 +2328,7 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkUnmapMemory2KHR = win32u_vkUnmapMemory2KHR,
     .p_get_host_extension = win32u_get_host_extension,
     .p_map_instance_extensions = win32u_map_instance_extensions,
+    .p_map_device_extensions = win32u_map_device_extensions,
 };
 
 static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
@@ -2359,12 +2366,23 @@ static void nulldrv_map_instance_extensions( struct vulkan_instance_extensions *
     if (extensions->has_VK_EXT_headless_surface) extensions->has_VK_KHR_win32_surface = 1;
 }
 
+static void nulldrv_map_device_extensions( struct vulkan_device_extensions *extensions )
+{
+    if (extensions->has_VK_KHR_external_memory_win32) extensions->has_VK_KHR_external_memory_fd = 1;
+    if (extensions->has_VK_KHR_external_memory_fd) extensions->has_VK_KHR_external_memory_win32 = 1;
+    if (extensions->has_VK_KHR_external_semaphore_win32) extensions->has_VK_KHR_external_semaphore_fd = 1;
+    if (extensions->has_VK_KHR_external_semaphore_fd) extensions->has_VK_KHR_external_semaphore_win32 = 1;
+    if (extensions->has_VK_KHR_external_fence_win32) extensions->has_VK_KHR_external_fence_fd = 1;
+    if (extensions->has_VK_KHR_external_fence_fd) extensions->has_VK_KHR_external_fence_win32 = 1;
+}
+
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = nulldrv_get_physical_device_presentation_support,
     .p_get_host_extension = nulldrv_get_host_extension,
     .p_map_instance_extensions = nulldrv_map_instance_extensions,
+    .p_map_device_extensions = nulldrv_map_device_extensions,
 };
 
 static void vulkan_driver_init(void)
@@ -2412,12 +2430,19 @@ static void lazydrv_map_instance_extensions( struct vulkan_instance_extensions *
     return driver_funcs->p_map_instance_extensions( extensions );
 }
 
+static void lazydrv_map_device_extensions( struct vulkan_device_extensions *extensions )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_map_device_extensions( extensions );
+}
+
 static const struct vulkan_driver_funcs lazydrv_funcs =
 {
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = lazydrv_get_physical_device_presentation_support,
     .p_get_host_extension = lazydrv_get_host_extension,
     .p_map_instance_extensions = lazydrv_map_instance_extensions,
+    .p_map_device_extensions = lazydrv_map_device_extensions,
 };
 
 static void vulkan_init_once(void)

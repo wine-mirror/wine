@@ -52929,7 +52929,7 @@ static NTSTATUS thunk64_vkEnumerateDeviceExtensionProperties(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
 
-    params->result = wine_vkEnumerateDeviceExtensionProperties(params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkEnumerateDeviceExtensionProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pLayerName, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52947,7 +52947,7 @@ static NTSTATUS thunk32_vkEnumerateDeviceExtensionProperties(void *args)
 
     TRACE("%#x, %#x, %#x, %#x\n", params->physicalDevice, params->pLayerName, params->pPropertyCount, params->pProperties);
 
-    params->result = wine_vkEnumerateDeviceExtensionProperties((VkPhysicalDevice)UlongToPtr(params->physicalDevice), (const char *)UlongToPtr(params->pLayerName), (uint32_t *)UlongToPtr(params->pPropertyCount), (VkExtensionProperties *)UlongToPtr(params->pProperties));
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkEnumerateDeviceExtensionProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (const char *)UlongToPtr(params->pLayerName), (uint32_t *)UlongToPtr(params->pPropertyCount), (VkExtensionProperties *)UlongToPtr(params->pProperties));
     return STATUS_SUCCESS;
 }
 

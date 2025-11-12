@@ -319,90 +319,41 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     return VK_FALSE;
 }
 
-static void vulkan_physical_device_cleanup(struct vulkan_physical_device *physical_device)
-{
-    free(physical_device->extensions);
-}
-
 static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physical_device,
         VkPhysicalDevice host_physical_device, VkPhysicalDevice client_physical_device,
         struct vulkan_instance *instance)
 {
-    BOOL have_memory_placed = FALSE, have_map_memory2 = FALSE;
-    uint32_t num_host_properties, num_properties = 0;
-    VkExtensionProperties *host_properties = NULL;
-    BOOL have_external_memory_host = FALSE, have_external_semaphore = FALSE;
+    struct vulkan_device_extensions extensions = {0};
+    VkExtensionProperties *properties;
+    uint32_t count;
     VkResult res;
-    unsigned int i, j;
 
     vulkan_object_init_ptr(&physical_device->obj, (UINT_PTR)host_physical_device, &client_physical_device->obj);
     physical_device->instance = instance;
 
     instance->p_vkGetPhysicalDeviceMemoryProperties(host_physical_device, &physical_device->memory_properties);
 
-    res = instance->p_vkEnumerateDeviceExtensionProperties(host_physical_device,
-            NULL, &num_host_properties, NULL);
-    if (res != VK_SUCCESS)
+    if ((res = instance->p_vkEnumerateDeviceExtensionProperties(host_physical_device, NULL, &count, NULL))) return res;
+    if (!(properties = calloc(count, sizeof(*properties)))) return res;
+    if ((res = instance->p_vkEnumerateDeviceExtensionProperties(host_physical_device, NULL, &count, properties))) goto done;
+
+    TRACE("Host physical device extensions:\n");
+    for (uint32_t i = 0; i < count; i++)
     {
-        ERR("Failed to enumerate device extensions, res=%d\n", res);
-        goto err;
+        const char *extension = properties[i].extensionName;
+#define USE_VK_EXT(x)                           \
+        if (!strcmp(extension, #x))             \
+        {                                       \
+            extensions.has_ ## x = 1;           \
+            TRACE("  - %s\n", extension);       \
+        } else
+        ALL_VK_DEVICE_EXTS
+#undef USE_VK_EXT
+        WARN("Extension %s is not supported.\n", debugstr_a(extension));
     }
+    physical_device->extensions = extensions;
 
-    host_properties = calloc(num_host_properties, sizeof(*host_properties));
-    if (!host_properties)
-    {
-        ERR("Failed to allocate memory for device properties!\n");
-        goto err;
-    }
-
-    res = instance->p_vkEnumerateDeviceExtensionProperties(host_physical_device,
-            NULL, &num_host_properties, host_properties);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to enumerate device extensions, res=%d\n", res);
-        goto err;
-    }
-
-    /* Count list of extensions for which we have an implementation.
-     * TODO: perform translation for platform specific extensions.
-     */
-    for (i = 0; i < num_host_properties; i++)
-    {
-        if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32"))
-                || !strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32"))
-                || !strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32"))
-                || wine_vk_device_extension_supported(host_properties[i].extensionName))
-        {
-            TRACE("Enabling extension '%s' for physical device %p\n", host_properties[i].extensionName, physical_device);
-            num_properties++;
-        }
-        else
-        {
-            TRACE("Skipping extension '%s', no implementation found in winevulkan.\n", host_properties[i].extensionName);
-        }
-        if (!strcmp(host_properties[i].extensionName, "VK_EXT_external_memory_host"))
-            have_external_memory_host = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32")))
-            have_external_semaphore = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, "VK_EXT_map_memory_placed"))
-            have_memory_placed = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, "VK_EXT_swapchain_maintenance1"))
-            physical_device->has_swapchain_maintenance1 = true;
-        else if (!strcmp(host_properties[i].extensionName, "VK_KHR_map_memory2"))
-            have_map_memory2 = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, "VK_KHR_timeline_semaphore"))
-            num_properties++;
-    }
-
-    TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
-
-    if (!(physical_device->extensions = calloc(num_properties, sizeof(*physical_device->extensions))))
-    {
-        ERR("Failed to allocate memory for device extensions!\n");
-        goto err;
-    }
-
-    if (zero_bits && have_memory_placed && have_map_memory2)
+    if (zero_bits && physical_device->extensions.has_VK_EXT_map_memory_placed && physical_device->extensions.has_VK_KHR_map_memory2)
     {
         VkPhysicalDeviceMapMemoryPlacedFeaturesEXT map_placed_feature =
         {
@@ -433,7 +384,7 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
         }
     }
 
-    if (zero_bits && have_external_memory_host && !physical_device->map_placed_align)
+    if (zero_bits && physical_device->extensions.has_VK_EXT_external_memory_host && !physical_device->map_placed_align)
     {
         VkPhysicalDeviceExternalMemoryHostPropertiesEXT host_mem_props =
         {
@@ -451,47 +402,21 @@ static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physi
                   physical_device->external_memory_align);
     }
 
-    for (i = 0, j = 0; i < num_host_properties; i++)
+    vk_funcs->p_map_device_extensions(&extensions);
+    if (extensions.has_VK_KHR_external_memory_win32 && zero_bits && !physical_device->map_placed_align)
     {
-        if (have_external_semaphore && !strcmp(host_properties[i].extensionName, "VK_KHR_timeline_semaphore"))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_win32_keyed_mutex");
-            physical_device->extensions[j++].specVersion = VK_KHR_WIN32_KEYED_MUTEX_SPEC_VERSION;
-        }
-        if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32")))
-        {
-            if (zero_bits && !physical_device->map_placed_align)
-            {
-                WARN("Cannot export WOW64 memory without VK_EXT_map_memory_placed\n");
-                continue;
-            }
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_memory_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_MEMORY_WIN32_SPEC_VERSION;
-        }
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32")))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_semaphore_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_SEMAPHORE_WIN32_SPEC_VERSION;
-        }
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32")))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_fence_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_FENCE_WIN32_SPEC_VERSION;
-        }
-        else if (wine_vk_device_extension_supported(host_properties[i].extensionName))
-        {
-            physical_device->extensions[j] = host_properties[i];
-            j++;
-        }
+        WARN("Cannot export WOW64 memory without VK_EXT_map_memory_placed\n");
+        extensions.has_VK_KHR_external_memory_win32 = 0;
     }
-    physical_device->extension_count = j;
+    extensions.has_VK_KHR_win32_keyed_mutex = extensions.has_VK_KHR_timeline_semaphore;
 
-    free(host_properties);
-    return VK_SUCCESS;
+    /* filter out unsupported client device extensions */
+#define USE_VK_EXT(x) client_physical_device->extensions.has_ ## x = extensions.has_ ## x;
+    ALL_VK_CLIENT_DEVICE_EXTS
+#undef USE_VK_EXT
 
-err:
-    vulkan_physical_device_cleanup(physical_device);
-    free(host_properties);
+done:
+    free(properties);
     return res;
 }
 
@@ -649,7 +574,7 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
     }
 
     /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
-    if (physical_device->has_swapchain_maintenance1 && has_swapchain && !has_swapchain_maintenance1)
+    if (physical_device->extensions.has_VK_EXT_swapchain_maintenance1 && has_swapchain && !has_swapchain_maintenance1)
         extensions[count++] = "VK_EXT_swapchain_maintenance1";
 
     TRACE("Enabling %u device extensions\n", count);
@@ -865,7 +790,6 @@ static VkResult wine_vk_instance_init_physical_devices(struct vulkan_instance *i
     return VK_SUCCESS;
 
 err:
-    while (i) vulkan_physical_device_cleanup(&physical_devices[--i]);
     free(host_physical_devices);
     return res;
 }
@@ -1122,40 +1046,12 @@ void wine_vkDestroyInstance(VkInstance client_instance, const VkAllocationCallba
 
     instance->obj.p_vkDestroyInstance(instance->obj.host.instance, NULL /* allocator */);
     for (i = 0; i < instance->obj.physical_device_count; i++)
-    {
         vulkan_instance_remove_object(&instance->obj, &instance->obj.physical_devices[i].obj);
-        vulkan_physical_device_cleanup(&instance->obj.physical_devices[i]);
-    }
     vulkan_instance_remove_object(&instance->obj, &instance->obj.obj);
 
     if (instance->objects.compare) pthread_rwlock_destroy(&instance->objects_lock);
     free(instance->utils_messengers);
     free(instance);
-}
-
-VkResult wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice client_physical_device, const char *layer_name,
-                                                   uint32_t *count, VkExtensionProperties *properties)
-{
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-
-    /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
-    if (layer_name)
-    {
-        ERR("Layer enumeration not supported from ICD.\n");
-        return VK_ERROR_LAYER_NOT_PRESENT;
-    }
-
-    if (!properties)
-    {
-        *count = physical_device->extension_count;
-        return VK_SUCCESS;
-    }
-
-    *count = min(*count, physical_device->extension_count);
-    memcpy(properties, physical_device->extensions, *count * sizeof(*properties));
-
-    TRACE("Returning %u extensions.\n", *count);
-    return *count < physical_device->extension_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
 VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t *count,

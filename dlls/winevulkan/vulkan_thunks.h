@@ -34,7 +34,6 @@ void wine_vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 void wine_vkDestroyDeferredOperationKHR(VkDevice device, VkDeferredOperationKHR operation, const VkAllocationCallbacks *pAllocator);
 void wine_vkDestroyDevice(VkDevice device, const VkAllocationCallbacks *pAllocator);
 void wine_vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *pAllocator);
-VkResult wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties);
 VkResult wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkLayerProperties *pProperties);
 VkResult wine_vkEnumerateInstanceExtensionProperties(const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties);
 VkResult wine_vkEnumerateInstanceVersion(uint32_t *pApiVersion);

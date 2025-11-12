@@ -4256,19 +4256,6 @@ VkResult WINAPI vkEndCommandBuffer(VkCommandBuffer commandBuffer)
     return params.result;
 }
 
-VkResult WINAPI vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties)
-{
-    struct vkEnumerateDeviceExtensionProperties_params params;
-    NTSTATUS status;
-    params.physicalDevice = physicalDevice;
-    params.pLayerName = pLayerName;
-    params.pPropertyCount = pPropertyCount;
-    params.pProperties = pProperties;
-    status = UNIX_CALL(vkEnumerateDeviceExtensionProperties, &params);
-    assert(!status && "vkEnumerateDeviceExtensionProperties");
-    return params.result;
-}
-
 VkResult WINAPI vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkLayerProperties *pProperties)
 {
     struct vkEnumerateDeviceLayerProperties_params params;

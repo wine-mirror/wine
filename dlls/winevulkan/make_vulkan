@@ -255,7 +255,6 @@ MANUAL_UNIX_THUNKS = {
     "vkDestroyDeferredOperationKHR",
     "vkDestroyDevice",
     "vkDestroyInstance",
-    "vkEnumerateDeviceExtensionProperties",
     "vkEnumerateDeviceLayerProperties",
     "vkEnumerateInstanceExtensionProperties",
     "vkEnumerateInstanceLayerProperties",
@@ -292,6 +291,7 @@ MANUAL_LOADER_THUNKS = {
     "vkDestroyCommandPool",
     "vkDestroyDevice",
     "vkDestroyInstance",
+    "vkEnumerateDeviceExtensionProperties",
     "vkEnumerateInstanceExtensionProperties",
     "vkEnumerateInstanceVersion",
     "vkFreeCommandBuffers",
@@ -2968,21 +2968,31 @@ class VkGenerator(object):
             f.write("{0};\n".format(func.prototype(call_conv="VKAPI_CALL")))
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
-        f.write("#define ALL_VK_DEVICE_FUNCS \\\n")
-        first = True
+        f.write("#define ALL_VK_DEVICE_FUNCS")
         for vk_func in self.registry.device_funcs:
             if not vk_func.is_required():
                 continue
-
             if not vk_func.needs_dispatch():
-                LOGGER.debug("skipping {0} in ALL_VK_DEVICE_FUNCS".format(vk_func.name))
                 continue
+            f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        f.write("\n\n")
 
-            if first:
-                f.write("    USE_VK_FUNC({0})".format(vk_func.name))
-                first = False
-            else:
-                f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        f.write("#define ALL_VK_CLIENT_DEVICE_EXTS")
+        for ext in self.registry.extensions:
+            if ext["type"] != "device":
+                continue
+            if ext["name"] in UNEXPOSED_EXTENSIONS:
+                continue
+            f.write(f" \\\n    USE_VK_EXT({ext["name"]})")
+        f.write("\n\n")
+
+        f.write("#define ALL_VK_DEVICE_EXTS ALL_VK_CLIENT_DEVICE_EXTS")
+        for ext in self.registry.extensions:
+            if ext["type"] != "device":
+                continue
+            if ext["name"] not in UNEXPOSED_EXTENSIONS:
+                continue
+            f.write(f" \\\n    USE_VK_EXT({ext["name"]})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS")

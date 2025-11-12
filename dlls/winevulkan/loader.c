@@ -340,6 +340,15 @@ static BOOL is_instance_extension_supported(const char *extension, struct vulkan
     return FALSE;
 }
 
+static BOOL is_device_extension_supported(VkPhysicalDevice physical_device, const char *extension, struct vulkan_device_extensions *extensions)
+{
+#define USE_VK_EXT(x) if (!strcmp(extension, #x)) return (extensions->has_ ## x = physical_device->extensions.has_ ## x);
+    ALL_VK_CLIENT_DEVICE_EXTS
+#undef USE_VK_EXT
+    WARN("Extension %s is not supported.\n", debugstr_a(extension));
+    return FALSE;
+}
+
 VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *ret)
 {
@@ -461,6 +470,80 @@ VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         if (j == capacity) return VK_INCOMPLETE;
         TRACE("  - VK_KHR_win32_surface\n");
         properties[j++] = VK_KHR_win32_surface;
+    }
+    *count = j;
+
+    return params.result;
+}
+
+VkResult WINAPI vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physical_device, const char *layer_name,
+        uint32_t *count, VkExtensionProperties *properties)
+{
+    struct vkEnumerateDeviceExtensionProperties_params params;
+    struct vulkan_device_extensions extensions = {0};
+    uint32_t i, j, capacity = *count;
+    NTSTATUS status;
+
+    TRACE("%p, %p, %p, %p\n", physical_device, layer_name, count, properties);
+
+    if (layer_name)
+    {
+        WARN("Layer enumeration not supported from ICD.\n");
+        return VK_ERROR_LAYER_NOT_PRESENT;
+    }
+
+    params.physicalDevice = physical_device;
+    params.pLayerName = layer_name;
+    params.pPropertyCount = count;
+    params.pProperties = properties;
+    status = UNIX_CALL(vkEnumerateDeviceExtensionProperties, &params);
+    assert(!status && "vkEnumerateDeviceExtensionProperties");
+    if (params.result) return params.result;
+
+    if (!properties)
+    {
+        if (physical_device->extensions.has_VK_KHR_external_memory_win32) *count += 1;
+        if (physical_device->extensions.has_VK_KHR_external_fence_win32) *count += 1;
+        if (physical_device->extensions.has_VK_KHR_external_semaphore_win32) *count += 1;
+        if (physical_device->extensions.has_VK_KHR_win32_keyed_mutex) *count += 1;
+        return params.result;
+    }
+
+    TRACE("Client physical device extensions:\n");
+    for (i = 0, j = 0; i < *count; i++)
+    {
+        const char *extension = properties[i].extensionName;
+        if (!is_device_extension_supported(physical_device, extension, &extensions)) continue;
+        TRACE("  - %s\n", extension);
+        properties[j++] = properties[i];
+    }
+    if (physical_device->extensions.has_VK_KHR_external_memory_win32)
+    {
+        static const VkExtensionProperties VK_KHR_external_memory_win32 = {VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME, VK_KHR_EXTERNAL_MEMORY_WIN32_SPEC_VERSION};
+        if (j == capacity) return VK_INCOMPLETE;
+        TRACE("  - VK_KHR_external_memory_win32\n");
+        properties[j++] = VK_KHR_external_memory_win32;
+    }
+    if (physical_device->extensions.has_VK_KHR_external_fence_win32)
+    {
+        static const VkExtensionProperties VK_KHR_external_fence_win32 = {VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME, VK_KHR_EXTERNAL_FENCE_WIN32_SPEC_VERSION};
+        if (j == capacity) return VK_INCOMPLETE;
+        TRACE("  - VK_KHR_external_fence_win32\n");
+        properties[j++] = VK_KHR_external_fence_win32;
+    }
+    if (physical_device->extensions.has_VK_KHR_external_semaphore_win32)
+    {
+        static const VkExtensionProperties VK_KHR_external_semaphore_win32 = {VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME, VK_KHR_EXTERNAL_SEMAPHORE_WIN32_SPEC_VERSION};
+        if (j == capacity) return VK_INCOMPLETE;
+        TRACE("  - VK_KHR_external_semaphore_win32\n");
+        properties[j++] = VK_KHR_external_semaphore_win32;
+    }
+    if (physical_device->extensions.has_VK_KHR_win32_keyed_mutex)
+    {
+        static const VkExtensionProperties VK_KHR_win32_keyed_mutex = {VK_KHR_WIN32_KEYED_MUTEX_EXTENSION_NAME, VK_KHR_WIN32_KEYED_MUTEX_SPEC_VERSION};
+        if (j == capacity) return VK_INCOMPLETE;
+        TRACE("  - VK_KHR_win32_keyed_mutex\n");
+        properties[j++] = VK_KHR_win32_keyed_mutex;
     }
     *count = j;
 

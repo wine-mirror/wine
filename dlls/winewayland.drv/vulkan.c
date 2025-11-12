@@ -95,12 +95,23 @@ static void wayland_map_instance_extensions(struct vulkan_instance_extensions *e
     if (extensions->has_VK_KHR_wayland_surface) extensions->has_VK_KHR_win32_surface = 1;
 }
 
+static void wayland_map_device_extensions(struct vulkan_device_extensions *extensions)
+{
+    if (extensions->has_VK_KHR_external_memory_win32) extensions->has_VK_KHR_external_memory_fd = 1;
+    if (extensions->has_VK_KHR_external_memory_fd) extensions->has_VK_KHR_external_memory_win32 = 1;
+    if (extensions->has_VK_KHR_external_semaphore_win32) extensions->has_VK_KHR_external_semaphore_fd = 1;
+    if (extensions->has_VK_KHR_external_semaphore_fd) extensions->has_VK_KHR_external_semaphore_win32 = 1;
+    if (extensions->has_VK_KHR_external_fence_win32) extensions->has_VK_KHR_external_fence_fd = 1;
+    if (extensions->has_VK_KHR_external_fence_fd) extensions->has_VK_KHR_external_fence_win32 = 1;
+}
+
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = wayland_vulkan_surface_create,
     .p_get_physical_device_presentation_support = wayland_get_physical_device_presentation_support,
     .p_get_host_extension = wayland_get_host_extension,
     .p_map_instance_extensions = wayland_map_instance_extensions,
+    .p_map_device_extensions = wayland_map_device_extensions,
 };
 
 /**********************************************************************
