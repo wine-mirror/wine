@@ -1044,6 +1044,17 @@ static UINT read_drm_device_prop( const char *name, const char *prop )
     return value;
 }
 
+static const char *opengl_vendor_to_name( UINT16 vendor, const char *default_name )
+{
+    switch (vendor)
+    {
+    case 0x8086: return "Intel";
+    case 0x1002: return "ATI Technologies Inc.";
+    case 0x10de: return "NVIDIA Corporation";
+    default:     return default_name;
+    }
+}
+
 static void init_device_info( struct egl_platform *egl, const struct opengl_funcs *funcs )
 {
     static const UINT versions[] = {46, 45, 44, 43, 42, 41, 40, 33, 32, 31, 30, 21, 20, 15, 14, 13, 12, 11, 10, 0};
@@ -1107,9 +1118,9 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
         funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, context );
 
         egl->device_name = (const char *)funcs->p_glGetString( GL_RENDERER );
-        egl->vendor_name = (const char *)funcs->p_glGetString( GL_VENDOR );
-        TRACE( "  - device_name: %s\n", egl->device_name );
-        TRACE( "  - vendor_name: %s\n", egl->vendor_name );
+        egl->vendor_name = opengl_vendor_to_name( egl->vendor_id, (const char *)funcs->p_glGetString( GL_VENDOR ) );
+        TRACE( "  - device_name: %s\n", debugstr_a( egl->device_name ) );
+        TRACE( "  - vendor_name: %s\n", debugstr_a( egl->vendor_name ) );
 
         if ((str = (const char *)funcs->p_glGetString( GL_VERSION )) && (str = strrchr( str, ' ' )) &&
             (count = sscanf( str, "%u.%u.%u", &values[0], &values[1], &values[2] )) >= 2)
