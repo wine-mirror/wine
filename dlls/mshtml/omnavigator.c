@@ -2713,9 +2713,195 @@ HRESULT create_media_query_list(HTMLInnerWindow *window, BSTR media_query, IDisp
     return S_OK;
 }
 
+struct crypto_subtle {
+    DispatchEx dispex;
+    IWineMSHTMLSubtleCrypto IWineMSHTMLSubtleCrypto_iface;
+};
+
+static inline struct crypto_subtle *impl_from_IWineMSHTMLSubtleCrypto(IWineMSHTMLSubtleCrypto *iface)
+{
+    return CONTAINING_RECORD(iface, struct crypto_subtle, IWineMSHTMLSubtleCrypto_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(crypto_subtle, IWineMSHTMLSubtleCrypto, impl_from_IWineMSHTMLSubtleCrypto(iface)->dispex)
+
+static HRESULT WINAPI crypto_subtle_encrypt(IWineMSHTMLSubtleCrypto *iface, VARIANT *algorithm, VARIANT *key,
+        VARIANT *data, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%p %p %p %p)\n", subtle, algorithm, key, data, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_decrypt(IWineMSHTMLSubtleCrypto *iface, VARIANT *algorithm, VARIANT *key,
+        VARIANT *data, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%p %p %p %p)\n", subtle, algorithm, key, data, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_sign(IWineMSHTMLSubtleCrypto *iface, VARIANT *algorithm, VARIANT *key,
+        VARIANT *data, IDispatch **signature)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%p %p %p %p)\n", subtle, algorithm, key, data, signature);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_verify(IWineMSHTMLSubtleCrypto *iface, VARIANT *algorithm, VARIANT *key,
+        VARIANT *signature, VARIANT *data, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%p %p %p %p %p)\n", subtle, algorithm, key, signature, data, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_digest(IWineMSHTMLSubtleCrypto *iface, VARIANT *algorithm, VARIANT *data,
+        IDispatch **digest)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%p %p %p)\n", subtle, algorithm, data, digest);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_generateKey(IWineMSHTMLSubtleCrypto *iface, VARIANT *algorithm,
+        VARIANT_BOOL extractable, VARIANT *keyUsages, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%p %x %p %p)\n", subtle, algorithm, extractable, keyUsages, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_deriveKey(IWineMSHTMLSubtleCrypto *iface, VARIANT *algorithm, VARIANT *baseKey,
+        VARIANT *derivedKeyAlgorithm, VARIANT_BOOL extractable, VARIANT *keyUsages, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%p %p %p %x %p %p)\n", subtle, algorithm, baseKey, derivedKeyAlgorithm, extractable,
+          keyUsages, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_importKey(IWineMSHTMLSubtleCrypto *iface, BSTR format, VARIANT *keyData,
+        VARIANT *algorithm, VARIANT_BOOL extractable, VARIANT *keyUsages, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%s %p %p %x %p %p)\n", subtle, debugstr_w(format), keyData, algorithm, extractable,
+          keyUsages, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_exportKey(IWineMSHTMLSubtleCrypto *iface, BSTR format, VARIANT *key,
+        IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%s %p %p)\n", subtle, debugstr_w(format), key, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_wrapKey(IWineMSHTMLSubtleCrypto *iface, BSTR format, VARIANT *key,
+        VARIANT *wrappingKey, VARIANT *wrapAlgo, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%s %p %p %p %p)\n", subtle, debugstr_w(format), key, wrappingKey, wrapAlgo, result);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI crypto_subtle_unwrapKey(IWineMSHTMLSubtleCrypto *iface, BSTR format, VARIANT *wrappedKey,
+        VARIANT *unwrappingKey, VARIANT *unwrapAlgo, VARIANT *unwrappedKeyAlgo, VARIANT_BOOL extractable,
+        VARIANT *keyUsages, IDispatch **result)
+{
+    struct crypto_subtle *subtle = impl_from_IWineMSHTMLSubtleCrypto(iface);
+
+    FIXME("(%p)->(%s %p %p %p %p %x %p %p)\n", subtle, debugstr_w(format), wrappedKey, unwrappingKey, unwrapAlgo,
+          unwrappedKeyAlgo, extractable, keyUsages, result);
+
+    return E_NOTIMPL;
+}
+
+static const IWineMSHTMLSubtleCryptoVtbl WineMSHTMLSubtleCryptoVtbl = {
+    crypto_subtle_QueryInterface,
+    crypto_subtle_AddRef,
+    crypto_subtle_Release,
+    crypto_subtle_GetTypeInfoCount,
+    crypto_subtle_GetTypeInfo,
+    crypto_subtle_GetIDsOfNames,
+    crypto_subtle_Invoke,
+    crypto_subtle_encrypt,
+    crypto_subtle_decrypt,
+    crypto_subtle_sign,
+    crypto_subtle_verify,
+    crypto_subtle_digest,
+    crypto_subtle_generateKey,
+    crypto_subtle_deriveKey,
+    crypto_subtle_importKey,
+    crypto_subtle_exportKey,
+    crypto_subtle_wrapKey,
+    crypto_subtle_unwrapKey
+};
+
+static inline struct crypto_subtle *crypto_subtle_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct crypto_subtle, dispex);
+}
+
+static void *crypto_subtle_query_interface(DispatchEx *dispex, REFIID riid)
+{
+    struct crypto_subtle *subtle = crypto_subtle_from_DispatchEx(dispex);
+
+    if(IsEqualGUID(&IID_IWineMSHTMLSubtleCrypto, riid))
+        return &subtle->IWineMSHTMLSubtleCrypto_iface;
+
+    return NULL;
+}
+
+static void crypto_subtle_destructor(DispatchEx *dispex)
+{
+    struct crypto_subtle *subtle = crypto_subtle_from_DispatchEx(dispex);
+    free(subtle);
+}
+
+static const dispex_static_data_vtbl_t crypto_subtle_dispex_vtbl = {
+    .query_interface  = crypto_subtle_query_interface,
+    .destructor       = crypto_subtle_destructor
+};
+
+static const tid_t crypto_subtle_iface_tids[] = {
+    IWineMSHTMLSubtleCrypto_tid,
+    0
+};
+dispex_static_data_t SubtleCrypto_dispex = {
+    .id              = OBJID_SubtleCrypto,
+    .vtbl            = &crypto_subtle_dispex_vtbl,
+    .disp_tid        = IWineMSHTMLSubtleCrypto_tid,
+    .iface_tids      = crypto_subtle_iface_tids,
+    .min_compat_mode = COMPAT_MODE_IE11,
+};
+
 struct crypto {
     DispatchEx dispex;
     IWineMSHTMLCrypto IWineMSHTMLCrypto_iface;
+    struct crypto_subtle *subtle;
 };
 
 static inline struct crypto *impl_from_IWineMSHTMLCrypto(IWineMSHTMLCrypto *iface)
@@ -2729,9 +2915,11 @@ static HRESULT WINAPI crypto_get_subtle(IWineMSHTMLCrypto *iface, IDispatch **su
 {
     struct crypto *crypto = impl_from_IWineMSHTMLCrypto(iface);
 
-    FIXME("(%p)->(%p)\n", crypto, subtle);
+    TRACE("(%p)->(%p)\n", crypto, subtle);
 
-    return E_NOTIMPL;
+    *subtle = (IDispatch*)&crypto->subtle->dispex.IWineJSDispatchHost_iface;
+    IWineMSHTMLSubtleCrypto_AddRef(&crypto->subtle->IWineMSHTMLSubtleCrypto_iface);
+    return S_OK;
 }
 
 static HRESULT WINAPI crypto_getRandomValues(IWineMSHTMLCrypto *iface, IDispatch *typedArray, IDispatch **ret)
@@ -2770,6 +2958,25 @@ static void *crypto_query_interface(DispatchEx *dispex, REFIID riid)
     return NULL;
 }
 
+static void crypto_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    struct crypto *This = crypto_from_DispatchEx(dispex);
+
+    if(This->subtle)
+        note_cc_edge((nsISupports*)&This->subtle->dispex.IWineJSDispatchHost_iface, "subtle", cb);
+}
+
+static void crypto_unlink(DispatchEx *dispex)
+{
+    struct crypto *This = crypto_from_DispatchEx(dispex);
+
+    if(This->subtle) {
+        struct crypto_subtle *subtle = This->subtle;
+        This->subtle = NULL;
+        IWineJSDispatchHost_Release(&subtle->dispex.IWineJSDispatchHost_iface);
+    }
+}
+
 static void crypto_destructor(DispatchEx *dispex)
 {
     struct crypto *This = crypto_from_DispatchEx(dispex);
@@ -2779,6 +2986,8 @@ static void crypto_destructor(DispatchEx *dispex)
 static const dispex_static_data_vtbl_t crypto_dispex_vtbl = {
     .query_interface  = crypto_query_interface,
     .destructor       = crypto_destructor,
+    .traverse         = crypto_traverse,
+    .unlink           = crypto_unlink
 };
 
 static const tid_t crypto_iface_tids[] = {
@@ -2795,13 +3004,23 @@ dispex_static_data_t Crypto_dispex = {
 
 HRESULT create_crypto(HTMLInnerWindow *window, IWineMSHTMLCrypto **ret)
 {
+    compat_mode_t compat_mode = dispex_compat_mode(&window->event_target.dispex);
+    struct crypto_subtle *subtle;
     struct crypto *crypto;
 
     if(!(crypto = calloc(1, sizeof(*crypto))))
         return E_OUTOFMEMORY;
+    if(!(subtle = calloc(1, sizeof(*subtle)))) {
+        free(crypto);
+        return E_OUTOFMEMORY;
+    }
 
     crypto->IWineMSHTMLCrypto_iface.lpVtbl = &WineMSHTMLCryptoVtbl;
-    init_dispatch(&crypto->dispex, &Crypto_dispex, window, dispex_compat_mode(&window->event_target.dispex));
+    crypto->subtle = subtle;
+    init_dispatch(&crypto->dispex, &Crypto_dispex, window, compat_mode);
+
+    subtle->IWineMSHTMLSubtleCrypto_iface.lpVtbl = &WineMSHTMLSubtleCryptoVtbl;
+    init_dispatch(&subtle->dispex, &SubtleCrypto_dispex, window, compat_mode);
 
     *ret = &crypto->IWineMSHTMLCrypto_iface;
     return S_OK;

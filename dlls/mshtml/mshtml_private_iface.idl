@@ -128,6 +128,46 @@ interface IWineMSHTMLCrypto : IDispatch
     HRESULT getRandomValues([in] IDispatch *typedArray, [retval, out] IDispatch **ret);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(fd55b4b6-2813-4fb4-829d-380099474ab3)
+]
+interface IWineMSHTMLSubtleCrypto : IDispatch
+{
+    [id(1)]
+    HRESULT encrypt([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *data, [retval, out] IDispatch **result);
+    [id(2)]
+    HRESULT decrypt([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *data, [retval, out] IDispatch **result);
+    [id(3)]
+    HRESULT sign([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *data, [retval, out] IDispatch **signature);
+    [id(4)]
+    HRESULT verify([in] VARIANT *algorithm, [in] VARIANT *key, [in] VARIANT *signature, [in] VARIANT *data,
+                   [retval, out] IDispatch **result);
+    [id(5)]
+    HRESULT digest([in] VARIANT *algorithm, [in] VARIANT *data, [retval, out] IDispatch **digest);
+    [id(6)]
+    HRESULT generateKey([in] VARIANT *algorithm, VARIANT_BOOL extractable, [in] VARIANT *keyUsages,
+                        [retval, out] IDispatch **result);
+    [id(7)]
+    HRESULT deriveKey([in] VARIANT *algorithm, [in] VARIANT *baseKey, [in] VARIANT *derivedKeyAlgorithm,
+                      VARIANT_BOOL extractable, [in] VARIANT *keyUsages, [retval, out] IDispatch **result);
+    [id(8)]
+    HRESULT importKey([in] BSTR format, [in] VARIANT *keyData, [in] VARIANT *algorithm, VARIANT_BOOL extractable,
+                      [in] VARIANT *keyUsages, [retval, out] IDispatch **result);
+    [id(9)]
+    HRESULT exportKey([in] BSTR format, [in] VARIANT *key, [retval, out] IDispatch **result);
+    [id(10)]
+    HRESULT wrapKey([in] BSTR format, [in] VARIANT *key, [in] VARIANT *wrappingKey, [in] VARIANT *wrapAlgo,
+                    [retval, out] IDispatch **result);
+    [id(11)]
+    HRESULT unwrapKey([in] BSTR format, [in] VARIANT *wrappedKey, [in] VARIANT *unwrappingKey,
+                      [in] VARIANT *unwrapAlgo, [in] VARIANT *unwrappedKeyAlgo, VARIANT_BOOL extractable,
+                      [in] VARIANT *keyUsages, [retval, out] IDispatch **result);
+}
+
 const long DISPID_IWINEHTMLWINDOWPRIVATE_MSCRYPTO = 54;
 [
     odl,

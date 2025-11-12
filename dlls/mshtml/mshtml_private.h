@@ -323,6 +323,7 @@ struct constructor;
     XIID(IWineXMLHttpRequestPrivate) \
     XIID(IWineMSHTMLConsole) \
     XIID(IWineMSHTMLCrypto) \
+    XIID(IWineMSHTMLSubtleCrypto) \
     XIID(IWineMSHTMLMediaQueryList) \
     XIID(IWineMSHTMLMutationObserver)
 
@@ -521,6 +522,7 @@ typedef struct {
     X(StorageEvent)                        \
     X(StyleSheet)                          \
     X(StyleSheetList)                      \
+    X(SubtleCrypto)                        \
     X(Text)                                \
     X(TextRange)                           \
     X(UIEvent)                             \
