@@ -891,6 +891,11 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
             const char *vendor = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_VENDOR_ID_WINE );
             return vendor ? (const GLubyte *)vendor : ret;
         }
+        if (name == GL_RENDERER)
+        {
+            const char *renderer = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_DEVICE_ID_WINE );
+            return renderer ? (const GLubyte *)renderer : ret;
+        }
         if (name == GL_EXTENSIONS)
         {
             struct context *ctx = get_current_context( teb, NULL, NULL );

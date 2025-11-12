@@ -1117,7 +1117,7 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     {
         funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, context );
 
-        egl->device_name = (const char *)funcs->p_glGetString( GL_RENDERER );
+        egl->device_name = gpu_device_name( egl->vendor_id, egl->device_id, (const char *)funcs->p_glGetString( GL_RENDERER ) );
         egl->vendor_name = opengl_vendor_to_name( egl->vendor_id, (const char *)funcs->p_glGetString( GL_VENDOR ) );
         TRACE( "  - device_name: %s\n", debugstr_a( egl->device_name ) );
         TRACE( "  - vendor_name: %s\n", debugstr_a( egl->vendor_name ) );

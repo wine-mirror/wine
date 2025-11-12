@@ -1116,7 +1116,7 @@ static const char* driver_vendor_to_name( UINT16 vendor )
     }
 }
 
-static const char *gpu_device_name( UINT16 vendor, UINT16 device, const char *default_name )
+const char *gpu_device_name( UINT16 vendor, UINT16 device, const char *default_name )
 {
     switch (MAKELONG(vendor, device))
     {

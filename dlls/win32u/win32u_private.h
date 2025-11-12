@@ -168,6 +168,7 @@ extern UINT get_thread_dpi(void);
 extern UINT set_thread_dpi_awareness_context( UINT context );
 extern UINT get_thread_dpi_awareness_context(void);
 extern RECT get_virtual_screen_rect( UINT dpi, MONITOR_DPI_TYPE type );
+extern const char *gpu_device_name( UINT16 vendor, UINT16 device, const char *name );
 extern BOOL is_exiting_thread( DWORD tid );
 extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to );
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to );
