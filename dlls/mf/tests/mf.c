@@ -89,6 +89,8 @@ HRESULT (WINAPI *pMFCreateMediaBufferFromMediaType)(IMFMediaType *media_type, LO
         DWORD min_alignment, IMFMediaBuffer **buffer);
 BOOL has_video_processor;
 
+DEFINE_GUID(InvalidServiceGUID, 0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33);
+
 static BOOL is_vista(void)
 {
     return !pMFGetTopoNodeCurrentType;
@@ -2762,6 +2764,8 @@ static void test_media_session(void)
 
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Failed to create media session, hr %#lx.\n", hr);
+
+    check_service_interface(session, &InvalidServiceGUID, &InvalidServiceGUID, FALSE);
 
     check_interface(session, &IID_IMFGetService, TRUE);
     check_interface(session, &IID_IMFRateSupport, TRUE);

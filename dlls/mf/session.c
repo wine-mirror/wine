@@ -2732,7 +2732,10 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
         hr = session_get_audio_render_service(session, service, riid, obj);
     }
     else
+    {
         FIXME("Unsupported service %s.\n", debugstr_guid(service));
+        hr = E_NOINTERFACE;
+    }
 
     LeaveCriticalSection(&session->cs);
 
