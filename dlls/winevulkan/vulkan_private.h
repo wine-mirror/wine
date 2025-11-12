@@ -112,11 +112,11 @@ static inline struct wine_debug_report_callback *wine_debug_report_callback_from
 
 BOOL wine_vk_device_extension_supported(const char *name);
 BOOL wine_vk_instance_extension_supported(const char *name);
-BOOL wine_vk_is_host_surface_extension(const char *name);
 
 BOOL wine_vk_is_type_wrapped(VkObjectType type);
 
 NTSTATUS init_vulkan(void *args);
+NTSTATUS wow64_init_vulkan(void *args);
 
 NTSTATUS vk_is_available_instance_function(void *arg);
 NTSTATUS vk_is_available_device_function(void *arg);

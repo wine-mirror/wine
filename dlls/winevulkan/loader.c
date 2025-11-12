@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 static HINSTANCE hinstance;
 static BOOL get_device_proc_addr_instance_procs = FALSE;
+static struct vulkan_instance_extensions instance_extensions; /* supported client instance extensions */
 
 VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
 {
@@ -305,13 +306,14 @@ static NTSTATUS WINAPI call_vulkan_debug_utils_callback(void *args, ULONG size)
 
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    struct vk_callback_funcs callback_funcs =
+    struct init_params params =
     {
-        .call_vulkan_debug_report_callback = (ULONG_PTR)call_vulkan_debug_report_callback,
-        .call_vulkan_debug_utils_callback = (ULONG_PTR)call_vulkan_debug_utils_callback,
+        .call_vulkan_debug_report_callback = (UINT_PTR)call_vulkan_debug_report_callback,
+        .call_vulkan_debug_utils_callback = (UINT_PTR)call_vulkan_debug_utils_callback,
+        .extensions = &instance_extensions,
     };
 
-    return !__wine_init_unix_call() && !UNIX_CALL(init, &callback_funcs);
+    return !__wine_init_unix_call() && !UNIX_CALL(init, &params);
 }
 
 static BOOL  wine_vk_init_once(void)
@@ -319,6 +321,15 @@ static BOOL  wine_vk_init_once(void)
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
     return InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
+}
+
+static BOOL is_instance_extension_supported(const char *extension, struct vulkan_instance_extensions *extensions)
+{
+#define USE_VK_EXT(x) if (!strcmp(extension, #x)) return (extensions->has_ ## x = instance_extensions.has_ ## x);
+    ALL_VK_CLIENT_INSTANCE_EXTS
+#undef USE_VK_EXT
+    WARN("Extension %s is not supported.\n", debugstr_a(extension));
+    return FALSE;
 }
 
 VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
@@ -386,6 +397,8 @@ VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
     struct vkEnumerateInstanceExtensionProperties_params params;
+    struct vulkan_instance_extensions extensions = {0};
+    uint32_t i, j, capacity = *count;
     NTSTATUS status;
 
     TRACE("%p, %p, %p\n", layer_name, count, properties);
@@ -406,7 +419,32 @@ VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
     params.pPropertyCount = count;
     params.pProperties = properties;
     status = UNIX_CALL(vkEnumerateInstanceExtensionProperties, &params);
-    assert(!status);
+    assert(!status && "vkEnumerateInstanceExtensionProperties");
+    if (params.result) return params.result;
+
+    if (!properties)
+    {
+        if (instance_extensions.has_VK_KHR_win32_surface) *count += 1;
+        return params.result;
+    }
+
+    TRACE("Client instance extensions:\n");
+    for (i = 0, j = 0; i < *count; i++)
+    {
+        const char *extension = properties[i].extensionName;
+        if (!is_instance_extension_supported(extension, &extensions)) continue;
+        TRACE("  - %s\n", extension);
+        properties[j++] = properties[i];
+    }
+    if (instance_extensions.has_VK_KHR_win32_surface)
+    {
+        static const VkExtensionProperties VK_KHR_win32_surface = {VK_KHR_WIN32_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_SPEC_VERSION};
+        if (j == capacity) return VK_INCOMPLETE;
+        TRACE("  - VK_KHR_win32_surface\n");
+        properties[j++] = VK_KHR_win32_surface;
+    }
+    *count = j;
+
     return params.result;
 }
 

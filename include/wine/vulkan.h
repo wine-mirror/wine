@@ -21005,4 +21005,30 @@ VkResult VKAPI_CALL vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micr
     USE_VK_FUNC(vkGetPhysicalDeviceWin32PresentationSupportKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceXlibPresentationSupportKHR)
 
+#define ALL_VK_CLIENT_INSTANCE_EXTS \
+    USE_VK_EXT(VK_EXT_debug_report) \
+    USE_VK_EXT(VK_EXT_debug_utils) \
+    USE_VK_EXT(VK_EXT_layer_settings) \
+    USE_VK_EXT(VK_EXT_surface_maintenance1) \
+    USE_VK_EXT(VK_EXT_swapchain_colorspace) \
+    USE_VK_EXT(VK_EXT_validation_features) \
+    USE_VK_EXT(VK_EXT_validation_flags) \
+    USE_VK_EXT(VK_KHR_device_group_creation) \
+    USE_VK_EXT(VK_KHR_external_fence_capabilities) \
+    USE_VK_EXT(VK_KHR_external_memory_capabilities) \
+    USE_VK_EXT(VK_KHR_external_semaphore_capabilities) \
+    USE_VK_EXT(VK_KHR_get_physical_device_properties2) \
+    USE_VK_EXT(VK_KHR_get_surface_capabilities2) \
+    USE_VK_EXT(VK_KHR_portability_enumeration) \
+    USE_VK_EXT(VK_KHR_surface) \
+    USE_VK_EXT(VK_KHR_surface_maintenance1) \
+    USE_VK_EXT(VK_KHR_win32_surface)
+
+#define ALL_VK_INSTANCE_EXTS ALL_VK_CLIENT_INSTANCE_EXTS \
+    USE_VK_EXT(VK_EXT_headless_surface) \
+    USE_VK_EXT(VK_EXT_metal_surface) \
+    USE_VK_EXT(VK_KHR_wayland_surface) \
+    USE_VK_EXT(VK_KHR_xlib_surface) \
+    USE_VK_EXT(VK_MVK_macos_surface)
+
 #endif /* __WINE_VULKAN_H */

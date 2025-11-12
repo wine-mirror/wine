@@ -87,11 +87,18 @@ static const char *X11DRV_get_host_extension( const char *name )
     return name;
 }
 
+static void X11DRV_map_instance_extensions( struct vulkan_instance_extensions *extensions )
+{
+    if (extensions->has_VK_KHR_win32_surface) extensions->has_VK_KHR_xlib_surface = 1;
+    if (extensions->has_VK_KHR_xlib_surface) extensions->has_VK_KHR_win32_surface = 1;
+}
+
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
     .p_get_physical_device_presentation_support = X11DRV_get_physical_device_presentation_support,
     .p_get_host_extension = X11DRV_get_host_extension,
+    .p_map_instance_extensions = X11DRV_map_instance_extensions,
 };
 
 UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )

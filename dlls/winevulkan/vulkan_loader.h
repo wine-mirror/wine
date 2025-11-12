@@ -90,10 +90,11 @@ void *wine_vk_get_device_proc_addr(const char *name);
 void *wine_vk_get_phys_dev_proc_addr(const char *name);
 void *wine_vk_get_instance_proc_addr(const char *name);
 
-struct vk_callback_funcs
+struct init_params
 {
     UINT64 call_vulkan_debug_report_callback;
     UINT64 call_vulkan_debug_utils_callback;
+    struct vulkan_instance_extensions *extensions;
 };
 
 /* debug callbacks params */

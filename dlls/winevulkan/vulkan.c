@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 static PFN_vkCreateInstance p_vkCreateInstance;
 static PFN_vkEnumerateInstanceVersion p_vkEnumerateInstanceVersion;
 static PFN_vkEnumerateInstanceExtensionProperties p_vkEnumerateInstanceExtensionProperties;
+static struct vulkan_instance_extensions instance_extensions; /* supported host instance extensions */
 
 static struct wine_instance *wine_instance_from_handle(VkInstance handle)
 {
@@ -131,7 +132,8 @@ static uint64_t client_handle_from_host(struct vulkan_instance *obj, uint64_t ho
     return result;
 }
 
-struct vk_callback_funcs callback_funcs;
+static UINT64 call_vulkan_debug_report_callback;
+static UINT64 call_vulkan_debug_utils_callback;
 
 static UINT append_string(const char *name, char *strings, UINT *strings_len)
 {
@@ -208,7 +210,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     ptr = (char *)(params + 1);
     strings = (char *)params + size;
 
-    params->dispatch.callback = callback_funcs.call_vulkan_debug_utils_callback;
+    params->dispatch.callback = call_vulkan_debug_utils_callback;
     params->user_callback = object->user_callback;
     params->user_data = object->user_data;
     params->severity = severity;
@@ -296,7 +298,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     if (!(params = malloc(sizeof(*params) + strings_len))) return VK_FALSE;
     strings = (char *)(params + 1);
 
-    params->dispatch.callback = callback_funcs.call_vulkan_debug_report_callback;
+    params->dispatch.callback = call_vulkan_debug_report_callback;
     params->user_callback = object->user_callback;
     params->user_data = object->user_data;
     params->flags = flags;
@@ -668,7 +670,11 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
 
 NTSTATUS init_vulkan(void *arg)
 {
-    const struct vk_callback_funcs *funcs = arg;
+    struct vulkan_instance_extensions extensions = {0};
+    VkExtensionProperties *properties = NULL;
+    const struct init_params *params = arg;
+    uint32_t count = 0;
+    VkResult res;
 
     vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
     if (!vk_funcs)
@@ -677,7 +683,9 @@ NTSTATUS init_vulkan(void *arg)
         return STATUS_UNSUCCESSFUL;
     }
 
-    callback_funcs = *funcs;
+    call_vulkan_debug_report_callback = params->call_vulkan_debug_report_callback;
+    call_vulkan_debug_utils_callback = params->call_vulkan_debug_utils_callback;
+
     p_vkCreateInstance = (PFN_vkCreateInstance)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkCreateInstance");
     p_vkEnumerateInstanceVersion = (PFN_vkEnumerateInstanceVersion)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
     p_vkEnumerateInstanceExtensionProperties = (PFN_vkEnumerateInstanceExtensionProperties)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceExtensionProperties");
@@ -690,7 +698,43 @@ NTSTATUS init_vulkan(void *arg)
         zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     }
 
-    return STATUS_SUCCESS;
+    do
+    {
+        free(properties);
+        properties = NULL;
+        if ((res = p_vkEnumerateInstanceExtensionProperties(NULL, &count, NULL))) goto failed;
+        if (!count || !(properties = malloc(count * sizeof(*properties)))) return STATUS_UNSUCCESSFUL;
+    } while ((res = p_vkEnumerateInstanceExtensionProperties(NULL, &count, properties) == VK_INCOMPLETE));
+    if (res) goto failed;
+
+    TRACE("Host instance extensions:\n");
+    for (uint32_t i = 0; i < count; i++)
+    {
+        const char *extension = properties[i].extensionName;
+#define USE_VK_EXT(x)                           \
+        if (!strcmp(extension, #x))             \
+        {                                       \
+            extensions.has_ ## x = 1;           \
+            TRACE("  - %s\n", extension);       \
+        } else
+        ALL_VK_INSTANCE_EXTS
+#undef USE_VK_EXT
+        WARN("Extension %s is not supported.\n", debugstr_a(extension));
+    }
+    instance_extensions = extensions;
+
+    /* map host instance extensions for VK_KHR_win32_surface */
+    vk_funcs->p_map_instance_extensions(&extensions);
+
+    /* filter out unsupported client instance extensions */
+#define USE_VK_EXT(x) params->extensions->has_ ## x = extensions.has_ ## x;
+    ALL_VK_CLIENT_INSTANCE_EXTS
+#undef USE_VK_EXT
+
+failed:
+    free(properties);
+    if (res) ERR("Failed to initialize Vulkan, res %d\n", res);
+    return res ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS;
 }
 
 /* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.
@@ -1138,65 +1182,7 @@ VkResult wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice client_physi
 VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t *count,
                                                      VkExtensionProperties *properties)
 {
-    uint32_t num_properties = 0, num_host_properties;
-    VkExtensionProperties *host_properties;
-    unsigned int i, j, surface;
-    VkResult res;
-
-    res = p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
-    if (res != VK_SUCCESS)
-        return res;
-
-    if (!(host_properties = calloc(num_host_properties, sizeof(*host_properties))))
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-
-    res = p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, host_properties);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to retrieve host properties, res=%d.\n", res);
-        free(host_properties);
-        return res;
-    }
-
-    /* The Wine graphics driver provides us with all extensions supported by the host side
-     * including extension fixup (e.g. VK_KHR_xlib_surface -> VK_KHR_win32_surface). It is
-     * up to us here to filter the list down to extensions for which we have thunks.
-     */
-    for (i = 0, surface = 0; i < num_host_properties; i++)
-    {
-        if (wine_vk_instance_extension_supported(host_properties[i].extensionName)
-                || (wine_vk_is_host_surface_extension(host_properties[i].extensionName) && !surface++))
-            num_properties++;
-        else
-            TRACE("Instance extension '%s' is not supported.\n", host_properties[i].extensionName);
-    }
-
-    if (!properties)
-    {
-        TRACE("Returning %u extensions.\n", num_properties);
-        *count = num_properties;
-        free(host_properties);
-        return VK_SUCCESS;
-    }
-
-    for (i = 0, j = 0, surface = 0; i < num_host_properties && j < *count; i++)
-    {
-        if (wine_vk_instance_extension_supported(host_properties[i].extensionName))
-        {
-            TRACE("Enabling extension '%s'.\n", host_properties[i].extensionName);
-            properties[j++] = host_properties[i];
-        }
-        else if (wine_vk_is_host_surface_extension(host_properties[i].extensionName) && !surface++)
-        {
-            VkExtensionProperties win32_surface = {VK_KHR_WIN32_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_SPEC_VERSION};
-            TRACE("Enabling VK_KHR_win32_surface.\n");
-            properties[j++] = win32_surface;
-        }
-    }
-    *count = min(*count, num_properties);
-
-    free(host_properties);
-    return *count < num_properties ? VK_INCOMPLETE : VK_SUCCESS;
+    return p_vkEnumerateInstanceExtensionProperties(name, count, properties);
 }
 
 VkResult wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice client_physical_device, uint32_t *count,
@@ -1841,6 +1827,21 @@ NTSTATUS vk_is_available_device_function(void *arg)
 }
 
 #endif /* _WIN64 */
+
+NTSTATUS wow64_init_vulkan(void *arg)
+{
+    struct
+    {
+        UINT64 call_vulkan_debug_report_callback;
+        UINT64 call_vulkan_debug_utils_callback;
+        ULONG extensions;
+    } *params32 = arg;
+    struct init_params params;
+    params.call_vulkan_debug_report_callback = params32->call_vulkan_debug_report_callback;
+    params.call_vulkan_debug_utils_callback = params32->call_vulkan_debug_utils_callback;
+    params.extensions = UlongToPtr(params32->extensions);
+    return init_vulkan(&params);
+}
 
 NTSTATUS vk_is_available_instance_function32(void *arg)
 {

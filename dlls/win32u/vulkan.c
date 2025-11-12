@@ -2266,6 +2266,11 @@ static const char *win32u_get_host_extension( const char *name )
     return driver_funcs->p_get_host_extension( name );
 }
 
+static void win32u_map_instance_extensions( struct vulkan_instance_extensions *extensions )
+{
+    return driver_funcs->p_map_instance_extensions( extensions );
+}
+
 static struct vulkan_funcs vulkan_funcs =
 {
     .p_vkAcquireNextImage2KHR = win32u_vkAcquireNextImage2KHR,
@@ -2316,6 +2321,7 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkUnmapMemory = win32u_vkUnmapMemory,
     .p_vkUnmapMemory2KHR = win32u_vkUnmapMemory2KHR,
     .p_get_host_extension = win32u_get_host_extension,
+    .p_map_instance_extensions = win32u_map_instance_extensions,
 };
 
 static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface,
@@ -2348,11 +2354,18 @@ static const char *nulldrv_get_host_extension( const char *name )
     return name;
 }
 
+static void nulldrv_map_instance_extensions( struct vulkan_instance_extensions *extensions )
+{
+    if (extensions->has_VK_KHR_win32_surface) extensions->has_VK_EXT_headless_surface = 1;
+    if (extensions->has_VK_EXT_headless_surface) extensions->has_VK_KHR_win32_surface = 1;
+}
+
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = nulldrv_get_physical_device_presentation_support,
     .p_get_host_extension = nulldrv_get_host_extension,
+    .p_map_instance_extensions = nulldrv_map_instance_extensions,
 };
 
 static void vulkan_driver_init(void)
@@ -2367,7 +2380,6 @@ static void vulkan_driver_init(void)
     }
 
     if (status == STATUS_NOT_IMPLEMENTED) driver_funcs = &nulldrv_funcs;
-    else vulkan_funcs.p_get_host_extension = driver_funcs->p_get_host_extension;
 }
 
 static void vulkan_driver_load(void)
@@ -2395,11 +2407,18 @@ static const char *lazydrv_get_host_extension( const char *name )
     return driver_funcs->p_get_host_extension( name );
 }
 
+static void lazydrv_map_instance_extensions( struct vulkan_instance_extensions *extensions )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_map_instance_extensions( extensions );
+}
+
 static const struct vulkan_driver_funcs lazydrv_funcs =
 {
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = lazydrv_get_physical_device_presentation_support,
     .p_get_host_extension = lazydrv_get_host_extension,
+    .p_map_instance_extensions = lazydrv_map_instance_extensions,
 };
 
 static void vulkan_init_once(void)

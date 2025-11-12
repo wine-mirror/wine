@@ -27,6 +27,8 @@
 #include <windef.h>
 #include <winbase.h>
 
+#include "wine/vulkan.h"
+
 /* Base 'class' for our Vulkan dispatchable objects such as VkDevice and VkInstance.
  * This structure MUST be the first element of a dispatchable object as the ICD
  * loader depends on it. For now only contains loader_magic, but over time more common
@@ -41,9 +43,15 @@ struct vulkan_client_object
     UINT64 unix_handle;
 };
 
+struct vulkan_instance_extensions
+{
+#define USE_VK_EXT(x) unsigned has_ ## x : 1;
+    ALL_VK_INSTANCE_EXTS
+#undef USE_VK_EXT
+};
+
 #ifdef WINE_UNIX_LIB
 
-#include "wine/vulkan.h"
 #include "wine/rbtree.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
@@ -261,6 +269,7 @@ struct vulkan_funcs
 
     /* winevulkan specific functions */
     const char *(*p_get_host_extension)( const char *name );
+    void (*p_map_instance_extensions)( struct vulkan_instance_extensions *extensions );
 };
 
 /* interface between win32u and the user drivers */
@@ -270,6 +279,7 @@ struct vulkan_driver_funcs
     VkResult (*p_vulkan_surface_create)(HWND, const struct vulkan_instance *, VkSurfaceKHR *, struct client_surface **);
     VkBool32 (*p_get_physical_device_presentation_support)(struct vulkan_physical_device *, uint32_t);
     const char *(*p_get_host_extension)( const char *name );
+    void (*p_map_instance_extensions)( struct vulkan_instance_extensions *extensions );
 };
 
 #endif /* WINE_UNIX_LIB */
