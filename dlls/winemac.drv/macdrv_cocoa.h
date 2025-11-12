@@ -245,8 +245,8 @@ struct macdrv_gpu
 /* Represent an adapter in EnumDisplayDevices context */
 struct macdrv_adapter
 {
-    /* ID to uniquely identify an adapter. Currently it's a CGDirectDisplayID */
-    uint32_t id;
+    /* ID to uniquely identify an adapter */
+    CGDirectDisplayID id;
     /* as StateFlags in DISPLAY_DEVICE struct */
     uint32_t state_flags;
 };
@@ -268,7 +268,7 @@ extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count);
 extern void macdrv_free_gpus(struct macdrv_gpu* gpus);
 extern int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** adapters, int* count);
 extern void macdrv_free_adapters(struct macdrv_adapter* adapters);
-extern int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** monitors, int* count);
+extern int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** monitors, int* count);
 extern void macdrv_free_monitors(struct macdrv_monitor* monitors);
 
 

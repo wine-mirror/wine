@@ -656,7 +656,7 @@ void macdrv_free_adapters(struct macdrv_adapter* adapters)
  *
  * Returns non-zero value on failure with parameters unchanged and zero on success.
  */
-int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitors, int* count)
+int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** new_monitors, int* count)
 {
     struct macdrv_monitor* monitors = NULL;
     struct macdrv_monitor* realloc_monitors;
