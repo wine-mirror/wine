@@ -297,6 +297,7 @@ void handle_dispatch_exception(script_ctx_t *ctx, EXCEPINFO *ei);
 HRESULT create_object(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 HRESULT create_math(script_ctx_t*,jsdisp_t**);
 HRESULT create_array(script_ctx_t*,DWORD,jsdisp_t**);
+HRESULT create_arraybuffer(script_ctx_t*,DWORD,IWineJSDispatch**,void**);
 HRESULT create_regexp(script_ctx_t*,jsstr_t*,DWORD,jsdisp_t**);
 HRESULT create_regexp_var(script_ctx_t*,jsval_t,jsval_t*,jsdisp_t**);
 HRESULT create_string(script_ctx_t*,jsstr_t*,jsdisp_t**);

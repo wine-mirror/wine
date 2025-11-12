@@ -1477,6 +1477,12 @@ static HRESULT WINAPI WineJScript_CreateObject(IWineJScript *iface, IWineJSDispa
     return hres;
 }
 
+static HRESULT WINAPI WineJScript_CreateArrayBuffer(IWineJScript *iface, DWORD size, IWineJSDispatch **arraybuf, void **data)
+{
+    JScript *This = impl_from_IWineJScript(iface);
+    return create_arraybuffer(This->ctx, size, arraybuf, data);
+}
+
 static HRESULT WINAPI WineJScript_FillGlobals(IWineJScript *iface, IWineJSDispatchHost *script_global)
 {
     JScript *This = impl_from_IWineJScript(iface);
@@ -1490,6 +1496,7 @@ static const IWineJScriptVtbl WineJScriptVtbl = {
     WineJScript_InitHostObject,
     WineJScript_InitHostConstructor,
     WineJScript_CreateObject,
+    WineJScript_CreateArrayBuffer,
     WineJScript_FillGlobals,
 };
 

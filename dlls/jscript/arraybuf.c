@@ -177,6 +177,20 @@ static HRESULT create_arraybuf(script_ctx_t *ctx, DWORD size, ArrayBufferInstanc
     return S_OK;
 }
 
+HRESULT create_arraybuffer(script_ctx_t *ctx, DWORD size, IWineJSDispatch **ret, void **data)
+{
+    ArrayBufferInstance *buf;
+    HRESULT hres;
+
+    hres = create_arraybuf(ctx, size, &buf);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = &buf->dispex.IWineJSDispatch_iface;
+    *data = buf->buf;
+    return S_OK;
+}
+
 static HRESULT ArrayBufferConstr_isView(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {

@@ -455,6 +455,20 @@ async_test("response", function() {
         [ "arraybuffer", "image/png", function() {
             if(xhr.readyState < 4)
                 ok(xhr.response === undefined, "response for arraybuffer with state " + state + " = " + xhr.response);
+            else {
+                var buf = xhr.response;
+                ok(buf instanceof ArrayBuffer, "response for arraybuffer not instanceof ArrayBuffer");
+                ok(buf.byteLength === xml.length, "response for arraybuffer byteLength = " + buf.byteLength);
+                buf = new Uint8Array(buf);
+                for(var i = 0; i < buf.length; i++) {
+                    if(buf[i] !== xml.charCodeAt(i)) {
+                        var a = new Array(buf.length);
+                        for(var j = 0; j < a.length; j++) a[j] = buf[j];
+                        ok(false, "response for arraybuffer is wrong (first bad char at pos " + i + "): " + a);
+                        break;
+                    }
+                }
+            }
         }],
         [ "blob", "wine/test", function() {
             if(xhr.readyState < 4)

@@ -140,6 +140,7 @@ struct xhr {
     BOOLEAN synchronous;
     DWORD magic;
     DWORD pending_events_magic;
+    IDispatch *response_obj;
     HTMLInnerWindow *window;
     nsIXMLHttpRequest *nsxhr;
     XMLHttpReqEventListener *event_listener;
@@ -1082,8 +1083,18 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_get_response(IWineXMLHttpReques
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
     HRESULT hres = S_OK;
+    UINT32 buf_size;
+    nsresult nsres;
+    void *buf;
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(This->xhr.response_obj) {
+        V_VT(p) = VT_DISPATCH;
+        V_DISPATCH(p) = This->xhr.response_obj;
+        IDispatch_AddRef(This->xhr.response_obj);
+        return S_OK;
+    }
 
     switch(This->xhr.response_type) {
     case response_type_empty:
@@ -1103,10 +1114,18 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_get_response(IWineXMLHttpReques
             V_VT(p) = VT_EMPTY;
             break;
         }
+        nsres = nsIXMLHttpRequest_GetResponseBuffer(This->xhr.nsxhr, NULL, 0, &buf_size);
+        assert(nsres == NS_OK);
+
         if(This->xhr.response_type == response_type_arraybuf) {
-            FIXME("response_type_arraybuf\n");
-            return E_NOTIMPL;
+            hres = IWineJScript_CreateArrayBuffer(This->xhr.window->jscript, buf_size, (IWineJSDispatch**)&This->xhr.response_obj, &buf);
+            if(SUCCEEDED(hres)) {
+                nsres = nsIXMLHttpRequest_GetResponseBuffer(This->xhr.nsxhr, buf, buf_size, &buf_size);
+                assert(nsres == NS_OK);
+            }
+            break;
         }
+
         FIXME("response_type_blob\n");
         return E_NOTIMPL;
 
@@ -1118,6 +1137,11 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_get_response(IWineXMLHttpReques
         assert(0);
     }
 
+    if(SUCCEEDED(hres) && This->xhr.response_obj) {
+        V_VT(p) = VT_DISPATCH;
+        V_DISPATCH(p) = This->xhr.response_obj;
+        IDispatch_AddRef(This->xhr.response_obj);
+    }
     return hres;
 }
 
@@ -1439,6 +1463,8 @@ static void xhr_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback 
         note_cc_edge((nsISupports*)&xhr->window->base.IHTMLWindow2_iface, "window", cb);
     if(xhr->pending_progress_event)
         note_cc_edge((nsISupports*)&xhr->pending_progress_event->IDOMEvent_iface, "pending_progress_event", cb);
+    if(xhr->response_obj)
+        note_cc_edge((nsISupports*)xhr->response_obj, "response_obj", cb);
     if(xhr->nsxhr)
         note_cc_edge((nsISupports*)xhr->nsxhr, "nsxhr", cb);
     traverse_event_target(&xhr->event_target, cb);
@@ -1462,6 +1488,7 @@ static void xhr_unlink(DispatchEx *dispex)
         xhr->pending_progress_event = NULL;
         IDOMEvent_Release(&pending_progress_event->IDOMEvent_iface);
     }
+    unlink_ref(&xhr->response_obj);
     unlink_ref(&xhr->nsxhr);
     release_event_target(&xhr->event_target);
 }
