@@ -320,14 +320,6 @@ static void init_unix_codepage(void)
 #endif  /* __APPLE__ || __ANDROID__ */
 
 
-static inline SIZE_T get_env_length( const WCHAR *env )
-{
-    const WCHAR *end = env;
-    while (*end) end += wcslen(end) + 1;
-    return end + 1 - env;
-}
-
-
 #define STARTS_WITH(var,str) (!strncmp( var, str, sizeof(str) - 1 ))
 
 /***********************************************************************
@@ -348,23 +340,6 @@ static BOOL is_special_env_var( const char *var )
             STARTS_WITH( var, "XDG_" ));
 }
 
-/* check if an environment variable changes dynamically in every new process */
-static BOOL is_dynamic_env_var( const char *var )
-{
-    return (STARTS_WITH( var, "WINEDLLOVERRIDES=" ) ||
-            STARTS_WITH( var, "WINEDATADIR=" ) ||
-            STARTS_WITH( var, "WINEHOMEDIR=" ) ||
-            STARTS_WITH( var, "WINEBUILDDIR=" ) ||
-            STARTS_WITH( var, "WINECONFIGDIR=" ) ||
-            STARTS_WITH( var, "WINELOADER=" ) ||
-            STARTS_WITH( var, "WINEDLLDIR" ) ||
-            STARTS_WITH( var, "WINEUNIXCP=" ) ||
-            STARTS_WITH( var, "WINEUSERLOCALE=" ) ||
-            STARTS_WITH( var, "WINEUSERNAME=" ) ||
-            STARTS_WITH( var, "WINEPRELOADRESERVE=" ) ||
-            STARTS_WITH( var, "WINELOADERNOEXEC=" ) ||
-            STARTS_WITH( var, "WINESERVERSOCKET=" ));
-}
 
 /******************************************************************
  *      ntdll_umbstowcs  (ntdll.so)
@@ -481,55 +456,6 @@ const WCHAR *ntdll_get_build_dir(void)
 const WCHAR *ntdll_get_data_dir(void)
 {
     return nt_data_dir;
-}
-
-
-/***********************************************************************
- *           build_envp
- *
- * Build the environment of a new child process.
- */
-char **build_envp( const WCHAR *envW )
-{
-    char **envp;
-    char *env, *p;
-    int count = 1, length, lenW;
-
-    lenW = get_env_length( envW );
-    if (!(env = malloc( lenW * 3 ))) return NULL;
-    length = ntdll_wcstoumbs( envW, lenW, env, lenW * 3, FALSE );
-
-    for (p = env; *p; p += strlen(p) + 1, count++)
-    {
-        if (is_dynamic_env_var( p )) continue;
-        if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
-    }
-
-    if ((envp = malloc( count * sizeof(*envp) + length )))
-    {
-        char **envptr = envp;
-        char *dst = (char *)(envp + count);
-
-        for (p = env; *p; p += strlen(p) + 1)
-        {
-            if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
-            if (is_dynamic_env_var( p )) continue;
-            if (is_special_env_var( p ))  /* prefix it with "WINE" */
-            {
-                *envptr++ = strcpy( dst, "WINE" );
-                strcat( dst, p );
-            }
-            else
-            {
-                if (STARTS_WITH( p, "UNIX_" )) p += 5;
-                *envptr++ = strcpy( dst, p );
-            }
-            dst += strlen(dst) + 1;
-        }
-        *envptr = 0;
-    }
-    free( env );
-    return envp;
 }
 
 
@@ -948,7 +874,6 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
             ptr += ARRAY_SIZE(unixW);
         }
 
-        if (is_dynamic_env_var( str )) continue;
         ptr += ntdll_umbstowcs( str, strlen(str) + 1, ptr, end - ptr );
     }
     *pos = ptr - env;
