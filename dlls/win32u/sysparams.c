@@ -49,6 +49,7 @@ static const char devicemap_video_keyA[] = "\\Registry\\Machine\\HARDWARE\\DEVIC
 static const char enum_keyA[] = "\\Registry\\Machine\\System\\CurrentControlSet\\Enum";
 static const char control_keyA[] = "\\Registry\\Machine\\System\\CurrentControlSet\\Control";
 static const char config_keyA[] = "\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\Current";
+static const char directx_keyA[] = "\\Registry\\Machine\\Software\\Microsoft\\DirectX";
 
 static const char devpropkey_gpu_vulkan_uuidA[] = "Properties\\{233A9EF3-AFC4-4ABD-B564-C32F21F1535C}\\0002";
 static const char devpropkey_gpu_luidA[] = "Properties\\{60B193CB-5276-4D0F-96FC-F173ABAD3EC6}\\0002";
@@ -863,6 +864,11 @@ static void prepare_devices(void)
     set_reg_ascii_value( hkey, "", "Display adapters" );
     set_reg_ascii_value( hkey, "Class", "Display" );
     NtClose( hkey );
+    if ((hkey = reg_create_ascii_key( NULL, directx_keyA, 0, NULL )))
+    {
+        reg_empty_key( hkey, NULL );
+        NtClose( hkey );
+    }
 
     hkey = reg_open_ascii_key( enum_key, "PCI" );
 
@@ -1281,6 +1287,27 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     link_device( gpu->path, guid_devinterface_display_adapterA );
     link_device( gpu->path, guid_display_device_arrivalA );
 
+    snprintf( buffer, sizeof(buffer), "%s\\%s", directx_keyA, gpu->guid );
+    hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE, NULL );
+    if (hkey)
+    {
+        UINT64 ver = 0x230000000f1ff4; /* Some version in the future. */
+
+        asciiz_to_unicode( bufferW, "AdapterLuid" );
+        set_reg_value( hkey, bufferW, REG_QWORD, &gpu->luid, sizeof(gpu->luid) );
+        asciiz_to_unicode( bufferW, "DriverVersion" );
+        set_reg_value( hkey, bufferW, REG_QWORD, &ver, sizeof(ver) );
+        asciiz_to_unicode( bufferW, "Description" );
+        set_reg_value( hkey, bufferW, REG_SZ, desc, (lstrlenW( desc ) + 1) * sizeof(WCHAR) );
+        if (pci->vendor && pci->device)
+        {
+            asciiz_to_unicode( bufferW, "DeviceId" );
+            set_reg_value( hkey, bufferW, REG_DWORD, &pci->device, sizeof(pci->device) );
+            asciiz_to_unicode( bufferW, "VendorId" );
+            set_reg_value( hkey, bufferW, REG_DWORD, &pci->vendor, sizeof(pci->vendor) );
+        }
+        NtClose( hkey );
+    }
     return TRUE;
 }
 
