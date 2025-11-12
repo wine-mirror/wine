@@ -2432,13 +2432,12 @@ void macdrv_beep(void)
 /***********************************************************************
  *              macdrv_set_display_mode
  */
-int macdrv_set_display_mode(const struct macdrv_display* display,
-                            CGDisplayModeRef display_mode)
+int macdrv_set_display_mode(CGDirectDisplayID displayID, CGDisplayModeRef display_mode)
 {
     __block int ret;
 
     OnMainThread(^{
-        ret = [[WineApplicationController sharedController] setMode:display_mode forDisplay:display->displayID];
+        ret = [[WineApplicationController sharedController] setMode:display_mode forDisplay:displayID];
     });
 
     return ret;

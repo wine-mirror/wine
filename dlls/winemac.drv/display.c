@@ -799,7 +799,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
                 bpp, mode->dmDisplayFrequency);
             ret = DISP_CHANGE_BADMODE;
         }
-        else if (!macdrv_set_display_mode(&macdrv_displays[0], best_display_mode))
+        else if (!macdrv_set_display_mode(macdrv_displays[0].displayID, best_display_mode))
         {
             WARN("Failed to set display mode\n");
             ret = DISP_CHANGE_FAILED;
