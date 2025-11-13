@@ -2,4 +2,5 @@ TESTDLL = xactengine3_7.dll
 IMPORTS = ole32
 
 SOURCES = \
+	resource.rc \
 	xact3.c

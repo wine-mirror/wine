@@ -1,0 +1,375 @@
+/*
+ * Resource file to embed XACT binaries.
+ *
+ * Copyright 2025 Elizabeth Figura for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "windef.h"
+
+/* Wave files generated with:
+ * ffmpeg -f lavfi -i "sine=frequency=300" -t 0.3 -ar 44100 -f wav -acodec pcm_u8 test.wav
+ * ffmpeg -f lavfi -i "sine=frequency=400" -t 0.4 -ar 44100 -f wav -acodec pcm_s16le test2.wav
+ * ffmpeg -f lavfi -i "sine=frequency=500" -t 0.5 -ar 44100 -f wav -acodec pcm_s16le -ac 2 test3.wav
+ *
+ * The wavebank, soundbank, and global settings were generated from the following source: */
+
+#if 0
+Signature = XACT3;
+Version = 18;
+
+Global Settings
+{
+    Windows File = test.xgs;
+
+    Variable
+    {
+        Name = v1;
+        Public = 1;
+        Global = 1;
+        Internal = 0;
+        External = 0;
+        Monitored = 1;
+        Reserved = 0;
+        Read Only = 0;
+        Time = 0;
+        Value = 0.000000;
+        Initial Value = 10.000000;
+        Min = 0.000000;
+        Max = 100.000000;
+    }
+
+    Variable
+    {
+        Name = v2;
+        Public = 1;
+        Global = 0;
+        Internal = 0;
+        External = 0;
+        Monitored = 1;
+        Reserved = 0;
+        Read Only = 0;
+        Time = 0;
+        Value = 0.000000;
+        Initial Value = 10.000000;
+        Min = 0.000000;
+        Max = 100.000000;
+    }
+
+    Variable
+    {
+        Name = v3;
+        Public = 0;
+        Global = 1;
+        Internal = 0;
+        External = 0;
+        Monitored = 1;
+        Reserved = 0;
+        Read Only = 0;
+        Time = 0;
+        Value = 0.000000;
+        Initial Value = 10.000000;
+        Min = 0.000000;
+        Max = 100.000000;
+    }
+
+    Variable
+    {
+        Name = v4;
+        Public = 1;
+        Global = 1;
+        Internal = 0;
+        External = 0;
+        Monitored = 1;
+        Reserved = 0;
+        Read Only = 1;
+        Time = 0;
+        Value = 0.000000;
+        Initial Value = 10.000000;
+        Min = 0.000000;
+        Max = 100.000000;
+    }
+
+    Compression Preset
+    {
+        Name = xwma;
+        Xbox Format Tag = 353;
+        PC Format Tag = 353;
+        WMA Quality = 1;
+    }
+
+    Compression Preset
+    {
+        Name = adpcm;
+        Xbox Format Tag = 353;
+        PC Format Tag = 2;
+        Samples Per Block = 32;
+    }
+}
+
+Wave Bank
+{
+    Name = wb;
+    Windows File = test.xwb;
+
+    Wave
+    {
+        Name = w1;
+        File = test.wav;
+    }
+
+    Wave
+    {
+        Name = w2;
+        File = test2.wav;
+        Compression Preset Name = adpcm;
+
+        Cache
+        {
+            Format Tag = 0;
+            Channels = 1;
+            Sampling Rate = 44100;
+            Bits Per Sample = 1;
+            Play Region Offset = 78;
+            Play Region Length = 35280;
+            Loop Region Offset = 0;
+            Loop Region Length = 0;
+            File Type = 1;
+            Last Modified Low = 2836222863;
+            Last Modified High = 31027759;
+        }
+    }
+
+    Wave
+    {
+        Name = w3;
+        File = test3.wav;
+        Compression Preset Name = xwma;
+    }
+}
+
+Sound Bank
+{
+    Name = sb;
+    Windows File = test.xsb;
+    Windows Bank Path Edited = 1;
+
+    Sound
+    {
+        Name = s1;
+        Volume = -1234;
+        Pitch = 66;
+        Priority = 0;
+
+        Category Entry
+        {
+            Name = Default;
+        }
+
+        Track
+        {
+            Name = t1;
+            Volume = -123;
+
+            Play Wave Event
+            {
+                Loop Count = 2;
+
+                Event Header
+                {
+                    Name = e1;
+                }
+
+                Variation
+                {
+                    Variation Type = 0;
+                    Variation Table Type = 0;
+                    New Variation On Loop = 1;
+                }
+
+                Wave Entry
+                {
+                    Bank Name = wb;
+                    Bank Index = 0;
+                    Entry Name = w1;
+                    Entry Index = 0;
+                    Weight = 100;
+                    Weight Min = 1;
+                }
+
+                Wave Entry
+                {
+                    Bank Name = wb;
+                    Bank Index = 0;
+                    Entry Name = w2;
+                    Entry Index = 1;
+                    Weight = 200;
+                    Weight Min = 2;
+                }
+            }
+        }
+
+        Track
+        {
+            Name = t2;
+            Volume = -321;
+
+            Play Wave Event
+            {
+                Event Header
+                {
+                    Name = e3;
+                }
+
+                Wave Entry
+                {
+                    Bank Name = wb;
+                    Bank Index = 0;
+                    Entry Name = w3;
+                    Entry Index = 2;
+                    Weight = 140;
+                    Weight Min = 3;
+                }
+            }
+        }
+    }
+
+    Sound
+    {
+        Name = s2;
+        Volume = 555;
+        Pitch = -8;
+        Priority = 0;
+
+        Category Entry
+        {
+            Name = Music;
+        }
+
+        Track
+        {
+            Name = t4;
+            Volume = -111;
+
+            Play Wave Event
+            {
+                Event Header
+                {
+                    Name = e4;
+                }
+
+                Wave Entry
+                {
+                    Bank Name = wb;
+                    Bank Index = 0;
+                    Entry Name = w2;
+                    Entry Index = 1;
+                    Weight = 200;
+                    Weight Min = 2;
+                }
+            }
+        }
+    }
+
+    Cue
+    {
+        Name = c1;
+
+        Variation
+        {
+            Variation Type = 0;
+            Variation Table Type = 1;
+        }
+
+        Sound Entry
+        {
+            Name = s1;
+            Index = 0;
+            Weight Min = 1;
+            Weight Max = 20;
+        }
+
+        Sound Entry
+        {
+            Name = s2;
+            Index = 1;
+            Weight Min = 30;
+            Weight Max = 60;
+        }
+    }
+
+    Cue
+    {
+        Name = c2;
+
+        Variation
+        {
+            Variation Type = 3;
+            Variation Table Type = 3;
+
+            Variable Entry
+            {
+                Name = v1;
+            }
+        }
+
+        Sound Entry
+        {
+            Name = s1;
+            Index = 0;
+            Variable Min = 1.0;
+            Variable Max = 5.0;
+            Linger = 1;
+        }
+
+        Sound Entry
+        {
+            Name = s2;
+            Index = 1;
+            Variable Min = 8.0;
+            Variable Max = 24.0;
+        }
+
+        Instance Limit
+        {
+            Max Instances = 11;
+            Behavior = 0;
+        }
+    }
+
+    Cue
+    {
+        Name = c3;
+
+        Variation
+        {
+            Variation Type = 0;
+            Variation Table Type = 1;
+        }
+
+        Sound Entry
+        {
+            Name = s2;
+            Index = 1;
+            Weight Min = 1;
+            Weight Max = 20;
+        }
+    }
+}
+#endif
+
+/* @makedep: test.xwb */
+test.xwb RCDATA "test.xwb"
