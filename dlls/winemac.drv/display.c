@@ -1109,7 +1109,7 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
             UINT dpi = NtUserGetSystemDpiForProcess( NULL );
             char buffer[32];
 
-            sprintf( buffer, "%04x", adapter->id );
+            snprintf( buffer, sizeof(buffer), "%04x", adapter->id );
             device_manager->add_source( buffer, adapter->state_flags, dpi, param );
 
             if (macdrv_get_monitors(adapter->id, &monitors, &monitor_count)) break;
