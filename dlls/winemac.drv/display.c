@@ -747,8 +747,6 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
     LONG ret = DISP_CHANGE_SUCCESSFUL;
     DEVMODEW *mode;
     int bpp;
-    struct macdrv_display *macdrv_displays;
-    int num_displays;
     CFArrayRef display_modes;
     struct display_mode_descriptor *desc;
     CGDisplayModeRef best_display_mode;
@@ -757,19 +755,14 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
 
     init_original_display_mode();
 
-    if (macdrv_get_displays(&macdrv_displays, &num_displays))
-        return DISP_CHANGE_FAILED;
-
-    display_modes = copy_display_modes(macdrv_displays[0].displayID, FALSE);
+    /* TODO: support displays other than the main one */
+    display_modes = copy_display_modes(CGMainDisplayID(), FALSE);
     if (!display_modes)
-    {
-        macdrv_free_displays(macdrv_displays);
         return DISP_CHANGE_FAILED;
-    }
 
     bpp = get_default_bpp();
 
-    desc = create_original_display_mode_descriptor(macdrv_displays[0].displayID);
+    desc = create_original_display_mode_descriptor(CGMainDisplayID());
 
     for (mode = displays; mode->dmSize && !ret; mode = NEXT_DEVMODEW(mode))
     {
@@ -799,7 +792,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
                 bpp, mode->dmDisplayFrequency);
             ret = DISP_CHANGE_BADMODE;
         }
-        else if (!macdrv_set_display_mode(macdrv_displays[0].displayID, best_display_mode))
+        else if (!macdrv_set_display_mode(CGMainDisplayID(), best_display_mode))
         {
             WARN("Failed to set display mode\n");
             ret = DISP_CHANGE_FAILED;
@@ -808,7 +801,6 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
 
     free_display_mode_descriptor(desc);
     CFRelease(display_modes);
-    macdrv_free_displays(macdrv_displays);
     macdrv_reset_device_metrics();
 
     return ret;
@@ -919,8 +911,6 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     BOOL ret = FALSE;
     DDGAMMARAMP *r = ramp;
-    struct macdrv_display *displays;
-    int num_displays;
     uint32_t mac_entries;
     int win_entries = ARRAY_SIZE(r->red);
     CGGammaValue *red, *green, *blue;
@@ -929,20 +919,15 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 
     TRACE("dev %p ramp %p\n", dev, ramp);
 
-    if (macdrv_get_displays(&displays, &num_displays))
-    {
-        WARN("failed to get Mac displays\n");
-        return FALSE;
-    }
-
-    mac_entries = CGDisplayGammaTableCapacity(displays[0].displayID);
+    /* TODO: support displays other than the main one */
+    mac_entries = CGDisplayGammaTableCapacity(CGMainDisplayID());
     red = malloc(mac_entries * sizeof(red[0]) * 3);
     if (!red)
         goto done;
     green = red + mac_entries;
     blue = green + mac_entries;
 
-    err = CGGetDisplayTransferByTable(displays[0].displayID, mac_entries, red, green,
+    err = CGGetDisplayTransferByTable(CGMainDisplayID(), mac_entries, red, green,
                                       blue, &mac_entries);
     if (err != kCGErrorSuccess)
     {
@@ -992,7 +977,6 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 
 done:
     free(red);
-    macdrv_free_displays(displays);
     return ret;
 }
 
@@ -1002,8 +986,6 @@ done:
 BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     DDGAMMARAMP *r = ramp;
-    struct macdrv_display *displays;
-    int num_displays;
     int win_entries = ARRAY_SIZE(r->red);
     CGGammaValue *red, *green, *blue;
     int i;
@@ -1014,12 +996,6 @@ BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
     if (!allow_set_gamma)
     {
         TRACE("disallowed by registry setting\n");
-        return FALSE;
-    }
-
-    if (macdrv_get_displays(&displays, &num_displays))
-    {
-        WARN("failed to get Mac displays\n");
         return FALSE;
     }
 
@@ -1036,13 +1012,13 @@ BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
         blue[i]     = r->blue[i] / 65535.0;
     }
 
-    err = CGSetDisplayTransferByTable(displays[0].displayID, win_entries, red, green, blue);
+    /* TODO: support displays other than the main one */
+    err = CGSetDisplayTransferByTable(CGMainDisplayID(), win_entries, red, green, blue);
     if (err != kCGErrorSuccess)
         WARN("failed to set display gamma table: %d\n", err);
 
 done:
     free(red);
-    macdrv_free_displays(displays);
     return (err == kCGErrorSuccess);
 }
 
