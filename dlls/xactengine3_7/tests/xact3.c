@@ -172,9 +172,15 @@ static const char global_settings_data[] =
         0x6e, 0x63, 0x65, 0x00, 0x76, 0x31, 0x00, 0x76, 0x32, 0x00, 0x76, 0x33, 0x00, 0x76, 0x34, 0x00,
 };
 
-static WCHAR *gen_xwb_file(void)
+static const struct
 {
-    static const WAVEBANKENTRY entry =
+    WAVEBANKHEADER header;
+    WAVEBANKDATA data;
+    WAVEBANKENTRY entry;
+}
+streaming_wavebank =
+{
+    .entry =
     {
         .Format =
         {
@@ -183,17 +189,17 @@ static WCHAR *gen_xwb_file(void)
             .nSamplesPerSec = 22051,
             .wBlockAlign = 48,
         },
-    };
-    static const WAVEBANKDATA bank_data =
+    },
+    .data =
     {
         .dwFlags = WAVEBANK_TYPE_STREAMING,
         .dwEntryCount = 1,
         .szBankName = "test",
-        .dwEntryMetaDataElementSize = sizeof(entry),
+        .dwEntryMetaDataElementSize = sizeof(WAVEBANKENTRY),
         .dwEntryNameElementSize = WAVEBANK_ENTRYNAME_LENGTH,
         .dwAlignment = 0x800,
-    };
-    static const WAVEBANKHEADER header =
+    },
+    .header =
     {
         .dwSignature = WAVEBANK_HEADER_SIGNATURE,
         .dwVersion = XACT_CONTENT_VERSION,
@@ -202,99 +208,127 @@ static WCHAR *gen_xwb_file(void)
         {
             [WAVEBANK_SEGIDX_BANKDATA] =
             {
-                .dwOffset = sizeof(header),
-                .dwLength = sizeof(bank_data),
+                .dwOffset = sizeof(WAVEBANKHEADER),
+                .dwLength = sizeof(WAVEBANKDATA),
             },
             [WAVEBANK_SEGIDX_ENTRYMETADATA] =
             {
-                .dwOffset = sizeof(header) + sizeof(bank_data),
-                .dwLength = sizeof(entry),
+                .dwOffset = sizeof(WAVEBANKHEADER) + sizeof(WAVEBANKDATA),
+                .dwLength = sizeof(WAVEBANKENTRY),
             },
         },
-    };
-    static WCHAR path[MAX_PATH];
-    DWORD written;
-    HANDLE file;
-
-    GetTempPathW(ARRAY_SIZE(path), path);
-    lstrcatW(path, L"test.xwb");
-
-    file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Cannot create file %s, error %ld\n",
-            wine_dbgstr_w(path), GetLastError());
-
-    WriteFile(file, &header, sizeof(header), &written, NULL);
-    ok(written == sizeof(header), "Cannot write header\n");
-
-    WriteFile(file, &bank_data, sizeof(bank_data), &written, NULL);
-    ok(written == sizeof(bank_data), "Cannot write bank data\n");
-
-    WriteFile(file, &entry, sizeof(entry), &written, NULL);
-    ok(written == sizeof(entry), "Cannot write entry\n");
-
-    CloseHandle(file);
-
-    return path;
-}
+    },
+};
 
 struct notification_cb_data
 {
     XACTNOTIFICATIONTYPE type;
     IXACT3WaveBank *wave_bank;
-    BOOL received;
+    unsigned int count;
     DWORD thread_id;
+    DWORD timestamp_before;
+    BOOL todo_wave_bank;
 };
+
+/* Current time as calculated by xactengine. */
+static DWORD get_current_time(void)
+{
+    LARGE_INTEGER time, freq;
+
+    QueryPerformanceCounter(&time);
+    QueryPerformanceFrequency(&freq);
+
+    return ((time.QuadPart * 1000) / freq.QuadPart) & INT_MAX;
+}
 
 static void WINAPI notification_cb(const XACT_NOTIFICATION *notification)
 {
     struct notification_cb_data *data = notification->pvContext;
+    DWORD timestamp_after = get_current_time();
     DWORD thread_id = GetCurrentThreadId();
 
-    data->received = TRUE;
-    ok(notification->type == data->type,
-            "Unexpected notification type %u\n", notification->type);
-    if(notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
-    {
-        ok(notification->waveBank.pWaveBank == data->wave_bank, "Unexpected wave bank %p instead of %p\n",
+    ++data->count;
+    ok(notification->type == data->type, "Expected type %u, got %u.\n", data->type, notification->type);
+    if (data->timestamp_before) /* ignore notifications we shouldn't even be getting */
+        todo_wine ok(notification->timeStamp >= data->timestamp_before && notification->timeStamp <= timestamp_after,
+                "Expected %lu <= timestamp <= %lu, got %lu.\n",
+                data->timestamp_before, timestamp_after, notification->timeStamp);
+    if (notification->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED)
+        data->wave_bank = notification->waveBank.pWaveBank;
+    else if (notification->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED)
+        todo_wine_if (data->todo_wave_bank) ok(notification->waveBank.pWaveBank == data->wave_bank, "Unexpected wave bank %p instead of %p\n",
             notification->waveBank.pWaveBank, data->wave_bank);
-    }
     ok(thread_id == data->thread_id, "Unexpected thread id %#lx instead of %#lx\n", thread_id, data->thread_id);
 }
 
 static void test_notifications(void)
 {
-    struct notification_cb_data prepared_data = { 0 }, destroyed_data = { 0 };
+    struct notification_cb_data prepared_data = {0}, destroyed_data = {0}, destroyed_data2 = {0};
+    XACT_RUNTIME_PARAMETERS params = {.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT};
+    struct notification_cb_data prepared_data_once = {0}, destroyed_data_once = {0};
     XACT_NOTIFICATION_DESCRIPTION notification_desc = { 0 };
     XACT_STREAMING_PARAMETERS streaming_params = { 0 };
-    XACT_RUNTIME_PARAMETERS params = { 0 };
+    IXACT3WaveBank *wavebank, *wavebank2;
+    IXACT3SoundBank *soundbank;
+    void *soundbank_data_copy;
     IXACT3Engine *engine;
-    WCHAR *filename;
-    unsigned int i;
+    WCHAR path[MAX_PATH];
+    DWORD state, size;
+    ULONG refcount;
     HANDLE file;
-    DWORD state;
     HRESULT hr;
+    BOOL ret;
+
+    hr = CoCreateInstance(&CLSID_XACTEngine, NULL, CLSCTX_INPROC_SERVER, &IID_IXACT3Engine, (void **)&engine);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_Initialize(engine, &params);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+if (!winetest_platform_is_wine)
+{
+    hr = IXACT3Engine_RegisterNotification(engine, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+}
+
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKPREPARED;
+    notification_desc.flags = XACT_FLAG_NOTIFICATION_PERSIST;
+    notification_desc.pvContext = &prepared_data;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    todo_wine ok(hr == XACTENGINE_E_NONOTIFICATIONCALLBACK, "Got hr %#lx.\n", hr);
+
+if (!winetest_platform_is_wine)
+{
+    hr = IXACT3Engine_UnRegisterNotification(engine, NULL);
+    ok(hr == XACTENGINE_E_NONOTIFICATIONCALLBACK, "Got hr %#lx.\n", hr);
+}
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    todo_wine ok(hr == XACTENGINE_E_NONOTIFICATIONCALLBACK, "Got hr %#lx.\n", hr);
+
+    refcount = IXACT3Engine_Release(engine);
+    todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
 
     hr = CoCreateInstance(&CLSID_XACTEngine, NULL, CLSCTX_INPROC_SERVER, &IID_IXACT3Engine, (void **)&engine);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-
     params.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT;
     params.fnNotificationCallback = notification_cb;
+    params.globalSettingsBufferSize = sizeof(global_settings_data);
+    params.pGlobalSettingsBuffer = (void *)global_settings_data;
 
     hr = IXACT3Engine_Initialize(engine, &params);
-    ok(hr == S_OK || broken(hr == XAUDIO2_E_INVALID_CALL), "Cannot initialize engine, hr %#lx\n", hr);
-    if(FAILED(hr))
-    {
-        win_skip("Unable to Initialize XACT. No speakers attached?\n");
-        IXACT3Engine_Release(engine);
-        return;
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     notification_desc.type = 0;
     notification_desc.flags = 0;
     notification_desc.pvContext = &prepared_data;
     hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
     ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+
+if (!winetest_platform_is_wine)
+{
+    hr = IXACT3Engine_UnRegisterNotification(engine, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+}
 
     hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
     ok(hr == S_OK, "got hr %#lx\n", hr);
@@ -320,47 +354,299 @@ static void test_notifications(void)
     destroyed_data.thread_id = GetCurrentThreadId();
     notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
     notification_desc.flags = XACT_FLAG_NOTIFICATION_PERSIST;
-    notification_desc.pvContext = NULL;
-    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
-    ok(hr == S_OK, "Cannot register notification, hr %#lx\n", hr);
-
-    /* Registering again overrides pvContext, but each notification
-     * class has its own pvContext. */
     notification_desc.pvContext = &destroyed_data;
     hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
     ok(hr == S_OK, "Cannot register notification, hr %#lx\n", hr);
 
-    filename = gen_xwb_file();
+    /* Multiple registrations are held in a stack. A notification is delivered
+     * to exactly one callback at a time, which is the most recent eligible
+     * callback to be registered (cf. the filtering tests below).
+     * UnRegisterCallback() unregisters the most recent callback. */
+    destroyed_data2.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
+    destroyed_data2.thread_id = GetCurrentThreadId();
+    notification_desc.pvContext = &destroyed_data2;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Cannot register notification, hr %#lx\n", hr);
 
-    file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "Cannot open file\n");
+    GetTempPathW(ARRAY_SIZE(path), path);
+    wcscat(path, L"test.xwb");
 
-    streaming_params.file = file;
-    streaming_params.packetSize = 0x800;
-    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &prepared_data.wave_bank);
-    ok(hr == S_OK, "Cannot create a streaming wave bank, hr %#lx\n", hr);
-    destroyed_data.wave_bank = prepared_data.wave_bank;
+    file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create %s, error %lu.\n", debugstr_w(path), GetLastError());
 
-    for (i = 0; i < 10 && !prepared_data.received; i++)
+    ret = WriteFile(file, &streaming_wavebank, sizeof(streaming_wavebank), &size, NULL);
+    ok(ret == TRUE, "Got error %lu.\n", GetLastError());
+
+    /* Do this twice, to test that persistent notifications truly are persistent. */
+    for (unsigned int i = 0; i < 3; ++i)
     {
-        IXACT3Engine_DoWork(engine);
-        Sleep(1);
+        prepared_data.count = destroyed_data.count = destroyed_data2.count = 0;
+
+        /* For some reason PREPARED notifications aren't sent synchronously.
+         * They're instead sent (in the same thread) from DoWork(). */
+        streaming_params.file = file;
+        streaming_params.packetSize = 0x800;
+        hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+        ok(hr == S_OK, "Cannot create a streaming wave bank, hr %#lx\n", hr);
+        destroyed_data.wave_bank = destroyed_data2.wave_bank = wavebank;
+        ok(!prepared_data.count, "Got %u notifications.\n", prepared_data.count);
+
+        prepared_data.timestamp_before = get_current_time();
+        hr = IXACT3Engine_DoWork(engine);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(prepared_data.count == 1, "Got %u notifications.\n", prepared_data.count);
+        ok(prepared_data.wave_bank == wavebank, "Wave banks didn't match.\n");
+
+        hr = IXACT3WaveBank_GetState(wavebank, &state);
+        ok(hr == S_OK, "Cannot query wave bank state, hr %#lx\n", hr);
+        ok(state == XACT_WAVEBANKSTATE_PREPARED, "Wave bank is not in prepared state, but in %#lx\n", state);
+
+        ok(!destroyed_data.count, "Got %u notifications.\n", destroyed_data.count);
+        ok(!destroyed_data2.count, "Got %u notifications.\n", destroyed_data2.count);
+
+        destroyed_data.timestamp_before = get_current_time();
+        hr = IXACT3WaveBank_Destroy(wavebank);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(destroyed_data.count == 0, "Got %u notifications.\n", destroyed_data.count);
+        ok(destroyed_data2.count == 1, "Got %u notifications.\n", destroyed_data2.count);
     }
 
-    hr = IXACT3WaveBank_GetState(prepared_data.wave_bank, &state);
-    ok(hr == S_OK, "Cannot query wave bank state, hr %#lx\n", hr);
-    ok(state == XACT_WAVEBANKSTATE_PREPARED, "Wave bank is not in prepared state, but in %#lx\n", state);
+    /* UnRegisterNotification() searches for a notification matching both the
+     * flags and context. If it doesn't find one, it helpfully returns S_OK
+     * anyway. */
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
+    notification_desc.pvContext = NULL;
+    notification_desc.flags = XACT_FLAG_NOTIFICATION_PERSIST;
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+if (!winetest_platform_is_wine)
+{
+    notification_desc.pvContext = &destroyed_data2;
+    notification_desc.flags = 0;
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+}
 
-    ok(prepared_data.received, "The 'wave bank prepared' notification was never received\n");
-    ok(!destroyed_data.received, "The 'wave bank destroyed' notification was received too early\n");
+    destroyed_data.count = destroyed_data2.count = 0;
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    destroyed_data.wave_bank = destroyed_data2.wave_bank = wavebank;
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(destroyed_data.count == 0, "Got %u notifications.\n", destroyed_data.count);
+    todo_wine ok(destroyed_data2.count == 1, "Got %u notifications.\n", destroyed_data2.count);
 
-    IXACT3WaveBank_Destroy(prepared_data.wave_bank);
-    ok(destroyed_data.received, "The 'wave bank destroyed' notification was never received\n");
+    notification_desc.pvContext = &destroyed_data2;
+    notification_desc.flags = XACT_FLAG_NOTIFICATION_PERSIST;
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    destroyed_data.count = destroyed_data2.count = 0;
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    destroyed_data.wave_bank = destroyed_data2.wave_bank = wavebank;
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(destroyed_data.count == 1, "Got %u notifications.\n", destroyed_data.count);
+    ok(destroyed_data2.count == 0, "Got %u notifications.\n", destroyed_data2.count);
+
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Registering the exact notification twice overrides the first. */
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
+    notification_desc.flags = XACT_FLAG_NOTIFICATION_PERSIST;
+    notification_desc.pvContext = &destroyed_data;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    destroyed_data.count = 0;
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    destroyed_data.wave_bank = wavebank;
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!destroyed_data.count, "Got %u notifications.\n", destroyed_data.count);
+
+if (!winetest_platform_is_wine)
+{
+    /* Test non-persistent notifications.
+     *
+     * Incidentally, register PREPARED notifications after creating the wave
+     * bank but before DoWork(), to show that they're still received in this
+     * case. */
+
+    prepared_data.count = destroyed_data2.count = 0;
+
+    destroyed_data_once.thread_id = GetCurrentThreadId();
+    destroyed_data_once.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
+    notification_desc.flags = 0;
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
+    notification_desc.pvContext = &destroyed_data_once;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(wavebank2 != wavebank, "Expected different wavebanks.\n");
+    ok(!prepared_data.count, "Got %u notifications.\n", prepared_data.count);
+
+    prepared_data_once.thread_id = GetCurrentThreadId();
+    prepared_data_once.type = XACTNOTIFICATIONTYPE_WAVEBANKPREPARED;
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKPREPARED;
+    notification_desc.pvContext = &prepared_data_once;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    prepared_data.timestamp_before = get_current_time();
+    prepared_data_once.timestamp_before = get_current_time();
+    hr = IXACT3Engine_DoWork(engine);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(prepared_data.count == 1, "Got %u notifications.\n", prepared_data.count);
+    ok(prepared_data.wave_bank == wavebank2, "Wavebanks didn't match.\n");
+    ok(prepared_data_once.count == 1, "Got %u notifications.\n", prepared_data_once.count);
+    ok(prepared_data_once.wave_bank == wavebank, "Wavebanks didn't match.\n");
+
+    destroyed_data_once.timestamp_before = get_current_time();
+    destroyed_data_once.wave_bank = wavebank2;
+    hr = IXACT3WaveBank_Destroy(wavebank2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(destroyed_data_once.count == 1, "Got %u notifications.\n", destroyed_data_once.count);
+    ok(!destroyed_data2.count, "Got %u notifications.\n", destroyed_data2.count);
+
+    /* Non-persistent notifications are not given priority. */
+
+    destroyed_data.count = destroyed_data_once.count = 0;
+
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
+    notification_desc.flags = 0;
+    notification_desc.pvContext = &destroyed_data_once;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    notification_desc.flags = XACT_FLAG_NOTIFICATION_PERSIST;
+    notification_desc.pvContext = &destroyed_data;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    destroyed_data.wave_bank = destroyed_data_once.wave_bank = wavebank;
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(destroyed_data.count == 1, "Got %u notifications.\n", destroyed_data.count);
+    ok(destroyed_data_once.count == 0, "Got %u notifications.\n", destroyed_data_once.count);
+
+    /* UnregisterNotification(NULL) is undocumented, but actually unregisters
+     * all notifications, both persistent and non-persistent. */
+
+    destroyed_data.count = destroyed_data_once.count = 0;
+
+    hr = IXACT3Engine_UnRegisterNotification(engine, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(destroyed_data.count == 0, "Got %u notifications.\n", destroyed_data.count);
+    ok(destroyed_data_once.count == 0, "Got %u notifications.\n", destroyed_data_once.count);
+}
+
+    /* Test filtering.
+     *
+     * We set pSoundBank on the wavebank notification to show that irrelevant
+     * members are simply ignored. */
+
+    /* Despite the parameter here being const, native will attempt to overwrite
+     * some of this data. */
+    soundbank_data_copy = malloc(sizeof(soundbank_data));
+    memcpy(soundbank_data_copy, soundbank_data, sizeof(soundbank_data));
+    hr = IXACT3Engine_CreateSoundBank(engine, soundbank_data_copy, sizeof(soundbank_data), 0, 0, &soundbank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    destroyed_data2.count = 0;
+    destroyed_data2.wave_bank = wavebank2;
+    destroyed_data.count = 0;
+    destroyed_data.wave_bank = wavebank;
+
+    destroyed_data2.todo_wave_bank = TRUE;
+
+    notification_desc.type = XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED;
+    notification_desc.flags = XACT_FLAG_NOTIFICATION_PERSIST;
+    notification_desc.pvContext = &destroyed_data;
+    notification_desc.pSoundBank = soundbank;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    notification_desc.pvContext = &destroyed_data2;
+    notification_desc.pWaveBank = wavebank2;
+    hr = IXACT3Engine_RegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_DoWork(engine);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    destroyed_data.timestamp_before = get_current_time();
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(destroyed_data.count == 1, "Got %u notifications.\n", destroyed_data.count);
+    todo_wine ok(!destroyed_data2.count, "Got %u notifications.\n", destroyed_data2.count);
+    destroyed_data2.todo_wave_bank = FALSE;
+    hr = IXACT3WaveBank_Destroy(wavebank2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(destroyed_data.count == 1, "Got %u notifications.\n", destroyed_data.count);
+    todo_wine ok(destroyed_data2.count == 1, "Got %u notifications.\n", destroyed_data2.count);
+
+    /* UnRegisterNotification requires that the filters match too, including
+     * the ones that don't matter. */
+    destroyed_data.count = destroyed_data2.count = 0;
+
+    notification_desc.pWaveBank = NULL;
+    notification_desc.pvContext = &destroyed_data;
+    notification_desc.pSoundBank = NULL;
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    destroyed_data.wave_bank = wavebank;
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(destroyed_data.count == 1, "Got %u notifications.\n", destroyed_data.count);
+    ok(!destroyed_data2.count, "Got %u notifications.\n", destroyed_data2.count);
+
+    destroyed_data.count = destroyed_data2.count = 0;
+
+    notification_desc.pSoundBank = soundbank;
+    hr = IXACT3Engine_UnRegisterNotification(engine, &notification_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3WaveBank_Destroy(wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!destroyed_data.count, "Got %u notifications.\n", destroyed_data.count);
+    ok(!destroyed_data2.count, "Got %u notifications.\n", destroyed_data2.count);
 
     CloseHandle(file);
-    IXACT3Engine_Release(engine);
+    refcount = IXACT3Engine_Release(engine);
+    todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
 
-    DeleteFileW(filename);
+    ret = DeleteFileW(path);
+    ok(ret == TRUE, "Got error %lu.\n", GetLastError());
 }
 
 static void test_properties(void)
