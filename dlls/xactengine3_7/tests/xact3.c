@@ -1438,6 +1438,67 @@ static void test_variables(void)
     todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
 }
 
+static void test_matrices(void)
+{
+    XACT_RUNTIME_PARAMETERS params = {.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT};
+    WAVEFORMATEXTENSIBLE format;
+    IXACT3SoundBank *soundbank;
+    void *soundbank_data_copy;
+    IXACT3WaveBank *wavebank;
+    float coefficients[20];
+    IXACT3Engine *engine;
+    IXACT3Cue *cue;
+    ULONG refcount;
+    HRESULT hr;
+    HRSRC res;
+
+    hr = CoCreateInstance(&CLSID_XACTEngine, NULL, CLSCTX_INPROC_SERVER, &IID_IXACT3Engine, (void **)&engine);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    params.pGlobalSettingsBuffer = (void *)global_settings_data;
+    params.globalSettingsBufferSize = sizeof(global_settings_data);
+    hr = IXACT3Engine_Initialize(engine, &params);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    res = FindResourceW(NULL, L"test.xwb", (const WCHAR *)RT_RCDATA);
+    ok(!!res, "Got error %lu.\n", GetLastError());
+
+    hr = IXACT3Engine_CreateInMemoryWaveBank(engine,
+            LockResource(LoadResource(GetModuleHandleA(NULL), res)),
+            SizeofResource(GetModuleHandleA(NULL), res), 0, 0, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_GetFinalMixFormat(engine, &format);
+
+    /* Despite the parameter here being const, native will attempt to overwrite
+     * some of this data. */
+    soundbank_data_copy = malloc(sizeof(soundbank_data));
+    memcpy(soundbank_data_copy, soundbank_data, sizeof(soundbank_data));
+    hr = IXACT3Engine_CreateSoundBank(engine, soundbank_data_copy, sizeof(soundbank_data), 0, 0, &soundbank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3SoundBank_Play(soundbank, 1, 0, 0, &cue);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int src_count = 0; src_count < 10; ++src_count)
+    {
+        hr = IXACT3Cue_SetMatrixCoefficients(cue, src_count, format.Format.nChannels, coefficients);
+        todo_wine_if (src_count == 0 || src_count == 9)
+            ok(hr == (src_count >= 1 && src_count <= 8 ? S_OK : E_FAIL),
+                    "Got hr %#lx for source count %u.\n", hr, src_count);
+    }
+    for (unsigned int dst_count = 0; dst_count < 10; ++dst_count)
+    {
+        hr = IXACT3Cue_SetMatrixCoefficients(cue, 1, dst_count, coefficients);
+        todo_wine_if (dst_count != format.Format.nChannels)
+            ok(hr == (dst_count == format.Format.nChannels ? S_OK : E_INVALIDARG),
+                    "Got hr %#lx for destination count %u.\n", hr, dst_count);
+    }
+
+    refcount = IXACT3Engine_Release(engine);
+    todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
+}
+
 START_TEST(xact3)
 {
     IXACT3Engine *engine;
@@ -1460,6 +1521,7 @@ START_TEST(xact3)
     test_renderer_details();
     test_properties();
     test_variables();
+    test_matrices();
 
     CoUninitialize();
 }
