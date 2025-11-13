@@ -1685,9 +1685,10 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
      * window rect will be repeatedly changed by the WM and the application, causing a flickering effect */
     if (data->is_fullscreen)
     {
-        xinerama_get_fullscreen_monitors( &data->rects.visible, &old_generation, old_monitors );
-        xinerama_get_fullscreen_monitors( &data->current_state.rect, &generation, monitors );
-        if (!memcmp( old_monitors, monitors, sizeof(monitors) )) return 0;
+        if (xinerama_get_fullscreen_monitors( &data->rects.visible, &old_generation, old_monitors )
+            && xinerama_get_fullscreen_monitors( &data->current_state.rect, &generation, monitors )
+            && !memcmp( old_monitors, monitors, sizeof(monitors) ))
+            return 0;
     }
 
     flags = SWP_NOACTIVATE | SWP_NOZORDER;
