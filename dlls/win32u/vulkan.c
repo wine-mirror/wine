@@ -307,6 +307,196 @@ static HANDLE open_shared_resource_from_name( const WCHAR *name )
     return open_name.hNtHandle;
 }
 
+static VkResult convert_device_create_info( struct vulkan_physical_device *physical_device, VkDeviceCreateInfo *info,
+                                            struct mempool *pool, struct vulkan_device *device )
+{
+    struct vulkan_instance *instance = physical_device->instance;
+    const char **extensions;
+    uint32_t count = 0;
+
+    /* Should be filtered out by loader as ICDs don't support layers. */
+    info->enabledLayerCount = 0;
+    info->ppEnabledLayerNames = NULL;
+
+    if (device->extensions.has_VK_KHR_win32_keyed_mutex)
+        device->extensions.has_VK_KHR_timeline_semaphore = 1;
+
+    driver_funcs->p_map_device_extensions( &device->extensions );
+    device->extensions.has_VK_KHR_win32_keyed_mutex = 0;
+    device->extensions.has_VK_KHR_external_memory_win32 = 0;
+    device->extensions.has_VK_KHR_external_fence_win32 = 0;
+    device->extensions.has_VK_KHR_external_semaphore_win32 = 0;
+
+    if (device->extensions.has_VK_EXT_external_memory_dma_buf)
+        device->extensions.has_VK_KHR_external_memory_fd = 1;
+
+    if (physical_device->map_placed_align)
+    {
+        VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *map_placed_features;
+
+        if (!(map_placed_features = mem_alloc( pool, sizeof(*map_placed_features) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+        map_placed_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
+        map_placed_features->pNext = (void *)info->pNext;
+        map_placed_features->memoryMapPlaced = VK_TRUE;
+        map_placed_features->memoryMapRangePlaced = VK_FALSE;
+        map_placed_features->memoryUnmapReserve = VK_TRUE;
+        info->pNext = map_placed_features;
+
+        device->extensions.has_VK_EXT_map_memory_placed = 1;
+        device->extensions.has_VK_KHR_map_memory2 = 1;
+    }
+    else if (physical_device->external_memory_align)
+    {
+        device->extensions.has_VK_KHR_external_memory = 1;
+        device->extensions.has_VK_EXT_external_memory_host = 1;
+    }
+
+    /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
+    if (device->extensions.has_VK_KHR_swapchain && instance->extensions.has_VK_EXT_surface_maintenance1 &&
+        physical_device->extensions.has_VK_EXT_swapchain_maintenance1)
+        device->extensions.has_VK_EXT_swapchain_maintenance1 = 1;
+
+    if (!(extensions = mem_alloc( pool, sizeof(device->extensions) * 8 * sizeof(*extensions) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+#define USE_VK_EXT(x) if (device->extensions.has_ ## x) extensions[count++] = #x;
+    ALL_VK_DEVICE_EXTS
+#undef USE_VK_EXT
+
+    TRACE( "Enabling %u host device extensions\n", count );
+    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
+        TRACE( "  - %s\n", debugstr_a(*extension) );
+
+    info->ppEnabledExtensionNames = extensions;
+    info->enabledExtensionCount = count;
+    return VK_SUCCESS;
+}
+
+static void init_device_queues( struct vulkan_device *device, const VkDeviceQueueCreateInfo *create_info, VkDevice client_device )
+{
+    VkDeviceQueueInfo2 info = {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2};
+    VkQueue client_queues = client_device->queues + device->queue_count;
+    struct vulkan_queue *queues = device->queues + device->queue_count;
+
+    TRACE( "Queue family index %u, queue count %u.\n", create_info->queueFamilyIndex, create_info->queueCount );
+
+    info.flags = create_info->flags;
+    info.queueFamilyIndex = create_info->queueFamilyIndex;
+    for (info.queueIndex = 0; info.queueIndex < create_info->queueCount; info.queueIndex++)
+    {
+        VkQueue host_queue, client_queue = client_queues + info.queueIndex;
+        struct vulkan_queue *queue = queues + info.queueIndex;
+
+        if (info.flags && device->p_vkGetDeviceQueue2) device->p_vkGetDeviceQueue2( device->host.device, &info, &host_queue );
+        else device->p_vkGetDeviceQueue( device->host.device, info.queueFamilyIndex, info.queueIndex, &host_queue );
+        vulkan_object_init_ptr( &queue->obj, (UINT_PTR)host_queue, &client_queue->obj );
+        queue->device = device;
+        queue->info = info;
+
+        TRACE( "Got device %p queue %p, host_queue %p.\n", device, queue, queue->host.queue );
+    }
+
+    device->queue_count += create_info->queueCount;
+}
+
+static VkResult win32u_vkCreateDevice( VkPhysicalDevice client_physical_device, const VkDeviceCreateInfo *client_create_info,
+                                       const VkAllocationCallbacks *allocator, VkDevice *client_device_ptr )
+{
+    VkDeviceCreateInfo *create_info = (VkDeviceCreateInfo *)client_create_info; /* cast away const, chain has been copied in the thunks */
+    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle( client_physical_device );
+    struct vulkan_instance *instance = physical_device->instance;
+    VkDevice host_device, client_device = *client_device_ptr;
+    struct vulkan_device *device;
+    unsigned int queue_count, i;
+    struct mempool pool = {0};
+    VkResult res;
+
+    if (TRACE_ON(vulkan))
+    {
+        VkPhysicalDeviceProperties properties = {0};
+        instance->p_vkGetPhysicalDeviceProperties( physical_device->host.physical_device, &properties );
+        TRACE( "Device name: %s.\n", debugstr_a(properties.deviceName) );
+        TRACE( "Vendor ID: %#x, Device ID: %#x.\n", properties.vendorID, properties.deviceID );
+        TRACE( "Driver version: %#x.\n", properties.driverVersion );
+    }
+
+    /* We need to cache all queues within the device as each requires wrapping since queues are dispatchable objects. */
+    for (queue_count = 0, i = 0; i < create_info->queueCreateInfoCount; i++) queue_count += create_info->pQueueCreateInfos[i].queueCount;
+
+    if (!(device = calloc( 1, offsetof(struct vulkan_device, queues[queue_count]) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    device->extensions = client_device->extensions;
+
+    if ((res = convert_device_create_info( physical_device, create_info, &pool, device ))) goto failed;
+    if ((res = instance->p_vkCreateDevice( physical_device->host.physical_device, create_info, NULL /* allocator */, &host_device ))) goto failed;
+
+    vulkan_object_init_ptr( &device->obj, (UINT_PTR)host_device, &client_device->obj );
+    device->physical_device = physical_device;
+
+#define USE_VK_FUNC( name )                                                          \
+    device->p_##name = (void *)p_vkGetDeviceProcAddr( device->host.device, #name );  \
+    if (!device->p_##name) TRACE( "Device proc %s not found.\n", #name );
+    ALL_VK_DEVICE_FUNCS
+#undef USE_VK_FUNC
+
+    for (i = 0; i < create_info->queueCreateInfoCount; i++) init_device_queues( device, create_info->pQueueCreateInfos + i, client_device );
+
+    TRACE( "Created device %p, host_device %p.\n", device, device->host.device );
+    for (struct vulkan_queue *queue = device->queues; queue < device->queues + device->queue_count; queue++)
+        instance->p_insert_object( instance, &queue->obj );
+    instance->p_insert_object( instance, &device->obj );
+
+failed:
+    if (res)
+    {
+        WARN( "Failed to create device, res %d\n", res );
+        free( device );
+    }
+    mem_free( &pool );
+    return res;
+}
+
+static void win32u_vkDestroyDevice( VkDevice client_device, const VkAllocationCallbacks *allocator )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct vulkan_instance *instance = device->physical_device->instance;
+    unsigned int i;
+
+    if (!device) return;
+
+    device->p_vkDestroyDevice( device->host.device, NULL /* pAllocator */ );
+    for (i = 0; i < device->queue_count; i++)
+        instance->p_remove_object( instance, &device->queues[i].obj );
+    instance->p_remove_object( instance, &device->obj );
+
+    free( device );
+}
+
+static VkQueue device_find_queue( VkDevice client_device, const VkDeviceQueueInfo2 *info )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+
+    for (struct vulkan_queue *queue = device->queues; queue < device->queues + device->queue_count; queue++)
+        if (!memcmp( &queue->info, info, sizeof(*info) )) return queue->client.queue;
+
+    return VK_NULL_HANDLE;
+}
+
+static void win32u_vkGetDeviceQueue( VkDevice client_device, uint32_t family_index, uint32_t queue_index, VkQueue *client_queue )
+{
+    VkDeviceQueueInfo2 info = {.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2};
+    info.queueFamilyIndex = family_index;
+    info.queueIndex = queue_index;
+
+    *client_queue = device_find_queue( client_device, &info );
+}
+
+static void win32u_vkGetDeviceQueue2( VkDevice client_device, const VkDeviceQueueInfo2 *client_info, VkQueue *client_queue )
+{
+    VkDeviceQueueInfo2 info = *client_info;
+    if (info.pNext) FIXME( "pNext not implemented\n" );
+    info.pNext = NULL;
+
+    *client_queue = device_find_queue( client_device, &info );
+}
+
 static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *client_alloc_info,
                                          const VkAllocationCallbacks *allocator, VkDeviceMemory *ret )
 {
@@ -2279,11 +2469,13 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkAcquireNextImageKHR = win32u_vkAcquireNextImageKHR,
     .p_vkAllocateMemory = win32u_vkAllocateMemory,
     .p_vkCreateBuffer = win32u_vkCreateBuffer,
+    .p_vkCreateDevice = win32u_vkCreateDevice,
     .p_vkCreateFence = win32u_vkCreateFence,
     .p_vkCreateImage = win32u_vkCreateImage,
     .p_vkCreateSemaphore = win32u_vkCreateSemaphore,
     .p_vkCreateSwapchainKHR = win32u_vkCreateSwapchainKHR,
     .p_vkCreateWin32SurfaceKHR = win32u_vkCreateWin32SurfaceKHR,
+    .p_vkDestroyDevice = win32u_vkDestroyDevice,
     .p_vkDestroyFence = win32u_vkDestroyFence,
     .p_vkDestroySemaphore = win32u_vkDestroySemaphore,
     .p_vkDestroySurfaceKHR = win32u_vkDestroySurfaceKHR,
@@ -2292,6 +2484,8 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkGetDeviceBufferMemoryRequirements = win32u_vkGetDeviceBufferMemoryRequirements,
     .p_vkGetDeviceBufferMemoryRequirementsKHR = win32u_vkGetDeviceBufferMemoryRequirements,
     .p_vkGetDeviceImageMemoryRequirements = win32u_vkGetDeviceImageMemoryRequirements,
+    .p_vkGetDeviceQueue = win32u_vkGetDeviceQueue,
+    .p_vkGetDeviceQueue2 = win32u_vkGetDeviceQueue2,
     .p_vkGetFenceWin32HandleKHR = win32u_vkGetFenceWin32HandleKHR,
     .p_vkGetMemoryWin32HandleKHR = win32u_vkGetMemoryWin32HandleKHR,
     .p_vkGetMemoryWin32HandlePropertiesKHR = win32u_vkGetMemoryWin32HandlePropertiesKHR,

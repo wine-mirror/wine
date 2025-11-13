@@ -615,19 +615,23 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice physical_device, const VkDeviceC
         queue_count += create_info->pQueueCreateInfos[i].queueCount;
     if (!(device = vulkan_client_object_create(FIELD_OFFSET(struct VkDevice_T, queues[queue_count]))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
-    for (i = 0; i < queue_count; i++)
-        device->queues[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    for (VkQueue queue = device->queues, end = queue + queue_count; queue < end; queue++)
+        queue->obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
     device->extensions = extensions;
+    *ret = device;
 
     params.physicalDevice = physical_device;
     params.pCreateInfo = create_info;
     params.pAllocator = allocator;
     params.pDevice = ret;
-    params.client_ptr = device;
+
     status = UNIX_CALL(vkCreateDevice, &params);
     assert(!status);
     if (params.result)
+    {
         free(device);
+        *ret = NULL;
+    }
     return params.result;
 }
 

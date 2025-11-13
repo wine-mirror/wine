@@ -43,19 +43,6 @@ static struct wine_instance *wine_instance_from_handle(VkInstance handle)
     return CONTAINING_RECORD(object, struct wine_instance, obj);
 }
 
-static struct wine_device *wine_device_from_handle(VkDevice handle)
-{
-    struct vulkan_device *object = vulkan_device_from_handle(handle);
-    return CONTAINING_RECORD(object, struct wine_device, obj);
-}
-
-static void vulkan_object_init_ptr( struct vulkan_object *obj, UINT64 host_handle, struct vulkan_client_object *client )
-{
-    obj->host_handle = host_handle;
-    obj->client_handle = (UINT_PTR)client;
-    client->unix_handle = (UINT_PTR)obj;
-}
-
 static BOOL is_wow64(void)
 {
     return sizeof(void *) == sizeof(UINT64) && NtCurrentTeb()->WowTebOffset;
@@ -443,116 +430,6 @@ static void wine_vk_free_command_buffers(struct vulkan_device *device,
     }
 }
 
-static void wine_vk_device_init_queues(struct wine_device *object, const VkDeviceQueueCreateInfo *info)
-{
-    struct wine_queue *queues = object->queues + object->queue_count;
-    struct vulkan_device *device = &object->obj;
-    VkQueue client_queues = device->client.device->queues + object->queue_count;
-    VkDeviceQueueInfo2 queue_info;
-    UINT i;
-
-    TRACE("Queue family index %u, queue count %u.\n", info->queueFamilyIndex, info->queueCount);
-
-    for (i = 0; i < info->queueCount; i++)
-    {
-        struct wine_queue *queue = queues + i;
-        VkQueue host_queue, client_queue = client_queues + i;
-
-        /* The Vulkan spec says:
-         *
-         * "vkGetDeviceQueue must only be used to get queues that were created
-         * with the flags parameter of VkDeviceQueueCreateInfo set to zero."
-         */
-        if (info->flags && device->p_vkGetDeviceQueue2)
-        {
-            queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
-            queue_info.pNext = NULL;
-            queue_info.flags = info->flags;
-            queue_info.queueFamilyIndex = info->queueFamilyIndex;
-            queue_info.queueIndex = i;
-            device->p_vkGetDeviceQueue2(device->host.device, &queue_info, &host_queue);
-        }
-        else
-        {
-            device->p_vkGetDeviceQueue(device->host.device, info->queueFamilyIndex, i, &host_queue);
-        }
-
-        vulkan_object_init_ptr(&queue->obj.obj, (UINT_PTR)host_queue, &client_queue->obj);
-        queue->obj.device = device;
-        queue->family_index = info->queueFamilyIndex;
-        queue->queue_index = i;
-        queue->flags = info->flags;
-
-        TRACE("Got device %p queue %p, host_queue %p.\n", device, queue, queue->obj.host.queue);
-    }
-
-    object->queue_count += info->queueCount;
-}
-
-static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device *physical_device, struct conversion_context *ctx,
-        const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst, struct wine_device *device)
-{
-    struct vulkan_instance *instance = physical_device->instance;
-    const char **extensions;
-    uint32_t count = 0;
-
-    *dst = *src;
-
-    /* Should be filtered out by loader as ICDs don't support layers. */
-    dst->enabledLayerCount = 0;
-    dst->ppEnabledLayerNames = NULL;
-
-    if (device->obj.extensions.has_VK_KHR_win32_keyed_mutex)
-        device->obj.extensions.has_VK_KHR_timeline_semaphore = 1;
-
-    vk_funcs->p_map_device_extensions(&device->obj.extensions);
-    device->obj.extensions.has_VK_KHR_win32_keyed_mutex = 0;
-    device->obj.extensions.has_VK_KHR_external_memory_win32 = 0;
-    device->obj.extensions.has_VK_KHR_external_fence_win32 = 0;
-    device->obj.extensions.has_VK_KHR_external_semaphore_win32 = 0;
-
-    if (device->obj.extensions.has_VK_EXT_external_memory_dma_buf)
-        device->obj.extensions.has_VK_KHR_external_memory_fd = 1;
-
-    if (physical_device->map_placed_align)
-    {
-        VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *map_placed_features;
-        map_placed_features = conversion_context_alloc(ctx, sizeof(*map_placed_features));
-        map_placed_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
-        map_placed_features->pNext = (void *)dst->pNext;
-        map_placed_features->memoryMapPlaced = VK_TRUE;
-        map_placed_features->memoryMapRangePlaced = VK_FALSE;
-        map_placed_features->memoryUnmapReserve = VK_TRUE;
-        dst->pNext = map_placed_features;
-
-        device->obj.extensions.has_VK_EXT_map_memory_placed = 1;
-        device->obj.extensions.has_VK_KHR_map_memory2 = 1;
-    }
-    else if (physical_device->external_memory_align)
-    {
-        device->obj.extensions.has_VK_KHR_external_memory = 1;
-        device->obj.extensions.has_VK_EXT_external_memory_host = 1;
-    }
-
-    /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
-    if (device->obj.extensions.has_VK_KHR_swapchain && instance->extensions.has_VK_EXT_surface_maintenance1 &&
-        physical_device->extensions.has_VK_EXT_swapchain_maintenance1)
-        device->obj.extensions.has_VK_EXT_swapchain_maintenance1 = 1;
-
-    extensions = conversion_context_alloc(ctx, sizeof(device->obj.extensions) * 8 * sizeof(*extensions));
-#define USE_VK_EXT(x) if (device->obj.extensions.has_ ## x) extensions[count++] = #x;
-    ALL_VK_DEVICE_EXTS
-#undef USE_VK_EXT
-
-    TRACE("Enabling %u host device extensions\n", count);
-    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
-        TRACE("  - %s\n", debugstr_a(*extension));
-
-    dst->ppEnabledExtensionNames = extensions;
-    dst->enabledExtensionCount = count;
-    return VK_SUCCESS;
-}
-
 NTSTATUS init_vulkan(void *arg)
 {
     struct vulkan_instance_extensions extensions = {0};
@@ -832,81 +709,6 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
     return res;
 }
 
-VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDeviceCreateInfo *create_info,
-                             const VkAllocationCallbacks *allocator, VkDevice *ret, void *client_ptr)
-{
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct vulkan_instance *instance = physical_device->instance;
-    VkDevice host_device, client_device = client_ptr;
-    VkDeviceCreateInfo create_info_host;
-    struct conversion_context ctx;
-    struct wine_device *device;
-    unsigned int queue_count, i;
-    VkResult res;
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    if (TRACE_ON(vulkan))
-    {
-        VkPhysicalDeviceProperties properties;
-
-        instance->p_vkGetPhysicalDeviceProperties(physical_device->host.physical_device, &properties);
-
-        TRACE("Device name: %s.\n", debugstr_a(properties.deviceName));
-        TRACE("Vendor ID: %#x, Device ID: %#x.\n", properties.vendorID, properties.deviceID);
-        TRACE("Driver version: %#x.\n", properties.driverVersion);
-    }
-
-    /* We need to cache all queues within the device as each requires wrapping since queues are dispatchable objects. */
-    for (queue_count = 0, i = 0; i < create_info->queueCreateInfoCount; i++)
-        queue_count += create_info->pQueueCreateInfos[i].queueCount;
-
-    if (!(device = calloc(1, offsetof(struct wine_device, queues[queue_count]))))
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-    device->obj.extensions = client_device->extensions;
-
-    init_conversion_context(&ctx);
-    res = wine_vk_device_convert_create_info(physical_device, &ctx, create_info, &create_info_host, device);
-    if (res == VK_SUCCESS)
-        res = instance->p_vkCreateDevice(physical_device->host.physical_device, &create_info_host,
-                                               NULL /* allocator */, &host_device);
-    free_conversion_context(&ctx);
-    if (res != VK_SUCCESS)
-    {
-        WARN("Failed to create device, res=%d.\n", res);
-        free(device);
-        return res;
-    }
-
-    vulkan_object_init_ptr(&device->obj.obj, (UINT_PTR)host_device, &client_device->obj);
-    device->obj.physical_device = physical_device;
-
-    /* Just load all function pointers we are aware off. The loader takes care of filtering.
-     * We use vkGetDeviceProcAddr as opposed to vkGetInstanceProcAddr for efficiency reasons
-     * as functions pass through fewer dispatch tables within the loader.
-     */
-#define USE_VK_FUNC(name)                                                                          \
-    device->obj.p_##name = (void *)vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, #name);  \
-    if (device->obj.p_##name == NULL) TRACE("Not found '%s'.\n", #name);
-    ALL_VK_DEVICE_FUNCS
-#undef USE_VK_FUNC
-
-    for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
-        wine_vk_device_init_queues(device, create_info_host.pQueueCreateInfos + i);
-
-    TRACE("Created device %p, host_device %p.\n", device, device->obj.host.device);
-    for (i = 0; i < device->queue_count; i++)
-    {
-        struct wine_queue *queue = device->queues + i;
-        vulkan_instance_insert_object(instance, &queue->obj.obj);
-    }
-    vulkan_instance_insert_object(instance, &device->obj.obj);
-
-    *ret = client_device;
-    return VK_SUCCESS;
-}
-
 VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
                                const VkAllocationCallbacks *allocator, VkInstance *ret,
                                void *client_ptr)
@@ -982,25 +784,6 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     *ret = client_instance;
     return VK_SUCCESS;
-}
-
-void wine_vkDestroyDevice(VkDevice client_device, const VkAllocationCallbacks *allocator)
-{
-    struct wine_device *device = wine_device_from_handle(client_device);
-    struct vulkan_instance *instance = device->obj.physical_device->instance;
-    unsigned int i;
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-    if (!device)
-        return;
-
-    device->obj.p_vkDestroyDevice(device->obj.host.device, NULL /* pAllocator */);
-    for (i = 0; i < device->queue_count; i++)
-        vulkan_instance_remove_object(instance, &device->queues[i].obj.obj);
-    vulkan_instance_remove_object(instance, &device->obj.obj);
-
-    free(device);
 }
 
 void wine_vkDestroyInstance(VkInstance client_instance, const VkAllocationCallbacks *allocator)
@@ -1084,49 +867,6 @@ void wine_vkFreeCommandBuffers(VkDevice client_device, VkCommandPool command_poo
     struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(command_pool);
 
     wine_vk_free_command_buffers(device, pool, count, buffers);
-}
-
-static VkQueue wine_vk_device_find_queue(VkDevice client_device, const VkDeviceQueueInfo2 *info)
-{
-    struct wine_device *device = wine_device_from_handle(client_device);
-    struct wine_queue *queue;
-    uint32_t i;
-
-    for (i = 0; i < device->queue_count; i++)
-    {
-        queue = &device->queues[i];
-        if (queue->family_index == info->queueFamilyIndex
-                && queue->queue_index == info->queueIndex
-                && queue->flags == info->flags)
-        {
-            return queue->obj.client.queue;
-        }
-    }
-
-    return VK_NULL_HANDLE;
-}
-
-void wine_vkGetDeviceQueue(VkDevice client_device, uint32_t family_index, uint32_t queue_index, VkQueue *client_queue)
-{
-    VkDeviceQueueInfo2 queue_info;
-
-    queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
-    queue_info.pNext = NULL;
-    queue_info.flags = 0;
-    queue_info.queueFamilyIndex = family_index;
-    queue_info.queueIndex = queue_index;
-
-    *client_queue = wine_vk_device_find_queue(client_device, &queue_info);
-}
-
-void wine_vkGetDeviceQueue2(VkDevice client_device, const VkDeviceQueueInfo2 *info, VkQueue *client_queue)
-{
-    const VkBaseInStructure *chain;
-
-    if ((chain = info->pNext))
-        FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
-
-    *client_queue = wine_vk_device_find_queue(client_device, info);
 }
 
 VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCreateInfo *info,
@@ -1630,8 +1370,8 @@ static NTSTATUS is_available_instance_function(VkInstance handle, const char *na
 
 static NTSTATUS is_available_device_function(VkDevice handle, const char *name)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
-    return !!vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, name);
+    struct vulkan_device *device = vulkan_device_from_handle(handle);
+    return !!vk_funcs->p_vkGetDeviceProcAddr(device->host.device, name);
 }
 
 #ifdef _WIN64

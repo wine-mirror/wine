@@ -112,6 +112,13 @@ static inline void vulkan_object_init( struct vulkan_object *obj, UINT64 host_ha
     obj->client_handle = (UINT_PTR)obj;
 }
 
+static inline void vulkan_object_init_ptr( struct vulkan_object *obj, UINT64 host_handle, struct vulkan_client_object *client )
+{
+    obj->host_handle = host_handle;
+    obj->client_handle = (UINT_PTR)client;
+    client->unix_handle = (UINT_PTR)obj;
+}
+
 struct vulkan_instance
 {
     VULKAN_OBJECT_HEADER( VkInstance, instance );
@@ -150,6 +157,20 @@ static inline struct vulkan_physical_device *vulkan_physical_device_from_handle(
     return (struct vulkan_physical_device *)(UINT_PTR)client->unix_handle;
 }
 
+struct vulkan_device;
+struct vulkan_queue
+{
+    VULKAN_OBJECT_HEADER( VkQueue, queue );
+    struct vulkan_device *device;
+    VkDeviceQueueInfo2 info;
+};
+
+static inline struct vulkan_queue *vulkan_queue_from_handle( VkQueue handle )
+{
+    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
+    return (struct vulkan_queue *)(UINT_PTR)client->unix_handle;
+}
+
 struct vulkan_device
 {
     VULKAN_OBJECT_HEADER( VkDevice, device );
@@ -158,24 +179,17 @@ struct vulkan_device
 #define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
     ALL_VK_DEVICE_FUNCS
 #undef USE_VK_FUNC
+
+    uint64_t queue_count;
+    struct vulkan_queue queues[];
 };
+
+C_ASSERT( sizeof(struct vulkan_device) == offsetof(struct vulkan_device, queues[0]) );
 
 static inline struct vulkan_device *vulkan_device_from_handle( VkDevice handle )
 {
     struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
     return (struct vulkan_device *)(UINT_PTR)client->unix_handle;
-}
-
-struct vulkan_queue
-{
-    VULKAN_OBJECT_HEADER( VkQueue, queue );
-    struct vulkan_device *device;
-};
-
-static inline struct vulkan_queue *vulkan_queue_from_handle( VkQueue handle )
-{
-    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
-    return (struct vulkan_queue *)(UINT_PTR)client->unix_handle;
 }
 
 struct vulkan_command_buffer
@@ -251,11 +265,13 @@ struct vulkan_funcs
     PFN_vkAcquireNextImageKHR p_vkAcquireNextImageKHR;
     PFN_vkAllocateMemory p_vkAllocateMemory;
     PFN_vkCreateBuffer p_vkCreateBuffer;
+    PFN_vkCreateDevice p_vkCreateDevice;
     PFN_vkCreateFence p_vkCreateFence;
     PFN_vkCreateImage p_vkCreateImage;
     PFN_vkCreateSemaphore p_vkCreateSemaphore;
     PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
     PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
+    PFN_vkDestroyDevice p_vkDestroyDevice;
     PFN_vkDestroyFence p_vkDestroyFence;
     PFN_vkDestroySemaphore p_vkDestroySemaphore;
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
@@ -265,6 +281,8 @@ struct vulkan_funcs
     PFN_vkGetDeviceBufferMemoryRequirementsKHR p_vkGetDeviceBufferMemoryRequirementsKHR;
     PFN_vkGetDeviceImageMemoryRequirements p_vkGetDeviceImageMemoryRequirements;
     PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
+    PFN_vkGetDeviceQueue p_vkGetDeviceQueue;
+    PFN_vkGetDeviceQueue2 p_vkGetDeviceQueue2;
     PFN_vkGetFenceWin32HandleKHR p_vkGetFenceWin32HandleKHR;
     PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
     PFN_vkGetMemoryWin32HandleKHR p_vkGetMemoryWin32HandleKHR;

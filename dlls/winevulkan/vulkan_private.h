@@ -29,24 +29,6 @@
 
 extern const struct vulkan_funcs *vk_funcs;
 
-struct wine_queue
-{
-    struct vulkan_queue obj;
-
-    uint32_t family_index;
-    uint32_t queue_index;
-    VkDeviceQueueCreateFlags flags;
-};
-
-struct wine_device
-{
-    struct vulkan_device obj;
-    uint64_t queue_count;
-    struct wine_queue queues[];
-};
-
-C_ASSERT(sizeof(struct wine_device) == offsetof(struct wine_device, queues[0]));
-
 struct wine_debug_utils_messenger;
 
 struct wine_debug_report_callback

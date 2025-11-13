@@ -178,10 +178,6 @@ PERF_CRITICAL_FUNCTIONS = [
 FUNCTION_OVERRIDES = {
     # Global functions
     "vkCreateInstance" : {"extra_param" : "client_ptr"},
-
-    # Instance functions
-    "vkCreateDevice" : {"extra_param" : "client_ptr"},
-
     # Device functions
     "vkCreateCommandPool" : {"extra_param" : "client_ptr"},
     "vkGetDeviceProcAddr" : {"dispatch" : False},
@@ -193,11 +189,13 @@ USER_DRIVER_FUNCS = {
     "vkAcquireNextImageKHR",
     "vkAllocateMemory",
     "vkCreateBuffer",
+    "vkCreateDevice",
     "vkCreateFence",
     "vkCreateImage",
     "vkCreateSemaphore",
     "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
+    "vkDestroyDevice",
     "vkDestroyFence",
     "vkDestroySemaphore",
     "vkDestroySurfaceKHR",
@@ -207,6 +205,8 @@ USER_DRIVER_FUNCS = {
     "vkGetDeviceBufferMemoryRequirementsKHR",
     "vkGetDeviceImageMemoryRequirements",
     "vkGetDeviceProcAddr",
+    "vkGetDeviceQueue",
+    "vkGetDeviceQueue2",
     "vkGetFenceWin32HandleKHR",
     "vkGetInstanceProcAddr",
     "vkGetMemoryWin32HandleKHR",
@@ -247,13 +247,11 @@ MANUAL_UNIX_THUNKS = {
     "vkCreateDebugReportCallbackEXT",
     "vkCreateDebugUtilsMessengerEXT",
     "vkCreateDeferredOperationKHR",
-    "vkCreateDevice",
     "vkCreateInstance",
     "vkDestroyCommandPool",
     "vkDestroyDebugReportCallbackEXT",
     "vkDestroyDebugUtilsMessengerEXT",
     "vkDestroyDeferredOperationKHR",
-    "vkDestroyDevice",
     "vkDestroyInstance",
     "vkEnumerateDeviceLayerProperties",
     "vkEnumerateInstanceExtensionProperties",
@@ -266,8 +264,6 @@ MANUAL_UNIX_THUNKS = {
     "vkGetCalibratedTimestampsEXT",
     "vkGetCalibratedTimestampsKHR",
     "vkGetDeviceProcAddr",
-    "vkGetDeviceQueue",
-    "vkGetDeviceQueue2",
     "vkGetInstanceProcAddr",
     "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT",
     "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR",
