@@ -132,6 +132,15 @@ static UINT32 _effect_get_bool_prop(ID2D1Effect *effect, UINT32 prop, int line)
     return v;
 }
 
+#define effect_get_mat5x4_prop(a,b,c) _effect_get_mat5x4_prop(a,b,c,__LINE__)
+static void _effect_get_mat5x4_prop(ID2D1Effect *effect, UINT32 prop, D2D1_MATRIX_5X4_F *m, int line)
+{
+    HRESULT hr;
+
+    hr = ID2D1Effect_GetValue(effect, prop, D2D1_PROPERTY_TYPE_MATRIX_5X4, (BYTE *)m, sizeof(*m));
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 static const WCHAR *effect_xml_a =
 L"<?xml version='1.0'?>                                                       \
     <Effect>                                                                  \
@@ -13854,6 +13863,58 @@ static void test_effect_composite(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_color_matrix(BOOL d3d11)
+{
+    static const struct effect_property properties[] =
+    {
+        { L"ColorMatrix", D2D1_COLORMATRIX_PROP_COLOR_MATRIX, D2D1_PROPERTY_TYPE_MATRIX_5X4 },
+        { L"AlphaMode", D2D1_COLORMATRIX_PROP_ALPHA_MODE, D2D1_PROPERTY_TYPE_ENUM },
+        { L"ClampOutput", D2D1_COLORMATRIX_PROP_CLAMP_OUTPUT, D2D1_PROPERTY_TYPE_BOOL },
+    };
+    D2D1_MATRIX_5X4_F m, identity;
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    unsigned int count, i;
+    ID2D1Effect *effect;
+    WCHAR name[64];
+    HRESULT hr;
+    UINT32 v;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    context = ctx.context;
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1ColorMatrix, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_system_properties(effect);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(count == 3, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(properties); ++i)
+    {
+        hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(name, properties[i].name), "Unexpected name %s.\n", wine_dbgstr_w(name));
+    }
+
+    memset(&identity, 0, sizeof(identity));
+    identity._11 = identity._22 = identity._33 = identity._44 = 1.0f;
+    effect_get_mat5x4_prop(effect, D2D1_COLORMATRIX_PROP_COLOR_MATRIX, &m);
+    ok(!memcmp(&m, &identity, sizeof(m)), "Unexpected value.\n");
+
+    v = effect_get_enum_prop(effect, D2D1_COLORMATRIX_PROP_ALPHA_MODE);
+    ok(v == D2D1_COLORMATRIX_ALPHA_MODE_PREMULTIPLIED, "Unexpected value %#x.\n", v);
+
+    v = effect_get_bool_prop(effect, D2D1_COLORMATRIX_PROP_CLAMP_OUTPUT);
+    ok(!v, "Unexpected value %#x.\n", v);
+
+    ID2D1Effect_Release(effect);
+    release_test_context(&ctx);
+}
+
 static void test_registered_effects(BOOL d3d11)
 {
     UINT32 ret, count, count2, count3;
@@ -17232,6 +17293,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_effect_shadow);
     queue_d3d10_test(test_effect_3d_perspective_transform);
     queue_d3d10_test(test_effect_composite);
+    queue_d3d10_test(test_effect_color_matrix);
     queue_test(test_effect_flood);
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);

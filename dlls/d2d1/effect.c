@@ -1358,11 +1358,37 @@ L"<?xml version='1.0'?>                                                   \
     <Inputs >                                                             \
       <Input name='Source'/>                                              \
     </Inputs>                                                             \
+    <Property name='ColorMatrix' type='matrix5x4' />                      \
+    <Property name='AlphaMode' type='enum' />                             \
+    <Property name='ClampOutput' type='bool' />                           \
   </Effect>";
+
+struct color_matrix_properties
+{
+    D2D1_MATRIX_5X4_F color_matrix;
+    D2D1_COLORMATRIX_ALPHA_MODE alpha_mode;
+    BOOL clamp_output;
+};
+
+EFFECT_PROPERTY_RW(color_matrix, color_matrix, MATRIX_5X4)
+EFFECT_PROPERTY_RW(color_matrix, alpha_mode, ENUM)
+EFFECT_PROPERTY_RW(color_matrix, clamp_output, BOOL)
+
+static const D2D1_PROPERTY_BINDING color_matrix_bindings[] =
+{
+    { L"ColorMatrix", BINDING_RW(color_matrix, color_matrix) },
+    { L"AlphaMode", BINDING_RW(color_matrix, alpha_mode) },
+    { L"ClampOutput", BINDING_RW(color_matrix, clamp_output) },
+};
 
 static HRESULT __stdcall color_matrix_factory(IUnknown **effect)
 {
-    return d2d_effect_create_impl(effect, NULL, 0);
+    static const struct color_matrix_properties properties =
+    {
+        .color_matrix = { ._11 = 1.0f, ._22 = 1.0f, ._33 = 1.0f, ._44 = 1.0f },
+        .alpha_mode = D2D1_COLORMATRIX_ALPHA_MODE_PREMULTIPLIED,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
 static const WCHAR flood_description[] =
@@ -1564,7 +1590,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1Crop, X2(crop) },
         { &CLSID_D2D1Shadow, X2(shadow) },
         { &CLSID_D2D1Grayscale, X(grayscale) },
-        { &CLSID_D2D1ColorMatrix, X(color_matrix) },
+        { &CLSID_D2D1ColorMatrix, X2(color_matrix) },
         { &CLSID_D2D1Flood, X2(flood) },
         { &CLSID_D2D1GaussianBlur, X2(gaussian_blur) },
         { &CLSID_D2D1PointSpecular, X2(point_specular) },
