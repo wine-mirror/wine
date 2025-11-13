@@ -320,6 +320,7 @@ struct constructor;
     XIID(IWineHTMLWindowCompatPrivate) \
     XIID(IWineCSSProperties) \
     XIID(IWinePageTransitionEvent) \
+    XIID(IWinePerformancePrivate) \
     XIID(IWineXMLHttpRequestPrivate) \
     XIID(IWineMSHTMLConsole) \
     XIID(IWineMSHTMLCrypto) \

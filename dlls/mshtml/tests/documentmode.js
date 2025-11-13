@@ -21,6 +21,10 @@ var tests = [];
 
 var svg_ns = "http://www.w3.org/2000/svg";
 
+if(performance.now) {
+    var t = performance.now();
+    ok(t - performance.timing.navigationStart < 2000, "performance.now() more than 2 sec away from navigationStart: " + t + " vs " + performance.timing.navigationStart);
+}
 ok(performance.timing.navigationStart > 0, "navigationStart <= 0");
 ok(performance.timing.fetchStart == performance.timing.navigationStart, "fetchStart != navigationStart");
 ok(performance.timing.domainLookupStart >= performance.timing.fetchStart, "domainLookupStart < fetchStart");
@@ -1028,6 +1032,7 @@ sync_test("perf_props", function() {
     test_exposed("timing", true);
     test_exposed("toJSON", v >= 9);
     test_exposed("toString", true);
+    test_exposed("now", v >= 10);
 
     obj = window.performance.navigation, name = "PerformanceNavigation";
 
@@ -4570,7 +4575,7 @@ sync_test("prototype props", function() {
         "getMeasures", "mark", "measure", "navigation", ["now",10], "setResourceTimingBufferSize", "timing", "toJSON"
     ], [
         "clearMarks", "clearMeasures", "clearResourceTimings", "getEntries", "getEntriesByName", "getEntriesByType", "getMarks",
-        "getMeasures", "mark", "measure", ["now",10], "setResourceTimingBufferSize"
+        "getMeasures", "mark", "measure", "setResourceTimingBufferSize"
     ]);
     check(PerformanceNavigation, [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED", "redirectCount", "toJSON", "type" ], [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED" ]);
     check(PerformanceTiming, [

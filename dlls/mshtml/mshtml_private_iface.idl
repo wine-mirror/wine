@@ -455,6 +455,18 @@ interface IWinePageTransitionEvent : IDispatch
     HRESULT persisted([retval, out] VARIANT_BOOL *ret);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(c985818a-0a28-3da3-4023-9cf70955d79d)
+]
+interface IWinePerformancePrivate : IDispatch
+{
+    [id(1)]
+    HRESULT now([retval, out] double *p);
+}
 
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSE = 1;
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSETYPE = 2;
