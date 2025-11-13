@@ -1499,6 +1499,62 @@ static void test_matrices(void)
     todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
 }
 
+static void test_create_wavebank(void)
+{
+    XACT_RUNTIME_PARAMETERS params = {.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT};
+    XACT_STREAMING_PARAMETERS streaming_params = {0};
+    IXACT3WaveBank *wavebank;
+    IXACT3Engine *engine;
+    WCHAR path[MAX_PATH];
+    ULONG refcount;
+    HANDLE file;
+    HRESULT hr;
+    DWORD size;
+    HRSRC res;
+    BOOL ret;
+
+    hr = CoCreateInstance(&CLSID_XACTEngine, NULL, CLSCTX_INPROC_SERVER, &IID_IXACT3Engine, (void **)&engine);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    params.pGlobalSettingsBuffer = (void *)global_settings_data;
+    params.globalSettingsBufferSize = sizeof(global_settings_data);
+    hr = IXACT3Engine_Initialize(engine, &params);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Test trying to create an in-memory wave bank from streaming wave bank data. This fails. */
+
+    hr = IXACT3Engine_CreateInMemoryWaveBank(engine, &streaming_wavebank, sizeof(streaming_wavebank), 0, 0, &wavebank);
+    todo_wine ok(hr == XACTENGINE_E_INVALIDUSAGE, "Got hr %#lx.\n", hr);
+
+    /* Test trying to create a streaming wave bank from in-memory wave bank data.
+     * This actually succeeds, but then trying to use the wavebank crashes. */
+
+    GetTempPathW(ARRAY_SIZE(path), path);
+    wcscat(path, L"test.xwb");
+
+    file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create %s, error %lu.\n", debugstr_w(path), GetLastError());
+
+    res = FindResourceW(NULL, L"test.xwb", (const WCHAR *)RT_RCDATA);
+    ok(!!res, "Got error %lu.\n", GetLastError());
+    ret = WriteFile(file, LockResource(LoadResource(GetModuleHandleA(NULL), res)),
+            SizeofResource(GetModuleHandleA(NULL), res), &size, NULL);
+    ok(ret == TRUE, "Got error %lu.\n", GetLastError());
+
+    streaming_params.file = file;
+    streaming_params.packetSize = 16;
+    hr = IXACT3Engine_CreateStreamingWaveBank(engine, &streaming_params, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    CloseHandle(file);
+
+    ret = DeleteFileW(path);
+    ok(ret == TRUE, "Got error %lu.\n", GetLastError());
+
+    refcount = IXACT3Engine_Release(engine);
+    todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
+}
+
 START_TEST(xact3)
 {
     IXACT3Engine *engine;
@@ -1522,6 +1578,7 @@ START_TEST(xact3)
     test_properties();
     test_variables();
     test_matrices();
+    test_create_wavebank();
 
     CoUninitialize();
 }
