@@ -1159,11 +1159,58 @@ L"<?xml version='1.0'?>                                                         
     <Inputs>                                                                      \
       <Input name='Source'/>                                                      \
     </Inputs>                                                                     \
+    <Property name='InterpolationMode' type='enum' />                             \
+    <Property name='BorderMode' type='enum' />                                    \
+    <Property name='Depth' type='float' />                                        \
+    <Property name='PerspectiveOrigin' type='vector2' />                          \
+    <Property name='LocalOffset' type='vector3' />                                \
+    <Property name='GlobalOffset' type='vector3' />                               \
+    <Property name='RotationOrigin' type='vector3' />                             \
+    <Property name='Rotation' type='vector3' />                                   \
   </Effect>";
+
+struct _3d_perspective_transform_properties
+{
+    D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE interpolation_mode;
+    D2D1_BORDER_MODE border_mode;
+    float depth;
+    D2D1_VECTOR_2F perspective_origin;
+    D2D1_VECTOR_3F local_offset;
+    D2D1_VECTOR_3F global_offset;
+    D2D1_VECTOR_3F rotation_origin;
+    D2D1_VECTOR_3F rotation;
+};
+
+EFFECT_PROPERTY_RW(_3d_perspective_transform, interpolation_mode, ENUM)
+EFFECT_PROPERTY_RW(_3d_perspective_transform, border_mode, ENUM)
+EFFECT_PROPERTY_RW(_3d_perspective_transform, depth, FLOAT)
+EFFECT_PROPERTY_RW(_3d_perspective_transform, perspective_origin, VECTOR2)
+EFFECT_PROPERTY_RW(_3d_perspective_transform, local_offset, VECTOR3)
+EFFECT_PROPERTY_RW(_3d_perspective_transform, global_offset, VECTOR3)
+EFFECT_PROPERTY_RW(_3d_perspective_transform, rotation_origin, VECTOR3)
+EFFECT_PROPERTY_RW(_3d_perspective_transform, rotation, VECTOR3)
+
+static const D2D1_PROPERTY_BINDING _3d_perspective_transform_bindings[] =
+{
+    { L"InterpolationMode", BINDING_RW(_3d_perspective_transform, interpolation_mode) },
+    { L"BorderMode", BINDING_RW(_3d_perspective_transform, border_mode) },
+    { L"Depth", BINDING_RW(_3d_perspective_transform, depth) },
+    { L"PerspectiveOrigin", BINDING_RW(_3d_perspective_transform, perspective_origin) },
+    { L"LocalOffset", BINDING_RW(_3d_perspective_transform, local_offset) },
+    { L"GlobalOffset", BINDING_RW(_3d_perspective_transform, global_offset) },
+    { L"RotationOrigin", BINDING_RW(_3d_perspective_transform, rotation_origin) },
+    { L"Rotation", BINDING_RW(_3d_perspective_transform, rotation) },
+};
 
 static HRESULT __stdcall _3d_perspective_transform_factory(IUnknown **effect)
 {
-    return d2d_effect_create_impl(effect, NULL, 0);
+    static const struct _3d_perspective_transform_properties properties =
+    {
+        .interpolation_mode = D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE_LINEAR,
+        .border_mode = D2D1_BORDER_MODE_SOFT,
+        .depth = 1000.0f,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
 static const WCHAR composite_description[] =
@@ -1474,7 +1521,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
 #define X(name) name##_description, name##_factory
 #define X2(name) name##_description, name##_factory, name##_bindings, ARRAY_SIZE(name##_bindings)
         { &CLSID_D2D12DAffineTransform, X2(_2d_affine_transform) },
-        { &CLSID_D2D13DPerspectiveTransform, X(_3d_perspective_transform) },
+        { &CLSID_D2D13DPerspectiveTransform, X2(_3d_perspective_transform) },
         { &CLSID_D2D1Composite, X(composite) },
         { &CLSID_D2D1Crop, X(crop) },
         { &CLSID_D2D1Shadow, X2(shadow) },
