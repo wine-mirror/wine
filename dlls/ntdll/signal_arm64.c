@@ -650,7 +650,8 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
         (1ull << PF_ARM_SVE_SM4_INSTRUCTIONS_AVAILABLE) |
         (1ull << PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE) |
         (1ull << PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE) |
-        (1ull << PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE);
+        (1ull << PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_LSE2_AVAILABLE);
 
     return (feature < PROCESSOR_FEATURE_MAX && (arm64_features & (1ull << feature)) &&
             user_shared_data->ProcessorFeatures[feature]);

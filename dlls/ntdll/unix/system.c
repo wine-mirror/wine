@@ -513,6 +513,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
         features[PF_ERMS_AVAILABLE]                 = !!(regs[1] & (1 << 9));
         features[PF_AVX512F_INSTRUCTIONS_AVAILABLE] = !!(regs[1] & (1 << 16));
         features[PF_RDPID_INSTRUCTION_AVAILABLE]    = !!(regs[2] & (1 << 22));
+        features[PF_MOVDIR64B_INSTRUCTION_AVAILABLE]= !!(regs[2] & (1 << 28));
 #if defined(__linux__) && defined(AT_HWCAP2)
         features[PF_RDWRFSGSBASE_AVAILABLE] &= !!(getauxval( AT_HWCAP2 ) & 2);
 #endif
@@ -645,6 +646,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
             features[PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svei8mm" );
             features[PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef32mm" );
             features[PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef64mm" );
+            features[PF_ARM_LSE2_AVAILABLE]                      = has_feature( value, "uscat" );
             break;
         }
         fclose( f );
