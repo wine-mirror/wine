@@ -1859,6 +1859,7 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
         const struct d2d_effect_property *prop, D2D1_PROPERTY_TYPE type, BYTE *value, UINT32 size)
 {
     struct d2d_effect *effect = properties->effect;
+    PD2D1_PROPERTY_GET_FUNCTION get_function = effect ? prop->get_function : NULL;
     UINT32 actual_size;
 
     memset(value, 0, size);
@@ -1872,8 +1873,8 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
         return E_INVALIDARG;
     }
 
-    if (prop->get_function)
-        return prop->get_function((IUnknown *)effect->impl, value, size, &actual_size);
+    if (get_function)
+        return get_function((IUnknown *)effect->impl, value, size, &actual_size);
 
     switch (prop->type)
     {
