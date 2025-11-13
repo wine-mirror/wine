@@ -148,8 +148,6 @@ typedef struct
 #define TAB_HOTTRACK_TIMER            1
 #define TAB_HOTTRACK_TIMER_INTERVAL   100   /* milliseconds */
 
-static const WCHAR themeClass[] = L"Tab";
-
 static inline TAB_ITEM* TAB_GetItem(const TAB_INFO *infoPtr, INT i)
 {
     assert(i >= 0 && i < infoPtr->uNumItem);
@@ -1950,6 +1948,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 static void TAB_DrawItemThemeBackground(const TAB_INFO *infoPtr, HDC hdc, INT iItem,
                                         const RECT *selectedRect, RECT *contentRect)
 {
+#if __WINE_COMCTL32_VERSION == 6
     static const int partIds[8] =
     {
         /* Normal item */
@@ -1991,6 +1990,7 @@ static void TAB_DrawItemThemeBackground(const TAB_INFO *infoPtr, HDC hdc, INT iI
 
     DrawThemeBackground(theme, hdc, partIds[partIndex], stateId, contentRect, NULL);
     GetThemeBackgroundContentRect(theme, hdc, partIds[partIndex], stateId, contentRect, contentRect);
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 }
 
 /******************************************************************************
@@ -2301,6 +2301,7 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
 
 static void TAB_DrawBorderBackground(const TAB_INFO *infoPtr, HDC hdc, RECT *rect)
 {
+#if __WINE_COMCTL32_VERSION == 6
   HTHEME theme = GetWindowTheme(infoPtr->hwnd);
 
   if (theme)
@@ -2309,6 +2310,7 @@ static void TAB_DrawBorderBackground(const TAB_INFO *infoPtr, HDC hdc, RECT *rec
       DrawThemeBackground(theme, hdc, TABP_PANE, 0, rect, NULL);
       return;
   }
+#endif
 
   DrawEdge(hdc, rect, EDGE_RAISED, BF_SOFT | BF_RECT);
 }
@@ -3056,8 +3058,8 @@ static LRESULT TAB_Create (HWND hwnd, LPARAM lParam)
     }
   }
 
-  OpenThemeData (infoPtr->hwnd, themeClass);
-  
+  COMCTL32_OpenThemeForWindow (infoPtr->hwnd, L"Tab");
+
   /*
    * We need to get text information so we need a DC and we need to select
    * a font.
@@ -3118,20 +3120,10 @@ TAB_Destroy (TAB_INFO *infoPtr)
   if (infoPtr->iHotTracked >= 0)
     KillTimer(infoPtr->hwnd, TAB_HOTTRACK_TIMER);
 
-  CloseThemeData (GetWindowTheme (infoPtr->hwnd));
+  COMCTL32_CloseThemeForWindow (infoPtr->hwnd);
 
   Free (infoPtr);
   return 0;
-}
-
-/* update theme after a WM_THEMECHANGED message */
-static LRESULT theme_changed(const TAB_INFO *infoPtr)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->hwnd);
-    CloseThemeData (theme);
-    OpenThemeData (infoPtr->hwnd, themeClass);
-    InvalidateRect (infoPtr->hwnd, NULL, TRUE);
-    return 0;
 }
 
 static LRESULT TAB_NCCalcSize(WPARAM wParam)
@@ -3434,7 +3426,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return 0;
 
     case WM_THEMECHANGED:
-      return theme_changed (infoPtr);
+      return COMCTL32_ThemeChanged (infoPtr->hwnd, L"Tab", TRUE, TRUE);
 
     case WM_KILLFOCUS:
       TAB_KillFocus(infoPtr);
