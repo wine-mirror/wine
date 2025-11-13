@@ -100,11 +100,6 @@ static VkBool32 macdrv_get_physical_device_presentation_support(struct vulkan_ph
 
 static BOOL use_VK_EXT_metal_surface;
 
-static const char *macdrv_get_host_extension(const char *name)
-{
-    return name;
-}
-
 static void macdrv_map_instance_extensions(struct vulkan_instance_extensions *extensions)
 {
     if (use_VK_EXT_metal_surface)
@@ -127,7 +122,6 @@ static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = macdrv_get_physical_device_presentation_support,
-    .p_get_host_extension = macdrv_get_host_extension,
     .p_map_instance_extensions = macdrv_map_instance_extensions,
     .p_map_device_extensions = macdrv_map_device_extensions,
 };

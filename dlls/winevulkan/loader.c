@@ -141,6 +141,30 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
     if (!device || !name)
         return NULL;
 
+    if (device->extensions.has_VK_KHR_external_memory_win32)
+    {
+        if (!strcmp(name, "vkGetMemoryWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkGetMemoryWin32HandleKHR;
+        if (!strcmp(name, "vkGetMemoryWin32HandlePropertiesKHR"))
+            return (PFN_vkVoidFunction)vkGetMemoryWin32HandlePropertiesKHR;
+    }
+
+    if (device->extensions.has_VK_KHR_external_semaphore_win32)
+    {
+        if (!strcmp(name, "vkGetSemaphoreWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkGetSemaphoreWin32HandleKHR;
+        if (!strcmp(name, "vkImportSemaphoreWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkImportSemaphoreWin32HandleKHR;
+    }
+
+    if (device->extensions.has_VK_KHR_external_fence_win32)
+    {
+        if (!strcmp(name, "vkGetFenceWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkGetFenceWin32HandleKHR;
+        if (!strcmp(name, "vkImportFenceWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkImportFenceWin32HandleKHR;
+    }
+
     /* Per the spec, we are only supposed to return device functions as in functions
      * for which the first parameter is vkDevice or a child of vkDevice like a
      * vkCommandBuffer or vkQueue.
@@ -569,13 +593,23 @@ VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
     return params.result;
 }
 
-VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateInfo *create_info,
+VkResult WINAPI vkCreateDevice(VkPhysicalDevice physical_device, const VkDeviceCreateInfo *create_info,
                                const VkAllocationCallbacks *allocator, VkDevice *ret)
 {
+    struct vulkan_device_extensions extensions = {0};
     struct vkCreateDevice_params params;
     uint32_t queue_count = 0, i;
     VkDevice device;
     NTSTATUS status;
+
+    TRACE("Enabling %u client device extensions\n", create_info->enabledExtensionCount);
+    for (uint32_t i = 0; i < create_info->enabledExtensionCount; i++)
+    {
+        const char *extension = create_info->ppEnabledExtensionNames[i];
+        if (!is_device_extension_supported(physical_device, extension, &extensions))
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        TRACE("  - %s\n", extension);
+    }
 
     for (i = 0; i < create_info->queueCreateInfoCount; i++)
         queue_count += create_info->pQueueCreateInfos[i].queueCount;
@@ -583,8 +617,9 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     for (i = 0; i < queue_count; i++)
         device->queues[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    device->extensions = extensions;
 
-    params.physicalDevice = phys_dev;
+    params.physicalDevice = physical_device;
     params.pCreateInfo = create_info;
     params.pAllocator = allocator;
     params.pDevice = ret;

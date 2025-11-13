@@ -492,14 +492,9 @@ static void wine_vk_device_init_queues(struct wine_device *object, const VkDevic
 static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device *physical_device, struct conversion_context *ctx,
         const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst, struct wine_device *device)
 {
-    bool has_swapchain_maintenance1 = false;
-    bool has_external_memory_host = false;
-    bool has_map_memory_placed = false;
-    bool has_external_memory = false;
-    bool has_map_memory2 = false;
-    bool has_swapchain = false;
+    struct vulkan_instance *instance = physical_device->instance;
     const char **extensions;
-    uint32_t count;
+    uint32_t count = 0;
 
     *dst = *src;
 
@@ -507,51 +502,17 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
     dst->enabledLayerCount = 0;
     dst->ppEnabledLayerNames = NULL;
 
-    count = src->enabledExtensionCount;
-    extensions = conversion_context_alloc(ctx, (count + 16) * sizeof(*extensions));
-    memcpy(extensions, dst->ppEnabledExtensionNames, count * sizeof(*extensions));
-    dst->ppEnabledExtensionNames = extensions;
+    if (device->obj.extensions.has_VK_KHR_win32_keyed_mutex)
+        device->obj.extensions.has_VK_KHR_timeline_semaphore = 1;
 
-    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
-    {
-        if (!wine_vk_device_extension_supported(*extension))
-        {
-            WARN("Extension %s is not supported.\n", debugstr_a(*extension));
-            return VK_ERROR_EXTENSION_NOT_PRESENT;
-        }
-        if (!strcmp(*extension, "VK_EXT_map_memory_placed")) has_map_memory_placed = true;
-        if (!strcmp(*extension, "VK_KHR_map_memory2")) has_map_memory2 = true;
-        if (!strcmp(*extension, "VK_KHR_external_memory")) has_external_memory = true;
-        if (!strcmp(*extension, "VK_EXT_external_memory_host")) has_external_memory_host = true;
-        if (!strcmp(*extension, "VK_EXT_swapchain_maintenance1")) has_swapchain_maintenance1 = true;
-        if (!strcmp(*extension, "VK_KHR_swapchain")) has_swapchain = true;
-        if (!strcmp(*extension, "VK_KHR_win32_keyed_mutex"))
-        {
-            device->obj.has_win32_keyed_mutex = true;
-            *extension = "VK_KHR_timeline_semaphore";
-        }
-        if (!strcmp(*extension, "VK_KHR_external_memory_win32"))
-        {
-            if (zero_bits && !physical_device->map_placed_align)
-            {
-                FIXME("Cannot export WOW64 memory without VK_EXT_map_memory_placed\n");
-                return VK_ERROR_EXTENSION_NOT_PRESENT;
-            }
-            device->has_external_memory_win32 = true;
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32");
-            if (!strcmp(*extension, "VK_EXT_external_memory_dma_buf")) extensions[count++] = "VK_KHR_external_memory_fd";
-        }
-        if (!strcmp(*extension, "VK_KHR_external_semaphore_win32"))
-        {
-            device->has_external_semaphore_win32 = true;
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32");
-        }
-        if (!strcmp(*extension, "VK_KHR_external_fence_win32"))
-        {
-            device->has_external_fence_win32 = true;
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32");
-        }
-    }
+    vk_funcs->p_map_device_extensions(&device->obj.extensions);
+    device->obj.extensions.has_VK_KHR_win32_keyed_mutex = 0;
+    device->obj.extensions.has_VK_KHR_external_memory_win32 = 0;
+    device->obj.extensions.has_VK_KHR_external_fence_win32 = 0;
+    device->obj.extensions.has_VK_KHR_external_semaphore_win32 = 0;
+
+    if (device->obj.extensions.has_VK_EXT_external_memory_dma_buf)
+        device->obj.extensions.has_VK_KHR_external_memory_fd = 1;
 
     if (physical_device->map_placed_align)
     {
@@ -564,23 +525,30 @@ static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device
         map_placed_features->memoryUnmapReserve = VK_TRUE;
         dst->pNext = map_placed_features;
 
-        if (!has_map_memory_placed) extensions[count++] = "VK_EXT_map_memory_placed";
-        if (!has_map_memory2) extensions[count++] = "VK_KHR_map_memory2";
+        device->obj.extensions.has_VK_EXT_map_memory_placed = 1;
+        device->obj.extensions.has_VK_KHR_map_memory2 = 1;
     }
     else if (physical_device->external_memory_align)
     {
-        if (!has_external_memory) extensions[count++] = "VK_KHR_external_memory";
-        if (!has_external_memory_host) extensions[count++] = "VK_EXT_external_memory_host";
+        device->obj.extensions.has_VK_KHR_external_memory = 1;
+        device->obj.extensions.has_VK_EXT_external_memory_host = 1;
     }
 
     /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
-    if (physical_device->extensions.has_VK_EXT_swapchain_maintenance1 && has_swapchain && !has_swapchain_maintenance1)
-        extensions[count++] = "VK_EXT_swapchain_maintenance1";
+    if (device->obj.extensions.has_VK_KHR_swapchain && instance->extensions.has_VK_EXT_surface_maintenance1 &&
+        physical_device->extensions.has_VK_EXT_swapchain_maintenance1)
+        device->obj.extensions.has_VK_EXT_swapchain_maintenance1 = 1;
 
-    TRACE("Enabling %u device extensions\n", count);
+    extensions = conversion_context_alloc(ctx, sizeof(device->obj.extensions) * 8 * sizeof(*extensions));
+#define USE_VK_EXT(x) if (device->obj.extensions.has_ ## x) extensions[count++] = #x;
+    ALL_VK_DEVICE_EXTS
+#undef USE_VK_EXT
+
+    TRACE("Enabling %u host device extensions\n", count);
     for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
         TRACE("  - %s\n", debugstr_a(*extension));
 
+    dst->ppEnabledExtensionNames = extensions;
     dst->enabledExtensionCount = count;
     return VK_SUCCESS;
 }
@@ -708,6 +676,9 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
 
+    vk_funcs->p_map_instance_extensions(&instance->obj.extensions);
+    instance->obj.extensions.has_VK_KHR_win32_surface = 0;
+
     if (instance->obj.extensions.has_VK_EXT_debug_utils || instance->obj.extensions.has_VK_EXT_debug_report)
     {
         rb_init(&instance->objects, vulkan_object_compare);
@@ -721,9 +692,6 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         instance->obj.extensions.has_VK_KHR_get_physical_device_properties2 = 1;
         instance->obj.extensions.has_VK_KHR_external_memory_capabilities = 1;
     }
-
-    vk_funcs->p_map_instance_extensions(&instance->obj.extensions);
-    instance->obj.extensions.has_VK_KHR_win32_surface = 0;
 
     extensions = conversion_context_alloc(ctx, sizeof(instance->obj.extensions) * 8 * sizeof(*extensions));
 #define USE_VK_EXT(x) if (instance->obj.extensions.has_ ## x) extensions[count++] = #x;
@@ -896,6 +864,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
 
     if (!(device = calloc(1, offsetof(struct wine_device, queues[queue_count]))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
+    device->obj.extensions = client_device->extensions;
 
     init_conversion_context(&ctx);
     res = wine_vk_device_convert_create_info(physical_device, &ctx, create_info, &create_info_host, device);
@@ -1662,22 +1631,6 @@ static NTSTATUS is_available_instance_function(VkInstance handle, const char *na
 static NTSTATUS is_available_device_function(VkDevice handle, const char *name)
 {
     struct wine_device *device = wine_device_from_handle(handle);
-
-    if (!strcmp(name, "vkGetMemoryWin32HandleKHR"))
-        return device->has_external_memory_win32;
-    if (!strcmp(name, "vkGetMemoryWin32HandlePropertiesKHR"))
-        return device->has_external_memory_win32;
-
-    if (!strcmp(name, "vkGetSemaphoreWin32HandleKHR"))
-        return device->has_external_semaphore_win32;
-    if (!strcmp(name, "vkImportSemaphoreWin32HandleKHR"))
-        return device->has_external_semaphore_win32;
-
-    if (!strcmp(name, "vkGetFenceWin32HandleKHR"))
-        return device->has_external_fence_win32;
-    if (!strcmp(name, "vkImportFenceWin32HandleKHR"))
-        return device->has_external_fence_win32;
-
     return !!vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, name);
 }
 

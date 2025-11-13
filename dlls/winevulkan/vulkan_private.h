@@ -41,9 +41,6 @@ struct wine_queue
 struct wine_device
 {
     struct vulkan_device obj;
-    bool has_external_memory_win32;
-    bool has_external_semaphore_win32;
-    bool has_external_fence_win32;
     uint64_t queue_count;
     struct wine_queue queues[];
 };
@@ -107,8 +104,6 @@ static inline struct wine_debug_report_callback *wine_debug_report_callback_from
 {
     return (struct wine_debug_report_callback *)(uintptr_t)handle;
 }
-
-BOOL wine_vk_device_extension_supported(const char *name);
 
 BOOL wine_vk_is_type_wrapped(VkObjectType type);
 
