@@ -1224,11 +1224,28 @@ L"<?xml version='1.0'?>                                                   \
       <Input name='Source1'/>                                             \
       <Input name='Source2'/>                                             \
     </Inputs>                                                             \
+    <Property name='Mode' type='enum' />                                  \
   </Effect>";
+
+struct composite_properties
+{
+    D2D1_COMPOSITE_MODE mode;
+};
+
+EFFECT_PROPERTY_RW(composite, mode, ENUM)
+
+static const D2D1_PROPERTY_BINDING composite_bindings[] =
+{
+    { L"Mode", BINDING_RW(composite, mode) },
+};
 
 static HRESULT __stdcall composite_factory(IUnknown **effect)
 {
-    return d2d_effect_create_impl(effect, NULL, 0);
+    static const struct composite_properties properties =
+    {
+        .mode = D2D1_COMPOSITE_MODE_SOURCE_OVER,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
 static const WCHAR crop_description[] =
@@ -1522,7 +1539,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
 #define X2(name) name##_description, name##_factory, name##_bindings, ARRAY_SIZE(name##_bindings)
         { &CLSID_D2D12DAffineTransform, X2(_2d_affine_transform) },
         { &CLSID_D2D13DPerspectiveTransform, X2(_3d_perspective_transform) },
-        { &CLSID_D2D1Composite, X(composite) },
+        { &CLSID_D2D1Composite, X2(composite) },
         { &CLSID_D2D1Crop, X(crop) },
         { &CLSID_D2D1Shadow, X2(shadow) },
         { &CLSID_D2D1Grayscale, X(grayscale) },

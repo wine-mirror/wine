@@ -13798,6 +13798,47 @@ static void test_effect_flood(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_composite(BOOL d3d11)
+{
+    static const struct effect_property properties[] =
+    {
+        { L"Mode", D2D1_COMPOSITE_PROP_MODE, D2D1_PROPERTY_TYPE_ENUM },
+    };
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    unsigned int count, i;
+    ID2D1Effect *effect;
+    WCHAR name[64];
+    HRESULT hr;
+    UINT32 v;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    context = ctx.context;
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Composite, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_system_properties(effect);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(count == 1, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(properties); ++i)
+    {
+        hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(name, properties[i].name), "Unexpected name %s.\n", wine_dbgstr_w(name));
+    }
+
+    v = effect_get_enum_prop(effect, D2D1_COMPOSITE_PROP_MODE);
+    ok(v == D2D1_COMPOSITE_MODE_SOURCE_OVER, "Unexpected value %#x.\n", v);
+
+    ID2D1Effect_Release(effect);
+    release_test_context(&ctx);
+}
+
 static void test_registered_effects(BOOL d3d11)
 {
     UINT32 ret, count, count2, count3;
@@ -17176,6 +17217,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_effect_arithmetic_composite);
     queue_d3d10_test(test_effect_shadow);
     queue_d3d10_test(test_effect_3d_perspective_transform);
+    queue_d3d10_test(test_effect_composite);
     queue_test(test_effect_flood);
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);
