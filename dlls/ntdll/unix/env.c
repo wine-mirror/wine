@@ -818,6 +818,20 @@ void init_environment(void)
 }
 
 
+/* check if a WINE_HOST_ prefixed variable already exists in the environment */
+static BOOL host_var_exists( const char *name )
+{
+    char *end = strchr( name, '=' );
+
+    if (!end) return FALSE;
+    for (char **e = environ; *e; e++)
+    {
+        if (!STARTS_WITH( *e, "WINE_HOST_" )) continue;
+        if (!strncmp( *e + 10, name, end + 1 - name )) return TRUE;
+    }
+    return FALSE;
+}
+
 static const char overrides_help_message[] =
     "Syntax:\n"
     "  WINEDLLOVERRIDES=\"entry;entry;entry...\"\n"
@@ -867,6 +881,7 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
                 exit(0);
             }
         }
+        else if (host_var_exists( str )) continue;
         else if (is_special_env_var( str )) /* prefix it with WINE_HOST_ */
         {
             static const WCHAR hostW[] = {'W','I','N','E','_','H','O','S','T','_'};
