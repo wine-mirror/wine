@@ -1,5 +1,6 @@
 /*
  * Copyright 2024 Zhiyi Zhang for CodeWeavers
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +22,7 @@
 #include <windows.h>
 #include "initguid.h"
 #include "cor.h"
+#include "corhdr.h"
 #include "roapi.h"
 #include "rometadata.h"
 #include "rometadataapi.h"
@@ -213,6 +215,7 @@ struct type_info
     DWORD exp_flags;
     const char *exp_name;
     const char *exp_namespace;
+    mdToken exp_base;
 };
 
 struct column_info
@@ -532,8 +535,8 @@ static void test_MetaDataDispenser_OpenScope(void)
     static const struct type_info type_defs[3] =
     {
         { 0, "<Module>", NULL },
-        { TYPE_ATTR_INTERFACE | TYPE_ATTR_ABSTRACT | TYPE_ATTR_UNKNOWN, "ITest1", "Wine.Test" },
-        { TYPE_ATTR_PUBLIC | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN, "Test1", "Wine.Test" },
+        { tdInterface | tdAbstract | tdWindowsRuntime, "ITest1", "Wine.Test" },
+        { tdPublic | tdSealed | tdWindowsRuntime, "Test1", "Wine.Test" },
     };
     const WCHAR *filename = load_resource(L"test-simple.winmd");
     ULONG val = 0, i, guid_ctor_idx = 0, itest1_def_idx = 0;
@@ -774,6 +777,184 @@ static void test_MetaDataDispenser_OpenScope(void)
     IMetaDataTables_Release(md_tables);
 }
 
+static const char *debugstr_CorTokenType(CorTokenType type)
+{
+#define TYPE(t) { t, #t }
+    static const struct type_str
+    {
+        CorTokenType type;
+        const char *str;
+    } types[] = {
+        TYPE(mdtModule),
+        TYPE(mdtTypeRef),
+        TYPE(mdtTypeDef),
+        TYPE(mdtFieldDef),
+        TYPE(mdtMethodDef),
+        TYPE(mdtParamDef),
+        TYPE(mdtInterfaceImpl),
+        TYPE(mdtMemberRef),
+        TYPE(mdtCustomAttribute),
+        TYPE(mdtPermission),
+        TYPE(mdtSignature),
+        TYPE(mdtEvent),
+        TYPE(mdtProperty),
+        TYPE(mdtModuleRef),
+        TYPE(mdtTypeSpec),
+        TYPE(mdtAssembly),
+        TYPE(mdtAssemblyRef),
+        TYPE(mdtFile),
+        TYPE(mdtExportedType),
+        TYPE(mdtManifestResource),
+        TYPE(mdtGenericParam),
+        TYPE(mdtMethodSpec),
+        TYPE(mdtGenericParamConstraint),
+        TYPE(mdtString),
+        TYPE(mdtName),
+        TYPE(mdtBaseType)
+    };
+#undef TYPE
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(types); i++)
+        if (type == types[i].type) return types[i].str;
+    return wine_dbg_sprintf("%#x\n", type);
+}
+
+static const char *debugstr_mdToken(mdToken token)
+{
+    CorTokenType type = TypeFromToken(token);
+    const char *type_str = debugstr_CorTokenType(type);
+    UINT rid = RidFromToken(token);
+
+    if (type_str[0] == 'm') /* Known CorTokenType value */
+        return rid ? wine_dbg_sprintf("(%s|%#x)", type_str, rid) : wine_dbg_sprintf("md%sNil", &type_str[3]);
+    return wine_dbg_sprintf("(%#x|%#x)", type, rid);
+}
+
+#define test_token(iface, token, exp_type, nil) test_token_(__LINE__, iface, token, exp_type, nil)
+static void test_token_(int line, IMetaDataImport *iface, mdToken token, CorTokenType exp_type, BOOL nil)
+{
+    CorTokenType type = TypeFromToken(token);
+    BOOL valid;
+
+    ok_(__FILE__, line)(type == exp_type, "got token type %s != %s\n", debugstr_CorTokenType(type),
+                        debugstr_CorTokenType(exp_type));
+    ok_(__FILE__, line)(nil == IsNilToken(token), "got nil token %s\n", debugstr_mdToken(token));
+    valid = IMetaDataImport_IsValidToken(iface, token);
+    todo_wine ok_(__FILE__, line)(valid, "got invalid token %s\n", debugstr_mdToken(token));
+}
+
+static void test_IMetaDataImport(void)
+{
+    static const struct type_info type_defs[] =
+    {
+        { tdPublic | tdSealed | tdWindowsRuntime, "TestEnum1", "Wine.Test", 0x1000001 },
+        { tdPublic | tdSealed | tdSequentialLayout | tdWindowsRuntime, "TestStruct1", "Wine.Test", 0x1000005 },
+        { tdInterface | tdAbstract | tdWindowsRuntime, "ITest2", "Wine.Test", 0x1000000 },
+        { tdPublic | tdSealed | tdWindowsRuntime, "Test2", "Wine.Test", 0x100000b },
+    };
+    const WCHAR *filename = load_resource(L"test-enum.winmd");
+    ULONG buf_len, buf_count, str_len, str_reqd, i;
+    IMetaDataDispenser *dispenser;
+    IMetaDataImport *md_import;
+    mdTypeDef *typedef_tokens;
+    HCORENUM henum = 0;
+    WCHAR *strW;
+    HRESULT hr;
+    ULONG val;
+
+    hr = MetaDataGetDispenser(&CLSID_CorMetaDataDispenser, &IID_IMetaDataDispenser, (void **)&dispenser);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    hr = IMetaDataDispenser_OpenScope(dispenser, filename, 0, &IID_IMetaDataImport, (IUnknown **)&md_import);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    IMetaDataDispenser_Release(dispenser);
+
+    buf_count = 0xdeadbeef;
+    henum = NULL;
+    hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, NULL, 0, &buf_count);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    todo_wine ok(buf_count == 0, "got buf_reqd %lu\n", buf_count);
+    todo_wine ok(!!henum, "got henum %p\n", henum);
+
+    buf_len = 0;
+    hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    /* The <Module> typedef is ommitted. */
+    todo_wine ok(buf_len == ARRAY_SIZE(type_defs), "got len %lu\n", buf_len);
+
+    typedef_tokens = calloc(buf_len, sizeof(*typedef_tokens));
+    ok(!!typedef_tokens, "got typedef_tokens %p\n", typedef_tokens);
+    hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(buf_len == buf_count, "got len %lu != %lu\n", buf_len, buf_count);
+    for (i = 0; i < buf_len; i++)
+    {
+        const struct type_info *info = &type_defs[i];
+        mdTypeDef token = 0;
+        ULONG exp_len, len;
+        WCHAR bufW[80];
+        char bufA[80];
+        mdToken base;
+
+        winetest_push_context("i=%lu", i);
+
+        test_token(md_import, typedef_tokens[i], mdtTypeDef, FALSE);
+        bufW[0] = L'\0';
+        bufA[0] = '\0';
+        exp_len = snprintf(bufA, sizeof(bufA), "%s.%s", info->exp_namespace, info->exp_name) + 1;
+        str_reqd = 0;
+        hr = IMetaDataImport_GetTypeDefProps(md_import, typedef_tokens[i], NULL, 0, &str_reqd, NULL, NULL);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(str_reqd == exp_len, "got str_reqd %lu != %lu\n", str_reqd, exp_len);
+        MultiByteToWideChar(CP_ACP, 0, bufA, -1, bufW, ARRAY_SIZE(bufW));
+
+        str_len = str_reqd;
+        strW = calloc(str_len, sizeof(WCHAR));
+        hr = IMetaDataImport_GetTypeDefProps(md_import, typedef_tokens[i], strW, str_len - 1, &str_reqd, &val, &base);
+        todo_wine ok(hr == CLDB_S_TRUNCATION, "got hr %#lx\n", hr);
+        len = wcslen(strW);
+        todo_wine ok( len == str_len - 2, "got len %lu != %lu\n", len, str_len - 2);
+        if (hr == CLDB_S_TRUNCATION)
+            todo_wine ok(!wcsncmp(strW, bufW, str_len - 2), "got bufW %s != %s\n", debugstr_w(strW),
+                         debugstr_wn(bufW, str_len - 2));
+        val = base = 0;
+        hr = IMetaDataImport_GetTypeDefProps(md_import, typedef_tokens[i], strW, str_len, NULL, &val, &base);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        if (hr == S_OK)
+            ok(1 || !wcscmp(strW, bufW), "got strW %s != %s\n", debugstr_w(strW), debugstr_w(bufW));
+        free(strW);
+
+        todo_wine ok(val == info->exp_flags, "got val %#lx != %#lx\n", val, info->exp_flags);
+        todo_wine ok(base == info->exp_base, "got base %s != %s\n", debugstr_mdToken(base),
+                     debugstr_mdToken(info->exp_base));
+
+        hr = IMetaDataImport_FindTypeDefByName(md_import, bufW, 0, &token);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(token == typedef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token), debugstr_mdToken(typedef_tokens[i]));
+
+        winetest_pop_context();
+    }
+    hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+
+    hr = IMetaDataImport_ResetEnum(md_import, henum, 0);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    buf_count = 0xdeadbeef;
+    hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(buf_len == buf_count, "got len %lu != %lu\n", buf_len, buf_count);
+    hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    IMetaDataImport_CloseEnum(md_import, henum);
+    free(typedef_tokens);
+
+    hr = IMetaDataImport_FindTypeDefByName(md_import, NULL, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+
+    IMetaDataImport_Release(md_import);
+}
+
 START_TEST(rometadata)
 {
     HRESULT hr;
@@ -783,6 +964,7 @@ START_TEST(rometadata)
 
     test_MetaDataGetDispenser();
     test_MetaDataDispenser_OpenScope();
+    test_IMetaDataImport();
 
     RoUninitialize();
 }

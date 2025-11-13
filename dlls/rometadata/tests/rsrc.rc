@@ -18,3 +18,6 @@
 
 /* @makedep: test-simple.winmd */
 test-simple.winmd RCDATA "test-simple.winmd"
+
+/* @makedep: test-enum.winmd */
+test-enum.winmd RCDATA "test-enum.winmd"

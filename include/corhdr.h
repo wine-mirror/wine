@@ -129,4 +129,43 @@ typedef mdToken mdGenericParamConstraint;
 typedef mdToken mdString;
 typedef mdToken mdCPToken;
 
+typedef enum CorTypeAttr
+{
+    tdNotPublic          = 0x000000,
+    tdPublic             = 0x000001,
+    tdNestedPublic       = 0x000002,
+    tdNestedPrivate      = 0x000003,
+    tdNestedFamily       = 0x000004,
+    tdNestedAssembly     = 0x000005,
+    tdNestedFamANDAssem  = 0x000006,
+    tdNestedFamORAssem   = 0x000007,
+    tdAutoLayout         = 0x000000,
+    tdSequentialLayout   = 0x000008,
+    tdExplicitLayout     = 0x000010,
+    tdExtendedLayout     = 0x000018,
+    tdClass              = 0x000000,
+    tdInterface          = 0x000020,
+    tdAbstract           = 0x000080,
+    tdSealed             = 0x000100,
+    tdSpecialName        = 0x000400,
+    tdImport             = 0x001000,
+    tdSerializable       = 0x002000,
+    tdWindowsRuntime     = 0x004000,
+    tdAnsiClass          = 0x000000,
+    tdUnicodeClass       = 0x010000,
+    tdAutoClass          = 0x020000,
+    tdCustomFormatClass  = 0x030000,
+    tdBeforeFieldInit    = 0x100000,
+    tdForwarder          = 0x200000,
+    tdRTSpecialName      = 0x000800,
+    tdHasSecurity        = 0x040000,
+
+    tdVisibilityMask     = 0x000007,
+    tdLayoutMask         = 0x000018,
+    tdClassSemanticsMask = 0x000020,
+    tdStringFormatMask   = 0x030000,
+    tdCustomFormatMask   = 0xc00000,
+    tdReservedMask       = 0x040800
+} CorTypeAttr;
+
 #endif /* __WINE_CORHDR_H */
