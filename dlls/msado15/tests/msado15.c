@@ -73,9 +73,12 @@ DEFINE_EXPECT(rowset_QI_IColumnsInfo);
 DEFINE_EXPECT(rowset_QI_IRowsetChange);
 DEFINE_EXPECT(rowset_QI_IDBAsynchStatus);
 DEFINE_EXPECT(rowset_QI_IAccessor);
+DEFINE_EXPECT(rowset_QI_IRowsetUpdate);
+DEFINE_EXPECT(rowset_QI_IRowsetFind);
 DEFINE_EXPECT(rowset_info_GetProperties);
 DEFINE_EXPECT(column_info_GetColumnInfo);
 DEFINE_EXPECT(rowset_GetNextRows);
+DEFINE_EXPECT(rowset_AddRefRows);
 DEFINE_EXPECT(rowset_ReleaseRows);
 DEFINE_EXPECT(rowset_GetRowsAt);
 DEFINE_EXPECT(rowset_GetExactPosition);
@@ -564,20 +567,145 @@ static ULONG WINAPI rowset_info_Release(IRowsetInfo *iface)
     return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
 }
 
-static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG count,
-        const DBPROPIDSET propertyidsets[], ULONG *out_count, DBPROPSET **propertysets1)
+static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG propidsets_count,
+        const DBPROPIDSET propidsets[], ULONG *count, DBPROPSET **propsets)
 {
+    BOOL prop_fail = FALSE, err = FALSE;
+    int i, j;
+
     CHECK_EXPECT(rowset_info_GetProperties);
-    todo_wine ok( count == 2, "got %ld\n", count );
 
-    ok( IsEqualIID(&DBPROPSET_ROWSET, &propertyidsets[0].guidPropertySet), "got %s\n", wine_dbgstr_guid(&propertyidsets[0].guidPropertySet));
-    todo_wine ok( propertyidsets[0].cPropertyIDs == 17, "got %ld\n", propertyidsets[0].cPropertyIDs );
-    if (count < 2) return E_NOTIMPL;
+    ok( propidsets_count, "propidsets_count = %ld\n", propidsets_count );
+    ok( propidsets != NULL, "propertyidsets = NULL\n" );
+    ok( count != NULL, "count = NULL\n" );
+    ok( propsets != NULL, "propsets = NULL\n");
 
-    ok( IsEqualIID(&DBPROPSET_PROVIDERROWSET, &propertyidsets[1].guidPropertySet), "got %s\n", wine_dbgstr_guid(&propertyidsets[1].guidPropertySet));
-    ok( propertyidsets[1].cPropertyIDs == 1, "got %ld\n", propertyidsets[1].cPropertyIDs );
+    *count = 0;
+    *propsets = CoTaskMemAlloc(sizeof(**propsets) * propidsets_count);
+    for (i = 0; i < propidsets_count; i++)
+    {
+        size_t size = sizeof(*(*propsets)[i].rgProperties) * propidsets[i].cPropertyIDs;
+        DBPROPSTATUS *status;
+        VARIANT *v;
 
-    return E_NOTIMPL;
+        (*propsets)[i].rgProperties = CoTaskMemAlloc( size );
+        memset( (*propsets)[i].rgProperties, 0, size );
+        (*propsets)[i].cProperties = propidsets[i].cPropertyIDs;
+        (*propsets)[i].guidPropertySet = propidsets[i].guidPropertySet;
+
+        for (j = 0; j < propidsets[i].cPropertyIDs; j++)
+        {
+            (*propsets)[i].rgProperties[j].dwPropertyID = propidsets[i].rgPropertyIDs[j];
+            status = &(*propsets)[i].rgProperties[j].dwStatus;
+            v = &(*propsets)[i].rgProperties[j].vValue;
+
+            if (IsEqualGUID( &propidsets[i].guidPropertySet, &DBPROPSET_ROWSET ))
+            {
+                switch(propidsets[i].rgPropertyIDs[j])
+                {
+                case DBPROP_OTHERUPDATEDELETE:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_OTHERINSERT:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_CANHOLDROWS:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_TRUE;
+                    break;
+                case DBPROP_CANSCROLLBACKWARDS:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_TRUE;
+                    break;
+                case DBPROP_UPDATABILITY:
+                    V_VT(v) = VT_I4;
+                    V_I4(v) = DBPROPVAL_UP_CHANGE | DBPROPVAL_UP_DELETE | DBPROPVAL_UP_INSERT;
+                    break;
+                case DBPROP_IRowsetLocate:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_TRUE;
+                    break;
+                case DBPROP_IRowsetScroll:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_TRUE;
+                    break;
+                case DBPROP_IRowsetUpdate:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_IRowsetResynch:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_IConnectionPointContainer:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_BOOKMARKSKIPPED:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_TRUE;
+                    break;
+                case DBPROP_IRowsetFind:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_IRowsetRefresh:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_LOCKMODE:
+                    *status = DBPROPSTATUS_NOTSUPPORTED;
+                    prop_fail = TRUE;
+                    break;
+                case DBPROP_IRowsetIndex:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_FALSE;
+                    break;
+                case DBPROP_IRowsetCurrentIndex:
+                    *status = DBPROPSTATUS_NOTSUPPORTED;
+                    prop_fail = TRUE;
+                    break;
+                case DBPROP_REMOVEDELETED:
+                    V_VT(v) = VT_BOOL;
+                    V_BOOL(v) = VARIANT_TRUE;
+                    break;
+                default:
+                    err = TRUE;
+                    break;
+                }
+            }
+            else if (IsEqualGUID( &propidsets[i].guidPropertySet, &DBPROPSET_PROVIDERROWSET ))
+            {
+                switch(propidsets[i].rgPropertyIDs[j])
+                {
+                case KAGPROP_CONCURRENCY:
+                    V_VT(v) = VT_I4;
+                    V_I4(v) = KAGPROPVAL_CONCUR_VALUES;
+                    break;
+                default:
+                    err = TRUE;
+                    break;
+                }
+            }
+            else
+            {
+                err = TRUE;
+            }
+
+            if (err)
+            {
+                ok( 0, "unhandled propery %s %lx\n",
+                        wine_dbgstr_guid(&propidsets[i].guidPropertySet),
+                        propidsets[i].rgPropertyIDs[j]);
+                return E_FAIL;
+            }
+        }
+    }
+
+    *count = propidsets_count;
+    return prop_fail ? DB_S_ERRORSOCCURRED : S_OK;
 }
 
 static HRESULT WINAPI rowset_info_GetReferencedRowset(IRowsetInfo *iface, DBORDINAL ordinal,
@@ -832,7 +960,7 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     }
     else if (IsEqualIID(riid, &IID_IRowsetChange))
     {
-        CHECK_EXPECT(rowset_QI_IRowsetChange);
+        todo_wine CHECK_EXPECT(rowset_QI_IRowsetChange);
         *obj = &rowset->IRowsetChange_iface;
     }
     else if (IsEqualIID(riid, &IID_IDBAsynchStatus))
@@ -844,6 +972,16 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     {
         CHECK_EXPECT(rowset_QI_IAccessor);
         *obj = &rowset->IAccessor_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IRowsetUpdate))
+    {
+        CHECK_EXPECT(rowset_QI_IRowsetUpdate);
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualIID(riid, &IID_IRowsetFind))
+    {
+        CHECK_EXPECT(rowset_QI_IRowsetFind);
+        return E_NOINTERFACE;
     }
     else if (IsEqualIID(riid, &UKN_INTERFACE))
     {
@@ -876,8 +1014,8 @@ static ULONG WINAPI rowset_Release(IRowsetExactScroll *iface)
 static HRESULT WINAPI rowset_AddRefRows(IRowsetExactScroll *iface, DBCOUNTITEM cRows, const HROW rghRows[],
     DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
-    ok(0, "Unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(rowset_AddRefRows);
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
@@ -912,7 +1050,7 @@ static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER hRe
 static HRESULT WINAPI rowset_ReleaseRows(IRowsetExactScroll *iface, DBCOUNTITEM cRows, const HROW rghRows[],
     DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
 {
-    CHECK_EXPECT(rowset_ReleaseRows);
+    CHECK_EXPECT2(rowset_ReleaseRows);
     return S_OK;
 }
 
@@ -1062,21 +1200,31 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     SET_EXPECT( rowset_QI_IRowset );
     SET_EXPECT( rowset_QI_IRowsetInfo );
-    SET_EXPECT( rowset_QI_IRowsetExactScroll );
-    SET_EXPECT( rowset_QI_IDBAsynchStatus );
-    SET_EXPECT( rowset_QI_IColumnsInfo );
     SET_EXPECT( rowset_info_GetProperties );
-    SET_EXPECT( column_info_GetColumnInfo );
+    SET_EXPECT( rowset_QI_IRowsetChange );
+    SET_EXPECT( rowset_QI_IRowsetUpdate );
+    SET_EXPECT( rowset_QI_IRowsetFind );
+    SET_EXPECT( rowset_QI_IRowsetExactScroll );
+    if (exact_scroll)
+    {
+        SET_EXPECT( rowset_QI_IColumnsInfo );
+        SET_EXPECT( column_info_GetColumnInfo );
+    }
+    SET_EXPECT( rowset_QI_IDBAsynchStatus );
     hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
     CHECK_CALLED( rowset_QI_IRowset );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetInfo );
-    todo_wine CHECK_CALLED( rowset_QI_IRowsetExactScroll );
-    todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
     todo_wine CHECK_CALLED( rowset_info_GetProperties );
-    if (exact_scroll) todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
-    else CHECK_NOT_CALLED( rowset_QI_IColumnsInfo );
-    if (exact_scroll) todo_wine CHECK_CALLED( column_info_GetColumnInfo );
-    else CHECK_NOT_CALLED( column_info_GetColumnInfo );
+    todo_wine CHECK_CALLED( rowset_QI_IRowsetChange );
+    todo_wine CHECK_CALLED( rowset_QI_IRowsetUpdate );
+    todo_wine CHECK_CALLED( rowset_QI_IRowsetFind );
+    todo_wine CHECK_CALLED( rowset_QI_IRowsetExactScroll );
+    if (exact_scroll)
+    {
+        todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
+        todo_wine CHECK_CALLED( column_info_GetColumnInfo );
+    }
+    todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
     ok( hr == S_OK, "got %08lx\n", hr );
 
     hr = _Recordset_get_State( recordset, &state );
@@ -1136,13 +1284,15 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     ok( hr == S_OK, "got %08lx\n", hr );
     todo_wine ok( !is_eof( recordset ), "at eof\n" );
 
+    SET_EXPECT( rowset_AddRefRows );
+    SET_EXPECT( rowset_ReleaseRows );
     if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
     else SET_EXPECT( rowset_GetRowsAt );
-    SET_EXPECT( rowset_ReleaseRows );
     hr = _Recordset_MoveNext( recordset );
+    todo_wine CHECK_CALLED( rowset_AddRefRows );
+    todo_wine CHECK_CALLED( rowset_ReleaseRows );
     if (!exact_scroll) todo_wine CHECK_CALLED( rowset_GetNextRows );
     else todo_wine CHECK_CALLED( rowset_GetRowsAt );
-    todo_wine CHECK_CALLED( rowset_ReleaseRows );
     todo_wine ok( hr == S_OK, "got %08lx\n", hr );
     ok( is_eof( recordset ), "unexpected records\n" );
 
@@ -1155,7 +1305,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
-    SET_EXPECT(rowset_QI_IRowsetChange);
     SET_EXPECT(rowset_QI_IAccessor);
     SET_EXPECT(accessor_CreateAccessor);
     SET_EXPECT(accessor_AddRefAccessor);
@@ -1163,7 +1312,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT(accessor_ReleaseAccessor);
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08lx\n", hr );
-    CHECK_CALLED(rowset_QI_IRowsetChange);
     CHECK_CALLED(rowset_QI_IAccessor);
     CHECK_CALLED(accessor_CreateAccessor);
     CHECK_CALLED(accessor_AddRefAccessor);

@@ -645,6 +645,10 @@ cpp_quote("#define DBPROPVAL_RT_FREETHREAD            __MSABI_LONG(0x00000001)")
 cpp_quote("#define DBPROPVAL_RT_APTMTTHREAD           __MSABI_LONG(0x00000002)")
 cpp_quote("#define DBPROPVAL_RT_SINGLETHREAD          __MSABI_LONG(0x00000004)")
 
+cpp_quote("#define DBPROPVAL_UP_CHANGE                __MSABI_LONG(0x00000001)")
+cpp_quote("#define DBPROPVAL_UP_DELETE                __MSABI_LONG(0x00000002)")
+cpp_quote("#define DBPROPVAL_UP_INSERT                __MSABI_LONG(0x00000004)")
+
 cpp_quote("#define DBPROPVAL_LM_NONE                  __MSABI_LONG(0x00000001)")
 cpp_quote("#define DBPROPVAL_LM_READ                  __MSABI_LONG(0x00000002)")
 cpp_quote("#define DBPROPVAL_LM_INTENT                __MSABI_LONG(0x00000004)")
