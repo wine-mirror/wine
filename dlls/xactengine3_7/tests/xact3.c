@@ -1316,6 +1316,128 @@ if (!winetest_platform_is_wine)
     todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
 }
 
+static void test_variables(void)
+{
+    XACT_RUNTIME_PARAMETERS params = {.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT};
+    IXACT3SoundBank *soundbank;
+    void *soundbank_data_copy;
+    IXACT3WaveBank *wavebank;
+    XACTVARIABLEVALUE value;
+    IXACT3Engine *engine;
+    XACTINDEX index;
+    IXACT3Cue *cue;
+    ULONG refcount;
+    HRESULT hr;
+    HRSRC res;
+
+    hr = CoCreateInstance(&CLSID_XACTEngine, NULL, CLSCTX_INPROC_SERVER, &IID_IXACT3Engine, (void **)&engine);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    params.pGlobalSettingsBuffer = (void *)global_settings_data;
+    params.globalSettingsBufferSize = sizeof(global_settings_data);
+    hr = IXACT3Engine_Initialize(engine, &params);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    index = IXACT3Engine_GetGlobalVariableIndex(engine, "speedofsound");
+    ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
+    index = IXACT3Engine_GetGlobalVariableIndex(engine, "V1");
+    ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
+
+    index = IXACT3Engine_GetGlobalVariableIndex(engine, "SpeedOfSound");
+    ok(index == 5, "Got index %u.\n", index);
+    value = -1.0f;
+    hr = IXACT3Engine_GetGlobalVariable(engine, index, &value);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(value == 343.5f, "Got value %.8e.\n", value);
+
+    index = IXACT3Engine_GetGlobalVariableIndex(engine, "v1");
+    ok(index == 7, "Got index %u.\n", index);
+    value = -1.0f;
+    hr = IXACT3Engine_GetGlobalVariable(engine, index, &value);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(value == 10.0f, "Got value %.8e.\n", value);
+
+    hr = IXACT3Engine_SetGlobalVariable(engine, index, 11.0f);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_GetGlobalVariable(engine, index, &value);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(value == 11.0f, "Got value %.8e.\n", value);
+
+    hr = IXACT3Engine_SetGlobalVariable(engine, index, 101.0f);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_GetGlobalVariable(engine, index, &value);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(value == 100.0f, "Got value %.8e.\n", value);
+
+    value = -1.0f;
+    hr = IXACT3Engine_GetGlobalVariable(engine, 8, &value);
+    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    todo_wine ok(value == -1.0f, "Got value %.8e.\n", value);
+
+    hr = IXACT3Engine_SetGlobalVariable(engine, 8, 11.0f);
+    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+
+    index = IXACT3Engine_GetGlobalVariableIndex(engine, "v2");
+    ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
+
+    index = IXACT3Engine_GetGlobalVariableIndex(engine, "v3");
+    todo_wine ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
+
+    index = IXACT3Engine_GetGlobalVariableIndex(engine, "v4");
+    ok(index == 10, "Got index %u.\n", index);
+
+    hr = IXACT3Engine_SetGlobalVariable(engine, index, 11.0f);
+    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    hr = IXACT3Engine_GetGlobalVariable(engine, index, &value);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(value == 10.0f, "Got value %.8e.\n", value);
+
+    res = FindResourceW(NULL, L"test.xwb", (const WCHAR *)RT_RCDATA);
+    ok(!!res, "Got error %lu.\n", GetLastError());
+
+    hr = IXACT3Engine_CreateInMemoryWaveBank(engine,
+            LockResource(LoadResource(GetModuleHandleA(NULL), res)),
+            SizeofResource(GetModuleHandleA(NULL), res), 0, 0, &wavebank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Despite the parameter here being const, native will attempt to overwrite
+     * some of this data. */
+    soundbank_data_copy = malloc(sizeof(soundbank_data));
+    memcpy(soundbank_data_copy, soundbank_data, sizeof(soundbank_data));
+    hr = IXACT3Engine_CreateSoundBank(engine, soundbank_data_copy, sizeof(soundbank_data), 0, 0, &soundbank);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3SoundBank_Prepare(soundbank, 1, 0, 0, &cue);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    index = IXACT3Cue_GetVariableIndex(cue, "v1");
+    ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
+
+    value = -1.0f;
+    hr = IXACT3Cue_GetVariable(cue, 7, &value);
+    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    todo_wine ok(value == -1.0f, "Got value %.8e.\n", value);
+
+    hr = IXACT3Cue_SetVariable(cue, 7, 11.0f);
+    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+
+    index = IXACT3Cue_GetVariableIndex(cue, "v2");
+    ok(index == 8, "Got index %u.\n", index);
+
+    value = -1.0f;
+    hr = IXACT3Cue_GetVariable(cue, index, &value);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(value == 10.0f, "Got value %.8e.\n", value);
+    hr = IXACT3Cue_SetVariable(cue, index, 11.0f);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IXACT3Cue_GetVariable(cue, index, &value);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(value == 11.0f, "Got value %.8e.\n", value);
+
+    refcount = IXACT3Engine_Release(engine);
+    todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
+}
+
 START_TEST(xact3)
 {
     IXACT3Engine *engine;
@@ -1337,6 +1459,7 @@ START_TEST(xact3)
     test_notifications();
     test_renderer_details();
     test_properties();
+    test_variables();
 
     CoUninitialize();
 }
