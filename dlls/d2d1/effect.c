@@ -1259,11 +1259,32 @@ L"<?xml version='1.0'?>                                                   \
       <Input name='Source'/>                                              \
     </Inputs>                                                             \
     <Property name='Rect' type='vector4' />                               \
+    <Property name='BorderMode' type='enum' />                            \
   </Effect>";
+
+struct crop_properties
+{
+    D2D1_VECTOR_4F rect;
+    D2D1_BORDER_MODE border_mode;
+};
+
+EFFECT_PROPERTY_RW(crop, rect, VECTOR4)
+EFFECT_PROPERTY_RW(crop, border_mode, ENUM)
+
+static const D2D1_PROPERTY_BINDING crop_bindings[] =
+{
+    { L"Rect", BINDING_RW(crop, rect) },
+    { L"BorderMode", BINDING_RW(crop, border_mode) },
+};
 
 static HRESULT __stdcall crop_factory(IUnknown **effect)
 {
-    return d2d_effect_create_impl(effect, NULL, 0);
+    static const struct crop_properties properties =
+    {
+        .rect = { -INFINITY, -INFINITY, INFINITY, INFINITY },
+        .border_mode = D2D1_BORDER_MODE_SOFT,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
 static const WCHAR shadow_description[] =
@@ -1540,7 +1561,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D12DAffineTransform, X2(_2d_affine_transform) },
         { &CLSID_D2D13DPerspectiveTransform, X2(_3d_perspective_transform) },
         { &CLSID_D2D1Composite, X2(composite) },
-        { &CLSID_D2D1Crop, X(crop) },
+        { &CLSID_D2D1Crop, X2(crop) },
         { &CLSID_D2D1Shadow, X2(shadow) },
         { &CLSID_D2D1Grayscale, X(grayscale) },
         { &CLSID_D2D1ColorMatrix, X(color_matrix) },
