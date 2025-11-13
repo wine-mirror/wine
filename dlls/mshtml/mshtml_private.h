@@ -1557,7 +1557,7 @@ LONG get_task_target_magic(void);
 HRESULT push_task(task_t*,task_proc_t,task_proc_t,LONG);
 HRESULT push_event_task(event_task_t*,HTMLInnerWindow*,event_task_proc_t,event_task_proc_t,LONG);
 void remove_target_tasks(LONG);
-ULONGLONG get_time_stamp(void);
+double get_time_stamp(void);
 
 enum timer_type {
     TIMER_TIMEOUT,
