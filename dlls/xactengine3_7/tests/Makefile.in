@@ -1,6 +1,8 @@
 TESTDLL = xactengine3_7.dll
 IMPORTS = ole32
+EXTRADEFS = -DXACT3_VER=0x0307 -DXAUDIO2_VER=7
 
 SOURCES = \
 	resource.rc \
-	xact3.c
+	xact3.c \
+	xact_classes.idl

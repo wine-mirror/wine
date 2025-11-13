@@ -20,13 +20,16 @@
 #include <math.h>
 #include <limits.h>
 #include <float.h>
+#include <mmsystem.h>
 
 #define COBJMACROS
 #include "wine/test.h"
 
+#include "initguid.h"
+#include "xact_classes.h"
+#define __xaudio2_h__
 #include "x3daudio.h"
 
-#include "initguid.h"
 #include "xact3.h"
 #include "xact3wb.h"
 
@@ -649,6 +652,85 @@ if (!winetest_platform_is_wine)
     ok(ret == TRUE, "Got error %lu.\n", GetLastError());
 }
 
+static void test_renderer_details(void)
+{
+    XAUDIO2_DEVICE_DETAILS xaudio_details;
+    XACT_RENDERER_DETAILS details;
+    WAVEFORMATEXTENSIBLE format;
+    IXACT3Engine *engine;
+    UINT32 xaudio_count;
+    IXAudio2 *xaudio;
+    XACTINDEX count;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_XAudio2, NULL, CLSCTX_INPROC_SERVER, &IID_IXAudio2, (void **)&xaudio);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_XACTEngine, NULL, CLSCTX_INPROC_SERVER, &IID_IXACT3Engine, (void **)&engine);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXAudio2_GetDeviceCount(xaudio, &xaudio_count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IXACT3Engine_GetRendererCount(engine, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == xaudio_count, "Expected count %u, got %u.\n", xaudio_count, count);
+
+    for (XACTINDEX i = 0; i < count; ++i)
+    {
+        winetest_push_context("renderer %u", i);
+
+        hr = IXACT3Engine_GetRendererDetails(engine, i, &details);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IXAudio2_GetDeviceDetails(xaudio, i, &xaudio_details);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        ok(!wcscmp(details.displayName, xaudio_details.DisplayName),
+                "Expected %s, got %s.\n", debugstr_w(xaudio_details.DisplayName), debugstr_w(details.displayName));
+        ok(!wcscmp(details.rendererID, xaudio_details.DeviceID),
+                "Expected %s, got %s.\n", debugstr_w(xaudio_details.DeviceID), debugstr_w(details.rendererID));
+        ok(details.defaultDevice == !i, "Got default device %d.\n", details.defaultDevice);
+
+        winetest_pop_context();
+    }
+
+    hr = IXACT3Engine_GetRendererDetails(engine, count, &details);
+    todo_wine ok(hr == XAUDIO2_E_INVALID_CALL, "Got hr %#lx.\n", hr);
+
+    refcount = IXACT3Engine_Release(engine);
+    todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
+
+    for (XACTINDEX i = 0; i < count; ++i)
+    {
+        XACT_RUNTIME_PARAMETERS params = {.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT};
+
+        winetest_push_context("renderer %u", i);
+
+        hr = CoCreateInstance(&CLSID_XACTEngine, NULL, CLSCTX_INPROC_SERVER, &IID_IXACT3Engine, (void **)&engine);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IXAudio2_GetDeviceDetails(xaudio, i, &xaudio_details);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        params.pRendererID = xaudio_details.DeviceID;
+        hr = IXACT3Engine_Initialize(engine, &params);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IXACT3Engine_GetFinalMixFormat(engine, &format);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        todo_wine ok(!memcmp(&format, &xaudio_details.OutputFormat, sizeof(WAVEFORMATEXTENSIBLE)), "Formats didn't match.\n");
+
+        refcount = IXACT3Engine_Release(engine);
+        todo_wine ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
+
+        winetest_pop_context();
+    }
+
+    refcount = IXAudio2_Release(xaudio);
+    ok(!refcount, "Got outstanding refcount %ld.\n", refcount);
+}
+
 static void test_properties(void)
 {
     XACT_RUNTIME_PARAMETERS params = {.lookAheadTime = XACT_ENGINE_LOOKAHEAD_DEFAULT};
@@ -1253,6 +1335,7 @@ START_TEST(xact3)
 
     test_interfaces();
     test_notifications();
+    test_renderer_details();
     test_properties();
 
     CoUninitialize();
