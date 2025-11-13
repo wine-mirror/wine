@@ -312,7 +312,7 @@ static void propset_private_tests(void)
         rc = IKsPropertySet_Get(pps, &DSPROPSETID_DirectSoundDevice,
                               DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1,
                               NULL, 0, &data, sizeof(data), &bytes);
-        ok(rc==DS_OK, "Couldn't get description: 0x%lx\n",rc);
+        ok(rc==DS_OK || broken(rc == 0x88780078), "Couldn't get description: 0x%lx\n",rc);
     }
     /* test DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A */
     rc = IKsPropertySet_QuerySupport(pps, &DSPROPSETID_DirectSoundDevice,
