@@ -744,7 +744,7 @@ static inline void hottrack_refresh(const TAB_INFO *infoPtr, int tabIndex)
 {
     if (tabIndex == -1) return;
 
-    if (GetWindowTheme (infoPtr->hwnd))
+    if (COMCTL32_IsThemed(infoPtr->hwnd))
     {
         RECT rect;
         TAB_InternalGetItemRect(infoPtr, tabIndex, &rect, NULL);
@@ -834,7 +834,7 @@ TAB_RecalcHotTrack
   if (out_redrawEnter != NULL)
     *out_redrawEnter = -1;
 
-  if ((infoPtr->dwStyle & TCS_HOTTRACK) || GetWindowTheme(infoPtr->hwnd))
+  if ((infoPtr->dwStyle & TCS_HOTTRACK) || COMCTL32_IsThemed(infoPtr->hwnd))
   {
     POINT pt;
     UINT  flags;
@@ -1518,7 +1518,7 @@ TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, const RECT *dr
     else /* !TCS_BUTTONS */
     {
         InflateRect(&rTemp, -2, -2);
-        if (!GetWindowTheme (infoPtr->hwnd))
+        if (!COMCTL32_IsThemed(infoPtr->hwnd))
 	    FillRect(hdc, &rTemp, hbr);
     }
 
@@ -1690,7 +1690,7 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
    * Setup for text output
   */
   oldBkMode = SetBkMode(hdc, TRANSPARENT);
-  if (!GetWindowTheme (infoPtr->hwnd) || (infoPtr->dwStyle & TCS_BUTTONS))
+  if (!COMCTL32_IsThemed(infoPtr->hwnd) || (infoPtr->dwStyle & TCS_BUTTONS))
   {
     if ((infoPtr->dwStyle & TCS_HOTTRACK) && (iItem == infoPtr->iHotTracked) &&
         !(infoPtr->dwStyle & TCS_FLATBUTTONS))
@@ -2007,7 +2007,6 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
   INT       clRight = 0;
   INT       clBottom = 0;
   COLORREF  bkgnd, corner;
-  HTHEME    theme;
 
   /*
    * Get the rectangle for the item.
@@ -2093,8 +2092,7 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
        * Windows draws even side or bottom tabs themed, with wacky results.
        * However, since in Wine apps may get themed that did not opt in via
        * a manifest avoid theming when we know the result will be wrong */
-      if ((theme = GetWindowTheme (infoPtr->hwnd)) 
-          && ((infoPtr->dwStyle & (TCS_VERTICAL | TCS_BOTTOM)) == 0))
+      if (COMCTL32_IsThemed(infoPtr->hwnd) && ((infoPtr->dwStyle & (TCS_VERTICAL | TCS_BOTTOM)) == 0))
       {
           TAB_DrawItemThemeBackground(infoPtr, hdc, iItem, &selectedRect, &r);
       }
