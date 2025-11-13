@@ -97,7 +97,6 @@ struct recordset
     } cache;
     ADO_LONGPTR        max_records;
     VARIANT            filter;
-    BOOL               use_bookmarks;
 
     DBTYPE            *columntypes;
     HACCESSOR          hacc_empty; /* haccessor for adding empty rows */
@@ -1065,8 +1064,8 @@ static HRESULT init_fields( struct fields *fields )
                 colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
                 colinfo[i].bPrecision, colinfo[i].bScale);
 
-        /* skip bookmark column */
-        if (!i && rec->use_bookmarks) continue;
+        if (!i && colinfo[i].columnid.eKind == DBKIND_GUID_PROPID &&
+                IsEqualGUID(&colinfo[i].columnid.uGuid.guid, &DBCOL_SPECIALCOL)) continue;
 
         hr = append_field(fields, &colinfo[i]);
         if (FAILED(hr))
@@ -1343,7 +1342,6 @@ static void close_recordset( struct recordset *recordset )
     recordset->accessor = NULL;
 
     VariantClear( &recordset->filter );
-    recordset->use_bookmarks = FALSE;
 
     col_count = get_column_count( recordset );
 
@@ -3040,8 +3038,6 @@ static HRESULT WINAPI rsconstruction_get_Rowset(ADORecordsetConstruction *iface,
 static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *unk)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    DBPROPSET *propset = NULL;
-    IRowsetInfo *info;
     IRowset *rowset;
     HRESULT hr;
 
@@ -3054,29 +3050,6 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
 
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = rowset;
-
-    hr = IRowset_QueryInterface( rowset, &IID_IRowsetInfo, (void**)&info );
-    if ( SUCCEEDED(hr) && info)
-    {
-        DBPROPIDSET propidset;
-        DBPROPID id[1];
-        ULONG count;
-
-        propidset.rgPropertyIDs = id;
-        propidset.cPropertyIDs = ARRAY_SIZE(id);
-        propidset.guidPropertySet = DBPROPSET_ROWSET;
-        id[0] = DBPROP_BOOKMARKS;
-        hr = IRowsetInfo_GetProperties( info, 1, &propidset, &count, &propset );
-        IRowsetInfo_Release( info );
-        if ( FAILED(hr) ) propset = NULL;
-    }
-    if ( propset )
-    {
-        if (V_VT(&propset->rgProperties[0].vValue) == VT_BOOL && V_BOOL(&propset->rgProperties[0].vValue))
-            recordset->use_bookmarks = TRUE;
-        CoTaskMemFree( propset->rgProperties );
-        CoTaskMemFree( propset );
-    }
 
     recordset->state = adStateOpen;
     return S_OK;

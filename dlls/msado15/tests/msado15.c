@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #define COBJMACROS
+#define DBINITCONSTANTS
 #include <initguid.h>
 #include <oledb.h>
 #include <oledberr.h>
@@ -26,8 +27,6 @@
 #include "wine/test.h"
 #include "msdasql.h"
 #include "odbcinst.h"
-
-DEFINE_GUID(DBPROPSET_ROWSET,            0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
@@ -630,25 +629,31 @@ static HRESULT WINAPI column_info_GetColumnInfo(IColumnsInfo *This, DBORDINAL *c
 
     CHECK_EXPECT(column_info_GetColumnInfo);
 
-    *columns = 1;
+    *columns = 2;
     *stringsbuffer = CoTaskMemAlloc(sizeof(L"Column1"));
     lstrcpyW(*stringsbuffer, L"Column1");
 
-    dbcolumn = CoTaskMemAlloc(sizeof(DBCOLUMNINFO));
+    dbcolumn = CoTaskMemAlloc(sizeof(*dbcolumn) * 2);
+    memset(dbcolumn, 0, sizeof(*dbcolumn) * 2);
 
-    dbcolumn->pwszName = *stringsbuffer;
-    dbcolumn->pTypeInfo = NULL;
-    dbcolumn->iOrdinal = 1;
-    dbcolumn->dwFlags = DBCOLUMNFLAGS_MAYBENULL;
-    dbcolumn->ulColumnSize = 5;
-    dbcolumn->wType = DBTYPE_I4;
-    dbcolumn->bPrecision = 1;
-    dbcolumn->bScale = 1;
-    dbcolumn->columnid.eKind = DBKIND_NAME;
-    dbcolumn->columnid.uName.pwszName = *stringsbuffer;
+    dbcolumn[0].dwFlags = 0;
+    dbcolumn[0].ulColumnSize = sizeof(unsigned int);
+    dbcolumn[0].wType = DBTYPE_UI4;
+    dbcolumn[0].columnid.eKind = DBKIND_GUID_PROPID;
+    dbcolumn[0].columnid.uGuid.guid = DBCOL_SPECIALCOL;
+
+    dbcolumn[1].pwszName = *stringsbuffer;
+    dbcolumn[1].pTypeInfo = NULL;
+    dbcolumn[1].iOrdinal = 1;
+    dbcolumn[1].dwFlags = DBCOLUMNFLAGS_MAYBENULL;
+    dbcolumn[1].ulColumnSize = 5;
+    dbcolumn[1].wType = DBTYPE_I4;
+    dbcolumn[1].bPrecision = 1;
+    dbcolumn[1].bScale = 1;
+    dbcolumn[1].columnid.eKind = DBKIND_NAME;
+    dbcolumn[1].columnid.uName.pwszName = *stringsbuffer;
 
     *colinfo = dbcolumn;
-
     return S_OK;
 }
 
@@ -1064,10 +1069,10 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT( column_info_GetColumnInfo );
     hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
     CHECK_CALLED( rowset_QI_IRowset );
-    CHECK_CALLED( rowset_QI_IRowsetInfo );
+    todo_wine CHECK_CALLED( rowset_QI_IRowsetInfo );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetExactScroll );
     todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
-    CHECK_CALLED( rowset_info_GetProperties );
+    todo_wine CHECK_CALLED( rowset_info_GetProperties );
     if (exact_scroll) todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
     else CHECK_NOT_CALLED( rowset_QI_IColumnsInfo );
     if (exact_scroll) todo_wine CHECK_CALLED( column_info_GetColumnInfo );
