@@ -219,10 +219,7 @@ extern void check_for_events( UINT flags );
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
 /* vulkan.c */
-extern PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
-extern PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
-
-extern BOOL vulkan_init(void);
+extern struct vulkan_instance *vulkan_instance_create( const struct vulkan_instance_extensions *extensions );
 
 /* window.c */
 HANDLE alloc_user_handle( void *ptr, unsigned short type );

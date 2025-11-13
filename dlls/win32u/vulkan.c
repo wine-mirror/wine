@@ -35,8 +35,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr = NULL;
-PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr = NULL;
+static PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
+static PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
 static PFN_vkCreateInstance p_vkCreateInstance;
 static PFN_vkEnumerateInstanceExtensionProperties p_vkEnumerateInstanceExtensionProperties;
 
@@ -601,7 +601,8 @@ static VkResult win32u_vkCreateInstance( const VkInstanceCreateInfo *client_crea
     unsigned int i;
     VkResult res;
 
-    if (!(instance = calloc( 1, sizeof(*instance) + sizeof(*physical_devices) * client_instance->physical_device_count) )) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(instance = calloc( 1, sizeof(*instance) + sizeof(*physical_devices) * client_instance->physical_device_count) ))
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
     physical_devices = (struct vulkan_physical_device *)(instance + 1);
     instance->obj.extensions = client_instance->extensions;
     list_init( &instance->utils_messengers );
@@ -3047,24 +3048,61 @@ static void vulkan_init_once(void)
 
 #endif /* SONAME_LIBVULKAN */
 
-BOOL vulkan_init(void)
-{
-    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-    pthread_once( &init_once, vulkan_init_once );
-    return !!vulkan_handle;
-}
-
 /***********************************************************************
  *      __wine_get_vulkan_driver  (win32u.so)
  */
 const struct vulkan_funcs *__wine_get_vulkan_driver( UINT version )
 {
+    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
+
     if (version != WINE_VULKAN_DRIVER_VERSION)
     {
         ERR( "version mismatch, vulkan wants %u but win32u has %u\n", version, WINE_VULKAN_DRIVER_VERSION );
         return NULL;
     }
 
-    if (!vulkan_init()) return NULL;
+    pthread_once( &init_once, vulkan_init_once );
+    if (!vulkan_handle) return NULL;
     return &vulkan_funcs;
+}
+
+/* unix side client-like instance wrapper to fit with the vulkan wrapping infrastructure */
+struct instance_wrapper
+{
+    struct VkInstance_T client;
+};
+
+struct vulkan_instance *vulkan_instance_create( const struct vulkan_instance_extensions *extensions )
+{
+    const struct vulkan_funcs *funcs = __wine_get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION );
+    VkInstanceCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+    const char *extension_names[sizeof(*extensions) * 8];
+    struct instance_wrapper *wrapper;
+    UINT device_count = 8;
+    VkResult res;
+
+    create_info.ppEnabledExtensionNames = extension_names;
+#define USE_VK_EXT(x) if (extensions->has_ ## x) extension_names[create_info.enabledExtensionCount++] = #x;
+    ALL_VK_INSTANCE_EXTS
+#undef USE_VK_EXT
+
+    for (;;)
+    {
+        VkInstance instance;
+
+        if (!(wrapper = calloc( 1, offsetof(struct instance_wrapper, client.physical_device[device_count]) ))) return NULL;
+        wrapper->client.physical_device_count = device_count;
+        wrapper->client.extensions = *extensions;
+        instance = &wrapper->client;
+
+        if ((res = funcs->p_vkCreateInstance( &create_info, NULL, &instance ))) break;
+        if ((wrapper->client.physical_device_count <= device_count)) break;
+        device_count = wrapper->client.physical_device_count;
+        free( wrapper );
+    }
+
+    if (!res) return vulkan_instance_from_handle( &wrapper->client );
+    WARN( "Failed to create instance, res %d\n", res );
+    free( wrapper );
+    return NULL;
 }
