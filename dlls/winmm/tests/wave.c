@@ -1891,6 +1891,34 @@ static void test_PlaySound(void)
 
         winetest_pop_context();
     }
+
+    /* Test a few more exotic formats. */
+    br = PlaySoundA("test_alaw.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_mulaw.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_adpcm_ms.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    todo_wine
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_adpcm_ima_wav.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    todo_wine
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_gsm_ms.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    todo_wine
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_mp2.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    /* I'm not sure of what is the problem, maybe some Windows versions just don't support MP2 any more. */
+    todo_wine
+    ok(br || broken(!br), "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_mp3.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    todo_wine
+    ok(br, "PlaySound failed, got %d\n", br);
 }
 
 START_TEST(wave)
