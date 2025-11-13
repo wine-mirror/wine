@@ -168,4 +168,86 @@ typedef enum CorTypeAttr
     tdReservedMask       = 0x040800
 } CorTypeAttr;
 
+typedef enum CorMethodAttr
+{
+    mdPrivateScope          =   0x0000,
+    mdPrivate               =   0x0001,
+    mdFamANDAssem           =   0x0002,
+    mdAssem                 =   0x0003,
+    mdFamily                =   0x0004,
+    mdFamORAssem            =   0x0005,
+    mdPublic                =   0x0006,
+    mdStatic                =   0x0010,
+    mdFinal                 =   0x0020,
+    mdVirtual               =   0x0040,
+    mdHideBySig             =   0x0080,
+    mdReuseSlot             =   0x0000,
+    mdNewSlot               =   0x0100,
+    mdCheckAccessOnOverride =   0x0200,
+    mdAbstract              =   0x0400,
+    mdSpecialName           =   0x0800,
+    mdPinvokeImpl           =   0x2000,
+    mdUnmanagedExport       =   0x0008,
+    mdRTSpecialName         =   0x1000,
+    mdHasSecurity           =   0x4000,
+    mdRequireSecObject      =   0x8000,
+
+    mdMemberAccessMask      =   0x0007,
+    mdVtableLayoutMask      =   0x0100,
+    mdReservedMask          =   0xd000,
+} CorMethodAttr;
+
+typedef enum CorMethodImpl
+{
+    miIL                     = 0x0000,
+    miNative                 = 0x0001,
+    miOPTIL                  = 0x0002,
+    miRuntime                = 0x0003,
+    miUnmanaged              = 0x0004,
+    miManaged                = 0x0000,
+    miForwardRef             = 0x0010,
+    miPreserveSig            = 0x0080,
+    miInternalCall           = 0x1000,
+    miSynchronized           = 0x0020,
+    miNoInlining             = 0x0008,
+    miAggressiveInlining     = 0x0100,
+    miNoOptimization         = 0x0040,
+    miAggressiveOptimization = 0x0200,
+    miAsync                  = 0x2000,
+
+    miCodeTypeMask           =  0x0003,
+    miManagedMask            =  0x0004,
+    miUserMask               =  0x33fc,
+
+    miMaxMethodImplVal       = 0xffff,
+} CorMethodImpl;
+
+typedef enum CorPinvokeMap
+{
+    pmNoMangle                      = 0x0001,
+    pmCharSetNotSpec                = 0x0000,
+    pmCharSetAnsi                   = 0x0002,
+    pmCharSetUnicode                = 0x0004,
+    pmCharSetAuto                   = 0x0006,
+    pmBestFitUseAssem               = 0x0000,
+    pmBestFitEnabled                = 0x0010,
+    pmBestFitDisabled               = 0x0020,
+    pmThrowOnUnmappableCharUseAssem = 0x0000,
+    pmThrowOnUnmappableCharEnabled  = 0x1000,
+    pmThrowOnUnmappableCharDisabled = 0x2000,
+    pmSupportsLastError             = 0x0040,
+    pmCallConvWinapi                = 0x0100,
+    pmCallConvCdecl                 = 0x0200,
+    pmCallConvStdcall               = 0x0300,
+    pmCallConvThiscall              = 0x0400,
+    pmCallConvFastcall              = 0x0500,
+
+    pmCharSetMask                   = 0x0006,
+    pmBestFitMask                   = 0x0030,
+    pmCallConvMask                  = 0x0700,
+    pmThrowOnUnmappableCharMask     = 0x3000,
+
+    pmMaxValue          = 0xffff,
+} CorPinvokeMap;
+
 #endif /* __WINE_CORHDR_H */

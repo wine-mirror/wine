@@ -843,6 +843,15 @@ static void test_token_(int line, IMetaDataImport *iface, mdToken token, CorToke
     valid = IMetaDataImport_IsValidToken(iface, token);
     todo_wine ok_(__FILE__, line)(valid, "got invalid token %s\n", debugstr_mdToken(token));
 }
+struct method_props
+{
+    const WCHAR *exp_name;
+    CorMethodAttr exp_method_flags;
+    CorMethodImpl exp_impl_flags;
+    BYTE exp_sig_blob[6];
+    ULONG exp_sig_len;
+    CorPinvokeMap exp_call_conv;
+};
 
 static void test_IMetaDataImport(void)
 {
@@ -853,11 +862,17 @@ static void test_IMetaDataImport(void)
         { tdInterface | tdAbstract | tdWindowsRuntime, "ITest2", "Wine.Test", 0x1000000 },
         { tdPublic | tdSealed | tdWindowsRuntime, "Test2", "Wine.Test", 0x100000b },
     };
+    static const struct method_props test2_methods[2] =
+    {
+        { L"Method1", mdPublic | mdNewSlot | mdFinal | mdVirtual | mdHideBySig, miManaged | miRuntime, { 0x20, 0x2, 0x8, 0x8, 0x8 }, 5, pmCallConvWinapi },
+        { L"Method2", mdPublic | mdNewSlot | mdFinal | mdVirtual | mdHideBySig, miManaged | miRuntime, { 0x20, 0x1, 0x11, 0x9, 0x11, 0x9 }, 6, pmCallConvWinapi },
+    };
     const WCHAR *filename = load_resource(L"test-enum.winmd");
     ULONG buf_len, buf_count, str_len, str_reqd, i;
+    mdTypeDef *typedef_tokens, typedef1, typedef2;
+    mdMethodDef *methoddef_tokens;
     IMetaDataDispenser *dispenser;
     IMetaDataImport *md_import;
-    mdTypeDef *typedef_tokens;
     HCORENUM henum = 0;
     WCHAR *strW;
     HRESULT hr;
@@ -951,6 +966,66 @@ static void test_IMetaDataImport(void)
 
     hr = IMetaDataImport_FindTypeDefByName(md_import, NULL, 0, NULL);
     todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+
+    hr = IMetaDataImport_FindTypeDefByName(md_import, L"Test2", 0, &typedef1);
+    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_FindTypeDefByName(md_import, NULL, 0, &typedef1);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+
+    typedef1 = 0;
+    hr = IMetaDataImport_FindTypeDefByName(md_import, L"Wine.Test.Test2", 0, &typedef1);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine test_token(md_import, typedef1, mdtTypeDef, FALSE);
+    buf_count = 0xdeadbeef;
+    henum = NULL;
+    hr = IMetaDataImport_EnumMethods(md_import, &henum, typedef1, NULL, 0, &buf_count);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    todo_wine ok(buf_count == 0, "got buf_reqd %lu\n", buf_count);
+    buf_len = 0;
+    hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(buf_len == ARRAY_SIZE(test2_methods), "got buf_len %#lx\n" , buf_len);
+    methoddef_tokens = calloc(buf_len, sizeof(*methoddef_tokens));
+    ok(!!methoddef_tokens, "got methoddef_tokens %p\n", methoddef_tokens);
+    hr = IMetaDataImport_EnumMethods(md_import, &henum, typedef1, methoddef_tokens, buf_len, &buf_count);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(buf_count == buf_len, "got buf_reqd %lu != %lu\n", buf_count, buf_len);
+    for (i = 0; i < buf_len; i++)
+    {
+        ULONG method_flags = 0, impl_flags = 0, sig_len = 0, call_conv = 0;
+        const struct method_props *method = &test2_methods[i];
+        const COR_SIGNATURE *sig_blob = NULL;
+        WCHAR name[80];
+
+        winetest_push_context("i=%lu", i);
+
+        test_token(md_import, methoddef_tokens[i], mdtMethodDef, FALSE);
+        name[0] = L'\0';
+        str_len = 0;
+        hr = IMetaDataImport_GetMethodProps(md_import, methoddef_tokens[i], &typedef2, name, ARRAY_SIZE(name), &str_len,
+                                            &method_flags, &sig_blob, &sig_len, NULL, &impl_flags);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2),
+                     debugstr_mdToken(typedef1));
+        todo_wine ok(method_flags == method->exp_method_flags, "got method_flags %#lx != %#x\n", method_flags,
+                     method->exp_method_flags);
+        todo_wine ok(impl_flags == method->exp_impl_flags, "got impl_flags %#lx != %#x\n", impl_flags,
+                     method->exp_impl_flags);
+        todo_wine ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
+        todo_wine ok(sig_len == method->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, method->exp_sig_len);
+        if (sig_blob && sig_len == method->exp_sig_len)
+            ok(!memcmp(sig_blob, method->exp_sig_blob, method->exp_sig_len), "got unexpected sig_blob\n");
+        todo_wine ok(!wcscmp(name, method->exp_name), "got name %s != %s\n", debugstr_w(name),
+                     debugstr_w(method->exp_name));
+
+        hr = IMetaDataImport_GetNativeCallConvFromSig(md_import, sig_blob, sig_len, &call_conv);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(call_conv == method->exp_call_conv, "got call_conv %#lx != %#x\n", call_conv, method->exp_call_conv);
+
+        winetest_pop_context();
+    }
+    free(methoddef_tokens);
+    IMetaDataImport_CloseEnum(md_import, henum);
 
     IMetaDataImport_Release(md_import);
 }
