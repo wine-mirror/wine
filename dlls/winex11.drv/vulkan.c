@@ -80,7 +80,6 @@ static VkBool32 X11DRV_get_physical_device_presentation_support( struct vulkan_p
 
 static const char *X11DRV_get_host_extension( const char *name )
 {
-    if (!strcmp( name, "VK_KHR_win32_surface" )) return "VK_KHR_xlib_surface";
     if (!strcmp( name, "VK_KHR_external_memory_win32" )) return "VK_KHR_external_memory_fd";
     if (!strcmp( name, "VK_KHR_external_semaphore_win32" )) return "VK_KHR_external_semaphore_fd";
     if (!strcmp( name, "VK_KHR_external_fence_win32" )) return "VK_KHR_external_fence_fd";

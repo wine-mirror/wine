@@ -102,11 +102,6 @@ static BOOL use_VK_EXT_metal_surface;
 
 static const char *macdrv_get_host_extension(const char *name)
 {
-    if (!strcmp( name, "VK_KHR_win32_surface" ))
-    {
-        if (use_VK_EXT_metal_surface) return "VK_EXT_metal_surface";
-        return "VK_MVK_macos_surface";
-    }
     return name;
 }
 

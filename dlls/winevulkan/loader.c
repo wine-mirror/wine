@@ -107,6 +107,14 @@ PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char 
         return NULL;
     }
 
+    if (instance->extensions.has_VK_KHR_win32_surface)
+    {
+        if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
+            return (PFN_vkVoidFunction)vkCreateWin32SurfaceKHR;
+        if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+            return (PFN_vkVoidFunction)vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    }
+
     if (!is_available_instance_function(instance, name))
         return NULL;
 
@@ -335,6 +343,7 @@ static BOOL is_instance_extension_supported(const char *extension, struct vulkan
 VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *ret)
 {
+    struct vulkan_instance_extensions extensions = {0};
     struct vkCreateInstance_params params;
     const VkApplicationInfo *app_info;
     struct VkInstance_T *instance;
@@ -356,6 +365,15 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
             get_device_proc_addr_instance_procs = TRUE;
     }
 
+    TRACE("Enabling %u client instance extensions\n", create_info->enabledExtensionCount);
+    for (uint32_t i = 0; i < create_info->enabledExtensionCount; i++)
+    {
+        const char *extension = create_info->ppEnabledExtensionNames[i];
+        if (!is_instance_extension_supported(extension, &extensions))
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        TRACE("  - %s\n", extension);
+    }
+
     for (;;)
     {
         if (!(instance = vulkan_client_object_create(FIELD_OFFSET(struct VkInstance_T, phys_devs[phys_dev_count]))))
@@ -363,6 +381,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         instance->phys_dev_count = phys_dev_count;
         for (i = 0; i < phys_dev_count; i++)
             instance->phys_devs[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+        instance->extensions = extensions;
 
         params.pCreateInfo = create_info;
         params.pAllocator = allocator;

@@ -2347,7 +2347,6 @@ static VkBool32 nulldrv_get_physical_device_presentation_support( struct vulkan_
 
 static const char *nulldrv_get_host_extension( const char *name )
 {
-    if (!strcmp( name, "VK_KHR_win32_surface" )) return "VK_EXT_headless_surface";
     if (!strcmp( name, "VK_KHR_external_memory_win32" )) return "VK_KHR_external_memory_fd";
     if (!strcmp( name, "VK_KHR_external_semaphore_win32" )) return "VK_KHR_external_semaphore_fd";
     if (!strcmp( name, "VK_KHR_external_fence_win32" )) return "VK_KHR_external_fence_fd";

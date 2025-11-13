@@ -61449,44 +61449,12 @@ static const char * const vk_device_extensions[] =
     "VK_VALVE_video_encode_rgb_conversion",
 };
 
-static const char * const vk_instance_extensions[] =
-{
-    "VK_EXT_debug_report",
-    "VK_EXT_debug_utils",
-    "VK_EXT_layer_settings",
-    "VK_EXT_surface_maintenance1",
-    "VK_EXT_swapchain_colorspace",
-    "VK_EXT_validation_features",
-    "VK_EXT_validation_flags",
-    "VK_KHR_device_group_creation",
-    "VK_KHR_external_fence_capabilities",
-    "VK_KHR_external_memory_capabilities",
-    "VK_KHR_external_semaphore_capabilities",
-    "VK_KHR_get_physical_device_properties2",
-    "VK_KHR_get_surface_capabilities2",
-    "VK_KHR_portability_enumeration",
-    "VK_KHR_surface",
-    "VK_KHR_surface_maintenance1",
-    "VK_KHR_win32_surface",
-};
-
 BOOL wine_vk_device_extension_supported(const char *name)
 {
     unsigned int i;
     for (i = 0; i < ARRAY_SIZE(vk_device_extensions); i++)
     {
         if (strcmp(vk_device_extensions[i], name) == 0)
-            return TRUE;
-    }
-    return FALSE;
-}
-
-BOOL wine_vk_instance_extension_supported(const char *name)
-{
-    unsigned int i;
-    for (i = 0; i < ARRAY_SIZE(vk_instance_extensions); i++)
-    {
-        if (strcmp(vk_instance_extensions[i], name) == 0)
             return TRUE;
     }
     return FALSE;

@@ -67,8 +67,6 @@ struct wine_instance
 {
     struct vulkan_instance obj;
 
-    VkBool32 enable_win32_surface;
-
     struct wine_debug_utils_messenger *utils_messengers;
     uint32_t utils_messenger_count;
 
@@ -111,7 +109,6 @@ static inline struct wine_debug_report_callback *wine_debug_report_callback_from
 }
 
 BOOL wine_vk_device_extension_supported(const char *name);
-BOOL wine_vk_instance_extension_supported(const char *name);
 
 BOOL wine_vk_is_type_wrapped(VkObjectType type);
 

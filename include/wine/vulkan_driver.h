@@ -50,6 +50,19 @@ struct vulkan_instance_extensions
 #undef USE_VK_EXT
 };
 
+struct VkPhysicalDevice_T
+{
+    struct vulkan_client_object obj;
+};
+
+struct VkInstance_T
+{
+    struct vulkan_client_object obj;
+    struct vulkan_instance_extensions extensions;
+    uint32_t phys_dev_count;
+    struct VkPhysicalDevice_T phys_devs[1];
+};
+
 #ifdef WINE_UNIX_LIB
 
 #include "wine/rbtree.h"
@@ -82,6 +95,7 @@ static inline void vulkan_object_init( struct vulkan_object *obj, UINT64 host_ha
 struct vulkan_instance
 {
     VULKAN_OBJECT_HEADER( VkInstance, instance );
+    struct vulkan_instance_extensions extensions;
 #define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
     ALL_VK_INSTANCE_FUNCS
 #undef USE_VK_FUNC

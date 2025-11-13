@@ -40,18 +40,6 @@
 /* Magic value defined by Vulkan ICD / Loader spec */
 #define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
 
-struct VkPhysicalDevice_T
-{
-    struct vulkan_client_object obj;
-};
-
-struct VkInstance_T
-{
-    struct vulkan_client_object obj;
-    uint32_t phys_dev_count;
-    struct VkPhysicalDevice_T phys_devs[1];
-};
-
 struct VkQueue_T
 {
     struct vulkan_client_object obj;

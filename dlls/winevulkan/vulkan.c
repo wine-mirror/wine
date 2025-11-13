@@ -748,8 +748,8 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
     VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
     VkBaseInStructure *header;
     const char **extensions;
+    uint32_t count = 0;
     unsigned int i;
-    uint32_t count;
 
     *dst = *src;
 
@@ -791,47 +791,31 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
 
-    for (i = 0; i < src->enabledExtensionCount; i++)
+    if (instance->obj.extensions.has_VK_EXT_debug_utils || instance->obj.extensions.has_VK_EXT_debug_report)
     {
-        const char *extension_name = src->ppEnabledExtensionNames[i];
-        TRACE("Extension %u: %s.\n", i, debugstr_a(extension_name));
-        if (!wine_vk_instance_extension_supported(extension_name))
-        {
-            WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
-            return VK_ERROR_EXTENSION_NOT_PRESENT;
-        }
-    }
-
-    count = src->enabledExtensionCount;
-    extensions = conversion_context_alloc(ctx, (count + 2) * sizeof(*extensions));
-    memcpy(extensions, src->ppEnabledExtensionNames, count * sizeof(*dst->ppEnabledExtensionNames));
-    dst->ppEnabledExtensionNames = extensions;
-    dst->enabledExtensionCount = src->enabledExtensionCount;
-
-    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
-    {
-        if (!strcmp(*extension, "VK_EXT_debug_utils") || !strcmp(*extension, "VK_EXT_debug_report"))
-        {
-            rb_init(&instance->objects, vulkan_object_compare);
-            pthread_rwlock_init(&instance->objects_lock, NULL);
-        }
-        if (!strcmp(*extension, "VK_KHR_win32_surface"))
-        {
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_win32_surface");
-            instance->enable_win32_surface = VK_TRUE;
-        }
+        rb_init(&instance->objects, vulkan_object_compare);
+        pthread_rwlock_init(&instance->objects_lock, NULL);
     }
 
     if (use_external_memory())
     {
-        extensions[count++] = "VK_KHR_get_physical_device_properties2";
-        extensions[count++] = "VK_KHR_external_memory_capabilities";
+        instance->obj.extensions.has_VK_KHR_get_physical_device_properties2 = 1;
+        instance->obj.extensions.has_VK_KHR_external_memory_capabilities = 1;
     }
 
-    TRACE("Enabling %u instance extensions\n", count);
+    vk_funcs->p_map_instance_extensions(&instance->obj.extensions);
+    instance->obj.extensions.has_VK_KHR_win32_surface = 0;
+
+    extensions = conversion_context_alloc(ctx, sizeof(instance->obj.extensions) * 8 * sizeof(*extensions));
+#define USE_VK_EXT(x) if (instance->obj.extensions.has_ ## x) extensions[count++] = #x;
+    ALL_VK_INSTANCE_EXTS
+#undef USE_VK_EXT
+
+    TRACE("Enabling %u host instance extensions\n", count);
     for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
         TRACE("  - %s\n", debugstr_a(*extension));
 
+    dst->ppEnabledExtensionNames = extensions;
     dst->enabledExtensionCount = count;
     return VK_SUCCESS;
 }
@@ -1057,6 +1041,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
     physical_devices = (struct vulkan_physical_device *)(instance + 1);
+    instance->obj.extensions = client_instance->extensions;
 
     init_conversion_context(&ctx);
     res = wine_vk_instance_convert_create_info(&ctx, create_info, &create_info_host, instance);
@@ -1780,14 +1765,8 @@ void wine_vkDestroyDeferredOperationKHR(VkDevice device_handle,
 
 static NTSTATUS is_available_instance_function(VkInstance handle, const char *name)
 {
-    struct wine_instance *instance = wine_instance_from_handle(handle);
-
-    if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
-        return instance->enable_win32_surface;
-    if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
-        return instance->enable_win32_surface;
-
-    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->obj.host.instance, name);
+    struct vulkan_instance *instance = vulkan_instance_from_handle(handle);
+    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->host.instance, name);
 }
 
 static NTSTATUS is_available_device_function(VkDevice handle, const char *name)
