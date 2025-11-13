@@ -650,6 +650,7 @@ void macdrv_free_adapters(struct macdrv_adapter* adapters)
  *
  * Get a list of monitors under adapter_id. The first monitor is primary if adapter is primary.
  * Call macdrv_free_monitors() when you are done using the data.
+ * An adapter_id of kCGNullDirectDisplay will return monitors for all adapters.
  *
  * Returns non-zero value on failure with parameters unchanged and zero on success.
  */
@@ -687,7 +688,9 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
 
     for (i = 0; i < display_id_count; i++)
     {
-        if (display_ids[i] != adapter_id && CGDisplayMirrorsDisplay(display_ids[i]) != adapter_id)
+        if (adapter_id     != kCGNullDirectDisplay &&
+            display_ids[i] != adapter_id           &&
+            CGDisplayMirrorsDisplay(display_ids[i]) != adapter_id)
             continue;
 
         /* Find and fill in monitor info */

@@ -212,8 +212,8 @@ static void init_original_display_mode(void)
     BOOL success = FALSE;
     HKEY mac_driver_hkey, parent_hkey;
     DWORD disposition;
-    struct macdrv_display *displays = NULL;
-    int num_displays, i;
+    struct macdrv_monitor *monitors = NULL;
+    int num_monitors, i;
 
     if (inited_original_display_mode)
         return;
@@ -237,12 +237,14 @@ static void init_original_display_mode(void)
     if (disposition != REG_CREATED_NEW_KEY)
         goto done;
 
-    if (macdrv_get_displays(&displays, &num_displays))
+    if (macdrv_get_monitors(kCGNullDirectDisplay, &monitors, &num_monitors))
         goto fail;
 
-    for (i = 0; i < num_displays; i++)
+    for (i = 0; i < num_monitors; i++)
     {
-        if (!write_display_settings(parent_hkey, displays[i].displayID))
+        if (CGDisplayMirrorsDisplay(monitors[i].id) != kCGNullDirectDisplay)
+            continue;
+        if (!write_display_settings(parent_hkey, monitors[i].id))
             goto fail;
     }
 
@@ -250,7 +252,7 @@ done:
     success = TRUE;
 
 fail:
-    macdrv_free_displays(displays);
+    macdrv_free_monitors(monitors);
     NtClose(parent_hkey);
     if (!success && parent_hkey)
         reg_delete_tree(mac_driver_hkey, initial_mode_keyW, sizeof(initial_mode_keyW));
