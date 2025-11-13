@@ -110,12 +110,6 @@ typedef struct macdrv_opaque_status_item* macdrv_status_item;
 struct macdrv_event;
 struct macdrv_query;
 
-struct macdrv_display {
-    CGDirectDisplayID displayID;
-    CGRect frame;
-    CGRect work_frame;
-};
-
 
 /* main */
 extern bool macdrv_err_on;
@@ -261,8 +255,6 @@ struct macdrv_monitor
     CGRect rc_work;
 };
 
-extern int macdrv_get_displays(struct macdrv_display** displays, int* count);
-extern void macdrv_free_displays(struct macdrv_display* displays);
 extern int macdrv_set_display_mode(CGDirectDisplayID id, CGDisplayModeRef display_mode);
 extern int macdrv_get_gpus(struct macdrv_gpu** gpus, int* count);
 extern void macdrv_free_gpus(struct macdrv_gpu* gpus);
