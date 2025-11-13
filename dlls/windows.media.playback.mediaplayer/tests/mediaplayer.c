@@ -63,8 +63,8 @@ static void test_MediaPlayer_Statics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
-    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
-    if (hr == REGDB_E_CLASSNOTREG)
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ) || broken( hr == CLASS_E_CLASSNOTAVAILABLE ) /* w1064v1507 */, "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG || hr == CLASS_E_CLASSNOTAVAILABLE)
     {
         WindowsDeleteString( str );
         win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( media_player_name ) );
