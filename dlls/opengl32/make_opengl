@@ -529,8 +529,8 @@ sub generate_unix_thunk($$$$)
             }
             elsif ($ptype eq "PTR32")
             {
-                $ret_expr .= "(UINT_PTR)" unless $ret_type =~ /\*/;
-                $need_manual_thunk = 1 if $ret_type =~ /(GLsync|PROC|GLintptr|\*)/;
+                $ret_expr .= "(UINT_PTR)";
+                $need_manual_thunk = 1;
             }
         }
         $ret .= "    } *params = args;\n";
@@ -637,9 +637,9 @@ sub generate_wrapper_declaration($$$)
     my $decl_args = get_func_args( $func, 0 );
     my $ret_type = get_func_ret( $func, 0 );
     my $ret = "extern ";
-    $ret_type = "PTR32" if $is_wow64 && $ret_type =~ /\*/;
     $ret .= $ret_type;
-    $ret .= $is_wow64 ? " wow64_" : " wrap_";
+    $ret .= " " unless $ret_type =~ /\*$/;
+    $ret .= $is_wow64 ? "wow64_" : "wrap_";
     $ret .= "$name( TEB *teb,";
     foreach my $arg (@{$func->[1]})
     {

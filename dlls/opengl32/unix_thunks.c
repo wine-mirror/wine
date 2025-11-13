@@ -54194,7 +54194,7 @@ static NTSTATUS wow64_ext_glMapBuffer( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glMapBuffer( teb, params->target, params->access );
+    params->ret = (UINT_PTR)wow64_glMapBuffer( teb, params->target, params->access );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -54209,7 +54209,7 @@ static NTSTATUS wow64_ext_glMapBufferARB( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glMapBufferARB( teb, params->target, params->access );
+    params->ret = (UINT_PTR)wow64_glMapBufferARB( teb, params->target, params->access );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -54226,7 +54226,7 @@ static NTSTATUS wow64_ext_glMapBufferRange( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glMapBufferRange( teb, params->target, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access );
+    params->ret = (UINT_PTR)wow64_glMapBufferRange( teb, params->target, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -54297,7 +54297,7 @@ static NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glMapNamedBuffer( teb, params->buffer, params->access );
+    params->ret = (UINT_PTR)wow64_glMapNamedBuffer( teb, params->buffer, params->access );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -54312,7 +54312,7 @@ static NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glMapNamedBufferEXT( teb, params->buffer, params->access );
+    params->ret = (UINT_PTR)wow64_glMapNamedBufferEXT( teb, params->buffer, params->access );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -54329,7 +54329,7 @@ static NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glMapNamedBufferRange( teb, params->buffer, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access );
+    params->ret = (UINT_PTR)wow64_glMapNamedBufferRange( teb, params->buffer, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -54346,7 +54346,7 @@ static NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
         PTR32 ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glMapNamedBufferRangeEXT( teb, params->buffer, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access );
+    params->ret = (UINT_PTR)wow64_glMapNamedBufferRangeEXT( teb, params->buffer, (GLintptr)ULongToPtr(params->offset), (GLsizeiptr)ULongToPtr(params->length), params->access );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
