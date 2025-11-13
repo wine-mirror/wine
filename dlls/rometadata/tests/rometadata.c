@@ -30,6 +30,7 @@
 
 #define WIDL_using_Wine_Test
 #include "test-simple.h"
+#include "test-enum.h"
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -216,6 +217,8 @@ struct type_info
     const char *exp_name;
     const char *exp_namespace;
     mdToken exp_base;
+    const char *exp_contract_name;
+    UINT32 exp_contract_version;
 };
 
 struct column_info
@@ -865,14 +868,36 @@ struct field_props
     ULONG value_len;
 };
 
+#define test_contract_value(data, data_len, exp_name, exp_version) test_contract_value_(__LINE__, data, data_len, exp_name, exp_version)
+static void test_contract_value_(int line, const BYTE *data, ULONG data_len, const char *exp_name, UINT32 exp_version)
+{
+    const ULONG name_len = strlen(exp_name);
+    /* {0x1, 0x2, <len>, <exp_name>, <exp_version>, 0x0, 0x0} */
+    const ULONG exp_len = 3 + name_len + sizeof(exp_version) + 2;
+
+    ok_(__FILE__, line)(!!data, "got data %p\n", data);
+    ok_(__FILE__, line)(data_len == exp_len, "got data_len %lu != %lu\n", data_len, exp_len);
+    if (data && data_len == exp_len)
+    {
+        const char *name = (char *)&data[3];
+        const UINT32 version = *(UINT32 *)&data[3 + name_len];
+
+        ok_(__FILE__, line)(data[0] == 1 && data[1] == 0 && data[2] == name_len,
+                            "unexpected contract value prefix {%#x, %#x, %#x}\n", data[0], data[1], data[2]);
+        ok_(__FILE__, line)(!memcmp(name, exp_name, name_len), "unexpected contract name: %s != %s\n",
+                            debugstr_an(name, name_len), debugstr_a(exp_name));
+        ok_(__FILE__, line)(version == exp_version, "got version %#x != %#x\n", version, exp_version);
+    }
+}
+
 static void test_IMetaDataImport(void)
 {
     static const struct type_info type_defs[] =
     {
-        { tdPublic | tdSealed | tdWindowsRuntime, "TestEnum1", "Wine.Test", 0x1000001 },
-        { tdPublic | tdSealed | tdSequentialLayout | tdWindowsRuntime, "TestStruct1", "Wine.Test", 0x1000005 },
-        { tdInterface | tdAbstract | tdWindowsRuntime, "ITest2", "Wine.Test", 0x1000000 },
-        { tdPublic | tdSealed | tdWindowsRuntime, "Test2", "Wine.Test", 0x100000b },
+        { tdPublic | tdSealed | tdWindowsRuntime, "TestEnum1", "Wine.Test", 0x1000001, "Windows.Foundation.UniversalApiContract", 0x10000 },
+        { tdPublic | tdSealed | tdSequentialLayout | tdWindowsRuntime, "TestStruct1", "Wine.Test", 0x1000005, "Windows.Foundation.UniversalApiContract", 0x20000 },
+        { tdInterface | tdAbstract | tdWindowsRuntime, "ITest2", "Wine.Test", 0x1000000, "Windows.Foundation.UniversalApiContract", 0x30000 },
+        { tdPublic | tdSealed | tdWindowsRuntime, "Test2", "Wine.Test", 0x100000b, "Windows.Foundation.UniversalApiContract", 0x30000 },
     };
     static const struct method_props test2_methods[2] =
     {
@@ -901,6 +926,9 @@ static void test_IMetaDataImport(void)
         { L"Wine.Test.TestEnum1", testenum1_fields, ARRAY_SIZE(testenum1_fields) },
         { L"Wine.Test.TestStruct1", teststruct1_fields, ARRAY_SIZE(teststruct1_fields) },
     };
+    static const WCHAR *contract_attribute_name = L"Windows.Foundation.Metadata.ContractVersionAttribute";
+    static const WCHAR *guid_attribute_name = L"Windows.Foundation.Metadata.GuidAttribute";
+
     const WCHAR *filename = load_resource(L"test-enum.winmd");
     ULONG buf_len, buf_count, str_len, str_reqd, i;
     mdTypeDef *typedef_tokens, typedef1, typedef2;
@@ -908,7 +936,9 @@ static void test_IMetaDataImport(void)
     IMetaDataDispenser *dispenser;
     mdFieldDef *fielddef_tokens;
     IMetaDataImport *md_import;
+    const BYTE *data = NULL;
     HCORENUM henum = 0;
+    const GUID *guid;
     WCHAR *strW;
     HRESULT hr;
     ULONG val;
@@ -941,8 +971,8 @@ static void test_IMetaDataImport(void)
     for (i = 0; i < buf_len; i++)
     {
         const struct type_info *info = &type_defs[i];
+        ULONG exp_len, data_len, len;
         mdTypeDef token = 0;
-        ULONG exp_len, len;
         WCHAR bufW[80];
         char bufA[80];
         mdToken base;
@@ -982,6 +1012,15 @@ static void test_IMetaDataImport(void)
         hr = IMetaDataImport_FindTypeDefByName(md_import, bufW, 0, &token);
         todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
         todo_wine ok(token == typedef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token), debugstr_mdToken(typedef_tokens[i]));
+
+        if (info->exp_contract_name)
+        {
+            data_len = 0;
+            data = NULL;
+            hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef_tokens[i], contract_attribute_name, &data, &data_len);
+            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+            todo_wine test_contract_value(data, data_len, info->exp_contract_name, info->exp_contract_version);
+        }
 
         winetest_pop_context();
     }
@@ -1127,6 +1166,22 @@ static void test_IMetaDataImport(void)
         free(fielddef_tokens);
         winetest_pop_context();
     }
+
+    typedef1 = buf_len = 0;
+    data = NULL;
+    hr = IMetaDataImport_FindTypeDefByName(md_import, L"Wine.Test.ITest2", 0, &typedef1);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine test_token(md_import, typedef1, mdtTypeDef, FALSE);
+    hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef1, guid_attribute_name, &data, &buf_len);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(!!data, "got data %p\n", data);
+    todo_wine ok(buf_len == sizeof(GUID) + 4, "got buf_len %lu\n", buf_len);
+    if (data && buf_len == sizeof(GUID) + 4)
+    {
+        guid = (GUID *)&data[2];
+        ok(IsEqualGUID(guid, &IID_ITest2), "got guid %s\n", debugstr_guid(guid));
+    }
+
     IMetaDataImport_Release(md_import);
 }
 
