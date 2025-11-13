@@ -176,8 +176,6 @@ PERF_CRITICAL_FUNCTIONS = [
 # part of the driver interface.
 # - dispatch (default: True):  set whether we need a function pointer in the device / instance dispatch table.
 FUNCTION_OVERRIDES = {
-    # Global functions
-    "vkCreateInstance" : {"extra_param" : "client_ptr"},
     # Device functions
     "vkCreateCommandPool" : {"extra_param" : "client_ptr"},
     "vkGetDeviceProcAddr" : {"dispatch" : False},
@@ -192,11 +190,13 @@ USER_DRIVER_FUNCS = {
     "vkCreateDevice",
     "vkCreateFence",
     "vkCreateImage",
+    "vkCreateInstance",
     "vkCreateSemaphore",
     "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
     "vkDestroyDevice",
     "vkDestroyFence",
+    "vkDestroyInstance",
     "vkDestroySemaphore",
     "vkDestroySurfaceKHR",
     "vkDestroySwapchainKHR",
@@ -252,7 +252,6 @@ MANUAL_UNIX_THUNKS = {
     "vkDestroyDebugReportCallbackEXT",
     "vkDestroyDebugUtilsMessengerEXT",
     "vkDestroyDeferredOperationKHR",
-    "vkDestroyInstance",
     "vkEnumerateDeviceLayerProperties",
     "vkEnumerateInstanceExtensionProperties",
     "vkEnumerateInstanceLayerProperties",

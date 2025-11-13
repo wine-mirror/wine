@@ -3294,7 +3294,6 @@ struct vkCreateInstance_params
     const VkInstanceCreateInfo *pCreateInfo;
     const VkAllocationCallbacks *pAllocator;
     VkInstance *pInstance;
-    void *client_ptr;
     VkResult result;
 };
 

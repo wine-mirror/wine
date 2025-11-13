@@ -51368,7 +51368,7 @@ static NTSTATUS thunk64_vkCreateInstance(void *args)
 
     init_conversion_context(ctx);
     convert_VkInstanceCreateInfo_win64_to_host(ctx, params->pCreateInfo, &pCreateInfo_host);
-    params->result = wine_vkCreateInstance(&pCreateInfo_host, params->pAllocator, params->pInstance, params->client_ptr);
+    params->result = wine_vkCreateInstance(&pCreateInfo_host, params->pAllocator, params->pInstance);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -51381,7 +51381,6 @@ static NTSTATUS thunk32_vkCreateInstance(void *args)
         PTR32 pCreateInfo;
         PTR32 pAllocator;
         PTR32 pInstance;
-        PTR32 client_ptr;
         VkResult result;
     } *params = args;
     VkInstanceCreateInfo pCreateInfo_host;
@@ -51394,7 +51393,7 @@ static NTSTATUS thunk32_vkCreateInstance(void *args)
     init_conversion_context(ctx);
     convert_VkInstanceCreateInfo_win32_to_host(ctx, (const VkInstanceCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
     pInstance_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pInstance));
-    params->result = wine_vkCreateInstance(&pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), &pInstance_host, UlongToPtr(params->client_ptr));
+    params->result = wine_vkCreateInstance(&pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), &pInstance_host);
     *(PTR32 *)UlongToPtr(params->pInstance) = PtrToUlong(pInstance_host);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -53103,7 +53102,7 @@ static NTSTATUS thunk64_vkDestroyInstance(void *args)
     if (!params->instance)
         return STATUS_SUCCESS;
 
-    wine_vkDestroyInstance(params->instance, params->pAllocator);
+    vk_funcs->p_vkDestroyInstance(params->instance, params->pAllocator);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -53121,7 +53120,7 @@ static NTSTATUS thunk32_vkDestroyInstance(void *args)
     if (!params->instance)
         return STATUS_SUCCESS;
 
-    wine_vkDestroyInstance((VkInstance)UlongToPtr(params->instance), (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
+    vk_funcs->p_vkDestroyInstance((VkInstance)UlongToPtr(params->instance), (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
     return STATUS_SUCCESS;
 }
 

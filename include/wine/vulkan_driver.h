@@ -67,8 +67,8 @@ struct VkInstance_T
 {
     struct vulkan_client_object obj;
     struct vulkan_instance_extensions extensions;
-    uint32_t phys_dev_count;
-    struct VkPhysicalDevice_T phys_devs[1];
+    UINT physical_device_count;
+    struct VkPhysicalDevice_T physical_device[1];
 };
 
 struct VkQueue_T
@@ -159,6 +159,7 @@ struct vulkan_instance
 #undef USE_VK_FUNC
     void (*p_insert_object)( struct vulkan_instance *instance, struct vulkan_object *obj );
     void (*p_remove_object)( struct vulkan_instance *instance, struct vulkan_object *obj );
+    uint64_t (*p_client_handle_from_host)( struct vulkan_instance *instance, uint64_t host_handle );
 
     struct vulkan_physical_device *physical_devices;
     uint32_t physical_device_count;
@@ -288,6 +289,9 @@ static inline struct vulkan_fence *vulkan_fence_from_handle( VkFence handle )
 
 struct vulkan_funcs
 {
+    struct vulkan_instance_extensions host_extensions;
+    struct vulkan_instance_extensions client_extensions;
+
     /* Vulkan global functions. These are the only calls at this point a graphics driver
      * needs to provide. Other function calls will be provided indirectly by dispatch
      * tables part of dispatchable Vulkan objects such as VkInstance or vkDevice.
@@ -299,11 +303,13 @@ struct vulkan_funcs
     PFN_vkCreateDevice p_vkCreateDevice;
     PFN_vkCreateFence p_vkCreateFence;
     PFN_vkCreateImage p_vkCreateImage;
+    PFN_vkCreateInstance p_vkCreateInstance;
     PFN_vkCreateSemaphore p_vkCreateSemaphore;
     PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
     PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
     PFN_vkDestroyDevice p_vkDestroyDevice;
     PFN_vkDestroyFence p_vkDestroyFence;
+    PFN_vkDestroyInstance p_vkDestroyInstance;
     PFN_vkDestroySemaphore p_vkDestroySemaphore;
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
     PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
@@ -345,10 +351,6 @@ struct vulkan_funcs
     PFN_vkQueueSubmit2KHR p_vkQueueSubmit2KHR;
     PFN_vkUnmapMemory p_vkUnmapMemory;
     PFN_vkUnmapMemory2KHR p_vkUnmapMemory2KHR;
-
-    /* winevulkan specific functions */
-    void (*p_map_instance_extensions)( struct vulkan_instance_extensions *extensions );
-    void (*p_map_device_extensions)( struct vulkan_device_extensions *extensions );
 };
 
 /* interface between win32u and the user drivers */

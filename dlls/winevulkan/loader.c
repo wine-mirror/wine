@@ -380,7 +380,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
     struct vkCreateInstance_params params;
     const VkApplicationInfo *app_info;
     struct VkInstance_T *instance;
-    uint32_t phys_dev_count = 8, i;
+    uint32_t device_count = 8, i;
     NTSTATUS status;
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, ret);
@@ -409,27 +409,31 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     for (;;)
     {
-        if (!(instance = vulkan_client_object_create(FIELD_OFFSET(struct VkInstance_T, phys_devs[phys_dev_count]))))
+        if (!(instance = vulkan_client_object_create(FIELD_OFFSET(struct VkInstance_T, physical_device[device_count]))))
             return VK_ERROR_OUT_OF_HOST_MEMORY;
-        instance->phys_dev_count = phys_dev_count;
-        for (i = 0; i < phys_dev_count; i++)
-            instance->phys_devs[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+        instance->physical_device_count = device_count;
+        for (i = 0; i < device_count; i++)
+            instance->physical_device[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
         instance->extensions = extensions;
+        *ret = instance;
 
         params.pCreateInfo = create_info;
         params.pAllocator = allocator;
         params.pInstance = ret;
-        params.client_ptr = instance;
         status = UNIX_CALL(vkCreateInstance, &params);
         assert(!status);
-        if (instance->phys_dev_count <= phys_dev_count)
+        if (instance->physical_device_count <= device_count)
             break;
-        phys_dev_count = instance->phys_dev_count;
+        device_count = instance->physical_device_count;
         free(instance);
+        *ret = NULL;
     }
 
     if (params.result)
+    {
         free(instance);
+        *ret = NULL;
+    }
     return params.result;
 }
 
