@@ -885,16 +885,16 @@ static DEVMODEW *display_get_modes(CGDirectDisplayID display_id, int *modes_coun
     return devmodes;
 }
 
-static void display_get_current_mode(struct macdrv_display *display, DEVMODEW *devmode)
+static void display_get_current_mode(struct macdrv_monitor *monitor, DEVMODEW *devmode)
 {
     CGDisplayModeRef display_mode;
     CGDirectDisplayID display_id;
 
-    display_id = display->displayID;
+    display_id = monitor->id;
     display_mode = CGDisplayCopyDisplayMode(display_id);
 
-    devmode->dmPosition.x = CGRectGetMinX(display->frame);
-    devmode->dmPosition.y = CGRectGetMinY(display->frame);
+    devmode->dmPosition.x = CGRectGetMinX(monitor->rc_monitor);
+    devmode->dmPosition.y = CGRectGetMinY(monitor->rc_monitor);
     devmode->dmFields |= DM_POSITION;
 
     display_mode_to_devmode_fields(display_id, display_mode, devmode);
@@ -1070,15 +1070,8 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;
     struct macdrv_gpu *gpus, *gpu;
-    struct macdrv_display *displays, *display;
-    INT gpu_count, adapter_count, monitor_count, mode_count, display_count;
+    INT gpu_count, adapter_count, monitor_count, mode_count;
     DEVMODEW *modes;
-
-    if (macdrv_get_displays(&displays, &display_count))
-    {
-        displays = NULL;
-        display_count = 0;
-    }
 
     /* Initialize GPUs */
     if (macdrv_get_gpus(&gpus, &gpu_count))
@@ -1124,19 +1117,10 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
                     .rc_work = rect_from_cgrect(monitor->rc_work),
                 };
                 device_manager->add_monitor( &gdi_monitor, param );
-            }
 
-            /* Get the current mode */
-            if (displays)
-            {
-                for (display = displays; display < displays + display_count; display++)
-                {
-                    if (display->displayID == adapter->id)
-                    {
-                        display_get_current_mode(display, &current_mode);
-                        break;
-                    }
-                }
+                /* Get the current mode */
+                if (monitor->id == adapter->id)
+                    display_get_current_mode(monitor, &current_mode);
             }
 
             if (!(modes = display_get_modes(adapter->id, &mode_count))) break;
@@ -1149,6 +1133,5 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
     }
 
     macdrv_free_gpus(gpus);
-    macdrv_free_displays(displays);
     return STATUS_SUCCESS;
 }
