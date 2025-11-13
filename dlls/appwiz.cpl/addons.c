@@ -323,7 +323,7 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
     WCHAR *cache_dir=NULL, *ret;
     size_t len, size;
 
-    xdg_dir = _wgetenv( L"UNIX_XDG_CACHE_HOME" );
+    xdg_dir = _wgetenv( L"WINE_HOST_XDG_CACHE_HOME" );
     if (xdg_dir && *xdg_dir)
     {
         if (!(cache_dir = HeapAlloc( GetProcessHeap(), 0, wcslen(xdg_dir) * sizeof(WCHAR) + sizeof(L"\\\\?\\unix") ))) return NULL;

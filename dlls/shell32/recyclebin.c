@@ -104,7 +104,7 @@ static BOOL WINAPI init_trash_dirs( INIT_ONCE *once, void *param, void **context
     }
     else
     {
-        const WCHAR *data_home = _wgetenv( L"UNIX_XDG_DATA_HOME" );
+        const WCHAR *data_home = _wgetenv( L"WINE_HOST_XDG_DATA_HOME" );
         const WCHAR *fmt = L"%s/.local/share/Trash";
         WCHAR *p;
 

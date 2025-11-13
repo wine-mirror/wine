@@ -867,11 +867,11 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
                 exit(0);
             }
         }
-        else if (is_special_env_var( str )) /* prefix it with UNIX_ */
+        else if (is_special_env_var( str )) /* prefix it with WINE_HOST_ */
         {
-            static const WCHAR unixW[] = {'U','N','I','X','_'};
-            memcpy( ptr, unixW, sizeof(unixW) );
-            ptr += ARRAY_SIZE(unixW);
+            static const WCHAR hostW[] = {'W','I','N','E','_','H','O','S','T','_'};
+            memcpy( ptr, hostW, sizeof(hostW) );
+            ptr += ARRAY_SIZE(hostW);
         }
 
         ptr += ntdll_umbstowcs( str, strlen(str) + 1, ptr, end - ptr );
