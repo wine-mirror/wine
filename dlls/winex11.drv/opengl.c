@@ -584,6 +584,8 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
         return STATUS_SUCCESS;
     }
 
+    use_egl = FALSE;
+
     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
        and include all dependencies */
     opengl_handle = dlopen( SONAME_LIBGL, RTLD_NOW | RTLD_GLOBAL );
