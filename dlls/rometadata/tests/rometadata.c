@@ -853,6 +853,18 @@ struct method_props
     CorPinvokeMap exp_call_conv;
 };
 
+struct field_props
+{
+    const WCHAR *exp_name;
+    CorFieldAttr exp_flags;
+    CorElementType exp_value_type;
+    BYTE exp_sig_blob[3];
+    ULONG exp_sig_len;
+    BOOL has_value;
+    const char exp_value[4];
+    ULONG value_len;
+};
+
 static void test_IMetaDataImport(void)
 {
     static const struct type_info type_defs[] =
@@ -867,11 +879,34 @@ static void test_IMetaDataImport(void)
         { L"Method1", mdPublic | mdNewSlot | mdFinal | mdVirtual | mdHideBySig, miManaged | miRuntime, { 0x20, 0x2, 0x8, 0x8, 0x8 }, 5, pmCallConvWinapi },
         { L"Method2", mdPublic | mdNewSlot | mdFinal | mdVirtual | mdHideBySig, miManaged | miRuntime, { 0x20, 0x1, 0x11, 0x9, 0x11, 0x9 }, 6, pmCallConvWinapi },
     };
+    static const struct field_props testenum1_fields[4] =
+    {
+        { COR_ENUM_FIELD_NAME_W, fdPrivate | fdSpecialName | fdRTSpecialName, ELEMENT_TYPE_VOID, { 0x6, 0x8 }, 2 },
+        { L"Foo", fdPublic | fdStatic | fdLiteral | fdHasDefault, ELEMENT_TYPE_I4, { 0x6, 0x11, 0x9 }, 3, TRUE, { 0, 0, 0, 0 }, 4 },
+        { L"Bar", fdPublic | fdStatic | fdLiteral | fdHasDefault, ELEMENT_TYPE_I4, { 0x6, 0x11, 0x9 }, 3, TRUE, { 1, 0, 0, 0 }, 4 },
+        { L"Baz", fdPublic | fdStatic | fdLiteral | fdHasDefault, ELEMENT_TYPE_I4, { 0x6, 0x11, 0x9 }, 3, TRUE, { 2, 0, 0, 0 }, 4 },
+    };
+    static const struct field_props teststruct1_fields[3] =
+    {
+        { L"a", fdPublic, ELEMENT_TYPE_VOID, { 0x6, ELEMENT_TYPE_I4 }, 2 },
+        { L"b", fdPublic, ELEMENT_TYPE_VOID, { 0x6, ELEMENT_TYPE_I4 }, 2 },
+        { L"c", fdPublic, ELEMENT_TYPE_VOID, { 0x6, ELEMENT_TYPE_I4 }, 2 },
+    };
+    const struct field_enum_test_case
+    {
+        const WCHAR *type_name;
+        const struct field_props *field_props;
+        ULONG fields_len;
+    } field_enum_test_cases[2] = {
+        { L"Wine.Test.TestEnum1", testenum1_fields, ARRAY_SIZE(testenum1_fields) },
+        { L"Wine.Test.TestStruct1", teststruct1_fields, ARRAY_SIZE(teststruct1_fields) },
+    };
     const WCHAR *filename = load_resource(L"test-enum.winmd");
     ULONG buf_len, buf_count, str_len, str_reqd, i;
     mdTypeDef *typedef_tokens, typedef1, typedef2;
     mdMethodDef *methoddef_tokens;
     IMetaDataDispenser *dispenser;
+    mdFieldDef *fielddef_tokens;
     IMetaDataImport *md_import;
     HCORENUM henum = 0;
     WCHAR *strW;
@@ -1027,6 +1062,71 @@ static void test_IMetaDataImport(void)
     free(methoddef_tokens);
     IMetaDataImport_CloseEnum(md_import, henum);
 
+    for (i = 0; i < ARRAY_SIZE(field_enum_test_cases); i++)
+    {
+        const struct field_props *fields_props = field_enum_test_cases[i].field_props;
+        const WCHAR *type_name = field_enum_test_cases[i].type_name;
+        const ULONG fields_len = field_enum_test_cases[i].fields_len;
+        ULONG field_idx;
+
+        winetest_push_context("%s", debugstr_w(type_name));
+
+        typedef1 = 0;
+        hr = IMetaDataImport_FindTypeDefByName(md_import, type_name, 0, &typedef1);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine test_token(md_import, typedef1, mdtTypeDef, FALSE);
+        henum = NULL;
+        buf_count = 0xdeadbeef;
+        hr = IMetaDataImport_EnumFields(md_import, &henum, typedef1, NULL, 0, &buf_count);
+        todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+        todo_wine ok(!!henum, "got henum %p\n", henum);
+        todo_wine ok(buf_count == 0, "got buf_count %lu\n", buf_count);
+        buf_len = 0;
+        hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(buf_len == fields_len, "got buf_len %lu\n", buf_len);
+        fielddef_tokens = calloc(buf_len, sizeof(*fielddef_tokens));
+        ok(!!fielddef_tokens, "got fielddef_tokens %p\n", fielddef_tokens);
+        hr = IMetaDataImport_EnumFields(md_import, &henum, typedef1, fielddef_tokens, buf_len, &buf_count);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(buf_count == buf_len, "got buf_count %lu != %lu\n", buf_count, buf_len);
+        IMetaDataImport_CloseEnum(md_import, henum);
+
+        for (field_idx = 0; field_idx < buf_len; field_idx++)
+        {
+            ULONG flags = 0, sig_len = 0, value_type = 0, value_len = 0;
+            const struct field_props *props = &fields_props[field_idx];
+            const COR_SIGNATURE *sig_blob = NULL;
+            UVCP_CONSTANT value = NULL;
+            WCHAR name[80];
+
+            winetest_push_context("field_idx=%lu", field_idx);
+
+            test_token(md_import, fielddef_tokens[i], mdtFieldDef, FALSE);
+            name[0] = L'\0';
+            typedef2 = 0;
+            hr = IMetaDataImport_GetFieldProps(md_import, fielddef_tokens[field_idx], &typedef2, name, ARRAY_SIZE(name), NULL,
+                                               &flags, &sig_blob, &sig_len, &value_type, &value, &value_len);
+            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+            todo_wine ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
+            todo_wine ok(!wcscmp(name, props->exp_name), "got name %s != %s\n", debugstr_w(name), debugstr_w(props->exp_name));
+            todo_wine ok(flags == props->exp_flags, "got flags %#lx != %#x\n", flags, props->exp_flags);
+            todo_wine ok(value_type == props->exp_value_type, "got value_type %#lx != %#x\n", value_type, props->exp_value_type);
+            todo_wine ok(sig_len == props->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, props->exp_sig_len);
+            todo_wine ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
+            if (sig_blob && sig_len == props->exp_sig_len)
+                ok(!memcmp(sig_blob, props->exp_sig_blob, sig_len), "got unexpected sig_blob\n");
+            todo_wine ok(value_len == 0, "got value_len %lu\n", value_len); /* Non-zero only for string types. */
+            todo_wine ok(props->has_value == !!value, "got value %s\n", debugstr_a(value));
+            if (props->has_value)
+                todo_wine ok(value && !memcmp(value, props->exp_value, props->value_len), "got unexpected value %p\n",
+                             value);
+
+            winetest_pop_context();
+        }
+        free(fielddef_tokens);
+        winetest_pop_context();
+    }
     IMetaDataImport_Release(md_import);
 }
 
