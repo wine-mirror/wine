@@ -4189,8 +4189,336 @@ static void test_sample_grabber(void)
     IMFSampleGrabberSinkCallback_Release(grabber_callback);
 }
 
+struct timer_cancel
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+    ULONG id;
+};
+
+static struct timer_cancel* impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct timer_cancel, IUnknown_iface);
+}
+
+static WINAPI HRESULT unknown_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef(iface);
+    return S_OK;
+}
+
+static WINAPI ULONG unknown_AddRef(IUnknown *iface)
+{
+    struct timer_cancel *tc = impl_from_IUnknown(iface);
+    return InterlockedIncrement(&tc->refcount);
+}
+
+static WINAPI ULONG unknown_Release(IUnknown *iface)
+{
+    struct timer_cancel *tc = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&tc->refcount);
+
+    if (!tc->refcount)
+        free(tc);
+
+    return refcount;
+}
+
+static IUnknownVtbl UnknownVtbl =
+{
+    unknown_QueryInterface,
+    unknown_AddRef,
+    unknown_Release,
+};
+
+static struct timer_cancel* create_timer_cancel(void)
+{
+    static ULONG id = 1;
+
+    struct timer_cancel *tc = calloc(1, sizeof(*tc));
+    tc->IUnknown_iface.lpVtbl = &UnknownVtbl;
+    tc->refcount = 1;
+    tc->id = id++;
+
+    return tc;
+}
+
+DEFINE_EXPECT(timer_SetTimer);
+DEFINE_EXPECT(timer_CancelTimer);
+
+struct presentation_clock
+{
+    IMFPresentationClock IMFPresentationClock_iface;
+    IMFTimer IMFTimer_iface;
+    LONG refcount;
+    IMFClockStateSink *sample_grabber_clock_state_sink;
+    IMFAsyncResult *callback_result;
+    IUnknown *cancel_key;
+};
+
+static struct presentation_clock* impl_from_IMFTimer(IMFTimer *iface)
+{
+    return CONTAINING_RECORD(iface, struct presentation_clock, IMFTimer_iface);
+}
+
+static WINAPI HRESULT timer_QueryInterface(IMFTimer *iface, REFIID riid, void **obj)
+{
+    struct presentation_clock* pc = impl_from_IMFTimer(iface);
+    return IMFPresentationClock_QueryInterface(&pc->IMFPresentationClock_iface, riid, obj);
+}
+
+static WINAPI ULONG timer_AddRef(IMFTimer *iface)
+{
+    struct presentation_clock* pc = impl_from_IMFTimer(iface);
+    return IMFPresentationClock_AddRef(&pc->IMFPresentationClock_iface);
+}
+
+static WINAPI ULONG timer_Release(IMFTimer *iface)
+{
+    struct presentation_clock* pc = impl_from_IMFTimer(iface);
+    return IMFPresentationClock_Release(&pc->IMFPresentationClock_iface);
+}
+
+static HRESULT WINAPI timer_SetTimer(IMFTimer *iface, DWORD flags, LONGLONG time,
+        IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_key)
+{
+    struct presentation_clock* pc = impl_from_IMFTimer(iface);
+    struct timer_cancel *tc;
+    HRESULT hr;
+
+    CHECK_EXPECT(timer_SetTimer);
+
+    ok(flags == 0, "Unexpected flags value %#lx\n", flags);
+    ok(time == 0, "Unexpected time value %I64d\n", time);
+    ok(pc->callback_result == NULL, "Unexpected callback value %p\n", pc->callback_result);
+    ok(pc->cancel_key == NULL, "Unexpected cancel key %p\n", pc->cancel_key);
+
+    hr = MFCreateAsyncResult(NULL, callback, state, &pc->callback_result);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    tc = create_timer_cancel();
+    pc->cancel_key = *cancel_key = &tc->IUnknown_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI timer_CancelTimer(IMFTimer *iface, IUnknown *cancel_key)
+{
+    struct presentation_clock* pc = impl_from_IMFTimer(iface);
+
+    todo_wine
+    CHECK_EXPECT(timer_CancelTimer);
+    ok(cancel_key == pc->cancel_key, "Unexpected cancel key %p\n", cancel_key);
+
+    IMFAsyncResult_Release(pc->callback_result);
+    pc->callback_result = NULL;
+    pc->cancel_key = NULL;
+
+    return S_OK;
+}
+
+static IMFTimerVtbl MFTimerVtbl =
+{
+    timer_QueryInterface,
+    timer_AddRef,
+    timer_Release,
+    timer_SetTimer,
+    timer_CancelTimer,
+};
+
+static struct presentation_clock* impl_from_IMFPresentationClock(IMFPresentationClock *iface)
+{
+    return CONTAINING_RECORD(iface, struct presentation_clock, IMFPresentationClock_iface);
+}
+
+static WINAPI HRESULT presentation_clock_QueryInterface(IMFPresentationClock *iface, REFIID riid, void **obj)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+
+    if (IsEqualIID(riid, &IID_IMFPresentationClock) ||
+        IsEqualIID(riid, &IID_IMFClock) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFTimer))
+    {
+        *obj = &pc->IMFTimer_iface;
+    }
+    else
+    {
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IMFPresentationClock_AddRef(iface);
+    return S_OK;
+}
+
+static WINAPI ULONG presentation_clock_AddRef(IMFPresentationClock *iface)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+    return InterlockedIncrement(&pc->refcount);
+}
+
+static WINAPI ULONG presentation_clock_Release(IMFPresentationClock *iface)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+    ULONG refcount = InterlockedDecrement(&pc->refcount);
+
+    if (!pc->refcount)
+    {
+        if (pc->sample_grabber_clock_state_sink)
+            IMFClockStateSink_Release(pc->sample_grabber_clock_state_sink);
+        if (pc->callback_result)
+            IMFAsyncResult_Release(pc->callback_result);
+        free(pc);
+    }
+
+    return refcount;
+}
+
+static WINAPI HRESULT presentation_clock_GetClockCharacteristics(IMFPresentationClock *iface, DWORD *flags)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_GetCorrelatedTime(IMFPresentationClock *iface, DWORD reserved,
+        LONGLONG *clock_time, MFTIME *system_time)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_GetContinuityKey(IMFPresentationClock *iface, DWORD *key)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_GetState(IMFPresentationClock *iface, DWORD reserved, MFCLOCK_STATE *state)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_GetProperties(IMFPresentationClock *iface, MFCLOCK_PROPERTIES *props)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_SetTimeSource(IMFPresentationClock *iface,
+        IMFPresentationTimeSource *time_source)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_GetTimeSource(IMFPresentationClock *iface,
+        IMFPresentationTimeSource **time_source)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_GetTime(IMFPresentationClock *iface, MFTIME *time)
+{
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT presentation_clock_AddClockStateSink(IMFPresentationClock *iface, IMFClockStateSink *state_sink)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+
+    if (pc->sample_grabber_clock_state_sink)
+        IMFClockStateSink_Release(pc->sample_grabber_clock_state_sink);
+
+    IMFClockStateSink_AddRef(pc->sample_grabber_clock_state_sink = state_sink);
+
+    return S_OK;
+}
+
+static WINAPI HRESULT presentation_clock_RemoveClockStateSink(IMFPresentationClock *iface,
+        IMFClockStateSink *state_sink)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+
+    if (pc->sample_grabber_clock_state_sink == state_sink)
+    {
+        IMFClockStateSink_Release(state_sink);
+        pc->sample_grabber_clock_state_sink = NULL;
+    }
+
+    return S_OK;
+}
+
+static WINAPI HRESULT presentation_clock_Start(IMFPresentationClock *iface, LONGLONG start_offset)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+    HRESULT hr;
+
+    if (start_offset == PRESENTATION_CURRENT_POSITION)
+        hr = IMFClockStateSink_OnClockRestart(pc->sample_grabber_clock_state_sink, 0);
+    else
+        hr = IMFClockStateSink_OnClockStart(pc->sample_grabber_clock_state_sink, 0, start_offset);
+    return hr;
+}
+
+static WINAPI HRESULT presentation_clock_Stop(IMFPresentationClock *iface)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+
+    return IMFClockStateSink_OnClockStop(pc->sample_grabber_clock_state_sink, 0);
+}
+
+static WINAPI HRESULT presentation_clock_Pause(IMFPresentationClock *iface)
+{
+    struct presentation_clock *pc = impl_from_IMFPresentationClock(iface);
+
+    return IMFClockStateSink_OnClockPause(pc->sample_grabber_clock_state_sink, 0);
+}
+
+static IMFPresentationClockVtbl MFPresentationClockVtbl =
+{
+    presentation_clock_QueryInterface,
+    presentation_clock_AddRef,
+    presentation_clock_Release,
+    presentation_clock_GetClockCharacteristics,
+    presentation_clock_GetCorrelatedTime,
+    presentation_clock_GetContinuityKey,
+    presentation_clock_GetState,
+    presentation_clock_GetProperties,
+    presentation_clock_SetTimeSource,
+    presentation_clock_GetTimeSource,
+    presentation_clock_GetTime,
+    presentation_clock_AddClockStateSink,
+    presentation_clock_RemoveClockStateSink,
+    presentation_clock_Start,
+    presentation_clock_Stop,
+    presentation_clock_Pause,
+};
+
+static struct presentation_clock* create_presentation_clock(void)
+{
+    struct presentation_clock* pc = calloc(1, sizeof(*pc));
+
+    pc->IMFPresentationClock_iface.lpVtbl = &MFPresentationClockVtbl;
+    pc->IMFTimer_iface.lpVtbl = &MFTimerVtbl;
+    pc->refcount = 1;
+
+    return pc;
+}
+
+static MFTIME sample_pts = 0;
+
 static void supply_samples(IMFStreamSink *stream, int num_samples)
 {
+
     IMFMediaBuffer *buffer;
     IMFSample *sample;
     HRESULT hr;
@@ -4207,8 +4535,10 @@ static void supply_samples(IMFStreamSink *stream, int num_samples)
         hr = IMFSample_AddBuffer(sample, buffer);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-        hr = IMFSample_SetSampleTime(sample, 0);
+        hr = IMFSample_SetSampleTime(sample, sample_pts);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        sample_pts += 41667;
 
         hr = IMFSample_SetSampleDuration(sample, 41667);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -4247,7 +4577,7 @@ static int count_samples_requested(IMFStreamSink *stream)
 static void test_sample_grabber_seek(void)
 {
     IMFSampleGrabberSinkCallback *grabber_callback = create_test_grabber_callback();
-    IMFPresentationTimeSource *time_source;
+    struct presentation_clock *mock_clock;
     IMFPresentationClock *clock;
     IMFMediaType *media_type;
     IMFStreamSink *stream;
@@ -4256,7 +4586,6 @@ static void test_sample_grabber_seek(void)
     IMFMediaSink *sink;
     HRESULT hr;
     ULONG ref;
-
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -4285,19 +4614,12 @@ static void test_sample_grabber_seek(void)
 
 
     /* Set clock. */
-    hr = MFCreatePresentationClock(&clock);
-    ok(hr == S_OK, "Failed to create clock object, hr %#lx.\n", hr);
+    mock_clock = create_presentation_clock();
+    clock = &mock_clock->IMFPresentationClock_iface;
 
     hr = IMFMediaSink_SetPresentationClock(sink, clock);
     ok(hr == S_OK, "Failed to set presentation clock, hr %#lx.\n", hr);
-
-    hr = MFCreateSystemTimeSource(&time_source);
-    ok(hr == S_OK, "Failed to create time source, hr %#lx.\n", hr);
-
-    hr = IMFPresentationClock_SetTimeSource(clock, time_source);
-    ok(hr == S_OK, "Failed to set time source, hr %#lx.\n", hr);
-    IMFPresentationTimeSource_Release(time_source);
-
+    ok(!!mock_clock->sample_grabber_clock_state_sink, "AddClockStateSink not called\n");
 
     /* test number of new sample requests on clock start */
     hr = IMFPresentationClock_Start(clock, 0);
@@ -4307,18 +4629,33 @@ static void test_sample_grabber_seek(void)
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
     /* test number of new sample requests on seek when in running state and 4 samples have been provided */
+    sample_pts = 0;
+    SET_EXPECT(timer_SetTimer);
     supply_samples(stream, 4);
+    CHECK_CALLED(timer_SetTimer);
+
+    SET_EXPECT(timer_CancelTimer);
     hr = IMFPresentationClock_Start(clock, 1234);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    CHECK_CALLED(timer_CancelTimer);
 
     samples_requested = count_samples_requested(stream);
     todo_wine
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
     /* test number of new sample requests on seek when in running state and 3 samples have been provided */
+    sample_pts = 0;
+    SET_EXPECT(timer_SetTimer);
     supply_samples(stream, 3);
+    todo_wine
+    CHECK_CALLED(timer_SetTimer);
+
+    SET_EXPECT(timer_CancelTimer);
     hr = IMFPresentationClock_Start(clock, 1234);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    CHECK_CALLED(timer_CancelTimer);
 
     samples_requested = count_samples_requested(stream);
     todo_wine
@@ -4332,21 +4669,43 @@ static void test_sample_grabber_seek(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     samples_requested = count_samples_requested(stream);
-    todo_wine
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
     /* test number of new sample requests on seek from paused state where 3 samples were previously provided */
+    sample_pts = 0;
+    SET_EXPECT(timer_SetTimer);
     supply_samples(stream, 3);
+    todo_wine
+    CHECK_CALLED(timer_SetTimer);
 
     hr = IMFPresentationClock_Pause(clock);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    SET_EXPECT(timer_CancelTimer);
     hr = IMFPresentationClock_Start(clock, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(timer_CancelTimer);
 
     samples_requested = count_samples_requested(stream);
     todo_wine
     ok(samples_requested == 3, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test over supply */
+    sample_pts = 0;
+    SET_EXPECT(timer_SetTimer);
+    supply_samples(stream, 6);
+    todo_wine
+    CHECK_CALLED(timer_SetTimer);
+
+    SET_EXPECT(timer_CancelTimer);
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    CHECK_CALLED(timer_CancelTimer);
+
+    samples_requested = count_samples_requested(stream);
+    todo_wine
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
     /* test number of new sample requests on seek from paused state where no samples were previously provided */
     hr = IMFPresentationClock_Pause(clock);
@@ -4356,13 +4715,44 @@ static void test_sample_grabber_seek(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     samples_requested = count_samples_requested(stream);
-    todo_wine
     ok(samples_requested == 0, "Unexpected number of samples requested %d\n", samples_requested);
 
+    /* test sample received in the paused state with no samples queued */
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    sample_pts = 0;
+    SET_EXPECT(timer_SetTimer);
+    supply_samples(stream, 4);
+    todo_wine
+    CHECK_CALLED(timer_SetTimer);
+
+    hr = IMFPresentationClock_Start(clock, PRESENTATION_CURRENT_POSITION);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    todo_wine
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test sample received in the stopped state */
+    SET_EXPECT(timer_CancelTimer);
+    hr = IMFPresentationClock_Stop(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    CHECK_CALLED(timer_CancelTimer);
+
+    supply_samples(stream, 4);
+
+    hr = IMFPresentationClock_Start(clock, PRESENTATION_CURRENT_POSITION);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* required for the sink to be fully released */
     ref = IMFPresentationClock_Release(clock);
     ok(ref == 2, "Release returned %ld\n", ref);
 
-    /* required for the sink to be fully released */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
