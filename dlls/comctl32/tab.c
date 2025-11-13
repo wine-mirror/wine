@@ -1947,6 +1947,52 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
   DeleteObject( htextPen );
 }
 
+static void TAB_DrawItemThemeBackground(const TAB_INFO *infoPtr, HDC hdc, INT iItem,
+                                        const RECT *selectedRect, RECT *contentRect)
+{
+    static const int partIds[8] =
+    {
+        /* Normal item */
+        TABP_TABITEM,
+        TABP_TABITEMLEFTEDGE,
+        TABP_TABITEMRIGHTEDGE,
+        TABP_TABITEMBOTHEDGE,
+        /* Selected tab */
+        TABP_TOPTABITEM,
+        TABP_TOPTABITEMLEFTEDGE,
+        TABP_TOPTABITEMRIGHTEDGE,
+        TABP_TOPTABITEMBOTHEDGE,
+    };
+    HTHEME theme = GetWindowTheme(infoPtr->hwnd);
+    int partIndex = 0, stateId = TIS_NORMAL;
+    RECT rect;
+
+    /* selected and unselected tabs have different parts */
+    if (iItem == infoPtr->iSelected)
+        partIndex += 4;
+    /* The part also differs on the position of a tab on a line.
+     * "Visually" determining the position works well enough. */
+    GetClientRect(infoPtr->hwnd, &rect);
+    if (selectedRect->left == 0)
+        partIndex += 1;
+    if (selectedRect->right == rect.right)
+        partIndex += 2;
+
+    if (iItem == infoPtr->iSelected)
+        stateId = TIS_SELECTED;
+    else if (iItem == infoPtr->iHotTracked)
+        stateId = TIS_HOT;
+    else if (iItem == infoPtr->uFocus)
+        stateId = TIS_FOCUSED;
+
+    /* Adjust rectangle for bottommost row */
+    if (TAB_GetItem(infoPtr, iItem)->rect.top == infoPtr->uNumRows - 1)
+        contentRect->bottom += 3;
+
+    DrawThemeBackground(theme, hdc, partIds[partIndex], stateId, contentRect, NULL);
+    GetThemeBackgroundContentRect(theme, hdc, partIds[partIndex], stateId, contentRect, contentRect);
+}
+
 /******************************************************************************
  * TAB_DrawItem
  *
@@ -2050,45 +2096,7 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
       if ((theme = GetWindowTheme (infoPtr->hwnd)) 
           && ((infoPtr->dwStyle & (TCS_VERTICAL | TCS_BOTTOM)) == 0))
       {
-          static const int partIds[8] = {
-              /* Normal item */
-              TABP_TABITEM,
-              TABP_TABITEMLEFTEDGE,
-              TABP_TABITEMRIGHTEDGE,
-              TABP_TABITEMBOTHEDGE,
-              /* Selected tab */
-              TABP_TOPTABITEM,
-              TABP_TOPTABITEMLEFTEDGE,
-              TABP_TOPTABITEMRIGHTEDGE,
-              TABP_TOPTABITEMBOTHEDGE,
-          };
-          int partIndex = 0;
-          int stateId = TIS_NORMAL;
-
-          /* selected and unselected tabs have different parts */
-          if (iItem == infoPtr->iSelected)
-              partIndex += 4;
-          /* The part also differs on the position of a tab on a line.
-           * "Visually" determining the position works well enough. */
-          GetClientRect(infoPtr->hwnd, &r1);
-          if(selectedRect.left == 0)
-              partIndex += 1;
-          if(selectedRect.right == r1.right)
-              partIndex += 2;
-
-          if (iItem == infoPtr->iSelected)
-              stateId = TIS_SELECTED;
-          else if (iItem == infoPtr->iHotTracked)
-              stateId = TIS_HOT;
-          else if (iItem == infoPtr->uFocus)
-              stateId = TIS_FOCUSED;
-
-          /* Adjust rectangle for bottommost row */
-          if (TAB_GetItem(infoPtr, iItem)->rect.top == infoPtr->uNumRows-1)
-            r.bottom += 3;
-
-          DrawThemeBackground (theme, hdc, partIds[partIndex], stateId, &r, NULL);
-          GetThemeBackgroundContentRect (theme, hdc, partIds[partIndex], stateId, &r, &r);
+          TAB_DrawItemThemeBackground(infoPtr, hdc, iItem, &selectedRect, &r);
       }
       else if(infoPtr->dwStyle & TCS_VERTICAL)
       {
