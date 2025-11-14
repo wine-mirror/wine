@@ -1070,6 +1070,7 @@ static struct dce *get_window_dce( HWND hwnd )
  */
 void free_dce( struct dce *dce, HWND hwnd )
 {
+    struct opengl_drawable *drawable = NULL;
     struct dce *dce_to_free = NULL;
 
     user_lock();
@@ -1102,7 +1103,7 @@ void free_dce( struct dce *dce, HWND hwnd )
             {
                 WARN( "GetDC() without ReleaseDC() for window %p\n", hwnd );
                 dce->count = 0;
-                set_dc_pixel_format_internal( dce->hdc, 0 );
+                set_dc_pixel_format_internal( dce->hdc, 0, &drawable );
                 set_dce_flags( dce->hdc, DCHF_DISABLEDC );
             }
         }
@@ -1116,6 +1117,8 @@ void free_dce( struct dce *dce, HWND hwnd )
         NtGdiDeleteObjectApp( dce_to_free->hdc );
         free( dce_to_free );
     }
+
+    if (drawable) opengl_drawable_release( drawable );
 }
 
 BOOL is_cache_dc( HDC hdc )
@@ -1223,6 +1226,7 @@ void invalidate_dce( WND *win, const RECT *old_rect )
  */
 static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
 {
+    struct opengl_drawable *drawable = NULL;
     struct dce *dce;
     BOOL ret = FALSE;
 
@@ -1237,12 +1241,14 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
         if (dce->flags & DCX_CACHE)
         {
             dce->count = 0;
-            set_dc_pixel_format_internal( hdc, 0 );
+            set_dc_pixel_format_internal( hdc, 0, &drawable );
             set_dce_flags( dce->hdc, DCHF_DISABLEDC );
         }
         ret = TRUE;
     }
     user_unlock();
+
+    if (drawable) opengl_drawable_release( drawable );
     return ret;
 }
 

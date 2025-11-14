@@ -1473,7 +1473,7 @@ static BOOL flush_memory_dc( struct wgl_context *context, HDC hdc, BOOL write, v
     return ret;
 }
 
-static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
+static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMATDESCRIPTOR *pfd )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     UINT total, onscreen;
@@ -1493,9 +1493,9 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
             return FALSE;
         }
 
-        TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
+        TRACE( "%p/%p format %d\n", hdc, hwnd, new_format );
 
-        if ((old_format = get_window_pixel_format( hwnd, FALSE )) && !internal) return old_format == new_format;
+        if ((old_format = get_window_pixel_format( hwnd, FALSE ))) return old_format == new_format;
 
         if ((drawable = get_window_unused_drawable( hwnd, new_format )))
         {
@@ -1504,24 +1504,21 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
             opengl_drawable_release( drawable );
         }
 
-        return set_window_pixel_format( hwnd, new_format, internal );
+        return set_window_pixel_format( hwnd, new_format, FALSE );
     }
 
-    TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
+    TRACE( "%p/%p format %d\n", hdc, hwnd, new_format );
     return NtGdiSetPixelFormat( hdc, new_format );
 }
 
-static BOOL win32u_wglSetPixelFormat( HDC hdc, int format, const PIXELFORMATDESCRIPTOR *pfd )
-{
-    return set_dc_pixel_format( hdc, format, FALSE );
-}
-
-BOOL set_dc_pixel_format_internal( HDC hdc, int format )
+BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct opengl_drawable **drawable )
 {
     DC *dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
     dc->pixel_format = format;
+    *drawable = dc->opengl_drawable;
+    dc->opengl_drawable = NULL;
     release_dc_ptr( dc );
 
     return TRUE;
@@ -1529,13 +1526,35 @@ BOOL set_dc_pixel_format_internal( HDC hdc, int format )
 
 static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
 {
+    const struct opengl_funcs *funcs = &display_funcs;
+    struct opengl_drawable *drawable;
+    UINT total, onscreen;
     HWND hwnd;
 
     if (!(hwnd = NtUserWindowFromDC( hdc )) || !is_cache_dc( hdc )) return FALSE;
     if (format && get_window_pixel_format( hwnd, FALSE ) == format) return TRUE;
 
-    if (!set_dc_pixel_format( hdc, format, TRUE )) return FALSE;
-    return set_dc_pixel_format_internal( hdc, format );
+    TRACE( "%p/%p format %d\n", hdc, hwnd, format );
+
+    funcs->p_get_pixel_formats( NULL, 0, &total, &onscreen );
+    if (format < 0 || format > total) return FALSE;
+    if (format > onscreen) return FALSE;
+
+    if (!set_dc_pixel_format_internal( hdc, format, &drawable )) return FALSE;
+
+    if (drawable && drawable->format != format)
+    {
+        opengl_drawable_release( drawable );
+        drawable = NULL;
+    }
+    if (format && (drawable || (drawable = get_window_unused_drawable( hwnd, format ))))
+    {
+        set_window_opengl_drawable( hwnd, drawable, TRUE );
+        set_dc_opengl_drawable( hdc, drawable );
+        opengl_drawable_release( drawable );
+    }
+
+    return TRUE;
 }
 
 static PROC win32u_wglGetProcAddress( const char *name )
@@ -1604,6 +1623,10 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     struct opengl_drawable *new_draw, *new_read, *old_draw = NULL, *old_read = NULL;
     struct wgl_context *previous = NtCurrentTeb()->glContext;
     BOOL ret = FALSE;
+
+    /* retrieve the D3D internal drawables from the DCs if they have any */
+    if (draw_hdc && !context->draw) context->draw = get_dc_opengl_drawable( draw_hdc );
+    if (read_hdc && !context->read) context->read = get_dc_opengl_drawable( read_hdc );
 
     new_draw = get_updated_drawable( draw_hdc, context->format, context->draw );
     if (!draw_hdc && context->draw == context->read) opengl_drawable_add_ref( (new_read = new_draw) );

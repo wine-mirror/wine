@@ -220,7 +220,7 @@ extern void check_for_events( UINT flags );
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
 /* opengl.c */
-extern BOOL set_dc_pixel_format_internal( HDC hdc, int format );
+extern BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct opengl_drawable **drawable );
 
 /* vulkan.c */
 extern struct vulkan_instance *vulkan_instance_create( const struct vulkan_instance_extensions *extensions );
