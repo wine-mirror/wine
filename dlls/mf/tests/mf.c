@@ -4300,12 +4300,16 @@ static HRESULT WINAPI timer_SetTimer(IMFTimer *iface, DWORD flags, LONGLONG time
     struct timer_cancel *tc;
     HRESULT hr;
 
+    todo_wine_if(time == 83334)
     CHECK_EXPECT(timer_SetTimer);
     SetEvent(pc->set_timer_event);
 
     ok(flags == 0, "Unexpected flags value %#lx\n", flags);
+    todo_wine_if(time == 83334)
     ok(time == expected_pts, "Unexpected time value %I64d\n", time);
+    todo_wine_if(time == 83334)
     ok(pc->callback_result == NULL, "Unexpected callback result value %p\n", pc->callback_result);
+    todo_wine_if(time == 83334)
     ok(pc->cancel_key == NULL, "Unexpected cancel key %p\n", pc->cancel_key);
 
     hr = MFCreateAsyncResult(NULL, callback, state, &pc->callback_result);
@@ -4577,6 +4581,7 @@ static int count_samples_requested(IMFStreamSink *stream)
             break;
         else if (met == MEStreamSinkMarker)
         {
+            todo_wine
             CHECK_EXPECT(MEStreamSinkMarker);
             break;
         }
@@ -4728,6 +4733,30 @@ static void test_sample_grabber_seek(void)
     todo_wine
     ok(samples_requested == 2, "Unexpected number of samples requested %d\n", samples_requested);
 
+    /* test number of new sample requests after a flush then seek */
+    sample_pts = expected_pts = 0;
+    SET_EXPECT(timer_SetTimer);
+    supply_samples(stream, 2);
+    todo_wine
+    CHECK_CALLED(timer_SetTimer);
+
+    /* there is no cancel timer, or sample requests during a flush */
+    hr = IMFStreamSink_Flush(stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    supply_samples(stream, 1);
+
+    /* only on seek */
+    SET_EXPECT(timer_CancelTimer);
+    hr = IMFPresentationClock_Start(clock, 1234);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    CHECK_CALLED(timer_CancelTimer);
+
+    samples_requested = count_samples_requested(stream);
+    todo_wine
+    ok(samples_requested == 3, "Unexpected number of samples requested %d\n", samples_requested);
+
     /* test number of new sample requests on seek whilst stopped */
     hr = IMFPresentationClock_Stop(clock);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -4736,13 +4765,13 @@ static void test_sample_grabber_seek(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     samples_requested = count_samples_requested(stream);
+    todo_wine
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
     /* queue three samples with a marker between the first and second ... */
     sample_pts = expected_pts = 0;
     SET_EXPECT(timer_SetTimer);
     supply_samples(stream, 1);
-    todo_wine
     CHECK_CALLED(timer_SetTimer);
     hr = IMFStreamSink_PlaceMarker(stream, MFSTREAMSINK_MARKER_DEFAULT, NULL, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -4848,6 +4877,7 @@ static void test_sample_grabber_seek(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     samples_requested = count_samples_requested(stream);
+    todo_wine
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
     /* required for the sink to be fully released */
