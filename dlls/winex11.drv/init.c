@@ -195,6 +195,13 @@ static HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
     return dev->funcs->pSelectFont( dev, hfont, aa_flags );
 }
 
+static BOOL get_surface_rect( HWND hwnd, RECT *rect, UINT dpi )
+{
+    if (!NtUserGetPresentRect( hwnd, rect, dpi ) && !NtUserGetClientRect( hwnd, rect, dpi )) return FALSE;
+    OffsetRect( rect, -rect->left, -rect->top );
+    return TRUE;
+}
+
 static BOOL needs_client_window_clipping( HWND hwnd )
 {
     RECT rect, client;
@@ -202,6 +209,7 @@ static BOOL needs_client_window_clipping( HWND hwnd )
     HRGN region;
     HDC hdc;
 
+    if (NtUserGetPresentRect( hwnd, &client, 0 )) return FALSE;
     if (!NtUserGetClientRect( hwnd, &client, NtUserGetDpiForWindow( hwnd ) )) return FALSE;
     OffsetRect( &client, -client.left, -client.top );
 
@@ -306,14 +314,15 @@ static void x11drv_client_surface_detach( struct client_surface *client )
 
 static void client_surface_update_geometry( HWND hwnd, struct x11drv_client_surface *surface )
 {
-    HWND toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
+    HWND origin = hwnd, toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
     XWindowChanges changes = surface->changes;
     struct x11drv_win_data *data;
     int mask = 0;
     RECT rect;
 
-    if (!NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) )) return;
-    NtUserMapWindowPoints( hwnd, toplevel, (POINT *)&rect, 2, NtUserGetDpiForWindow( hwnd ) );
+    if (NtUserGetPresentRect( toplevel, &rect, -1 /* raw dpi */ )) origin = hwnd;
+    else if (!NtUserGetClientRect( hwnd, &rect, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) )) return;
+    NtUserMapWindowPoints( origin, toplevel, (POINT *)&rect, 2, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
     if ((data = get_win_data( toplevel )))
     {
         OffsetRect( &rect, data->rects.client.left - data->rects.visible.left,
@@ -420,10 +429,19 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
 
     if (!hdc) return;
     window = X11DRV_get_whole_window( toplevel );
-    region = get_dc_monitor_region( hwnd, hdc );
 
-    if (!NtUserGetClientRect( hwnd, &rect_dst, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) )) goto done;
-    NtUserMapWindowPoints( hwnd, toplevel, (POINT *)&rect_dst, 2, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
+    if (NtUserGetPresentRect( toplevel, &rect_dst, -1 /* raw dpi */ ))
+    {
+        region = 0; /* window is exclusive fullscreen, ignore everything else */
+        if (toplevel != hwnd) return; /* toplevel is exclusive fullscreen, don't present */
+        NtUserMapWindowPoints( 0, toplevel, (POINT *)&rect_dst, 2, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
+    }
+    else
+    {
+        region = get_dc_monitor_region( hwnd, hdc ); /* otherwise use the window region for clipping rules */
+        if (!NtUserGetClientRect( hwnd, &rect_dst, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) )) goto done;
+        NtUserMapWindowPoints( hwnd, toplevel, (POINT *)&rect_dst, 2, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
+    }
 
     if ((data = get_win_data( toplevel )))
     {
@@ -472,7 +490,7 @@ Window x11drv_client_surface_create( HWND hwnd, int format, struct client_surfac
     if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd ))) goto failed;
     surface->colormap = colormap;
 
-    if (!NtUserGetClientRect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) )) goto failed;
+    if (!get_surface_rect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) )) goto failed;
     if (!(surface->window = create_client_window( hwnd, surface->rect, &visual, colormap ))) goto failed;
 
     TRACE( "Created %s for client window %lx\n", debugstr_client_surface( &surface->client ), surface->window );
