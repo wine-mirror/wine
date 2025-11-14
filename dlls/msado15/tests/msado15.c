@@ -82,6 +82,7 @@ DEFINE_EXPECT(rowset_AddRefRows);
 DEFINE_EXPECT(rowset_ReleaseRows);
 DEFINE_EXPECT(rowset_GetRowsAt);
 DEFINE_EXPECT(rowset_GetExactPosition);
+DEFINE_EXPECT(rowset_GetData);
 DEFINE_EXPECT(rowset_change_InsertRow);
 DEFINE_EXPECT(accessor_AddRefAccessor);
 DEFINE_EXPECT(accessor_CreateAccessor);
@@ -524,6 +525,12 @@ struct test_rowset
     BOOL exact_scroll;
 };
 
+struct haccessor
+{
+    LONG ref;
+    DBBINDING binding;
+};
+
 static inline struct test_rowset *impl_from_IRowsetExactScroll( IRowsetExactScroll *iface )
 {
     return CONTAINING_RECORD( iface, struct test_rowset, IRowsetExactScroll_iface );
@@ -764,7 +771,7 @@ static HRESULT WINAPI column_info_GetColumnInfo(IColumnsInfo *This, DBORDINAL *c
     dbcolumn = CoTaskMemAlloc(sizeof(*dbcolumn) * 2);
     memset(dbcolumn, 0, sizeof(*dbcolumn) * 2);
 
-    dbcolumn[0].dwFlags = 0;
+    dbcolumn[0].dwFlags = DBCOLUMNFLAGS_ISBOOKMARK | DBCOLUMNFLAGS_ISFIXEDLENGTH;
     dbcolumn[0].ulColumnSize = sizeof(unsigned int);
     dbcolumn[0].wType = DBTYPE_UI4;
     dbcolumn[0].columnid.eKind = DBKIND_GUID_PROPID;
@@ -889,14 +896,25 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
         DBCOUNTITEM cBindings, const DBBINDING rgBindings[], DBLENGTH cbRowSize,
         HACCESSOR *phAccessor, DBBINDSTATUS rgStatus[])
 {
+    struct haccessor *haccessor;
+
     CHECK_EXPECT(accessor_CreateAccessor);
     ok(dwAccessorFlags == DBACCESSOR_ROWDATA, "dwAccessorFlags = %lx\n", dwAccessorFlags);
-    ok(cBindings == 0, "cBindings = %Iu\n", cBindings);
+    ok(!cBindings || cBindings == 1, "cBindings = %Iu\n", cBindings);
     ok(cbRowSize == 0, "cbRowSize = %Iu\n", cbRowSize);
     ok(phAccessor != NULL, "pHAccessor = NULL\n");
     ok(!rgStatus, "rgStatus != NULL\n");
 
-    *phAccessor = 1;
+    if (!cBindings)
+    {
+        *phAccessor = 1;
+        return S_OK;
+    }
+
+    haccessor = malloc(sizeof(*haccessor));
+    haccessor->ref = 1;
+    haccessor->binding = rgBindings[0];
+    *phAccessor = (HACCESSOR)haccessor;
     return S_OK;
 }
 
@@ -910,10 +928,19 @@ static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hAccessor
 static HRESULT WINAPI accessor_ReleaseAccessor(IAccessor *iface,
         HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
 {
-    CHECK_EXPECT2(accessor_ReleaseAccessor);
-    ok(hAccessor == 1, "hAccessor = %Id\n", hAccessor);
+    struct haccessor *haccessor = (struct haccessor *)hAccessor;
 
-    if (pcRefCount) *pcRefCount = 1;
+    CHECK_EXPECT2(accessor_ReleaseAccessor);
+
+    if (hAccessor == 1)
+    {
+        if (pcRefCount) *pcRefCount = 1;
+        return S_OK;
+    }
+
+    haccessor->ref--;
+    if (pcRefCount) *pcRefCount = haccessor->ref;
+    if (!haccessor->ref) free(haccessor);
     return S_OK;
 }
 
@@ -1020,8 +1047,27 @@ static HRESULT WINAPI rowset_AddRefRows(IRowsetExactScroll *iface, DBCOUNTITEM c
 
 static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
 {
-    ok(0, "Unexpected call\n");
-    return E_NOTIMPL;
+    struct haccessor *haccessor = (struct haccessor *)hAccessor;
+    DBSTATUS status;
+    DBLENGTH len;
+    int val;
+
+    CHECK_EXPECT2(rowset_GetData);
+
+    ok(!haccessor->binding.iOrdinal, "iOrdinal = %Id\n", haccessor->binding.iOrdinal);
+    ok(haccessor->binding.dwPart == (DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS),
+            "dwPart = %ld\n", haccessor->binding.dwPart);
+    ok(haccessor->binding.cbMaxLen == sizeof(int), "cbMaxLen = %Id\n", haccessor->binding.cbMaxLen);
+    ok(haccessor->binding.wType == DBTYPE_I4, "wType = %d\n", haccessor->binding.wType);
+
+    val = hRow;
+    len = sizeof(int);
+    status = DBSTATUS_S_OK;
+
+    memcpy((BYTE *)pData + haccessor->binding.obValue, &val, sizeof(val));
+    memcpy((BYTE *)pData + haccessor->binding.obLength, &len, sizeof(len));
+    memcpy((BYTE *)pData + haccessor->binding.obStatus, &status, sizeof(status));
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
@@ -1071,28 +1117,46 @@ static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION h
         HCHAPTER hReserved2, DBBKMARK cbBookmark, const BYTE *pBookmark, DBROWOFFSET lRowsOffset,
         DBROWCOUNT cRows, DBCOUNTITEM *pcRowsObtained, HROW **prghRows)
 {
-    static int idx;
+    int row;
 
     CHECK_EXPECT2(rowset_GetRowsAt);
     ok(!hReserved1, "hReserved1 = %Ix\n", hReserved1);
     ok(!hReserved2, "hReserved2 = %Ix\n", hReserved2);
-    ok(cbBookmark == 1, "cbBookmark = %Id\n", cbBookmark);
-    ok(lRowsOffset >= 0 && lRowsOffset <= 2, "lRowsOffset = %Id\n", lRowsOffset);
     ok(cRows == 1, "cRows = %Id\n", cRows);
     ok(pcRowsObtained != NULL, "pcRowsObtained == NULL\n");
     ok(prghRows != NULL, "prghRows == NULL\n");
     ok(*prghRows != NULL, "*prghRows == NULL\n");
 
-    if (pBookmark[0] == DBBMK_LAST && idx == 2)
+    if (cbBookmark == 1 && pBookmark[0] == DBBMK_FIRST)
+    {
+        ok(!lRowsOffset, "lRowsOffset = %Id\n", lRowsOffset);
+
+        *pcRowsObtained = 1;
+        (*prghRows)[0] = 1;
+        return S_OK;
+    }
+    if (cbBookmark == 1)
+    {
+        ok(pBookmark[0] == DBBMK_LAST, "pBookmark[0] = %x\n", pBookmark[0]);
+        ok(lRowsOffset == 2, "lRowsOffset = %Id\n", lRowsOffset);
+
+        *pcRowsObtained = 0;
+        return DB_E_BADSTARTPOSITION;
+    }
+
+    ok(cbBookmark == sizeof(int), "cbBookmark = %Id\n", cbBookmark);
+    ok(lRowsOffset == 1, "lRowsOffset = %Id\n", lRowsOffset);
+
+    row = *(int *)pBookmark + lRowsOffset;
+    ok(row > 1 && row <= 3, "row = %d\n", row);
+    if (row == 3)
     {
         *pcRowsObtained = 0;
         return DB_S_ENDOFROWSET;
     }
-    if (pBookmark[0] == DBBMK_FIRST) ok(!idx, "idx = %d\n", idx);
 
     *pcRowsObtained = 1;
-    (*prghRows)[0] = idx + lRowsOffset;
-    idx += cRows;
+    (*prghRows)[0] = row;
     return S_OK;
 }
 
@@ -1209,6 +1273,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     {
         SET_EXPECT( rowset_QI_IColumnsInfo );
         SET_EXPECT( column_info_GetColumnInfo );
+        SET_EXPECT( rowset_QI_IAccessor );
+        SET_EXPECT( accessor_CreateAccessor );
     }
     SET_EXPECT( rowset_QI_IDBAsynchStatus );
     hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
@@ -1223,6 +1289,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     {
         todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
         todo_wine CHECK_CALLED( column_info_GetColumnInfo );
+        todo_wine CHECK_CALLED( rowset_QI_IAccessor );
+        todo_wine CHECK_CALLED( accessor_CreateAccessor );
     }
     todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -1275,11 +1343,21 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     ok( size == (exact_scroll ? 3 : -1), "size = %Id\n", size );
 
     if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
-    else SET_EXPECT( rowset_GetRowsAt );
+    else
+    {
+        SET_EXPECT( rowset_GetRowsAt );
+        SET_EXPECT( rowset_GetData );
+        SET_EXPECT( rowset_AddRefRows );
+    }
     SET_EXPECT( rowset_ReleaseRows );
     hr = _Recordset_MoveNext( recordset );
     if (!exact_scroll) todo_wine CHECK_CALLED( rowset_GetNextRows );
-    else todo_wine CHECK_CALLED( rowset_GetRowsAt );
+    else
+    {
+        todo_wine CHECK_CALLED( rowset_GetRowsAt );
+        todo_wine CHECK_CALLED( rowset_GetData );
+        todo_wine CHECK_CALLED( rowset_AddRefRows );
+    }
     todo_wine CHECK_CALLED( rowset_ReleaseRows );
     ok( hr == S_OK, "got %08lx\n", hr );
     todo_wine ok( !is_eof( recordset ), "at eof\n" );
@@ -1310,13 +1388,16 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT(accessor_AddRefAccessor);
     SET_EXPECT(rowset_change_InsertRow);
     SET_EXPECT(accessor_ReleaseAccessor);
+    if (exact_scroll) SET_EXPECT(rowset_GetData);
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08lx\n", hr );
-    CHECK_CALLED(rowset_QI_IAccessor);
+    if (!exact_scroll) CHECK_CALLED(rowset_QI_IAccessor);
+    else todo_wine CHECK_NOT_CALLED(rowset_QI_IAccessor);
     CHECK_CALLED(accessor_CreateAccessor);
     CHECK_CALLED(accessor_AddRefAccessor);
     CHECK_CALLED(rowset_change_InsertRow);
     CHECK_CALLED(accessor_ReleaseAccessor);
+    if (exact_scroll) CHECK_EXPECT(rowset_GetData);
 
     Fields_Release(fields);
     ADORecordsetConstruction_Release(construct);
