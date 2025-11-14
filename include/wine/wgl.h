@@ -5178,6 +5178,9 @@ typedef unsigned int GLhandleARB;
 #define GL_VECTOR_EXT                                                 0x87BF
 #define GL_VENDOR                                                     0x1F00
 #define GL_VERSION                                                    0x1F02
+#define GL_VERSION_ES_CL_1_0                                          1
+#define GL_VERSION_ES_CL_1_1                                          1
+#define GL_VERSION_ES_CM_1_1                                          1
 #define GL_VERTEX23_BIT_PGI                                           0x00000004
 #define GL_VERTEX4_BIT_PGI                                            0x00000008
 #define GL_VERTEX_ARRAY                                               0x8074
@@ -6349,6 +6352,7 @@ typedef void       (GLAPIENTRY *PFN_glActiveVaryingNV)( GLuint program, const GL
 typedef void       (GLAPIENTRY *PFN_glAlphaFragmentOp1ATI)( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod );
 typedef void       (GLAPIENTRY *PFN_glAlphaFragmentOp2ATI)( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod );
 typedef void       (GLAPIENTRY *PFN_glAlphaFragmentOp3ATI)( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod );
+typedef void       (GLAPIENTRY *PFN_glAlphaFuncx)( GLenum func, GLfixed ref );
 typedef void       (GLAPIENTRY *PFN_glAlphaFuncxOES)( GLenum func, GLfixed ref );
 typedef void       (GLAPIENTRY *PFN_glAlphaToCoverageDitherControlNV)( GLenum mode );
 typedef void       (GLAPIENTRY *PFN_glApplyFramebufferAttachmentCMAAINTEL)(void);
@@ -6497,10 +6501,12 @@ typedef void       (GLAPIENTRY *PFN_glClearBufferiv)( GLenum buffer, GLint drawb
 typedef void       (GLAPIENTRY *PFN_glClearBufferuiv)( GLenum buffer, GLint drawbuffer, const GLuint *value );
 typedef void       (GLAPIENTRY *PFN_glClearColorIiEXT)( GLint red, GLint green, GLint blue, GLint alpha );
 typedef void       (GLAPIENTRY *PFN_glClearColorIuiEXT)( GLuint red, GLuint green, GLuint blue, GLuint alpha );
+typedef void       (GLAPIENTRY *PFN_glClearColorx)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glClearColorxOES)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glClearDepthdNV)( GLdouble depth );
 typedef void       (GLAPIENTRY *PFN_glClearDepthf)( GLfloat d );
 typedef void       (GLAPIENTRY *PFN_glClearDepthfOES)( GLclampf depth );
+typedef void       (GLAPIENTRY *PFN_glClearDepthx)( GLfixed depth );
 typedef void       (GLAPIENTRY *PFN_glClearDepthxOES)( GLfixed depth );
 typedef void       (GLAPIENTRY *PFN_glClearNamedBufferData)( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data );
 typedef void       (GLAPIENTRY *PFN_glClearNamedBufferDataEXT)( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data );
@@ -6519,7 +6525,9 @@ typedef void       (GLAPIENTRY *PFN_glClientAttribDefaultEXT)( GLbitfield mask )
 typedef void       (GLAPIENTRY *PFN_glClientWaitSemaphoreui64NVX)( GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray );
 typedef GLenum     (GLAPIENTRY *PFN_glClientWaitSync)( GLsync sync, GLbitfield flags, GLuint64 timeout );
 typedef void       (GLAPIENTRY *PFN_glClipControl)( GLenum origin, GLenum depth );
+typedef void       (GLAPIENTRY *PFN_glClipPlanef)( GLenum p, const GLfloat *eqn );
 typedef void       (GLAPIENTRY *PFN_glClipPlanefOES)( GLenum plane, const GLfloat *equation );
+typedef void       (GLAPIENTRY *PFN_glClipPlanex)( GLenum plane, const GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glClipPlanexOES)( GLenum plane, const GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glColor3fVertex3fSUN)( GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z );
 typedef void       (GLAPIENTRY *PFN_glColor3fVertex3fvSUN)( const GLfloat *c, const GLfloat *v );
@@ -6535,6 +6543,7 @@ typedef void       (GLAPIENTRY *PFN_glColor4ubVertex2fSUN)( GLubyte r, GLubyte g
 typedef void       (GLAPIENTRY *PFN_glColor4ubVertex2fvSUN)( const GLubyte *c, const GLfloat *v );
 typedef void       (GLAPIENTRY *PFN_glColor4ubVertex3fSUN)( GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z );
 typedef void       (GLAPIENTRY *PFN_glColor4ubVertex3fvSUN)( const GLubyte *c, const GLfloat *v );
+typedef void       (GLAPIENTRY *PFN_glColor4x)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glColor4xOES)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glColor4xvOES)( const GLfixed *components );
 typedef void       (GLAPIENTRY *PFN_glColorFormatNV)( GLint size, GLenum type, GLsizei stride );
@@ -6737,6 +6746,7 @@ typedef void       (GLAPIENTRY *PFN_glDepthRangeIndexeddNV)( GLuint index, GLdou
 typedef void       (GLAPIENTRY *PFN_glDepthRangedNV)( GLdouble zNear, GLdouble zFar );
 typedef void       (GLAPIENTRY *PFN_glDepthRangef)( GLfloat n, GLfloat f );
 typedef void       (GLAPIENTRY *PFN_glDepthRangefOES)( GLclampf n, GLclampf f );
+typedef void       (GLAPIENTRY *PFN_glDepthRangex)( GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glDepthRangexOES)( GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glDetachObjectARB)( GLhandleARB containerObj, GLhandleARB attachedObj );
 typedef void       (GLAPIENTRY *PFN_glDetachShader)( GLuint program, GLuint shader );
@@ -6869,7 +6879,9 @@ typedef void       (GLAPIENTRY *PFN_glFogCoordfvEXT)( const GLfloat *coord );
 typedef void       (GLAPIENTRY *PFN_glFogCoordhNV)( GLhalfNV fog );
 typedef void       (GLAPIENTRY *PFN_glFogCoordhvNV)( const GLhalfNV *fog );
 typedef void       (GLAPIENTRY *PFN_glFogFuncSGIS)( GLsizei n, const GLfloat *points );
+typedef void       (GLAPIENTRY *PFN_glFogx)( GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glFogxOES)( GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glFogxv)( GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glFogxvOES)( GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glFragmentColorMaterialSGIX)( GLenum face, GLenum mode );
 typedef void       (GLAPIENTRY *PFN_glFragmentCoverageColorNV)( GLuint color );
@@ -6914,7 +6926,9 @@ typedef void       (GLAPIENTRY *PFN_glFramebufferTextureLayerARB)( GLenum target
 typedef void       (GLAPIENTRY *PFN_glFramebufferTextureLayerEXT)( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer );
 typedef void       (GLAPIENTRY *PFN_glFramebufferTextureMultiviewOVR)( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews );
 typedef void       (GLAPIENTRY *PFN_glFreeObjectBufferATI)( GLuint buffer );
+typedef void       (GLAPIENTRY *PFN_glFrustumf)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
 typedef void       (GLAPIENTRY *PFN_glFrustumfOES)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
+typedef void       (GLAPIENTRY *PFN_glFrustumx)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glFrustumxOES)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef GLuint     (GLAPIENTRY *PFN_glGenAsyncMarkersSGIX)( GLsizei range );
 typedef void       (GLAPIENTRY *PFN_glGenBuffers)( GLsizei n, GLuint *buffers );
@@ -6979,7 +6993,9 @@ typedef void       (GLAPIENTRY *PFN_glGetBufferPointerv)( GLenum target, GLenum 
 typedef void       (GLAPIENTRY *PFN_glGetBufferPointervARB)( GLenum target, GLenum pname, void **params );
 typedef void       (GLAPIENTRY *PFN_glGetBufferSubData)( GLenum target, GLintptr offset, GLsizeiptr size, void *data );
 typedef void       (GLAPIENTRY *PFN_glGetBufferSubDataARB)( GLenum target, GLintptrARB offset, GLsizeiptrARB size, void *data );
+typedef void       (GLAPIENTRY *PFN_glGetClipPlanef)( GLenum plane, GLfloat *equation );
 typedef void       (GLAPIENTRY *PFN_glGetClipPlanefOES)( GLenum plane, GLfloat *equation );
+typedef void       (GLAPIENTRY *PFN_glGetClipPlanex)( GLenum plane, GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glGetClipPlanexOES)( GLenum plane, GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glGetColorTable)( GLenum target, GLenum format, GLenum type, void *table );
 typedef void       (GLAPIENTRY *PFN_glGetColorTableEXT)( GLenum target, GLenum format, GLenum type, void *data );
@@ -7021,6 +7037,7 @@ typedef void       (GLAPIENTRY *PFN_glGetFenceivNV)( GLuint fence, GLenum pname,
 typedef void       (GLAPIENTRY *PFN_glGetFinalCombinerInputParameterfvNV)( GLenum variable, GLenum pname, GLfloat *params );
 typedef void       (GLAPIENTRY *PFN_glGetFinalCombinerInputParameterivNV)( GLenum variable, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetFirstPerfQueryIdINTEL)( GLuint *queryId );
+typedef void       (GLAPIENTRY *PFN_glGetFixedv)( GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetFixedvOES)( GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetFloatIndexedvEXT)( GLenum target, GLuint index, GLfloat *data );
 typedef void       (GLAPIENTRY *PFN_glGetFloati_v)( GLenum target, GLuint index, GLfloat *data );
@@ -7068,6 +7085,7 @@ typedef void       (GLAPIENTRY *PFN_glGetInvariantBooleanvEXT)( GLuint id, GLenu
 typedef void       (GLAPIENTRY *PFN_glGetInvariantFloatvEXT)( GLuint id, GLenum value, GLfloat *data );
 typedef void       (GLAPIENTRY *PFN_glGetInvariantIntegervEXT)( GLuint id, GLenum value, GLint *data );
 typedef void       (GLAPIENTRY *PFN_glGetLightxOES)( GLenum light, GLenum pname, GLfixed *params );
+typedef void       (GLAPIENTRY *PFN_glGetLightxv)( GLenum light, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetListParameterfvSGIX)( GLuint list, GLenum pname, GLfloat *params );
 typedef void       (GLAPIENTRY *PFN_glGetListParameterivSGIX)( GLuint list, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetLocalConstantBooleanvEXT)( GLuint id, GLenum value, GLboolean *data );
@@ -7080,6 +7098,7 @@ typedef void       (GLAPIENTRY *PFN_glGetMapParameterfvNV)( GLenum target, GLenu
 typedef void       (GLAPIENTRY *PFN_glGetMapParameterivNV)( GLenum target, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetMapxvOES)( GLenum target, GLenum query, GLfixed *v );
 typedef void       (GLAPIENTRY *PFN_glGetMaterialxOES)( GLenum face, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glGetMaterialxv)( GLenum face, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetMemoryObjectDetachedResourcesuivNV)( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glGetMemoryObjectParameterivEXT)( GLuint memoryObject, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetMinmax)( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values );
@@ -7237,6 +7256,7 @@ typedef GLint      (GLAPIENTRY *PFN_glGetSubroutineUniformLocation)( GLuint prog
 typedef void       (GLAPIENTRY *PFN_glGetSynciv)( GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values );
 typedef void       (GLAPIENTRY *PFN_glGetTexBumpParameterfvATI)( GLenum pname, GLfloat *param );
 typedef void       (GLAPIENTRY *PFN_glGetTexBumpParameterivATI)( GLenum pname, GLint *param );
+typedef void       (GLAPIENTRY *PFN_glGetTexEnvxv)( GLenum target, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexEnvxvOES)( GLenum target, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexFilterFuncSGIS)( GLenum target, GLenum filter, GLfloat *weights );
 typedef void       (GLAPIENTRY *PFN_glGetTexGenxvOES)( GLenum coord, GLenum pname, GLfixed *params );
@@ -7246,6 +7266,7 @@ typedef void       (GLAPIENTRY *PFN_glGetTexParameterIivEXT)( GLenum target, GLe
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterIuiv)( GLenum target, GLenum pname, GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterIuivEXT)( GLenum target, GLenum pname, GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterPointervAPPLE)( GLenum target, GLenum pname, void **params );
+typedef void       (GLAPIENTRY *PFN_glGetTexParameterxv)( GLenum target, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterxvOES)( GLenum target, GLenum pname, GLfixed *params );
 typedef GLuint64   (GLAPIENTRY *PFN_glGetTextureHandleARB)( GLuint texture );
 typedef GLuint64   (GLAPIENTRY *PFN_glGetTextureHandleNV)( GLuint texture );
@@ -7468,10 +7489,15 @@ typedef void       (GLAPIENTRY *PFN_glLGPUInterlockNVX)(void);
 typedef void       (GLAPIENTRY *PFN_glLGPUNamedBufferSubDataNVX)( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data );
 typedef void       (GLAPIENTRY *PFN_glLabelObjectEXT)( GLenum type, GLuint object, GLsizei length, const GLchar *label );
 typedef void       (GLAPIENTRY *PFN_glLightEnviSGIX)( GLenum pname, GLint param );
+typedef void       (GLAPIENTRY *PFN_glLightModelx)( GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glLightModelxOES)( GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glLightModelxv)( GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glLightModelxvOES)( GLenum pname, const GLfixed *param );
+typedef void       (GLAPIENTRY *PFN_glLightx)( GLenum light, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glLightxOES)( GLenum light, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glLightxv)( GLenum light, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glLightxvOES)( GLenum light, GLenum pname, const GLfixed *params );
+typedef void       (GLAPIENTRY *PFN_glLineWidthx)( GLfixed width );
 typedef void       (GLAPIENTRY *PFN_glLineWidthxOES)( GLfixed width );
 typedef void       (GLAPIENTRY *PFN_glLinkProgram)( GLuint program );
 typedef void       (GLAPIENTRY *PFN_glLinkProgramARB)( GLhandleARB programObj );
@@ -7481,6 +7507,7 @@ typedef void       (GLAPIENTRY *PFN_glListParameterfvSGIX)( GLuint list, GLenum 
 typedef void       (GLAPIENTRY *PFN_glListParameteriSGIX)( GLuint list, GLenum pname, GLint param );
 typedef void       (GLAPIENTRY *PFN_glListParameterivSGIX)( GLuint list, GLenum pname, const GLint *params );
 typedef void       (GLAPIENTRY *PFN_glLoadIdentityDeformationMapSGIX)( GLbitfield mask );
+typedef void       (GLAPIENTRY *PFN_glLoadMatrixx)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glLoadMatrixxOES)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glLoadProgramNV)( GLenum target, GLuint id, GLsizei len, const GLubyte *program );
 typedef void       (GLAPIENTRY *PFN_glLoadTransposeMatrixd)( const GLdouble *m );
@@ -7523,7 +7550,9 @@ typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib1dAPPLE)( GLuint index, GLu
 typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib1fAPPLE)( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points );
 typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib2dAPPLE)( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points );
 typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib2fAPPLE)( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points );
+typedef void       (GLAPIENTRY *PFN_glMaterialx)( GLenum face, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glMaterialxOES)( GLenum face, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glMaterialxv)( GLenum face, GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glMaterialxvOES)( GLenum face, GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glMatrixFrustumEXT)( GLenum mode, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar );
 typedef void       (GLAPIENTRY *PFN_glMatrixIndexPointerARB)( GLint size, GLenum type, GLsizei stride, const void *pointer );
@@ -7564,6 +7593,7 @@ typedef void       (GLAPIENTRY *PFN_glMinSampleShading)( GLfloat value );
 typedef void       (GLAPIENTRY *PFN_glMinSampleShadingARB)( GLfloat value );
 typedef void       (GLAPIENTRY *PFN_glMinmax)( GLenum target, GLenum internalformat, GLboolean sink );
 typedef void       (GLAPIENTRY *PFN_glMinmaxEXT)( GLenum target, GLenum internalformat, GLboolean sink );
+typedef void       (GLAPIENTRY *PFN_glMultMatrixx)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glMultMatrixxOES)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glMultTransposeMatrixd)( const GLdouble *m );
 typedef void       (GLAPIENTRY *PFN_glMultTransposeMatrixdARB)( const GLdouble *m );
@@ -7714,6 +7744,7 @@ typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4sSGIS)( GLenum target, GLsho
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4sv)( GLenum target, const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4svARB)( GLenum target, const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4svSGIS)( GLenum target, GLshort * v );
+typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4x)( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4xOES)( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4xvOES)( GLenum texture, const GLfixed *coords );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoordP1ui)( GLenum texture, GLenum type, GLuint coords );
@@ -7820,6 +7851,7 @@ typedef void       (GLAPIENTRY *PFN_glNormal3fVertex3fSUN)( GLfloat nx, GLfloat 
 typedef void       (GLAPIENTRY *PFN_glNormal3fVertex3fvSUN)( const GLfloat *n, const GLfloat *v );
 typedef void       (GLAPIENTRY *PFN_glNormal3hNV)( GLhalfNV nx, GLhalfNV ny, GLhalfNV nz );
 typedef void       (GLAPIENTRY *PFN_glNormal3hvNV)( const GLhalfNV *v );
+typedef void       (GLAPIENTRY *PFN_glNormal3x)( GLfixed nx, GLfixed ny, GLfixed nz );
 typedef void       (GLAPIENTRY *PFN_glNormal3xOES)( GLfixed nx, GLfixed ny, GLfixed nz );
 typedef void       (GLAPIENTRY *PFN_glNormal3xvOES)( const GLfixed *coords );
 typedef void       (GLAPIENTRY *PFN_glNormalFormatNV)( GLenum type, GLsizei stride );
@@ -7842,7 +7874,9 @@ typedef void       (GLAPIENTRY *PFN_glObjectLabel)( GLenum identifier, GLuint na
 typedef void       (GLAPIENTRY *PFN_glObjectPtrLabel)( const void *ptr, GLsizei length, const GLchar *label );
 typedef GLenum     (GLAPIENTRY *PFN_glObjectPurgeableAPPLE)( GLenum objectType, GLuint name, GLenum option );
 typedef GLenum     (GLAPIENTRY *PFN_glObjectUnpurgeableAPPLE)( GLenum objectType, GLuint name, GLenum option );
+typedef void       (GLAPIENTRY *PFN_glOrthof)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
 typedef void       (GLAPIENTRY *PFN_glOrthofOES)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
+typedef void       (GLAPIENTRY *PFN_glOrthox)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glOrthoxOES)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glPNTrianglesfATI)( GLenum pname, GLfloat param );
 typedef void       (GLAPIENTRY *PFN_glPNTrianglesiATI)( GLenum pname, GLint param );
@@ -7900,13 +7934,17 @@ typedef void       (GLAPIENTRY *PFN_glPointParameteri)( GLenum pname, GLint para
 typedef void       (GLAPIENTRY *PFN_glPointParameteriNV)( GLenum pname, GLint param );
 typedef void       (GLAPIENTRY *PFN_glPointParameteriv)( GLenum pname, const GLint *params );
 typedef void       (GLAPIENTRY *PFN_glPointParameterivNV)( GLenum pname, const GLint *params );
+typedef void       (GLAPIENTRY *PFN_glPointParameterx)( GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glPointParameterxv)( GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glPointParameterxvOES)( GLenum pname, const GLfixed *params );
+typedef void       (GLAPIENTRY *PFN_glPointSizex)( GLfixed size );
 typedef void       (GLAPIENTRY *PFN_glPointSizexOES)( GLfixed size );
 typedef GLint      (GLAPIENTRY *PFN_glPollAsyncSGIX)( GLuint *markerp );
 typedef GLint      (GLAPIENTRY *PFN_glPollInstrumentsSGIX)( GLint *marker_p );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetClamp)( GLfloat factor, GLfloat units, GLfloat clamp );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetClampEXT)( GLfloat factor, GLfloat units, GLfloat clamp );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetEXT)( GLfloat factor, GLfloat bias );
+typedef void       (GLAPIENTRY *PFN_glPolygonOffsetx)( GLfixed factor, GLfixed units );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetxOES)( GLfixed factor, GLfixed units );
 typedef void       (GLAPIENTRY *PFN_glPopDebugGroup)(void);
 typedef void       (GLAPIENTRY *PFN_glPopGroupMarkerEXT)(void);
@@ -8165,9 +8203,11 @@ typedef void       (GLAPIENTRY *PFN_glResizeBuffersMESA)(void);
 typedef void       (GLAPIENTRY *PFN_glResolveDepthValuesNV)(void);
 typedef void       (GLAPIENTRY *PFN_glResumeTransformFeedback)(void);
 typedef void       (GLAPIENTRY *PFN_glResumeTransformFeedbackNV)(void);
+typedef void       (GLAPIENTRY *PFN_glRotatex)( GLfixed angle, GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glRotatexOES)( GLfixed angle, GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glSampleCoverage)( GLfloat value, GLboolean invert );
 typedef void       (GLAPIENTRY *PFN_glSampleCoverageARB)( GLfloat value, GLboolean invert );
+typedef void       (GLAPIENTRY *PFN_glSampleCoveragex)( GLclampx value, GLboolean invert );
 typedef void       (GLAPIENTRY *PFN_glSampleMapATI)( GLuint dst, GLuint interp, GLenum swizzle );
 typedef void       (GLAPIENTRY *PFN_glSampleMaskEXT)( GLclampf value, GLboolean invert );
 typedef void       (GLAPIENTRY *PFN_glSampleMaskIndexedNV)( GLuint index, GLbitfield mask );
@@ -8181,6 +8221,7 @@ typedef void       (GLAPIENTRY *PFN_glSamplerParameterf)( GLuint sampler, GLenum
 typedef void       (GLAPIENTRY *PFN_glSamplerParameterfv)( GLuint sampler, GLenum pname, const GLfloat *param );
 typedef void       (GLAPIENTRY *PFN_glSamplerParameteri)( GLuint sampler, GLenum pname, GLint param );
 typedef void       (GLAPIENTRY *PFN_glSamplerParameteriv)( GLuint sampler, GLenum pname, const GLint *param );
+typedef void       (GLAPIENTRY *PFN_glScalex)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glScalexOES)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glScissorArrayv)( GLuint first, GLsizei count, const GLint *v );
 typedef void       (GLAPIENTRY *PFN_glScissorExclusiveArrayvNV)( GLuint first, GLsizei count, const GLint *v );
@@ -8359,7 +8400,9 @@ typedef void       (GLAPIENTRY *PFN_glTexCoordP4uiv)( GLenum type, const GLuint 
 typedef void       (GLAPIENTRY *PFN_glTexCoordPointerEXT)( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer );
 typedef void       (GLAPIENTRY *PFN_glTexCoordPointerListIBM)( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride );
 typedef void       (GLAPIENTRY *PFN_glTexCoordPointervINTEL)( GLint size, GLenum type, const void **pointer );
+typedef void       (GLAPIENTRY *PFN_glTexEnvx)( GLenum target, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glTexEnvxOES)( GLenum target, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glTexEnvxv)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexEnvxvOES)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexFilterFuncSGIS)( GLenum target, GLenum filter, GLsizei n, const GLfloat *weights );
 typedef void       (GLAPIENTRY *PFN_glTexGenxOES)( GLenum coord, GLenum pname, GLfixed param );
@@ -8377,7 +8420,9 @@ typedef void       (GLAPIENTRY *PFN_glTexParameterIiv)( GLenum target, GLenum pn
 typedef void       (GLAPIENTRY *PFN_glTexParameterIivEXT)( GLenum target, GLenum pname, const GLint *params );
 typedef void       (GLAPIENTRY *PFN_glTexParameterIuiv)( GLenum target, GLenum pname, const GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glTexParameterIuivEXT)( GLenum target, GLenum pname, const GLuint *params );
+typedef void       (GLAPIENTRY *PFN_glTexParameterx)( GLenum target, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glTexParameterxOES)( GLenum target, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glTexParameterxv)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexParameterxvOES)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexRenderbufferNV)( GLenum target, GLuint renderbuffer );
 typedef void       (GLAPIENTRY *PFN_glTexStorage1D)( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width );
@@ -8465,6 +8510,7 @@ typedef void       (GLAPIENTRY *PFN_glTransformFeedbackVaryings)( GLuint program
 typedef void       (GLAPIENTRY *PFN_glTransformFeedbackVaryingsEXT)( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode );
 typedef void       (GLAPIENTRY *PFN_glTransformFeedbackVaryingsNV)( GLuint program, GLsizei count, const GLint *locations, GLenum bufferMode );
 typedef void       (GLAPIENTRY *PFN_glTransformPathNV)( GLuint resultPath, GLuint srcPath, GLenum transformType, const GLfloat *transformValues );
+typedef void       (GLAPIENTRY *PFN_glTranslatex)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glTranslatexOES)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glUniform1d)( GLint location, GLdouble x );
 typedef void       (GLAPIENTRY *PFN_glUniform1dv)( GLint location, GLsizei count, const GLdouble *value );
@@ -9505,6 +9551,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glAlphaFragmentOp1ATI) \
     USE_GL_FUNC(glAlphaFragmentOp2ATI) \
     USE_GL_FUNC(glAlphaFragmentOp3ATI) \
+    USE_GL_FUNC(glAlphaFuncx) \
     USE_GL_FUNC(glAlphaFuncxOES) \
     USE_GL_FUNC(glAlphaToCoverageDitherControlNV) \
     USE_GL_FUNC(glApplyFramebufferAttachmentCMAAINTEL) \
@@ -9653,10 +9700,12 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glClearBufferuiv) \
     USE_GL_FUNC(glClearColorIiEXT) \
     USE_GL_FUNC(glClearColorIuiEXT) \
+    USE_GL_FUNC(glClearColorx) \
     USE_GL_FUNC(glClearColorxOES) \
     USE_GL_FUNC(glClearDepthdNV) \
     USE_GL_FUNC(glClearDepthf) \
     USE_GL_FUNC(glClearDepthfOES) \
+    USE_GL_FUNC(glClearDepthx) \
     USE_GL_FUNC(glClearDepthxOES) \
     USE_GL_FUNC(glClearNamedBufferData) \
     USE_GL_FUNC(glClearNamedBufferDataEXT) \
@@ -9675,7 +9724,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glClientWaitSemaphoreui64NVX) \
     USE_GL_FUNC(glClientWaitSync) \
     USE_GL_FUNC(glClipControl) \
+    USE_GL_FUNC(glClipPlanef) \
     USE_GL_FUNC(glClipPlanefOES) \
+    USE_GL_FUNC(glClipPlanex) \
     USE_GL_FUNC(glClipPlanexOES) \
     USE_GL_FUNC(glColor3fVertex3fSUN) \
     USE_GL_FUNC(glColor3fVertex3fvSUN) \
@@ -9691,6 +9742,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glColor4ubVertex2fvSUN) \
     USE_GL_FUNC(glColor4ubVertex3fSUN) \
     USE_GL_FUNC(glColor4ubVertex3fvSUN) \
+    USE_GL_FUNC(glColor4x) \
     USE_GL_FUNC(glColor4xOES) \
     USE_GL_FUNC(glColor4xvOES) \
     USE_GL_FUNC(glColorFormatNV) \
@@ -9893,6 +9945,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glDepthRangedNV) \
     USE_GL_FUNC(glDepthRangef) \
     USE_GL_FUNC(glDepthRangefOES) \
+    USE_GL_FUNC(glDepthRangex) \
     USE_GL_FUNC(glDepthRangexOES) \
     USE_GL_FUNC(glDetachObjectARB) \
     USE_GL_FUNC(glDetachShader) \
@@ -10025,7 +10078,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glFogCoordhNV) \
     USE_GL_FUNC(glFogCoordhvNV) \
     USE_GL_FUNC(glFogFuncSGIS) \
+    USE_GL_FUNC(glFogx) \
     USE_GL_FUNC(glFogxOES) \
+    USE_GL_FUNC(glFogxv) \
     USE_GL_FUNC(glFogxvOES) \
     USE_GL_FUNC(glFragmentColorMaterialSGIX) \
     USE_GL_FUNC(glFragmentCoverageColorNV) \
@@ -10070,7 +10125,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glFramebufferTextureLayerEXT) \
     USE_GL_FUNC(glFramebufferTextureMultiviewOVR) \
     USE_GL_FUNC(glFreeObjectBufferATI) \
+    USE_GL_FUNC(glFrustumf) \
     USE_GL_FUNC(glFrustumfOES) \
+    USE_GL_FUNC(glFrustumx) \
     USE_GL_FUNC(glFrustumxOES) \
     USE_GL_FUNC(glGenAsyncMarkersSGIX) \
     USE_GL_FUNC(glGenBuffers) \
@@ -10135,7 +10192,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetBufferPointervARB) \
     USE_GL_FUNC(glGetBufferSubData) \
     USE_GL_FUNC(glGetBufferSubDataARB) \
+    USE_GL_FUNC(glGetClipPlanef) \
     USE_GL_FUNC(glGetClipPlanefOES) \
+    USE_GL_FUNC(glGetClipPlanex) \
     USE_GL_FUNC(glGetClipPlanexOES) \
     USE_GL_FUNC(glGetColorTable) \
     USE_GL_FUNC(glGetColorTableEXT) \
@@ -10177,6 +10236,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetFinalCombinerInputParameterfvNV) \
     USE_GL_FUNC(glGetFinalCombinerInputParameterivNV) \
     USE_GL_FUNC(glGetFirstPerfQueryIdINTEL) \
+    USE_GL_FUNC(glGetFixedv) \
     USE_GL_FUNC(glGetFixedvOES) \
     USE_GL_FUNC(glGetFloatIndexedvEXT) \
     USE_GL_FUNC(glGetFloati_v) \
@@ -10224,6 +10284,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetInvariantFloatvEXT) \
     USE_GL_FUNC(glGetInvariantIntegervEXT) \
     USE_GL_FUNC(glGetLightxOES) \
+    USE_GL_FUNC(glGetLightxv) \
     USE_GL_FUNC(glGetListParameterfvSGIX) \
     USE_GL_FUNC(glGetListParameterivSGIX) \
     USE_GL_FUNC(glGetLocalConstantBooleanvEXT) \
@@ -10236,6 +10297,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetMapParameterivNV) \
     USE_GL_FUNC(glGetMapxvOES) \
     USE_GL_FUNC(glGetMaterialxOES) \
+    USE_GL_FUNC(glGetMaterialxv) \
     USE_GL_FUNC(glGetMemoryObjectDetachedResourcesuivNV) \
     USE_GL_FUNC(glGetMemoryObjectParameterivEXT) \
     USE_GL_FUNC(glGetMinmax) \
@@ -10393,6 +10455,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetSynciv) \
     USE_GL_FUNC(glGetTexBumpParameterfvATI) \
     USE_GL_FUNC(glGetTexBumpParameterivATI) \
+    USE_GL_FUNC(glGetTexEnvxv) \
     USE_GL_FUNC(glGetTexEnvxvOES) \
     USE_GL_FUNC(glGetTexFilterFuncSGIS) \
     USE_GL_FUNC(glGetTexGenxvOES) \
@@ -10402,6 +10465,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetTexParameterIuiv) \
     USE_GL_FUNC(glGetTexParameterIuivEXT) \
     USE_GL_FUNC(glGetTexParameterPointervAPPLE) \
+    USE_GL_FUNC(glGetTexParameterxv) \
     USE_GL_FUNC(glGetTexParameterxvOES) \
     USE_GL_FUNC(glGetTextureHandleARB) \
     USE_GL_FUNC(glGetTextureHandleNV) \
@@ -10624,10 +10688,15 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glLGPUNamedBufferSubDataNVX) \
     USE_GL_FUNC(glLabelObjectEXT) \
     USE_GL_FUNC(glLightEnviSGIX) \
+    USE_GL_FUNC(glLightModelx) \
     USE_GL_FUNC(glLightModelxOES) \
+    USE_GL_FUNC(glLightModelxv) \
     USE_GL_FUNC(glLightModelxvOES) \
+    USE_GL_FUNC(glLightx) \
     USE_GL_FUNC(glLightxOES) \
+    USE_GL_FUNC(glLightxv) \
     USE_GL_FUNC(glLightxvOES) \
+    USE_GL_FUNC(glLineWidthx) \
     USE_GL_FUNC(glLineWidthxOES) \
     USE_GL_FUNC(glLinkProgram) \
     USE_GL_FUNC(glLinkProgramARB) \
@@ -10637,6 +10706,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glListParameteriSGIX) \
     USE_GL_FUNC(glListParameterivSGIX) \
     USE_GL_FUNC(glLoadIdentityDeformationMapSGIX) \
+    USE_GL_FUNC(glLoadMatrixx) \
     USE_GL_FUNC(glLoadMatrixxOES) \
     USE_GL_FUNC(glLoadProgramNV) \
     USE_GL_FUNC(glLoadTransposeMatrixd) \
@@ -10679,7 +10749,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glMapVertexAttrib1fAPPLE) \
     USE_GL_FUNC(glMapVertexAttrib2dAPPLE) \
     USE_GL_FUNC(glMapVertexAttrib2fAPPLE) \
+    USE_GL_FUNC(glMaterialx) \
     USE_GL_FUNC(glMaterialxOES) \
+    USE_GL_FUNC(glMaterialxv) \
     USE_GL_FUNC(glMaterialxvOES) \
     USE_GL_FUNC(glMatrixFrustumEXT) \
     USE_GL_FUNC(glMatrixIndexPointerARB) \
@@ -10720,6 +10792,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glMinSampleShadingARB) \
     USE_GL_FUNC(glMinmax) \
     USE_GL_FUNC(glMinmaxEXT) \
+    USE_GL_FUNC(glMultMatrixx) \
     USE_GL_FUNC(glMultMatrixxOES) \
     USE_GL_FUNC(glMultTransposeMatrixd) \
     USE_GL_FUNC(glMultTransposeMatrixdARB) \
@@ -10870,6 +10943,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glMultiTexCoord4sv) \
     USE_GL_FUNC(glMultiTexCoord4svARB) \
     USE_GL_FUNC(glMultiTexCoord4svSGIS) \
+    USE_GL_FUNC(glMultiTexCoord4x) \
     USE_GL_FUNC(glMultiTexCoord4xOES) \
     USE_GL_FUNC(glMultiTexCoord4xvOES) \
     USE_GL_FUNC(glMultiTexCoordP1ui) \
@@ -10976,6 +11050,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glNormal3fVertex3fvSUN) \
     USE_GL_FUNC(glNormal3hNV) \
     USE_GL_FUNC(glNormal3hvNV) \
+    USE_GL_FUNC(glNormal3x) \
     USE_GL_FUNC(glNormal3xOES) \
     USE_GL_FUNC(glNormal3xvOES) \
     USE_GL_FUNC(glNormalFormatNV) \
@@ -10998,7 +11073,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glObjectPtrLabel) \
     USE_GL_FUNC(glObjectPurgeableAPPLE) \
     USE_GL_FUNC(glObjectUnpurgeableAPPLE) \
+    USE_GL_FUNC(glOrthof) \
     USE_GL_FUNC(glOrthofOES) \
+    USE_GL_FUNC(glOrthox) \
     USE_GL_FUNC(glOrthoxOES) \
     USE_GL_FUNC(glPNTrianglesfATI) \
     USE_GL_FUNC(glPNTrianglesiATI) \
@@ -11056,13 +11133,17 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glPointParameteriNV) \
     USE_GL_FUNC(glPointParameteriv) \
     USE_GL_FUNC(glPointParameterivNV) \
+    USE_GL_FUNC(glPointParameterx) \
+    USE_GL_FUNC(glPointParameterxv) \
     USE_GL_FUNC(glPointParameterxvOES) \
+    USE_GL_FUNC(glPointSizex) \
     USE_GL_FUNC(glPointSizexOES) \
     USE_GL_FUNC(glPollAsyncSGIX) \
     USE_GL_FUNC(glPollInstrumentsSGIX) \
     USE_GL_FUNC(glPolygonOffsetClamp) \
     USE_GL_FUNC(glPolygonOffsetClampEXT) \
     USE_GL_FUNC(glPolygonOffsetEXT) \
+    USE_GL_FUNC(glPolygonOffsetx) \
     USE_GL_FUNC(glPolygonOffsetxOES) \
     USE_GL_FUNC(glPopDebugGroup) \
     USE_GL_FUNC(glPopGroupMarkerEXT) \
@@ -11321,9 +11402,11 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glResolveDepthValuesNV) \
     USE_GL_FUNC(glResumeTransformFeedback) \
     USE_GL_FUNC(glResumeTransformFeedbackNV) \
+    USE_GL_FUNC(glRotatex) \
     USE_GL_FUNC(glRotatexOES) \
     USE_GL_FUNC(glSampleCoverage) \
     USE_GL_FUNC(glSampleCoverageARB) \
+    USE_GL_FUNC(glSampleCoveragex) \
     USE_GL_FUNC(glSampleMapATI) \
     USE_GL_FUNC(glSampleMaskEXT) \
     USE_GL_FUNC(glSampleMaskIndexedNV) \
@@ -11337,6 +11420,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glSamplerParameterfv) \
     USE_GL_FUNC(glSamplerParameteri) \
     USE_GL_FUNC(glSamplerParameteriv) \
+    USE_GL_FUNC(glScalex) \
     USE_GL_FUNC(glScalexOES) \
     USE_GL_FUNC(glScissorArrayv) \
     USE_GL_FUNC(glScissorExclusiveArrayvNV) \
@@ -11515,7 +11599,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glTexCoordPointerEXT) \
     USE_GL_FUNC(glTexCoordPointerListIBM) \
     USE_GL_FUNC(glTexCoordPointervINTEL) \
+    USE_GL_FUNC(glTexEnvx) \
     USE_GL_FUNC(glTexEnvxOES) \
+    USE_GL_FUNC(glTexEnvxv) \
     USE_GL_FUNC(glTexEnvxvOES) \
     USE_GL_FUNC(glTexFilterFuncSGIS) \
     USE_GL_FUNC(glTexGenxOES) \
@@ -11533,7 +11619,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glTexParameterIivEXT) \
     USE_GL_FUNC(glTexParameterIuiv) \
     USE_GL_FUNC(glTexParameterIuivEXT) \
+    USE_GL_FUNC(glTexParameterx) \
     USE_GL_FUNC(glTexParameterxOES) \
+    USE_GL_FUNC(glTexParameterxv) \
     USE_GL_FUNC(glTexParameterxvOES) \
     USE_GL_FUNC(glTexRenderbufferNV) \
     USE_GL_FUNC(glTexStorage1D) \
@@ -11621,6 +11709,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glTransformFeedbackVaryingsEXT) \
     USE_GL_FUNC(glTransformFeedbackVaryingsNV) \
     USE_GL_FUNC(glTransformPathNV) \
+    USE_GL_FUNC(glTranslatex) \
     USE_GL_FUNC(glTranslatexOES) \
     USE_GL_FUNC(glUniform1d) \
     USE_GL_FUNC(glUniform1dv) \

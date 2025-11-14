@@ -3187,6 +3187,15 @@ static NTSTATUS ext_glAlphaFragmentOp3ATI( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glAlphaFuncx( void *args )
+{
+    struct glAlphaFuncx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glAlphaFuncx( params->func, params->ref );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glAlphaFuncxOES( void *args )
 {
     struct glAlphaFuncxOES_params *params = args;
@@ -4525,6 +4534,15 @@ static NTSTATUS ext_glClearColorIuiEXT( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glClearColorx( void *args )
+{
+    struct glClearColorx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glClearColorx( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glClearColorxOES( void *args )
 {
     struct glClearColorxOES_params *params = args;
@@ -4557,6 +4575,15 @@ static NTSTATUS ext_glClearDepthfOES( void *args )
     struct glClearDepthfOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClearDepthfOES( params->depth );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glClearDepthx( void *args )
+{
+    struct glClearDepthx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glClearDepthx( params->depth );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -4727,11 +4754,29 @@ static NTSTATUS ext_glClipControl( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glClipPlanef( void *args )
+{
+    struct glClipPlanef_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glClipPlanef( params->p, params->eqn );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glClipPlanefOES( void *args )
 {
     struct glClipPlanefOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glClipPlanefOES( params->plane, params->equation );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glClipPlanex( void *args )
+{
+    struct glClipPlanex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glClipPlanex( params->plane, params->equation );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -4867,6 +4912,15 @@ static NTSTATUS ext_glColor4ubVertex3fvSUN( void *args )
     struct glColor4ubVertex3fvSUN_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glColor4ubVertex3fvSUN( params->c, params->v );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glColor4x( void *args )
+{
+    struct glColor4x_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glColor4x( params->red, params->green, params->blue, params->alpha );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -6691,6 +6745,15 @@ static NTSTATUS ext_glDepthRangefOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glDepthRangex( void *args )
+{
+    struct glDepthRangex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glDepthRangex( params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glDepthRangexOES( void *args )
 {
     struct glDepthRangexOES_params *params = args;
@@ -7878,11 +7941,29 @@ static NTSTATUS ext_glFogFuncSGIS( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glFogx( void *args )
+{
+    struct glFogx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glFogx( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glFogxOES( void *args )
 {
     struct glFogxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFogxOES( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glFogxv( void *args )
+{
+    struct glFogxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glFogxv( params->pname, params->param );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -8314,11 +8395,29 @@ static NTSTATUS ext_glFreeObjectBufferATI( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glFrustumf( void *args )
+{
+    struct glFrustumf_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glFrustumf( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glFrustumfOES( void *args )
 {
     struct glFrustumfOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glFrustumfOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glFrustumx( void *args )
+{
+    struct glFrustumx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glFrustumx( params->l, params->r, params->b, params->t, params->n, params->f );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -8870,11 +8969,27 @@ static NTSTATUS ext_glGetBufferSubDataARB( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glGetClipPlanef( void *args )
+{
+    struct glGetClipPlanef_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glGetClipPlanef( params->plane, params->equation );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glGetClipPlanefOES( void *args )
 {
     struct glGetClipPlanefOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGetClipPlanefOES( params->plane, params->equation );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glGetClipPlanex( void *args )
+{
+    struct glGetClipPlanex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glGetClipPlanex( params->plane, params->equation );
     return STATUS_SUCCESS;
 }
 
@@ -9203,6 +9318,14 @@ static NTSTATUS ext_glGetFirstPerfQueryIdINTEL( void *args )
     struct glGetFirstPerfQueryIdINTEL_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGetFirstPerfQueryIdINTEL( params->queryId );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glGetFixedv( void *args )
+{
+    struct glGetFixedv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glGetFixedv( params->pname, params->params );
     return STATUS_SUCCESS;
 }
 
@@ -9584,6 +9707,14 @@ static NTSTATUS ext_glGetLightxOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glGetLightxv( void *args )
+{
+    struct glGetLightxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glGetLightxv( params->light, params->pname, params->params );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glGetListParameterfvSGIX( void *args )
 {
     struct glGetListParameterfvSGIX_params *params = args;
@@ -9677,6 +9808,14 @@ static NTSTATUS ext_glGetMaterialxOES( void *args )
     struct glGetMaterialxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGetMaterialxOES( params->face, params->pname, params->param );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glGetMaterialxv( void *args )
+{
+    struct glGetMaterialxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glGetMaterialxv( params->face, params->pname, params->params );
     return STATUS_SUCCESS;
 }
 
@@ -10940,6 +11079,14 @@ static NTSTATUS ext_glGetTexBumpParameterivATI( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glGetTexEnvxv( void *args )
+{
+    struct glGetTexEnvxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glGetTexEnvxv( params->target, params->pname, params->params );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glGetTexEnvxvOES( void *args )
 {
     struct glGetTexEnvxvOES_params *params = args;
@@ -11009,6 +11156,14 @@ static NTSTATUS ext_glGetTexParameterPointervAPPLE( void *args )
     struct glGetTexParameterPointervAPPLE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGetTexParameterPointervAPPLE( params->target, params->pname, params->params );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glGetTexParameterxv( void *args )
+{
+    struct glGetTexParameterxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glGetTexParameterxv( params->target, params->pname, params->params );
     return STATUS_SUCCESS;
 }
 
@@ -12837,11 +12992,29 @@ static NTSTATUS ext_glLightEnviSGIX( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glLightModelx( void *args )
+{
+    struct glLightModelx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glLightModelx( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glLightModelxOES( void *args )
 {
     struct glLightModelxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightModelxOES( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glLightModelxv( void *args )
+{
+    struct glLightModelxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glLightModelxv( params->pname, params->param );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -12855,6 +13028,15 @@ static NTSTATUS ext_glLightModelxvOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glLightx( void *args )
+{
+    struct glLightx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glLightx( params->light, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glLightxOES( void *args )
 {
     struct glLightxOES_params *params = args;
@@ -12864,11 +13046,29 @@ static NTSTATUS ext_glLightxOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glLightxv( void *args )
+{
+    struct glLightxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glLightxv( params->light, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glLightxvOES( void *args )
 {
     struct glLightxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLightxvOES( params->light, params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glLineWidthx( void *args )
+{
+    struct glLineWidthx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glLineWidthx( params->width );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -12950,6 +13150,15 @@ static NTSTATUS ext_glLoadIdentityDeformationMapSGIX( void *args )
     struct glLoadIdentityDeformationMapSGIX_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glLoadIdentityDeformationMapSGIX( params->mask );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glLoadMatrixx( void *args )
+{
+    struct glLoadMatrixx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glLoadMatrixx( params->m );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -13332,11 +13541,29 @@ static NTSTATUS ext_glMapVertexAttrib2fAPPLE( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glMaterialx( void *args )
+{
+    struct glMaterialx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glMaterialx( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glMaterialxOES( void *args )
 {
     struct glMaterialxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMaterialxOES( params->face, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glMaterialxv( void *args )
+{
+    struct glMaterialxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glMaterialxv( params->face, params->pname, params->param );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -13697,6 +13924,15 @@ static NTSTATUS ext_glMinmaxEXT( void *args )
     struct glMinmaxEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glMinmaxEXT( params->target, params->internalformat, params->sink );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glMultMatrixx( void *args )
+{
+    struct glMultMatrixx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glMultMatrixx( params->m );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -15051,6 +15287,15 @@ static NTSTATUS ext_glMultiTexCoord4svSGIS( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glMultiTexCoord4x( void *args )
+{
+    struct glMultiTexCoord4x_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glMultiTexCoord4x( params->texture, params->s, params->t, params->r, params->q );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glMultiTexCoord4xOES( void *args )
 {
     struct glMultiTexCoord4xOES_params *params = args;
@@ -16008,6 +16253,15 @@ static NTSTATUS ext_glNormal3hvNV( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glNormal3x( void *args )
+{
+    struct glNormal3x_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glNormal3x( params->nx, params->ny, params->nz );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glNormal3xOES( void *args )
 {
     struct glNormal3xOES_params *params = args;
@@ -16206,11 +16460,29 @@ static NTSTATUS ext_glObjectUnpurgeableAPPLE( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glOrthof( void *args )
+{
+    struct glOrthof_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glOrthof( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glOrthofOES( void *args )
 {
     struct glOrthofOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glOrthofOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glOrthox( void *args )
+{
+    struct glOrthox_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glOrthox( params->l, params->r, params->b, params->t, params->n, params->f );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -16728,11 +17000,38 @@ static NTSTATUS ext_glPointParameterivNV( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glPointParameterx( void *args )
+{
+    struct glPointParameterx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glPointParameterx( params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glPointParameterxv( void *args )
+{
+    struct glPointParameterxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glPointParameterxv( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glPointParameterxvOES( void *args )
 {
     struct glPointParameterxvOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPointParameterxvOES( params->pname, params->params );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glPointSizex( void *args )
+{
+    struct glPointSizex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glPointSizex( params->size );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -16787,6 +17086,15 @@ static NTSTATUS ext_glPolygonOffsetEXT( void *args )
     struct glPolygonOffsetEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glPolygonOffsetEXT( params->factor, params->bias );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glPolygonOffsetx( void *args )
+{
+    struct glPolygonOffsetx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glPolygonOffsetx( params->factor, params->units );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -19113,6 +19421,15 @@ static NTSTATUS ext_glResumeTransformFeedbackNV( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glRotatex( void *args )
+{
+    struct glRotatex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glRotatex( params->angle, params->x, params->y, params->z );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glRotatexOES( void *args )
 {
     struct glRotatexOES_params *params = args;
@@ -19136,6 +19453,15 @@ static NTSTATUS ext_glSampleCoverageARB( void *args )
     struct glSampleCoverageARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSampleCoverageARB( params->value, params->invert );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glSampleCoveragex( void *args )
+{
+    struct glSampleCoveragex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glSampleCoveragex( params->value, params->invert );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -19253,6 +19579,15 @@ static NTSTATUS ext_glSamplerParameteriv( void *args )
     struct glSamplerParameteriv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glSamplerParameteriv( params->sampler, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glScalex( void *args )
+{
+    struct glScalex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glScalex( params->x, params->y, params->z );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -20859,11 +21194,29 @@ static NTSTATUS ext_glTexCoordPointervINTEL( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glTexEnvx( void *args )
+{
+    struct glTexEnvx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glTexEnvx( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glTexEnvxOES( void *args )
 {
     struct glTexEnvxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexEnvxOES( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glTexEnvxv( void *args )
+{
+    struct glTexEnvxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glTexEnvxv( params->target, params->pname, params->params );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -21021,11 +21374,29 @@ static NTSTATUS ext_glTexParameterIuivEXT( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glTexParameterx( void *args )
+{
+    struct glTexParameterx_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glTexParameterx( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glTexParameterxOES( void *args )
 {
     struct glTexParameterxOES_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTexParameterxOES( params->target, params->pname, params->param );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glTexParameterxv( void *args )
+{
+    struct glTexParameterxv_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glTexParameterxv( params->target, params->pname, params->params );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -21809,6 +22180,15 @@ static NTSTATUS ext_glTransformPathNV( void *args )
     struct glTransformPathNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glTransformPathNV( params->resultPath, params->srcPath, params->transformType, params->transformValues );
+    set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glTranslatex( void *args )
+{
+    struct glTranslatex_params *params = args;
+    const struct opengl_funcs *funcs = params->teb->glTable;
+    funcs->p_glTranslatex( params->x, params->y, params->z );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -27419,6 +27799,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glAlphaFragmentOp1ATI,
     ext_glAlphaFragmentOp2ATI,
     ext_glAlphaFragmentOp3ATI,
+    ext_glAlphaFuncx,
     ext_glAlphaFuncxOES,
     ext_glAlphaToCoverageDitherControlNV,
     ext_glApplyFramebufferAttachmentCMAAINTEL,
@@ -27567,10 +27948,12 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glClearBufferuiv,
     ext_glClearColorIiEXT,
     ext_glClearColorIuiEXT,
+    ext_glClearColorx,
     ext_glClearColorxOES,
     ext_glClearDepthdNV,
     ext_glClearDepthf,
     ext_glClearDepthfOES,
+    ext_glClearDepthx,
     ext_glClearDepthxOES,
     ext_glClearNamedBufferData,
     ext_glClearNamedBufferDataEXT,
@@ -27589,7 +27972,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glClientWaitSemaphoreui64NVX,
     ext_glClientWaitSync,
     ext_glClipControl,
+    ext_glClipPlanef,
     ext_glClipPlanefOES,
+    ext_glClipPlanex,
     ext_glClipPlanexOES,
     ext_glColor3fVertex3fSUN,
     ext_glColor3fVertex3fvSUN,
@@ -27605,6 +27990,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glColor4ubVertex2fvSUN,
     ext_glColor4ubVertex3fSUN,
     ext_glColor4ubVertex3fvSUN,
+    ext_glColor4x,
     ext_glColor4xOES,
     ext_glColor4xvOES,
     ext_glColorFormatNV,
@@ -27807,6 +28193,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glDepthRangedNV,
     ext_glDepthRangef,
     ext_glDepthRangefOES,
+    ext_glDepthRangex,
     ext_glDepthRangexOES,
     ext_glDetachObjectARB,
     ext_glDetachShader,
@@ -27939,7 +28326,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glFogCoordhNV,
     ext_glFogCoordhvNV,
     ext_glFogFuncSGIS,
+    ext_glFogx,
     ext_glFogxOES,
+    ext_glFogxv,
     ext_glFogxvOES,
     ext_glFragmentColorMaterialSGIX,
     ext_glFragmentCoverageColorNV,
@@ -27984,7 +28373,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glFramebufferTextureLayerEXT,
     ext_glFramebufferTextureMultiviewOVR,
     ext_glFreeObjectBufferATI,
+    ext_glFrustumf,
     ext_glFrustumfOES,
+    ext_glFrustumx,
     ext_glFrustumxOES,
     ext_glGenAsyncMarkersSGIX,
     ext_glGenBuffers,
@@ -28049,7 +28440,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glGetBufferPointervARB,
     ext_glGetBufferSubData,
     ext_glGetBufferSubDataARB,
+    ext_glGetClipPlanef,
     ext_glGetClipPlanefOES,
+    ext_glGetClipPlanex,
     ext_glGetClipPlanexOES,
     ext_glGetColorTable,
     ext_glGetColorTableEXT,
@@ -28091,6 +28484,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glGetFinalCombinerInputParameterfvNV,
     ext_glGetFinalCombinerInputParameterivNV,
     ext_glGetFirstPerfQueryIdINTEL,
+    ext_glGetFixedv,
     ext_glGetFixedvOES,
     ext_glGetFloatIndexedvEXT,
     ext_glGetFloati_v,
@@ -28138,6 +28532,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glGetInvariantFloatvEXT,
     ext_glGetInvariantIntegervEXT,
     ext_glGetLightxOES,
+    ext_glGetLightxv,
     ext_glGetListParameterfvSGIX,
     ext_glGetListParameterivSGIX,
     ext_glGetLocalConstantBooleanvEXT,
@@ -28150,6 +28545,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glGetMapParameterivNV,
     ext_glGetMapxvOES,
     ext_glGetMaterialxOES,
+    ext_glGetMaterialxv,
     ext_glGetMemoryObjectDetachedResourcesuivNV,
     ext_glGetMemoryObjectParameterivEXT,
     ext_glGetMinmax,
@@ -28307,6 +28703,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glGetSynciv,
     ext_glGetTexBumpParameterfvATI,
     ext_glGetTexBumpParameterivATI,
+    ext_glGetTexEnvxv,
     ext_glGetTexEnvxvOES,
     ext_glGetTexFilterFuncSGIS,
     ext_glGetTexGenxvOES,
@@ -28316,6 +28713,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glGetTexParameterIuiv,
     ext_glGetTexParameterIuivEXT,
     ext_glGetTexParameterPointervAPPLE,
+    ext_glGetTexParameterxv,
     ext_glGetTexParameterxvOES,
     ext_glGetTextureHandleARB,
     ext_glGetTextureHandleNV,
@@ -28538,10 +28936,15 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glLGPUNamedBufferSubDataNVX,
     ext_glLabelObjectEXT,
     ext_glLightEnviSGIX,
+    ext_glLightModelx,
     ext_glLightModelxOES,
+    ext_glLightModelxv,
     ext_glLightModelxvOES,
+    ext_glLightx,
     ext_glLightxOES,
+    ext_glLightxv,
     ext_glLightxvOES,
+    ext_glLineWidthx,
     ext_glLineWidthxOES,
     ext_glLinkProgram,
     ext_glLinkProgramARB,
@@ -28551,6 +28954,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glListParameteriSGIX,
     ext_glListParameterivSGIX,
     ext_glLoadIdentityDeformationMapSGIX,
+    ext_glLoadMatrixx,
     ext_glLoadMatrixxOES,
     ext_glLoadProgramNV,
     ext_glLoadTransposeMatrixd,
@@ -28593,7 +28997,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glMapVertexAttrib1fAPPLE,
     ext_glMapVertexAttrib2dAPPLE,
     ext_glMapVertexAttrib2fAPPLE,
+    ext_glMaterialx,
     ext_glMaterialxOES,
+    ext_glMaterialxv,
     ext_glMaterialxvOES,
     ext_glMatrixFrustumEXT,
     ext_glMatrixIndexPointerARB,
@@ -28634,6 +29040,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glMinSampleShadingARB,
     ext_glMinmax,
     ext_glMinmaxEXT,
+    ext_glMultMatrixx,
     ext_glMultMatrixxOES,
     ext_glMultTransposeMatrixd,
     ext_glMultTransposeMatrixdARB,
@@ -28784,6 +29191,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glMultiTexCoord4sv,
     ext_glMultiTexCoord4svARB,
     ext_glMultiTexCoord4svSGIS,
+    ext_glMultiTexCoord4x,
     ext_glMultiTexCoord4xOES,
     ext_glMultiTexCoord4xvOES,
     ext_glMultiTexCoordP1ui,
@@ -28890,6 +29298,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glNormal3fVertex3fvSUN,
     ext_glNormal3hNV,
     ext_glNormal3hvNV,
+    ext_glNormal3x,
     ext_glNormal3xOES,
     ext_glNormal3xvOES,
     ext_glNormalFormatNV,
@@ -28912,7 +29321,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glObjectPtrLabel,
     ext_glObjectPurgeableAPPLE,
     ext_glObjectUnpurgeableAPPLE,
+    ext_glOrthof,
     ext_glOrthofOES,
+    ext_glOrthox,
     ext_glOrthoxOES,
     ext_glPNTrianglesfATI,
     ext_glPNTrianglesiATI,
@@ -28970,13 +29381,17 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glPointParameteriNV,
     ext_glPointParameteriv,
     ext_glPointParameterivNV,
+    ext_glPointParameterx,
+    ext_glPointParameterxv,
     ext_glPointParameterxvOES,
+    ext_glPointSizex,
     ext_glPointSizexOES,
     ext_glPollAsyncSGIX,
     ext_glPollInstrumentsSGIX,
     ext_glPolygonOffsetClamp,
     ext_glPolygonOffsetClampEXT,
     ext_glPolygonOffsetEXT,
+    ext_glPolygonOffsetx,
     ext_glPolygonOffsetxOES,
     ext_glPopDebugGroup,
     ext_glPopGroupMarkerEXT,
@@ -29235,9 +29650,11 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glResolveDepthValuesNV,
     ext_glResumeTransformFeedback,
     ext_glResumeTransformFeedbackNV,
+    ext_glRotatex,
     ext_glRotatexOES,
     ext_glSampleCoverage,
     ext_glSampleCoverageARB,
+    ext_glSampleCoveragex,
     ext_glSampleMapATI,
     ext_glSampleMaskEXT,
     ext_glSampleMaskIndexedNV,
@@ -29251,6 +29668,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glSamplerParameterfv,
     ext_glSamplerParameteri,
     ext_glSamplerParameteriv,
+    ext_glScalex,
     ext_glScalexOES,
     ext_glScissorArrayv,
     ext_glScissorExclusiveArrayvNV,
@@ -29429,7 +29847,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glTexCoordPointerEXT,
     ext_glTexCoordPointerListIBM,
     ext_glTexCoordPointervINTEL,
+    ext_glTexEnvx,
     ext_glTexEnvxOES,
+    ext_glTexEnvxv,
     ext_glTexEnvxvOES,
     ext_glTexFilterFuncSGIS,
     ext_glTexGenxOES,
@@ -29447,7 +29867,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glTexParameterIivEXT,
     ext_glTexParameterIuiv,
     ext_glTexParameterIuivEXT,
+    ext_glTexParameterx,
     ext_glTexParameterxOES,
+    ext_glTexParameterxv,
     ext_glTexParameterxvOES,
     ext_glTexRenderbufferNV,
     ext_glTexStorage1D,
@@ -29535,6 +29957,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_glTransformFeedbackVaryingsEXT,
     ext_glTransformFeedbackVaryingsNV,
     ext_glTransformPathNV,
+    ext_glTranslatex,
     ext_glTranslatexOES,
     ext_glUniform1d,
     ext_glUniform1dv,
@@ -35574,6 +35997,21 @@ static NTSTATUS wow64_ext_glAlphaFragmentOp3ATI( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glAlphaFuncx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum func;
+        GLfixed ref;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glAlphaFuncx( params->func, params->ref );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glAlphaFuncxOES( void *args )
 {
     struct
@@ -38014,6 +38452,23 @@ static NTSTATUS wow64_ext_glClearColorIuiEXT( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glClearColorx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed red;
+        GLfixed green;
+        GLfixed blue;
+        GLfixed alpha;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClearColorx( params->red, params->green, params->blue, params->alpha );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glClearColorxOES( void *args )
 {
     struct
@@ -38069,6 +38524,20 @@ static NTSTATUS wow64_ext_glClearDepthfOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glClearDepthfOES( params->depth );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glClearDepthx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed depth;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClearDepthx( params->depth );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -38383,6 +38852,21 @@ static NTSTATUS wow64_ext_glClipControl( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glClipPlanef( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum p;
+        PTR32 eqn;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClipPlanef( params->p, ULongToPtr(params->eqn) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glClipPlanefOES( void *args )
 {
     struct
@@ -38394,6 +38878,21 @@ static NTSTATUS wow64_ext_glClipPlanefOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glClipPlanefOES( params->plane, ULongToPtr(params->equation) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glClipPlanex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum plane;
+        PTR32 equation;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glClipPlanex( params->plane, ULongToPtr(params->equation) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -38642,6 +39141,23 @@ static NTSTATUS wow64_ext_glColor4ubVertex3fvSUN( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glColor4ubVertex3fvSUN( ULongToPtr(params->c), ULongToPtr(params->v) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glColor4x( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed red;
+        GLfixed green;
+        GLfixed blue;
+        GLfixed alpha;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glColor4x( params->red, params->green, params->blue, params->alpha );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -42194,6 +42710,21 @@ static NTSTATUS wow64_ext_glDepthRangefOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glDepthRangex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed n;
+        GLfixed f;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glDepthRangex( params->n, params->f );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glDepthRangexOES( void *args )
 {
     struct
@@ -44230,6 +44761,21 @@ static NTSTATUS wow64_ext_glFogFuncSGIS( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glFogx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum pname;
+        GLfixed param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFogx( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glFogxOES( void *args )
 {
     struct
@@ -44241,6 +44787,21 @@ static NTSTATUS wow64_ext_glFogxOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glFogxOES( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glFogxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum pname;
+        PTR32 param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFogxv( params->pname, ULongToPtr(params->param) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -44995,6 +45556,25 @@ static NTSTATUS wow64_ext_glFreeObjectBufferATI( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glFrustumf( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfloat l;
+        GLfloat r;
+        GLfloat b;
+        GLfloat t;
+        GLfloat n;
+        GLfloat f;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFrustumf( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glFrustumfOES( void *args )
 {
     struct
@@ -45010,6 +45590,25 @@ static NTSTATUS wow64_ext_glFrustumfOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glFrustumfOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glFrustumx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed l;
+        GLfixed r;
+        GLfixed b;
+        GLfixed t;
+        GLfixed n;
+        GLfixed f;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glFrustumx( params->l, params->r, params->b, params->t, params->n, params->f );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -46017,6 +46616,20 @@ static NTSTATUS wow64_ext_glGetBufferSubDataARB( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glGetClipPlanef( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum plane;
+        PTR32 equation;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetClipPlanef( params->plane, ULongToPtr(params->equation) );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glGetClipPlanefOES( void *args )
 {
     struct
@@ -46028,6 +46641,20 @@ static NTSTATUS wow64_ext_glGetClipPlanefOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glGetClipPlanefOES( params->plane, ULongToPtr(params->equation) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glGetClipPlanex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum plane;
+        PTR32 equation;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetClipPlanex( params->plane, ULongToPtr(params->equation) );
     return STATUS_SUCCESS;
 }
 
@@ -46676,6 +47303,20 @@ static NTSTATUS wow64_ext_glGetFirstPerfQueryIdINTEL( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glGetFirstPerfQueryIdINTEL( ULongToPtr(params->queryId) );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glGetFixedv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetFixedv( params->pname, ULongToPtr(params->params) );
     return STATUS_SUCCESS;
 }
 
@@ -47397,6 +48038,21 @@ static NTSTATUS wow64_ext_glGetLightxOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glGetLightxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetLightxv( params->light, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glGetListParameterfvSGIX( void *args )
 {
     struct
@@ -47580,6 +48236,21 @@ static NTSTATUS wow64_ext_glGetMaterialxOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glGetMaterialxOES( params->face, params->pname, params->param );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glGetMaterialxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetMaterialxv( params->face, params->pname, ULongToPtr(params->params) );
     return STATUS_SUCCESS;
 }
 
@@ -50053,6 +50724,21 @@ static NTSTATUS wow64_ext_glGetTexBumpParameterivATI( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glGetTexEnvxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexEnvxv( params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glGetTexEnvxvOES( void *args )
 {
     struct
@@ -50185,6 +50871,21 @@ static NTSTATUS wow64_ext_glGetTexParameterPointervAPPLE( void *args )
     } *params = args;
     FIXME( "params %p stub!\n", params );
     return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetTexParameterxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glGetTexParameterxv( params->target, params->pname, ULongToPtr(params->params) );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_ext_glGetTexParameterxvOES( void *args )
@@ -53619,6 +54320,21 @@ static NTSTATUS wow64_ext_glLightEnviSGIX( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glLightModelx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum pname;
+        GLfixed param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightModelx( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glLightModelxOES( void *args )
 {
     struct
@@ -53634,6 +54350,21 @@ static NTSTATUS wow64_ext_glLightModelxOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glLightModelxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum pname;
+        PTR32 param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightModelxv( params->pname, ULongToPtr(params->param) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glLightModelxvOES( void *args )
 {
     struct
@@ -53645,6 +54376,22 @@ static NTSTATUS wow64_ext_glLightModelxvOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glLightModelxvOES( params->pname, ULongToPtr(params->param) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glLightx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum light;
+        GLenum pname;
+        GLfixed param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightx( params->light, params->pname, params->param );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -53665,6 +54412,22 @@ static NTSTATUS wow64_ext_glLightxOES( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glLightxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLightxv( params->light, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glLightxvOES( void *args )
 {
     struct
@@ -53677,6 +54440,20 @@ static NTSTATUS wow64_ext_glLightxvOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glLightxvOES( params->light, params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glLineWidthx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed width;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLineWidthx( params->width );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -53819,6 +54596,20 @@ static NTSTATUS wow64_ext_glLoadIdentityDeformationMapSGIX( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glLoadIdentityDeformationMapSGIX( params->mask );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glLoadMatrixx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 m;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glLoadMatrixx( ULongToPtr(params->m) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -54499,6 +55290,22 @@ static NTSTATUS wow64_ext_glMapVertexAttrib2fAPPLE( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glMaterialx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum face;
+        GLenum pname;
+        GLfixed param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMaterialx( params->face, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glMaterialxOES( void *args )
 {
     struct
@@ -54511,6 +55318,22 @@ static NTSTATUS wow64_ext_glMaterialxOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glMaterialxOES( params->face, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glMaterialxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum face;
+        GLenum pname;
+        PTR32 param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMaterialxv( params->face, params->pname, ULongToPtr(params->param) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -55131,6 +55954,20 @@ static NTSTATUS wow64_ext_glMinmaxEXT( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glMinmaxEXT( params->target, params->internalformat, params->sink );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glMultMatrixx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 m;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMultMatrixx( ULongToPtr(params->m) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -57549,6 +58386,24 @@ static NTSTATUS wow64_ext_glMultiTexCoord4svSGIS( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glMultiTexCoord4x( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum texture;
+        GLfixed s;
+        GLfixed t;
+        GLfixed r;
+        GLfixed q;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glMultiTexCoord4x( params->texture, params->s, params->t, params->r, params->q );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glMultiTexCoord4xOES( void *args )
 {
     struct
@@ -59443,6 +60298,22 @@ static NTSTATUS wow64_ext_glNormal3hvNV( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glNormal3x( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed nx;
+        GLfixed ny;
+        GLfixed nz;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glNormal3x( params->nx, params->ny, params->nz );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glNormal3xOES( void *args )
 {
     struct
@@ -59788,6 +60659,25 @@ static NTSTATUS wow64_ext_glObjectUnpurgeableAPPLE( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glOrthof( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfloat l;
+        GLfloat r;
+        GLfloat b;
+        GLfloat t;
+        GLfloat n;
+        GLfloat f;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glOrthof( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glOrthofOES( void *args )
 {
     struct
@@ -59803,6 +60693,25 @@ static NTSTATUS wow64_ext_glOrthofOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glOrthofOES( params->l, params->r, params->b, params->t, params->n, params->f );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glOrthox( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed l;
+        GLfixed r;
+        GLfixed b;
+        GLfixed t;
+        GLfixed n;
+        GLfixed f;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glOrthox( params->l, params->r, params->b, params->t, params->n, params->f );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -60734,6 +61643,36 @@ static NTSTATUS wow64_ext_glPointParameterivNV( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glPointParameterx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum pname;
+        GLfixed param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPointParameterx( params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glPointParameterxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPointParameterxv( params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glPointParameterxvOES( void *args )
 {
     struct
@@ -60745,6 +61684,20 @@ static NTSTATUS wow64_ext_glPointParameterxvOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glPointParameterxvOES( params->pname, ULongToPtr(params->params) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glPointSizex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed size;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPointSizex( params->size );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -60836,6 +61789,21 @@ static NTSTATUS wow64_ext_glPolygonOffsetEXT( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glPolygonOffsetEXT( params->factor, params->bias );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glPolygonOffsetx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed factor;
+        GLfixed units;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glPolygonOffsetx( params->factor, params->units );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -65239,6 +66207,23 @@ static NTSTATUS wow64_ext_glResumeTransformFeedbackNV( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glRotatex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed angle;
+        GLfixed x;
+        GLfixed y;
+        GLfixed z;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glRotatex( params->angle, params->x, params->y, params->z );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glRotatexOES( void *args )
 {
     struct
@@ -65282,6 +66267,21 @@ static NTSTATUS wow64_ext_glSampleCoverageARB( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glSampleCoverageARB( params->value, params->invert );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glSampleCoveragex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLclampx value;
+        GLboolean invert;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glSampleCoveragex( params->value, params->invert );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -65482,6 +66482,22 @@ static NTSTATUS wow64_ext_glSamplerParameteriv( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glSamplerParameteriv( params->sampler, params->pname, ULongToPtr(params->param) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glScalex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed x;
+        GLfixed y;
+        GLfixed z;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glScalex( params->x, params->y, params->z );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -68314,6 +69330,22 @@ static NTSTATUS wow64_ext_glTexCoordPointervINTEL( void *args )
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS wow64_ext_glTexEnvx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        GLfixed param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexEnvx( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glTexEnvxOES( void *args )
 {
     struct
@@ -68326,6 +69358,22 @@ static NTSTATUS wow64_ext_glTexEnvxOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glTexEnvxOES( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glTexEnvxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexEnvxv( params->target, params->pname, ULongToPtr(params->params) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -68656,6 +69704,22 @@ static NTSTATUS wow64_ext_glTexParameterIuivEXT( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_ext_glTexParameterx( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        GLfixed param;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexParameterx( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wow64_ext_glTexParameterxOES( void *args )
 {
     struct
@@ -68668,6 +69732,22 @@ static NTSTATUS wow64_ext_glTexParameterxOES( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glTexParameterxOES( params->target, params->pname, params->param );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glTexParameterxv( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTexParameterxv( params->target, params->pname, ULongToPtr(params->params) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -70315,6 +71395,22 @@ static NTSTATUS wow64_ext_glTransformPathNV( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     funcs->p_glTransformPathNV( params->resultPath, params->srcPath, params->transformType, ULongToPtr(params->transformValues) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_ext_glTranslatex( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        GLfixed x;
+        GLfixed y;
+        GLfixed z;
+    } *params = args;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    funcs->p_glTranslatex( params->x, params->y, params->z );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -79942,6 +81038,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glAlphaFragmentOp1ATI,
     wow64_ext_glAlphaFragmentOp2ATI,
     wow64_ext_glAlphaFragmentOp3ATI,
+    wow64_ext_glAlphaFuncx,
     wow64_ext_glAlphaFuncxOES,
     wow64_ext_glAlphaToCoverageDitherControlNV,
     wow64_ext_glApplyFramebufferAttachmentCMAAINTEL,
@@ -80090,10 +81187,12 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glClearBufferuiv,
     wow64_ext_glClearColorIiEXT,
     wow64_ext_glClearColorIuiEXT,
+    wow64_ext_glClearColorx,
     wow64_ext_glClearColorxOES,
     wow64_ext_glClearDepthdNV,
     wow64_ext_glClearDepthf,
     wow64_ext_glClearDepthfOES,
+    wow64_ext_glClearDepthx,
     wow64_ext_glClearDepthxOES,
     wow64_ext_glClearNamedBufferData,
     wow64_ext_glClearNamedBufferDataEXT,
@@ -80112,7 +81211,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glClientWaitSemaphoreui64NVX,
     wow64_ext_glClientWaitSync,
     wow64_ext_glClipControl,
+    wow64_ext_glClipPlanef,
     wow64_ext_glClipPlanefOES,
+    wow64_ext_glClipPlanex,
     wow64_ext_glClipPlanexOES,
     wow64_ext_glColor3fVertex3fSUN,
     wow64_ext_glColor3fVertex3fvSUN,
@@ -80128,6 +81229,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glColor4ubVertex2fvSUN,
     wow64_ext_glColor4ubVertex3fSUN,
     wow64_ext_glColor4ubVertex3fvSUN,
+    wow64_ext_glColor4x,
     wow64_ext_glColor4xOES,
     wow64_ext_glColor4xvOES,
     wow64_ext_glColorFormatNV,
@@ -80330,6 +81432,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glDepthRangedNV,
     wow64_ext_glDepthRangef,
     wow64_ext_glDepthRangefOES,
+    wow64_ext_glDepthRangex,
     wow64_ext_glDepthRangexOES,
     wow64_ext_glDetachObjectARB,
     wow64_ext_glDetachShader,
@@ -80462,7 +81565,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glFogCoordhNV,
     wow64_ext_glFogCoordhvNV,
     wow64_ext_glFogFuncSGIS,
+    wow64_ext_glFogx,
     wow64_ext_glFogxOES,
+    wow64_ext_glFogxv,
     wow64_ext_glFogxvOES,
     wow64_ext_glFragmentColorMaterialSGIX,
     wow64_ext_glFragmentCoverageColorNV,
@@ -80507,7 +81612,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glFramebufferTextureLayerEXT,
     wow64_ext_glFramebufferTextureMultiviewOVR,
     wow64_ext_glFreeObjectBufferATI,
+    wow64_ext_glFrustumf,
     wow64_ext_glFrustumfOES,
+    wow64_ext_glFrustumx,
     wow64_ext_glFrustumxOES,
     wow64_ext_glGenAsyncMarkersSGIX,
     wow64_ext_glGenBuffers,
@@ -80572,7 +81679,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glGetBufferPointervARB,
     wow64_ext_glGetBufferSubData,
     wow64_ext_glGetBufferSubDataARB,
+    wow64_ext_glGetClipPlanef,
     wow64_ext_glGetClipPlanefOES,
+    wow64_ext_glGetClipPlanex,
     wow64_ext_glGetClipPlanexOES,
     wow64_ext_glGetColorTable,
     wow64_ext_glGetColorTableEXT,
@@ -80614,6 +81723,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glGetFinalCombinerInputParameterfvNV,
     wow64_ext_glGetFinalCombinerInputParameterivNV,
     wow64_ext_glGetFirstPerfQueryIdINTEL,
+    wow64_ext_glGetFixedv,
     wow64_ext_glGetFixedvOES,
     wow64_ext_glGetFloatIndexedvEXT,
     wow64_ext_glGetFloati_v,
@@ -80661,6 +81771,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glGetInvariantFloatvEXT,
     wow64_ext_glGetInvariantIntegervEXT,
     wow64_ext_glGetLightxOES,
+    wow64_ext_glGetLightxv,
     wow64_ext_glGetListParameterfvSGIX,
     wow64_ext_glGetListParameterivSGIX,
     wow64_ext_glGetLocalConstantBooleanvEXT,
@@ -80673,6 +81784,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glGetMapParameterivNV,
     wow64_ext_glGetMapxvOES,
     wow64_ext_glGetMaterialxOES,
+    wow64_ext_glGetMaterialxv,
     wow64_ext_glGetMemoryObjectDetachedResourcesuivNV,
     wow64_ext_glGetMemoryObjectParameterivEXT,
     wow64_ext_glGetMinmax,
@@ -80830,6 +81942,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glGetSynciv,
     wow64_ext_glGetTexBumpParameterfvATI,
     wow64_ext_glGetTexBumpParameterivATI,
+    wow64_ext_glGetTexEnvxv,
     wow64_ext_glGetTexEnvxvOES,
     wow64_ext_glGetTexFilterFuncSGIS,
     wow64_ext_glGetTexGenxvOES,
@@ -80839,6 +81952,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glGetTexParameterIuiv,
     wow64_ext_glGetTexParameterIuivEXT,
     wow64_ext_glGetTexParameterPointervAPPLE,
+    wow64_ext_glGetTexParameterxv,
     wow64_ext_glGetTexParameterxvOES,
     wow64_ext_glGetTextureHandleARB,
     wow64_ext_glGetTextureHandleNV,
@@ -81061,10 +82175,15 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glLGPUNamedBufferSubDataNVX,
     wow64_ext_glLabelObjectEXT,
     wow64_ext_glLightEnviSGIX,
+    wow64_ext_glLightModelx,
     wow64_ext_glLightModelxOES,
+    wow64_ext_glLightModelxv,
     wow64_ext_glLightModelxvOES,
+    wow64_ext_glLightx,
     wow64_ext_glLightxOES,
+    wow64_ext_glLightxv,
     wow64_ext_glLightxvOES,
+    wow64_ext_glLineWidthx,
     wow64_ext_glLineWidthxOES,
     wow64_ext_glLinkProgram,
     wow64_ext_glLinkProgramARB,
@@ -81074,6 +82193,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glListParameteriSGIX,
     wow64_ext_glListParameterivSGIX,
     wow64_ext_glLoadIdentityDeformationMapSGIX,
+    wow64_ext_glLoadMatrixx,
     wow64_ext_glLoadMatrixxOES,
     wow64_ext_glLoadProgramNV,
     wow64_ext_glLoadTransposeMatrixd,
@@ -81116,7 +82236,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glMapVertexAttrib1fAPPLE,
     wow64_ext_glMapVertexAttrib2dAPPLE,
     wow64_ext_glMapVertexAttrib2fAPPLE,
+    wow64_ext_glMaterialx,
     wow64_ext_glMaterialxOES,
+    wow64_ext_glMaterialxv,
     wow64_ext_glMaterialxvOES,
     wow64_ext_glMatrixFrustumEXT,
     wow64_ext_glMatrixIndexPointerARB,
@@ -81157,6 +82279,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glMinSampleShadingARB,
     wow64_ext_glMinmax,
     wow64_ext_glMinmaxEXT,
+    wow64_ext_glMultMatrixx,
     wow64_ext_glMultMatrixxOES,
     wow64_ext_glMultTransposeMatrixd,
     wow64_ext_glMultTransposeMatrixdARB,
@@ -81307,6 +82430,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glMultiTexCoord4sv,
     wow64_ext_glMultiTexCoord4svARB,
     wow64_ext_glMultiTexCoord4svSGIS,
+    wow64_ext_glMultiTexCoord4x,
     wow64_ext_glMultiTexCoord4xOES,
     wow64_ext_glMultiTexCoord4xvOES,
     wow64_ext_glMultiTexCoordP1ui,
@@ -81413,6 +82537,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glNormal3fVertex3fvSUN,
     wow64_ext_glNormal3hNV,
     wow64_ext_glNormal3hvNV,
+    wow64_ext_glNormal3x,
     wow64_ext_glNormal3xOES,
     wow64_ext_glNormal3xvOES,
     wow64_ext_glNormalFormatNV,
@@ -81435,7 +82560,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glObjectPtrLabel,
     wow64_ext_glObjectPurgeableAPPLE,
     wow64_ext_glObjectUnpurgeableAPPLE,
+    wow64_ext_glOrthof,
     wow64_ext_glOrthofOES,
+    wow64_ext_glOrthox,
     wow64_ext_glOrthoxOES,
     wow64_ext_glPNTrianglesfATI,
     wow64_ext_glPNTrianglesiATI,
@@ -81493,13 +82620,17 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glPointParameteriNV,
     wow64_ext_glPointParameteriv,
     wow64_ext_glPointParameterivNV,
+    wow64_ext_glPointParameterx,
+    wow64_ext_glPointParameterxv,
     wow64_ext_glPointParameterxvOES,
+    wow64_ext_glPointSizex,
     wow64_ext_glPointSizexOES,
     wow64_ext_glPollAsyncSGIX,
     wow64_ext_glPollInstrumentsSGIX,
     wow64_ext_glPolygonOffsetClamp,
     wow64_ext_glPolygonOffsetClampEXT,
     wow64_ext_glPolygonOffsetEXT,
+    wow64_ext_glPolygonOffsetx,
     wow64_ext_glPolygonOffsetxOES,
     wow64_ext_glPopDebugGroup,
     wow64_ext_glPopGroupMarkerEXT,
@@ -81758,9 +82889,11 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glResolveDepthValuesNV,
     wow64_ext_glResumeTransformFeedback,
     wow64_ext_glResumeTransformFeedbackNV,
+    wow64_ext_glRotatex,
     wow64_ext_glRotatexOES,
     wow64_ext_glSampleCoverage,
     wow64_ext_glSampleCoverageARB,
+    wow64_ext_glSampleCoveragex,
     wow64_ext_glSampleMapATI,
     wow64_ext_glSampleMaskEXT,
     wow64_ext_glSampleMaskIndexedNV,
@@ -81774,6 +82907,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glSamplerParameterfv,
     wow64_ext_glSamplerParameteri,
     wow64_ext_glSamplerParameteriv,
+    wow64_ext_glScalex,
     wow64_ext_glScalexOES,
     wow64_ext_glScissorArrayv,
     wow64_ext_glScissorExclusiveArrayvNV,
@@ -81952,7 +83086,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glTexCoordPointerEXT,
     wow64_ext_glTexCoordPointerListIBM,
     wow64_ext_glTexCoordPointervINTEL,
+    wow64_ext_glTexEnvx,
     wow64_ext_glTexEnvxOES,
+    wow64_ext_glTexEnvxv,
     wow64_ext_glTexEnvxvOES,
     wow64_ext_glTexFilterFuncSGIS,
     wow64_ext_glTexGenxOES,
@@ -81970,7 +83106,9 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glTexParameterIivEXT,
     wow64_ext_glTexParameterIuiv,
     wow64_ext_glTexParameterIuivEXT,
+    wow64_ext_glTexParameterx,
     wow64_ext_glTexParameterxOES,
+    wow64_ext_glTexParameterxv,
     wow64_ext_glTexParameterxvOES,
     wow64_ext_glTexRenderbufferNV,
     wow64_ext_glTexStorage1D,
@@ -82058,6 +83196,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_glTransformFeedbackVaryingsEXT,
     wow64_ext_glTransformFeedbackVaryingsNV,
     wow64_ext_glTransformPathNV,
+    wow64_ext_glTranslatex,
     wow64_ext_glTranslatexOES,
     wow64_ext_glUniform1d,
     wow64_ext_glUniform1dv,
@@ -84095,6 +85234,10 @@ static void null_glAlphaFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMod, GL
 {
     ERR( "unsupported\n" );
 }
+static void null_glAlphaFuncx( GLenum func, GLfixed ref )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glAlphaFuncxOES( GLenum func, GLfixed ref )
 {
     ERR( "unsupported\n" );
@@ -84701,6 +85844,10 @@ static void null_glClearColorIuiEXT( GLuint red, GLuint green, GLuint blue, GLui
 {
     ERR( "unsupported\n" );
 }
+static void null_glClearColorx( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glClearColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
 {
     ERR( "unsupported\n" );
@@ -84714,6 +85861,10 @@ static void null_glClearDepthf( GLfloat d )
     ERR( "unsupported\n" );
 }
 static void null_glClearDepthfOES( GLclampf depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearDepthx( GLfixed depth )
 {
     ERR( "unsupported\n" );
 }
@@ -84790,7 +85941,15 @@ static void null_glClipControl( GLenum origin, GLenum depth )
 {
     ERR( "unsupported\n" );
 }
+static void null_glClipPlanef( GLenum p, const GLfloat *eqn )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glClipPlanefOES( GLenum plane, const GLfloat *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClipPlanex( GLenum plane, const GLfixed *equation )
 {
     ERR( "unsupported\n" );
 }
@@ -84851,6 +86010,10 @@ static void null_glColor4ubVertex3fSUN( GLubyte r, GLubyte g, GLubyte b, GLubyte
     ERR( "unsupported\n" );
 }
 static void null_glColor4ubVertex3fvSUN( const GLubyte *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4x( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
 {
     ERR( "unsupported\n" );
 }
@@ -85670,6 +86833,10 @@ static void null_glDepthRangefOES( GLclampf n, GLclampf f )
 {
     ERR( "unsupported\n" );
 }
+static void null_glDepthRangex( GLfixed n, GLfixed f )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glDepthRangexOES( GLfixed n, GLfixed f )
 {
     ERR( "unsupported\n" );
@@ -86200,7 +87367,15 @@ static void null_glFogFuncSGIS( GLsizei n, const GLfloat *points )
 {
     ERR( "unsupported\n" );
 }
+static void null_glFogx( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glFogxOES( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogxv( GLenum pname, const GLfixed *param )
 {
     ERR( "unsupported\n" );
 }
@@ -86380,7 +87555,15 @@ static void null_glFreeObjectBufferATI( GLuint buffer )
 {
     ERR( "unsupported\n" );
 }
+static void null_glFrustumf( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glFrustumfOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFrustumx( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
 {
     ERR( "unsupported\n" );
 }
@@ -86647,7 +87830,15 @@ static void null_glGetBufferSubDataARB( GLenum target, GLintptrARB offset, GLsiz
 {
     ERR( "unsupported\n" );
 }
+static void null_glGetClipPlanef( GLenum plane, GLfloat *equation )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glGetClipPlanefOES( GLenum plane, GLfloat *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetClipPlanex( GLenum plane, GLfixed *equation )
 {
     ERR( "unsupported\n" );
 }
@@ -86816,6 +88007,10 @@ static void null_glGetFinalCombinerInputParameterivNV( GLenum variable, GLenum p
     ERR( "unsupported\n" );
 }
 static void null_glGetFirstPerfQueryIdINTEL( GLuint *queryId )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFixedv( GLenum pname, GLfixed *params )
 {
     ERR( "unsupported\n" );
 }
@@ -87016,6 +88211,10 @@ static void null_glGetLightxOES( GLenum light, GLenum pname, GLfixed *params )
 {
     ERR( "unsupported\n" );
 }
+static void null_glGetLightxv( GLenum light, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glGetListParameterfvSGIX( GLuint list, GLenum pname, GLfloat *params )
 {
     ERR( "unsupported\n" );
@@ -87061,6 +88260,10 @@ static void null_glGetMapxvOES( GLenum target, GLenum query, GLfixed *v )
     ERR( "unsupported\n" );
 }
 static void null_glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMaterialxv( GLenum face, GLenum pname, GLfixed *params )
 {
     ERR( "unsupported\n" );
 }
@@ -87700,6 +88903,10 @@ static void null_glGetTexBumpParameterivATI( GLenum pname, GLint *param )
 {
     ERR( "unsupported\n" );
 }
+static void null_glGetTexEnvxv( GLenum target, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glGetTexEnvxvOES( GLenum target, GLenum pname, GLfixed *params )
 {
     ERR( "unsupported\n" );
@@ -87733,6 +88940,10 @@ static void null_glGetTexParameterIuivEXT( GLenum target, GLenum pname, GLuint *
     ERR( "unsupported\n" );
 }
 static void null_glGetTexParameterPointervAPPLE( GLenum target, GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterxv( GLenum target, GLenum pname, GLfixed *params )
 {
     ERR( "unsupported\n" );
 }
@@ -88680,7 +89891,15 @@ static void null_glLightEnviSGIX( GLenum pname, GLint param )
 {
     ERR( "unsupported\n" );
 }
+static void null_glLightModelx( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glLightModelxOES( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightModelxv( GLenum pname, const GLfixed *param )
 {
     ERR( "unsupported\n" );
 }
@@ -88688,11 +89907,23 @@ static void null_glLightModelxvOES( GLenum pname, const GLfixed *param )
 {
     ERR( "unsupported\n" );
 }
+static void null_glLightx( GLenum light, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glLightxOES( GLenum light, GLenum pname, GLfixed param )
 {
     ERR( "unsupported\n" );
 }
+static void null_glLightxv( GLenum light, GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glLightxvOES( GLenum light, GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLineWidthx( GLfixed width )
 {
     ERR( "unsupported\n" );
 }
@@ -88729,6 +89960,10 @@ static void null_glListParameterivSGIX( GLuint list, GLenum pname, const GLint *
     ERR( "unsupported\n" );
 }
 static void null_glLoadIdentityDeformationMapSGIX( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadMatrixx( const GLfixed *m )
 {
     ERR( "unsupported\n" );
 }
@@ -88909,7 +90144,15 @@ static void null_glMapVertexAttrib2fAPPLE( GLuint index, GLuint size, GLfloat u1
 {
     ERR( "unsupported\n" );
 }
+static void null_glMaterialx( GLenum face, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glMaterialxOES( GLenum face, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaterialxv( GLenum face, GLenum pname, const GLfixed *param )
 {
     ERR( "unsupported\n" );
 }
@@ -89070,6 +90313,10 @@ static void null_glMinmax( GLenum target, GLenum internalformat, GLboolean sink 
     ERR( "unsupported\n" );
 }
 static void null_glMinmaxEXT( GLenum target, GLenum internalformat, GLboolean sink )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultMatrixx( const GLfixed *m )
 {
     ERR( "unsupported\n" );
 }
@@ -89673,6 +90920,10 @@ static void null_glMultiTexCoord4svSGIS( GLenum target, GLshort * v )
 {
     ERR( "unsupported\n" );
 }
+static void null_glMultiTexCoord4x( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glMultiTexCoord4xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q )
 {
     ERR( "unsupported\n" );
@@ -90099,6 +91350,10 @@ static void null_glNormal3hvNV( const GLhalfNV *v )
 {
     ERR( "unsupported\n" );
 }
+static void null_glNormal3x( GLfixed nx, GLfixed ny, GLfixed nz )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glNormal3xOES( GLfixed nx, GLfixed ny, GLfixed nz )
 {
     ERR( "unsupported\n" );
@@ -90189,7 +91444,15 @@ static GLenum null_glObjectUnpurgeableAPPLE( GLenum objectType, GLuint name, GLe
     ERR( "unsupported\n" );
     return 0;
 }
+static void null_glOrthof( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glOrthofOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glOrthox( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
 {
     ERR( "unsupported\n" );
 }
@@ -90425,7 +91688,19 @@ static void null_glPointParameterivNV( GLenum pname, const GLint *params )
 {
     ERR( "unsupported\n" );
 }
+static void null_glPointParameterx( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterxv( GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glPointParameterxvOES( GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointSizex( GLfixed size )
 {
     ERR( "unsupported\n" );
 }
@@ -90452,6 +91727,10 @@ static void null_glPolygonOffsetClampEXT( GLfloat factor, GLfloat units, GLfloat
     ERR( "unsupported\n" );
 }
 static void null_glPolygonOffsetEXT( GLfloat factor, GLfloat bias )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPolygonOffsetx( GLfixed factor, GLfixed units )
 {
     ERR( "unsupported\n" );
 }
@@ -91490,6 +92769,10 @@ static void null_glResumeTransformFeedbackNV(void)
 {
     ERR( "unsupported\n" );
 }
+static void null_glRotatex( GLfixed angle, GLfixed x, GLfixed y, GLfixed z )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glRotatexOES( GLfixed angle, GLfixed x, GLfixed y, GLfixed z )
 {
     ERR( "unsupported\n" );
@@ -91499,6 +92782,10 @@ static void null_glSampleCoverage( GLfloat value, GLboolean invert )
     ERR( "unsupported\n" );
 }
 static void null_glSampleCoverageARB( GLfloat value, GLboolean invert )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleCoveragex( GLclampx value, GLboolean invert )
 {
     ERR( "unsupported\n" );
 }
@@ -91551,6 +92838,10 @@ static void null_glSamplerParameteri( GLuint sampler, GLenum pname, GLint param 
     ERR( "unsupported\n" );
 }
 static void null_glSamplerParameteriv( GLuint sampler, GLenum pname, const GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScalex( GLfixed x, GLfixed y, GLfixed z )
 {
     ERR( "unsupported\n" );
 }
@@ -92269,7 +93560,15 @@ static void null_glTexCoordPointervINTEL( GLint size, GLenum type, const void **
 {
     ERR( "unsupported\n" );
 }
+static void null_glTexEnvx( GLenum target, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glTexEnvxOES( GLenum target, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexEnvxv( GLenum target, GLenum pname, const GLfixed *params )
 {
     ERR( "unsupported\n" );
 }
@@ -92341,7 +93640,15 @@ static void null_glTexParameterIuivEXT( GLenum target, GLenum pname, const GLuin
 {
     ERR( "unsupported\n" );
 }
+static void null_glTexParameterx( GLenum target, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
 static void null_glTexParameterxOES( GLenum target, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterxv( GLenum target, GLenum pname, const GLfixed *params )
 {
     ERR( "unsupported\n" );
 }
@@ -92690,6 +93997,10 @@ static void null_glTransformFeedbackVaryingsNV( GLuint program, GLsizei count, c
     ERR( "unsupported\n" );
 }
 static void null_glTransformPathNV( GLuint resultPath, GLuint srcPath, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTranslatex( GLfixed x, GLfixed y, GLfixed z )
 {
     ERR( "unsupported\n" );
 }
@@ -95417,6 +96728,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glAlphaFragmentOp1ATI = null_glAlphaFragmentOp1ATI,
     .p_glAlphaFragmentOp2ATI = null_glAlphaFragmentOp2ATI,
     .p_glAlphaFragmentOp3ATI = null_glAlphaFragmentOp3ATI,
+    .p_glAlphaFuncx = null_glAlphaFuncx,
     .p_glAlphaFuncxOES = null_glAlphaFuncxOES,
     .p_glAlphaToCoverageDitherControlNV = null_glAlphaToCoverageDitherControlNV,
     .p_glApplyFramebufferAttachmentCMAAINTEL = null_glApplyFramebufferAttachmentCMAAINTEL,
@@ -95565,10 +96877,12 @@ struct opengl_funcs null_opengl_funcs =
     .p_glClearBufferuiv = null_glClearBufferuiv,
     .p_glClearColorIiEXT = null_glClearColorIiEXT,
     .p_glClearColorIuiEXT = null_glClearColorIuiEXT,
+    .p_glClearColorx = null_glClearColorx,
     .p_glClearColorxOES = null_glClearColorxOES,
     .p_glClearDepthdNV = null_glClearDepthdNV,
     .p_glClearDepthf = null_glClearDepthf,
     .p_glClearDepthfOES = null_glClearDepthfOES,
+    .p_glClearDepthx = null_glClearDepthx,
     .p_glClearDepthxOES = null_glClearDepthxOES,
     .p_glClearNamedBufferData = null_glClearNamedBufferData,
     .p_glClearNamedBufferDataEXT = null_glClearNamedBufferDataEXT,
@@ -95587,7 +96901,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glClientWaitSemaphoreui64NVX = null_glClientWaitSemaphoreui64NVX,
     .p_glClientWaitSync = null_glClientWaitSync,
     .p_glClipControl = null_glClipControl,
+    .p_glClipPlanef = null_glClipPlanef,
     .p_glClipPlanefOES = null_glClipPlanefOES,
+    .p_glClipPlanex = null_glClipPlanex,
     .p_glClipPlanexOES = null_glClipPlanexOES,
     .p_glColor3fVertex3fSUN = null_glColor3fVertex3fSUN,
     .p_glColor3fVertex3fvSUN = null_glColor3fVertex3fvSUN,
@@ -95603,6 +96919,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glColor4ubVertex2fvSUN = null_glColor4ubVertex2fvSUN,
     .p_glColor4ubVertex3fSUN = null_glColor4ubVertex3fSUN,
     .p_glColor4ubVertex3fvSUN = null_glColor4ubVertex3fvSUN,
+    .p_glColor4x = null_glColor4x,
     .p_glColor4xOES = null_glColor4xOES,
     .p_glColor4xvOES = null_glColor4xvOES,
     .p_glColorFormatNV = null_glColorFormatNV,
@@ -95805,6 +97122,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glDepthRangedNV = null_glDepthRangedNV,
     .p_glDepthRangef = null_glDepthRangef,
     .p_glDepthRangefOES = null_glDepthRangefOES,
+    .p_glDepthRangex = null_glDepthRangex,
     .p_glDepthRangexOES = null_glDepthRangexOES,
     .p_glDetachObjectARB = null_glDetachObjectARB,
     .p_glDetachShader = null_glDetachShader,
@@ -95937,7 +97255,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glFogCoordhNV = null_glFogCoordhNV,
     .p_glFogCoordhvNV = null_glFogCoordhvNV,
     .p_glFogFuncSGIS = null_glFogFuncSGIS,
+    .p_glFogx = null_glFogx,
     .p_glFogxOES = null_glFogxOES,
+    .p_glFogxv = null_glFogxv,
     .p_glFogxvOES = null_glFogxvOES,
     .p_glFragmentColorMaterialSGIX = null_glFragmentColorMaterialSGIX,
     .p_glFragmentCoverageColorNV = null_glFragmentCoverageColorNV,
@@ -95982,7 +97302,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glFramebufferTextureLayerEXT = null_glFramebufferTextureLayerEXT,
     .p_glFramebufferTextureMultiviewOVR = null_glFramebufferTextureMultiviewOVR,
     .p_glFreeObjectBufferATI = null_glFreeObjectBufferATI,
+    .p_glFrustumf = null_glFrustumf,
     .p_glFrustumfOES = null_glFrustumfOES,
+    .p_glFrustumx = null_glFrustumx,
     .p_glFrustumxOES = null_glFrustumxOES,
     .p_glGenAsyncMarkersSGIX = null_glGenAsyncMarkersSGIX,
     .p_glGenBuffers = null_glGenBuffers,
@@ -96047,7 +97369,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glGetBufferPointervARB = null_glGetBufferPointervARB,
     .p_glGetBufferSubData = null_glGetBufferSubData,
     .p_glGetBufferSubDataARB = null_glGetBufferSubDataARB,
+    .p_glGetClipPlanef = null_glGetClipPlanef,
     .p_glGetClipPlanefOES = null_glGetClipPlanefOES,
+    .p_glGetClipPlanex = null_glGetClipPlanex,
     .p_glGetClipPlanexOES = null_glGetClipPlanexOES,
     .p_glGetColorTable = null_glGetColorTable,
     .p_glGetColorTableEXT = null_glGetColorTableEXT,
@@ -96089,6 +97413,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glGetFinalCombinerInputParameterfvNV = null_glGetFinalCombinerInputParameterfvNV,
     .p_glGetFinalCombinerInputParameterivNV = null_glGetFinalCombinerInputParameterivNV,
     .p_glGetFirstPerfQueryIdINTEL = null_glGetFirstPerfQueryIdINTEL,
+    .p_glGetFixedv = null_glGetFixedv,
     .p_glGetFixedvOES = null_glGetFixedvOES,
     .p_glGetFloatIndexedvEXT = null_glGetFloatIndexedvEXT,
     .p_glGetFloati_v = null_glGetFloati_v,
@@ -96136,6 +97461,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glGetInvariantFloatvEXT = null_glGetInvariantFloatvEXT,
     .p_glGetInvariantIntegervEXT = null_glGetInvariantIntegervEXT,
     .p_glGetLightxOES = null_glGetLightxOES,
+    .p_glGetLightxv = null_glGetLightxv,
     .p_glGetListParameterfvSGIX = null_glGetListParameterfvSGIX,
     .p_glGetListParameterivSGIX = null_glGetListParameterivSGIX,
     .p_glGetLocalConstantBooleanvEXT = null_glGetLocalConstantBooleanvEXT,
@@ -96148,6 +97474,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glGetMapParameterivNV = null_glGetMapParameterivNV,
     .p_glGetMapxvOES = null_glGetMapxvOES,
     .p_glGetMaterialxOES = null_glGetMaterialxOES,
+    .p_glGetMaterialxv = null_glGetMaterialxv,
     .p_glGetMemoryObjectDetachedResourcesuivNV = null_glGetMemoryObjectDetachedResourcesuivNV,
     .p_glGetMemoryObjectParameterivEXT = null_glGetMemoryObjectParameterivEXT,
     .p_glGetMinmax = null_glGetMinmax,
@@ -96305,6 +97632,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glGetSynciv = null_glGetSynciv,
     .p_glGetTexBumpParameterfvATI = null_glGetTexBumpParameterfvATI,
     .p_glGetTexBumpParameterivATI = null_glGetTexBumpParameterivATI,
+    .p_glGetTexEnvxv = null_glGetTexEnvxv,
     .p_glGetTexEnvxvOES = null_glGetTexEnvxvOES,
     .p_glGetTexFilterFuncSGIS = null_glGetTexFilterFuncSGIS,
     .p_glGetTexGenxvOES = null_glGetTexGenxvOES,
@@ -96314,6 +97642,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glGetTexParameterIuiv = null_glGetTexParameterIuiv,
     .p_glGetTexParameterIuivEXT = null_glGetTexParameterIuivEXT,
     .p_glGetTexParameterPointervAPPLE = null_glGetTexParameterPointervAPPLE,
+    .p_glGetTexParameterxv = null_glGetTexParameterxv,
     .p_glGetTexParameterxvOES = null_glGetTexParameterxvOES,
     .p_glGetTextureHandleARB = null_glGetTextureHandleARB,
     .p_glGetTextureHandleNV = null_glGetTextureHandleNV,
@@ -96536,10 +97865,15 @@ struct opengl_funcs null_opengl_funcs =
     .p_glLGPUNamedBufferSubDataNVX = null_glLGPUNamedBufferSubDataNVX,
     .p_glLabelObjectEXT = null_glLabelObjectEXT,
     .p_glLightEnviSGIX = null_glLightEnviSGIX,
+    .p_glLightModelx = null_glLightModelx,
     .p_glLightModelxOES = null_glLightModelxOES,
+    .p_glLightModelxv = null_glLightModelxv,
     .p_glLightModelxvOES = null_glLightModelxvOES,
+    .p_glLightx = null_glLightx,
     .p_glLightxOES = null_glLightxOES,
+    .p_glLightxv = null_glLightxv,
     .p_glLightxvOES = null_glLightxvOES,
+    .p_glLineWidthx = null_glLineWidthx,
     .p_glLineWidthxOES = null_glLineWidthxOES,
     .p_glLinkProgram = null_glLinkProgram,
     .p_glLinkProgramARB = null_glLinkProgramARB,
@@ -96549,6 +97883,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glListParameteriSGIX = null_glListParameteriSGIX,
     .p_glListParameterivSGIX = null_glListParameterivSGIX,
     .p_glLoadIdentityDeformationMapSGIX = null_glLoadIdentityDeformationMapSGIX,
+    .p_glLoadMatrixx = null_glLoadMatrixx,
     .p_glLoadMatrixxOES = null_glLoadMatrixxOES,
     .p_glLoadProgramNV = null_glLoadProgramNV,
     .p_glLoadTransposeMatrixd = null_glLoadTransposeMatrixd,
@@ -96591,7 +97926,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glMapVertexAttrib1fAPPLE = null_glMapVertexAttrib1fAPPLE,
     .p_glMapVertexAttrib2dAPPLE = null_glMapVertexAttrib2dAPPLE,
     .p_glMapVertexAttrib2fAPPLE = null_glMapVertexAttrib2fAPPLE,
+    .p_glMaterialx = null_glMaterialx,
     .p_glMaterialxOES = null_glMaterialxOES,
+    .p_glMaterialxv = null_glMaterialxv,
     .p_glMaterialxvOES = null_glMaterialxvOES,
     .p_glMatrixFrustumEXT = null_glMatrixFrustumEXT,
     .p_glMatrixIndexPointerARB = null_glMatrixIndexPointerARB,
@@ -96632,6 +97969,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glMinSampleShadingARB = null_glMinSampleShadingARB,
     .p_glMinmax = null_glMinmax,
     .p_glMinmaxEXT = null_glMinmaxEXT,
+    .p_glMultMatrixx = null_glMultMatrixx,
     .p_glMultMatrixxOES = null_glMultMatrixxOES,
     .p_glMultTransposeMatrixd = null_glMultTransposeMatrixd,
     .p_glMultTransposeMatrixdARB = null_glMultTransposeMatrixdARB,
@@ -96782,6 +98120,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glMultiTexCoord4sv = null_glMultiTexCoord4sv,
     .p_glMultiTexCoord4svARB = null_glMultiTexCoord4svARB,
     .p_glMultiTexCoord4svSGIS = null_glMultiTexCoord4svSGIS,
+    .p_glMultiTexCoord4x = null_glMultiTexCoord4x,
     .p_glMultiTexCoord4xOES = null_glMultiTexCoord4xOES,
     .p_glMultiTexCoord4xvOES = null_glMultiTexCoord4xvOES,
     .p_glMultiTexCoordP1ui = null_glMultiTexCoordP1ui,
@@ -96888,6 +98227,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glNormal3fVertex3fvSUN = null_glNormal3fVertex3fvSUN,
     .p_glNormal3hNV = null_glNormal3hNV,
     .p_glNormal3hvNV = null_glNormal3hvNV,
+    .p_glNormal3x = null_glNormal3x,
     .p_glNormal3xOES = null_glNormal3xOES,
     .p_glNormal3xvOES = null_glNormal3xvOES,
     .p_glNormalFormatNV = null_glNormalFormatNV,
@@ -96910,7 +98250,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glObjectPtrLabel = null_glObjectPtrLabel,
     .p_glObjectPurgeableAPPLE = null_glObjectPurgeableAPPLE,
     .p_glObjectUnpurgeableAPPLE = null_glObjectUnpurgeableAPPLE,
+    .p_glOrthof = null_glOrthof,
     .p_glOrthofOES = null_glOrthofOES,
+    .p_glOrthox = null_glOrthox,
     .p_glOrthoxOES = null_glOrthoxOES,
     .p_glPNTrianglesfATI = null_glPNTrianglesfATI,
     .p_glPNTrianglesiATI = null_glPNTrianglesiATI,
@@ -96968,13 +98310,17 @@ struct opengl_funcs null_opengl_funcs =
     .p_glPointParameteriNV = null_glPointParameteriNV,
     .p_glPointParameteriv = null_glPointParameteriv,
     .p_glPointParameterivNV = null_glPointParameterivNV,
+    .p_glPointParameterx = null_glPointParameterx,
+    .p_glPointParameterxv = null_glPointParameterxv,
     .p_glPointParameterxvOES = null_glPointParameterxvOES,
+    .p_glPointSizex = null_glPointSizex,
     .p_glPointSizexOES = null_glPointSizexOES,
     .p_glPollAsyncSGIX = null_glPollAsyncSGIX,
     .p_glPollInstrumentsSGIX = null_glPollInstrumentsSGIX,
     .p_glPolygonOffsetClamp = null_glPolygonOffsetClamp,
     .p_glPolygonOffsetClampEXT = null_glPolygonOffsetClampEXT,
     .p_glPolygonOffsetEXT = null_glPolygonOffsetEXT,
+    .p_glPolygonOffsetx = null_glPolygonOffsetx,
     .p_glPolygonOffsetxOES = null_glPolygonOffsetxOES,
     .p_glPopDebugGroup = null_glPopDebugGroup,
     .p_glPopGroupMarkerEXT = null_glPopGroupMarkerEXT,
@@ -97233,9 +98579,11 @@ struct opengl_funcs null_opengl_funcs =
     .p_glResolveDepthValuesNV = null_glResolveDepthValuesNV,
     .p_glResumeTransformFeedback = null_glResumeTransformFeedback,
     .p_glResumeTransformFeedbackNV = null_glResumeTransformFeedbackNV,
+    .p_glRotatex = null_glRotatex,
     .p_glRotatexOES = null_glRotatexOES,
     .p_glSampleCoverage = null_glSampleCoverage,
     .p_glSampleCoverageARB = null_glSampleCoverageARB,
+    .p_glSampleCoveragex = null_glSampleCoveragex,
     .p_glSampleMapATI = null_glSampleMapATI,
     .p_glSampleMaskEXT = null_glSampleMaskEXT,
     .p_glSampleMaskIndexedNV = null_glSampleMaskIndexedNV,
@@ -97249,6 +98597,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glSamplerParameterfv = null_glSamplerParameterfv,
     .p_glSamplerParameteri = null_glSamplerParameteri,
     .p_glSamplerParameteriv = null_glSamplerParameteriv,
+    .p_glScalex = null_glScalex,
     .p_glScalexOES = null_glScalexOES,
     .p_glScissorArrayv = null_glScissorArrayv,
     .p_glScissorExclusiveArrayvNV = null_glScissorExclusiveArrayvNV,
@@ -97427,7 +98776,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glTexCoordPointerEXT = null_glTexCoordPointerEXT,
     .p_glTexCoordPointerListIBM = null_glTexCoordPointerListIBM,
     .p_glTexCoordPointervINTEL = null_glTexCoordPointervINTEL,
+    .p_glTexEnvx = null_glTexEnvx,
     .p_glTexEnvxOES = null_glTexEnvxOES,
+    .p_glTexEnvxv = null_glTexEnvxv,
     .p_glTexEnvxvOES = null_glTexEnvxvOES,
     .p_glTexFilterFuncSGIS = null_glTexFilterFuncSGIS,
     .p_glTexGenxOES = null_glTexGenxOES,
@@ -97445,7 +98796,9 @@ struct opengl_funcs null_opengl_funcs =
     .p_glTexParameterIivEXT = null_glTexParameterIivEXT,
     .p_glTexParameterIuiv = null_glTexParameterIuiv,
     .p_glTexParameterIuivEXT = null_glTexParameterIuivEXT,
+    .p_glTexParameterx = null_glTexParameterx,
     .p_glTexParameterxOES = null_glTexParameterxOES,
+    .p_glTexParameterxv = null_glTexParameterxv,
     .p_glTexParameterxvOES = null_glTexParameterxvOES,
     .p_glTexRenderbufferNV = null_glTexRenderbufferNV,
     .p_glTexStorage1D = null_glTexStorage1D,
@@ -97533,6 +98886,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glTransformFeedbackVaryingsEXT = null_glTransformFeedbackVaryingsEXT,
     .p_glTransformFeedbackVaryingsNV = null_glTransformFeedbackVaryingsNV,
     .p_glTransformPathNV = null_glTransformPathNV,
+    .p_glTranslatex = null_glTranslatex,
     .p_glTranslatexOES = null_glTranslatexOES,
     .p_glUniform1d = null_glUniform1d,
     .p_glUniform1dv = null_glUniform1dv,
@@ -98118,8 +99472,8 @@ struct opengl_funcs null_opengl_funcs =
     .p_wglSwapIntervalEXT = null_wglSwapIntervalEXT,
 };
 
-const int extension_registry_size = 2715;
-const struct registry_entry extension_registry[2715] =
+const int extension_registry_size = 2758;
+const struct registry_entry extension_registry[2758] =
 {
     { "glAccumxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glAccumxOES) },
     { "glAcquireKeyedMutexWin32EXT", "GL_EXT_win32_keyed_mutex\0", offsetof(struct opengl_funcs, p_glAcquireKeyedMutexWin32EXT) },
@@ -98132,6 +99486,7 @@ const struct registry_entry extension_registry[2715] =
     { "glAlphaFragmentOp1ATI", "GL_ATI_fragment_shader\0", offsetof(struct opengl_funcs, p_glAlphaFragmentOp1ATI) },
     { "glAlphaFragmentOp2ATI", "GL_ATI_fragment_shader\0", offsetof(struct opengl_funcs, p_glAlphaFragmentOp2ATI) },
     { "glAlphaFragmentOp3ATI", "GL_ATI_fragment_shader\0", offsetof(struct opengl_funcs, p_glAlphaFragmentOp3ATI) },
+    { "glAlphaFuncx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glAlphaFuncx) },
     { "glAlphaFuncxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glAlphaFuncxOES) },
     { "glAlphaToCoverageDitherControlNV", "GL_NV_alpha_to_coverage_dither_control\0", offsetof(struct opengl_funcs, p_glAlphaToCoverageDitherControlNV) },
     { "glApplyFramebufferAttachmentCMAAINTEL", "GL_INTEL_framebuffer_CMAA\0", offsetof(struct opengl_funcs, p_glApplyFramebufferAttachmentCMAAINTEL) },
@@ -98280,10 +99635,12 @@ const struct registry_entry extension_registry[2715] =
     { "glClearBufferuiv", "GL_VERSION_3_0\0", offsetof(struct opengl_funcs, p_glClearBufferuiv) },
     { "glClearColorIiEXT", "GL_EXT_texture_integer\0", offsetof(struct opengl_funcs, p_glClearColorIiEXT) },
     { "glClearColorIuiEXT", "GL_EXT_texture_integer\0", offsetof(struct opengl_funcs, p_glClearColorIuiEXT) },
+    { "glClearColorx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glClearColorx) },
     { "glClearColorxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glClearColorxOES) },
     { "glClearDepthdNV", "GL_NV_depth_buffer_float\0", offsetof(struct opengl_funcs, p_glClearDepthdNV) },
     { "glClearDepthf", "GL_ARB_ES2_compatibility\0GL_VERSION_4_1\0", offsetof(struct opengl_funcs, p_glClearDepthf) },
     { "glClearDepthfOES", "GL_OES_single_precision\0", offsetof(struct opengl_funcs, p_glClearDepthfOES) },
+    { "glClearDepthx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glClearDepthx) },
     { "glClearDepthxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glClearDepthxOES) },
     { "glClearNamedBufferData", "GL_ARB_direct_state_access\0GL_VERSION_4_5\0", offsetof(struct opengl_funcs, p_glClearNamedBufferData) },
     { "glClearNamedBufferDataEXT", "GL_EXT_direct_state_access\0", offsetof(struct opengl_funcs, p_glClearNamedBufferDataEXT) },
@@ -98302,7 +99659,9 @@ const struct registry_entry extension_registry[2715] =
     { "glClientWaitSemaphoreui64NVX", "GL_NVX_progress_fence\0", offsetof(struct opengl_funcs, p_glClientWaitSemaphoreui64NVX) },
     { "glClientWaitSync", "GL_ARB_sync\0GL_VERSION_3_2\0", offsetof(struct opengl_funcs, p_glClientWaitSync) },
     { "glClipControl", "GL_ARB_clip_control\0GL_VERSION_4_5\0", offsetof(struct opengl_funcs, p_glClipControl) },
+    { "glClipPlanef", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glClipPlanef) },
     { "glClipPlanefOES", "GL_OES_single_precision\0", offsetof(struct opengl_funcs, p_glClipPlanefOES) },
+    { "glClipPlanex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glClipPlanex) },
     { "glClipPlanexOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glClipPlanexOES) },
     { "glColor3fVertex3fSUN", "GL_SUN_vertex\0", offsetof(struct opengl_funcs, p_glColor3fVertex3fSUN) },
     { "glColor3fVertex3fvSUN", "GL_SUN_vertex\0", offsetof(struct opengl_funcs, p_glColor3fVertex3fvSUN) },
@@ -98318,6 +99677,7 @@ const struct registry_entry extension_registry[2715] =
     { "glColor4ubVertex2fvSUN", "GL_SUN_vertex\0", offsetof(struct opengl_funcs, p_glColor4ubVertex2fvSUN) },
     { "glColor4ubVertex3fSUN", "GL_SUN_vertex\0", offsetof(struct opengl_funcs, p_glColor4ubVertex3fSUN) },
     { "glColor4ubVertex3fvSUN", "GL_SUN_vertex\0", offsetof(struct opengl_funcs, p_glColor4ubVertex3fvSUN) },
+    { "glColor4x", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glColor4x) },
     { "glColor4xOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glColor4xOES) },
     { "glColor4xvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glColor4xvOES) },
     { "glColorFormatNV", "GL_NV_vertex_buffer_unified_memory\0", offsetof(struct opengl_funcs, p_glColorFormatNV) },
@@ -98520,6 +99880,7 @@ const struct registry_entry extension_registry[2715] =
     { "glDepthRangedNV", "GL_NV_depth_buffer_float\0", offsetof(struct opengl_funcs, p_glDepthRangedNV) },
     { "glDepthRangef", "GL_ARB_ES2_compatibility\0GL_VERSION_4_1\0", offsetof(struct opengl_funcs, p_glDepthRangef) },
     { "glDepthRangefOES", "GL_OES_single_precision\0", offsetof(struct opengl_funcs, p_glDepthRangefOES) },
+    { "glDepthRangex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glDepthRangex) },
     { "glDepthRangexOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glDepthRangexOES) },
     { "glDetachObjectARB", "GL_ARB_shader_objects\0", offsetof(struct opengl_funcs, p_glDetachObjectARB) },
     { "glDetachShader", "GL_VERSION_2_0\0", offsetof(struct opengl_funcs, p_glDetachShader) },
@@ -98652,7 +100013,9 @@ const struct registry_entry extension_registry[2715] =
     { "glFogCoordhNV", "GL_NV_half_float\0", offsetof(struct opengl_funcs, p_glFogCoordhNV) },
     { "glFogCoordhvNV", "GL_NV_half_float\0", offsetof(struct opengl_funcs, p_glFogCoordhvNV) },
     { "glFogFuncSGIS", "GL_SGIS_fog_function\0", offsetof(struct opengl_funcs, p_glFogFuncSGIS) },
+    { "glFogx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glFogx) },
     { "glFogxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glFogxOES) },
+    { "glFogxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glFogxv) },
     { "glFogxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glFogxvOES) },
     { "glFragmentColorMaterialSGIX", "GL_SGIX_fragment_lighting\0", offsetof(struct opengl_funcs, p_glFragmentColorMaterialSGIX) },
     { "glFragmentCoverageColorNV", "GL_NV_fragment_coverage_to_color\0", offsetof(struct opengl_funcs, p_glFragmentCoverageColorNV) },
@@ -98697,7 +100060,9 @@ const struct registry_entry extension_registry[2715] =
     { "glFramebufferTextureLayerEXT", "GL_EXT_texture_array\0GL_NV_geometry_program4\0", offsetof(struct opengl_funcs, p_glFramebufferTextureLayerEXT) },
     { "glFramebufferTextureMultiviewOVR", "GL_OVR_multiview\0", offsetof(struct opengl_funcs, p_glFramebufferTextureMultiviewOVR) },
     { "glFreeObjectBufferATI", "GL_ATI_vertex_array_object\0", offsetof(struct opengl_funcs, p_glFreeObjectBufferATI) },
+    { "glFrustumf", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glFrustumf) },
     { "glFrustumfOES", "GL_OES_single_precision\0", offsetof(struct opengl_funcs, p_glFrustumfOES) },
+    { "glFrustumx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glFrustumx) },
     { "glFrustumxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glFrustumxOES) },
     { "glGenAsyncMarkersSGIX", "GL_SGIX_async\0", offsetof(struct opengl_funcs, p_glGenAsyncMarkersSGIX) },
     { "glGenBuffers", "GL_VERSION_1_5\0", offsetof(struct opengl_funcs, p_glGenBuffers) },
@@ -98762,7 +100127,9 @@ const struct registry_entry extension_registry[2715] =
     { "glGetBufferPointervARB", "GL_ARB_vertex_buffer_object\0", offsetof(struct opengl_funcs, p_glGetBufferPointervARB) },
     { "glGetBufferSubData", "GL_VERSION_1_5\0", offsetof(struct opengl_funcs, p_glGetBufferSubData) },
     { "glGetBufferSubDataARB", "GL_ARB_vertex_buffer_object\0", offsetof(struct opengl_funcs, p_glGetBufferSubDataARB) },
+    { "glGetClipPlanef", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glGetClipPlanef) },
     { "glGetClipPlanefOES", "GL_OES_single_precision\0", offsetof(struct opengl_funcs, p_glGetClipPlanefOES) },
+    { "glGetClipPlanex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glGetClipPlanex) },
     { "glGetClipPlanexOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetClipPlanexOES) },
     { "glGetColorTable", "GL_ARB_imaging\0", offsetof(struct opengl_funcs, p_glGetColorTable) },
     { "glGetColorTableEXT", "GL_EXT_paletted_texture\0", offsetof(struct opengl_funcs, p_glGetColorTableEXT) },
@@ -98804,6 +100171,7 @@ const struct registry_entry extension_registry[2715] =
     { "glGetFinalCombinerInputParameterfvNV", "GL_NV_register_combiners\0", offsetof(struct opengl_funcs, p_glGetFinalCombinerInputParameterfvNV) },
     { "glGetFinalCombinerInputParameterivNV", "GL_NV_register_combiners\0", offsetof(struct opengl_funcs, p_glGetFinalCombinerInputParameterivNV) },
     { "glGetFirstPerfQueryIdINTEL", "GL_INTEL_performance_query\0", offsetof(struct opengl_funcs, p_glGetFirstPerfQueryIdINTEL) },
+    { "glGetFixedv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glGetFixedv) },
     { "glGetFixedvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetFixedvOES) },
     { "glGetFloatIndexedvEXT", "GL_EXT_direct_state_access\0", offsetof(struct opengl_funcs, p_glGetFloatIndexedvEXT) },
     { "glGetFloati_v", "GL_ARB_viewport_array\0GL_VERSION_4_1\0", offsetof(struct opengl_funcs, p_glGetFloati_v) },
@@ -98851,6 +100219,7 @@ const struct registry_entry extension_registry[2715] =
     { "glGetInvariantFloatvEXT", "GL_EXT_vertex_shader\0", offsetof(struct opengl_funcs, p_glGetInvariantFloatvEXT) },
     { "glGetInvariantIntegervEXT", "GL_EXT_vertex_shader\0", offsetof(struct opengl_funcs, p_glGetInvariantIntegervEXT) },
     { "glGetLightxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetLightxOES) },
+    { "glGetLightxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glGetLightxv) },
     { "glGetListParameterfvSGIX", "GL_SGIX_list_priority\0", offsetof(struct opengl_funcs, p_glGetListParameterfvSGIX) },
     { "glGetListParameterivSGIX", "GL_SGIX_list_priority\0", offsetof(struct opengl_funcs, p_glGetListParameterivSGIX) },
     { "glGetLocalConstantBooleanvEXT", "GL_EXT_vertex_shader\0", offsetof(struct opengl_funcs, p_glGetLocalConstantBooleanvEXT) },
@@ -98863,6 +100232,7 @@ const struct registry_entry extension_registry[2715] =
     { "glGetMapParameterivNV", "GL_NV_evaluators\0", offsetof(struct opengl_funcs, p_glGetMapParameterivNV) },
     { "glGetMapxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetMapxvOES) },
     { "glGetMaterialxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetMaterialxOES) },
+    { "glGetMaterialxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glGetMaterialxv) },
     { "glGetMemoryObjectDetachedResourcesuivNV", "GL_NV_memory_attachment\0", offsetof(struct opengl_funcs, p_glGetMemoryObjectDetachedResourcesuivNV) },
     { "glGetMemoryObjectParameterivEXT", "GL_EXT_memory_object\0", offsetof(struct opengl_funcs, p_glGetMemoryObjectParameterivEXT) },
     { "glGetMinmax", "GL_ARB_imaging\0", offsetof(struct opengl_funcs, p_glGetMinmax) },
@@ -99020,6 +100390,7 @@ const struct registry_entry extension_registry[2715] =
     { "glGetSynciv", "GL_ARB_sync\0GL_VERSION_3_2\0", offsetof(struct opengl_funcs, p_glGetSynciv) },
     { "glGetTexBumpParameterfvATI", "GL_ATI_envmap_bumpmap\0", offsetof(struct opengl_funcs, p_glGetTexBumpParameterfvATI) },
     { "glGetTexBumpParameterivATI", "GL_ATI_envmap_bumpmap\0", offsetof(struct opengl_funcs, p_glGetTexBumpParameterivATI) },
+    { "glGetTexEnvxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glGetTexEnvxv) },
     { "glGetTexEnvxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetTexEnvxvOES) },
     { "glGetTexFilterFuncSGIS", "GL_SGIS_texture_filter4\0", offsetof(struct opengl_funcs, p_glGetTexFilterFuncSGIS) },
     { "glGetTexGenxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetTexGenxvOES) },
@@ -99029,6 +100400,7 @@ const struct registry_entry extension_registry[2715] =
     { "glGetTexParameterIuiv", "GL_VERSION_3_0\0", offsetof(struct opengl_funcs, p_glGetTexParameterIuiv) },
     { "glGetTexParameterIuivEXT", "GL_EXT_texture_integer\0", offsetof(struct opengl_funcs, p_glGetTexParameterIuivEXT) },
     { "glGetTexParameterPointervAPPLE", "GL_APPLE_texture_range\0", offsetof(struct opengl_funcs, p_glGetTexParameterPointervAPPLE) },
+    { "glGetTexParameterxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glGetTexParameterxv) },
     { "glGetTexParameterxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glGetTexParameterxvOES) },
     { "glGetTextureHandleARB", "GL_ARB_bindless_texture\0", offsetof(struct opengl_funcs, p_glGetTextureHandleARB) },
     { "glGetTextureHandleNV", "GL_NV_bindless_texture\0", offsetof(struct opengl_funcs, p_glGetTextureHandleNV) },
@@ -99251,10 +100623,15 @@ const struct registry_entry extension_registry[2715] =
     { "glLGPUNamedBufferSubDataNVX", "GL_NVX_linked_gpu_multicast\0", offsetof(struct opengl_funcs, p_glLGPUNamedBufferSubDataNVX) },
     { "glLabelObjectEXT", "GL_EXT_debug_label\0", offsetof(struct opengl_funcs, p_glLabelObjectEXT) },
     { "glLightEnviSGIX", "GL_SGIX_fragment_lighting\0", offsetof(struct opengl_funcs, p_glLightEnviSGIX) },
+    { "glLightModelx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glLightModelx) },
     { "glLightModelxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glLightModelxOES) },
+    { "glLightModelxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glLightModelxv) },
     { "glLightModelxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glLightModelxvOES) },
+    { "glLightx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glLightx) },
     { "glLightxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glLightxOES) },
+    { "glLightxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glLightxv) },
     { "glLightxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glLightxvOES) },
+    { "glLineWidthx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glLineWidthx) },
     { "glLineWidthxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glLineWidthxOES) },
     { "glLinkProgram", "GL_VERSION_2_0\0", offsetof(struct opengl_funcs, p_glLinkProgram) },
     { "glLinkProgramARB", "GL_ARB_shader_objects\0", offsetof(struct opengl_funcs, p_glLinkProgramARB) },
@@ -99264,6 +100641,7 @@ const struct registry_entry extension_registry[2715] =
     { "glListParameteriSGIX", "GL_SGIX_list_priority\0", offsetof(struct opengl_funcs, p_glListParameteriSGIX) },
     { "glListParameterivSGIX", "GL_SGIX_list_priority\0", offsetof(struct opengl_funcs, p_glListParameterivSGIX) },
     { "glLoadIdentityDeformationMapSGIX", "GL_SGIX_polynomial_ffd\0", offsetof(struct opengl_funcs, p_glLoadIdentityDeformationMapSGIX) },
+    { "glLoadMatrixx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glLoadMatrixx) },
     { "glLoadMatrixxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glLoadMatrixxOES) },
     { "glLoadProgramNV", "GL_NV_vertex_program\0", offsetof(struct opengl_funcs, p_glLoadProgramNV) },
     { "glLoadTransposeMatrixd", "GL_VERSION_1_3\0", offsetof(struct opengl_funcs, p_glLoadTransposeMatrixd) },
@@ -99306,7 +100684,9 @@ const struct registry_entry extension_registry[2715] =
     { "glMapVertexAttrib1fAPPLE", "GL_APPLE_vertex_program_evaluators\0", offsetof(struct opengl_funcs, p_glMapVertexAttrib1fAPPLE) },
     { "glMapVertexAttrib2dAPPLE", "GL_APPLE_vertex_program_evaluators\0", offsetof(struct opengl_funcs, p_glMapVertexAttrib2dAPPLE) },
     { "glMapVertexAttrib2fAPPLE", "GL_APPLE_vertex_program_evaluators\0", offsetof(struct opengl_funcs, p_glMapVertexAttrib2fAPPLE) },
+    { "glMaterialx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glMaterialx) },
     { "glMaterialxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glMaterialxOES) },
+    { "glMaterialxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glMaterialxv) },
     { "glMaterialxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glMaterialxvOES) },
     { "glMatrixFrustumEXT", "GL_EXT_direct_state_access\0GL_NV_path_rendering\0", offsetof(struct opengl_funcs, p_glMatrixFrustumEXT) },
     { "glMatrixIndexPointerARB", "GL_ARB_matrix_palette\0", offsetof(struct opengl_funcs, p_glMatrixIndexPointerARB) },
@@ -99347,6 +100727,7 @@ const struct registry_entry extension_registry[2715] =
     { "glMinSampleShadingARB", "GL_ARB_sample_shading\0", offsetof(struct opengl_funcs, p_glMinSampleShadingARB) },
     { "glMinmax", "GL_ARB_imaging\0", offsetof(struct opengl_funcs, p_glMinmax) },
     { "glMinmaxEXT", "GL_EXT_histogram\0", offsetof(struct opengl_funcs, p_glMinmaxEXT) },
+    { "glMultMatrixx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glMultMatrixx) },
     { "glMultMatrixxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glMultMatrixxOES) },
     { "glMultTransposeMatrixd", "GL_VERSION_1_3\0", offsetof(struct opengl_funcs, p_glMultTransposeMatrixd) },
     { "glMultTransposeMatrixdARB", "GL_ARB_transpose_matrix\0", offsetof(struct opengl_funcs, p_glMultTransposeMatrixdARB) },
@@ -99497,6 +100878,7 @@ const struct registry_entry extension_registry[2715] =
     { "glMultiTexCoord4sv", "GL_VERSION_1_3\0", offsetof(struct opengl_funcs, p_glMultiTexCoord4sv) },
     { "glMultiTexCoord4svARB", "GL_ARB_multitexture\0", offsetof(struct opengl_funcs, p_glMultiTexCoord4svARB) },
     { "glMultiTexCoord4svSGIS", "GL_SGIS_multitexture\0", offsetof(struct opengl_funcs, p_glMultiTexCoord4svSGIS) },
+    { "glMultiTexCoord4x", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glMultiTexCoord4x) },
     { "glMultiTexCoord4xOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glMultiTexCoord4xOES) },
     { "glMultiTexCoord4xvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glMultiTexCoord4xvOES) },
     { "glMultiTexCoordP1ui", "GL_ARB_vertex_type_2_10_10_10_rev\0GL_VERSION_3_3\0", offsetof(struct opengl_funcs, p_glMultiTexCoordP1ui) },
@@ -99603,6 +100985,7 @@ const struct registry_entry extension_registry[2715] =
     { "glNormal3fVertex3fvSUN", "GL_SUN_vertex\0", offsetof(struct opengl_funcs, p_glNormal3fVertex3fvSUN) },
     { "glNormal3hNV", "GL_NV_half_float\0", offsetof(struct opengl_funcs, p_glNormal3hNV) },
     { "glNormal3hvNV", "GL_NV_half_float\0", offsetof(struct opengl_funcs, p_glNormal3hvNV) },
+    { "glNormal3x", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glNormal3x) },
     { "glNormal3xOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glNormal3xOES) },
     { "glNormal3xvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glNormal3xvOES) },
     { "glNormalFormatNV", "GL_NV_vertex_buffer_unified_memory\0", offsetof(struct opengl_funcs, p_glNormalFormatNV) },
@@ -99625,7 +101008,9 @@ const struct registry_entry extension_registry[2715] =
     { "glObjectPtrLabel", "GL_KHR_debug\0GL_VERSION_4_3\0", offsetof(struct opengl_funcs, p_glObjectPtrLabel) },
     { "glObjectPurgeableAPPLE", "GL_APPLE_object_purgeable\0", offsetof(struct opengl_funcs, p_glObjectPurgeableAPPLE) },
     { "glObjectUnpurgeableAPPLE", "GL_APPLE_object_purgeable\0", offsetof(struct opengl_funcs, p_glObjectUnpurgeableAPPLE) },
+    { "glOrthof", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glOrthof) },
     { "glOrthofOES", "GL_OES_single_precision\0", offsetof(struct opengl_funcs, p_glOrthofOES) },
+    { "glOrthox", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glOrthox) },
     { "glOrthoxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glOrthoxOES) },
     { "glPNTrianglesfATI", "GL_ATI_pn_triangles\0", offsetof(struct opengl_funcs, p_glPNTrianglesfATI) },
     { "glPNTrianglesiATI", "GL_ATI_pn_triangles\0", offsetof(struct opengl_funcs, p_glPNTrianglesiATI) },
@@ -99683,13 +101068,17 @@ const struct registry_entry extension_registry[2715] =
     { "glPointParameteriNV", "GL_NV_point_sprite\0", offsetof(struct opengl_funcs, p_glPointParameteriNV) },
     { "glPointParameteriv", "GL_VERSION_1_4\0", offsetof(struct opengl_funcs, p_glPointParameteriv) },
     { "glPointParameterivNV", "GL_NV_point_sprite\0", offsetof(struct opengl_funcs, p_glPointParameterivNV) },
+    { "glPointParameterx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glPointParameterx) },
+    { "glPointParameterxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glPointParameterxv) },
     { "glPointParameterxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glPointParameterxvOES) },
+    { "glPointSizex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glPointSizex) },
     { "glPointSizexOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glPointSizexOES) },
     { "glPollAsyncSGIX", "GL_SGIX_async\0", offsetof(struct opengl_funcs, p_glPollAsyncSGIX) },
     { "glPollInstrumentsSGIX", "GL_SGIX_instruments\0", offsetof(struct opengl_funcs, p_glPollInstrumentsSGIX) },
     { "glPolygonOffsetClamp", "GL_ARB_polygon_offset_clamp\0GL_VERSION_4_6\0", offsetof(struct opengl_funcs, p_glPolygonOffsetClamp) },
     { "glPolygonOffsetClampEXT", "GL_EXT_polygon_offset_clamp\0", offsetof(struct opengl_funcs, p_glPolygonOffsetClampEXT) },
     { "glPolygonOffsetEXT", "GL_EXT_polygon_offset\0", offsetof(struct opengl_funcs, p_glPolygonOffsetEXT) },
+    { "glPolygonOffsetx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glPolygonOffsetx) },
     { "glPolygonOffsetxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glPolygonOffsetxOES) },
     { "glPopDebugGroup", "GL_KHR_debug\0GL_VERSION_4_3\0", offsetof(struct opengl_funcs, p_glPopDebugGroup) },
     { "glPopGroupMarkerEXT", "GL_EXT_debug_marker\0", offsetof(struct opengl_funcs, p_glPopGroupMarkerEXT) },
@@ -99948,9 +101337,11 @@ const struct registry_entry extension_registry[2715] =
     { "glResolveDepthValuesNV", "GL_NV_sample_locations\0", offsetof(struct opengl_funcs, p_glResolveDepthValuesNV) },
     { "glResumeTransformFeedback", "GL_ARB_transform_feedback2\0GL_VERSION_4_0\0", offsetof(struct opengl_funcs, p_glResumeTransformFeedback) },
     { "glResumeTransformFeedbackNV", "GL_NV_transform_feedback2\0", offsetof(struct opengl_funcs, p_glResumeTransformFeedbackNV) },
+    { "glRotatex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glRotatex) },
     { "glRotatexOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glRotatexOES) },
     { "glSampleCoverage", "GL_VERSION_1_3\0", offsetof(struct opengl_funcs, p_glSampleCoverage) },
     { "glSampleCoverageARB", "GL_ARB_multisample\0", offsetof(struct opengl_funcs, p_glSampleCoverageARB) },
+    { "glSampleCoveragex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glSampleCoveragex) },
     { "glSampleMapATI", "GL_ATI_fragment_shader\0", offsetof(struct opengl_funcs, p_glSampleMapATI) },
     { "glSampleMaskEXT", "GL_EXT_multisample\0", offsetof(struct opengl_funcs, p_glSampleMaskEXT) },
     { "glSampleMaskIndexedNV", "GL_NV_explicit_multisample\0", offsetof(struct opengl_funcs, p_glSampleMaskIndexedNV) },
@@ -99964,6 +101355,7 @@ const struct registry_entry extension_registry[2715] =
     { "glSamplerParameterfv", "GL_ARB_sampler_objects\0GL_VERSION_3_3\0", offsetof(struct opengl_funcs, p_glSamplerParameterfv) },
     { "glSamplerParameteri", "GL_ARB_sampler_objects\0GL_VERSION_3_3\0", offsetof(struct opengl_funcs, p_glSamplerParameteri) },
     { "glSamplerParameteriv", "GL_ARB_sampler_objects\0GL_VERSION_3_3\0", offsetof(struct opengl_funcs, p_glSamplerParameteriv) },
+    { "glScalex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glScalex) },
     { "glScalexOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glScalexOES) },
     { "glScissorArrayv", "GL_ARB_viewport_array\0GL_VERSION_4_1\0", offsetof(struct opengl_funcs, p_glScissorArrayv) },
     { "glScissorExclusiveArrayvNV", "GL_NV_scissor_exclusive\0", offsetof(struct opengl_funcs, p_glScissorExclusiveArrayvNV) },
@@ -100142,7 +101534,9 @@ const struct registry_entry extension_registry[2715] =
     { "glTexCoordPointerEXT", "GL_EXT_vertex_array\0", offsetof(struct opengl_funcs, p_glTexCoordPointerEXT) },
     { "glTexCoordPointerListIBM", "GL_IBM_vertex_array_lists\0", offsetof(struct opengl_funcs, p_glTexCoordPointerListIBM) },
     { "glTexCoordPointervINTEL", "GL_INTEL_parallel_arrays\0", offsetof(struct opengl_funcs, p_glTexCoordPointervINTEL) },
+    { "glTexEnvx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glTexEnvx) },
     { "glTexEnvxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glTexEnvxOES) },
+    { "glTexEnvxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glTexEnvxv) },
     { "glTexEnvxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glTexEnvxvOES) },
     { "glTexFilterFuncSGIS", "GL_SGIS_texture_filter4\0", offsetof(struct opengl_funcs, p_glTexFilterFuncSGIS) },
     { "glTexGenxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glTexGenxOES) },
@@ -100160,7 +101554,9 @@ const struct registry_entry extension_registry[2715] =
     { "glTexParameterIivEXT", "GL_EXT_texture_integer\0", offsetof(struct opengl_funcs, p_glTexParameterIivEXT) },
     { "glTexParameterIuiv", "GL_VERSION_3_0\0", offsetof(struct opengl_funcs, p_glTexParameterIuiv) },
     { "glTexParameterIuivEXT", "GL_EXT_texture_integer\0", offsetof(struct opengl_funcs, p_glTexParameterIuivEXT) },
+    { "glTexParameterx", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glTexParameterx) },
     { "glTexParameterxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glTexParameterxOES) },
+    { "glTexParameterxv", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glTexParameterxv) },
     { "glTexParameterxvOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glTexParameterxvOES) },
     { "glTexRenderbufferNV", "GL_NV_explicit_multisample\0", offsetof(struct opengl_funcs, p_glTexRenderbufferNV) },
     { "glTexStorage1D", "GL_ARB_texture_storage\0GL_VERSION_4_2\0", offsetof(struct opengl_funcs, p_glTexStorage1D) },
@@ -100248,6 +101644,7 @@ const struct registry_entry extension_registry[2715] =
     { "glTransformFeedbackVaryingsEXT", "GL_EXT_transform_feedback\0", offsetof(struct opengl_funcs, p_glTransformFeedbackVaryingsEXT) },
     { "glTransformFeedbackVaryingsNV", "GL_NV_transform_feedback\0", offsetof(struct opengl_funcs, p_glTransformFeedbackVaryingsNV) },
     { "glTransformPathNV", "GL_NV_path_rendering\0", offsetof(struct opengl_funcs, p_glTransformPathNV) },
+    { "glTranslatex", "GL_NV_ES1_1_compatibility\0", offsetof(struct opengl_funcs, p_glTranslatex) },
     { "glTranslatexOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glTranslatexOES) },
     { "glUniform1d", "GL_ARB_gpu_shader_fp64\0GL_VERSION_4_0\0", offsetof(struct opengl_funcs, p_glUniform1d) },
     { "glUniform1dv", "GL_ARB_gpu_shader_fp64\0GL_VERSION_4_0\0", offsetof(struct opengl_funcs, p_glUniform1dv) },

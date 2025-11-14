@@ -1024,13 +1024,21 @@ sub parse_file($)
     # generate extension functions from norm functions, if they are newer than the category
     foreach my $feature ($xml->findnodes("/registry/feature"))
     {
-        next if defined $norm_categories{$feature->{name}};
-        next unless is_supported_api( $feature->{api} );
+        my $feature_name = $feature->{name};
+        if ($feature_name =~ /GL_VERSION_ES_.*_1_/)
+        {
+            $feature_name = "GL_NV_ES1_1_compatibility";
+        }
+        else
+        {
+            next unless is_supported_api( $feature->{api} );
+        }
+        next if defined $norm_categories{$feature_name};
         foreach my $cmd ($feature->findnodes("./require/command"))
         {
             my $name = $cmd->{name};
             next if $norm_functions{$name} || $ext_functions{$name};
-            $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $feature->{name} ] ];
+            $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $feature_name ] ];
         }
         foreach my $enum ($feature->findnodes("./require/enum"))
         {
