@@ -29,6 +29,7 @@ namespace Wine.Test {
     typedef enum TestEnum1 TestEnum1;
 
     interface ITest2;
+    interface ITest3;
 
     runtimeclass Test2;
 
@@ -68,5 +69,20 @@ namespace Wine.Test {
     runtimeclass Test2
     {
         [default] interface Wine.Test.ITest2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(deadbeef-dead-beef-dead-deadbeef0003)
+    ]
+    interface ITest3 : IInspectable
+    {
+        HRESULT GetTest2([in] TestEnum1 a, [out, retval] Wine.Test.ITest2 **out);
+        [propget] HRESULT Prop1([out, retval] int *out);
+        [propget] HRESULT Prop2([out, retval] TestEnum1 *out);
+        [propget] HRESULT Prop3([out, retval] TestStruct1 *out);
+        [propget] HRESULT Prop4([out, retval] Wine.Test.ITest2 **out);
+        [propget] HRESULT Prop5([out, retval] int *a);
+        [propput] HRESULT Prop5([in] int a);
     }
 }

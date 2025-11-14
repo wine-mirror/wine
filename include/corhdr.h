@@ -129,6 +129,32 @@ typedef mdToken mdGenericParamConstraint;
 typedef mdToken mdString;
 typedef mdToken mdCPToken;
 
+#define mdTokenNil                  ((mdToken)0)
+#define mdModuleNil                 ((mdModule)mdtModule)
+#define mdTypeRefNil                ((mdTypeRef)mdtTypeRef)
+#define mdTypeDefNil                ((mdTypeDef)mdtTypeDef)
+#define mdFieldDefNil               ((mdFieldDef)mdtFieldDef)
+#define mdMethodDefNil              ((mdMethodDef)mdtMethodDef)
+#define mdParamDefNil               ((mdParamDef)mdtParamDef)
+#define mdInterfaceImplNil          ((mdInterfaceImpl)mdtInterfaceImpl)
+#define mdMemberRefNil              ((mdMemberRef)mdtMemberRef)
+#define mdCustomAttributeNil        ((mdCustomAttribute)mdtCustomAttribute)
+#define mdPermissionNil             ((mdPermission)mdtPermission)
+#define mdSignatureNil              ((mdSignature)mdtSignature)
+#define mdEventNil                  ((mdEvent)mdtEvent)
+#define mdPropertyNil               ((mdProperty)mdtProperty)
+#define mdModuleRefNil              ((mdModuleRef)mdtModuleRef)
+#define mdTypeSpecNil               ((mdTypeSpec)mdtTypeSpec)
+#define mdAssemblyNil               ((mdAssembly)mdtAssembly)
+#define mdAssemblyRefNil            ((mdAssemblyRef)mdtAssemblyRef)
+#define mdFileNil                   ((mdFile)mdtFile)
+#define mdExportedTypeNil           ((mdExportedType)mdtExportedType)
+#define mdManifestResourceNil       ((mdManifestResource)mdtManifestResource)
+#define mdGenericParamNil           ((mdGenericParam)mdtGenericParam)
+#define mdGenericParamConstraintNil ((mdGenericParamConstraint)mdtGenericParamConstraint)
+#define mdMethodSpecNil             ((mdMethodSpec)mdtMethodSpec)
+#define mdStringNil                 ((mdString)mdtString)
+
 typedef enum CorTypeAttr
 {
     tdNotPublic          = 0x000000,
