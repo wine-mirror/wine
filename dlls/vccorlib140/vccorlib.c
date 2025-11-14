@@ -85,26 +85,40 @@ HRESULT WINAPI GetIidsFn(unsigned int count, unsigned int *copied, const GUID *s
     return S_OK;
 }
 
+static void *try_Allocate(size_t size)
+{
+    return malloc(size);
+}
+
 void *__cdecl Allocate(size_t size)
 {
     void *addr;
 
     TRACE("(%Iu)\n", size);
 
-    addr = malloc(size);
-    if (!addr)
+    if (!(addr = try_Allocate(size)))
         __abi_WinRTraiseOutOfMemoryException();
     return addr;
 }
 
-void *__cdecl AllocateException(size_t size)
+static void *try_AllocateException(size_t size)
 {
     struct exception_alloc *base;
 
+    if (!(base = try_Allocate(offsetof(struct exception_alloc, data[size]))))
+        return NULL;
+    return &base->data;
+}
+
+void *__cdecl AllocateException(size_t size)
+{
+    void *addr;
+
     TRACE("(%Iu)\n", size);
 
-    base = Allocate(offsetof(struct exception_alloc, data[size]));
-    return &base->data;
+    if (!(addr = try_AllocateException(size)))
+        __abi_WinRTraiseOutOfMemoryException();
+    return addr;
 }
 
 void __cdecl Free(void *addr)
@@ -204,7 +218,11 @@ void *__cdecl AllocateWithWeakRef(ptrdiff_t offset, size_t size)
     if (size > inline_max)
     {
         weakref = Allocate(sizeof(*weakref));
-        object = Allocate(size);
+        if (!(object = try_Allocate(size)))
+        {
+            Free(weakref);
+            __abi_WinRTraiseOutOfMemoryException();
+        }
         weakref->is_inline = FALSE;
     }
     else /* Perform an inline allocation */
@@ -233,7 +251,11 @@ void *__cdecl AllocateExceptionWithWeakRef(ptrdiff_t offset, size_t size)
 
     /* AllocateExceptionWithWeakRef does not store the control block inline, regardless of size. */
     weakref = Allocate(sizeof(*weakref));
-    excp = AllocateException(size);
+    if (!(excp = try_AllocateException(size)))
+    {
+        Free(weakref);
+        __abi_WinRTraiseOutOfMemoryException();
+    }
     *(struct control_block **)((char *)excp + offset) = weakref;
     weakref->IWeakReference_iface.lpVtbl = &control_block_vtbl;
     weakref->object = excp;
