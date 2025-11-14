@@ -121,6 +121,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
             libkrb5-dev:i386 \
             liborc-0.4-dev:i386 \
             libpcap-dev:i386 \
+            libpcsclite-dev:i386 \
             libpulse-dev:i386 \
             libsane-dev:i386 \
             libsdl2-dev:i386 \
@@ -145,6 +146,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
             linux-libc-dev:i386 \
             mesa-vulkan-drivers:i386 \
             ocl-icd-opencl-dev:i386 \
+            samba-dev:i386 \
             unixodbc-dev:i386 && \
         apt-get download -y libgstreamer-plugins-base1.0-dev:i386 libgstreamer1.0-dev:i386 && \
         (for deb in *.deb; do dpkg-deb -x $deb /dpkg; done) && \
