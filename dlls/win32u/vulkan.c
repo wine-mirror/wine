@@ -2426,7 +2426,10 @@ static VkResult win32u_vkCreateSemaphore( VkDevice client_device, const VkSemaph
             break;
         }
 
-        if (!(semaphore->local = d3dkmt_create_sync( fd, nt_shared ? NULL : &semaphore->global ))) goto failed;
+        semaphore->local = d3dkmt_create_sync( fd, nt_shared ? NULL : &semaphore->global );
+        close( fd );
+
+        if (!semaphore->local) goto failed;
         if (nt_shared && !(semaphore->shared = create_shared_semaphore_handle( semaphore->local, &export_win32 ))) goto failed;
     }
 
@@ -2651,7 +2654,10 @@ static VkResult win32u_vkCreateFence( VkDevice client_device, const VkFenceCreat
             break;
         }
 
-        if (!(fence->local = d3dkmt_create_sync( fd, nt_shared ? NULL : &fence->global ))) goto failed;
+        fence->local = d3dkmt_create_sync( fd, nt_shared ? NULL : &fence->global );
+        close( fd );
+
+        if (!fence->local) goto failed;
         if (nt_shared && !(fence->shared = create_shared_semaphore_handle( fence->local, &export_win32 ))) goto failed;
     }
 
