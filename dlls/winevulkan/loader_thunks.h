@@ -46,6 +46,7 @@ enum unix_call
     unix_vkBuildAccelerationStructuresKHR,
     unix_vkBuildMicromapsEXT,
     unix_vkCmdBeginConditionalRenderingEXT,
+    unix_vkCmdBeginCustomResolveEXT,
     unix_vkCmdBeginDebugUtilsLabelEXT,
     unix_vkCmdBeginPerTileExecutionQCOM,
     unix_vkCmdBeginQuery,
@@ -120,6 +121,8 @@ enum unix_call
     unix_vkCmdDebugMarkerEndEXT,
     unix_vkCmdDebugMarkerInsertEXT,
     unix_vkCmdDecodeVideoKHR,
+    unix_vkCmdDecompressMemoryEXT,
+    unix_vkCmdDecompressMemoryIndirectCountEXT,
     unix_vkCmdDecompressMemoryIndirectCountNV,
     unix_vkCmdDecompressMemoryNV,
     unix_vkCmdDispatch,
@@ -160,6 +163,7 @@ enum unix_call
     unix_vkCmdEndRenderPass2KHR,
     unix_vkCmdEndRendering,
     unix_vkCmdEndRendering2EXT,
+    unix_vkCmdEndRendering2KHR,
     unix_vkCmdEndRenderingKHR,
     unix_vkCmdEndTransformFeedbackEXT,
     unix_vkCmdEndVideoCodingKHR,
@@ -446,6 +450,7 @@ enum unix_call
     unix_vkEnumerateInstanceVersion,
     unix_vkEnumeratePhysicalDeviceGroups,
     unix_vkEnumeratePhysicalDeviceGroupsKHR,
+    unix_vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM,
     unix_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR,
     unix_vkEnumeratePhysicalDevices,
     unix_vkFlushMappedMemoryRanges,
@@ -880,6 +885,12 @@ struct vkCmdBeginConditionalRenderingEXT_params
 {
     VkCommandBuffer commandBuffer;
     const VkConditionalRenderingBeginInfoEXT *pConditionalRenderingBegin;
+};
+
+struct vkCmdBeginCustomResolveEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkBeginCustomResolveInfoEXT *pBeginCustomResolveInfo;
 };
 
 struct vkCmdBeginDebugUtilsLabelEXT_params
@@ -1440,6 +1451,22 @@ struct vkCmdDecodeVideoKHR_params
     const VkVideoDecodeInfoKHR *pDecodeInfo;
 };
 
+struct vkCmdDecompressMemoryEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkDecompressMemoryInfoEXT *pDecompressMemoryInfoEXT;
+};
+
+struct vkCmdDecompressMemoryIndirectCountEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    VkMemoryDecompressionMethodFlagsEXT DECLSPEC_ALIGN(8) decompressionMethod;
+    VkDeviceAddress DECLSPEC_ALIGN(8) indirectCommandsAddress;
+    VkDeviceAddress DECLSPEC_ALIGN(8) indirectCommandsCountAddress;
+    uint32_t maxDecompressionCount;
+    uint32_t stride;
+};
+
 struct vkCmdDecompressMemoryIndirectCountNV_params
 {
     VkCommandBuffer commandBuffer;
@@ -1772,7 +1799,13 @@ struct vkCmdEndRendering_params
 struct vkCmdEndRendering2EXT_params
 {
     VkCommandBuffer commandBuffer;
-    const VkRenderingEndInfoEXT *pRenderingEndInfo;
+    const VkRenderingEndInfoKHR *pRenderingEndInfo;
+};
+
+struct vkCmdEndRendering2KHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkRenderingEndInfoKHR *pRenderingEndInfo;
 };
 
 struct vkCmdEndRenderingKHR_params
@@ -3929,6 +3962,16 @@ struct vkEnumeratePhysicalDeviceGroupsKHR_params
     VkInstance instance;
     uint32_t *pPhysicalDeviceGroupCount;
     VkPhysicalDeviceGroupProperties *pPhysicalDeviceGroupProperties;
+    VkResult result;
+};
+
+struct vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM_params
+{
+    VkPhysicalDevice physicalDevice;
+    uint32_t queueFamilyIndex;
+    uint32_t *pCounterCount;
+    VkPerformanceCounterARM *pCounters;
+    VkPerformanceCounterDescriptionARM *pCounterDescriptions;
     VkResult result;
 };
 
