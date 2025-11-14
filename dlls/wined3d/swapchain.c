@@ -27,6 +27,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
+static BOOL set_window_present_rect(HWND hwnd, UINT x, UINT y, UINT width, UINT height)
+{
+    RECT rect = {x, y, x + width, y + height};
+    D3DKMT_ESCAPE escape = {0};
+
+    escape.Type = D3DKMT_ESCAPE_SET_PRESENT_RECT_WINE;
+    escape.hContext = HandleToULong(hwnd);
+    escape.pPrivateDriverData = &rect;
+    escape.PrivateDriverDataSize = sizeof(rect);
+
+    return !D3DKMTEscape(&escape);
+}
+
 void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
     HRESULT hr;
@@ -2267,6 +2280,8 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
         return WINED3DERR_NOTAVAILABLE;
     }
 
+    set_window_present_rect(window, x, y, width, height);
+
     if (!(s = malloc(sizeof(*s))))
         return E_OUTOFMEMORY;
     s->window = window;
@@ -2309,6 +2324,8 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
 {
     struct wined3d_window_state *s;
     LONG style, exstyle;
+
+    set_window_present_rect(window, 0, 0, 0, 0);
 
     if (!state->style && !state->exstyle)
         return;
@@ -2452,6 +2469,9 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
         {
             HWND window = state->device_window;
             BOOL filter;
+
+            set_window_present_rect(state->device_window, output_desc.desktop_rect.left,
+                    output_desc.desktop_rect.top, width, height);
 
             /* Fullscreen -> fullscreen mode change */
             filter = wined3d_filter_messages(window, TRUE);
