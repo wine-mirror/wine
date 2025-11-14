@@ -158,6 +158,8 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         curl -s -L https://github.com/mstorsjo/llvm-mingw/releases/download/20251007/llvm-mingw-20251007-ucrt-ubuntu-22.04-aarch64.tar.xz | tar xJ && \
         mv llvm-mingw-20251007-ucrt-ubuntu-22.04-aarch64 /usr/local/llvm-mingw ;; \
     esac && \
+    mkdir -p /usr/lib/oss/include/sys && \
+    curl -s -o /usr/lib/oss/include/sys/soundcard.h https://salsa.debian.org/debian/oss4/-/raw/debian/4.2-build2020-6/include/soundcard.h && \
     apt-get clean && \
     useradd -m gitlab
 
