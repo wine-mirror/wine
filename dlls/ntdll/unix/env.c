@@ -326,7 +326,7 @@ static void init_unix_codepage(void)
  *           is_special_env_var
  *
  * Check if an environment variable needs to be handled specially when
- * passed through the Unix environment (i.e. prefixed with "WINE").
+ * imported from the Unix environment (i.e. prefixed with "WINE_HOST_").
  */
 static BOOL is_special_env_var( const char *var )
 {
@@ -335,13 +335,27 @@ static BOOL is_special_env_var( const char *var )
             STARTS_WITH( var, "HOME=" ) ||
             STARTS_WITH( var, "TEMP=" ) ||
             STARTS_WITH( var, "TMP=" ) ||
+            STARTS_WITH( var, "TMPDIR=" ) ||
+            STARTS_WITH( var, "XDG_" ));
+}
+
+
+/***********************************************************************
+ *           is_ignored_env_var
+ *
+ * Check if an environment variable needs to be skipped when importing
+ * from the Unix environment, either because it would confuse Windows
+ * apps, or make the Windows environment grow too large.
+ */
+static BOOL is_ignored_env_var( const char *var )
+{
+    return (STARTS_WITH( var, "NIXPKGS_" ) ||
             STARTS_WITH( var, "QT_" ) ||
             STARTS_WITH( var, "SDL_AUDIODRIVER=" ) ||
             STARTS_WITH( var, "SDL_AUDIO_DRIVER=" ) ||
             STARTS_WITH( var, "SDL_VIDEODRIVER=" ) ||
             STARTS_WITH( var, "SDL_VIDEO_DRIVER=" ) ||
-            STARTS_WITH( var, "VK_" ) ||
-            STARTS_WITH( var, "XDG_" ));
+            STARTS_WITH( var, "VK_" ));
 }
 
 
@@ -861,13 +875,6 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
     *size = 1;
     for (e = environ; *e; e++) *size += strlen(*e) + 6;
 
-    if (*size > 30000)  /* Windows is limited to 32767, and we need some space for the Wine variables */
-    {
-        ERR( "Unix environment too large, not importing it.\n");
-        *size = *pos = 0;
-        return NULL;
-    }
-
     env = malloc( *size * sizeof(WCHAR) );
     ptr = env;
     end = env + *size - 1;
@@ -878,13 +885,14 @@ static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
         /* skip Unix special variables and use the Wine variants instead */
         if (STARTS_WITH( str, "WINE" ))
         {
-            if (is_special_env_var( str + 4 )) str += 4;
+            if (is_special_env_var( str + 4 ) || is_ignored_env_var( str + 4 )) str += 4;
             else if (!strcmp( str, "WINEDLLOVERRIDES=help" ))
             {
                 MESSAGE( overrides_help_message );
                 exit(0);
             }
         }
+        else if (is_ignored_env_var( str )) continue;
         else if (host_var_exists( str )) continue;
         else if (is_special_env_var( str )) /* prefix it with WINE_HOST_ */
         {
