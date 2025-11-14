@@ -790,15 +790,6 @@ void wined3d_ffp_blitter_create(struct wined3d_blitter **next, const struct wine
 struct wined3d_blitter *wined3d_glsl_blitter_create(struct wined3d_blitter **next, const struct wined3d_device *device);
 void wined3d_raw_blitter_create(struct wined3d_blitter **next, const struct wined3d_gl_info *gl_info);
 
-bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_resource *src_resource, DWORD src_location,
-        const struct wined3d_resource *dst_resource, DWORD dst_location);
-void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *context,
-        enum wined3d_texture_filter_type filter, struct wined3d_texture *src_texture,
-        unsigned int src_sub_resource_idx, DWORD src_location, const RECT *src_rect,
-        struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, DWORD dst_location,
-        const RECT *dst_rect, const struct wined3d_format *resolve_format);
-
 struct wined3d_caps_gl_ctx
 {
     HDC dc;
