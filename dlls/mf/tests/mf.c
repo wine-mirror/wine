@@ -1658,6 +1658,7 @@ static struct test_media_stream *create_test_stream(DWORD stream_index, IMFMedia
     stream->source = source;
     IMFMediaSource_AddRef(stream->source);
     stream->is_new = TRUE;
+    stream->sample_duration = 333667;
 
     IMFMediaSource_CreatePresentationDescriptor(source, &pd);
     IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, stream_index, &selected, &stream->sd);
@@ -1875,7 +1876,16 @@ static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDe
         hr = IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, &GUID_NULL, S_OK, &var);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-        event_type = start_position->vt == VT_I8 ? MEStreamSeeked : MEStreamStarted;
+        if (start_position->vt == VT_I8)
+        {
+            source->streams[i]->sample_time = start_position->hVal.QuadPart;
+            event_type = MEStreamSeeked;
+        }
+        else
+        {
+            event_type = MEStreamStarted;
+        }
+
         hr = IMFMediaEventQueue_QueueEventParamVar(source->streams[i]->event_queue, event_type, &GUID_NULL,
                 S_OK, start_position);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
