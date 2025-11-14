@@ -63,6 +63,392 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
     return GL_BACK;
 }
 
+static void ffp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_context *context)
+{
+    struct wined3d_blitter *next;
+
+    if ((next = blitter->next))
+        next->ops->blitter_destroy(next, context);
+
+    free(blitter);
+}
+
+bool wined3d_rendertarget_view_is_full_clear(const struct wined3d_rendertarget_view *rtv,
+        const RECT *draw_rect, const RECT *clear_rect)
+{
+    unsigned int height = rtv->height;
+    unsigned int width = rtv->width;
+
+    /* partial draw rect */
+    if (draw_rect->left || draw_rect->top || draw_rect->right < width || draw_rect->bottom < height)
+        return false;
+
+    /* partial clear rect */
+    if (clear_rect && (clear_rect->left > 0 || clear_rect->top > 0
+            || clear_rect->right < width || clear_rect->bottom < height))
+        return false;
+
+    return true;
+}
+
+static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsigned int rt_count,
+        const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rect, const RECT *draw_rect,
+        uint32_t flags, const struct wined3d_color *colour, float depth, unsigned int stencil)
+{
+    struct wined3d_rendertarget_view *rtv = rt_count ? fb->render_targets[0] : NULL;
+    struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
+    const struct wined3d_state *state = &device->cs->state;
+    struct wined3d_texture *depth_stencil = NULL;
+    unsigned int drawable_width, drawable_height;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context_gl *context_gl;
+    struct wined3d_texture *target = NULL;
+    struct wined3d_color colour_srgb;
+    struct wined3d_context *context;
+    GLbitfield clear_mask = 0;
+    bool render_offscreen;
+    unsigned int i;
+
+    if (rtv && rtv->resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        target = texture_from_resource(rtv->resource);
+        context = context_acquire(device, target, rtv->sub_resource_idx);
+    }
+    else
+    {
+        context = context_acquire(device, NULL, 0);
+    }
+    context_gl = wined3d_context_gl(context);
+
+    if (dsv && dsv->resource->type != WINED3D_RTYPE_BUFFER)
+        depth_stencil = texture_from_resource(dsv->resource);
+
+    if (!context_gl->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping clear.\n");
+        return;
+    }
+    gl_info = context_gl->gl_info;
+
+    /* When we're clearing parts of the drawable, make sure that the target
+     * surface is well up to date in the drawable. After the clear we'll mark
+     * the drawable up to date, so we have to make sure that this is true for
+     * the cleared parts, and the untouched parts.
+     *
+     * If we're clearing the whole target there is no need to copy it into the
+     * drawable, it will be overwritten anyway. If we're not clearing the
+     * colour buffer we don't have to copy either since we're not going to set
+     * the drawable up to date. We have to check all settings that limit the
+     * clear area though. Do not bother checking all this if the destination
+     * surface is in the drawable anyway. */
+    for (i = 0; i < rt_count; ++i)
+    {
+        struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
+
+        if (rtv && rtv->format->id != WINED3DFMT_NULL)
+        {
+            if ((flags & WINED3DCLEAR_TARGET)
+                    && !wined3d_rendertarget_view_is_full_clear(rtv, draw_rect, rect_count ? clear_rect : NULL))
+                wined3d_rendertarget_view_load_location(rtv, context, rtv->resource->draw_binding);
+            else
+                wined3d_rendertarget_view_prepare_location(rtv, context, rtv->resource->draw_binding);
+        }
+    }
+
+    if (target)
+    {
+        render_offscreen = wined3d_resource_is_offscreen(&target->resource);
+        wined3d_rendertarget_view_get_drawable_size(rtv, context, &drawable_width, &drawable_height);
+    }
+    else
+    {
+        unsigned int ds_level = dsv->sub_resource_idx % depth_stencil->level_count;
+
+        render_offscreen = true;
+        drawable_width = wined3d_texture_get_level_width(depth_stencil, ds_level);
+        drawable_height = wined3d_texture_get_level_height(depth_stencil, ds_level);
+    }
+
+    if (depth_stencil)
+    {
+        DWORD ds_location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
+
+        if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)
+                && !wined3d_rendertarget_view_is_full_clear(dsv, draw_rect, rect_count ? clear_rect : NULL))
+            wined3d_rendertarget_view_load_location(dsv, context, ds_location);
+        else
+            wined3d_rendertarget_view_prepare_location(dsv, context, ds_location);
+
+        if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+        {
+            wined3d_rendertarget_view_validate_location(dsv, ds_location);
+            wined3d_rendertarget_view_invalidate_location(dsv, ~ds_location);
+        }
+    }
+
+    if (!wined3d_context_gl_apply_clear_state(context_gl, state, rt_count, fb))
+    {
+        context_release(context);
+        WARN("Failed to apply clear state, skipping clear.\n");
+        return;
+    }
+
+    /* Only set the values up once, as they are not changing. */
+    if (flags & WINED3DCLEAR_STENCIL)
+    {
+        if (gl_info->supported[EXT_STENCIL_TWO_SIDE])
+            gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+        gl_info->gl_ops.gl.p_glStencilMask(~0u);
+        context_invalidate_state(context, STATE_DEPTH_STENCIL);
+        gl_info->gl_ops.gl.p_glClearStencil(stencil);
+        checkGLcall("glClearStencil");
+        clear_mask = clear_mask | GL_STENCIL_BUFFER_BIT;
+    }
+
+    if (flags & WINED3DCLEAR_ZBUFFER)
+    {
+        gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
+        context_invalidate_state(context, STATE_DEPTH_STENCIL);
+        if (gl_info->supported[ARB_ES2_COMPATIBILITY])
+            GL_EXTCALL(glClearDepthf(depth));
+        else
+            gl_info->gl_ops.gl.p_glClearDepth(depth);
+        checkGLcall("glClearDepth");
+        clear_mask = clear_mask | GL_DEPTH_BUFFER_BIT;
+    }
+
+    if (flags & WINED3DCLEAR_TARGET)
+    {
+        for (i = 0; i < rt_count; ++i)
+        {
+            struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
+
+            if (!rtv)
+                continue;
+
+            if (rtv->resource->type == WINED3D_RTYPE_BUFFER)
+            {
+                FIXME("Not supported on buffer resources.\n");
+                continue;
+            }
+
+            wined3d_rendertarget_view_validate_location(rtv, rtv->resource->draw_binding);
+            wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);
+        }
+
+        if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context->d3d_info, state, fb))
+        {
+            if (rt_count > 1)
+                WARN("Clearing multiple sRGB render targets without GL_ARB_framebuffer_sRGB "
+                        "support, this might cause graphical issues.\n");
+
+            wined3d_colour_srgb_from_linear(&colour_srgb, colour);
+            colour = &colour_srgb;
+        }
+
+        gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        context_invalidate_state(context, STATE_BLEND);
+        gl_info->gl_ops.gl.p_glClearColor(colour->r, colour->g, colour->b, colour->a);
+        checkGLcall("glClearColor");
+        clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
+    }
+
+    if (!rect_count)
+    {
+        if (render_offscreen)
+        {
+            gl_info->gl_ops.gl.p_glScissor(draw_rect->left, draw_rect->top,
+                    draw_rect->right - draw_rect->left, draw_rect->bottom - draw_rect->top);
+        }
+        else
+        {
+            gl_info->gl_ops.gl.p_glScissor(draw_rect->left, drawable_height - draw_rect->bottom,
+                        draw_rect->right - draw_rect->left, draw_rect->bottom - draw_rect->top);
+        }
+        gl_info->gl_ops.gl.p_glClear(clear_mask);
+    }
+    else
+    {
+        RECT current_rect;
+
+        /* Now process each rect in turn. */
+        for (i = 0; i < rect_count; ++i)
+        {
+            /* Note that GL uses lower left, width/height. */
+            IntersectRect(&current_rect, draw_rect, &clear_rect[i]);
+
+            TRACE("clear_rect[%u] %s, current_rect %s.\n", i,
+                    wine_dbgstr_rect(&clear_rect[i]),
+                    wine_dbgstr_rect(&current_rect));
+
+            /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored
+             * silently. The rectangle is not cleared, no error is returned,
+             * but further rectangles are still cleared if they are valid. */
+            if (current_rect.left > current_rect.right || current_rect.top > current_rect.bottom)
+            {
+                TRACE("Rectangle with negative dimensions, ignoring.\n");
+                continue;
+            }
+
+            if (render_offscreen)
+            {
+                gl_info->gl_ops.gl.p_glScissor(current_rect.left, current_rect.top,
+                        current_rect.right - current_rect.left, current_rect.bottom - current_rect.top);
+            }
+            else
+            {
+                gl_info->gl_ops.gl.p_glScissor(current_rect.left, drawable_height - current_rect.bottom,
+                          current_rect.right - current_rect.left, current_rect.bottom - current_rect.top);
+            }
+            gl_info->gl_ops.gl.p_glClear(clear_mask);
+        }
+    }
+    context->scissor_rect_count = WINED3D_MAX_VIEWPORTS;
+    checkGLcall("clear");
+
+    if (flags & WINED3DCLEAR_TARGET && target->swapchain && target->swapchain->front_buffer == target)
+        gl_info->gl_ops.gl.p_glFlush();
+
+    context_release(context);
+}
+
+static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
+        unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
+        const RECT *draw_rect, uint32_t flags, const struct wined3d_color *colour, float depth, unsigned int stencil)
+{
+    struct wined3d_rendertarget_view *view, *previous = NULL;
+    bool have_identical_size = TRUE;
+    struct wined3d_fb_state tmp_fb;
+    unsigned int next_rt_count = 0;
+    struct wined3d_blitter *next;
+    DWORD next_flags = 0;
+    unsigned int i;
+
+    if (flags & WINED3DCLEAR_TARGET)
+    {
+        for (i = 0; i < rt_count; ++i)
+        {
+            if (!(view = fb->render_targets[i]))
+                continue;
+
+            if (wined3d_rendertarget_view_use_cpu_clear(view)
+                    || (!(view->resource->bind_flags & WINED3D_BIND_RENDER_TARGET)
+                    && !(view->format_caps & WINED3D_FORMAT_CAP_FBO_ATTACHABLE)))
+            {
+                next_flags |= WINED3DCLEAR_TARGET;
+                flags &= ~WINED3DCLEAR_TARGET;
+                next_rt_count = rt_count;
+                rt_count = 0;
+                break;
+            }
+
+            /* FIXME: We should reject colour fills on formats with fixups,
+             * but this would break P8 colour fills for example. */
+        }
+    }
+
+    if ((flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)) && (view = fb->depth_stencil)
+            && (!view->format->depth_size || (flags & WINED3DCLEAR_ZBUFFER))
+            && (!view->format->stencil_size || (flags & WINED3DCLEAR_STENCIL))
+            && wined3d_rendertarget_view_use_cpu_clear(view))
+    {
+        next_flags |= flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
+        flags &= ~(WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
+    }
+
+    if (flags)
+    {
+        for (i = 0; i < rt_count; ++i)
+        {
+            if (!(view = fb->render_targets[i]))
+                continue;
+
+            if (previous && (previous->width != view->width || previous->height != view->height))
+                have_identical_size = false;
+            previous = view;
+        }
+        if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+        {
+            view = fb->depth_stencil;
+
+            if (previous && (previous->width != view->width || previous->height != view->height))
+                have_identical_size = false;
+        }
+
+        if (have_identical_size)
+        {
+            ffp_blitter_clear_rendertargets(device, rt_count, fb, rect_count,
+                    clear_rects, draw_rect, flags, colour, depth, stencil);
+        }
+        else
+        {
+            for (i = 0; i < rt_count; ++i)
+            {
+                if (!(view = fb->render_targets[i]))
+                    continue;
+
+                tmp_fb.render_targets[0] = view;
+                tmp_fb.depth_stencil = NULL;
+                ffp_blitter_clear_rendertargets(device, 1, &tmp_fb, rect_count,
+                        clear_rects, draw_rect, WINED3DCLEAR_TARGET, colour, depth, stencil);
+            }
+            if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+            {
+                tmp_fb.render_targets[0] = NULL;
+                tmp_fb.depth_stencil = fb->depth_stencil;
+                ffp_blitter_clear_rendertargets(device, 0, &tmp_fb, rect_count,
+                        clear_rects, draw_rect, flags & ~WINED3DCLEAR_TARGET, colour, depth, stencil);
+            }
+        }
+    }
+
+    if (next_flags && (next = blitter->next))
+        next->ops->blitter_clear(next, device, next_rt_count, fb, rect_count,
+                clear_rects, draw_rect, next_flags, colour, depth, stencil);
+}
+
+static DWORD ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
+        struct wined3d_context *context, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
+        DWORD src_location, const RECT *src_rect, struct wined3d_texture *dst_texture,
+        unsigned int dst_sub_resource_idx, DWORD dst_location, const RECT *dst_rect,
+        const struct wined3d_color_key *colour_key, enum wined3d_texture_filter_type filter,
+        const struct wined3d_format *resolve_format)
+{
+    struct wined3d_blitter *next;
+
+    if (!(next = blitter->next))
+    {
+        ERR("No blitter to handle blit op %#x.\n", op);
+        return dst_location;
+    }
+
+    return next->ops->blitter_blit(next, op, context, src_texture, src_sub_resource_idx, src_location,
+            src_rect, dst_texture, dst_sub_resource_idx, dst_location, dst_rect, colour_key, filter,
+            resolve_format);
+}
+
+static const struct wined3d_blitter_ops ffp_blitter_ops =
+{
+    ffp_blitter_destroy,
+    ffp_blitter_clear,
+    ffp_blitter_blit,
+};
+
+void wined3d_ffp_blitter_create(struct wined3d_blitter **next, const struct wined3d_gl_info *gl_info)
+{
+    struct wined3d_blitter *blitter;
+
+    if (!(blitter = malloc(sizeof(*blitter))))
+        return;
+
+    TRACE("Created blitter %p.\n", blitter);
+
+    blitter->ops = &ffp_blitter_ops;
+    blitter->next = *next;
+    *next = blitter;
+}
+
 static void raw_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_context *context)
 {
     struct wined3d_blitter *next;
