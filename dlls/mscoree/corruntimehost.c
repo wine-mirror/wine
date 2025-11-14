@@ -832,7 +832,7 @@ static HRESULT WINAPI CLRRuntimeHost_SetHostControl(ICLRRuntimeHost* iface,
     IHostControl *pHostControl)
 {
     FIXME("(%p,%p)\n", iface, pHostControl);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI CLRRuntimeHost_GetCLRControl(ICLRRuntimeHost* iface,
