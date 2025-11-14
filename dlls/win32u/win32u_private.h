@@ -257,6 +257,7 @@ extern BOOL client_to_screen( HWND hwnd, POINT *pt );
 extern void destroy_thread_windows(void);
 extern LRESULT destroy_window( HWND hwnd );
 extern BOOL get_client_rect( HWND hwnd, RECT *rect, UINT dpi );
+extern BOOL get_present_rect( HWND hwnd, RECT *rect, UINT dpi );
 extern HWND get_desktop_window(void);
 extern UINT get_dpi_for_window( HWND hwnd );
 extern HWND get_full_window_handle( HWND hwnd );

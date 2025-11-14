@@ -1992,6 +1992,7 @@ static RECT get_visible_rect( HWND hwnd, BOOL shaped, UINT style, UINT ex_style,
     UINT dpi = get_dpi_for_window( hwnd ), style_mask, ex_style_mask;
     RECT visible_rect, rect = {0};
 
+    if (get_present_rect( hwnd, &rect, get_thread_dpi() )) return rect;
     if (IsRectEmpty( &rects->window ) || EqualRect( &rects->window, &rects->client ) || shaped || !decorated_mode) return rects->window;
     if (!user_driver->pGetWindowStyleMasks( hwnd, style, ex_style, &style_mask, &ex_style_mask )) return rects->window;
     if (!NtUserAdjustWindowRect( &rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi )) return rects->window;
@@ -2081,7 +2082,7 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     if (get_window_region( hwnd, FALSE, &shape, &dummy )) shaped = FALSE;
     else if ((shaped = !!shape)) NtGdiDeleteObjectApp( shape );
 
-    rects->visible = rects->window;
+    if (!get_present_rect( hwnd, &rects->visible, get_thread_dpi() )) rects->visible = rects->window;
     if (is_child) monitor_rects = map_dpi_window_rects( *rects, get_thread_dpi(), raw_dpi );
     else monitor_rects = map_window_rects_virt_to_raw( *rects, get_thread_dpi() );
 
@@ -2271,6 +2272,15 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 
         if (win->dwStyle & WS_THICKFRAME) swp_flags |= WINE_SWP_RESIZABLE;
         if (is_child) monitor_rects = map_dpi_window_rects( *new_rects, dpi, raw_dpi );
+        else if (!IsRectEmpty( &win->present_rect ))
+        {
+            MONITORINFO monitor_info = monitor_info_from_rect( new_rects->window, dpi );
+            struct window_rects rects = { monitor_info.rcMonitor, monitor_info.rcMonitor, monitor_info.rcMonitor };
+            OffsetRect( &rects.client, -rects.client.left, -rects.client.top );
+            swp_flags |= WINE_SWP_FULLSCREEN;
+            swp_flags &= ~WINE_SWP_RESIZABLE;
+            monitor_rects = map_window_rects_virt_to_raw( rects, dpi );
+        }
         else
         {
             MONITORINFO monitor_info = monitor_info_from_rect( new_rects->window, dpi );
@@ -5992,7 +6002,7 @@ static BOOL set_raw_window_pos( HWND hwnd, RECT rect, UINT flags, BOOL internal 
     return NtUserSetWindowPos( hwnd, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, flags );
 }
 
-static BOOL get_present_rect( HWND hwnd, RECT *rect, UINT dpi )
+BOOL get_present_rect( HWND hwnd, RECT *rect, UINT dpi )
 {
     UINT dpi_from = get_dpi_for_window( hwnd );
     WND *win;
