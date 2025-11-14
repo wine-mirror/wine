@@ -338,7 +338,7 @@ system_fallback_config[] =
     { "A000-A4CF",              L"Noto Sans Yi" },
     { "A4D0-A4FF",              L"Noto Sans Lisu" },
     { "A500-A63F",              L"Noto Sans Vai" },
-    { "A6A0-A6FF",              L"Noto Sans Bamum" },
+    { "A6A0-A6FF, 16800-16A38", L"Noto Sans Bamum" },
     { "A800-A82F",              L"Noto Sans Syloti Nagri" },
     { "A840-A87F",              L"Noto Sans PhagsPa" },
     { "A880-A8DF",              L"Noto Sans Saurashtra" },
