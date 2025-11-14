@@ -236,6 +236,9 @@ system_fallback_config[] =
     { "0000-007F, 0080-00FF, 0100-017F, 0180-024F, "
       "0250-02AF, 02B0-02FF, 0300-036F", L"Tahoma" },
 
+    /* Cyrillic, Cyrillic Supplement */
+    { "0400-052F",              L"Tahoma" },
+
     { "0530-058F, FB10-FB1C",   L"Noto Sans Armenian" },
 
     { "0590-05FF, FB1D-FB4F",   L"Noto Sans Hebrew" },
