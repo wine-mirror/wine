@@ -51,6 +51,7 @@ typedef struct tagWND
     HINSTANCE          hInstance;     /* Window hInstance (from CreateWindow) */
     struct window_rects rects;        /* window rects in window DPI, relative to the parent client area */
     RECT               normal_rect;   /* Normal window rect saved when maximized/minimized */
+    RECT               present_rect;  /* present rect for exclusive fullscreen mode */
     POINT              min_pos;       /* Position for minimized window */
     POINT              max_pos;       /* Position for maximized window */
     WCHAR             *text;          /* Window text */

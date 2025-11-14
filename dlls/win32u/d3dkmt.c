@@ -547,6 +547,23 @@ NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
         return d3dkmt_object_update( &resource->obj, desc->pPrivateDriverData, desc->PrivateDriverDataSize );
     }
 
+    case D3DKMT_ESCAPE_SET_PRESENT_RECT_WINE:
+    {
+        HWND hwnd = UlongToHandle( desc->hContext );
+        RECT *rect = desc->pPrivateDriverData;
+        UINT dpi = get_dpi_for_window( hwnd );
+        WND *win;
+
+        if (desc->PrivateDriverDataSize != sizeof(*rect)) return STATUS_INVALID_PARAMETER;
+
+        TRACE( "hwnd %p, rect %s\n", hwnd, wine_dbgstr_rect( rect ) );
+        if (!(win = get_win_ptr( hwnd ))) return STATUS_INVALID_PARAMETER;
+        win->present_rect = map_dpi_rect( *rect, get_thread_dpi(), dpi );
+        release_win_ptr( win );
+
+        return STATUS_SUCCESS;
+    }
+
     default:
         FIXME( "(%p): stub\n", desc );
         return STATUS_NO_MEMORY;
