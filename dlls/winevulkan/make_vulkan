@@ -2957,20 +2957,16 @@ class VkGenerator(object):
 
         f.write("#define ALL_VK_CLIENT_DEVICE_EXTS")
         for ext in self.registry.extensions:
-            if ext["type"] != "device":
-                continue
-            if ext["name"] in UNEXPOSED_EXTENSIONS:
-                continue
-            f.write(f" \\\n    USE_VK_EXT({ext["name"]})")
+            type, name = ext["type"], ext["name"]
+            if type == "device" and name not in UNEXPOSED_EXTENSIONS:
+                f.write(f" \\\n    USE_VK_EXT({name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_DEVICE_EXTS ALL_VK_CLIENT_DEVICE_EXTS")
         for ext in self.registry.extensions:
-            if ext["type"] != "device":
-                continue
-            if ext["name"] not in UNEXPOSED_EXTENSIONS:
-                continue
-            f.write(f" \\\n    USE_VK_EXT({ext["name"]})")
+            type, name = ext["type"], ext["name"]
+            if type == "device" and name in UNEXPOSED_EXTENSIONS:
+                f.write(f" \\\n    USE_VK_EXT({name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS")
@@ -2984,20 +2980,16 @@ class VkGenerator(object):
 
         f.write("#define ALL_VK_CLIENT_INSTANCE_EXTS")
         for ext in self.registry.extensions:
-            if ext["type"] != "instance":
-                continue
-            if ext["name"] in UNEXPOSED_EXTENSIONS:
-                continue
-            f.write(f" \\\n    USE_VK_EXT({ext["name"]})")
+            type, name = ext["type"], ext["name"]
+            if type == "instance" and name not in UNEXPOSED_EXTENSIONS:
+                f.write(f" \\\n    USE_VK_EXT({name})")
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_EXTS ALL_VK_CLIENT_INSTANCE_EXTS")
         for ext in self.registry.extensions:
-            if ext["type"] != "instance":
-                continue
-            if ext["name"] not in UNEXPOSED_EXTENSIONS:
-                continue
-            f.write(f" \\\n    USE_VK_EXT({ext["name"]})")
+            type, name = ext["type"], ext["name"]
+            if type == "instance" and name in UNEXPOSED_EXTENSIONS:
+                f.write(f" \\\n    USE_VK_EXT({name})")
         f.write("\n\n")
 
         f.write("#endif /* __WINE_VULKAN_H */\n")
