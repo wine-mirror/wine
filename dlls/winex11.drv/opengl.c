@@ -216,6 +216,7 @@ enum glx_swap_control_method
 static struct glx_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static const struct egl_platform *egl;
+static BOOL (*p_egl_describe_pixel_format)( int format, struct wgl_pixel_format *pf );
 
 /* Selects the preferred GLX swap control method for use by wglSwapIntervalEXT */
 static enum glx_swap_control_method swap_control_method = GLX_SWAP_CONTROL_NONE;
@@ -506,6 +507,22 @@ BOOL visual_from_pixel_format( int format, XVisualInfo *visual )
     }
 }
 
+static BOOL x11drv_egl_describe_pixel_format( int format, struct wgl_pixel_format *pf )
+{
+    XVisualInfo visual;
+
+    if (!p_egl_describe_pixel_format( format, pf )) return FALSE;
+    if (!visual_from_pixel_format( format, &visual ) || visual.depth != default_visual.depth)
+    {
+        /* Forbid drawing to windows with formats whose depth does not match the screen depth
+         * so that we can copy child windows on-screen using XCopyArea().
+         * See x11drv_init_pixel_formats() for the same logic with GLX. */
+        pf->pfd.dwFlags &= ~PFD_DRAW_TO_WINDOW;
+    }
+
+    return TRUE;
+}
+
 static BOOL x11drv_egl_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
 {
     struct opengl_drawable *previous;
@@ -561,6 +578,8 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
         x11drv_driver_funcs = **driver_funcs;
         x11drv_driver_funcs.p_init_egl_platform = x11drv_init_egl_platform;
         x11drv_driver_funcs.p_surface_create = x11drv_egl_surface_create;
+        x11drv_driver_funcs.p_describe_pixel_format = x11drv_egl_describe_pixel_format;
+        p_egl_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
         *driver_funcs = &x11drv_driver_funcs;
         return STATUS_SUCCESS;
     }
