@@ -1005,21 +1005,21 @@ static void test_IMetaDataImport(void)
     buf_count = 0xdeadbeef;
     henum = NULL;
     hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, NULL, 0, &buf_count);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-    todo_wine ok(buf_count == 0, "got buf_reqd %lu\n", buf_count);
-    todo_wine ok(!!henum, "got henum %p\n", henum);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(buf_count == 0, "got buf_reqd %lu\n", buf_count);
+    ok(!!henum, "got henum %p\n", henum);
 
     buf_len = 0;
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
     /* The <Module> typedef is ommitted. */
-    todo_wine ok(buf_len == ARRAY_SIZE(type_defs), "got len %lu\n", buf_len);
+    ok(buf_len == ARRAY_SIZE(type_defs), "got len %lu\n", buf_len);
 
     typedef_tokens = calloc(buf_len, sizeof(*typedef_tokens));
     ok(!!typedef_tokens, "got typedef_tokens %p\n", typedef_tokens);
     hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_len == buf_count, "got len %lu != %lu\n", buf_len, buf_count);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(buf_len == buf_count, "got len %lu != %lu\n", buf_len, buf_count);
     for (i = 0; i < buf_len; i++)
     {
         const struct type_info *info = &type_defs[i];
@@ -1077,16 +1077,16 @@ static void test_IMetaDataImport(void)
         winetest_pop_context();
     }
     hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
 
     hr = IMetaDataImport_ResetEnum(md_import, henum, 0);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
     buf_count = 0xdeadbeef;
     hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_len == buf_count, "got len %lu != %lu\n", buf_len, buf_count);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(buf_len == buf_count, "got len %lu != %lu\n", buf_len, buf_count);
     hr = IMetaDataImport_EnumTypeDefs(md_import, &henum, typedef_tokens, buf_len, &buf_count);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
     IMetaDataImport_CloseEnum(md_import, henum);
     free(typedef_tokens);
 
@@ -1109,7 +1109,7 @@ static void test_IMetaDataImport(void)
     todo_wine ok(buf_count == 0, "got buf_reqd %lu\n", buf_count);
     buf_len = 0;
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
     todo_wine ok(buf_len == ARRAY_SIZE(test2_methods), "got buf_len %#lx\n" , buf_len);
     methoddef_tokens = calloc(buf_len, sizeof(*methoddef_tokens));
     ok(!!methoddef_tokens, "got methoddef_tokens %p\n", methoddef_tokens);
@@ -1174,7 +1174,7 @@ static void test_IMetaDataImport(void)
         todo_wine ok(buf_count == 0, "got buf_count %lu\n", buf_count);
         buf_len = 0;
         hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
         todo_wine ok(buf_len == fields_len, "got buf_len %lu\n", buf_len);
         fielddef_tokens = calloc(buf_len, sizeof(*fielddef_tokens));
         ok(!!fielddef_tokens, "got fielddef_tokens %p\n", fielddef_tokens);
@@ -1241,7 +1241,7 @@ static void test_IMetaDataImport(void)
     hr = IMetaDataImport_EnumProperties(md_import, &henum, typedef1, NULL, 0, NULL);
     todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
     todo_wine ok(buf_len == ARRAY_SIZE(test3_props), "got buf_len %lu\n", buf_len);
     property_tokens = calloc(buf_len, sizeof(*property_tokens));
     ok(!!property_tokens, "got property_tokens %p\n", property_tokens);

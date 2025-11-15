@@ -317,27 +317,85 @@ static ULONG WINAPI import_Release(IMetaDataImport *iface)
     return IMetaDataTables_Release(&impl->IMetaDataTables_iface);
 }
 
+struct token_enum
+{
+    ULONG count;
+    ULONG row_start;
+    ULONG row_cur;
+    ULONG row_end;
+};
+
+HRESULT token_enum_create(HCORENUM *out)
+{
+    struct token_enum *md_enum;
+
+    if (!(md_enum = calloc(1, sizeof(*md_enum)))) return E_OUTOFMEMORY;
+    *out = md_enum;
+    return S_OK;
+}
+
 static void WINAPI import_CloseEnum(IMetaDataImport *iface, HCORENUM henum)
 {
-    FIXME("(%p, %p): stub!\n", iface, henum);
+    TRACE("(%p, %p)\n", iface, henum);
+    free(henum);
 }
 
 static HRESULT WINAPI import_CountEnum(IMetaDataImport *iface, HCORENUM henum, ULONG *count)
 {
-    FIXME("(%p, %p, %p): stub!\n", iface, henum, count);
-    return E_NOTIMPL;
+    const struct token_enum *md_enum = henum;
+
+    TRACE("(%p, %p, %p)\n", iface, henum, count);
+
+    *count = henum ? md_enum->count : 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI import_ResetEnum(IMetaDataImport *iface, HCORENUM henum, ULONG idx)
 {
-    FIXME("(%p, %p, %lu): stub\n", iface, henum, idx);
-    return E_NOTIMPL;
+    struct token_enum *md_enum = henum;
+
+    TRACE("(%p, %p, %lu)\n", iface, henum, idx);
+
+    if (henum)
+        md_enum->row_cur = md_enum->row_start + idx;
+    return S_OK;
 }
 
-static HRESULT WINAPI import_EnumTypeDefs(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef *typedefs, ULONG len, ULONG *count)
+static HRESULT WINAPI import_EnumTypeDefs(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef *typedefs, ULONG len, ULONG *count)
 {
-    FIXME("(%p, %p, %p, %lu, %p): stub!\n", iface, henum, typedefs, len, count);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    ULONG row_size, rows, cols, key_idx, i = 0;
+    struct token_enum *henum = *ret_henum;
+    const char *name;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %p, %lu, %p)\n", iface, ret_henum, typedefs, len, count);
+
+    if (count)
+        *count = 0;
+
+    if (!henum)
+    {
+        hr = IMetaDataTables_GetTableInfo(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, &row_size, &rows, &cols,
+                                          &key_idx, &name);
+        if (FAILED(hr)) return hr;
+        /* Skip the <Module> row. */
+        if (rows < 2) return S_FALSE;
+        if (FAILED((hr = token_enum_create((HCORENUM *)&henum)))) return hr;
+
+        henum->count = rows - 1;
+        henum->row_start = henum->row_cur = 2;
+        henum->row_end = rows;
+        *ret_henum = henum;
+    }
+
+    while (henum->row_cur <= henum->row_end && i < len)
+        typedefs[i++] = TokenFromRid(henum->row_cur++, mdtTypeDef);
+
+    if (count)
+        *count = i;
+
+    return i ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI import_EnumInterfaceImpls(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef type_def,
