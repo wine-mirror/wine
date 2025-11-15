@@ -1037,29 +1037,28 @@ static void test_IMetaDataImport(void)
         exp_len = snprintf(bufA, sizeof(bufA), "%s.%s", info->exp_namespace, info->exp_name) + 1;
         str_reqd = 0;
         hr = IMetaDataImport_GetTypeDefProps(md_import, typedef_tokens[i], NULL, 0, &str_reqd, NULL, NULL);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(str_reqd == exp_len, "got str_reqd %lu != %lu\n", str_reqd, exp_len);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(str_reqd == exp_len, "got str_reqd %lu != %lu\n", str_reqd, exp_len);
         MultiByteToWideChar(CP_ACP, 0, bufA, -1, bufW, ARRAY_SIZE(bufW));
 
         str_len = str_reqd;
         strW = calloc(str_len, sizeof(WCHAR));
         hr = IMetaDataImport_GetTypeDefProps(md_import, typedef_tokens[i], strW, str_len - 1, &str_reqd, &val, &base);
-        todo_wine ok(hr == CLDB_S_TRUNCATION, "got hr %#lx\n", hr);
+        ok(hr == CLDB_S_TRUNCATION, "got hr %#lx\n", hr);
         len = wcslen(strW);
-        todo_wine ok( len == str_len - 2, "got len %lu != %lu\n", len, str_len - 2);
+        ok( len == str_len - 2, "got len %lu != %lu\n", len, str_len - 2);
         if (hr == CLDB_S_TRUNCATION)
-            todo_wine ok(!wcsncmp(strW, bufW, str_len - 2), "got bufW %s != %s\n", debugstr_w(strW),
-                         debugstr_wn(bufW, str_len - 2));
+            ok(!wcsncmp(strW, bufW, str_len - 2), "got bufW %s != %s\n", debugstr_w(strW),
+               debugstr_wn(bufW, str_len - 2));
         val = base = 0;
         hr = IMetaDataImport_GetTypeDefProps(md_import, typedef_tokens[i], strW, str_len, NULL, &val, &base);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
         if (hr == S_OK)
             ok(1 || !wcscmp(strW, bufW), "got strW %s != %s\n", debugstr_w(strW), debugstr_w(bufW));
         free(strW);
 
-        todo_wine ok(val == info->exp_flags, "got val %#lx != %#lx\n", val, info->exp_flags);
-        todo_wine ok(base == info->exp_base, "got base %s != %s\n", debugstr_mdToken(base),
-                     debugstr_mdToken(info->exp_base));
+        ok(val == info->exp_flags, "got val %#lx != %#lx\n", val, info->exp_flags);
+        ok(base == info->exp_base, "got base %s != %s\n", debugstr_mdToken(base), debugstr_mdToken(info->exp_base));
 
         hr = IMetaDataImport_FindTypeDefByName(md_import, bufW, 0, &token);
         todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);

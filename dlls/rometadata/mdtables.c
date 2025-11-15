@@ -19,8 +19,12 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
 
 #define COBJMACROS
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "objbase.h"
 #include "cor.h"
 #include "rometadataapi.h"
@@ -429,11 +433,75 @@ static HRESULT WINAPI import_GetModuleFromScope(IMetaDataImport *iface, mdModule
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI import_GetTypeDefProps(IMetaDataImport *iface, mdTypeDef type_def, WCHAR *name, ULONG len,
-                                             ULONG *written, ULONG *flags, mdToken *base)
+static BOOL type_full_name(WCHAR *out, ULONG out_len, ULONG *needed, const char *namespace, const char *name)
 {
-    FIXME("(%p, %#x, %p, %lu, %p, %p, %p): stub!\n", iface, type_def, name, len, written, flags, base);
-    return E_NOTIMPL;
+    ULONG full_name_len;
+    char *full_name;
+
+    if (namespace[0] && name[0])
+        full_name_len = strlen(namespace) + 1 + strlen(name) + 1;
+    else
+        full_name_len = strlen(namespace[0] ? namespace : name) + 1;
+    if (!(full_name = malloc(full_name_len))) return FALSE;
+    if (namespace[0] && name[0])
+        snprintf(full_name, full_name_len, "%s.%s", namespace, name);
+    else
+        strcpy(full_name, namespace[0] ? namespace : name);
+    *needed = MultiByteToWideChar(CP_ACP, 0, full_name, -1, NULL, 0);
+    if (out && out_len)
+    {
+        ULONG n = MultiByteToWideChar(CP_ACP, 0, full_name, min(full_name_len, out_len) - 1, out, out_len - 1);
+        out[n] = L'\0';
+    }
+    free(full_name);
+    return TRUE;
+}
+
+static HRESULT WINAPI import_GetTypeDefProps(IMetaDataImport *iface, mdTypeDef type_def, WCHAR *name, ULONG len,
+                                             ULONG *written, ULONG *ret_flags, mdToken *base)
+{
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    ULONG needed = 0, flags = 0, extends = 0;
+
+    TRACE("(%p, %#x, %p, %lu, %p, %p, %p)\n", iface, type_def, name, len, written, ret_flags, base);
+
+    if (TypeFromToken(type_def) != mdtTypeDef) return S_FALSE;
+
+    if (name && len)
+        name[0] = L'\0';
+    if (type_def != mdTypeDefNil)
+    {
+        const ULONG row = RidFromToken(type_def);
+        const char *namespace, *nameA;
+        ULONG name_idx, ns_idx;
+        HRESULT hr;
+
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 0, row, &flags))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 1, row, &name_idx))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 2, row, &ns_idx))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 3, row, &extends))))
+            return hr;
+        if (FAILED(hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, name_idx, &nameA)))
+            return hr;
+        if (FAILED(hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, ns_idx, &namespace)))
+            return hr;
+        if (!type_full_name(name, len, &needed, namespace, nameA)) return E_OUTOFMEMORY;
+        /* Native replaces tokens with rid 0 with mdTypeRefNil. */
+        if (IsNilToken(extends))
+            extends = mdTypeRefNil;
+    }
+
+    if (written)
+        *written = needed;
+    if (ret_flags)
+        *ret_flags = flags;
+    if (base)
+        *base = extends;
+
+    return (name && needed > len) ? CLDB_S_TRUNCATION : S_OK;
 }
 
 static HRESULT WINAPI import_GetInterfaceImplProps(IMetaDataImport *iface, mdInterfaceImpl iface_impl,
