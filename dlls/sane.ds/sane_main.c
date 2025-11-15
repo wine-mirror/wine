@@ -82,6 +82,9 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
         activeDS.appIdentity = *pOrigin;
         activeDS.capXferMech = TWSX_NATIVE;
         activeDS.capXferCount = -1;
+
+        SANE_LoadOptions();
+
         return TWRC_SUCCESS;
     }
     SANE_CALL( close_ds, NULL );

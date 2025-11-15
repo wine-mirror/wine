@@ -72,6 +72,7 @@ extern void SANE_Notify (TW_UINT16 message);
 extern TW_UINT16 SANE_Start(void);
 extern void      SANE_Cancel(void);
 extern void      SANE_XferReady(void);
+extern void      SANE_LoadOptions(void);
 
 /* Implementation of operation triplets
  * From Application to Source (Control Information) */
