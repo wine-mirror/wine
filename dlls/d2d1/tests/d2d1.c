@@ -1273,6 +1273,31 @@ static IDXGIDevice *create_device(BOOL d3d11)
     return device;
 }
 
+static void print_adapter_info(void)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    HRESULT hr;
+
+    if (!(device = create_device(TRUE)))
+        device = create_device(FALSE);
+
+    if (!device)
+        return;
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    trace("Adapter: %s, %04x:%04x.\n", wine_dbgstr_w(adapter_desc.Description),
+            adapter_desc.VendorId, adapter_desc.DeviceId);
+
+    IDXGIDevice_Release(device);
+    IDXGIAdapter_Release(adapter);
+}
+
 static IDXGIDevice *create_warp_device(BOOL d3d11)
 {
     IUnknown *d3d_device;
@@ -17275,6 +17300,8 @@ START_TEST(d2d1)
         if (!strcmp(argv[i], "--single"))
             use_mt = FALSE;
     }
+
+    print_adapter_info();
 
     queue_test(test_clip);
     queue_test(test_state_block);
