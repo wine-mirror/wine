@@ -1273,6 +1273,39 @@ static IDXGIDevice *create_device(BOOL d3d11)
     return device;
 }
 
+static IDXGIDevice *create_warp_device(BOOL d3d11)
+{
+    IUnknown *d3d_device;
+    IDXGIDevice *device;
+    HRESULT hr;
+
+    if (d3d11)
+    {
+        D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
+
+        if (FAILED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_WARP, NULL,
+                D3D11_CREATE_DEVICE_BGRA_SUPPORT, &level, 1, D3D11_SDK_VERSION,
+                (ID3D11Device **)&d3d_device, NULL, NULL)))
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        if (FAILED((D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_WARP, NULL,
+                D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION,
+                (ID3D10Device1 **)&d3d_device))))
+        {
+            return NULL;
+        }
+    }
+    hr = IUnknown_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&device);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    IUnknown_Release(d3d_device);
+
+    return device;
+}
+
 static HWND create_window(void)
 {
     RECT r = {0, 0, 640, 480};
@@ -5352,10 +5385,12 @@ static void test_alpha_mode(BOOL d3d11)
 static void test_shared_bitmap(BOOL d3d11)
 {
     IWICBitmap *wic_bitmap1, *wic_bitmap2;
+    ID2D1DeviceContext *sw_device_context;
     ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     ID2D1RenderTarget *rt1, *rt2, *rt3;
+    IDXGIDevice *device2, *warp_device;
     IDXGISurface *surface2;
     ID2D1Factory *factory1, *factory2;
     IWICImagingFactory *wic_factory;
@@ -5368,7 +5403,7 @@ static void test_shared_bitmap(BOOL d3d11)
     IWICBitmapLock *wic_lock;
     IDXGISurface1 *surface3;
     ID2D1Bitmap1 *bitmap3;
-    IDXGIDevice *device2;
+    ID2D1Device *device;
     WICRect wic_rect;
     ULONG refcount;
     HWND window2;
@@ -5651,6 +5686,16 @@ static void test_shared_bitmap(BOOL d3d11)
     ID2D1Bitmap_Release(bitmap1);
 
     /* Using IWICBitmapLock */
+    warp_device = create_warp_device(d3d11);
+
+    hr = ID2D1Factory1_CreateDevice(ctx.factory1, warp_device, &device);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    IDXGIDevice_Release(warp_device);
+
+    hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &sw_device_context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1Device_Release(device);
+
     wic_rect.X = wic_rect.Y = 0;
     wic_rect.Width = 32;
     wic_rect.Height = 16;
@@ -5658,7 +5703,7 @@ static void test_shared_bitmap(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     refcount = get_refcount(wic_lock);
-    hr = ID2D1RenderTarget_CreateSharedBitmap(ctx.rt, &IID_IWICBitmapLock, wic_lock, NULL, &bitmap1);
+    hr = ID2D1DeviceContext_CreateSharedBitmap(sw_device_context, &IID_IWICBitmapLock, wic_lock, NULL, &bitmap1);
     todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     todo_wine
@@ -5695,6 +5740,7 @@ if (hr == S_OK)
     }
     ID2D1Bitmap_Release(bitmap1);
 }
+    ID2D1DeviceContext_Release(sw_device_context);
     IWICBitmapLock_Release(wic_lock);
 
     ID2D1RenderTarget_Release(rt1);
