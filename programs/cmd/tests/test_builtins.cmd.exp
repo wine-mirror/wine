@@ -91,23 +91,23 @@ word
 
 @todo_wine@@pwd@>echo a 1>nul@space@
 
-@todo_wine@@pwd@>if 1 == 2 then @echo a@space@
+@pwd@>if 1 == 2 then @echo a@space@
 
 @todo_wine@@pwd@>IF 1 == 2 ThEn @EchO a@space@
-@todo_wine@
-@todo_wine@@pwd@>echo 1@space@
-@todo_wine@1
-@todo_wine@
-@todo_wine@@pwd@>echo 2@space@
-@todo_wine@2
-@todo_wine@---
+
+@pwd@>echo 1@space@
+1
+
+@pwd@>echo 2@space@
+2
+---
 @todo_wine@AA@\x08@BB
-@todo_wine@--- @ with chains and brackets
+--- @ with chains and brackets
 
 @todo_wine@@pwd@>(echo the @ character chains until  && )  && echo and can hide brackets  || ()  ||@space@
-@todo_wine@the @ character chains until
-@todo_wine@we leave the current depth
-@todo_wine@and can hide brackets
+the @ character chains until
+we leave the current depth
+and can hide brackets
 @todo_wine@---
 foo1
 
@@ -155,10 +155,10 @@ if 1==1 @echo bar
 if 1==1 echo foo2
 if 1==1 @echo bar2
 
-@todo_wine@@pwd@>if 1 == 1 echo foo@space@
+@pwd@>if 1 == 1 echo foo@space@
 foo
 
-@todo_wine@@pwd@>if 1 == 1@space@
+@pwd@>if 1 == 1@space@
 bar
 foo2
 bar2

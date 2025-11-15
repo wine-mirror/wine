@@ -3229,35 +3229,6 @@ static WCHAR *fetch_next_line(BOOL first_line, WCHAR* buffer)
     handleExpansion(buffer, FALSE);
 
     buffer = WCMD_skip_leading_spaces(buffer);
-    /* Show prompt before batch line IF echo is on and in batch program */
-    if (WCMD_is_in_context(NULL) && echo_mode && *buffer && *buffer != L'@' && *buffer != L':')
-    {
-        if (first_line)
-        {
-            const size_t len = wcslen(L"echo.");
-            size_t curr_size = wcslen(buffer);
-            size_t min_len = curr_size < len ? curr_size : len;
-            WCMD_output_asis(L"\r\n");
-            WCMD_show_prompt();
-            WCMD_output_asis(buffer);
-            /* I don't know why Windows puts a space here but it does */
-            /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
-            if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                               buffer, min_len, L"echo.", len) != CSTR_EQUAL
-                && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                                  buffer, min_len, L"echo:", len) != CSTR_EQUAL
-                && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                                  buffer, min_len, L"echo/", len) != CSTR_EQUAL)
-            {
-                WCMD_output_asis(L" ");
-            }
-        }
-        else
-            WCMD_output_asis(buffer);
-
-        WCMD_output_asis(L"\r\n");
-    }
-
     return buffer;
 }
 
@@ -3270,7 +3241,8 @@ struct command_rebuild
 
 struct rebuild_flags
 {
-    unsigned depth;
+    unsigned in_echo : 1,
+             depth;
 };
 
 static BOOL rebuild_append(struct command_rebuild *rb, const WCHAR *toappend)
@@ -3363,10 +3335,26 @@ static BOOL rebuild_append_all_redirections(struct command_rebuild *rb, const CM
 
 static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags);
 
+static BOOL rebuild_shall_echo(const CMD_NODE *node)
+{
+    if (!node->do_echo) return FALSE;
+    switch (node->op)
+    {
+    case CMD_PIPE:
+    case CMD_CONCAT:
+    case CMD_ONFAILURE:
+    case CMD_ONSUCCESS:
+        return rebuild_shall_echo(node->left) && rebuild_shall_echo(node->right);
+    default:
+        return TRUE;
+    }
+}
+
 static BOOL rebuild_command_binary(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
 {
     const WCHAR *op_string;
-    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1};
+    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1, .in_echo = rbflags.in_echo};
+    BOOL ret;
 
     switch (node->op)
     {
@@ -3377,16 +3365,20 @@ static BOOL rebuild_command_binary(struct command_rebuild *rb, const CMD_NODE *n
     default: return FALSE;
     }
 
-    return rebuild_append_command(rb, node->left, new_rbflags) &&
-        ((node->left->op == CMD_SINGLE && node->op == CMD_CONCAT) ? rebuild_append(rb, L" ") : TRUE) &&
-        rebuild_append(rb, op_string) &&
-        rebuild_append_command(rb, node->right, new_rbflags);
+    ret = rebuild_append_command(rb, node->left, new_rbflags) &&
+        ((node->left->op == CMD_SINGLE && node->op == CMD_CONCAT) ? rebuild_append(rb, L" ") : TRUE);
+    if (!rbflags.in_echo || rebuild_shall_echo(node->left))
+    {
+        ret = ret && rebuild_append(rb, op_string);
+        ret = ret && rebuild_append_command(rb, node->right, new_rbflags);
+    }
+    return ret;
 }
 
 static BOOL rebuild_command_if(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
 {
     const WCHAR *unop = NULL, *binop = NULL;
-    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1};
+    struct rebuild_flags new_rbflags = {.depth = rbflags.depth + 1, .in_echo = rbflags.in_echo};
     BOOL ret;
 
     ret = rebuild_append(rb, L"if ");
@@ -3447,7 +3439,7 @@ static const WCHAR *state_to_delim(int state)
 static BOOL rebuild_command_for(struct command_rebuild *rb, const CMD_NODE *node, struct rebuild_flags rbflags)
 {
     const CMD_FOR_CONTROL *for_ctrl = &node->for_ctrl;
-    struct rebuild_flags new_rflags = {.depth = rbflags.depth + 1};
+    struct rebuild_flags new_rflags = {.depth = rbflags.depth + 1, .in_echo = rbflags.in_echo};
     const WCHAR *opt = NULL;
     BOOL ret;
 
@@ -3521,11 +3513,22 @@ static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *n
 {
     BOOL ret;
 
-    if (!node->do_echo && !rebuild_append(rb, L"@")) return FALSE;
+    if (!node->do_echo)
+    {
+        if (rbflags.in_echo) return TRUE;
+        if (!rebuild_append(rb, L"@")) return FALSE;
+    }
     switch (node->op)
     {
     case CMD_SINGLE:
         ret = rebuild_expand_and_append(rb, node->command, rbflags.depth == 0);
+        /* I don't know why Windows puts a space here but it does */
+        /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
+        if (rbflags.in_echo &&
+            (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, node->command, 4, L"echo", 4) != CSTR_EQUAL ||
+             node->command[4] == L'\0' ||
+             wcschr(L".:/", node->command[4]) == NULL))
+            rebuild_append(rb, L" ");
         break;
     case CMD_PIPE:
     case CMD_CONCAT:
@@ -3541,7 +3544,7 @@ static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *n
         break;
     case CMD_BLOCK:
         {
-            struct rebuild_flags new_rbflags = {.depth = rbflags.depth = 1};
+            struct rebuild_flags new_rbflags = {.depth = rbflags.depth = 1, .in_echo = rbflags.in_echo};
             ret = rebuild_append(rb, L"( ") &&
                 rebuild_append_command(rb, node->block, new_rbflags) &&
                 rebuild_append(rb, L" ) ");
@@ -4012,6 +4015,8 @@ static BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
     return TRUE;
 }
 
+static RETURN_CODE node_execute_with_echo(CMD_NODE *node, BOOL with_echo);
+
 struct for_loop_variables
 {
     unsigned char table[32];
@@ -4142,7 +4147,7 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, 
     /* Execute the body of the for loop with these values */
     if (forloopcontext->variable[varidx] && forloopcontext->variable[varidx][0] != forf_eol)
     {
-        return_code = node_execute(node);
+        return_code = node_execute_with_echo(node, echo_mode);
     }
     else
     {
@@ -4355,14 +4360,14 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
                 if (insert_pos + wcslen(fd.cFileName) + 1 >= ARRAY_SIZE(buffer)) continue;
                 wcscpy(&buffer[insert_pos], fd.cFileName);
                 WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
-                return_code = node_execute(node);
+                return_code = node_execute_with_echo(node, echo_mode);
             } while (!WCMD_is_break(return_code) && FindNextFileW(hff, &fd) != 0);
             FindClose(hff);
         }
         else
         {
             WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
-            return_code = node_execute(node);
+            return_code = node_execute_with_echo(node, echo_mode);
         }
     }
     return return_code;
@@ -4437,7 +4442,7 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
         swprintf(tmp, ARRAY_SIZE(tmp), L"%d", var);
         WCMD_set_for_loop_variable(for_ctrl->variable_index, tmp);
         TRACE("Processing FOR number %s\n", wine_dbgstr_w(tmp));
-        return_code = node_execute(node);
+        return_code = node_execute_with_echo(node, echo_mode);
     }
     return return_code;
 }
@@ -4596,13 +4601,26 @@ static RETURN_CODE handle_pipe_command(CMD_NODE *node)
     return errorlevel = return_code;
 }
 
-RETURN_CODE node_execute(CMD_NODE *node)
+static RETURN_CODE node_execute_with_echo(CMD_NODE *node, BOOL with_echo)
 {
     HANDLE saved[3];
     RETURN_CODE return_code;
     int test;
 
     if (!node) return NO_ERROR;
+    if (with_echo && node->do_echo && (node->op != CMD_SINGLE || node->command[0] != L':'))
+    {
+        WCHAR buffer[MAXSTRING];
+        struct command_rebuild rb = {buffer, ARRAY_SIZE(buffer), 0};
+        struct rebuild_flags rbflags = {.depth = 0, .in_echo = 1};
+        if (rebuild_append_command(&rb, node, rbflags))
+        {
+            WCMD_output_asis(L"\r\n");
+            WCMD_show_prompt();
+            WCMD_output_asis(buffer);
+            WCMD_output_asis(L"\r\n");
+        }
+    }
     if (!push_std_redirections(node->redirects, saved))
     {
         WCMD_print_error();
@@ -4616,22 +4634,22 @@ RETURN_CODE node_execute(CMD_NODE *node)
         else return_code = NO_ERROR;
         break;
     case CMD_CONCAT:
-        return_code = node_execute(node->left);
+        return_code = node_execute_with_echo(node->left, FALSE);
         if (!WCMD_is_break(return_code))
-            return_code = node_execute(node->right);
+            return_code = node_execute_with_echo(node->right, FALSE);
         break;
     case CMD_ONSUCCESS:
-        return_code = node_execute(node->left);
+        return_code = node_execute_with_echo(node->left, FALSE);
         if (return_code == NO_ERROR)
-            return_code = node_execute(node->right);
+            return_code = node_execute_with_echo(node->right, FALSE);
         break;
     case CMD_ONFAILURE:
-        return_code = node_execute(node->left);
+        return_code = node_execute_with_echo(node->left, FALSE);
         if (return_code != NO_ERROR && !WCMD_is_break(return_code))
         {
             /* that's needed for commands (POPD, RMDIR) that don't set errorlevel in case of failure. */
             errorlevel = return_code;
-            return_code = node_execute(node->right);
+            return_code = node_execute_with_echo(node->right, FALSE);
         }
         break;
     case CMD_PIPE:
@@ -4639,7 +4657,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
         break;
     case CMD_IF:
         if (if_condition_evaluate(&node->condition, &test))
-            return_code = node_execute(test ? node->then_block : node->else_block);
+            return_code = node_execute_with_echo(test ? node->then_block : node->else_block, FALSE);
         else
             return_code = ERROR_INVALID_FUNCTION;
         break;
@@ -4647,7 +4665,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
         return_code = for_control_execute(&node->for_ctrl, node->do_block);
         break;
     case CMD_BLOCK:
-        return_code = node_execute(node->block);
+        return_code = node_execute_with_echo(node->block, FALSE);
         break;
     default:
         FIXME("Unexpected operator %u\n", node->op);
@@ -4658,6 +4676,10 @@ RETURN_CODE node_execute(CMD_NODE *node)
     return return_code;
 }
 
+RETURN_CODE node_execute(CMD_NODE *node)
+{
+    return node_execute_with_echo(node, echo_mode && WCMD_is_in_context(NULL));
+}
 
 RETURN_CODE WCMD_ctrlc_status(void)
 {
