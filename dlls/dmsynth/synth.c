@@ -1505,7 +1505,7 @@ static int synth_preset_get_num(fluid_preset_t *fluid_preset)
     return preset->patch;
 }
 
-static void find_region(struct synth *synth, int bank, int patch, int key, int vel,
+static void find_region_no_fallback(struct synth *synth, int bank, int patch, int key, int vel,
         struct instrument **out_instrument, struct region **out_region)
 {
     struct instrument *instrument;
@@ -1532,6 +1532,19 @@ static void find_region(struct synth *synth, int bank, int patch, int key, int v
         *out_region = region;
         break;
     }
+}
+
+static void find_region(struct synth *synth, int bank, int patch, int key, int vel,
+        struct instrument **out_instrument, struct region **out_region)
+{
+    find_region_no_fallback(synth, bank, patch, key, vel, out_instrument, out_region);
+    if (!*out_region && bank == 128)
+        find_region_no_fallback(synth, bank, 0, key, vel, out_instrument, out_region);
+
+    if (!*out_instrument)
+        WARN("Could not find instrument with patch %#x\n", patch);
+    else if (!*out_region)
+        WARN("Failed to find instrument matching note / velocity\n");
 }
 
 static BOOL gen_from_connection(const CONNECTION *conn, UINT *gen)
@@ -1893,18 +1906,8 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
     EnterCriticalSection(&synth->cs);
 
     find_region(synth, preset->bank, preset->patch, key, vel, &instrument, &region);
-    if (!region && preset->bank == 128)
-        find_region(synth, preset->bank, 0, key, vel, &instrument, &region);
-
-    if (!instrument)
-    {
-        WARN("Could not find instrument with patch %#x\n", preset->patch);
-        LeaveCriticalSection(&synth->cs);
-        return FLUID_FAILED;
-    }
     if (!region)
     {
-        WARN("Failed to find instrument matching note / velocity\n");
         LeaveCriticalSection(&synth->cs);
         return FLUID_FAILED;
     }
