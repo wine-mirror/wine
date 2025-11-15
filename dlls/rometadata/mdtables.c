@@ -365,6 +365,56 @@ static HRESULT WINAPI import_ResetEnum(IMetaDataImport *iface, HCORENUM henum, U
     return S_OK;
 }
 
+static const char *debugstr_mdToken(mdToken token)
+{
+#define TYPE(t) { t, #t }
+    static const struct type_str
+    {
+        CorTokenType type;
+        const char *str;
+    } types[] = {
+        TYPE(mdtModule),
+        TYPE(mdtTypeRef),
+        TYPE(mdtTypeDef),
+        TYPE(mdtFieldDef),
+        TYPE(mdtMethodDef),
+        TYPE(mdtParamDef),
+        TYPE(mdtInterfaceImpl),
+        TYPE(mdtMemberRef),
+        TYPE(mdtCustomAttribute),
+        TYPE(mdtPermission),
+        TYPE(mdtSignature),
+        TYPE(mdtEvent),
+        TYPE(mdtProperty),
+        TYPE(mdtModuleRef),
+        TYPE(mdtTypeSpec),
+        TYPE(mdtAssembly),
+        TYPE(mdtAssemblyRef),
+        TYPE(mdtFile),
+        TYPE(mdtExportedType),
+        TYPE(mdtManifestResource),
+        TYPE(mdtGenericParam),
+        TYPE(mdtMethodSpec),
+        TYPE(mdtGenericParamConstraint),
+        TYPE(mdtString),
+        TYPE(mdtName),
+        TYPE(mdtBaseType)
+    };
+#undef TYPE
+    const CorTokenType type = TypeFromToken(token);
+    const UINT rid = RidFromToken(token);
+    int i;
+
+    if (!token) return "(mdTokenNil)";
+    for (i = 0; i < ARRAY_SIZE(types); i++)
+    {
+        if (type == types[i].type)
+            return rid ? wine_dbg_sprintf("(%s|%#x)", types[i].str, rid)
+                       : wine_dbg_sprintf("(md%sNil)", &types[i].str[3]);
+    }
+    return wine_dbg_sprintf("(%#x|%#x)", type, rid);
+}
+
 static HRESULT WINAPI import_EnumTypeDefs(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef *typedefs, ULONG len, ULONG *count)
 {
     struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
@@ -415,10 +465,88 @@ static HRESULT WINAPI import_EnumTypeRefs(IMetaDataImport *iface, HCORENUM *henu
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI import_FindTypeDefByName(IMetaDataImport *iface, const WCHAR *name, mdToken enclosing_class, mdTypeDef *type_def)
+static void type_split_name(const char *nameA, const char **namespace, size_t *ns_len, const char **type_name)
 {
-    FIXME("(%p, %p, %#x, %p): stub!\n", iface, debugstr_w(name), enclosing_class, type_def);
-    return E_NOTIMPL;
+    const char *sep;
+
+    if ((sep = strrchr(nameA, '.')))
+    {
+        *namespace = nameA;
+        *ns_len = sep - nameA;
+        *type_name = &sep[1];
+    }
+    else
+    {
+        *namespace = NULL;
+        *ns_len = 0;
+        *type_name = nameA;
+    }
+}
+
+static HRESULT WINAPI import_FindTypeDefByName(IMetaDataImport *iface, const WCHAR *name, mdToken enclosing_class,
+                                               mdTypeDef *type_def)
+{
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    const char *namespace, *type_name;
+    HCORENUM henum = NULL;
+    mdTypeDef cur_typedef;
+    size_t len, ns_len;
+    BOOL found = FALSE;
+    char *nameA;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p)\n", iface, debugstr_w(name), debugstr_mdToken(enclosing_class), type_def);
+
+    if (!name) return E_INVALIDARG;
+    if (!IsNilToken(enclosing_class) && enclosing_class != TokenFromRid(1, mdtModule))
+    {
+        CorTokenType type = TypeFromToken(enclosing_class);
+
+        if (type == mdtTypeDef || type == mdtTypeRef)
+            FIXME("unsupported enclosing_class: %s\n", debugstr_mdToken(enclosing_class));
+        return CLDB_E_RECORD_NOTFOUND;
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, name, -1, NULL, 0, NULL, NULL);
+    if (!(nameA = malloc(len))) return E_OUTOFMEMORY;
+    WideCharToMultiByte(CP_ACP, 0, name, -1, nameA, len, NULL, NULL);
+    type_split_name(nameA, &namespace, &ns_len, &type_name);
+
+    hr = IMetaDataImport_EnumTypeDefs(&impl->IMetaDataImport_iface, &henum, NULL, 0, NULL);
+    if (FAILED(hr))
+    {
+        free(nameA);
+        return hr;
+    }
+    hr = IMetaDataImport_EnumTypeDefs(&impl->IMetaDataImport_iface, &henum, &cur_typedef, 1, NULL);
+    while (hr == S_OK)
+    {
+        ULONG row = RidFromToken(cur_typedef), idx;
+        const char *cur_type_name, *cur_ns;
+
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 1, row, &idx)))) break;
+        if (FAILED((hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, idx, &cur_type_name)))) break;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 2, row, &idx)))) break;
+        if (FAILED((hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, idx, &cur_ns)))) break;
+
+        if (!!namespace == !!cur_ns[0] &&
+            (!namespace || !strncmp(namespace, cur_ns, ns_len)) &&
+            !strcmp(type_name, cur_type_name))
+        {
+            found = TRUE;
+            *type_def = cur_typedef;
+            break;
+        }
+        hr = IMetaDataImport_EnumTypeDefs(&impl->IMetaDataImport_iface, &henum, &cur_typedef, 1, NULL);
+    }
+    IMetaDataImport_CloseEnum(&impl->IMetaDataImport_iface, henum);
+    free(nameA);
+
+    if (found)
+        hr = S_OK;
+    else if (SUCCEEDED(hr))
+        hr = CLDB_E_RECORD_NOTFOUND;
+    return hr;
 }
 
 static HRESULT WINAPI import_GetScopeProps(IMetaDataImport *iface, WCHAR *name, ULONG len, ULONG *written, GUID *mvid)
@@ -463,7 +591,7 @@ static HRESULT WINAPI import_GetTypeDefProps(IMetaDataImport *iface, mdTypeDef t
     struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
     ULONG needed = 0, flags = 0, extends = 0;
 
-    TRACE("(%p, %#x, %p, %lu, %p, %p, %p)\n", iface, type_def, name, len, written, ret_flags, base);
+    TRACE("(%p, %s, %p, %lu, %p, %p, %p)\n", iface, debugstr_mdToken(type_def), name, len, written, ret_flags, base);
 
     if (TypeFromToken(type_def) != mdtTypeDef) return S_FALSE;
 

@@ -1061,8 +1061,8 @@ static void test_IMetaDataImport(void)
         ok(base == info->exp_base, "got base %s != %s\n", debugstr_mdToken(base), debugstr_mdToken(info->exp_base));
 
         hr = IMetaDataImport_FindTypeDefByName(md_import, bufW, 0, &token);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(token == typedef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token), debugstr_mdToken(typedef_tokens[i]));
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(token == typedef_tokens[i], "got token %s != %s\n", debugstr_mdToken(token), debugstr_mdToken(typedef_tokens[i]));
 
         if (info->exp_contract_name)
         {
@@ -1090,17 +1090,17 @@ static void test_IMetaDataImport(void)
     free(typedef_tokens);
 
     hr = IMetaDataImport_FindTypeDefByName(md_import, NULL, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
 
     hr = IMetaDataImport_FindTypeDefByName(md_import, L"Test2", 0, &typedef1);
-    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
     hr = IMetaDataImport_FindTypeDefByName(md_import, NULL, 0, &typedef1);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
 
     typedef1 = 0;
     hr = IMetaDataImport_FindTypeDefByName(md_import, L"Wine.Test.Test2", 0, &typedef1);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine test_token(md_import, typedef1, mdtTypeDef, FALSE);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    test_token(md_import, typedef1, mdtTypeDef, FALSE);
     buf_count = 0xdeadbeef;
     henum = NULL;
     hr = IMetaDataImport_EnumMethods(md_import, &henum, typedef1, NULL, 0, &buf_count);
@@ -1163,8 +1163,8 @@ static void test_IMetaDataImport(void)
 
         typedef1 = 0;
         hr = IMetaDataImport_FindTypeDefByName(md_import, type_name, 0, &typedef1);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine test_token(md_import, typedef1, mdtTypeDef, FALSE);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        test_token(md_import, typedef1, mdtTypeDef, FALSE);
         henum = NULL;
         buf_count = 0xdeadbeef;
         hr = IMetaDataImport_EnumFields(md_import, &henum, typedef1, NULL, 0, &buf_count);
@@ -1221,8 +1221,8 @@ static void test_IMetaDataImport(void)
     typedef1 = buf_len = 0;
     data = NULL;
     hr = IMetaDataImport_FindTypeDefByName(md_import, L"Wine.Test.ITest2", 0, &typedef1);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine test_token(md_import, typedef1, mdtTypeDef, FALSE);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    test_token(md_import, typedef1, mdtTypeDef, FALSE);
     hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef1, guid_attribute_name, &data, &buf_len);
     todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
     todo_wine ok(!!data, "got data %p\n", data);
@@ -1235,7 +1235,7 @@ static void test_IMetaDataImport(void)
 
     typedef1 = buf_len = 0;
     hr = IMetaDataImport_FindTypeDefByName(md_import, L"Wine.Test.ITest3", 0, &typedef1);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
     henum = NULL;
     hr = IMetaDataImport_EnumProperties(md_import, &henum, typedef1, NULL, 0, NULL);
     todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
