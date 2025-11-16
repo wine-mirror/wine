@@ -101,7 +101,7 @@ word
 @pwd@>echo 2@space@
 2
 ---
-@todo_wine@AA@\x08@BB
+AA@\x08@BB
 --- @ with chains and brackets
 
 @todo_wine@@pwd@>(echo the @ character chains until  && )  && echo and can hide brackets  || ()  ||@space@

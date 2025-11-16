@@ -831,6 +831,8 @@ static void WCMD_show_prompt(void)
 	  break;
 	case 'H':
 	  *q++ = '\b';
+	  *q++ = ' ';
+	  *q++ = '\b';
 	  break;
 	case 'L':
 	  *q++ = '<';
