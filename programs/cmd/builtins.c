@@ -3061,6 +3061,7 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
           if (last) *last = L'\0';
         }
         WCMD_output_asis(p);
+        WCMD_output_asis(NULL);
       }
 
       /* Read the reply */
