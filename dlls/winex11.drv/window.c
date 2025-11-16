@@ -111,6 +111,22 @@ static const char *debugstr_mwm_hints( const MwmHints *hints )
     return wine_dbg_sprintf( "%lx,%lx", hints->functions, hints->decorations );
 }
 
+static const char *debugstr_size_hints( const XSizeHints *hints )
+{
+    char buffer[1024], *buf = buffer;
+    buf += sprintf( buf, "{" );
+    if (hints->flags & PPosition) buf += sprintf( buf, " pos %d,%d", hints->x, hints->y );
+    if (hints->flags & PSize) buf += sprintf( buf, " size %d,%d", hints->width, hints->height );
+    if (hints->flags & PMinSize) buf += sprintf( buf, " min %d,%d", hints->min_width, hints->min_height );
+    if (hints->flags & PMaxSize) buf += sprintf( buf, " max %d,%d", hints->max_width, hints->max_height );
+    if (hints->flags & PResizeInc) buf += sprintf( buf, " inc %d,%d", hints->width_inc, hints->height_inc );
+    if (hints->flags & PAspect) buf += sprintf( buf, " a/r min %d:%d max %d:%d", hints->min_aspect.x, hints->min_aspect.y, hints->max_aspect.x, hints->max_aspect.y );
+    if (hints->flags & PBaseSize) buf += sprintf( buf, " base %d,%d", hints->base_width, hints->base_height );
+    if (hints->flags & PWinGravity) buf += sprintf( buf, " grav %d", hints->win_gravity );
+    buf += sprintf( buf, " }" );
+    return __wine_dbg_strdup( buffer );
+}
+
 static const char *debugstr_monitor_indices( const struct monitor_indices *monitors )
 {
     return wine_dbg_sprintf( "%ld,%ld,%ld,%ld", monitors->indices[0], monitors->indices[1], monitors->indices[2], monitors->indices[3] );
@@ -862,6 +878,21 @@ static void set_window_icon_data( struct x11drv_win_data *data, HICON icon, cons
     data->icon_size = size;
 }
 
+static void window_set_wm_normal_hints( struct x11drv_win_data *data, XSizeHints *new_hints )
+{
+    const XSizeHints *old_hints = &data->pending_state.wm_normal_hints;
+
+    data->desired_state.wm_normal_hints = *new_hints;
+    if (!data->whole_window) return; /* no window or not managed, nothing to update */
+    if (!memcmp( old_hints, new_hints, sizeof(*new_hints) )) return; /* hints are the same, nothing to update */
+
+    data->pending_state.wm_normal_hints = *new_hints;
+    data->wm_normal_hints_serial = NextRequest( data->display );
+    TRACE( "window %p/%lx, requesting WM_NORMAL_HINTS %s serial %lu\n", data->hwnd, data->whole_window,
+           debugstr_size_hints(&data->pending_state.wm_normal_hints), data->wm_normal_hints_serial );
+    XSetWMNormalHints( data->display, data->whole_window, new_hints );
+}
+
 
 /***********************************************************************
  *              set_size_hints
@@ -870,7 +901,7 @@ static void set_window_icon_data( struct x11drv_win_data *data, HICON icon, cons
  */
 static void set_size_hints( struct x11drv_win_data *data, DWORD style )
 {
-    XSizeHints* size_hints;
+    XSizeHints *size_hints;
 
     if (!(size_hints = XAllocSizeHints())) return;
 
@@ -901,9 +932,7 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
         }
     }
 
-    TRACE( "window %p/%lx requesting WM_NORMAL_HINTS flags %#lx, serial %lu\n", data->hwnd,
-           data->whole_window, size_hints->flags, NextRequest( data->display ) );
-    XSetWMNormalHints( data->display, data->whole_window, size_hints );
+    window_set_wm_normal_hints( data, size_hints );
     XFree( size_hints );
 }
 
@@ -1844,6 +1873,20 @@ void window_mwm_hints_notify( struct x11drv_win_data *data, unsigned long serial
     window_set_config( data, data->desired_state.rect, FALSE );
 }
 
+void window_wm_normal_hints_notify( struct x11drv_win_data *data, unsigned long serial, const XSizeHints *value )
+{
+    XSizeHints *desired = &data->desired_state.wm_normal_hints, *pending = &data->pending_state.wm_normal_hints, *current = &data->current_state.wm_normal_hints;
+    unsigned long *expect_serial = &data->wm_normal_hints_serial;
+    const char *expected, *received, *prefix;
+
+    prefix = wine_dbg_sprintf( "window %p/%lx ", data->hwnd, data->whole_window );
+    received = wine_dbg_sprintf( "WM_NORMAL_HINTS %s/%lu", debugstr_size_hints(value), serial );
+    expected = *expect_serial ? wine_dbg_sprintf( ", expected %s/%lu", debugstr_size_hints(pending), *expect_serial ) : "";
+
+    handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
+                         current, expected, prefix, received, NULL );
+}
+
 void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *value )
 {
     RECT *desired = &data->desired_state.rect, *pending = &data->pending_state.rect, *current = &data->current_state.rect;
@@ -2426,6 +2469,7 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     data->wm_state_serial = 0;
     data->net_wm_state_serial = 0;
     data->mwm_hints_serial = 0;
+    data->wm_normal_hints_serial = 0;
     data->configure_serial = 0;
     data->reparenting = 0;
 
