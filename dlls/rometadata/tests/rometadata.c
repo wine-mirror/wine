@@ -1165,18 +1165,18 @@ static void test_IMetaDataImport(void)
         henum = NULL;
         buf_count = 0xdeadbeef;
         hr = IMetaDataImport_EnumFields(md_import, &henum, typedef1, NULL, 0, &buf_count);
-        todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-        todo_wine ok(!!henum, "got henum %p\n", henum);
-        todo_wine ok(buf_count == 0, "got buf_count %lu\n", buf_count);
+        ok(hr == S_FALSE, "got hr %#lx\n", hr);
+        ok(!!henum, "got henum %p\n", henum);
+        ok(buf_count == 0, "got buf_count %lu\n", buf_count);
         buf_len = 0;
         hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(buf_len == fields_len, "got buf_len %lu\n", buf_len);
+        ok(buf_len == fields_len, "got buf_len %lu\n", buf_len);
         fielddef_tokens = calloc(buf_len, sizeof(*fielddef_tokens));
         ok(!!fielddef_tokens, "got fielddef_tokens %p\n", fielddef_tokens);
         hr = IMetaDataImport_EnumFields(md_import, &henum, typedef1, fielddef_tokens, buf_len, &buf_count);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(buf_count == buf_len, "got buf_count %lu != %lu\n", buf_count, buf_len);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(buf_count == buf_len, "got buf_count %lu != %lu\n", buf_count, buf_len);
         IMetaDataImport_CloseEnum(md_import, henum);
 
         for (field_idx = 0; field_idx < buf_len; field_idx++)
@@ -1203,8 +1203,8 @@ static void test_IMetaDataImport(void)
             todo_wine ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
             if (sig_blob && sig_len == props->exp_sig_len)
                 ok(!memcmp(sig_blob, props->exp_sig_blob, sig_len), "got unexpected sig_blob\n");
-            todo_wine ok(value_len == 0, "got value_len %lu\n", value_len); /* Non-zero only for string types. */
-            todo_wine ok(props->has_value == !!value, "got value %s\n", debugstr_a(value));
+            ok(value_len == 0, "got value_len %lu\n", value_len); /* Non-zero only for string types. */
+            todo_wine_if(FAILED(hr) && props->has_value) ok(props->has_value == !!value, "got value %s\n", debugstr_a(value));
             if (props->has_value)
                 todo_wine ok(value && !memcmp(value, props->exp_value, props->value_len), "got unexpected value %p\n",
                              value);

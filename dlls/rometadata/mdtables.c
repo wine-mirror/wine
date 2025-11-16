@@ -679,11 +679,43 @@ static HRESULT WINAPI import_EnumMembersWithName(IMetaDataImport *iface, HCORENU
     return E_NOTIMPL;
 }
 
+static HRESULT table_create_enum_from_token_list(IMetaDataTables *iface, enum table table, enum table list_table,
+                                                 ULONG row, ULONG col, HCORENUM *ret_henum)
+{
+    ULONG num_rows, row_start, row_end;
+    struct token_enum *henum;
+    HRESULT hr;
+
+    if (FAILED((hr = table_get_num_rows(iface, table, &num_rows)))) return hr;
+    if (row > num_rows) return S_FALSE;
+    if (FAILED((hr = IMetaDataTables_GetColumn(iface, table, col, row, &row_start)))) return hr;
+    row_start = RidFromToken(row_start);
+
+    if (row != num_rows)
+    {
+        /* Use the next row to get the last token. */
+        if (FAILED((hr = IMetaDataTables_GetColumn(iface, table, col, row + 1, &row_end)))) return hr;
+        row_end = RidFromToken(row_end) - 1;
+    }
+    /* This is the last row, so the final token can be derived from the number of rows in list_table. */
+    else if (FAILED((hr = table_get_num_rows(iface, list_table, &row_end))))
+        return hr;
+
+    if (FAILED((hr = token_enum_create((HCORENUM *)&henum)))) return hr;
+
+    henum->count = row_end - row_start + 1;
+    henum->row_start = henum->row_cur = row_start;
+    henum->row_end = row_end;
+    *ret_henum = henum;
+    return S_OK;
+}
+
 static HRESULT WINAPI import_EnumMethods(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef type_def,
                                          mdMethodDef *method_defs, ULONG len, ULONG *count)
 {
     struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
     struct token_enum *henum = *ret_henum;
+    HRESULT hr;
 
     TRACE("(%p, %p, %s, %p, %lu, %p)\n", iface, ret_henum, debugstr_mdToken(type_def), method_defs, len, count);
 
@@ -691,37 +723,15 @@ static HRESULT WINAPI import_EnumMethods(IMetaDataImport *iface, HCORENUM *ret_h
     if (TypeFromToken(type_def) != mdtTypeDef || IsNilToken(type_def)) return S_FALSE;
     if (!henum)
     {
-        ULONG methods_start, methods_end, row = RidFromToken(type_def), num_typedef_rows;
-        HRESULT hr;
-
-        if (FAILED((hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, &num_typedef_rows))))
-            return hr;
-        if (row > num_typedef_rows) return S_FALSE;
-        hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 5, row, &methods_start);
-        if (FAILED(hr)) return hr;
-
         /* From Partition II.22.37, "TypeDef":
-         *
-         * The (MethodList) run continues to the smaller of:
-         *  the last row of the MethodDef table
-         *  the next run of Methods, found by inspecting the MethodList of the next row in this TypeDef table
-         */
-        if (row != num_typedef_rows) /* Get the end MethodDef from the next TypeDef's MethodList. */
-        {
-            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 5, RidFromToken(row + 1),
-                                           &methods_end);
-            if (SUCCEEDED(hr))
-                methods_end = RidFromToken(methods_end) - 1;
-        }
-        else /* The run ends at the last MethodDef row. */
-            hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_METHODDEF, &methods_end);
-
-        if (FAILED(hr) || FAILED((hr = token_enum_create((HCORENUM *)&henum)))) return hr;
-
-        henum->count = methods_end - methods_start + 1;
-        henum->row_start = henum->row_cur = methods_start;
-        henum->row_end = methods_end;
-        *ret_henum = henum;
+        *
+        * The (MethodList) run continues to the smaller of:
+        *  the last row of the MethodDef table
+        *  the next run of Methods, found by inspecting the MethodList of the next row in this TypeDef table
+        */
+        hr = table_create_enum_from_token_list(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, TABLE_METHODDEF,
+                                               RidFromToken(type_def), 5, ret_henum);
+        if (hr != S_OK) return hr;
     }
 
     return token_enum_get_entries(*ret_henum, mdtMethodDef, method_defs, len, count);
@@ -734,11 +744,31 @@ static HRESULT WINAPI import_EnumMethodsWithName(IMetaDataImport *iface, HCORENU
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI import_EnumFields(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef token,
+static HRESULT WINAPI import_EnumFields(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef token,
                                         mdFieldDef *field_defs, ULONG len, ULONG *count)
 {
-    FIXME("(%p, %p, %#x, %p, %lu, %p): stub!\n", iface, henum, token, field_defs, len, count);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    struct token_enum *henum = *ret_henum;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %p, %lu, %p)\n", iface, ret_henum, debugstr_mdToken(token), field_defs, len, count);
+
+    if (count) *count = 0;
+    if (TypeFromToken(token) != mdtTypeDef || IsNilToken(token)) return S_FALSE;
+    if (!henum)
+    {
+        /* From Partition II.22.37, "TypeDef":
+        *
+        * The (FieldList) run continues to the smaller of:
+        *  the last row of the Field table
+        *  the next run of Fields, found by inspecting the FieldList of the next row in this TypeDef table
+        */
+        hr = table_create_enum_from_token_list(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, TABLE_FIELD,
+                                               RidFromToken(token), 4, ret_henum);
+        if (hr != S_OK) return hr;
+    }
+
+    return token_enum_get_entries(*ret_henum, mdtFieldDef, field_defs, len, count);
 }
 
 static HRESULT WINAPI import_EnumFieldsWithName(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef token,
