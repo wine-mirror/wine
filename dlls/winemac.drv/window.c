@@ -1762,7 +1762,7 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
     if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
     {
         TRACE("setting foreground window to %p\n", hwnd);
-        NtUserSetForegroundWindow(hwnd);
+        NtUserSetForegroundWindowInternal(hwnd);
         return;
     }
 
@@ -1786,7 +1786,7 @@ void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event)
     {
         send_message(hwnd, WM_CANCELMODE, 0, 0);
         if (hwnd == NtUserGetForegroundWindow())
-            NtUserSetForegroundWindow(NtUserGetDesktopWindow());
+            NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
     }
 }
 
@@ -1815,7 +1815,7 @@ void macdrv_app_deactivated(void)
     if (get_active_window() == NtUserGetForegroundWindow())
     {
         TRACE("setting fg to desktop\n");
-        NtUserSetForegroundWindow(NtUserGetDesktopWindow());
+        NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
     }
 }
 
@@ -1978,7 +1978,7 @@ void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event)
         if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
         {
             TRACE("setting foreground window to %p\n", hwnd);
-            NtUserSetForegroundWindow(hwnd);
+            NtUserSetForegroundWindowInternal(hwnd);
         }
     }
 

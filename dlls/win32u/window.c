@@ -3967,7 +3967,7 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
         if ((style & (WS_CHILD | WS_POPUP)) == WS_CHILD)
             send_message( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
         else if (!(style & WS_MINIMIZE))
-            set_foreground_window( winpos->hwnd, FALSE );
+            set_foreground_window( winpos->hwnd, FALSE, FALSE );
     }
 
     if(!(orig_flags & SWP_DEFERERASE))
@@ -4312,7 +4312,7 @@ static void activate_other_window( HWND hwnd )
     TRACE( "win = %p fg = %p\n", hwnd_to, fg );
     if (!fg || hwnd == fg)
     {
-        if (set_foreground_window( hwnd_to, FALSE )) return;
+        if (set_foreground_window( hwnd_to, FALSE, FALSE )) return;
     }
     if (NtUserSetActiveWindow( hwnd_to )) NtUserSetActiveWindow( 0 );
 }
@@ -6024,6 +6024,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_ActivateOtherWindow:
         activate_other_window( hwnd );
         return 0;
+
+    case NtUserCallHwnd_SetForegroundWindowInternal:
+        return set_foreground_window( hwnd, FALSE, TRUE );
 
     case NtUserCallHwnd_GetDpiForWindow:
         return get_dpi_for_window( hwnd );

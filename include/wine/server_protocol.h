@@ -4286,6 +4286,8 @@ struct set_foreground_window_request
 {
     struct request_header __header;
     user_handle_t  handle;
+    int            internal;
+    char __pad_20[4];
 };
 struct set_foreground_window_reply
 {
@@ -7089,6 +7091,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 928
+#define SERVER_PROTOCOL_VERSION 929
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

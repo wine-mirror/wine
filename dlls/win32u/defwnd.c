@@ -2206,7 +2206,7 @@ static LRESULT handle_nc_lbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
                 top = parent;
             }
 
-            if (set_foreground_window( top, TRUE ) || (get_active_window() == top))
+            if (set_foreground_window( top, TRUE, FALSE ) || (get_active_window() == top))
                 send_message( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lparam );
             break;
         }

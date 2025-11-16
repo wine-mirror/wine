@@ -2235,6 +2235,7 @@ static void dump_set_key_state_request( const struct set_key_state_request *req 
 static void dump_set_foreground_window_request( const struct set_foreground_window_request *req )
 {
     fprintf( stderr, " handle=%08x", req->handle );
+    fprintf( stderr, ", internal=%d", req->internal );
 }
 
 static void dump_set_foreground_window_reply( const struct set_foreground_window_reply *req )
@@ -4492,6 +4493,7 @@ static const struct
     { "INVALID_ACL",                 STATUS_INVALID_ACL },
     { "INVALID_ADDRESS",             STATUS_INVALID_ADDRESS },
     { "INVALID_ADDRESS_COMPONENT",   STATUS_INVALID_ADDRESS_COMPONENT },
+    { "INVALID_BUFFER_SIZE",         STATUS_INVALID_BUFFER_SIZE },
     { "INVALID_CID",                 STATUS_INVALID_CID },
     { "INVALID_CONNECTION",          STATUS_INVALID_CONNECTION },
     { "INVALID_DEVICE_REQUEST",      STATUS_INVALID_DEVICE_REQUEST },
@@ -4510,6 +4512,9 @@ static const struct
     { "INVALID_PIPE_STATE",          STATUS_INVALID_PIPE_STATE },
     { "INVALID_READ_MODE",           STATUS_INVALID_READ_MODE },
     { "INVALID_SECURITY_DESCR",      STATUS_INVALID_SECURITY_DESCR },
+    { "INVALID_USER_BUFFER",         STATUS_INVALID_USER_BUFFER },
+    { "IO_REPARSE_DATA_INVALID",     STATUS_IO_REPARSE_DATA_INVALID },
+    { "IO_REPARSE_TAG_INVALID",      STATUS_IO_REPARSE_TAG_INVALID },
     { "IO_TIMEOUT",                  STATUS_IO_TIMEOUT },
     { "KERNEL_APC",                  STATUS_KERNEL_APC },
     { "KEY_DELETED",                 STATUS_KEY_DELETED },
@@ -4521,6 +4526,7 @@ static const struct
     { "NETWORK_UNREACHABLE",         STATUS_NETWORK_UNREACHABLE },
     { "NOT_ALL_ASSIGNED",            STATUS_NOT_ALL_ASSIGNED },
     { "NOT_A_DIRECTORY",             STATUS_NOT_A_DIRECTORY },
+    { "NOT_A_REPARSE_POINT",         STATUS_NOT_A_REPARSE_POINT },
     { "NOT_FOUND",                   STATUS_NOT_FOUND },
     { "NOT_IMPLEMENTED",             STATUS_NOT_IMPLEMENTED },
     { "NOT_MAPPED_VIEW",             STATUS_NOT_MAPPED_VIEW },

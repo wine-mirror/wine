@@ -2231,7 +2231,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground )) return 0;
         window_rect = map_rect_raw_to_virt( window_rect, get_thread_dpi() );
 
-        if (foreground) NtUserSetForegroundWindow( foreground );
+        if (foreground) set_foreground_window( foreground, FALSE, TRUE );
         switch (state_cmd)
         {
         case SC_RESTORE:
@@ -2744,7 +2744,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
                     /* fall through */
                 case MA_ACTIVATE:
                 case 0:
-                    if (!set_foreground_window( hwndTop, TRUE )) eat_msg = TRUE;
+                    if (!set_foreground_window( hwndTop, TRUE, FALSE )) eat_msg = TRUE;
                     break;
                 default:
                     WARN( "unknown WM_MOUSEACTIVATE code %d\n", ret );

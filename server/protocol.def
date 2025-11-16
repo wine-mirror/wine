@@ -3117,6 +3117,7 @@ enum coords_relative
 /* Set the system foreground window */
 @REQ(set_foreground_window)
     user_handle_t  handle;        /* handle to the foreground window */
+    int            internal;      /* foreground change comes from the host */
 @REPLY
     user_handle_t  previous;      /* handle to the previous foreground window */
     int            send_msg_old;  /* whether we have to send a msg to the old window */

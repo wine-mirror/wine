@@ -1306,6 +1306,7 @@ enum
     NtUserCallHwnd_IsWindowEnabled,
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
+    NtUserCallHwnd_SetForegroundWindowInternal,
     /* temporary exports */
     NtUserGetFullWindowHandle,
     NtUserIsCurrentProcessWindow,
@@ -1315,6 +1316,11 @@ enum
 static inline void NtUserActivateOtherWindow( HWND hwnd )
 {
     NtUserCallHwnd( hwnd, NtUserCallHwnd_ActivateOtherWindow );
+}
+
+static inline BOOL NtUserSetForegroundWindowInternal( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_SetForegroundWindowInternal );
 }
 
 static inline void *NtUserGetDialogInfo( HWND hwnd )
