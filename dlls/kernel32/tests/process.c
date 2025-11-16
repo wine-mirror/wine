@@ -3669,25 +3669,16 @@ static void test_StdHandleInheritance(void)
             {
                 unsigned startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_INVALID : std_tests[i].expected;
 
-                todo_wine_if(j == 4 && (i == 2 || i == 4 || i == 6 || i == 10 || i == 12 || i == 14 || i == 16 || i == 18))
-                {
                 okChildHexInt("StartupInfoA", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
                 okChildHexInt("StartupInfoA", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
-                }
 
                 startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_UNTOUCHED : std_tests[i].expected;
 
-                todo_wine_if(j == 4 && (i == 2 || i == 4 || i == 6 || i == 10 || i == 12 || i == 14 || i == 16 || i == 18))
-                {
                 okChildHexInt("StartupInfoW", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
                 okChildHexInt("StartupInfoW", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
-                }
 
-                todo_wine_if(j == 4 && (i == 2 || i == 4 || i == 6 || (i >= 10 && i <= 19)))
-                {
                 okChildHexInt("TEB", "hStdInputEncode", std_tests[i].expected, std_tests[i].is_broken);
                 okChildHexInt("TEB", "hStdOutputEncode", std_tests[i].expected, std_tests[i].is_broken);
-                }
             }
 
             release_memory();

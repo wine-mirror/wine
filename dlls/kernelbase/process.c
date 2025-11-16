@@ -606,6 +606,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
                             TRACE( "PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE %p reference %p\n",
                                    console, console->reference );
                             params->ConsoleHandle = console->reference;
+                            if (!(flags & DETACHED_PROCESS))
+                            {
+                                params->ConsoleFlags |= 2;
+                                /* don't inherit standard handles bound to parent console (but inherit the others) */
+                                if (!(startup_info->dwFlags & STARTF_USESTDHANDLES))
+                                {
+                                    if (is_console_handle(params->hStdInput))  params->hStdInput = NULL;
+                                    if (is_console_handle(params->hStdOutput)) params->hStdOutput = NULL;
+                                    if (is_console_handle(params->hStdError))  params->hStdError = NULL;
+                                }
+                            }
                             break;
                         }
                     case PROC_THREAD_ATTRIBUTE_JOB_LIST:
