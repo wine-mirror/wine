@@ -3105,6 +3105,8 @@ static void test_media_session_rate_control(void)
     ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
 }
 
+DEFINE_EXPECT(OnProcessSample);
+
 struct test_grabber_callback
 {
     IMFSampleGrabberSinkCallback IMFSampleGrabberSinkCallback_iface;
@@ -3113,6 +3115,8 @@ struct test_grabber_callback
     IMFCollection *samples;
     HANDLE ready_event;
     HANDLE done_event;
+
+    BOOL do_event;
 };
 
 static struct test_grabber_callback *impl_from_IMFSampleGrabberSinkCallback(IMFSampleGrabberSinkCallback *iface)
@@ -3204,7 +3208,7 @@ static HRESULT WINAPI test_grabber_callback_OnProcessSample(IMFSampleGrabberSink
         return S_OK;
     }
 
-    if (!grabber->ready_event)
+    if (!grabber->ready_event && grabber->do_event)
         return E_NOTIMPL;
 
     sample = create_sample(buffer, sample_size);
@@ -3218,9 +3222,16 @@ static HRESULT WINAPI test_grabber_callback_OnProcessSample(IMFSampleGrabberSink
     IMFCollection_AddElement(grabber->samples, (IUnknown *)sample);
     IMFSample_Release(sample);
 
-    SetEvent(grabber->ready_event);
-    res = WaitForSingleObject(grabber->done_event, 1000);
-    ok(!res, "WaitForSingleObject returned %#lx\n", res);
+    if (grabber->do_event)
+    {
+        SetEvent(grabber->ready_event);
+        res = WaitForSingleObject(grabber->done_event, 1000);
+        ok(!res, "WaitForSingleObject returned %#lx\n", res);
+    }
+    else
+    {
+        CHECK_EXPECT2(OnProcessSample);
+    }
 
     return S_OK;
 }
@@ -3257,6 +3268,7 @@ static IMFSampleGrabberSinkCallback *create_test_grabber_callback(void)
     grabber->refcount = 1;
     hr = MFCreateCollection(&grabber->samples);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    grabber->do_event = TRUE;
 
     return &grabber->IMFSampleGrabberSinkCallback_iface;
 }
@@ -4561,7 +4573,10 @@ static void supply_samples(IMFStreamSink *stream, int num_samples)
     }
 }
 
-static int count_samples_requested(IMFStreamSink *stream)
+static BOOL ignore_clock = FALSE;
+
+#define count_samples_requested(stream) _count_samples_requested(__LINE__, stream)
+static int _count_samples_requested(int line, IMFStreamSink *stream)
 {
     int samples_requested;
     IMFMediaEvent *event;
@@ -4572,16 +4587,19 @@ static int count_samples_requested(IMFStreamSink *stream)
     while (IMFStreamSink_GetEvent(stream, 0, &event) == S_OK)
     {
         hr = IMFMediaEvent_GetType(event, &met);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         IMFMediaEvent_Release(event);
         if (met == MEStreamSinkRequestSample)
             samples_requested++;
         else if (met == MEStreamSinkStarted)
+        {
+            ok_(__FILE__, line)(!expect_MEStreamSinkMarker, "Expected MEStreamSinkMarker, got MEStreamSinkStarted\n");
             break;
+        }
         else if (met == MEStreamSinkMarker)
         {
-            todo_wine
+            todo_wine_if(!ignore_clock)
             CHECK_EXPECT(MEStreamSinkMarker);
             break;
         }
@@ -4884,6 +4902,212 @@ static void test_sample_grabber_seek(void)
     ref = IMFPresentationClock_Release(clock);
     ok(ref == 2, "Release returned %ld\n", ref);
 
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    ref = IMFMediaSink_Release(sink);
+    todo_wine
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    /* test with MF_SAMPLEGRABBERSINK_IGNORE_CLOCK */
+
+    ignore_clock = TRUE;
+    grabber_callback = create_test_grabber_callback();
+    grabber_callback_impl = impl_from_IMFSampleGrabberSinkCallback(grabber_callback);
+    grabber_callback_impl->do_event = FALSE;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
+
+    EXPECT_REF(media_type, 1);
+    hr = MFCreateSampleGrabberSinkActivate(media_type, grabber_callback, &activate);
+    ok(hr == S_OK, "Failed to create grabber activate, hr %#lx.\n", hr);
+    EXPECT_REF(media_type, 2);
+
+    hr = IMFActivate_SetUINT32(activate, &MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ref = IMFMediaType_Release(media_type);
+    ok(ref == 1, "Release returned %ld\n", ref);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Failed to activate object, hr %#lx.\n", hr);
+
+    ref = IMFActivate_Release(activate);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream);
+    ok(hr == S_OK, "Failed to get sink stream, hr %#lx.\n", hr);
+
+
+    /* Set clock. */
+    mock_clock = create_presentation_clock();
+    clock = &mock_clock->IMFPresentationClock_iface;
+
+    hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    ok(hr == S_OK, "Failed to set presentation clock, hr %#lx.\n", hr);
+
+    /* test number of new sample requests on clock start */
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test number of new sample requests on seek when in running state and 4 samples have been provided */
+    sample_pts = 0;
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 4);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+
+    hr = IMFPresentationClock_Start(clock, 1234);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test number of new sample requests on seek when in running state and 3 samples have been provided */
+    sample_pts = 0;
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 2);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+    hr = IMFStreamSink_PlaceMarker(stream, MFSTREAMSINK_MARKER_DEFAULT, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 1);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+
+    hr = IMFPresentationClock_Start(clock, 1234);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    SET_EXPECT(MEStreamSinkMarker);
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 2, "Unexpected number of samples requested %d\n", samples_requested);
+    CHECK_CALLED(MEStreamSinkMarker);
+    CLEAR_CALLED(OnProcessSample);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 1, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test number of new sample requests after a flush then seek */
+    sample_pts = expected_pts = 0;
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 2);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+
+    /* there is no cancel timer, or sample requests during a flush */
+    hr = IMFStreamSink_Flush(stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 1);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+
+    /* only on seek */
+    hr = IMFPresentationClock_Start(clock, 1234);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 3, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test number of new sample requests on seek whilst stopped */
+    hr = IMFPresentationClock_Stop(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test number of new sample requests on seek whilst paused and 3 samples provided */
+    sample_pts = expected_pts = 0;
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 3);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+    hr = IMFStreamSink_PlaceMarker(stream, MFSTREAMSINK_MARKER_DEFAULT, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 2);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+
+    SET_EXPECT(MEStreamSinkMarker);
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 3, "Unexpected number of samples requested %d\n", samples_requested);
+    CHECK_CALLED(MEStreamSinkMarker);
+
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* test over supply */
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 6);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 8, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test number of new sample requests on seek whilst paused and no samples provided */
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPresentationClock_Start(clock, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 0, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test sample received in the paused state with no samples queued */
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    expected_pts = sample_pts;
+    SET_EXPECT(OnProcessSample);
+    supply_samples(stream, 4);
+    CHECK_CALLED(OnProcessSample);
+    CLEAR_CALLED(OnProcessSample);
+
+    hr = IMFPresentationClock_Start(clock, PRESENTATION_CURRENT_POSITION);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test sample received in the stopped state */
+    hr = IMFPresentationClock_Stop(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    supply_samples(stream, 4);
+
+    hr = IMFPresentationClock_Start(clock, PRESENTATION_CURRENT_POSITION);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
+
+    ref = IMFPresentationClock_Release(clock);
+    ok(ref == 2, "Release returned %ld\n", ref);
+
+    /* required for the sink to be fully released */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
