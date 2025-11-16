@@ -994,7 +994,7 @@ foo
 not empty
 --- nested expansion
 foo
-@todo_wine@foo
+foo
 --- using /V cmd flag
 foo
 foo@or_broken@!WINE_FOO!

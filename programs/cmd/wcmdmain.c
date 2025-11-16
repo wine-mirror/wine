@@ -981,7 +981,7 @@ static inline int read_int_in_range(const WCHAR *from, WCHAR **after, int low, i
 /*************************************************************************
  * WCMD_expand_envvar
  *
- *	Expands environment variables, allowing for WCHARacter substitution
+ *	Expands environment variables, allowing for character substitution
  */
 static WCHAR *WCMD_expand_envvar(WCHAR *start)
 {
@@ -1223,6 +1223,18 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
         p = WCMD_strsubstW(p, p + 2, forloopcontext->variable[p[1]], -1);
       } else if (!atExecute || startchar == L'!') {
         BOOL first = p == cmd;
+        /* env var delimited by % have been expanded at parse time, but there could still be
+         * loop variables nested inside env var delimited by !
+         */
+        if (startchar == L'!')
+        {
+            WCHAR *ptr;
+            for (ptr = p + 1; *ptr && *ptr != startchar; ptr++)
+                if (*ptr == L'%' && for_var_is_valid(ptr[1]) && forloopcontext->variable[ptr[1]]) {
+                    /* Replace the 2 characters, % and for variable character */
+                    ptr = WCMD_strsubstW(ptr, ptr + 2, forloopcontext->variable[ptr[1]], -1);
+                }
+        }
         p = WCMD_expand_envvar(p);
         /* FIXME: maybe this more likely calls for a specific handling of first arg? */
         if (WCMD_is_in_context(NULL) && startchar == L'!' && first)
