@@ -2959,6 +2959,62 @@ static void test_unicode_format(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WM_ERASEBKGND(BOOL v6)
+{
+    COLORREF color;
+    HBRUSH brush;
+    LRESULT lr;
+    HWND hwnd;
+    RECT rect;
+    HDC hdc;
+
+    /* Check WM_ERASEBKGND without TBSTYLE_TRANSPARENT */
+    hwnd = CreateWindowA(TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE, 100, 100, 100, 100,
+                         hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "CreateWindowA failed.\n");
+
+    GetClientRect(hwnd, &rect);
+    brush = CreateSolidBrush(RGB(255, 0, 0));
+    hdc = GetDC(hwnd);
+    FillRect(hdc, &rect, brush);
+    color = GetPixel(hdc, 10, 10);
+    ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
+
+    lr = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok(lr == 1, "Got unexpected %Id.\n", lr);
+    color = GetPixel(hdc, 10, 10);
+    ok(color != RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
+
+    DeleteObject(brush);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+
+    /* Check WM_ERASEBKGND with TBSTYLE_TRANSPARENT */
+    hwnd = CreateWindowA(TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE | TBSTYLE_TRANSPARENT, 100,
+                         100, 100, 100, hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "CreateWindowA failed.\n");
+
+    GetClientRect(hwnd, &rect);
+    brush = CreateSolidBrush(RGB(255, 0, 0));
+    hdc = GetDC(hwnd);
+    FillRect(hdc, &rect, brush);
+    color = GetPixel(hdc, 10, 10);
+    ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
+
+    lr = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok(lr == 1, "Got unexpected %Id.\n", lr);
+    color = GetPixel(hdc, 10, 10);
+    if (v6)
+        todo_wine
+        ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
+    else
+        ok(color == GetSysColor(COLOR_WINDOW), "Got unexpected color %#lx.\n", color);
+
+    DeleteObject(brush);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(toolbar)
 {
     ULONG_PTR ctx_cookie;
@@ -3012,6 +3068,7 @@ START_TEST(toolbar)
     test_BTNS_SEP();
     test_WM_NOTIFY();
     test_unicode_format();
+    test_WM_ERASEBKGND(FALSE);
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
@@ -3020,6 +3077,7 @@ START_TEST(toolbar)
     test_visual();
     test_BTNS_SEP();
     test_unicode_format();
+    test_WM_ERASEBKGND(TRUE);
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
