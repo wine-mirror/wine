@@ -3192,7 +3192,12 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
            debugstr_window_rects(new_rects), new_style, swp_flags );
 
     /* layered windows are mapped only once their attributes are set */
-    if (ex_style & WS_EX_LAYERED && !data->layered && !IsRectEmpty( &new_rects->window )) new_style &= ~WS_VISIBLE;
+    if (data->pending_state.wm_state == WithdrawnState && (new_style & WS_VISIBLE) &&
+        (ex_style & WS_EX_LAYERED) && !data->layered && !IsRectEmpty( &new_rects->window ))
+    {
+        WARN( "win %p/%lx is layered, delaying mapping\n", hwnd, data->whole_window );
+        new_style &= ~WS_VISIBLE;
+    }
 
     XFlush( gdi_display );  /* make sure painting is done before we move the window */
 
