@@ -3420,6 +3420,42 @@ static BOOL build_startupinfo( STARTUPINFOA *startup, unsigned args, HANDLE hstd
     return needs_close;
 }
 
+static BOOL build_startupinfoex( STARTUPINFOEXA *startup, unsigned args, HANDLE hstd[4], HPCON *pseudo_console )
+{
+    HANDLE output_read, input_write;
+    HANDLE output_write, input_read;
+    SIZE_T attr_size;
+    COORD size = {80, 32};
+    HRESULT hres;
+    BOOL ret, needs_close;
+
+    ret = CreatePipe(&input_read, &input_write, NULL, 0);
+    ok(ret, "Couldn't create pipe\n");
+    ret = CreatePipe(&output_read, &output_write, NULL, 0);
+    ok(ret, "Couldn't create pipe\n");
+
+    hres = CreatePseudoConsole(size, input_read, output_write, 0, pseudo_console);
+    ok(hres == S_OK, "CreatePseudoConsole failed: %08lx\n", hres);
+
+    memset(startup, 0, sizeof(*startup));
+    needs_close = build_startupinfo(&startup->StartupInfo, args, hstd);
+    startup->StartupInfo.cb = sizeof(*startup);
+
+    InitializeProcThreadAttributeList(NULL, 1, 0, &attr_size);
+    startup->lpAttributeList = HeapAlloc(GetProcessHeap(), 0, attr_size);
+    InitializeProcThreadAttributeList(startup->lpAttributeList, 1, 0, &attr_size);
+    UpdateProcThreadAttribute(startup->lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, *pseudo_console,
+                              sizeof(*pseudo_console), NULL, NULL);
+
+    hstd[2] = output_read;
+    hstd[3] = input_write;
+
+    CloseHandle(output_write);
+    CloseHandle(input_read);
+
+    return needs_close;
+}
+
 struct std_handle_test
 {
     /* input */
@@ -3515,6 +3551,41 @@ static void test_StdHandleInheritance(void)
         /* all others handles type behave as H_DISK */
         {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+    },
+    pseudoconsole_cui[] =
+    {
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK (except H_CONSOLE) */
+        {ARG_STARTUPINFO |                                       H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_DISK,      HATTR_TYPE | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK (except H_CONSOLE) */
+        {ARG_STARTUPINFO |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_PROTECT | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
+
+        {ARG_STARTUPINFO |                                       H_DEVIL,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_DEVIL,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STARTUPINFO |                                       H_INVALID,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_INVALID,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STARTUPINFO |                                       H_NULL,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_NULL,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+
+        /* looks like parent handle is not inherited */
+        {ARG_STARTUPINFO |                                       H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STARTUPINFO |                  ARG_HANDLE_PROTECT | H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                  ARG_HANDLE_PROTECT | H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
     };
     static const struct
     {
@@ -3527,10 +3598,13 @@ static void test_StdHandleInheritance(void)
     tests[] =
     {
 #define X(d, cg, s) {(d), (cg), s, ARRAY_SIZE(s), #s}
-        X(0,                TRUE,  nothing_cui),
-        X(0,                FALSE, nothing_gui),
-        X(DETACHED_PROCESS, TRUE,  detached_cui),
-        X(DETACHED_PROCESS, FALSE, detached_gui),
+        X(0,                                               TRUE,  nothing_cui),
+        X(0,                                               FALSE, nothing_gui),
+        X(DETACHED_PROCESS,                                TRUE,  detached_cui),
+        X(DETACHED_PROCESS,                                FALSE, detached_gui),
+        X(EXTENDED_STARTUPINFO_PRESENT,                    TRUE,  pseudoconsole_cui),
+        X(EXTENDED_STARTUPINFO_PRESENT | DETACHED_PROCESS, TRUE,  detached_cui),
+        /* not testing gui + pseudo console, behaves like without pseudo console */
 #undef X
     };
 
@@ -3554,16 +3628,20 @@ static void test_StdHandleInheritance(void)
 
         for (i = 0; i < tests[j].count; i++)
         {
-            STARTUPINFOA startup;
-            HANDLE hstd[2] = {};
+            STARTUPINFOEXA startup;
+            HPCON pseudo_console;
+            HANDLE hstd[4] = {};
             BOOL needs_close;
 
             winetest_push_context("%s[%u] ", tests[j].descr, i);
-            needs_close = build_startupinfo( &startup, std_tests[i].args, hstd );
+            if (tests[j].cp_flags & EXTENDED_STARTUPINFO_PRESENT)
+                needs_close = build_startupinfoex( &startup, std_tests[i].args, hstd, &pseudo_console );
+            else
+                needs_close = build_startupinfo( &startup.StartupInfo, std_tests[i].args, hstd );
 
             ret = check_run_child(tests[j].use_cui ? cuiexec : guiexec,
                                   tests[j].cp_flags, !!(std_tests[i].args & ARG_CP_INHERIT),
-                                  &startup);
+                                  &startup.StartupInfo);
             ok(ret, "Couldn't run child\n");
             reload_child_info(resfile);
 
@@ -3591,16 +3669,25 @@ static void test_StdHandleInheritance(void)
             {
                 unsigned startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_INVALID : std_tests[i].expected;
 
+                todo_wine_if(j == 4 && (i == 2 || i == 4 || i == 6 || i == 10 || i == 12 || i == 14 || i == 16 || i == 18))
+                {
                 okChildHexInt("StartupInfoA", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
                 okChildHexInt("StartupInfoA", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
+                }
 
                 startup_expected = (std_tests[i].args & ARG_STD) ? HATTR_UNTOUCHED : std_tests[i].expected;
 
+                todo_wine_if(j == 4 && (i == 2 || i == 4 || i == 6 || i == 10 || i == 12 || i == 14 || i == 16 || i == 18))
+                {
                 okChildHexInt("StartupInfoW", "hStdInputEncode", startup_expected, std_tests[i].is_broken);
                 okChildHexInt("StartupInfoW", "hStdOutputEncode", startup_expected, std_tests[i].is_broken);
+                }
 
+                todo_wine_if(j == 4 && (i == 2 || i == 4 || i == 6 || (i >= 10 && i <= 19)))
+                {
                 okChildHexInt("TEB", "hStdInputEncode", std_tests[i].expected, std_tests[i].is_broken);
                 okChildHexInt("TEB", "hStdOutputEncode", std_tests[i].expected, std_tests[i].is_broken);
+                }
             }
 
             release_memory();
@@ -3611,6 +3698,13 @@ static void test_StdHandleInheritance(void)
                 CloseHandle(hstd[0]);
                 SetHandleInformation(hstd[1], HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
                 CloseHandle(hstd[1]);
+            }
+            if (tests[j].cp_flags & EXTENDED_STARTUPINFO_PRESENT)
+            {
+                HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
+                ClosePseudoConsole(pseudo_console);
+                CloseHandle(hstd[2]);
+                CloseHandle(hstd[3]);
             }
             winetest_pop_context();
         }
