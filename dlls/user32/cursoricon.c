@@ -1375,7 +1375,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     TRACE("%p, %s, %dx%d, depth %d, fCursor %d, flags 0x%04x\n",
           hInstance, debugstr_w(name), width, height, depth, fCursor, loadflags);
 
-    if ( loadflags & LR_LOADFROMFILE )    /* Load from file */
+    if ((loadflags & LR_LOADFROMFILE) && get_app_version() >= 0x4000)    /* Load from file */
         return CURSORICON_LoadFromFile( name, width, height, depth, fCursor, loadflags );
 
     if (!hInstance) hInstance = user32_module;  /* Load OEM cursor/icon */

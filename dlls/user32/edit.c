@@ -188,7 +188,7 @@ static inline void EDIT_EM_EmptyUndoBuffer(EDITSTATE *es)
  * applications with an expected version 0f 4.0 or higher.
  *
  */
-static DWORD get_app_version(void)
+DWORD get_app_version(void)
 {
     static DWORD version;
     if (!version)
