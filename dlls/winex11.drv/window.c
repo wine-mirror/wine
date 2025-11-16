@@ -127,6 +127,22 @@ static const char *debugstr_size_hints( const XSizeHints *hints )
     return __wine_dbg_strdup( buffer );
 }
 
+static const char *debugstr_wm_hints( const XWMHints *hints )
+{
+    char buffer[1024], *buf = buffer;
+    buf += sprintf( buf, "{" );
+    if (hints->flags & InputHint) buf += sprintf( buf, " input %u", hints->input );
+    if (hints->flags & StateHint) buf += sprintf( buf, " state %u", hints->initial_state );
+    if (hints->flags & IconPixmapHint) buf += sprintf( buf, " icon pix %lx", hints->icon_pixmap );
+    if (hints->flags & IconWindowHint) buf += sprintf( buf, " icon win %lx", hints->icon_window );
+    if (hints->flags & IconPositionHint) buf += sprintf( buf, " icon pos %d,%d", hints->icon_x, hints->icon_y );
+    if (hints->flags & IconMaskHint) buf += sprintf( buf, " icon mask %lx", hints->icon_mask );
+    if (hints->flags & WindowGroupHint) buf += sprintf( buf, " group %lx", hints->window_group );
+    if (hints->flags & XUrgencyHint) buf += sprintf( buf, " urgent" );
+    buf += sprintf( buf, " }" );
+    return __wine_dbg_strdup( buffer );
+}
+
 static const char *debugstr_monitor_indices( const struct monitor_indices *monitors )
 {
     return wine_dbg_sprintf( "%ld,%ld,%ld,%ld", monitors->indices[0], monitors->indices[1], monitors->indices[2], monitors->indices[3] );
@@ -1039,6 +1055,21 @@ static void set_mwm_hints( struct x11drv_win_data *data, UINT style, UINT ex_sty
 }
 
 
+static void window_set_wm_hints( struct x11drv_win_data *data, XWMHints *new_hints )
+{
+    const XWMHints *old_hints = &data->pending_state.wm_hints;
+
+    data->desired_state.wm_hints = *new_hints;
+    if (!data->whole_window) return; /* no window or not managed, nothing to update */
+    if (!memcmp( old_hints, new_hints, sizeof(*new_hints) )) return; /* hints are the same, nothing to update */
+
+    data->pending_state.wm_hints = *new_hints;
+    data->wm_hints_serial = NextRequest( data->display );
+    TRACE( "window %p/%lx, requesting WM_HINTS %s serial %lu\n", data->hwnd, data->whole_window,
+           debugstr_wm_hints(&data->pending_state.wm_hints), data->wm_hints_serial );
+    XSetWMHints( data->display, data->whole_window, new_hints );
+}
+
 /***********************************************************************
  *              set_style_hints
  */
@@ -1088,10 +1119,7 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
             wm_hints->icon_mask = data->icon_mask;
             wm_hints->flags |= IconPixmapHint | IconMaskHint;
         }
-
-        TRACE( "window %p/%lx requesting WM_HINTS flags %#lx, serial %lu\n", data->hwnd,
-               data->whole_window, wm_hints->flags, NextRequest( data->display ) );
-        XSetWMHints( data->display, data->whole_window, wm_hints );
+        window_set_wm_hints( data, wm_hints );
         XFree( wm_hints );
     }
 
@@ -1850,6 +1878,20 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
     window_set_mwm_hints( data, &data->desired_state.mwm_hints );
     window_set_config( data, data->desired_state.rect, FALSE );
+}
+
+void window_wm_hints_notify( struct x11drv_win_data *data, unsigned long serial, const XWMHints *value )
+{
+    XWMHints *desired = &data->desired_state.wm_hints, *pending = &data->pending_state.wm_hints, *current = &data->current_state.wm_hints;
+    unsigned long *expect_serial = &data->wm_hints_serial;
+    const char *expected, *received, *prefix;
+
+    prefix = wine_dbg_sprintf( "window %p/%lx ", data->hwnd, data->whole_window );
+    received = wine_dbg_sprintf( "WM_HINTS %s/%lu", debugstr_wm_hints(value), serial );
+    expected = *expect_serial ? wine_dbg_sprintf( ", expected %s/%lu", debugstr_wm_hints(pending), *expect_serial ) : "";
+
+    handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
+                         current, expected, prefix, received, NULL );
 }
 
 void window_mwm_hints_notify( struct x11drv_win_data *data, unsigned long serial, const MwmHints *value )

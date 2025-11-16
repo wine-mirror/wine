@@ -1285,6 +1285,18 @@ static void handle_net_wm_state_notify( HWND hwnd, XPropertyEvent *event )
     NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
 }
 
+static void handle_wm_hints_notify( HWND hwnd, XPropertyEvent *event )
+{
+    struct x11drv_win_data *data;
+    XWMHints empty = {0}, *hints;
+
+    if (!(data = get_win_data( hwnd ))) return;
+    hints = event->state == PropertyNewValue ? XGetWMHints( event->display, event->window ) : &empty;
+    window_wm_hints_notify( data, event->serial, hints );
+    if (hints != &empty) XFree( hints );
+    release_win_data( data );
+}
+
 static void handle_mwm_hints_notify( HWND hwnd, XPropertyEvent *event )
 {
     struct x11drv_win_data *data;
@@ -1347,6 +1359,7 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
     if (event->atom == x11drv_atom(WM_STATE)) handle_wm_state_notify( hwnd, event );
     if (event->atom == x11drv_atom(_XEMBED_INFO)) handle_xembed_info_notify( hwnd, event );
     if (event->atom == x11drv_atom(_NET_WM_STATE)) handle_net_wm_state_notify( hwnd, event );
+    if (event->atom == x11drv_atom(WM_HINTS)) handle_wm_hints_notify( hwnd, event );
     if (event->atom == x11drv_atom(_MOTIF_WM_HINTS)) handle_mwm_hints_notify( hwnd, event );
     if (event->atom == x11drv_atom(WM_NORMAL_HINTS)) handle_wm_normal_hints_notify( hwnd, event );
     if (event->atom == x11drv_atom(_NET_SUPPORTED)) handle_net_supported_notify( event );

@@ -500,6 +500,7 @@ enum x11drv_atoms
     XATOM_RAW_CAP_HEIGHT,
     XATOM_WM_PROTOCOLS,
     XATOM_WM_DELETE_WINDOW,
+    XATOM_WM_HINTS,
     XATOM_WM_NORMAL_HINTS,
     XATOM_WM_STATE,
     XATOM_WM_TAKE_FOCUS,
@@ -642,6 +643,7 @@ struct window_state
     UINT wm_state;
     BOOL activate;
     UINT net_wm_state;
+    XWMHints wm_hints;
     MwmHints mwm_hints;
     XSizeHints wm_normal_hints;
     struct monitor_indices monitors;
@@ -685,6 +687,7 @@ struct x11drv_win_data
     struct window_state current_state; /* window state tracking the current X11 state */
     unsigned long wm_state_serial;     /* serial of last pending WM_STATE request */
     unsigned long net_wm_state_serial; /* serial of last pending _NET_WM_STATE request */
+    unsigned long wm_hints_serial;     /* serial of last pending WM_HINTS request */
     unsigned long mwm_hints_serial;    /* serial of last pending _MOTIF_WM_HINTS request */
     unsigned long wm_normal_hints_serial;/* serial of last pending WM_NORMAL_HINTS request */
     unsigned long configure_serial;    /* serial of last pending configure request */
@@ -701,6 +704,7 @@ extern BOOL window_should_take_focus( HWND hwnd, Time time );
 extern BOOL window_has_pending_wm_state( HWND hwnd, UINT state );
 extern void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value, Time time );
 extern void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
+extern void window_wm_hints_notify( struct x11drv_win_data *data, unsigned long serial, const XWMHints *hints );
 extern void window_mwm_hints_notify( struct x11drv_win_data *data, unsigned long serial, const MwmHints *hints );
 extern void window_wm_normal_hints_notify( struct x11drv_win_data *data, unsigned long serial, const XSizeHints *hints );
 extern void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *rect );
