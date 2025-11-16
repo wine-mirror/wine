@@ -1055,6 +1055,21 @@ static void set_mwm_hints( struct x11drv_win_data *data, UINT style, UINT ex_sty
 }
 
 
+static void window_set_net_wm_window_type( struct x11drv_win_data *data, enum x11drv_atoms atom )
+{
+    Atom old_type = data->pending_state.net_wm_window_type, new_type = X11DRV_Atoms[atom - FIRST_XATOM];
+
+    data->desired_state.net_wm_window_type = new_type;
+    if (!data->whole_window) return; /* no window or not managed, nothing to update */
+    if (old_type == new_type) return; /* hints are the same, nothing to update */
+
+    data->pending_state.net_wm_window_type = new_type;
+    TRACE( "window %p/%lx, requesting _NET_WM_WINDOW_TYPE %lx (%s) serial %lu\n", data->hwnd, data->whole_window,
+           new_type, X11DRV_atom_names[atom - FIRST_XATOM], NextRequest( data->display ) );
+    XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE), XA_ATOM,
+                     32, PropModeReplace, (unsigned char *)&new_type, 1 );
+}
+
 static void window_set_wm_hints( struct x11drv_win_data *data, XWMHints *new_hints )
 {
     const XWMHints *old_hints = &data->pending_state.wm_hints;
@@ -1079,7 +1094,6 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
     HWND owner = NtUserGetWindowRelative( data->hwnd, GW_OWNER );
     Window owner_win = 0;
     XWMHints *wm_hints;
-    Atom window_type;
 
     if (owner)
     {
@@ -1098,14 +1112,9 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
      * dialogs owned by fullscreen windows.
      */
     if (((style & WS_POPUP) || (ex_style & WS_EX_DLGMODALFRAME)) && owner)
-        window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
+        window_set_net_wm_window_type( data, XATOM__NET_WM_WINDOW_TYPE_DIALOG );
     else
-        window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
-
-    TRACE( "window %p/%lx requesting _NET_WM_WINDOW_TYPE %#lx, serial %lu\n", data->hwnd,
-           data->whole_window, window_type, NextRequest( data->display ) );
-    XChangeProperty(data->display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
-		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
+        window_set_net_wm_window_type( data, XATOM__NET_WM_WINDOW_TYPE_NORMAL );
 
     if ((wm_hints = XAllocWMHints()))
     {

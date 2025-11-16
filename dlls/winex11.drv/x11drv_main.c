@@ -102,7 +102,7 @@ static pthread_mutex_t error_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
 
-static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
+const char * const X11DRV_atom_names[NB_XATOMS - FIRST_XATOM] =
 {
     "CLIPBOARD",
     "COMPOUND_TEXT",
@@ -654,7 +654,7 @@ static NTSTATUS x11drv_init( void *arg )
     init_visuals( display, DefaultScreen( display ));
     screen_bpp = pixmap_formats[default_visual.depth]->bits_per_pixel;
 
-    XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
+    XInternAtoms( display, (char **)X11DRV_atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
 
     init_win_context();
 

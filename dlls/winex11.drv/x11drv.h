@@ -577,6 +577,7 @@ enum x11drv_atoms
 };
 
 extern Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
+extern const char * const X11DRV_atom_names[];
 extern Atom systray_atom;
 extern HWND systray_hwnd;
 
@@ -643,6 +644,7 @@ struct window_state
     UINT wm_state;
     BOOL activate;
     UINT net_wm_state;
+    Atom net_wm_window_type;
     XWMHints wm_hints;
     MwmHints mwm_hints;
     XSizeHints wm_normal_hints;
