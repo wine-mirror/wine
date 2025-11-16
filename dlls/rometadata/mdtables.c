@@ -338,6 +338,18 @@ HRESULT token_enum_create(HCORENUM *out)
     return S_OK;
 }
 
+static HRESULT token_enum_get_entries(struct token_enum *henum, CorTokenType type, mdToken *buf, ULONG buf_len,
+                                      ULONG *buf_written)
+{
+    ULONG i = 0;
+
+    while (henum->row_cur <= henum->row_end && i < buf_len)
+        buf[i++] = TokenFromRid(henum->row_cur++, type);
+    if (buf_written)
+        *buf_written = i;
+    return !!i ? S_OK : S_FALSE;
+}
+
 static void WINAPI import_CloseEnum(IMetaDataImport *iface, HCORENUM henum)
 {
     TRACE("(%p, %p)\n", iface, henum);
@@ -415,12 +427,19 @@ static const char *debugstr_mdToken(mdToken token)
     return wine_dbg_sprintf("(%#x|%#x)", type, rid);
 }
 
+static HRESULT table_get_num_rows(IMetaDataTables *iface, enum table table, ULONG *rows)
+{
+    ULONG row_size, cols, key_idx;
+    const char *name;
+
+    return IMetaDataTables_GetTableInfo(iface, table, &row_size, rows, &cols, &key_idx, &name);
+}
+
 static HRESULT WINAPI import_EnumTypeDefs(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef *typedefs, ULONG len, ULONG *count)
 {
     struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
-    ULONG row_size, rows, cols, key_idx, i = 0;
     struct token_enum *henum = *ret_henum;
-    const char *name;
+    ULONG rows;
     HRESULT hr;
 
     TRACE("(%p, %p, %p, %lu, %p)\n", iface, ret_henum, typedefs, len, count);
@@ -430,8 +449,7 @@ static HRESULT WINAPI import_EnumTypeDefs(IMetaDataImport *iface, HCORENUM *ret_
 
     if (!henum)
     {
-        hr = IMetaDataTables_GetTableInfo(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, &row_size, &rows, &cols,
-                                          &key_idx, &name);
+        hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, &rows);
         if (FAILED(hr)) return hr;
         /* Skip the <Module> row. */
         if (rows < 2) return S_FALSE;
@@ -443,13 +461,7 @@ static HRESULT WINAPI import_EnumTypeDefs(IMetaDataImport *iface, HCORENUM *ret_
         *ret_henum = henum;
     }
 
-    while (henum->row_cur <= henum->row_end && i < len)
-        typedefs[i++] = TokenFromRid(henum->row_cur++, mdtTypeDef);
-
-    if (count)
-        *count = i;
-
-    return i ? S_OK : S_FALSE;
+    return token_enum_get_entries(henum, mdtTypeDef, typedefs, len, count);
 }
 
 static HRESULT WINAPI import_EnumInterfaceImpls(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef type_def,
@@ -667,11 +679,52 @@ static HRESULT WINAPI import_EnumMembersWithName(IMetaDataImport *iface, HCORENU
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI import_EnumMethods(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef type_def,
+static HRESULT WINAPI import_EnumMethods(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef type_def,
                                          mdMethodDef *method_defs, ULONG len, ULONG *count)
 {
-    FIXME("(%p, %p, %#x, %p, %lu, %p): stub!\n", iface, henum, type_def, method_defs, len, count);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    struct token_enum *henum = *ret_henum;
+
+    TRACE("(%p, %p, %s, %p, %lu, %p)\n", iface, ret_henum, debugstr_mdToken(type_def), method_defs, len, count);
+
+    if (count) *count = 0;
+    if (TypeFromToken(type_def) != mdtTypeDef || IsNilToken(type_def)) return S_FALSE;
+    if (!henum)
+    {
+        ULONG methods_start, methods_end, row = RidFromToken(type_def), num_typedef_rows;
+        HRESULT hr;
+
+        if (FAILED((hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, &num_typedef_rows))))
+            return hr;
+        if (row > num_typedef_rows) return S_FALSE;
+        hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 5, row, &methods_start);
+        if (FAILED(hr)) return hr;
+
+        /* From Partition II.22.37, "TypeDef":
+         *
+         * The (MethodList) run continues to the smaller of:
+         *  the last row of the MethodDef table
+         *  the next run of Methods, found by inspecting the MethodList of the next row in this TypeDef table
+         */
+        if (row != num_typedef_rows) /* Get the end MethodDef from the next TypeDef's MethodList. */
+        {
+            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 5, RidFromToken(row + 1),
+                                           &methods_end);
+            if (SUCCEEDED(hr))
+                methods_end = RidFromToken(methods_end) - 1;
+        }
+        else /* The run ends at the last MethodDef row. */
+            hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_METHODDEF, &methods_end);
+
+        if (FAILED(hr) || FAILED((hr = token_enum_create((HCORENUM *)&henum)))) return hr;
+
+        henum->count = methods_end - methods_start + 1;
+        henum->row_start = henum->row_cur = methods_start;
+        henum->row_end = methods_end;
+        *ret_henum = henum;
+    }
+
+    return token_enum_get_entries(*ret_henum, mdtMethodDef, method_defs, len, count);
 }
 
 static HRESULT WINAPI import_EnumMethodsWithName(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef type_def,
@@ -751,14 +804,106 @@ static HRESULT WINAPI import_FindMemberRef(IMetaDataImport *iface, mdTypeRef typ
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI import_GetMethodProps(IMetaDataImport *iface, mdMethodDef method_def, mdTypeDef *type_def,
-                                            WCHAR *method_name, ULONG name_len, ULONG *written, ULONG *method_flags,
-                                            const COR_SIGNATURE **sig_blob, ULONG *sig_len, ULONG *rva,
-                                            ULONG *impl_flags)
+static HRESULT methoddef_get_parent(IMetaDataImport *iface, mdMethodDef method, mdTypeDef *parent)
 {
-    FIXME("(%p, %#x, %p, %p, %lu, %p, %p, %p, %p, %p, %p): stub!\n", iface, method_def, type_def, method_name, name_len,
-          written, method_flags, sig_blob, sig_len, rva, impl_flags);
-    return E_NOTIMPL;
+    mdTypeDef cur_typedef = mdTypeDefNil;
+    HCORENUM typedef_enum = NULL;
+    HRESULT hr;
+
+    *parent = mdTypeDefNil;
+    hr = IMetaDataImport_EnumTypeDefs(iface, &typedef_enum, &cur_typedef, 1, NULL);
+    while (hr == S_OK)
+    {
+        HCORENUM methoddef_enum = NULL;
+        mdMethodDef first, last;
+        ULONG count;
+
+        hr = IMetaDataImport_EnumMethods(iface, &methoddef_enum, cur_typedef, &first, 1, NULL);
+        if (FAILED(hr)) break;
+        hr = IMetaDataImport_CountEnum(iface, methoddef_enum, &count);
+        IMetaDataImport_CloseEnum(iface, methoddef_enum);
+        if (FAILED(hr)) break;
+        if (count)
+        {
+            /* MethodDef runs are strictly sequential. */
+            last = TokenFromRid(RidFromToken(first) + count - 1, mdtMethodDef);
+            if (method >= first && method <= last)
+            {
+                *parent = cur_typedef;
+                break;
+            }
+        }
+        hr = IMetaDataImport_EnumTypeDefs(iface, &typedef_enum, &cur_typedef, 1, NULL);
+    }
+    IMetaDataImport_CloseEnum(iface, typedef_enum);
+    return hr;
+}
+
+static HRESULT WINAPI import_GetMethodProps(IMetaDataImport *iface, mdMethodDef method_def, mdTypeDef *ret_parent,
+                                            WCHAR *method_name, ULONG name_len, ULONG *written, ULONG *method_flags,
+                                            const COR_SIGNATURE **ret_sig_blob, ULONG *ret_sig_len, ULONG *rva,
+                                            ULONG *ret_impl_flags)
+{
+    ULONG attrs = 0, impl_flags = 0, addr = 0, sig_len = 0, name_needed = 0;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    mdToken parent = mdTypeDefNil;
+    const BYTE *sig_blob = NULL;
+
+    TRACE("(%p, %s, %p, %p, %lu, %p, %p, %p, %p, %p, %p)\n", iface, debugstr_mdToken(method_def), ret_parent,
+          method_name, name_len, written, method_flags, ret_sig_blob, ret_sig_len, rva, ret_impl_flags);
+
+    if (TypeFromToken(method_def) != mdtMethodDef) return S_FALSE;
+
+    if (method_name && name_len)
+        method_name[0] = L'\0';
+    if (method_def != mdMethodDefNil)
+    {
+        const ULONG row = RidFromToken(method_def);
+        ULONG name_idx, sig_idx;
+        const char *nameA = NULL;
+        HRESULT hr;
+
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 0, row, &addr))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 1, row, &impl_flags))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 2, row, &attrs))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 3, row, &name_idx))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 4, row, &sig_idx))))
+            return hr;
+
+        if (FAILED(hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, name_idx, &nameA)))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetBlob(&impl->IMetaDataTables_iface, sig_idx, &sig_len, &sig_blob))))
+            return hr;
+        if (FAILED((hr = methoddef_get_parent(iface, method_def, &parent))))
+            return hr;
+
+        name_needed = MultiByteToWideChar(CP_ACP, 0, nameA, -1, NULL, 0);
+        if (method_name && name_len)
+        {
+            ULONG n = MultiByteToWideChar(CP_ACP, 0, nameA, min(strlen(nameA), name_len - 1), method_name, name_len - 1);
+            method_name[n] = L'\0';
+        }
+    }
+    if (ret_parent)
+        *ret_parent = parent;
+    if (method_flags)
+        *method_flags = attrs;
+    if (ret_sig_blob)
+        *ret_sig_blob = sig_blob;
+    if (ret_sig_len)
+        *ret_sig_len = sig_len;
+    if (rva)
+        *rva = addr;
+    if (ret_impl_flags)
+        *ret_impl_flags = impl_flags;
+    if (written)
+        *written = name_needed;
+
+    return (method_name && name_needed > name_len) ? CLDB_S_TRUNCATION : S_OK;
 }
 
 static HRESULT WINAPI import_GetMemberRefProps(IMetaDataImport *iface, mdMemberRef member_ref, mdToken *token,

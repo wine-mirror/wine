@@ -1104,17 +1104,17 @@ static void test_IMetaDataImport(void)
     buf_count = 0xdeadbeef;
     henum = NULL;
     hr = IMetaDataImport_EnumMethods(md_import, &henum, typedef1, NULL, 0, &buf_count);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-    todo_wine ok(buf_count == 0, "got buf_reqd %lu\n", buf_count);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(buf_count == 0, "got buf_reqd %lu\n", buf_count);
     buf_len = 0;
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_len == ARRAY_SIZE(test2_methods), "got buf_len %#lx\n" , buf_len);
+    ok(buf_len == ARRAY_SIZE(test2_methods), "got buf_len %#lx\n" , buf_len);
     methoddef_tokens = calloc(buf_len, sizeof(*methoddef_tokens));
     ok(!!methoddef_tokens, "got methoddef_tokens %p\n", methoddef_tokens);
     hr = IMetaDataImport_EnumMethods(md_import, &henum, typedef1, methoddef_tokens, buf_len, &buf_count);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_count == buf_len, "got buf_reqd %lu != %lu\n", buf_count, buf_len);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(buf_count == buf_len, "got buf_reqd %lu != %lu\n", buf_count, buf_len);
     for (i = 0; i < buf_len; i++)
     {
         ULONG method_flags = 0, impl_flags = 0, sig_len = 0, call_conv = 0;
@@ -1129,19 +1129,16 @@ static void test_IMetaDataImport(void)
         str_len = 0;
         hr = IMetaDataImport_GetMethodProps(md_import, methoddef_tokens[i], &typedef2, name, ARRAY_SIZE(name), &str_len,
                                             &method_flags, &sig_blob, &sig_len, NULL, &impl_flags);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2),
-                     debugstr_mdToken(typedef1));
-        todo_wine ok(method_flags == method->exp_method_flags, "got method_flags %#lx != %#x\n", method_flags,
-                     method->exp_method_flags);
-        todo_wine ok(impl_flags == method->exp_impl_flags, "got impl_flags %#lx != %#x\n", impl_flags,
-                     method->exp_impl_flags);
-        todo_wine ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
-        todo_wine ok(sig_len == method->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, method->exp_sig_len);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
+        ok(method_flags == method->exp_method_flags, "got method_flags %#lx != %#x\n", method_flags,
+           method->exp_method_flags);
+        ok(impl_flags == method->exp_impl_flags, "got impl_flags %#lx != %#x\n", impl_flags, method->exp_impl_flags);
+        ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
+        ok(sig_len == method->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, method->exp_sig_len);
         if (sig_blob && sig_len == method->exp_sig_len)
             ok(!memcmp(sig_blob, method->exp_sig_blob, method->exp_sig_len), "got unexpected sig_blob\n");
-        todo_wine ok(!wcscmp(name, method->exp_name), "got name %s != %s\n", debugstr_w(name),
-                     debugstr_w(method->exp_name));
+        ok(!wcscmp(name, method->exp_name), "got name %s != %s\n", debugstr_w(name), debugstr_w(method->exp_name));
 
         hr = IMetaDataImport_GetNativeCallConvFromSig(md_import, sig_blob, sig_len, &call_conv);
         todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
