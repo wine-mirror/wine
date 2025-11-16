@@ -888,6 +888,7 @@ static void set_window_icon_data( struct x11drv_win_data *data, HICON icon, cons
     if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
     if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
     free( data->icon_bits );
+    data->net_wm_icon_serial = 0; /* allow requesting it again */
     data->icon_pixmap = icon_pixmap;
     data->icon_mask = mask_pixmap;
     data->icon_bits = bits;
@@ -1085,6 +1086,20 @@ static void window_set_wm_hints( struct x11drv_win_data *data, XWMHints *new_hin
     XSetWMHints( data->display, data->whole_window, new_hints );
 }
 
+static void window_set_net_wm_icon( struct x11drv_win_data *data, const void *icon_data, UINT icon_size )
+{
+    /* we don't keep track of requested icon data exactly, and use net_wm_icon_serial instead */
+    if (!data->whole_window) return; /* no window or not managed, nothing to update */
+    if (data->net_wm_icon_serial) return; /* icon has already been requested */
+
+    data->net_wm_icon_serial = NextRequest( data->display );
+    TRACE( "window %p/%lx, requesting _NET_WM_ICON %p/%u serial %lu\n", data->hwnd, data->whole_window,
+           icon_data, icon_size, data->net_wm_icon_serial );
+    if (!icon_data) XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON), XA_CARDINAL,
+                                    32, PropModeReplace, icon_data, icon_size );
+    else XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
+}
+
 /***********************************************************************
  *              set_style_hints
  */
@@ -1132,21 +1147,7 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
         XFree( wm_hints );
     }
 
-    if (data->icon_bits)
-    {
-        TRACE( "window %p/%lx requesting _NET_WM_ICON, serial %lu\n", data->hwnd,
-               data->whole_window, NextRequest( data->display ) );
-        XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON),
-                         XA_CARDINAL, 32, PropModeReplace,
-                         (unsigned char *)data->icon_bits, data->icon_size );
-    }
-    else
-    {
-        TRACE( "window %p/%lx deleting _NET_WM_ICON, serial %lu\n", data->hwnd,
-               data->whole_window, NextRequest( data->display ) );
-        XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
-    }
-
+    window_set_net_wm_icon( data, data->icon_bits, data->icon_size );
 }
 
 
@@ -2522,6 +2523,7 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     data->mwm_hints_serial = 0;
     data->wm_normal_hints_serial = 0;
     data->configure_serial = 0;
+    data->net_wm_icon_serial = 0;
     data->reparenting = 0;
 
     if (data->xic)
