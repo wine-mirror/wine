@@ -189,6 +189,7 @@ static DWORD x11drv_mode_from_devmode( x11drv_settings_id id, DEVMODEW *mode, st
     UINT count, i;
 
     full->mode = *mode;
+    full->mode.dmDriverExtra = sizeof(*full) - sizeof(full->mode);
     if (is_detached_mode( mode )) return DISP_CHANGE_SUCCESSFUL;
 
     if (!settings_handler.get_modes( id, EDS_ROTATEDMODE, &modes, &count )) return DISP_CHANGE_BADMODE;
