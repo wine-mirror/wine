@@ -2281,7 +2281,7 @@ static RECT map_monitor_rect( struct monitor *monitor, RECT rect, UINT dpi_from,
 
     if (monitor->source)
     {
-        float points[4] = {rect.left, rect.top, rect.right, rect.bottom}, from[2], to[2];
+        double points[4] = {rect.left, rect.top, rect.right, rect.bottom}, from[2], to[2];
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)}, physical_mode;
         UINT num, den, dpi;
 
@@ -2311,14 +2311,16 @@ static RECT map_monitor_rect( struct monitor *monitor, RECT rect, UINT dpi_from,
 
         for (int i = 0; i < ARRAY_SIZE(points); i++)
         {
-            points[i] *= (float)dpi / dpi_from;
+            points[i] *= (double)dpi / dpi_from;
             points[i] -= from[i & 1];
-            points[i] *= (float)num / den;
+            points[i] *= (double)num / den;
             points[i] += to[i & 1];
-            points[i] *= (float)dpi_to / dpi;
+            points[i] *= (double)dpi_to / dpi;
+            points[i] = roundf( points[i] );
+            points[i] = min( INT_MAX, max( INT_MIN, (INT64)points[i] ));
         }
 
-        SetRect( &rect, round( points[0] ), round( points[1] ), round( points[2] ), round( points[3] ) );
+        SetRect( &rect, points[0], points[1], points[2], points[3] );
         return rect;
     }
 
