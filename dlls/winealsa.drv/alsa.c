@@ -2610,7 +2610,6 @@ static NTSTATUS alsa_wow64_is_format_supported(void *args)
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
-        PTR32 fmt_out;
         HRESULT result;
     } *params32 = args;
     struct is_format_supported_params params =
