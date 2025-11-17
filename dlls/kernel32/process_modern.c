@@ -12,9 +12,12 @@
  */
 
 #include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "winternl.h"
+#include "winbase.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kernel32);

@@ -12,10 +12,14 @@
  */
 
 #include <stdarg.h>
+
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
 #include "winhttp.h"
+
 #include "wine/debug.h"
+#include "winhttp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
