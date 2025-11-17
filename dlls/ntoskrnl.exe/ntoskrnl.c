@@ -2571,7 +2571,7 @@ PRKTHREAD WINAPI KeGetCurrentThread(void)
 
         /* FIXME: we shouldn't need it, GetCurrentThread() should be client thread already */
         if (GetCurrentThreadId() == request_thread)
-            handle = OpenThread( THREAD_QUERY_INFORMATION, FALSE, client_tid );
+            handle = OpenThread( MAXIMUM_ALLOWED, FALSE, client_tid );
 
         kernel_object_from_handle( handle, PsThreadType, (void**)&thread );
         if (handle != GetCurrentThread()) NtClose( handle );
