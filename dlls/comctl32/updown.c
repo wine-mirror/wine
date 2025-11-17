@@ -381,6 +381,26 @@ static BOOL UPDOWN_DrawBuddyBackground (const UPDOWN_INFO *infoPtr, HDC hdc)
     return TRUE;
 }
 
+static BOOL UPDOWN_IsUpArrowPressed(const UPDOWN_INFO *infoPtr)
+{
+    return infoPtr->Flags & FLAG_PRESSED && infoPtr->Flags & FLAG_INCR;
+}
+
+static BOOL UPDOWN_IsUpArrowHot(const UPDOWN_INFO *infoPtr)
+{
+    return infoPtr->Flags & FLAG_INCR && infoPtr->Flags & FLAG_MOUSEIN;
+}
+
+static BOOL UPDOWN_IsDownArrowPressed(const UPDOWN_INFO *infoPtr)
+{
+    return infoPtr->Flags & FLAG_PRESSED && infoPtr->Flags & FLAG_DECR;
+}
+
+static BOOL UPDOWN_IsDownArrowHot(const UPDOWN_INFO *infoPtr)
+{
+    return infoPtr->Flags & FLAG_DECR && infoPtr->Flags & FLAG_MOUSEIN;
+}
+
 /***********************************************************************
  * UPDOWN_Draw
  *
@@ -394,10 +414,10 @@ static LRESULT UPDOWN_Draw (const UPDOWN_INFO *infoPtr, HDC hdc)
     int uPart = 0, uState = 0, dPart = 0, dState = 0;
     BOOL needBuddyBg = FALSE;
 
-    uPressed = (infoPtr->Flags & FLAG_PRESSED) && (infoPtr->Flags & FLAG_INCR);
-    uHot = (infoPtr->Flags & FLAG_INCR) && (infoPtr->Flags & FLAG_MOUSEIN);
-    dPressed = (infoPtr->Flags & FLAG_PRESSED) && (infoPtr->Flags & FLAG_DECR);
-    dHot = (infoPtr->Flags & FLAG_DECR) && (infoPtr->Flags & FLAG_MOUSEIN);
+    uPressed = UPDOWN_IsUpArrowPressed(infoPtr);
+    uHot = UPDOWN_IsUpArrowHot(infoPtr);
+    dPressed = UPDOWN_IsDownArrowPressed(infoPtr);
+    dHot = UPDOWN_IsDownArrowHot(infoPtr);
     if (theme) {
         uPart = (infoPtr->dwStyle & UDS_HORZ) ? SPNP_UPHORZ : SPNP_UP;
         uState = (infoPtr->dwStyle & WS_DISABLED) ? DNS_DISABLED 
