@@ -1363,7 +1363,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     CHECK_CALLED( rowset_AddRefRows );
     CHECK_CALLED( rowset_ReleaseRows );
     ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine ok( !is_eof( recordset ), "at eof\n" );
+    ok( !is_eof( recordset ), "at eof\n" );
 
     SET_EXPECT( rowset_AddRefRows );
     SET_EXPECT( rowset_ReleaseRows );

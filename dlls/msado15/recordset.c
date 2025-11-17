@@ -1777,10 +1777,19 @@ static HRESULT WINAPI recordset_put_CursorType( _Recordset *iface, CursorTypeEnu
 static HRESULT WINAPI recordset_get_EOF( _Recordset *iface, VARIANT_BOOL *eof )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p, %p\n", recordset, eof );
 
-    *eof = (!recordset->count || recordset->index >= recordset->count) ? VARIANT_TRUE : VARIANT_FALSE;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->is_eof && !recordset->is_bof && !recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    *eof = recordset->is_eof;
     return S_OK;
 }
 
