@@ -1390,9 +1390,9 @@ static void test_download_instrument(void)
     IDirectMusicDownloadedInstrument_Release(downloaded2);
 
     hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
-    todo_wine ok(hr == S_FALSE, "got %#lx\n", hr);
+    ok(hr == S_FALSE, "got %#lx\n", hr);
     hr = IDirectMusicPort_UnloadInstrument(port, downloaded);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     IDirectMusicDownloadedInstrument_Release(downloaded);
 
     IDirectMusicInstrument_Release(instrument);

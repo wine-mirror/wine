@@ -82,6 +82,7 @@ struct downloaded_instrument
     struct list entry;
     LONG ref;
 
+    LONG download_count;
     IDirectMusicPortDownload *port;
     IDirectMusicDownload *download;
     struct list downloaded_waves;
@@ -1315,6 +1316,7 @@ HRESULT instrument_download_to_port(IDirectMusicInstrument *iface, IDirectMusicP
     list_add_tail(&This->downloaded_instruments, &downloaded_instrument->entry);
 
 done:
+    ++downloaded_instrument->download_count;
     *downloaded = &downloaded_instrument->IDirectMusicDownloadedInstrument_iface;
     IDirectMusicDownloadedInstrument_AddRef(*downloaded);
     return S_OK;
@@ -1331,7 +1333,10 @@ HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDi
     struct downloaded_instrument *This = impl_from_IDirectMusicDownloadedInstrument(iface);
     HRESULT hr;
 
-    if (!This->download || This->port != port) return DMUS_E_NOT_DOWNLOADED_TO_PORT;
+    if (!This->download_count || This->port != port) return DMUS_E_NOT_DOWNLOADED_TO_PORT;
+
+    --This->download_count;
+    if (This->download_count) return S_FALSE;
 
     if (FAILED(hr = IDirectMusicPortDownload_Unload(port, This->download)))
         WARN("Failed to unload instrument download buffer, hr %#lx\n", hr);
@@ -1357,7 +1362,6 @@ HRESULT instrument_unload_from_port(IDirectMusicDownloadedInstrument *iface, IDi
     }
 
     IDirectMusicDownload_Release(This->download);
-    This->download = NULL;
 
     if (!list_empty(&This->entry))
     {
