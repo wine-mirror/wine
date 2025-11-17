@@ -232,8 +232,10 @@ static HRESULT WINAPI rowset_RestartPosition(IRowsetExactScroll *iface, HCHAPTER
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll(iface);
 
-    FIXME("%p, %Id\n", rowset, reserved);
-    return E_NOTIMPL;
+    TRACE("%p, %Id\n", rowset, reserved);
+
+    rowset->index = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_Compare(IRowsetExactScroll *iface, HCHAPTER hReserved, DBBKMARK cbBookmark1,
