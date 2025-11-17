@@ -421,6 +421,26 @@ static void UPDOWN_GetDownArrowThemePartAndState(const UPDOWN_INFO *infoPtr, int
     *state = (infoPtr->dwStyle & WS_DISABLED) ? DNS_DISABLED : (pressed ? DNS_PRESSED : (hot ? DNS_HOT : DNS_NORMAL));
 }
 
+static BOOL UPDOWN_NeedBuddyBackground(const UPDOWN_INFO *infoPtr)
+{
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
+
+    if (theme)
+    {
+        int up_part = 0, up_state = 0, down_part = 0, down_state = 0;
+        BOOL up_transparent, down_transparent, need_buddy_bg;
+
+        UPDOWN_GetUpArrowThemePartAndState(infoPtr, &up_part, &up_state);
+        UPDOWN_GetDownArrowThemePartAndState(infoPtr, &down_part, &down_state);
+        up_transparent = IsThemeBackgroundPartiallyTransparent(theme, up_part, up_state);
+        down_transparent = IsThemeBackgroundPartiallyTransparent(theme, down_part, down_state);
+        need_buddy_bg = IsWindow(infoPtr->Buddy) && (up_transparent || down_transparent);
+        return UPDOWN_HasBuddyBorder(infoPtr) || need_buddy_bg;
+    }
+
+    return UPDOWN_HasBuddyBorder(infoPtr);
+}
+
 /***********************************************************************
  * UPDOWN_Draw
  *
@@ -432,7 +452,6 @@ static LRESULT UPDOWN_Draw (const UPDOWN_INFO *infoPtr, HDC hdc)
     RECT rect;
     HTHEME theme = GetWindowTheme (infoPtr->Self);
     int uPart = 0, uState = 0, dPart = 0, dState = 0;
-    BOOL needBuddyBg = FALSE;
 
     uPressed = UPDOWN_IsUpArrowPressed(infoPtr);
     uHot = UPDOWN_IsUpArrowHot(infoPtr);
@@ -441,13 +460,10 @@ static LRESULT UPDOWN_Draw (const UPDOWN_INFO *infoPtr, HDC hdc)
     if (theme) {
         UPDOWN_GetUpArrowThemePartAndState(infoPtr, &uPart, &uState);
         UPDOWN_GetDownArrowThemePartAndState(infoPtr, &dPart, &dState);
-        needBuddyBg = IsWindow (infoPtr->Buddy)
-            && (IsThemeBackgroundPartiallyTransparent (theme, uPart, uState)
-              || IsThemeBackgroundPartiallyTransparent (theme, dPart, dState));
     }
 
     /* Draw the common border between ourselves and our buddy */
-    if (UPDOWN_HasBuddyBorder(infoPtr) || needBuddyBg) {
+    if (UPDOWN_NeedBuddyBackground(infoPtr)) {
         if (!theme || !UPDOWN_DrawBuddyBackground (infoPtr, hdc)) {
             GetClientRect(infoPtr->Self, &rect);
 	    DrawEdge(hdc, &rect, EDGE_SUNKEN,
