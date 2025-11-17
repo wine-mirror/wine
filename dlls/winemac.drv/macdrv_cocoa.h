@@ -568,7 +568,7 @@ extern CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef t
 extern bool macdrv_is_pasteboard_owner(WineWindow *window);
 extern bool macdrv_has_pasteboard_changed(void);
 extern void macdrv_clear_pasteboard(WineWindow *window);
-extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, WineWindow *window);
+extern bool macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, WineWindow *window);
 
 
 /* opengl */

@@ -38,9 +38,9 @@
 #include "unixlib.h"
 
 
-extern BOOL allow_vsync;
-extern BOOL allow_set_gamma;
-extern BOOL allow_software_rendering;
+extern bool allow_vsync;
+extern bool allow_set_gamma;
+extern bool allow_software_rendering;
 
 extern UINT64 app_icon_callback;
 extern UINT64 app_quit_request_callback;
@@ -200,12 +200,12 @@ struct macdrv_client_surface
 };
 
 extern struct macdrv_client_surface *impl_from_client_surface(struct client_surface *client);
-extern BOOL macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface *surface);
+extern bool macdrv_client_surface_acquire_metal_swapchain(struct macdrv_client_surface *surface);
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd);
 extern void release_win_data(struct macdrv_win_data *data);
 extern void init_win_context(void);
-extern WineWindow *macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen);
+extern WineWindow *macdrv_get_cocoa_window(HWND hwnd, bool require_on_screen);
 extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp);
 extern void activate_on_following_focus(void);
 
@@ -228,9 +228,9 @@ extern void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event
 extern void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event);
 extern void macdrv_window_drag_end(HWND hwnd);
 extern void macdrv_reassert_window_position(HWND hwnd);
-extern BOOL query_resize_size(HWND hwnd, macdrv_query *query);
-extern BOOL query_resize_start(HWND hwnd);
-extern BOOL query_min_max_info(HWND hwnd);
+extern bool query_resize_size(HWND hwnd, macdrv_query *query);
+extern bool query_resize_start(HWND hwnd);
+extern bool query_min_max_info(HWND hwnd);
 
 extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event);
 extern void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event);
@@ -246,7 +246,7 @@ extern HKL macdrv_get_hkl_from_source(TISInputSourceRef input_source);
 extern void macdrv_displays_changed(const macdrv_event *event);
 
 extern void macdrv_UpdateClipboard(void);
-extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type);
+extern bool query_pasteboard_data(HWND hwnd, CFStringRef type);
 extern void macdrv_lost_pasteboard_ownership(HWND hwnd);
 
 extern UINT macdrv_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs);
@@ -305,7 +305,7 @@ static inline HWND get_focus(void)
     return NtUserGetGUIThreadInfo(GetCurrentThreadId(), &info) ? info.hwndFocus : 0;
 }
 
-static inline BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
+static inline bool intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
 {
     dst->left   = max(src1->left, src2->left);
     dst->top    = max(src1->top, src2->top);
@@ -323,7 +323,7 @@ extern HKEY reg_create_ascii_key(HKEY root, const char *name, DWORD options,
                                  DWORD *disposition);
 extern HKEY reg_create_key(HKEY root, const WCHAR *name, ULONG name_len,
                            DWORD options, DWORD *disposition);
-extern BOOL reg_delete_tree(HKEY parent, const WCHAR *name, ULONG name_len);
+extern bool reg_delete_tree(HKEY parent, const WCHAR *name, ULONG name_len);
 extern HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len);
 
 /* string helpers */
