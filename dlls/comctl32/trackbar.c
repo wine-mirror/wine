@@ -1759,7 +1759,7 @@ TRACKBAR_MouseMove (TRACKBAR_INFO *infoPtr, INT x, INT y)
 
     if (!(infoPtr->flags & TB_DRAG_MODE)) 
     {
-        if (GetWindowTheme (infoPtr->hwndSelf))
+        if (COMCTL32_IsThemed (infoPtr->hwndSelf))
         {
             DWORD oldFlags = infoPtr->flags;
             POINT pt;
