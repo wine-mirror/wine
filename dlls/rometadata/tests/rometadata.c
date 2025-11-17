@@ -1194,20 +1194,19 @@ static void test_IMetaDataImport(void)
             typedef2 = 0;
             hr = IMetaDataImport_GetFieldProps(md_import, fielddef_tokens[field_idx], &typedef2, name, ARRAY_SIZE(name), NULL,
                                                &flags, &sig_blob, &sig_len, &value_type, &value, &value_len);
-            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
-            todo_wine ok(!wcscmp(name, props->exp_name), "got name %s != %s\n", debugstr_w(name), debugstr_w(props->exp_name));
-            todo_wine ok(flags == props->exp_flags, "got flags %#lx != %#x\n", flags, props->exp_flags);
-            todo_wine ok(value_type == props->exp_value_type, "got value_type %#lx != %#x\n", value_type, props->exp_value_type);
-            todo_wine ok(sig_len == props->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, props->exp_sig_len);
-            todo_wine ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            ok(typedef2 == typedef1, "got typedef2 %s != %s\n", debugstr_mdToken(typedef2), debugstr_mdToken(typedef1));
+            ok(!wcscmp(name, props->exp_name), "got name %s != %s\n", debugstr_w(name), debugstr_w(props->exp_name));
+            ok(flags == props->exp_flags, "got flags %#lx != %#x\n", flags, props->exp_flags);
+            ok(value_type == props->exp_value_type, "got value_type %#lx != %#x\n", value_type, props->exp_value_type);
+            ok(sig_len == props->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, props->exp_sig_len);
+            ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
             if (sig_blob && sig_len == props->exp_sig_len)
                 ok(!memcmp(sig_blob, props->exp_sig_blob, sig_len), "got unexpected sig_blob\n");
             ok(value_len == 0, "got value_len %lu\n", value_len); /* Non-zero only for string types. */
-            todo_wine_if(FAILED(hr) && props->has_value) ok(props->has_value == !!value, "got value %s\n", debugstr_a(value));
+            ok(props->has_value == !!value, "got value %s\n", debugstr_a(value));
             if (props->has_value)
-                todo_wine ok(value && !memcmp(value, props->exp_value, props->value_len), "got unexpected value %p\n",
-                             value);
+                ok(value && !memcmp(value, props->exp_value, props->value_len), "got unexpected value %p\n", value);
 
             winetest_pop_context();
         }
