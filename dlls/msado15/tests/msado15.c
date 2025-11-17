@@ -523,6 +523,7 @@ struct test_rowset
     IAccessor IAccessor_iface;
     LONG refs;
     BOOL exact_scroll;
+    int idx;
 };
 
 struct haccessor
@@ -1073,7 +1074,7 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW hRow, HACCE
 static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
     DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
 {
-    static int idx;
+    struct test_rowset *rowset = impl_from_IRowsetExactScroll( iface );
 
     CHECK_EXPECT2(rowset_GetNextRows);
     ok(!hReserved, "hReserved = %Ix\n", hReserved);
@@ -1081,7 +1082,7 @@ static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER hRe
     ok(prghRows != NULL, "prghRows = NULL\n");
     ok(*prghRows != NULL, "*prghRows = NULL\n");
 
-    if (idx == 2)
+    if (rowset->idx == 2)
     {
         *pcRowObtained = 0;
         return DB_S_ENDOFROWSET;
@@ -1089,7 +1090,7 @@ static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER hRe
 
     ok(!lRowsOffset, "lRowsOffset = %Id\n", lRowsOffset);
     *pcRowObtained = 1;
-    (*prghRows)[0] = idx++;
+    (*prghRows)[0] = ++rowset->idx;
     return S_OK;
 }
 
@@ -1259,6 +1260,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     testrowset.IAccessor_iface.lpVtbl = &accessor;
     testrowset.refs = 1;
     testrowset.exact_scroll = exact_scroll;
+    testrowset.idx = 0;
 
     rowset = (IUnknown*)&testrowset.IRowsetExactScroll_iface;
 
@@ -1347,8 +1349,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     {
         SET_EXPECT( rowset_GetRowsAt );
         SET_EXPECT( rowset_GetData );
-        SET_EXPECT( rowset_AddRefRows );
     }
+    SET_EXPECT( rowset_AddRefRows );
     SET_EXPECT( rowset_ReleaseRows );
     hr = _Recordset_MoveNext( recordset );
     if (!exact_scroll) todo_wine CHECK_CALLED( rowset_GetNextRows );
@@ -1356,8 +1358,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     {
         todo_wine CHECK_CALLED( rowset_GetRowsAt );
         todo_wine CHECK_CALLED( rowset_GetData );
-        todo_wine CHECK_CALLED( rowset_AddRefRows );
     }
+    todo_wine CHECK_CALLED( rowset_AddRefRows );
     todo_wine CHECK_CALLED( rowset_ReleaseRows );
     ok( hr == S_OK, "got %08lx\n", hr );
     todo_wine ok( !is_eof( recordset ), "at eof\n" );
