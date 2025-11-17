@@ -95,8 +95,6 @@ typedef struct
 #define TIC_SELECTIONMARKMIN    0x100
 #define TIC_SELECTIONMARK       (TIC_SELECTIONMARKMAX | TIC_SELECTIONMARKMIN)
 
-static const WCHAR themeClass[] = L"Trackbar";
-
 static inline int 
 notify_customdraw (const TRACKBAR_INFO *infoPtr, NMCUSTOMDRAW *pnmcd, int stage)
 {
@@ -461,22 +459,25 @@ static void
 TRACKBAR_DrawChannel (const TRACKBAR_INFO *infoPtr, HDC hdc)
 {
     RECT rcChannel = infoPtr->rcChannel;
+
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (theme)
     {
-        DrawThemeBackground (theme, hdc, 
-            (infoPtr->dwStyle & TBS_VERT) ?
-                TKP_TRACKVERT : TKP_TRACK, TKS_NORMAL, &rcChannel, 0);
+        int part = (infoPtr->dwStyle & TBS_VERT) ? TKP_TRACKVERT : TKP_TRACK;
+        DrawThemeBackground (theme, hdc, part, TKS_NORMAL, &rcChannel, 0);
+        return;
     }
-    else
+#endif
+
+    DrawEdge (hdc, &rcChannel, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
+    if (infoPtr->dwStyle & TBS_ENABLESELRANGE)
     {
-        DrawEdge (hdc, &rcChannel, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
-        if (infoPtr->dwStyle & TBS_ENABLESELRANGE) {		 /* fill the channel */
-            FillRect (hdc, &rcChannel, GetStockObject(WHITE_BRUSH));
-            if (TRACKBAR_HasSelection(infoPtr))
-                FillRect (hdc, &infoPtr->rcSelection, GetSysColorBrush(COLOR_HIGHLIGHT));
-        }
+        /* fill the channel */
+        FillRect (hdc, &rcChannel, GetStockObject (WHITE_BRUSH));
+        if (TRACKBAR_HasSelection (infoPtr))
+            FillRect (hdc, &infoPtr->rcSelection, GetSysColorBrush (COLOR_HIGHLIGHT));
     }
 }
 
@@ -563,6 +564,7 @@ TRACKBAR_DrawTic (const TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
 
 static COLORREF TRACKBAR_GetTicPenColor(const TRACKBAR_INFO *infoPtr)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (theme)
@@ -573,6 +575,7 @@ static COLORREF TRACKBAR_GetTicPenColor(const TRACKBAR_INFO *infoPtr)
         GetThemeColor (theme, part, TSS_NORMAL, TMT_COLOR, &color);
         return color;
     }
+#endif
 
     return GetSysColor (COLOR_3DDKSHADOW);
 }
@@ -708,9 +711,11 @@ TRACKBAR_FillThumb (const TRACKBAR_INFO *infoPtr, HDC hdc, HBRUSH hbrush)
 static void
 TRACKBAR_DrawThumb (TRACKBAR_INFO *infoPtr, HDC hdc)
 {
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     int PointDepth;
     HBRUSH brush;
+
+#if __WINE_COMCTL32_VERSION == 6
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
 
     if (theme)
     {
@@ -738,6 +743,7 @@ TRACKBAR_DrawThumb (TRACKBAR_INFO *infoPtr, HDC hdc)
         
         return;
     }
+#endif
 
     if (infoPtr->dwStyle & WS_DISABLED || infoPtr->flags & TB_DRAG_MODE)
     {
@@ -1573,8 +1579,8 @@ TRACKBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
             SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
 	 }
     }
-    
-    OpenThemeData (hwnd, themeClass);
+
+    COMCTL32_OpenThemeForWindow (hwnd, L"Trackbar");
 
     return 0;
 }
@@ -1591,7 +1597,7 @@ TRACKBAR_Destroy (TRACKBAR_INFO *infoPtr)
     infoPtr->tics = NULL;
 
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
-    CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
+    COMCTL32_CloseThemeForWindow (infoPtr->hwndSelf);
     Free (infoPtr);
 
     return 0;
@@ -1728,18 +1734,6 @@ TRACKBAR_Timer (TRACKBAR_INFO *infoPtr)
     }
     return 0;
 }
-
-
-/* update theme after a WM_THEMECHANGED message */
-static LRESULT theme_changed (const TRACKBAR_INFO* infoPtr)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
-    CloseThemeData (theme);
-    OpenThemeData (infoPtr->hwndSelf, themeClass);
-    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
-    return 0;
-}
-
 
 static LRESULT
 TRACKBAR_MouseMove (TRACKBAR_INFO *infoPtr, INT x, INT y)
@@ -2068,7 +2062,7 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return TRACKBAR_StyleChanged (infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
     case WM_THEMECHANGED:
-        return theme_changed (infoPtr);
+        return COMCTL32_ThemeChanged (infoPtr->hwndSelf, L"Trackbar", TRUE, FALSE);
 
     case WM_TIMER:
 	return TRACKBAR_Timer (infoPtr);
