@@ -401,6 +401,26 @@ static BOOL UPDOWN_IsDownArrowHot(const UPDOWN_INFO *infoPtr)
     return infoPtr->Flags & FLAG_DECR && infoPtr->Flags & FLAG_MOUSEIN;
 }
 
+static void UPDOWN_GetUpArrowThemePartAndState(const UPDOWN_INFO *infoPtr, int *part, int *state)
+{
+    BOOL pressed, hot;
+
+    pressed = UPDOWN_IsUpArrowPressed(infoPtr);
+    hot = UPDOWN_IsUpArrowHot(infoPtr);
+    *part = (infoPtr->dwStyle & UDS_HORZ) ? SPNP_UPHORZ : SPNP_UP;
+    *state = (infoPtr->dwStyle & WS_DISABLED) ? DNS_DISABLED : (pressed ? DNS_PRESSED : (hot ? DNS_HOT : DNS_NORMAL));
+}
+
+static void UPDOWN_GetDownArrowThemePartAndState(const UPDOWN_INFO *infoPtr, int *part, int *state)
+{
+    BOOL pressed, hot;
+
+    pressed = UPDOWN_IsDownArrowPressed(infoPtr);
+    hot = UPDOWN_IsDownArrowHot(infoPtr);
+    *part = (infoPtr->dwStyle & UDS_HORZ) ? SPNP_DOWNHORZ : SPNP_DOWN;
+    *state = (infoPtr->dwStyle & WS_DISABLED) ? DNS_DISABLED : (pressed ? DNS_PRESSED : (hot ? DNS_HOT : DNS_NORMAL));
+}
+
 /***********************************************************************
  * UPDOWN_Draw
  *
@@ -419,12 +439,8 @@ static LRESULT UPDOWN_Draw (const UPDOWN_INFO *infoPtr, HDC hdc)
     dPressed = UPDOWN_IsDownArrowPressed(infoPtr);
     dHot = UPDOWN_IsDownArrowHot(infoPtr);
     if (theme) {
-        uPart = (infoPtr->dwStyle & UDS_HORZ) ? SPNP_UPHORZ : SPNP_UP;
-        uState = (infoPtr->dwStyle & WS_DISABLED) ? DNS_DISABLED 
-            : (uPressed ? DNS_PRESSED : (uHot ? DNS_HOT : DNS_NORMAL));
-        dPart = (infoPtr->dwStyle & UDS_HORZ) ? SPNP_DOWNHORZ : SPNP_DOWN;
-        dState = (infoPtr->dwStyle & WS_DISABLED) ? DNS_DISABLED 
-            : (dPressed ? DNS_PRESSED : (dHot ? DNS_HOT : DNS_NORMAL));
+        UPDOWN_GetUpArrowThemePartAndState(infoPtr, &uPart, &uState);
+        UPDOWN_GetDownArrowThemePartAndState(infoPtr, &dPart, &dState);
         needBuddyBg = IsWindow (infoPtr->Buddy)
             && (IsThemeBackgroundPartiallyTransparent (theme, uPart, uState)
               || IsThemeBackgroundPartiallyTransparent (theme, dPart, dState));
