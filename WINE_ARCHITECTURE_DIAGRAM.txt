@@ -1,0 +1,231 @@
+                    ARQUITETURA DO WINE - DIAGRAMA VISUAL
+
+================================================================================
+                          CAMADA 1: APLICAÇÃO WINDOWS
+================================================================================
+
+    Executável Windows (EXE) / DLL (PEs)
+    |
+    | Chama APIs Windows
+    v
+
+================================================================================
+                 CAMADA 2: DLLs WINDOWS (723 DLLs no Wine)
+================================================================================
+
+    RUNTIME BASE:
+    [ntdll]─────[kernel32]─────[advapi32]─────[ole32]─────[rpcrt4]
+       ↓           ↓               ↓             ↓           ↓
+    PE Loader   Processos    Segurança    COM/OLE      RPC
+    Exceções    Threads      Registry    Automation   Chamadas
+    RTL         Sync
+
+    INTERFACE (JANELAS/GRÁFICOS):
+    [user32]────[gdi32]────[win32u]────[winex11.drv]────[wined3d]
+       ↓          ↓          ↓              ↓               ↓
+    Janelas   Gráficos   Baixo-nível   X11/Wayland    OpenGL/Vulkan
+    Mensagens  Drawing    Kernel                          D3D Rendering
+    Controles
+
+    FUNCIONALIDADES MODERNAS:
+    [d3d12]────[dxgi]────[dwrite]────[mf*]────[bcrypt]────[ws2_32]
+       ↓        ↓          ↓           ↓         ↓           ↓
+    Direct3D  Graphics   Typography  Media    Crypto      Networking
+    12        Infra.     Rendering   Foundation Crypto   Sockets
+                                                Modern    (POSIX bridge)
+
+    RUNTIME MODERNO:
+    [vcruntime140]────[msvcp140]────[concrt140]────[windows.*.dll]
+           ↓              ↓               ↓              ↓
+        Visual C++    C++ STL       Concurrency     WinRT APIs
+        Runtime       Library       Runtime         Modern
+                                                    Windows
+
+================================================================================
+                    CAMADA 3: WINE SERVER (Gerenciador Central)
+================================================================================
+
+    Unix Sockets
+         ↓
+    [WINE SERVER PROCESS]
+    ├── Process Management (process.c)
+    ├── Thread Management (thread.c)
+    ├── File Descriptor Management (fd.c)
+    ├── Window Management (window.c)
+    ├── Socket Management (sock.c)
+    ├── Handle Management (handle.c)
+    ├── Registry Emulation (registry.c)
+    ├── Console Emulation (console.c)
+    ├── Message Queue (queue.c)
+    ├── Memory Mapping (mapping.c)
+    └── Security Tokens (token.c)
+
+    Coordena: Sincronização, Compartilhamento de Recursos,
+              Inter-processo Communication, Estado Global
+
+================================================================================
+                 CAMADA 4: DRIVERS E BACKENDS DO SISTEMA
+================================================================================
+
+    DISPLAY DRIVERS:
+    [winex11.drv]────[winewayland.drv]────[winemac.drv]────[wineandroid.drv]
+         ↓                 ↓                  ↓                  ↓
+        X11             Wayland            macOS             Android
+     (legacy)           (moderno)          (Apple)           (mobile)
+
+    GRAPHICS BACKENDS:
+    [wined3d] ──→ OpenGL Backend ──→ libGL/GLEW/Mesa
+             └─→ Vulkan Backend  ──→ libvulkan
+
+    INPUT DRIVERS:
+    [winehid.sys]────[winexinput.sys]────[winebus.sys]
+         ↓                ↓                    ↓
+       HID             XInput             USB Bus
+
+    AUDIO DRIVERS:
+    [winealsa.drv]────[winepulse.drv]────[winecoreaudio.drv]
+         ↓                 ↓                    ↓
+       ALSA            PulseAudio           CoreAudio
+
+================================================================================
+                    CAMADA 5: SISTEMA OPERACIONAL HOSPEDEIRO
+================================================================================
+
+    KERNEL LINUX/BSD/macOS
+    ├── Syscalls (mmap, fork, exec, etc)
+    ├── Sockets (POSIX networking)
+    ├── File System
+    ├── Process Management
+    ├── Threading (pthreads)
+    └── Graphics APIs (OpenGL, Vulkan)
+
+    BIBLIOTECAS DO SISTEMA
+    ├── glibc/musl (C library)
+    ├── OpenGL/Vulkan (graphics)
+    ├── X11/Wayland (display)
+    ├── ALSA/PulseAudio (audio)
+    ├── OpenSSL/GnuTLS (crypto)
+    ├── DBus (IPC)
+    └── libusb (USB)
+
+================================================================================
+                        FLUXO DE UMA CHAMADA API
+================================================================================
+
+Exemplo: CreateProcessA("notepad.exe", NULL, ...)
+
+1. APLICAÇÃO:
+   CreateProcessA("notepad.exe", ...)
+                        ↓
+2. WINE DLL (kernel32.dll):
+   KERNEL_CreateProcessA()
+   ├── Valida argumentos
+   ├── Abre arquivo executável
+   ├── Carrega PE em memória (ntdll!loader)
+   ├── Cria estrutura do processo
+   └── Envia requisição ao Wine Server
+                        ↓
+3. WINE SERVER (server/process.c):
+   create_process_request()
+   ├── Cria objeto processo
+   ├── Cria threads iniciais
+   ├── Aloca handles
+   ├── Registra no manager de processos
+   └── Retorna PID/handle ao cliente
+                        ↓
+4. KERNEL32 (ntdll back):
+   ├── Popula PROCESS_INFORMATION
+   ├── Inicia thread principal via ntdll
+   └── Retorna sucesso ao chamador
+                        ↓
+5. SYSCALLS DO SO:
+   ├── fork() → novo processo Linux
+   ├── mmap() → carrega código executável
+   ├── clone() → primeira thread
+   └── Sync via Unix sockets com servidor
+
+================================================================================
+                    ESTRUTURA DE COMPONENTES CRÍTICOS
+================================================================================
+
+NTDLL (core runtime):
+├── loader.c (175KB) ──→ PE loading, imports, delays
+├── exception.c ──→ SEH handling, unwind
+├── threadpool.c (108KB) ──→ async work queues
+├── sync.c ──→ event, mutex, semaphore
+├── heap.c ──→ memory allocation
+└── signal_*.c ──→ architecture-specific signals
+
+WINED3D (graphics engine):
+├── adapter_gl.c (246KB) ──→ OpenGL implementation
+├── adapter_vk.c (103KB) ──→ Vulkan implementation
+├── device.c (210KB) ──→ D3D device state
+├── glsl_shader.c (542KB!) ──→ HLSL→GLSL compiler
+└── context_*.c ──→ rendering context
+
+USER32 (window subsystem):
+├── message.c ──→ message dispatch
+├── window.c ──→ window management
+├── dialog.c ──→ dialog boxes
+├── button.c, edit.c, listbox.c ──→ controls
+
+WINE SERVER (resource manager):
+├── process.c ──→ process objects
+├── thread.c ──→ thread objects
+├── fd.c (98KB) ──→ file descriptor tables
+├── window.c (110KB) ──→ window objects
+├── sock.c (139KB) ──→ socket objects
+└── queue.c (139KB) ──→ message queues
+
+================================================================================
+                      PADRÕES DE IMPLEMENTAÇÃO
+================================================================================
+
+PADRÃO 1: WRAPPER PURO (System Calls)
+    Windows API ──→ Sistema Linux/BSD/macOS
+    Ex: VirtualAlloc → mmap, GetTicks → clock_gettime
+
+PADRÃO 2: SERVER DELEGATION
+    Windows API ──→ Wine Server ──→ Recurso compartilhado
+    Ex: CreateEvent → servidor armazena evento, outras threads consultam
+
+PADRÃO 3: LIBRARY WRAPPING
+    Windows API ──→ Biblioteca nativa (OpenGL, POSIX)
+    Ex: wglCreateContext → glXCreateContext, socket → POSIX socket
+
+PADRÃO 4: COM/MARSHALING
+    Windows COM ──→ RPC ──→ Implementação
+    Ex: Direct3D → servidor marshals interface calls
+
+PADRÃO 5: UNIXLIB BRIDGE
+    Windows API ──→ Windows Wrapper ──→ Unix Library (.so)
+    Ex: ws2_32.dll ──→ ws2_32.so → POSIX sockets
+
+================================================================================
+                         ESTATÍSTICAS DO PROJETO
+================================================================================
+
+TAMANHO:
+    - Total DLLs: 723
+    - Programas: 116
+    - Código servidor: ~2.5MB
+    - Headers: ~36MB
+    - Bibliotecas externas: 30+
+
+ARQUIVOS MAIORES:
+    1. glsl_shader.c (542KB) ──→ Compilador HLSL→GLSL
+    2. loader.c (175KB) ──→ PE module loader
+    3. protocol.def (147KB) ──→ Server protocol
+    4. request_handlers.h (134KB) ──→ Auto-generated
+    5. request_trace.h (166KB) ──→ Debug trace
+
+ARQUITETURA SUPORTADA:
+    - i386 (32-bit Intel)
+    - x86_64 (64-bit Intel/AMD)
+    - ARM (ARM32)
+    - AArch64 (ARM64)
+
+VERSÃO: 10.19 (Novembro 2024)
+LICENÇA: LGPL 2.1+
+
+================================================================================
