@@ -217,6 +217,7 @@ NTSTATUS WINAPI HidP_GetSpecificValueCaps(HIDP_REPORT_TYPE ReportType, USAGE Usa
 NTSTATUS WINAPI HidP_GetUsagesEx(HIDP_REPORT_TYPE ReportType, USHORT LinkCollection, USAGE_AND_PAGE *ButtonList, ULONG *UsageLength, PHIDP_PREPARSED_DATA PreparsedData, CHAR *Report, ULONG ReportLength);
 ULONG WINAPI HidP_MaxDataListLength(HIDP_REPORT_TYPE ReportType, PHIDP_PREPARSED_DATA PreparsedData);
 NTSTATUS WINAPI HidP_GetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, ULONG *DataLength, PHIDP_PREPARSED_DATA PreparsedData, CHAR *Report, ULONG ReportLength);
+NTSTATUS WINAPI HidP_SetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, ULONG *DataLength, PHIDP_PREPARSED_DATA PreparsedData, CHAR *Report, ULONG ReportLength);
 NTSTATUS WINAPI HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE *LinkCollectionNode, ULONG *LinkCollectionNodeLength, PHIDP_PREPARSED_DATA PreparsedData);
 
 #ifndef FACILITY_HID_ERROR_CODE
