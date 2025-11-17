@@ -3117,6 +3117,7 @@ struct test_grabber_callback
     HANDLE done_event;
 
     BOOL do_event;
+    BOOL need_sample_time;
 };
 
 static struct test_grabber_callback *impl_from_IMFSampleGrabberSinkCallback(IMFSampleGrabberSinkCallback *iface)
@@ -3215,7 +3216,7 @@ static HRESULT WINAPI test_grabber_callback_OnProcessSample(IMFSampleGrabberSink
     hr = IMFSample_SetSampleFlags(sample, sample_flags);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     /* FIXME: sample time is inconsistent across windows versions, ignore it */
-    hr = IMFSample_SetSampleTime(sample, 0);
+    hr = IMFSample_SetSampleTime(sample, grabber->need_sample_time ? sample_time : 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFSample_SetSampleDuration(sample, sample_duration);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -4642,8 +4643,47 @@ static void test_sample_grabber_seek(void)
     int samples_requested;
     PROPVARIANT propvar;
     IMFMediaSink *sink;
+    IMFSample *sample;
+    LONGLONG pts;
+    DWORD count;
     HRESULT hr;
     ULONG ref;
+    int i;
+
+    static const LONGLONG use_clock_samples[] =
+    {
+        0,
+        0
+    };
+
+    static const LONGLONG ignore_clock_samples[] =
+    {
+        0,
+        41667,
+        83334,
+        125001,
+        0,
+        41667,
+        83334,
+        0,
+        41667,
+        83334,
+        0,
+        41667,
+        83334,
+        125001,
+        166668,
+        208335,
+        250002,
+        291669,
+        333336,
+        375003,
+        416670,
+        458337,
+        500004,
+        541671,
+        583338,
+    };
 
     PropVariantInit(&propvar);
     callback = create_test_callback(TRUE);
@@ -4654,6 +4694,7 @@ static void test_sample_grabber_seek(void)
     ok(!!grabber_callback_impl->ready_event, "CreateEventW failed, error %lu\n", GetLastError());
     grabber_callback_impl->done_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(!!grabber_callback_impl->done_event, "CreateEventW failed, error %lu\n", GetLastError());
+    grabber_callback_impl->need_sample_time = TRUE;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -4898,6 +4939,29 @@ static void test_sample_grabber_seek(void)
     todo_wine
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
+    /* check contents of collection */
+    hr = IMFCollection_GetElementCount(grabber_callback_impl->samples, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == ARRAY_SIZE(use_clock_samples), "Unexpected total of samples delivered %ld\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(use_clock_samples); i++)
+    {
+        hr = IMFCollection_GetElement(grabber_callback_impl->samples, i, (IUnknown**)&sample);
+        todo_wine_if(i)
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(sample, &pts);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(pts == use_clock_samples[i], "%d: Unexpected pts %I64d, expected %I64d\n", i, pts, use_clock_samples[i]);
+
+            ref = IMFSample_Release(sample);
+            ok(ref == 1, "Release returned %ld\n", ref);
+        }
+    }
+
     /* required for the sink to be fully released */
     ref = IMFPresentationClock_Release(clock);
     ok(ref == 2, "Release returned %ld\n", ref);
@@ -4915,6 +4979,7 @@ static void test_sample_grabber_seek(void)
     grabber_callback = create_test_grabber_callback();
     grabber_callback_impl = impl_from_IMFSampleGrabberSinkCallback(grabber_callback);
     grabber_callback_impl->do_event = FALSE;
+    grabber_callback_impl->need_sample_time = TRUE;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
@@ -5104,10 +5169,28 @@ static void test_sample_grabber_seek(void)
     samples_requested = count_samples_requested(stream);
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
+    /* check contents of collection */
+    hr = IMFCollection_GetElementCount(grabber_callback_impl->samples, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == ARRAY_SIZE(ignore_clock_samples), "Unexpected total of samples delivered %ld\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(ignore_clock_samples); i++)
+    {
+        hr = IMFCollection_GetElement(grabber_callback_impl->samples, i, (IUnknown**)&sample);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFSample_GetSampleTime(sample, &pts);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(pts == ignore_clock_samples[i], "%d: Unexpected pts %I64d, expected %I64d\n", i, pts, ignore_clock_samples[i]);
+
+        ref = IMFSample_Release(sample);
+        ok(ref == 1, "Release returned %ld\n", ref);
+    }
+
+    /* required for the sink to be fully released */
     ref = IMFPresentationClock_Release(clock);
     ok(ref == 2, "Release returned %ld\n", ref);
 
-    /* required for the sink to be fully released */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
