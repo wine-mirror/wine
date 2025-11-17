@@ -104,6 +104,22 @@ static const struct message restore_parent_seq[] = {
     { 0 }
 };
 
+static const struct message wm_paint_parent_seq[] = {
+    { WM_NOTIFY, sent },
+    { 0 }
+};
+
+static const struct message wm_paint_transparent_parent_v5_seq[] = {
+    { WM_NOTIFY, sent },
+    { 0 }
+};
+
+static const struct message wm_paint_transparent_parent_v6_seq[] = {
+    { WM_ERASEBKGND, sent },
+    { WM_NOTIFY, sent },
+    { 0 }
+};
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -3015,6 +3031,78 @@ static void test_WM_ERASEBKGND(BOOL v6)
     DestroyWindow(hwnd);
 }
 
+static LRESULT CALLBACK wm_paint_parent_wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    static LONG defwndproc_counter = 0;
+    struct message msg;
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wp;
+    msg.lParam = lp;
+
+    add_message(sequences, PARENT_SEQ_INDEX, &msg);
+
+    defwndproc_counter++;
+    ret = DefWindowProcW(hwnd, message, wp, lp);
+    defwndproc_counter--;
+    return ret;
+}
+
+static void test_WM_PAINT(BOOL v6)
+{
+    WNDCLASSW wc = {0};
+    HWND parent, hwnd;
+
+    wc.hInstance = GetModuleHandleW(NULL);
+    wc.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_IBEAM);
+    wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
+    wc.lpszClassName = L"ToolbarWmPaintParentClass";
+    wc.lpfnWndProc = wm_paint_parent_wnd_proc;
+    RegisterClassW(&wc);
+
+    parent = CreateWindowW(wc.lpszClassName, L"Parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
+                           NULL, NULL, GetModuleHandleW(NULL), 0);
+    ok(parent != NULL, "CreateWindowW failed.\n");
+
+    /* Check WM_PAINT without TBSTYLE_TRANSPARENT */
+    hwnd = CreateWindowW(TOOLBARCLASSNAMEW, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 100, 100, parent,
+                         NULL, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "CreateWindowW failed.\n");
+    flush_events();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    InvalidateRect(hwnd, NULL, FALSE);
+    flush_events();
+    ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_parent_seq, "WM_PAINT without TBSTYLE_TRANSPARENT", FALSE);
+
+    DestroyWindow(hwnd);
+
+    /* Check WM_PAINT with TBSTYLE_TRANSPARENT */
+    hwnd = CreateWindowW(TOOLBARCLASSNAMEW, NULL, WS_CHILD | WS_VISIBLE | TBSTYLE_TRANSPARENT, 0, 0,
+                         100, 100, parent, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "CreateWindowW failed.\n");
+    flush_events();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    InvalidateRect(hwnd, NULL, FALSE);
+    flush_events();
+    if (v6)
+        ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_transparent_parent_v6_seq,
+                    "WM_PAINT with TBSTYLE_TRANSPARENT v6", TRUE);
+    else
+        ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_transparent_parent_v5_seq,
+                    "WM_PAINT with TBSTYLE_TRANSPARENT v5", FALSE);
+    DestroyWindow(hwnd);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(parent);
+    UnregisterClassW(wc.lpszClassName, 0);
+}
+
 START_TEST(toolbar)
 {
     ULONG_PTR ctx_cookie;
@@ -3069,6 +3157,7 @@ START_TEST(toolbar)
     test_WM_NOTIFY();
     test_unicode_format();
     test_WM_ERASEBKGND(FALSE);
+    test_WM_PAINT(FALSE);
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
@@ -3078,6 +3167,7 @@ START_TEST(toolbar)
     test_BTNS_SEP();
     test_unicode_format();
     test_WM_ERASEBKGND(TRUE);
+    test_WM_PAINT(TRUE);
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
