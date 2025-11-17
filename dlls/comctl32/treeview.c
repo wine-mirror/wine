@@ -2363,6 +2363,71 @@ TREEVIEW_ToggleItemState(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
     }
 }
 
+/* Draw the (+/-) signs */
+static void TREEVIEW_DrawItemLineSigns(const TREEVIEW_INFO *infoPtr, HDC hdc,
+                                       const TREEVIEW_ITEM *item, LONG centerx, LONG centery,
+                                       COLORREF clrBk)
+{
+    LONG height, width, rectsize, plussize;
+    HPEN new_pen, old_pen;
+    HTHEME theme = GetWindowTheme(infoPtr->hwnd);
+
+    if (theme)
+    {
+        int state = (item->state & TVIS_EXPANDED) ? GLPS_OPENED : GLPS_CLOSED;
+        RECT glyphRect = item->rect;
+
+        glyphRect.left = item->linesOffset;
+        glyphRect.right = item->stateOffset;
+        DrawThemeBackground(theme, hdc, TVP_GLYPH, state, &glyphRect, NULL);
+        return;
+    }
+
+    height = item->rect.bottom - item->rect.top;
+    width = item->stateOffset - item->linesOffset;
+    rectsize = min(height, width) / 4;
+    /* plussize = ceil(rectsize * 3/4) */
+    plussize = (rectsize + 1) * 3 / 4;
+
+    new_pen = CreatePen(PS_SOLID, 0, GETLINECOLOR(infoPtr->clrLine));
+    old_pen = SelectObject(hdc, new_pen);
+
+    Rectangle(hdc, centerx - rectsize - 1, centery - rectsize - 1, centerx + rectsize + 2,
+              centery + rectsize + 2);
+
+    SelectObject(hdc, old_pen);
+    DeleteObject(new_pen);
+
+    /* draw +/- signs with current text color */
+    new_pen = CreatePen(PS_SOLID, 0, GETTXTCOLOR(infoPtr->clrText));
+    old_pen = SelectObject(hdc, new_pen);
+
+    if (height < 18 || width < 18)
+    {
+        MoveToEx(hdc, centerx - plussize + 1, centery, NULL);
+        LineTo(hdc, centerx + plussize, centery);
+
+        if (!(item->state & TVIS_EXPANDED) || (item->state & TVIS_EXPANDPARTIAL))
+        {
+            MoveToEx(hdc, centerx, centery - plussize + 1, NULL);
+            LineTo(hdc, centerx, centery + plussize);
+        }
+    }
+    else
+    {
+        Rectangle(hdc, centerx - plussize + 1, centery - 1, centerx + plussize, centery + 2);
+
+        if (!(item->state & TVIS_EXPANDED) || (item->state & TVIS_EXPANDPARTIAL))
+        {
+            Rectangle(hdc, centerx - 1, centery - plussize + 1, centerx + 2, centery + plussize);
+            SetPixel(hdc, centerx - 1, centery, clrBk);
+            SetPixel(hdc, centerx + 1, centery, clrBk);
+        }
+    }
+
+    SelectObject(hdc, old_pen);
+    DeleteObject(new_pen);
+}
 
 /* Painting *************************************************************/
 
@@ -2443,73 +2508,9 @@ TREEVIEW_DrawItemLines(const TREEVIEW_INFO *infoPtr, HDC hdc, const TREEVIEW_ITE
      * Display the (+/-) signs
      */
 
-    if (infoPtr->dwStyle & TVS_HASBUTTONS)
-    {
-	if (item->cChildren)
-	{
-            HTHEME theme = GetWindowTheme(infoPtr->hwnd);
-            if (theme)
-            {
-                RECT glyphRect = item->rect;
-                glyphRect.left = item->linesOffset;
-                glyphRect.right = item->stateOffset;
-                DrawThemeBackground (theme, hdc, TVP_GLYPH,
-                    (item->state & TVIS_EXPANDED) ? GLPS_OPENED : GLPS_CLOSED,
-                    &glyphRect, NULL);
-            }
-            else
-            {
-                LONG height = item->rect.bottom - item->rect.top;
-                LONG width  = item->stateOffset - item->linesOffset;
-                LONG rectsize = min(height, width) / 4;
-                /* plussize = ceil(rectsize * 3/4) */
-                LONG plussize = (rectsize + 1) * 3 / 4;
+    if (infoPtr->dwStyle & TVS_HASBUTTONS && item->cChildren)
+        TREEVIEW_DrawItemLineSigns(infoPtr, hdc, item, centerx, centery, clrBk);
 
-                HPEN new_pen  = CreatePen(PS_SOLID, 0, GETLINECOLOR(infoPtr->clrLine));
-                HPEN old_pen  = SelectObject(hdc, new_pen);
-
-                Rectangle(hdc, centerx - rectsize - 1, centery - rectsize - 1,
-                          centerx + rectsize + 2, centery + rectsize + 2);
-
-                SelectObject(hdc, old_pen);
-                DeleteObject(new_pen);
-
-                /* draw +/- signs with current text color */
-                new_pen = CreatePen(PS_SOLID, 0, GETTXTCOLOR(infoPtr->clrText));
-                old_pen = SelectObject(hdc, new_pen);
-
-                if (height < 18 || width < 18)
-                {
-                    MoveToEx(hdc, centerx - plussize + 1, centery, NULL);
-                    LineTo(hdc, centerx + plussize, centery);
-    
-                    if (!(item->state & TVIS_EXPANDED) ||
-                         (item->state & TVIS_EXPANDPARTIAL))
-                    {
-                        MoveToEx(hdc, centerx, centery - plussize + 1, NULL);
-                        LineTo(hdc, centerx, centery + plussize);
-                    }
-                }
-                else
-                {
-                    Rectangle(hdc, centerx - plussize + 1, centery - 1,
-                    centerx + plussize, centery + 2);
-
-                    if (!(item->state & TVIS_EXPANDED) ||
-                         (item->state & TVIS_EXPANDPARTIAL))
-                    {
-                        Rectangle(hdc, centerx - 1, centery - plussize + 1,
-                        centerx + 2, centery + plussize);
-                        SetPixel(hdc, centerx - 1, centery, clrBk);
-                        SetPixel(hdc, centerx + 1, centery, clrBk);
-                    }
-                }
-
-                SelectObject(hdc, old_pen);
-                DeleteObject(new_pen);
-            }
-	}
-    }
     SelectObject(hdc, hbrOld);
     DeleteObject(hbr);
 }
