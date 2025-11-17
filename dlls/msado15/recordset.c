@@ -92,9 +92,12 @@ struct recordset
         LONG           alloc;
         LONG           size;
         LONG           fetched;
+        BOOL           forward;
         LONG           pos;
         HROW          *rows;
     } cache;
+    VARIANT_BOOL       is_bof;
+    VARIANT_BOOL       is_eof;
     ADO_LONGPTR        max_records;
     VARIANT            filter;
 
@@ -113,9 +116,21 @@ static inline struct field *impl_from_Properties( Properties *iface )
     return CONTAINING_RECORD( iface, struct field, Properties_iface );
 }
 
+static inline BOOL cache_is_empty( struct recordset *recordset )
+{
+    return !recordset->cache.fetched;
+}
+
 static void cache_release( struct recordset *recordset )
 {
-    if (!recordset->cache.fetched) return;
+    if (cache_is_empty( recordset ))
+    {
+        if (recordset->current_row)
+            IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL);
+        recordset->current_row = DB_NULL_HROW;
+        return;
+    }
+
     IRowset_ReleaseRows( recordset->row_set, recordset->cache.fetched,
             recordset->cache.rows, NULL, NULL, NULL );
     recordset->cache.fetched = 0;
@@ -123,14 +138,79 @@ static void cache_release( struct recordset *recordset )
     recordset->current_row = DB_NULL_HROW;
 }
 
-static void cache_add( struct recordset *recordset, HROW row )
+static HRESULT cache_get( struct recordset *recordset, BOOL forward )
 {
-    assert( !recordset->cache.fetched );
-    assert( !recordset->cache.pos );
+    int dir = forward ? 1 : -1;
+    LONG off, fetch = 0;
 
-    recordset->cache.rows[0] = row;
-    recordset->cache.fetched = 1;
-    recordset->current_row = row;
+    if (!forward == !recordset->cache.forward)
+    {
+        if (recordset->cache.pos + 1 > recordset->cache.fetched)
+        {
+            off = 0;
+            fetch = dir * recordset->cache.size;
+        }
+    }
+    else
+    {
+        if (recordset->cache.pos -1 <= 0)
+        {
+            off = dir * recordset->cache.fetched;
+            fetch = dir * recordset->cache.size;
+        }
+    }
+
+    if (fetch)
+    {
+        DBCOUNTITEM count;
+        HROW row = 0;
+        HRESULT hr;
+
+        if (!cache_is_empty( recordset ))
+        {
+            if (SUCCEEDED(IRowset_AddRefRows(recordset->row_set, 1, &recordset->current_row, NULL, NULL)))
+               row = recordset->current_row;
+        }
+        cache_release( recordset );
+        recordset->current_row = row;
+
+        hr = IRowset_GetNextRows(recordset->row_set, 0, off, fetch, &count, &recordset->cache.rows);
+        if (FAILED(hr)) return hr;
+
+        if (recordset->current_row)
+        {
+            IRowset_ReleaseRows(recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL);
+            recordset->current_row = 0;
+        }
+
+        if (!count)
+        {
+            if (!recordset->is_eof && forward)
+            {
+                recordset->is_eof = VARIANT_TRUE;
+                if (!row) recordset->is_bof = VARIANT_TRUE;
+                return S_OK;
+            }
+            if (!recordset->is_bof && !forward)
+            {
+                recordset->is_bof = VARIANT_TRUE;
+                return S_OK;
+            }
+            return MAKE_ADO_HRESULT(adErrNoCurrentRecord);
+        }
+
+
+        recordset->cache.pos = 0;
+        recordset->cache.fetched = count;
+        recordset->cache.forward = forward;
+    }
+
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+    if (!forward == !recordset->cache.forward)
+        recordset->current_row = recordset->cache.rows[recordset->cache.pos++];
+    else
+        recordset->current_row = recordset->cache.rows[--recordset->cache.pos];
+    return S_OK;
 }
 
 static ULONG WINAPI field_AddRef( Field *iface )
@@ -1322,7 +1402,7 @@ static void close_recordset( struct recordset *recordset )
         IRowset_QueryInterface(recordset->row_set, &IID_IAccessor, (void**)&accessor);
 
     cache_release( recordset );
-    recordset->current_row = DB_NULL_HROW;
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
     if ( recordset->hacc_empty )
     {
         IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, NULL );
@@ -1805,7 +1885,6 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     struct recordset *recordset = impl_from_Recordset( iface );
     DBREFCOUNT refcount;
     HRESULT hr;
-    HROW row;
 
     TRACE( "%p, %s, %s\n", recordset, debugstr_variant(&field_list), debugstr_variant(&values) );
     if (V_VT(&field_list) != VT_ERROR)
@@ -1845,11 +1924,11 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
         return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
     cache_release( recordset );
     hr = IRowsetChange_InsertRow( recordset->rowset_change, 0,
-            recordset->hacc_empty, NULL, &row );
+            recordset->hacc_empty, NULL, &recordset->current_row );
     IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
     if (FAILED(hr))
         return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
-    cache_add( recordset, row );
+    recordset->is_bof = recordset->is_eof = FALSE;
 
     if (!resize_recordset( recordset, recordset->count + 1 )) return E_OUTOFMEMORY;
     recordset->index = recordset->count - 1;
@@ -1904,20 +1983,42 @@ static HRESULT WINAPI recordset_Move( _Recordset *iface, ADO_LONGPTR num_records
 static HRESULT WINAPI recordset_MoveNext( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p\n", recordset );
 
-    if (recordset->index >= recordset->count)
-        return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
-    if (recordset->index < recordset->count) recordset->index++;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    hr = cache_get( recordset, TRUE );
+    if (FAILED(hr)) return hr;
+
+    recordset->index++;
     return S_OK;
 }
 
 static HRESULT WINAPI recordset_MovePrevious( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p\n", recordset );
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    hr = cache_get( recordset, FALSE );
+    if (FAILED(hr)) return hr;
 
     if (recordset->index >= 0) recordset->index--;
     return S_OK;
@@ -1926,8 +2027,19 @@ static HRESULT WINAPI recordset_MovePrevious( _Recordset *iface )
 static HRESULT WINAPI recordset_MoveFirst( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p\n", recordset );
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    cache_release( recordset );
+    hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
+    if (FAILED(hr)) return hr;
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+
+    hr = cache_get( recordset, TRUE );
+    if (FAILED(hr)) return hr;
 
     recordset->index = 0;
     return S_OK;
@@ -1936,8 +2048,19 @@ static HRESULT WINAPI recordset_MoveFirst( _Recordset *iface )
 static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p\n", recordset );
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    cache_release( recordset );
+    hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
+    if (FAILED(hr)) return hr;
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+
+    hr = cache_get( recordset, FALSE );
+    if (FAILED(hr)) return hr;
 
     recordset->index = (recordset->count > 0) ? recordset->count - 1 : 0;
     return S_OK;
@@ -2339,6 +2462,7 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
     } while(hr == S_OK);
 
     free(data);
+    IRowset_RestartPosition(rowset2, 0);
     IRowset_Release(rowset2);
 
     return S_OK;
