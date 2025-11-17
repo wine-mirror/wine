@@ -2010,7 +2010,7 @@ BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DWORD new
     {
         send_message( previous, WM_NCACTIVATE, FALSE, (LPARAM)hwnd );
         send_message( previous, WM_ACTIVATE,
-                      MAKEWPARAM( WA_INACTIVE, is_iconic(previous) ), (LPARAM)hwnd );
+                      MAKEWPARAM( WA_INACTIVE, is_iconic(previous) ? 0x20 : 0 ), (LPARAM)hwnd );
     }
 
     SERVER_START_REQ( set_active_window )
@@ -2069,7 +2069,7 @@ BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DWORD new
     {
         send_message( hwnd, WM_NCACTIVATE, hwnd == NtUserGetForegroundWindow(), (LPARAM)previous );
         send_message( hwnd, WM_ACTIVATE,
-                      MAKEWPARAM( mouse ? WA_CLICKACTIVE : WA_ACTIVE, is_iconic(hwnd) ),
+                      MAKEWPARAM( mouse ? WA_CLICKACTIVE : WA_ACTIVE, is_iconic(hwnd) ? 0x20 : 0 ),
                       (LPARAM)previous );
         if (NtUserGetAncestor( hwnd, GA_PARENT ) == get_desktop_window())
             NtUserPostMessage( get_desktop_window(), WM_PARENTNOTIFY, WM_NCACTIVATE, (LPARAM)hwnd );
