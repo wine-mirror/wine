@@ -2902,13 +2902,23 @@ TREEVIEW_EraseBackground(const TREEVIEW_INFO *infoPtr, HDC hdc)
     return 1;
 }
 
+static void TREEVIEW_FillThemeBackground(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rect)
+{
+    HTHEME theme;
+
+    if (infoPtr->dwStyle & TVS_HASBUTTONS && (theme = GetWindowTheme(infoPtr->hwnd)))
+    {
+        if (IsThemeBackgroundPartiallyTransparent(theme, TVP_GLYPH, 0))
+            FillRect(hdc, rect, (HBRUSH)(COLOR_WINDOW + 1));
+    }
+}
+
 static void
 TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
 {
     HWND hwnd = infoPtr->hwnd;
     RECT rect = *rc;
     TREEVIEW_ITEM *item;
-    HTHEME theme;
 
     if (infoPtr->clientHeight == 0 || infoPtr->clientWidth == 0)
     {
@@ -2925,11 +2935,7 @@ TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
 	return;
     }
 
-    if (infoPtr->dwStyle & TVS_HASBUTTONS && (theme = GetWindowTheme(infoPtr->hwnd)))
-    {
-        if (IsThemeBackgroundPartiallyTransparent(theme, TVP_GLYPH, 0))
-            FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
-    }
+    TREEVIEW_FillThemeBackground(infoPtr, hdc, &rect);
 
     for (item = infoPtr->root->firstChild;
          item != NULL;
