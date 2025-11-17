@@ -233,6 +233,7 @@ typedef enum
 #define GETHOTIMAGELIST(infoPtr, id) TOOLBAR_GetImageList(infoPtr->himlHot, infoPtr->cimlHot, id)
 #define GETDISIMAGELIST(infoPtr, id) TOOLBAR_GetImageList(infoPtr->himlDis, infoPtr->cimlDis, id)
 
+static LRESULT TOOLBAR_DoEraseBackground(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
 static BOOL TOOLBAR_GetButtonInfo(const TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb);
 static BOOL TOOLBAR_IsButtonRemovable(const TOOLBAR_INFO *infoPtr, int iItem, const CUSTOMBUTTON *btnInfo);
 static HIMAGELIST TOOLBAR_GetImageList(const PIMLENTRY *pies, INT cies, INT id);
@@ -1187,6 +1188,13 @@ TOOLBAR_Refresh (TOOLBAR_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
     /* the app has told us not to redraw the toolbar */
     if (!infoPtr->bDoRedraw)
         return;
+
+    /* Comctl32 v6 erases the background when TBSTYLE_TRANSPARENT is present when handling WM_PAINT,
+     * not when handling WM_ERASEBKGND */
+#if __WINE_COMCTL32_VERSION == 6
+    if (infoPtr->dwStyle & TBSTYLE_TRANSPARENT)
+        TOOLBAR_DoEraseBackground(infoPtr, (WPARAM)hdc, 0);
+#endif
 
     /* if imagelist belongs to the app, it can be changed
        by the app after setting it */
@@ -5393,7 +5401,7 @@ TOOLBAR_Destroy (TOOLBAR_INFO *infoPtr)
 
 
 static LRESULT
-TOOLBAR_EraseBackground (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+TOOLBAR_DoEraseBackground (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     NMTBCUSTOMDRAW tbcd;
     INT ret = FALSE;
@@ -5463,6 +5471,18 @@ TOOLBAR_EraseBackground (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     return ret;
 }
 
+static LRESULT
+TOOLBAR_EraseBackground (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+{
+    /* In comctl32 v6, erasing the background when TBSTYLE_TRANSPARENT is present is done in the
+     * WM_PAINT handler, not WM_ERASEBKGND */
+#if __WINE_COMCTL32_VERSION == 6
+    if (infoPtr->dwStyle & TBSTYLE_TRANSPARENT)
+        return TRUE;
+#endif
+
+    return TOOLBAR_DoEraseBackground(infoPtr, wParam, lParam);
+}
 
 static inline LRESULT
 TOOLBAR_GetFont (const TOOLBAR_INFO *infoPtr)

@@ -3021,7 +3021,6 @@ static void test_WM_ERASEBKGND(BOOL v6)
     ok(lr == 1, "Got unexpected %Id.\n", lr);
     color = GetPixel(hdc, 10, 10);
     if (v6)
-        todo_wine
         ok(color == RGB(255, 0, 0), "Got unexpected color %#lx.\n", color);
     else
         ok(color == GetSysColor(COLOR_WINDOW), "Got unexpected color %#lx.\n", color);
@@ -3092,7 +3091,7 @@ static void test_WM_PAINT(BOOL v6)
     flush_events();
     if (v6)
         ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_transparent_parent_v6_seq,
-                    "WM_PAINT with TBSTYLE_TRANSPARENT v6", TRUE);
+                    "WM_PAINT with TBSTYLE_TRANSPARENT v6", FALSE);
     else
         ok_sequence(sequences, PARENT_SEQ_INDEX, wm_paint_transparent_parent_v5_seq,
                     "WM_PAINT with TBSTYLE_TRANSPARENT v5", FALSE);
