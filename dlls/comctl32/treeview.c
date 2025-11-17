@@ -195,9 +195,6 @@ typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
 #define GETTXTCOLOR(x)  ((x) == CLR_NONE    ? comctl32_color.clrWindowText : (x))
 #define GETINSCOLOR(x)  ((x) == CLR_DEFAULT ? comctl32_color.clrBtnText    : (x))
 
-static const WCHAR themeClass[] = L"Treeview";
-
-
 typedef VOID (*TREEVIEW_ItemEnumFunc)(TREEVIEW_INFO *, TREEVIEW_ITEM *,LPVOID);
 
 
@@ -2370,6 +2367,8 @@ static void TREEVIEW_DrawItemLineSigns(const TREEVIEW_INFO *infoPtr, HDC hdc,
 {
     LONG height, width, rectsize, plussize;
     HPEN new_pen, old_pen;
+
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->hwnd);
 
     if (theme)
@@ -2382,6 +2381,7 @@ static void TREEVIEW_DrawItemLineSigns(const TREEVIEW_INFO *infoPtr, HDC hdc,
         DrawThemeBackground(theme, hdc, TVP_GLYPH, state, &glyphRect, NULL);
         return;
     }
+#endif
 
     height = item->rect.bottom - item->rect.top;
     width = item->stateOffset - item->linesOffset;
@@ -2902,6 +2902,7 @@ TREEVIEW_EraseBackground(const TREEVIEW_INFO *infoPtr, HDC hdc)
     return 1;
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 static void TREEVIEW_FillThemeBackground(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rect)
 {
     HTHEME theme;
@@ -2912,6 +2913,7 @@ static void TREEVIEW_FillThemeBackground(TREEVIEW_INFO *infoPtr, HDC hdc, const 
             FillRect(hdc, rect, (HBRUSH)(COLOR_WINDOW + 1));
     }
 }
+#endif
 
 static void
 TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
@@ -2935,7 +2937,9 @@ TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
 	return;
     }
 
+#if __WINE_COMCTL32_VERSION == 6
     TREEVIEW_FillThemeBackground(infoPtr, hdc, &rect);
+#endif
 
     for (item = infoPtr->root->firstChild;
          item != NULL;
@@ -2975,6 +2979,7 @@ TREEVIEW_Invalidate(const TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
         InvalidateRect(infoPtr->hwnd, NULL, TRUE);
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 static BOOL TREEVIEW_InitThemedCheckboxes(TREEVIEW_INFO *info)
 {
     HBITMAP bitmap, old_bitmap;
@@ -3020,6 +3025,7 @@ static BOOL TREEVIEW_InitThemedCheckboxes(TREEVIEW_INFO *info)
     info->stateImageHeight = size.cy;
     return TRUE;
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 static void
 TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
@@ -3029,8 +3035,10 @@ TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
     HBITMAP hbm, hbmOld;
     HDC hdc, hdcScreen;
 
+#if __WINE_COMCTL32_VERSION == 6
     if (TREEVIEW_InitThemedCheckboxes(infoPtr))
         return;
+#endif
 
     width = 12 * GetDpiForWindow(infoPtr->hwnd) / 96 + 1;
     height = width;
@@ -5249,8 +5257,8 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     /* Make sure actual scrollbar state is consistent with uInternalStatus */
     ShowScrollBar(hwnd, SB_VERT, FALSE);
     ShowScrollBar(hwnd, SB_HORZ, FALSE);
-    
-    OpenThemeData (hwnd, themeClass);
+
+    COMCTL32_OpenThemeForWindow (hwnd, L"Treeview");
 
     return 0;
 }
@@ -5272,7 +5280,7 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
 	SetWindowLongPtrW(infoPtr->hwndEdit, GWLP_WNDPROC,
 		       (DWORD_PTR)infoPtr->wpEditOrig);
 
-    CloseThemeData (GetWindowTheme (infoPtr->hwnd));
+    COMCTL32_CloseThemeForWindow (infoPtr->hwnd);
 
     /* Deassociate treeview from the window before doing anything drastic. */
     SetWindowLongPtrW(infoPtr->hwnd, 0, 0);
@@ -5517,48 +5525,6 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, LPARAM lParam)
     return 0;
 }
 
-/* Draw themed border */
-static BOOL TREEVIEW_NCPaint (const TREEVIEW_INFO *infoPtr, HRGN region, LPARAM lParam)
-{
-    int cxEdge, cyEdge;
-    LONG ex_style;
-    HTHEME theme;
-    HDC dc;
-    RECT r;
-    HRGN cliprgn;
-
-    ex_style = GetWindowLongW(infoPtr->hwnd, GWL_EXSTYLE);
-    if (!(ex_style & WS_EX_CLIENTEDGE))
-        return DefWindowProcW(infoPtr->hwnd, WM_NCPAINT, (WPARAM)region, lParam);
-
-    theme = GetWindowTheme(infoPtr->hwnd);
-    if (!theme)
-        return DefWindowProcW (infoPtr->hwnd, WM_NCPAINT, (WPARAM)region, lParam);
-
-    GetWindowRect(infoPtr->hwnd, &r);
-
-    cxEdge = GetSystemMetrics(SM_CXEDGE);
-    cyEdge = GetSystemMetrics(SM_CYEDGE);
-    cliprgn = CreateRectRgn (r.left + cxEdge, r.top + cyEdge,
-        r.right - cxEdge, r.bottom - cyEdge);
-    if (region != (HRGN)1)
-        CombineRgn (cliprgn, cliprgn, region, RGN_AND);
-    OffsetRect(&r, -r.left, -r.top);
-
-    dc = GetDCEx(infoPtr->hwnd, region, DCX_WINDOW|DCX_INTERSECTRGN);
-
-    if (IsThemeBackgroundPartiallyTransparent (theme, 0, 0))
-        DrawThemeParentBackground(infoPtr->hwnd, dc, &r);
-    DrawThemeBackground (theme, dc, 0, 0, &r, 0);
-    ReleaseDC(infoPtr->hwnd, dc);
-
-    /* Call default proc to get the scrollbars etc. painted */
-    DefWindowProcW (infoPtr->hwnd, WM_NCPAINT, (WPARAM)cliprgn, 0);
-    DeleteObject(cliprgn);
-
-    return TRUE;
-}
-
 static LRESULT
 TREEVIEW_Notify(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -5712,17 +5678,6 @@ TREEVIEW_KillFocus(const TREEVIEW_INFO *infoPtr)
     TREEVIEW_SendSimpleNotify(infoPtr, NM_KILLFOCUS, NULL);
     return 0;
 }
-
-/* update theme after a WM_THEMECHANGED message */
-static LRESULT TREEVIEW_ThemeChanged(const TREEVIEW_INFO *infoPtr)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->hwnd);
-    CloseThemeData (theme);
-    OpenThemeData (infoPtr->hwnd, themeClass);
-    InvalidateRect (infoPtr->hwnd, NULL, TRUE);
-    return 0;
-}
-
 
 static LRESULT WINAPI
 TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -5929,7 +5884,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         goto def;
 
     case WM_NCPAINT:
-        return TREEVIEW_NCPaint (infoPtr, (HRGN)wParam, lParam);
+        return COMCTL32_NCPaint (infoPtr->hwnd, wParam, lParam, NULL);
 
     case WM_NOTIFY:
 	return TREEVIEW_Notify(infoPtr, wParam, lParam);
@@ -5972,7 +5927,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return TREEVIEW_HandleTimer(infoPtr, wParam);
 
     case WM_THEMECHANGED:
-        return TREEVIEW_ThemeChanged (infoPtr);
+        return COMCTL32_ThemeChanged (infoPtr->hwnd, L"Treeview", TRUE, TRUE);
 
     case WM_VSCROLL:
 	return TREEVIEW_VScroll(infoPtr, wParam);
