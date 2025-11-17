@@ -1648,10 +1648,19 @@ static HRESULT WINAPI recordset_get_ActiveConnection( _Recordset *iface, VARIANT
 static HRESULT WINAPI recordset_get_BOF( _Recordset *iface, VARIANT_BOOL *bof )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p, %p\n", recordset, bof );
 
-    *bof = (recordset->index < 0) ? VARIANT_TRUE : VARIANT_FALSE;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->is_bof && !recordset->is_eof && !recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    *bof = recordset->is_bof;
     return S_OK;
 }
 
