@@ -1379,12 +1379,12 @@ static void test_download_instrument(void)
 
     hr = IDirectMusicPort_DownloadInstrument(port2, instrument, &downloaded2, NULL, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(downloaded != downloaded2, "downloaded instruments are the same\n");
+    ok(downloaded != downloaded2, "downloaded instruments are the same\n");
 
     hr = IDirectMusicPort_UnloadInstrument(port, downloaded2);
-    todo_wine ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
+    ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
     hr = IDirectMusicPort_UnloadInstrument(port2, downloaded2);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     hr = IDirectMusicPort_UnloadInstrument(port2, downloaded2);
     ok(hr == DMUS_E_NOT_DOWNLOADED_TO_PORT, "got %#lx\n", hr);
     IDirectMusicDownloadedInstrument_Release(downloaded2);
