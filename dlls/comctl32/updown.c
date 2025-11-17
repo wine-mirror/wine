@@ -65,7 +65,6 @@ typedef struct
 #define DEFAULT_ADDBOT       0 /* amount to extend below the buddy window */
 #define DEFAULT_BUDDYBORDER  2 /* Width/height of the buddy border */
 #define DEFAULT_BUDDYSPACER  2 /* Spacer between the buddy and the ctrl */
-#define DEFAULT_BUDDYSPACER_THEMED  0 /* buddy spacer when theming is enabled */
 
 /* Work constants */
 
@@ -167,6 +166,13 @@ static int UPDOWN_GetBuddyBorderSize(HWND hwnd)
     return DEFAULT_BUDDYBORDER;
 }
 
+static int UPDOWN_GetBuddySpacerSize(HWND hwnd)
+{
+    if (GetWindowTheme(hwnd)) return 0;
+
+    return DEFAULT_BUDDYSPACER;
+}
+
 /***********************************************************************
  *           UPDOWN_GetArrowRect
  * wndPtr   - pointer to the up-down wnd
@@ -176,9 +182,8 @@ static int UPDOWN_GetBuddyBorderSize(HWND hwnd)
  */
 static void UPDOWN_GetArrowRect (const UPDOWN_INFO* infoPtr, RECT *rect, unsigned int arrow)
 {
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
     const int border = UPDOWN_GetBuddyBorderSize(infoPtr->Self);
-    const int spacer = theme ? DEFAULT_BUDDYSPACER_THEMED : DEFAULT_BUDDYSPACER;
+    const int spacer = UPDOWN_GetBuddySpacerSize(infoPtr->Self);
     int size;
 
     assert(arrow && (arrow & (FLAG_INCR | FLAG_DECR)) != (FLAG_INCR | FLAG_DECR));
