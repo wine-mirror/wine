@@ -561,21 +561,35 @@ TRACKBAR_DrawTic (const TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
         TRACKBAR_DrawOneTic (infoPtr, hdc, ticPos, flags & ~TBS_LEFT);
 }
 
+static COLORREF TRACKBAR_GetTicPenColor(const TRACKBAR_INFO *infoPtr)
+{
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+
+    if (theme)
+    {
+        int part = (infoPtr->dwStyle & TBS_VERT) ? TKP_TICSVERT : TKP_TICS;
+        COLORREF color;
+
+        GetThemeColor (theme, part, TSS_NORMAL, TMT_COLOR, &color);
+        return color;
+    }
+
+    return GetSysColor (COLOR_3DDKSHADOW);
+}
+
 static void
 TRACKBAR_DrawTics (const TRACKBAR_INFO *infoPtr, HDC hdc)
 {
     unsigned int i;
     int ticFlags = infoPtr->dwStyle & 0x0f;
-    LOGPEN ticPen = { PS_SOLID, {1, 0}, GetSysColor (COLOR_3DDKSHADOW) };
+    LOGPEN ticPen;
     HPEN hOldPen, hTicPen;
-    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
-    
-    if (theme)
-    {
-        int part = (infoPtr->dwStyle & TBS_VERT) ? TKP_TICSVERT : TKP_TICS;
-        GetThemeColor (theme, part, TSS_NORMAL, TMT_COLOR, &ticPen.lopnColor);
-    }
+
     /* create the pen to draw the tics with */
+    ticPen.lopnStyle = PS_SOLID;
+    ticPen.lopnWidth.x = 1;
+    ticPen.lopnWidth.y = 0;
+    ticPen.lopnColor = TRACKBAR_GetTicPenColor(infoPtr);
     hTicPen = CreatePenIndirect(&ticPen);
     hOldPen = hTicPen ? SelectObject(hdc, hTicPen) : 0;
 
