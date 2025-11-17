@@ -148,8 +148,14 @@ static HRESULT WINAPI rowset_AddRefRows(IRowsetExactScroll *iface, DBCOUNTITEM c
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll(iface);
 
-    FIXME("%p, %Id, %p, %p, %p\n", rowset, count, rows, ref_counts, status);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %p, %p, %p\n", rowset, count, rows, ref_counts, status);
+    if (ref_counts || status)
+    {
+        FIXME("unhandled parameters\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCESSOR accessor, void *data)
