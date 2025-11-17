@@ -4279,8 +4279,10 @@ static struct opengl_device *create_opengl_device( HWND hwnd, LUID *luid )
 static void import_opengl_image( struct opengl_device *dev, UINT width, UINT height, UINT depth, UINT bpp,
                                  const WCHAR *name, HANDLE handle, UINT handle_type )
 {
+    PFN_glMemoryObjectParameterivEXT p_glMemoryObjectParameterivEXT;
     PFN_glCreateMemoryObjectsEXT p_glCreateMemoryObjectsEXT;
     PFN_glDeleteMemoryObjectsEXT p_glDeleteMemoryObjectsEXT;
+    const GLint dedicated = GL_TRUE;
     GLuint memory;
 
     UINT ret;
@@ -4298,6 +4300,8 @@ static void import_opengl_image( struct opengl_device *dev, UINT width, UINT hei
     ok_ptr( p_glCreateMemoryObjectsEXT, !=, NULL );
     p_glDeleteMemoryObjectsEXT = (void *)wglGetProcAddress( "glDeleteMemoryObjectsEXT" );
     ok_ptr( p_glDeleteMemoryObjectsEXT, !=, NULL );
+    p_glMemoryObjectParameterivEXT = (void *)wglGetProcAddress( "glMemoryObjectParameterivEXT" );
+    ok_ptr( p_glMemoryObjectParameterivEXT, !=, NULL );
 
     if (name)
     {
@@ -4306,6 +4310,7 @@ static void import_opengl_image( struct opengl_device *dev, UINT width, UINT hei
         if (!p_glImportMemoryWin32NameEXT) return;
 
         p_glCreateMemoryObjectsEXT( 1, &memory );
+        p_glMemoryObjectParameterivEXT( memory, GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated );
         p_glImportMemoryWin32NameEXT( memory, width * height * depth * bpp, handle_type, name );
         p_glDeleteMemoryObjectsEXT( 1, &memory );
     }
@@ -4316,6 +4321,7 @@ static void import_opengl_image( struct opengl_device *dev, UINT width, UINT hei
         if (!p_glImportMemoryWin32HandleEXT) return;
 
         p_glCreateMemoryObjectsEXT( 1, &memory );
+        p_glMemoryObjectParameterivEXT( memory, GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated );
         p_glImportMemoryWin32HandleEXT( memory, width * height * depth * bpp, handle_type, handle );
         p_glDeleteMemoryObjectsEXT( 1, &memory );
     }
