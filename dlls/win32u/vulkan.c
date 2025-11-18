@@ -43,8 +43,6 @@ static PFN_vkEnumerateInstanceExtensionProperties p_vkEnumerateInstanceExtension
 static void *vulkan_handle;
 static struct vulkan_funcs vulkan_funcs;
 
-#ifdef SONAME_LIBVULKAN
-
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static const struct vulkan_driver_funcs *driver_funcs;
@@ -594,7 +592,7 @@ static VkResult win32u_vkCreateInstance( const VkInstanceCreateInfo *client_crea
                                          VkInstance *client_instance_ptr )
 {
     VkInstanceCreateInfo *create_info = (VkInstanceCreateInfo *)client_create_info; /* cast away const, chain has been copied in the thunks */
-    VkInstance host_instance, client_instance = *client_instance_ptr;
+    VkInstance host_instance = VK_NULL_HANDLE, client_instance = *client_instance_ptr;
     struct vulkan_physical_device *physical_devices;
     struct mempool pool = {0};
     struct instance *instance;
@@ -2973,11 +2971,13 @@ static void vulkan_init_once(void)
     uint32_t count = 0;
     VkResult res;
 
-    if (!(vulkan_handle = dlopen( SONAME_LIBVULKAN, RTLD_NOW )))
-    {
-        ERR( "Failed to load %s\n", SONAME_LIBVULKAN );
-        return;
-    }
+#ifdef SONAME_LIBVULKAN
+    vulkan_handle = dlopen( SONAME_LIBVULKAN, RTLD_NOW );
+    if (!vulkan_handle) ERR( "Failed to load %s\n", SONAME_LIBVULKAN );
+#else
+    ERR( "Wine was built without Vulkan support.\n" );
+#endif
+    if (!vulkan_handle) return;
 
 #define LOAD_FUNCPTR( f )                                                                          \
     if (!(p_##f = dlsym( vulkan_handle, #f )))                                                     \
@@ -3039,15 +3039,6 @@ failed:
     free( properties );
 }
 
-#else /* SONAME_LIBVULKAN */
-
-static void vulkan_init_once(void)
-{
-    ERR( "Wine was built without Vulkan support.\n" );
-}
-
-#endif /* SONAME_LIBVULKAN */
-
 /***********************************************************************
  *      __wine_get_vulkan_driver  (win32u.so)
  */
@@ -3080,6 +3071,8 @@ struct vulkan_instance *vulkan_instance_create( const struct vulkan_instance_ext
     struct instance_wrapper *wrapper;
     UINT device_count = 8;
     VkResult res;
+
+    if (!funcs) return NULL;
 
     create_info.ppEnabledExtensionNames = extension_names;
 #define USE_VK_EXT(x) if (extensions->has_ ## x) extension_names[create_info.enabledExtensionCount++] = #x;
