@@ -35,6 +35,7 @@
 #include "winioctl.h"
 #include "ntddcdrm.h"
 #include "ddk/wdm.h"
+#include "ddk/ntifs.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
 
@@ -542,19 +543,79 @@ BOOL WINAPI DeleteVolumeMountPointA(LPCSTR mountpoint)
 /***********************************************************************
  *           SetVolumeMountPointA (KERNEL32.@)
  */
-BOOL WINAPI SetVolumeMountPointA(LPCSTR path, LPCSTR volume)
+BOOL WINAPI SetVolumeMountPointA( const char *link, const char *target )
 {
-    FIXME("(%s, %s), stub!\n", debugstr_a(path), debugstr_a(volume));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    WCHAR *linkW, *targetW;
+    BOOL ret;
+
+    if (!(linkW = FILE_name_AtoW( link, FALSE ))) return FALSE;
+    if (!(targetW = FILE_name_AtoW( target, TRUE ))) return FALSE;
+
+    ret = SetVolumeMountPointW( linkW, targetW );
+
+    HeapFree( GetProcessHeap(), 0, targetW );
+    return ret;
 }
 
 /***********************************************************************
  *           SetVolumeMountPointW (KERNEL32.@)
  */
-BOOL WINAPI SetVolumeMountPointW(LPCWSTR path, LPCWSTR volume)
+BOOL WINAPI SetVolumeMountPointW( const WCHAR *link, const WCHAR *target )
 {
-    FIXME("(%s, %s), stub!\n", debugstr_w(path), debugstr_w(volume));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    UNICODE_STRING nt_link, nt_target;
+    REPARSE_DATA_BUFFER *data;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    unsigned int size;
+    NTSTATUS status;
+    HANDLE file;
+
+    TRACE( "link %s, target %s\n", debugstr_w(link), debugstr_w(target) );
+
+    status = RtlDosPathNameToNtPathName_U_WithStatus( link, &nt_link, NULL, NULL );
+    if (status) return set_ntstatus( status );
+
+    status = RtlDosPathNameToNtPathName_U_WithStatus( target, &nt_target, NULL, NULL );
+    if (status)
+    {
+        RtlFreeUnicodeString( &nt_link );
+        return set_ntstatus( status );
+    }
+
+    size = offsetof( REPARSE_DATA_BUFFER, MountPointReparseBuffer.PathBuffer );
+    size += (nt_target.Length + sizeof(WCHAR)) * 2;
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        RtlFreeUnicodeString( &nt_target );
+        RtlFreeUnicodeString( &nt_link );
+        return set_ntstatus( status );
+    }
+
+    data->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+    data->ReparseDataLength = size - offsetof( REPARSE_DATA_BUFFER, MountPointReparseBuffer );
+    data->Reserved = 0;
+    data->MountPointReparseBuffer.SubstituteNameOffset = 0;
+    data->MountPointReparseBuffer.SubstituteNameLength = nt_target.Length;
+    data->MountPointReparseBuffer.PrintNameOffset = nt_target.Length + sizeof(WCHAR);
+    data->MountPointReparseBuffer.PrintNameLength = nt_target.Length;
+    memcpy( data->MountPointReparseBuffer.PathBuffer,
+            nt_target.Buffer, nt_target.Length + sizeof(WCHAR) );
+    memcpy( data->MountPointReparseBuffer.PathBuffer + (nt_target.Length / sizeof(WCHAR)) + 1,
+            nt_target.Buffer, nt_target.Length + sizeof(WCHAR) );
+    RtlFreeUnicodeString( &nt_target );
+
+    InitializeObjectAttributes( &attr, &nt_link, OBJ_CASE_INSENSITIVE, 0, NULL );
+    status = NtCreateFile( &file, GENERIC_WRITE, &attr, &io, NULL, 0, 0, FILE_OPEN_IF,
+                           FILE_OPEN_REPARSE_POINT | FILE_DIRECTORY_FILE, NULL, 0 );
+    RtlFreeUnicodeString( &nt_link );
+    if (status)
+    {
+        HeapFree( GetProcessHeap(), 0, data );
+        return set_ntstatus( status );
+    }
+
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, size, NULL, 0 );
+    HeapFree( GetProcessHeap(), 0, data );
+    NtClose( file );
+    return set_ntstatus( status );
 }
