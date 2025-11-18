@@ -244,6 +244,7 @@ dispex_static_data_t NodeList_dispex = {
     .vtbl       = &HTMLDOMChildrenCollection_dispex_vtbl,
     .disp_tid   = DispDOMChildrenCollection_tid,
     .iface_tids = NodeList_iface_tids,
+    .js_flags   = HOSTOBJ_VOLATILE_PROPS
 };
 
 HRESULT create_child_collection(nsIDOMNodeList *nslist, DispatchEx *owner, IHTMLDOMChildrenCollection **ret)

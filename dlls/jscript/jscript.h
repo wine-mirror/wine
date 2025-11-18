@@ -199,6 +199,7 @@ struct jsdisp_t {
 
     LONG ref;
 
+    BOOLEAN has_volatile_props : 1;
     BOOLEAN is_constructor : 1;
     BOOLEAN has_weak_refs : 1;
     BOOLEAN props_filled : 1;

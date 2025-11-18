@@ -4318,7 +4318,7 @@ dispex_static_data_t Window_dispex = {
     .vtbl       = &HTMLWindow_event_target_vtbl.dispex_vtbl,
     .disp_tid   = DispHTMLWindow2_tid,
     .init_info  = HTMLWindow_init_dispex_info,
-    .js_flags   = HOSTOBJ_VOLATILE_FILL,
+    .js_flags   = HOSTOBJ_VOLATILE_FILL | HOSTOBJ_VOLATILE_PROPS,
 };
 
 static nsresult NSAPI outer_window_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)

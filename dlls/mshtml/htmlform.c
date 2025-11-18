@@ -866,6 +866,7 @@ dispex_static_data_t HTMLFormElement_dispex = {
     .vtbl         = &HTMLFormElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLFormElement_tid,
     .init_info    = HTMLFormElement_init_dispex_info,
+    .js_flags     = HOSTOBJ_VOLATILE_PROPS
 };
 
 HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
