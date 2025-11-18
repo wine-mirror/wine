@@ -255,7 +255,7 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
         copy_plane(&dst, surface_desc.lPitch / 2, surface_desc.dwHeight / 2, &src, src_pitch / 2, height / 2);
         copy_plane(&dst, surface_desc.lPitch / 2, surface_desc.dwHeight / 2, &src, src_pitch / 2, height / 2);
     }
-    else if (height > 0 && bitmap_header->biCompression == BI_RGB)
+    else if (height > 0 && (bitmap_header->biCompression == BI_RGB || bitmap_header->biCompression == BI_BITFIELDS))
     {
         BYTE *dst = surface_desc.lpSurface;
         const BYTE *src = data;

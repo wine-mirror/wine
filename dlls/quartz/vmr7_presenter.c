@@ -201,6 +201,16 @@ static HRESULT WINAPI surface_allocator_AllocateSurface(IVMRSurfaceAllocator *if
         surface_desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
         surface_desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
     }
+    else if (info->lpHdr->biCompression == BI_BITFIELDS)
+    {
+        const DWORD *mask = (DWORD *)((BITMAPINFO *)info->lpHdr)->bmiColors;
+
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        surface_desc.ddpfPixelFormat.dwRGBBitCount = info->lpHdr->biBitCount;
+        surface_desc.ddpfPixelFormat.dwRBitMask = mask[0];
+        surface_desc.ddpfPixelFormat.dwGBitMask = mask[1];
+        surface_desc.ddpfPixelFormat.dwBBitMask = mask[2];
+    }
     else
     {
         surface_desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
