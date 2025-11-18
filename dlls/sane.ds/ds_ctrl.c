@@ -259,11 +259,39 @@ TW_UINT16 SANE_PendingXfersGet (pTW_IDENTITY pOrigin,
         twRC = TWRC_FAILURE;
         activeDS.twCC = TWCC_SEQERROR;
     }
+    else if (activeDS.currentState < 6)
+    {
+        /* We have not yet started scanning */
+        pPendingXfers->Count = activeDS.capXferCount;
+        twRC = TWRC_SUCCESS;
+        activeDS.twCC = TWCC_SUCCESS;
+
+    }
+    else if (activeDS.capXferCount != -1)
+    {
+        /* The application gave us a counter with CAP_XFERCOUNT */
+        pPendingXfers->Count = activeDS.capXferCount - activeDS.scannedImages;
+        twRC = TWRC_SUCCESS;
+        activeDS.twCC = TWCC_SUCCESS;
+    }
+    else if (activeDS.currentState == 7)
+    {
+        /* We are already scanning a frame, so there obviously is one */
+        pPendingXfers->Count = -1;
+        twRC = TWRC_SUCCESS;
+        activeDS.twCC = TWCC_SUCCESS;
+    }
     else
     {
         pPendingXfers->Count = -1;
-        if (SANE_CALL( start_device, NULL ))
+        if (SANE_Start())
+        {
+            /* No more frames... tell the application */
             pPendingXfers->Count = 0;
+            activeDS.currentState = 5;
+            SANE_Cancel();
+            SANE_Notify(MSG_CLOSEDSREQ);
+        }
         twRC = TWRC_SUCCESS;
         activeDS.twCC = TWCC_SUCCESS;
     }
