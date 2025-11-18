@@ -1702,6 +1702,20 @@ static inline void check_texture3d_desc_(uint32_t line, const D3D10_TEXTURE3D_DE
                 expected->MiscFlags, desc->MiscFlags);
 }
 
+#define check_texture3d_desc_values(desc, width, height, depth, mip_levels, format, usage, bind_flags, \
+                                cpu_access_flags, misc_flags, wine_todo) \
+    check_texture3d_desc_values_(__LINE__, desc, width, height, depth, mip_levels, format, usage, bind_flags, \
+                                cpu_access_flags, misc_flags, wine_todo)
+static inline void check_texture3d_desc_values_(uint32_t line, const D3D10_TEXTURE3D_DESC *desc, uint32_t width,
+        uint32_t height, uint32_t depth, uint32_t mip_levels, DXGI_FORMAT format, D3D10_USAGE usage,
+        uint32_t bind_flags, uint32_t cpu_access_flags, uint32_t misc_flags, BOOL wine_todo)
+{
+    const D3D10_TEXTURE3D_DESC expected_desc = { width, height, depth, mip_levels, format, usage, bind_flags,
+                                                 cpu_access_flags, misc_flags };
+
+    check_texture3d_desc_(line, desc, &expected_desc, wine_todo);
+}
+
 /*
  * Taken from the d3d10core tests. If there's a missing resource type or
  * texture format checking function, check to see if it exists there first.
@@ -1961,40 +1975,9 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
             hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture_2d);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n",  hr);
             ID3D10Texture2D_GetDesc(texture_2d, &desc_2d);
-            ok_(__FILE__, line)(desc_2d.Width == expected_width,
-                    "Got unexpected Width %u, expected %u.\n",
-                     desc_2d.Width, expected_width);
-            ok_(__FILE__, line)(desc_2d.Height == expected_height,
-                    "Got unexpected Height %u, expected %u.\n",
-                     desc_2d.Height, expected_height);
-            ok_(__FILE__, line)(desc_2d.MipLevels == expected_mip_levels,
-                    "Got unexpected MipLevels %u, expected %u.\n",
-                     desc_2d.MipLevels, expected_mip_levels);
-            ok_(__FILE__, line)(desc_2d.ArraySize == image->expected_info.ArraySize,
-                    "Got unexpected ArraySize %u, expected %u.\n",
-                     desc_2d.ArraySize, image->expected_info.ArraySize);
-            ok_(__FILE__, line)(desc_2d.Format == image->expected_info.Format,
-                    "Got unexpected Format %u, expected %u.\n",
-                     desc_2d.Format, image->expected_info.Format);
-            ok_(__FILE__, line)(desc_2d.SampleDesc.Count == 1,
-                    "Got unexpected SampleDesc.Count %u, expected %u\n",
-                     desc_2d.SampleDesc.Count, 1);
-            ok_(__FILE__, line)(desc_2d.SampleDesc.Quality == 0,
-                    "Got unexpected SampleDesc.Quality %u, expected %u\n",
-                     desc_2d.SampleDesc.Quality, 0);
-            ok_(__FILE__, line)(desc_2d.Usage == D3D10_USAGE_DEFAULT,
-                    "Got unexpected Usage %u, expected %u\n",
-                     desc_2d.Usage, D3D10_USAGE_DEFAULT);
-            ok_(__FILE__, line)(desc_2d.BindFlags == D3D10_BIND_SHADER_RESOURCE,
-                    "Got unexpected BindFlags %#x, expected %#x\n",
-                     desc_2d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
-            ok_(__FILE__, line)(desc_2d.CPUAccessFlags == 0,
-                    "Got unexpected CPUAccessFlags %#x, expected %#x\n",
-                     desc_2d.CPUAccessFlags, 0);
-            ok_(__FILE__, line)(desc_2d.MiscFlags == image->expected_info.MiscFlags,
-                    "Got unexpected MiscFlags %#x, expected %#x.\n",
-                     desc_2d.MiscFlags, image->expected_info.MiscFlags);
-
+            check_texture2d_desc_values_(line, &desc_2d, expected_width, expected_height, expected_mip_levels,
+                    image->expected_info.ArraySize, image->expected_info.Format, 1, 0, D3D10_USAGE_DEFAULT,
+                    D3D10_BIND_SHADER_RESOURCE, 0, image->expected_info.MiscFlags, FALSE);
             ID3D10Texture2D_Release(texture_2d);
             break;
 
@@ -2002,33 +1985,9 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
             hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture_3d);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n",  hr);
             ID3D10Texture3D_GetDesc(texture_3d, &desc_3d);
-            ok_(__FILE__, line)(desc_3d.Width == expected_width,
-                    "Got unexpected Width %u, expected %u.\n",
-                     desc_3d.Width, expected_width);
-            ok_(__FILE__, line)(desc_3d.Height == expected_height,
-                    "Got unexpected Height %u, expected %u.\n",
-                     desc_3d.Height, expected_height);
-            ok_(__FILE__, line)(desc_3d.Depth == image->expected_info.Depth,
-                    "Got unexpected Depth %u, expected %u.\n",
-                     desc_3d.Depth, image->expected_info.Depth);
-            ok_(__FILE__, line)(desc_3d.MipLevels == expected_mip_levels,
-                    "Got unexpected MipLevels %u, expected %u.\n",
-                     desc_3d.MipLevels, expected_mip_levels);
-            ok_(__FILE__, line)(desc_3d.Format == image->expected_info.Format,
-                    "Got unexpected Format %u, expected %u.\n",
-                     desc_3d.Format, image->expected_info.Format);
-            ok_(__FILE__, line)(desc_3d.Usage == D3D10_USAGE_DEFAULT,
-                    "Got unexpected Usage %u, expected %u\n",
-                     desc_3d.Usage, D3D10_USAGE_DEFAULT);
-            ok_(__FILE__, line)(desc_3d.BindFlags == D3D10_BIND_SHADER_RESOURCE,
-                    "Got unexpected BindFlags %#x, expected %#x\n",
-                     desc_3d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
-            ok_(__FILE__, line)(desc_3d.CPUAccessFlags == 0,
-                    "Got unexpected CPUAccessFlags %#x, expected %#x\n",
-                     desc_3d.CPUAccessFlags, 0);
-            ok_(__FILE__, line)(desc_3d.MiscFlags == image->expected_info.MiscFlags,
-                    "Got unexpected MiscFlags %#x, expected %#x.\n",
-                     desc_3d.MiscFlags, image->expected_info.MiscFlags);
+            check_texture3d_desc_values_(line, &desc_3d, expected_width, expected_height, image->expected_info.Depth,
+                    expected_mip_levels, image->expected_info.Format, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE,
+                    0, image->expected_info.MiscFlags, FALSE);
             ID3D10Texture3D_Release(texture_3d);
             break;
 
