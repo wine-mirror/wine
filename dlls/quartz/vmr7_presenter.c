@@ -180,6 +180,12 @@ static HRESULT WINAPI surface_allocator_AllocateSurface(IVMRSurfaceAllocator *if
 
     TRACE("presenter %p, id %#Ix, info %p, count %p, surface %p.\n", presenter, id, info, count, surface);
 
+    if (info->lpHdr->biSize != sizeof(*info->lpHdr))
+    {
+        WARN("Invalid BITMAPINFOHEADER size %lu.\n", info->lpHdr->biSize);
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
     surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.dwWidth = info->lpHdr->biWidth;
     surface_desc.dwHeight = info->lpHdr->biHeight;
