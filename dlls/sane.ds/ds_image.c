@@ -75,6 +75,7 @@ TW_UINT16 SANE_Start(void)
             activeDS.frame_params.last_frame);
 
       activeDS.currentState = 7;
+      activeDS.YOffset = 0;
   }
   return twRC;
 }
@@ -304,8 +305,9 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
             pImageMemXfer->Columns = activeDS.frame_params.pixels_per_line;
             pImageMemXfer->Rows = rows;
             pImageMemXfer->XOffset = 0;
-            pImageMemXfer->YOffset = 0;
+            pImageMemXfer->YOffset = activeDS.YOffset;
             pImageMemXfer->BytesWritten = retlen;
+            activeDS.YOffset += rows;
 
             ScanningDialogBox(activeDS.progressWnd, retlen);
 

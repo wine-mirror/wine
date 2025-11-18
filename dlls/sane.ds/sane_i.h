@@ -53,6 +53,9 @@ struct tagActiveDS
     BOOL                YResolutionSet;
     TW_FIX32            defaultYResolution;
 
+    /* Number of scan lines already transfered in DG_IMAGE / DAT_IMAGEMEMXFER / MSG_GET. */
+    TW_UINT32           YOffset;
+
     /* Number of images transferd since start of scan process */
     TW_INT16            scannedImages;
 
