@@ -3689,11 +3689,13 @@ static void test_default_presenter_allocate(void)
     {
         WORD depth;
         DWORD compression;
-        DDPIXELFORMAT format;
+        BOOL expect_failure;
     }
     tests[] =
     {
         {32, BI_RGB},
+        {16, BI_RGB, .expect_failure = TRUE},
+        {24, BI_RGB, .expect_failure = TRUE},
         {12, mmioFOURCC('N','V','1','2')},
         {12, mmioFOURCC('Y','V','1','2')},
         {16, mmioFOURCC('U','Y','V','Y')},
@@ -3769,11 +3771,14 @@ static void test_default_presenter_allocate(void)
 
         IDirectDraw7_Release(ddraw);
 
+        if (tests[i].expect_failure)
+            expect_hr = E_FAIL;
         hr = IVMRSurfaceAllocator_AllocateSurface(allocator, 0, &info, &count, &frontbuffer);
         ok(hr == expect_hr, "Got hr %#lx.\n", hr);
-        if (hr == VFW_E_DDRAW_CAPS_NOT_SUITABLE)
+        if (FAILED(hr))
         {
-            skip("Format is not supported.\n");
+            if (hr == VFW_E_DDRAW_CAPS_NOT_SUITABLE)
+                skip("Format is not supported.\n");
             winetest_pop_context();
             continue;
         }
