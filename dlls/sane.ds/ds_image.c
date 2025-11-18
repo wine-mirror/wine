@@ -348,7 +348,9 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     RGBTRIPLE *pixels;
     int color_size = 0;
     int i, j;
+    int y, eof = 0;
     BYTE *p;
+    DWORD tmp, *ptop, *pbot;
 
     TRACE("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET\n");
 
@@ -394,9 +396,10 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         }
 
         dib_bytes_per_line = ((activeDS.frame_params.bytes_per_line + 3) / 4) * 4;
-        dib_bytes = activeDS.frame_params.lines * dib_bytes_per_line;
+        y = activeDS.feederEnabled ? activeDS.frame_params.lines * 3/2 : activeDS.frame_params.lines+1;
+        dib_bytes = y * dib_bytes_per_line;
 
-        hDIB = GlobalAlloc(GMEM_ZEROINIT, dib_bytes + sizeof(*header) + color_size);
+        hDIB = GlobalAlloc(GMEM_MOVEABLE, dib_bytes + sizeof(*header) + color_size);
         if (hDIB)
            header = GlobalLock(hDIB);
 
@@ -410,9 +413,10 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             return TWRC_FAILURE;
         }
 
+        memset(header, 0, sizeof(BITMAPINFOHEADER)+color_size);
         header->biSize = sizeof (*header);
         header->biWidth = activeDS.frame_params.pixels_per_line;
-        header->biHeight = activeDS.frame_params.lines;
+        header->biHeight = -y;
         header->biPlanes = 1;
         header->biCompression = BI_RGB;
         switch (activeDS.frame_params.format)
@@ -426,7 +430,6 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
         case FMT_OTHER:
             break;
         }
-        header->biSizeImage = dib_bytes;
         header->biXPelsPerMeter = 0;
         header->biYPelsPerMeter = 0;
         header->biClrUsed = 0;
@@ -449,47 +452,115 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
                     colors[i].rgbBlue = colors[i].rgbRed = colors[i].rgbGreen = i;
         }
 
-
-        /* Sane returns data in top down order.  Acrobat does best with
-           a bottom up DIB being returned.  */
-        line = p + (activeDS.frame_params.lines - 1) * dib_bytes_per_line;
-        for (i = activeDS.frame_params.lines - 1; i >= 0; i--)
+        y=0;
+        do
         {
             int retlen;
-            struct read_data_params params = { line, activeDS.frame_params.bytes_per_line, &retlen };
+            struct read_data_params params = { NULL, activeDS.frame_params.bytes_per_line, &retlen };
+
+            if (y >= -header->biHeight)
+            {
+                TRACE("Data source transfers more lines than expected. Extend DIB to %ld lines\n", (-header->biHeight)+1000);
+                GlobalUnlock(hDIB);
+
+                dib_bytes += 1000 * dib_bytes_per_line;
+
+                if (!GlobalReAlloc(hDIB, dib_bytes + sizeof(*header) + color_size, GMEM_MOVEABLE))
+                {
+                    SANE_Cancel();
+                    activeDS.twCC = TWCC_LOWMEMORY;
+                    activeDS.currentState = 6;
+                    GlobalFree(hDIB);
+                    return TWRC_FAILURE;
+                }
+
+                header = (BITMAPINFOHEADER *) GlobalLock(hDIB);
+                header->biHeight -= 1000;
+
+                p = ((BYTE *) header) + header->biSize + color_size;
+            }
 
             activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd,
-                    ((activeDS.frame_params.lines - 1 - i) * 100)
-                            /
-                    (activeDS.frame_params.lines - 1));
+                                                     MulDiv(y, 100, activeDS.frame_params.lines));
+
+            params.buffer =
+              line = p + y * dib_bytes_per_line;
+
+            if (activeDS.frame_params.bytes_per_line & 3)
+            {
+                /* Set padding-bytes at the end of the line buffer to 0 */
+                memset(line+dib_bytes_per_line-4, 0, 4);
+            }
 
             twRC = SANE_CALL( read_data, &params );
             if (twRC != TWCC_SUCCESS) break;
-            if (retlen < activeDS.frame_params.bytes_per_line) break;
-            /* TWAIN: for 24 bit color DIBs, the pixels are stored in BGR order */
-            if (activeDS.frame_params.format == FMT_RGB && activeDS.frame_params.depth == 8)
+            if (retlen < activeDS.frame_params.bytes_per_line)
+            {   /* EOF reached */
+                eof = 1;
+            }
+            else
             {
-                pixels = (RGBTRIPLE *) line;
-                for (j = 0; j < activeDS.frame_params.pixels_per_line; ++j)
+                y++;
+                /* TWAIN: for 24 bit color DIBs, the pixels are stored in BGR order */
+                if (activeDS.frame_params.format == FMT_RGB && activeDS.frame_params.depth == 8)
                 {
-                    color_buffer = pixels[j].rgbtRed;
-                    pixels[j].rgbtRed = pixels[j].rgbtBlue;
-                    pixels[j].rgbtBlue = color_buffer;
+                    pixels = (RGBTRIPLE *) line;
+                    for (j = 0; j < activeDS.frame_params.pixels_per_line; ++j)
+                    {
+                        color_buffer = pixels[j].rgbtRed;
+                        pixels[j].rgbtRed = pixels[j].rgbtBlue;
+                        pixels[j].rgbtBlue = color_buffer;
+                    }
                 }
             }
-            line -= dib_bytes_per_line;
         }
+        while (!eof);
 
-        if (twRC != TWCC_SUCCESS)
+        if (twRC != TWCC_SUCCESS || y==0)
         {
-            WARN("sane_read: %u, reading line %d\n", twRC, i);
+            WARN("sane_read: %u, reading line %d\n", twRC, y);
             SANE_Cancel();
             activeDS.twCC = TWCC_OPERATIONERROR;
             GlobalFree(hDIB);
             return TWRC_FAILURE;
         }
 
+        /* Sane returns data in top down order.  Acrobat does best with
+           a bottom up DIB being returned. Flip image */
+        header->biHeight = y;
+        for (y = 0; y<header->biHeight / 2; y++)
+        {
+            ptop = (DWORD *) (p + dib_bytes_per_line *                   y    );
+            pbot = (DWORD *) (p + dib_bytes_per_line * (header->biHeight-y-1) );
+
+            for (i=0; i<dib_bytes_per_line/4; i++)
+            {
+                tmp = *ptop;
+                *ptop = *pbot;
+                *pbot = tmp;
+                ptop++;
+                pbot++;
+            }
+        }
+
+        /* Shrink the memory block to the size actually transfered by
+         * the sane data source. */
+        header->biSizeImage =
+          dib_bytes = header->biHeight * dib_bytes_per_line;
+
         GlobalUnlock(hDIB);
+
+        if (!GlobalReAlloc(hDIB, dib_bytes + sizeof(*header) + color_size, GMEM_MOVEABLE))
+        {
+            SANE_Cancel();
+            activeDS.twCC = TWCC_LOWMEMORY;
+            activeDS.currentState = 6;
+            GlobalUnlock(hDIB);
+            GlobalFree(hDIB);
+            return TWRC_FAILURE;
+        }
+
+        activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
 
         *pHandle = (TW_HANDLE)hDIB;
         twRC = TWRC_XFERDONE;
