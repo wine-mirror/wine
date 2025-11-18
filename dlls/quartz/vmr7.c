@@ -285,13 +285,56 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
     return IVMRImagePresenter_PresentImage(filter->presenter, filter->cookie, &info);
 }
 
+static BOOL fourcc_is_supported(IDirectDraw7 *ddraw, DWORD fourcc)
+{
+    DWORD *codes, count, i;
+    HRESULT hr;
+
+    if (FAILED(hr = IDirectDraw7_GetFourCCCodes(ddraw, &count, NULL)))
+    {
+        ERR("Failed to get FOURCC code count, hr %#lx.\n", hr);
+        return FALSE;
+    }
+
+    if (!count || !(codes = calloc(count, sizeof(*codes))))
+        return FALSE;
+
+    if (FAILED(hr = IDirectDraw7_GetFourCCCodes(ddraw, &count, codes)))
+    {
+        ERR("Failed to get FOURCC codes, hr %#lx.\n", hr);
+        free(codes);
+        return FALSE;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        if (codes[i] == fourcc)
+            break;
+    }
+    free(codes);
+
+    return i < count;
+}
+
 static HRESULT vmr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
+    struct vmr7 *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
+
     if (!IsEqualIID(&mt->majortype, &MEDIATYPE_Video) || !mt->pbFormat)
         return S_FALSE;
 
     if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
             && !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
+        return S_FALSE;
+
+    if (bitmap_header->biCompression == BI_RGB || bitmap_header->biCompression == BI_BITFIELDS)
+        return S_OK;
+
+    if (!filter->ddraw)
+        return S_OK;
+
+    if (!fourcc_is_supported(filter->ddraw, bitmap_header->biCompression))
         return S_FALSE;
 
     return S_OK;
