@@ -1141,8 +1141,7 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                     case PSN_APPLY:
                         if (psn->lParam)
                         {
-                            activeDS.currentState = 6;
-                            SANE_Notify(MSG_XFERREADY);
+                            SANE_XferReady();
                         }
                         break;
                     case PSN_QUERYCANCEL:

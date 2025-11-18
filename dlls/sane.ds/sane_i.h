@@ -52,6 +52,12 @@ struct tagActiveDS
     TW_FIX32            defaultXResolution;
     BOOL                YResolutionSet;
     TW_FIX32            defaultYResolution;
+
+    /* Number of images transferd since start of scan process */
+    TW_INT16            scannedImages;
+
+    /* TRUE if we are scanning with an Automatic Document Feeder */
+    BOOL                feederEnabled;
 };
 
 extern struct tagActiveDS activeDS;
@@ -60,6 +66,9 @@ extern struct tagActiveDS activeDS;
 extern TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action);
 extern TW_UINT16 SANE_SaneSetDefaults (void);
 extern void SANE_Notify (TW_UINT16 message);
+extern TW_UINT16 SANE_Start(void);
+extern void      SANE_Cancel(void);
+extern void      SANE_XferReady(void);
 
 /* Implementation of operation triplets
  * From Application to Source (Control Information) */

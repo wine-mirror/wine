@@ -295,7 +295,6 @@ static NTSTATUS start_device( void *args )
 {
     SANE_Status status;
 
-    if (device_started) return STATUS_SUCCESS;
     status = sane_start( device_handle );
     if (status != SANE_STATUS_GOOD)
     {

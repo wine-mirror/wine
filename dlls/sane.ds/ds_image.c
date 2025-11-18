@@ -26,6 +26,75 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+
+/* transition from state 6 to state 7.
+ *
+ * Called by either SANE_ImageMemXferGet, SANE_ImageInfoGet or
+ * SANE_ImageNativeXferGet, whatever the application calls first.
+ *
+ * - start the scan with a call to sane start_devince
+ * - open the progress dialog window
+ * - call get_sane_params to retrieve parameters of current scan frame
+ *
+ * @return TWAIN result code, TWRC_SUCCESS on success
+ */
+TW_UINT16 SANE_Start(void)
+{
+  TW_UINT16 twRC = TWRC_SUCCESS;
+  TRACE("SANE_Start currentState:%d\n", activeDS.currentState);
+  if (activeDS.currentState != 6)
+  {
+      twRC = TWRC_FAILURE;
+      activeDS.twCC = TWCC_SEQERROR;
+  }
+  else
+  {
+      /* Open progress dialog */
+      activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd,0);
+
+      /* Start the scan process in sane */
+      if (SANE_CALL( start_device, NULL ))
+      {
+          activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
+          activeDS.twCC = TWCC_OPERATIONERROR;
+          return TWRC_FAILURE;
+      }
+
+      if (get_sane_params( &activeDS.frame_params ))
+      {
+          WARN("sane_get_parameters failed\n");
+          SANE_CALL( cancel_device, NULL );
+          activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
+          activeDS.twCC = TWCC_OPERATIONERROR;
+          return TWRC_FAILURE;
+      }
+
+      TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d) from sane...\n"
+            , activeDS.frame_params.pixels_per_line, activeDS.frame_params.lines,
+            activeDS.frame_params.depth, activeDS.frame_params.format,
+            activeDS.frame_params.last_frame);
+
+      activeDS.currentState = 7;
+  }
+  return twRC;
+}
+
+/** transition from state 7 or 6 to state 5.
+ *
+ * Called when an error occurs or when the last frame
+ * has been transfered successfully.
+ * - call sane cancel_device to finish any open transfer
+ * - close the progress dialog box.
+ */
+void SANE_Cancel(void)
+{
+  SANE_CALL( cancel_device, NULL );
+  activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
+  activeDS.currentState = 5;
+}
+
+
+
 /* DG_IMAGE/DAT_IMAGEINFO/MSG_GET */
 TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin, 
                               TW_MEMREF pData)
@@ -45,14 +114,11 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
     {
         if (activeDS.currentState == 6)
         {
-            /* return general image description information about the image about to be transferred */
-            TRACE("Getting parameters\n");
-            if (SANE_CALL( get_params, &activeDS.frame_params ))
+            /* Transition from state 6 to state 7 by starting the scan */
+            twRC = SANE_Start();
+            if (twRC != TWRC_SUCCESS)
             {
-                WARN("sane_get_parameters failed\n");
-                SANE_CALL( cancel_device, NULL );
-                activeDS.twCC = TWCC_OPERATIONERROR;
-                return TWRC_FAILURE;
+                return twRC;
             }
         }
 
@@ -201,38 +267,18 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
         /* Transfer an image from the source to the application */
         if (activeDS.currentState == 6)
         {
-
-            /* trigger scanning dialog */
-            activeDS.progressWnd = ScanningDialogBox(NULL,0);
-
-            ScanningDialogBox(activeDS.progressWnd,0);
-
-            if (SANE_CALL( start_device, NULL ))
+            /* Transition from state 6 to state 7 by starting the scan */
+            twRC = SANE_Start();
+            if (twRC != TWRC_SUCCESS)
             {
-                activeDS.twCC = TWCC_OPERATIONERROR;
-                return TWRC_FAILURE;
+                return twRC;
             }
-
-            if (get_sane_params( &activeDS.frame_params ))
-            {
-                WARN("sane_get_parameters failed\n");
-                SANE_CALL( cancel_device, NULL );
-                activeDS.twCC = TWCC_OPERATIONERROR;
-                return TWRC_FAILURE;
-            }
-
-            TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d) from sane...\n"
-              , activeDS.frame_params.pixels_per_line, activeDS.frame_params.lines,
-              activeDS.frame_params.depth, activeDS.frame_params.format,
-              activeDS.frame_params.last_frame);
-
-            activeDS.currentState = 7;
         }
 
         /* access memory buffer */
         if (pImageMemXfer->Memory.Length < activeDS.frame_params.bytes_per_line)
         {
-            SANE_CALL( cancel_device, NULL );
+            SANE_Cancel();
             activeDS.twCC = TWCC_BADVALUE;
             return TWRC_FAILURE;
         }
@@ -265,18 +311,15 @@ TW_UINT16 SANE_ImageMemXferGet (pTW_IDENTITY pOrigin,
 
             if (retlen < activeDS.frame_params.bytes_per_line * rows)
             {
-                ScanningDialogBox(activeDS.progressWnd, -1);
                 TRACE("sane_read: %u / %u\n", retlen, activeDS.frame_params.bytes_per_line * rows);
-                SANE_CALL( cancel_device, NULL );
                 twRC = TWRC_XFERDONE;
             }
             activeDS.twCC = TWRC_SUCCESS;
         }
         else
         {
-            ScanningDialogBox(activeDS.progressWnd, -1);
             WARN("sane_read: %u\n", twRC);
-            SANE_CALL( cancel_device, NULL );
+            SANE_Cancel();
             activeDS.twCC = TWCC_OPERATIONERROR;
             twRC = TWRC_FAILURE;
         }
@@ -307,28 +350,23 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
 
     TRACE("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET\n");
 
-    if (activeDS.currentState != 6)
+    if (activeDS.currentState == 6)
+    {
+        /* Transition from state 6 to state 7 by starting the scan */
+        twRC = SANE_Start();
+        if (twRC != TWRC_SUCCESS)
+        {
+            return twRC;
+        }
+    }
+
+    if (activeDS.currentState != 7)
     {
         twRC = TWRC_FAILURE;
         activeDS.twCC = TWCC_SEQERROR;
     }
     else
     {
-        /* Transfer an image from the source to the application */
-        if (SANE_CALL( start_device, NULL ))
-        {
-            activeDS.twCC = TWCC_OPERATIONERROR;
-            return TWRC_FAILURE;
-        }
-
-        if (SANE_CALL( get_params, &activeDS.frame_params ))
-        {
-            WARN("sane_get_parameters failed\n");
-            SANE_CALL( cancel_device, NULL );
-            activeDS.twCC = TWCC_OPERATIONERROR;
-            return TWRC_FAILURE;
-        }
-
         switch (activeDS.frame_params.format)
         {
         case FMT_GRAY:
@@ -337,8 +375,9 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             else
             {
                 FIXME("For NATIVE, we support only 1 bit monochrome and 8 bit Grayscale, not %d\n", activeDS.frame_params.depth);
-                SANE_CALL( cancel_device, NULL );
+                SANE_Cancel();
                 activeDS.twCC = TWCC_OPERATIONERROR;
+                activeDS.currentState = 6;
                 return TWRC_FAILURE;
             }
             break;
@@ -346,15 +385,11 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             break;
         case FMT_OTHER:
             FIXME("For NATIVE, we support only GRAY and RGB\n");
-            SANE_CALL( cancel_device, NULL );
+            SANE_Cancel();
             activeDS.twCC = TWCC_OPERATIONERROR;
+            activeDS.currentState = 6;
             return TWRC_FAILURE;
         }
-
-        TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d bpl=%d) from sane...\n"
-              , activeDS.frame_params.pixels_per_line, activeDS.frame_params.lines,
-              activeDS.frame_params.depth, activeDS.frame_params.format,
-              activeDS.frame_params.last_frame, activeDS.frame_params.bytes_per_line);
 
         dib_bytes_per_line = ((activeDS.frame_params.bytes_per_line + 3) / 4) * 4;
         dib_bytes = activeDS.frame_params.lines * dib_bytes_per_line;
@@ -365,8 +400,9 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
 
         if (!header)
         {
-            SANE_CALL( cancel_device, NULL );
+            SANE_Cancel();
             activeDS.twCC = TWCC_LOWMEMORY;
+            activeDS.currentState = 6;
             if (hDIB)
                 GlobalFree(hDIB);
             return TWRC_FAILURE;
@@ -441,24 +477,21 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             }
             line -= dib_bytes_per_line;
         }
-        activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
-
-        GlobalUnlock(hDIB);
 
         if (twRC != TWCC_SUCCESS)
         {
             WARN("sane_read: %u, reading line %d\n", twRC, i);
-            SANE_CALL( cancel_device, NULL );
+            SANE_Cancel();
             activeDS.twCC = TWCC_OPERATIONERROR;
             GlobalFree(hDIB);
             return TWRC_FAILURE;
         }
 
-        SANE_CALL( cancel_device, NULL );
+        GlobalUnlock(hDIB);
+
         *pHandle = (TW_HANDLE)hDIB;
         twRC = TWRC_XFERDONE;
         activeDS.twCC = TWCC_SUCCESS;
-        activeDS.currentState = 7;
     }
     return twRC;
 }

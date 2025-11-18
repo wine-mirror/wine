@@ -199,6 +199,8 @@ TW_UINT16 SANE_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
 
     TRACE("DG_CONTROL/DAT_PENDINGXFERS/MSG_ENDXFER\n");
 
+    activeDS.scannedImages++;
+
     if (activeDS.currentState != 6 && activeDS.currentState != 7)
     {
         twRC = TWRC_FAILURE;
@@ -206,14 +208,35 @@ TW_UINT16 SANE_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
     }
     else
     {
-        pPendingXfers->Count = -1;
-        activeDS.currentState = 6;
-        if (SANE_CALL( start_device, NULL ))
+        pPendingXfers->Count = activeDS.capXferCount==-1 ? -1 :
+          activeDS.capXferCount - activeDS.scannedImages;
+	if (!pPendingXfers->Count ||
+            !activeDS.feederEnabled)
         {
+            /* All requested images transfered. Stop scanning */
             pPendingXfers->Count = 0;
             activeDS.currentState = 5;
+            SANE_Cancel();
             /* Notify the application that it can close the data source */
             SANE_Notify(MSG_CLOSEDSREQ);
+        }
+        else
+        {
+            /* To find out if there are more Xfers waiting for us,
+             * we need to call sane_start.
+             * On success, this will prepare the next frame and
+             * bring us back into currentState==7
+             */
+            activeDS.currentState = 6;
+            if (SANE_Start())
+            {
+                /* No more frames... tell the application */
+                pPendingXfers->Count = 0;
+                activeDS.currentState = 5;
+                SANE_Cancel();
+                /* Notify the application that it can close the data source */
+                SANE_Notify(MSG_CLOSEDSREQ);
+            }
         }
         twRC = TWRC_SUCCESS;
         activeDS.twCC = TWCC_SUCCESS;
@@ -370,8 +393,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
         else
         {
             /* no UI will be displayed, so source is ready to transfer data */
-            activeDS.currentState = 6; /* Transitions to state 6 directly */
-            SANE_Notify(MSG_XFERREADY);
+            SANE_XferReady();
         }
 
         twRC = TWRC_SUCCESS;

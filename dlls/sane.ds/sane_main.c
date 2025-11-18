@@ -80,6 +80,8 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
         activeDS.currentState = 4;
         activeDS.identity.Id = self->Id;
         activeDS.appIdentity = *pOrigin;
+        activeDS.capXferMech = TWSX_NATIVE;
+        activeDS.capXferCount = -1;
         return TWRC_SUCCESS;
     }
     SANE_CALL( close_ds, NULL );
@@ -361,6 +363,34 @@ void SANE_Notify (TW_UINT16 message)
 {
     SANE_dsmentry (&activeDS.identity, &activeDS.appIdentity, DG_CONTROL, DAT_NULL, message, NULL);
 }
+
+
+/** @brief A new TWAIN data transfer is ready to be processed
+ *
+ *  - Notify Application.
+ *  - Set activeDS.remainingImages to start value.
+ *  - Set activeDS.feederEnabled according to current sane parameters
+ *    if Automatic Document Feeder (ADF) is enabled.
+ *  - Notify the Application of MSG_XFERREADY.
+ *
+ *  The source names used depends on the sane backend.
+ *  A complete list of all values for "source" that indicates
+ *  the use of an ADF is in SANE_CAPFeederEnabled
+ */
+void
+SANE_XferReady(void)
+{
+    char current_source[256];
+
+    activeDS.currentState = 6;
+    activeDS.scannedImages = 0;
+    activeDS.feederEnabled =
+      sane_option_get_str ("source", current_source, sizeof(current_source)) == TWCC_SUCCESS &&
+      (current_source[0]=='A' || current_source[0]=='a');
+
+    SANE_Notify(MSG_XFERREADY);
+}
+
 
 /* DG_CONTROL/DAT_ENTRYPOINT/MSG_SET */
 TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData)
