@@ -3704,6 +3704,7 @@ static void test_default_presenter_allocate(void)
     {
         WORD depth;
         DWORD compression;
+        BOOL v4;
         BOOL expect_failure;
     }
     tests[] =
@@ -3718,6 +3719,7 @@ static void test_default_presenter_allocate(void)
         {32, BI_BITFIELDS},
         {16, BI_BITFIELDS, .expect_failure = TRUE},
         {24, BI_BITFIELDS, .expect_failure = TRUE},
+        {32, BI_BITFIELDS, .v4 = TRUE, .expect_failure = TRUE},
     };
 
     window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
@@ -3746,12 +3748,15 @@ static void test_default_presenter_allocate(void)
 
         winetest_push_context("Test %u: Compression %#lx, depth %u", i, tests[i].compression, tests[i].depth);
 
-        if (tests[i].compression == BI_BITFIELDS)
+        if (tests[i].v4 || tests[i].compression == BI_BITFIELDS)
         {
             info.lpHdr = (BITMAPINFOHEADER *)&bitmap_v4_header;
             bitmap_v4_header.bV4BitCount = tests[i].depth;
             bitmap_v4_header.bV4V4Compression = tests[i].compression;
-            bitmap_v4_header.bV4Size = sizeof(BITMAPINFOHEADER);
+            if (tests[i].v4)
+                bitmap_v4_header.bV4Size = sizeof(bitmap_v4_header);
+            else
+                bitmap_v4_header.bV4Size = sizeof(BITMAPINFOHEADER);
         }
         else
         {
@@ -3801,7 +3806,7 @@ static void test_default_presenter_allocate(void)
         IDirectDraw7_Release(ddraw);
 
         if (tests[i].expect_failure)
-            expect_hr = E_FAIL;
+            expect_hr = tests[i].v4 ? DDERR_INVALIDPIXELFORMAT : E_FAIL;
         hr = IVMRSurfaceAllocator_AllocateSurface(allocator, 0, &info, &count, &frontbuffer);
         ok(hr == expect_hr, "Got hr %#lx.\n", hr);
         if (FAILED(hr))
