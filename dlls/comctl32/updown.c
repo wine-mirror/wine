@@ -449,6 +449,29 @@ static BOOL UPDOWN_NeedBuddyBackground(const UPDOWN_INFO *infoPtr)
     return UPDOWN_HasBuddyBorder(infoPtr);
 }
 
+static void UPDOWN_DrawUpArrow(const UPDOWN_INFO *infoPtr, HDC hdc)
+{
+    RECT rect;
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
+
+    if (theme)
+    {
+        int part = 0, state = 0;
+
+        UPDOWN_GetUpArrowThemePartAndState(infoPtr, &part, &state);
+        UPDOWN_GetArrowRect(infoPtr, &rect, FLAG_INCR);
+        DrawThemeBackground(theme, hdc, part, state, &rect, NULL);
+        return;
+    }
+
+    UPDOWN_GetArrowRect(infoPtr, &rect, FLAG_INCR);
+    DrawFrameControl(hdc, &rect, DFC_SCROLL,
+                     (infoPtr->dwStyle & UDS_HORZ ? DFCS_SCROLLRIGHT : DFCS_SCROLLUP) |
+                     ((infoPtr->dwStyle & UDS_HOTTRACK) && UPDOWN_IsUpArrowHot(infoPtr) ? DFCS_HOT : 0) |
+                     (UPDOWN_IsUpArrowPressed(infoPtr) ? DFCS_PUSHED : 0) |
+                     (infoPtr->dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0));
+}
+
 /***********************************************************************
  * UPDOWN_Draw
  *
@@ -456,17 +479,14 @@ static BOOL UPDOWN_NeedBuddyBackground(const UPDOWN_INFO *infoPtr)
  */
 static LRESULT UPDOWN_Draw (const UPDOWN_INFO *infoPtr, HDC hdc)
 {
-    BOOL uPressed, uHot, dPressed, dHot;
+    BOOL dPressed, dHot;
     RECT rect;
     HTHEME theme = GetWindowTheme (infoPtr->Self);
-    int uPart = 0, uState = 0, dPart = 0, dState = 0;
+    int dPart = 0, dState = 0;
 
-    uPressed = UPDOWN_IsUpArrowPressed(infoPtr);
-    uHot = UPDOWN_IsUpArrowHot(infoPtr);
     dPressed = UPDOWN_IsDownArrowPressed(infoPtr);
     dHot = UPDOWN_IsDownArrowHot(infoPtr);
     if (theme) {
-        UPDOWN_GetUpArrowThemePartAndState(infoPtr, &uPart, &uState);
         UPDOWN_GetDownArrowThemePartAndState(infoPtr, &dPart, &dState);
     }
 
@@ -475,16 +495,7 @@ static LRESULT UPDOWN_Draw (const UPDOWN_INFO *infoPtr, HDC hdc)
         UPDOWN_DrawBuddyBackground(infoPtr, hdc);
 
     /* Draw the incr button */
-    UPDOWN_GetArrowRect (infoPtr, &rect, FLAG_INCR);
-    if (theme) {
-        DrawThemeBackground(theme, hdc, uPart, uState, &rect, NULL);
-    } else {
-        DrawFrameControl(hdc, &rect, DFC_SCROLL,
-            (infoPtr->dwStyle & UDS_HORZ ? DFCS_SCROLLRIGHT : DFCS_SCROLLUP) |
-            ((infoPtr->dwStyle & UDS_HOTTRACK) && uHot ? DFCS_HOT : 0) |
-            (uPressed ? DFCS_PUSHED : 0) |
-            (infoPtr->dwStyle & WS_DISABLED ? DFCS_INACTIVE : 0) );
-    }
+    UPDOWN_DrawUpArrow(infoPtr, hdc);
 
     /* Draw the decr button */
     UPDOWN_GetArrowRect(infoPtr, &rect, FLAG_DECR);
