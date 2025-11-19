@@ -2007,7 +2007,7 @@ static HRESULT WINAPI recordset_MoveNext( _Recordset *iface )
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    if (!recordset->current_row)
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
     {
         hr = cache_get( recordset, TRUE );
         if (FAILED(hr)) return hr;
