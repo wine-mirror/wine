@@ -516,12 +516,76 @@ static HRESULT WINAPI rowset_change_DeleteRows(IRowsetChange *iface, HCHAPTER re
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface, HROW row, HACCESSOR accessor, void *data)
+static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface, HROW row, HACCESSOR hacc, void *data)
 {
     struct rowset *rowset = impl_from_IRowsetChange(iface);
+    struct accessor *accessor = (struct accessor *)hacc;
+    BOOL err = FALSE, succ = FALSE;
+    DBSTATUS status;
+    DBLENGTH len;
+    int i, idx;
+    HRESULT hr;
 
-    FIXME("%p, %Id, %Id, %p\n", rowset, row, accessor, data);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %Id, %p\n", rowset, row, hacc, data);
+
+    if (!accessor->bindings_count) return DB_E_BADACCESSORTYPE;
+    if (row > rowset->row_cnt) return DB_E_BADROWHANDLE;
+    for (i = 0; i < accessor->bindings_count; i++)
+    {
+        if (accessor->bindings[i].wType != DBTYPE_VARIANT)
+        {
+            FIXME("data conversion not implemented\n");
+            return E_NOTIMPL;
+        }
+    }
+
+    for (i = 0; i < accessor->bindings_count; i++)
+    {
+        idx = (row - 1) * rowset->columns_cnt + accessor->bindings[i].iOrdinal;
+
+        if (rowset->columns[accessor->bindings[i].iOrdinal].wType != DBTYPE_VARIANT)
+            FIXME("convert data to column type\n");
+
+        if (idx > rowset->data_cnt)
+        {
+            size_t size = max(max(rowset->data_cnt, idx), 8);
+            VARIANT *data = realloc(rowset->data, size * sizeof(*rowset->data));
+
+            if (!data) return E_OUTOFMEMORY;
+            memset(data + rowset->data_cnt, 0, (size - rowset->data_cnt) * sizeof(*rowset->data));
+            rowset->data = data;
+            rowset->data_cnt = size;
+        }
+
+        len = sizeof(VARIANT);
+        status = DBSTATUS_S_OK;
+        if (accessor->bindings[i].cbMaxLen < len)
+            status = DBSTATUS_E_DATAOVERFLOW;
+        else if (accessor->bindings[i].dwPart & DBPART_VALUE)
+        {
+            hr = VariantCopy(&rowset->data[idx], (VARIANT *)((BYTE *)data + accessor->bindings[i].obValue));
+            if (FAILED(hr))
+            {
+                for (i--; i>=0; i--)
+                {
+                    if (accessor->bindings[i].dwPart & DBPART_VALUE)
+                        VariantClear((VARIANT *)((BYTE *)data + accessor->bindings[i].obValue));
+                }
+                return hr;
+            }
+        }
+
+        if (accessor->bindings[i].dwPart & DBPART_LENGTH)
+            memcpy((BYTE *)data + accessor->bindings[i].obLength, &len, sizeof(len));
+        if (accessor->bindings[i].dwPart & DBPART_STATUS)
+            memcpy((BYTE *)data + accessor->bindings[i].obStatus, &status, sizeof(status));
+
+        if (status == DBSTATUS_S_OK) succ = TRUE;
+        else err = TRUE;
+    }
+
+    if (!succ) return DB_E_ERRORSOCCURRED;
+    return err ? DB_S_ERRORSOCCURRED : S_OK;
 }
 
 static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER reserved,
