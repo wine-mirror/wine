@@ -221,23 +221,23 @@ static void test_Recordset(void)
 
     VariantInit( &filter );
     hr = _Recordset_put_Filter( recordset, filter );
-    ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08lx\n", hr );
+    todo_wine ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08lx\n", hr );
 
     V_VT(&filter) = VT_BSTR;
     V_BSTR(&filter) = SysAllocString( L"field1 = 1" );
     hr = _Recordset_put_Filter( recordset, filter );
-    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
     VariantClear(&filter);
 
     V_VT(&filter) = VT_I4;
     V_I4(&filter) = 0;
     hr = _Recordset_put_Filter( recordset, filter );
-    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
 
     V_VT(&filter) = VT_I2;
     V_I2(&filter) = 0;
     hr = _Recordset_put_Filter( recordset, filter );
-    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
 
     VariantInit( &missing );
     hr = _Recordset_AddNew( recordset, missing, missing );
@@ -399,13 +399,13 @@ static void test_Recordset(void)
     V_VT(&filter) = VT_BSTR;
     V_BSTR(&filter) = SysAllocString( L"field = 1" );
     hr = _Recordset_put_Filter( recordset, filter );
-    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
     VariantClear(&filter);
 
     V_VT(&filter) = VT_I4;
     V_I4(&filter) = 0;
     hr = _Recordset_put_Filter( recordset, filter );
-    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
 
     count = -1;
     hr = Fields_get_Count( fields2, &count );

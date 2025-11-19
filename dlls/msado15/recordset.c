@@ -102,7 +102,6 @@ struct recordset
     VARIANT_BOOL       is_bof;
     VARIANT_BOOL       is_eof;
     ADO_LONGPTR        max_records;
-    VARIANT            filter;
 
     DBTYPE            *columntypes;
     HACCESSOR          hacc_empty; /* haccessor for adding empty rows */
@@ -1516,8 +1515,6 @@ static void close_recordset( struct recordset *recordset )
         IRowsetChange_Release( recordset->rowset_change );
     recordset->rowset_change = NULL;
 
-    VariantClear( &recordset->filter );
-
     col_count = get_column_count( recordset );
 
     free(recordset->columntypes);
@@ -2776,37 +2773,14 @@ static HRESULT WINAPI recordset_get_EditMode( _Recordset *iface, EditModeEnum *m
 
 static HRESULT WINAPI recordset_get_Filter( _Recordset *iface, VARIANT *criteria )
 {
-    struct recordset *recordset = impl_from_Recordset( iface );
-    TRACE( "%p, %p\n", iface, criteria );
-
-    if (!criteria) return MAKE_ADO_HRESULT( adErrInvalidArgument );
-
-    VariantCopy(criteria, &recordset->filter);
-    return S_OK;
+    FIXME( "%p, %p\n", iface, criteria );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI recordset_put_Filter( _Recordset *iface, VARIANT criteria )
 {
-    struct recordset *recordset = impl_from_Recordset( iface );
-    TRACE( "%p, %s\n", recordset, debugstr_variant(&criteria) );
-
-    if (V_VT(&criteria) != VT_I2 && V_VT(&criteria) != VT_I4 && V_VT(&criteria) != VT_BSTR)
-        return MAKE_ADO_HRESULT( adErrInvalidArgument );
-
-    if (V_VT(&criteria) == VT_BSTR && recordset->state == adStateOpen)
-    {
-        FIXME("No filter performed.  Reporting no records found.\n");
-
-        /* Set the index to signal we didn't find a record. */
-        recordset->index = -1;
-    }
-    else
-    {
-        recordset->index = recordset->count ? 0 : -1; /* Reset */
-    }
-
-    VariantCopy(&recordset->filter, &criteria);
-    return S_OK;
+    TRACE( "%p, %s\n", iface, debugstr_variant(&criteria) );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI recordset_get_PageCount( _Recordset *iface, ADO_LONGPTR *count )
@@ -3377,7 +3351,6 @@ HRESULT Recordset_create( void **obj )
     recordset->cache.size = 1;
     recordset->cache.rows = malloc( sizeof(*recordset->cache.rows) );
     recordset->max_records = 0;
-    VariantInit( &recordset->filter );
     recordset->columntypes = NULL;
     recordset->haccessors = NULL;
     Fields_create( recordset );
