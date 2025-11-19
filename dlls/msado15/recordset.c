@@ -42,6 +42,7 @@ struct field
     ISupportErrorInfo   ISupportErrorInfo_iface;
     Properties          Properties_iface;
     LONG                refs;
+    DBORDINAL           ordinal;
     WCHAR              *name;
     DataTypeEnum        type;
     LONG                defined_size;
@@ -1084,6 +1085,7 @@ static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
 
     hr = Field_create( info->pwszName, fields->count, fields_get_recordset(fields), &field );
     if (hr != S_OK) return hr;
+    field->ordinal = info->iOrdinal;
     field->type = info->wType;
     field->defined_size = info->ulColumnSize;
     if (info->dwFlags != adFldUnspecified) field->attrs = info->dwFlags;
@@ -1269,6 +1271,7 @@ static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum typ
     if ((hr = init_fields( fields )) != S_OK) return hr;
 
     memset( &colinfo, 0, sizeof(colinfo) );
+    colinfo.iOrdinal = fields->count ? (*fields->field)[fields->count - 1].ordinal + 1 : 1;
     colinfo.pwszName = name;
     colinfo.wType = type;
     colinfo.ulColumnSize = size;
@@ -2538,7 +2541,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
             struct field *field = recordset->fields.field[i - 1];
 
             info[i].pwszName = field->name;
-            info[i].iOrdinal = i;
+            info[i].iOrdinal = field->ordinal;
             info[i].dwFlags = field->attrs;
             info[i].ulColumnSize = field->defined_size;
             info[i].wType = field->type;
