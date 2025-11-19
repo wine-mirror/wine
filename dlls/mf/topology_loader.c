@@ -144,9 +144,23 @@ struct topology_branch
     struct list entry;
 };
 
+static const char *debugstr_topology_type(MF_TOPOLOGY_TYPE type)
+{
+    switch (type)
+    {
+        case MF_TOPOLOGY_OUTPUT_NODE: return "sink";
+        case MF_TOPOLOGY_SOURCESTREAM_NODE: return "source";
+        case MF_TOPOLOGY_TRANSFORM_NODE: return "transform";
+        case MF_TOPOLOGY_TEE_NODE: return "tee";
+        default: return "unknown";
+    }
+}
+
 static const char *debugstr_topology_branch(struct topology_branch *branch)
 {
-    return wine_dbg_sprintf("%p:%lu to %p:%lu", branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
+    return wine_dbg_sprintf("%s %p:%lu to %s %p:%lu", debugstr_topology_type(topology_node_get_type(branch->up.node)),
+            branch->up.node, branch->up.stream, debugstr_topology_type(topology_node_get_type(branch->down.node)),
+            branch->down.node, branch->down.stream);
 }
 
 static HRESULT topology_branch_create(IMFTopologyNode *source, DWORD source_stream,
@@ -279,8 +293,8 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
     GUID category, guid;
     HRESULT hr;
 
-    TRACE("topology %p, method_mask %#x, branch %s, up_type %p, down_type %p.\n",
-            topology, method_mask, debugstr_topology_branch(branch), up_type, down_type);
+    TRACE("topology %p, method_mask %#x, branch %s, up_type %s, down_type %s.\n", topology, method_mask,
+            debugstr_topology_branch(branch), debugstr_media_type(up_type), debugstr_media_type(down_type));
 
     if (FAILED(hr = IMFMediaType_GetMajorType(up_type, &input_info.guidMajorType)))
         return hr;
@@ -418,8 +432,8 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
     DWORD flags;
     HRESULT hr;
 
-    TRACE("topology %p, method_mask %#x, branch %s, up_type %p.\n",
-            topology, method_mask, debugstr_topology_branch(branch), up_type);
+    TRACE("topology %p, method_mask %#x, branch %s, up_type %s.\n",
+            topology, method_mask, debugstr_topology_branch(branch), debugstr_media_type(up_type));
 
     if (FAILED(IMFTopologyNode_GetUINT32(branch->down.node, &MF_TOPONODE_CONNECT_METHOD, &method)))
         method = MF_CONNECT_ALLOW_DECODER;
@@ -430,14 +444,14 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
     if (SUCCEEDED(hr = get_first_supported_media_type(down_handler, &down_type))
             && IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
     {
-        TRACE("Connecting branch %s with current type %p.\n", debugstr_topology_branch(branch), up_type);
+        TRACE("Connecting branch %s with current type %s.\n", debugstr_topology_branch(branch), debugstr_media_type(up_type));
         hr = IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
         goto done;
     }
 
     if (SUCCEEDED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(down_handler, up_type, NULL)))
     {
-        TRACE("Connected branch %s with upstream type %p.\n", debugstr_topology_branch(branch), up_type);
+        TRACE("Connected branch %s with upstream type %s.\n", debugstr_topology_branch(branch), debugstr_media_type(up_type));
 
         if (topology_node_get_type(branch->down.node) == MF_TOPOLOGY_TRANSFORM_NODE
                 && FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(down_handler, up_type)))
