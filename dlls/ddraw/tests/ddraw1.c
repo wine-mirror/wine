@@ -30,6 +30,7 @@
 
 static BOOL is_ddraw64 = sizeof(DWORD) != sizeof(DWORD *);
 static DEVMODEA registry_mode;
+static HWND foreground;
 
 static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
 
@@ -111,6 +112,64 @@ static void flush_events(void)
             DispatchMessageA(&msg);
         diff = time - GetTickCount();
     }
+}
+
+static HWND create_foreground_window(void)
+{
+    for (UINT retries = 5; retries; retries--)
+    {
+        HWND hwnd;
+        BOOL ret;
+
+        hwnd = CreateWindowW(L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 5, 5, NULL, NULL, NULL, NULL);
+        ok(hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError());
+        flush_events();
+
+        if (GetForegroundWindow() == hwnd)
+            return hwnd;
+        ret = DestroyWindow(hwnd);
+        ok(ret, "DestroyWindow failed, error %lu\n", GetLastError());
+        flush_events();
+    }
+
+    ok(0, "Failed to create foreground window\n");
+    return NULL;
+}
+
+static LRESULT CALLBACK foreground_window_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_USER)
+        SetForegroundWindow((HWND)wparam);
+    if (msg == WM_CLOSE)
+        PostQuitMessage(0);
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+static DWORD WINAPI foreground_window_thread(void *arg)
+{
+    HANDLE event = arg;
+    MSG msg;
+
+    foreground = create_foreground_window();
+    SetWindowLongPtrW(foreground, GWLP_WNDPROC, (LONG_PTR)foreground_window_wndproc);
+    SetEvent(event);
+
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        if (msg.message == WM_QUIT) break;
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    return 0;
+}
+
+static void start_foreground_window_thread(void)
+{
+    HANDLE event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    CloseHandle(CreateThread(NULL, 0, foreground_window_thread, event, 0, NULL));
+    WaitForSingleObject(event, 10000);
+    CloseHandle(event);
 }
 
 static BOOL ddraw_get_identifier(IDirectDraw *ddraw, DDDEVICEIDENTIFIER *identifier)
@@ -1053,6 +1112,8 @@ static void test_clipper_blt(void)
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             10, 10, 640, 480, 0, 0, 0, 0);
     ShowWindow(window, SW_SHOW);
+    flush_events();
+
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
 
@@ -2632,7 +2693,7 @@ static void test_window_style(void)
     GetClientRect(window, &r);
     todo_wine ok(!EqualRect(&r, &fullscreen_rect), "Client rect and window rect are equal.\n");
 
-    ret = SetForegroundWindow(GetDesktopWindow());
+    ret = SetForegroundWindow(foreground);
     ok(ret, "Failed to set foreground window.\n");
 
     tmp = GetWindowLongA(window, GWL_STYLE);
@@ -2720,7 +2781,7 @@ static void test_window_style(void)
     ok(tmp == exstyle, "Expected window extended style %#lx, got %#lx.\n", exstyle, tmp);
 
     ShowWindow(window, SW_SHOW);
-    ret = SetForegroundWindow(GetDesktopWindow());
+    ret = SetForegroundWindow(foreground);
     ok(ret, "Failed to set foreground window.\n");
     SetActiveWindow(window);
     ok(GetActiveWindow() == window, "Unexpected active window.\n");
@@ -2792,7 +2853,7 @@ static void test_window_style(void)
     expected_style = exstyle | WS_EX_TOPMOST;
     todo_wine ok(tmp == expected_style, "Expected window extended style %#lx, got %#lx.\n", expected_style, tmp);
 
-    ret = SetForegroundWindow(GetDesktopWindow());
+    ret = SetForegroundWindow(foreground);
     ok(ret, "Failed to set foreground window.\n");
     tmp = GetWindowLongA(window, GWL_STYLE);
     expected_style = style | WS_VISIBLE | WS_MINIMIZE;
@@ -3186,7 +3247,7 @@ static void test_coop_level_mode_set(void)
             wine_dbgstr_rect(&r));
 
     expect_messages = exclusive_focus_loss_messages;
-    ret = SetForegroundWindow(GetDesktopWindow());
+    ret = SetForegroundWindow(foreground);
     ok(ret, "Failed to set foreground window.\n");
     ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     memset(&devmode, 0, sizeof(devmode));
@@ -4461,7 +4522,7 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
 
     /* Exclusive with window not active. */
-    SetForegroundWindow(GetDesktopWindow());
+    SetForegroundWindow(foreground);
     activateapp_testdata.received = FALSE;
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
@@ -4470,7 +4531,7 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
 
     /* Normal with window not active, then exclusive with the same window. */
-    SetForegroundWindow(GetDesktopWindow());
+    SetForegroundWindow(foreground);
     activateapp_testdata.received = FALSE;
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
@@ -4482,7 +4543,7 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
 
     /* Recursive set of DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN. */
-    SetForegroundWindow(GetDesktopWindow());
+    SetForegroundWindow(foreground);
     activateapp_testdata.received = FALSE;
     activateapp_testdata.ddraw = ddraw;
     activateapp_testdata.window = window;
@@ -4504,7 +4565,7 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#lx.\n", hr);
 
     /* Setting DDSCL_NORMAL with recursive invocation. */
-    SetForegroundWindow(GetDesktopWindow());
+    SetForegroundWindow(foreground);
     activateapp_testdata.received = FALSE;
     activateapp_testdata.ddraw = ddraw;
     activateapp_testdata.window = window;
@@ -8217,7 +8278,7 @@ static void test_lost_device(void)
         ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     }
 
-    ret = SetForegroundWindow(GetDesktopWindow());
+    ret = SetForegroundWindow(foreground);
     ok(ret, "Failed to set foreground window.\n");
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#lx.\n", hr);
@@ -8301,7 +8362,7 @@ static void test_lost_device(void)
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ret = SetForegroundWindow(GetDesktopWindow());
+    ret = SetForegroundWindow(foreground);
     ok(ret, "Failed to set foreground window.\n");
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
@@ -13835,7 +13896,7 @@ static void test_killfocus(void)
     hr = IDirectDraw_CreateSurface(killfocus_ddraw, &surface_desc, &killfocus_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
 
-    SetForegroundWindow(GetDesktopWindow());
+    SetForegroundWindow(foreground);
     ok(!killfocus_ddraw, "WM_KILLFOCUS was not received.\n");
 
     DestroyWindow(window);
@@ -14794,7 +14855,7 @@ static BOOL CALLBACK test_window_position_cb(HMONITOR monitor, HDC hdc, RECT *mo
     ret = SetWindowPos(window, 0, monitor_rect->left, monitor_rect->top, 0, 0,
             SWP_NOZORDER | SWP_NOSIZE);
     ok(ret, "SetWindowPos failed, error %lu.\n", GetLastError());
-    ret = SetForegroundWindow(GetDesktopWindow());
+    ret = SetForegroundWindow(foreground);
     ok(ret, "Failed to set foreground window.\n");
     flush_events();
     ret = ShowWindow(window, SW_RESTORE);
@@ -16342,6 +16403,8 @@ START_TEST(ddraw1)
 
     if ((dwmapi = LoadLibraryA("dwmapi.dll")))
         pDwmIsCompositionEnabled = (void *)GetProcAddress(dwmapi, "DwmIsCompositionEnabled");
+
+    start_foreground_window_thread();
 
     test_coop_level_create_device_window();
     test_clipper_blt();
