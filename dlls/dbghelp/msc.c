@@ -2714,10 +2714,11 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 }
                 else
                 {
+                    const union codeview_symbol* end_sym;
                     /* skip all records until paired S_INLINESITE_END */
-                    sym = (const union codeview_symbol*)(root + sym->inline_site_v3.pEnd);
-                    if (sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
-                    length = sym->inline_site_v3.pEnd - i + sym->generic.len;
+                    end_sym = (const union codeview_symbol*)(root + sym->inline_site_v3.pEnd);
+                    if (end_sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
+                    length = sym->inline_site_v3.pEnd - i + end_sym->generic.len + 2;
                 }
             }
             break;
@@ -2736,10 +2737,11 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 }
                 else
                 {
+                    const union codeview_symbol* end_sym;
                     /* skip all records until paired S_INLINESITE_END */
-                    sym = (const union codeview_symbol*)(root + sym->inline_site2_v3.pEnd);
-                    if (sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
-                    length = sym->inline_site2_v3.pEnd - i + sym->generic.len;
+                    end_sym = (const union codeview_symbol*)(root + sym->inline_site2_v3.pEnd);
+                    if (end_sym->generic.id != S_INLINESITE_END) FIXME("complete wreckage\n");
+                    length = sym->inline_site2_v3.pEnd - i + end_sym->generic.len + 2;
                 }
             }
             break;
