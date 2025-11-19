@@ -47,6 +47,9 @@ struct rowset
     BOOL backward_fetch;
     int index;
     int row_cnt;
+
+    int data_cnt;
+    VARIANT *data;
 };
 
 struct accessor
@@ -168,12 +171,62 @@ static HRESULT WINAPI rowset_AddRefRows(IRowsetExactScroll *iface, DBCOUNTITEM c
     return S_OK;
 }
 
-static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCESSOR accessor, void *data)
+static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCESSOR hacc, void *data)
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll(iface);
+    struct accessor *accessor = (struct accessor *)hacc;
+    DBSTATUS status = DBSTATUS_S_OK;
+    BOOL succ = FALSE, err = FALSE;
+    DBLENGTH len;
+    VARIANT val;
+    HRESULT hr;
+    int i, idx;
 
-    FIXME("%p, %Id, %Id, %p\n", rowset, row, accessor, data);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %Id, %p\n", rowset, row, hacc, data);
+
+    if (!accessor->bindings_count) return DB_E_BADACCESSORTYPE;
+    if (row > rowset->row_cnt) return DB_E_BADROWHANDLE;
+    for (i = 0; i < accessor->bindings_count; i++)
+    {
+        if (accessor->bindings[i].wType != DBTYPE_VARIANT)
+        {
+            FIXME("data conversion not implemented\n");
+            return E_NOTIMPL;
+        }
+    }
+
+    for (i = 0; i < accessor->bindings_count; i++)
+    {
+        idx = (row - 1) * rowset->columns_cnt + accessor->bindings[i].iOrdinal;
+
+        len = sizeof(val);
+        status = DBSTATUS_S_OK;
+        if (accessor->bindings[i].cbMaxLen < len)
+            status = DBSTATUS_E_DATAOVERFLOW;
+        else
+        {
+            VariantInit(&val);
+            if (idx < rowset->data_cnt)
+            {
+                hr = VariantCopy(&val, &rowset->data[idx]);
+                if (FAILED(hr)) return hr;
+            }
+
+            if (accessor->bindings[i].dwPart & DBPART_VALUE && status == DBSTATUS_S_OK)
+                memcpy((BYTE *)data + accessor->bindings[i].obValue, &val, sizeof(val));
+        }
+
+        if (accessor->bindings[i].dwPart & DBPART_LENGTH)
+            memcpy((BYTE *)data + accessor->bindings[i].obLength, &len, sizeof(len));
+        if (accessor->bindings[i].dwPart & DBPART_STATUS)
+            memcpy((BYTE *)data + accessor->bindings[i].obStatus, &status, sizeof(status));
+
+        if (status == DBSTATUS_S_OK) succ = TRUE;
+        else err = TRUE;
+    }
+
+    if (!succ) return DB_E_ERRORSOCCURRED;
+    return err ? DB_S_ERRORSOCCURRED : S_OK;
 }
 
 static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER chapter,
