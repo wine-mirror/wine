@@ -21,6 +21,10 @@
 #include "oledberr.h"
 #include "unknwn.h"
 
+#include "initguid.h"
+#include "msdadc.h"
+#include "msdaguid.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
@@ -34,6 +38,8 @@ struct rowset
     IRowsetInfo IRowsetInfo_iface;
     LONG refs;
 
+    IDataConvert *convert;
+
     int columns_cnt;
     DBCOLUMNINFO *columns;
     OLECHAR *columns_buf;
@@ -46,6 +52,8 @@ struct rowset
 struct accessor
 {
     LONG refs;
+    int bindings_count;
+    DBBINDING bindings[1];
 };
 
 static inline struct rowset *impl_from_IRowsetExactScroll(IRowsetExactScroll *iface)
@@ -135,6 +143,8 @@ static ULONG WINAPI rowset_Release(IRowsetExactScroll *iface)
     if (!refs)
     {
         TRACE("destroying %p\n", rowset);
+
+        if (rowset->convert) IDataConvert_Release(rowset->convert);
 
         CoTaskMemFree(rowset->columns);
         CoTaskMemFree(rowset->columns_buf);
@@ -528,6 +538,8 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
 {
     struct rowset *rowset = impl_from_IAccessor(iface);
     struct accessor *accessor;
+    HRESULT hr, ret = S_OK;
+    int i;
 
     TRACE("%p, %lx, %Iu, %p %Id, %p %p\n", rowset, dwAccessorFlags, cBindings,
             rgBindings, cbRowSize, phAccessor, rgStatus);
@@ -535,9 +547,9 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
     if (!phAccessor) return E_INVALIDARG;
     *phAccessor = 0;
 
-    if (cBindings || cbRowSize)
+    if (cbRowSize)
     {
-        FIXME("accessing data not implemented\n");
+        FIXME("cbRowSize not handled\n");
         return E_NOTIMPL;
     }
     if (dwAccessorFlags != DBACCESSOR_ROWDATA)
@@ -546,9 +558,44 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
         return E_NOTIMPL;
     }
 
-    accessor = calloc(1, sizeof(*accessor));
+    for (i = 0; i < cBindings; i++)
+    {
+        if (rgBindings[i].iOrdinal >= rowset->columns_cnt)
+        {
+            if (rgStatus) rgStatus[i] = DBBINDSTATUS_BADORDINAL;
+            if (ret == S_OK) ret = DBSTATUS_E_BADACCESSOR;
+            continue;
+        }
+
+        if (rgBindings[i].wType != rowset->columns[rgBindings[i].iOrdinal].wType)
+        {
+            if (!rowset->convert)
+            {
+               hr = CoCreateInstance(&CLSID_OLEDB_CONVERSIONLIBRARY, NULL, CLSCTX_INPROC_SERVER,
+                       &IID_IDataConvert, (void **)&rowset->convert);
+               if (FAILED(hr)) return hr;
+            }
+
+            hr = IDataConvert_CanConvert(rowset->convert,
+                    rowset->columns[rgBindings[i].iOrdinal].wType, rgBindings[i].wType);
+            if (FAILED(hr)) return hr;
+            if (hr != S_OK)
+            {
+                if (rgStatus) rgStatus[i] = DBBINDSTATUS_UNSUPPORTEDCONVERSION;
+                if (ret == S_OK) ret = DBSTATUS_E_BADACCESSOR;
+                continue;
+            }
+        }
+
+        if (rgStatus) rgStatus[i] = DBBINDSTATUS_OK;
+    }
+    if (ret != S_OK) return ret;
+
+    accessor = calloc(1, offsetof(struct accessor, bindings[cBindings]));
     if (!accessor) return E_OUTOFMEMORY;
     accessor->refs = 1;
+    accessor->bindings_count = cBindings;
+    memcpy(accessor->bindings, rgBindings, sizeof(rgBindings[0]) * cBindings);
 
     *phAccessor = (HACCESSOR)accessor;
     return S_OK;
