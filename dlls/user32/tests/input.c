@@ -561,7 +561,7 @@ static inline BOOL is_mouse_message( UINT message )
 }
 
 #define create_foreground_window( a ) create_foreground_window_( __FILE__, __LINE__, a, 5 )
-HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries )
+static HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries )
 {
     for (;;)
     {
