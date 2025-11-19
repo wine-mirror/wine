@@ -362,23 +362,31 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
  *
  * Draw buddy background for visual integration.
  */
-static BOOL UPDOWN_DrawBuddyBackground (const UPDOWN_INFO *infoPtr, HDC hdc)
+static void UPDOWN_DrawBuddyBackground (const UPDOWN_INFO *infoPtr, HDC hdc)
 {
-    RECT br, r;
+    RECT rect;
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
     HTHEME buddyTheme = GetWindowTheme (infoPtr->Buddy);
-    if (!buddyTheme) return FALSE;
 
-    GetWindowRect (infoPtr->Buddy, &br);
-    MapWindowPoints (NULL, infoPtr->Self, (POINT*)&br, 2);
-    GetClientRect (infoPtr->Self, &r);
+    if (theme && buddyTheme)
+    {
+        RECT br;
 
-    if (infoPtr->dwStyle & UDS_ALIGNLEFT)
-        br.left = r.left;
-    else if (infoPtr->dwStyle & UDS_ALIGNRIGHT)
-        br.right = r.right;
-    /* FIXME: take disabled etc. into account */
-    DrawThemeBackground (buddyTheme, hdc, 0, 0, &br, NULL);
-    return TRUE;
+        GetWindowRect(infoPtr->Buddy, &br);
+        MapWindowPoints(NULL, infoPtr->Self, (POINT*)&br, 2);
+        GetClientRect(infoPtr->Self, &rect);
+
+        if (infoPtr->dwStyle & UDS_ALIGNLEFT)
+            br.left = rect.left;
+        else if (infoPtr->dwStyle & UDS_ALIGNRIGHT)
+            br.right = rect.right;
+        /* FIXME: take disabled etc. into account */
+        DrawThemeBackground(buddyTheme, hdc, 0, 0, &br, NULL);
+        return;
+    }
+
+    GetClientRect(infoPtr->Self, &rect);
+    DrawEdge(hdc, &rect, EDGE_SUNKEN, BF_BOTTOM | BF_TOP | (infoPtr->dwStyle & UDS_ALIGNLEFT ? BF_LEFT : BF_RIGHT));
 }
 
 static BOOL UPDOWN_IsUpArrowPressed(const UPDOWN_INFO *infoPtr)
@@ -463,14 +471,8 @@ static LRESULT UPDOWN_Draw (const UPDOWN_INFO *infoPtr, HDC hdc)
     }
 
     /* Draw the common border between ourselves and our buddy */
-    if (UPDOWN_NeedBuddyBackground(infoPtr)) {
-        if (!theme || !UPDOWN_DrawBuddyBackground (infoPtr, hdc)) {
-            GetClientRect(infoPtr->Self, &rect);
-	    DrawEdge(hdc, &rect, EDGE_SUNKEN,
-		     BF_BOTTOM | BF_TOP |
-		     (infoPtr->dwStyle & UDS_ALIGNLEFT ? BF_LEFT : BF_RIGHT));
-        }
-    }
+    if (UPDOWN_NeedBuddyBackground(infoPtr))
+        UPDOWN_DrawBuddyBackground(infoPtr, hdc);
 
     /* Draw the incr button */
     UPDOWN_GetArrowRect (infoPtr, &rect, FLAG_INCR);
