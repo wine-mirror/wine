@@ -1711,6 +1711,8 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
         }
     }
 
+    if (new_style & WS_MINIMIZE) return 0; /* window is still minimized, don't change maximized state */
+
     if ((old_style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)
     {
         if ((new_style & WS_MAXIMIZE) && !(old_style & WS_MAXIMIZE))
