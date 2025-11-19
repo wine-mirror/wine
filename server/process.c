@@ -682,6 +682,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->is_system       = 0;
     process->debug_children  = 1;
     process->is_terminating  = 0;
+    process->set_foreground  = 0;
     process->imagelen        = 0;
     process->image           = NULL;
     process->job             = NULL;

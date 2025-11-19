@@ -112,6 +112,7 @@ struct thread_input
     int                    caret_hide;    /* caret hide count */
     int                    caret_state;   /* caret on/off state */
     struct list            msg_list;      /* list of hardware messages */
+    timeout_t              user_time;     /* time of last user input */
     unsigned char          desktop_keystate[256]; /* desktop keystate when keystate was synced */
     input_shm_t           *shared;        /* thread input in session shared memory */
 };
@@ -253,6 +254,7 @@ static struct thread_input *create_thread_input( struct thread *thread )
     if ((input = alloc_object( &thread_input_ops )))
     {
         list_init( &input->msg_list );
+        input->user_time = 0;
         input->shared = NULL;
 
         if (!(input->desktop = get_thread_desktop( thread, 0 /* FIXME: access rights */ )))
@@ -665,6 +667,7 @@ static void set_foreground_input( struct desktop *desktop, struct thread_input *
     input_shm_t *input_shm, *old_input_shm;
     shared_object_t dummy_obj = {0};
 
+    if (input) input->user_time = monotonic_time;
     if (desktop->foreground_input == input) return;
     input_shm = input ? input->shared : &dummy_obj.shm.input;
     old_input_shm = desktop->foreground_input ? desktop->foreground_input->shared : &dummy_obj.shm.input;
@@ -1927,6 +1930,10 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
 
     win = find_hardware_message_window( desktop, input, msg, &msg_code, &thread );
     flags = thread ? get_rawinput_device_flags( thread->process, msg ) : 0;
+    if (thread) input = thread->queue->input;
+    if (input && (get_hardware_msg_bit( msg->msg ) & (QS_KEY | QS_MOUSEBUTTON)))
+        input->user_time = monotonic_time;
+
     if (!win || !thread || (flags & RIDEV_NOLEGACY))
     {
         if (input && !(flags & RIDEV_NOLEGACY)) update_thread_input_key_state( input, msg->msg, msg->wparam );
@@ -1934,8 +1941,6 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
         if (thread) release_object( thread );
         return;
     }
-
-    input = thread->queue->input;
 
     if (win != msg->win) always_queue = 1;
     if (!always_queue || merge_message( input, msg )) free_message( msg );
@@ -1994,10 +1999,22 @@ static struct thread *get_foreground_thread( struct desktop *desktop, user_handl
     if (desktop->foreground_input)
     {
         input_shm_t *input_shm = desktop->foreground_input->shared;
-        return get_window_thread( input_shm->focus );
+        if (!(window = input_shm->focus)) window = input_shm->active;
     }
     if (window) return get_window_thread( window );
     return NULL;
+}
+
+static int is_current_process_foreground( struct desktop *desktop )
+{
+    struct thread *thread;
+    int ret;
+
+    if (!(thread = get_foreground_thread( desktop, 0 ))) return 1;
+    ret = thread->process == current->process || thread->process->id == current->process->parent_id;
+    release_object( thread );
+
+    return ret;
 }
 
 /* user32 reserves 1 & 2 for winemouse and winekeyboard,
@@ -3802,10 +3819,21 @@ DECL_HANDLER(set_foreground_window)
     struct thread_input *input;
     struct msg_queue *queue = get_current_queue();
 
-    if (!(desktop = get_thread_desktop( current, 0 ))) return;
+    if (!queue || !(desktop = get_thread_desktop( current, 0 ))) return;
 
     if (!(input = desktop->foreground_input)) reply->previous = 0;
     else reply->previous = input->shared->active;
+
+    if (!req->internal)
+    {
+        if (!current->process->set_foreground) current->process->set_foreground = 1;
+        else if (!is_current_process_foreground( desktop ) && queue->input && input && queue->input->user_time < input->user_time)
+        {
+            set_win32_error( ERROR_ACCESS_DENIED );
+            release_object( desktop );
+            return;
+        }
+    }
 
     reply->send_msg_old = (reply->previous && desktop->foreground_input != queue->input);
     reply->send_msg_new = FALSE;

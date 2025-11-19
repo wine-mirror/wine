@@ -3837,7 +3837,7 @@ static void test_SetFocus(HWND hwnd)
     flush_events( TRUE );
     ok( GetFocus() == 0, "got focus %p\n", GetFocus() );
     ok( GetActiveWindow() == 0, "got active %p\n", GetActiveWindow() );
-    todo_wine ok( GetForegroundWindow() == 0, "got foreground %p\n", GetForegroundWindow() );
+    ok( GetForegroundWindow() == 0, "got foreground %p\n", GetForegroundWindow() );
 
     SetFocus( other );
     ok( GetFocus() == other, "got focus %p\n", GetFocus() );
