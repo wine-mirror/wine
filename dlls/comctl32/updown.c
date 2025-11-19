@@ -161,14 +161,18 @@ static BOOL UPDOWN_HasBuddyBorder(const UPDOWN_INFO *infoPtr)
 
 static int UPDOWN_GetBuddyBorderSize(HWND hwnd)
 {
+#if __WINE_COMCTL32_VERSION == 6
     if (GetWindowTheme(hwnd)) return 1;
+#endif
 
     return DEFAULT_BUDDYBORDER;
 }
 
 static int UPDOWN_GetBuddySpacerSize(HWND hwnd)
 {
+#if __WINE_COMCTL32_VERSION == 6
     if (GetWindowTheme(hwnd)) return 0;
+#endif
 
     return DEFAULT_BUDDYSPACER;
 }
@@ -365,6 +369,7 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
 static void UPDOWN_DrawBuddyBackground (const UPDOWN_INFO *infoPtr, HDC hdc)
 {
     RECT rect;
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->Self);
     HTHEME buddyTheme = GetWindowTheme (infoPtr->Buddy);
 
@@ -384,6 +389,7 @@ static void UPDOWN_DrawBuddyBackground (const UPDOWN_INFO *infoPtr, HDC hdc)
         DrawThemeBackground(buddyTheme, hdc, 0, 0, &br, NULL);
         return;
     }
+#endif
 
     GetClientRect(infoPtr->Self, &rect);
     DrawEdge(hdc, &rect, EDGE_SUNKEN, BF_BOTTOM | BF_TOP | (infoPtr->dwStyle & UDS_ALIGNLEFT ? BF_LEFT : BF_RIGHT));
@@ -409,6 +415,7 @@ static BOOL UPDOWN_IsDownArrowHot(const UPDOWN_INFO *infoPtr)
     return infoPtr->Flags & FLAG_DECR && infoPtr->Flags & FLAG_MOUSEIN;
 }
 
+#if __WINE_COMCTL32_VERSION == 6
 static void UPDOWN_GetUpArrowThemePartAndState(const UPDOWN_INFO *infoPtr, int *part, int *state)
 {
     BOOL pressed, hot;
@@ -428,9 +435,11 @@ static void UPDOWN_GetDownArrowThemePartAndState(const UPDOWN_INFO *infoPtr, int
     *part = (infoPtr->dwStyle & UDS_HORZ) ? SPNP_DOWNHORZ : SPNP_DOWN;
     *state = (infoPtr->dwStyle & WS_DISABLED) ? DNS_DISABLED : (pressed ? DNS_PRESSED : (hot ? DNS_HOT : DNS_NORMAL));
 }
+#endif /* __WINE_COMCTL32_VERSION == 6 */
 
 static BOOL UPDOWN_NeedBuddyBackground(const UPDOWN_INFO *infoPtr)
 {
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->Self);
 
     if (theme)
@@ -445,6 +454,7 @@ static BOOL UPDOWN_NeedBuddyBackground(const UPDOWN_INFO *infoPtr)
         need_buddy_bg = IsWindow(infoPtr->Buddy) && (up_transparent || down_transparent);
         return UPDOWN_HasBuddyBorder(infoPtr) || need_buddy_bg;
     }
+#endif
 
     return UPDOWN_HasBuddyBorder(infoPtr);
 }
@@ -452,6 +462,7 @@ static BOOL UPDOWN_NeedBuddyBackground(const UPDOWN_INFO *infoPtr)
 static void UPDOWN_DrawUpArrow(const UPDOWN_INFO *infoPtr, HDC hdc)
 {
     RECT rect;
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->Self);
 
     if (theme)
@@ -463,6 +474,7 @@ static void UPDOWN_DrawUpArrow(const UPDOWN_INFO *infoPtr, HDC hdc)
         DrawThemeBackground(theme, hdc, part, state, &rect, NULL);
         return;
     }
+#endif
 
     UPDOWN_GetArrowRect(infoPtr, &rect, FLAG_INCR);
     DrawFrameControl(hdc, &rect, DFC_SCROLL,
@@ -475,6 +487,7 @@ static void UPDOWN_DrawUpArrow(const UPDOWN_INFO *infoPtr, HDC hdc)
 static void UPDOWN_DrawDownArrow(const UPDOWN_INFO *infoPtr, HDC hdc)
 {
     RECT rect;
+#if __WINE_COMCTL32_VERSION == 6
     HTHEME theme = GetWindowTheme(infoPtr->Self);
 
     if (theme)
@@ -486,6 +499,7 @@ static void UPDOWN_DrawDownArrow(const UPDOWN_INFO *infoPtr, HDC hdc)
         DrawThemeBackground(theme, hdc, part, state, &rect, NULL);
         return;
     }
+#endif
 
     UPDOWN_GetArrowRect(infoPtr, &rect, FLAG_DECR);
     DrawFrameControl(hdc, &rect, DFC_SCROLL,
@@ -966,7 +980,6 @@ static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, INT x, INT 
 static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr (hwnd);
-    HTHEME theme;
 
     TRACE("hwnd %p, msg %04x, wparam %Id, lparam %Ix\n", hwnd, message, wParam, lParam);
 
@@ -1005,7 +1018,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    if (infoPtr->dwStyle & UDS_AUTOBUDDY)
 		UPDOWN_SetBuddy (infoPtr, GetWindow (hwnd, GW_HWNDPREV));
 
-	    OpenThemeData (hwnd, L"Spin");
+            COMCTL32_OpenThemeForWindow (hwnd, L"Spin");
 
 	    TRACE("UpDown Ctrl creation, hwnd=%p\n", hwnd);
 	    }
@@ -1016,8 +1029,8 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
             UPDOWN_ResetSubclass (infoPtr);
 	    Free (infoPtr);
 	    SetWindowLongPtrW (hwnd, 0, 0);
-            theme = GetWindowTheme (hwnd);
-            CloseThemeData (theme);
+            COMCTL32_CloseThemeForWindow (hwnd);
+
 	    TRACE("UpDown Ctrl destruction, hwnd=%p\n", hwnd);
 	    break;
 
@@ -1042,11 +1055,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
             break;
 
         case WM_THEMECHANGED:
-            theme = GetWindowTheme (hwnd);
-            CloseThemeData (theme);
-            OpenThemeData (hwnd, L"Spin");
-            InvalidateRect (hwnd, NULL, TRUE);
-            break;
+            return COMCTL32_ThemeChanged (hwnd, L"Spin", TRUE, TRUE);
 
 	case WM_TIMER:
 	   /* is this the auto-press timer? */
