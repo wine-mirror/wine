@@ -5361,6 +5361,14 @@ static void test_shared_resources(void)
             get_d3dkmt_resource_desc( luid, handle, TRUE, 0, runtime_desc );
             break;
         }
+        case MAKETEST(4, 2, 2):
+        {
+            if (!vulkan_exp) break;
+            name = L"__winetest_vulkan_image";
+            img = export_vulkan_image( vulkan_exp, width_2d, height_2d, 1, name, VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT, &handle );
+            get_d3dkmt_resource_desc( luid, handle, FALSE, 0, runtime_desc );
+            break;
+        }
         case MAKETEST(4, 3, 0):
         {
             if (!vulkan_exp) break;
@@ -5375,7 +5383,7 @@ static void test_shared_resources(void)
         {
             WCHAR path[MAX_PATH];
             swprintf( path, ARRAY_SIZE(path), L"\\Sessions\\1\\BaseNamedObjects\\%s", name );
-            todo_wine check_object_name( handle, path );
+            check_object_name( handle, path );
         }
 
         if (d3d9_imp && GET_API(test) <= 3)
