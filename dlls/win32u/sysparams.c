@@ -775,7 +775,7 @@ static BOOL read_source_monitor_path( HKEY hkey, UINT index, char *path )
     return TRUE;
 }
 
-static void reg_empty_key( HKEY root, const char *key_name )
+static void reg_empty_key( HKEY root, const char *key_name, BOOL subkeys_only )
 {
     char buffer[4096];
     KEY_NODE_INFORMATION *key = (KEY_NODE_INFORMATION *)buffer;
@@ -786,10 +786,13 @@ static void reg_empty_key( HKEY root, const char *key_name )
     while (!NtEnumerateKey( hkey, 0, KeyNodeInformation, key, sizeof(buffer), &size ))
         reg_delete_tree( hkey, key->Name, key->NameLength );
 
-    while (!NtEnumerateValueKey( hkey, 0, KeyValueFullInformation, value, sizeof(buffer), &size ))
+    if (!subkeys_only)
     {
-        UNICODE_STRING name = { value->NameLength, value->NameLength, value->Name };
-        NtDeleteValueKey( hkey, &name );
+        while (!NtEnumerateValueKey( hkey, 0, KeyValueFullInformation, value, sizeof(buffer), &size ))
+        {
+            UNICODE_STRING name = { value->NameLength, value->NameLength, value->Name };
+            NtDeleteValueKey( hkey, &name );
+        }
     }
 
     if (hkey != root) NtClose( hkey );
@@ -846,27 +849,27 @@ static void prepare_devices(void)
     if (!video_key) video_key = reg_create_ascii_key( NULL, devicemap_video_keyA, REG_OPTION_VOLATILE, NULL );
 
     /* delete monitors */
-    reg_empty_key( enum_key, "DISPLAY" );
+    reg_empty_key( enum_key, "DISPLAY", FALSE );
     snprintf( buffer, sizeof(buffer), "Class\\%s", guid_devclass_monitorA );
     hkey = reg_create_ascii_key( control_key, buffer, 0, NULL );
-    reg_empty_key( hkey, NULL );
+    reg_empty_key( hkey, NULL, FALSE );
     set_reg_ascii_value( hkey, "", "Monitors" );
     set_reg_ascii_value( hkey, "Class", "Monitor" );
     NtClose( hkey );
 
     /* delete sources */
-    reg_empty_key( video_key, NULL );
+    reg_empty_key( video_key, NULL, FALSE );
 
     /* clean GPUs */
     snprintf( buffer, sizeof(buffer), "Class\\%s", guid_devclass_displayA );
     hkey = reg_create_ascii_key( control_key, buffer, 0, NULL );
-    reg_empty_key( hkey, NULL );
+    reg_empty_key( hkey, NULL, FALSE );
     set_reg_ascii_value( hkey, "", "Display adapters" );
     set_reg_ascii_value( hkey, "Class", "Display" );
     NtClose( hkey );
     if ((hkey = reg_create_ascii_key( NULL, directx_keyA, 0, NULL )))
     {
-        reg_empty_key( hkey, NULL );
+        reg_empty_key( hkey, NULL, TRUE );
         NtClose( hkey );
     }
 
