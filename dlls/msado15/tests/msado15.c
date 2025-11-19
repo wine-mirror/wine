@@ -27,6 +27,7 @@
 #include "wine/test.h"
 #include "msdasql.h"
 #include "odbcinst.h"
+#include "msdadc.h"
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
@@ -83,6 +84,7 @@ DEFINE_EXPECT(rowset_ReleaseRows);
 DEFINE_EXPECT(rowset_GetRowsAt);
 DEFINE_EXPECT(rowset_GetExactPosition);
 DEFINE_EXPECT(rowset_GetData);
+DEFINE_EXPECT(rowset_change_SetData);
 DEFINE_EXPECT(rowset_change_InsertRow);
 DEFINE_EXPECT(accessor_AddRefAccessor);
 DEFINE_EXPECT(accessor_CreateAccessor);
@@ -837,8 +839,18 @@ static HRESULT WINAPI rowset_change_DeleteRows(IRowsetChange *iface, HCHAPTER re
 static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface,
         HROW row, HACCESSOR accessor, void *data)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    VARIANT *v;
+
+    CHECK_EXPECT(rowset_change_SetData);
+
+    ok(row == 1, "row = %Id\n", row);
+    ok(accessor, "accessor = 0\n");
+    ok(data != NULL, "data = NULL\n");
+
+    v = (VARIANT *)data;
+    ok(V_VT(v) == VT_I4, "V_VT(v) = %d\n", V_VT(v));
+    ok(V_I4(v) == 123, "V_I4(v) = %ld\n", V_I4(v));
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface,
@@ -904,7 +916,6 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
     ok(!cBindings || cBindings == 1, "cBindings = %Iu\n", cBindings);
     ok(cbRowSize == 0, "cbRowSize = %Iu\n", cbRowSize);
     ok(phAccessor != NULL, "pHAccessor = NULL\n");
-    ok(!rgStatus, "rgStatus != NULL\n");
 
     if (!cBindings)
     {
@@ -916,6 +927,8 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
     haccessor->ref = 1;
     haccessor->binding = rgBindings[0];
     *phAccessor = (HACCESSOR)haccessor;
+
+    if (rgStatus) rgStatus[0] = DBBINDSTATUS_OK;
     return S_OK;
 }
 
@@ -1049,25 +1062,49 @@ static HRESULT WINAPI rowset_AddRefRows(IRowsetExactScroll *iface, DBCOUNTITEM c
 static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
 {
     struct haccessor *haccessor = (struct haccessor *)hAccessor;
-    DBSTATUS status;
+    DBSTATUS status = DBSTATUS_S_OK;
     DBLENGTH len;
-    int val;
+    union
+    {
+        int i;
+        VARIANT v;
+    } val;
 
     CHECK_EXPECT2(rowset_GetData);
 
-    ok(!haccessor->binding.iOrdinal, "iOrdinal = %Id\n", haccessor->binding.iOrdinal);
-    ok(haccessor->binding.dwPart == (DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS),
-            "dwPart = %ld\n", haccessor->binding.dwPart);
-    ok(haccessor->binding.cbMaxLen == sizeof(int), "cbMaxLen = %Id\n", haccessor->binding.cbMaxLen);
-    ok(haccessor->binding.wType == DBTYPE_I4, "wType = %d\n", haccessor->binding.wType);
+    switch(haccessor->binding.iOrdinal)
+    {
+    case 0:
+        ok(haccessor->binding.dwPart == (DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS),
+                "dwPart = %ld\n", haccessor->binding.dwPart);
+        ok(haccessor->binding.cbMaxLen == sizeof(int), "cbMaxLen = %Id\n", haccessor->binding.cbMaxLen);
+        ok(haccessor->binding.wType == DBTYPE_I4, "wType = %d\n", haccessor->binding.wType);
 
-    val = hRow;
-    len = sizeof(int);
-    status = DBSTATUS_S_OK;
+        val.i = hRow;
+        len = sizeof(val.i);
+        break;
 
-    memcpy((BYTE *)pData + haccessor->binding.obValue, &val, sizeof(val));
-    memcpy((BYTE *)pData + haccessor->binding.obLength, &len, sizeof(len));
-    memcpy((BYTE *)pData + haccessor->binding.obStatus, &status, sizeof(status));
+    case 1:
+        ok(haccessor->binding.dwPart == (DBPART_VALUE | DBPART_STATUS),
+                "dwPart = %ld\n", haccessor->binding.dwPart);
+        ok(haccessor->binding.cbMaxLen == sizeof(VARIANT), "cbMaxLen = %Id\n", haccessor->binding.cbMaxLen);
+        ok(haccessor->binding.wType == DBTYPE_VARIANT, "wType = %d\n", haccessor->binding.wType);
+
+        V_VT(&val.v) = VT_I4;
+        V_I4(&val.v) = 123;
+        len = sizeof(val.v);
+        break;
+    default:
+        ok(0, "unexpected GetData argument\n");
+        return E_NOTIMPL;
+    }
+
+    if (haccessor->binding.dwPart & DBPART_VALUE)
+        memcpy((BYTE *)pData + haccessor->binding.obValue, &val, len);
+    if (haccessor->binding.dwPart & DBPART_LENGTH)
+        memcpy((BYTE *)pData + haccessor->binding.obLength, &len, sizeof(len));
+    if (haccessor->binding.dwPart & DBPART_STATUS)
+        memcpy((BYTE *)pData + haccessor->binding.obStatus, &status, sizeof(status));
     return S_OK;
 }
 
@@ -1235,7 +1272,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     HRESULT hr;
     LONG count, state;
     unsigned char prec, scale;
-    VARIANT index, missing;
+    VARIANT index, missing, v;
     ADO_LONGPTR size;
     DataTypeEnum type;
 
@@ -1334,6 +1371,43 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( scale == 1, "got %u\n", scale );
 
+    SET_EXPECT( rowset_GetNextRows );
+    if (exact_scroll) SET_EXPECT( rowset_GetRowsAt );
+    SET_EXPECT( rowset_QI_IAccessor );
+    SET_EXPECT( accessor_CreateAccessor );
+    SET_EXPECT( rowset_GetData );
+    hr = Field_get_Value( field, &v );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
+    else
+    {
+        todo_wine CHECK_NOT_CALLED( rowset_GetNextRows );
+        todo_wine CHECK_CALLED( rowset_GetRowsAt );
+    }
+    CHECK_CALLED( rowset_QI_IAccessor );
+    CHECK_CALLED( accessor_CreateAccessor );
+    CHECK_CALLED( rowset_GetData );
+    ok( V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v) );
+    ok( V_I4(&v) == 123, "V_I4(&v) = %ld\n", V_I4(&v) );
+
+    SET_EXPECT( rowset_GetData );
+    hr = Field_get_Value( field, &v );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED( rowset_GetData );
+    ok( V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v) );
+    ok( V_I4(&v) == 123, "V_I4(&v) = %ld\n", V_I4(&v) );
+
+    SET_EXPECT(rowset_QI_IRowsetChange);
+    SET_EXPECT( rowset_QI_IAccessor );
+    SET_EXPECT( accessor_CreateAccessor );
+    SET_EXPECT( rowset_change_SetData );
+    hr = Field_put_Value( field, v );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine CHECK_NOT_CALLED(rowset_QI_IRowsetChange);
+    todo_wine CHECK_CALLED( rowset_QI_IAccessor );
+    CHECK_CALLED( accessor_CreateAccessor );
+    CHECK_CALLED( rowset_change_SetData );
+
     Field_Release( field );
 
     SET_EXPECT( rowset_QI_IRowsetExactScroll );
@@ -1394,7 +1468,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
-    SET_EXPECT(rowset_QI_IRowsetChange);
     SET_EXPECT(rowset_QI_IAccessor);
     SET_EXPECT(accessor_CreateAccessor);
     SET_EXPECT(accessor_AddRefAccessor);
@@ -1403,9 +1476,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     if (exact_scroll) SET_EXPECT(rowset_GetData);
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine CHECK_NOT_CALLED(rowset_QI_IRowsetChange);
-    if (!exact_scroll) CHECK_CALLED(rowset_QI_IAccessor);
-    else todo_wine CHECK_NOT_CALLED(rowset_QI_IAccessor);
+    if (!exact_scroll) todo_wine CHECK_CALLED(rowset_QI_IAccessor);
+    else CHECK_NOT_CALLED(rowset_QI_IAccessor);
     CHECK_CALLED(accessor_CreateAccessor);
     CHECK_CALLED(accessor_AddRefAccessor);
     CHECK_CALLED(rowset_change_InsertRow);
