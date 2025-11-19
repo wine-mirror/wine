@@ -3209,5 +3209,9 @@ LRESULT COMCTL32_NCPaint(HWND hwnd, WPARAM wp, LPARAM lp, const WCHAR *theme_cla
 
 BOOL COMCTL32_IsThemed(HWND hwnd)
 {
+#if __WINE_COMCTL32_VERSION == 6
     return !!GetWindowTheme(hwnd);
+#else
+    return FALSE;
+#endif
 }
