@@ -199,7 +199,7 @@ msgstr "&Instal·la"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -744,7 +744,7 @@ msgid "Scr&ipt:"
 msgstr "&Alfabet:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Color"
 
@@ -1098,7 +1098,8 @@ msgstr "Porpra"
 msgid "Teal"
 msgstr "Xarxet"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Gris"
 
@@ -9700,11 +9701,39 @@ msgstr "Font desconegut"
 msgid "the program which created it"
 msgstr "el programa que l'ha creat"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:50
 msgid "Scanning"
 msgstr "S'està escanejant"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:53
+#, fuzzy
+#| msgid "feature from:"
+msgid "Manufacturer:"
+msgstr "característica de:"
+
+#: dlls/sane.ds/sane.rc:55
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product family:"
+msgstr "Actualitzacions de producte:"
+
+#: dlls/sane.ds/sane.rc:57
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product name:"
+msgstr "Actualitzacions de producte:"
+
+#: dlls/sane.ds/sane.rc:59
+#, fuzzy
+#| msgid "Screen resolution"
+msgid "Resolution:"
+msgstr "Resolució de pantalla"
+
+#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Pàgina"
+
+#: dlls/sane.ds/sane.rc:63
 msgid "SCANNING... Please Wait"
 msgstr "S'ESTÀ ESCANEJANT... Si us plau, espereu"
 
@@ -9733,6 +9762,15 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Desconegut"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9786,10 +9824,6 @@ msgstr "Copia fitxers del fabricant de:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "Cal el fitxer '%1' en %2"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Desconegut"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -20137,10 +20171,6 @@ msgstr "Apropa"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Allunya"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Pàgina"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

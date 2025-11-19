@@ -46,6 +46,7 @@ struct tagActiveDS
     /* Capabilities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
     TW_INT16            capXferCount;           /* ICAP_XFERCOUNT */
+    TW_BOOL             capIndicators;          /* CAP_INDICATORS */
     BOOL                PixelTypeSet;
     TW_UINT16		defaultPixelType;		/* ICAP_PIXELTYPE */
     BOOL                XResolutionSet;
@@ -61,6 +62,12 @@ struct tagActiveDS
 
     /* TRUE if we are scanning with an Automatic Document Feeder */
     BOOL                feederEnabled;
+
+    /* TRUE if user pressed cancel in scanning dialog */
+    BOOL                userCancelled;
+
+    /* TRUE if user interface dialog is shown in DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDS */
+    BOOL                ShowUI;
 };
 
 extern struct tagActiveDS activeDS;

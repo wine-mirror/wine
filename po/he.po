@@ -207,7 +207,7 @@ msgstr "ה&תקנה"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -753,7 +753,7 @@ msgid "Scr&ipt:"
 msgstr "&כתב:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "צבע"
 
@@ -1113,7 +1113,8 @@ msgstr "סגול"
 msgid "Teal"
 msgstr "כחול ים"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "אפור"
 
@@ -10163,11 +10164,37 @@ msgstr "מקור לא ידוע"
 msgid "the program which created it"
 msgstr "התכנית שיצרה אותו"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:50
 msgid "Scanning"
 msgstr "סריקה"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:53
+msgid "Manufacturer:"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:55
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product family:"
+msgstr "עדכוני המוצר:"
+
+#: dlls/sane.ds/sane.rc:57
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product name:"
+msgstr "עדכוני המוצר:"
+
+#: dlls/sane.ds/sane.rc:59
+#, fuzzy
+#| msgid "Version:"
+msgid "Resolution:"
+msgstr "גרסה:"
+
+#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "עמודים"
+
+#: dlls/sane.ds/sane.rc:63
 msgid "SCANNING... Please Wait"
 msgstr "מתבצעת סריקה... נא להמתין"
 
@@ -10196,6 +10223,15 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "מ״ש"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "לא ידוע"
 
 #: dlls/serialui/serialui.rc:28
 #, fuzzy
@@ -10250,10 +10286,6 @@ msgstr "העתקת קובצי היצרן מ־:"
 #, fuzzy
 msgid "The file '%1' on %2 is needed"
 msgstr "הקובץ '%s' שב־%s דרוש"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "לא ידוע"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -20721,10 +20753,6 @@ msgstr "התקרבות"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "התרחקות"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "עמודים"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

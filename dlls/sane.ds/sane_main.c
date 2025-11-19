@@ -82,6 +82,8 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
         activeDS.appIdentity = *pOrigin;
         activeDS.capXferMech = TWSX_NATIVE;
         activeDS.capXferCount = -1;
+        activeDS.capIndicators = TRUE;
+        activeDS.ShowUI = FALSE;
 
         SANE_LoadOptions();
 
@@ -371,7 +373,7 @@ void SANE_Notify (TW_UINT16 message)
 /** @brief A new TWAIN data transfer is ready to be processed
  *
  *  - Notify Application.
- *  - Set activeDS.remainingImages to start value.
+ *  - Set activeDS.sannedImages to zero.
  *  - Set activeDS.feederEnabled according to current sane parameters
  *    if Automatic Document Feeder (ADF) is enabled.
  *  - Notify the Application of MSG_XFERREADY.
@@ -390,6 +392,7 @@ SANE_XferReady(void)
     activeDS.feederEnabled =
       sane_option_get_str ("source", current_source, sizeof(current_source)) == TWCC_SUCCESS &&
       (current_source[0]=='A' || current_source[0]=='a');
+    activeDS.userCancelled = FALSE;
 
     SANE_Notify(MSG_XFERREADY);
 }

@@ -181,7 +181,7 @@ static TW_UINT16 msg_get_array(pTW_CAPABILITY pCapability, TW_UINT16 type, const
 
 static TW_UINT16 TWAIN_GetSupportedCaps(pTW_CAPABILITY pCapability)
 {
-    static const int supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE,
+    static const int supported_caps[] = { CAP_SUPPORTEDCAPS, CAP_XFERCOUNT, CAP_UICONTROLLABLE, CAP_INDICATORS,
                     CAP_AUTOFEED, CAP_FEEDERENABLED,
                     ICAP_XFERMECH, ICAP_PIXELTYPE, ICAP_UNITS, ICAP_BITDEPTH, ICAP_COMPRESSION, ICAP_PIXELFLAVOR,
                     ICAP_XRESOLUTION, ICAP_YRESOLUTION, ICAP_PHYSICALHEIGHT, ICAP_PHYSICALWIDTH, ICAP_SUPPORTEDSIZES };
@@ -1057,6 +1057,46 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
 }
 
 
+/* CAP_INDICATORS */
+static TW_UINT16 SANE_CAPIndicators (pTW_CAPABILITY pCapability, TW_UINT16 action)
+{
+    TW_UINT16 twCC = TWCC_BADCAP;
+    TW_UINT32 val;
+
+    TRACE("CAP_INDICATORS\n");
+
+    switch (action)
+    {
+        case MSG_QUERYSUPPORT:
+            twCC = set_onevalue(pCapability, TWTY_INT32,
+                    TWQC_GET | TWQC_SET | TWQC_GETDEFAULT | TWQC_GETCURRENT | TWQC_RESET );
+            break;
+
+        case MSG_GET:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, activeDS.capIndicators);
+            break;
+
+        case MSG_SET:
+            twCC = msg_set(pCapability, &val);
+            if (twCC == TWCC_SUCCESS)
+                activeDS.capIndicators = (TW_BOOL) val;
+            break;
+
+        case MSG_GETDEFAULT:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, TRUE);
+            break;
+
+        case MSG_RESET:
+            activeDS.capIndicators = TRUE;
+            /* .. fall through intentional .. */
+
+        case MSG_GETCURRENT:
+            twCC = set_onevalue(pCapability, TWTY_BOOL, activeDS.capIndicators);
+            break;
+    }
+    return twCC;
+}
+
 
 TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
@@ -1087,6 +1127,10 @@ TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action)
 
         case CAP_FEEDERENABLED:
             twCC = SANE_CAPFeederEnabled (pCapability, action);
+            break;
+
+        case CAP_INDICATORS:
+            twCC = SANE_CAPIndicators (pCapability, action);
             break;
 
         case ICAP_PIXELTYPE:

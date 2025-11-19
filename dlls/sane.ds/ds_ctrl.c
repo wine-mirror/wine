@@ -211,7 +211,8 @@ TW_UINT16 SANE_PendingXfersEndXfer (pTW_IDENTITY pOrigin,
         pPendingXfers->Count = activeDS.capXferCount==-1 ? -1 :
           activeDS.capXferCount - activeDS.scannedImages;
 	if (!pPendingXfers->Count ||
-            !activeDS.feederEnabled)
+            !activeDS.feederEnabled ||
+            activeDS.userCancelled)
         {
             /* All requested images transfered. Stop scanning */
             pPendingXfers->Count = 0;
@@ -403,6 +404,7 @@ TW_UINT16 SANE_EnableDSUserInterface (pTW_IDENTITY pOrigin,
     else
     {
         activeDS.hwndOwner = pUserInterface->hParent;
+        activeDS.ShowUI = pUserInterface->ShowUI;
         if (pUserInterface->ShowUI)
         {
             BOOL rc;

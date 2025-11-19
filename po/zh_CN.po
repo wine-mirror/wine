@@ -193,7 +193,7 @@ msgstr "安装(&I)"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -729,7 +729,7 @@ msgid "Scr&ipt:"
 msgstr "书写系统(&I):"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "颜色"
 
@@ -1083,7 +1083,8 @@ msgstr "紫色"
 msgid "Teal"
 msgstr "青色"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "灰色"
 
@@ -9583,11 +9584,39 @@ msgstr "不明来源"
 msgid "the program which created it"
 msgstr "不明应用程序"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:50
 msgid "Scanning"
 msgstr "正在扫描"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:53
+#, fuzzy
+#| msgid "feature from:"
+msgid "Manufacturer:"
+msgstr "功能来自:"
+
+#: dlls/sane.ds/sane.rc:55
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product family:"
+msgstr "产品更新:"
+
+#: dlls/sane.ds/sane.rc:57
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product name:"
+msgstr "产品更新:"
+
+#: dlls/sane.ds/sane.rc:59
+#, fuzzy
+#| msgid "Screen resolution"
+msgid "Resolution:"
+msgstr "屏幕分辨率"
+
+#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "页"
+
+#: dlls/sane.ds/sane.rc:63
 msgid "SCANNING... Please Wait"
 msgstr "正在扫描... 请稍候"
 
@@ -9616,6 +9645,15 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "未知"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9666,10 +9704,6 @@ msgstr "从此处复制厂商文件:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "需要 %2 上的文件“%1”"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "未知"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -19679,10 +19713,6 @@ msgstr "放大"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "缩小"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "页"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

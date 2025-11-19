@@ -199,7 +199,7 @@ msgstr "&تثبيت"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -746,7 +746,7 @@ msgid "Scr&ipt:"
 msgstr "ترمي&ز:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "الون"
 
@@ -1102,7 +1102,8 @@ msgstr "أرجواني"
 msgid "Teal"
 msgstr "نهري"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "رمادي"
 
@@ -10166,11 +10167,39 @@ msgstr "مصدر غير معروف"
 msgid "the program which created it"
 msgstr "البرنامج الذي تم إنشاؤه"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:50
 msgid "Scanning"
 msgstr "المسح"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:53
+#, fuzzy
+#| msgid "feature from:"
+msgid "Manufacturer:"
+msgstr "الميزة من:"
+
+#: dlls/sane.ds/sane.rc:55
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product family:"
+msgstr "تحديثات المُنتج:"
+
+#: dlls/sane.ds/sane.rc:57
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product name:"
+msgstr "تحديثات المُنتج:"
+
+#: dlls/sane.ds/sane.rc:59
+#, fuzzy
+#| msgid "Screen resolution"
+msgid "Resolution:"
+msgstr "دقة الشّاشة"
+
+#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "صفحة"
+
+#: dlls/sane.ds/sane.rc:63
 msgid "SCANNING... Please Wait"
 msgstr "يجري المسح... يرجى الانتظار"
 
@@ -10199,6 +10228,15 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "us"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "غير معروف"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -10251,10 +10289,6 @@ msgstr "نسخ الملفات الأصلية من:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "الملف '%1' الموجود في %2 مطلوب"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "غير معروف"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -21259,10 +21293,6 @@ msgstr "تكبير"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "تصغير"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "صفحة"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

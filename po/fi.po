@@ -194,7 +194,7 @@ msgstr "&Asenna"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -734,7 +734,7 @@ msgid "Scr&ipt:"
 msgstr "Merk&istö:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Väri"
 
@@ -1088,7 +1088,8 @@ msgstr "Purppura"
 msgid "Teal"
 msgstr "Turkoosi"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Harmaa"
 
@@ -9623,11 +9624,39 @@ msgstr "Tuntematon lähde"
 msgid "the program which created it"
 msgstr "ohjelma, joka loi sen"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:50
 msgid "Scanning"
 msgstr "Skannataan"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:53
+#, fuzzy
+#| msgid "feature from:"
+msgid "Manufacturer:"
+msgstr "ominaisuus lähteestä:"
+
+#: dlls/sane.ds/sane.rc:55
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product family:"
+msgstr "Päivitykset:"
+
+#: dlls/sane.ds/sane.rc:57
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product name:"
+msgstr "Päivitykset:"
+
+#: dlls/sane.ds/sane.rc:59
+#, fuzzy
+#| msgid "Screen resolution"
+msgid "Resolution:"
+msgstr "Näytön resoluutio"
+
+#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Sivu"
+
+#: dlls/sane.ds/sane.rc:63
 msgid "SCANNING... Please Wait"
 msgstr "SKANNATAAN... Odota"
 
@@ -9656,6 +9685,15 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Tuntematon"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9708,10 +9746,6 @@ msgstr "Kopioi valmistajan tiedostot:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "Tiedostoa '%1' %2:lla tarvitaan"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Tuntematon"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -19861,10 +19895,6 @@ msgstr "Lähennä"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Loitonna"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Sivu"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

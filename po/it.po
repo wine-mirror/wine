@@ -209,7 +209,7 @@ msgstr "&Installa"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -769,7 +769,7 @@ msgid "Scr&ipt:"
 msgstr "Sc&ript:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Colore"
 
@@ -1125,7 +1125,8 @@ msgstr "Porpora"
 msgid "Teal"
 msgstr "Foglia di Tè"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Grigio"
 
@@ -10259,11 +10260,39 @@ msgstr "Sorgente sconosciuta"
 msgid "the program which created it"
 msgstr "Il programma che lo ha creato"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:50
 msgid "Scanning"
 msgstr "Scansione"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:53
+#, fuzzy
+#| msgid "feature from:"
+msgid "Manufacturer:"
+msgstr "funzionalità da:"
+
+#: dlls/sane.ds/sane.rc:55
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product family:"
+msgstr "Aggiornamenti del prodotto:"
+
+#: dlls/sane.ds/sane.rc:57
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product name:"
+msgstr "Aggiornamenti del prodotto:"
+
+#: dlls/sane.ds/sane.rc:59
+#, fuzzy
+#| msgid "Screen resolution"
+msgid "Resolution:"
+msgstr "Risoluzione dello schermo"
+
+#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Pagina"
+
+#: dlls/sane.ds/sane.rc:63
 msgid "SCANNING... Please Wait"
 msgstr "SCANSIONE... Aspetta un momento"
 
@@ -10292,6 +10321,15 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Sconosciuto"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -10344,10 +10382,6 @@ msgstr "Copia i file del produttore da:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "Il file '%1' su %2 è necessario"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Sconosciuto"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -21267,10 +21301,6 @@ msgstr "Ingrandisci"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Rimpicciolisci"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Pagina"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

@@ -28,6 +28,7 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "prsht.h"
+#include "commctrl.h"
 #include "wine/debug.h"
 #include "resource.h"
 
@@ -1059,14 +1060,53 @@ static int CALLBACK PropSheetProc(HWND hwnd, UINT msg, LPARAM lParam)
 
 static INT_PTR CALLBACK ScanningProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    switch (msg)
+    {
+       case WM_INITDIALOG:
+       {
+           WCHAR buffer[34];
+           MultiByteToWideChar( CP_UNIXCP, 0, activeDS.identity.Manufacturer, -1, buffer, ARRAY_SIZE(buffer) );
+           SetDlgItemTextW(hwnd, IDC_MANUFACTURER , buffer);
+
+           MultiByteToWideChar( CP_UNIXCP, 0, activeDS.identity.ProductFamily, -1, buffer, ARRAY_SIZE(buffer) );
+           SetDlgItemTextW(hwnd, IDC_PRODUCTFAMILY, buffer);
+
+           MultiByteToWideChar( CP_UNIXCP, 0, activeDS.identity.ProductName, -1, buffer, ARRAY_SIZE(buffer) );
+           SetDlgItemTextW(hwnd, IDC_PRODUCTNAME  , buffer);
+
+           SetDlgItemInt(hwnd, IDC_PAGE, activeDS.scannedImages+1, TRUE);
+       }
+       break;
+       case WM_COMMAND:
+       {
+           switch (LOWORD(wParam))
+           {
+               case IDCANCEL:
+                   WARN("User cancelled\n");
+                   activeDS.userCancelled = TRUE;
+                   break;
+           }
+           break;
+       }
+    }
     return FALSE;
 }
 
 HWND ScanningDialogBox(HWND dialog, LONG progress)
 {
+    static DWORD tickLast=0;
+    DWORD tickNow = GetTickCount();
+
+    if (!activeDS.capIndicators &&
+        !activeDS.ShowUI)
+    {
+        return NULL;
+    }
+
     if (!dialog)
-        dialog = CreateDialogW(SANE_instance,
-                (LPWSTR)MAKEINTRESOURCE(IDD_DIALOG1), NULL, ScanningProc);
+    {
+        dialog = CreateDialogW(SANE_instance, MAKEINTRESOURCEW(IDD_SCANNING), NULL, ScanningProc);
+    }
 
     if (progress == -1)
     {
@@ -1074,8 +1114,24 @@ HWND ScanningDialogBox(HWND dialog, LONG progress)
         return NULL;
     }
 
-    RedrawWindow(dialog,NULL,NULL,
-            RDW_INTERNALPAINT|RDW_UPDATENOW|RDW_ALLCHILDREN);
+    if (tickNow - tickLast > 100)
+    {
+        MSG msg;
+        tickLast = tickNow;
+
+        /* Update progress bar */
+        SendDlgItemMessageW(dialog, IDC_PROGRESS, PBM_SETPOS, progress, 0);
+
+        /* Perform message handling */
+        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (!IsDialogMessageW(dialog, &msg))
+            {
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
+        }
+    }
 
     return dialog;
 }

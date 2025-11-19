@@ -204,7 +204,7 @@ msgstr "&Установить"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -747,7 +747,7 @@ msgid "Scr&ipt:"
 msgstr "На&бор символов:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Выбор цвета"
 
@@ -1103,7 +1103,8 @@ msgstr "Пурпурный"
 msgid "Teal"
 msgstr "Морской волны"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Серый"
 
@@ -9725,11 +9726,39 @@ msgstr "Неизвестный источник"
 msgid "the program which created it"
 msgstr "программа, которая его создала"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:50
 msgid "Scanning"
 msgstr "Сканирование"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:53
+#, fuzzy
+#| msgid "feature from:"
+msgid "Manufacturer:"
+msgstr "функции из:"
+
+#: dlls/sane.ds/sane.rc:55
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product family:"
+msgstr "Обновления:"
+
+#: dlls/sane.ds/sane.rc:57
+#, fuzzy
+#| msgid "Product Updates:"
+msgid "Product name:"
+msgstr "Обновления:"
+
+#: dlls/sane.ds/sane.rc:59
+#, fuzzy
+#| msgid "Screen resolution"
+msgid "Resolution:"
+msgstr "Разрешение экрана"
+
+#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Страница"
+
+#: dlls/sane.ds/sane.rc:63
 msgid "SCANNING... Please Wait"
 msgstr "СКАНИРОВАНИЕ... пожалуйста, подождите"
 
@@ -9758,6 +9787,15 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "мкс"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Неизвестно"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9810,10 +9848,6 @@ msgstr "Копировать файлы изготовителя из:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "Файл «%1» на %2 необходим"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Неизвестно"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -20143,10 +20177,6 @@ msgstr "Приблизить"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Отдалить"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Страница"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"
