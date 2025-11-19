@@ -2762,7 +2762,13 @@ static HRESULT WINAPI recordset_get_EditMode( _Recordset *iface, EditModeEnum *m
     TRACE( "%p, %p\n", iface, mode );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
-    if (recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
+    {
+        HRESULT hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
 
     *mode = recordset->editmode;
     return S_OK;
