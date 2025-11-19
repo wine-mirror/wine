@@ -3792,14 +3792,19 @@ HRESULT dom_document_create(MSXML_VERSION version, void **ppObj)
     return hr;
 }
 
-IUnknown* create_domdoc( xmlNodePtr document )
+IUnknown* create_domdoc( xmlNodePtr node )
 {
+    xmlDocPtr doc = (xmlDocPtr)node;
     IUnknown *obj = NULL;
     HRESULT hr;
 
-    TRACE("(%p)\n", document);
+    TRACE("(%p)\n", node);
 
-    hr = get_domdoc_from_xmldoc((xmlDocPtr)document, (IXMLDOMDocument3**)&obj);
+    if (!doc->_private)
+        xmldoc_init(doc, MSXML6);
+    xmldoc_add_ref(doc);
+
+    hr = get_domdoc_from_xmldoc(doc, (IXMLDOMDocument3**)&obj);
     if (FAILED(hr))
         return NULL;
 

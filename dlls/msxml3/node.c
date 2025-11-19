@@ -33,6 +33,8 @@
 #include <libxslt/xsltutils.h>
 #include <libxslt/xsltInternals.h>
 #include <libxslt/documents.h>
+#include <libxslt/extensions.h>
+#include <libxslt/xsltInternals.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -40,6 +42,8 @@
 #include "winnls.h"
 #include "ole2.h"
 #include "msxml6.h"
+#include <activscp.h>
+#include "objsafe.h"
 
 #include "msxml_private.h"
 
@@ -1477,9 +1481,514 @@ failed:
     return doc;
 }
 
+#ifdef _WIN64
+
+#define IActiveScriptParse_Release IActiveScriptParse64_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse64_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse64_ParseScriptText
+
+#else
+
+#define IActiveScriptParse_Release IActiveScriptParse32_Release
+#define IActiveScriptParse_InitNew IActiveScriptParse32_InitNew
+#define IActiveScriptParse_ParseScriptText IActiveScriptParse32_ParseScriptText
+
+#endif
+
+struct xsl_scripts
+{
+    struct
+    {
+        IActiveScript *script;
+        const xmlChar *uri;
+    } *entries;
+    size_t count;
+    size_t capacity;
+};
+
+static IActiveScript *xpath_msxsl_script_get_script(xmlXPathParserContextPtr ctxt, const xmlChar *uri)
+{
+    xsltTransformContextPtr xslt_ctxt = xsltXPathGetTransformContext(ctxt);
+    struct xsl_scripts *scripts = xslt_ctxt->userData;
+
+    for (size_t i = 0; i < scripts->count; ++i)
+    {
+        if (xmlStrEqual(scripts->entries[i].uri, uri))
+            return scripts->entries[i].script;
+    }
+
+    return NULL;
+}
+
+static HRESULT xpath_create_nodelist_from_set(xmlNodeSetPtr set, bool needs_copy, IXMLDOMNodeList **ret)
+{
+    xmlNodeSet _copy = { 0 };
+    xmlXPathObjectPtr obj;
+    HRESULT hr;
+
+    if (needs_copy)
+    {
+        _copy.nodeTab = xmlMalloc(set->nodeNr * sizeof(*set->nodeTab));
+        _copy.nodeNr = set->nodeNr;
+        _copy.nodeMax = set->nodeNr;
+        for (int i = 0; i < set->nodeNr; ++i)
+            _copy.nodeTab[i] = xmlCopyNode(set->nodeTab[i], 1);
+        set = &_copy;
+    }
+
+    obj = xmlXPathNewNodeSetList(set);
+    hr = create_selection_from_nodeset(obj, ret);
+    xmlFree(_copy.nodeTab);
+
+    return hr;
+}
+
+static void xpath_msxsl_script_function(xmlXPathParserContextPtr ctxt, int nargs)
+{
+    xsltTransformContextPtr xslt_ctxt = xsltXPathGetTransformContext(ctxt);
+    xmlXPathContextPtr xpath = ((struct _xsltTransformContext *)xslt_ctxt)->xpathCtxt;
+    DISPPARAMS params = { 0 };
+    IActiveScript *script;
+    VARIANT *args = NULL;
+    IDispatch *disp;
+    VARIANT result;
+    DISPID dispid;
+    HRESULT hr;
+    BSTR name;
+
+    TRACE("%s:%s\n", xpath->functionURI, xpath->function);
+
+    script = xpath_msxsl_script_get_script(ctxt, xpath->functionURI);
+    if (!script)
+    {
+        WARN("Couldn't find a script for %s.\n", xpath->functionURI);
+        return;
+    }
+
+    if (FAILED(IActiveScript_GetScriptDispatch(script, NULL, &disp)))
+        return;
+
+    name = bstr_from_xmlChar(xpath->function);
+    hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, &dispid);
+    SysFreeString(name);
+    if (FAILED(hr))
+    {
+        WARN("Couldn't find %s function.\n", xpath->function);
+        IDispatch_Release(disp);
+        return;
+    }
+
+    if (nargs)
+    {
+        args = calloc(nargs, sizeof(*args));
+
+        for (int i = 0; i < nargs; ++i)
+        {
+            xmlXPathObjectType obj_type = XPATH_UNDEFINED;
+            xmlXPathObjectPtr obj = NULL;
+            xmlChar *s;
+
+            /* Since we don't want to impose expectations on argument types,
+               first inspect actual type on stack, and then pop with corresponding function. */
+            if (ctxt->valueNr > 0)
+            {
+                obj = ctxt->valueTab[ctxt->valueNr - 1];
+                obj_type = obj->type;
+            }
+
+            switch (obj_type)
+            {
+                case XPATH_XSLT_TREE:
+                case XPATH_NODESET:
+                {
+                    xmlNodeSetPtr nodeset = xmlXPathPopNodeSet(ctxt);
+                    IXMLDOMNodeList *nodelist;
+
+                    hr = xpath_create_nodelist_from_set(nodeset, obj_type == XPATH_XSLT_TREE, &nodelist);
+
+                    V_VT(&args[i]) = VT_DISPATCH;
+                    V_DISPATCH(&args[i]) = (IDispatch *)nodelist;
+                    break;
+                }
+                case XPATH_STRING:
+                    s = xmlXPathPopString(ctxt);
+                    V_VT(&args[i]) = VT_BSTR;
+                    V_BSTR(&args[i]) = bstr_from_xmlChar(s);
+                    xmlFree(s);
+                    break;
+                case XPATH_NUMBER:
+                    V_VT(&args[i]) = VT_R8;
+                    V_R8(&args[i]) = xmlXPathPopNumber(ctxt);
+                    break;
+                case XPATH_BOOLEAN:
+                    V_VT(&args[i]) = VT_BOOL;
+                    V_BOOL(&args[i]) = xmlXPathPopBoolean(ctxt) ? VARIANT_TRUE : VARIANT_FALSE;
+                    break;
+                default:
+                    FIXME("Unexpected XPath (%s) value type %d.\n", xpath->function, obj->type);
+                    return;
+            }
+        }
+
+        params.rgvarg = args;
+        params.cArgs = nargs;
+    }
+
+    VariantInit(&result);
+    hr = IDispatch_Invoke(disp, dispid, &IID_NULL, 0, DISPATCH_METHOD, &params, &result, NULL, NULL);
+    if (FAILED(hr))
+        WARN("User script Invoke() failed %#lx, function %s.\n", hr, xpath->function);
+
+    if (args)
+    {
+        for (int i = 0; i < nargs; ++i)
+            VariantClear(&args[i]);
+        free(args);
+    }
+
+    switch (V_VT(&result))
+    {
+        case VT_BSTR:
+        {
+            xmlChar *s = xmlchar_from_wcharn(V_BSTR(&result), -1, TRUE);
+            xmlXPathReturnString(ctxt, s);
+            break;
+        }
+        case VT_BOOL:
+            xmlXPathReturnBoolean(ctxt, !!V_BOOL(&result));
+            break;
+        case VT_INT:
+        case VT_I1:
+        case VT_UI1:
+        case VT_I2:
+        case VT_UI2:
+        case VT_I4:
+        case VT_UI4:
+        case VT_R4:
+        case VT_R8:
+            VariantChangeType(&result, &result, 0, VT_R8);
+            xmlXPathReturnNumber(ctxt, V_R8(&result));
+            break;
+        case VT_EMPTY:
+            xmlXPathReturnEmptyString(ctxt);
+            break;
+        default:
+            FIXME("Unexpected return value %s.\n", debugstr_variant(&result));
+            xmlXPathReturnEmptyString(ctxt);
+    }
+
+    IDispatch_Release(disp);
+    VariantClear(&result);
+}
+
+struct msxsl_script_site
+{
+    IActiveScriptSite IActiveScriptSite_iface;
+    IServiceProvider IServiceProvider_iface;
+    LONG refcount;
+
+    IServiceProvider *provider;
+};
+
+static struct msxsl_script_site *impl_from_IActiveScriptSite(IActiveScriptSite *iface)
+{
+    return CONTAINING_RECORD(iface, struct msxsl_script_site, IActiveScriptSite_iface);
+}
+
+static struct msxsl_script_site *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct msxsl_script_site, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI msxsl_script_site_QueryInterface(IActiveScriptSite *iface, REFIID riid, void **obj)
+{
+    struct msxsl_script_site *site = impl_from_IActiveScriptSite(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid)
+        || IsEqualGUID(&IID_IActiveScriptSite, riid))
+    {
+        *obj = iface;
+        IActiveScriptSite_AddRef(iface);
+        return S_OK;
+    }
+    else if (IsEqualGUID(&IID_IServiceProvider, riid))
+    {
+        *obj = &site->IServiceProvider_iface;
+        IServiceProvider_AddRef(&site->IServiceProvider_iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI msxsl_script_site_AddRef(IActiveScriptSite *iface)
+{
+    struct msxsl_script_site *site = impl_from_IActiveScriptSite(iface);
+    return InterlockedIncrement(&site->refcount);
+}
+
+static ULONG WINAPI msxsl_script_site_Release(IActiveScriptSite *iface)
+{
+    struct msxsl_script_site *site = impl_from_IActiveScriptSite(iface);
+    LONG refcount = InterlockedDecrement(&site->refcount);
+
+    if (!refcount)
+    {
+        if (site->provider)
+            IServiceProvider_Release(site->provider);
+        free(site);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI msxsl_script_site_GetLCID(IActiveScriptSite *iface, LCID *lcid)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msxsl_script_site_GetItemInfo(IActiveScriptSite *iface, LPCOLESTR name,
+        DWORD mask, IUnknown **item, ITypeInfo **typeinfo)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msxsl_script_site_GetDocVersionString(IActiveScriptSite *iface, BSTR *version)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msxsl_script_site_OnScriptTerminate(IActiveScriptSite *iface,
+        const VARIANT *result, const EXCEPINFO *ei)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msxsl_script_site_OnStateChange(IActiveScriptSite *iface, SCRIPTSTATE state)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msxsl_script_site_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *script_error)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI msxsl_script_site_OnEnterScript(IActiveScriptSite *iface)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI msxsl_script_site_OnLeaveScript(IActiveScriptSite *iface)
+{
+    return S_OK;
+}
+
+static const IActiveScriptSiteVtbl msxsl_script_site_vtbl =
+{
+    msxsl_script_site_QueryInterface,
+    msxsl_script_site_AddRef,
+    msxsl_script_site_Release,
+    msxsl_script_site_GetLCID,
+    msxsl_script_site_GetItemInfo,
+    msxsl_script_site_GetDocVersionString,
+    msxsl_script_site_OnScriptTerminate,
+    msxsl_script_site_OnStateChange,
+    msxsl_script_site_OnScriptError,
+    msxsl_script_site_OnEnterScript,
+    msxsl_script_site_OnLeaveScript
+};
+
+static HRESULT WINAPI msxsl_script_site_servprov_QueryInterface(IServiceProvider *iface, REFIID riid, void **obj)
+{
+    struct msxsl_script_site *site = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_QueryInterface(&site->IActiveScriptSite_iface, riid, obj);
+}
+
+static ULONG WINAPI msxsl_script_site_servprov_AddRef(IServiceProvider *iface)
+{
+    struct msxsl_script_site *site = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_AddRef(&site->IActiveScriptSite_iface);
+}
+
+static ULONG WINAPI msxsl_script_site_servprov_Release(IServiceProvider *iface)
+{
+    struct msxsl_script_site *site = impl_from_IServiceProvider(iface);
+    return IActiveScriptSite_Release(&site->IActiveScriptSite_iface);
+}
+
+static HRESULT WINAPI msxsl_script_site_servprov_QueryService(IServiceProvider *iface,
+        REFGUID service, REFIID riid, void **obj)
+{
+    struct msxsl_script_site *site = impl_from_IServiceProvider(iface);
+
+    if (site->provider)
+        return IServiceProvider_QueryService(site->provider, service, riid, obj);
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl msxsl_script_site_servprov_vtbl =
+{
+    msxsl_script_site_servprov_QueryInterface,
+    msxsl_script_site_servprov_AddRef,
+    msxsl_script_site_servprov_Release,
+    msxsl_script_site_servprov_QueryService,
+};
+
+static HRESULT msxsl_create_script_site(IXMLDOMDocument *doc, IActiveScriptSite **obj)
+{
+    struct msxsl_script_site *object;
+    IServiceProvider *provider = NULL;
+    IObjectWithSite *ows;
+    HRESULT hr;
+
+    if (FAILED(hr = IXMLDOMDocument_QueryInterface(doc, &IID_IObjectWithSite, (void **)&ows)))
+        return hr;
+
+    IObjectWithSite_GetSite(ows, &IID_IServiceProvider, (void **)&provider);
+    IObjectWithSite_Release(ows);
+
+    object = calloc(1, sizeof(*object));
+    object->IActiveScriptSite_iface.lpVtbl = &msxsl_script_site_vtbl;
+    object->IServiceProvider_iface.lpVtbl = &msxsl_script_site_servprov_vtbl;
+    object->refcount = 1;
+    object->provider = provider;
+
+    *obj = &object->IActiveScriptSite_iface;
+
+    return S_OK;
+}
+
+static void node_transform_bind_scripts(xsltTransformContextPtr ctxt, IXMLDOMDocument *owner_doc,
+        xmlDocPtr sheet, struct xsl_scripts *scripts)
+{
+    IActiveScriptSite *script_site;
+    xmlNodePtr root, child, node;
+    DWORD supported, enabled = 0;
+    IObjectSafety *object_safety;
+    xmlNsPtr ns;
+
+    IXMLDOMDocument_QueryInterface(owner_doc, &IID_IObjectSafety, (void **)&object_safety);
+    IObjectSafety_GetInterfaceSafetyOptions(object_safety, NULL, &supported, &enabled);
+    IObjectSafety_Release(object_safety);
+
+    if (FAILED(msxsl_create_script_site(owner_doc, &script_site)))
+        return;
+
+    root = xmlDocGetRootElement(sheet);
+    for (node = root->children; node; node = node->next)
+    {
+        if (xmlStrEqual(node->name, BAD_CAST "script")
+                && node->ns
+                && xmlStrEqual(node->ns->prefix, BAD_CAST "msxsl")
+                && xmlStrEqual(node->ns->href, BAD_CAST "urn:schemas-microsoft-com:xslt"))
+        {
+             child = node->children;
+
+             if (child && child->type == XML_CDATA_SECTION_NODE)
+             {
+                 IActiveScript *active_script;
+                 xmlChar *language, *prefix;
+                 IActiveScriptParse *parser;
+                 TYPEATTR *typeattr;
+                 BSTR text, progid;
+                 IDispatch *disp;
+                 ITypeInfo *ti;
+                 CLSID clsid;
+                 HRESULT hr;
+
+                 if (!(prefix = xmlGetProp(node, BAD_CAST "implements-prefix")))
+                 {
+                     WARN("<msxsl:script> without 'implements-prefix'.\n");
+                     continue;
+                 }
+
+                 if (!(ns = xmlSearchNs(sheet, node, prefix)))
+                 {
+                     WARN("Couldn't locate script element namespace for \"%s\".\n", debugstr_a((char *)prefix));
+                     continue;
+                 }
+
+                 if (!(language = xmlGetProp(node, BAD_CAST "language")))
+                     language = BAD_CAST "javascript";
+
+                 progid = bstr_from_xmlChar(language);
+                 if (FAILED(hr = CLSIDFromProgID(progid, &clsid)))
+                     WARN("Unknown engine progid %s.\n", debugstr_w(progid));
+                 SysFreeString(progid);
+                 if (FAILED(hr))
+                     return;
+
+                 if (FAILED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                         &IID_IActiveScript, (void **)&active_script)))
+                 {
+                     WARN("Failed to create a script engine instance, hr %#lx.\n", hr);
+                     continue;
+                 }
+
+                 IActiveScript_QueryInterface(active_script, &IID_IObjectSafety, (void **)&object_safety);
+                 IObjectSafety_SetInterfaceSafetyOptions(object_safety, NULL, enabled, enabled);
+                 IObjectSafety_Release(object_safety);
+
+                 IActiveScript_QueryInterface(active_script, &IID_IActiveScriptParse, (void **)&parser);
+                 IActiveScript_SetScriptSite(active_script, script_site);
+                 IActiveScriptParse_InitNew(parser);
+                 IActiveScript_SetScriptState(active_script, SCRIPTSTATE_STARTED);
+
+                 text = bstr_from_xmlChar(child->content);
+                 hr = IActiveScriptParse_ParseScriptText(parser, text, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+                 IActiveScriptParse_Release(parser);
+                 SysFreeString(text);
+                 if (FAILED(hr))
+                 {
+                     WARN("Failed to parse script for the namespace %s, hr %#lx.\n", prefix, hr);
+                     IActiveScript_Release(active_script);
+                     continue;
+                 }
+
+                 IActiveScript_GetScriptDispatch(active_script, NULL, &disp);
+                 IDispatch_GetTypeInfo(disp, 0, LOCALE_USER_DEFAULT, &ti);
+
+                 ITypeInfo_GetTypeAttr(ti, &typeattr);
+
+                 for (int i = 0; i < typeattr->cFuncs; ++i)
+                 {
+                     FUNCDESC *funcdesc;
+                     xmlChar *func_name;
+                     BSTR name;
+
+                     ITypeInfo_GetFuncDesc(ti, i, &funcdesc);
+                     ITypeInfo_GetDocumentation(ti, funcdesc->memid, &name, NULL, NULL, NULL);
+                     func_name = xmlchar_from_wchar(name);
+
+                     xsltRegisterExtFunction(ctxt, func_name, ns->href, xpath_msxsl_script_function);
+
+                     SysFreeString(name);
+                     free(func_name);
+                 }
+
+                 IDispatch_Release(disp);
+                 ITypeInfo_Release(ti);
+
+                 array_reserve((void **)&scripts->entries, &scripts->capacity, scripts->count + 1, sizeof(*scripts->entries));
+
+                 scripts->entries[scripts->count].script = active_script;
+                 scripts->entries[scripts->count].uri = ns->href;
+                 scripts->count++;
+             }
+        }
+    }
+
+    IActiveScriptSite_Release(script_site);
+}
+
 HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p,
     ISequentialStream *stream, const struct xslprocessor_params *params)
 {
+    IXMLDOMDocument *owner_doc;
     xsltStylesheetPtr xsltSS;
     xmlDocPtr sheet_doc;
     HRESULT hr = S_OK;
@@ -1492,11 +2001,16 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
     sheet = get_node_obj(stylesheet);
     if(!sheet) return E_FAIL;
 
+    if (FAILED(hr = IXMLDOMNode_get_ownerDocument(stylesheet, &owner_doc)))
+        return hr;
+
     sheet_doc = xmlCopyDoc(sheet->node->doc, 1);
     xsltSS = xsltParseStylesheetDoc(sheet_doc);
     if (xsltSS)
     {
+        struct xsl_scripts scripts = { 0 };
         const char **xslparams = NULL;
+        xsltTransformContextPtr ctxt;
         xmlDocPtr result;
         unsigned int i;
 
@@ -1515,21 +2029,35 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
             xslparams[i] = NULL;
         }
 
+        ctxt = xsltNewTransformContext(xsltSS, This->node->doc);
+
+        node_transform_bind_scripts(ctxt, owner_doc, sheet_doc, &scripts);
+        ctxt->userData = &scripts;
+
         if (xslparams)
         {
-            xsltTransformContextPtr ctxt = xsltNewTransformContext(xsltSS, This->node->doc);
-
             /* push parameters to user context */
             xsltQuoteUserParams(ctxt, xslparams);
             result = xsltApplyStylesheetUser(xsltSS, This->node->doc, NULL, NULL, NULL, ctxt);
-            xsltFreeTransformContext(ctxt);
 
             for (i = 0; i < params->count*2; i++)
                 free((char*)xslparams[i]);
             free(xslparams);
         }
         else
-            result = xsltApplyStylesheet(xsltSS, This->node->doc, NULL);
+        {
+            result = xsltApplyStylesheetUser(xsltSS, This->node->doc, NULL, NULL, NULL, ctxt);
+        }
+
+        for (size_t i = 0; i < scripts.count; ++i)
+        {
+            if (scripts.entries[i].script)
+                IActiveScript_Release(scripts.entries[i].script);
+        }
+        free(scripts.entries);
+
+        ctxt->userData = NULL;
+        xsltFreeTransformContext(ctxt);
 
         if (result)
         {
@@ -1546,6 +2074,8 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
         xmlFreeDoc(sheet_doc);
 
     if (p && !*p) *p = SysAllocStringLen(NULL, 0);
+
+    IXMLDOMDocument_Release(owner_doc);
 
     return hr;
 }

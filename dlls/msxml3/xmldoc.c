@@ -22,7 +22,6 @@
 #define COBJMACROS
 
 #include <stdarg.h>
-#include <stdbool.h>
 #include <libxml/parser.h>
 
 #include "windef.h"
@@ -299,32 +298,6 @@ struct parse_context
         BSTR name;
     } dtd;
 };
-
-static bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
-{
-    size_t new_capacity, max_capacity;
-    void *new_elements;
-
-    if (count <= *capacity)
-        return true;
-
-    max_capacity = ~(SIZE_T)0 / size;
-    if (count > max_capacity)
-        return false;
-
-    new_capacity = max(4, *capacity);
-    while (new_capacity < count && new_capacity <= max_capacity / 2)
-        new_capacity *= 2;
-    if (new_capacity < count)
-        new_capacity = max_capacity;
-
-    if (!(new_elements = realloc(*elements, new_capacity * size)))
-        return false;
-
-    *elements = new_elements;
-    *capacity = new_capacity;
-    return true;
-}
 
 static HRESULT text_buffer_append(struct buffer *buffer, const WCHAR *chars, int count)
 {
