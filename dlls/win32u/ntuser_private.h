@@ -208,7 +208,7 @@ extern LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 HICON alloc_cursoricon_handle( BOOL is_icon );
 
 /* dce.c */
-extern void free_dce( struct dce *dce, HWND hwnd );
+extern void free_dce( struct dce *dce, HWND hwnd, struct list *drawables );
 extern void invalidate_dce( WND *win, const RECT *old_rect );
 extern BOOL is_cache_dc( HDC hdc );
 
@@ -219,7 +219,8 @@ extern void check_for_events( UINT flags );
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
 /* opengl.c */
-extern BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct opengl_drawable **drawable );
+extern BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct list *drawables );
+extern void release_opengl_drawables( struct list *drawables );
 
 /* vulkan.c */
 extern struct vulkan_instance *vulkan_instance_create( const struct vulkan_instance_extensions *extensions );

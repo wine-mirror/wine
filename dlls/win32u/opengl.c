@@ -1525,21 +1525,33 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMAT
     return NtGdiSetPixelFormat( hdc, new_format );
 }
 
-BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct opengl_drawable **drawable )
+BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct list *drawables )
 {
     DC *dc;
 
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
     dc->pixel_format = format;
-    *drawable = dc->opengl_drawable;
+    if (dc->opengl_drawable) list_add_tail( drawables, &dc->opengl_drawable->entry );
     dc->opengl_drawable = NULL;
     release_dc_ptr( dc );
 
     return TRUE;
 }
 
+void release_opengl_drawables( struct list *drawables )
+{
+    struct opengl_drawable *drawable, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( drawable, next, drawables, struct opengl_drawable, entry )
+    {
+        list_remove( &drawable->entry );
+        opengl_drawable_release( drawable );
+    }
+}
+
 static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
 {
+    struct list *ptr, drawables = LIST_INIT( drawables );
     const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_drawable *drawable;
     UINT total, onscreen;
@@ -1554,7 +1566,9 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
     if (format < 0 || format > total) return FALSE;
     if (format > onscreen) return FALSE;
 
-    if (!set_dc_pixel_format_internal( hdc, format, &drawable )) return FALSE;
+    if (!set_dc_pixel_format_internal( hdc, format, &drawables )) return FALSE;
+    if (!(ptr = list_head( &drawables ))) drawable = NULL;
+    else drawable = LIST_ENTRY( ptr, struct opengl_drawable, entry );
 
     if (drawable && drawable->format != format)
     {

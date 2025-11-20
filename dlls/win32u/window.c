@@ -5217,7 +5217,7 @@ static void free_window_handle( HWND hwnd )
  */
 LRESULT destroy_window( HWND hwnd )
 {
-    struct list vulkan_surfaces = LIST_INIT(vulkan_surfaces);
+    struct list drawables = LIST_INIT( drawables );
     struct window_surface *surface;
     HMENU menu = 0, sys_menu;
     WND *win;
@@ -5263,12 +5263,14 @@ LRESULT destroy_window( HWND hwnd )
     if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
         menu = (HMENU)win->wIDmenu;
     sys_menu = win->hSysMenu;
-    free_dce( win->dce, hwnd );
+    free_dce( win->dce, hwnd, &drawables );
     win->dce = NULL;
     NtUserDestroyCursor( win->hIconSmall2, 0 );
     surface = win->surface;
     win->surface = NULL;
     release_win_ptr( win );
+
+    release_opengl_drawables( &drawables );
 
     NtUserDestroyMenu( menu );
     NtUserDestroyMenu( sys_menu );
@@ -5390,6 +5392,7 @@ void destroy_thread_windows(void)
         struct window_surface *surface;
         struct destroy_entry *next;
     } *entry, *free_list = NULL;
+    struct list drawables = LIST_INIT(drawables);
     HANDLE handle = 0;
     WND *win;
 
@@ -5402,7 +5405,7 @@ void destroy_thread_windows(void)
         BOOL is_child = (win->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD;
         struct destroy_entry tmp = {0};
 
-        free_dce( win->dce, win->handle );
+        free_dce( win->dce, win->handle, &drawables );
         set_user_handle_ptr( handle, NULL );
         free( win->pScroll );
         free( win->text );
@@ -5430,6 +5433,8 @@ void destroy_thread_windows(void)
         SERVER_END_REQ;
     }
     user_unlock();
+
+    release_opengl_drawables( &drawables );
 
     while ((entry = free_list))
     {

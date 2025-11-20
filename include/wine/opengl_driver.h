@@ -178,6 +178,7 @@ struct opengl_drawable
 {
     const struct opengl_drawable_funcs *funcs;
     LONG                                ref;            /* reference count */
+    struct list                         entry;          /* entry in cleanup lists */
     struct client_surface              *client;         /* underlying client surface */
     int                                 format;         /* pixel format of the drawable */
     int                                 interval;       /* last set surface swap interval */
