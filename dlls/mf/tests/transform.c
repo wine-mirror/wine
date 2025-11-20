@@ -8355,6 +8355,14 @@ static void test_wmv_decoder_media_object(void)
     diff = check_dmo_output_data_buffer(&output_data_buffer, &output_buffer_desc_nv12, L"nv12frame.bmp", 0, 300000);
     ok(diff == 0, "Got %lu%% diff.\n", diff);
 
+    output_media_buffer->length = 0;
+    output_data_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+    output_data_buffer.dwStatus = 0xdeadbeef;
+    output_data_buffer.rtTimestamp = 0xdeadbeef;
+    output_data_buffer.rtTimelength = 0xdeadbeef;
+    hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
+    todo_wine ok(hr == S_FALSE, "ProcessOutput returned %#lx.\n", hr);
+
     hr = IMediaObject_AllocateStreamingResources(media_object);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaObject_FreeStreamingResources(media_object);
