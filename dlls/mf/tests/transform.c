@@ -8328,7 +8328,6 @@ static void test_wmv_decoder_media_object(void)
     output_data_buffer.rtTimestamp = 0xdeadbeef;
     output_data_buffer.rtTimelength = 0xdeadbeef;
     hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
-    todo_wine
     ok(hr == S_FALSE, "ProcessOutput returned %#lx.\n", hr);
     ok(output_media_buffer->length == 0, "Unexpected length %#lx.\n", output_media_buffer->length);
 
@@ -8361,7 +8360,7 @@ static void test_wmv_decoder_media_object(void)
     output_data_buffer.rtTimestamp = 0xdeadbeef;
     output_data_buffer.rtTimelength = 0xdeadbeef;
     hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
-    todo_wine ok(hr == S_FALSE, "ProcessOutput returned %#lx.\n", hr);
+    ok(hr == S_FALSE, "ProcessOutput returned %#lx.\n", hr);
 
     hr = IMediaObject_AllocateStreamingResources(media_object);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);

@@ -1469,6 +1469,8 @@ static HRESULT WINAPI media_object_ProcessOutput(IMediaObject *iface, DWORD flag
 
     if (SUCCEEDED(hr))
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
+    else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        hr = S_FALSE;
 
     return hr;
 }
