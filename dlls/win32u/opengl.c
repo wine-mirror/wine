@@ -54,11 +54,12 @@ struct wgl_pbuffer
 
 static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_funcs;
 static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
-static struct egl_platform display_egl, *devices_egl;
+static struct list devices_egl = LIST_INIT( devices_egl );
+static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
 
 static struct wgl_pixel_format *pixel_formats;
-static UINT formats_count, onscreen_count, devices_count;
+static UINT formats_count, onscreen_count;
 static char wgl_extensions[4096];
 
 static BOOL has_extension( const char *list, const char *ext )
@@ -962,7 +963,7 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     EGLDeviceEXT *devices = NULL;
     struct egl_platform *egl;
     const char *extensions;
-    EGLint i, count;
+    EGLint count;
 
     if (!(extensions = funcs->p_eglQueryString( EGL_NO_DISPLAY, EGL_EXTENSIONS ))) return;
     if (!has_extension( extensions, "EGL_EXT_device_base" ) || !has_extension( extensions, "EGL_EXT_platform_device" )) return;
@@ -982,21 +983,25 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     TRACE( "Found display platform device %p\n", display_egl.device );
 
     funcs->p_eglQueryDevicesEXT( 0, NULL, &count );
-    if (!count || !(devices = calloc( count, sizeof(EGLDeviceEXT *) )) || !(devices_egl = calloc( count, sizeof(*devices_egl) ))) goto done;
+    if (!count || !(devices = calloc( count, sizeof(EGLDeviceEXT *) ))) goto done;
     funcs->p_eglQueryDevicesEXT( count, devices, &count );
 
-    for (i = 0, egl = devices_egl; i < count; i++)
+    for (int i = 0; i < count; i++)
     {
+        if (!(egl = calloc( 1, sizeof(*egl) ))) break;
+
         TRACE( "Initializing EGL device %p\n", devices[i] );
         egl->type = EGL_PLATFORM_DEVICE_EXT;
         egl->native_display = devices[i];
         egl->device = devices[i];
-        if (init_egl_platform( egl, funcs )) egl++;
+        egl->index = list_count( &devices_egl );
+
+        if (!init_egl_platform( egl, funcs )) free( egl );
+        else list_add_tail( &devices_egl, &egl->entry );
     }
-    devices_count = egl - devices_egl;
 
 done:
-    TRACE( "Initialized %u EGL devices\n", devices_count );
+    TRACE( "Initialized %u EGL devices\n", list_count( &devices_egl ) );
     free( devices );
 }
 
@@ -1063,7 +1068,7 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     const char *extensions, *str;
     EGLConfig config;
 
-    TRACE( "Initializing device %zu (%p)\n", egl - devices_egl, egl->device);
+    TRACE( "Initializing device %u (%p)\n", egl->index, egl->device);
 
     extensions = funcs->p_eglQueryDeviceStringEXT( egl->device, EGL_EXTENSIONS );
     /* Assume that all devices without EGL_MESA_device_software are accelerated. */
@@ -2321,14 +2326,19 @@ static int win32u_wglGetSwapIntervalEXT(void)
     return interval;
 }
 
-static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum attribute, GLuint *value )
+static struct egl_platform *egl_platform_from_index( GLint index )
 {
-    struct egl_platform *egl = devices_egl + renderer;
+    struct egl_platform *egl;
 
-    TRACE( "hdc %p, renderer %u, attribute %#x, value %p\n", hdc, renderer, attribute, value );
+    LIST_FOR_EACH_ENTRY( egl, &devices_egl, struct egl_platform, entry )
+        if (egl->index == index) return egl;
 
-    if (renderer >= devices_count) return FALSE;
+    WARN( "Cannot find renderer at index %d\n", index );
+    return NULL;
+}
 
+static BOOL query_renderer_integer( struct egl_platform *egl, GLenum attribute, GLuint *value )
+{
     switch (attribute)
     {
     case WGL_RENDERER_ACCELERATED_WINE: *value = egl->accelerated; return TRUE;
@@ -2354,14 +2364,18 @@ static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum 
     return FALSE;
 }
 
-static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, GLenum attribute )
+static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum attribute, GLuint *value )
 {
-    struct egl_platform *egl = devices_egl + renderer;
+    struct egl_platform *egl;
 
-    TRACE( "hdc %p, renderer %u, attribute %#x\n", hdc, renderer, attribute );
+    TRACE( "hdc %p, renderer %u, attribute %#x, value %p\n", hdc, renderer, attribute, value );
 
-    if (renderer >= devices_count) return NULL;
+    if (!(egl = egl_platform_from_index( renderer ))) return FALSE;
+    return query_renderer_integer( egl, attribute, value );
+}
 
+static const char *query_renderer_string( struct egl_platform *egl, GLenum attribute )
+{
     switch (attribute)
     {
     case WGL_RENDERER_DEVICE_ID_WINE: return egl->device_name;
@@ -2372,34 +2386,50 @@ static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, G
     return NULL;
 }
 
+static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, GLenum attribute )
+{
+    struct egl_platform *egl;
+
+    TRACE( "hdc %p, renderer %u, attribute %#x\n", hdc, renderer, attribute );
+
+    if (!(egl = egl_platform_from_index( renderer ))) return NULL;
+    return query_renderer_string( egl, attribute );
+}
+
+static struct egl_platform *egl_platform_from_device( EGLDeviceEXT device )
+{
+    struct egl_platform *egl;
+
+    LIST_FOR_EACH_ENTRY( egl, &devices_egl, struct egl_platform, entry )
+        if (egl->device == device) return egl;
+
+    WARN( "Cannot find current renderer\n" );
+    return NULL;
+}
+
 static BOOL win32u_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
 {
-    int i;
+    struct egl_platform *egl;
 
     TRACE( "attribute %#x, value %p\n", attribute, value );
 
-    for (i = 0; i < devices_count; i++) if (devices_egl[i].device == display_egl.device) break;
-    if (i < devices_count) return win32u_wglQueryRendererIntegerWINE( 0, i, attribute, value );
-
-    WARN( "Cannot find current renderer device\n" );
-    return FALSE;
+    if (!(egl = egl_platform_from_device( display_egl.device ))) return FALSE;
+    return query_renderer_integer( egl, attribute, value );
 }
 
 static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
 {
-    int i;
+    struct egl_platform *egl;
 
     TRACE( "attribute %#x\n", attribute );
 
-    for (i = 0; i < devices_count; i++) if (devices_egl[i].device == display_egl.device) break;
-    if (i < devices_count) return win32u_wglQueryRendererStringWINE( 0, i, attribute );
-
-    WARN( "Cannot find current renderer device\n" );
-    return NULL;
+    if (!(egl = egl_platform_from_device( display_egl.device ))) return NULL;
+    return query_renderer_string( egl, attribute );
 }
 
 static void display_funcs_init(void)
 {
+    struct egl_platform *egl;
     UINT status;
 
     if (egl_init( &driver_funcs )) TRACE( "Initialized EGL library\n" );
@@ -2498,14 +2528,15 @@ static void display_funcs_init(void)
     display_funcs.p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
     display_funcs.p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
 
-    if (display_egl.device && devices_count)
+    if (display_egl.device && !list_empty( &devices_egl ))
     {
         register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_query_renderer" );
         display_funcs.p_wglQueryCurrentRendererIntegerWINE = win32u_wglQueryCurrentRendererIntegerWINE;
         display_funcs.p_wglQueryCurrentRendererStringWINE = win32u_wglQueryCurrentRendererStringWINE;
         display_funcs.p_wglQueryRendererIntegerWINE = win32u_wglQueryRendererIntegerWINE;
         display_funcs.p_wglQueryRendererStringWINE = win32u_wglQueryRendererStringWINE;
-        for (int i = 0; i < devices_count; i++) init_device_info( devices_egl + i, &display_funcs );
+        LIST_FOR_EACH_ENTRY( egl, &devices_egl, struct egl_platform, entry )
+            init_device_info( egl, &display_funcs );
     }
 }
 

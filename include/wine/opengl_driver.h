@@ -131,11 +131,13 @@ struct opengl_funcs
 
 struct egl_platform
 {
+    struct list          entry;
     EGLenum              type;
     EGLNativeDisplayType native_display;
     BOOL                 force_pbuffer_formats;
 
     /* filled by win32u after init_egl_platform */
+    unsigned int         index;
     EGLDeviceEXT         device;
     EGLDisplay           display;
     UINT                 config_count;
