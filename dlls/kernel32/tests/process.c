@@ -96,6 +96,8 @@ static void   (WINAPI *pDeleteProcThreadAttributeList)(struct _PROC_THREAD_ATTRI
 static DWORD  (WINAPI *pGetActiveProcessorCount)(WORD);
 static DWORD  (WINAPI *pGetMaximumProcessorCount)(WORD);
 static BOOL   (WINAPI *pGetProcessInformation)(HANDLE,PROCESS_INFORMATION_CLASS,void*,DWORD);
+static void (WINAPI *pClosePseudoConsole)(HPCON);
+static HRESULT (WINAPI *pCreatePseudoConsole)(COORD,HANDLE,HANDLE,DWORD,HPCON*);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -276,6 +278,8 @@ static BOOL init(void)
     pGetActiveProcessorCount = (void *)GetProcAddress(hkernel32, "GetActiveProcessorCount");
     pGetMaximumProcessorCount = (void *)GetProcAddress(hkernel32, "GetMaximumProcessorCount");
     pGetProcessInformation = (void *)GetProcAddress(hkernel32, "GetProcessInformation");
+    pCreatePseudoConsole = (void *)GetProcAddress(hkernel32, "CreatePseudoConsole");
+    pClosePseudoConsole = (void *)GetProcAddress(hkernel32, "ClosePseudoConsole");
 
     return TRUE;
 }
@@ -3434,18 +3438,18 @@ static BOOL build_startupinfoex( STARTUPINFOEXA *startup, unsigned args, HANDLE 
     ret = CreatePipe(&output_read, &output_write, NULL, 0);
     ok(ret, "Couldn't create pipe\n");
 
-    hres = CreatePseudoConsole(size, input_read, output_write, 0, pseudo_console);
+    hres = pCreatePseudoConsole(size, input_read, output_write, 0, pseudo_console);
     ok(hres == S_OK, "CreatePseudoConsole failed: %08lx\n", hres);
 
     memset(startup, 0, sizeof(*startup));
     needs_close = build_startupinfo(&startup->StartupInfo, args, hstd);
     startup->StartupInfo.cb = sizeof(*startup);
 
-    InitializeProcThreadAttributeList(NULL, 1, 0, &attr_size);
+    pInitializeProcThreadAttributeList(NULL, 1, 0, &attr_size);
     startup->lpAttributeList = HeapAlloc(GetProcessHeap(), 0, attr_size);
-    InitializeProcThreadAttributeList(startup->lpAttributeList, 1, 0, &attr_size);
-    UpdateProcThreadAttribute(startup->lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, *pseudo_console,
-                              sizeof(*pseudo_console), NULL, NULL);
+    pInitializeProcThreadAttributeList(startup->lpAttributeList, 1, 0, &attr_size);
+    pUpdateProcThreadAttribute(startup->lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, *pseudo_console,
+                               sizeof(*pseudo_console), NULL, NULL);
 
     hstd[2] = output_read;
     hstd[3] = input_write;
@@ -3626,6 +3630,12 @@ static void test_StdHandleInheritance(void)
     {
         const struct std_handle_test* std_tests = tests[j].tests;
 
+        if ((tests[j].cp_flags & EXTENDED_STARTUPINFO_PRESENT) &&
+            (!pCreatePseudoConsole || !pClosePseudoConsole || !pInitializeProcThreadAttributeList || !pUpdateProcThreadAttribute))
+        {
+            win_skip("No pseudo-console support, skipping test\n");
+            continue;
+        }
         for (i = 0; i < tests[j].count; i++)
         {
             STARTUPINFOEXA startup;
@@ -3693,7 +3703,7 @@ static void test_StdHandleInheritance(void)
             if (tests[j].cp_flags & EXTENDED_STARTUPINFO_PRESENT)
             {
                 HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
-                ClosePseudoConsole(pseudo_console);
+                pClosePseudoConsole(pseudo_console);
                 CloseHandle(hstd[2]);
                 CloseHandle(hstd[3]);
             }
