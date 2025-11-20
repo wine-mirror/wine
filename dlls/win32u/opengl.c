@@ -978,9 +978,10 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     if (!funcs->p_eglQueryDisplayAttribEXT( display_egl.display, EGL_DEVICE_EXT, (EGLAttrib *)&display_egl.device ))
     {
         WARN( "Failed to query EGL display device (error %#x).\n", funcs->p_eglGetError() );
-        display_egl.device = EGL_NO_DEVICE_EXT;
+        return;
     }
     TRACE( "Found display platform device %p\n", display_egl.device );
+    list_add_tail( &devices_egl, &display_egl.entry );
 
     funcs->p_eglQueryDevicesEXT( 0, NULL, &count );
     if (!count || !(devices = calloc( count, sizeof(EGLDeviceEXT *) ))) goto done;
@@ -988,6 +989,7 @@ static void init_egl_devices( struct opengl_funcs *funcs )
 
     for (int i = 0; i < count; i++)
     {
+        if (devices[i] == display_egl.device) continue;
         if (!(egl = calloc( 1, sizeof(*egl) ))) break;
 
         TRACE( "Initializing EGL device %p\n", devices[i] );
@@ -2396,35 +2398,24 @@ static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, G
     return query_renderer_string( egl, attribute );
 }
 
-static struct egl_platform *egl_platform_from_device( EGLDeviceEXT device )
-{
-    struct egl_platform *egl;
-
-    LIST_FOR_EACH_ENTRY( egl, &devices_egl, struct egl_platform, entry )
-        if (egl->device == device) return egl;
-
-    WARN( "Cannot find current renderer\n" );
-    return NULL;
-}
-
 static BOOL win32u_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
 {
-    struct egl_platform *egl;
+    struct list *ptr;
 
     TRACE( "attribute %#x, value %p\n", attribute, value );
 
-    if (!(egl = egl_platform_from_device( display_egl.device ))) return FALSE;
-    return query_renderer_integer( egl, attribute, value );
+    if (!(ptr = list_head( &devices_egl ))) return FALSE;
+    return query_renderer_integer( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute, value );
 }
 
 static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
 {
-    struct egl_platform *egl;
+    struct list *ptr;
 
     TRACE( "attribute %#x\n", attribute );
 
-    if (!(egl = egl_platform_from_device( display_egl.device ))) return NULL;
-    return query_renderer_string( egl, attribute );
+    if (!(ptr = list_head( &devices_egl ))) return NULL;
+    return query_renderer_string( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute );
 }
 
 static void display_funcs_init(void)
@@ -2528,7 +2519,7 @@ static void display_funcs_init(void)
     display_funcs.p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
     display_funcs.p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
 
-    if (display_egl.device && !list_empty( &devices_egl ))
+    if (!list_empty( &devices_egl ))
     {
         register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_query_renderer" );
         display_funcs.p_wglQueryCurrentRendererIntegerWINE = win32u_wglQueryCurrentRendererIntegerWINE;
