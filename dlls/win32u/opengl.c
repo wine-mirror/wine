@@ -990,6 +990,11 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     for (int i = 0; i < count; i++)
     {
         if (devices[i] == display_egl.device) continue;
+
+        extensions = funcs->p_eglQueryDeviceStringEXT( devices[i], EGL_EXTENSIONS );
+        /* Assume that all devices without EGL_MESA_device_software are accelerated. */
+        if (has_extension( extensions, "EGL_MESA_device_software" )) continue;
+
         if (!(egl = calloc( 1, sizeof(*egl) ))) break;
 
         TRACE( "Initializing EGL device %p\n", devices[i] );
