@@ -2546,6 +2546,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
                                        const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty )
 {
     DWORD swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
+    BYTE source_alpha = blend ? blend->SourceConstantAlpha : 0xff;
     struct window_rects new_rects;
     struct window_surface *surface;
     RECT surface_rect;
@@ -2602,7 +2603,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
 
     if (!hdc_src || surface == &dummy_surface)
     {
-        user_driver->pUpdateLayeredWindow( hwnd, blend->SourceConstantAlpha, flags );
+        user_driver->pUpdateLayeredWindow( hwnd, source_alpha, flags );
         ret = TRUE;
     }
     else
@@ -2636,7 +2637,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
         if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
         window_surface_set_layered( surface, key, -1, 0xff000000 );
 
-        user_driver->pUpdateLayeredWindow( hwnd, blend->SourceConstantAlpha, flags );
+        user_driver->pUpdateLayeredWindow( hwnd, source_alpha, flags );
         window_surface_flush( surface );
     }
 
