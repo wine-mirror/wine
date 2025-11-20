@@ -1155,6 +1155,8 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
 
     if (compat_context) funcs->p_eglDestroyContext( egl->display, compat_context );
     if (core_context) funcs->p_eglDestroyContext( egl->display, core_context );
+
+    if (egl != &display_egl) funcs->p_eglTerminate( egl->display );
 }
 
 static const struct
