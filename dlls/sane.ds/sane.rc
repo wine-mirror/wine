@@ -41,6 +41,11 @@ BEGIN
   IDS_COLOUR,"Color"
   IDS_LINEART,"LineArt"
   IDS_UNKNOWN,"Unknown"
+  IDS_CAPTION,"Scanning"
+  IDS_NO_DOCS,"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be scanned."
+  IDS_JAMMED,"The scanner reports a paper jam. Check for additional information on device display."
+  IDS_COVER_OPEN,"The scanner cover is open. Please close the scanner."
+  IDS_DEVICE_BUSY,"The scanner is busy. Try again later."
 END
 
 

@@ -199,7 +199,7 @@ msgstr "&Installieren"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:70
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -9689,31 +9689,31 @@ msgstr "Unbekannte Quelle"
 msgid "the program which created it"
 msgstr "dem Erzeugerprogramm"
 
-#: dlls/sane.ds/sane.rc:50
+#: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
 msgstr "Scanne"
 
-#: dlls/sane.ds/sane.rc:53
+#: dlls/sane.ds/sane.rc:58
 msgid "Manufacturer:"
 msgstr "Hersteller:"
 
-#: dlls/sane.ds/sane.rc:55
+#: dlls/sane.ds/sane.rc:60
 msgid "Product family:"
 msgstr "Produktfamilie:"
 
-#: dlls/sane.ds/sane.rc:57
+#: dlls/sane.ds/sane.rc:62
 msgid "Product name:"
 msgstr "Produktname:"
 
-#: dlls/sane.ds/sane.rc:59
+#: dlls/sane.ds/sane.rc:64
 msgid "Resolution:"
 msgstr "Auflösung:"
 
-#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+#: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
 msgid "Page"
 msgstr "Seite"
 
-#: dlls/sane.ds/sane.rc:63
+#: dlls/sane.ds/sane.rc:68
 msgid "SCANNING... Please Wait"
 msgstr "SCANNE... Bitte warten"
 
@@ -9751,6 +9751,30 @@ msgstr "S/W"
 #: programs/ipconfig/ipconfig.rc:34
 msgid "Unknown"
 msgstr "Unbekannt"
+
+#: dlls/sane.ds/sane.rc:46
+msgid ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+msgstr ""
+"Der Automatische Vorlageneinzug (ADF) ist leer. Bitte legen Sie die zu "
+"scannenden Blätter ein."
+
+#: dlls/sane.ds/sane.rc:47
+msgid ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+msgstr ""
+"Der Scanner meldet einen Papierstau. Prüfen Sie, ob das Gerät weitere "
+"Informationen anzeigt."
+
+#: dlls/sane.ds/sane.rc:48
+msgid "The scanner cover is open. Please close the scanner."
+msgstr "Die Scanner-Abdeckung ist offen. Bitte schließen Sie den Scanner."
+
+#: dlls/sane.ds/sane.rc:49
+msgid "The scanner is busy. Try again later."
+msgstr "Der Scanner ist in Benutzung. Versuchen Sie es später noch einmal."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"

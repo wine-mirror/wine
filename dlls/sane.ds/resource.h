@@ -36,3 +36,8 @@
 #define IDS_COLOUR        0x502
 #define IDS_LINEART       0x503
 #define IDS_UNKNOWN       0x504
+#define IDS_CAPTION       0x505
+#define IDS_NO_DOCS       0x506
+#define IDS_JAMMED        0x507
+#define IDS_COVER_OPEN    0x508
+#define IDS_DEVICE_BUSY   0x509

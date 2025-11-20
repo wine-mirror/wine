@@ -299,10 +299,12 @@ static NTSTATUS start_device( void *args )
     if (status != SANE_STATUS_GOOD)
     {
         TRACE("sane_start returns %s\n", sane_strstatus(status));
-        return STATUS_DEVICE_NOT_CONNECTED;
     }
-    device_started = TRUE;
-    return STATUS_SUCCESS;
+    else
+    {
+        device_started = TRUE;
+    }
+    return status;
 }
 
 static NTSTATUS cancel_device( void *args )

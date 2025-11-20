@@ -195,7 +195,7 @@ msgstr "설치(&I)"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:65
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:70
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
@@ -9645,39 +9645,39 @@ msgstr "알 수 없는 원본"
 msgid "the program which created it"
 msgstr "개체를 만든 프로그램"
 
-#: dlls/sane.ds/sane.rc:50
+#: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
 msgstr "스캔 중"
 
-#: dlls/sane.ds/sane.rc:53
+#: dlls/sane.ds/sane.rc:58
 #, fuzzy
 #| msgid "feature from:"
 msgid "Manufacturer:"
 msgstr "기능:"
 
-#: dlls/sane.ds/sane.rc:55
+#: dlls/sane.ds/sane.rc:60
 #, fuzzy
 #| msgid "Product Updates:"
 msgid "Product family:"
 msgstr "제품 업데이트:"
 
-#: dlls/sane.ds/sane.rc:57
+#: dlls/sane.ds/sane.rc:62
 #, fuzzy
 #| msgid "Product Updates:"
 msgid "Product name:"
 msgstr "제품 업데이트:"
 
-#: dlls/sane.ds/sane.rc:59
+#: dlls/sane.ds/sane.rc:64
 #, fuzzy
 #| msgid "Screen resolution"
 msgid "Resolution:"
 msgstr "화면 해상도"
 
-#: dlls/sane.ds/sane.rc:61 programs/wordpad/wordpad.rc:181
+#: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
 msgid "Page"
 msgstr "페이지"
 
-#: dlls/sane.ds/sane.rc:63
+#: dlls/sane.ds/sane.rc:68
 msgid "SCANNING... Please Wait"
 msgstr "스캔 중... 기다려 주세요"
 
@@ -9715,6 +9715,26 @@ msgstr ""
 #: programs/ipconfig/ipconfig.rc:34
 msgid "Unknown"
 msgstr "알 수 없음"
+
+#: dlls/sane.ds/sane.rc:46
+msgid ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:47
+msgid ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:48
+msgid "The scanner cover is open. Please close the scanner."
+msgstr ""
+
+#: dlls/sane.ds/sane.rc:49
+msgid "The scanner is busy. Try again later."
+msgstr ""
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
