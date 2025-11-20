@@ -28,6 +28,12 @@ struct wined3d_decoder
     struct wined3d_decoder_desc desc;
     struct wined3d_buffer *bitstream, *parameters, *matrix, *slice_control;
     struct wined3d_decoder_output_view *output_view;
+
+    /* Accessed from both the CS and application threads. */
+    CRITICAL_SECTION feedback_cs;
+    unsigned int feedback_number;
+    uint8_t feedback_pic_entry;
+    bool feedback_field;
 };
 
 static void wined3d_decoder_cleanup(struct wined3d_decoder *decoder)
@@ -36,6 +42,7 @@ static void wined3d_decoder_cleanup(struct wined3d_decoder *decoder)
     wined3d_buffer_decref(decoder->parameters);
     wined3d_buffer_decref(decoder->matrix);
     wined3d_buffer_decref(decoder->slice_control);
+    wined3d_lock_cleanup(&decoder->feedback_cs);
 }
 
 ULONG CDECL wined3d_decoder_decref(struct wined3d_decoder *decoder)
@@ -82,6 +89,7 @@ static HRESULT wined3d_decoder_init(struct wined3d_decoder *decoder,
     decoder->ref = 1;
     decoder->device = device;
     decoder->desc = *desc;
+    wined3d_lock_init(&decoder->feedback_cs, "wined3d_decoder.feedback_cs");
 
     buffer_desc.byte_width = sizeof(DXVA_PicParams_H264);
     if (FAILED(hr = wined3d_buffer_create(device, &buffer_desc,
@@ -1240,6 +1248,12 @@ static void wined3d_decoder_vk_decode_h264(struct wined3d_decoder_vk *decoder_vk
 
     wined3d_decoder_vk_blit_output(decoder_vk, context_vk, output_view_vk, slot_index);
 
+    EnterCriticalSection(&decoder_vk->d.feedback_cs);
+    decoder_vk->d.feedback_number = h264_params->StatusReportFeedbackNumber;
+    decoder_vk->d.feedback_pic_entry = h264_params->CurrPic.bPicEntry;
+    decoder_vk->d.feedback_field = h264_params->field_pic_flag;
+    LeaveCriticalSection(&decoder_vk->d.feedback_cs);
+
 out:
     wined3d_context_vk_destroy_vk_video_parameters(context_vk, vk_params, context_vk->current_command_buffer.id);
     free(slice_offsets);
@@ -1363,4 +1377,58 @@ HRESULT CDECL wined3d_decoder_decode(struct wined3d_decoder *decoder,
 
     wined3d_cs_emit_decode(decoder, decoder->output_view, bitstream_size, slice_control_size);
     return S_OK;
+}
+
+HRESULT CDECL wined3d_decoder_extension(struct wined3d_decoder *decoder, unsigned int function,
+        const void *input, unsigned int input_size, void *output, unsigned int output_size)
+{
+    TRACE("decoder %p, function %#x, input %p, input_size %u, output %p, output_size %u.\n",
+            decoder, function, input, input_size, output, output_size);
+
+    if (function == DXVA_STATUS_REPORTING_FUNCTION)
+    {
+        DXVA_Status_H264 *status = output;
+        unsigned int feedback_number;
+        uint8_t feedback_pic_entry;
+        bool feedback_field;
+
+        if (output_size < sizeof(*status))
+        {
+            WARN("Invalid size %u.\n", output_size);
+            return E_FAIL;
+        }
+
+        /* FIXME: We should use Vulkan result status queries here. */
+
+        /* In lieu of real status information, we report the frame done as soon
+         * as the command has been submitted. That's earlier than it should be,
+         * but the application can't tell the difference. */
+
+        EnterCriticalSection(&decoder->feedback_cs);
+        feedback_number = decoder->feedback_number;
+        feedback_pic_entry = decoder->feedback_pic_entry;
+        feedback_field = decoder->feedback_field;
+        LeaveCriticalSection(&decoder->feedback_cs);
+
+        /* AMD returns E_FAIL here; NVidia returns S_OK with zeroed output. */
+        if (!feedback_number)
+            return E_FAIL;
+
+        status->StatusReportFeedbackNumber = feedback_number;
+        status->CurrPic.bPicEntry = feedback_pic_entry;
+        status->field_pic_flag = feedback_field;
+        status->bDXVA_Func = DXVA_PICTURE_DECODING_FUNCTION;
+        status->bBufType = (UCHAR)~0;
+        status->bStatus = 0;
+        status->bReserved8Bits = 0;
+        /* 0xffff means no estimate provided. NVidia returns this.
+         * AMD returns 1, which is obviously wrong. */
+        status->wNumMbsAffected = 0xffff;
+        return S_OK;
+    }
+    else
+    {
+        FIXME("Unhandled function %#x.\n", function);
+        return E_NOTIMPL;
+    }
 }

@@ -37077,7 +37077,7 @@ static void test_h264_decoder(void)
     extension.pPrivateOutputData = &h264_status;
     extension.PrivateOutputDataSize = sizeof(h264_status);
     hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
-    todo_wine ok(hr == E_FAIL /* AMD */ || hr == S_OK /* NVidia */, "Got hr %#lx.\n", hr);
+    ok(hr == E_FAIL /* AMD */ || hr == S_OK /* NVidia */, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         DXVA_Status_H264 zero_status = {0};
@@ -37287,23 +37287,30 @@ static void test_h264_decoder(void)
     memset(&extension, 0, sizeof(extension));
     extension.Function = DXVA_STATUS_REPORTING_FUNCTION;
     extension.pPrivateOutputData = &h264_status;
+    extension.PrivateOutputDataSize = sizeof(h264_status) - 1;
+    hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+
+    memset(&h264_status, 0xcc, sizeof(h264_status));
+    memset(&extension, 0, sizeof(extension));
+    extension.Function = DXVA_STATUS_REPORTING_FUNCTION;
+    extension.pPrivateInputData = (void *)0xdeadbeef;
+    extension.PrivateInputDataSize = 123;
+    extension.pPrivateOutputData = &h264_status;
     extension.PrivateOutputDataSize = sizeof(h264_status);
     hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(h264_status.StatusReportFeedbackNumber == 2, "Got number %u.\n", h264_status.StatusReportFeedbackNumber);
-        ok(h264_status.CurrPic.bPicEntry == 1, "Got index %#x.\n", h264_status.CurrPic.bPicEntry);
-        ok(!h264_status.field_pic_flag, "Got field pic flag %#x.\n", h264_status.field_pic_flag);
-        ok(h264_status.bDXVA_Func == DXVA_PICTURE_DECODING_FUNCTION, "Got function %#x.\n", h264_status.bDXVA_Func);
-        ok(h264_status.bBufType == (UCHAR)~0, "Got buffer type %#x.\n", h264_status.bBufType);
-        ok(!h264_status.bStatus, "Got status %#x.\n", h264_status.bStatus);
-        ok(!h264_status.bReserved8Bits, "Got reserved %#x.\n", h264_status.bReserved8Bits);
-        /* AMD reports that 1 macroblock was successfully decoded, which is
-         * obviously wrong.
-         * NVidia returns 0xffff, which is valid and means that no estimate was
-         * provided. */
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(h264_status.StatusReportFeedbackNumber == 2, "Got number %u.\n", h264_status.StatusReportFeedbackNumber);
+    ok(h264_status.CurrPic.bPicEntry == 1, "Got index %#x.\n", h264_status.CurrPic.bPicEntry);
+    ok(!h264_status.field_pic_flag, "Got field pic flag %#x.\n", h264_status.field_pic_flag);
+    ok(h264_status.bDXVA_Func == DXVA_PICTURE_DECODING_FUNCTION, "Got function %#x.\n", h264_status.bDXVA_Func);
+    ok(h264_status.bBufType == (UCHAR)~0, "Got buffer type %#x.\n", h264_status.bBufType);
+    ok(!h264_status.bStatus, "Got status %#x.\n", h264_status.bStatus);
+    ok(!h264_status.bReserved8Bits, "Got reserved %#x.\n", h264_status.bReserved8Bits);
+    /* AMD reports that 1 macroblock was successfully decoded, which is
+     * obviously wrong.
+     * NVidia returns 0xffff, which is valid and means that no estimate was
+     * provided. */
 
     for (unsigned int i = 0; i < ARRAY_SIZE(output_views); ++i)
         ID3D11VideoDecoderOutputView_Release(output_views[i]);
