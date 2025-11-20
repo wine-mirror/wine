@@ -1330,7 +1330,7 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 {
     UINT i, count, old_state = data->pending_state.net_wm_state;
 
-    new_state &= x11drv_thread_data()->net_wm_state_mask;
+    new_state &= x11drv_init_thread_data()->net_wm_state_mask;
     data->desired_state.net_wm_state = new_state;
     if (!data->whole_window || !data->managed || data->embedded) return; /* no window or not managed, nothing to update */
     if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
