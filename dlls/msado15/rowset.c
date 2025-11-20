@@ -145,9 +145,15 @@ static ULONG WINAPI rowset_Release(IRowsetExactScroll *iface)
 
     if (!refs)
     {
+        int i;
+
         TRACE("destroying %p\n", rowset);
 
         if (rowset->convert) IDataConvert_Release(rowset->convert);
+
+        for (i = 0; i < rowset->data_cnt; i++)
+            VariantClear(rowset->data + i);
+        free(rowset->data);
 
         CoTaskMemFree(rowset->columns);
         CoTaskMemFree(rowset->columns_buf);
