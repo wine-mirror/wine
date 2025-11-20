@@ -2247,8 +2247,10 @@ static void test_SoftwareLicensingProduct( IWbemServices *services )
     {
         hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
         if (hr != S_OK) break;
+        check_property( obj, L"ApplicationId", VT_BSTR, CIM_STRING );
         check_property( obj, L"LicenseIsAddon", VT_BOOL, CIM_BOOLEAN );
         check_property( obj, L"LicenseStatus", VT_I4, CIM_UINT32 );
+        check_property_nullable( obj, L"PartialProductKey", VT_BSTR, CIM_STRING );
         IWbemClassObject_Release( obj );
     }
 

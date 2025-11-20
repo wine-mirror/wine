@@ -491,9 +491,11 @@ static const struct column col_sid[] =
 };
 static const struct column col_softwarelicensingproduct[] =
 {
-    { L"LicenseIsAddon", CIM_BOOLEAN },
-    { L"LicenseStatus",  CIM_UINT32 },
-};
+    { L"ApplicationId",     CIM_STRING },
+    { L"LicenseIsAddon",    CIM_BOOLEAN },
+    { L"LicenseStatus",     CIM_UINT32 },
+    { L"PartialProductKey", CIM_STRING },
+ };
 static const struct column col_sounddevice[] =
 {
     { L"Caption",      CIM_STRING },
@@ -1068,8 +1070,10 @@ struct record_sid
 };
 struct record_softwarelicensingproduct
 {
-    int    license_is_addon;
-    UINT32 license_status;
+    const WCHAR *application_id;
+    int         license_is_addon;
+    UINT32      license_status;
+    const WCHAR *partial_product_key;
 };
 struct record_sounddevice
 {
@@ -1291,7 +1295,7 @@ static const struct record_quickfixengineering data_quickfixengineering[] =
 
 static const struct record_softwarelicensingproduct data_softwarelicensingproduct[] =
 {
-    { 0, 1 },
+    { L"55c92734-d682-4d71-983e-d6ec3f16059f", 0, 1, L"BEEF0" },
 };
 
 static const struct record_stdregprov data_stdregprov[] =
