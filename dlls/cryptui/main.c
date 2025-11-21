@@ -5072,9 +5072,10 @@ static INT_PTR CALLBACK import_store_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
         {
             SendMessageW(GetDlgItem(hwnd, IDC_IMPORT_AUTO_STORE), BM_CLICK,
              0, 0);
-            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE), FALSE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_STORE), TRUE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_BROWSE_STORE), TRUE);
+            EnableWindow(GetDlgItem(hwnd, IDC_IMPORT_SPECIFY_STORE),
+             !(data->dwFlags & CRYPTUI_WIZ_IMPORT_NO_CHANGE_DEST_STORE));
         }
         else
         {
