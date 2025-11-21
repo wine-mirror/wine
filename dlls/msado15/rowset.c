@@ -594,17 +594,6 @@ static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface, HROW row, HACC
         if (rowset->columns[accessor->bindings[i].iOrdinal].wType != DBTYPE_VARIANT)
             FIXME("convert data to column type\n");
 
-        if (idx > rowset->data_cnt)
-        {
-            size_t size = max(max(rowset->data_cnt, idx), 8);
-            VARIANT *data = realloc(rowset->data, size * sizeof(*rowset->data));
-
-            if (!data) return E_OUTOFMEMORY;
-            memset(data + rowset->data_cnt, 0, (size - rowset->data_cnt) * sizeof(*rowset->data));
-            rowset->data = data;
-            rowset->data_cnt = size;
-        }
-
         len = sizeof(VARIANT);
         status = DBSTATUS_S_OK;
         if (accessor->bindings[i].cbMaxLen < len)
@@ -640,6 +629,7 @@ static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER res
         HACCESSOR accessor, void *data, HROW *row)
 {
     struct rowset *rowset = impl_from_IRowsetChange(iface);
+    int idx, size;
 
     TRACE("%p, %Iu, %Id, %p, %p\n", rowset, reserved, accessor, data, row);
 
@@ -649,7 +639,26 @@ static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER res
         return E_NOTIMPL;
     }
 
+    idx = rowset->row_cnt * rowset->columns_cnt;
+    size = idx + rowset->columns_cnt;
+    if (size > rowset->data_cnt)
+    {
+        VARIANT *tmp;
+
+        size = max(size, rowset->data_cnt * 2);
+        size = max(size, 8 * rowset->columns_cnt);
+        tmp = realloc(rowset->data, size * sizeof(*rowset->data));
+        if (!tmp) return E_OUTOFMEMORY;
+
+        memset(tmp + rowset->data_cnt, 0, (size - rowset->data_cnt) * sizeof(*rowset->data));
+        rowset->data = tmp;
+        rowset->data_cnt = size;
+    }
+
     rowset->row_cnt++;
+    V_VT(&rowset->data[idx]) = VT_I4;
+    V_I4(&rowset->data[idx]) = rowset->row_cnt;
+
     if (row) *row = rowset->row_cnt;
     return S_OK;
 }
