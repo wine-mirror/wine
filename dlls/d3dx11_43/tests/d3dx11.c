@@ -3974,14 +3974,6 @@ static void test_create_texture(void)
     check_resource_data(resource, test_image, __LINE__);
     ID3D11Resource_Release(resource);
 
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("Skipping D3DX11CreateTextureFrom{File,Resource} tests.\n");
-        CoUninitialize();
-        ok(!ID3D11Device_Release(device), "Unexpected refcount.\n");
-        return;
-    }
-
     /* D3DX11CreateTextureFromFile tests */
 
     hr2 = 0xdeadbeef;
@@ -4090,6 +4082,14 @@ static void test_create_texture(void)
 
         delete_file(test_filename);
         winetest_pop_context();
+    }
+
+    if (!strcmp(winetest_platform, "wine"))
+    {
+        skip("Skipping D3DX11CreateTextureFromResource tests.\n");
+        CoUninitialize();
+        ok(!ID3D11Device_Release(device), "Unexpected refcount.\n");
+        return;
     }
 
     /* D3DX11CreateTextureFromResource tests */
