@@ -3674,13 +3674,6 @@ static void test_get_image_info(void)
     check_dds_dxt10_format(DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, FALSE);
     check_dds_dxt10_format(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, FALSE);
 
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("Skipping D3DX11GetImageInfoFromResource() tests.\n");
-        CoUninitialize();
-        return;
-    }
-
     /* D3DX11GetImageInfoFromResource tests */
 
     hr2 = 0xdeadbeef;

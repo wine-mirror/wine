@@ -223,6 +223,48 @@ HRESULT WINAPI D3DX11GetImageInfoFromFileW(const WCHAR *src_file, ID3DX11ThreadP
     return hr;
 }
 
+HRESULT WINAPI D3DX11GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *info, HRESULT *result)
+{
+    uint32_t size;
+    void *buffer;
+    HRESULT hr;
+
+    TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
+            module, debugstr_a(resource), pump, info, result);
+
+    if (pump)
+        FIXME("D3DX11 thread pump is currently unimplemented.\n");
+
+    if (FAILED((hr = d3dx_load_resource_a(module, resource, &buffer, &size))))
+        return hr;
+    hr = get_image_info(buffer, size, info);
+    if (result)
+        *result = hr;
+    return hr;
+}
+
+HRESULT WINAPI D3DX11GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX11ThreadPump *pump,
+        D3DX11_IMAGE_INFO *info, HRESULT *result)
+{
+    uint32_t size;
+    void *buffer;
+    HRESULT hr;
+
+    TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
+            module, debugstr_w(resource), pump, info, result);
+
+    if (pump)
+        FIXME("D3DX11 thread pump is currently unimplemented.\n");
+
+    if (FAILED((hr = d3dx_load_resource_w(module, resource, &buffer, &size))))
+        return hr;
+    hr = get_image_info(buffer, size, info);
+    if (result)
+        *result = hr;
+    return hr;
+}
+
 static HRESULT d3dx11_image_info_from_d3dx_image(D3DX11_IMAGE_INFO *info, struct d3dx_image *image)
 {
     D3DX11_IMAGE_FILE_FORMAT iff = d3dx11_image_file_format_from_d3dx_image_file_format(image->image_file_format);
@@ -701,22 +743,4 @@ HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
     if (hresult)
         *hresult = hr;
     return hr;
-}
-
-HRESULT WINAPI D3DX11GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX11ThreadPump *pump,
-        D3DX11_IMAGE_INFO *info, HRESULT *result)
-{
-    FIXME("module %p, resource %s, pump %p, info %p, result %p stub!.\n", module, debugstr_a(resource), pump, info,
-            result);
-
-    return E_NOTIMPL;
-}
-
-HRESULT WINAPI D3DX11GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX11ThreadPump *pump,
-        D3DX11_IMAGE_INFO *info, HRESULT *result)
-{
-    FIXME("module %p, resource %s, pump %p, info %p, result %p stub!.\n", module, debugstr_w(resource), pump, info,
-            result);
-
-    return E_NOTIMPL;
 }
