@@ -75,6 +75,7 @@ struct bookmark_data
     union
     {
         int i4;
+        LONGLONG i8;
         BYTE *ptr;
     } val;
     DBLENGTH len;
@@ -166,6 +167,13 @@ static HRESULT get_bookmark( struct recordset *recordset, HROW row, VARIANT *boo
     {
         V_VT(bookmark) = VT_R8;
         V_R8(bookmark) = bookmark_data.val.i4;
+        return S_OK;
+    }
+
+    if (recordset->bookmark_type == DBTYPE_I8)
+    {
+        V_VT(bookmark) = VT_I8;
+        V_I8(bookmark) = bookmark_data.val.i8;
         return S_OK;
     }
 
@@ -1891,7 +1899,8 @@ static HRESULT WINAPI recordset_put_Bookmark( _Recordset *iface, VARIANT bookmar
     TRACE( "%p, %s\n", iface, debugstr_variant(&bookmark) );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
-    if (V_VT(&bookmark) != VT_R8 && V_VT(&bookmark) != (VT_ARRAY | VT_UI1))
+    if (V_VT(&bookmark) != VT_R8 && V_VT(&bookmark) != VT_I8 &&
+            V_VT(&bookmark) != (VT_ARRAY | VT_UI1))
         return MAKE_ADO_HRESULT( adErrInvalidArgument );
     if (!recordset->bookmark_hacc)
         return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
@@ -3017,6 +3026,8 @@ static void init_bookmark( struct recordset *recordset )
 
             if (colinfo[i].ulColumnSize == sizeof(int))
                 recordset->bookmark_type = DBTYPE_I4;
+            else if (colinfo[i].ulColumnSize == sizeof(INT_PTR))
+                recordset->bookmark_type = DBTYPE_I8;
             else
                 recordset->bookmark_type = DBTYPE_BYREF | DBTYPE_BYTES;
 
