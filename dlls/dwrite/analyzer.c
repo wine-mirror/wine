@@ -309,7 +309,7 @@ system_fallback_config[] =
     { "1C50-1C7F",              L"Noto Sans Ol Chiki" },
 
     /* Dingbats - 2700-27BF */
-    { "2700-27BF",              L"Noto Sans Symbols2"},
+    { "2700-27BF",              L"Noto Sans Symbols2, Noto Sans Symbols 2" },
 
     { "2C80-2CFF",              L"Noto Sans Coptic" },
     { "2D30-2D7F",              L"Noto Sans Tifinagh" },
@@ -377,7 +377,7 @@ system_fallback_config[] =
     { "FF00-FFEF",              L"Noto Sans CJK KR", L"ko" },
     { "FF00-FFEF",              L"Noto Sans CJK JP" },
 
-    { "1F800-1F8FF",            L"Noto Sans Symbols2" },
+    { "1F800-1F8FF",            L"Noto Sans Symbols2, Noto Sans Symbols 2" },
 };
 
 struct text_source_context
