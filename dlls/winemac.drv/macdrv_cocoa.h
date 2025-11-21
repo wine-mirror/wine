@@ -255,6 +255,7 @@ struct macdrv_monitor
     CGRect rc_work;
     unsigned char *edid;
     uint32_t edid_len;
+    bool hdr_enabled;
 };
 
 extern int macdrv_set_display_mode(CGDirectDisplayID id, CGDisplayModeRef display_mode);

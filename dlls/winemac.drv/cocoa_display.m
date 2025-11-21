@@ -986,6 +986,11 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
                     CFRelease(edid_data);
                 }
 
+                monitors[monitor_count].hdr_enabled = false;
+#if defined(MAC_OS_X_VERSION_10_15) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_15
+                if (@available(macOS 10.15, *))
+                    monitors[monitor_count].hdr_enabled = (screen.maximumPotentialExtendedDynamicRangeColorComponentValue > 1.0) ? true : false;
+#endif
                 monitor_count++;
                 break;
             }
