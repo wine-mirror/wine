@@ -84,6 +84,7 @@ DEFINE_EXPECT(rowset_ReleaseRows);
 DEFINE_EXPECT(rowset_GetRowsAt);
 DEFINE_EXPECT(rowset_GetExactPosition);
 DEFINE_EXPECT(rowset_GetData);
+DEFINE_EXPECT(rowset_RestartPosition);
 DEFINE_EXPECT(rowset_change_SetData);
 DEFINE_EXPECT(rowset_change_InsertRow);
 DEFINE_EXPECT(accessor_AddRefAccessor);
@@ -1119,16 +1120,17 @@ static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER hRe
     ok(pcRowObtained != NULL, "pcRowObtained = NULL\n");
     ok(prghRows != NULL, "prghRows = NULL\n");
     ok(*prghRows != NULL, "*prghRows = NULL\n");
+    ok(lRowsOffset >= -1 && lRowsOffset <= 1, "lRowsOffset = %Id\n", lRowsOffset);
 
-    if (rowset->idx == 2)
+    if ((cRows > 0 && rowset->idx + lRowsOffset >= 2) || (cRows < 0 && rowset->idx + lRowsOffset <= 0))
     {
         *pcRowObtained = 0;
         return DB_S_ENDOFROWSET;
     }
 
-    ok(!lRowsOffset, "lRowsOffset = %Id\n", lRowsOffset);
     *pcRowObtained = 1;
-    (*prghRows)[0] = ++rowset->idx;
+    rowset->idx += lRowsOffset;
+    (*prghRows)[0] = cRows > 0 ? ++rowset->idx : --rowset->idx;
     return S_OK;
 }
 
@@ -1141,8 +1143,13 @@ static HRESULT WINAPI rowset_ReleaseRows(IRowsetExactScroll *iface, DBCOUNTITEM 
 
 static HRESULT WINAPI rowset_RestartPosition(IRowsetExactScroll *iface, HCHAPTER hReserved)
 {
-    ok(0, "Unexpected call\n");
-    return E_NOTIMPL;
+    struct test_rowset *rowset = impl_from_IRowsetExactScroll( iface );
+
+    CHECK_EXPECT(rowset_RestartPosition);
+    ok(!hReserved, "hReserved = %Ix\n", hReserved);
+
+    rowset->idx = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_Compare(IRowsetExactScroll *iface, HCHAPTER hReserved, DBBKMARK cbBookmark1,
@@ -1161,7 +1168,7 @@ static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION h
     CHECK_EXPECT2(rowset_GetRowsAt);
     ok(!hReserved1, "hReserved1 = %Ix\n", hReserved1);
     ok(!hReserved2, "hReserved2 = %Ix\n", hReserved2);
-    ok(cRows == 1, "cRows = %Id\n", cRows);
+    ok(cRows == -1 || cRows == 1, "cRows = %Id\n", cRows);
     ok(pcRowsObtained != NULL, "pcRowsObtained == NULL\n");
     ok(prghRows != NULL, "prghRows == NULL\n");
     ok(*prghRows != NULL, "*prghRows == NULL\n");
@@ -1184,11 +1191,11 @@ static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION h
     }
 
     ok(cbBookmark == sizeof(int), "cbBookmark = %Id\n", cbBookmark);
-    ok(!lRowsOffset || lRowsOffset == 1, "lRowsOffset = %Id\n", lRowsOffset);
+    ok(lRowsOffset >= -1 && lRowsOffset <= 1, "lRowsOffset = %Id\n", lRowsOffset);
 
     row = *(int *)pBookmark + lRowsOffset;
-    ok(row >= 1 && row <= 3, "row = %d\n", row);
-    if (row == 3)
+    ok(row >= 0 && row <= 3, "row = %d\n", row);
+    if (!row || row == 3)
     {
         *pcRowsObtained = 0;
         return DB_S_ENDOFROWSET;
@@ -1479,6 +1486,44 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
     else CHECK_CALLED( rowset_GetRowsAt );
     ok( hr == MAKE_ADO_HRESULT(adErrNoCurrentRecord), "got %08lx\n", hr );
+
+    if (!exact_scroll)
+    {
+        SET_EXPECT( rowset_RestartPosition );
+        SET_EXPECT( rowset_GetNextRows );
+    }
+    else
+    {
+        SET_EXPECT( rowset_GetRowsAt );
+        SET_EXPECT( rowset_GetData );
+    }
+    hr = _Recordset_MoveFirst( recordset );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    if (!exact_scroll)
+    {
+        CHECK_CALLED( rowset_RestartPosition );
+        CHECK_CALLED( rowset_GetNextRows );
+    }
+    else
+    {
+        CHECK_CALLED( rowset_GetRowsAt );
+        CHECK_CALLED( rowset_GetData );
+    }
+    ok( !is_bof( recordset ), "at bof\n" );
+    ok( !is_eof( recordset ), "at eof\n" );
+
+    SET_EXPECT( rowset_AddRefRows );
+    SET_EXPECT( rowset_ReleaseRows );
+    if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
+    else SET_EXPECT( rowset_GetRowsAt );
+    hr = _Recordset_MovePrevious( recordset );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED( rowset_AddRefRows );
+    CHECK_CALLED( rowset_ReleaseRows );
+    if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
+    else CHECK_CALLED( rowset_GetRowsAt );
+    ok( is_bof( recordset ), "not at bof\n" );
+    ok( !is_eof( recordset ), "at eof\n" );
 
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
