@@ -4150,6 +4150,11 @@ static enum pdb_result pdb_reader_create_inline_site(struct pdb_reader *pdb, str
     symref_t type_symref;
     unsigned opcode, arg1, arg2;
 
+    if (cv_inlinee_id & 0x80000000)
+    {
+        WARN("Unsupported inlinee id %x\n", cv_inlinee_id);
+        return R_PDB_INVALID_ARGUMENT;
+    }
     if ((result = pdb_reader_IPI_alloc_and_read_full_codeview_type(pdb, cv_inlinee_id, &cv_type)))
     {
         WARN("Couldn't find type %x in IPI stream\n", cv_inlinee_id);
