@@ -228,7 +228,7 @@ static void enumerate_strings(IAutoCompleteImpl *ac, enum prefix_filtering pfx_f
     } while (str_read);
 
     /* Allocate even if there were zero strings enumerated, to mark it non-NULL */
-    if ((tmp = realloc(strs, cur * sizeof(*strs))))
+    if ((tmp = realloc(strs, max(cur, 1) * sizeof(*strs))))
     {
         strs = tmp;
         if (cur > 0)
