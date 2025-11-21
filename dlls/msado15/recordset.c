@@ -74,8 +74,8 @@ struct bookmark_data
 {
     union
     {
-        int i;
-        SAFEARRAY *sa;
+        int i4;
+        BYTE *ptr;
     } val;
     DBLENGTH len;
     DBSTATUS status;
@@ -156,6 +156,7 @@ static void cache_release( struct recordset *recordset )
 static HRESULT get_bookmark( struct recordset *recordset, HROW row, VARIANT *bookmark )
 {
     struct bookmark_data bookmark_data = { 0 };
+    SAFEARRAY *sa;
     HRESULT hr;
 
     hr = IRowset_GetData(recordset->row_set, row, recordset->bookmark_hacc, &bookmark_data);
@@ -164,12 +165,27 @@ static HRESULT get_bookmark( struct recordset *recordset, HROW row, VARIANT *boo
     if (recordset->bookmark_type == DBTYPE_I4)
     {
         V_VT(bookmark) = VT_R8;
-        V_R8(bookmark) = bookmark_data.val.i;
+        V_R8(bookmark) = bookmark_data.val.i4;
         return S_OK;
     }
 
+    sa = SafeArrayCreateVector( VT_UI1, 0, bookmark_data.len );
+    if (!sa)
+    {
+        CoTaskMemFree( bookmark_data.val.ptr );
+        return E_OUTOFMEMORY;
+    }
+    hr = SafeArrayLock( sa );
+    if (SUCCEEDED(hr))
+    {
+            memcpy( sa->pvData, bookmark_data.val.ptr, bookmark_data.len );
+            SafeArrayUnlock( sa );
+    }
+    CoTaskMemFree( bookmark_data.val.ptr );
+    if (FAILED(hr)) return hr;
+
     V_VT(bookmark) = VT_ARRAY | VT_UI1;
-    V_ARRAY(bookmark) = bookmark_data.val.sa;
+    V_ARRAY(bookmark) = sa;
     return S_OK;
 }
 
@@ -3002,7 +3018,7 @@ static void init_bookmark( struct recordset *recordset )
             if (colinfo[i].ulColumnSize == sizeof(int))
                 recordset->bookmark_type = DBTYPE_I4;
             else
-                recordset->bookmark_type = DBTYPE_ARRAY | DBTYPE_UI1;
+                recordset->bookmark_type = DBTYPE_BYREF | DBTYPE_BYTES;
 
             memset(&binding, 0, sizeof(binding));
             binding.iOrdinal = colinfo[i].iOrdinal;
@@ -3010,7 +3026,7 @@ static void init_bookmark( struct recordset *recordset )
             binding.obLength = offsetof( struct bookmark_data, len );
             binding.obStatus = offsetof( struct bookmark_data, status );
             binding.dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
-            binding.cbMaxLen = recordset->bookmark_type == DBTYPE_I4 ? sizeof(int) : sizeof(SAFEARRAY *);
+            binding.cbMaxLen = recordset->bookmark_type == DBTYPE_I4 ? sizeof(int) : sizeof(void *);
             binding.wType = recordset->bookmark_type;
             binding.bPrecision = colinfo[i].bPrecision;
             binding.bScale = colinfo[i].bScale;
