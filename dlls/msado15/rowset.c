@@ -183,20 +183,19 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCES
     struct accessor *accessor = (struct accessor *)hacc;
     DBSTATUS status = DBSTATUS_S_OK;
     BOOL succ = FALSE, err = FALSE;
+    HRESULT hr = S_OK;
     DBLENGTH len;
-    VARIANT val;
-    HRESULT hr;
     int i, idx;
 
     TRACE("%p, %Id, %Id, %p\n", rowset, row, hacc, data);
 
     if (!accessor->bindings_count) return DB_E_BADACCESSORTYPE;
-    if (row > rowset->row_cnt) return DB_E_BADROWHANDLE;
+    if (row < 1 || row > rowset->row_cnt) return DB_E_BADROWHANDLE;
     for (i = 0; i < accessor->bindings_count; i++)
     {
-        if (accessor->bindings[i].wType != DBTYPE_VARIANT)
+        if (accessor->bindings[i].dwMemOwner != DBMEMOWNER_CLIENTOWNED)
         {
-            FIXME("data conversion not implemented\n");
+            FIXME("dwMemOwner = %lx\n", accessor->bindings[i].dwMemOwner);
             return E_NOTIMPL;
         }
     }
@@ -204,21 +203,41 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCES
     for (i = 0; i < accessor->bindings_count; i++)
     {
         idx = (row - 1) * rowset->columns_cnt + accessor->bindings[i].iOrdinal;
-
-        len = sizeof(val);
         status = DBSTATUS_S_OK;
+        len = 0;
+
+        if (accessor->bindings[i].wType != DBTYPE_VARIANT)
+        {
+            hr = IDataConvert_GetConversionSize(rowset->convert, DBTYPE_VARIANT,
+                    accessor->bindings[i].wType, NULL, &len, &rowset->data[idx]);
+            if (FAILED(hr)) status = DBSTATUS_E_CANTCONVERTVALUE;
+        }
+        else len = sizeof(VARIANT);
+
+        if (status != DBSTATUS_S_OK) {}
         if (accessor->bindings[i].cbMaxLen < len)
             status = DBSTATUS_E_DATAOVERFLOW;
+        else if (!(accessor->bindings[i].dwPart & DBPART_VALUE))
+            status = DBSTATUS_E_BADACCESSOR;
+        else if (accessor->bindings[i].wType != DBTYPE_VARIANT)
+        {
+            hr = IDataConvert_DataConvert(rowset->convert, DBTYPE_VARIANT,
+                    accessor->bindings[i].wType, sizeof(VARIANT), NULL,
+                    &rowset->data[idx], (BYTE *)data + accessor->bindings[i].obValue,
+                    accessor->bindings[i].cbMaxLen, DBSTATUS_S_OK, &status,
+                    accessor->bindings[i].bPrecision, accessor->bindings[i].bScale, 0);
+            if (FAILED(hr) && status == DBSTATUS_S_OK)
+                status = DBSTATUS_E_CANTCONVERTVALUE;
+        }
         else
         {
-            VariantInit(&val);
-            if (idx < rowset->data_cnt)
-            {
-                hr = VariantCopy(&val, &rowset->data[idx]);
-                if (FAILED(hr)) return hr;
-            }
+            VARIANT val;
 
-            if (accessor->bindings[i].dwPart & DBPART_VALUE && status == DBSTATUS_S_OK)
+            VariantInit(&val);
+            hr = VariantCopy(&val, &rowset->data[idx]);
+            if (FAILED(hr))
+                status = DBSTATUS_E_CANTCONVERTVALUE;
+            else
                 memcpy((BYTE *)data + accessor->bindings[i].obValue, &val, sizeof(val));
         }
 
