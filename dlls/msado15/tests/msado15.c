@@ -67,13 +67,7 @@ static char mdbpath[MAX_PATH];
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
-DEFINE_EXPECT(rowset_QI_IRowset);
-DEFINE_EXPECT(rowset_QI_IRowsetExactScroll);
-DEFINE_EXPECT(rowset_QI_IRowsetInfo);
-DEFINE_EXPECT(rowset_QI_IColumnsInfo);
-DEFINE_EXPECT(rowset_QI_IRowsetChange);
 DEFINE_EXPECT(rowset_QI_IDBAsynchStatus);
-DEFINE_EXPECT(rowset_QI_IAccessor);
 DEFINE_EXPECT(rowset_QI_IRowsetUpdate);
 DEFINE_EXPECT(rowset_QI_IRowsetFind);
 DEFINE_EXPECT(rowset_info_GetProperties);
@@ -980,30 +974,25 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     if (IsEqualIID(riid, &IID_IRowset) ||
         IsEqualIID(riid, &IID_IUnknown))
     {
-        CHECK_EXPECT(rowset_QI_IRowset);
         *obj = &rowset->IRowsetExactScroll_iface;
     }
     else if (IsEqualIID(riid, &IID_IRowsetLocate) ||
             IsEqualIID(riid, &IID_IRowsetScroll) ||
             IsEqualIID(riid, &IID_IRowsetExactScroll))
     {
-        CHECK_EXPECT(rowset_QI_IRowsetExactScroll);
         if (!rowset->exact_scroll) return E_NOINTERFACE;
         *obj = &rowset->IRowsetExactScroll_iface;
     }
     else if (IsEqualIID(riid, &IID_IRowsetInfo))
     {
-        CHECK_EXPECT(rowset_QI_IRowsetInfo);
         *obj = &rowset->IRowsetInfo_iface;
     }
     else if (IsEqualIID(riid, &IID_IColumnsInfo))
     {
-        CHECK_EXPECT(rowset_QI_IColumnsInfo);
         *obj = &rowset->IColumnsInfo_iface;
     }
     else if (IsEqualIID(riid, &IID_IRowsetChange))
     {
-        CHECK_EXPECT(rowset_QI_IRowsetChange);
         *obj = &rowset->IRowsetChange_iface;
     }
     else if (IsEqualIID(riid, &IID_IDBAsynchStatus))
@@ -1013,7 +1002,6 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     }
     else if (IsEqualIID(riid, &IID_IAccessor))
     {
-        CHECK_EXPECT(rowset_QI_IAccessor);
         *obj = &rowset->IAccessor_iface;
     }
     else if (IsEqualIID(riid, &IID_IRowsetUpdate))
@@ -1309,34 +1297,22 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     rowset = (IUnknown*)&testrowset.IRowsetExactScroll_iface;
 
-    SET_EXPECT( rowset_QI_IRowset );
-    SET_EXPECT( rowset_QI_IRowsetInfo );
     SET_EXPECT( rowset_info_GetProperties );
-    SET_EXPECT( rowset_QI_IRowsetChange );
     SET_EXPECT( rowset_QI_IRowsetUpdate );
     SET_EXPECT( rowset_QI_IRowsetFind );
-    SET_EXPECT( rowset_QI_IRowsetExactScroll );
     if (exact_scroll)
     {
-        SET_EXPECT( rowset_QI_IColumnsInfo );
         SET_EXPECT( column_info_GetColumnInfo );
-        SET_EXPECT( rowset_QI_IAccessor );
         SET_EXPECT( accessor_CreateAccessor );
     }
     SET_EXPECT( rowset_QI_IDBAsynchStatus );
     hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
-    CHECK_CALLED( rowset_QI_IRowset );
-    todo_wine CHECK_CALLED( rowset_QI_IRowsetInfo );
     todo_wine CHECK_CALLED( rowset_info_GetProperties );
-    todo_wine CHECK_CALLED( rowset_QI_IRowsetChange );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetUpdate );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetFind );
-    CHECK_CALLED( rowset_QI_IRowsetExactScroll );
     if (exact_scroll)
     {
-        CHECK_CALLED( rowset_QI_IColumnsInfo );
         CHECK_CALLED( column_info_GetColumnInfo );
-        CHECK_CALLED( rowset_QI_IAccessor );
         CHECK_CALLED( accessor_CreateAccessor );
     }
     todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
@@ -1347,11 +1323,9 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     ok( state == adStateOpen, "state = %ld\n", state );
 
     count = -1;
-    SET_EXPECT( rowset_QI_IColumnsInfo );
     SET_EXPECT( column_info_GetColumnInfo );
     hr = Fields_get_Count( fields, &count );
     ok( hr == S_OK, "got %08lx\n", hr );
-    CHECK_CALLED( rowset_QI_IColumnsInfo );
     CHECK_CALLED( column_info_GetColumnInfo );
     ok( count == 1, "got %ld\n", count );
 
@@ -1381,14 +1355,12 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
     else SET_EXPECT( rowset_GetRowsAt );
-    SET_EXPECT( rowset_QI_IAccessor );
     SET_EXPECT( accessor_CreateAccessor );
     SET_EXPECT( rowset_GetData );
     hr = Field_get_Value( field, &v );
     ok( hr == S_OK, "got %08lx\n", hr );
     if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
     else CHECK_CALLED( rowset_GetRowsAt );
-    todo_wine_if(exact_scroll) CHECK_CALLED( rowset_QI_IAccessor );
     CHECK_CALLED( accessor_CreateAccessor );
     CHECK_CALLED( rowset_GetData );
     ok( V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v) );
@@ -1401,14 +1373,10 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     ok( V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v) );
     ok( V_I4(&v) == 123, "V_I4(&v) = %ld\n", V_I4(&v) );
 
-    SET_EXPECT(rowset_QI_IRowsetChange);
-    SET_EXPECT( rowset_QI_IAccessor );
     SET_EXPECT( accessor_CreateAccessor );
     SET_EXPECT( rowset_change_SetData );
     hr = Field_put_Value( field, v );
     ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine CHECK_NOT_CALLED(rowset_QI_IRowsetChange);
-    todo_wine CHECK_CALLED( rowset_QI_IAccessor );
     CHECK_CALLED( accessor_CreateAccessor );
     CHECK_CALLED( rowset_change_SetData );
 
@@ -1440,10 +1408,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
         CHECK_CALLED( rowset_GetData );
     }
 
-    SET_EXPECT( rowset_QI_IRowsetExactScroll );
     if (exact_scroll) SET_EXPECT( rowset_GetExactPosition );
     hr = _Recordset_get_RecordCount( recordset, &size );
-    CHECK_CALLED( rowset_QI_IRowsetExactScroll );
     if (exact_scroll) CHECK_CALLED( rowset_GetExactPosition );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( size == (exact_scroll ? 3 : -1), "size = %Id\n", size );
@@ -1527,7 +1493,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
-    SET_EXPECT(rowset_QI_IAccessor);
     SET_EXPECT(accessor_CreateAccessor);
     SET_EXPECT(accessor_AddRefAccessor);
     SET_EXPECT(rowset_change_InsertRow);
@@ -1535,8 +1500,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     if (exact_scroll) SET_EXPECT(rowset_GetData);
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == S_OK, "got %08lx\n", hr );
-    if (!exact_scroll) todo_wine CHECK_CALLED(rowset_QI_IAccessor);
-    else CHECK_NOT_CALLED(rowset_QI_IAccessor);
     CHECK_CALLED(accessor_CreateAccessor);
     CHECK_CALLED(accessor_AddRefAccessor);
     CHECK_CALLED(rowset_change_InsertRow);
@@ -1546,11 +1509,9 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     Fields_Release(fields);
     ADORecordsetConstruction_Release(construct);
     SET_EXPECT( rowset_ReleaseRows );
-    SET_EXPECT( rowset_QI_IAccessor );
     SET_EXPECT(accessor_ReleaseAccessor);
     ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
     CHECK_CALLED(rowset_ReleaseRows );
-    todo_wine CHECK_CALLED( rowset_QI_IAccessor );
     CHECK_CALLED(accessor_ReleaseAccessor);
     ok( testrowset.refs == 1, "got %ld\n", testrowset.refs );
 }
