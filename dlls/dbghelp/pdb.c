@@ -4326,10 +4326,16 @@ static enum pdb_result pdb_reader_load_compiland_symbols(struct pdb_reader *pdb,
             break;
 
         case S_THUNK32:
+            if (curr_func) WARN("not expecting thunks inside functions\n");
             if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->thunk_v3.segment, cv_symbol->thunk_v3.offset, &address))) goto failure;
             symt_new_thunk(pdb->module, compiland,
                            cv_symbol->thunk_v3.name, cv_symbol->thunk_v3.thtype,
                            address, cv_symbol->thunk_v3.thunk_len);
+            /* FIXME: we've seen S_FRAMEPROC inside S_THUNK...
+             * so until it's better supported, skip until end of thunk declaration
+             */
+            walker->offset = cv_symbol->thunk_v3.pend;
+            if ((result = pdb_reader_symbol_skip_if(pdb, walker, S_END))) goto failure;
             break;
 
         /*
