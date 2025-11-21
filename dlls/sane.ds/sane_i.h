@@ -215,6 +215,7 @@ BOOL DoScannerUI(void);
 HWND ScanningDialogBox(HWND dialog, LONG progress);
 
 /* Option functions */
+TW_UINT16 sane_find_option( const char *name, int type, struct option_descriptor *descr );
 TW_UINT16 sane_option_get_value( int optno, void *val );
 TW_UINT16 sane_option_set_value( int optno, void *val, BOOL *reload );
 TW_UINT16 sane_option_get_int( const char *option_name, int *val );

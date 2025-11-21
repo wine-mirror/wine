@@ -85,10 +85,10 @@ static TW_UINT16 msg_get_enum(pTW_CAPABILITY pCapability, const TW_UINT32 *value
     pCapability->hContainer = 0;
 
     if (type == TWTY_INT16 || type == TWTY_UINT16)
-        pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT16)]));
+        pCapability->hContainer = GlobalAlloc (GMEM_ZEROINIT, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT16)]));
 
     if (type == TWTY_INT32 || type == TWTY_UINT32)
-        pCapability->hContainer = GlobalAlloc (0, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT32)]));
+        pCapability->hContainer = GlobalAlloc (GMEM_ZEROINIT, FIELD_OFFSET( TW_ENUMERATION, ItemList[value_count * sizeof(TW_UINT32)]));
 
     if (pCapability->hContainer)
         enumv = GlobalLock(pCapability->hContainer);
@@ -476,30 +476,87 @@ static TW_UINT16 SANE_ICAPUnits (pTW_CAPABILITY pCapability, TW_UINT16 action)
 static TW_UINT16 SANE_ICAPBitDepth(pTW_CAPABILITY pCapability, TW_UINT16 action)
 {
     TW_UINT16 twCC = TWCC_BADCAP;
-    TW_UINT32 possible_values[1];
+    TW_UINT32 val;
+    TW_UINT32 sane_depth, twain_depth;
+    BOOL have_option_depth;
+    int samples_per_pixel;
+    struct option_descriptor opt;
 
     TRACE("ICAP_BITDEPTH\n");
 
-    possible_values[0] = activeDS.frame_params.depth;
+    get_sane_params(&activeDS.frame_params); // Updates activeDS.frame_params.format
+    samples_per_pixel=(activeDS.frame_params.format == FMT_RGB) ? 3 : 1;
+
+    sane_depth=activeDS.frame_params.depth;
+    have_option_depth =
+      sane_find_option( "depth", TYPE_INT, &opt ) == TWCC_SUCCESS
+      && (opt.size==sizeof(TW_UINT32))
+      && sane_option_get_value(opt.optno, &sane_depth) == TWCC_SUCCESS;
+    twain_depth = sane_depth*samples_per_pixel;
 
     switch (action)
     {
         case MSG_QUERYSUPPORT:
             twCC = set_onevalue(pCapability, TWTY_INT32,
-                    TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT  );
+                    TWQC_GET | TWQC_GETDEFAULT | TWQC_GETCURRENT | (have_option_depth ? TWQC_SET : 0)  );
             break;
 
         case MSG_GET:
-            twCC = msg_get_enum(pCapability, possible_values, ARRAY_SIZE(possible_values),
-                    TWTY_UINT16, activeDS.frame_params.depth, activeDS.frame_params.depth);
+            if (have_option_depth &&
+                opt.constraint_type == CONSTRAINT_WORD_LIST &&
+                opt.constraint.word_list[0]<=32)
+            {
+                /* The constraint word ist is in bits per color channel, for TWAIN we need bits per pixel */
+                TW_UINT32 enum_bitdepths[32];
+                int i;
+                for (i=0; i<opt.constraint.word_list[0]; i++)
+                    enum_bitdepths[i] = opt.constraint.word_list[i+1] * samples_per_pixel;
+                twCC = msg_get_enum(pCapability, enum_bitdepths, opt.constraint.word_list[0],
+                                    TWTY_UINT16, twain_depth, twain_depth);
+            }
+            else
+            {
+                twCC = msg_get_enum(pCapability, &twain_depth, 1,
+                                    TWTY_UINT16, twain_depth, twain_depth);
+            }
+            break;
+
+        case MSG_SET:
+            if (have_option_depth)
+            {
+                twCC = msg_set(pCapability, &val);
+                if (twCC == TWCC_SUCCESS)
+                {
+                    BOOL reload = FALSE;
+                    TW_UINT16 val16 = (TW_UINT16) val;
+
+                    /* TWAIN Spec 2.4 says unambiguous that the depth is defined per pixel,
+                     * not per color channel. However it also warns that there have been
+                     * misunderstandings. So interpret it... */
+                    if (val16==8 && samples_per_pixel==3)
+                    {
+                        val16=24;
+                    } else if (val16==16 && samples_per_pixel==3)
+                    {
+                        val16=48;
+                    }
+                    sane_depth = val16/samples_per_pixel;
+                    twCC = sane_option_set_value(opt.optno, &sane_depth, &reload);
+                    if (reload) twCC = TWCC_CHECKSTATUS;
+                }
+            }
+            else
+            {
+                twCC = TWCC_BADCAP;
+            }
             break;
 
         case MSG_GETDEFAULT:
             /* .. Fall through intentional .. */
 
         case MSG_GETCURRENT:
-            TRACE("Returning current bitdepth of %d\n", activeDS.frame_params.depth);
-            twCC = set_onevalue(pCapability, TWTY_UINT16, activeDS.frame_params.depth);
+            TRACE("Returning current bitdepth of %ld\n", twain_depth);
+            twCC = set_onevalue(pCapability, TWTY_UINT16, twain_depth);
             break;
     }
     return twCC;

@@ -40,7 +40,7 @@ TW_UINT16 sane_option_set_value( int optno, void *val, BOOL *reload )
     return SANE_CALL( option_set_value, &params );
 }
 
-static TW_UINT16 sane_find_option( const char *name, int type, struct option_descriptor *descr )
+TW_UINT16 sane_find_option( const char *name, int type, struct option_descriptor *descr )
 {
     struct option_find_descriptor_params params = { name, type, descr };
     return SANE_CALL( option_find_descriptor, &params ) ? TWCC_CAPUNSUPPORTED : TWCC_SUCCESS;
