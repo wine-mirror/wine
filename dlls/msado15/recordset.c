@@ -18,12 +18,14 @@
 
 #include <stdarg.h>
 #include <assert.h>
+#include <math.h>
 #include "windef.h"
 #include "winbase.h"
 #define COBJMACROS
 #include "objbase.h"
 #include "msado15_backcompat.h"
 #include "oledb.h"
+#include "oledberr.h"
 #include "sqlucode.h"
 
 #include "wine/debug.h"
@@ -68,6 +70,17 @@ struct fields
     ULONG               allocated;
 };
 
+struct bookmark_data
+{
+    union
+    {
+        int i;
+        SAFEARRAY *sa;
+    } val;
+    DBLENGTH len;
+    DBSTATUS status;
+};
+
 struct recordset
 {
     _Recordset         Recordset_iface;
@@ -84,6 +97,7 @@ struct recordset
     CursorLocationEnum cursor_location;
     CursorTypeEnum     cursor_type;
     IRowset           *row_set;
+    IRowsetLocate     *rowset_locate;
     IRowsetExactScroll *rowset_es;
     IRowsetChange     *rowset_change;
     IAccessor         *accessor;
@@ -95,7 +109,7 @@ struct recordset
         LONG           alloc;
         LONG           size;
         LONG           fetched;
-        BOOL           forward;
+        int            dir;
         LONG           pos;
         HROW          *rows;
     } cache;
@@ -105,6 +119,10 @@ struct recordset
 
     DBTYPE            *columntypes;
     HACCESSOR          hacc_empty; /* haccessor for adding empty rows */
+
+    HACCESSOR          bookmark_hacc;
+    DBTYPE             bookmark_type;
+    VARIANT            bookmark;
     HACCESSOR         *haccessors;
 };
 
@@ -136,8 +154,29 @@ static void cache_release( struct recordset *recordset )
     IRowset_ReleaseRows( recordset->row_set, recordset->cache.fetched,
             recordset->cache.rows, NULL, NULL, NULL );
     recordset->cache.fetched = 0;
+    recordset->cache.dir = 0;
     recordset->cache.pos = 0;
     recordset->current_row = DB_NULL_HROW;
+}
+
+static HRESULT get_bookmark( struct recordset *recordset, HROW row, VARIANT *bookmark )
+{
+    struct bookmark_data bookmark_data = { 0 };
+    HRESULT hr;
+
+    hr = IRowset_GetData(recordset->row_set, row, recordset->bookmark_hacc, &bookmark_data);
+    if (FAILED(hr)) return hr;
+
+    if (recordset->bookmark_type == DBTYPE_I4)
+    {
+        V_VT(bookmark) = VT_R8;
+        V_R8(bookmark) = bookmark_data.val.i;
+        return S_OK;
+    }
+
+    V_VT(bookmark) = VT_ARRAY | VT_UI1;
+    V_ARRAY(bookmark) = bookmark_data.val.sa;
+    return S_OK;
 }
 
 static HRESULT cache_get( struct recordset *recordset, BOOL forward )
@@ -145,11 +184,17 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
     int dir = forward ? 1 : -1;
     LONG off, fetch = 0;
 
-    if (!forward == !recordset->cache.forward)
+    if (!recordset->cache.dir)
+    {
+        off = 0;
+        fetch = dir * recordset->cache.size;
+    }
+    else if (recordset->cache.dir == dir)
     {
         if (recordset->cache.pos + 1 > recordset->cache.fetched)
         {
             off = 0;
+            if (recordset->bookmark_hacc) off += dir;
             fetch = dir * recordset->cache.size;
         }
     }
@@ -176,7 +221,81 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
         cache_release( recordset );
         recordset->current_row = row;
 
-        hr = IRowset_GetNextRows(recordset->row_set, 0, off, fetch, &count, &recordset->cache.rows);
+        if (recordset->bookmark_hacc)
+        {
+            const BYTE *data;
+            BYTE byte_buf;
+            DBBKMARK len;
+            int int_buf;
+
+            if (V_VT(&recordset->bookmark) == VT_R8)
+            {
+                if (isinf(V_R8(&recordset->bookmark)))
+                {
+                    data = (BYTE *)&byte_buf;
+                    if (V_R8(&recordset->bookmark) < 0)
+                    {
+                        byte_buf = DBBMK_FIRST;
+                        if (!forward) off -= 2;
+                    }
+                    else
+                    {
+                        byte_buf = DBBMK_LAST;
+                        if (forward) off += 2;
+                    }
+                    len = sizeof(byte_buf);
+                }
+                else
+                {
+                    data = (BYTE *)&int_buf;
+                    int_buf = V_R8(&recordset->bookmark);
+                    len = sizeof(int_buf);
+                }
+            }
+            else
+            {
+                hr = SafeArrayLock(V_ARRAY(&recordset->bookmark));
+                if (FAILED(hr)) return hr;
+                data = V_ARRAY(&recordset->bookmark)->pvData;
+                len = V_ARRAY(&recordset->bookmark)->rgsabound[0].cElements;
+            }
+
+            hr = IRowsetLocate_GetRowsAt(recordset->rowset_locate, 0, 0, len, data,
+                    off, fetch, &count, &recordset->cache.rows);
+            if (V_VT(&recordset->bookmark) & VT_ARRAY)
+                SafeArrayUnlock(V_ARRAY(&recordset->bookmark));
+
+            if (hr == DB_E_BADSTARTPOSITION)
+            {
+                count = 0;
+                hr  = S_OK;
+            }
+            else if (hr == DB_S_ENDOFROWSET)
+            {
+                VariantClear(&recordset->bookmark);
+                V_VT(&recordset->bookmark) = VT_R8;
+                V_R8(&recordset->bookmark) = dir * INFINITY;
+            }
+            else if (SUCCEEDED(hr))
+            {
+                VARIANT tmp;
+
+                hr = get_bookmark(recordset, recordset->cache.rows[count - 1], &tmp);
+                if (FAILED(hr))
+                {
+                    cache_release( recordset );
+                    recordset->current_row = row;
+                    return hr;
+                }
+
+                VariantClear(&recordset->bookmark);
+                recordset->bookmark = tmp;
+            }
+        }
+        else
+        {
+            hr = IRowset_GetNextRows(recordset->row_set, 0, off, fetch, &count, &recordset->cache.rows);
+        }
         if (FAILED(hr)) return hr;
 
         if (recordset->current_row)
@@ -204,11 +323,11 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
 
         recordset->cache.pos = 0;
         recordset->cache.fetched = count;
-        recordset->cache.forward = forward;
+        recordset->cache.dir = dir;
     }
 
     recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
-    if (!forward == !recordset->cache.forward)
+    if (dir == recordset->cache.dir)
         recordset->current_row = recordset->cache.rows[recordset->cache.pos++];
     else
         recordset->current_row = recordset->cache.rows[--recordset->cache.pos];
@@ -1506,8 +1625,18 @@ static void close_recordset( struct recordset *recordset )
         recordset->hacc_empty = 0;
     }
 
+    if (recordset->bookmark_hacc)
+    {
+        IAccessor_ReleaseAccessor( recordset->accessor, recordset->bookmark_hacc, NULL );
+        recordset->bookmark_hacc = 0;
+    }
+    VariantClear( &recordset->bookmark );
+
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = NULL;
+    if ( recordset->rowset_locate )
+        IRowsetLocate_Release( recordset->rowset_locate );
+    recordset->rowset_locate = NULL;
     if ( recordset->rowset_es && recordset->rowset_es != NO_INTERFACE )
         IRowsetExactScroll_Release( recordset->rowset_es );
     recordset->rowset_es = NULL;
@@ -2158,11 +2287,21 @@ static HRESULT WINAPI recordset_MoveFirst( _Recordset *iface )
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    cache_release( recordset );
-    hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
-    if (FAILED(hr)) return hr;
-    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+    if (recordset->bookmark_hacc)
+    {
+        VariantClear( &recordset->bookmark );
+        V_VT( &recordset->bookmark ) = VT_R8;
+        V_R8( &recordset->bookmark ) = -INFINITY;
+        recordset->cache.dir = 0;
+    }
+    else
+    {
+        cache_release( recordset );
+        hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
+        if (FAILED(hr)) return hr;
+    }
 
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
     hr = cache_get( recordset, TRUE );
     if (FAILED(hr)) return hr;
 
@@ -2179,11 +2318,21 @@ static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    cache_release( recordset );
-    hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
-    if (FAILED(hr)) return hr;
-    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+    if (recordset->bookmark_hacc)
+    {
+        VariantClear( &recordset->bookmark );
+        V_VT( &recordset->bookmark ) = VT_R8;
+        V_R8( &recordset->bookmark ) = INFINITY;
+        recordset->cache.dir = 0;
+    }
+    else
+    {
+        cache_release( recordset );
+        hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
+        if (FAILED(hr)) return hr;
+    }
 
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
     hr = cache_get( recordset, FALSE );
     if (FAILED(hr)) return hr;
 
@@ -3267,6 +3416,64 @@ static HRESULT WINAPI rsconstruction_get_Rowset(ADORecordsetConstruction *iface,
     return S_OK;
 }
 
+static void init_bookmark( struct recordset *recordset )
+{
+    DBCOLUMNINFO *colinfo = NULL;
+    OLECHAR *strbuf = NULL;
+    DBORDINAL i, columns;
+    IColumnsInfo *info;
+    HRESULT hr;
+
+    hr = IRowset_QueryInterface( recordset->row_set, &IID_IColumnsInfo, (void **)&info );
+    if (FAILED(hr) || !info) return;
+
+    if (!recordset->accessor)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
+        if (FAILED(hr) || !recordset->accessor)
+            recordset->accessor = NO_INTERFACE;
+    }
+    if (recordset->accessor == NO_INTERFACE) return;
+
+    hr = IColumnsInfo_GetColumnInfo( info, &columns, &colinfo, &strbuf );
+    IColumnsInfo_Release( info );
+    if (FAILED(hr)) return;
+    CoTaskMemFree( strbuf );
+
+    for (i = 0; i < columns; i++)
+    {
+        if (colinfo[i].dwFlags & DBCOLUMNFLAGS_ISBOOKMARK)
+        {
+            DBBINDING binding;
+
+            if (colinfo[i].ulColumnSize == sizeof(int))
+                recordset->bookmark_type = DBTYPE_I4;
+            else
+                recordset->bookmark_type = DBTYPE_ARRAY | DBTYPE_UI1;
+
+            memset(&binding, 0, sizeof(binding));
+            binding.iOrdinal = colinfo[i].iOrdinal;
+            binding.obValue = offsetof( struct bookmark_data, val );
+            binding.obLength = offsetof( struct bookmark_data, len );
+            binding.obStatus = offsetof( struct bookmark_data, status );
+            binding.dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+            binding.cbMaxLen = recordset->bookmark_type == DBTYPE_I4 ? sizeof(int) : sizeof(SAFEARRAY *);
+            binding.wType = recordset->bookmark_type;
+            binding.bPrecision = colinfo[i].bPrecision;
+            binding.bScale = colinfo[i].bScale;
+            hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+                    1, &binding, 0, &recordset->bookmark_hacc, NULL );
+            if (FAILED(hr)) return;
+
+            V_VT(&recordset->bookmark) = VT_R8;
+            V_R8(&recordset->bookmark) = -INFINITY;
+            return;
+        }
+    }
+
+    CoTaskMemFree( colinfo );
+}
+
 static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *unk)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
@@ -3277,13 +3484,13 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
 
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
 
-    hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
+    hr = IUnknown_QueryInterface( unk, &IID_IRowset, (void**)&rowset );
     if ( FAILED(hr) ) return E_FAIL;
-
-    if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = rowset;
-
     recordset->state = adStateOpen;
+
+    hr = IRowset_QueryInterface( rowset, &IID_IRowsetLocate, (void**)&recordset->rowset_locate );
+    if (SUCCEEDED(hr)) init_bookmark( recordset );
     return S_OK;
 }
 

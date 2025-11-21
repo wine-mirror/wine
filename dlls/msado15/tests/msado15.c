@@ -923,6 +923,7 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
         return S_OK;
     }
 
+    ok(rgBindings[0].dwMemOwner == DBMEMOWNER_CLIENTOWNED, "dwMemOwner = %lx\n", rgBindings[0].dwMemOwner);
     haccessor = malloc(sizeof(*haccessor));
     haccessor->ref = 1;
     haccessor->binding = rgBindings[0];
@@ -1183,10 +1184,10 @@ static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION h
     }
 
     ok(cbBookmark == sizeof(int), "cbBookmark = %Id\n", cbBookmark);
-    ok(lRowsOffset == 1, "lRowsOffset = %Id\n", lRowsOffset);
+    ok(!lRowsOffset || lRowsOffset == 1, "lRowsOffset = %Id\n", lRowsOffset);
 
     row = *(int *)pBookmark + lRowsOffset;
-    ok(row > 1 && row <= 3, "row = %d\n", row);
+    ok(row >= 1 && row <= 3, "row = %d\n", row);
     if (row == 3)
     {
         *pcRowsObtained = 0;
@@ -1323,13 +1324,13 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     todo_wine CHECK_CALLED( rowset_QI_IRowsetChange );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetUpdate );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetFind );
-    todo_wine CHECK_CALLED( rowset_QI_IRowsetExactScroll );
+    CHECK_CALLED( rowset_QI_IRowsetExactScroll );
     if (exact_scroll)
     {
-        todo_wine CHECK_CALLED( rowset_QI_IColumnsInfo );
-        todo_wine CHECK_CALLED( column_info_GetColumnInfo );
-        todo_wine CHECK_CALLED( rowset_QI_IAccessor );
-        todo_wine CHECK_CALLED( accessor_CreateAccessor );
+        CHECK_CALLED( rowset_QI_IColumnsInfo );
+        CHECK_CALLED( column_info_GetColumnInfo );
+        CHECK_CALLED( rowset_QI_IAccessor );
+        CHECK_CALLED( accessor_CreateAccessor );
     }
     todo_wine CHECK_CALLED( rowset_QI_IDBAsynchStatus );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -1371,20 +1372,16 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( scale == 1, "got %u\n", scale );
 
-    SET_EXPECT( rowset_GetNextRows );
-    if (exact_scroll) SET_EXPECT( rowset_GetRowsAt );
+    if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
+    else SET_EXPECT( rowset_GetRowsAt );
     SET_EXPECT( rowset_QI_IAccessor );
     SET_EXPECT( accessor_CreateAccessor );
     SET_EXPECT( rowset_GetData );
     hr = Field_get_Value( field, &v );
     ok( hr == S_OK, "got %08lx\n", hr );
     if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
-    else
-    {
-        todo_wine CHECK_NOT_CALLED( rowset_GetNextRows );
-        todo_wine CHECK_CALLED( rowset_GetRowsAt );
-    }
-    CHECK_CALLED( rowset_QI_IAccessor );
+    else CHECK_CALLED( rowset_GetRowsAt );
+    todo_wine_if(exact_scroll) CHECK_CALLED( rowset_QI_IAccessor );
     CHECK_CALLED( accessor_CreateAccessor );
     CHECK_CALLED( rowset_GetData );
     ok( V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v) );
@@ -1418,8 +1415,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( size == (exact_scroll ? 3 : -1), "size = %Id\n", size );
 
-    SET_EXPECT( rowset_GetNextRows );
-    if (exact_scroll)
+    if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
+    else
     {
         SET_EXPECT( rowset_GetRowsAt );
         SET_EXPECT( rowset_GetData );
@@ -1430,9 +1427,8 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
     else
     {
-        todo_wine CHECK_NOT_CALLED( rowset_GetNextRows );
-        todo_wine CHECK_CALLED( rowset_GetRowsAt );
-        todo_wine CHECK_CALLED( rowset_GetData );
+        CHECK_CALLED( rowset_GetRowsAt );
+        CHECK_CALLED( rowset_GetData );
     }
     CHECK_CALLED( rowset_AddRefRows );
     CHECK_CALLED( rowset_ReleaseRows );
@@ -1441,29 +1437,21 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     SET_EXPECT( rowset_AddRefRows );
     SET_EXPECT( rowset_ReleaseRows );
-    SET_EXPECT( rowset_GetNextRows );
-    if (exact_scroll) SET_EXPECT( rowset_GetRowsAt );
+    if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
+    else SET_EXPECT( rowset_GetRowsAt );
     hr = _Recordset_MoveNext( recordset );
     CHECK_CALLED( rowset_AddRefRows );
     CHECK_CALLED( rowset_ReleaseRows );
     if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
-    else
-    {
-        todo_wine CHECK_NOT_CALLED( rowset_GetNextRows );
-        todo_wine CHECK_CALLED( rowset_GetRowsAt );
-    }
+    else CHECK_CALLED( rowset_GetRowsAt );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( is_eof( recordset ), "unexpected records\n" );
 
-    SET_EXPECT( rowset_GetNextRows );
-    if (exact_scroll) SET_EXPECT( rowset_GetRowsAt );
+    if (!exact_scroll) SET_EXPECT( rowset_GetNextRows );
+    else SET_EXPECT( rowset_GetRowsAt );
     hr = _Recordset_MoveNext( recordset );
     if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
-    else
-    {
-        todo_wine CHECK_NOT_CALLED( rowset_GetNextRows );
-        todo_wine CHECK_CALLED( rowset_GetRowsAt );
-    }
+    else CHECK_CALLED( rowset_GetRowsAt );
     ok( hr == MAKE_ADO_HRESULT(adErrNoCurrentRecord), "got %08lx\n", hr );
 
     V_VT( &missing ) = VT_ERROR;
