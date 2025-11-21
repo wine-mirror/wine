@@ -845,7 +845,7 @@ static HRESULT token_get_parent_typedef(IMetaDataImport *iface, mdToken token, t
 
     TRACE("(%p, %s, %p, %p)\n", iface, debugstr_mdToken(token), enum_func, parent);
 
-    assert(type == mdtMethodDef || type == mdtFieldDef);
+    assert(type == mdtMethodDef || type == mdtFieldDef || type == mdtProperty);
 
     *parent = mdTypeDefNil;
     hr = IMetaDataImport_EnumTypeDefs(iface, &typedef_enum, &cur_typedef, 1, NULL);
@@ -957,11 +957,41 @@ static HRESULT WINAPI import_GetMemberRefProps(IMetaDataImport *iface, mdMemberR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI import_EnumProperties(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef type_def,
+static HRESULT WINAPI import_EnumProperties(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef type_def,
                                             mdProperty *props, ULONG len, ULONG *count)
 {
-    FIXME("(%p, %p, %#x, %p, %lu, %p): stub!\n", iface, henum, type_def, props, len, count);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    ULONG num_propertymap_rows, i;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %p, %lu, %p)\n", iface, ret_henum, debugstr_mdToken(type_def), props, len, count);
+
+    if (count) *count = 0;
+    if (TypeFromToken(type_def) != mdtTypeDef || IsNilToken(type_def)) return S_FALSE;
+
+    if (!*ret_henum)
+    {
+        if (FAILED((hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_PROPERTYMAP, &num_propertymap_rows))))
+            return hr;
+        for (i = 1; i <= num_propertymap_rows; i++)
+        {
+            ULONG parent;
+
+            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTYMAP, 0, i, &parent);
+            if (FAILED(hr)) return hr;
+
+            if (parent == RidFromToken(type_def))
+            {
+                hr = table_create_enum_from_token_list(&impl->IMetaDataTables_iface, TABLE_PROPERTYMAP, TABLE_PROPERTY,
+                                                       i, 1, ret_henum);
+                if (hr != S_OK) return hr;
+                break;
+            }
+        }
+        if (!*ret_henum) return S_FALSE;
+    }
+
+    return token_enum_get_entries(*ret_henum, mdtProperty, props, len, count);
 }
 
 static HRESULT WINAPI import_EnumEvents(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef type_def, mdEvent *events,
@@ -1253,17 +1283,109 @@ static HRESULT WINAPI import_GetFieldProps(IMetaDataImport *iface, mdFieldDef fi
     return (field_name && name_needed > name_len) ? CLDB_S_TRUNCATION : S_OK;
 }
 
+static HRESULT property_get_parent_typedef(IMetaDataImport *iface, mdProperty property, mdTypeDef *parent)
+{
+    return token_get_parent_typedef(iface, property, iface->lpVtbl->EnumProperties, parent);
+}
+
 static HRESULT WINAPI import_GetPropertyProps(IMetaDataImport *iface, mdProperty prop, mdTypeDef *type_def, WCHAR *name,
                                               ULONG name_len, ULONG *name_written, ULONG *prop_flags,
-                                              const COR_SIGNATURE **sig_blob, ULONG *sig_len, ULONG *value_type_flag,
-                                              UVCP_CONSTANT *default_value, ULONG *value_len, mdMethodDef *set_method,
-                                              mdMethodDef *get_method, mdMethodDef *other_methods, ULONG other_len,
-                                              ULONG *other_count)
+                                              const COR_SIGNATURE **ret_sig_blob, ULONG *ret_sig_len,
+                                              ULONG *value_type_flag, UVCP_CONSTANT *default_value, ULONG *value_len,
+                                              mdMethodDef *ret_set_method, mdMethodDef *ret_get_method,
+                                              mdMethodDef *other_methods, ULONG other_len, ULONG *ret_other_count)
 {
-    FIXME("(%p, %#x, %p, %p, %lu, %p, %p, %p, %p, %p, %p, %p, %p, %p, %p, %lu, %p): stub!\n", iface, prop, type_def,
-          name, name_len, name_written, prop_flags, sig_blob, sig_len, value_type_flag, default_value, value_len,
-          set_method, get_method, other_methods, other_len, other_count);
-    return E_NOTIMPL;
+    ULONG flags = 0, sig_len = 0, name_needed = 0, val_len = 0, val_type = ELEMENT_TYPE_VOID, other_count = 0;
+    mdToken parent = mdTypeDefNil, get_method = mdMethodDefNil, set_method = mdMethodDefNil;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    const BYTE *sig_blob = NULL, *val_blob = NULL;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p, %p, %lu, %p, %p, %p, %p, %p, %p, %p, %p, %p, %p, %lu, %p)\n", iface, debugstr_mdToken(prop),
+          type_def, name, name_len, name_written, prop_flags, ret_sig_blob, ret_sig_len, value_type_flag, default_value,
+          value_len, ret_set_method, ret_get_method, other_methods, other_len, ret_other_count);
+
+    if (TypeFromToken(prop) != mdtProperty) return S_FALSE;
+
+    if (name && name_len)
+        name[0] = L'\0';
+    if (!IsNilToken(prop))
+    {
+        ULONG name_idx, sig_idx, num_methodsemantics, semantic_row;
+        const ULONG row = RidFromToken(prop);
+        const char *nameA;
+
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 0, row, &flags))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 1, row, &name_idx))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 2, row, &sig_idx))))
+            return hr;
+
+        if (FAILED((hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, name_idx, &nameA))))
+            return hr;
+        if (FAILED((hr = IMetaDataTables_GetBlob(&impl->IMetaDataTables_iface, sig_idx, &sig_len, &sig_blob))))
+            return hr;
+        if (FAILED((hr = property_get_parent_typedef(&impl->IMetaDataImport_iface, prop, &parent))))
+            return hr;
+        if (FAILED((hr = token_get_constant_value(&impl->IMetaDataImport_iface, prop, &val_type, &val_blob, &val_len))))
+            return hr;
+
+        if (FAILED((hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, &num_methodsemantics))))
+            return hr;
+
+        for (semantic_row = 1; semantic_row <= num_methodsemantics; semantic_row++)
+        {
+            ULONG assoc_token, semantic, method;
+
+            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, 2, semantic_row,
+                                           &assoc_token);
+            if (FAILED(hr)) return hr;
+            if (assoc_token != prop) continue;
+            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, 0, semantic_row,
+                                           &semantic);
+            if (FAILED(hr)) return hr;
+            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODSEMANTICS, 1, semantic_row,
+                                           &method);
+            if (FAILED(hr)) return hr;
+            if (IsNilToken(get_method) && semantic & msGetter)
+                get_method = TokenFromRid(method, mdtMethodDef);
+            else if (IsNilToken(set_method) && semantic & msSetter)
+                set_method = TokenFromRid(method, mdtMethodDef);
+            else if (other_methods && other_count < other_len && semantic & msOther)
+                other_methods[other_count++] = TokenFromRid(method, mdtMethodDef);
+        }
+
+        name_needed = MultiByteToWideChar(CP_ACP, 0, nameA, -1, NULL, 0);
+        if (name && name_len)
+        {
+            ULONG n = MultiByteToWideChar(CP_ACP, 0, nameA, min(strlen(nameA), name_len - 1), name, name_len - 1);
+            name[n] = L'\0';
+        }
+    }
+    if (type_def)
+        *type_def = parent;
+    if (name_written)
+        *name_written = name_needed;
+    if (prop_flags)
+        *prop_flags = flags;
+    if (ret_sig_blob)
+        *ret_sig_blob = sig_blob;
+    if (ret_sig_len)
+        *ret_sig_len = sig_len;
+    if (value_type_flag)
+        *value_type_flag = val_type;
+    if (default_value)
+        *default_value = (UVCP_CONSTANT)val_blob;
+    if (value_len)
+        *value_len = val_len;
+    if (ret_get_method)
+        *ret_get_method = get_method;
+    if (ret_set_method)
+        *ret_set_method = set_method;
+    if (ret_other_count)
+        *ret_other_count = other_count;
+    return S_OK;
 }
 
 static HRESULT WINAPI import_GetParamProps(IMetaDataImport *iface, mdParamDef param_def, mdMethodDef *method_def,

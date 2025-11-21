@@ -950,16 +950,15 @@ static void test_prop_method_token_(int line, IMetaDataImport *md_import, mdType
 
     ok_(__FILE__, line)(token && token != mdMethodDefNil, "got token %#x\n", token);
     valid = IMetaDataImport_IsValidToken(md_import, token);
-    ok_(__FILE__, line)(valid, "got value %d\n", valid);
+    todo_wine ok_(__FILE__, line)(valid, "got value %d\n", valid);
     name[0] = L'\0';
     hr = IMetaDataImport_GetMethodProps(md_import, token, &type_def, name, ARRAY_SIZE(name), NULL, &attrs, NULL, NULL,
                                         NULL, &impl);
-    todo_wine ok_(__FILE__, line)(hr == S_OK, "GetMethodProps failed, got hr %#lx\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "GetMethodProps failed, got hr %#lx\n", hr);
     swprintf(exp_name, ARRAY_SIZE(exp_name), L"%s_%s", prefix, prop_name);
-    todo_wine ok_(__FILE__, line)(!wcscmp(name, exp_name), "got name %s != %s\n", debugstr_w(name),
-                                  debugstr_w(exp_name));
-    todo_wine ok_(__FILE__, line)(attrs == exp_attrs, "got attrs %#lx != %#x\n", attrs, exp_attrs);
-    todo_wine ok_(__FILE__, line)(!impl, "got impl %#lx\n", impl);
+    ok_(__FILE__, line)(!wcscmp(name, exp_name), "got name %s != %s\n", debugstr_w(name), debugstr_w(exp_name));
+    ok_(__FILE__, line)(attrs == exp_attrs, "got attrs %#lx != %#x\n", attrs, exp_attrs);
+    ok_(__FILE__, line)(!impl, "got impl %#lx\n", impl);
 }
 
 static void test_IMetaDataImport(void)
@@ -1273,16 +1272,16 @@ static void test_IMetaDataImport(void)
     ok(hr == S_OK, "got hr %#lx\n", hr);
     henum = NULL;
     hr = IMetaDataImport_EnumProperties(md_import, &henum, typedef1, NULL, 0, NULL);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_len == ARRAY_SIZE(test3_props), "got buf_len %lu\n", buf_len);
+    ok(buf_len == ARRAY_SIZE(test3_props), "got buf_len %lu\n", buf_len);
     property_tokens = calloc(buf_len, sizeof(*property_tokens));
     ok(!!property_tokens, "got property_tokens %p\n", property_tokens);
     buf_count = 0xdeadbeef;
     hr = IMetaDataImport_EnumProperties(md_import, &henum, typedef1, property_tokens, buf_len, &buf_count);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_count == buf_len, "got buf_count %lu != %lu\n", buf_count, buf_len);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(buf_count == buf_len, "got buf_count %lu != %lu\n", buf_count, buf_len);
     IMetaDataImport_CloseEnum(md_import, henum);
     for (i = 0; i < buf_len; i++)
     {
@@ -1300,11 +1299,11 @@ static void test_IMetaDataImport(void)
         hr = IMetaDataImport_GetPropertyProps(md_import, property_tokens[i], &typedef2, name, ARRAY_SIZE(name),
                                               &str_reqd, &val, &sig_blob, &sig_len, &value_type, &value, &value_len,
                                               &set_method, &get_method, NULL, 0, NULL);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(typedef1 == typedef2, "got typedef1 %#x != %#x\n", typedef1, typedef2);
-        todo_wine ok(!wcscmp(name, props->exp_name), "got name %s != %s\n", debugstr_w(name), debugstr_w(props->exp_name));
-        todo_wine ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
-        todo_wine ok(sig_len == props->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, props->exp_sig_len);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(typedef1 == typedef2, "got typedef1 %#x != %#x\n", typedef1, typedef2);
+        ok(!wcscmp(name, props->exp_name), "got name %s != %s\n", debugstr_w(name), debugstr_w(props->exp_name));
+        ok(!!sig_blob, "got sig_blob %p\n", sig_blob);
+        ok(sig_len == props->exp_sig_len, "got sig_len %lu != %lu\n", sig_len, props->exp_sig_len);
         if (sig_blob && sig_len == props->exp_sig_len)
             ok(!memcmp(sig_blob, props->exp_sig_blob, sig_len), "got unexpected sig_blob\n");
         ok(!value_len, "got value_len %lu\n", value_len);
@@ -1312,11 +1311,11 @@ static void test_IMetaDataImport(void)
         if (props->has_get)
             test_prop_method_token(md_import, typedef1, props->exp_name, PROP_METHOD_GET, get_method);
         else
-            todo_wine ok(get_method == mdMethodDefNil, "got get_method %#x\n", get_method);
+            ok(get_method == mdMethodDefNil, "got get_method %#x\n", get_method);
         if (props->has_set)
             test_prop_method_token(md_import, typedef1, props->exp_name, PROP_METHOD_SET, set_method);
         else
-            todo_wine ok(set_method == mdMethodDefNil, "got set_method %#x\n", set_method);
+            ok(set_method == mdMethodDefNil, "got set_method %#x\n", set_method);
         winetest_pop_context();
     }
     IMetaDataImport_Release(md_import);

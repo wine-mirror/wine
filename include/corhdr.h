@@ -303,4 +303,14 @@ typedef enum CorFieldAttr
 #define COR_ENUM_FIELD_NAME   ("value__")
 #define COR_ENUM_FIELD_NAME_W (L"value__")
 
+typedef enum CorMethodSemanticsAttr
+{
+    msSetter   = 0x01,
+    msGetter   = 0x02,
+    msOther    = 0x04,
+    msAddOn    = 0x08,
+    msRemoveOn = 0x10,
+    msFire     = 0x20,
+} CorMethodSemanticsAttr;
+
 #endif /* __WINE_CORHDR_H */
