@@ -3564,18 +3564,17 @@ static void test_get_image_info(void)
     ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#lx.\n", hr2);
     hr2 = 0xdeadbeef;
     hr = D3DX11GetImageInfoFromFileW(L"deadbeaf", NULL, &image_info, &hr2);
-    todo_wine ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
     hr2 = 0xdeadbeef;
     hr = D3DX11GetImageInfoFromFileA(NULL, NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#lx.\n", hr2);
     hr2 = 0xdeadbeef;
     hr = D3DX11GetImageInfoFromFileA("deadbeaf", NULL, &image_info, &hr2);
-    todo_wine ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+    ok(hr == D3D11_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
 
-todo_wine {
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
         winetest_push_context("Test %u", i);
@@ -3600,7 +3599,6 @@ todo_wine {
         delete_file(test_filename);
         winetest_pop_context();
     }
-}
 
     check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC1_UNORM);
     check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC2_UNORM);

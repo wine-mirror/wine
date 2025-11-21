@@ -18,4 +18,6 @@
 
 #include "d3dx_helpers.h"
 
+HRESULT load_file(const WCHAR *path, void **data, DWORD *size);
+
 HRESULT get_image_info(const void *data, SIZE_T size, D3DX11_IMAGE_INFO *img_info);

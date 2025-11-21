@@ -44,25 +44,3 @@ HRESULT WINAPI D3DX11FilterTexture(ID3D11DeviceContext *context, ID3D11Resource 
 
     return E_NOTIMPL;
 }
-
-HRESULT WINAPI D3DX11GetImageInfoFromFileA(const char *filename, ID3DX11ThreadPump *pump, D3DX11_IMAGE_INFO *img_info,
-        HRESULT *hresult)
-{
-    FIXME("filename %s, pump %p, img_info %p, hresult %p stub!\n", debugstr_a(filename), pump, img_info, hresult);
-
-    if (!filename)
-        return E_FAIL;
-
-    return E_NOTIMPL;
-}
-
-HRESULT WINAPI D3DX11GetImageInfoFromFileW(const WCHAR *filename, ID3DX11ThreadPump *pump, D3DX11_IMAGE_INFO *img_info,
-        HRESULT *hresult)
-{
-    FIXME("filename %s, pump %p, img_info %p, hresult %p stub!\n", debugstr_w(filename), pump, img_info, hresult);
-
-    if (!filename)
-        return E_FAIL;
-
-    return E_NOTIMPL;
-}
