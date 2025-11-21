@@ -317,15 +317,57 @@ static HRESULT WINAPI rowset_Compare(IRowsetExactScroll *iface, HCHAPTER hReserv
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION hReserved1,
-        HCHAPTER hReserved2, DBBKMARK cbBookmark, const BYTE *pBookmark, DBROWOFFSET lRowsOffset,
-        DBROWCOUNT cRows, DBCOUNTITEM *pcRowsObtained, HROW **prghRows)
+static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION watchregion,
+        HCHAPTER chapter, DBBKMARK bookmark_size, const BYTE *bookmark, DBROWOFFSET offset,
+        DBROWCOUNT count, DBCOUNTITEM *obtained, HROW **rows)
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll(iface);
+    int idx = -1, i, row_count;
 
-    FIXME("%p, %Id, %Id, %Iu, %p, %Id, %Id, %p, %p\n", rowset, hReserved1, hReserved2,
-            cbBookmark, pBookmark, lRowsOffset, cRows, pcRowsObtained, prghRows);
-    return E_NOTIMPL;
+    TRACE("%p, %Id, %Id, %Iu, %p, %Id, %Id, %p, %p\n", rowset, watchregion, chapter,
+            bookmark_size, bookmark, offset, count, obtained, rows);
+
+    if (!bookmark_size || !bookmark || !obtained || !rows)
+        return E_INVALIDARG;
+    *obtained = 0;
+
+    if (watchregion || chapter)
+    {
+        FIXME("unsupported arguments\n");
+        return E_NOTIMPL;
+    }
+
+    if (bookmark_size == 1 && bookmark[0] == DBBMK_FIRST)
+        idx = 0;
+    else if (bookmark_size == 1 && bookmark[0] == DBBMK_LAST)
+        idx = rowset->row_cnt ? rowset->row_cnt - 1 : 0;
+    else if (bookmark_size == sizeof(int))
+        idx = *(int*)bookmark - 1;
+
+    if (idx < 0 || (idx && idx >= rowset->row_cnt)) return DB_E_BADBOOKMARK;
+
+    idx += offset;
+    if (idx < 0 || (idx && idx >= rowset->row_cnt)) return DB_E_BADSTARTPOSITION;
+
+    if (count > 0) row_count = min(rowset->row_cnt - idx, count);
+    else if (!rowset->row_cnt) row_count = 0;
+    else row_count = min(idx + 1, -count);
+    if (!row_count) return count ? DB_S_ENDOFROWSET : S_OK;
+
+    if (!*rows)
+    {
+        *rows = CoTaskMemAlloc(sizeof(**rows) * row_count);
+        if (!*rows) return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < row_count; i++)
+    {
+        (*rows)[i] = idx + 1;
+        idx += (count > 0 ? 1 : -1);
+    }
+
+    *obtained = row_count;
+    return row_count == count || row_count == -count ? S_OK : DB_S_ENDOFROWSET;
 }
 
 static HRESULT WINAPI rowset_GetRowsByBookmark(IRowsetExactScroll *iface, HCHAPTER hReserved,
