@@ -3685,6 +3685,21 @@ static void test_default_presenter_allocate(void)
         .biPlanes = 1,
     };
 
+    /* This works as BITMAPINFOHEADER + the three color masks for BI_BITFIELDS. */
+    BITMAPV4HEADER bitmap_v4_header =
+    {
+        .bV4Size = sizeof(BITMAPV4HEADER),
+        .bV4Width = 32,
+        .bV4Height = 16,
+        .bV4Planes = 1,
+        .bV4BitCount = 16,
+        .bV4V4Compression = BI_BITFIELDS,
+        .bV4RedMask = 0x00ff0000,
+        .bV4GreenMask = 0x0000ff00,
+        .bV4BlueMask = 0x000000ff,
+        .bV4AlphaMask = 0,
+    };
+
     static const struct
     {
         WORD depth;
@@ -3700,6 +3715,9 @@ static void test_default_presenter_allocate(void)
         {12, mmioFOURCC('Y','V','1','2')},
         {16, mmioFOURCC('U','Y','V','Y')},
         {16, mmioFOURCC('Y','U','Y','2')},
+        {32, BI_BITFIELDS},
+        {16, BI_BITFIELDS, .expect_failure = TRUE},
+        {24, BI_BITFIELDS, .expect_failure = TRUE},
     };
 
     window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
@@ -3718,7 +3736,6 @@ static void test_default_presenter_allocate(void)
     info.dwInterlaceFlags = 0;
     info.szNativeSize.cx = info.szAspectRatio.cx = 640;
     info.szNativeSize.cy = info.szAspectRatio.cy = 480;
-    info.lpHdr = &bitmap_header;
     info.lpPixFmt = NULL;
 
     for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -3727,10 +3744,22 @@ static void test_default_presenter_allocate(void)
         HRESULT expect_hr;
         DWORD count = 2;
 
-        winetest_push_context("Compression %#lx, depth %u", tests[i].compression, tests[i].depth);
+        winetest_push_context("Test %u: Compression %#lx, depth %u", i, tests[i].compression, tests[i].depth);
 
-        bitmap_header.biBitCount = tests[i].depth;
-        bitmap_header.biCompression = tests[i].compression;
+        if (tests[i].compression == BI_BITFIELDS)
+        {
+            info.lpHdr = (BITMAPINFOHEADER *)&bitmap_v4_header;
+            bitmap_v4_header.bV4BitCount = tests[i].depth;
+            bitmap_v4_header.bV4V4Compression = tests[i].compression;
+            bitmap_v4_header.bV4Size = sizeof(BITMAPINFOHEADER);
+        }
+        else
+        {
+            bitmap_header.biBitCount = tests[i].depth;
+            bitmap_header.biCompression = tests[i].compression;
+            info.lpHdr = &bitmap_header;
+            bitmap_header.biSize = sizeof(BITMAPINFOHEADER);
+        }
 
         ddraw = create_ddraw(window);
 
@@ -3743,7 +3772,7 @@ static void test_default_presenter_allocate(void)
         desc.dwWidth = desc.dwHeight = 32;
         desc.dwBackBufferCount = 2;
         desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
-        if (tests[i].compression)
+        if (tests[i].compression != BI_RGB && tests[i].compression != BI_BITFIELDS)
         {
             desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
             desc.ddpfPixelFormat.dwFourCC = tests[i].compression;
@@ -3799,7 +3828,7 @@ static void test_default_presenter_allocate(void)
         ok(desc.dwHeight == 16, "Got height %lu.\n", desc.dwHeight);
         ok(desc.ddpfPixelFormat.dwSize == sizeof(desc.ddpfPixelFormat),
                 "Got size %lu.\n", desc.ddpfPixelFormat.dwSize);
-        if (tests[i].compression)
+        if (tests[i].compression != BI_RGB && tests[i].compression != BI_BITFIELDS)
         {
             ok(desc.ddpfPixelFormat.dwFlags == DDPF_FOURCC, "Got flags %#lx.\n", desc.ddpfPixelFormat.dwFlags);
             ok(desc.ddpfPixelFormat.dwFourCC == bitmap_header.biCompression,
