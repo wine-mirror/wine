@@ -5341,15 +5341,16 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
 
     data.dwFlags = dwFlags;
     data.pwszWizardTitle = pwszWizardTitle;
+    data.fileName = NULL;
     if (pImportSrc)
     {
         memcpy(&data.importSrc, pImportSrc, sizeof(data.importSrc));
-        data.fileName = (LPWSTR)pImportSrc->pwszFileName;
+        if (pImportSrc->dwSubjectChoice == CRYPTUI_WIZ_IMPORT_SUBJECT_FILE)
+            data.fileName = (LPWSTR)pImportSrc->pwszFileName;
     }
     else
     {
         memset(&data.importSrc, 0, sizeof(data.importSrc));
-        data.fileName = NULL;
     }
     data.freeSource = FALSE;
     data.hDestCertStore = hDestCertStore;
