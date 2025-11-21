@@ -1903,27 +1903,44 @@ static HRESULT WINAPI recordset_get_BOF( _Recordset *iface, VARIANT_BOOL *bof )
 static HRESULT WINAPI recordset_get_Bookmark( _Recordset *iface, VARIANT *bookmark )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+
     TRACE( "%p, %p\n", iface, bookmark );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
-    if (recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
+    {
+        HRESULT hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    if (!recordset->bookmark_hacc)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    V_VT(bookmark) = VT_I4;
-    V_I4(bookmark) = recordset->index;
-    return S_OK;
+    return get_bookmark( recordset, recordset->current_row, bookmark );
 }
 
 static HRESULT WINAPI recordset_put_Bookmark( _Recordset *iface, VARIANT bookmark )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    VARIANT copy;
+    HRESULT hr;
+
     TRACE( "%p, %s\n", iface, debugstr_variant(&bookmark) );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (V_VT(&bookmark) != VT_R8 && V_VT(&bookmark) != (VT_ARRAY | VT_UI1))
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (!recordset->bookmark_hacc)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    if (V_VT(&bookmark) != VT_I4) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    VariantInit( &copy );
+    hr = VariantCopy( &copy, &bookmark );
+    if (FAILED(hr)) return hr;
 
-    recordset->index = V_I4(&bookmark);
-    return S_OK;
+    VariantClear( &recordset->bookmark );
+    recordset->bookmark = copy;
+    recordset->cache.dir = 0;
+    return cache_get( recordset, TRUE );
 }
 
 static HRESULT WINAPI recordset_get_CacheSize( _Recordset *iface, LONG *size )

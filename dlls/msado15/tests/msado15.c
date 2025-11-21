@@ -1407,6 +1407,32 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     Field_Release( field );
 
+    if (exact_scroll) SET_EXPECT( rowset_GetData );
+    VariantInit(&v);
+    hr = _Recordset_get_Bookmark( recordset, &v );
+    if (exact_scroll)
+    {
+        ok( hr == S_OK, "got %08lx\n", hr );
+        CHECK_CALLED( rowset_GetData );
+        ok( V_VT(&v) == VT_R8, "V_VT(v) = %x\n", V_VT(&v) );
+        ok( V_R8(&v) == 1.0, "V_R8(v) = %lf\n", V_R8(&v) );
+    }
+    else ok( hr == MAKE_ADO_HRESULT( adErrFeatureNotAvailable ), "got %08lx\n", hr );
+
+    if (exact_scroll)
+    {
+        SET_EXPECT( rowset_AddRefRows );
+        SET_EXPECT( rowset_ReleaseRows );
+        SET_EXPECT( rowset_GetRowsAt );
+        SET_EXPECT( rowset_GetData );
+        hr = _Recordset_put_Bookmark( recordset, v );
+        ok( hr == S_OK, "hr = %lx\n", hr );
+        CHECK_CALLED( rowset_AddRefRows );
+        CHECK_CALLED( rowset_ReleaseRows );
+        CHECK_CALLED( rowset_GetRowsAt );
+        CHECK_CALLED( rowset_GetData );
+    }
+
     SET_EXPECT( rowset_QI_IRowsetExactScroll );
     if (exact_scroll) SET_EXPECT( rowset_GetExactPosition );
     hr = _Recordset_get_RecordCount( recordset, &size );
