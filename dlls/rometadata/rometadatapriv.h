@@ -21,7 +21,8 @@
 
 #include <rometadataapi.h>
 
-extern HRESULT IMetaDataTables_create(const WCHAR *path, IMetaDataTables **iface);
+extern HRESULT IMetaDataTables_create_from_file(const WCHAR *path, IMetaDataTables **iface);
+extern HRESULT IMetaDataTables_create_from_data(const BYTE *data, ULONG data_size, IMetaDataTables **iface);
 
 typedef struct assembly assembly_t;
 struct metadata_table_info
@@ -105,6 +106,7 @@ enum table
 };
 
 extern HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **out);
+extern HRESULT assembly_open_from_data(const BYTE *data, ULONG data_size, assembly_t **out);
 extern void assembly_free(assembly_t *assembly);
 extern HRESULT assembly_get_table(const assembly_t *assembly, ULONG table_idx, struct metadata_table_info *info);
 extern HRESULT assembly_get_column(const assembly_t *assembly, ULONG table_idx, ULONG column_idx, struct metadata_column_info *info);

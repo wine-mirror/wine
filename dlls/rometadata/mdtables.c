@@ -1376,7 +1376,7 @@ static const IMetaDataImportVtbl import_vtbl = {
     import_IsGlobal
 };
 
-HRESULT IMetaDataTables_create(const WCHAR *path, IMetaDataTables **iface)
+HRESULT IMetaDataTables_create_from_file(const WCHAR *path, IMetaDataTables **iface)
 {
     struct metadata_tables *impl;
     HRESULT hr;
@@ -1385,6 +1385,25 @@ HRESULT IMetaDataTables_create(const WCHAR *path, IMetaDataTables **iface)
     if (FAILED(hr = assembly_open_from_file(path, &impl->assembly)))
     {
         free( impl );
+        return hr;
+    }
+
+    impl->IMetaDataTables_iface.lpVtbl = &tables_vtbl;
+    impl->IMetaDataImport_iface.lpVtbl = &import_vtbl;
+    impl->ref = 1;
+    *iface = &impl->IMetaDataTables_iface;
+    return S_OK;
+}
+
+HRESULT IMetaDataTables_create_from_data(const BYTE *data, ULONG data_size, IMetaDataTables **iface)
+{
+    struct metadata_tables *impl;
+    HRESULT hr;
+
+    if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
+    if (FAILED((hr = assembly_open_from_data(data, data_size, &impl->assembly))))
+    {
+        free(impl);
         return hr;
     }
 

@@ -455,6 +455,7 @@ struct table_info
 
 struct assembly
 {
+    BOOL mapped;
     HANDLE file;
     HANDLE map;
     const BYTE *data;
@@ -603,13 +604,13 @@ static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
     for (i = 0; i < 64; i++)
     {
         if (!assembly_table_exists(assembly, i)) continue;
-        if (i >= TABLE_MAX) return E_INVALIDARG;
+        if (i >= TABLE_MAX) return CLDB_E_FILE_CORRUPT;
         assert(table_schemas[i]);
         num_tables++;
     }
 
     cur_table = tables_stream_start + offsetof(struct stream_tables_hdr, table_rows[num_tables]);
-    if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return E_INVALIDARG;
+    if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
 
     num_tables = 0;
     for (i = 0; i < TABLE_MAX; i++)
@@ -627,7 +628,7 @@ static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
         {
             table->start = cur_table;
             cur_table += (size_t)(assembly->tables[i].num_rows * table->row_size);
-            if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return E_INVALIDARG;
+            if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
         }
     }
     return S_OK;
@@ -644,12 +645,13 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
     UINT32 rva, num_sections, offset;
     UINT8 num_streams, i;
 
+    if (!assembly->size) return CLDB_E_NO_DATA;
     if (assembly->size < sizeof(IMAGE_DOS_HEADER) || dos_hdr->e_magic != IMAGE_DOS_SIGNATURE ||
         assembly->size < (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS32)))
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     nt_hdrs = (IMAGE_NT_HEADERS32 *)(assembly->data + dos_hdr->e_lfanew);
-    if (!(num_sections = nt_hdrs->FileHeader.NumberOfSections)) return E_INVALIDARG;
+    if (!(num_sections = nt_hdrs->FileHeader.NumberOfSections)) return CLDB_E_FILE_CORRUPT;
     switch (nt_hdrs->OptionalHeader.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
@@ -660,29 +662,29 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
     {
         const IMAGE_NT_HEADERS64 *hdr64 = (IMAGE_NT_HEADERS64 *)(assembly->data + dos_hdr->e_lfanew);
 
-        if (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64) > assembly->size) return E_INVALIDARG;
+        if (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64) > assembly->size) return CLDB_E_FILE_CORRUPT;
         rva = hdr64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
         sections = (IMAGE_SECTION_HEADER *)(assembly->data + dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64));
         break;
     }
     default:
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
     }
 
     if (!pe_rva_to_offset(sections, num_sections, rva, &offset) || offset + sizeof(IMAGE_COR20_HEADER) > assembly->size)
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     cor_hdr = (IMAGE_COR20_HEADER *)(assembly->data + offset);
-    if (cor_hdr->cb != sizeof(IMAGE_COR20_HEADER)) return E_INVALIDARG;
+    if (cor_hdr->cb != sizeof(IMAGE_COR20_HEADER)) return CLDB_E_FILE_CORRUPT;
     if (!(pe_rva_to_offset(sections, num_sections, cor_hdr->MetaData.VirtualAddress, &offset)) ||
         offset + sizeof(struct metadata_hdr) > assembly->size)
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     md_start = assembly->data + offset;
     md_hdr = (struct metadata_hdr *)md_start;
     if (md_hdr->signature != METADATA_MAGIC ||
         offset + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16) * 2 > assembly->size)
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     num_streams = *(UINT8 *)(md_start + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16)); /* Flags */
     streams_cur = md_start + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16) * 2; /* Flags + Streams */
@@ -703,10 +705,10 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
             { "#GUID", 5, &assembly->stream_guids },
             { "#US", 3, &assembly->stream_user_strings }
         };
-        HRESULT hr = E_INVALIDARG;
+        HRESULT hr = CLDB_E_FILE_CORRUPT;
         int j;
 
-        if ((UINT_PTR)(streams_cur - assembly->data) > assembly->size) return E_INVALIDARG;
+        if ((UINT_PTR)(streams_cur - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
         for (j = 0; j < ARRAY_SIZE(streams); j++)
         {
             if (!strncmp(streams[j].name, md_stream_hdr->name, streams[j].name_len))
@@ -735,10 +737,30 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
         ptr--;
     }
 
-    if (assembly->stream_tables.size < sizeof(struct stream_tables_hdr)) return E_INVALIDARG;
+    if (assembly->stream_tables.size < sizeof(struct stream_tables_hdr)) return CLDB_E_FILE_CORRUPT;
     assembly->tables_hdr = (struct stream_tables_hdr *)assembly->stream_tables.start;
 
     return assembly_parse_metadata_tables(assembly);
+}
+
+HRESULT assembly_open_from_data(const BYTE *data, ULONG data_size, assembly_t **ret)
+{
+    assembly_t *assembly;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %p)\n", data, data_size, ret);
+
+    if (!data) return E_FAIL;
+    if (!(assembly = calloc(1, sizeof(*assembly)))) return E_OUTOFMEMORY;
+
+    assembly->mapped = FALSE;
+    assembly->data = data;
+    assembly->size = data_size;
+    if (FAILED((hr = assembly_parse_headers(assembly))))
+        assembly_free(assembly);
+    else
+        *ret = assembly;
+    return hr;
 }
 
 HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **ret)
@@ -749,6 +771,8 @@ HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **ret)
     TRACE("(%s, %p)\n", debugstr_w(path), ret);
 
     if (!(assembly = calloc(1, sizeof(*assembly)))) return E_OUTOFMEMORY;
+
+    assembly->mapped = TRUE;
     assembly->file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (assembly->file == INVALID_HANDLE_VALUE)
     {
@@ -786,9 +810,12 @@ void assembly_free(assembly_t *assembly)
     ULONG i;
 
     for (i = 0; i < TABLE_MAX; i++) free(assembly->tables[i].columns_size);
-    if (assembly->data) UnmapViewOfFile(assembly->data);
-    CloseHandle(assembly->map);
-    CloseHandle(assembly->file);
+    if (assembly->mapped)
+    {
+        if (assembly->data) UnmapViewOfFile(assembly->data);
+        CloseHandle(assembly->map);
+        CloseHandle(assembly->file);
+    }
     free(assembly);
 }
 

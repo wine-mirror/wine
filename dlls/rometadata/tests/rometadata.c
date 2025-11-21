@@ -565,24 +565,24 @@ static void test_MetaDataDispenser_OpenScope(void)
     ok(hr == S_OK, "got hr %#lx\n", hr);
 
     hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, NULL, 0, 0, &IID_IMetaDataTables, (IUnknown **)&md_tables);
-    todo_wine ok(hr == E_FAIL, "got hr %#lx\n", hr);
+    ok(hr == E_FAIL, "got hr %#lx\n", hr);
 
     hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, NULL, md_size, 0, &IID_IMetaDataTables,
                                               (IUnknown **)&md_tables);
-    todo_wine ok(hr == E_FAIL, "got hr %#lx\n", hr);
+    ok(hr == E_FAIL, "got hr %#lx\n", hr);
 
     hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, md_bytes, 0, 0, &IID_IMetaDataTables,
                                               (IUnknown **)&md_tables);
-    todo_wine ok(hr == CLDB_E_NO_DATA, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_NO_DATA, "got hr %#lx\n", hr);
 
     hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, md_bytes, sizeof(IMAGE_DOS_HEADER), 0, &IID_IMetaDataTables,
                                               (IUnknown **)&md_tables);
-    todo_wine ok(hr == CLDB_E_FILE_CORRUPT, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_FILE_CORRUPT, "got hr %#lx\n", hr);
 
     hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, md_bytes, md_size, 0, &IID_IMetaDataTables,
                                               (IUnknown **)&md_tables);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    if (SUCCEEDED(hr)) IMetaDataTables_Release(md_tables);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    IMetaDataTables_Release(md_tables);
 
     hr = IMetaDataDispenser_OpenScope(dispenser, filename, 0, &IID_IMetaDataTables, (IUnknown **)&md_tables);
     ok(hr == S_OK, "got hr %#lx\n", hr);
