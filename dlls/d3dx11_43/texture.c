@@ -676,30 +676,60 @@ HRESULT WINAPI D3DX11CreateTextureFromFileW(ID3D11Device *device, const WCHAR *s
     return hr;
 }
 
+HRESULT WINAPI D3DX11CreateTextureFromResourceA(ID3D11Device *device, HMODULE module, const char *resource,
+        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult)
+{
+    uint32_t size;
+    void *buffer;
+    HRESULT hr;
+
+    TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
+            device, module, debugstr_a(resource), load_info, pump, texture, hresult);
+
+    if (!device)
+        return E_INVALIDARG;
+
+    if (pump)
+        FIXME("D3DX11 thread pump is currently unimplemented.\n");
+
+    if (FAILED((hr = d3dx_load_resource_a(module, resource, &buffer, &size))))
+        return hr;
+    hr = create_texture(device, buffer, size, load_info, texture);
+    if (hresult)
+        *hresult = hr;
+    return hr;
+}
+
+HRESULT WINAPI D3DX11CreateTextureFromResourceW(ID3D11Device *device, HMODULE module, const WCHAR *resource,
+        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult)
+{
+    uint32_t size;
+    void *buffer;
+    HRESULT hr;
+
+    TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
+            device, module, debugstr_w(resource), load_info, pump, texture, hresult);
+
+    if (!device)
+        return E_INVALIDARG;
+
+    if (pump)
+        FIXME("D3DX11 thread pump is currently unimplemented.\n");
+
+    if (FAILED((hr = d3dx_load_resource_w(module, resource, &buffer, &size))))
+        return hr;
+    hr = create_texture(device, buffer, size, load_info, texture);
+    if (hresult)
+        *hresult = hr;
+    return hr;
+}
+
 HRESULT WINAPI D3DX11CreateShaderResourceViewFromMemory(ID3D11Device *device, const void *data,
         SIZE_T data_size, D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump,
         ID3D11ShaderResourceView **view, HRESULT *hresult)
 {
     FIXME("device %p, data %p, data_size %Iu, load_info %p, pump %p, view %p, hresult %p stub!\n",
             device, data, data_size, load_info, pump, view, hresult);
-
-    return E_NOTIMPL;
-}
-
-HRESULT WINAPI D3DX11CreateTextureFromResourceA(ID3D11Device *device, HMODULE module, const char *resource,
-        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult)
-{
-    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
-            device, module, debugstr_a(resource), load_info, pump, texture, hresult);
-
-    return E_NOTIMPL;
-}
-
-HRESULT WINAPI D3DX11CreateTextureFromResourceW(ID3D11Device *device, HMODULE module, const WCHAR *resource,
-        D3DX11_IMAGE_LOAD_INFO *load_info, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult)
-{
-    FIXME("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p stub!\n",
-            device, module, debugstr_w(resource), load_info, pump, texture, hresult);
 
     return E_NOTIMPL;
 }

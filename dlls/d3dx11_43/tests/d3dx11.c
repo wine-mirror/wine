@@ -4084,14 +4084,6 @@ static void test_create_texture(void)
         winetest_pop_context();
     }
 
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("Skipping D3DX11CreateTextureFromResource tests.\n");
-        CoUninitialize();
-        ok(!ID3D11Device_Release(device), "Unexpected refcount.\n");
-        return;
-    }
-
     /* D3DX11CreateTextureFromResource tests */
 
     hr2 = 0xdeadbeef;
