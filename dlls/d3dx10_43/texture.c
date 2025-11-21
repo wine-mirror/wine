@@ -245,9 +245,9 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
 HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *info, HRESULT *result)
 {
+    uint32_t size;
     void *buffer;
     HRESULT hr;
-    DWORD size;
 
     TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_a(resource), pump, info, result);
@@ -272,7 +272,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resou
         return hr;
     }
 
-    if (FAILED((hr = load_resourceA(module, resource, &buffer, &size))))
+    if (FAILED((hr = d3dx_load_resource_a(module, resource, &buffer, &size))))
         return hr;
     hr = get_image_info(buffer, size, info);
     if (result)
@@ -283,9 +283,9 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resou
 HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *info, HRESULT *result)
 {
+    uint32_t size;
     void *buffer;
     HRESULT hr;
-    DWORD size;
 
     TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_w(resource), pump, info, result);
@@ -310,7 +310,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *reso
         return hr;
     }
 
-    if (FAILED((hr = load_resourceW(module, resource, &buffer, &size))))
+    if (FAILED((hr = d3dx_load_resource_w(module, resource, &buffer, &size))))
         return hr;
     hr = get_image_info(buffer, size, info);
     if (result)
@@ -532,8 +532,8 @@ HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *s
 HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE module, const char *resource,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
+    uint32_t size;
     void *buffer;
-    DWORD size;
     HRESULT hr;
 
     TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
@@ -562,7 +562,7 @@ HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE mo
         return hr;
     }
 
-    if (FAILED((hr = load_resourceA(module, resource, &buffer, &size))))
+    if (FAILED((hr = d3dx_load_resource_a(module, resource, &buffer, &size))))
         return hr;
     hr = create_texture(device, buffer, size, load_info, texture);
     if (hresult)
@@ -573,8 +573,8 @@ HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE mo
 HRESULT WINAPI D3DX10CreateTextureFromResourceW(ID3D10Device *device, HMODULE module, const WCHAR *resource,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
+    uint32_t size;
     void *buffer;
-    DWORD size;
     HRESULT hr;
 
     TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
@@ -603,7 +603,7 @@ HRESULT WINAPI D3DX10CreateTextureFromResourceW(ID3D10Device *device, HMODULE mo
         return hr;
     }
 
-    if (FAILED((hr = load_resourceW(module, resource, &buffer, &size))))
+    if (FAILED((hr = d3dx_load_resource_w(module, resource, &buffer, &size))))
         return hr;
     hr = create_texture(device, buffer, size, load_info, texture);
     if (hresult)

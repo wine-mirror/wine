@@ -45,7 +45,7 @@ struct asyncdataloader
         } resource;
     } u;
     void *data;
-    DWORD size;
+    uint32_t size;
 };
 
 static inline struct asyncdataloader *impl_from_ID3DX10DataLoader(ID3DX10DataLoader *iface)
@@ -90,32 +90,13 @@ static const ID3DX10DataLoaderVtbl memorydataloadervtbl =
 
 HRESULT load_file(const WCHAR *path, void **data, DWORD *size)
 {
-    DWORD read_len;
-    HANDLE file;
-    BOOL ret;
+    uint32_t file_size;
+    HRESULT hr;
 
-    file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
-            NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (file == INVALID_HANDLE_VALUE)
+    if ((hr = d3dx_load_file(path, data, &file_size)) == ERROR_FILE_NOT_FOUND)
         return D3D10_ERROR_FILE_NOT_FOUND;
-
-    *size = GetFileSize(file, NULL);
-    *data = malloc(*size);
-    if (!*data)
-    {
-        CloseHandle(file);
-        return E_OUTOFMEMORY;
-    }
-
-    ret = ReadFile(file, *data, *size, &read_len, NULL);
-    CloseHandle(file);
-    if (!ret || read_len != *size)
-    {
-        WARN("Failed to read file contents.\n");
-        free(*data);
-        return E_FAIL;
-    }
-    return S_OK;
+    *size = file_size;
+    return hr;
 }
 
 static HRESULT WINAPI filedataloader_Load(ID3DX10DataLoader *iface)
@@ -173,63 +154,6 @@ static const ID3DX10DataLoaderVtbl filedataloadervtbl =
     filedataloader_Destroy
 };
 
-static HRESULT load_resource_initA(HMODULE module, const char *resource, HRSRC *rsrc)
-{
-    if (!(*rsrc = FindResourceA(module, resource, (const char *)RT_RCDATA)))
-        *rsrc = FindResourceA(module, resource, (const char *)RT_BITMAP);
-    if (!*rsrc)
-    {
-        WARN("Failed to find resource.\n");
-        return D3DX10_ERR_INVALID_DATA;
-    }
-    return S_OK;
-}
-
-static HRESULT load_resource_initW(HMODULE module, const WCHAR *resource, HRSRC *rsrc)
-{
-    if (!(*rsrc = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA)))
-        *rsrc = FindResourceW(module, resource, (const WCHAR *)RT_BITMAP);
-    if (!*rsrc)
-    {
-        WARN("Failed to find resource.\n");
-        return D3DX10_ERR_INVALID_DATA;
-    }
-    return S_OK;
-}
-
-static HRESULT load_resource(HMODULE module, HRSRC rsrc, void **data, DWORD *size)
-{
-    HGLOBAL hglobal;
-
-    if (!(*size = SizeofResource(module, rsrc)))
-        return D3DX10_ERR_INVALID_DATA;
-    if (!(hglobal = LoadResource(module, rsrc)))
-        return D3DX10_ERR_INVALID_DATA;
-    if (!(*data = LockResource(hglobal)))
-        return D3DX10_ERR_INVALID_DATA;
-    return S_OK;
-}
-
-HRESULT load_resourceA(HMODULE module, const char *resource, void **data, DWORD *size)
-{
-    HRESULT hr;
-    HRSRC rsrc;
-
-    if (FAILED((hr = load_resource_initA(module, resource, &rsrc))))
-        return hr;
-    return load_resource(module, rsrc, data, size);
-}
-
-HRESULT load_resourceW(HMODULE module, const WCHAR *resource, void **data, DWORD *size)
-{
-    HRESULT hr;
-    HRSRC rsrc;
-
-    if ((FAILED(hr = load_resource_initW(module, resource, &rsrc))))
-        return hr;
-    return load_resource(module, rsrc, data, size);
-}
-
 static HRESULT WINAPI resourcedataloader_Load(ID3DX10DataLoader *iface)
 {
     struct asyncdataloader *loader = impl_from_ID3DX10DataLoader(iface);
@@ -239,7 +163,7 @@ static HRESULT WINAPI resourcedataloader_Load(ID3DX10DataLoader *iface)
     if (loader->data)
         return S_OK;
 
-    return load_resource(loader->u.resource.module, loader->u.resource.rsrc,
+    return d3dx_load_resource(loader->u.resource.module, loader->u.resource.rsrc,
             &loader->data, &loader->size);
 }
 
@@ -514,7 +438,7 @@ HRESULT WINAPI D3DX10CreateAsyncResourceLoaderA(HMODULE module, const char *reso
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED((hr = load_resource_initA(module, resource, &rsrc))))
+    if (FAILED((hr = d3dx_load_resource_init_a(module, resource, &rsrc))))
     {
         free(object);
         return hr;
@@ -546,7 +470,7 @@ HRESULT WINAPI D3DX10CreateAsyncResourceLoaderW(HMODULE module, const WCHAR *res
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED((hr = load_resource_initW(module, resource, &rsrc))))
+    if (FAILED((hr = d3dx_load_resource_init_w(module, resource, &rsrc))))
     {
         free(object);
         return hr;
