@@ -2471,13 +2471,23 @@ static INT_PTR CALLBACK general_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             ShowWindow(GetDlgItem(hwnd, IDC_ADDTOSTORE), SW_HIDE);
         EnableWindow(GetDlgItem(hwnd, IDC_ISSUERSTATEMENT), FALSE);
         set_general_info(hwnd, pCertViewInfo);
+        SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)pCertViewInfo->pCertContext);
         break;
     case WM_COMMAND:
         switch (wp)
         {
         case IDC_ADDTOSTORE:
-            CryptUIWizImport(0, hwnd, NULL, NULL, NULL);
+        {
+            CRYPTUI_WIZ_IMPORT_SRC_INFO info;
+
+            info.dwSize = sizeof(info);
+            info.dwSubjectChoice = CRYPTUI_WIZ_IMPORT_SUBJECT_CERT_CONTEXT;
+            info.pCertContext = (PCCERT_CONTEXT)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+            info.dwFlags = 0;
+            info.pwszPassword = L"";
+            CryptUIWizImport(0, hwnd, NULL, &info, NULL);
             break;
+        }
         case IDC_ISSUERSTATEMENT:
         {
             struct IssuerStatement *issuerStatement =
