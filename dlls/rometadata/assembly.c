@@ -885,8 +885,9 @@ const char *assembly_get_string(const assembly_t *assembly, ULONG idx)
     return idx < assembly->stream_strings.size ? (const char *)&assembly->stream_strings.start[idx] : NULL;
 }
 
-static HRESULT decode_int(const BYTE *encoded, ULONG *val, ULONG *len)
+static BOOL decode_int(const BYTE *encoded, SIZE_T encoded_len, ULONG *val, ULONG *len)
 {
+    if (!encoded_len) return FALSE;
     if (!(encoded[0] & 0x80))
     {
         *len = 1;
@@ -894,28 +895,33 @@ static HRESULT decode_int(const BYTE *encoded, ULONG *val, ULONG *len)
     }
     else if (!(encoded[0] & 0x40))
     {
+        if (encoded_len < 2) return FALSE;
         *len = 2;
         *val = ((encoded[0] & ~0xc0) << 8) + encoded[1];
     }
     else if (!(encoded[0] & 0x20))
     {
+        if (encoded_len < 4) return FALSE;
         *len = 4;
         *val = ((encoded[0] & ~0xe0) << 24) + (encoded[1] << 16) + (encoded[2] << 8) + encoded[3];
     }
     else
-        return E_INVALIDARG;
-    return S_OK;
+        return FALSE;
+    return TRUE;
 }
 
-HRESULT assembly_get_blob(const assembly_t *assembly, ULONG idx, const BYTE **blob, ULONG *size)
+HRESULT assembly_get_blob(const assembly_t *assembly, ULONG idx, const BYTE **blob, ULONG *ret_size)
 {
+    ULONG size, size_len;
     const BYTE *ptr;
-    ULONG size_len;
-    HRESULT hr;
 
     if (idx >= assembly->stream_blobs.size) return E_INVALIDARG;
     ptr = assembly->stream_blobs.start + idx;
-    if (FAILED(hr = decode_int(ptr, size, &size_len))) return hr;
+    /* We can decode upto the end of the blobs stream. */
+    if (!decode_int(ptr, assembly->stream_blobs.size - idx, &size, &size_len) ||
+        ptr + size_len >= assembly->stream_blobs.start + assembly->stream_blobs.size)
+        return E_INVALIDARG;
+    *ret_size = size;
     *blob = ptr + size_len;
     return S_OK;
 }
