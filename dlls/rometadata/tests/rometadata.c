@@ -65,13 +65,24 @@ static void test_MetaDataGetDispenser(void)
         IMetaDataDispenserEx_Release(dispenser_ex);
 }
 
+static const BYTE *load_resource_data(const WCHAR *name, ULONG *data_size)
+{
+    const BYTE *data;
+    HRSRC res;
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok(!!res, "Failed to load resource %s, error %lu.\n", debugstr_w(name), GetLastError());
+    data = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    *data_size = SizeofResource(GetModuleHandleA(NULL), res);
+    return data;
+}
+
 static WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
-    DWORD written;
+    DWORD written, res_size;
+    const BYTE *data;
     HANDLE file;
-    HRSRC res;
-    void *ptr;
 
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
     wcscat(pathW, name);
@@ -80,11 +91,9 @@ static WCHAR *load_resource(const WCHAR *name)
     ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %lu.\n",
             wine_dbgstr_w(pathW), GetLastError());
 
-    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
-    ok(!!res, "Failed to load resource, error %lu.\n", GetLastError());
-    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
-    WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
-    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource.\n");
+    data = load_resource_data(name, &res_size);
+    WriteFile(file, data, res_size, &written, NULL);
+    ok(written == res_size, "Failed to write resource.\n");
     CloseHandle(file);
 
     return pathW;
@@ -541,8 +550,9 @@ static void test_MetaDataDispenser_OpenScope(void)
         { tdInterface | tdAbstract | tdWindowsRuntime, "ITest1", "Wine.Test" },
         { tdPublic | tdSealed | tdWindowsRuntime, "Test1", "Wine.Test" },
     };
+    ULONG val = 0, i, guid_ctor_idx = 0, itest1_def_idx = 0, md_size;
+    const BYTE *md_bytes = load_resource_data(L"test-simple.winmd", &md_size);
     const WCHAR *filename = load_resource(L"test-simple.winmd");
-    ULONG val = 0, i, guid_ctor_idx = 0, itest1_def_idx = 0;
     const struct row_typedef *type_def = NULL;
     const struct row_module *module = NULL;
     IMetaDataDispenser *dispenser;
@@ -553,6 +563,26 @@ static void test_MetaDataDispenser_OpenScope(void)
 
     hr = MetaDataGetDispenser(&CLSID_CorMetaDataDispenser, &IID_IMetaDataDispenser, (void **)&dispenser);
     ok(hr == S_OK, "got hr %#lx\n", hr);
+
+    hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, NULL, 0, 0, &IID_IMetaDataTables, (IUnknown **)&md_tables);
+    todo_wine ok(hr == E_FAIL, "got hr %#lx\n", hr);
+
+    hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, NULL, md_size, 0, &IID_IMetaDataTables,
+                                              (IUnknown **)&md_tables);
+    todo_wine ok(hr == E_FAIL, "got hr %#lx\n", hr);
+
+    hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, md_bytes, 0, 0, &IID_IMetaDataTables,
+                                              (IUnknown **)&md_tables);
+    todo_wine ok(hr == CLDB_E_NO_DATA, "got hr %#lx\n", hr);
+
+    hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, md_bytes, sizeof(IMAGE_DOS_HEADER), 0, &IID_IMetaDataTables,
+                                              (IUnknown **)&md_tables);
+    todo_wine ok(hr == CLDB_E_FILE_CORRUPT, "got hr %#lx\n", hr);
+
+    hr = IMetaDataDispenser_OpenScopeOnMemory(dispenser, md_bytes, md_size, 0, &IID_IMetaDataTables,
+                                              (IUnknown **)&md_tables);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    if (SUCCEEDED(hr)) IMetaDataTables_Release(md_tables);
 
     hr = IMetaDataDispenser_OpenScope(dispenser, filename, 0, &IID_IMetaDataTables, (IUnknown **)&md_tables);
     ok(hr == S_OK, "got hr %#lx\n", hr);
