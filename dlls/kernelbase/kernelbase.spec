@@ -569,7 +569,7 @@
 @ stdcall GetGeoInfoEx(ptr long ptr long)
 @ stdcall GetHandleInformation(long ptr)
 # @ stub GetHivePath
-# @ stub GetIntegratedDisplaySize
+@ stdcall GetIntegratedDisplaySize(ptr)
 # @ stub GetIsEdpEnabled
 @ stdcall GetKernelObjectSecurity(long long ptr long ptr)
 @ stdcall GetLargePageMinimum()
