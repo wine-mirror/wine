@@ -101,7 +101,12 @@ struct pdb_type_hash_entry
 struct pdb_dbi_hash_entry
 {
     pdbsize_t dbi_stream_offset;
-    struct pdb_dbi_hash_entry *next;
+};
+
+struct pdb_dbi_hash_bucket
+{
+    unsigned num_entries;
+    struct pdb_dbi_hash_entry *entries;
 };
 
 struct pdb_compiland
@@ -150,7 +155,7 @@ struct pdb_reader
     unsigned num_action_globals;
     unsigned num_action_entries;
     struct pdb_action_entry *action_store;
-    struct pdb_dbi_hash_entry *dbi_symbols_hash;
+    struct pdb_dbi_hash_bucket dbi_symbols_hash_buckets[DBI_MAX_HASH + 1];
     unsigned short dbi_substreams[16]; /* 0 means non existing stream */
 
     /* compilands */
@@ -1630,7 +1635,6 @@ static enum pdb_result pdb_reader_load_DBI_hash_table(struct pdb_reader *pdb)
     UINT32 bitmap;
     UINT32 start_index, end_index;
     unsigned index, last_index, i, j;
-    struct pdb_dbi_hash_entry *entry;
 
     if ((result = pdb_reader_walker_init(pdb, pdb->dbi_header.global_hash_stream, &walker))) return result;
     if ((result = pdb_reader_READ(pdb, &walker, &dbi_hash_header))) return result;
@@ -1651,17 +1655,14 @@ static enum pdb_result pdb_reader_load_DBI_hash_table(struct pdb_reader *pdb)
         }
     }
 
-    if ((result = pdb_reader_alloc(pdb, sizeof(pdb->dbi_symbols_hash[0]) * (DBI_MAX_HASH + 1), (void **)&pdb->dbi_symbols_hash))) return result;
-    memset(pdb->dbi_symbols_hash, 0, sizeof(pdb->dbi_symbols_hash[0]) * (DBI_MAX_HASH + 1));
-    for (index = 0, i = 0; i <= DBI_MAX_HASH; i++)
-        pdb->dbi_symbols_hash[i].next = &pdb->dbi_symbols_hash[i];
-
+    memset(pdb->dbi_symbols_hash_buckets, 0, sizeof(pdb->dbi_symbols_hash_buckets));
     if (!dbi_hash_header.hash_records_size) return R_PDB_SUCCESS;
     num_hash_records = dbi_hash_header.hash_records_size / sizeof(DBI_HASH_RECORD);
     last_index = (walker.last - (sizeof(DBI_HASH_HEADER) + dbi_hash_header.hash_records_size + DBI_BITMAP_HASH_SIZE)) / sizeof(UINT32);
 
     for (index = 0, i = 0; i <= DBI_MAX_HASH; i++)
     {
+        struct pdb_dbi_hash_bucket *bucket = &pdb->dbi_symbols_hash_buckets[i];
         if ((i & 31) == 0)
         {
             walker.offset = sizeof(DBI_HASH_HEADER) + dbi_hash_header.hash_records_size + (i / 32) * 4;
@@ -1686,24 +1687,14 @@ static enum pdb_result pdb_reader_load_DBI_hash_table(struct pdb_reader *pdb)
                 end_index = num_hash_records;
             index++;
 
+            bucket->num_entries = end_index - start_index;
+            if (end_index > start_index && (result = pdb_reader_alloc(pdb, sizeof(*bucket->entries) * bucket->num_entries, (void **)&bucket->entries))) goto on_error;
             for (j = start_index; j < end_index; j++)
             {
                 walker.offset = sizeof(DBI_HASH_HEADER) + j * sizeof(DBI_HASH_RECORD);
                 if ((result = pdb_reader_READ(pdb, &walker, &hash_record))) goto on_error;
-                if (pdb->dbi_symbols_hash[i].next == &pdb->dbi_symbols_hash[i]) /* empty slot */
-                {
-                    pdb->dbi_symbols_hash[i].dbi_stream_offset = hash_record.offset - 1;
-                    pdb->dbi_symbols_hash[i].next = NULL;
-                }
-                else
-                {
-                    struct pdb_dbi_hash_entry **last;
-                    if ((result = pdb_reader_alloc(pdb, sizeof(*entry), (void **)&entry))) goto on_error;
-                    entry->dbi_stream_offset = hash_record.offset - 1;
-                    entry->next = NULL;
-                    for (last = &pdb->dbi_symbols_hash[i].next; *last; last = &(*last)->next) {}
-                    *last = entry;
-                }
+
+                bucket->entries[j - start_index].dbi_stream_offset = hash_record.offset - 1;
             }
         }
     }
@@ -1711,16 +1702,10 @@ static enum pdb_result pdb_reader_load_DBI_hash_table(struct pdb_reader *pdb)
 on_error:
     for (i = 0; i <= DBI_MAX_HASH; i++)
     {
-        struct pdb_dbi_hash_entry *current, *next;
-        if (pdb->dbi_symbols_hash[i].next == &pdb->dbi_symbols_hash[i]) continue;
-        for (current = pdb->dbi_symbols_hash[i].next; current; current = next)
-        {
-            next = current->next;
-            pdb_reader_free(pdb, current);
-        }
+        if (pdb->dbi_symbols_hash_buckets[i].entries)
+            pdb_reader_free(pdb, pdb->dbi_symbols_hash_buckets[i].entries);
     }
-    pdb_reader_free(pdb, pdb->dbi_symbols_hash);
-    pdb->dbi_symbols_hash = NULL;
+    memset(pdb->dbi_symbols_hash_buckets, 0, sizeof(pdb->dbi_symbols_hash_buckets));
     return result;
 }
 
@@ -1766,12 +1751,13 @@ static enum pdb_result pdb_reader_read_DBI_codeview_symbol_by_name(struct pdb_re
 
     if ((result = pdb_reader_walker_init(pdb, pdb->dbi_header.gsym_stream, &walker))) return result;
     hash = codeview_compute_hash(name, strlen(name)) % DBI_MAX_HASH;
-    if (pdb->dbi_symbols_hash[hash].next != &pdb->dbi_symbols_hash[hash])
+    if (pdb->dbi_symbols_hash_buckets[hash].num_entries)
     {
-        struct pdb_dbi_hash_entry *entry;
-        for (entry = &pdb->dbi_symbols_hash[hash]; entry; entry = entry->next)
+        unsigned int i;
+        struct pdb_dbi_hash_bucket *bucket = &pdb->dbi_symbols_hash_buckets[hash];
+        for (i = 0; bucket->num_entries; i++)
         {
-            walker.offset = entry->dbi_stream_offset;
+            walker.offset = bucket->entries[i].dbi_stream_offset;
             if ((result = pdb_reader_alloc_and_read_full_codeview_symbol(pdb, &walker, &full_cv_symbol))) return result;
             if (pdb_reader_extract_name_out_of_codeview_symbol(full_cv_symbol, &cv_name, &cv_length) == R_PDB_SUCCESS)
             {
@@ -1779,7 +1765,7 @@ static enum pdb_result pdb_reader_read_DBI_codeview_symbol_by_name(struct pdb_re
                 {
                     *cv_symbol = *full_cv_symbol;
                     pdb_reader_free(pdb, full_cv_symbol);
-                    *stream_offset = entry->dbi_stream_offset;
+                    *stream_offset = bucket->entries[i].dbi_stream_offset;
                     return R_PDB_SUCCESS;
                 }
                 pdb_reader_free(pdb, full_cv_symbol);
@@ -1915,20 +1901,21 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
 
     for (hash = 0; hash < DBI_MAX_HASH; hash++)
     {
-        struct pdb_dbi_hash_entry *entry, *entry2;
+        struct pdb_dbi_hash_bucket *bucket = &pdb->dbi_symbols_hash_buckets[hash];
         DWORD64 address;
         symref_t type_symref;
+        unsigned int i, j;
         BOOL found;
 
-        if (pdb->dbi_symbols_hash[hash].next == &pdb->dbi_symbols_hash[hash]) continue;
-        for (entry = &pdb->dbi_symbols_hash[hash]; entry; entry = entry->next)
+        if (!bucket->num_entries) continue;
+        for (i = 0; i < bucket->num_entries; i++)
         {
-            if (!pdb_reader_whole_stream_access_codeview_symbol(pdb, &whole, entry->dbi_stream_offset, &cv_global_symbol))
+            if (!pdb_reader_whole_stream_access_codeview_symbol(pdb, &whole, bucket->entries[i].dbi_stream_offset, &cv_global_symbol))
             {
                 switch (cv_global_symbol->generic.id)
                 {
                 case S_UDT:
-                    if ((result = pdb_reader_push_action(pdb, action_type_globals, entry->dbi_stream_offset,
+                    if ((result = pdb_reader_push_action(pdb, action_type_globals, bucket->entries[i].dbi_stream_offset,
                                                          cv_global_symbol->generic.len + sizeof(cv_global_symbol->generic.len), 0, &symref))) return result;
                     break;
                 case S_GDATA32:
@@ -1942,9 +1929,9 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
                      * there.
                      */
                     found = FALSE;
-                    for (entry2 = &pdb->dbi_symbols_hash[hash]; !found && entry2 && entry2 != entry; entry2 = entry2->next)
+                    for (j = 0; !found && j < i; j++)
                     {
-                        if (!pdb_reader_whole_stream_access_codeview_symbol(pdb, &whole, entry2->dbi_stream_offset, &cv_global_symbol2))
+                        if (!pdb_reader_whole_stream_access_codeview_symbol(pdb, &whole, bucket->entries[j].dbi_stream_offset, &cv_global_symbol2))
                             found = !strcmp(cv_global_symbol->data_v3.name, cv_global_symbol2->data_v3.name);
                     }
                     if (!found &&
