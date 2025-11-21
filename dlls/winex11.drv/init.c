@@ -415,6 +415,7 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
 
     NtGdiStretchBlt( surface->hdc_dst, 0, 0, rect_dst.right - rect_dst.left, rect_dst.bottom - rect_dst.top,
                      surface->hdc_src, 0, 0, surface->rect.right, surface->rect.bottom, SRCCOPY, 0 );
+    XFlush( gdi_display );
 
 done:
     if (region) NtGdiDeleteObjectApp( region );
