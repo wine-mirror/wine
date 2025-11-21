@@ -4184,6 +4184,7 @@ static enum pdb_result pdb_reader_create_inline_site(struct pdb_reader *pdb, str
 
     while (pdb_reader_read_inlinesite_annotation(pdb, annotation_walker, &opcode, &arg1, &arg2) == R_PDB_SUCCESS)
     {
+        if (opcode == BA_OP_Invalid) break;
         switch (opcode)
         {
         case BA_OP_CodeOffset:
