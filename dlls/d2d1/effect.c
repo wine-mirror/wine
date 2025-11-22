@@ -1570,6 +1570,38 @@ static HRESULT __stdcall arithmetic_composite_factory(IUnknown **effect)
     return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
+static const WCHAR blend_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Blend'/>            \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Blend'/>            \
+    <Inputs minimum='2' maximum='2' >                                     \
+      <Input name='Source1'/>                                             \
+      <Input name='Source2'/>                                             \
+    </Inputs>                                                             \
+    <Property name='Mode' type='enum' />                                  \
+  </Effect>";
+
+struct blend_properties
+{
+    D2D1_BLEND_MODE mode;
+};
+
+EFFECT_PROPERTY_RW(blend, mode, ENUM)
+
+static const D2D1_PROPERTY_BINDING blend_bindings[] =
+{
+    { L"Mode", BINDING_RW(blend, mode) },
+};
+
+static HRESULT __stdcall blend_factory(IUnknown **effect)
+{
+    static const struct blend_properties properties = {};
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1595,6 +1627,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1GaussianBlur, X2(gaussian_blur) },
         { &CLSID_D2D1PointSpecular, X2(point_specular) },
         { &CLSID_D2D1ArithmeticComposite, X2(arithmetic_composite) },
+        { &CLSID_D2D1Blend, X2(blend) },
 #undef X2
 #undef X
     };
