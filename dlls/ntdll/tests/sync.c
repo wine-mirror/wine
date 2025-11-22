@@ -1205,17 +1205,22 @@ struct test_barrier_thread_param
     BOOL wait_skipped;
     volatile LONG *count;
     volatile LONG *true_ret_count;
+    unsigned int iter_count;
 };
 
 static DWORD WINAPI test_barrier_thread(void *param)
 {
     struct test_barrier_thread_param *p = param;
+    unsigned int i;
 
     InterlockedIncrement( p->count );
-    if (pRtlBarrier( p->barrier, p->flags ))
-        InterlockedIncrement( p->true_ret_count );
+    for (i = 0; i < p->iter_count; ++i)
+    {
+        if (pRtlBarrier( p->barrier, p->flags ))
+            InterlockedIncrement( p->true_ret_count );
+    }
     if (!p->wait_skipped)
-        ok( *p->count == p->thread_count, "got %ld.\n", *p->count );
+        ok( *p->count == p->thread_count * p->iter_count, "got %ld.\n", *p->count );
     return 0;
 }
 
@@ -1285,7 +1290,12 @@ static void test_barrier(void)
 
     status = pRtlInitBarrier(  &barrier, 0, -1 );
     ok( !status, "got %#lx.\n", status );
-
+    if (0)
+    {
+        /* Waits forever. */
+        bval = pRtlBarrier( &barrier, 0 );
+        ok( bval == 1, "got %#x.\n", bval );
+    }
     status = pRtlInitBarrier(  &barrier, 1, -2 );
     ok( !status, "got %#lx.\n", status );
 
@@ -1317,20 +1327,28 @@ static void test_barrier(void)
     p.thread_count = ARRAY_SIZE(threads) + 1;
     p.count = &count;
     p.true_ret_count = &true_ret_count;
+    p.iter_count = 100;
     p.wait_skipped = TRUE;
+
+    status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
+    ok( !status, "got %#lx.\n", status );
     count = 0;
     true_ret_count = 0;
     for (i = 0; i < ARRAY_SIZE(threads); ++i)
         threads[i] = CreateThread( NULL, 0, test_barrier_thread, &p, 0, NULL );
-    InterlockedIncrement( p.count );
-    if (pRtlBarrier( p.barrier, p.flags ))
-        InterlockedIncrement( p.true_ret_count );
+
+    for (i = 0; i < p.iter_count; ++i)
+    {
+        InterlockedIncrement( p.count );
+        if (pRtlBarrier( p.barrier, p.flags ))
+            InterlockedIncrement( p.true_ret_count );
+    }
     for (i = 0; i < ARRAY_SIZE(threads); ++i)
     {
         WaitForSingleObject( threads[i], INFINITE );
         CloseHandle( threads[i] );
     }
-    ok( true_ret_count == p.thread_count, "got %ld.\n", true_ret_count );
+    todo_wine ok( true_ret_count == p.iter_count, "got %ld.\n", true_ret_count );
 
     /* Normal case. */
     status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
@@ -1340,6 +1358,7 @@ static void test_barrier(void)
     pRtlDeleteBarrier( &barrier );
     p.flags = 0x10000;
     p.wait_skipped = FALSE;
+    p.iter_count = 1;
     count = 0;
     true_ret_count = 0;
     for (i = 0; i < ARRAY_SIZE(threads); ++i)
