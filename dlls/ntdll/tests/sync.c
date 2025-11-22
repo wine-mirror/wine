@@ -1348,7 +1348,7 @@ static void test_barrier(void)
         WaitForSingleObject( threads[i], INFINITE );
         CloseHandle( threads[i] );
     }
-    todo_wine ok( true_ret_count == p.iter_count, "got %ld.\n", true_ret_count );
+    ok( true_ret_count == p.iter_count, "got %ld.\n", true_ret_count );
 
     /* Normal case. */
     status = pRtlInitBarrier( &barrier, p.thread_count, -1 );
