@@ -1602,6 +1602,44 @@ static HRESULT __stdcall blend_factory(IUnknown **effect)
     return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
+static const WCHAR brightness_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Brightness'/>       \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Brightness'/>       \
+    <Inputs>                                                              \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+    <Property name='WhitePoint' type='vector2' />                         \
+    <Property name='BlackPoint' type='vector2' />                         \
+  </Effect>";
+
+struct brightness_properties
+{
+    D2D_VECTOR_2F white_point;
+    D2D_VECTOR_2F black_point;
+};
+
+EFFECT_PROPERTY_RW(brightness, white_point, VECTOR2)
+EFFECT_PROPERTY_RW(brightness, black_point, VECTOR2)
+
+static const D2D1_PROPERTY_BINDING brightness_bindings[] =
+{
+    { L"WhitePoint", BINDING_RW(brightness, white_point) },
+    { L"BlackPoint", BINDING_RW(brightness, black_point) },
+};
+
+static HRESULT __stdcall brightness_factory(IUnknown **effect)
+{
+    static const struct brightness_properties properties =
+    {
+        .white_point = { 1.0f, 1.0f },
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1628,6 +1666,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1PointSpecular, X2(point_specular) },
         { &CLSID_D2D1ArithmeticComposite, X2(arithmetic_composite) },
         { &CLSID_D2D1Blend, X2(blend) },
+        { &CLSID_D2D1Brightness, X2(brightness) },
 #undef X2
 #undef X
     };

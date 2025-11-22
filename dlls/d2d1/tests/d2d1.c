@@ -14027,6 +14027,51 @@ static void test_effect_blend(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_brightness(BOOL d3d11)
+{
+    static const struct effect_property properties[] =
+    {
+        { L"WhitePoint", D2D1_BRIGHTNESS_PROP_WHITE_POINT, D2D1_PROPERTY_TYPE_VECTOR2 },
+        { L"BlackPoint", D2D1_BRIGHTNESS_PROP_BLACK_POINT, D2D1_PROPERTY_TYPE_VECTOR2 },
+    };
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    unsigned int count, i;
+    ID2D1Effect *effect;
+    D2D_VECTOR_2F vec;
+    WCHAR name[64];
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    context = ctx.context;
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Brightness, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_system_properties(effect);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(count == 2, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(properties); ++i)
+    {
+        hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(name, properties[i].name), "Unexpected name %s.\n", wine_dbgstr_w(name));
+    }
+
+    vec = effect_get_vec2_prop(effect, D2D1_BRIGHTNESS_PROP_WHITE_POINT);
+    ok(vec.x == 1.0f && vec.y == 1.0f, "Unexpected value {%.8e,%.8e}.\n", vec.x, vec.y);
+
+    vec = effect_get_vec2_prop(effect, D2D1_BRIGHTNESS_PROP_BLACK_POINT);
+    ok(vec.x == 0.0f && vec.y == 0.0f, "Unexpected value {%.8e,%.8e}.\n", vec.x, vec.y);
+
+    ID2D1Effect_Release(effect);
+    release_test_context(&ctx);
+}
+
 static void test_registered_effects(BOOL d3d11)
 {
     UINT32 ret, count, count2, count3;
@@ -17410,6 +17455,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_effect_color_matrix);
     queue_test(test_effect_flood);
     queue_d3d10_test(test_effect_blend);
+    queue_d3d10_test(test_effect_brightness);
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);
     queue_test(test_blend_transform);
