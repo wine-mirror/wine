@@ -1718,6 +1718,40 @@ static HRESULT __stdcall hue_rotation_factory(IUnknown **effect)
     return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
+static const WCHAR saturation_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Saturation'/>       \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Saturation'/>       \
+    <Inputs>                                                              \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+    <Property name='Saturation' type='float' />                           \
+  </Effect>";
+
+struct saturation_properties
+{
+    float saturation;
+};
+
+EFFECT_PROPERTY_RW(saturation, saturation, FLOAT)
+
+static const D2D1_PROPERTY_BINDING saturation_bindings[] =
+{
+    { L"Saturation", BINDING_RW(saturation, saturation) },
+};
+
+static HRESULT __stdcall saturation_factory(IUnknown **effect)
+{
+    static const struct saturation_properties properties =
+    {
+        .saturation = 0.5f,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1747,6 +1781,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1Brightness, X2(brightness) },
         { &CLSID_D2D1DirectionalBlur, X2(directional_blur) },
         { &CLSID_D2D1HueRotation, X2(hue_rotation) },
+        { &CLSID_D2D1Saturation, X2(saturation) },
 #undef X2
 #undef X
     };
