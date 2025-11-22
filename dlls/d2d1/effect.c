@@ -1640,6 +1640,53 @@ static HRESULT __stdcall brightness_factory(IUnknown **effect)
     return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
+static const WCHAR directional_blur_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Directional Blur'/> \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Directional Blur'/> \
+    <Inputs>                                                              \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+    <Property name='StandardDeviation' type='float' />                    \
+    <Property name='Angle' type='float' />                                \
+    <Property name='Optimization' type='enum' />                          \
+    <Property name='BorderMode' type='enum' />                            \
+  </Effect>";
+
+struct directional_blur_properties
+{
+    float standard_deviation;
+    float angle;
+    D2D1_DIRECTIONALBLUR_OPTIMIZATION optimization;
+    D2D1_BORDER_MODE border_mode;
+};
+
+EFFECT_PROPERTY_RW(directional_blur, standard_deviation, FLOAT)
+EFFECT_PROPERTY_RW(directional_blur, angle, FLOAT)
+EFFECT_PROPERTY_RW(directional_blur, optimization, ENUM)
+EFFECT_PROPERTY_RW(directional_blur, border_mode, ENUM)
+
+static const D2D1_PROPERTY_BINDING directional_blur_bindings[] =
+{
+    { L"StandardDeviation", BINDING_RW(directional_blur, standard_deviation) },
+    { L"Angle", BINDING_RW(directional_blur, angle) },
+    { L"Optimization", BINDING_RW(directional_blur, optimization) },
+    { L"BorderMode", BINDING_RW(directional_blur, border_mode) },
+};
+
+static HRESULT __stdcall directional_blur_factory(IUnknown **effect)
+{
+    static const struct directional_blur_properties properties =
+    {
+        .standard_deviation = 3.0f,
+        .optimization = D2D1_DIRECTIONALBLUR_OPTIMIZATION_BALANCED,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1667,6 +1714,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1ArithmeticComposite, X2(arithmetic_composite) },
         { &CLSID_D2D1Blend, X2(blend) },
         { &CLSID_D2D1Brightness, X2(brightness) },
+        { &CLSID_D2D1DirectionalBlur, X2(directional_blur) },
 #undef X2
 #undef X
     };
