@@ -1382,7 +1382,7 @@ struct barrier_impl
     LONG spin_count;
     LONG total_thread_count;
     volatile LONG reached_thread_count;
-    volatile LONG waiting_thread_count;
+    volatile LONG structure_lock_count;
     volatile LONG wait_barrier_complete;
 };
 
@@ -1401,7 +1401,7 @@ NTSTATUS WINAPI RtlInitBarrier( RTL_BARRIER *barrier, LONG thread_count, LONG sp
     b->total_thread_count = thread_count;
     b->spin_count = spin_count;
     b->reached_thread_count = 0;
-    b->waiting_thread_count = 0;
+    b->structure_lock_count = 0;
     b->wait_barrier_complete = 0;
     return STATUS_SUCCESS;
 }
@@ -1418,14 +1418,14 @@ void WINAPI RtlDeleteBarrier( RTL_BARRIER *barrier )
     TRACE( "barrier %p.\n", barrier );
 
     if (!barrier) return;
-    if (ReadAcquire( &b->reached_thread_count ) < b->total_thread_count && b->waiting_thread_count)
+    if (ReadAcquire( &b->reached_thread_count ) < b->total_thread_count && b->structure_lock_count)
     {
         /* On Windows this case will make RtlDeleteBarrier and the threads joining after wait forever,
          * unless the threads joining after will have SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE. */
         ERR( "called before the barrier wait is satisfied.\n" );
     }
-    while ((count = ReadAcquire( &b->waiting_thread_count )))
-        RtlWaitOnAddress( (void *)&b->waiting_thread_count, &count, sizeof(b->waiting_thread_count), NULL );
+    while ((count = ReadAcquire( &b->structure_lock_count )))
+        RtlWaitOnAddress( (void *)&b->structure_lock_count, &count, sizeof(b->structure_lock_count), NULL );
 }
 
 
@@ -1450,7 +1450,7 @@ BOOLEAN WINAPI RtlBarrier( RTL_BARRIER *barrier, ULONG flags )
 
     /* Incrementing reached_thread_count may trigger RTL_BARRIER data desrtuction from another thread,
      * so lock RtlDeleteBarrier with waiting_thread_count before that. */
-    if (flags & 0x10000) InterlockedIncrement( &b->waiting_thread_count );
+    if (flags & 0x10000) InterlockedIncrement( &b->structure_lock_count );
     if (InterlockedIncrement( &b->reached_thread_count ) == b->total_thread_count)
     {
         WriteRelease( &b->wait_barrier_complete, 1 );
@@ -1474,12 +1474,12 @@ BOOLEAN WINAPI RtlBarrier( RTL_BARRIER *barrier, ULONG flags )
     }
 
 done:
-    if (flags & 0x10000 && !InterlockedDecrement( &b->waiting_thread_count ))
+    if (flags & 0x10000 && !InterlockedDecrement( &b->structure_lock_count ))
     {
         /* Now RTL_BARRIER structure contents may become invalid. Signaling on its address should be fine, the worst
          * (unlikely) case it will wake something unrelated on reused address but that should be a legitimate spurious
          * wakeup case. */
-        RtlWakeAddressAll( (const void *)&b->waiting_thread_count );
+        RtlWakeAddressAll( (const void *)&b->structure_lock_count );
     }
     return ret;
 }
