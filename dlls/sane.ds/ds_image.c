@@ -480,6 +480,14 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
             }
             break;
         case FMT_RGB:
+            if (activeDS.frame_params.depth != 8)
+            {
+                FIXME("For NATIVE, we support only 8 bit per color channel, not %d\n", activeDS.frame_params.depth);
+                SANE_Cancel();
+                activeDS.twCC = TWCC_OPERATIONERROR;
+                activeDS.currentState = 6;
+                return TWRC_FAILURE;
+            }
             break;
         case FMT_OTHER:
             FIXME("For NATIVE, we support only GRAY and RGB\n");
