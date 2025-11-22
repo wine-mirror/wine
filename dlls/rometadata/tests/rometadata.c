@@ -1258,6 +1258,15 @@ static void test_IMetaDataImport(void)
         guid = (GUID *)&data[2];
         ok(IsEqualGUID(guid, &IID_ITest2), "got guid %s\n", debugstr_guid(guid));
     }
+    hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef1, guid_attribute_name, NULL, NULL);
+    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef1, NULL, &data, &buf_len);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_GetCustomAttributeByName(md_import, mdTypeDefNil, L"foo", &data, &buf_len);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_GetCustomAttributeByName(md_import, TokenFromRid(1, mdtCustomAttribute), L"foo", &data,
+                                                  &buf_len);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
 
     typedef1 = buf_len = 0;
     hr = IMetaDataImport_FindTypeDefByName(md_import, L"Wine.Test.ITest3", 0, &typedef1);
