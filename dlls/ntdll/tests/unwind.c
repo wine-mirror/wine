@@ -3161,6 +3161,10 @@ static void test_virtual_unwind_x86(void)
         0,                             /* frame reg */
 
         0x01, UWOP(PUSH_NONVOL, rbp),  /* 02: push %rbp */
+
+        0x00, 0x00,                    /* align */
+        0x00, 0x00, 0x00, 0x00,        /* handler */
+        0x00, 0x00, 0x00, 0x00,        /* data */
     };
 
     static const struct results_x86 results_6_epilogue[] =
