@@ -1447,7 +1447,7 @@ static void test_SystemSecurity( IWbemServices *services )
     ok( ret, "CreateWellKnownSid failed\n" );
 
     out = NULL;
-    method = SysAllocString( L"GetSD" );
+    method = SysAllocString( L"gETsd" ); /* Also test case insensitivity here */
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, NULL, &out, NULL );
     ok( hr == S_OK || hr == WBEM_E_ACCESS_DENIED, "failed to execute method %#lx\n", hr );
     SysFreeString( method );
