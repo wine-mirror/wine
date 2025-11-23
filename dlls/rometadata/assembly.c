@@ -513,7 +513,7 @@ static ULONG bit_width(ULONG n)
 {
     ULONG bits = 1;
 
-    for (n = n - 1; n; n >>= 1)
+    for (n = (n - 1) >> 1; n; n >>= 1)
         bits++;
     return bits;
 }
@@ -549,8 +549,9 @@ ULONG metadata_coded_value_as_token(ULONG table_idx, ULONG column_idx, ULONG val
     column = &table_schemas[table_idx]->columns[column_idx];
     assert(column->type == COLUMN_CODED_IDX);
 
-    tag_bits = bit_width(column->size.coded.len - 1);
+    tag_bits = bit_width(column->size.coded.len);
     table_mask = ((1UL << tag_bits) - 1);
+    assert((value & table_mask) < column->size.coded.len);
     return TokenFromRid((value & ~table_mask) >> tag_bits, TokenFromTable(column->size.coded.tables[value & table_mask]));
 }
 
