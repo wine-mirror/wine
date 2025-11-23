@@ -477,34 +477,123 @@ static HRESULT WINAPI import_EnumTypeRefs(IMetaDataImport *iface, HCORENUM *henu
     return E_NOTIMPL;
 }
 
-static void type_split_name(const char *nameA, const char **namespace, size_t *ns_len, const char **type_name)
+struct clr_type_path
 {
+    const char *namespace;
+    size_t ns_len;
+    const char *type_name;
+};
+
+static struct clr_type_path type_split_name(const char *nameA)
+{
+    struct clr_type_path path;
     const char *sep;
 
     if ((sep = strrchr(nameA, '.')))
     {
-        *namespace = nameA;
-        *ns_len = sep - nameA;
-        *type_name = &sep[1];
+        path.namespace = nameA;
+        path.ns_len = sep - nameA;
+        path.type_name = &sep[1];
     }
     else
     {
-        *namespace = NULL;
-        *ns_len = 0;
-        *type_name = nameA;
+        path.namespace = "";
+        path.ns_len = 0;
+        path.type_name = nameA;
     }
+
+    return path;
+}
+
+static BOOL clr_type_path_equals(const struct clr_type_path *path1, const struct clr_type_path *path2)
+{
+    assert(!!path1->ns_len == !!path1->namespace[0] && !!path2->ns_len == !!path2->namespace[0]);
+
+    return path1->ns_len == path2->ns_len && !strncmp(path1->namespace, path2->namespace, path1->ns_len) &&
+           !strcmp(path1->type_name, path2->type_name);
+}
+
+static BOOL clr_type_path_join(const struct clr_type_path *path, WCHAR *out, ULONG out_len, ULONG *needed)
+{
+    ULONG full_name_len;
+    char *full_name;
+
+    assert(!!path->ns_len == !!path->namespace[0]);
+
+    full_name_len = path->ns_len + strlen(path->type_name) + 1;
+    if (path->ns_len)
+        full_name_len++; /* For the dot seaparator */
+    if (!(full_name = malloc(full_name_len))) return FALSE;
+    if (path->ns_len && path->type_name[0])
+        snprintf(full_name, full_name_len, "%s.%s", path->namespace, path->type_name);
+    else
+        strcpy(full_name, path->ns_len ? path->namespace : path->type_name);
+    *needed = MultiByteToWideChar(CP_ACP, 0, full_name, -1, NULL, 0);
+    if (out && out_len)
+    {
+        ULONG n = MultiByteToWideChar(CP_ACP, 0, full_name, min(full_name_len, out_len) - 1, out, out_len - 1);
+        out[n] = L'\0';
+    }
+    free(full_name);
+    return TRUE;
+}
+
+static HRESULT table_get_column_as_string(IMetaDataTables *iface, enum table table, ULONG col, ULONG row,
+                                          const char **str)
+{
+    ULONG str_idx;
+    HRESULT hr;
+
+    TRACE("(%p, %#x, %lu, %lu, %p)\n", iface, table, col, row, str);
+
+    if (FAILED((hr = IMetaDataTables_GetColumn(iface, table, col, row, &str_idx)))) return hr;
+    return IMetaDataTables_GetString(iface, str_idx, str);
+}
+
+static HRESULT table_get_column_as_blob(IMetaDataTables *iface, enum table table, ULONG col, ULONG row, ULONG *blob_len,
+                                        const BYTE **blob)
+{
+    ULONG blob_idx;
+    HRESULT hr;
+
+    TRACE("(%p, %#x, %lu, %lu, %p, %p)\n", iface, table, col, row, blob_len, blob);
+
+    if (FAILED((hr = IMetaDataTables_GetColumn(iface, table, col, row, &blob_idx)))) return hr;
+    return IMetaDataTables_GetBlob(iface, blob_idx, blob_len, blob);
+}
+
+static HRESULT token_typedeforref_get_type_path(IMetaDataTables *iface, mdToken token, struct clr_type_path *type_path)
+{
+    const ULONG row = RidFromToken(token);
+    const ULONG type = TypeFromToken(token);
+    const enum table table = type >> 24;
+    const char *name, *namespace;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", iface, debugstr_mdToken(token), type_path);
+
+    assert(type == mdtTypeDef || type == mdtTypeRef);
+
+    /* The TypeDef and TypeRef use the same column indices for the name and namespace. */
+    if (FAILED((hr = table_get_column_as_string(iface, table, 1, row, &name)))) return hr;
+    if (FAILED((hr = table_get_column_as_string(iface, table, 2, row, &namespace)))) return hr;
+
+    type_path->namespace = namespace;
+    type_path->ns_len = strlen(namespace);
+    type_path->type_name = name;
+    return S_OK;
 }
 
 static HRESULT WINAPI import_FindTypeDefByName(IMetaDataImport *iface, const WCHAR *name, mdToken enclosing_class,
                                                mdTypeDef *type_def)
 {
     struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
-    const char *namespace, *type_name;
+    struct clr_type_path type_path;
     HCORENUM henum = NULL;
     mdTypeDef cur_typedef;
-    size_t len, ns_len;
     BOOL found = FALSE;
     char *nameA;
+    size_t len;
     HRESULT hr;
 
     TRACE("(%p, %s, %s, %p)\n", iface, debugstr_w(name), debugstr_mdToken(enclosing_class), type_def);
@@ -522,7 +611,7 @@ static HRESULT WINAPI import_FindTypeDefByName(IMetaDataImport *iface, const WCH
     len = WideCharToMultiByte(CP_ACP, 0, name, -1, NULL, 0, NULL, NULL);
     if (!(nameA = malloc(len))) return E_OUTOFMEMORY;
     WideCharToMultiByte(CP_ACP, 0, name, -1, nameA, len, NULL, NULL);
-    type_split_name(nameA, &namespace, &ns_len, &type_name);
+    type_path = type_split_name(nameA);
 
     hr = IMetaDataImport_EnumTypeDefs(&impl->IMetaDataImport_iface, &henum, NULL, 0, NULL);
     if (FAILED(hr))
@@ -533,17 +622,11 @@ static HRESULT WINAPI import_FindTypeDefByName(IMetaDataImport *iface, const WCH
     hr = IMetaDataImport_EnumTypeDefs(&impl->IMetaDataImport_iface, &henum, &cur_typedef, 1, NULL);
     while (hr == S_OK)
     {
-        ULONG row = RidFromToken(cur_typedef), idx;
-        const char *cur_type_name, *cur_ns;
+        struct clr_type_path cur_type_path;
 
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 1, row, &idx)))) break;
-        if (FAILED((hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, idx, &cur_type_name)))) break;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 2, row, &idx)))) break;
-        if (FAILED((hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, idx, &cur_ns)))) break;
-
-        if (!!namespace == !!cur_ns[0] &&
-            (!namespace || !strncmp(namespace, cur_ns, ns_len)) &&
-            !strcmp(type_name, cur_type_name))
+        if (FAILED((hr = token_typedeforref_get_type_path(&impl->IMetaDataTables_iface, cur_typedef, &cur_type_path))))
+            break;
+        if (clr_type_path_equals(&type_path, &cur_type_path))
         {
             found = TRUE;
             *type_def = cur_typedef;
@@ -573,30 +656,6 @@ static HRESULT WINAPI import_GetModuleFromScope(IMetaDataImport *iface, mdModule
     return E_NOTIMPL;
 }
 
-static BOOL type_full_name(WCHAR *out, ULONG out_len, ULONG *needed, const char *namespace, const char *name)
-{
-    ULONG full_name_len;
-    char *full_name;
-
-    if (namespace[0] && name[0])
-        full_name_len = strlen(namespace) + 1 + strlen(name) + 1;
-    else
-        full_name_len = strlen(namespace[0] ? namespace : name) + 1;
-    if (!(full_name = malloc(full_name_len))) return FALSE;
-    if (namespace[0] && name[0])
-        snprintf(full_name, full_name_len, "%s.%s", namespace, name);
-    else
-        strcpy(full_name, namespace[0] ? namespace : name);
-    *needed = MultiByteToWideChar(CP_ACP, 0, full_name, -1, NULL, 0);
-    if (out && out_len)
-    {
-        ULONG n = MultiByteToWideChar(CP_ACP, 0, full_name, min(full_name_len, out_len) - 1, out, out_len - 1);
-        out[n] = L'\0';
-    }
-    free(full_name);
-    return TRUE;
-}
-
 static HRESULT WINAPI import_GetTypeDefProps(IMetaDataImport *iface, mdTypeDef type_def, WCHAR *name, ULONG len,
                                              ULONG *written, ULONG *ret_flags, mdToken *base)
 {
@@ -612,23 +671,16 @@ static HRESULT WINAPI import_GetTypeDefProps(IMetaDataImport *iface, mdTypeDef t
     if (type_def != mdTypeDefNil)
     {
         const ULONG row = RidFromToken(type_def);
-        const char *namespace, *nameA;
-        ULONG name_idx, ns_idx;
+        struct clr_type_path type_path;
         HRESULT hr;
 
         if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 0, row, &flags))))
             return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 1, row, &name_idx))))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 2, row, &ns_idx))))
-            return hr;
+        hr = token_typedeforref_get_type_path(&impl->IMetaDataTables_iface, type_def, &type_path);
+        if (FAILED(hr)) return hr;
         if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_TYPEDEF, 3, row, &extends))))
             return hr;
-        if (FAILED(hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, name_idx, &nameA)))
-            return hr;
-        if (FAILED(hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, ns_idx, &namespace)))
-            return hr;
-        if (!type_full_name(name, len, &needed, namespace, nameA)) return E_OUTOFMEMORY;
+        if (!clr_type_path_join(&type_path, name, len, &needed)) return E_OUTOFMEMORY;
         /* Native replaces tokens with rid 0 with mdTypeRefNil. */
         if (IsNilToken(extends))
             extends = mdTypeRefNil;
@@ -901,7 +953,6 @@ static HRESULT WINAPI import_GetMethodProps(IMetaDataImport *iface, mdMethodDef 
     if (method_def != mdMethodDefNil)
     {
         const ULONG row = RidFromToken(method_def);
-        ULONG name_idx, sig_idx;
         const char *nameA = NULL;
         HRESULT hr;
 
@@ -911,15 +962,11 @@ static HRESULT WINAPI import_GetMethodProps(IMetaDataImport *iface, mdMethodDef 
             return hr;
         if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 2, row, &attrs))))
             return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 3, row, &name_idx))))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 4, row, &sig_idx))))
-            return hr;
+        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 3, row, &nameA);
+        if (FAILED((hr))) return hr;
+        hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 4, row, &sig_len, &sig_blob);
+        if (FAILED((hr))) return hr;
 
-        if (FAILED(hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, name_idx, &nameA)))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetBlob(&impl->IMetaDataTables_iface, sig_idx, &sig_len, &sig_blob))))
-            return hr;
         if (FAILED((hr = methoddef_get_parent_typedef(iface, method_def, &parent))))
             return hr;
 
@@ -1194,15 +1241,11 @@ static HRESULT token_get_constant_value(IMetaDataImport *iface, mdToken token, U
             break;
         if (parent == token)
         {
-            ULONG blob_idx;
-
             hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_CONSTANT, 0, row, value_type);
             if (FAILED(hr)) break;
-            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_CONSTANT, 2, row, &blob_idx);
+            hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_CONSTANT, 2, row, &len, value);
             if (FAILED(hr)) break;
 
-            if (FAILED((hr = IMetaDataTables_GetBlob(&impl->IMetaDataTables_iface, blob_idx, &len, value))))
-                break;
             if (*value_type == ELEMENT_TYPE_STRING)
                 *value_len = len / sizeof(WCHAR);
             break;
@@ -1236,21 +1279,16 @@ static HRESULT WINAPI import_GetFieldProps(IMetaDataImport *iface, mdFieldDef fi
     if (!IsNilToken(fielddef))
     {
         const ULONG row = RidFromToken(fielddef);
-        ULONG name_idx, sig_idx;
         const char *nameA;
         HRESULT hr;
 
         if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_FIELD, 0, row, &attrs))))
             return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_FIELD, 1, row, &name_idx))))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_FIELD, 2, row, &sig_idx))))
-            return hr;
+        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_FIELD, 1, row, &nameA);
+        if (FAILED((hr))) return hr;
+        hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_FIELD, 2, row, &sig_len, &sig_blob);
+        if (FAILED((hr))) return hr;
 
-        if (FAILED((hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, name_idx, &nameA))))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetBlob(&impl->IMetaDataTables_iface, sig_idx, &sig_len, &sig_blob))))
-            return hr;
         if (FAILED((hr = fielddef_get_parent_typedef(iface, fielddef, &parent))))
             return hr;
         if (FAILED((hr = token_get_constant_value(iface, fielddef, &val_type, &val_blob, &val_len))))
@@ -1311,21 +1349,16 @@ static HRESULT WINAPI import_GetPropertyProps(IMetaDataImport *iface, mdProperty
         name[0] = L'\0';
     if (!IsNilToken(prop))
     {
-        ULONG name_idx, sig_idx, num_methodsemantics, semantic_row;
+        ULONG num_methodsemantics, semantic_row;
         const ULONG row = RidFromToken(prop);
         const char *nameA;
 
         if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 0, row, &flags))))
             return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 1, row, &name_idx))))
+        if (FAILED((hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 1, row, &nameA))))
             return hr;
-        if (FAILED((hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_PROPERTY, 2, row, &sig_idx))))
-            return hr;
-
-        if (FAILED((hr = IMetaDataTables_GetString(&impl->IMetaDataTables_iface, name_idx, &nameA))))
-            return hr;
-        if (FAILED((hr = IMetaDataTables_GetBlob(&impl->IMetaDataTables_iface, sig_idx, &sig_len, &sig_blob))))
-            return hr;
+        hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_PROPERTY  , 2, row, &sig_len, &sig_blob);
+        if (FAILED(hr)) return hr;
         if (FAILED((hr = property_get_parent_typedef(&impl->IMetaDataImport_iface, prop, &parent))))
             return hr;
         if (FAILED((hr = token_get_constant_value(&impl->IMetaDataImport_iface, prop, &val_type, &val_blob, &val_len))))
@@ -1397,11 +1430,132 @@ static HRESULT WINAPI import_GetParamProps(IMetaDataImport *iface, mdParamDef pa
     return E_NOTIMPL;
 }
 
+static HRESULT token_memberrefparent_get_type_path(IMetaDataImport *iface, mdToken token, struct clr_type_path *path)
+{
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    const CorTokenType type = TypeFromToken(token);
+
+    switch (type)
+    {
+    case mdtTypeDef:
+    case mdtTypeRef:
+        return token_typedeforref_get_type_path(&impl->IMetaDataTables_iface, token, path);
+    case mdtMethodDef:
+    {
+        mdTypeDef parent;
+        HRESULT hr;
+
+        if (FAILED((hr = methoddef_get_parent_typedef(&impl->IMetaDataImport_iface, token, &parent))))
+            return hr;
+        return token_memberrefparent_get_type_path(&impl->IMetaDataImport_iface, parent, path);
+    }
+    case mdtModuleRef:
+    case mdtTypeSpec:
+        FIXME("Unsupported token: %s\n", debugstr_mdToken(token));
+        return S_FALSE;
+    default:
+        ERR("Unexpected MemberRefParent token: %s\n", debugstr_mdToken(token));
+        return S_FALSE;
+    }
+}
+
+/* The token should should be of type HasCustomAttribute, i.e a MethodDef/MemberRef row pointing to the custom attribute
+ * constructor. */
+static HRESULT token_hascustomattribute_get_name(IMetaDataImport *iface, mdToken token, const char **ctor_name,
+                                                 struct clr_type_path *attr_type_path)
+{
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    const CorTokenType type = TypeFromToken(token);
+    const ULONG row = RidFromToken(token);
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p, %p)\n", iface, debugstr_mdToken(token), ctor_name, attr_type_path);
+
+    assert(type == mdtMemberRef || type == mdtMethodDef);
+
+    if (type == mdtMemberRef)
+    {
+        ULONG parent_class;
+
+        hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_MEMBERREF, 0, row, &parent_class);
+        if (FAILED(hr)) return hr;
+        if (FAILED((hr = token_memberrefparent_get_type_path(iface, parent_class, attr_type_path)))) return hr;
+        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_MEMBERREF, 1, row, ctor_name);
+    }
+    else /* mdtMethodDef */
+    {
+        hr = table_get_column_as_string(&impl->IMetaDataTables_iface, TABLE_METHODDEF, 3, row, ctor_name);
+        if (FAILED(hr)) return hr;
+        hr = token_memberrefparent_get_type_path(iface, token, attr_type_path);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI import_GetCustomAttributeByName(IMetaDataImport *iface, mdToken obj, const WCHAR *name,
                                                       const BYTE **data, ULONG *len)
 {
-    FIXME("(%p, %#x, %s, %p, %p): stub!\n", iface, obj, debugstr_w(name), data, len);
-    return E_NOTIMPL;
+    struct metadata_tables *impl = impl_from_IMetaDataImport(iface);
+    struct clr_type_path attr_type_path;
+    ULONG row, num_rows, data_len = 0;
+    const BYTE *data_blob = NULL;
+    BOOL found = FALSE;
+    size_t lenA;
+    char *nameA;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p, %p)\n", iface, debugstr_mdToken(obj), debugstr_w(name), data, len);
+
+    /* From Partition II.22.10, "CustomAttribute": "Parent can be an index into any metadata table, except the
+     * CustomAttribute table itself." */
+    if (!name || IsNilToken(obj) || TypeFromToken(obj) == mdtCustomAttribute) return S_FALSE;
+
+    lenA = WideCharToMultiByte(0, 0, name, -1, NULL, 0, NULL, NULL);
+    if (!(nameA = calloc(lenA, sizeof(*nameA)))) return E_OUTOFMEMORY;
+    WideCharToMultiByte(0, 0, name, -1, nameA, lenA, NULL, NULL);
+    attr_type_path = type_split_name(nameA);
+
+    if (FAILED((hr = table_get_num_rows(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, &num_rows)))) goto done;
+    for (row = 1; row <= num_rows; row++)
+    {
+        ULONG parent = 0, type;
+
+        hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, 0, row, &parent);
+        if (FAILED(hr)) goto done;
+        if (parent == obj)
+        {
+            struct clr_type_path cur_type_path;
+            const char *cur_ctor_name;
+
+            hr = IMetaDataTables_GetColumn(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, 1, row, &type);
+            if (FAILED(hr)) goto done;
+            hr = token_hascustomattribute_get_name(&impl->IMetaDataImport_iface, type, &cur_ctor_name, &cur_type_path);
+            if (FAILED(hr)) goto done;
+
+            if (strcmp(COR_CTOR_METHOD_NAME, cur_ctor_name))
+            {
+                ERR("Unexpected constructor name for CustomAttribute %#lx: %s\n", row, debugstr_a(cur_ctor_name));
+                continue;
+            }
+            if (!clr_type_path_equals(&attr_type_path, &cur_type_path)) continue;
+            hr = table_get_column_as_blob(&impl->IMetaDataTables_iface, TABLE_CUSTOMATTRIBUTE, 2, row, &data_len,
+                                          &data_blob);
+            if (FAILED(hr)) goto done;
+            found = TRUE;
+            break;
+        }
+    }
+    if (found)
+    {
+        if (data) *data = data_blob;
+        if (len) *len = data_len;
+    }
+
+done:
+    free(nameA);
+    if (FAILED(hr))
+        return hr;
+    return found ? S_OK : S_FALSE;
 }
 
 static BOOL WINAPI import_IsValidToken(IMetaDataImport *iface, mdToken token)

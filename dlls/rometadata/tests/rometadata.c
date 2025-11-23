@@ -1098,8 +1098,8 @@ static void test_IMetaDataImport(void)
             data_len = 0;
             data = NULL;
             hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef_tokens[i], contract_attribute_name, &data, &data_len);
-            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-            todo_wine test_contract_value(data, data_len, info->exp_contract_name, info->exp_contract_version);
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            test_contract_value(data, data_len, info->exp_contract_name, info->exp_contract_version);
         }
 
         winetest_pop_context();
@@ -1249,23 +1249,23 @@ static void test_IMetaDataImport(void)
     ok(hr == S_OK, "got hr %#lx\n", hr);
     test_token(md_import, typedef1, mdtTypeDef, FALSE);
     hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef1, guid_attribute_name, &data, &buf_len);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(!!data, "got data %p\n", data);
-    todo_wine ok(buf_len == sizeof(GUID) + 4, "got buf_len %lu\n", buf_len);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(!!data, "got data %p\n", data);
+    ok(buf_len == sizeof(GUID) + 4, "got buf_len %lu\n", buf_len);
     if (data && buf_len == sizeof(GUID) + 4)
     {
         guid = (GUID *)&data[2];
         ok(IsEqualGUID(guid, &IID_ITest2), "got guid %s\n", debugstr_guid(guid));
     }
     hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef1, guid_attribute_name, NULL, NULL);
-    todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
     hr = IMetaDataImport_GetCustomAttributeByName(md_import, typedef1, NULL, &data, &buf_len);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
     hr = IMetaDataImport_GetCustomAttributeByName(md_import, mdTypeDefNil, L"foo", &data, &buf_len);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
     hr = IMetaDataImport_GetCustomAttributeByName(md_import, TokenFromRid(1, mdtCustomAttribute), L"foo", &data,
                                                   &buf_len);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
 
     typedef1 = buf_len = 0;
     hr = IMetaDataImport_FindTypeDefByName(md_import, L"Wine.Test.ITest3", 0, &typedef1);

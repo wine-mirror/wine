@@ -300,8 +300,16 @@ typedef enum CorFieldAttr
     fdReservedMask    =  0x9500
 } CorFieldAttr;
 
-#define COR_ENUM_FIELD_NAME   ("value__")
-#define COR_ENUM_FIELD_NAME_W (L"value__")
+#define COR_ENUM_FIELD_NAME    ("value__")
+#define COR_CTOR_METHOD_NAME   (".ctor")
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#define COR_ENUM_FIELD_NAME_W  (L"value__")
+#define COR_CTOR_METHOD_NAME_W (L".ctor")
+#else
+static const WCHAR COR_ENUM_FIELD_NAME_W[] = {'v','a','l','u','e','_','_',0};
+static const WCHAR COR_CTOR_METHOD_NAME_W[] = {'.','c','t','o','r',0};
+#endif
 
 typedef enum CorMethodSemanticsAttr
 {
