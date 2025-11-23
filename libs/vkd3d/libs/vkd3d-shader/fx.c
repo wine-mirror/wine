@@ -1607,7 +1607,7 @@ static void write_fx_2_type_iter(const struct hlsl_type *type, const char *name,
     }
 
     buffer = &fx->unstructured;
-    offset = put_u32(buffer, hlsl_sm1_base_type(type, ctx->is_combined_sampler));
+    offset = put_u32(buffer, hlsl_sm1_base_type(type, ctx->is_combined_sampler, HLSL_SAMPLER_DIM_GENERIC));
     put_u32(buffer, get_fx_2_type_class(type));
     *ctx->names++ = put_u32(buffer, 0);
     *ctx->semantics++ = put_u32(buffer, 0);
@@ -4205,7 +4205,7 @@ static void fx_parse_shader_blob(struct fx_parser *parser, enum vkd3d_shader_sou
 
     static const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_17},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_CURRENT},
     };
 
     info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;

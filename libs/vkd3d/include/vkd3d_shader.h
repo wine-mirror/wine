@@ -60,6 +60,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_15,
     VKD3D_SHADER_API_VERSION_1_16,
     VKD3D_SHADER_API_VERSION_1_17,
+    VKD3D_SHADER_API_VERSION_1_18,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -120,6 +121,16 @@ enum vkd3d_shader_structure_type
      * \since 1.15
      */
     VKD3D_SHADER_STRUCTURE_TYPE_SCAN_HULL_SHADER_TESSELLATION_INFO,
+    /**
+     * The structure is a vkd3d_shader_scan_thread_group_size_info structure.
+     * \since 1.18
+     */
+    VKD3D_SHADER_STRUCTURE_TYPE_SCAN_THREAD_GROUP_SIZE_INFO,
+    /**
+     * The structure is a vkd3d_shader_d3dbc_source_info structure.
+     * \since 1.18
+     */
+    VKD3D_SHADER_STRUCTURE_TYPE_D3DBC_SOURCE_INFO,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_STRUCTURE_TYPE),
 };
@@ -417,10 +428,17 @@ struct vkd3d_shader_code
 {
     /**
      * Pointer to the code. Note that textual formats are not null-terminated.
-     * Therefore \a size should not include a null terminator, when this
-     * structure is passed as input to a vkd3d-shader function, and the
-     * allocated string will not include a null terminator when this structure
-     * is used as output.
+     * Therefore \a size should not include a null terminator when this
+     * structure is passed as input to a vkd3d-shader function, and \a size
+     * will not include a null terminator when this structure is used as
+     * output.
+     *
+     * For convenience, vkd3d_shader_preprocess() and vkd3d_shader_compile()
+     * will append a null terminator past the end of their output when
+     * outputting textual formats like VKD3D_SHADER_TARGET_D3D_ASM. This makes
+     * it safe to call functions like strlen() on \a code for such output,
+     * although doing so will obviously not account for any embedded null
+     * characters that may be present.
      */
     const void *code;
     /** Size of \a code, in bytes. */
@@ -944,6 +962,83 @@ enum vkd3d_shader_parameter_name
      * \since 1.15
      */
     VKD3D_SHADER_PARAMETER_NAME_FOG_SOURCE,
+    /**
+     * Bump-mapping matrix. This parameter is used in the evaluation of the
+     * Shader Model 1.x instructions BEM, TEXBEM, and TEXBEML.
+     *
+     * This parameter specifies a 2x2 matrix, packed into a vector in the order
+     * [00, 01, 10, 11], where "01" specifies the component at column 0 and row
+     * 1. These coordinates correspond to the Direct3D notation.
+     *
+     * To use this parameter to implement Direct3D bump mapping, pass the values
+     * of the texture stage states D3DTSS_BUMPENVMAT00, D3DTSS_BUMPENVMAT01,
+     * D3DTSS_BUMPENVMAT10, and D3DTSS_BUMPENVMAT11, in that order.
+     *
+     * These enum values are contiguous and arithmetic may safely be performed
+     * on them. That is, VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_[n] is
+     * VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_0 plus n.
+     *
+     * The data type for each parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4.
+     *
+     * The default value for each parameter is the zero matrix [0, 0; 0, 0].
+     *
+     * \since 1.18
+     */
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_0,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_1,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_2,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_3,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_4,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_MATRIX_5,
+    /**
+     * Bump-mapping luminance scale factor. This parameter is used in the
+     * evaluation of the Shader Model 1.x instruction TEXBEML.
+     *
+     * To use this parameter to implement Direct3D bump mapping, pass the value
+     * of the texture stage state D3DTSS_BUMPENVLSCALE.
+     *
+     * These enum values are contiguous and arithmetic may safely be performed
+     * on them. That is, VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_[n] is
+     * VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_0 plus n.
+     *
+     * The data type for each parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
+     *
+     * The default value for each parameter is 0.0.
+     *
+     * \since 1.18
+     */
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_0,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_1,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_2,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_3,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_4,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_SCALE_5,
+    /**
+     * Bump-mapping luminance offset. This parameter is used in the
+     * evaluation of the Shader Model 1.x instruction TEXBEML.
+     *
+     * To use this parameter to implement Direct3D bump mapping, pass the value
+     * of the texture stage state D3DTSS_BUMPENVLOFFSET.
+     *
+     * These enum values are contiguous and arithmetic may safely be performed
+     * on them. That is, VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_[n] is
+     * VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_0 plus n.
+     *
+     * The data type for each parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
+     *
+     * The default value for each parameter is 0.0.
+     *
+     * \since 1.18
+     */
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_0,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_1,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_2,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_3,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_4,
+    VKD3D_SHADER_PARAMETER_NAME_BUMP_LUMINANCE_OFFSET_5,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_PARAMETER_NAME),
 };
@@ -2283,6 +2378,79 @@ struct vkd3d_shader_scan_hull_shader_tessellation_info
 };
 
 /**
+ * A chained structure describing the thread group size in a compute shader.
+ *
+ * This structure extends vkd3d_shader_compile_info.
+ *
+ * \since 1.18
+ */
+struct vkd3d_shader_scan_thread_group_size_info
+{
+    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_SCAN_THREAD_GROUP_SIZE_INFO. */
+    enum vkd3d_shader_structure_type type;
+    /** Optional pointer to a structure containing further parameters. */
+    const void *next;
+
+    /** The thread group size in the x/y/z direction. */
+    unsigned int x, y, z;
+};
+
+/**
+ * A chained structure containing legacy Direct3D bytecode compilation parameters.
+ * This structure specifies some information about the source environment that
+ * is not specified in the source shader format, but may be necessary for the
+ * target format.
+ *
+ * This structure is optional.
+ *
+ * This structure extends vkd3d_shader_compile_info.
+ *
+ * This structure contains only input parameters.
+ *
+ * \since 1.18
+ */
+struct vkd3d_shader_d3dbc_source_info
+{
+    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_D3DBC_SOURCE_INFO. */
+    enum vkd3d_shader_structure_type type;
+    /** Optional pointer to a structure containing further parameters. */
+    const void *next;
+
+    /**
+     * The dimension of each texture bound to the shader.
+     *
+     * If this structure is not specified, the dimension for all textures will
+     * be VKD3D_SHADER_RESOURCE_TEXTURE_2D.
+     *
+     * The dimension of textures in this array not used by the shader will be
+     * ignored.
+     *
+     * This field is ignored for shader models 2 and higher.
+     */
+    enum vkd3d_shader_resource_type texture_dimensions[6];
+
+    /**
+     * A mask indicating which samplers should be shadow (i.e. comparison-mode)
+     * samplers. When legacy Direct3D shaders are used with the Direct3D 8 and 9
+     * APIs, this is implied by the format of the sampled resource; e.g. a
+     * D3DFMT_D24S8 texture implies shadow sampling, while a D3DFMT_A8R8G8B8
+     * or D3DFMT_INTZ texture does not.
+     * This information is necessary when converting to other formats
+     * (e.g. SPIR-V, GLSL) which specify this in the shader.
+     *
+     * For example, if bit 1 is set (so the value is 0x2), this indicates that
+     * the sampler at bind point 1 (and no others) should be a shadow sampler.
+     *
+     * Bits in this mask corresponding to textures not used by the shader will
+     * be ignored.
+     *
+     * If this structure is not specified, no samplers will be considered to
+     * be shadow samplers.
+     */
+    uint32_t shadow_samplers;
+};
+
+/**
  * Data type of a shader varying, returned as part of struct
  * vkd3d_shader_signature_element.
  */
@@ -2775,6 +2943,7 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  *
  * Depending on the source and target types, this function may support the
  * following chained structures:
+ * - vkd3d_shader_d3dbc_source_info
  * - vkd3d_shader_descriptor_offset_info
  * - vkd3d_shader_hlsl_source_info
  * - vkd3d_shader_interface_info
@@ -2784,6 +2953,7 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * - vkd3d_shader_scan_descriptor_info
  * - vkd3d_shader_scan_hull_shader_tessellation_info
  * - vkd3d_shader_scan_signature_info
+ * - vkd3d_shader_scan_thread_group_size_info
  * - vkd3d_shader_spirv_domain_shader_target_info
  * - vkd3d_shader_spirv_target_info
  * - vkd3d_shader_transform_feedback_info
@@ -2972,10 +3142,21 @@ VKD3D_SHADER_API int vkd3d_shader_convert_root_signature(struct vkd3d_shader_ver
  * \param compile_info A chained structure containing scan parameters.
  * \n
  * The scanner supports the following chained structures:
+ * - vkd3d_shader_d3dbc_source_info
+ * - vkd3d_shader_descriptor_offset_info
+ * - vkd3d_shader_hlsl_source_info
+ * - vkd3d_shader_interface_info
+ * - vkd3d_shader_parameter_info
+ * - vkd3d_shader_preprocess_info
  * - vkd3d_shader_scan_combined_resource_sampler_info
  * - vkd3d_shader_scan_descriptor_info
  * - vkd3d_shader_scan_hull_shader_tessellation_info
  * - vkd3d_shader_scan_signature_info
+ * - vkd3d_shader_scan_thread_group_size_info
+ * - vkd3d_shader_spirv_domain_shader_target_info
+ * - vkd3d_shader_spirv_target_info
+ * - vkd3d_shader_transform_feedback_info
+ * - vkd3d_shader_varying_map_info
  * \n
  * Although the \a compile_info parameter is read-only, chained structures
  * passed to this function need not be, and may serve as output parameters,

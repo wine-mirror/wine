@@ -3271,9 +3271,14 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandList(ID3D12Device9 *i
             iface, node_mask, type, command_allocator,
             initial_pipeline_state, debugstr_guid(riid), command_list);
 
-    if (FAILED(hr = d3d12_command_list_create(device, node_mask, type, command_allocator,
-            initial_pipeline_state, &object)))
+    if (FAILED(hr = d3d12_command_list_create(device, node_mask, type, &object)))
         return hr;
+
+    if (FAILED(hr = d3d12_command_list_reset(object, command_allocator, initial_pipeline_state)))
+    {
+        ID3D12GraphicsCommandList6_Release(&object->ID3D12GraphicsCommandList6_iface);
+        return hr;
+    }
 
     return return_interface(&object->ID3D12GraphicsCommandList6_iface,
             &IID_ID3D12GraphicsCommandList6, riid, command_list);
@@ -5082,10 +5087,21 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandList1(ID3D12Device9 *
         UINT node_mask, D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_LIST_FLAGS flags,
         REFIID iid, void **command_list)
 {
-    FIXME("iface %p, node_mask 0x%08x, type %#x, flags %#x, iid %s, command_list %p stub!\n",
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
+    struct d3d12_command_list *object;
+    HRESULT hr;
+
+    TRACE("iface %p, node_mask 0x%08x, type %#x, flags %#x, iid %s, command_list %p.\n",
             iface, node_mask, type, flags, debugstr_guid(iid), command_list);
 
-    return E_NOTIMPL;
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    if (FAILED(hr = d3d12_command_list_create(device, node_mask, type, &object)))
+        return hr;
+
+    return return_interface(&object->ID3D12GraphicsCommandList6_iface,
+            &IID_ID3D12GraphicsCommandList6, iid, command_list);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_device_CreateProtectedResourceSession(ID3D12Device9 *iface,

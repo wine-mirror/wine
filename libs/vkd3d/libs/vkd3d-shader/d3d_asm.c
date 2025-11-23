@@ -145,11 +145,6 @@ static void shader_dump_global_flags(struct vkd3d_d3d_asm_compiler *compiler, en
 
 static void shader_dump_atomic_op_flags(struct vkd3d_d3d_asm_compiler *compiler, uint32_t atomic_flags)
 {
-    if (atomic_flags & VKD3DARF_SEQ_CST)
-    {
-        vkd3d_string_buffer_printf(&compiler->buffer, "_seqCst");
-        atomic_flags &= ~VKD3DARF_SEQ_CST;
-    }
     if (atomic_flags & VKD3DARF_VOLATILE)
     {
         vkd3d_string_buffer_printf(&compiler->buffer, "_volatile");
@@ -390,13 +385,30 @@ static void shader_print_resource_type(struct vkd3d_d3d_asm_compiler *compiler, 
 
 static void shader_print_data_type(struct vkd3d_d3d_asm_compiler *compiler, enum vsir_data_type type)
 {
-    static const char *const data_type_names[] =
+    const char *name;
+
+    if ((name = vsir_data_type_get_name(type, NULL)))
+        vkd3d_string_buffer_printf(&compiler->buffer, "%s", name);
+    else
+        vkd3d_string_buffer_printf(&compiler->buffer, "%s<unhandled data type %#x>%s",
+                compiler->colours.error, type, compiler->colours.reset);
+}
+
+static void shader_dump_resource_data_type(struct vkd3d_d3d_asm_compiler *compiler, const enum vsir_data_type *type)
+{
+    int i;
+
+    /* We want the D3D names here, not the vsir ones. */
+    static const char * const names[] =
     {
         [VSIR_DATA_BOOL     ] = "bool",
         [VSIR_DATA_F16      ] = "half",
         [VSIR_DATA_F32      ] = "float",
         [VSIR_DATA_F64      ] = "double",
+        [VSIR_DATA_I8       ] = "int8",
+        [VSIR_DATA_I16      ] = "int16",
         [VSIR_DATA_I32      ] = "int",
+        [VSIR_DATA_I64      ] = "int64",
         [VSIR_DATA_U8       ] = "uint8",
         [VSIR_DATA_U16      ] = "uint16",
         [VSIR_DATA_U32      ] = "uint",
@@ -409,23 +421,18 @@ static void shader_print_data_type(struct vkd3d_d3d_asm_compiler *compiler, enum
         [VSIR_DATA_UNUSED   ] = "<unused>",
     };
 
-    if (type < ARRAY_SIZE(data_type_names))
-        vkd3d_string_buffer_printf(&compiler->buffer, "%s", data_type_names[type]);
-    else
-        vkd3d_string_buffer_printf(&compiler->buffer, "%s<unhandled data type %#x>%s",
-                compiler->colours.error, type, compiler->colours.reset);
-}
-
-static void shader_dump_resource_data_type(struct vkd3d_d3d_asm_compiler *compiler, const enum vsir_data_type *type)
-{
-    int i;
-
     vkd3d_string_buffer_printf(&compiler->buffer, "(");
 
     for (i = 0; i < 4; i++)
     {
+        size_t t = type[i];
+
         vkd3d_string_buffer_printf(&compiler->buffer, "%s", i == 0 ? "" : ",");
-        shader_print_data_type(compiler, type[i]);
+        if (t < ARRAY_SIZE(names) && names[t])
+            vkd3d_string_buffer_printf(&compiler->buffer, "%s", names[t]);
+        else
+            vkd3d_string_buffer_printf(&compiler->buffer, "%s<unhandled data type %#zx>%s",
+                    compiler->colours.error, t, compiler->colours.reset);
     }
 
     vkd3d_string_buffer_printf(&compiler->buffer, ")");
@@ -608,6 +615,18 @@ static void shader_print_uint_literal(struct vkd3d_d3d_asm_compiler *compiler,
 {
     vkd3d_string_buffer_printf(&compiler->buffer, "%s%s%u%s%s",
             prefix, compiler->colours.literal, i, compiler->colours.reset, suffix);
+}
+
+static void shader_print_int64_literal(struct vkd3d_d3d_asm_compiler *compiler,
+        const char *prefix, int64_t i, const char *suffix)
+{
+    /* Note that we need to handle INT64_MIN here as well. */
+    if (i < 0)
+        vkd3d_string_buffer_printf(&compiler->buffer, "%s-%s%"PRIu64"%s%s",
+                prefix, compiler->colours.literal, -(uint64_t)i, compiler->colours.reset, suffix);
+    else
+        vkd3d_string_buffer_printf(&compiler->buffer, "%s%s%"PRId64"%s%s",
+                prefix, compiler->colours.literal, i, compiler->colours.reset, suffix);
 }
 
 static void shader_print_uint64_literal(struct vkd3d_d3d_asm_compiler *compiler,
@@ -810,6 +829,12 @@ static void shader_print_register(struct vkd3d_d3d_asm_compiler *compiler, const
                 if (reg->dimension == VSIR_DIMENSION_VEC4)
                     shader_print_double_literal(compiler, ", ", reg->u.immconst_f64[1], "");
             }
+            else if (reg->data_type == VSIR_DATA_I64)
+            {
+                shader_print_int64_literal(compiler, "", reg->u.immconst_u64[0], "");
+                if (reg->dimension == VSIR_DIMENSION_VEC4)
+                    shader_print_int64_literal(compiler, "", reg->u.immconst_u64[1], "");
+            }
             else if (reg->data_type == VSIR_DATA_U64)
             {
                 shader_print_uint64_literal(compiler, "", reg->u.immconst_u64[0], "");
@@ -851,7 +876,7 @@ static void shader_print_register(struct vkd3d_d3d_asm_compiler *compiler, const
             && reg->type != VKD3DSPR_NULL
             && reg->type != VKD3DSPR_DEPTHOUT)
     {
-        if (offset != ~0u)
+        if (reg->idx_count)
         {
             bool is_sm_5_1 = vkd3d_shader_ver_ge(&compiler->shader_version, 5, 1);
 
@@ -879,10 +904,10 @@ static void shader_print_register(struct vkd3d_d3d_asm_compiler *compiler, const
                 /* For descriptors in sm < 5.1 we move the reg->idx values up one slot
                  * to normalise with 5.1.
                  * Here we should ignore it if it's a descriptor in sm < 5.1. */
-                if (reg->idx[1].offset != ~0u && (!is_descriptor || is_sm_5_1))
+                if (reg->idx_count > 1 && (!is_descriptor || is_sm_5_1))
                     shader_print_subscript(compiler, reg->idx[1].offset, reg->idx[1].rel_addr);
 
-                if (reg->idx[2].offset != ~0u)
+                if (reg->idx_count > 2)
                     shader_print_subscript(compiler, reg->idx[2].offset, reg->idx[2].rel_addr);
             }
         }
@@ -972,6 +997,22 @@ static void shader_print_reg_type(struct vkd3d_d3d_asm_compiler *compiler,
     vkd3d_string_buffer_printf(buffer, "%s <%s", prefix, dimension);
     shader_print_data_type(compiler, reg->data_type);
     vkd3d_string_buffer_printf(buffer, ">%s", suffix);
+}
+
+static void shader_print_indexable_temp_data_type(struct vkd3d_d3d_asm_compiler *compiler,
+        const struct vkd3d_shader_indexable_temp *t)
+{
+    struct vkd3d_string_buffer *buffer = &compiler->buffer;
+
+    if (!(compiler->flags & VSIR_ASM_FLAG_DUMP_TYPES))
+        return;
+
+    if (t->component_count > 1)
+        vkd3d_string_buffer_printf(buffer, " <v%u:", t->component_count);
+    else
+        vkd3d_string_buffer_printf(buffer, " <s:");
+    shader_print_data_type(compiler, t->data_type);
+    vkd3d_string_buffer_printf(buffer, ">");
 }
 
 static void shader_print_write_mask(struct vkd3d_d3d_asm_compiler *compiler,
@@ -1528,6 +1569,7 @@ static void shader_dump_instruction(struct vkd3d_d3d_asm_compiler *compiler,
             vkd3d_string_buffer_printf(buffer, " %sx%u%s", compiler->colours.reg,
                     ins->declaration.indexable_temp.register_idx, compiler->colours.reset);
             shader_print_subscript(compiler, ins->declaration.indexable_temp.register_size, NULL);
+            shader_print_indexable_temp_data_type(compiler, &ins->declaration.indexable_temp);
             shader_print_uint_literal(compiler, ", ", ins->declaration.indexable_temp.component_count, "");
             if (ins->declaration.indexable_temp.alignment)
                 shader_print_uint_literal(compiler, ", align ", ins->declaration.indexable_temp.alignment, "");

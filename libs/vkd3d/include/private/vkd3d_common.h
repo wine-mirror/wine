@@ -19,6 +19,11 @@
 #ifndef __VKD3D_COMMON_H
 #define __VKD3D_COMMON_H
 
+#ifndef VKD3D_DEBUG_ENV
+#define VKD3D_DEBUG_ENV VKD3D_DEBUG
+#endif
+#define VKD3D_DEBUG_ENV_NAME VKD3D_EXPAND_AND_STRINGIFY(VKD3D_DEBUG_ENV)
+
 #include "config.h"
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
@@ -37,6 +42,8 @@
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
+
+#define VKD3D_SHADER_API_VERSION_CURRENT VKD3D_SHADER_API_VERSION_1_18
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
@@ -147,9 +154,10 @@ enum vkd3d_dbg_level
     VKD3D_DBG_LEVEL_TRACE,
 };
 
-enum vkd3d_dbg_level vkd3d_dbg_get_level(void);
+enum vkd3d_dbg_level vkd3d_dbg_get_level(const char *vkd3d_dbg_env_name);
 
-void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const char *fmt, ...) VKD3D_PRINTF_FUNC(3, 4);
+void vkd3d_dbg_printf(const char *vkd3d_dbg_env_name, enum vkd3d_dbg_level level,
+        const char *function, const char *fmt, ...) VKD3D_PRINTF_FUNC(4, 5);
 void vkd3d_dbg_set_log_callback(PFN_vkd3d_log callback);
 
 const char *vkd3d_dbg_sprintf(const char *fmt, ...) VKD3D_PRINTF_FUNC(1, 2);
@@ -172,7 +180,7 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
         VKD3D_DBG_PRINTF_##level
 
 #define VKD3D_DBG_PRINTF(...) \
-        vkd3d_dbg_printf(vkd3d_dbg_level, __FUNCTION__, __VA_ARGS__); } while (0)
+        vkd3d_dbg_printf(VKD3D_DEBUG_ENV_NAME, vkd3d_dbg_level, __FUNCTION__, __VA_ARGS__); } while (0)
 
 #define VKD3D_DBG_PRINTF_TRACE(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
 #define VKD3D_DBG_PRINTF_WARN(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
@@ -181,7 +189,7 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
 
 #ifdef VKD3D_ABORT_ON_ERR
 #define VKD3D_DBG_PRINTF_ERR(...) \
-        vkd3d_dbg_printf(vkd3d_dbg_level, __FUNCTION__, __VA_ARGS__); \
+        vkd3d_dbg_printf(VKD3D_DEBUG_ENV_NAME, vkd3d_dbg_level, __FUNCTION__, __VA_ARGS__); \
         abort(); \
         } while (0)
 #else
@@ -215,18 +223,16 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
 #endif
 
 #ifndef TRACE_ON
-#define TRACE_ON() (vkd3d_dbg_get_level() == VKD3D_DBG_LEVEL_TRACE)
+#define TRACE_ON() (vkd3d_dbg_get_level(VKD3D_DEBUG_ENV_NAME) == VKD3D_DBG_LEVEL_TRACE)
 #endif
 
 #ifndef WARN_ON
-#define WARN_ON() (vkd3d_dbg_get_level() >= VKD3D_DBG_LEVEL_WARN)
+#define WARN_ON() (vkd3d_dbg_get_level(VKD3D_DEBUG_ENV_NAME) >= VKD3D_DBG_LEVEL_WARN)
 #endif
 
 #ifndef FIXME_ONCE
 #define FIXME_ONCE VKD3D_DBG_LOG_ONCE(FIXME, WARN)
 #endif
-
-#define VKD3D_DEBUG_ENV_NAME(name) const char *const vkd3d_dbg_env_name = name
 
 static inline const char *debugstr_guid(const GUID *guid)
 {
@@ -338,6 +344,29 @@ static inline unsigned int vkd3d_log2i(unsigned int x)
 
     return (i = x >> 16) ? (x = i >> 8) ? l[x] + 24
             : l[i] + 16 : (i = x >> 8) ? l[i] + 8 : l[x];
+#endif
+}
+
+static inline unsigned int vkd3d_ctz(uint32_t v)
+{
+#ifdef _WIN32
+    ULONG result;
+    if (_BitScanForward(&result, v))
+        return (unsigned int)result;
+    return 32;
+#elif defined(HAVE_BUILTIN_CTZ)
+    return __builtin_ctz(v);
+#else
+    unsigned int c = 31;
+
+    v &= -v;
+    c = (v & 0x0000ffff) ? c - 16 : c;
+    c = (v & 0x00ff00ff) ? c - 8 : c;
+    c = (v & 0x0f0f0f0f) ? c - 4 : c;
+    c = (v & 0x33333333) ? c - 2 : c;
+    c = (v & 0x55555555) ? c - 1 : c;
+
+    return c;
 #endif
 }
 

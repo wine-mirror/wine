@@ -823,7 +823,6 @@ int preproc_lexer_parse(const struct vkd3d_shader_compile_info *compile_info,
     static const struct vkd3d_shader_preprocess_info default_preprocess_info = {0};
     struct preproc_ctx ctx = {0};
     char *source_name = NULL;
-    void *output_code;
     unsigned int i;
 
     vkd3d_string_buffer_init(&ctx.buffer);
@@ -900,16 +899,9 @@ int preproc_lexer_parse(const struct vkd3d_shader_compile_info *compile_info,
         return VKD3D_ERROR_INVALID_SHADER;
     }
 
-    if (!(output_code = vkd3d_malloc(ctx.buffer.content_size)))
-    {
-        vkd3d_string_buffer_cleanup(&ctx.buffer);
-        return VKD3D_ERROR_OUT_OF_MEMORY;
-    }
-    memcpy(output_code, ctx.buffer.buffer, ctx.buffer.content_size);
-    out->size = ctx.buffer.content_size;
-    out->code = output_code;
     vkd3d_string_buffer_trace(&ctx.buffer);
-    vkd3d_string_buffer_cleanup(&ctx.buffer);
+
+    vkd3d_shader_code_from_string_buffer(out, &ctx.buffer);
     return VKD3D_OK;
 
 fail:

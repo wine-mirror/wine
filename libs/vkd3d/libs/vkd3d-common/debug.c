@@ -40,8 +40,6 @@
 #define VKD3D_DEBUG_BUFFER_COUNT 64
 #define VKD3D_DEBUG_BUFFER_SIZE 512
 
-extern const char *const vkd3d_dbg_env_name;
-
 static const char *const debug_level_names[] =
 {
     [VKD3D_DBG_LEVEL_NONE ] =   "none",
@@ -52,7 +50,7 @@ static const char *const debug_level_names[] =
     [VKD3D_DBG_LEVEL_TRACE] =   "trace",
 };
 
-enum vkd3d_dbg_level vkd3d_dbg_get_level(void)
+enum vkd3d_dbg_level vkd3d_dbg_get_level(const char *vkd3d_dbg_env_name)
 {
     static unsigned int level = ~0u;
     const char *vkd3d_debug;
@@ -108,11 +106,12 @@ static uint64_t get_pthread_threadid(void)
 }
 #endif
 
-void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const char *fmt, ...)
+void vkd3d_dbg_printf(const char *vkd3d_dbg_env_name,
+        enum vkd3d_dbg_level level, const char *function, const char *fmt, ...)
 {
     va_list args;
 
-    if (vkd3d_dbg_get_level() < level)
+    if (vkd3d_dbg_get_level(vkd3d_dbg_env_name) < level)
         return;
 
 #ifdef _WIN32
