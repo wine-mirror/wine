@@ -2563,6 +2563,58 @@ static void win32u_glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLe
     }
 }
 
+static void import_semaphore( GLuint semaphore, GLenum type, void *handle )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    D3DKMT_HANDLE local;
+    GLenum err;
+    int fd;
+
+    switch (type)
+    {
+    case GL_HANDLE_TYPE_OPAQUE_WIN32_EXT:
+        local = d3dkmt_open_sync( 0, handle );
+        break;
+    case GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT:
+        local = d3dkmt_open_sync( PtrToUlong( handle ), NULL );
+        break;
+    default: return set_gl_error( GL_INVALID_ENUM );
+    }
+    fd = d3dkmt_object_get_fd( local );
+    d3dkmt_destroy_sync( local );
+    if (fd < 0) return set_gl_error( GL_INVALID_VALUE );
+
+    set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
+    funcs->p_glImportSemaphoreFdEXT( semaphore, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
+    if (!(err = funcs->p_glGetError())) return;
+
+    close( fd );
+    set_gl_error( err );
+}
+
+void win32u_glImportSemaphoreWin32HandleEXT( GLuint semaphore, GLenum type, void *handle )
+{
+    TRACE( "semaphore %u type %#x handle %p\n", semaphore, type, handle );
+
+    if (handle) import_semaphore( semaphore, type, handle );
+    else set_gl_error( GL_INVALID_VALUE );
+}
+
+void win32u_glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum type, const void *name )
+{
+    HANDLE handle;
+
+    TRACE( "semaphore %u type %#x name %s\n", semaphore, type, debugstr_w( name ) );
+
+    if (type != GL_HANDLE_TYPE_OPAQUE_WIN32_EXT) set_gl_error( GL_INVALID_ENUM );
+    else if (!(handle = open_shared_semaphore_from_name( name ))) set_gl_error( GL_INVALID_VALUE );
+    else
+    {
+        import_semaphore( semaphore, type, handle );
+        NtClose( handle );
+    }
+}
+
 static void display_funcs_init(void)
 {
     struct egl_platform *egl;
@@ -2592,6 +2644,7 @@ static void display_funcs_init(void)
     USE_GL_FUNC(glGetUnsignedBytei_vEXT)
     USE_GL_FUNC(glGetUnsignedBytevEXT)
     USE_GL_FUNC(glImportMemoryFdEXT)
+    USE_GL_FUNC(glImportSemaphoreFdEXT)
     USE_GL_FUNC(glNamedFramebufferDrawBuffer)
     USE_GL_FUNC(glNamedFramebufferReadBuffer)
     USE_GL_FUNC(glNamedFramebufferRenderbuffer)
@@ -2668,6 +2721,11 @@ static void display_funcs_init(void)
     {
         display_funcs.p_glImportMemoryWin32HandleEXT = win32u_glImportMemoryWin32HandleEXT;
         display_funcs.p_glImportMemoryWin32NameEXT = win32u_glImportMemoryWin32NameEXT;
+    }
+    if (display_funcs.p_glImportSemaphoreFdEXT)
+    {
+        display_funcs.p_glImportSemaphoreWin32HandleEXT = win32u_glImportSemaphoreWin32HandleEXT;
+        display_funcs.p_glImportSemaphoreWin32NameEXT = win32u_glImportSemaphoreWin32NameEXT;
     }
 
     if (!list_empty( &devices_egl ))

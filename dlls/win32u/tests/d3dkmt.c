@@ -4264,7 +4264,7 @@ static struct opengl_device *create_opengl_device( HWND hwnd, LUID *luid )
     ptr = find_opengl_extension( extensions, "GL_EXT_memory_object_win32" );
     ok_ptr( ptr, !=, NULL );
     ptr = find_opengl_extension( extensions, "GL_EXT_semaphore_win32" );
-    todo_wine ok_ptr( ptr, !=, NULL );
+    ok_ptr( ptr, !=, NULL );
     ptr = find_opengl_extension( extensions, "GL_EXT_win32_keyed_mutex" );
     dev->broken = !winetest_platform_is_wine && ptr == NULL; /* missing on AMD, as is support for importing D3D handles */
 
@@ -6425,7 +6425,7 @@ static void test_import_opengl_semaphore( struct opengl_device *dev, const WCHAR
     if (name)
     {
         PFN_glImportSemaphoreWin32NameEXT p_glImportSemaphoreWin32NameEXT = (void *)wglGetProcAddress( "glImportSemaphoreWin32NameEXT" );
-        todo_wine ok_ptr( p_glImportSemaphoreWin32NameEXT, !=, NULL );
+        ok_ptr( p_glImportSemaphoreWin32NameEXT, !=, NULL );
         if (!p_glImportSemaphoreWin32NameEXT) return;
 
         p_glGenSemaphoresEXT( 1, &semaphore );
@@ -6435,7 +6435,7 @@ static void test_import_opengl_semaphore( struct opengl_device *dev, const WCHAR
     else
     {
         PFN_glImportSemaphoreWin32HandleEXT p_glImportSemaphoreWin32HandleEXT = (void *)wglGetProcAddress( "glImportSemaphoreWin32HandleEXT" );
-        todo_wine ok_ptr( p_glImportSemaphoreWin32HandleEXT, !=, NULL );
+        ok_ptr( p_glImportSemaphoreWin32HandleEXT, !=, NULL );
         if (!p_glImportSemaphoreWin32HandleEXT) return;
 
         p_glGenSemaphoresEXT( 1, &semaphore );
@@ -6706,8 +6706,8 @@ static void test_shared_fences(void)
                 if (test == MAKETEST(2, 4)) ok_x4( glGetError(), ==, 0 );
                 else ok( (gl_err = glGetError()) == 0 || broken(gl_err == GL_INVALID_VALUE) /* NVIDIA */, "glGetError returned %#x\n", gl_err);
                 test_import_opengl_semaphore( opengl_imp, name, handle, GL_HANDLE_TYPE_D3D12_FENCE_EXT );
-                if (test != MAKETEST(2, 4)) ok_x4( glGetError(), ==, 0 );
-                else ok( (gl_err = glGetError()) == 0 || broken(gl_err == GL_INVALID_VALUE) /* NVIDIA */, "glGetError returned %#x\n", gl_err);
+                if (test != MAKETEST(2, 4)) todo_wine ok_x4( glGetError(), ==, 0 );
+                else todo_wine ok( (gl_err = glGetError()) == 0 || broken(gl_err == GL_INVALID_VALUE) /* NVIDIA */, "glGetError returned %#x\n", gl_err);
             }
         }
 

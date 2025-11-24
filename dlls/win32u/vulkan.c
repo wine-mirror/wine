@@ -2369,7 +2369,7 @@ static HANDLE create_shared_semaphore_handle( D3DKMT_HANDLE local, const VkExpor
     return NULL;
 }
 
-static HANDLE open_shared_semaphore_from_name( const WCHAR *name )
+HANDLE open_shared_semaphore_from_name( const WCHAR *name )
 {
     D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME open_name = {0};
     WCHAR bufferW[MAX_PATH * 2];
