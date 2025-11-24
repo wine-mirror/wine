@@ -1188,18 +1188,18 @@ static void test_IMetaDataImport(void)
         henum2 = NULL;
         methoddef = mdMethodDefNil;
         hr = IMetaDataImport_EnumMethodsWithName(md_import, &henum2, typedef2, name, NULL, 0, NULL);
-        todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-        todo_wine ok(!!henum2, "got henum2 %p\n", henum2);
+        ok(hr == S_FALSE, "got hr %#lx\n", hr);
+        ok(!!henum2, "got henum2 %p\n", henum2);
         buf_len2 = 0;
         hr = IMetaDataImport_CountEnum(md_import, henum2, &buf_len2);
         ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(buf_len2 == 1, "got buf_count2 %lu\n", buf_len2);
+        ok(buf_len2 == 1, "got buf_count2 %lu\n", buf_len2);
         buf_len2 = 0;
         hr = IMetaDataImport_EnumMethodsWithName(md_import, &henum2, typedef2, name, &methoddef, 1, &buf_len2);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(buf_len2 == 1, "got count %lu\n", hr);
-        todo_wine ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
-                     debugstr_mdToken(methoddef_tokens[i]));
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(buf_len2 == 1, "got count %lu\n", hr);
+        ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
+           debugstr_mdToken(methoddef_tokens[i]));
         IMetaDataImport_CloseEnum(md_import, henum2);
 
         token = mdTokenNil;
@@ -1238,12 +1238,12 @@ static void test_IMetaDataImport(void)
     henum = NULL;
     /* EnumMethodsWithName with a NULL name is the same as EnumMethods. */
     hr = IMetaDataImport_EnumMethodsWithName(md_import, &henum, typedef2, NULL, NULL, 0, NULL);
-    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
-    todo_wine ok(!!henum, "got henum %p\n", henum);
+    ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    ok(!!henum, "got henum %p\n", henum);
     buf_len2 = 0;
     hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
+    ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
     IMetaDataImport_CloseEnum(md_import, henum);
 
     henum = NULL;
