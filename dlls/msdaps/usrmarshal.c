@@ -1901,3 +1901,33 @@ HRESULT __RPC_STUB IErrorLookup_ReleaseErrors_Stub(IErrorLookup* This,
     FIXME("(%p)->(%#lx, %p): stub\n", This, dwDynamicErrorID, ppErrorInfoRem);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IRowsetView_CreateView_Proxy(IRowsetView* This,
+        IUnknown *unk_outer, REFIID riid, IUnknown **view)
+{
+    FIXME("(%p)->(%p, %s, %p): stub\n", This, unk_outer, wine_dbgstr_guid(riid), view);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetView_CreateView_Stub(IRowsetView* This, IUnknown *unk_outer,
+        REFIID riid, IUnknown **view, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%p, %s, %p, %p): stub\n", This, unk_outer, wine_dbgstr_guid(riid), view, err_info);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowsetView_GetView_Proxy(IRowsetView* This, HCHAPTER hchapter,
+        REFIID riid, HCHAPTER *hchapter_src, IUnknown **view)
+{
+    FIXME("(%p)->(%Ix, %s, %p %p): stub\n", This, hchapter,
+            wine_dbgstr_guid(riid), hchapter_src, view);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetView_GetView_Stub(IRowsetView* This, HCHAPTER hchapter,
+        REFIID riid, HCHAPTER *hchapter_src, IUnknown **view, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%Ix, %s, %p, %p, %p): stub\n", This, hchapter,
+            wine_dbgstr_guid(riid), hchapter_src, view, err_info);
+    return E_NOTIMPL;
+}
