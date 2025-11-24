@@ -1011,11 +1011,11 @@ static void test_IMetaDataImport(void)
 
     const WCHAR *filename = load_resource(L"test-enum.winmd");
     ULONG buf_len, buf_len2, buf_count, str_len, str_reqd, i;
-    mdMethodDef *methoddef_tokens, methoddef = mdMethodDefNil;
     mdTypeDef *typedef_tokens, typedef1, typedef2;
+    mdMethodDef *methoddef_tokens, methoddef;
+    mdFieldDef *fielddef_tokens, fielddef;
     HCORENUM henum = NULL, henum2 = NULL;
     IMetaDataDispenser *dispenser;
-    mdFieldDef *fielddef_tokens;
     mdProperty *property_tokens;
     IMetaDataImport *md_import;
     const BYTE *data = NULL;
@@ -1251,6 +1251,17 @@ static void test_IMetaDataImport(void)
         ok(buf_count == buf_len, "got buf_count %lu != %lu\n", buf_count, buf_len);
         IMetaDataImport_CloseEnum(md_import, henum);
 
+        henum = NULL;
+        /* EnumFieldsWithName with a NULL name is the same as EnumFields. */
+        hr = IMetaDataImport_EnumFieldsWithName(md_import, &henum, typedef1, NULL, NULL, 0, NULL);
+        todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+        todo_wine ok(!!henum, "got henum %p\n", henum);
+        buf_len2 = 0;
+        hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
+        IMetaDataImport_CloseEnum(md_import, henum);
+
         for (field_idx = 0; field_idx < buf_len; field_idx++)
         {
             ULONG flags = 0, sig_len = 0, value_type = 0, value_len = 0;
@@ -1261,7 +1272,7 @@ static void test_IMetaDataImport(void)
 
             winetest_push_context("field_idx=%lu", field_idx);
 
-            test_token(md_import, fielddef_tokens[i], mdtFieldDef, FALSE);
+            test_token(md_import, fielddef_tokens[field_idx], mdtFieldDef, FALSE);
             name[0] = L'\0';
             typedef2 = 0;
             hr = IMetaDataImport_GetFieldProps(md_import, fielddef_tokens[field_idx], &typedef2, name, ARRAY_SIZE(name), NULL,
@@ -1280,11 +1291,44 @@ static void test_IMetaDataImport(void)
             if (props->has_value)
                 ok(value && !memcmp(value, props->exp_value, props->value_len), "got unexpected value %p\n", value);
 
+            henum = NULL;
+            hr = IMetaDataImport_EnumFieldsWithName(md_import, &henum, typedef2, name, &fielddef, 0, NULL);
+            todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+            todo_wine ok(!!henum, "got henum %p\n", henum);
+            buf_len2 = 0;
+            hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
+            ok(hr == S_OK, "got hr %#lx\n", hr);
+            todo_wine ok(buf_len2 == 1, "got buf_len2 %lu\n", buf_len2);
+            fielddef = mdFieldDefNil;
+            hr = IMetaDataImport_EnumFieldsWithName(md_import, &henum, typedef2, name, &fielddef, 1, NULL);
+            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+            todo_wine ok(fielddef == fielddef_tokens[field_idx], "got fielddef %s != %s\n", debugstr_mdToken(fielddef),
+                         debugstr_mdToken(fielddef_tokens[field_idx]));
+            IMetaDataImport_CloseEnum(md_import, henum);
+
+            fielddef = mdFieldDefNil;
+            hr = IMetaDataImport_FindField(md_import, typedef2, name, sig_blob, sig_len, &fielddef);
+            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+            todo_wine ok(fielddef == fielddef_tokens[field_idx], "got fielddef %s != %s\n", debugstr_mdToken(fielddef),
+                         debugstr_mdToken(fielddef_tokens[field_idx]));
+            hr = IMetaDataImport_FindField(md_import, typedef2, name, sig_blob, sig_len, &fielddef);
+            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+            fielddef = mdFieldDefNil;
+            hr = IMetaDataImport_FindField(md_import, typedef2, name, NULL, 0, &fielddef);
+            todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+            todo_wine ok(fielddef == fielddef_tokens[field_idx], "got fielddef %s != %s\n", debugstr_mdToken(fielddef),
+                         debugstr_mdToken(fielddef_tokens[field_idx]));
+
             winetest_pop_context();
         }
         free(fielddef_tokens);
         winetest_pop_context();
     }
+
+    hr = IMetaDataImport_FindField(md_import, typedef2, NULL, NULL, 0, &fielddef);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_FindField(md_import, typedef2, L"foo", NULL, 0, &fielddef);
+    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
 
     typedef1 = buf_len = 0;
     data = NULL;
