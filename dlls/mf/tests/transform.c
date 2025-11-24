@@ -4079,6 +4079,24 @@ static void test_wma_decoder_dmo_output_type(void)
     MoFreeMediaType(input_type);
     MoFreeMediaType(&type);
 
+    /* Test setting output type to a type with less channels. */
+    init_dmo_media_type_audio(bad_output_type, &MEDIASUBTYPE_PCM, 1, rate, bits_per_sample);
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx.\n", hr);
+
+    /* Test setting output type to a type with more channels. */
+    init_dmo_media_type_audio(input_type, input_subtype, 1, rate, 16);
+    ((WAVEFORMATEX *)(input_type + 1))->nBlockAlign = 640;
+    ((WAVEFORMATEX *)(input_type + 1))->nAvgBytesPerSec = 2000;
+    init_dmo_media_type_audio(good_output_type, &MEDIASUBTYPE_PCM, 1, rate, bits_per_sample);
+    hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    init_dmo_media_type_audio(bad_output_type, &MEDIASUBTYPE_PCM, 2, rate, bits_per_sample);
+    hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx.\n", hr);
+
     init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate * 2, 32);
     hr = IMediaObject_SetInputType(dmo, 0, input_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
