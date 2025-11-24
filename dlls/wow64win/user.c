@@ -1681,18 +1681,30 @@ NTSTATUS WINAPI wow64_NtUserCallHwndParam( UINT *args )
             return NtUserCallHwndParam( hwnd, (UINT_PTR)&info, code );
         }
 
-    case NtUserCallHwndParam_GetWindowRects:
+    case NtUserCallHwndParam_GetWindowRect:
         {
             struct
             {
                 ULONG rect;
-                BOOL client;
                 UINT dpi;
             } *params32 = UlongToPtr( param );
             struct get_window_rects_params params;
 
             params.rect = UlongToPtr( params32->rect );
-            params.client = params32->client;
+            params.dpi = params32->dpi;
+            return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, code );
+        }
+
+    case NtUserCallHwndParam_GetClientRect:
+        {
+            struct
+            {
+                ULONG rect;
+                UINT dpi;
+            } *params32 = UlongToPtr( param );
+            struct get_window_rects_params params;
+
+            params.rect = UlongToPtr( params32->rect );
             params.dpi = params32->dpi;
             return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, code );
         }

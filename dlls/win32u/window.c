@@ -5992,6 +5992,19 @@ static BOOL set_raw_window_pos( HWND hwnd, RECT rect, UINT flags, BOOL internal 
     return NtUserSetWindowPos( hwnd, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, flags );
 }
 
+static BOOL get_present_rect( HWND hwnd, RECT *rect, UINT dpi )
+{
+    UINT dpi_from = get_dpi_for_window( hwnd );
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
+    if (dpi != -1) *rect = map_dpi_rect( win->present_rect, dpi_from, dpi );
+    else *rect = map_rect_virt_to_raw( win->present_rect, dpi_from );
+    release_win_ptr( win );
+
+    return !IsRectEmpty( rect );
+}
+
 /*****************************************************************************
  *           NtUserCallHwnd (win32u.@)
  */
@@ -6111,11 +6124,20 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_GetWindowLongPtrW:
         return get_window_long_ptr( hwnd, param, FALSE );
 
-    case NtUserCallHwndParam_GetWindowRects:
+    case NtUserCallHwndParam_GetWindowRect:
     {
         struct get_window_rects_params *params = (void *)param;
-        return params->client ? get_client_rect( hwnd, params->rect, params->dpi )
-                              : get_window_rect( hwnd, params->rect, params->dpi );
+        return get_window_rect( hwnd, params->rect, params->dpi );
+    }
+    case NtUserCallHwndParam_GetClientRect:
+    {
+        struct get_window_rects_params *params = (void *)param;
+        return get_client_rect( hwnd, params->rect, params->dpi );
+    }
+    case NtUserCallHwndParam_GetPresentRect:
+    {
+        struct get_window_rects_params *params = (void *)param;
+        return get_present_rect( hwnd, params->rect, params->dpi );
     }
 
     case NtUserCallHwndParam_GetWindowRelative:
