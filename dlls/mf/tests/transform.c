@@ -7861,26 +7861,26 @@ static void test_wmv_decoder_dmo_input_type(void)
     hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 1, NULL);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == E_POINTER, "GetInputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 1, &type);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 0, &type);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_SET, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetInputCurrentType returned %#lx.\n", hr);
 
     init_dmo_media_type_video(good_input_type, input_subtypes[0], width, height, 0);
     good_input_type->cbFormat = sizeof(VIDEOINFOHEADER);
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 1, NULL);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == E_POINTER, "GetInputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 1, &type);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputCurrentType(dmo, 0, &type);
-    todo_wine ok(hr == S_OK, "GetInputCurrentType returned %#lx.\n", hr);
+    ok(hr == S_OK, "GetInputCurrentType returned %#lx.\n", hr);
     if (hr == S_OK) check_dmo_media_type(&type, good_input_type);
     MoFreeMediaType(&type);
 
@@ -8150,24 +8150,24 @@ static void test_wmv_decoder_dmo_output_type(void)
     hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 1, NULL);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == E_POINTER, "GetOutputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 1, &type);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx.\n", hr);
 
     hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 1, NULL);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, NULL);
-    todo_wine ok(hr == E_POINTER, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == E_POINTER, "GetOutputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 1, &type);
-    todo_wine ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputCurrentType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &type);
-    todo_wine ok(hr == S_OK, "GetOutputCurrentType returned %#lx.\n", hr);
+    ok(hr == S_OK, "GetOutputCurrentType returned %#lx.\n", hr);
     if (hr == S_OK) check_dmo_media_type(&type, good_output_type);
     MoFreeMediaType(&type);
 
