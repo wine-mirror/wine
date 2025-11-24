@@ -8018,6 +8018,7 @@ static void test_wmv_decoder_dmo_output_type(void)
     const GUID* input_subtype = &MEDIASUBTYPE_WMV1;
     REFERENCE_TIME time_per_frame = 10000000;
     LONG width = 16, height = 16;
+    VIDEOINFOHEADER *vih;
     DWORD count, i, ret;
     IMediaObject *dmo;
     HRESULT hr;
@@ -8198,6 +8199,17 @@ static void test_wmv_decoder_dmo_output_type(void)
     hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0x4);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+
+    /* Does DMO accept a format with a different size? */
+    vih = (VIDEOINFOHEADER *)good_output_type->pbFormat;
+    vih->bmiHeader.biHeight += 10;
+    vih->bmiHeader.biWidth += 10;
+    vih->rcSource.bottom += 10;
+    vih->rcSource.right += 10;
+    vih->rcTarget.bottom += 10;
+    vih->rcTarget.right += 10;
+    hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
 
     /* Release. */
