@@ -59,7 +59,6 @@ struct region
     WAVELINK wave_link;
     WSMPL wave_sample;
     WLOOP wave_loop;
-    BOOL loop_present;
 };
 
 static void region_destroy(struct region *region)
@@ -585,7 +584,6 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
     end_loop = generators->amount[SF_GEN_ENDLOOP_ADDRS_OFFSET].value;
     if (start_loop || end_loop)
     {
-        region->loop_present = TRUE;
         region->wave_sample.cSampleLoops = 1;
         region->wave_loop.ulStart = start_loop;
         region->wave_loop.ulLength = end_loop - start_loop;
