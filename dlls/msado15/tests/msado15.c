@@ -417,10 +417,26 @@ static void test_Recordset(void)
 
     V_VT( &val ) = VT_ERROR;
     V_ERROR( &val ) = DISP_E_PARAMNOTFOUND;
+    hr = Field_put_Value( field, val );
+    ok( hr == DB_E_ERRORSOCCURRED, "got %08lx\n", hr );
+
+    V_VT( &val ) = VT_ERROR;
+    V_ERROR( &val ) = DISP_E_PARAMNOTFOUND;
     hr = Field_get_Value( field, &val );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( V_VT( &val ) == VT_I4, "got %u\n", V_VT( &val ) );
     ok( V_I4( &val ) == -1, "got %ld\n", V_I4( &val ) );
+
+    V_VT( &val ) = VT_BSTR;
+    V_BSTR( &val ) = SysAllocString( L"5" );
+    hr = Field_put_Value( field, val );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    VariantClear( &val );
+
+    hr = Field_get_Value( field, &val );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( V_VT( &val ) == VT_I4, "got %u\n", V_VT( &val ) );
+    ok( V_I4( &val ) == 5, "got %ld\n", V_I4( &val ) );
 
     /* Update/Cancel doesn't update EditMode when no active connection. */
     hr = _Recordset_Update( recordset, missing, missing );
@@ -461,7 +477,7 @@ static void test_Recordset(void)
     hr = Field_get_Value( field, &val );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( V_VT( &val ) == VT_I4, "got %u\n", V_VT( &val ) );
-    ok( V_I4( &val ) == -1, "got %ld\n", V_I4( &val ) );
+    ok( V_I4( &val ) == 5, "got %ld\n", V_I4( &val ) );
 
     hr = _Recordset_MoveNext( recordset );
     ok( hr == S_OK, "got %08lx\n", hr );

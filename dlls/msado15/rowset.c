@@ -29,6 +29,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
+struct data
+{
+    DBSTATUS status;
+    DBLENGTH length;
+    BYTE data[1];
+};
+
 struct rowset
 {
     IRowsetExactScroll IRowsetExactScroll_iface;
@@ -48,8 +55,10 @@ struct rowset
     int index;
     int row_cnt;
 
-    int data_cnt;
-    VARIANT *data;
+    int rows_alloc;
+    int row_size;
+    int *column_off;
+    BYTE *data;
 };
 
 struct accessor
@@ -58,6 +67,84 @@ struct accessor
     int bindings_count;
     DBBINDING bindings[1];
 };
+
+static void dbtype_free(DBTYPE type, void *data)
+{
+    if (type & DBTYPE_BYREF)
+    {
+        void *p = *(void **)data;
+
+        if (p)
+        {
+            dbtype_free(type & ~DBTYPE_BYREF, p);
+            free(p);
+        }
+        return;
+    }
+    if (type & DBTYPE_ARRAY)
+    {
+        SAFEARRAY *sa = *(SAFEARRAY **)data;
+        SafeArrayDestroy(sa);
+        return;
+    }
+    if (type & DBTYPE_VECTOR)
+    {
+        DBVECTOR *vec = *(DBVECTOR **)data;
+        CoTaskMemFree(vec->ptr);
+        return;
+    }
+
+    switch (type)
+    {
+    case DBTYPE_BSTR: SysFreeString(*(BSTR *)data); break;
+    case DBTYPE_IDISPATCH: IDispatch_Release(*(IDispatch **)data); break;
+    case DBTYPE_VARIANT: VariantClear((VARIANT *)data); break;
+    case DBTYPE_IUNKNOWN: IUnknown_Release(*(IUnknown **)data); break;
+    }
+}
+
+static int dbtype_size(DBTYPE type, DBLENGTH max_len)
+{
+    if (type & DBTYPE_BYREF) return sizeof(void*);
+    if (type & DBTYPE_ARRAY) return sizeof(void*);
+    if (type & DBTYPE_VECTOR) return sizeof(DBVECTOR);
+
+    switch (type)
+    {
+    case DBTYPE_EMPTY: return 0;
+    case DBTYPE_NULL: return 0;
+    case DBTYPE_I2: return sizeof(short);
+    case DBTYPE_I4: return sizeof(int);
+    case DBTYPE_R4: return sizeof(float);
+    case DBTYPE_R8: return sizeof(double);
+    case DBTYPE_CY: return sizeof(CY);
+    case DBTYPE_DATE: return sizeof(DATE);
+    case DBTYPE_BSTR: return sizeof(BSTR);
+    case DBTYPE_IDISPATCH: return sizeof(IDispatch*);
+    case DBTYPE_ERROR: return sizeof(SCODE);
+    case DBTYPE_BOOL: return sizeof(VARIANT_BOOL);
+    case DBTYPE_VARIANT: return sizeof(VARIANT);
+    case DBTYPE_IUNKNOWN: return sizeof(IUnknown*);
+    case DBTYPE_DECIMAL: return sizeof(DECIMAL);
+    case DBTYPE_I1: return sizeof(char);
+    case DBTYPE_UI1: return sizeof(char);
+    case DBTYPE_UI2: return sizeof(short);
+    case DBTYPE_UI4: return sizeof(int);
+    case DBTYPE_I8: return sizeof(LONGLONG);
+    case DBTYPE_UI8: return sizeof(LONGLONG);
+    case DBTYPE_GUID: return sizeof(GUID);
+    case DBTYPE_BYTES: return sizeof(BYTE) * max_len;
+    case DBTYPE_STR: return sizeof(CHAR) * max_len;
+    case DBTYPE_WSTR: return sizeof(WCHAR) * max_len;
+    case DBTYPE_NUMERIC: return sizeof(DB_NUMERIC);
+    case DBTYPE_DBDATE: return sizeof(DBDATE);
+    case DBTYPE_DBTIME: return sizeof(DBTIME);
+    case DBTYPE_DBTIMESTAMP: return sizeof(DBTIMESTAMP);
+    }
+
+    FIXME("unsupported type: %x\n", type);
+    return 0;
+}
 
 static inline struct rowset *impl_from_IRowsetExactScroll(IRowsetExactScroll *iface)
 {
@@ -145,18 +232,26 @@ static ULONG WINAPI rowset_Release(IRowsetExactScroll *iface)
 
     if (!refs)
     {
-        int i;
+        int i, j;
 
         TRACE("destroying %p\n", rowset);
 
         if (rowset->convert) IDataConvert_Release(rowset->convert);
 
-        for (i = 0; i < rowset->data_cnt; i++)
-            VariantClear(rowset->data + i);
+        for (i = 0; i < rowset->row_cnt; i++)
+        {
+            for (j = 0; j < rowset->columns_cnt; j++)
+            {
+                struct data *data = (struct data *)(rowset->data +
+                        i * rowset->row_size + rowset->column_off[j]);
+                dbtype_free(rowset->columns[j].wType, data->data);
+            }
+        }
         free(rowset->data);
 
         CoTaskMemFree(rowset->columns);
         CoTaskMemFree(rowset->columns_buf);
+        free(rowset->column_off);
         free(rowset);
     }
     return refs;
@@ -181,11 +276,11 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCES
 {
     struct rowset *rowset = impl_from_IRowsetExactScroll(iface);
     struct accessor *accessor = (struct accessor *)hacc;
-    DBSTATUS status = DBSTATUS_S_OK;
     BOOL succ = FALSE, err = FALSE;
-    HRESULT hr = S_OK;
+    DBSTATUS status;
     DBLENGTH len;
-    int i, idx;
+    HRESULT hr;
+    int i;
 
     TRACE("%p, %Id, %Id, %p\n", rowset, row, hacc, data);
 
@@ -202,43 +297,31 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCES
 
     for (i = 0; i < accessor->bindings_count; i++)
     {
-        idx = (row - 1) * rowset->columns_cnt + accessor->bindings[i].iOrdinal;
+        int col = accessor->bindings[i].iOrdinal;
+        struct data *val = (struct data *)(rowset->data +
+                (row - 1) * rowset->row_size + rowset->column_off[col]);
+
         status = DBSTATUS_S_OK;
         len = 0;
 
-        if (accessor->bindings[i].wType != DBTYPE_VARIANT)
-        {
-            hr = IDataConvert_GetConversionSize(rowset->convert, DBTYPE_VARIANT,
-                    accessor->bindings[i].wType, NULL, &len, &rowset->data[idx]);
-            if (FAILED(hr)) status = DBSTATUS_E_CANTCONVERTVALUE;
-        }
-        else len = sizeof(VARIANT);
-
-        if (status != DBSTATUS_S_OK) {}
-        if (accessor->bindings[i].cbMaxLen < len)
-            status = DBSTATUS_E_DATAOVERFLOW;
-        else if (!(accessor->bindings[i].dwPart & DBPART_VALUE))
+        if (!(accessor->bindings[i].dwPart & DBPART_VALUE))
             status = DBSTATUS_E_BADACCESSOR;
-        else if (accessor->bindings[i].wType != DBTYPE_VARIANT)
+        else if (accessor->bindings[i].wType == DBTYPE_VARIANT && val->status == DBSTATUS_E_UNAVAILABLE)
         {
-            hr = IDataConvert_DataConvert(rowset->convert, DBTYPE_VARIANT,
-                    accessor->bindings[i].wType, sizeof(VARIANT), NULL,
-                    &rowset->data[idx], (BYTE *)data + accessor->bindings[i].obValue,
-                    accessor->bindings[i].cbMaxLen, DBSTATUS_S_OK, &status,
-                    accessor->bindings[i].bPrecision, accessor->bindings[i].bScale, 0);
-            if (FAILED(hr) && status == DBSTATUS_S_OK)
-                status = DBSTATUS_E_CANTCONVERTVALUE;
+            if (accessor->bindings[i].cbMaxLen < sizeof(VARIANT))
+                status = DBSTATUS_E_BADACCESSOR;
+            else
+                VariantInit((VARIANT *)val->data);
         }
         else
         {
-            VARIANT val;
-
-            VariantInit(&val);
-            hr = VariantCopy(&val, &rowset->data[idx]);
+            hr = IDataConvert_DataConvert(rowset->convert, rowset->columns[col].wType,
+                    accessor->bindings[i].wType, val->length, &len,
+                    val->data, (BYTE *)data + accessor->bindings[i].obValue,
+                    accessor->bindings[i].cbMaxLen, val->status, &status,
+                    accessor->bindings[i].bPrecision, accessor->bindings[i].bScale, 0);
             if (FAILED(hr))
-                status = DBSTATUS_E_CANTCONVERTVALUE;
-            else
-                memcpy((BYTE *)data + accessor->bindings[i].obValue, &val, sizeof(val));
+                WARN("data conversion failed\n");
         }
 
         if (accessor->bindings[i].dwPart & DBPART_LENGTH)
@@ -246,7 +329,9 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW row, HACCES
         if (accessor->bindings[i].dwPart & DBPART_STATUS)
             memcpy((BYTE *)data + accessor->bindings[i].obStatus, &status, sizeof(status));
 
-        if (status == DBSTATUS_S_OK) succ = TRUE;
+        if (status == DBSTATUS_S_OK || status == DBSTATUS_S_ISNULL ||
+                status == DBSTATUS_S_TRUNCATED || status == DBSTATUS_S_DEFAULT)
+            succ = TRUE;
         else err = TRUE;
     }
 
@@ -590,45 +675,41 @@ static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface, HROW row, HACC
     BOOL err = FALSE, succ = FALSE;
     DBSTATUS status;
     DBLENGTH len;
-    int i, idx;
     HRESULT hr;
+    int i;
 
     TRACE("%p, %Id, %Id, %p\n", rowset, row, hacc, data);
 
     if (!accessor->bindings_count) return DB_E_BADACCESSORTYPE;
-    if (row > rowset->row_cnt) return DB_E_BADROWHANDLE;
-    for (i = 0; i < accessor->bindings_count; i++)
-    {
-        if (accessor->bindings[i].wType != DBTYPE_VARIANT)
-        {
-            FIXME("data conversion not implemented\n");
-            return E_NOTIMPL;
-        }
-    }
+    if (row < 1 || row > rowset->row_cnt) return DB_E_BADROWHANDLE;
 
     for (i = 0; i < accessor->bindings_count; i++)
     {
-        idx = (row - 1) * rowset->columns_cnt + accessor->bindings[i].iOrdinal;
+        int col = accessor->bindings[i].iOrdinal;
+        struct data *val = (struct data *)(rowset->data +
+                (row - 1) * rowset->row_size + rowset->column_off[col]);
+        DBSTATUS src_status = DBSTATUS_S_OK;
+        DBLENGTH src_len = 0;
 
-        if (rowset->columns[accessor->bindings[i].iOrdinal].wType != DBTYPE_VARIANT)
-            FIXME("convert data to column type\n");
-
-        len = sizeof(VARIANT);
         status = DBSTATUS_S_OK;
-        if (accessor->bindings[i].cbMaxLen < len)
-            status = DBSTATUS_E_DATAOVERFLOW;
-        else if (accessor->bindings[i].dwPart & DBPART_VALUE)
+        len = 0;
+
+        if (accessor->bindings[i].dwPart & DBPART_LENGTH)
+            src_len = *(DBLENGTH *)((BYTE *)data + accessor->bindings[i].obLength);
+        if (accessor->bindings[i].dwPart & DBPART_STATUS)
+            src_status = *(DBSTATUS *)((BYTE *)data + accessor->bindings[i].obStatus);
+
+        if (!(accessor->bindings[i].dwPart & DBPART_VALUE))
+            status = DBSTATUS_E_BADACCESSOR;
+        else
         {
-            hr = VariantCopy(&rowset->data[idx], (VARIANT *)((BYTE *)data + accessor->bindings[i].obValue));
+            hr = IDataConvert_DataConvert(rowset->convert, accessor->bindings[i].wType,
+                    rowset->columns[col].wType, src_len, &len,
+                    (BYTE *)data + accessor->bindings[i].obValue, val->data,
+                    rowset->columns[col].ulColumnSize, src_status, &status,
+                    rowset->columns[col].bPrecision, rowset->columns[col].bScale, 0);
             if (FAILED(hr))
-            {
-                for (i--; i>=0; i--)
-                {
-                    if (accessor->bindings[i].dwPart & DBPART_VALUE)
-                        VariantClear((VARIANT *)((BYTE *)data + accessor->bindings[i].obValue));
-                }
-                return hr;
-            }
+                WARN("data conversion failed\n");
         }
 
         if (accessor->bindings[i].dwPart & DBPART_LENGTH)
@@ -636,7 +717,13 @@ static HRESULT WINAPI rowset_change_SetData(IRowsetChange *iface, HROW row, HACC
         if (accessor->bindings[i].dwPart & DBPART_STATUS)
             memcpy((BYTE *)data + accessor->bindings[i].obStatus, &status, sizeof(status));
 
-        if (status == DBSTATUS_S_OK) succ = TRUE;
+        if (status == DBSTATUS_S_OK || status == DBSTATUS_S_ISNULL ||
+                status == DBSTATUS_S_TRUNCATED || status == DBSTATUS_S_DEFAULT)
+        {
+            val->status = status;
+            val->length = len;
+            succ = TRUE;
+        }
         else err = TRUE;
     }
 
@@ -648,7 +735,8 @@ static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER res
         HACCESSOR accessor, void *data, HROW *row)
 {
     struct rowset *rowset = impl_from_IRowsetChange(iface);
-    int idx, size;
+    struct data *val;
+    int i;
 
     TRACE("%p, %Iu, %Id, %p, %p\n", rowset, reserved, accessor, data, row);
 
@@ -658,26 +746,31 @@ static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER res
         return E_NOTIMPL;
     }
 
-    idx = rowset->row_cnt * rowset->columns_cnt;
-    size = idx + rowset->columns_cnt;
-    if (size > rowset->data_cnt)
+    if (rowset->row_cnt == rowset->rows_alloc)
     {
-        VARIANT *tmp;
+        int rows_alloc = max(8, max(rowset->row_cnt + 1, rowset->rows_alloc * 2));
+        BYTE *tmp;
 
-        size = max(size, rowset->data_cnt * 2);
-        size = max(size, 8 * rowset->columns_cnt);
-        tmp = realloc(rowset->data, size * sizeof(*rowset->data));
+        tmp = realloc(rowset->data, rows_alloc * rowset->row_size);
         if (!tmp) return E_OUTOFMEMORY;
 
-        memset(tmp + rowset->data_cnt, 0, (size - rowset->data_cnt) * sizeof(*rowset->data));
+        memset(tmp + rowset->rows_alloc * rowset->row_size, 0,
+                (rows_alloc - rowset->rows_alloc) * rowset->row_size);
         rowset->data = tmp;
-        rowset->data_cnt = size;
+        rowset->rows_alloc = rows_alloc;
+    }
+
+    val = (struct data *)(rowset->data + rowset->row_cnt * rowset->row_size);
+    *(int*)val->data = rowset->row_cnt + 1;
+
+    for (i = 1; i < rowset->columns_cnt; i++)
+    {
+        /* TODO: handle default values */
+        val = (struct data *)(rowset->data + rowset->row_cnt * rowset->row_size + rowset->column_off[i]);
+        val->status = DBSTATUS_E_UNAVAILABLE;
     }
 
     rowset->row_cnt++;
-    V_VT(&rowset->data[idx]) = VT_I4;
-    V_I4(&rowset->data[idx]) = rowset->row_cnt;
-
     if (row) *row = rowset->row_cnt;
     return S_OK;
 }
@@ -932,6 +1025,7 @@ HRESULT create_mem_rowset(int count, const DBCOLUMNINFO *info, IUnknown **ret)
 {
     struct rowset *rowset;
     HRESULT hr;
+    int i;
 
     rowset = calloc(1, sizeof(*rowset));
     if (!rowset) return E_OUTOFMEMORY;
@@ -943,12 +1037,25 @@ HRESULT create_mem_rowset(int count, const DBCOLUMNINFO *info, IUnknown **ret)
     rowset->IRowsetInfo_iface.lpVtbl = &rowset_info_vtbl;
     rowset->refs = 1;
 
+    rowset->column_off = malloc(sizeof(*rowset->column_off) * count);
+    if (!rowset->column_off)
+    {
+        IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+        return E_OUTOFMEMORY;
+    }
+
     rowset->columns_cnt = count;
     hr = copy_column_info(&rowset->columns, info, count, &rowset->columns_buf);
     if (FAILED(hr))
     {
         IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
         return E_OUTOFMEMORY;
+    }
+    for (i = 0; i < count; i++)
+    {
+        rowset->column_off[i] = rowset->row_size;
+        rowset->row_size += offsetof(struct data,
+                data[dbtype_size(info[i].wType, info[i].ulColumnSize)]);
     }
 
     *ret = (IUnknown *)&rowset->IRowsetExactScroll_iface;
