@@ -1010,15 +1010,15 @@ static void test_IMetaDataImport(void)
     static const WCHAR *guid_attribute_name = L"Windows.Foundation.Metadata.GuidAttribute";
 
     const WCHAR *filename = load_resource(L"test-enum.winmd");
-    ULONG buf_len, buf_count, str_len, str_reqd, i;
+    ULONG buf_len, buf_len2, buf_count, str_len, str_reqd, i;
+    mdMethodDef *methoddef_tokens, methoddef = mdMethodDefNil;
     mdTypeDef *typedef_tokens, typedef1, typedef2;
-    mdMethodDef *methoddef_tokens;
+    HCORENUM henum = NULL, henum2 = NULL;
     IMetaDataDispenser *dispenser;
     mdFieldDef *fielddef_tokens;
     mdProperty *property_tokens;
     IMetaDataImport *md_import;
     const BYTE *data = NULL;
-    HCORENUM henum = 0;
     const GUID *guid;
     WCHAR *strW;
     HRESULT hr;
@@ -1173,9 +1173,52 @@ static void test_IMetaDataImport(void)
         todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
         todo_wine ok(call_conv == method->exp_call_conv, "got call_conv %#lx != %#x\n", call_conv, method->exp_call_conv);
 
+        methoddef = mdMethodDefNil;
+        hr = IMetaDataImport_FindMethod(md_import, typedef2, name, sig_blob, sig_len, &methoddef);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
+                     debugstr_mdToken(methoddef_tokens[i]));
+        methoddef = mdMethodDefNil;
+        hr = IMetaDataImport_FindMethod(md_import, typedef2, name, NULL, 0, &methoddef);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
+                     debugstr_mdToken(methoddef_tokens[i]));
+
+        henum2 = NULL;
+        methoddef = mdMethodDefNil;
+        hr = IMetaDataImport_EnumMethodsWithName(md_import, &henum2, typedef2, name, NULL, 0, NULL);
+        todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+        todo_wine ok(!!henum2, "got henum2 %p\n", henum2);
+        buf_len2 = 0;
+        hr = IMetaDataImport_CountEnum(md_import, henum2, &buf_len2);
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(buf_len2 == 1, "got buf_count2 %lu\n", buf_len2);
+        buf_len2 = 0;
+        hr = IMetaDataImport_EnumMethodsWithName(md_import, &henum2, typedef2, name, &methoddef, 1, &buf_len2);
+        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
+        todo_wine ok(buf_len2 == 1, "got count %lu\n", hr);
+        todo_wine ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
+                     debugstr_mdToken(methoddef_tokens[i]));
+        IMetaDataImport_CloseEnum(md_import, henum2);
+
         winetest_pop_context();
     }
+    hr = IMetaDataImport_FindMethod(md_import, typedef2, NULL, NULL, 0, &methoddef);
+    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    hr = IMetaDataImport_FindMethod(md_import, typedef2, L"foo", NULL, 0, &methoddef);
+    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
     free(methoddef_tokens);
+    IMetaDataImport_CloseEnum(md_import, henum);
+
+    henum = NULL;
+    /* EnumMethodsWithName with a NULL name is the same as EnumMethods. */
+    hr = IMetaDataImport_EnumMethodsWithName(md_import, &henum, typedef2, NULL, NULL, 0, NULL);
+    todo_wine ok(hr == S_FALSE, "got hr %#lx\n", hr);
+    todo_wine ok(!!henum, "got henum %p\n", henum);
+    buf_len2 = 0;
+    hr = IMetaDataImport_CountEnum(md_import, henum, &buf_len2);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    todo_wine ok(buf_len2 == buf_len, "got buf_len2 %lu != %lu\n", buf_len2, buf_len);
     IMetaDataImport_CloseEnum(md_import, henum);
 
     for (i = 0; i < ARRAY_SIZE(field_enum_test_cases); i++)
