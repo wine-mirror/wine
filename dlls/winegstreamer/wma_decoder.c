@@ -801,6 +801,10 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
     if (!IsEqualGUID(&type->formattype, &FORMAT_WaveFormatEx))
         return DMO_E_TYPE_NOT_ACCEPTED;
 
+    if (((WAVEFORMATEX *)decoder->input_type.pbFormat)->nChannels !=
+            ((WAVEFORMATEX *)type->pbFormat)->nChannels)
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
     if (FAILED(hr = wg_transform_create_quartz(&decoder->input_type, type, &attrs, &new_transform)))
         return hr;
 
