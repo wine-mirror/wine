@@ -4739,6 +4739,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
 
     if ((!(style & (WS_POPUP | WS_CHILD))
          || ((style & (WS_POPUP | WS_CHILD | WS_CAPTION)) == (WS_POPUP | WS_CAPTION)))
+        && !get_window_relative( hwnd, GW_OWNER )
         && InterlockedExchange( &first_window, 0 ))
     {
         RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
