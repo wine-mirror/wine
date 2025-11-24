@@ -53,6 +53,7 @@ typedef LONG_PTR DB_LRESERVE;
 #include "chprst.idl"
 #include "rstfnd.idl"
 #include "rstvw.idl"
+#include "vwchp.idl"
 #include "cmdbas.idl"
 #include "cmdtxt.idl"
 #include "colinf.idl"

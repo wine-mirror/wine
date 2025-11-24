@@ -836,6 +836,7 @@ SOURCES = \
 	vsstyle.h \
 	vssym32.h \
 	vswriter.idl \
+	vwchp.idl \
 	wbemcli.idl \
 	wbemdisp.idl \
 	wbemprov.idl \

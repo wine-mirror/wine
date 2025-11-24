@@ -1931,3 +1931,30 @@ HRESULT __RPC_STUB IRowsetView_GetView_Stub(IRowsetView* This, HCHAPTER hchapter
             wine_dbgstr_guid(riid), hchapter_src, view, err_info);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IViewChapter_GetSpecification_Proxy(IViewChapter* This, REFIID riid, IUnknown **rowset)
+{
+    FIXME("(%p)->(%s, %p): stub\n", This, wine_dbgstr_guid(riid), rowset);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewChapter_GetSpecification_Stub(IViewChapter* This,
+        REFIID riid, IUnknown **rowset, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%s, %p, %p): stub\n", This, wine_dbgstr_guid(riid), rowset, err_info);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewChapter_OpenViewChapter_Proxy(IViewChapter* This,
+        HCHAPTER hsrc, HCHAPTER *view_hchapter)
+{
+    FIXME("(%p)->(%Ix, %p):stub\n", This, hsrc, view_hchapter);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewChapter_OpenViewChapter_Stub(IViewChapter* This,
+        HCHAPTER hsrc, HCHAPTER *view_hchapter, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%Ix, %p, %p):stub\n", This, hsrc, view_hchapter, err_info);
+    return E_NOTIMPL;
+}
