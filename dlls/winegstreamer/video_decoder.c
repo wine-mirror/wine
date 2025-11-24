@@ -1269,6 +1269,7 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
     struct video_decoder *decoder = impl_from_IMediaObject(iface);
+    wg_transform_t new_transform = 0;
     IMFMediaType *media_type;
     unsigned int i;
     HRESULT hr;
@@ -1311,21 +1312,22 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         return DMO_E_TYPE_NOT_ACCEPTED;
     IMFMediaType_Release(media_type);
 
+    if (FAILED(hr = wg_transform_create_quartz(&decoder->dmo_input_type, type,
+            &decoder->wg_transform_attrs, &new_transform)))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
+    {
+        wg_transform_destroy(new_transform);
         return S_OK;
+    }
 
     FreeMediaType(&decoder->dmo_output_type);
     CopyMediaType(&decoder->dmo_output_type, type);
 
     /* Set up wg_transform. */
-    if (decoder->wg_transform)
-    {
-        wg_transform_destroy(decoder->wg_transform);
-        decoder->wg_transform = 0;
-    }
-    if (FAILED(hr = wg_transform_create_quartz(&decoder->dmo_input_type, type,
-            &decoder->wg_transform_attrs, &decoder->wg_transform)))
-        return hr;
+    if (decoder->wg_transform) wg_transform_destroy(decoder->wg_transform);
+    decoder->wg_transform = new_transform;
 
     return S_OK;
 }
