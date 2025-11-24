@@ -2018,7 +2018,7 @@ void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     if (get_integer( teb, pname, data )) return;
-    funcs->p_glGetIntegerv( pname, data );
+    else funcs->p_glGetIntegerv( pname, data );
 }
 
 void wrap_glGetBooleanv( TEB *teb, GLenum pname, GLboolean *data )
@@ -2034,7 +2034,7 @@ void wrap_glGetDoublev( TEB *teb, GLenum pname, GLdouble *data )
     const struct opengl_funcs *funcs = teb->glTable;
     GLint value;
     if (get_integer( teb, pname, &value )) *data = value;
-    funcs->p_glGetDoublev( pname, data );
+    else funcs->p_glGetDoublev( pname, data );
 }
 
 void wrap_glGetFloatv( TEB *teb, GLenum pname, GLfloat *data )
