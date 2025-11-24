@@ -1958,3 +1958,17 @@ HRESULT __RPC_STUB IViewChapter_OpenViewChapter_Stub(IViewChapter* This,
     FIXME("(%p)->(%Ix, %p, %p):stub\n", This, hsrc, view_hchapter, err_info);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IViewFilter_GetFilterBindings_Proxy(IViewFilter* This,
+        DBCOUNTITEM *bindings_count, DBBINDING **bindings)
+{
+    FIXME("(%p)->(%p, %p): stub\n", This, bindings_count, bindings);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewFilter_GetFilterBindings_Stub(IViewFilter* This,
+        DBCOUNTITEM *bindings_count, DBBINDING **bindings, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%p, %p, %p): stub\n", This, bindings_count, bindings, err_info);
+    return E_NOTIMPL;
+}
