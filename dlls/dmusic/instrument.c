@@ -582,8 +582,8 @@ static HRESULT instrument_add_soundfont_region(struct instrument *This, struct s
 
     start_loop = generators->amount[SF_GEN_STARTLOOP_ADDRS_OFFSET].value;
     end_loop = generators->amount[SF_GEN_ENDLOOP_ADDRS_OFFSET].value;
-    region->wave_loop.ulStart = start_loop;
-    region->wave_loop.ulLength = end_loop - start_loop;
+    region->wave_loop.ulStart = sample->start_loop + start_loop - sample->start;
+    region->wave_loop.ulLength = sample->end_loop + end_loop - sample->start_loop;
 
     switch (generators->amount[SF_GEN_SAMPLE_MODES].value & 0x3)
     {
