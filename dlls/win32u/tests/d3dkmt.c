@@ -6392,6 +6392,51 @@ static void test_d3d12_fence_from_vulkan_binary( ID3D12Device *device, struct vu
     ID3D12Fence_Release( fence );
 }
 
+static void test_import_opengl_semaphore( struct opengl_device *dev, const WCHAR *name,
+                                          HANDLE handle, UINT handle_type )
+{
+    PFN_glDeleteSemaphoresEXT p_glDeleteSemaphoresEXT;
+    PFN_glGenSemaphoresEXT p_glGenSemaphoresEXT;
+    GLuint semaphore;
+
+    UINT ret;
+
+    if (dev->broken && handle_type == GL_HANDLE_TYPE_D3D12_FENCE_EXT)
+    {
+        win_skip( "Skipping unsupported handle type\n" );
+        return;
+    }
+
+    ret = wglMakeCurrent( dev->hdc, dev->rc );
+    todo_wine_if( ret == 0 ) ok_u4( ret, !=, 0 );
+
+    p_glGenSemaphoresEXT = (void *)wglGetProcAddress( "glGenSemaphoresEXT" );
+    ok_ptr( p_glGenSemaphoresEXT, !=, NULL );
+    p_glDeleteSemaphoresEXT = (void *)wglGetProcAddress( "glDeleteSemaphoresEXT" );
+    ok_ptr( p_glDeleteSemaphoresEXT, !=, NULL );
+
+    if (name)
+    {
+        PFN_glImportSemaphoreWin32NameEXT p_glImportSemaphoreWin32NameEXT = (void *)wglGetProcAddress( "glImportSemaphoreWin32NameEXT" );
+        todo_wine ok_ptr( p_glImportSemaphoreWin32NameEXT, !=, NULL );
+        if (!p_glImportSemaphoreWin32NameEXT) return;
+
+        p_glGenSemaphoresEXT( 1, &semaphore );
+        p_glImportSemaphoreWin32NameEXT( semaphore, handle_type, name );
+        p_glDeleteSemaphoresEXT( 1, &semaphore );
+    }
+    else
+    {
+        PFN_glImportSemaphoreWin32HandleEXT p_glImportSemaphoreWin32HandleEXT = (void *)wglGetProcAddress( "glImportSemaphoreWin32HandleEXT" );
+        todo_wine ok_ptr( p_glImportSemaphoreWin32HandleEXT, !=, NULL );
+        if (!p_glImportSemaphoreWin32HandleEXT) return;
+
+        p_glGenSemaphoresEXT( 1, &semaphore );
+        p_glImportSemaphoreWin32HandleEXT( semaphore, handle_type, handle );
+        p_glDeleteSemaphoresEXT( 1, &semaphore );
+    }
+}
+
 static void test_shared_fences(void)
 {
     static const char *device_extensions[] =
@@ -6402,6 +6447,7 @@ static void test_shared_fences(void)
     };
 
     struct vulkan_device *vulkan_imp = NULL, *vulkan_exp = NULL;
+    struct opengl_device *opengl_imp = NULL;
     ID3D11Device5 *d3d11_exp = NULL, *d3d11_imp = NULL;
     ID3D12Device *d3d12_exp = NULL, *d3d12_imp = NULL;
     BOOL has_timeline = FALSE, vk_export_broken;
@@ -6410,8 +6456,18 @@ static void test_shared_fences(void)
     UINT64 max_timeline = -1;
     IDXGIAdapter *adapter;
     LUID luid = {0};
+    GLenum gl_err;
     VkResult vr;
     HRESULT hr;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 100, 100, 200, 200, NULL, NULL, NULL, NULL );
+    ok_ptr( hwnd, !=, NULL );
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+
+    if (!(opengl_imp = create_opengl_device( hwnd, &luid )))
+        win_skip( "Skipping tests on software renderer\n" );
 
     vr = create_vulkan_device( &luid, device_extensions, ARRAY_SIZE(device_extensions), &vulkan_exp );
     todo_wine ok( vr == VK_SUCCESS || broken(vr == VK_ERROR_INITIALIZATION_FAILED || vr == VK_ERROR_INCOMPATIBLE_DRIVER) /* no GPU */, "got vr %d\n", vr );
@@ -6630,6 +6686,24 @@ static void test_shared_fences(void)
             }
         }
 
+        if (opengl_imp)
+        {
+            if (is_d3dkmt_handle( handle ))
+            {
+                test_import_opengl_semaphore( opengl_imp, name, handle, GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT );
+                ok_x4( glGetError(), ==, 0 );
+            }
+            else
+            {
+                test_import_opengl_semaphore( opengl_imp, name, handle, GL_HANDLE_TYPE_OPAQUE_WIN32_EXT );
+                if (test == MAKETEST(2, 4)) ok_x4( glGetError(), ==, 0 );
+                else ok( (gl_err = glGetError()) == 0 || broken(gl_err == GL_INVALID_VALUE) /* NVIDIA */, "glGetError returned %#x\n", gl_err);
+                test_import_opengl_semaphore( opengl_imp, name, handle, GL_HANDLE_TYPE_D3D12_FENCE_EXT );
+                if (test != MAKETEST(2, 4)) ok_x4( glGetError(), ==, 0 );
+                else ok( (gl_err = glGetError()) == 0 || broken(gl_err == GL_INVALID_VALUE) /* NVIDIA */, "glGetError returned %#x\n", gl_err);
+            }
+        }
+
 skip_tests:
         if (handle && !is_d3dkmt_handle( handle )) CloseHandle( handle );
         if (export) ok_ref( 0, IUnknown_Release( export ) );
@@ -6644,6 +6718,8 @@ skip_tests:
     if (d3d12_exp) ok_ref( 0, ID3D12Device_Release( d3d12_exp ) );
     if (vulkan_imp) destroy_vulkan_device( vulkan_imp );
     if (vulkan_exp) destroy_vulkan_device( vulkan_exp );
+    if (opengl_imp) destroy_opengl_device( opengl_imp);
+    DestroyWindow( hwnd );
 }
 
 START_TEST( d3dkmt )
