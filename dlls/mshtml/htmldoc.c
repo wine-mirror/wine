@@ -6009,8 +6009,10 @@ static void DocumentFragment_init_dispex_info(dispex_data_t *info, compat_mode_t
     if(mode < COMPAT_MODE_IE9) {
         HTMLDocumentNode_init_dispex_info(info, mode);
         dispex_info_add_interface(info, IHTMLDocument5_tid, NULL);
-    } else if(mode < COMPAT_MODE_IE11) {
-        dispex_info_add_dispids(info, IHTMLDocument3_tid, document3_dispids);
+    } else {
+        HTMLDOMNode_init_dispex_info(info, mode);
+        if(mode < COMPAT_MODE_IE11)
+            dispex_info_add_dispids(info, IHTMLDocument3_tid, document3_dispids);
     }
 }
 

@@ -405,6 +405,13 @@ sync_test("document_style_props", function() {
     ok(document.aLinkColor === "#deb8ad", "aLinkColor = " + document.aLinkColor);
 });
 
+sync_test("document_frag", function() {
+    var frag = document.createDocumentFragment()
+
+    frag.textContent = "1234";
+    ok(frag.textContent === "1234", "textContent = " + frag.textContent);
+});
+
 sync_test("style_properties", function() {
     document.body.innerHTML = '<div>test</div><svg></svg>';
     var elem = document.body.firstChild;
