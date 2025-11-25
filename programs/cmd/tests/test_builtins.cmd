@@ -819,6 +819,9 @@ call :setError 666 & (mklink &&echo SUCCESS !errorlevel!||echo FAILURE !errorlev
 call :setError 666 & (mklink /h foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /z foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /j foo foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /j foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rmdir foo
 echo bar > foo
 call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /h bar foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)

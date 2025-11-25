@@ -30,6 +30,10 @@
 
 #include "wcmd.h"
 #include <shellapi.h>
+#define WIN32_NO_STATUS
+#include "winternl.h"
+#include "winioctl.h"
+#include "ddk/ntifs.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
@@ -3961,6 +3965,81 @@ RETURN_CODE WCMD_color(void)
   return errorlevel = return_code;
 }
 
+/* We cannot use SetVolumeMountPoint(), because that function forbids setting
+ * arbitrary directories as mount points, whereas mklink /j allows it. */
+BOOL create_mount_point(const WCHAR *link, const WCHAR *target) {
+    char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+    REPARSE_DATA_BUFFER *data = (void *)buffer;
+    WCHAR full_link[MAX_PATH], *full_target;
+    UNICODE_STRING nt_link, nt_target;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE file;
+    DWORD size;
+    BOOL ret;
+
+    TRACE( "link %s, target %s\n", debugstr_w(link), debugstr_w(target) );
+
+    if (!WCMD_get_fullpath(link, ARRAY_SIZE(full_link), full_link, NULL))
+        return FALSE;
+
+    if (!(size = GetFullPathNameW(target, 0, NULL, NULL)))
+        return FALSE;
+    full_target = malloc(size * sizeof(WCHAR));
+    GetFullPathNameW(target, size, full_target, NULL);
+
+    status = RtlDosPathNameToNtPathName_U_WithStatus(full_link, &nt_link, NULL, NULL);
+    if (status)
+    {
+        free(full_target);
+        return FALSE;
+    }
+
+    status = RtlDosPathNameToNtPathName_U_WithStatus(full_target, &nt_target, NULL, NULL);
+    if (status)
+    {
+        free(full_target);
+        RtlFreeUnicodeString(&nt_link);
+        return FALSE;
+    }
+
+    size = offsetof(REPARSE_DATA_BUFFER, MountPointReparseBuffer.PathBuffer);
+    size += nt_target.Length + sizeof(WCHAR) + (wcslen(full_target) + 1) * sizeof(WCHAR);
+    if (size > sizeof(buffer))
+    {
+        free(full_target);
+        RtlFreeUnicodeString(&nt_link);
+        RtlFreeUnicodeString(&nt_target);
+        return FALSE;
+    }
+
+    data->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+    data->ReparseDataLength = size - offsetof(REPARSE_DATA_BUFFER, MountPointReparseBuffer);
+    data->Reserved = 0;
+    data->MountPointReparseBuffer.SubstituteNameOffset = 0;
+    data->MountPointReparseBuffer.SubstituteNameLength = nt_target.Length;
+    data->MountPointReparseBuffer.PrintNameOffset = nt_target.Length + sizeof(WCHAR);
+    data->MountPointReparseBuffer.PrintNameLength = wcslen(full_target) * sizeof(WCHAR);
+    memcpy(data->MountPointReparseBuffer.PathBuffer,
+           nt_target.Buffer, nt_target.Length + sizeof(WCHAR));
+    memcpy(data->MountPointReparseBuffer.PathBuffer + (nt_target.Length / sizeof(WCHAR)) + 1,
+           full_target, (wcslen(full_target) + 1) * sizeof(WCHAR));
+    RtlFreeUnicodeString(&nt_target);
+    free(full_target);
+
+    InitializeObjectAttributes(&attr, &nt_link, OBJ_CASE_INSENSITIVE, 0, NULL);
+    status = NtCreateFile(&file, GENERIC_WRITE, &attr, &io, NULL, 0, 0, FILE_CREATE,
+                          FILE_OPEN_REPARSE_POINT | FILE_DIRECTORY_FILE, NULL, 0);
+    RtlFreeUnicodeString(&nt_link);
+    if (status)
+        return FALSE;
+
+    ret = DeviceIoControl(file, FSCTL_SET_REPARSE_POINT, data, size, NULL, 0, &size, NULL);
+    CloseHandle(file);
+    return ret;
+}
+
 /****************************************************************************
  * WCMD_mklink
  */
@@ -4011,7 +4090,7 @@ RETURN_CODE WCMD_mklink(WCHAR *args)
         else if(!junction)
             ret = CreateSymbolicLinkW(file1, file2, isdir);
         else
-            TRACE("Junction links currently not supported.\n");
+            ret = create_mount_point(file1, file2);
     }
 
     if (ret) return errorlevel = NO_ERROR;
