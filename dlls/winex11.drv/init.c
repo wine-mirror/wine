@@ -449,8 +449,8 @@ Window x11drv_client_surface_create( HWND hwnd, int format, struct client_surfac
     if (!(surface = client_surface_create( sizeof(*surface), &x11drv_client_surface_funcs, hwnd ))) goto failed;
     surface->colormap = colormap;
 
-    if (!(surface->window = create_client_window( hwnd, &visual, colormap ))) goto failed;
     if (!NtUserGetClientRect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) )) goto failed;
+    if (!(surface->window = create_client_window( hwnd, surface->rect, &visual, colormap ))) goto failed;
 
     TRACE( "Created %s for client window %lx\n", debugstr_client_surface( &surface->client ), surface->window );
     *client = &surface->client;

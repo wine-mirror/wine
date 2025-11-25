@@ -2362,13 +2362,12 @@ void destroy_client_window( HWND hwnd, Window client_window )
 /**********************************************************************
  *		create_client_window
  */
-Window create_client_window( HWND hwnd, const XVisualInfo *visual, Colormap colormap )
+Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *visual, Colormap colormap )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
     XSetWindowAttributes attr;
     Window ret;
     int x, y, cx, cy;
-    RECT client_rect;
 
     if (!data)
     {
@@ -2376,8 +2375,7 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual, Colormap colo
         HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
         if (parent == NtUserGetDesktopWindow() || NtUserGetAncestor( parent, GA_PARENT )) return 0;
         if (!(data = alloc_win_data( thread_init_display(), hwnd ))) return 0;
-        NtUserGetClientRect( hwnd, &data->rects.client, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
-        data->rects.window = data->rects.visible = data->rects.client;
+        data->rects.window = data->rects.visible = data->rects.client = client_rect;
     }
 
     detach_client_window( data, data->client_window );
@@ -2390,8 +2388,6 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual, Colormap colo
 
     x = data->rects.client.left - data->rects.visible.left;
     y = data->rects.client.top - data->rects.visible.top;
-
-    NtUserGetClientRect( hwnd, &client_rect, NtUserGetDpiForWindow( hwnd ) );
     cx = min( max( 1, client_rect.right - client_rect.left ), 65535 );
     cy = min( max( 1, client_rect.bottom - client_rect.top ), 65535 );
 
