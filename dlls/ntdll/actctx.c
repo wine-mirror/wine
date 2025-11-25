@@ -3139,24 +3139,64 @@ static NTSTATUS get_manifest_in_associated_manifest( struct actctx_loader* acl, 
     return status;
 }
 
+static void append_field( WCHAR *buffer, const WCHAR *str, unsigned int maxlen )
+{
+    static const WCHAR valid_chars[] = L"-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    unsigned int len;
+
+    if (!*str) return;
+    buffer += wcslen( buffer );
+    for (len = 0; *str; str++) if (wcschr( valid_chars, *str )) buffer[len++] = *str;
+    if (len > maxlen)
+    {
+        unsigned int pos = maxlen / 2;
+        buffer[pos - 1] = buffer[pos] = '.';
+        memmove( buffer + pos + 1, buffer + len - pos + 1, (pos - 1) * sizeof(WCHAR) );
+        len = maxlen;
+    }
+    buffer[len++] = '_';
+    buffer[len] = 0;
+}
+
+static WCHAR *build_manifest_filter( struct assembly_identity *ai )
+{
+    WCHAR version[32];
+    unsigned int buflen = 20;
+    WCHAR *ret;
+
+    swprintf( version, ARRAY_SIZE(version), L"_%u.%u.*.*_", ai->version.major, ai->version.minor );
+
+    buflen += wcslen( ai->arch ) + 1;
+    buflen += wcslen( ai->name ) + 1;
+    buflen += wcslen( ai->public_key ) + 1;
+    buflen += wcslen( version ) + 1;
+    if (ai->language) buflen += wcslen( ai->language );
+    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, buflen * sizeof(WCHAR) ))) return NULL;
+    ret[0] = 0;
+    append_field( ret, ai->arch, 16 );
+    append_field( ret, ai->name, 40 );
+    wcscat( ret, ai->public_key );
+    wcscat( ret, version );
+    if (!ai->language || !wcsicmp( ai->language, L"*" ) || !wcsicmp( ai->language, L"neutral" ))
+        wcscat( ret, L"*_" );
+    else
+        append_field( ret, ai->language, 8 );
+
+    wcscat( ret, L"*.manifest" );
+    return ret;
+}
+
 static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
 {
-    static const WCHAR lookup_fmtW[] = L"%s_%s_%s_%u.%u.*.*_%s_*.manifest";
     static const WCHAR wine_trailerW[] = {'d','e','a','d','b','e','e','f','.','m','a','n','i','f','e','s','t'};
 
     WCHAR *lookup, *ret = NULL;
     UNICODE_STRING lookup_us;
     IO_STATUS_BLOCK io;
-    const WCHAR *lang = ai->language;
-    unsigned int data_pos = 0, data_len, len;
+    unsigned int data_pos = 0, data_len;
     char buffer[8192];
 
-    if (!lang || !wcsicmp( lang, L"neutral" )) lang = L"*";
-
-    len = wcslen(ai->arch) + wcslen(ai->name) + wcslen(ai->public_key) + wcslen(lang) + 20 + ARRAY_SIZE(lookup_fmtW);
-    if (!(lookup = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
-    swprintf( lookup, len, lookup_fmtW, ai->arch, ai->name, ai->public_key,
-              ai->version.major, ai->version.minor, lang );
+    if (!(lookup = build_manifest_filter( ai ))) return NULL;
     RtlInitUnicodeString( &lookup_us, lookup );
 
 #ifdef __arm64ec__
