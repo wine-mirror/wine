@@ -408,6 +408,7 @@ static LONG clipping_cursor; /* clipping thread counter */
 
 BOOL grab_pointer = TRUE;
 BOOL grab_fullscreen = FALSE;
+LONG enable_mouse_in_pointer = -1;
 
 static void kbd_tables_init_vsc2vk( const KBDTABLES *tables, USHORT vsc2vk[0x300] )
 {
@@ -2608,9 +2609,12 @@ void toggle_caret( HWND hwnd )
  */
 BOOL WINAPI NtUserEnableMouseInPointer( BOOL enable )
 {
-    FIXME( "enable %u stub!\n", enable );
-    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    FIXME( "enable %u semi-stub!\n", enable );
+    if (InterlockedCompareExchange( &enable_mouse_in_pointer, enable ? 1 : 0, -1 ) != -1) {
+        RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /**********************************************************************
