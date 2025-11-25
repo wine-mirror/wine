@@ -367,6 +367,8 @@ static BOOL test_instantiation(void)
     }
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
+    todo_wine
+    check_interface(pfod, &IID_IModalWindow, TRUE);
     check_interface(pfod, &IID_IFileDialog, TRUE);
     check_interface(pfod, &IID_IExplorerBrowserEvents, TRUE);
     check_interface(pfod, &IID_ICommDlgBrowser3, TRUE);
@@ -454,6 +456,8 @@ static BOOL test_instantiation(void)
     }
     ok(hr == S_OK, "got 0x%08lx.\n", hr);
 
+    todo_wine
+    check_interface(pfsd, &IID_IModalWindow, TRUE);
     check_interface(pfsd, &IID_IFileDialog, TRUE);
     check_interface(pfsd, &IID_IExplorerBrowserEvents, TRUE);
     check_interface(pfsd, &IID_ICommDlgBrowser3, TRUE);
