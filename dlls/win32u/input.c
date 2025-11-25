@@ -2671,7 +2671,8 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
 
     ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
-    ret = get_window_rect( hwnd, &window_rect, get_thread_dpi() );
+    if (!(ret = get_present_rect( hwnd, &window_rect, get_thread_dpi() )))
+        ret = get_window_rect( hwnd, &window_rect, get_thread_dpi() );
     monitor_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTONEAREST );
     virtual_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
     monitor_rect = map_rect_virt_to_raw( monitor_info.rcMonitor, get_thread_dpi() );
@@ -2777,6 +2778,7 @@ BOOL WINAPI NtUserGetClipCursor( RECT *rect )
  */
 BOOL WINAPI NtUserClipCursor( const RECT *rect )
 {
+    UINT dpi = get_thread_dpi();
     RECT new_rect;
     BOOL ret;
 
@@ -2784,8 +2786,14 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
 
     if (rect)
     {
+        HWND foreground = NtUserGetForegroundWindow();
+        if (IsRectEmpty( rect ) && get_present_rect( foreground, &new_rect, dpi ))
+        {
+            WARN( "Fullscreen clipping fixup to %s\n", wine_dbgstr_rect(&new_rect) );
+            rect = &new_rect;
+        }
         if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
-        new_rect = map_rect_virt_to_raw( *rect, get_thread_dpi() );
+        new_rect = map_rect_virt_to_raw( *rect, dpi );
         rect = &new_rect;
     }
 
