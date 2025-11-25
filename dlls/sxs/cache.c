@@ -98,15 +98,24 @@ static unsigned int build_sxs_path( WCHAR *path )
     return len + ARRAY_SIZE(winsxsW) - 1;
 }
 
-static void append_string( WCHAR *buffer, const WCHAR *str )
+static void append_string( WCHAR *buffer, const WCHAR *str, unsigned int maxlen )
 {
     static const WCHAR valid_chars[] = L"-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    unsigned int len;
 
     if (!*str) return;
     buffer += wcslen( buffer );
-    for (; *str; str++) if (wcschr( valid_chars, *str )) *buffer++ = *str;
-    *buffer++ = '_';
-    *buffer = 0;
+    for (len = 0; *str; str++) if (wcschr( valid_chars, *str )) buffer[len++] = *str;
+    if (len > maxlen)
+    {
+        unsigned int pos = maxlen / 2;
+        buffer[pos - 1] = buffer[pos] = '.';
+        memmove( buffer + pos + 1, buffer + len - pos + 1, (pos - 1) * sizeof(WCHAR) );
+        len = maxlen;
+    }
+    buffer[len++] = '_';
+    buffer[len] = 0;
+    wcslwr( buffer );
 }
 
 static WCHAR *build_assembly_name( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
@@ -126,14 +135,16 @@ static WCHAR *build_assembly_name( const WCHAR *arch, const WCHAR *name, const W
     buflen += wcslen( language ) + 1;
     if (!(ret = malloc( buflen * sizeof(WCHAR) ))) return NULL;
     ret[0] = 0;
-    append_string( ret, arch );
-    append_string( ret, name );
-    append_string( ret, token );
-    append_string( ret, version );
-    append_string( ret, language );
+    append_string( ret, arch, 16 );
+    append_string( ret, name, 40 );
+    wcscat( ret, token );
+    wcscat( ret, L"_" );
+    wcscat( ret, version );
+    wcscat( ret, L"_" );
+    append_string( ret, language, 8 );
     wcscat( ret, L"deadbeef" );
     *len = wcslen( ret );
-    return wcslwr( ret );
+    return ret;
 }
 
 static WCHAR *build_dll_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
@@ -807,7 +818,16 @@ BOOL WINAPI SxspGenerateManifestPathOnAssemblyIdentity( const WCHAR *identity, W
         SetLastError( ERROR_INVALID_PARAMETER );
         goto done;
     }
-    path = build_assembly_name( arch, name, token, version, language, &retlen );
+    if (wcslen( version ) > 103 || (token && wcslen( token ) > 100))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        goto done;
+    }
+    if (!(path = build_assembly_name( arch, name, token, version, language, &retlen )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        goto done;
+    }
     if (*size <= retlen)
     {
         *size = retlen + 1;

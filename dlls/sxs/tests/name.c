@@ -239,7 +239,7 @@ static void test_display_name( void )
 
 static void test_manifest_path(void)
 {
-    static const struct { const WCHAR *input, *expect; DWORD err; } tests[] =
+    static const struct { const WCHAR *input, *expect; DWORD err; const WCHAR *broken; } tests[] =
     {
         { L"wine", NULL, ERROR_INVALID_PARAMETER },
         { L"version=\"1.2.3.4\"", NULL, ERROR_INVALID_PARAMETER },
@@ -265,6 +265,21 @@ static void test_manifest_path(void)
           L"none_wine_none_1.2.3.4__16e8bafd97447162" },
         { L"WI !\"#$%'()*+-./:;<=>?@[\\]`{|}~\u00a0\u2014NE,language=\"\",processorArchitecture=\"\",version=\"1.2.3.4\"",
           L"wi-.ne_none_1.2.3.4_479b515b7cd6b072" },
+        { L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,version=\"1.2.3.4\"",
+          L"none_abcdefghijklmnopqrs..rstuvwxyz0123456789_none_1.2.3.4_none_039d813ec5d31e1e" },
+        { L"wine,processorArchitecture=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\",version=\"1.2.3.4\"",
+          L"abcdefg..3456789_wine_none_1.2.3.4_none_4cf3b364ce50d048",
+          0, L"abc..789_wine_none_1.2.3.4_none_4cf3b364ce50d048" /* win8 */ },
+        { L"wine,publicKeyToken=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl\",version=\"1.2.3.4\"",
+          L"none_wine_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl_1.2.3.4_none_23520ded75d26b1d" },
+        { L"wine,publicKeyToken=\"ABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%'()*+-./:;<=>?@[\\]`{|}~\u00a0\u2014\",version=\"1.2.3.4\"",
+          L"none_wine_ABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%'()*+-./:;<=>?@[\\]`{|}~\u00a0\u2014_1.2.3.4_none_36e94b00900cd8e5" },
+        { L"wine,language=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\",version=\"1.2.3.4\"",
+          L"none_wine_none_1.2.3.4_abc..789_9608dbda04ebd12f" },
+        { L"wine,version=\"00000000000000000000000001.0000000000000000000000002.0000000000000000000000003.000000000000000000000004\"",
+          L"none_wine_none_00000000000000000000000001.0000000000000000000000002.0000000000000000000000003.000000000000000000000004_none_c96f37b6c34189f6" },
+        { L"wine,publicKeyToken=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm\",version=\"1.2.3.4\"", NULL, ERROR_INSUFFICIENT_BUFFER },
+        { L"wine,version=\"00000000000000000000000001.0000000000000000000000002.0000000000000000000000003.0000000000000000000000004\"", NULL, ERROR_INSUFFICIENT_BUFFER },
     };
     unsigned int i;
     WCHAR buffer[1024];
@@ -295,11 +310,13 @@ static void test_manifest_path(void)
             {
                 /* FIXME: hash is different on Wine, so compare without it first */
                 const WCHAR *p = wcsrchr( buffer, '_' );
-                ok( p && !wcsncmp( buffer, tests[i].expect, p + 1 - buffer ), "wrong result %s / %s\n",
-                    debugstr_w(buffer), debugstr_w(tests[i].expect) );
+                ok( (p && !wcsncmp( buffer, tests[i].expect, p + 1 - buffer )) ||
+                     broken( tests[i].broken && !wcsncmp( buffer, tests[i].broken, p + 1 - buffer )),
+                     "wrong result %s / %s\n", debugstr_w(buffer), debugstr_w(tests[i].expect) );
                 todo_wine
-                ok( !wcscmp( buffer, tests[i].expect ), "wrong result %s / %s\n",
-                    debugstr_w(buffer), debugstr_w(tests[i].expect) );
+                ok( !wcscmp( buffer, tests[i].expect ) ||
+                    broken( tests[i].broken && !wcscmp( buffer, tests[i].broken )),
+                    "wrong result %s / %s\n", debugstr_w(buffer), debugstr_w(tests[i].expect) );
             }
         }
         else
