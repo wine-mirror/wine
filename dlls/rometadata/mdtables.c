@@ -1005,8 +1005,37 @@ static HRESULT WINAPI import_FindMember(IMetaDataImport *iface, mdTypeDef type_d
 static HRESULT WINAPI import_FindMethod(IMetaDataImport *iface, mdTypeDef type_def, const WCHAR *name,
                                         const COR_SIGNATURE *sig_blob, ULONG len, mdMethodDef *method_def)
 {
-    FIXME("(%p, %#x, %s, %p, %lu, %p): stub!\n", iface, type_def, debugstr_w(name), sig_blob, len, method_def);
-    return E_NOTIMPL;
+    mdMethodDef cur_method;
+    HCORENUM henum = NULL;
+    BOOL found = FALSE;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p, %lu, %p):\n", iface, debugstr_mdToken(type_def), debugstr_w(name), sig_blob, len,
+          method_def);
+
+    if (!name) return E_INVALIDARG;
+    if (IsNilToken(type_def) || TypeFromToken(type_def) != mdtTypeDef) return CLDB_E_RECORD_NOTFOUND;
+
+    if (FAILED((hr = IMetaDataImport_EnumMethodsWithName(iface, &henum, type_def, name, &cur_method, 1, NULL)))) return hr;
+    while (hr == S_OK)
+    {
+        const COR_SIGNATURE *cur_sig;
+        ULONG cur_sig_len;
+
+        hr = IMetaDataImport_GetMethodProps(iface, cur_method, NULL, NULL, 0, NULL, NULL, &cur_sig, &cur_sig_len, NULL,
+                                            NULL);
+        if (FAILED(hr)) break;
+        if (!(len && sig_blob) || (len == cur_sig_len && !memcmp(cur_sig, sig_blob, len)))
+        {
+            found = TRUE;
+            break;
+        }
+        hr = IMetaDataImport_EnumMethodsWithName(iface, &henum, type_def, name, &cur_method, 1, NULL);
+    }
+    IMetaDataImport_CloseEnum(iface, henum);
+
+    *method_def = found ? cur_method : mdMethodDefNil;
+    return FAILED(hr) ? hr : (found ? S_OK : CLDB_E_RECORD_NOTFOUND);
 }
 
 static HRESULT WINAPI import_FindField(IMetaDataImport *iface, mdTypeDef type_def, const WCHAR *name,

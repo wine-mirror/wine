@@ -1176,14 +1176,14 @@ static void test_IMetaDataImport(void)
 
         methoddef = mdMethodDefNil;
         hr = IMetaDataImport_FindMethod(md_import, typedef2, name, sig_blob, sig_len, &methoddef);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
-                     debugstr_mdToken(methoddef_tokens[i]));
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
+           debugstr_mdToken(methoddef_tokens[i]));
         methoddef = mdMethodDefNil;
         hr = IMetaDataImport_FindMethod(md_import, typedef2, name, NULL, 0, &methoddef);
-        todo_wine ok(hr == S_OK, "got hr %#lx\n", hr);
-        todo_wine ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
-                     debugstr_mdToken(methoddef_tokens[i]));
+        ok(hr == S_OK, "got hr %#lx\n", hr);
+        ok(methoddef == methoddef_tokens[i], "got methoddef %s != %s\n", debugstr_mdToken(methoddef),
+           debugstr_mdToken(methoddef_tokens[i]));
 
         henum2 = NULL;
         methoddef = mdMethodDefNil;
@@ -1229,9 +1229,9 @@ static void test_IMetaDataImport(void)
         winetest_pop_context();
     }
     hr = IMetaDataImport_FindMethod(md_import, typedef2, NULL, NULL, 0, &methoddef);
-    todo_wine ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
+    ok(hr == E_INVALIDARG, "got hr %#lx\n", hr);
     hr = IMetaDataImport_FindMethod(md_import, typedef2, L"foo", NULL, 0, &methoddef);
-    todo_wine ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
+    ok(hr == CLDB_E_RECORD_NOTFOUND, "got hr %#lx\n", hr);
     free(methoddef_tokens);
     IMetaDataImport_CloseEnum(md_import, henum);
 
