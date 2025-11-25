@@ -249,6 +249,7 @@ static void init_user(void)
 {
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
 
+    init_startup_info();
     shared_session_init();
     gdi_init();
     sysparams_init();

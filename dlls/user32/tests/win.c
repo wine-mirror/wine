@@ -31,6 +31,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "winternl.h"
 
 #include "wine/test.h"
 
@@ -13693,18 +13694,21 @@ static void test_startupinfo_showwindow_proc( int test_id )
         { WS_OVERLAPPED, TRUE }, /* owned window */
         { WS_POPUP | WS_CAPTION, TRUE }, /* owned window */
     };
+
+    RTL_USER_PROCESS_PARAMETERS *up = NtCurrentTeb()->Peb->ProcessParameters;
     BOOL bval, expected;
-    STARTUPINFOW sa;
     unsigned int i;
     DWORD style;
     HWND parent, hwnd;
 
-    GetStartupInfoW( &sa );
+    winetest_push_context( "test %d", test_id );
 
-    winetest_push_context( "show %u, test %d", sa.wShowWindow, test_id );
+    ok( up->dwFlags & STARTF_USESHOWWINDOW, "got %#lx.\n", up->dwFlags );
+    ok( up->wShowWindow == SW_HIDE, "got %lu.\n.", up->wShowWindow );
 
-    ok( sa.dwFlags & STARTF_USESHOWWINDOW, "got %#lx.\n", sa.dwFlags );
-    ok( sa.wShowWindow == SW_HIDE, "got %u.\n.", sa.wShowWindow );
+    /* Startup window parameters are fetched early and current values don't affect behaviour. */
+    up->dwFlags = 0;
+    up->wShowWindow = SW_SHOW;
 
     /* First test windows which are not affected by startup info. ShowWindow() called for those doesn't count as
      * consuming startup info, it is still used with the next applicable window.
