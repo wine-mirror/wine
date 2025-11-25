@@ -83,6 +83,10 @@ DEFINE_EXPECT(rowset_update_InsertRow);
 DEFINE_EXPECT(accessor_AddRefAccessor);
 DEFINE_EXPECT(accessor_CreateAccessor);
 DEFINE_EXPECT(accessor_ReleaseAccessor);
+DEFINE_EXPECT(rowset_view_CreateView);
+DEFINE_EXPECT(view_chapter_OpenViewChapter);
+DEFINE_EXPECT(view_filter_SetFilter);
+DEFINE_EXPECT(chaptered_rowset_ReleaseChapter);
 
 static BOOL is_bof( _Recordset *recordset )
 {
@@ -533,7 +537,14 @@ struct test_rowset
     IColumnsInfo IColumnsInfo_iface;
     IRowsetUpdate IRowsetUpdate_iface;
     IAccessor IAccessor_iface;
+    IRowsetView IRowsetView_iface;
+    IChapteredRowset IChapteredRowset_iface;
     LONG refs;
+
+    IViewChapter IViewChapter_iface;
+    IViewFilter IViewFilter_iface;
+    BOOL filter_chapter;
+
     BOOL exact_scroll;
     int idx;
 };
@@ -567,6 +578,26 @@ static inline struct test_rowset *impl_from_IRowsetUpdate( IRowsetUpdate *iface 
 static inline struct test_rowset *impl_from_IAccessor( IAccessor *iface )
 {
     return CONTAINING_RECORD( iface, struct test_rowset, IAccessor_iface );
+}
+
+static inline struct test_rowset *impl_from_IRowsetView( IRowsetView *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IRowsetView_iface );
+}
+
+static inline struct test_rowset *impl_from_IChapteredRowset( IChapteredRowset *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IChapteredRowset_iface );
+}
+
+static inline struct test_rowset *impl_from_IViewChapter( IViewChapter *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IViewChapter_iface );
+}
+
+static inline struct test_rowset *impl_from_IViewFilter( IViewFilter *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IViewFilter_iface );
 }
 
 static HRESULT WINAPI rowset_info_QueryInterface(IRowsetInfo *iface, REFIID riid, void **obj)
@@ -949,10 +980,15 @@ static HRESULT WINAPI accessor_AddRefAccessor(IAccessor *iface,
         HACCESSOR hAccessor, DBREFCOUNT *pcRefCount)
 {
     CHECK_EXPECT2(accessor_AddRefAccessor);
-    ok(hAccessor == 1, "hAccessor = %Id\n", hAccessor);
     ok(pcRefCount != NULL, "pcRefCount == NULL\n");
+    if (hAccessor == 1) *pcRefCount = 2;
+    else
+    {
+        struct haccessor *accessor = (struct haccessor *)hAccessor;
 
-    *pcRefCount = 2;
+        accessor->ref++;
+        *pcRefCount = accessor->ref;
+    }
     return S_OK;
 }
 
@@ -965,7 +1001,7 @@ static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS 
     CHECK_EXPECT(accessor_CreateAccessor);
     ok(dwAccessorFlags == DBACCESSOR_ROWDATA, "dwAccessorFlags = %lx\n", dwAccessorFlags);
     ok(!cBindings || cBindings == 1, "cBindings = %Iu\n", cBindings);
-    ok(cbRowSize == 0, "cbRowSize = %Iu\n", cbRowSize);
+    ok(cbRowSize == 0 || cbRowSize == sizeof(VARIANT), "cbRowSize = %Iu\n", cbRowSize);
     ok(phAccessor != NULL, "pHAccessor = NULL\n");
 
     if (!cBindings)
@@ -1021,6 +1057,220 @@ static const struct IAccessorVtbl accessor =
     accessor_ReleaseAccessor
 };
 
+static HRESULT WINAPI rowset_view_QueryInterface(IRowsetView *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IRowsetView( iface );
+    return IRowsetExactScroll_QueryInterface(&rowset->IRowsetExactScroll_iface, riid, obj);
+}
+
+static ULONG WINAPI rowset_view_AddRef(IRowsetView *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowsetView( iface );
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI rowset_view_Release(IRowsetView *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowsetView( iface );
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT WINAPI rowset_view_CreateView(IRowsetView *iface,
+        IUnknown *unk_outer, REFIID riid, IUnknown **view)
+{
+    struct test_rowset *rowset = impl_from_IRowsetView( iface );
+
+    CHECK_EXPECT(rowset_view_CreateView);
+    ok(!unk_outer, "unk_outer = %p\n", unk_outer);
+    ok(IsEqualGUID(riid, &IID_IViewChapter), "riid = %s\n", wine_dbgstr_guid(riid));
+    ok(view != NULL, "view = NULL\n");
+
+    *view = (IUnknown *)&rowset->IViewChapter_iface;
+    IUnknown_AddRef(*view);
+    return S_OK;
+}
+
+static HRESULT WINAPI rowset_view_GetView(IRowsetView *iface, HCHAPTER hchapter,
+        REFIID riid, HCHAPTER *hchapter_src, IUnknown **view)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const struct IRowsetViewVtbl rowset_view =
+{
+    rowset_view_QueryInterface,
+    rowset_view_AddRef,
+    rowset_view_Release,
+    rowset_view_CreateView,
+    rowset_view_GetView
+};
+
+static HRESULT WINAPI chaptered_rowset_QueryInterface(IChapteredRowset *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IChapteredRowset( iface );
+    return IRowsetExactScroll_QueryInterface(&rowset->IRowsetExactScroll_iface, riid, obj);
+}
+
+static ULONG WINAPI chaptered_rowset_AddRef(IChapteredRowset *iface)
+{
+    struct test_rowset *rowset = impl_from_IChapteredRowset( iface );
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI chaptered_rowset_Release(IChapteredRowset *iface)
+{
+    struct test_rowset *rowset = impl_from_IChapteredRowset( iface );
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT WINAPI chaptered_rowset_AddRefChapter(IChapteredRowset *iface,
+        HCHAPTER chapter, DBREFCOUNT *refcount)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI chaptered_rowset_ReleaseChapter(IChapteredRowset *iface,
+        HCHAPTER chapter, DBREFCOUNT *refcount)
+{
+    CHECK_EXPECT(chaptered_rowset_ReleaseChapter);
+    ok(chapter == 1, "chapter = %Ix\n", chapter);
+    ok(!refcount, "refcount != NULL\n");
+    return S_OK;
+}
+
+static const struct IChapteredRowsetVtbl chaptered_rowset =
+{
+    chaptered_rowset_QueryInterface,
+    chaptered_rowset_AddRef,
+    chaptered_rowset_Release,
+    chaptered_rowset_AddRefChapter,
+    chaptered_rowset_ReleaseChapter
+};
+
+static HRESULT WINAPI view_chapter_QueryInterface(IViewChapter *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IViewChapter( iface );
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IViewChapter))
+    {
+        *obj = iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IViewFilter))
+    {
+        *obj = &rowset->IViewFilter_iface;
+    }
+    else
+    {
+        ok(0, "unexpected interface %s\n", wine_dbgstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI view_chapter_AddRef(IViewChapter *iface)
+{
+    struct test_rowset *rowset = impl_from_IViewChapter( iface );
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI view_chapter_Release(IViewChapter *iface)
+{
+    struct test_rowset *rowset = impl_from_IViewChapter( iface );
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT WINAPI view_chapter_GetSpecification(IViewChapter *iface, REFIID riid, IUnknown **rowset)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI view_chapter_OpenViewChapter(IViewChapter *iface,
+        HCHAPTER hsrc, HCHAPTER *view_hchapter)
+{
+    struct test_rowset *rowset = impl_from_IViewChapter( iface );
+
+    CHECK_EXPECT(view_chapter_OpenViewChapter);
+    ok(!hsrc, "hsrc = %Ix\n", hsrc);
+
+    rowset->filter_chapter = TRUE;
+    *view_hchapter = 1;
+    return S_OK;
+}
+
+static const struct IViewChapterVtbl view_chapter =
+{
+    view_chapter_QueryInterface,
+    view_chapter_AddRef,
+    view_chapter_Release,
+    view_chapter_GetSpecification,
+    view_chapter_OpenViewChapter
+};
+
+static HRESULT WINAPI view_filter_QueryInterface(IViewFilter *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IViewFilter( iface );
+    return IViewChapter_QueryInterface(&rowset->IViewChapter_iface, riid, obj);
+}
+
+static ULONG WINAPI view_filter_AddRef(IViewFilter *iface)
+{
+    struct test_rowset *rowset = impl_from_IViewFilter( iface );
+    return IViewChapter_AddRef(&rowset->IViewChapter_iface);
+}
+
+static ULONG WINAPI view_filter_Release(IViewFilter *iface)
+{
+    struct test_rowset *rowset = impl_from_IViewFilter( iface );
+    return IViewChapter_Release(&rowset->IViewChapter_iface);
+}
+
+static HRESULT WINAPI view_filter_GetFilter(IViewFilter *iface, HACCESSOR haccessor,
+        DBCOUNTITEM *rows, DBCOMPAREOP *compare[], void *criteria)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI view_filter_GetFilterBindings(IViewFilter *iface,
+        DBCOUNTITEM *bindings_count, DBBINDING **bindings)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI view_filter_SetFilter(IViewFilter *iface, HACCESSOR haccessor,
+        DBCOUNTITEM rows, DBCOMPAREOP compare[], void *criteria)
+{
+    struct haccessor *accessor = (struct haccessor *)haccessor;
+    VARIANT *v = criteria;
+
+    CHECK_EXPECT(view_filter_SetFilter);
+    ok(accessor->binding.iOrdinal == 1, "accessor->binding.iOrdinal = %Id\n", accessor->binding.iOrdinal);
+    ok(accessor->binding.wType == VT_VARIANT, "accessor->binding.wType = %d\n", accessor->binding.wType);
+    ok(accessor->binding.dwPart == DBPART_VALUE, "accessor->binding.dwPart = %ld\n", accessor->binding.dwPart);
+    ok(rows == 1, "rows = %Id\n", rows);
+    ok(compare[0] == DBCOMPAREOPS_EQ, "compare[0] = %ld\n", compare[0]);
+    ok(V_VT(v) = VT_I4, "V_VT(criteria) = %d\n", V_VT(v));
+    ok(V_I4(v) = 1, "V_I4(criteria) = %ld\n", V_I4(v));
+    return S_OK;
+}
+
+static const struct IViewFilterVtbl view_filter =
+{
+    view_filter_QueryInterface,
+    view_filter_AddRef,
+    view_filter_Release,
+    view_filter_GetFilter,
+    view_filter_GetFilterBindings,
+    view_filter_SetFilter
+};
+
 static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID riid, void **obj)
 {
     struct test_rowset *rowset = impl_from_IRowsetExactScroll( iface );
@@ -1065,6 +1315,14 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     {
         CHECK_EXPECT(rowset_QI_IRowsetFind);
         return E_NOINTERFACE;
+    }
+    else if (IsEqualIID(riid, &IID_IRowsetView))
+    {
+        *obj = &rowset->IRowsetView_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IChapteredRowset))
+    {
+        *obj = &rowset->IChapteredRowset_iface;
     }
     else if (IsEqualIID(riid, &UKN_INTERFACE))
     {
@@ -1150,13 +1408,14 @@ static HRESULT WINAPI rowset_GetData(IRowsetExactScroll *iface, HROW hRow, HACCE
     return S_OK;
 }
 
-static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
+static HRESULT WINAPI rowset_GetNextRows(IRowsetExactScroll *iface, HCHAPTER chapter, DBROWOFFSET lRowsOffset,
     DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
 {
     struct test_rowset *rowset = impl_from_IRowsetExactScroll( iface );
 
     CHECK_EXPECT2(rowset_GetNextRows);
-    ok(!hReserved, "hReserved = %Ix\n", hReserved);
+    ok((!chapter && !rowset->filter_chapter) || (chapter == 1 && rowset->filter_chapter),
+            "chapter = %Ix (filter %x)\n", chapter, rowset->filter_chapter);
     ok(pcRowObtained != NULL, "pcRowObtained = NULL\n");
     ok(prghRows != NULL, "prghRows = NULL\n");
     ok(*prghRows != NULL, "*prghRows = NULL\n");
@@ -1181,12 +1440,13 @@ static HRESULT WINAPI rowset_ReleaseRows(IRowsetExactScroll *iface, DBCOUNTITEM 
     return S_OK;
 }
 
-static HRESULT WINAPI rowset_RestartPosition(IRowsetExactScroll *iface, HCHAPTER hReserved)
+static HRESULT WINAPI rowset_RestartPosition(IRowsetExactScroll *iface, HCHAPTER chapter)
 {
     struct test_rowset *rowset = impl_from_IRowsetExactScroll( iface );
 
     CHECK_EXPECT(rowset_RestartPosition);
-    ok(!hReserved, "hReserved = %Ix\n", hReserved);
+    ok((!chapter && !rowset->filter_chapter) || (chapter == 1 && rowset->filter_chapter),
+            "chapter = %Ix (filter %x)\n", chapter, rowset->filter_chapter);
 
     rowset->idx = 0;
     return S_OK;
@@ -1200,14 +1460,16 @@ static HRESULT WINAPI rowset_Compare(IRowsetExactScroll *iface, HCHAPTER hReserv
 }
 
 static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION hReserved1,
-        HCHAPTER hReserved2, DBBKMARK cbBookmark, const BYTE *pBookmark, DBROWOFFSET lRowsOffset,
+        HCHAPTER chapter, DBBKMARK cbBookmark, const BYTE *pBookmark, DBROWOFFSET lRowsOffset,
         DBROWCOUNT cRows, DBCOUNTITEM *pcRowsObtained, HROW **prghRows)
 {
+    struct test_rowset *rowset = impl_from_IRowsetExactScroll( iface );
     int row;
 
     CHECK_EXPECT2(rowset_GetRowsAt);
     ok(!hReserved1, "hReserved1 = %Ix\n", hReserved1);
-    ok(!hReserved2, "hReserved2 = %Ix\n", hReserved2);
+    ok((!chapter && !rowset->filter_chapter) || (chapter == 1 && rowset->filter_chapter),
+            "chapter = %Ix (filter %x)\n", chapter, rowset->filter_chapter);
     ok(cRows == -1 || cRows == 1, "cRows = %Id\n", cRows);
     ok(pcRowsObtained != NULL, "pcRowsObtained == NULL\n");
     ok(prghRows != NULL, "prghRows == NULL\n");
@@ -1343,9 +1605,14 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     testrowset.IColumnsInfo_iface.lpVtbl = &column_info;
     testrowset.IRowsetUpdate_iface.lpVtbl = &rowset_update;
     testrowset.IAccessor_iface.lpVtbl = &accessor;
+    testrowset.IRowsetView_iface.lpVtbl = &rowset_view;
+    testrowset.IChapteredRowset_iface.lpVtbl = &chaptered_rowset;
     testrowset.refs = 1;
+    testrowset.IViewChapter_iface.lpVtbl = &view_chapter;
+    testrowset.IViewFilter_iface.lpVtbl = &view_filter;
     testrowset.exact_scroll = exact_scroll;
     testrowset.idx = 0;
+    testrowset.filter_chapter = FALSE;
 
     rowset = (IUnknown*)&testrowset.IRowsetExactScroll_iface;
 
@@ -1556,13 +1823,57 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     CHECK_CALLED(accessor_ReleaseAccessor);
     if (exact_scroll) CHECK_EXPECT(rowset_GetData);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString( L"Column1 = 1" );
+    SET_EXPECT(rowset_AddRefRows);
+    SET_EXPECT(rowset_ReleaseRows);
+    SET_EXPECT(accessor_CreateAccessor);
+    SET_EXPECT(accessor_AddRefAccessor);
+    SET_EXPECT(rowset_view_CreateView);
+    SET_EXPECT(view_filter_SetFilter);
+    SET_EXPECT(view_chapter_OpenViewChapter);
+    SET_EXPECT(accessor_ReleaseAccessor);
+    if (exact_scroll)
+    {
+        SET_EXPECT(rowset_GetRowsAt);
+        SET_EXPECT(rowset_GetData);
+    }
+    else
+    {
+        SET_EXPECT(rowset_RestartPosition);
+        SET_EXPECT(rowset_GetNextRows);
+    }
+    hr = _Recordset_put_Filter( recordset, v );
+    todo_wine ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine CHECK_CALLED(rowset_AddRefRows);
+    todo_wine CHECK_CALLED(rowset_ReleaseRows);
+    todo_wine CHECK_CALLED(accessor_CreateAccessor);
+    todo_wine CHECK_CALLED(accessor_AddRefAccessor);
+    todo_wine CHECK_CALLED(rowset_view_CreateView);
+    todo_wine CHECK_CALLED(view_filter_SetFilter);
+    todo_wine CHECK_CALLED(view_chapter_OpenViewChapter);
+    todo_wine CHECK_CALLED(accessor_ReleaseAccessor);
+    if (exact_scroll)
+    {
+        todo_wine CHECK_CALLED(rowset_GetRowsAt);
+        todo_wine CHECK_CALLED(rowset_GetData);
+    }
+    else
+    {
+        todo_wine CHECK_CALLED(rowset_RestartPosition);
+        todo_wine CHECK_CALLED(rowset_GetNextRows);
+    }
+    VariantClear(&v);
+
     Fields_Release(fields);
     ADORecordsetConstruction_Release(construct);
     SET_EXPECT( rowset_ReleaseRows );
     SET_EXPECT(accessor_ReleaseAccessor);
+    SET_EXPECT(chaptered_rowset_ReleaseChapter);
     ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
     CHECK_CALLED(rowset_ReleaseRows );
     CHECK_CALLED(accessor_ReleaseAccessor);
+    todo_wine CHECK_CALLED(chaptered_rowset_ReleaseChapter);
     ok( testrowset.refs == 1, "got %ld\n", testrowset.refs );
 }
 
