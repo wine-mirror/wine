@@ -2147,32 +2147,6 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags, 
 
 
 /***********************************************************************
- *		sync_client_position
- *
- * Synchronize the X client window position with the Windows one
- */
-static void sync_client_position( struct x11drv_win_data *data, const struct window_rects *old_rects )
-{
-    int mask = 0;
-    XWindowChanges changes;
-
-    if (!data->client_window) return;
-
-    changes.x      = data->rects.client.left - data->rects.visible.left;
-    changes.y      = data->rects.client.top - data->rects.visible.top;
-    if (changes.x != old_rects->client.left - old_rects->visible.left) mask |= CWX;
-    if (changes.y != old_rects->client.top  - old_rects->visible.top)  mask |= CWY;
-
-    if (mask)
-    {
-        TRACE( "setting client win %lx pos %d,%d changes=%x\n",
-               data->client_window, changes.x, changes.y, mask );
-        XConfigureWindow( gdi_display, data->client_window, mask, &changes );
-    }
-}
-
-
-/***********************************************************************
  *		move_window_bits
  *
  * Move the window bits when a window is moved.
@@ -3295,8 +3269,6 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     }
 
     XFlush( gdi_display );  /* make sure painting is done before we move the window */
-
-    sync_client_position( data, &old_rects );
 
     if (!data->whole_window)
     {
