@@ -1962,6 +1962,11 @@ LRESULT SYSCALL_API NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARA
     SYSCALL_FUNC( NtUserMessageCall );
 }
 
+BOOL SYSCALL_API NtUserModifyUserStartupInfoFlags( DWORD mask, DWORD flags )
+{
+    SYSCALL_FUNC( NtUserModifyUserStartupInfoFlags );
+}
+
 BOOL SYSCALL_API NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )
 {
     SYSCALL_FUNC( NtUserMoveWindow );

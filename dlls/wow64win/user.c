@@ -3807,6 +3807,14 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
     return message_call_32to64( hwnd, msg, wparam, lparam, result_info, type, ansi );
 }
 
+NTSTATUS WINAPI wow64_NtUserModifyUserStartupInfoFlags( UINT *args )
+{
+    DWORD mask = get_ulong( &args );
+    DWORD flags = get_ulong( &args );
+
+    return NtUserModifyUserStartupInfoFlags( mask, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserMoveWindow( UINT *args )
 {
     HWND hwnd = get_handle( &args );

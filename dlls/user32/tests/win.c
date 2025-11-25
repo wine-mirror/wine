@@ -64,6 +64,8 @@ static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
 static HICON (WINAPI *pInternalGetWindowIcon)(HWND window, UINT type);
 static BOOL (WINAPI *pSetProcessLaunchForegroundPolicy)(DWORD,DWORD);
 
+static BOOL (WINAPI *pNtUserModifyUserStartupInfoFlags)(DWORD,DWORD);
+
 static BOOL test_lbuttondown_flag;
 static DWORD num_gettext_msgs;
 static DWORD num_settext_msgs;
@@ -13777,6 +13779,65 @@ static void test_startupinfo_showwindow_proc( int test_id )
     winetest_pop_context();
 }
 
+static void test_showwindow_proc_modify_flags(void)
+{
+    RTL_USER_PROCESS_PARAMETERS *up = NtCurrentTeb()->Peb->ProcessParameters;
+    HWND hwnd;
+    BOOL ret;
+
+    if (!pNtUserModifyUserStartupInfoFlags)
+    {
+        win_skip( "NtUserModifyUserStartupInfoFlags is not available.\n" );
+        return;
+    }
+
+    ok( up->dwFlags & STARTF_USESHOWWINDOW, "got %#lx.\n", up->dwFlags );
+    ok( up->wShowWindow == SW_HIDE, "got %lu.\n.", up->wShowWindow );
+
+    /* Startup window parameters are fetched early and current values don't affect behaviour. */
+    up->dwFlags = 0;
+    up->wShowWindow = SW_SHOW;
+
+    pNtUserModifyUserStartupInfoFlags( STARTF_USESHOWWINDOW, 0 );
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    ret = IsWindowVisible( hwnd );
+    ok( ret, "got %d.\n", ret );
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    pNtUserModifyUserStartupInfoFlags( STARTF_USESHOWWINDOW, STARTF_USESHOWWINDOW );
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    ret = IsWindowVisible( hwnd );
+    ok( !ret, "got %d.\n", ret );
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    ret = IsWindowVisible( hwnd );
+    ok( ret, "got %d.\n", ret );
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    pNtUserModifyUserStartupInfoFlags( STARTF_USESHOWWINDOW, STARTF_USESHOWWINDOW );
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    ret = IsWindowVisible( hwnd );
+    ok( !ret, "got %d.\n", ret );
+    DestroyWindow( hwnd );
+    pump_messages();
+}
+
 static void test_startupinfo_showwindow( char **argv )
 {
     STARTUPINFOA sa = {.cb = sizeof(STARTUPINFOA)};
@@ -13795,6 +13856,11 @@ static void test_startupinfo_showwindow( char **argv )
         ok( ret, "got error %lu\n", GetLastError() );
         wait_child_process( &info );
     }
+
+    sprintf( cmdline, "%s %s showwindow_proc_modify_flags", argv[0], argv[1] );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &sa, &info );
+    ok( ret, "got error %lu\n", GetLastError() );
+    wait_child_process( &info );
 }
 
 static void test_cascade_windows(void)
@@ -14273,6 +14339,7 @@ START_TEST(win)
     int argc = winetest_get_mainargs( &argv );
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
+    HMODULE win32u = GetModuleHandleA("win32u.dll");
     pGetWindowInfo = (void *)GetProcAddress( user32, "GetWindowInfo" );
     pGetWindowModuleFileNameA = (void *)GetProcAddress( user32, "GetWindowModuleFileNameA" );
     pGetLayeredWindowAttributes = (void *)GetProcAddress( user32, "GetLayeredWindowAttributes" );
@@ -14292,6 +14359,8 @@ START_TEST(win)
     pSystemParametersInfoForDpi = (void *)GetProcAddress( user32, "SystemParametersInfoForDpi" );
     pInternalGetWindowIcon = (void *)GetProcAddress( user32, "InternalGetWindowIcon" );
     pSetProcessLaunchForegroundPolicy = (void*)GetProcAddress( user32, "SetProcessLaunchForegroundPolicy" );
+
+    pNtUserModifyUserStartupInfoFlags = (void*)GetProcAddress( win32u, "NtUserModifyUserStartupInfoFlags" );
 
     if (argc == 4)
     {
@@ -14325,6 +14394,12 @@ START_TEST(win)
     if (argc == 4 && !strcmp(argv[2], "showwindow_proc"))
     {
         test_startupinfo_showwindow_proc( atoi( argv[3] ));
+        return;
+    }
+
+    if (argc == 3 && !strcmp(argv[2], "showwindow_proc_modify_flags"))
+    {
+        test_showwindow_proc_modify_flags();
         return;
     }
 

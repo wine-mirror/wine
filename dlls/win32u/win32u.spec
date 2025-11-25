@@ -1207,7 +1207,7 @@
 @ stdcall -syscall NtUserMessageCall(long long long long long long long)
 @ stub -syscall NtUserMinInitialize
 @ stub -syscall NtUserMinMaximize
-@ stub -syscall NtUserModifyUserStartupInfoFlags
+@ stdcall -syscall NtUserModifyUserStartupInfoFlags(long long)
 @ stub -syscall NtUserModifyWindowTouchCapability
 @ stdcall -syscall NtUserMoveWindow(long long long long long long)
 @ stdcall -syscall NtUserMsgWaitForMultipleObjectsEx(long ptr long long long)

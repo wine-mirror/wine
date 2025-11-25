@@ -1209,7 +1209,7 @@
     SYSCALL_ENTRY( 0x14b5, NtUserMessageCall, 28 ) \
     SYSCALL_ENTRY( 0x14b6, NtUserMinInitialize, 0 ) \
     SYSCALL_ENTRY( 0x14b7, NtUserMinMaximize, 0 ) \
-    SYSCALL_ENTRY( 0x14b8, NtUserModifyUserStartupInfoFlags, 0 ) \
+    SYSCALL_ENTRY( 0x14b8, NtUserModifyUserStartupInfoFlags, 8 ) \
     SYSCALL_ENTRY( 0x14b9, NtUserModifyWindowTouchCapability, 0 ) \
     SYSCALL_ENTRY( 0x14ba, NtUserMoveWindow, 24 ) \
     SYSCALL_ENTRY( 0x14bb, NtUserMsgWaitForMultipleObjectsEx, 20 ) \
@@ -2751,7 +2751,7 @@
     SYSCALL_ENTRY( 0x14b5, NtUserMessageCall, 56 ) \
     SYSCALL_ENTRY( 0x14b6, NtUserMinInitialize, 0 ) \
     SYSCALL_ENTRY( 0x14b7, NtUserMinMaximize, 0 ) \
-    SYSCALL_ENTRY( 0x14b8, NtUserModifyUserStartupInfoFlags, 0 ) \
+    SYSCALL_ENTRY( 0x14b8, NtUserModifyUserStartupInfoFlags, 16 ) \
     SYSCALL_ENTRY( 0x14b9, NtUserModifyWindowTouchCapability, 0 ) \
     SYSCALL_ENTRY( 0x14ba, NtUserMoveWindow, 48 ) \
     SYSCALL_ENTRY( 0x14bb, NtUserMsgWaitForMultipleObjectsEx, 40 ) \
@@ -3929,7 +3929,6 @@
     SYSCALL_STUB( NtUserMarkWindowForRawMouse ) \
     SYSCALL_STUB( NtUserMinInitialize ) \
     SYSCALL_STUB( NtUserMinMaximize ) \
-    SYSCALL_STUB( NtUserModifyUserStartupInfoFlags ) \
     SYSCALL_STUB( NtUserModifyWindowTouchCapability ) \
     SYSCALL_STUB( NtUserNavigateFocus ) \
     SYSCALL_STUB( NtUserNlsKbdSendIMENotification ) \
