@@ -2338,11 +2338,20 @@ static void wined3d_context_gl_get_rt_size(const struct wined3d_context_gl *cont
 
     if (rt->swapchain)
     {
-        RECT window_size;
+        const struct wined3d_swapchain_desc *desc = &rt->swapchain->state.desc;
 
-        GetClientRect(context_gl->window, &window_size);
-        size->cx = window_size.right - window_size.left;
-        size->cy = window_size.bottom - window_size.top;
+        if (!desc->windowed)
+        {
+            size->cx = desc->backbuffer_width;
+            size->cy = desc->backbuffer_height;
+        }
+        else
+        {
+            RECT client_rect;
+            GetClientRect(context_gl->window, &client_rect);
+            size->cx = client_rect.right - client_rect.left;
+            size->cy = client_rect.bottom - client_rect.top;
+        }
 
         return;
     }

@@ -68,12 +68,13 @@ static BOOL wined3d_texture_use_pbo(const struct wined3d_texture *texture, const
  * origin, while D3D has a top-left origin. */
 void wined3d_texture_translate_drawable_coords(const struct wined3d_texture *texture, HWND window, RECT *rect)
 {
+    const struct wined3d_swapchain_desc *desc;
     unsigned int drawable_height;
     POINT offset = {0, 0};
-    RECT windowsize;
 
     if (!texture->swapchain)
         return;
+    desc = &texture->swapchain->state.desc;
 
     if (texture == texture->swapchain->front_buffer)
     {
@@ -81,8 +82,14 @@ void wined3d_texture_translate_drawable_coords(const struct wined3d_texture *tex
         OffsetRect(rect, offset.x, offset.y);
     }
 
-    GetClientRect(window, &windowsize);
-    drawable_height = windowsize.bottom - windowsize.top;
+    if (!desc->windowed)
+        drawable_height = desc->backbuffer_height;
+    else
+    {
+        RECT client_rect;
+        GetClientRect(window, &client_rect);
+        drawable_height = client_rect.bottom - client_rect.top;
+    }
 
     rect->top = drawable_height - rect->top;
     rect->bottom = drawable_height - rect->bottom;

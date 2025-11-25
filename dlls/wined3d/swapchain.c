@@ -215,6 +215,7 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         unsigned int swap_interval, uint32_t flags)
 {
+    const struct wined3d_swapchain_desc *desc = &swapchain->state.desc;
     RECT s, d;
 
     TRACE("swapchain %p, src_rect %s, dst_rect %s, dst_window_override %p, swap_interval %u, flags %#x.\n",
@@ -235,14 +236,16 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
 
     if (!src_rect)
     {
-        SetRect(&s, 0, 0, swapchain->state.desc.backbuffer_width,
-                swapchain->state.desc.backbuffer_height);
+        SetRect(&s, 0, 0, desc->backbuffer_width, desc->backbuffer_height);
         src_rect = &s;
     }
 
     if (!dst_rect)
     {
-        GetClientRect(swapchain->win_handle, &d);
+        if (!desc->windowed)
+            SetRect(&d, 0, 0, desc->backbuffer_width, desc->backbuffer_height);
+        else
+            GetClientRect(swapchain->win_handle, &d);
         dst_rect = &d;
     }
 
@@ -580,19 +583,28 @@ static void wined3d_swapchain_gl_rotate(struct wined3d_swapchain *swapchain, str
 static bool swapchain_present_is_partial_copy(struct wined3d_swapchain *swapchain, const RECT *dst_rect)
 {
     enum wined3d_swap_effect swap_effect = swapchain->state.desc.swap_effect;
-    RECT client_rect;
-    unsigned int t;
+    const struct wined3d_swapchain_desc *desc = &swapchain->state.desc;
+    unsigned int width, height;
 
     if (swap_effect != WINED3D_SWAP_EFFECT_COPY && swap_effect != WINED3D_SWAP_EFFECT_COPY_VSYNC)
         return false;
 
-    GetClientRect(swapchain->win_handle, &client_rect);
+    if (!desc->windowed)
+    {
+        width = desc->backbuffer_width;
+        height = desc->backbuffer_height;
+    }
+    else
+    {
+        RECT client_rect;
+        GetClientRect(swapchain->win_handle, &client_rect);
+        width = client_rect.right - client_rect.left;
+        height = client_rect.bottom - client_rect.top;
+    }
 
-    t = client_rect.right - client_rect.left;
-    if ((dst_rect->left && dst_rect->right) || abs(dst_rect->right - dst_rect->left) != t)
+    if ((dst_rect->left && dst_rect->right) || abs(dst_rect->right - dst_rect->left) != width)
         return true;
-    t = client_rect.bottom - client_rect.top;
-    if ((dst_rect->top && dst_rect->bottom) || abs(dst_rect->bottom - dst_rect->top) != t)
+    if ((dst_rect->top && dst_rect->bottom) || abs(dst_rect->bottom - dst_rect->top) != height)
         return true;
 
     return false;
