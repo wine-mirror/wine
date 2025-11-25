@@ -66,8 +66,8 @@ struct fields
     ISupportErrorInfo   ISupportErrorInfo_iface;
     LONG                refs;
     struct field      **field;
-    ULONG               count;
-    ULONG               allocated;
+    int                 count;
+    int                 allocated;
 };
 
 struct bookmark_data
@@ -1607,7 +1607,7 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
 
 static void close_recordset( struct recordset *recordset )
 {
-    ULONG i;
+    int i;
 
     cache_release( recordset );
     recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
