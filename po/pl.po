@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-11-06 19:03+0100\n"
+"PO-Revision-Date: 2025-11-25 17:08+0100\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -14848,10 +14848,8 @@ msgid "%t%1!u! file(s) copied\n"
 msgstr "Skopiowano %t%1!u! plik(ów)\n"
 
 #: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
-#, fuzzy
-#| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"
-msgstr "Nie można uzyskać dostępu do pliku.\n"
+msgstr "Nie można skopiować pliku do siebie samego.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
