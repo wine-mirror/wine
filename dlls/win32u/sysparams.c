@@ -2012,6 +2012,8 @@ static SIZE *get_screen_sizes( const DEVMODEW *maximum, const DEVMODEW *modes, U
         { 640,  480},
         { 800,  600},
         {1024,  768},
+        {1152,  864},
+        {1280,  960},
         {1600, 1200},
         /* 16:9 */
         { 960,  540},
