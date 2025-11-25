@@ -1615,24 +1615,6 @@ int get_window_pixel_format( HWND hwnd )
     return ret;
 }
 
-static int window_has_client_surface( HWND hwnd )
-{
-    struct client_surface *surface;
-    WND *win = get_win_ptr( hwnd );
-    BOOL ret;
-
-    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
-    ret = win->pixel_format || win->current_drawable;
-    release_win_ptr( win );
-    if (ret) return TRUE;
-
-    pthread_mutex_lock( &surfaces_lock );
-    LIST_FOR_EACH_ENTRY( surface, &client_surfaces, struct client_surface, entry )
-        if ((ret = surface->hwnd == hwnd)) break;
-    pthread_mutex_unlock( &surfaces_lock );
-    return ret;
-}
-
 /***********************************************************************
  *           NtUserGetProp   (win32u.@)
  *
@@ -2149,20 +2131,16 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     return new_surface;
 }
 
-static void update_children_window_state( HWND hwnd )
+static void update_window_client_surfaces( HWND hwnd )
 {
     HWND *children;
     int i;
 
     if (!(children = list_window_children( hwnd ))) return;
-
-    for (i = 0; children[i]; i++)
-    {
-        if (!window_has_client_surface( children[i] )) continue;
-        update_window_state( children[i] );
-    }
-
+    for (i = 0; children[i]; i++) update_window_client_surfaces( children[i] );
     free( children );
+
+    update_client_surfaces( hwnd );
 }
 
 static HICON get_icon_info( HICON icon, ICONINFO *ii )
@@ -2199,7 +2177,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 {
     struct window_rects monitor_rects;
     WND *win;
-    HWND owner_hint, surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
+    HWND owner_hint, surface_win = 0, toplevel;
     UINT raw_dpi, monitor_dpi, dpi = get_thread_dpi();
     BOOL ret, is_layered, is_child, need_icons = FALSE;
     struct window_rects old_rects;
@@ -2208,10 +2186,11 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     HICON icon, icon_small;
     ICONINFO ii, ii_small;
 
+    toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
     is_layered = new_surface && new_surface->alpha_mask;
-    is_child = parent && parent != NtUserGetDesktopWindow();
+    is_child = toplevel && toplevel != hwnd;
 
-    if (is_child) monitor_dpi = get_win_monitor_dpi( parent, &raw_dpi );
+    if (is_child) monitor_dpi = get_win_monitor_dpi( toplevel, &raw_dpi );
     else monitor_dpi = monitor_dpi_from_rect( new_rects->window, dpi, &raw_dpi );
 
     get_window_rects( hwnd, COORDS_PARENT, &old_rects, dpi );
@@ -2368,9 +2347,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 
         user_driver->pWindowPosChanged( hwnd, insert_after, owner_hint, swp_flags, &monitor_rects,
                                         get_driver_window_surface( new_surface, raw_dpi ) );
-        update_client_surfaces( hwnd );
-
-        update_children_window_state( hwnd );
+        update_window_client_surfaces( toplevel );
     }
 
     return ret;
