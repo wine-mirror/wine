@@ -578,7 +578,7 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                     skipFile = TRUE;
                     if (XCOPY_IsSameFile(copyFrom, copyTo)) {
                         XCOPY_wprintf(XCOPY_LoadMessage(STRING_NOCOPYTOSELF));
-                        ret = RC_WRITEERROR;
+                        ret = RC_INITERROR;
                     } else {
                         DWORD error = GetLastError();
                         XCOPY_wprintf(XCOPY_LoadMessage(STRING_COPYFAIL),
