@@ -667,22 +667,40 @@ static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value, BOO
     return TRUE;
 }
 
+static unsigned int append_string( WCHAR *buffer, const xmlstr_t *str, unsigned int maxlen )
+{
+    static const char valid_chars[] = "-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    unsigned int i, len;
+
+    if (!str->len) return 0;
+    for (i = len = 0; i < str->len; i++)
+        if (strchr( valid_chars, str->ptr[i] )) buffer[len++] = (WCHAR)str->ptr[i];
+    if (len > maxlen)
+    {
+        unsigned int pos = maxlen / 2;
+        buffer[pos - 1] = buffer[pos] = '.';
+        memmove( buffer + pos + 1, buffer + len - pos + 1, (pos - 1) * sizeof(WCHAR) );
+        len = maxlen;
+    }
+    buffer[len++] = '_';
+    buffer[len] = 0;
+    wcslwr( buffer );
+    return len;
+}
+
 static void append_manifest_filename( const xmlstr_t *arch, const xmlstr_t *name, const xmlstr_t *key,
                                       const xmlstr_t *version, const xmlstr_t *lang, WCHAR *buffer, DWORD size )
 {
     DWORD pos = lstrlenW( buffer );
 
-    pos += MultiByteToWideChar( CP_UTF8, 0, arch->ptr, arch->len, buffer + pos, size - pos );
-    buffer[pos++] = '_';
-    pos += MultiByteToWideChar( CP_UTF8, 0, name->ptr, name->len, buffer + pos, size - pos );
-    buffer[pos++] = '_';
+    pos += append_string( buffer + pos, arch, 16 );
+    pos += append_string( buffer + pos, name, 40 );
     pos += MultiByteToWideChar( CP_UTF8, 0, key->ptr, key->len, buffer + pos, size - pos );
     buffer[pos++] = '_';
     pos += MultiByteToWideChar( CP_UTF8, 0, version->ptr, version->len, buffer + pos, size - pos );
     buffer[pos++] = '_';
-    pos += MultiByteToWideChar( CP_UTF8, 0, lang->ptr, lang->len, buffer + pos, size - pos );
-    lstrcpyW( buffer + pos, L"_deadbeef" );
-    wcslwr( buffer );
+    pos += append_string( buffer + pos, lang, 8 );
+    lstrcpyW( buffer + pos, L"deadbeef" );
 }
 
 static WCHAR* create_winsxs_dll_path( const xmlstr_t *arch, const xmlstr_t *name,
