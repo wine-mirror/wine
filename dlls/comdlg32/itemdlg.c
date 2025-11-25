@@ -2420,6 +2420,7 @@ static HRESULT WINAPI IFileDialog2_fnQueryInterface(IFileDialog2 *iface,
 
     *ppvObject = NULL;
     if(IsEqualGUID(riid, &IID_IUnknown) ||
+       IsEqualGUID(riid, &IID_IModalWindow) ||
        IsEqualGUID(riid, &IID_IFileDialog) ||
        IsEqualGUID(riid, &IID_IFileDialog2))
     {
