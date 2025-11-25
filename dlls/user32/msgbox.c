@@ -540,6 +540,7 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
         EnumThreadWindows(GetCurrentThreadId(), MSGBOX_EnumProc, (LPARAM)&threadWindows);
     }
 
+    NtUserModifyUserStartupInfoFlags( STARTF_USESHOWWINDOW, 0 );
     ret=DialogBoxIndirectParamW(msgbox->hInstance, tmplate,
                                 msgbox->hwndOwner, MSGBOX_DlgProc, (LPARAM)msgbox);
 

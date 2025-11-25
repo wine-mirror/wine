@@ -2300,7 +2300,7 @@ static void test_message_box_startup_info(void)
     ShowWindow( hwnd, SW_SHOWDEFAULT );
     ret = IsWindowVisible( hwnd );
     /* startup info flags have no effect, while the message box window wasn't even created. */
-    todo_wine ok( ret, "got %d.\n", ret );
+    ok( ret, "got %d.\n", ret );
     DestroyWindow( hwnd );
     pump_messages();
 
