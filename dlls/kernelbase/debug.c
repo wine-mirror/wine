@@ -1555,7 +1555,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExW( HANDLE process, HMODULE mod
         NTSTATUS status;
 
         status = get_process_image_file_name( process, buffer, sizeof(buffer), &dynamic_buffer, &result );
-        if (!status)
+        if (set_ntstatus( status ))
         {
             len = result->Length / sizeof(WCHAR);
             memcpy( name, result->Buffer, min( len, size - 1 ) * sizeof(WCHAR) );
