@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-11-25 17:08+0100\n"
+"PO-Revision-Date: 2025-11-26 07:59+0100\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -9660,28 +9660,20 @@ msgid "Scanning"
 msgstr "Skanowanie"
 
 #: dlls/sane.ds/sane.rc:58
-#, fuzzy
-#| msgid "feature from:"
 msgid "Manufacturer:"
-msgstr "funkcja z:"
+msgstr "Producent:"
 
 #: dlls/sane.ds/sane.rc:60
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product family:"
-msgstr "Uaktualnienia produktu:"
+msgstr "Rodzina produktu:"
 
 #: dlls/sane.ds/sane.rc:62
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product name:"
-msgstr "Uaktualnienia produktu:"
+msgstr "Nazwa produktu:"
 
 #: dlls/sane.ds/sane.rc:64
-#, fuzzy
-#| msgid "Screen resolution"
 msgid "Resolution:"
-msgstr "Rozdzielczość ekranu"
+msgstr "Rozdzielczość:"
 
 #: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
 msgid "Page"
@@ -9719,7 +9711,7 @@ msgstr "µs"
 
 #: dlls/sane.ds/sane.rc:43
 msgid "LineArt"
-msgstr ""
+msgstr "LineArt"
 
 #: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
 #: programs/ipconfig/ipconfig.rc:34
@@ -9731,20 +9723,24 @@ msgid ""
 "The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
 "scanned."
 msgstr ""
+"Automatyczny podajnik dokumentów (ADF) jest pusty. Włoż arkusze do "
+"zeskanowania."
 
 #: dlls/sane.ds/sane.rc:47
 msgid ""
 "The scanner reports a paper jam. Check for additional information on device "
 "display."
 msgstr ""
+"Skaner zgłasza zacięcie papieru. Sprawdź dodatkowe informacje na "
+"wyświetlaczu urządzenia."
 
 #: dlls/sane.ds/sane.rc:48
 msgid "The scanner cover is open. Please close the scanner."
-msgstr ""
+msgstr "Pokrywa skanera jest otwarta. Zamknij skaner."
 
 #: dlls/sane.ds/sane.rc:49
 msgid "The scanner is busy. Try again later."
-msgstr ""
+msgstr "Skaner jest zajęty. Spróbuj ponownie później."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
