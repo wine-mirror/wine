@@ -1676,7 +1676,7 @@ static void test_mounted_folder(void)
 
     ret = GetVolumeNameForVolumeMountPointA( "C:\\", volume_name, sizeof(volume_name) );
     ok(ret, "got error %lu\n", GetLastError());
-    ret = GetVolumeNameForVolumeMountPointW( L"C:\\", volume_nameW, sizeof(volume_nameW) );
+    ret = GetVolumeNameForVolumeMountPointW( L"C:\\", volume_nameW, ARRAY_SIZE(volume_nameW) );
     ok(ret, "got error %lu\n", GetLastError());
 
     ret = SetVolumeMountPointA( "C:\\winetest_mnt\\", volume_name );
