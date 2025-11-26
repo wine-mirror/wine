@@ -1818,7 +1818,6 @@ static void register_view( struct file_view *view )
 static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t size, unsigned int vprot )
 {
     struct file_view *view;
-    int unix_prot;
 
     assert( !((UINT_PTR)base & host_page_mask) );
     assert( !(size & page_mask) );
@@ -1852,17 +1851,9 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     set_page_vprot( base, size, vprot );
 
     register_view( view );
+    kernel_writewatch_register_range( view, view->base, view->size );
 
     *view_ret = view;
-
-    unix_prot = get_unix_prot( vprot );
-    if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
-    {
-        TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
-        mprotect( base, size, unix_prot | PROT_EXEC );
-    }
-
-    kernel_writewatch_register_range( view, view->base, view->size );
     return STATUS_SUCCESS;
 }
 
@@ -2279,6 +2270,8 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
     if (use_kernel_writewatch && vprot & VPROT_WRITEWATCH)
         unix_prot = get_unix_prot( vprot & ~VPROT_WRITEWATCH );
 
+    unix_prot &= ~PROT_EXEC;
+
     if (base)
     {
         if (is_beyond_limit( base, size, address_space_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
@@ -2368,20 +2361,6 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
 #endif
     }
 
-    /* macOS since 10.15 fails to map files with PROT_EXEC
-     * (and will show the user an annoying warning if the file has a quarantine xattr set).
-     * But it works to map without PROT_EXEC and then use mprotect().
-     */
-#ifndef __APPLE__
-    if ((vprot & VPROT_EXEC) || force_exec_prot)
-    {
-        if (!(vprot & VPROT_EXEC))
-            TRACE( "forcing exec permission on mapping %p-%p\n",
-                   (char *)view->base + start, (char *)view->base + start + size - 1 );
-        prot |= PROT_EXEC;
-    }
-#endif
-
     map_size = ROUND_SIZE( start, size, page_mask );
     map_addr = ROUND_ADDR( (char *)view->base + start, page_mask );
     host_addr = ROUND_ADDR( (char *)view->base + start, host_page_mask );
@@ -2409,13 +2388,8 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
             }
             break;
         case EACCES:
-        case EPERM:  /* noexec filesystem, fall back to read() */
-            if (vprot & VPROT_WRITE)
-            {
-                if (prot & PROT_EXEC) ERR( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
-                return STATUS_ACCESS_DENIED;
-            }
-            if (prot & PROT_EXEC) WARN( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
+        case EPERM:  /* access error, fall back to read() */
+            if (vprot & VPROT_WRITE) return STATUS_ACCESS_DENIED;
             break;
         default:
             ERR( "mmap error %s, range %p-%p, unix_prot %#x\n",
@@ -2695,7 +2669,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
     void *addr = NULL;
     void * const low_64k = (void *)0x10000;
     const size_t dosmem_size = 0x110000;
-    int unix_prot = get_unix_prot( vprot );
+    int unix_prot = get_unix_prot( vprot ) & ~PROT_EXEC;
 
     /* check for existing view */
 
@@ -5143,7 +5117,11 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
             else status = map_view( &view, base, size, type, vprot, limit_low, limit_high,
                                     align ? align - 1 : granularity_mask );
 
-            if (status == STATUS_SUCCESS) base = view->base;
+            if (status == STATUS_SUCCESS)
+            {
+                base = view->base;
+                if (vprot & VPROT_EXEC || force_exec_prot) mprotect_range( base, size, 0, 0 );
+            }
         }
     }
     else if (type & MEM_RESET)
