@@ -3184,7 +3184,8 @@ static HRESULT WINAPI domdoc_setProperty(
              wcsicmp(p, L"AllowXsltScript") == 0 ||
              wcsicmp(p, L"NormalizeAttributeValues") == 0 ||
              wcsicmp(p, L"AllowDocumentFunction") == 0 ||
-             wcsicmp(p, L"MaxElementDepth") == 0)
+             wcsicmp(p, L"MaxElementDepth") == 0 ||
+             wcsicmp(p, L"UseInlineSchema") == 0)
     {
         /* Ignore */
         FIXME("Ignoring property %s, value %s\n", debugstr_w(p), debugstr_variant(&value));
