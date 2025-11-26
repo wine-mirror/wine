@@ -25,6 +25,8 @@
 #include "wine/debug.h"
 #include "resource.h"
 
+#include <winnls.h>
+
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 /* Sane result codes from sane.h */
@@ -141,6 +143,8 @@ TW_UINT16 SANE_Start(void)
 
       if (activeDS.progressWnd)
       {
+          WCHAR szLocaleBuffer[4];
+          WCHAR szResolution[200];
           WCHAR szFormat[20];
           int sid_format;
 
@@ -153,7 +157,28 @@ TW_UINT16 SANE_Start(void)
 
           LoadStringW( SANE_instance, sid_format, szFormat, ARRAY_SIZE( szFormat ) );
 
-          SetDlgItemTextW(activeDS.progressWnd, IDC_RESOLUTION, szFormat);
+          if (activeDS.XResolution.Whole && activeDS.YResolution.Whole)
+          {
+              const double xresolution = activeDS.XResolution.Whole + activeDS.XResolution.Frac / 65536.0;
+              const double yresolution = activeDS.YResolution.Whole + activeDS.YResolution.Frac / 65536.0;
+
+              GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_IMEASURE, szLocaleBuffer, ARRAY_SIZE(szLocaleBuffer));
+              if (szLocaleBuffer[0]=='1')
+              {
+                  swprintf(szResolution, ARRAY_SIZE(szResolution), L"%d DPI %s %.2f x %.2f \"",
+                           activeDS.XResolution.Whole, szFormat,
+                           activeDS.frame_params.pixels_per_line / xresolution ,
+                           activeDS.frame_params.lines           / yresolution );
+              }
+              else
+              {
+                  swprintf(szResolution, ARRAY_SIZE(szResolution), L"%d DPI %s %.1f x %.1f mm",
+                           activeDS.XResolution.Whole, szFormat,
+                           activeDS.frame_params.pixels_per_line * 25.4 / xresolution ,
+                           activeDS.frame_params.lines           * 25.4 / yresolution );
+              }
+              SetDlgItemTextW(activeDS.progressWnd, IDC_RESOLUTION, szResolution);
+          }
       }
 
       TRACE("Acquiring image %dx%dx%d bits (format=%d last=%d) from sane...\n"
@@ -189,7 +214,6 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
 {
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IMAGEINFO pImageInfo = (pTW_IMAGEINFO) pData;
-    int resolution;
 
     TRACE("DG_IMAGE/DAT_IMAGEINFO/MSG_GET\n");
 
@@ -210,12 +234,8 @@ TW_UINT16 SANE_ImageInfoGet (pTW_IDENTITY pOrigin,
             }
         }
 
-        if (sane_option_get_int("resolution", &resolution) == TWCC_SUCCESS)
-            pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = resolution;
-        else
-            pImageInfo->XResolution.Whole = pImageInfo->YResolution.Whole = -1;
-        pImageInfo->XResolution.Frac = 0;
-        pImageInfo->YResolution.Frac = 0;
+        pImageInfo->XResolution = activeDS.XResolution;
+        pImageInfo->YResolution = activeDS.YResolution;
         pImageInfo->ImageWidth = activeDS.frame_params.pixels_per_line;
         pImageInfo->ImageLength = activeDS.frame_params.lines;
 

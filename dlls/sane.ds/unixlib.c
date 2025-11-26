@@ -399,7 +399,8 @@ static NTSTATUS option_find_descriptor( void *args )
 
     for (i = 1; (opt = sane_get_option_descriptor( device_handle, i )) != NULL; i++)
     {
-        if (params->type != map_type( opt->type )) continue;
+        if (params->type >= 0 &&
+            params->type != map_type( opt->type )) continue;
         if (strcmp( params->name, opt->name )) continue;
         descr->optno = i;
         map_descr( descr, opt );

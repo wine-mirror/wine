@@ -49,9 +49,7 @@ struct tagActiveDS
     TW_BOOL             capIndicators;          /* CAP_INDICATORS */
     BOOL                PixelTypeSet;
     TW_UINT16		defaultPixelType;		/* ICAP_PIXELTYPE */
-    BOOL                XResolutionSet;
     TW_FIX32            defaultXResolution;
-    BOOL                YResolutionSet;
     TW_FIX32            defaultYResolution;
 
     /* Number of scan lines already transfered in DG_IMAGE / DAT_IMAGEMEMXFER / MSG_GET. */
@@ -68,6 +66,10 @@ struct tagActiveDS
 
     /* TRUE if user interface dialog is shown in DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDS */
     BOOL                ShowUI;
+
+    /* Resolution used during scan */
+    TW_FIX32            XResolution;
+    TW_FIX32            YResolution;
 };
 
 extern struct tagActiveDS activeDS;
@@ -222,6 +224,8 @@ TW_UINT16 sane_option_get_int( const char *option_name, int *val );
 TW_UINT16 sane_option_set_int( const char *option_name, int val, BOOL *reload );
 TW_UINT16 sane_option_get_str( const char *option_name, char *val, int len );
 TW_UINT16 sane_option_set_str( const char *option_name, char *val, BOOL *reload );
+TW_UINT16 sane_option_get_fix32( const char *option_name, TW_FIX32 *val);
+TW_UINT16 sane_option_set_fix32( const char *option_name, const TW_FIX32 *val, BOOL *reload);
 TW_UINT16 sane_option_probe_resolution( const char *option_name, struct option_descriptor *opt );
 TW_UINT16 sane_option_probe_str( const char* option_name, const WCHAR* const* filter[], char* opt_vals, int buf_len );
 TW_UINT16 sane_option_get_bool( const char *option_name, BOOL *val );
@@ -229,6 +233,8 @@ TW_UINT16 sane_option_set_bool( const char *option_name, BOOL val );
 TW_UINT16 sane_option_get_scan_area( int *tlx, int *tly, int *brx, int *bry );
 TW_UINT16 sane_option_get_max_scan_area( int *tlx, int *tly, int *brx, int *bry );
 TW_UINT16 sane_option_set_scan_area( int tlx, int tly, int brx, int bry, BOOL *reload );
+TW_UINT16 sane_option_get_resolution(const char *best_option_name, TW_FIX32 *val);
+TW_UINT16 sane_option_set_resolution(const char *best_option_name, const TW_FIX32 *val, BOOL *reload);
 TW_FIX32 convert_sane_res_to_twain( int res );
 int convert_twain_res_to_sane( TW_FIX32 res );
 TW_UINT16 get_sane_params( struct frame_parameters *params );

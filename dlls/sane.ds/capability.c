@@ -44,7 +44,7 @@ static TW_UINT16 get_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 *type, TW_UI
 }
 
 
-static TW_UINT16 set_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 type, TW_UINT32 value)
+static TW_UINT16 set_onevaluep(pTW_CAPABILITY pCapability, TW_UINT16 type, void *value)
 {
     pCapability->hContainer = GlobalAlloc (0, sizeof(TW_ONEVALUE));
 
@@ -55,12 +55,18 @@ static TW_UINT16 set_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 type, TW_UIN
         {
             pCapability->ConType = TWON_ONEVALUE;
             pVal->ItemType = type;
-            pVal->Item = value;
+            memcpy(&pVal->Item, value, sizeof(pVal->Item));
             GlobalUnlock (pCapability->hContainer);
             return TWCC_SUCCESS;
         }
     }
    return TWCC_LOWMEMORY;
+}
+
+
+static TW_UINT16 set_onevalue(pTW_CAPABILITY pCapability, TW_UINT16 type, TW_UINT32 value)
+{
+    return set_onevaluep(pCapability, type, &value);
 }
 
 static TW_UINT16 msg_set(pTW_CAPABILITY pCapability, TW_UINT32 *val)
@@ -630,7 +636,7 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
 {
     TW_UINT16 twCC = TWCC_BADCAP;
     TW_UINT32 val;
-    int current_resolution;
+    TW_FIX32 current_resolution;
     TW_FIX32 *default_res;
     const char *best_option_name;
     struct option_descriptor opt;
@@ -648,28 +654,9 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
         best_option_name = "y-resolution";
         default_res = &activeDS.defaultYResolution;
     }
-    if (sane_option_get_int(best_option_name, &current_resolution) != TWCC_SUCCESS)
+    if (sane_option_get_resolution(best_option_name, &current_resolution) != TWCC_SUCCESS)
     {
-        best_option_name = "resolution";
-        if (sane_option_get_int(best_option_name, &current_resolution) != TWCC_SUCCESS)
-            return TWCC_BADCAP;
-    }
-
-    /* Sane does not support a concept of 'default' resolution, so we have to
-     *   cache the resolution the very first time we load the scanner, and use that
-     *   as the default */
-    if (cap == ICAP_XRESOLUTION && ! activeDS.XResolutionSet)
-    {
-        default_res->Whole = current_resolution;
-        default_res->Frac = 0;
-        activeDS.XResolutionSet = TRUE;
-    }
-
-    if (cap == ICAP_YRESOLUTION && ! activeDS.YResolutionSet)
-    {
-        default_res->Whole = current_resolution;
-        default_res->Frac = 0;
-        activeDS.YResolutionSet = TRUE;
+        return TWCC_BADCAP;
     }
 
     switch (action)
@@ -680,19 +667,23 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
             break;
 
         case MSG_GET:
-            twCC = sane_option_probe_resolution(best_option_name, &opt);
-            if (twCC == TWCC_SUCCESS)
+            if (sane_option_probe_resolution(best_option_name, &opt)==TWCC_SUCCESS ||
+                sane_option_probe_resolution("resolution", &opt)==TWCC_SUCCESS)
             {
                 if (opt.constraint_type == CONSTRAINT_RANGE)
                     twCC = msg_get_range(pCapability, TWTY_FIX32,
                             opt.constraint.range.min, opt.constraint.range.max,
                             opt.constraint.range.quant == 0 ? 1 : opt.constraint.range.quant,
-                            default_res->Whole, current_resolution);
+                            default_res->Whole, current_resolution.Whole);
                 else if (opt.constraint_type == CONSTRAINT_WORD_LIST)
                     twCC = msg_get_array(pCapability, TWTY_UINT32, &(opt.constraint.word_list[1]),
                             opt.constraint.word_list[0]);
                 else
                     twCC = TWCC_CAPUNSUPPORTED;
+            }
+            else
+            {
+                twCC = TWCC_BADCAP;
             }
             break;
 
@@ -703,23 +694,23 @@ static TW_UINT16 SANE_ICAPResolution (pTW_CAPABILITY pCapability, TW_UINT16 acti
                 TW_FIX32 f32;
                 BOOL reload = FALSE;
                 memcpy(&f32, &val, sizeof(f32));
-                twCC = sane_option_set_int(best_option_name, f32.Whole, &reload);
+                twCC = sane_option_set_resolution(best_option_name, &f32, &reload);
                 if (reload) twCC = TWCC_CHECKSTATUS;
             }
             break;
 
         case MSG_GETDEFAULT:
-            twCC = set_onevalue(pCapability, TWTY_FIX32, default_res->Whole);
+            twCC = set_onevaluep(pCapability, TWTY_FIX32, default_res);
             break;
 
         case MSG_RESET:
-            twCC = sane_option_set_int(best_option_name, default_res->Whole, NULL);
+          twCC = sane_option_set_resolution(best_option_name, default_res, NULL);
             if (twCC != TWCC_SUCCESS) return twCC;
 
             /* .. fall through intentional .. */
 
         case MSG_GETCURRENT:
-            twCC = set_onevalue(pCapability, TWTY_FIX32, current_resolution);
+            twCC = set_onevaluep(pCapability, TWTY_FIX32, &current_resolution);
             break;
     }
     return twCC;

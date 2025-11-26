@@ -85,6 +85,12 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
         activeDS.capIndicators = TRUE;
         activeDS.ShowUI = FALSE;
 
+        /* Sane does not support a concept of 'default' resolution, so we have to
+         *   cache the resolution the very first time we load the scanner, and use that
+         *   as the default */
+        sane_option_get_resolution("x-resolution", &activeDS.defaultXResolution);
+        sane_option_get_resolution("y-resolution", &activeDS.defaultYResolution);
+
         SANE_LoadOptions();
 
         return TWRC_SUCCESS;
@@ -393,6 +399,9 @@ SANE_XferReady(void)
       sane_option_get_str ("source", current_source, sizeof(current_source)) == TWCC_SUCCESS &&
       (current_source[0]=='A' || current_source[0]=='a');
     activeDS.userCancelled = FALSE;
+
+    sane_option_get_resolution("x-resolution", &activeDS.XResolution);
+    sane_option_get_resolution("y-resolution", &activeDS.YResolution);
 
     SANE_Notify(MSG_XFERREADY);
 }
