@@ -563,6 +563,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
             case 1:
                 if (local_size) len++;  /* sub sp,sp,#local_size */
                 if (local_size > 4088) len++;  /* sub sp,sp,#4088 */
+                if (func->RegI == 1 && func->CR == 1) len++; /* sub sp,sp,#regsave */
                 break;
             }
             if (offset < len + h_size)  /* prolog */
@@ -645,8 +646,12 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
                 if (func->CR == 1) restore_regs( 30, 1, int_regs - 1, context, ptrs );
                 /* str xn,[sp,#offset] */
                 restore_regs( 18 + func->RegI, 1,
-                              (func->RegI > 1) ? func->RegI - 1 : -saved_regs,
+                              (func->RegI > 1 || func->CR == 1) ? func->RegI - 1 : -saved_regs,
                               context, ptrs );
+            }
+            if (func->CR == 1 && func->RegI == 1)
+            {
+                if (pos++ >= skip) context->Sp += regsave;
             }
         }
         else if (func->CR == 1)
