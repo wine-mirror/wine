@@ -253,6 +253,7 @@ static char cpu_name[49];
 static char cpu_vendor[13];
 static USHORT cpu_level, cpu_revision;
 static ULONGLONG cpu_id;
+static ULONGLONG cpu_features_bitmap[2];
 static ULONG *performance_cores;
 static unsigned int performance_cores_capacity = 0;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
@@ -574,6 +575,46 @@ static void init_cpu_model(void)
             else if (!strcmp( line, "CPU part" )) part = strtoul( value, NULL, 0);
             else if (!strcmp( line, "CPU variant" )) variant = strtoul( value, NULL, 0);
             else if (!strcmp( line, "CPU revision" )) revision = strtoul( value, NULL, 0);
+            else if (!strcmp( line, "Features" ))
+            {
+                static const struct { ULONG flag; const char *name; } features[] =
+                {
+                    { PF_ARM_SHA3_INSTRUCTIONS_AVAILABLE, "sha3" },
+                    { PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE, "sha512" },
+                    { PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE, "i8mm" },
+                    { PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE, "fphp" },
+                    { PF_ARM_V86_BF16_INSTRUCTIONS_AVAILABLE, "bf16" },
+                    { PF_ARM_V86_EBF16_INSTRUCTIONS_AVAILABLE, "ebf16" },
+                    { PF_ARM_SME_INSTRUCTIONS_AVAILABLE, "sme" },
+                    { PF_ARM_SME2_INSTRUCTIONS_AVAILABLE, "sme2" },
+                    { PF_ARM_SME2_1_INSTRUCTIONS_AVAILABLE, "sme2p1" },
+                    { PF_ARM_SME2_2_INSTRUCTIONS_AVAILABLE, "sme2p2" },
+                    { PF_ARM_SME_AES_INSTRUCTIONS_AVAILABLE, "smeaes" },
+                    { PF_ARM_SME_SBITPERM_INSTRUCTIONS_AVAILABLE, "smesbitperm" },
+                    /* The PF_ARM_SME_SF8MM4_INSTRUCTIONS_AVAILABLE and
+                     * PF_ARM_SME_SF8MM8_INSTRUCTIONS_AVAILABLE flags aren't exposed by
+                     * the Linux kernel, see
+                     * https://lists.infradead.org/pipermail/linux-arm-kernel/2025-January/991187.html */
+                    { PF_ARM_SME_SF8DP2_INSTRUCTIONS_AVAILABLE, "smesf8dp2" },
+                    { PF_ARM_SME_SF8DP4_INSTRUCTIONS_AVAILABLE, "smesf8dp4" },
+                    { PF_ARM_SME_SF8FMA_INSTRUCTIONS_AVAILABLE, "smesf8fma" },
+                    { PF_ARM_SME_F8F32_INSTRUCTIONS_AVAILABLE, "smef8f32" },
+                    { PF_ARM_SME_F8F16_INSTRUCTIONS_AVAILABLE, "smef8f16" },
+                    { PF_ARM_SME_F16F16_INSTRUCTIONS_AVAILABLE, "smef16f16" },
+                    { PF_ARM_SME_B16B16_INSTRUCTIONS_AVAILABLE, "smeb16b16" },
+                    { PF_ARM_SME_F64F64_INSTRUCTIONS_AVAILABLE, "smef64f64" },
+                    { PF_ARM_SME_I16I64_INSTRUCTIONS_AVAILABLE, "smei16i64" },
+                    { PF_ARM_SME_LUTv2_INSTRUCTIONS_AVAILABLE, "smelutv2" },
+                    { PF_ARM_SME_FA64_INSTRUCTIONS_AVAILABLE, "smefa64" },
+                };
+
+                for (unsigned int i = 0; i < ARRAY_SIZE(features); i++)
+                {
+                    ULONG flag = features[i].flag - PROCESSOR_FEATURE_MAX;
+                    if (!has_feature( value, features[i].name )) continue;
+                    cpu_features_bitmap[flag / 64] |= 1ull << (flag % 64);
+                }
+            }
         }
         fclose( f );
     }
@@ -3858,6 +3899,12 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
+
+    case SystemProcessorFeaturesBitMapInformation:  /* 250 */
+        len = sizeof(cpu_features_bitmap);
+        if (size == len) memcpy( info, cpu_features_bitmap, len );
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
 
     /* Wine extensions */
 

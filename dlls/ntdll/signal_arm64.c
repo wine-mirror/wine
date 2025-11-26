@@ -614,6 +614,16 @@ NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
 }
 
 
+static ULONGLONG cpu_features_bitmap[2];
+static RTL_RUN_ONCE init_once = RTL_RUN_ONCE_INIT;
+
+static DWORD WINAPI init_cpu_features( RTL_RUN_ONCE *once, void *param, void **context )
+{
+    return !NtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation,
+                                      cpu_features_bitmap, sizeof(cpu_features_bitmap), NULL );
+}
+
+
 /***********************************************************************
  *           RtlIsProcessorFeaturePresent [NTDLL.@]
  */
@@ -653,8 +663,14 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
         (1ull << PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE) |
         (1ull << PF_ARM_LSE2_AVAILABLE);
 
-    return (feature < PROCESSOR_FEATURE_MAX && (arm64_features & (1ull << feature)) &&
-            user_shared_data->ProcessorFeatures[feature]);
+    if (feature < PROCESSOR_FEATURE_MAX)
+        return (arm64_features & (1ull << feature)) && user_shared_data->ProcessorFeatures[feature];
+
+    feature -= PROCESSOR_FEATURE_MAX;
+    if (feature >= 8 * sizeof(cpu_features_bitmap)) return FALSE;
+
+    RtlRunOnceExecuteOnce( &init_once, init_cpu_features, NULL, NULL );
+    return !!(cpu_features_bitmap[feature / 64] & (1ull << (feature % 64)));
 }
 
 

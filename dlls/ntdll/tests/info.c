@@ -404,8 +404,40 @@ static void test_query_cpu(void)
         ok( len == sizeof(features), "wrong len %lu\n", len );
         ok( (ULONG)features.ProcessorFeatureBits == sci.ProcessorFeatureBits, "wrong bits %I64x / %lx\n",
             features.ProcessorFeatureBits, sci.ProcessorFeatureBits );
+        ok( !features.Reserved[0] && !features.Reserved[1] && !features.Reserved[2],
+            "got reserved features %I64x %I64x %I64x\n",
+            features.Reserved[0], features.Reserved[1], features.Reserved[2] );
     }
     else skip( "SystemProcessorFeaturesInformation is not supported\n" );
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation, NULL, 0, &len );
+    if (status != STATUS_NOT_SUPPORTED && status != STATUS_INVALID_INFO_CLASS)
+    {
+        ULONGLONG bits[2];
+        ok( status == STATUS_INFO_LENGTH_MISMATCH,
+            "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+        ok( len == sizeof(bits), "wrong len %lu\n", len );
+        status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation,
+                                            bits, sizeof(bits), &len );
+        ok( !status, "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+        ok( len == sizeof(bits), "wrong len %lu\n", len );
+
+        for (int i = 0; i < len * 8; i++)
+            ok( !!(bits[i / 64] & (1ull << (i % 64))) == RtlIsProcessorFeaturePresent( i + PROCESSOR_FEATURE_MAX ),
+                "wrong feature %u: should be %u\n", i + PROCESSOR_FEATURE_MAX,
+                RtlIsProcessorFeaturePresent( i + PROCESSOR_FEATURE_MAX ) );
+
+        status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation,
+                                            bits, sizeof(bits) - 1, &len );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH,
+            "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+        status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation,
+                                            bits, sizeof(bits) + 1, &len );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH,
+            "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+    }
+    else skip( "SystemProcessorFeaturesBitMapInformation is not supported\n" );
 
     len = 0xdeadbeef;
     status = pNtQuerySystemInformation( SystemProcessorBrandString, buffer, sizeof(buffer), &len );
