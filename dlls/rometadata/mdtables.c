@@ -960,11 +960,81 @@ static HRESULT WINAPI import_EnumFields(IMetaDataImport *iface, HCORENUM *ret_he
     return token_enum_get_entries(*ret_henum, field_defs, len, count);
 }
 
-static HRESULT WINAPI import_EnumFieldsWithName(IMetaDataImport *iface, HCORENUM *henum, mdTypeDef token,
-                                                const WCHAR *name, mdFieldDef *field_defs, ULONG len, ULONG *count)
+static HRESULT WINAPI import_EnumFieldsWithName(IMetaDataImport *iface, HCORENUM *ret_henum, mdTypeDef token,
+                                                const WCHAR *name, mdFieldDef *field_defs, ULONG len, ULONG *ret_count)
 {
-    FIXME("(%p, %p, %#x, %s, %p, %lu, %p): stub!\n", iface, henum, token, debugstr_w(name), field_defs, len, count);
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %s, %s, %p, %lu, %p)\n", iface, ret_henum, debugstr_mdToken(token), debugstr_w(name), field_defs,
+          len, ret_count);
+
+    if (!name) return IMetaDataImport_EnumFields(iface, ret_henum, token, field_defs, len, ret_count);
+    if (ret_count) *ret_count = 0;
+    if (TypeFromToken(token) != mdtTypeDef || IsNilToken(token)) return S_FALSE;
+
+    if (!*ret_henum)
+    {
+        ULONG cur_name_len = 80, count;
+        mdFieldDef cur_field, *fields;
+        HCORENUM all_fields = NULL;
+        WCHAR *cur_name, *tmp;
+        HRESULT hr;
+
+        if (!(cur_name = malloc(sizeof(WCHAR) * cur_name_len))) return E_OUTOFMEMORY;
+        hr = IMetaDataImport_EnumFields(iface, &all_fields, token, &cur_field, 1, NULL);
+        if (hr != S_OK)
+        {
+            free(cur_name);
+            return hr;
+        }
+        if (FAILED((hr = IMetaDataImport_CountEnum(iface, all_fields, &count))))
+        {
+            IMetaDataImport_CloseEnum(iface, all_fields);
+            free(cur_name);
+            return hr;
+        }
+        if (!(fields = calloc(count, sizeof(*fields))))
+        {
+            IMetaDataImport_CloseEnum(iface, all_fields);
+            free(cur_name);
+            return E_OUTOFMEMORY;
+        }
+        count = 0;
+        while (hr == S_OK)
+        {
+            ULONG reqd;
+
+            hr = IMetaDataImport_GetFieldProps(iface, cur_field, NULL, cur_name, cur_name_len, &reqd, NULL, NULL, NULL,
+                                               NULL, NULL, NULL);
+            if (hr == CLDB_E_TRUNCATION)
+            {
+                cur_name_len = reqd;
+                if (!(tmp = realloc(cur_name, sizeof(WCHAR) * cur_name_len)))
+                {
+                    hr = E_OUTOFMEMORY;
+                    break;
+                }
+                cur_name = tmp;
+                hr = S_OK;
+                continue;
+            }
+            else if (FAILED(hr))
+                break;
+            if (!wcsncmp(cur_name, name, reqd))
+                fields[count++] = cur_field;
+            hr = IMetaDataImport_EnumFields(iface, &all_fields, token, &cur_field, 1, NULL);
+        }
+
+        free(cur_name);
+        IMetaDataImport_CloseEnum(iface, all_fields);
+        if (FAILED(hr) || !count)
+        {
+            free(fields);
+            return FAILED(hr) ? hr : S_FALSE;
+        }
+        hr = token_enum_list_create(ret_henum, count, fields);
+        free(fields);
+        if (FAILED(hr)) return hr;
+    }
+    return token_enum_get_entries(*ret_henum, field_defs, len, ret_count);
 }
 
 static HRESULT WINAPI import_EnumParams(IMetaDataImport *iface, HCORENUM *henum, mdMethodDef method_def,
@@ -1041,8 +1111,37 @@ static HRESULT WINAPI import_FindMethod(IMetaDataImport *iface, mdTypeDef type_d
 static HRESULT WINAPI import_FindField(IMetaDataImport *iface, mdTypeDef type_def, const WCHAR *name,
                                        const COR_SIGNATURE *sig_blob, ULONG len, mdFieldDef *field_def)
 {
-    FIXME("(%p, %#x, %s, %p, %lu, %p): stub!\n", iface, type_def, debugstr_w(name), sig_blob, len, field_def);
-    return E_NOTIMPL;
+    HCORENUM henum = NULL;
+    mdFieldDef cur_field;
+    BOOL found = FALSE;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p, %lu, %p)\n", iface, debugstr_mdToken(type_def), debugstr_w(name), sig_blob, len, field_def);
+
+    if (!name) return E_INVALIDARG;
+    if (IsNilToken(type_def) || TypeFromToken(type_def) != mdtTypeDef) return CLDB_E_RECORD_NOTFOUND;
+
+    if (FAILED((hr = IMetaDataImport_EnumFieldsWithName(iface, &henum, type_def, name, &cur_field, 1, NULL))))
+        return hr;
+    while (hr == S_OK)
+    {
+        const COR_SIGNATURE *cur_sig;
+        ULONG cur_sig_len;
+
+        hr = IMetaDataImport_GetFieldProps(iface, cur_field, NULL, NULL, 0, NULL, NULL, &cur_sig, &cur_sig_len, NULL,
+                                           NULL, NULL);
+        if (FAILED(hr)) break;
+        if (!(len && sig_blob) || (len && sig_blob && len == cur_sig_len && !memcmp(cur_sig, sig_blob, len)))
+        {
+            found = TRUE;
+            break;
+        }
+        hr = IMetaDataImport_EnumFieldsWithName(iface, &henum, type_def, name, &cur_field, 1, NULL);
+    }
+    IMetaDataImport_CloseEnum(iface, henum);
+
+    *field_def = found ? cur_field : mdFieldDefNil;
+    return FAILED(hr) ? hr : (found ? S_OK : CLDB_E_RECORD_NOTFOUND);
 }
 
 static HRESULT WINAPI import_FindMemberRef(IMetaDataImport *iface, mdTypeRef typeref, const WCHAR *name,
