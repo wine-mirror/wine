@@ -443,6 +443,7 @@ sub generate_unix_thunk($$$$)
     my $manual_wow64_wrapper = $is_wow64 && defined $manual_wow64_wrappers{$name};
     my $need_wrap = $manual_wow64_wrapper || needs_wrapper( $name, $func );
     my $need_lock = $func_ret =~ /HGLRC|HPBUFFERARB/;
+    my $need_funcs = !$need_wrap;
     my $teb = $is_wow64 ? "teb" : "params->teb";
     my $ret_stat = "return STATUS_SUCCESS;";
     my $invalidation = "";
@@ -544,9 +545,12 @@ sub generate_unix_thunk($$$$)
         if (defined $wow64_invalidate_buffer{$name})
         {
             $need_lock = 1;
+            $need_funcs = 1;
+            $input_conv .= "    struct buffer *buffer;\n";
             $invalidation .= $name =~ /NamedBuffer/
-                ? "    invalidate_buffer_name( $teb, params->buffer );\n"
-                : "    invalidate_buffer_target( $teb, params->target );\n";
+                ? "    buffer = invalidate_buffer_name( $teb, params->buffer );\n"
+                : "    buffer = invalidate_buffer_target( $teb, params->target );\n";
+            $output_conv .= "    if (buffer) free_buffer( funcs, buffer );\n";
         }
         $ret .= "    TEB *teb = get_teb64( params->teb );\n" if $need_wrap || !$use_dc;
     }
@@ -575,7 +579,7 @@ sub generate_unix_thunk($$$$)
         $ret .= "    const struct opengl_funcs *funcs = get_dc_funcs( $param );\n";
         $ret .= "    if (!funcs || !funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
-    elsif (!$need_wrap)
+    elsif ($need_funcs)
     {
         $ret .= "    const struct opengl_funcs *funcs = $teb->glTable;\n";
     }

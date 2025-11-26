@@ -398,7 +398,7 @@ static int compare_buffer_name( const void *key, const struct rb_entry *entry )
     return memcmp( key, &buffer->name, sizeof(buffer->name) );
 }
 
-static void free_buffer( const struct opengl_funcs *funcs, struct buffer *buffer )
+void free_buffer( const struct opengl_funcs *funcs, struct buffer *buffer )
 {
     if (buffer->vk_memory)
     {
@@ -2323,20 +2323,21 @@ static struct buffer *get_named_buffer( TEB *teb, GLuint name )
     return NULL;
 }
 
-void invalidate_buffer_name( TEB *teb, GLuint name )
+struct buffer *invalidate_buffer_name( TEB *teb, GLuint name )
 {
     struct buffer *buffer = get_named_buffer( teb, name );
-    struct context *ctx;
-
-    if (!buffer || !(ctx = get_current_context( teb, NULL, NULL ))) return;
-    rb_remove( &ctx->buffers->map, &buffer->entry );
-    free_buffer( teb->glTable, buffer );
+    if (buffer)
+    {
+        struct context *ctx = get_current_context( teb, NULL, NULL );
+        rb_remove( &ctx->buffers->map, &buffer->entry );
+    }
+    return buffer;
 }
 
-void invalidate_buffer_target( TEB *teb, GLenum target )
+struct buffer *invalidate_buffer_target( TEB *teb, GLenum target )
 {
     GLuint name = get_target_name( teb, target );
-    if (name) invalidate_buffer_name( teb, name );
+    return name ? invalidate_buffer_name( teb, name ) : NULL;
 }
 
 static struct buffer *get_target_buffer( TEB *teb, GLenum target )
@@ -2605,12 +2606,16 @@ static GLbitfield map_range_flags_from_map_flags( GLenum flags )
 void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers )
 {
     const struct opengl_funcs *funcs = teb->glTable;
+    struct buffer *buffer;
     GLsizei i;
 
     pthread_mutex_lock( &wgl_lock );
 
     funcs->p_glDeleteBuffers( n, buffers );
-    for (i = 0; i < n; i++) invalidate_buffer_name( teb, buffers[i] );
+    for (i = 0; i < n; i++)
+    {
+        if ((buffer = invalidate_buffer_name( teb, buffers[i] ))) free_buffer( funcs, buffer );
+    }
 
     pthread_mutex_unlock( &wgl_lock );
 }
