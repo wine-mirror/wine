@@ -302,7 +302,7 @@
 #   define PNG_LOONGARCH_LSX_IMPLEMENTATION 0
 #endif
 
-#if PNG_RISCV_RVV_OPT > 0
+#if PNG_RISCV_RVV_OPT > 0 && __riscv_v >= 1000000
 #  define PNG_FILTER_OPTIMIZATIONS png_init_filter_functions_rvv
 #  ifndef PNG_RISCV_RVV_IMPLEMENTATION
       /* Use the intrinsics code by default. */
@@ -310,7 +310,7 @@
 #  endif
 #else
 #  define PNG_RISCV_RVV_IMPLEMENTATION 0
-#endif
+#endif /* PNG_RISCV_RVV_OPT > 0 && __riscv_v >= 1000000 */
 
 /* Is this a build of a DLL where compilation of the object modules requires
  * different preprocessor settings to those required for a simple library?  If
@@ -710,7 +710,7 @@
 /* #define PNG_FLAG_KEEP_UNKNOWN_CHUNKS      0x8000U */
 /* #define PNG_FLAG_KEEP_UNSAFE_CHUNKS      0x10000U */
 #define PNG_FLAG_LIBRARY_MISMATCH        0x20000U
-#define PNG_FLAG_STRIP_ERROR_NUMBERS     0x40000U
+                                  /*     0x40000U    unused */
 #define PNG_FLAG_STRIP_ERROR_TEXT        0x80000U
 #define PNG_FLAG_BENIGN_ERRORS_WARN     0x100000U /* Added to libpng-1.4.0 */
 #define PNG_FLAG_APP_WARNINGS_WARN      0x200000U /* Added to libpng-1.6.0 */
@@ -1546,7 +1546,7 @@ PNG_INTERNAL_FUNCTION(void,png_read_filter_row_paeth4_lsx,(png_row_infop
     row_info, png_bytep row, png_const_bytep prev_row),PNG_EMPTY);
 #endif
 
-#if PNG_RISCV_RVV_OPT > 0
+#if PNG_RISCV_RVV_IMPLEMENTATION == 1
 PNG_INTERNAL_FUNCTION(void,png_read_filter_row_up_rvv,(png_row_infop
     row_info, png_bytep row, png_const_bytep prev_row),PNG_EMPTY);
 PNG_INTERNAL_FUNCTION(void,png_read_filter_row_sub3_rvv,(png_row_infop
@@ -2175,7 +2175,7 @@ PNG_INTERNAL_FUNCTION(void, png_init_filter_functions_lsx,
     (png_structp png_ptr, unsigned int bpp), PNG_EMPTY);
 #endif
 
-#  if PNG_RISCV_RVV_OPT > 0
+#  if PNG_RISCV_RVV_IMPLEMENTATION == 1
 PNG_INTERNAL_FUNCTION(void, png_init_filter_functions_rvv,
    (png_structp png_ptr, unsigned int bpp), PNG_EMPTY);
 #endif
