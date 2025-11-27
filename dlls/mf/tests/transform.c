@@ -4024,7 +4024,7 @@ static void test_wma_decoder_dmo_output_type(void)
     init_dmo_media_type_audio(bad_output_type, &MEDIASUBTYPE_PCM, channel_count, rate, bits_per_sample);
     bad_output_type->formattype = FORMAT_VideoInfo; /* What if formattype is wrong? */
     hr = IMediaObject_SetOutputType(dmo, 0, bad_output_type, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx.\n", hr);
 
     hr = IMediaObject_SetOutputType(dmo, 0, good_output_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
