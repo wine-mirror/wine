@@ -369,7 +369,6 @@ static void test_MCIWndCreate(void)
                 ok(!id, "got %d.\n", id);
             pump_messages();
             style = GetWindowLongA(window, GWL_STYLE);
-            todo_wine_if((tests[i].mci_style & (WS_POPUP | WS_CHILD)))
             ok(style == tests[i].expected_style, "got %#lx, expected %#lx (extra %#lx, missing %#lx).\n",
                     style, tests[i].expected_style, style & ~tests[i].expected_style, tests[i].expected_style & ~style);
         }
