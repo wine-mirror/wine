@@ -913,8 +913,7 @@ extern int __cdecl  symt_cmp_addr(const void* p1, const void* p2);
 extern void         copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si);
 extern void         symbol_setname(SYMBOL_INFO* si, const char* name);
 extern BOOL         symt_match_stringAW(const char *string, const WCHAR *re, BOOL _case);
-extern struct symt_ht*
-                    symt_find_nearest(struct module* module, DWORD_PTR addr);
+extern symref_t     symt_find_nearest(struct module* module, DWORD_PTR addr);
 extern struct symt_ht*
                     symt_find_symbol_at(struct module* module, DWORD_PTR addr);
 extern struct symt_module*

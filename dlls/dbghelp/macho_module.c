@@ -1151,7 +1151,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
 
             if (ste->used) continue;
 
-            sym = symt_find_nearest(module, ste->addr);
+            sym = (struct symt_ht*)SYMT_SYMREF_TO_PTR(symt_find_nearest(module, ste->addr));
             if (sym)
                 symt_get_address(&sym->symt, &addr);
             if (sym && ste->addr == addr)
