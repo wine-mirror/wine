@@ -170,6 +170,170 @@ static void get_raw(const IDirectSoundBufferImpl *dsb, BYTE *base, BYTE *dst, un
     memcpy(dst, base, samples * istride);
 }
 
+struct channel_map_entry
+{
+    unsigned short src_channel;
+    unsigned short dst_channel;
+    float weight;
+};
+
+#define MAX_CHANNEL_MAP_ENTRIES 8
+
+struct channel_map
+{
+    BOOL mix_channels;
+    unsigned int entry_count;
+    struct channel_map_entry entries[MAX_CHANNEL_MAP_ENTRIES];
+};
+
+static const struct channel_map channel_map_mono2stereo =
+{
+    FALSE, 2,
+    {
+        {0, 0, 1.0f},
+        {0, 1, 1.0f},
+    }
+};
+
+static const struct channel_map channel_map_mono2quad =
+{
+    FALSE, 4,
+    {
+        {0, 0, 1.0f},
+        {0, 1, 1.0f},
+        {0, 2, 1.0f},
+        {0, 3, 1.0f},
+    }
+};
+
+static const struct channel_map channel_map_stereo2quad =
+{
+    FALSE, 4,
+    {
+        {0, 0, 1.0f}, /* Left -> Front left */
+        {1, 1, 1.0f}, /* Right -> Front right */
+        {0, 2, 1.0f}, /* Left -> Back left */
+        {1, 3, 1.0f}, /* Right -> Back right */
+    }
+};
+
+static const struct channel_map channel_map_mono2surround51 =
+{
+    FALSE, 6,
+    {
+        {0, 0, 1.0f},
+        {0, 1, 1.0f},
+        {0, 2, 1.0f},
+        {0, 3, 1.0f},
+        {0, 4, 1.0f},
+        {0, 5, 1.0f},
+    }
+};
+
+static const struct channel_map channel_map_stereo2surround51 =
+{
+    FALSE, 4,
+    {
+        {0, 0, 1.0f}, /* Left -> Front left */
+        {1, 1, 1.0f}, /* Right -> Front right */
+        /* Mute front center and LFE */
+        {0, 4, 1.0f}, /* Left -> Back left */
+        {1, 5, 1.0f}, /* Right -> Back right */
+    }
+};
+
+static const struct channel_map channel_map_mono2surround71 =
+{
+    FALSE, 1,
+    {
+        /* Mute front left and front right */
+        {0, 2, 1.0f}, /* Front centre */
+        /* Mute LFE, back left, back right, side left and side right */
+    }
+};
+
+static const struct channel_map channel_map_stereo2surround71 =
+{
+    FALSE, 2,
+    {
+        {0, 0, 1.0f}, /* Front left */
+        {1, 1, 1.0f}, /* Front right */
+        /* Mute front centre, LFE, back left, back right, side left and side
+         * right */
+    }
+};
+
+static const struct channel_map channel_map_quad2surround71 =
+{
+    FALSE, 4,
+    {
+        {0, 0, 1.0f}, /* Front left */
+        {1, 1, 1.0f}, /* Front right */
+        /* Mute front center and LFE */
+        {2, 4, 1.0f}, /* Rear left */
+        {3, 5, 1.0f}, /* Rear right */
+        /* Mute side left and side right */
+    }
+};
+
+static const struct channel_map channel_map_surround512surround71 =
+{
+    FALSE, 6,
+    {
+        {0, 0, 1.0f}, /* Front left */
+        {1, 1, 1.0f}, /* Front right */
+        {2, 2, 1.0f}, /* Front center */
+        {3, 3, 1.0f}, /* LFE */
+        {4, 4, 1.0f}, /* Rear left */
+        {5, 5, 1.0f}, /* Rear right */
+        /* Mute side left and side right */
+    }
+};
+
+static const struct channel_map channel_map_surround512stereo =
+{
+    TRUE, 6,
+    {
+        /* Based on analyzing a recording of a dsound downmix */
+        {0, 0, 1.0f},  /* Front left -> Left */
+        {4, 0, 0.24f}, /* Surround left -> Left */
+        {2, 0, 0.7f},  /* Center -> Left */
+        {1, 1, 1.0f},  /* Front right -> Right */
+        {5, 1, 0.24f}, /* Surround right -> Right */
+        {2, 1, 0.7f},  /* Center -> Right */
+        /* LFE is totally ignored in dsound when downmixing to 2 channels */
+    }
+};
+
+static const struct channel_map channel_map_surround712stereo =
+{
+    TRUE, 8,
+    {
+        /* Based on analyzing a recording of a dsound downmix */
+        {0, 0, 1.0f},  /* Front left -> Left */
+        {4, 0, 0.24f}, /* Surround left -> Left */
+        {6, 0, 0.24f}, /* Back left -> Left */
+        {2, 0, 0.7f},  /* Center -> Left */
+        {1, 1, 1.0f},  /* Front right -> Right */
+        {5, 1, 0.24f}, /* Surround right -> Right */
+        {7, 1, 0.24f}, /* Back right -> Right */
+        {2, 1, 0.7f},  /* Center -> Right */
+        /* LFE is totally ignored in dsound when downmixing to 2 channels */
+    }
+};
+
+static const struct channel_map channel_map_quad2stereo =
+{
+    TRUE, 4,
+    {
+        /* Based on PulseAudio's downmix algorithm */
+        {0, 0, 0.9f}, /* Front left -> Left */
+        {2, 0, 0.1f}, /* Back left -> Left */
+        {1, 1, 0.9f}, /* Front right -> Right */
+        {3, 1, 0.1f}, /* Back right -> Right */
+    }
+};
+
 /**
  * Recalculate the size for temporary buffer
  * Should be called when one of the following things occur:
@@ -204,10 +368,9 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 		dsb->freqAccNum = (dsb->freqAccNum * (LONG64)dsb->freqAdjustDen +
 				oldFreqAdjustDen / 2) / oldFreqAdjustDen;
 
-	dsb->put_aux = putieee32;
-
 	dsb->get = ieee ? getieee32 : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
-	dsb->put = dsb->put_aux;
+	dsb->out_channel_passthrough = FALSE;
+	dsb->out_channel_average = FALSE;
 
 	if (ichannels == ochannels)
 	{
@@ -216,77 +379,75 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 			FIXME("Copying %lu channels is unsupported, limiting to first 32\n", ichannels);
 			dsb->mix_channels = 32;
 		}
+		dsb->out_channel_passthrough = TRUE;
 	}
 	else if (ichannels == 1)
 	{
 		dsb->mix_channels = 1;
 
 		if (ochannels == 2)
-			dsb->put = put_mono2stereo;
+			dsb->out_channel_map = &channel_map_mono2stereo;
 		else if (ochannels == 4)
-			dsb->put = put_mono2quad;
+			dsb->out_channel_map = &channel_map_mono2quad;
 		else if (ochannels == 6)
-			dsb->put = put_mono2surround51;
+			dsb->out_channel_map = &channel_map_mono2surround51;
 	}
 	else if (ochannels == 1)
 	{
 		dsb->mix_channels = ichannels;
-		dsb->put = put_mono;
-		dsb->put_aux = putieee32_sum;
+		dsb->out_channel_average = TRUE;
 	}
 	else if (ichannels == 2 && ochannels == 4)
 	{
 		dsb->mix_channels = 2;
-		dsb->put = put_stereo2quad;
+		dsb->out_channel_map = &channel_map_stereo2quad;
 	}
 	else if (ichannels == 2 && ochannels == 6)
 	{
 		dsb->mix_channels = 2;
-		dsb->put = put_stereo2surround51;
+		dsb->out_channel_map = &channel_map_stereo2surround51;
 	}
 	else if (ichannels == 6 && ochannels == 2)
 	{
 		dsb->mix_channels = 6;
-		dsb->put = put_surround512stereo;
-		dsb->put_aux = putieee32_sum;
+		dsb->out_channel_map = &channel_map_surround512stereo;
 	}
 	else if (ichannels == 8 && ochannels == 2)
 	{
 		dsb->mix_channels = 8;
-		dsb->put = put_surround712stereo;
-		dsb->put_aux = putieee32_sum;
+		dsb->out_channel_map = &channel_map_surround712stereo;
 	}
 	else if (ichannels == 4 && ochannels == 2)
 	{
 		dsb->mix_channels = 4;
-		dsb->put = put_quad2stereo;
-		dsb->put_aux = putieee32_sum;
+		dsb->out_channel_map = &channel_map_quad2stereo;
 	}
 	else if (ichannels == 1 && ochannels == 8)
 	{
 		dsb->mix_channels = 1;
-		dsb->put = put_mono2surround71;
+		dsb->out_channel_map = &channel_map_mono2surround71;
 	}
 	else if (ichannels == 2 && ochannels == 8)
 	{
 		dsb->mix_channels = 2;
-		dsb->put = put_stereo2surround71;
+		dsb->out_channel_map = &channel_map_stereo2surround71;
 	}
 	else if (ichannels == 4 && ochannels == 8)
 	{
 		dsb->mix_channels = 4;
-		dsb->put = put_quad2surround71;
+		dsb->out_channel_map = &channel_map_quad2surround71;
 	}
 	else if (ichannels == 6 && ochannels == 8)
 	{
 		dsb->mix_channels = 6;
-		dsb->put = put_surround512surround71;
+		dsb->out_channel_map = &channel_map_surround512surround71;
 	}
 	else
 	{
 		if (ichannels > 2)
 			FIXME("Conversion from %lu to %lu channels is not implemented, falling back to stereo\n", ichannels, ochannels);
 		dsb->mix_channels = 2;
+		dsb->out_channel_passthrough = TRUE;
 	}
 
 	dsb->input_delay = ((FIR_WIDTH - 1) * DSBFREQUENCY_MAX + dsb->freqAdjustDen - 1) /
@@ -416,6 +577,65 @@ static inline void filter_samples(const IDirectSoundBufferImpl *dsb, BYTE *buffe
         if (FAILED(IMediaObjectInPlace_Process(inplace, count * istride, dst, 0,
                 DMO_INPLACE_NORMAL)))
             WARN("IMediaObjectInPlace_Process failed for filter %u\n", i);
+    }
+}
+
+static void put_samples(IDirectSoundBufferImpl *dsb, unsigned int count, unsigned int ichannels,
+                        unsigned int istride, unsigned int ostride, float *input)
+{
+    const struct channel_map *map = dsb->out_channel_map;
+    float *buf = dsb->device->tmp_buffer;
+    unsigned int i, channel, entry;
+
+    if (dsb->out_channel_passthrough)
+    {
+        for (i = 0; i < count; ++i)
+        {
+            for (channel = 0; channel < ichannels; channel++)
+            {
+                float *fbuf = (float *)((char *)buf + i * ostride + sizeof(float) * channel);
+                *fbuf = input[channel * istride + i];
+            }
+        }
+        return;
+    }
+
+    if (dsb->out_channel_average)
+    {
+        for (i = 0; i < count; ++i)
+        {
+            /* XXX: does Windows include LFE into the mix? */
+            for (channel = 0; channel < ichannels; channel++)
+            {
+                float *fbuf = (float *)((char *)buf + i * ostride);
+                *fbuf += input[channel * istride + i];
+            }
+        }
+        return;
+    }
+
+    assert(map);
+    if (map->mix_channels)
+    {
+        for (i = 0; i < count; ++i)
+        {
+            for (entry = 0; entry < map->entry_count; entry++)
+            {
+                float *fbuf = (float *)((char *)buf + i * ostride + sizeof(float) * map->entries[entry].dst_channel);
+                *fbuf += input[map->entries[entry].src_channel * istride + i] * map->entries[entry].weight;
+            }
+        }
+    }
+    else
+    {
+        for (i = 0; i < count; ++i)
+        {
+            for (entry = 0; entry < map->entry_count; entry++)
+            {
+                float *fbuf = (float *)((char *)buf + i * ostride + sizeof(float) * map->entries[entry].dst_channel);
+                *fbuf = input[map->entries[entry].src_channel * istride + i] * map->entries[entry].weight;
+            }
+        }
     }
 }
 
@@ -655,7 +875,7 @@ static void resample(DWORD freq_adjust_num, DWORD freq_adjust_den, DWORD freq_ac
 
 static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *freqAccNum)
 {
-    UINT i, channel;
+    UINT channel;
     UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
 
     LONG64 freqAcc_start = *freqAccNum;
@@ -751,9 +971,7 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
                 channel_input + freqAcc_equalized / dsb->freqAdjustDen, channel_output);
     }
 
-    for(i = 0; i < count; ++i)
-        for (channel = 0; channel < channels; channel++)
-            dsb->put(dsb, i * ostride, channel, output[channel * (FIR_WIDTH - 1 + count) + i]);
+    put_samples(dsb, count, channels, count + FIR_WIDTH - 1, ostride, output);
 
     dsb->input_tail_valid = TRUE;
 
@@ -765,7 +983,7 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
     UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
     DWORD total_input = dsb->input_delay + count;
     float *intermediate;
-    DWORD channel, i;
+    DWORD channel;
 
     DWORD len = total_input * dsb->mix_channels;
     len *= sizeof(float);
@@ -824,9 +1042,7 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
         memcpy(channel_input_tail, channel_input + count, dsb->input_delay * sizeof(float));
     }
 
-    for (i = 0; i < count; i++)
-        for (channel = 0; channel < dsb->mix_channels; channel++)
-            dsb->put(dsb, i * ostride, channel, intermediate[channel * total_input + i]);
+    put_samples(dsb, count, dsb->mix_channels, total_input, ostride, intermediate);
 
     dsb->input_tail_valid = TRUE;
 
@@ -899,7 +1115,7 @@ static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD frames)
 		dsb->device->tmp_buffer_len = size_bytes;
 		dsb->device->tmp_buffer = realloc(dsb->device->tmp_buffer, size_bytes);
 	}
-	if(dsb->put_aux == putieee32_sum)
+	if (!dsb->out_channel_passthrough)
 		memset(dsb->device->tmp_buffer, 0, dsb->device->tmp_buffer_len);
 
 	cp_fields(dsb, frames, &dsb->freqAccNum);
