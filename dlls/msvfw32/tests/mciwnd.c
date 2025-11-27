@@ -355,8 +355,8 @@ static void test_MCIWndCreate(void)
         window = MCIWndCreateA(tests[i].parent ? parent : NULL, hinst, tests[i].mci_style, invalid_fname);
         if ((tests[i].mci_style & (WS_POPUP | WS_CHILD)) == (WS_POPUP | WS_CHILD))
         {
-            todo_wine ok(!window, "window creation succeeded.\n");
-            todo_wine ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "got %lu.\n", GetLastError());
+            ok(!window, "window creation succeeded.\n");
+            ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "got %lu.\n", GetLastError());
         }
         else
         {
@@ -364,7 +364,7 @@ static void test_MCIWndCreate(void)
 
             id = GetDlgCtrlID(window);
             if (tests[i].parent && !(tests[i].mci_style & WS_POPUP))
-                todo_wine ok(id == 66, "got %d.\n", id);
+                ok(id == 66, "got %d.\n", id);
             else
                 ok(!id, "got %d.\n", id);
             pump_messages();

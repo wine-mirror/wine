@@ -104,6 +104,8 @@ BOOL VFWAPIV MCIWndRegisterClass(void)
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
                            DWORD dwStyle, LPCWSTR szFile)
 {
+    HMENU child_id = 0;
+
     TRACE("%p %p %lx %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 
     MCIWndRegisterClass();
@@ -118,10 +120,13 @@ HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
             dwStyle |= WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
     }
 
+    if (dwStyle & WS_CHILD)
+        child_id = (HMENU)66;
+
     return CreateWindowExW(0, mciWndClassW, mciWndNameW,
                            dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                            0, 0, 300, 0,
-                           hwndParent, 0, hInstance, (LPVOID)szFile);
+                           hwndParent, child_id, hInstance, (LPVOID)szFile);
 }
 
 /***********************************************************************
