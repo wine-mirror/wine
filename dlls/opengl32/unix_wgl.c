@@ -146,6 +146,7 @@ struct context
     GLenum gl_error;               /* wrapped GL error */
     const char **extension_array;  /* array of supported extensions */
     size_t extension_count;        /* size of supported extensions */
+    BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
 
     /* semi-stub state tracker for wglCopyContext */
     GLbitfield used;                            /* context state used bits */
@@ -171,6 +172,7 @@ struct buffer
     size_t copy_length;
     void *vm_ptr;
     SIZE_T vm_size;
+    BOOL pinned;
 
     /* members of Vulkan-backed buffer storages */
     struct vk_device *vk_device;
@@ -1290,7 +1292,8 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     ctx->extension_array = extensions;
     ctx->extension_count = count;
 
-    if (is_win64 && ctx->buffers && !initialize_vk_device( teb, ctx ))
+    if (is_win64 && ctx->buffers && !initialize_vk_device( teb, ctx )
+        && !(ctx->use_pinned_memory = is_extension_supported( ctx, "GL_AMD_pinned_memory" )))
     {
         if (ctx->major_version > 4 || (ctx->major_version == 4 && ctx->minor_version > 3))
         {
@@ -2348,7 +2351,7 @@ static struct buffer *get_target_buffer( TEB *teb, GLenum target )
 
 static BOOL use_driver_buffer_map( struct buffer *buffer )
 {
-    return !buffer || !buffer->vk_memory;
+    return !buffer || (!buffer->vk_memory && !buffer->pinned);
 }
 
 static BOOL buffer_vm_alloc( TEB *teb, struct buffer *buffer, SIZE_T size )
@@ -2428,7 +2431,30 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
     VkResult vr;
 
     if (!(flags & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT))) return NULL;
-    if (!(vk_device = ctx->buffers->vk_device) || !vk_device->vk_device) return NULL;
+    if ((!(vk_device = ctx->buffers->vk_device) || !vk_device->vk_device) && !ctx->use_pinned_memory) return NULL;
+
+    if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
+    buffer->name = buffer_name;
+    buffer->flags = flags;
+    buffer->size = size;
+    buffer->vk_device = vk_device;
+
+    if (ctx->use_pinned_memory)
+    {
+        if (!buffer_vm_alloc( teb, buffer, size )) return NULL;
+        if (data) memcpy( buffer->vm_ptr, data, size );
+        buffer->pinned = TRUE;
+
+        /* FIXME: we may interfere with GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD if the
+         * application uses it as well. Unlike other targets, there’s no way to query
+         * the currently bound target, so we’d need to track it ourselves if we want
+         * to support it. */
+        funcs->p_glBindBuffer( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, buffer_name );
+        funcs->p_glBufferData( GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD, size, buffer->vm_ptr, GL_DYNAMIC_COPY );
+        rb_put( &ctx->buffers->map, &buffer->name, &buffer->entry );
+        TRACE( "created buffer %p with pinned memory %p\n", buffer, buffer->vm_ptr );
+        return buffer;
+    }
 
     if (flags & GL_CLIENT_STORAGE_BIT) desired_type &= ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     memory_type = find_vk_memory_type( vk_device, desired_type, type_mask );
@@ -2437,15 +2463,10 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
     if (memory_type == -1)
     {
         WARN( "Could not find memory type\n" );
+        free_buffer( funcs, buffer );
         return NULL;
     }
     alloc_info.memoryTypeIndex = memory_type;
-
-    if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
-    buffer->name = buffer_name;
-    buffer->flags = flags;
-    buffer->size = size;
-    buffer->vk_device = vk_device;
 
     vr = vk_device->p_vkAllocateMemory( vk_device->vk_device, &alloc_info, NULL, &buffer->vk_memory );
     if (vr)
@@ -2540,6 +2561,13 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
         assert( buffer->host_ptr == buffer->vm_ptr );
         buffer->map_ptr = (char *)buffer->vm_ptr + offset;
         TRACE( "returning vk mapping %p\n", buffer->map_ptr );
+        return buffer->map_ptr;
+    }
+
+    if (buffer && buffer->pinned)
+    {
+        buffer->map_ptr = (char *)buffer->vm_ptr + offset;
+        TRACE( "returning pinned ptr %p\n", buffer->map_ptr );
         return buffer->map_ptr;
     }
 
