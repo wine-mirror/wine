@@ -2596,7 +2596,19 @@ static int my_action_global_cmp(const void *p1, const void *p2)
     return 0;
 }
 
-static enum method_result pdb_method_find_type(struct module_format *modfmt, const char *name, symref_t *ref)
+static enum pdb_result pdb_reader_DBI_globals_symref(struct pdb_reader *pdb, unsigned globals_offset, symref_t *symref)
+{
+    struct symref_code code;
+    struct pdb_action_entry *entry;
+
+    entry = bsearch(&globals_offset, pdb->action_store, pdb->num_action_globals, sizeof(pdb->action_store[0]),
+                    &my_action_global_cmp);
+    if (entry)
+        return pdb_reader_encode_symref(pdb, symref_code_init_from_action(&code, entry - pdb->action_store), symref);
+    return R_PDB_NOT_FOUND;
+}
+
+static enum method_result pdb_method_find_type(struct module_format *modfmt, const char *name, symref_t *symref)
 {
     struct pdb_reader *pdb;
     enum pdb_result result;
@@ -2614,17 +2626,12 @@ static enum method_result pdb_method_find_type(struct module_format *modfmt, con
     if ((result = pdb_reader_read_codeview_type_by_name(pdb, name, &walker, &cv_type, &cv_typeid)) == R_PDB_SUCCESS)
     {
         if ((result = pdb_reader_get_type_details(pdb, cv_typeid, &type_details))) return MR_FAILURE;
-        return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), ref) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+        return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), symref) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
     }
     /* search in DBI globals' hash table */
     if ((result = pdb_reader_read_DBI_codeview_symbol_by_name(pdb, name, &stream_offset, &cv_symbol)) == R_PDB_SUCCESS)
     {
-        struct pdb_action_entry *entry;
-        entry = bsearch(&stream_offset, pdb->action_store, pdb->num_action_globals, sizeof(pdb->action_store[0]),
-                        &my_action_global_cmp);
-        if (entry)
-            return pdb_reader_encode_symref(pdb, symref_code_init_from_action(&code, entry - pdb->action_store),
-                                            ref) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+        return pdb_method_result(pdb_reader_DBI_globals_symref(pdb, stream_offset, symref));
     }
     return MR_FAILURE;
 }
