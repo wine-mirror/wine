@@ -2176,9 +2176,10 @@ static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
             printf( "    %04x:  str lr,[sp,-#%#x]!\n", pos++, savesz );
         break;
     case 1:
-        if (func->CR == 1)
-            printf( "    %04x:  stp x19,lr,[sp,-#%#x]!\n", pos++, savesz );
-        else
+        if (func->CR == 1) {
+            printf( "    %04x:  sub sp, sp, %#x\n", pos++, savesz );
+            printf( "    %04x:  stp x19,lr,[sp]\n", pos++ );
+        } else
             printf( "    %04x:  str x19,[sp,-#%#x]!\n", pos++, savesz );
         break;
     default:
