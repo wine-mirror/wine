@@ -3787,7 +3787,7 @@ DWORD WINAPI GetAnycastIpAddressTable(ADDRESS_FAMILY family, MIB_ANYCASTIPADDRES
     if (!table || (family != AF_INET && family != AF_INET6 && family != AF_UNSPEC))
         return ERROR_INVALID_PARAMETER;
 
-    *table = HeapAlloc(GetProcessHeap, HEAP_ZERO_MEMORY, sizeof(MIB_ANYCASTIPADDRESS_TABLE));
+    *table = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MIB_ANYCASTIPADDRESS_TABLE));
     if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
     (*table)->NumEntries = 0;
     return NO_ERROR;
