@@ -25,6 +25,17 @@
 
 #include "wine/test.h"
 
+static void pump_messages(void)
+{
+    MSG msg;
+
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageA( &msg );
+    }
+}
+
 static const DWORD file_header[] = /* file_header */
 {
     FOURCC_RIFF, 0x8c0 /* file size */,
@@ -260,13 +271,32 @@ static void test_window_create(unsigned line, const char* fname, HWND parent,
 
 static void test_MCIWndCreate(void)
 {
+    static struct
+    {
+        DWORD mci_style;
+        BOOL parent;
+        DWORD expected_style;
+    }
+    tests[] =
+    {
+        { MCIWNDF_NOERRORDLG, FALSE, WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX
+                                     | WS_MAXIMIZEBOX | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | MCIWNDF_NOERRORDLG},
+        { MCIWNDF_NOERRORDLG, TRUE, WS_VISIBLE | WS_CHILD | WS_BORDER | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | MCIWNDF_NOERRORDLG},
+        { WS_CHILD | MCIWNDF_NOERRORDLG, TRUE, WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | MCIWNDF_NOERRORDLG},
+        { WS_POPUP | MCIWNDF_NOERRORDLG, FALSE, WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | MCIWNDF_NOERRORDLG},
+        { WS_POPUP | MCIWNDF_NOERRORDLG, TRUE, WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | MCIWNDF_NOERRORDLG},
+        { WS_POPUP | WS_CHILD | MCIWNDF_NOERRORDLG, TRUE, WS_POPUP | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | MCIWNDF_NOERRORDLG},
+    };
     HWND parent, window;
     HMODULE hinst = GetModuleHandleA(NULL);
     char fname[MAX_PATH];
     char invalid_fname[] = "invalid.avi";
     char error[200];
+    unsigned int i;
+    DWORD style;
     HHOOK hook;
     LRESULT ret;
+    int id;
 
     create_avi_file(fname);
 
@@ -312,6 +342,44 @@ static void test_MCIWndCreate(void)
     todo_wine ok(ret == MCIERR_FILE_NOT_FOUND, "Unexpected error %Id\n", ret);
 
     DestroyWindow(window);
+
+    parent = CreateWindowExA(0, "static", "msvfw32 test",
+                             WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 200, 200,
+                             0, 0, 0, NULL);
+    ok(parent != NULL, "got error %lu\n", GetLastError());
+    pump_messages();
+    for (i = 0; i < ARRAYSIZE(tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        SetLastError(0xdeadbeef);
+        window = MCIWndCreateA(tests[i].parent ? parent : NULL, hinst, tests[i].mci_style, invalid_fname);
+        if ((tests[i].mci_style & (WS_POPUP | WS_CHILD)) == (WS_POPUP | WS_CHILD))
+        {
+            todo_wine ok(!window, "window creation succeeded.\n");
+            todo_wine ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "got %lu.\n", GetLastError());
+        }
+        else
+        {
+            ok(window != NULL, "got error %lu\n", GetLastError());
+
+            id = GetDlgCtrlID(window);
+            if (tests[i].parent && !(tests[i].mci_style & WS_POPUP))
+                todo_wine ok(id == 66, "got %d.\n", id);
+            else
+                ok(!id, "got %d.\n", id);
+            pump_messages();
+            style = GetWindowLongA(window, GWL_STYLE);
+            todo_wine_if((tests[i].mci_style & (WS_POPUP | WS_CHILD)) || tests[i].parent)
+            ok(style == tests[i].expected_style, "got %#lx, expected %#lx (extra %#lx, missing %#lx).\n",
+                    style, tests[i].expected_style, style & ~tests[i].expected_style, tests[i].expected_style & ~style);
+        }
+        if (window)
+            DestroyWindow(window);
+        pump_messages();
+        winetest_pop_context();
+    }
+    DestroyWindow(parent);
+
 
     DeleteFileA(fname);
 }
