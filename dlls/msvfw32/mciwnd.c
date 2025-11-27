@@ -111,7 +111,7 @@ HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
     if (!hInstance) hInstance = GetModuleHandleW(0);
 
     if (hwndParent)
-        dwStyle |= WS_VISIBLE | WS_BORDER /*| WS_CHILD*/;
+        dwStyle |= WS_VISIBLE | WS_BORDER | WS_CHILD;
     else
         dwStyle |= WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
