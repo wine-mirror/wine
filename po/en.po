@@ -4873,7 +4873,7 @@ msgstr "Auto data segment exceeds 64k.\n"
 
 #: dlls/kernelbase/winerror.mc:793
 msgid "Ring 2 segment must be movable.\n"
-msgstr "Ring 2 segment must be moveable.\n"
+msgstr "Ring 2 segment must be movable.\n"
 
 #: dlls/kernelbase/winerror.mc:798
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -9207,7 +9207,7 @@ msgstr "sizeable"
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
 msgid "movable"
-msgstr "moveable"
+msgstr "movable"
 
 #: dlls/oleacc/oleacc.rc:117
 msgctxt "object state"
@@ -9382,7 +9382,7 @@ msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
-"These are the initialization properties for this type of data. To edit a "
+"These are the initialisation properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 
 #: dlls/oledb32/version.rc:112
@@ -12614,7 +12614,7 @@ msgstr "Your computer"
 msgid ""
 "This zone contains all Web sites that are on your organization's intranet."
 msgstr ""
-"This zone contains all Web sites that are on your organization's intranet."
+"This zone contains all Web sites that are on your organisation's intranet."
 
 #: dlls/urlmon/urlmon.rc:61
 msgid ""
@@ -13262,7 +13262,7 @@ msgid ""
 "device name is spelled correctly."
 msgstr ""
 "Cannot find the specified device. Make sure it is installed and that the "
-"device name is spelled correctly."
+"device name is spelt correctly."
 
 #: dlls/winmm/winmm.rc:87
 msgid ""
@@ -14323,8 +14323,8 @@ msgstr ""
 "/d directory   Start the program in the specified directory.\n"
 "/b             Don't create a new console for the program.\n"
 "/i             Start the program with fresh environment variables.\n"
-"/min           Start the program minimized.\n"
-"/max           Start the program maximized.\n"
+"/min           Start the program minimised.\n"
+"/max           Start the program maximised.\n"
 "/low           Start the program in the idle priority class.\n"
 "/normal        Start the program in the normal priority class.\n"
 "/high          Start the program in the high priority class.\n"
@@ -17414,7 +17414,7 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
-"regsvr32: Invalid or unrecognized switch [%1]\n"
+"regsvr32: Invalid or unrecognised switch [%1]\n"
 "\n"
 
 #: programs/regsvr32/regsvr32.rc:43
@@ -17500,8 +17500,8 @@ msgstr ""
 "/d directory   Start the program in the specified directory.\n"
 "/b             Don't create a new console for the program.\n"
 "/i             Start the program with fresh environment variables.\n"
-"/min           Start the program minimized.\n"
-"/max           Start the program maximized.\n"
+"/min           Start the program minimised.\n"
+"/max           Start the program maximised.\n"
 "/low           Start the program in the idle priority class.\n"
 "/normal        Start the program in the normal priority class.\n"
 "/high          Start the program in the high priority class.\n"
