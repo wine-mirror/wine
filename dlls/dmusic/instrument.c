@@ -586,6 +586,45 @@ static void copy_modulators(struct sf_modulators *dst, const struct sf_mod *mods
     dst->count = count;
 }
 
+static struct sf_mod *add_modulator(struct sf_modulators *modulators, struct sf_mod *mod)
+{
+    struct sf_mod *new_mod;
+
+    if (modulators->capacity < modulators->count + 1)
+    {
+        UINT new_capacity = max(modulators->count + 1, modulators->capacity * 2);
+        struct sf_mod *mods;
+
+        if (!(mods = realloc(modulators->mods, new_capacity * sizeof(struct sf_mod))))
+            return NULL;
+        modulators->capacity = new_capacity;
+        modulators->mods = mods;
+    }
+
+    new_mod = &modulators->mods[modulators->count];
+    *new_mod = *mod;
+    ++modulators->count;
+    return new_mod;
+}
+
+static struct sf_mod *find_modulator(struct sf_modulators *modulators, struct sf_mod *mod)
+{
+    UINT i;
+    for (i = 0; i < modulators->count; ++i)
+    {
+        if (modulators->mods[i].dest_gen != mod->dest_gen)
+            continue;
+        if (modulators->mods[i].src_mod != mod->src_mod)
+            continue;
+        if (modulators->mods[i].amount_src_mod != mod->amount_src_mod)
+            continue;
+        if (modulators->mods[i].transform != mod->transform)
+            continue;
+        return &modulators->mods[i];
+    }
+    return NULL;
+}
+
 static BOOL parse_soundfont_generators(struct soundfont *soundfont, UINT index, BOOL preset,
         struct sf_generators *generators)
 {
@@ -632,6 +671,25 @@ static BOOL parse_soundfont_generators(struct soundfont *soundfont, UINT index, 
     }
 
     return TRUE;
+}
+
+static void parse_soundfont_modulators(struct soundfont *soundfont, UINT index, BOOL preset,
+        struct sf_modulators *modulators)
+{
+    struct sf_bag *bag = (preset ? soundfont->pbag : soundfont->ibag) + index;
+    struct sf_mod *mod, *mods = preset ? soundfont->pmod : soundfont->imod;
+    struct sf_mod *modulator;
+
+    for (mod = mods + bag->mod_ndx; mod < mods + (bag + 1)->mod_ndx; mod++)
+    {
+        if ((modulator = find_modulator(modulators, mod)))
+        {
+            *modulator = *mod;
+            continue;
+        }
+        if (!add_modulator(modulators, mod))
+            return;
+    }
 }
 
 static const USHORT gen_to_conn_dst[SF_GEN_END_OPER] =
@@ -878,6 +936,7 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
     struct sf_generators global_generators = SF_DEFAULT_GENERATORS;
     struct sf_instrument *instrument = soundfont->inst + index;
     struct sf_modulators global_modulators = {};
+    struct sf_modulators modulators = {};
     UINT i = instrument->bag_ndx;
     sf_generator oper;
     HRESULT hr = S_OK;
@@ -888,12 +947,18 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
     {
         struct sf_generators generators = global_generators;
 
+        copy_modulators(&modulators, global_modulators.mods, global_modulators.count);
+
+        parse_soundfont_modulators(soundfont, i, FALSE, &modulators);
         if (parse_soundfont_generators(soundfont, i, FALSE, &generators))
         {
             if (i > instrument->bag_ndx)
                 WARN("Ignoring instrument zone without a sample id\n");
             else
+            {
                 global_generators = generators;
+                copy_modulators(&global_modulators, modulators.mods, modulators.count);
+            }
             continue;
         }
 
@@ -912,9 +977,10 @@ static HRESULT instrument_add_soundfont_instrument(struct instrument *This, stru
             generators.amount[oper].value += preset_generators->amount[oper].value;
         }
 
-        hr = instrument_add_soundfont_region(This, soundfont, &generators, &global_modulators);
+        hr = instrument_add_soundfont_region(This, soundfont, &generators, &modulators);
     }
 
+    free(modulators.mods);
     free(global_modulators.mods);
 
     return hr;
