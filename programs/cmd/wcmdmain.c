@@ -33,9 +33,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
+/* Delimiters for tab-completion support */
 #define BASE_DELIMS             L",=;~!^&()+{}[]"
 #define PATH_SEPARATION_DELIMS  L" " BASE_DELIMS
-#define INTRA_PATH_DELIMS       L"\\" BASE_DELIMS
+#define INTRA_PATH_DELIMS       L"\\:" BASE_DELIMS
 
 typedef struct _SEARCH_CONTEXT
 {
