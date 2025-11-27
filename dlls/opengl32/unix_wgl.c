@@ -2844,14 +2844,12 @@ static BOOL wow64_unmap_buffer( TEB *teb, struct buffer *buffer )
         unmap_vk_buffer( buffer );
     }
 
-    if (buffer->host_ptr != buffer->map_ptr)
+    if (buffer->copy_length)
     {
-        if (buffer->copy_length)
-        {
-            TRACE( "Copying %#zx from wow64 buffer %p to buffer %p\n", buffer->copy_length,
-                   buffer->map_ptr, buffer->host_ptr );
-            memcpy( buffer->host_ptr, buffer->map_ptr, buffer->copy_length );
-        }
+        TRACE( "Copying %#zx from wow64 buffer %p to buffer %p\n", buffer->copy_length,
+               buffer->map_ptr, buffer->host_ptr );
+        memcpy( buffer->host_ptr, buffer->map_ptr, buffer->copy_length );
+        buffer->copy_length = 0;
     }
 
     buffer->host_ptr = buffer->map_ptr = NULL;
