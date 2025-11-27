@@ -111,26 +111,87 @@ unsigned int strlenW( const WCHAR *str )
     return s - str;
 }
 
-void dump_unicode_str( const WCHAR *str, int len )
+/* dump an ASCII string with proper escaping */
+int dump_strA( const char *str, size_t len )
 {
-    if (len == -1) len = strlenW( str );
-    printf( "L\"");
-    while (len-- > 0 && *str)
+    static const char escapes[32] = ".......abtnvfr.............e....";
+    char buffer[256];
+    char *pos = buffer;
+    int count = 0;
+
+    for (; len; str++, len--)
     {
-        WCHAR c = *str++;
-        switch (c)
+        if (pos > buffer + sizeof(buffer) - 8)
         {
-        case '\n': printf( "\\n" ); break;
-        case '\r': printf( "\\r" ); break;
-        case '\t': printf( "\\t" ); break;
-        case '"':  printf( "\\\"" ); break;
-        case '\\': printf( "\\\\" ); break;
-        default:
-            if (c >= ' ' && c <= 126) putchar(c);
-            else printf( "\\u%04x",c);
+            fwrite( buffer, pos - buffer, 1, stdout );
+            count += pos - buffer;
+            pos = buffer;
         }
+        if ((unsigned char)*str > 127)  /* hex escape */
+        {
+            pos += sprintf( pos, "\\x%02x", (unsigned char)*str );
+            continue;
+        }
+        if (*str < 32)  /* octal or C escape */
+        {
+            if (!*str && len == 1) continue;  /* do not output terminating NULL */
+            if (escapes[(unsigned char)*str] != '.')
+                pos += sprintf( pos, "\\%c", escapes[(unsigned char)*str] );
+            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
+                pos += sprintf( pos, "\\%03o", *str );
+            else
+                pos += sprintf( pos, "\\%o", *str );
+            continue;
+        }
+        if (*str == '\\') *pos++ = '\\';
+        *pos++ = *str;
     }
-    printf( "\"" );
+    fwrite( buffer, pos - buffer, 1, stdout );
+    count += pos - buffer;
+    return count;
+}
+
+/* dump a Unicode string with proper escaping */
+int dump_strW( const WCHAR *str, size_t len )
+{
+    static const char escapes[32] = ".......abtnvfr.............e....";
+    char buffer[256];
+    char *pos = buffer;
+    int count = 0;
+
+    for (; len; str++, len--)
+    {
+        if (pos > buffer + sizeof(buffer) - 8)
+        {
+            fwrite( buffer, pos - buffer, 1, stdout );
+            count += pos - buffer;
+            pos = buffer;
+        }
+        if (*str > 127)  /* hex escape */
+        {
+            if (len > 1 && str[1] < 128 && isxdigit((char)str[1]))
+                pos += sprintf( pos, "\\x%04x", *str );
+            else
+                pos += sprintf( pos, "\\x%x", *str );
+            continue;
+        }
+        if (*str < 32)  /* octal or C escape */
+        {
+            if (!*str && len == 1) continue;  /* do not output terminating NULL */
+            if (escapes[*str] != '.')
+                pos += sprintf( pos, "\\%c", escapes[*str] );
+            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
+                pos += sprintf( pos, "\\%03o", *str );
+            else
+                pos += sprintf( pos, "\\%o", *str );
+            continue;
+        }
+        if (*str == '\\') *pos++ = '\\';
+        *pos++ = *str;
+    }
+    fwrite( buffer, pos - buffer, 1, stdout );
+    count += pos - buffer;
+    return count;
 }
 
 const char *get_hexint64_str( DWORD64 l )

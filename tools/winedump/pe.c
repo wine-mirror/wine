@@ -4622,89 +4622,6 @@ static const char *get_resource_type( unsigned int id )
     return NULL;
 }
 
-/* dump an ASCII string with proper escaping */
-static int dump_strA( const unsigned char *str, size_t len )
-{
-    static const char escapes[32] = ".......abtnvfr.............e....";
-    char buffer[256];
-    char *pos = buffer;
-    int count = 0;
-
-    for (; len; str++, len--)
-    {
-        if (pos > buffer + sizeof(buffer) - 8)
-        {
-            fwrite( buffer, pos - buffer, 1, stdout );
-            count += pos - buffer;
-            pos = buffer;
-        }
-        if (*str > 127)  /* hex escape */
-        {
-            pos += sprintf( pos, "\\x%02x", *str );
-            continue;
-        }
-        if (*str < 32)  /* octal or C escape */
-        {
-            if (!*str && len == 1) continue;  /* do not output terminating NULL */
-            if (escapes[*str] != '.')
-                pos += sprintf( pos, "\\%c", escapes[*str] );
-            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
-                pos += sprintf( pos, "\\%03o", *str );
-            else
-                pos += sprintf( pos, "\\%o", *str );
-            continue;
-        }
-        if (*str == '\\') *pos++ = '\\';
-        *pos++ = *str;
-    }
-    fwrite( buffer, pos - buffer, 1, stdout );
-    count += pos - buffer;
-    return count;
-}
-
-/* dump a Unicode string with proper escaping */
-static int dump_strW( const WCHAR *str, size_t len )
-{
-    static const char escapes[32] = ".......abtnvfr.............e....";
-    char buffer[256];
-    char *pos = buffer;
-    int count = 0;
-
-    for (; len; str++, len--)
-    {
-        if (pos > buffer + sizeof(buffer) - 8)
-        {
-            fwrite( buffer, pos - buffer, 1, stdout );
-            count += pos - buffer;
-            pos = buffer;
-        }
-        if (*str > 127)  /* hex escape */
-        {
-            if (len > 1 && str[1] < 128 && isxdigit((char)str[1]))
-                pos += sprintf( pos, "\\x%04x", *str );
-            else
-                pos += sprintf( pos, "\\x%x", *str );
-            continue;
-        }
-        if (*str < 32)  /* octal or C escape */
-        {
-            if (!*str && len == 1) continue;  /* do not output terminating NULL */
-            if (escapes[*str] != '.')
-                pos += sprintf( pos, "\\%c", escapes[*str] );
-            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
-                pos += sprintf( pos, "\\%03o", *str );
-            else
-                pos += sprintf( pos, "\\%o", *str );
-            continue;
-        }
-        if (*str == '\\') *pos++ = '\\';
-        *pos++ = *str;
-    }
-    fwrite( buffer, pos - buffer, 1, stdout );
-    count += pos - buffer;
-    return count;
-}
-
 /* dump data for a STRING resource */
 static void dump_string_data( const WCHAR *ptr, unsigned int size, unsigned int id, const char *prefix )
 {
@@ -4756,7 +4673,7 @@ static void dump_msgtable_data( const void *ptr, unsigned int size, const char *
             {
                 const char *str = (const char *) entry->Text;
                 printf( "%s%08x \"", prefix, j );
-                dump_strA( entry->Text, strlen(str) );
+                dump_strA( str, strlen(str) );
                 printf( "\"\n" );
             }
             entry = (const MESSAGE_RESOURCE_ENTRY *)((const char *)entry + entry->Length);
@@ -5068,7 +4985,7 @@ static void dump_dir_resource(void)
                 if (e1->NameIsString)
                 {
                     string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->NameOffset);
-                    dump_unicode_str( string->NameString, string->Length );
+                    dump_strW( string->NameString, string->Length );
                 }
                 else
                 {
@@ -5081,7 +4998,7 @@ static void dump_dir_resource(void)
                 if (e2->NameIsString)
                 {
                     string = (const IMAGE_RESOURCE_DIR_STRING_U*) ((const char *)root + e2->NameOffset);
-                    dump_unicode_str( string->NameString, string->Length );
+                    dump_strW( string->NameString, string->Length );
                 }
                 else
                     printf( "%04x", e2->Id );
@@ -5095,7 +5012,8 @@ static void dump_dir_resource(void)
                         tlb_dump_resource( (void *)RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     else if (!cmp_resource_name( string, "MUI" ))
                         dump_mui_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
-                    else if (!cmp_resource_name( string, "WINE_REGISTRY" ))
+                    else if (!cmp_resource_name( string, "REGISTRY" ) ||
+                             !cmp_resource_name( string, "WINE_REGISTRY" ))
                         dump_text_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     else
                         dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
