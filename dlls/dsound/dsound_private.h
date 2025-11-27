@@ -82,8 +82,8 @@ struct DirectSoundDevice
     int                         num_speakers;
     int                         lfe_channel;
     BYTE                       *filter_buffer;
-    float *tmp_buffer, *cp_buffer;
-    DWORD                       filter_buffer_len, tmp_buffer_len, cp_buffer_len;
+    float *tmp_buffer, *cp_buffer, *linear_buffer;
+    DWORD                       filter_buffer_len, tmp_buffer_len, cp_buffer_len, linear_buffer_len;
     CO_MTA_USAGE_COOKIE         mta_cookie;
 
     DSVOLUMEPAN                 volpan;

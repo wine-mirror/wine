@@ -581,7 +581,7 @@ static inline void filter_samples(const IDirectSoundBufferImpl *dsb, BYTE *buffe
 }
 
 static void put_samples(IDirectSoundBufferImpl *dsb, unsigned int count, unsigned int ichannels,
-                        unsigned int istride, unsigned int ostride, float *input)
+                        unsigned int istride, float *input)
 {
     const struct channel_map *map = dsb->out_channel_map;
     float *buf = dsb->device->tmp_buffer;
@@ -589,14 +589,8 @@ static void put_samples(IDirectSoundBufferImpl *dsb, unsigned int count, unsigne
 
     if (dsb->out_channel_passthrough)
     {
-        for (i = 0; i < count; ++i)
-        {
-            for (channel = 0; channel < ichannels; channel++)
-            {
-                float *fbuf = (float *)((char *)buf + i * ostride + sizeof(float) * channel);
-                *fbuf = input[channel * istride + i];
-            }
-        }
+        for (channel = 0; channel < ichannels; channel++)
+            memcpy(&buf[channel * count], &input[channel * istride], count * sizeof(float));
         return;
     }
 
@@ -606,10 +600,7 @@ static void put_samples(IDirectSoundBufferImpl *dsb, unsigned int count, unsigne
         {
             /* XXX: does Windows include LFE into the mix? */
             for (channel = 0; channel < ichannels; channel++)
-            {
-                float *fbuf = (float *)((char *)buf + i * ostride);
-                *fbuf += input[channel * istride + i];
-            }
+                buf[i] += input[channel * istride + i];
         }
         return;
     }
@@ -618,24 +609,16 @@ static void put_samples(IDirectSoundBufferImpl *dsb, unsigned int count, unsigne
     if (map->mix_channels)
     {
         for (i = 0; i < count; ++i)
-        {
             for (entry = 0; entry < map->entry_count; entry++)
-            {
-                float *fbuf = (float *)((char *)buf + i * ostride + sizeof(float) * map->entries[entry].dst_channel);
-                *fbuf += input[map->entries[entry].src_channel * istride + i] * map->entries[entry].weight;
-            }
-        }
+                buf[map->entries[entry].dst_channel * count + i] +=
+                    input[map->entries[entry].src_channel * istride + i] * map->entries[entry].weight;
     }
     else
     {
         for (i = 0; i < count; ++i)
-        {
             for (entry = 0; entry < map->entry_count; entry++)
-            {
-                float *fbuf = (float *)((char *)buf + i * ostride + sizeof(float) * map->entries[entry].dst_channel);
-                *fbuf = input[map->entries[entry].src_channel * istride + i] * map->entries[entry].weight;
-            }
-        }
+                buf[map->entries[entry].dst_channel * count + i] =
+                    input[map->entries[entry].src_channel * istride + i] * map->entries[entry].weight;
     }
 }
 
@@ -876,7 +859,6 @@ static void resample(DWORD freq_adjust_num, DWORD freq_adjust_den, DWORD freq_ac
 static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *freqAccNum)
 {
     UINT channel;
-    UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
 
     LONG64 freqAcc_start = *freqAccNum;
     LONG64 freqAcc_end = freqAcc_start + count * dsb->freqAdjustNum;
@@ -971,7 +953,7 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
                 channel_input + freqAcc_equalized / dsb->freqAdjustDen, channel_output);
     }
 
-    put_samples(dsb, count, channels, count + FIR_WIDTH - 1, ostride, output);
+    put_samples(dsb, count, channels, count + FIR_WIDTH - 1, output);
 
     dsb->input_tail_valid = TRUE;
 
@@ -980,7 +962,6 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
 
 static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
 {
-    UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
     DWORD total_input = dsb->input_delay + count;
     float *intermediate;
     DWORD channel;
@@ -1042,7 +1023,7 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
         memcpy(channel_input_tail, channel_input + count, dsb->input_delay * sizeof(float));
     }
 
-    put_samples(dsb, count, dsb->mix_channels, total_input, ostride, intermediate);
+    put_samples(dsb, count, dsb->mix_channels, total_input, intermediate);
 
     dsb->input_tail_valid = TRUE;
 
@@ -1145,11 +1126,13 @@ static void DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT frames)
 	for (i = 0; i < channels; ++i)
 		vols[i] = dsb->volpan.dwTotalAmpFactor[i] / ((float)0xFFFF);
 
-	for(i = 0; i < frames; ++i){
-		for(chan = 0; chan < channels; ++chan){
-			dsb->device->tmp_buffer[i * channels + chan] *= vols[chan];
-		}
-	}
+    for(chan = 0; chan < channels; ++chan)
+    {
+        float vol = vols[chan];
+
+        for(i = 0; i < frames; ++i)
+            dsb->device->tmp_buffer[chan * frames + i] *= vol;
+    }
 }
 
 /**
@@ -1222,12 +1205,27 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD
 	return primary_done;
 }
 
-static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buffer, DWORD frames)
+static void DSOUND_MixToPrimary(DirectSoundDevice *device, float *mix_buffer, DWORD frames)
 {
-	INT i;
-	IDirectSoundBufferImpl	*dsb;
+    unsigned int channels = device->pwfx->nChannels;
+    unsigned int size = frames * sizeof(float) * channels;
+    IDirectSoundBufferImpl *dsb;
+    float *linear_buffer;
+    unsigned int i;
 
-	TRACE("(frames %ld)\n", frames);
+    if (device->linear_buffer_len < size || !device->linear_buffer)
+    {
+        linear_buffer = realloc(device->linear_buffer, size);
+        if (!linear_buffer)
+            return;
+        device->linear_buffer = linear_buffer;
+        device->linear_buffer_len = size;
+    }
+    linear_buffer = device->linear_buffer;
+
+    memset(linear_buffer, 0, size);
+
+    TRACE("%lu frames for %u buffers\n", frames, device->nrofbuffers);
 	for (i = 0; i < device->nrofbuffers; i++) {
 		dsb = device->buffers[i];
 
@@ -1243,11 +1241,15 @@ static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buff
 					dsb->state = STATE_PLAYING;
 
 				/* mix next buffer into the main buffer */
-				DSOUND_MixOne(dsb, mix_buffer, frames);
+				DSOUND_MixOne(dsb, linear_buffer, frames);
 			}
 			ReleaseSRWLockShared(&dsb->lock);
 		}
 	}
+    /* Interleave the mixed channels */
+    for (i = 0; i < frames; i++)
+        for (unsigned int c = 0; c < channels; c++)
+            mix_buffer[i * channels + c] = linear_buffer[c * frames + i];
 }
 
 /**
@@ -1293,8 +1295,10 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, LPBYTE pos, DWORD bytes)
  * The mixing procedure goes:
  *
  * secondary->buffer (secondary format)
- *   =[Resample]=> device->tmp_buffer (float format)
- *   =[Volume]=> device->tmp_buffer (float format)
+ *   =[Resample]=> device->cp_buffer (float format)
+ *   =[Remap channels]=> device->tmp_buffer (float format)
+ *   =[Volume + mix]=> device->linear_buffer (float format)
+ *   =[Interleave]=> device->buffer (float format)
  */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
@@ -1329,11 +1333,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		frames = device->frag_frames * 3;
 
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
-		int nfiller;
 		void *buffer = NULL;
-
-		/* the sound of silence */
-		nfiller = device->pwfx->wBitsPerSample == 8 ? 128 : 0;
 
 		/* check for underrun. underrun occurs when the write position passes the mix position
 		 * also wipe out just-played sound data */
@@ -1347,9 +1347,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			return;
 		}
 
-		memset(buffer, nfiller, frames * block);
-
-                DSOUND_MixToPrimary(device, buffer, frames);
+		DSOUND_MixToPrimary(device, buffer, frames);
 
 		hr = IAudioRenderClient_ReleaseBuffer(device->render, frames, 0);
 		if(FAILED(hr))
