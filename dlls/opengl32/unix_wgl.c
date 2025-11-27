@@ -2346,6 +2346,11 @@ static struct buffer *get_target_buffer( TEB *teb, GLenum target )
     return name ? get_named_buffer( teb, name ) : NULL;
 }
 
+static BOOL use_driver_buffer_map( struct buffer *buffer )
+{
+    return !buffer || !buffer->vk_memory;
+}
+
 static BOOL buffer_vm_alloc( TEB *teb, struct buffer *buffer, SIZE_T size )
 {
     if (buffer->vm_size >= size) return TRUE;
@@ -2715,7 +2720,7 @@ static void *wow64_gl_map_buffer( TEB *teb, GLenum target, GLenum access, PFN_gl
 
     pthread_mutex_lock( &wgl_lock );
     buffer = get_target_buffer( teb, target );
-    if (!buffer || !buffer->vk_memory) ptr = gl_map_buffer64( target, access );
+    if (use_driver_buffer_map( buffer )) ptr = gl_map_buffer64( target, access );
     ptr = wow64_map_buffer( teb, buffer, target, 0, 0, 0, range_access, ptr );
     pthread_mutex_unlock( &wgl_lock );
     return ptr;
@@ -2741,7 +2746,7 @@ void *wow64_glMapBufferRange( TEB *teb, GLenum target, GLintptr offset, GLsizeip
 
     pthread_mutex_lock( &wgl_lock );
     buffer = get_target_buffer( teb, target );
-    if (!buffer || !buffer->vk_memory) ptr = funcs->p_glMapBufferRange( target, offset, length, access );
+    if (use_driver_buffer_map( buffer )) ptr = funcs->p_glMapBufferRange( target, offset, length, access );
     ptr = wow64_map_buffer( teb, buffer, target, 0, offset, length, access, ptr );
     pthread_mutex_unlock( &wgl_lock );
     return ptr;
@@ -2755,7 +2760,7 @@ static void *wow64_gl_map_named_buffer( TEB *teb, GLuint name, GLenum access, PF
 
     pthread_mutex_lock( &wgl_lock );
     buffer = get_named_buffer( teb, name );
-    if (!buffer || !buffer->vk_memory) ptr = gl_map_named_buffer64( name, access );
+    if (use_driver_buffer_map( buffer )) ptr = gl_map_named_buffer64( name, access );
     ptr = wow64_map_buffer( teb, buffer, 0, name, 0, 0, range_access, ptr );
     pthread_mutex_unlock( &wgl_lock );
     return ptr;
@@ -2781,7 +2786,7 @@ static void *wow64_gl_map_named_buffer_range( TEB *teb, GLuint name, GLintptr of
 
     pthread_mutex_lock( &wgl_lock );
     buffer = get_named_buffer( teb, name );
-    if (!buffer || !buffer->vk_memory) ptr = gl_map_named_buffer_range64( name, offset, length, access );
+    if (use_driver_buffer_map( buffer )) ptr = gl_map_named_buffer_range64( name, offset, length, access );
     ptr = wow64_map_buffer( teb, buffer, 0, name, offset, length, access, ptr );
     pthread_mutex_unlock( &wgl_lock );
     return ptr;
@@ -2832,7 +2837,7 @@ static GLboolean wow64_unmap_target_buffer( TEB *teb, GLenum target, PFN_glUnmap
 
     pthread_mutex_lock( &wgl_lock );
     if ((buffer = get_target_buffer( teb, target ))) ret = wow64_unmap_buffer( teb, buffer );
-    if (!buffer || !buffer->vk_memory) ret = gl_unmap( target );
+    if (use_driver_buffer_map( buffer )) ret = gl_unmap( target );
     pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
@@ -2856,7 +2861,7 @@ static GLboolean wow64_gl_unmap_named_buffer( TEB *teb, GLuint name, PFN_glUnmap
 
     pthread_mutex_lock( &wgl_lock );
     if ((buffer = get_named_buffer( teb, name ))) ret = wow64_unmap_buffer( teb, buffer );
-    if (!buffer || !buffer->vk_memory) ret = gl_unmap( name );
+    if (use_driver_buffer_map( buffer )) ret = gl_unmap( name );
     pthread_mutex_unlock( &wgl_lock );
     return ret;
 }
@@ -2880,7 +2885,7 @@ void wow64_glFlushMappedBufferRange( TEB *teb, GLenum target, GLintptr offset, G
 
     pthread_mutex_lock( &wgl_lock );
     if ((buffer = get_target_buffer( teb, target ))) flush_buffer( teb, buffer, offset, length );
-    if (!buffer || !buffer->vk_memory) funcs->p_glFlushMappedBufferRange( target, offset, length );
+    if (use_driver_buffer_map( buffer )) funcs->p_glFlushMappedBufferRange( target, offset, length );
     pthread_mutex_unlock( &wgl_lock );
 }
 
@@ -2891,7 +2896,7 @@ void wow64_glFlushMappedNamedBufferRange( TEB *teb, GLuint name, GLintptr offset
 
     pthread_mutex_lock( &wgl_lock );
     if ((buffer = get_named_buffer( teb, name ))) flush_buffer( teb, buffer, offset, length );
-    if (!buffer || !buffer->vk_memory) funcs->p_glFlushMappedNamedBufferRange( name, offset, length );
+    if (use_driver_buffer_map( buffer )) funcs->p_glFlushMappedNamedBufferRange( name, offset, length );
     pthread_mutex_unlock( &wgl_lock );
 }
 
@@ -2902,7 +2907,7 @@ void wow64_glFlushMappedNamedBufferRangeEXT( TEB *teb, GLuint name, GLintptr off
 
     pthread_mutex_lock( &wgl_lock );
     if ((buffer = get_named_buffer( teb, name ))) flush_buffer( teb, buffer, offset, length );
-    if (!buffer || !buffer->vk_memory) funcs->p_glFlushMappedNamedBufferRangeEXT( name, offset, length );
+    if (use_driver_buffer_map( buffer )) funcs->p_glFlushMappedNamedBufferRangeEXT( name, offset, length );
     pthread_mutex_unlock( &wgl_lock );
 }
 
