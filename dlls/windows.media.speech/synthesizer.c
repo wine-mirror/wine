@@ -838,10 +838,12 @@ static HRESULT WINAPI synthesizer_GetTrustLevel( ISpeechSynthesizer *iface, Trus
     return E_NOTIMPL;
 }
 
-static HRESULT synthesizer_synthesize_text_to_stream_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT synthesizer_synthesize_text_to_stream_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     ISpeechSynthesisStream *stream;
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     if (SUCCEEDED(hr = synthesis_stream_create(&stream)))
     {
@@ -859,10 +861,12 @@ static HRESULT WINAPI synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesize
                                               synthesizer_synthesize_text_to_stream_async, (IAsyncOperation_IInspectable **)operation);
 }
 
-static HRESULT synthesizer_synthesize_ssml_to_stream_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT synthesizer_synthesize_ssml_to_stream_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     ISpeechSynthesisStream *stream;
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     if (SUCCEEDED(hr = synthesis_stream_create(&stream)))
     {
