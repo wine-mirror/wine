@@ -28,6 +28,7 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Perception_Spatial
 #define WIDL_using_Windows_Perception_Spatial_Surfaces
 #include "windows.perception.spatial.surfaces.h"
 #define WIDL_using_Windows_Graphics_Holographic
@@ -284,12 +285,107 @@ done:
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+struct status_async_handler
+{
+    IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus_iface;
+    LONG refcount;
+
+    IAsyncOperation_SpatialPerceptionAccessStatus *async;
+    AsyncStatus status;
+    BOOL invoked;
+    HANDLE event;
+};
+
+static inline struct status_async_handler *impl_from_IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus(
+        IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus *iface )
+{
+    return CONTAINING_RECORD( iface, struct status_async_handler, IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus_iface );
+}
+
+static HRESULT WINAPI status_async_handler_QueryInterface( IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus *iface,
+        REFIID iid, void **out )
+{
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus ))
+    {
+        IUnknown_AddRef( iface );
+        *out = iface;
+        return S_OK;
+    }
+
+    if (winetest_debug > 1) trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI status_async_handler_AddRef( IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus *iface )
+{
+    struct status_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus( iface );
+    return InterlockedIncrement( &impl->refcount );
+}
+
+static ULONG WINAPI status_async_handler_Release( IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus *iface )
+{
+    struct status_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus( iface );
+    ULONG ref = InterlockedDecrement( &impl->refcount );
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI status_async_handler_Invoke( IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus *iface,
+                                                 IAsyncOperation_SpatialPerceptionAccessStatus *async, AsyncStatus status )
+{
+    struct status_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus( iface );
+
+    if (winetest_debug > 1) trace( "iface %p, async %p, status %u\n", iface, async, status );
+
+    ok( !impl->invoked, "invoked twice\n" );
+    impl->invoked = TRUE;
+    impl->async = async;
+    impl->status = status;
+    if (impl->event) SetEvent( impl->event );
+
+    return S_OK;
+}
+
+static IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatusVtbl status_async_handler_vtbl =
+{
+    /*** IUnknown methods ***/
+    status_async_handler_QueryInterface,
+    status_async_handler_AddRef,
+    status_async_handler_Release,
+    /*** IAsyncOperationCompletedHandler<boolean> methods ***/
+    status_async_handler_Invoke,
+};
+
+static IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus *status_async_handler_create( HANDLE event )
+{
+    struct status_async_handler *impl;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return NULL;
+    impl->IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus_iface.lpVtbl = &status_async_handler_vtbl;
+    impl->event = event;
+    impl->refcount = 1;
+
+    return &impl->IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus_iface;
+}
+
 static void test_SpatialAnchorExporter(void)
 {
     static const WCHAR *class_name = L"Windows.Perception.Spatial.SpatialAnchorExporter";
+    IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus *handler;
+    IAsyncOperation_SpatialPerceptionAccessStatus *access_status;
+    struct status_async_handler *handler_impl;
+    ISpatialAnchorExporterStatics *statics;
+    SpatialPerceptionAccessStatus status;
     IActivationFactory *factory;
+    AsyncStatus astatus;
+    IAsyncInfo *info;
+    HANDLE event;
     HSTRING str;
     HRESULT hr;
+    UINT32 id;
     LONG ref;
 
     hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
@@ -304,6 +400,56 @@ static void test_SpatialAnchorExporter(void)
         return;
     }
 
+    check_interface( factory, &IID_IUnknown, FALSE );
+    check_interface( factory, &IID_IInspectable, FALSE );
+    check_interface( factory, &IID_IAgileObject, FALSE );
+    check_interface( factory, &IID_ISpatialAnchorExporterStatics, FALSE );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_ISpatialAnchorExporterStatics, (void **)&statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = ISpatialAnchorExporterStatics_RequestAccessAsync( statics, &access_status );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    handler = (void *)0xdeadbeef;
+    hr = IAsyncOperation_SpatialPerceptionAccessStatus_get_Completed( access_status, &handler );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !handler, "got %p.\n", handler );
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    handler = status_async_handler_create( event );
+    hr = IAsyncOperation_SpatialPerceptionAccessStatus_put_Completed( access_status, handler );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    handler_impl = impl_from_IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus( handler );
+    if (!handler_impl->invoked)
+    {
+        /* Looks like it normally completes at once on Win11, while on some Win10 Testbot machines it doesn't. */
+        WaitForSingleObject( event, INFINITE );
+    }
+    CloseHandle( event );
+    ok( handler_impl->invoked, "handler not invoked.\n" );
+    ok( handler_impl->async == access_status, "got %p, %p.\n", handler_impl->async, access_status );
+    ok( handler_impl->status == Completed, "got %d.\n", handler_impl->status );
+    IAsyncOperationCompletedHandler_SpatialPerceptionAccessStatus_Release( handler );
+
+    hr = IAsyncOperation_SpatialPerceptionAccessStatus_GetResults( access_status, &status );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( status == SpatialPerceptionAccessStatus_DeniedBySystem, "got %d.\n", status );
+
+    hr = IAsyncOperation_SpatialPerceptionAccessStatus_QueryInterface( access_status, &IID_IAsyncInfo, (void **)&info );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IAsyncInfo_get_Id( info, &id );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( id == 1, "got %u.\n", id );
+    hr = IAsyncInfo_get_Status( info, &astatus );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( astatus == Completed, "got %u.\n", id );
+    IAsyncInfo_Release( info );
+
+    IAsyncOperation_SpatialPerceptionAccessStatus_Release( access_status );
+
+    ISpatialAnchorExporterStatics_Release( statics );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }

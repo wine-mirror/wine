@@ -119,6 +119,13 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( exporter_statics, ISpatialAnchorExporterStatics, struct exporter, IActivationFactory_iface )
 
+static HRESULT request_access_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
+{
+    result->vt = VT_UI4;
+    result->ulVal = SpatialPerceptionAccessStatus_DeniedBySystem;
+    return S_OK;
+}
+
 static HRESULT WINAPI exporter_statics_GetDefault( ISpatialAnchorExporterStatics *iface, ISpatialAnchorExporter **value )
 {
     FIXME( "iface %p, value %p stub.\n", iface, value );
@@ -127,8 +134,8 @@ static HRESULT WINAPI exporter_statics_GetDefault( ISpatialAnchorExporterStatics
 
 static HRESULT WINAPI exporter_statics_RequestAccessAsync( ISpatialAnchorExporterStatics *iface, IAsyncOperation_SpatialPerceptionAccessStatus **result )
 {
-    FIXME( "iface %p, result %p stub.\n", iface, result );
-    return E_NOTIMPL;
+    TRACE( "iface %p, result %p stub.\n", iface, result );
+    return async_operation_request_access_create( (IUnknown *)iface, NULL, request_access_async, result );
 }
 
 static const struct ISpatialAnchorExporterStaticsVtbl exporter_statics_vtbl =
