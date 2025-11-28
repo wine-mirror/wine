@@ -71,6 +71,8 @@ struct vmr7
     IVMRSurfaceAllocator *allocator;
     IVMRImagePresenter *presenter;
     IDirectDrawSurface7 **surfaces;
+    IDirectDraw7 *ddraw;
+    HMONITOR monitor;
     DWORD surface_count;
     DWORD surface_index;
     DWORD_PTR cookie;
@@ -1260,8 +1262,19 @@ static HRESULT WINAPI surface_allocator_notify_AdviseSurfaceAllocator(
 static HRESULT WINAPI surface_allocator_notify_SetDDrawDevice(
         IVMRSurfaceAllocatorNotify *iface, IDirectDraw7 *device, HMONITOR monitor)
 {
-    FIXME("iface %p, device %p, monitor %p, stub!\n", iface, device, monitor);
-    return E_NOTIMPL;
+    struct vmr7 *filter = impl_from_IVMRSurfaceAllocatorNotify(iface);
+
+    TRACE("filter %p, device %p, monitor %p.\n", filter, device, monitor);
+
+    if (!device || monitor == MONITOR_DEFAULTTONULL)
+    {
+        WARN("Invalid parameters.\n");
+        return E_FAIL;
+    }
+
+    filter->ddraw = device;
+    filter->monitor = monitor;
+    return S_OK;
 }
 
 static HRESULT WINAPI surface_allocator_notify_ChangeDDrawDevice(

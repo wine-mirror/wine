@@ -3561,7 +3561,7 @@ static void test_renderless_formats(void)
 
     hr = IVMRSurfaceAllocatorNotify_SetDDrawDevice(notify, ddraw, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
     presenter.ddraw = ddraw;
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ref = get_refcount(ddraw);
     todo_wine ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
