@@ -3829,7 +3829,7 @@ DECL_HANDLER(set_foreground_window)
         if (!current->process->set_foreground) current->process->set_foreground = 1;
         else if (!is_current_process_foreground( desktop ) && queue->input && input && queue->input->user_time < input->user_time)
         {
-            set_win32_error( ERROR_ACCESS_DENIED );
+            set_error( STATUS_ACCESS_DENIED );
             release_object( desktop );
             return;
         }
