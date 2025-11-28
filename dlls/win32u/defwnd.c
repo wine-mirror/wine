@@ -988,8 +988,8 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
         break;
 
     case SC_MINIMIZE:
-        NtUserShowOwnedPopups( hwnd, FALSE );
         NtUserShowWindow( hwnd, SW_MINIMIZE );
+        NtUserShowOwnedPopups( hwnd, FALSE );
         break;
 
     case SC_MAXIMIZE:
