@@ -191,8 +191,9 @@ static HRESULT WINAPI dispatcher_queue_controller_get_DispatcherQueue( IDispatch
     return E_NOTIMPL;
 }
 
-static HRESULT shutdown_queue_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT shutdown_queue_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
+    if (!called_async) return STATUS_PENDING;
     return S_OK;
 }
 
