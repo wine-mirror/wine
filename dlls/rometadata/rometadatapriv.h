@@ -105,6 +105,9 @@ enum table
     TABLE_MAX                    = 0x2d
 };
 
+/* mdTokens use 3 bytes for the row ID, the maximum number of rows is thus 2**24 - 1. */
+#define RID_MAX 0xffffff
+
 extern HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **out);
 extern HRESULT assembly_open_from_data(const BYTE *data, ULONG data_size, assembly_t **out);
 extern void assembly_free(assembly_t *assembly);

@@ -557,6 +557,25 @@ ULONG metadata_coded_value_as_token(ULONG table_idx, ULONG column_idx, ULONG val
     return TokenFromRid((value & ~table_mask) >> tag_bits, TokenFromTable(column->size.coded.tables[value & table_mask]));
 }
 
+/* Return addr + offset, with bounds (should be able to read size bytes) and overflow check.
+ * addr should be obtained via assembly_base_offset. */
+static const void *assembly_addr_offset(const assembly_t *assembly, const void *addr, ULONG offset, SIZE_T size)
+{
+    const UINT_PTR max_addr = (UINT_PTR)assembly->data + assembly->size;
+    const UINT_PTR new_addr = (UINT_PTR)addr + offset;
+
+    assert((BYTE *)addr >= assembly->data && (UINT_PTR)addr < (UINT_PTR)(assembly->data + assembly->size));
+
+    if (new_addr < (UINT_PTR)addr || new_addr + size < new_addr || new_addr >= max_addr || new_addr + size > max_addr)
+        return NULL;
+    return (void *)new_addr;
+}
+
+static const void *assembly_base_offset(const assembly_t *assembly, ULONG offset, SIZE_T size)
+{
+    return assembly_addr_offset(assembly, assembly->data, offset, size);
+}
+
 static HRESULT assembly_calculate_table_sizes(assembly_t *assembly, enum table table)
 {
     const struct table_schema *schema;
@@ -599,7 +618,7 @@ static HRESULT assembly_calculate_table_sizes(assembly_t *assembly, enum table t
 static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
 {
     const BYTE *cur_table, *tables_stream_start = assembly->stream_tables.start;
-    ULONG num_tables = 0;
+    ULONG num_tables = 0, num_rows;
     int i;
 
     for (i = 0; i < 64; i++)
@@ -610,14 +629,17 @@ static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
         num_tables++;
     }
 
-    cur_table = tables_stream_start + offsetof(struct stream_tables_hdr, table_rows[num_tables]);
-    if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
+    cur_table = assembly_addr_offset(assembly, tables_stream_start,
+                                     offsetof(struct stream_tables_hdr, table_rows[num_tables]), sizeof(BYTE));
+    if (!cur_table) return CLDB_E_FILE_CORRUPT;
 
     num_tables = 0;
     for (i = 0; i < TABLE_MAX; i++)
     {
         if (!assembly_table_exists(assembly, i)) continue;
-        assembly->tables[i].num_rows = assembly->tables_hdr->table_rows[num_tables++];
+        num_rows = assembly->tables_hdr->table_rows[num_tables++];
+        if (num_rows > RID_MAX) return CLDB_E_FILE_CORRUPT;
+        assembly->tables[i].num_rows = num_rows;
     }
 
     for (i = 0; i < TABLE_MAX; i++)
@@ -627,9 +649,12 @@ static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
         assembly_calculate_table_sizes(assembly, i);
         if (assembly_table_exists(assembly, i))
         {
+            const ULONG num_rows = table->num_rows;
+
+            if (num_rows * table->row_size < num_rows) return CLDB_E_FILE_CORRUPT;
             table->start = cur_table;
-            cur_table += (size_t)(assembly->tables[i].num_rows * table->row_size);
-            if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
+            if (!(cur_table = assembly_addr_offset(assembly, cur_table, num_rows * table->row_size, sizeof(BYTE))))
+                return CLDB_E_FILE_CORRUPT;
         }
     }
     return S_OK;
@@ -637,62 +662,66 @@ static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
 
 static HRESULT assembly_parse_headers(assembly_t *assembly)
 {
-    const IMAGE_DOS_HEADER *dos_hdr = (IMAGE_DOS_HEADER *)assembly->data;
+    const struct stream_hdr *md_stream_hdr;
     const IMAGE_SECTION_HEADER *sections;
     const IMAGE_NT_HEADERS32 *nt_hdrs;
     const IMAGE_COR20_HEADER *cor_hdr;
     const struct metadata_hdr *md_hdr;
-    const BYTE *streams_cur, *md_start, *ptr;
     UINT32 rva, num_sections, offset;
+    const IMAGE_DOS_HEADER *dos_hdr;
     UINT8 num_streams, i;
+    const char *version;
+    const BYTE *ptr;
 
     if (!assembly->size) return CLDB_E_NO_DATA;
-    if (assembly->size < sizeof(IMAGE_DOS_HEADER) || dos_hdr->e_magic != IMAGE_DOS_SIGNATURE ||
-        assembly->size < (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS32)))
-        return CLDB_E_FILE_CORRUPT;
 
-    nt_hdrs = (IMAGE_NT_HEADERS32 *)(assembly->data + dos_hdr->e_lfanew);
-    if (!(num_sections = nt_hdrs->FileHeader.NumberOfSections)) return CLDB_E_FILE_CORRUPT;
+    dos_hdr = assembly_base_offset(assembly, 0, sizeof(*dos_hdr));
+    if (!dos_hdr || dos_hdr->e_magic != IMAGE_DOS_SIGNATURE) return CLDB_E_FILE_CORRUPT;
+
+    nt_hdrs = assembly_base_offset(assembly, dos_hdr->e_lfanew, sizeof(*nt_hdrs));
+    if (!nt_hdrs || !(num_sections = nt_hdrs->FileHeader.NumberOfSections)) return CLDB_E_FILE_CORRUPT;
+
     switch (nt_hdrs->OptionalHeader.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
         rva = nt_hdrs->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
-        sections = (IMAGE_SECTION_HEADER *)(assembly->data + dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS32));
+        sections = assembly_addr_offset(assembly, nt_hdrs, sizeof(*nt_hdrs), sizeof(*sections));
         break;
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
     {
-        const IMAGE_NT_HEADERS64 *hdr64 = (IMAGE_NT_HEADERS64 *)(assembly->data + dos_hdr->e_lfanew);
+        const IMAGE_NT_HEADERS64 *hdr64;
 
-        if (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64) > assembly->size) return CLDB_E_FILE_CORRUPT;
+        hdr64 = assembly_base_offset(assembly, dos_hdr->e_lfanew, sizeof(*hdr64));
+        if (!hdr64) return CLDB_E_FILE_CORRUPT;
         rva = hdr64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
-        sections = (IMAGE_SECTION_HEADER *)(assembly->data + dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64));
+        sections = assembly_addr_offset(assembly, nt_hdrs, sizeof(*hdr64), sizeof(*sections));
         break;
     }
     default:
         return CLDB_E_FILE_CORRUPT;
     }
 
-    if (!pe_rva_to_offset(sections, num_sections, rva, &offset) || offset + sizeof(IMAGE_COR20_HEADER) > assembly->size)
+    if (!sections || !pe_rva_to_offset(sections, num_sections, rva, &offset))
         return CLDB_E_FILE_CORRUPT;
+    cor_hdr = assembly_base_offset(assembly, offset, sizeof(*cor_hdr));
+    if (!cor_hdr || cor_hdr->cb != sizeof(*cor_hdr)) return CLDB_E_FILE_CORRUPT;
 
-    cor_hdr = (IMAGE_COR20_HEADER *)(assembly->data + offset);
-    if (cor_hdr->cb != sizeof(IMAGE_COR20_HEADER)) return CLDB_E_FILE_CORRUPT;
-    if (!(pe_rva_to_offset(sections, num_sections, cor_hdr->MetaData.VirtualAddress, &offset)) ||
-        offset + sizeof(struct metadata_hdr) > assembly->size)
+    if (!(pe_rva_to_offset(sections, num_sections, cor_hdr->MetaData.VirtualAddress, &offset)))
         return CLDB_E_FILE_CORRUPT;
-
-    md_start = assembly->data + offset;
-    md_hdr = (struct metadata_hdr *)md_start;
-    if (md_hdr->signature != METADATA_MAGIC ||
-        offset + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16) * 2 > assembly->size)
+    md_hdr = assembly_base_offset(assembly, offset, sizeof(*md_hdr));
+    if (!md_hdr || md_hdr->signature != METADATA_MAGIC || md_hdr->length > 255)
         return CLDB_E_FILE_CORRUPT;
+    version = assembly_addr_offset(assembly, &md_hdr->version, 0, md_hdr->length);
+    if (!version || version[md_hdr->length]) return CLDB_E_FILE_CORRUPT;
 
-    num_streams = *(UINT8 *)(md_start + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16)); /* Flags */
-    streams_cur = md_start + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16) * 2; /* Flags + Streams */
+    ptr = assembly_addr_offset(assembly, &md_hdr->version[md_hdr->length], sizeof(UINT16), sizeof(UINT8)); /* Flags */
+    if (!ptr) return CLDB_E_FILE_CORRUPT;
+    num_streams = *ptr;
+    md_stream_hdr = assembly_addr_offset(assembly, ptr, sizeof(UINT16), sizeof(*md_stream_hdr)); /* Flags + Streams */
+    if (!md_stream_hdr) return CLDB_E_FILE_CORRUPT;
 
     for (i = 0; i < num_streams; i++)
     {
-        const struct stream_hdr *md_stream_hdr = (struct stream_hdr *)streams_cur;
         const struct
         {
             const char *name;
@@ -709,15 +738,22 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
         HRESULT hr = CLDB_E_FILE_CORRUPT;
         int j;
 
-        if ((UINT_PTR)(streams_cur - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
         for (j = 0; j < ARRAY_SIZE(streams); j++)
         {
-            if (!strncmp(streams[j].name, md_stream_hdr->name, streams[j].name_len))
+            /* We can read up to the end of the assembly. */
+            SIZE_T name_max_len = (assembly->data + assembly->size) - ((BYTE *)md_stream_hdr->name);
+            SIZE_T name_len = strnlen(md_stream_hdr->name, name_max_len);
+
+            if (name_len == name_max_len) break;
+            if (name_len == streams[j].name_len && !memcmp(streams[j].name, md_stream_hdr->name, streams[j].name_len))
             {
-                if (md_stream_hdr->offset + md_stream_hdr->size <= assembly->size)
+                const BYTE *start;
+
+                start = assembly_addr_offset(assembly, md_hdr, md_stream_hdr->offset, md_stream_hdr->size);
+                if (start)
                 {
                     streams[j].stream->size = md_stream_hdr->size;
-                    streams[j].stream->start = md_start + md_stream_hdr->offset;
+                    streams[j].stream->start = start;
                     hr = S_OK;
                 }
                 break;
@@ -725,23 +761,30 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
         }
         if (FAILED(hr)) return hr;
         /* The stream name is padded to the next 4-byte boundary (ECMA-335 Partition II.24.2.2) */
-        streams_cur += offsetof(struct stream_hdr, name[(streams[j].name_len + 4) & ~3]);
+        md_stream_hdr = assembly_addr_offset(assembly, md_stream_hdr,
+                                             offsetof(struct stream_hdr, name[(streams[j].name_len + 4) & ~3]),
+                                             sizeof(*md_stream_hdr));
+        if (!md_stream_hdr) return CLDB_E_FILE_CORRUPT;
     }
 
     /* IMetaDataTables::GetStringHeapSize returns the string heap size without the nul byte padding.
      * Partition II.24.2.3 says that if there is a string heap, the first entry is always the empty string, so
      * we'll only subtract padding bytes as long as stream_strings.size > 1. */
-    ptr = assembly->stream_strings.start + assembly->stream_strings.size - 1;
-    while (assembly->stream_strings.size > 1 && !ptr[0] && !ptr[-1])
+    if (assembly->stream_strings.size)
     {
-        assembly->stream_strings.size--;
-        ptr--;
+        if (assembly->stream_strings.start[0]) return CLDB_E_FILE_CORRUPT;
+
+        ptr = assembly->stream_strings.start + assembly->stream_strings.size - 1;
+        while (assembly->stream_strings.size > 1 && !ptr[0] && !ptr[-1])
+        {
+            assembly->stream_strings.size--;
+            ptr--;
+        }
     }
 
-    if (assembly->stream_tables.size < sizeof(struct stream_tables_hdr)) return CLDB_E_FILE_CORRUPT;
-    assembly->tables_hdr = (struct stream_tables_hdr *)assembly->stream_tables.start;
-
-    return assembly_parse_metadata_tables(assembly);
+    assembly->tables_hdr = assembly_addr_offset(assembly, assembly->stream_tables.start, 0,
+                                          sizeof(struct stream_tables_hdr));
+    return !assembly->tables_hdr ? CLDB_E_FILE_CORRUPT : assembly_parse_metadata_tables(assembly);
 }
 
 HRESULT assembly_open_from_data(const BYTE *data, ULONG data_size, assembly_t **ret)
