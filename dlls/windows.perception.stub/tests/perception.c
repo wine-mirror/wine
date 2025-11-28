@@ -284,6 +284,30 @@ done:
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_SpatialAnchorExporter(void)
+{
+    static const WCHAR *class_name = L"Windows.Perception.Spatial.SpatialAnchorExporter";
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(perception)
 {
     HRESULT hr;
@@ -293,6 +317,7 @@ START_TEST(perception)
 
     test_ObserverStatics();
     test_HolographicSpaceStatics();
+    test_SpatialAnchorExporter();
 
     RoUninitialize();
 }

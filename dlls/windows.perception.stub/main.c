@@ -42,6 +42,8 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
         IActivationFactory_QueryInterface( observer_factory, &IID_IActivationFactory, (void **)factory );
     if (!wcscmp( buffer, RuntimeClass_Windows_Graphics_Holographic_HolographicSpace ))
         IActivationFactory_QueryInterface( holographic_space_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( buffer, RuntimeClass_Windows_Perception_Spatial_SpatialAnchorExporter ))
+        IActivationFactory_QueryInterface( anchor_exporter_factory, &IID_IActivationFactory, (void **)factory );
 
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;
