@@ -826,6 +826,7 @@ static HRESULT WINAPI filter_config_SetRenderingMode(IVMRFilterConfig *iface, DW
             }
             IUnknown_QueryInterface(default_presenter, &IID_IVMRSurfaceAllocator, (void **)&filter->allocator);
             IUnknown_QueryInterface(default_presenter, &IID_IVMRImagePresenter, (void **)&filter->presenter);
+            IVMRSurfaceAllocator_AdviseNotify(filter->allocator, &filter->IVMRSurfaceAllocatorNotify_iface);
             IUnknown_Release(default_presenter);
             break;
 
