@@ -27,6 +27,8 @@
 #include "wine/strmbase.h"
 #include "wine/test.h"
 
+static const GUID MEDIASUBTYPE_IV50 = {mmioFOURCC('I','V','5','0'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+
 static IBaseFilter *create_vmr7(DWORD mode)
 {
     IBaseFilter *filter = NULL;
@@ -3534,6 +3536,7 @@ static void test_renderless_formats(void)
         const GUID *subtype;
         WORD depth;
         DWORD compression;
+        BOOL must_fail;
     }
     tests[] =
     {
@@ -3542,6 +3545,8 @@ static void test_renderless_formats(void)
         {&MEDIASUBTYPE_YV12,    12, mmioFOURCC('Y','V','1','2')},
         {&MEDIASUBTYPE_UYVY,    16, mmioFOURCC('U','Y','V','Y')},
         {&MEDIASUBTYPE_YUY2,    16, mmioFOURCC('Y','U','Y','2')},
+        {&MEDIASUBTYPE_IV50,    16, mmioFOURCC('I','V','5','0')},
+        {&MEDIASUBTYPE_WAVE,    16, mmioFOURCC('W','A','V','E'), TRUE},
     };
 
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
@@ -3588,12 +3593,17 @@ static void test_renderless_formats(void)
         vih.bmiHeader.biCompression = tests[i].compression;
 
         hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-        /* Connection never fails on native, but Wine currently creates
-         * surfaces during IPin::ReceiveConnection() instead of
-         * IMemAllocator::SetProperties(), so let that fail here for now. */
+        /* Wine currently creates surfaces during IPin::ReceiveConnection()
+         * instead of IMemAllocator::SetProperties(), so accept those extra
+         * failures here for now. */
+        if (tests[i].must_fail)
+            ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+        else
+            ok(hr == S_OK || hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
         if (hr != S_OK)
         {
-            skip("Format is not supported, hr %#lx.\n", hr);
+            if (!tests[i].must_fail)
+                skip("Format is not supported, hr %#lx.\n", hr);
             winetest_pop_context();
             continue;
         }
