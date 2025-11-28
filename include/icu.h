@@ -1691,6 +1691,13 @@ typedef enum UTimeZoneTransitionType
     UCAL_TZ_TRANSITION_PREVIOUS_INCLUSIVE
 } UTimeZoneTransitionType;
 
+typedef enum UCPMapRangeOption
+{
+    UCPMAP_RANGE_NORMAL,
+    UCPMAP_RANGE_FIXED_LEAD_SURROGATES,
+    UCPMAP_RANGE_FIXED_ALL_SURROGATES
+} UCPMapRangeOption;
+
 typedef enum UCharCategory
 {
     U_UNASSIGNED = 0,
@@ -1760,6 +1767,83 @@ typedef enum UCalendarWeekdayType
     UCAL_WEEKEND_CEASE
 } UCalendarWeekdayType;
 
+typedef enum UCPTrieType
+{
+    UCPTRIE_TYPE_ANY = -1,
+    UCPTRIE_TYPE_FAST,
+    UCPTRIE_TYPE_SMALL
+} UCPTrieType;
+
+typedef enum UCPTrieValueWidth
+{
+    UCPTRIE_VALUE_BITS_ANY = -1,
+    UCPTRIE_VALUE_BITS_16,
+    UCPTRIE_VALUE_BITS_32,
+    UCPTRIE_VALUE_BITS_8
+} UCPTrieValueWidth;
+
+typedef enum UDateFormatHourCycle
+{
+    UDAT_HOUR_CYCLE_11,
+    UDAT_HOUR_CYCLE_12,
+    UDAT_HOUR_CYCLE_23,
+    UDAT_HOUR_CYCLE_24
+} UDateFormatHourCycle;
+
+typedef enum UTimeZoneLocalOption
+{
+    UCAL_TZ_LOCAL_FORMER = 0x04,
+    UCAL_TZ_LOCAL_LATTER = 0x0C,
+    UCAL_TZ_LOCAL_STANDARD_FORMER = UCAL_TZ_LOCAL_FORMER | 0x01,
+    UCAL_TZ_LOCAL_STANDARD_LATTER = UCAL_TZ_LOCAL_LATTER | 0x01,
+    UCAL_TZ_LOCAL_DAYLIGHT_FORMER = UCAL_TZ_LOCAL_FORMER | 0x03,
+    UCAL_TZ_LOCAL_DAYLIGHT_LATTER = UCAL_TZ_LOCAL_LATTER | 0x03,
+} UTimeZoneLocalOption;
+
+typedef enum UListFormatterType
+{
+    ULISTFMT_TYPE_AND,
+    ULISTFMT_TYPE_OR,
+    ULISTFMT_TYPE_UNITS
+} UListFormatterType;
+
+typedef enum UListFormatterWidth
+{
+    ULISTFMT_WIDTH_WIDE,
+    ULISTFMT_WIDTH_SHORT,
+    ULISTFMT_WIDTH_NARROW,
+} UListFormatterWidth;
+
+typedef enum ULocAvailableType
+{
+    ULOC_AVAILABLE_DEFAULT,
+    ULOC_AVAILABLE_ONLY_LEGACY_ALIASES,
+    ULOC_AVAILABLE_WITH_LEGACY_ALIASES,
+} ULocAvailableType;
+
+typedef enum UNumberRangeCollapse
+{
+    UNUM_RANGE_COLLAPSE_AUTO,
+    UNUM_RANGE_COLLAPSE_NONE,
+    UNUM_RANGE_COLLAPSE_UNIT,
+    UNUM_RANGE_COLLAPSE_ALL
+} UNumberRangeCollapse;
+
+typedef enum UNumberRangeIdentityFallback
+{
+    UNUM_IDENTITY_FALLBACK_SINGLE_VALUE,
+    UNUM_IDENTITY_FALLBACK_APPROXIMATELY_OR_SINGLE_VALUE,
+    UNUM_IDENTITY_FALLBACK_APPROXIMATELY,
+    UNUM_IDENTITY_FALLBACK_RANGE
+} UNumberRangeIdentityFallback;
+
+typedef enum UNumberRangeIdentityResult
+{
+    UNUM_IDENTITY_RESULT_EQUAL_BEFORE_ROUNDING,
+    UNUM_IDENTITY_RESULT_EQUAL_AFTER_ROUNDING,
+    UNUM_IDENTITY_RESULT_NOT_EQUAL,
+} UNumberRangeIdentityResult;
+
 enum
 {
     USET_SERIALIZED_STATIC_ARRAY_CAPACITY = 8
@@ -1811,7 +1895,6 @@ struct URegion;
 struct URegularExpression;
 struct URelativeDateTimeFormatter;
 struct UResourceBundle;
-struct UResourceBundle;
 struct USpoofChecker;
 struct USpoofCheckResult;
 struct UStringPrepProfile;
@@ -1853,6 +1936,16 @@ typedef struct USpoofCheckResult USpoofCheckResult;
 typedef struct UStringPrepProfile UStringPrepProfile;
 typedef struct UStringSearch UStringSearch;
 typedef struct UText UText;
+typedef struct UCPMap UCPMap;
+typedef struct UCPTrie UCPTrie;
+typedef struct UFormattedDateInterval UFormattedDateInterval;
+typedef struct UFormattedValue UFormattedValue;
+typedef struct UConstrainedFieldPosition UConstrainedFieldPosition;
+typedef struct UFormattedList UFormattedList;
+typedef struct UMutableCPTrie UMutableCPTrie;
+typedef struct UNumberRangeFormatter UNumberRangeFormatter;
+typedef struct UFormattedNumberRange UFormattedNumberRange;
+typedef struct UFormattedRelativeDateTime UFormattedRelativeDateTime;
 typedef UColAttributeValue UCollationStrength;
 typedef uint8_t UVersionInfo[U_MAX_VERSION_LENGTH];
 typedef UResourceBundle *u_nl_catd;
@@ -1889,6 +1982,7 @@ typedef UBool __cdecl UCharEnumTypeRange(const void *context, UChar32 start, UCh
                                          UCharCategory type);
 typedef UBool __cdecl UEnumCharNamesFn(void *context, UChar32 code, UCharNameChoice nameChoice,
                                        const char *name, int32_t length);
+typedef uint32_t __cdecl UCPMapValueFilter(const void *context, uint32_t value);
 
 void __cdecl UCNV_FROM_U_CALLBACK_ESCAPE(const void *context, UConverterFromUnicodeArgs *fromArgs, const UChar *codeUnits, int32_t length, UChar32 codePoint, UConverterCallbackReason reason, UErrorCode *err);
 void __cdecl UCNV_FROM_U_CALLBACK_SKIP(const void *context, UConverterFromUnicodeArgs *fromUArgs, const UChar *codeUnits, int32_t length, UChar32 codePoint, UConverterCallbackReason reason, UErrorCode *err);
@@ -1923,11 +2017,13 @@ UChar32 __cdecl u_forDigit(int32_t digit, int8_t radix);
 int32_t __cdecl u_formatMessage(const char *locale, const UChar *pattern, int32_t patternLength, UChar *result, int32_t resultLength, UErrorCode *status, ...);
 int32_t __cdecl u_formatMessageWithError(const char *locale, const UChar *pattern, int32_t patternLength, UChar *result, int32_t resultLength, UParseError *parseError, UErrorCode *status, ...);
 UChar32 __cdecl u_getBidiPairedBracket(UChar32 c);
+const USet * __cdecl u_getBinaryPropertySet(UProperty property, UErrorCode *pErrorCode);
 uint8_t __cdecl u_getCombiningClass(UChar32 c);
 void __cdecl u_getDataVersion(UVersionInfo dataVersionFillin, UErrorCode *status);
 int32_t __cdecl u_getFC_NFKC_Closure(UChar32 c, UChar *dest, int32_t destCapacity, UErrorCode *pErrorCode);
+const UCPMap * __cdecl u_getIntPropertyMap(UProperty property, UErrorCode *pErrorCode);
 int32_t __cdecl u_getIntPropertyMaxValue(UProperty which);
-int32_t __cdecl u_getIntPropertyMinValue(UProperty arg0);
+int32_t __cdecl u_getIntPropertyMinValue(UProperty which);
 int32_t __cdecl u_getIntPropertyValue(UChar32 c, UProperty which);
 double __cdecl u_getNumericValue(UChar32 c);
 UProperty __cdecl u_getPropertyEnum(const char *alias);
@@ -2011,6 +2107,7 @@ int32_t __cdecl u_strcmp(const UChar *s1, const UChar *s2);
 int32_t __cdecl u_strcmpCodePointOrder(const UChar *s1, const UChar *s2);
 UChar * __cdecl u_strcpy(UChar *dst, const UChar *src);
 int32_t __cdecl u_strcspn(const UChar *string, const UChar *matchSet);
+UBool __cdecl u_stringHasBinaryProperty(const UChar *s, int32_t length, UProperty which);
 int32_t __cdecl u_strlen(const UChar *s);
 int32_t __cdecl u_strncasecmp(const UChar *s1, const UChar *s2, int32_t n, uint32_t options);
 UChar * __cdecl u_strncat(UChar *dst, const UChar *src, int32_t n);
@@ -2083,6 +2180,7 @@ void __cdecl ubiditransform_close(UBiDiTransform *pBidiTransform);
 UBiDiTransform * __cdecl ubiditransform_open(UErrorCode *pErrorCode);
 uint32_t __cdecl ubiditransform_transform(UBiDiTransform *pBiDiTransform, const UChar *src, int32_t srcLength, UChar *dest, int32_t destSize, UBiDiLevel inParaLevel, UBiDiOrder inOrder, UBiDiLevel outParaLevel, UBiDiOrder outOrder, UBiDiMirroring doMirroring, uint32_t shapingOptions, UErrorCode *pErrorCode);
 UBlockCode __cdecl ublock_getCode(UChar32 c);
+UBreakIterator * __cdecl ubrk_clone(const UBreakIterator *bi, UErrorCode *status);
 void __cdecl ubrk_close(UBreakIterator *bi);
 int32_t __cdecl ubrk_countAvailable(void);
 int32_t __cdecl ubrk_current(const UBreakIterator *bi);
@@ -2121,6 +2219,7 @@ UCalendarWeekdayType __cdecl ucal_getDayOfWeekType(const UCalendar *cal, UCalend
 int32_t __cdecl ucal_getDefaultTimeZone(UChar *result, int32_t resultCapacity, UErrorCode *ec);
 int32_t __cdecl ucal_getFieldDifference(UCalendar *cal, UDate target, UCalendarDateFields field, UErrorCode *status);
 UDate __cdecl ucal_getGregorianChange(const UCalendar *cal, UErrorCode *pErrorCode);
+int32_t __cdecl ucal_getHostTimeZone(UChar *result, int32_t resultCapacity, UErrorCode *ec);
 UEnumeration * __cdecl ucal_getKeywordValuesForLocale(const char *arg0, const char *locale, UBool commonlyUsed, UErrorCode *status);
 int32_t __cdecl ucal_getLimit(const UCalendar *cal, UCalendarDateFields field, UCalendarLimitType type, UErrorCode *status);
 const char * __cdecl ucal_getLocaleByType(const UCalendar *cal, ULocDataLocaleType type, UErrorCode *status);
@@ -2130,6 +2229,7 @@ const char * __cdecl ucal_getTZDataVersion(UErrorCode *status);
 int32_t __cdecl ucal_getTimeZoneDisplayName(const UCalendar *cal, UCalendarDisplayNameType type, const char *locale, UChar *result, int32_t resultLength, UErrorCode *status);
 int32_t __cdecl ucal_getTimeZoneID(const UCalendar *cal, UChar *result, int32_t resultLength, UErrorCode *status);
 int32_t __cdecl ucal_getTimeZoneIDForWindowsID(const UChar *winid, int32_t len, const char *region, UChar *id, int32_t idCapacity, UErrorCode *status);
+void __cdecl ucal_getTimeZoneOffsetFromLocal(const UCalendar *cal, UTimeZoneLocalOption nonExistingTimeOpt, UTimeZoneLocalOption duplicatedTimeOpt, int32_t *rawOffset, int32_t *dstOffset, UErrorCode *status);
 UBool __cdecl ucal_getTimeZoneTransitionDate(const UCalendar *cal, UTimeZoneTransitionType type, UDate *transition, UErrorCode *status);
 const char * __cdecl ucal_getType(const UCalendar *cal, UErrorCode *status);
 int32_t __cdecl ucal_getWeekendTransition(const UCalendar *cal, UCalendarDaysOfWeek dayOfWeek, UErrorCode *status);
@@ -2163,11 +2263,24 @@ int32_t __cdecl ucasemap_utf8FoldCase(const UCaseMap *csm, char *dest, int32_t d
 int32_t __cdecl ucasemap_utf8ToLower(const UCaseMap *csm, char *dest, int32_t destCapacity, const char *src, int32_t srcLength, UErrorCode *pErrorCode);
 int32_t __cdecl ucasemap_utf8ToTitle(UCaseMap *csm, char *dest, int32_t destCapacity, const char *src, int32_t srcLength, UErrorCode *pErrorCode);
 int32_t __cdecl ucasemap_utf8ToUpper(const UCaseMap *csm, char *dest, int32_t destCapacity, const char *src, int32_t srcLength, UErrorCode *pErrorCode);
+void __cdecl ucfpos_close(UConstrainedFieldPosition *ptr);
+void __cdecl ucfpos_constrainCategory(UConstrainedFieldPosition *ptr, int32_t category, UErrorCode *ec);
+void __cdecl ucfpos_constrainField(UConstrainedFieldPosition *ptr, int32_t category, int32_t field, UErrorCode *ec);
+int32_t __cdecl ucfpos_getCategory(const UConstrainedFieldPosition *ptr, UErrorCode *ec);
+int32_t __cdecl ucfpos_getField(const UConstrainedFieldPosition *ptr, UErrorCode *ec);
+void __cdecl ucfpos_getIndexes(const UConstrainedFieldPosition *ptr, int32_t *pStart, int32_t *pLimit, UErrorCode *ec);
+int64_t __cdecl ucfpos_getInt64IterationContext(const UConstrainedFieldPosition *ptr, UErrorCode *ec);
+UBool __cdecl ucfpos_matchesField(const UConstrainedFieldPosition *ptr, int32_t category, int32_t field, UErrorCode *ec);
+UConstrainedFieldPosition * __cdecl ucfpos_open(UErrorCode *ec);
+void __cdecl ucfpos_reset(UConstrainedFieldPosition *ptr, UErrorCode *ec);
+void __cdecl ucfpos_setInt64IterationContext(UConstrainedFieldPosition *ptr, int64_t context, UErrorCode *ec);
+void __cdecl ucfpos_setState(UConstrainedFieldPosition *ptr, int32_t category, int32_t field, int32_t start, int32_t limit, UErrorCode *ec);
 void __cdecl ucnv_cbFromUWriteBytes(UConverterFromUnicodeArgs *args, const char *source, int32_t length, int32_t offsetIndex, UErrorCode *err);
 void __cdecl ucnv_cbFromUWriteSub(UConverterFromUnicodeArgs *args, int32_t offsetIndex, UErrorCode *err);
 void __cdecl ucnv_cbFromUWriteUChars(UConverterFromUnicodeArgs *args, const UChar **source, const UChar *sourceLimit, int32_t offsetIndex, UErrorCode *err);
 void __cdecl ucnv_cbToUWriteSub(UConverterToUnicodeArgs *args, int32_t offsetIndex, UErrorCode *err);
 void __cdecl ucnv_cbToUWriteUChars(UConverterToUnicodeArgs *args, const UChar *source, int32_t length, int32_t offsetIndex, UErrorCode *err);
+UConverter * __cdecl ucnv_clone(const UConverter *cnv, UErrorCode *status);
 void __cdecl ucnv_close(UConverter *converter);
 int __cdecl ucnv_compareNames(const char *name1, const char *name2);
 int32_t __cdecl ucnv_convert(const char *toConverterName, const char *fromConverterName, char *target, int32_t targetCapacity, const char *source, int32_t sourceLength, UErrorCode *pErrorCode);
@@ -2233,6 +2346,7 @@ UConverterSelector * __cdecl ucnvsel_openFromSerialized(const void *buffer, int3
 UEnumeration * __cdecl ucnvsel_selectForString(const UConverterSelector *sel, const UChar *s, int32_t length, UErrorCode *status);
 UEnumeration * __cdecl ucnvsel_selectForUTF8(const UConverterSelector *sel, const char *s, int32_t length, UErrorCode *status);
 int32_t __cdecl ucnvsel_serialize(const UConverterSelector *sel, void *buffer, int32_t bufferCapacity, UErrorCode *status);
+UCollator * __cdecl ucol_clone(const UCollator *coll, UErrorCode *status);
 int32_t __cdecl ucol_cloneBinary(const UCollator *coll, uint8_t *buffer, int32_t capacity, UErrorCode *status);
 void __cdecl ucol_close(UCollator *coll);
 void __cdecl ucol_closeElements(UCollationElements *elems);
@@ -2275,7 +2389,7 @@ UCollator * __cdecl ucol_openRules(const UChar *rules, int32_t rulesLength, UCol
 int32_t __cdecl ucol_previous(UCollationElements *elems, UErrorCode *status);
 int32_t __cdecl ucol_primaryOrder(int32_t order);
 void __cdecl ucol_reset(UCollationElements *elems);
-UCollator * __cdecl ucol_safeClone(const UCollator *coll, void *arg1, int32_t *pBufferSize, UErrorCode *status);
+UCollator * __cdecl ucol_safeClone(const UCollator *coll, void *stackBuffer, int32_t *pBufferSize, UErrorCode *status);
 int32_t __cdecl ucol_secondaryOrder(int32_t order);
 void __cdecl ucol_setAttribute(UCollator *coll, UColAttribute attr, UColAttributeValue value, UErrorCode *status);
 void __cdecl ucol_setMaxVariable(UCollator *coll, UColReorderCode group, UErrorCode *pErrorCode);
@@ -2287,6 +2401,18 @@ UCollationResult __cdecl ucol_strcoll(const UCollator *coll, const UChar *source
 UCollationResult __cdecl ucol_strcollIter(const UCollator *coll, UCharIterator *sIter, UCharIterator *tIter, UErrorCode *status);
 UCollationResult __cdecl ucol_strcollUTF8(const UCollator *coll, const char *source, int32_t sourceLength, const char *target, int32_t targetLength, UErrorCode *status);
 int32_t __cdecl ucol_tertiaryOrder(int32_t order);
+uint32_t __cdecl ucpmap_get(const UCPMap *map, UChar32 c);
+UChar32 __cdecl ucpmap_getRange(const UCPMap *map, UChar32 start, UCPMapRangeOption option, uint32_t surrogateValue, UCPMapValueFilter *filter, const void *context, uint32_t *pValue);
+void __cdecl ucptrie_close(UCPTrie *trie);
+uint32_t __cdecl ucptrie_get(const UCPTrie *trie, UChar32 c);
+UChar32 __cdecl ucptrie_getRange(const UCPTrie *trie, UChar32 start, UCPMapRangeOption option, uint32_t surrogateValue, UCPMapValueFilter *filter, const void *context, uint32_t *pValue);
+UCPTrieType __cdecl ucptrie_getType(const UCPTrie *trie);
+UCPTrieValueWidth __cdecl ucptrie_getValueWidth(const UCPTrie *trie);
+int32_t __cdecl ucptrie_internalSmallIndex(const UCPTrie *trie, UChar32 c);
+int32_t __cdecl ucptrie_internalSmallU8Index(const UCPTrie *trie, int32_t lt1, uint8_t t2, uint8_t t3);
+int32_t __cdecl ucptrie_internalU8PrevIndex(const UCPTrie *trie, UChar32 c, const uint8_t *start, const uint8_t *src);
+UCPTrie * __cdecl ucptrie_openFromBinary(UCPTrieType type, UCPTrieValueWidth valueWidth, const void *data, int32_t length, int32_t *pActualLength, UErrorCode *pErrorCode);
+int32_t __cdecl ucptrie_toBinary(const UCPTrie *trie, void *data, int32_t capacity, UErrorCode *pErrorCode);
 void __cdecl ucsdet_close(UCharsetDetector *ucsd);
 const UCharsetMatch * __cdecl ucsdet_detect(UCharsetDetector *ucsd, UErrorCode *status);
 const UCharsetMatch ** __cdecl ucsdet_detectAll(UCharsetDetector *ucsd, int32_t *maxMatchesFound, UErrorCode *status);
@@ -2358,6 +2484,7 @@ int32_t __cdecl udatpg_getBestPattern(UDateTimePatternGenerator *dtpg, const UCh
 int32_t __cdecl udatpg_getBestPatternWithOptions(UDateTimePatternGenerator *dtpg, const UChar *skeleton, int32_t length, UDateTimePatternMatchOptions options, UChar *bestPattern, int32_t capacity, UErrorCode *pErrorCode);
 const UChar * __cdecl udatpg_getDateTimeFormat(const UDateTimePatternGenerator *dtpg, int32_t *pLength);
 const UChar * __cdecl udatpg_getDecimal(const UDateTimePatternGenerator *dtpg, int32_t *pLength);
+UDateFormatHourCycle __cdecl udatpg_getDefaultHourCycle(const UDateTimePatternGenerator *dtpg, UErrorCode *pErrorCode);
 int32_t __cdecl udatpg_getFieldDisplayName(const UDateTimePatternGenerator *dtpg, UDateTimePatternField field, UDateTimePGDisplayWidth width, UChar *fieldName, int32_t capacity, UErrorCode *pErrorCode);
 const UChar * __cdecl udatpg_getPatternForSkeleton(const UDateTimePatternGenerator *dtpg, const UChar *skeleton, int32_t skeletonLength, int32_t *pLength);
 int32_t __cdecl udatpg_getSkeleton(UDateTimePatternGenerator *arg0, const UChar *pattern, int32_t length, UChar *skeleton, int32_t capacity, UErrorCode *pErrorCode);
@@ -2372,8 +2499,14 @@ void __cdecl udatpg_setAppendItemName(UDateTimePatternGenerator *dtpg, UDateTime
 void __cdecl udatpg_setDateTimeFormat(const UDateTimePatternGenerator *dtpg, const UChar *dtFormat, int32_t length);
 void __cdecl udatpg_setDecimal(UDateTimePatternGenerator *dtpg, const UChar *decimal, int32_t length);
 void __cdecl udtitvfmt_close(UDateIntervalFormat *formatter);
+void __cdecl udtitvfmt_closeResult(UFormattedDateInterval *uresult);
 int32_t __cdecl udtitvfmt_format(const UDateIntervalFormat *formatter, UDate fromDate, UDate toDate, UChar *result, int32_t resultCapacity, UFieldPosition *position, UErrorCode *status);
+void __cdecl udtitvfmt_formatToResult(const UDateIntervalFormat *formatter, UDate fromDate, UDate toDate, UFormattedDateInterval *result, UErrorCode *status);
+UDisplayContext __cdecl udtitvfmt_getContext(const UDateIntervalFormat *formatter, UDisplayContextType type, UErrorCode *status);
 UDateIntervalFormat * __cdecl udtitvfmt_open(const char *locale, const UChar *skeleton, int32_t skeletonLength, const UChar *tzID, int32_t tzIDLength, UErrorCode *status);
+UFormattedDateInterval * __cdecl udtitvfmt_openResult(UErrorCode *ec);
+const UFormattedValue * __cdecl udtitvfmt_resultAsValue(const UFormattedDateInterval *uresult, UErrorCode *ec);
+void __cdecl udtitvfmt_setContext(UDateIntervalFormat *formatter, UDisplayContext value, UErrorCode *status);
 void __cdecl uenum_close(UEnumeration *en);
 int32_t __cdecl uenum_count(UEnumeration *en, UErrorCode *status);
 const char * __cdecl uenum_next(UEnumeration *en, int32_t *resultLength, UErrorCode *status);
@@ -2397,6 +2530,8 @@ UFormattableType __cdecl ufmt_getType(const UFormattable *fmt, UErrorCode *statu
 const UChar * __cdecl ufmt_getUChars(UFormattable *fmt, int32_t *len, UErrorCode *status);
 UBool __cdecl ufmt_isNumeric(const UFormattable *fmt);
 UFormattable * __cdecl ufmt_open(UErrorCode *status);
+const UChar * __cdecl ufmtval_getString(const UFormattedValue *ufmtval, int32_t *pLength, UErrorCode *ec);
+UBool __cdecl ufmtval_nextPosition(const UFormattedValue *ufmtval, UConstrainedFieldPosition *ucfpos, UErrorCode *ec);
 const UGenderInfo * __cdecl ugender_getInstance(const char *locale, UErrorCode *status);
 UGender __cdecl ugender_getListGender(const UGenderInfo *genderInfo, const UGender *genders, int32_t size, UErrorCode *status);
 void __cdecl uidna_close(UIDNA *idna);
@@ -2432,8 +2567,13 @@ int32_t __cdecl uldn_scriptCodeDisplayName(const ULocaleDisplayNames *ldn, UScri
 int32_t __cdecl uldn_scriptDisplayName(const ULocaleDisplayNames *ldn, const char *script, UChar *result, int32_t maxResultSize, UErrorCode *pErrorCode);
 int32_t __cdecl uldn_variantDisplayName(const ULocaleDisplayNames *ldn, const char *variant, UChar *result, int32_t maxResultSize, UErrorCode *pErrorCode);
 void __cdecl ulistfmt_close(UListFormatter *listfmt);
+void __cdecl ulistfmt_closeResult(UFormattedList *uresult);
 int32_t __cdecl ulistfmt_format(const UListFormatter *listfmt, const UChar * const strings[], const int32_t *stringLengths, int32_t stringCount, UChar *result, int32_t resultCapacity, UErrorCode *status);
+void __cdecl ulistfmt_formatStringsToResult(const UListFormatter *listfmt, const UChar * const strings[], const int32_t *stringLengths, int32_t stringCount, UFormattedList *uresult, UErrorCode *status);
 UListFormatter * __cdecl ulistfmt_open(const char *locale, UErrorCode *status);
+UListFormatter * __cdecl ulistfmt_openForType(const char *locale, UListFormatterType type, UListFormatterWidth width, UErrorCode *status);
+UFormattedList * __cdecl ulistfmt_openResult(UErrorCode *ec);
+const UFormattedValue * __cdecl ulistfmt_resultAsValue(const UFormattedList *uresult, UErrorCode *ec);
 int32_t __cdecl uloc_acceptLanguage(char *result, int32_t resultAvailable, UAcceptResult *outResult, const char **acceptList, int32_t acceptListCount, UEnumeration *availableLocales, UErrorCode *status);
 int32_t __cdecl uloc_acceptLanguageFromHTTP(char *result, int32_t resultAvailable, UAcceptResult *outResult, const char *httpAcceptLanguage, UEnumeration *availableLocales, UErrorCode *status);
 int32_t __cdecl uloc_addLikelySubtags(const char *localeID, char *maximizedLocaleID, int32_t maximizedLocaleIDCapacity, UErrorCode *err);
@@ -2467,6 +2607,7 @@ int32_t __cdecl uloc_getScript(const char *localeID, char *script, int32_t scrip
 int32_t __cdecl uloc_getVariant(const char *localeID, char *variant, int32_t variantCapacity, UErrorCode *err);
 UBool __cdecl uloc_isRightToLeft(const char *locale);
 int32_t __cdecl uloc_minimizeSubtags(const char *localeID, char *minimizedLocaleID, int32_t minimizedLocaleIDCapacity, UErrorCode *err);
+UEnumeration * __cdecl uloc_openAvailableByType(ULocAvailableType type, UErrorCode *status);
 UEnumeration * __cdecl uloc_openKeywords(const char *localeID, UErrorCode *status);
 void __cdecl uloc_setDefault(const char *newDefaultLocale, UErrorCode *err);
 int32_t __cdecl uloc_setKeywordValue(const char *keywordName, const char *keywordValue, char *buffer, int32_t bufferCapacity, UErrorCode *status);
@@ -2498,6 +2639,16 @@ void __cdecl umsg_setLocale(UMessageFormat *fmt, const char *locale);
 int32_t __cdecl umsg_toPattern(const UMessageFormat *fmt, UChar *result, int32_t resultLength, UErrorCode *status);
 int32_t __cdecl umsg_vformat(const UMessageFormat *fmt, UChar *result, int32_t resultLength, va_list ap, UErrorCode *status);
 void __cdecl umsg_vparse(const UMessageFormat *fmt, const UChar *source, int32_t sourceLength, int32_t *count, va_list ap, UErrorCode *status);
+UCPTrie * __cdecl umutablecptrie_buildImmutable(UMutableCPTrie *trie, UCPTrieType type, UCPTrieValueWidth valueWidth, UErrorCode *pErrorCode);
+UMutableCPTrie * __cdecl umutablecptrie_clone(const UMutableCPTrie *other, UErrorCode *pErrorCode);
+void __cdecl umutablecptrie_close(UMutableCPTrie *trie);
+UMutableCPTrie * __cdecl umutablecptrie_fromUCPMap(const UCPMap *map, UErrorCode *pErrorCode);
+UMutableCPTrie * __cdecl umutablecptrie_fromUCPTrie(const UCPTrie *trie, UErrorCode *pErrorCode);
+uint32_t __cdecl umutablecptrie_get(const UMutableCPTrie *trie, UChar32 c);
+UChar32 __cdecl umutablecptrie_getRange(const UMutableCPTrie *trie, UChar32 start, UCPMapRangeOption option, uint32_t surrogateValue, UCPMapValueFilter *filter, const void *context, uint32_t *pValue);
+UMutableCPTrie * __cdecl umutablecptrie_open(uint32_t initialValue, uint32_t errorValue, UErrorCode *pErrorCode);
+void __cdecl umutablecptrie_set(UMutableCPTrie *trie, UChar32 c, uint32_t value, UErrorCode *pErrorCode);
+void __cdecl umutablecptrie_setRange(UMutableCPTrie *trie, UChar32 start, UChar32 end, uint32_t value, UErrorCode *pErrorCode);
 int32_t __cdecl unorm2_append(const UNormalizer2 *norm2, UChar *first, int32_t firstLength, int32_t firstCapacity, const UChar *second, int32_t secondLength, UErrorCode *pErrorCode);
 void __cdecl unorm2_close(UNormalizer2 *norm2);
 UChar32 __cdecl unorm2_composePair(const UNormalizer2 *norm2, UChar32 a, UChar32 b);
@@ -2557,10 +2708,23 @@ void __cdecl unumf_formatDecimal(const UNumberFormatter *uformatter, const char 
 void __cdecl unumf_formatDouble(const UNumberFormatter *uformatter, double value, UFormattedNumber *uresult, UErrorCode *ec);
 void __cdecl unumf_formatInt(const UNumberFormatter *uformatter, int64_t value, UFormattedNumber *uresult, UErrorCode *ec);
 UNumberFormatter * __cdecl unumf_openForSkeletonAndLocale(const UChar *skeleton, int32_t skeletonLen, const char *locale, UErrorCode *ec);
+UNumberFormatter * __cdecl unumf_openForSkeletonAndLocaleWithError(const UChar *skeleton, int32_t skeletonLen, const char *locale, UParseError *perror, UErrorCode *ec);
 UFormattedNumber * __cdecl unumf_openResult(UErrorCode *ec);
+const UFormattedValue * __cdecl unumf_resultAsValue(const UFormattedNumber *uresult, UErrorCode *ec);
 void __cdecl unumf_resultGetAllFieldPositions(const UFormattedNumber *uresult, UFieldPositionIterator *ufpositer, UErrorCode *ec);
 UBool __cdecl unumf_resultNextFieldPosition(const UFormattedNumber *uresult, UFieldPosition *ufpos, UErrorCode *ec);
+int32_t __cdecl unumf_resultToDecimalNumber(const UFormattedNumber *uresult, char *dest, int32_t destCapacity, UErrorCode *ec);
 int32_t __cdecl unumf_resultToString(const UFormattedNumber *uresult, UChar *buffer, int32_t bufferCapacity, UErrorCode *ec);
+void __cdecl unumrf_close(UNumberRangeFormatter *uformatter);
+void __cdecl unumrf_closeResult(UFormattedNumberRange *uresult);
+void __cdecl unumrf_formatDecimalRange(const UNumberRangeFormatter *uformatter, const char *first, int32_t firstLen, const char *second, int32_t secondLen, UFormattedNumberRange *uresult, UErrorCode *ec);
+void __cdecl unumrf_formatDoubleRange(const UNumberRangeFormatter *uformatter, double first, double second, UFormattedNumberRange *uresult, UErrorCode *ec);
+UNumberRangeFormatter * __cdecl unumrf_openForSkeletonWithCollapseAndIdentityFallback(const UChar *skeleton, int32_t skeletonLen, UNumberRangeCollapse collapse, UNumberRangeIdentityFallback identityFallback, const char *locale, UParseError *perror, UErrorCode *ec);
+UFormattedNumberRange * __cdecl unumrf_openResult(UErrorCode *ec);
+const UFormattedValue * __cdecl unumrf_resultAsValue(const UFormattedNumberRange *uresult, UErrorCode *ec);
+int32_t __cdecl unumrf_resultGetFirstDecimalNumber(const UFormattedNumberRange *uresult, char *dest, int32_t destCapacity, UErrorCode *ec);
+UNumberRangeIdentityResult __cdecl unumrf_resultGetIdentityResult(const UFormattedNumberRange *uresult, UErrorCode *ec);
+int32_t __cdecl unumrf_resultGetSecondDecimalNumber(const UFormattedNumberRange *uresult, char *dest, int32_t destCapacity, UErrorCode *ec);
 void __cdecl unumsys_close(UNumberingSystem *unumsys);
 int32_t __cdecl unumsys_getDescription(const UNumberingSystem *unumsys, UChar *result, int32_t resultLength, UErrorCode *status);
 const char * __cdecl unumsys_getName(const UNumberingSystem *unumsys);
@@ -2574,6 +2738,7 @@ UEnumeration * __cdecl uplrules_getKeywords(const UPluralRules *uplrules, UError
 UPluralRules * __cdecl uplrules_open(const char *locale, UErrorCode *status);
 UPluralRules * __cdecl uplrules_openForType(const char *locale, UPluralType type, UErrorCode *status);
 int32_t __cdecl uplrules_select(const UPluralRules *uplrules, double number, UChar *keyword, int32_t capacity, UErrorCode *status);
+int32_t __cdecl uplrules_selectFormatted(const UPluralRules *uplrules, const struct UFormattedNumber *number, UChar *keyword, int32_t capacity, UErrorCode *status);
 int32_t __cdecl uregex_appendReplacement(URegularExpression *regexp2, const UChar *replacementText, int32_t replacementLength, UChar **destBuf, int32_t *destCapacity, UErrorCode *status);
 void __cdecl uregex_appendReplacementUText(URegularExpression *regexp2, UText *replText, UText *dest, UErrorCode *status);
 int32_t __cdecl uregex_appendTail(URegularExpression *regexp2, UChar **destBuf, int32_t *destCapacity, UErrorCode *status);
@@ -2650,10 +2815,15 @@ const URegion * __cdecl uregion_getRegionFromCode(const char *regionCode, UError
 const URegion * __cdecl uregion_getRegionFromNumericCode(int32_t code, UErrorCode *status);
 URegionType __cdecl uregion_getType(const URegion *uregion);
 void __cdecl ureldatefmt_close(URelativeDateTimeFormatter *reldatefmt);
+void __cdecl ureldatefmt_closeResult(UFormattedRelativeDateTime *ufrdt);
 int32_t __cdecl ureldatefmt_combineDateAndTime(const URelativeDateTimeFormatter *reldatefmt, const UChar *relativeDateString, int32_t relativeDateStringLen, const UChar *timeString, int32_t timeStringLen, UChar *result, int32_t resultCapacity, UErrorCode *status);
 int32_t __cdecl ureldatefmt_format(const URelativeDateTimeFormatter *reldatefmt, double offset, URelativeDateTimeUnit unit, UChar *result, int32_t resultCapacity, UErrorCode *status);
 int32_t __cdecl ureldatefmt_formatNumeric(const URelativeDateTimeFormatter *reldatefmt, double offset, URelativeDateTimeUnit unit, UChar *result, int32_t resultCapacity, UErrorCode *status);
+void __cdecl ureldatefmt_formatNumericToResult(const URelativeDateTimeFormatter *reldatefmt, double offset, URelativeDateTimeUnit unit, UFormattedRelativeDateTime *result, UErrorCode *status);
+void __cdecl ureldatefmt_formatToResult(const URelativeDateTimeFormatter *reldatefmt, double offset, URelativeDateTimeUnit unit, UFormattedRelativeDateTime *result, UErrorCode *status);
 URelativeDateTimeFormatter * __cdecl ureldatefmt_open(const char *locale, UNumberFormat *nfToAdopt, UDateRelativeDateTimeFormatterStyle width, UDisplayContext capitalizationContext, UErrorCode *status);
+UFormattedRelativeDateTime * __cdecl ureldatefmt_openResult(UErrorCode *ec);
+const UFormattedValue * __cdecl ureldatefmt_resultAsValue(const UFormattedRelativeDateTime *ufrdt, UErrorCode *ec);
 void __cdecl ures_close(UResourceBundle *resB);
 const uint8_t * __cdecl ures_getBinary(const UResourceBundle *resB, int32_t *len, UErrorCode *status);
 UResourceBundle * __cdecl ures_getByIndex(const UResourceBundle *resB, int32_t indexR, UResourceBundle *fillIn, UErrorCode *status);
@@ -2733,6 +2903,9 @@ void __cdecl uset_closeOver(USet *set, int32_t attributes);
 void __cdecl uset_compact(USet *set);
 void __cdecl uset_complement(USet *set);
 void __cdecl uset_complementAll(USet *set, const USet *complement);
+void __cdecl uset_complementAllCodePoints(USet *set, const UChar *str, int32_t length);
+void __cdecl uset_complementRange(USet *set, UChar32 start, UChar32 end);
+void __cdecl uset_complementString(USet *set, const UChar *str, int32_t length);
 UBool __cdecl uset_contains(const USet *set, UChar32 c);
 UBool __cdecl uset_containsAll(const USet *set1, const USet *set2);
 UBool __cdecl uset_containsAllCodePoints(const USet *set, const UChar *str, int32_t strLen);
@@ -2744,9 +2917,11 @@ UBool __cdecl uset_equals(const USet *set1, const USet *set2);
 void __cdecl uset_freeze(USet *set);
 int32_t __cdecl uset_getItem(const USet *uset, int32_t itemIndex, UChar32 *start, UChar32 *end, UChar *str, int32_t strCapacity, UErrorCode *ec);
 int32_t __cdecl uset_getItemCount(const USet *uset);
+int32_t __cdecl uset_getRangeCount(const USet *set);
 UBool __cdecl uset_getSerializedRange(const USerializedSet *set, int32_t rangeIndex, UChar32 *pStart, UChar32 *pEnd);
 int32_t __cdecl uset_getSerializedRangeCount(const USerializedSet *set);
 UBool __cdecl uset_getSerializedSet(USerializedSet *fillSet, const uint16_t *src, int32_t srcLength);
+UBool __cdecl uset_hasStrings(const USet *set);
 int32_t __cdecl uset_indexOf(const USet *set, UChar32 c);
 UBool __cdecl uset_isEmpty(const USet *set);
 UBool __cdecl uset_isFrozen(const USet *set);
@@ -2756,12 +2931,15 @@ USet * __cdecl uset_openPattern(const UChar *pattern, int32_t patternLength, UEr
 USet * __cdecl uset_openPatternOptions(const UChar *pattern, int32_t patternLength, uint32_t options, UErrorCode *ec);
 void __cdecl uset_remove(USet *set, UChar32 c);
 void __cdecl uset_removeAll(USet *set, const USet *remove);
+void __cdecl uset_removeAllCodePoints(USet *set, const UChar *str, int32_t length);
 void __cdecl uset_removeAllStrings(USet *set);
 void __cdecl uset_removeRange(USet *set, UChar32 start, UChar32 end);
 void __cdecl uset_removeString(USet *set, const UChar *str, int32_t strLen);
 UBool __cdecl uset_resemblesPattern(const UChar *pattern, int32_t patternLength, int32_t pos);
 void __cdecl uset_retain(USet *set, UChar32 start, UChar32 end);
 void __cdecl uset_retainAll(USet *set, const USet *retain);
+void __cdecl uset_retainAllCodePoints(USet *set, const UChar *str, int32_t length);
+void __cdecl uset_retainString(USet *set, const UChar *str, int32_t length);
 int32_t __cdecl uset_serialize(const USet *set, uint16_t *dest, int32_t destCapacity, UErrorCode *ec);
 UBool __cdecl uset_serializedContains(const USerializedSet *set, UChar32 c);
 void __cdecl uset_set(USet *set, UChar32 start, UChar32 end);
@@ -2795,7 +2973,7 @@ int32_t __cdecl uspoof_getSkeletonUTF8(const USpoofChecker *sc, uint32_t type, c
 USpoofChecker * __cdecl uspoof_open(UErrorCode *status);
 USpoofCheckResult * __cdecl uspoof_openCheckResult(UErrorCode *status);
 USpoofChecker * __cdecl uspoof_openFromSerialized(const void *data, int32_t length, int32_t *pActualLength, UErrorCode *status);
-USpoofChecker * __cdecl uspoof_openFromSource(const char *confusables, int32_t confusablesLen, const char *arg2, int32_t arg3, int32_t *errorType, UParseError *pe, UErrorCode *status);
+USpoofChecker * __cdecl uspoof_openFromSource(const char *confusables, int32_t confusablesLen, const char *confusablesWholeScript, int32_t confusablesWholeScriptLen, int32_t *errorType, UParseError *pe, UErrorCode *status);
 int32_t __cdecl uspoof_serialize(USpoofChecker *sc, void *buf, int32_t capacity, UErrorCode *status);
 void __cdecl uspoof_setAllowedChars(USpoofChecker *sc, const USet *chars, UErrorCode *status);
 void __cdecl uspoof_setAllowedLocales(USpoofChecker *sc, const char *localesList, UErrorCode *status);
