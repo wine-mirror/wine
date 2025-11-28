@@ -31,6 +31,8 @@ struct vmr7_presenter
     IVMRWindowlessControl IVMRWindowlessControl_iface;
     LONG refcount;
 
+    IVMRSurfaceAllocatorNotify *notify;
+
     IDirectDraw7 *ddraw;
     IDirectDrawSurface7 *frontbuffer;
     IDirectDrawSurface7 *primary;
@@ -275,7 +277,14 @@ static HRESULT WINAPI surface_allocator_PrepareSurface(IVMRSurfaceAllocator *ifa
 static HRESULT WINAPI surface_allocator_AdviseNotify(IVMRSurfaceAllocator *iface,
         IVMRSurfaceAllocatorNotify *notify)
 {
-    FIXME("iface %p, notify %p, stub!\n", iface, notify);
+    struct vmr7_presenter *presenter = impl_from_IVMRSurfaceAllocator(iface);
+    RECT rect = {0, 0, 0, 0};
+
+    TRACE("presenter %p, notify %p.\n", presenter, notify);
+
+    presenter->notify = notify;
+    IVMRSurfaceAllocatorNotify_SetDDrawDevice(notify, presenter->ddraw,
+            MonitorFromRect(&rect, MONITOR_DEFAULTTOPRIMARY));
     return S_OK;
 }
 
