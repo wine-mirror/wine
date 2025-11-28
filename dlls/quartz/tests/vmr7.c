@@ -3338,6 +3338,8 @@ static ULONG WINAPI allocator_Release(IVMRSurfaceAllocator *iface)
     return InterlockedDecrement(&presenter->refcount);
 }
 
+static unsigned int allocatesurface_count;
+
 static HRESULT WINAPI allocator_AllocateSurface(IVMRSurfaceAllocator *iface,
         DWORD_PTR cookie, VMRALLOCATIONINFO *info, DWORD *buffer_count, IDirectDrawSurface7 **surface)
 {
@@ -3346,6 +3348,7 @@ static HRESULT WINAPI allocator_AllocateSurface(IVMRSurfaceAllocator *iface,
     HRESULT hr;
 
     if (winetest_debug > 1) trace("AllocateSurface()\n");
+    ++allocatesurface_count;
 
     ok(!presenter->surfaces[0], "Surface should not already exist.\n");
 
@@ -3516,6 +3519,7 @@ static void test_renderless_formats(void)
         .IVMRImagePresenter_iface.lpVtbl = &presenter_vtbl,
         .refcount = 1,
     };
+    unsigned int prev_allocatesurface_count;
     struct presenter presenter2 = presenter;
     IVMRSurfaceAllocatorNotify *notify;
     RECT rect = {0, 0, 640, 480};
@@ -3592,6 +3596,7 @@ static void test_renderless_formats(void)
         vih.bmiHeader.biBitCount = tests[i].depth;
         vih.bmiHeader.biCompression = tests[i].compression;
 
+        prev_allocatesurface_count = allocatesurface_count;
         hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
         /* Wine currently creates surfaces during IPin::ReceiveConnection()
          * instead of IMemAllocator::SetProperties(), so accept those extra
@@ -3600,6 +3605,9 @@ static void test_renderless_formats(void)
             ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
         else
             ok(hr == S_OK || hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+        todo_wine_if(i < 5) ok(allocatesurface_count == prev_allocatesurface_count,
+                "Got allocatesurface_count %u, prev_allocatesurface_count %u.\n",
+                allocatesurface_count, prev_allocatesurface_count);
         if (hr != S_OK)
         {
             if (!tests[i].must_fail)
@@ -3607,7 +3615,6 @@ static void test_renderless_formats(void)
             winetest_pop_context();
             continue;
         }
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         hr = IMemInputPin_GetAllocator(input, &allocator);
         todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3617,6 +3624,7 @@ static void test_renderless_formats(void)
             hr = IMemInputPin_GetAllocator(input, &allocator);
         }
 
+        prev_allocatesurface_count = allocatesurface_count;
         req_props.cbBuffer = vih.bmiHeader.biWidth * vih.bmiHeader.biHeight * vih.bmiHeader.biBitCount / 8;
         hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
         if (hr != S_OK)
@@ -3632,6 +3640,11 @@ static void test_renderless_formats(void)
         }
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+
+        todo_wine ok(allocatesurface_count == prev_allocatesurface_count + 1,
+                "Got allocatesurface_count %u, prev_allocatesurface_count %u.\n",
+                allocatesurface_count, prev_allocatesurface_count);
+
         hr = IMemAllocator_Commit(allocator);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
