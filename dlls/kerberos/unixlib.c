@@ -1273,6 +1273,12 @@ static NTSTATUS wow64_make_signature( void *args )
     return make_signature( &params );
 }
 
+struct SecPkgContext_SessionKey32
+{
+    ULONG SessionKeyLength;
+    PTR32 SessionKey;
+};
+
 static NTSTATUS wow64_query_context_attributes( void *args )
 {
     struct
@@ -1287,6 +1293,17 @@ static NTSTATUS wow64_query_context_attributes( void *args )
         params32->attr,
         ULongToPtr(params32->buf),
     };
+    SecPkgContext_SessionKey key;
+
+    if (params.attr == SECPKG_ATTR_SESSION_KEY)
+    {
+        struct SecPkgContext_SessionKey32 *key32 = (struct SecPkgContext_SessionKey32 *)params.buf;
+
+        key.SessionKeyLength = key32->SessionKeyLength;
+        key.SessionKey = ULongToPtr(key32->SessionKey);
+        params.buf = &key;
+    }
+
     return query_context_attributes( &params );
 }
 
