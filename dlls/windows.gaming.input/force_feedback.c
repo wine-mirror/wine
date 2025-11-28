@@ -601,7 +601,7 @@ static HRESULT WINAPI motor_get_SupportedAxes( IForceFeedbackMotor *iface, enum 
     return hr;
 }
 
-static HRESULT motor_load_effect_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT motor_load_effect_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     struct effect *effect = impl_from_IForceFeedbackEffect( (IForceFeedbackEffect *)param );
     IForceFeedbackMotor *motor = (IForceFeedbackMotor *)invoker;
@@ -609,6 +609,8 @@ static HRESULT motor_load_effect_async( IUnknown *invoker, IUnknown *param, PROP
     ForceFeedbackEffectAxes supported_axes = 0;
     IDirectInputEffect *dinput_effect;
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     EnterCriticalSection( &effect->cs );
 
@@ -692,10 +694,12 @@ static HRESULT WINAPI motor_StopAllEffects( IForceFeedbackMotor *iface )
     return IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_STOPALL );
 }
 
-static HRESULT motor_try_disable_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT motor_try_disable_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     struct motor *impl = impl_from_IForceFeedbackMotor( (IForceFeedbackMotor *)invoker );
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_SETACTUATORSOFF );
     result->vt = VT_BOOL;
@@ -710,10 +714,12 @@ static HRESULT WINAPI motor_TryDisableAsync( IForceFeedbackMotor *iface, IAsyncO
     return async_operation_boolean_create( (IUnknown *)iface, NULL, motor_try_disable_async, async_op );
 }
 
-static HRESULT motor_try_enable_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT motor_try_enable_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     struct motor *impl = impl_from_IForceFeedbackMotor( (IForceFeedbackMotor *)invoker );
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_SETACTUATORSON );
     result->vt = VT_BOOL;
@@ -728,10 +734,12 @@ static HRESULT WINAPI motor_TryEnableAsync( IForceFeedbackMotor *iface, IAsyncOp
     return async_operation_boolean_create( (IUnknown *)iface, NULL, motor_try_enable_async, async_op );
 }
 
-static HRESULT motor_try_reset_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT motor_try_reset_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     struct motor *impl = impl_from_IForceFeedbackMotor( (IForceFeedbackMotor *)invoker );
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     hr = IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_RESET );
     result->vt = VT_BOOL;
@@ -746,11 +754,13 @@ static HRESULT WINAPI motor_TryResetAsync( IForceFeedbackMotor *iface, IAsyncOpe
     return async_operation_boolean_create( (IUnknown *)iface, NULL, motor_try_reset_async, async_op );
 }
 
-static HRESULT motor_unload_effect_async( IUnknown *iface, IUnknown *param, PROPVARIANT *result )
+static HRESULT motor_unload_effect_async( IUnknown *iface, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     struct effect *effect = impl_from_IForceFeedbackEffect( (IForceFeedbackEffect *)param );
     IDirectInputEffect *dinput_effect;
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     EnterCriticalSection( &effect->cs );
     dinput_effect = effect->effect;

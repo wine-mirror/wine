@@ -42,5 +42,5 @@ namespace Wine.Internal {
         HRESULT Start();
     }
 
-    typedef HRESULT (*async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
+    typedef HRESULT (*async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async );
 }
