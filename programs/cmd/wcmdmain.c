@@ -2513,22 +2513,18 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
     CMD_FOR_CONTROL *for_ctrl;
     enum for_control_operator for_op;
     WCHAR mode = L' ', option;
-    WCHAR options[MAXSTRING];
-    WCHAR *arg;
+    WCHAR *arg, *last;
     unsigned flags = 0;
-    int arg_index;
     unsigned varidx;
 
-    options[0] = L'\0';
     /* native allows two options only in the /D /R case, a repetition of the option
      * and prints an error otherwise
      */
-    for (arg_index = 0; ; arg_index++)
+    for (arg = opts_var; *arg != L'\0'; arg++)
     {
-        arg = WCMD_parameter(opts_var, arg_index, NULL, FALSE, FALSE);
-
-        if (!arg || *arg != L'/') break;
-        option = towupper(arg[1]);
+        arg = WCMD_skip_leading_spaces(arg);
+        if (*arg != L'/') break;
+        option = towupper(*++arg);
         if (mode != L' ' && (mode != L'D' || option != 'R') && mode != option)
             break;
         switch (option)
@@ -2579,45 +2575,45 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
         FIXME("Unexpected situation\n");
         return NULL;
     }
-
-    if (mode == L'F' || mode == L'R')
+    arg = WCMD_skip_leading_spaces(arg);
+    last = arg + wcslen(arg);
+    while (arg < last && iswspace(last[-1])) last--;
+    /* grab variable at end of string */
+    if (arg + 2 > last || !for_var_is_valid(last[-1]) || last[-2] != L'%' || (last >= arg + 3 && !iswspace(last[-3])))
+        return NULL;
+    varidx = last[-1];
+    /* NOTE: we need to handle commands like:
+     * > FOR /F delim=^  %%i IN...
+     * so we have to be careful about the handling of "^ " (which will be already translated into " " here)
+     * and to discriminate between the delimiter before %<var> and potential trailing spaces before
+     * FIXME: perhaps a better alternative would be to construct the array of words in command
+     * at translation time and not afterwards like here.
+     */
+    last -= min(last - arg, 3);
+    /* skip surrounding double-quotes */
+    if (*arg == L'"')
     {
-        /* Retrieve next parameter to see if is root/options (raw form required
-         * with for /f, or unquoted in for /r)
-         */
-        arg = WCMD_parameter(opts_var, arg_index, NULL, for_op == CMD_FOR_FILE_SET, FALSE);
-
-        /* Next parm is either qualifier, path/options or variable -
-         * only care about it if it is the path/options
-         */
-        if (arg && *arg != L'/' && *arg != L'%')
+        while (arg < last && iswspace(last[-1])) last--;
+        if (last > arg + 1 && last[-1] == L'"')
         {
-            arg_index++;
-            wcscpy(options, arg);
+            arg++;
+            last--;
         }
     }
+    *last = L'\0';
+    if (mode != 'R' && mode != 'F' && last > arg) return NULL;
+    TRACE("var %c\n", varidx);
 
-    /* Ensure line continues with variable */
-    arg = WCMD_parameter(opts_var, arg_index++, NULL, FALSE, FALSE);
-    if (!arg || *arg != L'%' || !for_var_is_valid(arg[1]))
-        goto syntax_error; /* FIXME native prints the offending token "%<whatever>" was unexpected at this time */
-    varidx = arg[1];
     for_ctrl = xalloc(sizeof(*for_ctrl));
     if (for_op == CMD_FOR_FILE_SET)
     {
-        size_t len = wcslen(options);
-        WCHAR *p = options, *end;
+        WCHAR *p, *end;
         WCHAR eol = L'\0';
         int num_lines_to_skip = 0;
         BOOL use_backq = FALSE;
         WCHAR *delims = NULL, *tokens = NULL;
-        /* strip enclosing double-quotes when present */
-        if (len >= 2 && p[0] == L'"' && p[len - 1] == L'"')
-        {
-            p[len - 1] = L'\0';
-            p++;
-        }
-        for ( ; *(p = WCMD_skip_leading_spaces(p)); p = end)
+
+        for (p = arg; *(p = WCMD_skip_leading_spaces(p)); p = end)
         {
             /* Save End of line character (Ignore line if first token (based on delims) starts with it) */
             if ((end = for_fileset_option_split(p, L"eol=")))
@@ -2669,7 +2665,7 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
                                    tokens ? tokens : xstrdupW(L"1"), for_ctrl);
     }
     else
-        for_control_create(for_op, flags, options, varidx, for_ctrl);
+        for_control_create(for_op, flags, arg, varidx, for_ctrl);
     return for_ctrl;
 syntax_error:
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
