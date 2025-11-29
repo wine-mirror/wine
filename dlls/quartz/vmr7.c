@@ -320,6 +320,8 @@ static HRESULT vmr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_
 {
     struct vmr7 *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
+    IDirectDraw7 *ddraw = filter->ddraw;
+    HRESULT hr = S_OK;
 
     if (!IsEqualIID(&mt->majortype, &MEDIATYPE_Video) || !mt->pbFormat)
         return S_FALSE;
@@ -331,13 +333,19 @@ static HRESULT vmr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_
     if (bitmap_header->biCompression == BI_RGB || bitmap_header->biCompression == BI_BITFIELDS)
         return S_OK;
 
-    if (!filter->ddraw)
-        return S_OK;
+    if (!ddraw)
+    {
+        if (FAILED(DirectDrawCreateEx(NULL, (void **)&ddraw, &IID_IDirectDraw7, NULL)))
+            return S_FALSE;
+    }
 
-    if (!fourcc_is_supported(filter->ddraw, bitmap_header->biCompression))
-        return S_FALSE;
+    if (!fourcc_is_supported(ddraw, bitmap_header->biCompression))
+        hr = S_FALSE;
 
-    return S_OK;
+    if (ddraw != filter->ddraw)
+        IDirectDraw7_Release(ddraw);
+
+    return hr;
 }
 
 static HRESULT initialize_device(struct vmr7 *filter, VMRALLOCATIONINFO *info, DWORD count)
