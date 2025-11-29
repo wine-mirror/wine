@@ -2122,6 +2122,8 @@ struct wined3d_shader_resource_view * CDECL wined3d_texture_acquire_identity_srv
      * references to the view are forwarded to the resource instead. The view
      * is destroyed manually when all references are released. */
     desc.flags = WINED3D_VIEW_FORWARD_REFERENCE;
+    if (texture->resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+        desc.flags |= WINED3D_VIEW_TEXTURE_CUBE;
     desc.u.texture.level_idx = 0;
     desc.u.texture.level_count = texture->level_count;
     desc.u.texture.layer_idx = 0;
