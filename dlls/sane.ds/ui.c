@@ -485,20 +485,37 @@ exit:
     return tpl;
 }
 
+/** Data stored for the property sheet dialog while it is open */
+struct SUiData
+{
+    /** Window handle of the property sheet */
+    HWND hwPropertySheet;
+
+    /** Number of property sheet pages */
+    int page_count;
+
+    /** Room for property sheet pages */
+    PROPSHEETPAGEW psp[20];
+};
+
 BOOL DoScannerUI(void)
 {
     HDC hdc;
-    PROPSHEETPAGEW psp[10];
+    PROPSHEETPAGEW *psp;
     int page_count= 0;
     PROPSHEETHEADERW psh;
     int index = 1;
     TW_UINT16 rc;
     int optcount;
-    UINT psrc;
     LPWSTR szCaption;
     DWORD len;
 
-    memset(psp,0,sizeof(psp));
+    activeDS.ui_data = (struct SUiData *) calloc(1, sizeof(struct SUiData));
+    if (!activeDS.ui_data)
+    {
+        return FALSE;
+    }
+    psp = activeDS.ui_data->psp;
     rc = sane_option_get_value( 0, &optcount );
     if (rc != TWCC_SUCCESS)
     {
@@ -534,6 +551,7 @@ BOOL DoScannerUI(void)
 
         index ++;
     }
+    activeDS.ui_data->page_count = page_count;
 
     len = lstrlenA(activeDS.identity.Manufacturer)
          + lstrlenA(activeDS.identity.ProductName) + 2;
@@ -544,7 +562,7 @@ BOOL DoScannerUI(void)
     MultiByteToWideChar(CP_ACP,0,activeDS.identity.ProductName,-1,
             &szCaption[lstrlenA(activeDS.identity.Manufacturer)+1],len);
     psh.dwSize = sizeof(PROPSHEETHEADERW);
-    psh.dwFlags = PSH_PROPSHEETPAGE|PSH_PROPTITLE|PSH_USECALLBACK;
+    psh.dwFlags = PSH_MODELESS|PSH_PROPSHEETPAGE|PSH_PROPTITLE|PSH_USECALLBACK;
     psh.hwndParent = activeDS.hwndOwner;
     psh.hInstance = SANE_instance;
     psh.pszIcon = 0;
@@ -554,22 +572,86 @@ BOOL DoScannerUI(void)
     psh.ppsp = (LPCPROPSHEETPAGEW)psp;
     psh.pfnCallback = PropSheetProc;
 
-    psrc = PropertySheetW(&psh);
+    activeDS.ui_data->hwPropertySheet = (HWND) PropertySheetW(&psh);
 
-    for(index = 0; index < page_count; index ++)
+    if (!activeDS.ui_data->hwPropertySheet)
     {
-        free((LPBYTE)psp[index].pResource);
-        free((LPBYTE)psp[index].pszTitle);
+        UI_Destroy();
     }
     free(szCaption);
 
     DeleteDC(hdc);
 
-    if (psrc == IDOK)
-        return TRUE;
-    else
-        return FALSE;
+    return activeDS.ui_data != NULL;
 }
+
+
+/** Check if a Message is addressed to the property sheet dialog
+ */
+BOOL
+UI_IsDialogMessage(MSG *msg)
+{
+    return
+        activeDS.ui_data &&
+        activeDS.ui_data->hwPropertySheet &&
+        SendMessageW(activeDS.ui_data->hwPropertySheet, PSM_ISDIALOGMESSAGE, 0, (LPARAM) msg);
+}
+
+
+/** Destroy the property sheet dialog and associated structures
+ */
+void
+UI_Destroy(void)
+{
+    if (activeDS.ui_data)
+    {
+        if(activeDS.ui_data->hwPropertySheet)
+        {
+            DestroyWindow(activeDS.ui_data->hwPropertySheet);
+        }
+        for(int index = 0; index < activeDS.ui_data->page_count; index ++)
+        {
+            free((LPBYTE)activeDS.ui_data->psp[index].pResource);
+            free((LPBYTE)activeDS.ui_data->psp[index].pszTitle);
+        }
+        free(activeDS.ui_data);
+        activeDS.ui_data = NULL;
+    }
+    if (activeDS.ModalUI)
+    {
+        EnableWindow(activeDS.hwndOwner, TRUE);
+    }
+}
+
+/**
+ * @brief control enable state of scan dialog
+ * When finished scanning, re-enable the UI Dialog.
+ *
+ * @param enable TRUE to enable, FALSE to disable
+ */
+void
+UI_Enable(BOOL enable)
+{
+    HWND hwndControl;
+
+    if (activeDS.ui_data &&
+        activeDS.ui_data->hwPropertySheet)
+    {
+        EnableWindow(activeDS.ui_data->hwPropertySheet, enable);
+
+        /* Give the user a bit of optical feedback */
+        if (NULL != (hwndControl=GetDlgItem(activeDS.ui_data->hwPropertySheet, IDOK)))
+        {
+            EnableWindow(hwndControl, enable);
+        }
+        if (NULL != (hwndControl=GetDlgItem(activeDS.ui_data->hwPropertySheet, IDCANCEL)))
+        {
+            EnableWindow(hwndControl, enable);
+        }
+    }
+}
+
+
 
 static BOOL save_to_reg( DWORD reg_type, CHAR* name, const BYTE* value, DWORD size )
 {
@@ -1020,7 +1102,12 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                     case PSN_APPLY:
                         if (psn->lParam)
                         {
-                            SANE_XferReady();
+                            if (IsWindowEnabled(activeDS.ui_data->hwPropertySheet))
+                            {
+                                SANE_XferReady();
+                                /* Disable the DS UI while scanning */
+                                UI_Enable(FALSE);
+                            }
                         }
                         break;
                     case PSN_QUERYCANCEL:
@@ -1105,7 +1192,30 @@ HWND ScanningDialogBox(HWND dialog, LONG progress)
 
     if (!dialog)
     {
-        dialog = CreateDialogW(SANE_instance, MAKEINTRESOURCEW(IDD_SCANNING), NULL, ScanningProc);
+        HWND hwndOwner=
+          activeDS.ui_data
+          ? activeDS.ui_data->hwPropertySheet
+          : NULL;
+        dialog = CreateDialogW(SANE_instance, MAKEINTRESOURCEW(IDD_SCANNING), hwndOwner, ScanningProc);
+
+        if (dialog)
+        {
+            if (hwndOwner)
+            {
+                RECT rcDialog, rcOwner;
+                GetWindowRect(dialog, &rcDialog);
+                GetWindowRect(hwndOwner, &rcOwner);
+                SetWindowPos(dialog, NULL,
+                             (rcOwner.right+rcOwner.left)/2 - (rcDialog.right-rcDialog.left)/2,
+                             (rcOwner.bottom+rcOwner.top)/2 - (rcDialog.bottom-rcDialog.top)/2,
+                             0, 0,
+                             SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+            }
+            else
+            {
+                ShowWindow(dialog, SW_SHOW);
+            }
+        }
     }
 
     if (progress == -1)

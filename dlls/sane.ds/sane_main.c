@@ -101,6 +101,21 @@ static TW_UINT16 SANE_OpenDS( pTW_IDENTITY pOrigin, pTW_IDENTITY self)
 
 static TW_UINT16 SANE_SetEntryPoint (pTW_IDENTITY pOrigin, TW_MEMREF pData);
 
+
+/** @brief Close the data source.
+ *  Closes all associated windows and frees memory.
+ */
+static void SANE_CloseDS(void)
+{
+    if(activeDS.progressWnd)
+    {
+        ScanningDialogBox(activeDS.progressWnd, -1);
+    }
+    SANE_CALL( close_ds, NULL );
+    UI_Destroy();
+}
+
+
 static TW_UINT16 SANE_SourceControlHandler (
            pTW_IDENTITY pOrigin,
            TW_UINT16    DAT,
@@ -115,7 +130,7 @@ static TW_UINT16 SANE_SourceControlHandler (
 	    switch (MSG)
 	    {
 		case MSG_CLOSEDS:
-                    SANE_CALL( close_ds, NULL );
+                    SANE_CloseDS();
                     break;
 		case MSG_OPENDS:
 		     twRC = SANE_OpenDS( pOrigin, (pTW_IDENTITY)pData);

@@ -67,6 +67,12 @@ struct tagActiveDS
     /* TRUE if user interface dialog is shown in DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDS */
     BOOL                ShowUI;
 
+    /* Data strored for the property sheet dialog while it is displayed */
+    struct SUiData *    ui_data;
+
+    /* TRUE if the DS makes the parent window Modal */
+    BOOL                ModalUI;
+
     /* Resolution used during scan */
     TW_FIX32            XResolution;
     TW_FIX32            YResolution;
@@ -215,6 +221,9 @@ TW_UINT16 SANE_RGBResponseSet
 /* UI function */
 BOOL DoScannerUI(void);
 HWND ScanningDialogBox(HWND dialog, LONG progress);
+BOOL UI_IsDialogMessage(MSG *msg);
+void UI_Destroy(void);
+void UI_Enable(BOOL enable);
 
 /* Option functions */
 TW_UINT16 sane_find_option( const char *name, int type, struct option_descriptor *descr );

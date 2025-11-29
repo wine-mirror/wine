@@ -127,6 +127,7 @@ TW_UINT16 SANE_Start(void)
       /* If starting the scan failed, cancel scan job */
       if (twRC != TWRC_SUCCESS)
       {
+          UI_Enable(TRUE);
           activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
           activeDS.twCC = TWCC_OPERATIONERROR;
           return TWRC_FAILURE;
@@ -136,6 +137,7 @@ TW_UINT16 SANE_Start(void)
       {
           WARN("sane_get_parameters failed\n");
           SANE_CALL( cancel_device, NULL );
+          UI_Enable(TRUE);
           activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
           activeDS.twCC = TWCC_OPERATIONERROR;
           return TWRC_FAILURE;
@@ -202,6 +204,7 @@ TW_UINT16 SANE_Start(void)
 void SANE_Cancel(void)
 {
   SANE_CALL( cancel_device, NULL );
+  UI_Enable(TRUE);
   activeDS.progressWnd = ScanningDialogBox(activeDS.progressWnd, -1);
   activeDS.currentState = 5;
 }
