@@ -13868,7 +13868,7 @@ static void test_cascade_windows(void)
     unsigned int spacing = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYDLGFRAME);
     static const unsigned int zorder[] = {1, 3, 5, 2, 9, 4, 8, 6, 0, 7};
     RECT orig = {100, 200, 300, 400}, parent_client, rect, prev, expect;
-    unsigned int width, height;
+    unsigned int width = 0, height = 0;
     HWND parent, hwnds[10];
     POINT pt = {0};
     WORD ret;
