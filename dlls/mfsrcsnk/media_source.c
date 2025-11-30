@@ -204,6 +204,33 @@ static HRESULT async_start_params_create(IMFPresentationDescriptor *descriptor, 
     return S_OK;
 }
 
+struct async_set_rate_params
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+    float rate;
+    BOOL thin;
+};
+
+static void async_set_rate_params_destroy(struct async_set_rate_params *params)
+{
+    free(params);
+}
+
+DEFINE_MF_ASYNC_PARAMS(async_set_rate_params);
+
+static HRESULT async_set_rate_params_create(float rate, BOOL thin, IUnknown **out)
+{
+    struct async_set_rate_params *params;
+
+    if (!(params = async_set_rate_params_alloc())) return E_OUTOFMEMORY;
+    params->rate = rate;
+    params->thin = thin;
+
+    *out = &params->IUnknown_iface;
+    return S_OK;
+}
+
 struct media_stream
 {
     IMFMediaStream IMFMediaStream_iface;
@@ -231,6 +258,7 @@ struct media_source
     IMFAsyncCallback async_stop_iface;
     IMFAsyncCallback async_pause_iface;
     IMFAsyncCallback async_read_iface;
+    IMFAsyncCallback async_set_rate_iface;
     LONG refcount;
 
     CRITICAL_SECTION cs;
@@ -1036,9 +1064,28 @@ static ULONG WINAPI media_source_IMFRateControl_Release(IMFRateControl *iface)
     return IMFMediaSource_Release(&source->IMFMediaSource_iface);
 }
 
+static HRESULT media_source_async_set_rate(struct media_source *source, IMFAsyncResult *result)
+{
+    struct async_set_rate_params *params;
+    IUnknown *state;
+
+    if (!(state = IMFAsyncResult_GetStateNoAddRef(result))) return E_INVALIDARG;
+    params = async_set_rate_params_from_IUnknown(state);
+
+    EnterCriticalSection(&source->cs);
+    source->rate = params->rate;
+    LeaveCriticalSection(&source->cs);
+
+    queue_media_event_value(source->queue, MESourceRateChanged, NULL);
+    return S_OK;
+}
+
+DEFINE_MF_ASYNC_CALLBACK(media_source, async_set_rate, IMFMediaSource_iface)
+
 static HRESULT WINAPI media_source_IMFRateControl_SetRate(IMFRateControl *iface, BOOL thin, float rate)
 {
     struct media_source *source = media_source_from_IMFRateControl(iface);
+    IUnknown *params;
     HRESULT hr;
 
     FIXME("source %p, thin %d, rate %f, stub!\n", source, thin, rate);
@@ -1051,11 +1098,13 @@ static HRESULT WINAPI media_source_IMFRateControl_SetRate(IMFRateControl *iface,
     if (FAILED(hr = IMFRateSupport_IsRateSupported(&source->IMFRateSupport_iface, thin, rate, NULL)))
         return hr;
 
-    EnterCriticalSection(&source->cs);
-    source->rate = rate;
-    LeaveCriticalSection(&source->cs);
+    if (FAILED(hr = async_set_rate_params_create(rate, thin, &params)))
+        return hr;
 
-    return IMFMediaEventQueue_QueueEventParamVar(source->queue, MESourceRateChanged, &GUID_NULL, S_OK, NULL);
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_set_rate_iface, params);
+    IUnknown_Release(params);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_source_IMFRateControl_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
@@ -1724,6 +1773,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
     source->async_stop_iface.lpVtbl = &media_source_async_stop_vtbl;
     source->async_pause_iface.lpVtbl = &media_source_async_pause_vtbl;
     source->async_read_iface.lpVtbl = &media_source_async_read_vtbl;
+    source->async_set_rate_iface.lpVtbl = &media_source_async_set_rate_vtbl;
     source->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&source->queue)))
