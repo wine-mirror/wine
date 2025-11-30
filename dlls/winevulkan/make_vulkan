@@ -1353,37 +1353,36 @@ class VkMember(VkVariable):
         return expr.format(prefix=prefix, length=length)
 
     def copy(self, input, output, direction, conv, unwrap, parent_const, conversions, parent):
-        """ Helper method for use by conversion logic to generate a C-code statement to copy this member.
-            - `conv` indicates whether the statement is in a struct alignment conversion path. """
-
-        win_type = "win32" if conv else "win64"
-        suffix = convert_suffix(direction, win_type, unwrap, self.is_wrapped())
         is_const = self.is_const() if self.is_pointer() else parent_const
 
         if self.needs_conversion(conv, unwrap, direction, False):
             if self.is_dynamic_array():
+                convert = ArrayConversionFunction(self, direction, conv, unwrap)
+                conversions.append(convert)
+
                 # Array length is either a variable name (string) or an int.
                 count = self.get_dyn_array_len(parent, input, conv)
-                pointer_part = "pointer_" if self.pointer_array else ""
-                conversions.append(ArrayConversionFunction(self, direction, conv, unwrap))
                 if direction == Direction.OUTPUT:
-                    return "convert_{2}_{6}array_{5}({3}{1}, {0}, {4});\n".format(self.value(output, conv),
-                        self.name, self.type, input, count, suffix, pointer_part)
+                    value = self.value(output, conv)
+                    return f"{convert.name}({input}{self.name}, {value}, {count});\n"
                 else:
-                    return "{0}{1} = convert_{2}_{6}array_{5}(ctx, {3}, {4});\n".format(output,
-                        self.name, self.type, self.value(input, conv), count, suffix, pointer_part)
+                    value = self.value(input, conv)
+                    return f"{output}{self.name} = {convert.name}(ctx, {value}, {count});\n"
+
             elif self.is_static_array():
+                convert = ArrayConversionFunction(self, direction, conv, unwrap)
+                conversions.append(convert)
+
                 count = self.array_lens[0]
                 if len(self.array_lens) > 1:
                     LOGGER.warn("TODO: implement conversion of multidimensional static array for {0}.{1}".format(self.type, self.name))
                 elif direction == Direction.OUTPUT:
                     # Needed by VkMemoryHeap.memoryHeaps
-                    conversions.append(ArrayConversionFunction(self, direction, conv, unwrap))
-                    return "convert_{0}_array_{5}({2}{1}, {3}{1}, {4});\n".format(self.type,
-                        self.name, input, output, count, suffix)
+                    return f"{convert.name}({input}{self.name}, {output}{self.name}, {count});\n"
                 else:
                     # Nothing needed this yet.
                     LOGGER.warn("TODO: implement copying of static array for {0}.{1}".format(self.type, self.name))
+
             elif self.is_handle() and self.is_wrapped():
                 handle = self.type_info["data"]
                 if direction == Direction.OUTPUT:
@@ -1394,20 +1393,23 @@ class VkMember(VkVariable):
                 else:
                     return "{0}{1} = {2};\n".format(output, self.name,
                         handle.unwrap_handle(self.value(input, conv), unwrap))
+
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
                     LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
                 return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
             else:
-                selector_part = ", {0}{1}".format(input, self.selector) if self.selector else ""
-                conversions.append(StructConversionFunction(self.struct, direction, conv, unwrap, is_const))
+                convert = StructConversionFunction(self.struct, direction, conv, unwrap, is_const)
+                conversions.append(convert)
+
+                sel = f", {input}{self.selector}" if self.selector else ""
+                ctx = "ctx, " if self.needs_alloc(conv, unwrap) else ""
+
                 if direction == Direction.OUTPUT:
-                    return "convert_{0}_{4}(&{2}{1}, &{3}{1}{5});\n".format(self.type,
-                        self.name, input, output, suffix, selector_part)
+                    return f"{convert.name}(&{input}{self.name}, &{output}{self.name}{sel});\n"
                 else:
-                    ctx_param = "ctx, " if self.needs_alloc(conv, unwrap) else ""
-                    return "convert_{0}_{4}({5}&{2}{1}, &{3}{1}{6});\n".format(self.type,
-                        self.name, input, output, suffix, ctx_param, selector_part)
+                    return f"{convert.name}({ctx}&{input}{self.name}, &{output}{self.name}{sel});\n"
+
         elif self.is_static_array():
             bytes_count = "sizeof({0})".format(self.type)
             for l in self.array_lens:
@@ -1629,44 +1631,55 @@ class VkParam(VkVariable):
         return var.value(prefix, conv, deref=True)
 
     def copy(self, direction, conv, unwrap, conversions, params, prefix=""):
-        win_type = "win32" if conv else "win64"
-        suffix = convert_suffix(direction, win_type, unwrap, self.is_wrapped())
+        value = self.value(prefix, conv)
         is_const = self.is_const() if self.is_pointer() else False
 
         if direction == Direction.INPUT:
             ctx_param = "ctx, " if self.needs_alloc(conv, unwrap) else ""
             if self.is_dynamic_array():
-                conversions.append(ArrayConversionFunction(self, direction, conv, unwrap))
-                return "    {0}_host = convert_{2}_array_{4}({5}{1}, {3});\n".format(self.name, self.value(prefix, conv),
-                    self.type, self.get_dyn_array_len(params, prefix, conv), suffix, ctx_param)
+                convert = ArrayConversionFunction(self, direction, conv, unwrap)
+                conversions.append(convert)
+
+                length = self.get_dyn_array_len(params, prefix, conv)
+                return f"    {self.name}_host = {convert.name}({ctx_param}{value}, {length});\n"
+
             elif self.optional:
-                conversions.append(StructConversionFunction(self.struct, direction, conv, unwrap, is_const))
-                ret  = "    if ({0}{1})\n".format(prefix, self.name)
-                ret += "    {\n"
-                ret += "        {0}_host = conversion_context_alloc(ctx, sizeof(*{0}_host));\n".format(self.name)
-                ret += "        convert_{0}_{3}({4}{1}, {2}_host);\n".format(self.type, self.value(prefix, conv),
-                    self.name, suffix, ctx_param)
-                ret += "    }\n"
+                convert = StructConversionFunction(self.struct, direction, conv, unwrap, is_const)
+                conversions.append(convert)
+
+                ret  = f"    if ({prefix}{self.name})\n"
+                ret += u"    {\n"
+                ret += f"        {self.name}_host = conversion_context_alloc(ctx, sizeof(*{self.name}_host));\n"
+                ret += f"        {convert.name}({ctx_param}{value}, {self.name}_host);\n"
+                ret += u"    }\n"
                 return ret
+
             elif self.is_struct():
-                conversions.append(StructConversionFunction(self.struct, direction, conv, unwrap, is_const))
-                return "    convert_{0}_{3}({4}{1}, &{2}_host);\n".format(self.type, self.value(prefix, conv),
-                    self.name, suffix, ctx_param)
+                convert = StructConversionFunction(self.struct, direction, conv, unwrap, is_const)
+                conversions.append(convert)
+
+                return f"    {convert.name}({ctx_param}{value}, &{self.name}_host);\n"
+
             elif self.is_pointer_size() and self.type != "size_t":
                 return "    {0}_host = UlongToPtr(*{1});\n".format(self.name, self.value(prefix, conv))
             else:
                 return "    {0}_host = *{1};\n".format(self.name, self.value(prefix, conv))
         else:
             if self.is_dynamic_array():
-                conversions.append(ArrayConversionFunction(self, direction, conv, unwrap))
-                return "    convert_{0}_array_{1}({2}_host, {3}, {4});\n".format(
-                    self.type, suffix, self.name, self.value(prefix, conv).replace('const ', ''),
-                    self.get_dyn_array_len(params, prefix, conv))
+                convert = ArrayConversionFunction(self, direction, conv, unwrap)
+                conversions.append(convert)
+
+                value = value.replace('const ', '')
+                length = self.get_dyn_array_len(params, prefix, conv)
+                return f"    {convert.name}({self.name}_host, {value}, {length});\n"
+
             elif self.is_struct():
+                convert = StructConversionFunction(self.struct, direction, conv, unwrap, is_const)
+                conversions.append(convert)
+
                 ref_part = "" if self.optional else "&"
-                conversions.append(StructConversionFunction(self.struct, direction, conv, unwrap, is_const))
-                return "    convert_{0}_host_to_{3}({4}{2}_host, {1});\n".format(
-                    self.type, self.value(prefix, conv), self.name, win_type, ref_part)
+                return f"    {convert.name}({ref_part}{self.name}_host, {value});\n"
+
             elif self.is_pointer_size() and self.type != "size_t":
                 return "    *{0} = PtrToUlong({1}_host);\n".format(self.value(prefix, conv), self.name)
             else:
@@ -2410,33 +2423,27 @@ class ArrayConversionFunction(object):
             if self.array.is_struct():
                 struct = self.array.struct
                 is_const = self.array.is_const() if self.array.is_pointer() else False
-                win_part = "win32" if self.conv else "win64"
-                suffix = convert_suffix(self.direction, win_part, self.unwrap, struct.is_wrapped())
-                ctx_part = ""
-                if self.direction == Direction.INPUT and struct.needs_alloc(self.conv, self.unwrap):
-                    ctx_part = "ctx, "
+
+                convert = StructConversionFunction(struct, self.direction, self.conv, self.unwrap, is_const)
+                ctx = "ctx, " if self.direction == Direction.INPUT and struct.needs_alloc(self.conv, self.unwrap) else ""
+                inp = f"({win_type} *)UlongToPtr(in[i])" if self.conv else "in[i]"
 
                 if not pointer_array:
-                    conversions.append(StructConversionFunction(struct, self.direction, self.conv, self.unwrap, is_const))
-                    body += "        convert_{0}_{1}({2}&in[i], &out[i]);\n".format(
-                        struct.name, suffix, ctx_part)
+                    conversions.append(convert)
+                    body += f"        {convert.name}({ctx}&in[i], &out[i]);\n"
+
+                elif struct.needs_conversion(self.conv, self.unwrap, self.direction, False):
+                    conversions.append(convert)
+                    body += u"        if (in[i])\n"
+                    body += u"        {\n"
+                    body += u"            out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));\n"
+                    body += f"            {convert.name}({ctx}{inp}, out[i]);\n"
+                    body += u"        }\n"
+                    body += u"        else\n"
+                    body += u"            out[i] = NULL;\n"
                 else:
-                    if struct.needs_conversion(self.conv, self.unwrap, self.direction, False):
-                        body += "        if (in[i])\n"
-                        body += "        {\n"
-                        body += "            out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));\n"
-                        if self.conv:
-                            in_param = "({0} *)UlongToPtr(in[i])".format(win_type)
-                        else:
-                            in_param = "in[i]"
-                        conversions.append(StructConversionFunction(struct, self.direction, self.conv, self.unwrap, is_const))
-                        body += "            convert_{0}_{1}({2}{3}, out[i]);\n".format(
-                            struct.name, suffix, ctx_part, in_param)
-                        body += "        }\n"
-                        body += "        else\n"
-                        body += "            out[i] = NULL;\n"
-                    else:
-                        body += "        out[i] = UlongToPtr(in[i]);\n"
+                    body += u"        out[i] = UlongToPtr(in[i]);\n"
+
             elif self.array.is_handle():
                 if pointer_array:
                     LOGGER.error("Unhandled handle pointer arrays")
