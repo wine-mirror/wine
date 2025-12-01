@@ -2345,9 +2345,7 @@ Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *vis
 
     if (!data)
     {
-        /* explicitly create data for HWND_MESSAGE windows since they can be used for OpenGL */
-        HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
-        if (parent == NtUserGetDesktopWindow() || NtUserGetAncestor( parent, GA_PARENT )) return 0;
+        /* explicitly create data for HWND_MESSAGE and foreign windows since they can be used for OpenGL */
         if (!(data = alloc_win_data( thread_init_display(), hwnd ))) return 0;
         data->rects.window = data->rects.visible = data->rects.client = client_rect;
     }
