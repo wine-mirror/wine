@@ -1656,7 +1656,7 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     if (draw_hdc && !context->draw) context->draw = get_dc_opengl_drawable( draw_hdc );
     if (read_hdc && !context->read) context->read = get_dc_opengl_drawable( read_hdc );
 
-    new_draw = get_updated_drawable( draw_hdc, context->format, context->draw );
+    if (!(new_draw = get_updated_drawable( draw_hdc, context->format, context->draw ))) return FALSE;
     if (!draw_hdc && context->draw == context->read) opengl_drawable_add_ref( (new_read = new_draw) );
     else if (draw_hdc && draw_hdc == read_hdc) opengl_drawable_add_ref( (new_read = new_draw) );
     else new_read = get_updated_drawable( read_hdc, context->format, context->read );
