@@ -573,7 +573,8 @@ static HRESULT WINAPI field_get_Value( Field *iface, VARIANT *val )
     memset(&buf, 0, sizeof(buf));
     hr = IRowset_GetData(recordset->row_set, recordset->current_row, field->hacc_get, &buf);
     if (FAILED(hr)) return hr;
-    if (buf.status != DBSTATUS_S_OK) return E_FAIL;
+    if (buf.status == DBSTATUS_S_ISNULL) V_VT(&buf.val) = VT_NULL;
+    else if (buf.status != DBSTATUS_S_OK) return E_FAIL;
 
     *val = buf.val;
     return S_OK;
