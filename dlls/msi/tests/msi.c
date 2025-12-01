@@ -3344,12 +3344,13 @@ static void test_MsiProvideComponent(void)
 
 static void test_MsiProvideQualifiedComponentEx(void)
 {
+    UINT (WINAPI *pMsiDecomposeDescriptorA)(LPCSTR, LPCSTR, LPSTR, LPSTR, DWORD *);
     UINT r;
     INSTALLSTATE state;
     char comp[39], comp_squashed[33], comp2[39], comp2_base85[21], comp2_squashed[33];
-    char prod[39], prod_base85[21], prod_squashed[33];
+    char prod[39], prod2[39], prod_base85[21], prod_squashed[33], feature[39];
     char desc[MAX_PATH], buf[MAX_PATH], keypath[MAX_PATH], path[MAX_PATH];
-    DWORD len = sizeof(buf);
+    DWORD len;
     REGSAM access = KEY_ALL_ACCESS;
     HKEY hkey, hkey2, hkey3, hkey4, hkey5;
     LONG res;
@@ -3364,6 +3365,22 @@ static void test_MsiProvideQualifiedComponentEx(void)
     compose_base85_guid( comp2, comp2_base85, comp2_squashed );
     compose_base85_guid( prod, prod_base85, prod_squashed );
 
+    r = MsiEnumFeaturesA( prod, 0, feature, NULL );
+    ok( r == ERROR_UNKNOWN_PRODUCT, "got %u\n", r );
+
+    pMsiDecomposeDescriptorA = (void *)GetProcAddress( GetModuleHandleA( "msi.dll" ), "MsiDecomposeDescriptorA" );
+    if (pMsiDecomposeDescriptorA)
+    {
+        lstrcpyA( desc, prod_base85 );
+        memcpy( desc + lstrlenA(desc), "<\0", sizeof("<\0") );
+        len = 0;
+        r = pMsiDecomposeDescriptorA( desc, prod2, feature, comp2, &len );
+        todo_wine ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+    }
+    else
+        win_skip("MsiDecomposeDescriptorA is not available on this platform\n");
+
+    len = sizeof(buf);
     r = MsiProvideQualifiedComponentExA( comp, "qualifier", INSTALLMODE_EXISTING, prod, 0, 0, buf, &len );
     ok( r == ERROR_UNKNOWN_COMPONENT, "got %u\n", r );
 
@@ -3466,6 +3483,26 @@ static void test_MsiProvideQualifiedComponentEx(void)
     ok( r == ERROR_SUCCESS, "got %u\n", r );
     ok( len == lstrlenA(path), "got %lu\n", len );
     ok( !lstrcmpA( path, buf ), "got '%s'\n", buf );
+
+    r = MsiEnumFeaturesA( prod, 0, feature, NULL );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+    ok( !strcmp(feature, "feature"), "got %s\n", debugstr_a(feature) );
+
+    if (pMsiDecomposeDescriptorA)
+    {
+        lstrcpyA( desc, prod_base85 );
+        memcpy( desc + lstrlenA(desc), "<\0", sizeof("<\0") );
+        len = 0;
+        feature[0] = 0;
+        r = pMsiDecomposeDescriptorA( desc, prod2, feature, comp2, &len );
+        ok( r == ERROR_SUCCESS, "got %u\n", r );
+        ok( len == strlen(desc), "got %lu\n", len );
+        ok( !strcmp(prod2, prod), "got %s\n", debugstr_a(prod2) );
+        todo_wine ok( !strcmp(feature, "feature"), "got %s\n", debugstr_a(feature) );
+        ok( !strcmp(comp2, comp2), "got %s\n", debugstr_a(comp) );
+    }
+    else
+        win_skip("MsiDecomposeDescriptorA is not available on this platform\n");
 
     DeleteFileA( "msitest\\text.txt" );
     RemoveDirectoryA( "msitest" );
