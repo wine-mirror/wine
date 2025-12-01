@@ -558,10 +558,10 @@ static HRESULT WINAPI connection_OpenSchema( _Connection *iface, SchemaEnum sche
     ADORecordsetConstruction *construct;
     IDBSchemaRowset *schema_rowset;
     _Recordset *recordset;
+    VARIANT *restr, conn;
     ULONG restr_count;
     IUnknown *rowset;
     const GUID *guid;
-    VARIANT *restr;
     HRESULT hr;
 
     TRACE( "%p, %d, %s, %s, %p\n", iface, schema, debugstr_variant(&restrictions),
@@ -632,7 +632,12 @@ static HRESULT WINAPI connection_OpenSchema( _Connection *iface, SchemaEnum sche
         return hr;
     }
 
-    hr = _Recordset_QueryInterface( recordset, &IID_ADORecordsetConstruction, (void**)&construct );
+    V_VT(&conn) = VT_DISPATCH;
+    V_DISPATCH(&conn) = (IDispatch *)iface;
+    hr = _Recordset_put_ActiveConnection( recordset, conn );
+
+    if (SUCCEEDED(hr))
+        hr = _Recordset_QueryInterface( recordset, &IID_ADORecordsetConstruction, (void**)&construct );
     if (SUCCEEDED(hr))
     {
         hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
