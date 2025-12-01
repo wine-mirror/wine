@@ -1247,7 +1247,6 @@ static BOOL wined3d_context_gl_set_gl_context(struct wined3d_context_gl *context
             return FALSE;
         }
 
-        wined3d_release_dc(context_gl->window, context_gl->dc);
         if (!(context_gl->dc = wined3d_device_gl_get_backup_dc(device_gl)))
         {
             wined3d_context_gl_set_current(NULL);
@@ -1302,21 +1301,13 @@ static void wined3d_context_gl_update_window(struct wined3d_context_gl *context_
     TRACE("Updating context %p window from %p to %p.\n",
             context_gl, context_gl->window, context_gl->c.swapchain->win_handle);
 
-    if (context_gl->dc)
-        wined3d_release_dc(context_gl->window, context_gl->dc);
-
     context_gl->window = context_gl->c.swapchain->win_handle;
+    context_gl->dc = context_gl->c.swapchain->dc;
     context_gl->dc_is_private = FALSE;
     context_gl->dc_has_format = FALSE;
     context_gl->needs_set = 1;
     context_gl->valid = 1;
     context_gl->internal_format_set = 0;
-
-    if (!(context_gl->dc = GetDCEx(context_gl->window, 0, DCX_USESTYLE | DCX_CACHE)))
-    {
-        ERR("Failed to get a device context for window %p.\n", context_gl->window);
-        context_gl->valid = 0;
-    }
 }
 
 static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
@@ -1501,8 +1492,6 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
         context_restore_gl_context(gl_info, restore_dc, restore_ctx);
     else if (wglGetCurrentContext() && !wglMakeCurrent(NULL, NULL))
         ERR("Failed to disable GL context.\n");
-
-    wined3d_release_dc(context_gl->window, context_gl->dc);
 
     if (!wglDeleteContext(context_gl->gl_ctx))
     {
@@ -1941,7 +1930,6 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
         WARN("Failed to set pixel format %d on device context %p, trying backup DC.\n",
                 context_gl->pixel_format, context_gl->dc);
 
-        wined3d_release_dc(context_gl->window, context_gl->dc);
         if (!(context_gl->dc = wined3d_device_gl_get_backup_dc(wined3d_device_gl(device))))
         {
             ERR("Failed to retrieve the backup device context.\n");
@@ -2014,7 +2002,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
         TRACE("Swapchain is created on the desktop window, trying backup device context.\n");
         context_gl->dc = NULL;
     }
-    else if (!(context_gl->dc = GetDCEx(context_gl->window, 0, DCX_USESTYLE | DCX_CACHE)))
+    else if (!(context_gl->dc = swapchain_gl->s.dc))
         WARN("Failed to retrieve device context, trying swapchain backup.\n");
 
     if (!context_gl->dc)
@@ -2261,7 +2249,6 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
 
 fail:
     free(context_gl->texture_type);
-    wined3d_release_dc(context_gl->window, context_gl->dc);
     return E_FAIL;
 }
 

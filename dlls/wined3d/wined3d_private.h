@@ -4121,6 +4121,7 @@ struct wined3d_swapchain
 
     struct wined3d_swapchain_state state;
     HWND win_handle;
+    HDC dc;
 };
 
 void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activate);
