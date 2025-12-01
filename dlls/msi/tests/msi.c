@@ -3375,7 +3375,7 @@ static void test_MsiProvideQualifiedComponentEx(void)
         memcpy( desc + lstrlenA(desc), "<\0", sizeof("<\0") );
         len = 0;
         r = pMsiDecomposeDescriptorA( desc, prod2, feature, comp2, &len );
-        todo_wine ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+        ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
     }
     else
         win_skip("MsiDecomposeDescriptorA is not available on this platform\n");
@@ -3498,7 +3498,7 @@ static void test_MsiProvideQualifiedComponentEx(void)
         ok( r == ERROR_SUCCESS, "got %u\n", r );
         ok( len == strlen(desc), "got %lu\n", len );
         ok( !strcmp(prod2, prod), "got %s\n", debugstr_a(prod2) );
-        todo_wine ok( !strcmp(feature, "feature"), "got %s\n", debugstr_a(feature) );
+        ok( !strcmp(feature, "feature"), "got %s\n", debugstr_a(feature) );
         ok( !strcmp(comp2, comp2), "got %s\n", debugstr_a(comp) );
     }
     else
