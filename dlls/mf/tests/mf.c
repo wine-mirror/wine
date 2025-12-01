@@ -4923,12 +4923,32 @@ static void test_sample_grabber_seek(void)
     todo_wine
     ok(samples_requested == 4, "Unexpected number of samples requested %d\n", samples_requested);
 
-    /* test sample received in the stopped state */
+    /* test pause and resume with 4 samples queued */
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFPresentationClock_Start(clock, PRESENTATION_CURRENT_POSITION);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 0, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test pause and seek with 4 samples queued */
+    hr = IMFPresentationClock_Pause(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     SET_EXPECT(timer_CancelTimer);
-    hr = IMFPresentationClock_Stop(clock);
+    hr = IMFPresentationClock_Start(clock, 1234567);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     todo_wine
     CHECK_CALLED(timer_CancelTimer);
+
+    samples_requested = count_samples_requested(stream);
+    ok(samples_requested == 0, "Unexpected number of samples requested %d\n", samples_requested);
+
+    /* test sample received in the stopped state */
+    hr = IMFPresentationClock_Stop(clock);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     supply_samples(stream, 4);
 
