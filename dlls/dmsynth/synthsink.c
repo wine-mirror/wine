@@ -75,6 +75,23 @@ static void synth_sink_get_format(struct synth_sink *This, WAVEFORMATEX *format)
     }
 }
 
+static HRESULT synth_sink_wait_write(struct synth_sink *sink, HANDLE buffer_event)
+{
+    HANDLE handles[] = {sink->stop_event, buffer_event};
+    DWORD ret;
+
+    ret = WaitForMultipleObjects(ARRAY_SIZE(handles), handles, FALSE, INFINITE);
+    if (ret == WAIT_FAILED)
+    {
+        ERR("WaitForSingleObject failed with %lu\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+    if (ret == WAIT_OBJECT_0)
+        return S_FALSE;
+
+    return S_OK;
+}
+
 static HRESULT synth_sink_write_data(struct synth_sink *sink, IDirectSoundBuffer *buffer,
         DSBCAPS *caps, WAVEFORMATEX *format, const void *data, DWORD size)
 {
@@ -272,17 +289,14 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
     while (SUCCEEDED(hr) && SUCCEEDED(hr = synth_sink_write_data(sink, buffer,
             &caps, &format, samples, samples_size)))
     {
-        HANDLE handles[] = {sink->stop_event, buffer_event};
-        DWORD ret;
+        HRESULT wait_hr;
 
         if (hr == S_OK) /* if successfully written, render more data */
             hr = synth_sink_render_data(sink, synth, buffer, &format, samples, samples_size);
 
-        if (!(ret = WaitForMultipleObjects(ARRAY_SIZE(handles), handles, FALSE, INFINITE))
-                || ret >= ARRAY_SIZE(handles))
+        if (S_OK != (wait_hr = synth_sink_wait_write(sink, buffer_event)))
         {
-            ERR("WaitForMultipleObjects returned %lu\n", ret);
-            hr = HRESULT_FROM_WIN32(ret);
+            hr = wait_hr;
             break;
         }
     }
