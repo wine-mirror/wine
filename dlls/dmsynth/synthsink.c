@@ -164,43 +164,31 @@ static HRESULT synth_sink_write_data(struct synth_sink *sink, IDirectSoundBuffer
 }
 
 static HRESULT synth_sink_wait_play_end(struct synth_sink *sink, IDirectSoundBuffer *buffer,
-        DSBCAPS *caps, WAVEFORMATEX *format, HANDLE buffer_event)
+        DSBCAPS *caps, WAVEFORMATEX *format, DWORD samples_size)
 {
-    DWORD current_pos, start_pos, play_pos, written, played = 0;
+    DWORD play_pos, write_pos, write_latency, written;
     HRESULT hr;
 
-    if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &start_pos, NULL)))
-    {
-        ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
-        return hr;
-    }
-
-    current_pos = sink->written % caps->dwBufferBytes;
-    written = current_pos - start_pos + (current_pos < start_pos ? caps->dwBufferBytes : 0);
-    if (FAILED(hr = synth_sink_write_data(sink, buffer, caps, format, NULL, caps->dwBufferBytes / 2))) return hr;
+    written = sink->written;
 
     for (;;)
     {
-        DWORD ret;
+        if (FAILED(hr = synth_sink_wait_write(sink, buffer, caps, format, samples_size)))
+            return hr;
 
-        if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, NULL)))
+        if (FAILED(hr = synth_sink_write_data(sink, buffer, caps, format, NULL, samples_size)))
+            return hr;
+
+        if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos)))
         {
             ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
             return hr;
         }
 
-        played += play_pos - start_pos + (play_pos < start_pos ? caps->dwBufferBytes : 0);
-        if (played >= written) break;
+        write_latency = (write_pos - play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
 
-        TRACE("Waiting for EOS, start_pos %#lx, play_pos %#lx, written %#lx, played %#lx\n",
-                start_pos, play_pos, written, played);
-        if ((ret = WaitForMultipleObjects(1, &buffer_event, FALSE, INFINITE)))
-        {
-            ERR("WaitForMultipleObjects returned %#lx\n", ret);
+        if (sink->written >= written + write_latency)
             break;
-        }
-
-        start_pos = play_pos;
     }
 
     return S_OK;
@@ -327,7 +315,7 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         return hr;
     }
 
-    synth_sink_wait_play_end(sink, buffer, &caps, &format, buffer_event);
+    synth_sink_wait_play_end(sink, buffer, &caps, &format, samples_size);
     free(samples);
 
 done:
