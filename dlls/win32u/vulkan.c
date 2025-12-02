@@ -1690,7 +1690,7 @@ static void fill_luid_property( VkPhysicalDeviceProperties2 *properties2 )
 
     if (!vk11 && !id) return;
     uuid = (const GUID *)(id ? id->deviceUUID : vk11->deviceUUID);
-    device_luid_valid = get_luid_from_vulkan_uuid( uuid, &luid, &node_mask );
+    device_luid_valid = get_gpu_luid_from_uuid( uuid, &luid, &node_mask );
     if (!device_luid_valid) WARN( "luid for %s not found\n", debugstr_guid(uuid) );
 
     if (id)

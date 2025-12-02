@@ -51,7 +51,7 @@ static const char control_keyA[] = "\\Registry\\Machine\\System\\CurrentControlS
 static const char config_keyA[] = "\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\Current";
 static const char directx_keyA[] = "\\Registry\\Machine\\Software\\Microsoft\\DirectX";
 
-static const char devpropkey_gpu_vulkan_uuidA[] = "Properties\\{233A9EF3-AFC4-4ABD-B564-C32F21F1535C}\\0002";
+static const char devpropkey_gpu_uuidA[] = "Properties\\{233A9EF3-AFC4-4ABD-B564-C32F21F1535C}\\0002";
 static const char devpropkey_gpu_luidA[] = "Properties\\{60B193CB-5276-4D0F-96FC-F173ABAD3EC6}\\0002";
 static const char devpkey_device_driver_date[] = "Properties\\{A8B865DD-2E3D-4094-AD97-E593A70C75D6}\\0002";
 static const char devpkey_device_driver_version[] = "Properties\\{A8B865DD-2E3D-4094-AD97-E593A70C75D6}\\0003";
@@ -107,7 +107,7 @@ struct gpu
     char guid[39];
     LUID luid;
     UINT index;
-    GUID vulkan_uuid;
+    GUID uuid;
     UINT source_count;
 };
 
@@ -1096,10 +1096,10 @@ static BOOL read_gpu_from_registry( struct gpu *gpu )
         NtClose( subkey );
     }
 
-    if ((subkey = reg_open_ascii_key( hkey, devpropkey_gpu_vulkan_uuidA )))
+    if ((subkey = reg_open_ascii_key( hkey, devpropkey_gpu_uuidA )))
     {
         if (query_reg_value( subkey, NULL, value, sizeof(buffer) ) == sizeof(GUID))
-            gpu->vulkan_uuid = *(const GUID *)value->Data;
+            gpu->uuid = *(const GUID *)value->Data;
         NtClose( subkey );
     }
 
@@ -1583,10 +1583,9 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
         NtClose( subkey );
     }
 
-    if ((subkey = reg_create_ascii_key( hkey, devpropkey_gpu_vulkan_uuidA, 0, NULL )))
+    if ((subkey = reg_create_ascii_key( hkey, devpropkey_gpu_uuidA, 0, NULL )))
     {
-        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_GUID,
-                       &gpu->vulkan_uuid, sizeof(gpu->vulkan_uuid) );
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_GUID, &gpu->uuid, sizeof(gpu->uuid) );
         NtClose( subkey );
     }
 
@@ -1656,35 +1655,62 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     return TRUE;
 }
 
-static struct vulkan_gpu *find_vulkan_gpu_from_uuid( const struct device_manager_ctx *ctx, const GUID *uuid )
+static struct gpu_info *find_gpu_info_from_uuid( const struct list *infos, const GUID *uuid )
 {
-    struct vulkan_gpu *gpu;
+    struct gpu_info *gpu;
 
     if (!uuid) return NULL;
 
-    LIST_FOR_EACH_ENTRY( gpu, &ctx->vulkan_gpus, struct vulkan_gpu, entry )
+    LIST_FOR_EACH_ENTRY( gpu, infos, struct gpu_info, entry )
         if (!memcmp( &gpu->uuid, uuid, sizeof(*uuid) )) return gpu;
 
     return NULL;
 }
 
-static struct vulkan_gpu *find_vulkan_gpu_from_pci_id( const struct device_manager_ctx *ctx, const struct pci_id *pci_id )
+static struct gpu_info *find_gpu_info_from_pci_id( const struct list *infos, const struct pci_id *pci_id )
 {
-    struct vulkan_gpu *gpu;
+    struct gpu_info *gpu;
 
-    LIST_FOR_EACH_ENTRY( gpu, &ctx->vulkan_gpus, struct vulkan_gpu, entry )
+    LIST_FOR_EACH_ENTRY( gpu, infos, struct gpu_info, entry )
         if (gpu->pci_id.vendor == pci_id->vendor && gpu->pci_id.device == pci_id->device) return gpu;
 
     return NULL;
 }
 
-static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid, void *param )
+static struct gpu_info *find_gpu_info( const struct list *infos, const GUID *uuid, const struct pci_id *pci_id )
+{
+    struct gpu_info *info;
+    struct list *ptr;
+
+    if ((info = find_gpu_info_from_uuid( infos, uuid )))
+        TRACE( "Found GPU matching uuid %s, pci_id %#04x:%#04x, name %s\n", debugstr_guid( &info->uuid ),
+               info->pci_id.vendor, info->pci_id.device, debugstr_a(info->name) );
+    else if ((info = find_gpu_info_from_pci_id( infos, pci_id )))
+        TRACE( "Found GPU matching pci_id %#04x:%#04x, uuid %s, name %s\n", info->pci_id.vendor,
+               info->pci_id.device, debugstr_guid( &info->uuid ), debugstr_a(info->name) );
+    else if ((ptr = list_head( infos )))
+    {
+        info = LIST_ENTRY( ptr, struct gpu_info, entry );
+        WARN( "Using GPU pci_id %#04x:%#04x, uuid %s, name %s\n", info->pci_id.vendor,
+              info->pci_id.device, debugstr_guid( &info->uuid ), debugstr_a(info->name) );
+    }
+
+    return info;
+}
+
+static void free_gpu_info( struct gpu_info *info )
+{
+    list_remove( &info->entry );
+    free( info->name );
+    free( info );
+}
+
+static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *uuid, void *param )
 {
     struct device_manager_ctx *ctx = param;
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
-    struct vulkan_gpu *vulkan_gpu = NULL;
-    struct list *ptr;
+    struct gpu_info *vulkan_gpu = NULL;
     struct gpu *gpu;
     unsigned int i;
     HKEY hkey, subkey;
@@ -1693,7 +1719,7 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     static const GUID empty_uuid;
 
     TRACE( "%s %04X %04X %08X %02X %s\n", debugstr_a( name ), pci_id->vendor, pci_id->device,
-           pci_id->subsystem, pci_id->revision, debugstr_guid( vulkan_uuid ) );
+           pci_id->subsystem, pci_id->revision, debugstr_guid( uuid ) );
 
     if (!enum_key && !(enum_key = reg_create_ascii_key( NULL, enum_keyA, 0, NULL )))
         return;
@@ -1708,23 +1734,9 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     gpu->refcount = 1;
     gpu->index = ctx->gpu_count;
 
-    if ((vulkan_gpu = find_vulkan_gpu_from_uuid( ctx, vulkan_uuid )))
-        TRACE( "Found vulkan GPU matching uuid %s, pci_id %#04x:%#04x, name %s\n", debugstr_guid(&vulkan_gpu->uuid),
-               vulkan_gpu->pci_id.vendor, vulkan_gpu->pci_id.device, debugstr_a(vulkan_gpu->name));
-    else if ((vulkan_gpu = find_vulkan_gpu_from_pci_id( ctx, pci_id )))
-        TRACE( "Found vulkan GPU matching pci_id %#04x:%#04x, uuid %s, name %s\n",
-               vulkan_gpu->pci_id.vendor, vulkan_gpu->pci_id.device,
-               debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
-    else if ((ptr = list_head( &ctx->vulkan_gpus )))
-    {
-        vulkan_gpu = LIST_ENTRY( ptr, struct vulkan_gpu, entry );
-        WARN( "Using vulkan GPU pci_id %#04x:%#04x, uuid %s, name %s\n",
-               vulkan_gpu->pci_id.vendor, vulkan_gpu->pci_id.device,
-               debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
-    }
-
-    if (vulkan_uuid && !IsEqualGUID( vulkan_uuid, &empty_uuid )) gpu->vulkan_uuid = *vulkan_uuid;
-    else if (vulkan_gpu) gpu->vulkan_uuid = vulkan_gpu->uuid;
+    vulkan_gpu = find_gpu_info( &ctx->vulkan_gpus, uuid, pci_id );
+    if (uuid && !IsEqualGUID( uuid, &empty_uuid )) gpu->uuid = *uuid;
+    else if (vulkan_gpu) gpu->uuid = vulkan_gpu->uuid;
 
     if (!pci_id->vendor && !pci_id->device && vulkan_gpu) pci_id = &vulkan_gpu->pci_id;
 
@@ -1785,11 +1797,7 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
         ctx->gpu_count++;
     }
 
-    if (vulkan_gpu)
-    {
-        list_remove( &vulkan_gpu->entry );
-        free_vulkan_gpu( vulkan_gpu );
-    }
+    if (vulkan_gpu) free_gpu_info( vulkan_gpu );
 }
 
 static BOOL write_source_to_registry( struct source *source )
@@ -2219,6 +2227,17 @@ static const struct gdi_device_manager device_manager =
     add_modes,
 };
 
+static void free_gpu_infos( struct list *infos )
+{
+    struct list *ptr;
+
+    while ((ptr = list_head( infos )))
+    {
+        struct gpu_info *info = LIST_ENTRY( ptr, struct gpu_info, entry );
+        free_gpu_info( info );
+    }
+}
+
 static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 {
     if (ctx->mutex)
@@ -2229,13 +2248,7 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 
     if (!list_empty( &sources )) last_query_display_time = 0;
     if (ctx->gpu_count) cleanup_devices();
-
-    while (!list_empty( &ctx->vulkan_gpus ))
-    {
-        struct vulkan_gpu *gpu = LIST_ENTRY( list_head( &ctx->vulkan_gpus ), struct vulkan_gpu, entry );
-        list_remove( &gpu->entry );
-        free_vulkan_gpu( gpu );
-    }
+    free_gpu_infos( &ctx->vulkan_gpus );
 }
 
 static BOOL is_monitor_active( struct monitor *monitor )
@@ -2775,9 +2788,9 @@ static UINT update_display_devices( struct device_manager_ctx *ctx )
 
 static void commit_display_devices( struct device_manager_ctx *ctx )
 {
-    struct vulkan_gpu *gpu, *next;
+    struct gpu_info *gpu, *next;
 
-    LIST_FOR_EACH_ENTRY_SAFE( gpu, next, &ctx->vulkan_gpus, struct vulkan_gpu, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( gpu, next, &ctx->vulkan_gpus, struct gpu_info, entry )
     {
         TRACE( "adding vulkan-only gpu uuid %s, name %s\n", debugstr_guid(&gpu->uuid), debugstr_a(gpu->name));
         add_gpu( gpu->name, &gpu->pci_id, &gpu->uuid, ctx );
@@ -8009,8 +8022,8 @@ done:
     return status;
 }
 
-/* Find the Vulkan device UUID corresponding to a LUID */
-BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
+/* Find the GPU device UUID corresponding to a LUID */
+BOOL get_gpu_uuid_from_luid( const LUID *luid, GUID *uuid )
 {
     BOOL found = FALSE;
     struct gpu *gpu;
@@ -8021,7 +8034,7 @@ BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
     {
         if ((found = !memcmp( &gpu->luid, luid, sizeof(*luid) )))
         {
-            *uuid = gpu->vulkan_uuid;
+            *uuid = gpu->uuid;
             break;
         }
     }
@@ -8030,8 +8043,8 @@ BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
     return found;
 }
 
-/* Find the Vulkan LUID corresponding to a device UUID */
-BOOL get_luid_from_vulkan_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask )
+/* Find the GPU LUID corresponding to a device UUID */
+BOOL get_gpu_luid_from_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask )
 {
     BOOL found = FALSE;
     struct gpu *gpu;
@@ -8040,7 +8053,7 @@ BOOL get_luid_from_vulkan_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask 
 
     LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
     {
-        if (!IsEqualGUID( uuid, &gpu->vulkan_uuid )) continue;
+        if (!IsEqualGUID( uuid, &gpu->uuid )) continue;
         *luid = gpu->luid;
         *node_mask = 1;
         found = TRUE;
