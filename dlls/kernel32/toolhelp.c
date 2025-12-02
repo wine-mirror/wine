@@ -92,11 +92,16 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
     if (set_ntstatus( NtQueryInformationProcess( hProcess, ProcessBasicInformation,
                                                  &pbi, sizeof(pbi), NULL )))
     {
-        if (ReadProcessMemory( hProcess, &pbi.PebBaseAddress->LdrData,
-                               &pLdrData, sizeof(pLdrData), NULL ) &&
-            ReadProcessMemory( hProcess,
-                               &pLdrData->InLoadOrderModuleList.Flink,
-                               &curr, sizeof(curr), NULL ))
+        if (!ReadProcessMemory( hProcess, &pbi.PebBaseAddress->LdrData,
+                               &pLdrData, sizeof(pLdrData), NULL ) ||
+            (pLdrData && !ReadProcessMemory( hProcess, &pLdrData->InLoadOrderModuleList.Flink,
+                                             &curr, sizeof(curr), NULL )))
+        {
+            goto out;
+        }
+
+        /* pLdrData is NULL on "old" wow64. Don't fail, just return an empty modules list. */
+        if (pLdrData)
         {
             head = &pLdrData->InLoadOrderModuleList;
 
@@ -124,10 +129,11 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
                 else
                     HeapFree( GetProcessHeap(), 0, (*ldr_mod)[*num].BaseDllName.Buffer );
             }
-            ret = TRUE;
         }
+        ret = TRUE;
     }
 
+out:
     if (process) CloseHandle( hProcess );
     return ret;
 }
