@@ -47,8 +47,13 @@ struct synth_sink
     REFERENCE_TIME latency_time;
     REFERENCE_TIME latency;
 
+    DWORD play_pos;
+    DWORD write_pos;
+    HANDLE timing_stop_event;
+    HANDLE timing_thread;
+
     DWORD written; /* number of bytes written out */
-    HANDLE stop_event;
+    HANDLE render_stop_event;
     HANDLE render_thread;
 };
 
@@ -81,20 +86,15 @@ static HRESULT synth_sink_wait_write(struct synth_sink *sink, IDirectSoundBuffer
 {
     DWORD current_offset;
     DWORD write_latency;
-    DWORD write_pos;
     DWORD play_pos;
     DWORD timeout;
-    HRESULT hr;
     DWORD ret;
 
-    if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos)))
-    {
-        ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
-        return hr;
-    }
-
-    write_latency = (write_pos - play_pos + caps->dwBufferBytes) % caps->dwBufferBytes + samples_size;
-    current_offset = (sink->written - play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+    EnterCriticalSection(&sink->cs);
+    play_pos = sink->play_pos;
+    write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes + samples_size;
+    current_offset = (sink->written - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+    LeaveCriticalSection(&sink->cs);
 
     if (current_offset > write_latency)
         timeout = (current_offset - write_latency) * 1000 / format->nAvgBytesPerSec;
@@ -110,7 +110,7 @@ static HRESULT synth_sink_wait_write(struct synth_sink *sink, IDirectSoundBuffer
         timeout = 0;
     }
 
-    ret = WaitForSingleObject(sink->stop_event, timeout);
+    ret = WaitForSingleObject(sink->render_stop_event, timeout);
     if (ret == WAIT_FAILED)
     {
         ERR("WaitForSingleObject failed with %lu\n", GetLastError());
@@ -166,7 +166,7 @@ static HRESULT synth_sink_write_data(struct synth_sink *sink, IDirectSoundBuffer
 static HRESULT synth_sink_wait_play_end(struct synth_sink *sink, IDirectSoundBuffer *buffer,
         DSBCAPS *caps, WAVEFORMATEX *format, DWORD samples_size)
 {
-    DWORD play_pos, write_pos, write_latency, written;
+    DWORD write_latency, written;
     HRESULT hr;
 
     written = sink->written;
@@ -179,13 +179,9 @@ static HRESULT synth_sink_wait_play_end(struct synth_sink *sink, IDirectSoundBuf
         if (FAILED(hr = synth_sink_write_data(sink, buffer, caps, format, NULL, samples_size)))
             return hr;
 
-        if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos)))
-        {
-            ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
-            return hr;
-        }
-
-        write_latency = (write_pos - play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+        EnterCriticalSection(&sink->cs);
+        write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+        LeaveCriticalSection(&sink->cs);
 
         if (sink->written >= written + write_latency)
             break;
@@ -219,30 +215,27 @@ static HRESULT synth_sink_render_data(struct synth_sink *sink, IDirectMusicSynth
     return hr;
 }
 
-struct render_thread_params
+struct timing_thread_params
 {
     struct synth_sink *sink;
-    IDirectMusicSynth *synth;
     IDirectSoundBuffer *buffer;
     HANDLE started_event;
 };
 
-static DWORD CALLBACK synth_sink_render_thread(void *args)
+static DWORD CALLBACK synth_sink_timing_thread(void *args)
 {
-    struct render_thread_params *params = args;
+    struct timing_thread_params *params = args;
     DSBCAPS caps = {.dwSize = sizeof(DSBCAPS)};
     IDirectSoundBuffer *buffer = params->buffer;
-    IDirectMusicSynth *synth = params->synth;
     struct synth_sink *sink = params->sink;
     IDirectSoundNotify *notify;
+    BOOL started = FALSE;
     WAVEFORMATEX format;
     HANDLE buffer_event;
-    DWORD samples_size;
-    short *samples;
     HRESULT hr;
 
-    TRACE("Starting thread, args %p\n", args);
-    SetThreadDescription(GetCurrentThread(), L"wine_dmsynth_sink");
+    TRACE("Starting timing thread, args %p\n", args);
+    SetThreadDescription(GetCurrentThread(), L"wine_dmsynth_sink_timing");
 
     if (FAILED(hr = IDirectSoundBuffer_Stop(buffer)))
         ERR("Failed to stop sound buffer, hr %#lx.\n", hr);
@@ -280,6 +273,98 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         goto done;
     }
 
+    if (FAILED(hr = IDirectSoundBuffer_Play(buffer, 0, 0, DSBPLAY_LOOPING)))
+    {
+        SetEvent(params->started_event);
+        ERR("Failed to start sound buffer, hr %#lx.\n", hr);
+        goto done;
+    }
+
+    for (;;)
+    {
+        HANDLE handles[] = {sink->timing_stop_event, buffer_event};
+        DWORD write_pos;
+        DWORD play_pos;
+        DWORD ret;
+
+        ret = WaitForMultipleObjects(ARRAY_SIZE(handles), handles, FALSE, INFINITE);
+        if (ret == WAIT_FAILED)
+        {
+            ERR("WaitForMultipleObjects failed with %lu\n", GetLastError());
+            hr = HRESULT_FROM_WIN32(GetLastError());
+            break;
+        }
+        if (ret == WAIT_OBJECT_0)
+            break;
+
+        if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos)))
+        {
+            ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
+            break;
+        }
+
+        EnterCriticalSection(&sink->cs);
+        sink->play_pos = play_pos;
+        sink->write_pos = write_pos;
+        LeaveCriticalSection(&sink->cs);
+
+        if (!started)
+        {
+            SetEvent(params->started_event);
+            started = TRUE;
+        }
+    }
+
+    if (!started)
+        SetEvent(params->started_event);
+
+    if (FAILED(hr))
+    {
+        ERR("Thread unexpected termination, hr %#lx\n", hr);
+        return hr;
+    }
+
+done:
+    IDirectSoundBuffer_Release(buffer);
+    CloseHandle(buffer_event);
+
+    return 0;
+}
+
+struct render_thread_params
+{
+    struct synth_sink *sink;
+    IDirectMusicSynth *synth;
+    IDirectSoundBuffer *buffer;
+    HANDLE started_event;
+};
+
+static DWORD CALLBACK synth_sink_render_thread(void *args)
+{
+    struct render_thread_params *params = args;
+    DSBCAPS caps = {.dwSize = sizeof(DSBCAPS)};
+    IDirectSoundBuffer *buffer = params->buffer;
+    IDirectMusicSynth *synth = params->synth;
+    struct synth_sink *sink = params->sink;
+    WAVEFORMATEX format;
+    DWORD samples_size;
+    short *samples;
+    HRESULT hr;
+
+    TRACE("Starting thread, args %p\n", args);
+    SetThreadDescription(GetCurrentThread(), L"wine_dmsynth_sink_render");
+
+    if (FAILED(hr = IDirectSoundBuffer_GetCaps(buffer, &caps)))
+        ERR("Failed to query sound buffer caps, hr %#lx.\n", hr);
+    else if (FAILED(hr = IDirectSoundBuffer_GetFormat(buffer, &format, sizeof(format), NULL)))
+        ERR("Failed to query sound buffer format, hr %#lx.\n", hr);
+
+    if (FAILED(hr))
+    {
+        SetEvent(params->started_event);
+        goto done;
+    }
+
     samples_size = WRITE_PERIOD * format.nSamplesPerSec / 1000 * format.nBlockAlign;
     if (!(samples = malloc(samples_size)))
     {
@@ -290,8 +375,6 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
 
     if (FAILED(hr = synth_sink_render_data(sink, synth, buffer, &format, samples, samples_size)))
         ERR("Failed to render initial buffer data, hr %#lx.\n", hr);
-    if (FAILED(hr = IDirectSoundBuffer_Play(buffer, 0, 0, DSBPLAY_LOOPING)))
-        ERR("Failed to start sound buffer, hr %#lx.\n", hr);
     SetEvent(params->started_event);
 
     while (SUCCEEDED(hr) && SUCCEEDED(hr = synth_sink_write_data(sink, buffer,
@@ -321,7 +404,6 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
 done:
     IDirectSoundBuffer_Release(buffer);
     IDirectMusicSynth_Release(synth);
-    CloseHandle(buffer_event);
 
     return 0;
 }
@@ -330,7 +412,8 @@ static HRESULT synth_sink_activate(struct synth_sink *This)
 {
     IDirectMusicSynthSink *iface = &This->IDirectMusicSynthSink_iface;
     DSBUFFERDESC desc = {.dwSize = sizeof(DSBUFFERDESC)};
-    struct render_thread_params params;
+    struct timing_thread_params timing_params;
+    struct render_thread_params render_params;
     WAVEFORMATEX format;
     HRESULT hr;
 
@@ -342,8 +425,8 @@ static HRESULT synth_sink_activate(struct synth_sink *This)
     if (FAILED(hr = IReferenceClock_GetTime(This->master_clock, &This->activate_time))) return hr;
     This->latency_time = This->activate_time;
 
-    if ((params.buffer = This->dsound_buffer))
-        IDirectMusicBuffer_AddRef(params.buffer);
+    if ((render_params.buffer = This->dsound_buffer))
+        IDirectSoundBuffer_AddRef(render_params.buffer);
     else
     {
         synth_sink_get_format(This, &format);
@@ -353,30 +436,50 @@ static HRESULT synth_sink_activate(struct synth_sink *This)
             ERR("Failed to get desired buffer size, hr %#lx\n", hr);
 
         desc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;
-        if (FAILED(hr = IDirectSound8_CreateSoundBuffer(This->dsound, &desc, &params.buffer, NULL)))
+        if (FAILED(hr = IDirectSound8_CreateSoundBuffer(This->dsound, &desc, &render_params.buffer, NULL)))
         {
             ERR("Failed to create sound buffer, hr %#lx.\n", hr);
             return hr;
         }
     }
 
-    params.sink = This;
-    params.synth = This->synth;
-    IDirectMusicSynth_AddRef(This->synth);
+    timing_params.sink = This;
+    timing_params.buffer = render_params.buffer;
+    IDirectSoundBuffer_AddRef(render_params.buffer);
 
-    if (!(params.started_event = CreateEventW(NULL, FALSE, FALSE, NULL))
-            || !(This->render_thread = CreateThread(NULL, 0, synth_sink_render_thread, &params, 0, NULL)))
+    if (!(timing_params.started_event = CreateEventW(NULL, FALSE, FALSE, NULL))
+            || !(This->timing_thread = CreateThread(NULL, 0, synth_sink_timing_thread, &timing_params, 0, NULL)))
     {
-        ERR("Failed to create render thread, error %lu\n", GetLastError());
+        ERR("Failed to create timing thread, error %lu\n", GetLastError());
         hr = HRESULT_FROM_WIN32(GetLastError());
-        IDirectSoundBuffer_Release(params.buffer);
-        IDirectMusicSynth_Release(params.synth);
-        CloseHandle(params.started_event);
+        IDirectSoundBuffer_Release(timing_params.buffer);
+        CloseHandle(timing_params.started_event);
+        IDirectSoundBuffer_Release(render_params.buffer);
         return hr;
     }
 
-    WaitForSingleObject(params.started_event, INFINITE);
-    CloseHandle(params.started_event);
+    WaitForSingleObject(timing_params.started_event, INFINITE);
+    CloseHandle(timing_params.started_event);
+
+    render_params.sink = This;
+    render_params.synth = This->synth;
+    IDirectMusicSynth_AddRef(This->synth);
+
+    if (!(render_params.started_event = CreateEventW(NULL, FALSE, FALSE, NULL))
+            || !(This->render_thread = CreateThread(NULL, 0, synth_sink_render_thread, &render_params, 0, NULL)))
+    {
+        ERR("Failed to create render thread, error %lu\n", GetLastError());
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        SetEvent(This->timing_stop_event);
+        WaitForSingleObject(This->timing_thread, INFINITE);
+        IDirectSoundBuffer_Release(render_params.buffer);
+        IDirectMusicSynth_Release(render_params.synth);
+        CloseHandle(render_params.started_event);
+        return hr;
+    }
+
+    WaitForSingleObject(render_params.started_event, INFINITE);
+    CloseHandle(render_params.started_event);
     This->active = TRUE;
     return S_OK;
 }
@@ -385,9 +488,12 @@ static HRESULT synth_sink_deactivate(struct synth_sink *This)
 {
     if (!This->active) return S_OK;
 
-    SetEvent(This->stop_event);
+    SetEvent(This->render_stop_event);
     WaitForSingleObject(This->render_thread, INFINITE);
     This->render_thread = NULL;
+    SetEvent(This->timing_stop_event);
+    WaitForSingleObject(This->timing_thread, INFINITE);
+    This->timing_thread = NULL;
     This->active = FALSE;
 
     return S_OK;
@@ -446,7 +552,8 @@ static ULONG WINAPI synth_sink_Release(IDirectMusicSynthSink *iface)
 
         This->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->cs);
-        CloseHandle(This->stop_event);
+        CloseHandle(This->render_stop_event);
+        CloseHandle(This->timing_stop_event);
 
         free(This);
     }
@@ -786,7 +893,8 @@ HRESULT synth_sink_create(IUnknown **ret_iface)
     obj->IReferenceClock_iface.lpVtbl = &latency_clock_vtbl;
     obj->ref = 1;
 
-    obj->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    obj->timing_stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    obj->render_stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     InitializeCriticalSectionEx(&obj->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     obj->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
