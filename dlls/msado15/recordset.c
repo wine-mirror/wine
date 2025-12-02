@@ -1960,6 +1960,7 @@ static HRESULT WINAPI recordset_put_CacheSize( _Recordset *iface, LONG size )
         {
             if (V_VT(&propset->rgProperties[0].vValue) == VT_I4)
                 recordset->cache.max_size = V_I4(&propset->rgProperties[0].vValue);
+            VariantClear( &propset->rgProperties[0].vValue );
             CoTaskMemFree( propset->rgProperties );
             CoTaskMemFree( propset );
         }
