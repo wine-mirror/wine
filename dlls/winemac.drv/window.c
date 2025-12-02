@@ -1149,17 +1149,14 @@ struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd)
 {
     HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct macdrv_client_surface *surface;
-    struct macdrv_win_data *data;
     RECT rect;
 
     NtUserGetClientRect(hwnd, &rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
     NtUserMapWindowPoints(hwnd, toplevel, (POINT *)&rect, 2, NtUserGetWinMonitorDpi(toplevel, MDT_RAW_DPI));
 
-    if (!(data = get_win_data(toplevel))) return FALSE;
     surface = client_surface_create(sizeof(*surface), &macdrv_client_surface_funcs, hwnd);
     surface->cocoa_view = macdrv_create_view(cgrect_from_rect(rect));
     macdrv_set_view_hidden(surface->cocoa_view, TRUE);
-    release_win_data(data);
 
     if (surface)
     {
