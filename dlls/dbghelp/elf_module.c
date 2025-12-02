@@ -1247,7 +1247,7 @@ static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
         if (!modfmt) return FALSE;
         elf_info->module = module_new(pcs, filename, DMT_ELF,
                                       module_is_wine_host(filename, L".so"), FALSE, modbase,
-                                      fmap->u.elf.elf_size, 0, calc_crc32(fmap->u.elf.handle),
+                                      fmap->u.elf.elf_size, 0, 0,
                                       elf_get_machine(fmap->u.elf.elfhdr.e_machine));
         if (!elf_info->module)
         {
