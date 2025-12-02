@@ -216,6 +216,10 @@ extern D3DKMT_HANDLE d3dkmt_create_sync( int fd, D3DKMT_HANDLE *global );
 extern D3DKMT_HANDLE d3dkmt_open_sync( D3DKMT_HANDLE global, HANDLE shared );
 extern NTSTATUS d3dkmt_destroy_sync( D3DKMT_HANDLE local );
 
+/* opengl.c */
+
+extern BOOL get_opengl_gpus( struct list *gpus );
+
 /* winstation.c */
 
 struct object_lock

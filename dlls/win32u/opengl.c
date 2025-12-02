@@ -2606,3 +2606,25 @@ const struct opengl_funcs *__wine_get_opengl_driver( UINT version )
     pthread_once( &init_once, display_funcs_init );
     return &display_funcs;
 }
+
+BOOL get_opengl_gpus( struct list *gpus )
+{
+    struct egl_platform *egl;
+
+    if (!__wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION )) return FALSE;
+
+    LIST_FOR_EACH_ENTRY( egl, &devices_egl, struct egl_platform, entry )
+    {
+        struct gpu_info *gpu;
+
+        if (!(gpu = calloc( 1, sizeof(*gpu) ))) break;
+        memcpy( &gpu->uuid, &egl->device_uuid, sizeof(egl->device_uuid) );
+        gpu->name = strdup( egl->device_name );
+        gpu->pci_id.vendor = egl->vendor_id;
+        gpu->pci_id.device = egl->device_id;
+        gpu->memory = egl->video_memory;
+        list_add_tail( gpus, &gpu->entry );
+    }
+
+    return TRUE;
+}

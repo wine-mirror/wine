@@ -1027,6 +1027,7 @@ struct device_manager_ctx
     UINT monitor_count;
     HANDLE mutex;
     struct list vulkan_gpus;
+    struct list opengl_gpus;
     BOOL has_primary;
     /* for the virtual desktop settings */
     BOOL is_primary;
@@ -1617,9 +1618,6 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     set_reg_value( hkey, chip_typeW, REG_SZ, gpu->name, name_size );
     set_reg_value( hkey, dac_typeW, REG_SZ, ramdacW, sizeof(ramdacW) );
 
-    /* If we failed to retrieve the gpu memory size set a default of 1Gb */
-    if (!memory_size) memory_size = 1073741824;
-
     set_reg_value( hkey, qw_memory_sizeW, REG_QWORD, &memory_size, sizeof(memory_size) );
     value = (ULONG)min( memory_size, (ULONGLONG)ULONG_MAX );
     set_reg_value( hkey, memory_sizeW, REG_DWORD, &value, sizeof(value) );
@@ -1710,7 +1708,8 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     struct device_manager_ctx *ctx = param;
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
-    struct gpu_info *vulkan_gpu = NULL;
+    struct gpu_info *vulkan_gpu = NULL, *opengl_gpu = NULL;
+    ULONGLONG memory = 0;
     struct gpu *gpu;
     unsigned int i;
     HKEY hkey, subkey;
@@ -1735,13 +1734,17 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     gpu->index = ctx->gpu_count;
 
     vulkan_gpu = find_gpu_info( &ctx->vulkan_gpus, uuid, pci_id );
+    opengl_gpu = find_gpu_info( &ctx->opengl_gpus, uuid, pci_id );
     if (uuid && !IsEqualGUID( uuid, &empty_uuid )) gpu->uuid = *uuid;
     else if (vulkan_gpu) gpu->uuid = vulkan_gpu->uuid;
+    else if (opengl_gpu) gpu->uuid = opengl_gpu->uuid;
 
     if (!pci_id->vendor && !pci_id->device && vulkan_gpu) pci_id = &vulkan_gpu->pci_id;
+    if (!pci_id->vendor && !pci_id->device && opengl_gpu) pci_id = &opengl_gpu->pci_id;
 
     name = gpu_device_name( pci_id->vendor, pci_id->device, name );
     if (!strcmp( name, "Wine Adapter" ) && vulkan_gpu) name = vulkan_gpu->name;
+    if (!strcmp( name, "Wine Adapter" ) && opengl_gpu) name = opengl_gpu->name;
     RtlUTF8ToUnicodeN( gpu->name, sizeof(gpu->name) - sizeof(WCHAR), &len, name, strlen( name ) );
 
     snprintf( gpu->path, sizeof(gpu->path), "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
@@ -1785,7 +1788,11 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
 
     NtClose( hkey );
 
-    if (!write_gpu_to_registry( gpu, pci_id, vulkan_gpu ? vulkan_gpu->memory : 0 ))
+    if (!memory && vulkan_gpu) memory = vulkan_gpu->memory;
+    if (!memory && opengl_gpu) memory = opengl_gpu->memory;
+    if (!memory) memory = 1024 * 1024 * 1024;
+
+    if (!write_gpu_to_registry( gpu, pci_id, memory ))
     {
         WARN( "Failed to write gpu %p to registry\n", gpu );
         gpu_release( gpu );
@@ -1798,6 +1805,7 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     }
 
     if (vulkan_gpu) free_gpu_info( vulkan_gpu );
+    if (opengl_gpu) free_gpu_info( opengl_gpu );
 }
 
 static BOOL write_source_to_registry( struct source *source )
@@ -2248,7 +2256,9 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 
     if (!list_empty( &sources )) last_query_display_time = 0;
     if (ctx->gpu_count) cleanup_devices();
+
     free_gpu_infos( &ctx->vulkan_gpus );
+    free_gpu_infos( &ctx->opengl_gpus );
 }
 
 static BOOL is_monitor_active( struct monitor *monitor )
@@ -2795,6 +2805,11 @@ static void commit_display_devices( struct device_manager_ctx *ctx )
         TRACE( "adding vulkan-only gpu uuid %s, name %s\n", debugstr_guid(&gpu->uuid), debugstr_a(gpu->name));
         add_gpu( gpu->name, &gpu->pci_id, &gpu->uuid, ctx );
     }
+    LIST_FOR_EACH_ENTRY_SAFE( gpu, next, &ctx->opengl_gpus, struct gpu_info, entry )
+    {
+        TRACE( "adding opengl-only gpu uuid %s, name %s\n", debugstr_guid(&gpu->uuid), debugstr_a(gpu->name));
+        add_gpu( gpu->name, &gpu->pci_id, &gpu->uuid, ctx );
+    }
 
     set_winstation_monitors( TRUE );
 }
@@ -2823,7 +2838,11 @@ static BOOL lock_display_devices( BOOL force )
 {
     static const WCHAR wine_service_station_name[] =
         {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
-    struct device_manager_ctx ctx = {.vulkan_gpus = LIST_INIT(ctx.vulkan_gpus)};
+    struct device_manager_ctx ctx =
+    {
+        .opengl_gpus = LIST_INIT(ctx.opengl_gpus),
+        .vulkan_gpus = LIST_INIT(ctx.vulkan_gpus),
+    };
     UINT64 serial;
     UINT status;
     WCHAR name[MAX_PATH];
@@ -2849,7 +2868,8 @@ static BOOL lock_display_devices( BOOL force )
     if (!force && !update_display_cache_from_registry( serial )) force = TRUE;
     if (force)
     {
-        if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
+        if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any Vulkan GPU\n" );
+        if (!get_opengl_gpus( &ctx.opengl_gpus )) WARN( "Failed to find any OpenGL GPU\n" );
         if (!(status = update_display_devices( &ctx ))) commit_display_devices( &ctx );
         else WARN( "Failed to update display devices, status %#x\n", status );
         release_display_manager_ctx( &ctx );
