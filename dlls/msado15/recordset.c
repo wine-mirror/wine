@@ -93,6 +93,7 @@ struct recordset
     struct fields      fields;
     CursorLocationEnum cursor_location;
     CursorTypeEnum     cursor_type;
+    LockTypeEnum       lock_type;
     IRowset           *row_set;
     IRowsetLocate     *rowset_locate;
     IRowsetExactScroll *rowset_es;
@@ -2033,14 +2034,28 @@ static HRESULT WINAPI recordset_get_Fields( _Recordset *iface, Fields **obj )
 
 static HRESULT WINAPI recordset_get_LockType( _Recordset *iface, LockTypeEnum *lock_type )
 {
-    FIXME( "%p, %p\n", iface, lock_type );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", iface, lock_type );
+
+    if (!lock_type) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    *lock_type = recordset->lock_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_LockType( _Recordset *iface, LockTypeEnum lock_type )
 {
-    FIXME( "%p, %d\n", iface, lock_type );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %d\n", iface, lock_type );
+
+    if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
+    if (lock_type < adLockReadOnly || lock_type > adLockBatchOptimistic)
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    recordset->lock_type = lock_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_MaxRecords( _Recordset *iface, ADO_LONGPTR *max_records )
@@ -3133,6 +3148,7 @@ HRESULT Recordset_create( void **obj )
     recordset->refs = 1;
     recordset->cursor_location = adUseServer;
     recordset->cursor_type = adOpenForwardOnly;
+    recordset->lock_type = adLockReadOnly;
     recordset->row_set = NULL;
     recordset->editmode = adEditNone;
     recordset->cache.alloc = 1;
