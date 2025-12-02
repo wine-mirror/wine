@@ -120,6 +120,7 @@ static void test_Recordset(void)
     BSTR name;
     HRESULT hr;
     VARIANT bookmark, filter, active;
+    LockTypeEnum lock_type;
     EditModeEnum editmode;
     IUnknown *rowset;
     LONG cache_size;
@@ -241,18 +242,33 @@ static void test_Recordset(void)
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08lx\n", hr );
 
+    hr = _Recordset_get_LockType( recordset, &lock_type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( lock_type == adLockReadOnly, "lock_type = %d\n", lock_type );
+
+    hr = _Recordset_put_LockType( recordset, adLockUnspecified );
+    ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08lx\n", hr );
+
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
     hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
     ok( hr == MAKE_ADO_HRESULT( adErrInvalidConnection ), "got %08lx\n", hr );
+
+    hr = _Recordset_get_LockType( recordset, &lock_type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( lock_type == adLockBatchOptimistic, "lock_type = %d\n", lock_type );
 
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08lx\n", hr );
 
     V_VT( &missing ) = VT_ERROR;
     V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
-    hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
+    hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockPessimistic, adCmdUnspecified );
     ok( hr == MAKE_ADO_HRESULT( adErrInvalidConnection ), "got %08lx\n", hr );
+
+    hr = _Recordset_get_LockType( recordset, &lock_type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( lock_type == adLockPessimistic, "lock_type = %d\n", lock_type );
 
     name = SysAllocString( L"field" );
     hr = Fields__Append( fields, name, adInteger, 4, adFldUnspecified );
@@ -327,6 +343,10 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( is_eof( recordset ), "not eof\n" );
     ok( is_bof( recordset ), "not bof\n" );
+
+    hr = _Recordset_get_LockType( recordset, &lock_type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( lock_type == adLockBatchOptimistic, "lock_type = %d\n", lock_type );
 
     hr = ADORecordsetConstruction_get_Rowset(recordset_constr, &rowset);
     ok(hr == S_OK, "failed %08lx\n", hr);
@@ -509,6 +529,10 @@ static void test_Recordset(void)
 
     hr = _Recordset_Close( recordset );
     ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = _Recordset_get_LockType( recordset, &lock_type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( lock_type == adLockBatchOptimistic, "lock_type = %d\n", lock_type );
 
     count = -1;
     hr = Fields_get_Count( fields, &count );
@@ -1583,6 +1607,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     LONG count, state;
     unsigned char prec, scale;
     VARIANT index, missing, v;
+    LockTypeEnum lock_type;
     ADO_LONGPTR size;
     DataTypeEnum type;
 
@@ -1616,6 +1641,10 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
 
     rowset = (IUnknown*)&testrowset.IRowsetExactScroll_iface;
 
+    hr = _Recordset_get_LockType( recordset, &lock_type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( lock_type == adLockReadOnly, "lock_type = %d\n", lock_type );
+
     SET_EXPECT( rowset_info_GetProperties );
     SET_EXPECT( rowset_QI_IRowsetFind );
     if (exact_scroll)
@@ -1625,7 +1654,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     }
     SET_EXPECT( rowset_QI_IDBAsynchStatus );
     hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
-    todo_wine CHECK_CALLED( rowset_info_GetProperties );
+    CHECK_CALLED( rowset_info_GetProperties );
     todo_wine CHECK_CALLED( rowset_QI_IRowsetFind );
     if (exact_scroll)
     {
@@ -1638,6 +1667,10 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     hr = _Recordset_get_State( recordset, &state );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( state == adStateOpen, "state = %ld\n", state );
+
+    hr = _Recordset_get_LockType( recordset, &lock_type );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( lock_type == adLockBatchOptimistic, "lock_type = %d\n", lock_type );
 
     count = -1;
     SET_EXPECT( column_info_GetColumnInfo );

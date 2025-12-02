@@ -120,6 +120,9 @@ struct recordset
     HACCESSOR          bookmark_hacc;
     DBTYPE             bookmark_type;
     VARIANT            bookmark;
+
+    ULONG              prop_count;
+    DBPROPSET         *prop;
 };
 
 static inline struct field *impl_from_Field( Field *iface )
@@ -1609,7 +1612,7 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
 
 static void close_recordset( struct recordset *recordset )
 {
-    int i;
+    int i, j;
 
     cache_release( recordset );
     recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
@@ -1659,6 +1662,16 @@ static void close_recordset( struct recordset *recordset )
     if (recordset->accessor && recordset->accessor != NO_INTERFACE )
         IAccessor_Release( recordset->accessor );
     recordset->accessor = NULL;
+
+    for (i = 0; i < recordset->prop_count; i++)
+    {
+        for (j = 0; j < recordset->prop[i].cProperties; j++)
+            VariantClear( &recordset->prop[i].rgProperties[j].vValue );
+        CoTaskMemFree( recordset->prop[i].rgProperties );
+    }
+    CoTaskMemFree( recordset->prop );
+    recordset->prop_count = 0;
+    recordset->prop = NULL;
 }
 
 static ULONG WINAPI recordset_Release( _Recordset *iface )
@@ -2382,6 +2395,10 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
             return hr;
     }
 
+    _Recordset_put_CursorType( iface, cursor_type );
+    if (lock_type < adLockReadOnly) lock_type = adLockReadOnly;
+    _Recordset_put_LockType( iface, lock_type );
+
     if (recordset->fields.count != -1)
     {
         DBCOLUMNINFO *info;
@@ -2456,7 +2473,6 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
     IUnknown_Release(rowset);
-    recordset->cursor_type = cursor_type;
     return hr;
 }
 
@@ -3071,11 +3087,51 @@ static void init_bookmark( struct recordset *recordset )
     CoTaskMemFree( colinfo );
 }
 
+static BOOL recordset_get_prop( struct recordset *recordset,
+        const GUID *prop_set, DWORD propid, VARIANT *v )
+{
+    HRESULT hr = E_FAIL;
+    int i, j;
+
+    for (i = 0; i < recordset->prop_count; i++)
+    {
+        if (!IsEqualGUID( &recordset->prop[i].guidPropertySet, prop_set )) continue;
+
+        for (j=0; j < recordset->prop[i].cProperties; j++)
+        {
+            if (recordset->prop[i].rgProperties[j].dwStatus == DBPROPSTATUS_OK &&
+                    recordset->prop[i].rgProperties[j].dwPropertyID == propid)
+            {
+                *v = recordset->prop[i].rgProperties[j].vValue;
+                break;
+            }
+        }
+        if (j != recordset->prop[i].cProperties) break;
+    }
+    if (i == recordset->prop_count) return FALSE;
+
+    if (IsEqualGUID( prop_set, &DBPROPSET_ROWSET ))
+    {
+        switch (propid)
+        {
+        case DBPROP_UPDATABILITY:
+            hr = VariantChangeType( v, v, 0, VT_I4 );
+            break;
+        case DBPROP_IRowsetUpdate:
+            hr = VariantChangeType( v, v, 0, VT_BOOL );
+            break;
+        }
+    }
+    return SUCCEEDED( hr );
+}
+
 static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *unk)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    IRowsetInfo *rowset_info;
     IRowset *rowset;
     HRESULT hr;
+    VARIANT v;
 
     TRACE( "%p, %p\n", recordset, unk );
 
@@ -3085,6 +3141,32 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
     if ( FAILED(hr) ) return E_FAIL;
     recordset->row_set = rowset;
     recordset->state = adStateOpen;
+
+    hr = IRowset_QueryInterface( rowset, &IID_IRowsetInfo, (void**)&rowset_info );
+    if (SUCCEEDED(hr))
+    {
+        DBPROPIDSET propidset;
+        DBPROPID propid[2];
+
+        propidset.guidPropertySet = DBPROPSET_ROWSET;
+        propidset.cPropertyIDs = 2;
+        propidset.rgPropertyIDs = propid;
+        propid[0] = DBPROP_UPDATABILITY;
+        propid[1] = DBPROP_IRowsetUpdate;
+        hr = IRowsetInfo_GetProperties( rowset_info, 1, &propidset,
+                &recordset->prop_count, &recordset->prop);
+        IRowsetInfo_Release( rowset_info );
+    }
+
+    if (recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_UPDATABILITY, &v ) && V_I4( &v ))
+    {
+        if (recordset->lock_type != adLockOptimistic)
+        {
+            if (recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetUpdate, &v ) && V_BOOL( &v ))
+                recordset->lock_type = adLockBatchOptimistic;
+        }
+    }
+    else recordset->lock_type = adLockReadOnly;
 
     hr = IRowset_QueryInterface( rowset, &IID_IRowsetLocate, (void**)&recordset->rowset_locate );
     if (SUCCEEDED(hr)) init_bookmark( recordset );
