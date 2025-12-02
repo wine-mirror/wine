@@ -274,8 +274,11 @@ typedef unsigned int GLhandleARB;
 #define EGL_PLATFORM_ANDROID_KHR                                      0x3141
 #define EGL_PLATFORM_DEVICE_EXT                                       0x313F
 #define EGL_PLATFORM_SURFACELESS_MESA                                 0x31DD
+#define EGL_PLATFORM_WAYLAND_EXT                                      0x31D8
 #define EGL_PLATFORM_WAYLAND_KHR                                      0x31D8
+#define EGL_PLATFORM_X11_EXT                                          0x31D5
 #define EGL_PLATFORM_X11_KHR                                          0x31D5
+#define EGL_PLATFORM_X11_SCREEN_EXT                                   0x31D6
 #define EGL_PLATFORM_X11_SCREEN_KHR                                   0x31D6
 #define EGL_PRESENT_OPAQUE_EXT                                        0x31DF
 #define EGL_READ                                                      0x305A
@@ -6337,6 +6340,9 @@ typedef void       (GLAPIENTRY *PFN_glVertex4s)( GLshort x, GLshort y, GLshort z
 typedef void       (GLAPIENTRY *PFN_glVertex4sv)( const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glVertexPointer)( GLint size, GLenum type, GLsizei stride, const void *pointer );
 typedef void       (GLAPIENTRY *PFN_glViewport)( GLint x, GLint y, GLsizei width, GLsizei height );
+typedef EGLSurface (GLAPIENTRY *PFN_eglCreatePlatformPixmapSurfaceEXT)( EGLDisplay dpy, EGLConfig config, void *native_pixmap, const EGLint *attrib_list );
+typedef EGLSurface (GLAPIENTRY *PFN_eglCreatePlatformWindowSurfaceEXT)( EGLDisplay dpy, EGLConfig config, void *native_window, const EGLint *attrib_list );
+typedef EGLDisplay (GLAPIENTRY *PFN_eglGetPlatformDisplayEXT)( EGLenum platform, void *native_display, const EGLint *attrib_list );
 typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDeviceAttribEXT)( EGLDeviceEXT device, EGLint attribute, EGLAttrib *value );
 typedef const char * (GLAPIENTRY *PFN_eglQueryDeviceStringEXT)( EGLDeviceEXT device, EGLint name );
 typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDevicesEXT)( EGLint max_devices, EGLDeviceEXT *devices, EGLint *num_devices );
@@ -9196,6 +9202,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(eglWaitSync)
 
 #define ALL_EGL_EXT_FUNCS \
+    USE_GL_FUNC(eglCreatePlatformPixmapSurfaceEXT) \
+    USE_GL_FUNC(eglCreatePlatformWindowSurfaceEXT) \
+    USE_GL_FUNC(eglGetPlatformDisplayEXT) \
     USE_GL_FUNC(eglQueryDeviceAttribEXT) \
     USE_GL_FUNC(eglQueryDeviceStringEXT) \
     USE_GL_FUNC(eglQueryDevicesEXT) \

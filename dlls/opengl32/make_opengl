@@ -869,47 +869,126 @@ my %remapped_wgl_functions =
 
 my @extra_wgl_functions = ( "wglGetDefaultProcAddress" );
 
-my %supported_wgl_extensions =
+my %unsupported_extgroups =
    (
-    "WGL_ARB_create_context" => 1,
-    "WGL_ARB_create_context_no_error" => 1,
-    "WGL_ARB_create_context_profile" => 1,
-    "WGL_ARB_extensions_string" => 1,
-    "WGL_ARB_make_current_read" => 1,
-    "WGL_ARB_multisample" => 1,
-    "WGL_ARB_pbuffer" => 1,
-    "WGL_ARB_pixel_format" => 1,
-    "WGL_ARB_framebuffer_sRGB" => 1,
-    "WGL_ARB_pixel_format_float" => 1,
-    "WGL_ARB_render_texture" => 1,
-    "WGL_ATI_pixel_format_float" => 1,
-    "WGL_EXT_create_context_es2_profile" => 1,
-    "WGL_EXT_extensions_string" => 1,
-    "WGL_EXT_framebuffer_sRGB" => 1,
-    "WGL_EXT_pixel_format_packed_float" => 1,
-    "WGL_EXT_swap_control" => 1,
-    "WGL_EXT_swap_control_tear" => 1,
-    "WGL_NV_float_buffer" => 1,
-    "WGL_NV_render_depth_texture" => 1,
-    "WGL_NV_render_texture_rectangle" => 1,
-    "WGL_NV_vertex_array_range" => 1,
-    "WGL_WINE_pixel_format_passthrough" => 1,
-    "WGL_WINE_query_renderer" => 1,
+    "WGL_3DFX_" => 1,
+    "WGL_3DL_" => 1,
+    "WGL_I3D_" => 1,
+    "WGL_OML_" => 1,
+    "EGL_ANDROID_" => 1,
+    "EGL_ANGLE_" => 1,
+    "EGL_ARM_" => 1,
+    "EGL_HI_" => 1,
+    "EGL_IMG_" => 1,
+    "EGL_NOK_" => 1,
+    "EGL_NV_" => 1,
+    "EGL_QNX_" => 1,
+    "EGL_TIZEN_" => 1,
+    "EGL_WL_" => 1,
    );
-my %supported_egl_extensions =
+my %unsupported_extensions =
    (
-    "EGL_EXT_device_base" => 1,
-    "EGL_EXT_device_drm" => 1,
-    "EGL_EXT_pixel_format_float" => 1,
-    "EGL_EXT_platform_device" => 1,
-    "EGL_EXT_present_opaque" => 1,
-    "EGL_KHR_create_context" => 1,
-    "EGL_KHR_create_context_no_error" => 1,
-    "EGL_KHR_no_config_context" => 1,
-    "EGL_KHR_platform_android" => 1,
-    "EGL_KHR_platform_wayland" => 1,
-    "EGL_KHR_platform_x11" => 1,
-    "EGL_MESA_platform_surfaceless" => 1,
+    "WGL_AMD_gpu_association" => 1,
+    "WGL_ARB_buffer_region" => 1,
+    "WGL_ARB_context_flush_control" => 1,
+    "WGL_ARB_create_context_robustness" => 1,
+    "WGL_ARB_robustness_application_isolation" => 1,
+    "WGL_ARB_robustness_share_group_isolation" => 1,
+    "WGL_ATI_render_texture_rectangle" => 1,
+    "WGL_EXT_colorspace" => 1,
+    "WGL_EXT_create_context_es_profile" => 1,
+    "WGL_EXT_depth_float" => 1,
+    "WGL_EXT_display_color_table" => 1,
+    "WGL_EXT_make_current_read" => 1,
+    "WGL_EXT_multisample" => 1,
+    "WGL_EXT_pbuffer" => 1,
+    "WGL_EXT_pixel_format" => 1,
+    "WGL_NV_copy_image" => 1,
+    "WGL_NV_delay_before_swap" => 1,
+    "WGL_NV_DX_interop" => 1,
+    "WGL_NV_DX_interop2" => 1,
+    "WGL_NV_gpu_affinity" => 1,
+    "WGL_NV_multigpu_context" => 1,
+    "WGL_NV_multisample_coverage" => 1,
+    "WGL_NV_present_video" => 1,
+    "WGL_NV_swap_group" => 1,
+    "WGL_NV_video_capture" => 1,
+    "WGL_NV_video_output" => 1,
+    "EGL_EXT_bind_to_front" => 1,
+    "EGL_EXT_buffer_age" => 1,
+    "EGL_EXT_client_sync" => 1,
+    "EGL_EXT_compositor" => 1,
+    "EGL_EXT_config_select_group" => 1,
+    "EGL_EXT_create_context_robustness" => 1,
+    "EGL_EXT_device_drm_render_node" => 1,
+    "EGL_EXT_device_openwf" => 1,
+    "EGL_EXT_device_persistent_id" => 1,
+    "EGL_EXT_device_query_name" => 1,
+    "EGL_EXT_display_alloc" => 1,
+    "EGL_EXT_gl_colorspace_bt2020_hlg" => 1,
+    "EGL_EXT_gl_colorspace_bt2020_linear" => 1,
+    "EGL_EXT_gl_colorspace_bt2020_pq" => 1,
+    "EGL_EXT_gl_colorspace_display_p3" => 1,
+    "EGL_EXT_gl_colorspace_display_p3_linear" => 1,
+    "EGL_EXT_gl_colorspace_display_p3_passthrough" => 1,
+    "EGL_EXT_gl_colorspace_scrgb" => 1,
+    "EGL_EXT_gl_colorspace_scrgb_linear" => 1,
+    "EGL_EXT_image_dma_buf_import" => 1,
+    "EGL_EXT_image_dma_buf_import_modifiers" => 1,
+    "EGL_EXT_image_gl_colorspace" => 1,
+    "EGL_EXT_image_implicit_sync_control" => 1,
+    "EGL_EXT_multiview_window" => 1,
+    "EGL_EXT_output_base" => 1,
+    "EGL_EXT_output_drm" => 1,
+    "EGL_EXT_output_openwf" => 1,
+    "EGL_EXT_platform_xcb" => 1,
+    "EGL_EXT_protected_content" => 1,
+    "EGL_EXT_protected_surface" => 1,
+    "EGL_EXT_query_reset_notification_strategy" => 1,
+    "EGL_EXT_stream_consumer_egloutput" => 1,
+    "EGL_EXT_surface_compression" => 1,
+    "EGL_EXT_surface_CTA861_3_metadata" => 1,
+    "EGL_EXT_surface_SMPTE2086_metadata" => 1,
+    "EGL_EXT_swap_buffers_with_damage" => 1,
+    "EGL_EXT_sync_reuse" => 1,
+    "EGL_EXT_yuv_surface" => 1,
+    "EGL_KHR_cl_event" => 1,
+    "EGL_KHR_cl_event2" => 1,
+    "EGL_KHR_config_attribs" => 1,
+    "EGL_KHR_context_flush_control" => 1,
+    "EGL_KHR_debug" => 1,
+    "EGL_KHR_display_reference" => 1,
+    "EGL_KHR_fence_sync" => 1,
+    "EGL_KHR_gl_colorspace" => 1,
+    "EGL_KHR_gl_renderbuffer_image" => 1,
+    "EGL_KHR_gl_texture_2D_image" => 1,
+    "EGL_KHR_gl_texture_3D_image" => 1,
+    "EGL_KHR_gl_texture_cubemap_image" => 1,
+    "EGL_KHR_image" => 1,
+    "EGL_KHR_image_base" => 1,
+    "EGL_KHR_image_pixmap" => 1,
+    "EGL_KHR_lock_surface" => 1,
+    "EGL_KHR_lock_surface2" => 1,
+    "EGL_KHR_lock_surface3" => 1,
+    "EGL_KHR_mutable_render_buffer" => 1,
+    "EGL_KHR_partial_update" => 1,
+    "EGL_KHR_platform_gbm" => 1,
+    "EGL_KHR_reusable_sync" => 1,
+    "EGL_KHR_stream" => 1,
+    "EGL_KHR_stream_attrib" => 1,
+    "EGL_KHR_stream_consumer_gltexture" => 1,
+    "EGL_KHR_stream_cross_process_fd" => 1,
+    "EGL_KHR_stream_fifo" => 1,
+    "EGL_KHR_stream_producer_aldatalocator" => 1,
+    "EGL_KHR_stream_producer_eglsurface" => 1,
+    "EGL_KHR_surfaceless_context" => 1,
+    "EGL_KHR_swap_buffers_with_damage" => 1,
+    "EGL_KHR_vg_parent_image" => 1,
+    "EGL_KHR_wait_sync" => 1,
+    "EGL_MESA_drm_image" => 1,
+    "EGL_MESA_image_dma_buf_export" => 1,
+    "EGL_MESA_platform_gbm" => 1,
+    "EGL_MESA_query_driver" => 1,
    );
 my %extension_aliases =
     (
@@ -930,6 +1009,16 @@ sub is_supported_api($)
         return 1 if defined $supported_apis{$i};
     }
     return 0;
+}
+
+sub is_supported_extension($)
+{
+    my $ext = shift;
+    foreach my $group (keys %unsupported_extgroups)
+    {
+        return 0 if rindex($ext, $group, 0) == 0;
+    }
+    return not defined $unsupported_extensions{$ext};
 }
 
 # some functions need a hand-written wrapper
@@ -1057,9 +1146,9 @@ sub parse_file($)
     # generate extension functions
     foreach my $ext ($xml->findnodes("/registry/extensions/extension"))
     {
+        next unless is_supported_extension( $ext->{name} );
         if ($ext->{supported} eq "wgl")
         {
-            next unless defined $supported_wgl_extensions{$ext->{name}};
             foreach my $cmd ($ext->findnodes("./require/command"))
             {
                 my $name = $cmd->{name};
@@ -1073,7 +1162,6 @@ sub parse_file($)
         }
         if ($ext->{supported} eq "egl")
         {
-            next unless defined $supported_egl_extensions{$ext->{name}};
             foreach my $cmd ($ext->findnodes("./require/command"))
             {
                 my $name = $cmd->{name};
