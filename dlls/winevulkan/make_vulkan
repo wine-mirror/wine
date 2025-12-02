@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.4.333"
+VK_XML_VERSION = "1.4.335"
 WINE_VK_VERSION = (1, 4)
 
 # Filenames to create.
@@ -95,6 +95,7 @@ UNSUPPORTED_EXTENSIONS = [
     # Device extensions
     "VK_AMD_display_native_hdr",
     "VK_EXT_full_screen_exclusive",
+    "VK_EXT_present_timing", # Needs time conversion
     "VK_GOOGLE_display_timing",
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_maintenance7", # Causes infinity recursion in struct convert code

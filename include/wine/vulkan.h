@@ -952,7 +952,7 @@ typedef struct _XDisplay Display;
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
 #define VK_API_VERSION_1_4 VK_MAKE_API_VERSION(0, 1, 4, 0)
 #define VKSC_API_VERSION_1_0 VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, 0)
-#define VK_HEADER_VERSION 333
+#define VK_HEADER_VERSION 335
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 4, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
@@ -1213,6 +1213,7 @@ typedef VkFlags VkOpticalFlowGridSizeFlagsNV;
 typedef VkFlags VkOpticalFlowSessionCreateFlagsNV;
 typedef VkFlags VkOpticalFlowUsageFlagsNV;
 typedef VkFlags VkPartitionedAccelerationStructureInstanceFlagsNV;
+typedef VkFlags VkPastPresentationTimingFlagsEXT;
 typedef VkFlags VkPeerMemoryFeatureFlags;
 typedef VkPeerMemoryFeatureFlags VkPeerMemoryFeatureFlagsKHR;
 typedef VkFlags VkPerformanceCounterDescriptionFlagsARM;
@@ -1251,6 +1252,8 @@ typedef VkFlags VkPresentGravityFlagsKHR;
 typedef VkPresentGravityFlagsKHR VkPresentGravityFlagsEXT;
 typedef VkFlags VkPresentScalingFlagsKHR;
 typedef VkPresentScalingFlagsKHR VkPresentScalingFlagsEXT;
+typedef VkFlags VkPresentStageFlagsEXT;
+typedef VkFlags VkPresentTimingInfoFlagsEXT;
 typedef VkFlags VkPrivateDataSlotCreateFlags;
 typedef VkPrivateDataSlotCreateFlags VkPrivateDataSlotCreateFlagsEXT;
 typedef VkFlags VkQueryControlFlags;
@@ -6142,6 +6145,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM = 1000484000,
     VK_STRUCTURE_TYPE_TILE_PROPERTIES_QCOM = 1000484001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM = 1000488000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV = 1000490000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV = 1000490001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV = 1000491000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV = 1000491001,
@@ -6580,7 +6584,6 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO,
     VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO,
     VK_STRUCTURE_TYPE_SHADER_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO,
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_EXT,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES,
     VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES,
@@ -15520,7 +15523,13 @@ typedef struct VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT
     void *pNext;
     VkBool32 rayTracingInvocationReorder;
 } VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT;
-typedef VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV;
+
+typedef struct VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 rayTracingInvocationReorder;
+} VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV;
 
 typedef struct VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT
 {

@@ -6236,7 +6236,13 @@ typedef struct VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT32
     PTR32 pNext;
     VkBool32 rayTracingInvocationReorder;
 } VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT32;
-typedef VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT32 VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32;
+
+typedef struct VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 rayTracingInvocationReorder;
+} VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32;
 
 typedef struct VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT32
 {
@@ -18788,6 +18794,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingInvocationReorder = in_ext->rayTracingInvocationReorder;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV:
         {
             VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -21777,6 +21794,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT32 *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingInvocationReorder = in_ext->rayTracingInvocationReorder;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32 *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->rayTracingInvocationReorder = in_ext->rayTracingInvocationReorder;
             out_header->pNext = (void *)out_ext;
@@ -31846,6 +31874,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32 *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingInvocationReorder = in_ext->rayTracingInvocationReorder;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV:
         {
             VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -34359,6 +34398,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_EXT);
             const VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_EXT;
+            out_ext->rayTracingInvocationReorder = in_ext->rayTracingInvocationReorder;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV);
+            const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV;
             out_ext->rayTracingInvocationReorder = in_ext->rayTracingInvocationReorder;
             out_header = (void *)out_ext;
             break;
