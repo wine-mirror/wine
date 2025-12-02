@@ -709,7 +709,7 @@ sub generate_null_func($$)
 
     $ret .= "static $func_ret null_$name($decl_args)\n";
     $ret .= "{\n";
-    $ret .= "    ERR( \"unsupported\\n\" );\n";
+    $ret .= "    WARN( \"unsupported\\n\" );\n";
     if ($name eq "glGetError")
     {
         $ret .= "    return GL_INVALID_OPERATION;\n";
@@ -1588,19 +1588,13 @@ foreach (sort keys %wgl_functions)
 printf OUT "static void null_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,\n";
 printf OUT "                                    UINT *num_formats, UINT *num_onscreen_formats )\n";
 printf OUT "{\n";
-printf OUT "    ERR( \"unsupported\\n\" );\n";
+printf OUT "    WARN( \"unsupported\\n\" );\n";
 printf OUT "    *num_formats = *num_onscreen_formats = 0;\n";
 printf OUT "}\n";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
     print OUT generate_null_func($_, $norm_functions{$_});
-}
-foreach (sort keys %ext_functions)
-{
-    next if $_ =~ /^egl/; # unix-side only API
-    next if defined $manual_win_functions{$_};
-    print OUT generate_null_func($_, $ext_functions{$_});
 }
 print OUT "\n";
 
@@ -1614,12 +1608,6 @@ foreach (sort keys %wgl_functions)
 }
 foreach (sort keys %norm_functions)
 {
-    next if defined $manual_win_functions{$_};
-    print OUT "    .p_$_ = null_$_,\n";
-}
-foreach (sort keys %ext_functions)
-{
-    next if $_ =~ /^egl/; # unix-side only API
     next if defined $manual_win_functions{$_};
     print OUT "    .p_$_ = null_$_,\n";
 }
