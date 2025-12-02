@@ -974,6 +974,11 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     LOAD_FUNCPTR( eglQueryDisplayAttribEXT );
 #undef LOAD_FUNCPTR
 
+#define LOAD_FUNCPTR( func )                                                                    \
+    if (!(funcs->p_##func = (void *)funcs->p_eglGetProcAddress( #func ))) WARN( #func " not found\n" );
+    LOAD_FUNCPTR( eglQueryDeviceBinaryEXT );
+#undef LOAD_FUNCPTR
+
     if (!funcs->p_eglQueryDisplayAttribEXT( display_egl.display, EGL_DEVICE_EXT, (EGLAttrib *)&display_egl.device ))
     {
         WARN( "Failed to query EGL display device (error %#x).\n", funcs->p_eglGetError() );
@@ -1089,6 +1094,14 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     }
     TRACE( "  - device_id: %#x\n", egl->device_id );
     TRACE( "  - vendor_id: %#x\n", egl->vendor_id );
+
+    if (has_extension( extensions, "EGL_EXT_device_persistent_id" ))
+    {
+        funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DEVICE_UUID_EXT, sizeof(egl->device_uuid), &egl->device_uuid, &count );
+        funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DRIVER_UUID_EXT, sizeof(egl->driver_uuid), &egl->driver_uuid, &count );
+    }
+    TRACE( "  - device_uuid: %s\n", debugstr_guid(&egl->device_uuid) );
+    TRACE( "  - driver_uuid: %s\n", debugstr_guid(&egl->driver_uuid) );
 
     funcs->p_eglBindAPI( EGL_OPENGL_API );
     funcs->p_eglGetConfigs( egl->display, &config, 1, &count );

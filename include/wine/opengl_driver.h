@@ -155,6 +155,8 @@ struct egl_platform
     UINT                 video_memory;
     const char          *device_name;
     const char          *vendor_name;
+    GUID                 device_uuid;
+    GUID                 driver_uuid;
 };
 
 struct opengl_drawable_funcs
