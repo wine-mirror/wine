@@ -1,3 +1,0 @@
-MODULE = icu.dll
-IMPORTLIB = icu
-EXTRADLLFLAGS = -Wb,--prefer-native
