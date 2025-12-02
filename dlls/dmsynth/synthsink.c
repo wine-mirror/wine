@@ -26,6 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
 #define BUFFER_SUBDIVISIONS 100
+#define WRITE_PERIOD 20
 
 struct synth_sink
 {
@@ -75,12 +76,41 @@ static void synth_sink_get_format(struct synth_sink *This, WAVEFORMATEX *format)
     }
 }
 
-static HRESULT synth_sink_wait_write(struct synth_sink *sink, HANDLE buffer_event)
+static HRESULT synth_sink_wait_write(struct synth_sink *sink, IDirectSoundBuffer *buffer,
+        DSBCAPS *caps, WAVEFORMATEX *format, DWORD samples_size)
 {
-    HANDLE handles[] = {sink->stop_event, buffer_event};
+    DWORD current_offset;
+    DWORD write_latency;
+    DWORD write_pos;
+    DWORD play_pos;
+    DWORD timeout;
+    HRESULT hr;
     DWORD ret;
 
-    ret = WaitForMultipleObjects(ARRAY_SIZE(handles), handles, FALSE, INFINITE);
+    if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos)))
+    {
+        ERR("IDirectSoundBuffer_GetCurrentPosition failed, hr %#lx\n", hr);
+        return hr;
+    }
+
+    write_latency = (write_pos - play_pos + caps->dwBufferBytes) % caps->dwBufferBytes + samples_size;
+    current_offset = (sink->written - play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+
+    if (current_offset > write_latency)
+        timeout = (current_offset - write_latency) * 1000 / format->nAvgBytesPerSec;
+    else
+        timeout = 0;
+
+    if (!sink->written || timeout > WRITE_PERIOD * 2)
+    {
+        if (sink->written)
+            ERR("Underrun detected, sink %p, play pos %#lx, current pos %#lx!\n", sink, play_pos,
+                    sink->written % caps->dwBufferBytes);
+        sink->written += (write_latency - current_offset + caps->dwBufferBytes) % caps->dwBufferBytes;
+        timeout = 0;
+    }
+
+    ret = WaitForSingleObject(sink->stop_event, timeout);
     if (ret == WAIT_FAILED)
     {
         ERR("WaitForSingleObject failed with %lu\n", GetLastError());
@@ -95,30 +125,13 @@ static HRESULT synth_sink_wait_write(struct synth_sink *sink, HANDLE buffer_even
 static HRESULT synth_sink_write_data(struct synth_sink *sink, IDirectSoundBuffer *buffer,
         DSBCAPS *caps, WAVEFORMATEX *format, const void *data, DWORD size)
 {
-    DWORD write_end, size1, size2, current_pos;
+    DWORD size1, size2, current_pos;
     void *data1, *data2;
     HRESULT hr;
 
     TRACE("sink %p, data %p, size %#lx\n", sink, data, size);
 
     current_pos = sink->written % caps->dwBufferBytes;
-
-    if (sink->written)
-    {
-        DWORD play_pos, write_pos;
-
-        if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos))) return hr;
-
-        if (current_pos - play_pos < write_pos - play_pos)
-        {
-            ERR("Underrun detected, sink %p, play pos %#lx, write pos %#lx, current pos %#lx!\n",
-                    buffer, play_pos, write_pos, current_pos);
-            current_pos = write_pos;
-        }
-
-        write_end = (current_pos + size) % caps->dwBufferBytes;
-        if (write_end - current_pos >= play_pos - current_pos) return S_FALSE;
-    }
 
     if (FAILED(hr = IDirectSoundBuffer_Lock(buffer, current_pos, size,
             &data1, &size1, &data2, &size2, 0)))
@@ -279,7 +292,7 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         goto done;
     }
 
-    samples_size = caps.dwBufferBytes / BUFFER_SUBDIVISIONS;
+    samples_size = WRITE_PERIOD * format.nSamplesPerSec / 1000 * format.nBlockAlign;
     if (!(samples = malloc(samples_size)))
     {
         ERR("Failed to allocate memory for samples\n");
@@ -301,7 +314,7 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         if (hr == S_OK) /* if successfully written, render more data */
             hr = synth_sink_render_data(sink, synth, buffer, &format, samples, samples_size);
 
-        if (S_OK != (wait_hr = synth_sink_wait_write(sink, buffer_event)))
+        if (S_OK != (wait_hr = synth_sink_wait_write(sink, buffer, &caps, &format, samples_size)))
         {
             hr = wait_hr;
             break;
