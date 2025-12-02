@@ -115,6 +115,8 @@ struct pdb_compiland
     unsigned short are_symbols_loaded;
     unsigned short compiland_stream_id;
     pdbsize_t compiland_symbols_size;
+    pdbsize_t compiland_linetab2_offset;
+    pdbsize_t compiland_linetab2_size; /* in compiland stream id (starting at compiland_linetab2_offset) */
     struct symt_compiland* compiland;
 };
 
@@ -1005,18 +1007,14 @@ static enum pdb_result pdb_reader_set_lineinfo_filename(struct pdb_reader *pdb, 
     return result;
 }
 
-static enum pdb_result pdb_reader_search_linetab2(struct pdb_reader *pdb, const PDB_SYMBOL_FILE_EX *dbi_cu_header,
+static enum pdb_result pdb_reader_search_linetab2(struct pdb_reader *pdb, struct pdb_reader_walker *linetab2_walker,
                                                   DWORD64 address, struct lineinfo_t *line_info)
 {
-    struct pdb_reader_walker linetab2_walker;
     struct CV_DebugSLinesFileBlockHeader_t files_hdr;
-    enum pdb_result result;
     DWORD64 lineblk_base;
     struct CV_Line_t *lines;
 
-    if ((result = pdb_reader_walker_init_linetab2(pdb, dbi_cu_header, &linetab2_walker))) return result;
-
-    if (!pdb_reader_locate_filehdr_in_linetab2(pdb, linetab2_walker, address, &lineblk_base, &files_hdr, &lines))
+    if (!pdb_reader_locate_filehdr_in_linetab2(pdb, *linetab2_walker, address, &lineblk_base, &files_hdr, &lines))
     {
         unsigned i;
 
@@ -1025,7 +1023,7 @@ static enum pdb_result pdb_reader_search_linetab2(struct pdb_reader *pdb, const 
             /* found block... */
             line_info->address = lineblk_base + lines[i].offset;
             line_info->line_number = lines[i].linenumStart;
-            return pdb_reader_set_lineinfo_filename(pdb, linetab2_walker, files_hdr.offFile, line_info);
+            return pdb_reader_set_lineinfo_filename(pdb, *linetab2_walker, files_hdr.offFile, line_info);
         }
         pdb_reader_free(pdb, lines);
     }
@@ -1033,28 +1031,18 @@ static enum pdb_result pdb_reader_search_linetab2(struct pdb_reader *pdb, const 
 }
 
 static enum pdb_result pdb_reader_get_line_from_address_internal(struct pdb_reader *pdb,
-                                                                 DWORD64 address, struct lineinfo_t *line_info,
-                                                                 pdbsize_t *compiland_offset)
+                                                                 DWORD64 address, struct lineinfo_t *line_info)
 {
-    struct pdb_reader_compiland_iterator compiland_iter;
     enum pdb_result result;
+    unsigned segment, offset, compiland;
+    struct pdb_reader_walker linetab2_walker;
 
-    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
-    do
-    {
-        if (compiland_iter.dbi_cu_header.lineno2_size)
-        {
-            result = pdb_reader_search_linetab2(pdb, &compiland_iter.dbi_cu_header, address, line_info);
-            if (!result)
-            {
-                *compiland_offset = compiland_iter.dbi_walker.offset - sizeof(compiland_iter.dbi_cu_header);
-                return result;
-            }
-            if (result != R_PDB_NOT_FOUND) return result;
-        }
-    } while (pdb_reader_compiland_iterator_next(pdb, &compiland_iter) == R_PDB_SUCCESS);
-
-    return R_PDB_NOT_FOUND;
+    if ((result = pdb_reader_get_segment_offset_from_address(pdb, address, &segment, &offset))) return result;
+    if ((result = pdb_reader_lookup_compiland_by_segment_offset(pdb, segment, offset, &compiland))) return result;
+    if ((result = pdb_reader_walker_init(pdb, pdb->compilands[compiland].compiland_stream_id, &linetab2_walker))) return result;
+    if ((result = pdb_reader_walker_narrow(&linetab2_walker, pdb->compilands[compiland].compiland_linetab2_offset,
+                                           pdb->compilands[compiland].compiland_linetab2_size))) return result;
+    return pdb_reader_search_linetab2(pdb, &linetab2_walker, address, line_info);
 }
 
 struct pdb_module_info
@@ -1080,13 +1068,10 @@ static enum method_result pdb_method_result(enum pdb_result result)
 static enum method_result pdb_method_get_line_from_address(struct module_format *modfmt,
                                                            DWORD64 address, struct lineinfo_t *line_info)
 {
-    enum pdb_result result;
     struct pdb_reader *pdb;
-    pdbsize_t compiland_offset;
 
     pdb = pdb_get_current_reader(modfmt);
-    result = pdb_reader_get_line_from_address_internal(pdb, address, line_info, &compiland_offset);
-    return pdb_method_result(result);
+    return pdb_method_result(pdb_reader_get_line_from_address_internal(pdb, address, line_info));
 }
 
 static enum pdb_result pdb_reader_advance_line_info(struct pdb_reader *pdb,
@@ -1891,6 +1876,12 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
         pdb->compilands[i].compiland = NULL;
         pdb->compilands[i].compiland_stream_id = compiland_iter.dbi_cu_header.stream;
         pdb->compilands[i].compiland_symbols_size = compiland_iter.dbi_cu_header.symbol_size;
+        /* in today's PDB, lineno_size is zero and we wouldn't need to store it...
+         * but just in case...
+         */
+        pdb->compilands[i].compiland_linetab2_offset = compiland_iter.dbi_cu_header.symbol_size +
+            compiland_iter.dbi_cu_header.lineno_size;
+        pdb->compilands[i].compiland_linetab2_size = compiland_iter.dbi_cu_header.lineno2_size;
         pdb->compilands[i].are_symbols_loaded = pdb->compilands[i].compiland_stream_id == 0xffff;
         result = pdb_reader_compiland_iterator_next(pdb, &compiland_iter);
         if ((result == R_PDB_SUCCESS) != (i + 1 < pdb->num_compilands)) return result ? result : R_PDB_INVALID_PDB_FILE;
