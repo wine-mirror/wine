@@ -1043,9 +1043,7 @@ static UINT read_drm_device_prop( const char *name, const char *prop )
     char *path;
     FILE *file;
 
-    if (!(path = malloc( strlen( name ) + strlen( prop ) + 23 ))) return value;
-    sprintf( path, "/sys/class/drm%s/device/%s", name, prop );
-
+    if (asprintf( &path, "/sys/class/drm%s/device/%s", name, prop ) == -1) return value;
     if ((file = fopen( path, "r" )))
     {
         fscanf( file, "%x", &value );
