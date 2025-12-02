@@ -85582,8 +85582,8 @@ struct opengl_funcs null_opengl_funcs =
     .p_glViewport = null_glViewport,
 };
 
-const int extension_registry_size = 2758;
-const struct registry_entry extension_registry[2758] =
+const int extension_registry_size = 2754;
+const struct registry_entry extension_registry[2754] =
 {
     { "glAccumxOES", "GL_OES_fixed_point\0", offsetof(struct opengl_funcs, p_glAccumxOES) },
     { "glAcquireKeyedMutexWin32EXT", "GL_EXT_win32_keyed_mutex\0", offsetof(struct opengl_funcs, p_glAcquireKeyedMutexWin32EXT) },

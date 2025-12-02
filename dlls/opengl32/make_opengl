@@ -1631,7 +1631,11 @@ foreach (sort keys %norm_functions)
 print OUT "};\n";
 
 # Then the table giving the string <-> function correspondence */
-my $count = keys %ext_functions;
+my $count = 0;
+foreach (keys %ext_functions)
+{
+    $count += 1 unless $_ =~ /^egl/; # unix-side only API
+}
 print OUT "\nconst int extension_registry_size = $count;\n";
 print OUT "const struct registry_entry extension_registry[$count] =\n";
 print OUT "{\n";
