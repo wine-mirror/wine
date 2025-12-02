@@ -53,7 +53,6 @@ struct wgl_pbuffer
 };
 
 static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_funcs;
-static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
 static struct list devices_egl = LIST_INIT( devices_egl );
 static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
@@ -2454,10 +2453,7 @@ static void display_funcs_init(void)
 
 #define USE_GL_FUNC(func) \
     if (!display_funcs.p_##func && !(display_funcs.p_##func = driver_funcs->p_get_proc_address( #func ))) \
-    { \
-        WARN( "%s not found for memory DCs.\n", #func ); \
-        display_funcs.p_##func = default_funcs->p_##func; \
-    }
+        WARN( "%s not found.\n", #func );
     ALL_GL_FUNCS
     USE_GL_FUNC(glBindFramebuffer)
     USE_GL_FUNC(glCheckNamedFramebufferStatus)
@@ -2553,7 +2549,7 @@ static void display_funcs_init(void)
 /***********************************************************************
  *      __wine_get_wgl_driver  (win32u.@)
  */
-const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const struct opengl_funcs *null_funcs )
+const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
 {
     static pthread_once_t init_once = PTHREAD_ONCE_INIT;
     DWORD is_disabled, is_display, is_memdc;
@@ -2565,8 +2561,6 @@ const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const s
              version, WINE_OPENGL_DRIVER_VERSION );
         return NULL;
     }
-
-    InterlockedExchangePointer( (void *)&default_funcs, (void *)null_funcs );
 
     if (!(dc = get_dc_ptr( hdc ))) return NULL;
     is_memdc = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC;

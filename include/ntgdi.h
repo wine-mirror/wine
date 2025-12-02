@@ -564,7 +564,7 @@ W32KAPI NTSTATUS WINAPI NtGdiDdDDISignalSynchronizationObjectFromCpu( const D3DK
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params );
 
 /* Wine extensions */
-W32KAPI const struct vulkan_funcs * __wine_get_vulkan_driver(UINT version);
-W32KAPI const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const struct opengl_funcs *null_funcs );
+W32KAPI const struct vulkan_funcs *__wine_get_vulkan_driver( UINT version );
+W32KAPI const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version );
 
 #endif /* _NTGDI_ */
