@@ -139,8 +139,6 @@ static BOOL create_avi_file(char *fname)
         return FALSE;
     DeleteFileA(fname);
 
-    lstrcatA(fname, ".avi");
-
     hFile = CreateFileA(fname, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     ok(hFile != INVALID_HANDLE_VALUE, "Failed to create a file, err %ld\n", GetLastError());
     if (hFile == INVALID_HANDLE_VALUE) return FALSE;
