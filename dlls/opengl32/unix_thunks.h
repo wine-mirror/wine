@@ -16,6 +16,7 @@ extern void wrap_glFinish( TEB *teb );
 extern void wrap_glFlush( TEB *teb );
 extern void wrap_glGetBooleanv( TEB *teb, GLenum pname, GLboolean *data );
 extern void wrap_glGetDoublev( TEB *teb, GLenum pname, GLdouble *data );
+extern GLenum wrap_glGetError( TEB *teb );
 extern void wrap_glGetFloatv( TEB *teb, GLenum pname, GLfloat *data );
 extern void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data );
 extern const GLubyte *wrap_glGetString( TEB *teb, GLenum name );
@@ -47,7 +48,6 @@ extern BOOL wrap_wglReleaseTexImageARB( TEB *teb, HPBUFFERARB hPbuffer, int iBuf
 extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb, HPBUFFERARB hPbuffer, const int *piAttribList );
 
 #ifdef _WIN64
-extern GLenum wow64_glGetError( TEB *teb );
 extern void wow64_glBufferStorage( TEB *teb, GLenum target, GLsizeiptr size, const void *data, GLbitfield flags );
 extern GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout );
 extern void wow64_glDeleteBuffers( TEB *teb, GLsizei n, const GLuint *buffers );

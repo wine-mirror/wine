@@ -2359,6 +2359,16 @@ static int win32u_wglGetSwapIntervalEXT(void)
     return interval;
 }
 
+static void set_gl_error( GLenum error )
+{
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    const struct opengl_funcs *funcs = &display_funcs;
+
+    if (!ctx || ctx->error) return;
+    if ((ctx->error = funcs->p_glGetError())) return;
+    ctx->error = error;
+}
+
 static struct egl_platform *egl_platform_from_index( GLint index )
 {
     struct egl_platform *egl;
@@ -2391,10 +2401,11 @@ static BOOL query_renderer_integer( struct egl_platform *egl, GLenum attribute, 
         *value = egl->core_version ? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
         return TRUE;
     case WGL_RENDERER_VIDEO_MEMORY_WINE: *value = egl->video_memory; return TRUE;
-    default: FIXME( "Unsupported attribute %#x\n", attribute ); break;
+    default:
+        FIXME( "Unsupported attribute %#x\n", attribute );
+        set_gl_error( GL_INVALID_ENUM );
+        return FALSE;
     }
-
-    return FALSE;
 }
 
 static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum attribute, GLuint *value )
@@ -2403,7 +2414,11 @@ static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum 
 
     TRACE( "hdc %p, renderer %u, attribute %#x, value %p\n", hdc, renderer, attribute, value );
 
-    if (!(egl = egl_platform_from_index( renderer ))) return FALSE;
+    if (!(egl = egl_platform_from_index( renderer )))
+    {
+        set_gl_error( GL_INVALID_INDEX );
+        return FALSE;
+    }
     return query_renderer_integer( egl, attribute, value );
 }
 
@@ -2413,10 +2428,11 @@ static const char *query_renderer_string( struct egl_platform *egl, GLenum attri
     {
     case WGL_RENDERER_DEVICE_ID_WINE: return egl->device_name;
     case WGL_RENDERER_VENDOR_ID_WINE: return egl->vendor_name;
-    default: FIXME( "Unsupported attribute %#x\n", attribute );
+    default:
+        FIXME( "Unsupported attribute %#x\n", attribute );
+        set_gl_error( GL_INVALID_ENUM );
+        return NULL;
     }
-
-    return NULL;
 }
 
 static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, GLenum attribute )
@@ -2425,7 +2441,11 @@ static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, G
 
     TRACE( "hdc %p, renderer %u, attribute %#x\n", hdc, renderer, attribute );
 
-    if (!(egl = egl_platform_from_index( renderer ))) return NULL;
+    if (!(egl = egl_platform_from_index( renderer )))
+    {
+        set_gl_error( GL_INVALID_INDEX );
+        return NULL;
+    }
     return query_renderer_string( egl, attribute );
 }
 
@@ -2435,7 +2455,11 @@ static BOOL win32u_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint 
 
     TRACE( "attribute %#x, value %p\n", attribute, value );
 
-    if (!(ptr = list_head( &devices_egl ))) return FALSE;
+    if (!(ptr = list_head( &devices_egl )))
+    {
+        set_gl_error( GL_INVALID_OPERATION );
+        return FALSE;
+    }
     return query_renderer_integer( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute, value );
 }
 
@@ -2445,7 +2469,11 @@ static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
 
     TRACE( "attribute %#x\n", attribute );
 
-    if (!(ptr = list_head( &devices_egl ))) return NULL;
+    if (!(ptr = list_head( &devices_egl )))
+    {
+        set_gl_error( GL_INVALID_OPERATION );
+        return NULL;
+    }
     return query_renderer_string( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute );
 }
 

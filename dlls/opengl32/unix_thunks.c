@@ -1019,8 +1019,7 @@ static NTSTATUS gl_glGetDoublev( void *args )
 static NTSTATUS gl_glGetError( void *args )
 {
     struct glGetError_params *params = args;
-    const struct opengl_funcs *funcs = params->teb->glTable;
-    params->ret = funcs->p_glGetError();
+    params->ret = wrap_glGetError( params->teb );
     return STATUS_SUCCESS;
 }
 
@@ -32252,7 +32251,7 @@ static NTSTATUS wow64_gl_glGetError( void *args )
         GLenum ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    params->ret = wow64_glGetError( teb );
+    params->ret = wrap_glGetError( teb );
     return STATUS_SUCCESS;
 }
 

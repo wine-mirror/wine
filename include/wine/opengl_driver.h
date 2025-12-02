@@ -77,6 +77,7 @@ struct wgl_context
     int                     format;             /* pixel format of the context */
     struct opengl_drawable *draw;               /* currently bound draw surface */
     struct opengl_drawable *read;               /* currently bound read surface */
+    GLenum                  error;              /* wrapped GL error */
 };
 
 /* interface between opengl32 and win32u */
