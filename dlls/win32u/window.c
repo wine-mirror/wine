@@ -2136,11 +2136,11 @@ static void update_window_client_surfaces( HWND hwnd )
     HWND *children;
     int i;
 
+    update_client_surfaces( hwnd );
+
     if (!(children = list_window_children( hwnd ))) return;
     for (i = 0; children[i]; i++) update_window_client_surfaces( children[i] );
     free( children );
-
-    update_client_surfaces( hwnd );
 }
 
 static HICON get_icon_info( HICON icon, ICONINFO *ii )
