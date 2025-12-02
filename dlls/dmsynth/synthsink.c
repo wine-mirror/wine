@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
-#define BUFFER_SUBDIVISIONS 100
+#define BUFFER_SUBDIVISIONS 10
 #define WRITE_PERIOD 20
 
 struct synth_sink
@@ -49,6 +49,7 @@ struct synth_sink
 
     DWORD play_pos;
     DWORD write_pos;
+    REFERENCE_TIME play_pos_time;
     HANDLE timing_stop_event;
     HANDLE timing_thread;
 
@@ -82,18 +83,27 @@ static void synth_sink_get_format(struct synth_sink *This, WAVEFORMATEX *format)
 }
 
 static HRESULT synth_sink_wait_write(struct synth_sink *sink, IDirectSoundBuffer *buffer,
-        DSBCAPS *caps, WAVEFORMATEX *format, DWORD samples_size)
+        DSBCAPS *caps, WAVEFORMATEX *format)
 {
+    REFERENCE_TIME master_time;
+    DWORD estimated_play_pos;
     DWORD current_offset;
     DWORD write_latency;
-    DWORD play_pos;
     DWORD timeout;
+    HRESULT hr;
     DWORD ret;
 
+    if (FAILED(hr = IReferenceClock_GetTime(sink->master_clock, &master_time)))
+    {
+        ERR("Failed to get master clock time, hr %#lx\n", hr);
+        return hr;
+    }
+
     EnterCriticalSection(&sink->cs);
-    play_pos = sink->play_pos;
-    write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes + samples_size;
-    current_offset = (sink->written - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+    estimated_play_pos = (sink->play_pos + (master_time - sink->play_pos_time)
+            * format->nSamplesPerSec / 10000000ll * format->nBlockAlign) % caps->dwBufferBytes;
+    write_latency = (sink->write_pos - sink->play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
+    current_offset = (sink->written - estimated_play_pos + caps->dwBufferBytes) % caps->dwBufferBytes;
     LeaveCriticalSection(&sink->cs);
 
     if (current_offset > write_latency)
@@ -104,8 +114,8 @@ static HRESULT synth_sink_wait_write(struct synth_sink *sink, IDirectSoundBuffer
     if (!sink->written || timeout > WRITE_PERIOD * 2)
     {
         if (sink->written)
-            ERR("Underrun detected, sink %p, play pos %#lx, current pos %#lx!\n", sink, play_pos,
-                    sink->written % caps->dwBufferBytes);
+            ERR("Underrun detected, sink %p, estimated play pos %#lx, current pos %#lx!\n",
+                    sink, estimated_play_pos, sink->written % caps->dwBufferBytes);
         sink->written += (write_latency - current_offset + caps->dwBufferBytes) % caps->dwBufferBytes;
         timeout = 0;
     }
@@ -173,7 +183,7 @@ static HRESULT synth_sink_wait_play_end(struct synth_sink *sink, IDirectSoundBuf
 
     for (;;)
     {
-        if (FAILED(hr = synth_sink_wait_write(sink, buffer, caps, format, samples_size)))
+        if (FAILED(hr = synth_sink_wait_write(sink, buffer, caps, format)))
             return hr;
 
         if (FAILED(hr = synth_sink_write_data(sink, buffer, caps, format, NULL, samples_size)))
@@ -283,6 +293,7 @@ static DWORD CALLBACK synth_sink_timing_thread(void *args)
     for (;;)
     {
         HANDLE handles[] = {sink->timing_stop_event, buffer_event};
+        REFERENCE_TIME play_pos_time;
         DWORD write_pos;
         DWORD play_pos;
         DWORD ret;
@@ -303,9 +314,16 @@ static DWORD CALLBACK synth_sink_timing_thread(void *args)
             break;
         }
 
+        if (FAILED(hr = IReferenceClock_GetTime(sink->master_clock, &play_pos_time)))
+        {
+            ERR("Failed to get master clock time, hr %#lx\n", hr);
+            break;
+        }
+
         EnterCriticalSection(&sink->cs);
         sink->play_pos = play_pos;
         sink->write_pos = write_pos;
+        sink->play_pos_time = play_pos_time;
         LeaveCriticalSection(&sink->cs);
 
         if (!started)
@@ -385,7 +403,7 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         if (hr == S_OK) /* if successfully written, render more data */
             hr = synth_sink_render_data(sink, synth, buffer, &format, samples, samples_size);
 
-        if (S_OK != (wait_hr = synth_sink_wait_write(sink, buffer, &caps, &format, samples_size)))
+        if (S_OK != (wait_hr = synth_sink_wait_write(sink, buffer, &caps, &format)))
         {
             hr = wait_hr;
             break;
