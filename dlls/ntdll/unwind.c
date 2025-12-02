@@ -525,7 +525,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
     int i;
     unsigned int len, offset;
     unsigned int int_size = func->RegI * 8, fp_size = func->RegF * 8, regsave, local_size;
-    unsigned int int_regs, fp_regs, saved_regs;
+    unsigned int int_regs, fp_regs, saved_regs, homing = func->H;
     BYTE prologue[40], *prologue_end, epilogue[40], *epilogue_end;
     unsigned int ppos = 0, epos = 0;
     BOOLEAN final_pc_from_lr;
@@ -545,6 +545,12 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
     saved_regs = regsave / 8;
 
     offset = ((pc - base) - func->BeginAddress) / 4;
+
+    if (func->H && func->RegI == 0 && func->RegF == 0 && func->CR != 1)
+    {
+        local_size += regsave;
+        homing = 0;
+    }
 
     /* Synthesize prologue opcodes */
 #define WRITE_ONE(x) do { prologue[ppos++] = epilogue[epos++] = (x); } while (0)
@@ -577,7 +583,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
             WRITE_TWO(0xc000 | (4080/16)); /* alloc_m */
         }
     }
-    if (func->H)
+    if (homing)
     {
         prologue[ppos++] = 0xe3; /* nop */
         prologue[ppos++] = 0xe3; /* nop */

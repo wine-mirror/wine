@@ -2116,12 +2116,19 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
 static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
 {
     int i, pos = 0, intsz = func->RegI * 8, fpsz = func->RegF * 8, savesz, locsz;
+    int homing = func->H;
 
     if (func->CR == 1) intsz += 8;
     if (func->RegF) fpsz += 8;
 
     savesz = ((intsz + fpsz + 8 * 8 * func->H) + 0xf) & ~0xf;
     locsz = func->FrameSize * 16 - savesz;
+
+    if (func->H && func->RegI == 0 && func->RegF == 0 && func->CR != 1)
+    {
+        locsz += savesz;
+        homing = 0;
+    }
 
     switch (func->CR)
     {
@@ -2148,7 +2155,7 @@ static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
         break;
     }
 
-    if (func->H)
+    if (homing)
     {
         printf( "    %04x:  stp x6,x7,[sp,#%#x]\n", pos++, intsz + fpsz + 48 );
         printf( "    %04x:  stp x4,x5,[sp,#%#x]\n", pos++, intsz + fpsz + 32 );
