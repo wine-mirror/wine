@@ -1051,6 +1051,10 @@ BOOL WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result )
         *result = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC;
         break;
 
+    case NtGdiHasOpenGL:
+        *result = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC || dc->is_display;
+        break;
+
     default:
         WARN( "unknown method %u\n", method );
         ret = FALSE;

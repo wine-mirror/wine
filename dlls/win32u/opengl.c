@@ -2549,11 +2549,9 @@ static void display_funcs_init(void)
 /***********************************************************************
  *      __wine_get_wgl_driver  (win32u.@)
  */
-const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
+const struct opengl_funcs *__wine_get_opengl_driver( UINT version )
 {
     static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-    DWORD is_disabled, is_display, is_memdc;
-    DC *dc;
 
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
@@ -2562,14 +2560,6 @@ const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
         return NULL;
     }
 
-    if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    is_memdc = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC;
-    is_display = dc->is_display;
-    is_disabled = dc->attr->disabled;
-    release_dc_ptr( dc );
-
-    if (is_disabled) return NULL;
-    if (!is_display && !is_memdc) return NULL;
     pthread_once( &init_once, display_funcs_init );
     return &display_funcs;
 }

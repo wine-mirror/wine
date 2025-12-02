@@ -140,6 +140,7 @@ enum
     NtGdiGetROP2,
     NtGdiGetTextColor,
     NtGdiIsMemDC,
+    NtGdiHasOpenGL,
 };
 
 /* NtGdiGetDCPoint parameter, not compatible with Windows */
@@ -565,6 +566,6 @@ W32KAPI NTSTATUS WINAPI NtGdiDdDDIWaitForSynchronizationObjectFromCpu( const D3D
 
 /* Wine extensions */
 W32KAPI const struct vulkan_funcs *__wine_get_vulkan_driver( UINT version );
-W32KAPI const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version );
+W32KAPI const struct opengl_funcs *__wine_get_opengl_driver( UINT version );
 
 #endif /* _NTGDI_ */

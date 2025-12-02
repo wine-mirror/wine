@@ -45,12 +45,14 @@ extern const struct registry_entry extension_registry[];
 extern const int extension_registry_size;
 
 extern struct opengl_funcs null_opengl_funcs;
+extern const struct opengl_funcs *opengl_funcs;
 
 static inline const struct opengl_funcs *get_dc_funcs( HDC hdc )
 {
-    const struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_OPENGL_DRIVER_VERSION );
-    if (!funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-    return funcs;
+    DWORD has_opengl;
+    if (NtGdiGetDCDword( hdc, NtGdiHasOpenGL, &has_opengl ) && has_opengl) return opengl_funcs;
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+    return &null_opengl_funcs;
 }
 
 #ifdef _WIN64

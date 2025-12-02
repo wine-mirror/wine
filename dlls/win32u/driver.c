@@ -1235,6 +1235,11 @@ static UINT loaderdrv_VulkanInit( UINT version, void *vulkan_handle, const struc
     return load_driver()->pVulkanInit( version, vulkan_handle, driver_funcs );
 }
 
+static UINT loaderdrv_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
+{
+    return load_driver()->pOpenGLInit( version, opengl_funcs, driver_funcs );
+}
+
 static const struct user_driver_funcs lazy_load_driver =
 {
     { NULL },
@@ -1308,7 +1313,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* vulkan support */
     loaderdrv_VulkanInit,
     /* opengl support */
-    nulldrv_OpenGLInit,
+    loaderdrv_OpenGLInit,
     /* thread management */
     nulldrv_ThreadDetach,
 };
