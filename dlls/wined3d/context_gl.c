@@ -1162,38 +1162,6 @@ void wined3d_context_gl_texture_update(struct wined3d_context_gl *context_gl,
     }
 }
 
-static BOOL wined3d_context_gl_restore_pixel_format(struct wined3d_context_gl *context_gl)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    BOOL ret = FALSE;
-
-    if (context_gl->restore_pf && IsWindow(context_gl->restore_pf_win))
-    {
-        if (gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
-        {
-            HDC dc = GetDCEx(context_gl->restore_pf_win, 0, DCX_USESTYLE | DCX_CACHE);
-            if (dc)
-            {
-                if (!(ret = GL_EXTCALL(wglSetPixelFormatWINE(dc, context_gl->restore_pf))))
-                {
-                    ERR("Failed to restore pixel format %d on window %p.\n",
-                            context_gl->restore_pf, context_gl->restore_pf_win);
-                }
-                ReleaseDC(context_gl->restore_pf_win, dc);
-            }
-        }
-        else
-        {
-            ERR("Unable to restore pixel format %d on window %p.\n",
-                    context_gl->restore_pf, context_gl->restore_pf_win);
-        }
-    }
-
-    context_gl->restore_pf = 0;
-    context_gl->restore_pf_win = NULL;
-    return ret;
-}
-
 static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *context_gl)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
@@ -1201,7 +1169,6 @@ static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *conte
     int format = context_gl->pixel_format;
     HDC dc = context_gl->dc;
     int current;
-    HWND win;
 
     if (private && context_gl->dc_has_format)
         return TRUE;
@@ -1245,12 +1212,6 @@ static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *conte
                 format, dc, GetLastError());
         return FALSE;
     }
-
-    win = private ? NULL : WindowFromDC(dc);
-    if (win != context_gl->restore_pf_win)
-        wined3d_context_gl_restore_pixel_format(context_gl);
-    context_gl->restore_pf = private ? 0 : current;
-    context_gl->restore_pf_win = win;
 
 success:
     if (private)
@@ -1536,7 +1497,6 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
 
     free(context_gl->texture_type);
 
-    wined3d_context_gl_restore_pixel_format(context_gl);
     if (restore_ctx)
         context_restore_gl_context(gl_info, restore_dc, restore_ctx);
     else if (wglGetCurrentContext() && !wglMakeCurrent(NULL, NULL))
@@ -1642,8 +1602,8 @@ void wined3d_context_gl_release(struct wined3d_context_gl *context_gl)
 
     if (!--context_gl->level)
     {
-        if (wined3d_context_gl_restore_pixel_format(context_gl))
-            context_gl->needs_set = 1;
+        context_gl->needs_set = 1;
+
         if (context_gl->restore_ctx)
         {
             TRACE("Restoring GL context %p on device context %p.\n", context_gl->restore_ctx, context_gl->restore_dc);
