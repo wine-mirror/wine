@@ -2673,6 +2673,38 @@ static void test_virtual_unwind_arm64(void)
         { 0x2c,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
     };
 
+    static const BYTE function_21[] =
+    {
+        0xf3, 0x53, 0xbe, 0xa9,   /* 00: stp x19, x20, [sp, #-32]! */
+        0xf5, 0x5b, 0x01, 0xa9,   /* 04: stp x21, x22, [sp, #16] */
+        0x1f, 0x20, 0x03, 0xd5,   /* 08: nop */
+        0xf5, 0x5b, 0x41, 0xa9,   /* 0c: ldp x21, x22, [sp, #16] */
+        0xf3, 0x53, 0xc2, 0xa8,   /* 10: ldp x19, x20, [sp], #32 */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 14: ret */
+    };
+
+    static const DWORD unwind_info_21_packed =
+        (1 << 0)  | /* Flag */
+        (sizeof(function_21)/4 << 2) | /* FunctionLength */
+        (0 << 13) | /* RegF */
+        (4 << 16) | /* RegI */
+        (0 << 20) | /* H */
+        (0 << 21) | /* CR */
+        (2 << 23);  /* FrameSize */
+
+    static const BYTE unwind_info_21[] = { DW(unwind_info_21_packed) };
+
+    static const struct results_arm64 results_21[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x020, TRUE, { {x19,0x00}, {x20,0x08}, {-1,-1} }},
+        { 0x08,  0x00,  0,     ORIG_LR, 0x020, TRUE, { {x19,0x00}, {x20,0x08}, {x21, 0x10}, {x22, 0x18}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     ORIG_LR, 0x020, TRUE, { {x19,0x00}, {x20,0x08}, {x21, 0x10}, {x22, 0x18}, {-1,-1} }},
+        { 0x10,  0x00,  0,     ORIG_LR, 0x020, TRUE, { {x19,0x00}, {x20,0x08}, {-1,-1} }},
+        { 0x14,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+    };
+
     static const struct unwind_test_arm64 tests[] =
     {
 #define TEST(func, unwind, size, results, unwound_clear, last_ptr, stack_value_index, stack_value) \
@@ -2698,6 +2730,7 @@ static void test_virtual_unwind_arm64(void)
         TEST(function_18, NULL, 0, results_18, 0, 0, -1, 0),
         TEST(function_19, unwind_info_19, 0, results_19, 0, 0, -1, 0),
         TEST(function_20, unwind_info_20, 0, results_20, 0, 0, -1, 0),
+        TEST(function_21, unwind_info_21, 0, results_21, 0, 0, -1, 0),
 #undef TEST
     };
     unsigned int i;
