@@ -375,6 +375,21 @@ static const char* sub_expected_modules[] =
     "ntdll.dll"
 };
 
+static HANDLE create_toolhelp_snapshot( DWORD flags, DWORD pid )
+{
+    HANDLE hSnapshot;
+    int retries = winetest_platform_is_wine ? 1 : 5;
+
+    do
+    {
+        hSnapshot = pCreateToolhelp32Snapshot( flags, pid );
+        if (hSnapshot != INVALID_HANDLE_VALUE || GetLastError() != ERROR_BAD_LENGTH)
+            break;
+    } while (--retries);
+
+    return hSnapshot;
+}
+
 static void test_module(DWORD pid, const char* expected[], unsigned num_expected)
 {
     HANDLE              hSnapshot;
@@ -387,7 +402,7 @@ static void test_module(DWORD pid, const char* expected[], unsigned num_expected
 
     ok(ARRAY_SIZE(found) >= num_expected, "Internal: bump found[] size\n");
 
-    hSnapshot = pCreateToolhelp32Snapshot( TH32CS_SNAPMODULE, pid );
+    hSnapshot = create_toolhelp_snapshot( TH32CS_SNAPMODULE, pid );
     ok(hSnapshot != INVALID_HANDLE_VALUE, "Cannot create snapshot\n");
 
     for (i = 0; i < num_expected; i++) found[i] = 0;
