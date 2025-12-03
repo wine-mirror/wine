@@ -77,6 +77,7 @@ twain_add_onedriver(const WCHAR *dsname) {
 	do {
 		int i;
 
+		memset(&sourceId, 0, sizeof(sourceId));
 		sourceId.Id 		= DSM_sourceId;
 		sourceId.ProtocolMajor	= TWON_PROTOCOLMAJOR;
 		sourceId.ProtocolMinor	= TWON_PROTOCOLMINOR;
@@ -188,10 +189,41 @@ TW_UINT16 TWAIN_ControlNull (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, activeDS 
 
     if (MSG != MSG_CLOSEDSREQ &&
         MSG != MSG_DEVICEEVENT &&
-        MSG != MSG_XFERREADY)
+        MSG != MSG_XFERREADY &&
+        MSG != MSG_DEVICEEVENT)
     {
         DSM_twCC = TWCC_BADPROTOCOL;
         return TWRC_FAILURE;
+    }
+
+    if (pSource &&
+        pSource->registered_callback.CallBackProc)
+    {
+        static BOOL bProcessingCallback = FALSE;
+        TRACE("DG_CONTROL/DAT_NULL using callback\n");
+        if (!bProcessingCallback)
+        {
+            TW_UINT16 twRC;
+            bProcessingCallback=TRUE;
+            twRC = ((DSMENTRYPROC) pSource->registered_callback.CallBackProc)
+              (pOrigin,
+               pDest,
+               DG_CONTROL, DAT_NULL, MSG,
+               (TW_MEMREF) pSource->registered_callback.RefCon);
+            bProcessingCallback=FALSE;
+            if (twRC != TWCC_SUCCESS)
+            {
+                DSM_twCC = TWCC_BADPROTOCOL;
+            }
+            return twRC;
+        }
+        else
+        {
+            ERR("Nested callback\n");
+            DSM_twCC = TWCC_BADPROTOCOL;
+            return TWRC_FAILURE;
+        }
+
     }
 
     message = HeapAlloc(GetProcessHeap(), 0, sizeof(*message));
@@ -377,7 +409,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	} /* else use the first device */
 
 	/* the source is found in the device list */
-	newSource = HeapAlloc (GetProcessHeap(), 0, sizeof (activeDS));
+	newSource = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (activeDS));
 	if (!newSource) {
 		DSM_twCC = TWCC_LOWMEMORY;
 		FIXME("Out of memory.\n");
@@ -639,4 +671,22 @@ TW_UINT16 TWAIN_GetEntrypoint(TW_ENTRYPOINT *pEntrypoint)
 	}
 
 	return twRC;
+}
+
+
+
+/** @brief DG_CONTROL/DAT_CALLBACK/MSG_REGISTER_CALLBACK and DG_CONTROL/DAT_CALLBACK2/MSG_REGISTER_CALLBACK
+ *  @param pSource           The data source to associate the callback to
+ *  @param CallBackProc      Address of a callback procedure defined by the application program
+ *  @param RefCon            Reference Constant as defined by the application program
+ *  @return Twain result code, TWRC_SUCCESS on success
+ */
+TW_UINT16 TWAIN_RegisterCallback(activeDS *pSource, TW_MEMREF *CallBackProc, UINT_PTR RefCon)
+{
+	TRACE("DG_CONTROL/DAT_CALLBACKx/MSG_REGISTER_CALLBACK\n");
+	pSource->registered_callback.CallBackProc=CallBackProc;
+	pSource->registered_callback.RefCon=RefCon;
+
+	DSM_twCC = TWCC_SUCCESS;
+	return TWRC_SUCCESS;
 }

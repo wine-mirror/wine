@@ -187,7 +187,6 @@ DSM_Entry (pTW_IDENTITY pOrigin,
 
         return TWAIN_ControlNull (pOrigin, pDest, pSource, MSG, pData);
     }
-
     if (pDest)
     {
         activeDS *pSource = TWAIN_LookupSource (pDest);
@@ -211,6 +210,24 @@ DSM_Entry (pTW_IDENTITY pOrigin,
             pData != NULL)
         {
             pSource->ui_window = ((TW_USERINTERFACE*)pData)->hParent;
+        }
+
+        if (DG == DG_CONTROL &&
+            MSG == MSG_REGISTER_CALLBACK &&
+            (DAT == DAT_CALLBACK || DAT == DAT_CALLBACK2) &&
+            pData != NULL)
+        {
+            if (DAT == DAT_CALLBACK)
+            {
+                TW_CALLBACK *pCallback = (TW_CALLBACK *) pData;
+                twRC = TWAIN_RegisterCallback(pSource, pCallback->CallBackProc, pCallback->RefCon);
+            }
+            else
+            {
+                TW_CALLBACK2 *pCallback = (TW_CALLBACK2 *) pData;
+                twRC = TWAIN_RegisterCallback(pSource, pCallback->CallBackProc, pCallback->RefCon);
+            }
+            return twRC;
         }
 
 	DSM_twCC = TWCC_SUCCESS;
