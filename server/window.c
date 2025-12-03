@@ -786,11 +786,16 @@ int is_child_window( user_handle_t parent, user_handle_t child )
     return 0;
 }
 
-/* check if window can be set as foreground window */
-int is_valid_foreground_window( user_handle_t window )
+/* return the window thread if window can be set as foreground window */
+struct thread *make_window_foreground( struct desktop *desktop, user_handle_t window, int *is_desktop )
 {
     struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
-    return win && (win->style & (WS_POPUP|WS_CHILD)) != WS_CHILD;
+
+    if (!win || !win->thread || win->desktop != desktop) return NULL;
+    if ((win->style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return NULL;
+    *is_desktop = win == win->desktop->top_window;
+
+    return (struct thread *)grab_object( win->thread );
 }
 
 /* make a window active if possible */

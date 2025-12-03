@@ -3816,37 +3816,35 @@ DECL_HANDLER(set_foreground_window)
 {
     struct thread *thread = NULL;
     struct desktop *desktop;
-    struct thread_input *input;
     struct msg_queue *queue = get_current_queue();
+    int is_desktop = 0;
 
     if (!queue || !(desktop = get_thread_desktop( current, 0 ))) return;
 
-    if (!(input = desktop->foreground_input)) reply->previous = 0;
-    else reply->previous = input->shared->active;
+    if (!(thread = make_window_foreground( desktop, req->handle, &is_desktop )) ||
+        !thread->queue || !thread->queue->input)
+    {
+        set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+        goto done;
+    }
 
     if (!req->internal)
     {
         if (!current->process->set_foreground) current->process->set_foreground = 1;
-        else if (!is_current_process_foreground( desktop ) && queue->input && input && queue->input->user_time < input->user_time)
+        else if (!is_current_process_foreground( desktop ) && queue->input && desktop->foreground_input &&
+                 queue->input->user_time < desktop->foreground_input->user_time)
         {
             set_error( STATUS_ACCESS_DENIED );
-            release_object( desktop );
-            return;
+            goto done;
         }
     }
 
+    reply->previous = desktop->foreground_input ? desktop->foreground_input->shared->active : 0;
     reply->send_msg_old = (reply->previous && desktop->foreground_input != queue->input);
-    reply->send_msg_new = FALSE;
+    set_foreground_input( desktop, req->internal || !is_desktop ? thread->queue->input : NULL );
+    reply->send_msg_new = (desktop->foreground_input != queue->input);
 
-    if (is_valid_foreground_window( req->handle ) && (thread = get_window_thread( req->handle )) &&
-        (input = thread->queue->input) && input->desktop == desktop)
-    {
-        int is_desktop = thread->process == get_top_window_owner( desktop );
-        set_foreground_input( desktop, req->internal || !is_desktop ? input : NULL );
-        reply->send_msg_new = (desktop->foreground_input != queue->input);
-    }
-    else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
-
+done:
     if (thread) release_object( thread );
     release_object( desktop );
 }
