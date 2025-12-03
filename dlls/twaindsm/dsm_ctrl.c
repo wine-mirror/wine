@@ -47,6 +47,11 @@ struct all_devices {
 static int nrdevices = 0;
 static struct all_devices *devices = NULL;
 
+#ifndef WIN64
+/* Instance handle of the twain_32.dll */
+static HINSTANCE hinstTwain_32 = NULL;
+#endif
+
 static void
 twain_add_onedriver(const WCHAR *dsname) {
 	HMODULE 	hmod;
@@ -276,6 +281,12 @@ TW_UINT16 TWAIN_CloseDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	/* This causes crashes due to still open Windows, so leave out for now.
 	 * FreeLibrary (currentDS->hmod);
 	 */
+#ifndef WIN64
+	if (!(pIdentity->SupportedGroups & DF_DS2)) {
+		FreeLibrary(hinstTwain_32);
+	}
+#endif
+
 	if (prevDS)
 		prevDS->next = currentDS->next;
 	else
@@ -381,8 +392,34 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	}
 	newSource->hmod = hmod; 
 	newSource->dsEntry = (DSENTRYPROC)GetProcAddress(hmod, "DS_Entry"); 
+	if (!newSource->dsEntry) {
+		ERR("Failed to find DS_Entry() in TWAIN DS %s\n", debugstr_w(devices[i].modname));
+		DSM_twCC = TWCC_OPERATIONERROR;
+		HeapFree(GetProcessHeap(), 0, newSource);
+		return TWRC_FAILURE;
+	}
 	/* Assign id for the opened data source */
 	pIdentity->Id = DSM_sourceId ++;
+	/* Get the Identity of the new DS, so we know the SupportedGroups */
+	if (TWRC_SUCCESS != newSource->dsEntry (NULL, DG_CONTROL, DAT_IDENTITY, MSG_GET, pIdentity)) {
+		DSM_twCC = TWCC_OPERATIONERROR;
+		HeapFree(GetProcessHeap(), 0, newSource);
+		DSM_sourceId--;
+		return TWRC_FAILURE;
+	}
+	/* Tell the source our entry points */
+	if (pIdentity->SupportedGroups & DF_DS2) {
+		/* This makes sure that the DS knows the current address of our DSM_Entry
+		 * function so there is no risk that it is using a stale copy. */
+		newSource->dsEntry (pOrigin, DG_CONTROL, DAT_ENTRYPOINT, MSG_SET, (TW_ENTRYPOINT *) &_entrypoints);
+	}
+#ifndef WIN64
+	else {
+		/* DS is Version 1.x. Make sure twain_32.dll is loaded in case DS uses GetModuleHandle("twain_32") */
+		hinstTwain_32 = LoadLibraryW(L"twain_32.dll");
+	}
+#endif
+        /* Open the data source */
 	if (TWRC_SUCCESS != newSource->dsEntry (pOrigin, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, pIdentity)) {
 		DSM_twCC = TWCC_OPERATIONERROR;
                 HeapFree(GetProcessHeap(), 0, newSource);
@@ -398,16 +435,6 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         newSource->event_window = NULL;
 	activeSources = newSource;
 	DSM_twCC = TWCC_SUCCESS;
-
-	/* Tell the source our entry points */
-	if (pIdentity->SupportedGroups & DF_DS2) {
-		/* This makes sure that the DS knows the current address of our DSM_Entry
-		 * function so there is no risk that it is using a stale copy.
-		 * The other entry points are also set for formal reasons,
-		 * but are currently not used.
-		 */
-		newSource->dsEntry (pOrigin, DG_CONTROL, DAT_ENTRYPOINT, MSG_SET, (TW_ENTRYPOINT *) &_entrypoints);
-	}
 	return TWRC_SUCCESS;
 }
 

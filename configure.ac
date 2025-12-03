@@ -2426,6 +2426,7 @@ enable_win16=${enable_win16:-i386}
 enable_w32skrnl=${enable_w32skrnl:-$enable_win16}
 enable_wow32=${enable_wow32:-$enable_win16}
 enable_winevdm=${enable_winevdm:-$enable_win16}
+enable_twain_32=${enable_twain_32:-i386}
 
 dnl Disable winetest too if tests are disabled
 enable_winetest=${enable_winetest:-$enable_tests}
@@ -3209,6 +3210,7 @@ WINE_CONFIG_MAKEFILE(dlls/traffic)
 WINE_CONFIG_MAKEFILE(dlls/twain.dll16)
 WINE_CONFIG_MAKEFILE(dlls/twain_32)
 WINE_CONFIG_MAKEFILE(dlls/twain_32/tests)
+WINE_CONFIG_MAKEFILE(dlls/twaindsm)
 WINE_CONFIG_MAKEFILE(dlls/twinapi.appcore)
 WINE_CONFIG_MAKEFILE(dlls/twinapi.appcore/tests)
 WINE_CONFIG_MAKEFILE(dlls/typelib.dll16)

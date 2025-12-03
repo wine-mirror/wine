@@ -87,7 +87,7 @@ msgstr ""
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
 #: dlls/shell32/shell32.rc:278 dlls/shell32/shell32.rc:302
 #: dlls/shell32/shell32.rc:324 dlls/shell32/shell32.rc:343
-#: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
+#: dlls/shlwapi/shlwapi.rc:44 dlls/twaindsm/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
@@ -186,7 +186,7 @@ msgstr ""
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
 #: dlls/shell32/shell32.rc:344 dlls/shlwapi/shlwapi.rc:45
-#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
+#: dlls/twaindsm/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
 #: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
@@ -10422,7 +10422,7 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr ""
 
-#: dlls/twain_32/twain.rc:29
+#: dlls/twaindsm/twain.rc:29
 msgid "Select Source"
 msgstr ""
 

@@ -1,0 +1,8 @@
+MODULE    = twaindsm.dll
+IMPORTLIB = twaindsm
+IMPORTS   = user32
+
+SOURCES = \
+	dsm_ctrl.c \
+	twain.rc \
+	twain32_main.c
