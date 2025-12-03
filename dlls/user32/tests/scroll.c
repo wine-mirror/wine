@@ -287,7 +287,6 @@ static void test_GetScrollBarInfo(void)
     width = sbi.rcScrollBar.right - sbi.rcScrollBar.left;
     GetClientRect( hMainWnd, &rect );
     expected_width = rect.right - rect.left;
-    todo_wine
     ok( width == expected_width, "Expected width %d, got %d.\n", expected_width, width );
 
     /* Test height when WS_HSCROLL is present */
@@ -298,7 +297,6 @@ static void test_GetScrollBarInfo(void)
     height = sbi.rcScrollBar.bottom - sbi.rcScrollBar.top;
     GetClientRect( hMainWnd, &rect );
     expected_height = rect.bottom - rect.top;
-    todo_wine
     ok( height == expected_height, "Expected height %d, got %d.\n", expected_height, height );
 
     DestroyWindow(hScroll);
