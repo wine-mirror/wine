@@ -53,16 +53,13 @@ static HINSTANCE hinstTwain_32 = NULL;
 #endif
 
 static void
-twain_add_onedriver(const WCHAR *dsname) {
+twain_add_onedriver(const WCHAR *path) {
 	HMODULE 	hmod;
 	DSENTRYPROC	dsEntry;
 	TW_IDENTITY	fakeOrigin;
 	TW_IDENTITY	sourceId;
 	struct all_devices *new_devices;
 	TW_UINT16	ret;
-        WCHAR path[MAX_PATH];
-
-        swprintf( path, MAX_PATH, L"c:\\windows\\twain_%u\\%s", sizeof(void *) * 8, dsname );
 	hmod = LoadLibraryW(path);
 	if (!hmod) {
 		ERR("Failed to load TWAIN Source %s\n", debugstr_w(path));
@@ -71,6 +68,7 @@ twain_add_onedriver(const WCHAR *dsname) {
 	dsEntry = (DSENTRYPROC)GetProcAddress(hmod, "DS_Entry"); 
 	if (!dsEntry) {
 		ERR("Failed to find DS_Entry() in TWAIN DS %s\n", debugstr_w(path));
+		FreeLibrary(hmod);
 		return;
 	}
 	/* Loop to do multiple detects, mostly for sane.ds and gphoto2.ds */
@@ -108,20 +106,72 @@ twain_add_onedriver(const WCHAR *dsname) {
 	FreeLibrary (hmod);
 }
 
+
+/**
+ * Recursively search all *.ds Data Source files in the given directory
+ * and add them to the new_devices list.
+ *
+ * We search for file ending with ".ds" for the Data Source drivers
+ * and fill all subdirectories.
+ *
+ * @param dirname       Name of the start directory.
+ */
+static void
+twain_autodetect_recurse(const WCHAR *dirname)
+{
+	HANDLE hfind;
+	WCHAR szFindPattern[MAX_PATH];
+	WCHAR *p;
+	WIN32_FIND_DATAW ff;
+
+	swprintf(szFindPattern, ARRAY_SIZE(szFindPattern), L"%s\\*", dirname);
+
+	hfind = FindFirstFileW(szFindPattern, &ff);
+	if (hfind != INVALID_HANDLE_VALUE)
+	{
+		WCHAR szFullName[MAX_PATH];
+		do
+		{
+			swprintf(szFullName, ARRAY_SIZE(szFullName), L"%s\\%s", dirname, ff.cFileName);
+			if ((ff.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+			    lstrcmpW(ff.cFileName, L".") &&
+			    lstrcmpW(ff.cFileName, L".."))
+			{
+				/* Found a subdirectory. Recursivly search in it. */
+				twain_autodetect_recurse(szFullName);
+			}
+			else if (NULL != (p=wcsrchr(ff.cFileName, '.')) &&
+				!lstrcmpiW(p, L".ds"))
+			{
+				twain_add_onedriver(szFullName);
+			}
+		}
+		while (FindNextFileW(hfind, &ff));
+		FindClose(hfind);
+	}
+}
+
+
 static BOOL detectionrun = FALSE;
 
+/** @brief Detect all installed data sources by recursive directory scan.
+ *
+ *  TWAIN Data Sources install in a subdirectory of c:\windows\twain_<bitdepth> as
+ *  *.ds files. Search all of them and add them to the list.
+ */
 static void
-twain_autodetect(void) {
-	if (detectionrun) return;
-        detectionrun = TRUE;
+twain_autodetect(void)
+{
+	WCHAR szWindowsDir[MAX_PATH];
+	WCHAR szTwainDir[MAX_PATH];
 
-	twain_add_onedriver(L"sane.ds");
-	twain_add_onedriver(L"gphoto2.ds");
-#if 0
-	twain_add_onedriver(L"Largan\\sp503a.ds");
-	twain_add_onedriver(L"vivicam10\\vivicam10.ds");
-	twain_add_onedriver(L"ws30slim\\sp500a.ds");
-#endif
+	if (detectionrun) return;
+	detectionrun = TRUE;
+
+	GetWindowsDirectoryW(szWindowsDir, MAX_PATH);
+	swprintf( szTwainDir, MAX_PATH, L"%s\\twain_%u", szWindowsDir, sizeof(void *) * 8 );
+
+	twain_autodetect_recurse(szTwainDir);
 }
 
 /**
