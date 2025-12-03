@@ -98,6 +98,7 @@ struct recordset
     IRowsetLocate     *rowset_locate;
     IRowsetExactScroll *rowset_es;
     IRowsetChange     *rowset_change;
+    IRowsetUpdate     *rowset_update;
     IAccessor         *accessor;
     IRowsetCurrentIndex *rowset_cur_idx;
     EditModeEnum       editmode;
@@ -1641,6 +1642,9 @@ static void close_recordset( struct recordset *recordset )
     if ( recordset->rowset_change && recordset->rowset_change != NO_INTERFACE )
         IRowsetChange_Release( recordset->rowset_change );
     recordset->rowset_change = NULL;
+    if ( recordset->rowset_update && recordset->rowset_update != NO_INTERFACE )
+        IRowsetUpdate_Release( recordset->rowset_update );
+    recordset->rowset_update = NULL;
     if ( recordset->rowset_cur_idx && recordset->rowset_cur_idx != NO_INTERFACE )
         IRowsetCurrentIndex_Release( recordset->rowset_cur_idx );
     recordset->rowset_cur_idx = NULL;
@@ -2196,11 +2200,41 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
 static HRESULT WINAPI recordset_CancelUpdate( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    DBPENDINGSTATUS pending_status;
+    DBROWSTATUS *status;
+    DBCOUNTITEM count;
+    HRESULT hr;
+    HROW *row;
 
-    FIXME( "%p\n", iface );
+    TRACE( "%p\n", iface );
 
-    if (recordset->active_connection == NULL)
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    if (!recordset->rowset_update)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetUpdate,
+                (void **)&recordset->rowset_update );
+        if (FAILED(hr) || !recordset->rowset_update)
+            recordset->rowset_update = NO_INTERFACE;
+    }
+    if (recordset->rowset_update == NO_INTERFACE) return S_OK;
+
+    hr = IRowsetUpdate_GetRowStatus( recordset->rowset_update, 0,
+            1, &recordset->current_row, &pending_status );
+    if (FAILED(hr)) return S_OK;
+    if (pending_status & (DBPENDINGSTATUS_UNCHANGED | DBPENDINGSTATUS_INVALIDROW)) return S_OK;
+    if (!(pending_status & (DBPENDINGSTATUS_NEW | DBPENDINGSTATUS_CHANGED | DBPENDINGSTATUS_DELETED)))
         return S_OK;
+
+    row = NULL;
+    status = NULL;
+    hr = IRowsetUpdate_Undo( recordset->rowset_update, 0, 1, &recordset->current_row, &count, &row, &status );
+    if (FAILED(hr)) return hr;
+    if (status[0] == DBROWSTATUS_E_CANCELED) FIXME("status = DBROWSTATUS_E_CANCELED\n");
+    if (pending_status & DBPENDINGSTATUS_NEW) cache_release( recordset );
+    CoTaskMemFree( row );
+    CoTaskMemFree( status );
 
     recordset->editmode = adEditNone;
     return S_OK;

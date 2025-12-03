@@ -80,6 +80,8 @@ DEFINE_EXPECT(rowset_GetData);
 DEFINE_EXPECT(rowset_RestartPosition);
 DEFINE_EXPECT(rowset_update_SetData);
 DEFINE_EXPECT(rowset_update_InsertRow);
+DEFINE_EXPECT(rowset_update_GetRowStatus);
+DEFINE_EXPECT(rowset_update_Undo);
 DEFINE_EXPECT(accessor_AddRefAccessor);
 DEFINE_EXPECT(accessor_CreateAccessor);
 DEFINE_EXPECT(accessor_ReleaseAccessor);
@@ -957,15 +959,32 @@ static HRESULT WINAPI rowset_update_GetPendingRows(IRowsetUpdate *iface,
 static HRESULT WINAPI rowset_update_GetRowStatus(IRowsetUpdate *iface, HCHAPTER reserved,
         DBCOUNTITEM count, const HROW rows[], DBPENDINGSTATUS status[])
 {
-    ok(0, "Unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(rowset_update_GetRowStatus);
+    ok(!reserved, "reserved = %Id\n", reserved);
+    ok(count == 1, "count = %Id\n", count);
+    ok(rows[0] == 10, "rows[0] = %Id\n", rows[0]);
+
+    status[0] = DBPENDINGSTATUS_NEW;
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_update_Undo(IRowsetUpdate *iface, HCHAPTER reserved, DBCOUNTITEM count,
         const HROW rows[], DBCOUNTITEM *undone_cnt, HROW **undone, DBROWSTATUS **status)
 {
-    ok(0, "Unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(rowset_update_Undo);
+    ok(!reserved, "reserved = %Id\n", reserved);
+    ok(count == 1, "count = %Id\n", count);
+    ok(rows[0] == 10, "rows[0] = %Id\n", rows[0]);
+    ok(undone_cnt != NULL, "undone_cnt = NULL\n");
+    ok(undone != NULL, "undone = NULL\n");
+    ok(status != NULL, "status = NULL\n");
+
+    *undone_cnt = 1;
+    *undone = CoTaskMemAlloc(sizeof(**undone));
+    *undone[0] = rows[0];
+    *status = CoTaskMemAlloc(sizeof(**status));
+    *status[0] = DBROWSTATUS_S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_update_Update(IRowsetUpdate *iface, HCHAPTER reserved, DBCOUNTITEM count,
@@ -2047,9 +2066,22 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     CHECK_CALLED(accessor_ReleaseAccessor);
     if (exact_scroll) CHECK_EXPECT(rowset_GetData);
 
+    SET_EXPECT(rowset_update_GetRowStatus);
+    SET_EXPECT(rowset_update_Undo);
+    SET_EXPECT(rowset_AddRefRows);
+    SET_EXPECT(rowset_ReleaseRows);
+    hr = _Recordset_CancelUpdate( recordset );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED(rowset_update_GetRowStatus);
+    CHECK_CALLED(rowset_update_Undo);
+    todo_wine CHECK_CALLED(rowset_AddRefRows);
+    CHECK_CALLED(rowset_ReleaseRows);
+
+    hr = _Recordset_CancelUpdate( recordset );
+    ok( hr == MAKE_ADO_HRESULT( adErrNoCurrentRecord ), "got %08lx\n", hr );
+
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString( L"Column1 = 1" );
-    SET_EXPECT(rowset_AddRefRows);
     SET_EXPECT(rowset_ReleaseRows);
     SET_EXPECT(accessor_CreateAccessor);
     SET_EXPECT(accessor_AddRefAccessor);
@@ -2069,7 +2101,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     }
     hr = _Recordset_put_Filter( recordset, v );
     todo_wine ok( hr == S_OK, "got %08lx\n", hr );
-    todo_wine CHECK_CALLED(rowset_AddRefRows);
     todo_wine CHECK_CALLED(rowset_ReleaseRows);
     todo_wine CHECK_CALLED(accessor_CreateAccessor);
     todo_wine CHECK_CALLED(accessor_AddRefAccessor);
@@ -2095,7 +2126,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     SET_EXPECT(accessor_ReleaseAccessor);
     SET_EXPECT(chaptered_rowset_ReleaseChapter);
     ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
-    CHECK_CALLED(rowset_ReleaseRows );
+    todo_wine CHECK_CALLED(rowset_ReleaseRows );
     CHECK_CALLED(accessor_ReleaseAccessor);
     todo_wine CHECK_CALLED(chaptered_rowset_ReleaseChapter);
     ok( testrowset.refs == 1, "got %ld\n", testrowset.refs );
