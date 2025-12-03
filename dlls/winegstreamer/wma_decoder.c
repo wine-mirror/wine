@@ -798,8 +798,7 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
     if (IsEqualGUID(&decoder->input_type.majortype, &GUID_NULL))
         return DMO_E_TYPE_NOT_SET;
 
-    if (FAILED(hr = wg_transform_create_quartz(&decoder->input_type, &decoder->output_type,
-            &attrs, &new_transform)))
+    if (FAILED(hr = wg_transform_create_quartz(&decoder->input_type, type, &attrs, &new_transform)))
         return hr;
 
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
