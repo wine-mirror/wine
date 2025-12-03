@@ -999,6 +999,18 @@ typedef enum tagDBBOOKMARK {
 
 cpp_quote("#define STD_BOOKMARKLENGTH 1")
 
+typedef DWORD DBINDEX_COL_ORDER;
+
+enum DBINDEX_COL_ORDERENUM {
+    DBINDEX_COL_ORDER_ASC,
+    DBINDEX_COL_ORDER_DESC
+};
+
+typedef struct tagDBINDEXCOLUMNDESC {
+    DBID *pColumnID;
+    DBINDEX_COL_ORDER eIndexColOrder;
+} DBINDEXCOLUMNDESC;
+
 typedef struct tagDBCOLUMNDESC {
     LPOLESTR pwszTypeName;
     ITypeInfo *pTypeInfo;
