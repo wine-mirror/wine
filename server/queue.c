@@ -3817,18 +3817,18 @@ DECL_HANDLER(set_foreground_window)
     struct thread *thread = NULL;
     struct desktop *desktop;
     struct msg_queue *queue = get_current_queue();
-    int is_desktop = 0;
+    int is_desktop = 0, set_foreground = 0;
 
     if (!queue || !(desktop = get_thread_desktop( current, 0 ))) return;
 
-    if (!(thread = make_window_foreground( desktop, req->handle, &is_desktop )) ||
+    if (!(thread = make_window_foreground( desktop, req->handle, &is_desktop, &set_foreground )) ||
         !thread->queue || !thread->queue->input)
     {
         set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
         goto done;
     }
 
-    if (!req->internal)
+    if (set_foreground && !req->internal)
     {
         if (!current->process->set_foreground) current->process->set_foreground = 1;
         else if (!is_current_process_foreground( desktop ) && queue->input && desktop->foreground_input &&

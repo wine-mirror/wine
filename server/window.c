@@ -81,6 +81,7 @@ struct window
     unsigned int     is_linked : 1;   /* is it linked into the parent z-order list? */
     unsigned int     is_layered : 1;  /* has layered info been set? */
     unsigned int     is_orphan : 1;   /* is window orphaned */
+    unsigned int     set_foreground : 1;/* has window been foreground once */
     unsigned int     color_key;       /* color key for a layered window */
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
@@ -666,6 +667,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->is_linked      = 0;
     win->is_layered     = 0;
     win->is_orphan      = 0;
+    win->set_foreground = 0;
     win->monitor_dpi    = USER_DEFAULT_SCREEN_DPI;
     win->user_data      = 0;
     win->text           = NULL;
@@ -787,13 +789,16 @@ int is_child_window( user_handle_t parent, user_handle_t child )
 }
 
 /* return the window thread if window can be set as foreground window */
-struct thread *make_window_foreground( struct desktop *desktop, user_handle_t window, int *is_desktop )
+struct thread *make_window_foreground( struct desktop *desktop, user_handle_t window,
+                                       int *is_desktop, int *set_foreground )
 {
     struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
 
     if (!win || !win->thread || win->desktop != desktop) return NULL;
     if ((win->style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return NULL;
     *is_desktop = win == win->desktop->top_window;
+    *set_foreground = win->set_foreground;
+    win->set_foreground = 1;
 
     return (struct thread *)grab_object( win->thread );
 }
