@@ -709,6 +709,7 @@ SOURCES = \
 	rstchg.idl \
 	rstfnd.idl \
 	rstidn.idl \
+	rstind.idl \
 	rstinf.idl \
 	rstloc.idl \
 	rstnot.idl \

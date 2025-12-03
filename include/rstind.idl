@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 2025 Piotr Caban
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#if 0
+#pragma makedep install
+#endif
+
+[
+    local,
+    object,
+    uuid(0c733a82-2a1c-11ce-ade5-00aa0044773d),
+    pointer_default(unique)
+]
+interface IRowsetIndex : IUnknown
+{
+    typedef DWORD DBSEEK;
+
+    enum DBSEEKENUM
+    {
+        DBSEEK_INVALID = 0x0,
+        DBSEEK_FIRSTEQ = 0x1,
+        DBSEEK_LASTEQ = 0x2,
+        DBSEEK_AFTEREQ = 0x4,
+        DBSEEK_AFTER = 0x8,
+        DBSEEK_BEFOREEQ = 0x10,
+        DBSEEK_BEFORE = 0x20
+    };
+
+    cpp_quote("#define DBSEEK_GE DBSEEK_AFTEREQ")
+    cpp_quote("#define DBSEEK_GT DBSEEK_AFTER")
+    cpp_quote("#define DBSEEK_LE DBSEEK_BEFOREEQ")
+    cpp_quote("#define DBSEEK_LT DBSEEK_BEFORE")
+
+    typedef DWORD DBRANGE;
+
+    enum DBRANGEENUM {
+        DBRANGE_INCLUSIVESTART = 0x0,
+        DBRANGE_INCLUSIVEEND = 0x0,
+        DBRANGE_EXCLUSIVESTART = 0x1,
+        DBRANGE_EXCLUSIVEEND = 0x2,
+        DBRANGE_EXCLUDENULLS = 0x4,
+        DBRANGE_PREFIX = 0x8,
+        DBRANGE_MATCH = 0x10
+    };
+
+    enum DBRANGEENUM20 {
+        DBRANGE_MATCH_N_SHIFT = 0x18,
+        DBRANGE_MATCH_N_MASK = 0xff,
+    };
+
+    HRESULT GetIndexInfo([in, out] DBORDINAL *pcKeyColumns,
+                         [out, size_is(,*pcKeyColumns)] DBINDEXCOLUMNDESC **prgIndexColumnDesc,
+                         [in, out] ULONG *pcIndexPropertySets,
+                         [out, size_is(,*pcIndexPropertySets)] DBPROPSET **prgIndexPropertySets);
+
+    HRESULT Seek([in] HACCESSOR hAccessor,
+                 [in] DBORDINAL cKeyValues,
+                 [in] void *pData,
+                 [in] DBSEEK dwSeekOptions);
+
+    HRESULT SetRange([in] HACCESSOR hAccessor,
+                     [in] DBORDINAL cStartKeyColumns,
+                     [in] void *pStartData,
+                     [in] DBORDINAL cEndKeyColumns,
+                     [in] void *pEndData,
+                     [in] DBRANGE dwRangeOptions);
+}
