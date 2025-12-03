@@ -260,19 +260,19 @@ typedef [uuid(0000052f-0000-0010-8000-00aa006d2ea4)] enum CursorLocationEnum
 
 typedef [uuid(0000051c-0000-0010-8000-00aa006d2ea4)] enum CursorOptionEnum
 {
-    adHoldRecords = 256,
-    adMovePrevious = 512,
-    adBookmark = 8192,
-    adApproxPosition = 16384,
-    adUpdateBatch = 65536,
-    adResync = 131072,
-    adNotify = 262144,
-    adFind = 524288,
-    adSeek = 4194304,
-    adIndex = 8388608,
-    adAddNew = 16778240,
-    adDelete = 16779264,
-    adUpdate = 16809984
+    adHoldRecords = 0x100,
+    adMovePrevious = 0x200,
+    adBookmark = 0x2000,
+    adApproxPosition = 0x4000,
+    adUpdateBatch = 0x10000,
+    adResync = 0x20000,
+    adNotify = 0x40000,
+    adFind = 0x80000,
+    adSeek = 0x400000,
+    adIndex = 0x800000,
+    adAddNew = 0x1000400,
+    adDelete = 0x1000800,
+    adUpdate = 0x1008000
 } CursorOptionEnum;
 
 typedef [uuid(00000540-0000-0010-8000-00aa006d2ea4)] enum MarshalOptionsEnum
