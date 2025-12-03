@@ -2975,8 +2975,35 @@ static HRESULT WINAPI recordset_put_Index( _Recordset *iface, BSTR index )
 
 static HRESULT WINAPI recordset_get_Index( _Recordset *iface, BSTR *index )
 {
-    FIXME( "%p, %p\n", iface, index );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
+    DBID *dbid;
+
+    TRACE( "%p, %p\n", iface, index );
+
+    if (!index) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (!recordset->rowset_cur_idx)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetCurrentIndex, (void **)&recordset->rowset_cur_idx );
+        if (FAILED(hr) || !recordset->rowset_cur_idx)
+            recordset->rowset_cur_idx = NO_INTERFACE;
+    }
+    if (recordset->rowset_cur_idx == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    hr = IRowsetCurrentIndex_GetIndex( recordset->rowset_cur_idx, &dbid );
+    if (FAILED(hr)) return hr;
+
+    if (dbid->eKind == DBKIND_GUID_NAME || dbid->eKind == DBKIND_NAME)
+    {
+        *index = SysAllocString( dbid->uName.pwszName );
+        CoTaskMemFree( dbid->uName.pwszName );
+    }
+    else
+        *index = NULL;
+    CoTaskMemFree( dbid );
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_Save( _Recordset *iface, VARIANT destination, PersistFormatEnum persist_format )

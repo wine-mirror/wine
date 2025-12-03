@@ -87,6 +87,7 @@ DEFINE_EXPECT(rowset_view_CreateView);
 DEFINE_EXPECT(view_chapter_OpenViewChapter);
 DEFINE_EXPECT(view_filter_SetFilter);
 DEFINE_EXPECT(chaptered_rowset_ReleaseChapter);
+DEFINE_EXPECT(rowset_current_index_GetIndex);
 DEFINE_EXPECT(rowset_current_index_SetIndex);
 
 static BOOL is_bof( _Recordset *recordset )
@@ -1223,8 +1224,15 @@ static HRESULT WINAPI rowset_current_index_SetRange(IRowsetCurrentIndex *iface,
 
 static HRESULT WINAPI rowset_current_index_GetIndex(IRowsetCurrentIndex *iface, DBID **ppIndexID)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(rowset_current_index_GetIndex);
+    ok(ppIndexID != NULL, "ppIndexID = NULL\n");
+
+    *ppIndexID = CoTaskMemAlloc(sizeof(**ppIndexID));
+    memset(*ppIndexID, 0, sizeof(**ppIndexID));
+    (*ppIndexID)->eKind = DBKIND_NAME;
+    (*ppIndexID)->uName.pwszName = CoTaskMemAlloc(sizeof(L"abc"));
+    wcscpy((*ppIndexID)->uName.pwszName, L"abc");
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_current_index_SetIndex(IRowsetCurrentIndex *iface, DBID *pIndexID)
@@ -1947,6 +1955,13 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     if (!exact_scroll) CHECK_CALLED( rowset_GetNextRows );
     else CHECK_CALLED( rowset_GetRowsAt );
     ok( hr == MAKE_ADO_HRESULT(adErrNoCurrentRecord), "got %08lx\n", hr );
+
+    SET_EXPECT( rowset_current_index_GetIndex );
+    hr = _Recordset_get_Index( recordset, &bstr );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED( rowset_current_index_GetIndex );
+    ok( !wcscmp( bstr, L"abc"), "bstr = %s\n", wine_dbgstr_w(bstr) );
+    SysFreeString( bstr );
 
     bstr = SysAllocString( L"test" );
     SET_EXPECT( rowset_current_index_SetIndex );
