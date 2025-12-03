@@ -2331,6 +2331,8 @@ static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR s
     ICommandText *command_text;
     IOpenRowset *openrowset;
     DBROWCOUNT affected;
+    DBPROPSET propset;
+    DBPROP props[3];
     ICommand *cmd;
     DBID table;
     HRESULT hr;
@@ -2341,7 +2343,23 @@ static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR s
 
     table.eKind = DBKIND_NAME;
     table.uName.pwszName = source;
-    hr = IOpenRowset_OpenRowset(openrowset, NULL, &table, NULL, &IID_IUnknown, 0, NULL, rowset);
+
+    propset.guidPropertySet = DBPROPSET_ROWSET;
+    propset.cProperties = ARRAY_SIZE(props);
+    propset.rgProperties = props;
+    memset(props, 0, sizeof(props));
+    props[0].dwPropertyID = DBPROP_IRowsetChange;
+    V_VT(&props[0].vValue) = VT_BOOL;
+    V_BOOL(&props[0].vValue) = (recordset->lock_type == adLockReadOnly ? VARIANT_FALSE : VARIANT_TRUE);
+    props[1].dwPropertyID = DBPROP_IRowsetUpdate;
+    V_VT(&props[1].vValue) = VT_BOOL;
+    V_BOOL(&props[1].vValue) = (recordset->lock_type == adLockBatchOptimistic ? VARIANT_TRUE : VARIANT_FALSE);
+    props[2].dwPropertyID = DBPROP_UPDATABILITY;
+    V_VT(&props[2].vValue) = VT_I4;
+    V_I4(&props[2].vValue) = (recordset->lock_type == adLockReadOnly ? 0 :
+            DBPROPVAL_UP_CHANGE | DBPROPVAL_UP_DELETE | DBPROPVAL_UP_INSERT);
+
+    hr = IOpenRowset_OpenRowset(openrowset, NULL, &table, NULL, &IID_IUnknown, 1, &propset, rowset);
     if (SUCCEEDED(hr))
     {
         IOpenRowset_Release(openrowset);
