@@ -99,6 +99,7 @@ struct recordset
     IRowsetExactScroll *rowset_es;
     IRowsetChange     *rowset_change;
     IAccessor         *accessor;
+    IRowsetCurrentIndex *rowset_cur_idx;
     EditModeEnum       editmode;
     HROW               current_row;
     struct
@@ -1640,6 +1641,9 @@ static void close_recordset( struct recordset *recordset )
     if ( recordset->rowset_change && recordset->rowset_change != NO_INTERFACE )
         IRowsetChange_Release( recordset->rowset_change );
     recordset->rowset_change = NULL;
+    if ( recordset->rowset_cur_idx && recordset->rowset_cur_idx != NO_INTERFACE )
+        IRowsetCurrentIndex_Release( recordset->rowset_cur_idx );
+    recordset->rowset_cur_idx = NULL;
 
     for (i = 0; i < recordset->fields.count; i++)
     {
@@ -2943,8 +2947,30 @@ static HRESULT WINAPI recordset_Seek( _Recordset *iface, VARIANT key_values, See
 
 static HRESULT WINAPI recordset_put_Index( _Recordset *iface, BSTR index )
 {
-    FIXME( "%p, %s\n", iface, debugstr_w(index) );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
+    DBID dbid;
+
+    TRACE( "%p, %s\n", iface, debugstr_w(index) );
+
+    if (!recordset->rowset_cur_idx)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetCurrentIndex, (void **)&recordset->rowset_cur_idx );
+        if (FAILED(hr) || !recordset->rowset_cur_idx)
+            recordset->rowset_cur_idx = NO_INTERFACE;
+    }
+    if (recordset->rowset_cur_idx == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    cache_release( recordset );
+
+    memset( &dbid, 0, sizeof(dbid) );
+    dbid.eKind = DBKIND_NAME;
+    dbid.uName.pwszName = index;
+    hr = IRowsetCurrentIndex_SetIndex( recordset->rowset_cur_idx, &dbid );
+    if (FAILED(hr)) return hr;
+
+    return _Recordset_MoveFirst( iface );
 }
 
 static HRESULT WINAPI recordset_get_Index( _Recordset *iface, BSTR *index )
