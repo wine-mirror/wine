@@ -88,6 +88,7 @@ typedef LONG_PTR DB_LRESERVE;
 #include "rstupd.idl"
 #include "rstidn.idl"
 #include "rstind.idl"
+#include "rstcridx.idl"
 #include "mulres.idl"
 #include "transact.idl"
 #include "trnjoi.idl"
