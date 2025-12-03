@@ -1610,6 +1610,7 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     LockTypeEnum lock_type;
     ADO_LONGPTR size;
     DataTypeEnum type;
+    VARIANT_BOOL b;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -1624,6 +1625,11 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     hr = _Recordset_get_State( recordset, &state );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( state == adStateClosed, "state = %ld\n", state );
+
+    b = VARIANT_TRUE;
+    hr = _Recordset_Supports( recordset, adHoldRecords, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_FALSE, "b = %x\n", b);
 
     testrowset.IRowsetExactScroll_iface.lpVtbl = &rowset_vtbl;
     testrowset.IRowsetInfo_iface.lpVtbl = &rowset_info;
@@ -1671,6 +1677,62 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     hr = _Recordset_get_LockType( recordset, &lock_type );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( lock_type == adLockBatchOptimistic, "lock_type = %d\n", lock_type );
+
+    hr = _Recordset_Supports( recordset, adHoldRecords, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adMovePrevious, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adAddNew, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adDelete, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adUpdate, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adBookmark, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adApproxPosition, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adUpdateBatch, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adResync, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_FALSE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adNotify, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_FALSE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adFind, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_FALSE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adSeek, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_FALSE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adIndex, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_FALSE, "b = %x\n", b);
+
+    hr = _Recordset_Supports( recordset, adHoldRecords | adMovePrevious, &b );
+    ok( hr == S_OK, "got %08lx\n", hr);
+    ok( b == VARIANT_TRUE, "b = %x\n", b);
 
     count = -1;
     SET_EXPECT( column_info_GetColumnInfo );
