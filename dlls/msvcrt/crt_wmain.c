@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "crt_init.h"
 
 int __cdecl wmain(int argc, WCHAR **argv, WCHAR **env);
 
@@ -54,6 +55,7 @@ int __cdecl wmainCRTStartup(void)
     __wgetmainargs(&argc, &argv, &env, 0, &new_mode);
 #endif
     _set_app_type(get_nt_header()->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI ? _crt_gui_app : _crt_console_app);
+    do_global_ctors();
 
     ret = wmain(argc, argv, env);
 
