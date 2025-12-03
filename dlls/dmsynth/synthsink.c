@@ -343,6 +343,20 @@ static DWORD CALLBACK synth_sink_timing_thread(void *args)
     }
 
 done:
+    if (FAILED(hr = IDirectSoundBuffer_Stop(buffer)))
+        ERR("Failed to stop sound buffer, hr %#lx.\n", hr);
+
+    if (FAILED(hr = IDirectSoundBuffer_QueryInterface(buffer, &IID_IDirectSoundNotify,
+                (void **)&notify)))
+        ERR("Failed to query IDirectSoundNotify iface, hr %#lx.\n", hr);
+    else
+    {
+        if (FAILED(hr = IDirectSoundNotify_SetNotificationPositions(notify, 0, NULL)))
+            ERR("Failed to set notification positions, hr %#lx\n", hr);
+
+        IDirectSoundNotify_Release(notify);
+    }
+
     IDirectSoundBuffer_Release(buffer);
     CloseHandle(buffer_event);
 
