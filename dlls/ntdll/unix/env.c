@@ -1845,11 +1845,9 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
         NtCurrentTeb()->Tib.ExceptionList = (void *)((char *)NtCurrentTeb() + teb_offset);
         wow_peb = (PEB32 *)((char *)peb + page_size);
         set_thread_id( NtCurrentTeb(), GetCurrentProcessId(), GetCurrentThreadId() );
-        ERR( "starting %s in experimental wow64 mode\n", debugstr_us(&params->ImagePathName) );
         break;
     case IMAGE_FILE_MACHINE_AMD64:
         if (main_image_info.Machine == current_machine) break;
-        ERR( "starting %s in experimental ARM64EC mode\n", debugstr_us(&params->ImagePathName) );
         break;
     }
 #endif
