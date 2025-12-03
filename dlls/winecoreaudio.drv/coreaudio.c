@@ -662,6 +662,8 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             return osstatus_to_hresult(sc);
         }
     }else{
+        AudioChannelLayout layout;
+
         hr = ca_get_audiodesc(dev_desc, fmt);
         if(FAILED(hr))
             return hr;
@@ -673,6 +675,16 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             WARN("Couldn't set format: %x\n", (int)sc);
             return osstatus_to_hresult(sc);
         }
+
+        /* Set channel layout: AudioChannelBitmap and dwChannelMask conveniently have identical positions */
+        layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
+        layout.mChannelBitmap    = (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) ? ((WAVEFORMATEXTENSIBLE *)fmt)->dwChannelMask : 0x3;
+        layout.mNumberChannelDescriptions = 0;
+
+        sc = AudioUnitSetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
+                                  kAudioUnitScope_Input, 0, &layout, sizeof(layout));
+        if (sc != noErr)
+            WARN("Couldn't set channel layout: %d\n", (int)sc);
     }
 
     return S_OK;
