@@ -582,6 +582,12 @@ TW_UINT16 TWAIN_OpenDSM (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	TRACE("DG_CONTROL/DAT_PARENT/MSG_OPENDSM\n");
         if (!DSM_initialized) {
                 event_message = RegisterWindowMessageA("WINE TWAIN_32 EVENT");
+
+		if (pOrigin->SupportedGroups & DF_APP2)
+		{
+			pOrigin->SupportedGroups |= DF_DSM2;
+		}
+
 		DSM_currentDevice = 0;
 		DSM_initialized = TRUE;
 		DSM_twCC = TWCC_SUCCESS;
@@ -605,4 +611,32 @@ TW_UINT16 TWAIN_GetDSMStatus (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	pSourceStatus->ConditionCode = DSM_twCC;
 	DSM_twCC = TWCC_SUCCESS;  /* clear the condition code */
 	return TWRC_SUCCESS;
+}
+
+
+/* DG_CONTROL/DAT_ENTRYPOINT/MSG_GET */
+TW_UINT16 TWAIN_GetEntrypoint(TW_ENTRYPOINT *pEntrypoint)
+{
+	TW_UINT16 twRC;
+
+	if (!pEntrypoint)
+	{
+		ERR("pEntrypoint is null\n");
+		twRC = TWRC_FAILURE;
+		DSM_twCC = TWCC_BADVALUE;
+	}
+	else if (pEntrypoint->Size < sizeof(TW_ENTRYPOINT))
+	{
+		ERR("pEntrypoint->Size=%ld too small\n", pEntrypoint->Size);
+		twRC = TWRC_FAILURE;
+		DSM_twCC = TWCC_BADVALUE;
+	}
+	else
+	{
+		memcpy(pEntrypoint, &_entrypoints, sizeof(_entrypoints));
+		twRC = TWRC_SUCCESS;
+		DSM_twCC = TWCC_SUCCESS;
+	}
+
+	return twRC;
 }

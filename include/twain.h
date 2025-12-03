@@ -1845,7 +1845,9 @@ typedef TW_UINT16 (*DSENTRYPROC)(pTW_IDENTITY,
 
 /* Definitions from TWAIN 2.x used by our builtin data sources */
 #define DAT_ENTRYPOINT 0x0403
-#define DF_DS2 0x40000000
+#define DF_DSM2 0x10000000
+#define DF_APP2 0x20000000
+#define DF_DS2  0x40000000
 
 #ifdef  __cplusplus
 extern "C" {

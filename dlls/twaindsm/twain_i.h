@@ -63,5 +63,6 @@ extern TW_UINT16 TWAIN_OpenDSM(pTW_IDENTITY pOrigin, TW_MEMREF pData);
 extern TW_UINT16 TWAIN_GetDSMStatus(pTW_IDENTITY pOrigin, TW_MEMREF pData);
 extern TW_UINT16 TWAIN_ControlNull(pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, activeDS *pSource, TW_UINT16 MSG, TW_MEMREF pData);
 extern TW_UINT16 TWAIN_ProcessEvent(pTW_IDENTITY pOrigin, activeDS *pSource, TW_MEMREF pData);
+extern TW_UINT16 TWAIN_GetEntrypoint(TW_ENTRYPOINT *pEntrypoint);
 
 #endif

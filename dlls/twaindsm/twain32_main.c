@@ -126,6 +126,21 @@ static TW_UINT16 TWAIN_SourceManagerHandler (
             }
             break;
 
+        case DAT_ENTRYPOINT:
+            switch (MSG)
+            {
+                case MSG_GET:
+                    twRC = TWAIN_GetEntrypoint((TW_ENTRYPOINT *) pData);
+                    break;
+
+                default:
+                    /* Unrecognized operation triplet */
+                    twRC = TWRC_FAILURE;
+                    DSM_twCC = TWCC_BADPROTOCOL;
+                    WARN("unrecognized operation triplet\n");
+            }
+            break;
+
         case DAT_STATUS:
             if (MSG == MSG_GET) {
                 twRC = TWAIN_GetDSMStatus (pOrigin, pData);
