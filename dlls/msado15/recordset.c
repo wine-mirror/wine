@@ -2293,10 +2293,19 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     DBREFCOUNT refcount;
     HACCESSOR hacc;
     HRESULT hr;
+    void *data;
 
     TRACE( "%p, %s, %s\n", recordset, debugstr_variant(&field_list), debugstr_variant(&values) );
-    if (V_VT(&field_list) != VT_ERROR)
-        FIXME( "ignoring field list and values\n" );
+
+    if ((V_VT(&field_list) & VT_ARRAY) != (V_VT(&values) & VT_ARRAY))
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (V_VT(&field_list) & VT_ARRAY)
+    {
+        if (V_ARRAY(&field_list)->rgsabound[0].cElements != V_ARRAY(&values)->rgsabound[0].cElements ||
+                V_VT(&field_list) != (VT_ARRAY | VT_VARIANT) ||
+                V_VT(&values) != (VT_ARRAY | VT_VARIANT))
+            return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    }
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
@@ -2317,8 +2326,15 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     hr = get_accessor( recordset, &field_list, &hacc );
     if (FAILED(hr)) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
 
+    if (V_VT(&field_list) == VT_ERROR)
+        data = NULL;
+    else if (V_VT(&values) & VT_ARRAY)
+        data = V_ARRAY(&values)->pvData;
+    else
+        data = &values;
+
     hr = IRowsetChange_InsertRow( recordset->rowset_change, 0,
-            hacc, NULL, &recordset->current_row );
+            hacc, data, &recordset->current_row );
     IAccessor_ReleaseAccessor( recordset->accessor, hacc, &refcount );
     if (FAILED(hr))
         return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
