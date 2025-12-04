@@ -736,15 +736,10 @@ static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER res
 {
     struct rowset *rowset = impl_from_IRowsetChange(iface);
     struct data *val;
+    HRESULT hr;
     int i;
 
     TRACE("%p, %Iu, %Id, %p, %p\n", rowset, reserved, accessor, data, row);
-
-    if (data)
-    {
-        FIXME("setting data not implemented\n");
-        return E_NOTIMPL;
-    }
 
     if (rowset->row_cnt == rowset->rows_alloc)
     {
@@ -768,6 +763,12 @@ static HRESULT WINAPI rowset_change_InsertRow(IRowsetChange *iface, HCHAPTER res
         /* TODO: handle default values */
         val = (struct data *)(rowset->data + rowset->row_cnt * rowset->row_size + rowset->column_off[i]);
         val->status = DBSTATUS_E_UNAVAILABLE;
+    }
+
+    if (data)
+    {
+        hr = rowset_change_SetData(iface, rowset->row_cnt + 1, accessor, data);
+        if (FAILED(hr)) return hr;
     }
 
     rowset->row_cnt++;
