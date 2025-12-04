@@ -1077,65 +1077,59 @@ static enum method_result pdb_method_get_line_from_address(struct module_format 
 static enum pdb_result pdb_reader_advance_line_info(struct pdb_reader *pdb,
                                                     struct lineinfo_t *line_info, BOOL forward)
 {
-    struct pdb_reader_compiland_iterator compiland_iter;
     struct pdb_reader_walker linetab2_walker;
     struct CV_DebugSLinesFileBlockHeader_t files_hdr;
     DWORD64 lineblk_base;
     struct CV_Line_t *lines;
     enum pdb_result result;
+    unsigned segment, offset;
+    unsigned compiland;
     unsigned i;
 
-    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter)))
+    if ((result = pdb_reader_get_segment_offset_from_address(pdb, line_info->address, &segment, &offset))) return result;
+    if ((result = pdb_reader_lookup_compiland_by_segment_offset(pdb, segment, offset, &compiland))) return result;
+    if ((result = pdb_reader_walker_init(pdb, pdb->compilands[compiland].compiland_stream_id, &linetab2_walker))) return result;
+    if ((result = pdb_reader_walker_narrow(&linetab2_walker, pdb->compilands[compiland].compiland_linetab2_offset,
+                                           pdb->compilands[compiland].compiland_linetab2_size))) return result;
+
+    if ((result = pdb_reader_locate_filehdr_in_linetab2(pdb, linetab2_walker, line_info->address, &lineblk_base, &files_hdr, &lines)))
         return result;
-    do
+    if ((result = pdb_find_matching_linetab2(lines, files_hdr.nLines, line_info->address - lineblk_base, &i)))
+        return result;
+
+    /* It happens that several entries have same address (yet potentially different line numbers)
+     * Simplify handling by getting the first entry (forward or backward) with a different address.
+     * More tests from native are required.
+     */
+    if (forward)
     {
-        if (compiland_iter.dbi_cu_header.lineno2_size)
+        for (; i + 1 < files_hdr.nLines; i++)
+            if (line_info->address != lineblk_base + lines[i + 1].offset)
+            {
+                line_info->address = lineblk_base + lines[i + 1].offset;
+                line_info->line_number = lines[i + 1].linenumStart;
+                break;
+            }
+        if (i + 1 >= files_hdr.nLines)
+            result = R_PDB_INVALID_ARGUMENT;
+    }
+    else
+    {
+        for (; i; --i)
         {
-            if ((result = pdb_reader_walker_init_linetab2(pdb, &compiland_iter.dbi_cu_header, &linetab2_walker)))
-                return result;
-            result = pdb_reader_locate_filehdr_in_linetab2(pdb, linetab2_walker, line_info->address, &lineblk_base, &files_hdr, &lines);
-            if (result == R_PDB_NOT_FOUND) continue;
-            if (result) return result;
-            if ((result = pdb_find_matching_linetab2(lines, files_hdr.nLines, line_info->address - lineblk_base, &i)))
-                return result;
-
-            /* It happens that several entries have same address (yet potentially different line numbers)
-             * Simplify handling by getting the first entry (forward or backward) with a different address.
-             * More tests from native are required.
-             */
-            if (forward)
+            if (line_info->address != lineblk_base + lines[i - 1].offset)
             {
-                for (; i + 1 < files_hdr.nLines; i++)
-                    if (line_info->address != lineblk_base + lines[i + 1].offset)
-                    {
-                        line_info->address = lineblk_base + lines[i + 1].offset;
-                        line_info->line_number = lines[i + 1].linenumStart;
-                        break;
-                    }
-                if (i + 1 >= files_hdr.nLines)
-                    result = R_PDB_INVALID_ARGUMENT;
+                line_info->address = lineblk_base + lines[i - 1].offset;
+                line_info->line_number = lines[i - 1].linenumStart;
+                break;
             }
-            else
-            {
-                for (; i; --i)
-                {
-                    if (line_info->address != lineblk_base + lines[i - 1].offset)
-                    {
-                        line_info->address = lineblk_base + lines[i - 1].offset;
-                        line_info->line_number = lines[i - 1].linenumStart;
-                        break;
-                    }
-                }
-                if (!i)
-                    result = R_PDB_INVALID_ARGUMENT;
-            }
-            pdb_reader_free(pdb, lines);
-            /* refresh filename in case it has been tempered with */
-            return result ? result : pdb_reader_set_lineinfo_filename(pdb, linetab2_walker, files_hdr.offFile, line_info);
         }
-    } while (pdb_reader_compiland_iterator_next(pdb, &compiland_iter) == R_PDB_SUCCESS);
-
-    return R_PDB_NOT_FOUND;
+        if (!i)
+            result = R_PDB_INVALID_ARGUMENT;
+    }
+    pdb_reader_free(pdb, lines);
+    /* refresh filename in case it has been tempered with */
+    return result ? result : pdb_reader_set_lineinfo_filename(pdb, linetab2_walker, files_hdr.offFile, line_info);
 }
 
 static enum method_result pdb_method_advance_line_info(struct module_format *modfmt,
