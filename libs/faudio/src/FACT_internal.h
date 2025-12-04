@@ -30,12 +30,26 @@
 
 /* Internal AudioEngine Types */
 
+#define ACCESSIBILITY_PUBLIC    0x1
+#define ACCESSIBILITY_READONLY  0x2
+#define ACCESSIBILITY_CUE       0x4
+#define ACCESSIBILITY_RESERVED  0x8
+
+enum max_instance_behavior
+{
+    MAX_INSTANCE_BEHAVIOR_FAIL = 0,
+    MAX_INSTANCE_BEHAVIOR_QUEUE = 1,
+    MAX_INSTANCE_BEHAVIOR_REPLACE_OLDEST = 2,
+    MAX_INSTANCE_BEHAVIOR_REPLACE_QUIETEST = 3,
+    MAX_INSTANCE_BEHAVIOR_REPLACE_LOWEST_PRIORITY = 4,
+};
+
 typedef struct FACTAudioCategory
 {
 	uint8_t instanceLimit;
 	uint16_t fadeInMS;
 	uint16_t fadeOutMS;
-	uint8_t maxInstanceBehavior;
+	enum max_instance_behavior maxInstanceBehavior;
 	int16_t parentCategory;
 	float volume;
 	uint8_t visibility;
@@ -52,11 +66,19 @@ typedef struct FACTVariable
 	float maxValue;
 } FACTVariable;
 
+enum rpc_point_type
+{
+	RPC_POINT_TYPE_LINEAR = 0,
+	RPC_POINT_TYPE_FAST = 1,
+	RPC_POINT_TYPE_SLOW = 2,
+	RPC_POINT_TYPE_SINCOS = 3,
+};
+
 typedef struct FACTRPCPoint
 {
 	float x;
 	float y;
-	uint8_t type;
+	enum rpc_point_type type;
 } FACTRPCPoint;
 
 typedef enum FACTRPCParameter
@@ -93,28 +115,6 @@ typedef struct FACTDSPPreset
 	FACTDSPParameter *parameters;
 } FACTDSPPreset;
 
-typedef enum FACTNoticationsFlags
-{
-	NOTIFY_CUEPREPARED           = 0x00000001,
-	NOTIFY_CUEPLAY               = 0x00000002,
-	NOTIFY_CUESTOP               = 0x00000004,
-	NOTIFY_CUEDESTROY            = 0x00000008,
-	NOTIFY_MARKER                = 0x00000010,
-	NOTIFY_SOUNDBANKDESTROY      = 0x00000020,
-	NOTIFY_WAVEBANKDESTROY       = 0x00000040,
-	NOTIFY_LOCALVARIABLECHANGED  = 0x00000080,
-	NOTIFY_GLOBALVARIABLECHANGED = 0x00000100,
-	NOTIFY_GUICONNECTED          = 0x00000200,
-	NOTIFY_GUIDISCONNECTED       = 0x00000400,
-	NOTIFY_WAVEPREPARED          = 0x00000800,
-	NOTIFY_WAVEPLAY              = 0x00001000,
-	NOTIFY_WAVESTOP              = 0x00002000,
-	NOTIFY_WAVELOOPED            = 0x00004000,
-	NOTIFY_WAVEDESTROY           = 0x00008000,
-	NOTIFY_WAVEBANKPREPARED      = 0x00010000,
-	NOTIFY_WAVEBANKSTREAMING_INVALIDCONTENT = 0x00020000
-} FACTNoticationsFlags;
-
 /* Internal SoundBank Types */
 
 typedef enum
@@ -132,6 +132,28 @@ typedef enum
 	FACTEVENT_MARKERREPEATING =			18
 } FACTEventType;
 
+enum variation_type
+{
+	VARIATION_TYPE_ORDERED = 0,
+	VARIATION_TYPE_ORDERED_FROM_RANDOM = 1,
+	VARIATION_TYPE_RANDOM = 2,
+	VARIATION_TYPE_RANDOM_NO_REPEATS = 3,
+	VARIATION_TYPE_SHUFFLE = 4,
+};
+
+#define VARIATION_TYPE_MASK	0x7
+
+#define EVENT_WAVE_HAS_TRACK_VARIATION	0x0040
+
+#define EVENT_STOP_IMMEDIATE	0x01
+#define EVENT_STOP_CUE		0x02
+
+#define EVENT_SETTINGS_RAMP	0x01
+
+#define EVENT_EQUATION_ADD	0x01
+#define EVENT_EQUATION_VALUE	0x04
+#define EVENT_EQUATION_RANDOM	0x08
+
 typedef struct FACTEvent
 {
 	uint16_t type;
@@ -148,7 +170,7 @@ typedef struct FACTEvent
 			uint16_t angle;
 
 			/* Track Variation */
-			uint8_t isComplex;
+			bool isComplex;
 			FAUDIONAMELESS union
 			{
 				struct
@@ -158,7 +180,8 @@ typedef struct FACTEvent
 				} simple;
 				struct
 				{
-					uint16_t variation;
+					enum variation_type variation_type;
+					bool has_track_variation;
 					uint16_t trackCount;
 					uint16_t *tracks;
 					uint8_t *wavebanks;
@@ -231,6 +254,12 @@ typedef struct FACTTrack
 	FACTEvent *events;
 } FACTTrack;
 
+#define SOUND_FLAG_COMPLEX		0x01
+#define SOUND_FLAG_HAS_RPC		0x02
+#define SOUND_FLAG_HAS_TRACK_RPC	0x04
+#define SOUND_FLAG_RPC_MASK		0x0e
+#define SOUND_FLAG_HAS_DSP		0x10
+
 typedef struct FACTSound
 {
 	uint8_t flags;
@@ -248,6 +277,8 @@ typedef struct FACTSound
 	uint32_t *dspCodes;
 } FACTSound;
 
+#define CUE_FLAG_SINGLE_SOUND	0x04
+
 typedef struct FACTCueData
 {
 	uint8_t flags;
@@ -256,7 +287,7 @@ typedef struct FACTCueData
 	uint8_t instanceLimit;
 	uint16_t fadeInMS;
 	uint16_t fadeOutMS;
-	uint8_t maxInstanceBehavior;
+	enum max_instance_behavior maxInstanceBehavior;
 	uint8_t instanceCount;
 } FACTCueData;
 
@@ -276,11 +307,36 @@ typedef struct FACTVariation
 	uint32_t linger;
 } FACTVariation;
 
+enum variation_table_type
+{
+    VARIATION_TABLE_TYPE_WAVE = 0,
+    VARIATION_TABLE_TYPE_SOUND = 1,
+    VARIATION_TABLE_TYPE_CLIP = 2,
+    VARIATION_TABLE_TYPE_INTERACTIVE = 3,
+    VARIATION_TABLE_TYPE_COMPACT_WAVE = 4,
+};
+
+#define VARIATION_TABLE_TYPE_MASK		0x7
+
+#define VARIATION_FLAG_VOLUME_ADD               0x0001
+#define VARIATION_FLAG_PITCH_ADD                0x0004
+#define VARIATION_FLAG_FREQUENCY_ADD            0x0010
+#define VARIATION_FLAG_Q_ADD                    0x0040
+#define VARIATION_FLAG_PITCH_NEW_ON_LOOP        0x0100
+#define VARIATION_FLAG_VOLUME_NEW_ON_LOOP       0x0200
+#define VARIATION_FLAG_FREQUENCY_Q_NEW_ON_LOOP  0x0c00
+#define VARIATION_FLAG_PITCH                    0x1000
+#define VARIATION_FLAG_VOLUME                   0x2000
+#define VARIATION_FLAG_FREQUENCY_Q              0xc000
+
+#define VARIATION_FLAG_LOOP_MASK (VARIATION_FLAG_PITCH_NEW_ON_LOOP \
+        | VARIATION_FLAG_VOLUME_NEW_ON_LOOP | VARIATION_FLAG_FREQUENCY_Q_NEW_ON_LOOP)
+
 typedef struct FACTVariationTable
 {
-	uint8_t flags;
+	enum variation_table_type type;
 	int16_t variable;
-	uint8_t isComplex;
+	bool isComplex;
 
 	uint16_t entryCount;
 	FACTVariation *entries;
@@ -327,7 +383,7 @@ typedef struct FACTEventInstance
 {
 	uint32_t timestamp;
 	uint16_t loopCount;
-	uint8_t finished;
+	bool finished;
 	FAUDIONAMELESS union
 	{
 		float value;
@@ -428,7 +484,7 @@ struct FACTAudioEngine
 	/* Engine thread */
 	FAudioThread apiThread;
 	FAudioMutex apiLock;
-	uint8_t initialized;
+	bool initialized;
 
 	/* Allocator callbacks */
 	FAudioMallocFunc pMalloc;
@@ -436,12 +492,13 @@ struct FACTAudioEngine
 	FAudioReallocFunc pRealloc;
 
 	/* Peristent Notifications */
-	FACTNoticationsFlags notifications;
+	uint32_t notifications;
 	void *cue_context;
 	void *sb_context;
 	void *wb_context;
 	void *wave_context;
-	LinkedList *wb_notifications_list;
+	FACTNotification *wavebank_notifications;
+	size_t wavebank_notification_count, wavebank_notifications_capacity;
 
 	/* Settings handle */
 	void *settings;
@@ -452,7 +509,7 @@ struct FACTSoundBank
 	/* Engine references */
 	FACTAudioEngine *parentEngine;
 	FACTCue *cueList;
-	uint8_t notifyOnDestroy;
+	bool notifyOnDestroy;
 	void *usercontext;
 
 	/* Array sizes */
@@ -483,7 +540,7 @@ struct FACTWaveBank
 	FACTAudioEngine *parentEngine;
 	LinkedList *waveList;
 	FAudioMutex waveLock;
-	uint8_t notifyOnDestroy;
+	bool notifyOnDestroy;
 	void *usercontext;
 
 	/* Actual WaveBank information */
@@ -496,7 +553,7 @@ struct FACTWaveBank
 
 	/* I/O information */
 	uint32_t packetSize;
-	uint16_t streaming;
+	bool streaming;
 	uint8_t *packetBuffer;
 	uint32_t packetBufferLen;
 	void* io;
@@ -508,7 +565,7 @@ struct FACTWave
 	FACTWaveBank *parentBank;
 	FACTCue *parentCue;
 	uint16_t index;
-	uint8_t notifyOnDestroy;
+	bool notifyOnDestroy;
 	void *usercontext;
 
 	/* Playback */
@@ -533,9 +590,9 @@ struct FACTCue
 	/* Engine references */
 	FACTSoundBank *parentBank;
 	FACTCue *next;
-	uint8_t managed;
+	bool managed;
 	uint16_t index;
-	uint8_t notifyOnDestroy;
+	bool notifyOnDestroy;
 	void *usercontext;
 
 	/* Sound data */
@@ -563,7 +620,7 @@ struct FACTCue
 	uint32_t maxRpcReleaseTime;
 
 	/* 3D Data */
-	uint8_t active3D;
+	bool active3D;
 	uint32_t srcChannels;
 	uint32_t dstChannels;
 	float matrixCoefficients[2 * 8]; /* Stereo input, 7.1 output */
@@ -583,12 +640,12 @@ void FACT_INTERNAL_GetNextWave(
 	FACTEvent *evt,
 	FACTEventInstance *evtInst
 );
-uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS);
+bool FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS);
 void FACT_INTERNAL_DestroySound(FACTSoundInstance *sound);
 void FACT_INTERNAL_BeginFadeOut(FACTSoundInstance *sound, uint16_t fadeOutMS);
 void FACT_INTERNAL_BeginReleaseRPC(FACTSoundInstance *sound, uint16_t releaseMS);
 
-void FACT_INTERNAL_SendCueNotification(FACTCue *cue, FACTNoticationsFlags flag, uint8_t type);
+void FACT_INTERNAL_SendCueNotification(FACTCue *cue, uint8_t type);
 
 /* RPC Helper Functions */
 
@@ -639,7 +696,7 @@ uint32_t FACT_INTERNAL_ParseWaveBank(
 	uint32_t packetSize,
 	FACTReadFileCallback pRead,
 	FACTGetOverlappedResultCallback pOverlap,
-	uint16_t isStreaming,
+	bool isStreaming,
 	FACTWaveBank **ppWaveBank
 );
 

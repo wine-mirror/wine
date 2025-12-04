@@ -27,6 +27,7 @@
 #include "FAudio.h"
 #include "FAPOBase.h"
 #include <stdarg.h>
+#include <stdbool.h>
 
 
 #ifdef FAUDIO_WIN32_PLATFORM
