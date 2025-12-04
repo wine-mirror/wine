@@ -510,7 +510,7 @@ static BOOL read_source_mode( HKEY hkey, UINT index, DEVMODEW *mode )
     else return FALSE;
 
     if (!query_reg_ascii_value( hkey, key, value, sizeof(value_buf) )) return FALSE;
-    memcpy( &mode->dmFields, value->Data, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
+    memcpy( &mode->dmFields, value->Data, offsetof(DEVMODEW, dmICMMethod) - offsetof(DEVMODEW, dmFields) );
     return TRUE;
 }
 
@@ -554,7 +554,7 @@ static BOOL source_set_registry_settings( const struct source *source, const DEV
 
 static BOOL source_get_current_settings( const struct source *source, DEVMODEW *mode )
 {
-    memcpy( &mode->dmFields, &source->current.dmFields, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
+    memcpy( &mode->dmFields, &source->current.dmFields, offsetof(DEVMODEW, dmICMMethod) - offsetof(DEVMODEW, dmFields) );
     if (source->depth) mode->dmBitsPerPel = source->depth;
     return TRUE;
 }
@@ -4447,7 +4447,7 @@ static BOOL source_enum_display_settings( const struct source *source, UINT inde
             continue;
         if (!i--)
         {
-            memcpy( &devmode->dmFields, &source_mode->dmFields, devmode->dmSize - FIELD_OFFSET(DEVMODEW, dmFields) );
+            memcpy( &devmode->dmFields, &source_mode->dmFields, offsetof(DEVMODEW, dmICMMethod) - FIELD_OFFSET(DEVMODEW, dmFields) );
             devmode->dmDisplayFlags &= ~WINE_DM_UNSUPPORTED;
             return TRUE;
         }
