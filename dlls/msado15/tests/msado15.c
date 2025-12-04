@@ -2066,6 +2066,9 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     CHECK_CALLED(accessor_ReleaseAccessor);
     if (exact_scroll) CHECK_EXPECT(rowset_GetData);
 
+    hr = _Recordset_Update( recordset, missing, missing );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
     SET_EXPECT(rowset_update_GetRowStatus);
     SET_EXPECT(rowset_update_Undo);
     SET_EXPECT(rowset_AddRefRows);
@@ -2078,6 +2081,9 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     CHECK_CALLED(rowset_ReleaseRows);
 
     hr = _Recordset_CancelUpdate( recordset );
+    ok( hr == MAKE_ADO_HRESULT( adErrNoCurrentRecord ), "got %08lx\n", hr );
+
+    hr = _Recordset_Update( recordset, missing, missing );
     ok( hr == MAKE_ADO_HRESULT( adErrNoCurrentRecord ), "got %08lx\n", hr );
 
     V_VT(&v) = VT_BSTR;
