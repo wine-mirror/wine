@@ -87,6 +87,7 @@ static void wined3d_sampler_gl_cs_init(void *object)
     const struct wined3d_sampler_desc *desc;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    GLenum reduction_mode;
     GLuint name;
 
     TRACE("sampler_gl %p.\n", sampler_gl);
@@ -114,7 +115,10 @@ static void wined3d_sampler_gl_cs_init(void *object)
         GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_MAX_ANISOTROPY, desc->max_anisotropy));
     if (desc->reduction_mode == WINED3D_FILTER_REDUCTION_COMPARISON)
         GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE));
-    else if (desc->reduction_mode != WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE)
+    reduction_mode = wined3d_gl_filter_reduction_mode(desc->reduction_mode);
+    if (gl_info->supported[ARB_TEXTURE_FILTER_MINMAX])
+        GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_REDUCTION_MODE_ARB, reduction_mode));
+    else if (reduction_mode != GL_WEIGHTED_AVERAGE_ARB)
         WARN("Sampler min/max reduction filtering is not supported.\n");
     GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_COMPARE_FUNC,
             wined3d_gl_compare_func(desc->comparison_func)));

@@ -157,6 +157,23 @@ GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f)
     }
 }
 
+GLenum wined3d_gl_filter_reduction_mode(enum wined3d_filter_reduction_mode m)
+{
+    switch (m)
+    {
+        case WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE:
+        case WINED3D_FILTER_REDUCTION_COMPARISON:
+            return GL_WEIGHTED_AVERAGE_ARB;
+        case WINED3D_FILTER_REDUCTION_MINIMUM:
+            return GL_MIN;
+        case WINED3D_FILTER_REDUCTION_MAXIMUM:
+            return GL_MAX;
+        default:
+            FIXME("Unhandled reduction mode %#x.\n", m);
+            return GL_WEIGHTED_AVERAGE_ARB;
+    }
+}
+
 static GLenum gl_blend_op(const struct wined3d_gl_info *gl_info, enum wined3d_blend_op op)
 {
     switch (op)

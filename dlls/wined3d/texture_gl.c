@@ -2890,16 +2890,17 @@ void wined3d_texture_gl_apply_sampler_desc(struct wined3d_texture_gl *texture_gl
 
     if (!sampler_desc->reduction_mode != !gl_tex->sampler_desc.reduction_mode)
     {
+        GLenum reduction_mode = wined3d_gl_filter_reduction_mode(sampler_desc->reduction_mode);
+
         if (sampler_desc->reduction_mode == WINED3D_FILTER_REDUCTION_COMPARISON)
-        {
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
-        }
         else
-        {
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-            if (sampler_desc->reduction_mode != WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE)
-                WARN("Sampler min/max reduction filtering is not supported.\n");
-        }
+
+        if (gl_info->supported[ARB_TEXTURE_FILTER_MINMAX])
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_REDUCTION_MODE_ARB, reduction_mode);
+        else if (reduction_mode != GL_WEIGHTED_AVERAGE_ARB)
+            WARN("Sampler min/max reduction filtering is not supported.\n");
 
         gl_tex->sampler_desc.reduction_mode = sampler_desc->reduction_mode;
     }
