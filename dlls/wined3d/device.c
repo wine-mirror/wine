@@ -751,7 +751,7 @@ void wined3d_device_create_default_samplers(struct wined3d_device *device, struc
     desc.max_lod =  1000.0f;
     desc.mip_base_level = 0;
     desc.max_anisotropy = 1;
-    desc.compare = FALSE;
+    desc.reduction_mode = WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE;
     desc.comparison_func = WINED3D_CMP_NEVER;
     desc.srgb_decode = TRUE;
 

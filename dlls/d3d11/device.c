@@ -4899,9 +4899,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device5 
                 return E_INVALIDARG;
             }
 
+            wined3d_mutex_lock();
+            hr = wined3d_device_get_device_caps(device->wined3d_device, &wined3d_caps);
+            wined3d_mutex_unlock();
+            if (FAILED(hr))
+            {
+                WARN("Failed to get device caps, hr %#lx.\n", hr);
+                return hr;
+            }
+
             FIXME("Returning fake Options1 support data.\n");
             options->TiledResourcesTier = D3D11_TILED_RESOURCES_NOT_SUPPORTED;
-            options->MinMaxFiltering = FALSE;
+            options->MinMaxFiltering = wined3d_caps.min_max_filtering;
             options->ClearViewAlsoSupportsDepthOnlyFormats = FALSE;
             options->MapOnDefaultBuffers = FALSE;
             return S_OK;

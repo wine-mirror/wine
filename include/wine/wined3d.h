@@ -469,6 +469,14 @@ enum wined3d_cmp_func
     WINED3D_CMP_ALWAYS                      = 8,
 };
 
+enum wined3d_filter_reduction_mode
+{
+    WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE   = 0x0,
+    WINED3D_FILTER_REDUCTION_COMPARISON         = 0x1,
+    WINED3D_FILTER_REDUCTION_MINIMUM            = 0x2,
+    WINED3D_FILTER_REDUCTION_MAXIMUM            = 0x3,
+};
+
 enum wined3d_depth_buffer_type
 {
     WINED3D_ZB_FALSE                        = 0,
@@ -2014,6 +2022,7 @@ struct wined3d_caps
     bool viewport_array_index_any_shader;
     bool stencil_export;
     bool simple_instancing;
+    bool min_max_filtering;
 
     enum wined3d_feature_level max_feature_level;
 };
@@ -2116,7 +2125,7 @@ struct wined3d_sampler_desc
     float max_lod;
     unsigned int mip_base_level;
     unsigned int max_anisotropy;
-    BOOL compare;
+    enum wined3d_filter_reduction_mode reduction_mode;
     enum wined3d_cmp_func comparison_func;
     BOOL srgb_decode;
 };

@@ -2770,6 +2770,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
     caps->viewport_array_index_any_shader = d3d_info->viewport_array_index_any_shader;
     caps->stencil_export = d3d_info->stencil_export;
     caps->simple_instancing = d3d_info->simple_instancing;
+    caps->min_max_filtering = d3d_info->min_max_filtering;
 
     caps->max_feature_level = d3d_info->feature_level;
 

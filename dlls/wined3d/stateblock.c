@@ -2889,7 +2889,10 @@ static void sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
                 && sampler_states[WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_ANISOTROPIC)
             || (texture->flags & WINED3D_TEXTURE_COND_NP2))
         desc->max_anisotropy = 1;
-    desc->compare = texture->resource.format_attrs & WINED3D_FORMAT_ATTR_SHADOW;
+    if (texture->resource.format_attrs & WINED3D_FORMAT_ATTR_SHADOW)
+        desc->reduction_mode = WINED3D_FILTER_REDUCTION_COMPARISON;
+    else
+        desc->reduction_mode = WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE;
     desc->comparison_func = WINED3D_CMP_LESSEQUAL;
 
     /* Only use the LSB of the WINED3D_SAMP_SRGB_TEXTURE value. This matches

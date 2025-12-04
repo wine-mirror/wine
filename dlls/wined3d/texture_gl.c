@@ -2731,7 +2731,7 @@ void wined3d_texture_gl_bind(struct wined3d_texture_gl *texture_gl,
     gl_tex->sampler_desc.min_lod = -1000.0f;
     gl_tex->sampler_desc.max_lod = 1000.0f;
     gl_tex->sampler_desc.max_anisotropy = 1;
-    gl_tex->sampler_desc.compare = FALSE;
+    gl_tex->sampler_desc.reduction_mode = WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE;
     gl_tex->sampler_desc.comparison_func = WINED3D_CMP_LESSEQUAL;
     if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
         gl_tex->sampler_desc.srgb_decode = TRUE;
@@ -2888,13 +2888,20 @@ void wined3d_texture_gl_apply_sampler_desc(struct wined3d_texture_gl *texture_gl
         gl_tex->sampler_desc.srgb_decode = sampler_desc->srgb_decode;
     }
 
-    if (!sampler_desc->compare != !gl_tex->sampler_desc.compare)
+    if (!sampler_desc->reduction_mode != !gl_tex->sampler_desc.reduction_mode)
     {
-        if (sampler_desc->compare)
+        if (sampler_desc->reduction_mode == WINED3D_FILTER_REDUCTION_COMPARISON)
+        {
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
+        }
         else
+        {
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-        gl_tex->sampler_desc.compare = sampler_desc->compare;
+            if (sampler_desc->reduction_mode != WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE)
+                WARN("Sampler min/max reduction filtering is not supported.\n");
+        }
+
+        gl_tex->sampler_desc.reduction_mode = sampler_desc->reduction_mode;
     }
 
     checkGLcall("Texture parameter application");
