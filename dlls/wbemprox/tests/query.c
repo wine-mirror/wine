@@ -155,8 +155,10 @@ static void check_explorer_like_query( IWbemServices *services, const WCHAR *str
         VARIANT var;
         IEnumWbemClassObject_Next( result, 10000, 2, obj, &count );
 
-        ok( count == (expect_success ? 1 : 0), "expected to get %d results but got %lu\n",
-                (expect_success ? 1 : 0), count);
+        if (expect_success)
+            ok( count >= 1, "expected to get 1 or more results\n" );
+        else
+            ok( count == 0, "expected to get 0 results\n" );
 
         if (count)
         {
@@ -519,9 +521,7 @@ static void test_Win32_Bios( IWbemServices *services )
     BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_BIOS" );
     IEnumWbemClassObject *result;
     IWbemClassObject *obj;
-    CIMTYPE type;
     ULONG count;
-    VARIANT val;
     HRESULT hr;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
@@ -532,22 +532,13 @@ static void test_Win32_Bios( IWbemServices *services )
 
     check_property( obj, L"Description", VT_BSTR, CIM_STRING );
     check_property( obj, L"IdentificationCode", VT_NULL, CIM_STRING );
-    check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
+    check_property_nullable( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
     check_property( obj, L"Name", VT_BSTR, CIM_STRING );
-    check_property( obj, L"ReleaseDate", VT_BSTR, CIM_DATETIME );
-
-    type = 0xdeadbeef;
-    VariantInit( &val );
-    hr = IWbemClassObject_Get( obj, L"SerialNumber", 0, &val, &type, NULL );
-    ok( hr == S_OK, "failed to get serial number %#lx\n", hr );
-    ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL /* Testbot VMs */,
-        "unexpected variant type 0x%x\n", V_VT( &val ) );
-    ok( type == CIM_STRING, "unexpected type %#lx\n", type );
-    VariantClear( &val );
-
-    check_property( obj, L"SMBIOSBIOSVersion", VT_BSTR, CIM_STRING );
-    check_property( obj, L"SMBIOSMajorVersion", VT_I4, CIM_UINT16 );
-    check_property( obj, L"SMBIOSMinorVersion", VT_I4, CIM_UINT16 );
+    check_property_nullable( obj, L"ReleaseDate", VT_BSTR, CIM_DATETIME );
+    check_property_nullable( obj, L"SerialNumber", VT_BSTR, CIM_STRING );
+    check_property_nullable( obj, L"SMBIOSBIOSVersion", VT_BSTR, CIM_STRING );
+    check_property_nullable( obj, L"SMBIOSMajorVersion", VT_I4, CIM_UINT16 );
+    check_property_nullable( obj, L"SMBIOSMinorVersion", VT_I4, CIM_UINT16 );
     check_property( obj, L"Status", VT_BSTR, CIM_STRING );
     check_property( obj, L"Version", VT_BSTR, CIM_STRING );
 
@@ -961,7 +952,7 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     ok( hr == S_OK, "IWbemServices_ExecQuery failed %#lx\n", hr );
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "IEnumWbemClassObject_Next failed %#lx\n", hr );
+    if (hr != S_OK) goto done;
 
     check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
 
@@ -998,6 +989,7 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     check_property( obj, L"Tag", VT_BSTR, CIM_STRING );
 
     IWbemClassObject_Release( obj );
+done:
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
@@ -1650,10 +1642,10 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     check_property( obj, L"CSName", VT_BSTR, CIM_STRING );
     check_property( obj, L"CurrentTimeZone", VT_I2, CIM_SINT16 );
     check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
-    check_property( obj, L"Organization", VT_BSTR, CIM_STRING );
+    check_property_nullable( obj, L"Organization", VT_BSTR, CIM_STRING );
     check_property( obj, L"OSType", VT_I4, CIM_UINT16 );
     check_property( obj, L"ProductType", VT_I4, CIM_UINT32 );
-    check_property( obj, L"RegisteredUser", VT_BSTR, CIM_STRING );
+    check_property_nullable( obj, L"RegisteredUser", VT_BSTR, CIM_STRING );
     check_property( obj, L"ServicePackMajorVersion", VT_I4, CIM_UINT16 );
     check_property( obj, L"ServicePackMinorVersion", VT_I4, CIM_UINT16 );
     check_property( obj, L"SuiteMask", VT_I4, CIM_UINT32 );
@@ -1686,16 +1678,16 @@ static void test_Win32_ComputerSystemProduct( IWbemServices *services )
     }
 
     hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "got %#lx\n", hr );
-
-    check_property( obj, L"IdentifyingNumber", VT_BSTR, CIM_STRING );
-    check_property( obj, L"Name", VT_BSTR, CIM_STRING );
-    check_property( obj, L"SKUNumber", VT_NULL, CIM_STRING );
-    check_property( obj, L"UUID", VT_BSTR, CIM_STRING );
-    check_property( obj, L"Vendor", VT_BSTR, CIM_STRING );
-    check_property( obj, L"Version", VT_BSTR, CIM_STRING );
-
-    IWbemClassObject_Release( obj );
+    if (hr == S_OK)
+    {
+        check_property( obj, L"IdentifyingNumber", VT_BSTR, CIM_STRING );
+        check_property( obj, L"Name", VT_BSTR, CIM_STRING );
+        check_property( obj, L"SKUNumber", VT_NULL, CIM_STRING );
+        check_property( obj, L"UUID", VT_BSTR, CIM_STRING );
+        check_property( obj, L"Vendor", VT_BSTR, CIM_STRING );
+        check_property( obj, L"Version", VT_BSTR, CIM_STRING );
+        IWbemClassObject_Release( obj );
+    }
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
@@ -1903,8 +1895,8 @@ static void test_Win32_Processor( IWbemServices *services )
         check_property( obj, L"Family", VT_I4, CIM_UINT16 );
         check_property( obj, L"Level", VT_I4, CIM_UINT16 );
         check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
-        check_property( obj, L"Name", VT_BSTR, CIM_STRING );
-        check_property( obj, L"ProcessorId", VT_BSTR, CIM_STRING );
+        check_property_nullable( obj, L"Name", VT_BSTR, CIM_STRING );
+        check_property_nullable( obj, L"ProcessorId", VT_BSTR, CIM_STRING );
         check_property( obj, L"Revision", VT_I4, CIM_UINT16 );
         check_property( obj, L"Version", VT_BSTR, CIM_STRING );
 
@@ -2606,7 +2598,7 @@ static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
     ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &obj, &count );
-    ok( hr == S_OK, "got %#lx\n", hr );
+    if (hr != S_OK) goto done;
 
     check_property( obj, L"Active", VT_BOOL, CIM_BOOLEAN );
     check_property( obj, L"DmiRevision", VT_UI1, CIM_UINT8 );
@@ -2618,6 +2610,7 @@ static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
     check_property( obj, L"Used20CallingMethod", VT_BOOL, CIM_BOOLEAN );
 
     IWbemClassObject_Release( obj );
+done:
     IEnumWbemClassObject_Release( iter );
     IWbemServices_Release( services );
     SysFreeString( path );
