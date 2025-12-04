@@ -177,10 +177,14 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
 
         midi_drvname[0] = 0;
         wine_unix_call( midi_get_driver, midi_drvname );
-        if (midi_drvname[0] && load_driver( midi_drvname, &midi_driver ))
-            TRACE( "loaded %s as MIDI driver\n", debugstr_w(midi_driver.module_name) );
-        else
-            midi_driver = drvs;
+        if (midi_drvname[0])
+        {
+            if (load_driver( midi_drvname, &midi_driver ))
+                TRACE( "loaded %s as MIDI driver\n", debugstr_w(midi_driver.module_name) );
+            else
+               TRACE( "failed to load MIDI driver %s\n", wine_dbgstr_w(midi_drvname) );
+        }
+        else midi_driver = drvs;
 
         load_devices_from_reg();
         load_driver_devices(eRender);
