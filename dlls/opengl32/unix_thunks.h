@@ -37,16 +37,8 @@ extern void wrap_glGetUnsignedBytevEXT( TEB *teb, GLenum pname, GLubyte *data );
 extern void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint framebuffer, GLenum buf );
 extern void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint framebuffer, GLsizei n, const GLenum *bufs );
 extern void wrap_glNamedFramebufferReadBuffer( TEB *teb, GLuint framebuffer, GLenum src );
-extern BOOL wrap_wglBindTexImageARB( TEB *teb, HPBUFFERARB hPbuffer, int iBuffer );
 extern HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hDC, HGLRC hShareContext, const int *attribList );
-extern HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );
-extern BOOL wrap_wglDestroyPbufferARB( TEB *teb, HPBUFFERARB hPbuffer );
-extern HDC wrap_wglGetPbufferDCARB( TEB *teb, HPBUFFERARB hPbuffer );
 extern BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC hDrawDC, HDC hReadDC, HGLRC hglrc );
-extern BOOL wrap_wglQueryPbufferARB( TEB *teb, HPBUFFERARB hPbuffer, int iAttribute, int *piValue );
-extern int wrap_wglReleasePbufferDCARB( TEB *teb, HPBUFFERARB hPbuffer, HDC hDC );
-extern BOOL wrap_wglReleaseTexImageARB( TEB *teb, HPBUFFERARB hPbuffer, int iBuffer );
-extern BOOL wrap_wglSetPbufferAttribARB( TEB *teb, HPBUFFERARB hPbuffer, const int *piAttribList );
 
 #ifdef _WIN64
 extern void wow64_glBufferStorage( TEB *teb, GLenum target, GLsizeiptr size, const void *data, GLbitfield flags );

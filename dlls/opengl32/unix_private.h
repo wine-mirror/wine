@@ -57,6 +57,12 @@ static inline const struct opengl_funcs *get_dc_funcs( HDC hdc )
     return &null_opengl_funcs;
 }
 
+static inline const struct opengl_funcs *get_pbuffer_funcs( HPBUFFERARB client_pbuffer )
+{
+    struct opengl_client_pbuffer *client = opengl_client_pbuffer_from_client( client_pbuffer );
+    return client_pbuffer ? (struct opengl_funcs *)(UINT_PTR)client->unix_funcs : NULL;
+}
+
 #ifdef _WIN64
 
 static inline void *copy_wow64_ptr32s( UINT_PTR address, ULONG count )

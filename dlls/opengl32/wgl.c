@@ -49,6 +49,15 @@ static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 #define WINE_GL_RESERVED_FORMATS_NUM      4
 #define WINE_GL_RESERVED_FORMATS_ONSCREEN 5
 
+static CRITICAL_SECTION wgl_cs;
+static CRITICAL_SECTION_DEBUG wgl_cs_debug = {
+    0, 0, &wgl_cs,
+    { &wgl_cs_debug.ProcessLocksList,
+      &wgl_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": wgl_cs") }
+};
+static CRITICAL_SECTION wgl_cs = { &wgl_cs_debug, -1, 0, 0, 0, 0 };
+
 #ifndef _WIN64
 
 static char **wow64_strings;
@@ -88,6 +97,144 @@ static void cleanup_wow64_strings(void)
 }
 
 #endif
+
+struct handle_entry
+{
+    UINT handle;
+    union
+    {
+        struct opengl_client_pbuffer *pbuffer;
+        struct handle_entry *next_free;
+        void *user_data;
+    };
+};
+
+struct handle_table
+{
+    struct handle_entry  handles[1024];
+    struct handle_entry *next_free;
+    UINT                 count;
+};
+
+static struct handle_table pbuffers;
+
+static struct handle_entry *alloc_handle( struct handle_table *table, void *user_data )
+{
+    struct handle_entry *ptr = NULL;
+    WORD generation;
+
+    EnterCriticalSection( &wgl_cs );
+
+    if ((ptr = table->next_free)) table->next_free = ptr->next_free;
+    else if (table->count < ARRAY_SIZE(table->handles)) ptr = table->handles + table->count++;
+    else ptr = NULL;
+
+    if (ptr)
+    {
+        if (!(generation = HIWORD( ptr->handle ) + 1)) generation++;
+        ptr->handle = MAKELONG( ptr - table->handles + 1, generation );
+        ptr->user_data = user_data;
+    }
+
+    LeaveCriticalSection( &wgl_cs );
+
+    if (!ptr) RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
+    return ptr;
+}
+
+static void free_handle( struct handle_table *table, struct handle_entry *ptr )
+{
+    EnterCriticalSection( &wgl_cs );
+    ptr->handle |= 0xffff;
+    ptr->next_free = table->next_free;
+    table->next_free = ptr;
+    LeaveCriticalSection( &wgl_cs );
+}
+
+static struct handle_entry *get_handle_ptr( struct handle_table *table, HANDLE handle )
+{
+    WORD index = LOWORD( handle ) - 1;
+    struct handle_entry *ptr = table->handles + index;
+
+    EnterCriticalSection( &wgl_cs );
+    if (index >= table->count || ULongToHandle( ptr->handle ) != handle) ptr = NULL;
+    LeaveCriticalSection( &wgl_cs );
+
+    if (!ptr) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+    return ptr;
+}
+
+static struct opengl_client_pbuffer *pbuffer_from_handle( HPBUFFERARB handle )
+{
+    struct handle_entry *ptr;
+    if (!(ptr = get_handle_ptr( &pbuffers, handle ))) return NULL;
+    return ptr->pbuffer;
+}
+
+BOOL get_pbuffer_from_handle( HPBUFFERARB handle, HPBUFFERARB *obj )
+{
+    struct opengl_client_pbuffer *pbuffer = pbuffer_from_handle( handle );
+    *obj = pbuffer ? &pbuffer->obj : NULL;
+    return pbuffer || !handle;
+}
+
+static struct handle_entry *alloc_client_pbuffer(void)
+{
+    struct opengl_client_pbuffer *pbuffer;
+    struct handle_entry *ptr;
+
+    if (!(pbuffer = calloc( 1, sizeof(*pbuffer) ))) return NULL;
+    if (!(ptr = alloc_handle( &pbuffers, pbuffer )))
+    {
+        free( pbuffer );
+        return NULL;
+    }
+
+    return ptr;
+}
+
+static void free_client_pbuffer( struct handle_entry *ptr )
+{
+    struct opengl_client_pbuffer *pbuffer = ptr->pbuffer;
+    free_handle( &pbuffers, ptr );
+    free( pbuffer );
+}
+
+HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
+{
+    struct wglCreatePbufferARB_params args = { .teb = NtCurrentTeb(), .hDC = hdc, .iPixelFormat = format, .iWidth = width, .iHeight = height, .piAttribList = attribs };
+    struct handle_entry *ptr;
+    NTSTATUS status;
+
+    TRACE( "hdc %p, format %d, width %d, height %d, attribs %p\n", hdc, format, width, height, attribs );
+
+    if (!(ptr = alloc_client_pbuffer())) return 0;
+    args.ret = &ptr->pbuffer->obj;
+
+    if ((status = UNIX_CALL( wglCreatePbufferARB, &args ))) WARN( "wglCreatePbufferARB returned %#lx\n", status );
+    assert( args.ret == &ptr->pbuffer->obj || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_pbuffer( ptr );
+    return NULL;
+}
+
+BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
+{
+    struct wglDestroyPbufferARB_params args = { .teb = NtCurrentTeb() };
+    struct handle_entry *ptr;
+    NTSTATUS status;
+
+    TRACE( "handle %p\n", handle );
+
+    if (!(ptr = get_handle_ptr( &pbuffers, handle ))) return FALSE;
+    args.hPbuffer = &ptr->pbuffer->obj;
+
+    if ((status = UNIX_CALL( wglDestroyPbufferARB, &args ))) WARN( "wglDestroyPbufferARB returned %#lx\n", status );
+    if (args.ret) free_client_pbuffer( ptr );
+
+    return args.ret;
+}
 
 /***********************************************************************
  *		wglGetCurrentReadDCARB

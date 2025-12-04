@@ -40,7 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
-struct wgl_pbuffer
+struct pbuffer
 {
     struct opengl_drawable *drawable;
 
@@ -52,6 +52,12 @@ struct wgl_pbuffer
     GLint mipmap_level;
     GLenum cube_face;
 };
+
+static struct pbuffer *pbuffer_from_client_pbuffer( HPBUFFERARB client_pbuffer )
+{
+    struct opengl_client_pbuffer *client = opengl_client_pbuffer_from_client( client_pbuffer );
+    return (struct pbuffer *)(UINT_PTR)client->unix_handle;
+}
 
 static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_funcs;
 static struct list devices_egl = LIST_INIT( devices_egl );
@@ -1438,16 +1444,16 @@ static struct opengl_drawable *get_dc_opengl_drawable( HDC hdc )
     return drawable;
 }
 
-static void wgl_pbuffer_destroy( struct wgl_pbuffer *pbuffer )
+static void pbuffer_destroy( struct pbuffer *pbuffer )
 {
     opengl_drawable_release( pbuffer->drawable );
     NtGdiDeleteObjectApp( pbuffer->hdc );
     free( pbuffer );
 }
 
-static struct wgl_pbuffer *wgl_pbuffer_create( HDC hdc, int format, int width, int height, const int *attribs )
+static struct pbuffer *pbuffer_create( HDC hdc, int format, int width, int height, const int *attribs )
 {
-    struct wgl_pbuffer *pbuffer;
+    struct pbuffer *pbuffer;
     UINT size, max_level = 0;
     BOOL largest = FALSE;
 
@@ -1582,15 +1588,15 @@ static BOOL create_memory_pbuffer( HDC hdc )
     if (ret)
     {
         int width = dib.rect.right - dib.rect.left, height = dib.rect.bottom - dib.rect.top;
-        struct wgl_pbuffer *pbuffer;
+        struct pbuffer *pbuffer;
 
-        if (!(pbuffer = wgl_pbuffer_create( hdc, format, width, height, NULL )))
+        if (!(pbuffer = pbuffer_create( hdc, format, width, height, NULL )))
             WARN( "Failed to create pbuffer for memory DC %p\n", hdc );
         else
         {
             TRACE( "Created pbuffer %p for memory DC %p\n", pbuffer, hdc );
             set_dc_opengl_drawable( hdc, pbuffer->drawable );
-            wgl_pbuffer_destroy( pbuffer );
+            pbuffer_destroy( pbuffer );
         }
     }
 
@@ -1929,10 +1935,18 @@ static BOOL win32u_wglMakeCurrent( HDC hdc, struct wgl_context *context )
     return win32u_wglMakeContextCurrentARB( hdc, hdc, context );
 }
 
-static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int width, int height,
-                                                       const int *attribs )
+static void opengl_client_pbuffer_init( HPBUFFERARB client_pbuffer, struct pbuffer *pbuffer, const struct opengl_funcs *funcs )
+{
+    struct opengl_client_pbuffer *client = opengl_client_pbuffer_from_client( client_pbuffer );
+    client->unix_handle = (UINT_PTR)pbuffer;
+    client->unix_funcs = (UINT_PTR)funcs;
+}
+
+static HPBUFFERARB win32u_wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs,
+                                               HPBUFFERARB client_pbuffer )
 {
     const struct opengl_funcs *funcs = &display_funcs;
+    struct pbuffer *pbuffer;
     UINT total, onscreen;
 
     TRACE( "(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs );
@@ -1941,32 +1955,38 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
     if (format <= 0 || format > total)
     {
         RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
-        return NULL;
+        return 0;
     }
     if (width <= 0 || height <= 0)
     {
         RtlSetLastWin32Error( ERROR_INVALID_DATA );
-        return NULL;
+        return 0;
     }
 
-    return wgl_pbuffer_create( hdc, format, width, height, attribs );
+    if (!(pbuffer = pbuffer_create( hdc, format, width, height, attribs ))) return 0;
+    opengl_client_pbuffer_init( client_pbuffer, pbuffer, funcs );
+    return client_pbuffer;
 }
 
-static BOOL win32u_wglDestroyPbufferARB( struct wgl_pbuffer *pbuffer )
+static BOOL win32u_wglDestroyPbufferARB( HPBUFFERARB client_pbuffer )
 {
+    struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
     TRACE( "pbuffer %p\n", pbuffer );
-    wgl_pbuffer_destroy( pbuffer );
+    pbuffer_destroy( pbuffer );
     return GL_TRUE;
 }
 
-static HDC win32u_wglGetPbufferDCARB( struct wgl_pbuffer *pbuffer )
+static HDC win32u_wglGetPbufferDCARB( HPBUFFERARB client_pbuffer )
 {
+    struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
     TRACE( "pbuffer %p\n", pbuffer );
     return pbuffer->hdc;
 }
 
-static int win32u_wglReleasePbufferDCARB( struct wgl_pbuffer *pbuffer, HDC hdc )
+static int win32u_wglReleasePbufferDCARB( HPBUFFERARB client_pbuffer, HDC hdc )
 {
+    struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
+
     TRACE( "pbuffer %p, hdc %p\n", pbuffer, hdc );
 
     if (hdc != pbuffer->hdc)
@@ -1978,8 +1998,10 @@ static int win32u_wglReleasePbufferDCARB( struct wgl_pbuffer *pbuffer, HDC hdc )
     return TRUE;
 }
 
-static BOOL win32u_wglQueryPbufferARB( struct wgl_pbuffer *pbuffer, int attrib, int *value )
+static BOOL win32u_wglQueryPbufferARB( HPBUFFERARB client_pbuffer, int attrib, int *value )
 {
+    struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
+
     TRACE( "pbuffer %p, attrib %#x, value %p\n", pbuffer, attrib, value );
 
     switch (attrib)
@@ -2072,9 +2094,10 @@ static GLenum binding_from_target( GLenum target )
     return 0;
 }
 
-static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
+static BOOL win32u_wglBindTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
 {
     const struct opengl_funcs *funcs = &display_funcs;
+    struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
     int prev_texture = 0, format = win32u_wglGetPixelFormat( pbuffer->hdc );
     struct wgl_pixel_format desc;
     GLenum source;
@@ -2147,8 +2170,10 @@ static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
     return GL_TRUE;
 }
 
-static BOOL win32u_wglReleaseTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
+static BOOL win32u_wglReleaseTexImageARB( HPBUFFERARB client_pbuffer, int buffer )
 {
+    struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
+
     TRACE( "pbuffer %p, buffer %d\n", pbuffer, buffer );
 
     if (!pbuffer->texture_format)
@@ -2160,8 +2185,10 @@ static BOOL win32u_wglReleaseTexImageARB( struct wgl_pbuffer *pbuffer, int buffe
     return !!driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->drawable, GL_NONE );
 }
 
-static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const int *attribs )
+static BOOL win32u_wglSetPbufferAttribARB( HPBUFFERARB client_pbuffer, const int *attribs )
 {
+    struct pbuffer *pbuffer = pbuffer_from_client_pbuffer( client_pbuffer );
+
     TRACE( "pbuffer %p, attribs %p\n", pbuffer, attribs );
 
     if (!pbuffer->texture_format)

@@ -24735,9 +24735,10 @@ static void * WINAPI wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloa
 
 static BOOL WINAPI wglBindTexImageARB( HPBUFFERARB hPbuffer, int iBuffer )
 {
-    struct wglBindTexImageARB_params args = { .teb = NtCurrentTeb(), .hPbuffer = hPbuffer, .iBuffer = iBuffer };
+    struct wglBindTexImageARB_params args = { .teb = NtCurrentTeb(), .iBuffer = iBuffer };
     NTSTATUS status;
     TRACE( "hPbuffer %p, iBuffer %d\n", hPbuffer, iBuffer );
+    if (!get_pbuffer_from_handle( hPbuffer, &args.hPbuffer )) return 0;
     if ((status = UNIX_CALL( wglBindTexImageARB, &args ))) WARN( "wglBindTexImageARB returned %#lx\n", status );
     return args.ret;
 }
@@ -24751,24 +24752,6 @@ static HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, co
     return args.ret;
 }
 
-static HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList )
-{
-    struct wglCreatePbufferARB_params args = { .teb = NtCurrentTeb(), .hDC = hDC, .iPixelFormat = iPixelFormat, .iWidth = iWidth, .iHeight = iHeight, .piAttribList = piAttribList };
-    NTSTATUS status;
-    TRACE( "hDC %p, iPixelFormat %d, iWidth %d, iHeight %d, piAttribList %p\n", hDC, iPixelFormat, iWidth, iHeight, piAttribList );
-    if ((status = UNIX_CALL( wglCreatePbufferARB, &args ))) WARN( "wglCreatePbufferARB returned %#lx\n", status );
-    return args.ret;
-}
-
-static BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB hPbuffer )
-{
-    struct wglDestroyPbufferARB_params args = { .teb = NtCurrentTeb(), .hPbuffer = hPbuffer };
-    NTSTATUS status;
-    TRACE( "hPbuffer %p\n", hPbuffer );
-    if ((status = UNIX_CALL( wglDestroyPbufferARB, &args ))) WARN( "wglDestroyPbufferARB returned %#lx\n", status );
-    return args.ret;
-}
-
 static void WINAPI wglFreeMemoryNV( void *pointer )
 {
     struct wglFreeMemoryNV_params args = { .teb = NtCurrentTeb(), .pointer = pointer };
@@ -24779,9 +24762,10 @@ static void WINAPI wglFreeMemoryNV( void *pointer )
 
 static HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB hPbuffer )
 {
-    struct wglGetPbufferDCARB_params args = { .teb = NtCurrentTeb(), .hPbuffer = hPbuffer };
+    struct wglGetPbufferDCARB_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "hPbuffer %p\n", hPbuffer );
+    if (!get_pbuffer_from_handle( hPbuffer, &args.hPbuffer )) return 0;
     if ((status = UNIX_CALL( wglGetPbufferDCARB, &args ))) WARN( "wglGetPbufferDCARB returned %#lx\n", status );
     return args.ret;
 }
@@ -24815,9 +24799,10 @@ static BOOL WINAPI wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint 
 
 static BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB hPbuffer, int iAttribute, int *piValue )
 {
-    struct wglQueryPbufferARB_params args = { .teb = NtCurrentTeb(), .hPbuffer = hPbuffer, .iAttribute = iAttribute, .piValue = piValue };
+    struct wglQueryPbufferARB_params args = { .teb = NtCurrentTeb(), .iAttribute = iAttribute, .piValue = piValue };
     NTSTATUS status;
     TRACE( "hPbuffer %p, iAttribute %d, piValue %p\n", hPbuffer, iAttribute, piValue );
+    if (!get_pbuffer_from_handle( hPbuffer, &args.hPbuffer )) return 0;
     if ((status = UNIX_CALL( wglQueryPbufferARB, &args ))) WARN( "wglQueryPbufferARB returned %#lx\n", status );
     return args.ret;
 }
@@ -24833,27 +24818,30 @@ static BOOL WINAPI wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum a
 
 static int WINAPI wglReleasePbufferDCARB( HPBUFFERARB hPbuffer, HDC hDC )
 {
-    struct wglReleasePbufferDCARB_params args = { .teb = NtCurrentTeb(), .hPbuffer = hPbuffer, .hDC = hDC };
+    struct wglReleasePbufferDCARB_params args = { .teb = NtCurrentTeb(), .hDC = hDC };
     NTSTATUS status;
     TRACE( "hPbuffer %p, hDC %p\n", hPbuffer, hDC );
+    if (!get_pbuffer_from_handle( hPbuffer, &args.hPbuffer )) return 0;
     if ((status = UNIX_CALL( wglReleasePbufferDCARB, &args ))) WARN( "wglReleasePbufferDCARB returned %#lx\n", status );
     return args.ret;
 }
 
 static BOOL WINAPI wglReleaseTexImageARB( HPBUFFERARB hPbuffer, int iBuffer )
 {
-    struct wglReleaseTexImageARB_params args = { .teb = NtCurrentTeb(), .hPbuffer = hPbuffer, .iBuffer = iBuffer };
+    struct wglReleaseTexImageARB_params args = { .teb = NtCurrentTeb(), .iBuffer = iBuffer };
     NTSTATUS status;
     TRACE( "hPbuffer %p, iBuffer %d\n", hPbuffer, iBuffer );
+    if (!get_pbuffer_from_handle( hPbuffer, &args.hPbuffer )) return 0;
     if ((status = UNIX_CALL( wglReleaseTexImageARB, &args ))) WARN( "wglReleaseTexImageARB returned %#lx\n", status );
     return args.ret;
 }
 
 static BOOL WINAPI wglSetPbufferAttribARB( HPBUFFERARB hPbuffer, const int *piAttribList )
 {
-    struct wglSetPbufferAttribARB_params args = { .teb = NtCurrentTeb(), .hPbuffer = hPbuffer, .piAttribList = piAttribList };
+    struct wglSetPbufferAttribARB_params args = { .teb = NtCurrentTeb(), .piAttribList = piAttribList };
     NTSTATUS status;
     TRACE( "hPbuffer %p, piAttribList %p\n", hPbuffer, piAttribList );
+    if (!get_pbuffer_from_handle( hPbuffer, &args.hPbuffer )) return 0;
     if ((status = UNIX_CALL( wglSetPbufferAttribARB, &args ))) WARN( "wglSetPbufferAttribARB returned %#lx\n", status );
     return args.ret;
 }
@@ -24878,6 +24866,8 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
 
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index );
 extern BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
+extern HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );
+extern BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB hPbuffer );
 extern HDC WINAPI wglGetCurrentReadDCARB(void);
 extern const char * WINAPI wglGetExtensionsStringARB( HDC hdc );
 extern const char * WINAPI wglGetExtensionsStringEXT(void);

@@ -60,7 +60,6 @@ pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 enum wgl_handle_type
 {
-    HANDLE_PBUFFER = 0 << 12,
     HANDLE_CONTEXT = 1 << 12,
     HANDLE_GLSYNC = 2 << 12,
     HANDLE_TYPE_MASK = 15 << 12,
@@ -203,7 +202,6 @@ struct wgl_handle
     union
     {
         struct wgl_context *context;    /* for HANDLE_CONTEXT */
-        struct wgl_pbuffer *pbuffer;    /* for HANDLE_PBUFFER */
         GLsync sync;                    /* for HANDLE_GLSYNC */
         struct wgl_handle *next;        /* for free handles */
     } u;
@@ -456,14 +454,6 @@ static struct context *opengl_context_from_handle( TEB *teb, HGLRC handle, const
     update_handle_context( teb, handle, entry );
     *funcs = entry->funcs;
     return context_from_wgl_context( entry->u.context );
-}
-
-static struct wgl_pbuffer *wgl_pbuffer_from_handle( HPBUFFERARB handle, const struct opengl_funcs **funcs )
-{
-    struct wgl_handle *entry;
-    if (!(entry = get_handle_ptr( handle ))) return NULL;
-    *funcs = entry->funcs;
-    return entry->u.pbuffer;
 }
 
 static HANDLE alloc_handle( enum wgl_handle_type type, const struct opengl_funcs *funcs, void *user_ptr )
@@ -1577,14 +1567,6 @@ BOOL wrap_wglShareLists( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst )
     return ret;
 }
 
-BOOL wrap_wglBindTexImageARB( TEB *teb, HPBUFFERARB handle, int buffer )
-{
-    const struct opengl_funcs *funcs;
-    struct wgl_pbuffer *pbuffer;
-    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
-    return funcs->p_wglBindTexImageARB( pbuffer, buffer );
-}
-
 HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC share, const int *attribs )
 {
     HGLRC ret = 0;
@@ -1640,39 +1622,6 @@ HGLRC wrap_wglCreateContext( TEB *teb, HDC hdc )
     return wrap_wglCreateContextAttribsARB( teb, hdc, NULL, NULL );
 }
 
-HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hdc, int format, int width, int height, const int *attribs )
-{
-    HPBUFFERARB ret;
-    struct wgl_pbuffer *pbuffer;
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
-
-    if (!funcs || !funcs->p_wglCreatePbufferARB) return 0;
-    if (!(pbuffer = funcs->p_wglCreatePbufferARB( hdc, format, width, height, attribs ))) return 0;
-    ret = alloc_handle( HANDLE_PBUFFER, funcs, pbuffer );
-    if (!ret) funcs->p_wglDestroyPbufferARB( pbuffer );
-    return ret;
-}
-
-BOOL wrap_wglDestroyPbufferARB( TEB *teb, HPBUFFERARB handle )
-{
-    struct wgl_pbuffer *pbuffer;
-    struct wgl_handle *ptr;
-
-    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
-    pbuffer = ptr->u.pbuffer;
-    ptr->funcs->p_wglDestroyPbufferARB( pbuffer );
-    free_handle_ptr( ptr );
-    return TRUE;
-}
-
-HDC wrap_wglGetPbufferDCARB( TEB *teb, HPBUFFERARB handle )
-{
-    const struct opengl_funcs *funcs;
-    struct wgl_pbuffer *pbuffer;
-    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return 0;
-    return funcs->p_wglGetPbufferDCARB( pbuffer );
-}
-
 BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
@@ -1702,38 +1651,6 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     }
     update_teb32_context( teb );
     return TRUE;
-}
-
-BOOL wrap_wglQueryPbufferARB( TEB *teb, HPBUFFERARB handle, int attrib, int *value )
-{
-    const struct opengl_funcs *funcs;
-    struct wgl_pbuffer *pbuffer;
-    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
-    return funcs->p_wglQueryPbufferARB( pbuffer, attrib, value );
-}
-
-int wrap_wglReleasePbufferDCARB( TEB *teb, HPBUFFERARB handle, HDC hdc )
-{
-    const struct opengl_funcs *funcs;
-    struct wgl_pbuffer *pbuffer;
-    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
-    return funcs->p_wglReleasePbufferDCARB( pbuffer, hdc );
-}
-
-BOOL wrap_wglReleaseTexImageARB( TEB *teb, HPBUFFERARB handle, int buffer )
-{
-    const struct opengl_funcs *funcs;
-    struct wgl_pbuffer *pbuffer;
-    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
-    return funcs->p_wglReleaseTexImageARB( pbuffer, buffer );
-}
-
-BOOL wrap_wglSetPbufferAttribARB( TEB *teb, HPBUFFERARB handle, const int *attribs )
-{
-    const struct opengl_funcs *funcs;
-    struct wgl_pbuffer *pbuffer;
-    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
-    return funcs->p_wglSetPbufferAttribARB( pbuffer, attribs );
 }
 
 static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GLenum severity,

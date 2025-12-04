@@ -25,7 +25,6 @@
 #endif
 
 struct wgl_context;
-struct wgl_pbuffer;
 typedef void *EGLNativeDisplayType;
 typedef void *EGLNativePixmapType;
 typedef void *EGLNativeWindowType;
@@ -9518,28 +9517,28 @@ typedef void       (GLAPIENTRY *PFN_glWindowPos4svMESA)( const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glWindowRectanglesEXT)( GLenum mode, GLsizei count, const GLint *box );
 typedef void       (GLAPIENTRY *PFN_glWriteMaskEXT)( GLuint res, GLuint in, GLenum outX, GLenum outY, GLenum outZ, GLenum outW );
 typedef void *     (GLAPIENTRY *PFN_wglAllocateMemoryNV)( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority );
-typedef BOOL       (GLAPIENTRY *PFN_wglBindTexImageARB)( struct wgl_pbuffer * hPbuffer, int iBuffer );
+typedef BOOL       (GLAPIENTRY *PFN_wglBindTexImageARB)( HPBUFFERARB hPbuffer, int iBuffer );
 typedef BOOL       (GLAPIENTRY *PFN_wglChoosePixelFormatARB)( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
 typedef struct wgl_context * (GLAPIENTRY *PFN_wglCreateContextAttribsARB)( HDC hDC, struct wgl_context * hShareContext, const int *attribList );
-typedef struct wgl_pbuffer * (GLAPIENTRY *PFN_wglCreatePbufferARB)( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );
-typedef BOOL       (GLAPIENTRY *PFN_wglDestroyPbufferARB)( struct wgl_pbuffer * hPbuffer );
+typedef HPBUFFERARB (GLAPIENTRY *PFN_wglCreatePbufferARB)( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList, HPBUFFERARB client_pbuffer );
+typedef BOOL       (GLAPIENTRY *PFN_wglDestroyPbufferARB)( HPBUFFERARB hPbuffer );
 typedef void       (GLAPIENTRY *PFN_wglFreeMemoryNV)( void *pointer );
 typedef HDC        (GLAPIENTRY *PFN_wglGetCurrentReadDCARB)(void);
 typedef const char * (GLAPIENTRY *PFN_wglGetExtensionsStringARB)( HDC hdc );
 typedef const char * (GLAPIENTRY *PFN_wglGetExtensionsStringEXT)(void);
-typedef HDC        (GLAPIENTRY *PFN_wglGetPbufferDCARB)( struct wgl_pbuffer * hPbuffer );
+typedef HDC        (GLAPIENTRY *PFN_wglGetPbufferDCARB)( HPBUFFERARB hPbuffer );
 typedef BOOL       (GLAPIENTRY *PFN_wglGetPixelFormatAttribfvARB)( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues );
 typedef BOOL       (GLAPIENTRY *PFN_wglGetPixelFormatAttribivARB)( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues );
 typedef int        (GLAPIENTRY *PFN_wglGetSwapIntervalEXT)(void);
 typedef BOOL       (GLAPIENTRY *PFN_wglMakeContextCurrentARB)( HDC hDrawDC, HDC hReadDC, struct wgl_context * hglrc );
 typedef BOOL       (GLAPIENTRY *PFN_wglQueryCurrentRendererIntegerWINE)( GLenum attribute, GLuint *value );
 typedef const GLchar * (GLAPIENTRY *PFN_wglQueryCurrentRendererStringWINE)( GLenum attribute );
-typedef BOOL       (GLAPIENTRY *PFN_wglQueryPbufferARB)( struct wgl_pbuffer * hPbuffer, int iAttribute, int *piValue );
+typedef BOOL       (GLAPIENTRY *PFN_wglQueryPbufferARB)( HPBUFFERARB hPbuffer, int iAttribute, int *piValue );
 typedef BOOL       (GLAPIENTRY *PFN_wglQueryRendererIntegerWINE)( HDC dc, GLint renderer, GLenum attribute, GLuint *value );
 typedef const GLchar * (GLAPIENTRY *PFN_wglQueryRendererStringWINE)( HDC dc, GLint renderer, GLenum attribute );
-typedef int        (GLAPIENTRY *PFN_wglReleasePbufferDCARB)( struct wgl_pbuffer * hPbuffer, HDC hDC );
-typedef BOOL       (GLAPIENTRY *PFN_wglReleaseTexImageARB)( struct wgl_pbuffer * hPbuffer, int iBuffer );
-typedef BOOL       (GLAPIENTRY *PFN_wglSetPbufferAttribARB)( struct wgl_pbuffer * hPbuffer, const int *piAttribList );
+typedef int        (GLAPIENTRY *PFN_wglReleasePbufferDCARB)( HPBUFFERARB hPbuffer, HDC hDC );
+typedef BOOL       (GLAPIENTRY *PFN_wglReleaseTexImageARB)( HPBUFFERARB hPbuffer, int iBuffer );
+typedef BOOL       (GLAPIENTRY *PFN_wglSetPbufferAttribARB)( HPBUFFERARB hPbuffer, const int *piAttribList );
 typedef BOOL       (GLAPIENTRY *PFN_wglSetPixelFormatWINE)( HDC hdc, int format );
 typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
 

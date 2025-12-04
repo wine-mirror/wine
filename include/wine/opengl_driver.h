@@ -59,6 +59,18 @@ struct wgl_pixel_format
     int float_components;
 };
 
+struct opengl_client_pbuffer
+{
+    struct HPBUFFERARB__        obj;            /* client object header */
+    UINT64                      unix_handle;
+    UINT64                      unix_funcs;
+};
+
+static inline struct opengl_client_pbuffer *opengl_client_pbuffer_from_client( HPBUFFERARB client_pbuffer )
+{
+    return CONTAINING_RECORD( client_pbuffer, struct opengl_client_pbuffer, obj );
+}
+
 #ifdef WINE_UNIX_LIB
 
 #include "wine/gdi_driver.h"

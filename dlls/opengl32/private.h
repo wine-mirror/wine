@@ -27,9 +27,11 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wingdi.h"
+#include "wine/wgl.h"
 
 extern const void *extension_procs[];
 
 extern int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
+extern BOOL get_pbuffer_from_handle( HPBUFFERARB handle, HPBUFFERARB *obj );
 
 #endif /* __WINE_OPENGL32_PRIVATE_H */
