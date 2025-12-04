@@ -50,7 +50,7 @@ static void test_engine_options(void)
     ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
     ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#lx.\n", options);
 
-    hr = control->lpVtbl->AddEngineOptions(control, 0x01000000);
+    hr = control->lpVtbl->AddEngineOptions(control, 0x10000000);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     options = 0;
@@ -58,7 +58,7 @@ static void test_engine_options(void)
     ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
     ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#lx.\n", options);
 
-    hr = control->lpVtbl->RemoveEngineOptions(control, 0x01000000);
+    hr = control->lpVtbl->RemoveEngineOptions(control, 0x10000000);
     ok(hr == S_OK, "Failed to remove options, hr %#lx.\n", hr);
 
     hr = control->lpVtbl->AddEngineOptions(control, DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION);
@@ -86,10 +86,10 @@ static void test_engine_options(void)
     ok(hr == S_OK, "Failed to get engine options, hr %#lx.\n", hr);
     ok(options == DEBUG_ENGOPT_INITIAL_BREAK, "Unexpected options %#lx.\n", options);
 
-    hr = control->lpVtbl->SetEngineOptions(control, 0x01000000);
+    hr = control->lpVtbl->SetEngineOptions(control, 0x10000000);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = control->lpVtbl->SetEngineOptions(control, 0x01000000 | DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION);
+    hr = control->lpVtbl->SetEngineOptions(control, 0x10000000 | DEBUG_ENGOPT_IGNORE_DBGHELP_VERSION);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     options = 0;
