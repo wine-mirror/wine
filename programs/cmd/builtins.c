@@ -3967,10 +3967,10 @@ RETURN_CODE WCMD_color(void)
 
 /* We cannot use SetVolumeMountPoint(), because that function forbids setting
  * arbitrary directories as mount points, whereas mklink /j allows it. */
-BOOL create_mount_point(const WCHAR *link, const WCHAR *target) {
+BOOL create_mount_point(const WCHAR *full_link, const WCHAR *target) {
     char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
     REPARSE_DATA_BUFFER *data = (void *)buffer;
-    WCHAR full_link[MAX_PATH], *full_target;
+    WCHAR *full_target;
     UNICODE_STRING nt_link, nt_target;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
@@ -3979,10 +3979,7 @@ BOOL create_mount_point(const WCHAR *link, const WCHAR *target) {
     DWORD size;
     BOOL ret;
 
-    TRACE( "link %s, target %s\n", debugstr_w(link), debugstr_w(target) );
-
-    if (!WCMD_get_fullpath(link, ARRAY_SIZE(full_link), full_link, NULL))
-        return FALSE;
+    TRACE( "link %s, target %s\n", debugstr_w(full_link), debugstr_w(target) );
 
     if (!(size = GetFullPathNameW(target, 0, NULL, NULL)))
         return FALSE;
@@ -4053,7 +4050,7 @@ RETURN_CODE WCMD_mklink(WCHAR *args)
     BOOL hard = FALSE;
     BOOL ret = TRUE;
     WCHAR file1[MAX_PATH];
-    WCHAR file2[MAX_PATH];
+    WCHAR file2[MAXSTRING];
 
     file1[0] = file2[0] = L'\0';
 
@@ -4075,9 +4072,9 @@ RETURN_CODE WCMD_mklink(WCHAR *args)
         else
         {
             if (!file1[0])
-                lstrcpyW(file1, thisArg);
+                ret = WCMD_get_fullpath(thisArg, ARRAY_SIZE(file1), file1, NULL);
             else if (!file2[0])
-                lstrcpyW(file2, thisArg);
+                wcscpy(file2, thisArg);
             else
                 ret = FALSE;
         }
