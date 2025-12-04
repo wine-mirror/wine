@@ -142,6 +142,17 @@ static inline BOOL cache_is_empty( struct recordset *recordset )
     return !recordset->cache.fetched;
 }
 
+static HRESULT update_current_row( struct recordset *recordset )
+{
+    VARIANT missing;
+
+    if ( !recordset->current_row ) return S_OK;
+
+    V_VT( &missing ) = VT_ERROR;
+    V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
+    return _Recordset_Update( &recordset->Recordset_iface, missing, missing);
+}
+
 static void cache_release( struct recordset *recordset )
 {
     if (cache_is_empty( recordset ))
@@ -207,6 +218,10 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
 {
     int dir = forward ? 1 : -1;
     LONG off, fetch = 0;
+    HRESULT hr;
+
+    hr = update_current_row( recordset );
+    if (FAILED(hr)) return hr;
 
     if (!recordset->cache.dir)
     {
@@ -235,7 +250,6 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
     {
         DBCOUNTITEM count;
         HROW row = 0;
-        HRESULT hr;
 
         if (!cache_is_empty( recordset ))
         {
@@ -2174,6 +2188,10 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     if (recordset->accessor == NO_INTERFACE)
         return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
+    hr = update_current_row( recordset );
+    if (FAILED(hr)) return hr;
+    cache_release( recordset );
+
     if (!recordset->hacc_empty)
     {
         hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
@@ -2185,7 +2203,6 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     hr = IAccessor_AddRefAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
     if (FAILED(hr))
         return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
-    cache_release( recordset );
     hr = IRowsetChange_InsertRow( recordset->rowset_change, 0,
             recordset->hacc_empty, NULL, &recordset->current_row );
     IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
@@ -2323,6 +2340,8 @@ static HRESULT WINAPI recordset_MoveFirst( _Recordset *iface )
     }
     else
     {
+        hr = update_current_row( recordset );
+        if (FAILED(hr)) return hr;
         cache_release( recordset );
         hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
         if (FAILED(hr)) return hr;
@@ -2350,6 +2369,8 @@ static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
     }
     else
     {
+        hr = update_current_row( recordset );
+        if (FAILED(hr)) return hr;
         cache_release( recordset );
         hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
         if (FAILED(hr)) return hr;
@@ -3048,6 +3069,8 @@ static HRESULT WINAPI recordset_put_Index( _Recordset *iface, BSTR index )
     if (recordset->rowset_cur_idx == NO_INTERFACE)
         return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
+    hr = update_current_row( recordset );
+    if (FAILED(hr)) return hr;
     cache_release( recordset );
 
     memset( &dbid, 0, sizeof(dbid) );
