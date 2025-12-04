@@ -419,6 +419,7 @@ static void audio_renderer_set_presentation_clock(struct audio_renderer *rendere
 static HRESULT WINAPI audio_renderer_sink_SetPresentationClock(IMFMediaSink *iface, IMFPresentationClock *clock)
 {
     struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
+    IMFPresentationTimeSource *time_source = NULL;
     HRESULT hr = S_OK;
 
     TRACE("%p, %p.\n", iface, clock);
@@ -427,8 +428,12 @@ static HRESULT WINAPI audio_renderer_sink_SetPresentationClock(IMFMediaSink *ifa
 
     if (renderer->flags & SAR_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
-    else
+    else if (!clock || SUCCEEDED(hr = IMFPresentationClock_GetTimeSource(clock, &time_source)))
+    {
+        if (time_source)
+            IMFPresentationTimeSource_Release(time_source);
         audio_renderer_set_presentation_clock(renderer, clock);
+    }
 
     LeaveCriticalSection(&renderer->cs);
 
