@@ -2700,15 +2700,52 @@ static HRESULT WINAPI recordset_Update( _Recordset *iface, VARIANT fields, VARIA
     struct recordset *recordset = impl_from_Recordset( iface );
     DBPENDINGSTATUS pending_status;
     DBROWSTATUS *status;
+    HACCESSOR hacc;
     HRESULT hr;
+    void *data;
     HROW *row;
 
     TRACE( "%p, %s, %s\n", iface, debugstr_variant(&fields), debugstr_variant(&values) );
-    if (V_VT(&fields) != VT_ERROR)
-        FIXME( "ignoring field list and values\n" );
+
+    if ((V_VT(&fields) & VT_ARRAY) != (V_VT(&values) & VT_ARRAY))
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (V_VT(&fields) & VT_ARRAY)
+    {
+        if (V_ARRAY(&fields)->rgsabound[0].cElements != V_ARRAY(&values)->rgsabound[0].cElements ||
+                V_VT(&fields) != (VT_ARRAY | VT_VARIANT) ||
+                V_VT(&values) != (VT_ARRAY | VT_VARIANT))
+            return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    }
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
     if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    if (V_VT(&fields) != VT_ERROR)
+    {
+        if (!recordset->rowset_change)
+        {
+            hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetChange,
+                    (void **)&recordset->rowset_change );
+            if (FAILED(hr) || !recordset->rowset_change)
+                recordset->rowset_change = NO_INTERFACE;
+        }
+        if (recordset->rowset_change == NO_INTERFACE)
+            return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+        hr = get_accessor( recordset, &fields, &hacc );
+        if (FAILED(hr)) return hr;
+
+        if (V_VT(&fields) == VT_ERROR)
+            data = NULL;
+        else if (V_VT(&values) & VT_ARRAY)
+            data = V_ARRAY(&values)->pvData;
+        else
+            data = &values;
+
+        hr = IRowsetChange_SetData(recordset->rowset_change, recordset->current_row, hacc, data);
+        IAccessor_ReleaseAccessor( recordset->accessor, hacc, NULL );
+        if (FAILED(hr)) return hr;
+    }
 
     if (recordset->lock_type != adLockPessimistic && recordset->lock_type != adLockOptimistic)
         return S_OK;

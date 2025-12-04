@@ -918,7 +918,7 @@ static HRESULT WINAPI rowset_update_SetData(IRowsetUpdate *iface,
 
     CHECK_EXPECT(rowset_update_SetData);
 
-    ok(row == 1, "row = %Id\n", row);
+    ok(row == 1 || row == 10, "row = %Id\n", row);
     ok(accessor, "accessor = 0\n");
     ok(data != NULL, "data = NULL\n");
 
@@ -2069,6 +2069,21 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     hr = _Recordset_Update( recordset, missing, missing );
     ok( hr == S_OK, "got %08lx\n", hr );
 
+    V_VT(&index) = VT_I4;
+    V_I4(&index) = 0;
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 123;
+    SET_EXPECT(accessor_CreateAccessor);
+    SET_EXPECT(accessor_AddRefAccessor);
+    SET_EXPECT(rowset_update_SetData);
+    SET_EXPECT(accessor_ReleaseAccessor);
+    hr = _Recordset_Update( recordset, index, v );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED(accessor_CreateAccessor);
+    CHECK_CALLED(accessor_AddRefAccessor);
+    CHECK_CALLED(rowset_update_SetData);
+    CHECK_CALLED(accessor_ReleaseAccessor);
+
     SET_EXPECT(rowset_update_GetRowStatus);
     SET_EXPECT(rowset_update_Undo);
     SET_EXPECT(rowset_AddRefRows);
@@ -2089,7 +2104,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString( L"Column1 = 1" );
     SET_EXPECT(rowset_ReleaseRows);
-    SET_EXPECT(accessor_CreateAccessor);
     SET_EXPECT(accessor_AddRefAccessor);
     SET_EXPECT(rowset_view_CreateView);
     SET_EXPECT(view_filter_SetFilter);
@@ -2108,7 +2122,6 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
     hr = _Recordset_put_Filter( recordset, v );
     todo_wine ok( hr == S_OK, "got %08lx\n", hr );
     todo_wine CHECK_CALLED(rowset_ReleaseRows);
-    todo_wine CHECK_CALLED(accessor_CreateAccessor);
     todo_wine CHECK_CALLED(accessor_AddRefAccessor);
     todo_wine CHECK_CALLED(rowset_view_CreateView);
     todo_wine CHECK_CALLED(view_filter_SetFilter);
