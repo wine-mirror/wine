@@ -208,6 +208,8 @@ extern BOOL get_vulkan_gpus( struct list *gpus );
 extern int d3dkmt_object_get_fd( D3DKMT_HANDLE local );
 extern NTSTATUS d3dkmt_destroy_mutex( D3DKMT_HANDLE local );
 
+extern HANDLE open_shared_resource_from_name( const WCHAR *name );
+
 extern D3DKMT_HANDLE d3dkmt_create_resource( int fd, D3DKMT_HANDLE *global );
 extern D3DKMT_HANDLE d3dkmt_open_resource( D3DKMT_HANDLE global, HANDLE shared, D3DKMT_HANDLE *mutex_local, D3DKMT_HANDLE *sync_local );
 extern NTSTATUS d3dkmt_destroy_resource( D3DKMT_HANDLE local );

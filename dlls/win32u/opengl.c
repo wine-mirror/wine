@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -2508,6 +2509,60 @@ static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
     return query_renderer_string( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute );
 }
 
+static void import_memory( GLuint memory, GLuint64 size, GLenum type, void *handle )
+{
+    const struct opengl_funcs *funcs = &display_funcs;
+    D3DKMT_HANDLE local, mutex, sync;
+    GLenum err;
+    int fd;
+
+    switch (type)
+    {
+    case GL_HANDLE_TYPE_OPAQUE_WIN32_EXT:
+        local = d3dkmt_open_resource( 0, handle, &mutex, &sync );
+        break;
+    case GL_HANDLE_TYPE_OPAQUE_WIN32_KMT_EXT:
+        local = d3dkmt_open_resource( PtrToUlong( handle ), NULL, &mutex, &sync );
+        break;
+    default: return set_gl_error( GL_INVALID_ENUM );
+    }
+    if (mutex) d3dkmt_destroy_mutex( mutex );
+    if (sync) d3dkmt_destroy_sync( sync );
+    fd = d3dkmt_object_get_fd( local );
+    d3dkmt_destroy_resource( local );
+    if (fd < 0) return set_gl_error( GL_INVALID_VALUE );
+
+    set_gl_error( funcs->p_glGetError() ); /* save the error in the wrapper so we can check for success */
+    funcs->p_glImportMemoryFdEXT( memory, size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd );
+    if (!(err = funcs->p_glGetError())) return;
+
+    close( fd );
+    set_gl_error( err );
+}
+
+static void win32u_glImportMemoryWin32HandleEXT( GLuint memory, GLuint64 size, GLenum type, void *handle )
+{
+    TRACE( "memory %u size %s type %#x handle %p\n", memory, wine_dbgstr_longlong( size ), type, handle );
+
+    if (handle) import_memory( memory, size, type, handle );
+    else set_gl_error( GL_INVALID_VALUE );
+}
+
+static void win32u_glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLenum type, const void *name )
+{
+    HANDLE handle;
+
+    TRACE( "memory %u size %s type %#x name %s\n", memory, wine_dbgstr_longlong( size ), type, debugstr_w( name ) );
+
+    if (type != GL_HANDLE_TYPE_OPAQUE_WIN32_EXT) set_gl_error( GL_INVALID_ENUM );
+    else if (!(handle = open_shared_resource_from_name( name ))) set_gl_error( GL_INVALID_VALUE );
+    else
+    {
+        import_memory( memory, size, type, handle );
+        NtClose( handle );
+    }
+}
+
 static void display_funcs_init(void)
 {
     struct egl_platform *egl;
@@ -2536,6 +2591,7 @@ static void display_funcs_init(void)
     USE_GL_FUNC(glGetNamedFramebufferAttachmentParameteriv)
     USE_GL_FUNC(glGetUnsignedBytei_vEXT)
     USE_GL_FUNC(glGetUnsignedBytevEXT)
+    USE_GL_FUNC(glImportMemoryFdEXT)
     USE_GL_FUNC(glNamedFramebufferDrawBuffer)
     USE_GL_FUNC(glNamedFramebufferReadBuffer)
     USE_GL_FUNC(glNamedFramebufferRenderbuffer)
@@ -2607,6 +2663,12 @@ static void display_funcs_init(void)
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control_tear" );
     display_funcs.p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
     display_funcs.p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
+
+    if (display_funcs.p_glImportMemoryFdEXT)
+    {
+        display_funcs.p_glImportMemoryWin32HandleEXT = win32u_glImportMemoryWin32HandleEXT;
+        display_funcs.p_glImportMemoryWin32NameEXT = win32u_glImportMemoryWin32NameEXT;
+    }
 
     if (!list_empty( &devices_egl ))
     {

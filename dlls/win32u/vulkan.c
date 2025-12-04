@@ -312,7 +312,7 @@ static HANDLE create_shared_resource_handle( D3DKMT_HANDLE local, const VkExport
     return NULL;
 }
 
-static HANDLE open_shared_resource_from_name( const WCHAR *name )
+HANDLE open_shared_resource_from_name( const WCHAR *name )
 {
     D3DKMT_OPENNTHANDLEFROMNAME open_name = {0};
     WCHAR bufferW[MAX_PATH * 2];
