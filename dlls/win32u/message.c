@@ -2601,6 +2601,120 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
     set_thread_dpi_awareness_context( get_window_dpi_awareness_context( msg->hwnd ));
+// MY
+    if (enable_mouse_in_pointer == 1 /* emulate pointer messages */)
+    {
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+        POINTER_INFO *info = &thread_info->mouse_frame;
+        LARGE_INTEGER frequency, counter;
+        DWORD message = 0;
+
+        NtQueryPerformanceCounter( &counter, &frequency );
+
+        info->pointerType = PT_MOUSE;
+        info->pointerId = 1;
+        info->sourceDevice = INVALID_HANDLE_VALUE;
+        info->historyCount = 1;
+        info->frameId++;
+        info->pointerFlags = 0x20000 | POINTER_MESSAGE_FLAG_PRIMARY;
+        info->hwndTarget = msg->hwnd;
+        info->ptPixelLocation.x = msg->pt.x;
+        info->ptPixelLocation.y = msg->pt.y;
+        info->ptHimetricLocation.x = msg->pt.x;
+        info->ptHimetricLocation.y = msg->pt.y;
+        info->ptPixelLocationRaw.x = msg->pt.x;
+        info->ptPixelLocationRaw.y = msg->pt.y;
+        info->ptHimetricLocationRaw.x = msg->pt.x;
+        info->ptHimetricLocationRaw.y = msg->pt.y;
+        info->dwTime = msg->time;
+        info->PerformanceCount = counter.QuadPart;
+        info->ButtonChangeType = 0;
+
+        switch (msg->message)
+        {
+        case WM_MOUSEMOVE:
+            message = WM_POINTERUPDATE;
+            info->pointerFlags |= POINTER_MESSAGE_FLAG_INRANGE;
+            break;
+        case WM_LBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_XBUTTONDOWN:
+            message = WM_POINTERDOWN;
+            info->pointerFlags |= POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_INCONTACT;
+            if (msg->message == WM_LBUTTONDOWN)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_FIRSTBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_FIRSTBUTTON_DOWN;
+            }
+            if (msg->message == WM_RBUTTONDOWN)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_SECONDBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_SECONDBUTTON_DOWN;
+            }
+            if (msg->message == WM_MBUTTONDOWN)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_THIRDBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_THIRDBUTTON_DOWN;
+            }
+            if (msg->message == WM_XBUTTONDOWN && LOWORD(msg->wParam) == MK_LBUTTON)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_FIRSTBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_FIRSTBUTTON_DOWN;
+            }
+            if (msg->message == WM_XBUTTONDOWN && LOWORD(msg->wParam) == MK_RBUTTON)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_SECONDBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_SECONDBUTTON_DOWN;
+            }
+            if (msg->message == WM_XBUTTONDOWN && LOWORD(msg->wParam) == MK_MBUTTON)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_THIRDBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_THIRDBUTTON_DOWN;
+            }
+            if (msg->message == WM_XBUTTONDOWN && LOWORD(msg->wParam) == MK_XBUTTON1)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_FOURTHBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_FOURTHBUTTON_DOWN;
+            }
+            if (msg->message == WM_XBUTTONDOWN && LOWORD(msg->wParam) == MK_XBUTTON2)
+            {
+                info->pointerFlags |= POINTER_MESSAGE_FLAG_FIFTHBUTTON;
+                info->ButtonChangeType = POINTER_CHANGE_FIFTHBUTTON_DOWN;
+            }
+            break;
+        case WM_LBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONUP:
+        case WM_XBUTTONUP:
+            message = WM_POINTERUP;
+            if (msg->message == WM_LBUTTONUP) info->ButtonChangeType = POINTER_CHANGE_FIRSTBUTTON_UP;
+            if (msg->message == WM_RBUTTONUP) info->ButtonChangeType = POINTER_CHANGE_SECONDBUTTON_UP;
+            if (msg->message == WM_MBUTTONUP) info->ButtonChangeType = POINTER_CHANGE_THIRDBUTTON_UP;
+            if (msg->message == WM_XBUTTONUP && LOWORD(msg->wParam) == MK_LBUTTON)
+                info->ButtonChangeType = POINTER_CHANGE_FIRSTBUTTON_UP;
+            if (msg->message == WM_XBUTTONUP && LOWORD(msg->wParam) == MK_RBUTTON)
+                info->ButtonChangeType = POINTER_CHANGE_SECONDBUTTON_UP;
+            if (msg->message == WM_XBUTTONUP && LOWORD(msg->wParam) == MK_MBUTTON)
+                info->ButtonChangeType = POINTER_CHANGE_THIRDBUTTON_UP;
+            if (msg->message == WM_XBUTTONUP && LOWORD(msg->wParam) == MK_XBUTTON1)
+                info->ButtonChangeType = POINTER_CHANGE_FOURTHBUTTON_UP;
+            if (msg->message == WM_XBUTTONUP && LOWORD(msg->wParam) == MK_XBUTTON2)
+                info->ButtonChangeType = POINTER_CHANGE_FIFTHBUTTON_UP;
+            break;
+        case WM_MOUSEWHEEL:
+            message = WM_POINTERWHEEL;
+            info->pointerFlags = HIWORD(msg->wParam);
+            break;
+        case WM_MOUSEHWHEEL:
+            message = WM_POINTERHWHEEL;
+            info->pointerFlags = HIWORD(msg->wParam);
+            break;
+        }
+
+        if (message) send_message( msg->hwnd, message, MAKELONG(info->pointerId, LOWORD(info->pointerFlags)),
+                                   MAKELONG(msg->pt.x, msg->pt.y) );
+    }
 
     /* FIXME: is this really the right place for this hook? */
     event.message = msg->message;
