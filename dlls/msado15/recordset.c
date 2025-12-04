@@ -28,6 +28,7 @@
 #include "oledberr.h"
 #include "sqlucode.h"
 
+#include "wine/rbtree.h"
 #include "wine/debug.h"
 
 #include "msado15_private.h"
@@ -82,6 +83,17 @@ struct bookmark_data
     DBSTATUS status;
 };
 
+struct hacc_cache_elem
+{
+    struct rb_entry entry;
+    HACCESSOR hacc;
+    struct hacc_cache_key
+    {
+        int len;
+        ULONG data[1];
+    } key;
+};
+
 struct recordset
 {
     _Recordset         Recordset_iface;
@@ -117,7 +129,7 @@ struct recordset
     VARIANT_BOOL       is_eof;
     ADO_LONGPTR        max_records;
 
-    HACCESSOR          hacc_empty; /* haccessor for adding empty rows */
+    struct rb_tree     hacc_cache;
 
     HACCESSOR          bookmark_hacc;
     DBTYPE             bookmark_type;
@@ -1626,17 +1638,23 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
     return refs;
 }
 
+static void free_hacc( struct rb_entry *entry, void *context )
+{
+    struct hacc_cache_elem *elem = (struct hacc_cache_elem *)entry;
+    struct recordset *recordset = context;
+
+    IAccessor_ReleaseAccessor( recordset->accessor, elem->hacc, NULL );
+    free( elem );
+}
+
 static void close_recordset( struct recordset *recordset )
 {
     int i, j;
 
     cache_release( recordset );
     recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
-    if ( recordset->hacc_empty )
-    {
-        IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, NULL );
-        recordset->hacc_empty = 0;
-    }
+
+    rb_destroy( &recordset->hacc_cache, free_hacc, recordset );
 
     if (recordset->bookmark_hacc)
     {
@@ -2157,10 +2175,123 @@ static HRESULT WINAPI recordset_get_Source( _Recordset *iface, VARIANT *source )
     return E_NOTIMPL;
 }
 
+static HRESULT get_accessor( struct recordset *recordset, VARIANT *fields, HACCESSOR *hacc )
+{
+    struct hacc_cache_elem *elem;
+    struct hacc_cache_key *key;
+    DBREFCOUNT refcount;
+    BYTE tmp[256];
+    int i, size;
+    HRESULT hr;
+    ULONG idx;
+
+    if (!recordset->accessor)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
+        if (FAILED(hr) || !recordset->accessor)
+            recordset->accessor = NO_INTERFACE;
+    }
+    if (recordset->accessor == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    hr = init_fields( &recordset->fields );
+    if (FAILED(hr)) return hr;
+
+    key = (struct hacc_cache_key *)tmp;
+    if (V_VT(fields) == VT_ERROR && V_ERROR(fields) == DISP_E_PARAMNOTFOUND)
+    {
+        key->len = 0;
+    }
+    else if (V_VT(fields) & VT_ARRAY)
+    {
+        if (V_VT(fields) != (VT_ARRAY | VT_VARIANT))
+            return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+        i = V_ARRAY(fields)->rgsabound[0].cElements;
+        size = offsetof( struct hacc_cache_key, data[i] );
+        if (size > sizeof(tmp))
+        {
+            key = malloc( size );
+            if (!key) return E_OUTOFMEMORY;
+        }
+        key->len = i;
+
+        for (i = 0; i < key->len; i++)
+        {
+            hr = map_index( &recordset->fields, ((VARIANT *)V_ARRAY(fields)->pvData) + i, &idx );
+            if (FAILED(hr))
+            {
+                if ((BYTE *)key != tmp) free( key );
+                return hr;
+            }
+
+            key->data[i] = idx;
+        }
+    }
+    else
+    {
+        hr = map_index( &recordset->fields, fields, &idx );
+        if (FAILED(hr)) return hr;
+
+        key->len = 1;
+        key->data[0] = idx;
+    }
+
+    elem = (struct hacc_cache_elem *)rb_get( &recordset->hacc_cache, key );
+    if (!elem)
+    {
+        DBBINDING *bindings = malloc( sizeof(*bindings) * key->len );
+
+        if (!bindings)
+        {
+            if ((BYTE *)key != tmp) free( key );
+            return E_OUTOFMEMORY;
+        }
+        memset( bindings, 0, sizeof(*bindings) * key->len );
+
+        elem = malloc( offsetof(struct hacc_cache_elem, key.data[key->len]) );
+        if (!elem)
+        {
+            if ((BYTE *)key != tmp) free( key );
+            free( bindings );
+        }
+
+        for (i = 0; i < key->len; i++)
+        {
+            struct field *field = recordset->fields.field[key->data[i]];
+
+            bindings[i].iOrdinal = field->ordinal;
+            bindings[i].obValue = i * sizeof(VARIANT);
+            bindings[i].dwPart = DBPART_VALUE;
+            bindings[i].cbMaxLen = sizeof(VARIANT);
+            bindings[i].wType = DBTYPE_VARIANT;
+            bindings[i].bPrecision = field->prec;
+            bindings[i].bScale = field->scale;
+        }
+        hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+                key->len, bindings, 0, &elem->hacc, NULL );
+        free( bindings );
+        if (SUCCEEDED( hr ))
+        {
+            elem->key.len = key->len;
+            memcpy( elem->key.data, key->data, key->len * sizeof(key->data[0]) );
+            rb_put( &recordset->hacc_cache, key, &elem->entry );
+        }
+        free( key );
+    }
+    if ((BYTE *)key != tmp) free( key );
+
+    hr = IAccessor_AddRefAccessor( recordset->accessor, elem->hacc, &refcount );
+    if (FAILED(hr)) return hr;
+    *hacc = elem->hacc;
+    return S_OK;
+}
+
 static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, VARIANT values )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
     DBREFCOUNT refcount;
+    HACCESSOR hacc;
     HRESULT hr;
 
     TRACE( "%p, %s, %s\n", recordset, debugstr_variant(&field_list), debugstr_variant(&values) );
@@ -2179,33 +2310,16 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
     if (recordset->rowset_change == NO_INTERFACE)
         return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    if (!recordset->accessor)
-    {
-        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
-        if (FAILED(hr) || !recordset->accessor)
-            recordset->accessor = NO_INTERFACE;
-    }
-    if (recordset->accessor == NO_INTERFACE)
-        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
-
     hr = update_current_row( recordset );
     if (FAILED(hr)) return hr;
     cache_release( recordset );
 
-    if (!recordset->hacc_empty)
-    {
-        hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
-                0, NULL, 0, &recordset->hacc_empty, NULL );
-        if (FAILED(hr) || !recordset->hacc_empty)
-            return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
-    }
+    hr = get_accessor( recordset, &field_list, &hacc );
+    if (FAILED(hr)) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
 
-    hr = IAccessor_AddRefAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
-    if (FAILED(hr))
-        return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
     hr = IRowsetChange_InsertRow( recordset->rowset_change, 0,
-            recordset->hacc_empty, NULL, &recordset->current_row );
-    IAccessor_ReleaseAccessor( recordset->accessor, recordset->hacc_empty, &refcount );
+            hacc, NULL, &recordset->current_row );
+    IAccessor_ReleaseAccessor( recordset->accessor, hacc, &refcount );
     if (FAILED(hr))
         return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
     recordset->is_bof = recordset->is_eof = FALSE;
@@ -3510,6 +3624,16 @@ static const ADORecordsetConstructionVtbl rsconstruction_vtbl =
     rsconstruction_put_RowPosition
 };
 
+static int hacc_cmp( const void *key, const struct rb_entry *entry )
+{
+    const struct hacc_cache_elem *elem = (const struct hacc_cache_elem *)entry;
+    const struct hacc_cache_key *k = key;
+
+    if (k->len < elem->key.len) return -1;
+    if (k->len > elem->key.len) return 1;
+    return memcmp( k->data, elem->key.data, k->len * sizeof(k->data[0]) );
+}
+
 HRESULT Recordset_create( void **obj )
 {
     struct recordset *recordset;
@@ -3530,6 +3654,7 @@ HRESULT Recordset_create( void **obj )
     recordset->cache.rows = malloc( sizeof(*recordset->cache.rows) );
     recordset->max_records = 0;
     Fields_create( recordset );
+    rb_init( &recordset->hacc_cache, hacc_cmp);
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
