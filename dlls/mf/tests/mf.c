@@ -7346,7 +7346,6 @@ if (time_source)
     }
 
     /* Time is now greater than 300000 as, due to the ENDOFSEGMENT marker, SAR will now insert silence and continue the timer */
-    todo_wine
     ok(time > 300000, "Unexpected time %I64d.\n", time);
 
     /* No new samples are requested after the marker */

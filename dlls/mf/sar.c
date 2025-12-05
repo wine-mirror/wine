@@ -37,6 +37,7 @@ enum audio_renderer_flags
     SAR_SAMPLE_REQUESTED = 0x4,
     SAR_SEEKING = 0x8,
     SAR_REPORT_SEEK_TIME = 0x10,
+    SAR_ADDING_SILENCE = 0x20,
 };
 
 enum queued_object_type
@@ -2045,6 +2046,24 @@ static HRESULT WINAPI audio_renderer_render_callback_GetParameters(IMFAsyncCallb
     return E_NOTIMPL;
 }
 
+/* Fills the rest of the audio client buffer with silence */
+static void audio_renderer_render_silence(struct audio_renderer *renderer)
+{
+    unsigned int max_frames, pad_frames;
+    BYTE *dst;
+
+    if (SUCCEEDED(IAudioClient_GetBufferSize(renderer->audio_client, &max_frames)))
+    {
+        if (SUCCEEDED(IAudioClient_GetCurrentPadding(renderer->audio_client, &pad_frames)))
+        {
+            max_frames -= pad_frames;
+            if (max_frames &&
+                    SUCCEEDED(IAudioRenderClient_GetBuffer(renderer->audio_render_client, max_frames, &dst)))
+                IAudioRenderClient_ReleaseBuffer(renderer->audio_render_client, max_frames, AUDCLNT_BUFFERFLAGS_SILENT);
+        }
+    }
+}
+
 static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResult *result)
 {
     unsigned int src_frames, dst_frames, max_frames, pad_frames;
@@ -2061,6 +2080,9 @@ static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResul
     {
         if (obj->type == OBJECT_TYPE_MARKER)
         {
+            if (obj->u.marker.type == MFSTREAMSINK_MARKER_ENDOFSEGMENT)
+                renderer->flags |= SAR_ADDING_SILENCE;
+
             IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkMarker,
                 &GUID_NULL, S_OK, &obj->u.marker.context);
         }
@@ -2088,6 +2110,7 @@ static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResul
 
                                 if (dst_frames && SUCCEEDED(hr = IAudioRenderClient_GetBuffer(renderer->audio_render_client, dst_frames, &dst)))
                                 {
+                                    renderer->flags &= ~SAR_ADDING_SILENCE;
                                     memcpy(dst, src + obj->u.sample.frame_offset * renderer->frame_size,
                                             dst_frames * renderer->frame_size);
 
@@ -2120,10 +2143,16 @@ static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResul
         release_pending_object(obj);
     }
 
-    if (list_empty(&renderer->queue) && !(renderer->flags & SAR_SAMPLE_REQUESTED))
+    if (list_empty(&renderer->queue))
     {
-        IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
-        renderer->flags |= SAR_SAMPLE_REQUESTED;
+        if (!(renderer->flags & SAR_SAMPLE_REQUESTED))
+        {
+            IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+            renderer->flags |= SAR_SAMPLE_REQUESTED;
+        }
+
+        if (renderer->flags & SAR_ADDING_SILENCE)
+            audio_renderer_render_silence(renderer);
     }
 
     if (FAILED(hr = MFPutWaitingWorkItem(renderer->buffer_ready_event, 0, result, &renderer->buffer_ready_key)))
