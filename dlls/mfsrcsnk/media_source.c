@@ -26,6 +26,49 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+#define DEFINE_MF_ASYNC_PARAMS(type)                                                               \
+    static struct type *type ## _from_IUnknown(IUnknown *iface)                                    \
+    {                                                                                              \
+        return CONTAINING_RECORD(iface, struct type, IUnknown_iface);                              \
+    }                                                                                              \
+    static HRESULT WINAPI type ## _QueryInterface(IUnknown *iface, REFIID iid, void **out)         \
+    {                                                                                              \
+        if (IsEqualIID(iid, &IID_IUnknown))                                                        \
+        {                                                                                          \
+            IUnknown_AddRef(iface);                                                                \
+            *out = iface;                                                                          \
+            return S_OK;                                                                           \
+        }                                                                                          \
+        *out = NULL;                                                                               \
+        return E_NOINTERFACE;                                                                      \
+    }                                                                                              \
+    static ULONG WINAPI type ## _AddRef(IUnknown *iface)                                           \
+    {                                                                                              \
+        struct type *object = type ## _from_IUnknown(iface);                                       \
+        return InterlockedIncrement(&object->refcount);                                            \
+    }                                                                                              \
+    static ULONG WINAPI type ## _Release(IUnknown *iface)                                          \
+    {                                                                                              \
+        struct type *object = type ## _from_IUnknown(iface);                                       \
+        ULONG ref = InterlockedDecrement(&object->refcount);                                       \
+        if (!ref) type ## _ ## destroy(object);                                                    \
+        return ref;                                                                                \
+    }                                                                                              \
+    static const IUnknownVtbl type ## _vtbl =                                                      \
+    {                                                                                              \
+        type ## _QueryInterface,                                                                   \
+        type ## _AddRef,                                                                           \
+        type ## _Release,                                                                          \
+    };                                                                                             \
+    static struct type *type ## _alloc(void)                                                       \
+    {                                                                                              \
+        struct type *object;                                                                       \
+        if (!(object = calloc(1, sizeof(*object)))) return NULL;                                   \
+        object->IUnknown_iface.lpVtbl = &type ## _vtbl;                                            \
+        object->refcount = 1;                                                                      \
+        return object;                                                                             \
+    }
+
 #define DEFINE_MF_ASYNC_CALLBACK_(type, name, impl_from, pfx, mem, expr)                           \
     static struct type *impl_from(IMFAsyncCallback *iface)                                         \
     {                                                                                              \
@@ -137,66 +180,21 @@ struct async_start_params
     PROPVARIANT position;
 };
 
-static struct async_start_params *async_start_params_from_IUnknown(IUnknown *iface)
+static void async_start_params_destroy(struct async_start_params *params)
 {
-    return CONTAINING_RECORD(iface, struct async_start_params, IUnknown_iface);
+    IMFPresentationDescriptor_Release(params->descriptor);
+    PropVariantClear(&params->position);
+    free(params);
 }
 
-static HRESULT WINAPI async_start_params_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
-{
-    struct async_start_params *params = async_start_params_from_IUnknown(iface);
-
-    if (IsEqualIID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(&params->IUnknown_iface);
-        *obj = &params->IUnknown_iface;
-        return S_OK;
-    }
-
-    WARN("Unsupported interface %s\n", debugstr_guid(riid));
-    *obj = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI async_start_params_AddRef(IUnknown *iface)
-{
-    struct async_start_params *params = async_start_params_from_IUnknown(iface);
-    return InterlockedIncrement(&params->refcount);
-}
-
-static ULONG WINAPI async_start_params_Release(IUnknown *iface)
-{
-    struct async_start_params *params = async_start_params_from_IUnknown(iface);
-    ULONG refcount = InterlockedDecrement(&params->refcount);
-
-    if (!refcount)
-    {
-        IMFPresentationDescriptor_Release(params->descriptor);
-        PropVariantClear(&params->position);
-        free(params);
-    }
-
-    return refcount;
-}
-
-static const IUnknownVtbl async_start_params_vtbl =
-{
-    async_start_params_QueryInterface,
-    async_start_params_AddRef,
-    async_start_params_Release,
-};
+DEFINE_MF_ASYNC_PARAMS(async_start_params);
 
 static HRESULT async_start_params_create(IMFPresentationDescriptor *descriptor, const GUID *time_format,
         const PROPVARIANT *position, IUnknown **out)
 {
     struct async_start_params *params;
 
-    if (!(params = calloc(1, sizeof(*params))))
-        return E_OUTOFMEMORY;
-
-    params->IUnknown_iface.lpVtbl = &async_start_params_vtbl;
-    params->refcount = 1;
-
+    if (!(params = async_start_params_alloc())) return E_OUTOFMEMORY;
     params->descriptor = descriptor;
     IMFPresentationDescriptor_AddRef(descriptor);
     params->format = *time_format;
