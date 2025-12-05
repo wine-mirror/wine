@@ -454,6 +454,10 @@ static VkResult convert_instance_create_info( struct mempool *pool, VkInstanceCr
         instance->obj.extensions.has_VK_KHR_external_memory_capabilities = 1;
     }
 
+    /* VK_KHR_win32_keyed_mutex only requires external memory extensions, but we will use
+     * external semaphore fds to implement it, so we enable the instance extensions too */
+    instance->obj.extensions.has_VK_KHR_external_semaphore_capabilities = 1;
+
     if (!(extensions = mem_alloc( pool, sizeof(instance->obj.extensions) * 8 * sizeof(*extensions) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
 #define USE_VK_EXT(x) if (instance->obj.extensions.has_ ## x) extensions[count++] = #x;
     ALL_VK_INSTANCE_EXTS
@@ -535,7 +539,8 @@ static VkResult init_physical_device( struct vulkan_physical_device *physical_de
         WARN( "Cannot export WOW64 memory without VK_EXT_map_memory_placed\n" );
         extensions.has_VK_KHR_external_memory_win32 = 0;
     }
-    extensions.has_VK_KHR_win32_keyed_mutex = extensions.has_VK_KHR_timeline_semaphore;
+    extensions.has_VK_KHR_win32_keyed_mutex = extensions.has_VK_KHR_timeline_semaphore &&
+                                              extensions.has_VK_KHR_external_semaphore_fd;
 
     /* filter out unsupported client device extensions */
 #define USE_VK_EXT(x) client_physical_device->extensions.has_ ## x = extensions.has_ ## x;
@@ -675,7 +680,11 @@ static VkResult convert_device_create_info( struct vulkan_physical_device *physi
     info->ppEnabledLayerNames = NULL;
 
     if (device->extensions.has_VK_KHR_win32_keyed_mutex)
+    {
         device->extensions.has_VK_KHR_timeline_semaphore = 1;
+        device->extensions.has_VK_KHR_external_semaphore_fd = 1;
+        device->extensions.has_VK_KHR_external_semaphore = 1;
+    }
 
     driver_funcs->p_map_device_extensions( &device->extensions );
     device->extensions.has_VK_KHR_win32_keyed_mutex = 0;
