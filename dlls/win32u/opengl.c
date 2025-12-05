@@ -1104,6 +1104,14 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     TRACE( "  - device_uuid: %s\n", debugstr_guid(&egl->device_uuid) );
     TRACE( "  - driver_uuid: %s\n", debugstr_guid(&egl->driver_uuid) );
 
+    if (!egl->accelerated && sizeof(void *) == 4)
+    {
+        WARN( "Skipping bogus 32bit llvmpipe device initialization\n" );
+        egl->device_name = "llvmpipe";
+        egl->vendor_name = "Mesa";
+        return;
+    }
+
     funcs->p_eglBindAPI( EGL_OPENGL_API );
     funcs->p_eglGetConfigs( egl->display, &config, 1, &count );
     if (!count) config = EGL_NO_CONFIG_KHR;
