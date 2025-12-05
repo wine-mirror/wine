@@ -1752,6 +1752,58 @@ static HRESULT __stdcall saturation_factory(IUnknown **effect)
     return d2d_effect_create_impl(effect, &properties, sizeof(properties));
 }
 
+static const WCHAR scale_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Scale'/>            \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Scale'/>            \
+    <Inputs>                                                              \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+    <Property name='Scale' type='vector2' />                              \
+    <Property name='CenterPoint' type='vector2' />                        \
+    <Property name='InterpolationMode' type='enum' />                     \
+    <Property name='BorderMode' type='enum' />                            \
+    <Property name='Sharpness' type='float' />                            \
+  </Effect>";
+
+struct scale_properties
+{
+    D2D_VECTOR_2F scale;
+    D2D_VECTOR_2F center_point;
+    D2D1_BORDER_MODE border_mode;
+    float sharpness;
+    D2D1_SCALE_INTERPOLATION_MODE interpolation_mode;
+};
+
+EFFECT_PROPERTY_RW(scale, scale, VECTOR2)
+EFFECT_PROPERTY_RW(scale, center_point, VECTOR2)
+EFFECT_PROPERTY_RW(scale, border_mode, ENUM)
+EFFECT_PROPERTY_RW(scale, sharpness, FLOAT)
+EFFECT_PROPERTY_RW(scale, interpolation_mode, ENUM)
+
+static const D2D1_PROPERTY_BINDING scale_bindings[] =
+{
+    { L"Scale", BINDING_RW(scale, scale) },
+    { L"CenterPoint", BINDING_RW(scale, center_point) },
+    { L"BorderMode", BINDING_RW(scale, border_mode) },
+    { L"Sharpness", BINDING_RW(scale, sharpness) },
+    { L"InterpolationMode", BINDING_RW(scale, interpolation_mode) },
+};
+
+static HRESULT __stdcall scale_factory(IUnknown **effect)
+{
+    static const struct scale_properties properties =
+    {
+        .scale = { 1.0f, 1.0f },
+        .border_mode = D2D1_BORDER_MODE_SOFT,
+        .interpolation_mode = D2D1_SCALE_INTERPOLATION_MODE_LINEAR,
+    };
+    return d2d_effect_create_impl(effect, &properties, sizeof(properties));
+}
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1782,6 +1834,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1DirectionalBlur, X2(directional_blur) },
         { &CLSID_D2D1HueRotation, X2(hue_rotation) },
         { &CLSID_D2D1Saturation, X2(saturation) },
+        { &CLSID_D2D1Scale, X2(scale) },
 #undef X2
 #undef X
     };

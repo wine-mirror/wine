@@ -14208,6 +14208,65 @@ static void test_effect_saturation(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_scale(BOOL d3d11)
+{
+    static const struct effect_property properties[] =
+    {
+        { L"Scale", D2D1_SCALE_PROP_SCALE, D2D1_PROPERTY_TYPE_VECTOR2 },
+        { L"CenterPoint", D2D1_SCALE_PROP_CENTER_POINT, D2D1_PROPERTY_TYPE_VECTOR2 },
+        { L"InterpolationMode", D2D1_SCALE_PROP_INTERPOLATION_MODE, D2D1_PROPERTY_TYPE_ENUM },
+        { L"BorderMode", D2D1_SCALE_PROP_BORDER_MODE, D2D1_PROPERTY_TYPE_ENUM },
+        { L"Sharpness", D2D1_SCALE_PROP_SHARPNESS, D2D1_PROPERTY_TYPE_FLOAT },
+    };
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    unsigned int count, i;
+    ID2D1Effect *effect;
+    D2D_VECTOR_2F vec;
+    WCHAR name[64];
+    HRESULT hr;
+    UINT32 v;
+    float f;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    context = ctx.context;
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Scale, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_system_properties(effect);
+
+    count = ID2D1Effect_GetPropertyCount(effect);
+    ok(count == 5, "Got unexpected property count %u.\n", count);
+
+    for (i = 0; i < ARRAY_SIZE(properties); ++i)
+    {
+        hr = ID2D1Effect_GetPropertyName(effect, properties[i].index, name, 64);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(name, properties[i].name), "%u Unexpected name %s.\n", i, wine_dbgstr_w(name));
+    }
+
+    vec = effect_get_vec2_prop(effect, D2D1_SCALE_PROP_SCALE);
+    ok(vec.x == 1.0f && vec.y == 1.0f, "Unexpected value {%.8e,%.8e}.\n", vec.x, vec.y);
+
+    vec = effect_get_vec2_prop(effect, D2D1_SCALE_PROP_CENTER_POINT);
+    ok(vec.x == 0.0f && vec.y == 0.0f, "Unexpected value {%.8e,%.8e}.\n", vec.x, vec.y);
+
+    v = effect_get_enum_prop(effect, D2D1_SCALE_PROP_INTERPOLATION_MODE);
+    ok(v == D2D1_SCALE_INTERPOLATION_MODE_LINEAR, "Unexpected value %#x.\n", v);
+
+    v = effect_get_enum_prop(effect, D2D1_SCALE_PROP_BORDER_MODE);
+    ok(v == D2D1_BORDER_MODE_SOFT, "Unexpected value %#x.\n", v);
+
+    f = effect_get_float_prop(effect, D2D1_SCALE_PROP_SHARPNESS);
+    ok(f == 0.0f, "Unexpected value %.8e.\n", f);
+
+    ID2D1Effect_Release(effect);
+    release_test_context(&ctx);
+}
+
 static void test_registered_effects(BOOL d3d11)
 {
     UINT32 ret, count, count2, count3;
@@ -17595,6 +17654,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_effect_directional_blur);
     queue_d3d10_test(test_effect_hue_rotation);
     queue_d3d10_test(test_effect_saturation);
+    queue_d3d10_test(test_effect_scale);
     queue_test(test_transform_graph);
     queue_test(test_offset_transform);
     queue_test(test_blend_transform);
