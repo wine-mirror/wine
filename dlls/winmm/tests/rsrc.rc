@@ -67,3 +67,7 @@ test_mp2.wav WAVE "test_mp2.wav"
  * So I manually set it 11480 (the file size divided by 0.1 seconds). */
 /* @makedep: test_mp3.wav */
 test_mp3.wav WAVE "test_mp3.wav"
+
+/* ffmpeg -f lavfi -i "sine=frequency=500" -t 0.5 -ar 48000 -b:a 32k -f mp3 -acodec mp3 -write_xing 0 test.mp3 */
+/* @makedep: test.mp3 */
+test.mp3 RCDATA "test.mp3"

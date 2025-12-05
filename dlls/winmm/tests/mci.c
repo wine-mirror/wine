@@ -1318,14 +1318,15 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(0xDEADF00D==intbuf[0] && 0xABADCAFE==intbuf[2],"DWORD buffer corruption\n");
 }
 
-static void test_playWaveTypeMpegvideo(void)
+static void test_playTypeMpegvideo(HWND hwnd)
 {
     MCIERROR err;
     MCIDEVICEID wDeviceID;
     MCI_PLAY_PARMS play_parm;
     MCI_STATUS_PARMS status_parm;
-    char buf[1024];
-    memset(buf, 0, sizeof(buf));
+    MCI_DGV_WINDOW_PARMSW window_param;
+    const WCHAR *filename = load_resource(L"test.mp3");
+    char buf[1024] = {0};
 
     err = mciSendStringA("open tempfile.wav type MPEGVideo alias mysound", NULL, 0, NULL);
     ok(err==ok_saved,"mci open tempfile.wav type MPEGVideo returned %s\n", dbg_mcierr(err));
@@ -1336,6 +1337,14 @@ static void test_playWaveTypeMpegvideo(void)
 
     wDeviceID = mciGetDeviceIDA("mysound");
     ok(wDeviceID == 1, "mciGetDeviceIDA mysound returned %u, expected 1\n", wDeviceID);
+
+    window_param.hWnd = 0;
+    err = mciSendCommandW(wDeviceID, MCI_WINDOW, MCI_DGV_WINDOW_STATE, (DWORD_PTR)&window_param);
+    ok(err == MCIERR_NO_WINDOW,"mciSendCommandW returned %s\n", dbg_mcierr(err));
+
+    window_param.hWnd = hwnd;
+    err = mciSendCommandW(wDeviceID, MCI_WINDOW, MCI_DGV_WINDOW_HWND, (DWORD_PTR)&window_param);
+    ok(err == MCIERR_INTERNAL,"mciSendCommandW returned %s\n", dbg_mcierr(err));
 
     err = mciSendCommandA(wDeviceID, MCI_PLAY, 0, (DWORD_PTR)&play_parm);
     ok(!err,"mciCommand play returned %s\n", dbg_mcierr(err));
@@ -1374,12 +1383,37 @@ static void test_playWaveTypeMpegvideo(void)
     ok(err==ok_saved,"mci open tempfile.wav type MPEGVideo returned %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("play mysound", NULL, 0, NULL);
-    ok(!err,"mci play retuend %s\n", dbg_mcierr(err));
+    ok(!err,"mci play returned %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("play mysound", NULL, 0, NULL);
-    ok(!err,"mci play retuend %s\n", dbg_mcierr(err));
+    ok(!err,"mci play returned %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("close mysound", NULL, 0, NULL);
+    ok(!err,"mci close returned %s\n", dbg_mcierr(err));
+
+    /* test playing a mp3 file */
+    snprintf(buf, ARRAY_SIZE(buf), "open %ls type MPEGVideo alias mytest", filename);
+    err = mciSendStringA(buf, NULL, 0, NULL);
+    ok(!err, "mci open test.mp3 type MPEGVideo returned %s\n", dbg_mcierr(err));
+
+    wDeviceID = mciGetDeviceIDA("mytest");
+    ok(wDeviceID == 1, "mciGetDeviceIDA returned incorrect device id %u\n", wDeviceID);
+
+    err = mciSendCommandW(wDeviceID, MCI_WINDOW, MCI_DGV_WINDOW_STATE, (DWORD_PTR)&window_param);
+    ok(err == MCIERR_NO_WINDOW,"mciSendCommandW returned %s\n", dbg_mcierr(err));
+
+    window_param.hWnd = hwnd;
+    err = mciSendCommandW(wDeviceID, MCI_WINDOW, MCI_DGV_WINDOW_HWND, (DWORD_PTR)&window_param);
+    ok(err == MCIERR_INTERNAL,"mciSendCommandW returned %s\n", dbg_mcierr(err));
+
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, 0, (DWORD_PTR)&play_parm);
+    ok(!err,"mciCommand play returned %s\n", dbg_mcierr(err));
+
+    err = mciSendStringA("status mytest mode", buf, sizeof(buf), NULL);
+    ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
+    ok(!strcmp(buf,"playing"), "mci status mode: %s\n", buf);
+
+    err = mciSendStringA("close mytest", NULL, 0, NULL);
     ok(!err,"mci close returned %s\n", dbg_mcierr(err));
 }
 
@@ -1888,7 +1922,7 @@ START_TEST(mci)
         test_playWAVE(hwnd);
         test_asyncWAVE(hwnd);
         test_AutoOpenWAVE(hwnd);
-        test_playWaveTypeMpegvideo();
+        test_playTypeMpegvideo(hwnd);
         test_asyncWaveTypeMpegvideo(hwnd);
     }else
         skip("No output devices available, skipping all output tests\n");
