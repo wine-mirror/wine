@@ -416,13 +416,13 @@ sub get_func_trace($$$)
 
 sub get_func_args($$)
 {
-    my ($func, $convert_args) = @_;
+    my ($func, $unix) = @_;
     my $ret = "";
     foreach my $arg (@{$func->[1]})
     {
         my $ptype = get_arg_type( $arg );
         my $pname = get_arg_name( $arg );
-        $ret .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
+        $ret .= " " . ($unix ? ConvertType( $arg ) : $arg->textContent()) . ",";
     }
     $ret =~ s/,$/ /;
     $ret ||= "void";
@@ -431,8 +431,8 @@ sub get_func_args($$)
 
 sub get_func_ret($$)
 {
-    my ($func, $convert_args) = @_;
-    my $ret = $convert_args ? ConvertType( $func->[0] ) : $func->[0]->textContent();
+    my ($func, $unix) = @_;
+    my $ret = $unix ? ConvertType( $func->[0] ) : $func->[0]->textContent();
     $ret =~ s/ $//;
     return $ret;
 }
@@ -1161,6 +1161,9 @@ print HEADER "#ifndef EGL_CAST\n";
 print HEADER "#define EGL_CAST(t,x) ((t)(x))\n";
 print HEADER "#endif\n\n";
 
+print HEADER "struct wgl_context;\n";
+print HEADER "struct wgl_pbuffer;\n";
+
 foreach (@gl_types)
 {
     my $type = $gl_types{$_};
@@ -1180,37 +1183,37 @@ print HEADER "\n";
 print HEADER "#ifndef GL_NO_PROTOTYPES\n";
 foreach (sort keys %norm_functions)
 {
-    my $decl_args = get_func_args( $norm_functions{$_}, 0 );
-    my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
+    my $decl_args = get_func_args( $norm_functions{$_}, 1 );
+    my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
     printf HEADER "%-10s GLAPIENTRY $_($decl_args);\n", $func_ret;
 }
 print HEADER "#endif\n\n";
 
 foreach (sort keys %wgl_functions)
 {
-    my $decl_args = get_func_args( $wgl_functions{$_}, 0 );
-    my $func_ret = get_func_ret( $wgl_functions{$_}, 0 );
+    my $decl_args = get_func_args( $wgl_functions{$_}, 1 );
+    my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %egl_functions)
 {
-    my $decl_args = get_func_args( $egl_functions{$_}, 0 );
-    my $func_ret = get_func_ret( $egl_functions{$_}, 0 );
+    my $decl_args = get_func_args( $egl_functions{$_}, 1 );
+    my $func_ret = get_func_ret( $egl_functions{$_}, 1 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %norm_functions)
 {
-    my $decl_args = get_func_args( $norm_functions{$_}, 0 );
-    my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
+    my $decl_args = get_func_args( $norm_functions{$_}, 1 );
+    my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %ext_functions)
 {
-    my $decl_args = get_func_args( $ext_functions{$_}, 0 );
-    my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
+    my $decl_args = get_func_args( $ext_functions{$_}, 1 );
+    my $func_ret = get_func_ret( $ext_functions{$_}, 1 );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 print HEADER "\n";

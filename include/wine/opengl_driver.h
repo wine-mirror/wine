@@ -67,8 +67,6 @@ struct wgl_pixel_format
 #define WINE_OPENGL_DRIVER_VERSION 37
 
 struct opengl_drawable;
-struct wgl_context;
-struct wgl_pbuffer;
 
 struct wgl_context
 {
@@ -83,52 +81,20 @@ struct wgl_context
 /* interface between opengl32 and win32u */
 struct opengl_funcs
 {
-    BOOL       (*p_query_renderer)( UINT attribute, void *value );
-    BOOL       (*p_wgl_context_reset)( struct wgl_context *context, HDC hdc, struct wgl_context *share, const int *attribs );
-    BOOL       (*p_wgl_context_flush)( struct wgl_context *context, void (*flush)(void), UINT flags );
-    BOOL       (*p_wglCopyContext)( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask );
-    struct wgl_context * (*p_wglCreateContext)( HDC hDc );
-    BOOL       (*p_wglDeleteContext)( struct wgl_context * oldContext );
-    int        (*p_wglGetPixelFormat)( HDC hdc );
-    PROC       (*p_wglGetProcAddress)( LPCSTR lpszProc );
-    BOOL       (*p_wglMakeCurrent)( HDC hDc, struct wgl_context * newContext );
-    BOOL       (*p_wglSetPixelFormat)( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd );
-    BOOL       (*p_wglShareLists)( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource );
-    BOOL       (*p_wglSwapBuffers)( HDC hdc );
-    void       (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );
-    void *     (*p_wglAllocateMemoryNV)( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority );
-    BOOL       (*p_wglBindTexImageARB)( struct wgl_pbuffer * hPbuffer, int iBuffer );
-    BOOL       (*p_wglChoosePixelFormatARB)( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
-    struct wgl_context * (*p_wglCreateContextAttribsARB)( HDC hDC, struct wgl_context * hShareContext, const int *attribList );
-    struct wgl_pbuffer * (*p_wglCreatePbufferARB)( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );
-    BOOL       (*p_wglDestroyPbufferARB)( struct wgl_pbuffer * hPbuffer );
-    void       (*p_wglFreeMemoryNV)( void *pointer );
-    HDC        (*p_wglGetCurrentReadDCARB)(void);
-    const char * (*p_wglGetExtensionsStringARB)( HDC hdc );
-    const char * (*p_wglGetExtensionsStringEXT)(void);
-    HDC        (*p_wglGetPbufferDCARB)( struct wgl_pbuffer * hPbuffer );
-    BOOL       (*p_wglGetPixelFormatAttribfvARB)( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues );
-    BOOL       (*p_wglGetPixelFormatAttribivARB)( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues );
-    int        (*p_wglGetSwapIntervalEXT)(void);
-    BOOL       (*p_wglMakeContextCurrentARB)( HDC hDrawDC, HDC hReadDC, struct wgl_context * hglrc );
-    BOOL       (*p_wglQueryCurrentRendererIntegerWINE)( GLenum attribute, GLuint *value );
-    const GLchar * (*p_wglQueryCurrentRendererStringWINE)( GLenum attribute );
-    BOOL       (*p_wglQueryPbufferARB)( struct wgl_pbuffer * hPbuffer, int iAttribute, int *piValue );
-    BOOL       (*p_wglQueryRendererIntegerWINE)( HDC dc, GLint renderer, GLenum attribute, GLuint *value );
-    const GLchar * (*p_wglQueryRendererStringWINE)( HDC dc, GLint renderer, GLenum attribute );
-    int        (*p_wglReleasePbufferDCARB)( struct wgl_pbuffer * hPbuffer, HDC hDC );
-    BOOL       (*p_wglReleaseTexImageARB)( struct wgl_pbuffer * hPbuffer, int iBuffer );
-    BOOL       (*p_wglSetPbufferAttribARB)( struct wgl_pbuffer * hPbuffer, const int *piAttribList );
-    BOOL       (*p_wglSetPixelFormatWINE)( HDC hdc, int format );
-    BOOL       (*p_wglSwapIntervalEXT)( int interval );
 #define USE_GL_FUNC(x) PFN_##x p_##x;
+    ALL_WGL_FUNCS
+    ALL_WGL_EXT_FUNCS
     ALL_EGL_FUNCS
     ALL_EGL_EXT_FUNCS
     ALL_GL_FUNCS
     ALL_GL_EXT_FUNCS
 #undef USE_GL_FUNC
+    void (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );
+    BOOL (*p_query_renderer)( UINT attribute, void *value );
+    BOOL (*p_wgl_context_flush)( struct wgl_context *context, void (*flush)(void), UINT flags );
+    BOOL (*p_wgl_context_reset)( struct wgl_context *context, HDC hdc, struct wgl_context *share, const int *attribs );
 
-    void       *egl_handle;
+    void *egl_handle;
 };
 
 struct egl_platform
