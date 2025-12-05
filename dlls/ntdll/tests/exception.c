@@ -6424,7 +6424,7 @@ static void test_backtrace_without_runtime_function(void)
     memcpy( code_mem, test_code, sizeof(test_code) );
     func = code_mem;
 
-    func( TRUE );
+    func( FALSE );
 
     memcpy( (char *)code_mem + 0x1000, unwind_info, sizeof(unwind_info) );
     rt_func.BeginAddress = 0;
@@ -6443,7 +6443,7 @@ static void test_backtrace_without_runtime_function(void)
     ret = RtlInstallFunctionTableCallback( table, (ULONG_PTR)code_mem, 2048,
                                            &test_backtrace_without_runtime_function_callback, (PVOID*)&count, NULL );
     ok( ret, "RtlInstallFunctionTableCallback failed.\n" );
-    func( TRUE );
+    func( FALSE );
     todo_wine ok( !count, "got %d.\n", count );
     ret = pRtlDeleteFunctionTable( (PRUNTIME_FUNCTION)table );
     ok( ret, "RtlDeleteFunctionTable failed.\n" );

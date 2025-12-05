@@ -885,6 +885,7 @@ ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
     for (i = 0; i < count; i++)
     {
         func = RtlLookupFunctionEntry( context.Rip, &base, &table );
+        if (!func) break;
         if (RtlVirtualUnwind2( UNW_FLAG_NHANDLER, base, context.Rip, func, &context, NULL,
                                &data, &frame, NULL, NULL, NULL, &handler, 0 ))
             break;
