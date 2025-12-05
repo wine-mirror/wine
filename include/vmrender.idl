@@ -257,7 +257,7 @@ interface IVMRMonitorConfig : IUnknown
 typedef enum _VMRRenderPrefs
 {
     RenderPrefs_RestrictToInitialMonitor = 0x00,
-    RenderPrefs_ForceOffScreen = 0x01,
+    RenderPrefs_ForceOffscreen = 0x01,
     RenderPrefs_ForceOverlays = 0x02,
     RenderPrefs_AllowOverlays = 0x00,
     RenderPrefs_AllowOffscreen = 0x00,
