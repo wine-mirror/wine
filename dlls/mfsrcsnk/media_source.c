@@ -826,25 +826,34 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
     return hr;
 }
 
+static HRESULT media_source_request_stream_sample(struct media_source *source, struct media_stream *stream, IUnknown *token)
+{
+    IMFSample *sample;
+    HRESULT hr = S_OK;
+
+    if (source->state == SOURCE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
+
+    if (source->state == SOURCE_RUNNING && SUCCEEDED(hr = object_queue_pop(&stream->samples, (IUnknown **)&sample)))
+    {
+        media_stream_send_sample(stream, sample, token);
+        IMFSample_Release(sample);
+        return S_OK;
+    }
+
+    if (SUCCEEDED(hr = object_queue_push(&stream->tokens, token)) && source->state == SOURCE_RUNNING)
+        queue_media_source_read(source);
+    return hr;
+}
+
 static HRESULT media_stream_async_request(struct media_stream *stream, IMFAsyncResult *result)
 {
     struct media_source *source = media_source_from_IMFMediaSource(stream->source);
     IUnknown *token = IMFAsyncResult_GetStateNoAddRef(result);
-    IMFSample *sample;
     HRESULT hr = S_OK;
 
     EnterCriticalSection(&source->cs);
-
-    if (source->state == SOURCE_SHUTDOWN)
-        hr = MF_E_SHUTDOWN;
-    else if (source->state == SOURCE_RUNNING && SUCCEEDED(hr = object_queue_pop(&stream->samples, (IUnknown **)&sample)))
-    {
-        media_stream_send_sample(stream, sample, token);
-        IMFSample_Release(sample);
-    }
-    else if (SUCCEEDED(hr = object_queue_push(&stream->tokens, token)) && source->state == SOURCE_RUNNING)
-        queue_media_source_read(source);
-
+    hr = media_source_request_stream_sample(source, stream, token);
     LeaveCriticalSection(&source->cs);
 
     return hr;
