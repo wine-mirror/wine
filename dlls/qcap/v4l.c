@@ -27,6 +27,7 @@
 
 #include "config.h"
 
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -505,7 +506,7 @@ static NTSTATUS v4l_device_create( void *args )
     frmsize.pixel_format = V4L2_PIX_FMT_BGR24;
     while (xioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) != -1)
     {
-        LONGLONG max_frame_interval = (TICKSPERSEC / 30), min_frame_interval = (TICKSPERSEC / 30);
+        LONGLONG max_frame_interval = 0, min_frame_interval = LLONG_MAX;
         struct v4l2_frmivalenum frmival = {0};
         struct caps *new_caps;
 
@@ -526,21 +527,27 @@ static NTSTATUS v4l_device_create( void *args )
             continue;
         }
 
-        if (xioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) != -1)
+        for (frmival.index = 0; xioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) != -1; ++frmival.index)
         {
             if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE)
             {
-                max_frame_interval = TICKSPERSEC * frmival.discrete.numerator / frmival.discrete.denominator;
-                min_frame_interval = max_frame_interval;
+                LONGLONG interval = TICKSPERSEC * frmival.discrete.numerator / frmival.discrete.denominator;
+
+                max_frame_interval = max(max_frame_interval, interval);
+                min_frame_interval = min(min_frame_interval, interval);
             }
             else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE
                     || frmival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS)
             {
-                max_frame_interval = TICKSPERSEC * frmival.stepwise.max.numerator / frmival.stepwise.max.denominator;
-                min_frame_interval = TICKSPERSEC * frmival.stepwise.min.numerator / frmival.stepwise.min.denominator;
+                LONGLONG max_interval = TICKSPERSEC * frmival.stepwise.max.numerator / frmival.stepwise.max.denominator;
+                LONGLONG min_interval = TICKSPERSEC * frmival.stepwise.min.numerator / frmival.stepwise.min.denominator;
+
+                max_frame_interval = max(max_frame_interval, max_interval);
+                min_frame_interval = min(min_frame_interval, min_interval);
             }
         }
-        else
+
+        if (max_frame_interval < min_frame_interval)
             ERR("Failed to get fps: %s.\n", strerror(errno));
 
         new_caps = realloc(device->caps, (device->caps_count + 1) * sizeof(*device->caps));
