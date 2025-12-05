@@ -12353,6 +12353,65 @@ static void test_context_exception_request(void)
     CloseHandle( p.event );
 }
 
+typedef struct
+{
+    LIST_ENTRY entry;
+    ULONG_PTR *count;
+    void *unk1;
+    PVECTORED_EXCEPTION_HANDLER func;
+}
+VECTORED_HANDLER;
+
+static VECTORED_HANDLER *test_RtlAddVectoredExceptionHandler_vh2;
+
+static LONG CALLBACK test_RtlAddVectoredExceptionHandler_handler2( EXCEPTION_POINTERS *info )
+{
+    EXCEPTION_RECORD *rec = info->ExceptionRecord;
+
+    ok( rec->ExceptionCode == 0xeadbeef, "got %#lx, address %p.\n", rec->ExceptionCode, rec->ExceptionAddress );
+    ok( *test_RtlAddVectoredExceptionHandler_vh2->count == 2, "got %Iu.\n", *test_RtlAddVectoredExceptionHandler_vh2->count );
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static LONG CALLBACK test_RtlAddVectoredExceptionHandler_handler( EXCEPTION_POINTERS *info )
+{
+    ok( 0, "got here.\n" );
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void test_RtlAddVectoredExceptionHandler(void)
+{
+    VECTORED_HANDLER *vh, *vh2;
+    void *func;
+
+    vh = pRtlAddVectoredExceptionHandler( TRUE, test_RtlAddVectoredExceptionHandler_handler );
+    ok( !!vh, "got NULL.\n" );
+    if ((ULONG)(ULONG_PTR)vh->count == 1)
+    {
+        win_skip( "Old layout, skipping tests.\n" );
+        pRtlRemoveVectoredExceptionHandler( vh );
+        return;
+    }
+    ok( *vh->count == 1, "got %Iu.\n", *vh->count );
+    func = DecodePointer( vh->func );
+    ok( func == test_RtlAddVectoredExceptionHandler_handler, "got %p, %p.\n", func, test_RtlAddVectoredExceptionHandler_handler );
+
+    vh2 = pRtlAddVectoredExceptionHandler( TRUE, test_RtlAddVectoredExceptionHandler_handler2 );
+    ok( !!vh2, "got NULL.\n" );
+    ok( *vh2->count == 1, "got %Iu.\n", *vh->count );
+    func = DecodePointer( vh2->func );
+    ok( func == test_RtlAddVectoredExceptionHandler_handler2, "got %p, %p.\n", func, test_RtlAddVectoredExceptionHandler_handler2 );
+
+    ok( vh->entry.Blink == (void *)vh2, "got %p, %p.\n", vh->entry.Flink, vh2 );
+    ok( vh2->entry.Flink == (void *)vh, "got %p, %p.\n", vh->entry.Blink, vh );
+
+    test_RtlAddVectoredExceptionHandler_vh2 = vh2;
+    RaiseException( 0xeadbeef, 0, 0, NULL );
+
+    pRtlRemoveVectoredExceptionHandler( vh );
+    pRtlRemoveVectoredExceptionHandler( vh2 );
+}
+
 START_TEST(exception)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -12656,5 +12715,6 @@ START_TEST(exception)
     test_unload_trace();
     test_backtrace();
     test_context_exception_request();
+    test_RtlAddVectoredExceptionHandler();
     VirtualFree(code_mem, 0, MEM_RELEASE);
 }
