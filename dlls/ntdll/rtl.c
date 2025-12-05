@@ -1022,45 +1022,47 @@ ULONG WINAPI RtlRandomEx( ULONG *seed )
 }
 
 /***********************************************************************
- * get_pointer_obfuscator (internal)
+ * get_process_cookie (internal)
  */
-static DWORD_PTR get_pointer_obfuscator( void )
+static ULONG get_process_cookie(void)
 {
-    static DWORD_PTR pointer_obfuscator;
+    static ULONG process_cookie;
 
-    if (!pointer_obfuscator)
+    if (!process_cookie)
     {
-        ULONG seed = NtGetTickCount();
-        ULONG_PTR rand;
+        ULONG cookie;
 
-        /* generate a random value for the obfuscator */
-        rand = RtlUniform( &seed );
-
-        /* handle 64bit pointers */
-        rand ^= (ULONG_PTR)RtlUniform( &seed ) << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
-
-        /* set the high bits so dereferencing obfuscated pointers will (usually) crash */
-        rand |= (ULONG_PTR)0xc0000000 << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
-
-        InterlockedCompareExchangePointer( (void**) &pointer_obfuscator, (void*) rand, NULL );
+        NtQueryInformationProcess( GetCurrentProcess(), ProcessCookie, &cookie, sizeof(cookie), NULL );
+        InterlockedCompareExchange( (LONG volatile *)&process_cookie, cookie, 0 );
     }
-
-    return pointer_obfuscator;
+    return process_cookie;
 }
+
+#define BIT_COUNT_IN_POINTER (sizeof(void *) * 8)
 
 /*************************************************************************
  * RtlEncodePointer   [NTDLL.@]
  */
 PVOID WINAPI RtlEncodePointer( PVOID ptr )
 {
-    DWORD_PTR ptrval = (DWORD_PTR) ptr;
-    return (PVOID)(ptrval ^ get_pointer_obfuscator());
+    ULONG cookie = get_process_cookie();
+    ULONG rotate = cookie % BIT_COUNT_IN_POINTER;
+    ULONG_PTR ptrval = (ULONG_PTR)ptr ^ cookie;
+
+    return (void *)((ptrval >> rotate) | (ptrval << ((BIT_COUNT_IN_POINTER - rotate) % BIT_COUNT_IN_POINTER)));
 }
 
+/*************************************************************************
+ * RtlDecodePointer   [NTDLL.@]
+ */
 PVOID WINAPI RtlDecodePointer( PVOID ptr )
 {
-    DWORD_PTR ptrval = (DWORD_PTR) ptr;
-    return (PVOID)(ptrval ^ get_pointer_obfuscator());
+    ULONG cookie = get_process_cookie();
+    ULONG rotate = cookie % BIT_COUNT_IN_POINTER;
+    ULONG_PTR ptrval = (ULONG_PTR)ptr;
+
+    ptrval = (ptrval << rotate) | (ptrval >> ((BIT_COUNT_IN_POINTER - rotate) % BIT_COUNT_IN_POINTER));
+    return (void *)(ptrval ^ cookie);
 }
 
 /******************************************************************************
