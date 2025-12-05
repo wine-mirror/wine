@@ -769,13 +769,18 @@ static BOOL init_functionpointers(void)
         return FALSE;
     }
 
-    hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
+    hr = pLoadLibraryShim(L"fusion.dll", L"v4.0.30319", NULL, &hfusion);
     if (FAILED(hr))
     {
-        win_skip("fusion.dll not available\n");
-        FreeLibrary(hmscoree);
-        return FALSE;
+        hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
+        if (FAILED(hr))
+        {
+            win_skip("fusion.dll not available %08lx\n", hr);
+            FreeLibrary(hmscoree);
+            return FALSE;
+        }
     }
+    else trace("using .NET version 4\n");
 
     pCreateAssemblyCache = (void *)GetProcAddress(hfusion, "CreateAssemblyCache");
     pGetCachePath = (void *)GetProcAddress(hfusion, "GetCachePath");

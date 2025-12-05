@@ -59,9 +59,18 @@ static BOOL init_functionpointers(void)
         return FALSE;
     }
 
-    hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
+    hr = pLoadLibraryShim(L"fusion.dll", L"v4.0.30319", NULL, &hfusion);
     if (FAILED(hr))
-        return FALSE;
+    {
+        hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
+        if (FAILED(hr))
+        {
+            win_skip("fusion.dll not available\n");
+            FreeLibrary(hmscoree);
+            return FALSE;
+        }
+    }
+    else trace("using .NET version 4\n");
 
     pCreateAssemblyNameObject = (void *)GetProcAddress(hfusion, "CreateAssemblyNameObject");
     if (!pCreateAssemblyNameObject)
