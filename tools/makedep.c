@@ -1669,8 +1669,6 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
             }
             return;
         }
-        if (strendswith( source->sourcename, ".y" ))
-            return;  /* generated .tab.h doesn't include anything */
     }
 
     add_all_includes( make, source, file );
