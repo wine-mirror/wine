@@ -2510,6 +2510,13 @@ static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
     return cache_get( recordset, FALSE );
 }
 
+static inline void set_bool_prop(DBPROP *prop, DBPROPID id, BOOL b)
+{
+    prop->dwPropertyID = id;
+    V_VT(&prop->vValue) = VT_BOOL;
+    V_BOOL(&prop->vValue) = b ? VARIANT_TRUE : VARIANT_FALSE;
+}
+
 static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR source, IUnknown **rowset)
 {
     IDBCreateCommand *create_command;
@@ -2517,7 +2524,7 @@ static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR s
     IOpenRowset *openrowset;
     DBROWCOUNT affected;
     DBPROPSET propset;
-    DBPROP props[3];
+    DBPROP props[10];
     ICommand *cmd;
     DBID table;
     HRESULT hr;
@@ -2533,16 +2540,20 @@ static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR s
     propset.cProperties = ARRAY_SIZE(props);
     propset.rgProperties = props;
     memset(props, 0, sizeof(props));
-    props[0].dwPropertyID = DBPROP_IRowsetChange;
-    V_VT(&props[0].vValue) = VT_BOOL;
-    V_BOOL(&props[0].vValue) = (recordset->lock_type == adLockReadOnly ? VARIANT_FALSE : VARIANT_TRUE);
-    props[1].dwPropertyID = DBPROP_IRowsetUpdate;
-    V_VT(&props[1].vValue) = VT_BOOL;
-    V_BOOL(&props[1].vValue) = (recordset->lock_type == adLockBatchOptimistic ? VARIANT_TRUE : VARIANT_FALSE);
-    props[2].dwPropertyID = DBPROP_UPDATABILITY;
-    V_VT(&props[2].vValue) = VT_I4;
-    V_I4(&props[2].vValue) = (recordset->lock_type == adLockReadOnly ? 0 :
+    set_bool_prop(props, DBPROP_CANSCROLLBACKWARDS, recordset->cursor_type != adOpenForwardOnly);
+    set_bool_prop(props + 1, DBPROP_OTHERINSERT,
+            recordset->cursor_type != adOpenStatic && recordset->cursor_type != adOpenKeyset);
+    set_bool_prop(props + 2, DBPROP_OTHERUPDATEDELETE, recordset->cursor_type != adOpenStatic);
+    props[3].dwPropertyID = DBPROP_UPDATABILITY;
+    V_VT(&props[3].vValue) = VT_I4;
+    V_I4(&props[3].vValue) = (recordset->lock_type == adLockReadOnly ? 0 :
             DBPROPVAL_UP_CHANGE | DBPROPVAL_UP_DELETE | DBPROPVAL_UP_INSERT);
+    set_bool_prop(props + 4, DBPROP_IColumnsRowset, TRUE);
+    set_bool_prop(props + 5, DBPROP_IRowsetChange, recordset->lock_type != adLockReadOnly);
+    set_bool_prop(props + 6, DBPROP_IRowsetLocate, TRUE);
+    set_bool_prop(props + 7, DBPROP_IRowsetUpdate, recordset->lock_type != adLockReadOnly);
+    set_bool_prop(props + 8, DBPROP_IRowsetIndex, TRUE);
+    set_bool_prop(props + 9, DBPROP_IRowsetCurrentIndex, TRUE);
 
     hr = IOpenRowset_OpenRowset(openrowset, NULL, &table, NULL, &IID_IUnknown, 1, &propset, rowset);
     if (SUCCEEDED(hr))
