@@ -24,6 +24,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 #include "windef.h"
@@ -210,7 +211,6 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
     IDirectSoundBufferImpl** dsb = device->buffers;
     LPBYTE newbuf;
     DWORD new_buflen;
-    BOOL mixfloat = FALSE;
     int i;
 
     TRACE("(%p)\n", device);
@@ -218,16 +218,10 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
     new_buflen = device->buflen;
     new_buflen -= new_buflen % wfx->nBlockAlign;
 
-    if (wfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-        (wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-         IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)wfx)->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)))
-        mixfloat = TRUE;
-
     /* reallocate emulated primary buffer */
-    if (forcewave || !mixfloat) {
-        if (!forcewave)
-            new_buflen = frames * wfx->nChannels * sizeof(float);
-
+    if (forcewave)
+    {
+        /* forcewave means DSSCL_WRITEPRIMARY, which implies no mixing */
         newbuf = realloc(device->buffer, new_buflen);
 
         if (!newbuf) {
@@ -236,6 +230,10 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
         }
         FillMemory(newbuf, new_buflen, (wfx->wBitsPerSample == 8) ? 128 : 0);
     } else {
+        assert(wfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+               (wfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                IsEqualGUID(&((WAVEFORMATEXTENSIBLE*)wfx)->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)));
+
         free(device->buffer);
         newbuf = NULL;
     }
@@ -248,11 +246,6 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
     device->writelead = (wfx->nSamplesPerSec / 100) * wfx->nBlockAlign;
 
     TRACE("buflen: %lu, frames %lu\n", device->buflen, frames);
-
-    if (!mixfloat)
-        device->normfunction = normfunctions[wfx->wBitsPerSample/8 - 1];
-    else
-        device->normfunction = NULL;
 
     device->playpos = 0;
 

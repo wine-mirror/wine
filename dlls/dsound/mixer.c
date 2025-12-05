@@ -879,7 +879,6 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, LPBYTE pos, DWORD bytes)
  * secondary->buffer (secondary format)
  *   =[Resample]=> device->tmp_buffer (float format)
  *   =[Volume]=> device->tmp_buffer (float format)
- *   =[Reformat]=> device->buffer (device format, skipped on float)
  */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
@@ -934,16 +933,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		memset(buffer, nfiller, frames * block);
 
-		if (!device->normfunction)
-			DSOUND_MixToPrimary(device, buffer, frames);
-		else {
-			memset(device->buffer, nfiller, device->buflen);
-
-			/* do the mixing */
-			DSOUND_MixToPrimary(device, (float*)device->buffer, frames);
-
-			device->normfunction(device->buffer, buffer, frames * device->pwfx->nChannels);
-		}
+                DSOUND_MixToPrimary(device, buffer, frames);
 
 		hr = IAudioRenderClient_ReleaseBuffer(device->render, frames, 0);
 		if(FAILED(hr))

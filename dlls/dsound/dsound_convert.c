@@ -111,42 +111,6 @@ float get_mono(const IDirectSoundBufferImpl *dsb, BYTE *base, DWORD channel)
     return val;
 }
 
-static inline unsigned char f_to_8(float value)
-{
-    if(value <= -1.f)
-        return 0;
-    if(value >= 1.f * 0x7f / 0x80)
-        return 0xFF;
-    return lrintf((value + 1.f) * 0x80);
-}
-
-static inline SHORT f_to_16(float value)
-{
-    if(value <= -1.f)
-        return 0x8000;
-    if(value >= 1.f * 0x7FFF / 0x8000)
-        return 0x7FFF;
-    return le16(lrintf(value * 0x8000));
-}
-
-static LONG f_to_24(float value)
-{
-    if(value <= -1.f)
-        return 0x80000000;
-    if(value >= 1.f * 0x7FFFFF / 0x800000)
-        return 0x7FFFFF00;
-    return lrintf(value * 0x80000000U);
-}
-
-static inline LONG f_to_32(float value)
-{
-    if(value <= -1.f)
-        return 0x80000000;
-    if(value >= 1.f)
-        return 0x7FFFFFFF;
-    return le32(lrintf(value * 0x80000000U));
-}
-
 void putieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     BYTE *buf = (BYTE *)dsb->device->tmp_buffer;
@@ -327,57 +291,3 @@ void mixieee32(float *src, float *dst, unsigned samples)
     while (samples--)
         *(dst++) += *(src++);
 }
-
-static void norm8(float *src, unsigned char *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        *dst = f_to_8(*src);
-        ++dst;
-        ++src;
-    }
-}
-
-static void norm16(float *src, SHORT *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        *dst = f_to_16(*src);
-        ++dst;
-        ++src;
-    }
-}
-
-static void norm24(float *src, BYTE *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        LONG t = f_to_24(*src);
-        dst[0] = (t >> 8) & 0xFF;
-        dst[1] = (t >> 16) & 0xFF;
-        dst[2] = t >> 24;
-        dst += 3;
-        ++src;
-    }
-}
-
-static void norm32(float *src, INT *dst, unsigned samples)
-{
-    TRACE("%p - %p %d\n", src, dst, samples);
-    while (samples--)
-    {
-        *dst = f_to_32(*src);
-        ++dst;
-        ++src;
-    }
-}
-
-const normfunc normfunctions[4] = {
-    (normfunc)norm8,
-    (normfunc)norm16,
-    (normfunc)norm24,
-    (normfunc)norm32,
-};
