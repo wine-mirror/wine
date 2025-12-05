@@ -368,13 +368,15 @@ static NTSTATUS v4l_device_read_frame( void *args )
     return TRUE;
 }
 
+#define TICKSPERSEC ((LONGLONG)10000000)
+
 static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
-        __u32 max_fps, __u32 min_fps, struct caps *caps)
+        LONGLONG max_frame_interval, LONGLONG min_frame_interval, struct caps *caps)
 {
     LONG depth = 24;
 
     memset(caps, 0, sizeof(*caps));
-    caps->video_info.dwBitRate = width * height * depth * max_fps;
+    caps->video_info.dwBitRate = width * height * depth * TICKSPERSEC / min_frame_interval;
     caps->video_info.bmiHeader.biSize = sizeof(caps->video_info.bmiHeader);
     caps->video_info.bmiHeader.biWidth = width;
     caps->video_info.bmiHeader.biHeight = height;
@@ -392,15 +394,16 @@ static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
     caps->media_type.cbFormat = sizeof(VIDEOINFOHEADER);
     /* We reallocate the caps array, so pbFormat has to be set after all caps
      * have been enumerated. */
-    caps->config.MaxFrameInterval = 10000000 / max_fps;
-    caps->config.MinFrameInterval = 10000000 / min_fps;
+    caps->config.MaxFrameInterval = max_frame_interval;
+    caps->config.MinFrameInterval = min_frame_interval;
     caps->config.MaxOutputSize.cx = width;
     caps->config.MaxOutputSize.cy = height;
     caps->config.MinOutputSize.cx = width;
     caps->config.MinOutputSize.cy = height;
     caps->config.guid = FORMAT_VideoInfo;
-    caps->config.MinBitsPerSecond = width * height * depth * min_fps;
-    caps->config.MaxBitsPerSecond = width * height * depth * max_fps;
+    /* Dividing swaps max and min. */
+    caps->config.MinBitsPerSecond = width * height * depth * TICKSPERSEC / max_frame_interval;
+    caps->config.MaxBitsPerSecond = width * height * depth * TICKSPERSEC / min_frame_interval;
     caps->pixelformat = pixelformat;
 }
 
@@ -502,8 +505,8 @@ static NTSTATUS v4l_device_create( void *args )
     frmsize.pixel_format = V4L2_PIX_FMT_BGR24;
     while (xioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) != -1)
     {
+        LONGLONG max_frame_interval = (TICKSPERSEC / 30), min_frame_interval = (TICKSPERSEC / 30);
         struct v4l2_frmivalenum frmival = {0};
-        __u32 max_fps = 30, min_fps = 30;
         struct caps *new_caps;
 
         frmival.pixel_format = format.fmt.pix.pixelformat;
@@ -527,14 +530,14 @@ static NTSTATUS v4l_device_create( void *args )
         {
             if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE)
             {
-                max_fps = frmival.discrete.denominator / frmival.discrete.numerator;
-                min_fps = max_fps;
+                max_frame_interval = TICKSPERSEC * frmival.discrete.numerator / frmival.discrete.denominator;
+                min_frame_interval = max_frame_interval;
             }
             else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE
                     || frmival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS)
             {
-                min_fps = frmival.stepwise.max.denominator / frmival.stepwise.max.numerator;
-                max_fps = frmival.stepwise.min.denominator / frmival.stepwise.min.numerator;
+                max_frame_interval = TICKSPERSEC * frmival.stepwise.max.numerator / frmival.stepwise.max.denominator;
+                min_frame_interval = TICKSPERSEC * frmival.stepwise.min.numerator / frmival.stepwise.min.denominator;
             }
         }
         else
@@ -545,7 +548,7 @@ static NTSTATUS v4l_device_create( void *args )
             goto error;
         device->caps = new_caps;
         fill_caps(format.fmt.pix.pixelformat, frmsize.discrete.width, frmsize.discrete.height,
-                max_fps, min_fps, &device->caps[device->caps_count]);
+                max_frame_interval, min_frame_interval, &device->caps[device->caps_count]);
         device->caps_count++;
 
         frmsize.index++;
