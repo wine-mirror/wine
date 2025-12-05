@@ -107,6 +107,7 @@ struct audio_renderer
     LONGLONG pts;
     UINT64 position;
     UINT64 audio_clock_frequency;
+    float rate;
 };
 
 static void release_pending_object(struct queued_object *object)
@@ -512,7 +513,7 @@ static void audio_renderer_preroll(struct audio_renderer *renderer)
 {
     unsigned int i;
 
-    if (renderer->flags & SAR_PREROLLED)
+    if (renderer->flags & SAR_PREROLLED || renderer->rate == 0.0f)
         return;
 
     for (i = 0; i < 2; ++i)
@@ -657,7 +658,7 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStart(IMFClockStateSink *
     {
         if (renderer->clock_state != MFCLOCK_STATE_RUNNING)
         {
-            if (FAILED(hr = IAudioClient_Start(renderer->audio_client)))
+            if (renderer->rate != 0.0f && FAILED(hr = IAudioClient_Start(renderer->audio_client)))
                 WARN("Failed to start audio client, hr %#lx.\n", hr);
             renderer->clock_state = MFCLOCK_STATE_RUNNING;
         }
@@ -666,6 +667,8 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStart(IMFClockStateSink *
         hr = MF_E_NOT_INITIALIZED;
 
     IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkStarted, &GUID_NULL, hr, NULL);
+    if (renderer->rate == 0.0f)
+        IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkScrubSampleComplete, &GUID_NULL, hr, NULL);
     if (SUCCEEDED(hr))
         audio_renderer_preroll(renderer);
     LeaveCriticalSection(&renderer->cs);
@@ -724,6 +727,8 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockPause(IMFClockStateSink *
         {
             if (FAILED(hr = IAudioClient_Stop(renderer->audio_client)))
                 WARN("Failed to stop audio client, hr %#lx.\n", hr);
+            else
+                hr = S_OK;
             renderer->clock_state = MFCLOCK_STATE_PAUSED;
         }
         else
@@ -751,7 +756,7 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockRestart(IMFClockStateSink
     {
         if ((preroll = (renderer->clock_state != MFCLOCK_STATE_RUNNING)))
         {
-            if (FAILED(hr = IAudioClient_Start(renderer->audio_client)))
+            if (renderer->rate != 0.0f && FAILED(hr = IAudioClient_Start(renderer->audio_client)))
                 WARN("Failed to start audio client, hr %#lx.\n", hr);
             renderer->clock_state = MFCLOCK_STATE_RUNNING;
         }
@@ -760,6 +765,8 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockRestart(IMFClockStateSink
         hr = MF_E_NOT_INITIALIZED;
 
     IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkStarted, &GUID_NULL, hr, NULL);
+    if (renderer->rate == 0.0f)
+        IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkScrubSampleComplete, &GUID_NULL, hr, NULL);
     if (preroll)
         audio_renderer_preroll(renderer);
 
@@ -770,9 +777,29 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockRestart(IMFClockStateSink
 
 static HRESULT WINAPI audio_renderer_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
 {
-    FIXME("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
+    struct audio_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
+
+    EnterCriticalSection(&renderer->cs);
+
+    if (rate == 0.0 || rate == 1.0)
+    {
+        renderer->rate = rate;
+    }
+    else
+    {
+        WARN("%f is an unsupported rate.\n", rate);
+        hr = MF_E_UNSUPPORTED_RATE;
+    }
+
+    if (hr == S_OK)
+        IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRateChanged, &GUID_NULL, hr, NULL);
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static const IMFClockStateSinkVtbl audio_renderer_clock_sink_vtbl =
@@ -2107,6 +2134,7 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
     renderer->IMFAudioPolicy_iface.lpVtbl = &audio_renderer_policy_vtbl;
     renderer->IMFPresentationTimeSource_iface.lpVtbl = &audio_renderer_time_source_vtbl;
     renderer->render_callback.lpVtbl = &audio_renderer_render_callback_vtbl;
+    renderer->rate = 1.0f;
     renderer->refcount = 1;
     InitializeCriticalSection(&renderer->cs);
     renderer->buffer_ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
