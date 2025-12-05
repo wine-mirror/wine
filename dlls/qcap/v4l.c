@@ -29,6 +29,7 @@
 
 #include <limits.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -428,6 +429,37 @@ static NTSTATUS v4l_device_get_caps_count( void *args )
     return S_OK;
 }
 
+static NTSTATUS v4l_device_get_frame_intervals( void *args )
+{
+    const struct get_frame_intervals_params *params = args;
+    struct video_capture_device *device = get_device(params->device);
+
+    struct v4l2_frmivalenum frmival =
+    {
+        .pixel_format = device->caps[params->caps_index].pixelformat,
+        .width = params->width,
+        .height = params->height,
+    };
+    __u32 count = 0;
+
+    for (frmival.index = 0; xioctl(device->fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) != -1; ++frmival.index)
+    {
+        if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE)
+        {
+            if (params->intervals)
+                params->intervals[count] = TICKSPERSEC * frmival.discrete.numerator / frmival.discrete.denominator;
+            ++count;
+        }
+        else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE || frmival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS)
+        {
+            FIXME("Unhandled type %u.\n", frmival.type);
+        }
+    }
+
+    *params->count = count;
+    return S_OK;
+}
+
 static NTSTATUS v4l_device_create( void *args )
 {
     const struct create_params *params = args;
@@ -619,6 +651,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     v4l_device_get_media_type,
     v4l_device_get_caps,
     v4l_device_get_caps_count,
+    v4l_device_get_frame_intervals,
     v4l_device_get_prop_range,
     v4l_device_get_prop,
     v4l_device_set_prop,
@@ -810,6 +843,31 @@ static NTSTATUS wow64_v4l_device_get_caps_count( void *args )
     return v4l_device_get_caps_count( &params );
 }
 
+static NTSTATUS wow64_v4l_device_get_frame_intervals( void *args )
+{
+    struct
+    {
+        video_capture_device_t device;
+        unsigned int           caps_index;
+        unsigned int           width;
+        unsigned int           height;
+        PTR32                  count;
+        PTR32                  intervals;
+    } const *params32 = args;
+
+    struct get_frame_intervals_params params =
+    {
+        params32->device,
+        params32->caps_index,
+        params32->width,
+        params32->height,
+        ULongToPtr(params32->count),
+        ULongToPtr(params32->intervals),
+    };
+
+    return v4l_device_get_frame_intervals( &params );
+}
+
 static NTSTATUS wow64_v4l_device_get_prop_range( void *args )
 {
     struct
@@ -886,6 +944,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_v4l_device_get_media_type,
     wow64_v4l_device_get_caps,
     wow64_v4l_device_get_caps_count,
+    wow64_v4l_device_get_frame_intervals,
     wow64_v4l_device_get_prop_range,
     wow64_v4l_device_get_prop,
     v4l_device_set_prop,
