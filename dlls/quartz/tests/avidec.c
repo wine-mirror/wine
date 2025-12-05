@@ -1214,34 +1214,37 @@ static HRESULT WINAPI allocator_Decommit(IMemAllocator *iface)
     return IMemAllocator_Decommit(filter->wrapped_allocator);
 }
 
+static const VIDEOINFOHEADER dynamic_format =
+{
+    .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+    .bmiHeader.biCompression = mmioFOURCC('I','4','2','0'),
+    .bmiHeader.biWidth = 10,
+    .bmiHeader.biHeight = 20,
+    .bmiHeader.biBitCount = 32,
+    .bmiHeader.biPlanes = 1,
+    .bmiHeader.biSizeImage = 222,
+};
+
+static void init_dynamic_mt(AM_MEDIA_TYPE *mt)
+{
+    memset(mt, 0, sizeof(*mt));
+    mt->majortype = MEDIATYPE_Video;
+    mt->subtype = MEDIASUBTYPE_I420;
+    mt->formattype = FORMAT_VideoInfo;
+    mt->cbFormat = sizeof(dynamic_format);
+    mt->pbFormat = (BYTE *)&dynamic_format;
+};
+
 static HRESULT WINAPI allocator_GetBuffer(IMemAllocator *iface, IMediaSample **sample,
         REFERENCE_TIME *start_time, REFERENCE_TIME *end_time, DWORD flags)
 {
     struct testfilter *filter = impl_from_IMemAllocator(iface);
+    AM_MEDIA_TYPE mt;
     HRESULT hr;
-
-    VIDEOINFOHEADER format =
-    {
-        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-        .bmiHeader.biCompression = mmioFOURCC('I','4','2','0'),
-        .bmiHeader.biWidth = 10,
-        .bmiHeader.biHeight = 20,
-        .bmiHeader.biBitCount = 32,
-        .bmiHeader.biPlanes = 1,
-        .bmiHeader.biSizeImage = 222,
-    };
-    AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Video,
-        .subtype = MEDIASUBTYPE_I420,
-        .formattype = FORMAT_VideoInfo,
-        .cbFormat = sizeof(format),
-        .pbFormat = (BYTE *)&format,
-    };
 
     if (winetest_debug > 1) trace("GetBuffer()\n");
 
-    source_bitmap_info = format.bmiHeader;
+    source_bitmap_info = dynamic_format.bmiHeader;
 
     ok(!start_time, "Got start time.\n");
     ok(!end_time, "Got end time.\n");
@@ -1251,6 +1254,7 @@ static HRESULT WINAPI allocator_GetBuffer(IMemAllocator *iface, IMediaSample **s
 
     hr = IMemAllocator_GetBuffer(filter->wrapped_allocator, &filter->wrapped_sample, start_time, end_time, flags);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    init_dynamic_mt(&mt);
     hr = IMediaSample_SetMediaType(filter->wrapped_sample, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     *sample = &filter->IMediaSample_iface;
@@ -1342,6 +1346,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
 {
     ALLOCATOR_PROPERTIES props, req_props = {2, 30000, 32, 0};
     IMemAllocator *allocator, *sink_allocator;
+    AM_MEDIA_TYPE mt, dynamic_mt;
     IMediaSample *sample;
     IMemInputPin *input;
     HRESULT hr;
@@ -1526,6 +1531,13 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(testsink->got_sample == 1, "Got %u calls to Receive().\n", testsink->got_sample);
     testsink->got_sample = 0;
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    init_dynamic_mt(&dynamic_mt);
+    todo_wine ok(compare_media_types(&mt, &dynamic_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsink->sink.pin.mt, &source_mt), "Media types didn't match.\n");
+    FreeMediaType(&mt);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
