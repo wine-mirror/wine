@@ -363,6 +363,7 @@ static void compare_bitmap_data(const struct bitmap_data *src, const struct bitm
 
     hr = IWICBitmapSource_GetPixelFormat(source, &dst_pixelformat);
     ok(SUCCEEDED(hr), "GetPixelFormat(%s) failed, hr=%lx\n", name, hr);
+    todo_wine_if(IsEqualGUID(&dst_pixelformat, &GUID_WICPixelFormatBlackWhite) && IsEqualGUID(expect->format, &GUID_WICPixelFormat1bppIndexed))
     ok(IsEqualGUID(&dst_pixelformat, expect->format), "got unexpected pixel format %s (%s)\n", wine_dbgstr_guid(&dst_pixelformat), name);
 
     prc.X = 0;
@@ -830,7 +831,7 @@ static void test_can_convert(void)
     td[] =
     {
         {WIC_PIXEL_FORMAT(Undefined)},
-        {WIC_PIXEL_FORMAT(1bppIndexed), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(1bppIndexed), TRUE, TRUE, 33},
         {WIC_PIXEL_FORMAT(2bppIndexed), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(4bppIndexed), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(8bppIndexed), TRUE, TRUE, 26},
@@ -2176,7 +2177,7 @@ static void test_converter_8bppIndexed(void)
     hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
                                         &GUID_WICPixelFormat1bppIndexed, WICBitmapDitherTypeNone,
                                         NULL, 0.0, WICBitmapPaletteTypeMedianCut);
-    todo_wine ok(hr == S_OK, "unexpected error %#lx\n", hr);
+    ok(hr == S_OK, "unexpected error %#lx\n", hr);
     IWICFormatConverter_Release(converter);
 
     hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
@@ -2184,7 +2185,7 @@ static void test_converter_8bppIndexed(void)
     hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
                                         &GUID_WICPixelFormat1bppIndexed, WICBitmapDitherTypeNone,
                                         NULL, 0.0, WICBitmapPaletteTypeFixedBW);
-    todo_wine ok(hr == S_OK, "unexpected error %#lx\n", hr);
+    ok(hr == S_OK, "unexpected error %#lx\n", hr);
     IWICFormatConverter_Release(converter);
 
     hr = IWICImagingFactory_CreateFormatConverter(factory, &converter);
@@ -2323,6 +2324,7 @@ START_TEST(converter)
     test_conversion(&testdata_24bppRGB, &testdata_4bppIndexed, "24bppRGB -> 4bppIndexed", TRUE);
     test_conversion(&testdata_24bppRGB, &testdata_8bppIndexed, "24bppRGB -> 8bppIndexed", FALSE);
 
+    test_conversion(&testdata_BlackWhite, &testdata_1bppIndexed, "BlackWhite -> 1bppIndexed", FALSE);
     test_conversion(&testdata_BlackWhite, &testdata_8bppIndexed_BW, "BlackWhite -> 8bppIndexed", FALSE);
     test_conversion(&testdata_BlackWhite, &testdata_24bppBGR_BW, "BlackWhite -> 24bppBGR", FALSE);
     test_conversion(&testdata_1bppIndexed, &testdata_8bppIndexed_BW, "1bppIndexed -> 8bppIndexed", TRUE);

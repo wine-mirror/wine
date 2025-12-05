@@ -1888,6 +1888,22 @@ static HRESULT copypixels_to_8bppIndexed(struct FormatConverter *This, const WIC
     return hr;
 }
 
+static HRESULT copypixels_to_1bppIndexed(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    switch (source_format)
+    {
+    case format_1bppIndexed:
+    case format_BlackWhite:
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+        return S_OK;
+    default:
+        FIXME("Unimplemented conversion path! %d\n", source_format);
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+}
+
 static HRESULT copypixels_to_16bppBGRA5551(struct FormatConverter *This, const WICRect *prc,
     UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
 {
@@ -2304,7 +2320,7 @@ static HRESULT copypixels_to_128bppRGBFloat(struct FormatConverter *This, const 
 }
 
 static const struct pixelformatinfo supported_formats[] = {
-    {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL, TRUE},
+    {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, copypixels_to_1bppIndexed, TRUE},
     {format_2bppIndexed, &GUID_WICPixelFormat2bppIndexed, NULL, TRUE},
     {format_4bppIndexed, &GUID_WICPixelFormat4bppIndexed, NULL, TRUE},
     {format_8bppIndexed, &GUID_WICPixelFormat8bppIndexed, copypixels_to_8bppIndexed, TRUE},
