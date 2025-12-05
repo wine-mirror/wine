@@ -199,7 +199,9 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
                 return E_OUTOFMEMORY;
             }
 
-            DeleteMediaType(mt);
+            FreeMediaType(&This->source.pin.mt);
+            This->source.pin.mt = *mt;
+            CoTaskMemFree(mt);
 
             if ((res = ICDecompressBegin(This->hvid, This->input_format, This->output_format)))
             {

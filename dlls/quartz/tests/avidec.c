@@ -1535,7 +1535,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     hr = IPin_ConnectionMediaType(source, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     init_dynamic_mt(&dynamic_mt);
-    todo_wine ok(compare_media_types(&mt, &dynamic_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&mt, &dynamic_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsink->sink.pin.mt, &source_mt), "Media types didn't match.\n");
     FreeMediaType(&mt);
 
