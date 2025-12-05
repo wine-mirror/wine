@@ -563,7 +563,7 @@ static NTSTATUS remove_child_device( struct func_device *impl, DEVICE_OBJECT *de
     for (i = 0; i < impl->devices->Count; ++i)
         if (impl->devices->Objects[i] == device) break;
     if (i == impl->devices->Count) status = STATUS_NOT_FOUND;
-    else impl->devices->Objects[i] = impl->devices->Objects[impl->devices->Count--];
+    else impl->devices->Objects[i] = impl->devices->Objects[--impl->devices->Count];
     KeReleaseSpinLock( &impl->base.lock, irql );
 
     return status;
