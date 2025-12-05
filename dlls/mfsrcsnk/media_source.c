@@ -324,17 +324,17 @@ static HRESULT media_source_send_sample(struct media_source *source, UINT index,
     if (!(stream = media_stream_from_index(source, index)) || !stream->active)
         return S_FALSE;
 
-    if (SUCCEEDED(hr = object_queue_pop(&stream->tokens, &token)))
+    if (list_empty(&stream->tokens))
     {
-        media_stream_send_sample(stream, sample, token);
-        if (token) IUnknown_Release(token);
-        return S_OK;
+        if (FAILED(hr = object_queue_push(&stream->samples, (IUnknown *)sample)))
+            return hr;
+        return S_FALSE;
     }
 
-    if (FAILED(hr = object_queue_push(&stream->samples, (IUnknown *)sample)))
-        return hr;
-
-    return S_FALSE;
+    object_queue_pop(&stream->tokens, &token);
+    media_stream_send_sample(stream, sample, token);
+    if (token) IUnknown_Release(token);
+    return S_OK;
 }
 
 static void queue_media_event_object(IMFMediaEventQueue *queue, MediaEventType type, IUnknown *object)
