@@ -604,11 +604,12 @@ static DEVICE_OBJECT *find_child_device( struct func_device *impl, struct hid_de
 
     KeAcquireSpinLock( &impl->base.lock, &irql );
     devices = impl->devices->Objects;
-    for (i = 0; i < impl->devices->Count; ++i)
+    for (i = 0; !device && i < impl->devices->Count; ++i)
     {
-        struct phys_device *phys = pdo_from_DEVICE_OBJECT( (device = devices[i]) );
-        if (!wcscmp( phys->device_id, device_id )) break;
-        else device = NULL;
+        struct phys_device *phys = pdo_from_DEVICE_OBJECT( devices[i] );
+        if (wcscmp( phys->device_id, device_id )) continue;
+        if (*desc->serial_str && wcscmp( phys->serial_str, desc->serial_str )) continue;
+        device = devices[i];
     }
     KeReleaseSpinLock( &impl->base.lock, irql );
 
