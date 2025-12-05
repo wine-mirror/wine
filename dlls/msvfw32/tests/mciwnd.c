@@ -420,7 +420,7 @@ static void test_audio_playback(void)
     ok(!!parent, "failed to create mci window\n");
 
     error = SendMessageW(mci_wnd, MCIWNDM_OPENW, 0, (DWORD_PTR)test_file);
-    todo_wine ok(!error, "failed to set playback source, error %lu\n", error);
+    ok(!error, "failed to set playback source, error %lu\n", error);
 
     pump_messages();
 

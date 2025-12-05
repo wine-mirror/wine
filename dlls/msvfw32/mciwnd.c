@@ -551,9 +551,11 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
     case MCIWNDM_OPENW:
         {
             RECT rc;
+            BOOL has_window;
             HCURSOR hCursor;
             MCI_OPEN_PARMSW mci_open;
             MCI_GETDEVCAPS_PARMS mci_devcaps;
+            MCI_DGV_WINDOW_PARMSW mci_window;
             WCHAR aliasW[64];
             WCHAR drv_name[MAX_PATH];
             static const WCHAR formatW[] = {'%','d',0};
@@ -626,16 +628,29 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
 
             mwi->dev_type = mci_devcaps.dwReturn;
 
+            mci_window.nCmdShow = -1;
+            mwi->lasterror = mciSendCommandW(mwi->mci, MCI_WINDOW, MCI_DGV_WINDOW_STATE, (DWORD_PTR)&mci_window);
+
+            if (mwi->lasterror == MCIERR_NO_WINDOW)
+            {
+                has_window = FALSE;
+                mwi->lasterror = 0;
+            }
+            else if (mwi->lasterror)
+            {
+                MCIWND_notify_error(mwi);
+                goto end_of_mci_open;
+            }
+            else has_window = TRUE;
+
             drv_name[0] = 0;
             SendMessageW(hWnd, MCIWNDM_GETDEVICEW, 256, (LPARAM)drv_name);
             if (drv_name[0] && GetPrivateProfileStringW(mci32W, drv_name, NULL,
                                             drv_name, MAX_PATH, system_iniW))
                 mwi->hdrv = OpenDriver(drv_name, NULL, 0);
 
-            if (mwi->dev_type == MCI_DEVTYPE_DIGITAL_VIDEO)
+            if (mwi->dev_type == MCI_DEVTYPE_DIGITAL_VIDEO && has_window)
             {
-                MCI_DGV_WINDOW_PARMSW mci_window;
-
                 mci_window.hWnd = hWnd;
                 mwi->lasterror = mciSendCommandW(mwi->mci, MCI_WINDOW,
                                                  MCI_DGV_WINDOW_HWND,
