@@ -432,11 +432,9 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
 
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs;
 
-static inline EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
+static EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
 {
-    assert(format > 0 && format <= 2 * egl->config_count);
-    if (format <= egl->config_count) return egl->configs[format - 1];
-    return egl->configs[format - egl->config_count - 1];
+    return egl->configs[(format - 1) % egl->config_count];
 }
 
 static void egldrv_init_egl_platform( struct egl_platform *platform )
@@ -449,6 +447,14 @@ static void *egldrv_get_proc_address( const char *name )
 {
     return display_funcs.p_eglGetProcAddress( name );
 }
+
+/* list of flags with which each EGL config will be combined */
+static const UINT pixel_format_flags[] =
+{
+    PFD_SUPPORT_GDI,
+    PFD_DOUBLEBUFFER,
+    0, /* offscreen */
+};
 
 static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
 {
@@ -494,11 +500,12 @@ static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
 
     egl->configs = configs;
     egl->config_count = count;
-    *onscreen_count = count;
-    return 2 * count;
+
+    *onscreen_count = (ARRAY_SIZE(pixel_format_flags) - 1) * count;
+    return ARRAY_SIZE(pixel_format_flags) * count;
 }
 
-static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt, BOOL onscreen )
+static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt, UINT flags )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     struct egl_platform *egl = &display_egl;
@@ -512,12 +519,8 @@ static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt,
     memset( fmt, 0, sizeof(*fmt) );
     pfd->nSize = sizeof(*pfd);
     pfd->nVersion = 1;
-    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION;
-    if (onscreen)
-    {
-        pfd->dwFlags |= PFD_DOUBLEBUFFER;
-        if (surface_type & EGL_WINDOW_BIT) pfd->dwFlags |= PFD_DRAW_TO_WINDOW;
-    }
+    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION | flags;
+    if (flags && surface_type & EGL_WINDOW_BIT) pfd->dwFlags |= PFD_DRAW_TO_WINDOW;
     pfd->iPixelType = PFD_TYPE_RGBA;
     pfd->iLayerType = PFD_MAIN_PLANE;
 
@@ -637,11 +640,9 @@ static BOOL egldrv_describe_pixel_format( int format, struct wgl_pixel_format *d
 {
     struct egl_platform *egl = &display_egl;
     int count = egl->config_count;
-    BOOL onscreen = TRUE;
 
-    if (--format < 0 || format > 2 * count) return FALSE;
-    if (format >= count) onscreen = FALSE;
-    return describe_egl_config( egl->configs[format % count], desc, onscreen );
+    if (--format < 0 || format > ARRAY_SIZE(pixel_format_flags) * count) return FALSE;
+    return describe_egl_config( egl->configs[format % count], desc, pixel_format_flags[format / count] );
 }
 
 static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )

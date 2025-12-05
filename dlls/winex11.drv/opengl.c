@@ -473,9 +473,7 @@ static void x11drv_init_egl_platform( struct egl_platform *platform )
 
 static EGLConfig egl_config_for_format( int format )
 {
-    assert(format > 0 && format <= 2 * egl->config_count);
-    if (format <= egl->config_count) return egl->configs[format - 1];
-    return egl->configs[format - egl->config_count - 1];
+    return egl->configs[(format - 1) % egl->config_count];
 }
 
 static struct glx_pixel_format *glx_pixel_format_from_format( int format )
