@@ -2839,6 +2839,11 @@ static void test_D3DKMTShareObjects( void )
     NTSTATUS status;
     HANDLE handle;
 
+    HMODULE gdi32;
+    NTSTATUS (WINAPI *pD3DKMTOpenKeyedMutexFromNtHandle)( D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE* );
+    gdi32 = LoadLibraryW( L"gdi32.dll" );
+    pD3DKMTOpenKeyedMutexFromNtHandle = (void *)GetProcAddress( gdi32, "D3DKMTOpenKeyedMutexFromNtHandle" );
+
     wcscpy( open_adapter.DeviceName, L"\\\\.\\DISPLAY1" );
     status = D3DKMTOpenAdapterFromGdiDisplayName( &open_adapter );
     ok_nt( STATUS_SUCCESS, status );
@@ -3352,10 +3357,15 @@ static void test_D3DKMTShareObjects( void )
     open_resource.hSyncObject = 0;
 
     /* D3DKMTOpenKeyedMutexFromNtHandle doesn't work with resource handle */
-    open_mutex_nt.hNtHandle = handle;
-    open_mutex_nt.hKeyedMutex = 0xdeadbeef;
-    status = D3DKMTOpenKeyedMutexFromNtHandle( &open_mutex_nt );
-    todo_wine ok_nt( STATUS_OBJECT_TYPE_MISMATCH, status );
+    if (pD3DKMTOpenKeyedMutexFromNtHandle)
+    {
+        open_mutex_nt.hNtHandle = handle;
+        open_mutex_nt.hKeyedMutex = 0xdeadbeef;
+        status = D3DKMTOpenKeyedMutexFromNtHandle( &open_mutex_nt );
+        todo_wine ok_nt( STATUS_OBJECT_TYPE_MISMATCH, status );
+    }
+    else /* not available up to win10-1709 */
+        win_skip("Function D3DKMTOpenKeyedMutexFromNtHandle not present in gdi32.dll\n");
 
     memset( &open_resource, 0, sizeof(open_resource) );
     CloseHandle( handle );
