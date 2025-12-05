@@ -1168,6 +1168,13 @@ static void test_video_input(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ICreateDevEnum_CreateClassEnumerator(create_devenum, &CLSID_VideoInputDeviceCategory, &mon, 0);
+    if (hr == S_FALSE)
+    {
+        skip("No video capture devices present.\n");
+        ICreateDevEnum_Release(create_devenum);
+        CoUninitialize();
+        return;
+    }
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     while (IEnumMoniker_Next(mon, 1, &moniker, NULL) == S_OK)
