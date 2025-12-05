@@ -4066,16 +4066,44 @@ static HRESULT WINAPI contentHandler_startElement(
         ISAXAttributes *saxattr)
 {
     struct call_entry call;
-    IMXAttributes *mxattr;
+    TYPEATTR *type_attr;
+    IDispatch *disp;
+    ITypeInfo *ti;
     HRESULT hr;
     int len;
 
     ok(uri != NULL, "uri == NULL\n");
     ok(localname != NULL, "localname == NULL\n");
     ok(qname != NULL, "qname == NULL\n");
+    ok(!!saxattr, "Unexpected pointer.\n");
 
-    hr = ISAXAttributes_QueryInterface(saxattr, &IID_IMXAttributes, (void**)&mxattr);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+    check_interface(saxattr, &IID_IMXAttributes, FALSE);
+    check_interface(saxattr, &IID_IVBSAXAttributes, FALSE);
+    check_interface(saxattr, &IID_IVBSAXLocator, FALSE);
+    todo_wine
+    check_interface(saxattr, &IID_IDispatch, TRUE);
+    todo_wine
+    check_interface(saxattr, &IID_IDispatchEx, TRUE);
+    check_interface(saxattr, &IID_ISAXAttributes, TRUE);
+    todo_wine
+    check_interface(saxattr, &IID_ISAXXMLReader, TRUE);
+    todo_wine
+    check_interface(saxattr, &IID_IVBSAXXMLReader, TRUE);
+    check_interface(saxattr, &IID_ISAXLocator, TRUE);
+
+    if (SUCCEEDED(ISAXAttributes_QueryInterface(saxattr, &IID_IDispatch, (void **)&disp)))
+    {
+        hr = IDispatch_GetTypeInfo(disp, 0, 0, &ti);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = ITypeInfo_GetTypeAttr(ti, &type_attr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&IID_IVBSAXXMLReader, &type_attr->guid),
+                "Unexpected type %s\n", debugstr_guid(&type_attr->guid));
+        ITypeInfo_ReleaseTypeAttr(ti, type_attr);
+        ITypeInfo_Release(ti);
+        IDispatch_Release(disp);
+    }
 
     init_call_entry(locator, &call);
     call.id = CH_STARTELEMENT;
@@ -4086,6 +4114,9 @@ static HRESULT WINAPI contentHandler_startElement(
     if(!test_attr_ptr)
         test_attr_ptr = saxattr;
     ok(test_attr_ptr == saxattr, "Multiple ISAXAttributes instances are used (%p %p)\n", test_attr_ptr, saxattr);
+
+    hr = ISAXAttributes_getValueFromQName(saxattr, NULL, 0, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     /* store actual attributes */
     len = 0;
@@ -4341,6 +4372,7 @@ static void test_saxreader(void)
     ISAXErrorHandler *lpErrorHandler;
     SAFEARRAY *sa;
     SAFEARRAYBOUND SADim[1];
+    ISAXLocator *locator;
     char *ptr = NULL;
     IStream *stream;
     ULONG written;
@@ -4352,6 +4384,26 @@ static void test_saxreader(void)
     hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     g_reader = reader;
+
+    check_interface(reader, &IID_IDispatch, TRUE);
+    check_interface(reader, &IID_IDispatchEx, TRUE);
+    check_interface(reader, &IID_ISAXXMLReader, TRUE);
+    check_interface(reader, &IID_IVBSAXXMLReader, TRUE);
+    todo_wine
+    check_interface(reader, &IID_ISAXLocator, TRUE);
+    check_interface(reader, &IID_IVBSAXLocator, FALSE);
+
+    if (SUCCEEDED(ISAXXMLReader_QueryInterface(reader, &IID_ISAXLocator, (void **)&locator)))
+    {
+        check_interface(locator, &IID_IDispatch, TRUE);
+        check_interface(locator, &IID_IDispatchEx, TRUE);
+        check_interface(locator, &IID_ISAXXMLReader, TRUE);
+        check_interface(locator, &IID_IVBSAXXMLReader, TRUE);
+        check_interface(locator, &IID_ISAXLocator, TRUE);
+        check_interface(locator, &IID_IVBSAXLocator, FALSE);
+
+        ISAXLocator_Release(locator);
+    }
 
     hr = ISAXXMLReader_getContentHandler(reader, &content);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
