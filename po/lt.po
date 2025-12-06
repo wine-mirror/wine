@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-09-20 00:57+0300\n"
+"PO-Revision-Date: 2025-12-06 13:21+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -4178,30 +4178,25 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
 #: dlls/jscript/jscript.rc:84
-#, fuzzy
-#| msgid "DataView constructor argument offset is invalid"
 msgid "Typed array constructor argument is invalid"
-msgstr "DataView konstruktoriaus argumentas poslinkis yra netinkamas"
+msgstr "Tipizuoto masyvo konstruktoriaus argumentas netinkamas"
 
 #: dlls/jscript/jscript.rc:83
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a typed array object"
-msgstr "„Šis“ nėra | objektas"
+msgstr "„Šis“ nėra tipizuoto masyvo objektas"
 
 #: dlls/jscript/jscript.rc:85
 msgid "Invalid offset/length when creating typed array"
-msgstr ""
+msgstr "Neteisingas poslinkis/ilgis kuriant tipizuotą masyvą"
 
 #: dlls/jscript/jscript.rc:86
 msgid "Invalid begin/end value in typed array subarray method"
 msgstr ""
+"Neteisinga pradžios/pabaigos reikšmė tipizuoto masyvo „subarray“ metode"
 
 #: dlls/jscript/jscript.rc:87
-#, fuzzy
-#| msgid "Invalid module type for %1.\n"
 msgid "Invalid source in typed array set"
-msgstr "Neteisingas %1 modulio tipas.\n"
+msgstr "Nustatytas neteisingas tipizuoto masyvo šaltinis"
 
 #: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
@@ -9640,28 +9635,20 @@ msgid "Scanning"
 msgstr "Skaitoma"
 
 #: dlls/sane.ds/sane.rc:58
-#, fuzzy
-#| msgid "feature from:"
 msgid "Manufacturer:"
-msgstr "komponentas iš:"
+msgstr "Gamintojas:"
 
 #: dlls/sane.ds/sane.rc:60
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product family:"
-msgstr "Produkto atnaujinimai:"
+msgstr "Įrenginio šeima:"
 
 #: dlls/sane.ds/sane.rc:62
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product name:"
-msgstr "Produkto atnaujinimai:"
+msgstr "Įrenginio pavadinimas:"
 
 #: dlls/sane.ds/sane.rc:64
-#, fuzzy
-#| msgid "Screen resolution"
 msgid "Resolution:"
-msgstr "Ekrano skiriamoji geba"
+msgstr "Skiriamoji geba:"
 
 #: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
 msgid "Page"
@@ -9699,7 +9686,7 @@ msgstr "µs"
 
 #: dlls/sane.ds/sane.rc:43
 msgid "LineArt"
-msgstr ""
+msgstr "Linijinis paveikslas"
 
 #: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
 #: programs/ipconfig/ipconfig.rc:34
@@ -9711,20 +9698,23 @@ msgid ""
 "The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
 "scanned."
 msgstr ""
+"Automatinis dokumentų padaviklis (ADF) tuščias. Įdėkite lapus nuskaitymui."
 
 #: dlls/sane.ds/sane.rc:47
 msgid ""
 "The scanner reports a paper jam. Check for additional information on device "
 "display."
 msgstr ""
+"Skaitytuvas praneša apie užstrigusį popierių. Daugiau informacijos įrenginio "
+"ekrane."
 
 #: dlls/sane.ds/sane.rc:48
 msgid "The scanner cover is open. Please close the scanner."
-msgstr ""
+msgstr "Atidarytas skaitytuvo dangtis. Uždarykite skaitytuvą."
 
 #: dlls/sane.ds/sane.rc:49
 msgid "The scanner is busy. Try again later."
-msgstr ""
+msgstr "Skaitytuvas užimtas. Mėginkite vėliau."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -14807,10 +14797,8 @@ msgid "%t%1!u! file(s) copied\n"
 msgstr "Nukopijuota failų: %t%1!u!\n"
 
 #: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
-#, fuzzy
-#| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"
-msgstr "Nėra prieigos prie failo.\n"
+msgstr "Failas negali būti nukopijuotas ant savęs.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
