@@ -646,7 +646,6 @@ struct wined3d_context_gl
     unsigned int level;
     HGLRC restore_ctx;
     HDC restore_dc;
-    int restore_pf;
     HGLRC gl_ctx;
     HDC dc;
     int pixel_format;
