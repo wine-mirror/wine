@@ -4051,13 +4051,13 @@ RETURN_CODE WCMD_mklink(WCHAR *args)
     BOOL isdir = FALSE;
     BOOL junction = FALSE;
     BOOL hard = FALSE;
-    BOOL ret = FALSE;
+    BOOL ret = TRUE;
     WCHAR file1[MAX_PATH];
     WCHAR file2[MAX_PATH];
 
     file1[0] = file2[0] = L'\0';
 
-    while (argN) {
+    while (argN && ret) {
         WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
 
         if (!argN) break;
@@ -4071,27 +4071,30 @@ RETURN_CODE WCMD_mklink(WCHAR *args)
         else if (lstrcmpiW(thisArg, L"/J") == 0)
             junction = TRUE;
         else if (*thisArg == L'/')
-        {
-            return errorlevel = ERROR_INVALID_FUNCTION;
-        }
+            ret = FALSE;
         else
         {
-            if(!file1[0])
+            if (!file1[0])
                 lstrcpyW(file1, thisArg);
-            else
+            else if (!file2[0])
                 lstrcpyW(file2, thisArg);
+            else
+                ret = FALSE;
         }
     }
 
-    if (*file1 && *file2)
+    if (!file2[0] || !ret)
     {
-        if (hard)
-            ret = CreateHardLinkW(file1, file2, NULL);
-        else if(!junction)
-            ret = CreateSymbolicLinkW(file1, file2, isdir);
-        else
-            ret = create_mount_point(file1, file2);
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+        return errorlevel = ERROR_INVALID_FUNCTION;
     }
+
+    if (hard)
+        ret = CreateHardLinkW(file1, file2, NULL);
+    else if (!junction)
+        ret = CreateSymbolicLinkW(file1, file2, isdir);
+    else
+        ret = create_mount_point(file1, file2);
 
     if (ret) return errorlevel = NO_ERROR;
 
