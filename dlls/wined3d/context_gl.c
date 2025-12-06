@@ -1591,8 +1591,6 @@ void wined3d_context_gl_release(struct wined3d_context_gl *context_gl)
 
     if (!--context_gl->level)
     {
-        context_gl->needs_set = 1;
-
         if (context_gl->restore_ctx)
         {
             TRACE("Restoring GL context %p on device context %p.\n", context_gl->restore_ctx, context_gl->restore_dc);
