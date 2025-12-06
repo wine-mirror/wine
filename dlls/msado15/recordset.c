@@ -2254,6 +2254,7 @@ static HRESULT get_accessor( struct recordset *recordset, VARIANT *fields, HACCE
         {
             if ((BYTE *)key != tmp) free( key );
             free( bindings );
+            return E_OUTOFMEMORY;
         }
 
         for (i = 0; i < key->len; i++)
