@@ -923,7 +923,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (NSRect) firstRectForCharacterRange:(NSRange)aRange actualRange:(NSRangePointer)actualRange
     {
-        WineWindow* window = (WineWindow*)[self window];
         NSRect ret;
 
         aRange = NSIntersectionRange(aRange, NSMakeRange(0, [markedText length]));
