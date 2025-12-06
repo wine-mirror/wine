@@ -1084,7 +1084,7 @@ static void test_properties(void)
         hr = IXACT3SoundBank_Prepare(soundbank, 2, 0, 0, &cue);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         hr = IXACT3Cue_Play(cue);
-        todo_wine_if (i >= 10) ok(hr == (i < 11 ? S_OK : XACTENGINE_E_INSTANCELIMITFAILTOPLAY), "Got hr %#lx.\n", hr);
+        todo_wine_if (i == 10) ok(hr == (i < 11 ? S_OK : XACTENGINE_E_INSTANCELIMITFAILTOPLAY), "Got hr %#lx.\n", hr);
         hr = IXACT3Cue_GetProperties(cue, &props);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         todo_wine_if (i < 10) ok(props->cueProperties.currentInstances == min(i + 1, 11),
@@ -1371,26 +1371,26 @@ static void test_variables(void)
 
     value = -1.0f;
     hr = IXACT3Engine_GetGlobalVariable(engine, 8, &value);
-    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
-    todo_wine ok(value == -1.0f, "Got value %.8e.\n", value);
+    ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    ok(value == -1.0f, "Got value %.8e.\n", value);
 
     hr = IXACT3Engine_SetGlobalVariable(engine, 8, 11.0f);
-    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
 
     index = IXACT3Engine_GetGlobalVariableIndex(engine, "v2");
     ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
 
     index = IXACT3Engine_GetGlobalVariableIndex(engine, "v3");
-    todo_wine ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
+    ok(index == XACTINDEX_INVALID, "Got index %u.\n", index);
 
     index = IXACT3Engine_GetGlobalVariableIndex(engine, "v4");
     ok(index == 10, "Got index %u.\n", index);
 
     hr = IXACT3Engine_SetGlobalVariable(engine, index, 11.0f);
-    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
     hr = IXACT3Engine_GetGlobalVariable(engine, index, &value);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(value == 10.0f, "Got value %.8e.\n", value);
+    ok(value == 10.0f, "Got value %.8e.\n", value);
 
     res = FindResourceW(NULL, L"test.xwb", (const WCHAR *)RT_RCDATA);
     ok(!!res, "Got error %lu.\n", GetLastError());
@@ -1415,11 +1415,11 @@ static void test_variables(void)
 
     value = -1.0f;
     hr = IXACT3Cue_GetVariable(cue, 7, &value);
-    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
-    todo_wine ok(value == -1.0f, "Got value %.8e.\n", value);
+    ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    ok(value == -1.0f, "Got value %.8e.\n", value);
 
     hr = IXACT3Cue_SetVariable(cue, 7, 11.0f);
-    todo_wine ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
+    ok(hr == XACTENGINE_E_INVALIDVARIABLEINDEX, "Got hr %#lx.\n", hr);
 
     index = IXACT3Cue_GetVariableIndex(cue, "v2");
     ok(index == 8, "Got index %u.\n", index);
