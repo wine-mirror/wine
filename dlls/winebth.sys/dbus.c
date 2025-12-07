@@ -1343,11 +1343,18 @@ NTSTATUS bluez_device_start_pairing( void *connection, void *watcher_ctx, struct
     success = p_dbus_connection_send_with_reply( connection, request, &pending_call, bluez_timeout );
     p_dbus_message_unref( request );
     if (!success)
+    {
+        free( data );
         return STATUS_NO_MEMORY;
+    }
     if (!pending_call)
+    {
+        free( data );
         return STATUS_INTERNAL_ERROR;
+    }
     if (!p_dbus_pending_call_set_notify( pending_call, bluez_device_pair_callback, data, free ))
     {
+        free( data );
         p_dbus_pending_call_cancel( pending_call );
         p_dbus_pending_call_unref( pending_call );
         return STATUS_NO_MEMORY;
@@ -1386,8 +1393,11 @@ static BOOL bluez_event_list_queue_new_event_with_call(
     event_entry->event_type = event_type;
     event_entry->event = event;
     event_entry->pending_call = call;
-    if (call && callback)
-        p_dbus_pending_call_set_notify( call, callback, &event_entry->event, NULL );
+    if (call && callback && !p_dbus_pending_call_set_notify( call, callback, &event_entry->event, NULL ))
+    {
+        free( event_entry );
+        return FALSE;
+    }
     list_add_tail( event_list, &event_entry->entry );
 
     return TRUE;
