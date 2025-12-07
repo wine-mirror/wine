@@ -259,6 +259,11 @@ static inline const char *dbgstr_dbus_connection( DBusConnection *connection )
                              p_dbus_connection_get_is_connected( connection ) );
 }
 
+static const char *dbgstr_dbus_error( const DBusError *error )
+{
+    return wine_dbg_sprintf( "{%s: %s}", debugstr_a( error->name ), debugstr_a( error->message ) );
+}
+
 static NTSTATUS bluez_get_objects_async( DBusConnection *connection, DBusPendingCall **call )
 {
     DBusMessage *request;
@@ -426,7 +431,7 @@ static NTSTATUS bluez_adapter_set_discovery_filter( void *connection, const char
     }
     if (!reply)
     {
-        WARN( "Failed to set discovery filter: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+        WARN( "Failed to set discovery filter: %s\n", dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         p_dbus_error_free( &error );
         return status;
@@ -463,8 +468,7 @@ NTSTATUS bluez_adapter_start_discovery( void *connection, const char *adapter_pa
     }
     if (!reply)
     {
-        ERR( "Failed to start discovery on adapter %s: %s: %s", debugstr_a( adapter_path ),
-             debugstr_a( error.message ), debugstr_a( error.name ) );
+        ERR( "Failed to start discovery on adapter %s: %s\n", debugstr_a( adapter_path ), dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         p_dbus_error_free( &error );
         return status;
@@ -496,8 +500,8 @@ NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_pat
     }
     if (!reply)
     {
-        ERR( "Failed to stop discovery on adapter %s: %s: %s", debugstr_a( adapter_path ),
-             debugstr_a( error.message ), debugstr_a( error.name ) );
+        ERR( "Failed to stop discovery on adapter %s: %s\n", debugstr_a( adapter_path ),
+             dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         p_dbus_error_free( &error );
         return status;
@@ -534,8 +538,8 @@ NTSTATUS bluez_adapter_remove_device( void *connection, const char *adapter_path
     }
     if (!reply)
     {
-        ERR( "Failed to remove device %s on adapter %s: %s: %s\n", debugstr_a( device_path ),
-             debugstr_a( adapter_path ), debugstr_a( error.name ), debugstr_a( error.message ) );
+        ERR( "Failed to remove device %s on adapter %s: %s\n", debugstr_a( device_path ),
+             debugstr_a( adapter_path ), dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         p_dbus_error_free( &error );
         return status;
@@ -617,8 +621,8 @@ NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_
     }
     if (!reply)
     {
-        ERR( "Failed to set property %s for adapter %s: %s: %s\n", debugstr_a( prop_name ),
-             debugstr_a( params->adapter->str ), debugstr_a( error.name ), debugstr_a( error.message ) );
+        ERR( "Failed to set property %s for adapter %s: %s\n", debugstr_a( prop_name ),
+             debugstr_a( params->adapter->str ), dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         p_dbus_error_free( &error );
         return status;
@@ -917,7 +921,7 @@ void *bluez_dbus_init( void )
     connection = p_dbus_bus_get_private ( DBUS_BUS_SYSTEM, &error );
     if (!connection)
     {
-        WARN( "Failed to get system dbus connection: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+        WARN( "Failed to get system dbus connection: %s\n", dbgstr_dbus_error( &error ) );
         p_dbus_error_free( &error );
         return NULL;
     }
@@ -990,7 +994,7 @@ static DBusHandlerResult bluez_auth_agent_vtable_message_handler( DBusConnection
         if (!p_dbus_message_get_args( message, &error, DBUS_TYPE_OBJECT_PATH, &device_path, DBUS_TYPE_UINT32, &passkey,
                                       DBUS_TYPE_INVALID ))
         {
-            ERR( "Failed to get message args: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+            ERR( "Failed to get message args: %s\n", dbgstr_dbus_error( &error ) );
             p_dbus_error_free( &error );
             p_dbus_connection_free_preallocated_send( connection, prealloc_send );
             return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -1085,8 +1089,7 @@ NTSTATUS bluez_auth_agent_start( void *connection, void **auth_agent_ctx )
                                                           &bluez_auth_agent_object_vtable, ctx, &error );
     if (!success)
     {
-        ERR_(dbus)( "Failed to register object: %s: %s\n", debugstr_a( error.name ),
-                    debugstr_a( error.message ) );
+        ERR_(dbus)( "Failed to register object: %s\n", dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         bluez_auth_agent_ctx_decref( ctx );
         goto done;
@@ -1193,7 +1196,7 @@ NTSTATUS bluez_auth_agent_request_default( void *connection )
     if (!reply)
     {
         status = bluez_dbus_error_to_ntstatus( &error );
-        ERR( "RequestDefaultAgent failed: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+        ERR( "RequestDefaultAgent failed: %s\n", dbgstr_dbus_error( &error ) );
         p_dbus_error_free( &error );
         return status;
     }
@@ -1276,8 +1279,7 @@ NTSTATUS bluez_device_disconnect( void *connection, const char *device_path )
     }
     if (!reply)
     {
-        ERR( "Failed to disconnect device %s: %s: %s\n", debugstr_a( device_path ), debugstr_a( error.name ),
-             debugstr_a( error.message ) );
+        ERR( "Failed to disconnect device %s: %s\n", debugstr_a( device_path ), dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         p_dbus_error_free( &error );
         return status;
@@ -1310,7 +1312,7 @@ static void bluez_device_pair_callback( DBusPendingCall *pending, void *param )
     if (p_dbus_set_error_from_message( &error, reply ))
     {
         event.pairing_finished.result = bluez_dbus_error_to_ntstatus( &error );
-        ERR( "Failed to pair: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+        ERR( "Failed to pair: %s\n", dbgstr_dbus_error( &error ) );
     }
     p_dbus_error_free( &error );
 
@@ -1426,8 +1428,7 @@ static void bluez_filter_radio_props_changed_callback( DBusPendingCall *call, vo
     p_dbus_error_init( &error );
     if (p_dbus_set_error_from_message( &error, reply ))
     {
-        ERR( "Failed to get adapter properties for %s: %s: %s\n", debugstr_a( radio->str ),
-             debugstr_a( error.name ), debugstr_a( error.message ) );
+        ERR( "Failed to get adapter properties for %s: %s\n", debugstr_a( radio->str ), dbgstr_dbus_error( &error ) );
         p_dbus_error_free( &error );
         p_dbus_message_unref( reply );
         return;
@@ -1461,8 +1462,7 @@ static void bluez_filter_device_props_changed_callback( DBusPendingCall *call, v
     p_dbus_error_init( &error );
     if (p_dbus_set_error_from_message( &error, reply ))
     {
-        ERR( "Failed to get device properties for %s: %s: %s\n", debugstr_a( device->str ), debugstr_a( error.name ),
-             debugstr_a( error.message ) );
+        ERR( "Failed to get device properties for %s: %s\n", debugstr_a( device->str ), dbgstr_dbus_error( &error ) );
         p_dbus_error_free( &error );
         p_dbus_message_unref( reply );
         return;
@@ -1644,8 +1644,7 @@ static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const 
                                            &n_interfaces, DBUS_TYPE_INVALID );
         if (!success)
         {
-            ERR( "error getting arguments from message: %s: %s\n", debugstr_a( error.name ),
-                 debugstr_a( error.message ) );
+            ERR( "error getting arguments from message: %s\n", dbgstr_dbus_error( &error ));
             p_dbus_error_free( &error );
             return;
         }
@@ -1662,7 +1661,7 @@ static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const 
                 radio_name = unix_name_get_or_create( object_path );
                 if (!radio_name)
                 {
-                    ERR( "failed to allocate memory for adapter path %s\n", object_path );
+                    ERR( "failed to allocate memory for adapter path %s\n", debugstr_a( object_path ));
                     continue;
                 }
                 radio.handle = (UINT_PTR)radio_name;
@@ -1679,7 +1678,7 @@ static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const 
                 device = unix_name_get_or_create( object_path );
                 if (!device)
                 {
-                    ERR( "Failed to allocate memory for adapter path %s\n", object_path );
+                    ERR( "Failed to allocate memory for adapter path %s\n", debugstr_a( object_path ) );
                     continue;
                 }
                 event.device_removed.device.handle = (UINT_PTR)device;
@@ -2037,8 +2036,7 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
         if (p_dbus_error_is_set( &err ))
         {
             NTSTATUS status = bluez_dbus_error_to_ntstatus( &err );
-            ERR( "Could not add DBus match %s: %s: %s\n", debugstr_a( BLUEZ_MATCH_RULES[i] ), debugstr_a( err.name ),
-                 debugstr_a( err.message ) );
+            ERR( "Could not add DBus match %s: %s\n", debugstr_a( BLUEZ_MATCH_RULES[i] ), dbgstr_dbus_error( &err ) );
             p_dbus_pending_call_cancel( call );
             p_dbus_pending_call_unref( call );
             p_dbus_error_free( &err );
@@ -2062,8 +2060,7 @@ void bluez_watcher_close( void *connection, void *ctx )
         p_dbus_error_init( &error );
         p_dbus_bus_remove_match( connection, BLUEZ_MATCH_RULES[i], &error );
         if (p_dbus_error_is_set( &error ))
-            ERR( "Could not remove DBus match %s: %s: %s", BLUEZ_MATCH_RULES[i],
-                 debugstr_a( error.name ), debugstr_a( error.message ) );
+            ERR( "Could not remove DBus match %s: %s\n", debugstr_a( BLUEZ_MATCH_RULES[i] ), dbgstr_dbus_error( &error ) );
         p_dbus_error_free( &error );
     }
     p_dbus_connection_remove_filter( connection, bluez_filter, ctx );
@@ -2236,7 +2233,7 @@ static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct lis
                         const char *uuid_str;
                         p_dbus_message_iter_get_basic( &variant, &uuid_str );
                         if (!parse_uuid( &init_device->object.service.uuid, uuid_str ))
-                            ERR("Failed to parse UUID %s for GATT service %s\n", debugstr_a( uuid_str ), path );
+                            ERR("Failed to parse UUID %s for GATT service %s\n", debugstr_a( uuid_str ), debugstr_a( path ) );
                     }
                 }
                 if (!device_name)
@@ -2328,7 +2325,7 @@ static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct lis
                         if (parse_uuid( &uuid, uuid_str ))
                             uuid_to_le( &uuid, &props->CharacteristicUuid );
                         else
-                            ERR( "Failed to parse UUID %s for GATT characteristic %s\n", debugstr_a( uuid_str ), path );
+                            ERR( "Failed to parse UUID %s for GATT characteristic %s\n", debugstr_a( uuid_str ), debugstr_a( path ) );
                     }
                     else if (!strcmp( prop_name, "Handle" )
                              && p_dbus_message_iter_get_arg_type( &variant ) == DBUS_TYPE_UINT16)
@@ -2489,8 +2486,7 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher, void *auth_agent,
             p_dbus_error_init( &error );
             if (p_dbus_set_error_from_message( &error, reply ))
             {
-                WARN( "Error getting object list from BlueZ: '%s': '%s'\n", error.name,
-                      error.message );
+                WARN( "Error getting object list from BlueZ: %s\n", dbgstr_dbus_error( &error ) );
                 p_dbus_error_free( &error );
                 p_dbus_message_unref( reply );
                 p_dbus_connection_unref( connection );
