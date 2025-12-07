@@ -174,6 +174,113 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         return sizeof(ICINFO);
     }
 
+    case ICM_DECOMPRESSEX_QUERY:
+    {
+        const ICDECOMPRESSEX *params = (ICDECOMPRESSEX *)lparam1;
+
+        ok(lparam2 == sizeof(ICDECOMPRESSEX), "Got size %#Ix.\n", lparam2);
+
+        ok(!params->dwFlags, "Got flags %#lx.\n", params->dwFlags);
+        ok(!params->lpSrc, "Got src pointer %p.\n", params->lpSrc);
+        ok(!params->lpDst, "Got dst pointer %p.\n", params->lpDst);
+
+        if (params->lpbiSrc->biCompression != test_handler || params->lpbiSrc->biBitCount != 16)
+            return ICERR_BADFORMAT;
+
+        if (params->lpbiDst && params->lpbiDst->biCompression != mmioFOURCC('N','V','1','2'))
+            return ICERR_BADFORMAT;
+
+        ok(params->xDst == 10, "Got dst x %d.\n", params->xDst);
+        ok(params->yDst == 20, "Got dst y %d.\n", params->yDst);
+        ok(params->dxDst == 30, "Got dst width %d.\n", params->dxDst);
+        ok(params->dyDst == 40, "Got dst height %d.\n", params->dyDst);
+        ok(params->xSrc == 4, "Got src x %d.\n", params->xSrc);
+        ok(params->ySrc == 6, "Got src y %d.\n", params->ySrc);
+        ok(params->dxSrc == 12, "Got src width %d.\n", params->dxSrc);
+        ok(params->dySrc == 10, "Got src height %d.\n", params->dySrc);
+
+        return ICERR_OK;
+    }
+
+    case ICM_DECOMPRESSEX_BEGIN:
+    {
+        const ICDECOMPRESSEX *params = (ICDECOMPRESSEX *)lparam1;
+
+        ok(lparam2 == sizeof(ICDECOMPRESSEX), "Got size %#Ix.\n", lparam2);
+
+        ok(!params->dwFlags, "Got flags %#lx.\n", params->dwFlags);
+        ok(!params->lpSrc, "Got src pointer %p.\n", params->lpSrc);
+        ok(!params->lpDst, "Got dst pointer %p.\n", params->lpDst);
+
+        todo_wine_if (params->lpbiSrc->biSizeImage != sink_bitmap_info.biSizeImage)
+            ok(!memcmp(params->lpbiSrc, &sink_bitmap_info, sizeof(BITMAPINFOHEADER)),
+                    "Input types didn't match.\n");
+        ok(!memcmp(params->lpbiDst, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
+                "Output types didn't match.\n");
+
+        ok(params->xDst == 10, "Got dst x %d.\n", params->xDst);
+        ok(params->yDst == 20, "Got dst y %d.\n", params->yDst);
+        ok(params->dxDst == 30, "Got dst width %d.\n", params->dxDst);
+        ok(params->dyDst == 40, "Got dst height %d.\n", params->dyDst);
+        ok(params->xSrc == 4, "Got src x %d.\n", params->xSrc);
+        ok(params->ySrc == 6, "Got src y %d.\n", params->ySrc);
+        ok(params->dxSrc == 12, "Got src width %d.\n", params->dxSrc);
+        ok(params->dySrc == 10, "Got src height %d.\n", params->dySrc);
+
+        ok(!in_begin, "Got multiple ICM_DECOMPRESS_BEGIN messages.\n");
+        in_begin = 1;
+        return ICERR_OK;
+    }
+
+    case ICM_DECOMPRESSEX_END:
+        ok(!lparam1, "Got param1 %#Ix.\n", lparam1);
+        ok(!lparam2, "Got param2 %#Ix.\n", lparam2);
+        ok(in_begin, "Got unmatched ICM_DECOMPRESS_END message.\n");
+        in_begin = 0;
+        return ICERR_OK;
+
+    case ICM_DECOMPRESSEX:
+    {
+        BITMAPINFOHEADER expect_sink_format = sink_bitmap_info;
+        ICDECOMPRESSEX *params = (ICDECOMPRESSEX *)lparam1;
+        BYTE *output = params->lpDst, expect[200];
+        unsigned int i;
+
+        ok(in_begin, "Got ICM_DECOMPRESSEX without ICM_DECOMPRESSEX_BEGIN.\n");
+
+        ok(lparam2 == sizeof(ICDECOMPRESSEX), "Got size %#Ix.\n", lparam2);
+
+        if (testmode == 5 || testmode == 6)
+            ok(params->dwFlags == ICDECOMPRESS_NOTKEYFRAME, "Got flags %#lx.\n", params->dwFlags);
+        else if (testmode == 3)
+            ok(params->dwFlags == ICDECOMPRESS_PREROLL, "Got flags %#lx.\n", params->dwFlags);
+        else
+            ok(params->dwFlags == 0, "Got flags %#lx.\n", params->dwFlags);
+
+        expect_sink_format.biSizeImage = 200;
+        ok(!memcmp(params->lpbiSrc, &expect_sink_format, sizeof(BITMAPINFOHEADER)),
+                "Input types didn't match.\n");
+        ok(!memcmp(params->lpbiDst, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
+                "Output types didn't match.\n");
+
+        for (i = 0; i < 200; ++i)
+            expect[i] = i;
+        ok(!memcmp(params->lpSrc, expect, 200), "Data didn't match.\n");
+        for (i = 0; i < source_bitmap_info.biSizeImage; ++i)
+            output[i] = 111 - i;
+
+        ok(params->xDst == 10, "Got dst x %d.\n", params->xDst);
+        ok(params->yDst == 20, "Got dst y %d.\n", params->yDst);
+        ok(params->dxDst == 30, "Got dst width %d.\n", params->dxDst);
+        ok(params->dyDst == 40, "Got dst height %d.\n", params->dyDst);
+        ok(params->xSrc == 4, "Got src x %d.\n", params->xSrc);
+        ok(params->ySrc == 6, "Got src y %d.\n", params->ySrc);
+        ok(params->dxSrc == 12, "Got src width %d.\n", params->dxSrc);
+        ok(params->dySrc == 10, "Got src height %d.\n", params->dySrc);
+
+        return ICERR_OK;
+    }
+
     default:
         ok(0, "Got unexpected message %#x.\n", msg);
         return ICERR_UNSUPPORTED;
@@ -1671,6 +1778,8 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
 
     IMediaSample_Release(sample);
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IMemAllocator_Release(allocator);
 }
 
@@ -1747,6 +1856,9 @@ static void test_streaming_events(IMediaControl *control, IPin *sink,
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IMediaSample_Release(sample);
+
+    hr = IMemAllocator_Decommit(allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IMemAllocator_Release(allocator);
 }
 
@@ -1773,6 +1885,7 @@ static void test_connect_pin(void)
     IBaseFilter *filter = create_avi_dec();
     AM_MEDIA_TYPE mt, source_mt, *pmt;
     IPin *sink, *source, *peer;
+    VIDEOINFOHEADER *format;
     IEnumMediaTypes *enummt;
     IMediaControl *control;
     IMemInputPin *meminput;
@@ -2054,6 +2167,36 @@ static void test_connect_pin(void)
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
+
+    IFilterGraph2_Disconnect(graph, source);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    testsink.mt = NULL;
+
+    /* Test a format with nontrivial rects. This uses ICM_DECOMPRESSEX_*. */
+
+    req_mt.lSampleSize = source_mt.lSampleSize;
+    format = (VIDEOINFOHEADER *)req_mt.pbFormat;
+    SetRect(&format->rcSource, 4, 6, 16, 16);
+    SetRect(&format->rcTarget, 10, 20, 40, 60);
+
+    hr = IPin_QueryAccept(source, &req_mt);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    format->bmiHeader.biCompression = mmioFOURCC('N','V','1','2');
+    source_bitmap_info = format->bmiHeader;
+
+    hr = IPin_QueryAccept(source, &req_mt);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
+
+        test_sample_processing(control, meminput, &testsink);
+    }
 
     hr = IFilterGraph2_Disconnect(graph, sink);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
