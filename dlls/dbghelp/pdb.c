@@ -447,6 +447,7 @@ static enum pdb_result pdb_reader_push_action(struct pdb_reader *pdb, enum pdb_a
     return R_PDB_SUCCESS;
 }
 
+static enum pdb_result pdb_reader_read_TPI_header(struct pdb_reader *pdb);
 static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb);
 static enum pdb_result pdb_reader_internal_binary_search(size_t num_elt,
                                                          enum pdb_result (*cmp)(unsigned idx, int *cmp_ressult, void *user),
@@ -1853,6 +1854,7 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
     unsigned i;
 
     if ((result = pdb_reader_read_DBI_header(pdb, &pdb->dbi_header, &walker))) return result;
+    if ((result = pdb_reader_read_TPI_header(pdb))) return result;
 
     /* count number of compilands */
     if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
@@ -2187,6 +2189,36 @@ static enum pdb_result pdb_reader_read_cv_typeid_hash(struct pdb_reader *pdb, cv
     return R_PDB_SUCCESS;
 }
 
+static enum pdb_result pdb_reader_read_TPI_header(struct pdb_reader *pdb)
+{
+    enum pdb_result result;
+
+    if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_TPI, &pdb->tpi_types_walker))) goto invalid_file;
+    /* assuming stream is always big enough go hold a full PDB_TYPES */
+    if ((result = pdb_reader_READ(pdb, &pdb->tpi_types_walker, &pdb->tpi_header))) goto invalid_file;
+    result = R_PDB_INVALID_PDB_FILE;
+    if (pdb->tpi_header.version < 19960000 || pdb->tpi_header.type_offset < sizeof(PDB_TYPES))
+    {
+        /* not supported yet... */
+        FIXME("Old PDB_TYPES header, skipping\n");
+        goto invalid_file;
+    }
+    /* validate some bits */
+    if (pdb->tpi_header.hash_size != (pdb->tpi_header.last_index - pdb->tpi_header.first_index) * pdb->tpi_header.hash_value_size ||
+        pdb->tpi_header.search_size % sizeof(uint32_t[2]))
+        goto invalid_file;
+    if (pdb->tpi_header.hash_value_size > sizeof(unsigned))
+    {
+        FIXME("Unexpected hash value size %u\n", pdb->tpi_header.hash_value_size);
+        goto invalid_file;
+    }
+    pdb->tpi_types_walker.offset = pdb->tpi_header.type_offset;
+    return R_PDB_SUCCESS;
+invalid_file:
+    pdb->TPI_types_invalid = 1;
+    return R_PDB_INVALID_PDB_FILE;
+}
+
 static enum pdb_result pdb_reader_init_TPI(struct pdb_reader *pdb)
 {
     enum pdb_result result;
@@ -2195,27 +2227,6 @@ static enum pdb_result pdb_reader_init_TPI(struct pdb_reader *pdb)
     if (pdb->TPI_types_invalid) return R_PDB_INVALID_PDB_FILE;
     if (!pdb->tpi_typemap) /* load basic types information and hash table */
     {
-        if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_TPI, &pdb->tpi_types_walker))) goto invalid_file;
-        /* assuming stream is always big enough go hold a full PDB_TYPES */
-        if ((result = pdb_reader_READ(pdb, &pdb->tpi_types_walker, &pdb->tpi_header))) goto invalid_file;
-        result = R_PDB_INVALID_PDB_FILE;
-        if (pdb->tpi_header.version < 19960000 || pdb->tpi_header.type_offset < sizeof(PDB_TYPES))
-        {
-            /* not supported yet... */
-            FIXME("Old PDB_TYPES header, skipping\n");
-            goto invalid_file;
-        }
-        /* validate some bits */
-        if (pdb->tpi_header.hash_size != (pdb->tpi_header.last_index - pdb->tpi_header.first_index) * pdb->tpi_header.hash_value_size ||
-            pdb->tpi_header.search_size % sizeof(uint32_t[2]))
-            goto invalid_file;
-        if (pdb->tpi_header.hash_value_size > sizeof(unsigned))
-        {
-            FIXME("Unexpected hash value size %u\n", pdb->tpi_header.hash_value_size);
-            goto invalid_file;
-        }
-        pdb->tpi_types_walker.offset = pdb->tpi_header.type_offset;
-
         if ((result = pdb_reader_alloc(pdb, (pdb->tpi_header.last_index - pdb->tpi_header.first_index) * sizeof(pdb->tpi_typemap[0]),
                                        (void **)&pdb->tpi_typemap)))
             goto invalid_file;
