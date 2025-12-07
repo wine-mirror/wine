@@ -146,7 +146,7 @@ static void test_formats(void)
     ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, NULL, NULL, 0, 0, 0, 0);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 32, 24, NULL, NULL, 0, 0, 0, 0);
     todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0);
@@ -156,25 +156,25 @@ static void test_formats(void)
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 20, 320, 240, NULL, NULL, 0, 0, 0, 0);
     todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 0, 0);
-    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 320, 240);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 160, 120);
-    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
 
     out->bmiHeader.biWidth = 640;
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 640, 240);
-    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
     out->bmiHeader.biHeight = 480;
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 640, 480);
     todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
     ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 20, 20, 320, 240);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICDecompressExBegin(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 20, 20, 320, 240);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
     ret = ICDecompressExEnd(hic);
-    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICClose(hic);
     ok(!ret, "Got %Id.\n", ret);
