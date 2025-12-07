@@ -1512,17 +1512,12 @@ static UINT16 bluez_dbus_get_invalidated_properties_from_iter(
     return mask;
 }
 
-static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, void *user_data )
+static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const char *signal_iface, const char *signal_name, const char *signal_sig, struct list *event_list )
 {
-    struct list *event_list;
 
-    if (TRACE_ON( dbus ))
-        TRACE_( dbus )( "(%s, %s, %p)\n", dbgstr_dbus_connection( conn ), dbgstr_dbus_message( msg ), user_data );
-
-    event_list = &((struct bluez_watcher_ctx *)user_data)->event_list;
-
-    if (p_dbus_message_is_signal( msg, DBUS_INTERFACE_OBJECTMANAGER, DBUS_OBJECTMANAGER_SIGNAL_INTERFACESADDED )
-        && p_dbus_message_has_signature( msg, DBUS_INTERFACES_ADDED_SIGNATURE ))
+    if (!strcmp( signal_iface, DBUS_INTERFACE_OBJECTMANAGER ) &&
+        !strcmp( signal_name, DBUS_OBJECTMANAGER_SIGNAL_INTERFACESADDED ) &&
+        !strcmp( signal_sig, DBUS_INTERFACES_ADDED_SIGNATURE ))
     {
         DBusMessageIter iter, ifaces_iter;
         const char *object_path;
@@ -1633,8 +1628,9 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
             p_dbus_message_iter_next( &ifaces_iter );
         }
     }
-    else if (p_dbus_message_is_signal( msg, DBUS_INTERFACE_OBJECTMANAGER, DBUS_OBJECTMANAGER_SIGNAL_INTERFACESREMOVED )
-             && p_dbus_message_has_signature( msg, DBUS_INTERFACES_REMOVED_SIGNATURE ))
+    else if (!strcmp( signal_iface, DBUS_INTERFACE_OBJECTMANAGER ) &&
+             !strcmp( signal_name, DBUS_OBJECTMANAGER_SIGNAL_INTERFACESREMOVED ) &&
+             !strcmp( signal_sig, DBUS_INTERFACES_REMOVED_SIGNATURE ))
     {
         const char *object_path;
         char **interfaces;
@@ -1651,7 +1647,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
             ERR( "error getting arguments from message: %s: %s\n", debugstr_a( error.name ),
                  debugstr_a( error.message ) );
             p_dbus_error_free( &error );
-            return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+            return;
         }
 
         p_dbus_error_free( &error );
@@ -1726,8 +1722,9 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
         }
         p_dbus_free_string_array( interfaces );
     }
-    else if (p_dbus_message_is_signal( msg, DBUS_INTERFACE_PROPERTIES, DBUS_PROPERTIES_SIGNAL_PROPERTIESCHANGED ) &&
-             p_dbus_message_has_signature( msg, DBUS_PROPERTIES_CHANGED_SIGNATURE ))
+    else if (!strcmp( signal_iface, DBUS_INTERFACE_PROPERTIES ) &&
+             !strcmp( signal_name, DBUS_PROPERTIES_SIGNAL_PROPERTIESCHANGED ) &&
+             !strcmp( signal_sig, DBUS_PROPERTIES_CHANGED_SIGNATURE ))
     {
         DBusMessageIter iter;
         const char *iface;
@@ -1770,14 +1767,14 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
             if (!props_changed.changed_props_mask && !props_changed.invalid_props_mask)
                 /* No properties that are of any interest to us have changed or been invalidated,
                  * no need to generate an event. */
-                return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                return;
 
             object_path = p_dbus_message_get_path( msg );
             radio = unix_name_get_or_create( object_path );
             if (!radio)
             {
                 ERR( "failed to allocate memory for adapter path %s\n", debugstr_a( object_path ) );
-                return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                return;
             }
             props_changed.radio.handle = (UINT_PTR)radio;
             TRACE( "Properties changed for radio %s, changed %#x, invalid %#x\n",
@@ -1794,7 +1791,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                     ERR( "Failed to create async call to get adapter properties: %#x\n",
                          status );
                     unix_name_free( radio );
-                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                    return;
                 }
 
                 if (!bluez_event_list_queue_new_event_with_call( event_list,
@@ -1805,7 +1802,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                     unix_name_free( radio );
                     p_dbus_pending_call_cancel( pending_call );
                     p_dbus_pending_call_unref( pending_call );
-                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                    return;
                 }
             }
             else
@@ -1816,7 +1813,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                                                       event ))
                 {
                     unix_name_free( radio );
-                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                    return;
                 }
             }
         }
@@ -1851,7 +1848,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                 &invalid_props_iter, device_prop_masks, ARRAY_SIZE( device_prop_masks ) );
             /* No properties that we're interested in have changed or been invalidated. */
             if (!props_changed.changed_props_mask && !props_changed.invalid_props_mask)
-                return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                return;
 
             object_path = p_dbus_message_get_path( msg );
             TRACE( "Properties changed for device %s, changed %#x, invalidated %#x\n", debugstr_a( object_path ),
@@ -1861,7 +1858,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
             if (!device)
             {
                 ERR( "Failed to allocate memory for device path %s\n", object_path );
-                return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                return;
             }
             props_changed.device.handle = (UINT_PTR)device;
             event.device_props_changed = props_changed;
@@ -1876,7 +1873,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                 {
                     ERR( "Failed to create async call to get device properties: %#x\n", status );
                     unix_name_free( device );
-                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                    return;
                 }
 
                 if (!bluez_event_list_queue_new_event_with_call( event_list,
@@ -1887,7 +1884,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                     unix_name_free( device );
                     p_dbus_pending_call_cancel( pending_call );
                     p_dbus_pending_call_unref( pending_call );
-                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                    return;
                 }
             }
             else if (!bluez_event_list_queue_new_event( event_list,
@@ -1896,10 +1893,25 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
             {
 
                 unix_name_free( device );
-                return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                return;
             }
         }
     }
+}
+
+static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, void *data )
+{
+    struct list *event_list;
+    int type;
+
+    if (TRACE_ON( dbus ))
+        TRACE_( dbus )( "(%s, %s, %p)\n", dbgstr_dbus_connection( conn ), dbgstr_dbus_message( msg ), data );
+
+    event_list = &((struct bluez_watcher_ctx *)data)->event_list;
+    type = p_dbus_message_get_type( msg );
+    if (type == DBUS_MESSAGE_TYPE_SIGNAL)
+        bluez_signal_handler( conn, msg, p_dbus_message_get_interface( msg ), p_dbus_message_get_member( msg ),
+                              p_dbus_message_get_signature( msg ), event_list );
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
