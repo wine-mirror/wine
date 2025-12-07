@@ -2181,22 +2181,19 @@ static void test_connect_pin(void)
     SetRect(&format->rcTarget, 10, 20, 40, 60);
 
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     format->bmiHeader.biCompression = mmioFOURCC('N','V','1','2');
     source_bitmap_info = format->bmiHeader;
 
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
 
-        test_sample_processing(control, meminput, &testsink);
-    }
+    test_sample_processing(control, meminput, &testsink);
 
     hr = IFilterGraph2_Disconnect(graph, sink);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
