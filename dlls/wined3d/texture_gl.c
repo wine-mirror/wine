@@ -2888,7 +2888,7 @@ void wined3d_texture_gl_apply_sampler_desc(struct wined3d_texture_gl *texture_gl
         gl_tex->sampler_desc.srgb_decode = sampler_desc->srgb_decode;
     }
 
-    if (!sampler_desc->reduction_mode != !gl_tex->sampler_desc.reduction_mode)
+    if (sampler_desc->reduction_mode != gl_tex->sampler_desc.reduction_mode)
     {
         GLenum reduction_mode = wined3d_gl_filter_reduction_mode(sampler_desc->reduction_mode);
 
