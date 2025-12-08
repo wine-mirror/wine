@@ -484,8 +484,22 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
     if (data->current_event) mask = 0;  /* don't process nested events */
 
     prev_event.type = 0;
-    while (XCheckIfEvent( data->display, &event, filter_event, (XPointer)(UINT_PTR)mask ))
+    for (;;)
     {
+        if (!XCheckIfEvent( data->display, &event, filter_event, (XPointer)(UINT_PTR)mask ))
+        {
+            if (!prev_event.type) break;
+            call_event_handler( data->display, &prev_event );
+            free_event_data( &prev_event );
+
+            /* Retry after processing delayed event, more events might have been read from the pipe,
+             * this is the case for instance with synchronous requests like when reading a property.
+             */
+            action = MERGE_DISCARD;
+            prev_event.type = 0;
+            continue;
+        }
+
         count++;
         if (XFilterEvent( &event, None ))
         {
@@ -539,8 +553,7 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
             break;
         }
     }
-    if (prev_event.type) call_event_handler( data->display, &prev_event );
-    free_event_data( &prev_event );
+
     XFlush( gdi_display );
     if (count) TRACE( "processed %d events\n", count );
 
