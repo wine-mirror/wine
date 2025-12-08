@@ -363,7 +363,6 @@ static void compare_bitmap_data(const struct bitmap_data *src, const struct bitm
 
     hr = IWICBitmapSource_GetPixelFormat(source, &dst_pixelformat);
     ok(SUCCEEDED(hr), "GetPixelFormat(%s) failed, hr=%lx\n", name, hr);
-    todo_wine_if(IsEqualGUID(&dst_pixelformat, &GUID_WICPixelFormatBlackWhite) && IsEqualGUID(expect->format, &GUID_WICPixelFormat1bppIndexed))
     ok(IsEqualGUID(&dst_pixelformat, expect->format), "got unexpected pixel format %s (%s)\n", wine_dbgstr_guid(&dst_pixelformat), name);
 
     prc.X = 0;
