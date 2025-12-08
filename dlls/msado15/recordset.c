@@ -46,6 +46,7 @@ struct field
     Properties          Properties_iface;
     LONG                refs;
     DBORDINAL           ordinal;
+    int                 name_hash;
     WCHAR              *name;
     DataTypeEnum        type;
     LONG                defined_size;
@@ -1186,6 +1187,13 @@ static struct PropertiesVtbl field_properties_vtbl =
     field_props_get_Item
 };
 
+static int get_hash( const WCHAR *str )
+{
+    int hash = 5381;
+    for (; *str; str++) hash += (hash << 5) + towlower( *str );
+    return hash;
+}
+
 static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *recordset, struct field **field )
 {
     if (!(*field = calloc( 1, sizeof(**field) ))) return E_OUTOFMEMORY;
@@ -1198,6 +1206,7 @@ static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *re
         free( *field );
         return E_OUTOFMEMORY;
     }
+    (*field)->name_hash = get_hash( name );
     (*field)->index = index;
     (*field)->recordset = recordset;
 
@@ -1454,6 +1463,7 @@ static HRESULT WINAPI fields_Refresh( Fields *iface )
 
 static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
 {
+    int hash;
     ULONG i;
 
     if (V_VT( index ) != VT_BSTR)
@@ -1474,9 +1484,10 @@ static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
         return MAKE_ADO_HRESULT(adErrItemNotFound);
     }
 
+    hash = get_hash( V_BSTR(index) );
     for (i = 0; i < fields->count; i++)
     {
-        if (!wcsicmp( V_BSTR(index), fields->field[i]->name ))
+        if (hash == fields->field[i]->name_hash && !wcsicmp( V_BSTR(index), fields->field[i]->name ))
         {
             *ret = i;
             return S_OK;
