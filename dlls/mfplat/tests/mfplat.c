@@ -561,6 +561,7 @@ static HRESULT (WINAPI *pMFLockSharedWorkQueue)(const WCHAR *name, LONG base_pri
 static HRESULT (WINAPI *pMFLockDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
 static HRESULT (WINAPI *pMFUnlockDXGIDeviceManager)(void);
 static HRESULT (WINAPI *pMFInitVideoFormat_RGB)(MFVIDEOFORMAT *format, DWORD width, DWORD height, DWORD d3dformat);
+static HRESULT (WINAPI *pMFCreateD3D12SynchronizationObject)(ID3D12Device *device, REFIID riid, void **obj);
 
 static HRESULT (WINAPI *pRtwqStartup)(void);
 static HRESULT (WINAPI *pRtwqShutdown)(void);
@@ -1816,6 +1817,7 @@ static void init_functions(void)
     X(MFTUnregisterLocal);
     X(MFTUnregisterLocalByCLSID);
     X(MFUnlockDXGIDeviceManager);
+    X(MFCreateD3D12SynchronizationObject);
 
     if ((mod = LoadLibraryA("d3d11.dll")))
     {
@@ -11458,6 +11460,572 @@ notsupported:
     ok(!refcount, "Unexpected device refcount %u.\n", refcount);
 }
 
+static DWORD WINAPI test_d3d12_sync_object_thread(LPVOID param)
+{
+    HRESULT hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(param, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    return 0;
+}
+
+static void test_d3d12_sync_object(void)
+{
+    IMFD3D12SynchronizationObject *sync_obj;
+    IMFD3D12SynchronizationObjectCommands *sync_cmd;
+    IUnknown *unk;
+    ID3D12Device *device, *device2;
+    ID3D12CommandQueue *queue, *queue2;
+    ID3D12Fence *fence, *fence2;
+    HANDLE event, event2, event3, event4, thread;
+    D3D12_COMMAND_QUEUE_DESC queue_desc = { .Type = D3D12_COMMAND_LIST_TYPE_DIRECT };
+    DWORD status;
+    unsigned int refcount;
+    HRESULT hr;
+
+    /* d3d12 */
+    if (!(device = create_d3d12_device()))
+    {
+        skip("Failed to create a D3D12 device, skipping tests.\n");
+        return;
+    }
+
+    if (!pMFCreateD3D12SynchronizationObject)
+    {
+        todo_wine
+        win_skip("MFCreateD3D12SynchronizationObject() is not available.\n");
+        goto notsupported;
+    }
+
+    hr = ID3D12Device_CreateCommandQueue(device, &queue_desc, &IID_ID3D12CommandQueue, (void **) &queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateCommandQueue(device, &queue_desc, &IID_ID3D12CommandQueue, (void **) &queue2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    event = CreateEventA(NULL, FALSE,  FALSE, NULL);
+    event2 = CreateEventA(NULL, FALSE,  FALSE, NULL);
+
+    /* MFCreateD3D12SynchronizationObject */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IUnknown, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IUnknown, (void **) &unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IUnknown_Release(unk);
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObject_QueryInterface(sync_obj, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    /* invalid arguments */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReadyWait(sync_cmd, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    /* EnqueueResourceReady / EnqueueResourceReadyWait */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12Fence_SetEventOnCompletion(fence2, 1, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReadyWait(sync_cmd, queue2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12CommandQueue_Signal(queue2, fence2, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+    hr = ID3D12Fence_Signal(fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+    ID3D12Fence_Release(fence2);
+
+    /* EnqueueResourceReady / SignalEventOnResourceReady */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+    status = WaitForSingleObject(event2, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+    status = WaitForSingleObject(event2, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    /* EnqueueResourceReady is a manual-reset event */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    /* SignalEventOnResourceReady(NULL) */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    thread = CreateThread(NULL, 0, test_d3d12_sync_object_thread, sync_cmd, 0, NULL);
+
+    status = WaitForSingleObject(thread, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(thread, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    CloseHandle(thread);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    /* EnqueueResourceReady works cross-device */
+
+    device2 = create_d3d12_device();
+    hr = pMFCreateD3D12SynchronizationObject(device2, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Device_Release(device2);
+
+    /* EnqueueResourceRelease depends on MFStartup */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, queue);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    /* SignalEventOnFinalResourceRelease signals immediately if no Release enqueued  */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+
+    /* EnqueueResourceRelease / SignalEventOnFinalResourceRelease */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (UINT64 gen = 1; gen <= 5; gen++)
+    {
+    hr = ID3D12CommandQueue_Wait(queue, fence, gen);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+    hr = ID3D12CommandQueue_Wait(queue2, fence2, gen);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, queue2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12Fence_Signal(fence, gen);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+    hr = ID3D12Fence_Signal(fence2, gen);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObject_Reset(sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+    ID3D12Fence_Release(fence2);
+
+    /* SignalEventOnFinalResourceRelease only tracks one event */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12Fence_Signal(fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+    status = WaitForSingleObject(event2, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+
+    /* SignalEventOnFinalResourceRelease with duplicated event */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    event3 = CreateEventA(NULL, FALSE,  FALSE, NULL);
+
+    hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    DuplicateHandle(GetCurrentProcess(), event3, GetCurrentProcess(), &event4, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    CloseHandle(event3);
+
+    hr = ID3D12Fence_Signal(fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    status = WaitForSingleObject(event4, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+    CloseHandle(event4);
+
+    /* SignalEventOnFinalResourceRelease is not affected by pending Ready */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    /* unblock queue */
+    hr = ID3D12Fence_Signal(fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+
+    /* Reset errors if Release pending */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceRelease(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_Reset(sync_obj);
+    ok(hr == MF_E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12Fence_Signal(fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_SignalEventOnFinalResourceRelease(sync_obj, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObject_Reset(sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+
+    /* Reset clears Ready */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObject_Reset(sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+
+    /* ReadyWait before Reset is signaled by Ready after Reset */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReadyWait(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12CommandQueue_Signal(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_Reset(sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ID3D12Fence_SetEventOnCompletion(fence, 1, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+
+    /* Ready after Reset is cleared by deferred Ready before Reset */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12CommandQueue_Signal(queue, fence2, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_Reset(sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    hr = ID3D12Fence_Signal(fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12Fence_SetEventOnCompletion(fence2, 1, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    hr = IMFD3D12SynchronizationObjectCommands_SignalEventOnResourceReady(sync_cmd, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_TIMEOUT, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+    ID3D12Fence_Release(fence2);
+
+    /* ReadyWait before Reset is signaled by deferred Ready before Reset */
+
+    hr = pMFCreateD3D12SynchronizationObject(device, &IID_IMFD3D12SynchronizationObjectCommands, (void **) &sync_cmd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_QueryInterface(sync_cmd, &IID_IMFD3D12SynchronizationObject, (void **) &sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12Device_CreateFence(device, 0, 0, &IID_ID3D12Fence, (void **) &fence2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12CommandQueue_Wait(queue, fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReady(sync_cmd, queue);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObjectCommands_EnqueueResourceReadyWait(sync_cmd, queue2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D12CommandQueue_Signal(queue2, fence2, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFD3D12SynchronizationObject_Reset(sync_obj);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID3D12Fence_Signal(fence, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ID3D12Fence_SetEventOnCompletion(fence2, 1, event);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    status = WaitForSingleObject(event, 100);
+    ok(status == WAIT_OBJECT_0, "got %#lx.\n", status);
+
+    IMFD3D12SynchronizationObject_Release(sync_obj);
+    IMFD3D12SynchronizationObjectCommands_Release(sync_cmd);
+    ID3D12Fence_Release(fence);
+    ID3D12Fence_Release(fence2);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    ID3D12CommandQueue_Release(queue);
+    ID3D12CommandQueue_Release(queue2);
+    CloseHandle(event);
+    CloseHandle(event2);
+
+notsupported:
+    refcount = ID3D12Device_Release(device);
+    ok(!refcount, "Unexpected device refcount %u.\n", refcount);
+}
+
 static void test_sample_allocator_sysmem(void)
 {
     IMFVideoSampleAllocatorNotify test_notify = { &test_notify_callback_vtbl };
@@ -14060,6 +14628,7 @@ START_TEST(mfplat)
     test_MFMapDXGIFormatToDX9Format();
     test_d3d11_surface_buffer();
     test_d3d12_surface_buffer();
+    test_d3d12_sync_object();
     test_sample_allocator_sysmem();
     test_sample_allocator_d3d9();
     test_sample_allocator_d3d11();
