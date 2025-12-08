@@ -45,6 +45,7 @@
 @ stdcall MFCreateAttributes(ptr long)
 @ stdcall MFCreateAudioMediaType(ptr ptr)
 @ stdcall MFCreateCollection(ptr)
+@ stdcall MFCreateD3D12SynchronizationObject(ptr ptr ptr)
 @ stdcall MFCreateDXGIDeviceManager(ptr ptr)
 @ stdcall MFCreateDXGISurfaceBuffer(ptr ptr long long ptr)
 @ stdcall MFCreateDXSurfaceBuffer(ptr ptr long ptr)

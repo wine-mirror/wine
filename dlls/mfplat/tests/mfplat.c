@@ -11490,7 +11490,6 @@ static void test_d3d12_sync_object(void)
 
     if (!pMFCreateD3D12SynchronizationObject)
     {
-        todo_wine
         win_skip("MFCreateD3D12SynchronizationObject() is not available.\n");
         goto notsupported;
     }
