@@ -3623,7 +3623,7 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
         propid[14] = DBPROP_IRowsetIndex;
         propid[15] = DBPROP_IRowsetCurrentIndex;
         propid[16] = DBPROP_REMOVEDELETED;
-        hr = IRowsetInfo_GetProperties( rowset_info, 1, &propidset,
+        IRowsetInfo_GetProperties( rowset_info, 1, &propidset,
                 &recordset->prop_count, &recordset->prop);
         IRowsetInfo_Release( rowset_info );
     }
