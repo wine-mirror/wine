@@ -2088,7 +2088,6 @@ static void test_format(WAVEFORMATEXTENSIBLE *fmt)
             /* Native seems to largely ignore when the channel mask has nonsensical values, while Wine is more picky. */
             || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && __popcnt(fmt->dwChannelMask) != fmt->Format.nChannels)))
     ok(mmr == expected || broken(channel_mismatch), "waveOutOpen(0) got result %#08x, expected %#08x\n", mmr, expected);
-    todo_wine_if((mmr == MMSYSERR_NOERROR) != !!hwo)
     ok((mmr == MMSYSERR_NOERROR) == !!hwo, "Unexpected waveout %p\n", hwo);
 
     if (hwo && hwo != (void *)0xdeadf00d)
@@ -2108,7 +2107,6 @@ static void test_format(WAVEFORMATEXTENSIBLE *fmt)
             || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && __popcnt(fmt->dwChannelMask) != fmt->Format.nChannels)))
     ok(mmr == expected || (mmr == MMSYSERR_INVALPARAM && expected == WAVERR_BADFORMAT) || broken(channel_mismatch),
             "waveOutOpen(DIRECT) got result %#08x, expected %#08x\n", mmr, expected);
-    todo_wine_if((mmr == MMSYSERR_NOERROR) != !!hwo)
     ok((mmr == MMSYSERR_NOERROR) == !!hwo, "Unexpected waveout %p\n", hwo);
 
     if (hwo && hwo != (void *)0xdeadf00d)

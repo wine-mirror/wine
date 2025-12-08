@@ -2742,8 +2742,16 @@ MMRESULT WINAPI waveOutOpen(LPHWAVEOUT lphWaveOut, UINT uDeviceID,
 
     res = SendMessageW(g_devices_hwnd, WODM_OPEN, (DWORD_PTR)&info, 0);
     InterlockedDecrement(&g_devthread_token);
-    if(res != MMSYSERR_NOERROR || (dwFlags & WAVE_FORMAT_QUERY))
+
+    if (dwFlags & WAVE_FORMAT_QUERY)
         return res;
+
+    if (res != MMSYSERR_NOERROR)
+    {
+        if (lphWaveOut)
+            *lphWaveOut = 0;
+        return res;
+    }
 
     if(lphWaveOut)
         *lphWaveOut = (HWAVEOUT)info.handle;
