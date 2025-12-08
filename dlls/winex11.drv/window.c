@@ -2345,9 +2345,11 @@ Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *vis
 
     if (!data)
     {
+        Window toplevel = X11DRV_get_whole_window( hwnd );
         /* explicitly create data for HWND_MESSAGE and foreign windows since they can be used for OpenGL */
         if (!(data = alloc_win_data( thread_init_display(), hwnd ))) return 0;
         data->rects.window = data->rects.visible = data->rects.client = client_rect;
+        data->whole_window = toplevel;
     }
 
     detach_client_window( data, data->client_window );
