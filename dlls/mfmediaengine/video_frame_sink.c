@@ -384,6 +384,7 @@ static void video_frame_sink_notify(struct video_frame_sink *sink, unsigned int 
 static HRESULT WINAPI video_frame_sink_stream_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
     struct video_frame_sink *sink = impl_from_IMFStreamSink(iface);
+    BOOL first_frame = FALSE;
     LONGLONG sampletime;
     HRESULT hr = S_OK;
 
@@ -410,11 +411,19 @@ static HRESULT WINAPI video_frame_sink_stream_ProcessSample(IMFStreamSink *iface
             {
                 video_frame_sink_notify(sink, MF_MEDIA_ENGINE_EVENT_FIRSTFRAMEREADY);
                 video_frame_sink_set_flag(sink, FLAGS_FIRST_FRAME, TRUE);
+                first_frame = TRUE;
             }
             /* else TODO: send MEQualityNotify event */
 
             IMFSample_AddRef(sample);
-            video_frame_sink_sample_queue_push(sink, sample, FALSE);
+            if (first_frame && sink->rate == 0.0)
+            {
+                video_frame_sink_sample_queue_set_presentation(sink, sample);
+                IMFStreamSink_QueueEvent(&sink->IMFStreamSink_iface, MEStreamSinkScrubSampleComplete,
+                        &GUID_NULL, S_OK, NULL);
+            }
+            else
+                video_frame_sink_sample_queue_push(sink, sample, FALSE);
 
             if (sink->queue.used != ARRAY_SIZE(sink->queue.samples))
                 video_frame_sink_stream_request_sample(sink);
@@ -1012,10 +1021,6 @@ static HRESULT video_frame_sink_set_state(struct video_frame_sink *sink, enum si
 
             if (state != sink->state || state != SINK_STATE_PAUSED)
             {
-                if (sink->rate == 0.0f && state == SINK_STATE_RUNNING)
-                    IMFStreamSink_QueueEvent(&sink->IMFStreamSink_iface, MEStreamSinkScrubSampleComplete,
-                            &GUID_NULL, S_OK, NULL);
-
                 IMFStreamSink_QueueEvent(&sink->IMFStreamSink_iface, events[state], &GUID_NULL, S_OK, NULL);
             }
             sink->state = state;
@@ -1262,6 +1267,7 @@ static HRESULT sample_get_pts(IMFSample *sample, MFTIME clocktime, LONGLONG *pts
 HRESULT video_frame_sink_get_pts(struct video_frame_sink *sink, MFTIME clocktime, LONGLONG *pts)
 {
     HRESULT hr = S_FALSE;
+    LONGLONG sample_pts;
 
     *pts = MINLONGLONG;
     if (sink)
@@ -1286,8 +1292,12 @@ HRESULT video_frame_sink_get_pts(struct video_frame_sink *sink, MFTIME clocktime
 
         if (transfer_sample)
             video_frame_sink_stream_request_sample(sink);
-        else if (!sink->queue.sample_presented)
-            hr = sample_get_pts(sink->queue.presentation_sample, clocktime, pts);
+        else if (sink->queue.presentation_sample && !sink->queue.sample_presented)
+        {
+            hr = IMFSample_GetSampleTime(sink->queue.presentation_sample, &sample_pts);
+            if (hr == S_OK)
+                *pts = sample_pts;
+        }
 
         LeaveCriticalSection(&sink->cs);
     }

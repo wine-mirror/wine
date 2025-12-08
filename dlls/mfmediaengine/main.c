@@ -99,6 +99,7 @@ enum media_engine_flags
     FLAGS_ENGINE_SOURCE_PENDING = 0x10000,
     FLAGS_ENGINE_PLAY_PENDING = 0x20000,
     FLAGS_ENGINE_SEEKING = 0x40000,
+    FLAGS_ENGINE_SCRUBBING = 0x80000,
 };
 
 struct vec3
@@ -921,14 +922,32 @@ static HRESULT WINAPI media_engine_callback_GetParameters(IMFAsyncCallback *ifac
     return E_NOTIMPL;
 }
 
+static HRESULT media_engine_set_rate(struct media_engine *engine, BOOL thin, double rate)
+{
+    IMFRateControl *rate_control;
+    HRESULT hr;
+
+    if (FAILED(hr = MFGetService((IUnknown *)engine->session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rate_control)))
+        return hr;
+
+    if (FAILED(hr = IMFRateControl_SetRate(rate_control, thin, rate)))
+        WARN("Failed to set rate, hr %#lx.\n", hr);
+
+    IMFRateControl_Release(rate_control);
+
+    return hr;
+}
+
 static HRESULT media_engine_set_current_time(struct media_engine *engine, double seektime);
+static void media_engine_start_playback(struct media_engine *engine);
 
 static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_engine *engine = impl_from_session_events_IMFAsyncCallback(iface);
+    BOOL playing_event, ended_event = FALSE;
     IMFMediaEvent *event = NULL;
     MediaEventType event_type;
-    BOOL ended_event = FALSE;
+    PROPVARIANT rate;
     HRESULT hr;
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(engine->session, result, &event)))
@@ -989,6 +1008,9 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDDATA, 0, 0);
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_CANPLAY, 0, 0);
 
+            if (engine->flags & FLAGS_ENGINE_SCRUBBING)
+                media_engine_set_rate(engine, FALSE, 0.0);
+
             LeaveCriticalSection(&engine->cs);
 
             PropVariantClear(&value);
@@ -1005,8 +1027,11 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
                 if (isfinite(engine->next_seek))
                     media_engine_set_current_time(engine, engine->next_seek);
             }
+
+            playing_event = !(engine->flags & FLAGS_ENGINE_SCRUBBING);
             LeaveCriticalSection(&engine->cs);
-            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAYING, 0, 0);
+            if (playing_event)
+                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAYING, 0, 0);
             break;
         case MESessionEnded:
             EnterCriticalSection(&engine->cs);
@@ -1028,6 +1053,45 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
 
         case MEEndOfPresentationSegment:
             video_frame_sink_notify_end_of_presentation_segment(engine->presentation.frame_sink);
+            break;
+
+        case MESessionRateChanged:
+
+            EnterCriticalSection(&engine->cs);
+            if (engine->flags & FLAGS_ENGINE_SCRUBBING &&
+                    IMFMediaEvent_GetValue(event, &rate) == S_OK &&
+                    rate.vt == VT_R4)
+            {
+                if (rate.fltVal == 0.0)
+                {
+                    /* Start playback with rate at 0.0 */
+                    media_engine_start_playback(engine);
+                }
+                else
+                {
+                    /* Scrubbing is complete */
+                    media_engine_set_flag(engine, FLAGS_ENGINE_SCRUBBING, FALSE);
+                    if (engine->flags & FLAGS_ENGINE_PLAY_PENDING)
+                        media_engine_start_playback(engine);
+                }
+            }
+            LeaveCriticalSection(&engine->cs);
+            break;
+
+        case MESessionScrubSampleComplete:
+
+            EnterCriticalSection(&engine->cs);
+            if (engine->flags & FLAGS_ENGINE_SCRUBBING && FAILED(hr = IMFMediaSession_Pause(engine->session)))
+                WARN("Failed to pause media session %#lx.\n", hr);
+            LeaveCriticalSection(&engine->cs);
+            break;
+
+        case MESessionPaused:
+
+            EnterCriticalSection(&engine->cs);
+            if (engine->flags & FLAGS_ENGINE_SCRUBBING)
+                media_engine_set_rate(engine, FALSE, engine->default_playback_rate);
+            LeaveCriticalSection(&engine->cs);
             break;
     }
 
@@ -1492,6 +1556,11 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
         engine->network_state = MF_MEDIA_ENGINE_NETWORK_IDLE;
         if (start_playback)
             media_engine_start_playback(engine);
+        else
+        {
+            /* start scrubbing playback */
+            media_engine_set_flag(engine, FLAGS_ENGINE_SCRUBBING, TRUE);
+        }
     }
     else
     {
@@ -2182,7 +2251,7 @@ static HRESULT WINAPI media_engine_Play(IMFMediaEngineEx *iface)
             media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED | FLAGS_ENGINE_IS_ENDED, FALSE);
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAY, 0, 0);
 
-            if (!(engine->flags & FLAGS_ENGINE_SOURCE_PENDING))
+            if (!(engine->flags & (FLAGS_ENGINE_SOURCE_PENDING | FLAGS_ENGINE_SCRUBBING)))
                 media_engine_start_playback(engine);
             else
                 media_engine_set_flag(engine, FLAGS_ENGINE_PLAY_PENDING, TRUE);
@@ -2893,8 +2962,11 @@ static HRESULT WINAPI media_engine_OnVideoStreamTick(IMFMediaEngineEx *iface, LO
     else
     {
         MFTIME clocktime;
-        IMFPresentationClock_GetTime(engine->clock, &clocktime);
-        hr = video_frame_sink_get_pts(engine->presentation.frame_sink, clocktime, pts);
+        *pts = MINLONGLONG;
+        if (SUCCEEDED(IMFPresentationClock_GetTime(engine->clock, &clocktime)))
+            hr = video_frame_sink_get_pts(engine->presentation.frame_sink, clocktime, pts);
+        else
+            hr = S_FALSE;
     }
 
     LeaveCriticalSection(&engine->cs);

@@ -1507,7 +1507,6 @@ static void test_TransferVideoFrame(void)
 
     /* now that byte stream is set, we will recieve a frame */
     res = WaitForSingleObject(notify->frame_ready_event, 5000);
-    todo_wine
     ok(!res, "Unexpected res %#lx.\n", res);
 
     if (FAILED(notify->error))
@@ -1533,9 +1532,7 @@ static void test_TransferVideoFrame(void)
     /* confirm we have a frame available before calling play */
     pts = 0;
     hr = IMFMediaEngineEx_OnVideoStreamTick(media_engine, &pts);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(pts == 0, "Unexpected timestamp.\n");
 
     /* confirm we can transfer a frame before calling play */
@@ -1544,7 +1541,6 @@ static void test_TransferVideoFrame(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     res = compare_rgb32(texture, &dst_rect, rb_texture, L"rgb32frame.bmp");
-    todo_wine
     ok(res == 0, "Unexpected %lu%% diff\n", res);
 
     hr = IMFMediaEngineEx_Play(media_engine);
@@ -2176,6 +2172,8 @@ static void test_effect(void)
 
     if (SUCCEEDED(hr = MFCreateAudioRenderer(NULL, &sink)))
     {
+        Sleep(100);
+
         count = test_transform_get_sample_count(audio_effect);
         ok(count > 0, "Unexpected processing count %u.\n", count);
         count = test_transform_get_sample_count(audio_effect2);
