@@ -1647,6 +1647,7 @@ void init_cpu_info(void)
 #endif
     peb->NumberOfProcessors = num;
     init_cpu_model();
+    get_random( &process_cookie, sizeof(process_cookie) );
 }
 
 static SYSTEM_CPU_INFORMATION get_cpuinfo(void)

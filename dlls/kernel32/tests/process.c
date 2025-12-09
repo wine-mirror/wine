@@ -4369,8 +4369,12 @@ static void test_process_info(HANDLE hproc)
             break;
         case ProcessCookie:
             if (is_current)
+            {
                 ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER /* before win8 */,
                    "for info %lu got %08lx (ret_len %lu)\n", i, status, ret_len);
+                if (!status)
+                    ok( *(ULONG *)buf, "got 0.\n" );
+            }
             else
                 ok(status == STATUS_INVALID_PARAMETER /* before win8 */ || status == STATUS_ACCESS_DENIED,
                    "for info %lu got %08lx (ret_len %lu)\n", i, status, ret_len);
