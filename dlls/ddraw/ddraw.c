@@ -3847,7 +3847,8 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
     return D3D_OK;
 }
 
-static HRESULT enum_devices_d3d3(struct ddraw *ddraw, LPD3DENUMDEVICESCALLBACK callback, void *context, DWORD desc_size)
+static HRESULT enum_devices_d3d3(struct ddraw *ddraw, LPD3DENUMDEVICESCALLBACK callback,
+        void *context, unsigned int version, DWORD desc_size)
 {
     static CHAR wined3d_description[] = "Wine D3DDevice using WineD3D and OpenGL";
     D3DDEVICEDESC device_desc1, hal_desc, hel_desc;
@@ -3863,7 +3864,6 @@ static HRESULT enum_devices_d3d3(struct ddraw *ddraw, LPD3DENUMDEVICESCALLBACK c
      * name string. Let's put the string in a sufficiently sized array in
      * writable memory. */
     char device_name[50];
-    strcpy(device_name, "RGB Emulation");
 
     if (!callback)
         return DDERR_INVALIDPARAMS;
@@ -3888,9 +3888,12 @@ static HRESULT enum_devices_d3d3(struct ddraw *ddraw, LPD3DENUMDEVICESCALLBACK c
      * It expects D3DPTEXTURECAPS_POW2 to be set (yeah, it is a
      * limitation flag), and it refuses all devices that have the perspective
      * flag set. This way it refuses the emulation device, and HAL devices
-     * never have POW2 unset in d3d7 on windows. */
+     * never have POW2 unset in d3d7 on windows.
+     *
+     * Microsoft Golf 99 enumerates devices for version 1 and uses the second
+     * device enumerated without checking its identity. It expects the RGB
+     * device. */
 
-    TRACE("Enumerating RGB Direct3D device.\n");
     hal_desc = device_desc1;
     hel_desc = device_desc1;
     /* The rgb device has the pow2 flag set in the hel caps, but not in the hal caps. */
@@ -3905,6 +3908,30 @@ static HRESULT enum_devices_d3d3(struct ddraw *ddraw, LPD3DENUMDEVICESCALLBACK c
     /* RGB, REF, RAMP and MMX devices don't report hardware transform and lighting capability */
     hal_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION);
     hel_desc.dwDevCaps &= ~(D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWRASTERIZATION);
+
+    if (version <= 2)
+    {
+        TRACE("Enumerating RAMP device.\n");
+
+        strcpy(device_name, "Ramp Emulation");
+
+        hel_desc.dcmColorModel = D3DCOLOR_MONO;
+
+        hr = callback((GUID *)&IID_IDirect3DRampDevice, reference_description,
+                device_name, &hal_desc, &hel_desc, context);
+        if (hr != D3DENUMRET_OK)
+        {
+            TRACE("Application cancelled the enumeration.\n");
+            wined3d_mutex_unlock();
+            return D3D_OK;
+        }
+    }
+
+    TRACE("Enumerating RGB Direct3D device.\n");
+
+    strcpy(device_name, "RGB Emulation");
+
+    hel_desc.dcmColorModel = D3DCOLOR_RGB;
 
     hr = callback((GUID *)&IID_IDirect3DRGBDevice, reference_description,
             device_name, &hal_desc, &hel_desc, context);
@@ -3953,7 +3980,7 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
-    return enum_devices_d3d3(ddraw, callback, context, sizeof(D3DDEVICEDESC));
+    return enum_devices_d3d3(ddraw, callback, context, 3, sizeof(D3DDEVICEDESC));
 }
 
 static HRESULT WINAPI d3d2_EnumDevices(IDirect3D2 *iface, LPD3DENUMDEVICESCALLBACK callback, void *context)
@@ -3962,7 +3989,7 @@ static HRESULT WINAPI d3d2_EnumDevices(IDirect3D2 *iface, LPD3DENUMDEVICESCALLBA
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
-    return enum_devices_d3d3(ddraw, callback, context, offsetof(D3DDEVICEDESC, dwMaxTextureRepeat));
+    return enum_devices_d3d3(ddraw, callback, context, 2, offsetof(D3DDEVICEDESC, dwMaxTextureRepeat));
 }
 
 static HRESULT WINAPI d3d1_EnumDevices(IDirect3D *iface, LPD3DENUMDEVICESCALLBACK callback, void *context)
@@ -3971,7 +3998,7 @@ static HRESULT WINAPI d3d1_EnumDevices(IDirect3D *iface, LPD3DENUMDEVICESCALLBAC
 
     TRACE("iface %p, callback %p, context %p.\n", iface, callback, context);
 
-    return enum_devices_d3d3(ddraw, callback, context, offsetof(D3DDEVICEDESC, dwMinTextureWidth));
+    return enum_devices_d3d3(ddraw, callback, context, 1, offsetof(D3DDEVICEDESC, dwMinTextureWidth));
 }
 
 /*****************************************************************************

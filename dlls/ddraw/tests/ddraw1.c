@@ -15590,7 +15590,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
                 | D3DDEVCAPS_TEXTURESYSTEMMEMORY
                 | D3DDEVCAPS_DRAWPRIMTLVERTEX;
 
-        todo_wine ok(enum_devices_index == 1, "Expected index %u.\n", enum_devices_index);
+        ok(enum_devices_index == 1, "Expected index %u.\n", enum_devices_index);
         ok(!strcmp(device_name, "RGB Emulation"), "Got name %s.\n", debugstr_a(device_name));
 
         todo_wine ok(hel->dwFlags == hel_flags, "Got HEL flags %#lx.\n", hel->dwFlags);
@@ -15622,7 +15622,7 @@ static HRESULT WINAPI test_enum_devices_caps_callback(GUID *guid, char *device_d
                 | D3DDD_LIGHTINGCAPS
                 | D3DDD_BCLIPPING;
 
-        todo_wine ok(enum_devices_index == 2, "Expected index %u.\n", enum_devices_index);
+        ok(enum_devices_index == 2, "Expected index %u.\n", enum_devices_index);
         ok(!strcmp(device_name, "Direct3D HAL"), "Got name %s.\n", debugstr_a(device_name));
 
         ok(hal->dcmColorModel == D3DCOLOR_RGB, "HAL Device hal caps has colormodel %lu\n", hel->dcmColorModel);
