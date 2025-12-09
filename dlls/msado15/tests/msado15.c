@@ -3437,19 +3437,13 @@ static void test_ADOConnectionConstruction(void)
     SET_EXPECT(dbprops_SetProperties);
     hr = ADOConnectionConstruction15_WrapDSOandSession(conn_constr,
             (IUnknown *)&dso, (IUnknown *)&open_rowset);
-    todo_wine ok(hr == S_OK, "got %08lx\n", hr);
+    ok(hr == S_OK, "got %08lx\n", hr);
     todo_wine CHECK_CALLED(open_rowset_QI_ISessionProperties);
     todo_wine CHECK_CALLED(open_rowset_QI_IBindResource);
     todo_wine CHECK_CALLED(open_rowset_QI_ICreateRow);
     todo_wine CHECK_CALLED(dbprops_GetProperties);
-    todo_wine CHECK_CALLED(dbprops_SetProperties);
+    CHECK_CALLED(dbprops_SetProperties);
     ADOConnectionConstruction15_Release(conn_constr);
-    if (hr != S_OK)
-    {
-        skip("ADOConnectionConstruction15_WrapDSOandSession not implemented\n");
-        _Connection_Release(conn);
-        return;
-    }
 
     hr = _Connection_get_State(conn, &state);
     ok(hr == S_OK, "got %08lx\n", hr);
@@ -3473,7 +3467,7 @@ static void test_ADOConnectionConstruction(void)
     SET_EXPECT(rowset_info_GetProperties);
     hr = _Recordset_Open(recordset, v, missing, adOpenKeyset, adLockOptimistic, adCmdUnspecified);
     ok(hr == S_OK, "got %08lx\n", hr);
-    CHECK_CALLED(open_rowset_QI_IDBCreateCommand);
+    todo_wine CHECK_CALLED(open_rowset_QI_IDBCreateCommand);
     CHECK_CALLED(open_rowset_OpenRowset);
     CHECK_CALLED(rowset_info_GetProperties);
     VariantClear(&v);

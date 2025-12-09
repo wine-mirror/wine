@@ -60,6 +60,7 @@ struct connection
     ConnectModeEnum           mode;
     CursorLocationEnum        location;
     IUnknown                 *session;
+    BOOL                      dso_initialized;
     IDBInitialize            *dso;
     struct connection_point   cp_connev;
 };
@@ -108,12 +109,7 @@ static ULONG WINAPI connection_Release( _Connection *iface )
             if (connection->cp_connev.sinks[i])
                 IUnknown_Release( connection->cp_connev.sinks[i] );
         }
-        if (connection->session) IUnknown_Release( connection->session );
-        if (connection->dso)
-        {
-            IDBInitialize_Uninitialize( connection->dso );
-            IDBInitialize_Release( connection->dso );
-        }
+        _Connection_Close( iface );
         free( connection->cp_connev.sinks );
         free( connection->provider );
         free( connection->datasource );
@@ -304,7 +300,8 @@ static HRESULT WINAPI connection_Close( _Connection *iface )
     }
     if (connection->dso)
     {
-        IDBInitialize_Uninitialize( connection->dso );
+        if (connection->dso_initialized)
+            IDBInitialize_Uninitialize( connection->dso );
         IDBInitialize_Release( connection->dso );
         connection->dso = NULL;
     }
@@ -390,50 +387,51 @@ static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BST
                                        LONG options )
 {
     struct connection *connection = impl_from_Connection( iface );
-    IDBProperties *props;
+    IDBCreateSession *create_session;
+    BOOL dso_initialized = FALSE;
     IDataInitialize *datainit;
-    IDBCreateSession *session = NULL;
+    IDBInitialize *dso = NULL;
+    IUnknown *session = NULL;
     HRESULT hr;
 
     TRACE( "%p, %s, %s, %p, %08lx\n", iface, debugstr_w(connect_str), debugstr_w(userid), password, options );
+
+    /* TODO - Update username/password if required. */
+    if ((userid && *userid) || (password && *password))
+        FIXME("Username/password parameters currently not supported\n");
 
     if (connection->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
     if (!connect_str) return E_FAIL;
 
     if ((hr = CoCreateInstance( &CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,
                                 (void **)&datainit )) != S_OK) return hr;
-    if ((hr = IDataInitialize_GetDataSource( datainit, NULL, CLSCTX_INPROC_SERVER, connect_str, &IID_IDBInitialize,
-                                             (IUnknown **)&connection->dso )) != S_OK) goto done;
-    if ((hr = IDBInitialize_QueryInterface( connection->dso, &IID_IDBProperties, (void **)&props )) != S_OK) goto done;
-
-    /* TODO - Update username/password if required. */
-    if ((userid && *userid) || (password && *password))
-        FIXME("Username/password parameters currently not supported\n");
-
-    if ((hr = IDBInitialize_Initialize( connection->dso )) != S_OK) goto done;
-    if ((hr = IDBInitialize_QueryInterface( connection->dso, &IID_IDBCreateSession, (void **)&session )) != S_OK) goto done;
-    if ((hr = IDBCreateSession_CreateSession( session, NULL, &IID_IUnknown, &connection->session )) == S_OK)
-    {
-        connection->state = adStateOpen;
-    }
-    IDBCreateSession_Release( session );
-
-done:
-    if (hr != S_OK)
-    {
-        if(connection->session)
-            IUnknown_Release( connection->session );
-        connection->session = NULL;
-
-        if (connection->dso)
-        {
-            IDBInitialize_Uninitialize( connection->dso );
-            IDBInitialize_Release( connection->dso );
-        }
-        connection->dso = NULL;
-    }
-
+    hr = IDataInitialize_GetDataSource( datainit, NULL, CLSCTX_INPROC_SERVER, connect_str,
+                                        &IID_IDBInitialize, (IUnknown **)&dso);
     IDataInitialize_Release( datainit );
+    if (hr != S_OK) goto done;
+
+    if ((hr = IDBInitialize_Initialize( dso )) != S_OK) goto done;
+    dso_initialized = TRUE;
+
+    hr = IDBInitialize_QueryInterface( dso, &IID_IDBCreateSession, (void **)&create_session );
+    if (hr == S_OK)
+    {
+        hr = IDBCreateSession_CreateSession( create_session, NULL, &IID_IUnknown, &session );
+        IDBCreateSession_Release( create_session );
+    }
+    if (hr != S_OK) goto done;
+
+    hr = ADOConnectionConstruction15_WrapDSOandSession(
+            &connection->ADOConnectionConstruction15_iface, (IUnknown *)dso, session );
+    if (hr == S_OK)
+    {
+        connection->dso_initialized = TRUE;
+        dso_initialized = FALSE;
+    }
+done:
+    if (session) IUnknown_Release( session );
+    if (dso_initialized) IDBInitialize_Uninitialize( dso );
+    if (dso) IDBInitialize_Release( dso );
 
     TRACE("ret 0x%08lx\n", hr);
     return hr;
@@ -963,8 +961,42 @@ static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15
         IUnknown *session)
 {
     struct connection *connection = impl_from_ADOConnectionConstruction15( iface );
-    FIXME("%p, %p, %p\n", connection, dso, session);
-    return E_NOTIMPL;
+    IDBInitialize *dbinit;
+    IDBProperties *props;
+    DBPROPSET propset;
+    DBPROP prop[2];
+    HRESULT hr;
+
+    TRACE("%p, %p, %p\n", connection, dso, session);
+
+    hr = IUnknown_QueryInterface( dso, &IID_IDBProperties, (void **)&props );
+    if (FAILED(hr)) return hr;
+    propset.guidPropertySet = DBPROPSET_DBINIT;
+    propset.cProperties = ARRAY_SIZE(prop);
+    propset.rgProperties = prop;
+    memset(prop, 0, sizeof(prop));
+    prop[0].dwPropertyID = DBPROP_INIT_TIMEOUT;
+    prop[0].dwOptions = DBPROPOPTIONS_OPTIONAL;
+    V_VT(&prop[0].vValue) = VT_I4;
+    V_I4(&prop[0].vValue) = connection->conn_timeout;
+    prop[1].dwPropertyID = DBPROP_INIT_OLEDBSERVICES;
+    prop[1].dwOptions = DBPROPOPTIONS_REQUIRED;
+    V_VT(&prop[1].vValue) = VT_I4;
+    V_I4(&prop[1].vValue) = DBPROPVAL_OS_ENABLEALL;
+    if (connection->location != adUseClient)
+        V_I4(&prop[1].vValue) &= ~DBPROPVAL_OS_CLIENTCURSOR;
+    hr = IDBProperties_SetProperties( props, 1, &propset );
+    IDBProperties_Release( props );
+    if (FAILED(hr)) FIXME("SetProperties failed: %lx\n", hr);
+
+    hr = IUnknown_QueryInterface( dso, &IID_IDBInitialize, (void **)&dbinit );
+    if (FAILED(hr)) return hr;
+
+    connection->dso = dbinit;
+    connection->session = session;
+    IUnknown_AddRef( session );
+    connection->state = adStateOpen;
+    return S_OK;
 }
 
 struct ADOConnectionConstruction15Vtbl ado_construct_vtbl =
@@ -981,7 +1013,7 @@ HRESULT Connection_create( void **obj )
 {
     struct connection *connection;
 
-    if (!(connection = malloc( sizeof(*connection) ))) return E_OUTOFMEMORY;
+    if (!(connection = calloc( 1, sizeof(*connection) ))) return E_OUTOFMEMORY;
     connection->Connection_iface.lpVtbl = &connection_vtbl;
     connection->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
     connection->IConnectionPointContainer_iface.lpVtbl = &connpointcontainer_vtbl;
