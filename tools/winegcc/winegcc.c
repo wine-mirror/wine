@@ -627,6 +627,7 @@ static struct strarray get_link_args( const char *output_name )
             strarray_add(&link_args, strmake("-Wl,-implib:%s", make_temp_file( output_name, ".lib" )));
 
         strarray_add( &link_args, strmake( "-Wl,-filealign:%s,-align:%s,-driver", file_align, section_align ));
+        strarray_add( &link_args, "-Wl,-merge:.CRT=.rdata" );
 
         strarray_addall( &link_args, flags );
         return link_args;
