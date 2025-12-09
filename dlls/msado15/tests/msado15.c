@@ -28,6 +28,7 @@
 #include "msdasql.h"
 #include "odbcinst.h"
 #include "msdadc.h"
+#include "msdshape.h"
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
@@ -91,6 +92,13 @@ DEFINE_EXPECT(view_filter_SetFilter);
 DEFINE_EXPECT(chaptered_rowset_ReleaseChapter);
 DEFINE_EXPECT(rowset_current_index_GetIndex);
 DEFINE_EXPECT(rowset_current_index_SetIndex);
+DEFINE_EXPECT(open_rowset_QI_ISessionProperties);
+DEFINE_EXPECT(open_rowset_QI_IBindResource);
+DEFINE_EXPECT(open_rowset_QI_ICreateRow);
+DEFINE_EXPECT(open_rowset_QI_IDBCreateCommand);
+DEFINE_EXPECT(open_rowset_OpenRowset);
+DEFINE_EXPECT(dbprops_GetProperties);
+DEFINE_EXPECT(dbprops_SetProperties);
 
 static BOOL is_bof( _Recordset *recordset )
 {
@@ -556,7 +564,8 @@ static void test_Recordset(void)
 }
 
 /* This interface is queried for but is not documented anywhere. */
-DEFINE_GUID(UKN_INTERFACE, 0x6f1e39e1, 0x05c6, 0x11d0, 0xa7, 0x8b, 0x00, 0xaa, 0x00, 0xa3, 0xf0, 0x0d);
+DEFINE_GUID(UNK_INTERFACE, 0x6f1e39e1, 0x05c6, 0x11d0, 0xa7, 0x8b, 0x00, 0xaa, 0x00, 0xa3, 0xf0, 0x0d);
+DEFINE_GUID(UNK2_INTERFACE, 0x83693a20, 0xfbea, 0x11cf, 0xa7, 0x85, 0x00, 0xaa, 0x00, 0xa3, 0xf0, 0x0d);
 
 struct test_rowset
 {
@@ -1456,9 +1465,9 @@ static HRESULT WINAPI rowset_QueryInterface(IRowsetExactScroll *iface, REFIID ri
     {
         *obj = &rowset->IRowsetCurrentIndex_iface;
     }
-    else if (IsEqualIID(riid, &UKN_INTERFACE))
+    else if (IsEqualIID(riid, &UNK_INTERFACE) || IsEqualIID(riid, &UNK2_INTERFACE))
     {
-        trace("Unknown interface\n");
+        trace("Unknown interface (%s)\n", wine_dbgstr_guid(riid));
         return E_NOINTERFACE;
     }
 
@@ -3209,12 +3218,277 @@ static void cleanup_database(void)
     DeleteFileA(mdbpath);
 }
 
+static HRESULT WINAPI dbprops_QueryInterface(IDBProperties *iface, REFIID riid, void **obj)
+{
+    ok(0, "unexpected QI(%s)\n", wine_dbgstr_guid(riid));
+    *obj = NULL;
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI dbprops_AddRef(IDBProperties *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI dbprops_Release(IDBProperties *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI dbprops_GetProperties(IDBProperties *iface, ULONG propidsets_count,
+        const DBPROPIDSET propidsets[], ULONG *propsets_count, DBPROPSET **propsets)
+{
+    CHECK_EXPECT(dbprops_GetProperties);
+    ok(propidsets_count == 1, "propidsets_count = %lu\n", propidsets_count);
+    ok(IsEqualGUID(&propidsets[0].guidPropertySet, &DBPROPSET_MSDSDBINIT),
+            "guidPropertySet = %s\n", wine_dbgstr_guid(&propidsets[0].guidPropertySet));
+    ok(propidsets[0].cPropertyIDs == 1, "cPropertyIDs = %lu\n", propidsets[0].cPropertyIDs);
+    ok(propidsets[0].rgPropertyIDs[0] == DBPROP_MSDS_DBINIT_DATAPROVIDER,
+            "rgPropertyIDs[0] = %lx\n", propidsets[0].rgPropertyIDs[0]);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dbprops_GetPropertyInfo(IDBProperties *iface, ULONG propidsets_count,
+        const DBPROPIDSET propidsets[], ULONG *propinfosets_count,
+        DBPROPINFOSET **propinfosets, OLECHAR **desc_buf)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface,
+        ULONG propsets_count, DBPROPSET propsets[])
+{
+    DBPROP *prop;
+
+    CHECK_EXPECT(dbprops_SetProperties);
+    ok(propsets_count == 1, "propsets_count = %lu\n", propsets_count);
+    ok(IsEqualGUID(&propsets[0].guidPropertySet, &DBPROPSET_DBINIT),
+            "guidPropertySet = %s\n", wine_dbgstr_guid(&propsets[0].guidPropertySet));
+    ok(propsets[0].cProperties == 2, "cProperties = %lu\n", propsets[0].cProperties);
+
+    prop = propsets[0].rgProperties;
+    ok(prop->dwPropertyID == DBPROP_INIT_TIMEOUT, "[0].dwPropertyID = %lx\n", prop->dwPropertyID);
+    ok(prop->dwOptions == DBPROPOPTIONS_OPTIONAL, "[0].dwOptions = %lx\n", prop->dwOptions);
+    ok(V_VT(&prop->vValue) == VT_I4, "[0].vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+    ok(V_I4(&prop->vValue) == 15, "[0].vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+
+    prop = propsets[0].rgProperties + 1;
+    ok(prop->dwPropertyID == DBPROP_INIT_OLEDBSERVICES, "[1].dwPropertyID = %lx\n", prop->dwPropertyID);
+    ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "[1].dwOptions = %lx\n", prop->dwOptions);
+    ok(V_VT(&prop->vValue) == VT_I4, "[1].vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+    ok(V_I4(&prop->vValue) == (DBPROPVAL_OS_ENABLEALL & ~DBPROPVAL_OS_CLIENTCURSOR),
+            "[1].vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+    return S_OK;
+}
+
+static IDBPropertiesVtbl dbprops_vtbl =
+{
+    dbprops_QueryInterface,
+    dbprops_AddRef,
+    dbprops_Release,
+    dbprops_GetProperties,
+    dbprops_GetPropertyInfo,
+    dbprops_SetProperties
+};
+static IDBProperties dbprops = { &dbprops_vtbl };
+
+static HRESULT WINAPI dso_QueryInterface(IDBInitialize *iface, REFIID riid, void **obj)
+{
+    IID unk = { 0x986f3c20, 0x9879, 0x11d1, { 0xba, 0x17, 0x00, 0xaa, 0x00, 0x0d, 0x96, 0x65 } };
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDBInitialize))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+    if (IsEqualGUID(riid, &IID_IDBProperties))
+    {
+        *obj = &dbprops;
+        return S_OK;
+    }
+    if (IsEqualGUID(riid, &unk))
+    {
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    ok(0, "unexpected QI(%s)\n", wine_dbgstr_guid(riid));
+    *obj = NULL;
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI dso_AddRef(IDBInitialize *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI dso_Release(IDBInitialize *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI dso_Initialize(IDBInitialize *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dso_Uninitialize(IDBInitialize *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IDBInitializeVtbl dso_vtbl =
+{
+    dso_QueryInterface,
+    dso_AddRef,
+    dso_Release,
+    dso_Initialize,
+    dso_Uninitialize
+};
+static IDBInitialize dso = { &dso_vtbl };
+
+static HRESULT WINAPI open_rowset_QueryInterface(IOpenRowset *iface, REFIID riid, void **obj)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOpenRowset))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_ISessionProperties))
+        CHECK_EXPECT(open_rowset_QI_ISessionProperties);
+    else if (IsEqualGUID(riid, &IID_IBindResource))
+        CHECK_EXPECT(open_rowset_QI_IBindResource);
+    else if (IsEqualGUID(riid, &IID_ICreateRow))
+        CHECK_EXPECT(open_rowset_QI_ICreateRow);
+    else if (IsEqualGUID(riid, &IID_IDBCreateCommand))
+        CHECK_EXPECT2(open_rowset_QI_IDBCreateCommand);
+    else
+        ok(0, "unexpected QI(%s)\n", wine_dbgstr_guid(riid));
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI open_rowset_AddRef(IOpenRowset *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI open_rowset_Release(IOpenRowset *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI open_rowset_OpenRowset(IOpenRowset *iface, IUnknown *unk_outer,
+        DBID *table_id, DBID *index_id, REFIID riid, ULONG propsets_count,
+        DBPROPSET propsets[], IUnknown **rowset)
+{
+    static struct test_rowset testrowset;
+
+    CHECK_EXPECT(open_rowset_OpenRowset);
+
+    testrowset.IRowsetExactScroll_iface.lpVtbl = &rowset_vtbl;
+    testrowset.IRowsetInfo_iface.lpVtbl = &rowset_info;
+    testrowset.IColumnsInfo_iface.lpVtbl = &column_info;
+    testrowset.IRowsetUpdate_iface.lpVtbl = &rowset_update;
+    testrowset.IAccessor_iface.lpVtbl = &accessor;
+    testrowset.IRowsetView_iface.lpVtbl = &rowset_view;
+    testrowset.IChapteredRowset_iface.lpVtbl = &chaptered_rowset;
+    testrowset.IRowsetCurrentIndex_iface.lpVtbl = &rowset_current_index;
+    testrowset.refs = 1;
+    testrowset.IViewChapter_iface.lpVtbl = &view_chapter;
+    testrowset.IViewFilter_iface.lpVtbl = &view_filter;
+
+    *rowset = (IUnknown *)&testrowset.IRowsetExactScroll_iface;
+    return S_OK;
+}
+
+static IOpenRowsetVtbl open_rowset_vtbl =
+{
+    open_rowset_QueryInterface,
+    open_rowset_AddRef,
+    open_rowset_Release,
+    open_rowset_OpenRowset
+};
+static IOpenRowset open_rowset = { &open_rowset_vtbl };
+
+static void test_ADOConnectionConstruction(void)
+{
+    ADOConnectionConstruction15 *conn_constr;
+    _Recordset *recordset;
+    VARIANT v, missing;
+    _Connection *conn;
+    LONG state;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER,
+            &IID__Connection, (void **)&conn);
+    ok(hr == S_OK, "got %08lx\n", hr);
+
+    hr = _Connection_QueryInterface(conn, &IID_ADOConnectionConstruction15, (void **)&conn_constr);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    SET_EXPECT(open_rowset_QI_ISessionProperties);
+    SET_EXPECT(open_rowset_QI_IBindResource);
+    SET_EXPECT(open_rowset_QI_ICreateRow);
+    SET_EXPECT(dbprops_GetProperties);
+    SET_EXPECT(dbprops_SetProperties);
+    hr = ADOConnectionConstruction15_WrapDSOandSession(conn_constr,
+            (IUnknown *)&dso, (IUnknown *)&open_rowset);
+    todo_wine ok(hr == S_OK, "got %08lx\n", hr);
+    todo_wine CHECK_CALLED(open_rowset_QI_ISessionProperties);
+    todo_wine CHECK_CALLED(open_rowset_QI_IBindResource);
+    todo_wine CHECK_CALLED(open_rowset_QI_ICreateRow);
+    todo_wine CHECK_CALLED(dbprops_GetProperties);
+    todo_wine CHECK_CALLED(dbprops_SetProperties);
+    ADOConnectionConstruction15_Release(conn_constr);
+    if (hr != S_OK)
+    {
+        skip("ADOConnectionConstruction15_WrapDSOandSession not implemented\n");
+        _Connection_Release(conn);
+        return;
+    }
+
+    hr = _Connection_get_State(conn, &state);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(state == adStateOpen, "state = %ld\n", state);
+
+    hr = CoCreateInstance(&CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER,
+            &IID__Recordset, (void **)&recordset);
+    ok(hr == S_OK, "got %08lx\n", hr);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)conn;
+    hr = _Recordset_put_ActiveConnection(recordset, v);
+    ok(hr == S_OK, "got %08lx\n", hr);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"table name");
+    V_VT(&missing) = VT_ERROR;
+    V_ERROR(&missing) = DISP_E_PARAMNOTFOUND;
+    SET_EXPECT(open_rowset_QI_IDBCreateCommand);
+    SET_EXPECT(open_rowset_OpenRowset);
+    SET_EXPECT(rowset_info_GetProperties);
+    hr = _Recordset_Open(recordset, v, missing, adOpenKeyset, adLockOptimistic, adCmdUnspecified);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    CHECK_CALLED(open_rowset_QI_IDBCreateCommand);
+    CHECK_CALLED(open_rowset_OpenRowset);
+    CHECK_CALLED(rowset_info_GetProperties);
+    VariantClear(&v);
+
+    ok(!_Recordset_Release(recordset), "_Recordset not released\n");
+    _Connection_Release(conn);
+}
+
 START_TEST(msado15)
 {
     CoInitialize( NULL );
 
     setup_database();
 
+    test_ADOConnectionConstruction();
     test_Connection();
     test_Connection_Open();
     test_ConnectionPoint();
