@@ -34,6 +34,8 @@
 #include "wine/test.h"
 #include "utils.h"
 
+static BOOL (WINAPI *pIsWow64Process2)(HANDLE, USHORT *, USHORT *);
+
 static BOOL is_wow64;
 static const char msifile[] = "winetest-package.msi";
 static const WCHAR msifileW[] = L"winetest-package.msi";
@@ -5458,9 +5460,12 @@ static void test_installprops(void)
     REGSAM access = KEY_ALL_ACCESS;
     SYSTEM_INFO si;
     INSTALLUILEVEL uilevel;
+    USHORT machine, native_machine = 0;
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
+
+    if (pIsWow64Process2) pIsWow64Process2(GetCurrentProcess(), &machine, &native_machine);
 
     lstrcpyA(path, CURR_DIR);
     if (!is_root(CURR_DIR)) lstrcatA(path, "\\");
@@ -5645,7 +5650,10 @@ static void test_installprops(void)
         si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
     {
         sprintf(buf, "%d", si.wProcessorLevel);
-        check_prop(hpkg, "Intel", buf, 1, 0);
+        if (native_machine == IMAGE_FILE_MACHINE_ARM64)
+            check_prop(hpkg, "Intel", "0", 1, 0);
+        else
+            check_prop(hpkg, "Intel", buf, 1, 0);
         check_prop(hpkg, "MsiAMD64", buf, 1, 0);
         check_prop(hpkg, "Msix64", buf, 1, 0);
         sprintf(buf, "%d", LOBYTE(LOWORD(GetVersion())) * 100 + HIBYTE(LOWORD(GetVersion())));
@@ -9544,6 +9552,7 @@ START_TEST(package)
     if (!is_process_elevated()) restart_as_admin_elevated();
 
     IsWow64Process(GetCurrentProcess(), &is_wow64);
+    pIsWow64Process2 = (void *)GetProcAddress(GetModuleHandleA("kernel32"), "IsWow64Process2");
 
     GetCurrentDirectoryA(MAX_PATH, prev_path);
     GetTempPathA(MAX_PATH, temp_path);
