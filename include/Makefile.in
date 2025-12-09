@@ -500,6 +500,7 @@ SOURCES = \
 	msdasc.idl \
 	msdasql.h \
 	msdelta.h \
+	msdshape.h \
 	mshtmcid.h \
 	mshtmdid.h \
 	mshtmhst.idl \
