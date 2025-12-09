@@ -54,6 +54,7 @@ struct connection
     LONG                      refs;
     ObjectStateEnum           state;
     LONG                      timeout;
+    LONG                      conn_timeout;
     WCHAR                    *datasource;
     WCHAR                    *provider;
     ConnectModeEnum           mode;
@@ -266,14 +267,18 @@ static HRESULT WINAPI connection_put_CommandTimeout( _Connection *iface, LONG ti
 
 static HRESULT WINAPI connection_get_ConnectionTimeout( _Connection *iface, LONG *timeout )
 {
-    FIXME( "%p, %p\n", iface, timeout );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    TRACE( "%p, %p\n", connection, timeout );
+    *timeout = connection->conn_timeout;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_put_ConnectionTimeout( _Connection *iface, LONG timeout )
 {
-    FIXME( "%p, %ld\n", iface, timeout );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    TRACE( "%p, %ld\n", connection, timeout );
+    connection->conn_timeout = timeout;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_get_Version( _Connection *iface, BSTR *str )
@@ -984,6 +989,7 @@ HRESULT Connection_create( void **obj )
     connection->refs = 1;
     connection->state = adStateClosed;
     connection->timeout = 30;
+    connection->conn_timeout = 15;
     connection->datasource = NULL;
     if (!(connection->provider = wcsdup( L"MSDASQL" )))
     {
