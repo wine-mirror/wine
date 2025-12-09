@@ -1703,12 +1703,13 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
 
         opengl_drawable_set_context( new_read, context );
         if (new_read != new_draw) opengl_drawable_set_context( new_draw, context );
+
+        opengl_drawable_flush( new_read, new_read->interval, 0 );
+        opengl_drawable_flush( new_draw, new_draw->interval, 0 );
     }
 
     if (ret)
     {
-        opengl_drawable_flush( new_read, new_read->interval, 0 );
-        opengl_drawable_flush( new_draw, new_draw->interval, 0 );
         /* update the current window drawable to the last used draw surface */
         if (new_draw->client) set_window_opengl_drawable( new_draw->client->hwnd, new_draw, TRUE );
         context_exchange_drawables( context, &new_draw, &new_read );
