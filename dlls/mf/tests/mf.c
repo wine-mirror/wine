@@ -11234,6 +11234,47 @@ static void test_media_session_sample_request(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
+static void test_media_session_invalid_topology(void)
+{
+    IMFAsyncCallback *callback;
+    IMFMediaSession *session;
+    IMFMediaSource *source;
+    IMFTopology *topology;
+    PROPVARIANT propvar;
+    UINT64 duration;
+    HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    hr = MFCreateMediaSession(NULL, &session);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    callback = create_test_callback(TRUE);
+    source = create_test_source(FALSE);
+    topology = create_test_topology(source, NULL, &duration);
+
+    hr = IMFMediaSession_SetTopology(session, 0, topology);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionTopologySet, 5000, &propvar);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    propvar.vt = VT_I8;
+    propvar.hVal.QuadPart = 0;
+    hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = wait_media_event(session, callback, MESessionStarted, 5000, &propvar);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#lx.\n", hr);
+
+    IMFTopology_Release(topology);
+    IMFMediaSource_Release(source);
+    IMFAsyncCallback_Release(callback);
+    IMFMediaSession_Release(session);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -11277,4 +11318,5 @@ START_TEST(mf)
     test_media_session_seek();
     test_media_session_scrubbing();
     test_media_session_sample_request();
+    test_media_session_invalid_topology();
 }

@@ -2130,9 +2130,9 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
                 hr = session_init_media_types(resolved_topology);
 
             if (SUCCEEDED(hr))
-            {
                 topology = resolved_topology;
-            }
+            else
+                topology = NULL;
         }
     }
 
