@@ -310,7 +310,7 @@ static void update_client_surfaces( HWND hwnd )
 
     LIST_FOR_EACH_ENTRY_SAFE( surface, next, &client_surfaces, struct client_surface, entry )
     {
-        if (surface->hwnd != hwnd) continue;
+        if (NtUserGetAncestor( surface->hwnd, GA_ROOT ) != hwnd) continue;
         surface->funcs->update( surface );
         InterlockedExchange( &surface->updated, 1 );
     }
@@ -2132,18 +2132,6 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     return new_surface;
 }
 
-static void update_window_client_surfaces( HWND hwnd )
-{
-    HWND *children;
-    int i;
-
-    update_client_surfaces( hwnd );
-
-    if (!(children = list_window_children( hwnd ))) return;
-    for (i = 0; children[i]; i++) update_window_client_surfaces( children[i] );
-    free( children );
-}
-
 static HICON get_icon_info( HICON icon, ICONINFO *ii )
 {
     return icon && NtUserGetIconInfo( icon, ii, NULL, NULL, NULL, 0 ) ? icon : NULL;
@@ -2357,7 +2345,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 
         user_driver->pWindowPosChanged( hwnd, insert_after, owner_hint, swp_flags, &monitor_rects,
                                         get_driver_window_surface( new_surface, raw_dpi ) );
-        update_window_client_surfaces( toplevel );
+        update_client_surfaces( toplevel );
     }
 
     return ret;
