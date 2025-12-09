@@ -5198,9 +5198,11 @@ static void process_pending_renames(HKEY hkey)
             flags |= MOVEFILE_REPLACE_EXISTING;
             dst++;
         }
+        if (src[0] == '*' && src[1] == '1') src += 2; /* win11 */
         if (src[0] == '\\' && src[1] == '?' && src[2] == '?' && src[3] == '\\') src += 4;
         if (*dst)
         {
+            if (dst[0] == '*' && dst[1] == '1') dst += 2; /* win11 */
             if (dst[0] == '\\' && dst[1] == '?' && dst[2] == '?' && dst[3] == '\\') dst += 4;
             fileret = MoveFileExA(src, dst, flags);
             ok(fileret, "Failed to move file %s -> %s (%lu)\n", src, dst, GetLastError());
