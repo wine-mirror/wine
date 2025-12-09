@@ -430,7 +430,7 @@ HRESULT wg_transform_read_quartz(wg_transform_t transform, struct wg_sample *wg_
     }
 
     if (FAILED(hr = IMediaSample_SetActualDataLength(sample->u.quartz.sample, wg_sample->size)))
-        return hr;
+        ERR("SetActualDataLength() returned %#lx.\n", hr);
 
     if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
     {
