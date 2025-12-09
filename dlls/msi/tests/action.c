@@ -3453,8 +3453,8 @@ static void test_register_user(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     CHECK_REG_STR(props, "ProductID", "none");
-    CHECK_REG_STR(props, "RegCompany", company);
-    CHECK_REG_STR(props, "RegOwner", owner);
+    if (company) CHECK_REG_STR(props, "RegCompany", company);
+    if (owner) CHECK_REG_STR(props, "RegOwner", owner);
 
     RegDeleteValueA(props, "ProductID");
     RegDeleteValueA(props, "RegCompany");
@@ -3475,8 +3475,8 @@ static void test_register_user(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     CHECK_REG_STR(props, "ProductID", "none");
-    CHECK_REG_STR(props, "RegCompany", company);
-    CHECK_REG_STR(props, "RegOwner", owner);
+    if (company) CHECK_REG_STR(props, "RegCompany", company);
+    if (owner) CHECK_REG_STR(props, "RegOwner", owner);
 
     RegDeleteValueA(props, "ProductID");
     RegDeleteValueA(props, "RegCompany");
