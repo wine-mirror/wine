@@ -3630,6 +3630,7 @@ static NTSTATUS lookup_unix_name( int root_fd, OBJECT_ATTRIBUTES *attr, UNICODE_
                     return status;
                 }
             }
+            free( reparse_name );
         }
 
         /* if this is the last element, not finding it is not necessarily fatal */
