@@ -790,6 +790,7 @@ void output_spec16_file( DLLSPEC *spec16 )
     output_stubs( spec16 );
     output_exports( spec32 );
     output_imports( spec16 );
+    output_crt_sections();
     if (!strcmp( spec16->dll_name, "kernel" )) output_asm_relays16();
     if (needs_get_pc_thunk) output_get_pc_thunk();
     if (spec16->main_module)
