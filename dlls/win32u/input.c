@@ -800,7 +800,7 @@ SHORT WINAPI NtUserGetAsyncKeyState( INT key )
 
     if (key < 0 || key >= 256) return 0;
 
-    check_for_events( QS_INPUT );
+    check_for_events( QS_ALLINPUT );
 
     while ((status = get_shared_desktop( &lock, &desktop_shm )) == STATUS_PENDING)
         state = desktop_shm->keystate[key];
