@@ -53,7 +53,6 @@ static BOOL is_wow64(void)
     return !!NtCurrentTeb()->WowTebOffset;
 }
 
-const struct opengl_funcs *opengl_funcs;
 static UINT64 call_gl_debug_message_callback;
 pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -2115,7 +2114,6 @@ NTSTATUS process_attach( void *args )
         zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     }
 
-    opengl_funcs = __wine_get_opengl_driver( WINE_OPENGL_DRIVER_VERSION );
     return STATUS_SUCCESS;
 }
 
