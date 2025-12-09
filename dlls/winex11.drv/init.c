@@ -321,9 +321,9 @@ static void client_surface_update_geometry( HWND hwnd, struct x11drv_client_surf
     int mask = 0;
     RECT rect;
 
-    if (NtUserGetPresentRect( toplevel, &rect, dpi )) origin = hwnd;
+    if (NtUserGetPresentRect( hwnd, &rect, dpi )) OffsetRect( &rect, -rect.left, -rect.top );
     else if (!NtUserGetClientRect( hwnd, &rect, dpi )) return;
-    NtUserMapWindowPoints( origin, toplevel, (POINT *)&rect, 2, dpi );
+    else NtUserMapWindowPoints( origin, toplevel, (POINT *)&rect, 2, dpi );
 
     if ((data = get_win_data( toplevel )))
     {
@@ -436,7 +436,7 @@ static void X11DRV_client_surface_present( struct client_surface *client, HDC hd
     {
         region = 0; /* window is exclusive fullscreen, ignore everything else */
         if (toplevel != hwnd) return; /* toplevel is exclusive fullscreen, don't present */
-        NtUserMapWindowPoints( 0, toplevel, (POINT *)&rect_dst, 2, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
+        OffsetRect( &rect_dst, -rect_dst.left, -rect_dst.top );
     }
     else
     {
