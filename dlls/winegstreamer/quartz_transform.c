@@ -358,8 +358,6 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
                     &filter->source_mt, &attrs, &filter->transform)))
                 ERR("Failed to recreate transform, hr %#lx.\n", hr);
         }
-
-        DeleteMediaType(mt);
     }
     else if (hr != S_FALSE)
     {
