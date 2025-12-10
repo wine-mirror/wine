@@ -2241,6 +2241,7 @@ Window get_dummy_parent(void)
     if (!dummy_parent)
     {
         XSetWindowAttributes attrib;
+        unsigned long opacity = 0;
 
         attrib.override_redirect = True;
         attrib.border_pixel = 0;
@@ -2254,6 +2255,8 @@ Window get_dummy_parent(void)
                                           CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
             XShapeCombineRectangles( gdi_display, dummy_parent, ShapeBounding, 0, 0, &empty_rect, 1,
                                      ShapeSet, YXBanded );
+            XShapeCombineRectangles( gdi_display, dummy_parent, ShapeInput, 0, 0, &empty_rect, 1,
+                                     ShapeSet, YXBanded );
         }
 #else
         dummy_parent = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, default_visual.depth,
@@ -2261,6 +2264,8 @@ Window get_dummy_parent(void)
                                       CWColormap | CWBorderPixel | CWOverrideRedirect, &attrib );
         WARN("Xshape support is not compiled in. Applications under XWayland may have poor performance.\n");
 #endif
+        XChangeProperty( gdi_display, dummy_parent, x11drv_atom(_NET_WM_WINDOW_OPACITY),
+                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&opacity, 1 );
         XMapWindow( gdi_display, dummy_parent );
     }
     return dummy_parent;
