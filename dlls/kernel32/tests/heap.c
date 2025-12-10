@@ -1546,7 +1546,7 @@ static void test_GlobalAlloc(void)
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
     tmp_mem = pGlobalFree( mem );
     ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
-    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    if (0) /* crashes on Windows */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = pGlobalFree( mem );
@@ -1589,7 +1589,7 @@ static void test_GlobalAlloc(void)
     tmp_mem = GlobalReAlloc( mem, 0, GMEM_MOVEABLE );
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    if (0) /* crashes on Windows */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = GlobalHandle( mem );
@@ -1623,7 +1623,7 @@ static void test_GlobalAlloc(void)
     tmp_mem = GlobalReAlloc( invalid_mem, 0, GMEM_MOVEABLE );
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    if (0) /* crashes on Windows */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = GlobalHandle( invalid_mem );
@@ -2336,7 +2336,7 @@ static void test_LocalAlloc(void)
     tmp_mem = LocalReAlloc( mem, 0, LMEM_MOVEABLE );
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    if (0) /* crashes on Windows */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = LocalHandle( mem );
@@ -2369,7 +2369,7 @@ static void test_LocalAlloc(void)
     tmp_mem = LocalReAlloc( invalid_mem, 0, LMEM_MOVEABLE );
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    if (0) /* crashes on Windows */
     {
         SetLastError( 0xdeadbeef );
         tmp_mem = LocalHandle( invalid_mem );
