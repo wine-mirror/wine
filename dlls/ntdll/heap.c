@@ -80,6 +80,7 @@ struct rtl_heap_entry
 
 /* header for heap blocks */
 
+#define INITIAL_COMMIT_ALIGN  (0x400 * sizeof(void *))
 #define REGION_ALIGN  0x10000
 #define BLOCK_ALIGN   (2 * sizeof(void *))
 
@@ -1511,6 +1512,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     flags &= ~(HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED);
     if (process_heap) flags |= HEAP_PRIVATE;
     if (!process_heap || !total_size || (flags & HEAP_SHARED)) flags |= HEAP_GROWABLE;
+    commit_size = ROUND_SIZE( commit_size, INITIAL_COMMIT_ALIGN - 1 );
     if (!total_size) total_size = commit_size + HEAP_INITIAL_SIZE;
 
     if (!(heap = addr))
