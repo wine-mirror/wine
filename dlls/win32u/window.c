@@ -2117,7 +2117,7 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
         window_surface_add_ref( (new_surface = &dummy_surface) );
     }
 
-    if (new_surface && !is_layered)
+    if (new_surface && new_surface != &dummy_surface && !is_layered)
     {
         DWORD lwa_flags = 0, alpha_bits = -1;
         COLORREF key;
