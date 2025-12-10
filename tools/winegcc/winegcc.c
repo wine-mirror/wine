@@ -1250,6 +1250,7 @@ static void build(struct strarray input_files, const char *output)
     else
     {
         strarray_add(&lib_dirs, strmake("%s/dlls", wine_objdir));
+        strarray_add(&lib_dirs, strmake("%s/libs", wine_objdir));
         strarray_addall(&lib_dirs, lib_path_dirs);
     }
 
