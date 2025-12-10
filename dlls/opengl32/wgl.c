@@ -822,7 +822,7 @@ INT WINAPI wglDescribePixelFormat( HDC hdc, int index, UINT size, PIXELFORMATDES
     struct wgl_pixel_format *formats;
     UINT num_formats, num_onscreen_formats;
 
-    TRACE( "hdc %p, index %d, size %u, ppfd %p\n", hdc, index, index, ppfd );
+    TRACE( "hdc %p, index %d, size %u, ppfd %p\n", hdc, index, size, ppfd );
 
     if (!(formats = get_pixel_formats( hdc, &num_formats, &num_onscreen_formats ))) return 0;
     if (!ppfd) return num_onscreen_formats;
