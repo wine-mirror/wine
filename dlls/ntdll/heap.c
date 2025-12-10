@@ -1513,7 +1513,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     if (process_heap) flags |= HEAP_PRIVATE;
     if (!process_heap || !total_size || (flags & HEAP_SHARED)) flags |= HEAP_GROWABLE;
     commit_size = ROUND_SIZE( commit_size, INITIAL_COMMIT_ALIGN - 1 );
-    if (!total_size) total_size = commit_size + HEAP_INITIAL_SIZE;
+    if (!total_size) total_size = ROUND_SIZE( commit_size + 1 /* + 1 is intentional */, REGION_ALIGN - 1 );
 
     if (!(heap = addr))
     {

@@ -3735,8 +3735,6 @@ static void test_heap_size( SIZE_T initial_commit_size )
     commit_size = ROUND_SIZE( initial_commit_size, INITIAL_COMMIT_ALIGN - 1 );
     expected = ROUND_SIZE( commit_size + 1, REGION_ALIGN - 1 );
 
-    todo_wine_if( expected != initial_commit_size + REGION_ALIGN
-                  && !(initial_commit_size > REGION_ALIGN - INITIAL_COMMIT_ALIGN && initial_commit_size < REGION_ALIGN))
     ok( alloc_size == expected, "got %#Ix, expected %#Ix.\n", alloc_size, expected );
     expected = max( commit_size, INITIAL_COMMIT_ALIGN );
     todo_wine_if( (!initial_commit_size || (initial_commit_size & (REGION_ALIGN - 1)))
