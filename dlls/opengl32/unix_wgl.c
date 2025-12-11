@@ -1504,15 +1504,15 @@ static void flush_context( TEB *teb, void (*flush)(void) )
 void wrap_glFinish( TEB *teb )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    flush_context( teb, funcs->p_glFinish );
     resolve_default_fbo( teb, FALSE );
+    flush_context( teb, funcs->p_glFinish );
 }
 
 void wrap_glFlush( TEB *teb )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    flush_context( teb, funcs->p_glFlush );
     resolve_default_fbo( teb, FALSE );
+    flush_context( teb, funcs->p_glFlush );
 }
 
 void wrap_glClear( TEB *teb, GLbitfield mask )
