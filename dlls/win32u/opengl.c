@@ -2635,6 +2635,7 @@ static void display_funcs_init(void)
         WARN( "%s not found.\n", #func );
     ALL_GL_FUNCS
     USE_GL_FUNC(glBindFramebuffer)
+    USE_GL_FUNC(glBlitFramebuffer)
     USE_GL_FUNC(glCheckNamedFramebufferStatus)
     USE_GL_FUNC(glCreateFramebuffers)
     USE_GL_FUNC(glCreateRenderbuffers)
