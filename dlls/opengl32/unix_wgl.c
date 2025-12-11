@@ -1874,41 +1874,43 @@ void resolve_default_fbo( TEB *teb, BOOL read )
 
         NtUserGetClientRect( drawable->client->hwnd, &rect, NtUserGetDpiForWindow( drawable->client->hwnd ) );
 
+        funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, drawable->draw_fbo );
+        funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, drawable->read_fbo );
+
         if (context_draws_front( ctx ))
         {
-            funcs->p_glNamedFramebufferReadBuffer( drawable->draw_fbo, GL_COLOR_ATTACHMENT0 );
-            funcs->p_glNamedFramebufferDrawBuffer( drawable->read_fbo, GL_COLOR_ATTACHMENT0 );
-            funcs->p_glBlitNamedFramebuffer( drawable->draw_fbo, drawable->read_fbo, 0, 0, 0, 0, rect.right, rect.bottom,
-                                             rect.right, rect.bottom, mask, GL_NEAREST );
+            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT0 );
+            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT0 );
+            funcs->p_glBlitFramebuffer( 0, 0, 0, 0, rect.right, rect.bottom, rect.right, rect.bottom, mask, GL_NEAREST );
             mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         }
 
         if ((drawable->doublebuffer && context_draws_back( ctx )) || (!drawable->doublebuffer && drawable->stereo && context_draws_front( ctx )))
         {
-            funcs->p_glNamedFramebufferReadBuffer( drawable->draw_fbo, GL_COLOR_ATTACHMENT1 );
-            funcs->p_glNamedFramebufferDrawBuffer( drawable->read_fbo, GL_COLOR_ATTACHMENT1 );
-            funcs->p_glBlitNamedFramebuffer( drawable->draw_fbo, drawable->read_fbo, 0, 0, 0, 0, rect.right, rect.bottom,
-                                             rect.right, rect.bottom, mask, GL_NEAREST );
+            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT1 );
+            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT1 );
+            funcs->p_glBlitFramebuffer( 0, 0, 0, 0, rect.right, rect.bottom, rect.right, rect.bottom, mask, GL_NEAREST );
             mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         }
 
         if (drawable->doublebuffer && drawable->stereo && context_draws_front( ctx ))
         {
-            funcs->p_glNamedFramebufferReadBuffer( drawable->draw_fbo, GL_COLOR_ATTACHMENT2 );
-            funcs->p_glNamedFramebufferDrawBuffer( drawable->read_fbo, GL_COLOR_ATTACHMENT2 );
-            funcs->p_glBlitNamedFramebuffer( drawable->draw_fbo, drawable->read_fbo, 0, 0, 0, 0, rect.right, rect.bottom,
-                                             rect.right, rect.bottom, mask, GL_NEAREST );
+            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT2 );
+            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT2 );
+            funcs->p_glBlitFramebuffer( 0, 0, 0, 0, rect.right, rect.bottom, rect.right, rect.bottom, mask, GL_NEAREST );
             mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         }
 
         if (drawable->doublebuffer && drawable->stereo && context_draws_back( ctx ))
         {
-            funcs->p_glNamedFramebufferReadBuffer( drawable->draw_fbo, GL_COLOR_ATTACHMENT3 );
-            funcs->p_glNamedFramebufferDrawBuffer( drawable->read_fbo, GL_COLOR_ATTACHMENT3 );
-            funcs->p_glBlitNamedFramebuffer( drawable->draw_fbo, drawable->read_fbo, 0, 0, 0, 0, rect.right, rect.bottom,
-                                             rect.right, rect.bottom, mask, GL_NEAREST );
+            funcs->p_glReadBuffer( GL_COLOR_ATTACHMENT3 );
+            funcs->p_glDrawBuffer( GL_COLOR_ATTACHMENT3 );
+            funcs->p_glBlitFramebuffer( 0, 0, 0, 0, rect.right, rect.bottom, rect.right, rect.bottom, mask, GL_NEAREST );
             mask &= ~(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         }
+
+        funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, ctx->read_fbo );
+        funcs->p_glBindFramebuffer( GL_DRAW_FRAMEBUFFER, ctx->draw_fbo );
     }
 }
 
