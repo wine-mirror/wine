@@ -113,6 +113,15 @@ ULONG WINAPI WmiOpenBlock(GUID *guid, ULONG access, WMIHANDLE *handle)
 }
 
 /******************************************************************************
+ * WmiCloseBlock [ADVAPI32.@]
+ */
+ULONG WINAPI WmiCloseBlock(WMIHANDLE handle)
+{
+    FIXME("%p: stub\n", handle);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * WmiQueryAllDataA [ADVAPI32.@]
  */
 ULONG WMIAPI WmiQueryAllDataA(WMIHANDLE handle, ULONG *size, void *buffer)
