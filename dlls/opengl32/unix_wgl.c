@@ -1495,7 +1495,7 @@ static void flush_context( TEB *teb, void (*flush)(void) )
         NtUserGetClientRect( draw->client->hwnd, &rect, NtUserGetDpiForWindow( draw->client->hwnd ) );
         if (ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
         funcs->p_glReadBuffer( GL_FRONT_LEFT );
-        funcs->p_glBlitFramebuffer( 0, 0, 0, 0, rect.right, rect.bottom, rect.right, rect.bottom, mask, GL_NEAREST );
+        funcs->p_glBlitFramebuffer( 0, 0, rect.right, rect.bottom, 0, 0, rect.right, rect.bottom, mask, GL_NEAREST );
         if (ctx->read_fbo) funcs->p_glBindFramebuffer( GL_READ_FRAMEBUFFER, ctx->read_fbo );
         else funcs->p_glReadBuffer( drawable_buffer_from_buffer( read, ctx->pixel_mode.read_buffer ) );
     }
