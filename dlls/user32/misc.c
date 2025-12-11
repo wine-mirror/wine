@@ -526,10 +526,16 @@ BOOL WINAPI GetPointerType(UINT32 id, POINTER_INPUT_TYPE *type)
 
 BOOL WINAPI GetPointerInfo(UINT32 id, POINTER_INFO *info)
 {
-    FIXME("(%d %p): stub\n", id, info);
+    POINTER_INFO frame = NtUserGetThreadInfo()->mouse_frame;
+    FIXME("(%d %p): stubb\n", id, info);
+    if (!id || !info || !frame.frameId || id != frame.pointerId)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
 
-    SetLastError(ERROR_INVALID_PARAMETER);
-    return FALSE;
+    *info = frame;
+    return TRUE;
 }
 
 LRESULT WINAPI ImeWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
