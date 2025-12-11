@@ -3361,7 +3361,7 @@ static void test_D3DKMTShareObjects( void )
     {
         open_mutex_nt.hNtHandle = handle;
         open_mutex_nt.hKeyedMutex = 0xdeadbeef;
-        status = D3DKMTOpenKeyedMutexFromNtHandle( &open_mutex_nt );
+        status = pD3DKMTOpenKeyedMutexFromNtHandle( &open_mutex_nt );
         todo_wine ok_nt( STATUS_OBJECT_TYPE_MISMATCH, status );
     }
     else /* not available up to win10-1709 */
