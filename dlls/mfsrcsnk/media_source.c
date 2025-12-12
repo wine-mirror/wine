@@ -684,7 +684,6 @@ static HRESULT media_source_send_eos(struct media_source *source, struct media_s
     }
 
     queue_media_event_value(source->queue, MEEndOfPresentation, &empty);
-    source->state = SOURCE_STOPPED;
     return S_OK;
 }
 
