@@ -1591,6 +1591,8 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
         set_window_opengl_drawable( hwnd, drawable, TRUE );
         set_dc_opengl_drawable( hdc, drawable );
         opengl_drawable_release( drawable );
+
+        update_window_state( hwnd );
     }
 
     return TRUE;
