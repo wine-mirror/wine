@@ -1,4 +1,4 @@
-The Wine development release 11.0-rc1 is now available.
+The Wine development release 11.0-rc2 is now available.
 
 This is the first release candidate for the upcoming Wine 11.0. It
 marks the beginning of the yearly code freeze period. Please give this
@@ -6,12 +6,9 @@ release a good testing and report any issue that you find, to help us
 make the final 11.0 as good as possible.
 
 What's new in this release:
-  - Mono engine updated to version 10.4.0.
-  - Locale data updated to Unicode CLDR 48.
-  - TWAINDSM module for scanner support on 64-bit.
-  - Various bug fixes.
+  - Bug fixes only, we are in code freeze.
 
-The source is available at <https://dl.winehq.org/wine/source/11.0/wine-11.0-rc1.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/11.0/wine-11.0-rc2.tar.xz>
 
 Binary packages for various distributions will be available
 from the respective [download sites][1].
@@ -23,269 +20,141 @@ See the file [AUTHORS][3] for the complete list.
 
 [1]: https://gitlab.winehq.org/wine/wine/-/wikis/Download
 [2]: https://gitlab.winehq.org/wine/wine/-/wikis/Documentation
-[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-11.0-rc1/AUTHORS
+[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-11.0-rc2/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 11.0-rc1 (total 17):
+### Bugs fixed in 11.0-rc2 (total 28):
 
- - #36514  King's Quest: Mask of Eternity requires MCIWndCreate to create a child window when parent is specified
- - #38924  HeapSize(GetProcessHeap(), 0, GlobalLock(hGlobal)) must succeed [wxWidgets samples, Tapps2, DirMaster]
- - #56386  Gramps 5.2.0 displays empty windows
- - #58037  Photoshop CS 2 installation never completes
- - #58383  mmdevapi notify_thread busy waits when no midi driver can be loaded
- - #58408  win32u:input: Performance regression in Resident Evil 2 due to internal messages processing.
- - #58827  Running Mahjong with Wine ends without displaying the game screen
- - #58949  Sound test in winecfg doesn't produce audio
- - #58975  Mugen crashes after multiple matches on NVIDIA GPUs.
- - #59006  FL Studio fails to minimize on Wine 10.19
- - #59010  Window immediately restores after minimizing when a non-modal dialog is open
- - #59041  Incorrect Casting for NET 10 Runtime Apps
- - #59052  cmd doesn't handle all parameters in FOR /F command
- - #59054  Oblivion crashes with unhandled page fault: wine 10.19
- - #59061  Office 2013 File menu doesn't open
- - #59064  Mass Effect Legendary Window Surface Not Drawn To
- - #59075  various focus-related winforms tests fail in virtual desktop
+ - #12401  NET Framework 2.0, 3.0, 4.0 installers and other apps that make use of GAC API for managed assembly installation on NTFS filesystems need reparse point/junction API support (FSCTL_SET_REPARSE_POINT/FSCTL_GET_REPARSE_POINT)
+ - #38652  VMR9 Owner and Clipping hwnd
+ - #43110  Indycar Series crashes on start
+ - #53380  After 7.13 update, components in pop-up windows, sliders and buttons, do not work. ThumbsPlus 10 Pro
+ - #53737  Incoming (game): crashes after the intro video
+ - #56177  The 64-bit uxtheme:system fails on Windows 10 2004+
+ - #56286  Evil Under the Sun (French version) crashes when starting a new game
+ - #56462  PlayOnline Viewer crashes when Wine is built without gstreamer support
+ - #57393  MS Office 2013: Slide out File menu panel is behind the editing page
+ - #57960  ChessBase 18 hangs / stops accepting input a few seconds after launch
+ - #58171  Breath of Fire IV, Ys VI crashes on the opening video
+ - #58261  Ys Origin: videos playing upside down
+ - #58724  Heroes of the Storm doesn't start
+ - #58811  Steam: Unable to display the intended GUI windows due to steamwebhelper being unresponsive.
+ - #58824  Melonloader exit with an error code
+ - #58844  Command & Conquer Tiberian Sun (C&C Red Alert II): black rectangle instead of showing menus
+ - #58914  Basic Windows Combobox are randomly missing entries
+ - #59012  Maximized windows cannot be minimized on kde
+ - #59053  Mario Multiverse demo crashes upon launch
+ - #59069  Splinter Cell: Intro video window is invisible
+ - #59089  Forms in certain programs redraw very slowly
+ - #59091  UbisoftConnect window completely broken
+ - #59093  Various GL driver errors, OOM, and hangs on 32-bit after 4286e07f8
+ - #59094  Itch.io client shows empty white window on start
+ - #59097  Earth 2150 fails to play video
+ - #59100  Worms Revolution displays only black screen
+ - #59102  Minimizing fullscreen notepad and restoring gives a black window
+ - #59110  Memory leak in lookup_unix_name
 
-### Changes since 10.20:
+### Changes since 11.0-rc1:
 ```
-Akihiro Sagawa (1):
-      msvfw32: Retry with avivideo device type if open fails.
+Alexandre Julliard (4):
+      gitlab: Avoid error when parsing the minor number of a .0 release.
+      xactengine/tests: Remove todo_wine from tests that succeed now.
+      tomcrypt: Avoid macro redefinition warnings.
+      ir50_32: Import winegstreamer directly.
 
-Alexandre Julliard (12):
-      Revert "icuin: Add initial dll."
-      Revert "icuuc: Add initial dll."
-      Revert "icu: Add stub dll."
-      ntdll: Remove "experimental wow64" message.
-      faudio: Import upstream release 25.12.
-      nls: Update locale data to CLDR version 48.
-      mmdevapi: Don't fall back to initial driver when the MIDI driver fails to load.
-      makedep: Add an install-unixlib target as a subset of install-lib.
-      makedep: Don't assume that .tab.h files don't contain includes.
-      wow64: Build a proper wow64 IO status block for FSCTL_GET_OBJECT_ID.
-      ntdll: Silence warning about non-builtin for fake dlls.
-      tomcrypt: Force using 32-bit math library.
+André Zwing (2):
+      ntdll: Remove superfluous code.
+      ntdll/unix: Add bti c for call dispatchers on ARM64.
 
-Anton Baskanov (2):
-      dmsynth: Calculate latency and the derive latency clock from the master clock.
-      dmsynth: Factor out waiting for the buffer event.
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
 
-Bernd Herd (8):
-      sane.ds: Fix ICAP_BITDEPTH semantics, allow setting it.
-      sane.ds: Refuse native transfer mode with depth 16 bit.
-      sane.ds: Support SANE Backends that treat resolution as TYPE_FIXED.
-      sane.ds: Make UI non-modal as required by Twain specification.
-      twaindsm: Put DSM code into twaindsm.dll and add twain_32.dll wrapper.
-      twaindsm: Implement DG_CONTROL/DAT_ENTRYPOINT/MSG_GET.
-      twaindsm: Add DG_CONTROL/DAT_CALLBACKx/MSG_REGISTER_CALLBACK to support TWAIN 2.x protocol.
-      twaindsm: Recursively search in C:\Windows\twain_xx for installed data sources.
+Bernhard Übelacker (5):
+      msado15: Remove left over free in get_accessor (ASan).
+      msado15: Add missing return when malloc failed.
+      devenum/tests: Skip test if no video capture device is present.
+      win32u/tests: Dynamically load function D3DKMTOpenKeyedMutexFromNtHandle.
+      win32u/tests: Use dynamically loaded D3DKMTOpenKeyedMutexFromNtHandle.
 
-Bernhard Übelacker (1):
-      faudio: Make sure at least some wavebank notifications get allocated (ASan).
+Daniel Lehman (1):
+      ntdll: Fix memory leak in reparse code path.
 
-Biswapriyo Nath (2):
-      include: Add D3D12_FEATURE_DATA_VIDEO_ENCODER_INTRA_REFRESH_MODE in d3d12video.idl.
-      include: Add missing member in D3D12_VIDEO_ENCODER_CODEC_PICTURE_CONTROL_SUPPORT.
+Dmitry Timoshkov (2):
+      msi/tests: Add a test for MsiDecomposeDescriptor() with a product with only one feature.
+      msi: MsiDecomposeDescriptor() should look up single feature of the product.
 
-Brendan Shanks (2):
-      win32u: Use asprintf in read_drm_device_prop.
-      winecoreaudio: Set the AudioChannelLayout on output units.
+Elizabeth Figura (11):
+      quartz/tests: Test avidec source media type after dynamic format change.
+      quartz/avidec: Alter the current media type during dynamic format change.
+      winegstreamer: Handle dynamic format change.
+      amstream/tests: Test AM_MEDIA_TYPE generation for an existing sample and sub-rect.
+      amstream: Set the source/target rects from the sample rect in GetMediaType().
+      quartz/tests: Test using the AVI decompressor with rects.
+      quartz/avidec: Support nontrivial rects.
+      ir50_32/tests: Test extended decompression functions.
+      ir50_32: Implement extended decompression.
+      winegstreamer: Support dynamic reconnection in the DirectShow transform.
+      winegstreamer: Fix a double free (Coverity).
 
-Charlotte Pabst (4):
-      mfsrcsnk/tests: Add tests for thinning.
-      winedmo: Fall back to dts for sample time if pts is not present.
-      mfsrcsnk: Process SetRate asynchronously.
-      mfsrcsnk: Implement thinning.
+Hans Leidekker (4):
+      msi/tests: Allow registered owner and company to be unset.
+      msi/tests: Fix pending renames processing on Windows 11.
+      msi/tests: Fix test failures when running as an unprivileged user.
+      msi/tests: Fix a test failure on ARM64 Windows 11.
 
-Derek Lesho (2):
-      opengl32: Cleanup glGet* and fix typo in glGetDoublev.
-      opengl32: Move GL error to wgl_context.
+Henri Verbeet (4):
+      wined3d: Do not set "context_gl->needs_set" in wined3d_context_gl_release().
+      wined3d: Get rid of the "restore_pf" field from struct wined3d_context_gl.
+      wined3d: Expect WINED3D_VIEW_TEXTURE_CUBE for cube textures in get_texture_view_target().
+      wined3d: Properly compare reduction modes in wined3d_texture_gl_apply_sampler_desc().
 
-Dmitry Timoshkov (1):
-      ldap: Consistently use unicode version of QueryContextAttributes().
-
-Elizabeth Figura (5):
-      qcap: Avoid inverting frame interval twice.
-      qcap: Iterate over all frame intervals to get the max/min.
-      qcap: Implement GetFrameRateList().
-      cmd: Print reparse points in directory listings.
-      cmd: Implement mklink /j.
-
-Eric Pouech (10):
-      dbghelp: Fix skipping of inline call-site information.
-      dbghelp: Properly limit area of CU's symbols.
-      dbghelp: Properly skip S_FRAMEPROC inside thunk.
-      dbghelp: Silence a warning.
-      dbghelp: Don't use checksum on ELF files.
-      cmd: Enhance parsing of FOR /F options.
-      dbghelp: Detect and fail decorated TPI indexes.
-      dbghelp: Revamp DBI hash table.
-      dbghelp: Use contribution to select compiland for line info.
-      dbghelp: Use contrib to select compiland in advance_line_info.
-
-Esme Povirk (1):
-      mscoree: Update Wine Mono to 10.4.0.
-
-Floris Renaud (1):
-      po: Update Dutch translation.
-
-Georg Lehmann (1):
-      winevulkan: Update to VK spec version 1.4.335.
-
-Gerald Pfeifer (1):
-      user32/tests: Avoid compiler warnings in tests.
-
-Giovanni Mascellani (3):
-      winmm/tests: Test a few PCM and float wave formats.
-      winmm/tests: Test some more exotic wave formats.
-      Revert "winmm: Use AUTOCONVERTPCM when initializing the audio client.".
-
-Hans Leidekker (9):
-      cryptui: Properly initialize the filename in show_import_ui().
-      cryptui: Pass the certificate context to CryptUIWizImport() from the certificate viewer.
-      cryptui: Allow switching from automatic to manual certificate store selection.
-      wbemprox/tests: Fix test failures on Windows 11.
-      wbemprox/tests: Consistently use check_property_nullable().
-      bcrypt/tests: Fix test failures on Windows 8 and 11.
-      advapi32/tests: Fix test failures on Windows 11.
-      dbgeng/tests: Fix test failures on Windows 11.
-      fusion/tests: Run tests on .NET version 4.
-
-Haoyang Chen (1):
-      devenum: Add DevicePath field for a video input device.
-
-Henri Verbeet (8):
-      quartz/vmr7: Handle BI_BITFIELDS formats.
-      quartz/vmr7: Reject BI_RGB and BI_BITFIELDS formats with different bit depth.
-      quartz/vmr7: Reject unsupported FOURCC formats.
-      d3d11: Add the D3D11_DECODE_FILTER_REDUCTION macro.
-      d3d11/tests: Add a sampler min/max reduction filtering test.
-      wined3d/vk: Implement sampler min/max reduction filtering.
-      wined3d/gl: Implement sampler min/max reduction filtering.
-      wined3d: Create cube views for cube textures in wined3d_texture_acquire_identity_srv().
+Huw D. M. Davies (1):
+      winemac: Remove unused variable.
 
 Jacek Caban (1):
-      wininet: Move dwError to http_request_t.
+      winegcc: Add libs/ to library search paths when --wine-objdir is used.
 
-Martin Storsjö (7):
-      ntdll/tests: Update the reference code for a changed test.
-      ntdll/tests: Enable tests for save_next for float registers.
-      winedump: Fix the printout of a cornercase with packed arm64 unwind info.
-      ntdll: Implement handling of arm64 packed unwind for CR=01, RegI=1.
-      ntdll/tests: Add a missing testcase for arm64 packed unwind info.
-      ntdll: Rewrite arm64 packed unwind info handling.
-      ntdll: Handle arm64 packed unwind with H=1, RegI=RegF=0, CR!=1.
+Jiangyi Chen (1):
+      opengl32: Fix a copy error when printing the log.
 
-Matteo Bruni (21):
-      ddraw: Advertise NV12 FOURCC as supported.
-      quartz/vmr7: Implement IVMRSurfaceAllocatorNotify::SetDDrawDevice().
-      quartz/vmr7: Create a ddraw object if necessary to check for FourCC support.
-      quartz/vmr7: Validate BITMAPINFOHEADER size.
-      quartz/tests: Test allocating a surface with different bit depth from the primary.
-      quartz/tests: Test allocating BI_BITFIELDS pixel format.
-      quartz/tests: Test VMR7 AllocateSurface with a BITMAPV4HEADER.
-      quartz/tests: Add some VMR7 tests for unsupported formats.
-      ntdll: Factor out a cancel_io() function.
-      server: Factor out a cancel_async() function.
-      ntdll: Wait for all asyncs to handle cancel in NtCancelIoFile().
-      ntdll/tests: Add more NtCancelIoFile[Ex]() tests.
-      ntdll/tests: Test IOSB values of the cancel operation.
-      ntoskrnl/tests: Fix tests on current Windows 10 / 11.
-      ntoskrnl/tests: Add more cancellation tests.
-      ntoskrnl/tests: Test the thread ID the cancellation routine runs from.
-      ntoskrnl/tests: Use the 'Nt' version of the CancelIo APIs.
-      quartz/vmr7: Implement IVMRSurfaceAllocator::AdviseNotify() on the default allocator.
-      quartz/vmr7: Call IVMRSurfaceAllocator_AdviseNotify() on the default allocator.
-      quartz/tests: Show where AllocateSurface should be called.
-      include: Fix RenderPrefs_ForceOffscreen typo.
+Nikolay Sivov (1):
+      Revert "dwrite: Use uppercase paths for local file loader keys."
 
-Nikolay Sivov (5):
-      comdlg32/tests: Add a helper to check for supported interfaces.
-      comdlg32/tests: Check for IModalWindow interface.
-      comdlg32/itemdlg: Add missing IModalWindow to supported interfaces.
-      d2d1: Add a Scale effect stub.
-      msxml/tests: Add some tests for supported interfaces in the SAX API.
+Paul Gofman (4):
+      kernel32/tests: Disable heap tests which are now crashing on Windows.
+      kernel32/tests: Add more tests for heap total and commit sizes.
+      ntdll: Align commit size in RtlCreateHeap().
+      ntdll: Compute total size as aligned commit size in RtlCreateHeap().
 
-Pan Hui (1):
-      wmp: Implement OLEIVERB_SHOW.
+Piotr Caban (1):
+      msado15: Ignore IRowset:GetProperties return value in rsconstruction_put_Rowset (Coverity).
 
-Paul Gofman (10):
-      include: Add defintions related to Windows.Perception.Spatial.SpatialAnchorExporter.
-      windows.perception.stub: Stub SpatialAnchorExporter class.
-      windows.perception.stub: Implement exporter_statics_RequestAccessAsync().
-      windows.media.speech: Synchronize IAsyncInfo implementation in async.c.
-      windows.gaming.input: Synchronize IAsyncInfo implementation in async.c.
-      cryptowinrt: Synchronize IAsyncInfo implementation in async.c.
-      windows.devices.enumeration: Synchronize IAsyncInfo implementation in async.c.
-      windows.security.credentials.ui.userconsentverifier: Synchronize IAsyncInfo implementation in async.c.
-      coremessaging: Synchronize IAsyncInfo implementation in async.c.
-      win32u: Don't alter memory beyond structure effective size in NtUserEnumDisplaySettings().
+Rémi Bernon (15):
+      win32u: Introduce a new NtUserGetPresentRect driver-specific call.
+      win32u: Use the window present rect as visible rect when set.
+      win32u: Fixup fullscreen cursor clipping when present rect is set.
+      winex11: Ignore children clipping in exclusive fullscreen mode.
+      winex11: Retrieve the whole window when creating client window for other process.
+      opengl32: Return the buffers when invalid draw/read buffer are used.
+      winex11: Check for events again after processing delayed events.
+      win32u: Iterate the client surfaces rather than the toplevel window tree.
+      opengl32: Retrieve display OpenGL functions table only when needed.
+      win32u: Process every driver event in NtUserGetAsyncKeyState.
+      win32u: Remove unnecessary drawable flush in context_sync_drawables.
+      winex11: Use window DPI for client surface position and geometry.
+      winex11: Avoid mapping points with exclusive fullscreen windows.
+      win32u: Avoid setting surface layered with the dummy surface.
+      win32u: Update window state after setting internal pixel format.
 
-Piotr Caban (23):
-      msado15: Set ActiveConnection on recordset created by connection_OpenSchema.
-      msado15: Handle NULL values in field_get_Value.
-      msado15: Fix leak in recordset_put_CacheSize.
-      msado15: Support more properties in rowset_info_GetProperties.
-      msado15: Add _Recordset::LockType implementation.
-      msado15: Validate LockType in rsconstruction_put_Rowset.
-      msado15: Implement _Recordset::Supports function.
-      msado15: Add _Recordset::Supports tests.
-      include: Define CursorOptionEnum values using hexadecimal constants.
-      include: Add DBINDEXCOLUMNDESC definition.
-      include: Add IRowsetIndex interface.
-      include: Add IRowsetCurrentIndex interface.
-      msado15: Add _Recordset:put_Index implementation.
-      msado15: Add _Recordset:get_Index implementation.
-      msado15: Request features determined by lock type when opening table directly.
-      msado15: Add partial _Recordset:CancelUpdate implementation.
-      msado15: Add partial _Recordset::Update implementation.
-      msado15: Call _Recordset::Update when moving to new row.
-      msado15: Use accessors cache in _Recordset::AddNew.
-      msado15: Handle data argument in rowset_change_InsertRow.
-      msado15: Support setting values in _Recordset::AddNew.
-      msado15: Support setting values in _Recordset::Update.
-      msado15: Request more features when opening table directly.
+Sven Baars (2):
+      ntdll: Use the correct CPU tick length on macOS.
+      ntdll: Include idle time in kernel time on all platforms.
 
-Rémi Bernon (28):
-      win32u: Avoid a crash when drawable fails to be created.
-      win32u: Check internal drawables before trying to create new ones.
-      winex11: Allow client window creation on other process windows.
-      win32u: Update the window client surface even with no children.
-      server: Check whether window can be made foreground earlier.
-      server: Always allow windows to activate after their creation.
-      opengl32: Don't generate null functions for extensions.
-      opengl32: Generate some missing null functions.
-      opengl32: Expect core OpenGL functions to be present.
-      opengl32: Get OpenGL function table on process attach.
-      winemac: Avoid taking the window lock when creating client surface.
-      opengl32: Don't count EGL extensions in the registry arrays.
-      opengl32: List unsupported extensions rather than supported ones.
-      opengl32: Generate functions and constants for more EGL extensions.
-      win32u: Query EGL devices UUID with EGL_EXT_device_persistent_id.
-      winewayland: Update client surface position in update callback.
-      wined3d: Remove now unnecessary pixel format restoration.
-      wined3d: Create / release the window DCs with the swapchains.
-      win32u: Introduce a D3DKMT escape code to set fullscreen present rect.
-      wined3d: Set the window present rect when entering fullscreen mode.
-      wined3d: Use the backbuffer size rather than client rect when fullscreen.
-      server: Introduce a find_async_from_user helper.
-      mfsrcsnk: Introduce a DEFINE_MF_ASYNC_PARAMS macro.
-      mfsrcsnk: Factor out a media_source_request_stream_sample helper.
-      mfsrcsnk: Peek for stream token presence without removing it.
-      win32u: Require VK_KHR_external_semaphore_fd for keyed mutexes.
-      win32u: Expose onscreen single buffer formats with PFD_SUPPORT_GDI.
-      win32u: Workaround a 32-bit llvmpipe crash on initialization.
-
-Vibhav Pant (2):
-      winebth.sys: Unify critical sections used for bluetooth_radio.
-      winebth.sys: Fix potential deadlocks while performing operations that block on the DBus event loop.
-
-Yuxuan Shui (3):
-      winegstreamer: Fix SetOutputType of the wma decoder DMO.
-      mf/tests: Test Get{Input,Output}CurrentType.
-      winegstreamer: Implement media_object_Get{Input,Output}CurrentType.
-
-Zhiyi Zhang (2):
-      user32/tests: Test scrollbar rect when WS_HSCROLL or WS_VSCROLL is present.
-      win32u: Remove scrollbar rect offsets when WS_HSCROLL or WS_VSCROLL is present.
+Yuxuan Shui (5):
+      mf/tests: Test if WMA decoder DMO accept output type with a different num of channels.
+      mf/tests: Test SetOutputType with a wrong formattype on WMA decoder.
+      mf/tests: Test if WMV decoder DMO accepts output type with a different size.
+      winegstreamer: Reject setting WMA DMO with an output type with a wrong formattype.
+      winegstreamer: Reject SetOutput with a different number of channels.
 ```
