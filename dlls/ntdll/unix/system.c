@@ -3283,7 +3283,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 for (i = 0; i < cpus; i++)
                 {
                     sppi[i].IdleTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_IDLE] * 100000;
-                    sppi[i].KernelTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_SYSTEM] * 100000;
+                    sppi[i].KernelTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_SYSTEM] * 100000 +
+                                                  sppi[i].IdleTime.QuadPart;
                     sppi[i].UserTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_USER] * 100000;
                 }
                 vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
@@ -3344,7 +3345,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                     {
                         if (cpus * CPUSTATES * sizeof(long) >= size) break;
                         sppi[cpus].IdleTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_IDLE] * 10000000 / clockrate.stathz;
-                        sppi[cpus].KernelTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_SYS] * 10000000 / clockrate.stathz;
+                        sppi[cpus].KernelTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_SYS] * 10000000 / clockrate.stathz +
+                                                         sppi[cpus].IdleTime.QuadPart;
                         sppi[cpus].UserTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_USER] * 10000000 / clockrate.stathz;
                     }
                 }

@@ -781,6 +781,8 @@ static void test_query_procperf(void)
     ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
     ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
     ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
+    ok (sppi->KernelTime.QuadPart > sppi->IdleTime.QuadPart,
+        "Expected %I64u > %I64u\n", sppi->KernelTime.QuadPart, sppi->IdleTime.QuadPart);
 
     /* Try it for all processors */
     sppi->KernelTime.QuadPart = 0xdeaddead;
@@ -792,6 +794,8 @@ static void test_query_procperf(void)
     ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
     ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
     ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
+    ok (sppi->KernelTime.QuadPart > sppi->IdleTime.QuadPart,
+        "Expected %I64u > %I64u\n", sppi->KernelTime.QuadPart, sppi->IdleTime.QuadPart);
 
     /* A too large given buffer size */
     sppi = HeapReAlloc(GetProcessHeap(), 0, sppi , NeededLength + 2);
