@@ -2338,19 +2338,12 @@ void destroy_client_window( HWND hwnd, Window client_window )
  */
 Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *visual, Colormap colormap )
 {
-    struct x11drv_win_data *data = get_win_data( hwnd );
+    struct x11drv_win_data *data = get_win_data( hwnd ), dummy = {0};
     XSetWindowAttributes attr;
     Window ret;
     int x, y, cx, cy;
 
-    if (!data)
-    {
-        Window toplevel = X11DRV_get_whole_window( hwnd );
-        /* explicitly create data for HWND_MESSAGE and foreign windows since they can be used for OpenGL */
-        if (!(data = alloc_win_data( thread_init_display(), hwnd ))) return 0;
-        data->rects.window = data->rects.visible = data->rects.client = client_rect;
-        data->whole_window = toplevel;
-    }
+    if (!data) data = &dummy; /* use a dummy window data for HWND_MESSAGE and foreign windows, to create an offscreen client window */
 
     detach_client_window( data, data->client_window );
 
@@ -2381,7 +2374,8 @@ Window create_client_window( HWND hwnd, RECT client_rect, const XVisualInfo *vis
         }
         TRACE( "%p xwin %lx/%lx\n", data->hwnd, data->whole_window, data->client_window );
     }
-    release_win_data( data );
+
+    if (data != &dummy) release_win_data( data );
     return ret;
 }
 
