@@ -2454,12 +2454,7 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 
         count = HOST_CPU_LOAD_INFO_COUNT;
         if (host_statistics(host, HOST_CPU_LOAD_INFO, (host_info_t)&load_info, &count) == KERN_SUCCESS)
-        {
-            /* Believe it or not, based on my reading of XNU source, this is
-             * already in the units we want (100 ns).
-             */
-            info->IdleTime.QuadPart = load_info.cpu_ticks[CPU_STATE_IDLE];
-        }
+            info->IdleTime.QuadPart = (ULONGLONG)load_info.cpu_ticks[CPU_STATE_IDLE] * 100000;
         mach_port_deallocate(mach_task_self(), host);
     }
 #else
@@ -3287,9 +3282,9 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 cpus = min(cpus,out_cpus);
                 for (i = 0; i < cpus; i++)
                 {
-                    sppi[i].IdleTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_IDLE];
-                    sppi[i].KernelTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_SYSTEM];
-                    sppi[i].UserTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_USER];
+                    sppi[i].IdleTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_IDLE] * 100000;
+                    sppi[i].KernelTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_SYSTEM] * 100000;
+                    sppi[i].UserTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_USER] * 100000;
                 }
                 vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
             }
