@@ -975,6 +975,7 @@ static void test_Win32_SystemEnclosure( IWbemServices *services )
     check_property( obj, L"LockPresent", VT_BOOL, CIM_BOOLEAN );
     check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
     check_property( obj, L"Name", VT_BSTR, CIM_STRING );
+    check_property( obj, L"SerialNumber", VT_BSTR, CIM_STRING );
     check_property( obj, L"Tag", VT_BSTR, CIM_STRING );
 
     IWbemClassObject_Release( obj );
