@@ -3520,7 +3520,7 @@ static void test_MsiProvideQualifiedComponentEx(void)
         ok( len == strlen(desc), "got %lu\n", len );
         ok( !strcmp(prod2, prod), "got %s\n", debugstr_a(prod2) );
         ok( !strcmp(feature, "feature"), "got %s\n", debugstr_a(feature) );
-        ok( !strcmp(comp2, comp2), "got %s\n", debugstr_a(comp) );
+        ok( !strcmp(comp2, ""), "got %s\n", debugstr_a(comp2) );
     }
     else
         win_skip("MsiDecomposeDescriptorA is not available on this platform\n");
