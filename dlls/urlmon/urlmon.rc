@@ -59,7 +59,7 @@ STRINGTABLE
     IDS_SEC_ZONE2_NAME  "Trusted sites"
     IDS_SEC_ZONE2_DESC  "This zone contains Web sites that you trust not to damage your computer or data."
     IDS_SEC_ZONE3_NAME  "Internet"
-    IDS_SEC_ZONE3_DESC  "This zone contains all Web sites you haven't placed in other zones"
+    IDS_SEC_ZONE3_DESC  "This zone contains all Web sites you haven't placed in other zones."
     IDS_SEC_ZONE4_NAME  "Restricted sites"
     IDS_SEC_ZONE4_DESC  "This zone contains Web sites that could potentially damage your computer or data."
 }

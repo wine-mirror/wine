@@ -12660,10 +12660,10 @@ msgstr ""
 "Twojego komputera ani danych."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
 msgstr ""
 "Ta strefa zawiera wszystkie witryny internetowe, których nie umieściłeś w "
-"innych strefach"
+"innych strefach."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""

@@ -12638,7 +12638,7 @@ msgstr ""
 "まれます。"
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
 msgstr "このゾーンには他のゾーンに含まれないすべての Web サイトが含まれます。"
 
 #: dlls/urlmon/urlmon.rc:65

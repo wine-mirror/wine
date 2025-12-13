@@ -12629,8 +12629,8 @@ msgstr ""
 "duomenų."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
-msgstr "Šioje zonoje yra visos svetainės, kurių nėra kitose zonose"
+msgid "This zone contains all Web sites you haven't placed in other zones."
+msgstr "Šioje zonoje yra visos svetainės, kurių nėra kitose zonose."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""

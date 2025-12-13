@@ -12643,7 +12643,7 @@ msgstr ""
 "de computer of de gegevens."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
 msgstr "Deze zone bevat alle webpagina's die niet bij een andere zone horen."
 
 #: dlls/urlmon/urlmon.rc:65

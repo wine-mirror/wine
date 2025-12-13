@@ -12627,7 +12627,7 @@ msgstr ""
 "tai tiedostoja."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
 msgstr ""
 "Tämä vyöhyke on Internet-sivustoille, jotka eivät kuulu luotettuun tai "
 "rajoitettuun vyöhykkeeseen."

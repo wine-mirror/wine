@@ -12625,8 +12625,8 @@ msgstr ""
 "data."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
-msgstr "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
+msgstr "This zone contains all Web sites you haven't placed in other zones."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
