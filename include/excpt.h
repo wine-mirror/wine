@@ -37,9 +37,13 @@ typedef enum _EXCEPTION_DISPOSITION
 #define EXCEPTION_CONTINUE_SEARCH        0
 #define EXCEPTION_CONTINUE_EXECUTION    -1
 
-
-#if !defined(USE_COMPILER_EXCEPTIONS) && defined(_MSC_VER) && !defined(__i386__) && !defined(__arm__) && (!defined(__clang_major__) || __clang_major__ >= 19)
+#if !defined(USE_COMPILER_EXCEPTIONS) && defined(_MSC_VER)
+#if !defined(__clang_major__) || \
+    (defined(__x86_64__) && !defined(__arm64ec__) && __clang_major__ >= 19) || \
+    (defined(__aarch64__) && __clang_major__ >= 19) || \
+    (defined(__arm64ec__) && __clang_major__ >= 21)
 #define USE_COMPILER_EXCEPTIONS
+#endif
 #endif
 
 #ifdef USE_COMPILER_EXCEPTIONS
