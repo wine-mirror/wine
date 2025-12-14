@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-01-02 08:33+0900\n"
+"PO-Revision-Date: 2025-12-14 22:56+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -326,10 +326,8 @@ msgid "Please wait until the current uninstall/modify process is complete."
 msgstr "현재 제거/수정 프로세스가 완료될 때까지 기다려 주세요."
 
 #: dlls/appwiz.cpl/appwiz.rc:55
-#, fuzzy
-#| msgid "Downloading..."
 msgid "Download failed."
-msgstr "다운로드 중..."
+msgstr "다운로드 실패."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -384,19 +382,19 @@ msgid "uncompressed"
 msgstr "압축되지 않음"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:31
-#, fuzzy
-#| msgid "&Confirm password:"
 msgid "Confirm pairing"
-msgstr "암호 확인(&C):"
+msgstr "페어링 확인"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
-msgstr ""
+msgstr "PIN/패스키 값 %2!lu!을(를) 사용하여 '%1!s!'와(과) 페어링하시겠습니까?"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:33
 msgid ""
 "Pair with unnamed device %1!s! using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"PIN/패스키 값 %2!lu!을(를) 사용하여 이름이 지정되지 않은 장치 %1!s!와(과) 페"
+"어링하시겠습니까?"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
@@ -1045,7 +1043,7 @@ msgstr "자세히"
 
 #: dlls/comdlg32/comdlg32.rc:50
 msgid "Browse to Desktop"
-msgstr "바탕 화면 표시"
+msgstr "바탕 화면 찾아보기"
 
 #: dlls/comdlg32/comdlg32.rc:114
 msgid "Regular"
@@ -1364,41 +1362,32 @@ msgid "Default"
 msgstr "기본값"
 
 #: dlls/compstui/compstui.rc:35
-#, fuzzy
-#| msgid "&Copy Background"
 msgid "&Copy count"
-msgstr "배경 화면 복사(&C)"
+msgstr "복사 횟수(&C)"
 
 #: dlls/compstui/compstui.rc:36
-#, fuzzy
-#| msgid "Print to File"
 msgid "Print on Both Sides"
-msgstr "파일로 인쇄"
+msgstr "양면 인쇄"
 
 #: dlls/compstui/compstui.rc:32
-#, fuzzy
-#| msgid "C&olor:"
 msgid "C&olor"
-msgstr "색상(&O):"
+msgstr "색상(&O)"
 
 #: dlls/compstui/compstui.rc:34
 msgid "Bla&ck && White"
-msgstr ""
+msgstr "흑백(&C)"
 
 #: dlls/compstui/compstui.rc:37
-#, fuzzy
-#| msgctxt "hotkey"
-#| msgid "None"
 msgid "&None"
-msgstr "없음"
+msgstr "없음(&N)"
 
 #: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
 msgid "Flip on Shor&t Edge"
-msgstr ""
+msgstr "짧은 쪽으로 넘기기(&T)"
 
 #: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
 msgid "Flip on Long E&dge"
-msgstr ""
+msgstr "긴 쪽으로 넘기기(&D)"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -3192,18 +3181,12 @@ msgid "Not yet implemented"
 msgstr "구현되지 않음"
 
 #: dlls/desk.cpl/desk.rc:35
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Desktop"
-msgstr "바탕 화면"
+msgstr "데스크톱"
 
 #: dlls/desk.cpl/desk.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Virtual Desktop"
-msgstr "바탕 화면"
+msgstr "가상 데스크톱"
 
 #: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
 msgid "&Reset"
@@ -3211,17 +3194,15 @@ msgstr "초기화(&R)"
 
 #: dlls/desk.cpl/desk.rc:42
 msgid "Emulate display mode changes (requires restart)"
-msgstr ""
+msgstr "디스플레이 모드 변경 에뮬레이트 (재시작 필요)"
 
 #: dlls/desk.cpl/desk.rc:29
-#, fuzzy
-#| msgid "Default Settings"
 msgid "Display Settings"
-msgstr "기본 설정"
+msgstr "디스플레이 설정"
 
 #: dlls/desk.cpl/desk.rc:30
 msgid "Configure monitors and display devices."
-msgstr ""
+msgstr "모니터 및 디스플레이 장치 설정."
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
@@ -3477,10 +3458,8 @@ msgid "Show &Tabs"
 msgstr "탭 보이기(&T)"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:39
-#, fuzzy
-#| msgid "Select Source"
 msgid "Select Topic"
-msgstr "원본 선택"
+msgstr "항목 선택"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:44
 msgid "Show"
@@ -3818,40 +3797,32 @@ msgid "&Enable"
 msgstr "사용(&E)"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (DirectInput devices)"
-msgstr "연결됨 (XINPUT 장치)"
+msgstr "연결된 DirectInput 장치"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (XInput devices)"
-msgstr "연결됨 (XINPUT 장치)"
+msgstr "연결된 XInput 장치"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
-msgstr "사용 중지됨"
+msgstr "사용 중지된 장치"
 
 #: dlls/joy.cpl/joy.rc:51
 msgid "Advanced settings (restart prefix required to take effect)"
-msgstr ""
+msgstr "고급 설정 (변경 사항을 적용하려면 재시작 필요)"
 
 #: dlls/joy.cpl/joy.rc:52
-#, fuzzy
-#| msgid "&Enable"
 msgid "Enable SDL"
-msgstr "사용(&E)"
+msgstr "SDL 사용"
 
 #: dlls/joy.cpl/joy.rc:53
-#, fuzzy
-#| msgid "Disabled"
 msgid "Disable hidraw"
-msgstr "사용 중지됨"
+msgstr "HID 규격 장치 비활성화"
 
 #: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
-msgstr "DInput"
+msgstr "DirectInput"
 
 #: dlls/joy.cpl/joy.rc:62 dlls/joy.cpl/joy.rc:111
 msgid "Axes"
@@ -3870,10 +3841,6 @@ msgid "Force Feedback Effect"
 msgstr "피드백 효과 강제"
 
 #: dlls/joy.cpl/joy.rc:67
-#, fuzzy
-#| msgid ""
-#| "Press any button in the controller to activate the chosen effect. The "
-#| "effect direction can be changed with the controller axis."
 msgid ""
 "Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3907,7 +3874,7 @@ msgid ""
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 "슬롯 #0 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DInput으로 재정의되지 않았는지 확인하십시오."
+"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:85
 msgid ""
@@ -3915,7 +3882,7 @@ msgid ""
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 "슬롯 #1 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DInput으로 재정의되지 않았는지 확인하십시오."
+"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:89
 msgid ""
@@ -3923,7 +3890,7 @@ msgid ""
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 "슬롯 #2 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DInput으로 재정의되지 않았는지 확인하십시오."
+"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:93
 msgid ""
@@ -3931,7 +3898,7 @@ msgid ""
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 "슬롯 #3 사용이 감지되지 않았습니다. 게임패드가 연결되어 있는지, 조이스틱 탭에"
-"서 DInput으로 재정의되지 않았는지 확인하십시오."
+"서 DirectInput으로 재정의되지 않았는지 확인하십시오."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
 #: dlls/joy.cpl/joy.rc:101 dlls/joy.cpl/joy.rc:115
@@ -3940,7 +3907,7 @@ msgstr "진동"
 
 #: dlls/joy.cpl/joy.rc:106
 msgid "Windows.Gaming.Input"
-msgstr ""
+msgstr "Windows.Gaming.Input"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4075,10 +4042,8 @@ msgid "Function expected"
 msgstr "함수가 필요합니다"
 
 #: dlls/jscript/jscript.rc:55
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'[object]' is not a string object"
-msgstr "'[object]'은(는) 날짜 개체가 아닙니다"
+msgstr "'[object]'는 날짜 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4149,10 +4114,8 @@ msgid "Precision is out of range"
 msgstr "정밀도가 범위를 벗어났습니다"
 
 #: dlls/jscript/jscript.rc:74
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Array or arguments object expected"
-msgstr "배열 개체가 필요합니다"
+msgstr "배열 또는 인수 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -4191,45 +4154,39 @@ msgstr "쓰기 가능하지 않은 속성 '|'을(를) 수정할 수 없습니다
 
 #: dlls/jscript/jscript.rc:84
 msgid "Typed array constructor argument is invalid"
-msgstr ""
+msgstr "형식화된 배열 생성자 인수가 유효하지 않습니다"
 
 #: dlls/jscript/jscript.rc:83
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a typed array object"
-msgstr "'this'는 '|' 개체가 아닙니다"
+msgstr "'this'는 형식화된 배열 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:85
 msgid "Invalid offset/length when creating typed array"
-msgstr ""
+msgstr "형식화된 배열을 만들 때 오프셋/길이가 유효하지 않습니다"
 
 #: dlls/jscript/jscript.rc:86
 msgid "Invalid begin/end value in typed array subarray method"
-msgstr ""
+msgstr "형식화된 배열의 subarray 메서드에 있는 시작/끝 값이 유효하지 않습니다"
 
 #: dlls/jscript/jscript.rc:87
-#, fuzzy
-#| msgid "Invalid module type for %1.\n"
 msgid "Invalid source in typed array set"
-msgstr "잘못된 %1 모듈 유형.\n"
+msgstr "형식화된 배열 세트의 소스가 유효하지 않습니다"
 
 #: dlls/jscript/jscript.rc:88
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
-msgstr "'this'는 '|' 개체가 아닙니다"
+msgstr "'this'는 DataView 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
-msgstr ""
+msgstr "DataView 메서드에 필요한 인수(오프셋 또는 값)가 지정되지 않았습니다"
 
 #: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
-msgstr ""
+msgstr "DataView 작업 시 지정된 버퍼 길이를 초과하여 액세스했습니다"
 
 #: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
-msgstr ""
+msgstr "DataView 생성자 인수의 오프셋 값이 잘못되었습니다"
 
 #: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
@@ -4240,10 +4197,8 @@ msgid "'key' is not an object"
 msgstr "'key'는 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:94
-#, fuzzy
-#| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
-msgstr "배열 개체가 필요합니다"
+msgstr "ArrayBuffer 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
@@ -7268,7 +7223,7 @@ msgstr "인수가 잘못되었습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Cannot assign requested address.\n"
-msgstr ""
+msgstr "요청한 주소를 지정할 수 없습니다.\n"
 
 #: dlls/kernelbase/winerror.mc:3783
 msgid "Connection reset by peer.\n"
@@ -9650,28 +9605,20 @@ msgid "Scanning"
 msgstr "스캔 중"
 
 #: dlls/sane.ds/sane.rc:58
-#, fuzzy
-#| msgid "feature from:"
 msgid "Manufacturer:"
-msgstr "기능:"
+msgstr "제조사:"
 
 #: dlls/sane.ds/sane.rc:60
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product family:"
-msgstr "제품 업데이트:"
+msgstr "제품군:"
 
 #: dlls/sane.ds/sane.rc:62
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product name:"
-msgstr "제품 업데이트:"
+msgstr "제품명:"
 
 #: dlls/sane.ds/sane.rc:64
-#, fuzzy
-#| msgid "Screen resolution"
 msgid "Resolution:"
-msgstr "화면 해상도"
+msgstr "해상도:"
 
 #: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
 msgid "Page"
@@ -9709,7 +9656,7 @@ msgstr "µs"
 
 #: dlls/sane.ds/sane.rc:43
 msgid "LineArt"
-msgstr ""
+msgstr "라인아트"
 
 #: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
 #: programs/ipconfig/ipconfig.rc:34
@@ -9720,21 +9667,23 @@ msgstr "알 수 없음"
 msgid ""
 "The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
 "scanned."
-msgstr ""
+msgstr "자동 문서 공급기(ADF)가 비어 있습니다. 스캔할 용지를 넣어 주십시오."
 
 #: dlls/sane.ds/sane.rc:47
 msgid ""
 "The scanner reports a paper jam. Check for additional information on device "
 "display."
 msgstr ""
+"스캐너에 용지 걸림이 보고되었습니다. 장치 디스플레이에서 추가 정보를 확인하십"
+"시오."
 
 #: dlls/sane.ds/sane.rc:48
 msgid "The scanner cover is open. Please close the scanner."
-msgstr ""
+msgstr "스캐너 덮개가 열려 있습니다. 스캐너 덮개를 닫아 주십시오."
 
 #: dlls/sane.ds/sane.rc:49
 msgid "The scanner is busy. Try again later."
-msgstr ""
+msgstr "스캐너가 사용 중입니다. 나중에 다시 시도하십시오."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -10332,7 +10281,7 @@ msgstr "제어판"
 
 #: dlls/shell32/shell32.rc:162
 msgid "Ne&w"
-msgstr ""
+msgstr "새로 만들기(&W)"
 
 #: dlls/shell32/shell32.rc:164
 msgid "E&xplore"
@@ -10340,7 +10289,7 @@ msgstr "탐색(&X)"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Run as &Administrator"
-msgstr ""
+msgstr "관리자 권한으로 실행(&A)"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Restart"
@@ -12614,53 +12563,49 @@ msgid "Install"
 msgstr "설치"
 
 #: dlls/urlmon/urlmon.rc:58
-#, fuzzy
-#| msgid "Local Port"
 msgid "Local intranet"
-msgstr "로컬 포트"
+msgstr "로컬 인트라넷"
 
 #: dlls/urlmon/urlmon.rc:60
-#, fuzzy
-#| msgid "Trusted Publishers"
 msgid "Trusted sites"
-msgstr "신뢰할 수 있는 게시자"
+msgstr "신뢰할 수 있는 사이트"
 
 #: dlls/urlmon/urlmon.rc:62
-#, fuzzy
-#| msgid "Ethernet"
 msgid "Internet"
-msgstr "이더넷"
+msgstr "인터넷"
 
 #: dlls/urlmon/urlmon.rc:64
 msgid "Restricted sites"
-msgstr ""
+msgstr "제한된 사이트"
 
 #: dlls/urlmon/urlmon.rc:57
-#, fuzzy
-#| msgid "My Computer"
 msgid "Your computer"
 msgstr "내 컴퓨터"
 
 #: dlls/urlmon/urlmon.rc:59
 msgid ""
 "This zone contains all Web sites that are on your organization's intranet."
-msgstr ""
+msgstr "이 영역에는 사용자의 조직 인트라넷에 있는 모든 웹 사이트가 포함됩니다."
 
 #: dlls/urlmon/urlmon.rc:61
 msgid ""
 "This zone contains Web sites that you trust not to damage your computer or "
 "data."
 msgstr ""
+"이 영역에는 사용자의 컴퓨터나 데이터를 손상시키지 않는 신뢰하는 웹 사이트가 "
+"포함되어 있습니다."
 
 #: dlls/urlmon/urlmon.rc:63
 msgid "This zone contains all Web sites you haven't placed in other zones."
-msgstr ""
+msgstr "이 영역에는 다른 영역에 배치하지 않은 모든 웹 사이트가 포함됩니다."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
 "This zone contains Web sites that could potentially damage your computer or "
 "data."
 msgstr ""
+"이 영역에는 사용자의 컴퓨터 또는 데이터를 손상시킬 수 있는 웹 사이트가 포함되"
+"어 있습니다."
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -14778,34 +14723,24 @@ msgstr ""
 "16진수(0x34)나 8진수(056)중의 하나이어야 합니다.\n"
 
 #: programs/cmd/cmd.rc:407
-#, fuzzy
-#| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
-msgstr "문법 오류\n"
+msgstr "예기치 않은 구문 오류: %1\n"
 
 #: programs/cmd/cmd.rc:408
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of line"
-msgstr "파일 끝.\n"
+msgstr "줄 바꿈"
 
 #: programs/cmd/cmd.rc:409
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of file"
-msgstr "파일 끝.\n"
+msgstr "파일 끝"
 
 #: programs/cmd/cmd.rc:410
-#, fuzzy
-#| msgid "%1!d! file(s) copied\n"
 msgid "%t%1!u! file(s) copied\n"
-msgstr "%1!d! 파일이 복사되었습니다\n"
+msgstr "%t%1!u!개의 파일이 복사되었습니다\n"
 
 #: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
-#, fuzzy
-#| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"
-msgstr "파일에 액세스할 수 없습니다.\n"
+msgstr "파일을 자신에게 복사할 수 없습니다.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -14989,11 +14924,8 @@ msgid ""
 msgstr "모든 프로그램을 닫고 가상 데스크톱을 종료하시겠습니까?"
 
 #: programs/explorer/explorer.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Wine Desktop"
-msgstr "바탕 화면"
+msgstr "Wine 데스크톱"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
@@ -15163,8 +15095,6 @@ msgid "Current LogonId is"
 msgstr "현재 로그온 아이디"
 
 #: programs/klist/klist.rc:38
-#, fuzzy
-#| msgid "client"
 msgid "Client"
 msgstr "클라이언트"
 
@@ -15431,10 +15361,8 @@ msgid "&Save\tCtrl+S"
 msgstr "저장(&S)\tCtrl+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "다른 이름으로 저장..."
+msgstr "다른 이름으로 저장(&A)..."
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
@@ -15466,10 +15394,8 @@ msgid "&Paste\tCtrl+V"
 msgstr "붙여넣기(&P)\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
-msgstr "제거(&D)\tDel"
+msgstr "삭제(&L)\tDEL"
 
 #: programs/notepad/notepad.rc:49 programs/regedit/regedit.rc:62
 #: programs/regedit/regedit.rc:109 programs/wordpad/wordpad.rc:53
@@ -15477,8 +15403,6 @@ msgid "&Find...\tCtrl+F"
 msgstr "찾기(&F)...\tCtrl+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
 msgstr "다음 찾기(&N)\tF3"
 
@@ -15491,16 +15415,12 @@ msgid "&Go To...\tCtrl+G"
 msgstr "이동(&G)...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
 msgstr "모두 선택(&A)\tCtrl+A"
 
 #: programs/notepad/notepad.rc:55
-#, fuzzy
-#| msgid "&Time/Date\tF5"
 msgid "Time/&Date\tF5"
-msgstr "시간/날짜(&T)\tF5"
+msgstr "날짜/시간(&D)\tF5"
 
 #: programs/notepad/notepad.rc:57 programs/wordpad/wordpad.rc:82
 msgid "F&ormat"
@@ -15508,7 +15428,7 @@ msgstr "서식(&O)"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "자동 줄 바꿈(&W)"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -18445,37 +18365,35 @@ msgstr "작업"
 
 #: programs/timeout/timeout.rc:28
 msgid "Usage: timeout /T <timeout> [</NOBREAK>]\n"
-msgstr ""
+msgstr "사용법: timeout /T <초> [</NOBREAK>]\n"
 
 #: programs/timeout/timeout.rc:29
-#, fuzzy
-#| msgid "FINDSTR: Bad command line\n"
 msgid "TIMEOUT: Bad command line\n"
-msgstr "FINDSTR: 잘못된 명령줄\n"
+msgstr "시간 초과: 잘못된 명령줄\n"
 
 #: programs/timeout/timeout.rc:30
 msgid "waiting since %d sec. "
-msgstr ""
+msgstr "%d초 동안 대기 중. "
 
 #: programs/timeout/timeout.rc:31
 msgid "press CTRL+C..."
-msgstr ""
+msgstr "CTRL+C를 누르십시오..."
 
 #: programs/timeout/timeout.rc:32
-#, fuzzy
-#| msgid "Press any key to continue... "
 msgid "press a key to continue..."
-msgstr "계속하려면 아무 키나 누르세요... "
+msgstr "계속하려면 아무 키나 누르세요..."
 
 #: programs/timeout/timeout.rc:33
 msgid "ERROR: not possible to redirect input\n"
-msgstr ""
+msgstr "오류: 입력을 리디렉션할 수 없습니다\n"
 
 #: programs/timeout/timeout.rc:34
 msgid ""
 "ERROR: Timeout value out of range or invalid number. Valid range is -1 to "
 "99999.\n"
 msgstr ""
+"오류: 시간 제한 값이 범위를 벗어났거나 유효하지 않은 숫자입니다. 유효 범위는 "
+"-1에서 99999입니다.\n"
 
 #: programs/uninstaller/uninstaller.rc:29
 msgid "Wine Application Uninstaller"
@@ -18625,7 +18543,7 @@ msgid ""
 "or per-application settings in those tabs as well."
 msgstr ""
 "Wine은 각각의 프로그램에 대해 다른 Windows 버전을 흉내낼 수 있습니다. 이 탭"
-"은 라이브러리 및 그래픽 탭과 연결되어 시스템 전체 또는 프로그램별 설정을 바"
+"은 라이브러리 및 그래픽 탭과 연계해서 시스템 전체 또는 프로그램별 설정을 바"
 "꿀 수 있습니다."
 
 #: programs/winecfg/winecfg.rc:164
@@ -18658,7 +18576,7 @@ msgstr "창관리자가 Wine 창을 관리하도록 합니다(&W)"
 
 #: programs/winecfg/winecfg.rc:178
 msgid "&Emulate a virtual desktop"
-msgstr "하나의 창 안에서 가상 데스트톱 흉내내기(&E)"
+msgstr "하나의 창으로 데스크톱 화면 흉내내기(&E)"
 
 #: programs/winecfg/winecfg.rc:180
 msgid "Desktop &size:"
@@ -18801,10 +18719,8 @@ msgid "Voice input device:"
 msgstr "음성 입력 장치:"
 
 #: programs/winecfg/winecfg.rc:277
-#, fuzzy
-#| msgid "Output device:"
 msgid "MIDI output device:"
-msgstr "출력 장치:"
+msgstr "MIDI 출력 장치:"
 
 #: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
@@ -19637,10 +19553,8 @@ msgid "Help topics: "
 msgstr "도움말 항목: "
 
 #: programs/wmic/wmic.rc:28
-#, fuzzy
-#| msgid "Error: Command line not supported\n"
 msgid "Error: Command not supported\n"
-msgstr "오류: 명령 줄은 지원하지 않습니다\n"
+msgstr "오류: 지원되지 않는 명령\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
@@ -19655,14 +19569,12 @@ msgid "Error: Invalid syntax for PATH\n"
 msgstr "오류: 잘못된 구문입니다\n"
 
 #: programs/wmic/wmic.rc:32
-#, fuzzy
-#| msgid "Bad command.\n"
 msgid "Supply a command\n"
-msgstr "잘못된 명령.\n"
+msgstr "명령 지정\n"
 
 #: programs/wmic/wmic.rc:33
 msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
-msgstr ""
+msgstr "사용 예제: wmic 별칭 get 속성[,속성2,...]\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
