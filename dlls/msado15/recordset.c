@@ -2624,9 +2624,10 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
             return hr;
     }
 
+    if (cursor_type == adOpenUnspecified) cursor_type = adOpenForwardOnly;
     _Recordset_put_CursorType( iface, cursor_type );
-    if (lock_type < adLockReadOnly) lock_type = adLockReadOnly;
-    _Recordset_put_LockType( iface, lock_type );
+    if (lock_type != adLockUnspecified)
+        _Recordset_put_LockType( iface, lock_type );
 
     if (recordset->fields.count != -1)
     {
