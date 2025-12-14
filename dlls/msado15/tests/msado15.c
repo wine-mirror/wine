@@ -3387,8 +3387,152 @@ static HRESULT WINAPI open_rowset_OpenRowset(IOpenRowset *iface, IUnknown *unk_o
         DBPROPSET propsets[], IUnknown **rowset)
 {
     static struct test_rowset testrowset;
+    DBPROP *prop;
+    int i;
 
     CHECK_EXPECT(open_rowset_OpenRowset);
+    ok(!unk_outer, "unk_outer = %p\n", unk_outer);
+    ok(table_id != NULL, "table_id = NULL\n");
+    ok(table_id->eKind == DBKIND_NAME, "table_id->eKind = %ld\n", table_id->eKind);
+    ok(!wcscmp(table_id->uName.pwszName, L"table name"), "table_id->pwszName = %s\n",
+            wine_dbgstr_w(table_id->uName.pwszName));
+    ok(!index_id, "index_id != NULL\n");
+    ok(IsEqualGUID(riid, &IID_IUnknown), "riid = %s\n", wine_dbgstr_guid(riid));
+    ok(propsets_count == 2, "propsets_count = %lu\n", propsets_count);
+
+    ok(IsEqualGUID(&propsets[0].guidPropertySet, &DBPROPSET_ROWSET),
+            "guidPropertySet = %s\n", wine_dbgstr_guid(&propsets[0].guidPropertySet));
+    ok(propsets[0].cProperties == 17, "cProperties = %lu\n", propsets[0].cProperties);
+    for (i = 0; i < propsets[0].cProperties; i++)
+    {
+        prop = propsets[0].rgProperties + i;
+
+        winetest_push_context("dwPropertyID = %lx", prop->dwPropertyID);
+        switch (prop->dwPropertyID)
+        {
+        case DBPROP_IRowset:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_IColumnsRowset:
+            ok(prop->dwOptions == DBPROPOPTIONS_OPTIONAL, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_IRowsetIndex:
+            ok(prop->dwOptions == DBPROPOPTIONS_OPTIONAL, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_IRowsetCurrentIndex:
+            ok(prop->dwOptions == DBPROPOPTIONS_OPTIONAL, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_OTHERUPDATEDELETE:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_OWNINSERT:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_OWNUPDATEDELETE:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_CANHOLDROWS:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_CANSCROLLBACKWARDS:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_IRowsetLocate:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_IRowsetChange:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_IRowsetUpdate:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_UPDATABILITY:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_I4, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_I4(&prop->vValue) == (DBPROPVAL_UP_CHANGE | DBPROPVAL_UP_DELETE | DBPROPVAL_UP_INSERT),
+                    "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_IRowsetResynch:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_REMOVEDELETED:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_CANFETCHBACKWARDS:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case DBPROP_ISequentialStream:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        default:
+            ok(0, "vValue = %s (%lx)\n", wine_dbgstr_variant(&prop->vValue), prop->dwOptions);
+        }
+        winetest_pop_context();
+    }
+
+    ok(IsEqualGUID(&propsets[1].guidPropertySet, &DBPROPSET_PROVIDERROWSET),
+            "guidPropertySet = %s\n", wine_dbgstr_guid(&propsets[1].guidPropertySet));
+    ok(propsets[1].cProperties == 3, "cProperties = %lu\n", propsets[1].cProperties);
+    for (i = 0; i < propsets[1].cProperties; i++)
+    {
+        prop = propsets[1].rgProperties + i;
+
+        winetest_push_context("dwPropertyID = %lx", prop->dwPropertyID);
+        switch (prop->dwPropertyID)
+        {
+        case KAGPROP_POSITIONONNEWROW:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case KAGPROP_CONCURRENCY:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_I4, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_I4(&prop->vValue) == (KAGPROPVAL_CONCUR_ROWVER | KAGPROPVAL_CONCUR_VALUES | KAGPROPVAL_CONCUR_READ_ONLY),
+                    "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        case KAGPROP_FORCENOREEXECUTE:
+            ok(prop->dwOptions == DBPROPOPTIONS_REQUIRED, "dwOptions = %ld\n", prop->dwOptions);
+            ok(V_VT(&prop->vValue) == VT_BOOL, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            ok(V_BOOL(&prop->vValue) == VARIANT_TRUE, "vValue = %s\n", wine_dbgstr_variant(&prop->vValue));
+            break;
+        default:
+            ok(0, "vValue = %s (%lx)\n", wine_dbgstr_variant(&prop->vValue), prop->dwOptions);
+        }
+        winetest_pop_context();
+    }
 
     testrowset.IRowsetExactScroll_iface.lpVtbl = &rowset_vtbl;
     testrowset.IRowsetInfo_iface.lpVtbl = &rowset_info;
