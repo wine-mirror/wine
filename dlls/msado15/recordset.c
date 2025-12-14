@@ -1737,6 +1737,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
     {
         TRACE( "destroying %p\n", recordset );
         close_recordset( recordset );
+        if (recordset->active_connection) _Connection_Release( recordset->active_connection );
         free( recordset->fields.field );
         free( recordset->cache.rows );
         free( recordset );
