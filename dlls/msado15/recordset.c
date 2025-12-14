@@ -2699,8 +2699,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 {
     struct recordset *recordset = impl_from_Recordset( iface );
     ADOConnectionConstruction15 *construct;
-    IUnknown *session;
-    IUnknown *rowset;
+    IUnknown *session, *rowset, *rowsetex;
     HRESULT hr;
 
     TRACE( "%p, %s, %s, %d, %d, %ld\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
@@ -2792,8 +2791,13 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     if (FAILED(hr) || !rowset)
         return hr;
 
-    hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
+    hr = create_rowsetex(rowset, &rowsetex);
     IUnknown_Release(rowset);
+    if (FAILED(hr))
+        return hr;
+
+    hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowsetex);
+    IUnknown_Release(rowsetex);
     return hr;
 }
 

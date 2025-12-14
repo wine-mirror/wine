@@ -9,4 +9,5 @@ SOURCES = \
 	msado15_tlb.idl \
 	recordset.c \
 	rowset.c \
+	rowsetex.c \
 	stream.c

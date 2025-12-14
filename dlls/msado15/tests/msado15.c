@@ -3649,10 +3649,10 @@ static void test_ADOConnectionConstruction(void)
     hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void **)&rowset);
     ok(hr == S_OK, "got %08lx\n", hr);
 
-    todo_wine ok(rowset != (IRowset *)&open_rowset_test.IRowsetExactScroll_iface, "rowset not wrapped\n");
+    ok(rowset != (IRowset *)&open_rowset_test.IRowsetExactScroll_iface, "rowset not wrapped\n");
     hr = IRowset_QueryInterface(rowset, &IID_IRowsetExactScroll, (void **)&rowset_es);
-    todo_wine ok(hr == S_OK, "got %08lx\n", hr);
-    if (rowset_es) IRowsetExactScroll_Release(rowset_es);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    IRowsetExactScroll_Release(rowset_es);
 
     hr = IRowset_QueryInterface(rowset, &IID_IColumnsInfo, (void **)&ci);
     ok(hr == S_OK, "got %08lx\n", hr);
@@ -3660,7 +3660,7 @@ static void test_ADOConnectionConstruction(void)
     hr = IColumnsInfo_QueryInterface(ci, &IID_IUnknown, (void **)&unk2);
     ok(hr == S_OK, "got %08lx\n", hr);
     IColumnsInfo_Release(ci);
-    todo_wine ok(unk != unk2, "IUnknown interfaces match\n");
+    ok(unk != unk2, "IUnknown interfaces match\n");
     IUnknown_Release(unk2);
     IUnknown_Release(unk);
     IRowset_Release(rowset);
