@@ -2338,9 +2338,15 @@ static void test_string_data_process( int i )
         data = GetClipboardData( CF_TEXT );
         if (test_data[i].len >= sizeof(WCHAR))
         {
+            UINT cp = GetACP();
+
+            if (cp != CP_UTF8)
+                GetLocaleInfoW( GetUserDefaultLCID(), LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                                (LPWSTR)&cp, sizeof(cp)/sizeof(WCHAR) );
+
             ok( data != 0, "could not get data\n" );
             len = GlobalSize( data );
-            len2 = WideCharToMultiByte( CP_ACP, 0, bufferW, test_data[i].len / sizeof(WCHAR),
+            len2 = WideCharToMultiByte( cp, 0, bufferW, test_data[i].len / sizeof(WCHAR),
                                         bufferA, ARRAY_SIZE(bufferA), NULL, NULL );
             bufferA[len2 - 1] = 0;
             ok( len == len2, "wrong size %u / %u\n", len, len2 );
