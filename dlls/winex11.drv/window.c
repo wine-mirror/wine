@@ -1095,7 +1095,7 @@ static void window_set_net_wm_icon( struct x11drv_win_data *data, const void *ic
     data->net_wm_icon_serial = NextRequest( data->display );
     TRACE( "window %p/%lx, requesting _NET_WM_ICON %p/%u serial %lu\n", data->hwnd, data->whole_window,
            icon_data, icon_size, data->net_wm_icon_serial );
-    if (!icon_data) XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON), XA_CARDINAL,
+    if (icon_data) XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON), XA_CARDINAL,
                                     32, PropModeReplace, icon_data, icon_size );
     else XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
 }
