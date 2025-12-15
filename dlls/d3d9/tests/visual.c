@@ -19144,39 +19144,77 @@ static void add_dirty_rect_test(void)
     ok(color_match(color, 0x000000ff, 1) || broken(color_match(color, 0x00000000, 1)),
             "Got unexpected color 0x%08x.\n", color);
 
-    /* Tests with managed textures. */
-    fill_surface(surface_managed0, 0x00ff0000, 0);
-    fill_surface(surface_managed1, 0x00ff0000, 0);
+    /* Tests with managed textures. They are initially dirty.*/
+    fill_surface(surface_managed0, 0x00ffff00, D3DLOCK_READONLY);
+    fill_surface(surface_managed1, 0x00ff00ff, D3DLOCK_READONLY);
     hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex_managed);
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1),
-            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    ok(color_match(color, 0x00ffff00, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
     ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ff00ff, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+
+    /* Read-write map, this is uploaded. */
+    fill_surface(surface_managed0, 0x00ff0080, 0);
+    fill_surface(surface_managed1, 0x00ff8000, 0);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
+    ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff8000, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+
+    /* D3DLOCK_READONLY is honored, so this data does not get uploaded. */
+    fill_surface(surface_managed0, 0x00008000, D3DLOCK_READONLY);
+    fill_surface(surface_managed1, 0x00000080, D3DLOCK_READONLY);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
+    ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff8000, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
     /* Managed textures also honor D3DLOCK_NO_DIRTY_UPDATE. */
     fill_surface(surface_managed0, 0x0000ff00, D3DLOCK_NO_DIRTY_UPDATE);
     fill_surface(surface_managed1, 0x000000ff, D3DLOCK_NO_DIRTY_UPDATE);
-    add_dirty_rect_test_draw(device);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1),
-            "Expected color 0x00ff0000, got 0x%08x.\n", color);
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
     ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
+    ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff8000, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
@@ -19185,11 +19223,13 @@ static void add_dirty_rect_test(void)
      * tracked individually. Tested on Nvidia Kepler, other drivers untested. */
     hr = IDirect3DTexture9_AddDirtyRect(tex_managed, &part_rect);
     ok(hr == S_OK, "Failed to add dirty rect, hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 1, 1);
-    ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
