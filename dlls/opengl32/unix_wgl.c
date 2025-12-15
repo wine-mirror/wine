@@ -900,12 +900,12 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
 
     if ((ret = funcs->p_glGetString( name )))
     {
-        if (name == GL_VENDOR)
+        if (name == GL_VENDOR && funcs->p_wglQueryCurrentRendererStringWINE)
         {
             const char *vendor = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_VENDOR_ID_WINE );
             return vendor ? (const GLubyte *)vendor : ret;
         }
-        if (name == GL_RENDERER)
+        if (name == GL_RENDERER && funcs->p_wglQueryCurrentRendererStringWINE)
         {
             const char *renderer = funcs->p_wglQueryCurrentRendererStringWINE( WGL_RENDERER_DEVICE_ID_WINE );
             return renderer ? (const GLubyte *)renderer : ret;
