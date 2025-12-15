@@ -1616,7 +1616,7 @@ static HRESULT WINAPI rowset_GetRowsAt(IRowsetExactScroll *iface, HWATCHREGION h
     ok(!hReserved1, "hReserved1 = %Ix\n", hReserved1);
     ok((!chapter && !rowset->filter_chapter) || (chapter == 1 && rowset->filter_chapter),
             "chapter = %Ix (filter %x)\n", chapter, rowset->filter_chapter);
-    ok(cRows == -1 || cRows == 1, "cRows = %Id\n", cRows);
+    ok(cRows == -1 || cRows == 1 || cRows == 64, "cRows = %Id\n", cRows);
     ok(pcRowsObtained != NULL, "pcRowsObtained == NULL\n");
     ok(prghRows != NULL, "prghRows == NULL\n");
     ok(*prghRows != NULL, "*prghRows == NULL\n");
@@ -3573,11 +3573,13 @@ static void test_ADOConnectionConstruction(void)
     ADORecordsetConstruction *rec_constr;
     IRowsetExactScroll *rowset_es;
     _Recordset *recordset;
+    DBCOUNTITEM rows, pos;
     IUnknown *unk, *unk2;
     VARIANT v, missing;
     _Connection *conn;
     IColumnsInfo *ci;
     IRowset *rowset;
+    BYTE bookmark;
     LONG state;
     HRESULT hr;
 
@@ -3652,7 +3654,6 @@ static void test_ADOConnectionConstruction(void)
     ok(rowset != (IRowset *)&open_rowset_test.IRowsetExactScroll_iface, "rowset not wrapped\n");
     hr = IRowset_QueryInterface(rowset, &IID_IRowsetExactScroll, (void **)&rowset_es);
     ok(hr == S_OK, "got %08lx\n", hr);
-    IRowsetExactScroll_Release(rowset_es);
 
     hr = IRowset_QueryInterface(rowset, &IID_IColumnsInfo, (void **)&ci);
     ok(hr == S_OK, "got %08lx\n", hr);
@@ -3664,6 +3665,35 @@ static void test_ADOConnectionConstruction(void)
     IUnknown_Release(unk2);
     IUnknown_Release(unk);
     IRowset_Release(rowset);
+
+    SET_EXPECT(rowset_GetRowsAt);
+    SET_EXPECT(accessor_CreateAccessor);
+    SET_EXPECT(rowset_GetData);
+    SET_EXPECT(rowset_ReleaseRows);
+    hr = IRowsetExactScroll_GetExactPosition(rowset_es, 0, 0, 0, 0, &rows);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(rows == 2, "rows = %Id\n", rows);
+    CHECK_CALLED(rowset_GetRowsAt);
+    CHECK_CALLED(accessor_CreateAccessor);
+    CHECK_CALLED(rowset_GetData);
+    CHECK_CALLED(rowset_ReleaseRows);
+
+    rows = 0;
+    SET_EXPECT(rowset_GetRowsAt);
+    SET_EXPECT(accessor_CreateAccessor);
+    SET_EXPECT(rowset_GetData);
+    SET_EXPECT(rowset_ReleaseRows);
+    hr = IRowsetExactScroll_GetExactPosition(rowset_es, 0, 0, 0, 0, &rows);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(rows == 2, "rows = %Id\n", rows);
+    todo_wine CHECK_NOT_CALLED(rowset_GetRowsAt);
+    todo_wine CHECK_NOT_CALLED(rowset_GetData);
+    todo_wine CHECK_NOT_CALLED(rowset_ReleaseRows);
+
+    bookmark = DBBMK_FIRST;
+    hr = IRowsetExactScroll_GetExactPosition(rowset_es, 0, sizeof(bookmark), &bookmark, &pos, &rows);
+    ok(hr == E_INVALIDARG, "got %08lx\n", hr);
+    IRowsetExactScroll_Release(rowset_es);
 
     SET_EXPECT(accessor_ReleaseAccessor);
     ok(!_Recordset_Release(recordset), "_Recordset not released\n");

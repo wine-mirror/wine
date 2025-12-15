@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 #include "oledb.h"
+#include "oledberr.h"
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
@@ -36,6 +37,10 @@ struct rowsetex
     IRowset *rowset;
     IRowsetLocate *rowset_loc;
     IRowsetExactScroll *rowset_es;
+    IAccessor *accessor;
+
+    DBTYPE bookmark_type;
+    HACCESSOR bookmark_hacc;
 };
 
 static inline struct rowsetex *impl_from_IRowsetExactScroll(IRowsetExactScroll *iface)
@@ -103,6 +108,9 @@ static ULONG WINAPI rowsetex_Release(IRowsetExactScroll *iface)
         if (rowset->rowset_loc) IRowsetLocate_Release(rowset->rowset_loc);
         if (rowset->rowset_es && rowset->rowset_es != NO_INTERFACE)
             IRowsetExactScroll_Release(rowset->rowset_es);
+        if (rowset->bookmark_hacc)
+            IAccessor_ReleaseAccessor(rowset->accessor, rowset->bookmark_hacc, NULL);
+        if (rowset->accessor) IAccessor_Release(rowset->accessor);
         free(rowset);
     }
     return refs;
@@ -248,7 +256,24 @@ static HRESULT WINAPI rowsetex_GetRowsAtRatio(IRowsetExactScroll *iface, HWATCHR
 static HRESULT WINAPI rowsetex_GetExactPosition(IRowsetExactScroll *iface, HCHAPTER chapter,
         DBBKMARK bookmark_size, const BYTE *bookmark, DBCOUNTITEM *position, DBCOUNTITEM *rows)
 {
+    struct bookmark_data
+    {
+        union
+        {
+            int i4;
+            LONGLONG i8;
+            BYTE *ptr;
+        } val;
+        DBLENGTH len;
+        DBSTATUS status;
+    } bookmark_data;
+
     struct rowsetex *rowset = impl_from_IRowsetExactScroll(iface);
+    DBCOUNTITEM got_rows, n = 0;
+    HROW hrow[64], *prow = hrow;
+    BYTE tmp, *bm = &tmp;
+    DBBKMARK size;
+    HRESULT hr;
 
     TRACE("%p, %Id, %Iu, %p, %p, %p\n", rowset, chapter, bookmark_size, bookmark, position, rows);
 
@@ -258,8 +283,67 @@ static HRESULT WINAPI rowsetex_GetExactPosition(IRowsetExactScroll *iface, HCHAP
                 chapter, bookmark_size, bookmark, position, rows);
     }
 
-    FIXME("\n");
-    return E_NOTIMPL;
+    if (bookmark_size || bookmark || position) return E_INVALIDARG;
+    if (!rows) return S_OK;
+
+    size = 1;
+    bm[0] = DBBMK_FIRST;
+    n = 0;
+    while (1)
+    {
+        hr = IRowsetLocate_GetRowsAt(rowset->rowset_loc, 0, chapter, size, bm,
+                n ? 1 : 0, ARRAY_SIZE(hrow), &got_rows, &prow);
+        if (n && rowset->bookmark_type == (DBTYPE_BYREF | DBTYPE_BYTES))
+            CoTaskMemFree( bookmark_data.val.ptr );
+        if (FAILED(hr)) return hr;
+        n += got_rows;
+
+        if (hr != DB_S_ENDOFROWSET && got_rows)
+        {
+            if (!rowset->bookmark_hacc)
+            {
+                DBBINDING binding;
+
+                memset(&binding, 0, sizeof(binding));
+                binding.obValue = offsetof(struct bookmark_data, val);
+                binding.obLength = offsetof(struct bookmark_data, len);
+                binding.obStatus = offsetof(struct bookmark_data, status);
+                binding.dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+                binding.cbMaxLen = rowset->bookmark_type == DBTYPE_I4 ? sizeof(int) : sizeof(void *);
+                binding.wType = rowset->bookmark_type;
+
+                hr = IAccessor_CreateAccessor(rowset->accessor, DBACCESSOR_ROWDATA,
+                        1, &binding, 0, &rowset->bookmark_hacc, NULL);
+                if (FAILED(hr)) return hr;
+            }
+
+            hr = IRowset_GetData(rowset->rowset, hrow[got_rows - 1], rowset->bookmark_hacc, &bookmark_data);
+            if (FAILED(hr)) return hr;
+
+            if (rowset->bookmark_type == DBTYPE_I4)
+            {
+                size = sizeof(int);
+                bm = (BYTE *)&bookmark_data.val.i4;
+            }
+            else if (rowset->bookmark_type == DBTYPE_I8)
+            {
+                size = sizeof(long long);
+                bm = (BYTE *)&bookmark_data.val.i8;
+            }
+            else
+            {
+                size = bookmark_data.len;
+                bm = bookmark_data.val.ptr;
+            }
+        }
+        IRowset_ReleaseRows(rowset->rowset, got_rows, hrow, NULL, NULL, NULL);
+        if (hr == DB_S_ENDOFROWSET)
+        {
+            *rows = n;
+            return S_OK;
+        }
+        if (!got_rows) return E_FAIL;
+    }
 }
 
 static const struct IRowsetExactScrollVtbl rowsetex_vtbl =
@@ -300,8 +384,50 @@ HRESULT create_rowsetex(IUnknown *rowset, IUnknown **ret)
     }
 
     hr = IUnknown_QueryInterface(rowset, &IID_IRowsetLocate, (void **)&rowsetex->rowset_loc);
-    if (FAILED(hr))
-        rowsetex->rowset_loc = NULL;
+    if (SUCCEEDED(hr))
+    {
+        DBCOLUMNINFO *colinfo = NULL;
+        OLECHAR *strbuf = NULL;
+        DBORDINAL i, columns;
+        IColumnsInfo *info;
+
+        hr = IUnknown_QueryInterface(rowset, &IID_IAccessor, (void **)&rowsetex->accessor);
+        if (FAILED(hr))
+        {
+            IRowsetExactScroll_Release(&rowsetex->IRowsetExactScroll_iface);
+            return MAKE_ADO_HRESULT(adErrFeatureNotAvailable);
+        }
+
+        hr = IUnknown_QueryInterface(rowset, &IID_IColumnsInfo, (void **)&info);
+        if (FAILED(hr))
+        {
+            IRowsetExactScroll_Release(&rowsetex->IRowsetExactScroll_iface);
+            return MAKE_ADO_HRESULT(adErrFeatureNotAvailable);
+        }
+
+        hr = IColumnsInfo_GetColumnInfo(info, &columns, &colinfo, &strbuf);
+        IColumnsInfo_Release(info);
+        if (FAILED(hr))
+        {
+            IRowsetExactScroll_Release(&rowsetex->IRowsetExactScroll_iface);
+            return MAKE_ADO_HRESULT(adErrFeatureNotAvailable);
+        }
+
+        for (i = 0; i < columns; i++)
+        {
+            if (colinfo[i].dwFlags & DBCOLUMNFLAGS_ISBOOKMARK)
+            {
+                if (colinfo[i].ulColumnSize == sizeof(int))
+                    rowsetex->bookmark_type = DBTYPE_I4;
+                else if (colinfo[i].ulColumnSize == sizeof(INT_PTR))
+                    rowsetex->bookmark_type = DBTYPE_I8;
+                else
+                    rowsetex->bookmark_type = DBTYPE_BYREF | DBTYPE_BYTES;
+            }
+        }
+        CoTaskMemFree(strbuf);
+        CoTaskMemFree(colinfo);
+    }
 
     *ret = (IUnknown *)&rowsetex->IRowsetExactScroll_iface;
     return S_OK;
