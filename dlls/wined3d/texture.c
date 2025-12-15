@@ -1493,6 +1493,11 @@ HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined
             wined3d_texture_cleanup_sync(texture);
             return E_OUTOFMEMORY;
         }
+        if (!wined3d_resource_prepare_sysmem(&texture->resource))
+        {
+            wined3d_texture_cleanup_sync(texture);
+            return E_OUTOFMEMORY;
+        }
         for (i = 0; i < texture->layer_count; ++i)
             wined3d_texture_dirty_region_add(texture, i, NULL);
     }
@@ -1528,7 +1533,10 @@ HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined
         struct wined3d_texture_sub_resource *sub_resource;
 
         sub_resource = &texture->sub_resources[i];
-        sub_resource->locations = WINED3D_LOCATION_CLEARED;
+        if (flags & WINED3D_TEXTURE_CREATE_RECORD_DIRTY_REGIONS)
+            sub_resource->locations = WINED3D_LOCATION_SYSMEM;
+        else
+            sub_resource->locations = WINED3D_LOCATION_CLEARED;
 
         if (FAILED(hr = device_parent->ops->texture_sub_resource_created(device_parent,
                 desc->resource_type, texture, i, &sub_resource->parent, &sub_resource->parent_ops)))
