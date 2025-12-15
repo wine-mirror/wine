@@ -62,6 +62,12 @@ static HRESULT WINAPI rowsetex_QueryInterface(IRowsetExactScroll *iface, REFIID 
         if (!rowset->rowset_loc) return E_NOINTERFACE;
         *obj = &rowset->IRowsetExactScroll_iface;
     }
+    else if (IsEqualGUID(&IID_IColumnsInfo, riid) ||
+            IsEqualGUID(&IID_IRowsetIndex, riid) ||
+            IsEqualGUID(&IID_IRowsetCurrentIndex, riid))
+    {
+        return IRowset_QueryInterface(rowset->rowset, riid, obj);
+    }
 
     if(*obj)
     {
