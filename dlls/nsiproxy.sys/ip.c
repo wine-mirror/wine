@@ -1517,7 +1517,7 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void 
             {
                 entry.prefix.s_addr = htonl( 0x7f000000 );
                 entry.next_hop.s_addr = 0;
-                entry.metric = 256;
+                entry.metric = ~0u;
                 entry.prefix_len = 8;
                 entry.protocol = MIB_IPPROTO_LOCAL;
                 entry.loopback = 1;
