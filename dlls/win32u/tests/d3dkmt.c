@@ -4634,7 +4634,7 @@ static void test_shared_resources(void)
     ID3D11Device1 *d3d11_exp = NULL, *d3d11_imp = NULL;
     ID3D10Device *d3d10_exp = NULL, *d3d10_imp = NULL;
     ID3D12Device *d3d12_exp = NULL, *d3d12_imp = NULL;
-    BOOL stencil_broken, is_wow64 = FALSE;
+    BOOL stencil_broken, is_wow64 = FALSE, is_win64 = sizeof(void*) > sizeof(int);
     IDXGIFactory3 *dxgi = NULL;
     IDXGIAdapter *adapter;
     WCHAR path[MAX_PATH];
@@ -4657,7 +4657,8 @@ static void test_shared_resources(void)
 
     vr = create_vulkan_device( &luid, device_extensions, ARRAY_SIZE(device_extensions), &vulkan_exp );
     /* currently fails on llvmpipe on WOW64 without placed memory */
-    todo_wine_if(IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64 && vr == VK_ERROR_EXTENSION_NOT_PRESENT)
+    if (!is_win64) IsWow64Process(GetCurrentProcess(), &is_wow64);
+    todo_wine_if((is_win64 || is_wow64) && vr == VK_ERROR_EXTENSION_NOT_PRESENT)
     ok_vk( VK_SUCCESS, vr );
 
     vr = create_vulkan_device( &luid, device_extensions, ARRAY_SIZE(device_extensions), &vulkan_imp );
