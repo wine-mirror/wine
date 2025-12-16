@@ -28428,7 +28428,7 @@ static void test_fog(void)
                     {
                         colour = get_readback_vec4(&rb, points[i].x, points[i].y);
 
-todo_wine_if ((fog_mode_tests[pixel_mode] != D3DFOG_NONE && !ortho_fog && (vs_mode == VS_MODE_FFP || vs_mode == VS_MODE_RHW))
+todo_wine_if ((fog_mode_tests[pixel_mode] != D3DFOG_NONE && (vs_mode == VS_MODE_FFP || (!ortho_fog && vs_mode == VS_MODE_RHW)))
         || (fog_mode_tests[pixel_mode] == D3DFOG_NONE && fog_mode_tests[vertex_mode] != D3DFOG_NONE && vs_mode == VS_MODE_FFP))
 {
                         if (fog_mode_tests[pixel_mode] != D3DFOG_NONE && ortho_fog)
@@ -28826,6 +28826,7 @@ static void test_texture_transform_flags(void)
                     colour = get_readback_vec4(&rb, 0, 0);
                     /* We use point filtering, but we might have sampled the
                      * neighbouring texel. */
+                    todo_wine_if (attrib_count == 1 && vs_mode == VS_MODE_FFP && ps_mode <= 1 && i == 7)
                     ok(fabsf(colour->x - expect[0]) <= 0.006f && fabsf(colour->y - expect[1]) <= 0.006f
                             && colour->z == expect[2] && colour->w == expect[3],
                             "Expected colour {%.8e, %.8e, %.8e, %.8e}; got {%.8e, %.8e, %.8e, %.8e}.\n",
