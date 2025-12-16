@@ -51,7 +51,11 @@ static BOOL ddraw_gdi_is_front(struct ddraw *ddraw)
     if (!ddraw->gdi_surface || !(surface = wined3d_texture_get_sub_resource_parent(ddraw->gdi_surface, 0)))
         return FALSE;
 
-    return surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER;
+    /* Check for DDSCAPS_PRIMARYSURFACE, not DDSCAPS_FRONTBUFFER.
+     * DDSCAPS_FRONTBUFFER is not actually set if there aren't any backbuffers,
+     * but DDSCAPS_PRIMARYSURFACE is always set on the frontbuffer (and not on
+     * the backbuffers). */
+    return surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE;
 }
 
 /* This is slow, of course. Also, in case of locks, we can't prevent other
@@ -121,7 +125,16 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
      *
      * This affects the "Deer Hunter" demo, which uses a popup window and GDI
      * draws to draw part of the user interface. See also the "fswindow"
-     * sample is the DirectX 7 SDK. */
+     * sample is the DirectX 7 SDK.
+     *
+     * This behaviour seems to have changed in modern Windows, which is not
+     * particularly surprising. Modern Windows will apparently always draw GDI
+     * windows on top, but won't draw a background for WS_POPUP windows if they
+     * were never drawn to. Adding to the confusion, Deer Hunter is actually
+     * broken; it creates a swapchain with 1 backbuffer and flips it every
+     * frame, which means that the GDI drawing can only work correctly 50% of
+     * the time. Testing the game Windows 98 shows this exact behaviour; the
+     * buttons often fail to highlight correctly when you mouse over them. */
     if (ddraw->swapchain_window && (!(ddraw->cooperative_level & DDSCL_EXCLUSIVE)
             || ddraw->swapchain_window == GetForegroundWindow() || ddraw_gdi_is_front(ddraw)))
     {
