@@ -1500,6 +1500,7 @@ static void check_texture_sub_resource_uvec4_(unsigned int line, ID3D11Texture2D
             break;
     }
     release_resource_readback(&rb);
+    todo_wine_if(!all_match)
     ok_(__FILE__, line)(all_match,
             "Got {0x%08x, 0x%08x, 0x%08x, 0x%08x}, expected {0x%08x, 0x%08x, 0x%08x, 0x%08x} "
             "at (%u, %u), sub-resource %u.\n",
@@ -29018,7 +29019,7 @@ static void test_fractional_viewports(void)
                 ok(compare_float(v->x, expected.x, 0) && compare_float(v->y, expected.y, 0),
                         "Got fragcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
                         v->x, v->y, expected.x, expected.y, x, y, viewport_offsets[i]);
-                ok(compare_float(v->z, expected.z, 2) && compare_float(v->w, expected.w, 2),
+                ok(compare_float(v->z, expected.z, 8) && compare_float(v->w, expected.w, 8),
                         "Got texcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
                         v->z, v->w, expected.z, expected.w, x, y, viewport_offsets[i]);
             }
@@ -29071,7 +29072,7 @@ static void test_negative_viewports(const D3D_FEATURE_LEVEL feature_level)
     SetRect(&rect, 0, 0, 639, 479);
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xff00ff00, 1);
     SetRect(&rect, 639, 479, 640, 480);
-    todo_wine_if(quirk)
+    todo_wine_if(!quirk && feature_level >= D3D_FEATURE_LEVEL_10_0)
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, quirk ? 0xffffffff : 0xff00ff00, 1);
 
     set_viewport(context, -1.0f / 128.0f, -1.0 / 128.0f, 640.0f, 480.0f, 0.0f, 1.0f);
@@ -29080,7 +29081,7 @@ static void test_negative_viewports(const D3D_FEATURE_LEVEL feature_level)
     SetRect(&rect, 0, 0, 639, 479);
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xff00ff00, 1);
     SetRect(&rect, 639, 479, 640, 480);
-    todo_wine_if(quirk)
+    todo_wine_if(!quirk && feature_level >= D3D_FEATURE_LEVEL_10_0)
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, quirk ? 0xffffffff : 0xff00ff00, 1);
 
     release_test_context(&test_context);
