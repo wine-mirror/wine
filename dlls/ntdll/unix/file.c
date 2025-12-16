@@ -2160,7 +2160,7 @@ static NTSTATUS server_get_name_info( HANDLE handle, FILE_NAME_INFORMATION *info
             if (*name_len < info->FileNameLength) status = STATUS_BUFFER_OVERFLOW;
             else if (!info->FileNameLength) status = STATUS_INVALID_INFO_CLASS;
             else *name_len = info->FileNameLength;
-            memcpy( info->FileName, ptr, *name_len );
+            if (info->FileNameLength) memcpy( info->FileName, ptr, *name_len );
             free( name );
         }
         else
