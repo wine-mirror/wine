@@ -358,122 +358,69 @@ skip:
     return wcsdup(name);
 }
 
-static HRESULT validate_wfx(const WAVEFORMATEX *fmt, AUDCLNT_SHAREMODE share_mode)
+HRESULT validate_fmt(const WAVEFORMATEXTENSIBLE *fmt, BOOL compatible)
 {
-    BOOL exclusive = (share_mode == AUDCLNT_SHAREMODE_EXCLUSIVE);
-    const WAVEFORMATEXTENSIBLE *fmtx = (const void *)fmt;
-    HRESULT ret = S_OK;
+    WAVEFORMATEXTENSIBLE fmt2 = *fmt;
+    HRESULT ret;
 
-    if (share_mode != AUDCLNT_SHAREMODE_SHARED && share_mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return E_INVALIDARG;
+    /* Reduce non-extensible formats to extensible ones. */
+    if (fmt2.Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+    {
+        switch (fmt2.Format.wFormatTag)
+        {
+            case WAVE_FORMAT_PCM: fmt2.SubFormat = KSDATAFORMAT_SUBTYPE_PCM; break;
+            case WAVE_FORMAT_IEEE_FLOAT: fmt2.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT; break;
+            default: return AUDCLNT_E_UNSUPPORTED_FORMAT;
+        }
 
-    if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-        if (fmt->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-            ret = E_INVALIDARG;
-        else if (fmt->nAvgBytesPerSec == 0 || fmt->nBlockAlign == 0 ||
-                (fmtx->Samples.wValidBitsPerSample > fmt->wBitsPerSample))
-            ret = E_INVALIDARG;
-        else if (fmt->nChannels == 0)
-            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        if (fmt2.Format.nChannels > 2)
+            return E_INVALIDARG;
+
+        fmt2.dwChannelMask = (1u << fmt2.Format.nChannels) - 1;
+        fmt2.Samples.wValidBitsPerSample = fmt2.Format.wBitsPerSample;
+        fmt2.Format.cbSize = sizeof(fmt2) - sizeof(fmt2.Format);
     }
 
-    if (FAILED(ret))
-        return ret;
-
-    if (fmt->nSamplesPerSec == 0 || fmt->nBlockAlign == 0)
+    if (fmt2.Format.cbSize < sizeof(fmt2) - sizeof(fmt2.Format))
         ret = E_INVALIDARG;
-
-    switch (fmt->wFormatTag) {
-        case WAVE_FORMAT_EXTENSIBLE:
-            if ((fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX) &&
-                fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE)) ||
-                fmt->nBlockAlign != fmt->wBitsPerSample / 8 * fmt->nChannels ||
-                fmtx->Samples.wValidBitsPerSample > fmt->wBitsPerSample ||
-                fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec) {
-                ret = E_INVALIDARG;
-            }
-
-            if (exclusive) {
-                UINT32 mask = 0, i, channels = 0;
-
-                if (!(fmtx->dwChannelMask & (SPEAKER_ALL | SPEAKER_RESERVED))) {
-                    for (i = 1; !(i & SPEAKER_RESERVED); i <<= 1) {
-                        if (i & fmtx->dwChannelMask) {
-                            mask |= i;
-                            ++channels;
-                        }
-                    }
-
-                    if (channels != fmt->nChannels || (fmtx->dwChannelMask & ~mask)) {
-                        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                        break;
-                    }
-                } else {
-                    ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                    break;
-                }
-            }
-
-            if (IsEqualGUID(&fmtx->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
-                if (fmt->wBitsPerSample != 32) {
-                    ret = E_INVALIDARG;
-                    break;
-                }
-
-                if (fmtx->Samples.wValidBitsPerSample != fmt->wBitsPerSample) {
-                    ret = S_FALSE;
-                }
-            } else if (IsEqualGUID(&fmtx->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
-                if (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8) {
-                    ret = E_INVALIDARG;
-                    break;
-                }
-
-                if (fmtx->Samples.wValidBitsPerSample != fmt->wBitsPerSample &&
-                !(fmt->wBitsPerSample == 32 &&
-                    fmtx->Samples.wValidBitsPerSample == 24)) {
-                    ret = S_FALSE;
-                    break;
-                }
-            } else {
-                ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                break;
-            }
-            break;
-
-        case WAVE_FORMAT_ALAW:
-        case WAVE_FORMAT_MULAW:
-            if (fmt->wBitsPerSample != 8) {
-                ret = E_INVALIDARG;
-                break;
-            }
-        /* Fall-through */
-        case WAVE_FORMAT_IEEE_FLOAT:
-            if (fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT && fmt->wBitsPerSample != 32) {
-                ret = E_INVALIDARG;
-                break;
-            }
-        /* Fall-through */
-        case WAVE_FORMAT_PCM:
-            if (fmt->wFormatTag == WAVE_FORMAT_PCM &&
-                    (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8)) {
-                ret = E_INVALIDARG;
-                break;
-            }
-
-            if (fmt->nChannels > 2) {
-                ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                break;
-            }
-
-            /* fmt->cbSize, fmt->nBlockAlign and fmt->nAvgBytesPerSec seem to be
-            * ignored, invalid values are happily accepted. */
-            break;
-
-        default:
+    else if (fmt2.Format.nChannels == 0 || fmt2.Format.nSamplesPerSec == 0)
+        ret = E_INVALIDARG;
+    else if (fmt2.Format.nBlockAlign != fmt2.Format.nChannels * fmt2.Format.wBitsPerSample / 8)
+        ret = E_INVALIDARG;
+    else if (fmt2.Format.nAvgBytesPerSec != fmt2.Format.nBlockAlign * fmt2.Format.nSamplesPerSec)
+        ret = E_INVALIDARG;
+    else if (fmt2.Samples.wValidBitsPerSample == 0)
+        ret = E_INVALIDARG;
+    else if (fmt2.Samples.wValidBitsPerSample > fmt2.Format.wBitsPerSample)
+        ret = E_INVALIDARG;
+    else if (IsEqualGUID(&fmt2.SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))
+    {
+        if (fmt2.Format.wBitsPerSample != 8 && fmt2.Format.wBitsPerSample != 16
+                && fmt2.Format.wBitsPerSample != 24 && fmt2.Format.wBitsPerSample != 32)
+            ret = E_INVALIDARG;
+        else if (fmt2.Format.wBitsPerSample == 32 && fmt2.Samples.wValidBitsPerSample == 24)
+            ret = S_OK;
+        else if (fmt2.Samples.wValidBitsPerSample != fmt2.Format.wBitsPerSample)
             ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
-            break;
+        else
+            ret = S_OK;
     }
+    else if (IsEqualGUID(&fmt2.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))
+    {
+        if (fmt2.Format.wBitsPerSample != 32 && fmt2.Format.wBitsPerSample != 64)
+            ret = E_INVALIDARG;
+        else if (fmt2.Format.wBitsPerSample != 32)
+            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        else if (fmt2.Samples.wValidBitsPerSample != fmt2.Format.wBitsPerSample)
+            ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        else
+            ret = S_OK;
+    }
+    else
+        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    if (!compatible && ret == S_OK)
+        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     return ret;
 }
@@ -486,6 +433,7 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
     struct create_stream_params params;
     UINT32 i, channel_count;
     stream_handle stream;
+    BOOL compatible;
     WCHAR *name;
     HRESULT hr;
 
@@ -513,10 +461,32 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
     if (flags & AUDCLNT_STREAMFLAGS_CROSSPROCESS)
         FIXME("Cross-process sessions not supported\n");
 
-    hr = validate_wfx(fmt, mode);
+    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        return E_INVALIDARG;
 
-    if (hr == S_FALSE)
-        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+    if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE) {
+        if (flags & AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)
+            return E_INVALIDARG;
+
+        compatible = TRUE;
+    } else {
+        WAVEFORMATEX *mix_fmt;
+
+        if (FAILED(hr = IAudioClient3_GetMixFormat(&client->IAudioClient3_iface, &mix_fmt)))
+            return hr;
+
+        if (flags & AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)
+            compatible = TRUE;
+        else if (flags & AUDCLNT_STREAMFLAGS_RATEADJUST)
+            compatible = fmt->nChannels == mix_fmt->nChannels;
+        else
+            compatible = fmt->nSamplesPerSec == mix_fmt->nSamplesPerSec && fmt->nChannels == mix_fmt->nChannels;
+
+        CoTaskMemFree(mix_fmt);
+    }
+
+    hr = validate_fmt((const WAVEFORMATEXTENSIBLE *)fmt, compatible);
+
     if (hr != S_OK)
         return hr;
 
@@ -879,6 +849,7 @@ static HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHA
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
     struct is_format_supported_params params;
+    BOOL compatible;
     HRESULT hr;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
@@ -891,7 +862,26 @@ static HRESULT WINAPI client_IsFormatSupported(IAudioClient3 *iface, AUDCLNT_SHA
 
     dump_fmt(fmt);
 
-    hr = validate_wfx(fmt, mode);
+    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        return E_INVALIDARG;
+
+    if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE) {
+        compatible = TRUE;
+    } else {
+        WAVEFORMATEX *mix_fmt;
+
+        if (FAILED(hr = IAudioClient3_GetMixFormat(iface, &mix_fmt)))
+            return hr;
+
+        compatible = fmt->nSamplesPerSec == mix_fmt->nSamplesPerSec && fmt->nChannels == mix_fmt->nChannels;
+
+        CoTaskMemFree(mix_fmt);
+    }
+
+    hr = validate_fmt((const WAVEFORMATEXTENSIBLE *)fmt, TRUE);
+
+    if (hr == S_OK && !compatible)
+        hr = S_FALSE;
 
     if (FAILED(hr))
         return hr;
