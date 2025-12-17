@@ -2664,6 +2664,7 @@ GLuint wined3d_context_gl_allocate_vram_chunk_buffer(struct wined3d_context_gl *
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     GLbitfield flags;
+    GLenum binding;
     GLuint id = 0;
 
     TRACE("context_gl %p, pool %u, size %Iu.\n", context_gl, pool, size);
@@ -2674,12 +2675,13 @@ GLuint wined3d_context_gl_allocate_vram_chunk_buffer(struct wined3d_context_gl *
         checkGLcall("buffer object creation");
         return 0;
     }
-    wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, id);
+    binding = wined3d_device_gl_get_memory_type_binding(pool);
+    wined3d_context_gl_bind_bo(context_gl, binding, id);
 
     flags = wined3d_device_gl_get_memory_type_flags(pool) | GL_DYNAMIC_STORAGE_BIT;
     if (flags & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT))
         flags |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
-    GL_EXTCALL(glBufferStorage(GL_PIXEL_UNPACK_BUFFER, size, NULL, flags));
+    GL_EXTCALL(glBufferStorage(binding, size, NULL, flags));
 
     checkGLcall("buffer object creation");
 
@@ -2701,14 +2703,15 @@ static void *wined3d_allocator_chunk_gl_map(struct wined3d_allocator_chunk_gl *c
     if (!chunk_gl->c.map_ptr)
     {
         unsigned int flags = wined3d_device_gl_get_memory_type_flags(chunk_gl->memory_type) & ~GL_CLIENT_STORAGE_BIT;
+        GLenum binding = wined3d_device_gl_get_memory_type_binding(chunk_gl->memory_type);
 
         flags |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
         if (!(flags & GL_MAP_READ_BIT))
             flags |= GL_MAP_UNSYNCHRONIZED_BIT;
         if (flags & GL_MAP_WRITE_BIT)
             flags |= GL_MAP_FLUSH_EXPLICIT_BIT;
-        wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, chunk_gl->gl_buffer);
-        chunk_gl->c.map_ptr = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,
+        wined3d_context_gl_bind_bo(context_gl, binding, chunk_gl->gl_buffer);
+        chunk_gl->c.map_ptr = GL_EXTCALL(glMapBufferRange(binding,
                 0, WINED3D_ALLOCATOR_CHUNK_SIZE, flags));
         if (!chunk_gl->c.map_ptr)
         {
@@ -2731,6 +2734,7 @@ static void *wined3d_allocator_chunk_gl_map(struct wined3d_allocator_chunk_gl *c
 static void wined3d_allocator_chunk_gl_unmap(struct wined3d_allocator_chunk_gl *chunk_gl,
         struct wined3d_context_gl *context_gl)
 {
+    GLenum binding = wined3d_device_gl_get_memory_type_binding(chunk_gl->memory_type);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
     TRACE("chunk_gl %p, context_gl %p.\n", chunk_gl, context_gl);
@@ -2739,8 +2743,8 @@ static void wined3d_allocator_chunk_gl_unmap(struct wined3d_allocator_chunk_gl *
 
     if (!--chunk_gl->c.map_count)
     {
-        wined3d_context_gl_bind_bo(context_gl, GL_PIXEL_UNPACK_BUFFER, chunk_gl->gl_buffer);
-        GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+        wined3d_context_gl_bind_bo(context_gl, binding, chunk_gl->gl_buffer);
+        GL_EXTCALL(glUnmapBuffer(binding));
         chunk_gl->c.map_ptr = NULL;
 
         adapter_adjust_mapped_memory(context_gl->c.device->adapter, -WINED3D_ALLOCATOR_CHUNK_SIZE);

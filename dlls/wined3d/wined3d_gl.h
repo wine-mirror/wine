@@ -920,6 +920,7 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object);
 void wined3d_device_gl_delete_opengl_contexts_cs(void *object);
 HDC wined3d_device_gl_get_backup_dc(struct wined3d_device_gl *device_gl);
 GLbitfield wined3d_device_gl_get_memory_type_flags(unsigned int memory_type_idx);
+GLenum wined3d_device_gl_get_memory_type_binding(unsigned int memory_type_idx);
 
 GLbitfield wined3d_resource_gl_map_flags(const struct wined3d_bo_gl *bo, DWORD d3d_flags);
 GLenum wined3d_resource_gl_legacy_map_flags(DWORD d3d_flags);
