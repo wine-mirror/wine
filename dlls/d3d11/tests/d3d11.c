@@ -1500,7 +1500,6 @@ static void check_texture_sub_resource_uvec4_(unsigned int line, ID3D11Texture2D
             break;
     }
     release_resource_readback(&rb);
-    todo_wine_if(!all_match)
     ok_(__FILE__, line)(all_match,
             "Got {0x%08x, 0x%08x, 0x%08x, 0x%08x}, expected {0x%08x, 0x%08x, 0x%08x, 0x%08x} "
             "at (%u, %u), sub-resource %u.\n",
@@ -20683,6 +20682,7 @@ static void test_uint_shader_instructions(void)
         const struct shader *ps;
         unsigned int bits[4];
         struct uvec4 expected_result;
+        bool todo;
     }
     tests[] =
     {
@@ -20733,10 +20733,10 @@ static void test_uint_shader_instructions(void)
         {&ps_ibfe, {15, 15, 0xffff00ff}, {0xfffffffe, 0xfffffffe, 0xfffffffe, 0xfffffffe}},
         {&ps_ibfe, {16, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
         {&ps_ibfe, {16, 15, 0x3fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
-        {&ps_ibfe, {20, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
-        {&ps_ibfe, {31, 31, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
-        {&ps_ibfe, {31, 31, 0x80000000}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
-        {&ps_ibfe, {31, 31, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, {20, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}, .todo = true},
+        {&ps_ibfe, {31, 31, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}, .todo = true},
+        {&ps_ibfe, {31, 31, 0x80000000}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}, .todo = true},
+        {&ps_ibfe, {31, 31, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}, .todo = true},
 
         {&ps_ibfe2, {16, 15, 0x3fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
 
@@ -20820,16 +20820,21 @@ static void test_uint_shader_instructions(void)
         if (feature_level < tests[i].ps->required_feature_level)
             continue;
 
+        winetest_push_context("Test %u", i);
+
         hr = ID3D11Device_CreatePixelShader(device, tests[i].ps->code, tests[i].ps->size, NULL, &ps);
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, tests[i].bits, 0, 0);
 
         draw_quad(&test_context);
-        check_texture_uvec4(texture, &tests[i].expected_result);
+        todo_wine_if (tests[i].todo)
+            check_texture_uvec4(texture, &tests[i].expected_result);
 
         ID3D11PixelShader_Release(ps);
+
+        winetest_pop_context();
     }
 
     ID3D11Buffer_Release(cb);
