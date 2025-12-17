@@ -190,10 +190,10 @@ struct hid_physical
 struct hid_device_state
 {
     ULONG bit_size;
+    USHORT axis_byte_offsets[64];
+    BYTE axis_sizes[64];
     USAGE_AND_PAGE abs_axis_usages[32];
-    USHORT abs_axis_start;
     USHORT abs_axis_count;
-    USHORT rel_axis_start;
     USHORT rel_axis_count;
     USHORT hatswitch_start;
     USHORT hatswitch_count;

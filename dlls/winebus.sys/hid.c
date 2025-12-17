@@ -256,7 +256,14 @@ BOOL hid_device_add_hatswitch(struct unix_device *iface, INT count)
     return TRUE;
 }
 
-static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE count,
+static BYTE hid_device_determine_axis_size(LONG min, LONG max)
+{
+    if ((min >= 0 && max <= 255) || (min >= -128 && max <= 127)) return 8;
+    if ((min >= 0 && max <= 65535) || (min >= -32768 && max <= 32767)) return 16;
+    return 32;
+}
+
+static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE size, BYTE count,
                                       USAGE usage_page, const USAGE *usages)
 {
     struct hid_device_state *state = &iface->hid_device_state;
@@ -268,13 +275,22 @@ static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE 
         ERR("axes should be added before buttons or hatswitches!\n");
     else if ((state->bit_size % 8))
         ERR("axes should be byte aligned, missing padding!\n");
-    else if (state->bit_size + 32 * count > 0x80000)
+    else if (size != 8 && size != 16 && size != 32)
+        ERR("unsupported axis size, not one of 8, 16, 32!\n");
+    else if (state->bit_size + size * count > 0x80000)
         ERR("report size overflow, too many elements!\n");
+    else if (state->abs_axis_count + state->rel_axis_count + count > ARRAY_SIZE(state->axis_byte_offsets))
+        ERR("axis usage overflow, too many elements!\n");
     else if (rel)
     {
-        if (!state->rel_axis_count) state->rel_axis_start = offset;
+        for (i = 0; i < count; ++i)
+        {
+            int axis = state->abs_axis_count + state->rel_axis_count + i;
+            state->axis_byte_offsets[axis] = offset + i * size / 8;
+            state->axis_sizes[axis] = size;
+        }
         state->rel_axis_count += count;
-        state->bit_size += 32 * count;
+        state->bit_size += size * count;
         return TRUE;
     }
     else
@@ -286,13 +302,15 @@ static BOOL hid_device_add_axis_count(struct unix_device *iface, BOOL rel, BYTE 
         }
         for (i = 0; i < count; ++i)
         {
+            state->axis_byte_offsets[state->abs_axis_count + i] = offset + i * size / 8;
+            state->axis_sizes[state->abs_axis_count + i] = size;
+
             state->abs_axis_usages[state->abs_axis_count + i].UsagePage = usage_page;
             state->abs_axis_usages[state->abs_axis_count + i].Usage = usages[i];
         }
 
-        if (!state->abs_axis_count) state->abs_axis_start = offset;
         state->abs_axis_count += count;
-        state->bit_size += 32 * count;
+        state->bit_size += size * count;
         return TRUE;
     }
 
@@ -312,17 +330,18 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
     {
         END_COLLECTION,
     };
+    BYTE size = hid_device_determine_axis_size(min, max);
     const BYTE template[] =
     {
         LOGICAL_MINIMUM(4, min),
         LOGICAL_MAXIMUM(4, max),
-        REPORT_SIZE(1, 32),
+        REPORT_SIZE(1, size),
         REPORT_COUNT(1, count),
         INPUT(1, Data|Var|(rel ? Rel : Abs)),
     };
     int i;
 
-    if (!hid_device_add_axis_count(iface, rel, count, usage_page, usages))
+    if (!hid_device_add_axis_count(iface, rel, size, count, usage_page, usages))
         return FALSE;
 
     if (!hid_report_descriptor_append(desc, template_begin, sizeof(template_begin)))
@@ -1457,26 +1476,39 @@ void *hid_device_create(const struct hid_device_vtbl *vtbl, SIZE_T size)
 
 #ifdef WORDS_BIGENDIAN
 # define LE_ULONG(x) RtlUlongByteSwap((ULONG)(x))
+# define LE_USHORT(x) RtlUshortByteSwap((USHORT)(x))
 #else
 # define LE_ULONG(x) ((ULONG)(x))
+# define LE_USHORT(x) ((USHORT)(x))
 #endif
+
+static BOOL hid_device_set_axis(struct hid_device_state *state, ULONG axis, LONG value)
+{
+    USHORT offset = state->axis_byte_offsets[axis];
+    BYTE size = state->axis_sizes[axis];
+
+    switch (size)
+    {
+    case 8:  *(state->report_buf + offset) = (BYTE)value; return TRUE;
+    case 16: *(USHORT *)(state->report_buf + offset) = LE_USHORT(value); return TRUE;
+    case 32: *(ULONG *)(state->report_buf + offset) = LE_ULONG(value); return TRUE;
+    default: return FALSE;
+    }
+}
 
 BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value)
 {
     struct hid_device_state *state = &iface->hid_device_state;
-    ULONG offset = state->abs_axis_start + index * 4;
     if (index >= state->abs_axis_count) return FALSE;
-    *(ULONG *)(state->report_buf + offset) = LE_ULONG(value);
-    return TRUE;
+    return hid_device_set_axis(state, index, value);
 }
 
 BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value)
 {
     struct hid_device_state *state = &iface->hid_device_state;
-    ULONG offset = state->rel_axis_start + index * 4;
+    ULONG axis = state->abs_axis_count + index;
     if (index >= state->rel_axis_count) return FALSE;
-    *(ULONG *)(state->report_buf + offset) = LE_ULONG(value);
-    return TRUE;
+    return hid_device_set_axis(state, axis, value);
 }
 
 BOOL hid_device_set_button(struct unix_device *iface, ULONG index, BOOL is_set)
