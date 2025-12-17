@@ -1522,12 +1522,10 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMAT
 
         if ((old_format = get_window_pixel_format( hwnd ))) return old_format == new_format;
 
-        if ((drawable = get_window_unused_drawable( hwnd, new_format )))
-        {
-            set_window_opengl_drawable( hwnd, drawable, TRUE );
-            set_window_opengl_drawable( hwnd, drawable, FALSE );
-            opengl_drawable_release( drawable );
-        }
+        if (!(drawable = get_window_unused_drawable( hwnd, new_format ))) return FALSE;
+        set_window_opengl_drawable( hwnd, drawable, TRUE );
+        set_window_opengl_drawable( hwnd, drawable, FALSE );
+        opengl_drawable_release( drawable );
 
         return set_window_pixel_format( hwnd, new_format );
     }
