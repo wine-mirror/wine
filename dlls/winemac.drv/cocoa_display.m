@@ -962,8 +962,8 @@ int macdrv_get_monitors(CGDirectDisplayID adapter_id, struct macdrv_monitor** ne
                     primary_index = monitor_count;
 
                 monitors[monitor_count].id = display_ids[i];
-                monitors[monitor_count].rc_monitor = convert_display_rect(screen.frame, primary_frame);
-                monitors[monitor_count].rc_work = convert_display_rect(screen.visibleFrame, primary_frame);
+                monitors[monitor_count].rc_monitor = cgrect_win_from_mac(convert_display_rect(screen.frame, primary_frame));
+                monitors[monitor_count].rc_work = cgrect_win_from_mac(convert_display_rect(screen.visibleFrame, primary_frame));
 
                 vendor_number = CGDisplayVendorNumber(monitors[monitor_count].id);
                 model_number = CGDisplayModelNumber(monitors[monitor_count].id);
