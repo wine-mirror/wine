@@ -116,6 +116,7 @@ struct recordset
     IRowsetChange     *rowset_change;
     IRowsetUpdate     *rowset_update;
     IAccessor         *accessor;
+    IRowsetIndex      *rowset_idx;
     IRowsetCurrentIndex *rowset_cur_idx;
     EditModeEnum       editmode;
     HROW               current_row;
@@ -138,6 +139,8 @@ struct recordset
     HACCESSOR          bookmark_hacc;
     DBTYPE             bookmark_type;
     VARIANT            bookmark;
+
+    HACCESSOR          index_hacc;
 
     ULONG              prop_count;
     DBPROPSET         *prop;
@@ -313,6 +316,11 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
                 i8_buf = V_I8(&recordset->bookmark);
                 len = sizeof(i8_buf);
             }
+            else if (V_VT(&recordset->bookmark) == VT_EMPTY)
+            {
+                data = NULL;
+                len = 0;
+            }
             else
             {
                 hr = SafeArrayLock(V_ARRAY(&recordset->bookmark));
@@ -321,8 +329,15 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
                 len = V_ARRAY(&recordset->bookmark)->rgsabound[0].cElements;
             }
 
-            hr = IRowsetLocate_GetRowsAt(recordset->rowset_locate, 0, 0, len, data,
-                    off, fetch, &count, &recordset->cache.rows);
+            if (!data)
+            {
+                hr = IRowset_GetNextRows(recordset->row_set, 0, off, fetch, &count, &recordset->cache.rows);
+            }
+            else
+            {
+                hr = IRowsetLocate_GetRowsAt(recordset->rowset_locate, 0, 0, len, data,
+                        off, fetch, &count, &recordset->cache.rows);
+            }
             if (V_VT(&recordset->bookmark) & VT_ARRAY)
                 SafeArrayUnlock(V_ARRAY(&recordset->bookmark));
 
@@ -1698,6 +1713,9 @@ static void close_recordset( struct recordset *recordset )
     if ( recordset->rowset_update && recordset->rowset_update != NO_INTERFACE )
         IRowsetUpdate_Release( recordset->rowset_update );
     recordset->rowset_update = NULL;
+    if ( recordset->rowset_idx && recordset->rowset_idx != NO_INTERFACE )
+        IRowsetIndex_Release( recordset->rowset_idx );
+    recordset->rowset_idx = NULL;
     if ( recordset->rowset_cur_idx && recordset->rowset_cur_idx != NO_INTERFACE )
         IRowsetCurrentIndex_Release( recordset->rowset_cur_idx );
     recordset->rowset_cur_idx = NULL;
@@ -1719,6 +1737,12 @@ static void close_recordset( struct recordset *recordset )
         Field_Release(&recordset->fields.field[i]->Field_iface);
     }
     recordset->fields.count = -1;
+
+    if (recordset->index_hacc)
+    {
+        IAccessor_ReleaseAccessor(recordset->accessor, recordset->index_hacc, NULL);
+        recordset->index_hacc = 0;
+    }
 
     if (recordset->accessor && recordset->accessor != NO_INTERFACE )
         IAccessor_Release( recordset->accessor );
@@ -3340,8 +3364,119 @@ static HRESULT WINAPI recordset_Resync( _Recordset *iface, AffectEnum affect_rec
 
 static HRESULT WINAPI recordset_Seek( _Recordset *iface, VARIANT key_values, SeekEnum seek_option )
 {
-    FIXME( "%p, %s, %u\n", iface, debugstr_variant(&key_values), seek_option );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    DBINDEXCOLUMNDESC *columns;
+    ULONG i, j, prop_sets_no;
+    DBPROPSET *prop_sets;
+    DBORDINAL columns_no;
+    SAFEARRAY *sa = NULL;
+    void *data = NULL;
+    HRESULT hr = S_OK;
+    DBSEEK dbseek;
+
+    TRACE( "%p, %s, %u\n", iface, debugstr_variant(&key_values), seek_option );
+
+    if (!recordset->rowset_idx)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetIndex,
+                (void **)&recordset->rowset_idx );
+        if (FAILED(hr) || !recordset->rowset_idx)
+            recordset->rowset_idx = NO_INTERFACE;
+    }
+    if (recordset->rowset_idx == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    if (!recordset->index_hacc)
+    {
+        DBBINDING *bindings;
+
+        hr = IRowsetIndex_GetIndexInfo( recordset->rowset_idx,
+                &columns_no, &columns, &prop_sets_no, &prop_sets );
+        if (FAILED(hr)) return hr;
+        for (i = 0; i < prop_sets_no; i++)
+        {
+            for (j = 0; j < prop_sets[i].cProperties; j++)
+                VariantClear( &prop_sets[i].rgProperties[j].vValue );
+            CoTaskMemFree( prop_sets[i].rgProperties );
+        }
+        CoTaskMemFree( prop_sets );
+        if (!columns_no) return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+        hr = E_OUTOFMEMORY;
+        bindings = calloc( columns_no, sizeof(*bindings) );
+        if (bindings)
+        {
+            for (i = 0; i < columns_no; i++)
+            {
+                struct field *field;
+                VARIANT name;
+                ULONG idx;
+
+                V_VT(&name) = VT_BSTR;
+                V_BSTR(&name) = columns[i].pColumnID->uName.pwszName;
+                hr = map_index( &recordset->fields, &name, &idx );
+                if (FAILED(hr)) break;
+                field = recordset->fields.field[idx];
+
+                bindings[i].iOrdinal = field->ordinal;
+                bindings[i].obValue = i * sizeof(VARIANT);
+                bindings[i].dwPart = DBPART_VALUE;
+                bindings[i].cbMaxLen = sizeof(VARIANT);
+                bindings[i].wType = DBTYPE_VARIANT;
+                bindings[i].bPrecision = field->prec;
+                bindings[i].bScale = field->scale;
+            }
+        }
+        if (SUCCEEDED(hr))
+        {
+            hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+                columns_no, bindings, 0, &recordset->index_hacc, NULL );
+        }
+        free( bindings );
+
+        for (i = 0; i < columns_no; i++)
+        {
+            CoTaskMemFree( columns[i].pColumnID->uName.pwszName );
+            CoTaskMemFree( columns[i].pColumnID );
+        }
+        CoTaskMemFree( columns );
+        if (FAILED(hr)) return hr;
+    }
+
+    if (V_VT( &key_values ) == (VT_ARRAY | VT_VARIANT))
+    {
+        sa = V_ARRAY( &key_values );
+        hr = SafeArrayLock( sa );
+        if (SUCCEEDED(hr))
+        {
+            columns_no = sa->rgsabound[0].cElements;
+            data = sa->pvData;
+        }
+    }
+    else
+    {
+        columns_no = 1;
+        data = &key_values;
+    }
+
+    dbseek = 0;
+    if (seek_option & adSeekFirstEQ) dbseek |= DBSEEK_FIRSTEQ;
+    if (seek_option & adSeekLastEQ) dbseek |= DBSEEK_LASTEQ;
+    if (seek_option & adSeekAfterEQ) dbseek |= DBSEEK_AFTEREQ;
+    if (seek_option & adSeekAfter) dbseek |= DBSEEK_AFTER;
+    if (seek_option & adSeekBeforeEQ) dbseek |= DBSEEK_BEFOREEQ;
+    if (seek_option & adSeekBefore) dbseek |= DBSEEK_BEFORE;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IRowsetIndex_Seek( recordset->rowset_idx, recordset->index_hacc, columns_no, data, dbseek );
+        if (V_VT( &key_values ) == (VT_ARRAY | VT_VARIANT)) SafeArrayUnlock( sa );
+    }
+    if (FAILED( hr )) return hr;
+
+    VariantClear( &recordset->bookmark );
+    recordset->cache.dir = 0;
+    return cache_get( recordset, TRUE );
 }
 
 static HRESULT WINAPI recordset_put_Index( _Recordset *iface, BSTR index )
@@ -3371,7 +3506,13 @@ static HRESULT WINAPI recordset_put_Index( _Recordset *iface, BSTR index )
     hr = IRowsetCurrentIndex_SetIndex( recordset->rowset_cur_idx, &dbid );
     if (FAILED(hr)) return hr;
 
-    return _Recordset_MoveFirst( iface );
+    hr = _Recordset_MoveFirst( iface );
+    if (recordset->index_hacc)
+    {
+        IAccessor_ReleaseAccessor( recordset->accessor, recordset->index_hacc, NULL );
+        recordset->index_hacc = 0;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI recordset_get_Index( _Recordset *iface, BSTR *index )

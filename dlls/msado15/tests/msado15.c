@@ -90,6 +90,8 @@ DEFINE_EXPECT(rowset_view_CreateView);
 DEFINE_EXPECT(view_chapter_OpenViewChapter);
 DEFINE_EXPECT(view_filter_SetFilter);
 DEFINE_EXPECT(chaptered_rowset_ReleaseChapter);
+DEFINE_EXPECT(rowset_current_index_GetIndexInfo);
+DEFINE_EXPECT(rowset_current_index_Seek);
 DEFINE_EXPECT(rowset_current_index_GetIndex);
 DEFINE_EXPECT(rowset_current_index_SetIndex);
 DEFINE_EXPECT(open_rowset_QI_ISessionProperties);
@@ -1232,15 +1234,33 @@ static HRESULT WINAPI rowset_current_index_GetIndexInfo(IRowsetCurrentIndex *ifa
         DBORDINAL *pcKeyColumns, DBINDEXCOLUMNDESC **prgIndexColumnDesc,
         ULONG *pcIndexPropertySets, DBPROPSET **prgIndexPropertySets)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    static const WCHAR name[] = L"Column1";
+
+    CHECK_EXPECT(rowset_current_index_GetIndexInfo);
+
+    *pcKeyColumns = 1;
+    *prgIndexColumnDesc = CoTaskMemAlloc(sizeof(**prgIndexColumnDesc));
+    memset(*prgIndexColumnDesc, 0, sizeof(**prgIndexColumnDesc));
+    (*prgIndexColumnDesc)[0].pColumnID = CoTaskMemAlloc(sizeof(*(*prgIndexColumnDesc)[0].pColumnID));
+    (*prgIndexColumnDesc)[0].pColumnID->eKind = DBKIND_NAME;
+    (*prgIndexColumnDesc)[0].pColumnID->uName.pwszName = CoTaskMemAlloc(sizeof(name));
+    memcpy((*prgIndexColumnDesc)[0].pColumnID->uName.pwszName, name, sizeof(name));
+    *pcIndexPropertySets = 0;
+    *prgIndexPropertySets = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_current_index_Seek(IRowsetCurrentIndex *iface,
         HACCESSOR hAccessor, DBORDINAL cKeyValues, void *pData, DBSEEK dwSeekOptions)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    VARIANT *v = pData;
+
+    CHECK_EXPECT(rowset_current_index_Seek);
+    ok(cKeyValues == 1, "cKeyValues = %Iu\n", cKeyValues);
+    ok(V_VT(v) == VT_I4, "V_VT(pData) = %d\n", V_VT(v));
+    ok(V_I4(v) == 0x17, "V_I4(pData) = %ld\n", V_I4(v));
+    ok(dwSeekOptions == DBSEEK_FIRSTEQ, "dwSeekOptions = %ld\n", dwSeekOptions);
+    return S_OK;
 }
 
 static HRESULT WINAPI rowset_current_index_SetRange(IRowsetCurrentIndex *iface,
@@ -2023,6 +2043,25 @@ static void test_ADORecordsetConstruction(BOOL exact_scroll)
         CHECK_CALLED( rowset_GetData );
     }
     SysFreeString( bstr );
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 0x17;
+    SET_EXPECT(rowset_current_index_GetIndexInfo);
+    SET_EXPECT(accessor_CreateAccessor);
+    SET_EXPECT(rowset_current_index_Seek);
+    SET_EXPECT(rowset_AddRefRows);
+    SET_EXPECT(rowset_ReleaseRows);
+    SET_EXPECT(rowset_GetNextRows);
+    if (exact_scroll) SET_EXPECT(rowset_GetData);
+    hr = _Recordset_Seek( recordset, v, adSeekFirstEQ );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    CHECK_CALLED(rowset_current_index_GetIndexInfo);
+    CHECK_CALLED(accessor_CreateAccessor);
+    CHECK_CALLED(rowset_current_index_Seek);
+    CHECK_CALLED(rowset_AddRefRows);
+    CHECK_CALLED(rowset_ReleaseRows);
+    CHECK_CALLED(rowset_GetNextRows);
+    if (exact_scroll) CHECK_CALLED(rowset_GetData);
 
     SET_EXPECT( rowset_ReleaseRows );
     if (!exact_scroll)
