@@ -973,7 +973,7 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
         WAVEFORMATEXTENSIBLE *wfe = (WAVEFORMATEXTENSIBLE*)fmt;
         UINT mask = wfe->dwChannelMask;
         unsigned i = 0, j;
-        if (fmt->cbSize != (sizeof(*wfe) - sizeof(*fmt)) && fmt->cbSize != sizeof(*wfe))
+        if (fmt->cbSize < sizeof(*wfe) - sizeof(*fmt))
             break;
         if (IsEqualGUID(&wfe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) &&
             (!wfe->Samples.wValidBitsPerSample || wfe->Samples.wValidBitsPerSample == 32) &&
