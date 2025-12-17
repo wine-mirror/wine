@@ -1582,16 +1582,18 @@ LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, 
     return set_window_long( hwnd, offset, sizeof(LONG_PTR), newval, ansi );
 }
 
-BOOL set_window_pixel_format( HWND hwnd, int format )
+BOOL set_window_pixel_format( HWND hwnd, int format, BOOL internal )
 {
     WND *win = get_win_ptr( hwnd );
 
     if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
     {
-        WARN( "setting format %d on win %p not supported\n", format, hwnd );
+        WARN( "setting format %d on win %p semi-stub!\n", format, hwnd );
+        NtUserPostMessage( hwnd, WM_WINE_SETPIXELFORMAT, format, internal );
         return FALSE;
     }
-    win->pixel_format = format;
+    if (!internal) win->pixel_format = format;
+    if (format) win->clip_clients = TRUE;
     release_win_ptr( win );
 
     update_window_state( hwnd );
@@ -2218,8 +2220,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         }
         if (new_surface) req->paint_flags |= SET_WINPOS_PAINT_SURFACE;
         if (is_layered) req->paint_flags |= SET_WINPOS_LAYERED_WINDOW;
-        if (win->pixel_format || win->current_drawable)
-            req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
+        if (win->clip_clients) req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
 
         if ((ret = !wine_server_call( req )))
         {

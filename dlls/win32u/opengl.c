@@ -1527,7 +1527,7 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMAT
         set_window_opengl_drawable( hwnd, drawable, FALSE );
         opengl_drawable_release( drawable );
 
-        return set_window_pixel_format( hwnd, new_format );
+        return set_window_pixel_format( hwnd, new_format, FALSE );
     }
 
     TRACE( "%p/%p format %d\n", hdc, hwnd, new_format );
@@ -1590,7 +1590,7 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
         set_dc_opengl_drawable( hdc, drawable );
         opengl_drawable_release( drawable );
 
-        update_window_state( hwnd );
+        set_window_pixel_format( hwnd, format, TRUE );
     }
 
     return TRUE;
