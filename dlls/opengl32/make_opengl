@@ -443,7 +443,7 @@ sub generate_unix_thunk($$$$)
     my $manual_wow64_wrapper = $is_wow64 && defined $manual_wow64_wrappers{$name};
     my $need_wrap = $manual_wow64_wrapper || needs_wrapper( $name, $func );
     my $need_lock = $func_ret =~ /HGLRC|HPBUFFERARB/;
-    my $need_funcs = !$need_wrap;
+    my $need_funcs = !$need_wrap || ($prefix eq "ext" && $name !~ /^wgl/);
     my $teb = $is_wow64 ? "teb" : "params->teb";
     my $ret_stat = "return STATUS_SUCCESS;";
     my $invalidation = "";
@@ -582,6 +582,7 @@ sub generate_unix_thunk($$$$)
     elsif ($need_funcs)
     {
         $ret .= "    const struct opengl_funcs *funcs = $teb->glTable;\n";
+        $ret .= "    if (!funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
     foreach my $arg (@{$map_default_fbo_thunks{$name}})
     {
