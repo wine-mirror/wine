@@ -961,6 +961,8 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
             stream->ss.format = PA_SAMPLE_U8;
         else if (fmt->wBitsPerSample == 16)
             stream->ss.format = PA_SAMPLE_S16LE;
+        else if (fmt->wBitsPerSample == 24)
+            stream->ss.format = PA_SAMPLE_S24LE;
         else if (fmt->wBitsPerSample == 32)
             stream->ss.format = PA_SAMPLE_S32LE;
         else
