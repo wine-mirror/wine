@@ -1392,6 +1392,8 @@ static const char *x11drv_init_wgl_extensions( struct opengl_funcs *funcs )
 
     if (has_extension( glxExtensions, "GLX_ARB_multisample")) register_extension( "WGL_ARB_multisample" );
 
+    register_extension("WGL_ARB_pixel_format");
+
     if (has_extension( glxExtensions, "GLX_ARB_fbconfig_float"))
     {
         register_extension("WGL_ARB_pixel_format_float");
