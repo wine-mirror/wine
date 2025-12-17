@@ -25,7 +25,11 @@
 
 #define COBJMACROS
 #include <d3d8.h>
+#include <winternl.h>
 #include "wine/test.h"
+
+static bool is_win64 = sizeof(void *) > sizeof(int);
+static bool new_wow64;
 
 struct vec2
 {
@@ -237,7 +241,7 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
                     if (x < 0 || x >= 640 || y < 0 || y >= 480)
                         continue;
                     color = get_readback_color(rb, x, y);
-                    todo_wine_if(i == 0 && x_side == 0 && y_side == 1 && sizeof(void *) == 4)
+                    todo_wine_if(i == 0 && x_side == 0 && y_side == 1 && !is_win64 && !new_wow64)
                     ok(color == expected, "%s: Pixel (%ld, %ld) has color %08x, expected %08x.\n",
                             message, x, y, color, expected);
                 }
@@ -12387,12 +12391,23 @@ START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
     IDirect3D8 *d3d;
+    BOOL is_wow64;
     HRESULT hr;
 
     if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D8 object.\n");
         return;
+    }
+
+    if (!is_win64 && IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+    {
+        TEB64 *teb64 = ULongToPtr( NtCurrentTeb()->GdiBatchCount );
+        if (teb64)
+        {
+            PEB64 *peb64 = ULongToPtr( teb64->Peb );
+            new_wow64 = !!peb64->LdrData;
+        }
     }
 
     memset(&identifier, 0, sizeof(identifier));
