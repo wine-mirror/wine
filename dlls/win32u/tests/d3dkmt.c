@@ -6733,6 +6733,24 @@ skip_tests:
     DestroyWindow( hwnd );
 }
 
+static void test_escape(void)
+{
+    D3DKMT_ESCAPE escape = {0};
+    RECT rect = {0};
+
+    todo_wine ok_nt( STATUS_INVALID_PARAMETER, D3DKMTEscape( &escape ) );
+
+    escape.Type = D3DKMT_ESCAPE_UPDATE_RESOURCE_WINE;
+    escape.hContext = 0x1eadbeed;
+    ok_nt( STATUS_INVALID_PARAMETER, D3DKMTEscape( &escape ) );
+
+    escape.Type = D3DKMT_ESCAPE_SET_PRESENT_RECT_WINE;
+    escape.PrivateDriverDataSize = sizeof(rect);
+    escape.pPrivateDriverData = (void *)&rect;
+    escape.hContext = 0x1eadbeed;
+    ok_nt( STATUS_INVALID_PARAMETER, D3DKMTEscape( &escape ) );
+}
+
 START_TEST( d3dkmt )
 {
     char **argv;
@@ -6766,4 +6784,5 @@ START_TEST( d3dkmt )
     test_D3DKMTShareObjects();
     test_shared_resources();
     test_shared_fences();
+    test_escape();
 }
