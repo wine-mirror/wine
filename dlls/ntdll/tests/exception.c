@@ -9717,13 +9717,17 @@ static BYTE except_code_segments[] =
     0x31, 0xc0, /* xor %eax,%eax */
     0x8e, 0xc0, /* mov %eax,%es */
     0x8e, 0xd8, /* mov %eax,%ds */
+#ifndef __x86_64__  /* restoring fsbase is not supported on Wine yet */
     0x8e, 0xe0, /* mov %eax,%fs */
+#endif
     0x8e, 0xe8, /* mov %eax,%gs */
     0xcc,       /* int3 */
     0x58,       /* pop %rax */
     0x8e, 0xe8, /* mov %eax,%gs */
     0x58,       /* pop %rax */
+#ifndef __x86_64__
     0x8e, 0xe0, /* mov %eax,%fs */
+#endif
     0x58,       /* pop %rax */
     0x8e, 0xd8, /* mov %eax,%ds */
     0x58,       /* pop %rax */
