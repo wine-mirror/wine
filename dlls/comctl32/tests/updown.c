@@ -1065,6 +1065,38 @@ static void test_UDS_SETBUDDY(void)
     DestroyWindow(updown);
 }
 
+static void test_accel(void)
+{
+    UDACCEL accel[4];
+    HWND updown;
+    int r;
+
+    updown = create_updown_control(UDS_ALIGNRIGHT, g_edit);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    r = SendMessageA(updown, UDM_GETACCEL, 4, (LPARAM)accel);
+    expect(3, r);
+    expect(0, accel[0].nSec);
+    expect(1, accel[0].nInc);
+    expect(2, accel[1].nSec);
+    expect(5, accel[1].nInc);
+    expect(5, accel[2].nSec);
+    expect(20, accel[2].nInc);
+
+    accel[0].nSec = 0;
+    accel[0].nInc = 5;
+    r = SendMessageA(updown, UDM_SETACCEL, 1, (LPARAM)accel);
+    expect(TRUE, r);
+
+    r = SendMessageA(updown, UDM_GETACCEL, 3, (LPARAM)accel);
+    expect(1, r);
+    expect(0, accel[0].nSec);
+    expect(5, accel[0].nInc);
+
+    DestroyWindow(updown);
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -1103,6 +1135,7 @@ START_TEST(updown)
     test_UDS_SETBUDDYINT();
     test_CreateUpDownControl();
     test_updown_pos_notifications();
+    test_accel();
 
     DestroyWindow(g_edit);
 
@@ -1128,6 +1161,7 @@ START_TEST(updown)
     test_UDS_SETBUDDYINT();
     test_CreateUpDownControl();
     test_updown_pos_notifications();
+    test_accel();
 
     uninit_winevent_hook();
 
