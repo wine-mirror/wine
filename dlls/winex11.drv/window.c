@@ -3254,6 +3254,14 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     TRACE( "win %p/%lx new_rects %s style %08x flags %08x\n", hwnd, data->whole_window,
            debugstr_window_rects(new_rects), new_style, swp_flags );
 
+    /* visible windows are only hidden after SWP_HIDEWINDOW is used */
+    if (data->pending_state.wm_state != WithdrawnState && !(new_style & WS_VISIBLE) &&
+        !(swp_flags & SWP_HIDEWINDOW))
+    {
+        WARN( "win %p/%lx not yet hidden, delaying unmapping\n", hwnd, data->whole_window );
+        new_style |= WS_VISIBLE;
+    }
+
     /* layered windows are mapped only once their attributes are set */
     if (data->pending_state.wm_state == WithdrawnState && (new_style & WS_VISIBLE) &&
         (ex_style & WS_EX_LAYERED) && !data->layered && !IsRectEmpty( &new_rects->window ))
