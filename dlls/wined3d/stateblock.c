@@ -1715,6 +1715,19 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_CLIPPING:
         case WINED3D_RS_CLIPPLANEENABLE:
             stateblock->changed.extra_vs_args = 1;
+            /* Clip planes are affected by the view matrix. However in order to
+             * avoid unnecessarily invalidating clip planes every time the view
+             * matrix changes (which is itself frequent, but clipping might not
+             * even be enabled) we only invalidate the currently active clip
+             * planes.
+             *
+             * This means that we need to recalculate clip planes when the clip
+             * plane mask changes. If we changed the view matrix while clip
+             * planes were disabled, we need to recalculate them now that
+             * they've been enabled, since they weren't recalculated at the
+             * time. */
+            if (stateblock->stateblock_state.rs[WINED3D_RS_CLIPPING])
+                stateblock->changed.clipplane |= stateblock->stateblock_state.rs[WINED3D_RS_CLIPPLANEENABLE];
             break;
 
         case WINED3D_RS_ALPHAFUNC:
@@ -3078,7 +3091,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     {
         /* Clip planes are affected by the view matrix, but only if not using
          * vertex shaders. */
-        changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+        if (state->rs[WINED3D_RS_CLIPPING])
+            changed->clipplane |= state->rs[WINED3D_RS_CLIPPLANEENABLE];
     }
 
     for (start = 0; ; start = range.offset + range.size)
@@ -3668,8 +3682,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     {
         if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_VIEW))
         {
-            changed->lights = 1;
-            changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+            if (state->rs[WINED3D_RS_CLIPPING])
+                changed->clipplane |= state->rs[WINED3D_RS_CLIPPLANEENABLE];
         }
 
         if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_PROJECTION) || changed->position_transformed)
@@ -3677,9 +3691,6 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
                     offsetof(struct wined3d_ffp_vs_constants, projection_matrix),
                     sizeof(state->transforms[WINED3D_TS_PROJECTION]), &state->transforms[WINED3D_TS_PROJECTION]);
-
-        /* Clip planes are affected by the view matrix. */
-        changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
     }
 
     if (changed->indices)
