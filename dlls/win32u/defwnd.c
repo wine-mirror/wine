@@ -2945,7 +2945,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         break;
 
     case WM_STYLECHANGED:
-        if (wparam == GWL_STYLE && (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED))
+        if ((LONG)wparam == GWL_STYLE && (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED))
         {
             STYLESTRUCT *style = (STYLESTRUCT *)lparam;
             if ((style->styleOld ^ style->styleNew) & (WS_CAPTION|WS_THICKFRAME|WS_VSCROLL|WS_HSCROLL))
