@@ -1295,7 +1295,8 @@ static void wined3d_context_gl_update_window(struct wined3d_context_gl *context_
     if (!context_gl->c.swapchain)
         return;
 
-    if (context_gl->window == context_gl->c.swapchain->win_handle)
+    if (context_gl->window == context_gl->c.swapchain->win_handle &&
+        context_gl->dc == context_gl->c.swapchain->dc)
         return;
 
     TRACE("Updating context %p window from %p to %p.\n",
