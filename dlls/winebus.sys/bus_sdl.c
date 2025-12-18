@@ -373,7 +373,7 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface, cons
     for (i = 0; i < ball_count; i++)
     {
         if (!hid_device_add_axes(iface, 2, relative_axis_usages[2 * i].UsagePage,
-                                 &relative_axis_usages[2 * i].Usage, TRUE, INT32_MIN, INT32_MAX))
+                                 &relative_axis_usages[2 * i].Usage, TRUE, INT16_MIN, INT16_MAX))
             return STATUS_NO_MEMORY;
     }
 
