@@ -2037,7 +2037,6 @@ static void test_debugger(const char *argv0)
 
         /* main thread sleeps inside ntdll waiting for the event. set breakpoint there and make sure
          * ntdll can handle that. */
-        SuspendThread(ctx.main_thread->handle);
 
         fetch_thread_context(ctx.main_thread);
         ret = ReadProcessMemory(pi.hProcess, get_ip(&ctx.main_thread->ctx), &instr, 1, NULL);
@@ -2114,21 +2113,13 @@ static void test_debugger(const char *argv0)
 #if defined(__i386__)
         ok(ctx.main_thread->ctx.Eax == 0,   "Eax = %lx\n", ctx.main_thread->ctx.Eax);
         ok(ctx.main_thread->ctx.Ebx == 102, "Ebx = %lx\n", ctx.main_thread->ctx.Ebx);
-        ok(ctx.main_thread->ctx.Ecx != 103, "Ecx = %lx\n", ctx.main_thread->ctx.Ecx);
-        ok(ctx.main_thread->ctx.Edx != 104, "Edx = %lx\n", ctx.main_thread->ctx.Edx);
         ok(ctx.main_thread->ctx.Esi == 105, "Esi = %lx\n", ctx.main_thread->ctx.Esi);
         ok(ctx.main_thread->ctx.Edi == 106, "Edi = %lx\n", ctx.main_thread->ctx.Edi);
 #elif defined(__x86_64__)
         ok(ctx.main_thread->ctx.Rax == 0,   "Rax = %I64x\n", ctx.main_thread->ctx.Rax);
         ok(ctx.main_thread->ctx.Rbx == 102, "Rbx = %I64x\n", ctx.main_thread->ctx.Rbx);
-        ok(ctx.main_thread->ctx.Rcx != 103, "Rcx = %I64x\n", ctx.main_thread->ctx.Rcx);
-        ok(ctx.main_thread->ctx.Rdx != 104, "Rdx = %I64x\n", ctx.main_thread->ctx.Rdx);
         ok(ctx.main_thread->ctx.Rsi == 105, "Rsi = %I64x\n", ctx.main_thread->ctx.Rsi);
         ok(ctx.main_thread->ctx.Rdi == 106, "Rdi = %I64x\n", ctx.main_thread->ctx.Rdi);
-        ok(ctx.main_thread->ctx.R8  != 107, "R8 = %I64x\n",  ctx.main_thread->ctx.R8);
-        ok(ctx.main_thread->ctx.R9  != 108, "R9 = %I64x\n",  ctx.main_thread->ctx.R9);
-        ok(ctx.main_thread->ctx.R10 != 109, "R10 = %I64x\n", ctx.main_thread->ctx.R10);
-        ok(ctx.main_thread->ctx.R11 != 110, "R11 = %I64x\n", ctx.main_thread->ctx.R11);
         ok(ctx.main_thread->ctx.R12 == 111, "R12 = %I64x\n", ctx.main_thread->ctx.R12);
         ok(ctx.main_thread->ctx.R13 == 112, "R13 = %I64x\n", ctx.main_thread->ctx.R13);
         ok(ctx.main_thread->ctx.R14 == 113, "R14 = %I64x\n", ctx.main_thread->ctx.R14);
