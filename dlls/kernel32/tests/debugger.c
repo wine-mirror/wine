@@ -2241,7 +2241,9 @@ static DWORD WINAPI debug_and_exit(void *arg)
 static DWORD WINAPI debug_and_wait(void *arg)
 {
     STARTUPINFOA si = { sizeof(si) };
-    HANDLE debug = *(HANDLE *)arg;
+    HANDLE *handles = arg;
+    HANDLE debug = handles[0];
+    HANDLE event = handles[1];
     ULONG val = 0;
     NTSTATUS status;
     BOOL ret;
@@ -2253,6 +2255,7 @@ static DWORD WINAPI debug_and_wait(void *arg)
     status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
                                            &val, sizeof(val), NULL );
     ok( !status, "NtSetInformationDebugObject failed %lx\n", status );
+    SetEvent( event );
     Sleep(INFINITE);
     ExitThread(0);
 }
@@ -2274,7 +2277,7 @@ static void test_kill_on_exit(const char *argv0)
     SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     NTSTATUS status;
-    HANDLE event, debug, thread;
+    HANDLE event, debug, thread, handles[2];
     DWORD exit_code, tid;
     ULONG val;
     BOOL ret;
@@ -2352,8 +2355,12 @@ static void test_kill_on_exit(const char *argv0)
     /* checking on forced exit */
     status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, DEBUG_KILL_ON_CLOSE );
     ok( !status, "NtCreateDebugObject failed %lx\n", status );
-    thread = CreateThread(NULL, 0, debug_and_wait, &debug, 0, &tid);
-    Sleep( 100 );
+    handles[0] = debug;
+    handles[1] = event;
+    ResetEvent( event );
+    thread = CreateThread(NULL, 0, debug_and_wait, handles, 0, &tid);
+    status = WaitForSingleObject( event, 10000 );
+    ok( !status, "thread didn't start %lx\n", status );
     ok( debug != 0, "no debug port\n" );
     val = DEBUG_KILL_ON_CLOSE;
     status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
