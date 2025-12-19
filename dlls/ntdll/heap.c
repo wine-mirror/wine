@@ -975,7 +975,7 @@ static void *allocate_region( struct heap *heap, ULONG flags, SIZE_T *region_siz
     void *addr = NULL;
     NTSTATUS status;
 
-    if (heap && !(flags & HEAP_GROWABLE))
+    if (heap && !(flags & HEAP_GROWABLE) && (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_WINDOWS))
     {
         WARN( "Heap %p isn't growable, cannot allocate %#Ix bytes\n", heap, *region_size );
         return NULL;
