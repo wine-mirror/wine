@@ -2279,6 +2279,7 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
     TRACE( "context %p, hwnd %p, interval %d, flush %p\n", context, draw->client->hwnd, interval, flush );
 
     context_sync_drawables( context, 0, 0 );
+    if (!(draw = context->draw)) return FALSE; /* should never happen */
 
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
