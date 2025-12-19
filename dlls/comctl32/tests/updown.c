@@ -48,6 +48,7 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "v6util.h"
 #include "msg.h"
 
 #define expect(expected,got) expect_(__LINE__, expected, got)
@@ -603,7 +604,7 @@ static void test_updown_pos32(void)
     DestroyWindow(updown);
 }
 
-static void test_updown_buddy(void)
+static void test_updown_buddy(BOOL is_v6)
 {
     HWND updown, buddyReturn, buddy;
     RECT rect, rect2;
@@ -646,7 +647,7 @@ static void test_updown_buddy(void)
     updown= create_updown_control(UDS_ALIGNRIGHT | UDS_ARROWKEYS, buddy);
     ok(proc != (WNDPROC)GetWindowLongPtrA(buddy, GWLP_WNDPROC), "Subclassing expected\n");
 
-    if (pSetWindowSubclass)
+    if (pSetWindowSubclass && ! is_v6)
     {
         /* updown uses subclass helpers for buddy on >5.8x systems */
         ok(GetPropA(buddy, "CC32SubclassInfo") != NULL, "Expected CC32SubclassInfo property\n");
@@ -1078,6 +1079,9 @@ static void init_functions(void)
 
 START_TEST(updown)
 {
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
+
     init_functions();
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1092,7 +1096,32 @@ START_TEST(updown)
     test_updown_create();
     test_updown_pos();
     test_updown_pos32();
-    test_updown_buddy();
+    test_updown_buddy(FALSE);
+    test_updown_base();
+    test_updown_unicode();
+    test_UDS_SETBUDDY();
+    test_UDS_SETBUDDYINT();
+    test_CreateUpDownControl();
+    test_updown_pos_notifications();
+
+    DestroyWindow(g_edit);
+
+    if (!load_v6_module(&ctx_cookie, &hCtx))
+    {
+        DestroyWindow(parent_wnd);
+        return;
+    }
+
+    init_functions();
+
+    g_edit = create_edit_control();
+    ok(g_edit != NULL, "Failed to create edit control\n");
+
+    /* comctl32 version 6 tests start here */
+    test_updown_create();
+    test_updown_pos();
+    test_updown_pos32();
+    test_updown_buddy(TRUE);
     test_updown_base();
     test_updown_unicode();
     test_UDS_SETBUDDY();
@@ -1101,6 +1130,8 @@ START_TEST(updown)
     test_updown_pos_notifications();
 
     uninit_winevent_hook();
+
+    unload_v6_module(ctx_cookie, hCtx);
 
     DestroyWindow(g_edit);
     DestroyWindow(parent_wnd);
