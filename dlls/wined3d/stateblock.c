@@ -84,6 +84,7 @@ struct wined3d_stateblock
 {
     LONG ref;
     struct wined3d_device *device;
+    enum wined3d_stateblock_type type;
 
     struct wined3d_saved_states changed;
 
@@ -1970,6 +1971,13 @@ void CDECL wined3d_stateblock_set_viewport(struct wined3d_stateblock *stateblock
 {
     TRACE("stateblock %p, viewport %p.\n", stateblock, viewport);
 
+    if (stateblock->type == WINED3D_SBT_PRIMARY
+            && !memcmp(viewport, &stateblock->stateblock_state.viewport, sizeof(*viewport)))
+    {
+        TRACE("Ignoring redundant call on a primary stateblock.\n");
+        return;
+    }
+
     stateblock->stateblock_state.viewport = *viewport;
     stateblock->changed.viewport = TRUE;
     stateblock->changed.point_scale = TRUE;
@@ -2524,6 +2532,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const stru
 
     stateblock->ref = 1;
     stateblock->device = device;
+    stateblock->type = type;
     stateblock->stateblock_state.light_state = &stateblock->light_state;
     wined3d_stateblock_state_init(&stateblock->stateblock_state, device,
             type == WINED3D_SBT_PRIMARY ? WINED3D_STATE_INIT_DEFAULT : 0);
