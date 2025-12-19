@@ -1145,14 +1145,12 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	case WM_PAINT:
 	    return UPDOWN_Paint (infoPtr, (HDC)wParam);
 
-	case UDM_GETACCEL:
-	    if (wParam==0 && lParam==0) return infoPtr->AccelCount;
-	    if (wParam && lParam) {
-		int temp = min(infoPtr->AccelCount, wParam);
-	        memcpy((void *)lParam, infoPtr->AccelVect, temp*sizeof(UDACCEL));
-	        return temp;
-      	    }
-	    return 0;
+        case UDM_GETACCEL:
+            if (wParam && lParam) {
+                int temp = min(infoPtr->AccelCount, wParam);
+                memcpy((void *)lParam, infoPtr->AccelVect, temp * sizeof(UDACCEL));
+            }
+            return infoPtr->AccelCount;
 
 	case UDM_SETACCEL:
 	{

@@ -1075,6 +1075,14 @@ static void test_accel(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    r = SendMessageA(updown, UDM_GETACCEL, 0, (LPARAM)accel);
+    expect(3, r);
+
+    r = SendMessageA(updown, UDM_GETACCEL, 1, (LPARAM)accel);
+    expect(3, r);
+    expect(0, accel[0].nSec);
+    expect(1, accel[0].nInc);
+
     r = SendMessageA(updown, UDM_GETACCEL, 4, (LPARAM)accel);
     expect(3, r);
     expect(0, accel[0].nSec);
