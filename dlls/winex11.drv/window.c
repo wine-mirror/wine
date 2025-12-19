@@ -2025,6 +2025,7 @@ static BOOL window_set_pending_activate( HWND hwnd )
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
     if ((pending = !!data->wm_state_serial)) data->pending_state.activate = TRUE;
+    if (data->pending_state.wm_state == WithdrawnState) pending = TRUE;
     release_win_data( data );
 
     return pending;
