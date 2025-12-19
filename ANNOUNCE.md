@@ -1,14 +1,9 @@
-The Wine development release 11.0-rc2 is now available.
-
-This is the first release candidate for the upcoming Wine 11.0. It
-marks the beginning of the yearly code freeze period. Please give this
-release a good testing and report any issue that you find, to help us
-make the final 11.0 as good as possible.
+The Wine development release 11.0-rc3 is now available.
 
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
-The source is available at <https://dl.winehq.org/wine/source/11.0/wine-11.0-rc2.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/11.0/wine-11.0-rc3.tar.xz>
 
 Binary packages for various distributions will be available
 from the respective [download sites][1].
@@ -20,141 +15,100 @@ See the file [AUTHORS][3] for the complete list.
 
 [1]: https://gitlab.winehq.org/wine/wine/-/wikis/Download
 [2]: https://gitlab.winehq.org/wine/wine/-/wikis/Documentation
-[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-11.0-rc2/AUTHORS
+[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-11.0-rc3/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 11.0-rc2 (total 28):
+### Bugs fixed in 11.0-rc3 (total 17):
 
- - #12401  NET Framework 2.0, 3.0, 4.0 installers and other apps that make use of GAC API for managed assembly installation on NTFS filesystems need reparse point/junction API support (FSCTL_SET_REPARSE_POINT/FSCTL_GET_REPARSE_POINT)
- - #38652  VMR9 Owner and Clipping hwnd
- - #43110  Indycar Series crashes on start
- - #53380  After 7.13 update, components in pop-up windows, sliders and buttons, do not work. ThumbsPlus 10 Pro
- - #53737  Incoming (game): crashes after the intro video
- - #56177  The 64-bit uxtheme:system fails on Windows 10 2004+
- - #56286  Evil Under the Sun (French version) crashes when starting a new game
- - #56462  PlayOnline Viewer crashes when Wine is built without gstreamer support
- - #57393  MS Office 2013: Slide out File menu panel is behind the editing page
- - #57960  ChessBase 18 hangs / stops accepting input a few seconds after launch
- - #58171  Breath of Fire IV, Ys VI crashes on the opening video
- - #58261  Ys Origin: videos playing upside down
- - #58724  Heroes of the Storm doesn't start
- - #58811  Steam: Unable to display the intended GUI windows due to steamwebhelper being unresponsive.
- - #58824  Melonloader exit with an error code
- - #58844  Command & Conquer Tiberian Sun (C&C Red Alert II): black rectangle instead of showing menus
- - #58914  Basic Windows Combobox are randomly missing entries
- - #59012  Maximized windows cannot be minimized on kde
- - #59053  Mario Multiverse demo crashes upon launch
- - #59069  Splinter Cell: Intro video window is invisible
- - #59089  Forms in certain programs redraw very slowly
- - #59091  UbisoftConnect window completely broken
- - #59093  Various GL driver errors, OOM, and hangs on 32-bit after 4286e07f8
- - #59094  Itch.io client shows empty white window on start
- - #59097  Earth 2150 fails to play video
- - #59100  Worms Revolution displays only black screen
- - #59102  Minimizing fullscreen notepad and restoring gives a black window
- - #59110  Memory leak in lookup_unix_name
+ - #45483  Installation of the DirectX 8.1 SDK fails due to msi custom action failure
+ - #46033  Execution of commands that contain special symbols will be truncated.
+ - #52373  Call of Cthulhu intro videos don't play correctly
+ - #53751  RollerCoaster Tycoon 1-2: rename dialog is hidden behind game screen
+ - #54425  user32:clibpoard - test_string_data_process() fails on Windows in mixed locales
+ - #54626  Saving files in Microsoft Word/Excel 2010 creates useless shortcut files
+ - #56932  Null pointer dereference in MiniDumpWriteDump
+ - #57570  Syntax Error in CMD Batch Parsing
+ - #58454  Regression in Ti Nspire software
+ - #58483  Burnout Paradise has rendering issues
+ - #58491  Flickering on video-surveilance-app is back
+ - #58709  upgrade to 10.15 results in garbled fullscreen in Limelight Lemonade Jam
+ - #59047  VRChat sound output is broken after video playback start when using AVPro player
+ - #59096  GLX backend doesn't work with Nvidia binary drivers since Wine-10.19
+ - #59099  Mahjong game again does not display when launched - appears locked or caught in an endless loop
+ - #59108  Steam: Client starts up, but all window content is black or white.
+ - #59123  Performance issues in Clickteam games
 
-### Changes since 11.0-rc1:
+### Changes since 11.0-rc2:
 ```
-Alexandre Julliard (4):
-      gitlab: Avoid error when parsing the minor number of a .0 release.
-      xactengine/tests: Remove todo_wine from tests that succeed now.
-      tomcrypt: Avoid macro redefinition warnings.
-      ir50_32: Import winegstreamer directly.
+Alexandre Julliard (14):
+      user32/tests: Get the codepage from the user locale for CF_TEXT conversions.
+      d3d11/tests: Mark some tests that fail on gitlab CI as todo_wine.
+      d3d9/tests: Mark some tests that fail on gitlab CI as todo_wine.
+      win32u/tests: Fix a test failure with llvmpipe on 64-bit.
+      amstream/tests: Fix test failures on 64-bit Windows.
+      d3d8/tests: Disable a todo_wine that succeeds in new wow64.
+      d3d10core/tests: Mark some tests that fail on Gitlab CI as todo_wine.
+      d3d11/tests: Mark some tests that fail on Gitlab CI as todo_wine.
+      imm32/tests: Mark a test that fails on Gitlab CI as todo_wine.
+      ntdll: Set status in IO_STATUS_BLOCK on success.
+      ntdll/tests: Comment out one more instance of setting %fs register.
+      win32u: Only compare 32 bits of wparam in WM_STYLECHANGED handling.
+      kernel32/tests: Don't test volatile register values.
+      kernel32/tests: Synchronize the debug thread startup with the main thread.
 
-André Zwing (2):
-      ntdll: Remove superfluous code.
-      ntdll/unix: Add bti c for call dispatchers on ARM64.
+Bernhard Übelacker (1):
+      twain_32/tests: Test with twaindsm.dll at 64-bits.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+Brendan Shanks (1):
+      winemac: Report correct dimensions in macdrv_get_monitors() when retina mode is enabled.
 
-Bernhard Übelacker (5):
-      msado15: Remove left over free in get_accessor (ASan).
-      msado15: Add missing return when malloc failed.
-      devenum/tests: Skip test if no video capture device is present.
-      win32u/tests: Dynamically load function D3DKMTOpenKeyedMutexFromNtHandle.
-      win32u/tests: Use dynamically loaded D3DKMTOpenKeyedMutexFromNtHandle.
+Byeong-Sik Jeon (1):
+      po: Update Korean translation.
 
-Daniel Lehman (1):
-      ntdll: Fix memory leak in reparse code path.
+Elizabeth Figura (3):
+      d3d11/tests: Use explicit todo markers for test_uint_instructions() failures.
+      ddraw: Check for DDSCAPS_PRIMARYSURFACE in ddraw_gdi_is_front().
+      wined3d: Only invalidate enabled clip planes.
 
-Dmitry Timoshkov (2):
-      msi/tests: Add a test for MsiDecomposeDescriptor() with a product with only one feature.
-      msi: MsiDecomposeDescriptor() should look up single feature of the product.
+Eric Pouech (2):
+      dbghelp: Don't crash when creating minidump without exception pointers.
+      dbghelp: Skip compilation units with attributes imported from .dwz.
 
-Elizabeth Figura (11):
-      quartz/tests: Test avidec source media type after dynamic format change.
-      quartz/avidec: Alter the current media type during dynamic format change.
-      winegstreamer: Handle dynamic format change.
-      amstream/tests: Test AM_MEDIA_TYPE generation for an existing sample and sub-rect.
-      amstream: Set the source/target rects from the sample rect in GetMediaType().
-      quartz/tests: Test using the AVI decompressor with rects.
-      quartz/avidec: Support nontrivial rects.
-      ir50_32/tests: Test extended decompression functions.
-      ir50_32: Implement extended decompression.
-      winegstreamer: Support dynamic reconnection in the DirectShow transform.
-      winegstreamer: Fix a double free (Coverity).
+Hans Leidekker (1):
+      nsiproxy.sys: Assign the highest metric value to loopback adapters.
 
-Hans Leidekker (4):
-      msi/tests: Allow registered owner and company to be unset.
-      msi/tests: Fix pending renames processing on Windows 11.
-      msi/tests: Fix test failures when running as an unprivileged user.
-      msi/tests: Fix a test failure on ARM64 Windows 11.
+Jactry Zeng (2):
+      urlmon: Add missing period to Internet zone description.
+      po: Update Simplified Chinese translation.
 
-Henri Verbeet (4):
-      wined3d: Do not set "context_gl->needs_set" in wined3d_context_gl_release().
-      wined3d: Get rid of the "restore_pf" field from struct wined3d_context_gl.
-      wined3d: Expect WINED3D_VIEW_TEXTURE_CUBE for cube textures in get_texture_view_target().
-      wined3d: Properly compare reduction modes in wined3d_texture_gl_apply_sampler_desc().
+Matteo Bruni (4):
+      winex11: Don't try to set NULL icon data.
+      mfmediaengine: Apply stream volume instead of session-wide.
+      mfmediaengine: Set SAR session ID to a random GUID.
+      mfmediaengine/tests: Test WASAPI audio session interaction.
 
-Huw D. M. Davies (1):
-      winemac: Remove unused variable.
+Paul Gofman (3):
+      ntdll: Fix a crash in server_get_name_info() when there is NULL name.
+      win32u: Register WGL_ARB_pixel_format before WGL_ARB_pixel_format_float.
+      winex11.drv: Register WGL_ARB_pixel_format extension.
 
-Jacek Caban (1):
-      winegcc: Add libs/ to library search paths when --wine-objdir is used.
+Rémi Bernon (12):
+      opengl32: Avoid crashing if WGL_WINE_query_renderer is not supported.
+      win32u: Use the window fullscreen exclusive rect for vulkan swapchain.
+      win32u: Don't set window pixel format if drawable creation failed.
+      win32u: Fix clipping out of vulkan and other process client surfaces.
+      win32u/tests: Test that wine-specific D3DKMTEscape codes are harmless.
+      opengl32: Check extension function pointers before using them.
+      wined3d: Update the context DC from its swapchain if it changed.
+      winex11: Avoid creating window data entirely for offscreen windows.
+      winex11: Unmap windows only when SWP_HIDEWINDOW is set.
+      winex11: Don't request activation of withdrawn windows.
+      ntdll: Allow region allocation for some non growable heaps.
+      win32u: Get the context drawable pointer again after context_sync_drawables.
 
-Jiangyi Chen (1):
-      opengl32: Fix a copy error when printing the log.
-
-Nikolay Sivov (1):
-      Revert "dwrite: Use uppercase paths for local file loader keys."
-
-Paul Gofman (4):
-      kernel32/tests: Disable heap tests which are now crashing on Windows.
-      kernel32/tests: Add more tests for heap total and commit sizes.
-      ntdll: Align commit size in RtlCreateHeap().
-      ntdll: Compute total size as aligned commit size in RtlCreateHeap().
-
-Piotr Caban (1):
-      msado15: Ignore IRowset:GetProperties return value in rsconstruction_put_Rowset (Coverity).
-
-Rémi Bernon (15):
-      win32u: Introduce a new NtUserGetPresentRect driver-specific call.
-      win32u: Use the window present rect as visible rect when set.
-      win32u: Fixup fullscreen cursor clipping when present rect is set.
-      winex11: Ignore children clipping in exclusive fullscreen mode.
-      winex11: Retrieve the whole window when creating client window for other process.
-      opengl32: Return the buffers when invalid draw/read buffer are used.
-      winex11: Check for events again after processing delayed events.
-      win32u: Iterate the client surfaces rather than the toplevel window tree.
-      opengl32: Retrieve display OpenGL functions table only when needed.
-      win32u: Process every driver event in NtUserGetAsyncKeyState.
-      win32u: Remove unnecessary drawable flush in context_sync_drawables.
-      winex11: Use window DPI for client surface position and geometry.
-      winex11: Avoid mapping points with exclusive fullscreen windows.
-      win32u: Avoid setting surface layered with the dummy surface.
-      win32u: Update window state after setting internal pixel format.
-
-Sven Baars (2):
-      ntdll: Use the correct CPU tick length on macOS.
-      ntdll: Include idle time in kernel time on all platforms.
-
-Yuxuan Shui (5):
-      mf/tests: Test if WMA decoder DMO accept output type with a different num of channels.
-      mf/tests: Test SetOutputType with a wrong formattype on WMA decoder.
-      mf/tests: Test if WMV decoder DMO accepts output type with a different size.
-      winegstreamer: Reject setting WMA DMO with an output type with a wrong formattype.
-      winegstreamer: Reject SetOutput with a different number of channels.
+Stefan Dösinger (3):
+      wined3d: Initialize managed textures in LOCATION_SYSMEM.
+      d3d9/tests: Test initial texture dirty state.
+      d3d8/tests: Test initial texture dirty state.
 ```
