@@ -2022,6 +2022,95 @@ static HRESULT copypixels_to_64bppRGBA(struct FormatConverter *This, const WICRe
         free(srcdata);
         return hr;
     }
+
+    case format_32bppRGBA:
+    {
+        UINT srcstride, srcdatasize;
+        const BYTE *srcpixel;
+        const BYTE *srcrow;
+        WORD *dstpixel;
+        BYTE *srcdata;
+        BYTE *dstrow;
+        INT x, y;
+
+        if (!prc)
+            return S_OK;
+
+        srcstride = 4 * prc->Width;
+        srcdatasize = srcstride * prc->Height;
+
+        srcdata = malloc(srcdatasize);
+        if (!srcdata) return E_OUTOFMEMORY;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+        if (SUCCEEDED(hr))
+        {
+            srcrow = srcdata;
+            dstrow = pbBuffer;
+            for (y = 0; y < prc->Height; y++)
+            {
+                srcpixel = srcrow;
+                dstpixel = (WORD *)dstrow;
+                for (x = 0; x < prc->Width; x++)
+                {
+                    *dstpixel++ = srcpixel[0] * 257;
+                    *dstpixel++ = srcpixel[1] * 257;
+                    *dstpixel++ = srcpixel[2] * 257;
+                    *dstpixel++ = srcpixel[3] * 257;
+                    srcpixel += 4;
+                }
+                srcrow += srcstride;
+                dstrow += cbStride;
+            }
+        }
+        free(srcdata);
+        return hr;
+    }
+
+    case format_32bppBGRA:
+    {
+        UINT srcstride, srcdatasize;
+        const BYTE *srcpixel;
+        const BYTE *srcrow;
+        WORD *dstpixel;
+        BYTE *srcdata;
+        BYTE *dstrow;
+        INT x, y;
+
+        if (!prc)
+            return S_OK;
+
+        srcstride = 4 * prc->Width;
+        srcdatasize = srcstride * prc->Height;
+
+        srcdata = malloc(srcdatasize);
+        if (!srcdata) return E_OUTOFMEMORY;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+        if (SUCCEEDED(hr))
+        {
+            srcrow = srcdata;
+            dstrow = pbBuffer;
+            for (y = 0; y < prc->Height; y++)
+            {
+                srcpixel = srcrow;
+                dstpixel = (WORD *)dstrow;
+                for (x = 0; x < prc->Width; x++)
+                {
+                    *dstpixel++ = srcpixel[2] * 257;
+                    *dstpixel++ = srcpixel[1] * 257;
+                    *dstpixel++ = srcpixel[0] * 257;
+                    *dstpixel++ = srcpixel[3] * 257;
+                    srcpixel += 4;
+                }
+                srcrow += srcstride;
+                dstrow += cbStride;
+            }
+        }
+        free(srcdata);
+        return hr;
+    }
+
     default:
         FIXME("Unimplemented conversion path %d.\n", source_format);
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
