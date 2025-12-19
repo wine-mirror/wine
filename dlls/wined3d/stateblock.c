@@ -1799,6 +1799,12 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
         return;
     }
 
+    if (stateblock->type == WINED3D_SBT_PRIMARY && value == stateblock->stateblock_state.texture_states[stage][state])
+    {
+        TRACE("Ignoring redundant call on a primary stateblock.\n");
+        return;
+    }
+
     stateblock->stateblock_state.texture_states[stage][state] = value;
     stateblock->changed.textureState[stage] |= 1u << state;
 
