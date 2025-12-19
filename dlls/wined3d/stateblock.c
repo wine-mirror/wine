@@ -1590,6 +1590,10 @@ void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *
         wined3d_vertex_declaration_decref(prev);
     stateblock->stateblock_state.vertex_declaration = declaration;
     stateblock->changed.vertexDecl = TRUE;
+
+    if (declaration == prev)
+        return;
+
     /* Texture matrices depend on the format of the TEXCOORD attributes. */
     /* FIXME: They also depend on whether the draw is pretransformed,
      * but that should go away. */
