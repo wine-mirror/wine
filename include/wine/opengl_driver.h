@@ -175,6 +175,7 @@ struct opengl_drawable_funcs
 #define GL_FLUSH_FINISHED      0x01
 #define GL_FLUSH_INTERVAL      0x02
 #define GL_FLUSH_UPDATED       0x04
+#define GL_FLUSH_PRESENT       0x08
 
 /* a driver opengl drawable, either a client surface of a pbuffer */
 struct opengl_drawable
