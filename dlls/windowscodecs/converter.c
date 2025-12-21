@@ -1314,6 +1314,64 @@ static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRec
             return res;
         }
         return S_OK;
+
+    case format_8bppIndexed:
+        if (prc)
+        {
+            HRESULT res;
+            INT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcbyte;
+            BYTE *dstrow;
+            BYTE *dstpixel;
+            WICColor colors[256];
+            IWICPalette *palette;
+            UINT actualcolors;
+
+            res = PaletteImpl_Create(&palette);
+            if (FAILED(res)) return res;
+
+            res = IWICBitmapSource_CopyPalette(This->source, palette);
+            if (SUCCEEDED(res))
+                res = IWICPalette_GetColors(palette, 256, colors, &actualcolors);
+
+            IWICPalette_Release(palette);
+
+            if (FAILED(res)) return res;
+
+            srcstride = prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = malloc(srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcbyte = srcrow;
+                    dstpixel = dstrow;
+                    for (x=0; x<prc->Width; x++)
+                    {
+                        DWORD argb = colors[*srcbyte++];
+                        *dstpixel++ = argb & 0xff;
+                        *dstpixel++ = (argb >> 8) & 0xff;
+                        *dstpixel++ = (argb >> 16) & 0xff;
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            free(srcdata);
+            return res;
+        }
+        return S_OK;
+
     case format_24bppBGR:
     case format_24bppRGB:
         if (prc)
@@ -1477,7 +1535,7 @@ static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRec
         return S_OK;
 
     default:
-        FIXME("Unimplemented conversion path!\n");
+        FIXME("Unimplemented conversion path! (%d)\n", source_format);
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
     }
 }
@@ -1489,6 +1547,63 @@ static HRESULT copypixels_to_24bppRGB(struct FormatConverter *This, const WICRec
 
     switch (source_format)
     {
+    case format_8bppIndexed:
+        if (prc)
+        {
+            HRESULT res;
+            INT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcbyte;
+            BYTE *dstrow;
+            BYTE *dstpixel;
+            WICColor colors[256];
+            IWICPalette *palette;
+            UINT actualcolors;
+
+            res = PaletteImpl_Create(&palette);
+            if (FAILED(res)) return res;
+
+            res = IWICBitmapSource_CopyPalette(This->source, palette);
+            if (SUCCEEDED(res))
+                res = IWICPalette_GetColors(palette, 256, colors, &actualcolors);
+
+            IWICPalette_Release(palette);
+
+            if (FAILED(res)) return res;
+
+            srcstride = prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = malloc(srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcbyte = srcrow;
+                    dstpixel = dstrow;
+                    for (x=0; x<prc->Width; x++)
+                    {
+                        DWORD argb = colors[*srcbyte++];
+                        *dstpixel++ = (argb >> 16) & 0xff;
+                        *dstpixel++ = (argb >> 8) & 0xff;
+                        *dstpixel++ =  argb & 0xff;
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            free(srcdata);
+            return res;
+        }
+        return S_OK;
+
     case format_24bppBGR:
     case format_24bppRGB:
         if (prc)
@@ -1550,7 +1665,7 @@ static HRESULT copypixels_to_24bppRGB(struct FormatConverter *This, const WICRec
         }
         return S_OK;
     default:
-        FIXME("Unimplemented conversion path!\n");
+        FIXME("Unimplemented conversion path! (%d)\n", source_format);
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
     }
 }

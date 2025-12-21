@@ -382,7 +382,7 @@ static void compare_bitmap_data(const struct bitmap_data *src, const struct bitm
      * optimized palette generation implementation. We either need to
      * assign our own palette, or just skip the comparison.
      */
-    if (!(!is_indexed_format(src->format) && is_indexed_format(expect->format)))
+    if (is_indexed_format(src->format) == is_indexed_format(expect->format))
         ok(compare_bits(expect, buffersize, converted_bits), "unexpected pixel data (%s)\n", name);
 
     /* Test with NULL rectangle - should copy the whole bitmap */
@@ -390,7 +390,7 @@ static void compare_bitmap_data(const struct bitmap_data *src, const struct bitm
     hr = IWICBitmapSource_CopyPixels(source, NULL, stride, buffersize, converted_bits);
     ok(SUCCEEDED(hr), "CopyPixels(%s,rc=NULL) failed, hr=%lx\n", name, hr);
     /* see comment above */
-    if (!(!is_indexed_format(src->format) && is_indexed_format(expect->format)))
+    if (is_indexed_format(src->format) == is_indexed_format(expect->format))
         ok(compare_bits(expect, buffersize, converted_bits), "unexpected pixel data (%s)\n", name);
 
     HeapFree(GetProcessHeap(), 0, converted_bits);
@@ -837,7 +837,7 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(BlackWhite), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(2bppGray), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(4bppGray), TRUE, TRUE, 35},
-        {WIC_PIXEL_FORMAT(8bppGray), TRUE, TRUE, 26},
+        {WIC_PIXEL_FORMAT(8bppGray), TRUE, TRUE, 25},
         {WIC_PIXEL_FORMAT(16bppGray), TRUE, TRUE, 35},
 
         {WIC_PIXEL_FORMAT(8bppAlpha), TRUE, TRUE, 35, TRUE},
@@ -845,8 +845,8 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(16bppBGR555), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(16bppBGR565), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(16bppBGRA5551), TRUE, TRUE, 33, TRUE},
-        {WIC_PIXEL_FORMAT(24bppBGR), TRUE, TRUE, 27},
-        {WIC_PIXEL_FORMAT(24bppRGB), TRUE, TRUE, 30},
+        {WIC_PIXEL_FORMAT(24bppBGR), TRUE, TRUE, 26},
+        {WIC_PIXEL_FORMAT(24bppRGB), TRUE, TRUE, 29},
         {WIC_PIXEL_FORMAT(32bppBGR), TRUE, TRUE, 13},
         {WIC_PIXEL_FORMAT(32bppBGRA), TRUE, TRUE, 13},
         {WIC_PIXEL_FORMAT(32bppPBGRA), TRUE, TRUE, 13},
@@ -2328,6 +2328,9 @@ START_TEST(converter)
     test_conversion(&testdata_1bppIndexed, &testdata_8bppIndexed_BW, "1bppIndexed -> 8bppIndexed", TRUE);
     test_conversion(&testdata_2bppIndexed, &testdata_8bppIndexed_4colors, "2bppIndexed -> 8bppIndexed", TRUE);
     test_conversion(&testdata_4bppIndexed, &testdata_8bppIndexed, "4bppIndexed -> 8bppIndexed", TRUE);
+
+    test_conversion(&testdata_8bppIndexed, &testdata_24bppRGB, "8bppIndexed -> 24bppRGB", FALSE);
+    test_conversion(&testdata_8bppIndexed, &testdata_24bppBGR, "8bppIndexed -> 24bppBGR", FALSE);
 
     test_conversion(&testdata_32bppBGRA, &testdata_32bppBGR, "BGRA -> BGR", FALSE);
     test_conversion(&testdata_32bppBGR, &testdata_32bppBGRA, "BGR -> BGRA", FALSE);
