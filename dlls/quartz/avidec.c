@@ -130,7 +130,7 @@ static int AVIDec_DropSample(struct avi_decompressor *This, REFERENCE_TIME tStar
 static bool is_nontrivial_rect(const BITMAPINFOHEADER *header, const RECT *rect)
 {
     return rect->left || rect->top || (rect->right && rect->right != header->biWidth)
-            || (rect->bottom && rect->bottom != header->biHeight);
+            || (rect->bottom && rect->bottom != abs(header->biHeight));
 }
 
 static bool needs_decompressex(const AM_MEDIA_TYPE *mt)
