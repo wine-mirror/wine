@@ -22637,6 +22637,7 @@ wine_fn_config_makefile dlls/hvsimanagementapi enable_hvsimanagementapi
 wine_fn_config_makefile dlls/hvsimanagementapi/tests enable_tests
 wine_fn_config_makefile dlls/ia2comproxy enable_ia2comproxy
 wine_fn_config_makefile dlls/iccvid enable_iccvid
+wine_fn_config_makefile dlls/iccvid/tests enable_tests
 wine_fn_config_makefile dlls/icmp enable_icmp
 wine_fn_config_makefile dlls/icmui enable_icmui
 wine_fn_config_makefile dlls/icmui/tests enable_tests
