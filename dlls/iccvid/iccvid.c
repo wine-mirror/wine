@@ -400,7 +400,8 @@ typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit,
  * inverted - if true the output frame is written top-down
  */
 static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
-           unsigned char *output, unsigned int out_width, unsigned int out_height, int bit_per_pixel, BOOL inverted)
+        unsigned char *output, unsigned int out_width, unsigned int out_height,
+        unsigned int frm_stride, int bit_per_pixel, BOOL inverted)
 {
     cvid_codebook *v4_codebook, *v1_codebook, *codebook = NULL;
     unsigned long x, y, y_bottom, cnum, strip_id, chunk_id,
@@ -408,7 +409,7 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
     long top_size, chunk_size;
     unsigned char *frm_ptr;
     unsigned int i, cur_strip, addr;
-    int d0, d1, d2, d3, frm_stride, bpp = 3;
+    int d0, d1, d2, d3, bpp = 3;
     fn_cvid_v1 cvid_v1 = cvid_v1_24;
     fn_cvid_v4 cvid_v4 = cvid_v4_24;
     struct frame_header
@@ -453,7 +454,6 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
             break;
         }
 
-    frm_stride = get_stride(out_width, bpp * 8);
     frm_ptr = output;
 
     if(frame.length != size)
@@ -752,7 +752,7 @@ static void ICCVID_dump_BITMAPINFO(const BITMAPINFO * bmi)
         debugstr_fourcc(bmi->bmiHeader.biCompression));
 }
 
-static inline int ICCVID_CheckMask(RGBQUAD bmiColors[3], COLORREF redMask, COLORREF blueMask, COLORREF greenMask)
+static int ICCVID_CheckMask(const RGBQUAD bmiColors[3], COLORREF redMask, COLORREF blueMask, COLORREF greenMask)
 {
     COLORREF realRedMask = MAKECOLOUR32(bmiColors[0].rgbRed, bmiColors[0].rgbGreen, bmiColors[0].rgbBlue);
     COLORREF realBlueMask = MAKECOLOUR32(bmiColors[1].rgbRed, bmiColors[1].rgbGreen, bmiColors[1].rgbBlue);
@@ -768,33 +768,34 @@ static inline int ICCVID_CheckMask(RGBQUAD bmiColors[3], COLORREF redMask, COLOR
     return FALSE;
 }
 
-static LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
+static LRESULT decompress_query( ICCVID_Info *info, const ICDECOMPRESSEX *params )
 {
-    TRACE("ICM_DECOMPRESS_QUERY %p %p %p\n", info, in, out);
+    const BITMAPINFO *in = (BITMAPINFO *)params->lpbiSrc, *out = (BITMAPINFO *)params->lpbiDst;
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
 
     TRACE("in: ");
     ICCVID_dump_BITMAPINFO(in);
+    TRACE( "in offset (%d,%d), size %dx%d\n", params->xSrc, params->ySrc, params->dxSrc, params->dySrc );
 
     if( in->bmiHeader.biCompression != ICCVID_MAGIC )
         return ICERR_BADFORMAT;
+
+    if (params->xSrc || params->ySrc || params->dxSrc != in->bmiHeader.biWidth
+            || params->dySrc != in->bmiHeader.biHeight)
+    {
+        TRACE("nontrivial source rect\n");
+        return ICERR_BADPARAM;
+    }
 
     if( out )
     {
         TRACE("out: ");
         ICCVID_dump_BITMAPINFO(out);
+        TRACE( "out offset (%d,%d), size %dx%d\n", params->xDst, params->yDst, params->dxDst, params->dyDst );
 
-        if( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes )
-            return ICERR_BADFORMAT;
-        if( in->bmiHeader.biHeight != out->bmiHeader.biHeight )
-        {
-            if( in->bmiHeader.biHeight != -out->bmiHeader.biHeight )
-                return ICERR_BADFORMAT;
-            TRACE("Detected inverted height for video output\n");
-        }
-        if( in->bmiHeader.biWidth != out->bmiHeader.biWidth )
+        if (in->bmiHeader.biWidth != params->dxDst || in->bmiHeader.biHeight != params->dyDst)
             return ICERR_BADFORMAT;
 
         switch( out->bmiHeader.biCompression )
@@ -841,9 +842,11 @@ static LRESULT ICCVID_DecompressGetFormat( ICCVID_Info *info, LPBITMAPINFO in, L
     return size;
 }
 
-static LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
+static LRESULT decompress_begin( ICCVID_Info *info, ICDECOMPRESSEX *params )
 {
-    TRACE("ICM_DECOMPRESS_BEGIN %p %p %p\n", info, in, out);
+    const BITMAPINFO *in = (BITMAPINFO *)params->lpbiSrc, *out = (BITMAPINFO *)params->lpbiDst;
+
+    TRACE( "info %p, in %p, out %p.\n", info, in, out );
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
@@ -877,12 +880,12 @@ static LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBIT
     return ICERR_OK;
 }
 
-static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
+static LRESULT decompress( ICCVID_Info *info, ICDECOMPRESSEX *params )
 {
-    LONG width, height;
-    BOOL inverted;
+    unsigned int stride = get_stride( params->lpbiDst->biWidth, params->lpbiDst->biBitCount );
+    unsigned char *dst = params->lpDst;
 
-    TRACE("ICM_DECOMPRESS %p %p %ld\n", info, icd, size);
+    TRACE( "info %p, params %p.\n", info, params );
 
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return ICERR_BADPARAM;
@@ -892,39 +895,11 @@ static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD si
         return ICERR_BADPARAM;
     }
 
-    width  = icd->lpbiInput->biWidth;
-    height = icd->lpbiInput->biHeight;
-    inverted = -icd->lpbiOutput->biHeight == height;
+    dst += params->yDst * stride;
+    dst += params->xDst * params->lpbiDst->biBitCount / 8;
 
-    decode_cinepak(info->cvinfo, icd->lpInput, icd->lpbiInput->biSizeImage,
-                   icd->lpOutput, width, height, info->bits_per_pixel, inverted);
-
-    return ICERR_OK;
-}
-
-static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size )
-{
-    LONG width, height;
-    BOOL inverted;
-
-    TRACE("ICM_DECOMPRESSEX %p %p %ld\n", info, icd, size);
-
-    if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
-        return ICERR_BADPARAM;
-    if (info->cvinfo==NULL)
-    {
-        ERR("ICM_DECOMPRESSEX sent after ICM_DECOMPRESS_END\n");
-        return ICERR_BADPARAM;
-    }
-
-    /* FIXME: flags are ignored */
-
-    width  = icd->lpbiSrc->biWidth;
-    height = icd->lpbiSrc->biHeight;
-    inverted = -icd->lpbiDst->biHeight == height;
-
-    decode_cinepak(info->cvinfo, icd->lpSrc, icd->lpbiSrc->biSizeImage,
-                   icd->lpDst, width, height, info->bits_per_pixel, inverted);
+    decode_cinepak( info->cvinfo, params->lpSrc, params->lpbiSrc->biSizeImage, dst,
+            params->dxDst, params->dyDst, stride, info->bits_per_pixel, params->lpbiDst->biHeight < 0 );
 
     return ICERR_OK;
 }
@@ -966,6 +941,21 @@ static LRESULT ICCVID_DecompressEnd( ICCVID_Info *info )
         info->cvinfo = NULL;
     }
     return ICERR_OK;
+}
+
+static void fill_decompressex_params( ICDECOMPRESSEX *params,
+        BITMAPINFOHEADER *src, BITMAPINFOHEADER *dst )
+{
+    memset( params, 0, sizeof(*params) );
+    params->lpbiSrc = src;
+    params->lpbiDst = dst;
+    params->dxSrc = src->biWidth;
+    params->dySrc = src->biHeight;
+    if (dst)
+    {
+        params->dxDst = dst->biWidth;
+        params->dyDst = abs(dst->biHeight);
+    }
 }
 
 LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
@@ -1011,22 +1001,47 @@ LRESULT WINAPI ICCVID_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         return ICCVID_GetInfo( info, (ICINFO *)lParam1, (DWORD)lParam2 );
 
     case ICM_DECOMPRESS_QUERY:
-        return ICCVID_DecompressQuery( info, (LPBITMAPINFO) lParam1,
-                                       (LPBITMAPINFO) lParam2 );
+    {
+        ICDECOMPRESSEX params;
+
+        fill_decompressex_params( &params, (BITMAPINFOHEADER *)lParam1, (BITMAPINFOHEADER *)lParam2 );
+        return decompress_query( info, &params );
+    }
+
+    case ICM_DECOMPRESSEX_QUERY:
+        return decompress_query( info, (ICDECOMPRESSEX *)lParam1 );
+
     case ICM_DECOMPRESS_GET_FORMAT:
         return ICCVID_DecompressGetFormat( info, (LPBITMAPINFO) lParam1,
                                        (LPBITMAPINFO) lParam2 );
     case ICM_DECOMPRESS_BEGIN:
-        return ICCVID_DecompressBegin( info, (LPBITMAPINFO) lParam1,
-                                       (LPBITMAPINFO) lParam2 );
+    {
+        ICDECOMPRESSEX params;
+
+        fill_decompressex_params( &params, (BITMAPINFOHEADER *)lParam1, (BITMAPINFOHEADER *)lParam2 );
+        return decompress_begin( info, &params );
+    }
+
+    case ICM_DECOMPRESSEX_BEGIN:
+        return decompress_begin( info, (ICDECOMPRESSEX *)lParam1 );
+
     case ICM_DECOMPRESS:
-        return ICCVID_Decompress( info, (ICDECOMPRESS*) lParam1,
-                                  (DWORD) lParam2 );
+    {
+        const ICDECOMPRESS *params = (ICDECOMPRESS *)lParam1;
+        ICDECOMPRESSEX ex_params;
+
+        fill_decompressex_params( &ex_params, params->lpbiInput, params->lpbiOutput );
+        ex_params.dwFlags = params->dwFlags;
+        ex_params.lpSrc = params->lpInput;
+        ex_params.lpDst = params->lpOutput;
+        return decompress( info, &ex_params );
+    }
+
     case ICM_DECOMPRESSEX:
-        return ICCVID_DecompressEx( info, (ICDECOMPRESSEX*) lParam1, 
-                                  (DWORD) lParam2 );
+        return decompress( info, (ICDECOMPRESSEX *)lParam1 );
 
     case ICM_DECOMPRESS_END:
+    case ICM_DECOMPRESSEX_END:
         return ICCVID_DecompressEnd( info );
 
     case ICM_COMPRESS_QUERY:
