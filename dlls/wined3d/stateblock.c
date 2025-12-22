@@ -2503,6 +2503,14 @@ static void wined3d_stateblock_invalidate_initial_states(struct wined3d_stateblo
     stateblock->changed.fog_constants = 1;
     wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_POINTSIZE_MAX, 1);
     wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_POINTSIZE_MIN, 1);
+    stateblock->changed.extra_vs_args = 1;
+    stateblock->changed.extra_ps_args = 1;
+    stateblock->changed.rasterizer_state = 1;
+    /* These force setting depth/stencil, and blend state.
+     * FIXME: These should probably be made into flags in wined3d_saved_states
+     * like the rest. */
+    wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_BLENDOP, 1);
+    wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_ZENABLE, 1);
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
