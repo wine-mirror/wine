@@ -474,6 +474,13 @@ static void adapter_vk_destroy_device(struct wined3d_device *device)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(device);
     const struct wined3d_vk_info *vk_info = &device_vk->vk_info;
+    struct wined3d *wined3d = device->wined3d;
+
+    /* We need the adapter (which holds the reference to the Vulkan library)
+     * to stick around until we are done making Vulkan calls.
+     * wined3d_device_cleanup() might drop the last reference,
+     * so grab another one here. */
+    wined3d_incref(wined3d);
 
     wined3d_device_cleanup(&device_vk->d);
     wined3d_allocator_cleanup(&device_vk->allocator);
@@ -481,6 +488,7 @@ static void adapter_vk_destroy_device(struct wined3d_device *device)
     wined3d_lock_cleanup(&device_vk->allocator_cs);
 
     VK_CALL(vkDestroyDevice(device_vk->vk_device, NULL));
+    wined3d_decref(wined3d);
     free(device_vk);
 }
 
