@@ -1488,6 +1488,21 @@ static void vk_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_dev
             clear_rects, draw_rect, next_flags, colour, depth, stencil);
 }
 
+static bool vk_blitter_conversion_supported(enum wined3d_blit_op op, const struct wined3d_format *src_format,
+        const struct wined3d_format *dst_format, const struct wined3d_format *resolve_format)
+{
+    if (op == WINED3D_BLIT_OP_RAW_BLIT)
+        return true;
+
+    if (wined3d_format_is_typeless(src_format) || wined3d_format_is_typeless(dst_format))
+        return true;
+
+    if (resolve_format)
+        return true;
+
+    return false;
+}
+
 static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wined3d_context *context,
         const struct wined3d_resource *src_resource, const RECT *src_rect,
         const struct wined3d_resource *dst_resource, const RECT *dst_rect, const struct wined3d_format *resolve_format)
@@ -1521,10 +1536,8 @@ static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wine
             return false;
         }
 
-        if (op != WINED3D_BLIT_OP_RAW_BLIT
-                && wined3d_format_vk(src_format)->vk_format != wined3d_format_vk(dst_format)->vk_format
-                && ((!wined3d_format_is_typeless(src_format) && !wined3d_format_is_typeless(dst_format))
-                        || !resolve_format))
+        if (wined3d_format_vk(src_format)->vk_format != wined3d_format_vk(dst_format)->vk_format
+                && !vk_blitter_conversion_supported(op, src_format, dst_format, resolve_format))
         {
             TRACE("Format conversion not supported.\n");
             return false;
