@@ -1337,7 +1337,11 @@ __ASM_GLOBAL_FUNC( Wow64PrepareForException,
                    "je 1f\n\t"                   /* already in 64-bit mode? */
                    /* copy arguments to 64-bit stack */
                    "mov %rsp,%rsi\n\t"
-                   "leaq 0x5c0(%rdx),%rcx\n\t"   /* cf. KiUserExceptionDispatcher */
+                   "movl $0x5c0,%ecx\n"          /* cf. KiUserExceptionDispatcher */
+                   "movl 0x4d4(%rdx),%edi\n\t"   /* context_ex->All.Length */
+                   "cmp %edi,%ecx\n\t"
+                   "cmovl %edi,%ecx\n\t"         /* max( 0x5c0, context_ex->All.Length ) */
+                   "add %rdx,%rcx\n\t"
                    "sub %rsi,%rcx\n\t"           /* stack size */
                    "sub %rcx,%r14\n\t"           /* reserve same size on 64-bit stack */
                    "and $~0x0f,%r14\n\t"
