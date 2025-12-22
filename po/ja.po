@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-07-02 23:08+0900\n"
+"PO-Revision-Date: 2025-12-22 23:29+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -2466,8 +2466,8 @@ msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
-"Wine は証明書ストアを自動的に選択できますが、証明書の位置を指定することも可能"
-"です。"
+"Wine は証明書ストアを自動的に選択できますが、証明書の位置を指定することもでき"
+"ます。"
 
 #: dlls/cryptui/cryptui.rc:318
 msgid "&Automatically select certificate store"
@@ -3852,16 +3852,12 @@ msgid "Force Feedback Effect"
 msgstr "フォース フィードバック効果"
 
 #: dlls/joy.cpl/joy.rc:67
-#, fuzzy
-#| msgid ""
-#| "Press any button in the controller to activate the chosen effect. The "
-#| "effect direction can be changed with the controller axis."
 msgid ""
 "Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
-"選択した効果を有効化するにはコントローラーのボタンを押してください。効果の方"
-"向はコントローラーの軸で変更できます。"
+"選択した効果を試すにはコントローラーのボタンを押し続けてください。効果の方向"
+"はコントローラーの軸で変更できます。"
 
 #: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
@@ -3922,7 +3918,7 @@ msgstr "振動"
 
 #: dlls/joy.cpl/joy.rc:106
 msgid "Windows.Gaming.Input"
-msgstr ""
+msgstr "Windows.Gaming.Input"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4057,10 +4053,8 @@ msgid "Function expected"
 msgstr "関数を期待していました"
 
 #: dlls/jscript/jscript.rc:55
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'[object]' is not a string object"
-msgstr "'[object]' は日付オブジェクトではありません"
+msgstr "'[object]' は文字列オブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4131,10 +4125,8 @@ msgid "Precision is out of range"
 msgstr "精度指定が範囲外です"
 
 #: dlls/jscript/jscript.rc:74
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Array or arguments object expected"
-msgstr "配列オブジェクトを期待していました"
+msgstr "配列または引数オブジェクトを期待していました"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -4173,30 +4165,25 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "書換不可のプロパティ '|' は変更できません"
 
 #: dlls/jscript/jscript.rc:84
-#, fuzzy
-#| msgid "DataView constructor argument offset is invalid"
 msgid "Typed array constructor argument is invalid"
-msgstr "DataView コンストラクター引数のオフセットが正しくありません"
+msgstr "型付き配列のコンストラクター引数が正しくありません"
 
 #: dlls/jscript/jscript.rc:83
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a typed array object"
-msgstr "'this' は | オブジェクトではありません"
+msgstr "'this' は | 型付き配列ではありません"
 
 #: dlls/jscript/jscript.rc:85
 msgid "Invalid offset/length when creating typed array"
-msgstr ""
+msgstr "型付き配列作成時に指定したオフセットまたは長さが正しくありません"
 
 #: dlls/jscript/jscript.rc:86
 msgid "Invalid begin/end value in typed array subarray method"
 msgstr ""
+"型付き配列の subarray メソッドに指定した先頭または末尾の値が正しくありません"
 
 #: dlls/jscript/jscript.rc:87
-#, fuzzy
-#| msgid "Invalid module type for %1.\n"
 msgid "Invalid source in typed array set"
-msgstr "%1 に対するモジュールの種類が正しくありません。\n"
+msgstr "型付き配列の set に指定したコピー元が正しくありません"
 
 #: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
@@ -7970,7 +7957,7 @@ msgstr "サンプルが書き込み可能ではありません。\n"
 
 #: dlls/mferror/mferror.mc:312
 msgid "Key is invalid.\n"
-msgstr "キーが不正です。\n"
+msgstr "キーが正しくありません。\n"
 
 #: dlls/mferror/mferror.mc:319
 msgid "Bad startup version.\n"
@@ -9636,28 +9623,20 @@ msgid "Scanning"
 msgstr "スキャン中"
 
 #: dlls/sane.ds/sane.rc:58
-#, fuzzy
-#| msgid "feature from:"
 msgid "Manufacturer:"
-msgstr "機能の導入元:"
+msgstr "製造元:"
 
 #: dlls/sane.ds/sane.rc:60
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product family:"
-msgstr "製品の更新:"
+msgstr "製品ファミリー:"
 
 #: dlls/sane.ds/sane.rc:62
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product name:"
-msgstr "製品の更新:"
+msgstr "製品名:"
 
 #: dlls/sane.ds/sane.rc:64
-#, fuzzy
-#| msgid "Screen resolution"
 msgid "Resolution:"
-msgstr "画面の解像度"
+msgstr "解像度:"
 
 #: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
 msgid "Page"
@@ -9695,7 +9674,7 @@ msgstr "µs"
 
 #: dlls/sane.ds/sane.rc:43
 msgid "LineArt"
-msgstr ""
+msgstr "線画"
 
 #: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
 #: programs/ipconfig/ipconfig.rc:34
@@ -9707,20 +9686,23 @@ msgid ""
 "The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
 "scanned."
 msgstr ""
+"自動原稿送り装置 (ADF) が空です。スキャンする原稿をセットしてください。"
 
 #: dlls/sane.ds/sane.rc:47
 msgid ""
 "The scanner reports a paper jam. Check for additional information on device "
 "display."
 msgstr ""
+"スキャナーが紙詰まりを報告しています。機器のディスプレイで追加情報を確認して"
+"ください。"
 
 #: dlls/sane.ds/sane.rc:48
 msgid "The scanner cover is open. Please close the scanner."
-msgstr ""
+msgstr "スキャナーのカバーが開いています。スキャナーを閉じてください。"
 
 #: dlls/sane.ds/sane.rc:49
 msgid "The scanner is busy. Try again later."
-msgstr ""
+msgstr "スキャナーは動作中です。後ほどやり直してください。"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -12904,7 +12886,7 @@ msgstr "証明書の発行元は不明または信頼されていません。"
 
 #: dlls/wininet/wininet.rc:30
 msgid "The date on the certificate is invalid."
-msgstr "証明書の日付が無効です。"
+msgstr "証明書の日付が正しくありません。"
 
 #: dlls/wininet/wininet.rc:31
 msgid "The name on the certificate does not match the site."
@@ -12949,7 +12931,7 @@ msgstr "内部エラーが発生しました。\n"
 
 #: dlls/wininet/winineterror.mc:36
 msgid "The URL is invalid.\n"
-msgstr "URL が不正です。\n"
+msgstr "URL が正しくありません。\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
@@ -13020,7 +13002,7 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:37
 msgid "The specified device handle is invalid."
-msgstr "無効なデバイス ハンドルです。"
+msgstr "指定されたデバイス ハンドルは正しくありません。"
 
 #: dlls/winmm/winmm.rc:38
 msgid "There is no driver installed on your system!"
@@ -13048,11 +13030,11 @@ msgstr "指定されたエラー番号は定義されていません。"
 
 #: dlls/winmm/winmm.rc:42
 msgid "An invalid flag was passed to a system function."
-msgstr "システム関数に無効なフラグが渡されました。"
+msgstr "システム関数に渡されたフラグが正しくありません。"
 
 #: dlls/winmm/winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
-msgstr "システム関数に無効なパラメーターが渡されました。"
+msgstr "システム関数に渡されたパラメーターが正しくありません。"
 
 #: dlls/winmm/winmm.rc:46
 msgid ""
@@ -13128,8 +13110,8 @@ msgstr ""
 #: dlls/winmm/winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"無効なMCIデバイスIDです。MCIデバイスをオープンしたときに返されたIDを使用して"
-"下さい。"
+"MCI デバイス ID が正しくありません。MCI デバイスをオープンしたときに返された "
+"ID を使用して下さい。"
 
 #: dlls/winmm/winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
@@ -13186,22 +13168,22 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:71
 msgid "The specified integer is invalid for this command."
-msgstr "指定された整数値はこのコマンドには無効です。"
+msgstr "指定された整数値はこのコマンドには正しくありません。"
 
 #: dlls/winmm/winmm.rc:72
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"デバイス ドライバーが無効な形式の値を返しました。製造元に新しいドライバーが無"
-"いか問い合わせて下さい。"
+"デバイス ドライバーが正しくない値の型を返しました。製造元に新しいドライバーが"
+"ないか問い合わせて下さい。"
 
 #: dlls/winmm/winmm.rc:73
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"デバイス ドライバーに問題が発生しました。製造元に新しいドライバーが無いか問い"
+"デバイス ドライバーに問題が発生しました。製造元に新しいドライバーがないか問い"
 "合わせて下さい。"
 
 #: dlls/winmm/winmm.rc:74
@@ -13293,7 +13275,7 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:89
 msgid "The specified parameter is invalid for this command."
-msgstr "指定されたパラメーターはこのコマンドには無効です。"
+msgstr "指定されたパラメーターはこのコマンドに対して正しくありません。"
 
 #: dlls/winmm/winmm.rc:90
 msgid ""
@@ -13316,8 +13298,8 @@ msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"指定された時間のフォーマットが無効です。使用できるフォーマットに関してはMCIの"
-"ドキュメントを参照して下さい。"
+"指定された時間のフォーマットが正しくありません。使用できるフォーマットに関し"
+"ては MCI のドキュメントを参照して下さい。"
 
 #: dlls/winmm/winmm.rc:93
 msgid ""
@@ -13382,8 +13364,8 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"ファイル名が無効です。ファイル名が半角 8 文字以内で、ピリオドに続いて拡張子が"
-"付いていることを確認して下さい。"
+"ファイル名が正しくありません。ファイル名が半角 8 文字以内で、ピリオドに続いて"
+"拡張子が付いていることを確認して下さい。"
 
 #: dlls/winmm/winmm.rc:104
 msgid ""
@@ -13457,8 +13439,8 @@ msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"現在のフォーマットで録音が可能な全てのwaveデバイスは使用中です。デバイスが解"
-"放されるまで待ってからやり直して下さい。"
+"現在のフォーマットで録音できるすべての wave デバイスは使用中です。デバイスが"
+"解放されるまで待ってからやり直して下さい。"
 
 #: dlls/winmm/winmm.rc:115
 msgid ""
@@ -13697,7 +13679,7 @@ msgstr "属性または値は存在"
 
 #: dlls/wldap32/wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr "構文が無効"
+msgstr "構文が正しくない"
 
 #: dlls/wldap32/wldap32.rc:64
 msgid "No Such Object"
@@ -13709,7 +13691,7 @@ msgstr "エイリアスの問題"
 
 #: dlls/wldap32/wldap32.rc:66
 msgid "Invalid DN Syntax"
-msgstr "識別名(DN)の構文が無効"
+msgstr "識別名(DN)の構文が正しくない"
 
 #: dlls/wldap32/wldap32.rc:67
 msgid "Is Leaf"
@@ -13725,7 +13707,7 @@ msgstr "認証が不適切"
 
 #: dlls/wldap32/wldap32.rc:81
 msgid "Invalid Credentials"
-msgstr "資格情報が無効"
+msgstr "資格情報が正しくない"
 
 #: dlls/wldap32/wldap32.rc:82
 msgid "Insufficient Rights"
@@ -14170,7 +14152,7 @@ msgstr ""
 "されます)。設定を変更するには、PATH コマンドに続けて新しい設定値を入力して\n"
 "下さい。\n"
 "\n"
-"PATH を変更するときに PATH 環境変数を使用することも可能です、例えば:\n"
+"PATH を変更するときに PATH 環境変数を使用することもできます。例えば:\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: programs/cmd/cmd.rc:145
@@ -14804,10 +14786,8 @@ msgid "%t%1!u! file(s) copied\n"
 msgstr "%t%1!d! ファイルをコピーしました\n"
 
 #: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
-#, fuzzy
-#| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"
-msgstr "ネットワーク上の場所にアクセスできません。\n"
+msgstr "ファイルを同じ場所にコピーすることはできません。\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -15041,7 +15021,7 @@ msgstr "使い方: hostname\n"
 
 #: programs/hostname/hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "エラー: 無効なオプション '%c'。\n"
+msgstr "エラー: 正しくないオプション '%c'。\n"
 
 #: programs/hostname/hostname.rc:32
 msgid "Error: Could not get hostname: %u.\n"
@@ -16248,7 +16228,7 @@ msgstr "アイコン (*.ico)"
 
 #: programs/reg/reg.rc:139
 msgid "reg: Invalid syntax. "
-msgstr "reg: 無効な構文です。"
+msgstr "reg: 正しくない構文です。"
 
 #: programs/reg/reg.rc:142
 msgid "Type \"REG %1 /?\" for help.\n"
@@ -16712,7 +16692,7 @@ msgstr "reg: システム キーが正しくありません\n"
 
 #: programs/reg/reg.rc:140
 msgid "reg: Invalid option [%1]. "
-msgstr "reg: 無効なオプション [%1]。"
+msgstr "reg: 正しくないオプション [%1]。"
 
 #: programs/reg/reg.rc:122
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
@@ -17208,7 +17188,7 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:432
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "regedit: システム キーが無効です [%1]\n"
+msgstr "regedit: システム キーが正しくありません [%1]\n"
 
 #: programs/regedit/regedit.rc:433
 msgid ""
@@ -17223,7 +17203,7 @@ msgstr "regedit: レジストリ キー '%1' を削除できません。\n"
 
 #: programs/regedit/regedit.rc:436
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: 行の書式が正しくありません。\n"
+msgstr "regedit: 行の構文が正しくありません。\n"
 
 #: programs/regedit/regedit.rc:191
 msgid "Quits the Registry Editor"
@@ -17557,11 +17537,12 @@ msgstr "使い方: taskkill [/?] [/f] [/im プロセス名 | /pid プロセスID
 
 #: programs/taskkill/taskkill.rc:31
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "エラー: 不明または無効なコマンド ライン オプションが指定されました。\n"
+msgstr ""
+"エラー: 不明または正しくないコマンド ライン オプションが指定されました。\n"
 
 #: programs/taskkill/taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "エラー: 無効なコマンド ライン パラメーターが指定されました。\n"
+msgstr "エラー: 正しくないコマンド ライン パラメーターが指定されました。\n"
 
 #: programs/taskkill/taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
@@ -17658,7 +17639,7 @@ msgstr "K"
 
 #: programs/tasklist/tasklist.rc:36
 msgid "ERROR: Invalid syntax\n"
-msgstr "ERROR: 構文が無効です\n"
+msgstr "ERROR: 構文が正しくありません\n"
 
 #: programs/tasklist/tasklist.rc:37
 msgid "ERROR: The search filter cannot be recognized.\n"
@@ -18430,7 +18411,7 @@ msgstr "プロセスは少なくとも 1 つのプロセッサと関係付ける
 
 #: programs/taskmgr/taskmgr.rc:316
 msgid "Invalid Option"
-msgstr "無効なオプション"
+msgstr "正しくないオプション"
 
 #: programs/taskmgr/taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -18510,7 +18491,7 @@ msgstr ""
 
 #: programs/uninstaller/uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: 無効なオプション [%1]\n"
+msgstr "uninstaller: 正しくないオプション [%1]\n"
 
 #: programs/uninstaller/uninstaller.rc:35
 msgid ""
@@ -18808,10 +18789,8 @@ msgid "Voice input device:"
 msgstr "音声入力デバイス:"
 
 #: programs/winecfg/winecfg.rc:277
-#, fuzzy
-#| msgid "Output device:"
 msgid "MIDI output device:"
-msgstr "出力デバイス:"
+msgstr "MIDI 出力デバイス:"
 
 #: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
@@ -19654,11 +19633,11 @@ msgstr "別名が見つかりません。\n"
 
 #: programs/wmic/wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "エラー: クエリが無効です\n"
+msgstr "エラー: クエリが正しくありません\n"
 
 #: programs/wmic/wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "エラー: PATH の構文が無効です\n"
+msgstr "エラー: PATH の構文が正しくありません\n"
 
 #: programs/wmic/wmic.rc:32
 msgid "Supply a command\n"
@@ -19666,7 +19645,7 @@ msgstr "コマンドを入力してください\n"
 
 #: programs/wmic/wmic.rc:33
 msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
-msgstr ""
+msgstr "利用例: wmic エイリアス get プロパティ[,プロパティ2,...]\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -20016,7 +19995,7 @@ msgstr ""
 
 #: programs/wordpad/wordpad.rc:198
 msgid "Invalid number format."
-msgstr "数の書式が不正です。"
+msgstr "数の書式が正しくありません。"
 
 #: programs/wordpad/wordpad.rc:199
 msgid "OLE storage documents are not supported."
@@ -20052,11 +20031,11 @@ msgstr "Wordpad の起動に失敗しました"
 
 #: programs/xcopy/xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "パラメーターの数が違います。xcopy /? でヘルプを表示します\n"
+msgstr "パラメーターの数が正しくありません。xcopy /? でヘルプを表示します\n"
 
 #: programs/xcopy/xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "無効なパラメーター '%1' です。xcopy /? でヘルプを表示します\n"
+msgstr "パラメーター '%1' は正しくありません。xcopy /? でヘルプを表示します\n"
 
 #: programs/xcopy/xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
