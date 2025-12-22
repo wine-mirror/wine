@@ -2063,6 +2063,140 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
 }
 
 
+#pragma pack(push,1)
+union atl_thunk
+{
+    struct
+    {
+        UINT  movl;  /* movl this,4(%esp) */
+        UINT  this;
+        BYTE  jmp;   /* jmp func */
+        int   func;
+    } t1;
+    struct
+    {
+        BYTE  movl;  /* movl this,ecx */
+        UINT  this;
+        BYTE  jmp;   /* jmp func */
+        int   func;
+    } t2;
+    struct
+    {
+        BYTE  movl1; /* movl this,edx */
+        UINT  this;
+        BYTE  movl2; /* movl func,ecx */
+        UINT  func;
+        WORD  jmp;   /* jmp ecx */
+    } t3;
+    struct
+    {
+        BYTE  movl1; /* movl this,ecx */
+        UINT  this;
+        BYTE  movl2; /* movl func,eax */
+        UINT  func;
+        WORD  jmp;   /* jmp eax */
+    } t4;
+    struct
+    {
+        UINT  inst1; /* pop ecx
+                      * pop eax
+                      * push ecx
+                      * jmp 4(%eax) */
+        WORD  inst2;
+    } t5;
+};
+#pragma pack(pop)
+
+/**********************************************************************
+ *		check_atl_thunk
+ *
+ * Check if code destination is an ATL thunk, and emulate it if so.
+ */
+static BOOL check_atl_thunk( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    const union atl_thunk *thunk = (const union atl_thunk *)rec->ExceptionInformation[1];
+    union atl_thunk thunk_copy;
+    SIZE_T thunk_len;
+
+    if (CS_sig(sigcontext) == cs64_sel) return FALSE;
+
+    thunk_len = virtual_uninterrupted_read_memory( thunk, &thunk_copy, sizeof(*thunk) );
+    if (!thunk_len) return FALSE;
+
+    if (thunk_len >= sizeof(thunk_copy.t1) &&
+        thunk_copy.t1.movl == 0x042444c7 &&
+        thunk_copy.t1.jmp == 0xe9)
+    {
+        if (!virtual_uninterrupted_write_memory( (DWORD *)context->Rsp + 1,
+                                                 &thunk_copy.t1.this, sizeof(DWORD) ))
+        {
+            RIP_sig(sigcontext) = (DWORD_PTR)(&thunk->t1.func + 1) + thunk_copy.t1.func;
+            TRACE( "emulating ATL thunk type 1 at %p, func=%p arg=%08x\n",
+                   thunk, (void *)RIP_sig(sigcontext), thunk_copy.t1.this );
+            goto done;
+        }
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t2) &&
+             thunk_copy.t2.movl == 0xb9 &&
+             thunk_copy.t2.jmp == 0xe9)
+    {
+        RCX_sig(sigcontext) = thunk_copy.t2.this;
+        RIP_sig(sigcontext) = (DWORD_PTR)(&thunk->t2.func + 1) + thunk_copy.t2.func;
+        TRACE( "emulating ATL thunk type 2 at %p, func=%p ecx=%p\n", thunk,
+               (void *)RIP_sig(sigcontext), (void *)RCX_sig(sigcontext) );
+        goto done;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t3) &&
+             thunk_copy.t3.movl1 == 0xba &&
+             thunk_copy.t3.movl2 == 0xb9 &&
+             thunk_copy.t3.jmp == 0xe1ff)
+    {
+        RDX_sig(sigcontext) = thunk_copy.t3.this;
+        RCX_sig(sigcontext) = thunk_copy.t3.func;
+        RIP_sig(sigcontext) = thunk_copy.t3.func;
+        TRACE( "emulating ATL thunk type 3 at %p, func=%p ecx=%p edx=%p\n", thunk,
+               (void *)RIP_sig(sigcontext), (void *)RCX_sig(sigcontext), (void *)RDX_sig(sigcontext) );
+        goto done;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t4) &&
+             thunk_copy.t4.movl1 == 0xb9 &&
+             thunk_copy.t4.movl2 == 0xb8 &&
+             thunk_copy.t4.jmp == 0xe0ff)
+    {
+        RCX_sig(sigcontext) = thunk_copy.t4.this;
+        RAX_sig(sigcontext) = thunk_copy.t4.func;
+        RIP_sig(sigcontext) = thunk_copy.t4.func;
+        TRACE( "emulating ATL thunk type 4 at %p, func=%p eax=%p ecx=%p\n", thunk,
+               (void *)RIP_sig(sigcontext), (void *)RAX_sig(sigcontext), (void *)RCX_sig(sigcontext) );
+        goto done;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t5) &&
+             thunk_copy.t5.inst1 == 0xff515859 &&
+             thunk_copy.t5.inst2 == 0x0460)
+    {
+        DWORD func, sp[2];
+        if (virtual_uninterrupted_read_memory( (DWORD *)context->Rsp, sp, sizeof(sp) ) == sizeof(sp) &&
+            virtual_uninterrupted_read_memory( (DWORD *)(ULONG_PTR)sp[1] + 1, &func, sizeof(DWORD) ) == sizeof(DWORD) &&
+            !virtual_uninterrupted_write_memory( (DWORD *)context->Rsp + 1, &sp[0], sizeof(sp[0]) ))
+        {
+            RCX_sig(sigcontext) = sp[0];
+            RAX_sig(sigcontext) = sp[1];
+            RSP_sig(sigcontext) += sizeof(DWORD);
+            RIP_sig(sigcontext) = func;
+            TRACE( "emulating ATL thunk type 5 at %p, func=%p eax=%p ecx=%p esp=%p\n",
+                   thunk, (void *)RIP_sig(sigcontext), (void *)RAX_sig(sigcontext),
+                   (void *)RCX_sig(sigcontext), (void *)RSP_sig(sigcontext) );
+            goto done;
+        }
+    }
+    return FALSE;
+
+ done:
+    leave_handler( sigcontext );
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           handle_syscall_fault
  *
@@ -2311,6 +2445,9 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
                                        &flags, sizeof(flags), NULL );
             /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
             if (!(flags & MEM_EXECUTE_OPTION_DISABLE)) rec.ExceptionInformation[0] = EXCEPTION_READ_FAULT;
+            if (!(flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION) &&
+                check_atl_thunk( ucontext, &rec, &context.c ))
+                return;
         }
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
