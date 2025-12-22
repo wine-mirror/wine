@@ -1649,6 +1649,12 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         return;
     }
 
+    if (stateblock->type == WINED3D_SBT_PRIMARY && value == stateblock->stateblock_state.rs[state])
+    {
+        TRACE("Ignoring redundant call on a primary stateblock.\n");
+        return;
+    }
+
     stateblock->stateblock_state.rs[state] = value;
     stateblock->changed.renderState[state >> 5] |= 1u << (state & 0x1f);
 
