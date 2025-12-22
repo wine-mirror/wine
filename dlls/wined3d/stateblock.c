@@ -1328,15 +1328,19 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
 
 void CDECL wined3d_stateblock_set_vertex_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader)
 {
+    struct wined3d_shader *prev = stateblock->stateblock_state.vs;
+
     TRACE("stateblock %p, shader %p.\n", stateblock, shader);
 
     if (shader)
         wined3d_shader_incref(shader);
-    if (stateblock->stateblock_state.vs)
-        wined3d_shader_decref(stateblock->stateblock_state.vs);
+    if (prev)
+        wined3d_shader_decref(prev);
     stateblock->stateblock_state.vs = shader;
     stateblock->changed.vertexShader = TRUE;
     stateblock->changed.ffp_vs_settings = 1;
+    if (!shader != !prev)
+        stateblock->changed.fog_constants = 1;
 }
 
 static void wined3d_bitmap_set_bits(uint32_t *bitmap, unsigned int start, unsigned int count)
@@ -4020,7 +4024,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 offsetof(struct wined3d_ffp_ps_constants, alpha_test_ref), sizeof(f), &f);
     }
 
-    if (changed->fog_constants || changed->ffp_vs_settings || changed->position_transformed)
+    if (changed->fog_constants || changed->position_transformed)
     {
         bool rhw = state->vertex_declaration && state->vertex_declaration->position_transformed;
         struct wined3d_ffp_fog_constants fog;
