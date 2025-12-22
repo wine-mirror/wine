@@ -3829,9 +3829,9 @@ DECL_HANDLER(set_foreground_window)
 
     if (set_foreground && !req->internal)
     {
-        if (!current->process->set_foreground) current->process->set_foreground = 1;
-        else if (!is_current_process_foreground( desktop ) && queue->input && desktop->foreground_input &&
-                 queue->input->user_time < desktop->foreground_input->user_time)
+        /* allow a process to set foreground after changing desktop, or each window to be set foreground at least once */
+        if (!is_current_process_foreground( desktop ) && queue->input && desktop->foreground_input &&
+            queue->input->user_time < desktop->foreground_input->user_time)
         {
             set_error( STATUS_ACCESS_DENIED );
             goto done;
