@@ -1160,10 +1160,3 @@ PAGER_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-VOID
-PAGER_Unregister (void)
-{
-    UnregisterClassW (WC_PAGESCROLLERW, NULL);
-}

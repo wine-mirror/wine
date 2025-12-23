@@ -700,9 +700,3 @@ void IPADDRESS_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-void IPADDRESS_Unregister (void)
-{
-    UnregisterClassW (WC_IPADDRESSW, NULL);
-}

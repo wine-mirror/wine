@@ -2328,14 +2328,3 @@ VOID SYSLINK_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-/***********************************************************************
- * SYSLINK_Unregister [Internal]
- *
- * Unregisters the SysLink window class.
- */
-VOID SYSLINK_Unregister (void)
-{
-    UnregisterClassW (WC_LINK, NULL);
-}

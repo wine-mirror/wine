@@ -1280,14 +1280,3 @@ void UPDOWN_Register(void)
 
     RegisterClassW( &wndClass );
 }
-
-
-/***********************************************************************
- *		UPDOWN_Unregister	[Internal]
- *
- * Unregisters the updown window class.
- */
-void UPDOWN_Unregister (void)
-{
-    UnregisterClassW (UPDOWN_CLASSW, NULL);
-}

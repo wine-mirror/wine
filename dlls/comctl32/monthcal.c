@@ -3023,10 +3023,3 @@ MONTHCAL_Register(void)
 
   RegisterClassW(&wndClass);
 }
-
-
-void
-MONTHCAL_Unregister(void)
-{
-    UnregisterClassW(MONTHCAL_CLASSW, NULL);
-}

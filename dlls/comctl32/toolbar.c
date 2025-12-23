@@ -7045,13 +7045,6 @@ TOOLBAR_Register (void)
     RegisterClassW (&wndClass);
 }
 
-
-VOID
-TOOLBAR_Unregister (void)
-{
-    UnregisterClassW (TOOLBARCLASSNAMEW, NULL);
-}
-
 static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIST himl, INT id)
 {
     HIMAGELIST himlold;

@@ -562,10 +562,3 @@ HOTKEY_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-void
-HOTKEY_Unregister (void)
-{
-    UnregisterClassW (HOTKEY_CLASSW, NULL);
-}

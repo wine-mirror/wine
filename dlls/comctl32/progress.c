@@ -822,14 +822,3 @@ void PROGRESS_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-/***********************************************************************
- * PROGRESS_Unregister [Internal]
- *
- * Unregisters the progress bar window class.
- */
-void PROGRESS_Unregister (void)
-{
-    UnregisterClassW (PROGRESS_CLASSW, NULL);
-}

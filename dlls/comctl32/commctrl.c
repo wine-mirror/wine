@@ -91,46 +91,83 @@ static const WORD wPattern55AA[] =
 
 static const WCHAR strCC32SubclassInfo[] = L"CC32SubclassInfo";
 
-#if __WINE_COMCTL32_VERSION == 6
-static void unregister_versioned_classes(void)
+static const struct
 {
-#define VERSION "6.0.2600.2982!"
-    static const char *classes[] =
-    {
-        VERSION WC_BUTTONA,
-        VERSION WC_COMBOBOXA,
-        VERSION "ComboLBox",
-        VERSION WC_EDITA,
-        VERSION WC_LISTBOXA,
-        VERSION WC_STATICA,
-    };
-    int i;
-
-    for (i = 0; i < ARRAY_SIZE(classes); i++)
-        UnregisterClassA(classes[i], NULL);
-
-#undef VERSION
+    const WCHAR *nameW;
+    void (*fn_register)(void);
 }
+classes[] =
+{
+#if __WINE_COMCTL32_VERSION == 6
+    {L"Button", BUTTON_Register},
+    {L"ComboBox", COMBO_Register},
+    {L"ComboBoxEx32", COMBOEX_Register},
+    {L"ComboLBox", COMBOLBOX_Register},
+    {L"Edit", EDIT_Register},
+    {L"flatsb_class32", FLATSB_Register},
+    {L"ListBox", LISTBOX_Register},
+    {L"msctls_hotkey32", HOTKEY_Register},
+    {L"msctls_progress32", PROGRESS_Register},
+    {L"msctls_statusbar32", STATUS_Register},
+    {L"msctls_trackbar32", TRACKBAR_Register},
+    {L"msctls_updown32", UPDOWN_Register},
+    {L"NativeFontCtl", NATIVEFONT_Register},
+    {L"ReBarWindow32", REBAR_Register},
+    {L"Static", STATIC_Register},
+    {L"SysAnimate32", ANIMATE_Register},
+    {L"SysDateTimePick32", DATETIME_Register},
+    {L"SysHeader32", HEADER_Register},
+    {L"SysIPAddress32", IPADDRESS_Register},
+    {L"SysLink", SYSLINK_Register},
+    {L"SysListView32", LISTVIEW_Register},
+    {L"SysMonthCal32", MONTHCAL_Register},
+    {L"SysPager", PAGER_Register},
+    {L"SysTabControl32", TAB_Register},
+    {L"SysTreeView32", TREEVIEW_Register},
+    {L"ToolbarWindow32", TOOLBAR_Register},
+    {L"tooltips_class32", TOOLTIPS_Register},
+#else
+    {L"ComboBoxEx32", COMBOEX_Register},
+    {L"flatsb_class32", FLATSB_Register},
+    {L"msctls_hotkey32", HOTKEY_Register},
+    {L"msctls_progress32", PROGRESS_Register},
+    {L"msctls_statusbar32", STATUS_Register},
+    {L"msctls_trackbar32", TRACKBAR_Register},
+    {L"msctls_updown32", UPDOWN_Register},
+    {L"NativeFontCtl", NATIVEFONT_Register},
+    {L"ReBarWindow32", REBAR_Register},
+    {L"SysAnimate32", ANIMATE_Register},
+    {L"SysDateTimePick32", DATETIME_Register},
+    {L"SysHeader32", HEADER_Register},
+    {L"SysIPAddress32", IPADDRESS_Register},
+    {L"SysListView32", LISTVIEW_Register},
+    {L"SysMonthCal32", MONTHCAL_Register},
+    {L"SysPager", PAGER_Register},
+    {L"SysTabControl32", TAB_Register},
+    {L"SysTreeView32", TREEVIEW_Register},
+    {L"ToolbarWindow32", TOOLBAR_Register},
+    {L"tooltips_class32", TOOLTIPS_Register},
 #endif /* __WINE_COMCTL32_VERSION == 6 */
+};
+
+static void unregister_classes(void)
+{
+    for (unsigned int i = 0; i < ARRAY_SIZE(classes); i++)
+    {
+#if __WINE_COMCTL32_VERSION == 6
+        WCHAR versioned_class[40];
+
+        wcscpy(versioned_class, L"6.0.2600.2982!");
+        wcscat(versioned_class, classes[i].nameW);
+        UnregisterClassW(versioned_class, NULL);
+#else
+        UnregisterClassW(classes[i].nameW, NULL);
+#endif
+    }
+}
 
 BOOL WINAPI RegisterClassNameW(const WCHAR *class)
 {
-#if __WINE_COMCTL32_VERSION == 6
-    static const struct
-    {
-        const WCHAR nameW[16];
-        void (*fn_register)(void);
-    }
-    classes[] =
-    {
-        { L"Button",    BUTTON_Register },
-        { L"ComboBox",  COMBO_Register },
-        { L"ComboLBox", COMBOLBOX_Register },
-        { L"Edit",      EDIT_Register },
-        { L"ListBox",   LISTBOX_Register },
-        { L"Static",    STATIC_Register },
-    };
-
     int min = 0, max = ARRAY_SIZE(classes) - 1;
 
     while (min <= max)
@@ -144,7 +181,6 @@ BOOL WINAPI RegisterClassNameW(const WCHAR *class)
         if (res < 0) max = pos - 1;
         else min = pos + 1;
     }
-#endif /* __WINE_COMCTL32_VERSION == 6 */
 
     return FALSE;
 }
@@ -184,63 +220,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 	    /* Get all the colors at DLL load */
 	    COMCTL32_RefreshSysColors();
-
-            /* like comctl32 5.82+ register all the common control classes */
-            ANIMATE_Register ();
-            COMBOEX_Register ();
-            DATETIME_Register ();
-            FLATSB_Register ();
-            HEADER_Register ();
-            HOTKEY_Register ();
-            IPADDRESS_Register ();
-            LISTVIEW_Register ();
-            MONTHCAL_Register ();
-            NATIVEFONT_Register ();
-            PAGER_Register ();
-            PROGRESS_Register ();
-            REBAR_Register ();
-            STATUS_Register ();
-#if __WINE_COMCTL32_VERSION == 6
-            SYSLINK_Register ();
-#endif
-            TAB_Register ();
-            TOOLBAR_Register ();
-            TOOLTIPS_Register ();
-            TRACKBAR_Register ();
-            TREEVIEW_Register ();
-            UPDOWN_Register ();
             break;
 
 	case DLL_PROCESS_DETACH:
             if (lpvReserved) break;
 
             /* unregister all common control classes */
-            ANIMATE_Unregister ();
-            COMBOEX_Unregister ();
-            DATETIME_Unregister ();
-            FLATSB_Unregister ();
-            HEADER_Unregister ();
-            HOTKEY_Unregister ();
-            IPADDRESS_Unregister ();
-            LISTVIEW_Unregister ();
-            MONTHCAL_Unregister ();
-            NATIVEFONT_Unregister ();
-            PAGER_Unregister ();
-            PROGRESS_Unregister ();
-            REBAR_Unregister ();
-            STATUS_Unregister ();
-            TAB_Unregister ();
-            TOOLBAR_Unregister ();
-            TOOLTIPS_Unregister ();
-            TRACKBAR_Unregister ();
-            TREEVIEW_Unregister ();
-            UPDOWN_Unregister ();
-
-#if __WINE_COMCTL32_VERSION == 6
-            SYSLINK_Unregister ();
-
-            unregister_versioned_classes ();
-#endif /* __WINE_COMCTL32_VERSION == 6 */
+            unregister_classes ();
 
             /* delete local pattern brush */
             DeleteObject (COMCTL32_hPattern55AABrush);

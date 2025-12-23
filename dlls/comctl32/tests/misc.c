@@ -1397,7 +1397,6 @@ static void test_RegisterClassNameW(BOOL v6)
         for (i = 0; i < ARRAY_SIZE(v6_class_names); i++)
         {
             ret = pRegisterClassNameW(v6_class_names[i]);
-            todo_wine_if(i > 5)
             ok(ret, "RegisterClassNameW %s failed, error %lu.\n", wine_dbgstr_w(v6_class_names[i]), GetLastError());
         }
     }
@@ -1406,7 +1405,6 @@ static void test_RegisterClassNameW(BOOL v6)
         for (i = 0; i < ARRAY_SIZE(v5_class_names); i++)
         {
             ret = pRegisterClassNameW(v5_class_names[i]);
-            todo_wine
             ok(ret, "RegisterClassNameW %s failed, error %lu.\n", wine_dbgstr_w(v5_class_names[i]), GetLastError());
         }
     }
@@ -1421,12 +1419,10 @@ static void test_RegisterClassNameW(BOOL v6)
 
     /* GetClassInfoW() should succeed */
     ret = GetClassInfoW(0, ANIMATE_CLASSW, &wc);
-    todo_wine
     ok(ret, "GetClassInfoW failed, error %lu.\n", GetLastError());
 
     /* Test registering an already registered window class */
     ret = pRegisterClassNameW(ANIMATE_CLASSW);
-    todo_wine
     ok(ret, "RegisterClassNameW failed, error %lu.\n", GetLastError());
 
     /* Test registering an non-existent window class */
@@ -1435,6 +1431,7 @@ static void test_RegisterClassNameW(BOOL v6)
 
     /* There is no flatsb_class32 window class */
     ret = pRegisterClassNameW(L"flatsb_class32");
+    todo_wine
     ok(!ret, "RegisterClassNameW succeeded.\n");
 
     winetest_pop_context();

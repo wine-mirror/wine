@@ -5973,14 +5973,6 @@ TREEVIEW_Register(void)
     RegisterClassW(&wndClass);
 }
 
-
-VOID
-TREEVIEW_Unregister(void)
-{
-    UnregisterClassW(WC_TREEVIEWW, NULL);
-}
-
-
 /* Tree Verification ****************************************************/
 
 static inline void

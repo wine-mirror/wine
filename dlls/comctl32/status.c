@@ -1307,16 +1307,3 @@ STATUS_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-/***********************************************************************
- * STATUS_Unregister [Internal]
- *
- * Unregisters the status window class.
- */
-
-void
-STATUS_Unregister (void)
-{
-    UnregisterClassW (STATUSCLASSNAMEW, NULL);
-}

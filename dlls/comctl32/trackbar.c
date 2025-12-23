@@ -2093,9 +2093,3 @@ void TRACKBAR_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-void TRACKBAR_Unregister (void)
-{
-    UnregisterClassW (TRACKBAR_CLASSW, NULL);
-}

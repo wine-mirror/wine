@@ -2173,9 +2173,3 @@ void COMBOEX_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-void COMBOEX_Unregister (void)
-{
-    UnregisterClassW (WC_COMBOBOXEXW, NULL);
-}

@@ -3468,10 +3468,3 @@ TAB_Register (void)
 
   RegisterClassW (&wndClass);
 }
-
-
-void
-TAB_Unregister (void)
-{
-    UnregisterClassW (WC_TABCONTROLW, NULL);
-}

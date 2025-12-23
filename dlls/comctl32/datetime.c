@@ -1801,10 +1801,3 @@ DATETIME_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-void
-DATETIME_Unregister (void)
-{
-    UnregisterClassW (DATETIMEPICK_CLASSW, NULL);
-}

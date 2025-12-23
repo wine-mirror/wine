@@ -3783,10 +3783,3 @@ REBAR_Register (void)
     mindragy = GetSystemMetrics (SM_CYDRAG);
 
 }
-
-
-VOID
-REBAR_Unregister (void)
-{
-    UnregisterClassW (REBARCLASSNAMEW, NULL);
-}

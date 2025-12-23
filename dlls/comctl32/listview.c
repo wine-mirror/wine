@@ -11982,21 +11982,6 @@ void LISTVIEW_Register(void)
 
 /***
  * DESCRIPTION:
- * Unregisters the window class.
- *
- * PARAMETER(S):
- * None
- *
- * RETURN:
- * None
- */
-void LISTVIEW_Unregister(void)
-{
-    UnregisterClassW(WC_LISTVIEWW, NULL);
-}
-
-/***
- * DESCRIPTION:
  * Handle any WM_COMMAND messages
  *
  * PARAMETER(S):

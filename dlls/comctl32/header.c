@@ -2303,10 +2303,3 @@ HEADER_Register (void)
 
     RegisterClassW (&wndClass);
 }
-
-
-VOID
-HEADER_Unregister (void)
-{
-    UnregisterClassW (WC_HEADERW, NULL);
-}
