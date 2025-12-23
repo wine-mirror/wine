@@ -279,6 +279,7 @@ struct wined3d_vk_info
     BOOL supported[WINED3D_VK_EXT_COUNT];
     HMODULE vulkan_lib;
 
+    uint32_t max_clip_distances;
     bool multiple_viewports;
     bool dynamic_state2;
     bool dynamic_patch_vertex_count;
@@ -810,6 +811,11 @@ struct wined3d_adapter_vk
 };
 
 static inline struct wined3d_adapter_vk *wined3d_adapter_vk(struct wined3d_adapter *adapter)
+{
+    return CONTAINING_RECORD(adapter, struct wined3d_adapter_vk, a);
+}
+
+static inline const struct wined3d_adapter_vk *wined3d_adapter_vk_const(const struct wined3d_adapter *adapter)
 {
     return CONTAINING_RECORD(adapter, struct wined3d_adapter_vk, a);
 }

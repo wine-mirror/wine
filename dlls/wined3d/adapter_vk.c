@@ -59,11 +59,6 @@ static const struct wined3d_state_entry_template misc_state_template_vk[] =
     {0}, /* Terminate */
 };
 
-static inline const struct wined3d_adapter_vk *wined3d_adapter_vk_const(const struct wined3d_adapter *adapter)
-{
-    return CONTAINING_RECORD(adapter, struct wined3d_adapter_vk, a);
-}
-
 static const char *debug_vk_version(uint32_t version)
 {
     return wine_dbg_sprintf("%u.%u.%u",

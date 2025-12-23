@@ -1248,6 +1248,19 @@ static void spirv_vertex_pipe_vk_vp_get_caps(const struct wined3d_adapter *adapt
 {
     memset(caps, 0, sizeof(*caps));
     caps->emulated_flatshading = true;
+    caps->max_active_lights = WINED3D_MAX_ACTIVE_LIGHTS;
+    caps->max_vertex_blend_matrices = MAX_VERTEX_BLENDS;
+    caps->max_vertex_blend_matrix_index = 0;
+    caps->vertex_processing_caps = WINED3DVTXPCAPS_TEXGEN
+            | WINED3DVTXPCAPS_MATERIALSOURCE7
+            | WINED3DVTXPCAPS_VERTEXFOG
+            | WINED3DVTXPCAPS_DIRECTIONALLIGHTS
+            | WINED3DVTXPCAPS_POSITIONALLIGHTS
+            | WINED3DVTXPCAPS_LOCALVIEWER
+            | WINED3DVTXPCAPS_TEXGEN_SPHEREMAP;
+    caps->fvf_caps = WINED3DFVFCAPS_PSIZE | 8; /* 8 texture coordinates. */
+    caps->max_user_clip_planes = wined3d_adapter_vk_const(adapter)->device_limits.maxClipDistances;
+    caps->raster_caps = WINED3DPRASTERCAPS_FOGRANGE;
 }
 
 static unsigned int spirv_vertex_pipe_vk_vp_get_emul_mask(const struct wined3d_adapter *adapter)
@@ -1307,7 +1320,35 @@ static void spirv_fragment_pipe_vk_fp_disable(const struct wined3d_context *cont
 static void spirv_fragment_pipe_vk_fp_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
+    caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP
+            | WINED3DPMISCCAPS_PERSTAGECONSTANT;
+    caps->TextureOpCaps = WINED3DTEXOPCAPS_DISABLE
+            | WINED3DTEXOPCAPS_SELECTARG1
+            | WINED3DTEXOPCAPS_SELECTARG2
+            | WINED3DTEXOPCAPS_MODULATE4X
+            | WINED3DTEXOPCAPS_MODULATE2X
+            | WINED3DTEXOPCAPS_MODULATE
+            | WINED3DTEXOPCAPS_ADDSIGNED2X
+            | WINED3DTEXOPCAPS_ADDSIGNED
+            | WINED3DTEXOPCAPS_ADD
+            | WINED3DTEXOPCAPS_SUBTRACT
+            | WINED3DTEXOPCAPS_ADDSMOOTH
+            | WINED3DTEXOPCAPS_BLENDCURRENTALPHA
+            | WINED3DTEXOPCAPS_BLENDFACTORALPHA
+            | WINED3DTEXOPCAPS_BLENDTEXTUREALPHA
+            | WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA
+            | WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM
+            | WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR
+            | WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA
+            | WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA
+            | WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR
+            | WINED3DTEXOPCAPS_DOTPRODUCT3
+            | WINED3DTEXOPCAPS_MULTIPLYADD
+            | WINED3DTEXOPCAPS_LERP
+            | WINED3DTEXOPCAPS_BUMPENVMAP
+            | WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE;
     caps->max_blend_stages = WINED3D_MAX_FFP_TEXTURES;
+    caps->max_textures = WINED3D_MAX_FFP_TEXTURES;
 }
 
 static unsigned int spirv_fragment_pipe_vk_fp_get_emul_mask(const struct wined3d_adapter *adapter)
