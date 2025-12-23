@@ -9584,42 +9584,48 @@ static DWORD breakpoint_exceptions;
 static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     EXCEPTION_RECORD *rec = ExceptionInfo->ExceptionRecord;
+    CONTEXT *context = ExceptionInfo->ContextRecord;
 
     ok(rec->ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode is %08lx instead of %08lx\n",
        rec->ExceptionCode, EXCEPTION_BREAKPOINT);
 
 #ifdef __i386__
-    ok(ExceptionInfo->ContextRecord->Eip == (DWORD)code_mem + 1,
-       "expected Eip = %lx, got %lx\n", (DWORD)code_mem + 1, ExceptionInfo->ContextRecord->Eip);
+    ok(context->Eip == (DWORD)code_mem + 1,
+       "expected Eip = %lx, got %lx\n", (DWORD)code_mem + 1, context->Eip);
+    ok((char *)rec->ExceptionAddress == (char *)code_mem + 1,
+       "expected address %p, got %p\n", (char *)code_mem + 1, rec->ExceptionAddress);
     ok(rec->NumberParameters == (is_wow64 ? 1 : 3),
        "ExceptionParameters is %ld instead of %d\n", rec->NumberParameters, is_wow64 ? 1 : 3);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %Ix\n", rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Eip = (DWORD)code_mem + 2;
+    context->Eip = (DWORD)code_mem + 2;
 #elif defined(__x86_64__)
-    ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 1,
-       "expected Rip = %Ix, got %Ix\n", (DWORD_PTR)code_mem + 1, ExceptionInfo->ContextRecord->Rip);
+    ok(context->Rip == (DWORD_PTR)code_mem + 1,
+       "expected Rip = %Ix, got %Ix\n", (DWORD_PTR)code_mem + 1, context->Rip);
+    ok((char *)rec->ExceptionAddress == (char *)code_mem + 1,
+       "expected address %p, got %p\n", (char *)code_mem + 1, rec->ExceptionAddress);
     ok(rec->NumberParameters == 1,
        "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %Ix\n", rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Rip = (DWORD_PTR)code_mem + 2;
+    context->Rip = (DWORD_PTR)code_mem + 2;
 #elif defined(__arm__)
-    ok(ExceptionInfo->ContextRecord->Pc == (DWORD)code_mem + 1,
-       "expected pc = %lx, got %lx\n", (DWORD)code_mem + 1, ExceptionInfo->ContextRecord->Pc);
+    ok(context->Pc == (DWORD)code_mem + 1,
+       "expected pc = %lx, got %lx\n", (DWORD)code_mem + 1, context->Pc);
+    ok((char *)rec->ExceptionAddress == (char *)code_mem + 1,
+       "expected address %p, got %p\n", (char *)code_mem + 1, rec->ExceptionAddress);
     ok(rec->NumberParameters == 1,
        "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %Ix\n", rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Pc += 2;
+    context->Pc += 2;
 #elif defined(__aarch64__)
-    ok(ExceptionInfo->ContextRecord->Pc == (DWORD_PTR)code_mem,
-       "expected pc = %p, got %p\n", code_mem, (void *)ExceptionInfo->ContextRecord->Pc);
-    ok(rec->NumberParameters == 1,
-       "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
+    ok(context->Pc == (DWORD_PTR)code_mem, "expected pc = %p, got %p\n", code_mem, (void *)context->Pc);
+    ok(rec->ExceptionAddress == code_mem, "expected address %p, got %p\n", code_mem, rec->ExceptionAddress);
+    ok(rec->NumberParameters == 1, "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %p\n", (void *)rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Pc += 4;
+    context->Pc += 4;
 #endif
 
     breakpoint_exceptions++;
