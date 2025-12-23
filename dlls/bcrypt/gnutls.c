@@ -484,6 +484,8 @@ static NTSTATUS gnutls_process_detach( void *args )
 {
     if (libgnutls_handle)
     {
+        if (TRACE_ON( bcrypt ))
+            pgnutls_global_set_log_function( NULL );
         pgnutls_global_deinit();
         dlclose( libgnutls_handle );
         libgnutls_handle = NULL;
