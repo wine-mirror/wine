@@ -1190,7 +1190,7 @@ static void shader_spirv_get_caps(const struct wined3d_adapter *adapter, struct 
     caps->vs_uniform_count = WINED3D_MAX_VS_CONSTS_F;
     caps->ps_uniform_count = WINED3D_MAX_PS_CONSTS_F;
     caps->ps_1x_max_value = FLT_MAX;
-    caps->varying_count = 0;
+    caps->varying_count = wined3d_adapter_vk_const(adapter)->device_limits.maxFragmentInputComponents;
     caps->wined3d_caps = WINED3D_SHADER_CAP_FULL_FFP_VARYINGS;
 }
 
