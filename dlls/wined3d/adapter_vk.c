@@ -2122,7 +2122,7 @@ static VkPhysicalDevice get_vulkan_physical_device(struct wined3d_vk_info *vk_in
     if (count > 1)
     {
         /* TODO: Create wined3d_adapter for each device. */
-        FIXME("Multiple physical devices available.\n");
+        WARN("Multiple physical devices available.\n");
         count = 1;
     }
 
