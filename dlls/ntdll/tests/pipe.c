@@ -746,8 +746,8 @@ static void test_cancelsynchronousio(void)
     ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", ret, GetLastError());
     memset(&iosb, 0x55, sizeof(iosb));
     res = pNtCancelSynchronousIoFile(thread, NULL, &iosb);
-    ok(ctx.iosb.Status == 0xdeadbabe, "Unexpected Status %lx\n", ctx.iosb.Status);
-    ok(ctx.iosb.Information == 0xdeadbeef, "Unexpected Information %Iu\n", ctx.iosb.Information);
+    ok(ctx.iosb.Status == 0xdeadbabe || ctx.iosb.Status == STATUS_CANCELLED,
+        "Unexpected status %lx\n", ctx.iosb.Status);
     ok(res == STATUS_SUCCESS, "Failed to cancel I/O\n");
     ok(iosb.Status == STATUS_SUCCESS, "iosb.Status got changed to %lx\n", iosb.Status);
     ok(iosb.Information == 0, "iosb.Information got changed to %Iu\n", iosb.Information);

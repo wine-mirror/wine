@@ -370,6 +370,10 @@ static void test_NtQueryDirectoryFile_classes( HANDLE handle, UNICODE_STRING *ma
         case FileIdGlobalTxDirectoryInformation:
         case FileIdExtdDirectoryInformation:
         case FileIdExtdBothDirectoryInformation:
+        case FileId64ExtdDirectoryInformation:
+        case FileId64ExtdBothDirectoryInformation:
+        case FileIdAllExtdDirectoryInformation:
+        case FileIdAllExtdBothDirectoryInformation:
             if (status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED) continue;
             /* fall through */
         case FileDirectoryInformation:

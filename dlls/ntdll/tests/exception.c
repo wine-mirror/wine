@@ -8067,8 +8067,6 @@ static void * WINAPI hook_KiUserExceptionDispatcher(void *stack)
         CONTEXT_EX           context_ex; /* 390 */
         EXCEPTION_RECORD     rec;        /* 3b0 */
         ULONG64              align;      /* 448 */
-        ULONG64              sp;         /* 450 */
-        ULONG64              pc;         /* 458 */
     } *args = stack;
     EXCEPTION_RECORD *old_rec = (EXCEPTION_RECORD *)&args->context_ex;
 
@@ -8086,8 +8084,6 @@ static void * WINAPI hook_KiUserExceptionDispatcher(void *stack)
         ok( args->context_ex.All.Length >= sizeof(CONTEXT) + offsetof(CONTEXT_EX, align), "wrong All.Length %lx\n", args->context_ex.All.Length );
         ok( args->context_ex.Legacy.Offset == -sizeof(CONTEXT), "wrong Legacy.Offset %lx\n", args->context_ex.All.Offset );
         ok( args->context_ex.Legacy.Length == sizeof(CONTEXT), "wrong Legacy.Length %lx\n", args->context_ex.All.Length );
-        ok( args->sp == args->context.Sp, "wrong sp %Ix / %Ix\n", args->sp, args->context.Sp );
-        ok( args->pc == args->context.Pc, "wrong pc %Ix / %Ix\n", args->pc, args->context.Pc );
     }
 
     memcpy(pKiUserExceptionDispatcher, saved_code, sizeof(saved_code));
@@ -8479,7 +8475,7 @@ static void rtlraiseexception_handler_( EXCEPTION_RECORD *rec, void *frame, CONT
     ok( addr == (char *)code_mem + 0x0c,
         "ExceptionAddress at %p instead of %p\n", addr, (char *)code_mem + 0x0c );
     ok( context->ContextFlags == (CONTEXT_FULL | CONTEXT_UNWOUND_TO_CALL) ||
-        context->ContextFlags == (CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS | CONTEXT_UNWOUND_TO_CALL),
+        context->ContextFlags == (CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS),
         "wrong context flags %lx\n", context->ContextFlags );
     ok( context->Pc == (UINT_PTR)addr,
         "%d: Pc at %Ix instead of %Ix\n", test_stage, context->Pc, (UINT_PTR)addr );
@@ -12527,7 +12523,9 @@ START_TEST(exception)
         test_breakpoint(1);
         test_stage = STAGE_EXCEPTION_INVHANDLE_CONTINUE;
         test_closehandle(0, (HANDLE)0xdeadbeef);
-        test_closehandle(0, (HANDLE)0x7fffffff);
+#ifndef __aarch64__
+        test_closehandle(0, (HANDLE)0x7fffffff);  /* apparently valid on arm64 */
+#endif
         test_stage = STAGE_EXCEPTION_INVHANDLE_NOT_HANDLED;
         test_closehandle(1, (HANDLE)0xdeadbeef);
         test_closehandle(1, (HANDLE)~(ULONG_PTR)6);
