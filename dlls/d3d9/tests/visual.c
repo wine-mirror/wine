@@ -4470,8 +4470,6 @@ static void stretchrect_test(void)
             ok(hr == test->allowed ? D3D_OK : D3DERR_INVALIDCALL, "Test %u, got unexpected hr %#lx.\n", i, hr);
     }
 
-    /* TODO: Test format conversions. */
-
     for (i = 0; i < ARRAY_SIZE(surfaces); ++i)
     {
         IDirect3DSurface9_Release(surfaces[i]);
@@ -29141,6 +29139,94 @@ static void test_generated_texcoords(void)
     release_test_context(&context);
 }
 
+static void test_blit_format_conversion(void)
+{
+    IDirect3DSurface9 *src_surface, *dst_surface;
+    struct d3d9_test_context context;
+    IDirect3DTexture9 *src, *dst;
+    struct surface_readback rb;
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    static const struct
+    {
+        D3DFORMAT src_format;
+        uint32_t src_colour;
+        D3DFORMAT dst_format;
+        unsigned int dst_size;
+        union
+        {
+            float f[4];
+            uint32_t u;
+        } dst_data;
+    }
+    tests[] =
+    {
+        {D3DFMT_A8R8G8B8,      0x12345678, D3DFMT_X8R8G8B8,       3, {.u = 0x12345678}},
+        {D3DFMT_X8R8G8B8,      0x12345678, D3DFMT_A8R8G8B8,       3, {.u = 0x12345678}},
+        {D3DFMT_A8R8G8B8,      0x12345678, D3DFMT_R5G6B5,         2, {.u = 0x32af}},
+        {D3DFMT_A8R8G8B8,      0x12345678, D3DFMT_A32B32G32R32F, 16, {.f = {0x34/255.0f, 0x56/255.0f, 0x78/255.0f, 0x12/255.0f}}},
+        {D3DFMT_A32B32G32R32F, 0x12345678, D3DFMT_A8R8G8B8,       4, {.u = 0x12345678}},
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        /* Use a nontrivial clear rect to defeat a wined3d optimization and
+         * ensure that we are actually testing format conversion blits. */
+        static const RECT rect = {0, 0, 2, 2};
+
+        winetest_push_context("Test %u", i);
+
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, D3DUSAGE_RENDERTARGET,
+                tests[i].src_format, D3DPOOL_DEFAULT, &src, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, D3DUSAGE_RENDERTARGET,
+                tests[i].dst_format, D3DPOOL_DEFAULT, &dst, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DTexture9_GetSurfaceLevel(src, 0, &src_surface);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DTexture9_GetSurfaceLevel(dst, 0, &dst_surface);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_ColorFill(device, src_surface, &rect, tests[i].src_colour);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_StretchRect(device, src_surface, NULL, dst_surface, NULL, D3DTEXF_LINEAR);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        get_rt_readback(dst_surface, &rb);
+        if (tests[i].dst_format == D3DFMT_A32B32G32R32F)
+        {
+            const struct vec4 *data = rb.locked_rect.pBits;
+
+            ok(compare_vec4(data, tests[i].dst_data.f[0], tests[i].dst_data.f[1],
+                    tests[i].dst_data.f[2], tests[i].dst_data.f[3], 1),
+                    "Got %.8e, %.8e, %.8e, %.8e.\n", data->x, data->y, data->z, data->w);
+        }
+        else
+        {
+            ok(!memcmp(rb.locked_rect.pBits, &tests[i].dst_data, tests[i].dst_size),
+                    "Got data %08x.\n", *(uint32_t *)rb.locked_rect.pBits);
+        }
+        release_surface_readback(&rb);
+
+        IDirect3DSurface9_Release(src_surface);
+        IDirect3DSurface9_Release(dst_surface);
+        IDirect3DTexture9_Release(src);
+        IDirect3DTexture9_Release(dst);
+
+        winetest_pop_context();
+    }
+
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -29302,4 +29388,5 @@ START_TEST(visual)
     test_texture_transform_flags();
     test_lighting_matrices();
     test_generated_texcoords();
+    test_blit_format_conversion();
 }
