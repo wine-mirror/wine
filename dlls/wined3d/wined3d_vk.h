@@ -299,6 +299,7 @@ static const VkAccessFlags WINED3D_READ_ONLY_ACCESS_FLAGS = VK_ACCESS_INDIRECT_C
 
 VkAccessFlags vk_access_mask_from_bind_flags(uint32_t bind_flags);
 VkCompareOp vk_compare_op_from_wined3d(enum wined3d_cmp_func op);
+VkFilter vk_filter_from_wined3d(enum wined3d_texture_filter_type f);
 VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type, uint32_t flags);
 VkPipelineStageFlags vk_pipeline_stage_mask_from_bind_flags(uint32_t bind_flags);
 VkShaderStageFlagBits vk_shader_stage_from_wined3d(enum wined3d_shader_type shader_type);

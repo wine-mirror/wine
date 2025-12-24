@@ -1500,6 +1500,12 @@ static bool vk_blitter_conversion_supported(enum wined3d_blit_op op, const struc
     if (resolve_format)
         return true;
 
+    if (!((src_format->attrs | dst_format->attrs) & WINED3D_FORMAT_ATTR_INTEGER))
+        return true;
+
+    if ((src_format->attrs & WINED3D_FORMAT_ATTR_UNSIGNED) == (dst_format->attrs & WINED3D_FORMAT_ATTR_UNSIGNED))
+        return true;
+
     return false;
 }
 
@@ -1565,14 +1571,18 @@ static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wine
         return false;
     }
 
-    if ((src_rect->right - src_rect->left != dst_rect->right - dst_rect->left)
-            || (src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top))
-    {
-        TRACE("Scaling not supported.\n");
-        return false;
-    }
-
     return true;
+}
+
+static bool use_raw_blit(enum wined3d_blit_op op, const struct wined3d_format_vk *src_format_vk,
+        const struct wined3d_format_vk *dst_format_vk, const RECT *src_rect, const RECT *dst_rect)
+{
+    if (op == WINED3D_BLIT_OP_RAW_BLIT)
+        return true;
+
+    return src_format_vk->vk_format == dst_format_vk->vk_format
+            && src_rect->right - src_rect->left == dst_rect->right - dst_rect->left
+            && src_rect->bottom - src_rect->top == dst_rect->bottom - dst_rect->top;
 }
 
 static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
@@ -1582,6 +1592,8 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         const struct wined3d_color_key *colour_key, enum wined3d_texture_filter_type filter,
         const struct wined3d_format *resolve_format)
 {
+    const struct wined3d_format_vk *src_format_vk = wined3d_format_vk(src_texture->resource.format);
+    const struct wined3d_format_vk *dst_format_vk = wined3d_format_vk(dst_texture->resource.format);
     struct wined3d_texture_vk *src_texture_vk = wined3d_texture_vk(src_texture);
     struct wined3d_texture_vk *dst_texture_vk = wined3d_texture_vk(dst_texture);
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
@@ -1867,7 +1879,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
                     dst_texture_vk->image.vk_image, dst_layout, 1, &copy_region));
         }
     }
-    else
+    else if (use_raw_blit(op, src_format_vk, dst_format_vk, src_rect, dst_rect))
     {
         const struct wined3d_format *src_format = src_texture_vk->t.resource.format;
         VkImageCopy region;
@@ -1912,6 +1924,34 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image, src_layout,
                     dst_texture_vk->image.vk_image, dst_layout, 1, &region));
         }
+    }
+    else
+    {
+        VkImageBlit region;
+
+        region.srcSubresource.aspectMask = vk_src_range.aspectMask;
+        region.srcSubresource.mipLevel = vk_src_range.baseMipLevel;
+        region.srcSubresource.baseArrayLayer = vk_src_range.baseArrayLayer;
+        region.srcSubresource.layerCount = vk_src_range.layerCount;
+        region.srcOffsets[0].x = src_rect->left;
+        region.srcOffsets[0].y = src_rect->top;
+        region.srcOffsets[0].z = 0;
+        region.srcOffsets[1].x = src_rect->right;
+        region.srcOffsets[1].y = src_rect->bottom;
+        region.srcOffsets[1].z = 1;
+        region.dstSubresource.aspectMask = vk_dst_range.aspectMask;
+        region.dstSubresource.mipLevel = vk_dst_range.baseMipLevel;
+        region.dstSubresource.baseArrayLayer = vk_dst_range.baseArrayLayer;
+        region.dstSubresource.layerCount = vk_dst_range.layerCount;
+        region.dstOffsets[0].x = dst_rect->left;
+        region.dstOffsets[0].y = dst_rect->top;
+        region.dstOffsets[0].z = 0;
+        region.dstOffsets[1].x = dst_rect->right;
+        region.dstOffsets[1].y = dst_rect->bottom;
+        region.dstOffsets[1].z = 1;
+
+        VK_CALL(vkCmdBlitImage(vk_command_buffer, src_texture_vk->image.vk_image, src_layout,
+                dst_texture_vk->image.vk_image, dst_layout, 1, &region, vk_filter_from_wined3d(filter)));
     }
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,

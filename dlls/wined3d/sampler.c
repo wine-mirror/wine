@@ -145,7 +145,7 @@ void wined3d_sampler_gl_init(struct wined3d_sampler_gl *sampler_gl, struct wined
         wined3d_cs_init_object(device->cs, wined3d_sampler_gl_cs_init, sampler_gl);
 }
 
-static VkFilter vk_filter_from_wined3d(enum wined3d_texture_filter_type f)
+VkFilter vk_filter_from_wined3d(enum wined3d_texture_filter_type f)
 {
     switch (f)
     {

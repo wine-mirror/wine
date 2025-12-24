@@ -1928,6 +1928,8 @@ static void parse_channel_desc(struct wined3d_format *format, const char *channe
             attrs |= WINED3D_FORMAT_ATTR_NORMALISED;
         if (channel_type == WINED3D_CHANNEL_TYPE_UINT || channel_type == WINED3D_CHANNEL_TYPE_SINT)
             attrs |= WINED3D_FORMAT_ATTR_INTEGER;
+        if (channel_type == WINED3D_CHANNEL_TYPE_UINT || channel_type == WINED3D_CHANNEL_TYPE_UNORM)
+            attrs |= WINED3D_FORMAT_ATTR_UNSIGNED;
         if (channel_type == WINED3D_CHANNEL_TYPE_FLOAT)
             attrs |= WINED3D_FORMAT_ATTR_FLOAT;
         if (channel_type == WINED3D_CHANNEL_TYPE_DEPTH)
