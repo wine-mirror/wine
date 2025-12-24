@@ -41,9 +41,9 @@ struct unix_name
     struct wine_rb_entry entry;
 };
 
-extern struct unix_name *unix_name_get_or_create( const char *str );
 extern void unix_name_free( struct unix_name *name );
-extern struct unix_name *unix_name_dup( struct unix_name *name );
+extern struct unix_name *unix_name_get_or_create( const char *str ) __WINE_DEALLOC(unix_name_free) __WINE_MALLOC;
+extern struct unix_name *unix_name_dup( struct unix_name *name ) __WINE_DEALLOC(unix_name_free) __WINE_MALLOC;
 
 extern void *bluez_dbus_init( void );
 extern void bluez_dbus_close( void *connection );
