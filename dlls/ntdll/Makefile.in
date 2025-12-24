@@ -13,6 +13,7 @@ x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x170000000
 
 SOURCES = \
 	actctx.c \
+	async_modern.c \
 	atom.c \
 	crypt.c \
 	debugbuffer.c \
