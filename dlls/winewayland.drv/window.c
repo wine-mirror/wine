@@ -665,6 +665,25 @@ static enum xdg_toplevel_resize_edge hittest_to_resize_edge(WPARAM hittest)
 }
 
 /*****************************************************************
+ *              WAYLAND_IsTopLevel
+ */
+BOOL WAYLAND_IsTopLevel(HWND hwnd)
+{
+    struct wayland_win_data *data;
+
+    if ((data = wayland_win_data_get(hwnd)))
+    {
+        if (data->wayland_surface && wayland_surface_is_toplevel(data->wayland_surface))
+        {
+            wayland_win_data_release(data);
+            return TRUE;
+        }
+        wayland_win_data_release(data);
+    }
+    return FALSE;
+}
+
+/*****************************************************************
  *		WAYLAND_SetWindowIcons
  */
 void WAYLAND_SetWindowIcons(HWND hwnd, HICON icon, const ICONINFO *ii, HICON icon_small, const ICONINFO *ii_small)
@@ -677,11 +696,9 @@ void WAYLAND_SetWindowIcons(HWND hwnd, HICON icon, const ICONINFO *ii, HICON ico
     {
         if ((data = wayland_win_data_get(hwnd)))
         {
-            if (data->wayland_surface && wayland_surface_is_toplevel(data->wayland_surface))
-            {
-                wayland_surface_set_icon(data->wayland_surface, ICON_BIG, ii);
-                wayland_surface_set_icon(data->wayland_surface, ICON_SMALL, ii_small);
-            }
+            wayland_surface_set_icon(data->wayland_surface, ICON_BIG, ii);
+            wayland_surface_set_icon(data->wayland_surface, ICON_SMALL, ii_small);
+
             wayland_win_data_release(data);
         }
     }

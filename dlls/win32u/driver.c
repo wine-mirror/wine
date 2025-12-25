@@ -834,6 +834,11 @@ static void nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
 }
 
+static BOOL nulldrv_IsTopLevel( HWND hwnd )
+{
+    return FALSE;
+}
+
 static void nulldrv_SetWindowIcons( HWND hwnd, HICON icon, const ICONINFO *ii, HICON icon_small, const ICONINFO *ii_small )
 {
 }
@@ -1278,6 +1283,7 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_SetLayeredWindowAttributes,
     nulldrv_SetParent,
     loaderdrv_SetWindowRgn,
+    nulldrv_IsTopLevel,
     nulldrv_SetWindowIcons,
     nulldrv_SetWindowStyle,
     nulldrv_SetWindowText,
@@ -1375,6 +1381,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(SetLayeredWindowAttributes);
     SET_USER_FUNC(SetParent);
     SET_USER_FUNC(SetWindowRgn);
+    SET_USER_FUNC(IsTopLevel);
     SET_USER_FUNC(SetWindowIcons);
     SET_USER_FUNC(SetWindowStyle);
     SET_USER_FUNC(SetWindowText);

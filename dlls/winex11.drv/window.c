@@ -3248,6 +3248,14 @@ done:
 
 
 /**********************************************************************
+ *              IsTopLevel (X11DRV.@)
+ */
+BOOL X11DRV_IsTopLevel(HWND hwnd)
+{
+    return TRUE;
+}
+
+/**********************************************************************
  *		SetWindowIcons (X11DRV.@)
  */
 void X11DRV_SetWindowIcons( HWND hwnd, HICON icon, const ICONINFO *ii, HICON icon_small, const ICONINFO *ii_small )

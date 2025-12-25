@@ -445,6 +445,7 @@ BOOL WAYLAND_SetIMECompositionRect(HWND hwnd, RECT rect);
 void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor);
 BOOL WAYLAND_SetCursorPos(INT x, INT y);
 void WAYLAND_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha, DWORD flags);
+BOOL WAYLAND_IsTopLevel(HWND hwnd);
 void WAYLAND_SetWindowIcons(HWND hwnd, HICON icon, const ICONINFO *ii, HICON icon_small, const ICONINFO *ii_small);
 void WAYLAND_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style);
 void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text);

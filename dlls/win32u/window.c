@@ -2243,7 +2243,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             (swp_flags & (SWP_HIDEWINDOW | SWP_SHOWWINDOW | SWP_STATECHANGED | SWP_FRAMECHANGED)))
             invalidate_dce( win, &old_rects.window );
 
-        if (win->dwStyle & WS_VISIBLE && !is_child && !win->has_icons)
+        if (win->dwStyle & WS_VISIBLE && !is_child && !win->has_icons && user_driver->pIsTopLevel(hwnd))
         {
             icon = win->hIcon;
             icon_small = win->hIconSmall2 ? win->hIconSmall2 : win->hIconSmall;
