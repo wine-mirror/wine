@@ -51,7 +51,7 @@ BOOL is_virtual_desktop(void)
  *
  * Setup the desktop when not using the root window.
  */
-void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
+void X11DRV_init_desktop( Window win )
 {
     host_primary_rect = get_host_primary_monitor_rect();
     root_window = win;
@@ -91,7 +91,7 @@ BOOL X11DRV_CreateDesktop( const WCHAR *name, UINT width, UINT height )
     x11drv_xinput2_enable( display, win );
     XFlush( display );
 
-    X11DRV_init_desktop( win, width, height );
+    X11DRV_init_desktop( win );
     return TRUE;
 }
 
