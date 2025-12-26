@@ -395,7 +395,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH UnregisterWaitEx( HANDLE handle, HANDLE event )
  */
 DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObject( HANDLE handle, DWORD timeout )
 {
-    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
+    return WaitForSingleObjectEx( handle, timeout, FALSE );
 }
 
 
@@ -404,7 +404,18 @@ DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObject( HANDLE handle, DWORD timeout
  */
 DWORD WINAPI DECLSPEC_HOTPATCH WaitForSingleObjectEx( HANDLE handle, DWORD timeout, BOOL alertable )
 {
-    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
+    NTSTATUS status;
+    LARGE_INTEGER time;
+
+    status = NtWaitForSingleObject( normalize_std_handle( handle ), alertable,
+                                    get_nt_timeout( &time, timeout ) );
+
+    if (NT_ERROR(status))
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        status = WAIT_FAILED;
+    }
+    return status;
 }
 
 
@@ -438,7 +449,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH WaitForMultipleObjectsEx( DWORD count, const HAND
 
     status = NtWaitForMultipleObjects( count, hloc, wait_all ? WaitAll : WaitAny, alertable,
                                        get_nt_timeout( &time, timeout ) );
-    if (HIWORD(status))  /* is it an error code? */
+    if (NT_ERROR(status))
     {
         SetLastError( RtlNtStatusToDosError(status) );
         status = WAIT_FAILED;

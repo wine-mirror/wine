@@ -1767,6 +1767,104 @@ static void test_streaming(const WCHAR *resname)
     winetest_pop_context();
 }
 
+static void test_32bpp_media_types(void)
+{
+    static const VIDEOINFOHEADER expect_vih =
+    {
+        .AvgTimePerFrame = 1000 * 10000,
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 24,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biCompression = BI_RGB,
+        .bmiHeader.biSizeImage = 32 * 24 * 32 / 8,
+    };
+
+    const WCHAR *filename = load_resource(L"test_32bpp.avi");
+    IBaseFilter *filter = create_avi_splitter();
+    IFilterGraph2 *graph = connect_input(filter, filename);
+    IEnumMediaTypes *enummt;
+    VIDEOINFOHEADER *vih;
+    AM_MEDIA_TYPE *pmt;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+    BOOL ret;
+
+    IBaseFilter_FindPin(filter, L"Stream 00", &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* 1: ARGB32 */
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_ARGB32), "Got subtype %s\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(!pmt->bFixedSizeSamples, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(pmt->lSampleSize == 1, "Got sample size %lu.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &FORMAT_VideoInfo), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    ok(pmt->cbFormat == sizeof(VIDEOINFOHEADER), "Got format size %lu.\n", pmt->cbFormat);
+    ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
+
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
+    vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    FreeMediaType(pmt);
+
+    /* 2: RGB32 */
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_FALSE) goto done;
+
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB32), "Got subtype %s\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(!pmt->bFixedSizeSamples, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    todo_wine ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    ok(pmt->lSampleSize == 1, "Got sample size %lu.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &FORMAT_VideoInfo), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+    ok(pmt->cbFormat == sizeof(VIDEOINFOHEADER), "Got format size %lu.\n", pmt->cbFormat);
+    ok(!memcmp(pmt->pbFormat, &expect_vih, sizeof(VIDEOINFOHEADER)), "Format blocks didn't match.\n");
+
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    vih = (VIDEOINFOHEADER *)pmt->pbFormat;
+    vih->bmiHeader.biHeight = -vih->bmiHeader.biHeight;
+    hr = IPin_QueryAccept(pin, pmt);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    FreeMediaType(pmt);
+
+done:
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+    IPin_Release(pin);
+
+    IFilterGraph2_Release(graph);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
+}
+
 START_TEST(avisplit)
 {
     IBaseFilter *filter;
@@ -1793,6 +1891,7 @@ START_TEST(avisplit)
     test_seeking();
     test_streaming(L"test.avi");
     test_streaming(L"test_cinepak.avi");
+    test_32bpp_media_types();
 
     CoUninitialize();
 }

@@ -70,7 +70,7 @@ static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d
     TRACE("    Maximum LOD: %.8e.\n", desc->max_lod);
     TRACE("    Base mip level: %u.\n", desc->mip_base_level);
     TRACE("    Maximum anisotropy: %u.\n", desc->max_anisotropy);
-    TRACE("    Comparison: %d.\n", desc->compare);
+    TRACE("    Reduction mode: %#x.\n", desc->reduction_mode);
     TRACE("    Comparison func: %#x.\n", desc->comparison_func);
     TRACE("    SRGB decode: %d.\n", desc->srgb_decode);
 
@@ -87,6 +87,7 @@ static void wined3d_sampler_gl_cs_init(void *object)
     const struct wined3d_sampler_desc *desc;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    GLenum reduction_mode;
     GLuint name;
 
     TRACE("sampler_gl %p.\n", sampler_gl);
@@ -112,8 +113,13 @@ static void wined3d_sampler_gl_cs_init(void *object)
     GL_EXTCALL(glSamplerParameterf(name, GL_TEXTURE_MAX_LOD, desc->max_lod));
     if (gl_info->supported[ARB_TEXTURE_FILTER_ANISOTROPIC])
         GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_MAX_ANISOTROPY, desc->max_anisotropy));
-    if (desc->compare)
+    if (desc->reduction_mode == WINED3D_FILTER_REDUCTION_COMPARISON)
         GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE));
+    reduction_mode = wined3d_gl_filter_reduction_mode(desc->reduction_mode);
+    if (gl_info->supported[ARB_TEXTURE_FILTER_MINMAX])
+        GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_REDUCTION_MODE_ARB, reduction_mode));
+    else if (reduction_mode != GL_WEIGHTED_AVERAGE_ARB)
+        WARN("Sampler min/max reduction filtering is not supported.\n");
     GL_EXTCALL(glSamplerParameteri(name, GL_TEXTURE_COMPARE_FUNC,
             wined3d_gl_compare_func(desc->comparison_func)));
     if ((context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
@@ -212,8 +218,26 @@ static VkBorderColor vk_border_colour_from_wined3d(const struct wined3d_color *c
     return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
 }
 
+static VkSamplerReductionMode vk_reduction_mode_from_wined3d(enum wined3d_filter_reduction_mode mode)
+{
+    switch (mode)
+    {
+        case WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE:
+        case WINED3D_FILTER_REDUCTION_COMPARISON:
+            return VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE;
+        case WINED3D_FILTER_REDUCTION_MINIMUM:
+            return VK_SAMPLER_REDUCTION_MODE_MIN;
+        case WINED3D_FILTER_REDUCTION_MAXIMUM:
+            return VK_SAMPLER_REDUCTION_MODE_MAX;
+        default:
+            FIXME("Unhandled reduction mode %#x.\n", mode);
+            return VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE;
+    }
+}
+
 static void wined3d_sampler_vk_cs_init(void *object)
 {
+    VkSamplerReductionModeCreateInfo reduction_desc;
     struct wined3d_sampler_vk *sampler_vk = object;
     const struct wined3d_sampler_desc *desc;
     const struct wined3d_d3d_info *d3d_info;
@@ -244,7 +268,7 @@ static void wined3d_sampler_vk_cs_init(void *object)
     sampler_desc.mipLodBias = desc->lod_bias;
     sampler_desc.anisotropyEnable = desc->max_anisotropy != 1;
     sampler_desc.maxAnisotropy = desc->max_anisotropy;
-    sampler_desc.compareEnable = !!desc->compare;
+    sampler_desc.compareEnable = desc->reduction_mode == WINED3D_FILTER_REDUCTION_COMPARISON;
     sampler_desc.compareOp = vk_compare_op_from_wined3d(desc->comparison_func);
     sampler_desc.minLod = desc->min_lod;
     sampler_desc.maxLod = desc->max_lod;
@@ -258,6 +282,21 @@ static void wined3d_sampler_vk_cs_init(void *object)
         FIXME("Unhandled mip_base_level %u.\n", desc->mip_base_level);
     if ((d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL) && !desc->srgb_decode)
         FIXME("Unhandled srgb_decode %#x.\n", desc->srgb_decode);
+
+    reduction_desc.reductionMode = vk_reduction_mode_from_wined3d(desc->reduction_mode);
+    if (reduction_desc.reductionMode != VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE)
+    {
+        if (vk_info->supported[WINED3D_VK_EXT_SAMPLER_FILTER_MINMAX])
+        {
+            reduction_desc.sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO;
+            reduction_desc.pNext = sampler_desc.pNext;
+            sampler_desc.pNext = &reduction_desc;
+        }
+        else
+        {
+            FIXME("Sampler min/max reduction filtering is not supported.\n");
+        }
+    }
 
     vr = VK_CALL(vkCreateSampler(device_vk->vk_device, &sampler_desc, NULL, &vk_sampler));
     context_release(&context_vk->c);

@@ -1852,6 +1852,7 @@ enum server_fd_type
     obj_handle_t mapping;       /* file mapping handle */
     client_ptr_t base;          /* view base address (page-aligned) */
     mem_size_t   size;          /* view size */
+    mem_size_t   offset;        /* offset into the image */
     unsigned int entry;         /* entry point in mapped view */
     unsigned short machine;     /* machine in the mapped view */
 @END
@@ -2501,6 +2502,8 @@ enum message_type
     obj_handle_t handle;        /* handle to comm port, socket or file */
     client_ptr_t iosb;          /* I/O status block (NULL=all) */
     int          only_thread;   /* cancel matching this thread */
+@REPLY
+    obj_handle_t cancel_handle;
 @END
 
 
@@ -3116,6 +3119,7 @@ enum coords_relative
 /* Set the system foreground window */
 @REQ(set_foreground_window)
     user_handle_t  handle;        /* handle to the foreground window */
+    int            internal;      /* foreground change comes from the host */
 @REPLY
     user_handle_t  previous;      /* handle to the previous foreground window */
     int            send_msg_old;  /* whether we have to send a msg to the old window */

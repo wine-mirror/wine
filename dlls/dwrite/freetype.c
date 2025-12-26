@@ -44,7 +44,7 @@
 
 #include "dwrite_private.h"
 
-#ifdef HAVE_FREETYPE
+#ifdef SONAME_LIBFREETYPE
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
@@ -80,14 +80,13 @@ MAKE_FUNCPTR(FT_New_Size);
 MAKE_FUNCPTR(FT_Outline_Copy);
 MAKE_FUNCPTR(FT_Outline_Decompose);
 MAKE_FUNCPTR(FT_Outline_Done);
-MAKE_FUNCPTR(FT_Outline_Embolden);
+MAKE_FUNCPTR(FT_Outline_EmboldenXY);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_New);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 #undef MAKE_FUNCPTR
-static FT_Error (*pFT_Outline_EmboldenXY)(FT_Outline *, FT_Pos, FT_Pos);
 
 #define FaceFromObject(o) ((FT_Face)(ULONG_PTR)(o))
 
@@ -147,14 +146,13 @@ static NTSTATUS process_attach(void *args)
     LOAD_FUNCPTR(FT_Outline_Copy)
     LOAD_FUNCPTR(FT_Outline_Decompose)
     LOAD_FUNCPTR(FT_Outline_Done)
-    LOAD_FUNCPTR(FT_Outline_Embolden)
+    LOAD_FUNCPTR(FT_Outline_EmboldenXY)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
     LOAD_FUNCPTR(FT_Outline_New)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
 #undef LOAD_FUNCPTR
-    pFT_Outline_EmboldenXY = dlsym(ft_handle, "FT_Outline_EmboldenXY");
 
     if (pFT_Init_FreeType(&library) != 0)
     {
@@ -429,10 +427,7 @@ static void embolden_glyph_outline(FT_Outline *outline, FLOAT emsize)
     FT_Pos strength;
 
     strength = pFT_MulDiv(emsize, 1 << 6, 24);
-    if (pFT_Outline_EmboldenXY)
-        pFT_Outline_EmboldenXY(outline, strength, 0);
-    else
-        pFT_Outline_Embolden(outline, strength);
+    pFT_Outline_EmboldenXY(outline, strength, 0);
 }
 
 static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
@@ -740,7 +735,7 @@ static NTSTATUS get_glyph_advance(void *args)
     return STATUS_SUCCESS;
 }
 
-#else /* HAVE_FREETYPE */
+#else /* SONAME_LIBFREETYPE */
 
 static NTSTATUS process_attach(void *args)
 {
@@ -799,7 +794,7 @@ static NTSTATUS get_design_glyph_metrics(void *args)
     return STATUS_NOT_IMPLEMENTED;
 }
 
-#endif /* HAVE_FREETYPE */
+#endif /* SONAME_LIBFREETYPE */
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {

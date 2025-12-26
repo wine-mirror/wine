@@ -867,19 +867,26 @@ static void media_engine_get_frame_size(struct media_engine *engine, IMFTopology
 
 static void media_engine_apply_volume(const struct media_engine *engine)
 {
-    IMFSimpleAudioVolume *sa_volume;
+    IMFAudioStreamVolume *as_volume;
+    UINT32 count = 0;
+    unsigned int i;
     HRESULT hr;
 
     if (!engine->session)
         return;
 
-    if (FAILED(MFGetService((IUnknown *)engine->session, &MR_POLICY_VOLUME_SERVICE, &IID_IMFSimpleAudioVolume, (void **)&sa_volume)))
+    if (FAILED(MFGetService((IUnknown *)engine->session, &MR_STREAM_VOLUME_SERVICE, &IID_IMFAudioStreamVolume, (void **)&as_volume)))
         return;
 
-    if (FAILED(hr = IMFSimpleAudioVolume_SetMasterVolume(sa_volume, engine->volume)))
-        WARN("Failed to set master volume, hr %#lx.\n", hr);
+    if (FAILED(hr = IMFAudioStreamVolume_GetChannelCount(as_volume, &count)))
+        WARN("Failed to get channel count, hr %#lx.\n", hr);
+    for (i = 0; i < count; i++)
+    {
+        if (FAILED(hr = IMFAudioStreamVolume_SetChannelVolume(as_volume, i, engine->volume)))
+            WARN("Failed to set volume, hr %#lx.\n", hr);
+    }
 
-    IMFSimpleAudioVolume_Release(sa_volume);
+    IMFAudioStreamVolume_Release(as_volume);
 }
 
 static HRESULT WINAPI media_engine_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
@@ -1152,12 +1159,15 @@ static HRESULT media_engine_create_audio_renderer(struct media_engine *engine, I
     unsigned int category, role;
     IMFActivate *sar_activate;
     HRESULT hr;
+    GUID guid;
 
     *node = NULL;
 
     if (FAILED(hr = MFCreateAudioRendererActivate(&sar_activate)))
         return hr;
 
+    CoCreateGuid(&guid);
+    IMFActivate_SetGUID(sar_activate, &MF_AUDIO_RENDERER_ATTRIBUTE_SESSION_ID, &guid);
     /* Configuration attributes keys differ between Engine and SAR. */
     if (SUCCEEDED(IMFAttributes_GetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_CATEGORY, &category)))
         IMFActivate_SetUINT32(sar_activate, &MF_AUDIO_RENDERER_ATTRIBUTE_STREAM_CATEGORY, category);

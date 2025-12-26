@@ -166,4 +166,34 @@ void __cdecl __crtCapturePreviousContext( CONTEXT *ctx )
 }
 #endif
 
+LONG __attribute__((naked)) __C_ExecuteExceptionFilter( EXCEPTION_POINTERS *ptrs, void *frame,
+    PEXCEPTION_FILTER filter, BYTE *nonvolatile )
+{
+    asm( ".seh_proc _C_ExecuteExceptionFilter\n\t"
+         "stp x29, x30, [sp, #-80]!\n\t"
+         ".seh_save_fplr_x 80\n\t"
+         "stp x19, x20, [sp, #16]\n\t"
+         ".seh_save_regp x19, 16\n\t"
+         "stp x21, x22, [sp, #32]\n\t"
+         ".seh_save_regp x21, 32\n\t"
+         "stp x25, x26, [sp, #48]\n\t"
+         ".seh_save_regp x25, 48\n\t"
+         "str x27, [sp, #64]\n\t"
+         ".seh_save_reg x27, 64\n\t"
+         ".seh_endprologue\n\t"
+         "ldp x19, x20, [x3, #0]\n\t" /* nonvolatile regs */
+         "ldp x21, x22, [x3, #16]\n\t"
+         "ldp x25, x26, [x3, #48]\n\t"
+         "ldr x27, [x3, #64]\n\t"
+         "ldr x1,  [x3, #80]\n\t" /* x29 = frame */
+         "blr x2\n\t"             /* filter */
+         "ldp x19, x20, [sp, #16]\n\t"
+         "ldp x21, x22, [sp, #32]\n\t"
+         "ldp x25, x26, [sp, #48]\n\t"
+         "ldr x27,      [sp, #64]\n\t"
+         "ldp x29, x30, [sp], #80\n\t"
+         "ret\n\t"
+         ".seh_endproc" );
+}
+
 #endif  /* __arm64ec__ */

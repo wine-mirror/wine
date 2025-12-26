@@ -382,8 +382,10 @@ static HRESULT WINAPI session_set_AutoStopSilenceTimeout( ISpeechContinuousRecog
     return E_NOTIMPL;
 }
 
-static HRESULT session_start_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT session_start_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
+    if (!called_async) return STATUS_PENDING;
+
     return S_OK;
 }
 
@@ -431,8 +433,9 @@ static HRESULT WINAPI session_StartWithModeAsync( ISpeechContinuousRecognitionSe
     return E_NOTIMPL;
 }
 
-static HRESULT session_stop_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT session_stop_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
+    if (!called_async) return STATUS_PENDING;
     return S_OK;
 }
 
@@ -487,8 +490,9 @@ static HRESULT WINAPI session_CancelAsync( ISpeechContinuousRecognitionSession *
     return E_NOTIMPL;
 }
 
-static HRESULT session_pause_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT session_pause_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
+    if (!called_async) return STATUS_PENDING;
     return S_OK;
 }
 
@@ -725,10 +729,12 @@ static HRESULT WINAPI recognizer_get_UIOptions( ISpeechRecognizer *iface, ISpeec
     return E_NOTIMPL;
 }
 
-static HRESULT recognizer_compile_constraints_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT recognizer_compile_constraints_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
     ISpeechRecognitionCompilationResult *compilation;
     HRESULT hr;
+
+    if (!called_async) return STATUS_PENDING;
 
     if (SUCCEEDED(hr = compilation_result_create(SpeechRecognitionResultStatus_Success, &compilation)))
     {
@@ -1071,7 +1077,8 @@ static HRESULT recognizer_factory_create_audio_capture(struct session *session)
     wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
     TRACE("wfx tag %u, channels %u, samples %lu, bits %u, align %u.\n", wfx.wFormatTag, wfx.nChannels, wfx.nSamplesPerSec, wfx.wBitsPerSample, wfx.nBlockAlign);
 
-    if (FAILED(hr = IAudioClient_Initialize(session->audio_client, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, buffer_duration, 0, &wfx, NULL)))
+    if (FAILED(hr = IAudioClient_Initialize(session->audio_client, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM, buffer_duration, 0, &wfx, NULL)))
         goto cleanup;
 
     if (FAILED(hr = IAudioClient_SetEventHandle(session->audio_client, session->audio_buf_event)))

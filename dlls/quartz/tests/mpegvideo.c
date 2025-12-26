@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdbool.h>
 #define COBJMACROS
 #include "dshow.h"
 #include "mmreg.h"
@@ -834,6 +835,11 @@ struct testfilter
     unsigned int got_sample, got_new_segment, got_eos, got_begin_flush, got_end_flush;
     REFERENCE_TIME expected_start_time;
     REFERENCE_TIME expected_stop_time;
+
+    IMemAllocator IMemAllocator_iface;
+    IMemAllocator *wrapped_allocator;
+    IMediaSample IMediaSample_iface;
+    IMediaSample *wrapped_sample;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -916,15 +922,22 @@ static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const A
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    bool dynamic_format_change = (filter->sink.pAllocator == &filter->IMemAllocator_iface);
     REFERENCE_TIME start, stop;
     AM_MEDIA_TYPE *mt = (AM_MEDIA_TYPE *)0xdeadbeef;
     HRESULT hr;
     LONG size;
 
     size = IMediaSample_GetSize(sample);
-    ok(size == filter->sink.pin.mt.lSampleSize, "Got size %lu, expected %lu.\n", size, filter->sink.pin.mt.lSampleSize);
+    if (dynamic_format_change)
+        ok(size == 32 * 24 * 32 / 8, "Got size %ld.\n", size);
+    else
+        ok(size == filter->sink.pin.mt.lSampleSize, "Got size %ld, expected %ld.\n", size, filter->sink.pin.mt.lSampleSize);
     size = IMediaSample_GetActualDataLength(sample);
-    ok(size == filter->sink.pin.mt.lSampleSize, "Got actual size %lu, expected %lu.\n", size, filter->sink.pin.mt.lSampleSize);
+    if (dynamic_format_change)
+        ok(size == 32 * 24 * 32 / 8, "Got size %ld.\n", size);
+    else
+        ok(size == filter->sink.pin.mt.lSampleSize, "Got size %ld, expected %ld.\n", size, filter->sink.pin.mt.lSampleSize);
     ok(IMediaSample_GetActualDataLength(sample) <= IMediaSample_GetSize(sample), "Buffer overflow");
 
     start = 0xdeadbeef;
@@ -932,10 +945,12 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     hr = IMediaSample_GetTime(sample, &start, &stop);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    hr = IMediaSample_GetMediaType(sample, &mt);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    if (mt)
-        DeleteMediaType(mt);
+    if (!dynamic_format_change)
+    {
+        hr = IMediaSample_GetMediaType(sample, &mt);
+        ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+        ok(!mt, "Got unexpected media type.\n");
+    }
 
     if (filter->got_sample == 0 && filter->expected_start_time != (REFERENCE_TIME)-1)
     {
@@ -995,6 +1010,279 @@ static const struct strmbase_sink_ops testsink_ops =
     .sink_end_flush = testsink_end_flush,
 };
 
+static struct testfilter *impl_from_IMediaSample(IMediaSample *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IMediaSample_iface);
+}
+
+static HRESULT WINAPI sample_QueryInterface(IMediaSample *iface, REFIID iid, void **out)
+{
+    ok(IsEqualGUID(iid, &IID_IDirectDraw), "Got unexpected IID %s.\n", debugstr_guid(iid));
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI sample_AddRef(IMediaSample *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_AddRef(filter->wrapped_sample);
+}
+
+static ULONG WINAPI sample_Release(IMediaSample *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+    ULONG refcount = IMediaSample_Release(filter->wrapped_sample);
+
+    if (!refcount)
+        filter->wrapped_sample = NULL;
+    return refcount;
+}
+
+static HRESULT WINAPI sample_GetPointer(IMediaSample *iface, BYTE **data)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_GetPointer(filter->wrapped_sample, data);
+}
+
+static LONG WINAPI sample_GetSize(IMediaSample *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_GetSize(filter->wrapped_sample);
+}
+
+static HRESULT WINAPI sample_GetTime(IMediaSample *iface, REFERENCE_TIME *start, REFERENCE_TIME *end)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_GetTime(filter->wrapped_sample, start, end);
+}
+
+static HRESULT WINAPI sample_SetTime(IMediaSample *iface, REFERENCE_TIME *start, REFERENCE_TIME *end)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_SetTime(filter->wrapped_sample, start, end);
+}
+
+static HRESULT WINAPI sample_IsSyncPoint(IMediaSample *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_SetSyncPoint(IMediaSample *iface, BOOL sync_point)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_SetSyncPoint(filter->wrapped_sample, sync_point);
+}
+
+static HRESULT WINAPI sample_IsPreroll(IMediaSample *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_SetPreroll(IMediaSample *iface, BOOL preroll)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static LONG WINAPI sample_GetActualDataLength(IMediaSample *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_GetActualDataLength(filter->wrapped_sample);
+}
+
+static HRESULT WINAPI sample_SetActualDataLength(IMediaSample *iface, LONG size)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    if (winetest_debug > 1) trace("SetActualDataLength(%ld)\n", size);
+
+    ok(size == 32 * 24 * 32 / 8, "Got size %ld.\n", size);
+
+    IMediaSample_SetActualDataLength(filter->wrapped_sample, size);
+    return E_FAIL;
+}
+
+static HRESULT WINAPI sample_GetMediaType(IMediaSample *iface, AM_MEDIA_TYPE **mt)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_GetMediaType(filter->wrapped_sample, mt);
+}
+
+static HRESULT WINAPI sample_SetMediaType(IMediaSample *iface, AM_MEDIA_TYPE *mt)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_IsDiscontinuity(IMediaSample *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_SetDiscontinuity(IMediaSample *iface, BOOL discontinuity)
+{
+    struct testfilter *filter = impl_from_IMediaSample(iface);
+
+    return IMediaSample_SetDiscontinuity(filter->wrapped_sample, discontinuity);
+}
+
+static HRESULT WINAPI sample_GetMediaTime(IMediaSample *iface, LONGLONG *start, LONGLONG *end)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_SetMediaTime(IMediaSample *iface, LONGLONG *start, LONGLONG *end)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaSampleVtbl sample_vtbl =
+{
+    sample_QueryInterface,
+    sample_AddRef,
+    sample_Release,
+    sample_GetPointer,
+    sample_GetSize,
+    sample_GetTime,
+    sample_SetTime,
+    sample_IsSyncPoint,
+    sample_SetSyncPoint,
+    sample_IsPreroll,
+    sample_SetPreroll,
+    sample_GetActualDataLength,
+    sample_SetActualDataLength,
+    sample_GetMediaType,
+    sample_SetMediaType,
+    sample_IsDiscontinuity,
+    sample_SetDiscontinuity,
+    sample_GetMediaTime,
+    sample_SetMediaTime,
+};
+
+static struct testfilter *impl_from_IMemAllocator(IMemAllocator *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IMemAllocator_iface);
+}
+
+static HRESULT WINAPI allocator_QueryInterface(IMemAllocator *iface, REFIID iid, void **out)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI allocator_AddRef(IMemAllocator *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI allocator_Release(IMemAllocator *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI allocator_SetProperties(IMemAllocator *iface,
+        ALLOCATOR_PROPERTIES *req_props, ALLOCATOR_PROPERTIES *ret_props)
+{
+    struct testfilter *filter = impl_from_IMemAllocator(iface);
+
+    return IMemAllocator_SetProperties(filter->wrapped_allocator, req_props, ret_props);
+}
+
+static HRESULT WINAPI allocator_GetProperties(IMemAllocator *iface, ALLOCATOR_PROPERTIES *props)
+{
+    struct testfilter *filter = impl_from_IMemAllocator(iface);
+
+    return IMemAllocator_GetProperties(filter->wrapped_allocator, props);
+}
+
+static HRESULT WINAPI allocator_Commit(IMemAllocator *iface)
+{
+    struct testfilter *filter = impl_from_IMemAllocator(iface);
+
+    return IMemAllocator_Commit(filter->wrapped_allocator);
+}
+
+static HRESULT WINAPI allocator_Decommit(IMemAllocator *iface)
+{
+    struct testfilter *filter = impl_from_IMemAllocator(iface);
+
+    return IMemAllocator_Decommit(filter->wrapped_allocator);
+}
+
+static const VIDEOINFOHEADER dynamic_format =
+{
+    .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+    .bmiHeader.biCompression = BI_RGB,
+    .bmiHeader.biWidth = 32,
+    .bmiHeader.biHeight = -24,
+    .bmiHeader.biBitCount = 32,
+    .bmiHeader.biPlanes = 1,
+    .bmiHeader.biSizeImage = 32 * 24 * 32 / 8,
+};
+
+static void init_dynamic_mt(AM_MEDIA_TYPE *mt)
+{
+    memset(mt, 0, sizeof(*mt));
+    mt->majortype = MEDIATYPE_Video;
+    mt->subtype = MEDIASUBTYPE_RGB32;
+    mt->formattype = FORMAT_VideoInfo;
+    mt->cbFormat = sizeof(dynamic_format);
+    mt->pbFormat = (BYTE *)&dynamic_format;
+};
+
+static HRESULT WINAPI allocator_GetBuffer(IMemAllocator *iface, IMediaSample **sample,
+        REFERENCE_TIME *start_time, REFERENCE_TIME *end_time, DWORD flags)
+{
+    struct testfilter *filter = impl_from_IMemAllocator(iface);
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+
+    if (winetest_debug > 1) trace("GetBuffer(%#I64x, %#I64x, %#lx)\n", *start_time, *end_time, flags);
+
+    ok(!flags || flags == AM_GBF_PREVFRAMESKIPPED, "Got flags %#lx.\n", flags);
+
+    ok(!filter->wrapped_sample, "Should not have called GetBuffer() twice here.\n");
+
+    hr = IMemAllocator_GetBuffer(filter->wrapped_allocator, &filter->wrapped_sample, start_time, end_time, flags);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    init_dynamic_mt(&mt);
+    hr = IMediaSample_SetMediaType(filter->wrapped_sample, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    *sample = &filter->IMediaSample_iface;
+    return S_OK;
+}
+
+static HRESULT WINAPI allocator_ReleaseBuffer(IMemAllocator *iface, IMediaSample *sample)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMemAllocatorVtbl allocator_vtbl =
+{
+    allocator_QueryInterface,
+    allocator_AddRef,
+    allocator_Release,
+    allocator_SetProperties,
+    allocator_GetProperties,
+    allocator_Commit,
+    allocator_Decommit,
+    allocator_GetBuffer,
+    allocator_ReleaseBuffer,
+};
+
 static void testfilter_init(struct testfilter *filter)
 {
     static const GUID clsid = {0xabacab};
@@ -1002,6 +1290,8 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_source_init(&filter->source, &filter->filter, L"source", &testsource_ops);
     strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
+    filter->IMemAllocator_iface.lpVtbl = &allocator_vtbl;
+    filter->IMediaSample_iface.lpVtbl = &sample_vtbl;
 }
 
 static void test_sink_allocator(IMemInputPin *input)
@@ -1054,22 +1344,25 @@ static void test_sink_allocator(IMemInputPin *input)
     IMemAllocator_Release(ret_allocator);
 }
 
+static void test_send_video(IMemInputPin *input, IMediaSample *sample);
+
 static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
         IPin *sink, IPin *source, struct testfilter *testsource, struct testfilter *testsink,
         unsigned type_idx, BOOL should_work)
 {
     ALLOCATOR_PROPERTIES props, req_props = {2, 30000, 32, 0};
-    IMemAllocator *allocator;
+    IMemAllocator *allocator, *sink_allocator;
+    AM_MEDIA_TYPE mt, source_mt;
     IMediaSample *sample;
     VIDEOINFOHEADER format;
-    AM_MEDIA_TYPE mt;
+    IMemInputPin *input;
     HRESULT hr;
 
     hr = IFilterGraph2_ConnectDirect(graph, &testsource->source.pin.IPin_iface, sink, &mpeg_mt);
     ok(hr == S_OK, "(%u) Got hr %#lx.\n", type_idx, hr);
 
-    init_video_mt(&mt, &format, type_idx);
-    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    init_video_mt(&source_mt, &format, type_idx);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &source_mt);
     if (!should_work)
     {
         ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "(%u) Got hr %#lx.\n", type_idx, hr);
@@ -1083,7 +1376,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
-    ok(props.cbBuffer == mt.lSampleSize, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbBuffer == source_mt.lSampleSize, "Got size %ld.\n", props.cbBuffer);
     ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
 
@@ -1107,15 +1400,15 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);
 
-    init_video_mt(&mt, &format, type_idx);
-    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    init_video_mt(&source_mt, &format, type_idx);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &source_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ok(!!testsink->sink.pAllocator, "Expected an allocator.\n");
     hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
-    ok(props.cbBuffer == mt.lSampleSize, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbBuffer == source_mt.lSampleSize, "Got size %ld.\n", props.cbBuffer);
     ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
 
@@ -1124,22 +1417,81 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
 
     CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&allocator);
-    testsink->sink.pAllocator = allocator;
+    testsink->wrapped_allocator = allocator;
+    testsink->sink.pAllocator = &testsink->IMemAllocator_iface;
 
     hr = IMemAllocator_SetProperties(allocator, &req_props, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    init_video_mt(&mt, &format, type_idx);
-    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt);
+    init_video_mt(&source_mt, &format, type_idx);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &source_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    ok(testsink->sink.pAllocator == allocator, "Expected an allocator.\n");
+    ok(testsink->sink.pAllocator == &testsink->IMemAllocator_iface, "Expected our allocator to be used.\n");
+    hr = IMemAllocator_GetProperties(allocator, &props);
     hr = IMemAllocator_GetProperties(testsink->sink.pAllocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
-    ok(props.cbBuffer == mt.lSampleSize, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbBuffer == source_mt.lSampleSize, "Got size %ld.\n", props.cbBuffer);
     ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    /* Test dynamic format change. */
+
+    IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&input);
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)&sink_allocator);
+
+    /* We can use a bogus too-small size here. Native will happily respect it,
+     * and apparently just truncate the frame to fit. */
+    req_props.cBuffers = 1;
+    req_props.cbBuffer = 32 * 24 * 32 / 8;
+    req_props.cbAlign = 1;
+    req_props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(sink_allocator, &req_props, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_NotifyAllocator(input, sink_allocator, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_Commit(sink_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    req_props.cbBuffer = 32 * 24 * 32 / 8;
+    hr = IMemAllocator_SetProperties(allocator, &req_props, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetProperties(allocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbBuffer == 32 * 24 * 32 / 8, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+    hr = IMemAllocator_GetBuffer(sink_allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    testsink->expected_start_time = -1; /* native returns start and stop 0xff80000000000001 */
+    test_send_video(input, sample);
+    ok(testsink->got_sample == 1, "Got %u calls to Receive().\n", testsink->got_sample);
+    ok(!testsink->wrapped_sample, "Sample was not fully released.\n");
+    testsink->got_sample = 0;
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(compare_media_types(&mt, &source_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsink->sink.pin.mt, &source_mt), "Media types didn't match.\n");
+    FreeMediaType(&mt);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IMemInputPin_Release(input);
+    IMemAllocator_Release(sink_allocator);
 
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink->sink.pin.IPin_iface);

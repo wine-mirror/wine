@@ -125,4 +125,33 @@ int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+__ASM_GLOBAL_FUNC( __C_ExecuteExceptionFilter,
+    "stp x29, x30, [sp, #-96]!\n\t"
+    ".seh_save_fplr_x 96\n\t"
+    "stp x19, x20, [sp, #16]\n\t"
+    ".seh_save_regp x19, 16\n\t"
+    "stp x21, x22, [sp, #32]\n\t"
+    ".seh_save_regp x21, 32\n\t"
+    "stp x23, x24, [sp, #48]\n\t"
+    ".seh_save_regp x23, 48\n\t"
+    "stp x25, x26, [sp, #64]\n\t"
+    ".seh_save_regp x25, 64\n\t"
+    "stp x27, x28, [sp, #80]\n\t"
+    ".seh_save_regp x27, 80\n\t"
+    ".seh_endprologue\n\t"
+    "ldp x19, x20, [x3, #0]\n\t" /* nonvolatile regs */
+    "ldp x21, x22, [x3, #16]\n\t"
+    "ldp x23, x24, [x3, #32]\n\t"
+    "ldp x25, x26, [x3, #48]\n\t"
+    "ldp x27, x28, [x3, #64]\n\t"
+    "ldr x1, [x3, #80]\n\t"      /* x29 = frame */
+    "blr x2\n\t"                 /* filter */
+    "ldp x19, x20, [sp, #16]\n\t"
+    "ldp x21, x22, [sp, #32]\n\t"
+    "ldp x23, x24, [sp, #48]\n\t"
+    "ldp x25, x26, [sp, #64]\n\t"
+    "ldp x27, x28, [sp, #80]\n\t"
+    "ldp x29, x30, [sp], #96\n\t"
+    "ret" );
+
 #endif  /* __aarch64__ */

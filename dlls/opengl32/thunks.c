@@ -2846,6 +2846,14 @@ static void WINAPI glAlphaFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMod, 
     if ((status = UNIX_CALL( glAlphaFragmentOp3ATI, &args ))) WARN( "glAlphaFragmentOp3ATI returned %#lx\n", status );
 }
 
+static void WINAPI glAlphaFuncx( GLenum func, GLfixed ref )
+{
+    struct glAlphaFuncx_params args = { .teb = NtCurrentTeb(), .func = func, .ref = ref };
+    NTSTATUS status;
+    TRACE( "func %d, ref %d\n", func, ref );
+    if ((status = UNIX_CALL( glAlphaFuncx, &args ))) WARN( "glAlphaFuncx returned %#lx\n", status );
+}
+
 static void WINAPI glAlphaFuncxOES( GLenum func, GLfixed ref )
 {
     struct glAlphaFuncxOES_params args = { .teb = NtCurrentTeb(), .func = func, .ref = ref };
@@ -4044,6 +4052,14 @@ static void WINAPI glClearColorIuiEXT( GLuint red, GLuint green, GLuint blue, GL
     if ((status = UNIX_CALL( glClearColorIuiEXT, &args ))) WARN( "glClearColorIuiEXT returned %#lx\n", status );
 }
 
+static void WINAPI glClearColorx( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
+{
+    struct glClearColorx_params args = { .teb = NtCurrentTeb(), .red = red, .green = green, .blue = blue, .alpha = alpha };
+    NTSTATUS status;
+    TRACE( "red %d, green %d, blue %d, alpha %d\n", red, green, blue, alpha );
+    if ((status = UNIX_CALL( glClearColorx, &args ))) WARN( "glClearColorx returned %#lx\n", status );
+}
+
 static void WINAPI glClearColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
 {
     struct glClearColorxOES_params args = { .teb = NtCurrentTeb(), .red = red, .green = green, .blue = blue, .alpha = alpha };
@@ -4074,6 +4090,14 @@ static void WINAPI glClearDepthfOES( GLclampf depth )
     NTSTATUS status;
     TRACE( "depth %f\n", depth );
     if ((status = UNIX_CALL( glClearDepthfOES, &args ))) WARN( "glClearDepthfOES returned %#lx\n", status );
+}
+
+static void WINAPI glClearDepthx( GLfixed depth )
+{
+    struct glClearDepthx_params args = { .teb = NtCurrentTeb(), .depth = depth };
+    NTSTATUS status;
+    TRACE( "depth %d\n", depth );
+    if ((status = UNIX_CALL( glClearDepthx, &args ))) WARN( "glClearDepthx returned %#lx\n", status );
 }
 
 static void WINAPI glClearDepthxOES( GLfixed depth )
@@ -4221,12 +4245,28 @@ static void WINAPI glClipControl( GLenum origin, GLenum depth )
     if ((status = UNIX_CALL( glClipControl, &args ))) WARN( "glClipControl returned %#lx\n", status );
 }
 
+static void WINAPI glClipPlanef( GLenum p, const GLfloat *eqn )
+{
+    struct glClipPlanef_params args = { .teb = NtCurrentTeb(), .p = p, .eqn = eqn };
+    NTSTATUS status;
+    TRACE( "p %d, eqn %p\n", p, eqn );
+    if ((status = UNIX_CALL( glClipPlanef, &args ))) WARN( "glClipPlanef returned %#lx\n", status );
+}
+
 static void WINAPI glClipPlanefOES( GLenum plane, const GLfloat *equation )
 {
     struct glClipPlanefOES_params args = { .teb = NtCurrentTeb(), .plane = plane, .equation = equation };
     NTSTATUS status;
     TRACE( "plane %d, equation %p\n", plane, equation );
     if ((status = UNIX_CALL( glClipPlanefOES, &args ))) WARN( "glClipPlanefOES returned %#lx\n", status );
+}
+
+static void WINAPI glClipPlanex( GLenum plane, const GLfixed *equation )
+{
+    struct glClipPlanex_params args = { .teb = NtCurrentTeb(), .plane = plane, .equation = equation };
+    NTSTATUS status;
+    TRACE( "plane %d, equation %p\n", plane, equation );
+    if ((status = UNIX_CALL( glClipPlanex, &args ))) WARN( "glClipPlanex returned %#lx\n", status );
 }
 
 static void WINAPI glClipPlanexOES( GLenum plane, const GLfixed *equation )
@@ -4347,6 +4387,14 @@ static void WINAPI glColor4ubVertex3fvSUN( const GLubyte *c, const GLfloat *v )
     NTSTATUS status;
     TRACE( "c %p, v %p\n", c, v );
     if ((status = UNIX_CALL( glColor4ubVertex3fvSUN, &args ))) WARN( "glColor4ubVertex3fvSUN returned %#lx\n", status );
+}
+
+static void WINAPI glColor4x( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
+{
+    struct glColor4x_params args = { .teb = NtCurrentTeb(), .red = red, .green = green, .blue = blue, .alpha = alpha };
+    NTSTATUS status;
+    TRACE( "red %d, green %d, blue %d, alpha %d\n", red, green, blue, alpha );
+    if ((status = UNIX_CALL( glColor4x, &args ))) WARN( "glColor4x returned %#lx\n", status );
 }
 
 static void WINAPI glColor4xOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
@@ -5973,6 +6021,14 @@ static void WINAPI glDepthRangefOES( GLclampf n, GLclampf f )
     if ((status = UNIX_CALL( glDepthRangefOES, &args ))) WARN( "glDepthRangefOES returned %#lx\n", status );
 }
 
+static void WINAPI glDepthRangex( GLfixed n, GLfixed f )
+{
+    struct glDepthRangex_params args = { .teb = NtCurrentTeb(), .n = n, .f = f };
+    NTSTATUS status;
+    TRACE( "n %d, f %d\n", n, f );
+    if ((status = UNIX_CALL( glDepthRangex, &args ))) WARN( "glDepthRangex returned %#lx\n", status );
+}
+
 static void WINAPI glDepthRangexOES( GLfixed n, GLfixed f )
 {
     struct glDepthRangexOES_params args = { .teb = NtCurrentTeb(), .n = n, .f = f };
@@ -7031,12 +7087,28 @@ static void WINAPI glFogFuncSGIS( GLsizei n, const GLfloat *points )
     if ((status = UNIX_CALL( glFogFuncSGIS, &args ))) WARN( "glFogFuncSGIS returned %#lx\n", status );
 }
 
+static void WINAPI glFogx( GLenum pname, GLfixed param )
+{
+    struct glFogx_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "pname %d, param %d\n", pname, param );
+    if ((status = UNIX_CALL( glFogx, &args ))) WARN( "glFogx returned %#lx\n", status );
+}
+
 static void WINAPI glFogxOES( GLenum pname, GLfixed param )
 {
     struct glFogxOES_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "pname %d, param %d\n", pname, param );
     if ((status = UNIX_CALL( glFogxOES, &args ))) WARN( "glFogxOES returned %#lx\n", status );
+}
+
+static void WINAPI glFogxv( GLenum pname, const GLfixed *param )
+{
+    struct glFogxv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "pname %d, param %p\n", pname, param );
+    if ((status = UNIX_CALL( glFogxv, &args ))) WARN( "glFogxv returned %#lx\n", status );
 }
 
 static void WINAPI glFogxvOES( GLenum pname, const GLfixed *param )
@@ -7391,12 +7463,28 @@ static void WINAPI glFreeObjectBufferATI( GLuint buffer )
     if ((status = UNIX_CALL( glFreeObjectBufferATI, &args ))) WARN( "glFreeObjectBufferATI returned %#lx\n", status );
 }
 
+static void WINAPI glFrustumf( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    struct glFrustumf_params args = { .teb = NtCurrentTeb(), .l = l, .r = r, .b = b, .t = t, .n = n, .f = f };
+    NTSTATUS status;
+    TRACE( "l %f, r %f, b %f, t %f, n %f, f %f\n", l, r, b, t, n, f );
+    if ((status = UNIX_CALL( glFrustumf, &args ))) WARN( "glFrustumf returned %#lx\n", status );
+}
+
 static void WINAPI glFrustumfOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
 {
     struct glFrustumfOES_params args = { .teb = NtCurrentTeb(), .l = l, .r = r, .b = b, .t = t, .n = n, .f = f };
     NTSTATUS status;
     TRACE( "l %f, r %f, b %f, t %f, n %f, f %f\n", l, r, b, t, n, f );
     if ((status = UNIX_CALL( glFrustumfOES, &args ))) WARN( "glFrustumfOES returned %#lx\n", status );
+}
+
+static void WINAPI glFrustumx( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
+{
+    struct glFrustumx_params args = { .teb = NtCurrentTeb(), .l = l, .r = r, .b = b, .t = t, .n = n, .f = f };
+    NTSTATUS status;
+    TRACE( "l %d, r %d, b %d, t %d, n %d, f %d\n", l, r, b, t, n, f );
+    if ((status = UNIX_CALL( glFrustumx, &args ))) WARN( "glFrustumx returned %#lx\n", status );
 }
 
 static void WINAPI glFrustumxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
@@ -7918,12 +8006,28 @@ static void WINAPI glGetBufferSubDataARB( GLenum target, GLintptrARB offset, GLs
     if ((status = UNIX_CALL( glGetBufferSubDataARB, &args ))) WARN( "glGetBufferSubDataARB returned %#lx\n", status );
 }
 
+static void WINAPI glGetClipPlanef( GLenum plane, GLfloat *equation )
+{
+    struct glGetClipPlanef_params args = { .teb = NtCurrentTeb(), .plane = plane, .equation = equation };
+    NTSTATUS status;
+    TRACE( "plane %d, equation %p\n", plane, equation );
+    if ((status = UNIX_CALL( glGetClipPlanef, &args ))) WARN( "glGetClipPlanef returned %#lx\n", status );
+}
+
 static void WINAPI glGetClipPlanefOES( GLenum plane, GLfloat *equation )
 {
     struct glGetClipPlanefOES_params args = { .teb = NtCurrentTeb(), .plane = plane, .equation = equation };
     NTSTATUS status;
     TRACE( "plane %d, equation %p\n", plane, equation );
     if ((status = UNIX_CALL( glGetClipPlanefOES, &args ))) WARN( "glGetClipPlanefOES returned %#lx\n", status );
+}
+
+static void WINAPI glGetClipPlanex( GLenum plane, GLfixed *equation )
+{
+    struct glGetClipPlanex_params args = { .teb = NtCurrentTeb(), .plane = plane, .equation = equation };
+    NTSTATUS status;
+    TRACE( "plane %d, equation %p\n", plane, equation );
+    if ((status = UNIX_CALL( glGetClipPlanex, &args ))) WARN( "glGetClipPlanex returned %#lx\n", status );
 }
 
 static void WINAPI glGetClipPlanexOES( GLenum plane, GLfixed *equation )
@@ -8256,6 +8360,14 @@ static void WINAPI glGetFirstPerfQueryIdINTEL( GLuint *queryId )
     NTSTATUS status;
     TRACE( "queryId %p\n", queryId );
     if ((status = UNIX_CALL( glGetFirstPerfQueryIdINTEL, &args ))) WARN( "glGetFirstPerfQueryIdINTEL returned %#lx\n", status );
+}
+
+static void WINAPI glGetFixedv( GLenum pname, GLfixed *params )
+{
+    struct glGetFixedv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "pname %d, params %p\n", pname, params );
+    if ((status = UNIX_CALL( glGetFixedv, &args ))) WARN( "glGetFixedv returned %#lx\n", status );
 }
 
 static void WINAPI glGetFixedvOES( GLenum pname, GLfixed *params )
@@ -8643,6 +8755,14 @@ static void WINAPI glGetLightxOES( GLenum light, GLenum pname, GLfixed *params )
     if ((status = UNIX_CALL( glGetLightxOES, &args ))) WARN( "glGetLightxOES returned %#lx\n", status );
 }
 
+static void WINAPI glGetLightxv( GLenum light, GLenum pname, GLfixed *params )
+{
+    struct glGetLightxv_params args = { .teb = NtCurrentTeb(), .light = light, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "light %d, pname %d, params %p\n", light, pname, params );
+    if ((status = UNIX_CALL( glGetLightxv, &args ))) WARN( "glGetLightxv returned %#lx\n", status );
+}
+
 static void WINAPI glGetListParameterfvSGIX( GLuint list, GLenum pname, GLfloat *params )
 {
     struct glGetListParameterfvSGIX_params args = { .teb = NtCurrentTeb(), .list = list, .pname = pname, .params = params };
@@ -8737,6 +8857,14 @@ static void WINAPI glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param )
     NTSTATUS status;
     TRACE( "face %d, pname %d, param %d\n", face, pname, param );
     if ((status = UNIX_CALL( glGetMaterialxOES, &args ))) WARN( "glGetMaterialxOES returned %#lx\n", status );
+}
+
+static void WINAPI glGetMaterialxv( GLenum face, GLenum pname, GLfixed *params )
+{
+    struct glGetMaterialxv_params args = { .teb = NtCurrentTeb(), .face = face, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "face %d, pname %d, params %p\n", face, pname, params );
+    if ((status = UNIX_CALL( glGetMaterialxv, &args ))) WARN( "glGetMaterialxv returned %#lx\n", status );
 }
 
 static void WINAPI glGetMemoryObjectDetachedResourcesuivNV( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params )
@@ -9994,6 +10122,14 @@ static void WINAPI glGetTexBumpParameterivATI( GLenum pname, GLint *param )
     if ((status = UNIX_CALL( glGetTexBumpParameterivATI, &args ))) WARN( "glGetTexBumpParameterivATI returned %#lx\n", status );
 }
 
+static void WINAPI glGetTexEnvxv( GLenum target, GLenum pname, GLfixed *params )
+{
+    struct glGetTexEnvxv_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "target %d, pname %d, params %p\n", target, pname, params );
+    if ((status = UNIX_CALL( glGetTexEnvxv, &args ))) WARN( "glGetTexEnvxv returned %#lx\n", status );
+}
+
 static void WINAPI glGetTexEnvxvOES( GLenum target, GLenum pname, GLfixed *params )
 {
     struct glGetTexEnvxvOES_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
@@ -10064,6 +10200,14 @@ static void WINAPI glGetTexParameterPointervAPPLE( GLenum target, GLenum pname, 
     NTSTATUS status;
     TRACE( "target %d, pname %d, params %p\n", target, pname, params );
     if ((status = UNIX_CALL( glGetTexParameterPointervAPPLE, &args ))) WARN( "glGetTexParameterPointervAPPLE returned %#lx\n", status );
+}
+
+static void WINAPI glGetTexParameterxv( GLenum target, GLenum pname, GLfixed *params )
+{
+    struct glGetTexParameterxv_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "target %d, pname %d, params %p\n", target, pname, params );
+    if ((status = UNIX_CALL( glGetTexParameterxv, &args ))) WARN( "glGetTexParameterxv returned %#lx\n", status );
 }
 
 static void WINAPI glGetTexParameterxvOES( GLenum target, GLenum pname, GLfixed *params )
@@ -11898,12 +12042,28 @@ static void WINAPI glLightEnviSGIX( GLenum pname, GLint param )
     if ((status = UNIX_CALL( glLightEnviSGIX, &args ))) WARN( "glLightEnviSGIX returned %#lx\n", status );
 }
 
+static void WINAPI glLightModelx( GLenum pname, GLfixed param )
+{
+    struct glLightModelx_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "pname %d, param %d\n", pname, param );
+    if ((status = UNIX_CALL( glLightModelx, &args ))) WARN( "glLightModelx returned %#lx\n", status );
+}
+
 static void WINAPI glLightModelxOES( GLenum pname, GLfixed param )
 {
     struct glLightModelxOES_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "pname %d, param %d\n", pname, param );
     if ((status = UNIX_CALL( glLightModelxOES, &args ))) WARN( "glLightModelxOES returned %#lx\n", status );
+}
+
+static void WINAPI glLightModelxv( GLenum pname, const GLfixed *param )
+{
+    struct glLightModelxv_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "pname %d, param %p\n", pname, param );
+    if ((status = UNIX_CALL( glLightModelxv, &args ))) WARN( "glLightModelxv returned %#lx\n", status );
 }
 
 static void WINAPI glLightModelxvOES( GLenum pname, const GLfixed *param )
@@ -11914,6 +12074,14 @@ static void WINAPI glLightModelxvOES( GLenum pname, const GLfixed *param )
     if ((status = UNIX_CALL( glLightModelxvOES, &args ))) WARN( "glLightModelxvOES returned %#lx\n", status );
 }
 
+static void WINAPI glLightx( GLenum light, GLenum pname, GLfixed param )
+{
+    struct glLightx_params args = { .teb = NtCurrentTeb(), .light = light, .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "light %d, pname %d, param %d\n", light, pname, param );
+    if ((status = UNIX_CALL( glLightx, &args ))) WARN( "glLightx returned %#lx\n", status );
+}
+
 static void WINAPI glLightxOES( GLenum light, GLenum pname, GLfixed param )
 {
     struct glLightxOES_params args = { .teb = NtCurrentTeb(), .light = light, .pname = pname, .param = param };
@@ -11922,12 +12090,28 @@ static void WINAPI glLightxOES( GLenum light, GLenum pname, GLfixed param )
     if ((status = UNIX_CALL( glLightxOES, &args ))) WARN( "glLightxOES returned %#lx\n", status );
 }
 
+static void WINAPI glLightxv( GLenum light, GLenum pname, const GLfixed *params )
+{
+    struct glLightxv_params args = { .teb = NtCurrentTeb(), .light = light, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "light %d, pname %d, params %p\n", light, pname, params );
+    if ((status = UNIX_CALL( glLightxv, &args ))) WARN( "glLightxv returned %#lx\n", status );
+}
+
 static void WINAPI glLightxvOES( GLenum light, GLenum pname, const GLfixed *params )
 {
     struct glLightxvOES_params args = { .teb = NtCurrentTeb(), .light = light, .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "light %d, pname %d, params %p\n", light, pname, params );
     if ((status = UNIX_CALL( glLightxvOES, &args ))) WARN( "glLightxvOES returned %#lx\n", status );
+}
+
+static void WINAPI glLineWidthx( GLfixed width )
+{
+    struct glLineWidthx_params args = { .teb = NtCurrentTeb(), .width = width };
+    NTSTATUS status;
+    TRACE( "width %d\n", width );
+    if ((status = UNIX_CALL( glLineWidthx, &args ))) WARN( "glLineWidthx returned %#lx\n", status );
 }
 
 static void WINAPI glLineWidthxOES( GLfixed width )
@@ -12000,6 +12184,14 @@ static void WINAPI glLoadIdentityDeformationMapSGIX( GLbitfield mask )
     NTSTATUS status;
     TRACE( "mask %d\n", mask );
     if ((status = UNIX_CALL( glLoadIdentityDeformationMapSGIX, &args ))) WARN( "glLoadIdentityDeformationMapSGIX returned %#lx\n", status );
+}
+
+static void WINAPI glLoadMatrixx( const GLfixed *m )
+{
+    struct glLoadMatrixx_params args = { .teb = NtCurrentTeb(), .m = m };
+    NTSTATUS status;
+    TRACE( "m %p\n", m );
+    if ((status = UNIX_CALL( glLoadMatrixx, &args ))) WARN( "glLoadMatrixx returned %#lx\n", status );
 }
 
 static void WINAPI glLoadMatrixxOES( const GLfixed *m )
@@ -12347,12 +12539,28 @@ static void WINAPI glMapVertexAttrib2fAPPLE( GLuint index, GLuint size, GLfloat 
     if ((status = UNIX_CALL( glMapVertexAttrib2fAPPLE, &args ))) WARN( "glMapVertexAttrib2fAPPLE returned %#lx\n", status );
 }
 
+static void WINAPI glMaterialx( GLenum face, GLenum pname, GLfixed param )
+{
+    struct glMaterialx_params args = { .teb = NtCurrentTeb(), .face = face, .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "face %d, pname %d, param %d\n", face, pname, param );
+    if ((status = UNIX_CALL( glMaterialx, &args ))) WARN( "glMaterialx returned %#lx\n", status );
+}
+
 static void WINAPI glMaterialxOES( GLenum face, GLenum pname, GLfixed param )
 {
     struct glMaterialxOES_params args = { .teb = NtCurrentTeb(), .face = face, .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "face %d, pname %d, param %d\n", face, pname, param );
     if ((status = UNIX_CALL( glMaterialxOES, &args ))) WARN( "glMaterialxOES returned %#lx\n", status );
+}
+
+static void WINAPI glMaterialxv( GLenum face, GLenum pname, const GLfixed *param )
+{
+    struct glMaterialxv_params args = { .teb = NtCurrentTeb(), .face = face, .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "face %d, pname %d, param %p\n", face, pname, param );
+    if ((status = UNIX_CALL( glMaterialxv, &args ))) WARN( "glMaterialxv returned %#lx\n", status );
 }
 
 static void WINAPI glMaterialxvOES( GLenum face, GLenum pname, const GLfixed *param )
@@ -12673,6 +12881,14 @@ static void WINAPI glMinmaxEXT( GLenum target, GLenum internalformat, GLboolean 
     NTSTATUS status;
     TRACE( "target %d, internalformat %d, sink %d\n", target, internalformat, sink );
     if ((status = UNIX_CALL( glMinmaxEXT, &args ))) WARN( "glMinmaxEXT returned %#lx\n", status );
+}
+
+static void WINAPI glMultMatrixx( const GLfixed *m )
+{
+    struct glMultMatrixx_params args = { .teb = NtCurrentTeb(), .m = m };
+    NTSTATUS status;
+    TRACE( "m %p\n", m );
+    if ((status = UNIX_CALL( glMultMatrixx, &args ))) WARN( "glMultMatrixx returned %#lx\n", status );
 }
 
 static void WINAPI glMultMatrixxOES( const GLfixed *m )
@@ -13875,6 +14091,14 @@ static void WINAPI glMultiTexCoord4svSGIS( GLenum target, GLshort * v )
     if ((status = UNIX_CALL( glMultiTexCoord4svSGIS, &args ))) WARN( "glMultiTexCoord4svSGIS returned %#lx\n", status );
 }
 
+static void WINAPI glMultiTexCoord4x( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q )
+{
+    struct glMultiTexCoord4x_params args = { .teb = NtCurrentTeb(), .texture = texture, .s = s, .t = t, .r = r, .q = q };
+    NTSTATUS status;
+    TRACE( "texture %d, s %d, t %d, r %d, q %d\n", texture, s, t, r, q );
+    if ((status = UNIX_CALL( glMultiTexCoord4x, &args ))) WARN( "glMultiTexCoord4x returned %#lx\n", status );
+}
+
 static void WINAPI glMultiTexCoord4xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q )
 {
     struct glMultiTexCoord4xOES_params args = { .teb = NtCurrentTeb(), .texture = texture, .s = s, .t = t, .r = r, .q = q };
@@ -14725,6 +14949,14 @@ static void WINAPI glNormal3hvNV( const GLhalfNV *v )
     if ((status = UNIX_CALL( glNormal3hvNV, &args ))) WARN( "glNormal3hvNV returned %#lx\n", status );
 }
 
+static void WINAPI glNormal3x( GLfixed nx, GLfixed ny, GLfixed nz )
+{
+    struct glNormal3x_params args = { .teb = NtCurrentTeb(), .nx = nx, .ny = ny, .nz = nz };
+    NTSTATUS status;
+    TRACE( "nx %d, ny %d, nz %d\n", nx, ny, nz );
+    if ((status = UNIX_CALL( glNormal3x, &args ))) WARN( "glNormal3x returned %#lx\n", status );
+}
+
 static void WINAPI glNormal3xOES( GLfixed nx, GLfixed ny, GLfixed nz )
 {
     struct glNormal3xOES_params args = { .teb = NtCurrentTeb(), .nx = nx, .ny = ny, .nz = nz };
@@ -14903,12 +15135,28 @@ static GLenum WINAPI glObjectUnpurgeableAPPLE( GLenum objectType, GLuint name, G
     return args.ret;
 }
 
+static void WINAPI glOrthof( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    struct glOrthof_params args = { .teb = NtCurrentTeb(), .l = l, .r = r, .b = b, .t = t, .n = n, .f = f };
+    NTSTATUS status;
+    TRACE( "l %f, r %f, b %f, t %f, n %f, f %f\n", l, r, b, t, n, f );
+    if ((status = UNIX_CALL( glOrthof, &args ))) WARN( "glOrthof returned %#lx\n", status );
+}
+
 static void WINAPI glOrthofOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
 {
     struct glOrthofOES_params args = { .teb = NtCurrentTeb(), .l = l, .r = r, .b = b, .t = t, .n = n, .f = f };
     NTSTATUS status;
     TRACE( "l %f, r %f, b %f, t %f, n %f, f %f\n", l, r, b, t, n, f );
     if ((status = UNIX_CALL( glOrthofOES, &args ))) WARN( "glOrthofOES returned %#lx\n", status );
+}
+
+static void WINAPI glOrthox( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
+{
+    struct glOrthox_params args = { .teb = NtCurrentTeb(), .l = l, .r = r, .b = b, .t = t, .n = n, .f = f };
+    NTSTATUS status;
+    TRACE( "l %d, r %d, b %d, t %d, n %d, f %d\n", l, r, b, t, n, f );
+    if ((status = UNIX_CALL( glOrthox, &args ))) WARN( "glOrthox returned %#lx\n", status );
 }
 
 static void WINAPI glOrthoxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
@@ -15371,12 +15619,36 @@ static void WINAPI glPointParameterivNV( GLenum pname, const GLint *params )
     if ((status = UNIX_CALL( glPointParameterivNV, &args ))) WARN( "glPointParameterivNV returned %#lx\n", status );
 }
 
+static void WINAPI glPointParameterx( GLenum pname, GLfixed param )
+{
+    struct glPointParameterx_params args = { .teb = NtCurrentTeb(), .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "pname %d, param %d\n", pname, param );
+    if ((status = UNIX_CALL( glPointParameterx, &args ))) WARN( "glPointParameterx returned %#lx\n", status );
+}
+
+static void WINAPI glPointParameterxv( GLenum pname, const GLfixed *params )
+{
+    struct glPointParameterxv_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "pname %d, params %p\n", pname, params );
+    if ((status = UNIX_CALL( glPointParameterxv, &args ))) WARN( "glPointParameterxv returned %#lx\n", status );
+}
+
 static void WINAPI glPointParameterxvOES( GLenum pname, const GLfixed *params )
 {
     struct glPointParameterxvOES_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "pname %d, params %p\n", pname, params );
     if ((status = UNIX_CALL( glPointParameterxvOES, &args ))) WARN( "glPointParameterxvOES returned %#lx\n", status );
+}
+
+static void WINAPI glPointSizex( GLfixed size )
+{
+    struct glPointSizex_params args = { .teb = NtCurrentTeb(), .size = size };
+    NTSTATUS status;
+    TRACE( "size %d\n", size );
+    if ((status = UNIX_CALL( glPointSizex, &args ))) WARN( "glPointSizex returned %#lx\n", status );
 }
 
 static void WINAPI glPointSizexOES( GLfixed size )
@@ -15427,6 +15699,14 @@ static void WINAPI glPolygonOffsetEXT( GLfloat factor, GLfloat bias )
     NTSTATUS status;
     TRACE( "factor %f, bias %f\n", factor, bias );
     if ((status = UNIX_CALL( glPolygonOffsetEXT, &args ))) WARN( "glPolygonOffsetEXT returned %#lx\n", status );
+}
+
+static void WINAPI glPolygonOffsetx( GLfixed factor, GLfixed units )
+{
+    struct glPolygonOffsetx_params args = { .teb = NtCurrentTeb(), .factor = factor, .units = units };
+    NTSTATUS status;
+    TRACE( "factor %d, units %d\n", factor, units );
+    if ((status = UNIX_CALL( glPolygonOffsetx, &args ))) WARN( "glPolygonOffsetx returned %#lx\n", status );
 }
 
 static void WINAPI glPolygonOffsetxOES( GLfixed factor, GLfixed units )
@@ -17496,6 +17776,14 @@ static void WINAPI glResumeTransformFeedbackNV(void)
     if ((status = UNIX_CALL( glResumeTransformFeedbackNV, &args ))) WARN( "glResumeTransformFeedbackNV returned %#lx\n", status );
 }
 
+static void WINAPI glRotatex( GLfixed angle, GLfixed x, GLfixed y, GLfixed z )
+{
+    struct glRotatex_params args = { .teb = NtCurrentTeb(), .angle = angle, .x = x, .y = y, .z = z };
+    NTSTATUS status;
+    TRACE( "angle %d, x %d, y %d, z %d\n", angle, x, y, z );
+    if ((status = UNIX_CALL( glRotatex, &args ))) WARN( "glRotatex returned %#lx\n", status );
+}
+
 static void WINAPI glRotatexOES( GLfixed angle, GLfixed x, GLfixed y, GLfixed z )
 {
     struct glRotatexOES_params args = { .teb = NtCurrentTeb(), .angle = angle, .x = x, .y = y, .z = z };
@@ -17518,6 +17806,14 @@ static void WINAPI glSampleCoverageARB( GLfloat value, GLboolean invert )
     NTSTATUS status;
     TRACE( "value %f, invert %d\n", value, invert );
     if ((status = UNIX_CALL( glSampleCoverageARB, &args ))) WARN( "glSampleCoverageARB returned %#lx\n", status );
+}
+
+static void WINAPI glSampleCoveragex( GLclampx value, GLboolean invert )
+{
+    struct glSampleCoveragex_params args = { .teb = NtCurrentTeb(), .value = value, .invert = invert };
+    NTSTATUS status;
+    TRACE( "value %d, invert %d\n", value, invert );
+    if ((status = UNIX_CALL( glSampleCoveragex, &args ))) WARN( "glSampleCoveragex returned %#lx\n", status );
 }
 
 static void WINAPI glSampleMapATI( GLuint dst, GLuint interp, GLenum swizzle )
@@ -17622,6 +17918,14 @@ static void WINAPI glSamplerParameteriv( GLuint sampler, GLenum pname, const GLi
     NTSTATUS status;
     TRACE( "sampler %d, pname %d, param %p\n", sampler, pname, param );
     if ((status = UNIX_CALL( glSamplerParameteriv, &args ))) WARN( "glSamplerParameteriv returned %#lx\n", status );
+}
+
+static void WINAPI glScalex( GLfixed x, GLfixed y, GLfixed z )
+{
+    struct glScalex_params args = { .teb = NtCurrentTeb(), .x = x, .y = y, .z = z };
+    NTSTATUS status;
+    TRACE( "x %d, y %d, z %d\n", x, y, z );
+    if ((status = UNIX_CALL( glScalex, &args ))) WARN( "glScalex returned %#lx\n", status );
 }
 
 static void WINAPI glScalexOES( GLfixed x, GLfixed y, GLfixed z )
@@ -19051,12 +19355,28 @@ static void WINAPI glTexCoordPointervINTEL( GLint size, GLenum type, const void 
     if ((status = UNIX_CALL( glTexCoordPointervINTEL, &args ))) WARN( "glTexCoordPointervINTEL returned %#lx\n", status );
 }
 
+static void WINAPI glTexEnvx( GLenum target, GLenum pname, GLfixed param )
+{
+    struct glTexEnvx_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "target %d, pname %d, param %d\n", target, pname, param );
+    if ((status = UNIX_CALL( glTexEnvx, &args ))) WARN( "glTexEnvx returned %#lx\n", status );
+}
+
 static void WINAPI glTexEnvxOES( GLenum target, GLenum pname, GLfixed param )
 {
     struct glTexEnvxOES_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "target %d, pname %d, param %d\n", target, pname, param );
     if ((status = UNIX_CALL( glTexEnvxOES, &args ))) WARN( "glTexEnvxOES returned %#lx\n", status );
+}
+
+static void WINAPI glTexEnvxv( GLenum target, GLenum pname, const GLfixed *params )
+{
+    struct glTexEnvxv_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "target %d, pname %d, params %p\n", target, pname, params );
+    if ((status = UNIX_CALL( glTexEnvxv, &args ))) WARN( "glTexEnvxv returned %#lx\n", status );
 }
 
 static void WINAPI glTexEnvxvOES( GLenum target, GLenum pname, const GLfixed *params )
@@ -19195,12 +19515,28 @@ static void WINAPI glTexParameterIuivEXT( GLenum target, GLenum pname, const GLu
     if ((status = UNIX_CALL( glTexParameterIuivEXT, &args ))) WARN( "glTexParameterIuivEXT returned %#lx\n", status );
 }
 
+static void WINAPI glTexParameterx( GLenum target, GLenum pname, GLfixed param )
+{
+    struct glTexParameterx_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .param = param };
+    NTSTATUS status;
+    TRACE( "target %d, pname %d, param %d\n", target, pname, param );
+    if ((status = UNIX_CALL( glTexParameterx, &args ))) WARN( "glTexParameterx returned %#lx\n", status );
+}
+
 static void WINAPI glTexParameterxOES( GLenum target, GLenum pname, GLfixed param )
 {
     struct glTexParameterxOES_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .param = param };
     NTSTATUS status;
     TRACE( "target %d, pname %d, param %d\n", target, pname, param );
     if ((status = UNIX_CALL( glTexParameterxOES, &args ))) WARN( "glTexParameterxOES returned %#lx\n", status );
+}
+
+static void WINAPI glTexParameterxv( GLenum target, GLenum pname, const GLfixed *params )
+{
+    struct glTexParameterxv_params args = { .teb = NtCurrentTeb(), .target = target, .pname = pname, .params = params };
+    NTSTATUS status;
+    TRACE( "target %d, pname %d, params %p\n", target, pname, params );
+    if ((status = UNIX_CALL( glTexParameterxv, &args ))) WARN( "glTexParameterxv returned %#lx\n", status );
 }
 
 static void WINAPI glTexParameterxvOES( GLenum target, GLenum pname, const GLfixed *params )
@@ -19897,6 +20233,14 @@ static void WINAPI glTransformPathNV( GLuint resultPath, GLuint srcPath, GLenum 
     NTSTATUS status;
     TRACE( "resultPath %d, srcPath %d, transformType %d, transformValues %p\n", resultPath, srcPath, transformType, transformValues );
     if ((status = UNIX_CALL( glTransformPathNV, &args ))) WARN( "glTransformPathNV returned %#lx\n", status );
+}
+
+static void WINAPI glTranslatex( GLfixed x, GLfixed y, GLfixed z )
+{
+    struct glTranslatex_params args = { .teb = NtCurrentTeb(), .x = x, .y = y, .z = z };
+    NTSTATUS status;
+    TRACE( "x %d, y %d, z %d\n", x, y, z );
+    if ((status = UNIX_CALL( glTranslatex, &args ))) WARN( "glTranslatex returned %#lx\n", status );
 }
 
 static void WINAPI glTranslatexOES( GLfixed x, GLfixed y, GLfixed z )
@@ -24554,6 +24898,7 @@ const void *extension_procs[] =
     glAlphaFragmentOp1ATI,
     glAlphaFragmentOp2ATI,
     glAlphaFragmentOp3ATI,
+    glAlphaFuncx,
     glAlphaFuncxOES,
     glAlphaToCoverageDitherControlNV,
     glApplyFramebufferAttachmentCMAAINTEL,
@@ -24702,10 +25047,12 @@ const void *extension_procs[] =
     glClearBufferuiv,
     glClearColorIiEXT,
     glClearColorIuiEXT,
+    glClearColorx,
     glClearColorxOES,
     glClearDepthdNV,
     glClearDepthf,
     glClearDepthfOES,
+    glClearDepthx,
     glClearDepthxOES,
     glClearNamedBufferData,
     glClearNamedBufferDataEXT,
@@ -24724,7 +25071,9 @@ const void *extension_procs[] =
     glClientWaitSemaphoreui64NVX,
     glClientWaitSync,
     glClipControl,
+    glClipPlanef,
     glClipPlanefOES,
+    glClipPlanex,
     glClipPlanexOES,
     glColor3fVertex3fSUN,
     glColor3fVertex3fvSUN,
@@ -24740,6 +25089,7 @@ const void *extension_procs[] =
     glColor4ubVertex2fvSUN,
     glColor4ubVertex3fSUN,
     glColor4ubVertex3fvSUN,
+    glColor4x,
     glColor4xOES,
     glColor4xvOES,
     glColorFormatNV,
@@ -24942,6 +25292,7 @@ const void *extension_procs[] =
     glDepthRangedNV,
     glDepthRangef,
     glDepthRangefOES,
+    glDepthRangex,
     glDepthRangexOES,
     glDetachObjectARB,
     glDetachShader,
@@ -25074,7 +25425,9 @@ const void *extension_procs[] =
     glFogCoordhNV,
     glFogCoordhvNV,
     glFogFuncSGIS,
+    glFogx,
     glFogxOES,
+    glFogxv,
     glFogxvOES,
     glFragmentColorMaterialSGIX,
     glFragmentCoverageColorNV,
@@ -25119,7 +25472,9 @@ const void *extension_procs[] =
     glFramebufferTextureLayerEXT,
     glFramebufferTextureMultiviewOVR,
     glFreeObjectBufferATI,
+    glFrustumf,
     glFrustumfOES,
+    glFrustumx,
     glFrustumxOES,
     glGenAsyncMarkersSGIX,
     glGenBuffers,
@@ -25184,7 +25539,9 @@ const void *extension_procs[] =
     glGetBufferPointervARB,
     glGetBufferSubData,
     glGetBufferSubDataARB,
+    glGetClipPlanef,
     glGetClipPlanefOES,
+    glGetClipPlanex,
     glGetClipPlanexOES,
     glGetColorTable,
     glGetColorTableEXT,
@@ -25226,6 +25583,7 @@ const void *extension_procs[] =
     glGetFinalCombinerInputParameterfvNV,
     glGetFinalCombinerInputParameterivNV,
     glGetFirstPerfQueryIdINTEL,
+    glGetFixedv,
     glGetFixedvOES,
     glGetFloatIndexedvEXT,
     glGetFloati_v,
@@ -25273,6 +25631,7 @@ const void *extension_procs[] =
     glGetInvariantFloatvEXT,
     glGetInvariantIntegervEXT,
     glGetLightxOES,
+    glGetLightxv,
     glGetListParameterfvSGIX,
     glGetListParameterivSGIX,
     glGetLocalConstantBooleanvEXT,
@@ -25285,6 +25644,7 @@ const void *extension_procs[] =
     glGetMapParameterivNV,
     glGetMapxvOES,
     glGetMaterialxOES,
+    glGetMaterialxv,
     glGetMemoryObjectDetachedResourcesuivNV,
     glGetMemoryObjectParameterivEXT,
     glGetMinmax,
@@ -25442,6 +25802,7 @@ const void *extension_procs[] =
     glGetSynciv,
     glGetTexBumpParameterfvATI,
     glGetTexBumpParameterivATI,
+    glGetTexEnvxv,
     glGetTexEnvxvOES,
     glGetTexFilterFuncSGIS,
     glGetTexGenxvOES,
@@ -25451,6 +25812,7 @@ const void *extension_procs[] =
     glGetTexParameterIuiv,
     glGetTexParameterIuivEXT,
     glGetTexParameterPointervAPPLE,
+    glGetTexParameterxv,
     glGetTexParameterxvOES,
     glGetTextureHandleARB,
     glGetTextureHandleNV,
@@ -25673,10 +26035,15 @@ const void *extension_procs[] =
     glLGPUNamedBufferSubDataNVX,
     glLabelObjectEXT,
     glLightEnviSGIX,
+    glLightModelx,
     glLightModelxOES,
+    glLightModelxv,
     glLightModelxvOES,
+    glLightx,
     glLightxOES,
+    glLightxv,
     glLightxvOES,
+    glLineWidthx,
     glLineWidthxOES,
     glLinkProgram,
     glLinkProgramARB,
@@ -25686,6 +26053,7 @@ const void *extension_procs[] =
     glListParameteriSGIX,
     glListParameterivSGIX,
     glLoadIdentityDeformationMapSGIX,
+    glLoadMatrixx,
     glLoadMatrixxOES,
     glLoadProgramNV,
     glLoadTransposeMatrixd,
@@ -25728,7 +26096,9 @@ const void *extension_procs[] =
     glMapVertexAttrib1fAPPLE,
     glMapVertexAttrib2dAPPLE,
     glMapVertexAttrib2fAPPLE,
+    glMaterialx,
     glMaterialxOES,
+    glMaterialxv,
     glMaterialxvOES,
     glMatrixFrustumEXT,
     glMatrixIndexPointerARB,
@@ -25769,6 +26139,7 @@ const void *extension_procs[] =
     glMinSampleShadingARB,
     glMinmax,
     glMinmaxEXT,
+    glMultMatrixx,
     glMultMatrixxOES,
     glMultTransposeMatrixd,
     glMultTransposeMatrixdARB,
@@ -25919,6 +26290,7 @@ const void *extension_procs[] =
     glMultiTexCoord4sv,
     glMultiTexCoord4svARB,
     glMultiTexCoord4svSGIS,
+    glMultiTexCoord4x,
     glMultiTexCoord4xOES,
     glMultiTexCoord4xvOES,
     glMultiTexCoordP1ui,
@@ -26025,6 +26397,7 @@ const void *extension_procs[] =
     glNormal3fVertex3fvSUN,
     glNormal3hNV,
     glNormal3hvNV,
+    glNormal3x,
     glNormal3xOES,
     glNormal3xvOES,
     glNormalFormatNV,
@@ -26047,7 +26420,9 @@ const void *extension_procs[] =
     glObjectPtrLabel,
     glObjectPurgeableAPPLE,
     glObjectUnpurgeableAPPLE,
+    glOrthof,
     glOrthofOES,
+    glOrthox,
     glOrthoxOES,
     glPNTrianglesfATI,
     glPNTrianglesiATI,
@@ -26105,13 +26480,17 @@ const void *extension_procs[] =
     glPointParameteriNV,
     glPointParameteriv,
     glPointParameterivNV,
+    glPointParameterx,
+    glPointParameterxv,
     glPointParameterxvOES,
+    glPointSizex,
     glPointSizexOES,
     glPollAsyncSGIX,
     glPollInstrumentsSGIX,
     glPolygonOffsetClamp,
     glPolygonOffsetClampEXT,
     glPolygonOffsetEXT,
+    glPolygonOffsetx,
     glPolygonOffsetxOES,
     glPopDebugGroup,
     glPopGroupMarkerEXT,
@@ -26370,9 +26749,11 @@ const void *extension_procs[] =
     glResolveDepthValuesNV,
     glResumeTransformFeedback,
     glResumeTransformFeedbackNV,
+    glRotatex,
     glRotatexOES,
     glSampleCoverage,
     glSampleCoverageARB,
+    glSampleCoveragex,
     glSampleMapATI,
     glSampleMaskEXT,
     glSampleMaskIndexedNV,
@@ -26386,6 +26767,7 @@ const void *extension_procs[] =
     glSamplerParameterfv,
     glSamplerParameteri,
     glSamplerParameteriv,
+    glScalex,
     glScalexOES,
     glScissorArrayv,
     glScissorExclusiveArrayvNV,
@@ -26564,7 +26946,9 @@ const void *extension_procs[] =
     glTexCoordPointerEXT,
     glTexCoordPointerListIBM,
     glTexCoordPointervINTEL,
+    glTexEnvx,
     glTexEnvxOES,
+    glTexEnvxv,
     glTexEnvxvOES,
     glTexFilterFuncSGIS,
     glTexGenxOES,
@@ -26582,7 +26966,9 @@ const void *extension_procs[] =
     glTexParameterIivEXT,
     glTexParameterIuiv,
     glTexParameterIuivEXT,
+    glTexParameterx,
     glTexParameterxOES,
+    glTexParameterxv,
     glTexParameterxvOES,
     glTexRenderbufferNV,
     glTexStorage1D,
@@ -26670,6 +27056,7 @@ const void *extension_procs[] =
     glTransformFeedbackVaryingsEXT,
     glTransformFeedbackVaryingsNV,
     glTransformPathNV,
+    glTranslatex,
     glTranslatexOES,
     glUniform1d,
     glUniform1dv,

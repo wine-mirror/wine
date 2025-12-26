@@ -7,7 +7,7 @@
   variables:
     GIT_STRATEGY: none
     GECKO_VER: 2.47.4
-    MONO_VER: 10.3.0
+    MONO_VER: 10.4.1
   cache:
     - key: wine-gecko-$GECKO_VER
       paths:
@@ -79,15 +79,13 @@ test-linux-64:
 
 test-linux-32:
   extends: .wine-test
-  variables:
-    EXCLUDE_TESTS: "d3d11:d3d11 d3d9:d3d9ex d3d9:visual"
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   needs:
     - job: build-linux
   script:
     - export WINETEST_COLOR=1
-    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -J winetest.xml -n $EXCLUDE_TESTS
+    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -J winetest.xml
   artifacts:
     when: always
     paths:

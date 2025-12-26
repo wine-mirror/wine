@@ -1754,7 +1754,8 @@ static void test_reentrant_callback(void)
     CloseHandle(hevent);
 }
 
-static void create_wav_file(char *temp_file)
+static void create_wav_file(char *temp_file, WORD format_tag, unsigned int channels,
+        unsigned int bits_per_sample, unsigned int samples_per_sec)
 {
     WAVEFORMATEX format;
     HMMIO h;
@@ -1764,13 +1765,13 @@ static void create_wav_file(char *temp_file)
     DWORD length;
     char *buffer;
 
-    format.wFormatTag=WAVE_FORMAT_PCM;
+    format.wFormatTag = format_tag;
     format.cbSize = 0;
-    format.nChannels=1;
-    format.wBitsPerSample=8;
-    format.nSamplesPerSec=8000;
-    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
+    format.nChannels = channels;
+    format.wBitsPerSample = bits_per_sample;
+    format.nSamplesPerSec = samples_per_sec;
+    format.nBlockAlign = format.nChannels * format.wBitsPerSample / 8;
+    format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
 
     h = mmioOpenA(temp_file, NULL, MMIO_ALLOCBUF | MMIO_WRITE | MMIO_CREATE);
     ok(h != NULL, "Can't open temp_file\n");
@@ -1806,6 +1807,11 @@ static void create_wav_file(char *temp_file)
     ok(rc == MMSYSERR_NOERROR, "mmioClose failed, got %u\n", rc);
 }
 
+static const unsigned int sampling_rates[] = { 8000, 44100, 96000 };
+static const unsigned int channel_counts[] = { 1, 2 };
+static const unsigned int sample_formats[][2] = { {WAVE_FORMAT_PCM, 8}, {WAVE_FORMAT_PCM, 16},
+                                                  {WAVE_FORMAT_PCM, 32}, {WAVE_FORMAT_IEEE_FLOAT, 32} };
+
 static void test_PlaySound(void)
 {
     BOOL br;
@@ -1824,7 +1830,10 @@ static void test_PlaySound(void)
 
     GetTempPathA(sizeof(test_file), test_file);
     strcat(test_file, "mysound.wav");
-    create_wav_file(test_file);
+
+    /* Test some filename quirks. */
+
+    create_wav_file(test_file, WAVE_FORMAT_PCM, 1, 8, 8000);
 
     br = PlaySoundA(test_file, NULL, SND_FILENAME | SND_NODEFAULT);
     ok(br, "PlaySound failed, got %d\n", br);
@@ -1847,6 +1856,64 @@ static void test_PlaySound(void)
     ok(!br || broken(br), "PlaySound succeeded, got %d\n", br);
 
     DeleteFileA(test_file);
+
+    /* Test many different formats. */
+    for (unsigned int i = 0; i < ARRAY_SIZE(sampling_rates); ++i)
+    {
+        winetest_push_context("rate %u", sampling_rates[i]);
+
+        for (unsigned int j = 0; j < ARRAY_SIZE(channel_counts); ++j)
+        {
+            winetest_push_context("channel count %u", channel_counts[j]);
+
+            for (unsigned int k = 0; k < ARRAY_SIZE(sample_formats); ++k)
+            {
+                winetest_push_context("type %s, depth %u", sample_formats[k][0] == WAVE_FORMAT_PCM ? "PCM" : "float",
+                        sample_formats[k][1]);
+
+                create_wav_file(test_file, sample_formats[k][0], channel_counts[j],
+                        sample_formats[k][1], sampling_rates[i]);
+
+                br = PlaySoundA(test_file, NULL, SND_FILENAME | SND_NODEFAULT);
+                ok(br, "PlaySound failed, got %d\n", br);
+
+                /* SND_ALIAS fallbacks to SND_FILENAME */
+                br = PlaySoundA(test_file, NULL, SND_ALIAS | SND_NODEFAULT);
+                ok(br, "PlaySound failed, got %d\n", br);
+
+                DeleteFileA(test_file);
+
+                winetest_pop_context();
+            }
+
+            winetest_pop_context();
+        }
+
+        winetest_pop_context();
+    }
+
+    /* Test a few more exotic formats. */
+    br = PlaySoundA("test_alaw.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_mulaw.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_adpcm_ms.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_adpcm_ima_wav.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_gsm_ms.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_mp2.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    /* I'm not sure of what is the problem, maybe some Windows versions just don't support MP2 any more. */
+    ok(br || broken(!br), "PlaySound failed, got %d\n", br);
+
+    br = PlaySoundA("test_mp3.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    ok(br, "PlaySound failed, got %d\n", br);
 }
 
 START_TEST(wave)

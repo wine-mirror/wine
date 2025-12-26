@@ -41,6 +41,7 @@ const unsigned int PROPF_PUBLIC_MASK = PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF
 
 const unsigned int HOSTOBJ_CONSTRUCTOR    = 0x0001;
 const unsigned int HOSTOBJ_VOLATILE_FILL  = 0x0002;
+const unsigned int HOSTOBJ_VOLATILE_PROPS = 0x0004;
 
 interface IWineJSDispatchHost;
 
@@ -56,6 +57,7 @@ interface IWineJSDispatch : IDispatchEx
     HRESULT DefineProperty(const WCHAR *name, unsigned int flags, VARIANT *v);
     HRESULT UpdateProperty(struct property_info *desc);
     HRESULT GetScriptGlobal(IWineJSDispatchHost **ret);
+    HRESULT GetRandomValues();
 }
 
 [
@@ -78,6 +80,11 @@ interface IWineJSDispatchHost : IDispatchEx
     HRESULT ToString(BSTR *str);
 }
 
+const unsigned int SCRIPTLANGUAGEVERSION_HTML  = 0x400;
+const unsigned int SCRIPTLANGUAGEVERSION_ES5   = 0x102;
+const unsigned int SCRIPTLANGUAGEVERSION_ES5_1 = 0x103;
+const unsigned int SCRIPTLANGUAGEVERSION_ES6   = 0x104;
+
 [
     object,
     uuid(d359f2fe-5531-741b-a41a-5cf92edc971d),
@@ -88,5 +95,6 @@ interface IWineJScript : IUnknown
     HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch *prototype, UINT32 flags, IWineJSDispatch **ret);
     HRESULT InitHostConstructor(IWineJSDispatchHost *constr, const WCHAR *method_name, IWineJSDispatch **ret);
     HRESULT CreateObject(IWineJSDispatch **ret);
+    HRESULT CreateArrayBuffer(DWORD size, IWineJSDispatch **ret, void **data);
     HRESULT FillGlobals(IWineJSDispatchHost *script_global);
 }

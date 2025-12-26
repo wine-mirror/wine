@@ -676,6 +676,8 @@ static struct audio_session *session_create(const GUID *guid, IMMDevice *device,
     if (!ret)
         return NULL;
 
+    if (!guid)
+        guid = &GUID_NULL;
     memcpy(&ret->guid, guid, sizeof(GUID));
 
     ret->device = device;
@@ -725,17 +727,10 @@ HRESULT get_audio_session(const GUID *guid, IMMDevice *device, UINT channels,
 
     TRACE("(%s, %p, %u, %p)\n", debugstr_guid(guid), device, channels, out);
 
-    if (!guid || IsEqualGUID(guid, &GUID_NULL)) {
-        *out = session_create(&GUID_NULL, device, channels);
-        if (!*out)
-            return E_OUTOFMEMORY;
-
-        return S_OK;
-    }
-
     *out = NULL;
     LIST_FOR_EACH_ENTRY(session, &sessions, struct audio_session, entry) {
-        if (session->device == device && IsEqualGUID(guid, &session->guid)) {
+        if (session->device == device && ((!guid && IsEqualGUID(&session->guid, &GUID_NULL)) ||
+                                          (guid && IsEqualGUID(guid, &session->guid)))) {
             session_init_vols(session, channels);
             *out = session;
             break;

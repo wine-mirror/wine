@@ -441,6 +441,16 @@ NTSTATUS SYSCALL_API NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *ha
     SYSCALL_FUNC( NtGdiDdDDIShareObjects );
 }
 
+NTSTATUS SYSCALL_API NtGdiDdDDISignalSynchronizationObjectFromCpu( const D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *params )
+{
+    SYSCALL_FUNC( NtGdiDdDDISignalSynchronizationObjectFromCpu );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params )
+{
+    SYSCALL_FUNC( NtGdiDdDDIWaitForSynchronizationObjectFromCpu );
+}
+
 BOOL SYSCALL_API NtGdiDeleteClientObj( HGDIOBJ handle )
 {
     SYSCALL_FUNC( NtGdiDeleteClientObj );
@@ -1950,6 +1960,11 @@ LRESULT SYSCALL_API NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARA
                                        void *result_info, DWORD type, BOOL ansi )
 {
     SYSCALL_FUNC( NtUserMessageCall );
+}
+
+BOOL SYSCALL_API NtUserModifyUserStartupInfoFlags( DWORD mask, DWORD flags )
+{
+    SYSCALL_FUNC( NtUserModifyUserStartupInfoFlags );
 }
 
 BOOL SYSCALL_API NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )

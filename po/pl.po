@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-09-20 07:35+0200\n"
+"PO-Revision-Date: 2025-11-26 07:59+0100\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.7\n"
+"X-Generator: Poedit 3.8\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -103,7 +103,7 @@ msgstr "Szczegóły wsparcia"
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
 #: dlls/shell32/shell32.rc:278 dlls/shell32/shell32.rc:302
 #: dlls/shell32/shell32.rc:324 dlls/shell32/shell32.rc:343
-#: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
+#: dlls/shlwapi/shlwapi.rc:44 dlls/twaindsm/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
@@ -204,12 +204,12 @@ msgstr "&Zainstaluj"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:70
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
 #: dlls/shell32/shell32.rc:344 dlls/shlwapi/shlwapi.rc:45
-#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
+#: dlls/twaindsm/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
 #: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
@@ -747,7 +747,7 @@ msgid "Scr&ipt:"
 msgstr "Skr&ypt:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Kolor"
 
@@ -1101,7 +1101,8 @@ msgstr "Purpurowy"
 msgid "Teal"
 msgstr "Zielono-modry"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Szary"
 
@@ -4061,15 +4062,15 @@ msgstr "Warunkowa kompilacja jest wyłączona"
 msgid "Expected '@'"
 msgstr "Oczekiwano '@'"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
 msgstr "Błąd kompilacji Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:98
 msgid "Microsoft JScript runtime error"
 msgstr "Błąd biblioteki uruchomieniowej Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:94 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nieznany błąd biblioteki uruchomieniowej"
 
@@ -4193,36 +4194,58 @@ msgstr "Nie można określić nieustawialnej własności '|'"
 msgid "Cannot modify non-writable property '|'"
 msgstr "Nie można zmienić niezapisywalnej własności '|'"
 
+#: dlls/jscript/jscript.rc:84
+msgid "Typed array constructor argument is invalid"
+msgstr "Argument konstruktora tablicy typowanej jest nieprawidłowy"
+
 #: dlls/jscript/jscript.rc:83
+msgid "'this' is not a typed array object"
+msgstr "'this' nie jest obiektem tablicy typowanej"
+
+#: dlls/jscript/jscript.rc:85
+msgid "Invalid offset/length when creating typed array"
+msgstr "Nieprawidłowe przesunięcie/długość podczas tworzenia tablicy typowanej"
+
+#: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr ""
+"Nieprawidłowa wartość początkowa/końcowa w metodzie podtablicowej tablicy "
+"typowanej"
+
+#: dlls/jscript/jscript.rc:87
+msgid "Invalid source in typed array set"
+msgstr "Nieprawidłowe źródło w zestawie tablicy typowanej"
+
+#: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
 msgstr "'this' nie jest obiektem DataView"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 "Wymagany argument offset lub wartość w metodzie DataView nie jest określona"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
 msgstr "Dostęp do operacji DataView poza określoną długością bufora"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
 msgstr "Argument przesunięcia konstruktora DataView jest nieprawidłowy"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
 msgstr "'this' nie jest obiektem |"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:93
 msgid "'key' is not an object"
 msgstr "'key' nie jest obiektem"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
 msgstr "Oczekiwano obiektu ArrayBuffer"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
 msgstr "Własność nie może mieć zarówno akcesorów i wartości"
 
@@ -9632,11 +9655,31 @@ msgstr "Nieznane źródło"
 msgid "the program which created it"
 msgstr "program, który go stworzył"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
 msgstr "Skanowanie"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:58
+msgid "Manufacturer:"
+msgstr "Producent:"
+
+#: dlls/sane.ds/sane.rc:60
+msgid "Product family:"
+msgstr "Rodzina produktu:"
+
+#: dlls/sane.ds/sane.rc:62
+msgid "Product name:"
+msgstr "Nazwa produktu:"
+
+#: dlls/sane.ds/sane.rc:64
+msgid "Resolution:"
+msgstr "Rozdzielczość:"
+
+#: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Strona"
+
+#: dlls/sane.ds/sane.rc:68
 msgid "SCANNING... Please Wait"
 msgstr "SKANOWANIE... Proszę czekać"
 
@@ -9665,6 +9708,39 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr "LineArt"
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Nieznane"
+
+#: dlls/sane.ds/sane.rc:46
+msgid ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+msgstr ""
+"Automatyczny podajnik dokumentów (ADF) jest pusty. Włoż arkusze do "
+"zeskanowania."
+
+#: dlls/sane.ds/sane.rc:47
+msgid ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+msgstr ""
+"Skaner zgłasza zacięcie papieru. Sprawdź dodatkowe informacje na "
+"wyświetlaczu urządzenia."
+
+#: dlls/sane.ds/sane.rc:48
+msgid "The scanner cover is open. Please close the scanner."
+msgstr "Pokrywa skanera jest otwarta. Zamknij skaner."
+
+#: dlls/sane.ds/sane.rc:49
+msgid "The scanner is busy. Try again later."
+msgstr "Skaner jest zajęty. Spróbuj ponownie później."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9717,10 +9793,6 @@ msgstr "Skopiuj pliki producenta z:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "Plik '%1' znajdujący się na %2 jest potrzebny"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Nieznane"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -10620,7 +10692,7 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " s"
 
-#: dlls/twain_32/twain.rc:29
+#: dlls/twaindsm/twain.rc:29
 msgid "Select Source"
 msgstr "Zaznacz źródło"
 
@@ -12588,10 +12660,10 @@ msgstr ""
 "Twojego komputera ani danych."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
 msgstr ""
 "Ta strefa zawiera wszystkie witryny internetowe, których nie umieściłeś w "
-"innych strefach"
+"innych strefach."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
@@ -14770,6 +14842,10 @@ msgstr "Koniec pliku"
 #: programs/cmd/cmd.rc:410
 msgid "%t%1!u! file(s) copied\n"
 msgstr "Skopiowano %t%1!u! plik(ów)\n"
+
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
+msgid "File cannot be copied onto itself.\n"
+msgstr "Nie można skopiować pliku do siebie samego.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -19956,10 +20032,6 @@ msgstr "Przybliż"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Oddal"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Strona"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

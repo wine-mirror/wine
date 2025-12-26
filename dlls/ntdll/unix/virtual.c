@@ -1818,7 +1818,6 @@ static void register_view( struct file_view *view )
 static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t size, unsigned int vprot )
 {
     struct file_view *view;
-    int unix_prot;
 
     assert( !((UINT_PTR)base & host_page_mask) );
     assert( !(size & page_mask) );
@@ -1852,17 +1851,9 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     set_page_vprot( base, size, vprot );
 
     register_view( view );
+    kernel_writewatch_register_range( view, view->base, view->size );
 
     *view_ret = view;
-
-    unix_prot = get_unix_prot( vprot );
-    if (force_exec_prot && (unix_prot & PROT_READ) && !(unix_prot & PROT_EXEC))
-    {
-        TRACE( "forcing exec permission on %p-%p\n", base, (char *)base + size - 1 );
-        mprotect( base, size, unix_prot | PROT_EXEC );
-    }
-
-    kernel_writewatch_register_range( view, view->base, view->size );
     return STATUS_SUCCESS;
 }
 
@@ -2279,6 +2270,8 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
     if (use_kernel_writewatch && vprot & VPROT_WRITEWATCH)
         unix_prot = get_unix_prot( vprot & ~VPROT_WRITEWATCH );
 
+    unix_prot &= ~PROT_EXEC;
+
     if (base)
     {
         if (is_beyond_limit( base, size, address_space_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
@@ -2368,20 +2361,6 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
 #endif
     }
 
-    /* macOS since 10.15 fails to map files with PROT_EXEC
-     * (and will show the user an annoying warning if the file has a quarantine xattr set).
-     * But it works to map without PROT_EXEC and then use mprotect().
-     */
-#ifndef __APPLE__
-    if ((vprot & VPROT_EXEC) || force_exec_prot)
-    {
-        if (!(vprot & VPROT_EXEC))
-            TRACE( "forcing exec permission on mapping %p-%p\n",
-                   (char *)view->base + start, (char *)view->base + start + size - 1 );
-        prot |= PROT_EXEC;
-    }
-#endif
-
     map_size = ROUND_SIZE( start, size, page_mask );
     map_addr = ROUND_ADDR( (char *)view->base + start, page_mask );
     host_addr = ROUND_ADDR( (char *)view->base + start, host_page_mask );
@@ -2409,13 +2388,8 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
             }
             break;
         case EACCES:
-        case EPERM:  /* noexec filesystem, fall back to read() */
-            if (vprot & VPROT_WRITE)
-            {
-                if (prot & PROT_EXEC) ERR( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
-                return STATUS_ACCESS_DENIED;
-            }
-            if (prot & PROT_EXEC) WARN( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
+        case EPERM:  /* access error, fall back to read() */
+            if (vprot & VPROT_WRITE) return STATUS_ACCESS_DENIED;
             break;
         default:
             ERR( "mmap error %s, range %p-%p, unix_prot %#x\n",
@@ -2695,7 +2669,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
     void *addr = NULL;
     void * const low_64k = (void *)0x10000;
     const size_t dosmem_size = 0x110000;
-    int unix_prot = get_unix_prot( vprot );
+    int unix_prot = get_unix_prot( vprot ) & ~PROT_EXEC;
 
     /* check for existing view */
 
@@ -3404,7 +3378,7 @@ static NTSTATUS map_image_view( struct file_view **view_ret, struct pe_image_inf
 static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size_ptr, HANDLE shared_file,
                                    ULONG_PTR limit_low, ULONG_PTR limit_high, ULONG alloc_type,
                                    USHORT machine, struct pe_image_info *image_info,
-                                   UNICODE_STRING *nt_name, BOOL is_builtin )
+                                   UNICODE_STRING *nt_name, BOOL is_builtin, off_t offset)
 {
     int unix_fd = -1, needs_close;
     int shared_fd = -1, shared_needs_close = 0;
@@ -3412,6 +3386,9 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
     struct file_view *view;
     unsigned int status;
     sigset_t sigset;
+
+    if (offset >= size)
+        return STATUS_INVALID_PARAMETER;
 
     if ((status = server_get_unix_fd( mapping, 0, &unix_fd, &needs_close, NULL, NULL )))
         return status;
@@ -3443,6 +3420,12 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
     status = map_image_into_view( view, nt_name, unix_fd, image_info, machine, shared_fd, needs_close );
     if (status == STATUS_SUCCESS)
     {
+        if (offset)
+        {
+            free_pages( view, view->base, offset );
+            size -= offset;
+        }
+
         image_info->base = wine_server_client_ptr( view->base );
         SERVER_START_REQ( map_image_view )
         {
@@ -3451,13 +3434,14 @@ static NTSTATUS virtual_map_image( HANDLE mapping, void **addr_ptr, SIZE_T *size
             req->size    = size;
             req->entry   = image_info->entry_point;
             req->machine = image_info->machine;
+            req->offset  = offset;
             status = wine_server_call( req );
         }
         SERVER_END_REQ;
     }
     if (NT_SUCCESS(status))
     {
-        if (is_builtin) add_builtin_module( view->base, NULL );
+        if (is_builtin && !offset) add_builtin_module( view->base, NULL );
         *addr_ptr = view->base;
         *size_ptr = size;
         VIRTUAL_DEBUG_DUMP_VIEW( view );
@@ -3523,6 +3507,8 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
                             &image_info, &nt_name, &exp_name );
     if (res) return res;
 
+    offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
+
     if (image_info)
     {
         SECTION_IMAGE_INFORMATION info;
@@ -3535,10 +3521,10 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
         }
         /* check if we can replace that mapping with the builtin */
         res = load_builtin( image_info, &nt_name, &exp_name, machine, &info,
-                            addr_ptr, size_ptr, limit_low, limit_high );
+                            addr_ptr, size_ptr, limit_low, limit_high, offset.QuadPart );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
             res = virtual_map_image( handle, addr_ptr, size_ptr, shared_file, limit_low, limit_high,
-                                     alloc_type, machine, image_info, &nt_name, FALSE );
+                                     alloc_type, machine, image_info, &nt_name, FALSE, offset.QuadPart );
         if (shared_file) NtClose( shared_file );
         free( image_info );
         if (NtCurrentTeb64()) NtCurrentTeb64()->Tib.ArbitraryUserPointer = prev;
@@ -3546,7 +3532,6 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
     }
 
     base = *addr_ptr;
-    offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
     if (offset.QuadPart >= full_size) return STATUS_INVALID_PARAMETER;
     if (*size_ptr)
     {
@@ -3695,6 +3680,7 @@ void virtual_init(void)
             if (preload_reserve_start)
                 address_space_start = min( address_space_start, preload_reserve_start );
         }
+        unsetenv( "WINEPRELOADRESERVE" );
     }
 
     /* try to find space in a reserved area for the views and pages protection table */
@@ -3782,7 +3768,7 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 )
  */
 NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size,
                                      SECTION_IMAGE_INFORMATION *info, ULONG_PTR limit_low,
-                                     ULONG_PTR limit_high, WORD machine, BOOL prefer_native )
+                                     ULONG_PTR limit_high, WORD machine, BOOL prefer_native, off_t offset )
 {
     mem_size_t full_size;
     unsigned int sec_flags;
@@ -3803,7 +3789,8 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
 
     if (!image_info->wine_builtin) /* ignore non-builtins */
     {
-        WARN_(module)( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_us(&nt_name) );
+        if (!image_info->wine_fakedll)
+            WARN_(module)( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_us(&nt_name) );
         status = STATUS_DLL_NOT_FOUND;
     }
     else if (prefer_native && (image_info->dll_charact & IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE))
@@ -3814,7 +3801,7 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     else
     {
         status = virtual_map_image( mapping, module, size, shared_file, limit_low, limit_high, 0,
-                                    machine, image_info, &nt_name, TRUE );
+                                    machine, image_info, &nt_name, TRUE, offset );
         virtual_fill_image_information( image_info, info );
     }
 
@@ -3849,11 +3836,11 @@ NTSTATUS virtual_map_module( HANDLE mapping, void **module, SIZE_T *size, SECTIO
 
     /* check if we can replace that mapping with the builtin */
     status = load_builtin( image_info, &nt_name, &exp_name, machine, info,
-                           module, size, limit_low, limit_high );
+                           module, size, limit_low, limit_high, 0 );
     if (status == STATUS_IMAGE_ALREADY_LOADED)
     {
         status = virtual_map_image( mapping, module, size, shared_file, limit_low, limit_high, 0,
-                                    machine, image_info, &nt_name, FALSE );
+                                    machine, image_info, &nt_name, FALSE, 0 );
         virtual_fill_image_information( image_info, info );
     }
     if (shared_file) NtClose( shared_file );
@@ -5131,7 +5118,11 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
             else status = map_view( &view, base, size, type, vprot, limit_low, limit_high,
                                     align ? align - 1 : granularity_mask );
 
-            if (status == STATUS_SUCCESS) base = view->base;
+            if (status == STATUS_SUCCESS)
+            {
+                base = view->base;
+                if (vprot & VPROT_EXEC || force_exec_prot) mprotect_range( base, size, 0, 0 );
+            }
         }
     }
     else if (type & MEM_RESET)

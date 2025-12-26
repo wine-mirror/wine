@@ -108,14 +108,14 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
     pattern++;
 
     size = wcstol(pattern, NULL, 10);
-    mask = heap_alloc(size);
-    expect = heap_alloc(size);
+    mask = malloc(size);
+    expect = malloc(size);
     memset(mask, 0xff, size);
 
     if (!(pattern = wcschr(pattern, ',')))
     {
-        heap_free(mask);
-        heap_free(expect);
+        free(mask);
+        free(expect);
         return FALSE;
     }
     pattern++;
@@ -132,8 +132,8 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
 
     if (!(pattern = wcschr(pattern, ',')))
     {
-        heap_free(mask);
-        heap_free(expect);
+        free(mask);
+        free(expect);
         return FALSE;
     }
     pattern++;
@@ -148,13 +148,13 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
             expect[i / 2] = d << 4;
     }
 
-    actual = heap_alloc(size);
+    actual = malloc(size);
     SetFilePointer(file, offset, NULL, FILE_BEGIN);
     if (!ReadFile(file, actual, size, &ret_size, NULL) || ret_size != size)
     {
-        heap_free(actual);
-        heap_free(expect);
-        heap_free(mask);
+        free(actual);
+        free(expect);
+        free(mask);
         return FALSE;
     }
 
@@ -167,9 +167,9 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
         }
     }
 
-    heap_free(actual);
-    heap_free(expect);
-    heap_free(mask);
+    free(actual);
+    free(expect);
+    free(mask);
 
     /* If there is a following tuple, then we must match that as well. */
     if (ret && (pattern = wcschr(pattern, ',')))
@@ -256,7 +256,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
             if (RegQueryInfoKeyW(subtype_key, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_size, NULL, NULL))
                 continue;
 
-            pattern = heap_alloc(max_size);
+            pattern = malloc(max_size);
 
             for (value_idx = 0; ; ++value_idx)
             {
@@ -284,7 +284,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
                         NULL, NULL, (BYTE *)source_clsid_str, &size))
                     CLSIDFromString(source_clsid_str, source_clsid);
 
-                heap_free(pattern);
+                free(pattern);
                 RegCloseKey(subtype_key);
                 RegCloseKey(majortype_key);
                 RegCloseKey(parent_key);
@@ -292,7 +292,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
                 return TRUE;
             }
 
-            heap_free(pattern);
+            free(pattern);
             RegCloseKey(subtype_key);
         }
 

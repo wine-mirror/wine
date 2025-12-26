@@ -224,6 +224,7 @@ Control="System\CurrentControlSet\Control"
 [Classes]
 HKCR,.chm,,2,"chm.file"
 HKCR,.cpl,,2,"cplfile"
+HKCR,.crt,,2,"CERFile"
 HKCR,.hlp,,2,"hlpfile"
 HKCR,.inf,,2,"inffile"
 HKCR,.ini,,2,"inifile"
@@ -236,6 +237,8 @@ HKCR,.wri,,2,"wrifile"
 HKCR,*\shellex\ContextMenuHandlers,,16
 HKCR,AppID\{B8C54A54-355E-11D3-83EB-00A0C92A2F2D},,2,"Windows Media Player"
 HKCR,Applications\wmplayer.exe,,2,"Windows Media Player"
+HKCR,CERfile,,2,"Security Certificate"
+HKCR,CERfile\shell\open\command,,2,"%11%\rundll32.exe cryptext.dll,CryptExtOpenCER %1"
 HKCR,chm.file,,2,"Compiled HTML Help File"
 HKCR,chm.file\DefaultIcon,,2,"%10%\hh.exe,0"
 HKCR,chm.file\shell\open\command,,2,"""%10%\hh.exe"" ""%1"""
@@ -693,11 +696,13 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 11,,mshtml.dll,1
 11,,msisip.dll,1
 11,,msmpeg2vdec.dll,1
+11,,msvdsp.dll,1
 11,,msvproc.dll,1
 11,,qcap.dll,1
 11,,qedit.dll,1
 11,,resampledmo.dll,1
 11,,urlmon.dll,1
+11,,vidreszr.dll,1
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1
 55,,wineps.drv,1

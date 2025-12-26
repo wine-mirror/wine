@@ -1,8 +1,11 @@
 MODULE  = windows.perception.stub.dll
-IMPORTS = combase
+IMPORTS = combase user32
 
 SOURCES = \
+	anchor.c \
+	async.c \
+	async_private.idl \
 	classes.idl \
-	holographicspace.c \
+	holographic_space.c \
 	main.c \
 	observer.c

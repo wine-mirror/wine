@@ -1554,6 +1554,52 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIShareObjects( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDISignalSynchronizationObjectFromCpu( UINT *args )
+{
+    const struct
+    {
+        D3DKMT_HANDLE hDevice;
+        UINT ObjectCount;
+        ULONG ObjectHandleArray;
+        ULONG FenceValueArray;
+        D3DDDICB_SIGNALFLAGS Flags;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU desc;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hDevice = desc32->hDevice;
+    desc.ObjectCount = desc32->ObjectCount;
+    desc.ObjectHandleArray = UlongToPtr( desc32->ObjectHandleArray );
+    desc.FenceValueArray = UlongToPtr( desc32->FenceValueArray );
+    desc.Flags = desc32->Flags;
+
+    return NtGdiDdDDISignalSynchronizationObjectFromCpu( &desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIWaitForSynchronizationObjectFromCpu( UINT *args )
+{
+    const struct
+    {
+        D3DKMT_HANDLE hDevice;
+        UINT ObjectCount;
+        ULONG ObjectHandleArray;
+        ULONG FenceValueArray;
+        ULONG hAsyncEvent;
+        D3DDDI_WAITFORSYNCHRONIZATIONOBJECTFROMCPU_FLAGS Flags;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU desc;
+
+    if (!desc32) return STATUS_INVALID_PARAMETER;
+    desc.hDevice = desc32->hDevice;
+    desc.ObjectCount = desc32->ObjectCount;
+    desc.ObjectHandleArray = UlongToPtr( desc32->ObjectHandleArray );
+    desc.FenceValueArray = UlongToPtr( desc32->FenceValueArray );
+    desc.hAsyncEvent = UlongToHandle( desc32->hAsyncEvent );
+    desc.Flags = desc32->Flags;
+
+    return NtGdiDdDDIWaitForSynchronizationObjectFromCpu( &desc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDeleteClientObj( UINT *args )
 {
     HGDIOBJ obj = get_handle( &args );

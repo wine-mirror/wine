@@ -8669,6 +8669,7 @@ static void test_ddrawstream_mem_allocator(void)
     IMemAllocator *ddraw_allocator, *mem_allocator, *new_allocator;
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     IMediaSample *media_sample1, *media_sample2, *media_sample3;
+    bool is_win64 = sizeof(void *) > sizeof(int);
     ALLOCATOR_PROPERTIES props, ret_props;
     IDirectDrawMediaStream *ddraw_stream;
     VIDEOINFO connect_video_info;
@@ -8688,6 +8689,7 @@ static void test_ddrawstream_mem_allocator(void)
     ULONG ref;
     IPin *pin;
     LONG size;
+    RECT rect;
 
     DDSURFACEDESC surface_desc =
     {
@@ -9175,12 +9177,12 @@ static void test_ddrawstream_mem_allocator(void)
 
     SetRect(&expect_video_info.rcSource, 0, 0, 222, 555);
     SetRect(&expect_video_info.rcTarget, 0, 0, 222, 555);
-    expect_video_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-    expect_video_info.bmiHeader.biWidth = 222,
-    expect_video_info.bmiHeader.biHeight = -555,
-    expect_video_info.bmiHeader.biSizeImage = 222 * 555 * 4,
-    expect_video_info.bmiHeader.biPlanes = 1,
-    expect_video_info.bmiHeader.biBitCount = 32,
+    expect_video_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    expect_video_info.bmiHeader.biWidth = 222;
+    expect_video_info.bmiHeader.biHeight = -555;
+    expect_video_info.bmiHeader.biSizeImage = 222 * 555 * 4;
+    expect_video_info.bmiHeader.biPlanes = 1;
+    expect_video_info.bmiHeader.biBitCount = 32;
 
     hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -9196,6 +9198,63 @@ static void test_ddrawstream_mem_allocator(void)
             "Got format type %s.\n", debugstr_guid(&sample_mt->formattype));
     ok(!sample_mt->pUnk, "Got pUnk %p.\n", sample_mt->pUnk);
     ok(sample_mt->cbFormat == sizeof(VIDEOINFO), "Got format size %lu.\n", sample_mt->cbFormat);
+    ok(!memcmp(sample_mt->pbFormat, &expect_video_info, sizeof(VIDEOINFO)), "Format blocks didn't match.\n");
+
+    ref = IMediaSample_Release(media_sample1);
+    ok(!ref, "Got refcount %ld.\n", ref);
+    ref = IDirectDrawStreamSample_Release(ddraw_sample1);
+    ok(!ref, "Got refcount %ld.\n", ref);
+
+    /* Test providing an existing surface and rect. */
+
+    source.query_accept_width = 100;
+    source.query_accept_height = 220;
+    source.query_accept_subtype = MEDIASUBTYPE_RGB555;
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    SetRect(&rect, 10, 20, 110, 240);
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, &rect, 0, &ddraw_sample1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectDrawStreamSample_Update(ddraw_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
+    IDirectDrawSurface_Release(surface);
+    IDirectDraw_Release(ddraw);
+
+    hr = IMemAllocator_Commit(mem_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(mem_allocator, &media_sample1, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    SetRect(&expect_video_info.rcSource, 0, 0, 100, 220);
+    SetRect(&expect_video_info.rcTarget, 10, 20, 110, 240);
+    expect_video_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    expect_video_info.bmiHeader.biWidth = is_win64 ? 334 : 336;
+    expect_video_info.bmiHeader.biHeight = -444;
+    expect_video_info.bmiHeader.biSizeImage = expect_video_info.bmiHeader.biWidth * 444 * 2;
+    expect_video_info.bmiHeader.biPlanes = 1;
+    expect_video_info.bmiHeader.biBitCount = 16;
+
+    hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&sample_mt->majortype, &MEDIATYPE_Video),
+            "Got major type %s.\n", debugstr_guid(&sample_mt->majortype));
+    ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555),
+            "Got subtype %s.\n", debugstr_guid(&sample_mt->subtype));
+    ok(sample_mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", sample_mt->bFixedSizeSamples);
+    ok(!sample_mt->bTemporalCompression, "Got temporal compression %d.\n", sample_mt->bTemporalCompression);
+    todo_wine_if(is_win64)
+    ok(sample_mt->lSampleSize == expect_video_info.bmiHeader.biSizeImage,
+            "Expected sample size %lu, got %lu.\n", expect_video_info.bmiHeader.biSizeImage,
+            sample_mt->lSampleSize);
+    ok(IsEqualGUID(&sample_mt->formattype, &FORMAT_VideoInfo),
+            "Got format type %s.\n", debugstr_guid(&sample_mt->formattype));
+    ok(!sample_mt->pUnk, "Got pUnk %p.\n", sample_mt->pUnk);
+    ok(sample_mt->cbFormat == sizeof(VIDEOINFO), "Got format size %lu.\n", sample_mt->cbFormat);
+    todo_wine_if(is_win64)
     ok(!memcmp(sample_mt->pbFormat, &expect_video_info, sizeof(VIDEOINFO)), "Format blocks didn't match.\n");
 
     ref = IMediaSample_Release(media_sample1);

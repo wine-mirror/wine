@@ -31,13 +31,26 @@ echo @tab@word
 echo  @tab@word
 echo@tab@@tab@word
 echo @tab@ on @space@
+> nul echo a
+if@tab@1    ==           2 then @echo a
+@rem native stores the keyword (and preserve the case) :-(
+IF@tab@1    ==           2 ThEn @EchO a
+@rem echo is done at execution time
+@for %%a in (1 2) do echo %%a
+@echo ---
+@rem this convoluted code captures ^H inside BS env variable
+@for /f %%a in ('"prompt $H&for %%b in (1) do rem"') do @set "BS=%%a"
+@echo AA%BS%BB
 @echo --- @ with chains and brackets
 (echo the @ character chains until&&@echo we leave the current depth||(
 echo hidden
 @echo hidden
 ))&&echo and can hide brackets||(@echo command hidden)||@(echo brackets hidden)
 @echo ---
-
+@set V=@
+%V%echo foo1
+> nul echo a && @echo foo2
+@echo ---
 @echo off
 echo off@tab@@space@
 @echo noecho1
@@ -684,6 +697,12 @@ call :setError 666 & (copy fileA fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!
 call :setError 666 & (copy fileA+fileD fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (copy fileD+fileA fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 if exist fileD echo Unexpected fileD
+call :setError 666 & (copy /b fileA fileA /Y >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (copy /b fileA+fileB fileA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+type fileA
+echo a > fileA
+call :setError 666 & (copy /b fileA+fileB /Y fileB >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+type fileB
 cd .. && rd /q /s foo
 
 echo --- success/failure for MOVE command
@@ -800,6 +819,9 @@ call :setError 666 & (mklink &&echo SUCCESS !errorlevel!||echo FAILURE !errorlev
 call :setError 666 & (mklink /h foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /z foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /j foo foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /j foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rmdir foo
 echo bar > foo
 call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (mklink /h bar foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
@@ -1345,6 +1367,14 @@ setlocal EnableDelayedExpansion
 set WINE_FOO=foo bar
 if !WINE_FOO!=="" (echo empty) else echo not empty
 setlocal DisableDelayedExpansion
+
+echo --- nested expansion
+setlocal EnableDelayedExpansion
+set WINE_FOO_bar23=foo
+set WINE_BAR=bar
+set WINE_BAR=bar2 && echo !WINE_FOO_%WINE_BAR%23!
+for %%a in (bar) do echo !WINE_FOO_%%a23!
+endlocal
 
 echo --- using /V cmd flag
 echo @echo off> tmp.cmd

@@ -463,6 +463,7 @@ dispex_static_data_t HTMLCollection_dispex = {
     .vtbl       = &HTMLElementColection_dispex_vtbl,
     .disp_tid   = DispHTMLElementCollection_tid,
     .iface_tids = HTMLCollection_iface_tids,
+    .js_flags   = HOSTOBJ_VOLATILE_PROPS
 };
 
 static void create_all_list(HTMLDOMNode *elem, elem_vector_t *buf)

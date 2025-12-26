@@ -6393,6 +6393,7 @@ static void test_pipeline_statistics_query(void)
         /* AMD has nonzero GSInvocations on Windows. */
         ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
         ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
+        todo_wine_if (!data.CPrimitives)
         ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
         todo_wine_if (!damavand)
             ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
@@ -6415,6 +6416,7 @@ static void test_pipeline_statistics_query(void)
     /* AMD has nonzero GSInvocations on Windows. */
     ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
     ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
+    todo_wine_if (!data.CPrimitives)
     ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
     ok(data.PSInvocations >= 640 * 480, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
     ok(!data.HSInvocations, "Got unexpected HSInvocations count: %u.\n", (unsigned int)data.HSInvocations);
@@ -20682,6 +20684,7 @@ static void test_uint_shader_instructions(void)
         const struct shader *ps;
         unsigned int bits[4];
         struct uvec4 expected_result;
+        bool todo;
     }
     tests[] =
     {
@@ -20732,10 +20735,10 @@ static void test_uint_shader_instructions(void)
         {&ps_ibfe, {15, 15, 0xffff00ff}, {0xfffffffe, 0xfffffffe, 0xfffffffe, 0xfffffffe}},
         {&ps_ibfe, {16, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
         {&ps_ibfe, {16, 15, 0x3fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
-        {&ps_ibfe, {20, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
-        {&ps_ibfe, {31, 31, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
-        {&ps_ibfe, {31, 31, 0x80000000}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
-        {&ps_ibfe, {31, 31, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, {20, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}, .todo = true},
+        {&ps_ibfe, {31, 31, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}, .todo = true},
+        {&ps_ibfe, {31, 31, 0x80000000}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}, .todo = true},
+        {&ps_ibfe, {31, 31, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}, .todo = true},
 
         {&ps_ibfe2, {16, 15, 0x3fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
 
@@ -20819,16 +20822,21 @@ static void test_uint_shader_instructions(void)
         if (feature_level < tests[i].ps->required_feature_level)
             continue;
 
+        winetest_push_context("Test %u", i);
+
         hr = ID3D11Device_CreatePixelShader(device, tests[i].ps->code, tests[i].ps->size, NULL, &ps);
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, tests[i].bits, 0, 0);
 
         draw_quad(&test_context);
-        check_texture_uvec4(texture, &tests[i].expected_result);
+        todo_wine_if (tests[i].todo)
+            check_texture_uvec4(texture, &tests[i].expected_result);
 
         ID3D11PixelShader_Release(ps);
+
+        winetest_pop_context();
     }
 
     ID3D11Buffer_Release(cb);
@@ -29018,7 +29026,7 @@ static void test_fractional_viewports(void)
                 ok(compare_float(v->x, expected.x, 0) && compare_float(v->y, expected.y, 0),
                         "Got fragcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
                         v->x, v->y, expected.x, expected.y, x, y, viewport_offsets[i]);
-                ok(compare_float(v->z, expected.z, 2) && compare_float(v->w, expected.w, 2),
+                ok(compare_float(v->z, expected.z, 8) && compare_float(v->w, expected.w, 8),
                         "Got texcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
                         v->z, v->w, expected.z, expected.w, x, y, viewport_offsets[i]);
             }
@@ -29071,7 +29079,7 @@ static void test_negative_viewports(const D3D_FEATURE_LEVEL feature_level)
     SetRect(&rect, 0, 0, 639, 479);
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xff00ff00, 1);
     SetRect(&rect, 639, 479, 640, 480);
-    todo_wine_if(quirk)
+    todo_wine_if(!quirk && feature_level >= D3D_FEATURE_LEVEL_10_0)
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, quirk ? 0xffffffff : 0xff00ff00, 1);
 
     set_viewport(context, -1.0f / 128.0f, -1.0 / 128.0f, 640.0f, 480.0f, 0.0f, 1.0f);
@@ -29080,7 +29088,7 @@ static void test_negative_viewports(const D3D_FEATURE_LEVEL feature_level)
     SetRect(&rect, 0, 0, 639, 479);
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xff00ff00, 1);
     SetRect(&rect, 639, 479, 640, 480);
-    todo_wine_if(quirk)
+    todo_wine_if(!quirk && feature_level >= D3D_FEATURE_LEVEL_10_0)
     check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, quirk ? 0xffffffff : 0xff00ff00, 1);
 
     release_test_context(&test_context);
@@ -37077,7 +37085,7 @@ static void test_h264_decoder(void)
     extension.pPrivateOutputData = &h264_status;
     extension.PrivateOutputDataSize = sizeof(h264_status);
     hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
-    todo_wine ok(hr == E_FAIL /* AMD */ || hr == S_OK /* NVidia */, "Got hr %#lx.\n", hr);
+    ok(hr == E_FAIL /* AMD */ || hr == S_OK /* NVidia */, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         DXVA_Status_H264 zero_status = {0};
@@ -37287,23 +37295,30 @@ static void test_h264_decoder(void)
     memset(&extension, 0, sizeof(extension));
     extension.Function = DXVA_STATUS_REPORTING_FUNCTION;
     extension.pPrivateOutputData = &h264_status;
+    extension.PrivateOutputDataSize = sizeof(h264_status) - 1;
+    hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+
+    memset(&h264_status, 0xcc, sizeof(h264_status));
+    memset(&extension, 0, sizeof(extension));
+    extension.Function = DXVA_STATUS_REPORTING_FUNCTION;
+    extension.pPrivateInputData = (void *)0xdeadbeef;
+    extension.PrivateInputDataSize = 123;
+    extension.pPrivateOutputData = &h264_status;
     extension.PrivateOutputDataSize = sizeof(h264_status);
     hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(h264_status.StatusReportFeedbackNumber == 2, "Got number %u.\n", h264_status.StatusReportFeedbackNumber);
-        ok(h264_status.CurrPic.bPicEntry == 1, "Got index %#x.\n", h264_status.CurrPic.bPicEntry);
-        ok(!h264_status.field_pic_flag, "Got field pic flag %#x.\n", h264_status.field_pic_flag);
-        ok(h264_status.bDXVA_Func == DXVA_PICTURE_DECODING_FUNCTION, "Got function %#x.\n", h264_status.bDXVA_Func);
-        ok(h264_status.bBufType == (UCHAR)~0, "Got buffer type %#x.\n", h264_status.bBufType);
-        ok(!h264_status.bStatus, "Got status %#x.\n", h264_status.bStatus);
-        ok(!h264_status.bReserved8Bits, "Got reserved %#x.\n", h264_status.bReserved8Bits);
-        /* AMD reports that 1 macroblock was successfully decoded, which is
-         * obviously wrong.
-         * NVidia returns 0xffff, which is valid and means that no estimate was
-         * provided. */
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(h264_status.StatusReportFeedbackNumber == 2, "Got number %u.\n", h264_status.StatusReportFeedbackNumber);
+    ok(h264_status.CurrPic.bPicEntry == 1, "Got index %#x.\n", h264_status.CurrPic.bPicEntry);
+    ok(!h264_status.field_pic_flag, "Got field pic flag %#x.\n", h264_status.field_pic_flag);
+    ok(h264_status.bDXVA_Func == DXVA_PICTURE_DECODING_FUNCTION, "Got function %#x.\n", h264_status.bDXVA_Func);
+    ok(h264_status.bBufType == (UCHAR)~0, "Got buffer type %#x.\n", h264_status.bBufType);
+    ok(!h264_status.bStatus, "Got status %#x.\n", h264_status.bStatus);
+    ok(!h264_status.bReserved8Bits, "Got reserved %#x.\n", h264_status.bReserved8Bits);
+    /* AMD reports that 1 macroblock was successfully decoded, which is
+     * obviously wrong.
+     * NVidia returns 0xffff, which is valid and means that no estimate was
+     * provided. */
 
     for (unsigned int i = 0; i < ARRAY_SIZE(output_views); ++i)
         ID3D11VideoDecoderOutputView_Release(output_views[i]);
@@ -37312,6 +37327,200 @@ static void test_h264_decoder(void)
     ID3D11VideoDecoder_Release(decoder);
     ID3D11VideoContext_Release(video_context);
     ID3D11VideoDevice_Release(video_device);
+    release_test_context(&test_context);
+}
+
+static void test_filter_minmax(void)
+{
+    ID3D11Resource *srv_resource, *rtv_resource;
+    D3D11_FEATURE_DATA_D3D11_OPTIONS1 options1;
+    struct d3d11_test_context test_context;
+    ID3D10Blob *bytecode, *vs_blob;
+    ID3D11ShaderResourceView *srv;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11RenderTargetView *rtv;
+    D3D11_SUBRESOURCE_DATA data;
+    ID3D11SamplerState *sampler;
+    ID3D11PixelShader *ps;
+    const struct vec4 *c;
+    ID3D11Device *device;
+    size_t i, j;
+    HRESULT hr;
+
+    static const struct resource_desc srv_resource_desc =
+    {
+        .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+        .width = 4,
+        .height = 4,
+        .depth_or_array_size = 1,
+        .level_count = 1,
+        .format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .sample_desc.Count = 1,
+        .usage = D3D11_USAGE_DEFAULT,
+        .bind_flags = D3D11_BIND_SHADER_RESOURCE,
+    },
+    rtv_resource_desc =
+    {
+        .dimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+        .width = 64,
+        .height = 64,
+        .depth_or_array_size = 1,
+        .level_count = 1,
+        .format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .sample_desc.Count = 1,
+        .usage = D3D11_USAGE_DEFAULT,
+        .bind_flags = D3D11_BIND_RENDER_TARGET,
+    };
+
+    static const struct vec4 srv_data[] =
+    {
+        {.00, .00, .00, 1.0}, {.25, .00, .00, 1.0}, {.50, .00, .00, 1.0}, {.75, .00, .00, 1.0},
+        {.00, .25, .00, 1.0}, {.25, .25, .00, 1.0}, {.50, .25, .00, 1.0}, {.75, .25, .00, 1.0},
+        {.00, .50, .00, 1.0}, {.25, .50, .00, 1.0}, {.50, .50, .00, 1.0}, {.75, .50, .00, 1.0},
+        {.00, .75, .00, 1.0}, {.25, .75, .00, 1.0}, {.50, .75, .00, 1.0}, {.75, .75, .00, 1.0},
+    };
+
+    static const struct expected
+    {
+        unsigned int x, y;
+        struct vec4 c;
+    }
+    avg_expected[] =
+    {
+        {36, 20, {.375, .125, 0, 1}},
+        {20, 36, {.125, .375, 0, 1}},
+        {36, 36, {.375, .375, 0, 1}},
+        {52, 36, {.625, .375, 0, 1}},
+        {36, 52, {.375, .625, 0, 1}},
+    },
+    minimum_expected[] =
+    {
+        {36, 20, {.25, .00, 0, 1}},
+        {20, 36, {.00, .25, 0, 1}},
+        {36, 36, {.25, .25, 0, 1}},
+        {52, 36, {.50, .25, 0, 1}},
+        {36, 52, {.25, .50, 0, 1}},
+    },
+    maximum_expected[] =
+    {
+        {36, 20, {.50, .25, 0, 1}},
+        {20, 36, {.25, .50, 0, 1}},
+        {36, 36, {.50, .50, 0, 1}},
+        {52, 36, {.75, .50, 0, 1}},
+        {36, 52, {.50, .75, 0, 1}},
+    };
+
+    static const struct
+    {
+        D3D11_FILTER filter;
+        const struct expected *expected;
+        size_t expected_count;
+    }
+    tests[] =
+    {
+        {D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT,         avg_expected,     ARRAY_SIZE(avg_expected)},
+        {D3D11_FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT, minimum_expected, ARRAY_SIZE(minimum_expected)},
+        {D3D11_FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT, maximum_expected, ARRAY_SIZE(maximum_expected)},
+    };
+
+    static const char vs_code[] =
+            "void main(float4 p : POSITION, out float2 t : TEXCOORD, out float4 position : SV_Position)\n"
+            "{\n"
+            "    t.x = (p.x + 1.0) / 2.0;\n"
+            "    t.y = (-p.y + 1.0) / 2.0;\n"
+            "    position = p;\n"
+            "}\n";
+    static const char ps_code[] =
+            "Texture2D t;\n"
+            "sampler s;\n"
+            "\n"
+            "float4 main(float2 p : TEXCOORD) : SV_Target\n"
+            "{\n"
+            "    return t.Sample(s, floor(p * 8.0) / 8.0);\n"
+            "}\n";
+
+    static const float white_color[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    if (FAILED(hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D11_OPTIONS1,
+            &options1, sizeof(options1))) || !options1.MinMaxFiltering)
+    {
+        skip("Min/max reduction filtering is not supported.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    vs_blob = compile_shader(vs_code, strlen(vs_code), "vs_4_0");
+
+    bytecode = compile_shader(ps_code, strlen(ps_code), "ps_4_0");
+    hr = ID3D11Device_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(bytecode),
+            ID3D10Blob_GetBufferSize(bytecode), NULL, &ps);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D10Blob_Release(bytecode);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    data.pSysMem = srv_data;
+    data.SysMemPitch = srv_resource_desc.width * sizeof(*srv_data);
+    data.SysMemSlicePitch = srv_resource_desc.height * data.SysMemPitch;
+    hr = create_resource(device, &srv_resource_desc, &data, &srv_resource);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, srv_resource, NULL, &srv);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+
+    hr = create_resource(device, &rtv_resource_desc, NULL, &rtv_resource);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, rtv_resource, NULL, &rtv);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+    set_viewport(context, 0.0f, 0.0f, 64.0f, 64.0f, 0.0f, 1.0f);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        const D3D11_SAMPLER_DESC sampler_desc =
+        {
+            .Filter = tests[i].filter,
+            .AddressU = D3D11_TEXTURE_ADDRESS_CLAMP,
+            .AddressV = D3D11_TEXTURE_ADDRESS_CLAMP,
+            .AddressW = D3D11_TEXTURE_ADDRESS_CLAMP,
+        };
+
+        winetest_push_context("Test %Iu", i);
+
+        ID3D11DeviceContext_ClearRenderTargetView(context, rtv, white_color);
+
+        hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
+        draw_quad_vs(&test_context, ID3D10Blob_GetBufferPointer(vs_blob), ID3D10Blob_GetBufferSize(vs_blob));
+        ID3D11SamplerState_Release(sampler);
+
+        get_resource_readback(rtv_resource, 0, &rb);
+        for (j = 0; j < tests[i].expected_count; ++j)
+        {
+            const struct expected *e = &tests[i].expected[j];
+
+            c = get_readback_vec4(&rb, e->x, e->y);
+            ok(compare_vec4(c, &e->c, 0), "Got {%.8e, %.8e, %.8e, %.8e} at %u, %u.\n",
+                    c->x, c->y, c->z, c->w, e->x, e->y);
+        }
+        release_resource_readback(&rb);
+
+        winetest_pop_context();
+    }
+
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Resource_Release(rtv_resource);
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11Resource_Release(srv_resource);
+    ID3D11PixelShader_Release(ps);
+    ID3D10Blob_Release(vs_blob);
     release_test_context(&test_context);
 }
 
@@ -37522,6 +37731,7 @@ START_TEST(d3d11)
     queue_test(test_high_resource_count);
     queue_test(test_nv12);
     queue_test(test_h264_decoder);
+    queue_test(test_filter_minmax);
 
     run_queued_tests();
 

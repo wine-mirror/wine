@@ -177,6 +177,13 @@ static NTSTATUS bluetooth_adapter_free( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS bluetooth_adapter_dup( void *args )
+{
+    struct bluetooth_adapter_dup_params *params = args;
+    unix_name_dup( params->adapter );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS bluetooth_adapter_set_prop( void *arg )
 {
     struct bluetooth_adapter_set_prop_params *params = arg;
@@ -189,6 +196,13 @@ static NTSTATUS bluetooth_device_free( void *args )
 {
     struct bluetooth_device_free_params *params = args;
     unix_name_free( params->device );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS bluetooth_device_dup( void *args )
+{
+    struct bluetooth_device_dup_params *params = args;
+    unix_name_dup( params->device );
     return STATUS_SUCCESS;
 }
 
@@ -282,8 +296,10 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_adapter_stop_discovery,
     bluetooth_adapter_remove_device,
     bluetooth_adapter_free,
+    bluetooth_adapter_dup,
 
     bluetooth_device_free,
+    bluetooth_device_dup,
     bluetooth_device_disconnect,
     bluetooth_device_start_pairing,
 

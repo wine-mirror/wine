@@ -497,6 +497,9 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_OBJECT_NONEXTENSIBLE:
         case JS_E_NONCONFIGURABLE_REDEFINED:
         case JS_E_NONWRITABLE_MODIFIED:
+        case JS_E_TYPEDARRAY_BAD_CTOR_ARG:
+        case JS_E_NOT_TYPEDARRAY:
+        case JS_E_TYPEDARRAY_INVALID_SOURCE:
         case JS_E_NOT_DATAVIEW:
         case JS_E_DATAVIEW_NO_ARGUMENT:
         case JS_E_WRONG_THIS:
@@ -511,6 +514,8 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_FRACTION_DIGITS_OUT_OF_RANGE:
         case JS_E_PRECISION_OUT_OF_RANGE:
         case JS_E_INVALID_LENGTH:
+        case JS_E_TYPEDARRAY_INVALID_OFFSLEN:
+        case JS_E_TYPEDARRAY_INVALID_SUBARRAY:
         case JS_E_DATAVIEW_INVALID_ACCESS:
         case JS_E_DATAVIEW_INVALID_OFFSET:
             constr = ctx->range_error_constr;

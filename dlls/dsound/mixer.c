@@ -117,15 +117,10 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	 * sample in the secondary buffer. firgain specifies what
 	 * to multiply the FIR output by in order to attenuate it correctly.
 	 */
-	if (dsb->freqAdjustNum / dsb->freqAdjustDen > 0) {
-		/**
-		 * Yes, round it a bit to make sure that the
-		 * linear interpolation factor never changes.
-		 */
+        if (dsb->freqAdjustNum > dsb->freqAdjustDen)
 		dsb->firstep = fir_step * dsb->freqAdjustDen / dsb->freqAdjustNum;
-	} else {
+        else
 		dsb->firstep = fir_step;
-	}
 	dsb->firgain = (float)dsb->firstep / fir_step;
 
 	/* calculate the 10ms write lead */

@@ -133,46 +133,6 @@ static HRESULT create_file(const char *filename, const unsigned char *data, cons
     return D3DERR_INVALIDCALL;
 }
 
-static IDirect3DDevice9 *create_device(HWND *window)
-{
-    D3DPRESENT_PARAMETERS present_parameters = { 0 };
-    IDirect3DDevice9 *device;
-    IDirect3D9 *d3d;
-    HRESULT hr;
-    HWND wnd;
-
-    *window = NULL;
-
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
-    {
-        skip("Couldn't create application window.\n");
-        return NULL;
-    }
-
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object.\n");
-        DestroyWindow(wnd);
-        return NULL;
-    }
-
-    present_parameters.Windowed = TRUE;
-    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_HARDWARE_VERTEXPROCESSING,
-            &present_parameters, &device);
-    IDirect3D9_Release(d3d);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#lx.\n", hr);
-        DestroyWindow(wnd);
-        return NULL;
-    }
-
-    *window = wnd;
-    return device;
-}
-
 /* fills dds_header with reasonable default values */
 static void fill_dds_header(struct dds_header *header)
 {
@@ -1193,50 +1153,6 @@ static const uint8_t a8p8_2_2_expected[] =
     0x00,0x00,0x00,0x10,0x00,0x00,0x40,0x20,0x00,0x00,0x80,0x30,0xff,0xff,0xff,0x40,
 };
 
-static uint32_t get_bpp_for_d3dformat(D3DFORMAT format)
-{
-    switch (format)
-    {
-    case D3DFMT_A32B32G32R32F:
-        return 16;
-
-    case D3DFMT_A16B16G16R16:
-    case D3DFMT_Q16W16V16U16:
-        return 8;
-
-    case D3DFMT_Q8W8V8U8:
-    case D3DFMT_A8B8G8R8:
-    case D3DFMT_A8R8G8B8:
-    case D3DFMT_V16U16:
-    case D3DFMT_G16R16:
-    case D3DFMT_R32F:
-        return 4;
-
-    case D3DFMT_R8G8B8:
-        return 3;
-
-    case D3DFMT_A4R4G4B4:
-    case D3DFMT_X1R5G5B5:
-    case D3DFMT_A1R5G5B5:
-    case D3DFMT_R5G6B5:
-    case D3DFMT_V8U8:
-    case D3DFMT_A8P8:
-        return 2;
-
-    case D3DFMT_R3G3B2:
-    case D3DFMT_DXT5:
-    case D3DFMT_DXT4:
-    case D3DFMT_A4L4:
-    case D3DFMT_L8:
-    case D3DFMT_P8:
-        return 1;
-
-    default:
-        assert(0 && "Need to add format to get_bpp_for_d3dformat().");
-        return 0;
-    }
-}
-
 static void test_format_conversion(IDirect3DDevice9 *device)
 {
     struct
@@ -2221,22 +2137,6 @@ static const uint8_t q8w8v8u8_4_4_expected[] =
     0xac,0x9c,0x8c,0xbc,0xec,0xdc,0xcc,0xfc,0x2b,0x1b,0x0b,0x3b,0x6b,0x5b,0x4b,0x7b,
 };
 
-static const uint8_t a8r8g8b8_4_4[] =
-{
-    0x00,0xff,0x00,0x80,0x00,0xff,0x00,0x80,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
-    0x80,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
-    0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
-    0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
-};
-
-static const uint8_t a8r8g8b8_4_4_expected[] =
-{
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
-    0x80,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
-    0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
-    0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
-};
-
 static const uint8_t a4r4g4b4_4_4[] =
 {
     0xff,0x00,0x0f,0x00,0x00,0xf0,0x00,0x0f,0xf0,0x00,0xf0,0x00,0xf0,0x00,0xf0,0x00,
@@ -2324,6 +2224,21 @@ static const uint8_t r3g3b2_4_4_expected[] =
 static BOOL is_dxt_d3dformat(D3DFORMAT fmt);
 static void test_color_key(void)
 {
+    static const uint8_t a8r8g8b8_4_4[] =
+    {
+        0x00,0xff,0x00,0x80,0x00,0xff,0x00,0x80,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
+        0x80,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
+        0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
+        0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
+    };
+    static const uint8_t a8r8g8b8_4_4_expected[] =
+    {
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
+        0x80,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,
+        0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
+        0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,
+    };
+
     static const struct
     {
         D3DFORMAT src_format;
@@ -5219,6 +5134,160 @@ static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(surface);
 }
 
+static void test_image_filters(void)
+{
+    static const struct
+    {
+        DWORD filter;
+        const char *name;
+    }
+    test_filters[] =
+    {
+        { D3DX_FILTER_POINT, "D3DX_FILTER_POINT" },
+        { D3DX_FILTER_LINEAR, "D3DX_FILTER_LINEAR" },
+        { D3DX_FILTER_TRIANGLE, "D3DX_FILTER_TRIANGLE" },
+        { D3DX_FILTER_BOX, "D3DX_FILTER_BOX" },
+    };
+    static const struct
+    {
+        const RECT src_rect;
+        const void *src_data;
+        D3DFORMAT format;
+
+        unsigned int dst_width;
+        unsigned int dst_height;
+        struct
+        {
+            const void *expected_dst_data;
+            const void *expected_dst_data_32;
+            BOOL todo;
+        }
+        filter_expected[4];
+    } tests[] =
+    {
+        {
+            { 0, 0, 16, 16 }, a8r8g8b8_16_16, D3DFMT_A8R8G8B8, 8, 8,
+            {
+                { a8r8g8b8_16_16_point_filter_8_8 },
+                { a8r8g8b8_16_16_linear_filter_8_8, .todo = TRUE },
+                { a8r8g8b8_16_16_triangle_filter_8_8, a8r8g8b8_16_16_triangle_filter_8_8_32bit, .todo = TRUE },
+                /* Linear and box filters match. */
+                { a8r8g8b8_16_16_linear_filter_8_8 },
+            },
+        },
+        {
+            { 0, 0, 16, 16 }, a8r8g8b8_16_16, D3DFMT_A8R8G8B8, 7, 7,
+            {
+                { a8r8g8b8_16_16_point_filter_7_7, 0, },
+                { a8r8g8b8_16_16_linear_filter_7_7, .todo = TRUE },
+                { a8r8g8b8_16_16_triangle_filter_7_7, .todo = TRUE },
+                /*
+                 * If scaling down to a size that isn't a power of two, the
+                 * box filter is replaced with the triangle filter.
+                 */
+                { a8r8g8b8_16_16_triangle_filter_7_7, .todo = TRUE },
+            },
+        },
+        {
+            { 0, 0, 6, 6 }, a8r8g8b8_6_6, D3DFMT_A8R8G8B8, 3, 3,
+            {
+                { a8r8g8b8_6_6_point_filter_3_3, 0, },
+                { a8r8g8b8_6_6_linear_filter_3_3, .todo = TRUE },
+                { a8r8g8b8_6_6_triangle_filter_3_3, .todo = TRUE },
+                /*
+                 * If scaling down to a size that is half but isn't a power of
+                 * two, the box filter is replaced with the linear filter.
+                 */
+                { a8r8g8b8_6_6_linear_filter_3_3, .todo = TRUE },
+            },
+        },
+        {
+            { 0, 0, 6, 6 }, a8r8g8b8_6_6, D3DFMT_A8R8G8B8, 4, 4,
+            {
+                { a8r8g8b8_6_6_point_filter_4_4, 0, },
+                { a8r8g8b8_6_6_linear_filter_4_4, .todo = TRUE },
+                { a8r8g8b8_6_6_triangle_filter_4_4, .todo = TRUE },
+                /*
+                 * If scaling down to a size that is not half and isn't a power of
+                 * two, the box filter is replaced with the triangle filter.
+                 */
+                { a8r8g8b8_6_6_triangle_filter_4_4, .todo = TRUE },
+            },
+        },
+        {
+            { 0, 0, 4, 4 }, a8r8g8b8_4_4, D3DFMT_A8R8G8B8, 12, 12,
+            {
+                { a8r8g8b8_4_4_point_filter_12_12, .todo = TRUE },
+                { a8r8g8b8_4_4_linear_filter_12_12, .todo = TRUE },
+                { a8r8g8b8_4_4_triangle_filter_12_12, .todo = TRUE },
+                { a8r8g8b8_4_4_triangle_filter_12_12, .todo = TRUE },
+            },
+        },
+        {
+            { 0, 0, 4, 4 }, a8r8g8b8_4_4, D3DFMT_A8R8G8B8, 8, 8,
+            {
+                { a8r8g8b8_4_4_point_filter_8_8 },
+                /*
+                 * When scaling up by 2, linear and triangle filters behave
+                 * the same.
+                 */
+                { a8r8g8b8_4_4_linear_filter_8_8, .todo = TRUE },
+                { a8r8g8b8_4_4_linear_filter_8_8, .todo = TRUE },
+                { a8r8g8b8_4_4_linear_filter_8_8, .todo = TRUE },
+            },
+        },
+    };
+    const uint8_t *expected_dst;
+    IDirect3DDevice9 *device;
+    D3DLOCKED_RECT lock_rect;
+    IDirect3DSurface9 *surf;
+    uint32_t src_pitch;
+    unsigned int i, j;
+    HRESULT hr;
+    HWND hwnd;
+
+    if (!(device = create_device(&hwnd)))
+        return;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        const unsigned int fmt_bpp = get_bpp_for_d3dformat(tests[i].format);
+
+        winetest_push_context("Test %u", i);
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, tests[i].dst_width, tests[i].dst_height,
+                tests[i].format, D3DPOOL_SCRATCH, &surf, NULL);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+        src_pitch = fmt_bpp * (tests[i].src_rect.right - tests[i].src_rect.left);
+        for (j = 0; j < ARRAY_SIZE(test_filters); ++j)
+        {
+            winetest_push_context("Filter %s", test_filters[j].name);
+
+            hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, tests[i].src_data, tests[i].format,
+                    src_pitch, NULL, &tests[i].src_rect, test_filters[j].filter, 0);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            if (sizeof(void *) == 4 && tests[i].filter_expected[j].expected_dst_data_32)
+                expected_dst = tests[i].filter_expected[j].expected_dst_data_32;
+            else
+                expected_dst = tests[i].filter_expected[j].expected_dst_data;
+
+            IDirect3DSurface9_LockRect(surf, &lock_rect, NULL, D3DLOCK_READONLY);
+            todo_wine_if(tests[i].filter_expected[j].todo) check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0,
+                    expected_dst, tests[i].dst_width, tests[i].dst_height, 1, tests[i].format, 0);
+            IDirect3DSurface9_UnlockRect(surf);
+
+            winetest_pop_context();
+        }
+
+        check_release((IUnknown *)surf, 0);
+        winetest_pop_context();
+    }
+
+    check_release((IUnknown *)device, 0);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(surface)
 {
     HWND wnd;
@@ -5261,4 +5330,5 @@ START_TEST(surface)
     DestroyWindow(wnd);
 
     test_color_key();
+    test_image_filters();
 }

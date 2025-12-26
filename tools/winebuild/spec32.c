@@ -813,7 +813,7 @@ void output_module( DLLSPEC *spec )
         data_dirs[0] = ".L__wine_spec_exports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
     if (has_imports())
         data_dirs[1] = ".L__wine_spec_imports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */
-    if (spec->nb_resources)
+    if (spec->resources.count)
         data_dirs[2] = ".L__wine_spec_resources"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
     if (has_delay_imports())
         data_dirs[13] = ".L__wine_spec_delay_imports"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT] */
@@ -855,7 +855,6 @@ struct sec_data
     unsigned int flags;
     unsigned int file_size;
     unsigned int virt_size;
-    unsigned int filepos;
     unsigned int rva;
 };
 
@@ -901,10 +900,9 @@ static unsigned int current_rva(void)
     return pe.sec[pe.sec_count - 1].rva + pe.sec[pe.sec_count - 1].virt_size;
 }
 
-static unsigned int current_filepos(void)
+static unsigned int align_pos( unsigned int pos, unsigned int align )
 {
-    if (!pe.sec_count) return max( 0x400, pe.file_align );
-    return pe.sec[pe.sec_count - 1].filepos + pe.sec[pe.sec_count - 1].file_size;
+    return (pos + align - 1) & ~(align - 1);
 }
 
 static unsigned int flush_output_to_section( const char *name, int dir_idx, unsigned int flags )
@@ -919,9 +917,8 @@ static unsigned int flush_output_to_section( const char *name, int dir_idx, unsi
     sec->size      = output_buffer_pos;
     sec->flags     = flags;
     sec->rva       = current_rva();
-    sec->filepos   = current_filepos();
-    sec->file_size = (sec->size + pe.file_align - 1) & ~(pe.file_align - 1);
-    sec->virt_size = (sec->size + pe.section_align - 1) & ~(pe.section_align - 1);
+    sec->file_size = align_pos( sec->size, pe.file_align );
+    sec->virt_size = align_pos( sec->size, pe.section_align );
     if (dir_idx >= 0) set_dir( dir_idx, sec->rva, sec->size );
     init_output_buffer();
     pe.sec_count++;
@@ -1018,33 +1015,32 @@ static int apiset_hash_cmp( const void *h1, const void *h2 )
 static void output_apiset_section( const struct apiset *apiset )
 {
     struct apiset_hash_entry *hash;
-    struct apiset_entry *e;
-    unsigned int i, j, str_pos, value_pos, hash_pos, size;
+    unsigned int i, j, str_pos, value_pos, hash_pos, size, count = apiset->entries.count;
 
     init_output_buffer();
 
-    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
+    value_pos = 0x1c /* header */ + count * 0x18; /* names */
     str_pos = value_pos;
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
         str_pos += 0x14 * max( 1, e->val_count );  /* values */
 
     hash_pos = str_pos + ((apiset->str_pos * 2 + 3) & ~3);
-    size = hash_pos + apiset->count * 8;  /* hashes */
+    size = hash_pos + count * 8;  /* hashes */
 
     /* header */
 
     put_dword( 6 );      /* Version */
     put_dword( size );   /* Size */
     put_dword( 0 );      /* Flags */
-    put_dword( apiset->count );  /* Count */
+    put_dword( count );  /* Count */
     put_dword( 0x1c );   /* EntryOffset */
     put_dword( hash_pos ); /* HashOffset */
     put_dword( apiset_hash_factor );   /* HashFactor */
 
     /* name entries */
 
-    value_pos = 0x1c /* header */ + apiset->count * 0x18; /* names */
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    value_pos = 0x1c /* header */ + count * 0x18; /* names */
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
     {
         put_dword( 1 );  /* Flags */
         put_dword( str_pos + e->name_off * 2 );  /* NameOffset */
@@ -1057,7 +1053,7 @@ static void output_apiset_section( const struct apiset *apiset )
 
     /* values */
 
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
     {
         if (!e->val_count)
         {
@@ -1092,14 +1088,16 @@ static void output_apiset_section( const struct apiset *apiset )
 
     /* hash table */
 
-    hash = xmalloc( apiset->count * sizeof(*hash) );
-    for (i = 0, e = apiset->entries; i < apiset->count; i++, e++)
+    hash = xmalloc( count * sizeof(*hash) );
+    i = 0;
+    ARRAY_FOR_EACH( e, &apiset->entries, struct apiset_entry )
     {
         hash[i].hash = e->hash;
         hash[i].index = i;
+        i++;
     }
-    qsort( hash, apiset->count, sizeof(*hash), apiset_hash_cmp );
-    for (i = 0; i < apiset->count; i++)
+    qsort( hash, count, sizeof(*hash), apiset_hash_cmp );
+    for (i = 0; i < count; i++)
     {
         put_dword( hash[i].hash );
         put_dword( hash[i].index );
@@ -1113,7 +1111,7 @@ static void output_apiset_section( const struct apiset *apiset )
 static void output_pe_file( DLLSPEC *spec, const char signature[32] )
 {
     const unsigned int lfanew = 0x40 + 32;
-    unsigned int i, code_size = 0, data_size = 0;
+    unsigned int i, filepos, code_size = 0, data_size = 0;
 
     init_output_buffer();
 
@@ -1235,18 +1233,20 @@ static void output_pe_file( DLLSPEC *spec, const char signature[32] )
     }
 
     /* sections */
+    filepos = align_pos( output_buffer_pos + pe.sec_count * 40, pe.file_align );
     for (i = 0; i < pe.sec_count; i++)
     {
         put_data( pe.sec[i].name, 8 );    /* Name */
         put_dword( pe.sec[i].size );      /* VirtualSize */
         put_dword( pe.sec[i].rva );       /* VirtualAddress */
         put_dword( pe.sec[i].file_size ); /* SizeOfRawData */
-        put_dword( pe.sec[i].filepos );   /* PointerToRawData */
+        put_dword( filepos );             /* PointerToRawData */
         put_dword( 0 );                   /* PointerToRelocations */
         put_dword( 0 );                   /* PointerToLinenumbers */
         put_word( 0 );                    /* NumberOfRelocations */
         put_word( 0 );                    /* NumberOfLinenumbers */
         put_dword( pe.sec[i].flags );     /* Characteristics  */
+        filepos += pe.sec[i].file_size;
     }
     align_output( pe.file_align );
 
@@ -1347,7 +1347,7 @@ void output_data_module( DLLSPEC *spec )
     pe.section_align = pe.file_align = get_section_alignment();
 
     output_pe_exports( spec );
-    if (spec->apiset.count) output_apiset_section( &spec->apiset );
+    if (spec->apiset.entries.count) output_apiset_section( &spec->apiset );
     output_pe_file( spec, builtin_signature );
 }
 
@@ -1427,7 +1427,6 @@ void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
         output( "\n" );
     }
     if (!total) warning( "%s: Import library doesn't export anything\n", spec->file_name );
-    if (spec32) free_dll_spec( spec32 );
 }
 
 

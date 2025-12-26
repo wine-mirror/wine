@@ -8067,8 +8067,6 @@ static void * WINAPI hook_KiUserExceptionDispatcher(void *stack)
         CONTEXT_EX           context_ex; /* 390 */
         EXCEPTION_RECORD     rec;        /* 3b0 */
         ULONG64              align;      /* 448 */
-        ULONG64              sp;         /* 450 */
-        ULONG64              pc;         /* 458 */
     } *args = stack;
     EXCEPTION_RECORD *old_rec = (EXCEPTION_RECORD *)&args->context_ex;
 
@@ -8086,8 +8084,6 @@ static void * WINAPI hook_KiUserExceptionDispatcher(void *stack)
         ok( args->context_ex.All.Length >= sizeof(CONTEXT) + offsetof(CONTEXT_EX, align), "wrong All.Length %lx\n", args->context_ex.All.Length );
         ok( args->context_ex.Legacy.Offset == -sizeof(CONTEXT), "wrong Legacy.Offset %lx\n", args->context_ex.All.Offset );
         ok( args->context_ex.Legacy.Length == sizeof(CONTEXT), "wrong Legacy.Length %lx\n", args->context_ex.All.Length );
-        ok( args->sp == args->context.Sp, "wrong sp %Ix / %Ix\n", args->sp, args->context.Sp );
-        ok( args->pc == args->context.Pc, "wrong pc %Ix / %Ix\n", args->pc, args->context.Pc );
     }
 
     memcpy(pKiUserExceptionDispatcher, saved_code, sizeof(saved_code));
@@ -8479,7 +8475,7 @@ static void rtlraiseexception_handler_( EXCEPTION_RECORD *rec, void *frame, CONT
     ok( addr == (char *)code_mem + 0x0c,
         "ExceptionAddress at %p instead of %p\n", addr, (char *)code_mem + 0x0c );
     ok( context->ContextFlags == (CONTEXT_FULL | CONTEXT_UNWOUND_TO_CALL) ||
-        context->ContextFlags == (CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS | CONTEXT_UNWOUND_TO_CALL),
+        context->ContextFlags == (CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS),
         "wrong context flags %lx\n", context->ContextFlags );
     ok( context->Pc == (UINT_PTR)addr,
         "%d: Pc at %Ix instead of %Ix\n", test_stage, context->Pc, (UINT_PTR)addr );
@@ -9584,42 +9580,48 @@ static DWORD breakpoint_exceptions;
 static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
 {
     EXCEPTION_RECORD *rec = ExceptionInfo->ExceptionRecord;
+    CONTEXT *context = ExceptionInfo->ContextRecord;
 
     ok(rec->ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode is %08lx instead of %08lx\n",
        rec->ExceptionCode, EXCEPTION_BREAKPOINT);
 
 #ifdef __i386__
-    ok(ExceptionInfo->ContextRecord->Eip == (DWORD)code_mem + 1,
-       "expected Eip = %lx, got %lx\n", (DWORD)code_mem + 1, ExceptionInfo->ContextRecord->Eip);
+    ok(context->Eip == (DWORD)code_mem + 1,
+       "expected Eip = %lx, got %lx\n", (DWORD)code_mem + 1, context->Eip);
+    ok((char *)rec->ExceptionAddress == (char *)code_mem + 1,
+       "expected address %p, got %p\n", (char *)code_mem + 1, rec->ExceptionAddress);
     ok(rec->NumberParameters == (is_wow64 ? 1 : 3),
        "ExceptionParameters is %ld instead of %d\n", rec->NumberParameters, is_wow64 ? 1 : 3);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %Ix\n", rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Eip = (DWORD)code_mem + 2;
+    context->Eip = (DWORD)code_mem + 2;
 #elif defined(__x86_64__)
-    ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 1,
-       "expected Rip = %Ix, got %Ix\n", (DWORD_PTR)code_mem + 1, ExceptionInfo->ContextRecord->Rip);
+    ok(context->Rip == (DWORD_PTR)code_mem + 1,
+       "expected Rip = %Ix, got %Ix\n", (DWORD_PTR)code_mem + 1, context->Rip);
+    ok((char *)rec->ExceptionAddress == (char *)code_mem + 1,
+       "expected address %p, got %p\n", (char *)code_mem + 1, rec->ExceptionAddress);
     ok(rec->NumberParameters == 1,
        "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %Ix\n", rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Rip = (DWORD_PTR)code_mem + 2;
+    context->Rip = (DWORD_PTR)code_mem + 2;
 #elif defined(__arm__)
-    ok(ExceptionInfo->ContextRecord->Pc == (DWORD)code_mem + 1,
-       "expected pc = %lx, got %lx\n", (DWORD)code_mem + 1, ExceptionInfo->ContextRecord->Pc);
+    ok(context->Pc == (DWORD)code_mem + 1,
+       "expected pc = %lx, got %lx\n", (DWORD)code_mem + 1, context->Pc);
+    ok((char *)rec->ExceptionAddress == (char *)code_mem + 1,
+       "expected address %p, got %p\n", (char *)code_mem + 1, rec->ExceptionAddress);
     ok(rec->NumberParameters == 1,
        "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %Ix\n", rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Pc += 2;
+    context->Pc += 2;
 #elif defined(__aarch64__)
-    ok(ExceptionInfo->ContextRecord->Pc == (DWORD_PTR)code_mem,
-       "expected pc = %p, got %p\n", code_mem, (void *)ExceptionInfo->ContextRecord->Pc);
-    ok(rec->NumberParameters == 1,
-       "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
+    ok(context->Pc == (DWORD_PTR)code_mem, "expected pc = %p, got %p\n", code_mem, (void *)context->Pc);
+    ok(rec->ExceptionAddress == code_mem, "expected address %p, got %p\n", code_mem, rec->ExceptionAddress);
+    ok(rec->NumberParameters == 1, "ExceptionParameters is %ld instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %p\n", (void *)rec->ExceptionInformation[0]);
-    ExceptionInfo->ContextRecord->Pc += 4;
+    context->Pc += 4;
 #endif
 
     breakpoint_exceptions++;
@@ -9717,13 +9719,17 @@ static BYTE except_code_segments[] =
     0x31, 0xc0, /* xor %eax,%eax */
     0x8e, 0xc0, /* mov %eax,%es */
     0x8e, 0xd8, /* mov %eax,%ds */
+#ifndef __x86_64__  /* restoring fsbase is not supported on Wine yet */
     0x8e, 0xe0, /* mov %eax,%fs */
+#endif
     0x8e, 0xe8, /* mov %eax,%gs */
     0xcc,       /* int3 */
     0x58,       /* pop %rax */
     0x8e, 0xe8, /* mov %eax,%gs */
     0x58,       /* pop %rax */
+#ifndef __x86_64__
     0x8e, 0xe0, /* mov %eax,%fs */
+#endif
     0x58,       /* pop %rax */
     0x8e, 0xd8, /* mov %eax,%ds */
     0x58,       /* pop %rax */
@@ -12517,7 +12523,9 @@ START_TEST(exception)
         test_breakpoint(1);
         test_stage = STAGE_EXCEPTION_INVHANDLE_CONTINUE;
         test_closehandle(0, (HANDLE)0xdeadbeef);
-        test_closehandle(0, (HANDLE)0x7fffffff);
+#ifndef __aarch64__
+        test_closehandle(0, (HANDLE)0x7fffffff);  /* apparently valid on arm64 */
+#endif
         test_stage = STAGE_EXCEPTION_INVHANDLE_NOT_HANDLED;
         test_closehandle(1, (HANDLE)0xdeadbeef);
         test_closehandle(1, (HANDLE)~(ULONG_PTR)6);

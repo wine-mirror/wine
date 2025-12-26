@@ -24,6 +24,10 @@
 import "windows.perception.spatial.surfaces.idl";
 import "windows.graphics.holographic.idl";
 
+
+namespace Windows.Perception.Spatial {
+    runtimeclass SpatialAnchorExporter;
+}
 namespace Windows.Perception.Spatial.Surfaces {
     runtimeclass SpatialSurfaceObserver;
 }

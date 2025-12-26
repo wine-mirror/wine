@@ -422,6 +422,16 @@ enum
     NtUserSystemTrayCall      = 0x0306,
     NtUserDragDropCall        = 0x0307,
     NtUserPostDdeCall         = 0x0308,
+    NtUserWintabDriverCall    = 0x0309,
+};
+
+/* NtUserWintabDriverCall codes */
+enum
+{
+    NtUserWintabAttach,
+    NtUserWintabInfo,
+    NtUserWintabInit,
+    NtUserWintabPacket,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
@@ -639,6 +649,7 @@ enum wine_internal_message
     WM_WINE_WINDOW_STATE_CHANGED,
     WM_WINE_UPDATEWINDOWSTATE,
     WM_WINE_TRACKMOUSEEVENT,
+    WM_WINE_SETPIXELFORMAT,
     WM_WINE_FIRST_DRIVER_MSG = 0x80001000,  /* range of messages reserved for the USER driver */
     WM_WINE_CLIPCURSOR = 0x80001ff0, /* internal driver notification messages */
     WM_WINE_SETCURSOR,
@@ -923,6 +934,7 @@ W32KAPI INT     WINAPI NtUserMenuItemFromPoint( HWND hwnd, HMENU handle, int x, 
 W32KAPI BOOL    WINAPI NtUserMessageBeep( UINT type );
 W32KAPI LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                           void *result_info, DWORD type, BOOL ansi );
+W32KAPI BOOL    WINAPI NtUserModifyUserStartupInfoFlags( DWORD mask, DWORD flags );
 W32KAPI BOOL    WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint );
 W32KAPI DWORD   WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                                           DWORD timeout, DWORD mask, DWORD flags );
@@ -1295,6 +1307,7 @@ enum
     NtUserCallHwnd_IsWindowEnabled,
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
+    NtUserCallHwnd_SetForegroundWindowInternal,
     /* temporary exports */
     NtUserGetFullWindowHandle,
     NtUserIsCurrentProcessWindow,
@@ -1304,6 +1317,11 @@ enum
 static inline void NtUserActivateOtherWindow( HWND hwnd )
 {
     NtUserCallHwnd( hwnd, NtUserCallHwnd_ActivateOtherWindow );
+}
+
+static inline BOOL NtUserSetForegroundWindowInternal( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_SetForegroundWindowInternal );
 }
 
 static inline void *NtUserGetDialogInfo( HWND hwnd )
@@ -1387,7 +1405,9 @@ enum
     NtUserCallHwndParam_GetWindowLongW,
     NtUserCallHwndParam_GetWindowLongPtrA,
     NtUserCallHwndParam_GetWindowLongPtrW,
-    NtUserCallHwndParam_GetWindowRects,
+    NtUserCallHwndParam_GetWindowRect,
+    NtUserCallHwndParam_GetClientRect,
+    NtUserCallHwndParam_GetPresentRect,
     NtUserCallHwndParam_GetWindowRelative,
     NtUserCallHwndParam_GetWindowThread,
     NtUserCallHwndParam_GetWindowWord,
@@ -1407,7 +1427,6 @@ enum
 struct get_window_rects_params
 {
     RECT *rect;
-    BOOL client;
     UINT dpi;
 };
 
@@ -1448,8 +1467,14 @@ static inline WORD NtUserGetClassWord( HWND hwnd, INT offset )
 
 static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    struct get_window_rects_params params = {.rect = rect, .client = TRUE, .dpi = dpi};
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRects );
+    struct get_window_rects_params params = {.rect = rect, .dpi = dpi};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetClientRect );
+}
+
+static inline BOOL NtUserGetPresentRect( HWND hwnd, RECT *rect, UINT dpi )
+{
+    struct get_window_rects_params params = {.rect = rect, .dpi = dpi};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetPresentRect );
 }
 
 struct get_scroll_info_params
@@ -1491,8 +1516,8 @@ static inline LONG NtUserGetWindowLongW( HWND hwnd, INT offset )
 
 static inline BOOL NtUserGetWindowRect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    struct get_window_rects_params params = {.rect = rect, .client = FALSE, .dpi = dpi};
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRects );
+    struct get_window_rects_params params = {.rect = rect, .dpi = dpi};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRect );
 }
 
 static inline HWND NtUserGetWindowRelative( HWND hwnd, UINT rel )

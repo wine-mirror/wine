@@ -64,6 +64,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, DWORD buflen )
         HANDLE handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                      NULL, OPEN_EXISTING, 0, 0 );
         if ((ret = (handle != INVALID_HANDLE_VALUE))) CloseHandle( handle );
+        else SetLastError( ERROR_FILE_NOT_FOUND );
     }
     RtlReleasePath( load_path );
     return ret;
@@ -605,6 +606,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
                             TRACE( "PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE %p reference %p\n",
                                    console, console->reference );
                             params->ConsoleHandle = console->reference;
+                            if (!(flags & DETACHED_PROCESS))
+                            {
+                                params->ConsoleFlags |= 2;
+                                /* don't inherit standard handles bound to parent console (but inherit the others) */
+                                if (!(startup_info->dwFlags & STARTF_USESTDHANDLES))
+                                {
+                                    if (is_console_handle(params->hStdInput))  params->hStdInput = NULL;
+                                    if (is_console_handle(params->hStdOutput)) params->hStdOutput = NULL;
+                                    if (is_console_handle(params->hStdError))  params->hStdError = NULL;
+                                }
+                            }
                             break;
                         }
                     case PROC_THREAD_ATTRIBUTE_JOB_LIST:
@@ -1794,6 +1806,9 @@ static inline DWORD validate_proc_thread_attribute( DWORD_PTR attr, SIZE_T size 
         break;
     case PROC_THREAD_ATTRIBUTE_MACHINE_TYPE:
         if (size != sizeof(USHORT)) return ERROR_BAD_LENGTH;
+        break;
+    case PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY:
+        if (size != sizeof(GROUP_AFFINITY)) return ERROR_BAD_LENGTH;
         break;
     default:
         FIXME( "Unhandled attribute %Iu\n", attr & PROC_THREAD_ATTRIBUTE_NUMBER );

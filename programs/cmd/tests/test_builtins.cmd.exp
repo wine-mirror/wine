@@ -88,13 +88,32 @@ word
 @tab@word
 
 @pwd@>echo @tab@ on @space@@space@
+
+@todo_wine@@pwd@>echo a 1>nul@space@
+
+@pwd@>if 1 == 2 then @echo a@space@
+
+@todo_wine@@pwd@>IF 1 == 2 ThEn @EchO a@space@
+
+@pwd@>echo 1@space@
+1
+
+@pwd@>echo 2@space@
+2
+---
+AA@\x08@BB
 --- @ with chains and brackets
 
 @todo_wine@@pwd@>(echo the @ character chains until  && )  && echo and can hide brackets  || ()  ||@space@
-@todo_wine@the @ character chains until
-@todo_wine@we leave the current depth
-@todo_wine@and can hide brackets
+the @ character chains until
+we leave the current depth
+and can hide brackets
 @todo_wine@---
+foo1
+
+@todo_wine@@pwd@>echo a  1>nul  &&@space@
+foo2
+---
 noecho1
 noecho2
 echo3
@@ -136,10 +155,10 @@ if 1==1 @echo bar
 if 1==1 echo foo2
 if 1==1 @echo bar2
 
-@todo_wine@@pwd@>if 1 == 1 echo foo@space@
+@pwd@>if 1 == 1 echo foo@space@
 foo
 
-@todo_wine@@pwd@>if 1 == 1@space@
+@pwd@>if 1 == 1@space@
 bar
 foo2
 bar2
@@ -577,6 +596,12 @@ SUCCESS 0
 FAILURE 1
 FAILURE 1
 FAILURE 1
+FAILURE 1
+SUCCESS 0
+a@space@
+b@space@
+SUCCESS 0
+a@space@
 --- success/failure for MOVE command
 FAILURE 1
 SUCCESS 0
@@ -642,6 +667,8 @@ ERRORLEVEL 666
 FAILURE 1
 FAILURE 1
 FAILURE 1
+FAILURE 1
+SUCCESS 0
 FAILURE 1
 FAILURE 1
 SUCCESS 0
@@ -967,6 +994,9 @@ gotitright
 foo
 !WINE_FOO!
 not empty
+--- nested expansion
+foo
+foo
 --- using /V cmd flag
 foo
 foo@or_broken@!WINE_FOO!
@@ -1972,7 +2002,7 @@ Should expand foobaz
 batfile
 robinfile
 0
-@todo_wine@1
+1
 1
 1
 non-builtin dir

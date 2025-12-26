@@ -120,8 +120,7 @@ static void output_entries( DLLSPEC *spec, int first, int count )
             output( "\t.short .L__wine_%s_%u-.L__wine_spec_data_segment\n", spec->c_name, first + i );
             break;
         case TYPE_ABS:
-            output( "\t.short 0x%04x  /* %s */\n",
-                     odp->u.abs.value, odp->name );
+            output( "\t.short 0x%04x  /* %s */\n", odp->u.abs, odp->name );
             break;
         default:
             assert(0);
@@ -222,16 +221,12 @@ static void output_resident_name( const char *string, int ordinal )
  */
 static const char *get_callfrom16_name( const ORDDEF *odp )
 {
-    static char *buffer;
-
-    free( buffer );
-    buffer = strmake( "%s_%s_%s",
-                      (odp->type == TYPE_PASCAL) ? "p" :
-                      (odp->type == TYPE_VARARGS) ? "v" : "c",
-                      (odp->flags & FLAG_REGISTER) ? "regs" :
-                      (odp->flags & FLAG_RET16) ? "word" : "long",
-                      get_args_str(odp) );
-    return buffer;
+    return strmake( "%s_%s_%s",
+                    (odp->type == TYPE_PASCAL) ? "p" :
+                    (odp->type == TYPE_VARARGS) ? "v" : "c",
+                    (odp->flags & FLAG_REGISTER) ? "regs" :
+                    (odp->flags & FLAG_RET16) ? "word" : "long",
+                    get_args_str(odp) );
 }
 
 
@@ -440,7 +435,6 @@ static void output_call16_function( ORDDEF *odp )
     output( "\tret\n" );
     output_cfi( ".cfi_endproc" );
     output_function_size( name );
-    free( name );
 }
 
 
@@ -747,15 +741,14 @@ static void output_module16( DLLSPEC *spec )
         if (!odp || odp->type != TYPE_VARIABLE) continue;
         output( ".L__wine_%s_%u:\n", spec->c_name, i );
         output( "\t.long " );
-        for (j = 0; j < odp->u.var.n_values-1; j++)
-            output( "0x%08x,", odp->u.var.values[j] );
-        output( "0x%08x\n", odp->u.var.values[j] );
+        ARRAY_FOR_EACH( val, &odp->u.var, unsigned int ) output( "0x%08x,", *val );
+        output( "0\n" );
     }
     output( ".L__wine_spec_data_segment_end:\n" );
 
     /* resource data */
 
-    if (spec->nb_resources)
+    if (spec->resources.count)
     {
         output( "\n.L__wine_spec_resource_data:\n" );
         output_res16_data( spec );
@@ -807,7 +800,6 @@ void output_spec16_file( DLLSPEC *spec16 )
     }
     output_gnu_stack_note();
     close_output_file();
-    free_dll_spec( spec32 );
 }
 
 /*******************************************************************
@@ -830,7 +822,7 @@ void output_fake_module16( DLLSPEC *spec )
 
     rsrctab = lfanew;
     restab = segtab + 8 * cseg;
-    if (spec->nb_resources)
+    if (spec->resources.count)
     {
         output_bin_res16_directory( spec, 0 );
         align_output( 2 );
@@ -926,7 +918,7 @@ void output_fake_module16( DLLSPEC *spec )
     put_word( sizeof(data_segment) );
 
     /* resource directory */
-    if (spec->nb_resources)
+    if (spec->resources.count)
     {
         output_bin_res16_directory( spec, rsrcdata );
         align_output( 2 );

@@ -259,13 +259,9 @@ extern struct list DSOUND_renderers;
 extern GUID *DSOUND_renderer_guids;
 extern GUID *DSOUND_capture_guids;
 
-extern const WCHAR wine_vxd_drv[];
-
 void setup_dsound_options(void);
 
 HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device);
 
-BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
-        DWORD depth, WORD channels);
 HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         LPDSENUMCALLBACKW cb, void *user);

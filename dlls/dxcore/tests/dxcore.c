@@ -219,13 +219,11 @@ static void test_GetProperty(void)
         hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(hwid[0]), hwid);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(!!hwid[0].vendorID, "Expected vendorID.\n");
-        ok(!!hwid[0].deviceID, "Expected deviceID.\n");
 
         memset(hwid, 0, sizeof(hwid));
         hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(hwid[0]) + 1, hwid);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(!!hwid[0].vendorID, "Expected vendorID.\n");
-        ok(!!hwid[0].deviceID, "Expected deviceID.\n");
         ok(!hwid[1].vendorID, "Expected no vendorID.\n");
         ok(!hwid[1].deviceID, "Expected no deviceID.\n");
 

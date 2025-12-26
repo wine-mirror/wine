@@ -953,8 +953,16 @@ UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR szDescriptor, LPWSTR szProduct,
     }
     if (szFeature)
     {
-        memcpy( szFeature, &szDescriptor[20], len*sizeof(WCHAR) );
-        szFeature[len] = 0;
+        if (!len) /* Single feature was not encoded, figure it out */
+        {
+            if (MsiEnumFeaturesW( szProduct, 0, szFeature, NULL ) != ERROR_SUCCESS)
+                return ERROR_INVALID_PARAMETER;
+        }
+        else
+        {
+            memcpy( szFeature, &szDescriptor[20], len*sizeof(WCHAR) );
+            szFeature[len] = 0;
+        }
     }
 
     len = p - szDescriptor + 1;

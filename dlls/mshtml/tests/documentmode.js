@@ -21,6 +21,10 @@ var tests = [];
 
 var svg_ns = "http://www.w3.org/2000/svg";
 
+if(performance.now) {
+    var t = performance.now();
+    ok(t - performance.timing.navigationStart < 2000, "performance.now() more than 2 sec away from navigationStart: " + t + " vs " + performance.timing.navigationStart);
+}
 ok(performance.timing.navigationStart > 0, "navigationStart <= 0");
 ok(performance.timing.fetchStart == performance.timing.navigationStart, "fetchStart != navigationStart");
 ok(performance.timing.domainLookupStart >= performance.timing.fetchStart, "domainLookupStart < fetchStart");
@@ -351,6 +355,8 @@ sync_test("builtin_toString", function() {
         test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
     if(v >= 11) {
+        test("crypto", window.msCrypto, "Crypto");
+        test("crypto.subtle", window.msCrypto.subtle, "SubtleCrypto");
         test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver");
     }
     if(v >= 9) {
@@ -983,6 +989,7 @@ sync_test("window_props", function() {
     test_exposed("performance", true);
     test_exposed("console", v >= 10);
     test_exposed("matchMedia", v >= 10);
+    test_exposed("msCrypto", v >= 11);
     test_exposed("Document", v >= 9);
     test_exposed("HTMLDocument", v === 8 || v >= 11, v === 8);
     test_exposed("XMLDocument", v >= 11);
@@ -1025,6 +1032,7 @@ sync_test("perf_props", function() {
     test_exposed("timing", true);
     test_exposed("toJSON", v >= 9);
     test_exposed("toString", true);
+    test_exposed("now", v >= 10);
 
     obj = window.performance.navigation, name = "PerformanceNavigation";
 
@@ -3264,6 +3272,24 @@ sync_test("nullDisp", function() {
     r = (nullDisp instanceof Object);
     ok(r === false, "nullDisp instance of Object");
 
+    try {
+        r = Object.prototype.valueOf.call(null);
+        ok(v < 10, "expected exception calling valueOf on null");
+        ok(r === null, "valueOf null != null");
+    }catch(e) {
+        ok(v >= 10, "did not expect exception calling valueOf on null");
+        ok(e.number === 0xa138f - 0x80000000, "valueOf on null threw " + e.number);
+    }
+
+    try {
+        r = Object.prototype.valueOf.call(nullDisp);
+        ok(v < 10, "expected exception calling valueOf on nullDisp");
+        ok(r === nullDisp, "valueOf on nullDisp != nullDisp");
+    }catch(e) {
+        ok(v >= 10, "did not expect exception calling valueOf on nullDisp");
+        ok(e.number === 0xa138f - 0x80000000, "valueOf on nullDisp threw " + e.number);
+    }
+
     if(v >= 8) {
         r = JSON.stringify.call(null, nullDisp);
         ok(r === "null", "JSON.stringify(nullDisp) returned " + r);
@@ -3682,6 +3708,82 @@ sync_test("__defineSetter__", function() {
     ok(x.setterVal === 9, "x.setterVal after setting bar = " + x.setterVal);
 });
 
+sync_test("Crypto", function() {
+    if(!window.msCrypto) return;
+
+    var list = [
+        [ "Int8Array",    65536 ],
+        [ "Uint8Array",   65536 ],
+        [ "Int16Array",   32768 ],
+        [ "Uint16Array",  32768 ],
+        [ "Int32Array",   16384 ],
+        [ "Uint32Array",  16384 ]
+    ];
+    for(var i = 0; i < list.length; i++) {
+        var constr = list[i][0];
+        arr = (window[constr])(list[i][1]);
+
+        ok(arr[0] === 0, constr + "[0] = " + arr[0]);
+        ok(arr[1] === 0, constr + "[1] = " + arr[1]);
+        r = msCrypto.getRandomValues(arr);
+        ok(r === arr, "getRandomValues returned " + r);
+
+        arr = (window[constr])(list[i][1]+1);
+        try {
+            msCrypto.getRandomValues(arr);
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            todo_wine.
+            ok(ex.name === "QuotaExceededError", "getRandomValues(oversized " + constr + ") threw " + ex.name);
+            todo_wine.
+            ok(n === 0, "getRandomValues(oversized " + constr + ") threw code " + n);
+            todo_wine.
+            ok(ex.message === "QuotaExceededError", "getRandomValues(oversized " + constr + ") threw message " + ex.message);
+        }
+    }
+
+    try {
+        msCrypto.getRandomValues(null);
+        ok(false, "getRandomValues(null) did not throw exception");
+    }catch(e) {
+        ok(e.number === 0x70057 - 0x80000000, "getRandomValues(null) threw " + e.number);
+    }
+    try {
+        msCrypto.getRandomValues(external.nullDisp);
+        ok(false, "getRandomValues(nullDisp) did not throw exception");
+    }catch(e) {
+        ok(e.number === 0x70057 - 0x80000000, "getRandomValues(nullDisp) threw " + e.number);
+    }
+    try {
+        msCrypto.getRandomValues([1,2,3]);
+        ok(false, "getRandomValues([1,2,3]) did not throw exception");
+    }catch(e) {
+        ok(e.number === 0x70057 - 0x80000000, "getRandomValues([1,2,3]) threw " + e.number);
+    }
+    arr = Float32Array(2);
+    try {
+        msCrypto.getRandomValues(arr);
+        ok(false, "getRandomValues(Float32Array) did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        todo_wine.
+        ok(ex.name === "TypeMismatchError", "getRandomValues(Float32Array) threw " + ex.name);
+        todo_wine.
+        ok(n === 0, "getRandomValues(Float32Array) threw code " + n);
+    }
+    arr = Float64Array(2);
+    try {
+        msCrypto.getRandomValues(arr);
+        ok(false, "getRandomValues(Float64Array) did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        todo_wine.
+        ok(ex.name === "TypeMismatchError", "getRandomValues(Float64Array) threw " + ex.name);
+        todo_wine.
+        ok(n === 0, "getRandomValues(Float64Array) threw code " + n);
+    }
+});
+
 sync_test("MutationObserver", function() {
     if (!window.MutationObserver) {
         return;
@@ -3849,6 +3951,65 @@ sync_test("form", function() {
     ok(typeof(form[1]) === "object", "form[1] = " + form[1]);
     form.innerHTML = "";
     ok(form[0] === "test", "form[0] = " + form[0]);
+});
+
+sync_test("indexed hostobj props", function() {
+    var v = document.documentMode;
+    if(v < 9)
+        return;
+    function getter() { return 42; }
+
+    function check(obj, value) {
+        var name = Object.prototype.toString.call(obj).slice(8, -1);
+        if(value === undefined)
+            ok(typeof(obj[0]) === "object", name + "[0] = " + obj[0]);
+        else
+            ok(obj[0] === value, name + "[0] post-del = " + obj[0]);
+
+        Object.defineProperty(obj, "0", { get: getter, set: undefined, configurable: true, enumerable: false });
+        var desc = Object.getOwnPropertyDescriptor(obj, "0");
+        ok(desc.value === undefined, name + "[0] value = " + desc.value);
+        ok(desc.get === getter, name + "[0] get = " + desc.get);
+        ok(desc.set === undefined, name + "[0] set = " + desc.set);
+        ok(desc.writable === undefined, name + "[0] writable = " + desc.writable);
+        ok(desc.enumerable === false, name + "[0] enumerable = " + desc.enumerable);
+        ok(desc.configurable === true, name + "[0] configurable = " + desc.configurable);
+
+        ok(obj[0] === 42, name + "[0] = " + obj[0]);
+        delete obj["0"];
+
+        desc = Object.getOwnPropertyDescriptor(obj, "0");
+        if(value === undefined)
+            ok(typeof(desc.value) === "object", name + "[0] value post-del = " + desc.value);
+        else
+            ok(desc.value === value, name + "[0] value post-del = " + desc.value);
+        ok(desc.get === undefined, name + "[0] get post-del = " + desc.get);
+        ok(desc.set === undefined, name + "[0] set post-del = " + desc.set);
+        ok(desc.writable === true, name + "[0] writable post-del = " + desc.writable);
+        todo_wine.
+        ok(desc.enumerable === true, name + "[0] enumerable post-del = " + desc.enumerable);
+        ok(desc.configurable === true, name + "[0] configurable post-del = " + desc.configurable);
+        if(value === undefined)
+            ok(typeof(obj[0]) === "object", name + "[0] post-del = " + obj[0]);
+        else
+            ok(obj[0] === value, name + "[0] post-del = " + obj[0]);
+        ok(obj.hasOwnProperty("0"), "0 not a prop of " + name);
+    }
+
+    document.body.innerHTML = "<style>div { margin-left: 1px; }</style>";
+    var e = document.createElement("select");
+    e.innerHTML = '<option value="wine"/>'
+    e.setAttribute("class", "wine");
+
+    check(document.all);
+    check(document.childNodes);
+    check(document.styleSheets);
+    check(document.styleSheets[0].rules);
+    check(document.body.getClientRects());
+    check(e);
+    check(e.attributes);
+    if(v > 9)
+        check(e.classList, "wine");
 });
 
 function test_own_props(obj, name, props, todos, flaky) {
@@ -4093,6 +4254,12 @@ sync_test("prototypes", function() {
     }else {
         ok(!("Console" in window), "Console found in window");
     }
+    if(v >= 11) {
+        check(msCrypto, Crypto.prototype, "crypto");
+        check(Crypto.prototype, Object.prototype, "crypto prototype");
+    }else {
+        ok(!("msCrypto" in window), "msCrypto found in window");
+    }
     if(v >= 10) {
         check(window.matchMedia("(hover:hover)"), MediaQueryList.prototype, "media query");
         check(MediaQueryList.prototype, Object.prototype, "media query prototype");
@@ -4151,6 +4318,8 @@ sync_test("prototype props", function() {
     check(Attr, [ "expando", "name", "ownerElement", "specified", "value" ]);
     check(CharacterData, [ "appendData", "data", "deleteData", "insertData", "length", "replaceData", "substringData" ]);
     check(Comment, [ "text" ]);
+    if(v >= 11)
+        check(Crypto, [ "getRandomValues", "subtle" ]);
     check(CSSStyleDeclaration, [
         ["alignContent",11], ["alignItems",11], ["alignSelf",11], "alignmentBaseline", ["animation",10], ["animationDelay",10],
         ["animationDirection",10], ["animationDuration",10], ["animationFillMode",10], ["animationIterationCount",10], ["animationName",10],
@@ -4465,7 +4634,7 @@ sync_test("prototype props", function() {
         "getMeasures", "mark", "measure", "navigation", ["now",10], "setResourceTimingBufferSize", "timing", "toJSON"
     ], [
         "clearMarks", "clearMeasures", "clearResourceTimings", "getEntries", "getEntriesByName", "getEntriesByType", "getMarks",
-        "getMeasures", "mark", "measure", ["now",10], "setResourceTimingBufferSize"
+        "getMeasures", "mark", "measure", "setResourceTimingBufferSize"
     ]);
     check(PerformanceNavigation, [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED", "redirectCount", "toJSON", "type" ], [ "TYPE_BACK_FORWARD", "TYPE_NAVIGATE", "TYPE_RELOAD", "TYPE_RESERVED" ]);
     check(PerformanceTiming, [
@@ -4477,6 +4646,8 @@ sync_test("prototype props", function() {
         check(ProgressEvent, [ "initProgressEvent", "lengthComputable", "loaded", "total" ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);
     check(StyleSheet, [ "disabled", "href", "media", "ownerNode", "parentStyleSheet", "title", "type" ]);
+    if(v >= 11)
+        check(SubtleCrypto, [ "decrypt", "deriveKey", "digest", "encrypt", "exportKey", "generateKey", "importKey", "sign", "unwrapKey", "verify", "wrapKey" ]);
     check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
     if(v < 11)
@@ -4556,6 +4727,32 @@ sync_test("constructors", function() {
     HTMLMetaElement.prototype.constructor = old;
 });
 
+sync_test("typed arrays", function() {
+    if (document.documentMode < 10)
+        return;
+
+    function check(constr) {
+        ok(Object.getPrototypeOf(constr) === Function.prototype, "unexpected " + constr + " porototype " + Object.getPrototypeOf(constr));
+        ok(Object.getPrototypeOf(constr.prototype) === Object.prototype,
+           "unexpected " + constr + " porototype's prototype " + Object.getPrototypeOf(constr.prototype));
+        test_own_props(constr, constr,
+                       ["BYTES_PER_ELEMENT", "arguments", "caller", "length", "prototype"],
+                       ["arguments", "caller"]);
+        test_own_props(constr.prototype, constr + ".prototype",
+                       ["BYTES_PER_ELEMENT", "buffer", "byteLength", "byteOffset", "constructor", "length", "set", "subarray"],
+                       ["BYTES_PER_ELEMENT"]);
+    }
+
+    check(Int8Array);
+    check(Int16Array);
+    check(Int32Array);
+    check(Uint8Array);
+    check(Uint16Array);
+    check(Uint32Array);
+    check(Float32Array);
+    check(Float64Array);
+});
+
 async_test("window own props", function() {
     if(!Object.getOwnPropertyNames) {
         next_test();
@@ -4626,12 +4823,12 @@ async_test("window own props", function() {
             ["Worker",10], ["XDomainRequest",0,10], ["XMLDocument",11], "XMLHttpRequest", ["XMLHttpRequestEventTarget",10], "XMLSerializer", "decodeURI", "decodeURIComponent", "encodeURI",
             "encodeURIComponent", "escape", "eval", "isFinite", "isNaN", "parseFloat", "parseInt", "testprop", "undefined", "unescape"
         ], [
-            ["AesGcmEncryptResult",11], ["ANGLE_instanced_arrays",11], ["AnimationEvent",10], ["ApplicationCache",10], ["ArrayBuffer",9,9], "Audio", ["AudioTrack",10], ["AudioTrackList",10],
+            ["AesGcmEncryptResult",11], ["ANGLE_instanced_arrays",11], ["AnimationEvent",10], ["ApplicationCache",10], "Audio", ["AudioTrack",10], ["AudioTrackList",10],
             "BeforeUnloadEvent", ["Blob",10], "BookmarkCollection", "CanvasGradient", "CanvasPattern", "CanvasPixelArray", "CanvasRenderingContext2D", "CDATASection", ["CloseEvent",10],
-            "CompositionEvent", "ControlRangeCollection", "Coordinates", ["Crypto",11], ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
-            "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", ["DataView",9,9], "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
+            "CompositionEvent", "ControlRangeCollection", "Coordinates", ["CryptoOperation",11], "CSSFontFaceRule", "CSSImportRule", ["CSSKeyframeRule",10], ["CSSKeyframesRule",10],
+            "CSSMediaRule", "CSSNamespaceRule", "CSSPageRule", "CSSRuleList", "DataTransfer", "Debug", ["DeviceAcceleration",11], ["DeviceMotionEvent",11],
             ["DeviceOrientationEvent",11], ["DeviceRotationRate",11], ["DOMError",10], "DOMException", ["DOMSettableTokenList",10], ["DOMStringList",10], ["DOMStringMap",11],
-            "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10], ["Float32Array",10], ["Float64Array",10],
+            "DragEvent", ["ErrorEvent",10], "EventException", ["EXT_texture_filter_anisotropic",11], ["File",10], ["FileList",10], ["FileReader",10],
             "FocusEvent", ["FormData",10], "Geolocation", "GetObject", ["HTMLAllCollection",11], "HTMLAppletElement", "HTMLAreasCollection", "HTMLAudioElement", "HTMLBaseElement",
             "HTMLBaseFontElement", "HTMLBGSoundElement", "HTMLBlockElement", "HTMLBRElement", "HTMLCanvasElement", ["HTMLDataListElement",10], "HTMLDDElement", "HTMLDirectoryElement",
             "HTMLDivElement", "HTMLDListElement", "HTMLDTElement", "HTMLFieldSetElement", "HTMLFontElement", "HTMLFrameSetElement", "HTMLHeadingElement", "HTMLHRElement", "HTMLIsIndexElement",
@@ -4639,7 +4836,7 @@ async_test("window own props", function() {
             "HTMLOptGroupElement", "HTMLParagraphElement", "HTMLParamElement", "HTMLPhraseElement", "HTMLPreElement", ["HTMLProgressElement",10], "HTMLQuoteElement", "HTMLSourceElement",
             "HTMLSpanElement", "HTMLTableCaptionElement", "HTMLTableColElement", "HTMLTableHeaderCellElement", "HTMLTableSectionElement", ["HTMLTrackElement",10], "HTMLUListElement",
             "HTMLVideoElement", ["IDBCursor",10], ["IDBCursorWithValue",10], ["IDBDatabase",10], ["IDBFactory",10], ["IDBIndex",10], ["IDBKeyRange",10], ["IDBObjectStore",10], ["IDBOpenDBRequest",10],
-            ["IDBRequest",10], ["IDBTransaction",10], ["IDBVersionChangeEvent",10], "ImageData", ["Int16Array",10], ["Int32Array",10], ["Int8Array",10], ["Intl",11], ["Key",11], ["KeyOperation",11],
+            ["IDBRequest",10], ["IDBTransaction",10], ["IDBVersionChangeEvent",10], "ImageData", ["Intl",11], ["Key",11], ["KeyOperation",11],
             ["KeyPair",11], "Location", "MediaError", "MediaList", ["MediaSource",11], ["MessageChannel",10], ["MessagePort",10], ["MimeType",11], ["MimeTypeArray",9,10], "MouseWheelEvent",
             "MSBehaviorUrnsCollection", ["MSBlobBuilder",10], "MSCompatibleInfo", "MSCompatibleInfoCollection", ["MSCSSMatrix",10], ["MSGesture",10], ["MSGestureEvent",10], ["MSGraphicsTrust",11],
             ["MSInputMethodContext",11], ["MSManipulationEvent",10], ["MSMediaKeyError",11], ["MSMediaKeyMessageEvent",11], ["MSMediaKeyNeededEvent",11], ["MSMediaKeys",11], ["MSMediaKeySession",11],
@@ -4647,7 +4844,7 @@ async_test("window own props", function() {
             ["MSStreamReader",10], "MutationEvent", ["MutationRecord",11], "NodeFilter", "NodeIterator", ["OES_element_index_uint",11], ["OES_standard_derivatives",11], ["OES_texture_float",11],
             ["OES_texture_float_linear",11], "PerformanceEntry", "PerformanceMark", "PerformanceMeasure", ["PerformanceNavigationTiming",11], "PerformanceResourceTiming", ["Plugin",11],
             ["PluginArray",9,10], ["PointerEvent",11], ["PopStateEvent",10], "Position", "PositionError", "ProcessingInstruction", "RangeException", "RegExpError", "Selection", ["SourceBuffer",11],
-            ["SourceBufferList",11], "StyleMedia", "StyleSheetPageList", ["SubtleCrypto",11], "SVGAElement", "SVGAngle", "SVGAnimatedAngle", "SVGAnimatedBoolean", "SVGAnimatedEnumeration",
+            ["SourceBufferList",11], "StyleMedia", "StyleSheetPageList", "SVGAElement", "SVGAngle", "SVGAnimatedAngle", "SVGAnimatedBoolean", "SVGAnimatedEnumeration",
             "SVGAnimatedInteger", "SVGAnimatedLength", "SVGAnimatedLengthList", "SVGAnimatedNumber", "SVGAnimatedNumberList", "SVGAnimatedPreserveAspectRatio", "SVGAnimatedRect", "SVGAnimatedString",
             "SVGAnimatedTransformList", "SVGClipPathElement", ["SVGComponentTransferFunctionElement",10], "SVGDefsElement", "SVGDescElement", "SVGElementInstance", "SVGElementInstanceList",
             "SVGEllipseElement", "SVGException", ["SVGFEBlendElement",10], ["SVGFEColorMatrixElement",10], ["SVGFEComponentTransferElement",10], ["SVGFECompositeElement",10],
@@ -4662,8 +4859,8 @@ async_test("window own props", function() {
             "SVGPatternElement", "SVGPoint", "SVGPointList", "SVGPolygonElement", "SVGPolylineElement", "SVGPreserveAspectRatio", "SVGRadialGradientElement", "SVGRect", "SVGRectElement",
             "SVGScriptElement", "SVGStopElement", "SVGStringList", "SVGStyleElement", "SVGSwitchElement", "SVGSymbolElement", "SVGTextElement", "SVGTextPathElement", "SVGTitleElement",
             "SVGTransform", "SVGTransformList", "SVGUnitTypes", "SVGUseElement", "SVGViewElement", "SVGZoomAndPan", "SVGZoomEvent", "TextEvent", "TextMetrics", "TextRangeCollection", ["TextTrack",10],
-            ["TextTrackCue",10], ["TextTrackCueList",10], ["TextTrackList",10], "TimeRanges", ["TrackEvent",10], ["TransitionEvent",10], "TreeWalker", ["Uint16Array",10], ["Uint32Array",10],
-            ["Uint8Array",10], ["Uint8ClampedArray",11], ["URL",10], ["ValidityState",10], ["VideoPlaybackQuality",11], ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11],
+            ["TextTrackCue",10], ["TextTrackCueList",10], ["TextTrackList",10], "TimeRanges", ["TrackEvent",10], ["TransitionEvent",10], "TreeWalker",
+            ["URL",10], ["ValidityState",10], ["VideoPlaybackQuality",11], ["WebGLActiveInfo",11], ["WebGLBuffer",11], ["WebGLContextEvent",11],
             ["WebGLFramebuffer",11], ["WebGLObject",11], ["WebGLProgram",11], ["WebGLRenderbuffer",11], ["WebGLRenderingContext",11], ["WebGLShader",11], ["WebGLShaderPrecisionFormat",11],
             ["WebGLTexture",11], ["WebGLUniformLocation",11], ["WEBGL_compressed_texture_s3tc",11], ["WEBGL_debug_renderer_info",11], ["WebSocket",10], "WheelEvent", ["Worker",10],
             ["XMLHttpRequestEventTarget",10], "XMLSerializer"

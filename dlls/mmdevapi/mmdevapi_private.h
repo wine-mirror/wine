@@ -27,7 +27,7 @@
 
 #include "unixlib.h"
 
-typedef struct audio_session {
+struct audio_session {
     GUID guid;
     struct list clients;
 
@@ -43,7 +43,7 @@ typedef struct audio_session {
     GUID grouping_param;
 
     struct list entry;
-} AudioSession;
+};
 
 typedef struct audio_session_wrapper {
     IAudioSessionControl2 IAudioSessionControl2_iface;

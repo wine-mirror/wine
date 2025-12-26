@@ -5775,7 +5775,6 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
 
     refkey->writetime = *writetime;
     memcpy(refkey->name, path, len * sizeof(WCHAR));
-    wcsupr(refkey->name);
 
     *key = refkey;
 

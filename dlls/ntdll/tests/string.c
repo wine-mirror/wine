@@ -1921,7 +1921,7 @@ static void test_printf_format(void)
     WCHAR ws[256], expectedw[256], specw[256];
     unsigned int i, j;
     char expected[256], spec[256], s[256];
-    int len;
+    int len = 0;
 
     p_snprintf(s, ARRAY_SIZE(s), "%C", 0x95c8);
     p_snwprintf(ws, ARRAY_SIZE(ws), L"%c", 0x95c8);
@@ -1965,7 +1965,6 @@ static void test_printf_format(void)
                     len = p_snwprintf(ws, ~(size_t)0, specw, (ULONG64)tests[i].arg, L"end");
                 break;
             default:
-                len = 0;
                 ok(0, "unknown length %u.\n", tests[i].arg_size);
                 break;
         }

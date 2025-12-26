@@ -30,7 +30,6 @@ extern HINSTANCE COMDLG32_hInstance;
 extern HANDLE COMDLG32_hActCtx;
 
 void	COMDLG32_SetCommDlgExtendedError(DWORD err);
-LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1);
 
 /* Find/Replace local definitions */
 

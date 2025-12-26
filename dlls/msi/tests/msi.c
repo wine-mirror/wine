@@ -2280,6 +2280,11 @@ static void test_MsiQueryComponentState(void)
     lstrcatA(keypath, "\\InstallProperties");
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     res = reg_set_str(prodkey, "LocalPackage", "msitest.msi");
@@ -2485,7 +2490,7 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %lu\n", size);
 
-    res = reg_set_str(compkey, prod_squashed, "C:\\imapath");
+    res = reg_set_str(compkey, prod_squashed, "c:\\msitest\\imapath");
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* product value exists */
@@ -2493,15 +2498,15 @@ static void test_MsiGetComponentPath(void)
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(!lstrcmpA(path, "c:\\msitest\\imapath"), "Expected c:\\msitest\\imapath, got %s\n", path);
+    ok(size == 18, "got %lu\n", size);
 
     path[0] = 0;
     size = MAX_PATH;
     state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(!lstrcmpA(path, "c:\\msitest\\imapath"), "Expected c:\\msitest\\imapath, got %s\n", path);
+    ok(size == 18, "got %lu\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
@@ -2520,17 +2525,18 @@ static void test_MsiGetComponentPath(void)
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(!lstrcmpA(path, "c:\\msitest\\imapath"), "Expected c:\\msitest\\imapath, got %s\n", path);
+    ok(size == 18, "got %lu\n", size);
 
     path[0] = 0;
     size = MAX_PATH;
     state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
-    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(!lstrcmpA(path, "c:\\msitest\\imapath"), "Expected c:\\msitest\\imapath, got %s\n", path);
+    ok(size == 18, "got %lu\n", size);
 
-    create_file("C:\\imapath", 11);
+    CreateDirectoryA("c:\\msitest", NULL);
+    create_file("c:\\msitest\\imapath", 11);
 
     /* file exists */
     path[0] = 'a';
@@ -2538,28 +2544,28 @@ static void test_MsiGetComponentPath(void)
     state = MsiGetComponentPathA(prodcode, component, path, &size);
     ok(state == INSTALLSTATE_MOREDATA, "Expected INSTALLSTATE_MOREDATA, got %d\n", state);
     ok(path[0] == 'a', "got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(size == 18, "got %lu\n", size);
 
     path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(!lstrcmpA(path, "c:\\msitest\\imapath"), "Expected c:\\msitest\\imapath, got %s\n", path);
+    ok(size == 18, "got %lu\n", size);
 
     size = 0;
     path[0] = 'a';
     state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_MOREDATA, "Expected INSTALLSTATE_MOREDATA, got %d\n", state);
     ok(path[0] == 'a', "got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(size == 18, "got %lu\n", size);
 
     path[0] = 0;
     size = MAX_PATH;
     state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
-    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
-    ok(size == 10, "Expected 10, got %lu\n", size);
+    ok(!lstrcmpA(path, "c:\\msitest\\imapath"), "Expected c:\\msitest\\imapath, got %s\n", path);
+    ok(size == 18, "got %lu\n", size);
 
     RegDeleteValueA(compkey, prod_squashed);
     RegDeleteKeyExA(compkey, "", access & KEY_WOW64_64KEY, 0);
@@ -2567,7 +2573,8 @@ static void test_MsiGetComponentPath(void)
     RegDeleteKeyExA(installprop, "", access & KEY_WOW64_64KEY, 0);
     RegCloseKey(compkey);
     RegCloseKey(installprop);
-    DeleteFileA("C:\\imapath");
+    DeleteFileA("c:\\msitest\\imapath");
+    RemoveDirectoryA("c:\\msitest");
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\");
@@ -2576,6 +2583,12 @@ static void test_MsiGetComponentPath(void)
     lstrcatA(keypath, comp_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &compkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        LocalFree(usersid);
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", res);
 
     /* user managed component key exists */
@@ -3006,7 +3019,7 @@ static void test_MsiGetComponentPathEx(void)
     state = MsiGetComponentPathExA( prod, comp, NULL, MSIINSTALLCONTEXT_MACHINE, path, &size );
     ok( state == INSTALLSTATE_UNKNOWN, "got %d\n", state );
 
-    res = reg_set_str( key_comp, prod_squashed, "c:\\testcomponentpath" );
+    res = reg_set_str( key_comp, prod_squashed, "c:\\msitest\\testcomponentpath" );
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     /* product value exists */
@@ -3014,8 +3027,8 @@ static void test_MsiGetComponentPathEx(void)
     size = MAX_PATH;
     state = MsiGetComponentPathExA( prod, comp, NULL, MSIINSTALLCONTEXT_MACHINE, path, &size );
     ok( state == INSTALLSTATE_ABSENT, "got %d\n", state );
-    ok( !lstrcmpA( path, "c:\\testcomponentpath" ), "got %s\n", path );
-    ok( size == 20, "got %lu\n", size );
+    ok( !lstrcmpA( path, "c:\\msitest\\testcomponentpath" ), "got %s\n", path );
+    ok( size == 28, "got %lu\n", size );
 
     lstrcpyA( path_key, "Software\\Microsoft\\Windows\\CurrentVersion\\" );
     lstrcatA( path_key, "Installer\\UserData\\S-1-5-18\\Products\\" );
@@ -3034,10 +3047,11 @@ static void test_MsiGetComponentPathEx(void)
     size = MAX_PATH;
     state = MsiGetComponentPathExA( prod, comp, NULL, MSIINSTALLCONTEXT_MACHINE, path, &size );
     ok( state == INSTALLSTATE_ABSENT, "got %d\n", state );
-    ok( !lstrcmpA( path, "c:\\testcomponentpath"), "got %s\n", path );
-    ok( size == 20, "got %lu\n", size );
+    ok( !lstrcmpA( path, "c:\\msitest\\testcomponentpath"), "got %s\n", path );
+    ok( size == 28, "got %lu\n", size );
 
-    create_file( "c:\\testcomponentpath", 21 );
+    CreateDirectoryA( "c:\\msitest", NULL );
+    create_file( "c:\\msitest\\testcomponentpath", 21 );
 
     /* file exists */
     path[0] = 0;
@@ -3045,14 +3059,14 @@ static void test_MsiGetComponentPathEx(void)
     state = MsiGetComponentPathExA( prod, comp, NULL, MSIINSTALLCONTEXT_MACHINE, path, &size );
     ok( state == INSTALLSTATE_MOREDATA, "got %d\n", state );
     ok( !path[0], "got %s\n", path );
-    todo_wine ok( size == 40, "got %lu\n", size );
+    todo_wine ok( size == 56, "got %lu\n", size );
 
     path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathExA( prod, comp, NULL, MSIINSTALLCONTEXT_MACHINE, path, &size );
     ok( state == INSTALLSTATE_LOCAL, "got %d\n", state );
-    ok( !lstrcmpA( path, "c:\\testcomponentpath" ), "got %s\n", path );
-    ok( size == 20, "got %lu\n", size );
+    ok( !lstrcmpA( path, "c:\\msitest\\testcomponentpath" ), "got %s\n", path );
+    ok( size == 28, "got %lu\n", size );
 
     RegDeleteValueA( key_comp, prod_squashed );
     RegDeleteKeyExA( key_comp, "", access & KEY_WOW64_64KEY, 0 );
@@ -3060,7 +3074,8 @@ static void test_MsiGetComponentPathEx(void)
     RegDeleteKeyExA( key_installprop, "", access & KEY_WOW64_64KEY, 0 );
     RegCloseKey( key_comp );
     RegCloseKey( key_installprop );
-    DeleteFileA( "c:\\testcomponentpath" );
+    DeleteFileA( "c:\\msitest\\testcomponentpath" );
+    RemoveDirectoryA( "c:\\msitest" );
 
     lstrcpyA( path_key, "Software\\Microsoft\\Installer\\Products\\" );
     lstrcatA( path_key, prod_squashed );
@@ -3081,6 +3096,12 @@ static void test_MsiGetComponentPathEx(void)
     lstrcatA( path_key, comp_squashed );
 
     res = RegCreateKeyExA( HKEY_LOCAL_MACHINE, path_key, 0, NULL, 0, access, NULL, &key_comp, NULL );
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "insufficient rights\n" );
+        LocalFree( usersid );
+        return;
+    }
     ok( res == ERROR_SUCCESS, "got %ld\n", res );
 
     /* user unmanaged component key exists */
@@ -3344,12 +3365,13 @@ static void test_MsiProvideComponent(void)
 
 static void test_MsiProvideQualifiedComponentEx(void)
 {
+    UINT (WINAPI *pMsiDecomposeDescriptorA)(LPCSTR, LPCSTR, LPSTR, LPSTR, DWORD *);
     UINT r;
     INSTALLSTATE state;
     char comp[39], comp_squashed[33], comp2[39], comp2_base85[21], comp2_squashed[33];
-    char prod[39], prod_base85[21], prod_squashed[33];
+    char prod[39], prod2[39], prod_base85[21], prod_squashed[33], feature[39];
     char desc[MAX_PATH], buf[MAX_PATH], keypath[MAX_PATH], path[MAX_PATH];
-    DWORD len = sizeof(buf);
+    DWORD len;
     REGSAM access = KEY_ALL_ACCESS;
     HKEY hkey, hkey2, hkey3, hkey4, hkey5;
     LONG res;
@@ -3364,6 +3386,22 @@ static void test_MsiProvideQualifiedComponentEx(void)
     compose_base85_guid( comp2, comp2_base85, comp2_squashed );
     compose_base85_guid( prod, prod_base85, prod_squashed );
 
+    r = MsiEnumFeaturesA( prod, 0, feature, NULL );
+    ok( r == ERROR_UNKNOWN_PRODUCT, "got %u\n", r );
+
+    pMsiDecomposeDescriptorA = (void *)GetProcAddress( GetModuleHandleA( "msi.dll" ), "MsiDecomposeDescriptorA" );
+    if (pMsiDecomposeDescriptorA)
+    {
+        lstrcpyA( desc, prod_base85 );
+        memcpy( desc + lstrlenA(desc), "<\0", sizeof("<\0") );
+        len = 0;
+        r = pMsiDecomposeDescriptorA( desc, prod2, feature, comp2, &len );
+        ok( r == ERROR_INVALID_PARAMETER, "got %u\n", r );
+    }
+    else
+        win_skip("MsiDecomposeDescriptorA is not available on this platform\n");
+
+    len = sizeof(buf);
     r = MsiProvideQualifiedComponentExA( comp, "qualifier", INSTALLMODE_EXISTING, prod, 0, 0, buf, &len );
     ok( r == ERROR_UNKNOWN_COMPONENT, "got %u\n", r );
 
@@ -3466,6 +3504,26 @@ static void test_MsiProvideQualifiedComponentEx(void)
     ok( r == ERROR_SUCCESS, "got %u\n", r );
     ok( len == lstrlenA(path), "got %lu\n", len );
     ok( !lstrcmpA( path, buf ), "got '%s'\n", buf );
+
+    r = MsiEnumFeaturesA( prod, 0, feature, NULL );
+    ok( r == ERROR_SUCCESS, "got %u\n", r );
+    ok( !strcmp(feature, "feature"), "got %s\n", debugstr_a(feature) );
+
+    if (pMsiDecomposeDescriptorA)
+    {
+        lstrcpyA( desc, prod_base85 );
+        memcpy( desc + lstrlenA(desc), "<\0", sizeof("<\0") );
+        len = 0;
+        feature[0] = 0;
+        r = pMsiDecomposeDescriptorA( desc, prod2, feature, comp2, &len );
+        ok( r == ERROR_SUCCESS, "got %u\n", r );
+        ok( len == strlen(desc), "got %lu\n", len );
+        ok( !strcmp(prod2, prod), "got %s\n", debugstr_a(prod2) );
+        ok( !strcmp(feature, "feature"), "got %s\n", debugstr_a(feature) );
+        ok( !strcmp(comp2, comp2), "got %s\n", debugstr_a(comp) );
+    }
+    else
+        win_skip("MsiDecomposeDescriptorA is not available on this platform\n");
 
     DeleteFileA( "msitest\\text.txt" );
     RemoveDirectoryA( "msitest" );

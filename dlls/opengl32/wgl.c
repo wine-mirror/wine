@@ -338,6 +338,13 @@ static struct wgl_pixel_format *get_pixel_formats( HDC hdc, UINT *num_formats,
     NTSTATUS status;
     DWORD is_memdc;
 
+    *num_formats = *num_onscreen_formats = 0;
+    if (!NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc ))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+
     if (glReserved[WINE_GL_RESERVED_FORMATS_HDC] == hdc)
     {
         *num_formats = PtrToUlong( glReserved[WINE_GL_RESERVED_FORMATS_NUM] );
@@ -352,8 +359,7 @@ static struct wgl_pixel_format *get_pixel_formats( HDC hdc, UINT *num_formats,
     args.max_formats = args.num_formats;
     if ((status = UNIX_CALL( get_pixel_formats, &args ))) goto error;
 
-    if (NtGdiGetDCDword( hdc, NtGdiIsMemDC, &is_memdc ) && is_memdc)
-        args.num_onscreen_formats = args.num_formats;
+    if (is_memdc) args.num_onscreen_formats = args.num_formats;
 
     *num_formats = args.num_formats;
     *num_onscreen_formats = args.num_onscreen_formats;
@@ -816,7 +822,7 @@ INT WINAPI wglDescribePixelFormat( HDC hdc, int index, UINT size, PIXELFORMATDES
     struct wgl_pixel_format *formats;
     UINT num_formats, num_onscreen_formats;
 
-    TRACE( "hdc %p, index %d, size %u, ppfd %p\n", hdc, index, index, ppfd );
+    TRACE( "hdc %p, index %d, size %u, ppfd %p\n", hdc, index, size, ppfd );
 
     if (!(formats = get_pixel_formats( hdc, &num_formats, &num_onscreen_formats ))) return 0;
     if (!ppfd) return num_onscreen_formats;

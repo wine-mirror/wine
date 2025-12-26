@@ -81,6 +81,7 @@
 #ifdef  _MSWIN_
     typedef HANDLE         TW_HANDLE;
     typedef LPVOID         TW_MEMREF;
+    typedef UINT_PTR       TW_UINTPTR;
     typedef BYTE         * HPBYTE;
     typedef void         * HPVOID;
 #endif  /* _MSWIN_ */
@@ -495,6 +496,22 @@ typedef struct {
    TW_UINT16  Format;   /* one of TWAF_xxxx */
    TW_INT16 VRefNum;
 } TW_SETUPAUDIOFILEXFER, FAR * pTW_SETUPAUDIOFILEXFER;
+
+
+/* Used with DG_CONTROL / DAT_CALLBACK / MSG_REGISTER_CALLBACK */
+typedef struct  {
+    TW_MEMREF   CallBackProc;
+    TW_UINT32   RefCon;
+    TW_INT16    Message;
+} TW_CALLBACK, * pTW_CALLBACK;
+
+/* Used with DG_CONTROL / DAT_CALLBACK2 / MSG_REGISTER_CALLBACK */
+typedef struct  {
+    TW_MEMREF   CallBackProc;
+    TW_UINTPTR  RefCon;
+    TW_INT16    Message;
+} TW_CALLBACK2, * pTW_CALLBACK2;
+
 
 /****************************************************************************
  * Generic Constants                                                        *
@@ -1351,6 +1368,8 @@ typedef struct {
 #define DAT_DEVICEEVENT     0x000d /* TW_DEVICEEVENT                       */
 #define DAT_FILESYSTEM      0x000e /* TW_FILESYSTEM                        */
 #define DAT_PASSTHRU        0x000f /* TW_PASSTHRU                          */
+#define DAT_CALLBACK        0x0010 /* TW_CALLBACK                          */
+#define DAT_CALLBACK2       0x0012 /* TW_CALLBACK2                         */
 
 /* Data Argument Types for the DG_IMAGE Data Group. */
 #define DAT_IMAGEINFO       0x0101 /* TW_IMAGEINFO                         */
@@ -1435,6 +1454,10 @@ typedef struct {
 
 /* Messages used with a pointer to a DAT_PASSTHRU structure                 */
 #define MSG_PASSTHRU          0x0901
+
+/* Added 2.x */
+#define MSG_REGISTER_CALLBACK 0x0902 /* Used with DAT_CALLBACK/DAT_CALLBACK2*/
+
 
 /****************************************************************************
  * Capabilities                                                             *
@@ -1845,7 +1868,9 @@ typedef TW_UINT16 (*DSENTRYPROC)(pTW_IDENTITY,
 
 /* Definitions from TWAIN 2.x used by our builtin data sources */
 #define DAT_ENTRYPOINT 0x0403
-#define DF_DS2 0x40000000
+#define DF_DSM2 0x10000000
+#define DF_APP2 0x20000000
+#define DF_DS2  0x40000000
 
 #ifdef  __cplusplus
 extern "C" {

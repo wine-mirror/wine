@@ -169,7 +169,8 @@ static ULONG WINAPI domselection_Release(
     if ( ref == 0 )
     {
         xmlXPathFreeObject(This->result);
-        xmldoc_release(This->node->doc);
+        if (This->node)
+            xmldoc_release(This->node->doc);
         if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
         free(This);
     }
@@ -832,4 +833,26 @@ cleanup:
         IXMLDOMSelection_Release( &This->IXMLDOMSelection_iface );
     xmlXPathFreeContext(ctxt);
     return hr;
+}
+
+HRESULT create_selection_from_nodeset(xmlXPathObjectPtr nodeset, IXMLDOMNodeList **out)
+{
+    domselection *obj;
+
+    TRACE("%p, %p.\n", nodeset, out);
+
+    *out = NULL;
+
+    if (!(obj = calloc(1, sizeof(*obj))))
+        return E_OUTOFMEMORY;
+
+    obj->IXMLDOMSelection_iface.lpVtbl = &domselection_vtbl;
+    obj->ref = 1;
+    init_dispex(&obj->dispex, (IUnknown *)&obj->IXMLDOMSelection_iface, &domselection_dispex);
+
+    obj->result = nodeset;
+
+    *out = (IXMLDOMNodeList *)&obj->IXMLDOMSelection_iface;
+
+    return S_OK;
 }

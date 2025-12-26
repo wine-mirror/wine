@@ -26,7 +26,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
-#include "winuser.h"
+#include "ntuser.h"
 #include "winnls.h"
 
 #include "wintab.h"
@@ -149,7 +149,7 @@ static inline BOOL LoadTablet(void)
 
     if (loaded == TI_START)
     {
-        if (pLoadTabletInfo && pLoadTabletInfo(hwndDefault))
+        if (NtUserMessageCall(hwndDefault, NtUserWintabInit, 0, 0, NULL, NtUserWintabDriverCall, FALSE))
         {
             TRACE("Initialized the tablet to hwnd %p\n", hwndDefault);
             loaded = TI_OK;
@@ -373,6 +373,10 @@ static VOID TABLET_BlankPacketData(LPOPENCONTEXT context, LPVOID lpPkt, INT n)
     memset(lpPkt,0,rc);
 }
 
+static UINT DriverInfo(UINT category, UINT index, void *output)
+{
+    return NtUserMessageCall(NULL, NtUserWintabInfo, category, index, output, NtUserWintabDriverCall, FALSE);
+}
 
 static UINT WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
 {
@@ -406,7 +410,7 @@ static UINT WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
         if (lpOutput)
         {
             LOGCONTEXTW buf;
-            pWTInfoW(wCategory, nIndex, &buf);
+            DriverInfo(wCategory, nIndex, &buf);
 
             /*  Handle system extents here, as we can use user32.dll code to set them */
             if(wCategory == WTI_DEFSYSCTX)
@@ -425,14 +429,14 @@ static UINT WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
     }
     else if (is_string_field(wCategory, nIndex) && !bUnicode)
     {
-        int size = pWTInfoW(wCategory, nIndex, NULL);
+        int size = DriverInfo(wCategory, nIndex, NULL);
         WCHAR *buf = malloc(size);
-        pWTInfoW(wCategory, nIndex, buf);
+        DriverInfo(wCategory, nIndex, buf);
         result = WideCharToMultiByte(CP_ACP, 0, buf, size/sizeof(WCHAR), lpOutput, lpOutput ? 2*size : 0, NULL, NULL);
         free(buf);
     }
     else
-        result =  pWTInfoW(wCategory, nIndex, lpOutput);
+        result =  DriverInfo(wCategory, nIndex, lpOutput);
 
     TRACE("returns %d\n", result);
     return result;
@@ -481,7 +485,7 @@ HCTX WINAPI WTOpenW(HWND hWnd, LPLOGCONTEXTW lpLogCtx, BOOL fEnable)
     gOpenContexts = newcontext;
     LeaveCriticalSection(&csTablet);
 
-    pAttachEventQueueToTablet(hWnd);
+    NtUserMessageCall(hWnd, NtUserWintabAttach, 0, 0, NULL, NtUserWintabDriverCall, FALSE);
 
     TABLET_PostTabletMessage(newcontext, _WT_CTXOPEN(newcontext->context.lcMsgBase), (WPARAM)newcontext->handle,
                       newcontext->context.lcStatus, TRUE);

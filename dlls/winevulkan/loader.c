@@ -29,6 +29,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 #define WINE_VULKAN_ICD_VERSION 4
 
 static HINSTANCE hinstance;
+static BOOL get_device_proc_addr_instance_procs = FALSE;
+static struct vulkan_instance_extensions instance_extensions; /* supported client instance extensions */
 
 VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
 {
@@ -105,6 +107,14 @@ PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char 
         return NULL;
     }
 
+    if (instance->extensions.has_VK_KHR_win32_surface)
+    {
+        if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
+            return (PFN_vkVoidFunction)vkCreateWin32SurfaceKHR;
+        if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+            return (PFN_vkVoidFunction)vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    }
+
     if (!is_available_instance_function(instance, name))
         return NULL;
 
@@ -131,6 +141,30 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
     if (!device || !name)
         return NULL;
 
+    if (device->extensions.has_VK_KHR_external_memory_win32)
+    {
+        if (!strcmp(name, "vkGetMemoryWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkGetMemoryWin32HandleKHR;
+        if (!strcmp(name, "vkGetMemoryWin32HandlePropertiesKHR"))
+            return (PFN_vkVoidFunction)vkGetMemoryWin32HandlePropertiesKHR;
+    }
+
+    if (device->extensions.has_VK_KHR_external_semaphore_win32)
+    {
+        if (!strcmp(name, "vkGetSemaphoreWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkGetSemaphoreWin32HandleKHR;
+        if (!strcmp(name, "vkImportSemaphoreWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkImportSemaphoreWin32HandleKHR;
+    }
+
+    if (device->extensions.has_VK_KHR_external_fence_win32)
+    {
+        if (!strcmp(name, "vkGetFenceWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkGetFenceWin32HandleKHR;
+        if (!strcmp(name, "vkImportFenceWin32HandleKHR"))
+            return (PFN_vkVoidFunction)vkImportFenceWin32HandleKHR;
+    }
+
     /* Per the spec, we are only supposed to return device functions as in functions
      * for which the first parameter is vkDevice or a child of vkDevice like a
      * vkCommandBuffer or vkQueue.
@@ -154,7 +188,7 @@ PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
      * https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/issues/2323
      * https://github.com/KhronosGroup/Vulkan-Docs/issues/655
      */
-    if ((device->quirks & WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR)
+    if (get_device_proc_addr_instance_procs
         && ((func = wine_vk_get_instance_proc_addr(name))
              || (func = wine_vk_get_phys_dev_proc_addr(name))))
     {
@@ -304,13 +338,14 @@ static NTSTATUS WINAPI call_vulkan_debug_utils_callback(void *args, ULONG size)
 
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    struct vk_callback_funcs callback_funcs =
+    struct init_params params =
     {
-        .call_vulkan_debug_report_callback = (ULONG_PTR)call_vulkan_debug_report_callback,
-        .call_vulkan_debug_utils_callback = (ULONG_PTR)call_vulkan_debug_utils_callback,
+        .call_vulkan_debug_report_callback = (UINT_PTR)call_vulkan_debug_report_callback,
+        .call_vulkan_debug_utils_callback = (UINT_PTR)call_vulkan_debug_utils_callback,
+        .extensions = &instance_extensions,
     };
 
-    return !__wine_init_unix_call() && !UNIX_CALL(init, &callback_funcs);
+    return !__wine_init_unix_call() && !UNIX_CALL(init, &params);
 }
 
 static BOOL  wine_vk_init_once(void)
@@ -320,12 +355,32 @@ static BOOL  wine_vk_init_once(void)
     return InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
 }
 
+static BOOL is_instance_extension_supported(const char *extension, struct vulkan_instance_extensions *extensions)
+{
+#define USE_VK_EXT(x) if (!strcmp(extension, #x)) return (extensions->has_ ## x = instance_extensions.has_ ## x);
+    ALL_VK_CLIENT_INSTANCE_EXTS
+#undef USE_VK_EXT
+    WARN("Extension %s is not supported.\n", debugstr_a(extension));
+    return FALSE;
+}
+
+static BOOL is_device_extension_supported(VkPhysicalDevice physical_device, const char *extension, struct vulkan_device_extensions *extensions)
+{
+#define USE_VK_EXT(x) if (!strcmp(extension, #x)) return (extensions->has_ ## x = physical_device->extensions.has_ ## x);
+    ALL_VK_CLIENT_DEVICE_EXTS
+#undef USE_VK_EXT
+    WARN("Extension %s is not supported.\n", debugstr_a(extension));
+    return FALSE;
+}
+
 VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *ret)
 {
+    struct vulkan_instance_extensions extensions = {0};
     struct vkCreateInstance_params params;
+    const VkApplicationInfo *app_info;
     struct VkInstance_T *instance;
-    uint32_t phys_dev_count = 8, i;
+    uint32_t device_count = 8, i;
     NTSTATUS status;
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, ret);
@@ -333,28 +388,52 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (!wine_vk_init_once())
         return VK_ERROR_INITIALIZATION_FAILED;
 
+    if ((app_info = create_info->pApplicationInfo))
+    {
+        TRACE("Application name %s, application version %#x.\n", debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
+        TRACE("Engine name %s, engine version %#x.\n", debugstr_a(app_info->pEngineName), app_info->engineVersion);
+        TRACE("API version %#x.\n", app_info->apiVersion);
+
+        if (app_info->pEngineName && !strcmp(app_info->pEngineName, "idTech"))
+            get_device_proc_addr_instance_procs = TRUE;
+    }
+
+    TRACE("Enabling %u client instance extensions\n", create_info->enabledExtensionCount);
+    for (uint32_t i = 0; i < create_info->enabledExtensionCount; i++)
+    {
+        const char *extension = create_info->ppEnabledExtensionNames[i];
+        if (!is_instance_extension_supported(extension, &extensions))
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        TRACE("  - %s\n", extension);
+    }
+
     for (;;)
     {
-        if (!(instance = vulkan_client_object_create(FIELD_OFFSET(struct VkInstance_T, phys_devs[phys_dev_count]))))
+        if (!(instance = vulkan_client_object_create(FIELD_OFFSET(struct VkInstance_T, physical_device[device_count]))))
             return VK_ERROR_OUT_OF_HOST_MEMORY;
-        instance->phys_dev_count = phys_dev_count;
-        for (i = 0; i < phys_dev_count; i++)
-            instance->phys_devs[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+        instance->physical_device_count = device_count;
+        for (i = 0; i < device_count; i++)
+            instance->physical_device[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+        instance->extensions = extensions;
+        *ret = instance;
 
         params.pCreateInfo = create_info;
         params.pAllocator = allocator;
         params.pInstance = ret;
-        params.client_ptr = instance;
         status = UNIX_CALL(vkCreateInstance, &params);
         assert(!status);
-        if (instance->phys_dev_count <= phys_dev_count)
+        if (instance->physical_device_count <= device_count)
             break;
-        phys_dev_count = instance->phys_dev_count;
+        device_count = instance->physical_device_count;
         free(instance);
+        *ret = NULL;
     }
 
     if (params.result)
+    {
         free(instance);
+        *ret = NULL;
+    }
     return params.result;
 }
 
@@ -370,11 +449,40 @@ void WINAPI vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks *
     free(instance);
 }
 
+static VkResult enum_host_instance_extension_properties(const char *layer_name, uint32_t *count,
+        VkExtensionProperties **properties)
+{
+    struct vkEnumerateInstanceExtensionProperties_params params =
+    {
+        .pLayerName = layer_name,
+        .pPropertyCount = count,
+    };
+    NTSTATUS status;
+
+    for (;;)
+    {
+        *properties = params.pProperties;
+        status = UNIX_CALL(vkEnumerateInstanceExtensionProperties, &params);
+        assert(!status && "vkEnumerateInstanceExtensionProperties");
+        if (params.result == VK_INCOMPLETE)
+        {
+            free(params.pProperties);
+            params.pProperties = NULL;
+            continue;
+        }
+        if (params.result || params.pProperties) return params.result;
+        params.pProperties = realloc(*properties, *params.pPropertyCount * sizeof(*params.pProperties));
+        if (!params.pProperties) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+}
+
 VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
-    struct vkEnumerateInstanceExtensionProperties_params params;
-    NTSTATUS status;
+    uint32_t i, len, capacity = properties ? *count : UINT_MAX, host_count = 0;
+    struct vulkan_instance_extensions extensions = {0};
+    VkExtensionProperties *host_properties;
+    VkResult res;
 
     TRACE("%p, %p, %p\n", layer_name, count, properties);
 
@@ -390,12 +498,116 @@ VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         return VK_SUCCESS;
     }
 
-    params.pLayerName = layer_name;
-    params.pPropertyCount = count;
-    params.pProperties = properties;
-    status = UNIX_CALL(vkEnumerateInstanceExtensionProperties, &params);
-    assert(!status);
-    return params.result;
+    if ((res = enum_host_instance_extension_properties(layer_name, &host_count, &host_properties)))
+        goto done;
+
+    TRACE("Client instance extensions:\n");
+    for (i = 0, len = 0; i < host_count; i++)
+    {
+        const char *extension = host_properties[i].extensionName;
+        if (!is_instance_extension_supported(extension, &extensions)) continue;
+        TRACE("  - %s\n", extension);
+        if (len++ < capacity && properties) properties[len - 1] = host_properties[i];
+    }
+    if (instance_extensions.has_VK_KHR_win32_surface)
+    {
+        static const VkExtensionProperties VK_KHR_win32_surface = {VK_KHR_WIN32_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_SPEC_VERSION};
+        TRACE("  - VK_KHR_win32_surface\n");
+        if (len++ < capacity && properties) properties[len - 1] = VK_KHR_win32_surface;
+    }
+    res = len > capacity ? VK_INCOMPLETE : VK_SUCCESS;
+    *count = min(len, capacity);
+
+done:
+    free(host_properties);
+    return res;
+}
+
+static VkResult enum_host_device_extension_properties(VkPhysicalDevice physical_device, const char *layer_name,
+        uint32_t *count, VkExtensionProperties **properties)
+{
+    struct vkEnumerateDeviceExtensionProperties_params params =
+    {
+        .physicalDevice = physical_device,
+        .pLayerName = layer_name,
+        .pPropertyCount = count,
+    };
+    NTSTATUS status;
+
+    for (;;)
+    {
+        *properties = params.pProperties;
+        status = UNIX_CALL(vkEnumerateDeviceExtensionProperties, &params);
+        assert(!status && "vkEnumerateDeviceExtensionProperties");
+        if (params.result == VK_INCOMPLETE)
+        {
+            free(params.pProperties);
+            params.pProperties = NULL;
+            continue;
+        }
+        if (params.result || params.pProperties) return params.result;
+        params.pProperties = realloc(*properties, *params.pPropertyCount * sizeof(*params.pProperties));
+        if (!params.pProperties) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+}
+
+VkResult WINAPI vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physical_device, const char *layer_name,
+        uint32_t *count, VkExtensionProperties *properties)
+{
+    uint32_t i, len, capacity = properties ? *count : UINT_MAX, host_count = 0;
+    struct vulkan_device_extensions extensions = {0};
+    VkExtensionProperties *host_properties;
+    VkResult res;
+
+    TRACE("%p, %p, %p, %p\n", physical_device, layer_name, count, properties);
+
+    if (layer_name)
+    {
+        WARN("Layer enumeration not supported from ICD.\n");
+        return VK_ERROR_LAYER_NOT_PRESENT;
+    }
+
+    if ((res = enum_host_device_extension_properties(physical_device, layer_name, &host_count, &host_properties)))
+        goto done;
+
+    TRACE("Client physical device extensions:\n");
+    for (i = 0, len = 0; i < host_count; i++)
+    {
+        const char *extension = host_properties[i].extensionName;
+        if (!is_device_extension_supported(physical_device, extension, &extensions)) continue;
+        TRACE("  - %s\n", extension);
+        if (len++ < capacity && properties) properties[len - 1] = host_properties[i];
+    }
+    if (physical_device->extensions.has_VK_KHR_external_memory_win32)
+    {
+        static const VkExtensionProperties VK_KHR_external_memory_win32 = {VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME, VK_KHR_EXTERNAL_MEMORY_WIN32_SPEC_VERSION};
+        TRACE("  - VK_KHR_external_memory_win32\n");
+        if (len++ < capacity && properties) properties[len - 1] = VK_KHR_external_memory_win32;
+    }
+    if (physical_device->extensions.has_VK_KHR_external_fence_win32)
+    {
+        static const VkExtensionProperties VK_KHR_external_fence_win32 = {VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME, VK_KHR_EXTERNAL_FENCE_WIN32_SPEC_VERSION};
+        TRACE("  - VK_KHR_external_fence_win32\n");
+        if (len++ < capacity && properties) properties[len - 1] = VK_KHR_external_fence_win32;
+    }
+    if (physical_device->extensions.has_VK_KHR_external_semaphore_win32)
+    {
+        static const VkExtensionProperties VK_KHR_external_semaphore_win32 = {VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME, VK_KHR_EXTERNAL_SEMAPHORE_WIN32_SPEC_VERSION};
+        TRACE("  - VK_KHR_external_semaphore_win32\n");
+        if (len++ < capacity && properties) properties[len - 1] = VK_KHR_external_semaphore_win32;
+    }
+    if (physical_device->extensions.has_VK_KHR_win32_keyed_mutex)
+    {
+        static const VkExtensionProperties VK_KHR_win32_keyed_mutex = {VK_KHR_WIN32_KEYED_MUTEX_EXTENSION_NAME, VK_KHR_WIN32_KEYED_MUTEX_SPEC_VERSION};
+        TRACE("  - VK_KHR_win32_keyed_mutex\n");
+        if (len++ < capacity && properties) properties[len - 1] = VK_KHR_win32_keyed_mutex;
+    }
+    res = len > capacity ? VK_INCOMPLETE : VK_SUCCESS;
+    *count = min(len, capacity);
+
+done:
+    free(host_properties);
+    return res;
 }
 
 VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
@@ -417,30 +629,45 @@ VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
     return params.result;
 }
 
-VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateInfo *create_info,
+VkResult WINAPI vkCreateDevice(VkPhysicalDevice physical_device, const VkDeviceCreateInfo *create_info,
                                const VkAllocationCallbacks *allocator, VkDevice *ret)
 {
+    struct vulkan_device_extensions extensions = {0};
     struct vkCreateDevice_params params;
     uint32_t queue_count = 0, i;
     VkDevice device;
     NTSTATUS status;
 
+    TRACE("Enabling %u client device extensions\n", create_info->enabledExtensionCount);
+    for (uint32_t i = 0; i < create_info->enabledExtensionCount; i++)
+    {
+        const char *extension = create_info->ppEnabledExtensionNames[i];
+        if (!is_device_extension_supported(physical_device, extension, &extensions))
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        TRACE("  - %s\n", extension);
+    }
+
     for (i = 0; i < create_info->queueCreateInfoCount; i++)
         queue_count += create_info->pQueueCreateInfos[i].queueCount;
     if (!(device = vulkan_client_object_create(FIELD_OFFSET(struct VkDevice_T, queues[queue_count]))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
-    for (i = 0; i < queue_count; i++)
-        device->queues[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    for (VkQueue queue = device->queues, end = queue + queue_count; queue < end; queue++)
+        queue->obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    device->extensions = extensions;
+    *ret = device;
 
-    params.physicalDevice = phys_dev;
+    params.physicalDevice = physical_device;
     params.pCreateInfo = create_info;
     params.pAllocator = allocator;
     params.pDevice = ret;
-    params.client_ptr = device;
+
     status = UNIX_CALL(vkCreateDevice, &params);
     assert(!status);
     if (params.result)
+    {
         free(device);
+        *ret = NULL;
+    }
     return params.result;
 }
 

@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-01-04 21:17-0600\n"
+"PO-Revision-Date: 2025-12-13 08:01-0600\n"
 "Last-Translator: Jactry Zeng <jzeng@codeweavers.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.8\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -93,7 +93,7 @@ msgstr "技术支持信息"
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
 #: dlls/shell32/shell32.rc:278 dlls/shell32/shell32.rc:302
 #: dlls/shell32/shell32.rc:324 dlls/shell32/shell32.rc:343
-#: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
+#: dlls/shlwapi/shlwapi.rc:44 dlls/twaindsm/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
@@ -193,12 +193,12 @@ msgstr "安装(&I)"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:70
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
 #: dlls/shell32/shell32.rc:344 dlls/shlwapi/shlwapi.rc:45
-#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
+#: dlls/twaindsm/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
 #: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
@@ -318,10 +318,8 @@ msgid "Please wait until the current uninstall/modify process is complete."
 msgstr "请等待当前的卸载/修改进程完成。"
 
 #: dlls/appwiz.cpl/appwiz.rc:55
-#, fuzzy
-#| msgid "Downloading..."
 msgid "Download failed."
-msgstr "正在下载..."
+msgstr "下载失败。"
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -376,19 +374,17 @@ msgid "uncompressed"
 msgstr "未压缩"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:31
-#, fuzzy
-#| msgid "&Confirm password:"
 msgid "Confirm pairing"
-msgstr "确认密码(&C):"
+msgstr "确认配对"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
-msgstr ""
+msgstr "使用以下 PIN/密钥与“%1!s!”配对: %2!lu!?"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:33
 msgid ""
 "Pair with unnamed device %1!s! using the following PIN/passkey value: %2!lu!?"
-msgstr ""
+msgstr "使用以下 PIN/密钥与未命名设备 %1!s! 配对: %2!lu!?"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
@@ -729,7 +725,7 @@ msgid "Scr&ipt:"
 msgstr "书写系统(&I):"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "颜色"
 
@@ -1083,7 +1079,8 @@ msgstr "紫色"
 msgid "Teal"
 msgstr "青色"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "灰色"
 
@@ -1353,41 +1350,32 @@ msgid "Default"
 msgstr "默认"
 
 #: dlls/compstui/compstui.rc:35
-#, fuzzy
-#| msgid "&Copy Background"
 msgid "&Copy count"
-msgstr "复制背景(&C)"
+msgstr "复制数目(&C)"
 
 #: dlls/compstui/compstui.rc:36
-#, fuzzy
-#| msgid "Print to File"
 msgid "Print on Both Sides"
-msgstr "打印到文件"
+msgstr "双面打印"
 
 #: dlls/compstui/compstui.rc:32
-#, fuzzy
-#| msgid "C&olor:"
 msgid "C&olor"
-msgstr "颜色(&O):"
+msgstr "颜色(&O)"
 
 #: dlls/compstui/compstui.rc:34
 msgid "Bla&ck && White"
-msgstr ""
+msgstr "黑白(&C)"
 
 #: dlls/compstui/compstui.rc:37
-#, fuzzy
-#| msgctxt "hotkey"
-#| msgid "None"
 msgid "&None"
-msgstr "无"
+msgstr "无(&N)"
 
 #: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
 msgid "Flip on Shor&t Edge"
-msgstr ""
+msgstr "沿短边翻转(&T)"
 
 #: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
 msgid "Flip on Long E&dge"
-msgstr ""
+msgstr "沿长边翻转(&D)"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -3439,10 +3427,8 @@ msgid "Show &Tabs"
 msgstr "显示标签页(&T)"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:39
-#, fuzzy
-#| msgid "Select Source"
 msgid "Select Topic"
-msgstr "选择来源"
+msgstr "选择主题"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:44
 msgid "Show"
@@ -3823,14 +3809,11 @@ msgid "Force Feedback Effect"
 msgstr "力反馈效果"
 
 #: dlls/joy.cpl/joy.rc:67
-#, fuzzy
-#| msgid ""
-#| "Press any button in the controller to activate the chosen effect. The "
-#| "effect direction can be changed with the controller axis."
 msgid ""
 "Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
-msgstr "在控制器上按任意键以激活选中的效果。可根据控制器轴改变效果的方向。"
+msgstr ""
+"按住游戏控制器上的任意按键即可触发选中的效果，效果方向可通过控制器摇杆调整。"
 
 #: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
@@ -3891,7 +3874,7 @@ msgstr "震动"
 
 #: dlls/joy.cpl/joy.rc:106
 msgid "Windows.Gaming.Input"
-msgstr ""
+msgstr "Windows.Gaming.Input"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4005,15 +3988,15 @@ msgstr "条件编译已关闭"
 msgid "Expected '@'"
 msgstr "期望 '@'"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript 编译错误"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:98
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 运行时错误"
 
-#: dlls/jscript/jscript.rc:94 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "未知运行时错误"
 
@@ -4026,10 +4009,8 @@ msgid "Function expected"
 msgstr "期望得到函数"
 
 #: dlls/jscript/jscript.rc:55
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'[object]' is not a string object"
-msgstr "'[object]' 不是日期对象"
+msgstr "'[object]' 不是字符串对象"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4100,10 +4081,8 @@ msgid "Precision is out of range"
 msgstr "精度超出范围"
 
 #: dlls/jscript/jscript.rc:74
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Array or arguments object expected"
-msgstr "期望得到 Array 对象"
+msgstr "期望得到 array 或参数对象"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -4139,35 +4118,55 @@ msgstr "无法重定义不可配置的属性 '|'"
 msgid "Cannot modify non-writable property '|'"
 msgstr "无法更改不可写的属性 '|'"
 
+#: dlls/jscript/jscript.rc:84
+msgid "Typed array constructor argument is invalid"
+msgstr "类型化 array 构造函数参数无效"
+
 #: dlls/jscript/jscript.rc:83
+msgid "'this' is not a typed array object"
+msgstr "'this' 不是类型化 array 对象"
+
+#: dlls/jscript/jscript.rc:85
+msgid "Invalid offset/length when creating typed array"
+msgstr "创建类型化 array 时偏移量或长度无效"
+
+#: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr "类型化 array subarray 方法的起始或结束值无效"
+
+#: dlls/jscript/jscript.rc:87
+msgid "Invalid source in typed array set"
+msgstr "类型化 array set 的源参数无效"
+
+#: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
 msgstr "'this' 不是 DataView 对象"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr "未指定 DataView 方法所必需的参数偏移量或值"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView 操作访问超出指定的缓冲区长度"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView 构造函数参数偏移量无效"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
 msgstr "'this' 不是 | 对象"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:93
 msgid "'key' is not an object"
 msgstr "'key' 不是一个对象"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
 msgstr "期望得到 ArrayBuffer 对象"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
 msgstr "属性不能同时包含存取器和值"
 
@@ -9557,11 +9556,31 @@ msgstr "不明来源"
 msgid "the program which created it"
 msgstr "不明应用程序"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
 msgstr "正在扫描"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:58
+msgid "Manufacturer:"
+msgstr "制造商:"
+
+#: dlls/sane.ds/sane.rc:60
+msgid "Product family:"
+msgstr "产品系列:"
+
+#: dlls/sane.ds/sane.rc:62
+msgid "Product name:"
+msgstr "产品名称:"
+
+#: dlls/sane.ds/sane.rc:64
+msgid "Resolution:"
+msgstr "分辨率:"
+
+#: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "页"
+
+#: dlls/sane.ds/sane.rc:68
 msgid "SCANNING... Please Wait"
 msgstr "正在扫描... 请稍候"
 
@@ -9590,6 +9609,35 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr "线条图像"
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "未知"
+
+#: dlls/sane.ds/sane.rc:46
+msgid ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+msgstr "自动送稿器为空。请放入需要扫描的纸张。"
+
+#: dlls/sane.ds/sane.rc:47
+msgid ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+msgstr "扫描仪报告出现卡纸，请检查设备显示器获取更多信息。"
+
+#: dlls/sane.ds/sane.rc:48
+msgid "The scanner cover is open. Please close the scanner."
+msgstr "扫描仪顶盖未关闭，请关闭。"
+
+#: dlls/sane.ds/sane.rc:49
+msgid "The scanner is busy. Try again later."
+msgstr "扫描仪忙，请稍后再试。"
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9640,10 +9688,6 @@ msgstr "从此处复制厂商文件:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "需要 %2 上的文件“%1”"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "未知"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -10531,7 +10575,7 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " 秒"
 
-#: dlls/twain_32/twain.rc:29
+#: dlls/twaindsm/twain.rc:29
 msgid "Select Source"
 msgstr "选择来源"
 
@@ -12464,53 +12508,45 @@ msgid "Install"
 msgstr "安装"
 
 #: dlls/urlmon/urlmon.rc:58
-#, fuzzy
-#| msgid "Local Port"
 msgid "Local intranet"
-msgstr "本地端口"
+msgstr "本地内部网"
 
 #: dlls/urlmon/urlmon.rc:60
-#, fuzzy
-#| msgid "Trusted Publishers"
 msgid "Trusted sites"
-msgstr "已信任的发布者"
+msgstr "已信任的站点"
 
 #: dlls/urlmon/urlmon.rc:62
-#, fuzzy
-#| msgid "Ethernet"
 msgid "Internet"
-msgstr "以太网"
+msgstr "互联网"
 
 #: dlls/urlmon/urlmon.rc:64
 msgid "Restricted sites"
-msgstr ""
+msgstr "已限制的站点"
 
 #: dlls/urlmon/urlmon.rc:57
-#, fuzzy
-#| msgid "My Computer"
 msgid "Your computer"
-msgstr "我的电脑"
+msgstr "您的电脑"
 
 #: dlls/urlmon/urlmon.rc:59
 msgid ""
 "This zone contains all Web sites that are on your organization's intranet."
-msgstr ""
+msgstr "此区域包含您组织内部网的所有网站。"
 
 #: dlls/urlmon/urlmon.rc:61
 msgid ""
 "This zone contains Web sites that you trust not to damage your computer or "
 "data."
-msgstr ""
+msgstr "该区域包含您认为不会损坏您计算机或数据的网站。"
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
-msgstr ""
+msgid "This zone contains all Web sites you haven't placed in other zones."
+msgstr "该区域包含所有您未放置到其他区域的网站。"
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
 "This zone contains Web sites that could potentially damage your computer or "
 "data."
-msgstr ""
+msgstr "该区域包含可能损坏您计算机或数据的网站。"
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -14531,10 +14567,12 @@ msgid "End of file"
 msgstr "文件尾"
 
 #: programs/cmd/cmd.rc:410
-#, fuzzy
-#| msgid "%1!d! file(s) copied\n"
 msgid "%t%1!u! file(s) copied\n"
-msgstr "已复制 %1!d! 个文件\n"
+msgstr "已复制 %t%1!u! 个文件\n"
+
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
+msgid "File cannot be copied onto itself.\n"
+msgstr "文件无法被复制到自身。\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -15154,10 +15192,8 @@ msgid "&Save\tCtrl+S"
 msgstr "保存(&S)\tCtrl+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "另存为..."
+msgstr "另存为...(&A)"
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
@@ -15189,10 +15225,8 @@ msgid "&Paste\tCtrl+V"
 msgstr "粘贴(&P)\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
-msgstr "删除(&D)\tDel"
+msgstr "删除(&L)\tDel"
 
 #: programs/notepad/notepad.rc:49 programs/regedit/regedit.rc:62
 #: programs/regedit/regedit.rc:109 programs/wordpad/wordpad.rc:53
@@ -15200,10 +15234,8 @@ msgid "&Find...\tCtrl+F"
 msgstr "查找(&F)...\tCtrl+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
-msgstr "找下一个(&N)\tF3"
+msgstr "查找下一个(&N)\tF3"
 
 #: programs/notepad/notepad.rc:51 programs/wordpad/wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
@@ -15214,16 +15246,12 @@ msgid "&Go To...\tCtrl+G"
 msgstr "跳转到(&G)...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
 msgstr "全选(&A)\tCtrl+A"
 
 #: programs/notepad/notepad.rc:55
-#, fuzzy
-#| msgid "&Time/Date\tF5"
 msgid "Time/&Date\tF5"
-msgstr "插入日期/时间(&T)\tF5"
+msgstr "插入日期/时间(&D)\tF5"
 
 #: programs/notepad/notepad.rc:57 programs/wordpad/wordpad.rc:82
 msgid "F&ormat"
@@ -15231,7 +15259,7 @@ msgstr "格式(&O)"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "自动换行(&W)"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -18148,37 +18176,33 @@ msgstr "任务"
 
 #: programs/timeout/timeout.rc:28
 msgid "Usage: timeout /T <timeout> [</NOBREAK>]\n"
-msgstr ""
+msgstr "用法: timeout /T <timeout> [</NOBREAK>]\n"
 
 #: programs/timeout/timeout.rc:29
-#, fuzzy
-#| msgid "FINDSTR: Bad command line\n"
 msgid "TIMEOUT: Bad command line\n"
-msgstr "FINDSTR: 命令行无效\n"
+msgstr "TIMEOUT: 命令行无效\n"
 
 #: programs/timeout/timeout.rc:30
 msgid "waiting since %d sec. "
-msgstr ""
+msgstr "已等待 %d 秒。"
 
 #: programs/timeout/timeout.rc:31
 msgid "press CTRL+C..."
-msgstr ""
+msgstr "请按 CTRL+C 中断..."
 
 #: programs/timeout/timeout.rc:32
-#, fuzzy
-#| msgid "Press any key to continue... "
 msgid "press a key to continue..."
 msgstr "请按任意键继续..."
 
 #: programs/timeout/timeout.rc:33
 msgid "ERROR: not possible to redirect input\n"
-msgstr ""
+msgstr "错误: 不能重定向输入\n"
 
 #: programs/timeout/timeout.rc:34
 msgid ""
 "ERROR: Timeout value out of range or invalid number. Valid range is -1 to "
 "99999.\n"
-msgstr ""
+msgstr "错误: 超时值超出范围或为无效数值。有效范围为 -1 到 99999。\n"
 
 #: programs/uninstaller/uninstaller.rc:29
 msgid "Wine Application Uninstaller"
@@ -18498,10 +18522,8 @@ msgid "Voice input device:"
 msgstr "语音输入设备:"
 
 #: programs/winecfg/winecfg.rc:277
-#, fuzzy
-#| msgid "Output device:"
 msgid "MIDI output device:"
-msgstr "输出设备:"
+msgstr "MIDI 输出设备:"
 
 #: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
@@ -19347,7 +19369,7 @@ msgstr "请提供命令\n"
 
 #: programs/wmic/wmic.rc:33
 msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
-msgstr ""
+msgstr "实例用法: wmic 别名 get 属性[,属性2,...]\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -19647,10 +19669,6 @@ msgstr "放大"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "缩小"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "页"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

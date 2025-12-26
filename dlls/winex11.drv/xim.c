@@ -330,6 +330,7 @@ void X11DRV_NotifyIMEStatus( HWND hwnd, UINT status )
     }
 
     if (!status) XFree( XmbResetIC( xic ) );
+    XFlush( x11drv_thread_data()->display );
 }
 
 /***********************************************************************
@@ -552,6 +553,7 @@ BOOL X11DRV_SetIMECompositionRect( HWND hwnd, RECT rect )
         XFree( attr );
     }
 
+    XFlush( data->display );
     release_win_data( data );
     return TRUE;
 }

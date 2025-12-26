@@ -95,7 +95,7 @@ msgstr "Support Information"
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
 #: dlls/shell32/shell32.rc:278 dlls/shell32/shell32.rc:302
 #: dlls/shell32/shell32.rc:324 dlls/shell32/shell32.rc:343
-#: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
+#: dlls/shlwapi/shlwapi.rc:44 dlls/twaindsm/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
@@ -196,12 +196,12 @@ msgstr "&Install"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:70
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
 #: dlls/shell32/shell32.rc:344 dlls/shlwapi/shlwapi.rc:45
-#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
+#: dlls/twaindsm/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
 #: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
@@ -736,7 +736,7 @@ msgid "Scr&ipt:"
 msgstr "Scr&ipt:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Colour"
 
@@ -1090,7 +1090,8 @@ msgstr "Purple"
 msgid "Teal"
 msgstr "Teal"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Grey"
 
@@ -4037,15 +4038,15 @@ msgstr "Conditional compilation is turned off"
 msgid "Expected '@'"
 msgstr "Expected '@'"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript compilation error"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:98
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime error"
 
-#: dlls/jscript/jscript.rc:94 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Unknown runtime error"
 
@@ -4169,35 +4170,55 @@ msgstr "Cannot redefine non-configurable property '|'"
 msgid "Cannot modify non-writable property '|'"
 msgstr "Cannot modify non-writable property '|'"
 
+#: dlls/jscript/jscript.rc:84
+msgid "Typed array constructor argument is invalid"
+msgstr "Typed array constructor argument is invalid"
+
 #: dlls/jscript/jscript.rc:83
+msgid "'this' is not a typed array object"
+msgstr "'this' is not a typed array object"
+
+#: dlls/jscript/jscript.rc:85
+msgid "Invalid offset/length when creating typed array"
+msgstr "Invalid offset/length when creating typed array"
+
+#: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr "Invalid begin/end value in typed array subarray method"
+
+#: dlls/jscript/jscript.rc:87
+msgid "Invalid source in typed array set"
+msgstr "Invalid source in typed array set"
+
+#: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
 msgstr "'this' is not a DataView object"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr "Required argument offset or value in DataView method is not specified"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView operation access beyond specified buffer length"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView constructor argument offset is invalid"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
 msgstr "'this' is not a | object"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:93
 msgid "'key' is not an object"
 msgstr "'key' is not an object"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
 msgstr "ArrayBuffer object expected"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
 msgstr "Property cannot have both accessors and a value"
 
@@ -4852,7 +4873,7 @@ msgstr "Auto data segment exceeds 64k.\n"
 
 #: dlls/kernelbase/winerror.mc:793
 msgid "Ring 2 segment must be movable.\n"
-msgstr "Ring 2 segment must be moveable.\n"
+msgstr "Ring 2 segment must be movable.\n"
 
 #: dlls/kernelbase/winerror.mc:798
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -9186,7 +9207,7 @@ msgstr "sizeable"
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
 msgid "movable"
-msgstr "moveable"
+msgstr "movable"
 
 #: dlls/oleacc/oleacc.rc:117
 msgctxt "object state"
@@ -9361,7 +9382,7 @@ msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
-"These are the initialization properties for this type of data. To edit a "
+"These are the initialisation properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 
 #: dlls/oledb32/version.rc:112
@@ -9603,11 +9624,31 @@ msgstr "Unknown Source"
 msgid "the program which created it"
 msgstr "the program which created it"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
 msgstr "Scanning"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:58
+msgid "Manufacturer:"
+msgstr "Manufacturer:"
+
+#: dlls/sane.ds/sane.rc:60
+msgid "Product family:"
+msgstr "Product family:"
+
+#: dlls/sane.ds/sane.rc:62
+msgid "Product name:"
+msgstr "Product name:"
+
+#: dlls/sane.ds/sane.rc:64
+msgid "Resolution:"
+msgstr "Resolution:"
+
+#: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Page"
+
+#: dlls/sane.ds/sane.rc:68
 msgid "SCANNING... Please Wait"
 msgstr "SCANNING... Please Wait"
 
@@ -9636,6 +9677,39 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr "LineArt"
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Unknown"
+
+#: dlls/sane.ds/sane.rc:46
+msgid ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+msgstr ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+
+#: dlls/sane.ds/sane.rc:47
+msgid ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+msgstr ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+
+#: dlls/sane.ds/sane.rc:48
+msgid "The scanner cover is open. Please close the scanner."
+msgstr "The scanner cover is open. Please close the scanner."
+
+#: dlls/sane.ds/sane.rc:49
+msgid "The scanner is busy. Try again later."
+msgstr "The scanner is busy. Try again later."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9688,10 +9762,6 @@ msgstr "Copy manufacturer's files from:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "The file '%1' on %2 is needed"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Unknown"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -10588,7 +10658,7 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sec"
 
-#: dlls/twain_32/twain.rc:29
+#: dlls/twaindsm/twain.rc:29
 msgid "Select Source"
 msgstr "Select Source"
 
@@ -12544,7 +12614,7 @@ msgstr "Your computer"
 msgid ""
 "This zone contains all Web sites that are on your organization's intranet."
 msgstr ""
-"This zone contains all Web sites that are on your organization's intranet."
+"This zone contains all Web sites that are on your organisation's intranet."
 
 #: dlls/urlmon/urlmon.rc:61
 msgid ""
@@ -12555,8 +12625,8 @@ msgstr ""
 "data."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
-msgstr "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
+msgstr "This zone contains all Web sites you haven't placed in other zones."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
@@ -13192,7 +13262,7 @@ msgid ""
 "device name is spelled correctly."
 msgstr ""
 "Cannot find the specified device. Make sure it is installed and that the "
-"device name is spelled correctly."
+"device name is spelt correctly."
 
 #: dlls/winmm/winmm.rc:87
 msgid ""
@@ -14253,8 +14323,8 @@ msgstr ""
 "/d directory   Start the program in the specified directory.\n"
 "/b             Don't create a new console for the program.\n"
 "/i             Start the program with fresh environment variables.\n"
-"/min           Start the program minimized.\n"
-"/max           Start the program maximized.\n"
+"/min           Start the program minimised.\n"
+"/max           Start the program maximised.\n"
 "/low           Start the program in the idle priority class.\n"
 "/normal        Start the program in the normal priority class.\n"
 "/high          Start the program in the high priority class.\n"
@@ -14716,6 +14786,10 @@ msgstr "End of file"
 #: programs/cmd/cmd.rc:410
 msgid "%t%1!u! file(s) copied\n"
 msgstr "%t%1!u! file(s) copied\n"
+
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
+msgid "File cannot be copied onto itself.\n"
+msgstr "File cannot be copied onto itself.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -17340,7 +17414,7 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
-"regsvr32: Invalid or unrecognized switch [%1]\n"
+"regsvr32: Invalid or unrecognised switch [%1]\n"
 "\n"
 
 #: programs/regsvr32/regsvr32.rc:43
@@ -17426,8 +17500,8 @@ msgstr ""
 "/d directory   Start the program in the specified directory.\n"
 "/b             Don't create a new console for the program.\n"
 "/i             Start the program with fresh environment variables.\n"
-"/min           Start the program minimized.\n"
-"/max           Start the program maximized.\n"
+"/min           Start the program minimised.\n"
+"/max           Start the program maximised.\n"
 "/low           Start the program in the idle priority class.\n"
 "/normal        Start the program in the normal priority class.\n"
 "/high          Start the program in the high priority class.\n"
@@ -19870,10 +19944,6 @@ msgstr "Zoom in"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Zoom out"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Page"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

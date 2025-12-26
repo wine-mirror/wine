@@ -30,7 +30,6 @@
 #include <stdarg.h>
 
 #include "wine/list.h"
-#include "wine/heap.h"
 
 #include "windef.h"
 #include "winbase.h"

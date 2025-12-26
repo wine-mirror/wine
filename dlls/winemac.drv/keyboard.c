@@ -1089,7 +1089,8 @@ UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_s
     WORD scan = HIWORD(lparam) & 0x1ff, vkey = LOWORD(wparam);
     BOOL repeat = !!(lparam >> 30), pressed = !(lparam >> 31);
     unsigned int flags;
-    int keyc, done = 0;
+    int keyc;
+    UINT ret;
 
     TRACE("himc %p, scan %#x, vkey %#x, repeat %u, pressed %u\n",
           himc, scan, vkey, repeat, pressed);
@@ -1138,19 +1139,10 @@ UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_s
     if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey)) return 0;
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
-
-    if (!thread_data->ime_done_event)
-    {
-        NTSTATUS status;
-        status = NtCreateEvent(&thread_data->ime_done_event, EVENT_ALL_ACCESS, NULL,
-                               SynchronizationEvent, FALSE);
-        if (status != STATUS_SUCCESS) ERR("NtCreateEvent call failed.\n");
-    }
-
-    macdrv_ime_process_key(keyc, flags, repeat, himc, &done, thread_data->ime_done_event);
-    NtUserMsgWaitForMultipleObjectsEx(1, &thread_data->ime_done_event, INFINITE, 0, 0);
-
-    return done > 0;
+    ret = (UINT)macdrv_ime_process_key(keyc, flags, repeat, himc);
+    NtUserMsgWaitForMultipleObjectsEx(0, NULL, 0, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
+    TRACE("returning %u\n", ret);
+    return ret;
 }
 
 

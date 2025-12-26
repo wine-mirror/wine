@@ -79,8 +79,6 @@ CRITICAL_SECTION DSOUND_renderers_lock = { &DSOUND_renderers_lock_debug, -1, 0, 
 GUID *DSOUND_renderer_guids;
 GUID *DSOUND_capture_guids;
 
-const WCHAR wine_vxd_drv[] = L"winemm.vxd";
-
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_hel_buflen = 32768 * 2;
 
@@ -408,6 +406,7 @@ static BOOL send_device(IMMDevice *device, GUID *guid,
     PROPVARIANT pv;
     BOOL keep_going;
     HRESULT hr;
+    WCHAR *id;
 
     PropVariantInit(&pv);
 
@@ -434,8 +433,10 @@ static BOOL send_device(IMMDevice *device, GUID *guid,
     TRACE("Calling back with %s (%s)\n", wine_dbgstr_guid(guid),
             wine_dbgstr_w(pv.pwszVal));
 
-    keep_going = cb(guid, pv.pwszVal, wine_vxd_drv, user);
+    hr = IMMDevice_GetId(device, &id);
+    keep_going = cb(guid, pv.pwszVal, id, user);
 
+    CoTaskMemFree(id);
     PropVariantClear(&pv);
     IPropertyStore_Release(ps);
 

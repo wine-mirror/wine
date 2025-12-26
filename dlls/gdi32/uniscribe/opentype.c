@@ -32,7 +32,6 @@
 #include "usp10_internal.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
@@ -635,7 +634,7 @@ static VOID *load_CMAP_format12_table(HDC hdc, ScriptCache *psc)
         length = NtGdiGetFontData(hdc, CMAP_TAG , 0, NULL, 0);
         if (length != GDI_ERROR)
         {
-            psc->CMAP_Table = heap_alloc(length);
+            psc->CMAP_Table = malloc(length);
             NtGdiGetFontData(hdc, CMAP_TAG , 0, psc->CMAP_Table, length);
             TRACE("Loaded cmap table of %i bytes\n",length);
         }
@@ -2837,7 +2836,7 @@ static void usp10_language_add_feature_list(LoadedLanguage *language, char table
         loaded_feature->tableType = table_type;
         loaded_feature->feature = feature;
         loaded_feature->lookup_count = GET_BE_WORD(feature->LookupCount);
-        loaded_feature->lookups = heap_calloc(loaded_feature->lookup_count, sizeof(*loaded_feature->lookups));
+        loaded_feature->lookups = calloc(loaded_feature->lookup_count, sizeof(*loaded_feature->lookups));
         for (j = 0; j < loaded_feature->lookup_count; ++j)
             loaded_feature->lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
     }

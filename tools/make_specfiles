@@ -143,6 +143,10 @@ my @dll_groups =
   "sppc",
   "slc",
  ],
+ [
+  "shell32",
+  "windows.storage",
+ ],
 );
 
 my $update_flags = 0;

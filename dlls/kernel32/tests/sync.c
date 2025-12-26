@@ -1291,6 +1291,24 @@ static void test_WaitForSingleObject(void)
     LARGE_INTEGER timeout;
     NTSTATUS status;
     DWORD ret;
+    int i;
+    HANDLE waitable_pseudohandles[] =
+    {
+        NtCurrentProcess(),
+        NtCurrentThread(),
+    };
+    HANDLE non_waitable_pseudohandles[4];
+    HANDLE std_handles[] =
+    {
+        (HANDLE)STD_INPUT_HANDLE,
+        (HANDLE)STD_OUTPUT_HANDLE,
+        (HANDLE)STD_ERROR_HANDLE,
+    };
+
+    non_waitable_pseudohandles[0] = (HANDLE)~(ULONG_PTR)2;
+    non_waitable_pseudohandles[1] = GetCurrentProcessToken();
+    non_waitable_pseudohandles[2] = GetCurrentThreadToken();
+    non_waitable_pseudohandles[3] = GetCurrentThreadEffectiveToken();
 
     signaled = CreateEventW(NULL, TRUE, TRUE, NULL);
     nonsignaled = CreateEventW(NULL, TRUE, FALSE, NULL);
@@ -1359,20 +1377,44 @@ static void test_WaitForSingleObject(void)
     ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %ld\n", ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %ld\n", GetLastError());
 
-    /* pseudo handles are allowed in WaitForSingleObject and NtWaitForSingleObject */
-    ret = WaitForSingleObject(GetCurrentProcess(), 100);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %lu\n", ret);
+    /* waitable pseudo-handles are allowed in WaitForSingleObject and NtWaitForSingleObject,
+     * but not in  NtWaitForMultipleObjects, see test_WaitForMultipleObjects */
+    for (i = 0; i < ARRAY_SIZE(waitable_pseudohandles); i++)
+    {
+        ret = WaitForSingleObject(waitable_pseudohandles[i], 0);
+        ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %lu\n", ret);
 
-    ret = WaitForSingleObject(GetCurrentThread(), 100);
-    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %lu\n", ret);
+        timeout.QuadPart = 0;
+        status = pNtWaitForSingleObject(waitable_pseudohandles[i], FALSE, &timeout);
+        ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08lx\n", status);
+    }
 
-    timeout.QuadPart = -1000000;
-    status = pNtWaitForSingleObject(GetCurrentProcess(), FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08lx\n", status);
+    /* non-waitable pseudo-handles return STATUS_INVALID_HANDLE */
+    for (i = 0; i < ARRAY_SIZE(non_waitable_pseudohandles); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = WaitForSingleObject(non_waitable_pseudohandles[i], 0);
+        ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %ld\n", ret);
+        ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
-    timeout.QuadPart = -1000000;
-    status = pNtWaitForSingleObject(GetCurrentThread(), FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08lx\n", status);
+        status = pNtWaitForSingleObject(non_waitable_pseudohandles[i], FALSE, NULL);
+        todo_wine_if((non_waitable_pseudohandles[i] == GetCurrentProcessToken() ||
+                      non_waitable_pseudohandles[i] == GetCurrentThreadEffectiveToken()) &&
+                     NT_ERROR(status))
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    }
+
+    /* std handles are only allowed in WaitForSingleObject and not NtWaitForSingleObject */
+    for (i = 0; i < ARRAY_SIZE(std_handles); i++)
+    {
+        ret = WaitForSingleObject(std_handles[i], 0);
+        ok(ret == WAIT_OBJECT_0 || ret == WAIT_TIMEOUT,
+           "expected WAIT_OBJECT_0 or WAIT_TIMEOUT), got %lu, GetLastError()=%lu\n",
+           ret, GetLastError());
+
+        status = pNtWaitForSingleObject(std_handles[i], FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    }
 
     CloseHandle(signaled);
     CloseHandle(nonsignaled);
@@ -1380,15 +1422,28 @@ static void test_WaitForSingleObject(void)
 
 static void test_WaitForMultipleObjects(void)
 {
-    LARGE_INTEGER timeout;
     NTSTATUS status;
     DWORD r;
     int i;
     HANDLE maxevents[MAXIMUM_WAIT_OBJECTS];
+    HANDLE pseudohandles[6];
+    HANDLE std_handles[] =
+    {
+        (HANDLE)STD_INPUT_HANDLE,
+        (HANDLE)STD_OUTPUT_HANDLE,
+        (HANDLE)STD_ERROR_HANDLE,
+    };
+
+    pseudohandles[0] = GetCurrentProcess();
+    pseudohandles[1] = GetCurrentThread();
+    pseudohandles[2] = (HANDLE)~(ULONG_PTR)2;
+    pseudohandles[3] = GetCurrentProcessToken();
+    pseudohandles[4] = GetCurrentThreadToken();
+    pseudohandles[5] = GetCurrentThreadEffectiveToken();
 
     /* create the maximum number of events and make sure
      * we can wait on that many */
-    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
+    for (i = 0; i < MAXIMUM_WAIT_OBJECTS; i++)
     {
         maxevents[i] = CreateEventW(NULL, i==0, TRUE, NULL);
         ok( maxevents[i] != 0, "should create enough events\n");
@@ -1400,7 +1455,7 @@ static void test_WaitForMultipleObjects(void)
     r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
     ok( r == WAIT_OBJECT_0, "should signal handle #0 first, got %ld\n", r);
     ok(ResetEvent(maxevents[0]), "ResetEvent\n");
-    for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
+    for (i = 1; i < MAXIMUM_WAIT_OBJECTS; i++)
     {
         /* the lowest index is checked first and remaining events are untouched */
         r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
@@ -1408,7 +1463,7 @@ static void test_WaitForMultipleObjects(void)
     }
 
     /* run same test with Nt* call */
-    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
+    for (i = 0; i < MAXIMUM_WAIT_OBJECTS; i++)
         SetEvent(maxevents[i]);
 
     /* a manual-reset event remains signaled, an auto-reset event is cleared */
@@ -1417,41 +1472,87 @@ static void test_WaitForMultipleObjects(void)
     status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, WaitAny, FALSE, NULL);
     ok(status == STATUS_WAIT_0, "should signal handle #0 first, got %08lx\n", status);
     ok(ResetEvent(maxevents[0]), "ResetEvent\n");
-    for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
+    for (i = 1; i < MAXIMUM_WAIT_OBJECTS; i++)
     {
         /* the lowest index is checked first and remaining events are untouched */
         status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, WaitAny, FALSE, NULL);
         ok(status == STATUS_WAIT_0 + i, "should signal handle #%d first, got %08lx\n", i, status);
     }
 
-    for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
-        if (maxevents[i]) CloseHandle(maxevents[i]);
+    CloseHandle(maxevents[0]);
 
-    /* in contrast to WaitForSingleObject, pseudo handles are not allowed in
+    /* in contrast to WaitForSingleObject, all pseudo-handles are not allowed in
      * WaitForMultipleObjects and NtWaitForMultipleObjects */
-    maxevents[0] = GetCurrentProcess();
-    SetLastError(0xdeadbeef);
-    r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
-    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
-                 "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
+    for (i = 0; i < ARRAY_SIZE(pseudohandles); i++)
+    {
+        maxevents[0] = pseudohandles[i];
+        SetLastError(0xdeadbeef);
+        r = WaitForMultipleObjects(1, maxevents, FALSE, 0);
+        ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
-    maxevents[0] = GetCurrentThread();
-    SetLastError(0xdeadbeef);
-    r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
-    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
-    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
-                 "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
+        status = pNtWaitForMultipleObjects(1, maxevents, WaitAny, FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
 
-    timeout.QuadPart = -1000000;
-    maxevents[0] = GetCurrentProcess();
-    status = pNtWaitForMultipleObjects(1, maxevents, WaitAny, FALSE, &timeout);
-    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+        /* also not allowed with a wait count greater than 1 with both WaitAny and WaitAll */
+        SetLastError(0xdeadbeef);
+        r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
+        ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, 0);
+        ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
 
-    timeout.QuadPart = -1000000;
-    maxevents[0] = GetCurrentThread();
-    status = pNtWaitForMultipleObjects(1, maxevents, WaitAny, FALSE, &timeout);
-    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+        status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, WaitAny, FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+        status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, WaitAll, FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+
+        /* irrespective of the index that contains the pseudo handle for both wait types */
+        maxevents[0] = maxevents[MAXIMUM_WAIT_OBJECTS - 1];
+        maxevents[MAXIMUM_WAIT_OBJECTS - 1] = pseudohandles[i];
+        SetLastError(0xdeadbeef);
+        r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, FALSE, 0);
+        ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        r = WaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, 0);
+        ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %lu\n", r);
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "expected ERROR_INVALID_HANDLE, got %lu\n", GetLastError());
+
+        status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, WaitAny, FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+        status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, WaitAll, FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+        maxevents[MAXIMUM_WAIT_OBJECTS - 1] = maxevents[0];
+    }
+
+    /* Similar to WaitForSingleObject std handles are only allowed in WaitForMultipleObjects and
+     * not NtWaitForMultipleObjects (for brevity we only test single count waits here) */
+    for (i = 0; i < ARRAY_SIZE(std_handles); i++)
+    {
+        maxevents[0] = std_handles[i];
+        SetLastError(0xdeadbeef);
+        r = WaitForMultipleObjects(1, maxevents, FALSE, 0);
+        ok(r == WAIT_OBJECT_0 || r == WAIT_TIMEOUT,
+           "expected WAIT_OBJECT_0 or WAIT_TIMEOUT), got %lu, GetLastError()=%lu\n",
+           r, GetLastError());
+
+        status = pNtWaitForMultipleObjects(1, maxevents, WaitAny, FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+
+        status = pNtWaitForMultipleObjects(1, maxevents, WaitAll, FALSE, NULL);
+        ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+    }
+
+    for (i = 1; i < MAXIMUM_WAIT_OBJECTS; i++)
+        if (maxevents[i]) CloseHandle(maxevents[i]);
 }
 
 static BOOL g_initcallback_ret, g_initcallback_called;

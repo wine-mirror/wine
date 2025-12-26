@@ -48,6 +48,7 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "v6util.h"
 #include "msg.h"
 
 #define expect(expected,got) expect_(__LINE__, expected, got)
@@ -603,7 +604,7 @@ static void test_updown_pos32(void)
     DestroyWindow(updown);
 }
 
-static void test_updown_buddy(void)
+static void test_updown_buddy(BOOL is_v6)
 {
     HWND updown, buddyReturn, buddy;
     RECT rect, rect2;
@@ -646,7 +647,7 @@ static void test_updown_buddy(void)
     updown= create_updown_control(UDS_ALIGNRIGHT | UDS_ARROWKEYS, buddy);
     ok(proc != (WNDPROC)GetWindowLongPtrA(buddy, GWLP_WNDPROC), "Subclassing expected\n");
 
-    if (pSetWindowSubclass)
+    if (pSetWindowSubclass && ! is_v6)
     {
         /* updown uses subclass helpers for buddy on >5.8x systems */
         ok(GetPropA(buddy, "CC32SubclassInfo") != NULL, "Expected CC32SubclassInfo property\n");
@@ -1064,6 +1065,46 @@ static void test_UDS_SETBUDDY(void)
     DestroyWindow(updown);
 }
 
+static void test_accel(void)
+{
+    UDACCEL accel[4];
+    HWND updown;
+    int r;
+
+    updown = create_updown_control(UDS_ALIGNRIGHT, g_edit);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    r = SendMessageA(updown, UDM_GETACCEL, 0, (LPARAM)accel);
+    expect(3, r);
+
+    r = SendMessageA(updown, UDM_GETACCEL, 1, (LPARAM)accel);
+    expect(3, r);
+    expect(0, accel[0].nSec);
+    expect(1, accel[0].nInc);
+
+    r = SendMessageA(updown, UDM_GETACCEL, 4, (LPARAM)accel);
+    expect(3, r);
+    expect(0, accel[0].nSec);
+    expect(1, accel[0].nInc);
+    expect(2, accel[1].nSec);
+    expect(5, accel[1].nInc);
+    expect(5, accel[2].nSec);
+    expect(20, accel[2].nInc);
+
+    accel[0].nSec = 0;
+    accel[0].nInc = 5;
+    r = SendMessageA(updown, UDM_SETACCEL, 1, (LPARAM)accel);
+    expect(TRUE, r);
+
+    r = SendMessageA(updown, UDM_GETACCEL, 3, (LPARAM)accel);
+    expect(1, r);
+    expect(0, accel[0].nSec);
+    expect(5, accel[0].nInc);
+
+    DestroyWindow(updown);
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -1078,6 +1119,9 @@ static void init_functions(void)
 
 START_TEST(updown)
 {
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
+
     init_functions();
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1092,15 +1136,44 @@ START_TEST(updown)
     test_updown_create();
     test_updown_pos();
     test_updown_pos32();
-    test_updown_buddy();
+    test_updown_buddy(FALSE);
     test_updown_base();
     test_updown_unicode();
     test_UDS_SETBUDDY();
     test_UDS_SETBUDDYINT();
     test_CreateUpDownControl();
     test_updown_pos_notifications();
+    test_accel();
+
+    DestroyWindow(g_edit);
+
+    if (!load_v6_module(&ctx_cookie, &hCtx))
+    {
+        DestroyWindow(parent_wnd);
+        return;
+    }
+
+    init_functions();
+
+    g_edit = create_edit_control();
+    ok(g_edit != NULL, "Failed to create edit control\n");
+
+    /* comctl32 version 6 tests start here */
+    test_updown_create();
+    test_updown_pos();
+    test_updown_pos32();
+    test_updown_buddy(TRUE);
+    test_updown_base();
+    test_updown_unicode();
+    test_UDS_SETBUDDY();
+    test_UDS_SETBUDDYINT();
+    test_CreateUpDownControl();
+    test_updown_pos_notifications();
+    test_accel();
 
     uninit_winevent_hook();
+
+    unload_v6_module(ctx_cookie, hCtx);
 
     DestroyWindow(g_edit);
     DestroyWindow(parent_wnd);

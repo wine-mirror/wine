@@ -19,6 +19,7 @@
  */
 
 #import <AppKit/AppKit.h>
+#import <QuartzCore/QuartzCore.h>
 
 
 @class WineEventQueue;
@@ -81,6 +82,8 @@
     BOOL ignore_windowDeminiaturize;
     BOOL ignore_windowResize;
     BOOL fakingClose;
+
+    CAShapeLayer* contentViewMaskLayer;
 }
 
 @property (retain, readonly, nonatomic) WineEventQueue* queue;
@@ -107,6 +110,6 @@
 
     - (void) updateForCursorClipping;
 
-    - (void) setRetinaMode:(int)mode;
+    - (void) setRetinaMode:(BOOL)mode;
 
 @end

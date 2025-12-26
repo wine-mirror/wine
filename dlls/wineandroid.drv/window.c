@@ -515,7 +515,7 @@ static int process_events( DWORD mask )
         next = LIST_ENTRY( event_queue.next, struct java_event, entry );
     }
     current_event = previous;
-    return !check_fd_events( event_pipe[0], POLLIN );
+    return list_empty( &event_queue ) && !check_fd_events( event_pipe[0], POLLIN );
 }
 
 
@@ -1056,7 +1056,7 @@ BOOL ANDROID_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_r
 /***********************************************************************
  *           ANDROID_WindowPosChanged
  */
-void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
                                const struct window_rects *new_rects, struct window_surface *surface )
 {
     struct android_win_data *data;

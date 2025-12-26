@@ -740,7 +740,7 @@ static HRESULT activate_stream(SpatialAudioStreamImpl *stream)
     stream->stream_fmtex.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
     hr = IAudioClient_Initialize(stream->client, AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
             period, 0, &stream->stream_fmtex.Format, NULL);
     if(FAILED(hr)){
         WARN("Initialize failed: %08lx\n", hr);

@@ -561,7 +561,6 @@ static void test_conditionals(void)
         return;
     device = test_context.device;
 
-    todo_wine
     ps_code = compile_shader(ps_if_source, "ps_2_0", 0);
     if (ps_code)
     {
@@ -571,15 +570,15 @@ static void test_conditionals(void)
         for (i = 0; i < 200; i += 40)
         {
             v = get_readback_vec4(&rb, i, 0);
-            todo_wine ok(compare_vec4(v, 0.9f, 0.8f, 0.7f, 0.6f, 0),
-                         "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
+            ok(compare_vec4(v, 0.9f, 0.8f, 0.7f, 0.6f, 0),
+                    "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
         }
 
         for (i = 240; i < 640; i += 40)
         {
             v = get_readback_vec4(&rb, i, 0);
-            todo_wine ok(compare_vec4(v, 0.1f, 0.2f, 0.3f, 0.4f, 0),
-                         "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
+            ok(compare_vec4(v, 0.1f, 0.2f, 0.3f, 0.4f, 0),
+                    "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v->x, v->y, v->z, v->w);
         }
 
         release_readback(&rb);
@@ -1193,6 +1192,7 @@ static void check_constant_desc(const char *prefix, const D3DXCONSTANT_DESC *des
     ok(desc->Elements == expect->Elements, "%s: got Elements %u.\n", prefix, desc->Elements);
     ok(desc->StructMembers == expect->StructMembers, "%s: got StructMembers %u.\n", prefix, desc->StructMembers);
     ok(desc->Bytes == expect->Bytes, "%s: got Bytes %u.\n", prefix, desc->Bytes);
+    todo_wine_if(nonzero_defaultvalue)
     ok(!!desc->DefaultValue == nonzero_defaultvalue, "%s: got DefaultValue %p.\n", prefix, desc->DefaultValue);
 }
 
@@ -1287,9 +1287,7 @@ static void test_constant_table(void)
     static const D3DXCONSTANT_DESC expect_fields_j =
         {"a", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 3, 1, 0, 36};
 
-    todo_wine ps_code = compile_shader(source, "ps_2_0", 0);
-    if (!ps_code)
-        return;
+    ps_code = compile_shader(source, "ps_2_0", 0);
 
     hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);

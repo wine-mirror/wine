@@ -1642,11 +1642,7 @@ then
         [AC_CHECK_HEADERS([ft2build.h])
         if test "$ac_cv_header_ft2build_h" = "yes"
         then
-            WINE_CHECK_SONAME(freetype,FT_Init_FreeType,
-                [AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
-                 AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <ft2build.h>
-#include FT_MODULE_H])],
-                [FREETYPE_LIBS=""],[$FREETYPE_LIBS])
+            WINE_CHECK_SONAME(freetype,FT_Init_FreeType,,[FREETYPE_LIBS=""],[$FREETYPE_LIBS])
         else
             FREETYPE_CFLAGS=""
             FREETYPE_LIBS=""
@@ -2430,6 +2426,7 @@ enable_win16=${enable_win16:-i386}
 enable_w32skrnl=${enable_w32skrnl:-$enable_win16}
 enable_wow32=${enable_wow32:-$enable_win16}
 enable_winevdm=${enable_winevdm:-$enable_win16}
+enable_twain_32=${enable_twain_32:-i386}
 
 dnl Disable winetest too if tests are disabled
 enable_winetest=${enable_winetest:-$enable_tests}
@@ -2995,6 +2992,7 @@ WINE_CONFIG_MAKEFILE(dlls/msvcrt20)
 WINE_CONFIG_MAKEFILE(dlls/msvcrt40)
 WINE_CONFIG_MAKEFILE(dlls/msvcrtd)
 WINE_CONFIG_MAKEFILE(dlls/msvcrtd/tests)
+WINE_CONFIG_MAKEFILE(dlls/msvdsp)
 WINE_CONFIG_MAKEFILE(dlls/msvfw32)
 WINE_CONFIG_MAKEFILE(dlls/msvfw32/tests)
 WINE_CONFIG_MAKEFILE(dlls/msvidc32)
@@ -3212,6 +3210,7 @@ WINE_CONFIG_MAKEFILE(dlls/traffic)
 WINE_CONFIG_MAKEFILE(dlls/twain.dll16)
 WINE_CONFIG_MAKEFILE(dlls/twain_32)
 WINE_CONFIG_MAKEFILE(dlls/twain_32/tests)
+WINE_CONFIG_MAKEFILE(dlls/twaindsm)
 WINE_CONFIG_MAKEFILE(dlls/twinapi.appcore)
 WINE_CONFIG_MAKEFILE(dlls/twinapi.appcore/tests)
 WINE_CONFIG_MAKEFILE(dlls/typelib.dll16)
@@ -3259,6 +3258,7 @@ WINE_CONFIG_MAKEFILE(dlls/ver.dll16)
 WINE_CONFIG_MAKEFILE(dlls/version)
 WINE_CONFIG_MAKEFILE(dlls/version/tests)
 WINE_CONFIG_MAKEFILE(dlls/vga)
+WINE_CONFIG_MAKEFILE(dlls/vidreszr)
 WINE_CONFIG_MAKEFILE(dlls/virtdisk)
 WINE_CONFIG_MAKEFILE(dlls/virtdisk/tests)
 WINE_CONFIG_MAKEFILE(dlls/vmm.vxd)

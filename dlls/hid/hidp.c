@@ -1029,3 +1029,93 @@ NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, U
 
     return HIDP_STATUS_SUCCESS;
 }
+
+struct set_data_params
+{
+    HIDP_DATA *data;
+    char *report_buf;
+    BOOL found;
+};
+
+static NTSTATUS set_data( const struct hid_value_caps *caps, void *user )
+{
+    ULONG index_min, index_max, index, lookup, bit, last, mask, bit_count;
+    const struct hid_value_caps *end = caps;
+    struct set_data_params *params = user;
+    HIDP_DATA *data = params->data;
+    unsigned char *report_buf;
+
+    if (!caps->bit_size) return HIDP_STATUS_SUCCESS;
+    if (data->DataIndex < caps->data_index_min) return HIDP_STATUS_SUCCESS;
+    if (data->DataIndex > caps->data_index_max) return HIDP_STATUS_SUCCESS;
+    params->found = TRUE;
+
+    report_buf = (unsigned char *)params->report_buf + caps->start_byte;
+
+    if (HID_VALUE_CAPS_IS_ARRAY( caps ))
+    {
+        if (!(caps->flags & HID_VALUE_CAPS_IS_RANGE)) return HIDP_STATUS_IS_VALUE_ARRAY;
+
+        while (end->flags & HID_VALUE_CAPS_ARRAY_HAS_MORE) end++;
+        index_min = end - caps + 1;
+        index_max = index_min + caps->usage_max - caps->usage_min;
+        lookup = index_min + data->DataIndex - caps->data_index_min;
+
+        for (bit = caps->start_bit, last = bit + caps->report_count * caps->bit_size - 1; bit <= last; bit += 8)
+        {
+            if (!(index = report_buf[bit / 8]) || index < index_min || index > index_max) break;
+            if (!data->RawValue && index == lookup) break;
+        }
+        if (bit > last) return data->RawValue ? HIDP_STATUS_BUFFER_TOO_SMALL : HIDP_STATUS_BUTTON_NOT_PRESSED;
+
+        if (data->RawValue) report_buf[bit / 8] = lookup;
+        else if (report_buf[bit / 8] != lookup) return HIDP_STATUS_BUTTON_NOT_PRESSED;
+        else
+        {
+            while (bit < last) { report_buf[bit / 8] = report_buf[bit / 8 + 1]; bit++; }
+            report_buf[bit / 8] = 0;
+        }
+    }
+    else if (caps->flags & HID_VALUE_CAPS_IS_BUTTON)
+    {
+        bit = caps->start_bit + (data->DataIndex - caps->data_index_min) * caps->bit_size, mask = 1 << (bit % 8);
+
+        if (data->On) report_buf[bit / 8] |= mask;
+        else if (!(report_buf[bit / 8] & mask)) return HIDP_STATUS_BUTTON_NOT_PRESSED;
+        else report_buf[bit / 8] &= ~mask;
+    }
+    else if (caps->report_count == 1)
+    {
+        bit_count = caps->bit_size * caps->report_count;
+        copy_bits( report_buf, (void *)&data->RawValue, bit_count, -caps->start_bit );
+    }
+
+    return HIDP_STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI HidP_SetData( HIDP_REPORT_TYPE report_type, HIDP_DATA *data, ULONG *data_len,
+                              PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
+{
+    struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
+    struct set_data_params params = {.report_buf = report_buf};
+    HIDP_DATA *data_end = data + *data_len;
+    NTSTATUS status = HIDP_STATUS_SUCCESS;
+
+    TRACE( "report_type %d, data %p, data_len %p, preparsed_data %p, report_buf %p, report_len %lu.\n",
+           report_type, data, data_len, preparsed_data, report_buf, report_len );
+
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    for (params.data = data; params.data < data_end; params.data++)
+    {
+        struct caps_filter filter = {.usage_page = USAGE_ANY, .usage = USAGE_ANY, .report_id = report_buf[0]};
+        USHORT limit = -1;
+
+        status = enum_value_caps( preparsed, report_type, report_len, &filter, set_data, &params, &limit );
+        if (status != HIDP_STATUS_SUCCESS || !params.found) break;
+    }
+    *data_len = params.data - data;
+
+    if (!params.found) return HIDP_STATUS_REPORT_DOES_NOT_EXIST;
+    return status;
+}

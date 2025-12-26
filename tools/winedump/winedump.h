@@ -228,7 +228,8 @@ void            dump_data_offset( const unsigned char *ptr, unsigned int size, u
 void            dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
 const char*	get_time_str( unsigned long );
 unsigned int    strlenW( const unsigned short *str );
-void            dump_unicode_str( const unsigned short *str, int len );
+int             dump_strA( const char *str, size_t len );
+int             dump_strW( const WCHAR *str, size_t len );
 const char*     get_hexint64_str( DWORD64 l );
 const char*     get_uint64_str( DWORD64 l );
 const char*     get_guid_str(const GUID* guid);

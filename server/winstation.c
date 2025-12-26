@@ -864,6 +864,7 @@ DECL_HANDLER(set_thread_desktop)
         {
             if (old_desktop) remove_desktop_thread( old_desktop, current );
             add_desktop_thread( new_desktop, current );
+            current->process->set_foreground = 0;
         }
         reply->locator = get_shared_object_locator( new_desktop->shared );
     }

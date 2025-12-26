@@ -372,7 +372,7 @@
 @ stub -syscall NtGdiDdDDISharedPrimaryLockNotification
 @ stub -syscall NtGdiDdDDISharedPrimaryUnLockNotification
 @ stub -syscall NtGdiDdDDISignalSynchronizationObject
-@ stub -syscall NtGdiDdDDISignalSynchronizationObjectFromCpu
+@ stdcall -syscall NtGdiDdDDISignalSynchronizationObjectFromCpu(ptr)
 @ stub -syscall NtGdiDdDDISignalSynchronizationObjectFromGpu
 @ stub -syscall NtGdiDdDDISignalSynchronizationObjectFromGpu2
 @ stub -syscall NtGdiDdDDISubmitCommand
@@ -388,7 +388,7 @@
 @ stub -syscall NtGdiDdDDIUpdateOverlay
 @ stub -syscall NtGdiDdDDIWaitForIdle
 @ stub -syscall NtGdiDdDDIWaitForSynchronizationObject
-@ stub -syscall NtGdiDdDDIWaitForSynchronizationObjectFromCpu
+@ stdcall -syscall NtGdiDdDDIWaitForSynchronizationObjectFromCpu(ptr)
 @ stub -syscall NtGdiDdDDIWaitForSynchronizationObjectFromGpu
 @ stub -syscall NtGdiDdDDIWaitForVerticalBlankEvent
 @ stub -syscall NtGdiDdDDIWaitForVerticalBlankEvent2
@@ -1207,7 +1207,7 @@
 @ stdcall -syscall NtUserMessageCall(long long long long long long long)
 @ stub -syscall NtUserMinInitialize
 @ stub -syscall NtUserMinMaximize
-@ stub -syscall NtUserModifyUserStartupInfoFlags
+@ stdcall -syscall NtUserModifyUserStartupInfoFlags(long long)
 @ stub -syscall NtUserModifyWindowTouchCapability
 @ stdcall -syscall NtUserMoveWindow(long long long long long long)
 @ stdcall -syscall NtUserMsgWaitForMultipleObjectsEx(long ptr long long long)

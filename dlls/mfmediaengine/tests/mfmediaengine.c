@@ -33,6 +33,8 @@
 #include "initguid.h"
 #include "mmdeviceapi.h"
 #include "audiosessiontypes.h"
+#include "audioclient.h"
+#include "audiopolicy.h"
 #include "wincodec.h"
 
 #include "wine/test.h"
@@ -753,10 +755,110 @@ static void test_playback_rate(void)
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
+static void parse_guid(WCHAR *id, GUID *guid)
+{
+    WCHAR *str;
+
+    str = wcsstr(id, L"%b");
+    str += 2;
+    IIDFromString(str, guid);
+}
+
+static void test_audio_session(BOOL session_count_todo)
+{
+    unsigned int process_session_count = 0;
+    IAudioSessionEnumerator *ase;
+    IAudioSessionManager2 *asm2;
+    IAudioSessionControl2 *asc2;
+    IAudioSessionControl *asc;
+    IMMDeviceEnumerator *mme;
+    IChannelAudioVolume *cav;
+    ISimpleAudioVolume *sav;
+    UINT32 channel_count;
+    int i, j, count;
+    IMMDevice *dev;
+    WCHAR *name;
+    HRESULT hr;
+    GUID guid;
+    DWORD pid;
+    float vol;
+
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
+    if (FAILED(hr))
+    {
+        skip("mmdevapi not available: %#lx.\n", hr);
+        return;
+    }
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &dev);
+    ok(hr == S_OK || hr == E_NOTFOUND, "Unexpected hr %#lx.\n", hr);
+    if (hr != S_OK || !dev)
+    {
+        if (hr == E_NOTFOUND)
+            skip("No sound card available.\n");
+        else
+            skip("GetDefaultAudioEndpoint returned %#lx.\n", hr);
+        goto cleanup;
+    }
+    hr = IMMDevice_Activate(dev, &IID_IAudioSessionManager2, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&asm2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IAudioSessionManager2_GetSessionEnumerator(asm2, &ase);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IAudioSessionEnumerator_GetCount(ase, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < count; i++)
+    {
+        hr = IAudioSessionEnumerator_GetSession(ase, i, &asc);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IAudioSessionControl_QueryInterface(asc, &IID_IAudioSessionControl2, (void **)&asc2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IAudioSessionControl2_GetProcessId(asc2, &pid);
+        if (pid != GetCurrentProcessId())
+            continue;
+        process_session_count++;
+        hr = IAudioSessionControl2_GetSessionIdentifier(asc2, &name);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        parse_guid(name, &guid);
+        ok(!IsEqualGUID(&guid, &GUID_NULL), "unexpected session GUID %s.\n", wine_dbgstr_guid(&guid));
+        CoTaskMemFree(name);
+        hr = IAudioSessionControl2_QueryInterface(asc2, &IID_ISimpleAudioVolume, (void **)&sav);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(vol == 1.0f, "Unexpected volume %.8e.\n", vol);
+            ISimpleAudioVolume_Release(sav);
+            hr = IAudioSessionControl2_QueryInterface(asc2, &IID_IChannelAudioVolume, (void **)&cav);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IChannelAudioVolume_GetChannelCount(cav, &channel_count);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            for (j = 0; j < channel_count; j++)
+            {
+                hr = IChannelAudioVolume_GetChannelVolume(cav, j, &vol);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                ok(vol == 1.0f, "Unexpected channel %u volume %.8e.\n", j, vol);
+            }
+            IChannelAudioVolume_Release(cav);
+        }
+        IAudioSessionControl2_Release(asc2);
+        IAudioSessionControl_Release(asc);
+    }
+    todo_wine_if(session_count_todo) ok(process_session_count == 1, "Unexpected session count %u.\n", process_session_count);
+
+    IAudioSessionEnumerator_Release(ase);
+    IAudioSessionManager2_Release(asm2);
+    IMMDevice_Release(dev);
+cleanup:
+    IMMDeviceEnumerator_Release(mme);
+}
+
 static void test_mute(void)
 {
     struct media_engine_notify *notify;
     IMFMediaEngine *media_engine;
+    double volume;
     HRESULT hr;
     BOOL ret;
 
@@ -774,6 +876,26 @@ static void test_mute(void)
 
     ret = IMFMediaEngine_GetMuted(media_engine);
     ok(ret, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_SetMuted(media_engine, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ret = IMFMediaEngine_GetMuted(media_engine);
+    ok(!ret, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_SetVolume(media_engine, 0.0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    volume = IMFMediaEngine_GetVolume(media_engine);
+    ok(volume == 0.0, "Unexpected volume %.16e.\n", volume);
+
+    ret = IMFMediaEngine_GetMuted(media_engine);
+    ok(!ret, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_SetMuted(media_engine, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    test_audio_session(TRUE);
 
     hr = IMFMediaEngine_Shutdown(media_engine);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1307,6 +1429,9 @@ static void test_TransferVideoFrame(void)
 
     IMFDXGIDeviceManager_Release(manager);
 
+    hr = IMFMediaEngineEx_SetVolume(media_engine, 0.5);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     if (!(notify->media_engine = media_engine))
         goto done;
 
@@ -1379,6 +1504,11 @@ static void test_TransferVideoFrame(void)
     res = check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, &dst_rect);
     ok(res == 0, "Unexpected %lu%% diff\n", res);
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)rb_texture, 0);
+
+    hr = IMFMediaEngineEx_SetVolume(media_engine, 0.5);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    test_audio_session(FALSE);
 
     ID3D11DeviceContext_Release(context);
     ID3D11Texture2D_Release(rb_texture);

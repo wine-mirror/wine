@@ -1,6 +1,5 @@
 MODULE    = winex11.drv
 UNIXLIB   = winex11.so
-IMPORTS   = uuid user32 gdi32 win32u
 UNIX_CFLAGS  = $(X_CFLAGS)
 UNIX_LIBS    = -lwin32u $(X_LIBS) $(PTHREAD_LIBS) -lm
 
@@ -22,7 +21,6 @@ SOURCES = \
 	version.rc \
 	vulkan.c \
 	window.c \
-	winex11.drv.spec \
 	wintab.c \
 	x11drv_main.c \
 	xim.c \

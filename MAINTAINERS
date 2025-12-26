@@ -324,7 +324,9 @@ F:	dlls/uxtheme/
 
 TWAIN
 P:	Esme Povirk <esme@codeweavers.com> @madewokherd
+P:	Bernd Herd <codeberg@herdsoft.com> @herdsoft
 F:	dlls/twain_32/
+F:	dlls/twaindsm/
 F:	dlls/sane.ds/
 F:	dlls/gphoto2.ds/
 

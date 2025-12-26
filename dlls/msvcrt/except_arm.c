@@ -94,4 +94,12 @@ int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+__ASM_GLOBAL_FUNC( __C_ExecuteExceptionFilter,
+    "push {r3-r11,lr}\n\t"
+    ".seh_save_regs_w {r3-r11,lr}\n\t"
+    ".seh_endprologue\n\t"
+    "ldm r3, {r4-r11}\n\t"
+    "blx r2\n\t"
+    "pop {r3-r11,pc}\n\t" );
+
 #endif  /* __arm__ */

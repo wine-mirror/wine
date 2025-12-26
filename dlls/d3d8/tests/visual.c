@@ -25,7 +25,11 @@
 
 #define COBJMACROS
 #include <d3d8.h>
+#include <winternl.h>
 #include "wine/test.h"
+
+static bool is_win64 = sizeof(void *) > sizeof(int);
+static bool new_wow64;
 
 struct vec2
 {
@@ -237,7 +241,7 @@ static void check_rect(struct surface_readback *rb, RECT r, const char *message)
                     if (x < 0 || x >= 640 || y < 0 || y >= 480)
                         continue;
                     color = get_readback_color(rb, x, y);
-                    todo_wine_if(i == 0 && x_side == 0 && y_side == 1 && sizeof(void *) == 4)
+                    todo_wine_if(i == 0 && x_side == 0 && y_side == 1 && !is_win64 && !new_wow64)
                     ok(color == expected, "%s: Pixel (%ld, %ld) has color %08x, expected %08x.\n",
                             message, x, y, color, expected);
                 }
@@ -5847,39 +5851,77 @@ static void add_dirty_rect_test(void)
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x00ff00ff, 1), "Got unexpected color 0x%08x.\n", color);
 
-    /* Tests with managed textures. */
-    fill_surface(surface_managed0, 0x00ff0000, 0);
-    fill_surface(surface_managed1, 0x00ff0000, 0);
+    /* Tests with managed textures. They are initially dirty.*/
+    fill_surface(surface_managed0, 0x00ffff00, D3DLOCK_READONLY);
+    fill_surface(surface_managed1, 0x00ff00ff, D3DLOCK_READONLY);
     hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_managed);
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1),
-            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    ok(color_match(color, 0x00ffff00, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 1);
     ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ff00ff, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+
+    /* Read-write map, this is uploaded. */
+    fill_surface(surface_managed0, 0x00ff0080, 0);
+    fill_surface(surface_managed1, 0x00ff8000, 0);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 1);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff8000, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+
+    /* D3DLOCK_READONLY is honored, so this data does not get uploaded. */
+    fill_surface(surface_managed0, 0x00008000, D3DLOCK_READONLY);
+    fill_surface(surface_managed1, 0x00000080, D3DLOCK_READONLY);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 1);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff8000, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
     /* Managed textures also honor D3DLOCK_NO_DIRTY_UPDATE. */
     fill_surface(surface_managed0, 0x0000ff00, D3DLOCK_NO_DIRTY_UPDATE);
     fill_surface(surface_managed1, 0x000000ff, D3DLOCK_NO_DIRTY_UPDATE);
-    add_dirty_rect_test_draw(device);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1),
-            "Expected color 0x00ff0000, got 0x%08x.\n", color);
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 0);
     ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 1);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff8000, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
@@ -5888,11 +5930,13 @@ static void add_dirty_rect_test(void)
      * tracked individually. Tested on Nvidia Kepler, other drivers untested. */
     hr = IDirect3DTexture8_AddDirtyRect(tex_managed, &part_rect);
     ok(hr == S_OK, "Failed to add dirty rect, hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MAXMIPLEVEL, 0);
+    ok(SUCCEEDED(hr), "Failed to set texture stage state, hr %#lx.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 1, 1);
-    ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(color_match(color, 0x00ff0080, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
@@ -12387,12 +12431,23 @@ START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
     IDirect3D8 *d3d;
+    BOOL is_wow64;
     HRESULT hr;
 
     if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D8 object.\n");
         return;
+    }
+
+    if (!is_win64 && IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+    {
+        TEB64 *teb64 = ULongToPtr( NtCurrentTeb()->GdiBatchCount );
+        if (teb64)
+        {
+            PEB64 *peb64 = ULongToPtr( teb64->Peb );
+            new_wow64 = !!peb64->LdrData;
+        }
     }
 
     memset(&identifier, 0, sizeof(identifier));

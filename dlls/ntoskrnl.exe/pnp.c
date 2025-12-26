@@ -27,7 +27,6 @@
 #include "cfgmgr32.h"
 #include "dbt.h"
 #include "wine/exception.h"
-#include "wine/heap.h"
 
 #include "plugplay.h"
 
@@ -796,28 +795,28 @@ static NTSTATUS create_device_symlink( DEVICE_OBJECT *device, UNICODE_STRING *sy
     if (ret != STATUS_BUFFER_TOO_SMALL)
         return ret;
 
-    device_name = heap_alloc( len );
+    device_name = malloc( len );
     ret = IoGetDeviceProperty( device, DevicePropertyPhysicalDeviceObjectName, len, device_name, &len );
     if (ret)
     {
-        heap_free( device_name );
+        free( device_name );
         return ret;
     }
 
     RtlInitUnicodeString( &device_nameU, device_name );
     ret = IoCreateSymbolicLink( symlink_name, &device_nameU );
-    heap_free( device_name );
+    free( device_name );
     return ret;
 }
 
 void  __RPC_FAR * __RPC_USER MIDL_user_allocate( SIZE_T len )
 {
-    return heap_alloc( len );
+    return HeapAlloc( GetProcessHeap(), 0, len );
 }
 
 void __RPC_USER MIDL_user_free( void __RPC_FAR *ptr )
 {
-    heap_free( ptr );
+    HeapFree( GetProcessHeap(), 0, ptr );
 }
 
 static LONG WINAPI rpc_filter( EXCEPTION_POINTERS *eptr )
@@ -1012,7 +1011,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     len = lstrlenW(DeviceClassesW) + 38 + 1 + namelen + 2 + 1;
 
-    if (!(path = heap_alloc( len * sizeof(WCHAR) )))
+    if (!(path = malloc( len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
 
     lstrcpyW( path, DeviceClassesW );
@@ -1030,7 +1029,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     attr.ObjectName = &string;
     RtlInitUnicodeString( &string, path );
     ret = NtOpenKey( &iface_key, KEY_CREATE_SUB_KEY, &attr );
-    heap_free(path);
+    free(path);
     if (ret)
         return ret;
 
@@ -1064,7 +1063,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     len = offsetof(DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[namelen + 1]);
 
-    if ((broadcast = heap_alloc( len )))
+    if ((broadcast = malloc( len )))
     {
         broadcast->dbcc_size       = len;
         broadcast->dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
@@ -1073,7 +1072,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
         if (namelen > 1) broadcast->dbcc_name[1] = '\\';
         send_devicechange( L"", enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
-        heap_free( broadcast );
+        free( broadcast );
     }
     return ret;
 }
@@ -1193,7 +1192,7 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
     }
     else
     {
-        iface = heap_alloc_zero( sizeof(struct device_interface) );
+        iface = calloc( 1, sizeof(struct device_interface) );
         RtlDuplicateUnicodeString( 1, &device_path, &iface->symbolic_link );
         if (wine_rb_put( &device_interfaces, &iface->symbolic_link, &iface->entry ))
             ERR("Failed to insert interface %s into tree.\n", debugstr_us(&iface->symbolic_link));
@@ -1226,15 +1225,15 @@ NTSTATUS WINAPI IoReportTargetDeviceChange( DEVICE_OBJECT *device, void *data )
 
     ret = ObQueryNameString( device, NULL, 0, &size );
     if (ret != STATUS_INFO_LENGTH_MISMATCH) return ret;
-    if (!(name_info = heap_alloc( size ))) return STATUS_NO_MEMORY;
+    if (!(name_info = malloc( size ))) return STATUS_NO_MEMORY;
     ret = ObQueryNameString( device, name_info, size, &size );
     if (ret != STATUS_SUCCESS) return ret;
 
     data_size = notification->Size - offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer );
     size = offsetof( DEV_BROADCAST_HANDLE, dbch_data[data_size + 2 * sizeof(WCHAR)] );
-    if (!(event_handle = heap_alloc_zero( size )))
+    if (!(event_handle = calloc( 1, size )))
     {
-        heap_free( name_info );
+        free( name_info );
         return STATUS_NO_MEMORY;
     }
 
@@ -1244,8 +1243,8 @@ NTSTATUS WINAPI IoReportTargetDeviceChange( DEVICE_OBJECT *device, void *data )
     event_handle->dbch_nameoffset = notification->NameBufferOffset;
     memcpy( event_handle->dbch_data, notification->CustomDataBuffer, data_size );
     send_devicechange( name_info->Name.Buffer, DBT_CUSTOMEVENT, (BYTE *)event_handle, event_handle->dbch_size );
-    heap_free( event_handle );
-    heap_free( name_info );
+    free( event_handle );
+    free( name_info );
 
     return STATUS_SUCCESS;
 }

@@ -19,7 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "strmbase_private.h"
+#define COBJMACROS
+#include "wine/strmbase.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
@@ -46,7 +48,7 @@ static HRESULT enum_media_types_create(struct strmbase_pin *pin, IEnumMediaTypes
     if (!out)
         return E_POINTER;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
     {
         *out = NULL;
         return E_OUTOFMEMORY;
@@ -110,7 +112,7 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
     if (!refcount)
     {
         IPin_Release(&enummt->pin->IPin_iface);
-        heap_free(enummt);
+        free(enummt);
     }
     return refcount;
 }

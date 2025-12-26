@@ -662,6 +662,8 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             return osstatus_to_hresult(sc);
         }
     }else{
+        AudioChannelLayout layout;
+
         hr = ca_get_audiodesc(dev_desc, fmt);
         if(FAILED(hr))
             return hr;
@@ -673,6 +675,16 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
             WARN("Couldn't set format: %x\n", (int)sc);
             return osstatus_to_hresult(sc);
         }
+
+        /* Set channel layout: AudioChannelBitmap and dwChannelMask conveniently have identical positions */
+        layout.mChannelLayoutTag = kAudioChannelLayoutTag_UseChannelBitmap;
+        layout.mChannelBitmap    = (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) ? ((WAVEFORMATEXTENSIBLE *)fmt)->dwChannelMask : 0x3;
+        layout.mNumberChannelDescriptions = 0;
+
+        sc = AudioUnitSetProperty(unit, kAudioUnitProperty_AudioChannelLayout,
+                                  kAudioUnitScope_Input, 0, &layout, sizeof(layout));
+        if (sc != noErr)
+            WARN("Couldn't set channel layout: %d\n", (int)sc);
     }
 
     return S_OK;
@@ -1094,65 +1106,18 @@ static NTSTATUS unix_get_mix_format(void *args)
 static NTSTATUS unix_is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
-    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)params->fmt_in;
     AudioStreamBasicDescription dev_desc;
     AudioConverterRef converter;
     AudioComponentInstance unit;
     const AudioDeviceID dev_id = dev_id_from_device(params->device);
 
-    params->result = S_OK;
-
-    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
-        params->result = E_POINTER;
-    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        params->result = E_INVALIDARG;
-    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-            params->result = E_INVALIDARG;
-        else if(params->fmt_in->nAvgBytesPerSec == 0 || params->fmt_in->nBlockAlign == 0 ||
-                fmtex->Samples.wValidBitsPerSample > params->fmt_in->wBitsPerSample)
-            params->result = E_INVALIDARG;
-        else if(fmtex->Samples.wValidBitsPerSample < params->fmt_in->wBitsPerSample)
-            goto unsupported;
-        else if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE &&
-                (fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED))
-            goto unsupported;
-    }
-    if(FAILED(params->result)) return STATUS_SUCCESS;
-
-    if(params->fmt_in->nBlockAlign != params->fmt_in->nChannels * params->fmt_in->wBitsPerSample / 8 ||
-       params->fmt_in->nAvgBytesPerSec != params->fmt_in->nBlockAlign * params->fmt_in->nSamplesPerSec)
-        goto unsupported;
-
-    if(params->fmt_in->nChannels == 0){
-        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        return STATUS_SUCCESS;
-    }
     unit = get_audiounit(params->flow, dev_id);
 
     converter = NULL;
     params->result = ca_setup_audiounit(params->flow, unit, params->fmt_in, &dev_desc, &converter);
     AudioComponentInstanceDispose(unit);
-    if(FAILED(params->result)) goto unsupported;
     if(converter) AudioConverterDispose(converter);
 
-    params->result = S_OK;
-    return STATUS_SUCCESS;
-
-unsupported:
-    if(params->fmt_out){
-        struct get_mix_format_params get_mix_params =
-        {
-            .device = params->device,
-            .flow = params->flow,
-            .fmt = params->fmt_out,
-        };
-
-        unix_get_mix_format(&get_mix_params);
-        params->result = get_mix_params.result;
-        if(SUCCEEDED(params->result)) params->result = S_FALSE;
-    }
-    else params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
     return STATUS_SUCCESS;
 }
 
@@ -2008,7 +1973,6 @@ static NTSTATUS unix_wow64_is_format_supported(void *args)
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
-        PTR32 fmt_out;
         HRESULT result;
     } *params32 = args;
     struct is_format_supported_params params =
@@ -2017,7 +1981,6 @@ static NTSTATUS unix_wow64_is_format_supported(void *args)
         .flow = params32->flow,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
-        .fmt_out = ULongToPtr(params32->fmt_out)
     };
     unix_is_format_supported(&params);
     params32->result = params.result;

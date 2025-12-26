@@ -36,102 +36,10 @@ static PFN_vkCreateInstance p_vkCreateInstance;
 static PFN_vkEnumerateInstanceVersion p_vkEnumerateInstanceVersion;
 static PFN_vkEnumerateInstanceExtensionProperties p_vkEnumerateInstanceExtensionProperties;
 
-static struct wine_instance *wine_instance_from_handle(VkInstance handle)
-{
-    struct vulkan_instance *object = vulkan_instance_from_handle(handle);
-    return CONTAINING_RECORD(object, struct wine_instance, obj);
-}
-
-static struct wine_device *wine_device_from_handle(VkDevice handle)
-{
-    struct vulkan_device *object = vulkan_device_from_handle(handle);
-    return CONTAINING_RECORD(object, struct wine_device, obj);
-}
-
-static void vulkan_object_init_ptr( struct vulkan_object *obj, UINT64 host_handle, struct vulkan_client_object *client )
-{
-    obj->host_handle = host_handle;
-    obj->client_handle = (UINT_PTR)client;
-    client->unix_handle = (UINT_PTR)obj;
-}
-
-static BOOL is_wow64(void)
-{
-    return sizeof(void *) == sizeof(UINT64) && NtCurrentTeb()->WowTebOffset;
-}
-
-static BOOL use_external_memory(void)
-{
-    return is_wow64();
-}
-
-static ULONG_PTR zero_bits = 0;
-
-#define wine_vk_count_struct(s, t) wine_vk_count_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
-static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
-{
-    const VkBaseInStructure *header;
-    uint32_t result = 0;
-
-    for (header = s; header; header = header->pNext)
-    {
-        if (header->sType == t)
-            result++;
-    }
-
-    return result;
-}
-
 const struct vulkan_funcs *vk_funcs;
 
-static int vulkan_object_compare(const void *key, const struct rb_entry *entry)
-{
-    struct vulkan_object *object = RB_ENTRY_VALUE(entry, struct vulkan_object, entry);
-    const uint64_t *host_handle = key;
-    if (*host_handle < object->host_handle) return -1;
-    if (*host_handle > object->host_handle) return 1;
-    return 0;
-}
-
-static void vulkan_instance_insert_object( struct vulkan_instance *instance, struct vulkan_object *obj )
-{
-    struct wine_instance *impl = CONTAINING_RECORD(instance, struct wine_instance, obj);
-    if (impl->objects.compare)
-    {
-        pthread_rwlock_wrlock( &impl->objects_lock );
-        rb_put( &impl->objects, &obj->host_handle, &obj->entry );
-        pthread_rwlock_unlock( &impl->objects_lock );
-    }
-}
-
-static void vulkan_instance_remove_object( struct vulkan_instance *instance, struct vulkan_object *obj )
-{
-    struct wine_instance *impl = CONTAINING_RECORD(instance, struct wine_instance, obj);
-    if (impl->objects.compare)
-    {
-        pthread_rwlock_wrlock( &impl->objects_lock );
-        rb_remove( &impl->objects, &obj->entry );
-        pthread_rwlock_unlock( &impl->objects_lock );
-    }
-}
-
-static uint64_t client_handle_from_host(struct vulkan_instance *obj, uint64_t host_handle)
-{
-    struct wine_instance *instance = CONTAINING_RECORD(obj, struct wine_instance, obj);
-    struct rb_entry *entry;
-    uint64_t result = 0;
-
-    pthread_rwlock_rdlock(&instance->objects_lock);
-    if ((entry = rb_get(&instance->objects, &host_handle)))
-    {
-        struct vulkan_object *object = RB_ENTRY_VALUE(entry, struct vulkan_object, entry);
-        result = object->client_handle;
-    }
-    pthread_rwlock_unlock(&instance->objects_lock);
-    return result;
-}
-
-struct vk_callback_funcs callback_funcs;
+static UINT64 call_vulkan_debug_report_callback;
+static UINT64 call_vulkan_debug_utils_callback;
 
 static UINT append_string(const char *name, char *strings, UINT *strings_len)
 {
@@ -165,7 +73,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 {
     const VkDeviceAddressBindingCallbackDataEXT *address = NULL;
     struct wine_vk_debug_utils_params *params;
-    struct wine_debug_utils_messenger *object;
+    struct vulkan_debug_utils_messenger *object;
     struct debug_utils_object dummy_object, *objects;
     struct debug_utils_label dummy_label, *labels;
     UINT size, strings_len;
@@ -208,7 +116,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     ptr = (char *)(params + 1);
     strings = (char *)params + size;
 
-    params->dispatch.callback = callback_funcs.call_vulkan_debug_utils_callback;
+    params->dispatch.callback = call_vulkan_debug_utils_callback;
     params->user_callback = object->user_callback;
     params->user_data = object->user_data;
     params->severity = severity;
@@ -239,7 +147,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 
         if (wine_vk_is_type_wrapped(objects[i].object_type))
         {
-            objects[i].object_handle = client_handle_from_host(object->instance, objects[i].object_handle);
+            objects[i].object_handle = object->instance->p_client_handle_from_host(object->instance, objects[i].object_handle);
             if (!objects[i].object_handle)
             {
                 WARN("handle conversion failed 0x%s\n", wine_dbgstr_longlong(callback_data->pObjects[i].objectHandle));
@@ -272,7 +180,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     uint64_t object_handle, size_t location, int32_t code, const char *layer_prefix, const char *message, void *user_data)
 {
     struct wine_vk_debug_report_params *params;
-    struct wine_debug_report_callback *object;
+    struct vulkan_debug_report_callback *object;
     UINT strings_len;
     ULONG ret_len;
     void *ret_ptr;
@@ -296,14 +204,14 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     if (!(params = malloc(sizeof(*params) + strings_len))) return VK_FALSE;
     strings = (char *)(params + 1);
 
-    params->dispatch.callback = callback_funcs.call_vulkan_debug_report_callback;
+    params->dispatch.callback = call_vulkan_debug_report_callback;
     params->user_callback = object->user_callback;
     params->user_data = object->user_data;
     params->flags = flags;
     params->object_type = object_type;
     params->location = location;
     params->code = code;
-    params->object_handle = client_handle_from_host(object->instance, object_handle);
+    params->object_handle = object->instance->p_client_handle_from_host(object->instance, object_handle);
     if (!params->object_handle) params->object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
 
     strings_len = 0;
@@ -315,184 +223,6 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
 
     if (ret_len == sizeof(VkBool32)) return *(VkBool32 *)ret_ptr;
     return VK_FALSE;
-}
-
-static void vulkan_physical_device_cleanup(struct vulkan_physical_device *physical_device)
-{
-    free(physical_device->extensions);
-}
-
-static VkResult vulkan_physical_device_init(struct vulkan_physical_device *physical_device,
-        VkPhysicalDevice host_physical_device, VkPhysicalDevice client_physical_device,
-        struct vulkan_instance *instance)
-{
-    BOOL have_memory_placed = FALSE, have_map_memory2 = FALSE;
-    uint32_t num_host_properties, num_properties = 0;
-    VkExtensionProperties *host_properties = NULL;
-    BOOL have_external_memory_host = FALSE, have_external_semaphore = FALSE;
-    VkResult res;
-    unsigned int i, j;
-
-    vulkan_object_init_ptr(&physical_device->obj, (UINT_PTR)host_physical_device, &client_physical_device->obj);
-    physical_device->instance = instance;
-
-    instance->p_vkGetPhysicalDeviceMemoryProperties(host_physical_device, &physical_device->memory_properties);
-
-    res = instance->p_vkEnumerateDeviceExtensionProperties(host_physical_device,
-            NULL, &num_host_properties, NULL);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to enumerate device extensions, res=%d\n", res);
-        goto err;
-    }
-
-    host_properties = calloc(num_host_properties, sizeof(*host_properties));
-    if (!host_properties)
-    {
-        ERR("Failed to allocate memory for device properties!\n");
-        goto err;
-    }
-
-    res = instance->p_vkEnumerateDeviceExtensionProperties(host_physical_device,
-            NULL, &num_host_properties, host_properties);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to enumerate device extensions, res=%d\n", res);
-        goto err;
-    }
-
-    /* Count list of extensions for which we have an implementation.
-     * TODO: perform translation for platform specific extensions.
-     */
-    for (i = 0; i < num_host_properties; i++)
-    {
-        if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32"))
-                || !strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32"))
-                || !strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32"))
-                || wine_vk_device_extension_supported(host_properties[i].extensionName))
-        {
-            TRACE("Enabling extension '%s' for physical device %p\n", host_properties[i].extensionName, physical_device);
-            num_properties++;
-        }
-        else
-        {
-            TRACE("Skipping extension '%s', no implementation found in winevulkan.\n", host_properties[i].extensionName);
-        }
-        if (!strcmp(host_properties[i].extensionName, "VK_EXT_external_memory_host"))
-            have_external_memory_host = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32")))
-            have_external_semaphore = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, "VK_EXT_map_memory_placed"))
-            have_memory_placed = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, "VK_EXT_surface_maintenance1"))
-            physical_device->has_surface_maintenance1 = true;
-        else if (!strcmp(host_properties[i].extensionName, "VK_EXT_swapchain_maintenance1"))
-            physical_device->has_swapchain_maintenance1 = true;
-        else if (!strcmp(host_properties[i].extensionName, "VK_KHR_map_memory2"))
-            have_map_memory2 = TRUE;
-        else if (!strcmp(host_properties[i].extensionName, "VK_KHR_timeline_semaphore"))
-            num_properties++;
-    }
-
-    TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
-
-    if (!(physical_device->extensions = calloc(num_properties, sizeof(*physical_device->extensions))))
-    {
-        ERR("Failed to allocate memory for device extensions!\n");
-        goto err;
-    }
-
-    if (zero_bits && have_memory_placed && have_map_memory2)
-    {
-        VkPhysicalDeviceMapMemoryPlacedFeaturesEXT map_placed_feature =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT,
-        };
-        VkPhysicalDeviceFeatures2 features =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-            .pNext = &map_placed_feature,
-        };
-
-        instance->p_vkGetPhysicalDeviceFeatures2KHR(host_physical_device, &features);
-        if (map_placed_feature.memoryMapPlaced && map_placed_feature.memoryUnmapReserve)
-        {
-            VkPhysicalDeviceMapMemoryPlacedPropertiesEXT map_placed_props =
-            {
-                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT,
-            };
-            VkPhysicalDeviceProperties2 props =
-            {
-                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-                .pNext = &map_placed_props,
-            };
-
-            instance->p_vkGetPhysicalDeviceProperties2(host_physical_device, &props);
-            physical_device->map_placed_align = map_placed_props.minPlacedMemoryMapAlignment;
-            TRACE( "Using placed map with alignment %u\n", physical_device->map_placed_align );
-        }
-    }
-
-    if (zero_bits && have_external_memory_host && !physical_device->map_placed_align)
-    {
-        VkPhysicalDeviceExternalMemoryHostPropertiesEXT host_mem_props =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT,
-        };
-        VkPhysicalDeviceProperties2 props =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-            .pNext = &host_mem_props,
-        };
-        instance->p_vkGetPhysicalDeviceProperties2KHR(host_physical_device, &props);
-        physical_device->external_memory_align = host_mem_props.minImportedHostPointerAlignment;
-        if (physical_device->external_memory_align)
-            TRACE("Using VK_EXT_external_memory_host for memory mapping with alignment: %u\n",
-                  physical_device->external_memory_align);
-    }
-
-    for (i = 0, j = 0; i < num_host_properties; i++)
-    {
-        if (have_external_semaphore && !strcmp(host_properties[i].extensionName, "VK_KHR_timeline_semaphore"))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_win32_keyed_mutex");
-            physical_device->extensions[j++].specVersion = VK_KHR_WIN32_KEYED_MUTEX_SPEC_VERSION;
-        }
-        if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32")))
-        {
-            if (zero_bits && !physical_device->map_placed_align)
-            {
-                WARN("Cannot export WOW64 memory without VK_EXT_map_memory_placed\n");
-                continue;
-            }
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_memory_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_MEMORY_WIN32_SPEC_VERSION;
-        }
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32")))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_semaphore_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_SEMAPHORE_WIN32_SPEC_VERSION;
-        }
-        else if (!strcmp(host_properties[i].extensionName, vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32")))
-        {
-            strcpy(physical_device->extensions[j].extensionName, "VK_KHR_external_fence_win32");
-            physical_device->extensions[j++].specVersion = VK_KHR_EXTERNAL_FENCE_WIN32_SPEC_VERSION;
-        }
-        else if (wine_vk_device_extension_supported(host_properties[i].extensionName))
-        {
-            physical_device->extensions[j] = host_properties[i];
-            j++;
-        }
-    }
-    physical_device->extension_count = j;
-
-    free(host_properties);
-    return VK_SUCCESS;
-
-err:
-    vulkan_physical_device_cleanup(physical_device);
-    free(host_properties);
-    return res;
 }
 
 static void wine_vk_free_command_buffers(struct vulkan_device *device,
@@ -512,163 +242,15 @@ static void wine_vk_free_command_buffers(struct vulkan_device *device,
 
         device->p_vkFreeCommandBuffers(device->host.device, pool->host.command_pool, 1,
                                              &buffer->host.command_buffer);
-        vulkan_instance_remove_object(instance, &buffer->obj);
+        instance->p_remove_object(instance, &buffer->obj);
         buffer->client.command_buffer->obj.unix_handle = 0;
         free(buffer);
     }
 }
 
-static void wine_vk_device_init_queues(struct wine_device *object, const VkDeviceQueueCreateInfo *info)
-{
-    struct wine_queue *queues = object->queues + object->queue_count;
-    struct vulkan_device *device = &object->obj;
-    VkQueue client_queues = device->client.device->queues + object->queue_count;
-    VkDeviceQueueInfo2 queue_info;
-    UINT i;
-
-    TRACE("Queue family index %u, queue count %u.\n", info->queueFamilyIndex, info->queueCount);
-
-    for (i = 0; i < info->queueCount; i++)
-    {
-        struct wine_queue *queue = queues + i;
-        VkQueue host_queue, client_queue = client_queues + i;
-
-        /* The Vulkan spec says:
-         *
-         * "vkGetDeviceQueue must only be used to get queues that were created
-         * with the flags parameter of VkDeviceQueueCreateInfo set to zero."
-         */
-        if (info->flags && device->p_vkGetDeviceQueue2)
-        {
-            queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
-            queue_info.pNext = NULL;
-            queue_info.flags = info->flags;
-            queue_info.queueFamilyIndex = info->queueFamilyIndex;
-            queue_info.queueIndex = i;
-            device->p_vkGetDeviceQueue2(device->host.device, &queue_info, &host_queue);
-        }
-        else
-        {
-            device->p_vkGetDeviceQueue(device->host.device, info->queueFamilyIndex, i, &host_queue);
-        }
-
-        vulkan_object_init_ptr(&queue->obj.obj, (UINT_PTR)host_queue, &client_queue->obj);
-        queue->obj.device = device;
-        queue->family_index = info->queueFamilyIndex;
-        queue->queue_index = i;
-        queue->flags = info->flags;
-
-        TRACE("Got device %p queue %p, host_queue %p.\n", device, queue, queue->obj.host.queue);
-    }
-
-    object->queue_count += info->queueCount;
-}
-
-static VkResult wine_vk_device_convert_create_info(struct vulkan_physical_device *physical_device, struct conversion_context *ctx,
-        const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst, struct wine_device *device)
-{
-    bool has_swapchain_maintenance1 = false;
-    bool has_external_memory_host = false;
-    bool has_surface_maintenance1 = false;
-    bool has_map_memory_placed = false;
-    bool has_external_memory = false;
-    bool has_map_memory2 = false;
-    bool has_swapchain = false;
-    const char **extensions;
-    uint32_t count;
-
-    *dst = *src;
-
-    /* Should be filtered out by loader as ICDs don't support layers. */
-    dst->enabledLayerCount = 0;
-    dst->ppEnabledLayerNames = NULL;
-
-    count = src->enabledExtensionCount;
-    extensions = conversion_context_alloc(ctx, (count + 16) * sizeof(*extensions));
-    memcpy(extensions, dst->ppEnabledExtensionNames, count * sizeof(*extensions));
-    dst->ppEnabledExtensionNames = extensions;
-
-    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
-    {
-        if (!wine_vk_device_extension_supported(*extension))
-        {
-            WARN("Extension %s is not supported.\n", debugstr_a(*extension));
-            return VK_ERROR_EXTENSION_NOT_PRESENT;
-        }
-        if (!strcmp(*extension, "VK_EXT_map_memory_placed")) has_map_memory_placed = true;
-        if (!strcmp(*extension, "VK_KHR_map_memory2")) has_map_memory2 = true;
-        if (!strcmp(*extension, "VK_KHR_external_memory")) has_external_memory = true;
-        if (!strcmp(*extension, "VK_EXT_external_memory_host")) has_external_memory_host = true;
-        if (!strcmp(*extension, "VK_EXT_swapchain_maintenance1")) has_swapchain_maintenance1 = true;
-        if (!strcmp(*extension, "VK_EXT_surface_maintenance1")) has_surface_maintenance1 = true;
-        if (!strcmp(*extension, "VK_KHR_swapchain")) has_swapchain = true;
-        if (!strcmp(*extension, "VK_KHR_win32_keyed_mutex"))
-        {
-            device->obj.has_win32_keyed_mutex = true;
-            *extension = "VK_KHR_timeline_semaphore";
-        }
-        if (!strcmp(*extension, "VK_KHR_external_memory_win32"))
-        {
-            if (zero_bits && !physical_device->map_placed_align)
-            {
-                FIXME("Cannot export WOW64 memory without VK_EXT_map_memory_placed\n");
-                return VK_ERROR_EXTENSION_NOT_PRESENT;
-            }
-            device->has_external_memory_win32 = true;
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_external_memory_win32");
-            if (!strcmp(*extension, "VK_EXT_external_memory_dma_buf")) extensions[count++] = "VK_KHR_external_memory_fd";
-        }
-        if (!strcmp(*extension, "VK_KHR_external_semaphore_win32"))
-        {
-            device->has_external_semaphore_win32 = true;
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_external_semaphore_win32");
-        }
-        if (!strcmp(*extension, "VK_KHR_external_fence_win32"))
-        {
-            device->has_external_fence_win32 = true;
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_external_fence_win32");
-        }
-    }
-
-    if (physical_device->map_placed_align)
-    {
-        VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *map_placed_features;
-        map_placed_features = conversion_context_alloc(ctx, sizeof(*map_placed_features));
-        map_placed_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
-        map_placed_features->pNext = (void *)dst->pNext;
-        map_placed_features->memoryMapPlaced = VK_TRUE;
-        map_placed_features->memoryMapRangePlaced = VK_FALSE;
-        map_placed_features->memoryUnmapReserve = VK_TRUE;
-        dst->pNext = map_placed_features;
-
-        if (!has_map_memory_placed) extensions[count++] = "VK_EXT_map_memory_placed";
-        if (!has_map_memory2) extensions[count++] = "VK_KHR_map_memory2";
-    }
-    else if (physical_device->external_memory_align)
-    {
-        if (!has_external_memory) extensions[count++] = "VK_KHR_external_memory";
-        if (!has_external_memory_host) extensions[count++] = "VK_EXT_external_memory_host";
-    }
-
-    /* win32u uses VkSwapchainPresentScalingCreateInfoEXT if available. */
-    if (physical_device->has_surface_maintenance1 && physical_device->has_swapchain_maintenance1 &&
-        has_swapchain && !has_swapchain_maintenance1)
-    {
-        if (!has_surface_maintenance1) extensions[count++] = "VK_EXT_surface_maintenance1";
-        extensions[count++] = "VK_EXT_swapchain_maintenance1";
-    }
-
-    TRACE("Enabling %u device extensions\n", count);
-    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
-        TRACE("  - %s\n", debugstr_a(*extension));
-
-    dst->enabledExtensionCount = count;
-    return VK_SUCCESS;
-}
-
 NTSTATUS init_vulkan(void *arg)
 {
-    const struct vk_callback_funcs *funcs = arg;
+    const struct init_params *params = arg;
 
     vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
     if (!vk_funcs)
@@ -677,175 +259,37 @@ NTSTATUS init_vulkan(void *arg)
         return STATUS_UNSUCCESSFUL;
     }
 
-    callback_funcs = *funcs;
+    call_vulkan_debug_report_callback = params->call_vulkan_debug_report_callback;
+    call_vulkan_debug_utils_callback = params->call_vulkan_debug_utils_callback;
+
     p_vkCreateInstance = (PFN_vkCreateInstance)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkCreateInstance");
     p_vkEnumerateInstanceVersion = (PFN_vkEnumerateInstanceVersion)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
     p_vkEnumerateInstanceExtensionProperties = (PFN_vkEnumerateInstanceExtensionProperties)vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceExtensionProperties");
 
-    if (is_wow64())
-    {
-        SYSTEM_BASIC_INFORMATION info;
-
-        NtQuerySystemInformation(SystemEmulationBasicInformation, &info, sizeof(info), NULL);
-        zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
-    }
-
+    *params->extensions = vk_funcs->client_extensions;
     return STATUS_SUCCESS;
 }
 
-/* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.
- * This function takes care of extensions handled at winevulkan layer, a Wine graphics
- * driver is responsible for handling e.g. surface extensions.
- */
-static VkResult wine_vk_instance_convert_create_info(struct conversion_context *ctx,
-        const VkInstanceCreateInfo *src, VkInstanceCreateInfo *dst, struct wine_instance *instance)
+static void free_debug_utils_messengers(struct list *messengers)
 {
-    VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger;
-    VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
-    VkBaseInStructure *header;
-    const char **extensions;
-    unsigned int i;
-    uint32_t count;
+    struct vulkan_debug_utils_messenger *messenger, *next;
 
-    *dst = *src;
-
-    instance->utils_messenger_count = wine_vk_count_struct(dst, DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-    instance->utils_messengers =  calloc(instance->utils_messenger_count, sizeof(*instance->utils_messengers));
-    header = (VkBaseInStructure *) dst;
-    for (i = 0; i < instance->utils_messenger_count; i++)
+    LIST_FOR_EACH_ENTRY_SAFE(messenger, next, messengers, struct vulkan_debug_utils_messenger, entry)
     {
-        header = find_next_struct(header->pNext, VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-        debug_utils_messenger = (VkDebugUtilsMessengerCreateInfoEXT *) header;
-
-        instance->utils_messengers[i].instance = &instance->obj;
-        instance->utils_messengers[i].host.debug_messenger = VK_NULL_HANDLE;
-        instance->utils_messengers[i].user_callback = (UINT_PTR)debug_utils_messenger->pfnUserCallback;
-        instance->utils_messengers[i].user_data = (UINT_PTR)debug_utils_messenger->pUserData;
-
-        /* convert_VkInstanceCreateInfo_* already copied the chain, so we can modify it in-place. */
-        debug_utils_messenger->pfnUserCallback = (void *) &debug_utils_callback_conversion;
-        debug_utils_messenger->pUserData = &instance->utils_messengers[i];
+        list_remove(&messenger->entry);
+        free(messenger);
     }
-
-    if ((debug_report_callback = find_next_struct(dst->pNext, VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)))
-    {
-        instance->default_callback.instance = &instance->obj;
-        instance->default_callback.host.debug_callback = VK_NULL_HANDLE;
-        instance->default_callback.user_callback = (UINT_PTR)debug_report_callback->pfnCallback;
-        instance->default_callback.user_data = (UINT_PTR)debug_report_callback->pUserData;
-
-        debug_report_callback->pfnCallback = (void *) &debug_report_callback_conversion;
-        debug_report_callback->pUserData = &instance->default_callback;
-    }
-
-    /* ICDs don't support any layers, so nothing to copy. Modern versions of the loader
-     * filter this data out as well.
-     */
-    if (dst->enabledLayerCount)
-    {
-        FIXME("Loading explicit layers is not supported by winevulkan!\n");
-        return VK_ERROR_LAYER_NOT_PRESENT;
-    }
-
-    for (i = 0; i < src->enabledExtensionCount; i++)
-    {
-        const char *extension_name = src->ppEnabledExtensionNames[i];
-        TRACE("Extension %u: %s.\n", i, debugstr_a(extension_name));
-        if (!wine_vk_instance_extension_supported(extension_name))
-        {
-            WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
-            return VK_ERROR_EXTENSION_NOT_PRESENT;
-        }
-    }
-
-    count = src->enabledExtensionCount;
-    extensions = conversion_context_alloc(ctx, (count + 2) * sizeof(*extensions));
-    memcpy(extensions, src->ppEnabledExtensionNames, count * sizeof(*dst->ppEnabledExtensionNames));
-    dst->ppEnabledExtensionNames = extensions;
-    dst->enabledExtensionCount = src->enabledExtensionCount;
-
-    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
-    {
-        if (!strcmp(*extension, "VK_EXT_debug_utils") || !strcmp(*extension, "VK_EXT_debug_report"))
-        {
-            rb_init(&instance->objects, vulkan_object_compare);
-            pthread_rwlock_init(&instance->objects_lock, NULL);
-        }
-        if (!strcmp(*extension, "VK_KHR_win32_surface"))
-        {
-            *extension = vk_funcs->p_get_host_extension("VK_KHR_win32_surface");
-            instance->enable_win32_surface = VK_TRUE;
-        }
-    }
-
-    if (use_external_memory())
-    {
-        extensions[count++] = "VK_KHR_get_physical_device_properties2";
-        extensions[count++] = "VK_KHR_external_memory_capabilities";
-    }
-
-    TRACE("Enabling %u instance extensions\n", count);
-    for (const char **extension = extensions, **end = extension + count; extension < end; extension++)
-        TRACE("  - %s\n", debugstr_a(*extension));
-
-    dst->enabledExtensionCount = count;
-    return VK_SUCCESS;
 }
 
-/* Helper function which stores wrapped physical devices in the instance object. */
-static VkResult wine_vk_instance_init_physical_devices(struct vulkan_instance *instance,
-        struct vulkan_physical_device *physical_devices)
+static void free_debug_report_callbacks(struct list *callbacks)
 {
-    VkInstance client_instance = instance->client.instance;
-    VkPhysicalDevice *host_physical_devices;
-    uint32_t phys_dev_count;
-    unsigned int i;
-    VkResult res;
+    struct vulkan_debug_report_callback *callback, *next;
 
-    res = instance->p_vkEnumeratePhysicalDevices(instance->host.instance, &phys_dev_count, NULL);
-    if (res != VK_SUCCESS)
+    LIST_FOR_EACH_ENTRY_SAFE(callback, next, callbacks, struct vulkan_debug_report_callback, entry)
     {
-        ERR("Failed to enumerate physical devices, res=%d\n", res);
-        return res;
+        list_remove(&callback->entry);
+        free(callback);
     }
-    if (!phys_dev_count)
-        return res;
-
-    if (phys_dev_count > client_instance->phys_dev_count)
-    {
-        client_instance->phys_dev_count = phys_dev_count;
-        return VK_ERROR_OUT_OF_POOL_MEMORY;
-    }
-    client_instance->phys_dev_count = phys_dev_count;
-
-    if (!(host_physical_devices = calloc(phys_dev_count, sizeof(*host_physical_devices))))
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-
-    res = instance->p_vkEnumeratePhysicalDevices(instance->host.instance, &phys_dev_count, host_physical_devices);
-    if (res != VK_SUCCESS)
-    {
-        free(host_physical_devices);
-        return res;
-    }
-
-    /* Wrap each host physical device handle into a dispatchable object for the ICD loader. */
-    for (i = 0; i < phys_dev_count; i++)
-    {
-        struct vulkan_physical_device *physical_device = physical_devices + i;
-        res = vulkan_physical_device_init(physical_device, host_physical_devices[i], &client_instance->phys_devs[i], instance);
-        if (res != VK_SUCCESS)
-            goto err;
-    }
-    instance->physical_device_count = phys_dev_count;
-    instance->physical_devices = physical_devices;
-
-    free(host_physical_devices);
-    return VK_SUCCESS;
-
-err:
-    while (i) vulkan_physical_device_cleanup(&physical_devices[--i]);
-    free(host_physical_devices);
-    return res;
 }
 
 static struct vulkan_physical_device *vulkan_instance_get_physical_device(struct vulkan_instance *instance,
@@ -909,7 +353,7 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
 
         vulkan_object_init_ptr(&buffer->obj, (UINT_PTR)host_command_buffer, &client_command_buffer->obj);
         buffer->device = device;
-        vulkan_instance_insert_object(instance, &buffer->obj);
+        instance->p_insert_object(instance, &buffer->obj);
     }
 
     if (res != VK_SUCCESS)
@@ -918,300 +362,55 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
     return res;
 }
 
-VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDeviceCreateInfo *create_info,
-                             const VkAllocationCallbacks *allocator, VkDevice *ret, void *client_ptr)
+VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *client_create_info, const VkAllocationCallbacks *allocator,
+                               VkInstance *client_instance_ptr)
 {
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct vulkan_instance *instance = physical_device->instance;
-    VkDevice host_device, client_device = client_ptr;
-    VkDeviceCreateInfo create_info_host;
-    struct conversion_context ctx;
-    struct wine_device *device;
-    unsigned int queue_count, i;
-    VkResult res;
+    VkInstanceCreateInfo *create_info = (VkInstanceCreateInfo *)client_create_info; /* cast away const, chain has been copied in the thunks */
+    struct list utils_messengers = LIST_INIT(utils_messengers), report_callbacks = LIST_INIT(report_callbacks);
+    VkBaseInStructure *header = (VkBaseInStructure *)create_info;
+    VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
 
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    if (TRACE_ON(vulkan))
+    while ((header = find_next_struct(header->pNext, VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)))
     {
-        VkPhysicalDeviceProperties properties;
+        VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger = (VkDebugUtilsMessengerCreateInfoEXT *)header;
+        struct vulkan_debug_utils_messenger *utils_messenger;
 
-        instance->p_vkGetPhysicalDeviceProperties(physical_device->host.physical_device, &properties);
+        if (!(utils_messenger = calloc(1, sizeof(*utils_messenger)))) goto failed;
+        utils_messenger->host.debug_messenger = VK_NULL_HANDLE;
+        utils_messenger->user_callback = (UINT_PTR)debug_utils_messenger->pfnUserCallback;
+        utils_messenger->user_data = (UINT_PTR)debug_utils_messenger->pUserData;
 
-        TRACE("Device name: %s.\n", debugstr_a(properties.deviceName));
-        TRACE("Vendor ID: %#x, Device ID: %#x.\n", properties.vendorID, properties.deviceID);
-        TRACE("Driver version: %#x.\n", properties.driverVersion);
+        debug_utils_messenger->pfnUserCallback = (void *)&debug_utils_callback_conversion;
+        debug_utils_messenger->pUserData = utils_messenger;
+        list_add_tail(&utils_messengers, &utils_messenger->entry);
     }
 
-    /* We need to cache all queues within the device as each requires wrapping since queues are dispatchable objects. */
-    for (queue_count = 0, i = 0; i < create_info->queueCreateInfoCount; i++)
-        queue_count += create_info->pQueueCreateInfos[i].queueCount;
-
-    if (!(device = calloc(1, offsetof(struct wine_device, queues[queue_count]))))
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-
-    init_conversion_context(&ctx);
-    res = wine_vk_device_convert_create_info(physical_device, &ctx, create_info, &create_info_host, device);
-    if (res == VK_SUCCESS)
-        res = instance->p_vkCreateDevice(physical_device->host.physical_device, &create_info_host,
-                                               NULL /* allocator */, &host_device);
-    free_conversion_context(&ctx);
-    if (res != VK_SUCCESS)
+    if ((debug_report_callback = find_next_struct(create_info->pNext, VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)))
     {
-        WARN("Failed to create device, res=%d.\n", res);
-        free(device);
-        return res;
+        struct vulkan_debug_report_callback *report_callback;
+
+        if (!(report_callback = calloc(1, sizeof(*report_callback)))) goto failed;
+        report_callback->host.debug_callback = VK_NULL_HANDLE;
+        report_callback->user_callback = (UINT_PTR)debug_report_callback->pfnCallback;
+        report_callback->user_data = (UINT_PTR)debug_report_callback->pUserData;
+
+        debug_report_callback->pfnCallback = (void *)&debug_report_callback_conversion;
+        debug_report_callback->pUserData = report_callback;
+        list_add_tail(&report_callbacks, &report_callback->entry);
     }
 
-    vulkan_object_init_ptr(&device->obj.obj, (UINT_PTR)host_device, &client_device->obj);
-    device->obj.physical_device = physical_device;
+    return vk_funcs->p_vkCreateInstance(create_info, NULL /* allocator */, client_instance_ptr);
 
-    /* Just load all function pointers we are aware off. The loader takes care of filtering.
-     * We use vkGetDeviceProcAddr as opposed to vkGetInstanceProcAddr for efficiency reasons
-     * as functions pass through fewer dispatch tables within the loader.
-     */
-#define USE_VK_FUNC(name)                                                                          \
-    device->obj.p_##name = (void *)vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, #name);  \
-    if (device->obj.p_##name == NULL) TRACE("Not found '%s'.\n", #name);
-    ALL_VK_DEVICE_FUNCS
-#undef USE_VK_FUNC
-
-    for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
-        wine_vk_device_init_queues(device, create_info_host.pQueueCreateInfos + i);
-
-    client_device->quirks = CONTAINING_RECORD(instance, struct wine_instance, obj)->quirks;
-
-    TRACE("Created device %p, host_device %p.\n", device, device->obj.host.device);
-    for (i = 0; i < device->queue_count; i++)
-    {
-        struct wine_queue *queue = device->queues + i;
-        vulkan_instance_insert_object(instance, &queue->obj.obj);
-    }
-    vulkan_instance_insert_object(instance, &device->obj.obj);
-
-    *ret = client_device;
-    return VK_SUCCESS;
-}
-
-VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
-                               const VkAllocationCallbacks *allocator, VkInstance *ret,
-                               void *client_ptr)
-{
-    VkInstanceCreateInfo create_info_host;
-    const VkApplicationInfo *app_info;
-    struct conversion_context ctx;
-    struct wine_instance *instance;
-    VkInstance host_instance, client_instance = client_ptr;
-    struct vulkan_physical_device *physical_devices;
-    unsigned int i;
-    VkResult res;
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    if (!(instance = calloc(1, sizeof(*instance) + sizeof(*physical_devices) * client_instance->phys_dev_count)))
-    {
-        ERR("Failed to allocate memory for instance\n");
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-    }
-    physical_devices = (struct vulkan_physical_device *)(instance + 1);
-
-    init_conversion_context(&ctx);
-    res = wine_vk_instance_convert_create_info(&ctx, create_info, &create_info_host, instance);
-    if (res == VK_SUCCESS)
-        res = p_vkCreateInstance(&create_info_host, NULL /* allocator */, &host_instance);
-    free_conversion_context(&ctx);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to create instance, res=%d\n", res);
-        free(instance->utils_messengers);
-        free(instance);
-        return res;
-    }
-
-    vulkan_object_init_ptr(&instance->obj.obj, (UINT_PTR)host_instance, &client_instance->obj);
-    instance->obj.p_insert_object = vulkan_instance_insert_object;
-    instance->obj.p_remove_object = vulkan_instance_remove_object;
-
-    /* Load all instance functions we are aware of. Note the loader takes care
-     * of any filtering for extensions which were not requested, but which the
-     * ICD may support.
-     */
-#define USE_VK_FUNC(name) \
-    instance->obj.p_##name = (void *)vk_funcs->p_vkGetInstanceProcAddr(instance->obj.host.instance, #name);
-    ALL_VK_INSTANCE_FUNCS
-#undef USE_VK_FUNC
-
-    /* Cache physical devices for vkEnumeratePhysicalDevices within the instance as
-     * each vkPhysicalDevice is a dispatchable object, which means we need to wrap
-     * the host physical devices and present those to the application.
-     * Cleanup happens as part of wine_vkDestroyInstance.
-     */
-    res = wine_vk_instance_init_physical_devices(&instance->obj, physical_devices);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to load physical devices, res=%d\n", res);
-        instance->obj.p_vkDestroyInstance(instance->obj.host.instance, NULL /* allocator */);
-        free(instance->utils_messengers);
-        free(instance);
-        return res;
-    }
-
-    if ((app_info = create_info->pApplicationInfo))
-    {
-        TRACE("Application name %s, application version %#x.\n",
-                debugstr_a(app_info->pApplicationName), app_info->applicationVersion);
-        TRACE("Engine name %s, engine version %#x.\n", debugstr_a(app_info->pEngineName),
-                app_info->engineVersion);
-        TRACE("API version %#x.\n", app_info->apiVersion);
-
-        if (app_info->pEngineName && !strcmp(app_info->pEngineName, "idTech"))
-            instance->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
-    }
-
-    TRACE("Created instance %p, host_instance %p.\n", instance, instance->obj.host.instance);
-
-    for (i = 0; i < instance->obj.physical_device_count; i++)
-    {
-        struct vulkan_physical_device *physical_device = &instance->obj.physical_devices[i];
-        vulkan_instance_insert_object(&instance->obj, &physical_device->obj);
-    }
-    vulkan_instance_insert_object(&instance->obj, &instance->obj.obj);
-
-    *ret = client_instance;
-    return VK_SUCCESS;
-}
-
-void wine_vkDestroyDevice(VkDevice client_device, const VkAllocationCallbacks *allocator)
-{
-    struct wine_device *device = wine_device_from_handle(client_device);
-    struct vulkan_instance *instance = device->obj.physical_device->instance;
-    unsigned int i;
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-    if (!device)
-        return;
-
-    device->obj.p_vkDestroyDevice(device->obj.host.device, NULL /* pAllocator */);
-    for (i = 0; i < device->queue_count; i++)
-        vulkan_instance_remove_object(instance, &device->queues[i].obj.obj);
-    vulkan_instance_remove_object(instance, &device->obj.obj);
-
-    free(device);
-}
-
-void wine_vkDestroyInstance(VkInstance client_instance, const VkAllocationCallbacks *allocator)
-{
-    struct wine_instance *instance = wine_instance_from_handle(client_instance);
-    unsigned int i;
-
-    if (allocator)
-        FIXME("Support allocation allocators\n");
-    if (!instance)
-        return;
-
-    instance->obj.p_vkDestroyInstance(instance->obj.host.instance, NULL /* allocator */);
-    for (i = 0; i < instance->obj.physical_device_count; i++)
-    {
-        vulkan_instance_remove_object(&instance->obj, &instance->obj.physical_devices[i].obj);
-        vulkan_physical_device_cleanup(&instance->obj.physical_devices[i]);
-    }
-    vulkan_instance_remove_object(&instance->obj, &instance->obj.obj);
-
-    if (instance->objects.compare) pthread_rwlock_destroy(&instance->objects_lock);
-    free(instance->utils_messengers);
-    free(instance);
-}
-
-VkResult wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice client_physical_device, const char *layer_name,
-                                                   uint32_t *count, VkExtensionProperties *properties)
-{
-    struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-
-    /* This shouldn't get called with layer_name set, the ICD loader prevents it. */
-    if (layer_name)
-    {
-        ERR("Layer enumeration not supported from ICD.\n");
-        return VK_ERROR_LAYER_NOT_PRESENT;
-    }
-
-    if (!properties)
-    {
-        *count = physical_device->extension_count;
-        return VK_SUCCESS;
-    }
-
-    *count = min(*count, physical_device->extension_count);
-    memcpy(properties, physical_device->extensions, *count * sizeof(*properties));
-
-    TRACE("Returning %u extensions.\n", *count);
-    return *count < physical_device->extension_count ? VK_INCOMPLETE : VK_SUCCESS;
+failed:
+    free_debug_utils_messengers(&utils_messengers);
+    free_debug_report_callbacks(&report_callbacks);
+    return VK_ERROR_OUT_OF_HOST_MEMORY;
 }
 
 VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t *count,
                                                      VkExtensionProperties *properties)
 {
-    uint32_t num_properties = 0, num_host_properties;
-    VkExtensionProperties *host_properties;
-    unsigned int i, j, surface;
-    VkResult res;
-
-    res = p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
-    if (res != VK_SUCCESS)
-        return res;
-
-    if (!(host_properties = calloc(num_host_properties, sizeof(*host_properties))))
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-
-    res = p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, host_properties);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to retrieve host properties, res=%d.\n", res);
-        free(host_properties);
-        return res;
-    }
-
-    /* The Wine graphics driver provides us with all extensions supported by the host side
-     * including extension fixup (e.g. VK_KHR_xlib_surface -> VK_KHR_win32_surface). It is
-     * up to us here to filter the list down to extensions for which we have thunks.
-     */
-    for (i = 0, surface = 0; i < num_host_properties; i++)
-    {
-        if (wine_vk_instance_extension_supported(host_properties[i].extensionName)
-                || (wine_vk_is_host_surface_extension(host_properties[i].extensionName) && !surface++))
-            num_properties++;
-        else
-            TRACE("Instance extension '%s' is not supported.\n", host_properties[i].extensionName);
-    }
-
-    if (!properties)
-    {
-        TRACE("Returning %u extensions.\n", num_properties);
-        *count = num_properties;
-        free(host_properties);
-        return VK_SUCCESS;
-    }
-
-    for (i = 0, j = 0, surface = 0; i < num_host_properties && j < *count; i++)
-    {
-        if (wine_vk_instance_extension_supported(host_properties[i].extensionName))
-        {
-            TRACE("Enabling extension '%s'.\n", host_properties[i].extensionName);
-            properties[j++] = host_properties[i];
-        }
-        else if (wine_vk_is_host_surface_extension(host_properties[i].extensionName) && !surface++)
-        {
-            VkExtensionProperties win32_surface = {VK_KHR_WIN32_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_SPEC_VERSION};
-            TRACE("Enabling VK_KHR_win32_surface.\n");
-            properties[j++] = win32_surface;
-        }
-    }
-    *count = min(*count, num_properties);
-
-    free(host_properties);
-    return *count < num_properties ? VK_INCOMPLETE : VK_SUCCESS;
+    return p_vkEnumerateInstanceExtensionProperties(name, count, properties);
 }
 
 VkResult wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice client_physical_device, uint32_t *count,
@@ -1271,49 +470,6 @@ void wine_vkFreeCommandBuffers(VkDevice client_device, VkCommandPool command_poo
     wine_vk_free_command_buffers(device, pool, count, buffers);
 }
 
-static VkQueue wine_vk_device_find_queue(VkDevice client_device, const VkDeviceQueueInfo2 *info)
-{
-    struct wine_device *device = wine_device_from_handle(client_device);
-    struct wine_queue *queue;
-    uint32_t i;
-
-    for (i = 0; i < device->queue_count; i++)
-    {
-        queue = &device->queues[i];
-        if (queue->family_index == info->queueFamilyIndex
-                && queue->queue_index == info->queueIndex
-                && queue->flags == info->flags)
-        {
-            return queue->obj.client.queue;
-        }
-    }
-
-    return VK_NULL_HANDLE;
-}
-
-void wine_vkGetDeviceQueue(VkDevice client_device, uint32_t family_index, uint32_t queue_index, VkQueue *client_queue)
-{
-    VkDeviceQueueInfo2 queue_info;
-
-    queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
-    queue_info.pNext = NULL;
-    queue_info.flags = 0;
-    queue_info.queueFamilyIndex = family_index;
-    queue_info.queueIndex = queue_index;
-
-    *client_queue = wine_vk_device_find_queue(client_device, &queue_info);
-}
-
-void wine_vkGetDeviceQueue2(VkDevice client_device, const VkDeviceQueueInfo2 *info, VkQueue *client_queue)
-{
-    const VkBaseInStructure *chain;
-
-    if ((chain = info->pNext))
-        FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
-
-    *client_queue = wine_vk_device_find_queue(client_device, info);
-}
-
 VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCreateInfo *info,
                                   const VkAllocationCallbacks *allocator, VkCommandPool *command_pool,
                                   void *client_ptr)
@@ -1339,7 +495,7 @@ VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCre
     }
 
     vulkan_object_init_ptr(&object->obj, host_command_pool, &client_command_pool->obj);
-    vulkan_instance_insert_object(instance, &object->obj);
+    instance->p_insert_object(instance, &object->obj);
 
     *command_pool = object->client.command_pool;
     return VK_SUCCESS;
@@ -1356,7 +512,7 @@ void wine_vkDestroyCommandPool(VkDevice client_device, VkCommandPool handle,
         FIXME("Support for allocation callbacks not implemented yet\n");
 
     device->p_vkDestroyCommandPool(device->host.device, pool->host.command_pool, NULL);
-    vulkan_instance_remove_object(instance, &pool->obj);
+    instance->p_remove_object(instance, &pool->obj);
     free(pool);
 }
 
@@ -1652,7 +808,7 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance client_instance,
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
     VkDebugUtilsMessengerCreateInfoEXT wine_create_info;
     VkDebugUtilsMessengerEXT host_debug_messenger;
-    struct wine_debug_utils_messenger *object;
+    struct vulkan_debug_utils_messenger *object;
     VkResult res;
 
     if (allocator)
@@ -1677,7 +833,7 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance client_instance,
     object->instance = instance;
     object->user_callback = (UINT_PTR)create_info->pfnUserCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
-    vulkan_instance_insert_object(instance, &object->obj);
+    instance->p_insert_object(instance, &object->obj);
 
     *messenger = object->client.debug_messenger;
     return VK_SUCCESS;
@@ -1687,15 +843,15 @@ void wine_vkDestroyDebugUtilsMessengerEXT(VkInstance client_instance, VkDebugUti
                                           const VkAllocationCallbacks *allocator)
 {
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
-    struct wine_debug_utils_messenger *object;
+    struct vulkan_debug_utils_messenger *object;
 
-    object = wine_debug_utils_messenger_from_handle(messenger);
+    object = vulkan_debug_utils_messenger_from_handle(messenger);
 
     if (!object)
         return;
 
     instance->p_vkDestroyDebugUtilsMessengerEXT(instance->host.instance, object->host.debug_messenger, NULL);
-    vulkan_instance_remove_object(instance, &object->obj);
+    instance->p_remove_object(instance, &object->obj);
 
     free(object);
 }
@@ -1708,7 +864,7 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance client_instance,
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
     VkDebugReportCallbackCreateInfoEXT wine_create_info;
     VkDebugReportCallbackEXT host_debug_callback;
-    struct wine_debug_report_callback *object;
+    struct vulkan_debug_report_callback *object;
     VkResult res;
 
     if (allocator)
@@ -1733,7 +889,7 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance client_instance,
     object->instance = instance;
     object->user_callback = (UINT_PTR)create_info->pfnCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
-    vulkan_instance_insert_object(instance, &object->obj);
+    instance->p_insert_object(instance, &object->obj);
 
     *callback = object->client.debug_callback;
     return VK_SUCCESS;
@@ -1743,15 +899,15 @@ void wine_vkDestroyDebugReportCallbackEXT(VkInstance client_instance, VkDebugRep
                                           const VkAllocationCallbacks *allocator)
 {
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
-    struct wine_debug_report_callback *object;
+    struct vulkan_debug_report_callback *object;
 
-    object = wine_debug_report_callback_from_handle(callback);
+    object = vulkan_debug_report_callback_from_handle(callback);
 
     if (!object)
         return;
 
     instance->p_vkDestroyDebugReportCallbackEXT(instance->host.instance, object->host.debug_callback, NULL);
-    vulkan_instance_remove_object(instance, &object->obj);
+    instance->p_remove_object(instance, &object->obj);
 
     free(object);
 }
@@ -1781,7 +937,7 @@ VkResult wine_vkCreateDeferredOperationKHR(VkDevice device_handle,
 
     vulkan_object_init(&object->obj, host_deferred_operation);
     init_conversion_context(&object->ctx);
-    vulkan_instance_insert_object(instance, &object->obj);
+    instance->p_insert_object(instance, &object->obj);
 
     *operation = object->client.deferred_operation;
     return VK_SUCCESS;
@@ -1801,7 +957,7 @@ void wine_vkDestroyDeferredOperationKHR(VkDevice device_handle,
         return;
 
     device->p_vkDestroyDeferredOperationKHR(device->host.device, object->host.deferred_operation, NULL);
-    vulkan_instance_remove_object(instance, &object->obj);
+    instance->p_remove_object(instance, &object->obj);
 
     free_conversion_context(&object->ctx);
     free(object);
@@ -1809,36 +965,14 @@ void wine_vkDestroyDeferredOperationKHR(VkDevice device_handle,
 
 static NTSTATUS is_available_instance_function(VkInstance handle, const char *name)
 {
-    struct wine_instance *instance = wine_instance_from_handle(handle);
-
-    if (!strcmp(name, "vkCreateWin32SurfaceKHR"))
-        return instance->enable_win32_surface;
-    if (!strcmp(name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
-        return instance->enable_win32_surface;
-
-    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->obj.host.instance, name);
+    struct vulkan_instance *instance = vulkan_instance_from_handle(handle);
+    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->host.instance, name);
 }
 
 static NTSTATUS is_available_device_function(VkDevice handle, const char *name)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
-
-    if (!strcmp(name, "vkGetMemoryWin32HandleKHR"))
-        return device->has_external_memory_win32;
-    if (!strcmp(name, "vkGetMemoryWin32HandlePropertiesKHR"))
-        return device->has_external_memory_win32;
-
-    if (!strcmp(name, "vkGetSemaphoreWin32HandleKHR"))
-        return device->has_external_semaphore_win32;
-    if (!strcmp(name, "vkImportSemaphoreWin32HandleKHR"))
-        return device->has_external_semaphore_win32;
-
-    if (!strcmp(name, "vkGetFenceWin32HandleKHR"))
-        return device->has_external_fence_win32;
-    if (!strcmp(name, "vkImportFenceWin32HandleKHR"))
-        return device->has_external_fence_win32;
-
-    return !!vk_funcs->p_vkGetDeviceProcAddr(device->obj.host.device, name);
+    struct vulkan_device *device = vulkan_device_from_handle(handle);
+    return !!vk_funcs->p_vkGetDeviceProcAddr(device->host.device, name);
 }
 
 #ifdef _WIN64
@@ -1856,6 +990,21 @@ NTSTATUS vk_is_available_device_function(void *arg)
 }
 
 #endif /* _WIN64 */
+
+NTSTATUS wow64_init_vulkan(void *arg)
+{
+    struct
+    {
+        UINT64 call_vulkan_debug_report_callback;
+        UINT64 call_vulkan_debug_utils_callback;
+        ULONG extensions;
+    } *params32 = arg;
+    struct init_params params;
+    params.call_vulkan_debug_report_callback = params32->call_vulkan_debug_report_callback;
+    params.call_vulkan_debug_utils_callback = params32->call_vulkan_debug_utils_callback;
+    params.extensions = UlongToPtr(params32->extensions);
+    return init_vulkan(&params);
+}
 
 NTSTATUS vk_is_available_instance_function32(void *arg)
 {

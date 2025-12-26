@@ -5298,7 +5298,9 @@ START_TEST(script)
     detect_locale();
     if(argc > 2) {
         init_protocol_handler();
-        run_script_as_http_with_mode(argv[2], NULL, "11");
+        run_script_as_http_with_mode(argv[2],
+                                     argc > 4 ? argv[4] : NULL,
+                                     argc > 3 ? argv[3] : "11");
     }else if(check_ie()) {
         if(winetest_interactive || ! is_ie_hardened()) {
             if(register_script_engine()) {

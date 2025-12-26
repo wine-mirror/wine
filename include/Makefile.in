@@ -381,6 +381,7 @@ SOURCES = \
 	icm.h \
 	icmpapi.h \
 	icodecapi.idl \
+	icu.h \
 	idispids.h \
 	ieautomation.idl \
 	iextag.idl \
@@ -706,13 +707,16 @@ SOURCES = \
 	rpcsal.h \
 	rstbas.idl \
 	rstchg.idl \
+	rstcridx.idl \
 	rstfnd.idl \
 	rstidn.idl \
+	rstind.idl \
 	rstinf.idl \
 	rstloc.idl \
 	rstnot.idl \
 	rstscr.idl \
 	rstupd.idl \
+	rstvw.idl \
 	rstxsc.idl \
 	rtlsupportapi.h \
 	rtutils.h \
@@ -834,6 +838,8 @@ SOURCES = \
 	vsstyle.h \
 	vssym32.h \
 	vswriter.idl \
+	vwchp.idl \
+	vwflt.idl \
 	wbemcli.idl \
 	wbemdisp.idl \
 	wbemprov.idl \
@@ -964,7 +970,6 @@ SOURCES = \
 	wine/fil_data.idl \
 	wine/gdi_driver.h \
 	wine/glu.h \
-	wine/heap.h \
 	wine/hid.h \
 	wine/http.h \
 	wine/iaccessible2.idl \

@@ -512,7 +512,8 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
         if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, (len + 8) * sizeof(WCHAR) ))) goto failed;
         res = GetFinalPathNameByHandleW( handle, buffer, len + 8, VOLUME_NAME_DOS );
         if (!res || res > len + 8) goto failed;
-        wcscat( buffer, nt_name.Buffer + nt_name.Length / sizeof(WCHAR) );
+        if (buffer[res - 1] == '\\' && nt_name.Buffer[nt_name.Length / sizeof(WCHAR)] == '\\') res--;
+        wcscpy( buffer + res, nt_name.Buffer + nt_name.Length / sizeof(WCHAR) );
         NtClose( handle );
         RtlFreeHeap( GetProcessHeap(), 0, nt_str );
     }
@@ -537,8 +538,16 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
  */
 BOOLEAN WINAPI CreateSymbolicLinkA(LPCSTR link, LPCSTR target, DWORD flags)
 {
-    FIXME("(%s %s %ld): stub\n", debugstr_a(link), debugstr_a(target), flags);
-    return TRUE;
+    WCHAR *linkW, *targetW;
+    BOOL ret;
+
+    if (!(linkW = FILE_name_AtoW( link, FALSE ))) return FALSE;
+    if (!(targetW = FILE_name_AtoW( target, TRUE ))) return FALSE;
+
+    ret = CreateSymbolicLinkW( linkW, targetW, flags );
+
+    HeapFree( GetProcessHeap(), 0, targetW );
+    return ret;
 }
 
 /*************************************************************************

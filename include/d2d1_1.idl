@@ -29,6 +29,14 @@ interface ID2D1ColorContext;
 interface ID2D1Effect;
 interface ID2D1BitmapBrush1;
 
+typedef D2D_VECTOR_2F D2D1_VECTOR_2F;
+typedef D2D_VECTOR_3F D2D1_VECTOR_3F;
+typedef D2D_VECTOR_4F D2D1_VECTOR_4F;
+
+typedef D2D_MATRIX_4X3_F D2D1_MATRIX_4X3_F;
+typedef D2D_MATRIX_4X4_F D2D1_MATRIX_4X4_F;
+typedef D2D_MATRIX_5X4_F D2D1_MATRIX_5X4_F;
+
 cpp_quote("#ifndef __dwrite_h__")
 /* already defined in dwrite.h but needed for WIDL */
 typedef struct DWRITE_GLYPH_RUN_DESCRIPTION DWRITE_GLYPH_RUN_DESCRIPTION;
@@ -158,7 +166,6 @@ typedef enum D2D1_LAYER_OPTIONS1
 } D2D1_LAYER_OPTIONS1;
 
 struct D2D1_PROPERTY_BINDING;
-typedef D2D_MATRIX_4X4_F D2D1_MATRIX_4X4_F;
 
 typedef enum D2D1_PROPERTY_TYPE
 {

@@ -846,50 +846,49 @@ static HRESULT tiff_decoder_read_tile(struct tiff_decoder *This, UINT tile_x, UI
 
             for (x = 0; x < info->tile_width; x += 8)
             {
-                dst[2] = (src[0] & 0x80) ? 0xff : 0; /* R */
-                dst[1] = (src[0] & 0x40) ? 0xff : 0; /* G */
-                dst[0] = (src[0] & 0x20) ? 0xff : 0; /* B */
-                if (x + 1 < info->tile_width)
+                switch (info->tile_width - x - 1)
                 {
-                    dst[5] = (src[0] & 0x10) ? 0xff : 0; /* R */
-                    dst[4] = (src[0] & 0x08) ? 0xff : 0; /* G */
-                    dst[3] = (src[0] & 0x04) ? 0xff : 0; /* B */
-                }
-                if (x + 2 < info->tile_width)
-                {
-                    dst[8] = (src[0] & 0x02) ? 0xff : 0; /* R */
-                    dst[7] = (src[0] & 0x01) ? 0xff : 0; /* G */
-                    dst[6]  = (src[1] & 0x80) ? 0xff : 0; /* B */
-                }
-                if (x + 3 < info->tile_width)
-                {
-                    dst[11] = (src[1] & 0x40) ? 0xff : 0; /* R */
-                    dst[10] = (src[1] & 0x20) ? 0xff : 0; /* G */
-                    dst[9]  = (src[1] & 0x10) ? 0xff : 0; /* B */
-                }
-                if (x + 4 < info->tile_width)
-                {
-                    dst[14] = (src[1] & 0x08) ? 0xff : 0; /* R */
-                    dst[13] = (src[1] & 0x04) ? 0xff : 0; /* G */
-                    dst[12] = (src[1] & 0x02) ? 0xff : 0; /* B */
-                }
-                if (x + 5 < info->tile_width)
-                {
-                    dst[17] = (src[1] & 0x01) ? 0xff : 0; /* R */
-                    dst[16] = (src[2] & 0x80) ? 0xff : 0; /* G */
-                    dst[15] = (src[2] & 0x40) ? 0xff : 0; /* B */
-                }
-                if (x + 6 < info->tile_width)
-                {
-                    dst[20] = (src[2] & 0x20) ? 0xff : 0; /* R */
-                    dst[19] = (src[2] & 0x10) ? 0xff : 0; /* G */
-                    dst[18] = (src[2] & 0x08) ? 0xff : 0; /* B */
-                }
-                if (x + 7 < info->tile_width)
-                {
+                default:
+                case 7:
                     dst[23] = (src[2] & 0x04) ? 0xff : 0; /* R */
                     dst[22] = (src[2] & 0x02) ? 0xff : 0; /* G */
                     dst[21] = (src[2] & 0x01) ? 0xff : 0; /* B */
+                    /* fall through */
+                case 6:
+                    dst[20] = (src[2] & 0x20) ? 0xff : 0; /* R */
+                    dst[19] = (src[2] & 0x10) ? 0xff : 0; /* G */
+                    dst[18] = (src[2] & 0x08) ? 0xff : 0; /* B */
+                    /* fall through */
+                case 5:
+                    dst[17] = (src[1] & 0x01) ? 0xff : 0; /* R */
+                    dst[16] = (src[2] & 0x80) ? 0xff : 0; /* G */
+                    dst[15] = (src[2] & 0x40) ? 0xff : 0; /* B */
+                    /* fall through */
+                case 4:
+                    dst[14] = (src[1] & 0x08) ? 0xff : 0; /* R */
+                    dst[13] = (src[1] & 0x04) ? 0xff : 0; /* G */
+                    dst[12] = (src[1] & 0x02) ? 0xff : 0; /* B */
+                    /* fall through */
+                case 3:
+                    dst[11] = (src[1] & 0x40) ? 0xff : 0; /* R */
+                    dst[10] = (src[1] & 0x20) ? 0xff : 0; /* G */
+                    dst[9]  = (src[1] & 0x10) ? 0xff : 0; /* B */
+                    /* fall through */
+                case 2:
+                    dst[8] = (src[0] & 0x02) ? 0xff : 0; /* R */
+                    dst[7] = (src[0] & 0x01) ? 0xff : 0; /* G */
+                    dst[6] = (src[1] & 0x80) ? 0xff : 0; /* B */
+                    /* fall through */
+                case 1:
+                    dst[5] = (src[0] & 0x10) ? 0xff : 0; /* R */
+                    dst[4] = (src[0] & 0x08) ? 0xff : 0; /* G */
+                    dst[3] = (src[0] & 0x04) ? 0xff : 0; /* B */
+                    /* fall through */
+                case 0:
+                    dst[2] = (src[0] & 0x80) ? 0xff : 0; /* R */
+                    dst[1] = (src[0] & 0x40) ? 0xff : 0; /* G */
+                    dst[0] = (src[0] & 0x20) ? 0xff : 0; /* B */
+                    break;
                 }
                 src += 3;
                 dst += 24;

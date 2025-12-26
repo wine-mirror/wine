@@ -64,11 +64,9 @@ static struct gl_drawable *impl_from_opengl_drawable( struct opengl_drawable *ba
 
 static void *opengl_handle;
 
-static inline EGLConfig egl_config_for_format(int format)
+static EGLConfig egl_config_for_format(int format)
 {
-    assert(format > 0 && format <= 2 * egl->config_count);
-    if (format <= egl->config_count) return egl->configs[format - 1];
-    return egl->configs[format - egl->config_count - 1];
+    return egl->configs[(format - 1) % egl->config_count];
 }
 
 static void android_drawable_destroy( struct opengl_drawable *base )

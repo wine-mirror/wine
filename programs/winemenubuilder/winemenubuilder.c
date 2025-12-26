@@ -1706,8 +1706,8 @@ static BOOL build_native_mime_types(struct list *mime_types)
     WCHAR *dirs, *dir, *dos_name, *ctx, *p;
     BOOL ret;
 
-    if (_wgetenv( L"XDG_DATA_DIRS" ))
-        dirs = xwcsdup( _wgetenv( L"XDG_DATA_DIRS" ));
+    if (_wgetenv( L"WINE_HOST_XDG_DATA_DIRS" ))
+        dirs = xwcsdup( _wgetenv( L"WINE_HOST_XDG_DATA_DIRS" ));
     else
         dirs = xwcsdup( L"/usr/local/share/:/usr/share/" );
 
@@ -2825,7 +2825,7 @@ static BOOL init_xdg(void)
 
     if (FAILED(hr)) return FALSE;
 
-    if ((p = _wgetenv( L"XDG_CONFIG_HOME" )))
+    if ((p = _wgetenv( L"WINE_HOST_XDG_CONFIG_HOME" )))
         xdg_menu_dir = heap_wprintf( L"\\??\\unix%s/menus/applications-merged", p );
     else
         xdg_menu_dir = heap_wprintf( L"%s/.config/menus/applications-merged", _wgetenv(L"WINEHOMEDIR") );
@@ -2833,7 +2833,7 @@ static BOOL init_xdg(void)
     xdg_menu_dir[1] = '\\';  /* change \??\ to \\?\ */
     create_directories(xdg_menu_dir);
 
-    if ((p = _wgetenv( L"XDG_DATA_HOME" )))
+    if ((p = _wgetenv( L"WINE_HOST_XDG_DATA_HOME" )))
         xdg_data_dir = heap_wprintf( L"\\??\\unix%s", p );
     else
         xdg_data_dir = heap_wprintf( L"%s/.local/share", _wgetenv(L"WINEHOMEDIR") );

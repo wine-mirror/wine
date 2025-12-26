@@ -29,7 +29,6 @@
 #include "shlobj.h"
 #include "winreg.h"
 #include "winnls.h"
-#include "wine/heap.h"
 
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
@@ -80,6 +79,8 @@ extern INT_PTR WINPROC_CallDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 extern INT_PTR WINPROC_CallDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 extern void winproc_init(void);
 extern LRESULT dispatch_win_proc_params( struct win_proc_params *params );
+
+extern DWORD get_app_version(void);
 
 extern void init_class_name( UNICODE_STRING *str, const WCHAR *name );
 extern void init_class_name_ansi( UNICODE_STRING *str, const char *name );

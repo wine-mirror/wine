@@ -49,7 +49,17 @@ struct bluetooth_adapter_free_params
     unix_name_t adapter;
 };
 
+struct bluetooth_adapter_dup_params
+{
+    unix_name_t adapter;
+};
+
 struct bluetooth_device_free_params
+{
+    unix_name_t device;
+};
+
+struct bluetooth_device_dup_params
 {
     unix_name_t device;
 };
@@ -132,8 +142,10 @@ enum bluetoothapis_funcs
     unix_bluetooth_adapter_stop_discovery,
     unix_bluetooth_adapter_remove_device,
     unix_bluetooth_adapter_free,
+    unix_bluetooth_adapter_dup,
 
     unix_bluetooth_device_free,
+    unix_bluetooth_device_dup,
     unix_bluetooth_device_disconnect,
     unix_bluetooth_device_start_pairing,
 

@@ -1863,36 +1863,13 @@ static NTSTATUS alsa_release_capture_buffer(void *args)
 static NTSTATUS alsa_is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
-    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)params->fmt_in;
     snd_pcm_t *pcm_handle;
     snd_pcm_hw_params_t *hw_params;
     snd_pcm_format_mask_t *formats = NULL;
     snd_pcm_format_t format;
-    WAVEFORMATEXTENSIBLE *closest = NULL;
     unsigned int max = 0, min = 0;
     int err;
     int alsa_channels, alsa_channel_map[32];
-
-    params->result = S_OK;
-
-    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
-        params->result = E_POINTER;
-    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        params->result = E_INVALIDARG;
-    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-            params->result = E_INVALIDARG;
-        else if(params->fmt_in->nAvgBytesPerSec == 0 || params->fmt_in->nBlockAlign == 0 ||
-                (fmtex->Samples.wValidBitsPerSample > params->fmt_in->wBitsPerSample))
-            params->result = E_INVALIDARG;
-    }
-    if(FAILED(params->result))
-        return STATUS_SUCCESS;
-
-    if(params->fmt_in->nChannels == 0){
-        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        return STATUS_SUCCESS;
-    }
 
     params->result = alsa_open_device(params->device, params->flow, &pcm_handle, &hw_params);
     if(FAILED(params->result))
@@ -1914,12 +1891,6 @@ static NTSTATUS alsa_is_format_supported(void *args)
     if (format == SND_PCM_FORMAT_UNKNOWN ||
         !snd_pcm_format_mask_test(formats, format)){
         params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-        goto exit;
-    }
-
-    closest = clone_format(params->fmt_in);
-    if(!closest){
-        params->result = E_OUTOFMEMORY;
         goto exit;
     }
 
@@ -1951,47 +1922,17 @@ static NTSTATUS alsa_is_format_supported(void *args)
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
-    if(params->fmt_in->nChannels > max){
+    if(params->fmt_in->nChannels > max)
         params->result = S_FALSE;
-        closest->Format.nChannels = max;
-    }else if(params->fmt_in->nChannels < min){
+    else if(params->fmt_in->nChannels < min)
         params->result = S_FALSE;
-        closest->Format.nChannels = min;
-    }
 
     map_channels(params->flow, params->fmt_in, &alsa_channels, alsa_channel_map);
 
-    if(alsa_channels > max){
+    if(alsa_channels > max)
         params->result = S_FALSE;
-        closest->Format.nChannels = max;
-    }
-
-    if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        closest->dwChannelMask = get_channel_mask(closest->Format.nChannels);
-
-    if(params->fmt_in->nBlockAlign != params->fmt_in->nChannels * params->fmt_in->wBitsPerSample / 8 ||
-       params->fmt_in->nAvgBytesPerSec != params->fmt_in->nBlockAlign * params->fmt_in->nSamplesPerSec ||
-       (params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-        fmtex->Samples.wValidBitsPerSample < params->fmt_in->wBitsPerSample))
-        params->result = S_FALSE;
-
-    if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE && params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED)
-            params->result = S_FALSE;
-    }
 
 exit:
-    if(params->result == S_FALSE && !params->fmt_out)
-        params->result = AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    if(params->result == S_FALSE) {
-        closest->Format.nBlockAlign = closest->Format.nChannels * closest->Format.wBitsPerSample / 8;
-        closest->Format.nAvgBytesPerSec = closest->Format.nBlockAlign * closest->Format.nSamplesPerSec;
-        if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-            closest->Samples.wValidBitsPerSample = closest->Format.wBitsPerSample;
-        memcpy(params->fmt_out, closest, closest->Format.cbSize);
-    }
-    free(closest);
     free(formats);
     free(hw_params);
     snd_pcm_close(pcm_handle);
@@ -2669,7 +2610,6 @@ static NTSTATUS alsa_wow64_is_format_supported(void *args)
         EDataFlow flow;
         AUDCLNT_SHAREMODE share;
         PTR32 fmt_in;
-        PTR32 fmt_out;
         HRESULT result;
     } *params32 = args;
     struct is_format_supported_params params =
@@ -2678,7 +2618,6 @@ static NTSTATUS alsa_wow64_is_format_supported(void *args)
         .flow = params32->flow,
         .share = params32->share,
         .fmt_in = ULongToPtr(params32->fmt_in),
-        .fmt_out = ULongToPtr(params32->fmt_out)
     };
     alsa_is_format_supported(&params);
     params32->result = params.result;

@@ -32,7 +32,6 @@
 #include "commdlg.h"
 #include "cderr.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -85,27 +84,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 	return TRUE;
 }
 #undef GPA
-
-/***********************************************************************
- *	COMDLG32_AllocMem 			(internal)
- * Get memory for internal datastructure plus stringspace etc.
- *	RETURNS
- *		Success: Pointer to a heap block
- *		Failure: null
- */
-void *COMDLG32_AllocMem(int size)
-{
-    void *ptr = heap_alloc_zero(size);
-
-    if (!ptr)
-    {
-        COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-        return NULL;
-    }
-
-    return ptr;
-}
-
 
 /***********************************************************************
  *	COMDLG32_SetCommDlgExtendedError	(internal)

@@ -191,8 +191,8 @@ __ASM_GLOBAL_FUNC( modify_ldt,
 #define EFL_sig(context)     ((context)->uc_mcontext.gregs[REG_EFL])
 #define TRAP_sig(context)    ((context)->uc_mcontext.gregs[REG_TRAPNO])
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
-#define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.fpregs))
-#define XState_sig(fpu)      (((unsigned int *)fpu->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSAVE_AREA_HEADER *)(fpu + 1) : NULL)
+#define FPU_sig(context)     ((void *)((context)->uc_mcontext.fpregs))
+#define XState_sig(fpu)      (((unsigned int *)((XMM_SAVE_AREA32 *)fpu)->Reserved4)[12] == FP_XSTATE_MAGIC1 ? (XSAVE_AREA_HEADER *)(((XMM_SAVE_AREA32 *)fpu) + 1) : NULL)
 
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
 
@@ -224,7 +224,7 @@ __ASM_GLOBAL_FUNC( modify_ldt,
 #define RSP_sig(context)     ((context)->uc_mcontext.mc_rsp)
 #define TRAP_sig(context)    ((context)->uc_mcontext.mc_trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext.mc_err)
-#define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.mc_fpstate))
+#define FPU_sig(context)     ((void *)((context)->uc_mcontext.mc_fpstate))
 #define XState_sig(context)  NULL
 
 #elif defined(__NetBSD__)
@@ -255,7 +255,7 @@ __ASM_GLOBAL_FUNC( modify_ldt,
 #define RSP_sig(context)    (*((unsigned long*)&(context)->uc_mcontext.__gregs[_REG_URSP]))
 #define TRAP_sig(context)   ((context)->uc_mcontext.__gregs[_REG_TRAPNO])
 #define ERROR_sig(context)  ((context)->uc_mcontext.__gregs[_REG_ERR])
-#define FPU_sig(context)    ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.__fpregs))
+#define FPU_sig(context)    ((void *)((context)->uc_mcontext.__fpregs))
 #define XState_sig(context) NULL
 
 #elif defined (__APPLE__)
@@ -331,15 +331,15 @@ _STRUCT_MCONTEXT_AVX64_FULL
  * This changes the offset of the FPU state.
  * Checking mcsize is the only way to determine which mcontext is in use.
  */
-static inline XMM_SAVE_AREA32 *FPU_sig( const ucontext_t *context )
+static inline void *FPU_sig( const ucontext_t *context )
 {
     if (context->uc_mcsize == sizeof(_STRUCT_MCONTEXT64_FULL) ||
         context->uc_mcsize == sizeof(_STRUCT_MCONTEXT_AVX64_FULL) ||
         context->uc_mcsize == SIZEOF_STRUCT_MCONTEXT_AVX512_64_FULL)
     {
-        return (XMM_SAVE_AREA32 *)&((_STRUCT_MCONTEXT64_FULL *)context->uc_mcontext)->__fs.__fpu_fcw;
+        return &((_STRUCT_MCONTEXT64_FULL *)context->uc_mcontext)->__fs.__fpu_fcw;
     }
-    return (XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw;
+    return &(context)->uc_mcontext->__fs.__fpu_fcw;
 }
 
 static inline const WORD *SS_sig_ptr( const ucontext_t *context )
@@ -1007,7 +1007,7 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
         XSAVE_AREA_HEADER *xs;
 
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
-        context->FltSave = *FPU_sig(sigcontext);
+        memcpy( &context->FltSave, FPU_sig(sigcontext), sizeof(context->FltSave) );
         context->MxCsr = context->FltSave.MxCsr;
         if (xstate_extended_features && (xs = XState_sig(FPU_sig(sigcontext))))
         {
@@ -1048,7 +1048,7 @@ static void fixup_frame_fpu_state( struct syscall_frame *frame, const ucontext_t
         frame->xstate.CompactionMask = 0x8000000000000000 | user_shared_data->XState.EnabledFeatures;
 
     if (!FPU_sig(sigcontext)) return;
-    xsave = *FPU_sig(sigcontext);
+    memcpy( &xsave, FPU_sig(sigcontext), sizeof(xsave) );
     memcpy( &xsave.XmmRegisters[6], &frame->xsave.XmmRegisters[6], 10 * sizeof(*xsave.XmmRegisters) );
     xsave.MxCsr = frame->xsave.MxCsr;
     frame->xsave = xsave;
@@ -1072,7 +1072,7 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     amd64_thread_data()->dr6 = context->Dr6;
     amd64_thread_data()->dr7 = context->Dr7;
     set_sigcontext( context, sigcontext );
-    if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->FltSave;
+    if (FPU_sig(sigcontext)) memcpy( FPU_sig(sigcontext), &context->FltSave, sizeof(context->FltSave) );
     leave_handler( sigcontext );
 }
 
@@ -2063,6 +2063,140 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
 }
 
 
+#pragma pack(push,1)
+union atl_thunk
+{
+    struct
+    {
+        UINT  movl;  /* movl this,4(%esp) */
+        UINT  this;
+        BYTE  jmp;   /* jmp func */
+        int   func;
+    } t1;
+    struct
+    {
+        BYTE  movl;  /* movl this,ecx */
+        UINT  this;
+        BYTE  jmp;   /* jmp func */
+        int   func;
+    } t2;
+    struct
+    {
+        BYTE  movl1; /* movl this,edx */
+        UINT  this;
+        BYTE  movl2; /* movl func,ecx */
+        UINT  func;
+        WORD  jmp;   /* jmp ecx */
+    } t3;
+    struct
+    {
+        BYTE  movl1; /* movl this,ecx */
+        UINT  this;
+        BYTE  movl2; /* movl func,eax */
+        UINT  func;
+        WORD  jmp;   /* jmp eax */
+    } t4;
+    struct
+    {
+        UINT  inst1; /* pop ecx
+                      * pop eax
+                      * push ecx
+                      * jmp 4(%eax) */
+        WORD  inst2;
+    } t5;
+};
+#pragma pack(pop)
+
+/**********************************************************************
+ *		check_atl_thunk
+ *
+ * Check if code destination is an ATL thunk, and emulate it if so.
+ */
+static BOOL check_atl_thunk( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    const union atl_thunk *thunk = (const union atl_thunk *)rec->ExceptionInformation[1];
+    union atl_thunk thunk_copy;
+    SIZE_T thunk_len;
+
+    if (CS_sig(sigcontext) == cs64_sel) return FALSE;
+
+    thunk_len = virtual_uninterrupted_read_memory( thunk, &thunk_copy, sizeof(*thunk) );
+    if (!thunk_len) return FALSE;
+
+    if (thunk_len >= sizeof(thunk_copy.t1) &&
+        thunk_copy.t1.movl == 0x042444c7 &&
+        thunk_copy.t1.jmp == 0xe9)
+    {
+        if (!virtual_uninterrupted_write_memory( (DWORD *)context->Rsp + 1,
+                                                 &thunk_copy.t1.this, sizeof(DWORD) ))
+        {
+            RIP_sig(sigcontext) = (DWORD_PTR)(&thunk->t1.func + 1) + thunk_copy.t1.func;
+            TRACE( "emulating ATL thunk type 1 at %p, func=%p arg=%08x\n",
+                   thunk, (void *)RIP_sig(sigcontext), thunk_copy.t1.this );
+            goto done;
+        }
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t2) &&
+             thunk_copy.t2.movl == 0xb9 &&
+             thunk_copy.t2.jmp == 0xe9)
+    {
+        RCX_sig(sigcontext) = thunk_copy.t2.this;
+        RIP_sig(sigcontext) = (DWORD_PTR)(&thunk->t2.func + 1) + thunk_copy.t2.func;
+        TRACE( "emulating ATL thunk type 2 at %p, func=%p ecx=%p\n", thunk,
+               (void *)RIP_sig(sigcontext), (void *)RCX_sig(sigcontext) );
+        goto done;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t3) &&
+             thunk_copy.t3.movl1 == 0xba &&
+             thunk_copy.t3.movl2 == 0xb9 &&
+             thunk_copy.t3.jmp == 0xe1ff)
+    {
+        RDX_sig(sigcontext) = thunk_copy.t3.this;
+        RCX_sig(sigcontext) = thunk_copy.t3.func;
+        RIP_sig(sigcontext) = thunk_copy.t3.func;
+        TRACE( "emulating ATL thunk type 3 at %p, func=%p ecx=%p edx=%p\n", thunk,
+               (void *)RIP_sig(sigcontext), (void *)RCX_sig(sigcontext), (void *)RDX_sig(sigcontext) );
+        goto done;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t4) &&
+             thunk_copy.t4.movl1 == 0xb9 &&
+             thunk_copy.t4.movl2 == 0xb8 &&
+             thunk_copy.t4.jmp == 0xe0ff)
+    {
+        RCX_sig(sigcontext) = thunk_copy.t4.this;
+        RAX_sig(sigcontext) = thunk_copy.t4.func;
+        RIP_sig(sigcontext) = thunk_copy.t4.func;
+        TRACE( "emulating ATL thunk type 4 at %p, func=%p eax=%p ecx=%p\n", thunk,
+               (void *)RIP_sig(sigcontext), (void *)RAX_sig(sigcontext), (void *)RCX_sig(sigcontext) );
+        goto done;
+    }
+    else if (thunk_len >= sizeof(thunk_copy.t5) &&
+             thunk_copy.t5.inst1 == 0xff515859 &&
+             thunk_copy.t5.inst2 == 0x0460)
+    {
+        DWORD func, sp[2];
+        if (virtual_uninterrupted_read_memory( (DWORD *)context->Rsp, sp, sizeof(sp) ) == sizeof(sp) &&
+            virtual_uninterrupted_read_memory( (DWORD *)(ULONG_PTR)sp[1] + 1, &func, sizeof(DWORD) ) == sizeof(DWORD) &&
+            !virtual_uninterrupted_write_memory( (DWORD *)context->Rsp + 1, &sp[0], sizeof(sp[0]) ))
+        {
+            RCX_sig(sigcontext) = sp[0];
+            RAX_sig(sigcontext) = sp[1];
+            RSP_sig(sigcontext) += sizeof(DWORD);
+            RIP_sig(sigcontext) = func;
+            TRACE( "emulating ATL thunk type 5 at %p, func=%p eax=%p ecx=%p esp=%p\n",
+                   thunk, (void *)RIP_sig(sigcontext), (void *)RAX_sig(sigcontext),
+                   (void *)RCX_sig(sigcontext), (void *)RSP_sig(sigcontext) );
+            goto done;
+        }
+    }
+    return FALSE;
+
+ done:
+    leave_handler( sigcontext );
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           handle_syscall_fault
  *
@@ -2311,6 +2445,9 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
                                        &flags, sizeof(flags), NULL );
             /* send EXCEPTION_EXECUTE_FAULT only if data execution prevention is enabled */
             if (!(flags & MEM_EXECUTE_OPTION_DISABLE)) rec.ExceptionInformation[0] = EXCEPTION_READ_FAULT;
+            if (!(flags & MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION) &&
+                check_atl_thunk( ucontext, &rec, &context.c ))
+                return;
         }
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
@@ -2381,7 +2518,10 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     ucontext_t *ucontext = init_handler( sigcontext );
-    EXCEPTION_RECORD rec = { 0 };
+    EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)RIP_sig(ucontext) };
+    struct xcontext context;
+
+    save_context( &context, sigcontext );
 
     switch (siginfo->si_code)
     {
@@ -2408,7 +2548,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         break;
     case FPE_FLTINV:
     default:
-        if (FPU_sig(ucontext) && FPU_sig(ucontext)->StatusWord & 0x40)
+        if (context.c.FltSave.StatusWord & 0x40)
             rec.ExceptionCode = EXCEPTION_FLT_STACK_CHECK;
         else
             rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
@@ -2419,10 +2559,10 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     {
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = 0;
-        rec.ExceptionInformation[1] = FPU_sig(ucontext) ? FPU_sig(ucontext)->MxCsr : 0;
+        rec.ExceptionInformation[1] = context.c.FltSave.MxCsr;
         if (CS_sig(ucontext) != cs64_sel) rec.ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
     }
-    setup_exception( ucontext, &rec );
+    setup_raise_exception( sigcontext, &rec, &context );
 }
 
 

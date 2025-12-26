@@ -311,6 +311,55 @@ static void test_pin_interfaces(IPin *pin)
     check_interface(pin, &IID_IStreamBuilder, FALSE);
 }
 
+static void test_frame_rate_list(IBaseFilter *filter, IPin *pin)
+{
+    IAMStreamConfig *stream_config;
+    VIDEO_STREAM_CONFIG_CAPS vscc;
+    IAMVideoControl *control;
+    AM_MEDIA_TYPE *format;
+    LONGLONG *rates;
+    LONG rate_count;
+    SIZE dimensions;
+    int count, size;
+    HRESULT hr;
+
+    IPin_QueryInterface(pin, &IID_IAMStreamConfig, (void **)&stream_config);
+    IBaseFilter_QueryInterface(filter, &IID_IAMVideoControl, (void **)&control);
+
+    hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, &count, &size);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count != 0xdeadbeef, "Got wrong count: %d.\n", count);
+    ok(size == sizeof(VIDEO_STREAM_CONFIG_CAPS), "Got wrong size: %d.\n", size);
+
+    dimensions.cx = dimensions.cy = 0;
+
+    for (int i = 0; i < count; ++i)
+    {
+        hr = IAMStreamConfig_GetStreamCaps(stream_config, i, &format, (BYTE *)&vscc);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        if (0)
+        {
+            /* The documentation says the rates can be NULL, but it crashes. */
+            IAMVideoControl_GetFrameRateList(control, pin, i, vscc.MinOutputSize, &rate_count, NULL);
+        }
+
+        rate_count = 0;
+        hr = IAMVideoControl_GetFrameRateList(control, pin, i, vscc.MinOutputSize, &rate_count, &rates);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        for (LONG j = 0; j < rate_count; ++j)
+            ok(rates[j] >= vscc.MinFrameInterval && rates[j] <= vscc.MaxFrameInterval,
+                    "Got unexpected rates[%ld] %I64d, min %I64d, max %I64d.\n",
+                    j, rates[j], vscc.MinFrameInterval, vscc.MaxFrameInterval);
+        CoTaskMemFree(rates);
+
+        DeleteMediaType(format);
+    }
+
+    IAMStreamConfig_Release(stream_config);
+    IAMVideoControl_Release(control);
+}
+
 static void test_pins(IBaseFilter *filter)
 {
     IEnumPins *enum_pins;
@@ -329,6 +378,7 @@ static void test_pins(IBaseFilter *filter)
             test_pin_interfaces(pin);
             test_media_types(pin);
             test_stream_config(pin);
+            test_frame_rate_list(filter, pin);
         }
         IPin_Release(pin);
     }

@@ -133,11 +133,14 @@ typedef void ( *EGLDEBUGPROCKHR)(EGLenum error,const char *command,EGLint messag
 #define PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWL PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWLPROC
 typedef unsigned int GLhandleARB;
 
+#define EGL_ALLOC_NEW_DISPLAY_EXT                                     0x3379
 #define EGL_ALPHA_FORMAT                                              0x3088
 #define EGL_ALPHA_FORMAT_NONPRE                                       0x308B
 #define EGL_ALPHA_FORMAT_PRE                                          0x308C
 #define EGL_ALPHA_MASK_SIZE                                           0x303E
 #define EGL_ALPHA_SIZE                                                0x3021
+#define EGL_ALREADY_SIGNALED_NV                                       0x30EA
+#define EGL_AUTO_STEREO_NV                                            0x3136
 #define EGL_BACK_BUFFER                                               0x3084
 #define EGL_BAD_ACCESS                                                0x3002
 #define EGL_BAD_ALLOC                                                 0x3003
@@ -150,16 +153,33 @@ typedef unsigned int GLhandleARB;
 #define EGL_BAD_MATCH                                                 0x3009
 #define EGL_BAD_NATIVE_PIXMAP                                         0x300A
 #define EGL_BAD_NATIVE_WINDOW                                         0x300B
+#define EGL_BAD_OUTPUT_LAYER_EXT                                      0x322D
+#define EGL_BAD_OUTPUT_PORT_EXT                                       0x322E
 #define EGL_BAD_PARAMETER                                             0x300C
+#define EGL_BAD_STATE_KHR                                             0x321C
+#define EGL_BAD_STREAM_KHR                                            0x321B
 #define EGL_BAD_SURFACE                                               0x300D
 #define EGL_BIND_TO_TEXTURE_RGB                                       0x3039
 #define EGL_BIND_TO_TEXTURE_RGBA                                      0x303A
+#define EGL_BITMAP_ORIGIN_KHR                                         0x30C8
+#define EGL_BITMAP_PITCH_KHR                                          0x30C7
+#define EGL_BITMAP_PIXEL_ALPHA_OFFSET_KHR                             0x30CC
+#define EGL_BITMAP_PIXEL_BLUE_OFFSET_KHR                              0x30CB
+#define EGL_BITMAP_PIXEL_GREEN_OFFSET_KHR                             0x30CA
+#define EGL_BITMAP_PIXEL_LUMINANCE_OFFSET_KHR                         0x30CD
+#define EGL_BITMAP_PIXEL_RED_OFFSET_KHR                               0x30C9
+#define EGL_BITMAP_PIXEL_SIZE_KHR                                     0x3110
+#define EGL_BITMAP_POINTER_KHR                                        0x30C6
 #define EGL_BLUE_SIZE                                                 0x3022
+#define EGL_BOTTOM_NV                                                 0x336E
+#define EGL_BUFFER_AGE_EXT                                            0x313D
+#define EGL_BUFFER_AGE_KHR                                            0x313D
 #define EGL_BUFFER_DESTROYED                                          0x3095
 #define EGL_BUFFER_PRESERVED                                          0x3094
 #define EGL_BUFFER_SIZE                                               0x3020
 #define EGL_CLIENT_APIS                                               0x308D
 #define EGL_CL_EVENT_HANDLE                                           0x309C
+#define EGL_CL_EVENT_HANDLE_KHR                                       0x309C
 #define EGL_COLORSPACE                                                0x3087
 #define EGL_COLORSPACE_LINEAR                                         0x308A
 #define EGL_COLORSPACE_sRGB                                           0x3089
@@ -167,10 +187,22 @@ typedef unsigned int GLhandleARB;
 #define EGL_COLOR_COMPONENT_TYPE_EXT                                  0x3339
 #define EGL_COLOR_COMPONENT_TYPE_FIXED_EXT                            0x333A
 #define EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT                            0x333B
+#define EGL_COMPOSITOR_DROP_NEWEST_FRAME_EXT                          0x3462
+#define EGL_COMPOSITOR_KEEP_NEWEST_FRAME_EXT                          0x3463
 #define EGL_CONDITION_SATISFIED                                       0x30F6
+#define EGL_CONDITION_SATISFIED_KHR                                   0x30F6
+#define EGL_CONDITION_SATISFIED_NV                                    0x30EC
 #define EGL_CONFIG_CAVEAT                                             0x3027
 #define EGL_CONFIG_ID                                                 0x3028
+#define EGL_CONFIG_SELECT_GROUP_EXT                                   0x34C0
 #define EGL_CONFORMANT                                                0x3042
+#define EGL_CONFORMANT_KHR                                            0x3042
+#define EGL_CONSUMER_ACQUIRE_TIMEOUT_USEC_KHR                         0x321E
+#define EGL_CONSUMER_AUTO_ORIENTATION_NV                              0x3369
+#define EGL_CONSUMER_FRAME_KHR                                        0x3213
+#define EGL_CONSUMER_LATENCY_USEC_KHR                                 0x3210
+#define EGL_CONSUMER_MAX_FRAME_HINT_NV                                0x3338
+#define EGL_CONSUMER_METADATA_NV                                      0x3254
 #define EGL_CONTEXT_CLIENT_TYPE                                       0x3097
 #define EGL_CONTEXT_CLIENT_VERSION                                    0x3098
 #define EGL_CONTEXT_FLAGS_KHR                                         0x30FC
@@ -191,50 +223,172 @@ typedef unsigned int GLhandleARB;
 #define EGL_CONTEXT_OPENGL_PROFILE_MASK                               0x30FD
 #define EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR                           0x30FD
 #define EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY                0x31BD
+#define EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_EXT            0x3138
 #define EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY_KHR            0x31BD
 #define EGL_CONTEXT_OPENGL_ROBUST_ACCESS                              0x31B2
 #define EGL_CONTEXT_OPENGL_ROBUST_ACCESS_BIT_KHR                      0x00000004
+#define EGL_CONTEXT_OPENGL_ROBUST_ACCESS_EXT                          0x30BF
+#define EGL_CONTEXT_PRIORITY_HIGH_IMG                                 0x3101
+#define EGL_CONTEXT_PRIORITY_LEVEL_IMG                                0x3100
+#define EGL_CONTEXT_PRIORITY_LOW_IMG                                  0x3103
+#define EGL_CONTEXT_PRIORITY_MEDIUM_IMG                               0x3102
+#define EGL_CONTEXT_PRIORITY_REALTIME_NV                              0x3357
+#define EGL_CONTEXT_RELEASE_BEHAVIOR_FLUSH_KHR                        0x2098
+#define EGL_CONTEXT_RELEASE_BEHAVIOR_KHR                              0x2097
+#define EGL_CONTEXT_RELEASE_BEHAVIOR_NONE_KHR                         0
 #define EGL_CORE_NATIVE_ENGINE                                        0x305B
+#define EGL_COVERAGE_BUFFERS_NV                                       0x30E0
+#define EGL_COVERAGE_SAMPLES_NV                                       0x30E1
+#define EGL_COVERAGE_SAMPLE_RESOLVE_DEFAULT_NV                        0x3132
+#define EGL_COVERAGE_SAMPLE_RESOLVE_NONE_NV                           0x3133
+#define EGL_COVERAGE_SAMPLE_RESOLVE_NV                                0x3131
+#define EGL_CTA861_3_MAX_CONTENT_LIGHT_LEVEL_EXT                      0x3360
+#define EGL_CTA861_3_MAX_FRAME_AVERAGE_LEVEL_EXT                      0x3361
+#define EGL_CUDA_DEVICE_NV                                            0x323A
+#define EGL_CUDA_EVENT_HANDLE_NV                                      0x323B
+#define EGL_DEBUG_CALLBACK_KHR                                        0x33B8
+#define EGL_DEBUG_MSG_CRITICAL_KHR                                    0x33B9
+#define EGL_DEBUG_MSG_ERROR_KHR                                       0x33BA
+#define EGL_DEBUG_MSG_INFO_KHR                                        0x33BC
+#define EGL_DEBUG_MSG_WARN_KHR                                        0x33BB
 #define EGL_DEFAULT_DISPLAY                                           EGL_CAST(EGLNativeDisplayType,0)
+#define EGL_DEPTH_ENCODING_NONE_NV                                    0
+#define EGL_DEPTH_ENCODING_NONLINEAR_NV                               0x30E3
+#define EGL_DEPTH_ENCODING_NV                                         0x30E2
 #define EGL_DEPTH_SIZE                                                0x3025
 #define EGL_DEVICE_EXT                                                0x322C
+#define EGL_DEVICE_UUID_EXT                                           0x335C
 #define EGL_DISPLAY_SCALING                                           10000
+#define EGL_DMA_BUF_PLANE0_FD_EXT                                     0x3272
+#define EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT                            0x3444
+#define EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT                            0x3443
+#define EGL_DMA_BUF_PLANE0_OFFSET_EXT                                 0x3273
+#define EGL_DMA_BUF_PLANE0_PITCH_EXT                                  0x3274
+#define EGL_DMA_BUF_PLANE1_FD_EXT                                     0x3275
+#define EGL_DMA_BUF_PLANE1_MODIFIER_HI_EXT                            0x3446
+#define EGL_DMA_BUF_PLANE1_MODIFIER_LO_EXT                            0x3445
+#define EGL_DMA_BUF_PLANE1_OFFSET_EXT                                 0x3276
+#define EGL_DMA_BUF_PLANE1_PITCH_EXT                                  0x3277
+#define EGL_DMA_BUF_PLANE2_FD_EXT                                     0x3278
+#define EGL_DMA_BUF_PLANE2_MODIFIER_HI_EXT                            0x3448
+#define EGL_DMA_BUF_PLANE2_MODIFIER_LO_EXT                            0x3447
+#define EGL_DMA_BUF_PLANE2_OFFSET_EXT                                 0x3279
+#define EGL_DMA_BUF_PLANE2_PITCH_EXT                                  0x327A
+#define EGL_DMA_BUF_PLANE3_FD_EXT                                     0x3440
+#define EGL_DMA_BUF_PLANE3_MODIFIER_HI_EXT                            0x344A
+#define EGL_DMA_BUF_PLANE3_MODIFIER_LO_EXT                            0x3449
+#define EGL_DMA_BUF_PLANE3_OFFSET_EXT                                 0x3441
+#define EGL_DMA_BUF_PLANE3_PITCH_EXT                                  0x3442
 #define EGL_DONT_CARE                                                 EGL_CAST(EGLint,-1)
 #define EGL_DRAW                                                      0x3059
+#define EGL_DRIVER_NAME_EXT                                           0x335E
+#define EGL_DRIVER_UUID_EXT                                           0x335D
+#define EGL_DRM_BUFFER_FORMAT_ARGB32_MESA                             0x31D2
+#define EGL_DRM_BUFFER_FORMAT_MESA                                    0x31D0
+#define EGL_DRM_BUFFER_MESA                                           0x31D3
+#define EGL_DRM_BUFFER_STRIDE_MESA                                    0x31D4
+#define EGL_DRM_BUFFER_USE_CURSOR_MESA                                0x00000004
+#define EGL_DRM_BUFFER_USE_MESA                                       0x31D1
+#define EGL_DRM_BUFFER_USE_SCANOUT_MESA                               0x00000001
+#define EGL_DRM_BUFFER_USE_SHARE_MESA                                 0x00000002
+#define EGL_DRM_CONNECTOR_EXT                                         0x3236
+#define EGL_DRM_CRTC_EXT                                              0x3234
 #define EGL_DRM_DEVICE_FILE_EXT                                       0x3233
 #define EGL_DRM_MASTER_FD_EXT                                         0x333C
+#define EGL_DRM_PLANE_EXT                                             0x3235
+#define EGL_DRM_RENDER_NODE_FILE_EXT                                  0x3377
 #define EGL_EXTENSIONS                                                0x3055
+#define EGL_EXTERNAL_REF_ID_EXT                                       0x3461
 #define EGL_FALSE                                                     0
 #define EGL_FOREVER                                                   0xFFFFFFFFFFFFFFFF
+#define EGL_FOREVER_KHR                                               0xFFFFFFFFFFFFFFFF
+#define EGL_FOREVER_NV                                                0xFFFFFFFFFFFFFFFF
+#define EGL_FORMAT_RGBA_8888_EXACT_KHR                                0x30C2
+#define EGL_FORMAT_RGBA_8888_KHR                                      0x30C3
+#define EGL_FORMAT_RGB_565_EXACT_KHR                                  0x30C0
+#define EGL_FORMAT_RGB_565_KHR                                        0x30C1
+#define EGL_FRONT_BUFFER_EXT                                          0x3464
+#define EGL_GENERATE_RESET_ON_VIDEO_MEMORY_PURGE_NV                   0x334C
 #define EGL_GL_COLORSPACE                                             0x309D
+#define EGL_GL_COLORSPACE_BT2020_HLG_EXT                              0x3540
+#define EGL_GL_COLORSPACE_BT2020_LINEAR_EXT                           0x333F
+#define EGL_GL_COLORSPACE_BT2020_PQ_EXT                               0x3340
+#define EGL_GL_COLORSPACE_DEFAULT_EXT                                 0x314D
+#define EGL_GL_COLORSPACE_DISPLAY_P3_EXT                              0x3363
+#define EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT                       0x3362
+#define EGL_GL_COLORSPACE_DISPLAY_P3_PASSTHROUGH_EXT                  0x3490
+#define EGL_GL_COLORSPACE_KHR                                         0x309D
 #define EGL_GL_COLORSPACE_LINEAR                                      0x308A
+#define EGL_GL_COLORSPACE_LINEAR_KHR                                  0x308A
+#define EGL_GL_COLORSPACE_SCRGB_EXT                                   0x3351
+#define EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT                            0x3350
 #define EGL_GL_COLORSPACE_SRGB                                        0x3089
+#define EGL_GL_COLORSPACE_SRGB_KHR                                    0x3089
 #define EGL_GL_RENDERBUFFER                                           0x30B9
+#define EGL_GL_RENDERBUFFER_KHR                                       0x30B9
 #define EGL_GL_TEXTURE_2D                                             0x30B1
+#define EGL_GL_TEXTURE_2D_KHR                                         0x30B1
 #define EGL_GL_TEXTURE_3D                                             0x30B2
+#define EGL_GL_TEXTURE_3D_KHR                                         0x30B2
 #define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X                            0x30B4
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X_KHR                        0x30B4
 #define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Y                            0x30B6
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_KHR                        0x30B6
 #define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z                            0x30B8
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_KHR                        0x30B8
 #define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X                            0x30B3
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR                        0x30B3
 #define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y                            0x30B5
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y_KHR                        0x30B5
 #define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Z                            0x30B7
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Z_KHR                        0x30B7
 #define EGL_GL_TEXTURE_LEVEL                                          0x30BC
+#define EGL_GL_TEXTURE_LEVEL_KHR                                      0x30BC
 #define EGL_GL_TEXTURE_ZOFFSET                                        0x30BD
+#define EGL_GL_TEXTURE_ZOFFSET_KHR                                    0x30BD
 #define EGL_GREEN_SIZE                                                0x3023
 #define EGL_HEIGHT                                                    0x3056
 #define EGL_HORIZONTAL_RESOLUTION                                     0x3090
 #define EGL_IMAGE_PRESERVED                                           0x30D2
+#define EGL_IMAGE_PRESERVED_KHR                                       0x30D2
+#define EGL_IMPORT_EXPLICIT_SYNC_EXT                                  0x3472
+#define EGL_IMPORT_IMPLICIT_SYNC_EXT                                  0x3471
+#define EGL_IMPORT_SYNC_TYPE_EXT                                      0x3470
+#define EGL_ITU_REC2020_EXT                                           0x3281
+#define EGL_ITU_REC601_EXT                                            0x327F
+#define EGL_ITU_REC709_EXT                                            0x3280
 #define EGL_LARGEST_PBUFFER                                           0x3058
+#define EGL_LEFT_NV                                                   0x336B
 #define EGL_LEVEL                                                     0x3029
+#define EGL_LINUX_DMA_BUF_EXT                                         0x3270
+#define EGL_LINUX_DRM_FOURCC_EXT                                      0x3271
+#define EGL_LOCK_SURFACE_BIT_KHR                                      0x0080
+#define EGL_LOCK_USAGE_HINT_KHR                                       0x30C5
 #define EGL_LOSE_CONTEXT_ON_RESET                                     0x31BF
+#define EGL_LOSE_CONTEXT_ON_RESET_EXT                                 0x31BF
 #define EGL_LOSE_CONTEXT_ON_RESET_KHR                                 0x31BF
+#define EGL_LOWER_LEFT_KHR                                            0x30CE
 #define EGL_LUMINANCE_BUFFER                                          0x308F
 #define EGL_LUMINANCE_SIZE                                            0x303D
+#define EGL_MAP_PRESERVE_PIXELS_KHR                                   0x30C4
+#define EGL_MATCH_FORMAT_KHR                                          0x3043
 #define EGL_MATCH_NATIVE_PIXMAP                                       0x3041
 #define EGL_MAX_PBUFFER_HEIGHT                                        0x302A
 #define EGL_MAX_PBUFFER_PIXELS                                        0x302B
 #define EGL_MAX_PBUFFER_WIDTH                                         0x302C
+#define EGL_MAX_STREAM_METADATA_BLOCKS_NV                             0x3250
+#define EGL_MAX_STREAM_METADATA_BLOCK_SIZE_NV                         0x3251
+#define EGL_MAX_STREAM_METADATA_TOTAL_SIZE_NV                         0x3252
 #define EGL_MAX_SWAP_INTERVAL                                         0x303C
+#define EGL_METADATA0_SIZE_NV                                         0x3255
+#define EGL_METADATA0_TYPE_NV                                         0x3259
+#define EGL_METADATA1_SIZE_NV                                         0x3256
+#define EGL_METADATA1_TYPE_NV                                         0x325A
+#define EGL_METADATA2_SIZE_NV                                         0x3257
+#define EGL_METADATA2_TYPE_NV                                         0x325B
+#define EGL_METADATA3_SIZE_NV                                         0x3258
+#define EGL_METADATA3_TYPE_NV                                         0x325C
+#define EGL_METADATA_SCALING_EXT                                      50000
 #define EGL_MIN_SWAP_INTERVAL                                         0x303B
 #define EGL_MIPMAP_LEVEL                                              0x3083
 #define EGL_MIPMAP_TEXTURE                                            0x3082
@@ -242,6 +396,11 @@ typedef unsigned int GLhandleARB;
 #define EGL_MULTISAMPLE_RESOLVE_BOX                                   0x309B
 #define EGL_MULTISAMPLE_RESOLVE_BOX_BIT                               0x0200
 #define EGL_MULTISAMPLE_RESOLVE_DEFAULT                               0x309A
+#define EGL_MULTIVIEW_VIEW_COUNT_EXT                                  0x3134
+#define EGL_MUTABLE_RENDER_BUFFER_BIT_KHR                             0x1000
+#define EGL_NATIVE_BUFFER_MULTIPLANE_SEPARATE_IMG                     0x3105
+#define EGL_NATIVE_BUFFER_PLANE_OFFSET_IMG                            0x3106
+#define EGL_NATIVE_PIXMAP_KHR                                         0x30B0
 #define EGL_NATIVE_RENDERABLE                                         0x302D
 #define EGL_NATIVE_VISUAL_ID                                          0x302E
 #define EGL_NATIVE_VISUAL_TYPE                                        0x302F
@@ -252,12 +411,27 @@ typedef unsigned int GLhandleARB;
 #define EGL_NO_CONTEXT                                                EGL_CAST(EGLContext,0)
 #define EGL_NO_DEVICE_EXT                                             EGL_CAST(EGLDeviceEXT,0)
 #define EGL_NO_DISPLAY                                                EGL_CAST(EGLDisplay,0)
+#define EGL_NO_FILE_DESCRIPTOR_KHR                                    EGL_CAST(EGLNativeFileDescriptorKHR,-1)
 #define EGL_NO_IMAGE                                                  EGL_CAST(EGLImage,0)
+#define EGL_NO_IMAGE_KHR                                              EGL_CAST(EGLImageKHR,0)
+#define EGL_NO_OUTPUT_LAYER_EXT                                       EGL_CAST(EGLOutputLayerEXT,0)
+#define EGL_NO_OUTPUT_PORT_EXT                                        EGL_CAST(EGLOutputPortEXT,0)
 #define EGL_NO_RESET_NOTIFICATION                                     0x31BE
+#define EGL_NO_RESET_NOTIFICATION_EXT                                 0x31BE
 #define EGL_NO_RESET_NOTIFICATION_KHR                                 0x31BE
+#define EGL_NO_STREAM_KHR                                             EGL_CAST(EGLStreamKHR,0)
 #define EGL_NO_SURFACE                                                EGL_CAST(EGLSurface,0)
 #define EGL_NO_SYNC                                                   EGL_CAST(EGLSync,0)
+#define EGL_NO_SYNC_KHR                                               EGL_CAST(EGLSyncKHR,0)
+#define EGL_NO_SYNC_NV                                                EGL_CAST(EGLSyncNV,0)
 #define EGL_NO_TEXTURE                                                0x305C
+#define EGL_OBJECT_CONTEXT_KHR                                        0x33B2
+#define EGL_OBJECT_DISPLAY_KHR                                        0x33B1
+#define EGL_OBJECT_IMAGE_KHR                                          0x33B4
+#define EGL_OBJECT_STREAM_KHR                                         0x33B6
+#define EGL_OBJECT_SURFACE_KHR                                        0x33B3
+#define EGL_OBJECT_SYNC_KHR                                           0x33B5
+#define EGL_OBJECT_THREAD_KHR                                         0x33B0
 #define EGL_OPENGL_API                                                0x30A2
 #define EGL_OPENGL_BIT                                                0x0008
 #define EGL_OPENGL_ES2_BIT                                            0x0004
@@ -268,53 +442,185 @@ typedef unsigned int GLhandleARB;
 #define EGL_OPENVG_API                                                0x30A1
 #define EGL_OPENVG_BIT                                                0x0002
 #define EGL_OPENVG_IMAGE                                              0x3096
+#define EGL_OPENWF_DEVICE_EXT                                         0x333D
+#define EGL_OPENWF_DEVICE_ID_EXT                                      0x3237
+#define EGL_OPENWF_PIPELINE_ID_EXT                                    0x3238
+#define EGL_OPENWF_PORT_ID_EXT                                        0x3239
+#define EGL_OPTIMAL_FORMAT_BIT_KHR                                    0x0100
 #define EGL_PBUFFER_BIT                                               0x0001
+#define EGL_PENDING_FRAME_NV                                          0x3329
+#define EGL_PENDING_METADATA_NV                                       0x3328
 #define EGL_PIXEL_ASPECT_RATIO                                        0x3092
 #define EGL_PIXMAP_BIT                                                0x0002
 #define EGL_PLATFORM_ANDROID_KHR                                      0x3141
 #define EGL_PLATFORM_DEVICE_EXT                                       0x313F
+#define EGL_PLATFORM_GBM_KHR                                          0x31D7
+#define EGL_PLATFORM_GBM_MESA                                         0x31D7
 #define EGL_PLATFORM_SURFACELESS_MESA                                 0x31DD
+#define EGL_PLATFORM_WAYLAND_EXT                                      0x31D8
 #define EGL_PLATFORM_WAYLAND_KHR                                      0x31D8
+#define EGL_PLATFORM_X11_EXT                                          0x31D5
 #define EGL_PLATFORM_X11_KHR                                          0x31D5
+#define EGL_PLATFORM_X11_SCREEN_EXT                                   0x31D6
 #define EGL_PLATFORM_X11_SCREEN_KHR                                   0x31D6
+#define EGL_PLATFORM_XCB_EXT                                          0x31DC
+#define EGL_PLATFORM_XCB_SCREEN_EXT                                   0x31DE
+#define EGL_POST_SUB_BUFFER_SUPPORTED_NV                              0x30BE
 #define EGL_PRESENT_OPAQUE_EXT                                        0x31DF
+#define EGL_PRIMARY_COMPOSITOR_CONTEXT_EXT                            0x3460
+#define EGL_PRODUCER_AUTO_ORIENTATION_NV                              0x336A
+#define EGL_PRODUCER_FRAME_KHR                                        0x3212
+#define EGL_PRODUCER_MAX_FRAME_HINT_NV                                0x3337
+#define EGL_PRODUCER_METADATA_NV                                      0x3253
+#define EGL_PROTECTED_CONTENT_EXT                                     0x32C0
+#define EGL_QUADRUPLE_BUFFER_NV                                       0x3231
 #define EGL_READ                                                      0x305A
+#define EGL_READ_SURFACE_BIT_KHR                                      0x0001
 #define EGL_RED_SIZE                                                  0x3024
 #define EGL_RENDERABLE_TYPE                                           0x3040
+#define EGL_RENDERER_EXT                                              0x335F
 #define EGL_RENDER_BUFFER                                             0x3086
 #define EGL_RGB_BUFFER                                                0x308E
+#define EGL_RIGHT_NV                                                  0x336C
 #define EGL_SAMPLES                                                   0x3031
 #define EGL_SAMPLE_BUFFERS                                            0x3032
+#define EGL_SAMPLE_RANGE_HINT_EXT                                     0x327C
 #define EGL_SIGNALED                                                  0x30F2
+#define EGL_SIGNALED_KHR                                              0x30F2
+#define EGL_SIGNALED_NV                                               0x30E8
 #define EGL_SINGLE_BUFFER                                             0x3085
 #define EGL_SLOW_CONFIG                                               0x3050
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_BX_EXT                          0x3345
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_BY_EXT                          0x3346
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_GX_EXT                          0x3343
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_GY_EXT                          0x3344
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_RX_EXT                          0x3341
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_RY_EXT                          0x3342
+#define EGL_SMPTE2086_MAX_LUMINANCE_EXT                               0x3349
+#define EGL_SMPTE2086_MIN_LUMINANCE_EXT                               0x334A
+#define EGL_SMPTE2086_WHITE_POINT_X_EXT                               0x3347
+#define EGL_SMPTE2086_WHITE_POINT_Y_EXT                               0x3348
+#define EGL_SOCKET_HANDLE_NV                                          0x324C
+#define EGL_SOCKET_TYPE_INET_NV                                       0x324F
+#define EGL_SOCKET_TYPE_NV                                            0x324D
+#define EGL_SOCKET_TYPE_UNIX_NV                                       0x324E
 #define EGL_STENCIL_SIZE                                              0x3026
+#define EGL_STREAM_BIT_KHR                                            0x0800
+#define EGL_STREAM_CONSUMER_IMAGE_NV                                  0x3373
+#define EGL_STREAM_CONSUMER_IMAGE_USE_SCANOUT_NV                      0x3378
+#define EGL_STREAM_CONSUMER_NV                                        0x3248
+#define EGL_STREAM_CROSS_DISPLAY_NV                                   0x334E
+#define EGL_STREAM_CROSS_OBJECT_NV                                    0x334D
+#define EGL_STREAM_CROSS_PARTITION_NV                                 0x323F
+#define EGL_STREAM_CROSS_PROCESS_NV                                   0x3245
+#define EGL_STREAM_CROSS_SYSTEM_NV                                    0x334F
+#define EGL_STREAM_DMA_NV                                             0x3371
+#define EGL_STREAM_DMA_SERVER_NV                                      0x3372
+#define EGL_STREAM_ENDPOINT_NV                                        0x3243
+#define EGL_STREAM_FIFO_LENGTH_KHR                                    0x31FC
+#define EGL_STREAM_FIFO_SYNCHRONOUS_NV                                0x3336
+#define EGL_STREAM_FRAME_MAJOR_AXIS_NV                                0x3368
+#define EGL_STREAM_FRAME_ORIGIN_X_NV                                  0x3366
+#define EGL_STREAM_FRAME_ORIGIN_Y_NV                                  0x3367
+#define EGL_STREAM_IMAGE_ADD_NV                                       0x3374
+#define EGL_STREAM_IMAGE_AVAILABLE_NV                                 0x3376
+#define EGL_STREAM_IMAGE_REMOVE_NV                                    0x3375
+#define EGL_STREAM_LOCAL_NV                                           0x3244
+#define EGL_STREAM_PRODUCER_NV                                        0x3247
+#define EGL_STREAM_PROTOCOL_FD_NV                                     0x3246
+#define EGL_STREAM_PROTOCOL_NV                                        0x3242
+#define EGL_STREAM_PROTOCOL_SOCKET_NV                                 0x324B
+#define EGL_STREAM_STATE_CONNECTING_KHR                               0x3216
+#define EGL_STREAM_STATE_CREATED_KHR                                  0x3215
+#define EGL_STREAM_STATE_DISCONNECTED_KHR                             0x321A
+#define EGL_STREAM_STATE_EMPTY_KHR                                    0x3217
+#define EGL_STREAM_STATE_INITIALIZING_NV                              0x3240
+#define EGL_STREAM_STATE_KHR                                          0x3214
+#define EGL_STREAM_STATE_NEW_FRAME_AVAILABLE_KHR                      0x3218
+#define EGL_STREAM_STATE_OLD_FRAME_AVAILABLE_KHR                      0x3219
+#define EGL_STREAM_TIME_CONSUMER_KHR                                  0x31FE
+#define EGL_STREAM_TIME_NOW_KHR                                       0x31FD
+#define EGL_STREAM_TIME_PENDING_NV                                    0x332A
+#define EGL_STREAM_TIME_PRODUCER_KHR                                  0x31FF
+#define EGL_STREAM_TYPE_NV                                            0x3241
 #define EGL_SUCCESS                                                   0x3000
+#define EGL_SUPPORT_RESET_NV                                          0x3334
+#define EGL_SUPPORT_REUSE_NV                                          0x3335
+#define EGL_SURFACE_COMPRESSION_EXT                                   0x34B0
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_10BPC_EXT                  0x34BD
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_11BPC_EXT                  0x34BE
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_12BPC_EXT                  0x34BF
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_1BPC_EXT                   0x34B4
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_2BPC_EXT                   0x34B5
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_3BPC_EXT                   0x34B6
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_4BPC_EXT                   0x34B7
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_5BPC_EXT                   0x34B8
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_6BPC_EXT                   0x34B9
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_7BPC_EXT                   0x34BA
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_8BPC_EXT                   0x34BB
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_9BPC_EXT                   0x34BC
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_DEFAULT_EXT                0x34B2
+#define EGL_SURFACE_COMPRESSION_FIXED_RATE_NONE_EXT                   0x34B1
+#define EGL_SURFACE_COMPRESSION_PLANE1_EXT                            0x328E
+#define EGL_SURFACE_COMPRESSION_PLANE2_EXT                            0x328F
 #define EGL_SURFACE_TYPE                                              0x3033
 #define EGL_SWAP_BEHAVIOR                                             0x3093
 #define EGL_SWAP_BEHAVIOR_PRESERVED_BIT                               0x0400
+#define EGL_SWAP_INTERVAL_EXT                                         0x322F
+#define EGL_SYNC_CLIENT_EXT                                           0x3364
+#define EGL_SYNC_CLIENT_SIGNAL_EXT                                    0x3365
 #define EGL_SYNC_CL_EVENT                                             0x30FE
 #define EGL_SYNC_CL_EVENT_COMPLETE                                    0x30FF
+#define EGL_SYNC_CL_EVENT_COMPLETE_KHR                                0x30FF
+#define EGL_SYNC_CL_EVENT_KHR                                         0x30FE
 #define EGL_SYNC_CONDITION                                            0x30F8
+#define EGL_SYNC_CONDITION_KHR                                        0x30F8
+#define EGL_SYNC_CONDITION_NV                                         0x30EE
+#define EGL_SYNC_CUDA_EVENT_COMPLETE_NV                               0x323D
+#define EGL_SYNC_CUDA_EVENT_NV                                        0x323C
 #define EGL_SYNC_FENCE                                                0x30F9
+#define EGL_SYNC_FENCE_KHR                                            0x30F9
+#define EGL_SYNC_FENCE_NV                                             0x30EF
 #define EGL_SYNC_FLUSH_COMMANDS_BIT                                   0x0001
+#define EGL_SYNC_FLUSH_COMMANDS_BIT_KHR                               0x0001
+#define EGL_SYNC_FLUSH_COMMANDS_BIT_NV                                0x0001
+#define EGL_SYNC_NEW_FRAME_NV                                         0x321F
 #define EGL_SYNC_PRIOR_COMMANDS_COMPLETE                              0x30F0
+#define EGL_SYNC_PRIOR_COMMANDS_COMPLETE_KHR                          0x30F0
+#define EGL_SYNC_PRIOR_COMMANDS_COMPLETE_NV                           0x30E6
+#define EGL_SYNC_REUSABLE_KHR                                         0x30FA
 #define EGL_SYNC_STATUS                                               0x30F1
+#define EGL_SYNC_STATUS_KHR                                           0x30F1
+#define EGL_SYNC_STATUS_NV                                            0x30E7
 #define EGL_SYNC_TYPE                                                 0x30F7
+#define EGL_SYNC_TYPE_KHR                                             0x30F7
+#define EGL_SYNC_TYPE_NV                                              0x30ED
 #define EGL_TEXTURE_2D                                                0x305F
+#define EGL_TEXTURE_EXTERNAL_WL                                       0x31DA
 #define EGL_TEXTURE_FORMAT                                            0x3080
 #define EGL_TEXTURE_RGB                                               0x305D
 #define EGL_TEXTURE_RGBA                                              0x305E
 #define EGL_TEXTURE_TARGET                                            0x3081
+#define EGL_TEXTURE_Y_UV_WL                                           0x31D8
+#define EGL_TEXTURE_Y_U_V_WL                                          0x31D7
+#define EGL_TEXTURE_Y_XUXV_WL                                         0x31D9
 #define EGL_TIMEOUT_EXPIRED                                           0x30F5
+#define EGL_TIMEOUT_EXPIRED_KHR                                       0x30F5
+#define EGL_TIMEOUT_EXPIRED_NV                                        0x30EB
+#define EGL_TOP_NV                                                    0x336D
+#define EGL_TRACK_REFERENCES_KHR                                      0x3352
 #define EGL_TRANSPARENT_BLUE_VALUE                                    0x3035
 #define EGL_TRANSPARENT_GREEN_VALUE                                   0x3036
 #define EGL_TRANSPARENT_RED_VALUE                                     0x3037
 #define EGL_TRANSPARENT_RGB                                           0x3052
 #define EGL_TRANSPARENT_TYPE                                          0x3034
+#define EGL_TRIPLE_BUFFER_NV                                          0x3230
 #define EGL_TRUE                                                      1
 #define EGL_UNKNOWN                                                   EGL_CAST(EGLint,-1)
 #define EGL_UNSIGNALED                                                0x30F3
+#define EGL_UNSIGNALED_KHR                                            0x30F3
+#define EGL_UNSIGNALED_NV                                             0x30E9
+#define EGL_UPPER_LEFT_KHR                                            0x30CF
 #define EGL_VENDOR                                                    0x3053
 #define EGL_VERSION                                                   0x3054
 #define EGL_VERTICAL_RESOLUTION                                       0x3091
@@ -322,12 +628,56 @@ typedef unsigned int GLhandleARB;
 #define EGL_VG_ALPHA_FORMAT_NONPRE                                    0x308B
 #define EGL_VG_ALPHA_FORMAT_PRE                                       0x308C
 #define EGL_VG_ALPHA_FORMAT_PRE_BIT                                   0x0040
+#define EGL_VG_ALPHA_FORMAT_PRE_BIT_KHR                               0x0040
 #define EGL_VG_COLORSPACE                                             0x3087
 #define EGL_VG_COLORSPACE_LINEAR                                      0x308A
 #define EGL_VG_COLORSPACE_LINEAR_BIT                                  0x0020
+#define EGL_VG_COLORSPACE_LINEAR_BIT_KHR                              0x0020
 #define EGL_VG_COLORSPACE_sRGB                                        0x3089
+#define EGL_VG_PARENT_IMAGE_KHR                                       0x30BA
+#define EGL_WAYLAND_BUFFER_WL                                         0x31D5
+#define EGL_WAYLAND_PLANE_WL                                          0x31D6
+#define EGL_WAYLAND_Y_INVERTED_WL                                     0x31DB
 #define EGL_WIDTH                                                     0x3057
 #define EGL_WINDOW_BIT                                                0x0004
+#define EGL_WRITE_SURFACE_BIT_KHR                                     0x0002
+#define EGL_X_AXIS_NV                                                 0x336F
+#define EGL_YUV_BUFFER_EXT                                            0x3300
+#define EGL_YUV_CHROMA_HORIZONTAL_SITING_HINT_EXT                     0x327D
+#define EGL_YUV_CHROMA_SITING_0_5_EXT                                 0x3285
+#define EGL_YUV_CHROMA_SITING_0_EXT                                   0x3284
+#define EGL_YUV_CHROMA_VERTICAL_SITING_HINT_EXT                       0x327E
+#define EGL_YUV_COLOR_SPACE_HINT_EXT                                  0x327B
+#define EGL_YUV_CSC_STANDARD_2020_EXT                                 0x330D
+#define EGL_YUV_CSC_STANDARD_601_EXT                                  0x330B
+#define EGL_YUV_CSC_STANDARD_709_EXT                                  0x330C
+#define EGL_YUV_CSC_STANDARD_EXT                                      0x330A
+#define EGL_YUV_DEPTH_RANGE_EXT                                       0x3317
+#define EGL_YUV_DEPTH_RANGE_FULL_EXT                                  0x3319
+#define EGL_YUV_DEPTH_RANGE_LIMITED_EXT                               0x3318
+#define EGL_YUV_FULL_RANGE_EXT                                        0x3282
+#define EGL_YUV_NARROW_RANGE_EXT                                      0x3283
+#define EGL_YUV_NUMBER_OF_PLANES_EXT                                  0x3311
+#define EGL_YUV_ORDER_AYUV_EXT                                        0x3308
+#define EGL_YUV_ORDER_EXT                                             0x3301
+#define EGL_YUV_ORDER_UYVY_EXT                                        0x3305
+#define EGL_YUV_ORDER_VYUY_EXT                                        0x3307
+#define EGL_YUV_ORDER_YUV_EXT                                         0x3302
+#define EGL_YUV_ORDER_YUYV_EXT                                        0x3304
+#define EGL_YUV_ORDER_YVU_EXT                                         0x3303
+#define EGL_YUV_ORDER_YVYU_EXT                                        0x3306
+#define EGL_YUV_PLANE0_TEXTURE_UNIT_NV                                0x332C
+#define EGL_YUV_PLANE1_TEXTURE_UNIT_NV                                0x332D
+#define EGL_YUV_PLANE2_TEXTURE_UNIT_NV                                0x332E
+#define EGL_YUV_PLANE_BPP_0_EXT                                       0x331B
+#define EGL_YUV_PLANE_BPP_10_EXT                                      0x331D
+#define EGL_YUV_PLANE_BPP_8_EXT                                       0x331C
+#define EGL_YUV_PLANE_BPP_EXT                                         0x331A
+#define EGL_YUV_SUBSAMPLE_4_2_0_EXT                                   0x3313
+#define EGL_YUV_SUBSAMPLE_4_2_2_EXT                                   0x3314
+#define EGL_YUV_SUBSAMPLE_4_4_4_EXT                                   0x3315
+#define EGL_YUV_SUBSAMPLE_EXT                                         0x3312
+#define EGL_Y_AXIS_NV                                                 0x3370
 #define ERROR_INCOMPATIBLE_DEVICE_CONTEXTS_ARB                        0x2054
 #define ERROR_INVALID_PIXEL_TYPE_ARB                                  0x2043
 #define ERROR_INVALID_PROFILE_ARB                                     0x2096
@@ -5178,6 +5528,9 @@ typedef unsigned int GLhandleARB;
 #define GL_VECTOR_EXT                                                 0x87BF
 #define GL_VENDOR                                                     0x1F00
 #define GL_VERSION                                                    0x1F02
+#define GL_VERSION_ES_CL_1_0                                          1
+#define GL_VERSION_ES_CL_1_1                                          1
+#define GL_VERSION_ES_CM_1_1                                          1
 #define GL_VERTEX23_BIT_PGI                                           0x00000004
 #define GL_VERTEX4_BIT_PGI                                            0x00000008
 #define GL_VERTEX_ARRAY                                               0x8074
@@ -6334,10 +6687,105 @@ typedef void       (GLAPIENTRY *PFN_glVertex4s)( GLshort x, GLshort y, GLshort z
 typedef void       (GLAPIENTRY *PFN_glVertex4sv)( const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glVertexPointer)( GLint size, GLenum type, GLsizei stride, const void *pointer );
 typedef void       (GLAPIENTRY *PFN_glViewport)( GLint x, GLint y, GLsizei width, GLsizei height );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglBindWaylandDisplayWL)( EGLDisplay dpy, struct wl_display *display );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglClientSignalSyncEXT)( EGLDisplay dpy, EGLSync sync, const EGLAttrib *attrib_list );
+typedef EGLint     (GLAPIENTRY *PFN_eglClientWaitSyncKHR)( EGLDisplay dpy, EGLSyncKHR sync, EGLint flags, EGLTimeKHR timeout );
+typedef EGLint     (GLAPIENTRY *PFN_eglClientWaitSyncNV)( EGLSyncNV sync, EGLint flags, EGLTimeNV timeout );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglCompositorBindTexWindowEXT)( EGLint external_win_id );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglCompositorSetContextAttributesEXT)( EGLint external_ref_id, const EGLint *context_attributes, EGLint num_entries );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglCompositorSetContextListEXT)( const EGLint *external_ref_ids, EGLint num_entries );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglCompositorSetSizeEXT)( EGLint external_win_id, EGLint width, EGLint height );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglCompositorSetWindowAttributesEXT)( EGLint external_win_id, const EGLint *window_attributes, EGLint num_entries );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglCompositorSetWindowListEXT)( EGLint external_ref_id, const EGLint *external_win_ids, EGLint num_entries );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglCompositorSwapPolicyEXT)( EGLint external_win_id, EGLint policy );
+typedef EGLImageKHR (GLAPIENTRY *PFN_eglCreateDRMImageMESA)( EGLDisplay dpy, const EGLint *attrib_list );
+typedef EGLSyncNV  (GLAPIENTRY *PFN_eglCreateFenceSyncNV)( EGLDisplay dpy, EGLenum condition, const EGLint *attrib_list );
+typedef EGLImageKHR (GLAPIENTRY *PFN_eglCreateImageKHR)( EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list );
+typedef EGLSurface (GLAPIENTRY *PFN_eglCreatePlatformPixmapSurfaceEXT)( EGLDisplay dpy, EGLConfig config, void *native_pixmap, const EGLint *attrib_list );
+typedef EGLSurface (GLAPIENTRY *PFN_eglCreatePlatformWindowSurfaceEXT)( EGLDisplay dpy, EGLConfig config, void *native_window, const EGLint *attrib_list );
+typedef EGLStreamKHR (GLAPIENTRY *PFN_eglCreateStreamAttribKHR)( EGLDisplay dpy, const EGLAttrib *attrib_list );
+typedef EGLStreamKHR (GLAPIENTRY *PFN_eglCreateStreamFromFileDescriptorKHR)( EGLDisplay dpy, EGLNativeFileDescriptorKHR file_descriptor );
+typedef EGLStreamKHR (GLAPIENTRY *PFN_eglCreateStreamKHR)( EGLDisplay dpy, const EGLint *attrib_list );
+typedef EGLSurface (GLAPIENTRY *PFN_eglCreateStreamProducerSurfaceKHR)( EGLDisplay dpy, EGLConfig config, EGLStreamKHR stream, const EGLint *attrib_list );
+typedef EGLSyncKHR (GLAPIENTRY *PFN_eglCreateStreamSyncNV)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum type, const EGLint *attrib_list );
+typedef EGLSyncKHR (GLAPIENTRY *PFN_eglCreateSync64KHR)( EGLDisplay dpy, EGLenum type, const EGLAttribKHR *attrib_list );
+typedef EGLSyncKHR (GLAPIENTRY *PFN_eglCreateSyncKHR)( EGLDisplay dpy, EGLenum type, const EGLint *attrib_list );
+typedef struct wl_buffer * (GLAPIENTRY *PFN_eglCreateWaylandBufferFromImageWL)( EGLDisplay dpy, EGLImageKHR image );
+typedef EGLint     (GLAPIENTRY *PFN_eglDebugMessageControlKHR)( EGLDEBUGPROCKHR callback, const EGLAttrib *attrib_list );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglDestroyDisplayEXT)( EGLDisplay dpy );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglDestroyImageKHR)( EGLDisplay dpy, EGLImageKHR image );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglDestroyStreamKHR)( EGLDisplay dpy, EGLStreamKHR stream );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglDestroySyncKHR)( EGLDisplay dpy, EGLSyncKHR sync );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglDestroySyncNV)( EGLSyncNV sync );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglExportDMABUFImageMESA)( EGLDisplay dpy, EGLImageKHR image, int *fds, EGLint *strides, EGLint *offsets );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglExportDMABUFImageQueryMESA)( EGLDisplay dpy, EGLImageKHR image, int *fourcc, int *num_planes, EGLuint64KHR *modifiers );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglExportDRMImageMESA)( EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglFenceNV)( EGLSyncNV sync );
+typedef char *     (GLAPIENTRY *PFN_eglGetDisplayDriverConfig)( EGLDisplay dpy );
+typedef const char * (GLAPIENTRY *PFN_eglGetDisplayDriverName)( EGLDisplay dpy );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglGetOutputLayersEXT)( EGLDisplay dpy, const EGLAttrib *attrib_list, EGLOutputLayerEXT *layers, EGLint max_layers, EGLint *num_layers );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglGetOutputPortsEXT)( EGLDisplay dpy, const EGLAttrib *attrib_list, EGLOutputPortEXT *ports, EGLint max_ports, EGLint *num_ports );
+typedef EGLDisplay (GLAPIENTRY *PFN_eglGetPlatformDisplayEXT)( EGLenum platform, void *native_display, const EGLint *attrib_list );
+typedef EGLNativeFileDescriptorKHR (GLAPIENTRY *PFN_eglGetStreamFileDescriptorKHR)( EGLDisplay dpy, EGLStreamKHR stream );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglGetSyncAttribKHR)( EGLDisplay dpy, EGLSyncKHR sync, EGLint attribute, EGLint *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglGetSyncAttribNV)( EGLSyncNV sync, EGLint attribute, EGLint *value );
+typedef EGLuint64NV (GLAPIENTRY *PFN_eglGetSystemTimeFrequencyNV)(void);
+typedef EGLuint64NV (GLAPIENTRY *PFN_eglGetSystemTimeNV)(void);
+typedef EGLint     (GLAPIENTRY *PFN_eglLabelObjectKHR)( EGLDisplay display, EGLenum objectType, EGLObjectKHR object, EGLLabelKHR label );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglLockSurfaceKHR)( EGLDisplay dpy, EGLSurface surface, const EGLint *attrib_list );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglOutputLayerAttribEXT)( EGLDisplay dpy, EGLOutputLayerEXT layer, EGLint attribute, EGLAttrib value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglOutputPortAttribEXT)( EGLDisplay dpy, EGLOutputPortEXT port, EGLint attribute, EGLAttrib value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglPostSubBufferNV)( EGLDisplay dpy, EGLSurface surface, EGLint x, EGLint y, EGLint width, EGLint height );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDebugKHR)( EGLint attribute, EGLAttrib *value );
 typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDeviceAttribEXT)( EGLDeviceEXT device, EGLint attribute, EGLAttrib *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDeviceBinaryEXT)( EGLDeviceEXT device, EGLint name, EGLint max_size, void *value, EGLint *size );
 typedef const char * (GLAPIENTRY *PFN_eglQueryDeviceStringEXT)( EGLDeviceEXT device, EGLint name );
 typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDevicesEXT)( EGLint max_devices, EGLDeviceEXT *devices, EGLint *num_devices );
 typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDisplayAttribEXT)( EGLDisplay dpy, EGLint attribute, EGLAttrib *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDisplayAttribKHR)( EGLDisplay dpy, EGLint name, EGLAttrib *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDisplayAttribNV)( EGLDisplay dpy, EGLint attribute, EGLAttrib *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDmaBufFormatsEXT)( EGLDisplay dpy, EGLint max_formats, EGLint *formats, EGLint *num_formats );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryDmaBufModifiersEXT)( EGLDisplay dpy, EGLint format, EGLint max_modifiers, EGLuint64KHR *modifiers, EGLBoolean *external_only, EGLint *num_modifiers );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryNativeDisplayNV)( EGLDisplay dpy, EGLNativeDisplayType *display_id );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryNativePixmapNV)( EGLDisplay dpy, EGLSurface surf, EGLNativePixmapType *pixmap );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryNativeWindowNV)( EGLDisplay dpy, EGLSurface surf, EGLNativeWindowType *window );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryOutputLayerAttribEXT)( EGLDisplay dpy, EGLOutputLayerEXT layer, EGLint attribute, EGLAttrib *value );
+typedef const char * (GLAPIENTRY *PFN_eglQueryOutputLayerStringEXT)( EGLDisplay dpy, EGLOutputLayerEXT layer, EGLint name );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryOutputPortAttribEXT)( EGLDisplay dpy, EGLOutputPortEXT port, EGLint attribute, EGLAttrib *value );
+typedef const char * (GLAPIENTRY *PFN_eglQueryOutputPortStringEXT)( EGLDisplay dpy, EGLOutputPortEXT port, EGLint name );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryStreamAttribKHR)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum attribute, EGLAttrib *value );
+typedef EGLint     (GLAPIENTRY *PFN_eglQueryStreamConsumerEventNV)( EGLDisplay dpy, EGLStreamKHR stream, EGLTime timeout, EGLenum *event, EGLAttrib *aux );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryStreamKHR)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum attribute, EGLint *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryStreamMetadataNV)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum name, EGLint n, EGLint offset, EGLint size, void *data );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryStreamTimeKHR)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum attribute, EGLTimeKHR *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryStreamu64KHR)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum attribute, EGLuint64KHR *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQuerySupportedCompressionRatesEXT)( EGLDisplay dpy, EGLConfig config, const EGLAttrib *attrib_list, EGLint *rates, EGLint rate_size, EGLint *num_rates );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQuerySurface64KHR)( EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLAttribKHR *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglQueryWaylandBufferWL)( EGLDisplay dpy, struct wl_resource *buffer, EGLint attribute, EGLint *value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglResetStreamNV)( EGLDisplay dpy, EGLStreamKHR stream );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglSetDamageRegionKHR)( EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglSetStreamAttribKHR)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum attribute, EGLAttrib value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglSetStreamMetadataNV)( EGLDisplay dpy, EGLStreamKHR stream, EGLint n, EGLint offset, EGLint size, const void *data );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglSignalSyncKHR)( EGLDisplay dpy, EGLSyncKHR sync, EGLenum mode );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglSignalSyncNV)( EGLSyncNV sync, EGLenum mode );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamAcquireImageNV)( EGLDisplay dpy, EGLStreamKHR stream, EGLImage *pImage, EGLSync sync );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamAttribKHR)( EGLDisplay dpy, EGLStreamKHR stream, EGLenum attribute, EGLint value );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamConsumerAcquireAttribKHR)( EGLDisplay dpy, EGLStreamKHR stream, const EGLAttrib *attrib_list );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamConsumerAcquireKHR)( EGLDisplay dpy, EGLStreamKHR stream );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamConsumerGLTextureExternalAttribsNV)( EGLDisplay dpy, EGLStreamKHR stream, const EGLAttrib *attrib_list );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamConsumerGLTextureExternalKHR)( EGLDisplay dpy, EGLStreamKHR stream );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamConsumerOutputEXT)( EGLDisplay dpy, EGLStreamKHR stream, EGLOutputLayerEXT layer );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamConsumerReleaseAttribKHR)( EGLDisplay dpy, EGLStreamKHR stream, const EGLAttrib *attrib_list );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamConsumerReleaseKHR)( EGLDisplay dpy, EGLStreamKHR stream );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamFlushNV)( EGLDisplay dpy, EGLStreamKHR stream );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamImageConsumerConnectNV)( EGLDisplay dpy, EGLStreamKHR stream, EGLint num_modifiers, const EGLuint64KHR *modifiers, const EGLAttrib *attrib_list );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglStreamReleaseImageNV)( EGLDisplay dpy, EGLStreamKHR stream, EGLImage image, EGLSync sync );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglSwapBuffersWithDamageEXT)( EGLDisplay dpy, EGLSurface surface, const EGLint *rects, EGLint n_rects );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglSwapBuffersWithDamageKHR)( EGLDisplay dpy, EGLSurface surface, const EGLint *rects, EGLint n_rects );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglUnbindWaylandDisplayWL)( EGLDisplay dpy, struct wl_display *display );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglUnlockSurfaceKHR)( EGLDisplay dpy, EGLSurface surface );
+typedef EGLBoolean (GLAPIENTRY *PFN_eglUnsignalSyncEXT)( EGLDisplay dpy, EGLSync sync, const EGLAttrib *attrib_list );
+typedef EGLint     (GLAPIENTRY *PFN_eglWaitSyncKHR)( EGLDisplay dpy, EGLSyncKHR sync, EGLint flags );
 typedef void       (GLAPIENTRY *PFN_glAccumxOES)( GLenum op, GLfixed value );
 typedef GLboolean  (GLAPIENTRY *PFN_glAcquireKeyedMutexWin32EXT)( GLuint memory, GLuint64 key, GLuint timeout );
 typedef void       (GLAPIENTRY *PFN_glActiveProgramEXT)( GLuint program );
@@ -6349,6 +6797,7 @@ typedef void       (GLAPIENTRY *PFN_glActiveVaryingNV)( GLuint program, const GL
 typedef void       (GLAPIENTRY *PFN_glAlphaFragmentOp1ATI)( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod );
 typedef void       (GLAPIENTRY *PFN_glAlphaFragmentOp2ATI)( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod );
 typedef void       (GLAPIENTRY *PFN_glAlphaFragmentOp3ATI)( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod );
+typedef void       (GLAPIENTRY *PFN_glAlphaFuncx)( GLenum func, GLfixed ref );
 typedef void       (GLAPIENTRY *PFN_glAlphaFuncxOES)( GLenum func, GLfixed ref );
 typedef void       (GLAPIENTRY *PFN_glAlphaToCoverageDitherControlNV)( GLenum mode );
 typedef void       (GLAPIENTRY *PFN_glApplyFramebufferAttachmentCMAAINTEL)(void);
@@ -6497,10 +6946,12 @@ typedef void       (GLAPIENTRY *PFN_glClearBufferiv)( GLenum buffer, GLint drawb
 typedef void       (GLAPIENTRY *PFN_glClearBufferuiv)( GLenum buffer, GLint drawbuffer, const GLuint *value );
 typedef void       (GLAPIENTRY *PFN_glClearColorIiEXT)( GLint red, GLint green, GLint blue, GLint alpha );
 typedef void       (GLAPIENTRY *PFN_glClearColorIuiEXT)( GLuint red, GLuint green, GLuint blue, GLuint alpha );
+typedef void       (GLAPIENTRY *PFN_glClearColorx)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glClearColorxOES)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glClearDepthdNV)( GLdouble depth );
 typedef void       (GLAPIENTRY *PFN_glClearDepthf)( GLfloat d );
 typedef void       (GLAPIENTRY *PFN_glClearDepthfOES)( GLclampf depth );
+typedef void       (GLAPIENTRY *PFN_glClearDepthx)( GLfixed depth );
 typedef void       (GLAPIENTRY *PFN_glClearDepthxOES)( GLfixed depth );
 typedef void       (GLAPIENTRY *PFN_glClearNamedBufferData)( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data );
 typedef void       (GLAPIENTRY *PFN_glClearNamedBufferDataEXT)( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data );
@@ -6519,7 +6970,9 @@ typedef void       (GLAPIENTRY *PFN_glClientAttribDefaultEXT)( GLbitfield mask )
 typedef void       (GLAPIENTRY *PFN_glClientWaitSemaphoreui64NVX)( GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray );
 typedef GLenum     (GLAPIENTRY *PFN_glClientWaitSync)( GLsync sync, GLbitfield flags, GLuint64 timeout );
 typedef void       (GLAPIENTRY *PFN_glClipControl)( GLenum origin, GLenum depth );
+typedef void       (GLAPIENTRY *PFN_glClipPlanef)( GLenum p, const GLfloat *eqn );
 typedef void       (GLAPIENTRY *PFN_glClipPlanefOES)( GLenum plane, const GLfloat *equation );
+typedef void       (GLAPIENTRY *PFN_glClipPlanex)( GLenum plane, const GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glClipPlanexOES)( GLenum plane, const GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glColor3fVertex3fSUN)( GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z );
 typedef void       (GLAPIENTRY *PFN_glColor3fVertex3fvSUN)( const GLfloat *c, const GLfloat *v );
@@ -6535,6 +6988,7 @@ typedef void       (GLAPIENTRY *PFN_glColor4ubVertex2fSUN)( GLubyte r, GLubyte g
 typedef void       (GLAPIENTRY *PFN_glColor4ubVertex2fvSUN)( const GLubyte *c, const GLfloat *v );
 typedef void       (GLAPIENTRY *PFN_glColor4ubVertex3fSUN)( GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z );
 typedef void       (GLAPIENTRY *PFN_glColor4ubVertex3fvSUN)( const GLubyte *c, const GLfloat *v );
+typedef void       (GLAPIENTRY *PFN_glColor4x)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glColor4xOES)( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha );
 typedef void       (GLAPIENTRY *PFN_glColor4xvOES)( const GLfixed *components );
 typedef void       (GLAPIENTRY *PFN_glColorFormatNV)( GLint size, GLenum type, GLsizei stride );
@@ -6737,6 +7191,7 @@ typedef void       (GLAPIENTRY *PFN_glDepthRangeIndexeddNV)( GLuint index, GLdou
 typedef void       (GLAPIENTRY *PFN_glDepthRangedNV)( GLdouble zNear, GLdouble zFar );
 typedef void       (GLAPIENTRY *PFN_glDepthRangef)( GLfloat n, GLfloat f );
 typedef void       (GLAPIENTRY *PFN_glDepthRangefOES)( GLclampf n, GLclampf f );
+typedef void       (GLAPIENTRY *PFN_glDepthRangex)( GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glDepthRangexOES)( GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glDetachObjectARB)( GLhandleARB containerObj, GLhandleARB attachedObj );
 typedef void       (GLAPIENTRY *PFN_glDetachShader)( GLuint program, GLuint shader );
@@ -6869,7 +7324,9 @@ typedef void       (GLAPIENTRY *PFN_glFogCoordfvEXT)( const GLfloat *coord );
 typedef void       (GLAPIENTRY *PFN_glFogCoordhNV)( GLhalfNV fog );
 typedef void       (GLAPIENTRY *PFN_glFogCoordhvNV)( const GLhalfNV *fog );
 typedef void       (GLAPIENTRY *PFN_glFogFuncSGIS)( GLsizei n, const GLfloat *points );
+typedef void       (GLAPIENTRY *PFN_glFogx)( GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glFogxOES)( GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glFogxv)( GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glFogxvOES)( GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glFragmentColorMaterialSGIX)( GLenum face, GLenum mode );
 typedef void       (GLAPIENTRY *PFN_glFragmentCoverageColorNV)( GLuint color );
@@ -6914,7 +7371,9 @@ typedef void       (GLAPIENTRY *PFN_glFramebufferTextureLayerARB)( GLenum target
 typedef void       (GLAPIENTRY *PFN_glFramebufferTextureLayerEXT)( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer );
 typedef void       (GLAPIENTRY *PFN_glFramebufferTextureMultiviewOVR)( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews );
 typedef void       (GLAPIENTRY *PFN_glFreeObjectBufferATI)( GLuint buffer );
+typedef void       (GLAPIENTRY *PFN_glFrustumf)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
 typedef void       (GLAPIENTRY *PFN_glFrustumfOES)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
+typedef void       (GLAPIENTRY *PFN_glFrustumx)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glFrustumxOES)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef GLuint     (GLAPIENTRY *PFN_glGenAsyncMarkersSGIX)( GLsizei range );
 typedef void       (GLAPIENTRY *PFN_glGenBuffers)( GLsizei n, GLuint *buffers );
@@ -6979,7 +7438,9 @@ typedef void       (GLAPIENTRY *PFN_glGetBufferPointerv)( GLenum target, GLenum 
 typedef void       (GLAPIENTRY *PFN_glGetBufferPointervARB)( GLenum target, GLenum pname, void **params );
 typedef void       (GLAPIENTRY *PFN_glGetBufferSubData)( GLenum target, GLintptr offset, GLsizeiptr size, void *data );
 typedef void       (GLAPIENTRY *PFN_glGetBufferSubDataARB)( GLenum target, GLintptrARB offset, GLsizeiptrARB size, void *data );
+typedef void       (GLAPIENTRY *PFN_glGetClipPlanef)( GLenum plane, GLfloat *equation );
 typedef void       (GLAPIENTRY *PFN_glGetClipPlanefOES)( GLenum plane, GLfloat *equation );
+typedef void       (GLAPIENTRY *PFN_glGetClipPlanex)( GLenum plane, GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glGetClipPlanexOES)( GLenum plane, GLfixed *equation );
 typedef void       (GLAPIENTRY *PFN_glGetColorTable)( GLenum target, GLenum format, GLenum type, void *table );
 typedef void       (GLAPIENTRY *PFN_glGetColorTableEXT)( GLenum target, GLenum format, GLenum type, void *data );
@@ -7021,6 +7482,7 @@ typedef void       (GLAPIENTRY *PFN_glGetFenceivNV)( GLuint fence, GLenum pname,
 typedef void       (GLAPIENTRY *PFN_glGetFinalCombinerInputParameterfvNV)( GLenum variable, GLenum pname, GLfloat *params );
 typedef void       (GLAPIENTRY *PFN_glGetFinalCombinerInputParameterivNV)( GLenum variable, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetFirstPerfQueryIdINTEL)( GLuint *queryId );
+typedef void       (GLAPIENTRY *PFN_glGetFixedv)( GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetFixedvOES)( GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetFloatIndexedvEXT)( GLenum target, GLuint index, GLfloat *data );
 typedef void       (GLAPIENTRY *PFN_glGetFloati_v)( GLenum target, GLuint index, GLfloat *data );
@@ -7068,6 +7530,7 @@ typedef void       (GLAPIENTRY *PFN_glGetInvariantBooleanvEXT)( GLuint id, GLenu
 typedef void       (GLAPIENTRY *PFN_glGetInvariantFloatvEXT)( GLuint id, GLenum value, GLfloat *data );
 typedef void       (GLAPIENTRY *PFN_glGetInvariantIntegervEXT)( GLuint id, GLenum value, GLint *data );
 typedef void       (GLAPIENTRY *PFN_glGetLightxOES)( GLenum light, GLenum pname, GLfixed *params );
+typedef void       (GLAPIENTRY *PFN_glGetLightxv)( GLenum light, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetListParameterfvSGIX)( GLuint list, GLenum pname, GLfloat *params );
 typedef void       (GLAPIENTRY *PFN_glGetListParameterivSGIX)( GLuint list, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetLocalConstantBooleanvEXT)( GLuint id, GLenum value, GLboolean *data );
@@ -7080,6 +7543,7 @@ typedef void       (GLAPIENTRY *PFN_glGetMapParameterfvNV)( GLenum target, GLenu
 typedef void       (GLAPIENTRY *PFN_glGetMapParameterivNV)( GLenum target, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetMapxvOES)( GLenum target, GLenum query, GLfixed *v );
 typedef void       (GLAPIENTRY *PFN_glGetMaterialxOES)( GLenum face, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glGetMaterialxv)( GLenum face, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetMemoryObjectDetachedResourcesuivNV)( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glGetMemoryObjectParameterivEXT)( GLuint memoryObject, GLenum pname, GLint *params );
 typedef void       (GLAPIENTRY *PFN_glGetMinmax)( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values );
@@ -7237,6 +7701,7 @@ typedef GLint      (GLAPIENTRY *PFN_glGetSubroutineUniformLocation)( GLuint prog
 typedef void       (GLAPIENTRY *PFN_glGetSynciv)( GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values );
 typedef void       (GLAPIENTRY *PFN_glGetTexBumpParameterfvATI)( GLenum pname, GLfloat *param );
 typedef void       (GLAPIENTRY *PFN_glGetTexBumpParameterivATI)( GLenum pname, GLint *param );
+typedef void       (GLAPIENTRY *PFN_glGetTexEnvxv)( GLenum target, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexEnvxvOES)( GLenum target, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexFilterFuncSGIS)( GLenum target, GLenum filter, GLfloat *weights );
 typedef void       (GLAPIENTRY *PFN_glGetTexGenxvOES)( GLenum coord, GLenum pname, GLfixed *params );
@@ -7246,6 +7711,7 @@ typedef void       (GLAPIENTRY *PFN_glGetTexParameterIivEXT)( GLenum target, GLe
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterIuiv)( GLenum target, GLenum pname, GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterIuivEXT)( GLenum target, GLenum pname, GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterPointervAPPLE)( GLenum target, GLenum pname, void **params );
+typedef void       (GLAPIENTRY *PFN_glGetTexParameterxv)( GLenum target, GLenum pname, GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glGetTexParameterxvOES)( GLenum target, GLenum pname, GLfixed *params );
 typedef GLuint64   (GLAPIENTRY *PFN_glGetTextureHandleARB)( GLuint texture );
 typedef GLuint64   (GLAPIENTRY *PFN_glGetTextureHandleNV)( GLuint texture );
@@ -7468,10 +7934,15 @@ typedef void       (GLAPIENTRY *PFN_glLGPUInterlockNVX)(void);
 typedef void       (GLAPIENTRY *PFN_glLGPUNamedBufferSubDataNVX)( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data );
 typedef void       (GLAPIENTRY *PFN_glLabelObjectEXT)( GLenum type, GLuint object, GLsizei length, const GLchar *label );
 typedef void       (GLAPIENTRY *PFN_glLightEnviSGIX)( GLenum pname, GLint param );
+typedef void       (GLAPIENTRY *PFN_glLightModelx)( GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glLightModelxOES)( GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glLightModelxv)( GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glLightModelxvOES)( GLenum pname, const GLfixed *param );
+typedef void       (GLAPIENTRY *PFN_glLightx)( GLenum light, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glLightxOES)( GLenum light, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glLightxv)( GLenum light, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glLightxvOES)( GLenum light, GLenum pname, const GLfixed *params );
+typedef void       (GLAPIENTRY *PFN_glLineWidthx)( GLfixed width );
 typedef void       (GLAPIENTRY *PFN_glLineWidthxOES)( GLfixed width );
 typedef void       (GLAPIENTRY *PFN_glLinkProgram)( GLuint program );
 typedef void       (GLAPIENTRY *PFN_glLinkProgramARB)( GLhandleARB programObj );
@@ -7481,6 +7952,7 @@ typedef void       (GLAPIENTRY *PFN_glListParameterfvSGIX)( GLuint list, GLenum 
 typedef void       (GLAPIENTRY *PFN_glListParameteriSGIX)( GLuint list, GLenum pname, GLint param );
 typedef void       (GLAPIENTRY *PFN_glListParameterivSGIX)( GLuint list, GLenum pname, const GLint *params );
 typedef void       (GLAPIENTRY *PFN_glLoadIdentityDeformationMapSGIX)( GLbitfield mask );
+typedef void       (GLAPIENTRY *PFN_glLoadMatrixx)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glLoadMatrixxOES)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glLoadProgramNV)( GLenum target, GLuint id, GLsizei len, const GLubyte *program );
 typedef void       (GLAPIENTRY *PFN_glLoadTransposeMatrixd)( const GLdouble *m );
@@ -7523,7 +7995,9 @@ typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib1dAPPLE)( GLuint index, GLu
 typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib1fAPPLE)( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points );
 typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib2dAPPLE)( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points );
 typedef void       (GLAPIENTRY *PFN_glMapVertexAttrib2fAPPLE)( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points );
+typedef void       (GLAPIENTRY *PFN_glMaterialx)( GLenum face, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glMaterialxOES)( GLenum face, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glMaterialxv)( GLenum face, GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glMaterialxvOES)( GLenum face, GLenum pname, const GLfixed *param );
 typedef void       (GLAPIENTRY *PFN_glMatrixFrustumEXT)( GLenum mode, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar );
 typedef void       (GLAPIENTRY *PFN_glMatrixIndexPointerARB)( GLint size, GLenum type, GLsizei stride, const void *pointer );
@@ -7564,6 +8038,7 @@ typedef void       (GLAPIENTRY *PFN_glMinSampleShading)( GLfloat value );
 typedef void       (GLAPIENTRY *PFN_glMinSampleShadingARB)( GLfloat value );
 typedef void       (GLAPIENTRY *PFN_glMinmax)( GLenum target, GLenum internalformat, GLboolean sink );
 typedef void       (GLAPIENTRY *PFN_glMinmaxEXT)( GLenum target, GLenum internalformat, GLboolean sink );
+typedef void       (GLAPIENTRY *PFN_glMultMatrixx)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glMultMatrixxOES)( const GLfixed *m );
 typedef void       (GLAPIENTRY *PFN_glMultTransposeMatrixd)( const GLdouble *m );
 typedef void       (GLAPIENTRY *PFN_glMultTransposeMatrixdARB)( const GLdouble *m );
@@ -7714,6 +8189,7 @@ typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4sSGIS)( GLenum target, GLsho
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4sv)( GLenum target, const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4svARB)( GLenum target, const GLshort *v );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4svSGIS)( GLenum target, GLshort * v );
+typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4x)( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4xOES)( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoord4xvOES)( GLenum texture, const GLfixed *coords );
 typedef void       (GLAPIENTRY *PFN_glMultiTexCoordP1ui)( GLenum texture, GLenum type, GLuint coords );
@@ -7820,6 +8296,7 @@ typedef void       (GLAPIENTRY *PFN_glNormal3fVertex3fSUN)( GLfloat nx, GLfloat 
 typedef void       (GLAPIENTRY *PFN_glNormal3fVertex3fvSUN)( const GLfloat *n, const GLfloat *v );
 typedef void       (GLAPIENTRY *PFN_glNormal3hNV)( GLhalfNV nx, GLhalfNV ny, GLhalfNV nz );
 typedef void       (GLAPIENTRY *PFN_glNormal3hvNV)( const GLhalfNV *v );
+typedef void       (GLAPIENTRY *PFN_glNormal3x)( GLfixed nx, GLfixed ny, GLfixed nz );
 typedef void       (GLAPIENTRY *PFN_glNormal3xOES)( GLfixed nx, GLfixed ny, GLfixed nz );
 typedef void       (GLAPIENTRY *PFN_glNormal3xvOES)( const GLfixed *coords );
 typedef void       (GLAPIENTRY *PFN_glNormalFormatNV)( GLenum type, GLsizei stride );
@@ -7842,7 +8319,9 @@ typedef void       (GLAPIENTRY *PFN_glObjectLabel)( GLenum identifier, GLuint na
 typedef void       (GLAPIENTRY *PFN_glObjectPtrLabel)( const void *ptr, GLsizei length, const GLchar *label );
 typedef GLenum     (GLAPIENTRY *PFN_glObjectPurgeableAPPLE)( GLenum objectType, GLuint name, GLenum option );
 typedef GLenum     (GLAPIENTRY *PFN_glObjectUnpurgeableAPPLE)( GLenum objectType, GLuint name, GLenum option );
+typedef void       (GLAPIENTRY *PFN_glOrthof)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
 typedef void       (GLAPIENTRY *PFN_glOrthofOES)( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f );
+typedef void       (GLAPIENTRY *PFN_glOrthox)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glOrthoxOES)( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f );
 typedef void       (GLAPIENTRY *PFN_glPNTrianglesfATI)( GLenum pname, GLfloat param );
 typedef void       (GLAPIENTRY *PFN_glPNTrianglesiATI)( GLenum pname, GLint param );
@@ -7900,13 +8379,17 @@ typedef void       (GLAPIENTRY *PFN_glPointParameteri)( GLenum pname, GLint para
 typedef void       (GLAPIENTRY *PFN_glPointParameteriNV)( GLenum pname, GLint param );
 typedef void       (GLAPIENTRY *PFN_glPointParameteriv)( GLenum pname, const GLint *params );
 typedef void       (GLAPIENTRY *PFN_glPointParameterivNV)( GLenum pname, const GLint *params );
+typedef void       (GLAPIENTRY *PFN_glPointParameterx)( GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glPointParameterxv)( GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glPointParameterxvOES)( GLenum pname, const GLfixed *params );
+typedef void       (GLAPIENTRY *PFN_glPointSizex)( GLfixed size );
 typedef void       (GLAPIENTRY *PFN_glPointSizexOES)( GLfixed size );
 typedef GLint      (GLAPIENTRY *PFN_glPollAsyncSGIX)( GLuint *markerp );
 typedef GLint      (GLAPIENTRY *PFN_glPollInstrumentsSGIX)( GLint *marker_p );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetClamp)( GLfloat factor, GLfloat units, GLfloat clamp );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetClampEXT)( GLfloat factor, GLfloat units, GLfloat clamp );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetEXT)( GLfloat factor, GLfloat bias );
+typedef void       (GLAPIENTRY *PFN_glPolygonOffsetx)( GLfixed factor, GLfixed units );
 typedef void       (GLAPIENTRY *PFN_glPolygonOffsetxOES)( GLfixed factor, GLfixed units );
 typedef void       (GLAPIENTRY *PFN_glPopDebugGroup)(void);
 typedef void       (GLAPIENTRY *PFN_glPopGroupMarkerEXT)(void);
@@ -8165,9 +8648,11 @@ typedef void       (GLAPIENTRY *PFN_glResizeBuffersMESA)(void);
 typedef void       (GLAPIENTRY *PFN_glResolveDepthValuesNV)(void);
 typedef void       (GLAPIENTRY *PFN_glResumeTransformFeedback)(void);
 typedef void       (GLAPIENTRY *PFN_glResumeTransformFeedbackNV)(void);
+typedef void       (GLAPIENTRY *PFN_glRotatex)( GLfixed angle, GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glRotatexOES)( GLfixed angle, GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glSampleCoverage)( GLfloat value, GLboolean invert );
 typedef void       (GLAPIENTRY *PFN_glSampleCoverageARB)( GLfloat value, GLboolean invert );
+typedef void       (GLAPIENTRY *PFN_glSampleCoveragex)( GLclampx value, GLboolean invert );
 typedef void       (GLAPIENTRY *PFN_glSampleMapATI)( GLuint dst, GLuint interp, GLenum swizzle );
 typedef void       (GLAPIENTRY *PFN_glSampleMaskEXT)( GLclampf value, GLboolean invert );
 typedef void       (GLAPIENTRY *PFN_glSampleMaskIndexedNV)( GLuint index, GLbitfield mask );
@@ -8181,6 +8666,7 @@ typedef void       (GLAPIENTRY *PFN_glSamplerParameterf)( GLuint sampler, GLenum
 typedef void       (GLAPIENTRY *PFN_glSamplerParameterfv)( GLuint sampler, GLenum pname, const GLfloat *param );
 typedef void       (GLAPIENTRY *PFN_glSamplerParameteri)( GLuint sampler, GLenum pname, GLint param );
 typedef void       (GLAPIENTRY *PFN_glSamplerParameteriv)( GLuint sampler, GLenum pname, const GLint *param );
+typedef void       (GLAPIENTRY *PFN_glScalex)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glScalexOES)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glScissorArrayv)( GLuint first, GLsizei count, const GLint *v );
 typedef void       (GLAPIENTRY *PFN_glScissorExclusiveArrayvNV)( GLuint first, GLsizei count, const GLint *v );
@@ -8359,7 +8845,9 @@ typedef void       (GLAPIENTRY *PFN_glTexCoordP4uiv)( GLenum type, const GLuint 
 typedef void       (GLAPIENTRY *PFN_glTexCoordPointerEXT)( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer );
 typedef void       (GLAPIENTRY *PFN_glTexCoordPointerListIBM)( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride );
 typedef void       (GLAPIENTRY *PFN_glTexCoordPointervINTEL)( GLint size, GLenum type, const void **pointer );
+typedef void       (GLAPIENTRY *PFN_glTexEnvx)( GLenum target, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glTexEnvxOES)( GLenum target, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glTexEnvxv)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexEnvxvOES)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexFilterFuncSGIS)( GLenum target, GLenum filter, GLsizei n, const GLfloat *weights );
 typedef void       (GLAPIENTRY *PFN_glTexGenxOES)( GLenum coord, GLenum pname, GLfixed param );
@@ -8377,7 +8865,9 @@ typedef void       (GLAPIENTRY *PFN_glTexParameterIiv)( GLenum target, GLenum pn
 typedef void       (GLAPIENTRY *PFN_glTexParameterIivEXT)( GLenum target, GLenum pname, const GLint *params );
 typedef void       (GLAPIENTRY *PFN_glTexParameterIuiv)( GLenum target, GLenum pname, const GLuint *params );
 typedef void       (GLAPIENTRY *PFN_glTexParameterIuivEXT)( GLenum target, GLenum pname, const GLuint *params );
+typedef void       (GLAPIENTRY *PFN_glTexParameterx)( GLenum target, GLenum pname, GLfixed param );
 typedef void       (GLAPIENTRY *PFN_glTexParameterxOES)( GLenum target, GLenum pname, GLfixed param );
+typedef void       (GLAPIENTRY *PFN_glTexParameterxv)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexParameterxvOES)( GLenum target, GLenum pname, const GLfixed *params );
 typedef void       (GLAPIENTRY *PFN_glTexRenderbufferNV)( GLenum target, GLuint renderbuffer );
 typedef void       (GLAPIENTRY *PFN_glTexStorage1D)( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width );
@@ -8465,6 +8955,7 @@ typedef void       (GLAPIENTRY *PFN_glTransformFeedbackVaryings)( GLuint program
 typedef void       (GLAPIENTRY *PFN_glTransformFeedbackVaryingsEXT)( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode );
 typedef void       (GLAPIENTRY *PFN_glTransformFeedbackVaryingsNV)( GLuint program, GLsizei count, const GLint *locations, GLenum bufferMode );
 typedef void       (GLAPIENTRY *PFN_glTransformPathNV)( GLuint resultPath, GLuint srcPath, GLenum transformType, const GLfloat *transformValues );
+typedef void       (GLAPIENTRY *PFN_glTranslatex)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glTranslatexOES)( GLfixed x, GLfixed y, GLfixed z );
 typedef void       (GLAPIENTRY *PFN_glUniform1d)( GLint location, GLdouble x );
 typedef void       (GLAPIENTRY *PFN_glUniform1dv)( GLint location, GLsizei count, const GLdouble *value );
@@ -9150,10 +9641,105 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(eglWaitSync)
 
 #define ALL_EGL_EXT_FUNCS \
+    USE_GL_FUNC(eglBindWaylandDisplayWL) \
+    USE_GL_FUNC(eglClientSignalSyncEXT) \
+    USE_GL_FUNC(eglClientWaitSyncKHR) \
+    USE_GL_FUNC(eglClientWaitSyncNV) \
+    USE_GL_FUNC(eglCompositorBindTexWindowEXT) \
+    USE_GL_FUNC(eglCompositorSetContextAttributesEXT) \
+    USE_GL_FUNC(eglCompositorSetContextListEXT) \
+    USE_GL_FUNC(eglCompositorSetSizeEXT) \
+    USE_GL_FUNC(eglCompositorSetWindowAttributesEXT) \
+    USE_GL_FUNC(eglCompositorSetWindowListEXT) \
+    USE_GL_FUNC(eglCompositorSwapPolicyEXT) \
+    USE_GL_FUNC(eglCreateDRMImageMESA) \
+    USE_GL_FUNC(eglCreateFenceSyncNV) \
+    USE_GL_FUNC(eglCreateImageKHR) \
+    USE_GL_FUNC(eglCreatePlatformPixmapSurfaceEXT) \
+    USE_GL_FUNC(eglCreatePlatformWindowSurfaceEXT) \
+    USE_GL_FUNC(eglCreateStreamAttribKHR) \
+    USE_GL_FUNC(eglCreateStreamFromFileDescriptorKHR) \
+    USE_GL_FUNC(eglCreateStreamKHR) \
+    USE_GL_FUNC(eglCreateStreamProducerSurfaceKHR) \
+    USE_GL_FUNC(eglCreateStreamSyncNV) \
+    USE_GL_FUNC(eglCreateSync64KHR) \
+    USE_GL_FUNC(eglCreateSyncKHR) \
+    USE_GL_FUNC(eglCreateWaylandBufferFromImageWL) \
+    USE_GL_FUNC(eglDebugMessageControlKHR) \
+    USE_GL_FUNC(eglDestroyDisplayEXT) \
+    USE_GL_FUNC(eglDestroyImageKHR) \
+    USE_GL_FUNC(eglDestroyStreamKHR) \
+    USE_GL_FUNC(eglDestroySyncKHR) \
+    USE_GL_FUNC(eglDestroySyncNV) \
+    USE_GL_FUNC(eglExportDMABUFImageMESA) \
+    USE_GL_FUNC(eglExportDMABUFImageQueryMESA) \
+    USE_GL_FUNC(eglExportDRMImageMESA) \
+    USE_GL_FUNC(eglFenceNV) \
+    USE_GL_FUNC(eglGetDisplayDriverConfig) \
+    USE_GL_FUNC(eglGetDisplayDriverName) \
+    USE_GL_FUNC(eglGetOutputLayersEXT) \
+    USE_GL_FUNC(eglGetOutputPortsEXT) \
+    USE_GL_FUNC(eglGetPlatformDisplayEXT) \
+    USE_GL_FUNC(eglGetStreamFileDescriptorKHR) \
+    USE_GL_FUNC(eglGetSyncAttribKHR) \
+    USE_GL_FUNC(eglGetSyncAttribNV) \
+    USE_GL_FUNC(eglGetSystemTimeFrequencyNV) \
+    USE_GL_FUNC(eglGetSystemTimeNV) \
+    USE_GL_FUNC(eglLabelObjectKHR) \
+    USE_GL_FUNC(eglLockSurfaceKHR) \
+    USE_GL_FUNC(eglOutputLayerAttribEXT) \
+    USE_GL_FUNC(eglOutputPortAttribEXT) \
+    USE_GL_FUNC(eglPostSubBufferNV) \
+    USE_GL_FUNC(eglQueryDebugKHR) \
     USE_GL_FUNC(eglQueryDeviceAttribEXT) \
+    USE_GL_FUNC(eglQueryDeviceBinaryEXT) \
     USE_GL_FUNC(eglQueryDeviceStringEXT) \
     USE_GL_FUNC(eglQueryDevicesEXT) \
-    USE_GL_FUNC(eglQueryDisplayAttribEXT)
+    USE_GL_FUNC(eglQueryDisplayAttribEXT) \
+    USE_GL_FUNC(eglQueryDisplayAttribKHR) \
+    USE_GL_FUNC(eglQueryDisplayAttribNV) \
+    USE_GL_FUNC(eglQueryDmaBufFormatsEXT) \
+    USE_GL_FUNC(eglQueryDmaBufModifiersEXT) \
+    USE_GL_FUNC(eglQueryNativeDisplayNV) \
+    USE_GL_FUNC(eglQueryNativePixmapNV) \
+    USE_GL_FUNC(eglQueryNativeWindowNV) \
+    USE_GL_FUNC(eglQueryOutputLayerAttribEXT) \
+    USE_GL_FUNC(eglQueryOutputLayerStringEXT) \
+    USE_GL_FUNC(eglQueryOutputPortAttribEXT) \
+    USE_GL_FUNC(eglQueryOutputPortStringEXT) \
+    USE_GL_FUNC(eglQueryStreamAttribKHR) \
+    USE_GL_FUNC(eglQueryStreamConsumerEventNV) \
+    USE_GL_FUNC(eglQueryStreamKHR) \
+    USE_GL_FUNC(eglQueryStreamMetadataNV) \
+    USE_GL_FUNC(eglQueryStreamTimeKHR) \
+    USE_GL_FUNC(eglQueryStreamu64KHR) \
+    USE_GL_FUNC(eglQuerySupportedCompressionRatesEXT) \
+    USE_GL_FUNC(eglQuerySurface64KHR) \
+    USE_GL_FUNC(eglQueryWaylandBufferWL) \
+    USE_GL_FUNC(eglResetStreamNV) \
+    USE_GL_FUNC(eglSetDamageRegionKHR) \
+    USE_GL_FUNC(eglSetStreamAttribKHR) \
+    USE_GL_FUNC(eglSetStreamMetadataNV) \
+    USE_GL_FUNC(eglSignalSyncKHR) \
+    USE_GL_FUNC(eglSignalSyncNV) \
+    USE_GL_FUNC(eglStreamAcquireImageNV) \
+    USE_GL_FUNC(eglStreamAttribKHR) \
+    USE_GL_FUNC(eglStreamConsumerAcquireAttribKHR) \
+    USE_GL_FUNC(eglStreamConsumerAcquireKHR) \
+    USE_GL_FUNC(eglStreamConsumerGLTextureExternalAttribsNV) \
+    USE_GL_FUNC(eglStreamConsumerGLTextureExternalKHR) \
+    USE_GL_FUNC(eglStreamConsumerOutputEXT) \
+    USE_GL_FUNC(eglStreamConsumerReleaseAttribKHR) \
+    USE_GL_FUNC(eglStreamConsumerReleaseKHR) \
+    USE_GL_FUNC(eglStreamFlushNV) \
+    USE_GL_FUNC(eglStreamImageConsumerConnectNV) \
+    USE_GL_FUNC(eglStreamReleaseImageNV) \
+    USE_GL_FUNC(eglSwapBuffersWithDamageEXT) \
+    USE_GL_FUNC(eglSwapBuffersWithDamageKHR) \
+    USE_GL_FUNC(eglUnbindWaylandDisplayWL) \
+    USE_GL_FUNC(eglUnlockSurfaceKHR) \
+    USE_GL_FUNC(eglUnsignalSyncEXT) \
+    USE_GL_FUNC(eglWaitSyncKHR)
 
 #define ALL_GL_FUNCS \
     USE_GL_FUNC(glAccum) \
@@ -9505,6 +10091,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glAlphaFragmentOp1ATI) \
     USE_GL_FUNC(glAlphaFragmentOp2ATI) \
     USE_GL_FUNC(glAlphaFragmentOp3ATI) \
+    USE_GL_FUNC(glAlphaFuncx) \
     USE_GL_FUNC(glAlphaFuncxOES) \
     USE_GL_FUNC(glAlphaToCoverageDitherControlNV) \
     USE_GL_FUNC(glApplyFramebufferAttachmentCMAAINTEL) \
@@ -9653,10 +10240,12 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glClearBufferuiv) \
     USE_GL_FUNC(glClearColorIiEXT) \
     USE_GL_FUNC(glClearColorIuiEXT) \
+    USE_GL_FUNC(glClearColorx) \
     USE_GL_FUNC(glClearColorxOES) \
     USE_GL_FUNC(glClearDepthdNV) \
     USE_GL_FUNC(glClearDepthf) \
     USE_GL_FUNC(glClearDepthfOES) \
+    USE_GL_FUNC(glClearDepthx) \
     USE_GL_FUNC(glClearDepthxOES) \
     USE_GL_FUNC(glClearNamedBufferData) \
     USE_GL_FUNC(glClearNamedBufferDataEXT) \
@@ -9675,7 +10264,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glClientWaitSemaphoreui64NVX) \
     USE_GL_FUNC(glClientWaitSync) \
     USE_GL_FUNC(glClipControl) \
+    USE_GL_FUNC(glClipPlanef) \
     USE_GL_FUNC(glClipPlanefOES) \
+    USE_GL_FUNC(glClipPlanex) \
     USE_GL_FUNC(glClipPlanexOES) \
     USE_GL_FUNC(glColor3fVertex3fSUN) \
     USE_GL_FUNC(glColor3fVertex3fvSUN) \
@@ -9691,6 +10282,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glColor4ubVertex2fvSUN) \
     USE_GL_FUNC(glColor4ubVertex3fSUN) \
     USE_GL_FUNC(glColor4ubVertex3fvSUN) \
+    USE_GL_FUNC(glColor4x) \
     USE_GL_FUNC(glColor4xOES) \
     USE_GL_FUNC(glColor4xvOES) \
     USE_GL_FUNC(glColorFormatNV) \
@@ -9893,6 +10485,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glDepthRangedNV) \
     USE_GL_FUNC(glDepthRangef) \
     USE_GL_FUNC(glDepthRangefOES) \
+    USE_GL_FUNC(glDepthRangex) \
     USE_GL_FUNC(glDepthRangexOES) \
     USE_GL_FUNC(glDetachObjectARB) \
     USE_GL_FUNC(glDetachShader) \
@@ -10025,7 +10618,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glFogCoordhNV) \
     USE_GL_FUNC(glFogCoordhvNV) \
     USE_GL_FUNC(glFogFuncSGIS) \
+    USE_GL_FUNC(glFogx) \
     USE_GL_FUNC(glFogxOES) \
+    USE_GL_FUNC(glFogxv) \
     USE_GL_FUNC(glFogxvOES) \
     USE_GL_FUNC(glFragmentColorMaterialSGIX) \
     USE_GL_FUNC(glFragmentCoverageColorNV) \
@@ -10070,7 +10665,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glFramebufferTextureLayerEXT) \
     USE_GL_FUNC(glFramebufferTextureMultiviewOVR) \
     USE_GL_FUNC(glFreeObjectBufferATI) \
+    USE_GL_FUNC(glFrustumf) \
     USE_GL_FUNC(glFrustumfOES) \
+    USE_GL_FUNC(glFrustumx) \
     USE_GL_FUNC(glFrustumxOES) \
     USE_GL_FUNC(glGenAsyncMarkersSGIX) \
     USE_GL_FUNC(glGenBuffers) \
@@ -10135,7 +10732,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetBufferPointervARB) \
     USE_GL_FUNC(glGetBufferSubData) \
     USE_GL_FUNC(glGetBufferSubDataARB) \
+    USE_GL_FUNC(glGetClipPlanef) \
     USE_GL_FUNC(glGetClipPlanefOES) \
+    USE_GL_FUNC(glGetClipPlanex) \
     USE_GL_FUNC(glGetClipPlanexOES) \
     USE_GL_FUNC(glGetColorTable) \
     USE_GL_FUNC(glGetColorTableEXT) \
@@ -10177,6 +10776,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetFinalCombinerInputParameterfvNV) \
     USE_GL_FUNC(glGetFinalCombinerInputParameterivNV) \
     USE_GL_FUNC(glGetFirstPerfQueryIdINTEL) \
+    USE_GL_FUNC(glGetFixedv) \
     USE_GL_FUNC(glGetFixedvOES) \
     USE_GL_FUNC(glGetFloatIndexedvEXT) \
     USE_GL_FUNC(glGetFloati_v) \
@@ -10224,6 +10824,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetInvariantFloatvEXT) \
     USE_GL_FUNC(glGetInvariantIntegervEXT) \
     USE_GL_FUNC(glGetLightxOES) \
+    USE_GL_FUNC(glGetLightxv) \
     USE_GL_FUNC(glGetListParameterfvSGIX) \
     USE_GL_FUNC(glGetListParameterivSGIX) \
     USE_GL_FUNC(glGetLocalConstantBooleanvEXT) \
@@ -10236,6 +10837,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetMapParameterivNV) \
     USE_GL_FUNC(glGetMapxvOES) \
     USE_GL_FUNC(glGetMaterialxOES) \
+    USE_GL_FUNC(glGetMaterialxv) \
     USE_GL_FUNC(glGetMemoryObjectDetachedResourcesuivNV) \
     USE_GL_FUNC(glGetMemoryObjectParameterivEXT) \
     USE_GL_FUNC(glGetMinmax) \
@@ -10393,6 +10995,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetSynciv) \
     USE_GL_FUNC(glGetTexBumpParameterfvATI) \
     USE_GL_FUNC(glGetTexBumpParameterivATI) \
+    USE_GL_FUNC(glGetTexEnvxv) \
     USE_GL_FUNC(glGetTexEnvxvOES) \
     USE_GL_FUNC(glGetTexFilterFuncSGIS) \
     USE_GL_FUNC(glGetTexGenxvOES) \
@@ -10402,6 +11005,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glGetTexParameterIuiv) \
     USE_GL_FUNC(glGetTexParameterIuivEXT) \
     USE_GL_FUNC(glGetTexParameterPointervAPPLE) \
+    USE_GL_FUNC(glGetTexParameterxv) \
     USE_GL_FUNC(glGetTexParameterxvOES) \
     USE_GL_FUNC(glGetTextureHandleARB) \
     USE_GL_FUNC(glGetTextureHandleNV) \
@@ -10624,10 +11228,15 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glLGPUNamedBufferSubDataNVX) \
     USE_GL_FUNC(glLabelObjectEXT) \
     USE_GL_FUNC(glLightEnviSGIX) \
+    USE_GL_FUNC(glLightModelx) \
     USE_GL_FUNC(glLightModelxOES) \
+    USE_GL_FUNC(glLightModelxv) \
     USE_GL_FUNC(glLightModelxvOES) \
+    USE_GL_FUNC(glLightx) \
     USE_GL_FUNC(glLightxOES) \
+    USE_GL_FUNC(glLightxv) \
     USE_GL_FUNC(glLightxvOES) \
+    USE_GL_FUNC(glLineWidthx) \
     USE_GL_FUNC(glLineWidthxOES) \
     USE_GL_FUNC(glLinkProgram) \
     USE_GL_FUNC(glLinkProgramARB) \
@@ -10637,6 +11246,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glListParameteriSGIX) \
     USE_GL_FUNC(glListParameterivSGIX) \
     USE_GL_FUNC(glLoadIdentityDeformationMapSGIX) \
+    USE_GL_FUNC(glLoadMatrixx) \
     USE_GL_FUNC(glLoadMatrixxOES) \
     USE_GL_FUNC(glLoadProgramNV) \
     USE_GL_FUNC(glLoadTransposeMatrixd) \
@@ -10679,7 +11289,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glMapVertexAttrib1fAPPLE) \
     USE_GL_FUNC(glMapVertexAttrib2dAPPLE) \
     USE_GL_FUNC(glMapVertexAttrib2fAPPLE) \
+    USE_GL_FUNC(glMaterialx) \
     USE_GL_FUNC(glMaterialxOES) \
+    USE_GL_FUNC(glMaterialxv) \
     USE_GL_FUNC(glMaterialxvOES) \
     USE_GL_FUNC(glMatrixFrustumEXT) \
     USE_GL_FUNC(glMatrixIndexPointerARB) \
@@ -10720,6 +11332,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glMinSampleShadingARB) \
     USE_GL_FUNC(glMinmax) \
     USE_GL_FUNC(glMinmaxEXT) \
+    USE_GL_FUNC(glMultMatrixx) \
     USE_GL_FUNC(glMultMatrixxOES) \
     USE_GL_FUNC(glMultTransposeMatrixd) \
     USE_GL_FUNC(glMultTransposeMatrixdARB) \
@@ -10870,6 +11483,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glMultiTexCoord4sv) \
     USE_GL_FUNC(glMultiTexCoord4svARB) \
     USE_GL_FUNC(glMultiTexCoord4svSGIS) \
+    USE_GL_FUNC(glMultiTexCoord4x) \
     USE_GL_FUNC(glMultiTexCoord4xOES) \
     USE_GL_FUNC(glMultiTexCoord4xvOES) \
     USE_GL_FUNC(glMultiTexCoordP1ui) \
@@ -10976,6 +11590,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glNormal3fVertex3fvSUN) \
     USE_GL_FUNC(glNormal3hNV) \
     USE_GL_FUNC(glNormal3hvNV) \
+    USE_GL_FUNC(glNormal3x) \
     USE_GL_FUNC(glNormal3xOES) \
     USE_GL_FUNC(glNormal3xvOES) \
     USE_GL_FUNC(glNormalFormatNV) \
@@ -10998,7 +11613,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glObjectPtrLabel) \
     USE_GL_FUNC(glObjectPurgeableAPPLE) \
     USE_GL_FUNC(glObjectUnpurgeableAPPLE) \
+    USE_GL_FUNC(glOrthof) \
     USE_GL_FUNC(glOrthofOES) \
+    USE_GL_FUNC(glOrthox) \
     USE_GL_FUNC(glOrthoxOES) \
     USE_GL_FUNC(glPNTrianglesfATI) \
     USE_GL_FUNC(glPNTrianglesiATI) \
@@ -11056,13 +11673,17 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glPointParameteriNV) \
     USE_GL_FUNC(glPointParameteriv) \
     USE_GL_FUNC(glPointParameterivNV) \
+    USE_GL_FUNC(glPointParameterx) \
+    USE_GL_FUNC(glPointParameterxv) \
     USE_GL_FUNC(glPointParameterxvOES) \
+    USE_GL_FUNC(glPointSizex) \
     USE_GL_FUNC(glPointSizexOES) \
     USE_GL_FUNC(glPollAsyncSGIX) \
     USE_GL_FUNC(glPollInstrumentsSGIX) \
     USE_GL_FUNC(glPolygonOffsetClamp) \
     USE_GL_FUNC(glPolygonOffsetClampEXT) \
     USE_GL_FUNC(glPolygonOffsetEXT) \
+    USE_GL_FUNC(glPolygonOffsetx) \
     USE_GL_FUNC(glPolygonOffsetxOES) \
     USE_GL_FUNC(glPopDebugGroup) \
     USE_GL_FUNC(glPopGroupMarkerEXT) \
@@ -11321,9 +11942,11 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glResolveDepthValuesNV) \
     USE_GL_FUNC(glResumeTransformFeedback) \
     USE_GL_FUNC(glResumeTransformFeedbackNV) \
+    USE_GL_FUNC(glRotatex) \
     USE_GL_FUNC(glRotatexOES) \
     USE_GL_FUNC(glSampleCoverage) \
     USE_GL_FUNC(glSampleCoverageARB) \
+    USE_GL_FUNC(glSampleCoveragex) \
     USE_GL_FUNC(glSampleMapATI) \
     USE_GL_FUNC(glSampleMaskEXT) \
     USE_GL_FUNC(glSampleMaskIndexedNV) \
@@ -11337,6 +11960,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glSamplerParameterfv) \
     USE_GL_FUNC(glSamplerParameteri) \
     USE_GL_FUNC(glSamplerParameteriv) \
+    USE_GL_FUNC(glScalex) \
     USE_GL_FUNC(glScalexOES) \
     USE_GL_FUNC(glScissorArrayv) \
     USE_GL_FUNC(glScissorExclusiveArrayvNV) \
@@ -11515,7 +12139,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glTexCoordPointerEXT) \
     USE_GL_FUNC(glTexCoordPointerListIBM) \
     USE_GL_FUNC(glTexCoordPointervINTEL) \
+    USE_GL_FUNC(glTexEnvx) \
     USE_GL_FUNC(glTexEnvxOES) \
+    USE_GL_FUNC(glTexEnvxv) \
     USE_GL_FUNC(glTexEnvxvOES) \
     USE_GL_FUNC(glTexFilterFuncSGIS) \
     USE_GL_FUNC(glTexGenxOES) \
@@ -11533,7 +12159,9 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glTexParameterIivEXT) \
     USE_GL_FUNC(glTexParameterIuiv) \
     USE_GL_FUNC(glTexParameterIuivEXT) \
+    USE_GL_FUNC(glTexParameterx) \
     USE_GL_FUNC(glTexParameterxOES) \
+    USE_GL_FUNC(glTexParameterxv) \
     USE_GL_FUNC(glTexParameterxvOES) \
     USE_GL_FUNC(glTexRenderbufferNV) \
     USE_GL_FUNC(glTexStorage1D) \
@@ -11621,6 +12249,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(glTransformFeedbackVaryingsEXT) \
     USE_GL_FUNC(glTransformFeedbackVaryingsNV) \
     USE_GL_FUNC(glTransformPathNV) \
+    USE_GL_FUNC(glTranslatex) \
     USE_GL_FUNC(glTranslatexOES) \
     USE_GL_FUNC(glUniform1d) \
     USE_GL_FUNC(glUniform1dv) \

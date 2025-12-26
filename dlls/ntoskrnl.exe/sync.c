@@ -23,7 +23,6 @@
 #include "ntoskrnl_private.h"
 #include "ddk/ntddk.h"
 
-#include "wine/heap.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
@@ -910,9 +909,9 @@ NTSTATUS WINAPI ExInitializeResourceLite( ERESOURCE *resource )
 NTSTATUS WINAPI ExDeleteResourceLite( ERESOURCE *resource )
 {
     TRACE("resource %p.\n", resource);
-    heap_free(resource->OwnerTable);
-    heap_free(resource->ExclusiveWaiters);
-    heap_free(resource->SharedWaiters);
+    HeapFree(GetProcessHeap(), 0, resource->OwnerTable);
+    HeapFree(GetProcessHeap(), 0, resource->ExclusiveWaiters);
+    HeapFree(GetProcessHeap(), 0, resource->SharedWaiters);
     return STATUS_SUCCESS;
 }
 
@@ -928,7 +927,11 @@ static OWNER_ENTRY *resource_get_shared_entry( ERESOURCE *resource, ERESOURCE_TH
     }
 
     count = ++resource->OwnerEntry.TableSize;
-    resource->OwnerTable = heap_realloc(resource->OwnerTable, count * sizeof(*resource->OwnerTable));
+    if (!resource->OwnerTable)
+        resource->OwnerTable = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*resource->OwnerTable));
+    else
+        resource->OwnerTable = HeapReAlloc(GetProcessHeap(), 0, resource->OwnerTable,
+                                            count * sizeof(*resource->OwnerTable));
     resource->OwnerTable[count - 1].OwnerThread = thread;
     resource->OwnerTable[count - 1].OwnerCount = 0;
 
@@ -971,7 +974,7 @@ BOOLEAN WINAPI ExAcquireResourceExclusiveLite( ERESOURCE *resource, BOOLEAN wait
 
     if (!resource->ExclusiveWaiters)
     {
-        resource->ExclusiveWaiters = heap_alloc( sizeof(*resource->ExclusiveWaiters) );
+        resource->ExclusiveWaiters = HeapAlloc( GetProcessHeap(), 0, sizeof(*resource->ExclusiveWaiters) );
         KeInitializeEvent( resource->ExclusiveWaiters, SynchronizationEvent, FALSE );
     }
     resource->NumberOfExclusiveWaiters++;
@@ -1034,7 +1037,7 @@ BOOLEAN WINAPI ExAcquireResourceSharedLite( ERESOURCE *resource, BOOLEAN wait )
 
     if (!resource->SharedWaiters)
     {
-        resource->SharedWaiters = heap_alloc( sizeof(*resource->SharedWaiters) );
+        resource->SharedWaiters = HeapAlloc( GetProcessHeap(), 0, sizeof(*resource->SharedWaiters) );
         KeInitializeSemaphore( resource->SharedWaiters, 0, INT_MAX );
     }
     resource->NumberOfSharedWaiters++;
@@ -1098,7 +1101,7 @@ BOOLEAN WINAPI ExAcquireSharedStarveExclusive( ERESOURCE *resource, BOOLEAN wait
 
     if (!resource->SharedWaiters)
     {
-        resource->SharedWaiters = heap_alloc( sizeof(*resource->SharedWaiters) );
+        resource->SharedWaiters = HeapAlloc( GetProcessHeap(), 0, sizeof(*resource->SharedWaiters) );
         KeInitializeSemaphore( resource->SharedWaiters, 0, INT_MAX );
     }
     resource->NumberOfSharedWaiters++;
@@ -1160,7 +1163,7 @@ BOOLEAN WINAPI ExAcquireSharedWaitForExclusive( ERESOURCE *resource, BOOLEAN wai
 
     if (!resource->SharedWaiters)
     {
-        resource->SharedWaiters = heap_alloc( sizeof(*resource->SharedWaiters) );
+        resource->SharedWaiters = HeapAlloc( GetProcessHeap(), 0, sizeof(*resource->SharedWaiters) );
         KeInitializeSemaphore( resource->SharedWaiters, 0, INT_MAX );
     }
     resource->NumberOfSharedWaiters++;

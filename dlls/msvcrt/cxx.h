@@ -21,6 +21,15 @@
 #include "rtlsupportapi.h"
 #include "wine/asm.h"
 
+#define CLASS_IS_SIMPLE_TYPE          1
+#define CLASS_HAS_VIRTUAL_BASE_CLASS  4
+#define CLASS_IS_WINRT                8
+
+#define TYPE_FLAG_CONST      1
+#define TYPE_FLAG_VOLATILE   2
+#define TYPE_FLAG_REFERENCE  8
+#define TYPE_FLAG_WINRT     16
+
 #ifdef __i386__
 #undef CXX_USE_RVA
 #else

@@ -1619,6 +1619,24 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         { .DataIndex = 37, .RawValue = 1, },
         { .DataIndex = 39, .RawValue = 1, },
     };
+    const BYTE expect_report_0[] =
+    {
+        report_id, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,      0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    const BYTE expect_report_1[] =
+    {
+        report_id, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
+        0x00,      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,      0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    const BYTE expect_report_2[] =
+    {
+        report_id, 0x02, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00,
+        0x00,      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,      0x00, 0x00, 0x00, 0x00, 0x00
+    };
 
     DWORD waveform_list, collection_count, generic_output_list;
     OVERLAPPED overlapped = {0}, overlapped2 = {0};
@@ -2105,6 +2123,67 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#lx\n", status );
     ok( value == 11, "got data count %ld, expected %d\n", value, 11 );
+    memset( data, 0, sizeof(data) );
+    status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#lx\n", status );
+    for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
+    {
+        winetest_push_context( "data[%d]", i );
+        check_member( data[i], expect_data[i], "%d", DataIndex );
+        check_member( data[i], expect_data[i], "%ld", RawValue );
+        winetest_pop_context();
+    }
+
+    memset( report, 0, caps.InputReportByteLength );
+    report[0] = report_id;
+
+    value = 0;
+    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_SetData returned %#lx\n", status );
+    ok( value == 0, "got data count %ld, expected %d\n", value, 0 );
+
+    value = 0;
+    data[value].DataIndex = 0;  data[value++].RawValue = 1;
+    data[value].DataIndex = 1;  data[value++].RawValue = 2;
+    data[value].DataIndex = 0;  data[value++].RawValue = 3;
+    data[value].DataIndex = 43; data[value++].RawValue = 0;
+    data[value].DataIndex = 2;  data[value++].RawValue = 5;
+    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_IS_VALUE_ARRAY, "HidP_SetData returned %#lx\n", status );
+    ok( value == 3, "got data count %ld, expected %d\n", value, 3 );
+    ok( !memcmp( report, expect_report_0, caps.InputReportByteLength ), "report mismatch\n" );
+
+    value = 0;
+    data[value].DataIndex = 18; data[value++].RawValue = 1;
+    data[value].DataIndex = 19; data[value++].RawValue = 1;
+    data[value].DataIndex = 18; data[value++].RawValue = 0;
+    data[value].DataIndex = 18; data[value++].RawValue = 0;
+    data[value].DataIndex = 20; data[value++].RawValue = 1;
+    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_BUTTON_NOT_PRESSED, "HidP_SetData returned %#lx\n", status );
+    ok( value == 3, "got data count %ld, expected %d\n", value, 3 );
+    ok( !memcmp( report, expect_report_1, caps.InputReportByteLength ), "report mismatch\n" );
+
+    value = 0;
+    data[value].DataIndex = 2;  data[value++].RawValue = 1;
+    data[value].DataIndex = 2;  data[value++].RawValue = 1;
+    data[value].DataIndex = 18; data[value++].RawValue = 1;
+    data[value].DataIndex = 18; data[value++].RawValue = 1;
+    data[value].DataIndex = 20; data[value++].RawValue = 1;
+    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetData returned %#lx\n", status );
+    ok( value == 3, "got data count %ld, expected %d\n", value, 3 );
+    ok( !memcmp( report, expect_report_2, caps.InputReportByteLength ), "report mismatch\n" );
+
+    memset( report, 0, caps.InputReportByteLength );
+    report[0] = report_id;
+    value = ARRAY_SIZE(expect_data);
+    memcpy( data, expect_data, sizeof(expect_data) );
+    status = HidP_SetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetData returned %#lx\n", status );
+    ok( value == ARRAY_SIZE(expect_data), "got data count %ld, expected %d\n", value, 5 );
+
+    value = ARRAY_SIZE(expect_data);
     memset( data, 0, sizeof(data) );
     status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#lx\n", status );

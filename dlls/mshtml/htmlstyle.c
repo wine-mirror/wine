@@ -9783,6 +9783,7 @@ dispex_static_data_t MSStyleCSSProperties_dispex = {
     .disp_tid     = DispHTMLStyle_tid,
     .iface_tids   = MSStyleCSSProperties_iface_tids,
     .init_info    = MSStyleCSSProperties_init_dispex_info,
+    .js_flags     = HOSTOBJ_VOLATILE_PROPS
 };
 
 static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration **ret)
@@ -9927,6 +9928,7 @@ dispex_static_data_t CSSStyleDeclaration_dispex = {
     .vtbl      = &CSSStyleDeclaration_dispex_vtbl,
     .disp_tid  = DispHTMLW3CComputedStyle_tid,
     .init_info = CSSStyleDeclaration_init_dispex_info,
+    .js_flags  = HOSTOBJ_VOLATILE_PROPS
 };
 
 HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, DispatchEx *owner, IHTMLCSSStyleDeclaration **p)

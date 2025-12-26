@@ -23,3 +23,33 @@
 /* ffmpeg -f lavfi -i smptebars -f lavfi -i "sine=frequency=1000" -t 0.16 -r 25 -f mpeg -vcodec mpeg1video -vf scale=32x24 -acodec mp2 test.mpg */
 /* @makedep: test.mpg */
 test.mpg RCDATA "test.mpg"
+
+/* ffmpeg -f lavfi -i "sine=frequency=1000" -t 0.1 -c:a pcm_alaw test_alaw.wav */
+/* @makedep: test_alaw.wav */
+test_alaw.wav WAVE "test_alaw.wav"
+
+/* ffmpeg -f lavfi -i "sine=frequency=1000" -t 0.1 -c:a pcm_mulaw test_mulaw.wav */
+/* @makedep: test_mulaw.wav */
+test_mulaw.wav WAVE "test_mulaw.wav"
+
+/* ffmpeg -f lavfi -i "sine=frequency=1000" -t 0.1 -c:a adpcm_ms test_adpcm_ms.wav */
+/* @makedep: test_adpcm_ms.wav */
+test_adpcm_ms.wav WAVE "test_adpcm_ms.wav"
+
+/* ffmpeg -f lavfi -i "sine=frequency=1000" -t 0.1 -c:a adpcm_ima_wav test_adpcm_ima_wav.wav */
+/* @makedep: test_adpcm_ima_wav.wav */
+test_adpcm_ima_wav.wav WAVE "test_adpcm_ima_wav.wav"
+
+/* ffmpeg -f lavfi -i "sine=frequency=1000" -ar 8000 -t 0.1 -c:a gsm_ms test_gsm_ms.wav */
+/* @makedep: test_gsm_ms.wav */
+test_gsm_ms.wav WAVE "test_gsm_ms.wav"
+
+/* ffmpeg -f lavfi -i "sine=frequency=1000" -t 0.1 -c:a mp2 test_mp2.wav
+/* @makedep: test_mp2.wav */
+test_mp2.wav WAVE "test_mp2.wav"
+
+/* ffmpeg -f lavfi -i "sine=frequency=1000" -t 0.1 -c:a mp3 test_mp3.wav
+ * But that generates a file with zero nAvgBytesPerSec, which crashes in mpegl3.c.
+ * So I manually set it 11480 (the file size divided by 0.1 seconds). */
+/* @makedep: test_mp3.wav */
+test_mp3.wav WAVE "test_mp3.wav"

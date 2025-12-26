@@ -3172,6 +3172,7 @@ static void test_EnumDisplaySettings(void)
     BOOL attached, ret;
     DISPLAY_DEVICEA dd;
     DEVMODEA dm, dm2;
+    unsigned int i;
     DEVMODEW dmW;
     HDC hdc;
 
@@ -3232,6 +3233,58 @@ static void test_EnumDisplaySettings(void)
             FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
     ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
             setting_fields, dmW.dmFields);
+
+    memset(&dmW, 0xcc, sizeof(dmW));
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    ok((dmW.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
+            setting_fields, dmW.dmFields);
+    for (i = dmW.dmSize; i < sizeof(DEVMODEW); ++i)
+    {
+        if (((BYTE *)&dmW)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEW), "data modified at offset %u.\n", i);
+
+    memset(&dmW, 0xcc, sizeof(dmW));
+    ret = EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    for (i = dmW.dmSize; i < sizeof(DEVMODEW); ++i)
+    {
+        if (((BYTE *)&dmW)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEW), "data modified at offset %u.\n", i);
+
+    memset(&dmW, 0xcc, sizeof(dmW));
+    ret = EnumDisplaySettingsW(NULL, 0, &dmW);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dmW.dmSize == FIELD_OFFSET(DEVMODEW, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEW, dmICMMethod), dmW.dmSize);
+    for (i = dmW.dmSize; i < sizeof(DEVMODEW); ++i)
+    {
+        if (((BYTE *)&dmW)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEW), "data modified at offset %u.\n", i);
+
+    memset(&dm, 0xcc, sizeof(dm));
+    ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(ret, "EnumDisplaySettingsW failed, error %#lx\n", GetLastError());
+    ok(dm.dmSize == FIELD_OFFSET(DEVMODEA, dmICMMethod), "Expect dmSize %lu, got %u\n",
+            FIELD_OFFSET(DEVMODEA, dmICMMethod), dm.dmSize);
+    ok((dm.dmFields & setting_fields) == setting_fields, "Expect dmFields to contain %#lx, got %#lx\n",
+            setting_fields, dm.dmFields);
+    for (i = dm.dmSize; i < sizeof(DEVMODEA); ++i)
+    {
+        if (((BYTE *)&dm)[i] != 0xcc)
+            break;
+    }
+    ok(i == sizeof(DEVMODEA), "data modified at offset %u.\n", i);
 
     memset(&dmW, 0, sizeof(dmW));
     dmW.dmSize = sizeof(dmW);

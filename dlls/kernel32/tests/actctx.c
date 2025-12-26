@@ -3848,8 +3848,31 @@ static void test_one_sxs_and_one_local_2(void)
     clean_sxs_info(&dll);
 }
 
+#define check_redirected_flag(a, b) _check_redirected_flag(__LINE__, a, b)
+static void _check_redirected_flag(int line, HMODULE module, BOOL redirected)
+{
+    LIST_ENTRY *root = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    BOOL found_dll = FALSE;
 
-/* Test if we can get a module handle from loaded normal dll while context is active */
+    for (LIST_ENTRY *entry = root->Flink; entry != root; entry = entry->Flink)
+    {
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+
+        if (mod->DllBase != module)
+            continue;
+
+        if (redirected)
+            ok_(__FILE__, line)(mod->Flags & LDR_REDIRECTED, "Got unexpected flags %#lx.\n", mod->Flags);
+        else
+            ok_(__FILE__, line)(!(mod->Flags & LDR_REDIRECTED), "Got unexpected flags %#lx.\n", mod->Flags);
+
+        found_dll = TRUE;
+        break;
+    }
+    ok(found_dll, "Couldn't find module %p in module list.\n", module);
+}
+
+/* Test GetModuleHandleA() with DLL base names in different context states */
 static void test_one_with_sxs_and_GetModuleHandleA(void)
 {
     sxs_info dll;
@@ -3864,18 +3887,38 @@ static void test_one_with_sxs_and_GetModuleHandleA(void)
     extract_resource("dummy.dll", "TESTDLL", path_dll_local);
 
     module = LoadLibraryA(path_dll_local);
+    check_redirected_flag(module, FALSE);
 
     fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, FALSE);
     success = ActivateActCtx(dll.handle_context, &dll.cookie);
     ok(success, "ActivateActCtx failed: %ld\n", GetLastError());
 
+    /* Loaded normal dll can't be found while context is active */
     module_temp = GetModuleHandleA("sxs_dll.dll");
     ok (module_temp == 0, "Expected 0, got %p\n", module_temp);
 
+    dll.module = LoadLibraryA("sxs_dll.dll");
+    ok(dll.module != NULL && dll.module != module, "LoadLibrary failed\n");
+    check_redirected_flag(dll.module, TRUE);
+
+    /* Loaded SxS dll should be found while context is active */
+    module_temp = GetModuleHandleA("sxs_dll.dll");
+    ok(module_temp == dll.module, "Got unexpected module.\n");
+
     DeactivateActCtx(0, dll.cookie);
+    check_redirected_flag(dll.module, TRUE);
+
+    /* Normal loaded dll should be found while context is inactive */
+    module_temp = GetModuleHandleA("sxs_dll.dll");
+    ok(module_temp == module, "Got unexpected module.\n");
 
     if (module)
         FreeLibrary(module);
+
+    /* Loaded SxS dll can't be found while context is inactive */
+    module_temp = GetModuleHandleA("sxs_dll.dll");
+    ok(module_temp == NULL, "Got unexpected module.\n");
+
     if (dll.module)
         FreeLibrary(dll.module);
     if (*path_dll_local)

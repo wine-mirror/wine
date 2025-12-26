@@ -1448,5 +1448,9 @@ START_TEST(misc)
     test_CCM_SETVERSION(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
+
+    /* Now that v6 manifest is deactivated, test that comctl32 v5 windows can be created */
+    test_comctl32_classes(FALSE);
+
     FreeLibrary(hComctl32);
 }

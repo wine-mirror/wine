@@ -880,6 +880,15 @@ double CDECL omp_get_wtime(void)
     return GetTickCount() / 1000.0;
 }
 
+double CDECL omp_get_wtick(void)
+{
+    DWORD adjust, increment;
+    BOOL disable;
+    if (GetSystemTimeAdjustment(&adjust, &increment, &disable))
+        return (double)increment / 10000000.0;
+    return 1 / 1000.0;
+}
+
 void CDECL omp_set_dynamic(int val)
 {
     TRACE("(%d): stub\n", val);

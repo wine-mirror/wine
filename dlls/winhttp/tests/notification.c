@@ -880,7 +880,7 @@ static const struct notification websocket_test5[] =
 
 #define BIG_BUFFER_SIZE (16 * 1024)
 
-static void test_websocket(BOOL secure)
+static void test_websocket(void)
 {
     HANDLE session, connection, request, socket, event;
     WINHTTP_WEB_SOCKET_ASYNC_RESULT *result;
@@ -917,12 +917,9 @@ static void test_websocket(BOOL secure)
         unload = FALSE;
     }
 
-    if (secure)
-    {
-        protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
-        ret = WinHttpSetOption(session, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
-        ok( ret, "failed to set protocols %lu\n", GetLastError() );
-    }
+    protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
+    ret = WinHttpSetOption(session, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
+    ok( ret, "failed to set protocols %lu\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     WinHttpSetStatusCallback( session, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
@@ -944,18 +941,15 @@ static void test_websocket(BOOL secure)
 
     setup_test( &info, winhttp_open_request, __LINE__ );
     SetLastError( 0xdeadbeef );
-    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, secure ? WINHTTP_FLAG_SECURE : 0);
+    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, WINHTTP_FLAG_SECURE );
     err = GetLastError();
     ok( request != NULL, "got %lu\n", err );
     ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
-    if (secure)
-    {
-        flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
-        ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
-        ok( ret, "failed to set security flags %lu\n", GetLastError() );
-    }
+    flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+            SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok( ret, "failed to set security flags %lu\n", GetLastError() );
 
     ret = WinHttpSetOption( request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
@@ -1144,16 +1138,13 @@ static void test_websocket(BOOL secure)
     info.index = 0;
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, secure ? WINHTTP_FLAG_SECURE : 0);
+    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, WINHTTP_FLAG_SECURE );
     ok( request != NULL, "got %lu\n", err );
 
-    if (secure)
-    {
-        flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
-        ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
-        ok( ret, "failed to set security flags %lu\n", GetLastError() );
-    }
+    flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+            SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok( ret, "failed to set security flags %lu\n", GetLastError() );
 
     ret = WinHttpSetOption( request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
@@ -1227,16 +1218,13 @@ static void test_websocket(BOOL secure)
     info.index = 0;
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, secure ? WINHTTP_FLAG_SECURE : 0);
+    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, WINHTTP_FLAG_SECURE );
     ok( request != NULL, "got %lu\n", err );
 
-    if (secure)
-    {
-        flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
-        ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
-        ok( ret, "failed to set security flags %lu\n", GetLastError() );
-    }
+    flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+            SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok( ret, "failed to set security flags %lu\n", GetLastError() );
 
     ret = WinHttpSetOption( request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
@@ -1297,16 +1285,13 @@ static void test_websocket(BOOL secure)
     info.index = 0;
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, secure ? WINHTTP_FLAG_SECURE : 0);
+    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, WINHTTP_FLAG_SECURE );
     ok( request != NULL, "got %lu\n", err );
 
-    if (secure)
-    {
-        flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
-        ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
-        ok( ret, "failed to set security flags %lu\n", GetLastError() );
-    }
+    flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+            SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok( ret, "failed to set security flags %lu\n", GetLastError() );
 
     ret = WinHttpSetOption( request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
@@ -1365,16 +1350,13 @@ static void test_websocket(BOOL secure)
     info.index = 0;
 
     setup_test( &info, winhttp_open_request, __LINE__ );
-    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, secure ? WINHTTP_FLAG_SECURE : 0);
+    request = WinHttpOpenRequest( connection, NULL, L"/", NULL, NULL, NULL, WINHTTP_FLAG_SECURE );
     ok( request != NULL, "got %lu\n", err );
 
-    if (secure)
-    {
-        flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
-        ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
-        ok( ret, "failed to set security flags %lu\n", GetLastError() );
-    }
+    flags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+            SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_SECURITY_FLAGS, &flags, sizeof(flags));
+    ok( ret, "failed to set security flags %lu\n", GetLastError() );
 
     ret = WinHttpSetOption( request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
@@ -2117,10 +2099,7 @@ START_TEST (notification)
     test_redirect( TRUE );
     winetest_pop_context();
     test_async();
-    test_websocket( FALSE );
-    winetest_push_context( "secure" );
-    test_websocket( TRUE );
-    winetest_pop_context();
+    test_websocket();
     test_recursion();
 
     si.event = CreateEventW( NULL, 0, 0, NULL );

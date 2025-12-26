@@ -461,6 +461,8 @@ static void taskdialog_get_expando_size(struct taskdialog_info *dialog_info, HWN
     max_text_height = DrawTextW(hdc, dialog_info->collapsed_text, -1, &rect, style);
     size->cy = max(size->cy, max_text_height);
     size->cx = max(size->cx, rect.right - rect.left);
+
+    size->cx += icon_width + text_offset;
     size->cx = min(size->cx, max_width);
 
     if (old_hfont) SelectObject(hdc, old_hfont);

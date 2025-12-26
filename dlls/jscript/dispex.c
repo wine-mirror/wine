@@ -108,7 +108,7 @@ static inline BOOL is_function_prop(dispex_prop_t *prop)
     return ret;
 }
 
-static DWORD get_flags(jsdisp_t *This, dispex_prop_t *prop)
+static BOOL is_enumerable(jsdisp_t *This, dispex_prop_t *prop)
 {
     if(prop->type == PROP_PROTREF) {
         dispex_prop_t *parent = NULL;
@@ -118,13 +118,13 @@ static DWORD get_flags(jsdisp_t *This, dispex_prop_t *prop)
 
         if(!parent || parent->type == PROP_DELETED) {
             prop->type = PROP_DELETED;
-            return 0;
+            return FALSE;
         }
 
-        return get_flags(This->prototype, parent);
+        return is_enumerable(This->prototype, parent);
     }
 
-    return prop->flags;
+    return !!(prop->flags & PROPF_ENUMERABLE);
 }
 
 static const builtin_prop_t *find_builtin_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens)
@@ -322,7 +322,7 @@ static HRESULT update_external_prop(jsdisp_t *obj, const WCHAR *name, dispex_pro
 
 static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens, dispex_prop_t *prop, dispex_prop_t **ret)
 {
-    if(This->builtin_info->lookup_prop) {
+    if(This->has_volatile_props || (!prop && This->builtin_info->lookup_prop)) {
         struct property_info desc;
         HRESULT hres;
 
@@ -461,7 +461,7 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, DWORD create_
                 return E_OUTOFMEMORY;
         }
 
-        if(This->builtin_info->lookup_prop) {
+        if(This->has_volatile_props) {
             struct property_info desc;
             hres = This->builtin_info->lookup_prop(This, name, fdexNameEnsure, &desc);
             if(hres == S_OK)
@@ -2430,6 +2430,13 @@ static HRESULT WINAPI WineJSDispatch_GetScriptGlobal(IWineJSDispatch *iface, IWi
    return S_OK;
 }
 
+static HRESULT WINAPI WineJSDispatch_GetRandomValues(IWineJSDispatch *iface)
+{
+    jsdisp_t *This = impl_from_IWineJSDispatch(iface);
+
+    return typed_array_get_random_values(This);
+}
+
 static IWineJSDispatchVtbl DispatchExVtbl = {
     DispatchEx_QueryInterface,
     DispatchEx_AddRef,
@@ -2451,6 +2458,7 @@ static IWineJSDispatchVtbl DispatchExVtbl = {
     WineJSDispatch_DefineProperty,
     WineJSDispatch_UpdateProperty,
     WineJSDispatch_GetScriptGlobal,
+    WineJSDispatch_GetRandomValues,
 };
 
 jsdisp_t *as_jsdisp(IDispatch *disp)
@@ -3170,7 +3178,7 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
             continue;
         if(enum_type != JSDISP_ENUM_ALL && iter->type == PROP_PROTREF)
             continue;
-        if(enum_type != JSDISP_ENUM_OWN && !(get_flags(obj, iter) & PROPF_ENUMERABLE))
+        if(enum_type != JSDISP_ENUM_OWN && !is_enumerable(obj, iter))
             continue;
         *ret = prop_to_id(obj, iter);
         return S_OK;
@@ -3650,6 +3658,8 @@ HRESULT init_host_object(script_ctx_t *ctx, IWineJSDispatchHost *host_iface, IWi
     host_obj->host_iface = host_iface;
     if(flags & HOSTOBJ_CONSTRUCTOR)
         host_obj->jsdisp.is_constructor = TRUE;
+    if(flags & HOSTOBJ_VOLATILE_PROPS)
+        host_obj->jsdisp.has_volatile_props = TRUE;
     *ret = &host_obj->jsdisp.IWineJSDispatch_iface;
     return S_OK;
 }

@@ -44,6 +44,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define FACTENGINE_E_NONOTIFICATIONCALLBACK	0x8ac70004
+#define FACTENGINE_E_INVALIDDATA		0x8ac70007
+#define FACTENGINE_E_INSTANCELIMITFAILTOPLAY	0x8ac70008
+#define FACTENGINE_E_INVALIDVARIABLEINDEX	0x8ac7000a
+
 /* Type Declarations */
 
 typedef struct FACTAudioEngine FACTAudioEngine;
@@ -123,6 +128,11 @@ typedef struct FACTStreamingParameters
 	uint32_t flags;
 	uint16_t packetSize; /* Measured in DVD sectors, or 2048 bytes */
 } FACTStreamingParameters;
+
+#define FACT_WAVEBANKMINIFORMAT_TAG_PCM		0x0
+#define FACT_WAVEBANKMINIFORMAT_TAG_XMA		0x1
+#define FACT_WAVEBANKMINIFORMAT_TAG_ADPCM	0x2
+#define FACT_WAVEBANKMINIFORMAT_TAG_WMA		0x3
 
 #define FACT_WAVEBANK_TYPE_BUFFER		0x00000000
 #define FACT_WAVEBANK_TYPE_STREAMING		0x00000001

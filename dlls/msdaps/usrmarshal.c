@@ -1901,3 +1901,74 @@ HRESULT __RPC_STUB IErrorLookup_ReleaseErrors_Stub(IErrorLookup* This,
     FIXME("(%p)->(%#lx, %p): stub\n", This, dwDynamicErrorID, ppErrorInfoRem);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IRowsetView_CreateView_Proxy(IRowsetView* This,
+        IUnknown *unk_outer, REFIID riid, IUnknown **view)
+{
+    FIXME("(%p)->(%p, %s, %p): stub\n", This, unk_outer, wine_dbgstr_guid(riid), view);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetView_CreateView_Stub(IRowsetView* This, IUnknown *unk_outer,
+        REFIID riid, IUnknown **view, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%p, %s, %p, %p): stub\n", This, unk_outer, wine_dbgstr_guid(riid), view, err_info);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IRowsetView_GetView_Proxy(IRowsetView* This, HCHAPTER hchapter,
+        REFIID riid, HCHAPTER *hchapter_src, IUnknown **view)
+{
+    FIXME("(%p)->(%Ix, %s, %p %p): stub\n", This, hchapter,
+            wine_dbgstr_guid(riid), hchapter_src, view);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetView_GetView_Stub(IRowsetView* This, HCHAPTER hchapter,
+        REFIID riid, HCHAPTER *hchapter_src, IUnknown **view, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%Ix, %s, %p, %p, %p): stub\n", This, hchapter,
+            wine_dbgstr_guid(riid), hchapter_src, view, err_info);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewChapter_GetSpecification_Proxy(IViewChapter* This, REFIID riid, IUnknown **rowset)
+{
+    FIXME("(%p)->(%s, %p): stub\n", This, wine_dbgstr_guid(riid), rowset);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewChapter_GetSpecification_Stub(IViewChapter* This,
+        REFIID riid, IUnknown **rowset, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%s, %p, %p): stub\n", This, wine_dbgstr_guid(riid), rowset, err_info);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewChapter_OpenViewChapter_Proxy(IViewChapter* This,
+        HCHAPTER hsrc, HCHAPTER *view_hchapter)
+{
+    FIXME("(%p)->(%Ix, %p):stub\n", This, hsrc, view_hchapter);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewChapter_OpenViewChapter_Stub(IViewChapter* This,
+        HCHAPTER hsrc, HCHAPTER *view_hchapter, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%Ix, %p, %p):stub\n", This, hsrc, view_hchapter, err_info);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IViewFilter_GetFilterBindings_Proxy(IViewFilter* This,
+        DBCOUNTITEM *bindings_count, DBBINDING **bindings)
+{
+    FIXME("(%p)->(%p, %p): stub\n", This, bindings_count, bindings);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IViewFilter_GetFilterBindings_Stub(IViewFilter* This,
+        DBCOUNTITEM *bindings_count, DBBINDING **bindings, IErrorInfo **err_info)
+{
+    FIXME("(%p)->(%p, %p, %p): stub\n", This, bindings_count, bindings, err_info);
+    return E_NOTIMPL;
+}

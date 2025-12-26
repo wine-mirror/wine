@@ -62,11 +62,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #endif
 
-/* See jscript.h in jscript.dll. */
-#define SCRIPTLANGUAGEVERSION_HTML 0x400
-#define SCRIPTLANGUAGEVERSION_ES5  0x102
-#define SCRIPTLANGUAGEVERSION_ES6  0x103
-
 struct ScriptHost {
     IActiveScriptSite              IActiveScriptSite_iface;
     IActiveScriptSiteInterruptPoll IActiveScriptSiteInterruptPoll_iface;
@@ -156,10 +151,19 @@ static BOOL init_script_engine(ScriptHost *script_host, IActiveScript *script)
     compat_mode = lock_document_mode(script_host->window->doc);
     script_mode = compat_mode < COMPAT_MODE_IE8 ? SCRIPTLANGUAGEVERSION_5_7 : SCRIPTLANGUAGEVERSION_5_8;
     if(IsEqualGUID(&script_host->guid, &CLSID_JScript)) {
-        if(compat_mode >= COMPAT_MODE_IE11)
-            script_mode = SCRIPTLANGUAGEVERSION_ES6;
-        else if(compat_mode >= COMPAT_MODE_IE9)
+        switch(compat_mode) {
+        case COMPAT_MODE_IE9:
             script_mode = SCRIPTLANGUAGEVERSION_ES5;
+            break;
+        case COMPAT_MODE_IE10:
+            script_mode = SCRIPTLANGUAGEVERSION_ES5_1;
+            break;
+        case COMPAT_MODE_IE11:
+            script_mode = SCRIPTLANGUAGEVERSION_ES6;
+            break;
+        default:
+            break;
+        }
         script_mode |= SCRIPTLANGUAGEVERSION_HTML;
     }
     V_VT(&var) = VT_I4;

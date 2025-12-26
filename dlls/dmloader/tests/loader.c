@@ -162,6 +162,62 @@ static void test_release_object(void)
     IDirectMusicLoader_Release(loader);
 }
 
+static void test_clear_cache(void)
+{
+    IDirectMusicCollection *collection;
+    IDirectMusicSegment *segment;
+    IDirectMusicLoader8 *loader;
+    DMUS_OBJECTDESC desc;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8,
+            (void**)&loader);
+    ok(hr == S_OK, "Couldn't create Loader %#lx\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwValidData = DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS;
+    desc.guidObject = GUID_DefaultGMCollection;
+    desc.guidClass = CLSID_DirectMusicCollection;
+    hr = IDirectMusicLoader_GetObject(loader, &desc, &IID_IDirectMusicCollection, (void **)&collection);
+    ok(hr == S_OK, "GetObject failed with %#lx\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_MEMORY;
+    desc.guidClass = CLSID_DirectMusicSegment;
+    desc.llMemLength = sizeof(rifffile);
+    desc.pbMemData = rifffile;
+    segment = NULL;
+    hr = IDirectMusicLoader_GetObject(loader, &desc, &IID_IDirectMusicSegment, (void **)&segment);
+    if (FAILED(hr))
+        win_skip("GetObject failed with %#lx, skipping segment tests\n", hr);
+
+    hr = IDirectMusicLoader_ClearCache(loader, &GUID_DirectMusicAllTypes);
+    ok(hr == S_OK, "ClearCache failed with %#lx\n", hr);
+
+    /* ClearCache releases the loaded objects */
+    refcount = IDirectMusicCollection_Release(collection);
+    ok(!refcount, "refcount == %lu, expected 0\n", refcount);
+    if (segment)
+    {
+        refcount = IDirectMusicSegment_Release(segment);
+        ok(!refcount, "refcount == %lu, expected 0\n", refcount);
+    }
+
+    /* ClearCache doesn't remove the default collection */
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    hr = IDirectMusicLoader_EnumObject(loader, &CLSID_DirectMusicCollection, 0, &desc);
+    ok(hr == S_OK, "EnumObject failed with %#lx\n", hr);
+    ok(IsEqualGUID(&desc.guidObject, &GUID_DefaultGMCollection),
+            "Got object guid %s, expected GUID_DefaultGMCollection\n",
+            wine_dbgstr_guid(&desc.guidObject));
+
+    IDirectMusicLoader_Release(loader);
+}
+
 static void test_simple_playing(void)
 {
     IDirectMusic *music = NULL;
@@ -615,6 +671,7 @@ START_TEST(loader)
     test_directory();
     test_caching();
     test_release_object();
+    test_clear_cache();
     test_simple_playing();
     test_COM();
     test_COM_container();

@@ -253,6 +253,7 @@ static char cpu_name[49];
 static char cpu_vendor[13];
 static USHORT cpu_level, cpu_revision;
 static ULONGLONG cpu_id;
+static ULONGLONG cpu_features_bitmap[2];
 static ULONG *performance_cores;
 static unsigned int performance_cores_capacity = 0;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
@@ -513,6 +514,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
         features[PF_ERMS_AVAILABLE]                 = !!(regs[1] & (1 << 9));
         features[PF_AVX512F_INSTRUCTIONS_AVAILABLE] = !!(regs[1] & (1 << 16));
         features[PF_RDPID_INSTRUCTION_AVAILABLE]    = !!(regs[2] & (1 << 22));
+        features[PF_MOVDIR64B_INSTRUCTION_AVAILABLE]= !!(regs[2] & (1 << 28));
 #if defined(__linux__) && defined(AT_HWCAP2)
         features[PF_RDWRFSGSBASE_AVAILABLE] &= !!(getauxval( AT_HWCAP2 ) & 2);
 #endif
@@ -573,6 +575,46 @@ static void init_cpu_model(void)
             else if (!strcmp( line, "CPU part" )) part = strtoul( value, NULL, 0);
             else if (!strcmp( line, "CPU variant" )) variant = strtoul( value, NULL, 0);
             else if (!strcmp( line, "CPU revision" )) revision = strtoul( value, NULL, 0);
+            else if (!strcmp( line, "Features" ))
+            {
+                static const struct { ULONG flag; const char *name; } features[] =
+                {
+                    { PF_ARM_SHA3_INSTRUCTIONS_AVAILABLE, "sha3" },
+                    { PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE, "sha512" },
+                    { PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE, "i8mm" },
+                    { PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE, "fphp" },
+                    { PF_ARM_V86_BF16_INSTRUCTIONS_AVAILABLE, "bf16" },
+                    { PF_ARM_V86_EBF16_INSTRUCTIONS_AVAILABLE, "ebf16" },
+                    { PF_ARM_SME_INSTRUCTIONS_AVAILABLE, "sme" },
+                    { PF_ARM_SME2_INSTRUCTIONS_AVAILABLE, "sme2" },
+                    { PF_ARM_SME2_1_INSTRUCTIONS_AVAILABLE, "sme2p1" },
+                    { PF_ARM_SME2_2_INSTRUCTIONS_AVAILABLE, "sme2p2" },
+                    { PF_ARM_SME_AES_INSTRUCTIONS_AVAILABLE, "smeaes" },
+                    { PF_ARM_SME_SBITPERM_INSTRUCTIONS_AVAILABLE, "smesbitperm" },
+                    /* The PF_ARM_SME_SF8MM4_INSTRUCTIONS_AVAILABLE and
+                     * PF_ARM_SME_SF8MM8_INSTRUCTIONS_AVAILABLE flags aren't exposed by
+                     * the Linux kernel, see
+                     * https://lists.infradead.org/pipermail/linux-arm-kernel/2025-January/991187.html */
+                    { PF_ARM_SME_SF8DP2_INSTRUCTIONS_AVAILABLE, "smesf8dp2" },
+                    { PF_ARM_SME_SF8DP4_INSTRUCTIONS_AVAILABLE, "smesf8dp4" },
+                    { PF_ARM_SME_SF8FMA_INSTRUCTIONS_AVAILABLE, "smesf8fma" },
+                    { PF_ARM_SME_F8F32_INSTRUCTIONS_AVAILABLE, "smef8f32" },
+                    { PF_ARM_SME_F8F16_INSTRUCTIONS_AVAILABLE, "smef8f16" },
+                    { PF_ARM_SME_F16F16_INSTRUCTIONS_AVAILABLE, "smef16f16" },
+                    { PF_ARM_SME_B16B16_INSTRUCTIONS_AVAILABLE, "smeb16b16" },
+                    { PF_ARM_SME_F64F64_INSTRUCTIONS_AVAILABLE, "smef64f64" },
+                    { PF_ARM_SME_I16I64_INSTRUCTIONS_AVAILABLE, "smei16i64" },
+                    { PF_ARM_SME_LUTv2_INSTRUCTIONS_AVAILABLE, "smelutv2" },
+                    { PF_ARM_SME_FA64_INSTRUCTIONS_AVAILABLE, "smefa64" },
+                };
+
+                for (unsigned int i = 0; i < ARRAY_SIZE(features); i++)
+                {
+                    ULONG flag = features[i].flag - PROCESSOR_FEATURE_MAX;
+                    if (!has_feature( value, features[i].name )) continue;
+                    cpu_features_bitmap[flag / 64] |= 1ull << (flag % 64);
+                }
+            }
         }
         fclose( f );
     }
@@ -645,6 +687,7 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
             features[PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svei8mm" );
             features[PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef32mm" );
             features[PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef64mm" );
+            features[PF_ARM_LSE2_AVAILABLE]                      = has_feature( value, "uscat" );
             break;
         }
         fclose( f );
@@ -2411,12 +2454,7 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 
         count = HOST_CPU_LOAD_INFO_COUNT;
         if (host_statistics(host, HOST_CPU_LOAD_INFO, (host_info_t)&load_info, &count) == KERN_SUCCESS)
-        {
-            /* Believe it or not, based on my reading of XNU source, this is
-             * already in the units we want (100 ns).
-             */
-            info->IdleTime.QuadPart = load_info.cpu_ticks[CPU_STATE_IDLE];
-        }
+            info->IdleTime.QuadPart = (ULONGLONG)load_info.cpu_ticks[CPU_STATE_IDLE] * 100000;
         mach_port_deallocate(mach_task_self(), host);
     }
 #else
@@ -3244,9 +3282,10 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 cpus = min(cpus,out_cpus);
                 for (i = 0; i < cpus; i++)
                 {
-                    sppi[i].IdleTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_IDLE];
-                    sppi[i].KernelTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_SYSTEM];
-                    sppi[i].UserTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_USER];
+                    sppi[i].IdleTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_IDLE] * 100000;
+                    sppi[i].KernelTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_SYSTEM] * 100000 +
+                                                  sppi[i].IdleTime.QuadPart;
+                    sppi[i].UserTime.QuadPart = (ULONGLONG)pinfo[i].cpu_ticks[CPU_STATE_USER] * 100000;
                 }
                 vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
             }
@@ -3306,7 +3345,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                     {
                         if (cpus * CPUSTATES * sizeof(long) >= size) break;
                         sppi[cpus].IdleTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_IDLE] * 10000000 / clockrate.stathz;
-                        sppi[cpus].KernelTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_SYS] * 10000000 / clockrate.stathz;
+                        sppi[cpus].KernelTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_SYS] * 10000000 / clockrate.stathz +
+                                                         sppi[cpus].IdleTime.QuadPart;
                         sppi[cpus].UserTime.QuadPart = (ULONGLONG)ptimes[cpus*CPUSTATES + CP_USER] * 10000000 / clockrate.stathz;
                     }
                 }
@@ -3856,6 +3896,12 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
+
+    case SystemProcessorFeaturesBitMapInformation:  /* 250 */
+        len = sizeof(cpu_features_bitmap);
+        if (size == len) memcpy( info, cpu_features_bitmap, len );
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
 
     /* Wine extensions */
 

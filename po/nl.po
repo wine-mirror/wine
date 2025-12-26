@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-02-26 23:10+0100\n"
+"PO-Revision-Date: 2025-11-29 18:00+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -95,7 +95,7 @@ msgstr "Ondersteuning"
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
 #: dlls/shell32/shell32.rc:278 dlls/shell32/shell32.rc:302
 #: dlls/shell32/shell32.rc:324 dlls/shell32/shell32.rc:343
-#: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
+#: dlls/shlwapi/shlwapi.rc:44 dlls/twaindsm/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
@@ -197,12 +197,12 @@ msgstr "&Installeren"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:70
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
 #: dlls/shell32/shell32.rc:344 dlls/shlwapi/shlwapi.rc:45
-#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
+#: dlls/twaindsm/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
 #: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
@@ -328,10 +328,8 @@ msgid "Please wait until the current uninstall/modify process is complete."
 msgstr "Wacht totdat het verwijderen/ veranderen voltooid is."
 
 #: dlls/appwiz.cpl/appwiz.rc:55
-#, fuzzy
-#| msgid "Downloading..."
 msgid "Download failed."
-msgstr "Bezig met downloaden..."
+msgstr "Downloaden mislukt."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -386,19 +384,18 @@ msgid "uncompressed"
 msgstr "ongecomprimeerd"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:31
-#, fuzzy
-#| msgid "&Confirm password:"
 msgid "Confirm pairing"
-msgstr "&Bevestig wachtwoord:"
+msgstr "Bevestig koppeling"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:32
 msgid "Pair with '%1!s!' using the following PIN/passkey value: %2!lu!?"
-msgstr ""
+msgstr "Koppelen met '%1!s!' met de PIN/toegangscode: %2!lu!?"
 
 #: dlls/bluetoothapis/bluetoothapis.rc:33
 msgid ""
 "Pair with unnamed device %1!s! using the following PIN/passkey value: %2!lu!?"
 msgstr ""
+"Koppelen met naamloos apparaat '%1!s!' met de PIN/toegangscode: %2!lu!?"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
@@ -739,7 +736,7 @@ msgid "Scr&ipt:"
 msgstr "Schr&ift:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Kleur"
 
@@ -1093,7 +1090,8 @@ msgstr "Paars"
 msgid "Teal"
 msgstr "Groenblauw"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Grijs"
 
@@ -3873,16 +3871,13 @@ msgid "Force Feedback Effect"
 msgstr "Force Feedback Effect"
 
 #: dlls/joy.cpl/joy.rc:67
-#, fuzzy
-#| msgid ""
-#| "Press any button in the controller to activate the chosen effect. The "
-#| "effect direction can be changed with the controller axis."
 msgid ""
 "Hold any button in the controller to play the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr ""
-"Druk op een knop op de controller om het gewenste effect te activeren. De "
-"richting van het effect kan veranderd worden met de assen van de controller."
+"Houd een knop op de controller ingedrukt om het gekozen effect te activeren. "
+"De richting van het effect kan veranderd worden met de assen van de "
+"controller."
 
 #: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
@@ -3890,26 +3885,26 @@ msgstr "XInput"
 
 #: dlls/joy.cpl/joy.rc:76
 msgid "User #0"
-msgstr "Gebruiker 0"
+msgstr "Apparaat 0"
 
 #: dlls/joy.cpl/joy.rc:77
 msgid "User #1"
-msgstr "Gebruiker 1"
+msgstr "Apparaat 1"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid "User #2"
-msgstr "Gebruiker 2"
+msgstr "Apparaat 2"
 
 #: dlls/joy.cpl/joy.rc:79
 msgid "User #3"
-msgstr "Gebruiker 3"
+msgstr "Apparaat 3"
 
 #: dlls/joy.cpl/joy.rc:81
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Geen gebruiker gevonden op slot nr. 0. Zorg dat de gamepad is aangesloten en "
+"Geen apparaat gevonden op slot nr. 0. Zorg dat de gamepad is aangesloten en "
 "niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:85
@@ -3917,7 +3912,7 @@ msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Geen gebruiker gevonden op slot nr. 1. Zorg dat de gamepad is aangesloten en "
+"Geen apparaat gevonden op slot nr. 1. Zorg dat de gamepad is aangesloten en "
 "niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:89
@@ -3925,7 +3920,7 @@ msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Geen gebruiker gevonden op slot nr. 2. Zorg dat de gamepad is aangesloten en "
+"Geen apparaat gevonden op slot nr. 2. Zorg dat de gamepad is aangesloten en "
 "niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:93
@@ -3933,7 +3928,7 @@ msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
-"Geen gebruiker gevonden op slot nr. 3. Zorg dat de gamepad is aangesloten en "
+"Geen apparaat gevonden op slot nr. 3. Zorg dat de gamepad is aangesloten en "
 "niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
@@ -3943,7 +3938,7 @@ msgstr "Trillen"
 
 #: dlls/joy.cpl/joy.rc:106
 msgid "Windows.Gaming.Input"
-msgstr ""
+msgstr "Windows.Spel.Invoer"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4057,15 +4052,15 @@ msgstr "Conditionele compilatie is uitgeschakeld"
 msgid "Expected '@'"
 msgstr "Verwacht '@'"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript compilatie fout"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:98
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime-fout"
 
-#: dlls/jscript/jscript.rc:94 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Onbekende runtime-fout"
 
@@ -4078,10 +4073,8 @@ msgid "Function expected"
 msgstr "Functie verwacht"
 
 #: dlls/jscript/jscript.rc:55
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'[object]' is not a string object"
-msgstr "'[object]' is geen datum object"
+msgstr "'[object]' is geen string object"
 
 #: dlls/jscript/jscript.rc:56
 msgid "'[object]' is not a date object"
@@ -4152,10 +4145,8 @@ msgid "Precision is out of range"
 msgstr "Precisie is buiten bereik"
 
 #: dlls/jscript/jscript.rc:74
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Array or arguments object expected"
-msgstr "Array object verwacht"
+msgstr "Array of argumenten object verwacht"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -4193,36 +4184,56 @@ msgstr "Kan onconfigureerbare eigenschap '|' niet herdefiniëren"
 msgid "Cannot modify non-writable property '|'"
 msgstr "Kan onschrijfbare eigenschap '|' niet veranderen"
 
+#: dlls/jscript/jscript.rc:84
+msgid "Typed array constructor argument is invalid"
+msgstr "Ongeldig typed array constructor argument"
+
 #: dlls/jscript/jscript.rc:83
+msgid "'this' is not a typed array object"
+msgstr "'this' is geen typed array object"
+
+#: dlls/jscript/jscript.rc:85
+msgid "Invalid offset/length when creating typed array"
+msgstr "Ongeldige offset/lengte bij het maken van een typed array"
+
+#: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr "Ongeldige begin-/eindwaarde in de typed array subarray methode"
+
+#: dlls/jscript/jscript.rc:87
+msgid "Invalid source in typed array set"
+msgstr "Ongeldige bron in typed array set"
+
+#: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
 msgstr "'this' is geen DataView object"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 "Vereiste argument offset of waarde in DataView methode is niet opgegeven"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView bewerkingstoegang buiten opgegeven bufferlengte"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
 msgstr "Ongeldige offset van het DataView constructor argument"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
 msgstr "'this' is geen | object"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:93
 msgid "'key' is not an object"
 msgstr "'key' is geen object"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
 msgstr "ArrayBuffer object verwacht"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
 msgstr "Eigenschap kan niet zowel accessors als een waarde hebben"
 
@@ -9629,11 +9640,31 @@ msgstr "Onbekende bron"
 msgid "the program which created it"
 msgstr "het programma die het gecreëerd heeft"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
 msgstr "Scannen"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:58
+msgid "Manufacturer:"
+msgstr "Fabrikant:"
+
+#: dlls/sane.ds/sane.rc:60
+msgid "Product family:"
+msgstr "Productfamilie:"
+
+#: dlls/sane.ds/sane.rc:62
+msgid "Product name:"
+msgstr "Productnaam:"
+
+#: dlls/sane.ds/sane.rc:64
+msgid "Resolution:"
+msgstr "Resolutie:"
+
+#: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Pagina"
+
+#: dlls/sane.ds/sane.rc:68
 msgid "SCANNING... Please Wait"
 msgstr "SCANNEN... Even geduld"
 
@@ -9662,6 +9693,38 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr "Lijntekening"
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Onbekend"
+
+#: dlls/sane.ds/sane.rc:46
+msgid ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+msgstr ""
+"De Automatische Documentinvoer (ADF) is leeg. Plaats de te scannen vellen."
+
+#: dlls/sane.ds/sane.rc:47
+msgid ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+msgstr ""
+"De scanner meldt een papierstoring. Controleer het display van het apparaat "
+"voor meer informatie."
+
+#: dlls/sane.ds/sane.rc:48
+msgid "The scanner cover is open. Please close the scanner."
+msgstr "De scanner staat open. Sluit de scanner."
+
+#: dlls/sane.ds/sane.rc:49
+msgid "The scanner is busy. Try again later."
+msgstr "De scanner is bezig. Probeer opnieuw."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9714,10 +9777,6 @@ msgstr "Kopieer bestanden van de fabrikant van:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "Het bestand '%1' op %2 is benodigd"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Onbekend"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -10617,7 +10676,7 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sec"
 
-#: dlls/twain_32/twain.rc:29
+#: dlls/twaindsm/twain.rc:29
 msgid "Select Source"
 msgstr "Selecteer Bron"
 
@@ -12584,7 +12643,7 @@ msgstr ""
 "de computer of de gegevens."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
+msgid "This zone contains all Web sites you haven't placed in other zones."
 msgstr "Deze zone bevat alle webpagina's die niet bij een andere zone horen."
 
 #: dlls/urlmon/urlmon.rc:65
@@ -14779,10 +14838,12 @@ msgid "End of file"
 msgstr "Einde van bestand"
 
 #: programs/cmd/cmd.rc:410
-#, fuzzy
-#| msgid "%1!d! file(s) copied\n"
 msgid "%t%1!u! file(s) copied\n"
-msgstr "%1!d! bestand(en) gekopieerd\n"
+msgstr "%t%1!u! bestand(en) gekopieerd\n"
+
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
+msgid "File cannot be copied onto itself.\n"
+msgstr "Bestand kan niet naar zichzelf gekopieerd worden.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -15408,10 +15469,8 @@ msgid "&Save\tCtrl+S"
 msgstr "Op&slaan\tCtrl+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "Opslaan als..."
+msgstr "Opslaan &Als..."
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
@@ -15443,8 +15502,6 @@ msgid "&Paste\tCtrl+V"
 msgstr "&Plakken\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
 msgstr "Ver&wijderen\tDel"
 
@@ -15454,10 +15511,8 @@ msgid "&Find...\tCtrl+F"
 msgstr "&Zoeken...\tCtrl+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
-msgstr "Zoek vo&lgende\tF3"
+msgstr "Vo&lgende zoeken\tF3"
 
 #: programs/notepad/notepad.rc:51 programs/wordpad/wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
@@ -15468,16 +15523,12 @@ msgid "&Go To...\tCtrl+G"
 msgstr "&Ga Naar...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
-msgstr "&Alles selecteren\tCtrl+A"
+msgstr "&Alles Selecteren\tCtrl+A"
 
 #: programs/notepad/notepad.rc:55
-#, fuzzy
-#| msgid "&Time/Date\tF5"
 msgid "Time/&Date\tF5"
-msgstr "Tijd/&datum\tF5"
+msgstr "Tijd/&Datum\tF5"
 
 #: programs/notepad/notepad.rc:57 programs/wordpad/wordpad.rc:82
 msgid "F&ormat"
@@ -15485,7 +15536,7 @@ msgstr "&Opmaak"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "&Woordafbreking"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -18830,10 +18881,8 @@ msgid "Voice input device:"
 msgstr "Steminvoer apparaat:"
 
 #: programs/winecfg/winecfg.rc:277
-#, fuzzy
-#| msgid "Output device:"
 msgid "MIDI output device:"
-msgstr "Uitvoer apparaat:"
+msgstr "MIDI uitvoer apparaat:"
 
 #: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
@@ -19689,7 +19738,7 @@ msgstr "Geef een opdracht\n"
 
 #: programs/wmic/wmic.rc:33
 msgid "Example usage: wmic ALIAS get PROPERTY[,PROPERTY2,...]\n"
-msgstr ""
+msgstr "Bijvoorbeeld: wmic ALIAS get EIGENSCHAP[,EIGENSCHAP2,...]\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -19989,10 +20038,6 @@ msgstr "Inzoomen"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Uitzoomen"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Pagina"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

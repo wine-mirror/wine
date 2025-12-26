@@ -1487,6 +1487,9 @@ static void create_typeref( type_t *type )
     /* HSTRING is treated as a fundamental type */
     if (type->name && !strcmp( type->name, "HSTRING__" )) return;
 
+    /* IInspectable is treated as a fundamental type */
+    if (type->name && !strcmp( base_type->name, "IInspectable" )) return;
+
     /* GUID is imported from mscorlib */
     if (type->name && !strcmp( type->name, "GUID" ))
     {
@@ -1495,7 +1498,11 @@ static void create_typeref( type_t *type )
         return;
     }
 
-    base_type->md.name = add_string( base_type->name );
+    if (base_type->winmd_short_name)
+        base_type->md.name = add_string( base_type->winmd_short_name );
+    else
+        base_type->md.name = add_string( base_type->name );
+
     namespace_str = format_namespace( base_type->namespace, "", ".", NULL, NULL );
     base_type->md.namespace = add_string( namespace_str );
 
@@ -2005,7 +2012,7 @@ static void add_enum_type_step2( type_t *type )
                            add_string("value__"), add_blob(sig_value, sizeof(sig_value)) );
 
     type->md.def = add_typedef_row( TYPE_ATTR_PUBLIC | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN, type->md.name,
-                                    type->md.namespace, type->md.extends, field, 1 );
+                                    type->md.namespace, type->md.extends, field, 0 );
 
     sig_size = make_field_value_sig( typedef_or_ref(TABLE_TYPEREF, type->md.ref), sig_field );
 
@@ -2740,7 +2747,7 @@ static void add_apicontract_type_step2( type_t *type )
 {
     UINT flags = TYPE_ATTR_PUBLIC | TYPE_ATTR_SEQUENTIALLAYOUT | TYPE_ATTR_SEALED | TYPE_ATTR_UNKNOWN;
 
-    type->md.def = add_typedef_row( flags, type->md.name, type->md.namespace, type->md.extends, 0, 1 );
+    type->md.def = add_typedef_row( flags, type->md.name, type->md.namespace, type->md.extends, 0, 0 );
 
     add_contractversion_attr_step2( type );
     add_apicontract_attr_step2( type );
@@ -2760,7 +2767,7 @@ static void add_runtimeclass_type_step1( type_t *type )
 
     if (iface_list) LIST_FOR_EACH_ENTRY( iface, iface_list, typeref_t, entry )
     {
-        create_typeref( iface->type );
+        add_interface_type_step1( iface->type );
     }
 }
 

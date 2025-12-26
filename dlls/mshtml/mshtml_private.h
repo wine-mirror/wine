@@ -320,8 +320,11 @@ struct constructor;
     XIID(IWineHTMLWindowCompatPrivate) \
     XIID(IWineCSSProperties) \
     XIID(IWinePageTransitionEvent) \
+    XIID(IWinePerformancePrivate) \
     XIID(IWineXMLHttpRequestPrivate) \
     XIID(IWineMSHTMLConsole) \
+    XIID(IWineMSHTMLCrypto) \
+    XIID(IWineMSHTMLSubtleCrypto) \
     XIID(IWineMSHTMLMediaQueryList) \
     XIID(IWineMSHTMLMutationObserver)
 
@@ -442,6 +445,7 @@ typedef struct {
     X(ClientRectList)                      \
     X(Comment)                             \
     X(Console)                             \
+    X(Crypto)                              \
     X(CustomEvent)                         \
     X(DOMImplementation)                   \
     X(DOMParser)                           \
@@ -519,6 +523,7 @@ typedef struct {
     X(StorageEvent)                        \
     X(StyleSheet)                          \
     X(StyleSheetList)                      \
+    X(SubtleCrypto)                        \
     X(Text)                                \
     X(TextRange)                           \
     X(UIEvent)                             \
@@ -807,6 +812,7 @@ struct HTMLInnerWindow {
     IHTMLStorage *session_storage;
     IHTMLStorage *local_storage;
     IWineMSHTMLConsole *console;
+    IWineMSHTMLCrypto *crypto;
 
     BOOL static_props_filled;
     BOOL performance_initialized;
@@ -1552,7 +1558,7 @@ LONG get_task_target_magic(void);
 HRESULT push_task(task_t*,task_proc_t,task_proc_t,LONG);
 HRESULT push_event_task(event_task_t*,HTMLInnerWindow*,event_task_proc_t,event_task_proc_t,LONG);
 void remove_target_tasks(LONG);
-ULONGLONG get_time_stamp(void);
+double get_time_stamp(void);
 
 enum timer_type {
     TIMER_TIMEOUT,
@@ -1743,4 +1749,5 @@ IInternetSecurityManager *get_security_manager(void);
 
 extern HINSTANCE hInst;
 void create_console(HTMLInnerWindow *window, IWineMSHTMLConsole **ret);
+HRESULT create_crypto(HTMLInnerWindow *window, IWineMSHTMLCrypto **ret);
 HRESULT create_media_query_list(HTMLInnerWindow *window, BSTR media_query, IDispatch **ret);

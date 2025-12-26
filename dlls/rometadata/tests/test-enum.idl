@@ -1,0 +1,88 @@
+/*
+ * Copyright 2025 Vibhav Pant
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma makedep header winmd
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "windowscontracts.idl";
+
+namespace Wine.Test {
+    typedef struct TestStruct1 TestStruct1;
+    typedef enum TestEnum1 TestEnum1;
+
+    interface ITest2;
+    interface ITest3;
+
+    runtimeclass Test2;
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum TestEnum1
+    {
+        Foo = 0,
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)]
+        Bar = 1,
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+        Baz = 2
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 2.0)]
+    struct TestStruct1
+    {
+        int a;
+        int b;
+        int c;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Wine.Test.Test2),
+        uuid(deadbeef-dead-beef-dead-deadbeef0002)
+    ]
+    interface ITest2 : IInspectable
+    {
+        HRESULT Method1([in] int a, [in] int b, [out, retval] int *out);
+        HRESULT Method2([in] TestEnum1 a, [out, retval] TestEnum1 *out);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass Test2
+    {
+        [default] interface Wine.Test.ITest2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(deadbeef-dead-beef-dead-deadbeef0003)
+    ]
+    interface ITest3 : IInspectable
+    {
+        HRESULT GetTest2([in] TestEnum1 a, [out, retval] Wine.Test.ITest2 **out);
+        [propget] HRESULT Prop1([out, retval] int *out);
+        [propget] HRESULT Prop2([out, retval] TestEnum1 *out);
+        [propget] HRESULT Prop3([out, retval] TestStruct1 *out);
+        [propget] HRESULT Prop4([out, retval] Wine.Test.ITest2 **out);
+        [propget] HRESULT Prop5([out, retval] int *a);
+        [propput] HRESULT Prop5([in] int a);
+    }
+}

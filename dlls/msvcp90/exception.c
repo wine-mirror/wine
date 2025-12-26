@@ -41,10 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 CREATE_TYPE_INFO_VTABLE
 
-#define CLASS_IS_SIMPLE_TYPE          1
-#define CLASS_HAS_VIRTUAL_BASE_CLASS  4
-#define CLASS_IS_IUNKNOWN             8
-
 int* __cdecl __processing_throw(void);
 
 #if _MSVCP_VER >= 70 || defined(_MSVCIRT)
@@ -1200,7 +1196,7 @@ static inline void copy_exception( void *object, void **dest, UINT catch_flags,
 {
     if (type->flags & CLASS_IS_SIMPLE_TYPE)
     {
-        if (type->flags & CLASS_IS_IUNKNOWN && *(IUnknown**)object)
+        if (type->flags & CLASS_IS_WINRT && *(IUnknown**)object)
             IUnknown_AddRef(*(IUnknown**)object);
         memmove( dest, object, type->size );
         /* if it is a pointer, adjust it */
@@ -1216,7 +1212,7 @@ static inline void copy_exception( void *object, void **dest, UINT catch_flags,
         }
         else
         {
-            if (type->flags & CLASS_IS_IUNKNOWN && *(IUnknown**)object)
+            if (type->flags & CLASS_IS_WINRT && *(IUnknown**)object)
                 IUnknown_AddRef(*(IUnknown**)object);
             memmove( dest, get_this_pointer( &type->offsets, object ), type->size );
         }

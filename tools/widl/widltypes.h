@@ -546,6 +546,7 @@ struct _type_t {
   const char *impl_name;          /* C++ parameterized types impl base class name */
   const char *param_name;         /* used to build c_name of a parameterized type, when used as a parameter */
   const char *short_name;         /* widl specific short name */
+  const char *winmd_short_name;   /* metadata short name for parameterized type */
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;

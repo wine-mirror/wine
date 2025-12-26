@@ -250,7 +250,7 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     len = lstrlenW(ptr)+3;
     file_name = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    memcpy(file_name, ptr, len*sizeof(WCHAR));
+    wcscpy(file_name, ptr);
     hres = UrlUnescapeW(file_name, NULL, &len, URL_UNESCAPE_INPLACE);
     if(FAILED(hres)) {
         WARN("UrlUnescape failed: %08lx\n", hres);

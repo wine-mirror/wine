@@ -1327,8 +1327,9 @@ struct d3d12_command_list
 };
 
 HRESULT d3d12_command_list_create(struct d3d12_device *device,
-        UINT node_mask, D3D12_COMMAND_LIST_TYPE type, ID3D12CommandAllocator *allocator_iface,
-        ID3D12PipelineState *initial_pipeline_state, struct d3d12_command_list **list);
+        UINT node_mask, D3D12_COMMAND_LIST_TYPE type, struct d3d12_command_list **list);
+HRESULT d3d12_command_list_reset(struct d3d12_command_list *list,
+        ID3D12CommandAllocator *allocator_iface, ID3D12PipelineState *initial_pipeline_state);
 
 struct vkd3d_queue
 {

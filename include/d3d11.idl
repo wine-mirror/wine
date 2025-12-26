@@ -855,23 +855,34 @@ typedef enum D3D11_FILTER_TYPE
     D3D11_FILTER_TYPE_LINEAR = 1
 } D3D11_FILTER_TYPE;
 
+typedef enum D3D11_FILTER_REDUCTION_TYPE
+{
+    D3D11_FILTER_REDUCTION_TYPE_STANDARD   = 0x0,
+    D3D11_FILTER_REDUCTION_TYPE_COMPARISON = 0x1,
+    D3D11_FILTER_REDUCTION_TYPE_MINIMUM    = 0x2,
+    D3D11_FILTER_REDUCTION_TYPE_MAXIMUM    = 0x3,
+} D3D11_FILTER_REDUCTION_TYPE;
+
+const UINT D3D11_FILTER_REDUCTION_TYPE_SHIFT = 7;
 const UINT D3D11_MIN_FILTER_SHIFT = 4;
 const UINT D3D11_MAG_FILTER_SHIFT = 2;
 const UINT D3D11_MIP_FILTER_SHIFT = 0;
-const UINT D3D11_FILTER_TYPE_MASK          = 0x00000003;
-const UINT D3D11_COMPARISON_FILTERING_BIT  = 0x00000080;
-const UINT D3D11_ANISOTROPIC_FILTERING_BIT = 0x00000040;
 
-cpp_quote("#define D3D11_ENCODE_BASIC_FILTER(min, mag, mip, bComparison) \\")
-cpp_quote("    ((D3D11_FILTER)(((bComparison) ? D3D11_COMPARISON_FILTERING_BIT : 0 ) | \\")
-cpp_quote("                    (((min)&D3D11_FILTER_TYPE_MASK) << D3D11_MIN_FILTER_SHIFT) | \\")
+const UINT D3D11_FILTER_REDUCTION_TYPE_MASK = 0x00000003;
+const UINT D3D11_FILTER_TYPE_MASK           = 0x00000003;
+const UINT D3D11_COMPARISON_FILTERING_BIT   = 0x00000080;
+const UINT D3D11_ANISOTROPIC_FILTERING_BIT  = 0x00000040;
+
+cpp_quote("#define D3D11_ENCODE_BASIC_FILTER(min, mag, mip, reduction_mode) \\")
+cpp_quote("    ((D3D11_FILTER)((((min)&D3D11_FILTER_TYPE_MASK) << D3D11_MIN_FILTER_SHIFT) | \\")
 cpp_quote("                    (((mag)&D3D11_FILTER_TYPE_MASK) << D3D11_MAG_FILTER_SHIFT) | \\")
-cpp_quote("                    (((mip)&D3D11_FILTER_TYPE_MASK) << D3D11_MIP_FILTER_SHIFT)))")
+cpp_quote("                    (((mip)&D3D11_FILTER_TYPE_MASK) << D3D11_MIP_FILTER_SHIFT) | \\")
+cpp_quote("                    (((reduction_mode)&D3D11_FILTER_REDUCTION_TYPE_MASK) << D3D11_FILTER_REDUCTION_TYPE_SHIFT)))")
 
-cpp_quote("#define D3D11_ENCODE_ANISOTROPIC_FILTER(bComparison) \\")
+cpp_quote("#define D3D11_ENCODE_ANISOTROPIC_FILTER(reduction_mode) \\")
 cpp_quote("    ((D3D11_FILTER)(D3D11_ANISOTROPIC_FILTERING_BIT | \\" )
 cpp_quote("                    D3D11_ENCODE_BASIC_FILTER(D3D11_FILTER_TYPE_LINEAR,D3D11_FILTER_TYPE_LINEAR, \\" )
-cpp_quote("                                              D3D11_FILTER_TYPE_LINEAR,bComparison)))" )
+cpp_quote("                                              D3D11_FILTER_TYPE_LINEAR,reduction_mode)))" )
 
 cpp_quote("#define D3D11_DECODE_MIN_FILTER(d3d11Filter) \\")
 cpp_quote("    ((D3D11_FILTER_TYPE)(((d3d11Filter) >> D3D11_MIN_FILTER_SHIFT) & D3D11_FILTER_TYPE_MASK))")
@@ -882,7 +893,11 @@ cpp_quote("    ((D3D11_FILTER_TYPE)(((d3d11Filter) >> D3D11_MAG_FILTER_SHIFT) & 
 cpp_quote("#define D3D11_DECODE_MIP_FILTER(d3d11Filter) \\")
 cpp_quote("    ((D3D11_FILTER_TYPE)(((d3d11Filter) >> D3D11_MIP_FILTER_SHIFT) & D3D11_FILTER_TYPE_MASK))")
 
-cpp_quote("#define D3D11_DECODE_IS_COMPARISON_FILTER(d3d11Filter) ((d3d11Filter) & D3D11_COMPARISON_FILTERING_BIT)")
+cpp_quote("#define D3D11_DECODE_FILTER_REDUCTION(filter) \\")
+cpp_quote("    ((D3D11_FILTER_REDUCTION_TYPE)(((filter) >> D3D11_FILTER_REDUCTION_TYPE_SHIFT) & D3D11_FILTER_REDUCTION_TYPE_MASK))")
+
+cpp_quote("#define D3D11_DECODE_IS_COMPARISON_FILTER(filter) \\")
+cpp_quote("    (D3D11_DECODE_FILTER_REDUCTION(filter) == D3D11_FILTER_REDUCTION_TYPE_COMPARISON)")
 
 cpp_quote("#define D3D11_DECODE_IS_ANISOTROPIC_FILTER(d3d11Filter) \\")
 cpp_quote("    (((d3d11Filter) & D3D11_ANISOTROPIC_FILTERING_BIT ) \\" )

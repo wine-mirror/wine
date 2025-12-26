@@ -199,7 +199,6 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
         get_client_rect_rel( hwnd, COORDS_WINDOW, rect, get_thread_dpi() );
         rect->top = rect->bottom;
         rect->bottom += get_system_metrics( SM_CYHSCROLL );
-        if (win->dwStyle & WS_VSCROLL) rect->right++;
         vertical = FALSE;
         break;
 
@@ -215,7 +214,6 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
             rect->left = rect->right;
             rect->right += get_system_metrics( SM_CXVSCROLL );
         }
-        if (win->dwStyle & WS_HSCROLL) rect->bottom++;
         vertical = TRUE;
         break;
 

@@ -175,6 +175,39 @@ static HRESULT WINAPI async_impl_get_Result( IAsyncInfoImpl *iface, PROPVARIANT 
     return hr;
 }
 
+static BOOL async_info_complete( struct async_info *impl, BOOL called_async )
+{
+    IInspectable *operation = impl->IInspectable_outer;
+    PROPVARIANT result = {0};
+    HRESULT hr;
+
+    hr = impl->callback( impl->invoker, impl->param, &result, called_async );
+    if (!called_async && hr == STATUS_PENDING) return FALSE;
+
+    EnterCriticalSection( &impl->cs );
+    if (impl->status != Closed) impl->status = FAILED(hr) ? Error : Completed;
+    PropVariantCopy( &impl->result, &result );
+    impl->hr = hr;
+
+    if (impl->handler != NULL && impl->handler != HANDLER_NOT_SET)
+    {
+        IAsyncOperationCompletedHandlerImpl *handler = impl->handler;
+        AsyncStatus status = impl->status;
+        impl->handler = NULL; /* Prevent concurrent invoke. */
+        LeaveCriticalSection( &impl->cs );
+
+        IAsyncOperationCompletedHandlerImpl_Invoke( handler, operation, status );
+        IAsyncOperationCompletedHandlerImpl_Release( handler );
+    }
+    else LeaveCriticalSection( &impl->cs );
+
+    /* release refcount acquired in Start */
+    IInspectable_Release( operation );
+
+    PropVariantClear( &result );
+    return TRUE;
+}
+
 static HRESULT WINAPI async_impl_Start( IAsyncInfoImpl *iface )
 {
     struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
@@ -183,7 +216,7 @@ static HRESULT WINAPI async_impl_Start( IAsyncInfoImpl *iface )
 
     /* keep the async alive in the callback */
     IInspectable_AddRef( impl->IInspectable_outer );
-    SubmitThreadpoolWork( impl->async_run_work );
+    if (!async_info_complete( impl, FALSE )) SubmitThreadpoolWork( impl->async_run_work );
 
     return S_OK;
 }
@@ -305,33 +338,8 @@ static const struct IAsyncInfoVtbl async_info_vtbl =
 static void CALLBACK async_info_callback( TP_CALLBACK_INSTANCE *instance, void *iface, TP_WORK *work )
 {
     struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
-    IInspectable *operation = impl->IInspectable_outer;
-    PROPVARIANT result = {0};
-    HRESULT hr;
 
-    hr = impl->callback( impl->invoker, impl->param, &result );
-
-    EnterCriticalSection( &impl->cs );
-    if (impl->status != Closed) impl->status = FAILED(hr) ? Error : Completed;
-    PropVariantCopy( &impl->result, &result );
-    impl->hr = hr;
-
-    if (impl->handler != NULL && impl->handler != HANDLER_NOT_SET)
-    {
-        IAsyncOperationCompletedHandlerImpl *handler = impl->handler;
-        AsyncStatus status = impl->status;
-        impl->handler = NULL; /* Prevent concurrent invoke. */
-        LeaveCriticalSection( &impl->cs );
-
-        IAsyncOperationCompletedHandlerImpl_Invoke( handler, operation, status );
-        IAsyncOperationCompletedHandlerImpl_Release( handler );
-    }
-    else LeaveCriticalSection( &impl->cs );
-
-    /* release refcount acquired in Start */
-    IInspectable_Release( operation );
-
-    PropVariantClear( &result );
+    async_info_complete( impl, TRUE );
 }
 
 static HRESULT async_info_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,

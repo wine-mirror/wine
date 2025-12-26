@@ -2288,6 +2288,9 @@ static void test_LockFile(void)
     OVERLAPPED overlapped;
     int limited_LockFile;
     int limited_UnLockFile;
+    LARGE_INTEGER count, offset;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
     BOOL ret;
 
     handle = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
@@ -2306,6 +2309,17 @@ static void test_LockFile(void)
         ok( 0, "couldn't open file \"%s\" (err=%ld)\n", filename, GetLastError() );
         goto cleanup;
     }
+
+    count.QuadPart = 0;
+    offset.QuadPart = 0;
+    status = NtUnlockFile( handle, NULL, &count, &offset, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status );
+    memset( &iosb, 0xcc, sizeof(iosb) );
+    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
+    todo_wine_if(NT_ERROR(status)) ok( status == STATUS_RANGE_NOT_LOCKED, "got %#lx.\n", status );
+    ok( iosb.Status == status, "got %lu.\n", iosb.Status);
+    ok( !iosb.Information, "got %Iu.\n", iosb.Information);
+
     ok( WriteFile( handle, sillytext, strlen(sillytext), &written, NULL ), "write failed\n" );
 
     ok( LockFile( handle, 0, 0, 0, 0 ), "LockFile failed\n" );
@@ -2328,6 +2342,16 @@ static void test_LockFile(void)
     ok( UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 failed\n" );
     ok( !UnlockFile( handle, 10, 0, 20, 0 ), "UnlockFile 10,20 again succeeded\n" );
     ok( UnlockFile( handle, 5, 0, 5, 0 ), "UnlockFile 5,5 failed\n" );
+
+    ret = LockFile( handle, 5, 0, 5, 0 );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    count.QuadPart = 5;
+    offset.QuadPart = 5;
+    memset( &iosb, 0xcc, sizeof(iosb) );
+    status = NtUnlockFile( handle, &iosb, &count, &offset, NULL );
+    ok( !status, "got %#lx.\n", status );
+    ok( iosb.Status == status, "got %lu.\n", iosb.Status);
+    ok( !iosb.Information, "got %Iu.\n", iosb.Information);
 
     overlapped.Offset = 100;
     overlapped.OffsetHigh = 0;
@@ -6671,19 +6695,21 @@ static void test_symbolic_link(void)
     ok( ret == TRUE, "got error %lu\n", GetLastError() );
     ret = LookupPrivilegeValueA( NULL, "SeCreateSymbolicLinkPrivilege", &luid );
     todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
-
-    privs.PrivilegeCount = 1;
-    privs.Privileges[0].Luid = luid;
-    privs.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    ret = AdjustTokenPrivileges( token, FALSE, &privs, 0, NULL, NULL );
-    ok( ret == TRUE, "got error %lu\n", GetLastError() );
-    if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+    if (ret)
     {
-        todo_wine win_skip( "Insufficient permissions to perform symlink tests.\n" );
+        privs.PrivilegeCount = 1;
+        privs.Privileges[0].Luid = luid;
+        privs.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        ret = AdjustTokenPrivileges( token, FALSE, &privs, 0, NULL, NULL );
+        ok( ret == TRUE, "got error %lu\n", GetLastError() );
+        if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+        {
+            win_skip( "Insufficient permissions to perform symlink tests.\n" );
+            CloseHandle( token );
+            return;
+        }
         CloseHandle( token );
-        return;
     }
-    CloseHandle( token );
 
     GetTempPathW( ARRAY_SIZE( temp_path ), temp_path );
 
@@ -6692,10 +6718,8 @@ static void test_symbolic_link(void)
 
     SetLastError( 0xdeadbeef );
     ret = CreateSymbolicLinkW( path, path2, TRUE );
-    todo_wine ok( ret == TRUE, "got %d\n", ret );
+    ok( ret == TRUE, "got %d\n", ret );
     todo_wine ok( !GetLastError(), "got error %lu\n", GetLastError() );
-    if (!ret)
-        return;
 
     ret = GetFileAttributesW( path );
     ok( (ret & 0xfff) == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
@@ -6737,7 +6761,7 @@ static void test_symbolic_link(void)
     SetLastError( 0xdeadbeef );
     ret = CreateSymbolicLinkW( path, L".\\target", TRUE );
     ok( ret == TRUE, "got %d\n", ret );
-    ok( !GetLastError(), "got error %lu\n", GetLastError() );
+    todo_wine ok( !GetLastError(), "got error %lu\n", GetLastError() );
 
     ret = GetFileAttributesW( path );
     ok( (ret & 0xfff) == (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );
@@ -6779,7 +6803,7 @@ static void test_symbolic_link(void)
     swprintf( path, ARRAY_SIZE(path), L"%s/testsymlink", temp_path );
     ret = CreateSymbolicLinkW( path, L".\\target\\", FALSE );
     ok( ret == TRUE, "got %d\n", ret );
-    ok( !GetLastError(), "got error %lu\n", GetLastError() );
+    todo_wine ok( !GetLastError(), "got error %lu\n", GetLastError() );
 
     ret = GetFileAttributesW( path );
     ok( (ret & 0xfff) == (FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_REPARSE_POINT), "got attrs %#x\n", ret );

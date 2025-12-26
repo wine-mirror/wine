@@ -1,0 +1,690 @@
+/*
+ * Copyright 2025 Vibhav Pant
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#define COBJMACROS
+
+#include <stdint.h>
+
+#include "roapi.h"
+#include "winstring.h"
+#include "roerrorapi.h"
+#define WIDL_using_Windows_Foundation
+#include "windows.foundation.h"
+#include "wine/debug.h"
+#include "wine/exception.h"
+
+#include "cxx.h"
+#include "private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(vccorlib);
+
+extern void WINAPI DECLSPEC_NORETURN _CxxThrowException(void *, const cxx_exception_type *);
+extern const void **__cdecl __current_exception(void);
+
+#ifdef _WIN64
+#define REF_NAME(name) ".PE" name
+#else
+#define REF_NAME(name) ".P" name
+#endif
+
+#define CLASS_REF_NAME(name) REF_NAME("$AAV" name "@Platform@@")
+#define INTERFACE_REF_NAME(name) REF_NAME("$AAU" name "@Platform@@")
+
+/* Data members of the "Exception" C++/CX class.
+ * A back-pointer to this struct is stored just before the IInspectable vtable of an Exception object.
+ * TODO: The message fields are likely obtained from IRestrictedErrorInfo::GetErrorDetails, so we
+ * should use that once it has been implemented. */
+struct exception_inner
+{
+    /* This only gets set when the exception is thrown. */
+    BSTR description;
+    /* Likewise, but can also be set by CreateExceptionWithMessage. */
+    BSTR restricted_desc;
+    void *unknown1;
+    void *unknown2;
+    HRESULT hr;
+    /* Only gets set when the exception is thrown. */
+    IRestrictedErrorInfo *error_info;
+    const cxx_exception_type *exception_type;
+    /* Set to 32 and 64 on 32 and 64-bit platforms respectively, not sure what the purpose is. */
+    UINT32 unknown3;
+    /* Called before the exception is thrown by _CxxThrowException.
+     * This sets the description and error_info fields, and probably originates a WinRT error
+     * with RoOriginateError/RoOriginateLanguageException. */
+    void (*WINAPI set_exception_info)(struct exception_inner **);
+};
+
+struct Exception
+{
+    IInspectable IInspectable_iface;
+    IStringable IPrintable_iface;
+    const void *IEquatable_iface;
+    IClosable IClosable_iface;
+    struct exception_inner inner;
+    /* Exceptions use the weakref control block for reference counting, even though they don't implement
+     * IWeakReferenceSource. */
+    struct control_block *control_block;
+    /* This is lazily initialized, i.e, only when QueryInterface(IID_IMarshal) gets called. The default value is
+     * UINTPTR_MAX/-1 */
+    IUnknown *marshal;
+};
+
+#define WINRT_EXCEPTIONS                                     \
+    WINRT_EXCEPTION(AccessDenied, E_ACCESSDENIED)            \
+    WINRT_EXCEPTION(ChangedState, E_CHANGED_STATE)           \
+    WINRT_EXCEPTION(ClassNotRegistered, REGDB_E_CLASSNOTREG) \
+    WINRT_EXCEPTION(Disconnected, RPC_E_DISCONNECTED)        \
+    WINRT_EXCEPTION(Failure, E_FAIL)                         \
+    WINRT_EXCEPTION(InvalidArgument, E_INVALIDARG)           \
+    WINRT_EXCEPTION(InvalidCast, E_NOINTERFACE)              \
+    WINRT_EXCEPTION(NotImplemented, E_NOTIMPL)               \
+    WINRT_EXCEPTION(NullReference, E_POINTER)                \
+    WINRT_EXCEPTION(ObjectDisposed, RO_E_CLOSED)             \
+    WINRT_EXCEPTION(OperationCanceled, E_ABORT)              \
+    WINRT_EXCEPTION(OutOfBounds, E_BOUNDS)                   \
+    WINRT_EXCEPTION(OutOfMemory, E_OUTOFMEMORY)              \
+    WINRT_EXCEPTION(WrongThread, RPC_E_WRONG_THREAD)
+
+static inline struct Exception *impl_Exception_from_IInspectable(IInspectable *iface)
+{
+    return CONTAINING_RECORD(iface, struct Exception, IInspectable_iface);
+}
+
+static HRESULT WINAPI Exception_QueryInterface(IInspectable *iface, const GUID *iid, void **out)
+{
+    struct Exception *impl = impl_Exception_from_IInspectable(iface);
+
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject))
+    {
+        IInspectable_AddRef((*out = &impl->IInspectable_iface));
+        return S_OK;
+    }
+    if (IsEqualGUID(iid, &IID_IPrintable))
+    {
+        IStringable_AddRef((*out = &impl->IPrintable_iface));
+        return S_OK;
+    }
+    if (IsEqualGUID(iid, &IID_IClosable))
+    {
+        IClosable_AddRef((*out = &impl->IClosable_iface));
+        return S_OK;
+    }
+    if (IsEqualGUID(iid, &IID_IMarshal))
+    {
+        IUnknown *marshal, *old;
+        HRESULT hr;
+
+        if ((ULONG_PTR)impl->marshal != UINTPTR_MAX)
+            return IUnknown_QueryInterface(impl->marshal, iid, out);
+        /* Try initializing impl->marshal. */
+        if (FAILED(hr = CoCreateFreeThreadedMarshaler((IUnknown *)&impl->IInspectable_iface, &marshal)))
+            return hr;
+        old = InterlockedCompareExchangePointer((void *)&impl->marshal, marshal, (void *)UINTPTR_MAX);
+        if ((ULONG_PTR)old != UINTPTR_MAX) /* Someone else has already set impl->marshal, use it. */
+            IUnknown_Release(marshal);
+        return IUnknown_QueryInterface(impl->marshal, iid, out);
+    }
+
+    ERR("%s not implemented, returning E_NOTINTERFACE.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Exception_AddRef(IInspectable *iface)
+{
+    struct Exception *impl = impl_Exception_from_IInspectable(iface);
+    TRACE("(%p)\n", iface);
+    return InterlockedIncrement(&impl->control_block->ref_strong);
+}
+
+static ULONG WINAPI Exception_Release(IInspectable *iface)
+{
+    struct Exception *impl = impl_Exception_from_IInspectable(iface);
+    ULONG ref = InterlockedDecrement(&impl->control_block->ref_strong);
+
+    TRACE("(%p)\n", iface);
+
+    if (!ref)
+    {
+        SysFreeString(impl->inner.description);
+        SysFreeString(impl->inner.restricted_desc);
+        if ((ULONG_PTR)impl->marshal != UINTPTR_MAX)
+            IUnknown_Release((IUnknown *)impl->marshal);
+        /* Because Exception objects are never allocated inline, we don't need to use ReleaseTarget. */
+        IWeakReference_Release(&impl->control_block->IWeakReference_iface);
+        FreeException(impl);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI Exception_GetRuntimeClassName(IInspectable *iface, HSTRING *class_name)
+{
+    struct Exception *impl = impl_Exception_from_IInspectable(iface);
+    const WCHAR *buf;
+
+    TRACE("(%p, %p)\n", iface, class_name);
+
+#define WINRT_EXCEPTION(name, hr) case (hr): buf = L"Platform." #name "Exception"; break;
+    switch (impl->inner.hr)
+    {
+    WINRT_EXCEPTIONS
+#undef WINRT_EXCEPTION
+    default:
+        buf = L"Platform.COMException";
+        break;
+    }
+    return WindowsCreateString(buf, wcslen(buf), class_name);
+}
+
+static HRESULT WINAPI Exception_GetIids(IInspectable *iface, ULONG *count, IID **iids)
+{
+    TRACE("(%p, %p, %p)\n", iface, count, iids);
+
+    *count = 0;
+    *iids = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI Exception_GetTrustLevel(IInspectable *iface, TrustLevel *level)
+{
+    FIXME("(%p, %p)\n", iface, level);
+    return E_NOTIMPL;
+}
+
+DEFINE_CXX_BASE(Exception_void_ref, CLASS_IS_SIMPLE_TYPE,
+        0, REF_NAME("AX"));
+DEFINE_CXX_BASE(Exception_IClosable_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        offsetof(struct Exception, IClosable_iface), INTERFACE_REF_NAME("IDisposable"));
+DEFINE_CXX_BASE(Exception_IEquatable_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        offsetof(struct Exception, IEquatable_iface), INTERFACE_REF_NAME("IEquatable"));
+DEFINE_CXX_BASE(Exception_IPrintable_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        offsetof(struct Exception, IPrintable_iface), INTERFACE_REF_NAME("IPrintable"));
+DEFINE_CXX_BASE(Exception_Object_ref, CLASS_IS_SIMPLE_TYPE | CLASS_IS_WINRT,
+        0, CLASS_REF_NAME("Object"));
+type_info Exception_ref_type_info = { &type_info_vtable, NULL, CLASS_REF_NAME("Exception") };
+typedef struct Exception *Exception_ref;
+DEFINE_CXX_TYPE(Exception_ref,
+        Exception_Object_ref_cxx_type_info,
+        Exception_IPrintable_ref_cxx_type_info,
+        Exception_IEquatable_ref_cxx_type_info,
+        Exception_IClosable_ref_cxx_type_info,
+        Exception_void_ref_cxx_type_info);
+
+DEFINE_RTTI_BASE(Exception_IClosable, offsetof(struct Exception, IClosable_iface),
+        1, ".?AUIDisposable@Platform@@");
+DEFINE_RTTI_BASE(Exception_IEquatable, offsetof(struct Exception, IEquatable_iface),
+        1, ".?AUIEquatable@Details@Platform@@");
+DEFINE_RTTI_BASE(Exception_IPrintable, offsetof(struct Exception, IPrintable_iface),
+        1, ".?AUIPrintable@Details@Platform@@");
+DEFINE_RTTI_BASE(Exception_Object, 0, 0, ".?AVObject@Platform@@");
+DEFINE_RTTI_DATA(Exception, 0, ".?AVException@Platform@@",
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor);
+COM_VTABLE_RTTI_START(IInspectable, Exception)
+COM_VTABLE_ENTRY(Exception_QueryInterface)
+COM_VTABLE_ENTRY(Exception_AddRef)
+COM_VTABLE_ENTRY(Exception_Release)
+COM_VTABLE_ENTRY(Exception_GetIids)
+COM_VTABLE_ENTRY(Exception_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_GetTrustLevel)
+COM_VTABLE_RTTI_END;
+
+DEFINE_IINSPECTABLE_(Exception_Printable, IStringable, struct Exception,
+    impl_Exception_from_IStringable, IPrintable_iface, &impl->IInspectable_iface);
+
+static HRESULT WINAPI Exception_Printable_ToString(IStringable *iface, HSTRING *str)
+{
+    struct Exception *impl = impl_Exception_from_IStringable(iface);
+    WCHAR buf[256];
+
+    TRACE("(%p, %p)\n", iface, str);
+
+    if (impl->inner.restricted_desc)
+        return WindowsCreateString(impl->inner.restricted_desc, wcslen(impl->inner.restricted_desc), str);
+    if (FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, impl->inner.hr, 0, buf, ARRAY_SIZE(buf), NULL))
+            return WindowsCreateString(buf, wcslen(buf), str);
+    else
+        ERR("FormatMessageW failed: %lu\n", GetLastError());
+    *str = NULL;
+    return S_OK;
+}
+
+DEFINE_RTTI_DATA(Exception_Printable, offsetof(struct Exception, IPrintable_iface),
+        "?.AVException@Platform@@",
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor);
+COM_VTABLE_RTTI_START(IStringable, Exception_Printable)
+COM_VTABLE_ENTRY(Exception_Printable_QueryInterface)
+COM_VTABLE_ENTRY(Exception_Printable_AddRef)
+COM_VTABLE_ENTRY(Exception_Printable_Release)
+COM_VTABLE_ENTRY(Exception_Printable_GetIids)
+COM_VTABLE_ENTRY(Exception_Printable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_Printable_GetTrustLevel)
+COM_VTABLE_ENTRY(Exception_Printable_ToString)
+COM_VTABLE_RTTI_END;
+
+DEFINE_IINSPECTABLE_(Exception_Closable, IClosable, struct Exception,
+        impl_Exception_from_IClosable, IClosable_iface, &impl->IInspectable_iface);
+
+static HRESULT WINAPI Exception_Closable_Close(IClosable *iface)
+{
+    FIXME("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+DEFINE_RTTI_DATA(Exception_Closable, offsetof(struct Exception, IClosable_iface),
+        ".?AVException@Platform@@",
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor)
+COM_VTABLE_RTTI_START(IClosable, Exception_Closable)
+COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)
+COM_VTABLE_ENTRY(Exception_Closable_AddRef)
+COM_VTABLE_ENTRY(Exception_Closable_Release)
+COM_VTABLE_ENTRY(Exception_Closable_GetIids)
+COM_VTABLE_ENTRY(Exception_Closable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_Closable_GetTrustLevel)
+COM_VTABLE_ENTRY(Exception_Closable_Close)
+COM_VTABLE_RTTI_END;
+
+static void WINAPI set_exception_info(struct exception_inner **inner)
+{
+    struct exception_inner *info = *inner;
+    WCHAR buf[256];
+
+    FIXME("(%p): semi-stub!\n", inner);
+
+    if (FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, NULL, info->hr, 0, buf, ARRAY_SIZE(buf), NULL))
+        info->description = SysAllocString(buf);
+    if (!info->restricted_desc)
+        info->restricted_desc = SysAllocString(info->description);
+    info->error_info = NULL;
+}
+
+/* Note: All exception constructors should only throw exceptions *after* all fields have been initialized.
+ * This is because the cleanup code in CreateException(WithMessage) calls Release. */
+struct Exception *__cdecl Exception_ctor(struct Exception *this, HRESULT hr)
+{
+    struct exception_alloc *base = CONTAINING_RECORD(this, struct exception_alloc, data);
+
+    TRACE("(%p, %#lx)\n", this, hr);
+
+    this->IInspectable_iface.lpVtbl = &Exception_vtable.vtable;
+    this->IClosable_iface.lpVtbl = &Exception_Closable_vtable.vtable;
+    this->IPrintable_iface.lpVtbl = &Exception_Printable_vtable.vtable;
+    this->IEquatable_iface = NULL;
+
+    memset(&this->inner, 0, sizeof(this->inner));
+    base->exception_inner = &this->inner;
+    this->inner.exception_type = &Exception_ref_exception_type;
+    this->inner.hr = hr;
+    this->inner.unknown3 = sizeof(void *) == 8 ? 64 : 32;
+    this->inner.set_exception_info = set_exception_info;
+
+    this->marshal = (IUnknown *)UINTPTR_MAX;
+
+    if (SUCCEEDED(hr))
+        __abi_WinRTraiseInvalidArgumentException();
+    return this;
+}
+
+struct Exception *__cdecl Exception_hstring_ctor(struct Exception *this, HRESULT hr, HSTRING msg)
+{
+    const WCHAR *buf;
+    BOOL has_null;
+    UINT32 len;
+
+    TRACE("(%p, %#lx, %s)\n", this, hr, debugstr_hstring(msg));
+
+    Exception_ctor(this, hr);
+    if (WindowsIsStringEmpty(msg)) return this;
+
+    /* Native throws InvalidArgumentException if msg has an embedded NUL byte. */
+    if (FAILED(hr = WindowsStringHasEmbeddedNull(msg, &has_null)))
+        __abi_WinRTraiseCOMException(hr);
+    else if (has_null)
+        __abi_WinRTraiseInvalidArgumentException();
+
+    buf = WindowsGetStringRawBuffer(msg, &len);
+    if (len && !(this->inner.restricted_desc = SysAllocStringLen(buf, len)))
+        __abi_WinRTraiseOutOfMemoryException();
+    return this;
+}
+
+type_info COMException_ref_type_info = { &type_info_vtable, NULL, CLASS_REF_NAME("COMException") };
+typedef struct Exception *COMException_ref;
+DEFINE_CXX_TYPE(COMException_ref,
+        Exception_ref_cxx_type_info,
+        Exception_Object_ref_cxx_type_info,
+        Exception_IPrintable_ref_cxx_type_info,
+        Exception_IEquatable_ref_cxx_type_info,
+        Exception_IClosable_ref_cxx_type_info,
+        Exception_void_ref_cxx_type_info);
+
+DEFINE_RTTI_DATA(COMException, 0, ".?AVCOMException@Platform@@",
+        Exception_rtti_base_descriptor,
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor);
+COM_VTABLE_RTTI_START(IInspectable, COMException)
+COM_VTABLE_ENTRY(Exception_QueryInterface)
+COM_VTABLE_ENTRY(Exception_AddRef)
+COM_VTABLE_ENTRY(Exception_Release)
+COM_VTABLE_ENTRY(Exception_GetIids)
+COM_VTABLE_ENTRY(Exception_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_GetTrustLevel)
+COM_VTABLE_RTTI_END;
+
+DEFINE_RTTI_DATA(COMException_Printable, offsetof(struct Exception, IPrintable_iface),
+        "?.AVException@Platform@@",
+        Exception_rtti_base_descriptor,
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor);
+COM_VTABLE_RTTI_START(IStringable, COMException_Printable)
+COM_VTABLE_ENTRY(Exception_Printable_QueryInterface)
+COM_VTABLE_ENTRY(Exception_Printable_AddRef)
+COM_VTABLE_ENTRY(Exception_Printable_Release)
+COM_VTABLE_ENTRY(Exception_Printable_GetIids)
+COM_VTABLE_ENTRY(Exception_Printable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_Printable_GetTrustLevel)
+COM_VTABLE_ENTRY(Exception_Printable_ToString)
+COM_VTABLE_RTTI_END;
+
+DEFINE_RTTI_DATA(COMException_Closable, offsetof(struct Exception, IClosable_iface),
+        ".?AVCOMException@Platform@@",
+        Exception_rtti_base_descriptor,
+        Exception_Object_rtti_base_descriptor,
+        Exception_IPrintable_rtti_base_descriptor,
+        Exception_IEquatable_rtti_base_descriptor,
+        Exception_IClosable_rtti_base_descriptor)
+COM_VTABLE_RTTI_START(IClosable, COMException_Closable)
+COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)
+COM_VTABLE_ENTRY(Exception_Closable_AddRef)
+COM_VTABLE_ENTRY(Exception_Closable_Release)
+COM_VTABLE_ENTRY(Exception_Closable_GetIids)
+COM_VTABLE_ENTRY(Exception_Closable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(Exception_Closable_GetTrustLevel)
+COM_VTABLE_ENTRY(Exception_Closable_Close)
+COM_VTABLE_RTTI_END;
+
+struct Exception *__cdecl COMException_ctor(struct Exception *this, HRESULT hr)
+{
+    TRACE("(%p, %#lx)\n", this, hr);
+
+    Exception_ctor(this, hr);
+
+    this->IInspectable_iface.lpVtbl = &COMException_vtable.vtable;
+    this->IPrintable_iface.lpVtbl = &COMException_Printable_vtable.vtable;
+    this->IClosable_iface.lpVtbl = &COMException_Closable_vtable.vtable;
+    this->inner.exception_type = &COMException_ref_exception_type;
+    return this;
+}
+
+struct Exception *__cdecl COMException_hstring_ctor(struct Exception *this, HRESULT hr, HSTRING msg)
+{
+    TRACE("(%p, %#lx, %s)\n", this, hr, debugstr_hstring(msg));
+
+    Exception_hstring_ctor(this, hr, msg);
+
+    this->IInspectable_iface.lpVtbl = &COMException_vtable.vtable;
+    this->IPrintable_iface.lpVtbl = &COMException_Printable_vtable.vtable;
+    this->IClosable_iface.lpVtbl = &COMException_Closable_vtable.vtable;
+    this->inner.exception_type = &COMException_ref_exception_type;
+    return this;
+}
+
+#define WINRT_EXCEPTION(name, hr)                                                               \
+    type_info name ## Exception_ref ## _type_info =                                             \
+        { &type_info_vtable, NULL, CLASS_REF_NAME(#name "Exception") };                         \
+    typedef COMException_ref name##Exception_ref;                                               \
+    DEFINE_CXX_TYPE(name##Exception_ref,                                                        \
+            COMException_ref_cxx_type_info,                                                     \
+            Exception_ref_cxx_type_info,                                                        \
+            Exception_Object_ref_cxx_type_info,                                                 \
+            Exception_IPrintable_ref_cxx_type_info,                                             \
+            Exception_IEquatable_ref_cxx_type_info,                                             \
+            Exception_IClosable_ref_cxx_type_info,                                              \
+            Exception_void_ref_cxx_type_info);                                                  \
+                                                                                                \
+    DEFINE_RTTI_DATA(name##Exception, 0, ".?AV" #name "Exception@Platform@@",                   \
+            COMException_rtti_base_descriptor,                                                  \
+            Exception_rtti_base_descriptor,                                                     \
+            Exception_Object_rtti_base_descriptor,                                              \
+            Exception_IPrintable_rtti_base_descriptor,                                          \
+            Exception_IEquatable_rtti_base_descriptor,                                          \
+            Exception_IClosable_rtti_base_descriptor);                                          \
+    COM_VTABLE_RTTI_START(IInspectable, name##Exception)                                        \
+    COM_VTABLE_ENTRY(Exception_QueryInterface)                                                  \
+    COM_VTABLE_ENTRY(Exception_AddRef)                                                          \
+    COM_VTABLE_ENTRY(Exception_Release)                                                         \
+    COM_VTABLE_ENTRY(Exception_GetIids)                                                         \
+    COM_VTABLE_ENTRY(Exception_GetRuntimeClassName)                                             \
+    COM_VTABLE_ENTRY(Exception_GetTrustLevel)                                                   \
+    COM_VTABLE_RTTI_END;                                                                        \
+                                                                                                \
+    DEFINE_RTTI_DATA(name##Exception_Printable, offsetof(struct Exception, IPrintable_iface),   \
+                     "?.AV" #name "Exception@Platform@@",                                       \
+                     COMException_rtti_base_descriptor,                                         \
+                     Exception_rtti_base_descriptor,                                            \
+                     Exception_Object_rtti_base_descriptor,                                     \
+                     Exception_IPrintable_rtti_base_descriptor,                                 \
+                     Exception_IEquatable_rtti_base_descriptor,                                 \
+                     Exception_IClosable_rtti_base_descriptor);                                 \
+    COM_VTABLE_RTTI_START(IStringable, name##Exception_Printable)                               \
+    COM_VTABLE_ENTRY(Exception_Printable_QueryInterface)                                        \
+    COM_VTABLE_ENTRY(Exception_Printable_AddRef)                                                \
+    COM_VTABLE_ENTRY(Exception_Printable_Release)                                               \
+    COM_VTABLE_ENTRY(Exception_Printable_GetIids)                                               \
+    COM_VTABLE_ENTRY(Exception_Printable_GetRuntimeClassName)                                   \
+    COM_VTABLE_ENTRY(Exception_Printable_GetTrustLevel)                                         \
+    COM_VTABLE_ENTRY(Exception_Printable_ToString)                                              \
+    COM_VTABLE_RTTI_END;                                                                        \
+                                                                                                \
+    DEFINE_RTTI_DATA(name##Exception_Closable, offsetof(struct Exception, IClosable_iface),     \
+            ".?AV" #name "Exception@Platform@@",                                                \
+            COMException_rtti_base_descriptor,                                                  \
+            Exception_rtti_base_descriptor,                                                     \
+            Exception_Object_rtti_base_descriptor,                                              \
+            Exception_IPrintable_rtti_base_descriptor,                                          \
+            Exception_IEquatable_rtti_base_descriptor,                                          \
+            Exception_IClosable_rtti_base_descriptor);                                          \
+    COM_VTABLE_RTTI_START(IClosable, name##Exception_Closable)                                  \
+    COM_VTABLE_ENTRY(Exception_Closable_QueryInterface)                                         \
+    COM_VTABLE_ENTRY(Exception_Closable_AddRef)                                                 \
+    COM_VTABLE_ENTRY(Exception_Closable_Release)                                                \
+    COM_VTABLE_ENTRY(Exception_Closable_GetIids)                                                \
+    COM_VTABLE_ENTRY(Exception_Closable_GetRuntimeClassName)                                    \
+    COM_VTABLE_ENTRY(Exception_Closable_GetTrustLevel)                                          \
+    COM_VTABLE_ENTRY(Exception_Closable_Close)                                                  \
+    COM_VTABLE_RTTI_END;                                                                        \
+                                                                                                \
+    struct Exception *__cdecl name##Exception_ctor(struct Exception *this)                      \
+    {                                                                                           \
+        TRACE("(%p)\n", this);                                                                  \
+        Exception_ctor(this, hr);                                                               \
+        this->IInspectable_iface.lpVtbl = &name##Exception_vtable.vtable;                       \
+        this->IPrintable_iface.lpVtbl = &name##Exception_Printable_vtable.vtable;               \
+        this->IClosable_iface.lpVtbl = &name##Exception_Closable_vtable.vtable;                 \
+        this->inner.exception_type = &name##Exception_ref_exception_type;                       \
+        return this;                                                                            \
+    }                                                                                           \
+                                                                                                \
+    struct Exception *__cdecl name##Exception_hstring_ctor(struct Exception *this, HSTRING msg) \
+    {                                                                                           \
+        TRACE("(%p, %s)\n", this, debugstr_hstring(msg));                                       \
+        Exception_hstring_ctor(this, hr, msg);                                                  \
+        this->IInspectable_iface.lpVtbl = &name##Exception_vtable.vtable;                       \
+        this->IPrintable_iface.lpVtbl = &name##Exception_Printable_vtable.vtable;               \
+        this->IClosable_iface.lpVtbl = &name##Exception_Closable_vtable.vtable;                 \
+        this->inner.exception_type = &name##Exception_ref_exception_type;                       \
+        return this;                                                                            \
+    }
+WINRT_EXCEPTIONS
+#undef WINRT_EXCEPTION
+
+/* This is only executed once AllocateExceptionWithWeakRef succeeds, we can assume excp and excp->control_block are
+ * valid. */
+static void CALLBACK create_exception_cleanup(BOOL normal, void *excp)
+{
+    IInspectable_Release(excp);
+}
+
+struct Exception *__cdecl CreateExceptionWithMessage(HRESULT code, HSTRING msg)
+{
+    struct Exception *ret;
+
+    TRACE("(%#lx, %s)\n", code, debugstr_hstring(msg));
+
+    ret = AllocateExceptionWithWeakRef(offsetof(struct Exception, control_block), sizeof(*ret));
+
+#define WINRT_EXCEPTION(name, h) \
+    case (h): \
+        name##Exception_hstring_ctor(ret, msg); \
+        break;
+    __TRY
+    {
+        switch (code)
+        {
+        WINRT_EXCEPTIONS;
+        default:
+            COMException_hstring_ctor(ret, code, msg);
+            break;
+        }
+        /* Increment the refcount for create_exception_cleanup. */
+        IInspectable_AddRef(&ret->IInspectable_iface);
+    }
+    __FINALLY_CTX(create_exception_cleanup, &ret->IInspectable_iface)
+#undef WINRT_EXCEPTION
+    return ret;
+}
+
+struct Exception *__cdecl CreateException(HRESULT hr)
+{
+    TRACE("(%#lx)\n", hr);
+    return CreateExceptionWithMessage(hr, NULL);
+}
+
+static void DECLSPEC_NORETURN throw_exception(struct Exception *excp, const cxx_exception_type *type)
+{
+    /* TODO: figure out what native does with refcount */
+    _CxxThrowException(&excp, type);
+}
+
+#define WINRT_EXCEPTION(name, hr)                                                   \
+    void WINAPI DECLSPEC_NORETURN __abi_WinRTraise##name##Exception(void)           \
+    {                                                                               \
+        FIXME("(): semi-stub!\n");                                                  \
+        throw_exception(CreateException(hr), &name##Exception_ref_exception_type);  \
+    }
+WINRT_EXCEPTIONS
+#undef WINRT_EXCEPTION
+
+void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseCOMException(HRESULT hr)
+{
+    FIXME("(%#lx): semi-stub!\n", hr);
+
+    switch (hr)
+    {
+#define WINRT_EXCEPTION(name, code) case (code): __abi_WinRTraise##name##Exception();
+    WINRT_EXCEPTIONS;
+#undef WINRT_EXCEPTION
+    default:
+        throw_exception(CreateException(hr), &COMException_ref_exception_type);
+    }
+}
+
+HSTRING __cdecl Exception_get_Message(struct Exception *this)
+{
+    HSTRING msg;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = IStringable_ToString(&this->IPrintable_iface, &msg))))
+        __abi_WinRTraiseCOMException(hr);
+    return msg;
+}
+
+HSTRING __cdecl Exception_ToString(struct Exception *this)
+{
+    FIXME("(%p): stub!\n", this);
+    return NULL;
+}
+
+void init_exception(void *base)
+{
+    INIT_CXX_BASE(Exception_void_ref, base);
+    INIT_CXX_BASE(Exception_IClosable_ref, base);
+    INIT_CXX_BASE(Exception_IEquatable_ref, base);
+    INIT_CXX_BASE(Exception_IPrintable_ref, base);
+    INIT_CXX_BASE(Exception_Object_ref, base);
+    INIT_CXX_TYPE(Exception_ref, base);
+    INIT_RTTI_BASE(Exception_IClosable, base);
+    INIT_RTTI_BASE(Exception_IEquatable, base);
+    INIT_RTTI_BASE(Exception_IPrintable, base);
+    INIT_RTTI_BASE(Exception_Object, base);
+    INIT_RTTI(Exception, base);
+    INIT_RTTI(Exception_Closable, base);
+    INIT_RTTI(Exception_Printable, base);
+
+    INIT_CXX_TYPE(COMException_ref, base);
+    INIT_RTTI(COMException, base);
+    INIT_RTTI(COMException_Printable, base);
+    INIT_RTTI(COMException_Closable, base);
+
+#define WINRT_EXCEPTION(name, hr)           \
+    INIT_CXX_TYPE(name##Exception_ref, base);  \
+    INIT_RTTI(name##Exception, base);          \
+    INIT_RTTI(name##Exception_Printable, base); \
+    INIT_RTTI(name##Exception_Closable, base);
+    WINRT_EXCEPTIONS
+#undef WINRT_EXCEPTION
+}
+
+HRESULT WINAPI __abi_translateCurrentException(bool unknown)
+{
+    const struct Exception *excp;
+    const EXCEPTION_RECORD *record;
+    const cxx_exception_type *type;
+
+    FIXME("(%d): semi-stub!\n", unknown);
+
+    record = *__current_exception();
+    /* Native aborts if:
+     * There is no exception being currently handled.
+     * There is no associated exception object (_CxxThrowException(NULL, ...) was called).
+     * There is no associated cxx_exception_type param (_CxxThrowException(..., NULL) was called).
+     * A non C++/CX exception has been thrown. */
+    if (!record || !record->ExceptionInformation[1] ||
+        !(excp = *(struct Exception **)record->ExceptionInformation[1]) ||
+        !(type = (cxx_exception_type *)record->ExceptionInformation[2]) ||
+        !(type->flags & TYPE_FLAG_WINRT))
+        abort();
+    return excp->inner.hr;
+}

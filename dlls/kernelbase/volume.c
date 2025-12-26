@@ -365,7 +365,7 @@ err_ret:
  */
 BOOL WINAPI DECLSPEC_HOTPATCH DefineDosDeviceW( DWORD flags, const WCHAR *device, const WCHAR *target )
 {
-    WCHAR link_name[15] = L"\\DosDevices\\";
+    WCHAR *link_name;
     UNICODE_STRING nt_name, nt_target;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
@@ -376,33 +376,38 @@ BOOL WINAPI DECLSPEC_HOTPATCH DefineDosDeviceW( DWORD flags, const WCHAR *device
     if (flags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION))
         FIXME("Ignoring flags %#lx.\n", flags & ~(DDD_RAW_TARGET_PATH | DDD_REMOVE_DEFINITION));
 
+    if (!(link_name = HeapAlloc( GetProcessHeap(), 0, sizeof(L"\\DosDevices\\") + lstrlenW(device) * sizeof(WCHAR) )))
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    lstrcpyW( link_name, L"\\DosDevices\\" );
     lstrcatW( link_name, device );
     RtlInitUnicodeString( &nt_name, link_name );
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, 0, NULL );
     if (flags & DDD_REMOVE_DEFINITION)
     {
-        if (!set_ntstatus( NtOpenSymbolicLinkObject( &handle, DELETE, &attr ) ))
-            return FALSE;
-
-        status = NtMakeTemporaryObject( handle );
-        NtClose( handle );
-
-        return set_ntstatus( status );
+        if (!(status = NtOpenSymbolicLinkObject( &handle, DELETE, &attr )))
+        {
+            status = NtMakeTemporaryObject( handle );
+            NtClose( handle );
+        }
+        goto done;
     }
 
     if (!(flags & DDD_RAW_TARGET_PATH))
     {
-        if (!RtlDosPathNameToNtPathName_U( target, &nt_target, NULL, NULL))
-        {
-            SetLastError( ERROR_PATH_NOT_FOUND );
-            return FALSE;
-        }
+        status = RtlDosPathNameToNtPathName_U_WithStatus( target, &nt_target, NULL, NULL );
+        if (status) goto done;
     }
     else
         RtlInitUnicodeString( &nt_target, target );
 
     if (!(status = NtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, &nt_target )))
         NtClose( handle );
+ done:
+    HeapFree( GetProcessHeap(), 0, link_name );
     return set_ntstatus( status );
 }
 

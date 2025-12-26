@@ -120,9 +120,9 @@ static const struct
 static struct list files[HASH_SIZE];
 static struct list global_includes[HASH_SIZE];
 
-enum install_rules { INSTALL_LIB, INSTALL_DEV, INSTALL_TEST, NB_INSTALL_RULES };
-static const char *install_targets[NB_INSTALL_RULES] = { "install-lib", "install-dev", "install-test" };
-static const char *install_variables[NB_INSTALL_RULES] = { "INSTALL_LIB", "INSTALL_DEV", "INSTALL_TEST" };
+enum install_rules { INSTALL_LIB, INSTALL_DEV, INSTALL_UNIXLIB, INSTALL_TEST, NB_INSTALL_RULES };
+static const char *install_targets[NB_INSTALL_RULES] = { "install-lib", "install-dev", "install-unixlib", "install-test" };
+static const char *install_variables[NB_INSTALL_RULES] = { "INSTALL_LIB", "INSTALL_DEV", "INSTALL_UNIXLIB", "INSTALL_TEST" };
 
 #define MAX_ARCHS 6
 
@@ -1669,8 +1669,6 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
             }
             return;
         }
-        if (strendswith( source->sourcename, ".y" ))
-            return;  /* generated .tab.h doesn't include anything */
     }
 
     add_all_includes( make, source, file );
@@ -2729,6 +2727,7 @@ static void output_install_rules( struct makefile *make )
             strarray_addall_uniq( &targets, cmd->targets );
 
         if (strcmp( install_targets[i], "install-test" )) output( "install " );
+        if (!strcmp( install_targets[i], "install-unixlib" )) output( "install-lib " );
         output( "%s::", install_targets[i] );
         output_filenames( targets );
         output_filename( install );
@@ -3709,7 +3708,7 @@ static void output_unix_lib( struct makefile *make )
     if (make->disabled[arch]) return;
 
     strarray_add( &make->all_targets[arch], make->unixlib );
-    install_program( make, make->module, arch, make->unixlib, arch_install_dirs[arch] );
+    install_program( make, make->unixlib, arch, make->unixlib, arch_install_dirs[arch] );
     output( "%s:", obj_dir_path( make, make->unixlib ));
     output_filenames_obj_dir( make, make->unixobj_files );
     output_filenames( unix_deps );
@@ -4567,6 +4566,7 @@ static void load_sources( struct makefile *make )
         for (i = 0; i < NB_INSTALL_RULES; i++) if (make->install[i].count) break;
         if (i == NB_INSTALL_RULES && !make->extlib)
         {
+            if (make->unixlib) strarray_add( &make->install[INSTALL_UNIXLIB], make->unixlib );
             if (make->importlib) strarray_add( &make->install[INSTALL_DEV], make->importlib );
             if (make->staticlib) strarray_add( &make->install[INSTALL_DEV], make->staticlib );
             else strarray_add( &make->install[INSTALL_LIB], make->module );

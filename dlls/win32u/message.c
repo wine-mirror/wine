@@ -2231,19 +2231,16 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &swp_flags, &window_rect, &foreground )) return 0;
         window_rect = map_rect_raw_to_virt( window_rect, get_thread_dpi() );
 
-        if (foreground) NtUserSetForegroundWindow( foreground );
-        switch (LOWORD(state_cmd))
+        if (foreground) set_foreground_window( foreground, FALSE, TRUE );
+        switch (state_cmd)
         {
-        case SC_MAXIMIZE:
-        case SC_MINIMIZE:
-            send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
-            break;
         case SC_RESTORE:
-            if (HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
             NtUserSetInternalWindowPos( hwnd, SW_SHOW, &window_rect, NULL );
-            send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
-            break;
+            /* fallthrough */
         default:
+            send_message( hwnd, WM_SYSCOMMAND, state_cmd, 0 );
+            break;
+        case 0:
             if (!swp_flags) break;
             NtUserSetWindowPos( hwnd, 0, window_rect.left, window_rect.top, window_rect.right - window_rect.left,
                                 window_rect.bottom - window_rect.top, swp_flags );
@@ -2254,6 +2251,9 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     }
     case WM_WINE_UPDATEWINDOWSTATE:
         update_window_state( hwnd );
+        return 0;
+    case WM_WINE_SETPIXELFORMAT:
+        set_window_pixel_format( hwnd, wparam, lparam );
         return 0;
     case WM_WINE_TRACKMOUSEEVENT:
     {
@@ -2747,7 +2747,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
                     /* fall through */
                 case MA_ACTIVATE:
                 case 0:
-                    if (!set_foreground_window( hwndTop, TRUE )) eat_msg = TRUE;
+                    if (!set_foreground_window( hwndTop, TRUE, FALSE )) eat_msg = TRUE;
                     break;
                 default:
                     WARN( "unknown WM_MOUSEACTIVATE code %d\n", ret );
@@ -4706,6 +4706,9 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
     case NtUserPostDdeCall:
         return post_dde_message_call( hwnd, msg, wparam, lparam, result_info );
+
+    case NtUserWintabDriverCall:
+        return user_driver->pWintabProc( hwnd, msg, wparam, lparam, result_info );
 
     default:
         FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, (long)wparam, lparam, result_info, type, ansi );

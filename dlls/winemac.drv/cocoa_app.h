@@ -113,7 +113,7 @@ enum {
 
     - (void) windowGotFocus:(WineWindow*)window;
 
-    - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout processEvents:(BOOL)processEvents;
+    - (BOOL) waitUntilQueryDone:(bool*)done timeout:(NSDate*)timeout processEvents:(BOOL)processEvents;
 
     - (void) noteKey:(uint16_t)keyCode pressed:(BOOL)pressed;
 

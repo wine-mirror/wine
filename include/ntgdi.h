@@ -140,6 +140,7 @@ enum
     NtGdiGetROP2,
     NtGdiGetTextColor,
     NtGdiIsMemDC,
+    NtGdiHasOpenGL,
 };
 
 /* NtGdiGetDCPoint parameter, not compatible with Windows */
@@ -560,9 +561,11 @@ W32KAPI NTSTATUS WINAPI NtGdiDdDDIReleaseKeyedMutex2( D3DKMT_RELEASEKEYEDMUTEX2 
 W32KAPI NTSTATUS WINAPI NtGdiDdDDISetQueuedLimit( D3DKMT_SETQUEUEDLIMIT *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr, UINT access, HANDLE *handle );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDISignalSynchronizationObjectFromCpu( const D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIWaitForSynchronizationObjectFromCpu( const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *params );
 
 /* Wine extensions */
-W32KAPI const struct vulkan_funcs * __wine_get_vulkan_driver(UINT version);
-W32KAPI const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const struct opengl_funcs *null_funcs );
+W32KAPI const struct vulkan_funcs *__wine_get_vulkan_driver( UINT version );
+W32KAPI const struct opengl_funcs *__wine_get_opengl_driver( UINT version );
 
 #endif /* _NTGDI_ */

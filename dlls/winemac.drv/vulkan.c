@@ -98,18 +98,32 @@ static VkBool32 macdrv_get_physical_device_presentation_support(struct vulkan_ph
     return VK_TRUE;
 }
 
-static const char *host_surface_extension = "VK_MVK_macos_surface";
-static const char *macdrv_get_host_extension(const char *name)
+static BOOL use_VK_EXT_metal_surface;
+
+static void macdrv_map_instance_extensions(struct vulkan_instance_extensions *extensions)
 {
-    if (!strcmp( name, "VK_KHR_win32_surface" )) return host_surface_extension;
-    return name;
+    if (use_VK_EXT_metal_surface)
+    {
+        if (extensions->has_VK_KHR_win32_surface) extensions->has_VK_EXT_metal_surface = 1;
+        if (extensions->has_VK_EXT_metal_surface) extensions->has_VK_KHR_win32_surface = 1;
+    }
+    else
+    {
+        if (extensions->has_VK_KHR_win32_surface) extensions->has_VK_MVK_macos_surface = 1;
+        if (extensions->has_VK_MVK_macos_surface) extensions->has_VK_KHR_win32_surface = 1;
+    }
+}
+
+static void macdrv_map_device_extensions(struct vulkan_device_extensions *extensions)
+{
 }
 
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
     .p_get_physical_device_presentation_support = macdrv_get_physical_device_presentation_support,
-    .p_get_host_extension = macdrv_get_host_extension,
+    .p_map_instance_extensions = macdrv_map_instance_extensions,
+    .p_map_device_extensions = macdrv_map_device_extensions,
 };
 
 UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
@@ -120,7 +134,7 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_dr
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (dlsym(vulkan_handle, "vkCreateMetalSurfaceEXT")) host_surface_extension = "VK_EXT_metal_surface";
+    use_VK_EXT_metal_surface = !!dlsym(vulkan_handle, "vkCreateMetalSurfaceEXT");
 
     *driver_funcs = &macdrv_vulkan_driver_funcs;
     return STATUS_SUCCESS;

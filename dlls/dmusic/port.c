@@ -29,6 +29,7 @@ struct download_entry
     struct list entry;
     IDirectMusicDownload *download;
     HANDLE handle;
+    BOOL can_free;
     DWORD id;
 };
 
@@ -522,6 +523,7 @@ static HRESULT WINAPI synth_port_download_Download(IDirectMusicPortDownload *ifa
         IDirectMusicDownload_AddRef(download);
         entry->id = info->dwDLId;
         entry->handle = handle;
+        entry->can_free = can_free;
         list_add_tail(&This->downloads, &entry->entry);
     }
 
@@ -529,11 +531,19 @@ static HRESULT WINAPI synth_port_download_Download(IDirectMusicPortDownload *ifa
     return hr;
 }
 
+static HRESULT CALLBACK unload_callback(HANDLE handle, HANDLE user_data)
+{
+    IDirectMusicDownload *download = (IDirectMusicDownload *)user_data;
+    IDirectMusicDownload_Release(download);
+    return S_OK;
+}
+
 static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface, IDirectMusicDownload *download)
 {
     struct synth_port *This = synth_from_IDirectMusicPortDownload(iface);
     struct download_entry *entry;
     HANDLE handle = 0;
+    BOOL can_free;
 
     TRACE("(%p/%p)->(%p)\n", iface, This, download);
 
@@ -544,15 +554,21 @@ static HRESULT WINAPI synth_port_download_Unload(IDirectMusicPortDownload *iface
         if (entry->download == download)
         {
             list_remove(&entry->entry);
-            IDirectMusicDownload_Release(entry->download);
             handle = entry->handle;
+            can_free = entry->can_free;
             free(entry);
             break;
         }
     }
 
     if (!handle) return S_OK;
-    return IDirectMusicSynth_Unload(This->synth, handle, NULL, NULL);
+
+    if (can_free)
+    {
+        IDirectMusicDownload_Release(download);
+        return IDirectMusicSynth_Unload(This->synth, handle, NULL, NULL);
+    }
+    return IDirectMusicSynth_Unload(This->synth, handle, unload_callback, download);
 }
 
 static const IDirectMusicPortDownloadVtbl synth_port_download_vtbl = {

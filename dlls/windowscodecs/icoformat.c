@@ -662,9 +662,9 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
         goto fail;
     }
 
-    if (This->header.idCount < index)
+    if (This->header.idCount <= index)
     {
-        hr = E_INVALIDARG;
+        hr = WINCODEC_ERR_FRAMEMISSING;
         goto fail;
     }
 

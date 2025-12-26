@@ -84,8 +84,6 @@ typedef struct
 #define VERT_BORDER 2
 #define HORZ_GAP    2
 
-static const WCHAR themeClass[] = L"Status";
-
 /* prototype */
 static void
 STATUSBAR_SetPartBounds (STATUS_INFO *infoPtr);
@@ -113,15 +111,17 @@ STATUSBAR_ComputeHeight(STATUS_INFO *infoPtr)
 }
 
 static void
-STATUSBAR_DrawSizeGrip (HTHEME theme, HDC hdc, LPRECT lpRect)
+STATUSBAR_DrawSizeGrip (HWND hwnd, HDC hdc, LPRECT lpRect)
 {
     RECT rc = *lpRect;
-
-    TRACE("draw size grip %s\n", wine_dbgstr_rect(lpRect));
+#if __WINE_COMCTL32_VERSION == 6
+    HTHEME theme = GetWindowTheme(hwnd);
 
     if (theme)
     {
         SIZE gripperSize;
+
+        TRACE("draw size grip %s\n", wine_dbgstr_rect(lpRect));
         if (SUCCEEDED (GetThemePartSize (theme, hdc, SP_GRIPPER, 0, lpRect, 
             TS_DRAW, &gripperSize)))
         {
@@ -131,40 +131,52 @@ STATUSBAR_DrawSizeGrip (HTHEME theme, HDC hdc, LPRECT lpRect)
                 return;
         }
     }
+#endif
 
+    TRACE("draw size grip %s\n", wine_dbgstr_rect(lpRect));
     rc.left = max( rc.left, rc.right - GetSystemMetrics(SM_CXVSCROLL) - 1 );
     rc.top  = max( rc.top, rc.bottom - GetSystemMetrics(SM_CYHSCROLL) - 1 );
     DrawFrameControl( hdc, &rc, DFC_SCROLL, DFCS_SCROLLSIZEGRIP );
 }
 
 static void
+STATUSBAR_DrawPartBackground (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part,
+                              int itemID, RECT *rect)
+{
+    UINT border;
+#if __WINE_COMCTL32_VERSION == 6
+    HTHEME theme = GetWindowTheme(infoPtr->Self);
+
+    if (theme)
+    {
+        int themePart = SP_PANE;
+
+        if ((GetWindowLongW(infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
+            && (infoPtr->simple || (itemID == (infoPtr->numParts - 1))))
+            themePart = SP_GRIPPERPANE;
+        DrawThemeBackground(theme, hdc, themePart, 0, rect, NULL);
+        return;
+    }
+#endif
+
+    if (part->style & SBT_POPOUT)
+        border = BDR_RAISEDOUTER;
+    else if (part->style & SBT_NOBORDERS)
+        border = 0;
+    else
+        border = BDR_SUNKENOUTER;
+    DrawEdge(hdc, rect, border, BF_RECT | BF_ADJUST);
+}
+
+static void
 STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART *part, int itemID)
 {
     RECT r = part->bound;
-    UINT border;
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
-    int themePart = SP_PANE;
     int x = 0;
 
     TRACE("part bound %s\n", wine_dbgstr_rect(&r));
 
-    if (theme)
-    {
-        if ((GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
-            && (infoPtr->simple || (itemID == (infoPtr->numParts-1))))
-            themePart = SP_GRIPPERPANE;
-        DrawThemeBackground(theme, hdc, themePart, 0, &r, NULL);
-    }
-    else
-    {
-        if (part->style & SBT_POPOUT)
-            border = BDR_RAISEDOUTER;
-        else if (part->style & SBT_NOBORDERS)
-            border = 0;
-        else
-            border = BDR_SUNKENOUTER;
-        DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
-    }
+    STATUSBAR_DrawPartBackground(infoPtr, hdc, part, itemID, &r);
 
     if (part->hIcon) {
         INT cy = r.bottom - r.top;
@@ -202,14 +214,34 @@ STATUSBAR_RefreshPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPA
     STATUSBAR_DrawPart (infoPtr, hdc, part, itemID);
 }
 
+static void
+STATUSBAR_DrawBackground (const STATUS_INFO *infoPtr, HDC hdc, const RECT *rect)
+{
+    HBRUSH brush;
+#if __WINE_COMCTL32_VERSION == 6
+    HTHEME theme = GetWindowTheme (infoPtr->Self);
+
+    if (theme)
+    {
+        DrawThemeBackground (theme, hdc, 0, 0, rect, NULL);
+        return;
+    }
+#endif
+
+    if (infoPtr->clrBk != CLR_DEFAULT)
+        brush = CreateSolidBrush (infoPtr->clrBk);
+    else
+        brush = GetSysColorBrush (COLOR_3DFACE);
+    FillRect (hdc, rect, brush);
+    if (infoPtr->clrBk != CLR_DEFAULT)
+        DeleteObject (brush);
+}
 
 static LRESULT
 STATUSBAR_Refresh (STATUS_INFO *infoPtr, HDC hdc)
 {
     RECT   rect;
-    HBRUSH hbrBk;
     HFONT  hOldFont;
-    HTHEME theme;
 
     TRACE("\n");
     if (!IsWindowVisible(infoPtr->Self))
@@ -218,21 +250,7 @@ STATUSBAR_Refresh (STATUS_INFO *infoPtr, HDC hdc)
     STATUSBAR_SetPartBounds(infoPtr);
 
     GetClientRect (infoPtr->Self, &rect);
-
-    if ((theme = GetWindowTheme (infoPtr->Self)))
-    {
-        DrawThemeBackground(theme, hdc, 0, 0, &rect, NULL);
-    }
-    else
-    {
-        if (infoPtr->clrBk != CLR_DEFAULT)
-            hbrBk = CreateSolidBrush (infoPtr->clrBk);
-        else
-            hbrBk = GetSysColorBrush (COLOR_3DFACE);
-        FillRect(hdc, &rect, hbrBk);
-        if (infoPtr->clrBk != CLR_DEFAULT)
-            DeleteObject (hbrBk);
-    }
+    STATUSBAR_DrawBackground (infoPtr, hdc, &rect);
 
     hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
 
@@ -250,7 +268,7 @@ STATUSBAR_Refresh (STATUS_INFO *infoPtr, HDC hdc)
 
     if ((GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
             && !(GetWindowLongW (infoPtr->Notify, GWL_STYLE) & WS_MAXIMIZE))
-	    STATUSBAR_DrawSizeGrip (theme, hdc, &rect);
+	    STATUSBAR_DrawSizeGrip (infoPtr->Self, hdc, &rect);
 
     return 0;
 }
@@ -830,7 +848,7 @@ STATUSBAR_WMDestroy (STATUS_INFO *infoPtr)
     if (infoPtr->hwndToolTip)
 	DestroyWindow (infoPtr->hwndToolTip);
 
-    CloseThemeData (GetWindowTheme (infoPtr->Self));
+    COMCTL32_CloseThemeForWindow (infoPtr->Self);
 
     SetWindowLongPtrW(infoPtr->Self, 0, 0);
     Free (infoPtr);
@@ -889,8 +907,8 @@ STATUSBAR_WMCreate (HWND hwnd, const CREATESTRUCTA *lpCreate)
     infoPtr->parts[0].x = -1;
     infoPtr->parts[0].style = 0;
     infoPtr->parts[0].hIcon = 0;
-    
-    OpenThemeData (hwnd, themeClass);
+
+    COMCTL32_OpenThemeForWindow (hwnd, L"Status");
 
     if (lpCreate->lpszName && (len = lstrlenW ((LPCWSTR)lpCreate->lpszName)))
     {
@@ -1070,17 +1088,6 @@ STATUSBAR_WMSize (STATUS_INFO *infoPtr, WORD flags)
     STATUSBAR_SetPartBounds (infoPtr);
     InvalidateRect(infoPtr->Self, NULL, FALSE);
     return TRUE;
-}
-
-
-/* update theme after a WM_THEMECHANGED message */
-static LRESULT theme_changed (const STATUS_INFO* infoPtr)
-{
-    HTHEME theme = GetWindowTheme (infoPtr->Self);
-    CloseThemeData (theme);
-    OpenThemeData (infoPtr->Self, themeClass);
-    InvalidateRect (infoPtr->Self, NULL, TRUE);
-    return 0;
 }
 
 
@@ -1268,7 +1275,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
 
         case WM_THEMECHANGED:
-            return theme_changed (infoPtr);
+            return COMCTL32_ThemeChanged (infoPtr->Self, L"Status", TRUE, TRUE);
 
 	default:
 	    if ((msg >= WM_USER) && (msg < WM_APP) && !COMCTL32_IsReflectedMessage(msg))

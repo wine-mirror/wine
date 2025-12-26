@@ -1195,16 +1195,24 @@ static HRESULT WINAPI contentHandler_startElement(
         ISAXAttributes *saxattr)
 {
     struct call_entry call;
-    IMXAttributes *mxattr;
     HRESULT hr;
     int len;
 
     ok(uri != NULL, "uri == NULL\n");
     ok(localname != NULL, "localname == NULL\n");
     ok(qname != NULL, "qname == NULL\n");
+    ok(!!saxattr, "Unexpected pointer.\n");
 
-    hr = ISAXAttributes_QueryInterface(saxattr, &IID_IMXAttributes, (void**)&mxattr);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+    check_interface(saxattr, &IID_IMXAttributes, FALSE);
+    check_interface(saxattr, &IID_IVBSAXAttributes, FALSE);
+    check_interface(saxattr, &IID_IVBSAXLocator, FALSE);
+    check_interface(saxattr, &IID_IDispatch, FALSE);
+    check_interface(saxattr, &IID_IDispatchEx, FALSE);
+    check_interface(saxattr, &IID_ISAXAttributes, TRUE);
+    check_interface(saxattr, &IID_ISAXXMLReader, FALSE);
+    check_interface(saxattr, &IID_IVBSAXXMLReader, FALSE);
+    todo_wine
+    check_interface(saxattr, &IID_ISAXLocator, FALSE);
 
     init_call_entry(locator, &call);
     call.id = CH_STARTELEMENT;
@@ -1215,6 +1223,9 @@ static HRESULT WINAPI contentHandler_startElement(
     if(!test_attr_ptr)
         test_attr_ptr = saxattr;
     ok(test_attr_ptr == saxattr, "Multiple ISAXAttributes instances are used (%p %p)\n", test_attr_ptr, saxattr);
+
+    hr = ISAXAttributes_getValueFromQName(saxattr, NULL, 0, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     /* store actual attributes */
     len = 0;
@@ -2165,6 +2176,13 @@ static void test_saxreader(void)
         hr = CoCreateInstance(table->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         g_reader = reader;
+
+        check_interface(reader, &IID_IDispatch, TRUE);
+        check_interface(reader, &IID_IDispatchEx, TRUE);
+        check_interface(reader, &IID_ISAXXMLReader, TRUE);
+        check_interface(reader, &IID_IVBSAXXMLReader, TRUE);
+        check_interface(reader, &IID_ISAXLocator, FALSE);
+        check_interface(reader, &IID_IVBSAXLocator, FALSE);
 
         if (IsEqualGUID(table->clsid, &CLSID_SAXXMLReader40))
             msxml_version = 4;
@@ -5628,20 +5646,23 @@ static void test_mxattr_dispex(void)
 
 static void test_mxattr_qi(void)
 {
+    static const GUID *classes[] = { &CLSID_SAXAttributes, &CLSID_SAXAttributes30 };
     IMXAttributes *mxattr;
     HRESULT hr;
 
-    hr = CoCreateInstance(&CLSID_SAXAttributes, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IMXAttributes, (void **)&mxattr);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (int i = 0; i < ARRAYSIZE(classes); ++i)
+    {
+        hr = CoCreateInstance(classes[i], NULL, CLSCTX_INPROC_SERVER, &IID_IMXAttributes, (void **)&mxattr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    check_interface(mxattr, &IID_IMXAttributes, TRUE);
-    check_interface(mxattr, &IID_ISAXAttributes, TRUE);
-    check_interface(mxattr, &IID_IVBSAXAttributes, TRUE);
-    check_interface(mxattr, &IID_IDispatch, TRUE);
-    check_interface(mxattr, &IID_IDispatchEx, TRUE);
+        check_interface(mxattr, &IID_IMXAttributes, TRUE);
+        check_interface(mxattr, &IID_ISAXAttributes, TRUE);
+        check_interface(mxattr, &IID_IVBSAXAttributes, TRUE);
+        check_interface(mxattr, &IID_IDispatch, TRUE);
+        check_interface(mxattr, &IID_IDispatchEx, TRUE);
 
-    IMXAttributes_Release(mxattr);
+        IMXAttributes_Release(mxattr);
+    }
 }
 
 static struct msxmlsupported_data_t saxattr_support_data[] =

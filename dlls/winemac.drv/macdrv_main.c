@@ -43,21 +43,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 C_ASSERT(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
 
 int topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
-int capture_displays_for_fullscreen = 0;
+bool capture_displays_for_fullscreen = false;
 BOOL allow_vsync = TRUE;
 BOOL allow_set_gamma = TRUE;
-int left_option_is_alt = 0;
-int right_option_is_alt = 0;
-int left_command_is_ctrl = 0;
-int right_command_is_ctrl = 0;
+bool left_option_is_alt = false;
+bool right_option_is_alt = false;
+bool left_command_is_ctrl = false;
+bool right_command_is_ctrl = false;
 BOOL allow_software_rendering = FALSE;
-int allow_immovable_windows = TRUE;
-int use_confinement_cursor_clipping = TRUE;
-int cursor_clipping_locks_windows = TRUE;
-int use_precise_scrolling = TRUE;
+bool allow_immovable_windows = true;
+bool use_confinement_cursor_clipping = true;
+bool cursor_clipping_locks_windows = true;
+bool use_precise_scrolling = true;
 int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
-int retina_enabled = FALSE;
-int enable_app_nap = FALSE;
+bool retina_enabled = false;
+bool enable_app_nap = false;
 
 UINT64 app_icon_callback = 0;
 UINT64 app_quit_request_callback = 0;
@@ -464,8 +464,6 @@ void macdrv_ThreadDetach(void)
         macdrv_destroy_event_queue(data->queue);
         if (data->keyboard_layout_uchr)
             CFRelease(data->keyboard_layout_uchr);
-        if (data->ime_done_event)
-            NtClose(data->ime_done_event);
         free(data);
         /* clear data in case we get re-entered from user32 before the thread is truly dead */
         NtUserGetThreadInfo()->driver_data = 0;
@@ -524,8 +522,6 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
         ERR("macdrv: Can't create event queue.\n");
         NtTerminateProcess(0, 1);
     }
-
-    data->ime_done_event = NULL;
 
     macdrv_get_input_source_info(&data->keyboard_layout_uchr, &data->keyboard_type, &data->iso_keyboard, &input_source);
     data->active_keyboard_layout = macdrv_get_hkl_from_source(input_source);

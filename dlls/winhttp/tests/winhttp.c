@@ -3631,7 +3631,7 @@ static void test_websocket(int port)
     ret = WinHttpSetOption(session, WINHTTP_OPTION_WEB_SOCKET_SEND_BUFFER_SIZE, &value, sizeof(DWORD));
     ok(ret, "got %lu\n", GetLastError());
 
-    request = WinHttpOpenRequest(connection, L"GET", L"/", NULL, NULL, NULL, 0);
+    request = WinHttpOpenRequest(connection, L"GET", L"/", NULL, NULL, NULL, WINHTTP_FLAG_SECURE);
     ok(request != NULL, "got %lu\n", GetLastError());
 
     size = 0xdeadbeef;

@@ -931,8 +931,8 @@ void WINAPI RtlWakeAddressAll( const void *addr )
 {
     struct futex_queue *queue = get_futex_queue( addr );
     struct futex_entry *entry, *next;
-    unsigned int count = 0, i;
-    DWORD tids[256];
+    unsigned int count = 0;
+    HANDLE tids[256];
 
     TRACE("%p\n", addr);
 
@@ -949,19 +949,20 @@ void WINAPI RtlWakeAddressAll( const void *addr )
         {
             entry->addr = NULL;
             list_remove( &entry->entry );
-            /* Try to buffer wakes, so that we don't make a system call while
-             * holding a spinlock. */
-            if (count < ARRAY_SIZE(tids))
-                tids[count++] = entry->tid;
-            else
-                NtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)entry->tid );
+            if (count == ARRAY_SIZE(tids))
+            {
+                NtAlertMultipleThreadByThreadId( tids, count, NULL, NULL );
+                count = 0;
+            }
+            tids[count++] = (HANDLE)(ULONG_PTR)entry->tid;
         }
     }
 
+    /* Try not to make a system call while holding a spinlock (even if that can be responsible for spurious wake
+     * up scenario). */
     spin_unlock( &queue->lock );
-
-    for (i = 0; i < count; ++i)
-        NtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tids[i] );
+    if (count)
+        NtAlertMultipleThreadByThreadId( tids, count, NULL, NULL );
 }
 
 /***********************************************************************
@@ -1381,6 +1382,7 @@ struct barrier_impl
     LONG spin_count;
     LONG total_thread_count;
     volatile LONG reached_thread_count;
+    volatile LONG structure_lock_count;
     volatile LONG waiting_thread_count;
     volatile LONG wait_barrier_complete;
 };
@@ -1400,6 +1402,7 @@ NTSTATUS WINAPI RtlInitBarrier( RTL_BARRIER *barrier, LONG thread_count, LONG sp
     b->total_thread_count = thread_count;
     b->spin_count = spin_count;
     b->reached_thread_count = 0;
+    b->structure_lock_count = 0;
     b->waiting_thread_count = 0;
     b->wait_barrier_complete = 0;
     return STATUS_SUCCESS;
@@ -1417,14 +1420,14 @@ void WINAPI RtlDeleteBarrier( RTL_BARRIER *barrier )
     TRACE( "barrier %p.\n", barrier );
 
     if (!barrier) return;
-    if (ReadAcquire( &b->reached_thread_count ) < b->total_thread_count && b->waiting_thread_count)
+    if (ReadAcquire( &b->reached_thread_count ) < b->total_thread_count && b->structure_lock_count)
     {
         /* On Windows this case will make RtlDeleteBarrier and the threads joining after wait forever,
          * unless the threads joining after will have SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE. */
         ERR( "called before the barrier wait is satisfied.\n" );
     }
-    while ((count = ReadAcquire( &b->waiting_thread_count )))
-        RtlWaitOnAddress( (void *)&b->waiting_thread_count, &count, sizeof(b->waiting_thread_count), NULL );
+    while ((count = ReadAcquire( &b->structure_lock_count )))
+        RtlWaitOnAddress( (void *)&b->structure_lock_count, &count, sizeof(b->structure_lock_count), NULL );
 }
 
 
@@ -1445,11 +1448,28 @@ BOOLEAN WINAPI RtlBarrier( RTL_BARRIER *barrier, ULONG flags )
     if (flags & ~0x10000 && !once++) FIXME( "Unknown flags %#lx.\n", flags );
     if (!barrier) return FALSE;
 
-    if (ReadAcquire( &b->reached_thread_count ) >= b->total_thread_count) return TRUE;
-
     /* Incrementing reached_thread_count may trigger RTL_BARRIER data desrtuction from another thread,
      * so lock RtlDeleteBarrier with waiting_thread_count before that. */
-    if (flags & 0x10000) InterlockedIncrement( &b->waiting_thread_count );
+    if (flags & 0x10000) InterlockedIncrement( &b->structure_lock_count );
+
+    /* On Windows the long wait doesn't consume CPU with any spin count, so probably the spin count
+     * is limited or not used at all. */
+    spin_count = min( 2000, (unsigned int)b->spin_count );
+
+    /* Wait for previous wait iteration to complete. */
+    count = 0;
+    while (ReadAcquire( &b->reached_thread_count ) == b->total_thread_count)
+    {
+        if (count < spin_count)
+        {
+            ++count;
+            YieldProcessor();
+            continue;
+        }
+        RtlWaitOnAddress( (void *)&b->reached_thread_count, &b->total_thread_count,
+                          sizeof(b->reached_thread_count), NULL );
+    }
+    InterlockedIncrement( &b->waiting_thread_count );
     if (InterlockedIncrement( &b->reached_thread_count ) == b->total_thread_count)
     {
         WriteRelease( &b->wait_barrier_complete, 1 );
@@ -1457,9 +1477,6 @@ BOOLEAN WINAPI RtlBarrier( RTL_BARRIER *barrier, ULONG flags )
         ret = TRUE;
         goto done;
     }
-    /* On Windows the long wait doesn't consume CPU with any spin count, so probably the spin count
-     * is limited or not used at all. */
-    spin_count = min( 2000, (unsigned int)b->spin_count );
     count = 0;
     while (ReadAcquire( &b->reached_thread_count ) < b->total_thread_count )
     {
@@ -1473,12 +1490,19 @@ BOOLEAN WINAPI RtlBarrier( RTL_BARRIER *barrier, ULONG flags )
     }
 
 done:
-    if (flags & 0x10000 && !InterlockedDecrement( &b->waiting_thread_count ))
+    if (!InterlockedDecrement( &b->waiting_thread_count ))
+    {
+        WriteRelease( &b->wait_barrier_complete, 0 );
+        WriteRelease( &b->reached_thread_count, 0 );
+        RtlWakeAddressAll( (const void *)&b->reached_thread_count );
+    }
+
+    if (flags & 0x10000 && !InterlockedDecrement( &b->structure_lock_count ))
     {
         /* Now RTL_BARRIER structure contents may become invalid. Signaling on its address should be fine, the worst
          * (unlikely) case it will wake something unrelated on reused address but that should be a legitimate spurious
          * wakeup case. */
-        RtlWakeAddressAll( (const void *)&b->waiting_thread_count );
+        RtlWakeAddressAll( (const void *)&b->structure_lock_count );
     }
     return ret;
 }

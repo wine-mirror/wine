@@ -200,6 +200,7 @@ my %manual_unix_thunks =
      "glFramebufferReadBufferEXT" => 1,
      "glGetBooleanv" => 1,
      "glGetDoublev" => 1,
+     "glGetError" => 1,
      "glGetFloatv" => 1,
      "glGetFramebufferParameterivEXT" => 1,
      "glGetInteger64v" => 1,
@@ -288,7 +289,6 @@ my %manual_wow64_wrappers =
      "glFlushMappedNamedBufferRangeEXT" => 0,
      "glGetBufferPointerv" => 0,
      "glGetBufferPointervARB" => 0,
-     "glGetError" => 0,
      "glGetNamedBufferPointerv" => 0,
      "glGetNamedBufferPointervEXT" => 0,
      "glGetSynciv" => 0,
@@ -443,6 +443,7 @@ sub generate_unix_thunk($$$$)
     my $manual_wow64_wrapper = $is_wow64 && defined $manual_wow64_wrappers{$name};
     my $need_wrap = $manual_wow64_wrapper || needs_wrapper( $name, $func );
     my $need_lock = $func_ret =~ /HGLRC|HPBUFFERARB/;
+    my $need_funcs = !$need_wrap || ($prefix eq "ext" && $name !~ /^wgl/);
     my $teb = $is_wow64 ? "teb" : "params->teb";
     my $ret_stat = "return STATUS_SUCCESS;";
     my $invalidation = "";
@@ -529,8 +530,8 @@ sub generate_unix_thunk($$$$)
             }
             elsif ($ptype eq "PTR32")
             {
-                $ret_expr .= "(UINT_PTR)" unless $ret_type =~ /\*/;
-                $need_manual_thunk = 1 if $ret_type =~ /(GLsync|PROC|GLintptr|\*)/;
+                $ret_expr .= "(UINT_PTR)";
+                $need_manual_thunk = 1;
             }
         }
         $ret .= "    } *params = args;\n";
@@ -544,9 +545,12 @@ sub generate_unix_thunk($$$$)
         if (defined $wow64_invalidate_buffer{$name})
         {
             $need_lock = 1;
+            $need_funcs = 1;
+            $input_conv .= "    struct buffer *buffer;\n";
             $invalidation .= $name =~ /NamedBuffer/
-                ? "    invalidate_buffer_name( $teb, params->buffer );\n"
-                : "    invalidate_buffer_target( $teb, params->target );\n";
+                ? "    buffer = invalidate_buffer_name( $teb, params->buffer );\n"
+                : "    buffer = invalidate_buffer_target( $teb, params->target );\n";
+            $output_conv .= "    if (buffer) free_buffer( funcs, buffer );\n";
         }
         $ret .= "    TEB *teb = get_teb64( params->teb );\n" if $need_wrap || !$use_dc;
     }
@@ -575,9 +579,10 @@ sub generate_unix_thunk($$$$)
         $ret .= "    const struct opengl_funcs *funcs = get_dc_funcs( $param );\n";
         $ret .= "    if (!funcs || !funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
-    elsif (!$need_wrap)
+    elsif ($need_funcs)
     {
         $ret .= "    const struct opengl_funcs *funcs = $teb->glTable;\n";
+        $ret .= "    if (!funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
     foreach my $arg (@{$map_default_fbo_thunks{$name}})
     {
@@ -637,9 +642,9 @@ sub generate_wrapper_declaration($$$)
     my $decl_args = get_func_args( $func, 0 );
     my $ret_type = get_func_ret( $func, 0 );
     my $ret = "extern ";
-    $ret_type = "PTR32" if $is_wow64 && $ret_type =~ /\*/;
     $ret .= $ret_type;
-    $ret .= $is_wow64 ? " wow64_" : " wrap_";
+    $ret .= " " unless $ret_type =~ /\*$/;
+    $ret .= $is_wow64 ? "wow64_" : "wrap_";
     $ret .= "$name( TEB *teb,";
     foreach my $arg (@{$func->[1]})
     {
@@ -705,7 +710,11 @@ sub generate_null_func($$)
 
     $ret .= "static $func_ret null_$name($decl_args)\n";
     $ret .= "{\n";
-    $ret .= "    ERR( \"unsupported\\n\" );\n";
+    $ret .= "    WARN( \"unsupported\\n\" );\n";
+    if ($name eq "wglGetPixelFormat")
+    {
+        $ret .= "    RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );\n";
+    }
     if ($name eq "glGetError")
     {
         $ret .= "    return GL_INVALID_OPERATION;\n";
@@ -861,47 +870,48 @@ my %remapped_wgl_functions =
 
 my @extra_wgl_functions = ( "wglGetDefaultProcAddress" );
 
-my %supported_wgl_extensions =
+my %unsupported_extgroups =
    (
-    "WGL_ARB_create_context" => 1,
-    "WGL_ARB_create_context_no_error" => 1,
-    "WGL_ARB_create_context_profile" => 1,
-    "WGL_ARB_extensions_string" => 1,
-    "WGL_ARB_make_current_read" => 1,
-    "WGL_ARB_multisample" => 1,
-    "WGL_ARB_pbuffer" => 1,
-    "WGL_ARB_pixel_format" => 1,
-    "WGL_ARB_framebuffer_sRGB" => 1,
-    "WGL_ARB_pixel_format_float" => 1,
-    "WGL_ARB_render_texture" => 1,
-    "WGL_ATI_pixel_format_float" => 1,
-    "WGL_EXT_create_context_es2_profile" => 1,
-    "WGL_EXT_extensions_string" => 1,
-    "WGL_EXT_framebuffer_sRGB" => 1,
-    "WGL_EXT_pixel_format_packed_float" => 1,
-    "WGL_EXT_swap_control" => 1,
-    "WGL_EXT_swap_control_tear" => 1,
-    "WGL_NV_float_buffer" => 1,
-    "WGL_NV_render_depth_texture" => 1,
-    "WGL_NV_render_texture_rectangle" => 1,
-    "WGL_NV_vertex_array_range" => 1,
-    "WGL_WINE_pixel_format_passthrough" => 1,
-    "WGL_WINE_query_renderer" => 1,
+    "WGL_3DFX_" => 1,
+    "WGL_3DL_" => 1,
+    "WGL_I3D_" => 1,
+    "WGL_OML_" => 1,
+    "EGL_ANDROID_" => 1,
+    "EGL_ANGLE_" => 1,
+    "EGL_ARM_" => 1,
+    "EGL_HI_" => 1,
+    "EGL_NOK_" => 1,
+    "EGL_QNX_" => 1,
+    "EGL_TIZEN_" => 1,
    );
-my %supported_egl_extensions =
+my %unsupported_extensions =
    (
-    "EGL_EXT_device_base" => 1,
-    "EGL_EXT_device_drm" => 1,
-    "EGL_EXT_pixel_format_float" => 1,
-    "EGL_EXT_platform_device" => 1,
-    "EGL_EXT_present_opaque" => 1,
-    "EGL_KHR_create_context" => 1,
-    "EGL_KHR_create_context_no_error" => 1,
-    "EGL_KHR_no_config_context" => 1,
-    "EGL_KHR_platform_android" => 1,
-    "EGL_KHR_platform_wayland" => 1,
-    "EGL_KHR_platform_x11" => 1,
-    "EGL_MESA_platform_surfaceless" => 1,
+    "WGL_AMD_gpu_association" => 1,
+    "WGL_ARB_buffer_region" => 1,
+    "WGL_ARB_context_flush_control" => 1,
+    "WGL_ARB_create_context_robustness" => 1,
+    "WGL_ARB_robustness_application_isolation" => 1,
+    "WGL_ARB_robustness_share_group_isolation" => 1,
+    "WGL_ATI_render_texture_rectangle" => 1,
+    "WGL_EXT_colorspace" => 1,
+    "WGL_EXT_create_context_es_profile" => 1,
+    "WGL_EXT_depth_float" => 1,
+    "WGL_EXT_display_color_table" => 1,
+    "WGL_EXT_make_current_read" => 1,
+    "WGL_EXT_multisample" => 1,
+    "WGL_EXT_pbuffer" => 1,
+    "WGL_EXT_pixel_format" => 1,
+    "WGL_NV_copy_image" => 1,
+    "WGL_NV_delay_before_swap" => 1,
+    "WGL_NV_DX_interop" => 1,
+    "WGL_NV_DX_interop2" => 1,
+    "WGL_NV_gpu_affinity" => 1,
+    "WGL_NV_multigpu_context" => 1,
+    "WGL_NV_multisample_coverage" => 1,
+    "WGL_NV_present_video" => 1,
+    "WGL_NV_swap_group" => 1,
+    "WGL_NV_video_capture" => 1,
+    "WGL_NV_video_output" => 1,
    );
 my %extension_aliases =
     (
@@ -922,6 +932,16 @@ sub is_supported_api($)
         return 1 if defined $supported_apis{$i};
     }
     return 0;
+}
+
+sub is_supported_extension($)
+{
+    my $ext = shift;
+    foreach my $group (keys %unsupported_extgroups)
+    {
+        return 0 if rindex($ext, $group, 0) == 0;
+    }
+    return not defined $unsupported_extensions{$ext};
 }
 
 # some functions need a hand-written wrapper
@@ -1024,13 +1044,21 @@ sub parse_file($)
     # generate extension functions from norm functions, if they are newer than the category
     foreach my $feature ($xml->findnodes("/registry/feature"))
     {
-        next if defined $norm_categories{$feature->{name}};
-        next unless is_supported_api( $feature->{api} );
+        my $feature_name = $feature->{name};
+        if ($feature_name =~ /GL_VERSION_ES_.*_1_/)
+        {
+            $feature_name = "GL_NV_ES1_1_compatibility";
+        }
+        else
+        {
+            next unless is_supported_api( $feature->{api} );
+        }
+        next if defined $norm_categories{$feature_name};
         foreach my $cmd ($feature->findnodes("./require/command"))
         {
             my $name = $cmd->{name};
             next if $norm_functions{$name} || $ext_functions{$name};
-            $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $feature->{name} ] ];
+            $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $feature_name ] ];
         }
         foreach my $enum ($feature->findnodes("./require/enum"))
         {
@@ -1041,9 +1069,9 @@ sub parse_file($)
     # generate extension functions
     foreach my $ext ($xml->findnodes("/registry/extensions/extension"))
     {
+        next unless is_supported_extension( $ext->{name} );
         if ($ext->{supported} eq "wgl")
         {
-            next unless defined $supported_wgl_extensions{$ext->{name}};
             foreach my $cmd ($ext->findnodes("./require/command"))
             {
                 my $name = $cmd->{name};
@@ -1057,7 +1085,6 @@ sub parse_file($)
         }
         if ($ext->{supported} eq "egl")
         {
-            next unless defined $supported_egl_extensions{$ext->{name}};
             foreach my $cmd ($ext->findnodes("./require/command"))
             {
                 my $name = $cmd->{name};
@@ -1573,10 +1600,21 @@ foreach (sort keys %wgl_functions)
     next if defined $manual_win_functions{$_};
     print OUT generate_null_func($_, $wgl_functions{$_});
 }
+
+printf OUT "static BOOL null_wgl_context_reset( struct wgl_context *context, HDC hdc, struct wgl_context *share, const int *attribs )\n";
+printf OUT "{\n";
+printf OUT "    WARN( \"unsupported\\n\" );\n";
+printf OUT "    return FALSE;\n";
+printf OUT "}\n";
+printf OUT "static BOOL null_wgl_context_flush( struct wgl_context *context, void (*flush)(void), BOOL force_swap )\n";
+printf OUT "{\n";
+printf OUT "    WARN( \"unsupported\\n\" );\n";
+printf OUT "    return FALSE;\n";
+printf OUT "}\n";
 printf OUT "static void null_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,\n";
 printf OUT "                                    UINT *num_formats, UINT *num_onscreen_formats )\n";
 printf OUT "{\n";
-printf OUT "    ERR( \"unsupported\\n\" );\n";
+printf OUT "    WARN( \"unsupported\\n\" );\n";
 printf OUT "    *num_formats = *num_onscreen_formats = 0;\n";
 printf OUT "}\n";
 foreach (sort keys %norm_functions)
@@ -1584,16 +1622,12 @@ foreach (sort keys %norm_functions)
     next if defined $manual_win_functions{$_};
     print OUT generate_null_func($_, $norm_functions{$_});
 }
-foreach (sort keys %ext_functions)
-{
-    next if $_ =~ /^egl/; # unix-side only API
-    next if defined $manual_win_functions{$_};
-    print OUT generate_null_func($_, $ext_functions{$_});
-}
 print OUT "\n";
 
 print OUT "struct opengl_funcs null_opengl_funcs =\n";
 print OUT "{\n";
+print OUT "    .p_wgl_context_reset = null_wgl_context_reset,\n";
+print OUT "    .p_wgl_context_flush = null_wgl_context_flush,\n";
 print OUT "    .p_get_pixel_formats = null_get_pixel_formats,\n";
 foreach (sort keys %wgl_functions)
 {
@@ -1605,16 +1639,14 @@ foreach (sort keys %norm_functions)
     next if defined $manual_win_functions{$_};
     print OUT "    .p_$_ = null_$_,\n";
 }
-foreach (sort keys %ext_functions)
-{
-    next if $_ =~ /^egl/; # unix-side only API
-    next if defined $manual_win_functions{$_};
-    print OUT "    .p_$_ = null_$_,\n";
-}
 print OUT "};\n";
 
 # Then the table giving the string <-> function correspondence */
-my $count = keys %ext_functions;
+my $count = 0;
+foreach (keys %ext_functions)
+{
+    $count += 1 unless $_ =~ /^egl/; # unix-side only API
+}
 print OUT "\nconst int extension_registry_size = $count;\n";
 print OUT "const struct registry_entry extension_registry[$count] =\n";
 print OUT "{\n";

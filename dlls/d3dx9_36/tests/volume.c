@@ -23,6 +23,13 @@
 #include "d3dx9tex.h"
 #include "d3dx9_test_images.h"
 
+#define check_release(obj, exp) _check_release(__LINE__, obj, exp)
+static inline void _check_release(unsigned int line, IUnknown *obj, int exp)
+{
+    int ref = IUnknown_Release(obj);
+    ok_(__FILE__, line)(ref == exp, "Invalid refcount. Expected %d, got %d\n", exp, ref);
+}
+
 #define check_pixel_4bpp(box, x, y, z, color) _check_pixel_4bpp(__LINE__, box, x, y, z, color)
 static inline void _check_pixel_4bpp(unsigned int line, const D3DLOCKED_BOX *box, int x, int y, int z, DWORD expected_color)
 {
@@ -35,16 +42,6 @@ static inline void _check_pixel_8bpp(unsigned int line, const D3DLOCKED_BOX *box
 {
    uint64_t color = ((uint64_t *)box->pBits)[x + (y * box->RowPitch + z * box->SlicePitch) / 8];
    ok_(__FILE__, line)(color == expected_color, "Got color %#I64x, expected %#I64x.\n", color, expected_color);
-}
-
-static inline void set_box(D3DBOX *box, UINT left, UINT top, UINT right, UINT bottom, UINT front, UINT back)
-{
-    box->Left = left;
-    box->Top = top;
-    box->Right = right;
-    box->Bottom = bottom;
-    box->Front = front;
-    box->Back = back;
 }
 
 static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
@@ -659,6 +656,125 @@ static void test_d3dx_save_volume_to_file(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_Release(volume_texture);
 }
 
+static void test_image_filters(void)
+{
+    static const struct
+    {
+        DWORD filter;
+        const char *name;
+    }
+    test_filters[] =
+    {
+        { D3DX_FILTER_POINT, "D3DX_FILTER_POINT" },
+        { D3DX_FILTER_LINEAR, "D3DX_FILTER_LINEAR" },
+        { D3DX_FILTER_TRIANGLE, "D3DX_FILTER_TRIANGLE" },
+        { D3DX_FILTER_BOX, "D3DX_FILTER_BOX" },
+    };
+    static const struct
+    {
+        const D3DBOX src_box;
+        const void *src_data;
+        D3DFORMAT format;
+
+        unsigned int dst_width;
+        unsigned int dst_height;
+        unsigned int dst_depth;
+        struct
+        {
+            const void *expected_dst_data;
+            const void *expected_dst_data_32;
+            BOOL todo;
+            uint32_t max_diff;
+        }
+        filter_expected[4];
+    } tests[] =
+    {
+        {
+            { 0, 0, 8, 8, 0, 8 }, a8r8g8b8_8_8_8, D3DFMT_A8R8G8B8, 4, 4, 4,
+            {
+                { a8r8g8b8_8_8_8_point_filter_4_4_4 },
+                { a8r8g8b8_8_8_8_linear_filter_4_4_4, .todo = TRUE },
+                {
+                    a8r8g8b8_8_8_8_triangle_filter_4_4_4, a8r8g8b8_8_8_8_triangle_filter_4_4_4_32bit,
+                    .todo = TRUE
+                },
+                /* Linear and box filters match on 64bit, but not 32bit. */
+                {
+                    a8r8g8b8_8_8_8_linear_filter_4_4_4, a8r8g8b8_8_8_8_box_filter_4_4_4_32bit,
+#ifndef _WIN64
+                    /* We match exactly on 64-bit, but not 32-bit. */
+                    .max_diff = 1
+#endif
+                },
+            },
+        },
+        {
+            { 0, 0, 6, 6, 0, 6 }, a8r8g8b8_6_6_6, D3DFMT_A8R8G8B8, 3, 3, 3,
+            {
+                { a8r8g8b8_6_6_6_point_filter_3_3_3 },
+                { a8r8g8b8_6_6_6_linear_filter_3_3_3, .todo = TRUE },
+                { a8r8g8b8_6_6_6_triangle_filter_3_3_3, .todo = TRUE },
+                { a8r8g8b8_6_6_6_linear_filter_3_3_3, .todo = TRUE },
+            },
+        },
+    };
+    IDirect3DVolumeTexture9 *volume_texture;
+    uint32_t src_pitch, src_slice_pitch;
+    const uint8_t *expected_dst;
+    D3DLOCKED_BOX locked_box;
+    IDirect3DVolume9 *volume;
+    IDirect3DDevice9 *device;
+    unsigned int i, j;
+    HRESULT hr;
+    HWND hwnd;
+
+    if (!(device = create_device(&hwnd)))
+        return;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        const unsigned int fmt_bpp = get_bpp_for_d3dformat(tests[i].format);
+
+        winetest_push_context("Test %u", i);
+
+        hr = IDirect3DDevice9_CreateVolumeTexture(device, tests[i].dst_width, tests[i].dst_height, tests[i].dst_depth, 1,
+                0, tests[i].format, D3DPOOL_SCRATCH, &volume_texture, NULL);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+        IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
+
+        src_pitch = fmt_bpp * (tests[i].src_box.Right - tests[i].src_box.Left);
+        src_slice_pitch = src_pitch * (tests[i].src_box.Back - tests[i].src_box.Front);
+        for (j = 0; j < ARRAY_SIZE(test_filters); ++j)
+        {
+            winetest_push_context("Filter %s", test_filters[j].name);
+
+            hr = D3DXLoadVolumeFromMemory(volume, NULL, NULL, tests[i].src_data, tests[i].format, src_pitch,
+                    src_slice_pitch, NULL, &tests[i].src_box, test_filters[j].filter, 0);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            if (sizeof(void *) == 4 && tests[i].filter_expected[j].expected_dst_data_32)
+                expected_dst = tests[i].filter_expected[j].expected_dst_data_32;
+            else
+                expected_dst = tests[i].filter_expected[j].expected_dst_data;
+
+            IDirect3DVolume9_LockBox(volume, &locked_box, NULL, D3DLOCK_READONLY);
+            todo_wine_if(tests[i].filter_expected[j].todo) check_test_readback(locked_box.pBits, locked_box.RowPitch,
+                    locked_box.SlicePitch, expected_dst, tests[i].dst_width, tests[i].dst_height, tests[i].dst_depth,
+                    tests[i].format, tests[i].filter_expected[j].max_diff);
+            IDirect3DVolume9_UnlockBox(volume);
+
+            winetest_pop_context();
+        }
+
+        check_release((IUnknown *)volume_texture, 1);
+        check_release((IUnknown *)volume, 0);
+        winetest_pop_context();
+    }
+
+    check_release((IUnknown *)device, 0);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(volume)
 {
     HWND wnd;
@@ -700,4 +816,6 @@ START_TEST(volume)
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
     DestroyWindow(wnd);
+
+    test_image_filters();
 }

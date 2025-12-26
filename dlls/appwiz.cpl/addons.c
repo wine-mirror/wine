@@ -56,10 +56,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #define GECKO_SHA "???"
 #endif
 
-#define MONO_VERSION "10.3.0"
+#define MONO_VERSION "10.4.1"
 #if defined(__i386__) || defined(__x86_64__)
 #define MONO_ARCH "x86"
-#define MONO_SHA "cece5c63180094dffdf01d0fbe362a4b606e5280b98cdfd1b8568cdf9b572f98"
+#define MONO_SHA "071f4b2887e1c97a11d791ff3d65be9429eed6dec4c2708888bfd546ba358e23"
 #else
 #define MONO_ARCH ""
 #define MONO_SHA "???"
@@ -323,7 +323,7 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
     WCHAR *cache_dir=NULL, *ret;
     size_t len, size;
 
-    xdg_dir = _wgetenv( L"XDG_CACHE_HOME" );
+    xdg_dir = _wgetenv( L"WINE_HOST_XDG_CACHE_HOME" );
     if (xdg_dir && *xdg_dir)
     {
         if (!(cache_dir = HeapAlloc( GetProcessHeap(), 0, wcslen(xdg_dir) * sizeof(WCHAR) + sizeof(L"\\\\?\\unix") ))) return NULL;

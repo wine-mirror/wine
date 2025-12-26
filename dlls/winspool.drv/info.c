@@ -45,7 +45,6 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
-#include "wine/heap.h"
 #include <wine/unixlib.h>
 
 #include "ddk/compstui.h"
@@ -1650,7 +1649,7 @@ static void free_printer_info( void *data, DWORD level )
         free( piW->pDriverName );
         free( piW->pComment );
         free( piW->pLocation );
-        heap_free( piW->pDevMode );
+        HeapFree( GetProcessHeap(), 0, piW->pDevMode );
         free( piW->pSepFile );
         free( piW->pPrintProcessor );
         free( piW->pDatatype );
@@ -1663,7 +1662,7 @@ static void free_printer_info( void *data, DWORD level )
     {
         PRINTER_INFO_9W *piW = (PRINTER_INFO_9W *)data;
 
-        heap_free( piW->pDevMode );
+        HeapFree( GetProcessHeap(), 0, piW->pDevMode );
         break;
     }
 
@@ -1729,7 +1728,7 @@ INT WINAPI DeviceCapabilitiesA(const char *device, const char *portA, WORD cap,
     }
 cleanup:
     free(device_name);
-    heap_free(devmode);
+    HeapFree(GetProcessHeap(), 0, devmode);
     free(port);
     return ret;
 }
@@ -1795,7 +1794,7 @@ LONG WINAPI DocumentPropertiesA(HWND hwnd, HANDLE printer, char *device_name, DE
         DEVMODEWtoA( outputW, output );
 
     free(device);
-    heap_free(inputW);
+    HeapFree(GetProcessHeap(), 0, inputW);
     free(outputW);
 
     if (!mode && ret > 0) ret -= CCHDEVICENAME + CCHFORMNAME;
@@ -2017,7 +2016,7 @@ BOOL WINAPI OpenPrinter2A(LPSTR name, HANDLE *printer,
     if (p_defaultsW)
     {
         RtlFreeUnicodeString(&datatypeU);
-        heap_free(defaultsW.pDevMode);
+        HeapFree(GetProcessHeap(), 0, defaultsW.pDevMode);
     }
     RtlFreeUnicodeString(&nameU);
 
@@ -3057,8 +3056,8 @@ BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
         free(info2W->pDatatype);
         free(info2W->pPrintProcessor);
         free(info2W->pParameters);
-        heap_free(info2W->pDevMode);
         free(info2W->pStatus);
+        HeapFree(GetProcessHeap(), 0, info2W->pDevMode);
         break;
       }
     }
@@ -3455,7 +3454,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if (ptr && (buflen >= sz)) {
         DEVMODEW *dmW = GdiConvertToDevmodeW((DEVMODEA*)ptr);
         memcpy(ptr, dmW, sz);
-        heap_free(dmW);
+        HeapFree(GetProcessHeap(), 0, dmW);
     }
     *needed = sz;
     return TRUE;
@@ -7487,9 +7486,9 @@ LPSTR WINAPI StartDocDlgA( HANDLE hPrinter, DOCINFOA *doc )
     if(retW)
     {
         DWORD len = WideCharToMultiByte(CP_ACP, 0, retW, -1, NULL, 0, NULL, NULL);
-        ret = heap_alloc(len);
+        ret = HeapAlloc(GetProcessHeap(), 0, len);
         WideCharToMultiByte(CP_ACP, 0, retW, -1, ret, len, NULL, NULL);
-        heap_free(retW);
+        HeapFree(GetProcessHeap(), 0, retW);
     }
 
 failed:
@@ -7560,7 +7559,7 @@ LPWSTR WINAPI StartDocDlgW( HANDLE hPrinter, DOCINFOW *doc )
                 free(name);
                 return NULL;
             }
-            ret = heap_alloc(len * sizeof(WCHAR));
+            ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
             GetFullPathNameW(name, len, ret, NULL);
             free(name);
         }
@@ -7570,13 +7569,13 @@ LPWSTR WINAPI StartDocDlgW( HANDLE hPrinter, DOCINFOW *doc )
     if(!(len = GetFullPathNameW(doc->lpszOutput, 0, NULL, NULL)))
         return NULL;
 
-    ret = heap_alloc(len * sizeof(WCHAR));
+    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     GetFullPathNameW(doc->lpszOutput, len, ret, NULL);
-        
+
     attr = GetFileAttributesW(ret);
     if(attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
     {
-        heap_free(ret);
+        HeapFree(GetProcessHeap(), 0, ret);
         ret = NULL;
     }
     return ret;

@@ -1512,7 +1512,7 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
         y_offset = y_src;
         set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
-    pXRenderSetPictureFilter( gdi_display, src_pict, FilterBilinear, 0, 0 );
+    if (client_side_graphics) pXRenderSetPictureFilter( gdi_display, src_pict, FilterBilinear, 0, 0 );
     pXRenderComposite( gdi_display, op, src_pict, mask_pict, dst_pict,
                        x_offset, y_offset, 0, 0, x_dst, y_dst, width_dst, height_dst );
 }

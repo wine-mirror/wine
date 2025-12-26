@@ -31,6 +31,8 @@ SOURCES = \
 	surface.c \
 	swapchain.c \
 	texture.c \
+	texture_gl.c \
+	texture_vk.c \
 	utils.c \
 	version.rc \
 	vertexdeclaration.c \

@@ -33,7 +33,6 @@
 #include "wine/exception.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
@@ -64,6 +63,22 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThread( HANDLE process, SECURITY_ATT
     return CreateRemoteThreadEx( process, sa, stack, start, param, flags, NULL, id );
 }
 
+struct proc_thread_attr
+{
+    DWORD_PTR attr;
+    SIZE_T size;
+    void *value;
+};
+
+struct _PROC_THREAD_ATTRIBUTE_LIST
+{
+    DWORD mask;  /* bitmask of items in list */
+    DWORD size;  /* max number of items in list */
+    DWORD count; /* number of items in list */
+    DWORD pad;
+    DWORD_PTR unk;
+    struct proc_thread_attr attrs[];
+};
 
 /***************************************************************************
  *           CreateRemoteThreadEx   (kernelbase.@)
@@ -73,33 +88,78 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
                                                       LPVOID param, DWORD flags,
                                                       LPPROC_THREAD_ATTRIBUTE_LIST attributes, DWORD *id )
 {
+    ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[3] ) / sizeof(ULONG_PTR)];
+    PS_ATTRIBUTE_LIST *attr_list = (PS_ATTRIBUTE_LIST *)buffer;
+    struct _ACTIVATION_CONTEXT *actctx;
     HANDLE handle;
     CLIENT_ID client_id;
+    TEB *teb;
+    ULONG count = 0, ret;
+    OBJECT_ATTRIBUTES attr;
     SIZE_T stack_reserve = 0, stack_commit = 0;
+    GROUP_AFFINITY *group_affinity = NULL;
 
-    if (attributes) FIXME("thread attributes ignored\n");
+    if (attributes)
+    {
+        DWORD i;
+        for (i = 0; i < attributes->count; i++)
+            switch (attributes->attrs[i].attr)
+            {
+            case PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY:
+                group_affinity = attributes->attrs[i].value;
+                break;
+            default:
+                FIXME("thread attributes %Ix ignored\n", attributes->attrs[i].attr);
+                break;
+            }
+    }
 
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
 
-    if (!set_ntstatus( RtlCreateUserThread( process, sa ? sa->lpSecurityDescriptor : NULL, TRUE,
-                                            0, stack_reserve, stack_commit,
-                                            (PRTL_THREAD_START_ROUTINE)start, param, &handle, &client_id )))
+    attr_list->Attributes[count].Attribute    = PS_ATTRIBUTE_CLIENT_ID;
+    attr_list->Attributes[count].Size         = sizeof(client_id);
+    attr_list->Attributes[count].ValuePtr     = &client_id;
+    attr_list->Attributes[count].ReturnLength = NULL;
+    count++;
+    attr_list->Attributes[count].Attribute    = PS_ATTRIBUTE_TEB_ADDRESS;
+    attr_list->Attributes[count].Size         = sizeof(teb);
+    attr_list->Attributes[count].ValuePtr     = &teb;
+    attr_list->Attributes[count].ReturnLength = NULL;
+    count++;
+    if (group_affinity)
+    {
+        attr_list->Attributes[count].Attribute    = PS_ATTRIBUTE_GROUP_AFFINITY;
+        attr_list->Attributes[count].Size         = sizeof(*group_affinity);
+        attr_list->Attributes[count].ValuePtr     = group_affinity;
+        attr_list->Attributes[count].ReturnLength = NULL;
+        count++;
+    }
+    attr_list->TotalLength = offsetof( PS_ATTRIBUTE_LIST, Attributes[count] );
+
+    InitializeObjectAttributes( &attr, NULL, 0, NULL, sa ? sa->lpSecurityDescriptor : NULL );
+    if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
+
+    RtlGetActiveActivationContext( &actctx );
+
+    if (!set_ntstatus( NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, &attr, process,
+                                         (PRTL_THREAD_START_ROUTINE)start, param,
+                                         THREAD_CREATE_FLAGS_CREATE_SUSPENDED, 0,
+                                         stack_commit, stack_reserve, attr_list )))
+    {
+        if (actctx) RtlReleaseActivationContext( actctx );
         return 0;
+    }
+
+    if (actctx)
+    {
+        ULONG_PTR cookie;
+        RtlActivateActivationContextEx( 0, teb, actctx, &cookie );
+        RtlReleaseActivationContext( actctx );
+    }
 
     if (id) *id = HandleToULong( client_id.UniqueThread );
-    if (sa && sa->nLength >= sizeof(*sa) && sa->bInheritHandle)
-        SetHandleInformation( handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT );
-    if (!(flags & CREATE_SUSPENDED))
-    {
-        ULONG ret;
-        if (NtResumeThread( handle, &ret ))
-        {
-            NtClose( handle );
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            handle = 0;
-        }
-    }
+    if (!(flags & CREATE_SUSPENDED)) NtResumeThread( handle, &ret );
     return handle;
 }
 
@@ -450,7 +510,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **de
     if (status != STATUS_BUFFER_TOO_SMALL)
         return HRESULT_FROM_NT(status);
 
-    if (!(info = heap_alloc( length )))
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, length )))
         return HRESULT_FROM_NT(STATUS_NO_MEMORY);
 
     status = NtQueryInformationThread( thread, ThreadNameInformation, info, length, &length );
@@ -466,7 +526,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetThreadDescription( HANDLE thread, WCHAR **de
         }
     }
 
-    heap_free(info);
+    HeapFree(GetProcessHeap(), 0, info);
 
     return HRESULT_FROM_NT(status);
 }

@@ -237,8 +237,100 @@ static void test_display_name( void )
     }
 }
 
+static void test_manifest_path(void)
+{
+    static const struct { const WCHAR *input, *expect; DWORD err; const WCHAR *broken; } tests[] =
+    {
+        { L"wine", NULL, ERROR_INVALID_PARAMETER },
+        { L"version=\"1.2.3.4\"", NULL, ERROR_INVALID_PARAMETER },
+        { L"wine,version=\"1.2.3.4\"",
+          L"none_wine_none_1.2.3.4_none_84773ee2583267fe" },
+        { L"wine,version=\"1.2.3.4\",type=\"foo\"",
+          L"none_wine_none_1.2.3.4_none_809e0f845afa3452" },
+        { L"wine,version=\"1.2.3.4\",type=\"win32\"",
+          L"none_wine_none_1.2.3.4_none_e70f7e4e47ba9a81" },
+        { L"wine,version=\"1.2.3.4\",publicKeyToken=\"31bf3856ad364e35\"",
+          L"none_wine_31bf3856ad364e35_1.2.3.4_none_71afa6b5b61c3bc4" },
+        { L"wine,processorArchitecture=\"amd64\",publicKeyToken=\"31bf3856ad364e35\",type=\"win32\",version=\"1.2.3.4\"",
+          L"amd64_wine_31bf3856ad364e35_1.2.3.4_none_fdf9237c42e26d18" },
+        { L"wine,language=\"en-US\",publicKeyToken=\"31bf3856ad364e35\",type=\"win32\",version=\"1.2.3.4\"",
+          L"none_wine_31bf3856ad364e35_1.2.3.4_en-us_39407a45109afc33" },
+        { L"wine,language=\"en-US\",processorArchitecture=\"amd64\",version=\"1.2.3.4\"",
+          L"amd64_wine_none_1.2.3.4_en-us_a496a08d77174661" },
+        { L"wine,language=\"en-US\",processorArchitecture=\"amd64\",publicKeyToken=\"31bf3856ad364e35\",type=\"win32\",version=\"1.2.3.4\"",
+          L"amd64_wine_31bf3856ad364e35_1.2.3.4_en-us_2bda3d954a55adbe" },
+        { L"wine,language=\"neutral\",version=\"1.2.3.4\"",
+          L"none_wine_none_1.2.3.4_neutral_f9ff6dcba258cd73" },
+        { L"wine,language=\"*\",version=\"1.2.3.4\"",
+          L"none_wine_none_1.2.3.4__16e8bafd97447162" },
+        { L"WI !\"#$%'()*+-./:;<=>?@[\\]`{|}~\u00a0\u2014NE,language=\"\",processorArchitecture=\"\",version=\"1.2.3.4\"",
+          L"wi-.ne_none_1.2.3.4_479b515b7cd6b072" },
+        { L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,version=\"1.2.3.4\"",
+          L"none_abcdefghijklmnopqrs..rstuvwxyz0123456789_none_1.2.3.4_none_039d813ec5d31e1e" },
+        { L"wine,processorArchitecture=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\",version=\"1.2.3.4\"",
+          L"abcdefg..3456789_wine_none_1.2.3.4_none_4cf3b364ce50d048",
+          0, L"abc..789_wine_none_1.2.3.4_none_4cf3b364ce50d048" /* win8 */ },
+        { L"wine,publicKeyToken=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl\",version=\"1.2.3.4\"",
+          L"none_wine_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl_1.2.3.4_none_23520ded75d26b1d" },
+        { L"wine,publicKeyToken=\"ABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%'()*+-./:;<=>?@[\\]`{|}~\u00a0\u2014\",version=\"1.2.3.4\"",
+          L"none_wine_ABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%'()*+-./:;<=>?@[\\]`{|}~\u00a0\u2014_1.2.3.4_none_36e94b00900cd8e5" },
+        { L"wine,language=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\",version=\"1.2.3.4\"",
+          L"none_wine_none_1.2.3.4_abc..789_9608dbda04ebd12f" },
+        { L"wine,version=\"00000000000000000000000001.0000000000000000000000002.0000000000000000000000003.000000000000000000000004\"",
+          L"none_wine_none_00000000000000000000000001.0000000000000000000000002.0000000000000000000000003.000000000000000000000004_none_c96f37b6c34189f6" },
+        { L"wine,publicKeyToken=\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm\",version=\"1.2.3.4\"", NULL, ERROR_INSUFFICIENT_BUFFER },
+        { L"wine,version=\"00000000000000000000000001.0000000000000000000000002.0000000000000000000000003.0000000000000000000000004\"", NULL, ERROR_INSUFFICIENT_BUFFER },
+    };
+    unsigned int i;
+    WCHAR buffer[1024];
+    DWORD len;
+    BOOL ret;
+
+    SetLastError( 0xdeadbeef );
+    len = 10;
+    ret = SxspGenerateManifestPathOnAssemblyIdentity( L"wine,version=\"1.2.3.4\"", buffer, &len, NULL );
+    ok( !ret, "SxspGenerateManifestPathOnAssemblyIdentity succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %lu\n", GetLastError() );
+    ok( len > 10, "wrong len %lu\n", len );
+    ret = SxspGenerateManifestPathOnAssemblyIdentity( L"wine,version=\"1.2.3.4\"", buffer, &len, NULL );
+    ok( ret, "SxspGenerateManifestPathOnAssemblyIdentity failed err %lu\n", GetLastError() );
+    ok( wcslen( buffer ) == len - 1, "wrong len %Iu\n", wcslen(buffer) );
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context( "%u", i );
+        SetLastError( 0xdeadbeef );
+        len = ARRAY_SIZE( buffer );
+        ret = SxspGenerateManifestPathOnAssemblyIdentity( tests[i].input, buffer, &len, NULL );
+        ok( len == ARRAY_SIZE( buffer ), "wrong len %lu\n", len );
+        if (tests[i].expect)
+        {
+            ok( ret, "SxspGenerateManifestPathOnAssemblyIdentity failed err %lu\n", GetLastError() );
+            if (ret)
+            {
+                /* FIXME: hash is different on Wine, so compare without it first */
+                const WCHAR *p = wcsrchr( buffer, '_' );
+                ok( (p && !wcsncmp( buffer, tests[i].expect, p + 1 - buffer )) ||
+                     broken( tests[i].broken && !wcsncmp( buffer, tests[i].broken, p + 1 - buffer )),
+                     "wrong result %s / %s\n", debugstr_w(buffer), debugstr_w(tests[i].expect) );
+                todo_wine
+                ok( !wcscmp( buffer, tests[i].expect ) ||
+                    broken( tests[i].broken && !wcscmp( buffer, tests[i].broken )),
+                    "wrong result %s / %s\n", debugstr_w(buffer), debugstr_w(tests[i].expect) );
+            }
+        }
+        else
+        {
+            ok( !ret, "SxspGenerateManifestPathOnAssemblyIdentity succeeded\n" );
+            ok( GetLastError() == tests[i].err, "wrong error %lu\n", GetLastError() );
+        }
+        winetest_pop_context();
+    }
+}
+
 START_TEST(name)
 {
     test_CreateAssemblyNameObject();
     test_display_name();
+    test_manifest_path();
 }

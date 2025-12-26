@@ -2174,7 +2174,8 @@ static void test_token(void)
     status = pNtOpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, (HANDLE *)0xdeadbee0 );
     ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcessToken failed: %lx\n", status);
     status = pNtOpenThreadToken( GetCurrentThread(), TOKEN_ALL_ACCESS, TRUE, (HANDLE *)0xdeadbee0 );
-    ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcessToken failed: %lx\n", status);
+    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_NO_TOKEN,
+        "NtOpenProcessToken failed: %lx\n", status);
     handle = (HANDLE)0xdeadbeef;
     status = pNtOpenProcessToken( (HANDLE)0xdead, TOKEN_ALL_ACCESS, &handle );
     ok( status == STATUS_INVALID_HANDLE, "NtOpenProcessToken failed: %lx\n", status);

@@ -104,7 +104,7 @@ static BOOL WINAPI init_trash_dirs( INIT_ONCE *once, void *param, void **context
     }
     else
     {
-        const WCHAR *data_home = _wgetenv( L"XDG_DATA_HOME" );
+        const WCHAR *data_home = _wgetenv( L"WINE_HOST_XDG_DATA_HOME" );
         const WCHAR *fmt = L"%s/.local/share/Trash";
         WCHAR *p;
 
@@ -207,7 +207,7 @@ static BOOL write_trashinfo_file( HANDLE handle, const WCHAR *orig_path )
     sprintf( buffer + strlen(buffer), "\nDeletionDate=%04u-%02u-%02uT%02u:%02u:%02u\n",
              now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute, now.wSecond);
     WriteFile( handle, buffer, strlen(buffer), NULL, NULL );
-    heap_free( path );
+    HeapFree( GetProcessHeap(), 0, path );
     free( buffer );
     return TRUE;
 }
@@ -240,7 +240,7 @@ static void read_trashinfo_file( HANDLE handle, WIN32_FIND_DATAW *data )
             if ((path = wine_get_dos_file_name( decode( p ))))
             {
                 lstrcpynW( data->cFileName, path, MAX_PATH );
-                heap_free( path );
+                HeapFree( GetProcessHeap(), 0, path );
             }
             else
             {

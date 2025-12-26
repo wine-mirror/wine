@@ -57,6 +57,7 @@ static NTSTATUS (WINAPI * pDbgUiConvertStateChangeStructure)(DBGUI_WAIT_STATE_CH
 static HANDLE   (WINAPI * pDbgUiGetThreadDebugObject)(void);
 static void     (WINAPI * pDbgUiSetThreadDebugObject)(HANDLE);
 static NTSTATUS (WINAPI * pNtSystemDebugControl)(SYSDBG_COMMAND,PVOID,ULONG,PVOID,ULONG,PULONG);
+static BOOLEAN  (WINAPI * pRtlIsProcessorFeaturePresent)(UINT);
 
 static BOOL is_wow64;
 static BOOL old_wow64;
@@ -114,6 +115,7 @@ static void InitFunctionPtrs(void)
     NTDLL_GET_PROC(DbgUiGetThreadDebugObject);
     NTDLL_GET_PROC(DbgUiSetThreadDebugObject);
     NTDLL_GET_PROC(NtSystemDebugControl);
+    NTDLL_GET_PROC(RtlIsProcessorFeaturePresent);
 
     if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
@@ -404,8 +406,40 @@ static void test_query_cpu(void)
         ok( len == sizeof(features), "wrong len %lu\n", len );
         ok( (ULONG)features.ProcessorFeatureBits == sci.ProcessorFeatureBits, "wrong bits %I64x / %lx\n",
             features.ProcessorFeatureBits, sci.ProcessorFeatureBits );
+        ok( !features.Reserved[0] && !features.Reserved[1] && !features.Reserved[2],
+            "got reserved features %I64x %I64x %I64x\n",
+            features.Reserved[0], features.Reserved[1], features.Reserved[2] );
     }
     else skip( "SystemProcessorFeaturesInformation is not supported\n" );
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation, NULL, 0, &len );
+    if (status != STATUS_NOT_SUPPORTED && status != STATUS_INVALID_INFO_CLASS)
+    {
+        ULONGLONG bits[2];
+        ok( status == STATUS_INFO_LENGTH_MISMATCH,
+            "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+        ok( len == sizeof(bits), "wrong len %lu\n", len );
+        status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation,
+                                            bits, sizeof(bits), &len );
+        ok( !status, "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+        ok( len == sizeof(bits), "wrong len %lu\n", len );
+
+        for (int i = 0; i < len * 8; i++)
+            ok( !!(bits[i / 64] & (1ull << (i % 64))) == pRtlIsProcessorFeaturePresent( i + PROCESSOR_FEATURE_MAX ),
+                "wrong feature %u: should be %u\n", i + PROCESSOR_FEATURE_MAX,
+                pRtlIsProcessorFeaturePresent( i + PROCESSOR_FEATURE_MAX ) );
+
+        status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation,
+                                            bits, sizeof(bits) - 1, &len );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH,
+            "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+        status = pNtQuerySystemInformation( SystemProcessorFeaturesBitMapInformation,
+                                            bits, sizeof(bits) + 1, &len );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH,
+            "SystemProcessorFeaturesBitMapInformation failed %lx\n", status );
+    }
+    else skip( "SystemProcessorFeaturesBitMapInformation is not supported\n" );
 
     len = 0xdeadbeef;
     status = pNtQuerySystemInformation( SystemProcessorBrandString, buffer, sizeof(buffer), &len );
@@ -633,10 +667,6 @@ static void test_query_process( BOOL extended )
 
             if (extended)
             {
-                todo_wine ok( !!ti->StackBase, "Got NULL StackBase.\n" );
-                todo_wine ok( !!ti->StackLimit, "Got NULL StackLimit.\n" );
-                ok( !!ti->Win32StartAddress, "Got NULL Win32StartAddress.\n" );
-
                 cid.UniqueProcess = 0;
                 cid.UniqueThread = ti->ThreadInfo.ClientId.UniqueThread;
 
@@ -747,6 +777,8 @@ static void test_query_procperf(void)
     ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
     ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
     ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
+    ok (sppi->KernelTime.QuadPart > sppi->IdleTime.QuadPart,
+        "Expected %I64u > %I64u\n", sppi->KernelTime.QuadPart, sppi->IdleTime.QuadPart);
 
     /* Try it for all processors */
     sppi->KernelTime.QuadPart = 0xdeaddead;
@@ -758,6 +790,8 @@ static void test_query_procperf(void)
     ok (sppi->KernelTime.QuadPart != 0xdeaddead, "KernelTime unchanged\n");
     ok (sppi->UserTime.QuadPart != 0xdeaddead, "UserTime unchanged\n");
     ok (sppi->IdleTime.QuadPart != 0xdeaddead, "IdleTime unchanged\n");
+    ok (sppi->KernelTime.QuadPart > sppi->IdleTime.QuadPart,
+        "Expected %I64u > %I64u\n", sppi->KernelTime.QuadPart, sppi->IdleTime.QuadPart);
 
     /* A too large given buffer size */
     sppi = HeapReAlloc(GetProcessHeap(), 0, sppi , NeededLength + 2);
@@ -807,7 +841,7 @@ static void test_query_module(void)
         RTL_PROCESS_MODULE_INFORMATION *module = &info->Modules[i];
 
         ok(module->LoadOrderIndex == i, "%lu: got index %u\n", i, module->LoadOrderIndex);
-        ok(module->ImageBaseAddress || is_wow64, "%lu: got NULL address for %s\n", i, module->Name);
+        /* module->ImageBaseAddress is not set on wow64 or arm64 */
         ok(module->ImageSize, "%lu: got 0 size\n", i);
         ok(module->LoadCount, "%lu: got 0 load count\n", i);
     }
@@ -833,7 +867,7 @@ static void test_query_module(void)
         const RTL_PROCESS_MODULE_INFORMATION *module = &infoex->BaseInfo;
 
         ok(module->LoadOrderIndex == i, "%lu: got index %u\n", i, module->LoadOrderIndex);
-        ok(module->ImageBaseAddress || is_wow64, "%lu: got NULL address for %s\n", i, module->Name);
+        /* module->ImageBaseAddress is not set on wow64 or arm64 */
         ok(module->ImageSize, "%lu: got 0 size\n", i);
         ok(module->LoadCount, "%lu: got 0 load count\n", i);
 

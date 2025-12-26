@@ -29,52 +29,12 @@
 
 extern const struct vulkan_funcs *vk_funcs;
 
-struct wine_queue
-{
-    struct vulkan_queue obj;
-
-    uint32_t family_index;
-    uint32_t queue_index;
-    VkDeviceQueueCreateFlags flags;
-};
-
-struct wine_device
-{
-    struct vulkan_device obj;
-    bool has_external_memory_win32;
-    bool has_external_semaphore_win32;
-    bool has_external_fence_win32;
-    uint64_t queue_count;
-    struct wine_queue queues[];
-};
-
-C_ASSERT(sizeof(struct wine_device) == offsetof(struct wine_device, queues[0]));
-
-struct wine_debug_utils_messenger;
-
-struct wine_debug_report_callback
-{
-    VULKAN_OBJECT_HEADER( VkDebugReportCallbackEXT, debug_callback );
-    struct vulkan_instance *instance;
-
-    UINT64 user_callback; /* client pointer */
-    UINT64 user_data; /* client pointer */
-};
-
-struct wine_debug_report_callback;
-
 struct wine_instance
 {
     struct vulkan_instance obj;
 
-    VkBool32 enable_win32_surface;
-
-    struct wine_debug_utils_messenger *utils_messengers;
-    uint32_t utils_messenger_count;
-
-    struct wine_debug_report_callback default_callback;
-
-    unsigned int quirks;
+    struct list utils_messengers;
+    struct list report_callbacks;
 
     struct rb_tree objects;
     pthread_rwlock_t objects_lock;
@@ -91,34 +51,10 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
     return (struct wine_cmd_pool *)(UINT_PTR)client->unix_handle;
 }
 
-struct wine_debug_utils_messenger
-{
-    VULKAN_OBJECT_HEADER( VkDebugUtilsMessengerEXT, debug_messenger );
-    struct vulkan_instance *instance;
-
-    UINT64 user_callback; /* client pointer */
-    UINT64 user_data; /* client pointer */
-};
-
-static inline struct wine_debug_utils_messenger *wine_debug_utils_messenger_from_handle(
-        VkDebugUtilsMessengerEXT handle)
-{
-    return (struct wine_debug_utils_messenger *)(uintptr_t)handle;
-}
-
-static inline struct wine_debug_report_callback *wine_debug_report_callback_from_handle(
-        VkDebugReportCallbackEXT handle)
-{
-    return (struct wine_debug_report_callback *)(uintptr_t)handle;
-}
-
-BOOL wine_vk_device_extension_supported(const char *name);
-BOOL wine_vk_instance_extension_supported(const char *name);
-BOOL wine_vk_is_host_surface_extension(const char *name);
-
 BOOL wine_vk_is_type_wrapped(VkObjectType type);
 
 NTSTATUS init_vulkan(void *args);
+NTSTATUS wow64_init_vulkan(void *args);
 
 NTSTATUS vk_is_available_instance_function(void *arg);
 NTSTATUS vk_is_available_device_function(void *arg);

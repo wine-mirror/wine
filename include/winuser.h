@@ -1251,6 +1251,7 @@ typedef struct tagSTYLESTRUCT {
 #define GW_HWNDPREV	3
 #define GW_OWNER	4
 #define GW_CHILD	5
+#define GW_ENABLEDPOPUP 6
 
 /* GetAncestor() constants */
 #define GA_PARENT       1

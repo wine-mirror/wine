@@ -523,9 +523,12 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
                                  ARM64_NT_CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs )
 {
     int i;
-    unsigned int len, offset, skip = 0;
-    unsigned int int_size = func->RegI * 8, fp_size = func->RegF * 8, h_size = func->H * 4, regsave, local_size;
-    unsigned int int_regs, fp_regs, saved_regs, local_size_regs;
+    unsigned int len, offset;
+    unsigned int int_size = func->RegI * 8, fp_size = func->RegF * 8, regsave, local_size;
+    unsigned int int_regs, fp_regs, saved_regs, homing = func->H;
+    BYTE prologue[40], *prologue_end, epilogue[40], *epilogue_end;
+    unsigned int ppos = 0, epos = 0;
+    BOOLEAN final_pc_from_lr;
 
     TRACE( "function %I64x-%I64x: len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
            base + func->BeginAddress, base + func->BeginAddress + func->FunctionLength * 4,
@@ -540,133 +543,129 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
     int_regs = int_size / 8;
     fp_regs = fp_size / 8;
     saved_regs = regsave / 8;
-    local_size_regs = local_size / 8;
 
-    /* check for prolog/epilog */
-    if (func->Flag == 1)
+    offset = ((pc - base) - func->BeginAddress) / 4;
+
+    if (func->H && func->RegI == 0 && func->RegF == 0 && func->CR != 1)
     {
-        offset = ((pc - base) - func->BeginAddress) / 4;
-        if (offset < 17 || offset >= func->FunctionLength - 15)
-        {
-            len = (int_size + 8) / 16 + (fp_size + 8) / 16;
-            switch (func->CR)
-            {
-            case 2:
-                len++; /* pacibsp */
-                /* fall through */
-            case 3:
-                len++; /* mov x29,sp */
-                len++; /* stp x29,lr,[sp,0] */
-                if (local_size <= 512) break;
-                /* fall through */
-            case 0:
-            case 1:
-                if (local_size) len++;  /* sub sp,sp,#local_size */
-                if (local_size > 4088) len++;  /* sub sp,sp,#4088 */
-                break;
-            }
-            if (offset < len + h_size)  /* prolog */
-            {
-                skip = len + h_size - offset;
-            }
-            else if (offset >= func->FunctionLength - (len + 1))  /* epilog */
-            {
-                skip = offset - (func->FunctionLength - (len + 1));
-                h_size = 0;
-            }
-        }
+        local_size += regsave;
+        homing = 0;
     }
 
-    if (!skip)
+    /* Synthesize prologue opcodes */
+#define WRITE_ONE(x) do { prologue[ppos++] = epilogue[epos++] = (x); } while (0)
+#define WRITE_TWO(x) do { WRITE_ONE((x) >> 8); WRITE_ONE((x) & 0xff); } while (0)
+    if (func->CR == 2 || func->CR == 3)
     {
-        if (func->CR == 3 || func->CR == 2)
+        WRITE_ONE(0xe1); /* set_fp */
+        if (local_size <= 512)
         {
-            /* mov x29,sp */
-            context->Sp = context->Fp;
-            restore_regs( 29, 2, 0, context, ptrs );
+            WRITE_ONE(0x80 | (local_size/8 - 1)); /* save_fplr_x */
         }
-        context->Sp += local_size;
-        if (fp_size) restore_fpregs( 8, fp_regs, int_regs, context, ptrs );
-        if (func->CR == 1) restore_regs( 30, 1, int_regs - 1, context, ptrs );
-        restore_regs( 19, func->RegI, -saved_regs, context, ptrs );
+        else
+        {
+            WRITE_ONE(0x40); /* save_fplr */
+        }
     }
-    else
+    if ((func->CR <= 1 && local_size > 0) || local_size > 512)
     {
-        unsigned int pos = 0;
-
-        switch (func->CR)
+        if (local_size <= 512)
         {
-        case 3:
-        case 2:
-            /* mov x29,sp */
-            if (pos++ >= skip) context->Sp = context->Fp;
-            if (local_size <= 512)
-            {
-                /* stp x29,lr,[sp,-#local_size]! */
-                if (pos++ >= skip) restore_regs( 29, 2, -local_size_regs, context, ptrs );
-                break;
-            }
-            /* stp x29,lr,[sp,0] */
-            if (pos++ >= skip) restore_regs( 29, 2, 0, context, ptrs );
-            /* fall through */
-        case 0:
-        case 1:
-            if (!local_size) break;
-            /* sub sp,sp,#local_size */
-            if (pos++ >= skip) context->Sp += (local_size - 1) % 4088 + 1;
-            if (local_size > 4088 && pos++ >= skip) context->Sp += 4088;
-            break;
+            WRITE_ONE(local_size/16); /* alloc_s */
         }
-
-        pos += h_size;
-
-        if (fp_size)
+        else if (local_size <= 4080)
         {
-            if (func->RegF % 2 == 0 && pos++ >= skip)
-                /* str d%u,[sp,#fp_size] */
-                restore_fpregs( 8 + func->RegF, 1, int_regs + fp_regs - 1, context, ptrs );
-            for (i = (func->RegF + 1) / 2 - 1; i >= 0; i--)
-            {
-                if (pos++ < skip) continue;
-                if (!i && !int_size)
-                     /* stp d8,d9,[sp,-#regsave]! */
-                    restore_fpregs( 8, 2, -saved_regs, context, ptrs );
-                else
-                     /* stp dn,dn+1,[sp,#offset] */
-                    restore_fpregs( 8 + 2 * i, 2, int_regs + 2 * i, context, ptrs );
-            }
+            WRITE_TWO(0xc000 | (local_size/16)); /* alloc_m */
         }
-
+        else
+        {
+            WRITE_ONE((local_size - 4080)/16); /* alloc_s */
+            WRITE_TWO(0xc000 | (4080/16)); /* alloc_m */
+        }
+    }
+    if (homing)
+    {
+        prologue[ppos++] = 0xe3; /* nop */
+        prologue[ppos++] = 0xe3; /* nop */
+        prologue[ppos++] = 0xe3; /* nop */
+        prologue[ppos++] = 0xe3; /* nop */
+    }
+    if (func->RegF > 0)
+    {
+        if (func->RegF % 2 == 0)
+        {
+            WRITE_TWO(0xdc00 | ((func->RegF) << 6) | (int_regs + fp_regs - 1)); /* save_freg */
+        }
+        for (i = (func->RegF + 1) / 2 - 1; i >= 0; i--)
+        {
+            if (!i && !int_size)
+                WRITE_TWO(0xda00 | ((0) << 6) | (saved_regs - 1)); /* save_fregp_x */
+            else
+                WRITE_TWO(0xd800 | ((2*i) << 6) | (int_regs + 2*i)); /* save_fregp d(8+2*i), int_regs + 2*i */
+        }
+    }
+    if (func->CR == 1 && func->RegI % 2 == 0)
+    {
+        if (func->RegI == 0)
+            WRITE_TWO(0xd400 | ((30 - 19) << 5) | (saved_regs - 1)); /* save_reg_x x30 */
+        else
+            WRITE_TWO(0xd000 | ((30 - 19) << 6) | (int_regs - 1)); /* save_reg x30 */
+    }
+    if (func->RegI > 0)
+    {
         if (func->RegI % 2)
         {
-            if (pos++ >= skip)
+            if (func->CR == 1)
             {
-                /* stp xn,lr,[sp,#offset] */
-                if (func->CR == 1) restore_regs( 30, 1, int_regs - 1, context, ptrs );
-                /* str xn,[sp,#offset] */
-                restore_regs( 18 + func->RegI, 1,
-                              (func->RegI > 1) ? func->RegI - 1 : -saved_regs,
-                              context, ptrs );
+                WRITE_TWO(0xd600 | ((func->RegI - 1)/2) << 6 | (int_regs - 2)); /* save_lrpair x(19+RegI-1), (int_regs-2) */
+                if (func->RegI == 1)
+                    WRITE_ONE(saved_regs/2); /* alloc_s */
+            }
+            else
+            {
+                if (func->RegI == 1)
+                    WRITE_TWO(0xd400 | ((0) << 5) | (saved_regs - 1)); /* save_reg_x x19 */
+                else
+                    WRITE_TWO(0xd000 | ((int_regs - 1) << 6) | (int_regs - 1)); /* save_reg x(19+int_regs-1) */
             }
         }
-        else if (func->CR == 1)
-        {
-            /* str lr,[sp,#offset] */
-            if (pos++ >= skip) restore_regs( 30, 1, func->RegI ? int_regs - 1 : -saved_regs, context, ptrs );
-        }
-
         for (i = func->RegI / 2 - 1; i >= 0; i--)
         {
-            if (pos++ < skip) continue;
             if (i)
-                /* stp xn,xn+1,[sp,#offset] */
-                restore_regs( 19 + 2 * i, 2, 2 * i, context, ptrs );
+                WRITE_TWO(0xc800 | ((2*i) << 6) | (2*i)); /* save_regp x(19+2*i), 2*i */
             else
-                /* stp x19,x20,[sp,-#regsave]! */
-                restore_regs( 19, 2, -saved_regs, context, ptrs );
+                WRITE_TWO(0xcc00 | ((0) << 6) | (saved_regs - 1)); /* save_regp_x x19, saved_regs */
         }
     }
-    if (func->CR == 2) do_pac_auth( context );
+    if (func->CR == 2)
+        WRITE_ONE(0xfc); /* pac_sign_lr */
+    WRITE_ONE(0xe4); /* end */
+    prologue_end = &prologue[ppos];
+    epilogue_end = &epilogue[epos];
+
+    if (func->Flag == 1)
+    {
+        if (offset < (prologue_end - prologue) || offset >= func->FunctionLength - (epilogue_end - epilogue))
+        {
+            /* Check prologue */
+            len = get_sequence_len( prologue, prologue_end );
+            if (offset < len)
+            {
+                process_unwind_codes( prologue, prologue_end, context, ptrs, len - offset, &final_pc_from_lr );
+                return NULL;
+            }
+            /* Check epilogue */
+            len = get_sequence_len( epilogue, epilogue_end );
+            if (offset >= func->FunctionLength - (len + 1))  /* epilog */
+            {
+                process_unwind_codes( epilogue, epilogue_end, context, ptrs, offset - (func->FunctionLength - (len + 1)), &final_pc_from_lr );
+                return NULL;
+            }
+        }
+    }
+
+    /* Execute full prologue */
+    process_unwind_codes( prologue, prologue_end, context, ptrs, 0, &final_pc_from_lr );
     return NULL;
 }
 
@@ -1843,6 +1842,32 @@ static int get_opcode_size( struct opcode op )
     }
 }
 
+static void *get_main_function_start( const RUNTIME_FUNCTION *f, ULONG_PTR base )
+{
+    const struct UNWIND_INFO *info;
+    const union handler_data *data;
+
+    while (f->UnwindData)
+    {
+        info = (const struct UNWIND_INFO *)((char *)base + f->UnwindData);
+        if (!(info->flags & UNW_FLAG_CHAININFO)) break;
+
+        data = (union handler_data *)&info->opcodes[(info->count + 1) & ~1];
+        f = &data->chain;
+    }
+    return (char *)base + f->BeginAddress;
+}
+
+static BOOL is_address_in_function( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *function )
+{
+    RUNTIME_FUNCTION *f;
+    ULONG_PTR pc_base;
+
+    if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress) return TRUE;
+    if (!(f = RtlLookupFunctionEntry( (ULONG_PTR)pc, &pc_base, NULL ))) return FALSE;
+    return get_main_function_start( f, pc_base ) == get_main_function_start( function, base );
+}
+
 static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *function )
 {
     /* add or lea must be the first instruction, and it must have a rex.W prefix */
@@ -1886,7 +1911,9 @@ static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *fu
 
     for (;;)
     {
-        if ((*pc & 0xf0) == 0x40) pc++;  /* rex prefix */
+        BYTE rex = 0;
+
+        if ((*pc & 0xf0) == 0x40) rex = *pc++ & 0x0f;  /* rex prefix */
 
         switch (*pc)
         {
@@ -1905,16 +1932,16 @@ static BOOL is_inside_epilog( BYTE *pc, ULONG64 base, const RUNTIME_FUNCTION *fu
             return TRUE;
         case 0xe9: /* jmp nnnn */
             pc += 5 + *(LONG *)(pc + 1);
-            if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress)
-                continue;
-            break;
+            return !is_address_in_function( pc, base, function );
         case 0xeb: /* jmp n */
             pc += 2 + (signed char)pc[1];
-            if (pc - (BYTE *)base >= function->BeginAddress && pc - (BYTE *)base < function->EndAddress)
-                continue;
-            break;
+            return !is_address_in_function( pc, base, function );
         case 0xf3: /* rep; ret (for amd64 prediction bug) */
             return pc[1] == 0xc3;
+        case 0xff: /* jmp */
+            if (rex && rex != 8) return FALSE;
+            if (pc[1] == 0x25) return TRUE;
+            return rex && ((pc[1] >> 3) & 7) == 4;
         }
         return FALSE;
     }
@@ -1967,17 +1994,14 @@ static void interpret_epilog( BYTE *pc, CONTEXT *context, KNONVOLATILE_CONTEXT_P
             context->Rip = *(ULONG64 *)context->Rsp;
             context->Rsp += sizeof(ULONG64) + *(WORD *)(pc + 1);
             return;
+        case 0xe9: /* jmp nnnn */
+        case 0xeb: /* jmp n */
         case 0xc3: /* ret */
         case 0xf3: /* rep; ret */
+        case 0xff: /* jmp */
             context->Rip = *(ULONG64 *)context->Rsp;
             context->Rsp += sizeof(ULONG64);
             return;
-        case 0xe9: /* jmp nnnn */
-            pc += 5 + *(LONG *)(pc + 1);
-            continue;
-        case 0xeb: /* jmp n */
-            pc += 2 + (signed char)pc[1];
-            continue;
         }
         return;
     }
@@ -2020,7 +2044,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
     ULONG64 frame, off;
     struct UNWIND_INFO *info;
     unsigned int i, prolog_offset;
-    BOOL mach_frame = FALSE;
+    BOOL mach_frame = FALSE, chained = FALSE;
 
 #ifdef __arm64ec__
     if (RtlIsEcCode( pc ))
@@ -2079,11 +2103,11 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
         {
             prolog_offset = ~0;
             /* Since Win10 1809 epilogue does not have a special treatment in case of zero opcode count. */
-            if (info->count && is_inside_epilog( (BYTE *)pc, base, function ))
+            if (!chained && info->count && is_inside_epilog( (BYTE *)pc, base, function ))
             {
                 TRACE("inside epilog.\n");
                 interpret_epilog( (BYTE *)pc, context, ctx_ptr );
-                *frame_ret = frame;
+                *frame_ret = info->frame_reg ? context->Rsp - 8 : frame;
                 *handler_ret = NULL;
                 return STATUS_SUCCESS;
             }
@@ -2155,6 +2179,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
 
         if (!(info->flags & UNW_FLAG_CHAININFO)) break;
         function = &handler_data->chain;  /* restart with the chained info */
+        chained = TRUE;
     }
 
     if (!mach_frame)

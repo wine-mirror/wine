@@ -19,6 +19,31 @@
 import "unknwn.idl";
 import "cor.idl";
 
+cpp_quote("#if 0")
+
+typedef ULONG32 mdToken;
+
+typedef mdToken mdModule;
+typedef mdToken mdTypeRef;
+typedef mdToken mdTypeDef;
+typedef mdToken mdFieldDef;
+typedef mdToken mdMethodDef;
+typedef mdToken mdParamDef;
+typedef mdToken mdInterfaceImpl;
+typedef mdToken mdMemberRef;
+typedef mdToken mdCustomAttribute;
+typedef mdToken mdPermission;
+typedef mdToken mdSignature;
+typedef mdToken mdEvent;
+typedef mdToken mdProperty;
+typedef mdToken mdModuleRef;
+typedef mdToken mdAssembly;
+typedef mdToken mdAssemblyRef;
+typedef mdToken mdTypeSpec;
+typedef mdToken mdString;
+
+cpp_quote("#endif")
+
 [
     local,
     object,
@@ -66,4 +91,246 @@ interface IMetaDataTables : IUnknown
     HRESULT GetNextGuid([in] ULONG idx, [out] ULONG *next);
 
     HRESULT GetNextUserString([in] ULONG idx, [out] ULONG *next);
+}
+
+typedef void *HCORENUM;
+typedef BYTE COR_SIGNATURE;
+typedef const char *UVCP_CONSTANT;
+
+typedef struct COR_FIELD_OFFSET
+{
+    mdFieldDef ridOfField;
+    UINT32 ulOffset;
+} COR_FIELD_OFFSET;
+
+[
+    local,
+    object,
+    uuid(7dac8207-d3ae-4c75-9b67-92801a497d44)
+]
+interface IMetaDataImport : IUnknown
+{
+    void CloseEnum([in] HCORENUM henum);
+
+    HRESULT CountEnum([in] HCORENUM henum, [out, retval] ULONG *count);
+
+    HRESULT ResetEnum([in] HCORENUM henum, [in] ULONG pos);
+
+    HRESULT EnumTypeDefs([in, out] HCORENUM *henum, [out, size_is(len), length_is(*count)] mdTypeDef *typedefs,
+                        [in] ULONG len, [out, retval] ULONG *count);
+
+    HRESULT EnumInterfaceImpls([in, out] HCORENUM *henum, [in] mdTypeDef type_def,
+                               [out, size_is(len), length_is(*count)] mdInterfaceImpl *impls, [in] ULONG len,
+                               [out, retval] ULONG *count);
+
+    HRESULT EnumTypeRefs([in, out] HCORENUM *henum,
+                         [out, size_is(len), length_is(*count)] mdTypeRef *typerefs, [in] ULONG len,
+                         [out, retval] ULONG *count);
+
+    HRESULT FindTypeDefByName([in, string] const WCHAR *name, [in] mdToken enclosing_class,
+                              [out, retval] mdTypeDef *type_def);
+
+    HRESULT GetScopeProps([out, string, size_is(len), length_is(*written)] WCHAR *name, [in] ULONG len,
+                          [out] ULONG *written, [out, unique] GUID *mvid);
+
+    HRESULT GetModuleFromScope([out] mdModule *module_token);
+
+    HRESULT GetTypeDefProps([in] mdTypeDef type_def, [out, string, size_is(len), length_is(*written)] WCHAR *name,
+                            [in] ULONG len, [out] ULONG *written, [out] ULONG *flags, [out] mdToken *extends);
+
+    HRESULT GetInterfaceImplProps([in] mdInterfaceImpl iface_impl, [out] mdTypeDef *class_token, [out] mdToken *iface);
+
+    HRESULT GetTypeRefProps([in] mdTypeRef typeref, [out] mdToken *resolution_scope,
+                            [out, string, size_is(len), length_is(*written)] WCHAR *name, [in] ULONG len,
+                            [out] ULONG *written);
+
+    HRESULT ResolveTypeRef([in] mdTypeRef typeref, [in] const GUID *iid, [out, iid_is(iid)] IUnknown **scope,
+                           [out, retval] mdTypeDef *type_def);
+
+    HRESULT EnumMembers([in, out] HCORENUM *henum, [in] mdTypeDef type_def,
+                        [out, size_is(len), length_is(*count)] mdToken *member_defs, [in] ULONG len,
+                        [out] ULONG *count);
+
+    HRESULT EnumMembersWithName([in, out] HCORENUM *henum, [in] mdTypeDef token, [in, string] const WCHAR *name,
+                                [out, size_is(len), length_is(*count)] mdToken *member_defs, [in]  ULONG len,
+                                [out] ULONG *count);
+
+    HRESULT EnumMethods([in, out] HCORENUM *henum, [in] mdTypeDef type_def,
+                        [out, size_is(len), length_is(*count)] mdMethodDef *method_defs, [in] ULONG len,
+                        [out] ULONG *count);
+
+    HRESULT EnumMethodsWithName([in, out] HCORENUM *henum, [in] mdTypeDef type_def, [in, string] const WCHAR *name,
+                                [out, size_is(len), length_is(*count)] mdMethodDef *method_defs, [in]  ULONG len,
+                                [out] ULONG *count);
+
+    HRESULT EnumFields([in, out] HCORENUM *henum, [in] mdTypeDef token,
+                       [out, size_is(len), length_is(*count)] mdFieldDef *field_defs, [in] ULONG len,
+                       [out] ULONG *count);
+
+    HRESULT EnumFieldsWithName([in, out] HCORENUM *henum, [in] mdTypeDef token, [in, string] const WCHAR *name,
+                               [out, size_is(len), length_is(*count)] mdFieldDef *field_defs, [in] ULONG len,
+                               [out] ULONG *count);
+
+    HRESULT EnumParams([in, out] HCORENUM *henum, [in] mdMethodDef method_def,
+                       [out, size_is(len), length_is(*count)] mdParamDef *params, [in] ULONG len,
+                       [out] ULONG *count);
+
+    HRESULT EnumMemberRefs([in, out] HCORENUM *henum, [in] mdToken parent,
+                           [out, size_is(len), length_is(*count)] mdMemberRef *members, [in] ULONG len,
+                           [out] ULONG *count);
+
+    HRESULT EnumMethodImpls([in, out] HCORENUM *henum, [in] mdTypeDef token,
+                            [out, size_is(len), length_is(*count)] mdToken *body_tokens,
+                            [out, size_is(len), length_is(*count)] mdToken *decl_tokens, [in] ULONG len,
+                            [out] ULONG *count);
+
+    HRESULT EnumPermissionSets([in, out] HCORENUM *henum, [in] mdToken token, [in] ULONG actions,
+                               [out, size_is(len), length_is(*count)] mdPermission *permissions, [in] ULONG len,
+                               [out] ULONG *count);
+
+    HRESULT FindMember([in] mdTypeDef type_def, [in, string] const WCHAR *name,
+                       [in, size_is(len)] const COR_SIGNATURE *sig_blob, [in] ULONG len, [out] mdToken *member_ref);
+
+    HRESULT FindMethod([in] mdTypeDef type_def, [in, string] const WCHAR *name,
+                       [in, size_is(len)] const COR_SIGNATURE *sig_blob, [in] ULONG len,
+                       [out] mdMethodDef *method_def);
+
+    HRESULT FindField([in] mdTypeDef type_def, [in, string] const WCHAR *name,
+                      [in, size_is(len)] const COR_SIGNATURE *sig_blob, [in] ULONG len, [out] mdFieldDef *field_def);
+
+    HRESULT FindMemberRef([in] mdTypeRef typeref, [in, string] const WCHAR *name,
+                          [in, size_is(len)] const COR_SIGNATURE *sig_blob, [in] ULONG len,
+                          [out] mdMemberRef *member_ref);
+
+    HRESULT GetMethodProps([in] mdMethodDef method_def, [out] mdTypeDef *type_def,
+                           [out, string, size_is(name_len), length_is(*written)] WCHAR *method_name, [in] ULONG name_len,
+                           [out] ULONG *written, [out] ULONG *method_flags,
+                           [out, size_is(, *sig_len)] const COR_SIGNATURE **sig_blob, [out] ULONG *sig_len,
+                           [out] ULONG *rva, [out] ULONG *impl_flags);
+
+    HRESULT GetMemberRefProps([in] mdMemberRef member_ref, [out] mdToken *token,
+                              [out, string, size_is(name_len), length_is(*written)] WCHAR *member_name,
+                              [in] ULONG name_len, [out] ULONG *written,
+                              [out, size_is(, *sig_len)] const COR_SIGNATURE **sig_blob, [out] ULONG *sig_len);
+
+    HRESULT EnumProperties([in, out] HCORENUM *henum, [in] mdTypeDef type_def,
+                           [out, size_is(len), length_is(*count)] mdProperty *props,
+                           [in] ULONG len, [out] ULONG *count);
+
+    HRESULT EnumEvents([in, out] HCORENUM *henum, [in] mdTypeDef type_def,
+                       [out, size_is(len), length_is(*count)] mdEvent *events, [in] ULONG len, [out] ULONG *count);
+
+    HRESULT GetEventProps([in] mdEvent event, [out] mdTypeDef *class_typedef,
+                          [out, string, size_is(name_len), length_is(*written)] WCHAR *name, [in] ULONG name_len,
+                          [out] ULONG *written, [out] ULONG *event_flags, [out] mdToken *event_type,
+                          [out] mdMethodDef *add_method, [out] mdMethodDef *remove_method,
+                          [out] mdMethodDef *fire_method,
+                          [out, size_is(other_len), length_is(*other_count)] mdMethodDef *other_methods,
+                          [in] ULONG other_len, [out] ULONG *other_count);
+
+    HRESULT EnumMethodSemantics([in, out] HCORENUM *henum, [in] mdMethodDef method_def,
+                                [out, size_is(len), length_is(*written)] mdToken *event_props, [in] ULONG len,
+                                [out] ULONG *written);
+
+    HRESULT GetMethodSemantics([in] mdMethodDef method_def, [in] mdToken event_prop, [out] ULONG *semantics);
+
+    HRESULT GetClassLayout([in] mdTypeDef type_def, [out] ULONG *pack_size,
+                           [out, size_is(len), length_is(*count)] COR_FIELD_OFFSET *offsets, [in] ULONG len,
+                           [out] ULONG *count, [out] ULONG *class_size);
+
+    HRESULT GetFieldMarshal([in] mdToken token, [out, size_is(, *len)] const COR_SIGNATURE **native_type_blob,
+                            [out] ULONG *len);
+
+    HRESULT GetRVA([in] mdToken token, [out] ULONG *rva, [out] ULONG *impl_flags);
+
+    HRESULT GetPermissionSetProps([in] mdPermission permission, [out] ULONG *decl_sec,
+                                  [out, size_is(, *len)] BYTE const **perm_blob, [out] ULONG *len);
+
+    HRESULT GetSigFromToken([in] mdSignature signature, [out, size_is(, *len)] const COR_SIGNATURE **sig_blob,
+                            [out] ULONG *len);
+
+    HRESULT GetModuleRefProps([in] mdModuleRef module_ref, [out, string, size_is(len), length_is(*written)] WCHAR *name,
+                              [in] ULONG len, [out] ULONG *written);
+
+    HRESULT EnumModuleRefs([in, out] HCORENUM *henum,
+                           [out, size_is(len), length_is(*count)] mdModuleRef *module_refs, [in] ULONG len,
+                           [out] ULONG *count);
+
+    HRESULT GetTypeSpecFromToken([in] mdTypeSpec typespec, [out, size_is(, *len)] const COR_SIGNATURE **sig_blob,
+                                 [out] ULONG *len);
+
+    HRESULT GetNameFromToken([in] mdToken token, [out, string] const char **name);
+
+    HRESULT EnumUnresolvedMethods([in, out] HCORENUM *henum,
+                                  [out, size_is(len), length_is(*count)] mdToken *method_defs, [in] ULONG len,
+                                  [out] ULONG *count);
+
+    HRESULT GetUserString([in] mdString string_token, [out, string, size_is(len), length_is(*written)] WCHAR *str,
+                          [in] ULONG len, [out] ULONG *written);
+
+    HRESULT GetPinvokeMap([in] mdToken field_method_def, [out] ULONG *map_flags,
+                          [out, string, size_is(len), length_is(*written)] WCHAR *import_name, [in] ULONG len,
+                          [out] ULONG *written, [out] mdModuleRef *target);
+
+    HRESULT EnumSignatures([in, out] HCORENUM *henum, [out, size_is(len), length_is(*count)] mdSignature *sigs,
+                           [in] ULONG len, [out] ULONG *count);
+
+    HRESULT EnumTypeSpecs([in, out] HCORENUM *henum, [out, size_is(len), length_is(*count)] mdTypeSpec *typespecs,
+                          [in] ULONG len, [out] ULONG *count);
+
+    HRESULT EnumUserStrings([in, out] HCORENUM *henum, [out, size_is(len), length_is(*count)] mdString *strings,
+                            [in] ULONG len, [out] ULONG *count);
+
+    HRESULT GetParamForMethodIndex([in] mdMethodDef token, [in] ULONG param_seq, [out] mdParamDef *param_def);
+
+    HRESULT EnumCustomAttributes([in, out] HCORENUM *henum, [in] mdToken token, [in] mdToken token_type,
+                                 [out, size_is(len), length_is(*count)] mdCustomAttribute *attrs, [in] ULONG len,
+                                 [out] ULONG *count);
+
+    HRESULT GetCustomAttributeProps([in] mdCustomAttribute custom_attr, [out, unique] mdToken *obj,
+                                    [out, unique] mdToken *attr_type, [out, size_is(, *len), unique] BYTE const **blob,
+                                    [out] ULONG *len);
+
+    HRESULT FindTypeRef([in] mdToken resolution_scope, [in, string] const WCHAR *name, [out] mdTypeRef *typeref);
+
+    HRESULT GetMemberProps([in] mdToken member, [out] mdTypeDef *type_def,
+                           [out, string, size_is(member_len), length_is(*member_written)] WCHAR *name,
+                           [in] ULONG member_len,[out] ULONG *member_written, [out] ULONG *flags,
+                           [out, size_is(, *blob_len)] const COR_SIGNATURE **sig_blob, [out] ULONG *blob_len,
+                           [out] ULONG *rva, [out] ULONG *impl_flags, [out] ULONG *value_type_flag,
+                           [out, size_is(, *value_len)] UVCP_CONSTANT *value, [out] ULONG *value_len);
+
+    HRESULT GetFieldProps([in] mdFieldDef fielddef, [out] mdTypeDef *type_def,
+                          [out, string, size_is(name_len), length_is(*name_written)] WCHAR *field_name,
+                          [in] ULONG name_len, [out] ULONG *name_written, [out] ULONG *flags,
+                          [out, size_is(, *sig_len)] const COR_SIGNATURE **sig_blob, [out] ULONG *sig_len,
+                          [out] ULONG *value_type_flag,
+                          [out, size_is(, *value_len)] UVCP_CONSTANT *value, [out] ULONG *value_len);
+
+    HRESULT GetPropertyProps([in] mdProperty prop, [out] mdTypeDef *type_def,
+                             [out, string, size_is(name_len), length_is(*name_written)] WCHAR *name,
+                             [in] ULONG name_len, [out] ULONG *name_written, [out] ULONG *prop_flags,
+                             [out, size_is(, *sig_len)] const COR_SIGNATURE **sig_blob, [out] ULONG *sig_len,
+                             [out] ULONG *value_type_flag, [out, size_is(, *value_len)] UVCP_CONSTANT *default_value,
+                             [out] ULONG *value_len, [out] mdMethodDef *set_method, [out] mdMethodDef *get_method,
+                             [out, size_is(other_len), length_is(*other_count)] mdMethodDef *other_methods,
+                             [in] ULONG other_len, [out] ULONG *other_count);
+
+    HRESULT GetParamProps([in] mdParamDef param_def, [out] mdMethodDef *method_def,
+                          [out] ULONG *param_seq,
+                          [out, string, size_is(name_len), length_is(*name_written)] WCHAR *name, [in] ULONG name_len,
+                          [out] ULONG *name_written, [out] ULONG *flags, [out] ULONG *value_type_flag,
+                          [out, size_is(, *value_len)] UVCP_CONSTANT *value, [out] ULONG *value_len);
+
+    HRESULT GetCustomAttributeByName([in] mdToken obj, [in, string] const WCHAR *name,
+                                     [out, size_is(, *len)] BYTE const **data, [out] ULONG *len);
+
+    BOOL IsValidToken([in] mdToken token);
+
+    HRESULT GetNestedClassProps([in] mdTypeDef nested_class, [out] mdTypeDef *enclosing_class);
+
+    HRESULT GetNativeCallConvFromSig([in, size_is(len)] BYTE const *sig_blob, [in] ULONG len,
+                                     [out] ULONG *call_conv);
+
+    HRESULT IsGlobal([in] mdToken token, [out] int *is_global);
 }

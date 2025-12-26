@@ -129,4 +129,196 @@ typedef mdToken mdGenericParamConstraint;
 typedef mdToken mdString;
 typedef mdToken mdCPToken;
 
+#define mdTokenNil                  ((mdToken)0)
+#define mdModuleNil                 ((mdModule)mdtModule)
+#define mdTypeRefNil                ((mdTypeRef)mdtTypeRef)
+#define mdTypeDefNil                ((mdTypeDef)mdtTypeDef)
+#define mdFieldDefNil               ((mdFieldDef)mdtFieldDef)
+#define mdMethodDefNil              ((mdMethodDef)mdtMethodDef)
+#define mdParamDefNil               ((mdParamDef)mdtParamDef)
+#define mdInterfaceImplNil          ((mdInterfaceImpl)mdtInterfaceImpl)
+#define mdMemberRefNil              ((mdMemberRef)mdtMemberRef)
+#define mdCustomAttributeNil        ((mdCustomAttribute)mdtCustomAttribute)
+#define mdPermissionNil             ((mdPermission)mdtPermission)
+#define mdSignatureNil              ((mdSignature)mdtSignature)
+#define mdEventNil                  ((mdEvent)mdtEvent)
+#define mdPropertyNil               ((mdProperty)mdtProperty)
+#define mdModuleRefNil              ((mdModuleRef)mdtModuleRef)
+#define mdTypeSpecNil               ((mdTypeSpec)mdtTypeSpec)
+#define mdAssemblyNil               ((mdAssembly)mdtAssembly)
+#define mdAssemblyRefNil            ((mdAssemblyRef)mdtAssemblyRef)
+#define mdFileNil                   ((mdFile)mdtFile)
+#define mdExportedTypeNil           ((mdExportedType)mdtExportedType)
+#define mdManifestResourceNil       ((mdManifestResource)mdtManifestResource)
+#define mdGenericParamNil           ((mdGenericParam)mdtGenericParam)
+#define mdGenericParamConstraintNil ((mdGenericParamConstraint)mdtGenericParamConstraint)
+#define mdMethodSpecNil             ((mdMethodSpec)mdtMethodSpec)
+#define mdStringNil                 ((mdString)mdtString)
+
+typedef enum CorTypeAttr
+{
+    tdNotPublic          = 0x000000,
+    tdPublic             = 0x000001,
+    tdNestedPublic       = 0x000002,
+    tdNestedPrivate      = 0x000003,
+    tdNestedFamily       = 0x000004,
+    tdNestedAssembly     = 0x000005,
+    tdNestedFamANDAssem  = 0x000006,
+    tdNestedFamORAssem   = 0x000007,
+    tdAutoLayout         = 0x000000,
+    tdSequentialLayout   = 0x000008,
+    tdExplicitLayout     = 0x000010,
+    tdExtendedLayout     = 0x000018,
+    tdClass              = 0x000000,
+    tdInterface          = 0x000020,
+    tdAbstract           = 0x000080,
+    tdSealed             = 0x000100,
+    tdSpecialName        = 0x000400,
+    tdImport             = 0x001000,
+    tdSerializable       = 0x002000,
+    tdWindowsRuntime     = 0x004000,
+    tdAnsiClass          = 0x000000,
+    tdUnicodeClass       = 0x010000,
+    tdAutoClass          = 0x020000,
+    tdCustomFormatClass  = 0x030000,
+    tdBeforeFieldInit    = 0x100000,
+    tdForwarder          = 0x200000,
+    tdRTSpecialName      = 0x000800,
+    tdHasSecurity        = 0x040000,
+
+    tdVisibilityMask     = 0x000007,
+    tdLayoutMask         = 0x000018,
+    tdClassSemanticsMask = 0x000020,
+    tdStringFormatMask   = 0x030000,
+    tdCustomFormatMask   = 0xc00000,
+    tdReservedMask       = 0x040800
+} CorTypeAttr;
+
+typedef enum CorMethodAttr
+{
+    mdPrivateScope          =   0x0000,
+    mdPrivate               =   0x0001,
+    mdFamANDAssem           =   0x0002,
+    mdAssem                 =   0x0003,
+    mdFamily                =   0x0004,
+    mdFamORAssem            =   0x0005,
+    mdPublic                =   0x0006,
+    mdStatic                =   0x0010,
+    mdFinal                 =   0x0020,
+    mdVirtual               =   0x0040,
+    mdHideBySig             =   0x0080,
+    mdReuseSlot             =   0x0000,
+    mdNewSlot               =   0x0100,
+    mdCheckAccessOnOverride =   0x0200,
+    mdAbstract              =   0x0400,
+    mdSpecialName           =   0x0800,
+    mdPinvokeImpl           =   0x2000,
+    mdUnmanagedExport       =   0x0008,
+    mdRTSpecialName         =   0x1000,
+    mdHasSecurity           =   0x4000,
+    mdRequireSecObject      =   0x8000,
+
+    mdMemberAccessMask      =   0x0007,
+    mdVtableLayoutMask      =   0x0100,
+    mdReservedMask          =   0xd000,
+} CorMethodAttr;
+
+typedef enum CorMethodImpl
+{
+    miIL                     = 0x0000,
+    miNative                 = 0x0001,
+    miOPTIL                  = 0x0002,
+    miRuntime                = 0x0003,
+    miUnmanaged              = 0x0004,
+    miManaged                = 0x0000,
+    miForwardRef             = 0x0010,
+    miPreserveSig            = 0x0080,
+    miInternalCall           = 0x1000,
+    miSynchronized           = 0x0020,
+    miNoInlining             = 0x0008,
+    miAggressiveInlining     = 0x0100,
+    miNoOptimization         = 0x0040,
+    miAggressiveOptimization = 0x0200,
+    miAsync                  = 0x2000,
+
+    miCodeTypeMask           =  0x0003,
+    miManagedMask            =  0x0004,
+    miUserMask               =  0x33fc,
+
+    miMaxMethodImplVal       = 0xffff,
+} CorMethodImpl;
+
+typedef enum CorPinvokeMap
+{
+    pmNoMangle                      = 0x0001,
+    pmCharSetNotSpec                = 0x0000,
+    pmCharSetAnsi                   = 0x0002,
+    pmCharSetUnicode                = 0x0004,
+    pmCharSetAuto                   = 0x0006,
+    pmBestFitUseAssem               = 0x0000,
+    pmBestFitEnabled                = 0x0010,
+    pmBestFitDisabled               = 0x0020,
+    pmThrowOnUnmappableCharUseAssem = 0x0000,
+    pmThrowOnUnmappableCharEnabled  = 0x1000,
+    pmThrowOnUnmappableCharDisabled = 0x2000,
+    pmSupportsLastError             = 0x0040,
+    pmCallConvWinapi                = 0x0100,
+    pmCallConvCdecl                 = 0x0200,
+    pmCallConvStdcall               = 0x0300,
+    pmCallConvThiscall              = 0x0400,
+    pmCallConvFastcall              = 0x0500,
+
+    pmCharSetMask                   = 0x0006,
+    pmBestFitMask                   = 0x0030,
+    pmCallConvMask                  = 0x0700,
+    pmThrowOnUnmappableCharMask     = 0x3000,
+
+    pmMaxValue          = 0xffff,
+} CorPinvokeMap;
+
+typedef enum CorFieldAttr
+{
+    fdPrivateScope    =  0x0000,
+    fdPrivate         =  0x0001,
+    fdFamANDAssem     =  0x0002,
+    fdAssembly        =  0x0003,
+    fdFamily          =  0x0004,
+    fdFamORAssem      =  0x0005,
+    fdPublic          =  0x0006,
+    fdStatic          =  0x0010,
+    fdInitOnly        =  0x0020,
+    fdLiteral         =  0x0040,
+    fdNotSerialized   =  0x0080,
+    fdSpecialName     =  0x0200,
+    fdPinvokeImpl     =  0x2000,
+    fdRTSpecialName   =  0x0400,
+    fdHasFieldMarshal =  0x1000,
+    fdHasDefault      =  0x8000,
+    fdHasFieldRVA     =  0x0100,
+
+    fdFieldAccessMask =  0x0007,
+    fdReservedMask    =  0x9500
+} CorFieldAttr;
+
+#define COR_ENUM_FIELD_NAME    ("value__")
+#define COR_CTOR_METHOD_NAME   (".ctor")
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#define COR_ENUM_FIELD_NAME_W  (L"value__")
+#define COR_CTOR_METHOD_NAME_W (L".ctor")
+#else
+static const WCHAR COR_ENUM_FIELD_NAME_W[] = {'v','a','l','u','e','_','_',0};
+static const WCHAR COR_CTOR_METHOD_NAME_W[] = {'.','c','t','o','r',0};
+#endif
+
+typedef enum CorMethodSemanticsAttr
+{
+    msSetter   = 0x01,
+    msGetter   = 0x02,
+    msOther    = 0x04,
+    msAddOn    = 0x08,
+    msRemoveOn = 0x10,
+    msFire     = 0x20,
+} CorMethodSemanticsAttr;
+
 #endif /* __WINE_CORHDR_H */

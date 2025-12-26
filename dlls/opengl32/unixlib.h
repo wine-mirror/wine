@@ -2660,6 +2660,13 @@ struct glAlphaFragmentOp3ATI_params
     GLuint arg3Mod;
 };
 
+struct glAlphaFuncx_params
+{
+    TEB *teb;
+    GLenum func;
+    GLfixed ref;
+};
+
 struct glAlphaFuncxOES_params
 {
     TEB *teb;
@@ -3887,6 +3894,15 @@ struct glClearColorIuiEXT_params
     GLuint alpha;
 };
 
+struct glClearColorx_params
+{
+    TEB *teb;
+    GLfixed red;
+    GLfixed green;
+    GLfixed blue;
+    GLfixed alpha;
+};
+
 struct glClearColorxOES_params
 {
     TEB *teb;
@@ -3912,6 +3928,12 @@ struct glClearDepthfOES_params
 {
     TEB *teb;
     GLclampf depth;
+};
+
+struct glClearDepthx_params
+{
+    TEB *teb;
+    GLfixed depth;
 };
 
 struct glClearDepthxOES_params
@@ -4075,11 +4097,25 @@ struct glClipControl_params
     GLenum depth;
 };
 
+struct glClipPlanef_params
+{
+    TEB *teb;
+    GLenum p;
+    const GLfloat *eqn;
+};
+
 struct glClipPlanefOES_params
 {
     TEB *teb;
     GLenum plane;
     const GLfloat *equation;
+};
+
+struct glClipPlanex_params
+{
+    TEB *teb;
+    GLenum plane;
+    const GLfixed *equation;
 };
 
 struct glClipPlanexOES_params
@@ -4208,6 +4244,15 @@ struct glColor4ubVertex3fvSUN_params
     TEB *teb;
     const GLubyte *c;
     const GLfloat *v;
+};
+
+struct glColor4x_params
+{
+    TEB *teb;
+    GLfixed red;
+    GLfixed green;
+    GLfixed blue;
+    GLfixed alpha;
 };
 
 struct glColor4xOES_params
@@ -6145,6 +6190,13 @@ struct glDepthRangefOES_params
     GLclampf f;
 };
 
+struct glDepthRangex_params
+{
+    TEB *teb;
+    GLfixed n;
+    GLfixed f;
+};
+
 struct glDepthRangexOES_params
 {
     TEB *teb;
@@ -7132,11 +7184,25 @@ struct glFogFuncSGIS_params
     const GLfloat *points;
 };
 
+struct glFogx_params
+{
+    TEB *teb;
+    GLenum pname;
+    GLfixed param;
+};
+
 struct glFogxOES_params
 {
     TEB *teb;
     GLenum pname;
     GLfixed param;
+};
+
+struct glFogxv_params
+{
+    TEB *teb;
+    GLenum pname;
+    const GLfixed *param;
 };
 
 struct glFogxvOES_params
@@ -7506,6 +7572,17 @@ struct glFreeObjectBufferATI_params
     GLuint buffer;
 };
 
+struct glFrustumf_params
+{
+    TEB *teb;
+    GLfloat l;
+    GLfloat r;
+    GLfloat b;
+    GLfloat t;
+    GLfloat n;
+    GLfloat f;
+};
+
 struct glFrustumfOES_params
 {
     TEB *teb;
@@ -7515,6 +7592,17 @@ struct glFrustumfOES_params
     GLfloat t;
     GLfloat n;
     GLfloat f;
+};
+
+struct glFrustumx_params
+{
+    TEB *teb;
+    GLfixed l;
+    GLfixed r;
+    GLfixed b;
+    GLfixed t;
+    GLfixed n;
+    GLfixed f;
 };
 
 struct glFrustumxOES_params
@@ -8039,11 +8127,25 @@ struct glGetBufferSubDataARB_params
     void *data;
 };
 
+struct glGetClipPlanef_params
+{
+    TEB *teb;
+    GLenum plane;
+    GLfloat *equation;
+};
+
 struct glGetClipPlanefOES_params
 {
     TEB *teb;
     GLenum plane;
     GLfloat *equation;
+};
+
+struct glGetClipPlanex_params
+{
+    TEB *teb;
+    GLenum plane;
+    GLfixed *equation;
 };
 
 struct glGetClipPlanexOES_params
@@ -8405,6 +8507,13 @@ struct glGetFirstPerfQueryIdINTEL_params
 {
     TEB *teb;
     GLuint *queryId;
+};
+
+struct glGetFixedv_params
+{
+    TEB *teb;
+    GLenum pname;
+    GLfixed *params;
 };
 
 struct glGetFixedvOES_params
@@ -8794,6 +8903,14 @@ struct glGetLightxOES_params
     GLfixed *params;
 };
 
+struct glGetLightxv_params
+{
+    TEB *teb;
+    GLenum light;
+    GLenum pname;
+    GLfixed *params;
+};
+
 struct glGetListParameterfvSGIX_params
 {
     TEB *teb;
@@ -8894,6 +9011,14 @@ struct glGetMaterialxOES_params
     GLenum face;
     GLenum pname;
     GLfixed param;
+};
+
+struct glGetMaterialxv_params
+{
+    TEB *teb;
+    GLenum face;
+    GLenum pname;
+    GLfixed *params;
 };
 
 struct glGetMemoryObjectDetachedResourcesuivNV_params
@@ -10265,6 +10390,14 @@ struct glGetTexBumpParameterivATI_params
     GLint *param;
 };
 
+struct glGetTexEnvxv_params
+{
+    TEB *teb;
+    GLenum target;
+    GLenum pname;
+    GLfixed *params;
+};
+
 struct glGetTexEnvxvOES_params
 {
     TEB *teb;
@@ -10336,6 +10469,14 @@ struct glGetTexParameterPointervAPPLE_params
     GLenum target;
     GLenum pname;
     void **params;
+};
+
+struct glGetTexParameterxv_params
+{
+    TEB *teb;
+    GLenum target;
+    GLenum pname;
+    GLfixed *params;
 };
 
 struct glGetTexParameterxvOES_params
@@ -12178,6 +12319,13 @@ struct glLightEnviSGIX_params
     GLint param;
 };
 
+struct glLightModelx_params
+{
+    TEB *teb;
+    GLenum pname;
+    GLfixed param;
+};
+
 struct glLightModelxOES_params
 {
     TEB *teb;
@@ -12185,11 +12333,26 @@ struct glLightModelxOES_params
     GLfixed param;
 };
 
+struct glLightModelxv_params
+{
+    TEB *teb;
+    GLenum pname;
+    const GLfixed *param;
+};
+
 struct glLightModelxvOES_params
 {
     TEB *teb;
     GLenum pname;
     const GLfixed *param;
+};
+
+struct glLightx_params
+{
+    TEB *teb;
+    GLenum light;
+    GLenum pname;
+    GLfixed param;
 };
 
 struct glLightxOES_params
@@ -12200,12 +12363,26 @@ struct glLightxOES_params
     GLfixed param;
 };
 
+struct glLightxv_params
+{
+    TEB *teb;
+    GLenum light;
+    GLenum pname;
+    const GLfixed *params;
+};
+
 struct glLightxvOES_params
 {
     TEB *teb;
     GLenum light;
     GLenum pname;
     const GLfixed *params;
+};
+
+struct glLineWidthx_params
+{
+    TEB *teb;
+    GLfixed width;
 };
 
 struct glLineWidthxOES_params
@@ -12274,6 +12451,12 @@ struct glLoadIdentityDeformationMapSGIX_params
 {
     TEB *teb;
     GLbitfield mask;
+};
+
+struct glLoadMatrixx_params
+{
+    TEB *teb;
+    const GLfixed *m;
 };
 
 struct glLoadMatrixxOES_params
@@ -12629,12 +12812,28 @@ struct glMapVertexAttrib2fAPPLE_params
     const GLfloat *points;
 };
 
+struct glMaterialx_params
+{
+    TEB *teb;
+    GLenum face;
+    GLenum pname;
+    GLfixed param;
+};
+
 struct glMaterialxOES_params
 {
     TEB *teb;
     GLenum face;
     GLenum pname;
     GLfixed param;
+};
+
+struct glMaterialxv_params
+{
+    TEB *teb;
+    GLenum face;
+    GLenum pname;
+    const GLfixed *param;
 };
 
 struct glMaterialxvOES_params
@@ -12935,6 +13134,12 @@ struct glMinmaxEXT_params
     GLenum target;
     GLenum internalformat;
     GLboolean sink;
+};
+
+struct glMultMatrixx_params
+{
+    TEB *teb;
+    const GLfixed *m;
 };
 
 struct glMultMatrixxOES_params
@@ -14143,6 +14348,16 @@ struct glMultiTexCoord4svSGIS_params
     GLshort * v;
 };
 
+struct glMultiTexCoord4x_params
+{
+    TEB *teb;
+    GLenum texture;
+    GLfixed s;
+    GLfixed t;
+    GLfixed r;
+    GLfixed q;
+};
+
 struct glMultiTexCoord4xOES_params
 {
     TEB *teb;
@@ -15167,6 +15382,14 @@ struct glNormal3hvNV_params
     const GLhalfNV *v;
 };
 
+struct glNormal3x_params
+{
+    TEB *teb;
+    GLfixed nx;
+    GLfixed ny;
+    GLfixed nz;
+};
+
 struct glNormal3xOES_params
 {
     TEB *teb;
@@ -15342,6 +15565,17 @@ struct glObjectUnpurgeableAPPLE_params
     GLenum ret;
 };
 
+struct glOrthof_params
+{
+    TEB *teb;
+    GLfloat l;
+    GLfloat r;
+    GLfloat b;
+    GLfloat t;
+    GLfloat n;
+    GLfloat f;
+};
+
 struct glOrthofOES_params
 {
     TEB *teb;
@@ -15351,6 +15585,17 @@ struct glOrthofOES_params
     GLfloat t;
     GLfloat n;
     GLfloat f;
+};
+
+struct glOrthox_params
+{
+    TEB *teb;
+    GLfixed l;
+    GLfixed r;
+    GLfixed b;
+    GLfixed t;
+    GLfixed n;
+    GLfixed f;
 };
 
 struct glOrthoxOES_params
@@ -15824,11 +16069,31 @@ struct glPointParameterivNV_params
     const GLint *params;
 };
 
+struct glPointParameterx_params
+{
+    TEB *teb;
+    GLenum pname;
+    GLfixed param;
+};
+
+struct glPointParameterxv_params
+{
+    TEB *teb;
+    GLenum pname;
+    const GLfixed *params;
+};
+
 struct glPointParameterxvOES_params
 {
     TEB *teb;
     GLenum pname;
     const GLfixed *params;
+};
+
+struct glPointSizex_params
+{
+    TEB *teb;
+    GLfixed size;
 };
 
 struct glPointSizexOES_params
@@ -15872,6 +16137,13 @@ struct glPolygonOffsetEXT_params
     TEB *teb;
     GLfloat factor;
     GLfloat bias;
+};
+
+struct glPolygonOffsetx_params
+{
+    TEB *teb;
+    GLfixed factor;
+    GLfixed units;
 };
 
 struct glPolygonOffsetxOES_params
@@ -18212,6 +18484,15 @@ struct glResumeTransformFeedbackNV_params
     TEB *teb;
 };
 
+struct glRotatex_params
+{
+    TEB *teb;
+    GLfixed angle;
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
+};
+
 struct glRotatexOES_params
 {
     TEB *teb;
@@ -18232,6 +18513,13 @@ struct glSampleCoverageARB_params
 {
     TEB *teb;
     GLfloat value;
+    GLboolean invert;
+};
+
+struct glSampleCoveragex_params
+{
+    TEB *teb;
+    GLclampx value;
     GLboolean invert;
 };
 
@@ -18329,6 +18617,14 @@ struct glSamplerParameteriv_params
     GLuint sampler;
     GLenum pname;
     const GLint *param;
+};
+
+struct glScalex_params
+{
+    TEB *teb;
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
 };
 
 struct glScalexOES_params
@@ -19740,12 +20036,28 @@ struct glTexCoordPointervINTEL_params
     const void **pointer;
 };
 
+struct glTexEnvx_params
+{
+    TEB *teb;
+    GLenum target;
+    GLenum pname;
+    GLfixed param;
+};
+
 struct glTexEnvxOES_params
 {
     TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed param;
+};
+
+struct glTexEnvxv_params
+{
+    TEB *teb;
+    GLenum target;
+    GLenum pname;
+    const GLfixed *params;
 };
 
 struct glTexEnvxvOES_params
@@ -19938,12 +20250,28 @@ struct glTexParameterIuivEXT_params
     const GLuint *params;
 };
 
+struct glTexParameterx_params
+{
+    TEB *teb;
+    GLenum target;
+    GLenum pname;
+    GLfixed param;
+};
+
 struct glTexParameterxOES_params
 {
     TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed param;
+};
+
+struct glTexParameterxv_params
+{
+    TEB *teb;
+    GLenum target;
+    GLenum pname;
+    const GLfixed *params;
 };
 
 struct glTexParameterxvOES_params
@@ -20891,6 +21219,14 @@ struct glTransformPathNV_params
     GLuint srcPath;
     GLenum transformType;
     const GLfloat *transformValues;
+};
+
+struct glTranslatex_params
+{
+    TEB *teb;
+    GLfixed x;
+    GLfixed y;
+    GLfixed z;
 };
 
 struct glTranslatexOES_params
@@ -25876,6 +26212,7 @@ enum unix_funcs
     unix_glAlphaFragmentOp1ATI,
     unix_glAlphaFragmentOp2ATI,
     unix_glAlphaFragmentOp3ATI,
+    unix_glAlphaFuncx,
     unix_glAlphaFuncxOES,
     unix_glAlphaToCoverageDitherControlNV,
     unix_glApplyFramebufferAttachmentCMAAINTEL,
@@ -26024,10 +26361,12 @@ enum unix_funcs
     unix_glClearBufferuiv,
     unix_glClearColorIiEXT,
     unix_glClearColorIuiEXT,
+    unix_glClearColorx,
     unix_glClearColorxOES,
     unix_glClearDepthdNV,
     unix_glClearDepthf,
     unix_glClearDepthfOES,
+    unix_glClearDepthx,
     unix_glClearDepthxOES,
     unix_glClearNamedBufferData,
     unix_glClearNamedBufferDataEXT,
@@ -26046,7 +26385,9 @@ enum unix_funcs
     unix_glClientWaitSemaphoreui64NVX,
     unix_glClientWaitSync,
     unix_glClipControl,
+    unix_glClipPlanef,
     unix_glClipPlanefOES,
+    unix_glClipPlanex,
     unix_glClipPlanexOES,
     unix_glColor3fVertex3fSUN,
     unix_glColor3fVertex3fvSUN,
@@ -26062,6 +26403,7 @@ enum unix_funcs
     unix_glColor4ubVertex2fvSUN,
     unix_glColor4ubVertex3fSUN,
     unix_glColor4ubVertex3fvSUN,
+    unix_glColor4x,
     unix_glColor4xOES,
     unix_glColor4xvOES,
     unix_glColorFormatNV,
@@ -26264,6 +26606,7 @@ enum unix_funcs
     unix_glDepthRangedNV,
     unix_glDepthRangef,
     unix_glDepthRangefOES,
+    unix_glDepthRangex,
     unix_glDepthRangexOES,
     unix_glDetachObjectARB,
     unix_glDetachShader,
@@ -26396,7 +26739,9 @@ enum unix_funcs
     unix_glFogCoordhNV,
     unix_glFogCoordhvNV,
     unix_glFogFuncSGIS,
+    unix_glFogx,
     unix_glFogxOES,
+    unix_glFogxv,
     unix_glFogxvOES,
     unix_glFragmentColorMaterialSGIX,
     unix_glFragmentCoverageColorNV,
@@ -26441,7 +26786,9 @@ enum unix_funcs
     unix_glFramebufferTextureLayerEXT,
     unix_glFramebufferTextureMultiviewOVR,
     unix_glFreeObjectBufferATI,
+    unix_glFrustumf,
     unix_glFrustumfOES,
+    unix_glFrustumx,
     unix_glFrustumxOES,
     unix_glGenAsyncMarkersSGIX,
     unix_glGenBuffers,
@@ -26506,7 +26853,9 @@ enum unix_funcs
     unix_glGetBufferPointervARB,
     unix_glGetBufferSubData,
     unix_glGetBufferSubDataARB,
+    unix_glGetClipPlanef,
     unix_glGetClipPlanefOES,
+    unix_glGetClipPlanex,
     unix_glGetClipPlanexOES,
     unix_glGetColorTable,
     unix_glGetColorTableEXT,
@@ -26548,6 +26897,7 @@ enum unix_funcs
     unix_glGetFinalCombinerInputParameterfvNV,
     unix_glGetFinalCombinerInputParameterivNV,
     unix_glGetFirstPerfQueryIdINTEL,
+    unix_glGetFixedv,
     unix_glGetFixedvOES,
     unix_glGetFloatIndexedvEXT,
     unix_glGetFloati_v,
@@ -26595,6 +26945,7 @@ enum unix_funcs
     unix_glGetInvariantFloatvEXT,
     unix_glGetInvariantIntegervEXT,
     unix_glGetLightxOES,
+    unix_glGetLightxv,
     unix_glGetListParameterfvSGIX,
     unix_glGetListParameterivSGIX,
     unix_glGetLocalConstantBooleanvEXT,
@@ -26607,6 +26958,7 @@ enum unix_funcs
     unix_glGetMapParameterivNV,
     unix_glGetMapxvOES,
     unix_glGetMaterialxOES,
+    unix_glGetMaterialxv,
     unix_glGetMemoryObjectDetachedResourcesuivNV,
     unix_glGetMemoryObjectParameterivEXT,
     unix_glGetMinmax,
@@ -26764,6 +27116,7 @@ enum unix_funcs
     unix_glGetSynciv,
     unix_glGetTexBumpParameterfvATI,
     unix_glGetTexBumpParameterivATI,
+    unix_glGetTexEnvxv,
     unix_glGetTexEnvxvOES,
     unix_glGetTexFilterFuncSGIS,
     unix_glGetTexGenxvOES,
@@ -26773,6 +27126,7 @@ enum unix_funcs
     unix_glGetTexParameterIuiv,
     unix_glGetTexParameterIuivEXT,
     unix_glGetTexParameterPointervAPPLE,
+    unix_glGetTexParameterxv,
     unix_glGetTexParameterxvOES,
     unix_glGetTextureHandleARB,
     unix_glGetTextureHandleNV,
@@ -26995,10 +27349,15 @@ enum unix_funcs
     unix_glLGPUNamedBufferSubDataNVX,
     unix_glLabelObjectEXT,
     unix_glLightEnviSGIX,
+    unix_glLightModelx,
     unix_glLightModelxOES,
+    unix_glLightModelxv,
     unix_glLightModelxvOES,
+    unix_glLightx,
     unix_glLightxOES,
+    unix_glLightxv,
     unix_glLightxvOES,
+    unix_glLineWidthx,
     unix_glLineWidthxOES,
     unix_glLinkProgram,
     unix_glLinkProgramARB,
@@ -27008,6 +27367,7 @@ enum unix_funcs
     unix_glListParameteriSGIX,
     unix_glListParameterivSGIX,
     unix_glLoadIdentityDeformationMapSGIX,
+    unix_glLoadMatrixx,
     unix_glLoadMatrixxOES,
     unix_glLoadProgramNV,
     unix_glLoadTransposeMatrixd,
@@ -27050,7 +27410,9 @@ enum unix_funcs
     unix_glMapVertexAttrib1fAPPLE,
     unix_glMapVertexAttrib2dAPPLE,
     unix_glMapVertexAttrib2fAPPLE,
+    unix_glMaterialx,
     unix_glMaterialxOES,
+    unix_glMaterialxv,
     unix_glMaterialxvOES,
     unix_glMatrixFrustumEXT,
     unix_glMatrixIndexPointerARB,
@@ -27091,6 +27453,7 @@ enum unix_funcs
     unix_glMinSampleShadingARB,
     unix_glMinmax,
     unix_glMinmaxEXT,
+    unix_glMultMatrixx,
     unix_glMultMatrixxOES,
     unix_glMultTransposeMatrixd,
     unix_glMultTransposeMatrixdARB,
@@ -27241,6 +27604,7 @@ enum unix_funcs
     unix_glMultiTexCoord4sv,
     unix_glMultiTexCoord4svARB,
     unix_glMultiTexCoord4svSGIS,
+    unix_glMultiTexCoord4x,
     unix_glMultiTexCoord4xOES,
     unix_glMultiTexCoord4xvOES,
     unix_glMultiTexCoordP1ui,
@@ -27347,6 +27711,7 @@ enum unix_funcs
     unix_glNormal3fVertex3fvSUN,
     unix_glNormal3hNV,
     unix_glNormal3hvNV,
+    unix_glNormal3x,
     unix_glNormal3xOES,
     unix_glNormal3xvOES,
     unix_glNormalFormatNV,
@@ -27369,7 +27734,9 @@ enum unix_funcs
     unix_glObjectPtrLabel,
     unix_glObjectPurgeableAPPLE,
     unix_glObjectUnpurgeableAPPLE,
+    unix_glOrthof,
     unix_glOrthofOES,
+    unix_glOrthox,
     unix_glOrthoxOES,
     unix_glPNTrianglesfATI,
     unix_glPNTrianglesiATI,
@@ -27427,13 +27794,17 @@ enum unix_funcs
     unix_glPointParameteriNV,
     unix_glPointParameteriv,
     unix_glPointParameterivNV,
+    unix_glPointParameterx,
+    unix_glPointParameterxv,
     unix_glPointParameterxvOES,
+    unix_glPointSizex,
     unix_glPointSizexOES,
     unix_glPollAsyncSGIX,
     unix_glPollInstrumentsSGIX,
     unix_glPolygonOffsetClamp,
     unix_glPolygonOffsetClampEXT,
     unix_glPolygonOffsetEXT,
+    unix_glPolygonOffsetx,
     unix_glPolygonOffsetxOES,
     unix_glPopDebugGroup,
     unix_glPopGroupMarkerEXT,
@@ -27692,9 +28063,11 @@ enum unix_funcs
     unix_glResolveDepthValuesNV,
     unix_glResumeTransformFeedback,
     unix_glResumeTransformFeedbackNV,
+    unix_glRotatex,
     unix_glRotatexOES,
     unix_glSampleCoverage,
     unix_glSampleCoverageARB,
+    unix_glSampleCoveragex,
     unix_glSampleMapATI,
     unix_glSampleMaskEXT,
     unix_glSampleMaskIndexedNV,
@@ -27708,6 +28081,7 @@ enum unix_funcs
     unix_glSamplerParameterfv,
     unix_glSamplerParameteri,
     unix_glSamplerParameteriv,
+    unix_glScalex,
     unix_glScalexOES,
     unix_glScissorArrayv,
     unix_glScissorExclusiveArrayvNV,
@@ -27886,7 +28260,9 @@ enum unix_funcs
     unix_glTexCoordPointerEXT,
     unix_glTexCoordPointerListIBM,
     unix_glTexCoordPointervINTEL,
+    unix_glTexEnvx,
     unix_glTexEnvxOES,
+    unix_glTexEnvxv,
     unix_glTexEnvxvOES,
     unix_glTexFilterFuncSGIS,
     unix_glTexGenxOES,
@@ -27904,7 +28280,9 @@ enum unix_funcs
     unix_glTexParameterIivEXT,
     unix_glTexParameterIuiv,
     unix_glTexParameterIuivEXT,
+    unix_glTexParameterx,
     unix_glTexParameterxOES,
+    unix_glTexParameterxv,
     unix_glTexParameterxvOES,
     unix_glTexRenderbufferNV,
     unix_glTexStorage1D,
@@ -27992,6 +28370,7 @@ enum unix_funcs
     unix_glTransformFeedbackVaryingsEXT,
     unix_glTransformFeedbackVaryingsNV,
     unix_glTransformPathNV,
+    unix_glTranslatex,
     unix_glTranslatexOES,
     unix_glUniform1d,
     unix_glUniform1dv,

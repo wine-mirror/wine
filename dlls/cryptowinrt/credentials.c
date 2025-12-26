@@ -118,8 +118,10 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( credentials_statics, IKeyCredentialManagerStatics, struct credentials_statics, IActivationFactory_iface );
 
-static HRESULT is_supported_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT is_supported_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
 {
+    if (!called_async) return STATUS_PENDING;
+
     result->vt = VT_BOOL;
     result->boolVal = FALSE;
     return S_OK;

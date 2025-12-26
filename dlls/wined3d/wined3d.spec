@@ -45,6 +45,7 @@
 @ cdecl wined3d_decoder_decref(ptr)
 @ cdecl wined3d_decoder_decode(ptr long long)
 @ cdecl wined3d_decoder_end_frame(ptr)
+@ cdecl wined3d_decoder_extension(ptr long ptr long ptr long)
 @ cdecl wined3d_decoder_get_buffer(ptr long)
 
 @ cdecl wined3d_decoder_output_view_create(ptr ptr ptr ptr ptr)

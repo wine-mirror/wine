@@ -1,5 +1,5 @@
 MODULE    = cmd.exe
-IMPORTS   = shell32 user32 advapi32
+IMPORTS   = shell32 user32 advapi32 kernelbase
 
 EXTRADLLFLAGS = -mconsole -municode
 

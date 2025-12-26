@@ -50,7 +50,6 @@
 #include "winuser.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "dictionary.h"
 #include "storage32.h"
 #include "oleauto.h"
@@ -282,8 +281,8 @@ static ULONG WINAPI enum_stat_prop_stg_Release(IEnumSTATPROPSTG *iface)
     if (!refcount)
     {
         IPropertyStorage_Release(&penum->storage->IPropertyStorage_iface);
-        heap_free(penum->stats);
-        heap_free(penum);
+        free(penum->stats);
+        free(penum);
     }
 
     return refcount;
@@ -388,7 +387,7 @@ static HRESULT create_enum_stat_prop_stg(PropertyStorage_impl *storage, IEnumSTA
     struct enum_stat_prop_stg *enum_obj;
     DWORD count;
 
-    enum_obj = heap_alloc_zero(sizeof(*enum_obj));
+    enum_obj = calloc(1, sizeof(*enum_obj));
     if (!enum_obj)
         return E_OUTOFMEMORY;
 
@@ -402,7 +401,7 @@ static HRESULT create_enum_stat_prop_stg(PropertyStorage_impl *storage, IEnumSTA
 
     if (count)
     {
-        if (!(enum_obj->stats = heap_alloc(sizeof(*enum_obj->stats) * count)))
+        if (!(enum_obj->stats = malloc(sizeof(*enum_obj->stats) * count)))
         {
             IEnumSTATPROPSTG_Release(&enum_obj->IEnumSTATPROPSTG_iface);
             return E_OUTOFMEMORY;
@@ -2274,6 +2273,12 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         hr = IStream_Write(This->stm, &ularge, sizeof(ularge), &bytesWritten);
         break;
     }
+    case VT_R8:
+    {
+        hr = IStream_Write(This->stm, &var->dblVal, sizeof(var->dblVal), &count);
+        bytesWritten = count;
+        break;
+    }
     case VT_LPSTR:
     {
         if (This->codePage == CP_UNICODE)
@@ -2305,7 +2310,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
             len = WideCharToMultiByte(This->codePage, 0, var->bstrVal, SysStringLen(var->bstrVal) + 1,
                     NULL, 0, NULL, NULL);
 
-            str = heap_alloc(len);
+            str = malloc(len);
             if (!str)
             {
                 hr = E_OUTOFMEMORY;
@@ -2318,7 +2323,7 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
             hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
             if (SUCCEEDED(hr))
                 hr = IStream_Write(This->stm, str, len, &count);
-            heap_free(str);
+            free(str);
         }
 
         bytesWritten = count + sizeof(DWORD);
@@ -2753,8 +2758,8 @@ static ULONG WINAPI enum_stat_propset_stg_Release(IEnumSTATPROPSETSTG *iface)
 
     if (!refcount)
     {
-        heap_free(psenum->stats);
-        heap_free(psenum);
+        free(psenum->stats);
+        free(psenum);
     }
 
     return refcount;
@@ -2826,7 +2831,7 @@ static HRESULT create_enum_stat_propset_stg(StorageImpl *storage, IEnumSTATPROPS
 
     struct enum_stat_propset_stg *enum_obj;
 
-    enum_obj = heap_alloc_zero(sizeof(*enum_obj));
+    enum_obj = calloc(1, sizeof(*enum_obj));
     if (!enum_obj)
         return E_OUTOFMEMORY;
 
@@ -2848,7 +2853,7 @@ static HRESULT create_enum_stat_propset_stg(StorageImpl *storage, IEnumSTATPROPS
     if (FAILED(hr))
         goto done;
 
-    enum_obj->stats = heap_alloc(enum_obj->count * sizeof(*enum_obj->stats));
+    enum_obj->stats = malloc(enum_obj->count * sizeof(*enum_obj->stats));
     if (!enum_obj->stats)
     {
         hr = E_OUTOFMEMORY;

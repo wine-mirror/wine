@@ -2990,7 +2990,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             else
                 args->color_fixup[i] = texture->resource.format->color_fixup;
 
-            if (texture->resource.format_caps & WINED3D_FORMAT_CAP_SHADOW)
+            if (texture->resource.format_attrs & WINED3D_FORMAT_ATTR_SHADOW)
                 args->shadow |= 1u << i;
         }
     }

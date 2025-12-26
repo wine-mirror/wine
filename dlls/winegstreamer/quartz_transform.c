@@ -36,6 +36,11 @@ struct transform
     struct strmbase_source source;
     struct strmbase_passthrough passthrough;
 
+    /* Dynamic reconnection changes the source media type, but the mpeg video
+     * decoder does not reflect it in ConnectionMediaType().
+     * [Note that this differs from other filters, viz. avidec, which does.] */
+    AM_MEDIA_TYPE source_mt;
+
     IQualityControl sink_IQualityControl_iface;
     IQualityControl source_IQualityControl_iface;
     IQualityControl *qc_sink;
@@ -106,6 +111,7 @@ static HRESULT transform_init_stream(struct strmbase_filter *iface)
         if (FAILED(hr = wg_sample_queue_create(&filter->sample_queue)))
             return hr;
 
+        CopyMediaType(&filter->source_mt, &filter->source.pin.mt);
         if (FAILED(hr = wg_transform_create_quartz(&filter->sink.pin.mt, &filter->source.pin.mt,
                 &attrs, &filter->transform)))
         {
@@ -133,6 +139,7 @@ static HRESULT transform_cleanup_stream(struct strmbase_filter *iface)
         wg_transform_destroy(filter->transform);
         wg_sample_queue_destroy(filter->sample_queue);
         LeaveCriticalSection(&filter->filter.stream_cs);
+        FreeMediaType(&filter->source_mt);
     }
 
     return S_OK;
@@ -291,10 +298,21 @@ static HRESULT transform_sink_query_interface(struct strmbase_pin *pin, REFIID i
     return S_OK;
 }
 
+static bool compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+{
+    return IsEqualGUID(&a->majortype, &b->majortype)
+            && IsEqualGUID(&a->subtype, &b->subtype)
+            && IsEqualGUID(&a->formattype, &b->formattype)
+            && a->cbFormat == b->cbFormat
+            && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
 static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSample *sample)
 {
     struct transform *filter = impl_from_strmbase_filter(pin->pin.filter);
     struct wg_sample *wg_sample;
+    IMediaSample *output_sample;
+    AM_MEDIA_TYPE *mt;
     HRESULT hr;
 
     /* We do not expect pin connection state to change while the filter is
@@ -313,6 +331,39 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
     if (filter->sink.flushing)
         return S_FALSE;
 
+    if (FAILED(hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &output_sample, NULL, NULL, 0)))
+        return hr;
+
+    if ((hr = IMediaSample_GetMediaType(output_sample, &mt)) == S_OK)
+    {
+        struct wg_transform_attrs attrs = {0};
+
+        if (compare_media_types(mt, &filter->source_mt))
+        {
+            DeleteMediaType(mt);
+        }
+        else
+        {
+            TRACE("Executing dynamic format change. Current format:\n");
+            strmbase_dump_media_type(&filter->source_mt);
+            TRACE("New format:\n");
+            strmbase_dump_media_type(mt);
+
+            FreeMediaType(&filter->source_mt);
+            filter->source_mt = *mt;
+            CoTaskMemFree(mt);
+
+            wg_transform_destroy(filter->transform);
+            if (FAILED(hr = wg_transform_create_quartz(&filter->sink.pin.mt,
+                    &filter->source_mt, &attrs, &filter->transform)))
+                ERR("Failed to recreate transform, hr %#lx.\n", hr);
+        }
+    }
+    else if (hr != S_FALSE)
+    {
+        ERR("Failed to get media type, hr %#lx.\n", hr);
+    }
+
     hr = wg_sample_create_quartz(sample, &wg_sample);
     if (FAILED(hr))
         return hr;
@@ -323,12 +374,6 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
 
     for (;;)
     {
-        IMediaSample *output_sample;
-
-        hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &output_sample, NULL, NULL, 0);
-        if (FAILED(hr))
-            return hr;
-
         hr = wg_sample_create_quartz(output_sample, &wg_sample);
         if (FAILED(hr))
         {
@@ -360,6 +405,9 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
         }
 
         IMediaSample_Release(output_sample);
+
+        if (FAILED(hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &output_sample, NULL, NULL, 0)))
+            return hr;
     }
 
     return S_OK;

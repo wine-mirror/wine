@@ -35,6 +35,8 @@
 
 #include "ime_test.h"
 
+static const BOOL is_win64 = sizeof(void *) > sizeof(int);
+
 static const char *debugstr_wm_ime( UINT msg )
 {
     switch (msg)
@@ -7057,6 +7059,7 @@ static void test_ImmTranslateMessage( BOOL kbd_char_first )
             .hkl = expect_ime, .himc = default_himc, .func = IME_TO_ASCII_EX,
             /* FIXME what happened to kbd_char_first here!? */
             .to_ascii_ex = {.vkey = 'Q', .vsc = 0xc010},
+            .todo_value = kbd_char_first && is_win64,
         },
         {0},
     };

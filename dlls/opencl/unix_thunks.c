@@ -7,6 +7,11 @@
 #include "config.h"
 #include "unix_private.h"
 
+#ifdef __APPLE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 static NTSTATUS wrap_clCreateBuffer( void *args )
 {
     struct clCreateBuffer_params *params = args;
@@ -564,6 +569,9 @@ static NTSTATUS wrap_clWaitForEvents( void *args )
 
     return clWaitForEvents( params->num_events, params->event_list );
 }
+#ifdef __APPLE__
+#pragma clang diagnostic pop
+#endif
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {

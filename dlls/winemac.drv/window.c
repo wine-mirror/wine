@@ -538,9 +538,6 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const struct wi
         return NULL;
     }
 
-    /* don't create win data for HWND_MESSAGE windows */
-    if (parent != NtUserGetDesktopWindow() && !NtUserGetAncestor(parent, GA_PARENT)) return NULL;
-
     if (!(data = alloc_win_data(hwnd))) return NULL;
     data->rects = *rects;
 
@@ -1152,17 +1149,14 @@ struct macdrv_client_surface *macdrv_client_surface_create(HWND hwnd)
 {
     HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct macdrv_client_surface *surface;
-    struct macdrv_win_data *data;
     RECT rect;
 
     NtUserGetClientRect(hwnd, &rect, NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI));
     NtUserMapWindowPoints(hwnd, toplevel, (POINT *)&rect, 2, NtUserGetWinMonitorDpi(toplevel, MDT_RAW_DPI));
 
-    if (!(data = get_win_data(toplevel))) return FALSE;
     surface = client_surface_create(sizeof(*surface), &macdrv_client_surface_funcs, hwnd);
     surface->cocoa_view = macdrv_create_view(cgrect_from_rect(rect));
     macdrv_set_view_hidden(surface->cocoa_view, TRUE);
-    release_win_data(data);
 
     if (surface)
     {
@@ -1589,9 +1583,10 @@ BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *styl
 /***********************************************************************
  *              WindowPosChanged   (MACDRV.@)
  */
-void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
                              const struct window_rects *new_rects, struct window_surface *surface)
 {
+    BOOL fullscreen = swp_flags & WINE_SWP_FULLSCREEN;
     struct macdrv_thread_data *thread_data;
     struct macdrv_win_data *data;
     unsigned int new_style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
@@ -1604,8 +1599,8 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
     old_rects = data->rects;
     data->rects = *new_rects;
 
-    TRACE("win %p/%p new_rects %s style %08x flags %08x fullscreen %u surface %p\n", hwnd, data->cocoa_window,
-          debugstr_window_rects(new_rects), new_style, swp_flags, fullscreen, surface);
+    TRACE("win %p/%p new_rects %s style %08x flags %08x surface %p\n", hwnd, data->cocoa_window,
+          debugstr_window_rects(new_rects), new_style, swp_flags, surface);
 
     if (!data->cocoa_window) goto done;
 
@@ -1736,7 +1731,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
         flags |= SWP_NOSENDCHANGING;
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
     {
-        int send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
+        bool send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
         if (send_sizemove)
             send_message(hwnd, WM_ENTERSIZEMOVE, 0, 0);
         NtUserSetRawWindowPos(hwnd, rect, flags, FALSE);
@@ -1764,7 +1759,7 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
     if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
     {
         TRACE("setting foreground window to %p\n", hwnd);
-        NtUserSetForegroundWindow(hwnd);
+        NtUserSetForegroundWindowInternal(hwnd);
         return;
     }
 
@@ -1788,7 +1783,7 @@ void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event)
     {
         send_message(hwnd, WM_CANCELMODE, 0, 0);
         if (hwnd == NtUserGetForegroundWindow())
-            NtUserSetForegroundWindow(NtUserGetDesktopWindow());
+            NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
     }
 }
 
@@ -1817,7 +1812,7 @@ void macdrv_app_deactivated(void)
     if (get_active_window() == NtUserGetForegroundWindow())
     {
         TRACE("setting fg to desktop\n");
-        NtUserSetForegroundWindow(NtUserGetDesktopWindow());
+        NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
     }
 }
 
@@ -1881,7 +1876,6 @@ void macdrv_window_did_unminimize(HWND hwnd)
     {
         TRACE("restoring win %p/%p\n", hwnd, data->cocoa_window);
         release_win_data(data);
-        NtUserSetActiveWindow(hwnd);
         send_message(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
         return;
     }
@@ -1981,7 +1975,7 @@ void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event)
         if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
         {
             TRACE("setting foreground window to %p\n", hwnd);
-            NtUserSetForegroundWindow(hwnd);
+            NtUserSetForegroundWindowInternal(hwnd);
         }
     }
 

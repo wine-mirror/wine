@@ -368,6 +368,7 @@ dispex_static_data_t MSCSSRuleList_dispex = {
     .vtbl       = &MSCSSRuleList_dispex_vtbl,
     .disp_tid   = DispHTMLStyleSheetRulesCollection_tid,
     .iface_tids = MSCSSRuleList_iface_tids,
+    .js_flags   = HOSTOBJ_VOLATILE_PROPS
 };
 
 static HRESULT create_style_sheet_rules_collection(nsIDOMCSSRuleList *nslist, DispatchEx *owner,
@@ -603,6 +604,7 @@ dispex_static_data_t StyleSheetList_dispex = {
     .vtbl       = &StyleSheetList_dispex_vtbl,
     .disp_tid   = DispHTMLStyleSheetsCollection_tid,
     .iface_tids = StyleSheetList_iface_tids,
+    .js_flags   = HOSTOBJ_VOLATILE_PROPS
 };
 
 HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, HTMLDocumentNode *doc,

@@ -27,7 +27,6 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
@@ -604,15 +603,15 @@ WCHAR *get_dos_file_name(const WCHAR *filename)
     {
         char *unix_path;
         len = WideCharToMultiByte(CP_UNIXCP, 0, filename, -1, NULL, 0, NULL, NULL);
-        unix_path = heap_alloc(len * sizeof(WCHAR));
+        unix_path = malloc(len * sizeof(WCHAR));
         WideCharToMultiByte(CP_UNIXCP, 0, filename, -1, unix_path, len, NULL, NULL);
         dos_path = wine_get_dos_file_name(unix_path);
-        heap_free(unix_path);
+        free(unix_path);
     }
     else
     {
         len = lstrlenW(filename);
-        dos_path = heap_alloc((len + 1) * sizeof(WCHAR));
+        dos_path = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
         memcpy(dos_path, filename, (len + 1) * sizeof(WCHAR));
     }
     return dos_path;
@@ -659,7 +658,7 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, WORD mach
     if ((env = process_getenv(process, L"WINEBUILDDIR")))
     {
         len = lstrlenW(env);
-        if (!(buf = heap_alloc((len + wcslen(L"\\programs\\") + machine_dir_len +
+        if (!(buf = malloc((len + wcslen(L"\\programs\\") + machine_dir_len +
                                 2 * lstrlenW(name) + 1) * sizeof(WCHAR)))) return FALSE;
         wcscpy(buf, env);
         end = buf + len;
@@ -693,7 +692,7 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, WORD mach
         lstrcpyW(p, name);
         if (try_match_file(buf, match, param)) goto found;
 
-        heap_free(buf);
+        free(buf);
     }
 
     for (i = 0;; i++)
@@ -702,19 +701,19 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, WORD mach
         swprintf(env_name, ARRAY_SIZE(env_name), L"WINEDLLDIR%u", i);
         if (!(env = process_getenv(process, env_name))) return FALSE;
         len = wcslen(env) + machine_dir_len + wcslen(name) + 1;
-        if (!(buf = heap_alloc(len * sizeof(WCHAR)))) return FALSE;
+        if (!(buf = malloc(len * sizeof(WCHAR)))) return FALSE;
         swprintf(buf, len, L"%s%s%s", env, get_machine_dir(machine_dir, name), name);
         if (try_match_file(buf, match, param)) goto found;
         swprintf(buf, len, L"%s\\%s", env, name);
         if (try_match_file(buf, match, param)) goto found;
-        heap_free(buf);
+        free(buf);
     }
 
     return FALSE;
 
 found:
     TRACE("found %s\n", debugstr_w(buf));
-    heap_free(buf);
+    free(buf);
     return TRUE;
 }
 
@@ -731,7 +730,7 @@ BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*,
 
     size = WideCharToMultiByte(CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL)
         + WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL);
-    if (!(buf = heap_alloc(size))) return FALSE;
+    if (!(buf = malloc(size))) return FALSE;
 
     for (iter = path;; iter = next + 1)
     {
@@ -745,14 +744,14 @@ BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*,
             {
                 ret = try_match_file(dos_path, match, param);
                 if (ret) TRACE("found %s\n", debugstr_w(dos_path));
-                heap_free(dos_path);
+                HeapFree(GetProcessHeap(), 0, dos_path);
                 if (ret) break;
             }
         }
         if (*next != ':') break;
     }
 
-    heap_free(buf);
+    free(buf);
     return ret;
 }
 

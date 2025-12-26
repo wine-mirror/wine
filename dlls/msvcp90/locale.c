@@ -32,7 +32,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "msvcp90.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -13072,14 +13071,14 @@ size_t __cdecl _Strxfrm(char *dest, char *dest_end,
 
     len = MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, NULL, 0);
     if (!len) return INT_MAX;
-    buf = heap_alloc(len * sizeof(WCHAR));
+    buf = malloc(len * sizeof(WCHAR));
     if (!buf) return INT_MAX;
     MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, buf, len);
 
     len = LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, NULL, 0);
     if (len <= dest_len)
         LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, (WCHAR*)dest, dest_len);
-    heap_free(buf);
+    free(buf);
     return len;
 }
 

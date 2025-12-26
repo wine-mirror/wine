@@ -35,7 +35,6 @@
 #include "kernelbase.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(path);
 
@@ -87,7 +86,7 @@ static WCHAR *heap_strdupAtoW(const char *str)
         DWORD len;
 
         len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = heap_alloc(len * sizeof(WCHAR));
+        ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     }
 
@@ -112,7 +111,12 @@ static bool array_reserve(void **elements, size_t *capacity, size_t count, size_
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc( *elements, new_capacity * size )))
+    if (*elements)
+        new_elements = HeapReAlloc( GetProcessHeap(), 0, *elements, new_capacity * size );
+    else
+        new_elements = HeapAlloc( GetProcessHeap(), 0, new_capacity * size );
+
+    if (!new_elements)
         return false;
 
     *elements = new_elements;
@@ -2391,8 +2395,8 @@ HRESULT WINAPI PathMatchSpecExA(const char *path, const char *mask, DWORD flags)
     pathW = heap_strdupAtoW( path );
     maskW = heap_strdupAtoW( mask );
     ret = PathMatchSpecExW( pathW, maskW, flags );
-    heap_free( pathW );
-    heap_free( maskW );
+    HeapFree( GetProcessHeap(), 0, pathW );
+    HeapFree( GetProcessHeap(), 0, maskW );
     return ret;
 }
 
@@ -3045,7 +3049,7 @@ HRESULT WINAPI PathCreateFromUrlW(const WCHAR *url, WCHAR *path, DWORD *pcchPath
      */
     len = 2 + lstrlenW(url) + 1;
     if (*pcchPath < len)
-        tpath = heap_alloc(len * sizeof(WCHAR));
+        tpath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     else
         tpath = path;
 
@@ -3139,7 +3143,7 @@ HRESULT WINAPI PathCreateFromUrlW(const WCHAR *url, WCHAR *path, DWORD *pcchPath
             lstrcpyW(path, tpath);
     }
     if (tpath != path)
-        heap_free(tpath);
+        HeapFree(GetProcessHeap(), 0, tpath);
 
     TRACE("Returning (%lu) %s\n", *pcchPath, wine_dbgstr_w(path));
     return hr;
@@ -3267,7 +3271,7 @@ HRESULT WINAPI UrlEscapeA(const char *url, char *escaped, DWORD *escaped_len, DW
 
     if ((hr = UrlEscapeW(urlW.Buffer, escapedW, &lenW, flags)) == E_POINTER)
     {
-        escapedW = heap_alloc(lenW * sizeof(WCHAR));
+        escapedW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
         hr = UrlEscapeW(urlW.Buffer, escapedW, &lenW, flags);
     }
 
@@ -3287,7 +3291,7 @@ HRESULT WINAPI UrlEscapeA(const char *url, char *escaped, DWORD *escaped_len, DW
         }
     }
     if (escapedW != bufW)
-        heap_free(escapedW);
+        HeapFree(GetProcessHeap(), 0, escapedW);
     RtlFreeUnicodeString(&urlW);
     return hr;
 }
@@ -3313,7 +3317,7 @@ HRESULT WINAPI UrlEscapeW(const WCHAR *url, WCHAR *escaped, DWORD *escaped_len, 
         FIXME("Unimplemented flags: %08lx\n", flags);
     }
 
-    dst_ptr = dst = heap_alloc(*escaped_len * sizeof(WCHAR));
+    dst_ptr = dst = HeapAlloc(GetProcessHeap(), 0, *escaped_len * sizeof(WCHAR));
     if (!dst_ptr)
         return E_OUTOFMEMORY;
 
@@ -3478,7 +3482,7 @@ HRESULT WINAPI UrlEscapeW(const WCHAR *url, WCHAR *escaped, DWORD *escaped_len, 
     }
     *escaped_len = needed;
 
-    heap_free(dst_ptr);
+    HeapFree(GetProcessHeap(), 0, dst_ptr);
     return hr;
 }
 
@@ -3493,11 +3497,11 @@ HRESULT WINAPI UrlCanonicalizeA(const char *src_url, char *canonicalized, DWORD 
         return E_INVALIDARG;
 
     url = heap_strdupAtoW(src_url);
-    canonical = heap_alloc(*canonicalized_len * sizeof(WCHAR));
+    canonical = HeapAlloc(GetProcessHeap(), 0, *canonicalized_len * sizeof(WCHAR));
     if (!url || !canonical)
     {
-        heap_free(url);
-        heap_free(canonical);
+        HeapFree(GetProcessHeap(), 0, url);
+        HeapFree(GetProcessHeap(), 0, canonical);
         return E_OUTOFMEMORY;
     }
 
@@ -3505,8 +3509,8 @@ HRESULT WINAPI UrlCanonicalizeA(const char *src_url, char *canonicalized, DWORD 
     if (hr == S_OK)
         WideCharToMultiByte(CP_ACP, 0, canonical, -1, canonicalized, *canonicalized_len + 1, NULL, NULL);
 
-    heap_free(url);
-    heap_free(canonical);
+    HeapFree(GetProcessHeap(), 0, url);
+    HeapFree(GetProcessHeap(), 0, canonical);
     return hr;
 }
 
@@ -4168,8 +4172,8 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
         }
     }
 
-    heap_free( rewritten.string );
-    heap_free( url );
+    HeapFree( GetProcessHeap(), 0, rewritten.string );
+    HeapFree( GetProcessHeap(), 0, url );
 
     if (hr == S_OK)
         TRACE("result %s\n", wine_dbgstr_w(canonicalized));
@@ -4188,7 +4192,7 @@ HRESULT WINAPI UrlApplySchemeA(const char *url, char *out, DWORD *out_len, DWORD
     if (!url || !out || !out_len)
         return E_INVALIDARG;
 
-    inW = heap_alloc(2 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
+    inW = HeapAlloc(GetProcessHeap(), 0, 2 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
     outW = inW + INTERNET_MAX_URL_LENGTH;
 
     MultiByteToWideChar(CP_ACP, 0, url, -1, inW, INTERNET_MAX_URL_LENGTH);
@@ -4197,7 +4201,7 @@ HRESULT WINAPI UrlApplySchemeA(const char *url, char *out, DWORD *out_len, DWORD
     hr = UrlApplySchemeW(inW, outW, &len, flags);
     if (hr != S_OK)
     {
-        heap_free(inW);
+        HeapFree(GetProcessHeap(), 0, inW);
         return hr;
     }
 
@@ -4213,7 +4217,7 @@ HRESULT WINAPI UrlApplySchemeA(const char *url, char *out, DWORD *out_len, DWORD
 
 cleanup:
     *out_len = len;
-    heap_free(inW);
+    HeapFree(GetProcessHeap(), 0, inW);
     return hr;
 }
 
@@ -4291,12 +4295,12 @@ static HRESULT url_create_from_path(const WCHAR *path, WCHAR *url, DWORD *url_le
         }
     }
 
-    new_url = heap_alloc((lstrlenW(path) + 9) * sizeof(WCHAR)); /* "file:///" + path length + 1 */
+    new_url = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(path) + 9) * sizeof(WCHAR)); /* "file:///" + path length + 1 */
     lstrcpyW(new_url, L"file:");
     if (is_drive_spec( path )) lstrcatW(new_url, L"///");
     lstrcatW(new_url, path);
     hr = UrlEscapeW(new_url, url, url_len, URL_ESCAPE_PERCENT);
-    heap_free(new_url);
+    HeapFree(GetProcessHeap(), 0, new_url);
     return hr;
 }
 
@@ -4470,7 +4474,7 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
     if (!url || !out || !out_len || !*out_len)
         return E_INVALIDARG;
 
-    inW = heap_alloc(2 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
+    inW = HeapAlloc(GetProcessHeap(), 0, 2 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
     outW = inW + INTERNET_MAX_URL_LENGTH;
 
     MultiByteToWideChar(CP_ACP, 0, url, -1, inW, INTERNET_MAX_URL_LENGTH);
@@ -4479,7 +4483,7 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
     hr = UrlGetPartW(inW, outW, &len, part, flags);
     if (FAILED(hr))
     {
-        heap_free(inW);
+        HeapFree(GetProcessHeap(), 0, inW);
         return hr;
     }
 
@@ -4487,12 +4491,12 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
     if (len2 > *out_len)
     {
         *out_len = len2;
-        heap_free(inW);
+        HeapFree(GetProcessHeap(), 0, inW);
         return E_POINTER;
     }
     len2 = WideCharToMultiByte(CP_ACP, 0, outW, len + 1, out, *out_len, NULL, NULL);
     *out_len = len2 - 1;
-    heap_free(inW);
+    HeapFree(GetProcessHeap(), 0, inW);
     if (hr == S_OK && !*out_len) hr = S_FALSE;
     return hr;
 }
@@ -4832,7 +4836,7 @@ HRESULT WINAPI UrlCreateFromPathA(const char *path, char *url, DWORD *url_len, D
 
     if ((hr = UrlCreateFromPathW(pathW.Buffer, urlW, &lenW, reserved)) == E_POINTER)
     {
-        urlW = heap_alloc(lenW * sizeof(WCHAR));
+        urlW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
         hr = UrlCreateFromPathW(pathW.Buffer, urlW, &lenW, reserved);
     }
 
@@ -4852,7 +4856,7 @@ HRESULT WINAPI UrlCreateFromPathA(const char *path, char *url, DWORD *url_len, D
         }
     }
     if (urlW != bufW)
-        heap_free(urlW);
+        HeapFree(GetProcessHeap(), 0, urlW);
     RtlFreeUnicodeString(&pathW);
     return hr;
 }
@@ -4884,7 +4888,7 @@ HRESULT WINAPI UrlCombineA(const char *base, const char *relative, char *combine
     if (!base || !relative || !combined_len)
         return E_INVALIDARG;
 
-    baseW = heap_alloc(3 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
+    baseW = HeapAlloc(GetProcessHeap(), 0, 3 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
     relativeW = baseW + INTERNET_MAX_URL_LENGTH;
     combinedW = relativeW + INTERNET_MAX_URL_LENGTH;
 
@@ -4896,7 +4900,7 @@ HRESULT WINAPI UrlCombineA(const char *base, const char *relative, char *combine
     if (hr != S_OK)
     {
         *combined_len = len;
-        heap_free(baseW);
+        HeapFree(GetProcessHeap(), 0, baseW);
         return hr;
     }
 
@@ -4904,12 +4908,12 @@ HRESULT WINAPI UrlCombineA(const char *base, const char *relative, char *combine
     if (len2 > *combined_len)
     {
         *combined_len = len2;
-        heap_free(baseW);
+        HeapFree(GetProcessHeap(), 0, baseW);
         return E_POINTER;
     }
     WideCharToMultiByte(CP_ACP, 0, combinedW, len+1, combined, *combined_len + 1, NULL, NULL);
     *combined_len = len2;
-    heap_free(baseW);
+    HeapFree(GetProcessHeap(), 0, baseW);
     return S_OK;
 }
 
@@ -4929,7 +4933,7 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
     relative.cbSize = sizeof(relative);
 
     /* Get space for duplicates of the input and the output */
-    preliminary = heap_alloc(3 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
+    preliminary = HeapAlloc(GetProcessHeap(), 0, 3 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
     mbase = preliminary + INTERNET_MAX_URL_LENGTH;
     canonicalized = mbase + INTERNET_MAX_URL_LENGTH;
     *preliminary = '\0';
@@ -5180,7 +5184,7 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
         TRACE("return-%ld len=%ld, %s\n", process_case, *combined_len, debugstr_w(combined));
     }
 
-    heap_free(preliminary);
+    HeapFree(GetProcessHeap(), 0, preliminary);
     return hr;
 }
 

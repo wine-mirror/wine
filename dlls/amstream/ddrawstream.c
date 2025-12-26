@@ -1537,8 +1537,10 @@ static HRESULT WINAPI ddraw_mem_allocator_GetBuffer(IMemAllocator *iface,
     }
 
     sample->surface_desc.dwSize = sizeof(DDSURFACEDESC);
+    /* Don't pass the sample rect here; the upstream filter is expected to
+     * deal with it. */
     if ((FAILED(hr = IDirectDrawSurface_Lock(sample->surface,
-            &sample->rect, &sample->surface_desc, DDLOCK_WAIT, NULL))))
+            NULL, &sample->surface_desc, DDLOCK_WAIT, NULL))))
     {
         LeaveCriticalSection(&stream->cs);
         return hr;
@@ -2282,12 +2284,23 @@ static HRESULT WINAPI media_sample_SetActualDataLength(IMediaSample *iface, LONG
 static HRESULT WINAPI media_sample_GetMediaType(IMediaSample *iface, AM_MEDIA_TYPE **ret_mt)
 {
     struct ddraw_sample *sample = impl_from_IMediaSample(iface);
+    VIDEOINFOHEADER *video_info;
 
     TRACE("sample %p, ret_mt %p.\n", sample, ret_mt);
 
+    /* Note that this usually matches the media type we pass to QueryAccept(),
+     * but not if there's a sub-rect.
+     * That's amstream just breaking the DirectShow rules.
+     * The type we pass to QueryAccept() just uses the size of the sub-rect for
+     * everything. The type we return from GetMediaType() uses the size of the
+     * surface for everything except rcSource/rcTarget. */
     if (!(*ret_mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
         return E_OUTOFMEMORY;
     set_mt_from_desc(*ret_mt, &sample->surface_desc, sample->surface_desc.lPitch);
+    video_info = (VIDEOINFOHEADER *)(*ret_mt)->pbFormat;
+    SetRect(&video_info->rcSource, 0, 0, sample->rect.right - sample->rect.left,
+            sample->rect.bottom - sample->rect.top);
+    video_info->rcTarget = sample->rect;
     return S_OK;
 }
 
@@ -2458,6 +2471,8 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
             IDirectDrawStreamSample_Release(&object->IDirectDrawStreamSample_iface);
             return hr;
         }
+
+        SetRect(&object->rect, 0, 0, desc.dwWidth, desc.dwHeight);
     }
 
     *ddraw_stream_sample = &object->IDirectDrawStreamSample_iface;

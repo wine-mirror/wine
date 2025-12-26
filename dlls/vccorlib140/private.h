@@ -16,6 +16,44 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdbool.h>
+
+#include "weakreference.h"
+
+struct exception_alloc
+{
+    void *unknown;
+    void *exception_inner;
+    char data[0];
+};
+
+struct control_block
+{
+    IWeakReference IWeakReference_iface;
+    LONG ref_weak;
+    LONG ref_strong;
+    IUnknown *object;
+    bool is_inline;
+    bool unknown;
+    bool is_exception;
+#ifdef _WIN32
+    char _padding[5];
+#endif
+};
+
+void *__cdecl AllocateExceptionWithWeakRef(ptrdiff_t, size_t);
+void __cdecl FreeException(void *);
+void *__cdecl AllocateWithWeakRef(ptrdiff_t, size_t);
+
+void __thiscall control_block_ReleaseTarget(struct control_block *);
+
+void init_exception(void *);
+void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseCOMException(HRESULT);
+void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseInvalidArgumentException(void);
+void WINAPI DECLSPEC_NORETURN __abi_WinRTraiseOutOfMemoryException(void);
+
+void init_delegate(void *base);
+
 #define COM_VTABLE_RTTI_START(iface, type)                                                                             \
     static const struct                                                                                                \
     {                                                                                                                  \
@@ -61,3 +99,5 @@
     DEFINE_IINSPECTABLE_(pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface)
 #define DEFINE_IINSPECTABLE_OUTER(pfx, iface_type, impl_type, outer_iface)                                             \
     DEFINE_IINSPECTABLE_(pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, impl->outer_iface)
+
+DEFINE_GUID(IID_IPrintable,0xde0cbaeb,0x8065,0x4a45,0x96,0xb1,0xc9,0xd4,0x43,0xf9,0xba,0xb3);

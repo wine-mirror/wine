@@ -2676,7 +2676,7 @@ static BOOL WINAPI init_xdg_dirs( INIT_ONCE *once, void *param, void **context )
     HANDLE file;
     DWORD len;
 
-    if (!(var = _wgetenv( L"XDG_CONFIG_HOME" )) || var[0] != '/')
+    if (!(var = _wgetenv( L"WINE_HOST_XDG_CONFIG_HOME" )) || var[0] != '/')
     {
         if (!(var = _wgetenv( L"WINEHOMEDIR" ))) return TRUE;
         fmt = L"%s/.config/user-dirs.dirs";

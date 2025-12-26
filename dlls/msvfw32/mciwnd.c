@@ -104,21 +104,29 @@ BOOL VFWAPIV MCIWndRegisterClass(void)
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
                            DWORD dwStyle, LPCWSTR szFile)
 {
+    HMENU child_id = 0;
+
     TRACE("%p %p %lx %s\n", hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 
     MCIWndRegisterClass();
 
     if (!hInstance) hInstance = GetModuleHandleW(0);
 
-    if (hwndParent)
-        dwStyle |= WS_VISIBLE | WS_BORDER /*| WS_CHILD*/;
-    else
-        dwStyle |= WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+    if (!(dwStyle & (WS_POPUP | WS_CHILD)))
+    {
+        if (hwndParent)
+            dwStyle |= WS_VISIBLE | WS_BORDER | WS_CHILD;
+        else
+            dwStyle |= WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+    }
+
+    if (dwStyle & WS_CHILD)
+        child_id = (HMENU)66;
 
     return CreateWindowExW(0, mciWndClassW, mciWndNameW,
                            dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                            0, 0, 300, 0,
-                           hwndParent, 0, hInstance, (LPVOID)szFile);
+                           hwndParent, child_id, hInstance, (LPVOID)szFile);
 }
 
 /***********************************************************************
@@ -551,6 +559,7 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
             static const WCHAR formatW[] = {'%','d',0};
             static const WCHAR mci32W[] = {'m','c','i','3','2',0};
             static const WCHAR system_iniW[] = {'s','y','s','t','e','m','.','i','n','i',0};
+            static const WCHAR avivideoW[] = {'a','v','i','v','i','d','e','o',0};
 
             TRACE("MCIWNDM_OPENW %s\n", debugstr_w((LPWSTR)lParam));
 
@@ -575,6 +584,16 @@ static LRESULT WINAPI MCIWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lPa
             mwi->lasterror = mciSendCommandW(mwi->mci, MCI_OPEN,
                                              MCI_OPEN_ELEMENT | MCI_OPEN_ALIAS | MCI_WAIT,
                                              (DWORD_PTR)&mci_open);
+
+            if (mwi->lasterror)
+            {
+                mci_open.lpstrDeviceType = avivideoW;
+                mwi->lasterror = mciSendCommandW(mwi->mci, MCI_OPEN,
+                                                 MCI_OPEN_ELEMENT | MCI_OPEN_TYPE |
+                                                 MCI_OPEN_ALIAS | MCI_WAIT,
+                                                 (DWORD_PTR)&mci_open);
+            }
+
             SetCursor(hCursor);
 
             if (mwi->lasterror && !(mwi->dwStyle & MCIWNDF_NOERRORDLG))

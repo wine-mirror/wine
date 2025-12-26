@@ -256,7 +256,7 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
 
     *handle = 0;
     memset( info, 0, sizeof(*info) );
-    if (!(status = get_nt_and_unix_names( attr, nt_name, unix_name, FILE_OPEN )))
+    if (!(status = get_nt_and_unix_names( attr, nt_name, unix_name, FILE_OPEN, FALSE )))
     {
         status = open_unix_file( handle, *unix_name, GENERIC_READ, attr, 0,
                                  FILE_SHARE_READ | FILE_SHARE_DELETE,
@@ -340,7 +340,7 @@ static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
     nt_name.Length = wcslen( nt_name.Buffer ) * sizeof(WCHAR);
 
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    status = get_nt_and_unix_names( &attr, &true_nt_name, &unix_name, FILE_OPEN );
+    status = get_nt_and_unix_names( &attr, &true_nt_name, &unix_name, FILE_OPEN, FALSE );
     if (status) goto done;
     status = open_unix_file( &handle, unix_name, FILE_TRAVERSE | SYNCHRONIZE, &attr, 0,
                              FILE_SHARE_READ | FILE_SHARE_DELETE,
@@ -554,7 +554,7 @@ static NTSTATUS fork_and_exec( OBJECT_ATTRIBUTES *attr, const char *unix_name, i
 {
     pid_t pid;
     int fd[2], stdin_fd = -1, stdout_fd = -1;
-    char **argv, **envp;
+    char **argv;
     NTSTATUS status = STATUS_SUCCESS;
 
 #ifdef HAVE_PIPE2
@@ -597,13 +597,12 @@ static NTSTATUS fork_and_exec( OBJECT_ATTRIBUTES *attr, const char *unix_name, i
             signal( SIGPIPE, SIG_DFL );
 
             argv = build_argv( &params->CommandLine, 0 );
-            envp = build_envp( params->Environment );
             if (unixdir != -1)
             {
                 fchdir( unixdir );
                 close( unixdir );
             }
-            execve( unix_name, argv, envp );
+            execv( unix_name, argv );
         }
 
         if (pid <= 0)  /* grandchild if exec failed or child if fork failed */

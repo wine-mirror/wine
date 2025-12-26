@@ -53,12 +53,12 @@ struct wgl_pbuffer
 };
 
 static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_funcs;
-static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
-static struct egl_platform display_egl, *devices_egl;
+static struct list devices_egl = LIST_INIT( devices_egl );
+static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
 
 static struct wgl_pixel_format *pixel_formats;
-static UINT formats_count, onscreen_count, devices_count;
+static UINT formats_count, onscreen_count;
 static char wgl_extensions[4096];
 
 static BOOL has_extension( const char *list, const char *ext )
@@ -162,8 +162,7 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
         flags = GL_FLUSH_INTERVAL;
     }
 
-    if (flags || InterlockedCompareExchange( &drawable->client->offscreen, 0, 0 ))
-        drawable->funcs->flush( drawable, flags );
+    if (flags) drawable->funcs->flush( drawable, flags );
 }
 
 static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
@@ -432,11 +431,9 @@ static struct opengl_drawable *framebuffer_surface_create( int format, struct cl
 
 static const struct opengl_drawable_funcs egldrv_pbuffer_funcs;
 
-static inline EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
+static EGLConfig egl_config_for_format( const struct egl_platform *egl, int format )
 {
-    assert(format > 0 && format <= 2 * egl->config_count);
-    if (format <= egl->config_count) return egl->configs[format - 1];
-    return egl->configs[format - egl->config_count - 1];
+    return egl->configs[(format - 1) % egl->config_count];
 }
 
 static void egldrv_init_egl_platform( struct egl_platform *platform )
@@ -449,6 +446,14 @@ static void *egldrv_get_proc_address( const char *name )
 {
     return display_funcs.p_eglGetProcAddress( name );
 }
+
+/* list of flags with which each EGL config will be combined */
+static const UINT pixel_format_flags[] =
+{
+    PFD_SUPPORT_GDI,
+    PFD_DOUBLEBUFFER,
+    0, /* offscreen */
+};
 
 static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
 {
@@ -494,11 +499,12 @@ static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
 
     egl->configs = configs;
     egl->config_count = count;
-    *onscreen_count = count;
-    return 2 * count;
+
+    *onscreen_count = (ARRAY_SIZE(pixel_format_flags) - 1) * count;
+    return ARRAY_SIZE(pixel_format_flags) * count;
 }
 
-static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt, BOOL onscreen )
+static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt, UINT flags )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     struct egl_platform *egl = &display_egl;
@@ -512,12 +518,8 @@ static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt,
     memset( fmt, 0, sizeof(*fmt) );
     pfd->nSize = sizeof(*pfd);
     pfd->nVersion = 1;
-    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION;
-    if (onscreen)
-    {
-        pfd->dwFlags |= PFD_DOUBLEBUFFER;
-        if (surface_type & EGL_WINDOW_BIT) pfd->dwFlags |= PFD_DRAW_TO_WINDOW;
-    }
+    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION | flags;
+    if (flags && surface_type & EGL_WINDOW_BIT) pfd->dwFlags |= PFD_DRAW_TO_WINDOW;
     pfd->iPixelType = PFD_TYPE_RGBA;
     pfd->iLayerType = PFD_MAIN_PLANE;
 
@@ -637,11 +639,9 @@ static BOOL egldrv_describe_pixel_format( int format, struct wgl_pixel_format *d
 {
     struct egl_platform *egl = &display_egl;
     int count = egl->config_count;
-    BOOL onscreen = TRUE;
 
-    if (--format < 0 || format > 2 * count) return FALSE;
-    if (format >= count) onscreen = FALSE;
-    return describe_egl_config( egl->configs[format % count], desc, onscreen );
+    if (--format < 0 || format > ARRAY_SIZE(pixel_format_flags) * count) return FALSE;
+    return describe_egl_config( egl->configs[format % count], desc, pixel_format_flags[format / count] );
 }
 
 static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )
@@ -962,7 +962,7 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     EGLDeviceEXT *devices = NULL;
     struct egl_platform *egl;
     const char *extensions;
-    EGLint i, count;
+    EGLint count;
 
     if (!(extensions = funcs->p_eglQueryString( EGL_NO_DISPLAY, EGL_EXTENSIONS ))) return;
     if (!has_extension( extensions, "EGL_EXT_device_base" ) || !has_extension( extensions, "EGL_EXT_platform_device" )) return;
@@ -974,29 +974,45 @@ static void init_egl_devices( struct opengl_funcs *funcs )
     LOAD_FUNCPTR( eglQueryDisplayAttribEXT );
 #undef LOAD_FUNCPTR
 
+#define LOAD_FUNCPTR( func )                                                                    \
+    if (!(funcs->p_##func = (void *)funcs->p_eglGetProcAddress( #func ))) WARN( #func " not found\n" );
+    LOAD_FUNCPTR( eglQueryDeviceBinaryEXT );
+#undef LOAD_FUNCPTR
+
     if (!funcs->p_eglQueryDisplayAttribEXT( display_egl.display, EGL_DEVICE_EXT, (EGLAttrib *)&display_egl.device ))
     {
         WARN( "Failed to query EGL display device (error %#x).\n", funcs->p_eglGetError() );
-        display_egl.device = EGL_NO_DEVICE_EXT;
+        return;
     }
     TRACE( "Found display platform device %p\n", display_egl.device );
+    list_add_tail( &devices_egl, &display_egl.entry );
 
     funcs->p_eglQueryDevicesEXT( 0, NULL, &count );
-    if (!count || !(devices = calloc( count, sizeof(EGLDeviceEXT *) )) || !(devices_egl = calloc( count, sizeof(*devices_egl) ))) goto done;
+    if (!count || !(devices = calloc( count, sizeof(EGLDeviceEXT *) ))) goto done;
     funcs->p_eglQueryDevicesEXT( count, devices, &count );
 
-    for (i = 0, egl = devices_egl; i < count; i++)
+    for (int i = 0; i < count; i++)
     {
+        if (devices[i] == display_egl.device) continue;
+
+        extensions = funcs->p_eglQueryDeviceStringEXT( devices[i], EGL_EXTENSIONS );
+        /* Assume that all devices without EGL_MESA_device_software are accelerated. */
+        if (has_extension( extensions, "EGL_MESA_device_software" )) continue;
+
+        if (!(egl = calloc( 1, sizeof(*egl) ))) break;
+
         TRACE( "Initializing EGL device %p\n", devices[i] );
         egl->type = EGL_PLATFORM_DEVICE_EXT;
         egl->native_display = devices[i];
         egl->device = devices[i];
-        if (init_egl_platform( egl, funcs )) egl++;
+        egl->index = list_count( &devices_egl );
+
+        if (!init_egl_platform( egl, funcs )) free( egl );
+        else list_add_tail( &devices_egl, &egl->entry );
     }
-    devices_count = egl - devices_egl;
 
 done:
-    TRACE( "Initialized %u EGL devices\n", devices_count );
+    TRACE( "Initialized %u EGL devices\n", list_count( &devices_egl ) );
     free( devices );
 }
 
@@ -1031,9 +1047,7 @@ static UINT read_drm_device_prop( const char *name, const char *prop )
     char *path;
     FILE *file;
 
-    if (!(path = malloc( strlen( name ) + strlen( prop ) + 23 ))) return value;
-    sprintf( path, "/sys/class/drm%s/device/%s", name, prop );
-
+    if (asprintf( &path, "/sys/class/drm%s/device/%s", name, prop ) == -1) return value;
     if ((file = fopen( path, "r" )))
     {
         fscanf( file, "%x", &value );
@@ -1044,6 +1058,17 @@ static UINT read_drm_device_prop( const char *name, const char *prop )
     return value;
 }
 
+static const char *opengl_vendor_to_name( UINT16 vendor, const char *default_name )
+{
+    switch (vendor)
+    {
+    case 0x8086: return "Intel";
+    case 0x1002: return "ATI Technologies Inc.";
+    case 0x10de: return "NVIDIA Corporation";
+    default:     return default_name;
+    }
+}
+
 static void init_device_info( struct egl_platform *egl, const struct opengl_funcs *funcs )
 {
     static const UINT versions[] = {46, 45, 44, 43, 42, 41, 40, 33, 32, 31, 30, 21, 20, 15, 14, 13, 12, 11, 10, 0};
@@ -1052,7 +1077,7 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     const char *extensions, *str;
     EGLConfig config;
 
-    TRACE( "Initializing device %zu (%p)\n", egl - devices_egl, egl->device);
+    TRACE( "Initializing device %u (%p)\n", egl->index, egl->device);
 
     extensions = funcs->p_eglQueryDeviceStringEXT( egl->device, EGL_EXTENSIONS );
     /* Assume that all devices without EGL_MESA_device_software are accelerated. */
@@ -1069,6 +1094,14 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     }
     TRACE( "  - device_id: %#x\n", egl->device_id );
     TRACE( "  - vendor_id: %#x\n", egl->vendor_id );
+
+    if (has_extension( extensions, "EGL_EXT_device_persistent_id" ))
+    {
+        funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DEVICE_UUID_EXT, sizeof(egl->device_uuid), &egl->device_uuid, &count );
+        funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DRIVER_UUID_EXT, sizeof(egl->driver_uuid), &egl->driver_uuid, &count );
+    }
+    TRACE( "  - device_uuid: %s\n", debugstr_guid(&egl->device_uuid) );
+    TRACE( "  - driver_uuid: %s\n", debugstr_guid(&egl->driver_uuid) );
 
     funcs->p_eglBindAPI( EGL_OPENGL_API );
     funcs->p_eglGetConfigs( egl->display, &config, 1, &count );
@@ -1104,12 +1137,20 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
 
     if (context)
     {
+        char *renderer, *vendor;
+
         funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, context );
 
-        egl->device_name = (const char *)funcs->p_glGetString( GL_RENDERER );
-        egl->vendor_name = (const char *)funcs->p_glGetString( GL_VENDOR );
-        TRACE( "  - device_name: %s\n", egl->device_name );
-        TRACE( "  - vendor_name: %s\n", egl->vendor_name );
+        renderer = strdup( (const char *)funcs->p_glGetString( GL_RENDERER ) );
+        egl->device_name = gpu_device_name( egl->vendor_id, egl->device_id, renderer );
+        if (egl->device_name != renderer) free( renderer );
+
+        vendor = strdup( (const char *)funcs->p_glGetString( GL_VENDOR ) );
+        egl->vendor_name = opengl_vendor_to_name( egl->vendor_id, vendor );
+        if (egl->vendor_name != vendor) free( vendor );
+
+        TRACE( "  - device_name: %s\n", debugstr_a( egl->device_name ) );
+        TRACE( "  - vendor_name: %s\n", debugstr_a( egl->vendor_name ) );
 
         if ((str = (const char *)funcs->p_glGetString( GL_VERSION )) && (str = strrchr( str, ' ' )) &&
             (count = sscanf( str, "%u.%u.%u", &values[0], &values[1], &values[2] )) >= 2)
@@ -1129,6 +1170,8 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
 
     if (compat_context) funcs->p_eglDestroyContext( egl->display, compat_context );
     if (core_context) funcs->p_eglDestroyContext( egl->display, core_context );
+
+    if (egl != &display_egl) funcs->p_eglTerminate( egl->display );
 }
 
 static const struct
@@ -1269,39 +1312,27 @@ static const char *win32u_wglGetExtensionsStringEXT(void)
     return wgl_extensions;
 }
 
-static int get_dc_pixel_format( HDC hdc, BOOL internal )
+static int win32u_wglGetPixelFormat( HDC hdc )
 {
-    int ret = 0;
+    BOOL is_display = is_dc_display( hdc );
+    int format;
     HWND hwnd;
-    DC *dc;
 
     if ((hwnd = NtUserWindowFromDC( hdc )))
-        ret = get_window_pixel_format( hwnd, internal );
-    else if ((dc = get_dc_ptr( hdc )))
-    {
-        BOOL is_display = dc->is_display;
-        ret = dc->pixel_format;
-        release_dc_ptr( dc );
-
-        /* Offscreen formats can't be used with traditional WGL calls. As has been
-         * verified on Windows GetPixelFormat doesn't fail but returns 1.
-         */
-        if (is_display && ret >= 0 && ret > onscreen_count) ret = 1;
-    }
-    else
+        format = get_window_pixel_format( hwnd );
+    else if ((format = get_dc_pixel_format( hdc )) < 0)
     {
         WARN( "Invalid DC handle %p\n", hdc );
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return -1;
     }
 
-    TRACE( "%p/%p -> %d\n", hdc, hwnd, ret );
-    return ret;
-}
+    /* Offscreen formats can't be used with traditional WGL calls. As has been
+     * verified on Windows GetPixelFormat doesn't fail but returns 1.
+     */
+    if (is_display && format > onscreen_count) format = 1;
 
-static int win32u_wglGetPixelFormat( HDC hdc )
-{
-    int format = get_dc_pixel_format( hdc, FALSE );
+    TRACE( "%p/%p -> %d\n", hdc, hwnd, format );
     return format > 0 ? format : 0;
 }
 
@@ -1466,7 +1497,7 @@ static BOOL flush_memory_dc( struct wgl_context *context, HDC hdc, BOOL write, v
     return ret;
 }
 
-static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
+static BOOL win32u_wglSetPixelFormat( HDC hdc, int new_format, const PIXELFORMATDESCRIPTOR *pfd )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     UINT total, onscreen;
@@ -1486,32 +1517,82 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
             return FALSE;
         }
 
-        TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
+        TRACE( "%p/%p format %d\n", hdc, hwnd, new_format );
 
-        if ((old_format = get_window_pixel_format( hwnd, FALSE )) && !internal) return old_format == new_format;
+        if ((old_format = get_window_pixel_format( hwnd ))) return old_format == new_format;
 
-        if ((drawable = get_window_unused_drawable( hwnd, new_format )))
-        {
-            set_window_opengl_drawable( hwnd, drawable, TRUE );
-            set_window_opengl_drawable( hwnd, drawable, FALSE );
-            opengl_drawable_release( drawable );
-        }
+        if (!(drawable = get_window_unused_drawable( hwnd, new_format ))) return FALSE;
+        set_window_opengl_drawable( hwnd, drawable, TRUE );
+        set_window_opengl_drawable( hwnd, drawable, FALSE );
+        opengl_drawable_release( drawable );
 
-        return set_window_pixel_format( hwnd, new_format, internal );
+        return set_window_pixel_format( hwnd, new_format, FALSE );
     }
 
-    TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
+    TRACE( "%p/%p format %d\n", hdc, hwnd, new_format );
     return NtGdiSetPixelFormat( hdc, new_format );
 }
 
-static BOOL win32u_wglSetPixelFormat( HDC hdc, int format, const PIXELFORMATDESCRIPTOR *pfd )
+BOOL set_dc_pixel_format_internal( HDC hdc, int format, struct list *drawables )
 {
-    return set_dc_pixel_format( hdc, format, FALSE );
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    dc->pixel_format = format;
+    if (dc->opengl_drawable) list_add_tail( drawables, &dc->opengl_drawable->entry );
+    dc->opengl_drawable = NULL;
+    release_dc_ptr( dc );
+
+    return TRUE;
+}
+
+void release_opengl_drawables( struct list *drawables )
+{
+    struct opengl_drawable *drawable, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( drawable, next, drawables, struct opengl_drawable, entry )
+    {
+        list_remove( &drawable->entry );
+        opengl_drawable_release( drawable );
+    }
 }
 
 static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
 {
-    return set_dc_pixel_format( hdc, format, TRUE );
+    struct list *ptr, drawables = LIST_INIT( drawables );
+    const struct opengl_funcs *funcs = &display_funcs;
+    struct opengl_drawable *drawable;
+    UINT total, onscreen;
+    HWND hwnd;
+
+    if (!(hwnd = NtUserWindowFromDC( hdc )) || !is_cache_dc( hdc )) return FALSE;
+    if (format && get_window_pixel_format( hwnd ) == format) return TRUE;
+
+    TRACE( "%p/%p format %d\n", hdc, hwnd, format );
+
+    funcs->p_get_pixel_formats( NULL, 0, &total, &onscreen );
+    if (format < 0 || format > total) return FALSE;
+    if (format > onscreen) return FALSE;
+
+    if (!set_dc_pixel_format_internal( hdc, format, &drawables )) return FALSE;
+    if (!(ptr = list_head( &drawables ))) drawable = NULL;
+    else drawable = LIST_ENTRY( ptr, struct opengl_drawable, entry );
+
+    if (drawable && drawable->format != format)
+    {
+        opengl_drawable_release( drawable );
+        drawable = NULL;
+    }
+    if (format && (drawable || (drawable = get_window_unused_drawable( hwnd, format ))))
+    {
+        set_window_opengl_drawable( hwnd, drawable, TRUE );
+        set_dc_opengl_drawable( hdc, drawable );
+        opengl_drawable_release( drawable );
+
+        set_window_pixel_format( hwnd, format, TRUE );
+    }
+
+    return TRUE;
 }
 
 static PROC win32u_wglGetProcAddress( const char *name )
@@ -1560,16 +1641,20 @@ static struct opengl_drawable *get_updated_drawable( HDC hdc, int format, struct
 {
     HWND hwnd = NULL;
 
+    /* return the memory DCs drawables directly */
     if (hdc && !(hwnd = NtUserWindowFromDC( hdc ))) return get_dc_opengl_drawable( hdc );
     if (!hdc && drawable && drawable->client) hwnd = drawable->client->hwnd;
     if (!hwnd) return NULL;
 
-    /* if the window still has a drawable, keep using the one we have */
+    /* if the drawable we were using is for the same window, keep using it */
     if (drawable && is_client_surface_window( drawable->client, hwnd ))
     {
         opengl_drawable_add_ref( drawable );
         return drawable;
     }
+
+    /* retrieve D3D internal drawables from the DCs if they have any */
+    if (hdc && (drawable = get_dc_opengl_drawable( hdc ))) return drawable;
 
     /* get an updated drawable with the desired format */
     return get_window_unused_drawable( hwnd, format );
@@ -1581,7 +1666,7 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
     struct wgl_context *previous = NtCurrentTeb()->glContext;
     BOOL ret = FALSE;
 
-    new_draw = get_updated_drawable( draw_hdc, context->format, context->draw );
+    if (!(new_draw = get_updated_drawable( draw_hdc, context->format, context->draw ))) return FALSE;
     if (!draw_hdc && context->draw == context->read) opengl_drawable_add_ref( (new_read = new_draw) );
     else if (draw_hdc && draw_hdc == read_hdc) opengl_drawable_add_ref( (new_read = new_draw) );
     else new_read = get_updated_drawable( read_hdc, context->format, context->read );
@@ -1617,12 +1702,13 @@ static BOOL context_sync_drawables( struct wgl_context *context, HDC draw_hdc, H
 
         opengl_drawable_set_context( new_read, context );
         if (new_read != new_draw) opengl_drawable_set_context( new_draw, context );
+
+        opengl_drawable_flush( new_read, new_read->interval, 0 );
+        opengl_drawable_flush( new_draw, new_draw->interval, GL_FLUSH_PRESENT );
     }
 
     if (ret)
     {
-        opengl_drawable_flush( new_read, new_read->interval, 0 );
-        opengl_drawable_flush( new_draw, new_draw->interval, 0 );
         /* update the current window drawable to the last used draw surface */
         if (new_draw->client) set_window_opengl_drawable( new_draw->client->hwnd, new_draw, TRUE );
         context_exchange_drawables( context, &new_draw, &new_read );
@@ -1684,10 +1770,12 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         return TRUE;
     }
 
-    if ((format = get_dc_pixel_format( draw_hdc, TRUE )) <= 0)
+    if ((format = get_dc_pixel_format( draw_hdc )) <= 0 &&
+        (format = get_window_pixel_format( NtUserWindowFromDC( draw_hdc ) )) <= 0)
     {
         WARN( "Invalid draw_hdc %p format %u\n", draw_hdc, format );
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
     if (context->format != format)
@@ -2144,9 +2232,11 @@ static BOOL win32u_wgl_context_reset( struct wgl_context *context, HDC hdc, stru
     context->driver_private = NULL;
     if (!hdc) return TRUE;
 
-    if ((format = get_dc_pixel_format( hdc, TRUE )) <= 0)
+    if ((format = get_dc_pixel_format( hdc )) <= 0 &&
+        (format = get_window_pixel_format( NtUserWindowFromDC( hdc ) )) <= 0)
     {
         if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
     if (!driver_funcs->p_context_create( format, share_private, attribs, &context->driver_private ))
@@ -2183,13 +2273,16 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
 
     if (!draw->client) return flush_memory_pbuffer( flush );
     interval = get_window_swap_interval( draw->client->hwnd );
+    if (force_swap) interval = 0;
 
     TRACE( "context %p, hwnd %p, interval %d, flush %p\n", context, draw->client->hwnd, interval, flush );
 
     context_sync_drawables( context, 0, 0 );
+    if (!(draw = context->draw)) return FALSE; /* should never happen */
 
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
+    if (flush && !force_swap) flags |= GL_FLUSH_PRESENT;
     opengl_drawable_flush( draw, interval, flags );
     if (force_swap) opengl_drawable_swap( draw );
 
@@ -2269,14 +2362,29 @@ static int win32u_wglGetSwapIntervalEXT(void)
     return interval;
 }
 
-static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum attribute, GLuint *value )
+static void set_gl_error( GLenum error )
 {
-    struct egl_platform *egl = devices_egl + renderer;
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    const struct opengl_funcs *funcs = &display_funcs;
 
-    TRACE( "hdc %p, renderer %u, attribute %#x, value %p\n", hdc, renderer, attribute, value );
+    if (!ctx || ctx->error) return;
+    if ((ctx->error = funcs->p_glGetError())) return;
+    ctx->error = error;
+}
 
-    if (renderer >= devices_count) return FALSE;
+static struct egl_platform *egl_platform_from_index( GLint index )
+{
+    struct egl_platform *egl;
 
+    LIST_FOR_EACH_ENTRY( egl, &devices_egl, struct egl_platform, entry )
+        if (egl->index == index) return egl;
+
+    WARN( "Cannot find renderer at index %d\n", index );
+    return NULL;
+}
+
+static BOOL query_renderer_integer( struct egl_platform *egl, GLenum attribute, GLuint *value )
+{
     switch (attribute)
     {
     case WGL_RENDERER_ACCELERATED_WINE: *value = egl->accelerated; return TRUE;
@@ -2296,58 +2404,85 @@ static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum 
         *value = egl->core_version ? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
         return TRUE;
     case WGL_RENDERER_VIDEO_MEMORY_WINE: *value = egl->video_memory; return TRUE;
-    default: FIXME( "Unsupported attribute %#x\n", attribute ); break;
+    default:
+        FIXME( "Unsupported attribute %#x\n", attribute );
+        set_gl_error( GL_INVALID_ENUM );
+        return FALSE;
     }
-
-    return FALSE;
 }
 
-static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, GLenum attribute )
+static BOOL win32u_wglQueryRendererIntegerWINE( HDC hdc, GLint renderer, GLenum attribute, GLuint *value )
 {
-    struct egl_platform *egl = devices_egl + renderer;
+    struct egl_platform *egl;
 
-    TRACE( "hdc %p, renderer %u, attribute %#x\n", hdc, renderer, attribute );
+    TRACE( "hdc %p, renderer %u, attribute %#x, value %p\n", hdc, renderer, attribute, value );
 
-    if (renderer >= devices_count) return NULL;
+    if (!(egl = egl_platform_from_index( renderer )))
+    {
+        set_gl_error( GL_INVALID_INDEX );
+        return FALSE;
+    }
+    return query_renderer_integer( egl, attribute, value );
+}
 
+static const char *query_renderer_string( struct egl_platform *egl, GLenum attribute )
+{
     switch (attribute)
     {
     case WGL_RENDERER_DEVICE_ID_WINE: return egl->device_name;
     case WGL_RENDERER_VENDOR_ID_WINE: return egl->vendor_name;
-    default: FIXME( "Unsupported attribute %#x\n", attribute );
+    default:
+        FIXME( "Unsupported attribute %#x\n", attribute );
+        set_gl_error( GL_INVALID_ENUM );
+        return NULL;
     }
+}
 
-    return NULL;
+static const char *win32u_wglQueryRendererStringWINE( HDC hdc, GLint renderer, GLenum attribute )
+{
+    struct egl_platform *egl;
+
+    TRACE( "hdc %p, renderer %u, attribute %#x\n", hdc, renderer, attribute );
+
+    if (!(egl = egl_platform_from_index( renderer )))
+    {
+        set_gl_error( GL_INVALID_INDEX );
+        return NULL;
+    }
+    return query_renderer_string( egl, attribute );
 }
 
 static BOOL win32u_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
 {
-    int i;
+    struct list *ptr;
 
     TRACE( "attribute %#x, value %p\n", attribute, value );
 
-    for (i = 0; i < devices_count; i++) if (devices_egl[i].device == display_egl.device) break;
-    if (i < devices_count) return win32u_wglQueryRendererIntegerWINE( 0, i, attribute, value );
-
-    WARN( "Cannot find current renderer device\n" );
-    return FALSE;
+    if (!(ptr = list_head( &devices_egl )))
+    {
+        set_gl_error( GL_INVALID_OPERATION );
+        return FALSE;
+    }
+    return query_renderer_integer( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute, value );
 }
 
 static const char *win32u_wglQueryCurrentRendererStringWINE( GLenum attribute )
 {
-    int i;
+    struct list *ptr;
 
     TRACE( "attribute %#x\n", attribute );
 
-    for (i = 0; i < devices_count; i++) if (devices_egl[i].device == display_egl.device) break;
-    if (i < devices_count) return win32u_wglQueryRendererStringWINE( 0, i, attribute );
-
-    WARN( "Cannot find current renderer device\n" );
-    return NULL;
+    if (!(ptr = list_head( &devices_egl )))
+    {
+        set_gl_error( GL_INVALID_OPERATION );
+        return NULL;
+    }
+    return query_renderer_string( LIST_ENTRY( ptr, struct egl_platform, entry ), attribute );
 }
 
 static void display_funcs_init(void)
 {
+    struct egl_platform *egl;
     UINT status;
 
     if (egl_init( &driver_funcs )) TRACE( "Initialized EGL library\n" );
@@ -2362,10 +2497,7 @@ static void display_funcs_init(void)
 
 #define USE_GL_FUNC(func) \
     if (!display_funcs.p_##func && !(display_funcs.p_##func = driver_funcs->p_get_proc_address( #func ))) \
-    { \
-        WARN( "%s not found for memory DCs.\n", #func ); \
-        display_funcs.p_##func = default_funcs->p_##func; \
-    }
+        WARN( "%s not found.\n", #func );
     ALL_GL_FUNCS
     USE_GL_FUNC(glBindFramebuffer)
     USE_GL_FUNC(glCheckNamedFramebufferStatus)
@@ -2397,6 +2529,11 @@ static void display_funcs_init(void)
     display_funcs.p_wgl_context_reset = win32u_wgl_context_reset;
     display_funcs.p_wgl_context_flush = win32u_wgl_context_flush;
 
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pixel_format" );
+    display_funcs.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
+    display_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
+    display_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
+
     if (display_egl.has_EGL_EXT_pixel_format_float)
     {
         register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pixel_format_float" );
@@ -2414,11 +2551,6 @@ static void display_funcs_init(void)
      */
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_pixel_format_passthrough" );
     display_funcs.p_wglSetPixelFormatWINE = win32u_wglSetPixelFormatWINE;
-
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pixel_format" );
-    display_funcs.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
-    display_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    display_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context" );
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_no_error" );
@@ -2446,25 +2578,24 @@ static void display_funcs_init(void)
     display_funcs.p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
     display_funcs.p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
 
-    if (display_egl.device && devices_count)
+    if (!list_empty( &devices_egl ))
     {
         register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_query_renderer" );
         display_funcs.p_wglQueryCurrentRendererIntegerWINE = win32u_wglQueryCurrentRendererIntegerWINE;
         display_funcs.p_wglQueryCurrentRendererStringWINE = win32u_wglQueryCurrentRendererStringWINE;
         display_funcs.p_wglQueryRendererIntegerWINE = win32u_wglQueryRendererIntegerWINE;
         display_funcs.p_wglQueryRendererStringWINE = win32u_wglQueryRendererStringWINE;
-        for (int i = 0; i < devices_count; i++) init_device_info( devices_egl + i, &display_funcs );
+        LIST_FOR_EACH_ENTRY( egl, &devices_egl, struct egl_platform, entry )
+            init_device_info( egl, &display_funcs );
     }
 }
 
 /***********************************************************************
  *      __wine_get_wgl_driver  (win32u.@)
  */
-const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const struct opengl_funcs *null_funcs )
+const struct opengl_funcs *__wine_get_opengl_driver( UINT version )
 {
     static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-    DWORD is_disabled, is_display, is_memdc;
-    DC *dc;
 
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
@@ -2473,16 +2604,6 @@ const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const s
         return NULL;
     }
 
-    InterlockedExchangePointer( (void *)&default_funcs, (void *)null_funcs );
-
-    if (!(dc = get_dc_ptr( hdc ))) return NULL;
-    is_memdc = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC;
-    is_display = dc->is_display;
-    is_disabled = dc->attr->disabled;
-    release_dc_ptr( dc );
-
-    if (is_disabled) return NULL;
-    if (!is_display && !is_memdc) return NULL;
     pthread_once( &init_once, display_funcs_init );
     return &display_funcs;
 }

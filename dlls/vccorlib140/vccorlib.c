@@ -19,11 +19,8 @@
 
 #define COBJMACROS
 
-#include <stdbool.h>
-
 #include "initguid.h"
 #include "roapi.h"
-#include "weakreference.h"
 #include "winstring.h"
 #define WIDL_using_Windows_Foundation
 #include "windows.foundation.h"
@@ -88,34 +85,40 @@ HRESULT WINAPI GetIidsFn(unsigned int count, unsigned int *copied, const GUID *s
     return S_OK;
 }
 
+static void *try_Allocate(size_t size)
+{
+    return malloc(size);
+}
+
 void *__cdecl Allocate(size_t size)
 {
     void *addr;
 
     TRACE("(%Iu)\n", size);
 
-    addr = malloc(size);
-    /* TODO: Throw a COMException on allocation failure. */
-    if (!addr)
-        FIXME("allocation failure\n");
+    if (!(addr = try_Allocate(size)))
+        __abi_WinRTraiseOutOfMemoryException();
     return addr;
 }
 
-struct exception_alloc
-{
-    void *unknown;
-    void *exception_inner;
-    char data[0];
-};
-
-void *__cdecl AllocateException(size_t size)
+static void *try_AllocateException(size_t size)
 {
     struct exception_alloc *base;
 
+    if (!(base = try_Allocate(offsetof(struct exception_alloc, data[size]))))
+        return NULL;
+    return &base->data;
+}
+
+void *__cdecl AllocateException(size_t size)
+{
+    void *addr;
+
     TRACE("(%Iu)\n", size);
 
-    base = Allocate(offsetof(struct exception_alloc, data[size]));
-    return &base->data;
+    if (!(addr = try_AllocateException(size)))
+        __abi_WinRTraiseOutOfMemoryException();
+    return addr;
 }
 
 void __cdecl Free(void *addr)
@@ -133,20 +136,6 @@ void __cdecl FreeException(void *addr)
 
     Free(base);
 }
-
-struct control_block
-{
-    IWeakReference IWeakReference_iface;
-    LONG ref_weak;
-    LONG ref_strong;
-    IUnknown *object;
-    bool is_inline;
-    bool unknown;
-    bool is_exception;
-#ifdef _WIN32
-    char _padding[5];
-#endif
-};
 
 static inline struct control_block *impl_from_IWeakReference(IWeakReference *iface)
 {
@@ -229,7 +218,11 @@ void *__cdecl AllocateWithWeakRef(ptrdiff_t offset, size_t size)
     if (size > inline_max)
     {
         weakref = Allocate(sizeof(*weakref));
-        object = Allocate(size);
+        if (!(object = try_Allocate(size)))
+        {
+            Free(weakref);
+            __abi_WinRTraiseOutOfMemoryException();
+        }
         weakref->is_inline = FALSE;
     }
     else /* Perform an inline allocation */
@@ -258,7 +251,11 @@ void *__cdecl AllocateExceptionWithWeakRef(ptrdiff_t offset, size_t size)
 
     /* AllocateExceptionWithWeakRef does not store the control block inline, regardless of size. */
     weakref = Allocate(sizeof(*weakref));
-    excp = AllocateException(size);
+    if (!(excp = try_AllocateException(size)))
+    {
+        Free(weakref);
+        __abi_WinRTraiseOutOfMemoryException();
+    }
     *(struct control_block **)((char *)excp + offset) = weakref;
     weakref->IWeakReference_iface.lpVtbl = &control_block_vtbl;
     weakref->object = excp;
@@ -287,6 +284,40 @@ void __thiscall control_block_ReleaseTarget(struct control_block *weakref)
     }
 }
 
+IWeakReference *WINAPI GetWeakReference(IUnknown *obj)
+{
+    IWeakReferenceSource *src;
+    IWeakReference *ref;
+    HRESULT hr;
+
+    TRACE("(%p)\n", obj);
+
+    if (!obj)
+        __abi_WinRTraiseInvalidArgumentException();
+    if (SUCCEEDED((hr = IUnknown_QueryInterface(obj, &IID_IWeakReferenceSource, (void **)&src))))
+    {
+        hr = IWeakReferenceSource_GetWeakReference(src, &ref);
+        IWeakReferenceSource_Release(src);
+    }
+    if (FAILED(hr))
+        __abi_WinRTraiseCOMException(hr);
+
+    return ref;
+}
+
+IUnknown *WINAPI ResolveWeakReference(const GUID *iid, IWeakReference **weakref)
+{
+    IUnknown *obj = NULL;
+    HRESULT hr;
+
+    TRACE("(%s, %p)\n", debugstr_guid(iid), weakref);
+
+    if (*weakref && FAILED((hr = IWeakReference_Resolve(*weakref, iid, (IInspectable **)&obj))))
+        __abi_WinRTraiseCOMException(hr);
+
+    return obj;
+}
+
 struct __abi_type_descriptor
 {
     const WCHAR *name;
@@ -296,6 +327,7 @@ struct __abi_type_descriptor
 struct platform_type
 {
     IInspectable IInspectable_iface;
+    IStringable IPrintable_iface;
     IClosable IClosable_iface;
     IUnknown *marshal;
     const struct __abi_type_descriptor *desc;
@@ -318,6 +350,11 @@ HRESULT WINAPI platform_type_QueryInterface(IInspectable *iface, const GUID *iid
         IsEqualGUID(iid, &IID_IAgileObject))
     {
         IInspectable_AddRef((*out = &impl->IInspectable_iface));
+        return S_OK;
+    }
+    if (IsEqualGUID(iid, &IID_IPrintable))
+    {
+        IStringable_AddRef((*out = &impl->IPrintable_iface));
         return S_OK;
     }
     if (IsEqualGUID(iid, &IID_IClosable))
@@ -385,6 +422,29 @@ COM_VTABLE_ENTRY(platform_type_GetRuntimeClassName)
 COM_VTABLE_ENTRY(platform_type_GetTrustLevel)
 COM_VTABLE_RTTI_END;
 
+DEFINE_IINSPECTABLE_(platform_type_printable, IStringable, struct platform_type,
+    impl_platform_type_from_IStringable, IPrintable_iface, &impl->IInspectable_iface);
+
+static HRESULT WINAPI platform_type_printable_ToString(IStringable *iface, HSTRING *str)
+{
+    struct platform_type *impl = impl_platform_type_from_IStringable(iface);
+
+    TRACE("(%p, %p)\n", iface, str);
+
+    return WindowsCreateString(impl->desc->name, impl->desc->name ? wcslen(impl->desc->name ) : 0, str);
+}
+
+DEFINE_RTTI_DATA(platform_type_printable, offsetof(struct platform_type, IPrintable_iface), ".?AVType@Platform@@");
+COM_VTABLE_RTTI_START(IStringable, platform_type_printable)
+COM_VTABLE_ENTRY(platform_type_printable_QueryInterface)
+COM_VTABLE_ENTRY(platform_type_printable_AddRef)
+COM_VTABLE_ENTRY(platform_type_printable_Release)
+COM_VTABLE_ENTRY(platform_type_printable_GetIids)
+COM_VTABLE_ENTRY(platform_type_printable_GetRuntimeClassName)
+COM_VTABLE_ENTRY(platform_type_printable_GetTrustLevel)
+COM_VTABLE_ENTRY(platform_type_printable_ToString)
+COM_VTABLE_RTTI_END;
+
 DEFINE_IINSPECTABLE(platform_type_closable, IClosable, struct platform_type, IInspectable_iface);
 
 static HRESULT WINAPI platform_type_closable_Close(IClosable *iface)
@@ -408,6 +468,7 @@ static void init_platform_type(void *base)
 {
     INIT_RTTI(type_info, base);
     INIT_RTTI(platform_type, base);
+    INIT_RTTI(platform_type_printable, base);
     INIT_RTTI(platform_type_closable, base);
 }
 
@@ -421,8 +482,7 @@ static const char *debugstr_abi_type_descriptor(const struct __abi_type_descript
 void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
 {
     /* TODO:
-     * Implement IEquatable and IPrintable.
-     * Throw a COMException if CoCreateFreeThreadedMarshaler fails. */
+     * Implement IEquatable. */
     struct platform_type *obj;
     HRESULT hr;
 
@@ -430,15 +490,15 @@ void *WINAPI __abi_make_type_id(const struct __abi_type_descriptor *desc)
 
     obj = Allocate(sizeof(*obj));
     obj->IInspectable_iface.lpVtbl = &platform_type_vtable.vtable;
+    obj->IPrintable_iface.lpVtbl = &platform_type_printable_vtable.vtable;
     obj->IClosable_iface.lpVtbl = &platform_type_closable_vtable.vtable;
     obj->desc = desc;
     obj->ref = 1;
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&obj->IInspectable_iface, &obj->marshal);
     if (FAILED(hr))
     {
-        FIXME("CoCreateFreeThreadedMarshaler failed: %#lx\n", hr);
         Free(obj);
-        return NULL;
+        __abi_WinRTraiseCOMException(hr);
     }
     return &obj->IInspectable_iface;
 }
@@ -464,10 +524,8 @@ HSTRING __cdecl platform_type_ToString(struct platform_type *this)
 
     TRACE("(%p)\n", this);
 
-    /* TODO: Throw a COMException if this fails */
-    hr = WindowsCreateString(this->desc->name, this->desc->name ? wcslen(this->desc->name) : 0, &str);
-    if (FAILED(hr))
-        FIXME("WindowsCreateString failed: %#lx\n", hr);
+    if (FAILED(hr = IStringable_ToString(&this->IPrintable_iface, &str)))
+        __abi_WinRTraiseCOMException(hr);
     return str;
 }
 
@@ -536,10 +594,7 @@ void *WINAPI CreateValue(int typecode, const void *val)
     hr = GetActivationFactoryByPCWSTR(RuntimeClass_Windows_Foundation_PropertyValue, &IID_IPropertyValueStatics,
                                       (void **)&statics);
     if (FAILED(hr))
-    {
-        FIXME("GetActivationFactoryByPCWSTR failed: %#lx\n", hr);
-        return NULL;
-    }
+        __abi_WinRTraiseCOMException(hr);
     switch (typecode)
     {
     case TYPECODE_BOOLEAN:
@@ -604,98 +659,265 @@ void *WINAPI CreateValue(int typecode, const void *val)
 
     IPropertyValueStatics_Release(statics);
     if (FAILED(hr))
-    {
-        FIXME("Failed to create IPropertyValue object: %#lx\n", hr);
-        return NULL;
-    }
+        __abi_WinRTraiseCOMException(hr);
     return obj;
 }
 
-void *__cdecl CreateExceptionWithMessage(HRESULT hr, HSTRING msg)
+static HRESULT hstring_sprintf(HSTRING *out, const WCHAR *fmt, ...)
 {
-    FIXME("(%#lx, %s): stub!\n", hr, debugstr_hstring(msg));
-    return NULL;
+    WCHAR buf[100];
+    va_list args;
+    int len;
+
+    va_start(args, fmt);
+    len = vswprintf(buf, ARRAY_SIZE(buf), fmt, args);
+    va_end(args);
+    return WindowsCreateString(buf, len, out);
 }
 
-void *__cdecl CreateException(HRESULT hr)
+HSTRING __cdecl Guid_ToString(const GUID *this)
 {
-    FIXME("(%#lx): stub!\n", hr);
-    return NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%s)\n", debugstr_guid(this));
+
+    hr = hstring_sprintf(&str, L"{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}", this->Data1, this->Data2,
+                         this->Data3, this->Data4[0], this->Data4[1], this->Data4[2], this->Data4[3], this->Data4[4],
+                         this->Data4[5], this->Data4[6], this->Data4[7]);
+    if (FAILED(hr))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
-void WINAPI __abi_WinRTraiseCOMException(HRESULT hr)
+HSTRING __cdecl Boolean_ToString(const boolean *this)
 {
-    FIXME("(%#lx): stub!\n", hr);
+    const WCHAR *strW;
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    strW = *this ? L"true" : L"false";
+    if (FAILED((hr = WindowsCreateString(strW, wcslen(strW), &str))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
 }
 
-#define WINRT_EXCEPTIONS                                     \
-    WINRT_EXCEPTION(AccessDenied, E_ACCESSDENIED)            \
-    WINRT_EXCEPTION(ChangedState, E_CHANGED_STATE)           \
-    WINRT_EXCEPTION(ClassNotRegistered, REGDB_E_CLASSNOTREG) \
-    WINRT_EXCEPTION(Disconnected, RPC_E_DISCONNECTED)        \
-    WINRT_EXCEPTION(Failure, E_FAIL)                         \
-    WINRT_EXCEPTION(InvalidArgument, E_INVALIDARG)           \
-    WINRT_EXCEPTION(InvalidCast, E_NOINTERFACE)              \
-    WINRT_EXCEPTION(NotImplemented, E_NOTIMPL)               \
-    WINRT_EXCEPTION(NullReference, E_POINTER)                \
-    WINRT_EXCEPTION(ObjectDisposed, RO_E_CLOSED)             \
-    WINRT_EXCEPTION(OperationCanceled, E_ABORT)              \
-    WINRT_EXCEPTION(OutOfBounds, E_BOUNDS)                   \
-    WINRT_EXCEPTION(OutOfMemory, E_OUTOFMEMORY)              \
-    WINRT_EXCEPTION(WrongThread, RPC_E_WRONG_THREAD)
+HSTRING __cdecl char16_ToString(const WCHAR *this)
+{
+    HSTRING str;
+    HRESULT hr;
 
-#define WINRT_EXCEPTION(name, hr)                                                  \
-    void WINAPI __abi_WinRTraise##name##Exception(void)                            \
-    {                                                                              \
-        FIXME("(): stub!\n");                                                      \
-    }                                                                              \
-    void *__cdecl platform_##name##Exception_ctor(void *this)                      \
-    {                                                                              \
-        FIXME("(%p): stub!\n", this);                                              \
-        return this;                                                               \
-    }                                                                              \
-    void *__cdecl platform_##name##Exception_hstring_ctor(void *this, HSTRING msg) \
-    {                                                                              \
-        FIXME("(%p, %s): stub!\n", this, debugstr_hstring(msg));                   \
-        return this;                                                               \
+    TRACE("(%p): stub!\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%c", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl float32_ToString(const FLOAT *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%g", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl float64_ToString(const DOUBLE *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%g", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl int16_ToString(const INT16 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hd", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl int32_ToString(const INT32 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I32d", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl int64_ToString(const INT64 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I64d", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl int8_ToString(const INT8 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hhd", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl uint16_ToString(const UINT16 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hu", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl uint32_ToString(const UINT32 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I32u", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl uint64_ToString(const UINT64 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%I64u", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING __cdecl uint8_ToString(const UINT8 *this)
+{
+    HSTRING str;
+    HRESULT hr;
+
+    TRACE("(%p)\n", this);
+
+    if (FAILED((hr = hstring_sprintf(&str, L"%hhu", *this))))
+        __abi_WinRTraiseCOMException(hr);
+    return str;
+}
+
+HSTRING WINAPI __abi_ObjectToString(IUnknown *obj, bool try_stringable)
+{
+    IInspectable *inspectable;
+    IPropertyValue *propval;
+    IStringable *stringable;
+    HSTRING val = NULL;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %d)\n", obj, try_stringable);
+
+    if (!obj) return NULL;
+    /* If try_stringable is true, native will first query for IStringable, and then IPrintable (which is just an alias
+     * for IStringable). */
+    if (try_stringable && (SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IStringable, (void **)&stringable)) ||
+                           SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IPrintable, (void **)&stringable))))
+    {
+        hr = IStringable_ToString(stringable, &val);
+        IStringable_Release(stringable);
+    }
+    /* Next, native checks if this is an boxed type (IPropertyValue) storing a numeric-like or string value. */
+    else if (SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IPropertyValue, (void **)&propval)))
+    {
+        PropertyType type;
+
+        if (SUCCEEDED((hr = IPropertyValue_get_Type(propval, &type))))
+        {
+#define PROPVAL_SIMPLE(prop_type, pfx, c_type)                                        \
+    case PropertyType_##prop_type:                                                    \
+    {                                                                                 \
+        c_type prop_type_##val;                                                       \
+        if (SUCCEEDED(hr = IPropertyValue_Get##prop_type(propval, &prop_type_##val))) \
+        {                                                                             \
+           IPropertyValue_Release(propval);                                           \
+           return pfx##_ToString(&prop_type_##val);                                   \
+        }                                                                             \
+        break;                                                                        \
+    }
+            switch (type)
+            {
+            PROPVAL_SIMPLE(Char16, char16, WCHAR)
+            PROPVAL_SIMPLE(UInt8, uint8, UINT8)
+            PROPVAL_SIMPLE(Int16, int16, INT16)
+            PROPVAL_SIMPLE(UInt16, uint16, UINT16)
+            PROPVAL_SIMPLE(Int32, int32, INT32)
+            PROPVAL_SIMPLE(UInt32, uint32, UINT32)
+            PROPVAL_SIMPLE(Int64, int64, INT64)
+            PROPVAL_SIMPLE(UInt64, uint64, UINT64)
+            PROPVAL_SIMPLE(Single, float32, FLOAT)
+            PROPVAL_SIMPLE(Double, float64, DOUBLE)
+            PROPVAL_SIMPLE(Boolean, Boolean, boolean)
+            PROPVAL_SIMPLE(Guid, Guid, GUID)
+            case PropertyType_String:
+                hr = IPropertyValue_GetString(propval, &val);
+                break;
+            default:
+                /* For other types, use the WinRT class name. */
+                hr = IPropertyValue_GetRuntimeClassName(propval, &val);
+            }
+#undef PROPVAL_SIMPLE
+        }
+        IPropertyValue_Release(propval);
+    }
+    /* Finally, if this is an IInspectable, use the WinRT class name. Otherwise, return NULL. */
+    else if (SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IInspectable, (void **)&inspectable)))
+    {
+        hr = IInspectable_GetRuntimeClassName(inspectable, &val);
+        IInspectable_Release(inspectable);
     }
 
-WINRT_EXCEPTIONS
-#undef WINRT_EXCEPTION
+    if (FAILED(hr))
+        __abi_WinRTraiseCOMException(hr);
 
-void *__cdecl platform_Exception_ctor(void *this, HRESULT hr)
-{
-    FIXME("(%p, %#lx): stub!\n", this, hr);
-    return this;
-}
-
-void *__cdecl platform_Exception_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
-{
-    FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
-    return this;
-}
-
-void *__cdecl platform_COMException_ctor(void *this, HRESULT hr)
-{
-    FIXME("(%p, %#lx): stub!\n", this, hr);
-    return this;
-}
-
-void *__cdecl platform_COMException_hstring_ctor(void *this, HRESULT hr, HSTRING msg)
-{
-    FIXME("(%p, %#lx, %s): stub!\n", this, hr, debugstr_hstring(msg));
-    return this;
-}
-
-HSTRING __cdecl platform_exception_get_Message(void *excp)
-{
-    FIXME("(%p): stub!\n", excp);
-    return NULL;
+    return val;
 }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
+    {
+        init_exception(inst);
         init_platform_type(inst);
+        init_delegate(inst);
+    }
     return TRUE;
 }

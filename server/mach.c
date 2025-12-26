@@ -422,6 +422,8 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
     mach_port_t process_port = get_process_port( process );
     mach_vm_offset_t data;
 
+    if (written) *written = 0;
+
     if (!process_port)
     {
         set_error( STATUS_ACCESS_DENIED );
@@ -453,7 +455,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         mach_vm_address_t current_address = (mach_vm_address_t)ptr;
         mach_vm_address_t region_address = current_address;
         mach_vm_size_t region_size, write_size;
-        vm_region_basic_info_data_t info;
+        vm_region_basic_info_data_64_t info;
         mach_msg_type_number_t info_count = VM_REGION_BASIC_INFO_COUNT_64;
         mach_port_t object_name;
         data_size_t remaining_size = size;
@@ -529,8 +531,9 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
                     info.protection );
             if (ret != KERN_SUCCESS) break;
 
-            current_address += write_size;
-            remaining_size  -= write_size;
+            if (written) *written += write_size;
+            current_address       += write_size;
+            remaining_size        -= write_size;
         }
 
         task_resume( process_port );

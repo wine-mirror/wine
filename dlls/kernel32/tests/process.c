@@ -96,6 +96,8 @@ static void   (WINAPI *pDeleteProcThreadAttributeList)(struct _PROC_THREAD_ATTRI
 static DWORD  (WINAPI *pGetActiveProcessorCount)(WORD);
 static DWORD  (WINAPI *pGetMaximumProcessorCount)(WORD);
 static BOOL   (WINAPI *pGetProcessInformation)(HANDLE,PROCESS_INFORMATION_CLASS,void*,DWORD);
+static void (WINAPI *pClosePseudoConsole)(HPCON);
+static HRESULT (WINAPI *pCreatePseudoConsole)(COORD,HANDLE,HANDLE,DWORD,HPCON*);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -276,6 +278,8 @@ static BOOL init(void)
     pGetActiveProcessorCount = (void *)GetProcAddress(hkernel32, "GetActiveProcessorCount");
     pGetMaximumProcessorCount = (void *)GetProcAddress(hkernel32, "GetMaximumProcessorCount");
     pGetProcessInformation = (void *)GetProcAddress(hkernel32, "GetProcessInformation");
+    pCreatePseudoConsole = (void *)GetProcAddress(hkernel32, "CreatePseudoConsole");
+    pClosePseudoConsole = (void *)GetProcAddress(hkernel32, "ClosePseudoConsole");
 
     return TRUE;
 }
@@ -3420,6 +3424,42 @@ static BOOL build_startupinfo( STARTUPINFOA *startup, unsigned args, HANDLE hstd
     return needs_close;
 }
 
+static BOOL build_startupinfoex( STARTUPINFOEXA *startup, unsigned args, HANDLE hstd[4], HPCON *pseudo_console )
+{
+    HANDLE output_read, input_write;
+    HANDLE output_write, input_read;
+    SIZE_T attr_size;
+    COORD size = {80, 32};
+    HRESULT hres;
+    BOOL ret, needs_close;
+
+    ret = CreatePipe(&input_read, &input_write, NULL, 0);
+    ok(ret, "Couldn't create pipe\n");
+    ret = CreatePipe(&output_read, &output_write, NULL, 0);
+    ok(ret, "Couldn't create pipe\n");
+
+    hres = pCreatePseudoConsole(size, input_read, output_write, 0, pseudo_console);
+    ok(hres == S_OK, "CreatePseudoConsole failed: %08lx\n", hres);
+
+    memset(startup, 0, sizeof(*startup));
+    needs_close = build_startupinfo(&startup->StartupInfo, args, hstd);
+    startup->StartupInfo.cb = sizeof(*startup);
+
+    pInitializeProcThreadAttributeList(NULL, 1, 0, &attr_size);
+    startup->lpAttributeList = HeapAlloc(GetProcessHeap(), 0, attr_size);
+    pInitializeProcThreadAttributeList(startup->lpAttributeList, 1, 0, &attr_size);
+    pUpdateProcThreadAttribute(startup->lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, *pseudo_console,
+                               sizeof(*pseudo_console), NULL, NULL);
+
+    hstd[2] = output_read;
+    hstd[3] = input_write;
+
+    CloseHandle(output_write);
+    CloseHandle(input_read);
+
+    return needs_close;
+}
+
 struct std_handle_test
 {
     /* input */
@@ -3515,6 +3555,41 @@ static void test_StdHandleInheritance(void)
         /* all others handles type behave as H_DISK */
         {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_NULL},
         {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+    },
+    pseudoconsole_cui[] =
+    {
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+        {ARG_STD         | ARG_CP_INHERIT | ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                  ARG_HANDLE_INHERIT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK (except H_CONSOLE) */
+        {ARG_STARTUPINFO |                                       H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_DISK,      HATTR_TYPE | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK (except H_CONSOLE) */
+        {ARG_STARTUPINFO |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                  ARG_HANDLE_PROTECT | H_DISK,      HATTR_TYPE | HATTR_PROTECT | FILE_TYPE_DISK},
+
+        /* all others handles type behave as H_DISK */
+        {ARG_STARTUPINFO | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING, .is_broken = HATTR_TYPE | FILE_TYPE_UNKNOWN},
+        {ARG_STD         | ARG_CP_INHERIT |                      H_DISK,      HATTR_DANGLING},
+
+        {ARG_STARTUPINFO |                                       H_DEVIL,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_DEVIL,     HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STARTUPINFO |                                       H_INVALID,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_INVALID,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STARTUPINFO |                                       H_NULL,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_NULL,      HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+
+        /* looks like parent handle is not inherited */
+        {ARG_STARTUPINFO |                                       H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                                       H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STARTUPINFO |                  ARG_HANDLE_PROTECT | H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
+        {ARG_STD         |                  ARG_HANDLE_PROTECT | H_CONSOLE,   HATTR_TYPE | HATTR_INHERIT | FILE_TYPE_CHAR},
     };
     static const struct
     {
@@ -3527,10 +3602,13 @@ static void test_StdHandleInheritance(void)
     tests[] =
     {
 #define X(d, cg, s) {(d), (cg), s, ARRAY_SIZE(s), #s}
-        X(0,                TRUE,  nothing_cui),
-        X(0,                FALSE, nothing_gui),
-        X(DETACHED_PROCESS, TRUE,  detached_cui),
-        X(DETACHED_PROCESS, FALSE, detached_gui),
+        X(0,                                               TRUE,  nothing_cui),
+        X(0,                                               FALSE, nothing_gui),
+        X(DETACHED_PROCESS,                                TRUE,  detached_cui),
+        X(DETACHED_PROCESS,                                FALSE, detached_gui),
+        X(EXTENDED_STARTUPINFO_PRESENT,                    TRUE,  pseudoconsole_cui),
+        X(EXTENDED_STARTUPINFO_PRESENT | DETACHED_PROCESS, TRUE,  detached_cui),
+        /* not testing gui + pseudo console, behaves like without pseudo console */
 #undef X
     };
 
@@ -3552,18 +3630,28 @@ static void test_StdHandleInheritance(void)
     {
         const struct std_handle_test* std_tests = tests[j].tests;
 
+        if ((tests[j].cp_flags & EXTENDED_STARTUPINFO_PRESENT) &&
+            (!pCreatePseudoConsole || !pClosePseudoConsole || !pInitializeProcThreadAttributeList || !pUpdateProcThreadAttribute))
+        {
+            win_skip("No pseudo-console support, skipping test\n");
+            continue;
+        }
         for (i = 0; i < tests[j].count; i++)
         {
-            STARTUPINFOA startup;
-            HANDLE hstd[2] = {};
+            STARTUPINFOEXA startup;
+            HPCON pseudo_console;
+            HANDLE hstd[4] = {};
             BOOL needs_close;
 
             winetest_push_context("%s[%u] ", tests[j].descr, i);
-            needs_close = build_startupinfo( &startup, std_tests[i].args, hstd );
+            if (tests[j].cp_flags & EXTENDED_STARTUPINFO_PRESENT)
+                needs_close = build_startupinfoex( &startup, std_tests[i].args, hstd, &pseudo_console );
+            else
+                needs_close = build_startupinfo( &startup.StartupInfo, std_tests[i].args, hstd );
 
             ret = check_run_child(tests[j].use_cui ? cuiexec : guiexec,
                                   tests[j].cp_flags, !!(std_tests[i].args & ARG_CP_INHERIT),
-                                  &startup);
+                                  &startup.StartupInfo);
             ok(ret, "Couldn't run child\n");
             reload_child_info(resfile);
 
@@ -3611,6 +3699,13 @@ static void test_StdHandleInheritance(void)
                 CloseHandle(hstd[0]);
                 SetHandleInformation(hstd[1], HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
                 CloseHandle(hstd[1]);
+            }
+            if (tests[j].cp_flags & EXTENDED_STARTUPINFO_PRESENT)
+            {
+                HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
+                pClosePseudoConsole(pseudo_console);
+                CloseHandle(hstd[2]);
+                CloseHandle(hstd[3]);
             }
             winetest_pop_context();
         }
@@ -4404,6 +4499,7 @@ static void test_ProcThreadAttributeList(void)
     int i;
     struct _PROC_THREAD_ATTRIBUTE_LIST list, expect_list;
     HANDLE handles[4];
+    GROUP_AFFINITY gaff = {.Group = 0, .Mask = 0xffff};
 
     if (!pInitializeProcThreadAttributeList)
     {
@@ -4501,6 +4597,17 @@ static void test_ProcThreadAttributeList(void)
         expect_list.attrs[i].attr = PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE;
         expect_list.attrs[i].size = sizeof(HPCON);
         expect_list.attrs[i].value = handles;
+    }
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY, &gaff, sizeof(gaff), NULL, NULL);
+    ok(ret, "got %d gle %ld\n", ret, GetLastError());
+    if (ret)
+    {
+        unsigned int i = expect_list.count++;
+        expect_list.mask |= 1 << ProcThreadAttributeGroupAffinity;
+        expect_list.attrs[i].attr = PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY;
+        expect_list.attrs[i].size = sizeof(GROUP_AFFINITY);
+        expect_list.attrs[i].value = &gaff;
     }
 
     ok(!memcmp(&list, &expect_list, size), "mismatch\n");

@@ -287,6 +287,14 @@ void WINAPI vkCmdBeginConditionalRenderingEXT(VkCommandBuffer commandBuffer, con
     UNIX_CALL(vkCmdBeginConditionalRenderingEXT, &params);
 }
 
+void WINAPI vkCmdBeginCustomResolveEXT(VkCommandBuffer commandBuffer, const VkBeginCustomResolveInfoEXT *pBeginCustomResolveInfo)
+{
+    struct vkCmdBeginCustomResolveEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.pBeginCustomResolveInfo = pBeginCustomResolveInfo;
+    UNIX_CALL(vkCmdBeginCustomResolveEXT, &params);
+}
+
 void WINAPI vkCmdBeginDebugUtilsLabelEXT(VkCommandBuffer commandBuffer, const VkDebugUtilsLabelEXT *pLabelInfo)
 {
     struct vkCmdBeginDebugUtilsLabelEXT_params params;
@@ -993,6 +1001,26 @@ void WINAPI vkCmdDecodeVideoKHR(VkCommandBuffer commandBuffer, const VkVideoDeco
     UNIX_CALL(vkCmdDecodeVideoKHR, &params);
 }
 
+void WINAPI vkCmdDecompressMemoryEXT(VkCommandBuffer commandBuffer, const VkDecompressMemoryInfoEXT *pDecompressMemoryInfoEXT)
+{
+    struct vkCmdDecompressMemoryEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.pDecompressMemoryInfoEXT = pDecompressMemoryInfoEXT;
+    UNIX_CALL(vkCmdDecompressMemoryEXT, &params);
+}
+
+void WINAPI vkCmdDecompressMemoryIndirectCountEXT(VkCommandBuffer commandBuffer, VkMemoryDecompressionMethodFlagsEXT decompressionMethod, VkDeviceAddress indirectCommandsAddress, VkDeviceAddress indirectCommandsCountAddress, uint32_t maxDecompressionCount, uint32_t stride)
+{
+    struct vkCmdDecompressMemoryIndirectCountEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.decompressionMethod = decompressionMethod;
+    params.indirectCommandsAddress = indirectCommandsAddress;
+    params.indirectCommandsCountAddress = indirectCommandsCountAddress;
+    params.maxDecompressionCount = maxDecompressionCount;
+    params.stride = stride;
+    UNIX_CALL(vkCmdDecompressMemoryIndirectCountEXT, &params);
+}
+
 void WINAPI vkCmdDecompressMemoryIndirectCountNV(VkCommandBuffer commandBuffer, VkDeviceAddress indirectCommandsAddress, VkDeviceAddress indirectCommandsCountAddress, uint32_t stride)
 {
     struct vkCmdDecompressMemoryIndirectCountNV_params params;
@@ -1400,12 +1428,20 @@ void WINAPI vkCmdEndRendering(VkCommandBuffer commandBuffer)
     UNIX_CALL(vkCmdEndRendering, &params);
 }
 
-void WINAPI vkCmdEndRendering2EXT(VkCommandBuffer commandBuffer, const VkRenderingEndInfoEXT *pRenderingEndInfo)
+void WINAPI vkCmdEndRendering2EXT(VkCommandBuffer commandBuffer, const VkRenderingEndInfoKHR *pRenderingEndInfo)
 {
     struct vkCmdEndRendering2EXT_params params;
     params.commandBuffer = commandBuffer;
     params.pRenderingEndInfo = pRenderingEndInfo;
     UNIX_CALL(vkCmdEndRendering2EXT, &params);
+}
+
+void WINAPI vkCmdEndRendering2KHR(VkCommandBuffer commandBuffer, const VkRenderingEndInfoKHR *pRenderingEndInfo)
+{
+    struct vkCmdEndRendering2KHR_params params;
+    params.commandBuffer = commandBuffer;
+    params.pRenderingEndInfo = pRenderingEndInfo;
+    UNIX_CALL(vkCmdEndRendering2KHR, &params);
 }
 
 void WINAPI vkCmdEndRenderingKHR(VkCommandBuffer commandBuffer)
@@ -4256,19 +4292,6 @@ VkResult WINAPI vkEndCommandBuffer(VkCommandBuffer commandBuffer)
     return params.result;
 }
 
-VkResult WINAPI vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties)
-{
-    struct vkEnumerateDeviceExtensionProperties_params params;
-    NTSTATUS status;
-    params.physicalDevice = physicalDevice;
-    params.pLayerName = pLayerName;
-    params.pPropertyCount = pPropertyCount;
-    params.pProperties = pProperties;
-    status = UNIX_CALL(vkEnumerateDeviceExtensionProperties, &params);
-    assert(!status && "vkEnumerateDeviceExtensionProperties");
-    return params.result;
-}
-
 VkResult WINAPI vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkLayerProperties *pProperties)
 {
     struct vkEnumerateDeviceLayerProperties_params params;
@@ -4302,6 +4325,20 @@ VkResult WINAPI vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance, uint32_t
     params.pPhysicalDeviceGroupProperties = pPhysicalDeviceGroupProperties;
     status = UNIX_CALL(vkEnumeratePhysicalDeviceGroupsKHR, &params);
     assert(!status && "vkEnumeratePhysicalDeviceGroupsKHR");
+    return params.result;
+}
+
+VkResult WINAPI vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, uint32_t *pCounterCount, VkPerformanceCounterARM *pCounters, VkPerformanceCounterDescriptionARM *pCounterDescriptions)
+{
+    struct vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM_params params;
+    NTSTATUS status;
+    params.physicalDevice = physicalDevice;
+    params.queueFamilyIndex = queueFamilyIndex;
+    params.pCounterCount = pCounterCount;
+    params.pCounters = pCounters;
+    params.pCounterDescriptions = pCounterDescriptions;
+    status = UNIX_CALL(vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM, &params);
+    assert(!status && "vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM");
     return params.result;
 }
 
@@ -7188,6 +7225,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkBuildAccelerationStructuresKHR", vkBuildAccelerationStructuresKHR},
     {"vkBuildMicromapsEXT", vkBuildMicromapsEXT},
     {"vkCmdBeginConditionalRenderingEXT", vkCmdBeginConditionalRenderingEXT},
+    {"vkCmdBeginCustomResolveEXT", vkCmdBeginCustomResolveEXT},
     {"vkCmdBeginDebugUtilsLabelEXT", vkCmdBeginDebugUtilsLabelEXT},
     {"vkCmdBeginPerTileExecutionQCOM", vkCmdBeginPerTileExecutionQCOM},
     {"vkCmdBeginQuery", vkCmdBeginQuery},
@@ -7262,6 +7300,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDebugMarkerEndEXT", vkCmdDebugMarkerEndEXT},
     {"vkCmdDebugMarkerInsertEXT", vkCmdDebugMarkerInsertEXT},
     {"vkCmdDecodeVideoKHR", vkCmdDecodeVideoKHR},
+    {"vkCmdDecompressMemoryEXT", vkCmdDecompressMemoryEXT},
+    {"vkCmdDecompressMemoryIndirectCountEXT", vkCmdDecompressMemoryIndirectCountEXT},
     {"vkCmdDecompressMemoryIndirectCountNV", vkCmdDecompressMemoryIndirectCountNV},
     {"vkCmdDecompressMemoryNV", vkCmdDecompressMemoryNV},
     {"vkCmdDispatch", vkCmdDispatch},
@@ -7302,6 +7342,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdEndRenderPass2KHR", vkCmdEndRenderPass2KHR},
     {"vkCmdEndRendering", vkCmdEndRendering},
     {"vkCmdEndRendering2EXT", vkCmdEndRendering2EXT},
+    {"vkCmdEndRendering2KHR", vkCmdEndRendering2KHR},
     {"vkCmdEndRenderingKHR", vkCmdEndRenderingKHR},
     {"vkCmdEndTransformFeedbackEXT", vkCmdEndTransformFeedbackEXT},
     {"vkCmdEndVideoCodingKHR", vkCmdEndVideoCodingKHR},
@@ -7766,6 +7807,7 @@ static const struct vulkan_func vk_phys_dev_dispatch_table[] =
     {"vkCreateDevice", vkCreateDevice},
     {"vkEnumerateDeviceExtensionProperties", vkEnumerateDeviceExtensionProperties},
     {"vkEnumerateDeviceLayerProperties", vkEnumerateDeviceLayerProperties},
+    {"vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM", vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM},
     {"vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR", vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR},
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsEXT", vkGetPhysicalDeviceCalibrateableTimeDomainsEXT},
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsKHR", vkGetPhysicalDeviceCalibrateableTimeDomainsKHR},

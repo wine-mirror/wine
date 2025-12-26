@@ -569,13 +569,35 @@ static void test_nonalertable(void)
     CloseHandle(hPipe);
 }
 
+struct cancelio_ctx
+{
+    HANDLE pipe;
+    HANDLE event;
+    IO_STATUS_BLOCK *iosb;
+    BOOL null_iosb;
+};
+
+static DWORD WINAPI cancelioex_thread_func(void *arg)
+{
+    struct cancelio_ctx *ctx = arg;
+    IO_STATUS_BLOCK cancel_sb;
+    NTSTATUS res;
+
+    res = pNtCancelIoFileEx(ctx->pipe, ctx->null_iosb ? NULL : ctx->iosb, &cancel_sb);
+    ok(!res, "NtCancelIoFileEx returned %lx\n", res);
+
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+
+    return 0;
+}
+
 static void test_cancelio(void)
 {
-    IO_STATUS_BLOCK iosb;
-    IO_STATUS_BLOCK cancel_sb;
-    HANDLE hEvent;
-    HANDLE hPipe;
-    NTSTATUS res;
+    IO_STATUS_BLOCK cancel_sb, iosb;
+    HANDLE hEvent, hPipe, thread;
+    struct cancelio_ctx ctx;
+    NTSTATUS res, status;
 
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %lx\n", GetLastError());
@@ -589,9 +611,15 @@ static void test_cancelio(void)
     ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
 
     res = pNtCancelIoFile(hPipe, &cancel_sb);
+    /* Save Status first thing after the call. We want to make very unlikely
+     * that the kernel APC updating Status could be executed after the call
+     * but before peeking at Status here. */
+    status = iosb.Status;
     ok(!res, "NtCancelIoFile returned %lx\n", res);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
 
-    ok(iosb.Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", iosb.Status);
+    ok(status == STATUS_CANCELLED, "Wrong iostatus %lx\n", status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     ok(!ioapc_called, "IOAPC ran too early\n");
@@ -603,6 +631,8 @@ static void test_cancelio(void)
     res = pNtCancelIoFile(hPipe, &cancel_sb);
     ok(!res, "NtCancelIoFile returned %lx\n", res);
     ok(iosb.Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", iosb.Status);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
 
     CloseHandle(hPipe);
 
@@ -616,15 +646,41 @@ static void test_cancelio(void)
         ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
 
         res = pNtCancelIoFileEx(hPipe, &iosb, &cancel_sb);
+        status = iosb.Status;
         ok(!res, "NtCancelIoFileEx returned %lx\n", res);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
 
-        ok(iosb.Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", iosb.Status);
+        ok(status == STATUS_CANCELLED, "Wrong iostatus %lx\n", status);
         ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
         iosb.Status = 0xdeadbeef;
         res = pNtCancelIoFileEx(hPipe, NULL, &cancel_sb);
         ok(res == STATUS_NOT_FOUND, "NtCancelIoFileEx returned %lx\n", res);
         ok(iosb.Status == 0xdeadbeef, "Wrong iostatus %lx\n", iosb.Status);
+        ok(cancel_sb.Status == STATUS_NOT_FOUND, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+
+        memset(&iosb, 0x55, sizeof(iosb));
+        res = listen_pipe(hPipe, hEvent, &iosb, FALSE);
+        ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
+
+        ctx.pipe = hPipe;
+        ctx.event = hEvent;
+        ctx.iosb = &iosb;
+        ctx.null_iosb = FALSE;
+        thread = CreateThread(NULL, 0, cancelioex_thread_func, &ctx, 0, NULL);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+
+        memset(&iosb, 0x55, sizeof(iosb));
+        res = listen_pipe(hPipe, hEvent, &iosb, FALSE);
+        ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
+
+        ctx.null_iosb = TRUE;
+        thread = CreateThread(NULL, 0, cancelioex_thread_func, &ctx, 0, NULL);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
 
         CloseHandle(hPipe);
     }
@@ -690,6 +746,8 @@ static void test_cancelsynchronousio(void)
     ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", ret, GetLastError());
     memset(&iosb, 0x55, sizeof(iosb));
     res = pNtCancelSynchronousIoFile(thread, NULL, &iosb);
+    ok(ctx.iosb.Status == 0xdeadbabe || ctx.iosb.Status == STATUS_CANCELLED,
+        "Unexpected status %lx\n", ctx.iosb.Status);
     ok(res == STATUS_SUCCESS, "Failed to cancel I/O\n");
     ok(iosb.Status == STATUS_SUCCESS, "iosb.Status got changed to %lx\n", iosb.Status);
     ok(iosb.Information == 0, "iosb.Information got changed to %Iu\n", iosb.Information);

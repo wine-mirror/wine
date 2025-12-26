@@ -40,6 +40,8 @@
 #include "winuser.h"
 #include "winnls.h"
 
+static BOOL (WINAPI *pNtUserModifyUserStartupInfoFlags)(DWORD,DWORD);
+
 #define MAXHWNDS 1024
 static HWND hwnd [MAXHWNDS];
 static unsigned int numwnds=1; /* 0 is reserved for null */
@@ -146,6 +148,17 @@ static const h_entry hierarchy [] = {
     { 84,  4,  WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0},
     {0, 0, 0, 0}
 };
+
+static void pump_messages(void)
+{
+    MSG msg;
+
+    while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageA( &msg );
+    }
+}
 
 static DWORD get_button_style(HWND button)
 {
@@ -2248,7 +2261,63 @@ static LRESULT CALLBACK msgbox_hook_proc(INT code, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
-static void test_MessageBox(void)
+static LRESULT CALLBACK msgbox_hook_proc2(INT code, WPARAM wParam, LPARAM lParam)
+{
+    return 1; /* prevent message box or dialog window creation. */
+}
+
+static void test_message_box_startup_info(void)
+{
+    HHOOK hook;
+    HWND hwnd;
+    int ret;
+
+    hook = SetWindowsHookExA( WH_CBT, msgbox_hook_proc2, NULL, GetCurrentThreadId() );
+    ret = DialogBoxParamA( GetModuleHandleA( NULL ), "TEST_EMPTY_DIALOG", 0, NULL, 0 );
+    ok(ret == -1, "got %d\n", ret);
+    UnhookWindowsHookEx( hook );
+
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    /* startup info window show flags are in effect. */
+    ret = IsWindowVisible( hwnd );
+    ok( !ret, "got %d.\n", ret );
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    /* set startup info flags once again. */
+    pNtUserModifyUserStartupInfoFlags( STARTF_USESHOWWINDOW, STARTF_USESHOWWINDOW );
+    hook = SetWindowsHookExA( WH_CBT, msgbox_hook_proc2, NULL, GetCurrentThreadId() );
+    ret = MessageBoxA(NULL, "Text", "MSGBOX caption", msgbox_type);
+    todo_wine ok(!ret, "got %d\n", ret); /* Wine returns -1 here. */
+    UnhookWindowsHookEx( hook );
+
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    ret = IsWindowVisible( hwnd );
+    /* startup info flags have no effect, while the message box window wasn't even created. */
+    ok( ret, "got %d.\n", ret );
+    DestroyWindow( hwnd );
+    pump_messages();
+
+    /* sanity check, set startup flags once againg and check that it works */
+    pNtUserModifyUserStartupInfoFlags( STARTF_USESHOWWINDOW, STARTF_USESHOWWINDOW );
+    hwnd = CreateWindowA( "static", "overlapped2", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, GetModuleHandleW(NULL), NULL );
+    ok( !!hwnd, "got NULL.\n" );
+    pump_messages();
+    ShowWindow( hwnd, SW_SHOWDEFAULT );
+    ret = IsWindowVisible( hwnd );
+    /* startup info flags have no effect, while the message box window wasn't even created. */
+    ok( !ret, "got %d.\n", ret );
+    DestroyWindow( hwnd );
+    pump_messages();
+}
+
+static void test_MessageBox(char **argv)
 {
     static const UINT tests[] =
     {
@@ -2260,6 +2329,9 @@ static void test_MessageBox(void)
         MB_OKCANCEL | MB_TASKMODAL | MB_TOPMOST,
         MB_OKCANCEL | MB_TASKMODAL | MB_SYSTEMMODAL | MB_TOPMOST,
     };
+    STARTUPINFOA sa = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info;
+    char cmdline[MAX_PATH];
     unsigned int i;
     HHOOK hook;
     int ret;
@@ -2278,6 +2350,18 @@ static void test_MessageBox(void)
     }
 
     UnhookWindowsHookEx(hook);
+
+    if (!pNtUserModifyUserStartupInfoFlags)
+    {
+        win_skip("NtUserModifyUserStartupInfoFlags is not available.\n");
+        return;
+    }
+    sa.dwFlags = STARTF_USESHOWWINDOW;
+    sa.wShowWindow = SW_HIDE;
+    sprintf(cmdline, "%s %s message_box_startup_info", argv[0], argv[1]);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &sa, &info);
+    ok(ret, "got error %lu\n", GetLastError());
+    wait_child_process(&info);
 }
 
 static INT_PTR CALLBACK custom_test_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -2436,9 +2520,21 @@ static void test_create_controls(void)
 
 START_TEST(dialog)
 {
+    char **argv;
+    int argc = winetest_get_mainargs( &argv );
+    HMODULE win32u = GetModuleHandleA("win32u.dll");
+
+    pNtUserModifyUserStartupInfoFlags = (void*)GetProcAddress(win32u, "NtUserModifyUserStartupInfoFlags");
+
     g_hinst = GetModuleHandleA (0);
 
     if (!RegisterWindowClasses()) assert(0);
+
+    if (argc == 3 && !strcmp(argv[2], "message_box_startup_info"))
+    {
+        test_message_box_startup_info();
+        return;
+    }
 
     test_dialog_custom_data();
     test_GetNextDlgItem();
@@ -2453,6 +2549,6 @@ START_TEST(dialog)
     test_MessageBoxFontTest();
     test_SaveRestoreFocus();
     test_timer_message();
-    test_MessageBox();
+    test_MessageBox(argv);
     test_capture_release();
 }

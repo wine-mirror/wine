@@ -278,7 +278,7 @@ extern void fd_copy_completion( struct fd *src, struct fd *dst );
 extern struct iosb *async_get_iosb( struct async *async );
 extern struct thread *async_get_thread( struct async *async );
 extern struct async *find_pending_async( struct async_queue *queue );
-extern void cancel_process_asyncs( struct process *process );
+extern void cancel_terminating_process_asyncs( struct process *process );
 extern void cancel_terminating_thread_asyncs( struct thread *thread );
 extern int async_close_obj_handle( struct object *obj, struct process *process, obj_handle_t handle );
 

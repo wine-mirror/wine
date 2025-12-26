@@ -18,28 +18,80 @@
 
 #include <stdarg.h>
 #include <assert.h>
+#include <math.h>
 #include "windef.h"
 #include "winbase.h"
 #define COBJMACROS
 #include "objbase.h"
 #include "msado15_backcompat.h"
 #include "oledb.h"
+#include "oledberr.h"
 #include "sqlucode.h"
 
+#include "wine/rbtree.h"
 #include "wine/debug.h"
 
 #include "msado15_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
+#define NO_INTERFACE ((void*)-1)
+
+struct recordset;
+
+struct field
+{
+    Field               Field_iface;
+    ISupportErrorInfo   ISupportErrorInfo_iface;
+    Properties          Properties_iface;
+    LONG                refs;
+    DBORDINAL           ordinal;
+    WCHAR              *name;
+    DataTypeEnum        type;
+    LONG                defined_size;
+    LONG                attrs;
+    LONG                index;
+    unsigned char       prec;
+    unsigned char       scale;
+    struct recordset   *recordset;
+    HACCESSOR           hacc_get;
+    HACCESSOR           hacc_put;
+
+    /* Field Properties */
+    VARIANT             optimize;
+};
+
 struct fields
 {
     Fields              Fields_iface;
     ISupportErrorInfo   ISupportErrorInfo_iface;
     LONG                refs;
-    Field             **field;
-    ULONG               count;
-    ULONG               allocated;
+    struct field      **field;
+    int                 count;
+    int                 allocated;
+};
+
+struct bookmark_data
+{
+    union
+    {
+        int i4;
+        LONGLONG i8;
+        BYTE *ptr;
+    } val;
+    DBLENGTH len;
+    DBSTATUS status;
+};
+
+struct hacc_cache_elem
+{
+    struct rb_entry entry;
+    HACCESSOR hacc;
+    struct hacc_cache_key
+    {
+        int len;
+        ULONG data[1];
+    } key;
 };
 
 struct recordset
@@ -51,39 +103,40 @@ struct recordset
     _Connection       *active_connection;
     LONG               state;
     struct fields      fields;
-    LONG               count;
-    LONG               allocated;
-    LONG               index;
-    VARIANT           *data;
     CursorLocationEnum cursor_location;
     CursorTypeEnum     cursor_type;
+    LockTypeEnum       lock_type;
     IRowset           *row_set;
-    EditModeEnum      editmode;
-    LONG               cache_size;
+    IRowsetLocate     *rowset_locate;
+    IRowsetExactScroll *rowset_es;
+    IRowsetChange     *rowset_change;
+    IRowsetUpdate     *rowset_update;
+    IAccessor         *accessor;
+    IRowsetCurrentIndex *rowset_cur_idx;
+    EditModeEnum       editmode;
+    HROW               current_row;
+    struct
+    {
+        LONG           max_size;
+        LONG           alloc;
+        LONG           size;
+        LONG           fetched;
+        int            dir;
+        LONG           pos;
+        HROW          *rows;
+    } cache;
+    VARIANT_BOOL       is_bof;
+    VARIANT_BOOL       is_eof;
     ADO_LONGPTR        max_records;
-    VARIANT            filter;
 
-    DBTYPE            *columntypes;
-    HACCESSOR         *haccessors;
-};
+    struct rb_tree     hacc_cache;
 
-struct field
-{
-    Field               Field_iface;
-    ISupportErrorInfo   ISupportErrorInfo_iface;
-    Properties          Properties_iface;
-    LONG                refs;
-    WCHAR              *name;
-    DataTypeEnum        type;
-    LONG                defined_size;
-    LONG                attrs;
-    LONG                index;
-    unsigned char       prec;
-    unsigned char       scale;
-    struct recordset   *recordset;
+    HACCESSOR          bookmark_hacc;
+    DBTYPE             bookmark_type;
+    VARIANT            bookmark;
 
-    /* Field Properties */
-    VARIANT             optimize;
+    ULONG              prop_count;
+    DBPROPSET         *prop;
 };
 
 static inline struct field *impl_from_Field( Field *iface )
@@ -94,6 +147,241 @@ static inline struct field *impl_from_Field( Field *iface )
 static inline struct field *impl_from_Properties( Properties *iface )
 {
     return CONTAINING_RECORD( iface, struct field, Properties_iface );
+}
+
+static inline BOOL cache_is_empty( struct recordset *recordset )
+{
+    return !recordset->cache.fetched;
+}
+
+static HRESULT update_current_row( struct recordset *recordset )
+{
+    VARIANT missing;
+
+    if ( !recordset->current_row ) return S_OK;
+
+    V_VT( &missing ) = VT_ERROR;
+    V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
+    return _Recordset_Update( &recordset->Recordset_iface, missing, missing);
+}
+
+static void cache_release( struct recordset *recordset )
+{
+    if (cache_is_empty( recordset ))
+    {
+        if (recordset->current_row)
+            IRowset_ReleaseRows( recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL);
+        recordset->current_row = DB_NULL_HROW;
+        return;
+    }
+
+    IRowset_ReleaseRows( recordset->row_set, recordset->cache.fetched,
+            recordset->cache.rows, NULL, NULL, NULL );
+    recordset->cache.fetched = 0;
+    recordset->cache.dir = 0;
+    recordset->cache.pos = 0;
+    recordset->current_row = DB_NULL_HROW;
+}
+
+static HRESULT get_bookmark( struct recordset *recordset, HROW row, VARIANT *bookmark )
+{
+    struct bookmark_data bookmark_data = { 0 };
+    SAFEARRAY *sa;
+    HRESULT hr;
+
+    hr = IRowset_GetData(recordset->row_set, row, recordset->bookmark_hacc, &bookmark_data);
+    if (FAILED(hr)) return hr;
+
+    if (recordset->bookmark_type == DBTYPE_I4)
+    {
+        V_VT(bookmark) = VT_R8;
+        V_R8(bookmark) = bookmark_data.val.i4;
+        return S_OK;
+    }
+
+    if (recordset->bookmark_type == DBTYPE_I8)
+    {
+        V_VT(bookmark) = VT_I8;
+        V_I8(bookmark) = bookmark_data.val.i8;
+        return S_OK;
+    }
+
+    sa = SafeArrayCreateVector( VT_UI1, 0, bookmark_data.len );
+    if (!sa)
+    {
+        CoTaskMemFree( bookmark_data.val.ptr );
+        return E_OUTOFMEMORY;
+    }
+    hr = SafeArrayLock( sa );
+    if (SUCCEEDED(hr))
+    {
+            memcpy( sa->pvData, bookmark_data.val.ptr, bookmark_data.len );
+            SafeArrayUnlock( sa );
+    }
+    CoTaskMemFree( bookmark_data.val.ptr );
+    if (FAILED(hr)) return hr;
+
+    V_VT(bookmark) = VT_ARRAY | VT_UI1;
+    V_ARRAY(bookmark) = sa;
+    return S_OK;
+}
+
+static HRESULT cache_get( struct recordset *recordset, BOOL forward )
+{
+    int dir = forward ? 1 : -1;
+    LONG off, fetch = 0;
+    HRESULT hr;
+
+    hr = update_current_row( recordset );
+    if (FAILED(hr)) return hr;
+
+    if (!recordset->cache.dir)
+    {
+        off = 0;
+        fetch = dir * recordset->cache.size;
+    }
+    else if (recordset->cache.dir == dir)
+    {
+        if (recordset->cache.pos + 1 > recordset->cache.fetched)
+        {
+            off = 0;
+            if (recordset->bookmark_hacc) off += dir;
+            fetch = dir * recordset->cache.size;
+        }
+    }
+    else
+    {
+        if (recordset->cache.pos -1 <= 0)
+        {
+            off = dir * recordset->cache.fetched;
+            fetch = dir * recordset->cache.size;
+        }
+    }
+
+    if (fetch)
+    {
+        DBCOUNTITEM count;
+        HROW row = 0;
+
+        if (!cache_is_empty( recordset ))
+        {
+            if (SUCCEEDED(IRowset_AddRefRows(recordset->row_set, 1, &recordset->current_row, NULL, NULL)))
+               row = recordset->current_row;
+        }
+        cache_release( recordset );
+        recordset->current_row = row;
+
+        if (recordset->bookmark_hacc)
+        {
+            const BYTE *data;
+            BYTE byte_buf;
+            DBBKMARK len;
+            int int_buf;
+
+            if (V_VT(&recordset->bookmark) == VT_R8)
+            {
+                if (isinf(V_R8(&recordset->bookmark)))
+                {
+                    data = (BYTE *)&byte_buf;
+                    if (V_R8(&recordset->bookmark) < 0)
+                    {
+                        byte_buf = DBBMK_FIRST;
+                        if (!forward) off -= 2;
+                    }
+                    else
+                    {
+                        byte_buf = DBBMK_LAST;
+                        if (forward) off += 2;
+                    }
+                    len = sizeof(byte_buf);
+                }
+                else
+                {
+                    data = (BYTE *)&int_buf;
+                    int_buf = V_R8(&recordset->bookmark);
+                    len = sizeof(int_buf);
+                }
+            }
+            else
+            {
+                hr = SafeArrayLock(V_ARRAY(&recordset->bookmark));
+                if (FAILED(hr)) return hr;
+                data = V_ARRAY(&recordset->bookmark)->pvData;
+                len = V_ARRAY(&recordset->bookmark)->rgsabound[0].cElements;
+            }
+
+            hr = IRowsetLocate_GetRowsAt(recordset->rowset_locate, 0, 0, len, data,
+                    off, fetch, &count, &recordset->cache.rows);
+            if (V_VT(&recordset->bookmark) & VT_ARRAY)
+                SafeArrayUnlock(V_ARRAY(&recordset->bookmark));
+
+            if (hr == DB_E_BADSTARTPOSITION)
+            {
+                count = 0;
+                hr  = S_OK;
+            }
+            else if (hr == DB_S_ENDOFROWSET)
+            {
+                VariantClear(&recordset->bookmark);
+                V_VT(&recordset->bookmark) = VT_R8;
+                V_R8(&recordset->bookmark) = dir * INFINITY;
+            }
+            else if (SUCCEEDED(hr))
+            {
+                VARIANT tmp;
+
+                hr = get_bookmark(recordset, recordset->cache.rows[count - 1], &tmp);
+                if (FAILED(hr))
+                {
+                    cache_release( recordset );
+                    recordset->current_row = row;
+                    return hr;
+                }
+
+                VariantClear(&recordset->bookmark);
+                recordset->bookmark = tmp;
+            }
+        }
+        else
+        {
+            hr = IRowset_GetNextRows(recordset->row_set, 0, off, fetch, &count, &recordset->cache.rows);
+        }
+        if (FAILED(hr)) return hr;
+
+        if (recordset->current_row)
+        {
+            IRowset_ReleaseRows(recordset->row_set, 1, &recordset->current_row, NULL, NULL, NULL);
+            recordset->current_row = 0;
+        }
+
+        if (!count)
+        {
+            if (!recordset->is_eof && forward)
+            {
+                recordset->is_eof = VARIANT_TRUE;
+                if (!row) recordset->is_bof = VARIANT_TRUE;
+                return S_OK;
+            }
+            if (!recordset->is_bof && !forward)
+            {
+                recordset->is_bof = VARIANT_TRUE;
+                return S_OK;
+            }
+            return MAKE_ADO_HRESULT(adErrNoCurrentRecord);
+        }
+
+
+        recordset->cache.pos = 0;
+        recordset->cache.fetched = count;
+        recordset->cache.dir = dir;
+    }
+
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+    if (dir == recordset->cache.dir)
+        recordset->current_row = recordset->cache.rows[recordset->cache.pos++];
+    else
+        recordset->current_row = recordset->cache.rows[--recordset->cache.pos];
+    return S_OK;
 }
 
 static ULONG WINAPI field_AddRef( Field *iface )
@@ -259,54 +547,143 @@ static HRESULT WINAPI field_get_Type( Field *iface, DataTypeEnum *type )
     return S_OK;
 }
 
-static LONG get_column_count( struct recordset *recordset )
-{
-    return recordset->fields.count;
-}
-
 static HRESULT WINAPI field_get_Value( Field *iface, VARIANT *val )
 {
     struct field *field = impl_from_Field( iface );
-    ULONG row = field->recordset->index, col = field->index, col_count;
-    VARIANT copy;
+    struct recordset *recordset = field->recordset;
+    struct buf
+    {
+        VARIANT val;
+        DBSTATUS status;
+    } buf;
     HRESULT hr;
 
     TRACE( "%p, %p\n", field, val );
 
-    if (field->recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
-    if (field->recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    if (!recordset || recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    col_count = get_column_count( field->recordset );
+    if (!recordset->is_eof && !recordset->is_bof && !recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
 
-    VariantInit( &copy );
-    if ((hr = VariantCopy( &copy, &field->recordset->data[row * col_count + col] )) != S_OK) return hr;
+    if (!recordset->accessor)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
+        if (FAILED(hr) || !recordset->accessor)
+            recordset->accessor = NO_INTERFACE;
+    }
+    if (recordset->accessor == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    *val = copy;
+    if (!field->hacc_get)
+    {
+        DBBINDSTATUS status = DBBINDSTATUS_OK;
+        DBBINDING binding;
+
+        memset(&binding, 0, sizeof(binding));
+        binding.iOrdinal = field->ordinal;
+        binding.obStatus = offsetof(struct buf, status);
+        binding.dwPart = DBPART_VALUE | DBPART_STATUS;
+        binding.cbMaxLen = sizeof(buf.val);
+        binding.wType = DBTYPE_VARIANT;
+        binding.bPrecision = field->prec;
+        binding.bScale = field->scale;
+        hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+            1, &binding, 0, &field->hacc_get, &status );
+        if (FAILED(hr)) return hr;
+        if (status != DBBINDSTATUS_OK)
+        {
+            IAccessor_ReleaseAccessor( recordset->accessor, field->hacc_get, NULL );
+            field->hacc_get = 0;
+            return E_FAIL;
+        }
+    }
+
+    memset(&buf, 0, sizeof(buf));
+    hr = IRowset_GetData(recordset->row_set, recordset->current_row, field->hacc_get, &buf);
+    if (FAILED(hr)) return hr;
+    if (buf.status == DBSTATUS_S_ISNULL) V_VT(&buf.val) = VT_NULL;
+    else if (buf.status != DBSTATUS_S_OK) return E_FAIL;
+
+    *val = buf.val;
     return S_OK;
 }
 
 static HRESULT WINAPI field_put_Value( Field *iface, VARIANT val )
 {
     struct field *field = impl_from_Field( iface );
-    ULONG row = field->recordset->index, col = field->index, col_count;
-    VARIANT copy;
+    struct recordset *recordset = field->recordset;
+    struct buf
+    {
+        VARIANT val;
+        DBSTATUS status;
+        DBLENGTH len;
+    } buf;
     HRESULT hr;
 
     TRACE( "%p, %s\n", field, debugstr_variant(&val) );
 
-    if (field->recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
-    if (field->recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    if (!recordset || recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    col_count = get_column_count( field->recordset );
+    if (!recordset->is_eof && !recordset->is_bof && !recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
 
-    VariantInit( &copy );
-    if ((hr = VariantCopy( &copy, &val )) != S_OK) return hr;
+    if (!recordset->rowset_change)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetChange,
+                (void **)&recordset->rowset_change );
+        if (FAILED(hr) || !recordset->rowset_change)
+            recordset->rowset_change = NO_INTERFACE;
+    }
+    if (recordset->rowset_change == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    field->recordset->data[row * col_count + col] = copy;
+    if (!recordset->accessor)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
+        if (FAILED(hr) || !recordset->accessor)
+            recordset->accessor = NO_INTERFACE;
+    }
+    if (recordset->accessor == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    if (field->recordset->editmode == adEditNone)
-        field->recordset->editmode = adEditInProgress;
+    if (!field->hacc_put)
+    {
+        DBBINDSTATUS status = DBBINDSTATUS_OK;
+        DBBINDING binding;
 
+        memset(&binding, 0, sizeof(binding));
+        binding.iOrdinal = field->ordinal;
+        binding.obLength = offsetof(struct buf, len);
+        binding.obStatus = offsetof(struct buf, status);
+        binding.dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+        binding.cbMaxLen = sizeof(buf.val);
+        binding.wType = DBTYPE_VARIANT;
+        binding.bPrecision = field->prec;
+        binding.bScale = field->scale;
+        hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+            1, &binding, 0, &field->hacc_put, &status );
+        if (FAILED(hr)) return hr;
+        if (status != DBBINDSTATUS_OK)
+        {
+            IAccessor_ReleaseAccessor( recordset->accessor, field->hacc_put, NULL );
+            field->hacc_put = 0;
+            return E_FAIL;
+        }
+    }
+
+    memset(&buf, 0, sizeof(buf));
+    buf.val = val;
+    hr = IRowsetChange_SetData(recordset->rowset_change, recordset->current_row, field->hacc_put, &buf);
+    if (FAILED(hr)) return hr;
+    if (buf.status != DBSTATUS_S_OK) return E_FAIL;
     return S_OK;
 }
 
@@ -809,25 +1186,22 @@ static struct PropertiesVtbl field_properties_vtbl =
     field_props_get_Item
 };
 
-static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *recordset, Field **obj )
+static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *recordset, struct field **field )
 {
-    struct field *field;
-
-    if (!(field = calloc( 1, sizeof(*field) ))) return E_OUTOFMEMORY;
-    field->Field_iface.lpVtbl = &field_vtbl;
-    field->ISupportErrorInfo_iface.lpVtbl = &field_supporterrorinfo_vtbl;
-    field->Properties_iface.lpVtbl = &field_properties_vtbl;
-    field->refs = 1;
-    if (!(field->name = wcsdup( name )))
+    if (!(*field = calloc( 1, sizeof(**field) ))) return E_OUTOFMEMORY;
+    (*field)->Field_iface.lpVtbl = &field_vtbl;
+    (*field)->ISupportErrorInfo_iface.lpVtbl = &field_supporterrorinfo_vtbl;
+    (*field)->Properties_iface.lpVtbl = &field_properties_vtbl;
+    (*field)->refs = 1;
+    if (!((*field)->name = wcsdup( name )))
     {
-        free( field );
+        free( *field );
         return E_OUTOFMEMORY;
     }
-    field->index = index;
-    field->recordset = recordset;
+    (*field)->index = index;
+    (*field)->recordset = recordset;
 
-    *obj = &field->Field_iface;
-    TRACE( "returning iface %p\n", *obj );
+    TRACE( "returning field %p\n", *field );
     return S_OK;
 }
 
@@ -949,12 +1323,119 @@ static HRESULT WINAPI fields_Invoke( Fields *iface, DISPID member, REFIID riid, 
     return hr;
 }
 
+static BOOL resize_fields( struct fields *fields, ULONG count )
+{
+    if (count > fields->allocated)
+    {
+        struct field **tmp;
+        ULONG new_size = max( count, fields->allocated * 2 );
+        if (!(tmp = realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
+        fields->field = tmp;
+        fields->allocated = new_size;
+    }
+
+    return TRUE;
+}
+
+static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
+{
+    struct field *field;
+    HRESULT hr;
+
+    hr = Field_create( info->pwszName, fields->count, fields_get_recordset(fields), &field );
+    if (hr != S_OK) return hr;
+    field->ordinal = info->iOrdinal;
+    field->type = info->wType;
+    field->defined_size = info->ulColumnSize;
+    if (info->dwFlags != adFldUnspecified) field->attrs = info->dwFlags;
+    field->prec = info->bPrecision;
+    field->scale = info->bScale;
+
+    if (!(resize_fields( fields, fields->count + 1 )))
+    {
+        Field_Release( &field->Field_iface );
+        return E_OUTOFMEMORY;
+    }
+
+    fields->field[fields->count++] = field;
+    return S_OK;
+}
+
+static HRESULT init_fields( struct fields *fields )
+{
+    struct recordset *rec = fields_get_recordset( fields );
+    DBCOLUMNINFO *colinfo = NULL;
+    OLECHAR *strbuf = NULL;
+    DBORDINAL i, columns;
+    IColumnsInfo *info;
+    HRESULT hr;
+
+    if (fields->count != -1) return S_OK;
+
+    if (!rec->row_set)
+    {
+        fields->count = 0;
+        return S_OK;
+    }
+
+    hr = IRowset_QueryInterface( rec->row_set, &IID_IColumnsInfo, (void **)&info );
+    if (FAILED(hr) || !info)
+    {
+        fields->count = 0;
+        return S_OK;
+    }
+
+    hr = IColumnsInfo_GetColumnInfo( info, &columns, &colinfo, &strbuf );
+    IColumnsInfo_Release( info );
+    if (FAILED(hr)) return hr;
+
+    if (!resize_fields( fields, columns ))
+    {
+        CoTaskMemFree( colinfo );
+        CoTaskMemFree( strbuf );
+        return E_OUTOFMEMORY;
+    }
+
+    fields->count = 0;
+    for (i = 0; i < columns; i++)
+    {
+        TRACE("Adding Column %Iu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
+                "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
+                i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
+                colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
+                colinfo[i].bPrecision, colinfo[i].bScale);
+
+        if (!i && colinfo[i].columnid.eKind == DBKIND_GUID_PROPID &&
+                IsEqualGUID(&colinfo[i].columnid.uGuid.guid, &DBCOL_SPECIALCOL)) continue;
+
+        hr = append_field(fields, &colinfo[i]);
+        if (FAILED(hr))
+        {
+            for (; i > 0; i--)
+                Field_Release(&fields->field[i - 1]->Field_iface);
+            fields->count = -1;
+
+            CoTaskMemFree( colinfo );
+            CoTaskMemFree( strbuf );
+
+            ERR("Failed to add Field name - 0x%08lx\n", hr);
+            return hr;
+        }
+    }
+
+    CoTaskMemFree( colinfo );
+    CoTaskMemFree( strbuf );
+    return S_OK;
+}
+
 static HRESULT WINAPI fields_get_Count( Fields *iface, LONG *count )
 {
     struct fields *fields = impl_from_Fields( iface );
+    HRESULT hr;
 
     TRACE( "%p, %p\n", fields, count );
 
+    if ((hr = init_fields( fields )) != S_OK) return hr;
     *count = fields->count;
     return S_OK;
 }
@@ -995,14 +1476,7 @@ static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
 
     for (i = 0; i < fields->count; i++)
     {
-        BSTR name;
-        BOOL match;
-        HRESULT hr;
-
-        if ((hr = Field_get_Name( fields->field[i], &name )) != S_OK) return hr;
-        match = !wcsicmp( V_BSTR( index ), name );
-        SysFreeString( name );
-        if (match)
+        if (!wcsicmp( V_BSTR(index), fields->field[i]->name ))
         {
             *ret = i;
             return S_OK;
@@ -1010,22 +1484,6 @@ static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
     }
 
     return MAKE_ADO_HRESULT(adErrItemNotFound);
-}
-
-static inline WCHAR *heap_strdupAtoW(const char *str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD len;
-
-        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = malloc(len*sizeof(WCHAR));
-        if(ret)
-            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    }
-
-    return ret;
 }
 
 static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj )
@@ -1036,48 +1494,11 @@ static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj
 
     TRACE( "%p, %s, %p\n", fields, debugstr_variant(&index), obj );
 
+    if ((hr = init_fields( fields )) != S_OK) return hr;
     if ((hr = map_index( fields, &index, &i )) != S_OK) return hr;
 
-    Field_AddRef( fields->field[i] );
-    *obj = fields->field[i];
-    return S_OK;
-}
-
-static BOOL resize_fields( struct fields *fields, ULONG count )
-{
-    if (count > fields->allocated)
-    {
-        Field **tmp;
-        ULONG new_size = max( count, fields->allocated * 2 );
-        if (!(tmp = realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
-        fields->field = tmp;
-        fields->allocated = new_size;
-    }
-
-    fields->count = count;
-    return TRUE;
-}
-
-static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
-{
-    Field *field;
-    HRESULT hr;
-
-    hr = Field_create( info->pwszName, fields->count, fields_get_recordset(fields), &field );
-    if (hr != S_OK) return hr;
-    Field_put_Type( field, info->wType );
-    Field_put_DefinedSize( field, info->ulColumnSize );
-    if (info->dwFlags != adFldUnspecified) Field_put_Attributes( field, info->dwFlags );
-    Field_put_Precision( field, info->bPrecision );
-    Field_put_NumericScale( field, info->bScale );
-
-    if (!(resize_fields( fields, fields->count + 1 )))
-    {
-        Field_Release( field );
-        return E_OUTOFMEMORY;
-    }
-
-    fields->field[fields->count - 1] = field;
+    Field_AddRef( &fields->field[i]->Field_iface );
+    *obj = &fields->field[i]->Field_iface;
     return S_OK;
 }
 
@@ -1085,10 +1506,15 @@ static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum typ
 {
     struct fields *fields = impl_from_Fields( iface );
     DBCOLUMNINFO colinfo;
+    HRESULT hr;
 
     TRACE( "%p, %s, %u, %Id, %d\n", fields, debugstr_w(name), type, size, attr );
 
+    if (fields_get_recordset(fields)->state != adStateClosed) return MAKE_ADO_HRESULT( adErrIllegalOperation );
+    if ((hr = init_fields( fields )) != S_OK) return hr;
+
     memset( &colinfo, 0, sizeof(colinfo) );
+    colinfo.iOrdinal = fields->count ? (*fields->field)[fields->count - 1].ordinal + 1 : 1;
     colinfo.pwszName = name;
     colinfo.wType = type;
     colinfo.ulColumnSize = size;
@@ -1186,50 +1612,12 @@ static const ISupportErrorInfoVtbl fields_supporterrorinfo_vtbl =
     fields_supporterrorinfo_InterfaceSupportsErrorInfo
 };
 
-static void map_rowset_fields(struct recordset *recordset, struct fields *fields)
-{
-    HRESULT hr;
-    IColumnsInfo *columninfo;
-    DBORDINAL columns, i;
-    DBCOLUMNINFO *colinfo;
-    OLECHAR *stringsbuffer;
-
-    /* Not Finding the interface or GetColumnInfo failing just causes 0 Fields to be returned */
-    hr = IRowset_QueryInterface(recordset->row_set, &IID_IColumnsInfo, (void**)&columninfo);
-    if (FAILED(hr))
-        return;
-
-    hr = IColumnsInfo_GetColumnInfo(columninfo, &columns, &colinfo, &stringsbuffer);
-    if (SUCCEEDED(hr))
-    {
-        for (i=0; i < columns; i++)
-        {
-            TRACE("Adding Column %Iu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
-                  "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
-                  i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
-                  colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
-                  colinfo[i].bPrecision, colinfo[i].bScale);
-
-            hr = append_field(fields, &colinfo[i]);
-            if (FAILED(hr))
-            {
-                ERR("Failed to add Field name - 0x%08lx\n", hr);
-                return;
-            }
-        }
-
-        CoTaskMemFree(colinfo);
-        CoTaskMemFree(stringsbuffer);
-    }
-
-    IColumnsInfo_Release(columninfo);
-}
-
-static void fields_init( struct recordset *recordset )
+static void Fields_create( struct recordset *recordset )
 {
     memset( &recordset->fields, 0, sizeof(recordset->fields) );
     recordset->fields.Fields_iface.lpVtbl = &fields_vtbl;
     recordset->fields.ISupportErrorInfo_iface.lpVtbl = &fields_supporterrorinfo_vtbl;
+    recordset->fields.count = -1;
 }
 
 static inline struct recordset *impl_from_Recordset( _Recordset *iface )
@@ -1250,48 +1638,80 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
     return refs;
 }
 
+static void free_hacc( struct rb_entry *entry, void *context )
+{
+    struct hacc_cache_elem *elem = (struct hacc_cache_elem *)entry;
+    struct recordset *recordset = context;
+
+    IAccessor_ReleaseAccessor( recordset->accessor, elem->hacc, NULL );
+    free( elem );
+}
+
 static void close_recordset( struct recordset *recordset )
 {
-    ULONG row, col, col_count;
-    ULONG i;
-    IAccessor *accessor;
+    int i, j;
 
-    if (recordset->haccessors)
-        IRowset_QueryInterface(recordset->row_set, &IID_IAccessor, (void**)&accessor);
+    cache_release( recordset );
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+
+    rb_destroy( &recordset->hacc_cache, free_hacc, recordset );
+
+    if (recordset->bookmark_hacc)
+    {
+        IAccessor_ReleaseAccessor( recordset->accessor, recordset->bookmark_hacc, NULL );
+        recordset->bookmark_hacc = 0;
+    }
+    VariantClear( &recordset->bookmark );
 
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = NULL;
+    if ( recordset->rowset_locate )
+        IRowsetLocate_Release( recordset->rowset_locate );
+    recordset->rowset_locate = NULL;
+    if ( recordset->rowset_es && recordset->rowset_es != NO_INTERFACE )
+        IRowsetExactScroll_Release( recordset->rowset_es );
+    recordset->rowset_es = NULL;
+    if ( recordset->rowset_change && recordset->rowset_change != NO_INTERFACE )
+        IRowsetChange_Release( recordset->rowset_change );
+    recordset->rowset_change = NULL;
+    if ( recordset->rowset_update && recordset->rowset_update != NO_INTERFACE )
+        IRowsetUpdate_Release( recordset->rowset_update );
+    recordset->rowset_update = NULL;
+    if ( recordset->rowset_cur_idx && recordset->rowset_cur_idx != NO_INTERFACE )
+        IRowsetCurrentIndex_Release( recordset->rowset_cur_idx );
+    recordset->rowset_cur_idx = NULL;
 
-    VariantClear( &recordset->filter );
-
-    col_count = get_column_count( recordset );
-
-    free(recordset->columntypes);
-
-    for (i = 0; i < col_count; i++)
+    for (i = 0; i < recordset->fields.count; i++)
     {
-        struct field *field = impl_from_Field( recordset->fields.field[i] );
-        field->recordset = NULL;
-        Field_Release(&field->Field_iface);
+        if (recordset->fields.field[i]->hacc_get)
+        {
+            IAccessor_ReleaseAccessor(recordset->accessor, recordset->fields.field[i]->hacc_get, NULL);
+            recordset->fields.field[i]->hacc_get = 0;
+        }
+        if (recordset->fields.field[i]->hacc_put)
+        {
+            IAccessor_ReleaseAccessor(recordset->accessor, recordset->fields.field[i]->hacc_put, NULL);
+            recordset->fields.field[i]->hacc_put = 0;
+        }
+        recordset->fields.field[i]->recordset = NULL;
 
-        if (recordset->haccessors)
-            IAccessor_ReleaseAccessor(accessor, recordset->haccessors[i], NULL);
+        Field_Release(&recordset->fields.field[i]->Field_iface);
     }
+    recordset->fields.count = -1;
 
-    if (recordset->haccessors)
+    if (recordset->accessor && recordset->accessor != NO_INTERFACE )
+        IAccessor_Release( recordset->accessor );
+    recordset->accessor = NULL;
+
+    for (i = 0; i < recordset->prop_count; i++)
     {
-        IAccessor_Release(accessor);
-        free(recordset->haccessors);
-        recordset->haccessors = NULL;
+        for (j = 0; j < recordset->prop[i].cProperties; j++)
+            VariantClear( &recordset->prop[i].rgProperties[j].vValue );
+        CoTaskMemFree( recordset->prop[i].rgProperties );
     }
-    recordset->fields.count = 0;
-
-    for (row = 0; row < recordset->count; row++)
-        for (col = 0; col < col_count; col++) VariantClear( &recordset->data[row * col_count + col] );
-
-    recordset->count = recordset->allocated = recordset->index = 0;
-    free( recordset->data );
-    recordset->data = NULL;
+    CoTaskMemFree( recordset->prop );
+    recordset->prop_count = 0;
+    recordset->prop = NULL;
 }
 
 static ULONG WINAPI recordset_Release( _Recordset *iface )
@@ -1304,6 +1724,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
         TRACE( "destroying %p\n", recordset );
         close_recordset( recordset );
         free( recordset->fields.field );
+        free( recordset->cache.rows );
         free( recordset );
     }
     return refs;
@@ -1489,37 +1910,64 @@ static HRESULT WINAPI recordset_get_ActiveConnection( _Recordset *iface, VARIANT
 static HRESULT WINAPI recordset_get_BOF( _Recordset *iface, VARIANT_BOOL *bof )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p, %p\n", recordset, bof );
 
-    *bof = (recordset->index < 0) ? VARIANT_TRUE : VARIANT_FALSE;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->is_bof && !recordset->is_eof && !recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    *bof = recordset->is_bof;
     return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_Bookmark( _Recordset *iface, VARIANT *bookmark )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+
     TRACE( "%p, %p\n", iface, bookmark );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
-    if (recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
+    {
+        HRESULT hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    if (!recordset->bookmark_hacc)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    V_VT(bookmark) = VT_I4;
-    V_I4(bookmark) = recordset->index;
-    return S_OK;
+    return get_bookmark( recordset, recordset->current_row, bookmark );
 }
 
 static HRESULT WINAPI recordset_put_Bookmark( _Recordset *iface, VARIANT bookmark )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    VARIANT copy;
+    HRESULT hr;
+
     TRACE( "%p, %s\n", iface, debugstr_variant(&bookmark) );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (V_VT(&bookmark) != VT_R8 && V_VT(&bookmark) != VT_I8 &&
+            V_VT(&bookmark) != (VT_ARRAY | VT_UI1))
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (!recordset->bookmark_hacc)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
 
-    if (V_VT(&bookmark) != VT_I4) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    VariantInit( &copy );
+    hr = VariantCopy( &copy, &bookmark );
+    if (FAILED(hr)) return hr;
 
-    recordset->index = V_I4(&bookmark);
-    return S_OK;
+    VariantClear( &recordset->bookmark );
+    recordset->bookmark = copy;
+    recordset->cache.dir = 0;
+    return cache_get( recordset, TRUE );
 }
 
 static HRESULT WINAPI recordset_get_CacheSize( _Recordset *iface, LONG *size )
@@ -1527,16 +1975,63 @@ static HRESULT WINAPI recordset_get_CacheSize( _Recordset *iface, LONG *size )
     struct recordset *recordset = impl_from_Recordset( iface );
     TRACE( "%p, %p\n", iface, size );
 
-    *size = recordset->cache_size;
+    *size = recordset->cache.size;
     return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_CacheSize( _Recordset *iface, LONG size )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+
     TRACE( "%p, %ld\n", iface, size );
 
-    recordset->cache_size = size;
+    if (size < 1) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (!recordset->cache.max_size && recordset->row_set)
+    {
+        DBPROPSET *propset = NULL;
+        IRowsetInfo *info;
+        HRESULT hr;
+
+        recordset->cache.max_size = LONG_MAX;
+
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetInfo, (void **)&info );
+        if (SUCCEEDED( hr ))
+        {
+            DBPROPIDSET propidset;
+            DBPROPID id[1];
+            ULONG count;
+
+            propidset.rgPropertyIDs = id;
+            propidset.cPropertyIDs = ARRAY_SIZE(id);
+            propidset.guidPropertySet = DBPROPSET_ROWSET;
+            id[0] = DBPROP_MAXOPENROWS;
+            hr = IRowsetInfo_GetProperties( info, 1, &propidset, &count, &propset );
+            IRowsetInfo_Release( info );
+            if (FAILED( hr )) propset = NULL;
+        }
+        if (propset)
+        {
+            if (V_VT(&propset->rgProperties[0].vValue) == VT_I4)
+                recordset->cache.max_size = V_I4(&propset->rgProperties[0].vValue);
+            VariantClear( &propset->rgProperties[0].vValue );
+            CoTaskMemFree( propset->rgProperties );
+            CoTaskMemFree( propset );
+        }
+    }
+
+    if (recordset->cache.max_size && recordset->cache.max_size < size)
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (size > recordset->cache.alloc)
+    {
+        HROW *rows = realloc( recordset->cache.rows, sizeof(*rows) * size );
+        if (!rows) return E_OUTOFMEMORY;
+        recordset->cache.alloc = size;
+        recordset->cache.rows = rows;
+    }
+
+    recordset->cache.size = size;
     return S_OK;
 }
 
@@ -1563,10 +2058,19 @@ static HRESULT WINAPI recordset_put_CursorType( _Recordset *iface, CursorTypeEnu
 static HRESULT WINAPI recordset_get_EOF( _Recordset *iface, VARIANT_BOOL *eof )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p, %p\n", recordset, eof );
 
-    *eof = (!recordset->count || recordset->index >= recordset->count) ? VARIANT_TRUE : VARIANT_FALSE;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->is_eof && !recordset->is_bof && !recordset->current_row)
+    {
+        hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    *eof = recordset->is_eof;
     return S_OK;
 }
 
@@ -1583,14 +2087,28 @@ static HRESULT WINAPI recordset_get_Fields( _Recordset *iface, Fields **obj )
 
 static HRESULT WINAPI recordset_get_LockType( _Recordset *iface, LockTypeEnum *lock_type )
 {
-    FIXME( "%p, %p\n", iface, lock_type );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", iface, lock_type );
+
+    if (!lock_type) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    *lock_type = recordset->lock_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_LockType( _Recordset *iface, LockTypeEnum lock_type )
 {
-    FIXME( "%p, %d\n", iface, lock_type );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %d\n", iface, lock_type );
+
+    if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
+    if (lock_type < adLockReadOnly || lock_type > adLockBatchOptimistic)
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    recordset->lock_type = lock_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_MaxRecords( _Recordset *iface, ADO_LONGPTR *max_records )
@@ -1614,10 +2132,28 @@ static HRESULT WINAPI recordset_put_MaxRecords( _Recordset *iface, ADO_LONGPTR m
 static HRESULT WINAPI recordset_get_RecordCount( _Recordset *iface, ADO_LONGPTR *count )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    DBCOUNTITEM rows;
+    HRESULT hr;
 
     TRACE( "%p, %p\n", recordset, count );
 
-    *count = recordset->count;
+    *count = -1;
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->rowset_es)
+    {
+        hr = IUnknown_QueryInterface( recordset->row_set, &IID_IRowsetExactScroll,
+                (void**)&recordset->rowset_es );
+        if (FAILED(hr) || !recordset->rowset_es)
+            recordset->rowset_es = NO_INTERFACE;
+    }
+    if (recordset->rowset_es == NO_INTERFACE)
+        return S_OK;
+
+    hr = IRowsetExactScroll_GetExactPosition( recordset->rowset_es, 0, 0, 0, 0, &rows );
+    if (SUCCEEDED(hr))
+        *count = rows;
     return S_OK;
 }
 
@@ -1639,36 +2175,171 @@ static HRESULT WINAPI recordset_get_Source( _Recordset *iface, VARIANT *source )
     return E_NOTIMPL;
 }
 
-static BOOL resize_recordset( struct recordset *recordset, ULONG row_count )
+static HRESULT get_accessor( struct recordset *recordset, VARIANT *fields, HACCESSOR *hacc )
 {
-    ULONG row_size = get_column_count( recordset ) * sizeof(*recordset->data);
+    struct hacc_cache_elem *elem;
+    struct hacc_cache_key *key;
+    DBREFCOUNT refcount;
+    BYTE tmp[256];
+    int i, size;
+    HRESULT hr;
+    ULONG idx;
 
-    if (row_count > recordset->allocated)
+    if (!recordset->accessor)
     {
-        VARIANT *tmp;
-        ULONG count = max( row_count, recordset->allocated * 2 );
-        if (!(tmp = realloc( recordset->data, count * row_size ))) return FALSE;
-        memset( (BYTE*)tmp + recordset->allocated * row_size, 0, (count - recordset->allocated) * row_size );
-        recordset->data = tmp;
-        recordset->allocated = count;
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
+        if (FAILED(hr) || !recordset->accessor)
+            recordset->accessor = NO_INTERFACE;
+    }
+    if (recordset->accessor == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    hr = init_fields( &recordset->fields );
+    if (FAILED(hr)) return hr;
+
+    key = (struct hacc_cache_key *)tmp;
+    if (V_VT(fields) == VT_ERROR && V_ERROR(fields) == DISP_E_PARAMNOTFOUND)
+    {
+        key->len = 0;
+    }
+    else if (V_VT(fields) & VT_ARRAY)
+    {
+        if (V_VT(fields) != (VT_ARRAY | VT_VARIANT))
+            return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+        i = V_ARRAY(fields)->rgsabound[0].cElements;
+        size = offsetof( struct hacc_cache_key, data[i] );
+        if (size > sizeof(tmp))
+        {
+            key = malloc( size );
+            if (!key) return E_OUTOFMEMORY;
+        }
+        key->len = i;
+
+        for (i = 0; i < key->len; i++)
+        {
+            hr = map_index( &recordset->fields, ((VARIANT *)V_ARRAY(fields)->pvData) + i, &idx );
+            if (FAILED(hr))
+            {
+                if ((BYTE *)key != tmp) free( key );
+                return hr;
+            }
+
+            key->data[i] = idx;
+        }
+    }
+    else
+    {
+        hr = map_index( &recordset->fields, fields, &idx );
+        if (FAILED(hr)) return hr;
+
+        key->len = 1;
+        key->data[0] = idx;
     }
 
-    recordset->count = row_count;
-    return TRUE;
+    elem = (struct hacc_cache_elem *)rb_get( &recordset->hacc_cache, key );
+    if (!elem)
+    {
+        DBBINDING *bindings = malloc( sizeof(*bindings) * key->len );
+
+        if (!bindings)
+        {
+            if ((BYTE *)key != tmp) free( key );
+            return E_OUTOFMEMORY;
+        }
+        memset( bindings, 0, sizeof(*bindings) * key->len );
+
+        elem = malloc( offsetof(struct hacc_cache_elem, key.data[key->len]) );
+        if (!elem)
+        {
+            if ((BYTE *)key != tmp) free( key );
+            free( bindings );
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < key->len; i++)
+        {
+            struct field *field = recordset->fields.field[key->data[i]];
+
+            bindings[i].iOrdinal = field->ordinal;
+            bindings[i].obValue = i * sizeof(VARIANT);
+            bindings[i].dwPart = DBPART_VALUE;
+            bindings[i].cbMaxLen = sizeof(VARIANT);
+            bindings[i].wType = DBTYPE_VARIANT;
+            bindings[i].bPrecision = field->prec;
+            bindings[i].bScale = field->scale;
+        }
+        hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+                key->len, bindings, 0, &elem->hacc, NULL );
+        free( bindings );
+        if (SUCCEEDED( hr ))
+        {
+            elem->key.len = key->len;
+            memcpy( elem->key.data, key->data, key->len * sizeof(key->data[0]) );
+            rb_put( &recordset->hacc_cache, key, &elem->entry );
+        }
+    }
+    if ((BYTE *)key != tmp) free( key );
+
+    hr = IAccessor_AddRefAccessor( recordset->accessor, elem->hacc, &refcount );
+    if (FAILED(hr)) return hr;
+    *hacc = elem->hacc;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, VARIANT values )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    DBREFCOUNT refcount;
+    HACCESSOR hacc;
+    HRESULT hr;
+    void *data;
 
     TRACE( "%p, %s, %s\n", recordset, debugstr_variant(&field_list), debugstr_variant(&values) );
-    if (V_VT(&field_list) != VT_ERROR)
-        FIXME( "ignoring field list and values\n" );
+
+    if ((V_VT(&field_list) & VT_ARRAY) != (V_VT(&values) & VT_ARRAY))
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (V_VT(&field_list) & VT_ARRAY)
+    {
+        if (V_ARRAY(&field_list)->rgsabound[0].cElements != V_ARRAY(&values)->rgsabound[0].cElements ||
+                V_VT(&field_list) != (VT_ARRAY | VT_VARIANT) ||
+                V_VT(&values) != (VT_ARRAY | VT_VARIANT))
+            return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    }
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    if (!resize_recordset( recordset, recordset->count + 1 )) return E_OUTOFMEMORY;
-    recordset->index = recordset->count - 1;
+    if (!recordset->rowset_change)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetChange,
+                (void **)&recordset->rowset_change );
+        if (FAILED(hr) || !recordset->rowset_change)
+            recordset->rowset_change = NO_INTERFACE;
+    }
+    if (recordset->rowset_change == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    hr = update_current_row( recordset );
+    if (FAILED(hr)) return hr;
+    cache_release( recordset );
+
+    hr = get_accessor( recordset, &field_list, &hacc );
+    if (FAILED(hr)) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    if (V_VT(&field_list) == VT_ERROR)
+        data = NULL;
+    else if (V_VT(&values) & VT_ARRAY)
+        data = V_ARRAY(&values)->pvData;
+    else
+        data = &values;
+
+    hr = IRowsetChange_InsertRow( recordset->rowset_change, 0,
+            hacc, data, &recordset->current_row );
+    IAccessor_ReleaseAccessor( recordset->accessor, hacc, &refcount );
+    if (FAILED(hr))
+        return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+    recordset->is_bof = recordset->is_eof = FALSE;
+
     recordset->editmode = adEditAdd;
     return S_OK;
 }
@@ -1676,11 +2347,41 @@ static HRESULT WINAPI recordset_AddNew( _Recordset *iface, VARIANT field_list, V
 static HRESULT WINAPI recordset_CancelUpdate( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    DBPENDINGSTATUS pending_status;
+    DBROWSTATUS *status;
+    DBCOUNTITEM count;
+    HRESULT hr;
+    HROW *row;
 
-    FIXME( "%p\n", iface );
+    TRACE( "%p\n", iface );
 
-    if (recordset->active_connection == NULL)
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    if (!recordset->rowset_update)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetUpdate,
+                (void **)&recordset->rowset_update );
+        if (FAILED(hr) || !recordset->rowset_update)
+            recordset->rowset_update = NO_INTERFACE;
+    }
+    if (recordset->rowset_update == NO_INTERFACE) return S_OK;
+
+    hr = IRowsetUpdate_GetRowStatus( recordset->rowset_update, 0,
+            1, &recordset->current_row, &pending_status );
+    if (FAILED(hr)) return S_OK;
+    if (pending_status & (DBPENDINGSTATUS_UNCHANGED | DBPENDINGSTATUS_INVALIDROW)) return S_OK;
+    if (!(pending_status & (DBPENDINGSTATUS_NEW | DBPENDINGSTATUS_CHANGED | DBPENDINGSTATUS_DELETED)))
         return S_OK;
+
+    row = NULL;
+    status = NULL;
+    hr = IRowsetUpdate_Undo( recordset->rowset_update, 0, 1, &recordset->current_row, &count, &row, &status );
+    if (FAILED(hr)) return hr;
+    if (status[0] == DBROWSTATUS_E_CANCELED) FIXME("status = DBROWSTATUS_E_CANCELED\n");
+    if (pending_status & DBPENDINGSTATUS_NEW) cache_release( recordset );
+    CoTaskMemFree( row );
+    CoTaskMemFree( status );
 
     recordset->editmode = adEditNone;
     return S_OK;
@@ -1723,10 +2424,15 @@ static HRESULT WINAPI recordset_MoveNext( _Recordset *iface )
 
     TRACE( "%p\n", recordset );
 
-    if (recordset->index >= recordset->count)
-        return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
-    if (recordset->index < recordset->count) recordset->index++;
-    return S_OK;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
+    {
+        HRESULT hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    return cache_get( recordset, TRUE );
 }
 
 static HRESULT WINAPI recordset_MovePrevious( _Recordset *iface )
@@ -1735,28 +2441,80 @@ static HRESULT WINAPI recordset_MovePrevious( _Recordset *iface )
 
     TRACE( "%p\n", recordset );
 
-    if (recordset->index >= 0) recordset->index--;
-    return S_OK;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
+    {
+        HRESULT hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+
+    return cache_get( recordset, FALSE );
 }
 
 static HRESULT WINAPI recordset_MoveFirst( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p\n", recordset );
 
-    recordset->index = 0;
-    return S_OK;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (recordset->bookmark_hacc)
+    {
+        VariantClear( &recordset->bookmark );
+        V_VT( &recordset->bookmark ) = VT_R8;
+        V_R8( &recordset->bookmark ) = -INFINITY;
+        recordset->cache.dir = 0;
+    }
+    else
+    {
+        hr = update_current_row( recordset );
+        if (FAILED(hr)) return hr;
+        cache_release( recordset );
+        hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
+        if (FAILED(hr)) return hr;
+    }
+
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+    return cache_get( recordset, TRUE );
 }
 
 static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
 
     TRACE( "%p\n", recordset );
 
-    recordset->index = (recordset->count > 0) ? recordset->count - 1 : 0;
-    return S_OK;
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (recordset->bookmark_hacc)
+    {
+        VariantClear( &recordset->bookmark );
+        V_VT( &recordset->bookmark ) = VT_R8;
+        V_R8( &recordset->bookmark ) = INFINITY;
+        recordset->cache.dir = 0;
+    }
+    else
+    {
+        hr = update_current_row( recordset );
+        if (FAILED(hr)) return hr;
+        cache_release( recordset );
+        hr = IRowset_RestartPosition( recordset->row_set, DB_NULL_HCHAPTER );
+        if (FAILED(hr)) return hr;
+    }
+
+    recordset->is_bof = recordset->is_eof = VARIANT_FALSE;
+    return cache_get( recordset, FALSE );
+}
+
+static inline void set_bool_prop(DBPROP *prop, DBPROPID id, BOOL b)
+{
+    prop->dwPropertyID = id;
+    V_VT(&prop->vValue) = VT_BOOL;
+    V_BOOL(&prop->vValue) = b ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
 static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR source, IUnknown **rowset)
@@ -1765,6 +2523,8 @@ static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR s
     ICommandText *command_text;
     IOpenRowset *openrowset;
     DBROWCOUNT affected;
+    DBPROPSET propset;
+    DBPROP props[10];
     ICommand *cmd;
     DBID table;
     HRESULT hr;
@@ -1775,7 +2535,27 @@ static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR s
 
     table.eKind = DBKIND_NAME;
     table.uName.pwszName = source;
-    hr = IOpenRowset_OpenRowset(openrowset, NULL, &table, NULL, &IID_IUnknown, 0, NULL, rowset);
+
+    propset.guidPropertySet = DBPROPSET_ROWSET;
+    propset.cProperties = ARRAY_SIZE(props);
+    propset.rgProperties = props;
+    memset(props, 0, sizeof(props));
+    set_bool_prop(props, DBPROP_CANSCROLLBACKWARDS, recordset->cursor_type != adOpenForwardOnly);
+    set_bool_prop(props + 1, DBPROP_OTHERINSERT,
+            recordset->cursor_type != adOpenStatic && recordset->cursor_type != adOpenKeyset);
+    set_bool_prop(props + 2, DBPROP_OTHERUPDATEDELETE, recordset->cursor_type != adOpenStatic);
+    props[3].dwPropertyID = DBPROP_UPDATABILITY;
+    V_VT(&props[3].vValue) = VT_I4;
+    V_I4(&props[3].vValue) = (recordset->lock_type == adLockReadOnly ? 0 :
+            DBPROPVAL_UP_CHANGE | DBPROPVAL_UP_DELETE | DBPROPVAL_UP_INSERT);
+    set_bool_prop(props + 4, DBPROP_IColumnsRowset, TRUE);
+    set_bool_prop(props + 5, DBPROP_IRowsetChange, recordset->lock_type != adLockReadOnly);
+    set_bool_prop(props + 6, DBPROP_IRowsetLocate, TRUE);
+    set_bool_prop(props + 7, DBPROP_IRowsetUpdate, recordset->lock_type != adLockReadOnly);
+    set_bool_prop(props + 8, DBPROP_IRowsetIndex, TRUE);
+    set_bool_prop(props + 9, DBPROP_IRowsetCurrentIndex, TRUE);
+
+    hr = IOpenRowset_OpenRowset(openrowset, NULL, &table, NULL, &IID_IUnknown, 1, &propset, rowset);
     if (SUCCEEDED(hr))
     {
         IOpenRowset_Release(openrowset);
@@ -1809,355 +2589,7 @@ static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR s
 
     hr = ICommandText_Execute(command_text, NULL, &IID_IUnknown, NULL, &affected, rowset);
     ICommandText_Release(command_text);
-    if (FAILED(hr))
-        return hr;
-
-    recordset->count = affected > 0 ? affected : 0;
-    return S_OK;
-}
-
-#define ROUND_SIZE(size) (((size) + sizeof(void *) - 1) & ~(sizeof(void *) - 1))
-
-DEFINE_GUID(DBPROPSET_ROWSET,    0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
-
-static HRESULT create_bindings(IUnknown *rowset, struct recordset *recordset, DBBINDING **bind, DBBYTEOFFSET *size)
-{
-    HRESULT hr;
-    IColumnsInfo *columninfo;
-    IAccessor *accessor;
-    DBORDINAL columns;
-    DBCOLUMNINFO *colinfo;
-    OLECHAR *stringsbuffer;
-    DBBINDING *bindings;
-    DBBYTEOFFSET offset;
-
-    *size = 0;
-
-    hr = IUnknown_QueryInterface(rowset, &IID_IColumnsInfo, (void**)&columninfo);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IUnknown_QueryInterface(rowset, &IID_IAccessor, (void**)&accessor);
-    if (FAILED(hr))
-    {
-        IColumnsInfo_Release(columninfo);
-        return hr;
-    }
-
-    hr = IColumnsInfo_GetColumnInfo(columninfo, &columns, &colinfo, &stringsbuffer);
-    if (SUCCEEDED(hr))
-    {
-        ULONG i, j;
-        DBOBJECT *dbobj;
-        offset = 1;
-
-        recordset->columntypes = malloc(sizeof(DBTYPE) * columns);
-        recordset->haccessors = calloc(1, sizeof(HACCESSOR) * columns );
-
-        /* Do one allocation for the bindings and append the DBOBJECTS to the end.
-         * This is to save on multiple allocations vs a little bit of extra memory.
-         */
-        bindings = CoTaskMemAlloc( (sizeof(DBBINDING) + sizeof(DBOBJECT)) * columns);
-        dbobj = (DBOBJECT *)((char*)bindings + (sizeof(DBBINDING) * columns));
-
-        for (i=0, j=0; i < columns; i++)
-        {
-            TRACE("Column %lu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
-                  "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
-                  i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
-                  colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
-                  colinfo[i].bPrecision, colinfo[i].bScale);
-
-            if (!colinfo[i].pwszName)
-            {
-                FIXME("skipping implicit column\n");
-                continue;
-            }
-
-            hr = append_field(&recordset->fields, &colinfo[i]);
-            if (FAILED(hr)) WARN("append_field failed: %lx\n", hr);
-
-            bindings[j].iOrdinal = colinfo[i].iOrdinal;
-            bindings[j].obValue = offset;
-            bindings[j].pTypeInfo = NULL;
-            /* Always assigned the pObject even if it's not used. */
-            bindings[j].pObject = &dbobj[i];
-            bindings[j].pObject->dwFlags = 0;
-            bindings[j].pObject->iid = IID_ISequentialStream;
-            bindings[j].pBindExt = NULL;
-            bindings[j].dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
-            bindings[j].dwMemOwner = DBMEMOWNER_CLIENTOWNED;
-            bindings[j].eParamIO = 0;
-
-            recordset->columntypes[j] = colinfo[i].wType;
-            if (colinfo[i].dwFlags & DBCOLUMNFLAGS_ISLONG)
-            {
-                colinfo[i].wType = DBTYPE_IUNKNOWN;
-
-                bindings[j].cbMaxLen = (colinfo[i].ulColumnSize + 1) * sizeof(WCHAR);
-                offset += sizeof(ISequentialStream*);
-            }
-            else if(colinfo[i].wType == DBTYPE_WSTR)
-            {
-                /* ulColumnSize is the number of characters in the string not the actual buffer size */
-                bindings[j].cbMaxLen = colinfo[i].ulColumnSize * sizeof(WCHAR);
-                offset += bindings[j].cbMaxLen;
-            }
-            else
-            {
-                bindings[j].cbMaxLen = colinfo[i].ulColumnSize;
-                offset += bindings[j].cbMaxLen;
-            }
-
-            bindings[j].dwFlags = 0;
-            bindings[j].wType = colinfo[i].wType;
-            bindings[j].bPrecision = colinfo[i].bPrecision;
-            bindings[j].bScale = colinfo[i].bScale;
-            j++;
-        }
-
-        offset = ROUND_SIZE(offset);
-        for (i=0, j=0; i < columns; i++)
-        {
-            if (!colinfo[i].pwszName)
-                continue;
-
-            bindings[j].obLength = offset;
-            bindings[j].obStatus = offset + sizeof(DBBYTEOFFSET);
-
-            offset += sizeof(DBBYTEOFFSET) + sizeof(DBBYTEOFFSET);
-
-            hr = IAccessor_CreateAccessor(accessor, DBACCESSOR_ROWDATA, 1, &bindings[j], 0, &recordset->haccessors[j], NULL);
-            if (FAILED(hr))
-                FIXME("IAccessor_CreateAccessor Failed 0x%0lx\n", hr);
-            j++;
-        }
-
-        *size = offset;
-        *bind = bindings;
-
-        CoTaskMemFree(colinfo);
-        CoTaskMemFree(stringsbuffer);
-    }
-
-    IAccessor_Release(accessor);
-
-    IColumnsInfo_Release(columninfo);
-
     return hr;
-}
-
-static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *rowset, DBBINDING *bindings,
-        DBBYTEOFFSET datasize)
-{
-    IRowset *rowset2;
-    DBORDINAL columns;
-    HRESULT hr;
-    DBCOUNTITEM obtained;
-    HROW *row = NULL;
-    int datarow = 0, datacol;
-    char *data;
-
-    columns = get_column_count(recordset);
-
-    hr = IUnknown_QueryInterface(rowset, &IID_IRowset, (void**)&rowset2);
-    if (FAILED(hr))
-    {
-        WARN("Failed to get IRowset interface (0x%08lx)\n", hr);
-        return hr;
-    }
-
-    hr = IRowset_GetNextRows(rowset2, 0, 0, 1, &obtained, &row);
-    if (hr != S_OK)
-    {
-        recordset->count = 0;
-        recordset->index = -1;
-        IRowset_Release(rowset2);
-        return FAILED(hr) ? hr : S_OK;
-    }
-    recordset->index = 0;
-
-    data = malloc (datasize);
-    if (!data)
-    {
-        ERR("Failed to allocate row data (%Iu)\n", datasize);
-        IRowset_Release(rowset2);
-        return E_OUTOFMEMORY;
-    }
-
-    do
-    {
-        VARIANT *v;
-
-        if (!resize_recordset(recordset, datarow+1))
-        {
-            IRowset_ReleaseRows(rowset2, 1, row, NULL, NULL, NULL);
-            free(data);
-            IRowset_Release(rowset2);
-            WARN("Failed to resize recordset\n");
-            return E_OUTOFMEMORY;
-        }
-
-        for (datacol = 0; datacol < columns; datacol++)
-        {
-            hr = IRowset_GetData(rowset2, *row, recordset->haccessors[datacol], data);
-            if (FAILED(hr))
-            {
-                ERR("GetData Failed on Column %d (0x%08lx), status %Id\n", datacol, hr,
-                        *(DBBYTEOFFSET*)(data + bindings[datacol].obStatus));
-                break;
-            }
-
-            v = &recordset->data[datarow * columns + datacol];
-            VariantInit(v);
-
-            if ( *(DBBYTEOFFSET*)(data + bindings[datacol].obStatus) == DBSTATUS_S_ISNULL)
-            {
-                V_VT(v) = VT_NULL;
-                continue;
-            }
-
-            /* For most cases DBTYPE_* = VT_* type */
-            V_VT(v) = bindings[datacol].wType;
-            switch(bindings[datacol].wType)
-            {
-                case DBTYPE_IUNKNOWN:
-                {
-                    ISequentialStream *seq;
-                    char unkdata[2048];
-                    ULONG size = 4096, dataRead = 0, total = 0;
-                    char *buffer = malloc(size), *p = buffer;
-                    HRESULT hr2;
-
-                    /*
-                     * Cast directly to the object we specified in our bindings. As this object
-                     *  is referenced counted in some case and will error in GetData if the object
-                     *  hasn't been released.
-                     */
-                    seq = *(ISequentialStream**)(data + bindings[datacol].obValue);
-                    TRACE("Reading DBTYPE_IUNKNOWN %p\n", seq);
-
-                    do
-                    {
-                        dataRead = 0;
-                        hr2 = ISequentialStream_Read(seq, unkdata, sizeof(unkdata), &dataRead);
-                        if (FAILED(hr2) || !dataRead) break;
-
-                        total += dataRead;
-                        memcpy(p, unkdata, dataRead);
-                        p += dataRead;
-                        if (total == size)
-                        {
-                            size *= 2;  /* Double buffer */
-                            buffer = realloc(buffer, size);
-                            p = buffer + total;
-                        }
-                    } while(hr2 == S_OK);
-
-                    if (recordset->columntypes[datacol] == DBTYPE_WSTR)
-                    {
-                        V_VT(v) = VT_BSTR;
-                        V_BSTR(v) = SysAllocStringLen( (WCHAR*)buffer, total / sizeof(WCHAR) );
-                    }
-                    else if (recordset->columntypes[datacol] == DBTYPE_BYTES)
-                    {
-                        SAFEARRAYBOUND sab;
-
-                        sab.lLbound = 0;
-                        sab.cElements = total;
-
-                        V_VT(v) = (VT_ARRAY|VT_UI1);
-                        V_ARRAY(v) = SafeArrayCreate(VT_UI1, 1, &sab);
-
-                        memcpy( (BYTE*)V_ARRAY(v)->pvData, buffer, total);
-                    }
-                    else
-                    {
-                        FIXME("Unsupported conversion (%d)\n", recordset->columntypes[datacol]);
-                        V_VT(v) = VT_NULL;
-                    }
-
-                    free(buffer);
-                    ISequentialStream_Release(seq);
-
-                    break;
-                }
-                case DBTYPE_R4:
-                    V_R4(v) = *(float*)(data + bindings[datacol].obValue);
-                    break;
-                case DBTYPE_R8:
-                    V_R8(v) = *(DOUBLE*)(data + bindings[datacol].obValue);
-                    break;
-                case DBTYPE_I8:
-                    V_VT(v) = VT_I8;
-                    V_I8(v) = *(LONGLONG*)(data + bindings[datacol].obValue);
-                    break;
-                case DBTYPE_I4:
-                    V_I4(v) = *(LONG*)(data + bindings[datacol].obValue);
-                    break;
-                case DBTYPE_STR:
-                {
-                    WCHAR *str = heap_strdupAtoW( (char*)(data + bindings[datacol].obValue) );
-
-                    V_VT(v) = VT_BSTR;
-                    V_BSTR(v) = SysAllocString(str);
-                    free(str);
-                    break;
-                }
-                case DBTYPE_WSTR:
-                {
-                    V_VT(v) = VT_BSTR;
-                    V_BSTR(v) = SysAllocString( (WCHAR*)(data + bindings[datacol].obValue) );
-                    break;
-                }
-                case DBTYPE_DBTIMESTAMP:
-                {
-                    SYSTEMTIME st;
-                    DBTIMESTAMP *ts = (DBTIMESTAMP *)(data + bindings[datacol].obValue);
-                    DATE d;
-
-                    V_VT(v) = VT_DATE;
-
-                    st.wYear = ts->year;
-                    st.wMonth = ts->month;
-                    st.wDay = ts->day;
-                    st.wHour = ts->hour;
-                    st.wMinute = ts->minute;
-                    st.wSecond = ts->second;
-                    st.wMilliseconds = ts->fraction/1000000;
-                    st.wDayOfWeek = 0;
-                    hr = (SystemTimeToVariantTime(&st, &d) ? S_OK : E_FAIL);
-
-                    V_DATE(v) = d;
-                    break;
-                }
-                case DBTYPE_VARIANT:
-                    VariantInit(v);
-                    VariantCopy(v, (VARIANT*)(data + bindings[datacol].obValue));
-                    break;
-                case DBTYPE_DATE:
-                    V_DATE(v) = *(DATE*)(data + bindings[datacol].obValue);
-                    break;
-                default:
-                    V_VT(v) = VT_I2;
-                    V_I2(v) = 0;
-                    FIXME("Unknown Type %d\n", bindings[datacol].wType);
-            }
-        }
-
-        datarow++;
-
-        hr = IRowset_ReleaseRows(rowset2, 1, row, NULL, NULL, NULL);
-        if (FAILED(hr))
-            ERR("Failed to ReleaseRows 0x%08lx\n", hr);
-
-        hr = IRowset_GetNextRows(rowset2, 0, 0, 1, &obtained, &row);
-    } while(hr == S_OK);
-
-    free(data);
-    IRowset_Release(rowset2);
-
-    return S_OK;
 }
 
 static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT active_connection,
@@ -2168,19 +2600,11 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     IUnknown *session;
     IUnknown *rowset;
     HRESULT hr;
-    DBBINDING *bindings;
-    DBBYTEOFFSET datasize;
 
     TRACE( "%p, %s, %s, %d, %d, %ld\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
 
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
-
-    if (get_column_count( recordset ))
-    {
-        recordset->state = adStateOpen;
-        return S_OK;
-    }
 
     if (V_VT(&active_connection) != VT_ERROR || V_ERROR(&active_connection) != DISP_E_PARAMNOTFOUND)
     {
@@ -2188,7 +2612,61 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
         if (FAILED(hr))
             return hr;
     }
-    else if (!recordset->active_connection)
+
+    _Recordset_put_CursorType( iface, cursor_type );
+    if (lock_type < adLockReadOnly) lock_type = adLockReadOnly;
+    _Recordset_put_LockType( iface, lock_type );
+
+    if (recordset->fields.count != -1)
+    {
+        DBCOLUMNINFO *info;
+        int i;
+
+        if (recordset->active_connection)
+        {
+            FIXME("adding new table\n");
+            return E_NOTIMPL;
+        }
+
+        info = calloc(recordset->fields.count + 1, sizeof(*info));
+        if (!info)
+            return E_OUTOFMEMORY;
+
+        info[0].dwFlags = DBCOLUMNFLAGS_ISBOOKMARK | DBCOLUMNFLAGS_ISFIXEDLENGTH;
+        info[0].ulColumnSize = sizeof(unsigned int);
+        info[0].wType = DBTYPE_UI4;
+        info[0].bPrecision = 10;
+        info[0].bScale = 255;
+        info[0].columnid.eKind = DBKIND_GUID_PROPID;
+        info[0].columnid.uGuid.guid = DBCOL_SPECIALCOL;
+        info[0].columnid.uName.ulPropid = 2 /* PROPID_DBBMK_BOOKMARK */;
+
+        for (i = 1; i <= recordset->fields.count; i++)
+        {
+            struct field *field = recordset->fields.field[i - 1];
+
+            info[i].pwszName = field->name;
+            info[i].iOrdinal = field->ordinal;
+            info[i].dwFlags = field->attrs;
+            info[i].ulColumnSize = field->defined_size;
+            info[i].wType = field->type;
+            info[i].bPrecision = field->prec;
+            info[i].bScale = field->scale;
+            info[i].columnid.eKind = DBKIND_NAME;
+            info[i].columnid.uName.pwszName = field->name;
+        }
+
+        hr = create_mem_rowset(recordset->fields.count + 1, info, &rowset);
+        free(info);
+        if (FAILED(hr))
+            return hr;
+
+        hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
+        IUnknown_Release(rowset);
+        return hr;
+    }
+
+    if (!recordset->active_connection)
         return MAKE_ADO_HRESULT( adErrInvalidConnection );
 
     if (V_VT(&source) != VT_BSTR)
@@ -2211,32 +2689,8 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     if (FAILED(hr) || !rowset)
         return hr;
 
-    hr = create_bindings(rowset, recordset, &bindings, &datasize);
-    if (FAILED(hr))
-    {
-        WARN("Failed to load bindings (%lx)\n", hr);
-        IUnknown_Release(rowset);
-        return hr;
-    }
-    resize_recordset(recordset, recordset->count);
-
-    hr = load_all_recordset_data(recordset, rowset, bindings, datasize);
-    if (FAILED(hr))
-    {
-        WARN("Failed to load all recordset data (%lx)\n", hr);
-        CoTaskMemFree(bindings);
-        IUnknown_Release(rowset);
-        return hr;
-    }
-
-    CoTaskMemFree(bindings);
-
-    ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
-    recordset->cursor_type = cursor_type;
-    recordset->state = adStateOpen;
-
+    hr = ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
     IUnknown_Release(rowset);
-
     return hr;
 }
 
@@ -2255,14 +2709,85 @@ static HRESULT WINAPI recordset__xResync( _Recordset *iface, AffectEnum affect_r
 static HRESULT WINAPI recordset_Update( _Recordset *iface, VARIANT fields, VARIANT values )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    DBPENDINGSTATUS pending_status;
+    DBROWSTATUS *status;
+    HACCESSOR hacc;
+    HRESULT hr;
+    void *data;
+    HROW *row;
 
-    FIXME( "%p, %s, %s\n", iface, debugstr_variant(&fields), debugstr_variant(&values) );
+    TRACE( "%p, %s, %s\n", iface, debugstr_variant(&fields), debugstr_variant(&values) );
 
-    if (recordset->active_connection == NULL)
+    if ((V_VT(&fields) & VT_ARRAY) != (V_VT(&values) & VT_ARRAY))
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (V_VT(&fields) & VT_ARRAY)
+    {
+        if (V_ARRAY(&fields)->rgsabound[0].cElements != V_ARRAY(&values)->rgsabound[0].cElements ||
+                V_VT(&fields) != (VT_ARRAY | VT_VARIANT) ||
+                V_VT(&values) != (VT_ARRAY | VT_VARIANT))
+            return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    }
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    if (V_VT(&fields) != VT_ERROR)
+    {
+        if (!recordset->rowset_change)
+        {
+            hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetChange,
+                    (void **)&recordset->rowset_change );
+            if (FAILED(hr) || !recordset->rowset_change)
+                recordset->rowset_change = NO_INTERFACE;
+        }
+        if (recordset->rowset_change == NO_INTERFACE)
+            return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+        hr = get_accessor( recordset, &fields, &hacc );
+        if (FAILED(hr)) return hr;
+
+        if (V_VT(&fields) == VT_ERROR)
+            data = NULL;
+        else if (V_VT(&values) & VT_ARRAY)
+            data = V_ARRAY(&values)->pvData;
+        else
+            data = &values;
+
+        hr = IRowsetChange_SetData(recordset->rowset_change, recordset->current_row, hacc, data);
+        IAccessor_ReleaseAccessor( recordset->accessor, hacc, NULL );
+        if (FAILED(hr)) return hr;
+    }
+
+    if (recordset->lock_type != adLockPessimistic && recordset->lock_type != adLockOptimistic)
         return S_OK;
 
+    if (!recordset->rowset_update)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetUpdate,
+                (void **)&recordset->rowset_update );
+        if (FAILED(hr) || !recordset->rowset_update)
+            recordset->rowset_update = NO_INTERFACE;
+    }
+    if (recordset->rowset_update == NO_INTERFACE)
+        return S_OK;
+
+    hr = IRowsetUpdate_GetRowStatus( recordset->rowset_update, 0,
+            1, &recordset->current_row, &pending_status );
+    if (FAILED(hr)) return S_OK;
+    if (pending_status & (DBPENDINGSTATUS_UNCHANGED | DBPENDINGSTATUS_INVALIDROW)) return S_OK;
+    if (!(pending_status & (DBPENDINGSTATUS_NEW | DBPENDINGSTATUS_CHANGED | DBPENDINGSTATUS_DELETED)))
+        return S_OK;
+
+    row = NULL;
+    status = NULL;
+    hr = IRowsetUpdate_Update( recordset->rowset_update, 0, 1, &recordset->current_row, NULL, &row, &status );
+    if (FAILED(hr)) return hr;
+    if (status[0] == DBROWSTATUS_E_CANCELED) FIXME("status = DBROWSTATUS_E_CANCELED\n");
+    CoTaskMemFree( row );
+    CoTaskMemFree( status );
+
     recordset->editmode = adEditNone;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_AbsolutePage( _Recordset *iface, PositionEnum_Param *pos )
@@ -2283,7 +2808,13 @@ static HRESULT WINAPI recordset_get_EditMode( _Recordset *iface, EditModeEnum *m
     TRACE( "%p, %p\n", iface, mode );
 
     if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
-    if (recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    if (!recordset->current_row && !recordset->is_eof && !recordset->is_bof)
+    {
+        HRESULT hr = cache_get( recordset, TRUE );
+        if (FAILED(hr)) return hr;
+    }
+    if (!recordset->current_row) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
 
     *mode = recordset->editmode;
     return S_OK;
@@ -2291,37 +2822,14 @@ static HRESULT WINAPI recordset_get_EditMode( _Recordset *iface, EditModeEnum *m
 
 static HRESULT WINAPI recordset_get_Filter( _Recordset *iface, VARIANT *criteria )
 {
-    struct recordset *recordset = impl_from_Recordset( iface );
-    TRACE( "%p, %p\n", iface, criteria );
-
-    if (!criteria) return MAKE_ADO_HRESULT( adErrInvalidArgument );
-
-    VariantCopy(criteria, &recordset->filter);
-    return S_OK;
+    FIXME( "%p, %p\n", iface, criteria );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI recordset_put_Filter( _Recordset *iface, VARIANT criteria )
 {
-    struct recordset *recordset = impl_from_Recordset( iface );
-    TRACE( "%p, %s\n", recordset, debugstr_variant(&criteria) );
-
-    if (V_VT(&criteria) != VT_I2 && V_VT(&criteria) != VT_I4 && V_VT(&criteria) != VT_BSTR)
-        return MAKE_ADO_HRESULT( adErrInvalidArgument );
-
-    if (V_VT(&criteria) == VT_BSTR && recordset->state == adStateOpen)
-    {
-        FIXME("No filter performed.  Reporting no records found.\n");
-
-        /* Set the index to signal we didn't find a record. */
-        recordset->index = -1;
-    }
-    else
-    {
-        recordset->index = recordset->count ? 0 : -1; /* Reset */
-    }
-
-    VariantCopy(&recordset->filter, &criteria);
-    return S_OK;
+    TRACE( "%p, %s\n", iface, debugstr_variant(&criteria) );
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI recordset_get_PageCount( _Recordset *iface, ADO_LONGPTR *count )
@@ -2432,9 +2940,162 @@ static HRESULT WINAPI recordset_NextRecordset( _Recordset *iface, VARIANT *recor
     return E_NOTIMPL;
 }
 
+static BOOL recordset_get_prop( struct recordset *recordset,
+        const GUID *prop_set, DWORD propid, VARIANT *v )
+{
+    HRESULT hr = E_FAIL;
+    int i, j;
+
+    for (i = 0; i < recordset->prop_count; i++)
+    {
+        if (!IsEqualGUID( &recordset->prop[i].guidPropertySet, prop_set )) continue;
+
+        for (j=0; j < recordset->prop[i].cProperties; j++)
+        {
+            if (recordset->prop[i].rgProperties[j].dwStatus == DBPROPSTATUS_OK &&
+                    recordset->prop[i].rgProperties[j].dwPropertyID == propid)
+            {
+                *v = recordset->prop[i].rgProperties[j].vValue;
+                break;
+            }
+        }
+        if (j != recordset->prop[i].cProperties) break;
+    }
+    if (i == recordset->prop_count) return FALSE;
+
+    if (IsEqualGUID( prop_set, &DBPROPSET_ROWSET ))
+    {
+        switch (propid)
+        {
+        case DBPROP_UPDATABILITY:
+            hr = VariantChangeType( v, v, 0, VT_I4 );
+            break;
+        case DBPROP_CANHOLDROWS:
+        case DBPROP_CANSCROLLBACKWARDS:
+        case DBPROP_IRowsetLocate:
+        case DBPROP_IRowsetScroll:
+        case DBPROP_IRowsetUpdate:
+        case DBPROP_IRowsetResynch:
+        case DBPROP_IConnectionPointContainer:
+        case DBPROP_IRowsetFind:
+        case DBPROP_IRowsetIndex:
+        case DBPROP_IRowsetCurrentIndex:
+            hr = VariantChangeType( v, v, 0, VT_BOOL );
+            break;
+        }
+    }
+    return SUCCEEDED( hr );
+}
+
 static HRESULT WINAPI recordset_Supports( _Recordset *iface, CursorOptionEnum cursor_options, VARIANT_BOOL *ret )
 {
-    FIXME( "%p, %08x, %p\n", iface, cursor_options, ret );
+    struct recordset *recordset = impl_from_Recordset( iface );
+    VARIANT v;
+
+    TRACE( "%p, %08x, %p\n", iface, cursor_options, ret );
+
+    if (!ret) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+    if (cursor_options & ~(adHoldRecords | adMovePrevious | adAddNew | adDelete |
+                adUpdate | adBookmark | adApproxPosition | adUpdateBatch |
+                adResync | adNotify | adFind | adSeek | adIndex))
+    {
+        FIXME( "unsupported cursor_options: %x\n", cursor_options );
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+
+    if ((cursor_options & adHoldRecords) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_CANHOLDROWS, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adMovePrevious) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_CANSCROLLBACKWARDS, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adBookmark) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetLocate, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adApproxPosition) &&
+        (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetScroll, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adUpdateBatch) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetUpdate, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adResync) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetResynch, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adNotify) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IConnectionPointContainer, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adFind) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetFind, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adSeek) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetIndex, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adIndex) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetCurrentIndex, &v ) ||
+             !V_BOOL(&v)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adAddNew) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_UPDATABILITY, &v ) ||
+             !(V_I4(&v) & DBPROPVAL_UP_INSERT)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adDelete) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_UPDATABILITY, &v ) ||
+             !(V_I4(&v) & DBPROPVAL_UP_DELETE)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+    if ((cursor_options & adUpdate) &&
+            (!recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_UPDATABILITY, &v ) ||
+             !(V_I4(&v) & DBPROPVAL_UP_CHANGE)))
+    {
+        *ret = VARIANT_FALSE;
+        return S_OK;
+    }
+
     *ret = VARIANT_TRUE;
     return S_OK;
 }
@@ -2571,14 +3232,65 @@ static HRESULT WINAPI recordset_Seek( _Recordset *iface, VARIANT key_values, See
 
 static HRESULT WINAPI recordset_put_Index( _Recordset *iface, BSTR index )
 {
-    FIXME( "%p, %s\n", iface, debugstr_w(index) );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
+    DBID dbid;
+
+    TRACE( "%p, %s\n", iface, debugstr_w(index) );
+
+    if (!recordset->rowset_cur_idx)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetCurrentIndex, (void **)&recordset->rowset_cur_idx );
+        if (FAILED(hr) || !recordset->rowset_cur_idx)
+            recordset->rowset_cur_idx = NO_INTERFACE;
+    }
+    if (recordset->rowset_cur_idx == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    hr = update_current_row( recordset );
+    if (FAILED(hr)) return hr;
+    cache_release( recordset );
+
+    memset( &dbid, 0, sizeof(dbid) );
+    dbid.eKind = DBKIND_NAME;
+    dbid.uName.pwszName = index;
+    hr = IRowsetCurrentIndex_SetIndex( recordset->rowset_cur_idx, &dbid );
+    if (FAILED(hr)) return hr;
+
+    return _Recordset_MoveFirst( iface );
 }
 
 static HRESULT WINAPI recordset_get_Index( _Recordset *iface, BSTR *index )
 {
-    FIXME( "%p, %p\n", iface, index );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    HRESULT hr;
+    DBID *dbid;
+
+    TRACE( "%p, %p\n", iface, index );
+
+    if (!index) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (!recordset->rowset_cur_idx)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IRowsetCurrentIndex, (void **)&recordset->rowset_cur_idx );
+        if (FAILED(hr) || !recordset->rowset_cur_idx)
+            recordset->rowset_cur_idx = NO_INTERFACE;
+    }
+    if (recordset->rowset_cur_idx == NO_INTERFACE)
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+
+    hr = IRowsetCurrentIndex_GetIndex( recordset->rowset_cur_idx, &dbid );
+    if (FAILED(hr)) return hr;
+
+    if (dbid->eKind == DBKIND_GUID_NAME || dbid->eKind == DBKIND_NAME)
+    {
+        *index = SysAllocString( dbid->uName.pwszName );
+        CoTaskMemFree( dbid->uName.pwszName );
+    }
+    else
+        *index = NULL;
+    CoTaskMemFree( dbid );
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_Save( _Recordset *iface, VARIANT destination, PersistFormatEnum persist_format )
@@ -2797,32 +3509,137 @@ static HRESULT WINAPI rsconstruction_get_Rowset(ADORecordsetConstruction *iface,
 
     TRACE( "%p, %p\n", recordset, row_set );
 
+    if (!recordset->row_set)
+    {
+        *row_set = NULL;
+        return S_OK;
+    }
+
     hr = IRowset_QueryInterface(recordset->row_set, &IID_IUnknown, (void**)row_set);
     if ( FAILED(hr) ) return E_FAIL;
-
     return S_OK;
+}
+
+static void init_bookmark( struct recordset *recordset )
+{
+    DBCOLUMNINFO *colinfo = NULL;
+    OLECHAR *strbuf = NULL;
+    DBORDINAL i, columns;
+    IColumnsInfo *info;
+    HRESULT hr;
+
+    hr = IRowset_QueryInterface( recordset->row_set, &IID_IColumnsInfo, (void **)&info );
+    if (FAILED(hr) || !info) return;
+
+    if (!recordset->accessor)
+    {
+        hr = IRowset_QueryInterface( recordset->row_set, &IID_IAccessor, (void **)&recordset->accessor );
+        if (FAILED(hr) || !recordset->accessor)
+            recordset->accessor = NO_INTERFACE;
+    }
+    if (recordset->accessor == NO_INTERFACE) return;
+
+    hr = IColumnsInfo_GetColumnInfo( info, &columns, &colinfo, &strbuf );
+    IColumnsInfo_Release( info );
+    if (FAILED(hr)) return;
+    CoTaskMemFree( strbuf );
+
+    for (i = 0; i < columns; i++)
+    {
+        if (colinfo[i].dwFlags & DBCOLUMNFLAGS_ISBOOKMARK)
+        {
+            DBBINDING binding;
+
+            if (colinfo[i].ulColumnSize == sizeof(int))
+                recordset->bookmark_type = DBTYPE_I4;
+            else if (colinfo[i].ulColumnSize == sizeof(INT_PTR))
+                recordset->bookmark_type = DBTYPE_I8;
+            else
+                recordset->bookmark_type = DBTYPE_BYREF | DBTYPE_BYTES;
+
+            memset(&binding, 0, sizeof(binding));
+            binding.iOrdinal = colinfo[i].iOrdinal;
+            binding.obValue = offsetof( struct bookmark_data, val );
+            binding.obLength = offsetof( struct bookmark_data, len );
+            binding.obStatus = offsetof( struct bookmark_data, status );
+            binding.dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+            binding.cbMaxLen = recordset->bookmark_type == DBTYPE_I4 ? sizeof(int) : sizeof(void *);
+            binding.wType = recordset->bookmark_type;
+            binding.bPrecision = colinfo[i].bPrecision;
+            binding.bScale = colinfo[i].bScale;
+            hr = IAccessor_CreateAccessor( recordset->accessor, DBACCESSOR_ROWDATA,
+                    1, &binding, 0, &recordset->bookmark_hacc, NULL );
+            if (FAILED(hr)) return;
+
+            V_VT(&recordset->bookmark) = VT_R8;
+            V_R8(&recordset->bookmark) = -INFINITY;
+            return;
+        }
+    }
+
+    CoTaskMemFree( colinfo );
 }
 
 static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *unk)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    HRESULT hr;
+    IRowsetInfo *rowset_info;
     IRowset *rowset;
+    HRESULT hr;
+    VARIANT v;
 
     TRACE( "%p, %p\n", recordset, unk );
 
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
 
-    hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
+    hr = IUnknown_QueryInterface( unk, &IID_IRowset, (void**)&rowset );
     if ( FAILED(hr) ) return E_FAIL;
-
-    if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = rowset;
-
-    if ( !get_column_count(recordset) )
-        map_rowset_fields(recordset, &recordset->fields);
-
     recordset->state = adStateOpen;
+
+    hr = IRowset_QueryInterface( rowset, &IID_IRowsetInfo, (void**)&rowset_info );
+    if (SUCCEEDED(hr))
+    {
+        DBPROPIDSET propidset;
+        DBPROPID propid[17];
+
+        propidset.guidPropertySet = DBPROPSET_ROWSET;
+        propidset.cPropertyIDs = ARRAY_SIZE( propid );
+        propidset.rgPropertyIDs = propid;
+        propid[0] = DBPROP_OTHERUPDATEDELETE;
+        propid[1] = DBPROP_OTHERINSERT;
+        propid[2] = DBPROP_CANHOLDROWS;
+        propid[3] = DBPROP_CANSCROLLBACKWARDS;
+        propid[4] = DBPROP_UPDATABILITY;
+        propid[5] = DBPROP_IRowsetLocate;
+        propid[6] = DBPROP_IRowsetScroll;
+        propid[7] = DBPROP_IRowsetUpdate;
+        propid[8] = DBPROP_IRowsetResynch;
+        propid[9] = DBPROP_IConnectionPointContainer;
+        propid[10] = DBPROP_BOOKMARKSKIPPED;
+        propid[11] = DBPROP_IRowsetFind;
+        propid[12] = DBPROP_IRowsetRefresh;
+        propid[13] = DBPROP_LOCKMODE;
+        propid[14] = DBPROP_IRowsetIndex;
+        propid[15] = DBPROP_IRowsetCurrentIndex;
+        propid[16] = DBPROP_REMOVEDELETED;
+        IRowsetInfo_GetProperties( rowset_info, 1, &propidset,
+                &recordset->prop_count, &recordset->prop);
+        IRowsetInfo_Release( rowset_info );
+    }
+
+    if (recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_UPDATABILITY, &v ) && V_I4( &v ))
+    {
+        if (recordset->lock_type != adLockOptimistic)
+        {
+            if (recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_IRowsetUpdate, &v ) && V_BOOL( &v ))
+                recordset->lock_type = adLockBatchOptimistic;
+        }
+    }
+    else recordset->lock_type = adLockReadOnly;
+
+    hr = IRowset_QueryInterface( rowset, &IID_IRowsetLocate, (void**)&recordset->rowset_locate );
+    if (SUCCEEDED(hr)) init_bookmark( recordset );
     return S_OK;
 }
 
@@ -2871,6 +3688,16 @@ static const ADORecordsetConstructionVtbl rsconstruction_vtbl =
     rsconstruction_put_RowPosition
 };
 
+static int hacc_cmp( const void *key, const struct rb_entry *entry )
+{
+    const struct hacc_cache_elem *elem = (const struct hacc_cache_elem *)entry;
+    const struct hacc_cache_key *k = key;
+
+    if (k->len < elem->key.len) return -1;
+    if (k->len > elem->key.len) return 1;
+    return memcmp( k->data, elem->key.data, k->len * sizeof(k->data[0]) );
+}
+
 HRESULT Recordset_create( void **obj )
 {
     struct recordset *recordset;
@@ -2881,17 +3708,17 @@ HRESULT Recordset_create( void **obj )
     recordset->ADORecordsetConstruction_iface.lpVtbl = &rsconstruction_vtbl;
     recordset->active_connection = NULL;
     recordset->refs = 1;
-    recordset->index = -1;
     recordset->cursor_location = adUseServer;
     recordset->cursor_type = adOpenForwardOnly;
+    recordset->lock_type = adLockReadOnly;
     recordset->row_set = NULL;
     recordset->editmode = adEditNone;
-    recordset->cache_size = 1;
+    recordset->cache.alloc = 1;
+    recordset->cache.size = 1;
+    recordset->cache.rows = malloc( sizeof(*recordset->cache.rows) );
     recordset->max_records = 0;
-    VariantInit( &recordset->filter );
-    recordset->columntypes = NULL;
-    recordset->haccessors = NULL;
-    fields_init( recordset );
+    Fields_create( recordset );
+    rb_init( &recordset->hacc_cache, hacc_cmp);
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );

@@ -43,6 +43,7 @@ typedef struct tagActiveDS
     struct list         pending_messages;
     HWND                ui_window;
     HWND                event_window;
+    TW_CALLBACK2        registered_callback;
 } activeDS;
 
 extern TW_UINT16 DSM_twCC;             /* current condition code of Source Manager */
@@ -63,5 +64,7 @@ extern TW_UINT16 TWAIN_OpenDSM(pTW_IDENTITY pOrigin, TW_MEMREF pData);
 extern TW_UINT16 TWAIN_GetDSMStatus(pTW_IDENTITY pOrigin, TW_MEMREF pData);
 extern TW_UINT16 TWAIN_ControlNull(pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, activeDS *pSource, TW_UINT16 MSG, TW_MEMREF pData);
 extern TW_UINT16 TWAIN_ProcessEvent(pTW_IDENTITY pOrigin, activeDS *pSource, TW_MEMREF pData);
+extern TW_UINT16 TWAIN_GetEntrypoint(TW_ENTRYPOINT *pEntrypoint);
+extern TW_UINT16 TWAIN_RegisterCallback(activeDS *pSource, TW_MEMREF *CallBackProc, UINT_PTR RefCon);
 
 #endif

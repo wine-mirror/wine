@@ -207,7 +207,7 @@ static void default_shaper_setup_masks(struct scriptshaping_context *context,
 
     for (i = 0; i < context->glyph_count; ++i)
     {
-        context->u.buffer.glyph_props[i].justification = iswspace(context->glyph_infos[i].codepoint) ?
+        context->u.buffer.glyph_props[i].justification = opentype_is_whitespace(context->glyph_infos[i].codepoint) ?
                 SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
     }
 }

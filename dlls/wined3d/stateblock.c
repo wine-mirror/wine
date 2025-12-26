@@ -84,6 +84,7 @@ struct wined3d_stateblock
 {
     LONG ref;
     struct wined3d_device *device;
+    enum wined3d_stateblock_type type;
 
     struct wined3d_saved_states changed;
 
@@ -1327,15 +1328,19 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
 
 void CDECL wined3d_stateblock_set_vertex_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader)
 {
+    struct wined3d_shader *prev = stateblock->stateblock_state.vs;
+
     TRACE("stateblock %p, shader %p.\n", stateblock, shader);
 
     if (shader)
         wined3d_shader_incref(shader);
-    if (stateblock->stateblock_state.vs)
-        wined3d_shader_decref(stateblock->stateblock_state.vs);
+    if (prev)
+        wined3d_shader_decref(prev);
     stateblock->stateblock_state.vs = shader;
     stateblock->changed.vertexShader = TRUE;
     stateblock->changed.ffp_vs_settings = 1;
+    if (!shader != !prev)
+        stateblock->changed.fog_constants = 1;
 }
 
 static void wined3d_bitmap_set_bits(uint32_t *bitmap, unsigned int start, unsigned int count)
@@ -1590,6 +1595,10 @@ void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *
         wined3d_vertex_declaration_decref(prev);
     stateblock->stateblock_state.vertex_declaration = declaration;
     stateblock->changed.vertexDecl = TRUE;
+
+    if (declaration == prev)
+        return;
+
     /* Texture matrices depend on the format of the TEXCOORD attributes. */
     /* FIXME: They also depend on whether the draw is pretransformed,
      * but that should go away. */
@@ -1637,6 +1646,12 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
     if (state > WINEHIGHEST_RENDER_STATE)
     {
         WARN("Unhandled render state %#x.\n", state);
+        return;
+    }
+
+    if (stateblock->type == WINED3D_SBT_PRIMARY && value == stateblock->stateblock_state.rs[state])
+    {
+        TRACE("Ignoring redundant call on a primary stateblock.\n");
         return;
     }
 
@@ -1715,6 +1730,19 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_CLIPPING:
         case WINED3D_RS_CLIPPLANEENABLE:
             stateblock->changed.extra_vs_args = 1;
+            /* Clip planes are affected by the view matrix. However in order to
+             * avoid unnecessarily invalidating clip planes every time the view
+             * matrix changes (which is itself frequent, but clipping might not
+             * even be enabled) we only invalidate the currently active clip
+             * planes.
+             *
+             * This means that we need to recalculate clip planes when the clip
+             * plane mask changes. If we changed the view matrix while clip
+             * planes were disabled, we need to recalculate them now that
+             * they've been enabled, since they weren't recalculated at the
+             * time. */
+            if (stateblock->stateblock_state.rs[WINED3D_RS_CLIPPING])
+                stateblock->changed.clipplane |= stateblock->stateblock_state.rs[WINED3D_RS_CLIPPLANEENABLE];
             break;
 
         case WINED3D_RS_ALPHAFUNC:
@@ -1778,6 +1806,12 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
     {
         WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
                 stage, WINED3D_MAX_FFP_TEXTURES - 1);
+        return;
+    }
+
+    if (stateblock->type == WINED3D_SBT_PRIMARY && value == stateblock->stateblock_state.texture_states[stage][state])
+    {
+        TRACE("Ignoring redundant call on a primary stateblock.\n");
         return;
     }
 
@@ -1919,8 +1953,8 @@ void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stat
     TRACE("%.8e %.8e %.8e %.8e\n", matrix->_41, matrix->_42, matrix->_43, matrix->_44);
 
     multiply_matrix(mat, mat, matrix);
-    stateblock->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
-    stateblock->changed.transforms = 1;
+
+    wined3d_stateblock_set_transform(stateblock, d3dts, mat);
 }
 
 HRESULT CDECL wined3d_stateblock_set_clip_plane(struct wined3d_stateblock *stateblock,
@@ -1952,6 +1986,13 @@ void CDECL wined3d_stateblock_set_viewport(struct wined3d_stateblock *stateblock
         const struct wined3d_viewport *viewport)
 {
     TRACE("stateblock %p, viewport %p.\n", stateblock, viewport);
+
+    if (stateblock->type == WINED3D_SBT_PRIMARY
+            && !memcmp(viewport, &stateblock->stateblock_state.viewport, sizeof(*viewport)))
+    {
+        TRACE("Ignoring redundant call on a primary stateblock.\n");
+        return;
+    }
 
     stateblock->stateblock_state.viewport = *viewport;
     stateblock->changed.viewport = TRUE;
@@ -2490,6 +2531,14 @@ static void wined3d_stateblock_invalidate_initial_states(struct wined3d_stateblo
     stateblock->changed.fog_constants = 1;
     wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_POINTSIZE_MAX, 1);
     wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_POINTSIZE_MIN, 1);
+    stateblock->changed.extra_vs_args = 1;
+    stateblock->changed.extra_ps_args = 1;
+    stateblock->changed.rasterizer_state = 1;
+    /* These force setting depth/stencil, and blend state.
+     * FIXME: These should probably be made into flags in wined3d_saved_states
+     * like the rest. */
+    wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_BLENDOP, 1);
+    wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_ZENABLE, 1);
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -2499,6 +2548,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const stru
 
     stateblock->ref = 1;
     stateblock->device = device;
+    stateblock->type = type;
     stateblock->stateblock_state.light_state = &stateblock->light_state;
     wined3d_stateblock_state_init(&stateblock->stateblock_state, device,
             type == WINED3D_SBT_PRIMARY ? WINED3D_STATE_INIT_DEFAULT : 0);
@@ -2889,7 +2939,10 @@ static void sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
                 && sampler_states[WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_ANISOTROPIC)
             || (texture->flags & WINED3D_TEXTURE_COND_NP2))
         desc->max_anisotropy = 1;
-    desc->compare = texture->resource.format_caps & WINED3D_FORMAT_CAP_SHADOW;
+    if (texture->resource.format_attrs & WINED3D_FORMAT_ATTR_SHADOW)
+        desc->reduction_mode = WINED3D_FILTER_REDUCTION_COMPARISON;
+    else
+        desc->reduction_mode = WINED3D_FILTER_REDUCTION_WEIGHTED_AVERAGE;
     desc->comparison_func = WINED3D_CMP_LESSEQUAL;
 
     /* Only use the LSB of the WINED3D_SAMP_SRGB_TEXTURE value. This matches
@@ -3075,7 +3128,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     {
         /* Clip planes are affected by the view matrix, but only if not using
          * vertex shaders. */
-        changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+        if (state->rs[WINED3D_RS_CLIPPING])
+            changed->clipplane |= state->rs[WINED3D_RS_CLIPPLANEENABLE];
     }
 
     for (start = 0; ; start = range.offset + range.size)
@@ -3665,8 +3719,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     {
         if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_VIEW))
         {
-            changed->lights = 1;
-            changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+            if (state->rs[WINED3D_RS_CLIPPING])
+                changed->clipplane |= state->rs[WINED3D_RS_CLIPPLANEENABLE];
         }
 
         if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_PROJECTION) || changed->position_transformed)
@@ -3674,9 +3728,6 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
                     offsetof(struct wined3d_ffp_vs_constants, projection_matrix),
                     sizeof(state->transforms[WINED3D_TS_PROJECTION]), &state->transforms[WINED3D_TS_PROJECTION]);
-
-        /* Clip planes are affected by the view matrix. */
-        changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
     }
 
     if (changed->indices)
@@ -3979,7 +4030,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 offsetof(struct wined3d_ffp_ps_constants, alpha_test_ref), sizeof(f), &f);
     }
 
-    if (changed->fog_constants || changed->ffp_vs_settings || changed->position_transformed)
+    if (changed->fog_constants || changed->position_transformed)
     {
         bool rhw = state->vertex_declaration && state->vertex_declaration->position_transformed;
         struct wined3d_ffp_fog_constants fog;

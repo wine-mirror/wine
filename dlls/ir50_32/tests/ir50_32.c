@@ -91,7 +91,15 @@ static void test_formats(void)
     out->bmiHeader.biWidth = 640;
     ret = ICDecompressQuery(hic, &in, out);
     ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    out->bmiHeader.biHeight = 480;
+    ret = ICDecompressQuery(hic, &in, out);
+    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    out->bmiHeader.biWidth = 160;
+    out->bmiHeader.biHeight = 120;
+    ret = ICDecompressQuery(hic, &in, out);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
     out->bmiHeader.biWidth = 320;
+    out->bmiHeader.biHeight = 240;
 
     out->bmiHeader.biBitCount = 8;
     ret = ICDecompressQuery(hic, &in, out);
@@ -135,6 +143,37 @@ static void test_formats(void)
     ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICDecompressEnd(hic);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
+
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, NULL, NULL, 0, 0, 0, 0);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 32, 24, NULL, NULL, 0, 0, 0, 0);
+    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0);
+    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 20, 0, 320, 240, NULL, NULL, 0, 0, 0, 0);
+    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 20, 320, 240, NULL, NULL, 0, 0, 0, 0);
+    todo_wine ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 0, 0);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 320, 240);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 160, 120);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+
+    out->bmiHeader.biWidth = 640;
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 640, 240);
+    ok(ret == ICERR_BADPARAM, "Got %Id.\n", ret);
+    out->bmiHeader.biHeight = 480;
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 0, 0, 640, 480);
+    todo_wine ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ret = ICDecompressExQuery(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 20, 20, 320, 240);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
+
+    ret = ICDecompressExBegin(hic, 0, &in, NULL, 0, 0, 320, 240, &out->bmiHeader, NULL, 20, 20, 320, 240);
+    ok(ret == ICERR_OK, "Got %Id.\n", ret);
+    ret = ICDecompressExEnd(hic);
     ok(ret == ICERR_OK, "Got %Id.\n", ret);
 
     ret = ICClose(hic);

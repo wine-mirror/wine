@@ -35,7 +35,6 @@ SOURCES = \
 	version.rc \
 	xdr.c \
 	xmldoc.c \
-	xmlelem.c \
 	xmlparser.c \
 	xmlparser.idl \
 	xmlview.c \

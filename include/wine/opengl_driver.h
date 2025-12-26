@@ -77,6 +77,7 @@ struct wgl_context
     int                     format;             /* pixel format of the context */
     struct opengl_drawable *draw;               /* currently bound draw surface */
     struct opengl_drawable *read;               /* currently bound read surface */
+    GLenum                  error;              /* wrapped GL error */
 };
 
 /* interface between opengl32 and win32u */
@@ -131,11 +132,13 @@ struct opengl_funcs
 
 struct egl_platform
 {
+    struct list          entry;
     EGLenum              type;
     EGLNativeDisplayType native_display;
     BOOL                 force_pbuffer_formats;
 
     /* filled by win32u after init_egl_platform */
+    unsigned int         index;
     EGLDeviceEXT         device;
     EGLDisplay           display;
     UINT                 config_count;
@@ -153,6 +156,8 @@ struct egl_platform
     UINT                 video_memory;
     const char          *device_name;
     const char          *vendor_name;
+    GUID                 device_uuid;
+    GUID                 driver_uuid;
 };
 
 struct opengl_drawable_funcs
@@ -170,12 +175,14 @@ struct opengl_drawable_funcs
 #define GL_FLUSH_FINISHED      0x01
 #define GL_FLUSH_INTERVAL      0x02
 #define GL_FLUSH_UPDATED       0x04
+#define GL_FLUSH_PRESENT       0x08
 
 /* a driver opengl drawable, either a client surface of a pbuffer */
 struct opengl_drawable
 {
     const struct opengl_drawable_funcs *funcs;
     LONG                                ref;            /* reference count */
+    struct list                         entry;          /* entry in cleanup lists */
     struct client_surface              *client;         /* underlying client surface */
     int                                 format;         /* pixel format of the drawable */
     int                                 interval;       /* last set surface swap interval */

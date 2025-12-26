@@ -28,7 +28,6 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #define ELF_INFO_DEBUG_HEADER   0x0001
 #define ELF_INFO_MODULE         0x0002
@@ -436,7 +435,7 @@ static BOOL elf_map_file(struct elf_map_file_data* emfd, struct image_file_map* 
     case from_file:
         if (!(dos_path = get_dos_file_name(emfd->u.file.filename))) return FALSE;
         fmap->u.elf.handle = CreateFileW(dos_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-        heap_free(dos_path);
+        HeapFree(GetProcessHeap(), 0, dos_path);
         if (fmap->u.elf.handle == INVALID_HANDLE_VALUE) return FALSE;
         break;
     case from_handle:
@@ -1248,7 +1247,7 @@ static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
         if (!modfmt) return FALSE;
         elf_info->module = module_new(pcs, filename, DMT_ELF,
                                       module_is_wine_host(filename, L".so"), FALSE, modbase,
-                                      fmap->u.elf.elf_size, 0, calc_crc32(fmap->u.elf.handle),
+                                      fmap->u.elf.elf_size, 0, 0,
                                       elf_get_machine(fmap->u.elf.elfhdr.e_machine));
         if (!elf_info->module)
         {

@@ -37,7 +37,8 @@ static FILE_OBJECTID_BUFFER windir_id, sysdir_id;
 
 static inline NTSTATUS get_file_id( HANDLE handle, FILE_OBJECTID_BUFFER *id )
 {
-    IO_STATUS_BLOCK io;
+    IO_STATUS_BLOCK32 io32;
+    IO_STATUS_BLOCK io = { .Pointer = &io32 };
 
     return NtFsControlFile( handle, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, id, sizeof(*id) );
 }

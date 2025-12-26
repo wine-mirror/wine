@@ -438,12 +438,109 @@ static void test_basic_ioctl(void)
     ok(!strcmp(buf, "Wine is no"), "got '%s'\n", buf);
 }
 
+static BOOL cancelioex_returned;
+
+enum cancel_test
+{
+    cancel,
+    cancelex,
+    cancelex_cancel,
+    cancel_cancelex,
+    cancelsync,
+};
+
+struct cancel_thread_ctx
+{
+    HANDLE file;
+    enum cancel_test test;
+};
+
+static DWORD WINAPI test_cancel_thread(void *param)
+{
+    struct cancel_thread_ctx *ctx = param;
+    NTSTATUS status = STATUS_SUCCESS;
+    IO_STATUS_BLOCK cancel_sb;
+    DWORD cancel_cnt, size;
+    OVERLAPPED o, o2, o3;
+    BOOL res;
+
+    res = DeviceIoControl(ctx->file, IOCTL_WINETEST_RESET_CANCEL, NULL, 0, NULL, 0, NULL, &o);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+
+    if (ctx->test != cancelsync)
+    {
+        res = DeviceIoControl(ctx->file, IOCTL_WINETEST_QUEUE_ASYNC, NULL, 0, NULL, 0, NULL, &o);
+        ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %lu\n", GetLastError());
+
+        res = DeviceIoControl(ctx->file, IOCTL_WINETEST_QUEUE_ASYNC, NULL, 0, NULL, 0, NULL, &o2);
+        ok(!res && GetLastError() == ERROR_IO_PENDING, "DeviceIoControl failed: %lu\n", GetLastError());
+    }
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(ctx->file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &o3);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 0, "cancel_cnt = %lu\n", cancel_cnt);
+
+    if (ctx->test == cancelsync)
+    {
+        /* This hangs */
+        if (0)
+        {
+            res = DeviceIoControl(ctx->file, IOCTL_WINETEST_QUEUE_ASYNC, NULL, 0, NULL, 0, &size, NULL);
+            ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+        }
+        /* This hangs if the cancel routine doesn't call IoCompleteRequest()
+         * (regardless of Status / Information values) */
+        res = DeviceIoControl(ctx->file, IOCTL_WINETEST_TEST_CANCEL, NULL, 0, NULL, 0, &size, NULL);
+        ok(!res && GetLastError() == ERROR_OPERATION_ABORTED, "DeviceIoControl failed: %lu\n", GetLastError());
+    }
+
+    if (ctx->test == cancel || ctx->test == cancel_cancelex)
+    {
+        status = NtCancelIoFile(ctx->file, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+    }
+    else if (ctx->test == cancelex || ctx->test == cancelex_cancel)
+    {
+        status = NtCancelIoFileEx(ctx->file, NULL, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+        status = NtCancelIoFileEx(ctx->file, NULL, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+        cancelioex_returned = TRUE;
+    }
+    if (ctx->test == cancelex_cancel)
+    {
+        status = NtCancelIoFile(ctx->file, &cancel_sb);
+        ok(!status, "Unexpected status %lu\n", status);
+        ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+    }
+    else if (ctx->test == cancel_cancelex)
+    {
+        status = NtCancelIoFileEx(ctx->file, NULL, &cancel_sb);
+        ok(status, "Unexpected status %lu\n", status);
+        ok(cancel_sb.Status == STATUS_NOT_FOUND, "Unexpected Status %lx\n", cancel_sb.Status);
+        ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+    }
+    return status;
+}
+
 static void test_overlapped(void)
 {
     OVERLAPPED overlapped, overlapped2, *o;
+    struct cancel_thread_ctx ctx;
+    HANDLE file, port, thread;
+    IO_STATUS_BLOCK cancel_sb;
     DWORD cancel_cnt, size;
-    HANDLE file, port;
+    NTSTATUS status;
     ULONG_PTR key;
+    DWORD ret;
     BOOL res;
 
     overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
@@ -502,6 +599,102 @@ static void test_overlapped(void)
         ok(cancel_cnt == 2, "cancel_cnt = %lu\n", cancel_cnt);
     }
 
+    /* test cancelling uncancellable requests - CancelIo */
+    ctx.file = file;
+    ctx.test = cancel;
+    thread = CreateThread(NULL, 0, test_cancel_thread, &ctx, 0, NULL);
+    ret = WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "CancelIo didn't block\n");
+    res = DeviceIoControl(file, IOCTL_WINETEST_COMPLETE_ASYNC, NULL, 0, NULL, 0, NULL, &overlapped);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped2);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 0, "cancel_cnt = %lu\n", cancel_cnt);
+
+    /* test cancelling uncancellable requests - CancelIoEx */
+    ctx.file = file;
+    ctx.test = cancelex;
+    cancelioex_returned = FALSE;
+    thread = CreateThread(NULL, 0, test_cancel_thread, &ctx, 0, NULL);
+    /* CancelIoEx() doesn't block, but the thread doesn't terminate either
+     * until the pending IOCTL is completed */
+    ret = WaitForSingleObject(thread, 100);
+    todo_wine ok(ret == WAIT_TIMEOUT, "Thread already terminated\n");
+    ok(cancelioex_returned, "CancelIoEx did block\n");
+    res = DeviceIoControl(file, IOCTL_WINETEST_COMPLETE_ASYNC, NULL, 0, NULL, 0, NULL, &overlapped);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped2);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 0, "cancel_cnt = %lu\n", cancel_cnt);
+
+    /* test cancelling uncancellable requests - CancelIoEx + CancelIo */
+    ctx.file = file;
+    ctx.test = cancelex_cancel;
+    cancelioex_returned = FALSE;
+    thread = CreateThread(NULL, 0, test_cancel_thread, &ctx, 0, NULL);
+    ret = WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "Thread already terminated\n");
+    ok(cancelioex_returned, "CancelIoEx did block\n");
+    res = DeviceIoControl(file, IOCTL_WINETEST_COMPLETE_ASYNC, NULL, 0, NULL, 0, NULL, &overlapped);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped2);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 0, "cancel_cnt = %lu\n", cancel_cnt);
+
+    /* test cancelling uncancellable requests - CancelIo + CancelIoEx */
+    ctx.file = file;
+    ctx.test = cancel_cancelex;
+    thread = CreateThread(NULL, 0, test_cancel_thread, &ctx, 0, NULL);
+    ret = WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "CancelIo didn't block\n");
+    status = NtCancelIoFileEx(file, NULL, &cancel_sb);
+    ok(!status, "Unexpected status %lu\n", status);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+    ret = WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "CancelIo didn't block\n");
+    res = DeviceIoControl(file, IOCTL_WINETEST_COMPLETE_ASYNC, NULL, 0, NULL, 0, NULL, &overlapped);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(file, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), NULL, &overlapped2);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 0, "cancel_cnt = %lu\n", cancel_cnt);
+
+    /* test cancelling uncancellable requests - CancelSynchronousIo */
+    ctx.file = device;
+    ctx.test = cancelsync;
+    thread = CreateThread(NULL, 0, test_cancel_thread, &ctx, 0, NULL);
+    WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "Synchronous DeviceIoControl() already returned\n");
+    status = NtCancelSynchronousIoFile(thread, NULL, &cancel_sb);
+    ok(!status, "Unexpected status %lu\n", status);
+    ok(!cancel_sb.Status, "Unexpected Status %lx\n", cancel_sb.Status);
+    ok(!cancel_sb.Information, "Unexpected Information %Iu\n", cancel_sb.Information);
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "CancelIoEx did block\n");
+    CloseHandle(thread);
+
+    cancel_cnt = 0xdeadbeef;
+    res = DeviceIoControl(device, IOCTL_WINETEST_GET_CANCEL_COUNT, NULL, 0, &cancel_cnt, sizeof(cancel_cnt), &size, NULL);
+    ok(res, "DeviceIoControl failed: %lu\n", GetLastError());
+    ok(cancel_cnt == 1, "cancel_cnt = %lu\n", cancel_cnt);
+
+    /* test completion port */
     port = CreateIoCompletionPort(file, NULL, 0xdeadbeef, 0);
     ok(port != NULL, "CreateIoCompletionPort failed, error %lu\n", GetLastError());
     res = GetQueuedCompletionStatus(port, &size, &key, &o, 0);
@@ -695,15 +888,21 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(device, NULL, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == expect_status, "got %#x\n", ret);
-    if (NT_ERROR(params->iosb_status))
+    if (NT_ERROR(params->iosb_status) && !params->pending)
     {
         ok(io.Status == 0xdeadf00d, "got %#lx\n", io.Status);
         ok(io.Information == 0xdeadf00d, "got size %Iu\n", io.Information);
     }
     else
     {
-        ok(io.Status == params->iosb_status, "got %#lx\n", io.Status);
-        ok(io.Information == 3, "got size %Iu\n", io.Information);
+        todo_wine_if (NT_ERROR(params->iosb_status) && params->pending)
+            ok(io.Status == params->iosb_status /* newer win10/11 */
+                    || broken(NT_ERROR(params->iosb_status) && params->pending && io.Status == 0xdeadf00d), /* older win10 */
+                    "got %#lx\n", io.Status);
+        todo_wine_if (NT_ERROR(params->iosb_status) && params->pending)
+            ok(io.Information == 3 /* newer win10/11 */
+                    || broken(NT_ERROR(params->iosb_status) && params->pending && io.Information == 0xdeadf00d), /* older win10 */
+                    "got size %Iu\n", io.Information);
     }
     ok(!strcmp(buffer, expect_buffer), "got buffer %s\n", buffer);
 
@@ -725,7 +924,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == params->ret_status
-            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
@@ -772,7 +971,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(file, event, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == params->ret_status
-            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
@@ -800,7 +999,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
     ret = NtDeviceIoControlFile(file, NULL, NULL, NULL, &io,
             ioctl, params, sizeof(*params), buffer, sizeof(buffer));
     ok(ret == params->ret_status
-            || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+            || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
             "got %#x\n", ret);
     if (!params->pending && NT_ERROR(params->iosb_status))
     {
@@ -832,7 +1031,7 @@ static void do_return_status(ULONG ioctl, struct return_status_params *params)
         ret = NtDeviceIoControlFile(file, event, NULL, (void *)456, &io,
                 ioctl, params, sizeof(*params), buffer, sizeof(buffer));
         ok(ret == params->ret_status
-                || broken(NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* win10 */
+                || (NT_WARNING(params->ret_status) && ret == STATUS_PENDING), /* newer win10/11 */
                 "got %#x\n", ret);
         if (!params->pending && NT_ERROR(params->iosb_status))
         {
@@ -1132,8 +1331,10 @@ static void test_blocking_irp(void)
     io.Information = 0xdeadf00d;
     status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsFullSizeInformation);
     ok(status == STATUS_DEVICE_NOT_READY, "got %#lx\n", status);
-    ok(io.Status == 0xdeadf00d, "got iosb status %#lx\n", io.Status);
-    ok(io.Information == 0xdeadf00d, "got information %#Ix\n", io.Information);
+    todo_wine ok(io.Status == STATUS_DEVICE_NOT_READY || broken(io.Status == 0xdeadf00d), /* older win10 */
+            "got iosb status %#lx\n", io.Status);
+    todo_wine ok(io.Information == 0 || broken(io.Information == 0xdeadf00d), /* older win10 */
+            "got information %#Ix\n", io.Information);
 
     CloseHandle(file);
 
@@ -1257,6 +1458,7 @@ static void test_driver_netio(struct testsign_context *ctx)
     hthread = CreateThread(NULL, 0, wsk_test_thread, NULL, 0, NULL);
     main_test();
     WaitForSingleObject(hthread, INFINITE);
+    CloseHandle(hthread);
 
     CloseHandle(device);
 

@@ -214,12 +214,12 @@ HRESULT WINAPI BaseControlWindowImpl_get_Caption(IVideoWindow *iface, BSTR *capt
     *caption = NULL;
 
     len = GetWindowTextLengthW(window->hwnd) + 1;
-    if (!(str = heap_alloc(len * sizeof(WCHAR))))
+    if (!(str = malloc(len * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
     GetWindowTextW(window->hwnd, str, len);
     *caption = SysAllocString(str);
-    heap_free(str);
+    free(str);
     return *caption ? S_OK : E_OUTOFMEMORY;
 }
 

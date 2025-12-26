@@ -181,6 +181,8 @@ extern DC *alloc_dc_ptr( DWORD magic );
 extern void free_dc_ptr( DC *dc );
 extern DC *get_dc_ptr( HDC hdc );
 extern void release_dc_ptr( DC *dc );
+extern BOOL is_dc_display( HDC hdc );
+extern int get_dc_pixel_format( HDC hdc );
 extern struct dce *get_dc_dce( HDC hdc );
 extern void set_dc_dce( HDC hdc, struct dce *dce );
 extern WORD set_dce_flags( HDC hdc, WORD flags );

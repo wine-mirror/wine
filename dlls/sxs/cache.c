@@ -98,23 +98,53 @@ static unsigned int build_sxs_path( WCHAR *path )
     return len + ARRAY_SIZE(winsxsW) - 1;
 }
 
+static void append_string( WCHAR *buffer, const WCHAR *str, unsigned int maxlen )
+{
+    static const WCHAR valid_chars[] = L"-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    unsigned int len;
+
+    if (!*str) return;
+    buffer += wcslen( buffer );
+    for (len = 0; *str; str++) if (wcschr( valid_chars, *str )) buffer[len++] = *str;
+    if (len > maxlen)
+    {
+        unsigned int pos = maxlen / 2;
+        buffer[pos - 1] = buffer[pos] = '.';
+        memmove( buffer + pos + 1, buffer + len - pos + 1, (pos - 1) * sizeof(WCHAR) );
+        len = maxlen;
+    }
+    buffer[len++] = '_';
+    buffer[len] = 0;
+    wcslwr( buffer );
+}
+
 static WCHAR *build_assembly_name( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
                                    const WCHAR *version, const WCHAR *language, unsigned int *len )
 {
-    static const WCHAR fmtW[] = L"%s_%s_%s_%s_%s_deadbeef";
-    unsigned int buflen = ARRAY_SIZE(fmtW);
+    unsigned int buflen = 20;
     WCHAR *ret;
 
-    if (!language || !wcsicmp( language, L"neutral" ) || !wcscmp( language, L"*")) language = L"none";
+    if (!arch) arch = L"none";
+    if (!token) token = L"none";
+    if (!language) language = L"none";
 
-    buflen += lstrlenW( arch );
-    buflen += lstrlenW( name );
-    buflen += lstrlenW( token );
-    buflen += lstrlenW( version );
-    buflen += lstrlenW( language );
+    buflen += wcslen( arch ) + 1;
+    buflen += wcslen( name ) + 1;
+    buflen += wcslen( token ) + 1;
+    buflen += wcslen( version ) + 1;
+    buflen += wcslen( language ) + 1;
     if (!(ret = malloc( buflen * sizeof(WCHAR) ))) return NULL;
-    *len = swprintf( ret, buflen, fmtW, arch, name, token, version, language );
-    return wcslwr( ret );
+    ret[0] = 0;
+    append_string( ret, arch, 16 );
+    append_string( ret, name, 40 );
+    wcscat( ret, token );
+    wcscat( ret, L"_" );
+    wcscat( ret, version );
+    wcscat( ret, L"_" );
+    append_string( ret, language, 8 );
+    wcscat( ret, L"deadbeef" );
+    *len = wcslen( ret );
+    return ret;
 }
 
 static WCHAR *build_dll_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
@@ -122,6 +152,8 @@ static WCHAR *build_dll_path( const WCHAR *arch, const WCHAR *name, const WCHAR 
 {
     WCHAR *path = NULL, *ret, sxsdir[MAX_PATH];
     unsigned int len;
+
+    if (!language || !wcsicmp( language, L"neutral" ) || !wcscmp( language, L"*")) language = L"none";
 
     if (!(path = build_assembly_name( arch, name, token, version, language, &len ))) return NULL;
     len += build_sxs_path( sxsdir ) + 2;
@@ -754,4 +786,60 @@ HRESULT WINAPI CreateAssemblyCache( IAssemblyCache **obj, DWORD reserved )
     }
     *obj = &cache->IAssemblyCache_iface;
     return S_OK;
+}
+
+
+/******************************************************************
+ *  SxspGenerateManifestPathOnAssemblyIdentity   (SXS.@)
+ */
+BOOL WINAPI SxspGenerateManifestPathOnAssemblyIdentity( const WCHAR *identity, WCHAR *buffer,
+                                                        DWORD *size, void *unknown )
+{
+    const WCHAR *arch, *name, *token, *version, *language;
+    WCHAR *path = NULL;
+    BOOL ret = FALSE;
+    unsigned int retlen;
+    IAssemblyName *name_obj = NULL;
+    HRESULT hr = CreateAssemblyNameObject( &name_obj, identity, CANOF_PARSE_DISPLAY_NAME, 0 );
+
+    if (FAILED( hr ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    arch = get_name_attribute( name_obj, NAME_ATTR_ID_ARCH );
+    name = get_name_attribute( name_obj, NAME_ATTR_ID_NAME );
+    token = get_name_attribute( name_obj, NAME_ATTR_ID_TOKEN );
+    version = get_name_attribute( name_obj, NAME_ATTR_ID_VERSION );
+    language = get_name_attribute( name_obj, NAME_ATTR_ID_LANGUAGE );
+    if (!name || !version)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        goto done;
+    }
+    if (wcslen( version ) > 103 || (token && wcslen( token ) > 100))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        goto done;
+    }
+    if (!(path = build_assembly_name( arch, name, token, version, language, &retlen )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        goto done;
+    }
+    if (*size <= retlen)
+    {
+        *size = retlen + 1;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    }
+    else
+    {
+        wcscpy( buffer, path );
+        ret = TRUE;
+    }
+ done:
+    IAssemblyName_Release( name_obj );
+    free( path );
+    return ret;
 }

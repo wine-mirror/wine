@@ -27,6 +27,8 @@
 #include <windef.h>
 #include <winbase.h>
 
+#include "wine/vulkan.h"
+
 /* Base 'class' for our Vulkan dispatchable objects such as VkDevice and VkInstance.
  * This structure MUST be the first element of a dispatchable object as the ICD
  * loader depends on it. For now only contains loader_magic, but over time more common
@@ -41,10 +43,50 @@ struct vulkan_client_object
     UINT64 unix_handle;
 };
 
+struct vulkan_instance_extensions
+{
+#define USE_VK_EXT(x) unsigned has_ ## x : 1;
+    ALL_VK_INSTANCE_EXTS
+#undef USE_VK_EXT
+};
+
+struct vulkan_device_extensions
+{
+#define USE_VK_EXT(x) unsigned has_ ## x : 1;
+    ALL_VK_DEVICE_EXTS
+#undef USE_VK_EXT
+};
+
+struct VkPhysicalDevice_T
+{
+    struct vulkan_client_object obj;
+    struct vulkan_device_extensions extensions;
+};
+
+struct VkInstance_T
+{
+    struct vulkan_client_object obj;
+    struct vulkan_instance_extensions extensions;
+    UINT physical_device_count;
+    struct VkPhysicalDevice_T physical_device[1];
+};
+
+struct VkQueue_T
+{
+    struct vulkan_client_object obj;
+};
+
+struct VkDevice_T
+{
+    struct vulkan_client_object obj;
+    struct vulkan_device_extensions extensions;
+    struct VkQueue_T queues[1];
+};
+
 #ifdef WINE_UNIX_LIB
 
-#include "wine/vulkan.h"
 #include "wine/rbtree.h"
+#include "wine/list.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
 #define WINE_VULKAN_DRIVER_VERSION 47
@@ -71,14 +113,53 @@ static inline void vulkan_object_init( struct vulkan_object *obj, UINT64 host_ha
     obj->client_handle = (UINT_PTR)obj;
 }
 
+static inline void vulkan_object_init_ptr( struct vulkan_object *obj, UINT64 host_handle, struct vulkan_client_object *client )
+{
+    obj->host_handle = host_handle;
+    obj->client_handle = (UINT_PTR)client;
+    client->unix_handle = (UINT_PTR)obj;
+}
+
+struct vulkan_debug_utils_messenger
+{
+    VULKAN_OBJECT_HEADER( VkDebugUtilsMessengerEXT, debug_messenger );
+    struct vulkan_instance *instance;
+    struct list entry; /* entry in instance list if static */
+
+    UINT64 user_callback; /* client pointer */
+    UINT64 user_data; /* client pointer */
+};
+
+static inline struct vulkan_debug_utils_messenger *vulkan_debug_utils_messenger_from_handle( VkDebugUtilsMessengerEXT handle )
+{
+    return (struct vulkan_debug_utils_messenger *)(UINT_PTR)handle;
+}
+
+struct vulkan_debug_report_callback
+{
+    VULKAN_OBJECT_HEADER( VkDebugReportCallbackEXT, debug_callback );
+    struct vulkan_instance *instance;
+    struct list entry; /* entry in instance list if static */
+
+    UINT64 user_callback; /* client pointer */
+    UINT64 user_data; /* client pointer */
+};
+
+static inline struct vulkan_debug_report_callback *vulkan_debug_report_callback_from_handle( VkDebugReportCallbackEXT handle )
+{
+    return (struct vulkan_debug_report_callback *)(UINT_PTR)handle;
+}
+
 struct vulkan_instance
 {
     VULKAN_OBJECT_HEADER( VkInstance, instance );
+    struct vulkan_instance_extensions extensions;
 #define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
     ALL_VK_INSTANCE_FUNCS
 #undef USE_VK_FUNC
     void (*p_insert_object)( struct vulkan_instance *instance, struct vulkan_object *obj );
     void (*p_remove_object)( struct vulkan_instance *instance, struct vulkan_object *obj );
+    uint64_t (*p_client_handle_from_host)( struct vulkan_instance *instance, uint64_t host_handle );
 
     struct vulkan_physical_device *physical_devices;
     uint32_t physical_device_count;
@@ -94,11 +175,7 @@ struct vulkan_physical_device
 {
     VULKAN_OBJECT_HEADER( VkPhysicalDevice, physical_device );
     struct vulkan_instance *instance;
-    bool has_surface_maintenance1;
-    bool has_swapchain_maintenance1;
-
-    VkExtensionProperties *extensions;
-    uint32_t extension_count;
+    struct vulkan_device_extensions extensions;
 
     /* for WOW64 memory mapping with VK_EXT_external_memory_host */
     VkPhysicalDeviceMemoryProperties memory_properties;
@@ -112,32 +189,39 @@ static inline struct vulkan_physical_device *vulkan_physical_device_from_handle(
     return (struct vulkan_physical_device *)(UINT_PTR)client->unix_handle;
 }
 
-struct vulkan_device
-{
-    VULKAN_OBJECT_HEADER( VkDevice, device );
-    struct vulkan_physical_device *physical_device;
-    bool has_win32_keyed_mutex;
-#define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
-    ALL_VK_DEVICE_FUNCS
-#undef USE_VK_FUNC
-};
-
-static inline struct vulkan_device *vulkan_device_from_handle( VkDevice handle )
-{
-    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
-    return (struct vulkan_device *)(UINT_PTR)client->unix_handle;
-}
-
+struct vulkan_device;
 struct vulkan_queue
 {
     VULKAN_OBJECT_HEADER( VkQueue, queue );
     struct vulkan_device *device;
+    VkDeviceQueueInfo2 info;
 };
 
 static inline struct vulkan_queue *vulkan_queue_from_handle( VkQueue handle )
 {
     struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
     return (struct vulkan_queue *)(UINT_PTR)client->unix_handle;
+}
+
+struct vulkan_device
+{
+    VULKAN_OBJECT_HEADER( VkDevice, device );
+    struct vulkan_physical_device *physical_device;
+    struct vulkan_device_extensions extensions;
+#define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
+    ALL_VK_DEVICE_FUNCS
+#undef USE_VK_FUNC
+
+    uint64_t queue_count;
+    struct vulkan_queue queues[];
+};
+
+C_ASSERT( sizeof(struct vulkan_device) == offsetof(struct vulkan_device, queues[0]) );
+
+static inline struct vulkan_device *vulkan_device_from_handle( VkDevice handle )
+{
+    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
+    return (struct vulkan_device *)(UINT_PTR)client->unix_handle;
 }
 
 struct vulkan_command_buffer
@@ -205,6 +289,9 @@ static inline struct vulkan_fence *vulkan_fence_from_handle( VkFence handle )
 
 struct vulkan_funcs
 {
+    struct vulkan_instance_extensions host_extensions;
+    struct vulkan_instance_extensions client_extensions;
+
     /* Vulkan global functions. These are the only calls at this point a graphics driver
      * needs to provide. Other function calls will be provided indirectly by dispatch
      * tables part of dispatchable Vulkan objects such as VkInstance or vkDevice.
@@ -213,12 +300,16 @@ struct vulkan_funcs
     PFN_vkAcquireNextImageKHR p_vkAcquireNextImageKHR;
     PFN_vkAllocateMemory p_vkAllocateMemory;
     PFN_vkCreateBuffer p_vkCreateBuffer;
+    PFN_vkCreateDevice p_vkCreateDevice;
     PFN_vkCreateFence p_vkCreateFence;
     PFN_vkCreateImage p_vkCreateImage;
+    PFN_vkCreateInstance p_vkCreateInstance;
     PFN_vkCreateSemaphore p_vkCreateSemaphore;
     PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
     PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
+    PFN_vkDestroyDevice p_vkDestroyDevice;
     PFN_vkDestroyFence p_vkDestroyFence;
+    PFN_vkDestroyInstance p_vkDestroyInstance;
     PFN_vkDestroySemaphore p_vkDestroySemaphore;
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
     PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
@@ -227,6 +318,8 @@ struct vulkan_funcs
     PFN_vkGetDeviceBufferMemoryRequirementsKHR p_vkGetDeviceBufferMemoryRequirementsKHR;
     PFN_vkGetDeviceImageMemoryRequirements p_vkGetDeviceImageMemoryRequirements;
     PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
+    PFN_vkGetDeviceQueue p_vkGetDeviceQueue;
+    PFN_vkGetDeviceQueue2 p_vkGetDeviceQueue2;
     PFN_vkGetFenceWin32HandleKHR p_vkGetFenceWin32HandleKHR;
     PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
     PFN_vkGetMemoryWin32HandleKHR p_vkGetMemoryWin32HandleKHR;
@@ -258,9 +351,6 @@ struct vulkan_funcs
     PFN_vkQueueSubmit2KHR p_vkQueueSubmit2KHR;
     PFN_vkUnmapMemory p_vkUnmapMemory;
     PFN_vkUnmapMemory2KHR p_vkUnmapMemory2KHR;
-
-    /* winevulkan specific functions */
-    const char *(*p_get_host_extension)( const char *name );
 };
 
 /* interface between win32u and the user drivers */
@@ -269,7 +359,8 @@ struct vulkan_driver_funcs
 {
     VkResult (*p_vulkan_surface_create)(HWND, const struct vulkan_instance *, VkSurfaceKHR *, struct client_surface **);
     VkBool32 (*p_get_physical_device_presentation_support)(struct vulkan_physical_device *, uint32_t);
-    const char *(*p_get_host_extension)( const char *name );
+    void (*p_map_instance_extensions)( struct vulkan_instance_extensions *extensions );
+    void (*p_map_device_extensions)( struct vulkan_device_extensions *extensions );
 };
 
 #endif /* WINE_UNIX_LIB */

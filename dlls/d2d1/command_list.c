@@ -795,6 +795,7 @@ void d2d_command_list_draw_geometry(struct d2d_command_list *command_list,
 
     command = d2d_command_list_require_space(command_list, sizeof(*command));
     command->c.op = D2D_COMMAND_DRAW_GEOMETRY;
+    command->geometry = geometry;
     command->brush = brush;
     command->stroke_width = stroke_width;
     command->stroke_style = stroke_style;

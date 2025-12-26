@@ -23,7 +23,6 @@
 #include "commctrl.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
@@ -144,7 +143,7 @@ static ULONG WINAPI Client_Release(IAccessible *iface)
     TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
     return ref;
 }
 
@@ -841,13 +840,13 @@ static HRESULT edit_get_value(Client *client, VARIANT id, BSTR *value_out)
         return E_ACCESSDENIED;
 
     len = SendMessageW(client->hwnd, WM_GETTEXTLENGTH, 0, 0);
-    buf = heap_alloc_zero((len + 1) * sizeof(*buf));
+    buf = calloc(len + 1, sizeof(*buf));
     if(!buf)
         return E_OUTOFMEMORY;
 
     SendMessageW(client->hwnd, WM_GETTEXT, len + 1, (LPARAM)buf);
     *value_out = SysAllocString(buf);
-    heap_free(buf);
+    free(buf);
     return S_OK;
 }
 
@@ -910,7 +909,7 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
     if(!IsWindow(hwnd))
         return E_FAIL;
 
-    client = heap_alloc_zero(sizeof(Client));
+    client = calloc(1, sizeof(Client));
     if(!client)
         return E_OUTOFMEMORY;
 

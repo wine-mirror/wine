@@ -653,7 +653,7 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         load_info->Filter = D3DX10_FILTER_LINEAR;
     if (FAILED(hr = d3dx_validate_filter(load_info->Filter)))
     {
-        ERR("Invalid filter argument %#x.\n", load_info->Filter);
+        WARN("Invalid filter argument %#x.\n", load_info->Filter);
         return hr;
     }
 
@@ -751,7 +751,7 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
             load_info->MipFilter = D3DX10_FILTER_LINEAR;
         if (FAILED(hr = d3dx_validate_filter(load_info->MipFilter)))
         {
-            ERR("Invalid mip filter argument %#x.\n", load_info->MipFilter);
+            WARN("Invalid mip filter argument %#x.\n", load_info->MipFilter);
             goto end;
         }
 

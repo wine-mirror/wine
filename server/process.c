@@ -682,6 +682,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->is_system       = 0;
     process->debug_children  = 1;
     process->is_terminating  = 0;
+    process->set_foreground  = 0;
     process->imagelen        = 0;
     process->image           = NULL;
     process->job             = NULL;
@@ -986,7 +987,7 @@ static void process_killed( struct process *process )
     close_process_desktop( process );
     process->winstation = 0;
     process->desktop = 0;
-    cancel_process_asyncs( process );
+    cancel_terminating_process_asyncs( process );
     close_process_handles( process );
     if (process->idle_event) release_object( process->idle_event );
     process->idle_event = NULL;

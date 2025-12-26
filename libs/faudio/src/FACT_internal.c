@@ -106,7 +106,7 @@ static inline void FACT_INTERNAL_ReadFile(
 ) {
 	FACTOverlapped ovlp;
 	uint32_t realOffset, realLen, offPacket, lenPacket, result;
-	uint8_t usePacketBuffer;
+	bool usePacketBuffer = false;
 	void *buf;
 
 	ovlp.Internal = NULL;
@@ -119,20 +119,19 @@ static inline void FACT_INTERNAL_ReadFile(
 	 */
 	realOffset = offset;
 	realLen = len;
-	usePacketBuffer = 0;
 	if (packetSize > 0)
 	{
 		offPacket = realOffset % packetSize;
 		if (offPacket > 0)
 		{
-			usePacketBuffer = 1;
+			usePacketBuffer = true;
 			realOffset -= offPacket;
 			realLen += offPacket;
 		}
 		lenPacket = realLen % packetSize;
 		if (lenPacket > 0)
 		{
-			usePacketBuffer = 1;
+			usePacketBuffer = true;
 			realLen += (packetSize - lenPacket);
 		}
 	}
@@ -184,6 +183,7 @@ void FACT_INTERNAL_GetNextWave(
 	FACTEventInstance *evtInst
 ) {
 	FAudioSendDescriptor reverbDesc[2];
+	bool has_track_variation = false;
 	FAudioVoiceSends reverbSends;
 	const char *wbName;
 	FACTWaveBank *wb = NULL;
@@ -192,79 +192,65 @@ void FACT_INTERNAL_GetNextWave(
 	uint8_t wbIndex;
 	uint8_t loopCount = 0;
 	float max, next;
-	uint8_t noTrackVariation = 1;
 	uint32_t i;
 
 	/* Track Variation */
 	if (evt->wave.isComplex)
 	{
-		if (	trackInst->activeWave.wave == NULL ||
-			!(evt->wave.complex.variation & 0x00F0)	)
+		if (!trackInst->activeWave.wave || !(evt->wave.complex.has_track_variation))
 		{
 			/* No-op, no variation on loop */
 		}
-		/* Ordered, Ordered From Random */
-		else if (	(evt->wave.complex.variation & 0xF) == 0 ||
-				(evt->wave.complex.variation & 0xF) == 1	)
+		switch (evt->wave.complex.variation_type)
 		{
-			evtInst->valuei += 1;
-			if (evtInst->valuei >= evt->wave.complex.trackCount)
-			{
-				evtInst->valuei = 0;
-			}
-		}
-		/* Random */
-		else if ((evt->wave.complex.variation & 0xF) == 2)
-		{
-			max = 0.0f;
-			for (i = 0; i < evt->wave.complex.trackCount; i += 1)
-			{
-				max += evt->wave.complex.weights[i];
-			}
-			next = FACT_INTERNAL_rng() * max;
-			for (i = evt->wave.complex.trackCount; i > 0; i -= 1)
-			{
-				if (next > (max - evt->wave.complex.weights[i - 1]))
+			case VARIATION_TYPE_ORDERED:
+			case VARIATION_TYPE_ORDERED_FROM_RANDOM:
+				evtInst->valuei += 1;
+				if (evtInst->valuei >= evt->wave.complex.trackCount)
+					evtInst->valuei = 0;
+				break;
+
+			case VARIATION_TYPE_RANDOM:
+				max = 0.0f;
+				for (i = 0; i < evt->wave.complex.trackCount; i += 1)
+					max += evt->wave.complex.weights[i];
+				next = FACT_INTERNAL_rng() * max;
+				for (i = evt->wave.complex.trackCount; i > 0; i -= 1)
 				{
-					evtInst->valuei = i - 1;
-					break;
+					if (next > (max - evt->wave.complex.weights[i - 1]))
+					{
+						evtInst->valuei = i - 1;
+						break;
+					}
+					max -= evt->wave.complex.weights[i - 1];
 				}
-				max -= evt->wave.complex.weights[i - 1];
-			}
-		}
-		/* Random (No Immediate Repeats), Shuffle */
-		else if (	(evt->wave.complex.variation & 0xF) == 3 ||
-				(evt->wave.complex.variation & 0xF) == 4	)
-		{
-			max = 0.0f;
-			for (i = 0; i < evt->wave.complex.trackCount; i += 1)
-			{
-				if (i == evtInst->valuei)
+				break;
+
+			case VARIATION_TYPE_RANDOM_NO_REPEATS:
+			case VARIATION_TYPE_SHUFFLE:
+				max = 0.0f;
+				for (i = 0; i < evt->wave.complex.trackCount; i += 1)
 				{
-					continue;
+					if (i == evtInst->valuei)
+						continue;
+					max += evt->wave.complex.weights[i];
 				}
-				max += evt->wave.complex.weights[i];
-			}
-			next = FACT_INTERNAL_rng() * max;
-			for (i = evt->wave.complex.trackCount; i > 0; i -= 1)
-			{
-				if (i - 1 == evtInst->valuei)
+				next = FACT_INTERNAL_rng() * max;
+				for (i = evt->wave.complex.trackCount; i > 0; i -= 1)
 				{
-					continue;
+					if (i - 1 == evtInst->valuei)
+						continue;
+					if (next > (max - evt->wave.complex.weights[i - 1]))
+					{
+						evtInst->valuei = i - 1;
+						break;
+					}
+					max -= evt->wave.complex.weights[i - 1];
 				}
-				if (next > (max - evt->wave.complex.weights[i - 1]))
-				{
-					evtInst->valuei = i - 1;
-					break;
-				}
-				max -= evt->wave.complex.weights[i - 1];
-			}
+				break;
 		}
 
-		if (evt->wave.complex.variation & 0x00F0)
-		{
-			noTrackVariation = 0;
-		}
+		has_track_variation = evt->wave.complex.has_track_variation;
 
 		wbIndex = evt->wave.complex.wavebanks[evtInst->valuei];
 		wbTrack = evt->wave.complex.tracks[evtInst->valuei];
@@ -288,9 +274,8 @@ void FACT_INTERNAL_GetNextWave(
 	FAudio_assert(wb != NULL);
 
 	/* Generate the Wave */
-	if (	evtInst->loopCount == 255 &&
-		noTrackVariation &&
-		!(evt->wave.variationFlags & 0x0F00)	)
+	if (evtInst->loopCount == 255 && !has_track_variation &&
+		!(evt->wave.variationFlags & VARIATION_FLAG_LOOP_MASK))
 	{
 		/* For infinite loops with no variation, let Wave do the work */
 		loopCount = 255;
@@ -333,8 +318,7 @@ void FACT_INTERNAL_GetNextWave(
 		/* TODO: Position/Angle/UseCenterSpeaker */
 	}
 
-	/* Pitch Variation */
-	if (evt->wave.variationFlags & 0x1000)
+	if (evt->wave.variationFlags & VARIATION_FLAG_PITCH)
 	{
 		const int16_t rngPitch = (int16_t) (
 			FACT_INTERNAL_rng() *
@@ -342,11 +326,9 @@ void FACT_INTERNAL_GetNextWave(
 		) + evt->wave.minPitch;
 		if (trackInst->activeWave.wave != NULL)
 		{
-			/* Variation on Loop */
-			if (evt->wave.variationFlags & 0x0100)
+			if (evt->wave.variationFlags & VARIATION_FLAG_PITCH_NEW_ON_LOOP)
 			{
-				/* Add/Replace */
-				if (evt->wave.variationFlags & 0x0004)
+				if (evt->wave.variationFlags & VARIATION_FLAG_PITCH_ADD)
 				{
 					trackInst->upcomingWave.basePitch =
 						trackInst->activeWave.basePitch + rngPitch;
@@ -368,8 +350,7 @@ void FACT_INTERNAL_GetNextWave(
 		trackInst->upcomingWave.basePitch = sound->pitch;
 	}
 
-	/* Volume Variation */
-	if (evt->wave.variationFlags & 0x2000)
+	if (evt->wave.variationFlags & VARIATION_FLAG_VOLUME)
 	{
 		const float rngVolume = (
 			FACT_INTERNAL_rng() *
@@ -377,11 +358,9 @@ void FACT_INTERNAL_GetNextWave(
 		) + evt->wave.minVolume;
 		if (trackInst->activeWave.wave != NULL)
 		{
-			/* Variation on Loop */
-			if (evt->wave.variationFlags & 0x0200)
+			if (evt->wave.variationFlags & VARIATION_FLAG_VOLUME_NEW_ON_LOOP)
 			{
-				/* Add/Replace */
-				if (evt->wave.variationFlags & 0x0001)
+				if (evt->wave.variationFlags & VARIATION_FLAG_VOLUME_ADD)
 				{
 					trackInst->upcomingWave.baseVolume =
 						trackInst->activeWave.baseVolume + rngVolume;
@@ -411,8 +390,7 @@ void FACT_INTERNAL_GetNextWave(
 		trackInst->upcomingWave.baseVolume = sound->volume + track->volume;
 	}
 
-	/* Filter Variation, QFactor/Freq are always together */
-	if (evt->wave.variationFlags & 0xC000)
+	if (evt->wave.variationFlags & VARIATION_FLAG_FREQUENCY_Q)
 	{
 		const float rngQFactor = 1.0f / (
 			FACT_INTERNAL_rng() *
@@ -429,18 +407,17 @@ void FACT_INTERNAL_GetNextWave(
 		);
 		if (trackInst->activeWave.wave != NULL)
 		{
-			/* Variation on Loop */
-			if (evt->wave.variationFlags & 0x0C00)
+			if (evt->wave.variationFlags & VARIATION_FLAG_FREQUENCY_Q_NEW_ON_LOOP)
 			{
 				/* TODO: Add/Replace */
-				/* FIXME: Which is QFactor/Freq?
-				if (evt->wave.variationFlags & 0x0010)
+				/*
+				if (evt->wave.variationFlags & VARIATION_FLAG_FREQUENCY_ADD)
 				{
 				}
 				else
 				{
 				}
-				if (evt->wave.variationFlags & 0x0040)
+				if (evt->wave.variationFlags & VARIATION_FLAG_Q_ADD)
 				{
 				}
 				else
@@ -487,7 +464,7 @@ void FACT_INTERNAL_GetNextWave(
 	}
 }
 
-uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
+bool FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 {
 	int32_t i, j, k;
 	float max, next, weight;
@@ -500,17 +477,11 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 	FACTSoundInstance *newSound;
 	FACTRPC *rpc;
 	float lastX;
-
-	union
-	{
-		float maxf;
-		uint8_t maxi;
-	} limitmax;
 	FACTCue *tmp, *wnr;
 	uint16_t categoryIndex;
 	FACTAudioCategory *category;
 
-	if (cue->data->flags & 0x04)
+	if (cue->data->flags & CUE_FLAG_SINGLE_SOUND)
 	{
 		/* Sound */
 		baseSound = cue->sound;
@@ -518,10 +489,9 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 	else if (cue->variation)
 	{
 		/* Variation */
-		if (cue->variation->flags == 3)
+		if (cue->variation->type == VARIATION_TABLE_TYPE_INTERACTIVE)
 		{
-			/* Interactive */
-			if (cue->parentBank->parentEngine->variables[cue->variation->variable].accessibility & 0x04)
+			if (cue->parentBank->parentEngine->variables[cue->variation->variable].accessibility & ACCESSIBILITY_CUE)
 			{
 				FACTCue_GetVariable(
 					cue,
@@ -553,7 +523,7 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 			 */
 			if (i == cue->variation->entryCount)
 			{
-				return 1;
+				return true;
 			}
 		}
 		else
@@ -637,83 +607,67 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 			category = &cue->parentBank->parentEngine->categories[categoryIndex];
 			if (category->instanceCount >= category->instanceLimit)
 			{
+				float quietest_volume = FACTVOLUME_MAX;
+				uint8_t lowest_priority = UINT8_MAX;
+
 				wnr = NULL;
 				tmp = cue->parentBank->cueList;
-				if (category->maxInstanceBehavior == 0) /* Fail */
+
+				switch (category->maxInstanceBehavior)
 				{
-					cue->state |= FACT_STATE_STOPPED;
-					cue->state &= ~(
-						FACT_STATE_PLAYING |
-						FACT_STATE_STOPPING |
-						FACT_STATE_PAUSED
-					);
-					return 0;
-				}
-				else if (category->maxInstanceBehavior == 1) /* Queue */
-				{
-					/* FIXME: How is this different from Replace Oldest? */
-					while (tmp != NULL)
-					{
-						if (	tmp != cue &&
-							tmp->playingSound != NULL &&
-							tmp->playingSound->sound->category == categoryIndex &&
-							!(tmp->state & (FACT_STATE_STOPPING | FACT_STATE_STOPPED))	)
+					case MAX_INSTANCE_BEHAVIOR_FAIL:
+						cue->state |= FACT_STATE_STOPPED;
+						cue->state &= ~(FACT_STATE_PLAYING | FACT_STATE_STOPPING | FACT_STATE_PAUSED);
+						return false;
+
+					case MAX_INSTANCE_BEHAVIOR_QUEUE:
+						/* FIXME: How is this different from Replace Oldest? */
+					case MAX_INSTANCE_BEHAVIOR_REPLACE_OLDEST:
+						while (tmp != NULL)
 						{
-							wnr = tmp;
-							break;
+							if (tmp != cue && tmp->playingSound != NULL &&
+								tmp->playingSound->sound->category == categoryIndex &&
+								!(tmp->state & (FACT_STATE_STOPPING | FACT_STATE_STOPPED))	)
+							{
+								wnr = tmp;
+								break;
+							}
+							tmp = tmp->next;
 						}
-						tmp = tmp->next;
-					}
-				}
-				else if (category->maxInstanceBehavior == 2) /* Replace Oldest */
-				{
-					while (tmp != NULL)
-					{
-						if (	tmp != cue &&
-							tmp->playingSound != NULL &&
-							tmp->playingSound->sound->category == categoryIndex &&
-							!(tmp->state & (FACT_STATE_STOPPING | FACT_STATE_STOPPED))	)
+						break;
+
+					case MAX_INSTANCE_BEHAVIOR_REPLACE_QUIETEST:
+						while (tmp != NULL)
 						{
-							wnr = tmp;
-							break;
+							if (tmp != cue && tmp->playingSound != NULL &&
+								tmp->playingSound->sound->category == categoryIndex &&
+								/*FIXME: tmp->playingSound->volume < quietest_volume &&*/
+								!(tmp->state & (FACT_STATE_STOPPING | FACT_STATE_STOPPED))	)
+							{
+								wnr = tmp;
+								/* quietest_volume = tmp->playingSound->volume; */
+							}
+							tmp = tmp->next;
 						}
-						tmp = tmp->next;
-					}
-				}
-				else if (category->maxInstanceBehavior == 3) /* Replace Quietest */
-				{
-					limitmax.maxf = FACTVOLUME_MAX;
-					while (tmp != NULL)
-					{
-						if (	tmp != cue &&
-							tmp->playingSound != NULL &&
-							tmp->playingSound->sound->category == categoryIndex &&
-							/*FIXME: tmp->playingSound->volume < limitmax.maxf &&*/
-							!(tmp->state & (FACT_STATE_STOPPING | FACT_STATE_STOPPED))	)
+						break;
+
+					case MAX_INSTANCE_BEHAVIOR_REPLACE_LOWEST_PRIORITY:
+						while (tmp != NULL)
 						{
-							wnr = tmp;
-							/* limitmax.maxf = tmp->playingSound->volume; */
+							if (	tmp != cue &&
+								tmp->playingSound != NULL &&
+								tmp->playingSound->sound->category == categoryIndex &&
+								tmp->playingSound->sound->priority < lowest_priority &&
+								!(tmp->state & (FACT_STATE_STOPPING | FACT_STATE_STOPPED))	)
+							{
+								wnr = tmp;
+								lowest_priority = tmp->playingSound->sound->priority;
+							}
+							tmp = tmp->next;
 						}
-						tmp = tmp->next;
-					}
+						break;
 				}
-				else if (category->maxInstanceBehavior == 4) /* Replace Lowest Priority */
-				{
-					limitmax.maxi = 0xFF;
-					while (tmp != NULL)
-					{
-						if (	tmp != cue &&
-							tmp->playingSound != NULL &&
-							tmp->playingSound->sound->category == categoryIndex &&
-							tmp->playingSound->sound->priority < limitmax.maxi &&
-							!(tmp->state & (FACT_STATE_STOPPING | FACT_STATE_STOPPED))	)
-						{
-							wnr = tmp;
-							limitmax.maxi = tmp->playingSound->sound->priority;
-						}
-						tmp = tmp->next;
-					}
-				}
+
 				if (wnr != NULL)
 				{
 					fadeInMS = category->fadeInMS;
@@ -786,7 +740,7 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 				newSound->tracks[i].events[j].timestamp =
 					newSound->sound->tracks[i].events[j].timestamp;
 				newSound->tracks[i].events[j].loopCount = 0;
-				newSound->tracks[i].events[j].finished = 0;
+				newSound->tracks[i].events[j].finished = false;
 				newSound->tracks[i].events[j].value = 0.0f;
 
 				if (	evt->type == FACTEVENT_PLAYWAVE ||
@@ -798,8 +752,7 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 						newSound->sound->tracks[i].events[j].wave.loopCount;
 
 					evtInst = &newSound->tracks[i].events[j];
-					if (	!evt->wave.isComplex ||
-						(evt->wave.complex.variation & 0xF) == 0	)
+					if (!evt->wave.isComplex || evt->wave.complex.variation_type == VARIATION_TYPE_ORDERED)
 					{
 						evtInst->valuei = 0;
 					}
@@ -857,7 +810,7 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 					newSound->sound->tracks[i].rpcCodes[j]
 				);
 				if (	rpc->parameter == RPC_PARAMETER_VOLUME &&
-					cue->parentBank->parentEngine->variables[rpc->variable].accessibility & 0x04	)
+					(cue->parentBank->parentEngine->variables[rpc->variable].accessibility & ACCESSIBILITY_CUE))
 				{
 					if (FAudio_strcmp(
 						newSound->parentCue->parentBank->parentEngine->variableNames[rpc->variable],
@@ -876,12 +829,12 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 		cue->playingSound = newSound;
 	}
 
-	return 1;
+	return true;
 }
 
-void FACT_INTERNAL_SendCueNotification(FACTCue *cue, FACTNoticationsFlags flag, uint8_t type)
+void FACT_INTERNAL_SendCueNotification(FACTCue *cue, uint8_t type)
 {
-    if (cue->parentBank->parentEngine->notifications & flag)
+    if (cue->parentBank->parentEngine->notifications & (1u << type))
     {
         FACTNotification note;
 
@@ -933,7 +886,7 @@ void FACT_INTERNAL_DestroySound(FACTSoundInstance *sound)
 		sound->parentCue->state &= ~(FACT_STATE_PLAYING | FACT_STATE_PAUSED | FACT_STATE_STOPPING);
 		sound->parentCue->data->instanceCount -= 1;
 
-		FACT_INTERNAL_SendCueNotification(sound->parentCue, NOTIFY_CUESTOP, FACTNOTIFICATIONTYPE_CUESTOP);
+		FACT_INTERNAL_SendCueNotification(sound->parentCue, FACTNOTIFICATIONTYPE_CUESTOP);
 	}
 	sound->parentCue->parentBank->parentEngine->pFree(sound);
 }
@@ -1027,32 +980,29 @@ float FACT_INTERNAL_CalculateRPC(
 			const float deltaX = (var - rpc->points[i].x);
 			const float deltaXNormalized = deltaX / maxX;
 
-			if (rpc->points[i].type == 0) /* Linear */
+			switch (rpc->points[i].type)
 			{
-				result += maxY * deltaXNormalized;
-			}
-			else if (rpc->points[i].type == 1) /* Fast */
-			{
-				result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_powf(deltaXNormalized, 1.0f / 1.5f), 1.5f));
-			}
-			else if (rpc->points[i].type == 2) /* Slow */
-			{
-				result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_powf(deltaXNormalized, 1.5f), 1.0f / 1.5f));
-			}
-			else if (rpc->points[i].type == 3) /* SinCos */
-			{
-				if (maxY > 0.0f)
-				{
-					result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_sqrtf(deltaXNormalized), 2.0f));
-				}
-				else
-				{
-					result += maxY * (1.0f - FAudio_sqrtf(1.0f - FAudio_powf(deltaXNormalized, 2.0f)));
-				}
-			}
-			else
-			{
-				FAudio_assert(0 && "Unrecognized curve type!");
+				case RPC_POINT_TYPE_LINEAR:
+					result += maxY * deltaXNormalized;
+					break;
+
+				case RPC_POINT_TYPE_FAST:
+					result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_powf(deltaXNormalized, 1.0f / 1.5f), 1.5f));
+					break;
+
+				case RPC_POINT_TYPE_SLOW:
+					result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_powf(deltaXNormalized, 1.5f), 1.0f / 1.5f));
+					break;
+
+				case RPC_POINT_TYPE_SINCOS:
+					if (maxY > 0.0f)
+						result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_sqrtf(deltaXNormalized), 2.0f));
+					else
+						result += maxY * (1.0f - FAudio_sqrtf(1.0f - FAudio_powf(deltaXNormalized, 2.0f)));
+					break;
+
+				default:
+					FAudio_assert(0 && "Unrecognized curve type!");
 			}
 
 			break;
@@ -1087,7 +1037,7 @@ void FACT_INTERNAL_UpdateRPCs(
 				engine,
 				codes[i]
 			);
-			if (engine->variables[rpc->variable].accessibility & 0x04)
+			if (engine->variables[rpc->variable].accessibility & ACCESSIBILITY_CUE)
 			{
 				if (FAudio_strcmp(
 					engine->variableNames[rpc->variable],
@@ -1170,7 +1120,7 @@ void FACT_INTERNAL_UpdateEngine(FACTAudioEngine *engine)
 		if (engine->rpcs[i].parameter >= RPC_PARAMETER_COUNT)
 		{
 			/* FIXME: Why did I make this global vars only...? */
-			if (!(engine->variables[engine->rpcs[i].variable].accessibility & 0x04))
+			if (!(engine->variables[engine->rpcs[i].variable].accessibility & ACCESSIBILITY_CUE))
 			{
 				for (j = 0; j < engine->dspPresetCount; j += 1)
 				{
@@ -1233,7 +1183,7 @@ void FACT_INTERNAL_UpdateEngine(FACTAudioEngine *engine)
 static inline void FACT_INTERNAL_StopTrack(
 	FACTTrack *track,
 	FACTTrackInstance *trackInst,
-	uint8_t immediate
+	bool immediate
 ) {
 	uint8_t i;
 
@@ -1257,7 +1207,7 @@ static inline void FACT_INTERNAL_StopTrack(
 	for (i = 0; i < track->eventCount; i += 1)
 	{
 		trackInst->events[i].loopCount = 0;
-		trackInst->events[i].finished = 1;
+		trackInst->events[i].finished = true;
 	}
 }
 
@@ -1271,25 +1221,20 @@ void FACT_INTERNAL_ActivateEvent(
 ) {
 	uint8_t i;
 	float svResult;
-	uint8_t skipLoopCheck = 0;
+	bool skipLoopCheck = false;
 
 	/* STOP */
 	if (evt->type == FACTEVENT_STOP)
 	{
-		/* Stop Cue */
-		if (evt->stop.flags & 0x02)
+		if (evt->stop.flags & EVENT_STOP_CUE)
 		{
-			if (	evt->stop.flags & 0x01 ||
+			if (evt->stop.flags & EVENT_STOP_IMMEDIATE ||
 				(	sound->parentCue->parentBank->cues[sound->parentCue->index].fadeOutMS == 0 &&
 					sound->parentCue->maxRpcReleaseTime == 0	)	)
 			{
 				for (i = 0; i < sound->sound->trackCount; i += 1)
 				{
-					FACT_INTERNAL_StopTrack(
-						&sound->sound->tracks[i],
-						&sound->tracks[i],
-						1
-					);
+					FACT_INTERNAL_StopTrack(&sound->sound->tracks[i], &sound->tracks[i], true);
 				}
 			}
 			else
@@ -1322,7 +1267,7 @@ void FACT_INTERNAL_ActivateEvent(
 			FACT_INTERNAL_StopTrack(
 				track,
 				trackInst,
-				evt->stop.flags & 0x01
+				evt->stop.flags & EVENT_STOP_IMMEDIATE
 			);
 		}
 	}
@@ -1350,8 +1295,7 @@ void FACT_INTERNAL_ActivateEvent(
 			evt->type == FACTEVENT_VOLUME ||
 			evt->type == FACTEVENT_VOLUMEREPEATING	)
 	{
-		/* Ramp/Equation */
-		if (evt->value.settings & 0x01)
+		if (evt->value.settings & EVENT_SETTINGS_RAMP)
 		{
 			/* FIXME: Incorporate 2nd derivative into the interpolated pitch (slopeDelta) */
 			skipLoopCheck = elapsed <= (evtInst->timestamp + evt->value.ramp.duration);
@@ -1372,12 +1316,11 @@ void FACT_INTERNAL_ActivateEvent(
 		}
 		else
 		{
-			/* Value/Random */
-			if (evt->value.equation.flags & 0x04)
+			if (evt->value.equation.flags & EVENT_EQUATION_VALUE)
 			{
 				svResult = evt->value.equation.value1;
 			}
-			else if (evt->value.equation.flags & 0x08)
+			else if (evt->value.equation.flags & EVENT_EQUATION_RANDOM)
 			{
 				svResult = evt->value.equation.value1 + FACT_INTERNAL_rng() * (
 					evt->value.equation.value2 -
@@ -1390,8 +1333,7 @@ void FACT_INTERNAL_ActivateEvent(
 				FAudio_assert(0 && "Equation flags?");
 			}
 
-			/* Add/Replace */
-			if (evt->value.equation.flags & 0x01)
+			if (evt->value.equation.flags & EVENT_EQUATION_ADD)
 			{
 				if(	evt->type == FACTEVENT_PITCH ||
 					evt->type == FACTEVENT_PITCHREPEATING	)
@@ -1460,17 +1402,17 @@ void FACT_INTERNAL_ActivateEvent(
 	}
 
 	/* If we made it here, we're done! */
-	evtInst->finished = 1;
+	evtInst->finished = true;
 }
 
-uint8_t FACT_INTERNAL_UpdateSound(FACTSoundInstance *sound, uint32_t timestamp)
+bool FACT_INTERNAL_UpdateSound(FACTSoundInstance *sound, uint32_t timestamp)
 {
 	uint8_t i, j;
 	uint32_t waveState;
 	uint32_t elapsedCue;
 	FACTEventInstance *evtInst;
 	FAudioFilterParameters filterParams;
-	uint8_t finished = 1;
+	bool finished = true;
 
 	/* Instance limiting Fade in/out */
 	float fadeVolume;
@@ -1497,7 +1439,7 @@ uint8_t FACT_INTERNAL_UpdateSound(FACTSoundInstance *sound, uint32_t timestamp)
 		if ((timestamp - sound->fadeStart) >= sound->fadeTarget)
 		{
 			/* We've faded out! */
-			return 1;
+			return true;
 		}
 		fadeVolume = 1.0f - (
 			(float) (timestamp - sound->fadeStart) /
@@ -1509,7 +1451,7 @@ uint8_t FACT_INTERNAL_UpdateSound(FACTSoundInstance *sound, uint32_t timestamp)
 		if ((timestamp - sound->fadeStart) >= sound->fadeTarget)
 		{
 			/* We've faded out! */
-			return 1;
+			return true;
 		}
 		fadeVolume = 1.0f;
 	}
@@ -1558,7 +1500,7 @@ uint8_t FACT_INTERNAL_UpdateSound(FACTSoundInstance *sound, uint32_t timestamp)
 			if (!evtInst->finished)
 			{
 				/* Cue's not done yet...! */
-				finished = 0;
+				finished = false;
 
 				/* Trigger events at the right time */
 				if (elapsedCue >= evtInst->timestamp)
@@ -1580,7 +1522,7 @@ uint8_t FACT_INTERNAL_UpdateSound(FACTSoundInstance *sound, uint32_t timestamp)
 		{
 			continue;
 		}
-		finished = 0;
+		finished = false;
 
 		/* Clear out Waves as they finish */
 		FACTWave_GetState(
@@ -1668,10 +1610,10 @@ void FACT_INTERNAL_UpdateCue(FACTCue *cue)
 	FACTSoundInstance *sound;
 
 	/* Interactive sound selection */
-	if (!(cue->data->flags & 0x04) && cue->variation && cue->variation->flags == 3)
+	if (!(cue->data->flags & CUE_FLAG_SINGLE_SOUND) && cue->variation && cue->variation->type == VARIATION_TABLE_TYPE_INTERACTIVE)
 	{
 		/* Interactive */
-		if (cue->parentBank->parentEngine->variables[cue->variation->variable].accessibility & 0x04)
+		if (cue->parentBank->parentEngine->variables[cue->variation->variable].accessibility & ACCESSIBILITY_CUE)
 		{
 			FACTCue_GetVariable(
 				cue,
@@ -1836,7 +1778,7 @@ void FACT_INTERNAL_OnBufferEnd(FAudioVoiceCallback *callback, void* pContext)
 	if (c->wave->loopCount > 0 && entry->LoopRegion.dwTotalSamples > 0)
 	{
 		length = entry->LoopRegion.dwStartSample + entry->LoopRegion.dwTotalSamples;
-		if (entry->Format.wFormatTag == 0x0)
+		if (entry->Format.wFormatTag == FACT_WAVEBANKMINIFORMAT_TAG_PCM)
 		{
 			length = (
 				length *
@@ -1844,7 +1786,7 @@ void FACT_INTERNAL_OnBufferEnd(FAudioVoiceCallback *callback, void* pContext)
 				(1 << entry->Format.wBitsPerSample)
 			);
 		}
-		else if (entry->Format.wFormatTag == 0x2)
+		else if (entry->Format.wFormatTag == FACT_WAVEBANKMINIFORMAT_TAG_ADPCM)
 		{
 			length = (
 				length /
@@ -1909,7 +1851,7 @@ void FACT_INTERNAL_OnBufferEnd(FAudioVoiceCallback *callback, void* pContext)
 			c->wave->streamOffset = entry->PlayRegion.dwOffset;
 
 			/* Loop start */
-			if (entry->Format.wFormatTag == 0x0)
+			if (entry->Format.wFormatTag == FACT_WAVEBANKMINIFORMAT_TAG_PCM)
 			{
 				c->wave->streamOffset += (
 					entry->LoopRegion.dwStartSample *
@@ -1917,7 +1859,7 @@ void FACT_INTERNAL_OnBufferEnd(FAudioVoiceCallback *callback, void* pContext)
 					(1 << entry->Format.wBitsPerSample)
 				);
 			}
-			else if (entry->Format.wFormatTag == 0x2)
+			else if (entry->Format.wFormatTag == FACT_WAVEBANKMINIFORMAT_TAG_ADPCM)
 			{
 				c->wave->streamOffset += (
 					entry->LoopRegion.dwStartSample /
@@ -1943,7 +1885,7 @@ void FACT_INTERNAL_OnBufferEnd(FAudioVoiceCallback *callback, void* pContext)
 	buffer.pContext = NULL;
 
 	/* Submit, finally. */
-	if (entry->Format.wFormatTag == 0x3)
+	if (entry->Format.wFormatTag == FACT_WAVEBANKMINIFORMAT_TAG_WMA)
 	{
 		bufferWMA.pDecodedPacketCumulativeBytes =
 			c->wave->parentBank->seekTables[c->wave->index].entries;
@@ -2020,7 +1962,7 @@ int32_t FACTCALL FACT_INTERNAL_DefaultGetOverlappedResult(
 /* Parsing functions */
 
 #define READ_FUNC(type, size, bitsize, suffix) \
-	static inline type read_##suffix(uint8_t **ptr, const uint8_t swapendian) \
+	static inline type read_##suffix(uint8_t **ptr, const bool swapendian) \
 	{ \
 		type result = *((type*) *ptr); \
 		*ptr += size; \
@@ -2039,7 +1981,7 @@ READ_FUNC(uint16_t, 2, 16, u16)
 READ_FUNC(uint32_t, 4, 32, u32)
 READ_FUNC(int16_t, 2, 16, s16)
 READ_FUNC(int32_t, 4, 32, s32)
-static inline float read_f32(uint8_t **ptr, const uint8_t swapendian)
+static inline float read_f32(uint8_t **ptr, const bool swapendian)
 {
 	float result = *((float*) *ptr);
 	*ptr += 4;
@@ -2078,10 +2020,10 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 			dspParameterOffset;
 	uint16_t blob1Count, blob2Count, tool;
 	uint8_t version;
-	uint8_t se;
 	uint32_t magic;
 	size_t memsize;
 	uint16_t i, j;
+	bool se;
 
 	uint8_t *ptr = (uint8_t*) pParams->pGlobalSettingsBuffer;
 	uint8_t *start = ptr;
@@ -2090,18 +2032,18 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 	se = magic == 0x58475346; /* Swap Endian */
 	if (magic != 0x46534758 && magic != 0x58475346) /* 'XGSF' */
 	{
-		return -1; /* TODO: NOT XACT FILE */
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	if (!FACT_INTERNAL_SupportedContent(read_u16(&ptr, se)))
 	{
-		return -2;
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	tool = read_u16(&ptr, se); /* Tool version */
 	if (tool != 42)
 	{
-		return -3;
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	ptr += 2; /* Unknown value */
@@ -2114,7 +2056,7 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 	if (	version != 3 &&
 		version != 7	)
 	{
-		return -4; /* TODO: VERSION TOO OLD */
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	/* Object counts */
@@ -2140,7 +2082,7 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 	dspParameterOffset = read_u32(&ptr, se);
 
 	/* Category data */
-	FAudio_assert((ptr - start) == categoryOffset);
+	ptr = start + categoryOffset;
 	pEngine->categories = (FACTAudioCategory*) pEngine->pMalloc(
 		sizeof(FACTAudioCategory) * pEngine->categoryCount
 	);
@@ -2160,7 +2102,7 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 	}
 
 	/* Variable data */
-	FAudio_assert((ptr - start) == variableOffset);
+	ptr = start + variableOffset;
 	pEngine->variables = (FACTVariable*) pEngine->pMalloc(
 		sizeof(FACTVariable) * pEngine->variableCount
 	);
@@ -2184,7 +2126,7 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 	/* RPC data */
 	if (pEngine->rpcCount > 0)
 	{
-		FAudio_assert((ptr - start) == rpcOffset);
+		ptr = start + rpcOffset;
 		pEngine->rpcs = (FACTRPC*) pEngine->pMalloc(
 			sizeof(FACTRPC) *
 			pEngine->rpcCount
@@ -2215,7 +2157,7 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 	/* DSP Preset data */
 	if (pEngine->dspPresetCount > 0)
 	{
-		FAudio_assert((ptr - start) == dspPresetOffset);
+		ptr = start + dspPresetOffset;
 		pEngine->dspPresets = (FACTDSPPreset*) pEngine->pMalloc(
 			sizeof(FACTDSPPreset) *
 			pEngine->dspPresetCount
@@ -2237,7 +2179,7 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 		}
 
 		/* DSP Parameter data */
-		FAudio_assert((ptr - start) == dspParameterOffset);
+		ptr = start + dspParameterOffset;
 		for (i = 0; i < pEngine->dspPresetCount; i += 1)
 		{
 			for (j = 0; j < pEngine->dspPresets[i].parameterCount; j += 1)
@@ -2251,48 +2193,50 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 		}
 	}
 
-	/* Blob #1, no idea what this is... */
-	FAudio_assert((ptr - start) == blob1Offset);
-	ptr += blob1Count * 2;
-
-	/* Category Name Index data */
-	FAudio_assert((ptr - start) == categoryNameIndexOffset);
-	ptr += pEngine->categoryCount * 6; /* FIXME: index as assert value? */
-
 	/* Category Name data */
-	FAudio_assert((ptr - start) == categoryNameOffset);
 	pEngine->categoryNames = (char**) pEngine->pMalloc(
 		sizeof(char*) *
 		pEngine->categoryCount
 	);
 	for (i = 0; i < pEngine->categoryCount; i += 1)
 	{
+		uint8_t *offset_ptr = start + categoryNameIndexOffset + (i * 6);
+		uint16_t unknown;
+
+		ptr = start + read_u32(&offset_ptr, se);
+		unknown = read_u16(&offset_ptr, se);
+
+#if 0 /* FIXME: Cattle Country trips this, so we can maybe figure this out */
+		if (unknown != 0xff)
+			FAudio_Log("Category Names: Ignoring unknown value.\n");
+#endif
+
 		memsize = FAudio_strlen((char*) ptr) + 1; /* Dastardly! */
 		pEngine->categoryNames[i] = (char*) pEngine->pMalloc(memsize);
 		FAudio_memcpy(pEngine->categoryNames[i], ptr, memsize);
-		ptr += memsize;
 	}
 
-	/* Blob #2, no idea what this is... */
-	FAudio_assert((ptr - start) == blob2Offset);
-	ptr += blob2Count * 2;
-
-	/* Variable Name Index data */
-	FAudio_assert((ptr - start) == variableNameIndexOffset);
-	ptr += pEngine->variableCount * 6; /* FIXME: index as assert value? */
-
 	/* Variable Name data */
-	FAudio_assert((ptr - start) == variableNameOffset);
 	pEngine->variableNames = (char**) pEngine->pMalloc(
 		sizeof(char*) *
 		pEngine->variableCount
 	);
 	for (i = 0; i < pEngine->variableCount; i += 1)
 	{
+		uint8_t *offset_ptr = start + variableNameIndexOffset + (i * 6);
+		uint16_t unknown;
+
+		ptr = start + read_u32(&offset_ptr, se);
+		unknown = read_u16(&offset_ptr, se);
+
+#if 0 /* FIXME: Cattle Country trips this, so we can maybe figure this out */
+		if (unknown != 0xff)
+			FAudio_Log("Variable Names: Ignoring unknown value.\n");
+#endif
+
 		memsize = FAudio_strlen((char*) ptr) + 1; /* Dastardly! */
 		pEngine->variableNames[i] = (char*) pEngine->pMalloc(memsize);
 		FAudio_memcpy(pEngine->variableNames[i], ptr, memsize);
-		ptr += memsize;
 	}
 
 	/* Store this pointer in case we're asked to free it */
@@ -2301,14 +2245,12 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 		pEngine->settings = pParams->pGlobalSettingsBuffer;
 	}
 
-	/* Finally. */
-	FAudio_assert((ptr - start) == pParams->globalSettingsBufferSize);
 	return 0;
 }
 
 void FACT_INTERNAL_ParseTrackEvents(
 	uint8_t **ptr,
-	uint8_t se,
+	bool se,
 	FACTTrack *track,
 	FAudioMallocFunc pMalloc
 ) {
@@ -2342,7 +2284,7 @@ void FACT_INTERNAL_ParseTrackEvents(
 		else if (EVTTYPE(FACTEVENT_PLAYWAVE))
 		{
 			/* Basic Wave */
-			track->events[i].wave.isComplex = 0;
+			track->events[i].wave.isComplex = false;
 			track->events[i].wave.flags = read_u8(ptr);
 			track->events[i].wave.simple.track = read_u16(ptr, se);
 			track->events[i].wave.simple.wavebank = read_u8(ptr);
@@ -2355,8 +2297,10 @@ void FACT_INTERNAL_ParseTrackEvents(
 		}
 		else if (EVTTYPE(FACTEVENT_PLAYWAVETRACKVARIATION))
 		{
+			enum variation_table_type table_type;
+
 			/* Complex Wave */
-			track->events[i].wave.isComplex = 1;
+			track->events[i].wave.isComplex = true;
 			track->events[i].wave.flags = read_u8(ptr);
 			track->events[i].wave.loopCount = read_u8(ptr);
 			track->events[i].wave.position = read_u16(ptr, se);
@@ -2365,7 +2309,11 @@ void FACT_INTERNAL_ParseTrackEvents(
 			/* Track Variation */
 			evtInfo = read_u32(ptr, se);
 			track->events[i].wave.complex.trackCount = evtInfo & 0xFFFF;
-			track->events[i].wave.complex.variation = (evtInfo >> 16) & 0xFFFF;
+			track->events[i].wave.complex.variation_type = (evtInfo >> 16) & VARIATION_TYPE_MASK;
+			table_type = (evtInfo >> (16 + 3)) & VARIATION_TABLE_TYPE_MASK;
+			if (table_type != VARIATION_TABLE_TYPE_WAVE)
+				FAudio_Log("Unexpected variation table type.\n");
+			track->events[i].wave.complex.has_track_variation = (evtInfo >> 16) & EVENT_WAVE_HAS_TRACK_VARIATION;
 			*ptr += 4; /* Unknown values */
 			track->events[i].wave.complex.tracks = (uint16_t*) pMalloc(
 				sizeof(uint16_t) *
@@ -2396,7 +2344,7 @@ void FACT_INTERNAL_ParseTrackEvents(
 		else if (EVTTYPE(FACTEVENT_PLAYWAVEEFFECTVARIATION))
 		{
 			/* Basic Wave */
-			track->events[i].wave.isComplex = 0;
+			track->events[i].wave.isComplex = false;
 			track->events[i].wave.flags = read_u8(ptr);
 			track->events[i].wave.simple.track = read_u16(ptr, se);
 			track->events[i].wave.simple.wavebank = read_u8(ptr);
@@ -2417,8 +2365,10 @@ void FACT_INTERNAL_ParseTrackEvents(
 		}
 		else if (EVTTYPE(FACTEVENT_PLAYWAVETRACKEFFECTVARIATION))
 		{
+			enum variation_table_type table_type;
+
 			/* Complex Wave */
-			track->events[i].wave.isComplex = 1;
+			track->events[i].wave.isComplex = true;
 			track->events[i].wave.flags = read_u8(ptr);
 			track->events[i].wave.loopCount = read_u8(ptr);
 			track->events[i].wave.position = read_u16(ptr, se);
@@ -2438,7 +2388,11 @@ void FACT_INTERNAL_ParseTrackEvents(
 			/* Track Variation */
 			evtInfo = read_u32(ptr, se);
 			track->events[i].wave.complex.trackCount = evtInfo & 0xFFFF;
-			track->events[i].wave.complex.variation = (evtInfo >> 16) & 0xFFFF;
+			track->events[i].wave.complex.variation_type = (evtInfo >> 16) & VARIATION_TYPE_MASK;
+			table_type = (evtInfo >> (16 + 3)) & VARIATION_TABLE_TYPE_MASK;
+			if (table_type != VARIATION_TABLE_TYPE_WAVE)
+				FAudio_Log("Unexpected variation table type.\n");
+			track->events[i].wave.complex.has_track_variation = (evtInfo >> 16) & EVENT_WAVE_HAS_TRACK_VARIATION;
 			*ptr += 4; /* Unknown values */
 			track->events[i].wave.complex.tracks = (uint16_t*) pMalloc(
 				sizeof(uint16_t) *
@@ -2469,7 +2423,7 @@ void FACT_INTERNAL_ParseTrackEvents(
 				EVTTYPE(FACTEVENT_VOLUMEREPEATING)	)
 		{
 			track->events[i].value.settings = read_u8(ptr);
-			if (track->events[i].value.settings & 1) /* Ramp */
+			if (track->events[i].value.settings & EVENT_SETTINGS_RAMP)
 			{
 				track->events[i].value.repeats = 0;
 				track->events[i].value.ramp.initialValue = read_f32(ptr, se);
@@ -2482,7 +2436,7 @@ void FACT_INTERNAL_ParseTrackEvents(
 				track->events[i].value.equation.flags = read_u8(ptr);
 
 				/* SetValue, SetRandomValue, anything else? */
-				FAudio_assert(track->events[i].value.equation.flags & 0x0C);
+				FAudio_assert(track->events[i].value.equation.flags & (EVENT_EQUATION_RANDOM | EVENT_EQUATION_VALUE));
 
 				track->events[i].value.equation.value1 = read_f32(ptr, se);
 				track->events[i].value.equation.value2 = read_f32(ptr, se);
@@ -2552,23 +2506,23 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	uint8_t *start = ptr;
 
 	uint32_t magic = read_u32(&ptr, 0);
-	uint8_t se = magic == 0x5344424B; /* Swap Endian */
+	bool se = magic == 0x5344424B; /* Swap Endian */
 
 	if (magic != 0x4B424453 && magic != 0x5344424B)  /* 'SDBK' */
 	{
-		return -1; /* TODO: NOT XACT FILE */
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	contentVersion = read_u16(&ptr, se);
 	if (!FACT_INTERNAL_SupportedContent(contentVersion))
 	{
-		return -2;
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	tool = read_u16(&ptr, se); /* Tool version */
 	if (tool != 43)
 	{
-		return -3;
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	/* CRC, unused */
@@ -2589,7 +2543,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	sb = (FACTSoundBank*) pEngine->pMalloc(sizeof(FACTSoundBank));
 	sb->parentEngine = pEngine;
 	sb->cueList = NULL;
-	sb->notifyOnDestroy = 0;
+	sb->notifyOnDestroy = false;
 	sb->usercontext = NULL;
 
 	cueSimpleCount = read_u16(&ptr, se);
@@ -2627,7 +2581,6 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	ptr += 64;
 
 	/* WaveBank Name data */
-	FAudio_assert((ptr - start) == wavebankNameOffset);
 	ptr = start + wavebankNameOffset;
 	sb->wavebankNames = (char**) pEngine->pMalloc(
 		sizeof(char*) *
@@ -2642,7 +2595,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	}
 
 	/* Sound data */
-	FAudio_assert((ptr - start) == soundOffset);
+	ptr = start + soundOffset;
 	sb->sounds = (FACTSound*) pEngine->pMalloc(
 		sizeof(FACTSound) *
 		sb->soundCount
@@ -2663,8 +2616,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 		/* Length of sound entry, unused */
 		ptr += 2;
 
-		/* Simple/Complex Track data */
-		if (sb->sounds[i].flags & 0x01)
+		if (sb->sounds[i].flags & SOUND_FLAG_COMPLEX)
 		{
 			sb->sounds[i].trackCount = read_u8(&ptr);
 			memsize = sizeof(FACTTrack) * sb->sounds[i].trackCount;
@@ -2694,8 +2646,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 			sb->sounds[i].tracks[0].events[0].wave.simple.wavebank = read_u8(&ptr);
 		}
 
-		/* RPC Code data */
-		if (sb->sounds[i].flags & 0x0E)
+		if (sb->sounds[i].flags & SOUND_FLAG_RPC_MASK)
 		{
 			const uint16_t rpcDataLength = read_u16(&ptr, se);
 			ptrBookmark = ptr - 2;
@@ -2709,8 +2660,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 					loc.rpcCodes[k] = read_u32(&ptr, se); \
 				} \
 
-			/* Sound has attached RPCs */
-			if (sb->sounds[i].flags & 0x02)
+			if (sb->sounds[i].flags & SOUND_FLAG_HAS_RPC)
 			{
 				COPYRPCBLOCK(sb->sounds[i])
 			}
@@ -2720,8 +2670,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 				sb->sounds[i].rpcCodes = NULL;
 			}
 
-			/* Tracks have attached RPCs */
-			if (sb->sounds[i].flags & 0x04)
+			if (sb->sounds[i].flags & SOUND_FLAG_HAS_TRACK_RPC)
 			{
 				for (j = 0; j < sb->sounds[i].trackCount; j += 1)
 				{
@@ -2740,7 +2689,8 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 			#undef COPYRPCBLOCK
 
 			/* FIXME: Does 0x08 mean something for RPCs...? */
-			FAudio_assert((ptr - ptrBookmark) == rpcDataLength);
+			if (ptr - ptrBookmark != rpcDataLength)
+				FAudio_Log("Unexpected RPC data length.\n");
 		}
 		else
 		{
@@ -2753,8 +2703,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 			}
 		}
 
-		/* DSP Preset Code data */
-		if (sb->sounds[i].flags & 0x10)
+		if (sb->sounds[i].flags & SOUND_FLAG_HAS_DSP)
 		{
 			/* DSP presets length, unused */
 			ptr += 2;
@@ -2773,8 +2722,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 			sb->sounds[i].dspCodes = NULL;
 		}
 
-		/* Track data */
-		if (sb->sounds[i].flags & 0x01)
+		if (sb->sounds[i].flags & SOUND_FLAG_COMPLEX)
 		{
 			for (j = 0; j < sb->sounds[i].trackCount; j += 1)
 			{
@@ -2809,7 +2757,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 			/* All Track events are stored at the end of the block */
 			for (j = 0; j < sb->sounds[i].trackCount; j += 1)
 			{
-				FAudio_assert((ptr - start) == sb->sounds[i].tracks[j].code);
+				ptr = start + sb->sounds[i].tracks[j].code;
 				FACT_INTERNAL_ParseTrackEvents(
 					&ptr,
 					se,
@@ -2830,7 +2778,6 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	cur = 0;
 
 	/* Simple Cue data */
-	FAudio_assert(cueSimpleCount == 0 || (ptr - start) == cueSimpleOffset);
 	if (cueSimpleCount > 0)
 	{
 		ptr = start + cueSimpleOffset;
@@ -2843,13 +2790,12 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 			sb->cues[cur].instanceLimit = 0xFF;
 			sb->cues[cur].fadeInMS = 0;
 			sb->cues[cur].fadeOutMS = 0;
-			sb->cues[cur].maxInstanceBehavior = 0;
+			sb->cues[cur].maxInstanceBehavior = MAX_INSTANCE_BEHAVIOR_FAIL;
 			sb->cues[cur].instanceCount = 0;
 		}
 	}
 
 	/* Complex Cue data */
-	FAudio_assert(cueComplexCount == 0 || (ptr - start) == cueComplexOffset);
 	if (cueComplexCount > 0)
 	{
 		ptr = start + cueComplexOffset;
@@ -2870,7 +2816,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 			sb->cues[cur].maxInstanceBehavior = read_u8(&ptr) >> 3;
 			sb->cues[cur].instanceCount = 0;
 
-			if (!(sb->cues[cur].flags & 0x04))
+			if (!(sb->cues[cur].flags & CUE_FLAG_SINGLE_SOUND))
 			{
 				/* FIXME: Is this the only way to get this...? */
 				sb->variationCount += 1;
@@ -2886,7 +2832,6 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 	/* Variation data */
 	if (sb->variationCount > 0)
 	{
-		FAudio_assert((ptr - start) == variationOffset);
 		ptr = start + variationOffset;
 		sb->variations = (FACTVariationTable*) pEngine->pMalloc(
 			sizeof(FACTVariationTable) *
@@ -2907,7 +2852,7 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 		sb->variationCodes[i] = (uint32_t) (ptr - start);
 		entryCountAndFlags = read_u32(&ptr, se);
 		sb->variations[i].entryCount = entryCountAndFlags & 0xFFFF;
-		sb->variations[i].flags = (entryCountAndFlags >> (16 + 3)) & 0x07;
+		sb->variations[i].type = (entryCountAndFlags >> (16 + 3)) & 0x07;
 		ptr += 2; /* Unknown value */
 		sb->variations[i].variable = read_s16(&ptr, se);
 		memsize = sizeof(FACTVariation) * sb->variations[i].entryCount;
@@ -2916,63 +2861,59 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 		);
 		FAudio_zero(sb->variations[i].entries, memsize);
 
-		if (sb->variations[i].flags == 0)
+		switch (sb->variations[i].type)
 		{
-			/* Wave with byte min/max */
-			sb->variations[i].isComplex = 0;
-			for (j = 0; j < sb->variations[i].entryCount; j += 1)
-			{
-				sb->variations[i].entries[j].simple.track = read_u16(&ptr, se);
-				sb->variations[i].entries[j].simple.wavebank = read_u8(&ptr);
-				sb->variations[i].entries[j].minWeight = read_u8(&ptr) / 255.0f;
-				sb->variations[i].entries[j].maxWeight = read_u8(&ptr) / 255.0f;
-			}
-		}
-		else if (sb->variations[i].flags == 1)
-		{
-			/* Complex with byte min/max */
-			sb->variations[i].isComplex = 1;
-			for (j = 0; j < sb->variations[i].entryCount; j += 1)
-			{
-				sb->variations[i].entries[j].soundCode = read_u32(&ptr, se);
-				sb->variations[i].entries[j].minWeight = read_u8(&ptr) / 255.0f;
-				sb->variations[i].entries[j].maxWeight = read_u8(&ptr) / 255.0f;
-			}
-		}
-		else if (sb->variations[i].flags == 3)
-		{
-			/* Complex Interactive Variation with float min/max */
-			sb->variations[i].isComplex = 1;
-			for (j = 0; j < sb->variations[i].entryCount; j += 1)
-			{
-				sb->variations[i].entries[j].soundCode = read_u32(&ptr, se);
-				sb->variations[i].entries[j].minWeight = read_f32(&ptr, se);
-				sb->variations[i].entries[j].maxWeight = read_f32(&ptr, se);
-				sb->variations[i].entries[j].linger = read_u32(&ptr, se);
-			}
-		}
-		else if (sb->variations[i].flags == 4)
-		{
-			/* Compact Wave */
-			sb->variations[i].isComplex = 0;
-			for (j = 0; j < sb->variations[i].entryCount; j += 1)
-			{
-				sb->variations[i].entries[j].simple.track = read_u16(&ptr, se);
-				sb->variations[i].entries[j].simple.wavebank = read_u8(&ptr);
-				sb->variations[i].entries[j].minWeight = 0.0f;
-				sb->variations[i].entries[j].maxWeight = 1.0f;
-			}
-		}
-		else
-		{
-			FAudio_assert(0 && "Unknown variation type!");
+			case VARIATION_TABLE_TYPE_WAVE:
+				sb->variations[i].isComplex = false;
+				for (j = 0; j < sb->variations[i].entryCount; j += 1)
+				{
+					sb->variations[i].entries[j].simple.track = read_u16(&ptr, se);
+					sb->variations[i].entries[j].simple.wavebank = read_u8(&ptr);
+					sb->variations[i].entries[j].minWeight = read_u8(&ptr) / 255.0f;
+					sb->variations[i].entries[j].maxWeight = read_u8(&ptr) / 255.0f;
+				}
+				break;
+
+			case VARIATION_TABLE_TYPE_SOUND:
+				sb->variations[i].isComplex = true;
+				for (j = 0; j < sb->variations[i].entryCount; j += 1)
+				{
+					sb->variations[i].entries[j].soundCode = read_u32(&ptr, se);
+					sb->variations[i].entries[j].minWeight = read_u8(&ptr) / 255.0f;
+					sb->variations[i].entries[j].maxWeight = read_u8(&ptr) / 255.0f;
+				}
+				break;
+
+			case VARIATION_TABLE_TYPE_INTERACTIVE:
+				sb->variations[i].isComplex = true;
+				for (j = 0; j < sb->variations[i].entryCount; j += 1)
+				{
+					sb->variations[i].entries[j].soundCode = read_u32(&ptr, se);
+					sb->variations[i].entries[j].minWeight = read_f32(&ptr, se);
+					sb->variations[i].entries[j].maxWeight = read_f32(&ptr, se);
+					sb->variations[i].entries[j].linger = read_u32(&ptr, se);
+				}
+				break;
+
+			case VARIATION_TABLE_TYPE_COMPACT_WAVE:
+				sb->variations[i].isComplex = false;
+				for (j = 0; j < sb->variations[i].entryCount; j += 1)
+				{
+					sb->variations[i].entries[j].simple.track = read_u16(&ptr, se);
+					sb->variations[i].entries[j].simple.wavebank = read_u8(&ptr);
+					sb->variations[i].entries[j].minWeight = 0.0f;
+					sb->variations[i].entries[j].maxWeight = 1.0f;
+				}
+				break;
+
+			default:
+				FAudio_assert(0 && "Unknown variation type!");
 		}
 	}
 
 	/* Transition data */
 	if (sb->transitionCount > 0)
 	{
-		FAudio_assert((ptr - start) == transitionOffset);
 		ptr = start + transitionOffset;
 		sb->transitions = (FACTTransitionTable*) pEngine->pMalloc(
 			sizeof(FACTTransitionTable) *
@@ -3010,25 +2951,9 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 		}
 	}
 
-	/* Cue Hash data? No idea what this is... */
-	if (cueHashOffset != -1)
-	{
-		FAudio_assert((ptr - start) == cueHashOffset);
-		ptr += 2 * cueTotalAlign;
-	}
-
-	/* Cue Name Index data */
-	if (cueNameIndexOffset != -1)
-	{
-		FAudio_assert((ptr - start) == cueNameIndexOffset);
-		ptr = start + cueNameIndexOffset;
-		ptr += 6 * sb->cueCount; /* FIXME: index as assert value? */
-	}
-
 	/* Cue Name data */
 	if (cueNameOffset != -1)
 	{
-		FAudio_assert((ptr - start) == cueNameOffset);
 		ptr = start + cueNameOffset;
 		sb->cueNames = (char**) pEngine->pMalloc(
 			sizeof(char*) *
@@ -3036,10 +2961,20 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 		);
 		for (i = 0; i < sb->cueCount; i += 1)
 		{
+			uint8_t *offset_ptr = start + cueNameIndexOffset + (i * 6);
+			uint16_t unknown;
+
+			ptr = start + read_u32(&offset_ptr, se);
+			unknown = read_u16(&offset_ptr, se);
+
+#if 0 /* FIXME: Cattle Country trips this, so we can maybe figure this out */
+			if (unknown != 0xff)
+				FAudio_Log("Cue Names: Ignoring unknown value.\n");
+#endif
+
 			memsize = FAudio_strlen((char*) ptr) + 1;
 			sb->cueNames[i] = (char*) pEngine->pMalloc(memsize);
 			FAudio_memcpy(sb->cueNames[i], ptr, memsize);
-			ptr += memsize;
 		}
 	}
 	else
@@ -3055,8 +2990,6 @@ uint32_t FACT_INTERNAL_ParseSoundBank(
 		pEngine->pMalloc
 	);
 
-	/* Finally. */
-	FAudio_assert((ptr - start) == dwSize);
 	*ppSoundBank = sb;
 	return 0;
 }
@@ -3077,10 +3010,10 @@ uint32_t FACT_INTERNAL_ParseWaveBank(
 	uint32_t packetSize,
 	FACTReadFileCallback pRead,
 	FACTGetOverlappedResultCallback pOverlap,
-	uint16_t isStreaming,
+	bool isStreaming,
 	FACTWaveBank **ppWaveBank
 ) {
-	uint8_t se = 0; /* Swap Endian */
+	bool se; /* Swap Endian */
 	FACTWaveBank *wb;
 	size_t memsize;
 	uint32_t i, j;
@@ -3142,25 +3075,25 @@ uint32_t FACT_INTERNAL_ParseWaveBank(
 	}
 	if (header.dwSignature != 0x444E4257)
 	{
-		return -1; /* TODO: NOT XACT FILE */
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	/* We support all Wavebank versions - Restore when SoundBank support them also. */
 	/*if (!FACT_INTERNAL_SupportedContent(header.dwVersion))
 	{
-		return -2;
+		return FACTENGINE_E_INVALIDDATA;
 	}
 	*/
 	if (	header.dwVersion < FACT_CONTENT_VERSION_2_4 ||
 		header.dwVersion > FACT_CONTENT_VERSION	)
 	{
-		return -2;
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	if (	header.dwVersion > FACT_CONTENT_VERSION_2_4 &&
 		!FACT_INTERNAL_SupportedWBContent(header.dwHeaderVersion)	)
 	{
-		return -3;
+		return FACTENGINE_E_INVALIDDATA;
 	}
 
 	wb = (FACTWaveBank*) pEngine->pMalloc(sizeof(FACTWaveBank));
@@ -3169,7 +3102,7 @@ uint32_t FACT_INTERNAL_ParseWaveBank(
 	wb->waveLock = FAudio_PlatformCreateMutex();
 	wb->packetSize = packetSize;
 	wb->io = io;
-	wb->notifyOnDestroy = 0;
+	wb->notifyOnDestroy = false;
 	wb->usercontext = NULL;
 
 	/* WaveBank Data */
@@ -3271,7 +3204,7 @@ uint32_t FACT_INTERNAL_ParseWaveBank(
 			/* If it's in-memory big-endian PCM, swap! */
 			if (	se &&
 				!wb->streaming &&
-				wb->entries[i].Format.wFormatTag == 0x0 &&
+				wb->entries[i].Format.wFormatTag == FACT_WAVEBANKMINIFORMAT_TAG_PCM &&
 				wb->entries[i].Format.wBitsPerSample == 1	)
 			{
 				pcm = (uint16_t*) FAudio_memptr(

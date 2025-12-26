@@ -249,6 +249,7 @@ static void init_user(void)
 {
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
 
+    init_startup_info();
     shared_session_init();
     gdi_init();
     sysparams_init();
@@ -615,6 +616,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
                                    struct client_menu_name *client_menu_name )
 {
+    struct list drawables = LIST_INIT( drawables );
     CLASS *class = NULL;
 
     /* create the desktop window to trigger builtin class registration */
@@ -632,7 +634,7 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
     TRACE( "%p\n", class );
 
     user_lock();
-    if (class->dce) free_dce( class->dce, 0 );
+    if (class->dce) free_dce( class->dce, 0, &drawables );
     list_remove( &class->entry );
     if (class->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         NtGdiDeleteObjectApp( class->hbrBackground );
@@ -640,6 +642,8 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
     NtUserDestroyCursor( class->hIconSmIntern, 0 );
     free( class );
     user_unlock();
+
+    release_opengl_drawables( &drawables );
     return TRUE;
 }
 

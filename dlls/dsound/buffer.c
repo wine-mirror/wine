@@ -417,7 +417,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(IDirectSoundBuff
 
 	ReleaseSRWLockShared(&This->lock);
 
-	TRACE("playpos = %ld, writepos = %ld, buflen=%ld (%p, time=%ld)\n",
+	TRACE("playpos = %ld, writepos = %ld, buflen=%ld (%p, time=%lu)\n",
 		playpos?*playpos:-1, writepos?*writepos:-1, This->buflen, This, GetTickCount());
 
 	return DS_OK;
@@ -491,7 +491,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(IDirectSoundBuffer8 *iface, DW
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
 	HRESULT hres = DS_OK;
 
-        TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %ld\n", This, writecursor, writebytes, lplpaudioptr1,
+        TRACE("(%p,%lu,%lu,%p,%p,%p,%p,0x%08lx) at %lu\n", This, writecursor, writebytes, lplpaudioptr1,
                 audiobytes1, lplpaudioptr2, audiobytes2, flags, GetTickCount());
 
         if (!audiobytes1 || !lplpaudioptr1)
@@ -539,9 +539,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(IDirectSoundBuffer8 *iface, DW
 			commit_next_chunk(This);
 		}
 		*audiobytes1 = writebytes;
-		TRACE("Locked %p(%li bytes) and %p(%li bytes) writecursor=%ld\n",
+		TRACE("Locked %p (%lu bytes) and %p (%lu bytes) writecursor=%lu\n",
 		  *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL, audiobytes2 ? *audiobytes2: 0, writecursor);
-		TRACE("->%ld.0\n",writebytes);
+		TRACE("->%lu\n", writebytes);
 		This->buffer->lockedbytes += writebytes;
 	} else {
 		DWORD remainder = writebytes + writecursor - This->buflen;
@@ -562,7 +562,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(IDirectSoundBuffer8 *iface, DW
 			WARN("Overwriting mixing position, case 3\n");
 			commit_next_chunk(This);
 		}
-		TRACE("Locked %p(%li bytes) and %p(%li bytes) writecursor=%ld\n", *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL, audiobytes2 ? *audiobytes2: 0, writecursor);
+		TRACE("Locked %p (%lu bytes) and %p (%lu bytes) writecursor=%lu\n",
+                      *(LPBYTE*)lplpaudioptr1, *audiobytes1, lplpaudioptr2 ? *(LPBYTE*)lplpaudioptr2 : NULL,
+                      audiobytes2 ? *audiobytes2: 0, writecursor);
 	}
 
 	ReleaseSRWLockShared(&This->lock);
@@ -655,7 +657,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(IDirectSoundBuffer8 *iface, 
         IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface), *iter;
 	HRESULT hres = DS_OK;
 
-	TRACE("(%p,%p,%ld,%p,%ld)\n", This,p1,x1,p2,x2);
+	TRACE("(%p,%p,%lu,%p,%lu)\n", This, p1, x1, p2, x2);
 
 	if (!p2)
 		x2 = 0;

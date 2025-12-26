@@ -988,8 +988,8 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
         break;
 
     case SC_MINIMIZE:
-        NtUserShowOwnedPopups( hwnd, FALSE );
         NtUserShowWindow( hwnd, SW_MINIMIZE );
+        NtUserShowOwnedPopups( hwnd, FALSE );
         break;
 
     case SC_MAXIMIZE:
@@ -2206,7 +2206,7 @@ static LRESULT handle_nc_lbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
                 top = parent;
             }
 
-            if (set_foreground_window( top, TRUE ) || (get_active_window() == top))
+            if (set_foreground_window( top, TRUE, FALSE ) || (get_active_window() == top))
                 send_message( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lparam );
             break;
         }
@@ -2945,7 +2945,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         break;
 
     case WM_STYLECHANGED:
-        if (wparam == GWL_STYLE && (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED))
+        if ((LONG)wparam == GWL_STYLE && (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED))
         {
             STYLESTRUCT *style = (STYLESTRUCT *)lparam;
             if ((style->styleOld ^ style->styleNew) & (WS_CAPTION|WS_THICKFRAME|WS_VSCROLL|WS_HSCROLL))

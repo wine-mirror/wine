@@ -70,56 +70,6 @@ struct metadata_stream
     const BYTE *start;
 };
 
-enum table
-{
-    TABLE_MODULE                 = 0x00,
-    TABLE_TYPEREF                = 0x01,
-    TABLE_TYPEDEF                = 0x02,
-    TABLE_FIELDPTR               = 0x03,
-    TABLE_FIELD                  = 0x04,
-    TABLE_METHODPTR              = 0x05,
-    TABLE_METHODDEF              = 0x06,
-    TABLE_PARAMPTR               = 0x07,
-    TABLE_PARAM                  = 0x08,
-    TABLE_INTERFACEIMPL          = 0x09,
-    TABLE_MEMBERREF              = 0x0a,
-    TABLE_CONSTANT               = 0x0b,
-    TABLE_CUSTOMATTRIBUTE        = 0x0c,
-    TABLE_FIELDMARSHAL           = 0x0d,
-    TABLE_DECLSECURITY           = 0x0e,
-    TABLE_CLASSLAYOUT            = 0x0f,
-    TABLE_FIELDLAYOUT            = 0x10,
-    TABLE_STANDALONESIG          = 0x11,
-    TABLE_EVENTMAP               = 0x12,
-    TABLE_EVENTPTR               = 0x13,
-    TABLE_EVENT                  = 0x14,
-    TABLE_PROPERTYMAP            = 0x15,
-    TABLE_PROPERTYPTR            = 0x16,
-    TABLE_PROPERTY               = 0x17,
-    TABLE_METHODSEMANTICS        = 0x18,
-    TABLE_METHODIMPL             = 0x19,
-    TABLE_MODULEREF              = 0x1a,
-    TABLE_TYPESPEC               = 0x1b,
-    TABLE_IMPLMAP                = 0x1c,
-    TABLE_FIELDRVA               = 0x1d,
-    TABLE_ENCLOG                 = 0x1e,
-    TABLE_ENCMAP                 = 0x1f,
-    TABLE_ASSEMBLY               = 0x20,
-    TABLE_ASSEMBLYPROCESSOR      = 0x21,
-    TABLE_ASSEMBLYOS             = 0x22,
-    TABLE_ASSEMBLYREF            = 0x23,
-    TABLE_ASSEMBLYREFPROCESSOR   = 0x24,
-    TABLE_ASSEMBLYREFOS          = 0x25,
-    TABLE_FILE                   = 0x26,
-    TABLE_EXPORTEDTYPE           = 0x27,
-    TABLE_MANIFESTRESOURCE       = 0x28,
-    TABLE_NESTEDCLASS            = 0x29,
-    TABLE_GENERICPARAM           = 0x2a,
-    TABLE_METHODSPEC             = 0x2b,
-    TABLE_GENERICPARAMCONSTRAINT = 0x2c,
-    TABLE_MAX                    = 0x2d
-};
-
 enum coded_idx_type
 {
     CT_TypeDefOrRef        = 64,
@@ -191,6 +141,7 @@ DEFINE_CODED_IDX(HasCustomAttribute,
                  TABLE_MEMBERREF,
                  TABLE_MODULE,
                  TABLE_PROPERTY,
+                 TABLE_DECLSECURITY,
                  TABLE_EVENT,
                  TABLE_STANDALONESIG,
                  TABLE_MODULEREF,
@@ -505,6 +456,7 @@ struct table_info
 
 struct assembly
 {
+    BOOL mapped;
     HANDLE file;
     HANDLE map;
     const BYTE *data;
@@ -563,7 +515,7 @@ static ULONG bit_width(ULONG n)
 {
     ULONG bits = 1;
 
-    for (n = n - 1; n; n >>= 1)
+    for (n = (n - 1) >> 1; n; n >>= 1)
         bits++;
     return bits;
 }
@@ -599,8 +551,9 @@ ULONG metadata_coded_value_as_token(ULONG table_idx, ULONG column_idx, ULONG val
     column = &table_schemas[table_idx]->columns[column_idx];
     assert(column->type == COLUMN_CODED_IDX);
 
-    tag_bits = bit_width(column->size.coded.len - 1);
+    tag_bits = bit_width(column->size.coded.len);
     table_mask = ((1UL << tag_bits) - 1);
+    assert((value & table_mask) < column->size.coded.len);
     return TokenFromRid((value & ~table_mask) >> tag_bits, TokenFromTable(column->size.coded.tables[value & table_mask]));
 }
 
@@ -652,13 +605,13 @@ static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
     for (i = 0; i < 64; i++)
     {
         if (!assembly_table_exists(assembly, i)) continue;
-        if (i >= TABLE_MAX) return E_INVALIDARG;
+        if (i >= TABLE_MAX) return CLDB_E_FILE_CORRUPT;
         assert(table_schemas[i]);
         num_tables++;
     }
 
     cur_table = tables_stream_start + offsetof(struct stream_tables_hdr, table_rows[num_tables]);
-    if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return E_INVALIDARG;
+    if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
 
     num_tables = 0;
     for (i = 0; i < TABLE_MAX; i++)
@@ -676,7 +629,7 @@ static HRESULT assembly_parse_metadata_tables(assembly_t *assembly)
         {
             table->start = cur_table;
             cur_table += (size_t)(assembly->tables[i].num_rows * table->row_size);
-            if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return E_INVALIDARG;
+            if ((UINT_PTR)(cur_table - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
         }
     }
     return S_OK;
@@ -693,12 +646,13 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
     UINT32 rva, num_sections, offset;
     UINT8 num_streams, i;
 
+    if (!assembly->size) return CLDB_E_NO_DATA;
     if (assembly->size < sizeof(IMAGE_DOS_HEADER) || dos_hdr->e_magic != IMAGE_DOS_SIGNATURE ||
         assembly->size < (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS32)))
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     nt_hdrs = (IMAGE_NT_HEADERS32 *)(assembly->data + dos_hdr->e_lfanew);
-    if (!(num_sections = nt_hdrs->FileHeader.NumberOfSections)) return E_INVALIDARG;
+    if (!(num_sections = nt_hdrs->FileHeader.NumberOfSections)) return CLDB_E_FILE_CORRUPT;
     switch (nt_hdrs->OptionalHeader.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
@@ -709,29 +663,29 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
     {
         const IMAGE_NT_HEADERS64 *hdr64 = (IMAGE_NT_HEADERS64 *)(assembly->data + dos_hdr->e_lfanew);
 
-        if (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64) > assembly->size) return E_INVALIDARG;
+        if (dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64) > assembly->size) return CLDB_E_FILE_CORRUPT;
         rva = hdr64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
         sections = (IMAGE_SECTION_HEADER *)(assembly->data + dos_hdr->e_lfanew + sizeof(IMAGE_NT_HEADERS64));
         break;
     }
     default:
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
     }
 
     if (!pe_rva_to_offset(sections, num_sections, rva, &offset) || offset + sizeof(IMAGE_COR20_HEADER) > assembly->size)
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     cor_hdr = (IMAGE_COR20_HEADER *)(assembly->data + offset);
-    if (cor_hdr->cb != sizeof(IMAGE_COR20_HEADER)) return E_INVALIDARG;
+    if (cor_hdr->cb != sizeof(IMAGE_COR20_HEADER)) return CLDB_E_FILE_CORRUPT;
     if (!(pe_rva_to_offset(sections, num_sections, cor_hdr->MetaData.VirtualAddress, &offset)) ||
         offset + sizeof(struct metadata_hdr) > assembly->size)
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     md_start = assembly->data + offset;
     md_hdr = (struct metadata_hdr *)md_start;
     if (md_hdr->signature != METADATA_MAGIC ||
         offset + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16) * 2 > assembly->size)
-        return E_INVALIDARG;
+        return CLDB_E_FILE_CORRUPT;
 
     num_streams = *(UINT8 *)(md_start + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16)); /* Flags */
     streams_cur = md_start + offsetof(struct metadata_hdr, version[md_hdr->length]) + sizeof(UINT16) * 2; /* Flags + Streams */
@@ -752,10 +706,10 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
             { "#GUID", 5, &assembly->stream_guids },
             { "#US", 3, &assembly->stream_user_strings }
         };
-        HRESULT hr = E_INVALIDARG;
+        HRESULT hr = CLDB_E_FILE_CORRUPT;
         int j;
 
-        if ((UINT_PTR)(streams_cur - assembly->data) > assembly->size) return E_INVALIDARG;
+        if ((UINT_PTR)(streams_cur - assembly->data) > assembly->size) return CLDB_E_FILE_CORRUPT;
         for (j = 0; j < ARRAY_SIZE(streams); j++)
         {
             if (!strncmp(streams[j].name, md_stream_hdr->name, streams[j].name_len))
@@ -784,10 +738,30 @@ static HRESULT assembly_parse_headers(assembly_t *assembly)
         ptr--;
     }
 
-    if (assembly->stream_tables.size < sizeof(struct stream_tables_hdr)) return E_INVALIDARG;
+    if (assembly->stream_tables.size < sizeof(struct stream_tables_hdr)) return CLDB_E_FILE_CORRUPT;
     assembly->tables_hdr = (struct stream_tables_hdr *)assembly->stream_tables.start;
 
     return assembly_parse_metadata_tables(assembly);
+}
+
+HRESULT assembly_open_from_data(const BYTE *data, ULONG data_size, assembly_t **ret)
+{
+    assembly_t *assembly;
+    HRESULT hr;
+
+    TRACE("(%p, %lu, %p)\n", data, data_size, ret);
+
+    if (!data) return E_FAIL;
+    if (!(assembly = calloc(1, sizeof(*assembly)))) return E_OUTOFMEMORY;
+
+    assembly->mapped = FALSE;
+    assembly->data = data;
+    assembly->size = data_size;
+    if (FAILED((hr = assembly_parse_headers(assembly))))
+        assembly_free(assembly);
+    else
+        *ret = assembly;
+    return hr;
 }
 
 HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **ret)
@@ -798,6 +772,8 @@ HRESULT assembly_open_from_file(const WCHAR *path, assembly_t **ret)
     TRACE("(%s, %p)\n", debugstr_w(path), ret);
 
     if (!(assembly = calloc(1, sizeof(*assembly)))) return E_OUTOFMEMORY;
+
+    assembly->mapped = TRUE;
     assembly->file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (assembly->file == INVALID_HANDLE_VALUE)
     {
@@ -835,9 +811,12 @@ void assembly_free(assembly_t *assembly)
     ULONG i;
 
     for (i = 0; i < TABLE_MAX; i++) free(assembly->tables[i].columns_size);
-    if (assembly->map) UnmapViewOfFile(assembly->map);
-    CloseHandle(assembly->map);
-    CloseHandle(assembly->file);
+    if (assembly->mapped)
+    {
+        if (assembly->data) UnmapViewOfFile(assembly->data);
+        CloseHandle(assembly->map);
+        CloseHandle(assembly->file);
+    }
     free(assembly);
 }
 
@@ -935,8 +914,9 @@ const char *assembly_get_string(const assembly_t *assembly, ULONG idx)
     return idx < assembly->stream_strings.size ? (const char *)&assembly->stream_strings.start[idx] : NULL;
 }
 
-static HRESULT decode_int(const BYTE *encoded, ULONG *val, ULONG *len)
+static BOOL decode_int(const BYTE *encoded, SIZE_T encoded_len, ULONG *val, ULONG *len)
 {
+    if (!encoded_len) return FALSE;
     if (!(encoded[0] & 0x80))
     {
         *len = 1;
@@ -944,28 +924,33 @@ static HRESULT decode_int(const BYTE *encoded, ULONG *val, ULONG *len)
     }
     else if (!(encoded[0] & 0x40))
     {
+        if (encoded_len < 2) return FALSE;
         *len = 2;
         *val = ((encoded[0] & ~0xc0) << 8) + encoded[1];
     }
     else if (!(encoded[0] & 0x20))
     {
+        if (encoded_len < 4) return FALSE;
         *len = 4;
         *val = ((encoded[0] & ~0xe0) << 24) + (encoded[1] << 16) + (encoded[2] << 8) + encoded[3];
     }
     else
-        return E_INVALIDARG;
-    return S_OK;
+        return FALSE;
+    return TRUE;
 }
 
-HRESULT assembly_get_blob(const assembly_t *assembly, ULONG idx, const BYTE **blob, ULONG *size)
+HRESULT assembly_get_blob(const assembly_t *assembly, ULONG idx, const BYTE **blob, ULONG *ret_size)
 {
+    ULONG size, size_len;
     const BYTE *ptr;
-    ULONG size_len;
-    HRESULT hr;
 
     if (idx >= assembly->stream_blobs.size) return E_INVALIDARG;
     ptr = assembly->stream_blobs.start + idx;
-    if (FAILED(hr = decode_int(ptr, size, &size_len))) return hr;
+    /* We can decode upto the end of the blobs stream. */
+    if (!decode_int(ptr, assembly->stream_blobs.size - idx, &size, &size_len) ||
+        ptr + size_len >= assembly->stream_blobs.start + assembly->stream_blobs.size)
+        return E_INVALIDARG;
+    *ret_size = size;
     *blob = ptr + size_len;
     return S_OK;
 }

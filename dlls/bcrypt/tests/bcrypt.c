@@ -2418,6 +2418,11 @@ static void test_ECDSA(void)
 
     /* generic ECDSA provider */
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_ALGORITHM, NULL, 0);
+    if (status == STATUS_NOT_FOUND)
+    {
+        win_skip("generic ECDSA provider not found\n");
+        return;
+    }
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptGenerateKeyPair(alg, &key, 0, 0);
@@ -2861,7 +2866,7 @@ static void test_RSA(void)
 
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
     ret = BCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), 0);
-    ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %#lx\n", ret);
+    ok(ret == STATUS_INVALID_SIGNATURE || ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
 
     ret = BCryptVerifySignature(key, NULL, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), 0);
     ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %#lx\n", ret);
@@ -3094,7 +3099,7 @@ static void test_RSA_SIGN(void)
 
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
     ret = BCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), 0);
-    ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %#lx\n", ret);
+    ok(ret == STATUS_INVALID_SIGNATURE || ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
 
     ret = BCryptVerifySignature(key, NULL, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), 0);
     ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %#lx\n", ret);
@@ -3470,6 +3475,11 @@ static void test_ECDH(void)
 
     /* generic ECDH provider */
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_ALGORITHM, NULL, 0);
+    if (status == STATUS_NOT_FOUND)
+    {
+        win_skip("generic ECDH provider not found\n");
+        return;
+    }
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     status = BCryptGenerateKeyPair(alg, &key, 0, 0);

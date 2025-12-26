@@ -256,7 +256,7 @@ static int fill_auth_identity( const sasl_interact_t *prompts, SEC_WINNT_AUTH_ID
 static ULONG get_key_size( CtxtHandle *ctx )
 {
     SecPkgContext_SessionKey key;
-    if (QueryContextAttributesA( ctx, SECPKG_ATTR_SESSION_KEY, &key )) return 0;
+    if (QueryContextAttributesW( ctx, SECPKG_ATTR_SESSION_KEY, &key )) return 0;
     FreeContextBuffer( key.SessionKey );
     return key.SessionKeyLength * 8;
 }
@@ -264,7 +264,7 @@ static ULONG get_key_size( CtxtHandle *ctx )
 static ULONG get_trailer_size( CtxtHandle *ctx )
 {
     SecPkgContext_Sizes sizes;
-    if (QueryContextAttributesA( ctx, SECPKG_ATTR_SIZES, &sizes )) return 0;
+    if (QueryContextAttributesW( ctx, SECPKG_ATTR_SIZES, &sizes )) return 0;
     return sizes.cbSecurityTrailer;
 }
 

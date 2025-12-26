@@ -78,20 +78,28 @@ static VkBool32 X11DRV_get_physical_device_presentation_support( struct vulkan_p
                                                                       default_visual.visual->visualid );
 }
 
-static const char *X11DRV_get_host_extension( const char *name )
+static void X11DRV_map_instance_extensions( struct vulkan_instance_extensions *extensions )
 {
-    if (!strcmp( name, "VK_KHR_win32_surface" )) return "VK_KHR_xlib_surface";
-    if (!strcmp( name, "VK_KHR_external_memory_win32" )) return "VK_KHR_external_memory_fd";
-    if (!strcmp( name, "VK_KHR_external_semaphore_win32" )) return "VK_KHR_external_semaphore_fd";
-    if (!strcmp( name, "VK_KHR_external_fence_win32" )) return "VK_KHR_external_fence_fd";
-    return name;
+    if (extensions->has_VK_KHR_win32_surface) extensions->has_VK_KHR_xlib_surface = 1;
+    if (extensions->has_VK_KHR_xlib_surface) extensions->has_VK_KHR_win32_surface = 1;
+}
+
+static void X11DRV_map_device_extensions( struct vulkan_device_extensions *extensions )
+{
+    if (extensions->has_VK_KHR_external_memory_win32) extensions->has_VK_KHR_external_memory_fd = 1;
+    if (extensions->has_VK_KHR_external_memory_fd) extensions->has_VK_KHR_external_memory_win32 = 1;
+    if (extensions->has_VK_KHR_external_semaphore_win32) extensions->has_VK_KHR_external_semaphore_fd = 1;
+    if (extensions->has_VK_KHR_external_semaphore_fd) extensions->has_VK_KHR_external_semaphore_win32 = 1;
+    if (extensions->has_VK_KHR_external_fence_win32) extensions->has_VK_KHR_external_fence_fd = 1;
+    if (extensions->has_VK_KHR_external_fence_fd) extensions->has_VK_KHR_external_fence_win32 = 1;
 }
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
     .p_get_physical_device_presentation_support = X11DRV_get_physical_device_presentation_support,
-    .p_get_host_extension = X11DRV_get_host_extension,
+    .p_map_instance_extensions = X11DRV_map_instance_extensions,
+    .p_map_device_extensions = X11DRV_map_device_extensions,
 };
 
 UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )

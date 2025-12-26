@@ -112,6 +112,7 @@ typedef struct _CMD_FOR_CONTROL
 typedef struct _CMD_NODE
 {
     CMD_OPERATOR      op;            /* operator */
+    BOOL              do_echo;
     CMD_REDIRECTION  *redirects;     /* Redirections */
     union
     {
@@ -482,3 +483,4 @@ extern WCHAR version_string[];
 #define WCMD_ENDOFLINE        1048
 #define WCMD_ENDOFFILE        1049
 #define WCMD_NUMCOPIED        1050
+#define WCMD_NOCOPYTOSELF     1051

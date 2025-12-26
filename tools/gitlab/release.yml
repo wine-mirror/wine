@@ -11,9 +11,9 @@ release-vars:
   script:
     - version=$(expr "$CI_COMMIT_TAG" ':' 'wine-\(.*\)')
     - test -n "$version" || exit 1
-    - major=$(expr "$version" ':' '\([0-9]\+\.\)')
-    - minor=$(expr "$version" ':' '[0-9]\+\.\([0-9]\+\)')
-    - test "$minor" -eq 0 || minor=x
+    - major=$(expr "$version" ':' '\([0-9]\+\)\.')
+    - minor=$(expr "$version" ':' '[0-9]\+\(\.[0-9]\+\)')
+    - test "$minor" = ".0" || minor=".x"
     - |
       cat <<EOF > vars.env
       RELEASE_VERSION=$version

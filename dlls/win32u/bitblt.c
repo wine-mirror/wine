@@ -857,6 +857,7 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
     int oldStretchMode;
     DIBSECTION dib;
     DC *dc_src;
+    DC *dc_work;
 
     if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
         TRACE("Cannot mirror\n");
@@ -890,6 +891,11 @@ BOOL WINAPI NtGdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDes
     }
     else bmpWork = NtGdiCreateCompatibleBitmap( hdcDest, widthDest, heightDest );
     oldWork = NtGdiSelectBitmap(hdcWork, bmpWork);
+
+    if (!(dc_work = get_dc_ptr(hdcWork))) goto error;
+    dc_work->attr->stretch_blt_mode = COLORONCOLOR;
+    release_dc_ptr( dc_work );
+
     if (!NtGdiStretchBlt( hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc,
                           widthSrc, heightSrc, SRCCOPY, 0 ))
     {

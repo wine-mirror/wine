@@ -102,7 +102,7 @@ static pthread_mutex_t error_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
 
-static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
+const char * const X11DRV_atom_names[NB_XATOMS - FIRST_XATOM] =
 {
     "CLIPBOARD",
     "COMPOUND_TEXT",
@@ -120,6 +120,8 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "RAW_CAP_HEIGHT",
     "WM_PROTOCOLS",
     "WM_DELETE_WINDOW",
+    "WM_HINTS",
+    "WM_NORMAL_HINTS",
     "WM_STATE",
     "WM_TAKE_FOCUS",
     "DndProtocol",
@@ -652,7 +654,7 @@ static NTSTATUS x11drv_init( void *arg )
     init_visuals( display, DefaultScreen( display ));
     screen_bpp = pixmap_formats[default_visual.depth]->bits_per_pixel;
 
-    XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
+    XInternAtoms( display, (char **)X11DRV_atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
 
     init_win_context();
 
@@ -806,43 +808,13 @@ BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     x11drv_init,
-    x11drv_tablet_attach_queue,
-    x11drv_tablet_get_packet,
-    x11drv_tablet_info,
-    x11drv_tablet_load_info,
 };
 
-
-C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
-
-
 #ifdef _WIN64
-
-static NTSTATUS x11drv_wow64_tablet_info( void *arg )
-{
-    struct
-    {
-        UINT category;
-        UINT index;
-        ULONG output;
-    } *params32 = arg;
-    struct tablet_info_params params;
-
-    params.category = params32->category;
-    params.index = params32->index;
-    params.output = UlongToPtr( params32->output );
-    return x11drv_tablet_info( &params );
-}
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     x11drv_init,
-    x11drv_tablet_attach_queue,
-    x11drv_tablet_get_packet,
-    x11drv_wow64_tablet_info,
-    x11drv_tablet_load_info,
 };
-
-C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
 
 #endif /* _WIN64 */

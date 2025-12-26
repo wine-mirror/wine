@@ -3405,8 +3405,12 @@ static HRESULT STDMETHODCALLTYPE d3d11_video_context_SubmitDecoderBuffers(ID3D11
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderExtension(ID3D11VideoContext *iface,
         ID3D11VideoDecoder *decoder, const D3D11_VIDEO_DECODER_EXTENSION *extension)
 {
-    FIXME("iface %p, decoder %p, extension %p, stub!\n", iface, decoder, extension);
-    return E_NOTIMPL;
+    struct d3d_video_decoder *decoder_impl = unsafe_impl_from_ID3D11VideoDecoder(decoder);
+
+    TRACE("iface %p, decoder %p, extension %p.\n", iface, decoder, extension);
+
+    return wined3d_decoder_extension(decoder_impl->wined3d_decoder, extension->Function, extension->pPrivateInputData,
+            extension->PrivateInputDataSize, extension->pPrivateOutputData, extension->PrivateOutputDataSize);
 }
 
 static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputTargetRect(
@@ -4895,9 +4899,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device5 
                 return E_INVALIDARG;
             }
 
+            wined3d_mutex_lock();
+            hr = wined3d_device_get_device_caps(device->wined3d_device, &wined3d_caps);
+            wined3d_mutex_unlock();
+            if (FAILED(hr))
+            {
+                WARN("Failed to get device caps, hr %#lx.\n", hr);
+                return hr;
+            }
+
             FIXME("Returning fake Options1 support data.\n");
             options->TiledResourcesTier = D3D11_TILED_RESOURCES_NOT_SUPPORTED;
-            options->MinMaxFiltering = FALSE;
+            options->MinMaxFiltering = wined3d_caps.min_max_filtering;
             options->ClearViewAlsoSupportsDepthOnlyFormats = FALSE;
             options->MapOnDefaultBuffers = FALSE;
             return S_OK;

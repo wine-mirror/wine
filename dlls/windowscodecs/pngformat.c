@@ -37,7 +37,7 @@ static inline USHORT read_ushort_be(BYTE* data)
 
 static inline ULONG read_ulong_be(BYTE* data)
 {
-    return data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+    return ((ULONG)data[0] << 24) | data[1] << 16 | data[2] << 8 | data[3];
 }
 
 static HRESULT LoadTextMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,

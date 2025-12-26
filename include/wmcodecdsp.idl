@@ -98,6 +98,21 @@ coclass CWMVDecMediaObject {}
 ]
 coclass CWMVXEncMediaObject {}
 
+[
+    uuid(01f36ce2-0907-4d8b-979d-f151be91c883)
+]
+coclass CFrameRateConvertDmo {}
+
+[
+    uuid(798059f0-89ca-4160-b325-aeb48efe4f9a)
+]
+coclass CColorControlDmo {}
+
+[
+    uuid(1ea1ea14-48f4-4054-ad1a-e8aee10ac805)
+]
+coclass CResizerDMO {}
+
 typedef float ChMtxType;
 
 [

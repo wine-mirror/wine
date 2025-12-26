@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-09-20 00:57+0300\n"
+"PO-Revision-Date: 2025-12-06 13:21+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -98,7 +98,7 @@ msgstr "Priežiūros informacija"
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
 #: dlls/shell32/shell32.rc:278 dlls/shell32/shell32.rc:302
 #: dlls/shell32/shell32.rc:324 dlls/shell32/shell32.rc:343
-#: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
+#: dlls/shlwapi/shlwapi.rc:44 dlls/twaindsm/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
@@ -200,12 +200,12 @@ msgstr "&Įdiegti"
 #: dlls/inetcpl.cpl/inetcpl.rc:81 dlls/localui/localui.rc:45
 #: dlls/localui/localui.rc:58 dlls/mpr/mpr.rc:50 dlls/msacm32/msacm32.rc:54
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
-#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
+#: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95 dlls/sane.ds/sane.rc:70
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
 #: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:279
 #: dlls/shell32/shell32.rc:303 dlls/shell32/shell32.rc:314
 #: dlls/shell32/shell32.rc:344 dlls/shlwapi/shlwapi.rc:45
-#: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
+#: dlls/twaindsm/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
 #: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
@@ -740,7 +740,7 @@ msgid "Scr&ipt:"
 msgstr "Si&mbolių rinkinys:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
-#: dlls/compstui/compstui.rc:33
+#: dlls/compstui/compstui.rc:33 dlls/sane.ds/sane.rc:42
 msgid "Color"
 msgstr "Spalva"
 
@@ -1094,7 +1094,8 @@ msgstr "Violetinė"
 msgid "Teal"
 msgstr "Tamsiai žydra"
 
-#: dlls/comdlg32/comdlg32.rc:129 programs/wordpad/wordpad.rc:132
+#: dlls/comdlg32/comdlg32.rc:129 dlls/sane.ds/sane.rc:41
+#: programs/wordpad/wordpad.rc:132
 msgid "Gray"
 msgstr "Pilka"
 
@@ -4044,15 +4045,15 @@ msgstr "Sąlyginis kompiliavimas išjungtas"
 msgid "Expected '@'"
 msgstr "Tikėtasi „@“"
 
-#: dlls/jscript/jscript.rc:92
+#: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript kompiliavimo klaida"
 
-#: dlls/jscript/jscript.rc:93
+#: dlls/jscript/jscript.rc:98
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: dlls/jscript/jscript.rc:94 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
@@ -4176,36 +4177,57 @@ msgstr "Negalima iš naujo apibrėžti nekonfigūruojamos savybės „|“"
 msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
+#: dlls/jscript/jscript.rc:84
+msgid "Typed array constructor argument is invalid"
+msgstr "Tipizuoto masyvo konstruktoriaus argumentas netinkamas"
+
 #: dlls/jscript/jscript.rc:83
+msgid "'this' is not a typed array object"
+msgstr "„Šis“ nėra tipizuoto masyvo objektas"
+
+#: dlls/jscript/jscript.rc:85
+msgid "Invalid offset/length when creating typed array"
+msgstr "Neteisingas poslinkis/ilgis kuriant tipizuotą masyvą"
+
+#: dlls/jscript/jscript.rc:86
+msgid "Invalid begin/end value in typed array subarray method"
+msgstr ""
+"Neteisinga pradžios/pabaigos reikšmė tipizuoto masyvo „subarray“ metode"
+
+#: dlls/jscript/jscript.rc:87
+msgid "Invalid source in typed array set"
+msgstr "Nustatytas neteisingas tipizuoto masyvo šaltinis"
+
+#: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
 msgstr "„Šis“ nėra DataView objektas"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:89
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 "DataView metode nenurodytas reikalingas argumentas poslinkis ar reikšmė"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:90
 msgid "DataView operation access beyond specified buffer length"
 msgstr "DataView operacijos kreiptis už nurodyto buferio ilgio"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:91
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView konstruktoriaus argumentas poslinkis yra netinkamas"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:92
 msgid "'this' is not a | object"
 msgstr "„Šis“ nėra | objektas"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:93
 msgid "'key' is not an object"
 msgstr "„raktas“ nėra objektas"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
 msgstr "Tikėtasi ArrayBuffer objekto"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
 msgstr "Savybė negali turėti ir kreipiklių, ir reikšmės"
 
@@ -9608,11 +9630,31 @@ msgstr "Nežinomas šaltinis"
 msgid "the program which created it"
 msgstr "programa, kuri jį sukūrė"
 
-#: dlls/sane.ds/sane.rc:41
+#: dlls/sane.ds/sane.rc:55 dlls/sane.ds/sane.rc:45
 msgid "Scanning"
 msgstr "Skaitoma"
 
-#: dlls/sane.ds/sane.rc:44
+#: dlls/sane.ds/sane.rc:58
+msgid "Manufacturer:"
+msgstr "Gamintojas:"
+
+#: dlls/sane.ds/sane.rc:60
+msgid "Product family:"
+msgstr "Įrenginio šeima:"
+
+#: dlls/sane.ds/sane.rc:62
+msgid "Product name:"
+msgstr "Įrenginio pavadinimas:"
+
+#: dlls/sane.ds/sane.rc:64
+msgid "Resolution:"
+msgstr "Skiriamoji geba:"
+
+#: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
+msgid "Page"
+msgstr "Puslapis"
+
+#: dlls/sane.ds/sane.rc:68
 msgid "SCANNING... Please Wait"
 msgstr "SKAITOMA... Palaukite"
 
@@ -9641,6 +9683,38 @@ msgstr "%"
 msgctxt "unit: microseconds"
 msgid "us"
 msgstr "µs"
+
+#: dlls/sane.ds/sane.rc:43
+msgid "LineArt"
+msgstr "Linijinis paveikslas"
+
+#: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
+#: programs/ipconfig/ipconfig.rc:34
+msgid "Unknown"
+msgstr "Nežinomas"
+
+#: dlls/sane.ds/sane.rc:46
+msgid ""
+"The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
+"scanned."
+msgstr ""
+"Automatinis dokumentų padaviklis (ADF) tuščias. Įdėkite lapus nuskaitymui."
+
+#: dlls/sane.ds/sane.rc:47
+msgid ""
+"The scanner reports a paper jam. Check for additional information on device "
+"display."
+msgstr ""
+"Skaitytuvas praneša apie užstrigusį popierių. Daugiau informacijos įrenginio "
+"ekrane."
+
+#: dlls/sane.ds/sane.rc:48
+msgid "The scanner cover is open. Please close the scanner."
+msgstr "Atidarytas skaitytuvo dangtis. Uždarykite skaitytuvą."
+
+#: dlls/sane.ds/sane.rc:49
+msgid "The scanner is busy. Try again later."
+msgstr "Skaitytuvas užimtas. Mėginkite vėliau."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -9693,10 +9767,6 @@ msgstr "Kopijuoti gamintojo failus iš:"
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
 msgstr "Reikalingas failas „%1“ esantis %2"
-
-#: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
-msgid "Unknown"
-msgstr "Nežinomas"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
@@ -10593,7 +10663,7 @@ msgctxt "time unit: seconds"
 msgid " sec"
 msgstr " sek."
 
-#: dlls/twain_32/twain.rc:29
+#: dlls/twaindsm/twain.rc:29
 msgid "Select Source"
 msgstr "Parinkite šaltinį"
 
@@ -12559,8 +12629,8 @@ msgstr ""
 "duomenų."
 
 #: dlls/urlmon/urlmon.rc:63
-msgid "This zone contains all Web sites you haven't placed in other zones"
-msgstr "Šioje zonoje yra visos svetainės, kurių nėra kitose zonose"
+msgid "This zone contains all Web sites you haven't placed in other zones."
+msgstr "Šioje zonoje yra visos svetainės, kurių nėra kitose zonose."
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
@@ -14725,6 +14795,10 @@ msgstr "Failo pabaiga"
 #: programs/cmd/cmd.rc:410
 msgid "%t%1!u! file(s) copied\n"
 msgstr "Nukopijuota failų: %t%1!u!\n"
+
+#: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
+msgid "File cannot be copied onto itself.\n"
+msgstr "Failas negali būti nukopijuotas ant savęs.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -19900,10 +19974,6 @@ msgstr "Didinti"
 #: programs/wordpad/wordpad.rc:179
 msgid "Zoom out"
 msgstr "Mažinti"
-
-#: programs/wordpad/wordpad.rc:181
-msgid "Page"
-msgstr "Puslapis"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"

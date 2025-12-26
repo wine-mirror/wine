@@ -32,14 +32,22 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Perception_Spatial
 #define WIDL_using_Windows_Perception_Spatial_Surfaces
 #include "windows.perception.spatial.surfaces.h"
 #define WIDL_using_Windows_Graphics_Holographic
+#define WIDL_using_Windows_Graphics_DirectX_Direct3D11
 #include "windows.graphics.holographic.h"
 #include "holographicspaceinterop.h"
 
+#include "async_private.h"
+
 extern IActivationFactory *observer_factory;
-extern IActivationFactory *holographicspace_factory;
+extern IActivationFactory *holographic_space_factory;
+extern IActivationFactory *anchor_exporter_factory;
+
+extern HRESULT async_operation_request_access_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
+                                                      IAsyncOperation_SpatialPerceptionAccessStatus **out );
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
@@ -78,5 +86,7 @@ extern IActivationFactory *holographicspace_factory;
     }
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )
+#define DEFINE_IINSPECTABLE_OUTER( pfx, iface_type, impl_type, outer_iface )                       \
+    DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, impl->outer_iface )
 
 #endif

@@ -44,6 +44,7 @@ struct synth_sink
 
     CRITICAL_SECTION cs;
     REFERENCE_TIME latency_time;
+    REFERENCE_TIME latency;
 
     DWORD written; /* number of bytes written out */
     HANDLE stop_event;
@@ -72,6 +73,23 @@ static void synth_sink_get_format(struct synth_sink *This, WAVEFORMATEX *format)
         if (FAILED(hr = IDirectMusicSynth_GetFormat(This->synth, format, &size)))
             WARN("Failed to get synth buffer format, hr %#lx\n", hr);
     }
+}
+
+static HRESULT synth_sink_wait_write(struct synth_sink *sink, HANDLE buffer_event)
+{
+    HANDLE handles[] = {sink->stop_event, buffer_event};
+    DWORD ret;
+
+    ret = WaitForMultipleObjects(ARRAY_SIZE(handles), handles, FALSE, INFINITE);
+    if (ret == WAIT_FAILED)
+    {
+        ERR("WaitForSingleObject failed with %lu\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+    if (ret == WAIT_OBJECT_0)
+        return S_FALSE;
+
+    return S_OK;
 }
 
 static HRESULT synth_sink_write_data(struct synth_sink *sink, IDirectSoundBuffer *buffer,
@@ -178,8 +196,12 @@ static HRESULT synth_sink_wait_play_end(struct synth_sink *sink, IDirectSoundBuf
 static HRESULT synth_sink_render_data(struct synth_sink *sink, IDirectMusicSynth *synth,
         IDirectSoundBuffer *buffer, WAVEFORMATEX *format, short *samples, DWORD samples_size)
 {
+    REFERENCE_TIME master_time;
     REFERENCE_TIME sample_time;
     HRESULT hr;
+
+    if (FAILED(hr = IReferenceClock_GetTime(sink->master_clock, &master_time)))
+        ERR("Failed to get master clock time, hr %#lx\n", hr);
 
     if (FAILED(hr = IDirectMusicSynth_Render(synth, samples, samples_size / format->nBlockAlign,
             sink->written / format->nBlockAlign)))
@@ -190,7 +212,7 @@ static HRESULT synth_sink_render_data(struct synth_sink *sink, IDirectMusicSynth
         ERR("Failed to convert sample position to time, hr %#lx\n", hr);
 
     EnterCriticalSection(&sink->cs);
-    sink->latency_time = sample_time;
+    sink->latency = sample_time - master_time;
     LeaveCriticalSection(&sink->cs);
 
     return hr;
@@ -267,17 +289,14 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
     while (SUCCEEDED(hr) && SUCCEEDED(hr = synth_sink_write_data(sink, buffer,
             &caps, &format, samples, samples_size)))
     {
-        HANDLE handles[] = {sink->stop_event, buffer_event};
-        DWORD ret;
+        HRESULT wait_hr;
 
         if (hr == S_OK) /* if successfully written, render more data */
             hr = synth_sink_render_data(sink, synth, buffer, &format, samples, samples_size);
 
-        if (!(ret = WaitForMultipleObjects(ARRAY_SIZE(handles), handles, FALSE, INFINITE))
-                || ret >= ARRAY_SIZE(handles))
+        if (S_OK != (wait_hr = synth_sink_wait_write(sink, buffer_event)))
         {
-            ERR("WaitForMultipleObjects returned %lu\n", ret);
-            hr = HRESULT_FROM_WIN32(ret);
+            hr = wait_hr;
             break;
         }
     }
@@ -696,13 +715,19 @@ static ULONG WINAPI latency_clock_Release(IReferenceClock *iface)
 static HRESULT WINAPI latency_clock_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
 {
     struct synth_sink *This = impl_from_IReferenceClock(iface);
+    REFERENCE_TIME master_time;
+    HRESULT hr;
 
     TRACE("(%p, %p)\n", iface, time);
 
     if (!time) return E_INVALIDARG;
     if (!This->active) return E_FAIL;
 
+    if (FAILED(hr = IReferenceClock_GetTime(This->master_clock, &master_time)))
+        return hr;
+
     EnterCriticalSection(&This->cs);
+    This->latency_time = max(This->latency_time, master_time + This->latency);
     *time = This->latency_time;
     LeaveCriticalSection(&This->cs);
 

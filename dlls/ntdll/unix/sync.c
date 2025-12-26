@@ -556,6 +556,11 @@ static inline unsigned int inproc_sync_handle_to_index( HANDLE handle, unsigned 
     return idx % INPROC_SYNC_CACHE_BLOCK_SIZE;
 }
 
+static BOOL is_pseudo_handle( HANDLE handle )
+{
+    return ((ULONG)(ULONG_PTR)handle >= 0xfffffffa);
+}
+
 static struct inproc_sync *cache_inproc_sync( HANDLE handle, struct inproc_sync *sync )
 {
     unsigned int entry, idx = inproc_sync_handle_to_index( handle, &entry );
@@ -563,7 +568,7 @@ static struct inproc_sync *cache_inproc_sync( HANDLE handle, struct inproc_sync 
     int refcount;
 
     /* don't cache pseudo-handles; waiting on them is pointless anyway */
-    if ((ULONG)(ULONG_PTR)handle > 0xfffffffa) return sync;
+    if (is_pseudo_handle( handle )) return sync;
 
     if (entry >= INPROC_SYNC_CACHE_ENTRIES)
     {
@@ -902,6 +907,7 @@ static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, WAIT_TYPE type,
     if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
 
     assert( count <= ARRAY_SIZE(syncs) );
+    objs[0] = -1;  /* make gcc happy, otherwise it thinks objs is not initialized */
     for (int i = 0; i < count; ++i)
     {
         if ((ret = get_inproc_sync( handles[i], INPROC_SYNC_UNKNOWN, SYNCHRONIZE, &stack[i], &syncs[i] )))
@@ -2313,6 +2319,12 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, WA
         TRACE( "}, timeout %s\n", debugstr_timeout(timeout) );
     }
 
+    /* Reject pseudo-handles up front. These are not valid for multi-object waits. */
+    for (i = 0; i < count; i++)
+    {
+        if (is_pseudo_handle( handles[i] )) return STATUS_INVALID_HANDLE;
+    }
+
     if ((ret = inproc_wait( count, handles, type, alertable, timeout )) != STATUS_NOT_IMPLEMENTED)
     {
         TRACE( "-> %#x\n", ret );
@@ -2333,7 +2345,24 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, WA
  */
 NTSTATUS WINAPI NtWaitForSingleObject( HANDLE handle, BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    return NtWaitForMultipleObjects( 1, &handle, FALSE, alertable, timeout );
+    union select_op select_op;
+    UINT flags = SELECT_INTERRUPTIBLE;
+    unsigned int ret;
+
+    TRACE( "handle %p, alertable %u, timeout %s\n", handle, alertable, debugstr_timeout(timeout) );
+
+    if ((ret = inproc_wait( 1, &handle, WaitAny, alertable, timeout )) != STATUS_NOT_IMPLEMENTED)
+    {
+        TRACE( "-> %#x\n", ret );
+        return ret;
+    }
+
+    if (alertable) flags |= SELECT_ALERTABLE;
+    select_op.wait.op = SELECT_WAIT;
+    select_op.wait.handles[0] = wine_server_obj_handle( handle );
+    ret = server_wait( &select_op, offsetof( union select_op, wait.handles[1] ), flags, timeout );
+    TRACE( "-> %#x\n", ret );
+    return ret;
 }
 
 
@@ -3392,6 +3421,14 @@ static unsigned int handle_to_index( HANDLE handle, unsigned int *block_idx )
     return idx % TID_ALERT_BLOCK_SIZE;
 }
 
+static BOOL is_alert_tid_valid( HANDLE tid )
+{
+    unsigned int block_idx;
+
+    handle_to_index( tid, &block_idx );
+    return block_idx <= ARRAY_SIZE(tid_alert_blocks);
+}
+
 static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 {
     unsigned int block_idx, idx = handle_to_index( tid, &block_idx );
@@ -3459,6 +3496,25 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 #endif
 
     return entry;
+}
+
+
+/***********************************************************************
+ *             NtAlertMultipleThreadByThreadId (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAlertMultipleThreadByThreadId( HANDLE *tids, ULONG count, void *unk1, void *unk2 )
+{
+    unsigned int i;
+
+    TRACE( "%p %d %p %p\n", tids, (int)count, unk1, unk2 );
+
+    if (unk1 || unk2) FIXME( "unk1 %p, unk2 %p.\n", unk1, unk2 );
+    for (i = 0; i < count; ++i)
+    {
+        if (!is_alert_tid_valid( tids[i] )) return STATUS_INVALID_CID;
+    }
+    for (i = 0; i < count; ++i) NtAlertThreadByThreadId( tids[i] );
+    return STATUS_SUCCESS;
 }
 
 

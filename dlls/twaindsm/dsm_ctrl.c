@@ -47,17 +47,19 @@ struct all_devices {
 static int nrdevices = 0;
 static struct all_devices *devices = NULL;
 
+#ifndef WIN64
+/* Instance handle of the twain_32.dll */
+static HINSTANCE hinstTwain_32 = NULL;
+#endif
+
 static void
-twain_add_onedriver(const WCHAR *dsname) {
+twain_add_onedriver(const WCHAR *path) {
 	HMODULE 	hmod;
 	DSENTRYPROC	dsEntry;
 	TW_IDENTITY	fakeOrigin;
 	TW_IDENTITY	sourceId;
 	struct all_devices *new_devices;
 	TW_UINT16	ret;
-        WCHAR path[MAX_PATH];
-
-        swprintf( path, MAX_PATH, L"c:\\windows\\twain_%u\\%s", sizeof(void *) * 8, dsname );
 	hmod = LoadLibraryW(path);
 	if (!hmod) {
 		ERR("Failed to load TWAIN Source %s\n", debugstr_w(path));
@@ -66,12 +68,14 @@ twain_add_onedriver(const WCHAR *dsname) {
 	dsEntry = (DSENTRYPROC)GetProcAddress(hmod, "DS_Entry"); 
 	if (!dsEntry) {
 		ERR("Failed to find DS_Entry() in TWAIN DS %s\n", debugstr_w(path));
+		FreeLibrary(hmod);
 		return;
 	}
 	/* Loop to do multiple detects, mostly for sane.ds and gphoto2.ds */
 	do {
 		int i;
 
+		memset(&sourceId, 0, sizeof(sourceId));
 		sourceId.Id 		= DSM_sourceId;
 		sourceId.ProtocolMajor	= TWON_PROTOCOLMAJOR;
 		sourceId.ProtocolMinor	= TWON_PROTOCOLMINOR;
@@ -102,21 +106,129 @@ twain_add_onedriver(const WCHAR *dsname) {
 	FreeLibrary (hmod);
 }
 
+
+/**
+ * Recursively search all *.ds Data Source files in the given directory
+ * and add them to the new_devices list.
+ *
+ * We search for file ending with ".ds" for the Data Source drivers
+ * and fill all subdirectories.
+ *
+ * @param dirname       Name of the start directory.
+ */
+static void
+twain_autodetect_recurse(const WCHAR *dirname)
+{
+	HANDLE hfind;
+	WCHAR szFindPattern[MAX_PATH];
+	WCHAR *p;
+	WIN32_FIND_DATAW ff;
+
+	swprintf(szFindPattern, ARRAY_SIZE(szFindPattern), L"%s\\*", dirname);
+
+	hfind = FindFirstFileW(szFindPattern, &ff);
+	if (hfind != INVALID_HANDLE_VALUE)
+	{
+		WCHAR szFullName[MAX_PATH];
+		do
+		{
+			swprintf(szFullName, ARRAY_SIZE(szFullName), L"%s\\%s", dirname, ff.cFileName);
+			if ((ff.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+			    lstrcmpW(ff.cFileName, L".") &&
+			    lstrcmpW(ff.cFileName, L".."))
+			{
+				/* Found a subdirectory. Recursivly search in it. */
+				twain_autodetect_recurse(szFullName);
+			}
+			else if (NULL != (p=wcsrchr(ff.cFileName, '.')) &&
+				!lstrcmpiW(p, L".ds"))
+			{
+				twain_add_onedriver(szFullName);
+			}
+		}
+		while (FindNextFileW(hfind, &ff));
+		FindClose(hfind);
+	}
+}
+
+
 static BOOL detectionrun = FALSE;
 
+/** @brief Detect all installed data sources by recursive directory scan.
+ *
+ *  TWAIN Data Sources install in a subdirectory of c:\windows\twain_<bitdepth> as
+ *  *.ds files. Search all of them and add them to the list.
+ */
 static void
-twain_autodetect(void) {
-	if (detectionrun) return;
-        detectionrun = TRUE;
+twain_autodetect(void)
+{
+	WCHAR szWindowsDir[MAX_PATH];
+	WCHAR szTwainDir[MAX_PATH];
 
-	twain_add_onedriver(L"sane.ds");
-	twain_add_onedriver(L"gphoto2.ds");
-#if 0
-	twain_add_onedriver(L"Largan\\sp503a.ds");
-	twain_add_onedriver(L"vivicam10\\vivicam10.ds");
-	twain_add_onedriver(L"ws30slim\\sp500a.ds");
-#endif
+	if (detectionrun) return;
+	detectionrun = TRUE;
+
+	GetWindowsDirectoryW(szWindowsDir, MAX_PATH);
+	swprintf( szTwainDir, MAX_PATH, L"%s\\twain_%u", szWindowsDir, sizeof(void *) * 8 );
+
+	twain_autodetect_recurse(szTwainDir);
 }
+
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _size   Size for the newly allocated global memory block
+ * @return new GlobalAlloc memory handle
+ */
+static TW_HANDLE PASCAL _DSM_MemAllocate(TW_UINT32 _size)
+{
+  return GlobalAlloc(GMEM_MOVEABLE, _size);
+}
+
+
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _handle   Handle created by DSM_MemAllocate that shall now be freed
+ */
+static void PASCAL _DSM_MemFree(TW_HANDLE _handle)
+{
+  GlobalFree(_handle);
+}
+
+
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _handle   Handle created by DSM_MemAllocate that shall now be
+ *                  locked at a certain address
+ * @return The current address to the data contained in this handle
+ */
+static TW_MEMREF PASCAL _DSM_MemLock(TW_HANDLE _handle)
+{
+  return GlobalLock(_handle);
+}
+
+
+/**
+ * Callback function used in TW_ENTRYPOINT as defined by the TWAIN Group
+ * @param _handle   Handle created by DSM_MemAllocate that shall now be
+ *                  unlocked to allow the memory handler to move it to
+ *                  different addresses,
+ */
+static void PASCAL _DSM_MemUnlock(TW_HANDLE _handle)
+{
+  GlobalUnlock(_handle);
+}
+
+/* Structure with pointers being transfered in
+ * DG_CONTROL / DAT_ENTRYPOINT / MSG_SET to the data source
+ */
+static const TW_ENTRYPOINT _entrypoints = {
+ .Size = sizeof(TW_ENTRYPOINT),
+ .DSM_Entry = DSM_Entry,
+ .DSM_MemAllocate = _DSM_MemAllocate,
+ .DSM_MemFree = _DSM_MemFree,
+ .DSM_MemLock = _DSM_MemLock,
+ .DSM_MemUnlock = _DSM_MemUnlock
+};
 
 /* DG_CONTROL/DAT_NULL/MSG_CLOSEDSREQ|MSG_DEVICEEVENT|MSG_XFERREADY */
 TW_UINT16 TWAIN_ControlNull (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, activeDS *pSource, TW_UINT16 MSG, TW_MEMREF pData)
@@ -127,10 +239,41 @@ TW_UINT16 TWAIN_ControlNull (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, activeDS 
 
     if (MSG != MSG_CLOSEDSREQ &&
         MSG != MSG_DEVICEEVENT &&
-        MSG != MSG_XFERREADY)
+        MSG != MSG_XFERREADY &&
+        MSG != MSG_DEVICEEVENT)
     {
         DSM_twCC = TWCC_BADPROTOCOL;
         return TWRC_FAILURE;
+    }
+
+    if (pSource &&
+        pSource->registered_callback.CallBackProc)
+    {
+        static BOOL bProcessingCallback = FALSE;
+        TRACE("DG_CONTROL/DAT_NULL using callback\n");
+        if (!bProcessingCallback)
+        {
+            TW_UINT16 twRC;
+            bProcessingCallback=TRUE;
+            twRC = ((DSMENTRYPROC) pSource->registered_callback.CallBackProc)
+              (pOrigin,
+               pDest,
+               DG_CONTROL, DAT_NULL, MSG,
+               (TW_MEMREF) pSource->registered_callback.RefCon);
+            bProcessingCallback=FALSE;
+            if (twRC != TWCC_SUCCESS)
+            {
+                DSM_twCC = TWCC_BADPROTOCOL;
+            }
+            return twRC;
+        }
+        else
+        {
+            ERR("Nested callback\n");
+            DSM_twCC = TWCC_BADPROTOCOL;
+            return TWRC_FAILURE;
+        }
+
     }
 
     message = HeapAlloc(GetProcessHeap(), 0, sizeof(*message));
@@ -220,6 +363,12 @@ TW_UINT16 TWAIN_CloseDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	/* This causes crashes due to still open Windows, so leave out for now.
 	 * FreeLibrary (currentDS->hmod);
 	 */
+#ifndef WIN64
+	if (!(pIdentity->SupportedGroups & DF_DS2)) {
+		FreeLibrary(hinstTwain_32);
+	}
+#endif
+
 	if (prevDS)
 		prevDS->next = currentDS->next;
 	else
@@ -310,7 +459,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	} /* else use the first device */
 
 	/* the source is found in the device list */
-	newSource = HeapAlloc (GetProcessHeap(), 0, sizeof (activeDS));
+	newSource = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof (activeDS));
 	if (!newSource) {
 		DSM_twCC = TWCC_LOWMEMORY;
 		FIXME("Out of memory.\n");
@@ -325,8 +474,34 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	}
 	newSource->hmod = hmod; 
 	newSource->dsEntry = (DSENTRYPROC)GetProcAddress(hmod, "DS_Entry"); 
+	if (!newSource->dsEntry) {
+		ERR("Failed to find DS_Entry() in TWAIN DS %s\n", debugstr_w(devices[i].modname));
+		DSM_twCC = TWCC_OPERATIONERROR;
+		HeapFree(GetProcessHeap(), 0, newSource);
+		return TWRC_FAILURE;
+	}
 	/* Assign id for the opened data source */
 	pIdentity->Id = DSM_sourceId ++;
+	/* Get the Identity of the new DS, so we know the SupportedGroups */
+	if (TWRC_SUCCESS != newSource->dsEntry (NULL, DG_CONTROL, DAT_IDENTITY, MSG_GET, pIdentity)) {
+		DSM_twCC = TWCC_OPERATIONERROR;
+		HeapFree(GetProcessHeap(), 0, newSource);
+		DSM_sourceId--;
+		return TWRC_FAILURE;
+	}
+	/* Tell the source our entry points */
+	if (pIdentity->SupportedGroups & DF_DS2) {
+		/* This makes sure that the DS knows the current address of our DSM_Entry
+		 * function so there is no risk that it is using a stale copy. */
+		newSource->dsEntry (pOrigin, DG_CONTROL, DAT_ENTRYPOINT, MSG_SET, (TW_ENTRYPOINT *) &_entrypoints);
+	}
+#ifndef WIN64
+	else {
+		/* DS is Version 1.x. Make sure twain_32.dll is loaded in case DS uses GetModuleHandle("twain_32") */
+		hinstTwain_32 = LoadLibraryW(L"twain_32.dll");
+	}
+#endif
+        /* Open the data source */
 	if (TWRC_SUCCESS != newSource->dsEntry (pOrigin, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, pIdentity)) {
 		DSM_twCC = TWCC_OPERATIONERROR;
                 HeapFree(GetProcessHeap(), 0, newSource);
@@ -489,6 +664,12 @@ TW_UINT16 TWAIN_OpenDSM (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 	TRACE("DG_CONTROL/DAT_PARENT/MSG_OPENDSM\n");
         if (!DSM_initialized) {
                 event_message = RegisterWindowMessageA("WINE TWAIN_32 EVENT");
+
+		if (pOrigin->SupportedGroups & DF_APP2)
+		{
+			pOrigin->SupportedGroups |= DF_DSM2;
+		}
+
 		DSM_currentDevice = 0;
 		DSM_initialized = TRUE;
 		DSM_twCC = TWCC_SUCCESS;
@@ -511,5 +692,51 @@ TW_UINT16 TWAIN_GetDSMStatus (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 
 	pSourceStatus->ConditionCode = DSM_twCC;
 	DSM_twCC = TWCC_SUCCESS;  /* clear the condition code */
+	return TWRC_SUCCESS;
+}
+
+
+/* DG_CONTROL/DAT_ENTRYPOINT/MSG_GET */
+TW_UINT16 TWAIN_GetEntrypoint(TW_ENTRYPOINT *pEntrypoint)
+{
+	TW_UINT16 twRC;
+
+	if (!pEntrypoint)
+	{
+		ERR("pEntrypoint is null\n");
+		twRC = TWRC_FAILURE;
+		DSM_twCC = TWCC_BADVALUE;
+	}
+	else if (pEntrypoint->Size < sizeof(TW_ENTRYPOINT))
+	{
+		ERR("pEntrypoint->Size=%ld too small\n", pEntrypoint->Size);
+		twRC = TWRC_FAILURE;
+		DSM_twCC = TWCC_BADVALUE;
+	}
+	else
+	{
+		memcpy(pEntrypoint, &_entrypoints, sizeof(_entrypoints));
+		twRC = TWRC_SUCCESS;
+		DSM_twCC = TWCC_SUCCESS;
+	}
+
+	return twRC;
+}
+
+
+
+/** @brief DG_CONTROL/DAT_CALLBACK/MSG_REGISTER_CALLBACK and DG_CONTROL/DAT_CALLBACK2/MSG_REGISTER_CALLBACK
+ *  @param pSource           The data source to associate the callback to
+ *  @param CallBackProc      Address of a callback procedure defined by the application program
+ *  @param RefCon            Reference Constant as defined by the application program
+ *  @return Twain result code, TWRC_SUCCESS on success
+ */
+TW_UINT16 TWAIN_RegisterCallback(activeDS *pSource, TW_MEMREF *CallBackProc, UINT_PTR RefCon)
+{
+	TRACE("DG_CONTROL/DAT_CALLBACKx/MSG_REGISTER_CALLBACK\n");
+	pSource->registered_callback.CallBackProc=CallBackProc;
+	pSource->registered_callback.RefCon=RefCon;
+
+	DSM_twCC = TWCC_SUCCESS;
 	return TWRC_SUCCESS;
 }

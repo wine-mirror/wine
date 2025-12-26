@@ -1068,7 +1068,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     dc.num_mem64 = 0;
     dc.alloc_mem64 = 0;
     dc.rva = 0;
-    dc.except_param = ExceptionParam;
+    dc.except_param = (ExceptionParam && ExceptionParam->ExceptionPointers) ? ExceptionParam : NULL;
     dc.user_stream = UserStreamParam;
 
     /* have a dedicated thread for fetching info on self */

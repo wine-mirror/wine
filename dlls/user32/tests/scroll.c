@@ -219,6 +219,7 @@ static void test_ShowScrollBar(void)
 
 static void test_GetScrollBarInfo(void)
 {
+    int width, height, expected_width, expected_height;
     HWND hMainWnd;
     BOOL ret;
     SCROLLBARINFO sbi;
@@ -277,6 +278,26 @@ static void test_GetScrollBarInfo(void)
     ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
     ok(EqualRect(&rect, &sbi.rcScrollBar), "PreviousRect %s != CurrentRect %s\n",
        wine_dbgstr_rect(&rect), wine_dbgstr_rect(&sbi.rcScrollBar));
+
+    /* Test width when WS_VSCROLL is present */
+    ok( GetWindowLongA( hMainWnd, GWL_STYLE ) & WS_VSCROLL , "Expected WS_VSCROLL.\n" );
+    sbi.cbSize = sizeof(sbi);
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_HSCROLL, &sbi );
+    ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
+    width = sbi.rcScrollBar.right - sbi.rcScrollBar.left;
+    GetClientRect( hMainWnd, &rect );
+    expected_width = rect.right - rect.left;
+    ok( width == expected_width, "Expected width %d, got %d.\n", expected_width, width );
+
+    /* Test height when WS_HSCROLL is present */
+    ok( GetWindowLongA( hMainWnd, GWL_STYLE ) & WS_HSCROLL , "Expected WS_HSCROLL.\n" );
+    sbi.cbSize = sizeof(sbi);
+    ret = pGetScrollBarInfo( hMainWnd, OBJID_VSCROLL, &sbi );
+    ok( ret, "The GetScrollBarInfo() call should not fail.\n" );
+    height = sbi.rcScrollBar.bottom - sbi.rcScrollBar.top;
+    GetClientRect( hMainWnd, &rect );
+    expected_height = rect.bottom - rect.top;
+    ok( height == expected_height, "Expected height %d, got %d.\n", expected_height, height );
 
     DestroyWindow(hScroll);
     DestroyWindow(hMainWnd);

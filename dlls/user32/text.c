@@ -37,7 +37,6 @@
 #include "usp10.h"
 #include "user_private.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(text);
 
@@ -362,7 +361,7 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     assert (format & DT_WORDBREAK);
     assert (chars_fit < *len_str);
 
-    sla = heap_alloc(sizeof(SCRIPT_LOGATTR) * *len_str);
+    sla = malloc(sizeof(SCRIPT_LOGATTR) * *len_str);
 
     memset(&sa, 0, sizeof(SCRIPT_ANALYSIS));
     sa.eScript = SCRIPT_UNDEFINED;
@@ -442,7 +441,7 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     }
     /* Remeasure the string */
     GetTextExtentExPointW (hdc, str, *len_str, 0, NULL, NULL, size);
-    heap_free(sla);
+    free(sla);
 }
 
 /*********************************************************************
@@ -961,7 +960,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     if (flags & DT_MODIFYSTRING)
     {
         size_retstr = (count + 4) * sizeof (WCHAR);
-        retstr = heap_alloc(size_retstr);
+        retstr = malloc(size_retstr);
         if (!retstr) return 0;
         memcpy (retstr, str, size_retstr);
     }
@@ -1071,7 +1070,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     ret = y - rect->top;
     if (ret == 0) ret = 1;
 done:
-    heap_free(retstr);
+    free(retstr);
     return ret;
 }
 
@@ -1135,7 +1134,7 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
         wmax += 4;
         amax += 4;
    }
-   wstr = heap_alloc(wmax * sizeof(WCHAR));
+   wstr = malloc(wmax * sizeof(WCHAR));
    if (wstr)
    {
        MultiByteToWideChar( cp, 0, str, count, wstr, wcount );
@@ -1154,7 +1153,7 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
             for (i=4, p=wstr+wcount; i-- && *p != 0xFFFE; p++) wcount++;
             WideCharToMultiByte( cp, 0, wstr, wcount, str, amax, NULL, NULL );
        }
-       heap_free(wstr);
+       free(wstr);
    }
    return ret;
 }
@@ -1423,11 +1422,11 @@ LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
 {
     LONG ret;
     DWORD len = MultiByteToWideChar( CP_ACP, 0, lpstr, count, NULL, 0 );
-    LPWSTR strW = heap_alloc( len * sizeof(WCHAR) );
+    LPWSTR strW = malloc( len * sizeof(WCHAR) );
     if (!strW) return 0;
     MultiByteToWideChar( CP_ACP, 0, lpstr, count, strW, len );
     ret = TabbedTextOutW( hdc, x, y, strW, len, cTabStops, lpTabPos, nTabOrg );
-    heap_free( strW );
+    free( strW );
     return ret;
 }
 
@@ -1476,11 +1475,11 @@ DWORD WINAPI GetTabbedTextExtentA( HDC hdc, LPCSTR lpstr, INT count,
 {
     LONG ret;
     DWORD len = MultiByteToWideChar( CP_ACP, 0, lpstr, count, NULL, 0 );
-    LPWSTR strW = heap_alloc( len * sizeof(WCHAR) );
+    LPWSTR strW = malloc( len * sizeof(WCHAR) );
     if (!strW) return 0;
     MultiByteToWideChar( CP_ACP, 0, lpstr, count, strW, len );
     ret = GetTabbedTextExtentW( hdc, strW, len, cTabStops, lpTabPos );
-    heap_free( strW );
+    free( strW );
     return ret;
 }
 
