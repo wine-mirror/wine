@@ -189,6 +189,107 @@ DECLARE_CRITICAL_SECTION(cs_socket_list);
 static SOCKET *socket_list;
 static unsigned int socket_list_size;
 
+static inline const char *debugstr_sockdomain(int domain)
+{
+    const char *stropt = NULL;
+
+#define DEBUG_SOCKDOM(x) case (x): stropt = #x; break
+
+    switch(domain)
+    {
+        DEBUG_SOCKDOM(AF_12844);
+        DEBUG_SOCKDOM(AF_APPLETALK);
+        DEBUG_SOCKDOM(AF_ATM);
+        DEBUG_SOCKDOM(AF_BAN);
+        DEBUG_SOCKDOM(AF_BTH);
+        DEBUG_SOCKDOM(AF_CCITT);
+        DEBUG_SOCKDOM(AF_CHAOS);
+        DEBUG_SOCKDOM(AF_CLUSTER);
+        DEBUG_SOCKDOM(AF_DATAKIT);
+        DEBUG_SOCKDOM(AF_DECnet);
+        DEBUG_SOCKDOM(AF_DLI);
+        DEBUG_SOCKDOM(AF_ECMA);
+        DEBUG_SOCKDOM(AF_FIREFOX);
+        DEBUG_SOCKDOM(AF_HYLINK);
+        DEBUG_SOCKDOM(AF_HYPERV);
+        DEBUG_SOCKDOM(AF_ICLFXBM);
+        DEBUG_SOCKDOM(AF_IMPLINK);
+        DEBUG_SOCKDOM(AF_INET);
+        DEBUG_SOCKDOM(AF_INET6);
+        DEBUG_SOCKDOM(AF_IPX);
+        DEBUG_SOCKDOM(AF_IRDA);
+        DEBUG_SOCKDOM(AF_ISO);
+        DEBUG_SOCKDOM(AF_LAT);
+        DEBUG_SOCKDOM(AF_LINK);
+        DEBUG_SOCKDOM(AF_MAX);
+        DEBUG_SOCKDOM(AF_NETBIOS);
+        DEBUG_SOCKDOM(AF_NETDES);
+        /* duplicated cases */
+        /* DEBUG_SOCKDOM(AF_NS);*/
+        /* DEBUG_SOCKDOM(AF_OSI); */
+        DEBUG_SOCKDOM(AF_PUP);
+        DEBUG_SOCKDOM(AF_SNA);
+        DEBUG_SOCKDOM(AF_TCNMESSAGE);
+        DEBUG_SOCKDOM(AF_TCNPROCESS);
+        DEBUG_SOCKDOM(AF_UNIX);
+        DEBUG_SOCKDOM(AF_UNKNOWN1);
+        DEBUG_SOCKDOM(AF_UNSPEC);
+        DEBUG_SOCKDOM(AF_VOICEVIEW);
+        default: stropt = wine_dbg_sprintf("0x%x", domain);
+    }
+
+#undef DEBUG_SOCKDOM
+
+    return stropt;
+}
+
+static inline const char *debugstr_socktype(int type)
+{
+    const char *stropt = NULL;
+
+#define DEBUG_SOCKTYPE(x) case (x): stropt = #x; break
+
+    switch(type)
+    {
+        DEBUG_SOCKTYPE(SOCK_DGRAM);
+        DEBUG_SOCKTYPE(SOCK_RAW);
+        DEBUG_SOCKTYPE(SOCK_RDM);
+        DEBUG_SOCKTYPE(SOCK_SEQPACKET);
+        DEBUG_SOCKTYPE(SOCK_STREAM);
+        default: stropt = wine_dbg_sprintf("0x%x", type);
+    }
+
+#undef DEBUG_SOCKTYPE
+
+    return stropt;
+}
+
+static inline const char *debugstr_sockprotocol(int protocol)
+{
+    const char *stropt = NULL;
+
+#define DEBUG_SOCKPROTO(x) case (x): stropt = #x; break
+
+    switch(protocol)
+    {
+        DEBUG_SOCKPROTO(IPPROTO_GGP);
+        DEBUG_SOCKPROTO(IPPROTO_ICMP);
+        DEBUG_SOCKPROTO(IPPROTO_IDP);
+        DEBUG_SOCKPROTO(IPPROTO_IGMP);
+        DEBUG_SOCKPROTO(IPPROTO_IP);
+        DEBUG_SOCKPROTO(IPPROTO_MAX);
+        DEBUG_SOCKPROTO(IPPROTO_ND);
+        DEBUG_SOCKPROTO(IPPROTO_RAW);
+        DEBUG_SOCKPROTO(IPPROTO_TCP);
+        DEBUG_SOCKPROTO(IPPROTO_UDP);
+        default: stropt = wine_dbg_sprintf("0x%x", protocol);
+    }
+
+#undef DEBUG_SOCKPROTO
+
+    return stropt;
+}
+
 const char *debugstr_sockaddr( const struct sockaddr *a )
 {
     if (!a) return "(nil)";
@@ -785,8 +886,8 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
             return TRUE;
         }
     }
-    FIXME( "Could not fill protocol information for family %d, type %d, protocol %d.\n",
-            params.family, params.type, params.protocol );
+    FIXME( "Could not fill protocol information for family %s, type %s, protocol %s.\n",
+            debugstr_sockdomain(params.family), debugstr_socktype(params.type), debugstr_sockprotocol(params.protocol) );
     return TRUE;
 }
 
@@ -3701,7 +3802,7 @@ int WINAPI shutdown( SOCKET s, int how )
  */
 SOCKET WINAPI socket( int af, int type, int protocol )
 {
-    TRACE("af=%d type=%d protocol=%d\n", af, type, protocol);
+    TRACE("af=%s type=%s protocol=%s\n", debugstr_sockdomain(af), debugstr_socktype(type), debugstr_sockprotocol(protocol));
 
     return WSASocketW( af, type, protocol, NULL, 0,
                        get_per_thread_data()->opentype ? 0 : WSA_FLAG_OVERLAPPED );
@@ -3951,8 +4052,8 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
       g, dwFlags except WSA_FLAG_OVERLAPPED) are ignored.
    */
 
-    TRACE( "family %d, type %d, protocol %d, info %p, group %u, flags %#lx\n",
-           af, type, protocol, lpProtocolInfo, g, flags );
+    TRACE( "family %s, type %s, protocol %s, info %p, group %u, flags %#lx\n",
+           debugstr_sockdomain(af), debugstr_socktype(type), debugstr_sockprotocol(protocol), lpProtocolInfo, g, flags );
 
     if (!num_startup)
     {
