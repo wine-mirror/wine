@@ -161,6 +161,12 @@ typedef enum D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS
 } D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS;
 cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_PROCESS_DEINTERLACE_FLAGS );")
 
+typedef struct D3D12_VIDEO_PROCESS_ALPHA_BLENDING
+{
+    BOOL Enable;
+    FLOAT Alpha;
+} D3D12_VIDEO_PROCESS_ALPHA_BLENDING;
+
 typedef struct D3D12_VIDEO_PROCESS_LUMA_KEY
 {
     BOOL Enable;
@@ -380,6 +386,78 @@ interface ID3D12VideoProcessor : ID3D12Pageable
     D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC GetOutputStreamDesc();
 }
 
+typedef enum D3D12_VIDEO_PROCESS_ORIENTATION
+{
+    D3D12_VIDEO_PROCESS_ORIENTATION_DEFAULT = 0,
+    D3D12_VIDEO_PROCESS_ORIENTATION_FLIP_HORIZONTAL = 1,
+    D3D12_VIDEO_PROCESS_ORIENTATION_CLOCKWISE_90 = 2,
+    D3D12_VIDEO_PROCESS_ORIENTATION_CLOCKWISE_90_FLIP_HORIZONTAL = 3,
+    D3D12_VIDEO_PROCESS_ORIENTATION_CLOCKWISE_180 = 4,
+    D3D12_VIDEO_PROCESS_ORIENTATION_FLIP_VERTICAL = 5,
+    D3D12_VIDEO_PROCESS_ORIENTATION_CLOCKWISE_270 = 6,
+    D3D12_VIDEO_PROCESS_ORIENTATION_CLOCKWISE_270_FLIP_HORIZONTAL = 7,
+} D3D12_VIDEO_PROCESS_ORIENTATION;
+
+typedef enum D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAGS
+{
+    D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAG_NONE = 0x0,
+    D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAG_FRAME_DISCONTINUITY = 0x1,
+    D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAG_FRAME_REPEAT = 0x2,
+} D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAGS;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAGS)")
+
+typedef struct D3D12_VIDEO_PROCESS_REFERENCE_SET
+{
+    UINT NumPastFrames;
+    ID3D12Resource **ppPastFrames;
+    UINT *pPastSubresources;
+    UINT NumFutureFrames;
+    ID3D12Resource **ppFutureFrames;
+    UINT *pFutureSubresources;
+} D3D12_VIDEO_PROCESS_REFERENCE_SET;
+
+typedef struct D3D12_VIDEO_PROCESS_TRANSFORM
+{
+    D3D12_RECT SourceRectangle;
+    D3D12_RECT DestinationRectangle;
+    D3D12_VIDEO_PROCESS_ORIENTATION Orientation;
+} D3D12_VIDEO_PROCESS_TRANSFORM;
+
+typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM_RATE
+{
+    UINT OutputIndex;
+    UINT InputFrameOrField;
+} D3D12_VIDEO_PROCESS_INPUT_STREAM_RATE;
+
+typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM
+{
+    ID3D12Resource *pTexture2D;
+    UINT Subresource;
+    D3D12_VIDEO_PROCESS_REFERENCE_SET ReferenceSet;
+} D3D12_VIDEO_PROCESS_INPUT_STREAM;
+
+typedef struct D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS
+{
+    D3D12_VIDEO_PROCESS_INPUT_STREAM InputStream[D3D12_VIDEO_PROCESS_STEREO_VIEWS];
+    D3D12_VIDEO_PROCESS_TRANSFORM Transform;
+    D3D12_VIDEO_PROCESS_INPUT_STREAM_FLAGS Flags;
+    D3D12_VIDEO_PROCESS_INPUT_STREAM_RATE RateInfo;
+    INT FilterLevels[D3D12_VIDEO_PROCESS_MAX_FILTERS];
+    D3D12_VIDEO_PROCESS_ALPHA_BLENDING AlphaBlending;
+} D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS;
+
+typedef struct D3D12_VIDEO_PROCESS_OUTPUT_STREAM
+{
+    ID3D12Resource *pTexture2D;
+    UINT Subresource;
+} D3D12_VIDEO_PROCESS_OUTPUT_STREAM;
+
+typedef struct D3D12_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS
+{
+    D3D12_VIDEO_PROCESS_OUTPUT_STREAM OutputStream[D3D12_VIDEO_PROCESS_STEREO_VIEWS];
+    D3D12_RECT TargetRectangle;
+} D3D12_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS;
+
 [
     uuid(3b60536e-ad29-4e64-a269-f853837e5e53),
     object,
@@ -451,6 +529,87 @@ interface ID3D12VideoDecodeCommandList : ID3D12CommandList
         [in] ID3D12VideoDecoder *decoder,
         [in] const D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS *output_arguments,
         [in] const D3D12_VIDEO_DECODE_INPUT_STREAM_ARGUMENTS *input_arguments
+    );
+
+    void WriteBufferImmediate(
+        [in] UINT count,
+        [in] const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER *params,
+        [in, optional] const D3D12_WRITEBUFFERIMMEDIATE_MODE *modes
+    );
+}
+
+[
+    uuid(aeb2543a-167f-4682-acc8-d159ed4a6209),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoProcessCommandList : ID3D12CommandList
+{
+    HRESULT Close();
+
+    HRESULT Reset(
+        [in] ID3D12CommandAllocator *allocator
+    );
+
+    void ClearState();
+
+    void ResourceBarrier(
+        [in] UINT num_barriers,
+        [in] const D3D12_RESOURCE_BARRIER *barriers
+    );
+
+    void DiscardResource(
+        [in] ID3D12Resource *resource,
+        [in, optional] const D3D12_DISCARD_REGION *region
+    );
+
+    void BeginQuery(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT index
+    );
+
+    void EndQuery(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT index
+    );
+
+    void ResolveQueryData(
+        [in] ID3D12QueryHeap *query_heap,
+        [in] D3D12_QUERY_TYPE type,
+        [in] UINT start_index,
+        [in] UINT num_queries,
+        [in] ID3D12Resource *destination_buffer,
+        [in] UINT64 aligned_destination_buffer_offset
+    );
+
+    void SetPredication(
+        [in, optional] ID3D12Resource *buffer,
+        [in] UINT64 aligned_buffer_offset,
+        [in] D3D12_PREDICATION_OP operation
+    );
+
+    void SetMarker(
+        [in] UINT metadata,
+        [in] const void *data,
+        [in] UINT size
+    );
+
+    void BeginEvent(
+        [in] UINT metadata,
+        [in] const void *data,
+        [in] UINT size
+    );
+
+    void EndEvent();
+
+    void ProcessFrames(
+        [in] ID3D12VideoProcessor *video_processor,
+        [in] const D3D12_VIDEO_PROCESS_OUTPUT_STREAM_ARGUMENTS *output_arguments,
+        [in] UINT num_input_streams,
+        [in] const D3D12_VIDEO_PROCESS_INPUT_STREAM_ARGUMENTS *input_arguments
     );
 
     void WriteBufferImmediate(
