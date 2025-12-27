@@ -361,6 +361,26 @@ typedef struct D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS
 } D3D12_VIDEO_DECODE_OUTPUT_STREAM_ARGUMENTS;
 
 [
+    uuid(304fdb32-bede-410a-8545-943ac6a46138),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12VideoProcessor : ID3D12Pageable
+{
+    UINT GetNodeMask();
+
+    UINT GetNumInputStreamDescs();
+
+    HRESULT GetInputStreamDescs(
+        [in] UINT num_input_stream_descs,
+        [out] D3D12_VIDEO_PROCESS_INPUT_STREAM_DESC *input_stream_descs
+    );
+
+    D3D12_VIDEO_PROCESS_OUTPUT_STREAM_DESC GetOutputStreamDesc();
+}
+
+[
     uuid(3b60536e-ad29-4e64-a269-f853837e5e53),
     object,
     local,
