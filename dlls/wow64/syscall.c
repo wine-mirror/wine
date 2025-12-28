@@ -239,7 +239,7 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
 
             RtlGetExtendedContextLength( flags, &context_length );
 
-            esp = ctx.SegSs != ss32_sel ? NtCurrentTeb32()->SystemReserved1[0] : ctx.Esp;
+            esp = LOWORD(ctx.SegSs) != ss32_sel ? NtCurrentTeb32()->SystemReserved1[0] : ctx.Esp;
             stack = (struct exc_stack_layout32 *)ULongToPtr( (esp - offsetof(struct exc_stack_layout32, context) - context_length) & ~3 );
             stack->rec_ptr     = PtrToUlong( &stack->rec );
             stack->context_ptr = PtrToUlong( &stack->context );
