@@ -1521,12 +1521,20 @@ static void test_listbox_dlgdir(void)
     int itemCount_justFiles;
     int itemCount_justDrives;
     int i;
+    char curdir[MAX_PATH];
+    char path[MAX_PATH];
     char pathBuffer[MAX_PATH];
     char itemBuffer[MAX_PATH];
     char tempBuffer[MAX_PATH];
     char * p;
     char driveletter;
     HANDLE file;
+
+    GetCurrentDirectoryA(ARRAY_SIZE(curdir), curdir);
+
+    GetTempPathA(ARRAY_SIZE(path), path);
+    res = SetCurrentDirectoryA(path);
+    ok(res, "Failed to set current directory.\n");
 
     file = CreateFileA( "wtest1.tmp.c", GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
     ok(file != INVALID_HANDLE_VALUE, "Error creating the test file: %ld\n", GetLastError());
@@ -1950,6 +1958,7 @@ static void test_listbox_dlgdir(void)
        "GetLastError should return 0x589, got 0x%lX\n",GetLastError());
 
     DestroyWindow(hWnd);
+    SetCurrentDirectoryA(curdir);
 }
 
 static void test_set_count( void )
