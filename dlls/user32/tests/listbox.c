@@ -90,10 +90,10 @@ struct listbox_stat {
 };
 
 struct listbox_test {
-  struct listbox_stat  init,  init_todo;
-  struct listbox_stat click, click_todo;
-  struct listbox_stat  step,  step_todo;
-  struct listbox_stat   sel,   sel_todo;
+  struct listbox_stat  init;
+  struct listbox_stat click;
+  struct listbox_stat  step;
+  struct listbox_stat   sel;
 };
 
 static void
@@ -131,14 +131,11 @@ keypress (HWND handle, WPARAM keycode, BYTE scancode, BOOL extended)
   ok (t.s.f==got.f, "style %#lx, step " #s ", field " #f \
       ": expected %d, got %d\n", style, t.s.f, got.f)
 
-#define listbox_todo_field_ok(t, s, f, got) \
-  todo_wine_if (t.s##_todo.f) { listbox_field_ok(t, s, f, got); }
-
 #define listbox_ok(t, s, got) \
-  listbox_todo_field_ok(t, s, selected, got); \
-  listbox_todo_field_ok(t, s, anchor, got); \
-  listbox_todo_field_ok(t, s, caret, got); \
-  listbox_todo_field_ok(t, s, selcount, got)
+  listbox_field_ok(t, s, selected, got); \
+  listbox_field_ok(t, s, anchor, got); \
+  listbox_field_ok(t, s, caret, got); \
+  listbox_field_ok(t, s, selcount, got)
 
 static void
 check (DWORD style, const struct listbox_test test)
@@ -2586,46 +2583,46 @@ START_TEST(listbox)
 {
   const struct listbox_test SS =
 /*   {add_style} */
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
-/* {selected, anchor,  caret, selcount}{TODO fields} */
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
+/* {selected, anchor,  caret, selcount} */
   const struct listbox_test SS_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
   const struct listbox_test MS =
-    {{     0, LB_ERR,      0,      0}, {0,0,0,0},
-     {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      1,      2,      1}, {0,0,0,0},
-     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
+    {{     0, LB_ERR,      0,      0},
+     {     1,      1,      1,      1},
+     {     2,      1,      2,      1},
+     {     0, LB_ERR,      0,      2}};
   const struct listbox_test MS_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
   const struct listbox_test ES =
-    {{     0, LB_ERR,      0,      0}, {0,0,0,0},
-     {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      2,      2,      1}, {0,0,0,0},
-     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
+    {{     0, LB_ERR,      0,      0},
+     {     1,      1,      1,      1},
+     {     2,      2,      2,      1},
+     {     0, LB_ERR,      0,      2}};
   const struct listbox_test ES_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
   const struct listbox_test EMS =
-    {{     0, LB_ERR,      0,      0}, {0,0,0,0},
-     {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      2,      2,      1}, {0,0,0,0},
-     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
+    {{     0, LB_ERR,      0,      0},
+     {     1,      1,      1,      1},
+     {     2,      2,      2,      1},
+     {     0, LB_ERR,      0,      2}};
   const struct listbox_test EMS_NS =
-    {{LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
+    {{LB_ERR, LB_ERR,      0, LB_ERR},
+     {     1,      1,      1, LB_ERR},
+     {     2,      2,      2, LB_ERR},
+     {LB_ERR, LB_ERR,      0, LB_ERR}};
 
   trace (" Testing single selection...\n");
   check (0, SS);
