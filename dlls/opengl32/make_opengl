@@ -452,6 +452,7 @@ sub generate_unix_thunk($$$$)
     my $call_args = "";
     my $ret_expr = "";
     my $use_dc = 0;
+    my $vars = "";
     my $ret = "";
 
     foreach my $arg (@{$func->[1]})
@@ -495,14 +496,15 @@ sub generate_unix_thunk($$$$)
                 {
                     $arg_type =~ s/^const //;
                 }
-                $input_conv .= "    $arg_type$pname = copy_wow64_ptr32s( params->$pname, params->$pointer_array_count{$_} );\n";
+                $vars .= "    $arg_type$pname;\n";
+                $input_conv .= "    $pname = copy_wow64_ptr32s( params->$pname, params->$pointer_array_count{$_} );\n";
                 $output_conv .= "    free( $pname );\n";
                 $call_args .= " $pname,";
             }
             elsif (defined $pointer_is_offset{$_} && $pname =~ $pointer_is_offset{$_})
             {
                 $arg_type =~ s/\*$//;
-                $input_conv .= "    $arg_type$pname\_arg;\n";
+                $vars .= "    $arg_type$pname\_arg;\n";
                 $output_conv .= "    *(PTR32 *)UlongToPtr(params->$pname) = PtrToUlong( $pname\_arg );\n";
                 $call_args .= " &$pname\_arg,";
             }
@@ -524,7 +526,7 @@ sub generate_unix_thunk($$$$)
             $ret .= "        $ptype ret;\n";
             if ($ret_type eq "const GLubyte *" || $ret_type eq "const char *" || $ret_type eq "const GLchar *")
             {
-                $input_conv .= "    " . $ret_type . "ret;\n";
+                $vars .= "    " . $ret_type . "ret;\n";
                 $ret_expr = "ret = ";
                 $ret_stat = "return return_wow64_string( ret, &params->ret );";
             }
@@ -546,7 +548,7 @@ sub generate_unix_thunk($$$$)
         {
             $need_lock = 1;
             $need_funcs = 1;
-            $input_conv .= "    struct buffer *buffer;\n";
+            $vars .= "    struct buffer *buffer;\n";
             $invalidation .= $name =~ /NamedBuffer/
                 ? "    buffer = invalidate_buffer_name( $teb, params->buffer );\n"
                 : "    buffer = invalidate_buffer_target( $teb, params->target );\n";
@@ -571,7 +573,7 @@ sub generate_unix_thunk($$$$)
         }
         $ret .= "    struct $name\_params *params = args;\n";
     }
-    $ret .= $input_conv;
+    $ret .= $vars;
     if ($use_dc)
     {
         my $param = "params->" . get_arg_name( ${$func->[1]}[0] );
@@ -584,6 +586,7 @@ sub generate_unix_thunk($$$$)
         $ret .= "    const struct opengl_funcs *funcs = $teb->glTable;\n";
         $ret .= "    if (!funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
+    $ret .= $input_conv;
     foreach my $arg (@{$map_default_fbo_thunks{$name}})
     {
         my $target = "GL_DRAW_FRAMEBUFFER";
