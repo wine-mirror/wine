@@ -303,7 +303,7 @@ static BOOL set_window_text( HWND hwnd, const void *text, BOOL ansi )
     }
     else str = NULL;
 
-    TRACE( "%s\n", debugstr_w(str) );
+    TRACE( "%p, %s\n", hwnd, debugstr_w(str) );
 
     if (!(win = get_win_ptr( hwnd )))
     {
