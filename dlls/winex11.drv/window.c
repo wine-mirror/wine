@@ -1289,7 +1289,8 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     if (!X11DRV_DisplayDevices_SupportEventHandlers())
         return;
 
-    xinerama_get_fullscreen_monitors( &data->rects.visible, &monitors.generation, monitors.indices );
+    if (!xinerama_get_fullscreen_monitors( &data->rects.visible, &monitors.generation, monitors.indices ))
+        return;
     data->desired_state.monitors = monitors;
 
     if (!memcmp( old_monitors, &monitors, sizeof(monitors) )) return; /* states are the same, nothing to update */
@@ -1299,9 +1300,8 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
         memcpy( &data->pending_state.monitors, &monitors, sizeof(monitors) );
         TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %s serial %lu\n", data->hwnd, data->whole_window,
                debugstr_monitor_indices( &monitors ), NextRequest( data->display ) );
-        if (monitors.indices[0] == -1) XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS) );
-        else XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
-                              XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors.indices, 4 );
+        XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
+                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors.indices, 4 );
     }
     else
     {
