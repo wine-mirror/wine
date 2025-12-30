@@ -653,6 +653,24 @@ static void dump_section_apiset(void)
     }
 }
 
+static UINT get_export_rva( const char *name )
+{
+    UINT i;
+    const UINT *funcs;
+    const UINT *names;
+    const WORD *ordinals;
+    const IMAGE_EXPORT_DIRECTORY *dir;
+
+    if (!(dir = get_dir( IMAGE_FILE_EXPORT_DIRECTORY ))) return 0;
+    if (!(funcs = RVA( dir->AddressOfFunctions, dir->NumberOfFunctions * sizeof(DWORD) ))) return 0;
+    names = RVA( dir->AddressOfNames, dir->NumberOfNames * sizeof(DWORD) );
+    ordinals = RVA( dir->AddressOfNameOrdinals, dir->NumberOfNames * sizeof(WORD) );
+    for (i = 0; i < dir->NumberOfNames; i++)
+        if (!strcmp( name, RVA( names[i], 1 )))
+            return funcs[ordinals[i]];
+    return 0;
+}
+
 static const char *find_export_from_rva( UINT rva )
 {
     UINT i, *func_names;
@@ -5094,6 +5112,19 @@ static void dump_symbol_table(void)
     dump_coff_symbol_table(sym, numsym, IMAGE_FIRST_SECTION(PE_nt_headers));
 }
 
+static void dump_embedded_ne_module( UINT rva )
+{
+    const void *ne_module = RVA( rva, 1 );
+    void *new_base;
+
+    dump_total_len -= (char *)ne_module - (char *)dump_base;
+    new_base = xmalloc( dump_total_len );
+    memcpy( new_base, ne_module, dump_total_len );
+    free( dump_base );
+    dump_base = new_base;
+    ne_dump();
+}
+
 enum FileSig get_kind_exec(void)
 {
     const WORD*                pw;
@@ -5123,6 +5154,7 @@ enum FileSig get_kind_exec(void)
 void pe_dump(void)
 {
     int alt = 0;
+    UINT rva;
 
     PE_nt_headers = get_nt_header();
     print_fake_dll();
@@ -5179,6 +5211,13 @@ void pe_dump(void)
             dump_symbol_table();
         if (globals.do_debug)
             dump_debug();
+        if (PE_nt_headers->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 &&
+            (rva = get_export_rva( "__wine_spec_dos_header" )))
+        {
+            printf( "\n*** 16-bit Wine dll, dumping embedded NE module ***\n\n" );
+            dump_embedded_ne_module( rva );
+            break;
+        }
         if (alt++) break;
         if (!get_alt_header()) break;
     }
