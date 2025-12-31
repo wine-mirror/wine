@@ -9,5 +9,6 @@ SOURCES = \
 	buffer.c \
 	main.c \
 	mediatype.c \
+	mfplat_modern.c \
 	queue.c \
 	sample.c

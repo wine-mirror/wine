@@ -13,4 +13,5 @@ SOURCES = \
 	rsrc.rc \
 	session.c \
 	url.c \
+	winhttp_modern.c \
 	winhttp_tlb.idl
