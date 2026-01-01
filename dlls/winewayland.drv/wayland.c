@@ -141,7 +141,7 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         }
         pthread_mutex_lock(&seat->mutex);
         seat->wl_seat = wl_registry_bind(registry, id, &wl_seat_interface,
-                                         version < 5 ? version : 5);
+                                         version < 8 ? version : 8);
         seat->global_id = id;
         wl_seat_add_listener(seat->wl_seat, &seat_listener, NULL);
         pthread_mutex_unlock(&seat->mutex);

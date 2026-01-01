@@ -291,8 +291,8 @@ static void pointer_handle_axis_stop(void *data, struct wl_pointer *wl_pointer,
 {
 }
 
-static void pointer_handle_axis_discrete(void *data, struct wl_pointer *wl_pointer,
-                                         uint32_t axis, int32_t discrete)
+static void pointer_handle_axis_value120(void *data, struct wl_pointer *wl_pointer,
+                                         uint32_t axis, int32_t value120)
 {
     INPUT input = {0};
     HWND hwnd;
@@ -305,18 +305,24 @@ static void pointer_handle_axis_discrete(void *data, struct wl_pointer *wl_point
     {
     case WL_POINTER_AXIS_VERTICAL_SCROLL:
         input.mi.dwFlags = MOUSEEVENTF_WHEEL;
-        input.mi.mouseData = -WHEEL_DELTA * discrete;
+        input.mi.mouseData = -value120;
         break;
     case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
         input.mi.dwFlags = MOUSEEVENTF_HWHEEL;
-        input.mi.mouseData = WHEEL_DELTA * discrete;
+        input.mi.mouseData = value120;
         break;
     default: break;
     }
 
-    TRACE("hwnd=%p axis=%u discrete=%d\n", hwnd, axis, discrete);
+    TRACE("hwnd=%p axis=%u value120=%d\n", hwnd, axis, value120);
 
     NtUserSendHardwareInput(hwnd, 0, &input, 0);
+}
+
+static void pointer_handle_axis_discrete(void *data, struct wl_pointer *wl_pointer,
+                                         uint32_t axis, int32_t discrete)
+{
+    pointer_handle_axis_value120(data, wl_pointer, axis, WHEEL_DELTA * discrete);
 }
 
 static const struct wl_pointer_listener pointer_listener =
@@ -329,7 +335,8 @@ static const struct wl_pointer_listener pointer_listener =
     pointer_handle_frame,
     pointer_handle_axis_source,
     pointer_handle_axis_stop,
-    pointer_handle_axis_discrete
+    pointer_handle_axis_discrete,
+    pointer_handle_axis_value120
 };
 
 /**********************************************************************
