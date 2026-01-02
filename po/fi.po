@@ -4167,30 +4167,24 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Kirjoitussuojattua ominaisuutta '|' ei voi muokata"
 
 #: dlls/jscript/jscript.rc:84
-#, fuzzy
-#| msgid "DataView constructor argument offset is invalid"
 msgid "Typed array constructor argument is invalid"
-msgstr "DataView'n muodostimen kohta-argumentti (offset) ei kelpaa"
+msgstr "Tyypitetyn taulukon muodostimen argumentti ei kelpaa"
 
 #: dlls/jscript/jscript.rc:83
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a typed array object"
-msgstr "'this' ei ole |-objekti"
+msgstr "'this' ei ole tyypitetty taulukko"
 
 #: dlls/jscript/jscript.rc:85
 msgid "Invalid offset/length when creating typed array"
-msgstr ""
+msgstr "Tyypitetyn taulukon pituus tai kohta (offset) ei kelpaa"
 
 #: dlls/jscript/jscript.rc:86
 msgid "Invalid begin/end value in typed array subarray method"
-msgstr ""
+msgstr "Alku tai loppu ei kelpaa tyypitetyn taulukon subarray-metodissa"
 
 #: dlls/jscript/jscript.rc:87
-#, fuzzy
-#| msgid "Invalid module type for %1.\n"
 msgid "Invalid source in typed array set"
-msgstr "%1:n moduulin tyyppi ei kelpaa.\n"
+msgstr "Tyypitetyn taulukon lähde ei kelpaa"
 
 #: dlls/jscript/jscript.rc:88
 msgid "'this' is not a DataView object"
@@ -9629,28 +9623,20 @@ msgid "Scanning"
 msgstr "Skannataan"
 
 #: dlls/sane.ds/sane.rc:58
-#, fuzzy
-#| msgid "feature from:"
 msgid "Manufacturer:"
-msgstr "ominaisuus lähteestä:"
+msgstr "Valmistaja:"
 
 #: dlls/sane.ds/sane.rc:60
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product family:"
-msgstr "Päivitykset:"
+msgstr "Tuoteperhe:"
 
 #: dlls/sane.ds/sane.rc:62
-#, fuzzy
-#| msgid "Product Updates:"
 msgid "Product name:"
-msgstr "Päivitykset:"
+msgstr "Tuote:"
 
 #: dlls/sane.ds/sane.rc:64
-#, fuzzy
-#| msgid "Screen resolution"
 msgid "Resolution:"
-msgstr "Näytön resoluutio"
+msgstr "Resoluutio:"
 
 #: dlls/sane.ds/sane.rc:66 programs/wordpad/wordpad.rc:181
 msgid "Page"
@@ -9688,7 +9674,7 @@ msgstr "µs"
 
 #: dlls/sane.ds/sane.rc:43
 msgid "LineArt"
-msgstr ""
+msgstr "Viivapiirros"
 
 #: dlls/sane.ds/sane.rc:44 dlls/setupapi/setupapi.rc:32
 #: programs/ipconfig/ipconfig.rc:34
@@ -9699,21 +9685,21 @@ msgstr "Tuntematon"
 msgid ""
 "The Automatic Document Feeder (ADF) is empty. Please insert the sheets to be "
 "scanned."
-msgstr ""
+msgstr "Automaattisyöttö on tyhjä. Syötä skannattavat paperit."
 
 #: dlls/sane.ds/sane.rc:47
 msgid ""
 "The scanner reports a paper jam. Check for additional information on device "
 "display."
-msgstr ""
+msgstr "Skanneri ilmoittaa paperitukoksesta. Tarkasta tilanne laitteesta."
 
 #: dlls/sane.ds/sane.rc:48
 msgid "The scanner cover is open. Please close the scanner."
-msgstr ""
+msgstr "Skannerin kansi on auki. Sulje se."
 
 #: dlls/sane.ds/sane.rc:49
 msgid "The scanner is busy. Try again later."
-msgstr ""
+msgstr "Skanneri on käytössä. Yritä myöhemmin uudestaan."
 
 #: dlls/serialui/serialui.rc:28
 msgid "Settings for %s"
@@ -14780,10 +14766,8 @@ msgid "%t%1!u! file(s) copied\n"
 msgstr "%t%1!u! tiedosto(a) kopioitu\n"
 
 #: programs/cmd/cmd.rc:411 programs/xcopy/xcopy.rc:83
-#, fuzzy
-#| msgid "The file cannot be accessed.\n"
 msgid "File cannot be copied onto itself.\n"
-msgstr "Tiedostoon ei ole pääsyä.\n"
+msgstr "Tiedostoa ei voi kopioida itsensä päälle.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
