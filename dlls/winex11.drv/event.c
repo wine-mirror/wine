@@ -501,37 +501,7 @@ BOOL X11DRV_ProcessEvents( DWORD mask )
         }
 
         count++;
-        if (XFilterEvent( &event, None ))
-        {
-            /*
-             * SCIM on linux filters key events strangely. It does not filter the
-             * KeyPress events for these keys however it does filter the
-             * KeyRelease events. This causes wine to become very confused as
-             * to the keyboard state.
-             *
-             * We need to let those KeyRelease events be processed so that the
-             * keyboard state is correct.
-             */
-            if (event.type == KeyRelease)
-            {
-                KeySym keysym = 0;
-                XKeyEvent *keyevent = &event.xkey;
-
-                XLookupString(keyevent, NULL, 0, &keysym, NULL);
-                if (!(keysym == XK_Shift_L ||
-                    keysym == XK_Shift_R ||
-                    keysym == XK_Control_L ||
-                    keysym == XK_Control_R ||
-                    keysym == XK_Alt_R ||
-                    keysym == XK_Alt_L ||
-                    keysym == XK_Meta_R ||
-                    keysym == XK_Meta_L))
-                        continue; /* not a key we care about, ignore it */
-            }
-            else
-                continue;  /* filtered, ignore it */
-        }
-
+        if (XFilterEvent( &event, None )) continue;
         if (host_window_filter_event( &event, &prev_event )) continue;
 
         get_event_data( &event );
