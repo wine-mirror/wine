@@ -12427,6 +12427,131 @@ static void test_specular_shaders(void)
     release_test_context(&context);
 }
 
+/* A test to show that lights are affected by the view matrix but not the world
+ * matrix, and to make sure that lighting is invalidated when the view matrix
+ * (and nothing else) changes. */
+static void test_lighting_matrices(void)
+{
+    struct d3d8_test_context context;
+    struct surface_readback rb;
+    IDirect3DDevice8 *device;
+    unsigned int color;
+    HRESULT hr;
+
+    static const D3DMATERIAL8 material = {.Power = 1.0f};
+
+    static const D3DLIGHT8 light =
+    {
+        .Type = D3DLIGHT_SPOT,
+        .Diffuse = {1.0f, 1.0f, 1.0f, 1.0f},
+        .Specular = {1.0f, 1.0f, 1.0f, 1.0f},
+        .Position = {2.0f, -2.0f, 2.0f},
+        .Direction = {1.0f, 1.0f, -0.5f},
+        .Range = 1000.0f,
+        .Falloff = 1.0f,
+        .Attenuation1 = 0.1f,
+        .Theta = 1.0f,
+        .Phi = 3.0f,
+    };
+
+    static const D3DMATRIX world_matrix =
+    {{{
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.0f,
+        0.0f, 0.2f, 0.0f, 1.0f,
+    }}};
+
+    static const D3DMATRIX view_matrix =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.0f, 1.0f,
+    }}};
+
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 normal;
+        unsigned int diffuse;
+        unsigned int specular;
+    }
+    tri[] =
+    {
+        {{ 2.0f, -2.0f, 0.5f}, {-0.3f, -0.4f, 0.4f}, 0x00ff0000, 0x0000ff00},
+        {{-2.0f, -2.0f, 0.5f}, {-1.0f,  0.4f, 0.4f}, 0x00ff0000, 0x0000ff00},
+        {{ 0.0f,  2.0f, 0.5f}, { 0.0f, -0.4f, 0.4f}, 0x00ff0000, 0x0000ff00},
+    },
+    tri2[] =
+    {
+        {{ 1.0f, -3.0f, 0.5f}, {-0.3f, -0.4f, 0.4f}, 0x00ff0000, 0x0000ff00},
+        {{-3.0f, -3.0f, 0.5f}, {-1.0f,  0.4f, 0.4f}, 0x00ff0000, 0x0000ff00},
+        {{-1.0f,  1.0f, 0.5f}, { 0.0f, -0.4f, 0.4f}, 0x00ff0000, 0x0000ff00},
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetMaterial(device, &material);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetLight(device, 123, &light);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_LightEnable(device, 123, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_SPECULARENABLE, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLD, &world_matrix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 1, tri, sizeof(*tri));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    get_surface_readback(context.backbuffer, &rb);
+    color = get_readback_color(&rb, 320, 240);
+    ok(color_match(color, 0x939100, 1), "Got color %08x.\n", color);
+    color = get_readback_color(&rb, 10, 430);
+    ok(color_match(color, 0x040400, 1), "Got color %08x.\n", color);
+    color = get_readback_color(&rb, 320, 10);
+    ok(color_match(color, 0xb5a600, 1), "Got color %08x.\n", color);
+    color = get_readback_color(&rb, 630, 430);
+    ok(color_match(color, 0xeafb00, 1), "Got color %08x.\n", color);
+    release_surface_readback(&rb);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_VIEW, &view_matrix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 1, tri2, sizeof(*tri2));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    get_surface_readback(context.backbuffer, &rb);
+    color = get_readback_color(&rb, 320, 240);
+    ok(color_match(color, 0x1d1c00, 1), "Got color %08x.\n", color);
+    color = get_readback_color(&rb, 10, 430);
+    ok(color_match(color, 0x000000, 1), "Got color %08x.\n", color);
+    color = get_readback_color(&rb, 320, 10);
+    ok(color_match(color, 0x3f3d00, 1), "Got color %08x.\n", color);
+    color = get_readback_color(&rb, 630, 430);
+    ok(color_match(color, 0x000000, 1), "Got color %08x.\n", color);
+    release_surface_readback(&rb);
+
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -12522,4 +12647,5 @@ START_TEST(visual)
     test_managed_reset();
     test_mipmap_upload();
     test_specular_shaders();
+    test_lighting_matrices();
 }
