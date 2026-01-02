@@ -8500,6 +8500,7 @@ static void test_subresource_surface(void)
 
             /* IDXGISurface::Map() */
             hr = IDXGISurface2_Map(surface, &mapped_rect, DXGI_MAP_READ);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             ok(mapped_rect.Pitch == expected_pitch, "Expected pitch %u, got %u.\n",
                     expected_pitch, mapped_rect.Pitch);
             hr = IDXGISurface2_Unmap(surface);
