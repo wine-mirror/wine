@@ -327,10 +327,40 @@ static void test_system_palette_entries(void)
     check_system_palette_entries(ULongToHandle(0xdeadbeef));
 }
 
+static void test_resize_palette(void)
+{
+    char logpalettebuf[sizeof(LOGPALETTE) + sizeof(logpalettedata)];
+    PLOGPALETTE logpalette = (PLOGPALETTE)logpalettebuf;
+    HPALETTE hpal;
+    PALETTEENTRY palette_entries[11];
+    int ret;
+
+    /* Initialize the logical palette with a few colours */
+    logpalette->palVersion = 0x300;
+    logpalette->palNumEntries = 8;
+    memcpy( logpalette->palPalEntry, logpalettedata, sizeof(logpalettedata) );
+
+    hpal = CreatePalette( logpalette );
+    ok(hpal != NULL, "CreatePalette failed.\n");
+    ret = GetPaletteEntries(hpal, 0, 11, palette_entries);
+    ok(ret == 8, "GetPaletteEntries returned %d entries, expected 8\n", ret);
+
+    ok(ResizePalette(hpal, 10), "ResizePalette failed.\n");
+    ret = GetPaletteEntries(hpal, 0, 11, palette_entries);
+    ok(ret == 10, "GetPaletteEntries returned %d entries, expected 10\n", ret);
+
+    ok(!ResizePalette(hpal, 0), "ResizePalette unexpectedly succeeded.\n");
+    ret = GetPaletteEntries(hpal, 0, 11, palette_entries);
+    ok(ret == 10, "GetPaletteEntries returned %d entries, expected 10\n", ret);
+
+    ok(DeleteObject(hpal), "DeleteObject failed.\n");
+}
+
 START_TEST(palette)
 {
     test_DIB_PAL_COLORS();
     test_palette_entries();
     test_halftone_palette();
     test_system_palette_entries();
+    test_resize_palette();
 }
