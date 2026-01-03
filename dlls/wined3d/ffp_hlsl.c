@@ -329,6 +329,24 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
                     continue;
                 break;
 
+            case WINED3DTSS_TCI_CAMERASPACENORMAL:
+                shader_addline(&texcoord, "float4(normal, 1.0)");
+                break;
+
+            case WINED3DTSS_TCI_CAMERASPACEPOSITION:
+                shader_addline(&texcoord, "ec_pos");
+                break;
+
+            case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
+                shader_addline(&texcoord, "float4(reflect(ffp_normalize(ec_pos.xyz), normal), 1.0)");
+                break;
+
+            case WINED3DTSS_TCI_SPHEREMAP:
+                shader_addline(buffer, "float3 r = reflect(ffp_normalize(ec_pos.xyz), normal);");
+                shader_addline(buffer, "float m = 2.0 * length(float3(r.xy, r.z - 1.0));");
+                shader_addline(&texcoord, "float4(r.xy / m + 0.5, 0.0, 1.0)");
+                break;
+
             default:
                 FIXME("Unhandled texgen %#x.\n", settings->texgen[i]);
                 break;
