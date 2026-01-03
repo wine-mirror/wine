@@ -9337,7 +9337,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
             case WINED3DTSS_TCI_SPHEREMAP:
                 shader_addline(buffer, "r = reflect(ffp_normalize(ec_pos.xyz), normal);\n");
-                shader_addline(buffer, "m = 2.0 * length(vec3(r.x, r.y, r.z + 1.0));\n");
+                shader_addline(buffer, "m = 2.0 * length(vec3(r.x, r.y, r.z - 1.0));\n");
                 shader_addline(texcoord, "vec4(r.x / m + 0.5, r.y / m + 0.5, 0.0, 1.0)");
                 break;
 
