@@ -29016,6 +29016,101 @@ static void test_lighting_matrices(void)
     release_test_context(&context);
 }
 
+static void test_generated_texcoords(void)
+{
+    struct d3d9_test_context context;
+    IDirect3DPixelShader9 *ps;
+    IDirect3DDevice9 *device;
+    unsigned int color;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+        0xffff0101,                         /* ps_1_1      */
+        0x00000040, 0xb00f0000,             /* texcoord t0 */
+        0x00000001, 0x800f0000, 0xb0e40000, /* mov r0, t0  */
+        0x0000ffff
+    };
+
+    /* Shift a little to show that we're using camera space coordinates. */
+    static const D3DMATRIX transform =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.2f, 0.2f, 0.0f, 1.0f,
+    }}};
+
+    static const struct
+    {
+        struct vec3 position;
+        struct vec3 normal;
+    }
+    tri[] =
+    {
+        {{ 2.0f, -2.0f, 0.1f}, {0.8f, 0.0f, 0.7f}},
+        {{-2.0f, -2.0f, 0.1f}, {0.8f, 0.0f, 0.7f}},
+        {{ 0.0f,  2.0f, 0.1f}, {0.8f, 0.0f, 0.7f}},
+    };
+
+    static const struct
+    {
+        unsigned int tci;
+        unsigned int color;
+    }
+    tests[] =
+    {
+        {D3DTSS_TCI_CAMERASPACEPOSITION,            0x0000001a},
+        {D3DTSS_TCI_CAMERASPACENORMAL,              0x00cc00b2},
+        {D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR,    0x0000000f},
+        {D3DTSS_TCI_SPHEREMAP,                      0x00836900},
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_NORMAL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &transform);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, &transform);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("TCI %#x", tests[i].tci);
+
+        hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXCOORDINDEX, tests[i].tci);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 1, tri, sizeof(*tri));
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        color = getPixelColor(device, 320, 240);
+        ok(color_match(color, tests[i].color, 1), "Got color %08x.\n", color);
+
+        winetest_pop_context();
+    }
+
+    IDirect3DPixelShader9_Release(ps);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -29176,4 +29271,5 @@ START_TEST(visual)
     test_fog();
     test_texture_transform_flags();
     test_lighting_matrices();
+    test_generated_texcoords();
 }
