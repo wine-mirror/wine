@@ -150,6 +150,12 @@ static struct object *create_key_object(enum algid algid, NCRYPT_PROV_HANDLE pro
         set_object_property(object, BCRYPT_SIGNATURE_LENGTH, (BYTE *)&dw_value, sizeof(dw_value));
         break;
 
+    case ECDSA_P256:
+        if (!(object = allocate_object(KEY))) return NULL;
+
+        object->key.algid = ECDSA_P256;
+        break;
+
     default:
         ERR("Invalid algid %#x\n", algid);
         return NULL;
@@ -198,6 +204,24 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
 
         set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&default_bitlen, sizeof(default_bitlen));
         set_object_property(object, BCRYPT_PUBLIC_KEY_LENGTH, (BYTE *)&default_bitlen, sizeof(default_bitlen));
+    }
+    else if (!lstrcmpiW(algid, BCRYPT_ECDSA_P256_ALGORITHM))
+    {
+        NTSTATUS status;
+        DWORD bitlen = 256;
+
+        if (!(object = create_key_object(ECDSA_P256, provider)))
+            return NTE_NO_MEMORY;
+
+        status = BCryptGenerateKeyPair(BCRYPT_ECDSA_P256_ALG_HANDLE, &object->key.bcrypt_key, bitlen, 0);
+        if (status != STATUS_SUCCESS)
+        {
+            free(object);
+            return map_ntstatus(status);
+        }
+
+        set_object_property(object, NCRYPT_LENGTH_PROPERTY, (BYTE *)&bitlen, sizeof(bitlen));
+        set_object_property(object, BCRYPT_PUBLIC_KEY_LENGTH, (BYTE *)&bitlen, sizeof(bitlen));
     }
     else
     {
