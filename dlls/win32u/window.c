@@ -376,6 +376,13 @@ void client_surface_present( struct client_surface *surface )
     pthread_mutex_unlock( &surfaces_lock );
 }
 
+void client_surface_update( struct client_surface *surface )
+{
+    pthread_mutex_lock( &surfaces_lock );
+    if (surface->hwnd) surface->funcs->update( surface );
+    pthread_mutex_unlock( &surfaces_lock );
+}
+
 BOOL is_client_surface_window( struct client_surface *surface, HWND hwnd )
 {
     BOOL ret;

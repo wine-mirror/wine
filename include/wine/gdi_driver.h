@@ -252,7 +252,7 @@ struct client_surface_funcs
     void (*destroy)( struct client_surface *surface );
     /* detach the surface from its window, called from window owner thread */
     void (*detach)( struct client_surface *surface );
-    /* update the surface to match its window state, called from window owner thread */
+    /* update the surface to match its window state */
     void (*update)( struct client_surface *surface );
     /* present the client surface if necessary, hdc != NULL when offscreen, called from render thread */
     void (*present)( struct client_surface *surface, HDC hdc );
@@ -272,6 +272,7 @@ W32KAPI void *client_surface_create( UINT size, const struct client_surface_func
 W32KAPI void client_surface_add_ref( struct client_surface *surface );
 W32KAPI void client_surface_release( struct client_surface *surface );
 W32KAPI void client_surface_present( struct client_surface *surface );
+W32KAPI void client_surface_update( struct client_surface *surface );
 W32KAPI void detach_client_surfaces( HWND hwnd );
 
 static inline const char *debugstr_client_surface( struct client_surface *surface )

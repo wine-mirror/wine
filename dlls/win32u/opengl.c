@@ -168,6 +168,7 @@ static void opengl_drawable_flush( struct opengl_drawable *drawable, int interva
 static BOOL opengl_drawable_swap( struct opengl_drawable *drawable )
 {
     if (!is_client_surface_window( drawable->client, 0 )) return FALSE;
+    client_surface_update( drawable->client );
     return drawable->funcs->swap( drawable );
 }
 

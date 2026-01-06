@@ -1945,6 +1945,13 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
     client_swapchains = present_info->pSwapchains;
     present_info->pSwapchains = swapchains;
 
+    for (uint32_t i = 0; i < present_info->swapchainCount; i++)
+    {
+        struct swapchain *swapchain = swapchain_from_handle( client_swapchains[i] );
+        struct surface *surface = swapchain->surface;
+        client_surface_update( surface->client );
+    }
+
     res = device->p_vkQueuePresentKHR( queue->host.queue, present_info );
 
     for (uint32_t i = 0; i < present_info->swapchainCount; i++)
