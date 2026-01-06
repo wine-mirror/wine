@@ -2118,11 +2118,9 @@ void init_startup_info(void)
 /* helper for create_startup_info */
 static BOOL is_console_handle( HANDLE handle )
 {
-    IO_STATUS_BLOCK io;
     DWORD mode;
 
-    return NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io, IOCTL_CONDRV_GET_MODE, NULL, 0,
-                                  &mode, sizeof(mode) ) == STATUS_SUCCESS;
+    return sync_ioctl( handle, IOCTL_CONDRV_GET_MODE, NULL, 0, &mode, sizeof(mode) ) == STATUS_SUCCESS;
 }
 
 /***********************************************************************
