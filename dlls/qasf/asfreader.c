@@ -327,7 +327,8 @@ static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
     struct asf_stream *stream = impl_from_IMediaSeeking(iface);
     struct asf_reader *filter = asf_reader_from_asf_stream(stream);
     struct SourceSeeking *seek = &stream->seek;
-    HRESULT hr;
+    WMT_STATUS filter_status = filter->status;
+    HRESULT hr = S_OK;
     UINT i;
 
     TRACE("iface %p.\n", iface);
@@ -340,7 +341,8 @@ static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
     }
 
     /* Stop the reader. */
-    hr = asf_reader_stop_stream(filter);
+    if (filter_status == WMT_STARTED && FAILED(hr = asf_reader_stop_stream(filter)))
+        return hr;
 
     /* Send end flush commands downstream. */
     for (i = 0; i < filter->stream_count; ++i)
@@ -349,8 +351,8 @@ static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
             WARN("Failed to EndFlush for stream %u.\n", i);
     }
 
-    /* Start the reader. */
-    if (hr == S_OK)
+    /* Start the reader again if it was started. */
+    if (filter_status == WMT_STARTED)
         hr = asf_reader_start_stream(filter, seek->llCurrent, seek->llDuration, seek->dRate);
 
     return hr;
