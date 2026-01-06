@@ -148,7 +148,7 @@ static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
 /***********************************************************************
  *           get_non_pe_file_info
  */
-static BOOL get_non_pe_file_info( int fd, struct pe_image_info *info )
+static NTSTATUS get_non_pe_file_info( int fd, struct pe_image_info *info )
 {
     union
     {
