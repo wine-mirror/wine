@@ -278,6 +278,7 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
         if (recordset->bookmark_hacc)
         {
             const BYTE *data;
+            LONGLONG i8_buf;
             BYTE byte_buf;
             DBBKMARK len;
             int int_buf;
@@ -305,6 +306,12 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
                     int_buf = V_R8(&recordset->bookmark);
                     len = sizeof(int_buf);
                 }
+            }
+            else if (V_VT(&recordset->bookmark) == VT_I8)
+            {
+                data = (BYTE *)&i8_buf;
+                i8_buf = V_I8(&recordset->bookmark);
+                len = sizeof(i8_buf);
             }
             else
             {
