@@ -1444,9 +1444,10 @@ static void flush_context( TEB *teb, void (*flush)(void) )
     struct opengl_drawable *read, *draw;
     struct context *ctx = get_current_context( teb, &read, &draw );
     const struct opengl_funcs *funcs = teb->glTable;
-    BOOL force_swap = flush && ctx && !ctx->draw_fbo && context_draws_front( ctx ) &&
-                      draw->buffer_map[0] == GL_BACK_LEFT && draw->client;
-    UINT flags = force_swap ? GL_FLUSH_FORCE_SWAP : 0;
+    UINT flags = 0;
+
+    if (flush && ctx && !ctx->draw_fbo && context_draws_front( ctx ) && draw->client) flags |= GL_FLUSH_PRESENT;
+    if ((flags & GL_FLUSH_PRESENT) && draw->buffer_map[0] == GL_BACK_LEFT) flags |= GL_FLUSH_FORCE_SWAP;
 
     if (!ctx || !funcs->p_wgl_context_flush( &ctx->base, flush, flags ))
     {

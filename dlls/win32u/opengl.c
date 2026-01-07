@@ -2282,7 +2282,6 @@ static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)
 
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
-    if (flush && !(flags & GL_FLUSH_FORCE_SWAP)) flags |= GL_FLUSH_PRESENT;
     opengl_drawable_flush( draw, interval, flags );
     if (flags & GL_FLUSH_FORCE_SWAP) opengl_drawable_swap( draw );
 
