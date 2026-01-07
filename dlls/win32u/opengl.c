@@ -2265,27 +2265,26 @@ static BOOL flush_memory_pbuffer( void (*flush)(void) )
     return flush_memory_dc( context, draw_hdc, FALSE, flush );
 }
 
-static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void), BOOL force_swap )
+static BOOL win32u_wgl_context_flush( struct wgl_context *context, void (*flush)(void), UINT flags )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     struct opengl_drawable *draw = context->draw;
-    UINT flags = 0;
     int interval;
 
     if (!draw->client) return flush_memory_pbuffer( flush );
     interval = get_window_swap_interval( draw->client->hwnd );
-    if (force_swap) interval = 0;
+    if (flags & GL_FLUSH_FORCE_SWAP) interval = 0;
 
-    TRACE( "context %p, hwnd %p, interval %d, flush %p\n", context, draw->client->hwnd, interval, flush );
+    TRACE( "context %p, hwnd %p, interval %d, flush %p, flags %#x\n", context, draw->client->hwnd, interval, flush, flags );
 
     context_sync_drawables( context, 0, 0 );
     if (!(draw = context->draw)) return FALSE; /* should never happen */
 
     if (flush) flush();
     if (flush == funcs->p_glFinish) flags |= GL_FLUSH_FINISHED;
-    if (flush && !force_swap) flags |= GL_FLUSH_PRESENT;
+    if (flush && !(flags & GL_FLUSH_FORCE_SWAP)) flags |= GL_FLUSH_PRESENT;
     opengl_drawable_flush( draw, interval, flags );
-    if (force_swap) opengl_drawable_swap( draw );
+    if (flags & GL_FLUSH_FORCE_SWAP) opengl_drawable_swap( draw );
 
     return TRUE;
 }

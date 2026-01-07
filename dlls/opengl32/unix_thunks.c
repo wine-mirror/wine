@@ -90023,7 +90023,7 @@ static BOOL null_wgl_context_reset( struct wgl_context *context, HDC hdc, struct
     WARN( "unsupported\n" );
     return FALSE;
 }
-static BOOL null_wgl_context_flush( struct wgl_context *context, void (*flush)(void), BOOL force_swap )
+static BOOL null_wgl_context_flush( struct wgl_context *context, void (*flush)(void), UINT flags )
 {
     WARN( "unsupported\n" );
     return FALSE;

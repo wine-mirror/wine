@@ -1609,7 +1609,7 @@ printf OUT "{\n";
 printf OUT "    WARN( \"unsupported\\n\" );\n";
 printf OUT "    return FALSE;\n";
 printf OUT "}\n";
-printf OUT "static BOOL null_wgl_context_flush( struct wgl_context *context, void (*flush)(void), BOOL force_swap )\n";
+printf OUT "static BOOL null_wgl_context_flush( struct wgl_context *context, void (*flush)(void), UINT flags )\n";
 printf OUT "{\n";
 printf OUT "    WARN( \"unsupported\\n\" );\n";
 printf OUT "    return FALSE;\n";
