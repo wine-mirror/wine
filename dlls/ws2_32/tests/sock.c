@@ -6463,6 +6463,7 @@ static void check_events_(int line, struct event_test_ctx *ctx,
             ok_(__FILE__, line)(msg.wParam == ctx->socket, "got wparam %#Ix\n", msg.wParam);
             todo_wine_if (todo_msg) ok_(__FILE__, line)(msg.lParam == flag2, "got second event %#Ix\n", msg.lParam);
         }
+        MsgWaitForMultipleObjects(0, NULL, FALSE, 10, QS_POSTMESSAGE);
         ret = PeekMessageA(&msg, ctx->window, WM_USER, WM_USER, PM_REMOVE);
         todo_wine_if (todo_msg && ret) ok_(__FILE__, line)(!ret, "got unexpected event %#Ix\n", msg.lParam);
         if (ret) any_fail = TRUE;
