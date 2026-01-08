@@ -265,6 +265,8 @@ struct wayland_surface
 
     struct wl_surface *wl_surface;
     struct wp_viewport *wp_viewport;
+    struct wayland_shm_buffer *small_icon_buffer;
+    struct wayland_shm_buffer *big_icon_buffer;
 
     enum wayland_surface_role role;
     union
@@ -274,8 +276,6 @@ struct wayland_surface
             struct xdg_surface *xdg_surface;
             struct xdg_toplevel *xdg_toplevel;
             struct xdg_toplevel_icon_v1 *xdg_toplevel_icon;
-            struct wayland_shm_buffer *small_icon_buffer;
-            struct wayland_shm_buffer *big_icon_buffer;
         };
         struct
         {
@@ -332,7 +332,8 @@ struct wayland_client_surface *wayland_client_surface_create(HWND hwnd);
 void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel);
 void wayland_surface_ensure_contents(struct wayland_surface *surface);
 void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
-void wayland_surface_set_icon(struct wayland_surface *surface, UINT type, const ICONINFO *ii);
+void wayland_surface_assign_icon(struct wayland_surface *surface);
+void wayland_surface_set_icon_buffer(struct wayland_surface *surface, UINT type, const ICONINFO *ii);
 
 static inline BOOL wayland_surface_is_toplevel(struct wayland_surface *surface)
 {

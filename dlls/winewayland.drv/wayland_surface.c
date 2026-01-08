@@ -224,6 +224,18 @@ void wayland_surface_destroy(struct wayland_surface *surface)
         surface->wl_surface = NULL;
     }
 
+    if (surface->big_icon_buffer)
+    {
+        wayland_shm_buffer_unref(surface->big_icon_buffer);
+        surface->big_icon_buffer = NULL;
+    }
+
+    if (surface->small_icon_buffer)
+    {
+        wayland_shm_buffer_unref(surface->small_icon_buffer);
+        surface->small_icon_buffer = NULL;
+    }
+
     wl_display_flush(process_wayland.wl_display);
 
     free(surface);
@@ -258,12 +270,14 @@ void wayland_surface_make_toplevel(struct wayland_surface *surface)
     if (process_name)
         xdg_toplevel_set_app_id(surface->xdg_toplevel, process_name);
 
-    wl_surface_commit(surface->wl_surface);
-    wl_display_flush(process_wayland.wl_display);
-
     if (!NtUserInternalGetWindowText(surface->hwnd, text, ARRAY_SIZE(text)))
         text[0] = 0;
     wayland_surface_set_title(surface, text);
+
+    wayland_surface_assign_icon(surface);
+
+    wl_surface_commit(surface->wl_surface);
+    wl_display_flush(process_wayland.wl_display);
 
     return;
 
@@ -336,12 +350,6 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
                 process_wayland.xdg_toplevel_icon_manager_v1,
                 surface->xdg_toplevel, NULL);
             xdg_toplevel_icon_v1_destroy(surface->xdg_toplevel_icon);
-            if (surface->big_icon_buffer)
-                wayland_shm_buffer_unref(surface->big_icon_buffer);
-            if (surface->small_icon_buffer)
-                wayland_shm_buffer_unref(surface->small_icon_buffer);
-            surface->big_icon_buffer = NULL;
-            surface->small_icon_buffer = NULL;
             surface->xdg_toplevel_icon = NULL;
         }
 
@@ -1231,52 +1239,68 @@ void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR text)
 }
 
 /**********************************************************************
- *          wayland_surface_set_icon
+ *          wayland_surface_set_icon_buffer
  */
-void wayland_surface_set_icon(struct wayland_surface *surface, UINT type, const ICONINFO *ii)
+void wayland_surface_set_icon_buffer(struct wayland_surface *surface, UINT type, const ICONINFO *ii)
 {
-    HDC hDC;
     struct wayland_shm_buffer *icon_buf;
+    HDC hDC;
+
+    if (!process_wayland.xdg_toplevel_icon_manager_v1) return;
 
     assert(ii);
-    assert(wayland_surface_is_toplevel(surface));
+
+    TRACE("surface=%p type=%x ii=%p\n", surface, type, ii);
 
     hDC = NtGdiCreateCompatibleDC(0);
     icon_buf = wayland_shm_buffer_from_color_bitmaps(hDC, ii->hbmColor, ii->hbmMask);
     NtGdiDeleteObjectApp(hDC);
+
+    if (surface->big_icon_buffer && type == ICON_BIG)
+    {
+        wayland_shm_buffer_unref(surface->big_icon_buffer);
+        surface->big_icon_buffer = NULL;
+    }
+    else if (surface->small_icon_buffer && type != ICON_BIG)
+    {
+        wayland_shm_buffer_unref(surface->small_icon_buffer);
+        surface->small_icon_buffer = NULL;
+    }
+
+    if (icon_buf)
+    {
+        if (type == ICON_BIG) surface->big_icon_buffer = icon_buf;
+        else surface->small_icon_buffer = icon_buf;
+    }
+}
+
+/**********************************************************************
+ *          wayland_surface_assign_icon
+ */
+void wayland_surface_assign_icon(struct wayland_surface *surface)
+{
+    if (!process_wayland.xdg_toplevel_icon_manager_v1) return;
+
+    assert(wayland_surface_is_toplevel(surface));
+
+    TRACE("surface=%p\n", surface);
 
     if (surface->xdg_toplevel_icon)
     {
         xdg_toplevel_icon_manager_v1_set_icon(process_wayland.xdg_toplevel_icon_manager_v1,
                                               surface->xdg_toplevel, NULL);
         xdg_toplevel_icon_v1_destroy(surface->xdg_toplevel_icon);
-        if (surface->big_icon_buffer && type == ICON_BIG)
-        {
-            wayland_shm_buffer_unref(surface->big_icon_buffer);
-            surface->big_icon_buffer = NULL;
-        }
-        else if (surface->small_icon_buffer && type != ICON_BIG)
-        {
-            wayland_shm_buffer_unref(surface->small_icon_buffer);
-            surface->small_icon_buffer = NULL;
-        }
         surface->xdg_toplevel_icon = NULL;
     }
 
-    if (icon_buf)
+    if (surface->big_icon_buffer)
     {
         surface->xdg_toplevel_icon =
             xdg_toplevel_icon_manager_v1_create_icon(process_wayland.xdg_toplevel_icon_manager_v1);
 
-        if (type == ICON_BIG) surface->big_icon_buffer = icon_buf;
-        else surface->small_icon_buffer = icon_buf;
-
         /* FIXME: what to do with scale ? */
-        if (surface->big_icon_buffer)
-        {
-            xdg_toplevel_icon_v1_add_buffer(surface->xdg_toplevel_icon,
-                                            surface->big_icon_buffer->wl_buffer, 1);
-        }
+        xdg_toplevel_icon_v1_add_buffer(surface->xdg_toplevel_icon,
+                                        surface->big_icon_buffer->wl_buffer, 1);
         if (surface->small_icon_buffer)
         {
             xdg_toplevel_icon_v1_add_buffer(surface->xdg_toplevel_icon,
