@@ -2760,6 +2760,8 @@ sync_test("host this", function() {
         [137].forEach(external.testHostContext(false), tests[i]);
         Function.prototype.apply.call(external.testHostContext(false), tests[i], [137, 0, {}]);
     }
+
+    i = external.objWithMethod.func(42);
 });
 
 sync_test("head_setter", function() {

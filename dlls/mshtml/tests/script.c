@@ -160,6 +160,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_SCRIPT_TESTPROP2  0x100001
 #define DISPID_REFTEST_GET       0x100000
 #define DISPID_REFTEST_REF       0x100001
+#define DISPID_OBJWITHMETHOD_FUNC 0x100000
 
 #define DISPID_EXTERNAL_OK             0x300000
 #define DISPID_EXTERNAL_TRACE          0x300001
@@ -177,6 +178,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_GETMIMETYPE    0x30000D
 #define DISPID_EXTERNAL_SETVIEWSIZE    0x30000E
 #define DISPID_EXTERNAL_NEWREFTEST     0x30000F
+#define DISPID_EXTERNAL_OBJWITHMETHOD  0x300010
 
 static const GUID CLSID_TestScript[] = {
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}},
@@ -971,6 +973,52 @@ static IDispatchExVtbl testHostContextDisp_no_this_vtbl = {
 
 static IDispatchEx testHostContextDisp_no_this = { &testHostContextDisp_no_this_vtbl };
 
+static HRESULT WINAPI objWithMethod_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    if(!lstrcmpW(bstrName, L"func")) {
+        *pid = DISPID_OBJWITHMETHOD_FUNC;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI objWithMethod_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ok(id == DISPID_OBJWITHMETHOD_FUNC, "id = %ld\n", id);
+    ok(wFlags == (DISPATCH_PROPERTYGET | DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+    ok(pdp != NULL, "pdp == NULL\n");
+    ok(pdp->cArgs == 1, "pdp->cArgs = %d\n", pdp->cArgs);
+    ok(pdp->cNamedArgs == 0, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
+    ok(V_VT(&pdp->rgvarg[0]) == VT_I4, "V_VT(rgvarg[0]) = %d\n", V_VT(&pdp->rgvarg[0]));
+    ok(V_I4(&pdp->rgvarg[0]) == 42, "V_I4(rgvarg[0]) = %ld\n", V_I4(&pdp->rgvarg[0]));
+    ok(!pdp->rgdispidNamedArgs, "pdp->rgdispidNamedArgs != NULL\n");
+    ok(pvarRes != NULL, "pvarRes = NULL\n");
+    return S_OK;
+}
+
+static IDispatchExVtbl objWithMethod_vtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    objWithMethod_GetDispID,
+    objWithMethod_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx objWithMethod = { &objWithMethod_vtbl };
+
 struct refTestObj
 {
     IDispatchEx IDispatchEx_iface;
@@ -1210,6 +1258,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     }
     if(!lstrcmpW(bstrName, L"newRefTest")) {
         *pid = DISPID_EXTERNAL_NEWREFTEST;
+        return S_OK;
+    }
+    if(!lstrcmpW(bstrName, L"objWithMethod")) {
+        *pid = DISPID_EXTERNAL_OBJWITHMETHOD;
         return S_OK;
     }
 
@@ -1511,6 +1563,19 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         V_DISPATCH(pvarRes) = (IDispatch*)&obj->IDispatchEx_iface;
         return S_OK;
     }
+
+    case DISPID_EXTERNAL_OBJWITHMETHOD:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&objWithMethod;
+        return S_OK;
 
     default:
         ok(0, "unexpected call\n");
