@@ -1074,6 +1074,7 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
 {
     static const UINT versions[] = {46, 45, 44, 43, 42, 41, 40, 33, 32, 31, 30, 21, 20, 15, 14, 13, 12, 11, 10, 0};
     EGLContext core_context = EGL_NO_CONTEXT, compat_context = EGL_NO_CONTEXT, context = EGL_NO_CONTEXT;
+    BOOL has_device_persistent_id;
     int i, count, values[3] = {0};
     const char *extensions, *str;
     EGLConfig config;
@@ -1096,13 +1097,11 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     TRACE( "  - device_id: %#x\n", egl->device_id );
     TRACE( "  - vendor_id: %#x\n", egl->vendor_id );
 
-    if (has_extension( extensions, "EGL_EXT_device_persistent_id" ))
+    if ((has_device_persistent_id = has_extension( extensions, "EGL_EXT_device_persistent_id" )))
     {
         funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DEVICE_UUID_EXT, sizeof(egl->device_uuid), &egl->device_uuid, &count );
         funcs->p_eglQueryDeviceBinaryEXT( egl->device, EGL_DRIVER_UUID_EXT, sizeof(egl->driver_uuid), &egl->driver_uuid, &count );
     }
-    TRACE( "  - device_uuid: %s\n", debugstr_guid(&egl->device_uuid) );
-    TRACE( "  - driver_uuid: %s\n", debugstr_guid(&egl->driver_uuid) );
 
     funcs->p_eglBindAPI( EGL_OPENGL_API );
     funcs->p_eglGetConfigs( egl->display, &config, 1, &count );
@@ -1166,8 +1165,17 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
         }
         TRACE( "  - video_memory: %u MiB\n", egl->video_memory );
 
+        if (!has_device_persistent_id && (has_extension( extensions, "GL_EXT_memory_object" ) || has_extension( extensions, "GL_EXT_semaphore" )))
+        {
+            funcs->p_glGetUnsignedBytevEXT( GL_DRIVER_UUID_EXT, (GLubyte *)&egl->driver_uuid );
+            funcs->p_glGetUnsignedBytei_vEXT( GL_DEVICE_UUID_EXT, 0, (GLubyte *)&egl->device_uuid );
+        }
+
         funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
     }
+
+    TRACE( "  - device_uuid: %s\n", debugstr_guid(&egl->device_uuid) );
+    TRACE( "  - driver_uuid: %s\n", debugstr_guid(&egl->driver_uuid) );
 
     if (compat_context) funcs->p_eglDestroyContext( egl->display, compat_context );
     if (core_context) funcs->p_eglDestroyContext( egl->display, core_context );
@@ -2382,6 +2390,27 @@ static struct egl_platform *egl_platform_from_index( GLint index )
     return NULL;
 }
 
+static BOOL win32u_query_renderer( UINT attribute, void *value )
+{
+    struct egl_platform *egl = &display_egl;
+    LUID luid;
+    UINT mask;
+
+    TRACE( "attribute %#x, value %p\n", attribute, value );
+
+    switch (attribute)
+    {
+    case GL_DEVICE_LUID_EXT:
+        return get_gpu_luid_from_uuid( &egl->device_uuid, (LUID *)value, &mask );
+    case GL_DEVICE_NODE_MASK_EXT:
+        return get_gpu_luid_from_uuid( &egl->device_uuid, &luid, value );
+    default:
+        FIXME( "Unsupported attribute %#x\n", attribute );
+        set_gl_error( GL_INVALID_ENUM );
+        return FALSE;
+    }
+}
+
 static BOOL query_renderer_integer( struct egl_platform *egl, GLenum attribute, GLuint *value )
 {
     switch (attribute)
@@ -2505,6 +2534,8 @@ static void display_funcs_init(void)
     USE_GL_FUNC(glDeleteFramebuffers)
     USE_GL_FUNC(glDeleteRenderbuffers)
     USE_GL_FUNC(glGetNamedFramebufferAttachmentParameteriv)
+    USE_GL_FUNC(glGetUnsignedBytei_vEXT)
+    USE_GL_FUNC(glGetUnsignedBytevEXT)
     USE_GL_FUNC(glNamedFramebufferDrawBuffer)
     USE_GL_FUNC(glNamedFramebufferReadBuffer)
     USE_GL_FUNC(glNamedFramebufferRenderbuffer)
@@ -2580,6 +2611,7 @@ static void display_funcs_init(void)
     if (!list_empty( &devices_egl ))
     {
         register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_query_renderer" );
+        display_funcs.p_query_renderer = win32u_query_renderer;
         display_funcs.p_wglQueryCurrentRendererIntegerWINE = win32u_wglQueryCurrentRendererIntegerWINE;
         display_funcs.p_wglQueryCurrentRendererStringWINE = win32u_wglQueryCurrentRendererStringWINE;
         display_funcs.p_wglQueryRendererIntegerWINE = win32u_wglQueryRendererIntegerWINE;

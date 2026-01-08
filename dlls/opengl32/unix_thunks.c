@@ -12843,7 +12843,7 @@ static NTSTATUS ext_glGetUnsignedBytevEXT( void *args )
     struct glGetUnsignedBytevEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glGetUnsignedBytevEXT) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glGetUnsignedBytevEXT( params->pname, params->data );
+    wrap_glGetUnsignedBytevEXT( params->teb, params->pname, params->data );
     return STATUS_SUCCESS;
 }
 
@@ -56022,7 +56022,7 @@ static NTSTATUS wow64_ext_glGetUnsignedBytevEXT( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glGetUnsignedBytevEXT) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glGetUnsignedBytevEXT( params->pname, ULongToPtr(params->data) );
+    wrap_glGetUnsignedBytevEXT( teb, params->pname, ULongToPtr(params->data) );
     return STATUS_SUCCESS;
 }
 

@@ -860,6 +860,7 @@ static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable
 
 static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 {
+    const struct opengl_funcs *funcs = teb->glTable;
     struct opengl_drawable *draw, *read;
     struct context *ctx;
 
@@ -888,9 +889,27 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
         if (!read->read_fbo) break;
         *data = ctx->read_fbo;
         return TRUE;
+    case GL_DEVICE_NODE_MASK_EXT:
+        if (!funcs->p_query_renderer) break;
+        return funcs->p_query_renderer( pname, data );
     }
 
     return get_default_fbo_integer( ctx, draw, read, pname, data );
+}
+
+void wrap_glGetUnsignedBytevEXT( TEB *teb, GLenum pname, GLubyte *data )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+
+    switch (pname)
+    {
+    case GL_DEVICE_LUID_EXT:
+        if (!funcs->p_query_renderer) break;
+        funcs->p_query_renderer( pname, data );
+        return;
+    }
+
+    return funcs->p_glGetUnsignedBytevEXT( pname, data );
 }
 
 const GLubyte *wrap_glGetString( TEB *teb, GLenum name )

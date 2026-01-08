@@ -4226,6 +4226,8 @@ static struct opengl_device *create_opengl_device( HWND hwnd, LUID *luid )
 
     const char *extensions, *ptr;
     struct opengl_device *dev;
+    unsigned int nodes = 0;
+    LUID device_luid = {0};
     int format, count;
     GUID guid;
     BOOL ret;
@@ -4284,22 +4286,16 @@ static struct opengl_device *create_opengl_device( HWND hwnd, LUID *luid )
     ok_x4( glGetError(), ==, 0 );
     ok( !IsEqualGUID( &GUID_NULL, &guid ), "got GL_DRIVER_UUID_EXT %s\n", debugstr_guid( &guid ) );
 
-    if (!winetest_platform_is_wine) /* crashes in host drivers */
-    {
-        LUID device_luid = {0};
-        unsigned int nodes = 0;
+    p_glGetUnsignedBytevEXT( GL_DEVICE_LUID_EXT, (GLubyte *)&device_luid );
+    if (!dev->broken) ok_x4( glGetError(), ==, 0 );
+    else ok_x4( glGetError(), ==, GL_INVALID_ENUM );
 
-        p_glGetUnsignedBytevEXT( GL_DEVICE_LUID_EXT, (GLubyte *)&device_luid );
-        if (!dev->broken) ok_x4( glGetError(), ==, 0 );
-        else ok_x4( glGetError(), ==, GL_INVALID_ENUM );
+    glGetIntegerv( GL_DEVICE_NODE_MASK_EXT, (GLint *)&nodes );
+    if (!dev->broken) ok_x4( glGetError(), ==, 0 );
+    else ok_x4( glGetError(), ==, GL_INVALID_ENUM );
+    if (!dev->broken) ok_u4( nodes, !=, 0 );
 
-        glGetIntegerv( GL_DEVICE_NODE_MASK_EXT, (GLint *)&nodes );
-        if (!dev->broken) ok_x4( glGetError(), ==, 0 );
-        else ok_x4( glGetError(), ==, GL_INVALID_ENUM );
-        if (!dev->broken) ok_u4( nodes, !=, 0 );
-
-        if (luid_equals( luid, &luid_zero )) *luid = device_luid;
-    }
+    if (luid_equals( luid, &luid_zero )) *luid = device_luid;
 
     return dev;
 }
