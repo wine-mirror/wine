@@ -1326,7 +1326,7 @@ static void test_dxt_premultiplied_alpha(IDirect3DDevice9 *device)
             {
                 const uint32_t expected_pixel = !(x & 0x01) ? 0xffffffff : 0x00000000;
 
-                check_readback_pixel_4bpp(&surface_rb, x, y, expected_pixel, !expected_pixel);
+                check_readback_pixel_4bpp(&surface_rb, x, y, expected_pixel, FALSE);
             }
         }
         release_surface_readback(&surface_rb);
@@ -1348,17 +1348,10 @@ static void test_dxt_premultiplied_alpha(IDirect3DDevice9 *device)
          */
         hr = D3DXLoadSurfaceFromMemory(decomp_surf, NULL, NULL, tests[i].dxt_block, tests[i].pma_fmt, 16, NULL, &src_rect, D3DX_FILTER_NONE, 0);
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
-        for (y = 0; y < 4; ++y)
-        {
-            for (x = 0; x < 4; ++x)
-            {
-                const uint32_t expected_pixel = dxt_pma_decompressed_expected[(y * 4) + x];
-                const BOOL todo = ((expected_pixel >> 24) & 0xff) != 0xff;
 
-                todo_wine_if(todo) check_pixel_4bpp(&lock_rect, x, y, expected_pixel);
-            }
-        }
+        IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
+        check_test_readback(lock_rect.pBits, lock_rect.Pitch, lock_rect.Pitch * 4, dxt_pma_decompressed_expected, 4, 4,
+                1, D3DFMT_A8B8G8R8, 1);
         IDirect3DSurface9_UnlockRect(decomp_surf);
 
         /*

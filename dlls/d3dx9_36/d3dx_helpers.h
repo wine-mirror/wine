@@ -242,6 +242,12 @@ enum d3dx_pixel_format_id
 #define D3DX_PIXEL_FORMAT_BC3_UNORM          D3DX_PIXEL_FORMAT_DXT5_UNORM
 
 /* for internal use */
+enum conversion_flag
+{
+    CONV_FLAG_PM_ALPHA_IN  = 0x01,
+    CONV_FLAG_PM_ALPHA_OUT = 0x02,
+};
+
 enum component_type
 {
     CTYPE_EMPTY,
@@ -264,6 +270,8 @@ enum format_flag
      * equivalent.
      */
     FMT_FLAG_DXGI     = 0x08,
+    /* Formats with premultiplied alpha, i.e DXT2/DXT4. */
+    FMT_FLAG_PM_ALPHA = 0x10,
 };
 
 struct pixel_format_desc {
