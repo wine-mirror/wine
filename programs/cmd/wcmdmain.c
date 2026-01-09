@@ -4349,8 +4349,12 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
         if (wcspbrk(element, L"?*"))
         {
             WIN32_FIND_DATAW fd;
-            HANDLE hff = FindFirstFileW(buffer, &fd);
-            size_t insert_pos = (wcsrchr(buffer, L'\\') ? wcsrchr(buffer, L'\\') + 1 - buffer : 0);
+            HANDLE hff;
+            size_t insert_pos;
+
+            if (*buffer == L'"') WCMD_strip_quotes(buffer);
+            hff = FindFirstFileW(buffer, &fd);
+            insert_pos = wcsrchr(buffer, L'\\') ? wcsrchr(buffer, L'\\') + 1 - buffer : 0;
 
             if (hff == INVALID_HANDLE_VALUE)
             {
