@@ -444,6 +444,8 @@ static void asf_reader_destroy(struct strmbase_filter *iface)
     struct asf_reader *filter = impl_from_strmbase_filter(iface);
     struct strmbase_source *source;
 
+    IWMReader_Release(filter->reader);
+
     while (filter->stream_count--)
     {
         source = &filter->streams[filter->stream_count].source;
@@ -454,7 +456,6 @@ static void asf_reader_destroy(struct strmbase_filter *iface)
 
     free(filter->file_name);
     IWMReaderCallback_Release(filter->callback);
-    IWMReader_Release(filter->reader);
 
     strmbase_filter_cleanup(&filter->filter);
 
