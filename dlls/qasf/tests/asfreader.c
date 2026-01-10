@@ -640,6 +640,75 @@ static void test_filter_state(void)
     ok(!ref, "Got ref %ld.\n", ref);
 }
 
+static void test_seeking(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    IBaseFilter *filter = create_asf_reader();
+    LONGLONG current_pos, stop_pos;
+    IFileSourceFilter *file_source;
+    IMediaSeeking *seeking = NULL;
+    IReferenceClock *clock;
+    IEnumPins *enum_pins;
+    IFilterGraph *graph;
+    FILTER_STATE state;
+    IPin *pins[4];
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&file_source);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFileSourceFilter_Load(file_source, filename, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IFileSourceFilter_Release(file_source);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph_AddFilter(graph, filter, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ref = IFilterGraph_Release(graph);
+    ok(!ref, "Got ref %ld.\n", ref);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPin_QueryInterface(pins[0], &IID_IMediaSeeking, (void **)&seeking);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(seeking != NULL, "Got NULL IMediaSeeking.\n");
+    IPin_Release(pins[0]);
+    IEnumPins_Release(enum_pins);
+
+    hr = IBaseFilter_GetSyncSource(filter, &clock);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!clock, "Got clock %p.\n", clock);
+
+    hr = IBaseFilter_Run(filter, GetTickCount() * 10000);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %#x.\n", state);
+
+    hr = IMediaSeeking_GetPositions(seeking, &current_pos, &stop_pos);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaSeeking_SetPositions(seeking, &current_pos, AM_SEEKING_AbsolutePositioning, NULL,
+            AM_SEEKING_NoPositioning);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %#x.\n", state);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_GetState(filter, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+
+    IMediaSeeking_Release(seeking);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got ref %ld.\n", ref);
+}
+
 struct test_sink
 {
     struct strmbase_sink sink;
@@ -1024,6 +1093,7 @@ START_TEST(asfreader)
     test_aggregation();
     test_filesourcefilter();
     test_filter_state();
+    test_seeking();
     test_threading(FALSE);
     test_threading(TRUE);
 

@@ -335,7 +335,7 @@ static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
     /* Send begin flush commands downstream. */
     for (i = 0; i < filter->stream_count; ++i)
     {
-        if (FAILED(IPin_BeginFlush(stream->source.pin.peer)))
+        if (stream->source.pin.peer && FAILED(IPin_BeginFlush(stream->source.pin.peer)))
             WARN("Failed to BeginFlush for stream %u.\n", i);
     }
 
@@ -345,7 +345,7 @@ static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
     /* Send end flush commands downstream. */
     for (i = 0; i < filter->stream_count; ++i)
     {
-        if (FAILED(IPin_EndFlush(stream->source.pin.peer)))
+        if (stream->source.pin.peer && FAILED(IPin_EndFlush(stream->source.pin.peer)))
             WARN("Failed to EndFlush for stream %u.\n", i);
     }
 
