@@ -869,6 +869,8 @@ static BOOL check_dotnet20(void)
 static void test_CreateAssemblyCache(void)
 {
     IAssemblyCache *cache;
+    WCHAR path[MAX_PATH];
+    DWORD attrs;
     HRESULT hr;
 
     /* NULL ppAsmCache */
@@ -878,8 +880,12 @@ static void test_CreateAssemblyCache(void)
     /* dwReserved is non-zero */
     hr = pCreateAssemblyCache(&cache, 42);
     ok(hr == S_OK, "Expected S_OK, got %08lx\n", hr);
-
     IAssemblyCache_Release(cache);
+
+    GetWindowsDirectoryW(path, ARRAY_SIZE(path));
+    wcscat(path, L"\\assembly");
+    attrs = GetFileAttributesW(path);
+    ok(attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY), "got 0x%lx\n", attrs);
 }
 
 static void test_CreateAssemblyCacheItem(void)
