@@ -177,8 +177,10 @@ static void test_UISettings(void)
 {
     static const WCHAR *uisettings_name = L"Windows.UI.ViewManagement.UISettings";
     IActivationFactory *factory;
+    IUISettings2 *uisettings2;
     IUISettings3 *uisettings3;
     IInspectable *inspectable;
+    DOUBLE text_scale_factor;
     DWORD default_theme;
     UIColorType type;
     Color value;
@@ -221,6 +223,18 @@ static void test_UISettings(void)
     check_interface( inspectable, &IID_IUISettings3, TRUE );
     check_interface( inspectable, &IID_IWeakReferenceSource, TRUE );
     check_interface( inspectable, &IID_IWeakReference, FALSE );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IUISettings2, (void **)&uisettings2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    text_scale_factor = 12345.6;
+    hr = IUISettings2_get_TextScaleFactor( uisettings2, &text_scale_factor );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine
+    ok( text_scale_factor >= 1.0 && text_scale_factor <= 2.25, "got text_scale_factor %f.\n", text_scale_factor );
+
+    IUISettings2_Release( uisettings2 );
 
     test_AccentColor( uisettings3 );
 
