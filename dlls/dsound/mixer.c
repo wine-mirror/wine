@@ -353,13 +353,11 @@ static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
         UINT idx = fir_step - 1 - idx_num / freq_adjust_den;
         float rem = 1.0f - idx_num % freq_adjust_den / (float)freq_adjust_den;
 
-        int fir_used = (fir_len - 1 - idx + fir_step - 1) / fir_step;
-
         int j;
         float sum = 0.0;
         float* cache = &input[ipos];
 
-        for (j = 0; j < fir_used; j++)
+        for (j = 0; j < fir_width; j++)
             sum += (fir[idx + j * fir_step] * (1.0f - rem) + fir[idx + j * fir_step + 1] * rem) * cache[j];
         output[i] = sum;
     }

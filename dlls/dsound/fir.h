@@ -87,6 +87,7 @@ int main()
     fprintf(stderr, "status %s\n", get_pm_status_str(output.status));
 
     printf("static const int fir_len = %d;\n", fir_len);
+    printf("static const int fir_width = %d;\n", fir_width);
     printf("static const int fir_step = %d;\n", fir_step);
     printf("static const float fir[] = {");
     for (i = 0; i < fir_len; ++i)
@@ -104,6 +105,7 @@ int main()
 }
 */
 static const int fir_len = 8193;
+static const int fir_width = 64;
 static const int fir_step = 128;
 static const float fir[] = {
      0.0000000000e+00, -2.2207222127e-04,  1.4025302043e-05,  1.3443390954e-05,
