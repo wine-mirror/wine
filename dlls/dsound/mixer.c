@@ -341,7 +341,7 @@ static void downsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 fr
 }
 
 static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
-        UINT dsbfirstep, float firgain, UINT count, float *input, float *output)
+        UINT dsbfirstep, UINT count, float *input, float *output)
 {
     UINT i;
 
@@ -361,7 +361,7 @@ static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
 
         for (j = 0; j < fir_used; j++)
             sum += (fir[idx + j * dsbfirstep] * (1.0f - rem) + fir[idx + j * dsbfirstep + 1] * rem) * cache[j];
-        output[i] = sum * firgain;
+        output[i] = sum;
     }
 }
 
@@ -372,8 +372,8 @@ static void resample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
         downsample(freq_adjust_num, freq_adjust_den, freq_acc_start, dsbfirstep, firgain, count,
                 input, output);
     else
-        upsample(freq_adjust_num, freq_adjust_den, freq_acc_start, dsbfirstep, firgain, count,
-                input, output);
+        upsample(freq_adjust_num, freq_adjust_den, freq_acc_start, dsbfirstep, count, input,
+                output);
 }
 
 static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *freqAccNum)
