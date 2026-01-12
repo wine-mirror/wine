@@ -315,7 +315,7 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
     return count;
 }
 
-static void resample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
+static void downsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
         UINT dsbfirstep, float firgain, UINT count, float *input, float *output)
 {
     UINT i;
@@ -338,6 +338,42 @@ static void resample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
             sum += (fir[idx + j * dsbfirstep] * (1.0f - rem) + fir[idx + j * dsbfirstep + 1] * rem) * cache[j];
         output[i] = sum * firgain;
     }
+}
+
+static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
+        UINT dsbfirstep, float firgain, UINT count, float *input, float *output)
+{
+    UINT i;
+
+    for(i = 0; i < count; ++i) {
+        LONG64 ipos_num = freq_acc_start + i * freq_adjust_num;
+        UINT ipos = ipos_num / freq_adjust_den;
+
+        UINT idx_num = ipos_num % freq_adjust_den * dsbfirstep;
+        UINT idx = dsbfirstep - 1 - idx_num / freq_adjust_den;
+        float rem = 1.0f - idx_num % freq_adjust_den / (float)freq_adjust_den;
+
+        int fir_used = (fir_len - 1 - idx + dsbfirstep - 1) / dsbfirstep;
+
+        int j;
+        float sum = 0.0;
+        float* cache = &input[ipos];
+
+        for (j = 0; j < fir_used; j++)
+            sum += (fir[idx + j * dsbfirstep] * (1.0f - rem) + fir[idx + j * dsbfirstep + 1] * rem) * cache[j];
+        output[i] = sum * firgain;
+    }
+}
+
+static void resample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
+        UINT dsbfirstep, float firgain, UINT count, float *input, float *output)
+{
+    if (freq_adjust_num > freq_adjust_den)
+        downsample(freq_adjust_num, freq_adjust_den, freq_acc_start, dsbfirstep, firgain, count,
+                input, output);
+    else
+        upsample(freq_adjust_num, freq_adjust_den, freq_acc_start, dsbfirstep, firgain, count,
+                input, output);
 }
 
 static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *freqAccNum)
