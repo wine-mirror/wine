@@ -274,7 +274,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Belirlenmedi"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/oledb32.rc:30
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -448,7 +448,7 @@ msgstr "Sihirbazı"
 msgid "< &Back"
 msgstr "< &Geri"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/oledb32.rc:53
 msgid "&Next >"
 msgstr "&İleri >"
 
@@ -1408,7 +1408,7 @@ msgid "&User name:"
 msgstr "&Kullanıcı adı:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/oledb32.rc:73
 msgid "&Password:"
 msgstr "&Parola:"
 
@@ -2741,7 +2741,7 @@ msgstr "Bu sertifika sorunsuz."
 msgid "Field"
 msgstr "Alan"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/oledb32.rc:31
 msgid "Value"
 msgstr "Değer"
 
@@ -3352,7 +3352,7 @@ msgstr "Simge"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/oledb32.rc:92
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "Diğer"
@@ -3420,7 +3420,7 @@ msgid "&Stop"
 msgstr "&Durdur"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/oledb32.rc:65 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Yenile"
 
@@ -9341,99 +9341,99 @@ msgstr "Açık"
 msgid "Off"
 msgstr "Kapalı"
 
-#: dlls/oledb32/version.rc:53
+#: dlls/oledb32/oledb32.rc:48
 msgid "Provider"
 msgstr "Sağlayıcı"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/oledb32.rc:51
 msgid "Select the data you want to connect to:"
 msgstr "Bağlanmak istediğiniz veriyi seçin:"
 
-#: dlls/oledb32/version.rc:63
+#: dlls/oledb32/oledb32.rc:58
 msgid "Connection"
 msgstr "Bağlantı"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/oledb32.rc:61
 msgid "Specify the following to connect to ODBC data:"
 msgstr "ODBC verisine bağlanmak için şunları belirtin:"
 
-#: dlls/oledb32/version.rc:67
+#: dlls/oledb32/oledb32.rc:62
 msgid "1. Specify the source of data:"
 msgstr "1. Verinin kaynağını belirtin:"
 
-#: dlls/oledb32/version.rc:68
+#: dlls/oledb32/oledb32.rc:63
 msgid "Use &data source name"
 msgstr "&Veri kaynağı adını kullan"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/oledb32.rc:66
 msgid "Use c&onnection string"
 msgstr "&Bağlantı dizesini kullan"
 
-#: dlls/oledb32/version.rc:72
+#: dlls/oledb32/oledb32.rc:67
 msgid "&Connection string:"
 msgstr "B&ağlantı dizesi:"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/oledb32.rc:69
 msgid "B&uild..."
 msgstr "&Derle..."
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/oledb32.rc:70
 msgid "2. Enter information to log on to the server"
 msgstr "2. Sunucuya bağlanmak için bilgileri girin"
 
-#: dlls/oledb32/version.rc:76
+#: dlls/oledb32/oledb32.rc:71
 msgid "User &name:"
 msgstr "&Kullanıcı adı:"
 
-#: dlls/oledb32/version.rc:80
+#: dlls/oledb32/oledb32.rc:75
 msgid "&Blank password"
 msgstr "B&oş parola"
 
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/oledb32.rc:76
 msgid "Allow &saving password"
 msgstr "&Parolayı kaydetmeye izin ver"
 
-#: dlls/oledb32/version.rc:82
+#: dlls/oledb32/oledb32.rc:77
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Kullanılacak &ilk kataloğu girin:"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/oledb32.rc:79
 msgid "&Test Connection"
 msgstr "Bağlantıyı &Sına"
 
-#: dlls/oledb32/version.rc:89
+#: dlls/oledb32/oledb32.rc:84
 msgid "Advanced"
 msgstr "Gelişmiş"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/oledb32.rc:87
 msgid "Network settings"
 msgstr "Ağ ayarları"
 
-#: dlls/oledb32/version.rc:93
+#: dlls/oledb32/oledb32.rc:88
 msgid "&Impersonation level:"
 msgstr "Tak&lit seviyesi:"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/oledb32.rc:90
 msgid "P&rotection level:"
 msgstr "Ko&ruma seviyesi:"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/oledb32.rc:93
 msgid "Connect:"
 msgstr "Bağlan:"
 
-#: dlls/oledb32/version.rc:100
+#: dlls/oledb32/oledb32.rc:95
 msgid "seconds."
 msgstr "saniye."
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/oledb32.rc:96
 msgid "A&ccess:"
 msgstr "&Erişim:"
 
-#: dlls/oledb32/version.rc:107
+#: dlls/oledb32/oledb32.rc:102
 msgid "All"
 msgstr "Tümü"
 
-#: dlls/oledb32/version.rc:111
+#: dlls/oledb32/oledb32.rc:106
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -9441,58 +9441,58 @@ msgstr ""
 "Bunlar, bu türden verinin başlatılma özellikleridir. Bir değeri düzenlemek "
 "için, bir özelliği seçin, sonra alttan Değeri Düzenle'yi tıklatın."
 
-#: dlls/oledb32/version.rc:112
+#: dlls/oledb32/oledb32.rc:107
 msgid "&Edit Value..."
 msgstr "Değeri Dü&zenle..."
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/oledb32.rc:41
 msgid "Data Link Error"
 msgstr "Veri Bağlama Hatası"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/oledb32.rc:42
 msgid "Please select a provider."
 msgstr "Lütfen bir sağlayıcı seçin."
 
-#: dlls/oledb32/version.rc:48
+#: dlls/oledb32/oledb32.rc:43
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
 "Sağlayıcı kullanılamıyor. Sağlayıcının düzgün yüklendiğinden emin olun."
 
-#: dlls/oledb32/version.rc:33
+#: dlls/oledb32/oledb32.rc:28
 msgid "Data Link Properties"
 msgstr "Veri Bağlantısı Özellikleri"
 
-#: dlls/oledb32/version.rc:34
+#: dlls/oledb32/oledb32.rc:29
 msgid "OLE DB Provider(s)"
 msgstr "OLE Veritabanı Sağlayıcısı"
 
-#: dlls/oledb32/version.rc:38
+#: dlls/oledb32/oledb32.rc:33
 msgid "Read"
 msgstr "Okuma"
 
-#: dlls/oledb32/version.rc:39
+#: dlls/oledb32/oledb32.rc:34
 msgid "ReadWrite"
 msgstr "Okuma-yazma"
 
-#: dlls/oledb32/version.rc:40
+#: dlls/oledb32/oledb32.rc:35
 msgid "Share Deny None"
 msgstr "Yasak olmadan paylaş"
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/oledb32.rc:36
 msgid "Share Deny Read"
 msgstr "Okuma iznini yasakla"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/oledb32.rc:37
 msgid "Share Deny Write"
 msgstr "Yazma iznini yasakla"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/oledb32.rc:38
 msgid "Share Exclusive"
 msgstr "Okuma ve yazmayı yasakla"
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/oledb32.rc:39
 msgid "Write"
 msgstr "Yazma"
 

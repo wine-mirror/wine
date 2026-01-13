@@ -268,7 +268,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ei määritelty"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/oledb32.rc:30
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -442,7 +442,7 @@ msgstr "Velho"
 msgid "< &Back"
 msgstr "< &Edellinen"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/oledb32.rc:53
 msgid "&Next >"
 msgstr "&Seuraava >"
 
@@ -1393,7 +1393,7 @@ msgid "&User name:"
 msgstr "&Käyttäjänimi:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/oledb32.rc:73
 msgid "&Password:"
 msgstr "&Salasana:"
 
@@ -2726,7 +2726,7 @@ msgstr "Varmenne on kelvollinen."
 msgid "Field"
 msgstr "Kenttä"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/oledb32.rc:31
 msgid "Value"
 msgstr "Arvo"
 
@@ -3328,7 +3328,7 @@ msgstr "Symbolit"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/oledb32.rc:92
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "Muu"
@@ -3396,7 +3396,7 @@ msgid "&Stop"
 msgstr "&Pysäytä"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/oledb32.rc:65 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "P&äivitä"
 
@@ -9283,99 +9283,99 @@ msgstr "Päällä"
 msgid "Off"
 msgstr "Pois päältä"
 
-#: dlls/oledb32/version.rc:53
+#: dlls/oledb32/oledb32.rc:48
 msgid "Provider"
 msgstr "Tarjoaja"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/oledb32.rc:51
 msgid "Select the data you want to connect to:"
 msgstr "Valitse tietolähde, johon haluat yhdistää:"
 
-#: dlls/oledb32/version.rc:63
+#: dlls/oledb32/oledb32.rc:58
 msgid "Connection"
 msgstr "Yhteys"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/oledb32.rc:61
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Määritä seuraavat, jotta voit yhdistää ODBC-tietolähteeseen:"
 
-#: dlls/oledb32/version.rc:67
+#: dlls/oledb32/oledb32.rc:62
 msgid "1. Specify the source of data:"
 msgstr "1. Määritä tietolähde:"
 
-#: dlls/oledb32/version.rc:68
+#: dlls/oledb32/oledb32.rc:63
 msgid "Use &data source name"
 msgstr "Käytä tietolähteen &nimeä"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/oledb32.rc:66
 msgid "Use c&onnection string"
 msgstr "Syötä yhteysasetukset &merkkijonona"
 
-#: dlls/oledb32/version.rc:72
+#: dlls/oledb32/oledb32.rc:67
 msgid "&Connection string:"
 msgstr "Yhteys&asetukset:"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/oledb32.rc:69
 msgid "B&uild..."
 msgstr "&Luo..."
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/oledb32.rc:70
 msgid "2. Enter information to log on to the server"
 msgstr "2. Syötä palvelimen kirjautumistiedot"
 
-#: dlls/oledb32/version.rc:76
+#: dlls/oledb32/oledb32.rc:71
 msgid "User &name:"
 msgstr "&Tunnus:"
 
-#: dlls/oledb32/version.rc:80
+#: dlls/oledb32/oledb32.rc:75
 msgid "&Blank password"
 msgstr "&Ei salasanaa"
 
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/oledb32.rc:76
 msgid "Allow &saving password"
 msgstr "Sa&lli salasanan tallennus"
 
-#: dlls/oledb32/version.rc:82
+#: dlls/oledb32/oledb32.rc:77
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Syötä ensiksi käytettävä &katalogi:"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/oledb32.rc:79
 msgid "&Test Connection"
 msgstr "Testaa y&hteyttä"
 
-#: dlls/oledb32/version.rc:89
+#: dlls/oledb32/oledb32.rc:84
 msgid "Advanced"
 msgstr "Kehittynyt"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/oledb32.rc:87
 msgid "Network settings"
 msgstr "Verkkoasetukset"
 
-#: dlls/oledb32/version.rc:93
+#: dlls/oledb32/oledb32.rc:88
 msgid "&Impersonation level:"
 msgstr "&Tekeytymistaso:"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/oledb32.rc:90
 msgid "P&rotection level:"
 msgstr "&Suojaustaso:"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/oledb32.rc:93
 msgid "Connect:"
 msgstr "Yhdistä:"
 
-#: dlls/oledb32/version.rc:100
+#: dlls/oledb32/oledb32.rc:95
 msgid "seconds."
 msgstr "sekuntia."
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/oledb32.rc:96
 msgid "A&ccess:"
 msgstr "&Käyttöoikeus:"
 
-#: dlls/oledb32/version.rc:107
+#: dlls/oledb32/oledb32.rc:102
 msgid "All"
 msgstr "Kaikki"
 
-#: dlls/oledb32/version.rc:111
+#: dlls/oledb32/oledb32.rc:106
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -9383,57 +9383,57 @@ msgstr ""
 "Nämä ovat tietotyypin alustusominaisuudet. Muokataksesi arvoa valitse ensin "
 "ominaisuus ja paina sitten Muokkaa arvoa -painiketta."
 
-#: dlls/oledb32/version.rc:112
+#: dlls/oledb32/oledb32.rc:107
 msgid "&Edit Value..."
 msgstr "&Muokkaa arvoa..."
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/oledb32.rc:41
 msgid "Data Link Error"
 msgstr "Datayhteysvirhe"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/oledb32.rc:42
 msgid "Please select a provider."
 msgstr "Valitse tarjoaja."
 
-#: dlls/oledb32/version.rc:48
+#: dlls/oledb32/oledb32.rc:43
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr "Tarjoajaa ei ole enää saatavilla. Varmista, että se on asennettu."
 
-#: dlls/oledb32/version.rc:33
+#: dlls/oledb32/oledb32.rc:28
 msgid "Data Link Properties"
 msgstr "Datayhteyden ominaisuudet"
 
-#: dlls/oledb32/version.rc:34
+#: dlls/oledb32/oledb32.rc:29
 msgid "OLE DB Provider(s)"
 msgstr "OLE DB -tarjoaja(t)"
 
-#: dlls/oledb32/version.rc:38
+#: dlls/oledb32/oledb32.rc:33
 msgid "Read"
 msgstr "Luku"
 
-#: dlls/oledb32/version.rc:39
+#: dlls/oledb32/oledb32.rc:34
 msgid "ReadWrite"
 msgstr "Luku ja kirjoitus"
 
-#: dlls/oledb32/version.rc:40
+#: dlls/oledb32/oledb32.rc:35
 msgid "Share Deny None"
 msgstr "Salli samaan aikaan käyttö"
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/oledb32.rc:36
 msgid "Share Deny Read"
 msgstr "Estä samaan aikaan lukeminen"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/oledb32.rc:37
 msgid "Share Deny Write"
 msgstr "Estä samaan aikaan kirjoittaminen"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/oledb32.rc:38
 msgid "Share Exclusive"
 msgstr "Estä kaikki samaan aikaan käyttö"
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/oledb32.rc:39
 msgid "Write"
 msgstr "Kirjoitus"
 

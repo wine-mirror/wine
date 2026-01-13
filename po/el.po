@@ -260,7 +260,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/oledb32.rc:30
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -432,7 +432,7 @@ msgstr "Βοηθός"
 msgid "< &Back"
 msgstr "< &Προηγούμενο"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/oledb32.rc:53
 msgid "&Next >"
 msgstr "&Επόμενο >"
 
@@ -1395,7 +1395,7 @@ msgid "&User name:"
 msgstr ""
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/oledb32.rc:73
 msgid "&Password:"
 msgstr ""
 
@@ -2704,7 +2704,7 @@ msgstr ""
 msgid "Field"
 msgstr ""
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/oledb32.rc:31
 msgid "Value"
 msgstr ""
 
@@ -3287,7 +3287,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/oledb32.rc:92
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr ""
@@ -3358,7 +3358,7 @@ msgid "&Stop"
 msgstr "Τερματισμός"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/oledb32.rc:65 dlls/shdoclc/shdoclc.rc:59
 #, fuzzy
 msgid "&Refresh"
 msgstr "Ανανέωση"
@@ -9402,172 +9402,172 @@ msgstr "Ενεργό"
 msgid "Off"
 msgstr "Ανενεργό"
 
-#: dlls/oledb32/version.rc:53
+#: dlls/oledb32/oledb32.rc:48
 msgid "Provider"
 msgstr ""
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/oledb32.rc:51
 msgid "Select the data you want to connect to:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:63
+#: dlls/oledb32/oledb32.rc:58
 #, fuzzy
 msgid "Connection"
 msgstr "Επιλογές"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/oledb32.rc:61
 msgid "Specify the following to connect to ODBC data:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:67
+#: dlls/oledb32/oledb32.rc:62
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:68
+#: dlls/oledb32/oledb32.rc:63
 msgid "Use &data source name"
 msgstr ""
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/oledb32.rc:66
 #, fuzzy
 msgid "Use c&onnection string"
 msgstr "Επιλογές"
 
-#: dlls/oledb32/version.rc:72
+#: dlls/oledb32/oledb32.rc:67
 #, fuzzy
 msgid "&Connection string:"
 msgstr "Επιλογές"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/oledb32.rc:69
 msgid "B&uild..."
 msgstr ""
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/oledb32.rc:70
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: dlls/oledb32/version.rc:76
+#: dlls/oledb32/oledb32.rc:71
 #, fuzzy
 #| msgid "File &name:"
 msgid "User &name:"
 msgstr "Όνομα &αρχείου:"
 
-#: dlls/oledb32/version.rc:80
+#: dlls/oledb32/oledb32.rc:75
 msgid "&Blank password"
 msgstr ""
 
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/oledb32.rc:76
 msgid "Allow &saving password"
 msgstr ""
 
-#: dlls/oledb32/version.rc:82
+#: dlls/oledb32/oledb32.rc:77
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/oledb32.rc:79
 #, fuzzy
 msgid "&Test Connection"
 msgstr "Επιλογές"
 
-#: dlls/oledb32/version.rc:89
+#: dlls/oledb32/oledb32.rc:84
 msgid "Advanced"
 msgstr ""
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/oledb32.rc:87
 #, fuzzy
 msgid "Network settings"
 msgstr "Επιλογές"
 
-#: dlls/oledb32/version.rc:93
+#: dlls/oledb32/oledb32.rc:88
 msgid "&Impersonation level:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/oledb32.rc:90
 msgid "P&rotection level:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/oledb32.rc:93
 #, fuzzy
 msgid "Connect:"
 msgstr "Το αρχείο δε βρέθηκε"
 
-#: dlls/oledb32/version.rc:100
+#: dlls/oledb32/oledb32.rc:95
 msgid "seconds."
 msgstr ""
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/oledb32.rc:96
 #, fuzzy
 msgid "A&ccess:"
 msgstr "Τοπικοί Σκληροί Δίσκοι"
 
-#: dlls/oledb32/version.rc:107
+#: dlls/oledb32/oledb32.rc:102
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "&Όλα"
 
-#: dlls/oledb32/version.rc:111
+#: dlls/oledb32/oledb32.rc:106
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: dlls/oledb32/version.rc:112
+#: dlls/oledb32/oledb32.rc:107
 #, fuzzy
 msgid "&Edit Value..."
 msgstr "Εκτύπωση"
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/oledb32.rc:41
 #, fuzzy
 msgid "Data Link Error"
 msgstr "Επιλογές"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/oledb32.rc:42
 msgid "Please select a provider."
 msgstr ""
 
-#: dlls/oledb32/version.rc:48
+#: dlls/oledb32/oledb32.rc:43
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
 
-#: dlls/oledb32/version.rc:33
+#: dlls/oledb32/oledb32.rc:28
 #, fuzzy
 msgid "Data Link Properties"
 msgstr "Επιλογές"
 
-#: dlls/oledb32/version.rc:34
+#: dlls/oledb32/oledb32.rc:29
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: dlls/oledb32/version.rc:38
+#: dlls/oledb32/oledb32.rc:33
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "Έτοιμο"
 
-#: dlls/oledb32/version.rc:39
+#: dlls/oledb32/oledb32.rc:34
 #, fuzzy
 msgid "ReadWrite"
 msgstr "Έτοιμο"
 
-#: dlls/oledb32/version.rc:40
+#: dlls/oledb32/oledb32.rc:35
 msgid "Share Deny None"
 msgstr ""
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/oledb32.rc:36
 msgid "Share Deny Read"
 msgstr ""
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/oledb32.rc:37
 msgid "Share Deny Write"
 msgstr ""
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/oledb32.rc:38
 msgid "Share Exclusive"
 msgstr ""
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/oledb32.rc:39
 msgid "Write"
 msgstr ""
 

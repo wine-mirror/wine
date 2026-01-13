@@ -280,7 +280,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Neurčeno"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/oledb32.rc:30
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -456,7 +456,7 @@ msgstr "Průvodce"
 msgid "< &Back"
 msgstr "< &Zpět"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/oledb32.rc:53
 msgid "&Next >"
 msgstr "&Další >"
 
@@ -1425,7 +1425,7 @@ msgid "&User name:"
 msgstr "&Uživatelské jméno:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/oledb32.rc:73
 msgid "&Password:"
 msgstr "&Heslo:"
 
@@ -2735,7 +2735,7 @@ msgstr "Tento certifikát je v pořádku."
 msgid "Field"
 msgstr "Pole"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/oledb32.rc:31
 msgid "Value"
 msgstr "Hodnota"
 
@@ -3318,7 +3318,7 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/oledb32.rc:92
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "Jiné"
@@ -3386,7 +3386,7 @@ msgid "&Stop"
 msgstr "Za&stavit"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/oledb32.rc:65 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Obnovit"
 
@@ -9639,201 +9639,201 @@ msgstr "Zapnuto"
 msgid "Off"
 msgstr "Vypnuto"
 
-#: dlls/oledb32/version.rc:53
+#: dlls/oledb32/oledb32.rc:48
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "video"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/oledb32.rc:51
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Zvolte formát, který chcete použít:"
 
-#: dlls/oledb32/version.rc:63
+#: dlls/oledb32/oledb32.rc:58
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "Connection"
 msgstr "Připojení lokální sítě"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/oledb32.rc:61
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Zvolte formát, který chcete použít:"
 
-#: dlls/oledb32/version.rc:67
+#: dlls/oledb32/oledb32.rc:62
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:68
+#: dlls/oledb32/oledb32.rc:63
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "Zadej prosím své jméno"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/oledb32.rc:66
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "Resetovat připojení"
 
-#: dlls/oledb32/version.rc:72
+#: dlls/oledb32/oledb32.rc:67
 #, fuzzy
 #| msgid "LAN Connection"
 msgid "&Connection string:"
 msgstr "Připojení lokální sítě"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/oledb32.rc:69
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "Přid&at..."
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/oledb32.rc:70
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: dlls/oledb32/version.rc:76
+#: dlls/oledb32/oledb32.rc:71
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Uživatelské jméno:"
 
-#: dlls/oledb32/version.rc:80
+#: dlls/oledb32/oledb32.rc:75
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "&Prázdná stránka"
 
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/oledb32.rc:76
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "Chybné heslo.\n"
 
-#: dlls/oledb32/version.rc:82
+#: dlls/oledb32/oledb32.rc:77
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/oledb32.rc:79
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "Resetovat připojení"
 
-#: dlls/oledb32/version.rc:89
+#: dlls/oledb32/oledb32.rc:84
 msgid "Advanced"
 msgstr "Pokročilý"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/oledb32.rc:87
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "Síťový disk"
 
-#: dlls/oledb32/version.rc:93
+#: dlls/oledb32/oledb32.rc:88
 msgid "&Impersonation level:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/oledb32.rc:90
 msgid "P&rotection level:"
 msgstr ""
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/oledb32.rc:93
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "Připojeno"
 
-#: dlls/oledb32/version.rc:100
+#: dlls/oledb32/oledb32.rc:95
 #, fuzzy
 #| msgid "&Seconds"
 msgid "seconds."
 msgstr "&Vteřin"
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/oledb32.rc:96
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Úspěch"
 
-#: dlls/oledb32/version.rc:107
+#: dlls/oledb32/oledb32.rc:102
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "Vš&e"
 
-#: dlls/oledb32/version.rc:111
+#: dlls/oledb32/oledb32.rc:106
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: dlls/oledb32/version.rc:112
+#: dlls/oledb32/oledb32.rc:107
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
 msgstr "&Upravit..."
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/oledb32.rc:41
 #, fuzzy
 #| msgid "Properties"
 msgid "Data Link Error"
 msgstr "&Vlastnosti"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/oledb32.rc:42
 #, fuzzy
 #| msgid "Please select a file."
 msgid "Please select a provider."
 msgstr "Vyberte prosím soubor."
 
-#: dlls/oledb32/version.rc:48
+#: dlls/oledb32/oledb32.rc:43
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
 
-#: dlls/oledb32/version.rc:33
+#: dlls/oledb32/oledb32.rc:28
 #, fuzzy
 #| msgid "Properties"
 msgid "Data Link Properties"
 msgstr "&Vlastnosti"
 
-#: dlls/oledb32/version.rc:34
+#: dlls/oledb32/oledb32.rc:29
 msgid "OLE DB Provider(s)"
 msgstr ""
 
-#: dlls/oledb32/version.rc:38
+#: dlls/oledb32/oledb32.rc:33
 #, fuzzy
 #| msgid "Ready"
 msgid "Read"
 msgstr "Připraveno"
 
-#: dlls/oledb32/version.rc:39
+#: dlls/oledb32/oledb32.rc:34
 #, fuzzy
 #| msgid "Readme:"
 msgid "ReadWrite"
 msgstr "Čtimne:"
 
-#: dlls/oledb32/version.rc:40
+#: dlls/oledb32/oledb32.rc:35
 msgid "Share Deny None"
 msgstr ""
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/oledb32.rc:36
 msgid "Share Deny Read"
 msgstr ""
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/oledb32.rc:37
 msgid "Share Deny Write"
 msgstr ""
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/oledb32.rc:38
 msgid "Share Exclusive"
 msgstr ""
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/oledb32.rc:39
 #, fuzzy
 #| msgid "I/O Writes"
 msgid "Write"

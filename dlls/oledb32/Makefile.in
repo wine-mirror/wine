@@ -8,6 +8,7 @@ SOURCES = \
 	dslocator.c \
 	errorinfo.c \
 	main.c \
+	oledb32.rc \
 	oledb32_classes.idl \
 	oledb32_typelib.idl \
 	rowpos.c \

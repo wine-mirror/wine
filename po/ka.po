@@ -275,7 +275,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "მითითებული არაა"
 
-#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:35
+#: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/oledb32.rc:30
 #: dlls/shell32/shell32.rc:141 dlls/shell32/shell32.rc:243
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
@@ -449,7 +449,7 @@ msgstr "ოსტატი"
 msgid "< &Back"
 msgstr "< &უკან"
 
-#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:58
+#: dlls/comctl32/comctl32.rc:85 dlls/oledb32/oledb32.rc:53
 msgid "&Next >"
 msgstr "&შემდეგი >"
 
@@ -1409,7 +1409,7 @@ msgid "&User name:"
 msgstr "&მომხმარებლის სახელი:"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
-#: dlls/oledb32/version.rc:78
+#: dlls/oledb32/oledb32.rc:73
 msgid "&Password:"
 msgstr "&პაროლი:"
 
@@ -2745,7 +2745,7 @@ msgstr "სერტიფიკატი უნაკლოა."
 msgid "Field"
 msgstr "ველი"
 
-#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/version.rc:36
+#: dlls/cryptui/cryptui.rc:48 dlls/oledb32/oledb32.rc:31
 msgid "Value"
 msgstr "მნიშვნელობა"
 
@@ -3339,7 +3339,7 @@ msgstr "სიმბოლო"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:97
+#: dlls/gdi32/gdi32.rc:45 dlls/oledb32/oledb32.rc:92
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
 msgstr "სხვა"
@@ -3407,7 +3407,7 @@ msgid "&Stop"
 msgstr "გაჩერება"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
-#: dlls/oledb32/version.rc:70 dlls/shdoclc/shdoclc.rc:59
+#: dlls/oledb32/oledb32.rc:65 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&განახლება"
 
@@ -9292,156 +9292,156 @@ msgstr "ჩართული"
 msgid "Off"
 msgstr "გამორთ"
 
-#: dlls/oledb32/version.rc:53
+#: dlls/oledb32/oledb32.rc:48
 msgid "Provider"
 msgstr "პროვაიდერი"
 
-#: dlls/oledb32/version.rc:56
+#: dlls/oledb32/oledb32.rc:51
 msgid "Select the data you want to connect to:"
 msgstr "მიუთითეთ მონაცემების, რომელსაც გნებავთ, მიუერთდეთ:"
 
-#: dlls/oledb32/version.rc:63
+#: dlls/oledb32/oledb32.rc:58
 msgid "Connection"
 msgstr "კავშირი"
 
-#: dlls/oledb32/version.rc:66
+#: dlls/oledb32/oledb32.rc:61
 msgid "Specify the following to connect to ODBC data:"
 msgstr "ODBC-ის მონაცემებთან დასაკავშირებლად საჭიროა შემდეგი:"
 
-#: dlls/oledb32/version.rc:67
+#: dlls/oledb32/oledb32.rc:62
 msgid "1. Specify the source of data:"
 msgstr "1. მიუთითეთ მონაცემების წყარო:"
 
-#: dlls/oledb32/version.rc:68
+#: dlls/oledb32/oledb32.rc:63
 msgid "Use &data source name"
 msgstr "მონაცემების &წყაროს გაოყენება"
 
-#: dlls/oledb32/version.rc:71
+#: dlls/oledb32/oledb32.rc:66
 msgid "Use c&onnection string"
 msgstr "&მიერთების სტრიქონის გამოყენება"
 
-#: dlls/oledb32/version.rc:72
+#: dlls/oledb32/oledb32.rc:67
 msgid "&Connection string:"
 msgstr "&მიერთების სტრიქონი:"
 
-#: dlls/oledb32/version.rc:74
+#: dlls/oledb32/oledb32.rc:69
 msgid "B&uild..."
 msgstr "&აგება.."
 
-#: dlls/oledb32/version.rc:75
+#: dlls/oledb32/oledb32.rc:70
 msgid "2. Enter information to log on to the server"
 msgstr "2. შეიყვანეთ სერვერზე შესვლის ინფორმაცია"
 
-#: dlls/oledb32/version.rc:76
+#: dlls/oledb32/oledb32.rc:71
 msgid "User &name:"
 msgstr "მომხმარებლის &სახელი:"
 
-#: dlls/oledb32/version.rc:80
+#: dlls/oledb32/oledb32.rc:75
 msgid "&Blank password"
 msgstr "&პაროლის დაცარიელება"
 
-#: dlls/oledb32/version.rc:81
+#: dlls/oledb32/oledb32.rc:76
 msgid "Allow &saving password"
 msgstr "&პაროლის შენახვის დაშვება"
 
-#: dlls/oledb32/version.rc:82
+#: dlls/oledb32/oledb32.rc:77
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. შეიყვანეთ საწყისი გამოსაყენებელი კატალოგი:"
 
-#: dlls/oledb32/version.rc:84
+#: dlls/oledb32/oledb32.rc:79
 msgid "&Test Connection"
 msgstr "&შეერთების შემოწმება"
 
-#: dlls/oledb32/version.rc:89
+#: dlls/oledb32/oledb32.rc:84
 msgid "Advanced"
 msgstr "დაწინაურებული"
 
-#: dlls/oledb32/version.rc:92
+#: dlls/oledb32/oledb32.rc:87
 msgid "Network settings"
 msgstr "ქსელის მორგება"
 
-#: dlls/oledb32/version.rc:93
+#: dlls/oledb32/oledb32.rc:88
 msgid "&Impersonation level:"
 msgstr "განსახ&იერების დონე:"
 
-#: dlls/oledb32/version.rc:95
+#: dlls/oledb32/oledb32.rc:90
 msgid "P&rotection level:"
 msgstr "&დაცვის დონე:"
 
-#: dlls/oledb32/version.rc:98
+#: dlls/oledb32/oledb32.rc:93
 msgid "Connect:"
 msgstr "მიერთება:"
 
-#: dlls/oledb32/version.rc:100
+#: dlls/oledb32/oledb32.rc:95
 msgid "seconds."
 msgstr "წამი."
 
-#: dlls/oledb32/version.rc:101
+#: dlls/oledb32/oledb32.rc:96
 msgid "A&ccess:"
 msgstr "&წვდომა:"
 
-#: dlls/oledb32/version.rc:107
+#: dlls/oledb32/oledb32.rc:102
 msgid "All"
 msgstr "ყველა"
 
-#: dlls/oledb32/version.rc:111
+#: dlls/oledb32/oledb32.rc:106
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: dlls/oledb32/version.rc:112
+#: dlls/oledb32/oledb32.rc:107
 msgid "&Edit Value..."
 msgstr "&მნიშვნელობის ჩასწორება..."
 
-#: dlls/oledb32/version.rc:46
+#: dlls/oledb32/oledb32.rc:41
 msgid "Data Link Error"
 msgstr "მონაცემების გადაცემის შეცდომა"
 
-#: dlls/oledb32/version.rc:47
+#: dlls/oledb32/oledb32.rc:42
 msgid "Please select a provider."
 msgstr "აირჩიეთ მომწოდებელი."
 
-#: dlls/oledb32/version.rc:48
+#: dlls/oledb32/oledb32.rc:43
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
 "მომწოდებელი ხელმისაწვდომი აღარაა. დარწმუნდით, რომ მომწოდებელი სწორად აყენია."
 
-#: dlls/oledb32/version.rc:33
+#: dlls/oledb32/oledb32.rc:28
 msgid "Data Link Properties"
 msgstr "მონაცემების გადაცემის თვისებები"
 
-#: dlls/oledb32/version.rc:34
+#: dlls/oledb32/oledb32.rc:29
 msgid "OLE DB Provider(s)"
 msgstr "OLE DB მომწოდებლები"
 
-#: dlls/oledb32/version.rc:38
+#: dlls/oledb32/oledb32.rc:33
 msgid "Read"
 msgstr "წაკითხვა"
 
-#: dlls/oledb32/version.rc:39
+#: dlls/oledb32/oledb32.rc:34
 msgid "ReadWrite"
 msgstr "ჩაწერაწაკითხვადი"
 
-#: dlls/oledb32/version.rc:40
+#: dlls/oledb32/oledb32.rc:35
 msgid "Share Deny None"
 msgstr "გაზიარებულზე არაფრის უარყოფა"
 
-#: dlls/oledb32/version.rc:41
+#: dlls/oledb32/oledb32.rc:36
 msgid "Share Deny Read"
 msgstr "გაზიარებულზე წაკითხვის უარყოფა"
 
-#: dlls/oledb32/version.rc:42
+#: dlls/oledb32/oledb32.rc:37
 msgid "Share Deny Write"
 msgstr "გაზიარებულზე ჩაწერის უარყოფა"
 
-#: dlls/oledb32/version.rc:43
+#: dlls/oledb32/oledb32.rc:38
 msgid "Share Exclusive"
 msgstr "ექსკლუზიური გაზიარება"
 
-#: dlls/oledb32/version.rc:44
+#: dlls/oledb32/oledb32.rc:39
 msgid "Write"
 msgstr "ჩასწორება"
 
