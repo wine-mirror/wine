@@ -292,6 +292,27 @@ static inline int __cdecl wprintf_s(const wchar_t *format, ...)
     return ret;
 }
 
+static inline int __cdecl _vswscanf_l(const wchar_t *buffer, const wchar_t *format, _locale_t locale, va_list args)
+{
+    return __stdio_common_vswscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, buffer, -1, format, locale, args);
+}
+
+static inline int __cdecl _swscanf_l(const wchar_t *buffer, const wchar_t *format, _locale_t locale, ...)
+{
+    int ret;
+    va_list args;
+
+    va_start(args, locale);
+    ret = _vswscanf_l(buffer, format, locale, args);
+    va_end(args);
+    return ret;
+}
+
+static inline int __cdecl vswscanf(const wchar_t *buffer, const wchar_t *format, va_list args)
+{
+    return _vswscanf_l(buffer, format, NULL, args);
+}
+
 static inline int __cdecl swscanf(const wchar_t *buffer, const wchar_t *format, ...)
 {
     int ret;
@@ -314,6 +335,27 @@ static inline int __cdecl swscanf_s(const wchar_t *buffer, const wchar_t *format
     return ret;
 }
 
+static inline int __cdecl _vfwscanf_l(FILE *file, const wchar_t *format, _locale_t locale, va_list args)
+{
+    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, file, format, locale, args);
+}
+
+static inline int __cdecl _fwscanf_l(FILE *file, const wchar_t *format, _locale_t locale, ...)
+{
+    int ret;
+    va_list args;
+
+    va_start(args, locale);
+    ret = _vfwscanf_l(file, format, locale, args);
+    va_end(args);
+    return ret;
+}
+
+static inline int __cdecl vfwscanf(FILE *file, const wchar_t *format, va_list args)
+{
+    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, file, format, NULL, args);
+}
+
 static inline int __cdecl fwscanf(FILE *file, const wchar_t *format, ...)
 {
     int ret;
@@ -334,6 +376,27 @@ static inline int __cdecl fwscanf_s(FILE *file, const wchar_t *format, ...)
     ret = __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS | _CRT_INTERNAL_SCANF_SECURECRT, file, format, NULL, args);
     va_end(args);
     return ret;
+}
+
+static inline int __cdecl _vwscanf_l(const wchar_t *format, _locale_t locale, va_list args)
+{
+    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, stdin, format, locale, args);
+}
+
+static inline int __cdecl _wscanf_l(const wchar_t *format, _locale_t locale, ...)
+{
+    int ret;
+    va_list args;
+
+    va_start(args, locale);
+    ret = _vwscanf_l(format, locale, args);
+    va_end(args);
+    return ret;
+}
+
+static inline int __cdecl vwscanf(const wchar_t *format, va_list args)
+{
+    return __stdio_common_vfwscanf(_CRT_INTERNAL_LOCAL_SCANF_OPTIONS, stdin, format, NULL, args);
 }
 
 static inline int __cdecl wscanf(FILE *file, const wchar_t *format, ...)
@@ -399,10 +462,16 @@ _ACRTIMP int __cdecl vswprintf(wchar_t*,size_t,const wchar_t*,va_list);
 _ACRTIMP int __cdecl swprintf(wchar_t*,size_t,const wchar_t*,...);
 #endif  /*  _CRT_NON_CONFORMING_SWPRINTFS */
 
+_ACRTIMP int __cdecl _fwscanf_l(FILE*,const wchar_t*,_locale_t,...);
+_ACRTIMP int __cdecl _swscanf_l(const wchar_t*,const wchar_t*,_locale_t,...);
+_ACRTIMP int __cdecl _wscanf_l(const wchar_t*,_locale_t,...);
 _ACRTIMP int __cdecl fwscanf(FILE*,const wchar_t*,...);
 _ACRTIMP int __cdecl fwscanf_s(FILE*,const wchar_t*,...);
 _ACRTIMP int __cdecl swscanf(const wchar_t*,const wchar_t*,...);
 _ACRTIMP int __cdecl swscanf_s(const wchar_t*,const wchar_t*,...);
+_ACRTIMP int __cdecl vfwscanf(FILE*,const wchar_t*,va_list);
+_ACRTIMP int __cdecl vswscanf(const wchar_t*,const wchar_t*,va_list);
+_ACRTIMP int __cdecl vwscanf(const wchar_t*,va_list);
 _ACRTIMP int __cdecl wscanf(const wchar_t*,...);
 _ACRTIMP int __cdecl wscanf_s(const wchar_t*,...);
 
