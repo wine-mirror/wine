@@ -1562,15 +1562,15 @@ done:
     return ret;
 }
 
-static char *get_computer_name( COMPUTER_NAME_FORMAT format )
+static WCHAR *get_computer_name( COMPUTER_NAME_FORMAT format )
 {
-    char *ret;
+    WCHAR *ret;
     DWORD size = 0;
 
-    GetComputerNameExA( format, NULL, &size );
+    GetComputerNameExW( format, NULL, &size );
     if (GetLastError() != ERROR_MORE_DATA) return NULL;
-    if (!(ret = malloc( size ))) return NULL;
-    if (!GetComputerNameExA( format, ret, &size ))
+    if (!(ret = malloc( size * sizeof(WCHAR) ))) return NULL;
+    if (!GetComputerNameExW( format, ret, &size ))
     {
         free( ret );
         return NULL;
@@ -1578,44 +1578,42 @@ static char *get_computer_name( COMPUTER_NAME_FORMAT format )
     return ret;
 }
 
-static BOOL is_domain_suffix( const char *domain, const char *suffix )
+static BOOL is_domain_suffix( const WCHAR *domain, const WCHAR *suffix )
 {
-    int len_domain = strlen( domain ), len_suffix = strlen( suffix );
+    int len_domain = wcslen( domain ), len_suffix = wcslen( suffix );
 
     if (len_suffix > len_domain) return FALSE;
-    if (!stricmp( domain + len_domain - len_suffix, suffix )) return TRUE;
+    if (!wcsicmp( domain + len_domain - len_suffix, suffix )) return TRUE;
     return FALSE;
 }
 
-static int reverse_lookup( const struct addrinfo *ai, char *hostname, size_t len )
+static int reverse_lookup( const struct addrinfoW *ai, WCHAR *hostname, size_t len )
 {
-    return getnameinfo( ai->ai_addr, ai->ai_addrlen, hostname, len, NULL, 0, 0 );
+    return GetNameInfoW( ai->ai_addr, ai->ai_addrlen, hostname, len, NULL, 0, 0 );
 }
 
-static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
+static WCHAR *build_wpad_url( const WCHAR *hostname, const struct addrinfoW *ai )
 {
-    char name[NI_MAXHOST];
-    WCHAR *ret, *p;
+    WCHAR name[NI_MAXHOST];
+    WCHAR *ret;
     int len;
 
     while (ai && ai->ai_family != AF_INET && ai->ai_family != AF_INET6) ai = ai->ai_next;
     if (!ai) return NULL;
 
-    if (!reverse_lookup( ai, name, sizeof(name) )) hostname = name;
+    if (!reverse_lookup( ai, name, ARRAY_SIZE(name) )) hostname = name;
 
-    len = lstrlenW( L"http://" ) + strlen( hostname ) + lstrlenW( L"/wpad.dat" );
-    if (!(ret = p = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) ))) return NULL;
-    lstrcpyW( p, L"http://" );
-    p += lstrlenW( L"http://" );
-    while (*hostname) { *p++ = *hostname++; }
-    lstrcpyW( p, L"/wpad.dat" );
+    len = ARRAY_SIZE( L"http://" ) + wcslen( hostname ) + ARRAY_SIZE( L"/wpad.dat" );
+    if (!(ret = GlobalAlloc( 0, len * sizeof(WCHAR) ))) return NULL;
+    wcscpy( ret, L"http://" );
+    wcscat( ret, hostname );
+    wcscat( ret, L"/wpad.dat" );
     return ret;
 }
 
 static WCHAR *detect_autoproxyconfig_url_dns(void)
 {
-    char *fqdn, *domain, *p;
-    WCHAR *ret = NULL;
+    WCHAR *fqdn, *domain, *p, *ret = NULL;
 
     if (!(fqdn = get_computer_name( ComputerNamePhysicalDnsFullyQualified ))) return NULL;
     if (!(domain = get_computer_name( ComputerNamePhysicalDnsDomain )))
@@ -1624,28 +1622,28 @@ static WCHAR *detect_autoproxyconfig_url_dns(void)
         return NULL;
     }
     p = fqdn;
-    while ((p = strchr( p, '.' )) && is_domain_suffix( p + 1, domain ))
+    while ((p = wcschr( p, '.' )) && is_domain_suffix( p + 1, domain ))
     {
-        char *name;
-        struct addrinfo *ai, hints;
+        WCHAR *name;
+        struct addrinfoW *ai, hints;
         int res;
 
-        if (!(name = malloc( sizeof("wpad") + strlen(p) )))
+        if (!(name = malloc( sizeof(L"wpad") + wcslen(p) * sizeof(WCHAR) )))
         {
             free( fqdn );
             free( domain );
             return NULL;
         }
-        strcpy( name, "wpad" );
-        strcat( name, p );
+        wcscpy( name, L"wpad" );
+        wcscat( name, p );
         memset( &hints, 0, sizeof(hints) );
         hints.ai_flags  = AI_ALL | AI_DNS_ONLY;
         hints.ai_family = AF_UNSPEC;
-        res = getaddrinfo( name, NULL, &hints, &ai );
+        res = GetAddrInfoW( name, NULL, &hints, &ai );
         if (!res)
         {
             ret = build_wpad_url( name, ai );
-            freeaddrinfo( ai );
+            FreeAddrInfoW( ai );
             if (ret)
             {
                 TRACE("returning %s\n", debugstr_w(ret));
