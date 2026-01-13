@@ -863,7 +863,7 @@ static void update_visible_region( struct dce *dce )
                                         (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
     /* don't use a surface to paint the client area of OpenGL windows */
-    if (!(paint_flags & SET_WINPOS_PIXEL_FORMAT) || (flags & DCX_WINDOW))
+    if (!(paint_flags & SET_WINPOS_PIXEL_FORMAT && user_driver->dc_funcs.pPutImage) || (flags & DCX_WINDOW))
     {
         win = get_win_ptr( top_win );
         if (win && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
