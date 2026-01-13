@@ -824,6 +824,102 @@ static void test_thinning(void)
     IMFMediaSource_Release(source);
 }
 
+static void test_end_of_presentation(void)
+{
+    IMFPresentationDescriptor *pd;
+    IMFAsyncCallback *callback;
+    IMFByteStream *byte_stream;
+    IMFMediaSource *source;
+    IMFMediaStream *stream;
+    IMFMediaEvent *event;
+    MediaEventType type;
+    PROPVARIANT value;
+    HRESULT hr;
+
+    byte_stream = create_resource_byte_stream(L"test_thinning.avi");
+    hr = create_source(&CLSID_AVIByteStreamPlugin, byte_stream, &source);
+    IMFByteStream_Release(byte_stream);
+
+    if (FAILED(hr))
+    {
+        win_skip("Failed to create AVI media source: %#lx.\n", hr);
+        return;
+    }
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantInit(&value);
+    hr = IMFMediaSource_Start(source, pd, &GUID_NULL, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    callback = create_test_callback(TRUE);
+
+    hr = wait_media_event(source, callback, MENewStream, 1000, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
+    IMFMediaStream_AddRef(stream = (IMFMediaStream*)value.punkVal);
+    PropVariantClear(&value);
+
+    hr = wait_media_event(source, callback, MESourceStarted, 1000, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_EMPTY || value.vt == VT_I8, "Unexpected value type %d.\n", value.vt);
+    PropVariantClear(&value);
+
+    hr = wait_media_event(stream, callback, MEStreamStarted, 1000, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_EMPTY || value.vt == VT_I8, "Unexpected value type %d.\n", value.vt);
+    PropVariantClear(&value);
+
+    while (hr == S_OK)
+    {
+        hr = IMFMediaStream_RequestSample(stream, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = next_media_event(stream, callback, 1000, &event);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaEvent_GetType(event, &type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(type == MEMediaSample || type == MEEndOfStream, "Unexpected event type %ld.\n", type);
+
+        hr = IMFMediaEvent_GetValue(event, &value);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (type == MEMediaSample)
+            ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
+        else if (type == MEEndOfStream)
+            ok(value.vt == VT_EMPTY, "Unexpected value type %d.\n", value.vt);
+
+        PropVariantClear(&value);
+        if (type == MEEndOfStream)
+            break;
+    }
+
+    hr = wait_media_event(source, callback, MEEndOfPresentation, 1000, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_EMPTY, "Unexpected value type %d.\n", value.vt);
+    PropVariantClear(&value);
+
+    /* Test we can still pause after end of presentation */
+    hr = IMFMediaSource_Pause(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* And resume */
+    hr = IMFMediaSource_Start(source, pd, NULL, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* And finally stop */
+    hr = IMFMediaSource_Stop(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Free resources */
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IMFMediaSource_Release(source);
+    IMFPresentationDescriptor_Release(pd);
+    IMFAsyncCallback_Release(callback);
+}
+
 START_TEST(mfsrcsnk)
 {
     HRESULT hr;
@@ -833,6 +929,7 @@ START_TEST(mfsrcsnk)
 
     test_wave_sink();
     test_thinning();
+    test_end_of_presentation();
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
