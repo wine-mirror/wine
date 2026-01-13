@@ -22,8 +22,6 @@
 #ifndef __WINE_WINEBTH_UNIXLIB_PRIV_H
 #define __WINE_WINEBTH_UNIXLIB_PRIV_H
 
-#include <config.h>
-
 #include <ntstatus.h>
 #define WIN32_NO_STATUS
 #include <windef.h>

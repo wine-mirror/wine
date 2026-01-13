@@ -22,7 +22,9 @@
 #ifndef __WINE_BLUETOOTHAPIS_UNIXLIB_DBUS_H
 #define __WINE_BLUETOOTHAPIS_UNIXLIB_DBUS_H
 
-#include "config.h"
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #ifdef SONAME_LIBDBUS_1
 #include <dbus/dbus.h>
