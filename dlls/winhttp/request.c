@@ -1639,7 +1639,7 @@ static DWORD open_connection( struct request *request )
         len = lstrlenW( host->hostname ) + 1;
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, host->hostname, len );
 
-        if ((ret = netconn_resolve( host->hostname, port, &connect->sockaddr, request->resolve_timeout )))
+        if ((ret = netconn_resolve( host->hostname, port, 0, &connect->sockaddr, request->resolve_timeout )))
         {
             release_host( host );
             return ret;

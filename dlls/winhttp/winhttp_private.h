@@ -408,7 +408,7 @@ DWORD netconn_create( struct hostdata *, const struct sockaddr_storage *, int, s
 void netconn_unload( void );
 ULONG netconn_query_data_available( struct netconn * );
 DWORD netconn_recv( struct netconn *, void *, size_t, int, int * );
-DWORD netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int );
+DWORD netconn_resolve( const WCHAR *, INTERNET_PORT, DWORD, struct sockaddr_storage *, int );
 DWORD netconn_secure_connect( struct netconn *, WCHAR *, DWORD, CredHandle *, BOOL );
 DWORD netconn_send( struct netconn *, const void *, size_t, int *, WSAOVERLAPPED * );
 BOOL netconn_wait_overlapped_result( struct netconn *conn, WSAOVERLAPPED *ovr, DWORD *len );

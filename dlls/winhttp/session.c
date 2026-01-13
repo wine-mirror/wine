@@ -1587,21 +1587,18 @@ static BOOL is_domain_suffix( const WCHAR *domain, const WCHAR *suffix )
     return FALSE;
 }
 
-static int reverse_lookup( const struct addrinfoW *ai, WCHAR *hostname, size_t len )
+static int reverse_lookup( const struct sockaddr_storage *addr, WCHAR *hostname, size_t len )
 {
-    return GetNameInfoW( ai->ai_addr, ai->ai_addrlen, hostname, len, NULL, 0, 0 );
+    return GetNameInfoW( (const struct sockaddr *)addr, sizeof(*addr), hostname, len, NULL, 0, 0 );
 }
 
-static WCHAR *build_wpad_url( const WCHAR *hostname, const struct addrinfoW *ai )
+static WCHAR *build_wpad_url( const WCHAR *hostname, const struct sockaddr_storage *addr )
 {
     WCHAR name[NI_MAXHOST];
     WCHAR *ret;
     int len;
 
-    while (ai && ai->ai_family != AF_INET && ai->ai_family != AF_INET6) ai = ai->ai_next;
-    if (!ai) return NULL;
-
-    if (!reverse_lookup( ai, name, ARRAY_SIZE(name) )) hostname = name;
+    if (!reverse_lookup( addr, name, ARRAY_SIZE(name) )) hostname = name;
 
     len = ARRAY_SIZE( L"http://" ) + wcslen( hostname ) + ARRAY_SIZE( L"/wpad.dat" );
     if (!(ret = GlobalAlloc( 0, len * sizeof(WCHAR) ))) return NULL;
@@ -1625,8 +1622,7 @@ static WCHAR *detect_autoproxyconfig_url_dns(void)
     while ((p = wcschr( p, '.' )) && is_domain_suffix( p + 1, domain ))
     {
         WCHAR *name;
-        struct addrinfoW *ai, hints;
-        int res;
+        struct sockaddr_storage addr;
 
         if (!(name = malloc( sizeof(L"wpad") + wcslen(p) * sizeof(WCHAR) )))
         {
@@ -1636,15 +1632,9 @@ static WCHAR *detect_autoproxyconfig_url_dns(void)
         }
         wcscpy( name, L"wpad" );
         wcscat( name, p );
-        memset( &hints, 0, sizeof(hints) );
-        hints.ai_flags  = AI_ALL | AI_DNS_ONLY;
-        hints.ai_family = AF_UNSPEC;
-        res = GetAddrInfoW( name, NULL, &hints, &ai );
-        if (!res)
+        if (!netconn_resolve( name, 0, AI_ALL | AI_DNS_ONLY, &addr, 5000 ))
         {
-            ret = build_wpad_url( name, ai );
-            FreeAddrInfoW( ai );
-            if (ret)
+            if ((ret = build_wpad_url( name, &addr )))
             {
                 TRACE("returning %s\n", debugstr_w(ret));
                 free( name );
