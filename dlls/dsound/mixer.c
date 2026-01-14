@@ -118,17 +118,10 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 		ieee = TRUE;
 
 	/**
-	 * Recalculate FIR step and gain.
-	 *
-	 * firstep says how many points of the FIR exist per one
-	 * sample in the secondary buffer. firgain specifies what
-	 * to multiply the FIR output by in order to attenuate it correctly.
+	 * Recalculate FIR gain, which specifies what to multiply the FIR
+	 * output by in order to attenuate it correctly.
 	 */
-        if (dsb->freqAdjustNum > dsb->freqAdjustDen)
-		dsb->firstep = fir_step * dsb->freqAdjustDen / dsb->freqAdjustNum;
-        else
-		dsb->firstep = fir_step;
-	dsb->firgain = (float)dsb->firstep / fir_step;
+	dsb->firgain = min(1.0f, dsb->freqAdjustDen / (float)dsb->freqAdjustNum);
 
 	/* calculate the 10ms write lead */
 	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
