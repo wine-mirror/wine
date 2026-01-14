@@ -1583,36 +1583,40 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC share, const int
         RtlSetLastWin32Error( ERROR_INVALID_OPERATION );
         return 0;
     }
-    if ((context = calloc( 1, sizeof(*context) )))
+    if (!(context = calloc( 1, sizeof(*context) )))
     {
-        context->hdc = hdc;
-        context->share = (HGLRC)-1; /* initial shared context */
-        context->attribs = memdup_attribs( attribs );
-        if (is_win64 && is_wow64())
+        RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
+        return 0;
+    }
+    context->hdc = hdc;
+    context->share = (HGLRC)-1; /* initial shared context */
+    context->attribs = memdup_attribs( attribs );
+
+    if (is_win64 && is_wow64())
+    {
+        if (share_ctx)
         {
-            if (share_ctx)
-            {
-                context->buffers = share_ctx->buffers;
-                context->buffers->ref++;
-            }
-            else if (!(context->buffers = malloc( sizeof(*context->buffers ))))
-            {
-                free_context( context );
-                return 0;
-            }
-            else
-            {
-                context->buffers->ref = 1;
-                context->buffers->vk_device = NULL;
-                rb_init( &context->buffers->map, compare_buffer_name );
-            }
+            context->buffers = share_ctx->buffers;
+            context->buffers->ref++;
         }
-        if (!(funcs->p_wgl_context_reset( &context->base, hdc, share_ctx ? &share_ctx->base : NULL, attribs ))) free_context( context );
-        else if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
+        else if (!(context->buffers = malloc( sizeof(*context->buffers ))))
         {
-            funcs->p_wgl_context_reset( &context->base, NULL, NULL, NULL );
             free_context( context );
+            return 0;
         }
+        else
+        {
+            context->buffers->ref = 1;
+            context->buffers->vk_device = NULL;
+            rb_init( &context->buffers->map, compare_buffer_name );
+        }
+    }
+
+    if (!(funcs->p_wgl_context_reset( &context->base, hdc, share_ctx ? &share_ctx->base : NULL, attribs ))) free_context( context );
+    else if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context )))
+    {
+        funcs->p_wgl_context_reset( &context->base, NULL, NULL, NULL );
+        free_context( context );
     }
     return ret;
 }
