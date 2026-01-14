@@ -4238,11 +4238,6 @@ msgstr "屬性不可同時有存取子和值"
 msgid "Wine kernel DLL"
 msgstr "Wine 核心 DLL"
 
-#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
-#: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
-msgid "Wine"
-msgstr "Wine"
-
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
 msgstr "西歐和美國"
@@ -12806,6 +12801,11 @@ msgstr "Microsoft VBScript 編譯錯誤"
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript 執行期錯誤"
+
+#: dlls/winemac.drv/winemac.rc:32 programs/wineboot/wineboot.rc:42
+#: programs/winecfg/winecfg.rc:143
+msgid "Wine"
+msgstr "Wine"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"

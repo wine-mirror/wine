@@ -4301,11 +4301,6 @@ msgstr "Propriedade não pode ter ambos acessores e valor"
 msgid "Wine kernel DLL"
 msgstr "Biblioteca de kernel Wine"
 
-#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
-#: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
-msgid "Wine"
-msgstr "Wine"
-
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
 msgstr "Europa Ocidental e Estados Unidos"
@@ -13023,6 +13018,11 @@ msgstr "Microsoft VBScript erro de compilação"
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript erro de execução"
+
+#: dlls/winemac.drv/winemac.rc:32 programs/wineboot/wineboot.rc:42
+#: programs/winecfg/winecfg.rc:143
+msgid "Wine"
+msgstr "Wine"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"

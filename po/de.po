@@ -4284,11 +4284,6 @@ msgstr "Eigenschaft kann nicht sowohl Accessoren als auch einen Wert haben"
 msgid "Wine kernel DLL"
 msgstr "Wine-Kernel-DLL"
 
-#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
-#: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
-msgid "Wine"
-msgstr "Wine"
-
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
 msgstr "Westeuropa und Vereinigte Staaten"
@@ -12884,6 +12879,11 @@ msgstr "Microsoft VBScript Übersetzungsfehler"
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript Laufzeitfehler"
+
+#: dlls/winemac.drv/winemac.rc:32 programs/wineboot/wineboot.rc:42
+#: programs/winecfg/winecfg.rc:143
+msgid "Wine"
+msgstr "Wine"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"

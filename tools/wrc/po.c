@@ -661,8 +661,8 @@ static int version_value_needs_translation( const ver_value_t *val )
     if (val->type != val_str) return 0;
     if (!(key = convert_msgid_ascii( val->key, 0 ))) return 0;
 
-    /* most values contain version numbers or file names, only translate a few specific ones */
-    ret = (!strcasecmp( key, "FileDescription" ) || !strcasecmp( key, "ProductName" ));
+    /* most values contain version numbers or file names, only translate file description */
+    ret = !strcasecmp( key, "FileDescription" );
 
     free( key );
     return ret;

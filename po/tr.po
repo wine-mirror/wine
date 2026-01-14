@@ -4281,11 +4281,6 @@ msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 msgid "Wine kernel DLL"
 msgstr "Wine çekirdek DLL'si"
 
-#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
-#: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
-msgid "Wine"
-msgstr "Wine"
-
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
 msgstr "Batı Avrupa ve Amerika Birleşik Devletleri"
@@ -12866,6 +12861,11 @@ msgstr "Microsoft VBScript derleme hatası"
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript çalışma zamanı hatası"
+
+#: dlls/winemac.drv/winemac.rc:32 programs/wineboot/wineboot.rc:42
+#: programs/winecfg/winecfg.rc:143
+msgid "Wine"
+msgstr "Wine"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"

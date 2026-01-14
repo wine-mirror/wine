@@ -4302,11 +4302,6 @@ msgstr "Властивість не може одночасно мати дос�
 msgid "Wine kernel DLL"
 msgstr "Бібліотека ядра Wine"
 
-#: include/wine/wine_common_ver.rc:128 dlls/winemac.drv/winemac.rc:32
-#: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
-msgid "Wine"
-msgstr "Wine"
-
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
 msgstr "Західна Європа і Сполучені Штати"
@@ -13166,6 +13161,11 @@ msgstr "Помилка компіляції Microsoft VBScript"
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
 msgstr "Помилка виконання Microsoft VBScript"
+
+#: dlls/winemac.drv/winemac.rc:32 programs/wineboot/wineboot.rc:42
+#: programs/winecfg/winecfg.rc:143
+msgid "Wine"
+msgstr "Wine"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
