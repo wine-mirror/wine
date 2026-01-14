@@ -2083,7 +2083,7 @@ static void tp_object_wait( struct threadpool_object *object, BOOL group_wait )
     struct threadpool *pool = object->pool;
 
     RtlEnterCriticalSection( &pool->cs );
-    while (!object_is_finished( object, group_wait ))
+    while (!RtlDllShutdownInProgress() && !object_is_finished( object, group_wait ))
     {
         if (group_wait)
             RtlSleepConditionVariableCS( &object->group_finished_event, &pool->cs, NULL );
