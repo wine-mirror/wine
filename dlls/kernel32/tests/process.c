@@ -1178,7 +1178,6 @@ static void test_CommandLine(void)
     get_file_name(resfile);
     sprintf(buffer2, "\"%s \" process dump \"%s\"", buffer, resfile);
     ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
-    todo_wine
     ok(ret, "CreateProcess (%s) failed : %ld\n", buffer, GetLastError());
     if (ret)
     {
