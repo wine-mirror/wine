@@ -168,7 +168,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     }
     else
     {
-        status = LdrLoadDll( load_path, flags, libname, &module );
+        status = LdrLoadDll( load_path, &flags, libname, &module );
         if (!set_ntstatus( status ))
         {
             module = 0;

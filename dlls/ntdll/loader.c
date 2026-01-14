@@ -3440,12 +3440,15 @@ NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)
  */
-NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD flags,
+NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD *load_flags,
                                              const UNICODE_STRING *libname, HMODULE* hModule)
 {
     WINE_MODREF *wm;
     NTSTATUS nts;
+    ULONG flags = 0;
     WCHAR *dllname = append_dll_ext( libname->Buffer );
+
+    if (load_flags) flags = *load_flags;
 
     RtlEnterCriticalSection( &loader_section );
 

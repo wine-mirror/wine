@@ -101,7 +101,7 @@
 @ stub LdrInitShimEngineDynamic
 @ stdcall LdrInitializeThunk(ptr long long long)
 @ stub LdrLoadAlternateResourceModule
-@ stdcall LdrLoadDll(wstr long ptr ptr)
+@ stdcall LdrLoadDll(wstr ptr ptr ptr)
 @ stdcall LdrLockLoaderLock(long ptr ptr)
 @ stdcall LdrProcessRelocationBlock(ptr long ptr long)
 @ stdcall LdrQueryImageFileExecutionOptions(ptr wstr long ptr long ptr)
