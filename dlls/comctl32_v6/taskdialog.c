@@ -416,11 +416,13 @@ static void taskdialog_get_label_size(struct taskdialog_info *dialog_info, HWND 
     Free(text);
 }
 
-static void taskdialog_get_button_size(HWND hwnd, LONG max_width, SIZE *size)
+static void taskdialog_get_button_size(const struct taskdialog_info *dialog_info, HWND hwnd,
+                                       LONG max_width, SIZE *size)
 {
     size->cx = max_width;
     size->cy = 0;
     SendMessageW(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)size);
+    size->cx = min(max_width, size->cx + dialog_info->m.h_spacing * 4);
 }
 
 static void taskdialog_get_expando_size(struct taskdialog_info *dialog_info, HWND hwnd, SIZE *size)
@@ -915,7 +917,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     {
         x = main_icon_right + h_spacing;
         y = dialog_height + v_spacing;
-        taskdialog_get_button_size(dialog_info->radio_buttons[i], dialog_width - x - h_spacing, &size);
+        taskdialog_get_button_size(dialog_info, dialog_info->radio_buttons[i], dialog_width - x - h_spacing, &size);
         size.cx = dialog_width - x - h_spacing;
         SetWindowPos(dialog_info->radio_buttons[i], 0, x, y, size.cx, size.cy, SWP_NOZORDER);
         dialog_height = y + size.cy;
@@ -929,7 +931,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
         /* Only add spacing for the first command links. There is no vertical spacing between command links */
         if (!i)
             y += v_spacing;
-        taskdialog_get_button_size(dialog_info->command_links[i], dialog_width - x - h_spacing, &size);
+        taskdialog_get_button_size(dialog_info, dialog_info->command_links[i], dialog_width - x - h_spacing, &size);
         size.cx = dialog_width - x - h_spacing;
         /* Add spacing */
         size.cy += 4;
@@ -959,7 +961,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
         y = expando_bottom + v_spacing;
         size.cx = DIALOG_MIN_WIDTH / 2;
         taskdialog_du_to_px(dialog_info, &size.cx, NULL);
-        taskdialog_get_button_size(dialog_info->verification_box, size.cx, &size);
+        taskdialog_get_button_size(dialog_info, dialog_info->verification_box, size.cx, &size);
         SetWindowPos(dialog_info->verification_box, 0, x, y, size.cx, size.cy, SWP_NOZORDER);
         expando_right = max(expando_right, x + size.cx);
         expando_bottom = y + size.cy;
@@ -974,7 +976,7 @@ static void taskdialog_layout(struct taskdialog_info *dialog_info)
     taskdialog_du_to_px(dialog_info, &button_min_width, &button_height);
     for (i = 0; i < dialog_info->button_count; i++)
     {
-        taskdialog_get_button_size(dialog_info->buttons[i], dialog_width - expando_right - h_spacing * 2, &size);
+        taskdialog_get_button_size(dialog_info, dialog_info->buttons[i], dialog_width - expando_right - h_spacing * 2, &size);
         button_layout_infos[i].width = max(size.cx, button_min_width);
     }
 
