@@ -3440,15 +3440,25 @@ NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)
  */
-NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD *load_flags,
+NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR search_path, DWORD *load_flags,
                                              const UNICODE_STRING *libname, HMODULE* hModule)
 {
+    const ULONG load_library_search_flags = LOAD_WITH_ALTERED_SEARCH_PATH | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
+                | LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS
+                | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
     WINE_MODREF *wm;
     NTSTATUS nts;
     ULONG flags = 0;
     WCHAR *dllname = append_dll_ext( libname->Buffer );
+    WCHAR *path_name = NULL, *dummy;
 
     if (load_flags) flags = *load_flags;
+    if (!search_path || ((ULONG_PTR)search_path & 1))
+    {
+        if ((nts = LdrGetDllPath( libname->Buffer, (ULONG_PTR)search_path & load_library_search_flags, &path_name, &dummy )))
+            return nts;
+    }
+    else path_name = (WCHAR *)search_path;
 
     RtlEnterCriticalSection( &loader_section );
 
@@ -3467,6 +3477,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD *load_flag
 
     RtlLeaveCriticalSection( &loader_section );
     RtlFreeHeap( GetProcessHeap(), 0, dllname );
+    if (path_name != search_path) RtlReleasePath( path_name );
     return nts;
 }
 
