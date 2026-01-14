@@ -2283,7 +2283,7 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
 
     /* fixup imports */
 
-    if (!(flags & DONT_RESOLVE_DLL_REFERENCES) &&
+    if (!(flags & LDR_DONT_RESOLVE_REFS) &&
         ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
          nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE))
     {
@@ -2900,7 +2900,7 @@ static WINE_MODREF *build_main_module(void)
 #endif
     status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &nt_name, NULL, NULL );
     if (status) goto failed;
-    status = build_module( NULL, &nt_name, &module, &info, NULL, DONT_RESOLVE_DLL_REFERENCES, FALSE,
+    status = build_module( NULL, &nt_name, &module, &info, NULL, LDR_DONT_RESOLVE_REFS, FALSE,
                            FALSE, &wm );
     if (status) goto failed;
     RtlFreeUnicodeString( &nt_name );

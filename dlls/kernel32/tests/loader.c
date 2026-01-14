@@ -2305,15 +2305,15 @@ static void test_import_resolution(void)
             ok( mod != NULL, "failed to load err %lu\n", GetLastError() );
             if (!mod) break;
             ptr = (struct imports *)((char *)mod + page_size);
-            todo_wine_if (test == 7) ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
+            ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
-            todo_wine_if (test == 7) ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+            ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
 
             mod2 = LoadLibraryW( dll_name );
             ok( mod2 == mod, "loaded twice %p / %p\n", mod, mod2 );
-            todo_wine_if (test == 7) ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
+            ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
-            todo_wine_if (test == 7) ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+            ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
             check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod2 );
             FreeLibrary( mod );

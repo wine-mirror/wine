@@ -155,6 +155,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     NTSTATUS status;
     HMODULE module;
     WCHAR *load_path, *dummy;
+    DWORD load_flags = 0;
 
     if (flags & unsupported_flags) FIXME( "unsupported flag(s) used %#08lx\n", flags );
 
@@ -168,7 +169,8 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     }
     else
     {
-        status = LdrLoadDll( load_path, &flags, libname, &module );
+        if (flags & DONT_RESOLVE_DLL_REFERENCES) load_flags |= LDR_DONT_RESOLVE_REFS;
+        status = LdrLoadDll( load_path, &load_flags, libname, &module );
         if (!set_ntstatus( status ))
         {
             module = 0;
