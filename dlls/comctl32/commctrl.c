@@ -166,7 +166,7 @@ static void unregister_classes(void)
     }
 }
 
-BOOL WINAPI RegisterClassNameW(const WCHAR *class)
+BOOLEAN WINAPI RegisterClassNameW(const WCHAR *class)
 {
     int min = 0, max = ARRAY_SIZE(classes) - 1;
 

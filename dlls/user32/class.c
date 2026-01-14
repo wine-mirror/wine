@@ -232,7 +232,7 @@ void get_class_version( UNICODE_STRING *name, UNICODE_STRING *version, BOOL load
 
     if (load && hmod)
     {
-        BOOL (WINAPI *pRegisterClassNameW)( const WCHAR *class );
+        PREGISTERCLASSNAMEW pRegisterClassNameW;
         if ((pRegisterClassNameW = (void *)GetProcAddress( hmod, "RegisterClassNameW" )))
         {
             TRACE( "registering %s version %s\n", debugstr_us(name), debugstr_us(version) );
