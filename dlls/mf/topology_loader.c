@@ -550,7 +550,6 @@ static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD 
 static HRESULT topology_loader_resolve_branches(struct topoloader_context *context, struct list *branches,
         BOOL enumerate_source_types)
 {
-    struct list new_branches = LIST_INIT(new_branches);
     struct topology_branch *branch, *next;
     HRESULT hr = S_OK;
 
@@ -558,9 +557,7 @@ static HRESULT topology_loader_resolve_branches(struct topoloader_context *conte
     {
         list_remove(&branch->entry);
 
-        if (FAILED(hr = topology_node_list_branches(branch->down.node, &new_branches)))
-            WARN("Failed to list branches from branch %s\n", debugstr_topology_branch(branch));
-        else if (FAILED(hr = topology_branch_clone_nodes(context, branch)))
+        if (FAILED(hr = topology_branch_clone_nodes(context, branch)))
             WARN("Failed to clone nodes for branch %s\n", debugstr_topology_branch(branch));
         else
         {
@@ -574,7 +571,6 @@ static HRESULT topology_loader_resolve_branches(struct topoloader_context *conte
             break;
     }
 
-    list_move_tail(branches, &new_branches);
     return hr;
 }
 
