@@ -17605,10 +17605,6 @@ msgid ""
 msgstr ""
 "終了シグナルが PID %1!u! のプロセス (PID %2!u! の子) に送られました。\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Wine tasklist"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "使い方: tasklist [/?]\n"

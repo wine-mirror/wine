@@ -17605,10 +17605,6 @@ msgid ""
 msgstr ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Wine tasklist"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "Usage: tasklist [/?]\n"

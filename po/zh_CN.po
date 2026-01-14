@@ -17352,10 +17352,6 @@ msgid ""
 "Sent termination signal to process with PID %1!u!, child of PID %2!u!.\n"
 msgstr "已向 PID %2!u! 的子进程、PID 为 %1!u! 的进程发送结束信号。\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Wine 任务列表"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "用法: tasklist [/?]\n"

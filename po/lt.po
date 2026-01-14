@@ -17629,10 +17629,6 @@ msgstr ""
 "Nusiųstas priverstinio nutraukimo signalas procesui su PID %1!u!, pavaldžiam "
 "PID %2!u!.\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "„Wine“ procesų sąrašas"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "Naudojimas: tasklist [/?]\n"

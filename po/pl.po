@@ -17682,10 +17682,6 @@ msgstr ""
 "Wysłano sygnał zatrzymania do procesu z PID-em %1!u!, PID procesu potomnego "
 "%2!u!.\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Lista zadań Wine"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "Użycie: tasklist [/?]\n"

@@ -17828,10 +17828,6 @@ msgstr ""
 "S'han enviat el senyal de terminació al procès amb PID %1!u!, fil del PID %2!"
 "u!.\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Llista de tasques del Wine"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "Ús: tasklist [/?]\n"

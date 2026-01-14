@@ -17593,10 +17593,6 @@ msgstr ""
 "Unvióse la señal pa que'l procesu col PID %1!u! (fíu del PID %2!u!) termine "
 "de forma automática.\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Llista de xeres de WIne"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "Usu: tasklist [/?]\n"

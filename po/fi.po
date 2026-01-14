@@ -17567,10 +17567,6 @@ msgstr ""
 "Lähetettiin lopetussignaali prosessille PID %1!u! (prosessin PID %2!u! "
 "lapsi).\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Winen tehtävälista"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "Käyttö: tasklist [/?]\n"

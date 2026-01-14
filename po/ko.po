@@ -17537,10 +17537,6 @@ msgid ""
 msgstr ""
 "PID %1!u!, 자식 프로세스 PID %2!u!인 프로세스에 종료 신호를 보냈습니다.\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Wine 작업 목록"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "사용법: tasklist [/?]\n"

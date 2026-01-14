@@ -17688,10 +17688,6 @@ msgid ""
 msgstr ""
 "Signaal verzonden om PID %1!u!, onderdeel van PID %2!u!, af te sluiten.\n"
 
-#: include/wine/wine_common_ver.rc:123
-msgid "Wine tasklist"
-msgstr "Wine takenlijst"
-
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
 msgstr "Gebruik: tasklist [/?]\n"
