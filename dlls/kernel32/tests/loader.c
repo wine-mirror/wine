@@ -58,7 +58,7 @@ static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG_PTR, S
 static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
 static NTSTATUS (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG *, ULONG_PTR *);
 static NTSTATUS (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
-static NTSTATUS (WINAPI *pLdrLoadDll)(LPCWSTR,DWORD,const UNICODE_STRING *,HMODULE*);
+static NTSTATUS (WINAPI *pLdrLoadDll)(LPCWSTR,DWORD *,const UNICODE_STRING *,HMODULE*);
 static NTSTATUS (WINAPI *pLdrUnloadDll)(HMODULE);
 static void (WINAPI *pRtlInitUnicodeString)(PUNICODE_STRING,LPCWSTR);
 static void (WINAPI *pRtlAcquirePebLock)(void);
@@ -2112,8 +2112,8 @@ static DWORD WINAPI tls_thread_fn(void* tlsidx_v)
 
 static void test_import_resolution(void)
 {
-    char temp_path[MAX_PATH];
-    char dll_name[MAX_PATH];
+    WCHAR temp_path[MAX_PATH];
+    WCHAR dll_name[MAX_PATH];
     DWORD dummy;
     void *expect, *tmp;
     char *str;
@@ -2122,6 +2122,7 @@ static void test_import_resolution(void)
     HMODULE mod, mod2;
     NTSTATUS status;
     LARGE_INTEGER offset;
+    UNICODE_STRING name;
     struct imports
     {
         IMAGE_IMPORT_DESCRIPTOR descr[2];
@@ -2177,7 +2178,7 @@ static void test_import_resolution(void)
     static const UCHAR entry_point_code[] = { 0x00 };
 #endif
 
-    for (test = 0; test < 7; test++)
+    for (test = 0; test < 8; test++)
     {
 #define DATA_RVA(ptr) (page_size + ((char *)(ptr) - (char *)&data))
 #ifdef _WIN64
@@ -2246,10 +2247,10 @@ static void test_import_resolution(void)
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = data.rel.reloc.SizeOfBlock;
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress = DATA_RVA(&data.rel);
 
-        GetTempPathA(MAX_PATH, temp_path);
-        GetTempFileNameA(temp_path, "ldr", 0, dll_name);
+        GetTempPathW(MAX_PATH, temp_path);
+        GetTempFileNameW(temp_path, L"ldr", 0, dll_name);
 
-        hfile = CreateFileA(dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+        hfile = CreateFileW(dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
         ok( hfile != INVALID_HANDLE_VALUE, "creation failed\n" );
 
         memset( &section, 0, sizeof(section) );
@@ -2273,7 +2274,7 @@ static void test_import_resolution(void)
         switch (test)
         {
         case 0:  /* normal load */
-            mod = LoadLibraryA( dll_name );
+            mod = LoadLibraryW( dll_name );
             ok( mod != NULL, "failed to load err %lu\n", GetLastError() );
             if (!mod) break;
             ptr = (struct imports *)((char *)mod + page_size);
@@ -2287,26 +2288,38 @@ static void test_import_resolution(void)
             check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod );
             break;
+        case 7:
         case 1:  /* load with DONT_RESOLVE_DLL_REFERENCES doesn't resolve imports */
-            mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
+            if (test == 7)
+            {
+                DWORD load_flags = LDR_DONT_RESOLVE_REFS;
+
+                pRtlInitUnicodeString( &name, dll_name );
+                status = pLdrLoadDll( NULL, &load_flags, &name, &mod );
+                ok( !status, "got %#lx.\n", status );
+            }
+            else
+            {
+                mod = LoadLibraryExW( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
+            }
             ok( mod != NULL, "failed to load err %lu\n", GetLastError() );
             if (!mod) break;
             ptr = (struct imports *)((char *)mod + page_size);
-            ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
+            todo_wine_if (test == 7) ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
-            ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+            todo_wine_if (test == 7) ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
 
-            mod2 = LoadLibraryA( dll_name );
+            mod2 = LoadLibraryW( dll_name );
             ok( mod2 == mod, "loaded twice %p / %p\n", mod, mod2 );
-            ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
+            todo_wine_if (test == 7) ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
-            ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+            todo_wine_if (test == 7) ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
             check_tls_index(mod, ptr->tls_index != 9999);
             FreeLibrary( mod2 );
             FreeLibrary( mod );
             break;
         case 2:  /* load without IMAGE_FILE_DLL doesn't resolve imports */
-            mod = LoadLibraryA( dll_name );
+            mod = LoadLibraryW( dll_name );
             ok( mod != NULL, "failed to load err %lu\n", GetLastError() );
             if (!mod) break;
             ptr = (struct imports *)((char *)mod + page_size);
@@ -2317,7 +2330,7 @@ static void test_import_resolution(void)
             FreeLibrary( mod );
             break;
         case 3:  /* load with tls init function */
-            mod = LoadLibraryA( dll_name );
+            mod = LoadLibraryW( dll_name );
             ok( mod != NULL, "failed to load err %lu\n", GetLastError() );
             if (!mod) break;
             ptr = (struct imports *)((char *)mod + page_size);
@@ -2345,7 +2358,7 @@ static void test_import_resolution(void)
         case 4:  /* map with ntdll */
         case 5:  /* map with ntdll, without IMAGE_FILE_DLL */
         case 6:  /* map with ntdll, without IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE */
-            hfile = CreateFileA(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+            hfile = CreateFileW(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
             ok( hfile != INVALID_HANDLE_VALUE, "CreateFile failed err %lu\n", GetLastError() );
             mapping = CreateFileMappingA( hfile, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0, NULL );
             CloseHandle( hfile );
@@ -2397,7 +2410,7 @@ static void test_import_resolution(void)
             if (tmp) VirtualFree( tmp, 0, MEM_RELEASE );
             break;
         }
-        DeleteFileA( dll_name );
+        DeleteFileW( dll_name );
         winetest_pop_context();
 #undef DATA_RVA
     }
