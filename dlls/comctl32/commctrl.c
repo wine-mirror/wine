@@ -104,7 +104,6 @@ classes[] =
     {L"ComboBoxEx32", COMBOEX_Register},
     {L"ComboLBox", COMBOLBOX_Register},
     {L"Edit", EDIT_Register},
-    {L"flatsb_class32", FLATSB_Register},
     {L"ListBox", LISTBOX_Register},
     {L"msctls_hotkey32", HOTKEY_Register},
     {L"msctls_progress32", PROGRESS_Register},
@@ -128,7 +127,6 @@ classes[] =
     {L"tooltips_class32", TOOLTIPS_Register},
 #else
     {L"ComboBoxEx32", COMBOEX_Register},
-    {L"flatsb_class32", FLATSB_Register},
     {L"msctls_hotkey32", HOTKEY_Register},
     {L"msctls_progress32", PROGRESS_Register},
     {L"msctls_statusbar32", STATUS_Register},

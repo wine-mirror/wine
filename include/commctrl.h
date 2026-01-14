@@ -643,17 +643,6 @@ typedef struct tagTRACKMOUSEEVENT {
 
 WINCOMMCTRLAPI BOOL WINAPI _TrackMouseEvent(LPTRACKMOUSEEVENT lpEventTrack);
 
-/* Flat Scrollbar control */
-
-#define FLATSB_CLASSA         "flatsb_class32"
-#if defined(_MSC_VER) || defined(__MINGW32__)
-# define FLATSB_CLASSW        L"flatsb_class32"
-#else
-static const WCHAR FLATSB_CLASSW[] = { 'f','l','a','t','s','b','_',
-  'c','l','a','s','s','3','2',0 };
-#endif
-#define FLATSB_CLASS          WINELIB_NAME_AW(FLATSB_CLASS)
-
 #define WSB_PROP_CYVSCROLL     __MSABI_LONG(0x00000001)
 #define WSB_PROP_CXHSCROLL     __MSABI_LONG(0x00000002)
 #define WSB_PROP_CYHSCROLL     __MSABI_LONG(0x00000004)

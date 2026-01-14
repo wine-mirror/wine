@@ -256,7 +256,6 @@ extern void STATIC_Register(void);
 extern void ANIMATE_Register(void);
 extern void COMBOEX_Register(void);
 extern void DATETIME_Register(void);
-extern void FLATSB_Register(void);
 extern void HEADER_Register(void);
 extern void HOTKEY_Register(void);
 extern void IPADDRESS_Register(void);
