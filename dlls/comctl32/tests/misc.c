@@ -404,12 +404,13 @@ static void check_class( const char *name, int must_exist, UINT style, UINT igno
         HWND hwnd;
         DWORD objid;
 
+        todo_wine_if(!strcmp(name, "flatsb_class32"))
         ok( must_exist, "System class %s should %sexist\n", name, must_exist ? "" : "NOT " );
 
         todo_wine_if(!strcmp(name, "ScrollBar") || (!strcmp(name, "tooltips_class32") && v6))
         ok( !(~wc.style & style & ~ignore), "System class %s is missing bits %x (%08x/%08x)\n",
             name, ~wc.style & style, wc.style, style );
-        todo_wine_if((!strcmp(name, "tooltips_class32") && v6) || !strcmp(name, "SysLink"))
+        todo_wine_if((!strcmp(name, "tooltips_class32") && v6) || !strcmp(name, "SysLink") || !strcmp(name, "flatsb_class32"))
         ok( !(wc.style & ~style), "System class %s has extra bits %x (%08x/%08x)\n",
             name, wc.style & ~style, wc.style, style );
         ok( !wc.hInstance, "System class %s has hInstance %p\n", name, wc.hInstance );
@@ -474,6 +475,7 @@ static void test_comctl32_classes(BOOL v6)
     check_class(WC_TREEVIEWA,        1, CS_DBLCLKS | CS_GLOBALCLASS, 0, FALSE, 0x10019, FALSE);
     check_class(UPDOWN_CLASSA,       1, CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS, 0, FALSE, 0x10016, FALSE);
     check_class("SysLink", v6, CS_GLOBALCLASS, 0, FALSE, 0, FALSE);
+    check_class("flatsb_class32", 0, 0, 0, FALSE, 0, FALSE);
 }
 
 struct wm_themechanged_test
