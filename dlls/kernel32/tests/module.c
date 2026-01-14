@@ -579,7 +579,7 @@ static void test_LoadLibraryEx_search_flags(void)
         mod = (void *)0xdeadbeef;
         status = pLdrLoadDll( (void *)(ULONG_PTR)(LOAD_LIBRARY_SEARCH_SYSTEM32 | 1), NULL, &name, &mod );
         ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
-        todo_wine ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
+        ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
 
         load_flags = LOAD_LIBRARY_SEARCH_SYSTEM32;
         mod = (void *)0xdeadbeef;
@@ -597,7 +597,7 @@ static void test_LoadLibraryEx_search_flags(void)
         mod = (void *)0xdeadbeef;
         status = pLdrLoadDll( load_path, NULL, &name, &mod );
         ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
-        todo_wine ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
+        ok( mod == (HMODULE)0xdeadbeef, "got %p.\n", mod );
         RtlReleasePath( load_path );
 
         mod = (void *)0xdeadbeef;
