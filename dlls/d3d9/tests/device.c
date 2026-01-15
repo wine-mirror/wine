@@ -13988,7 +13988,7 @@ static void test_resource_access(void)
         {
             if (!skip_ati2n_once)
             {
-                skip("ATI2N texture not supported.\n");
+                skip("ATI2N volume texture not supported.\n");
                 skip_ati2n_once = TRUE;
             }
             continue;
