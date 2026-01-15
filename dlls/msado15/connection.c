@@ -969,32 +969,44 @@ static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15
 
     TRACE("%p, %p, %p\n", connection, dso, session);
 
-    hr = IUnknown_QueryInterface( dso, &IID_IDBProperties, (void **)&props );
-    if (FAILED(hr)) return hr;
-    propset.guidPropertySet = DBPROPSET_DBINIT;
-    propset.cProperties = ARRAY_SIZE(prop);
-    propset.rgProperties = prop;
-    memset(prop, 0, sizeof(prop));
-    prop[0].dwPropertyID = DBPROP_INIT_TIMEOUT;
-    prop[0].dwOptions = DBPROPOPTIONS_OPTIONAL;
-    V_VT(&prop[0].vValue) = VT_I4;
-    V_I4(&prop[0].vValue) = connection->conn_timeout;
-    prop[1].dwPropertyID = DBPROP_INIT_OLEDBSERVICES;
-    prop[1].dwOptions = DBPROPOPTIONS_REQUIRED;
-    V_VT(&prop[1].vValue) = VT_I4;
-    V_I4(&prop[1].vValue) = DBPROPVAL_OS_ENABLEALL;
-    if (connection->location != adUseClient)
-        V_I4(&prop[1].vValue) &= ~DBPROPVAL_OS_CLIENTCURSOR;
-    hr = IDBProperties_SetProperties( props, 1, &propset );
-    IDBProperties_Release( props );
-    if (FAILED(hr)) FIXME("SetProperties failed: %lx\n", hr);
+    if (dso)
+    {
+        if (connection->dso) return E_ACCESSDENIED;
 
-    hr = IUnknown_QueryInterface( dso, &IID_IDBInitialize, (void **)&dbinit );
-    if (FAILED(hr)) return hr;
+        hr = IUnknown_QueryInterface( dso, &IID_IDBProperties, (void **)&props );
+        if (FAILED(hr)) return hr;
+        propset.guidPropertySet = DBPROPSET_DBINIT;
+        propset.cProperties = ARRAY_SIZE(prop);
+        propset.rgProperties = prop;
+        memset(prop, 0, sizeof(prop));
+        prop[0].dwPropertyID = DBPROP_INIT_TIMEOUT;
+        prop[0].dwOptions = DBPROPOPTIONS_OPTIONAL;
+        V_VT(&prop[0].vValue) = VT_I4;
+        V_I4(&prop[0].vValue) = connection->conn_timeout;
+        prop[1].dwPropertyID = DBPROP_INIT_OLEDBSERVICES;
+        prop[1].dwOptions = DBPROPOPTIONS_REQUIRED;
+        V_VT(&prop[1].vValue) = VT_I4;
+        V_I4(&prop[1].vValue) = DBPROPVAL_OS_ENABLEALL;
+        if (connection->location != adUseClient)
+            V_I4(&prop[1].vValue) &= ~DBPROPVAL_OS_CLIENTCURSOR;
+        hr = IDBProperties_SetProperties( props, 1, &propset );
+        IDBProperties_Release( props );
+        if (FAILED(hr)) FIXME("SetProperties failed: %lx\n", hr);
 
-    connection->dso = dbinit;
-    connection->session = session;
-    IUnknown_AddRef( session );
+        hr = IUnknown_QueryInterface( dso, &IID_IDBInitialize, (void **)&dbinit );
+        if (FAILED(hr)) return hr;
+
+        connection->dso = dbinit;
+    }
+
+    if (session)
+    {
+        if (connection->session)
+            IUnknown_Release(connection->session);
+        connection->session = session;
+        IUnknown_AddRef( session );
+    }
+
     connection->state = adStateOpen;
     return S_OK;
 }

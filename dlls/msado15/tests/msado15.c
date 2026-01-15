@@ -3574,6 +3574,13 @@ static void test_ADOConnectionConstruction(void)
 
     hr = _Connection_QueryInterface(conn, &IID_ADOConnectionConstruction15, (void **)&conn_constr);
     ok(hr == S_OK, "got %08lx\n", hr);
+
+    hr = ADOConnectionConstruction15_WrapDSOandSession(conn_constr, NULL, NULL);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    hr = _Connection_get_State(conn, &state);
+    ok(hr == S_OK, "got %08lx\n", hr);
+    ok(state == adStateOpen, "state = %ld\n", state);
+
     SET_EXPECT(open_rowset_QI_ISessionProperties);
     SET_EXPECT(open_rowset_QI_IBindResource);
     SET_EXPECT(open_rowset_QI_ICreateRow);
@@ -3587,6 +3594,7 @@ static void test_ADOConnectionConstruction(void)
     todo_wine CHECK_CALLED(open_rowset_QI_ICreateRow);
     todo_wine CHECK_CALLED(dbprops_GetProperties);
     CHECK_CALLED(dbprops_SetProperties);
+
     ADOConnectionConstruction15_Release(conn_constr);
 
     hr = _Connection_get_State(conn, &state);
