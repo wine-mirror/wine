@@ -1842,6 +1842,8 @@ static void init_networks( struct list_manager *mgr )
         struct connection *connection;
         NET_LUID luid;
 
+        if (!wcscmp( aa->FriendlyName, L"lo" )) continue;
+
         ConvertInterfaceIndexToLuid(aa->IfIndex, &luid);
         ConvertInterfaceLuidToGuid(&luid, &id);
 
