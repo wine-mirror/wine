@@ -476,6 +476,7 @@ static HRESULT WINAPI network_get_IsConnectedToInternet(
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
     *pbIsConnected = network->connected_to_internet_v4 | network->connected_to_internet_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -488,6 +489,7 @@ static HRESULT WINAPI network_get_IsConnected(
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
     *pbIsConnected = network->connected_v4 | network->connected_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -511,6 +513,7 @@ static HRESULT WINAPI network_GetConnectivity(
     else if (network->connected_v6)
         *pConnectivity |= NLM_CONNECTIVITY_IPV6_LOCALNETWORK;
 
+    TRACE( "<- %#x\n", *pConnectivity );
     return S_OK;
 }
 
@@ -1385,6 +1388,7 @@ static HRESULT WINAPI list_manager_GetConnectivity(
             *pConnectivity |= NLM_CONNECTIVITY_IPV6_LOCALNETWORK;
     }
 
+    TRACE( "<- %#x\n", *pConnectivity );
     return S_OK;
 }
 
@@ -1598,6 +1602,7 @@ static HRESULT WINAPI connection_get_IsConnectedToInternet(
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
     *pbIsConnected = connection->connected_to_internet_v4 | connection->connected_to_internet_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -1610,6 +1615,7 @@ static HRESULT WINAPI connection_get_IsConnected(
     TRACE( "%p, %p\n", iface, pbIsConnected );
 
     *pbIsConnected = connection->connected_v4 | connection->connected_v6;
+    TRACE( "<- %#x\n", *pbIsConnected );
     return S_OK;
 }
 
@@ -1633,6 +1639,7 @@ static HRESULT WINAPI connection_GetConnectivity(
     else if (connection->connected_v6)
         *pConnectivity |= NLM_CONNECTIVITY_IPV6_LOCALNETWORK;
 
+    TRACE( "<- %#x\n", *pConnectivity );
     return S_OK;
 }
 
