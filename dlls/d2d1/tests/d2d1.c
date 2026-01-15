@@ -17574,6 +17574,104 @@ static void test_path_geometry_stream(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_transformed_geometry(BOOL d3d11)
+{
+    ID2D1TransformedGeometry *geometry, *geometry2;
+    ID2D1PathGeometry *path_geometry;
+    struct d2d1_test_context ctx;
+    D2D1_MATRIX_3X2_F matrix;
+    ID2D1GeometrySink *sink;
+    D2D1_POINT_2F point;
+    D2D1_RECT_F bounds;
+    BOOL match;
+    float area;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    hr = ID2D1Factory_CreatePathGeometry(ctx.factory, &path_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Path geometry hasn't been populated yet. */
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 240.0f, 720.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(ctx.factory, (ID2D1Geometry *)path_geometry,
+            &matrix, &geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    translate_matrix(&matrix, 240.0f, 720.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(ctx.factory, (ID2D1Geometry *)geometry,
+            &matrix, &geometry2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_rect(&bounds, 1.0f, 2.0f, 3.0f, 4.0f);
+    hr = ID2D1TransformedGeometry_GetBounds(geometry, NULL, &bounds);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        match = compare_rect(&bounds, INFINITY, INFINITY, FLT_MAX, FLT_MAX, 0);
+        ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+                bounds.left, bounds.top, bounds.right, bounds.bottom);
+    }
+
+    set_rect(&bounds, 1.0f, 2.0f, 3.0f, 4.0f);
+    hr = ID2D1TransformedGeometry_GetBounds(geometry2, NULL, &bounds);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        match = compare_rect(&bounds, INFINITY, INFINITY, FLT_MAX, FLT_MAX, 0);
+        ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+                bounds.left, bounds.top, bounds.right, bounds.bottom);
+    }
+
+    set_rect(&bounds, 1.0f, 2.0f, 3.0f, 4.0f);
+    hr = ID2D1PathGeometry_GetBounds(path_geometry, NULL, &bounds);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    match = compare_rect(&bounds, 1.0f, 2.0f, 3.0f, 4.0f, 0);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            bounds.left, bounds.top, bounds.right, bounds.bottom);
+
+    area = 123.0f;
+    hr = ID2D1TransformedGeometry_ComputeArea(geometry, NULL, 1.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(area == 0.0f, "Unexpected value %.8e.\n", area);
+
+    area = 123.0f;
+    hr = ID2D1TransformedGeometry_ComputeArea(geometry2, NULL, 1.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(area == 0.0f, "Unexpected value %.8e.\n", area);
+
+    hr = ID2D1PathGeometry_Open(path_geometry, &sink);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    set_point(&point, 0.0f, 0.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    line_to(sink, 10.0f, 10.0f);
+    line_to(sink, 0.0f, 10.0f);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    area = 0.0f;
+    hr = ID2D1TransformedGeometry_ComputeArea(geometry, NULL, 0.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(area > 0.0f, "Unexpected value %.8e.\n", area);
+
+    area = 0.0f;
+    hr = ID2D1TransformedGeometry_ComputeArea(geometry2, NULL, 0.0f, &area);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(area > 0.0f, "Unexpected value %.8e.\n", area);
+
+    ID2D1TransformedGeometry_Release(geometry2);
+    ID2D1TransformedGeometry_Release(geometry);
+    ID2D1PathGeometry_Release(path_geometry);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -17695,6 +17793,7 @@ START_TEST(d2d1)
     queue_test(test_mesh);
     queue_test(test_geometry_realization);
     queue_d3d10_test(test_path_geometry_stream);
+    queue_d3d10_test(test_transformed_geometry);
 
     run_queued_tests();
 }
