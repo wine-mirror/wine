@@ -24,6 +24,7 @@
 #include "initguid.h"
 #include "ocidl.h"
 #include "objbase.h"
+#include "oledberr.h"
 #include "msdasc.h"
 #include "olectl.h"
 #include "msado15_backcompat.h"
@@ -964,6 +965,7 @@ static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15
     IDBInitialize *dbinit;
     IDBProperties *props;
     DBPROPSET propset;
+    BOOL err = FALSE;
     DBPROP prop[2];
     HRESULT hr;
 
@@ -991,7 +993,28 @@ static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15
             V_I4(&prop[1].vValue) &= ~DBPROPVAL_OS_CLIENTCURSOR;
         hr = IDBProperties_SetProperties( props, 1, &propset );
         IDBProperties_Release( props );
-        if (FAILED(hr)) FIXME("SetProperties failed: %lx\n", hr);
+        if (hr == DB_E_ERRORSOCCURRED || hr == DB_S_ERRORSOCCURRED)
+        {
+            DBPROPIDSET propidset;
+            DBPROPSET *propset;
+            DBPROPID id[1];
+            ULONG count;
+
+            err = TRUE;
+
+            propidset.rgPropertyIDs = id;
+            propidset.cPropertyIDs = ARRAY_SIZE(id);
+            propidset.guidPropertySet = DBPROPSET_DBINIT;
+            id[0] = DBPROP_INIT_TIMEOUT;
+            hr = IDBProperties_GetProperties( props, 1, &propidset, &count, &propset );
+            if (SUCCEEDED(hr))
+            {
+                connection->conn_timeout = V_I4( &propset[0].rgProperties[0].vValue );
+                CoTaskMemFree( propset[0].rgProperties );
+                CoTaskMemFree( propset );
+            }
+        }
+        else if (FAILED(hr)) return hr;
 
         hr = IUnknown_QueryInterface( dso, &IID_IDBInitialize, (void **)&dbinit );
         if (FAILED(hr)) return hr;
@@ -1008,7 +1031,7 @@ static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15
     }
 
     connection->state = adStateOpen;
-    return S_OK;
+    return err ? DB_S_ERRORSOCCURRED : S_OK;
 }
 
 struct ADOConnectionConstruction15Vtbl ado_construct_vtbl =
