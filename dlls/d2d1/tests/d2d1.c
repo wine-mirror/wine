@@ -7505,6 +7505,7 @@ static void test_stroke_style(BOOL d3d11)
     };
     D2D1_STROKE_STYLE_PROPERTIES desc;
     struct d2d1_test_context ctx;
+    ID2D1StrokeStyle1 *style1;
     ID2D1StrokeStyle *style;
     UINT32 count;
     HRESULT hr;
@@ -7627,6 +7628,29 @@ static void test_stroke_style(BOOL d3d11)
     ok(count == 0, "Unexpected dashes count %u.\n", count);
 
     ID2D1StrokeStyle_Release(style);
+
+    if (ctx.factory1)
+    {
+        D2D1_STROKE_TRANSFORM_TYPE transform_type;
+
+        hr = ID2D1Factory_CreateStrokeStyle(ctx.factory, &desc, NULL, 0, &style);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1StrokeStyle_QueryInterface(style, &IID_ID2D1StrokeStyle1, (void **)&style1);
+        todo_wine
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        transform_type = ID2D1StrokeStyle1_GetStrokeTransformType(style1);
+        ok(transform_type == D2D1_STROKE_TRANSFORM_TYPE_NORMAL, "Unexpected type %u.\n", transform_type);
+
+        ID2D1StrokeStyle1_Release(style1);
+     }
+        ID2D1StrokeStyle_Release(style);
+    }
+    else
+        win_skip("ID2D1StrokeStyle1 is not supported.\n");
 
     release_test_context(&ctx);
 }
