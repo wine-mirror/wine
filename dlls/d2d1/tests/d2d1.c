@@ -7637,16 +7637,12 @@ static void test_stroke_style(BOOL d3d11)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1StrokeStyle_QueryInterface(style, &IID_ID2D1StrokeStyle1, (void **)&style1);
-        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    if (hr == S_OK)
-    {
         transform_type = ID2D1StrokeStyle1_GetStrokeTransformType(style1);
         ok(transform_type == D2D1_STROKE_TRANSFORM_TYPE_NORMAL, "Unexpected type %u.\n", transform_type);
 
         ID2D1StrokeStyle1_Release(style1);
-     }
         ID2D1StrokeStyle_Release(style);
     }
     else
