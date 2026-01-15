@@ -868,6 +868,7 @@ static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS 
         return This->info->vtbl->value(This, lcid, flags, params, res, ei, caller);
 
     switch(flags) {
+    case DISPATCH_PROPERTYGET | DISPATCH_METHOD:
     case DISPATCH_PROPERTYGET:
         V_VT(res) = VT_BSTR;
         hres = dispex_to_string(This, &V_BSTR(res));

@@ -11745,9 +11745,7 @@ static void test_method_vs_getter(IHTMLDocument2 *doc)
 
     V_VT(&v) = VT_EMPTY;
     hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, LOCALE_NEUTRAL, DISPATCH_METHOD | DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
-    todo_wine_if(compat_mode < COMPAT_IE9)
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
-    todo_wine_if(compat_mode < COMPAT_IE9)
     ok(V_VT(&v) == VT_BSTR, "V_VT = %d\n", V_VT(&v));
     VariantClear(&v);
 
