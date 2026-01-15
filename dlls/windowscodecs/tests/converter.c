@@ -2373,7 +2373,6 @@ START_TEST(converter)
     test_conversion(&testdata_24bppRGB, &testdata_32bppBGR, "24bppRGB -> 32bppBGR", FALSE);
     test_conversion(&testdata_32bppBGRA, &testdata_24bppRGB, "32bppBGRA -> 24bppRGB", FALSE);
     test_conversion(&testdata_32bppRGBA, &testdata_24bppBGR, "32bppRGBA -> 24bppBGR", FALSE);
-    test_conversion(&testdata_32bppRGBA, &testdata_64bppRGBA_1, "32bppRGBA -> 64bppRGBA", FALSE);
 
     test_conversion(&testdata_32bppRGBA, &testdata_32bppBGRA, "32bppRGBA -> 32bppBGRA", FALSE);
     test_conversion(&testdata_32bppBGRA, &testdata_32bppRGBA, "32bppBGRA -> 32bppRGBA", FALSE);
@@ -2389,6 +2388,9 @@ START_TEST(converter)
     test_conversion(&testdata_32bppGrayFloat, &testdata_24bppBGR_gray, "32bppGrayFloat -> 24bppBGR gray", FALSE);
     test_conversion(&testdata_32bppGrayFloat, &testdata_8bppGray, "32bppGrayFloat -> 8bppGray", FALSE);
     test_conversion(&testdata_32bppBGRA, &testdata_16bppBGRA5551, "32bppBGRA -> 16bppBGRA5551", FALSE);
+
+    test_conversion(&testdata_24bppBGR, &testdata_64bppRGBA_1, "24bppBGR -> 64bppRGBA", FALSE);
+    test_conversion(&testdata_32bppRGBA, &testdata_64bppRGBA_1, "32bppRGBA -> 64bppRGBA", FALSE);
     test_conversion(&testdata_32bppBGRA, &testdata_64bppRGBA_1, "32bppBGRA -> 64bppRGBA", FALSE);
     test_conversion(&testdata_48bppRGB, &testdata_64bppRGBA_2, "48bppRGB -> 64bppRGBA", FALSE);
 
