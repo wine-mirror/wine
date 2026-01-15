@@ -1866,6 +1866,8 @@ static HRESULT WINAPI recordset_putref_ActiveConnection( _Recordset *iface, IDis
 static HRESULT WINAPI recordset_put_ActiveConnection( _Recordset *iface, VARIANT connection )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    ADOConnectionConstruction15 *construct;
+    IUnknown *session;
     _Connection *conn;
     LONG state;
     HRESULT hr;
@@ -1893,6 +1895,19 @@ static HRESULT WINAPI recordset_put_ActiveConnection( _Recordset *iface, VARIANT
         hr = _Connection_get_State( conn, &state );
         if (SUCCEEDED(hr) && state != adStateOpen)
             hr = MAKE_ADO_HRESULT( adErrInvalidConnection );
+        if (SUCCEEDED(hr))
+            hr = _Connection_QueryInterface(conn, &IID_ADOConnectionConstruction15, (void**)&construct);
+        if (SUCCEEDED(hr))
+        {
+            hr = ADOConnectionConstruction15_get_Session(construct, &session);
+            ADOConnectionConstruction15_Release(construct);
+        }
+        if (SUCCEEDED(hr))
+        {
+            if (!session) hr = MAKE_ADO_HRESULT( adErrInvalidConnection );
+            else IUnknown_Release(session);
+        }
+
         if (FAILED(hr))
         {
             _Connection_Release( conn );
