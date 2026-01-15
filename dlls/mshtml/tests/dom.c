@@ -11731,6 +11731,85 @@ static void test_case_insens(IHTMLDocument2 *doc)
     IDispatchEx_Release(dispex);
 }
 
+static void test_method_vs_getter(IHTMLDocument2 *doc)
+{
+    DISPPARAMS dp = { 0 };
+    IDispatchEx *dispex;
+    DISPID dispid;
+    HRESULT hres;
+    VARIANT v;
+    BSTR bstr;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, LOCALE_NEUTRAL, DISPATCH_METHOD | DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    todo_wine_if(compat_mode < COMPAT_IE9)
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    todo_wine_if(compat_mode < COMPAT_IE9)
+    ok(V_VT(&v) == VT_BSTR, "V_VT = %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    bstr = SysAllocString(L"body");
+    hres = IDispatchEx_GetDispID(dispex, bstr, 0, &dispid);
+    ok(hres == S_OK, "GetDispID returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_NEUTRAL, DISPATCH_METHOD | DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH == NULL\n");
+    VariantClear(&v);
+
+    bstr = SysAllocString(L"title");
+    hres = IDispatchEx_GetDispID(dispex, bstr, 0, &dispid);
+    ok(hres == S_OK, "GetDispID returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_NEUTRAL, DISPATCH_METHOD | DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT = %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    bstr = SysAllocString(L"close");
+    hres = IDispatchEx_GetDispID(dispex, bstr, 0, &dispid);
+    ok(hres == S_OK, "GetDispID returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_NEUTRAL, DISPATCH_METHOD | DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    if(compat_mode < COMPAT_IE9)
+        ok(V_VT(&v) == VT_EMPTY, "V_VT = %d\n", V_VT(&v));
+    else {
+        ok(V_VT(&v) == VT_DISPATCH, "V_VT = %d\n", V_VT(&v));
+        ok(V_DISPATCH(&v) != NULL, "V_DISPATCH == NULL\n");
+    }
+    VariantClear(&v);
+
+    hres = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH == NULL\n");
+    IDispatchEx_Release(dispex);
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+    VariantClear(&v);
+
+    hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, LOCALE_NEUTRAL, DISPATCH_METHOD | DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    if(compat_mode < COMPAT_IE9)
+        todo_wine
+        ok(hres == E_ACCESSDENIED, "InvokeEx returned: %08lx\n", hres);
+    else {
+        ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+        ok(V_VT(&v) == VT_BSTR, "V_VT = %d\n", V_VT(&v));
+    }
+    VariantClear(&v);
+
+    IDispatchEx_Release(dispex);
+}
+
 static void test_null_write(IHTMLDocument2 *doc)
 {
     HRESULT hres;
@@ -13842,9 +13921,11 @@ START_TEST(dom)
     run_domtest(doc_blank_ie8, test_quirks_mode_perf_toJSON);
     run_domtest(doctype_str, test_doctype);
     run_domtest(case_insens_str, test_case_insens);
+    run_domtest(doc_blank, test_method_vs_getter);
     if(is_ie9plus) {
         compat_mode = COMPAT_IE9;
         run_domtest(emptydiv_ie9_str, test_docfrag);
+        run_domtest(doc_blank_ie9, test_method_vs_getter);
         compat_mode = COMPAT_NONE;
     }
 
