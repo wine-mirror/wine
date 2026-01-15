@@ -3343,7 +3343,9 @@ static HRESULT set_folder_attributes(void)
         { &CLSID_RecycleBin, FALSE, FALSE, FALSE,
           SFGAO_FOLDER|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET },
         { &CLSID_ControlPanel, FALSE, TRUE, TRUE,
-          SFGAO_FOLDER|SFGAO_HASSUBFOLDER }
+          SFGAO_FOLDER|SFGAO_HASSUBFOLDER },
+        { &CLSID_Printers, FALSE, FALSE, FALSE,
+          SFGAO_FOLDER|SFGAO_CANLINK }
     };
 
     unsigned int i;
