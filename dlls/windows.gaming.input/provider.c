@@ -565,7 +565,7 @@ failed:
     CloseHandle( device );
 }
 
-static const DIOBJECTDATAFORMAT data_format_objs[] =
+static const DIOBJECTDATAFORMAT data_format_xusb_objs[] =
 {
     {NULL,DIJOFS_X,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
     {NULL,DIJOFS_Y,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
@@ -573,6 +573,43 @@ static const DIOBJECTDATAFORMAT data_format_objs[] =
     {NULL,DIJOFS_RX,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
     {NULL,DIJOFS_RY,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
     {NULL,DIJOFS_RZ,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_POV(0),DIDFT_OPTIONAL|DIDFT_POV|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(0),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(1),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(2),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(3),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(4),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(5),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(6),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(7),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(8),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(9),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(10),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(11),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(12),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(13),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(14),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+    {NULL,DIJOFS_BUTTON(15),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
+};
+
+static const DIDATAFORMAT data_format_xusb =
+{
+    sizeof(DIDATAFORMAT),
+    sizeof(DIOBJECTDATAFORMAT),
+    DIDF_ABSAXIS,
+    sizeof(DIJOYSTATE2),
+    ARRAY_SIZE(data_format_xusb_objs),
+    (LPDIOBJECTDATAFORMAT)data_format_xusb_objs
+};
+
+static const DIOBJECTDATAFORMAT data_format_hid_objs[] =
+{
+    {&GUID_XAxis,DIJOFS_X,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
+    {&GUID_YAxis,DIJOFS_Y,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
+    {&GUID_ZAxis,DIJOFS_Z,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
+    {&GUID_RxAxis,DIJOFS_RX,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
+    {&GUID_RyAxis,DIJOFS_RY,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
+    {&GUID_RzAxis,DIJOFS_RZ,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
     {NULL,DIJOFS_SLIDER(0),DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
     {NULL,DIJOFS_SLIDER(1),DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE},
     {NULL,DIJOFS_POV(0),DIDFT_OPTIONAL|DIDFT_POV|DIDFT_ANYINSTANCE},
@@ -709,14 +746,14 @@ static const DIOBJECTDATAFORMAT data_format_objs[] =
     {NULL,DIJOFS_BUTTON(127),DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_ANYINSTANCE},
 };
 
-static const DIDATAFORMAT data_format =
+static const DIDATAFORMAT data_format_hid =
 {
     sizeof(DIDATAFORMAT),
     sizeof(DIOBJECTDATAFORMAT),
     DIDF_ABSAXIS,
     sizeof(DIJOYSTATE2),
-    ARRAY_SIZE(data_format_objs),
-    (LPDIOBJECTDATAFORMAT)data_format_objs
+    ARRAY_SIZE(data_format_hid_objs),
+    (LPDIOBJECTDATAFORMAT)data_format_hid_objs
 };
 
 void provider_create( const WCHAR *device_path )
@@ -725,6 +762,7 @@ void provider_create( const WCHAR *device_path )
     IGameControllerProvider *provider;
     struct provider *impl, *entry;
     GUID guid = device_path_guid;
+    const DIDATAFORMAT *format;
     IDirectInput8W *dinput;
     BOOL found = FALSE;
     const WCHAR *tmp;
@@ -732,6 +770,8 @@ void provider_create( const WCHAR *device_path )
 
     if (wcsnicmp( device_path, L"\\\\?\\HID#", 8 )) return;
     if ((tmp = wcschr( device_path + 8, '#' )) && !wcsnicmp( tmp - 6, L"&IG_", 4 )) return;
+    if (tmp && !wcsnicmp( tmp - 6, L"&XI_", 4 )) format = &data_format_xusb;
+    else format = &data_format_hid;
 
     TRACE( "device_path %s\n", debugstr_w( device_path ) );
 
@@ -743,7 +783,7 @@ void provider_create( const WCHAR *device_path )
     if (FAILED(hr)) return;
 
     if (FAILED(hr = IDirectInputDevice8_SetCooperativeLevel( dinput_device, 0, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE ))) goto done;
-    if (FAILED(hr = IDirectInputDevice8_SetDataFormat( dinput_device, &data_format ))) goto done;
+    if (FAILED(hr = IDirectInputDevice8_SetDataFormat( dinput_device, format ))) goto done;
     if (FAILED(hr = IDirectInputDevice8_Acquire( dinput_device ))) goto done;
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) goto done;
