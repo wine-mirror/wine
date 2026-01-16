@@ -9513,6 +9513,30 @@ static DWORD get_cblc_formats(IDWriteFontFace4 *fontface)
     return ret;
 }
 
+static DWORD get_colr_formats(IDWriteFontFace4 *fontface)
+{
+    DWORD ret = DWRITE_GLYPH_IMAGE_FORMATS_COLR;
+    struct dwrite_fonttable colr;
+    BOOL exists = FALSE;
+    WORD version;
+    HRESULT hr;
+
+    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_COLR_TAG, (const void **)&colr.data, &colr.size, &colr.context, &exists);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!exists, "Expected COLR table.\n");
+
+    if (!exists)
+        return 0;
+
+    version = table_read_be_word(&colr, NULL, 0);
+    if (version == 1)
+        ret |= DWRITE_GLYPH_IMAGE_FORMATS_COLR_PAINT_TREE;
+
+    IDWriteFontFace4_ReleaseFontTable(fontface, colr.context);
+
+    return ret;
+}
+
 static DWORD get_face_glyph_image_formats(IDWriteFontFace4 *fontface)
 {
     DWORD ret = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
@@ -9525,7 +9549,7 @@ static DWORD get_face_glyph_image_formats(IDWriteFontFace4 *fontface)
         ret |= DWRITE_GLYPH_IMAGE_FORMATS_CFF;
 
     if (face_has_table(fontface, MS_COLR_TAG))
-        ret |= DWRITE_GLYPH_IMAGE_FORMATS_COLR;
+        ret |= get_colr_formats(fontface);
 
     if (face_has_table(fontface, MS_SVG__TAG))
         ret |= DWRITE_GLYPH_IMAGE_FORMATS_SVG;
