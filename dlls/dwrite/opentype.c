@@ -2067,7 +2067,7 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
     }
 
     if (metrics->underlineThickness == 0)
-        metrics->underlineThickness = metrics->designUnitsPerEm / 14;
+        metrics->underlineThickness = (metrics->designUnitsPerEm + 7) / 14;
     if (metrics->strikethroughThickness == 0)
         metrics->strikethroughThickness = metrics->underlineThickness;
 
