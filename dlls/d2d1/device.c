@@ -1350,26 +1350,22 @@ static D2D1_ANTIALIAS_MODE d2d_device_context_set_aa_mode_from_text_aa_mode(stru
     return prev_antialias_mode;
 }
 
-static void d2d_device_context_draw_glyph_run_outline(struct d2d_device_context *render_target,
-        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush)
+static HRESULT d2d_device_context_get_glyph_run_geometry(struct d2d_device_context *context,
+        const DWRITE_GLYPH_RUN *glyph_run, ID2D1PathGeometry **result)
 {
-    D2D1_MATRIX_3X2_F *transform, prev_transform;
-    D2D1_ANTIALIAS_MODE prev_antialias_mode;
     ID2D1PathGeometry *geometry;
     ID2D1GeometrySink *sink;
     HRESULT hr;
 
-    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(render_target->factory, &geometry)))
-    {
-        ERR("Failed to create geometry, hr %#lx.\n", hr);
-        return;
-    }
+    *result = NULL;
+
+    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(context->factory, &geometry)))
+        return hr;
 
     if (FAILED(hr = ID2D1PathGeometry_Open(geometry, &sink)))
     {
-        ERR("Failed to open geometry sink, hr %#lx.\n", hr);
         ID2D1PathGeometry_Release(geometry);
-        return;
+        return hr;
     }
 
     if (FAILED(hr = IDWriteFontFace_GetGlyphRunOutline(glyph_run->fontFace, glyph_run->fontEmSize,
@@ -1379,24 +1375,100 @@ static void d2d_device_context_draw_glyph_run_outline(struct d2d_device_context 
         ERR("Failed to get glyph run outline, hr %#lx.\n", hr);
         ID2D1GeometrySink_Release(sink);
         ID2D1PathGeometry_Release(geometry);
-        return;
+        return hr;
     }
 
     if (FAILED(hr = ID2D1GeometrySink_Close(sink)))
         ERR("Failed to close geometry sink, hr %#lx.\n", hr);
     ID2D1GeometrySink_Release(sink);
 
-    transform = &render_target->drawing_state.transform;
+    if (hr == S_OK)
+        *result = geometry;
+    else
+        ID2D1PathGeometry_Release(geometry);
+
+    return hr;
+}
+
+static void d2d_device_context_draw_glyph_run_outline(struct d2d_device_context *context,
+        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush)
+{
+    D2D1_MATRIX_3X2_F *transform, prev_transform;
+    D2D1_ANTIALIAS_MODE prev_antialias_mode;
+    ID2D1PathGeometry *geometry;
+    HRESULT hr;
+
+    if (FAILED(hr = d2d_device_context_get_glyph_run_geometry(context, glyph_run, &geometry)))
+    {
+        ERR("Failed to create geometry, hr %#lx.\n", hr);
+        return;
+    }
+
+    transform = &context->drawing_state.transform;
     prev_transform = *transform;
     transform->_31 += baseline_origin.x * transform->_11 + baseline_origin.y * transform->_21;
     transform->_32 += baseline_origin.x * transform->_12 + baseline_origin.y * transform->_22;
-    prev_antialias_mode = d2d_device_context_set_aa_mode_from_text_aa_mode(render_target);
-    d2d_device_context_fill_geometry(render_target, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
+    prev_antialias_mode = d2d_device_context_set_aa_mode_from_text_aa_mode(context);
+    d2d_device_context_fill_geometry(context, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
             unsafe_impl_from_ID2D1Brush(brush), NULL);
-    render_target->drawing_state.antialiasMode = prev_antialias_mode;
+    context->drawing_state.antialiasMode = prev_antialias_mode;
     *transform = prev_transform;
 
     ID2D1PathGeometry_Release(geometry);
+}
+
+static HRESULT d2d_device_context_get_glyph_run_analysis(struct d2d_device_context *context,
+        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
+        DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode,
+        DWRITE_TEXT_ANTIALIAS_MODE antialias_mode, DWRITE_TEXTURE_TYPE *texture_type,
+        IDWriteGlyphRunAnalysis **result)
+{
+    IDWriteGlyphRunAnalysis *analysis;
+    IDWriteFactory2 *dwrite_factory;
+    D2D1_MATRIX_3X2_F *transform;
+    float scale_x, scale_y;
+    DWRITE_MATRIX m;
+    HRESULT hr;
+
+    *result = NULL;
+
+    if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory2,
+            (IUnknown **)&dwrite_factory)))
+    {
+        ERR("Failed to create dwrite factory, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    transform = &context->drawing_state.transform;
+
+    scale_x = context->desc.dpiX / 96.0f;
+    m.m11 = transform->_11 * scale_x;
+    m.m21 = transform->_21 * scale_x;
+    m.dx  = transform->_31 * scale_x;
+
+    scale_y = context->desc.dpiY / 96.0f;
+    m.m12 = transform->_12 * scale_y;
+    m.m22 = transform->_22 * scale_y;
+    m.dy  = transform->_32 * scale_y;
+
+    hr = IDWriteFactory2_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, &m, rendering_mode,
+            measuring_mode, DWRITE_GRID_FIT_MODE_DEFAULT, antialias_mode, baseline_origin.x,
+            baseline_origin.y, &analysis);
+    IDWriteFactory2_Release(dwrite_factory);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create glyph run analysis, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED || antialias_mode == DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE)
+        *texture_type = DWRITE_TEXTURE_ALIASED_1x1;
+    else
+        *texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
+
+    *result = analysis;
+
+    return S_OK;
 }
 
 static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *context,
@@ -1411,7 +1483,6 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
     IDWriteGlyphRunAnalysis *analysis;
     DWRITE_TEXTURE_TYPE texture_type;
     D2D1_BRUSH_PROPERTIES brush_desc;
-    IDWriteFactory2 *dwrite_factory;
     D2D1_MATRIX_3X2_F *transform, m;
     void *opacity_values = NULL;
     size_t opacity_values_size;
@@ -1421,39 +1492,13 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
     RECT bounds;
     HRESULT hr;
 
-    if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
-            &IID_IDWriteFactory2, (IUnknown **)&dwrite_factory)))
-    {
-        ERR("Failed to create dwrite factory, hr %#lx.\n", hr);
-        return;
-    }
-
-    transform = &context->drawing_state.transform;
-
-    scale_x = context->desc.dpiX / 96.0f;
-    m._11 = transform->_11 * scale_x;
-    m._21 = transform->_21 * scale_x;
-    m._31 = transform->_31 * scale_x;
-
-    scale_y = context->desc.dpiY / 96.0f;
-    m._12 = transform->_12 * scale_y;
-    m._22 = transform->_22 * scale_y;
-    m._32 = transform->_32 * scale_y;
-
-    hr = IDWriteFactory2_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, (DWRITE_MATRIX *)&m,
-            rendering_mode, measuring_mode, DWRITE_GRID_FIT_MODE_DEFAULT, antialias_mode,
-            baseline_origin.x, baseline_origin.y, &analysis);
-    IDWriteFactory2_Release(dwrite_factory);
+    hr = d2d_device_context_get_glyph_run_analysis(context, baseline_origin, glyph_run,
+            rendering_mode, measuring_mode, antialias_mode, &texture_type, &analysis);
     if (FAILED(hr))
     {
         ERR("Failed to create glyph run analysis, hr %#lx.\n", hr);
         return;
     }
-
-    if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED || antialias_mode == DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE)
-        texture_type = DWRITE_TEXTURE_ALIASED_1x1;
-    else
-        texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
 
     if (FAILED(hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, texture_type, &bounds)))
     {
@@ -1497,6 +1542,8 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
         goto done;
     }
 
+    scale_x = context->desc.dpiX / 96.0f;
+    scale_y = context->desc.dpiY / 96.0f;
     d2d_rect_set(&run_rect, bounds.left / scale_x, bounds.top / scale_y,
             bounds.right / scale_x, bounds.bottom / scale_y);
 
@@ -1520,6 +1567,7 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
         goto done;
     }
 
+    transform = &context->drawing_state.transform;
     m = *transform;
     *transform = identity;
     d2d_device_context_fill_geometry(context, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
@@ -1537,12 +1585,87 @@ done:
     IDWriteGlyphRunAnalysis_Release(analysis);
 }
 
+static HRESULT d2d_device_context_get_text_rendering_mode(struct d2d_device_context *context,
+        const DWRITE_GLYPH_RUN *glyph_run, DWRITE_MEASURING_MODE measuring_mode,
+        DWRITE_TEXT_ANTIALIAS_MODE *antialias_mode, DWRITE_RENDERING_MODE *rendering_mode)
+{
+    IDWriteRenderingParams *rendering_params;
+    HRESULT hr = S_OK;
+
+    rendering_params = context->text_rendering_params ? context->text_rendering_params
+            : context->default_text_rendering_params;
+
+    *antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE;
+    *rendering_mode = IDWriteRenderingParams_GetRenderingMode(rendering_params);
+
+    switch (context->drawing_state.textAntialiasMode)
+    {
+        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
+            if (*rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL
+                    || *rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC
+                    || *rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL
+                    || *rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC)
+            {
+                return E_INVALIDARG;
+            }
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
+            if (*rendering_mode == DWRITE_RENDERING_MODE_ALIASED
+                    || *rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
+            {
+                return E_INVALIDARG;
+            }
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE:
+            if (*rendering_mode == DWRITE_RENDERING_MODE_ALIASED)
+                return E_INVALIDARG;
+            break;
+
+        default:
+            break;
+    }
+
+    *rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
+    switch (context->drawing_state.textAntialiasMode)
+    {
+        case D2D1_TEXT_ANTIALIAS_MODE_DEFAULT:
+            if (IDWriteRenderingParams_GetClearTypeLevel(rendering_params) > 0.0f)
+                *antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
+            *antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
+            break;
+
+        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
+            *rendering_mode = DWRITE_RENDERING_MODE_ALIASED;
+            break;
+
+        default:
+            break;
+    }
+
+    if (*rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
+    {
+        if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
+                max(context->desc.dpiX, context->desc.dpiY) / 96.0f,
+                measuring_mode, rendering_params, rendering_mode)))
+        {
+            ERR("Failed to get recommended rendering mode, hr %#lx.\n", hr);
+            *rendering_mode = DWRITE_RENDERING_MODE_OUTLINE;
+        }
+    }
+
+    return hr;
+}
+
 static void d2d_device_context_draw_glyph_run(struct d2d_device_context *context,
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
         const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc, ID2D1Brush *brush, DWRITE_MEASURING_MODE measuring_mode)
 {
-    DWRITE_TEXT_ANTIALIAS_MODE antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE;
-    IDWriteRenderingParams *rendering_params;
+    DWRITE_TEXT_ANTIALIAS_MODE antialias_mode;
     DWRITE_RENDERING_MODE rendering_mode;
     HRESULT hr;
 
@@ -1562,68 +1685,11 @@ static void d2d_device_context_draw_glyph_run(struct d2d_device_context *context
         return;
     }
 
-    rendering_params = context->text_rendering_params ? context->text_rendering_params
-            : context->default_text_rendering_params;
-
-    rendering_mode = IDWriteRenderingParams_GetRenderingMode(rendering_params);
-
-    switch (context->drawing_state.textAntialiasMode)
+    if (FAILED(hr = d2d_device_context_get_text_rendering_mode(context, glyph_run, measuring_mode,
+            &antialias_mode, &rendering_mode)))
     {
-        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
-            if (rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL
-                    || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC
-                    || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL
-                    || rendering_mode == DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC)
-                d2d_device_context_set_error(context, E_INVALIDARG);
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
-            if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED
-                    || rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
-                d2d_device_context_set_error(context, E_INVALIDARG);
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE:
-            if (rendering_mode == DWRITE_RENDERING_MODE_ALIASED)
-                d2d_device_context_set_error(context, E_INVALIDARG);
-            break;
-
-        default:
-            break;
-    }
-
-    if (FAILED(context->error.code))
+        d2d_device_context_set_error(context, hr);
         return;
-
-    rendering_mode = DWRITE_RENDERING_MODE_DEFAULT;
-    switch (context->drawing_state.textAntialiasMode)
-    {
-        case D2D1_TEXT_ANTIALIAS_MODE_DEFAULT:
-            if (IDWriteRenderingParams_GetClearTypeLevel(rendering_params) > 0.0f)
-                antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE:
-            antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
-            break;
-
-        case D2D1_TEXT_ANTIALIAS_MODE_ALIASED:
-            rendering_mode = DWRITE_RENDERING_MODE_ALIASED;
-            break;
-
-        default:
-            break;
-    }
-
-    if (rendering_mode == DWRITE_RENDERING_MODE_DEFAULT)
-    {
-        if (FAILED(hr = IDWriteFontFace_GetRecommendedRenderingMode(glyph_run->fontFace, glyph_run->fontEmSize,
-                max(context->desc.dpiX, context->desc.dpiY) / 96.0f,
-                measuring_mode, rendering_params, &rendering_mode)))
-        {
-            ERR("Failed to get recommended rendering mode, hr %#lx.\n", hr);
-            rendering_mode = DWRITE_RENDERING_MODE_OUTLINE;
-        }
     }
 
     if (rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
@@ -2409,10 +2475,57 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_GetGlyphRunWorldBounds(ID2D1
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
         DWRITE_MEASURING_MODE measuring_mode, D2D1_RECT_F *bounds)
 {
-    FIXME("iface %p, baseline_origin %s, glyph_run %p, measuring_mode %#x, bounds %p stub!\n",
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    DWRITE_TEXT_ANTIALIAS_MODE antialias_mode;
+    DWRITE_RENDERING_MODE rendering_mode;
+    IDWriteGlyphRunAnalysis *analysis;
+    DWRITE_TEXTURE_TYPE texture_type;
+    ID2D1PathGeometry *geometry;
+    D2D1_MATRIX_3X2_F transform;
+    float scale_x, scale_y;
+    HRESULT hr;
+    RECT rect;
+
+    TRACE("iface %p, baseline_origin %s, glyph_run %p, measuring_mode %#x, bounds %p.\n",
             iface, debug_d2d_point_2f(&baseline_origin), glyph_run, measuring_mode, bounds);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = d2d_device_context_get_text_rendering_mode(context, glyph_run, measuring_mode,
+            &antialias_mode, &rendering_mode)))
+    {
+        return hr;
+    }
+
+    if (rendering_mode == DWRITE_RENDERING_MODE_OUTLINE)
+    {
+        if (FAILED(hr = d2d_device_context_get_glyph_run_geometry(context, glyph_run, &geometry)))
+            return hr;
+
+        transform = context->drawing_state.transform;
+        transform._31 += baseline_origin.x * transform._11 + baseline_origin.y * transform._21;
+        transform._32 += baseline_origin.x * transform._12 + baseline_origin.y * transform._22;
+        hr = ID2D1PathGeometry_GetBounds(geometry, &transform, bounds);
+        ID2D1PathGeometry_Release(geometry);
+    }
+    else
+    {
+        if (FAILED(hr = d2d_device_context_get_glyph_run_analysis(context, baseline_origin,
+                glyph_run, rendering_mode, measuring_mode, antialias_mode, &texture_type, &analysis)))
+        {
+            return hr;
+        }
+
+        if (SUCCEEDED(hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, texture_type, &rect)))
+        {
+            scale_x = context->desc.dpiX / 96.0f;
+            scale_y = context->desc.dpiY / 96.0f;
+            d2d_rect_set(bounds, rect.left / scale_x, rect.top / scale_y,
+                    rect.right / scale_x, rect.bottom / scale_y);
+        }
+
+        IDWriteGlyphRunAnalysis_Release(analysis);
+    }
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_GetDevice(ID2D1DeviceContext6 *iface, ID2D1Device **device)

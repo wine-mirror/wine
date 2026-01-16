@@ -17672,6 +17672,127 @@ static void test_transformed_geometry(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static IDWriteFontFace *get_tahoma(IDWriteFactory *factory)
+{
+    IDWriteFontCollection *collection;
+    IDWriteFontFace *fontface = NULL;
+    IDWriteFontFamily *family;
+    IDWriteFont *font;
+    UINT32 index;
+    BOOL exists;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    index = ~0;
+    exists = FALSE;
+    hr = IDWriteFontCollection_FindFamilyName(collection, L"Tahoma", &index, &exists);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (!exists) goto not_found;
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, &font);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IDWriteFont_Release(font);
+
+    IDWriteFontFamily_Release(family);
+not_found:
+    IDWriteFontCollection_Release(collection);
+    return fontface;
+}
+
+static void test_glyph_run_world_bounds(BOOL d3d11)
+{
+    ID2D1DeviceContext *device_context, *device_context2;
+    IDWriteFactory *dwrite_factory;
+    struct d2d1_test_context ctx;
+    D2D1_RECT_F bounds, bounds2;
+    DWRITE_GLYPH_RUN glyph_run;
+    IDWriteFontFace *fontface;
+    D2D1_MATRIX_3X2_F matrix;
+    D2D1_POINT_2F origin;
+    ID2D1Device *device;
+    UINT16 indices[1];
+    HRESULT hr;
+    UINT32 ch;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    device_context = ctx.context;
+
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown **)&dwrite_factory);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    fontface = get_tahoma(dwrite_factory);
+
+    ch = 'A';
+    *indices = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, &ch, 1, indices);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!!*indices, "Unexpected index %u.\n", indices[0]);
+
+    glyph_run.fontFace = fontface;
+    glyph_run.fontEmSize = 360.0f;
+    glyph_run.glyphCount = 1;
+    glyph_run.glyphIndices = indices;
+    glyph_run.glyphAdvances = NULL;
+    glyph_run.glyphOffsets = NULL;
+    glyph_run.isSideways = FALSE;
+    glyph_run.bidiLevel = 0;
+
+    set_point(&origin, 0.0f, 0.0f);
+    hr = ID2D1DeviceContext_GetGlyphRunWorldBounds(device_context, origin, &glyph_run,
+            DWRITE_MEASURING_MODE_NATURAL, &bounds);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_point(&origin, -1.0f, 2.0f);
+    hr = ID2D1DeviceContext_GetGlyphRunWorldBounds(device_context, origin, &glyph_run,
+            DWRITE_MEASURING_MODE_NATURAL, &bounds2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(bounds2.left == bounds.left + origin.x, "Unexpected bound %.8e.\n", bounds2.left);
+    ok(bounds2.top == bounds.top + origin.y, "Unexpected bound %.8e %.8e.\n", bounds2.top, bounds.top);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 2.0f, -1.0f);
+    ID2D1DeviceContext_SetTransform(device_context, &matrix);
+
+    set_point(&origin, 0.0f, 0.0f);
+    hr = ID2D1DeviceContext_GetGlyphRunWorldBounds(device_context, origin, &glyph_run,
+            DWRITE_MEASURING_MODE_NATURAL, &bounds2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(bounds2.left == bounds.left + matrix._31, "Unexpected bound %.8e.\n", bounds2.left);
+    ok(bounds2.top == bounds.top + matrix._32, "Unexpected bound %.8e.\n", bounds2.top);
+
+    /* Without a target */
+    ID2D1DeviceContext_GetDevice(device_context, &device);
+
+    hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_point(&origin, 0.0f, 0.0f);
+    hr = ID2D1DeviceContext_GetGlyphRunWorldBounds(device_context, origin, &glyph_run,
+            DWRITE_MEASURING_MODE_NATURAL, &bounds);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!memcmp(&bounds2, &bounds, sizeof(bounds)), "Unexpected bounds.\n");
+
+    ID2D1DeviceContext_Release(device_context2);
+
+    ID2D1Device_Release(device);
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteFactory_Release(dwrite_factory);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -17794,6 +17915,7 @@ START_TEST(d2d1)
     queue_test(test_geometry_realization);
     queue_d3d10_test(test_path_geometry_stream);
     queue_d3d10_test(test_transformed_geometry);
+    queue_d3d10_test(test_glyph_run_world_bounds);
 
     run_queued_tests();
 }
