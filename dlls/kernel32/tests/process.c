@@ -1120,6 +1120,21 @@ static void test_CommandLine(void)
     ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
+    strcpy(buffer2, "\" notepad.exe\"" );
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
+    strcpy(buffer2, "\"\tnotepad.exe\"" );
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
+    strcpy(buffer2, "\"notepad\t\"" );
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
 
     strcpy(buffer, "doesnotexist.exe");
     strcpy(buffer2, "does not exist.exe");
@@ -1155,6 +1170,22 @@ static void test_CommandLine(void)
     cmdline = GetCommandLineW();
     ok(cmdline == cmdline_backup, "Expected cached address from TEB, got %p\n", cmdline);
     NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer = cmdline_backup;
+
+    /* Test quoted command line without file extension*/
+    sprintf(buffer, "%s", selfname);
+    p = strrchr(buffer, '.');
+    *p = 0;
+    get_file_name(resfile);
+    sprintf(buffer2, "\"%s \" process dump \"%s\"", buffer, resfile);
+    ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    todo_wine
+    ok(ret, "CreateProcess (%s) failed : %ld\n", buffer, GetLastError());
+    if (ret)
+    {
+        wait_child_process(&info);
+        release_memory();
+        DeleteFileA(resfile);
+    }
 }
 
 static void test_Directory(void)
