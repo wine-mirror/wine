@@ -2044,8 +2044,10 @@ mkdir bar
 mkdir baz
 mkdir pop
 echo > bazbaz
+echo > notbaz
 echo --- basic wildcards
 for %%i in (ba*) do echo %%i
+for %%i in ("ba*" "ba?baz" "notbaz") do echo %%i
 echo --- wildcards in subdirs
 echo something>pop\bar1
 echo something>pop\bar2.txt

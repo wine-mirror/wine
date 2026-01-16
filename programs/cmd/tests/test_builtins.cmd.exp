@@ -1406,6 +1406,9 @@ b 1 3
 "h"
 --- basic wildcards
 bazbaz
+@todo_wine@bazbaz
+@todo_wine@bazbaz
+@todo_wine@"notbaz"
 --- wildcards in subdirs
 pop\bar1@space@
 pop\bar2.txt@space@
