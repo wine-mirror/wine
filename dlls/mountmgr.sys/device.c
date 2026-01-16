@@ -829,7 +829,7 @@ static void delete_dos_device( struct dos_drive *drive )
 }
 
 /* find a volume that matches the parameters */
-static struct volume *find_matching_volume( const char *udi, const char *device,
+static struct volume *find_matching_volume( const char *udi, const char *unix_device,
                                             const char *mount_point, enum device_type type )
 {
     struct volume *volume;
@@ -846,9 +846,9 @@ static struct volume *find_matching_volume( const char *udi, const char *device,
 
         disk_device = volume->device;
         if (disk_device->type != type) continue;
-        if (device && disk_device->unix_device)
+        if (unix_device && disk_device->unix_device)
         {
-            if (strcmp( device, disk_device->unix_device )) continue;
+            if (strcmp( unix_device, disk_device->unix_device )) continue;
             match++;
         }
         if (mount_point && disk_device->unix_mount)
@@ -858,7 +858,7 @@ static struct volume *find_matching_volume( const char *udi, const char *device,
         }
         if (!match) continue;
         TRACE( "found matching volume %s for device %s mount %s type %u\n",
-               debugstr_guid(&volume->guid), debugstr_a(device), debugstr_a(mount_point), type );
+               debugstr_guid(&volume->guid), debugstr_a(unix_device), debugstr_a(mount_point), type );
         return grab_volume( volume );
     }
     return NULL;
@@ -955,7 +955,7 @@ static void set_dos_devices_disk_serial( struct disk_device *device )
 }
 
 /* change the information for an existing volume */
-static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive, const char *device,
+static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive, const char *unix_device,
                                  const char *mount_point, enum device_type type, const GUID *guid,
                                  const char *label, const char *disk_serial )
 {
@@ -986,7 +986,7 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
         free( disk_device->unix_mount );
         free( disk_device->disk_serial );
     }
-    disk_device->unix_device = strdup( device );
+    disk_device->unix_device = strdup( unix_device );
     disk_device->unix_mount = strdup( mount_point );
     disk_device->disk_serial = strdup( disk_serial );
     set_dos_devices_disk_serial( disk_device );
@@ -1072,7 +1072,7 @@ static void create_drive_devices(void)
     for (i = 0; i < MAX_DOS_DRIVES; i++)
     {
         char link[4096], unix_dev[4096];
-        char *device = NULL;
+        char *unix_device = NULL;
         struct get_dosdev_symlink_params params = { dosdev, link, sizeof(link) };
 
         dosdev[0] = 'a' + i;
@@ -1081,7 +1081,7 @@ static void create_drive_devices(void)
         dosdev[2] = ':';
         params.dest = unix_dev;
         params.size = sizeof(unix_dev);
-        if (!MOUNTMGR_CALL( get_dosdev_symlink, &params )) device = unix_dev;
+        if (!MOUNTMGR_CALL( get_dosdev_symlink, &params )) unix_device = unix_dev;
 
         drive_type = i < 2 ? DEVICE_FLOPPY : DEVICE_HARDDISK_VOL;
         if (drives_key)
@@ -1103,12 +1103,12 @@ static void create_drive_devices(void)
             }
         }
 
-        volume = find_matching_volume( NULL, device, link, drive_type );
+        volume = find_matching_volume( NULL, unix_device, link, drive_type );
         if (!create_dos_device( volume, NULL, i, drive_type, &drive ))
         {
             /* don't reset uuid if we used an existing volume */
             const GUID *guid = volume ? NULL : get_default_uuid(i);
-            set_volume_info( drive->volume, drive, device, link, drive_type, guid, NULL, NULL );
+            set_volume_info( drive->volume, drive, unix_device, link, drive_type, guid, NULL, NULL );
         }
         if (volume) release_volume( volume );
     }
@@ -1206,7 +1206,7 @@ static void create_scsi_entry( struct volume *volume, const struct scsi_info *in
 }
 
 /* create a new disk volume */
-NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
+NTSTATUS add_volume( const char *udi, const char *unix_device, const char *mount_point,
                      enum device_type type, const GUID *guid, const char *disk_serial,
                      const char *label, const struct scsi_info *scsi_info )
 {
@@ -1214,7 +1214,7 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
     NTSTATUS status = STATUS_SUCCESS;
 
     TRACE( "adding %s device %s mount %s type %u uuid %s\n", debugstr_a(udi),
-           debugstr_a(device), debugstr_a(mount_point), type, debugstr_guid(guid) );
+           debugstr_a(unix_device), debugstr_a(mount_point), type, debugstr_guid(guid) );
 
     EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
@@ -1225,11 +1225,11 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
         }
 
     /* udi not found, search for a non-dynamic volume */
-    if ((volume = find_matching_volume( udi, device, mount_point, type ))) set_volume_udi( volume, udi );
+    if ((volume = find_matching_volume( udi, unix_device, mount_point, type ))) set_volume_udi( volume, udi );
     else status = create_volume( udi, type, &volume );
 
 found:
-    if (!status) status = set_volume_info( volume, NULL, device, mount_point, type, guid, label, disk_serial );
+    if (!status) status = set_volume_info( volume, NULL, unix_device, mount_point, type, guid, label, disk_serial );
     if (!status && scsi_info) create_scsi_entry( volume, scsi_info );
     if (volume) release_volume( volume );
     LeaveCriticalSection( &device_section );
@@ -1256,7 +1256,7 @@ NTSTATUS remove_volume( const char *udi )
 
 
 /* create a new dos drive */
-NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
+NTSTATUS add_dos_device( int letter, const char *udi, const char *unix_device,
                          const char *mount_point, enum device_type type, const GUID *guid,
                          const char *label, const struct scsi_info *scsi_info )
 {
@@ -1268,11 +1268,11 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     char dosdev[] = "a::";
 
     EnterCriticalSection( &device_section );
-    volume = find_matching_volume( udi, device, mount_point, type );
+    volume = find_matching_volume( udi, unix_device, mount_point, type );
 
     if (letter == -1)  /* auto-assign a letter */
     {
-        struct add_drive_params params = { device, type, &letter };
+        struct add_drive_params params = { unix_device, type, &letter };
         if ((status = MOUNTMGR_CALL( add_drive, &params ))) goto done;
 
         LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
@@ -1283,7 +1283,7 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     }
     else  /* simply reset the device symlink */
     {
-        struct set_dosdev_symlink_params params = { dosdev, device };
+        struct set_dosdev_symlink_params params = { dosdev, unix_device };
 
         LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
             if (drive->drive == letter) break;
@@ -1295,8 +1295,8 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
         }
         else
         {
-            if (!device || !drive->volume->device->unix_device ||
-                strcmp( device, drive->volume->device->unix_device ))
+            if (!unix_device || !drive->volume->device->unix_device ||
+                strcmp( unix_device, drive->volume->device->unix_device ))
                 MOUNTMGR_CALL( set_dosdev_symlink, &params );
             delete_dos_device( drive );
         }
@@ -1315,11 +1315,11 @@ found:
         struct set_dosdev_symlink_params params = { dosdev, mount_point };
         MOUNTMGR_CALL( set_dosdev_symlink, &params );
     }
-    set_volume_info( volume, drive, device, mount_point, type, guid, label, NULL );
+    set_volume_info( volume, drive, unix_device, mount_point, type, guid, label, NULL );
 
     TRACE( "added device %c: udi %s for %s on %s type %u\n",
-           'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
-           wine_dbgstr_a(mount_point), type );
+           'a' + drive->drive, debugstr_a(udi), debugstr_a(unix_device),
+           debugstr_a(mount_point), type );
 
     /* hack: force the drive type in the registry */
     if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\Drives", &hkey ))
@@ -1443,7 +1443,7 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
 {
     const struct mountmgr_unix_drive *input = buff;
     struct mountmgr_unix_drive *output = NULL;
-    char *device, *mount_point;
+    char *unix_device, *mount_point;
     int letter = towlower( input->letter );
     DWORD size, type = DEVICE_UNKNOWN, serial;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1465,7 +1465,7 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
         device_type = volume->device->type;
         fs_type = get_mountmgr_fs_type( volume->fs_type );
         serial = volume->serial;
-        device = strdup( volume->device->unix_device );
+        unix_device = strdup( volume->device->unix_device );
         mount_point = strdup( volume->device->unix_mount );
         label = wcsdup( volume->label );
         release_volume( volume );
@@ -1489,7 +1489,7 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
 
     size = sizeof(*output);
     if (label) size += (lstrlenW(label) + 1) * sizeof(WCHAR);
-    if (device) size += strlen(device) + 1;
+    if (unix_device) size += strlen( unix_device ) + 1;
     if (mount_point) size += strlen(mount_point) + 1;
 
     input = NULL;
@@ -1517,20 +1517,20 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
         strcpy( ptr, mount_point );
         ptr += strlen(ptr) + 1;
     }
-    if (device && ptr + strlen(device) + 1 - (char *)output <= outsize)
+    if (unix_device && ptr + strlen( unix_device ) + 1 - (char *)output <= outsize)
     {
         output->device_offset = ptr - (char *)output;
-        strcpy( ptr, device );
+        strcpy( ptr, unix_device );
         ptr += strlen(ptr) + 1;
     }
 
     TRACE( "returning %c: dev %s mount %s type %lu\n",
-           letter, debugstr_a(device), debugstr_a(mount_point), type );
+           letter, debugstr_a(unix_device), debugstr_a(mount_point), type );
 
     iosb->Information = ptr - (char *)output;
     if (size > outsize) status = STATUS_BUFFER_OVERFLOW;
 
-    free( device );
+    free( unix_device );
     free( mount_point );
     free( label );
     return status;
