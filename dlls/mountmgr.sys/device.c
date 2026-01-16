@@ -70,7 +70,7 @@ struct disk_device
     STORAGE_DEVICE_NUMBER devnum;      /* device number info */
     char                 *unix_device; /* unix device path */
     char                 *unix_mount;  /* unix mount point path */
-    char                 *serial;      /* disk serial number */
+    char                 *disk_serial; /* disk serial number */
     struct volume        *volume;      /* associated volume */
 };
 
@@ -724,7 +724,7 @@ static void delete_disk_device( struct disk_device *device )
     }
     free( device->unix_device );
     free( device->unix_mount );
-    free( device->serial );
+    free( device->disk_serial );
     RtlFreeUnicodeString( &device->name );
     IoDeleteDevice( device->dev_obj );
 }
@@ -938,7 +938,7 @@ static void set_dos_devices_disk_serial( struct disk_device *device )
     struct dos_drive *drive;
     struct get_volume_dos_devices_params params = { device->unix_mount, &devices };
 
-    if (!device->serial || !device->unix_mount || MOUNTMGR_CALL( get_volume_dos_devices, &params ))
+    if (!device->disk_serial || !device->unix_mount || MOUNTMGR_CALL( get_volume_dos_devices, &params ))
         return;
 
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
@@ -948,8 +948,8 @@ static void set_dos_devices_disk_serial( struct disk_device *device )
         /* copy serial if drive resides on this Unix device */
         if (devices & (1 << drive->drive))
         {
-            free( drive->volume->device->serial );
-            drive->volume->device->serial = strdup( device->serial );
+            free( drive->volume->device->disk_serial );
+            drive->volume->device->disk_serial = strdup( device->disk_serial );
         }
     }
 }
@@ -984,11 +984,11 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
     {
         free( disk_device->unix_device );
         free( disk_device->unix_mount );
-        free( disk_device->serial );
+        free( disk_device->disk_serial );
     }
     disk_device->unix_device = strdup( device );
     disk_device->unix_mount = strdup( mount_point );
-    disk_device->serial = strdup( disk_serial );
+    disk_device->disk_serial = strdup( disk_serial );
     set_dos_devices_disk_serial( disk_device );
 
     if (!get_volume_device_info( volume ))
@@ -1561,7 +1561,7 @@ static NTSTATUS query_property( struct disk_device *device, IRP *irp )
         STORAGE_DEVICE_DESCRIPTOR *descriptor;
         DWORD len = sizeof(*descriptor);
 
-        if (device->serial) len += strlen( device->serial ) + 1;
+        if (device->disk_serial) len += strlen( device->disk_serial ) + 1;
 
         if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DESCRIPTOR_HEADER))
             status = STATUS_INVALID_PARAMETER;
@@ -1590,11 +1590,11 @@ static NTSTATUS query_property( struct disk_device *device, IRP *irp )
             descriptor->ProductRevisionOffset = 0;
             descriptor->BusType = BusTypeScsi;
             descriptor->RawPropertiesLength = 0;
-            if (!device->serial) descriptor->SerialNumberOffset = 0;
+            if (!device->disk_serial) descriptor->SerialNumberOffset = 0;
             else
             {
                 descriptor->SerialNumberOffset = sizeof(*descriptor);
-                strcpy( (char *)descriptor + descriptor->SerialNumberOffset, device->serial );
+                strcpy( (char *)descriptor + descriptor->SerialNumberOffset, device->disk_serial );
             }
             irp->IoStatus.Information = len;
             status = STATUS_SUCCESS;
