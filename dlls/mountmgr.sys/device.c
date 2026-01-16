@@ -61,6 +61,22 @@ enum fs_type
     FS_UDF       /* For reference [E] = Ecma-167.pdf, [U] = udf260.pdf */
 };
 
+/* struct disk_device represents any drive or filesystem (partition).
+ * It differs from struct volume in two respects:
+ *
+ * - struct volume *only* represents filesystems. A whole physical drive has
+ *   only a struct disk_device. Anything with an actual filesystem has both a
+ *   struct disk_device and a struct volume, linked to each other.
+ *
+ * - struct disk_device is allocated as the DeviceExtension for the ntoskrnl
+ *   device object. struct volume is allocated by us and we expect the pointer
+ *   to remain stable in various places.
+ *   Note that we can recreate the NT device in response to
+ *   IOCTL_MOUNTMGR_DEFINE_UNIX_DRIVE if the type of device is changed
+ *   (e.g. from hard disk to CD-ROM, which necessitates a differently
+ *   named NT device), which means that the disk_device is reallocated.
+ */
+
 struct disk_device
 {
     enum device_type      type;        /* drive type */
