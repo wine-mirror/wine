@@ -8064,7 +8064,7 @@ BOOL get_gpu_uuid_from_luid( const LUID *luid, GUID *uuid )
 }
 
 /* Find the GPU LUID corresponding to a device UUID */
-BOOL get_gpu_luid_from_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask )
+BOOL get_gpu_info_from_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask, char *name )
 {
     BOOL found = FALSE;
     struct gpu *gpu;
@@ -8076,6 +8076,7 @@ BOOL get_gpu_luid_from_uuid( const GUID *uuid, LUID *luid, UINT32 *node_mask )
         if (!IsEqualGUID( uuid, &gpu->uuid )) continue;
         *luid = gpu->luid;
         *node_mask = 1;
+        if (name) unicodez_to_ascii( name, gpu->name );
         found = TRUE;
         break;
     }

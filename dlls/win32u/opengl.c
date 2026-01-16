@@ -2402,9 +2402,9 @@ static BOOL win32u_query_renderer( UINT attribute, void *value )
     switch (attribute)
     {
     case GL_DEVICE_LUID_EXT:
-        return get_gpu_luid_from_uuid( &egl->device_uuid, (LUID *)value, &mask );
+        return get_gpu_info_from_uuid( &egl->device_uuid, (LUID *)value, &mask, NULL );
     case GL_DEVICE_NODE_MASK_EXT:
-        return get_gpu_luid_from_uuid( &egl->device_uuid, &luid, value );
+        return get_gpu_info_from_uuid( &egl->device_uuid, &luid, value, NULL );
     default:
         FIXME( "Unsupported attribute %#x\n", attribute );
         set_gl_error( GL_INVALID_ENUM );
