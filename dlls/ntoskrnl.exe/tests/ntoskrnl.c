@@ -1187,6 +1187,7 @@ static void test_object_info(void)
     OBJECT_TYPE_INFORMATION *type_info = (OBJECT_TYPE_INFORMATION *)buffer;
     FILE_FS_VOLUME_INFORMATION *volume_info = (FILE_FS_VOLUME_INFORMATION *)buffer;
     FILE_NAME_INFORMATION *file_info = (FILE_NAME_INFORMATION *)buffer;
+    FILE_FS_DEVICE_INFORMATION device_info;
     HANDLE file;
     NTSTATUS status;
     IO_STATUS_BLOCK io;
@@ -1207,6 +1208,26 @@ static void test_object_info(void)
 
     status = NtQueryVolumeInformationFile(device, &io, buffer, sizeof(buffer), FileFsVolumeInformation);
     todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#lx\n", status);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtQueryVolumeInformationFile(device, &io, &device_info, sizeof(device_info) - 1, FileFsDeviceInformation);
+    todo_wine ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", status);
+    ok(io.Status == 0xdeadf00d, "got status %#lx\n", io.Status);
+    ok(io.Information == 0xdeadf00d, "got information %Iu\n", io.Information);
+
+    io.Status = 0xdeadf00d;
+    io.Information = 0xdeadf00d;
+    status = NtQueryVolumeInformationFile(device, &io, &device_info, sizeof(device_info), FileFsDeviceInformation);
+    todo_wine ok(!status, "got %#lx\n", status);
+    todo_wine ok(!io.Status, "got status %#lx\n", io.Status);
+    todo_wine ok(io.Information == sizeof(FILE_FS_DEVICE_INFORMATION), "got information %Iu\n", io.Information);
+    if (!status)
+    {
+        ok(device_info.DeviceType == FILE_DEVICE_UNKNOWN, "Got type %#lx.\n", device_info.DeviceType);
+        ok(device_info.Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE),
+                "Got characteristics %#lx.\n", device_info.Characteristics);
+    }
 
     file = CreateFileA("\\\\.\\WineTestDriver\\subfile", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());

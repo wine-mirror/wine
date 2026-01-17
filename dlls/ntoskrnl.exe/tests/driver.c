@@ -2936,6 +2936,11 @@ static NTSTATUS WINAPI driver_QueryVolumeInformation(DEVICE_OBJECT *device, IRP 
         return STATUS_PENDING;
     }
 
+    case FileFsDeviceInformation:
+        /* This one is actually handled by the I/O manager;
+         * it's never passed down to a driver. */
+        todo_wine ok(0, "Unexpected call.\n");
+        /* fall through */
     default:
         ret = STATUS_NOT_IMPLEMENTED;
         break;
@@ -3011,14 +3016,17 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     RtlInitUnicodeString(&nameW, L"\\Device\\WineTestDriver");
     RtlInitUnicodeString(&linkW, L"\\DosDevices\\WineTestDriver");
 
-    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &lower_device);
+    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
+            FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE,
+            FALSE, &lower_device);
     ok(!status, "failed to create device, status %#lx\n", status);
     status = IoCreateSymbolicLink(&linkW, &nameW);
     ok(!status, "failed to create link, status %#lx\n", status);
     lower_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
     RtlInitUnicodeString(&nameW, L"\\Device\\WineTestUpper");
-    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &upper_device);
+    status = IoCreateDevice(driver, 16, &nameW, FILE_DEVICE_UNKNOWN,
+            FILE_DEVICE_SECURE_OPEN | FILE_READ_ONLY_DEVICE, FALSE, &upper_device);
     ok(!status, "failed to create device, status %#lx\n", status);
 
     IoAttachDeviceToDeviceStack(upper_device, lower_device);
