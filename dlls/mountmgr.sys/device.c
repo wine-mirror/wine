@@ -602,6 +602,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     UNICODE_STRING name;
     DEVICE_OBJECT *dev_obj;
     struct disk_device *device;
+    DEVICE_TYPE nt_type;
 
     switch(type)
     {
@@ -610,21 +611,30 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     case DEVICE_NETWORK:  /* FIXME */
         format = L"\\Device\\Harddisk%u";
         link_format = L"\\??\\PhysicalDrive%u";
+        nt_type = FILE_DEVICE_DISK;
         break;
     case DEVICE_HARDDISK_VOL:
         format = L"\\Device\\HarddiskVolume%u";
+        nt_type = FILE_DEVICE_DISK;
         first = 1;  /* harddisk volumes start counting from 1 */
         break;
     case DEVICE_FLOPPY:
         format = L"\\Device\\Floppy%u";
+        nt_type = FILE_DEVICE_DISK;
         break;
     case DEVICE_CDROM:
+        format = L"\\Device\\CdRom%u";
+        link_format = L"\\??\\CdRom%u";
+        nt_type = FILE_DEVICE_CD_ROM;
+        break;
     case DEVICE_DVD:
         format = L"\\Device\\CdRom%u";
         link_format = L"\\??\\CdRom%u";
+        nt_type = FILE_DEVICE_DVD;
         break;
     case DEVICE_RAMDISK:
         format = L"\\Device\\Ramdisk%u";
+        nt_type = FILE_DEVICE_DISK;
         break;
     }
 
@@ -634,7 +644,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     {
         swprintf( name.Buffer, name.MaximumLength / sizeof(WCHAR), format, i );
         name.Length = lstrlenW(name.Buffer) * sizeof(WCHAR);
-        status = IoCreateDevice( harddisk_driver, sizeof(*device), &name, 0, 0, FALSE, &dev_obj );
+        status = IoCreateDevice( harddisk_driver, sizeof(*device), &name, nt_type, 0, FALSE, &dev_obj );
         if (status != STATUS_OBJECT_NAME_COLLISION) break;
     }
     if (!status)
@@ -661,33 +671,30 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
             }
         }
 
+        device->devnum.DeviceType = nt_type;
+
         switch (type)
         {
         case DEVICE_FLOPPY:
         case DEVICE_RAMDISK:
-            device->devnum.DeviceType = FILE_DEVICE_DISK;
             device->devnum.DeviceNumber = i;
             device->devnum.PartitionNumber = ~0u;
             break;
         case DEVICE_CDROM:
-            device->devnum.DeviceType = FILE_DEVICE_CD_ROM;
             device->devnum.DeviceNumber = i;
             device->devnum.PartitionNumber = ~0u;
             break;
         case DEVICE_DVD:
-            device->devnum.DeviceType = FILE_DEVICE_DVD;
             device->devnum.DeviceNumber = i;
             device->devnum.PartitionNumber = ~0u;
             break;
         case DEVICE_UNKNOWN:
         case DEVICE_HARDDISK:
         case DEVICE_NETWORK:  /* FIXME */
-            device->devnum.DeviceType = FILE_DEVICE_DISK;
             device->devnum.DeviceNumber = i;
             device->devnum.PartitionNumber = 0;
             break;
         case DEVICE_HARDDISK_VOL:
-            device->devnum.DeviceType = FILE_DEVICE_DISK;
             device->devnum.DeviceNumber = 0;
             device->devnum.PartitionNumber = i;
             break;
