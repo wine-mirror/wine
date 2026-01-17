@@ -1208,7 +1208,8 @@ static HRESULT WINAPI client_GetSharedModeEnginePeriod(IAudioClient3 *iface,
         return hr;
 
     *default_period_frames = def_period * format->nSamplesPerSec / (REFERENCE_TIME)10000000;
-    *min_period_frames     = min_period * format->nSamplesPerSec / (REFERENCE_TIME)10000000;
+    *min_period_frames     = (min_period * format->nSamplesPerSec + 10000000 - 1) / (REFERENCE_TIME)10000000;
+    *default_period_frames = max( *default_period_frames, *min_period_frames );
     *max_period_frames     = *default_period_frames;
     *unit_period_frames    = 1;
 
