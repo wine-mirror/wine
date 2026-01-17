@@ -603,6 +603,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     DEVICE_OBJECT *dev_obj;
     struct disk_device *device;
     DEVICE_TYPE nt_type;
+    ULONG characteristics = FILE_DEVICE_IS_MOUNTED;
 
     switch(type)
     {
@@ -621,11 +622,13 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     case DEVICE_FLOPPY:
         format = L"\\Device\\Floppy%u";
         nt_type = FILE_DEVICE_DISK;
+        characteristics |= FILE_REMOVABLE_MEDIA;
         break;
     case DEVICE_CDROM:
         format = L"\\Device\\CdRom%u";
         link_format = L"\\??\\CdRom%u";
         nt_type = FILE_DEVICE_CD_ROM;
+        characteristics |= FILE_REMOVABLE_MEDIA | FILE_READ_ONLY_DEVICE;
         break;
     case DEVICE_DVD:
         format = L"\\Device\\CdRom%u";
@@ -644,7 +647,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     {
         swprintf( name.Buffer, name.MaximumLength / sizeof(WCHAR), format, i );
         name.Length = lstrlenW(name.Buffer) * sizeof(WCHAR);
-        status = IoCreateDevice( harddisk_driver, sizeof(*device), &name, nt_type, 0, FALSE, &dev_obj );
+        status = IoCreateDevice( harddisk_driver, sizeof(*device), &name, nt_type, characteristics, FALSE, &dev_obj );
         if (status != STATUS_OBJECT_NAME_COLLISION) break;
     }
     if (!status)
