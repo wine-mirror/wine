@@ -2983,7 +2983,7 @@ static NTSTATUS WINAPI driver_QueryVolumeInformation(DEVICE_OBJECT *device, IRP 
     case FileFsDeviceInformation:
         /* This one is actually handled by the I/O manager;
          * it's never passed down to a driver. */
-        todo_wine ok(0, "Unexpected call.\n");
+        ok(0, "Unexpected call.\n");
         /* fall through */
     default:
         ret = STATUS_NOT_IMPLEMENTED;
