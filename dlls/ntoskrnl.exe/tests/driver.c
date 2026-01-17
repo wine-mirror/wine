@@ -2454,7 +2454,7 @@ static void test_device_object(void)
     ok(!lower_device->CurrentIrp, "Got current IRP %p.\n", lower_device->CurrentIrp);
     ok(!lower_device->Timer, "Got timer %p.\n", lower_device->Timer);
     todo_wine ok(lower_device->Flags == 0x40, "Got flags %#lx.\n", lower_device->Flags);
-    todo_wine ok(lower_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE),
+    ok(lower_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_FLOPPY_DISKETTE | FILE_PORTABLE_DEVICE),
             "Got characteristics %#lx.\n", lower_device->Characteristics);
     ok(!lower_device->Vpb, "Got VPB %p.\n", lower_device->Vpb);
     todo_wine ok(!lower_device->DeviceExtension, "Got extension %p.\n", lower_device->DeviceExtension);
@@ -2474,7 +2474,7 @@ static void test_device_object(void)
     todo_wine ok(!upper_device->CurrentIrp, "Got current IRP %p.\n", upper_device->CurrentIrp);
     ok(!upper_device->Timer, "Got timer %p.\n", upper_device->Timer);
     todo_wine ok(upper_device->Flags == 0x40, "Got flags %#lx.\n", upper_device->Flags);
-    todo_wine ok(upper_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_READ_ONLY_DEVICE),
+    ok(upper_device->Characteristics == (FILE_DEVICE_SECURE_OPEN | FILE_READ_ONLY_DEVICE),
             "Got characteristics %#lx.\n", upper_device->Characteristics);
     ok(!upper_device->Vpb, "Got VPB %p.\n", upper_device->Vpb);
     ok(!!upper_device->DeviceExtension, "Expected extension.\n");

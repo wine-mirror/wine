@@ -1646,6 +1646,7 @@ NTSTATUS WINAPI IoCreateDevice( DRIVER_OBJECT *driver, ULONG ext_size,
     device = &wine_device->device_obj;
 
     device->DriverObject    = driver;
+    device->Characteristics = characteristics;
     device->DeviceExtension = wine_device + 1;
     device->DeviceType      = type;
     device->StackSize       = 1;
