@@ -2188,7 +2188,7 @@ static void test_GetDiskSpaceInformationA(void)
     GetVolumeNameForVolumeMountPointA("C:\\", volume, ARRAY_SIZE(volume));
 
     hr = pGetDiskSpaceInformationA(volume, &info);
-    todo_wine ok(hr == S_OK, "got %#lx for %s\n", hr, debugstr_a(volume));
+    ok(hr == S_OK, "got %#lx for %s\n", hr, debugstr_a(volume));
     check_disk_space_information(&info);
 }
 
