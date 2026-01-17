@@ -871,6 +871,69 @@ static BOOL symt_fill_sym_info(struct module_pair* pair,
     return TRUE;
 }
 
+static BOOL symt_fill_sym_info_from_symref(struct module_pair* pair, symref_t symref, SYMBOL_INFO* sym_info)
+{
+    DWORD tag;
+    DWORD64 size;
+    WCHAR *name;
+
+    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_SYMTAG, &tag))
+        return FALSE;
+
+    sym_info->Tag = tag;
+    if (symt_is_symref_ptr(symref))
+        return symt_fill_sym_info(pair, NULL, SYMT_SYMREF_TO_PTR(symref), sym_info);
+
+    /* FIXME this isn't optimal; perhaps implement SymGetInfoTypeEx to support multiple
+     * queries at once!
+     */
+    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_TYPE, &sym_info->TypeIndex))
+        sym_info->TypeIndex = 0;
+    sym_info->Index = symt_symref_to_index(pair->effective, symref);
+    sym_info->Reserved[0] = sym_info->Reserved[1] = 0;
+    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_ADDRESS, &sym_info->Address))
+        sym_info->Address = 0;
+    if (!symt_get_info_from_symref(pair->effective, symref, TI_GET_LENGTH, &size) &&
+        (!sym_info->TypeIndex ||
+         !symt_get_info_from_index(pair->effective, sym_info->TypeIndex, TI_GET_LENGTH, &size)))
+        size = 0;
+    sym_info->Size = (DWORD)size;
+    sym_info->ModBase = pair->requested->module.BaseOfImage;
+    sym_info->Flags = 0;
+    sym_info->Value = 0;
+    sym_info->Register = 0;
+    sym_info->Scope = 0; /* FIXME */
+
+    /* FIXME we're swinging back & forth between ANSI & UNICODE... */
+    if (symt_get_info_from_symref(pair->effective, symref, TI_GET_SYMNAME, &name) && name)
+    {
+        SIZE_T len = WideCharToMultiByte(CP_ACP, 0, name, -1, NULL, 0, NULL, NULL);
+        char *buffer;
+        char *tmp;
+
+        if (sym_info->MaxNameLen && (buffer = malloc(len)))
+        {
+            WideCharToMultiByte(CP_ACP, 0, name, -1, buffer, len, NULL, NULL);
+            if (sym_info->Tag == SymTagPublicSymbol && (dbghelp_options & SYMOPT_UNDNAME) &&
+                (tmp = __unDName(NULL, buffer, 0, malloc, free, UNDNAME_NAME_ONLY)) != NULL)
+            {
+                symbol_setname(sym_info, tmp);
+                free(tmp);
+            }
+            else
+                symbol_setname(sym_info, buffer);
+            free(buffer);
+        }
+        else symbol_setname(sym_info, "");
+        LocalFree(name);
+    }
+    else symbol_setname(sym_info, "");
+
+    TRACE_(dbghelp_symt)("%Ix => %s %lu %I64x\n",
+                         symref, debugstr_a(sym_info->Name), sym_info->Size, sym_info->Address);
+    return TRUE;
+}
+
 struct sym_enum
 {
     PSYM_ENUMERATESYMBOLS_CALLBACK      cb;
@@ -2761,9 +2824,7 @@ BOOL WINAPI SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBO
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
     if ((symref = symt_index_to_symref(pair.effective, index)) == 0) return FALSE;
-    if (!symt_is_symref_ptr(symref)) return FALSE;
-    symt_fill_sym_info(&pair, NULL, (struct symt*)symref, symbol);
-    return TRUE;
+    return symt_fill_sym_info_from_symref(&pair, symref, symbol);
 }
 
 /******************************************************************
