@@ -2823,6 +2823,12 @@ static BOOL init_xdg(void)
     WCHAR *p;
     HRESULT hr = SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, xdg_desktop_dir);
 
+    if (!_wgetenv( L"WINE_HOST_XDG_CURRENT_DESKTOP" ))
+    {
+        WINE_WARN( "Skipping .desktop file creation, no XDG-compliant desktop environment detected.\n" );
+        return FALSE;
+    }
+
     if (FAILED(hr)) return FALSE;
 
     if ((p = _wgetenv( L"WINE_HOST_XDG_CONFIG_HOME" )))
