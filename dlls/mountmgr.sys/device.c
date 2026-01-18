@@ -1975,6 +1975,7 @@ static NTSTATUS WINAPI disk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         {
             struct cdrom_ioctl_params params;
 
+            params.cdrom = irpsp->FileObject->FsContext;
             params.code = code;
             params.input_size = irpsp->Parameters.DeviceIoControl.InputBufferLength;
             params.output_size = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
@@ -2000,9 +2001,38 @@ static NTSTATUS WINAPI disk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
 static NTSTATUS WINAPI disk_create( DEVICE_OBJECT *device, IRP *irp )
 {
-    irp->IoStatus.Status = STATUS_SUCCESS;
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    struct disk_device *dev = device->DeviceExtension;
+    NTSTATUS status;
+
+    if (dev->type == DEVICE_CDROM || dev->type == DEVICE_DVD)
+    {
+        struct cdrom_open_params params = {.unix_device = dev->unix_device};
+        if (!(status = MOUNTMGR_CALL( cdrom_open, &params )))
+            stack->FileObject->FsContext = params.cdrom;
+    }
+    else
+        status = STATUS_SUCCESS;
+
+    irp->IoStatus.Status = status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return STATUS_SUCCESS;
+    return status;
+}
+
+static NTSTATUS WINAPI disk_close( DEVICE_OBJECT *device, IRP *irp )
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    struct disk_device *dev = device->DeviceExtension;
+    NTSTATUS status;
+
+    if (dev->type == DEVICE_CDROM || dev->type == DEVICE_DVD)
+        status = MOUNTMGR_CALL( cdrom_close, stack->FileObject->FsContext );
+    else
+        status = STATUS_SUCCESS;
+
+    irp->IoStatus.Status = status;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return status;
 }
 
 /* driver entry point for the harddisk driver */
@@ -2012,6 +2042,7 @@ NTSTATUS WINAPI disk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     disk_driver = driver;
     driver->MajorFunction[IRP_MJ_CREATE] = disk_create;
+    driver->MajorFunction[IRP_MJ_CLOSE] = disk_close;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = disk_ioctl;
     driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = disk_query_volume;
 

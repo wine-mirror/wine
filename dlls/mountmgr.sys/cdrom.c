@@ -26,11 +26,48 @@
 #endif
 
 #include "config.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "mountmgr.h"
 #include "unixlib.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
+
+struct cdrom
+{
+    int fd;
+};
+
+NTSTATUS cdrom_open( void *args )
+{
+    struct cdrom_open_params *params = args;
+    struct cdrom *cdrom;
+
+    if (!(cdrom = malloc( sizeof( *cdrom ))))
+        return STATUS_NO_MEMORY;
+
+    if ((cdrom->fd = open( params->unix_device, O_RDONLY )) < 0)
+    {
+        WARN( "failed to open %s: %s\n", params->unix_device, strerror(errno) );
+        return errno_to_status( errno );
+    }
+
+    params->cdrom = cdrom;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS cdrom_close( void *args )
+{
+    struct cdrom *cdrom = args;
+
+    close( cdrom->fd );
+    free( cdrom );
+    return STATUS_SUCCESS;
+}
 
 NTSTATUS cdrom_ioctl( void *args )
 {
