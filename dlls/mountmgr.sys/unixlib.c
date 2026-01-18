@@ -622,6 +622,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     read_volume_file,
     match_unixdev,
     check_device_access,
+    cdrom_ioctl,
     detect_serial_ports,
     detect_parallel_ports,
     set_shell_folder,

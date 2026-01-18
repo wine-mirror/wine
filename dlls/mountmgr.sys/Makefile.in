@@ -8,6 +8,7 @@ UNIX_LIBS    = $(DISKARBITRATION_LIBS) $(SYSTEMCONFIGURATION_LIBS) $(CORESERVICE
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
 SOURCES = \
+	cdrom.c \
 	cred.c \
 	dbus.c \
 	device.c \

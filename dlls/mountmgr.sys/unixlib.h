@@ -113,6 +113,16 @@ struct match_unixdev_params
     ULONGLONG unix_dev;
 };
 
+struct cdrom_ioctl_params
+{
+    unsigned int code;
+    const void *input;
+    void *output;
+    unsigned int input_size;
+    unsigned int output_size;
+    unsigned int ret_size;
+};
+
 struct detect_ports_params
 {
     char *names;
@@ -163,6 +173,7 @@ enum mountmgr_funcs
     unix_read_volume_file,
     unix_match_unixdev,
     unix_check_device_access,
+    unix_cdrom_ioctl,
     unix_detect_serial_ports,
     unix_detect_parallel_ports,
     unix_set_shell_folder,
@@ -185,6 +196,7 @@ extern void queue_device_op( enum device_op op, const char *udi, const char *dev
 extern void run_dbus_loop(void);
 extern void run_diskarbitration_loop(void);
 
+extern NTSTATUS cdrom_ioctl( void *args );
 extern NTSTATUS dhcp_request( void *args );
 extern NTSTATUS query_symbol_file( void *args );
 extern NTSTATUS read_credential( void *args );
