@@ -598,7 +598,6 @@ IDI_WINDOWSM            ICON windowsm.ico
 #define WINE_FILEDESCRIPTION_STR "Wine Task Manager"
 #define WINE_FILENAME "taskmgr"
 #define WINE_FILENAME_STR "taskmgr.exe"
-#define WINE_PRODUCTNAME_STR "Task Manager by Brian Palmer"
 
 #include "wine/wine_common_ver.rc"
 
