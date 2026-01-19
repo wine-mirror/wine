@@ -50,9 +50,13 @@
 
 #define DB_E_UNSUPPORTEDCONVERSION          0x80040e1d
 #define DB_E_BADSTARTPOSITION               0x80040e1e
-
+#define DB_E_NOQUERY                        0x80040e1f
+#define DB_E_NOTREENTRANT                   0x80040e20
 #define DB_E_ERRORSOCCURRED                 0x80040e21
-
+#define DB_E_NOAGGREGATION                  0x80040e22
+#define DB_E_DELETEDROW                     0x80040e23
+#define DB_E_CANTFETCHBACKWARDS             0x80040e24
+#define DB_E_ROWSNOTRELEASED                0x80040e25
 #define DB_E_BADSTORAGEFLAG                 0x80040e26
 #define DB_E_BADCOMPAREOP                   0x80040e27
 #define DB_E_BADSTATUSVALUE                 0x80040e28
