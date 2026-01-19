@@ -599,6 +599,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
             const WCHAR *filename = opts.sei.lpFile;
             DWORD size, filename_len;
             WCHAR *name, *env;
+            DWORD error = HandleToULong(opts.sei.hInstApp);
 
             size = GetEnvironmentVariableW(L"PATHEXT", NULL, 0);
             if (size)
@@ -635,7 +636,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 
             }
 
-            fatal_string_error(STRING_EXECFAIL, GetLastError(), filename);
+            fatal_string_error(STRING_EXECFAIL, error, filename);
         }
 
 done:
