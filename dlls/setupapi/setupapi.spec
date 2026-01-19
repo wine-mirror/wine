@@ -93,14 +93,14 @@
 @ stdcall CM_Get_Device_Interface_AliasW(wstr ptr ptr ptr long)
 @ stub CM_Get_Device_Interface_Alias_ExA
 @ stub CM_Get_Device_Interface_Alias_ExW
-@ stdcall CM_Get_Device_Interface_ListA(ptr ptr ptr long long)
-@ stdcall CM_Get_Device_Interface_ListW(ptr ptr ptr long long)
-@ stdcall CM_Get_Device_Interface_List_ExA(ptr ptr ptr long long ptr)
-@ stdcall CM_Get_Device_Interface_List_ExW(ptr ptr ptr long long ptr)
-@ stdcall CM_Get_Device_Interface_List_SizeA(ptr ptr str long)
-@ stdcall CM_Get_Device_Interface_List_SizeW(ptr ptr wstr long)
-@ stdcall CM_Get_Device_Interface_List_Size_ExA(ptr ptr str long ptr)
-@ stdcall CM_Get_Device_Interface_List_Size_ExW(ptr ptr wstr long ptr)
+@ stdcall CM_Get_Device_Interface_ListA(ptr ptr ptr long long) cfgmgr32.CM_Get_Device_Interface_ListA
+@ stdcall CM_Get_Device_Interface_ListW(ptr ptr ptr long long) cfgmgr32.CM_Get_Device_Interface_ListW
+@ stdcall CM_Get_Device_Interface_List_ExA(ptr ptr ptr long long ptr) cfgmgr32.CM_Get_Device_Interface_List_ExA
+@ stdcall CM_Get_Device_Interface_List_ExW(ptr ptr ptr long long ptr) cfgmgr32.CM_Get_Device_Interface_List_ExW
+@ stdcall CM_Get_Device_Interface_List_SizeA(ptr ptr str long) cfgmgr32.CM_Get_Device_Interface_List_SizeA
+@ stdcall CM_Get_Device_Interface_List_SizeW(ptr ptr wstr long) cfgmgr32.CM_Get_Device_Interface_List_SizeW
+@ stdcall CM_Get_Device_Interface_List_Size_ExA(ptr ptr str long ptr) cfgmgr32.CM_Get_Device_Interface_List_Size_ExA
+@ stdcall CM_Get_Device_Interface_List_Size_ExW(ptr ptr wstr long ptr) cfgmgr32.CM_Get_Device_Interface_List_Size_ExW
 @ stub CM_Get_First_Log_Conf
 @ stub CM_Get_First_Log_Conf_Ex
 @ stub CM_Get_Global_State
