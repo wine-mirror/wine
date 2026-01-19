@@ -992,7 +992,6 @@ static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15
         if (connection->location != adUseClient)
             V_I4(&prop[1].vValue) &= ~DBPROPVAL_OS_CLIENTCURSOR;
         hr = IDBProperties_SetProperties( props, 1, &propset );
-        IDBProperties_Release( props );
         if (hr == DB_E_ERRORSOCCURRED || hr == DB_S_ERRORSOCCURRED)
         {
             DBPROPIDSET propidset;
@@ -1014,7 +1013,12 @@ static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15
                 CoTaskMemFree( propset );
             }
         }
-        else if (FAILED(hr)) return hr;
+        else if (FAILED(hr))
+        {
+            IDBProperties_Release( props );
+            return hr;
+        }
+        IDBProperties_Release( props );
 
         hr = IUnknown_QueryInterface( dso, &IID_IDBInitialize, (void **)&dbinit );
         if (FAILED(hr)) return hr;
