@@ -1,0 +1,55 @@
+/*
+ * Wine version resource definitions
+ *
+ * Copyright 2026 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#define __WINE_VER_VERSTRING2(major,minor,build,platform) #major "." #minor "." #build "." #platform
+#define __WINE_VER_VERSTRING(x) __WINE_VER_VERSTRING2(x)
+
+#define VER_FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+#define VER_FILEFLAGS     0
+
+#ifdef _WIN32
+#define VER_FILEOS VOS_NT_WINDOWS32
+#else
+#define VER_FILEOS VOS_DOS_WINDOWS16
+#endif
+
+#ifndef VER_FILETYPE
+#define VER_FILETYPE VFT_DLL
+#endif
+
+#ifndef VER_FILESUBTYPE
+#define VER_FILESUBTYPE VFT2_UNKNOWN
+#endif
+
+#ifndef VER_COMPANYNAME_STR
+#define VER_COMPANYNAME_STR "Microsoft Corporation" /* GameGuard depends on this */
+#endif
+
+#ifndef VER_PRODUCTNAME_STR
+#define VER_PRODUCTNAME_STR "@PACKAGE_STRING@"
+#endif
+
+#ifndef VER_PRODUCTVERSION
+#define VER_PRODUCTVERSION 10,0,19045,5796 /* Windows 10 version 22H2 */
+#endif
+
+#ifndef VER_PRODUCTVERSION_STR
+#define VER_PRODUCTVERSION_STR __WINE_VER_VERSTRING(VER_PRODUCTVERSION)
+#endif

@@ -25,7 +25,4 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 #define WINE_FILEDESCRIPTION_STR "Wine kernel DLL"
 #define WINE_FILENAME_STR "kernel32.dll"
 
-/* these values come from Windows 10 Version 2009 */
-#define WINE_FILEVERSION 10,0,19045,5796
-
 #include "wine/wine_common_ver.rc"

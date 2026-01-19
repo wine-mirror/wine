@@ -1173,9 +1173,6 @@ static void parse_in_file( struct file *source, FILE *file )
 {
     char *p, *buffer;
 
-    /* make sure it gets rebuilt when the version changes */
-    add_dependency( source, "config.h", INCL_SYSTEM );
-
     if (!strendswith( source->name, ".man.in" )) return;  /* not a man page */
 
     input_line = 0;
@@ -1245,6 +1242,7 @@ static const struct
     { ".y",   parse_c_file },
     { ".idl", parse_idl_file },
     { ".rc",  parse_rc_file },
+    { ".ver", parse_rc_file },
     { ".in",  parse_in_file },
     { ".sfd", parse_sfd_file }
 };
@@ -3186,7 +3184,9 @@ static void output_source_po( struct makefile *make, struct incl_file *source, c
  */
 static void output_source_in( struct makefile *make, struct incl_file *source, const char *obj )
 {
-    if (make == include_makefile) return;  /* ignore generated includes */
+    /* ignore generated includes */
+    if (make == include_makefile && (!strcmp( obj, "config.h" ) || !strcmp( obj, "stamp-h" ))) return;
+
     if (strendswith( obj, ".man" ) && source->file->args)
     {
         struct strarray symlinks;
@@ -3209,10 +3209,11 @@ static void output_source_in( struct makefile *make, struct incl_file *source, c
     strarray_add( &make->all_targets[0], obj );
     output( "%s: %s\n", obj_dir_path( make, obj ), source->filename );
     output( "\t%s%s %s >$@ || (rm -f $@ && false)\n", cmd_prefix( "SED" ), sed_cmd, source->filename );
-    output( "%s:", obj_dir_path( make, obj ));
+    output( "%s: include/config.h", obj_dir_path( make, obj ));
     output_filenames( source->dependencies );
     output( "\n" );
-    install_data_file( make, obj, obj, "$(datadir)/wine", NULL );
+    if (make == include_makefile) install_header( make, source->name, obj );
+    else install_data_file( make, obj, obj, "$(datadir)/wine", NULL );
 }
 
 
@@ -3523,6 +3524,7 @@ static const struct
     { "h", output_source_h },
     { "rh", output_source_h },
     { "inl", output_source_h },
+    { "ver", output_source_h },
     { "rc", output_source_rc },
     { "mc", output_source_mc },
     { "res", output_source_res },
