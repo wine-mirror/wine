@@ -213,6 +213,33 @@ enum layout_recompute_mask {
     RECOMPUTE_EVERYTHING          = 0xffff
 };
 
+#define SCRIPT_ID_MASK 0x7fff
+#define SCRIPT_NO_VISUAL 0x8000
+
+struct layout_scripts
+{
+    struct
+    {
+        UINT32 start;
+        UINT32 end;
+        UINT16 script;
+    } *ranges;
+    size_t count;
+    size_t capacity;
+};
+
+struct layout_bidi_levels
+{
+    struct
+    {
+        UINT32 start;
+        UINT32 end;
+        UINT8 level;
+    } *ranges;
+    size_t count;
+    size_t capacity;
+};
+
 struct dwrite_textlayout
 {
     IDWriteTextLayout4 IDWriteTextLayout4_iface;
@@ -224,13 +251,15 @@ struct dwrite_textlayout
     IDWriteFactory7 *factory;
     IDWriteFontCollection *system_collection;
 
-    WCHAR *str;
-    UINT32 len;
+    WCHAR *text;
+    UINT32 length;
 
     struct
     {
         unsigned int offset;
         unsigned int length;
+        struct layout_scripts scripts;
+        struct layout_bidi_levels levels;
     } text_source;
 
     struct dwrite_textformat_data format;
@@ -401,38 +430,30 @@ static inline DWRITE_BREAK_CONDITION override_break_condition(DWRITE_BREAK_CONDI
     return existingbreak;
 }
 
-/* This helper should be used to get effective range length, in other words it returns number of text
-   positions from range starting point to the end of the range, limited by layout text length */
-static inline UINT32 get_clipped_range_length(const struct dwrite_textlayout *layout, const struct layout_range *range)
-{
-    if (range->h.range.startPosition + range->h.range.length <= layout->len)
-        return range->h.range.length;
-    return layout->len - range->h.range.startPosition;
-}
-
-/* Actual breakpoint data gets updated with break condition required by inline object set for range 'cur'. */
-static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout, const struct layout_range *cur)
+/* Actual breakpoint data gets updated with break condition required by the inline object. */
+static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout, IDWriteInlineObject *object,
+        UINT32 start, UINT32 length)
 {
     DWRITE_BREAK_CONDITION before, after;
-    UINT32 i, length;
     HRESULT hr;
 
     /* ignore returned conditions if failed */
-    hr = IDWriteInlineObject_GetBreakConditions(cur->object, &before, &after);
+    hr = IDWriteInlineObject_GetBreakConditions(object, &before, &after);
     if (FAILED(hr))
         after = before = DWRITE_BREAK_CONDITION_NEUTRAL;
 
     if (!layout->actual_breakpoints)
     {
-        if (!(layout->actual_breakpoints = calloc(layout->len, sizeof(*layout->actual_breakpoints))))
+        if (!(layout->actual_breakpoints = calloc(layout->length, sizeof(*layout->actual_breakpoints))))
             return E_OUTOFMEMORY;
-        memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->len);
+        memcpy(layout->actual_breakpoints, layout->nominal_breakpoints, sizeof(DWRITE_LINE_BREAKPOINT)*layout->length);
     }
 
-    length = get_clipped_range_length(layout, cur);
-    for (i = cur->h.range.startPosition; i < length + cur->h.range.startPosition; i++) {
-        /* for first codepoint check if there's anything before it and update accordingly */
-        if (i == cur->h.range.startPosition) {
+    for (UINT32 i = start; i < length + start; i++)
+    {
+        /* For the first codepoint check if there's anything before it and update accordingly */
+        if (i == start)
+        {
             if (i > 0)
                 layout->actual_breakpoints[i].breakConditionBefore = layout->actual_breakpoints[i-1].breakConditionAfter =
                     override_break_condition(layout->actual_breakpoints[i-1].breakConditionAfter, before);
@@ -440,9 +461,10 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
                 layout->actual_breakpoints[i].breakConditionBefore = before;
             layout->actual_breakpoints[i].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
         }
-        /* similar check for last codepoint */
-        else if (i == cur->h.range.startPosition + length - 1) {
-            if (i == layout->len - 1)
+        /* similar check for the last codepoint */
+        else if (i == start + length - 1)
+        {
+            if (i == layout->length - 1)
                 layout->actual_breakpoints[i].breakConditionAfter = after;
             else
                 layout->actual_breakpoints[i].breakConditionAfter = layout->actual_breakpoints[i+1].breakConditionBefore =
@@ -526,7 +548,7 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
     if (metrics->length == 1) {
         DWRITE_LINE_BREAKPOINT bp = get_effective_breakpoint(layout, position);
         metrics->isWhitespace = bp.isWhitespace;
-        metrics->isNewline = metrics->canWrapLineAfter && lb_is_newline_char(layout->str[position]);
+        metrics->isNewline = metrics->canWrapLineAfter && lb_is_newline_char(layout->text[position]);
         metrics->isSoftHyphen = bp.isSoftHyphen;
     }
     else {
@@ -605,55 +627,200 @@ static inline void layout_get_font_height(float emsize, const DWRITE_FONT_METRIC
 static inline void layout_initialize_text_source(struct dwrite_textlayout *layout, unsigned int offset,
         unsigned int length)
 {
+    memset(&layout->text_source, 0, sizeof(layout->text_source));
     layout->text_source.offset = offset;
     layout->text_source.length = length;
 }
 
+static void layout_cleanup_text_source(struct dwrite_textlayout *layout)
+{
+    free(layout->text_source.scripts.ranges);
+    free(layout->text_source.levels.ranges);
+    memset(&layout->text_source, 0, sizeof(layout->text_source));
+}
+
+struct itemization_context
+{
+    struct dwrite_textlayout *layout;
+    unsigned int run_start, run_end;
+
+    struct
+    {
+        UINT8 value;
+        unsigned int index, end;
+    } level;
+
+    struct
+    {
+        UINT16 script;
+        unsigned int index, end;
+    } script;
+
+    struct
+    {
+        struct layout_range *value;
+        unsigned int end;
+    } range;
+};
+
+static void layout_itemize_next_level(struct itemization_context *context)
+{
+    const struct dwrite_textlayout *layout = context->layout;
+    unsigned int index = context->level.index++;
+
+    context->level.value = layout->text_source.levels.ranges[index].level;
+    context->level.end = layout->text_source.levels.ranges[index].end;
+}
+
+static void layout_itemize_next_script(struct itemization_context *context)
+{
+    const struct dwrite_textlayout *layout = context->layout;
+    unsigned int index = context->script.index++;
+
+    context->script.script = layout->text_source.scripts.ranges[index].script;
+    context->script.end = layout->text_source.scripts.ranges[index].end;
+}
+
+static void layout_itemize_next_range(struct itemization_context *context)
+{
+    const struct dwrite_textlayout *layout = context->layout;
+
+    context->range.value = LIST_ENTRY(context->range.value ? list_next(&layout->ranges, &context->range.value->h.entry)
+            : list_head(&layout->ranges), struct layout_range, h.entry);
+    context->range.end = min(context->layout->length, context->range.value->h.range.startPosition
+            + context->range.value->h.range.length);
+}
+
+static void layout_itemize_set_run_end(struct itemization_context *context)
+{
+    /* Inline objects take precedence, skip level and script ranges accordingly. */
+
+    if (context->range.value->object)
+    {
+        UINT8 level = context->level.value;
+        UINT16 script = context->script.script;
+
+        context->run_end = context->range.end;
+
+        while (context->level.end < context->run_end)
+            layout_itemize_next_level(context);
+        while (context->script.end < context->run_end)
+            layout_itemize_next_script(context);
+
+        context->level.value = level;
+        context->script.script = script;
+    }
+    else
+    {
+        context->run_end = context->level.end;
+        context->run_end = min(context->run_end, context->script.end);
+        context->run_end = min(context->run_end, context->range.end);
+    }
+}
+
+static void layout_itemize_context_init(struct dwrite_textlayout *layout,
+        struct itemization_context *context)
+{
+    memset(context, 0, sizeof(*context));
+
+    context->layout = layout;
+    layout_itemize_next_level(context);
+    layout_itemize_next_script(context);
+    layout_itemize_next_range(context);
+    layout_itemize_set_run_end(context);
+}
+
+static bool layout_itemize_get_next(struct itemization_context *context)
+{
+    if (context->run_end == context->layout->length)
+        return false;
+
+    context->run_start = context->run_end;
+
+    if (context->run_end == context->level.end)
+        layout_itemize_next_level(context);
+
+    if (context->run_end == context->script.end)
+        layout_itemize_next_script(context);
+
+    if (context->run_end == context->range.end)
+        layout_itemize_next_range(context);
+
+    layout_itemize_set_run_end(context);
+    return true;
+}
+
+static HRESULT layout_itemize_add_run(struct itemization_context *context)
+{
+    UINT32 length = context->run_end - context->run_start;
+    struct layout_run *run;
+    HRESULT hr;
+
+    if (FAILED(hr = alloc_layout_run(context->range.value->object ? LAYOUT_RUN_INLINE : LAYOUT_RUN_REGULAR,
+            context->run_start, &run)))
+        return hr;
+
+    if (context->range.value->object)
+    {
+        if (FAILED(hr = layout_update_breakpoints_range(context->layout, context->range.value->object,
+                context->run_start, length)))
+        {
+            free(run);
+            return hr;
+        }
+
+        run->u.object.object = context->range.value->object;
+        run->u.object.length = length;
+    }
+    else
+    {
+        run->u.regular.descr.string = &context->layout->text[context->run_start];
+        run->u.regular.descr.stringLength = length;
+        run->u.regular.descr.textPosition = context->run_start;
+        run->u.regular.sa.script = context->script.script & SCRIPT_ID_MASK;
+        run->u.regular.sa.shapes = context->script.script & SCRIPT_NO_VISUAL ?
+                DWRITE_SCRIPT_SHAPES_NO_VISUAL : DWRITE_SCRIPT_SHAPES_DEFAULT;
+        run->u.regular.run.bidiLevel = context->level.value;
+    }
+    list_add_tail(&context->layout->runs, &run->entry);
+
+    return hr;
+}
+
 static HRESULT layout_itemize(struct dwrite_textlayout *layout)
 {
+    struct itemization_context context;
     IDWriteTextAnalyzer2 *analyzer;
-    struct layout_range *range;
-    struct layout_run *r;
-    HRESULT hr = S_OK;
+    HRESULT hr;
+
+    if (layout->length == 0)
+        return S_OK;
 
     analyzer = get_text_analyzer();
 
-    layout_initialize_text_source(layout, 0, layout->len);
-    LIST_FOR_EACH_ENTRY(range, &layout->ranges, struct layout_range, h.entry) {
-        /* We don't care about ranges that don't contain any text. */
-        if (range->h.range.startPosition >= layout->len)
-            break;
+    layout_initialize_text_source(layout, 0, layout->length);
 
-        /* Inline objects override actual text in range. */
-        if (range->object) {
-            hr = layout_update_breakpoints_range(layout, range);
-            if (FAILED(hr))
-                return hr;
-
-            if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_INLINE, range->h.range.startPosition, &r)))
-                return hr;
-
-            r->u.object.object = range->object;
-            r->u.object.length = get_clipped_range_length(layout, range);
-            list_add_tail(&layout->runs, &r->entry);
-            continue;
-        }
-
-        /* Initial splitting by script. */
-        hr = IDWriteTextAnalyzer2_AnalyzeScript(analyzer, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
-                range->h.range.startPosition, get_clipped_range_length(layout, range),
-                (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface);
-        if (FAILED(hr))
-            break;
-
-        /* Splitting further by bidi levels. */
+    hr = IDWriteTextAnalyzer2_AnalyzeScript(analyzer, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
+            0, layout->length, (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface);
+    if (SUCCEEDED(hr))
+    {
         hr = IDWriteTextAnalyzer2_AnalyzeBidi(analyzer, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
-                range->h.range.startPosition, get_clipped_range_length(layout, range),
-                (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface);
-        if (FAILED(hr))
-            break;
+                0, layout->length, (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface);
     }
 
+    if (FAILED(hr))
+    {
+        layout_cleanup_text_source(layout);
+        return hr;
+    }
+
+    layout_itemize_context_init(layout, &context);
+    do
+    {
+        hr = layout_itemize_add_run(&context);
+    } while (hr == S_OK && layout_itemize_get_next(&context));
+
+    layout_cleanup_text_source(layout);
     return hr;
 }
 
@@ -723,7 +890,7 @@ static HRESULT layout_map_run_characters(struct dwrite_textlayout *layout, struc
             nextrun->run.fontFace = NULL;
             nextrun->descr.textPosition = nextr->start_position;
             nextrun->descr.stringLength = run->descr.stringLength - mapped_length;
-            nextrun->descr.string = &layout->str[nextrun->descr.textPosition];
+            nextrun->descr.string = &layout->text[nextrun->descr.textPosition];
             run->descr.stringLength = mapped_length;
             list_add_after(&r->entry, &nextr->entry);
             r = nextr;
@@ -1157,10 +1324,10 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     free_layout_runs(layout);
 
     /* Cluster data arrays are allocated once, assuming one text position per cluster. */
-    if (!layout->clustermetrics && layout->len)
+    if (!layout->clustermetrics && layout->length)
     {
-        layout->clustermetrics = calloc(layout->len, sizeof(*layout->clustermetrics));
-        layout->clusters = calloc(layout->len, sizeof(*layout->clusters));
+        layout->clustermetrics = calloc(layout->length, sizeof(*layout->clustermetrics));
+        layout->clusters = calloc(layout->length, sizeof(*layout->clusters));
         if (!layout->clustermetrics || !layout->clusters)
         {
             free(layout->clustermetrics);
@@ -1249,15 +1416,15 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
     {
         IDWriteTextAnalyzer2 *analyzer;
 
-        if (!(layout->nominal_breakpoints = calloc(layout->len, sizeof(*layout->nominal_breakpoints))))
+        if (!(layout->nominal_breakpoints = calloc(layout->length, sizeof(*layout->nominal_breakpoints))))
             return E_OUTOFMEMORY;
 
         analyzer = get_text_analyzer();
 
-        layout_initialize_text_source(layout, 0, layout->len);
+        layout_initialize_text_source(layout, 0, layout->length);
         if (FAILED(hr = IDWriteTextAnalyzer2_AnalyzeLineBreakpoints(analyzer,
                 (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
-                0, layout->len, (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface)))
+                0, layout->length, (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface)))
             WARN("Line breakpoints analysis failed, hr %#lx.\n", hr);
     }
 
@@ -2955,7 +3122,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout4 *iface)
         free(layout->clustermetrics);
         free(layout->clusters);
         free(layout->lines);
-        free(layout->str);
+        free(layout->text);
         free(layout);
     }
 
@@ -4918,19 +5085,25 @@ static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysi
     UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
-    struct layout_run *run;
-    HRESULT hr;
+    struct layout_scripts *scripts = &layout->text_source.scripts;
+    UINT32 script;
 
     TRACE("[%u,%u) script=%u:%s\n", position, position + length, sa->script, debugstr_sa_script(sa->script));
 
-    if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_REGULAR, position, &run)))
-        return hr;
+    if (!dwrite_array_reserve((void **)&scripts->ranges, &scripts->capacity, scripts->count + 1,
+            sizeof(*scripts->ranges)))
+    {
+        return E_OUTOFMEMORY;
+    }
 
-    run->u.regular.descr.string = &layout->str[position];
-    run->u.regular.descr.stringLength = length;
-    run->u.regular.descr.textPosition = position;
-    run->u.regular.sa = *sa;
-    list_add_tail(&layout->runs, &run->entry);
+    script = sa->script;
+    if (sa->shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL)
+        script |= SCRIPT_NO_VISUAL;
+    scripts->ranges[scripts->count].script = script;
+    scripts->ranges[scripts->count].start = position;
+    scripts->ranges[scripts->count].end = position + length;
+    ++scripts->count;
+
     return S_OK;
 }
 
@@ -4939,7 +5112,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalys
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
 
-    if (position + length > layout->len)
+    if (position + length > layout->length)
         return E_FAIL;
 
     memcpy(&layout->nominal_breakpoints[position], breakpoints, length*sizeof(DWRITE_LINE_BREAKPOINT));
@@ -4950,54 +5123,20 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
     UINT32 length, UINT8 explicitLevel, UINT8 resolvedLevel)
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
-    struct layout_run *cur_run;
-    HRESULT hr;
+    struct layout_bidi_levels *levels = &layout->text_source.levels;
 
     TRACE("[%u,%u) %u %u\n", position, position + length, explicitLevel, resolvedLevel);
 
-    LIST_FOR_EACH_ENTRY(cur_run, &layout->runs, struct layout_run, entry) {
-        struct regular_layout_run *cur = &cur_run->u.regular;
-        struct layout_run *run;
-
-        if (cur_run->kind == LAYOUT_RUN_INLINE)
-            continue;
-
-        /* FIXME: levels are reported in a natural forward direction, so start loop from a run we ended on */
-        if (position < cur->descr.textPosition || position >= cur->descr.textPosition + cur->descr.stringLength)
-            continue;
-
-        /* full hit - just set run level */
-        if (cur->descr.textPosition == position && cur->descr.stringLength == length) {
-            cur->run.bidiLevel = resolvedLevel;
-            break;
-        }
-
-        /* current run is fully covered, move to next one */
-        if (cur->descr.textPosition == position && cur->descr.stringLength < length) {
-            cur->run.bidiLevel = resolvedLevel;
-            position += cur->descr.stringLength;
-            length -= cur->descr.stringLength;
-            continue;
-        }
-
-        /* all fully covered runs are processed at this point, reuse existing run for remaining
-           reported bidi range and add another run for the rest of original one */
-
-        if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_REGULAR, position + length, &run)))
-            return hr;
-
-        *run = *cur_run;
-        run->u.regular.descr.textPosition = position + length;
-        run->u.regular.descr.stringLength = cur->descr.stringLength - length;
-        run->u.regular.descr.string = &layout->str[position + length];
-
-        /* reduce existing run */
-        cur->run.bidiLevel = resolvedLevel;
-        cur->descr.stringLength = length;
-
-        list_add_after(&cur_run->entry, &run->entry);
-        break;
+    if (!dwrite_array_reserve((void **)&levels->ranges, &levels->capacity, levels->count + 1,
+            sizeof(*levels->ranges)))
+    {
+        return E_OUTOFMEMORY;
     }
+
+    levels->ranges[levels->count].level = resolvedLevel;
+    levels->ranges[levels->count].start = position;
+    levels->ranges[levels->count].end = position + length;
+    ++levels->count;
 
     return S_OK;
 }
@@ -5065,7 +5204,7 @@ static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnaly
 
     if (position < layout->text_source.length)
     {
-        *text = &layout->str[position + layout->text_source.offset];
+        *text = &layout->text[position + layout->text_source.offset];
         *text_len = layout->text_source.length - position;
     }
     else
@@ -5086,7 +5225,7 @@ static HRESULT WINAPI dwritetextlayout_source_GetTextBeforePosition(IDWriteTextA
 
     if (position && position < layout->text_source.length)
     {
-        *text = &layout->str[layout->text_source.offset];
+        *text = &layout->text[layout->text_source.offset];
         *text_len = position;
     }
     else
@@ -5272,7 +5411,7 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     layout->IDWriteTextAnalysisSink1_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
     layout->IDWriteTextAnalysisSource1_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
     layout->refcount = 1;
-    layout->len = desc->length;
+    layout->length = desc->length;
     layout->recompute = RECOMPUTE_EVERYTHING;
     list_init(&layout->eruns);
     list_init(&layout->inlineobjects);
@@ -5288,8 +5427,9 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     layout->metrics.layoutWidth = desc->max_width;
     layout->metrics.layoutHeight = desc->max_height;
 
-    layout->str = heap_strdupnW(desc->string, desc->length);
-    if (desc->length && !layout->str) {
+    layout->text = heap_strdupnW(desc->string, desc->length);
+    if (desc->length && !layout->text)
+    {
         hr = E_OUTOFMEMORY;
         goto fail;
     }
