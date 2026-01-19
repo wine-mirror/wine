@@ -2149,6 +2149,7 @@ static void check_disk_space_information_(unsigned int line, const DISK_SPACE_IN
 static void test_GetDiskSpaceInformationA(void)
 {
     DISK_SPACE_INFORMATION info;
+    char volume[MAX_PATH];
     HRESULT hr;
 
     /* GetDiskSpaceInformation() is supported on Windows 10 build 1809 and later */
@@ -2176,12 +2177,18 @@ static void test_GetDiskSpaceInformationA(void)
     ok(hr == S_OK, "failed 0x%08lx\n", hr);
     check_disk_space_information(&info);
 
-    hr = pGetDiskSpaceInformationA("C:\\", &info);
+    hr = pGetDiskSpaceInformationA("C:\\windows\\", &info);
     ok(hr == S_OK, "failed 0x%08lx\n", hr);
     check_disk_space_information(&info);
 
     hr = pGetDiskSpaceInformationA("\\\\?\\C:\\", &info);
     ok(hr == S_OK, "failed 0x%08lx\n", hr);
+    check_disk_space_information(&info);
+
+    GetVolumeNameForVolumeMountPointA("C:\\", volume, ARRAY_SIZE(volume));
+
+    hr = pGetDiskSpaceInformationA(volume, &info);
+    todo_wine ok(hr == S_OK, "got %#lx for %s\n", hr, debugstr_a(volume));
     check_disk_space_information(&info);
 }
 
