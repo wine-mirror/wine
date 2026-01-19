@@ -256,44 +256,6 @@ CONFIGRET WINAPI CM_Get_Device_Interface_AliasW(const WCHAR *interface, GUID *cl
 }
 
 /***********************************************************************
- *      CM_Get_DevNode_Registry_Property_ExA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_DevNode_Registry_Property_ExA(DEVINST dev, ULONG prop, PULONG regdatatype,
-    PVOID buf, PULONG len, ULONG flags, HMACHINE machine)
-{
-    FIXME("0x%08lx %lu %p %p %p 0x%08lx %p: stub\n", dev, prop, regdatatype, buf, len, flags, machine);
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Get_DevNode_Registry_Property_ExW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_DevNode_Registry_Property_ExW(DEVINST dev, ULONG prop, PULONG regdatatype,
-    PVOID buf, PULONG len, ULONG flags, HMACHINE machine)
-{
-    FIXME("0x%08lx %lu %p %p %p 0x%08lx %p: stub\n", dev, prop, regdatatype, buf, len, flags, machine);
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Get_DevNode_Registry_PropertyA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyA(DEVINST dev, ULONG prop, PULONG regdatatype,
-    PVOID buf, PULONG len, ULONG flags)
-{
-    return CM_Get_DevNode_Registry_Property_ExA(dev, prop, regdatatype, buf, len, flags, NULL);
-}
-
-/***********************************************************************
- *      CM_Get_DevNode_Registry_PropertyW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyW(DEVINST dev, ULONG prop, PULONG regdatatype,
-    PVOID buf, PULONG len, ULONG flags)
-{
-    return CM_Get_DevNode_Registry_Property_ExW(dev, prop, regdatatype, buf, len, flags, NULL);
-}
-
-/***********************************************************************
  *      CM_Get_DevNode_Status (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_DevNode_Status(ULONG *status, ULONG *problem, DEVINST dev,
