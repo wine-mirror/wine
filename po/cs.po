@@ -4265,7 +4265,7 @@ msgstr "Očekáván objekt typu pole"
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr ""
 

@@ -4304,7 +4304,7 @@ msgstr "Objeto array esperado"
 msgid "Property cannot have both accessors and a value"
 msgstr "La propiedad no puede tener tanto descriptores de acceso como un valor"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "DLL de núcle Wine"
 

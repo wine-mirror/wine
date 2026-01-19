@@ -4170,7 +4170,7 @@ msgstr "期望得到 ArrayBuffer 对象"
 msgid "Property cannot have both accessors and a value"
 msgstr "属性不能同时包含存取器和值"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Wine kernel DLL"
 

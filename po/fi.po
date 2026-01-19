@@ -4218,7 +4218,7 @@ msgstr "Odotettiin ArrayBuffer-objektia"
 msgid "Property cannot have both accessors and a value"
 msgstr "Ominaisuudella ei voi olla sekä hakufunktiota että arvoa"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Winen ydin-DLL"
 

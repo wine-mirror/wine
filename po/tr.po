@@ -4277,7 +4277,7 @@ msgstr "Beklenen dizi nesnesi"
 msgid "Property cannot have both accessors and a value"
 msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Wine çekirdek DLL'si"
 

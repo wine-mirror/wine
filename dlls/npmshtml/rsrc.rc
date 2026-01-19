@@ -18,9 +18,9 @@
 
 #define WINE_FILEDESCRIPTION_STR "Wine ActiveX plugin"
 #define WINE_FILENAME_STR "npmshtml.dll"
-#define WINE_CODEPAGE 04E4 /* need to set "Windows Multilingual" */
-#define WINE_EXTRAVALUES \
-    VALUE "OLESelfRegister", "" \
-    VALUE "MIMEType", "application/x-oleobject"
+#define VER_VERSION_UNICODE_LANG "040904E4" /* need to set "Windows Multilingual" */
+#define VER_VERSION_TRANSLATION 0x0409,0x04E4
+#define VER_OLESELFREGISTER
+#define VER_EXTRAVALUES VALUE "MIMEType", "application/x-oleobject"
 
 #include "wine/wine_common_ver.rc"

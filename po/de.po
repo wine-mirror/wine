@@ -4280,7 +4280,7 @@ msgstr "Array-Objekt erwartet"
 msgid "Property cannot have both accessors and a value"
 msgstr "Eigenschaft kann nicht sowohl Accessoren als auch einen Wert haben"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Wine-Kernel-DLL"
 

@@ -4234,7 +4234,7 @@ msgstr "預期為陣列物件"
 msgid "Property cannot have both accessors and a value"
 msgstr "屬性不可同時有存取子和值"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Wine 核心 DLL"
 

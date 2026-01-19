@@ -4204,7 +4204,7 @@ msgstr "ArrayBuffer 개체가 필요합니다"
 msgid "Property cannot have both accessors and a value"
 msgstr "속성에 접근자와 값을 둘 다 지정할 수는 없습니다"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Wine 커널 DLL"
 

@@ -4222,7 +4222,7 @@ msgstr "ArrayBuffer object expected"
 msgid "Property cannot have both accessors and a value"
 msgstr "Property cannot have both accessors and a value"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Wine kernel DLL"
 

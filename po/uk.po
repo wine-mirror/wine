@@ -4298,7 +4298,7 @@ msgstr "Очікується об'єкт Array"
 msgid "Property cannot have both accessors and a value"
 msgstr "Властивість не може одночасно мати доступ і значення"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Бібліотека ядра Wine"
 

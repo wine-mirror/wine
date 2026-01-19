@@ -21,117 +21,42 @@
 #pragma makedep header
 #endif
 
-#include "winresrc.h"
-
-/*
-Assign WINE_FILEVERSION and WINE_FILEVERSION_STR high enough number
-to make sure that programs, relying on the version numbers, will
-never complain.
-*/
-
-#ifndef WINE_FILEVERSION
-#define WINE_FILEVERSION 10,0,0,0
+#ifdef WINE_FILEVERSION
+#define VER_PRODUCTVERSION WINE_FILEVERSION
 #endif
 
-#define WINE_VER_STRINGIZE2(x) #x
-#define WINE_VER_STRINGIZE(x) WINE_VER_STRINGIZE2(x)
-#define WINE_VER_HEXPREFIX2(x) 0x ## x
-#define WINE_VER_HEXPREFIX(x) WINE_VER_HEXPREFIX2(x)
-#define WINE_VER_VERSTRING2(major,minor,build,platform) #major "." #minor "." #build "." #platform
-#define WINE_VER_VERSTRING(x) WINE_VER_VERSTRING2(x)
-
-#ifndef WINE_FILEVERSION_STR
-#define WINE_FILEVERSION_STR WINE_VER_VERSTRING(WINE_FILEVERSION)
-#endif
-
-#ifndef WINE_FILEDESCRIPTION_STR
-#define WINE_FILEDESCRIPTION_STR "Wine core dll"
-#endif
-
-#ifndef WINE_FILENAME
-#define WINE_FILENAME ""
-#endif
-
-#ifndef WINE_FILENAME_STR
-#define WINE_FILENAME_STR ""
-#endif
-
-#ifndef WINE_FILETYPE
-#define WINE_FILETYPE VFT_DLL
-#endif
-
-#ifndef WINE_FILESUBTYPE
-#define WINE_FILESUBTYPE VFT2_UNKNOWN
-#endif
-
-#ifndef WINE_LEGALCOPYRIGHT
-#define WINE_LEGALCOPYRIGHT "Copyright (c) 1993-2026 the Wine project authors (see the file AUTHORS for a complete list)"
-#endif
-
-#ifndef WINE_PRODUCTVERSION
-#define WINE_PRODUCTVERSION WINE_FILEVERSION
-#endif
-
-#ifndef WINE_PRODUCTVERSION_STR
-#define WINE_PRODUCTVERSION_STR WINE_VER_VERSTRING(WINE_PRODUCTVERSION)
-#endif
-
-#ifndef WINE_PRODUCTNAME_STR
-#define WINE_PRODUCTNAME_STR "Wine"
-#endif
-
-#ifndef WINE_EXTRAVALUES
-#define WINE_EXTRAVALUES
-#endif
-
-#ifndef WINE_CODEPAGE
-#ifdef _WIN32
-#define WINE_CODEPAGE 04B0 /* CP1200 (Unicode) */
+#ifdef WINE_FILEDESCRIPTION_STR
+#define VER_FILEDESCRIPTION_STR WINE_FILEDESCRIPTION_STR
 #else
-#define WINE_CODEPAGE 04E4 /* CP1252 for Win16 */
-#endif
-#endif
-
-#ifndef WINE_CODEPAGE_STR
-#define WINE_CODEPAGE_STR WINE_VER_STRINGIZE(WINE_CODEPAGE)
+#define VER_FILEDESCRIPTION_STR "Wine core dll"
 #endif
 
-#ifndef WINE_CODEPAGE_HEX
-#define WINE_CODEPAGE_HEX WINE_VER_HEXPREFIX(WINE_CODEPAGE)
+#ifdef WINE_PRODUCTNAME_STR
+#define VER_PRODUCTNAME_STR WINE_PRODUCTNAME_STR
+#else
+#define VER_PRODUCTNAME_STR "Wine"
 #endif
 
-#ifndef WINE_LANGID
-#define WINE_LANGID 0409 /* LANG_ENGLISH/SUBLANG_DEFAULT */
+#ifdef WINE_PRODUCTVERSION_STR
+#define VER_PRODUCTVERSION_STR WINE_PRODUCTVERSION_STR
 #endif
-#define WINE_LANGID_STR WINE_VER_STRINGIZE(WINE_LANGID)
-#define WINE_LANGID_HEX WINE_VER_HEXPREFIX(WINE_LANGID)
 
-VS_VERSION_INFO VERSIONINFO
-FILEVERSION    WINE_FILEVERSION
-PRODUCTVERSION WINE_PRODUCTVERSION
-FILEFLAGSMASK  63
-FILEFLAGS      0
-FILEOS         VOS_UNKNOWN
-FILETYPE       WINE_FILETYPE
-FILESUBTYPE    WINE_FILESUBTYPE
-{
-    BLOCK "StringFileInfo"
-    {
-	BLOCK WINE_LANGID_STR WINE_CODEPAGE_STR
-	{
-	    VALUE "CompanyName", "Microsoft Corporation" /* GameGuard depends on this */
-	    VALUE "FileDescription", WINE_FILEDESCRIPTION_STR
-	    VALUE "FileVersion", WINE_FILEVERSION_STR
-	    VALUE "InternalName", WINE_FILENAME
-	    VALUE "LegalCopyright", WINE_LEGALCOPYRIGHT
-	    VALUE "OriginalFilename", WINE_FILENAME_STR
-	    VALUE "ProductName", WINE_PRODUCTNAME_STR
-	    VALUE "ProductVersion", WINE_PRODUCTVERSION_STR
-	    WINE_EXTRAVALUES
-	}
-    }
-    BLOCK "VarFileInfo"
-    {
-        VALUE "Translation", WINE_LANGID_HEX, WINE_CODEPAGE_HEX
-    }
-}
+#ifdef WINE_FILENAME
+#define VER_INTERNALNAME_STR WINE_FILENAME
+#else
+#define VER_INTERNALNAME_STR ""
+#endif
+
+#ifdef WINE_FILENAME_STR
+#define VER_ORIGINALFILENAME_STR WINE_FILENAME_STR
+#endif
+
+#ifdef WINE_FILETYPE
+#define VER_FILETYPE WINE_FILETYPE
+#endif
+
+#ifdef WINE_EXTRAVALUES
+#define VER_OLESELFREGISTER
+#endif
+
+#include "common.ver"

@@ -4297,7 +4297,7 @@ msgstr "Objeto tipo vetor esperado"
 msgid "Property cannot have both accessors and a value"
 msgstr "Propriedade não pode ter ambos acessores e valor"
 
-#: include/wine/wine_common_ver.rc:123
+#: include/common.ver:77
 msgid "Wine kernel DLL"
 msgstr "Biblioteca de kernel Wine"
 
