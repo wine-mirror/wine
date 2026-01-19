@@ -39,6 +39,7 @@ SOURCES = \
 	progress.c \
 	propsheet.c \
 	rebar.c \
+	rsrc.rc \
 	smoothscroll.c \
 	static.c \
 	status.c \
@@ -50,5 +51,4 @@ SOURCES = \
 	tooltips.c \
 	trackbar.c \
 	treeview.c \
-	updown.c \
-	version.rc
+	updown.c

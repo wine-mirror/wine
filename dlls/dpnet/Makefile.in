@@ -9,6 +9,6 @@ SOURCES = \
 	dpnet_main.c \
 	lobbiedapp.c \
 	peer.c \
+	rsrc.rc \
 	server.c \
-	threadpool.c \
-	version.rc
+	threadpool.c

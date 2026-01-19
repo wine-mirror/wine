@@ -17,6 +17,7 @@ SOURCES = \
 	riched_tom.idl \
 	richole.c \
 	row.c \
+	rsrc.rc \
 	run.c \
 	string.c \
 	style.c \
@@ -24,6 +25,5 @@ SOURCES = \
 	txthost.c \
 	txtsrv.c \
 	undo.c \
-	version.rc \
 	wrap.c \
 	writer.c

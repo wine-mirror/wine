@@ -9,6 +9,6 @@ SOURCES = \
 	async.c \
 	inaddr.c \
 	protocol.c \
+	rsrc.rc \
 	socket.c \
-	unixlib.c \
-	version.rc
+	unixlib.c

@@ -25,6 +25,7 @@ SOURCES = \
 	nodemap.c \
 	parseerror.c \
 	pi.c \
+	rsrc.rc \
 	saxreader.c \
 	schema.c \
 	schemas.rc \
@@ -32,7 +33,6 @@ SOURCES = \
 	stylesheet.c \
 	text.c \
 	uuid.c \
-	version.rc \
 	xdr.c \
 	xmldoc.c \
 	xmlparser.c \

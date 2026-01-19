@@ -12,9 +12,9 @@ SOURCES = \
 	metric.c \
 	msstyles.c \
 	property.c \
+	rsrc.rc \
 	scrollbar.c \
 	stylemap.c \
 	system.c \
 	uxini.c \
-	version.rc \
 	window.c

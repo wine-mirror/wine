@@ -8,6 +8,6 @@ SOURCES = \
 	icc.c \
 	mscms_main.c \
 	profile.c \
+	rsrc.rc \
 	stub.c \
-	transform.c \
-	version.rc
+	transform.c
