@@ -3837,6 +3837,58 @@ static void init_bookmark( struct recordset *recordset )
     CoTaskMemFree( colinfo );
 }
 
+static const char* debugstr_propset_guid(const GUID *guid)
+{
+    if (IsEqualGUID(guid, &DBPROPSET_ROWSET)) return "DBPROPSET_ROWSET";
+    return wine_dbgstr_guid(guid);
+}
+
+static const char* debugstr_prop_id(const GUID *guid, DBPROPID id)
+{
+    if (IsEqualGUID(guid, &DBPROPSET_ROWSET))
+    {
+        switch (id)
+        {
+        case DBPROP_OTHERUPDATEDELETE: return "DBPROP_OTHERUPDATEDELETE";
+        case DBPROP_OTHERINSERT: return "DBPROP_OTHERINSERT";
+        case DBPROP_CANHOLDROWS: return "DBPROP_CANHOLDROWS";
+        case DBPROP_CANSCROLLBACKWARDS: return "DBPROP_CANSCROLLBACKWARDS";
+        case DBPROP_UPDATABILITY: return "DBPROP_UPDATABILITY";
+        case DBPROP_IRowsetLocate: return "DBPROP_IRowsetLocate";
+        case DBPROP_IRowsetScroll: return "DBPROP_IRowsetScroll";
+        case DBPROP_IRowsetUpdate: return "DBPROP_IRowsetUpdate";
+        case DBPROP_IRowsetResynch: return "DBPROP_IRowsetResynch";
+        case DBPROP_IConnectionPointContainer: return "DBPROP_IConnectionPointContainer";
+        case DBPROP_BOOKMARKSKIPPED: return "DBPROP_BOOKMARKSKIPPED";
+        case DBPROP_IRowsetFind: return "DBPROP_IRowsetFind";
+        case DBPROP_IRowsetRefresh: return "DBPROP_IRowsetRefresh";
+        case DBPROP_LOCKMODE: return "DBPROP_LOCKMODE";
+        case DBPROP_IRowsetIndex: return "DBPROP_IRowsetIndex";
+        case DBPROP_IRowsetCurrentIndex: return "DBPROP_IRowsetCurrentIndex";
+        case DBPROP_REMOVEDELETED: return "DBPROP_REMOVEDELETED";
+        }
+    }
+
+    return wine_dbg_sprintf( "%lx", id );
+}
+
+static void dump_recordset_properties(struct recordset *recordset)
+{
+    ULONG i, j;
+
+    for (i = 0; i < recordset->prop_count; i++)
+    {
+        for (j = 0; j < recordset->prop[i].cProperties; j++)
+        {
+            const GUID *guid = &recordset->prop[i].guidPropertySet;
+            DBPROP *prop = recordset->prop[i].rgProperties + j;
+
+            TRACE( "%p %s (%lx) %s = %s\n", recordset, debugstr_propset_guid(guid), prop->dwStatus,
+                    debugstr_prop_id(guid, prop->dwPropertyID), wine_dbgstr_variant(&prop->vValue));
+        }
+    }
+}
+
 static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *unk)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
@@ -3883,6 +3935,8 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
         IRowsetInfo_GetProperties( rowset_info, 1, &propidset,
                 &recordset->prop_count, &recordset->prop);
         IRowsetInfo_Release( rowset_info );
+        if (TRACE_ON( msado15 ))
+            dump_recordset_properties( recordset );
     }
 
     if (recordset_get_prop( recordset, &DBPROPSET_ROWSET, DBPROP_UPDATABILITY, &v ) && V_I4( &v ))
