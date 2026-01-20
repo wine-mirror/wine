@@ -424,10 +424,11 @@ static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BST
 
     hr = ADOConnectionConstruction15_WrapDSOandSession(
             &connection->ADOConnectionConstruction15_iface, (IUnknown *)dso, session );
-    if (hr == S_OK)
+    if (SUCCEEDED(hr))
     {
         connection->dso_initialized = TRUE;
         dso_initialized = FALSE;
+        hr = S_OK;
     }
 done:
     if (session) IUnknown_Release( session );
