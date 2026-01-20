@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-#define WINE_FILEDESCRIPTION_STR "Wine kernel DLL"
-#define WINE_FILENAME_STR "kernel32.dll"
+#define VER_FILEDESCRIPTION_STR "Wine kernel DLL"
+#define VER_INTERNALNAME_STR "kernel32.dll"
 
-#include "wine/wine_common_ver.rc"
+#include "common.ver"
