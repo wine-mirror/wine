@@ -836,7 +836,7 @@ static void create_computer_name_keys(void)
     hints.ai_flags = AI_CANONNAME;
     if (getaddrinfo( buffer, NULL, &hints, &res ) != 0)
         res = NULL;
-    else if (strcasecmp( res->ai_canonname, "localhost" ) != 0)
+    else if (res->ai_canonname && strcasecmp( res->ai_canonname, "localhost" ) != 0)
         name = res->ai_canonname;
     dot = strchr( name, '.' );
     if (dot) *dot++ = 0;
