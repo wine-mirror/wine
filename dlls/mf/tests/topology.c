@@ -247,6 +247,8 @@ static void init_sink_node(IMFStreamSink *stream_sink, MF_CONNECT_METHOD method,
     }
 }
 
+static LONG sequence_count;
+
 struct test_transform
 {
     IMFTransform IMFTransform_iface;
@@ -258,6 +260,8 @@ struct test_transform
     UINT input_count;
     IMFMediaType **input_types;
     IMFMediaType *input_type;
+    LONG set_input_sequence_id;
+    LONG set_output_sequence_id;
 
     UINT output_count;
     IMFMediaType **output_types;
@@ -267,6 +271,7 @@ struct test_transform
     BOOL input_type_set;
     BOOL output_type_set;
     BOOL set_input_nulls_output;
+    BOOL validate_output_type;
 
     IDirect3DDeviceManager9 *expect_d3d9_device_manager;
     BOOL got_d3d9_device_manager;
@@ -437,6 +442,9 @@ static HRESULT WINAPI test_transform_SetInputType(IMFTransform *iface, DWORD id,
 
     if (type)
     {
+        if (!transform->set_input_sequence_id)
+            transform->set_input_sequence_id = InterlockedIncrement(&sequence_count);
+
         for (i = 0; i < transform->input_count; ++i)
         {
             if (IMFMediaType_Compare(transform->input_types[i], (IMFAttributes *)type,
@@ -473,10 +481,25 @@ static HRESULT WINAPI test_transform_SetOutputType(IMFTransform *iface, DWORD id
     struct test_transform *transform = test_transform_from_IMFTransform(iface);
     if (flags & MFT_SET_TYPE_TEST_ONLY)
         return S_OK;
+    if (type && transform->validate_output_type)
+    {
+        BOOL result;
+        UINT i;
+        for (i = 0; i < transform->output_count; ++i)
+        {
+            if (IMFMediaType_Compare(transform->output_types[i], (IMFAttributes *)type,
+                    MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result) == S_OK && result)
+                break;
+        }
+        if (i == transform->output_count)
+            return MF_E_INVALIDMEDIATYPE;
+    }
     if (transform->output_type)
         IMFMediaType_Release(transform->output_type);
     if ((transform->output_type = type))
     {
+        if (!transform->set_output_sequence_id)
+            transform->set_output_sequence_id = InterlockedIncrement(&sequence_count);
         transform->output_type_set = TRUE;
         IMFMediaType_AddRef(transform->output_type);
     }
@@ -1739,7 +1762,7 @@ struct test_handler
     ULONG media_types_count;
     IMFMediaType **media_types;
     BOOL enum_complete;
-    BOOL is_supported_called;
+    LONG is_supported_sequence_id;
 };
 
 static struct test_handler *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
@@ -1777,7 +1800,8 @@ static HRESULT WINAPI test_handler_IsMediaTypeSupported(IMFMediaTypeHandler *ifa
     BOOL result;
     ULONG i;
 
-    impl->is_supported_called = TRUE;
+    if (!impl->is_supported_sequence_id)
+        impl->is_supported_sequence_id = InterlockedIncrement(&sequence_count);
 
     if (out_type)
         *out_type = NULL;
@@ -2265,6 +2289,9 @@ enum loader_test_flags
     LOADER_TEST_MFT_EXPECT_CONVERTER = 0x2000,
     LOADER_EXPECT_MFT_OUTPUT_ENUMERATED = 0x4000,
     LOADER_EXPECT_MFT_INPUT_ENUMERATED = 0x8000,
+    LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM = 0x10000,
+    LOADER_EXPECT_MFT_OUTPUT_ENUMERATED_TODO = 0x20000,
+    LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO = 0x40000,
 };
 
 static void test_topology_loader(void)
@@ -2473,6 +2500,8 @@ static void test_topology_loader(void)
         const media_type_desc *output_types[2];
         const media_type_desc *mft_input_types[3];
         const media_type_desc *mft_output_types[5];
+        const media_type_desc *optional_mft_input_types[2]; /* one per node */
+        const media_type_desc *optional_mft_output_type;
         const media_type_desc *current_input;
         const media_type_desc *mft_current_output;
         const media_type_desc *decoded_type;
@@ -2482,6 +2511,8 @@ static void test_topology_loader(void)
         HRESULT expected_result;
         unsigned int mft_current_input_1based_index;
         unsigned int expected_output_index;
+        unsigned int optional_mft_count;
+        BOOL expect_optional_mft_rejected[2];
         unsigned int flags;
         GUID decoder_class;
         GUID converter_class;
@@ -2865,10 +2896,138 @@ static void test_topology_loader(void)
             .expected_result = S_OK,
             .flags = LOADER_ADD_TEST_MFT,
         },
+
+        {
+            /* H264 -> NV12, add optional test MFT and test MFT */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_count = 1,
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+        },
+        {
+            /* H264 -> NV12, add two optional test MFTs and test MFT */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_count = 2,
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+        },
+        {
+            /* H264 -> NV12, add unconnectable optional test MFT and test MFT */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_input_types = {&video_yuy2_1280},
+            .optional_mft_count = 1, .expect_optional_mft_rejected = {TRUE},
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+        },
+        {
+            /* H264 -> NV12, add unconnectable optional test MFT, connectable optional test MFT and test MFT */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_input_types = {&video_yuy2_1280, &video_nv12_1280},
+            .optional_mft_count = 2, .expect_optional_mft_rejected = {TRUE, FALSE},
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+        },
+        {
+            /* #60 H264 -> NV12, add connectable optional test MFT, unconnectable optional test MFT and test MFT */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_input_types = {&video_nv12_1280, &video_yuy2_1280},
+            .optional_mft_count = 2, .expect_optional_mft_rejected = {FALSE, TRUE},
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+        },
+        {
+            /* H264 -> NV12, add two unconnectable optional test MFTs and test MFT */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_input_types = {&video_yuy2_1280, &video_yuy2_1280},
+            .optional_mft_count = 2, .expect_optional_mft_rejected = {TRUE, TRUE},
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+        },
+        {
+            /* H264 -> NV12, add optional test MFT and test MFT, require test MFT input change for optional */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280, &video_yuy2_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_output_type = &video_yuy2_1280,
+            .optional_mft_count = 1,
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+        },
+        {
+            /* H264 -> NV12, add test MFT and optional test MFT */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_count = 1,
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
+        },
+        {
+            /* H264 -> NV12, add test MFT and optional test MFT, require sink input change for optional */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280, &video_yuy2_1280}, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_output_type = &video_yuy2_1280,
+            .optional_mft_count = 1,
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_NO_CURRENT_OUTPUT | LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
+        },
+        {
+            /* H264 -> NV12, add test MFT and optional test MFT, require test MFT output change for optional */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280, &video_yuy2_1280},
+            .optional_mft_input_types = {&video_yuy2_1280},
+            .optional_mft_count = 1,
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_NO_CURRENT_OUTPUT | LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM | LOADER_EXPECT_MFT_INPUT_ENUMERATED | LOADER_EXPECT_MFT_OUTPUT_ENUMERATED_TODO,
+        },
+        {
+            /* H264 -> NV12, add test MFT and unconnectable optional test MFT, converter is not added for optional connection */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .optional_mft_output_type = &video_yuy2_1280,
+            .optional_mft_count = 1, .expect_optional_mft_rejected = {TRUE},
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
+        },
+
+        {
+            /* PCM -> PCM, optional sink */
+            .input_types = {&audio_pcm_44100}, .output_types = {&audio_pcm_44100}, .sink_method = MF_CONNECT_AS_OPTIONAL, .source_method = -1,
+            .expected_result = MF_E_TOPO_UNSUPPORTED,
+            .flags = LOADER_TODO,
+        },
+        {
+            /* PCM -> PCM, optional source is ignored */
+            .input_types = {&audio_pcm_44100}, .output_types = {&audio_pcm_44100}, .sink_method = -1, .source_method = MF_CONNECT_AS_OPTIONAL,
+            .expected_result = S_OK,
+        },
+        {
+            /* H264 -> NV12, optional sink */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = MF_CONNECT_AS_OPTIONAL | MF_CONNECT_ALLOW_DECODER, .source_method = -1,
+            .expected_result = MF_E_TOPO_UNSUPPORTED, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_TODO,
+        },
+        {
+            /* #70 H264 -> NV12, optional source is ignored */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = MF_CONNECT_AS_OPTIONAL,
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+        },
+        {
+            /* H264 -> NV12, add test MFT, optional source is ignored */
+            .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = MF_CONNECT_AS_OPTIONAL,
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
+            .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
+        },
     };
 
     IMFTopologyNode *src_node, *sink_node, *src_node2, *sink_node2, *mft_node;
     IMFSampleGrabberSinkCallback *grabber_callback = create_test_grabber_callback();
+    TOPOID node_id, oldtopoid, newtopoid, optional_mft_node_id[2];
     IMFMediaType *media_type, *input_types[2], *output_types[2];
     struct test_stream_sink stream_sink = test_stream_sink;
     IMFTopology *topology, *topology2, *full_topology;
@@ -2883,7 +3042,6 @@ static void test_topology_loader(void)
     IMFTopoLoader *loader;
     IUnknown *node_object;
     WORD node_count;
-    TOPOID node_id, oldtopoid, newtopoid;
     DWORD index;
     HRESULT hr;
     BOOL ret;
@@ -3009,8 +3167,10 @@ static void test_topology_loader(void)
 
     for (i = 0; i < ARRAY_SIZE(loader_tests); ++i)
     {
+        struct test_transform *test_transform = NULL, *optional_transforms[2] = {0};
         const struct loader_test *test = &loader_tests[i];
-        struct test_transform *test_transform = NULL;
+        IMFTopologyNode *optional_mft_nodes[2] = {0};
+        IMFMediaType *optional_mft_types[2] = {0};
         IMFMediaType *mft_output_types[4] = {0};
         IMFMediaType *mft_input_types[2] = {0};
 
@@ -3088,6 +3248,40 @@ static void test_topology_loader(void)
                 test_transform_create(input_count, mft_input_types, output_count, mft_output_types, FALSE, &transform);
                 test_transform = test_transform_from_IMFTransform(transform);
                 IMFTransform_AddRef(transform);
+
+                if (test->optional_mft_count)
+                {
+                    const media_type_desc *optional_desc;
+                    IMFTransform *optional_mft;
+
+                    for (j = 0; j < test->optional_mft_count; j++)
+                    {
+                        IMFMediaType **optional_input_types = &mft_input_types[0], **optional_output_types = &mft_input_types[0];
+
+                        optional_desc = test->optional_mft_input_types[j] ? test->optional_mft_input_types[j] : test->optional_mft_output_type;
+                        if (optional_desc)
+                        {
+                            hr = MFCreateMediaType(&optional_mft_types[j]);
+                            ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
+                            init_media_type(optional_mft_types[j], *optional_desc, -1);
+                            if (test->optional_mft_input_types[j])
+                                optional_input_types = &optional_mft_types[j];
+                            else
+                                optional_output_types = &optional_mft_types[j];
+                        }
+
+                        hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &optional_mft_nodes[j]);
+                        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                        hr = IMFTopologyNode_SetUINT32(optional_mft_nodes[j], &MF_TOPONODE_CONNECT_METHOD, MF_CONNECT_ALLOW_DECODER | MF_CONNECT_AS_OPTIONAL);
+                        ok(hr == S_OK, "Failed to set connect method, hr %#lx.\n", hr);
+
+                        test_transform_create(1, optional_input_types, 1, optional_output_types, FALSE, &optional_mft);
+                        hr = IMFTopologyNode_SetObject(optional_mft_nodes[j], (IUnknown *)optional_mft);
+                        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                        optional_transforms[j] = test_transform_from_IMFTransform(optional_mft);
+                        optional_transforms[j]->validate_output_type = !!test->optional_mft_output_type;
+                    }
+                }
             }
             else
             {
@@ -3126,14 +3320,56 @@ static void test_topology_loader(void)
             {
                 test_transform->input_type_set = FALSE;
                 test_transform->output_type_set = FALSE;
+                test_transform->set_input_sequence_id = 0;
+                test_transform->set_output_sequence_id = 0;
             }
 
             hr = IMFTopology_AddNode(topology, mft_node);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            hr = IMFTopologyNode_ConnectOutput(src_node, 0, mft_node, 0);
-            ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
-            hr = IMFTopologyNode_ConnectOutput(mft_node, 0, sink_node, 0);
-            ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+            if (test->optional_mft_count)
+            {
+                for (j = 0; j < test->optional_mft_count; j++)
+                {
+                    hr = IMFTopology_AddNode(topology, optional_mft_nodes[j]);
+                    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                }
+                if (test->flags & LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM)
+                {
+                    hr = IMFTopologyNode_ConnectOutput(src_node, 0, mft_node, 0);
+                    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                    hr = IMFTopologyNode_ConnectOutput(mft_node, 0, optional_mft_nodes[0], 0);
+                    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                    hr = IMFTopologyNode_ConnectOutput(optional_mft_nodes[test->optional_mft_count - 1], 0, sink_node, 0);
+                    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                }
+                else
+                {
+                    hr = IMFTopologyNode_ConnectOutput(src_node, 0, optional_mft_nodes[0], 0);
+                    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                    hr = IMFTopologyNode_ConnectOutput(optional_mft_nodes[test->optional_mft_count - 1], 0, mft_node, 0);
+                    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                    hr = IMFTopologyNode_ConnectOutput(mft_node, 0, sink_node, 0);
+                    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                }
+                if (optional_mft_nodes[1])
+                {
+                    hr = IMFTopologyNode_ConnectOutput(optional_mft_nodes[0], 0, optional_mft_nodes[1], 0);
+                    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                }
+                for (j = 0; j < test->optional_mft_count; j++)
+                {
+                    hr = IMFTopologyNode_GetTopoNodeID(optional_mft_nodes[j], &optional_mft_node_id[j]);
+                    ok(hr == S_OK, "Failed to get source node id, hr %#lx.\n", hr);
+                    IMFTopologyNode_Release(optional_mft_nodes[j]);
+                }
+            }
+            else
+            {
+                hr = IMFTopologyNode_ConnectOutput(src_node, 0, mft_node, 0);
+                ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+                hr = IMFTopologyNode_ConnectOutput(mft_node, 0, sink_node, 0);
+                ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+            }
             IMFTopologyNode_Release(mft_node);
         }
         else
@@ -3159,7 +3395,7 @@ static void test_topology_loader(void)
         ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
         ok(!count, "Unexpected count %u.\n", count);
 
-        handler.is_supported_called = FALSE;
+        handler.is_supported_sequence_id = 0;
 
         if (test->flags & LOADER_SET_ENUMERATE_SOURCE_TYPES)
             IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, 1);
@@ -3187,10 +3423,29 @@ static void test_topology_loader(void)
         }
         else if (test->expected_result == S_OK)
         {
+            BOOL expect_optional_rejected = FALSE;
+
             IMFTopology_GetTopologyID(topology, &oldtopoid);
             IMFTopology_GetTopologyID(full_topology, &newtopoid);
             ok(oldtopoid == newtopoid, "Expected the same topology id. %I64u == %I64u\n", oldtopoid, newtopoid);
             ok(topology != full_topology, "Expected a different object for the resolved topology.\n");
+
+            for (j = 0; j < test->optional_mft_count; ++j)
+            {
+                hr = IMFTopology_GetNodeByID(full_topology, optional_mft_node_id[j], &mft_node);
+                todo_wine_if(test->expect_optional_mft_rejected[j])
+                ok(hr == (test->expect_optional_mft_rejected[j] ? MF_E_NOT_FOUND : S_OK), "Unexpected hr %#lx.\n", hr);
+                expect_optional_rejected |= test->expect_optional_mft_rejected[j];
+
+                if (hr == S_OK)
+                {
+                    UINT32 method;
+                    hr = IMFTopologyNode_GetUINT32(mft_node, &MF_TOPONODE_CONNECT_METHOD, &method);
+                    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                    ok(method == (MF_CONNECT_ALLOW_DECODER | MF_CONNECT_AS_OPTIONAL), "Unexpected method %#x\n", method);
+                    IMFTopologyNode_Release(mft_node);
+                }
+            }
 
             expected_count = 1 + !!(test->flags & LOADER_SET_ENUMERATE_SOURCE_TYPES)
                     + !!(test->flags & LOADER_SET_XVP_FOR_PLAYBACK);
@@ -3203,9 +3458,10 @@ static void test_topology_loader(void)
             hr = IMFTopology_GetUINT32(full_topology, &MF_TOPOLOGY_RESOLUTION_STATUS, &value);
 todo_wine {
             ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
-            ok(value == MF_TOPOLOGY_RESOLUTION_SUCCEEDED, "Unexpected value %#x.\n", value);
+            ok(value == (expect_optional_rejected ? MF_OPTIONAL_NODE_REJECTED_MEDIA_TYPE : MF_TOPOLOGY_RESOLUTION_SUCCEEDED),
+                    "Unexpected value %#x.\n", value);
 }
-            count = 2 + !!test_transform;
+            count = 2 + !!test_transform + test->optional_mft_count - test->expect_optional_mft_rejected[0] - test->expect_optional_mft_rejected[1];
             if (!IsEqualGUID(&test->decoder_class, &GUID_NULL))
                 count++;
             if (!IsEqualGUID(&test->converter_class, &GUID_NULL))
@@ -3213,6 +3469,7 @@ todo_wine {
 
             hr = IMFTopology_GetNodeCount(full_topology, &node_count);
             ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
+            todo_wine_if(expect_optional_rejected)
             ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             hr = IMFTopologyNode_GetTopoNodeID(src_node, &node_id);
@@ -3238,7 +3495,37 @@ todo_wine {
             if (hr == S_OK)
                 IMFMediaType_Release(media_type);
 
-            ok(handler.is_supported_called, "Sink input support not checked.\n");
+            ok(!!handler.is_supported_sequence_id, "Sink input sequence id not set.\n");
+
+            if (optional_transforms[0])
+            {
+                ok(!!optional_transforms[0]->set_input_sequence_id, "Optional transform input sequence id not set.\n");
+                ok(!!test_transform->set_input_sequence_id, "Test transform input sequence id not set.\n");
+                ok(!!test_transform->set_output_sequence_id, "Test transform output sequence id not set.\n");
+                if (test->flags & LOADER_ADD_OPTIONAL_TEST_MFT_DOWNSTREAM)
+                {
+                    todo_wine
+                    ok(optional_transforms[0]->set_input_sequence_id > handler.is_supported_sequence_id,
+                            "Optional transform input was not configured after the sink input.\n");
+                }
+                else
+                {
+                    todo_wine
+                    ok(optional_transforms[0]->set_input_sequence_id > test_transform->set_input_sequence_id,
+                            "Optional transform input was not configured after the non-optional one.\n");
+                    if (optional_transforms[0]->set_output_sequence_id)
+                    {
+                        /* Non-optional transform is connected to its downstream node after the optional
+                         * node is inserted upstream, i.e. after each branch is connected, its optional
+                         * nodes are inserted before the next branch is connected. */
+                        todo_wine
+                        ok(optional_transforms[0]->set_output_sequence_id < test_transform->set_output_sequence_id,
+                                "Optional transform output was not configured before the non-optional one.\n");
+                    }
+                }
+                for (j = 0; j < test->optional_mft_count; j++)
+                    IMFTransform_Release(&optional_transforms[j]->IMFTransform_iface);
+            }
 
             if (!IsEqualGUID(&test->decoder_class, &GUID_NULL))
             {
@@ -3386,6 +3673,10 @@ todo_wine {
             ok(oldtopoid == newtopoid, "Expected the same topology id. %I64u == %I64u\n", oldtopoid, newtopoid);
             hr = IMFTopology_GetUINT32(topology2, &IID_IMFTopology, &value);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            hr = IMFTopology_GetNodeCount(topology2, &node_count);
+            ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
+            todo_wine_if(expect_optional_rejected)
+            ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             ref = IMFTopology_Release(topology2);
             ok(ref == 0, "Release returned %ld\n", ref);
@@ -3407,10 +3698,11 @@ todo_wine {
 
         if (test_transform)
         {
-            ok(test_transform->input_enum_complete == !!(test->flags & LOADER_EXPECT_MFT_INPUT_ENUMERATED),
+            todo_wine_if(test->flags & LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO)
+            ok(test_transform->input_enum_complete == !!(test->flags & (LOADER_EXPECT_MFT_INPUT_ENUMERATED | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO)),
                     "got transform input_enum_complete %u\n", test_transform->input_enum_complete);
-            todo_wine_if(test_transform->output_enum_complete && (test->flags & LOADER_TODO))
-            ok(test_transform->output_enum_complete == !!(test->flags & LOADER_EXPECT_MFT_OUTPUT_ENUMERATED),
+            todo_wine_if((test->flags & LOADER_EXPECT_MFT_OUTPUT_ENUMERATED_TODO) || (test_transform->output_enum_complete && (test->flags & LOADER_TODO)))
+            ok(test_transform->output_enum_complete == !!(test->flags & (LOADER_EXPECT_MFT_OUTPUT_ENUMERATED | LOADER_EXPECT_MFT_OUTPUT_ENUMERATED_TODO)),
                     "got transform output_enum_complete %u\n", test_transform->output_enum_complete);
             ok(test_transform->input_type_set == (test->expected_result != MF_E_TOPO_CODEC_NOT_FOUND),
                     "Got transform input_type_set %u.\n", test_transform->input_type_set);
@@ -3437,6 +3729,8 @@ todo_wine {
         ok(ref == 0, "Release returned %ld\n", ref);
         for (j = 0; j < ARRAY_SIZE(mft_input_types) && mft_input_types[j]; ++j)
             IMFMediaType_Release(mft_input_types[j]);
+        for (j = 0; j < ARRAY_SIZE(optional_mft_types) && optional_mft_types[j]; ++j)
+            IMFMediaType_Release(optional_mft_types[j]);
         for (j = 0; j < ARRAY_SIZE(mft_output_types) && mft_output_types[j]; ++j)
             IMFMediaType_Release(mft_output_types[j]);
 
