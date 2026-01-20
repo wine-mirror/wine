@@ -102,7 +102,7 @@ PSSTDAPI InitPropVariantFromStringVector(PCWSTR *strs, ULONG count, PROPVARIANT 
 
 PSSTDAPI PropVariantToDouble(REFPROPVARIANT propvarIn, double *ret);
 PSSTDAPI PropVariantToFileTime(REFPROPVARIANT propvar, PSTIME_FLAGS flags, FILETIME *out);
-PSSTDAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid);
+PSSTDAPI PropVariantToGUID(REFPROPVARIANT ppropvar, GUID *guid);
 PSSTDAPI PropVariantToInt16(REFPROPVARIANT propvarIn, SHORT *ret);
 PSSTDAPI PropVariantToInt32(REFPROPVARIANT propvarIn, LONG *ret);
 PSSTDAPI PropVariantToInt64(REFPROPVARIANT propvarIn, LONGLONG *ret);

@@ -991,7 +991,7 @@ static inline HRESULT PROPVAR_WCHARToGUID(const WCHAR *str, int len, GUID *guid)
     return S_OK;
 }
 
-HRESULT WINAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid)
+HRESULT WINAPI PropVariantToGUID(REFPROPVARIANT ppropvar, GUID *guid)
 {
     TRACE("%p %p)\n", ppropvar, guid);
 
