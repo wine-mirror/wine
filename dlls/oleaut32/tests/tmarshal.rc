@@ -18,11 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+#define VER_FILEDESCRIPTION_STR "Wine tests for oleaut32"
+#define VER_INTERNALNAME_STR "oleaut32_test.exe"
+#define VER_FILETYPE VFT_APP
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "wine/wine_common_ver.rc"
+#include "common.ver"
