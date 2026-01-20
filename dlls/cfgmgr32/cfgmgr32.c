@@ -137,7 +137,7 @@ LSTATUS init_property( struct property *prop, const DEVPROPKEY *key, DEVPROPTYPE
     if (!key) return ERROR_INVALID_PARAMETER;
     if (!(prop->type = type) || !(prop->size = size)) return ERROR_INVALID_USER_BUFFER;
     if (!(prop->buffer = buffer) && (*prop->size)) return ERROR_INVALID_USER_BUFFER;
-    prop->ansi = FALSE;
+    prop->flags = PROP_FLAG_BINARY;
     prop->key = *key;
     prop->reg_type = NULL;
     return ERROR_SUCCESS;
@@ -148,7 +148,7 @@ static LSTATUS init_registry_property( struct property *prop, const DEVPROPKEY *
     if (!(prop->size = size)) return ERROR_INVALID_USER_BUFFER;
     if (!(prop->buffer = buffer) && (*prop->size)) return ERROR_INVALID_USER_BUFFER;
     prop->type = NULL;
-    prop->ansi = ansi;
+    prop->flags = ansi ? PROP_FLAG_ANSI : 0;
     memcpy( &prop->key, base, sizeof(prop->key) );
     prop->key.pid = property + 1;
     prop->reg_type = type;
@@ -175,12 +175,24 @@ static LSTATUS query_named_property( HKEY hkey, const WCHAR *nameW, DEVPROPTYPE 
 {
     LSTATUS err;
 
-    if (!prop->ansi) err = RegQueryValueExW( hkey, nameW, NULL, prop->reg_type, prop->buffer, prop->size );
-    else
+    if (prop->flags & PROP_FLAG_ANSI)
     {
         char nameA[MAX_PATH];
         if (nameW) WideCharToMultiByte( CP_ACP, 0, nameW, -1, nameA, sizeof(nameA), NULL, NULL );
         err = RegQueryValueExA( hkey, nameW ? nameA : NULL, NULL, prop->reg_type, prop->buffer, prop->size );
+    }
+    else if (type == DEVPROP_TYPE_GUID && (prop->flags & PROP_FLAG_BINARY))
+    {
+        WCHAR buffer[39];
+        DWORD len = *prop->size >= sizeof(GUID) ? sizeof(buffer) : 0;
+
+        if (!(err = RegQueryValueExW( hkey, nameW, NULL, prop->reg_type, (BYTE *)buffer, &len )))
+            err = guid_from_string( buffer, prop->buffer );
+        *prop->size = sizeof(GUID);
+    }
+    else
+    {
+        err = RegQueryValueExW( hkey, nameW, NULL, prop->reg_type, prop->buffer, prop->size );
     }
 
     if (!err && !prop->buffer) err = ERROR_MORE_DATA;
@@ -201,6 +213,11 @@ static LSTATUS return_property( struct property *prop, DEVPROPTYPE type, const v
 static LSTATUS return_property_bool( struct property *prop, DEVPROP_BOOLEAN value )
 {
     return return_property( prop, DEVPROP_TYPE_BOOLEAN, &value, sizeof(value) );
+}
+
+static LSTATUS return_property_string( struct property *prop, const WCHAR *value )
+{
+    return return_property( prop, DEVPROP_TYPE_STRING, value, (wcslen( value ) + 1) * sizeof(WCHAR) );
 }
 
 static LSTATUS enum_objects_size( HKEY hkey, const void *object, const WCHAR *path, UINT path_len, void *context )
@@ -612,10 +629,85 @@ static const struct property_desc device_properties[] =
     { &DEVPKEY_Device_InstallState,                 DEVPROP_TYPE_UINT32,                        L"InstallState" },
     { &DEVPKEY_Device_LocationPaths,                DEVPROP_TYPE_STRING_LIST,                   L"LocationPaths" },
     { &DEVPKEY_Device_BaseContainerId,              DEVPROP_TYPE_GUID,                          L"BaseContainerId" },
+    /* unicode-only properties */
+    { &DEVPKEY_Device_InstanceId,                   DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_DevNodeStatus,                DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_ProblemCode,                  DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_EjectionRelations,            DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_RemovalRelations,             DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_PowerRelations,               DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_BusRelations,                 DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_Parent,                       DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_Children,                     DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_Siblings,                     DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_TransportRelations,           DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_ProblemStatus,                DEVPROP_TYPE_NTSTATUS },
+    { &DEVPKEY_Device_Reported,                     DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_Legacy,                       DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_ContainerId,                  DEVPROP_TYPE_GUID,                          L"ContainerId" },
+    { &DEVPKEY_Device_InLocalMachineContainer,      DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_Model,                        DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_ModelId,                      DEVPROP_TYPE_GUID },
+    { &DEVPKEY_Device_FriendlyNameAttributes,       DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_ManufacturerAttributes,       DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_PresenceNotForDevice,         DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_SignalStrength,               DEVPROP_TYPE_INT32 },
+    { &DEVPKEY_Device_IsAssociateableByUserAction,  DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_ShowInUninstallUI,            DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_Numa_Proximity_Domain,        DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_DHP_Rebalance_Policy,         DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_Numa_Node,                    DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_BusReportedDeviceDesc,        DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_IsPresent,                    DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_HasProblem,                   DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_ConfigurationId,              DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_ReportedDeviceIdsHash,        DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_PhysicalDeviceLocation,       DEVPROP_TYPE_BINARY },
+    { &DEVPKEY_Device_BiosDeviceName,               DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_DriverProblemDesc,            DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_DebuggerSafe,                 DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_PostInstallInProgress,        DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_Stack,                        DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_ExtendedConfigurationIds,     DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_IsRebootRequired,             DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_FirmwareDate,                 DEVPROP_TYPE_FILETIME },
+    { &DEVPKEY_Device_FirmwareVersion,              DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_FirmwareRevision,             DEVPROP_TYPE_STRING },
+    { &DEVPKEY_Device_DependencyProviders,          DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_DependencyDependents,         DEVPROP_TYPE_STRING_LIST },
+    { &DEVPKEY_Device_SoftRestartSupported,         DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_ExtendedAddress,              DEVPROP_TYPE_UINT64 },
+    { &DEVPKEY_Device_SessionId,                    DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_InstallDate,                  DEVPROP_TYPE_FILETIME },
+    { &DEVPKEY_Device_FirstInstallDate,             DEVPROP_TYPE_FILETIME },
+    { &DEVPKEY_Device_LastArrivalDate,              DEVPROP_TYPE_FILETIME },
+    { &DEVPKEY_Device_LastRemovalDate,              DEVPROP_TYPE_FILETIME },
+    { &DEVPKEY_Device_DriverDate,                   DEVPROP_TYPE_FILETIME,                      L"DriverDateData" },
+    { &DEVPKEY_Device_DriverVersion,                DEVPROP_TYPE_STRING,                        L"DriverVersion" },
+    { &DEVPKEY_Device_DriverDesc,                   DEVPROP_TYPE_STRING,                        L"DriverDesc" },
+    { &DEVPKEY_Device_DriverInfPath,                DEVPROP_TYPE_STRING,                        L"InfPath" },
+    { &DEVPKEY_Device_DriverInfSection,             DEVPROP_TYPE_STRING,                        L"InfSection" },
+    { &DEVPKEY_Device_DriverInfSectionExt,          DEVPROP_TYPE_STRING,                        L"InfSectionExt" },
+    { &DEVPKEY_Device_MatchingDeviceId,             DEVPROP_TYPE_STRING,                        L"MatchingDeviceId" },
+    { &DEVPKEY_Device_DriverProvider,               DEVPROP_TYPE_STRING,                        L"ProviderName" },
+    { &DEVPKEY_Device_DriverPropPageProvider,       DEVPROP_TYPE_STRING,                        L"EnumPropPages32" },
+    { &DEVPKEY_Device_DriverCoInstallers,           DEVPROP_TYPE_STRING_LIST,                   L"CoInstallers32" },
+    { &DEVPKEY_Device_ResourcePickerTags,           DEVPROP_TYPE_STRING,                        L"ResourcePickerTags" },
+    { &DEVPKEY_Device_ResourcePickerExceptions,     DEVPROP_TYPE_STRING,                        L"ResourcePickerExceptions" },
+    { &DEVPKEY_Device_DriverRank,                   DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_DriverLogoLevel,              DEVPROP_TYPE_UINT32 },
+    { &DEVPKEY_Device_NoConnectSound,               DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_GenericDriverInstalled,       DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_AdditionalSoftwareRequested,  DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_SafeRemovalRequired,          DEVPROP_TYPE_BOOLEAN },
+    { &DEVPKEY_Device_SafeRemovalRequiredOverride,  DEVPROP_TYPE_BOOLEAN },
 };
 
-static LSTATUS query_device_property( HKEY hkey, struct property *prop )
+static LSTATUS query_device_property( HKEY hkey, const struct device *dev, struct property *prop )
 {
+    if (!memcmp( &DEVPKEY_Device_InstanceId, &prop->key, sizeof(prop->key) ))
+        return return_property_string( prop, dev->instance );
+
     for (UINT i = 0; i < ARRAY_SIZE(device_properties); i++)
     {
         const struct property_desc *desc = device_properties + i;
@@ -640,7 +732,7 @@ static LSTATUS get_device_property( HKEY root, const struct device *dev, struct 
 
     if (!(err = open_device_key( root, dev, KEY_QUERY_VALUE, TRUE, &hkey )))
     {
-        err = query_device_property( hkey, prop );
+        err = query_device_property( hkey, dev, prop );
         RegCloseKey( hkey );
     }
 
@@ -1523,4 +1615,51 @@ CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyW( DEVINST node, ULONG property
 CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyA( DEVINST node, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags )
 {
     return CM_Get_DevNode_Registry_Property_ExA( node, property, type, buffer, len, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_Property_ExW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Property_ExW( DEVINST node, const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buffer, ULONG *size, ULONG flags, HMACHINE machine )
+{
+    struct property prop;
+    struct device dev;
+    LSTATUS err;
+
+    TRACE( "node %#lx, key %s, type %p, buffer %p, size %p, flags %#lx, machine %p\n", node, debugstr_DEVPROPKEY(key), type, buffer, size, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+    if (flags) FIXME( "flags %#lx not implemented!\n", flags );
+
+    if (devnode_get_device( node, &dev )) return CR_INVALID_DEVNODE;
+    if ((err = init_property( &prop, key, type, buffer, size ))) return map_error( err );
+
+    return map_error( get_device_property( HKEY_LOCAL_MACHINE, &dev, &prop ) );
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_PropertyW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_PropertyW( DEVINST node, const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buffer, ULONG *size, ULONG flags )
+{
+    return CM_Get_DevNode_Property_ExW( node, key, type, buffer, size, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_Property_Keys_Ex (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Property_Keys_Ex( DEVINST node, DEVPROPKEY *keys, ULONG *count, ULONG flags, HMACHINE machine )
+{
+    TRACE( "node %#lx, keys %p, count %p, flags %#lx, machine %p\n", node, keys, count, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+    if (flags) FIXME( "flags %#lx not implemented!\n", flags );
+
+    return CR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *           CM_Get_DevNode_Property_Keys (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Property_Keys( DEVINST node, DEVPROPKEY *keys, ULONG *count, ULONG flags )
+{
+    return CM_Get_DevNode_Property_Keys_Ex( node, keys, count, flags, NULL );
 }

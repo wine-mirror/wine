@@ -50,9 +50,12 @@ static inline const char *debugstr_DEVPROPCOMPKEY( const DEVPROPCOMPKEY *key )
                              debugstr_w( key->LocaleName ) );
 }
 
+#define PROP_FLAG_ANSI    1
+#define PROP_FLAG_BINARY  2
+
 struct property
 {
-    BOOL ansi;
+    UINT flags;
     DEVPROPKEY key;
     DEVPROPTYPE *type;
     DWORD *reg_type;
