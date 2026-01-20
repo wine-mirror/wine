@@ -268,12 +268,14 @@ static HRESULT cache_get( struct recordset *recordset, BOOL forward )
     if (fetch)
     {
         DBCOUNTITEM count;
+        VARIANT_BOOL b;
         HROW row = 0;
 
-        if (!cache_is_empty( recordset ))
+        if (!cache_is_empty( recordset ) &&
+                SUCCEEDED(_Recordset_Supports(&recordset->Recordset_iface, adHoldRecords, &b)) && b &&
+                SUCCEEDED(IRowset_AddRefRows(recordset->row_set, 1, &recordset->current_row, NULL, NULL)))
         {
-            if (SUCCEEDED(IRowset_AddRefRows(recordset->row_set, 1, &recordset->current_row, NULL, NULL)))
-               row = recordset->current_row;
+            row = recordset->current_row;
         }
         cache_release( recordset );
         recordset->current_row = row;
