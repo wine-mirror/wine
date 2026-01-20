@@ -151,33 +151,31 @@ struct layout_run
     unsigned int start_position; /* run text position in range [0, layout-text-length) */
 };
 
-struct layout_effective_run {
-    struct list entry;
-    const struct layout_run *run; /* nominal run this one is based on */
-    UINT32 start;           /* relative text position, 0 means first text position of a nominal run */
-    UINT32 length;          /* length in codepoints that this run covers */
-    UINT32 glyphcount;      /* total glyph count in this run */
-    IUnknown *effect;       /* original reference is kept only at range level */
-    D2D1_POINT_2F origin;   /* baseline origin */
-    FLOAT align_dx;         /* adjustment from text alignment */
-    FLOAT width;            /* run width */
-    UINT16 *clustermap;     /* effective clustermap, allocated separately, is not reused from nominal map */
-    UINT32 line;            /* 0-based line index in line metrics array */
-    BOOL underlined;        /* set if this run is underlined */
-    D2D1_RECT_F bbox;       /* ink run box, top == bottom means it wasn't estimated yet */
-};
+struct layout_effective_run
+{
+    struct list draw_entry;
 
-struct layout_effective_inline {
-    struct list entry;
-    IDWriteInlineObject *object;  /* inline object, set explicitly or added when trimming a line */
+    /* Common fields */
+    UINT32 start;                 /* relative text position, 0 means first text position of a nominal run */
+    UINT32 length;                /* length in codepoints that this run covers */
     IUnknown *effect;             /* original reference is kept only at range level */
-    FLOAT baseline;
-    D2D1_POINT_2F origin;         /* left top corner */
-    FLOAT align_dx;               /* adjustment from text alignment */
-    FLOAT width;                  /* object width as it's reported it */
-    BOOL  is_sideways;            /* vertical flow direction flag passed to Draw */
-    BOOL  is_rtl;                 /* bidi flag passed to Draw */
+    D2D1_POINT_2F origin;         /* baseline origin or left top corner */
+    float align_dx;               /* adjustment from text alignment */
+    float width;                  /* run width */
     UINT32 line;                  /* 0-based line index in line metrics array */
+
+    /* Text run fields */
+    const struct layout_run *run; /* nominal run this one is based on */
+    UINT32 glyphcount;            /* total glyph count in this run */
+    UINT16 *clustermap;           /* Clustermap allocated separately, not reused from nominal map. */
+    bool underlined;              /* Set if this run is underlined */
+    D2D1_RECT_F bbox;             /* ink run box, top == bottom means it wasn't estimated yet */
+
+    /* Inline object fields */
+    IDWriteInlineObject *object;  /* User object or automatically added trimming sign. */
+    float baseline;
+    bool is_sideways;             /* Vertical flow direction flag passed to DrawInlineObject() */
+    bool is_rtl;                  /* Reading direction flag passed to DrawInlineObject() */
 };
 
 struct layout_underline {
@@ -380,22 +378,21 @@ static void free_layout_runs(struct dwrite_textlayout *layout)
 
 static void free_layout_eruns(struct dwrite_textlayout *layout)
 {
-    struct layout_effective_inline *in, *in2;
     struct layout_effective_run *cur, *cur2;
     struct layout_strikethrough *s, *s2;
     struct layout_underline *u, *u2;
 
-    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, entry)
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, draw_entry)
     {
-        list_remove(&cur->entry);
+        list_remove(&cur->draw_entry);
         free(cur->clustermap);
         free(cur);
     }
 
-    LIST_FOR_EACH_ENTRY_SAFE(in, in2, &layout->inlineobjects, struct layout_effective_inline, entry)
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->inlineobjects, struct layout_effective_run, draw_entry)
     {
-        list_remove(&in->entry);
-        free(in);
+        list_remove(&cur->draw_entry);
+        free(cur);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(u, u2, &layout->underlines, struct layout_underline, entry)
@@ -1530,9 +1527,9 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
 
     if (r->kind == LAYOUT_RUN_INLINE)
     {
-        struct layout_effective_inline *inlineobject;
+        struct layout_effective_run *inlineobject;
 
-        if (!(inlineobject = malloc(sizeof(*inlineobject))))
+        if (!(inlineobject = calloc(1, sizeof(*inlineobject))))
             return E_OUTOFMEMORY;
 
         inlineobject->object = r->u.object.object;
@@ -1545,15 +1542,15 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         /* It's not clear how these two are set, possibly directionality
            is derived from surrounding text (replaced text could have
            different ranges which differ in reading direction). */
-        inlineobject->is_sideways = FALSE;
-        inlineobject->is_rtl = FALSE;
+        inlineobject->is_sideways = false;
+        inlineobject->is_rtl = false;
         inlineobject->line = line;
 
         /* effect assigned from start position and on is used for inline objects */
         inlineobject->effect = layout_get_effect_from_pos(layout, layout->clusters[first_cluster].position +
                 layout->clusters[first_cluster].run->start_position);
 
-        list_add_tail(&layout->inlineobjects, &inlineobject->entry);
+        list_add_tail(&layout->inlineobjects, &inlineobject->draw_entry);
         return S_OK;
     }
 
@@ -1603,7 +1600,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
 
     run->effect = params->effect;
     run->underlined = params->underline;
-    list_add_tail(&layout->eruns, &run->entry);
+    list_add_tail(&layout->eruns, &run->draw_entry);
 
     /* Strikethrough style is guaranteed to be consistent within effective run,
        its width equals to run width, thickness and offset are derived from
@@ -1683,10 +1680,10 @@ static inline struct layout_effective_run *layout_get_next_erun(const struct dwr
     if (!cur)
         e = list_head(&layout->eruns);
     else
-        e = list_next(&layout->eruns, &cur->entry);
+        e = list_next(&layout->eruns, &cur->draw_entry);
     if (!e)
         return NULL;
-    return LIST_ENTRY(e, struct layout_effective_run, entry);
+    return LIST_ENTRY(e, struct layout_effective_run, draw_entry);
 }
 
 static inline struct layout_effective_run *layout_get_prev_erun(const struct dwrite_textlayout *layout,
@@ -1697,42 +1694,44 @@ static inline struct layout_effective_run *layout_get_prev_erun(const struct dwr
     if (!cur)
         e = list_tail(&layout->eruns);
     else
-        e = list_prev(&layout->eruns, &cur->entry);
+        e = list_prev(&layout->eruns, &cur->draw_entry);
     if (!e)
         return NULL;
-    return LIST_ENTRY(e, struct layout_effective_run, entry);
+    return LIST_ENTRY(e, struct layout_effective_run, draw_entry);
 }
 
-static inline struct layout_effective_inline *layout_get_next_inline_run(const struct dwrite_textlayout *layout,
-    const struct layout_effective_inline *cur)
+static inline struct layout_effective_run *layout_get_next_inline_run(const struct dwrite_textlayout *layout,
+    const struct layout_effective_run *cur)
 {
     struct list *e;
 
     if (!cur)
         e = list_head(&layout->inlineobjects);
     else
-        e = list_next(&layout->inlineobjects, &cur->entry);
+        e = list_next(&layout->inlineobjects, &cur->draw_entry);
     if (!e)
         return NULL;
-    return LIST_ENTRY(e, struct layout_effective_inline, entry);
+    return LIST_ENTRY(e, struct layout_effective_run, draw_entry);
 }
 
-static float layout_get_line_width(const struct dwrite_textlayout *layout, const struct layout_effective_run *erun,
-        const struct layout_effective_inline *inrun, UINT32 line)
+static float layout_get_line_width(const struct dwrite_textlayout *layout, const struct layout_effective_run *text_run,
+        const struct layout_effective_run *inline_run, UINT32 line)
 {
     FLOAT width = 0.0f;
 
-    while (erun && erun->line == line) {
-        width += erun->width;
-        erun = layout_get_next_erun(layout, erun);
-        if (!erun)
+    while (text_run && text_run->line == line)
+    {
+        width += text_run->width;
+        text_run = layout_get_next_erun(layout, text_run);
+        if (!text_run)
             break;
     }
 
-    while (inrun && inrun->line == line) {
-        width += inrun->width;
-        inrun = layout_get_next_inline_run(layout, inrun);
-        if (!inrun)
+    while (inline_run && inline_run->line == line)
+    {
+        width += inline_run->width;
+        inline_run = layout_get_next_inline_run(layout, inline_run);
+        if (!inline_run)
             break;
     }
 
@@ -1779,20 +1778,21 @@ static inline void layout_apply_snapping(D2D1_POINT_2F *vec, BOOL skiptransform,
 static void layout_apply_leading_alignment(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
-    struct layout_effective_inline *inrun;
-    struct layout_effective_run *erun;
+    struct layout_effective_run *text_run, *inline_run;
 
-    erun = layout_get_next_erun(layout, NULL);
-    inrun = layout_get_next_inline_run(layout, NULL);
+    text_run = layout_get_next_erun(layout, NULL);
+    inline_run = layout_get_next_inline_run(layout, NULL);
 
-    while (erun) {
-        erun->align_dx = 0.0f;
-        erun = layout_get_next_erun(layout, erun);
+    while (text_run)
+    {
+        text_run->align_dx = 0.0f;
+        text_run = layout_get_next_erun(layout, text_run);
     }
 
-    while (inrun) {
-        inrun->align_dx = 0.0f;
-        inrun = layout_get_next_inline_run(layout, inrun);
+    while (inline_run)
+    {
+        inline_run->align_dx = 0.0f;
+        inline_run = layout_get_next_inline_run(layout, inline_run);
     }
 
     layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0.0f;
@@ -1801,28 +1801,29 @@ static void layout_apply_leading_alignment(struct dwrite_textlayout *layout)
 static void layout_apply_trailing_alignment(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
-    struct layout_effective_inline *inrun;
-    struct layout_effective_run *erun;
+    struct layout_effective_run *text_run, *inline_run;
     UINT32 line;
 
-    erun = layout_get_next_erun(layout, NULL);
-    inrun = layout_get_next_inline_run(layout, NULL);
+    text_run = layout_get_next_erun(layout, NULL);
+    inline_run = layout_get_next_inline_run(layout, NULL);
 
     for (line = 0; line < layout->metrics.lineCount; line++) {
-        FLOAT width = layout_get_line_width(layout, erun, inrun, line);
+        FLOAT width = layout_get_line_width(layout, text_run, inline_run, line);
         FLOAT shift = layout->metrics.layoutWidth - width;
 
         if (is_rtl)
             shift *= -1.0f;
 
-        while (erun && erun->line == line) {
-            erun->align_dx = shift;
-            erun = layout_get_next_erun(layout, erun);
+        while (text_run && text_run->line == line)
+        {
+            text_run->align_dx = shift;
+            text_run = layout_get_next_erun(layout, text_run);
         }
 
-        while (inrun && inrun->line == line) {
-            inrun->align_dx = shift;
-            inrun = layout_get_next_inline_run(layout, inrun);
+        while (inline_run && inline_run->line == line)
+        {
+            inline_run->align_dx = shift;
+            inline_run = layout_get_next_inline_run(layout, inline_run);
         }
     }
 
@@ -1844,32 +1845,33 @@ static inline float layout_get_centered_shift(const struct dwrite_textlayout *la
 static void layout_apply_centered_alignment(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
-    struct layout_effective_inline *inrun;
-    struct layout_effective_run *erun;
+    struct layout_effective_run *text_run, *inline_run;
     BOOL skiptransform;
     UINT32 line;
     FLOAT det;
 
-    erun = layout_get_next_erun(layout, NULL);
-    inrun = layout_get_next_inline_run(layout, NULL);
+    text_run = layout_get_next_erun(layout, NULL);
+    inline_run = layout_get_next_inline_run(layout, NULL);
 
     skiptransform = should_skip_transform(&layout->transform, &det);
 
     for (line = 0; line < layout->metrics.lineCount; line++) {
-        FLOAT width = layout_get_line_width(layout, erun, inrun, line);
+        FLOAT width = layout_get_line_width(layout, text_run, inline_run, line);
         FLOAT shift = layout_get_centered_shift(layout, skiptransform, width, det);
 
         if (is_rtl)
             shift *= -1.0f;
 
-        while (erun && erun->line == line) {
-            erun->align_dx = shift;
-            erun = layout_get_next_erun(layout, erun);
+        while (text_run && text_run->line == line)
+        {
+            text_run->align_dx = shift;
+            text_run = layout_get_next_erun(layout, text_run);
         }
 
-        while (inrun && inrun->line == line) {
-            inrun->align_dx = shift;
-            inrun = layout_get_next_inline_run(layout, inrun);
+        while (inline_run && inline_run->line == line)
+        {
+            inline_run->align_dx = shift;
+            inline_run = layout_get_next_inline_run(layout, inline_run);
         }
     }
 
@@ -1899,8 +1901,7 @@ static void layout_apply_text_alignment(struct dwrite_textlayout *layout)
 
 static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
 {
-    struct layout_effective_inline *inrun;
-    struct layout_effective_run *erun;
+    struct layout_effective_run *text_run, *inline_run;
     FLOAT origin_y = 0.0f;
     UINT32 line;
 
@@ -1924,20 +1925,22 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
 
     layout->metrics.top = origin_y;
 
-    erun = layout_get_next_erun(layout, NULL);
-    inrun = layout_get_next_inline_run(layout, NULL);
+    text_run = layout_get_next_erun(layout, NULL);
+    inline_run = layout_get_next_inline_run(layout, NULL);
     for (line = 0; line < layout->metrics.lineCount; line++)
     {
         float pos_y = origin_y + layout->lines[line].metrics.baseline;
 
-        while (erun && erun->line == line) {
-            erun->origin.y = pos_y;
-            erun = layout_get_next_erun(layout, erun);
+        while (text_run && text_run->line == line)
+        {
+            text_run->origin.y = pos_y;
+            text_run = layout_get_next_erun(layout, text_run);
         }
 
-        while (inrun && inrun->line == line) {
-            inrun->origin.y = pos_y - inrun->baseline;
-            inrun = layout_get_next_inline_run(layout, inrun);
+        while (inline_run && inline_run->line == line)
+        {
+            inline_run->origin.y = pos_y - inline_run->baseline;
+            inline_run = layout_get_next_inline_run(layout, inline_run);
         }
 
         origin_y += layout->lines[line].metrics.height;
@@ -2205,8 +2208,9 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     if (get_cluster_range_width(layout, start, i) + sign_metrics.width > layout->metrics.layoutWidth)
         append_trimming_run = FALSE;
 
-    if (append_trimming_run) {
-        struct layout_effective_inline *trimming_sign;
+    if (append_trimming_run)
+    {
+        struct layout_effective_run *trimming_sign;
 
         if (!(trimming_sign = calloc(1, sizeof(*trimming_sign))))
             return;
@@ -2219,14 +2223,14 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
         trimming_sign->align_dx = 0.0f;
         trimming_sign->baseline = sign_metrics.baseline;
 
-        trimming_sign->is_sideways = FALSE;
-        trimming_sign->is_rtl = FALSE;
+        trimming_sign->is_sideways = false;
+        trimming_sign->is_rtl = false;
         trimming_sign->line = line;
 
         trimming_sign->effect = layout_get_effect_from_pos(layout, layout->clusters[i].position +
                 layout->clusters[i].run->start_position);
 
-        list_add_tail(&layout->inlineobjects, &trimming_sign->entry);
+        list_add_tail(&layout->inlineobjects, &trimming_sign->draw_entry);
     }
 
     /* Look for max baseline and descent for this line */
@@ -2253,29 +2257,30 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
 
 static void layout_set_line_positions(struct dwrite_textlayout *layout)
 {
-    struct layout_effective_inline *inrun;
-    struct layout_effective_run *erun;
+    struct layout_effective_run *text_run, *inline_run;
     FLOAT origin_y;
     UINT32 line;
 
     /* Now all line info is here, update effective runs positions in flow direction */
-    erun = layout_get_next_erun(layout, NULL);
-    inrun = layout_get_next_inline_run(layout, NULL);
+    text_run = layout_get_next_erun(layout, NULL);
+    inline_run = layout_get_next_inline_run(layout, NULL);
 
     for (line = 0, origin_y = 0.0f; line < layout->metrics.lineCount; line++)
     {
         float pos_y = origin_y + layout->lines[line].metrics.baseline;
 
         /* For all runs on this line */
-        while (erun && erun->line == line) {
-            erun->origin.y = pos_y;
-            erun = layout_get_next_erun(layout, erun);
+        while (text_run && text_run->line == line)
+        {
+            text_run->origin.y = pos_y;
+            text_run = layout_get_next_erun(layout, text_run);
         }
 
         /* Same for inline runs */
-        while (inrun && inrun->line == line) {
-            inrun->origin.y = pos_y - inrun->baseline;
-            inrun = layout_get_next_inline_run(layout, inrun);
+        while (inline_run && inline_run->line == line)
+        {
+            inline_run->origin.y = pos_y - inline_run->baseline;
+            inline_run = layout_get_next_inline_run(layout, inline_run);
         }
 
         origin_y += layout->lines[line].metrics.height;
@@ -3730,7 +3735,6 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout4 *iface,
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout4(iface);
     BOOL disabled = FALSE, skiptransform = FALSE;
-    struct layout_effective_inline *inlineobject;
     struct layout_effective_run *run;
     struct layout_strikethrough *s;
     struct layout_underline *u;
@@ -3768,7 +3772,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout4 *iface,
 
 #define SNAP_COORD(x) (disabled ? (x) : renderer_apply_snapping((x), skiptransform, ppdip, det, &m))
     /* 1. Regular runs */
-    LIST_FOR_EACH_ENTRY(run, &layout->eruns, struct layout_effective_run, entry)
+    LIST_FOR_EACH_ENTRY(run, &layout->eruns, struct layout_effective_run, draw_entry)
     {
         const struct regular_layout_run *regular = &run->run->u.regular;
         UINT32 start_glyph = regular->clustermap[run->start];
@@ -3805,16 +3809,16 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout4 *iface,
     }
 
     /* 2. Inline objects */
-    LIST_FOR_EACH_ENTRY(inlineobject, &layout->inlineobjects, struct layout_effective_inline, entry)
+    LIST_FOR_EACH_ENTRY(run, &layout->inlineobjects, struct layout_effective_run, draw_entry)
     {
         IDWriteTextRenderer_DrawInlineObject(renderer,
             context,
-            inlineobject->origin.x + inlineobject->align_dx + origin_x,
-            SNAP_COORD(inlineobject->origin.y + origin_y),
-            inlineobject->object,
-            inlineobject->is_sideways,
-            inlineobject->is_rtl,
-            inlineobject->effect);
+            run->origin.x + run->align_dx + origin_x,
+            SNAP_COORD(run->origin.y + origin_y),
+            run->object,
+            run->is_sideways,
+            run->is_rtl,
+            run->effect);
     }
 
     /* 3. Underlines */
@@ -3978,7 +3982,7 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
     d2d_rect_offset(bbox, run->origin.x + run->align_dx, run->origin.y);
 }
 
-static void layout_get_inlineobj_bbox(const struct layout_effective_inline *run, D2D1_RECT_F *bbox)
+static void layout_get_inlineobj_bbox(const struct layout_effective_run *run, D2D1_RECT_F *bbox)
 {
     DWRITE_OVERHANG_METRICS overhang_metrics = { 0 };
     DWRITE_INLINE_OBJECT_METRICS metrics = { 0 };
@@ -4007,7 +4011,6 @@ static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout4 *if
         DWRITE_OVERHANG_METRICS *overhangs)
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout4(iface);
-    struct layout_effective_inline *inline_run;
     struct layout_effective_run *run;
     D2D1_RECT_F bbox = { 0 };
     HRESULT hr;
@@ -4026,7 +4029,7 @@ static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout4 *if
     if (FAILED(hr))
         return hr;
 
-    LIST_FOR_EACH_ENTRY(run, &layout->eruns, struct layout_effective_run, entry)
+    LIST_FOR_EACH_ENTRY(run, &layout->eruns, struct layout_effective_run, draw_entry)
     {
         D2D1_RECT_F run_bbox;
 
@@ -4034,11 +4037,11 @@ static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout4 *if
         d2d_rect_union(&bbox, &run_bbox);
     }
 
-    LIST_FOR_EACH_ENTRY(inline_run, &layout->inlineobjects, struct layout_effective_inline, entry)
+    LIST_FOR_EACH_ENTRY(run, &layout->inlineobjects, struct layout_effective_run, draw_entry)
     {
         D2D1_RECT_F object_bbox;
 
-        layout_get_inlineobj_bbox(inline_run, &object_bbox);
+        layout_get_inlineobj_bbox(run, &object_bbox);
         d2d_rect_union(&bbox, &object_bbox);
     }
 
