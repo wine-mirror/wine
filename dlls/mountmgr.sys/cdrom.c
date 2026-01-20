@@ -64,6 +64,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
 struct cdrom
 {
     int fd;
+    SUB_Q_CURRENT_POSITION pos;
     /* Some systems are very slow to read the TOC, so we cache it. */
     bool toc_valid;
     CDROM_TOC toc;
@@ -96,7 +97,6 @@ NTSTATUS cdrom_close( void *args )
     return STATUS_SUCCESS;
 }
 
-#ifdef __APPLE__
 static void frame_to_msf( unsigned char *m, unsigned int frame )
 {
     m[2] = frame % CD_FRAMES;
@@ -104,7 +104,12 @@ static void frame_to_msf( unsigned char *m, unsigned int frame )
     m[1] = frame % CD_SECS;
     m[0] = frame / CD_SECS;
 }
-#endif
+
+static unsigned int track_to_frame( const CDROM_TOC *toc, unsigned int track_idx )
+{
+    const TRACK_DATA *track = &toc->TrackData[track_idx - toc->FirstTrack];
+    return ((unsigned int)track->Address[1] * CD_SECS + track->Address[2]) * CD_FRAMES + track->Address[3];
+}
 
 static NTSTATUS update_toc_cache( struct cdrom *cdrom )
 {
@@ -250,6 +255,101 @@ static NTSTATUS read_toc( struct cdrom *cdrom, CDROM_TOC *toc )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS seek_audio_msf( struct cdrom *cdrom, const CDROM_SEEK_AUDIO_MSF *params )
+{
+    unsigned int i, frame;
+    SUB_Q_CURRENT_POSITION *pos;
+    NTSTATUS status;
+#if defined(linux)
+    struct cdrom_subchnl sc;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    struct ioc_play_msf msf;
+    struct ioc_read_subchannel read_sc;
+    struct cd_sub_channel_info sc;
+    int final_frame;
+#endif
+
+    /* Use the information on the TOC to compute the new current
+     * position, which is shadowed on the cache. */
+    frame = (params->M * CD_SECS + params->S) * CD_FRAMES + params->F;
+
+    if (!cdrom->toc_valid && (status = update_toc_cache( cdrom )))
+        return status;
+
+    for (i = cdrom->toc.FirstTrack; i <= cdrom->toc.LastTrack + 1; ++i)
+    {
+        if (track_to_frame( &cdrom->toc, i ) > frame)
+            break;
+    }
+    if (i <= cdrom->toc.FirstTrack || i > cdrom->toc.LastTrack + 1)
+        return STATUS_INVALID_PARAMETER;
+    --i;
+
+    pos = &cdrom->pos;
+    pos->FormatCode = IOCTL_CDROM_CURRENT_POSITION;
+    pos->Control = cdrom->toc.TrackData[i - cdrom->toc.FirstTrack].Control;
+    pos->ADR = cdrom->toc.TrackData[i - cdrom->toc.FirstTrack].Adr;
+    pos->TrackNumber = cdrom->toc.TrackData[i - cdrom->toc.FirstTrack].TrackNumber;
+    pos->IndexNumber = 0; /* FIXME: where do they keep these? */
+    pos->AbsoluteAddress[0] = 0;
+    pos->AbsoluteAddress[1] = cdrom->toc.TrackData[i - cdrom->toc.FirstTrack].Address[1];
+    pos->AbsoluteAddress[2] = cdrom->toc.TrackData[i - cdrom->toc.FirstTrack].Address[2];
+    pos->AbsoluteAddress[3] = cdrom->toc.TrackData[i - cdrom->toc.FirstTrack].Address[3];
+    frame -= track_to_frame( &cdrom->toc, i );
+    pos->TrackRelativeAddress[0] = 0;
+    frame_to_msf( &pos->TrackRelativeAddress[1], frame );
+
+    /* If playing, then issue a seek command, otherwise do nothing */
+#ifdef linux
+    sc.cdsc_format = CDROM_MSF;
+
+    if (ioctl( cdrom->fd, CDROMSUBCHNL, &sc ) == -1)
+    {
+        TRACE( "failed to read subchannel data: %s\n", strerror( errno ));
+        cdrom->toc_valid = false;
+        return errno_to_status( errno );
+    }
+
+    if (sc.cdsc_audiostatus == CDROM_AUDIO_PLAY)
+    {
+        struct cdrom_msf0 msf;
+        msf.minute = params->M;
+        msf.second = params->S;
+        msf.frame = params->F;
+        if (ioctl( cdrom->fd, CDROMSEEK, &msf ) < 0)
+            return errno_to_status( errno );
+    }
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    read_sc.address_format = CD_MSF_FORMAT;
+    read_sc.track = 0;
+    read_sc.data_len = sizeof(sc);
+    read_sc.data = &sc;
+    read_sc.data_format = CD_CURRENT_POSITION;
+
+    if (ioctl( cdrom->fd, CDIOCREADSUBCHANNEL, &read_sc ) == -1)
+    {
+        TRACE( "failed to read subchannel data: %s\n", strerror( errno ));
+        cdrom->toc_valid = false;
+        return errno_to_status( errno );
+    }
+    if (sc.header.audio_status == CD_AS_PLAY_IN_PROGRESS)
+    {
+        msf.start_m = params->M;
+        msf.start_s = params->S;
+        msf.start_f = params->F;
+        final_frame = track_to_frame( &cdrom->toc, cdrom->toc.LastTrack + 1 ) - 1;
+        frame_to_msf( msf.end_m, final_frame );
+        if (ioctl( cdrom->fd, CDIOCPLAYMSF, &msf ) < 0)
+            return errno_to_status( errno );
+    }
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -266,6 +366,11 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(CDROM_TOC);
             return read_toc( params->cdrom, params->output );
+
+        case IOCTL_CDROM_SEEK_AUDIO_MSF:
+            if (params->input_size < sizeof(CDROM_SEEK_AUDIO_MSF))
+                return STATUS_INFO_LENGTH_MISMATCH;
+            return seek_audio_msf( params->cdrom, params->input );
 
         default:
             FIXME("Unsupported ioctl %#x (device=%#x access=%#x func=%#x method=%#x)\n",
