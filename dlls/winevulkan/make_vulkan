@@ -707,33 +707,17 @@ class Function(object):
             return True
         return self.name in PERF_CRITICAL_FUNCTIONS
 
-    def pfn(self, prefix="p", call_conv=None):
-        """ Create function pointer. """
+    def gen_params(self):
+        return ", ".join(p.as_param() for p in self.params)
 
-        if call_conv:
-            pfn = "{0} ({1} *{2}_{3})(".format(self.type, call_conv, prefix, self.name)
-        else:
-            pfn = "{0} (*{1}_{2})(".format(self.type, prefix, self.name)
+    def gen_pointer(self):
+        return f"typedef {self.type} (VKAPI_PTR *PFN_{self.name})({self.gen_params()});\n"
 
-        for i, param in enumerate(self.params):
-            pfn += param.const
-            pfn += param.type + " "
-            if param.is_pointer():
-                pfn += param.pointer
-            pfn += param.name
+    def gen_prototype(self):
+        return f"{self.type} VKAPI_CALL {self.name}({self.gen_params()});\n"
 
-            for l in param.array_lens:
-                pfn += "[{0}]".format(l)
-
-            if i < len(self.params) - 1:
-                pfn += ", "
-        pfn += ")"
-        return pfn
-
-    def prototype(self, call_conv="", prefix="", is_thunk=False, suffix=""):
-        params = [p.as_param() for p in self.params]
-        params = ", ".join(params)
-        return f"{self.type} {call_conv}{prefix}{self.name}({params}){suffix}"
+    def gen_wrapper(self):
+        return f"{self.type} wine_{self.name}({self.gen_params()});\n"
 
     def loader_body(self):
         body = "    struct {0}_params params;\n".format(self.name)
@@ -888,8 +872,8 @@ class Function(object):
         return thunk
 
     def loader_thunk(self):
-        thunk = self.prototype(call_conv="WINAPI ")
-        thunk += "\n{\n"
+        thunk = f"{self.type} WINAPI {self.name}({self.gen_params()})\n"
+        thunk += "{\n"
         thunk += self.loader_body()
         thunk += "}\n\n"
         return thunk
@@ -2603,7 +2587,7 @@ class Generator(object):
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
         for func in filter(Function.needs_private_thunk, Context.funcs.values()):
-            f.write(func.prototype(prefix="wine_", is_thunk=True, suffix=";\n"))
+            f.write(func.gen_wrapper())
         f.write("\n")
 
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
@@ -2796,12 +2780,12 @@ class Generator(object):
                 f.write("\n")
 
         for func in filter(Function.is_required, Context.funcs.values()):
-            f.write(f"typedef {func.pfn(prefix="PFN", call_conv="VKAPI_PTR")};\n")
+            f.write(func.gen_pointer())
         f.write("\n")
 
         f.write("#ifndef VK_NO_PROTOTYPES\n")
         for func in filter(Function.is_required, Context.funcs.values()):
-            f.write(func.prototype(call_conv="VKAPI_CALL ", suffix=";\n"))
+            f.write(func.gen_prototype())
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS")
