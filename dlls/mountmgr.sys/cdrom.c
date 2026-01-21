@@ -514,6 +514,272 @@ static NTSTATUS set_volume( struct cdrom *cdrom, const VOLUME_CONTROL *vc )
 #endif
 }
 
+static NTSTATUS read_q_channel( struct cdrom *cdrom, const CDROM_SUB_Q_DATA_FORMAT *fmt,
+        unsigned int data_size, SUB_Q_CHANNEL_DATA *data, unsigned int *ret_size )
+{
+#ifdef linux
+    SUB_Q_HEADER *hdr = &data->CurrentPosition.Header;
+    struct cdrom_subchnl sc;
+
+    sc.cdsc_format = CDROM_MSF;
+    if (ioctl( cdrom->fd, CDROMSUBCHNL, &sc ) == -1)
+    {
+        hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+        TRACE( "failed to read subchannel data: %s\n", strerror( errno ));
+        cdrom->toc_valid = false;
+        return errno_to_status( errno );
+    }
+
+    hdr->AudioStatus = AUDIO_STATUS_NOT_SUPPORTED;
+
+    switch (sc.cdsc_audiostatus)
+    {
+        case CDROM_AUDIO_INVALID:
+            cdrom->toc_valid = false;
+            hdr->AudioStatus = AUDIO_STATUS_NOT_SUPPORTED;
+            break;
+        case CDROM_AUDIO_NO_STATUS:
+            cdrom->toc_valid = false;
+            hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+            break;
+        case CDROM_AUDIO_PLAY:
+            hdr->AudioStatus = AUDIO_STATUS_IN_PROGRESS;
+            break;
+        case CDROM_AUDIO_PAUSED:
+            hdr->AudioStatus = AUDIO_STATUS_PAUSED;
+            break;
+        case CDROM_AUDIO_COMPLETED:
+            hdr->AudioStatus = AUDIO_STATUS_PLAY_COMPLETE;
+            break;
+        case CDROM_AUDIO_ERROR:
+            hdr->AudioStatus = AUDIO_STATUS_PLAY_ERROR;
+            break;
+        default:
+            FIXME( "unhandled status %#x\n", sc.cdsc_audiostatus );
+            hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+    }
+    switch (fmt->Format)
+    {
+        case IOCTL_CDROM_CURRENT_POSITION:
+            if (data_size < sizeof(SUB_Q_CURRENT_POSITION))
+                return STATUS_BUFFER_TOO_SMALL;
+
+            if (hdr->AudioStatus == AUDIO_STATUS_IN_PROGRESS)
+            {
+                data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
+                data->CurrentPosition.Control = sc.cdsc_ctrl;
+                data->CurrentPosition.ADR = sc.cdsc_adr;
+                data->CurrentPosition.TrackNumber = sc.cdsc_trk;
+                data->CurrentPosition.IndexNumber = sc.cdsc_ind;
+
+                data->CurrentPosition.AbsoluteAddress[0] = 0;
+                data->CurrentPosition.AbsoluteAddress[1] = sc.cdsc_absaddr.msf.minute;
+                data->CurrentPosition.AbsoluteAddress[2] = sc.cdsc_absaddr.msf.second;
+                data->CurrentPosition.AbsoluteAddress[3] = sc.cdsc_absaddr.msf.frame;
+
+                data->CurrentPosition.TrackRelativeAddress[0] = 0;
+                data->CurrentPosition.TrackRelativeAddress[1] = sc.cdsc_reladdr.msf.minute;
+                data->CurrentPosition.TrackRelativeAddress[2] = sc.cdsc_reladdr.msf.second;
+                data->CurrentPosition.TrackRelativeAddress[3] = sc.cdsc_reladdr.msf.frame;
+
+                cdrom->pos = data->CurrentPosition;
+            }
+            else
+            {
+                cdrom->pos.Header = *hdr;
+                data->CurrentPosition = cdrom->pos;
+            }
+            *ret_size = sizeof(SUB_Q_CURRENT_POSITION);
+            return STATUS_SUCCESS;
+
+        case IOCTL_CDROM_MEDIA_CATALOG:
+        {
+            struct cdrom_mcn mcn;
+
+            if (data_size < sizeof(SUB_Q_MEDIA_CATALOG_NUMBER))
+                return STATUS_BUFFER_TOO_SMALL;
+
+            data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
+
+            if (ioctl( cdrom->fd, CDROM_GET_MCN, &mcn ) == -1)
+                return errno_to_status( errno );
+
+            data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
+            data->MediaCatalog.Mcval = 0; /* FIXME */
+            memcpy( data->MediaCatalog.MediaCatalog, mcn.medium_catalog_number, 14 );
+            data->MediaCatalog.MediaCatalog[14] = 0;
+            *ret_size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
+            return STATUS_SUCCESS;
+        }
+
+        default:
+            FIXME( "unhandled format %#x\n", fmt->Format );
+            return STATUS_NOT_IMPLEMENTED;
+    }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    SUB_Q_HEADER *hdr = &data->CurrentPosition.Header;
+    struct ioc_read_subchannel read_sc;
+    struct cd_sub_channel_info sc;
+
+    read_sc.address_format = CD_MSF_FORMAT;
+    read_sc.track = 0;
+    read_sc.data_len = sizeof(sc);
+    read_sc.data = &sc;
+    switch (fmt->Format)
+    {
+        case IOCTL_CDROM_CURRENT_POSITION:
+            if (data_size < sizeof(SUB_Q_CURRENT_POSITION))
+                return STATUS_BUFFER_TOO_SMALL;
+            read_sc.data_format = CD_CURRENT_POSITION;
+            break;
+        case IOCTL_CDROM_MEDIA_CATALOG:
+            if (data_size < sizeof(SUB_Q_MEDIA_CATALOG_NUMBER))
+                return STATUS_BUFFER_TOO_SMALL;
+            read_sc.data_format = CD_MEDIA_CATALOG;
+            break;
+        case IOCTL_CDROM_TRACK_ISRC:
+            if (data_size < sizeof(SUB_Q_TRACK_ISRC))
+                return STATUS_BUFFER_TOO_SMALL;
+            read_sc.data_format = CD_TRACK_INFO;
+            sc.what.track_info.track_number = data->TrackIsrc.Track;
+            break;
+        default:
+            FIXME( "unhandled format %#x\n", fmt->Format );
+            return STATUS_NOT_IMPLEMENTED;
+    }
+    if (ioctl( cdrom->fd, CDIOCREADSUBCHANNEL, &read_sc ) == -1)
+    {
+        hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+        TRACE( "failed to read subchannel data: %s\n", strerror( errno ));
+        cdrom->toc_valid = false;
+        return errno_to_status( errno );
+    }
+
+    hdr->AudioStatus = AUDIO_STATUS_NOT_SUPPORTED;
+
+    switch (sc.header.audio_status)
+    {
+        case CD_AS_AUDIO_INVALID:
+            cdrom->toc_valid = false;
+            hdr->AudioStatus = AUDIO_STATUS_NOT_SUPPORTED;
+            break;
+        case CD_AS_NO_STATUS:
+            cdrom->toc_valid = false;
+            hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+            break;
+        case CD_AS_PLAY_IN_PROGRESS:
+            hdr->AudioStatus = AUDIO_STATUS_IN_PROGRESS;
+            break;
+        case CD_AS_PLAY_PAUSED:
+            hdr->AudioStatus = AUDIO_STATUS_PAUSED;
+            break;
+        case CD_AS_PLAY_COMPLETED:
+            hdr->AudioStatus = AUDIO_STATUS_PLAY_COMPLETE;
+            break;
+        case CD_AS_PLAY_ERROR:
+            hdr->AudioStatus = AUDIO_STATUS_PLAY_ERROR;
+            break;
+        default:
+            FIXME( "unhandled status %#x\n", sc.header.audio_status );
+            hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+    }
+
+    switch (fmt->Format)
+    {
+        case IOCTL_CDROM_CURRENT_POSITION:
+            if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS)
+            {
+                data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
+                data->CurrentPosition.Control = sc.what.position.control;
+                data->CurrentPosition.ADR = sc.what.position.addr_type;
+                data->CurrentPosition.TrackNumber = sc.what.position.track_number;
+                data->CurrentPosition.IndexNumber = sc.what.position.index_number;
+
+                data->CurrentPosition.AbsoluteAddress[0] = 0;
+                data->CurrentPosition.AbsoluteAddress[1] = sc.what.position.absaddr.msf.minute;
+                data->CurrentPosition.AbsoluteAddress[2] = sc.what.position.absaddr.msf.second;
+                data->CurrentPosition.AbsoluteAddress[3] = sc.what.position.absaddr.msf.frame;
+                data->CurrentPosition.TrackRelativeAddress[0] = 0;
+                data->CurrentPosition.TrackRelativeAddress[1] = sc.what.position.reladdr.msf.minute;
+                data->CurrentPosition.TrackRelativeAddress[2] = sc.what.position.reladdr.msf.second;
+                data->CurrentPosition.TrackRelativeAddress[3] = sc.what.position.reladdr.msf.frame;
+                cdrom->pos = data->CurrentPosition;
+            }
+            else
+            {
+                cdrom->pos.Header = *hdr;
+                data->CurrentPosition = cdrom->pos;
+            }
+            *ret_size = sizeof(SUB_Q_CURRENT_POSITION);
+            return STATUS_SUCCESS;
+
+        case IOCTL_CDROM_MEDIA_CATALOG:
+            data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
+            data->MediaCatalog.Mcval = sc.what.media_catalog.mc_valid;
+            memcpy( data->MediaCatalog.MediaCatalog, sc.what.media_catalog.mc_number, 15 );
+            *ret_size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
+            return STATUS_SUCCESS;
+
+        case IOCTL_CDROM_TRACK_ISRC:
+            data->TrackIsrc.FormatCode = IOCTL_CDROM_TRACK_ISRC;
+            data->TrackIsrc.Tcval = sc.what.track_info.ti_valid;
+            memcpy( data->TrackIsrc.TrackIsrc, sc.what.track_info.ti_number, 15 );
+            *ret_size = sizeof(SUB_Q_TRACK_ISRC);
+            break;
+    }
+#elif defined(__APPLE__)
+    SUB_Q_HEADER *hdr = &data->CurrentPosition.Header;
+
+    /* We need IOCDAudioControl for IOCTL_CDROM_CURRENT_POSITION */
+    if (fmt->Format == IOCTL_CDROM_CURRENT_POSITION)
+    {
+        FIXME( "IOCTL_CDROM_CURRENT_POSITION is not implemented\n" );
+        return STATUS_NOT_SUPPORTED;
+    }
+    /* No IOCDAudioControl support; just set the audio status to none */
+    hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
+    switch (fmt->Format)
+    {
+        case IOCTL_CDROM_MEDIA_CATALOG:
+        {
+            dk_cd_read_mcn_t mcn;
+
+            if (data_size < sizeof(SUB_Q_MEDIA_CATALOG_NUMBER))
+                return STATUS_BUFFER_TOO_SMALL;
+
+            if (ioctl( cdrom->fd, DKIOCCDREADMCN, &mcn ) == -1)
+                return errno_to_status( errno );
+            memcpy( data->MediaCatalog.MediaCatalog, mcn.mcn, kCDMCNMaxLength );
+            data->MediaCatalog.Mcval = 1;
+            *ret_size = sizeof(SUB_Q_MEDIA_CATALOG_NUMBER);
+            return STATUS_SUCCESS;
+        }
+        case IOCTL_CDROM_TRACK_ISRC:
+        {
+            dk_cd_read_isrc_t isrc;
+
+            if (data_size < sizeof(SUB_Q_TRACK_ISRC))
+                return STATUS_BUFFER_TOO_SMALL;
+
+            isrc.track = fmt->Track;
+            if (ioctl( cdrom->fd, DKIOCCDREADISRC, &isrc ) == -1)
+                return errno_to_status( errno );
+            memcpy( data->TrackIsrc.TrackIsrc, isrc.isrc, kCDISRCMaxLength );
+            data->TrackIsrc.Tcval = 1;
+            data->TrackIsrc.Track = isrc.track;
+            *ret_size = sizeof(SUB_Q_TRACK_ISRC);
+            return STATUS_SUCCESS;
+        }
+        default:
+            FIXME( "unhandled format %#x\n", fmt->Format );
+            return STATUS_NOT_IMPLEMENTED;
+    }
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -538,6 +804,11 @@ NTSTATUS cdrom_ioctl( void *args )
             if (params->input_size < sizeof(CDROM_PLAY_AUDIO_MSF))
                 return STATUS_INFO_LENGTH_MISMATCH;
             return play_audio_msf( params->cdrom, params->input );
+
+        case IOCTL_CDROM_READ_Q_CHANNEL:
+            if (params->input_size < sizeof(CDROM_SUB_Q_DATA_FORMAT))
+                return STATUS_INFO_LENGTH_MISMATCH;
+            return read_q_channel( params->cdrom, params->input, params->output_size, params->output, &params->ret_size );
 
         case IOCTL_CDROM_READ_TOC:
             if (params->output_size < sizeof(CDROM_TOC))
