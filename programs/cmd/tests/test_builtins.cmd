@@ -773,6 +773,7 @@ call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !error
 call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (popd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (popd &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (pushd "abc/"&&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & popd & echo ERRORLEVEL !errorlevel!
 cd .. && rd /q /s foo
 

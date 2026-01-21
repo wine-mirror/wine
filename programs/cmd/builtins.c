@@ -1783,7 +1783,7 @@ RETURN_CODE WCMD_pushd(const WCHAR *args)
     if (!*args)
         return errorlevel = NO_ERROR;
 
-    if (wcschr(args, '/') != NULL) {
+    if (*args == '/') {
       SetLastError(ERROR_INVALID_PARAMETER);
       WCMD_print_error();
       return errorlevel = ERROR_INVALID_FUNCTION;
