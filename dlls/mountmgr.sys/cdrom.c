@@ -350,6 +350,22 @@ static NTSTATUS seek_audio_msf( struct cdrom *cdrom, const CDROM_SEEK_AUDIO_MSF 
 #endif
 }
 
+static NTSTATUS pause_audio( struct cdrom *cdrom )
+{
+#ifdef linux
+    if (ioctl( cdrom->fd, CDROMPAUSE ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    if (ioctl( cdrom->fd, CDIOCPAUSE, NULL ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 static NTSTATUS stop_audio( struct cdrom *cdrom )
 {
     /* We might be about to change media. */
@@ -379,6 +395,9 @@ NTSTATUS cdrom_ioctl( void *args )
 
     switch (code)
     {
+        case IOCTL_CDROM_PAUSE_AUDIO:
+            return pause_audio( params->cdrom );
+
         case IOCTL_CDROM_READ_TOC:
             if (params->output_size < sizeof(CDROM_TOC))
                 return STATUS_BUFFER_TOO_SMALL;
