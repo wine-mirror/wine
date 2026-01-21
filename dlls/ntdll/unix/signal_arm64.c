@@ -131,12 +131,10 @@ struct exc_stack_layout
     CONTEXT_EX           context_ex;     /* 390 */
     EXCEPTION_RECORD     rec;            /* 3b0 */
     ULONG64              align;          /* 448 */
-    ULONG64              sp;             /* 450 */
-    ULONG64              pc;             /* 458 */
-    ULONG64              redzone[2];     /* 460 */
+    ULONG64              redzone[2];     /* 450 */
 };
 C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x3b0 );
-C_ASSERT( sizeof(struct exc_stack_layout) == 0x470 );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x460 );
 
 /* stack layout when calling KiUserApcDispatcher */
 struct apc_stack_layout
@@ -720,8 +718,6 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     stack->rec = *rec;
     stack->context = *context;
     context_init_empty_xstate( &stack->context, stack->redzone );
-    stack->sp = stack->context.Sp;
-    stack->pc = stack->context.Pc;
 
     SP_sig(sigcontext) = (ULONG_PTR)stack;
     PC_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
@@ -806,8 +802,6 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     memmove( &stack->context, context, sizeof(*context) );
     memmove( &stack->rec, rec, sizeof(*rec) );
     context_init_empty_xstate( &stack->context, stack->redzone );
-    stack->sp = stack->context.Sp;
-    stack->pc = stack->context.Pc;
 
     frame->pc = (ULONG64)pKiUserExceptionDispatcher;
     frame->sp = (ULONG64)stack;
