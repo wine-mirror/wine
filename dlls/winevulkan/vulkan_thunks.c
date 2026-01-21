@@ -50719,7 +50719,7 @@ static NTSTATUS thunk64_vkCreateCommandPool(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool);
 
-    params->result = wine_vkCreateCommandPool(params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool, params->client_ptr);
+    params->result = wine_vkCreateCommandPool(params->device, params->pCreateInfo, params->pAllocator, params->pCommandPool);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50732,7 +50732,6 @@ static NTSTATUS thunk32_vkCreateCommandPool(void *args)
         PTR32 pCreateInfo;
         PTR32 pAllocator;
         PTR32 pCommandPool;
-        PTR32 client_ptr;
         VkResult result;
     } *params = args;
     VkCommandPoolCreateInfo pCreateInfo_host;
@@ -50743,7 +50742,7 @@ static NTSTATUS thunk32_vkCreateCommandPool(void *args)
 
     init_conversion_context(ctx);
     convert_VkCommandPoolCreateInfo_win32_to_host(ctx, (const VkCommandPoolCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    params->result = wine_vkCreateCommandPool((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkCommandPool *)UlongToPtr(params->pCommandPool), UlongToPtr(params->client_ptr));
+    params->result = wine_vkCreateCommandPool((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkCommandPool *)UlongToPtr(params->pCommandPool));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }

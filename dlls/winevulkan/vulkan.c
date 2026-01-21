@@ -470,13 +470,12 @@ void wine_vkFreeCommandBuffers(VkDevice client_device, VkCommandPool command_poo
     wine_vk_free_command_buffers(device, pool, count, buffers);
 }
 
-VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCreateInfo *info,
-                                  const VkAllocationCallbacks *allocator, VkCommandPool *command_pool,
-                                  void *client_ptr)
+VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCreateInfo *info, const VkAllocationCallbacks *allocator,
+                                  VkCommandPool *client_command_pool_ptr)
 {
+    struct vk_command_pool *client_command_pool = command_pool_from_handle(*client_command_pool_ptr);
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
-    struct vk_command_pool *client_command_pool = client_ptr;
     VkCommandPool host_command_pool;
     struct wine_cmd_pool *object;
     VkResult res;
@@ -497,7 +496,6 @@ VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCre
     vulkan_object_init_ptr(&object->obj, host_command_pool, &client_command_pool->obj);
     instance->p_insert_object(instance, &object->obj);
 
-    *command_pool = object->client.command_pool;
     return VK_SUCCESS;
 }
 

@@ -180,7 +180,6 @@ PERF_CRITICAL_FUNCTIONS = [
 # - dispatch (default: True):  set whether we need a function pointer in the device / instance dispatch table.
 FUNCTION_OVERRIDES = {
     # Device functions
-    "vkCreateCommandPool" : {"extra_param" : "client_ptr"},
     "vkGetDeviceProcAddr" : {"dispatch" : False},
 }
 
@@ -603,7 +602,6 @@ class Function(object):
         # For some functions we need some extra metadata from FUNCTION_OVERRIDES.
         func_info = FUNCTION_OVERRIDES.get(self.name, {})
         self.dispatch = func_info.get("dispatch", True)
-        self.extra_param = func_info.get("extra_param", None)
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
@@ -718,10 +716,8 @@ class Function(object):
         return pfn
 
     def prototype(self, call_conv="", prefix="", is_thunk=False, suffix=""):
-        extra = [f"void *{self.extra_param}"] if is_thunk and self.extra_param else []
         params = [p.definition() for p in self.params]
-        params = ", ".join(params + extra)
-
+        params = ", ".join(params)
         return f"{self.type} {call_conv}{prefix}{self.name}({params}){suffix}"
 
     def loader_body(self):
@@ -802,11 +798,6 @@ class Function(object):
         # The param itself knows if conversion is needed and applies it when we set conv=True.
         unwrap = Unwrap.NONE if self.name in MANUAL_UNIX_THUNKS else self.unwrap
         params = ", ".join([p.variable(conv, unwrap, params_prefix) for p in self.params])
-        if self.extra_param:
-            if conv:
-                params += ", UlongToPtr({0}{1})".format(params_prefix, self.extra_param)
-            else:
-                params += ", {0}{1}".format(params_prefix, self.extra_param)
 
         if self.name in MANUAL_UNIX_THUNKS:
             func_prefix = "wine_"
@@ -873,8 +864,6 @@ class Function(object):
             thunk += "    {\n"
             for p in self.params:
                 thunk += "        {0};\n".format(p.definition(conv=True, is_member=True))
-            if self.extra_param:
-                thunk += "        PTR32 {0};\n".format(self.extra_param)
             if self.type != "void":
                 thunk += "        {0} result;\n".format(self.type)
             thunk += "    } *params = args;\n"
@@ -2767,8 +2756,6 @@ class Generator(object):
             f.write("{\n");
             for p in vk_func.params:
                 f.write("    {0};\n".format(p.definition(is_member=True)))
-            if vk_func.extra_param:
-                f.write("    void *{0};\n".format(vk_func.extra_param))
             if vk_func.type != "void":
                 f.write("    {0} result;\n".format(vk_func.type))
             f.write("};\n\n");

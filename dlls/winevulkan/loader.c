@@ -688,16 +688,19 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
     if (!(cmd_pool = vulkan_client_object_create(sizeof(*cmd_pool))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     list_init(&cmd_pool->command_buffers);
+    *ret = (UINT_PTR)cmd_pool;
 
     params.device = device;
     params.pCreateInfo = create_info;
     params.pAllocator = allocator;
     params.pCommandPool = ret;
-    params.client_ptr = cmd_pool;
     status = UNIX_CALL(vkCreateCommandPool, &params);
     assert(!status);
     if (params.result)
+    {
         free(cmd_pool);
+        *ret = 0;
+    }
     return params.result;
 }
 
