@@ -6364,6 +6364,91 @@ static void test_base_init_thunk_unwind(void)
     ok( count == 2, "got count %lu.\n", count );
 }
 
+static void WINAPI test_backtrace_without_runtime_function_func( BOOL todo )
+{
+    unsigned int count;
+    void *addrs[256];
+
+    memset( addrs, 0xcc, sizeof(addrs) );
+    count = RtlCaptureStackBackTrace( 0, 256, addrs, NULL );
+    todo_wine_if(todo) ok( count == 2, "got %d.\n", count );
+    ok( (char *)addrs[1] == (char *)code_mem + 22, "got %p, code_mem %p.\n", addrs[1], code_mem );
+    todo_wine_if(todo) ok( addrs[2] == (void *)0xcccccccccccccccc, "got %p.\n", addrs[2]);
+
+    memset( addrs, 0xcc, sizeof(addrs) );
+    count = RtlWalkFrameChain( addrs, 256, 0 );
+    todo_wine_if(todo) ok( count == 2, "got %d.\n", count );
+    ok( (char *)addrs[1] == (char *)code_mem + 22, "got %p, code_mem %p.\n", addrs[1], code_mem );
+    todo_wine_if(todo) ok( addrs[2] == (void *)0xcccccccccccccccc, "got %p.\n", addrs[2]);
+}
+
+static RUNTIME_FUNCTION * CALLBACK test_backtrace_without_runtime_function_callback( DWORD_PTR pc, void *context )
+{
+    ++*(unsigned int *)context;
+    return NULL;
+}
+
+static void test_backtrace_without_runtime_function(void)
+{
+    static const BYTE unwind_info[] =
+    {
+        1,                       /* version + flags */
+        0,                       /* prolog size */
+        0,                       /* opcode count */
+        0,                       /* frame reg */
+        0x00, 0x00, 0x00, 0x00,  /* handler */
+    };
+
+    static BYTE test_code[] =
+    {
+        0xb8, 0xef, 0xbe, 0xad, 0xde,               /* mov    $0xdeadbeef,%eax */
+        0x50,                                       /* pushq *rax */
+        0x50,                                       /* pushq *rax */
+        0x50,                                       /* pushq *rax */
+        0x50,                                       /* pushq *rax */
+        0x50,                                       /* pushq *rax */
+        /* test_backtrace_function offset 12  */
+        0x48, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0,         /* movabs test_backtrace_without_runtime_function_func, %rax */
+        0xff, 0xd0,                                 /* callq *%rax */
+        /* offset 22 */
+        0x48, 0x83, 0xc4, 0x28,                     /* addq $0x28,%rsp */
+        0xc3,                                       /* ret */
+    };
+    IMAGE_AMD64_RUNTIME_FUNCTION_ENTRY rt_func;
+    void (WINAPI *func)( BOOL todo ) = code_mem;
+    ULONG_PTR table;
+    unsigned int count;
+    BOOL ret;
+
+    *(void **)((char *)test_code + 12) = test_backtrace_without_runtime_function_func;
+    memcpy( code_mem, test_code, sizeof(test_code) );
+    func = code_mem;
+
+    func( TRUE );
+
+    memcpy( (char *)code_mem + 0x1000, unwind_info, sizeof(unwind_info) );
+    rt_func.BeginAddress = 0;
+    rt_func.EndAddress = sizeof(test_code);
+    rt_func.UnwindData = 0x1000;
+    ret = RtlAddFunctionTable( &rt_func, 1, (ULONG_PTR)code_mem );
+    ok(ret, "RtlAddFunctionTable failed.\n");
+
+    func( TRUE );
+
+    ret = RtlDeleteFunctionTable( &rt_func );
+    ok( ret, "RtlDeleteFunctionTable failed.\n" );
+
+    table = (ULONG_PTR)code_mem | 0x3;
+    count = 0;
+    ret = RtlInstallFunctionTableCallback( table, (ULONG_PTR)code_mem, 2048,
+                                           &test_backtrace_without_runtime_function_callback, (PVOID*)&count, NULL );
+    ok( ret, "RtlInstallFunctionTableCallback failed.\n" );
+    func( TRUE );
+    todo_wine ok( !count, "got %d.\n", count );
+    ret = pRtlDeleteFunctionTable( (PRUNTIME_FUNCTION)table );
+    ok( ret, "RtlDeleteFunctionTable failed.\n" );
+}
+
 #elif defined(__arm__)
 
 static void test_thread_context(void)
@@ -12661,6 +12746,7 @@ START_TEST(exception)
     test_direct_syscalls();
     test_single_step_address();
     test_base_init_thunk_unwind();
+    test_backtrace_without_runtime_function();
 
 #elif defined(__aarch64__)
 
