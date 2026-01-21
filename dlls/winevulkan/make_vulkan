@@ -719,10 +719,10 @@ class Function(object):
             if param.const:
                 pfn += param.const + " "
 
-            pfn += param.type
-
+            pfn += param.type + " "
             if param.is_pointer():
-                pfn += " " + param.pointer
+                pfn += param.pointer
+            pfn += param.name
 
             for l in param.array_lens:
                 pfn += "[{0}]".format(l)
