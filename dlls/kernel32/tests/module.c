@@ -1309,6 +1309,7 @@ static void test_AddDllDirectory(void)
     static const WCHAR tmpW[] = {'t','m','p',0};
     static const WCHAR dotW[] = {'.','\\','.',0};
     static const WCHAR rootW[] = {'\\',0};
+    static const WCHAR deviceW[] = {'\\','\\','.','\\', 'C', ':', '\\', 0};
     WCHAR path[MAX_PATH], buf[MAX_PATH];
     DLL_DIRECTORY_COOKIE cookie;
     BOOL ret;
@@ -1339,6 +1340,11 @@ static void test_AddDllDirectory(void)
     ok( !cookie, "AddDllDirectory succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
     cookie = pAddDllDirectory( rootW );
+    ok( cookie != NULL, "AddDllDirectory failed err %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pRemoveDllDirectory( cookie );
+    ok( ret, "RemoveDllDirectory failed err %lu\n", GetLastError() );
+    cookie = pAddDllDirectory( deviceW );
     ok( cookie != NULL, "AddDllDirectory failed err %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = pRemoveDllDirectory( cookie );
