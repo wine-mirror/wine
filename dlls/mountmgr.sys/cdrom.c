@@ -350,6 +350,24 @@ static NTSTATUS seek_audio_msf( struct cdrom *cdrom, const CDROM_SEEK_AUDIO_MSF 
 #endif
 }
 
+static NTSTATUS stop_audio( struct cdrom *cdrom )
+{
+    /* We might be about to change media. */
+    cdrom->toc_valid = false;
+#ifdef linux
+    if (ioctl( cdrom->fd, CDROMSTOP ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    if (ioctl( cdrom->fd, CDIOCSTOP, NULL ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -371,6 +389,9 @@ NTSTATUS cdrom_ioctl( void *args )
             if (params->input_size < sizeof(CDROM_SEEK_AUDIO_MSF))
                 return STATUS_INFO_LENGTH_MISMATCH;
             return seek_audio_msf( params->cdrom, params->input );
+
+        case IOCTL_CDROM_STOP_AUDIO:
+            return stop_audio( params->cdrom );
 
         default:
             FIXME("Unsupported ioctl %#x (device=%#x access=%#x func=%#x method=%#x)\n",
