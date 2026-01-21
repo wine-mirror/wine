@@ -400,6 +400,34 @@ static NTSTATUS stop_audio( struct cdrom *cdrom )
 #endif
 }
 
+static NTSTATUS get_volume( struct cdrom *cdrom, VOLUME_CONTROL *vc )
+{
+#if defined(linux)
+    struct cdrom_volctrl volc;
+
+    if (ioctl( cdrom->fd, CDROMVOLREAD, &volc ) == -1)
+        return errno_to_status( errno );
+    vc->PortVolume[0] = volc.channel0;
+    vc->PortVolume[1] = volc.channel1;
+    vc->PortVolume[2] = volc.channel2;
+    vc->PortVolume[3] = volc.channel3;
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    struct ioc_vol volc;
+
+    if (ioctl( cdrom->fd, CDIOCGETVOL, &volc ) == -1)
+        return errno_to_status( errno );
+    vc->PortVolume[0] = volc.vol[0];
+    vc->PortVolume[1] = volc.vol[1];
+    vc->PortVolume[2] = volc.vol[2];
+    vc->PortVolume[3] = volc.vol[3];
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -411,6 +439,12 @@ NTSTATUS cdrom_ioctl( void *args )
 
     switch (code)
     {
+        case IOCTL_CDROM_GET_VOLUME:
+            if (params->output_size < sizeof(VOLUME_CONTROL))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(VOLUME_CONTROL);
+            return get_volume( params->cdrom, params->output );
+
         case IOCTL_CDROM_PAUSE_AUDIO:
             return pause_audio( params->cdrom );
 
