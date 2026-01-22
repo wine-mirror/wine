@@ -946,6 +946,22 @@ static NTSTATUS get_drive_geometry( struct cdrom *cdrom, DISK_GEOMETRY *geometry
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS media_removal( struct cdrom *cdrom, const PREVENT_MEDIA_REMOVAL *prevent_removal )
+{
+#if defined(linux)
+    if (ioctl( cdrom->fd, CDROM_LOCKDOOR, prevent_removal->PreventMediaRemoval ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    if (ioctl( cdrom->fd, (prevent_removal->PreventMediaRemoval ? CDIOCPREVENT : CDIOCALLOW), NULL ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -974,6 +990,17 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(VOLUME_CONTROL);
             return get_volume( params->cdrom, params->output );
+
+        case IOCTL_CDROM_MEDIA_REMOVAL:
+        case IOCTL_DISK_MEDIA_REMOVAL:
+        case IOCTL_STORAGE_EJECTION_CONTROL:
+        case IOCTL_STORAGE_MEDIA_REMOVAL:
+            /* FIXME: IOCTL_STORAGE_EJECTION_CONTROL is supposed to track the
+             * file object which has requested to prevent ejection, and ignore
+             * requests from other file objects. We don't handle that yet. */
+            if (params->input_size < sizeof(PREVENT_MEDIA_REMOVAL))
+                return STATUS_INFO_LENGTH_MISMATCH;
+            return media_removal( params->cdrom, params->input );
 
         case IOCTL_CDROM_PAUSE_AUDIO:
             return pause_audio( params->cdrom );
