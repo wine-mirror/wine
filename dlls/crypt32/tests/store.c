@@ -441,8 +441,8 @@ static const struct
  */
 static void testRegStoreSavedCerts(void)
 {
-    PCCERT_CONTEXT cert1, cert2;
-    HCERTSTORE store;
+    PCCERT_CONTEXT cert1, cert2, cert3;
+    HCERTSTORE store, store2;
     HANDLE cert_file;
     HRESULT pathres;
     WCHAR key_name[MAX_PATH], appdata_path[MAX_PATH];
@@ -523,6 +523,18 @@ static void testRegStoreSavedCerts(void)
         ret = CertDeleteCertificateFromStore(cert2);
         ok (ret, "Failed to delete certificate from store at %ld, %lx\n", i, GetLastError());
 
+        /* check that cert is removed from backing store before closing store */
+        store2 = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,0,0,
+            reg_store_saved_certs[i].cert_store, reg_store_saved_certs[i].store_name);
+        ok (store2 != NULL, "Failed to open the store at %ld, %lx\n", i, GetLastError());
+
+        cert3 = CertFindCertificateInStore(store2, X509_ASN_ENCODING, 0,
+            CERT_FIND_EXISTING, cert1, NULL);
+        ok (cert3 == NULL, "Failed to find cert in the store at %ld, %lx\n", i, GetLastError());
+
+        ret = CertCloseStore(store2, CERT_CLOSE_STORE_CHECK_FLAG);
+        ok(ret, "got error %#lx.\n", GetLastError());
+
         CertFreeCertificateContext(cert1);
         ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
         ok(ret, "got error %#lx.\n", GetLastError());
@@ -576,7 +588,7 @@ static void testStoresInCollection(void)
     ret = CertAddStoreToCollection(collection, rw_store, CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok (ret, "Failed to add rw store to collection %lx\n", GetLastError());
     /** Adding certificate to collection should fall into rw store,
-     *  even though prioirty of the ro_store is higher */
+     *  even though priority of the ro_store is higher */
     ret = CertAddCertificateContextToStore(collection, cert1, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
     ok (ret, "Failed to add cert to the collection %lx\n", GetLastError());
 
@@ -634,8 +646,7 @@ static void testStoresInCollection(void)
         CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, L"WineTest_RW");
     ok (tstore!=NULL, "Failed to open existing rw store\n");
     tcert1 = CertEnumCertificatesInStore(tstore, NULL);
-    todo_wine
-        ok(tcert1 && tcert1->cbCertEncoded == cert1->cbCertEncoded, "cert1 wasn't saved\n");
+    ok(tcert1 && tcert1->cbCertEncoded == cert1->cbCertEncoded, "cert1 wasn't saved\n");
     CertFreeCertificateContext(tcert1);
     CertCloseStore(tstore,0);
 
@@ -643,8 +654,7 @@ static void testStoresInCollection(void)
         CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, L"WineTest_RW2");
     ok (tstore!=NULL, "Failed to open existing rw2 store\n");
     tcert1 = CertEnumCertificatesInStore(tstore, NULL);
-    todo_wine
-        ok (tcert1 && tcert1->cbCertEncoded == cert2->cbCertEncoded, "cert2 wasn't saved\n");
+    ok (tcert1 && tcert1->cbCertEncoded == cert2->cbCertEncoded, "cert2 wasn't saved\n");
     CertFreeCertificateContext(tcert1);
     CertCloseStore(tstore,0);
 

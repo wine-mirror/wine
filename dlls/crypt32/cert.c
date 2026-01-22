@@ -277,6 +277,8 @@ static BOOL add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *ce
         return FALSE;
     }
 
+    CertControlStore(store, CERT_STORE_CTRL_COMMIT_FORCE_FLAG, CERT_STORE_CTRL_COMMIT, NULL);
+
     if(inherit_props)
         Context_CopyProperties(context_ptr(new_context), existing);
 
