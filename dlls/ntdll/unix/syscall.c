@@ -35,9 +35,175 @@
 #include "winternl.h"
 #include "unix_private.h"
 #include "ntsyscalls.h"
+#include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(syscall);
+
+/* Clang on x86-64, and on macOS ARM64, assumes that function parameters are extended by the caller,
+ * contrary to the ABI standards */
+#if (defined(__x86_64__) && defined(__clang__)) || (defined(__aarch64__) && defined(__APPLE__))
+
+#ifdef __x86_64__
+
+#define WRAP_FUNC(name,code) \
+    extern NTSTATUS wrap_##name(void); \
+    __ASM_GLOBAL_FUNC( wrap_##name, code "jmp " __ASM_NAME(#name) )
+#define ARG1 "movzbl %dil,%edi\n\t"
+#define ARG2 "movzbl %sil,%esi\n\t"
+#define ARG3 "movzbl %dl,%edx\n\t"
+#define ARG4 "movzbl %cl,%ecx\n\t"
+#define ARG5 "movzbl %r8b,%r8d\n\t"
+#define ARG6 "movzbl %r9b,%r9d\n\t"
+#define ARG7 ARGn(7)
+#define ARG8 ARGn(8)
+#define ARGn(n) "andq $0xff,(" #n "-6)*8(%rsp)\n\t"
+
+WRAP_FUNC( NtAccessCheckByTypeAndAuditAlarm, ARGn(13) )
+WRAP_FUNC( NtLockFile, ARGn(9) ARGn(10) )
+WRAP_FUNC( NtNotifyChangeDirectoryFile, ARGn(9) )
+WRAP_FUNC( NtNotifyChangeKey, ARG7 ARGn(10) )
+WRAP_FUNC( NtNotifyChangeMultipleKeys, ARGn(9) ARGn(12) )
+WRAP_FUNC( NtQueryDirectoryFile, ARGn(9) ARGn(11) )
+WRAP_FUNC( NtQueryEaFile, ARG5 ARGn(9) )
+
+#define NtAccessCheckByTypeAndAuditAlarm wrap_NtAccessCheckByTypeAndAuditAlarm
+#define NtLockFile wrap_NtLockFile
+#define NtNotifyChangeDirectoryFile wrap_NtNotifyChangeDirectoryFile
+#define NtNotifyChangeKey wrap_NtNotifyChangeKey
+#define NtNotifyChangeMultipleKeys wrap_NtNotifyChangeMultipleKeys
+#define NtQueryDirectoryFile wrap_NtQueryDirectoryFile
+#define NtQueryEaFile wrap_NtQueryEaFile
+
+#else
+
+#define WRAP_FUNC(name,code) \
+    extern NTSTATUS wrap_##name(void); \
+    __ASM_GLOBAL_FUNC( wrap_##name, code "b " __ASM_NAME(#name) )
+#define ARG1 "and w0, w0, #0xff\n\t"
+#define ARG2 "and w1, w1, #0xff\n\t"
+#define ARG3 "and w2, w2, #0xff\n\t"
+#define ARG4 "and w3, w3, #0xff\n\t"
+#define ARG5 "and w4, w4, #0xff\n\t"
+#define ARG6 "and w5, w5, #0xff\n\t"
+#define ARG7 "and w6, w6, #0xff\n\t"
+#define ARG8 "and w7, w7, #0xff\n\t"
+
+/* Additionally, macOS doesn't follow the standard ABI for stack packing:
+ * types smaller that 64-bit are packed on the stack. The first 8 args are
+ * in registers, so it only affects a few functions.
+ */
+
+WRAP_FUNC( NtCreateNamedPipeFile, /* ULONG, ULONG, ULONG, ULONG, ULONG, LARGE_INTEGER* */
+           "ldr w8, [sp, #0x08]\n\t"
+           "ldp x9, x10, [sp, #0x10]\n\t"
+           "ldp x11, x12, [sp, #0x20]\n\t"
+           "str w8, [sp, #0x04]\n\t"
+           "stp w9, w10, [sp, #0x8]\n\t"
+           "stp x11, x12, [sp, #0x10]\n\t" )
+WRAP_FUNC( NtLockFile, /* BOOLEAN, BOOLEAN */
+           "ldrb w8, [sp, #8]\n\t"
+           "strb w8, [sp, #1]\n\t" )
+WRAP_FUNC( NtMapViewOfSection, /* ULONG, ULONG */
+           "ldr w8, [sp, #8]\n\t"
+           "str w8, [sp, #4]\n\t" )
+WRAP_FUNC( NtNotifyChangeKey, /* ULONG, BOOLEAN */
+           ARG7
+           "ldrb w8, [sp, #8]\n\t"
+           "strb w8, [sp, #4]\n\t" )
+WRAP_FUNC( NtNotifyChangeMultipleKeys, /* BOOLEAN, void*, ULONG, BOOLEAN */
+           "ldrb w8, [sp, #0x18]\n\t"
+           "strb w8, [sp, #0x14]\n\t" )
+WRAP_FUNC( NtQueryEaFile, ARG5 )
+
+#define NtCreateNamedPipeFile wrap_NtCreateNamedPipeFile
+#define NtLockFile wrap_NtLockFile
+#define NtMapViewOfSection wrap_NtMapViewOfSection
+#define NtNotifyChangeKey wrap_NtNotifyChangeKey
+#define NtNotifyChangeMultipleKeys wrap_NtNotifyChangeMultipleKeys
+#define NtQueryEaFile wrap_NtQueryEaFile
+
+#endif
+
+WRAP_FUNC( NtAcceptConnectPort, ARG4 )
+WRAP_FUNC( NtAccessCheckAndAuditAlarm, ARG8 )
+WRAP_FUNC( NtAdjustGroupsToken, ARG2 )
+WRAP_FUNC( NtAdjustPrivilegesToken, ARG2 )
+WRAP_FUNC( NtCloseObjectAuditAlarm, ARG3 )
+WRAP_FUNC( NtCommitTransaction, ARG2 )
+WRAP_FUNC( NtContinue, ARG2 )
+WRAP_FUNC( NtCreateEvent, ARG5 )
+WRAP_FUNC( NtCreateMutant, ARG4 )
+/* WRAP_FUNC( NtCreateProcess, ARG5 ) */
+WRAP_FUNC( NtCreateThread, ARG8 )
+WRAP_FUNC( NtDelayExecution, ARG1 )
+WRAP_FUNC( NtDuplicateToken, ARG4 )
+WRAP_FUNC( NtInitiatePowerAction, ARG4 )
+WRAP_FUNC( NtOpenThreadToken, ARG3 )
+WRAP_FUNC( NtOpenThreadTokenEx, ARG3 )
+/* WRAP_FUNC( NtPrivilegeObjectAuditAlarm, ARG6 ) */
+/* WRAP_FUNC( NtPrivilegedServiceAuditAlarm, ARG5 ) */
+WRAP_FUNC( NtQueryDefaultLocale, ARG1 )
+WRAP_FUNC( NtQueryDirectoryObject, ARG4 ARG5 )
+WRAP_FUNC( NtReleaseKeyedEvent, ARG3 )
+WRAP_FUNC( NtRemoveIoCompletionEx, ARG6 )
+WRAP_FUNC( NtRollbackTransaction, ARG2 )
+WRAP_FUNC( NtSetDebugFilterState, ARG3 )
+WRAP_FUNC( NtSetDefaultLocale, ARG1 )
+WRAP_FUNC( NtSetTimer, ARG5 )
+WRAP_FUNC( NtSetTimerResolution, ARG2 )
+WRAP_FUNC( NtSignalAndWaitForSingleObject, ARG3 )
+WRAP_FUNC( NtWaitForDebugEvent, ARG2 )
+WRAP_FUNC( NtWaitForKeyedEvent, ARG3 )
+WRAP_FUNC( NtWaitForMultipleObjects, ARG4 )
+WRAP_FUNC( NtWaitForSingleObject, ARG2 )
+
+#define NtAcceptConnectPort wrap_NtAcceptConnectPort
+#define NtAccessCheckAndAuditAlarm wrap_NtAccessCheckAndAuditAlarm
+#define NtAdjustGroupsToken wrap_NtAdjustGroupsToken
+#define NtAdjustPrivilegesToken wrap_NtAdjustPrivilegesToken
+#define NtCloseObjectAuditAlarm wrap_NtCloseObjectAuditAlarm
+#define NtCommitTransaction wrap_NtCommitTransaction
+#define NtContinue wrap_NtContinue
+#define NtCreateEvent wrap_NtCreateEvent
+#define NtCreateMutant wrap_NtCreateMutant
+#define NtCreateProcess wrap_NtCreateProcess
+#define NtCreateThread wrap_NtCreateThread
+#define NtDelayExecution wrap_NtDelayExecution
+#define NtDuplicateToken wrap_NtDuplicateToken
+#define NtInitiatePowerAction wrap_NtInitiatePowerAction
+#define NtOpenThreadToken wrap_NtOpenThreadToken
+#define NtOpenThreadTokenEx wrap_NtOpenThreadTokenEx
+#define NtPrivilegeObjectAuditAlarm wrap_NtPrivilegeObjectAuditAlarm
+#define NtPrivilegedServiceAuditAlarm wrap_NtPrivilegedServiceAuditAlarm
+#define NtQueryDefaultLocale wrap_NtQueryDefaultLocale
+#define NtQueryDirectoryObject wrap_NtQueryDirectoryObject
+#define NtReleaseKeyedEvent wrap_NtReleaseKeyedEvent
+#define NtRemoveIoCompletionEx wrap_NtRemoveIoCompletionEx
+#define NtRollbackTransaction wrap_NtRollbackTransaction
+#define NtSetDebugFilterState wrap_NtSetDebugFilterState
+#define NtSetDefaultLocale wrap_NtSetDefaultLocale
+#define NtSetTimer wrap_NtSetTimer
+#define NtSetTimerResolution wrap_NtSetTimerResolution
+#define NtSignalAndWaitForSingleObject wrap_NtSignalAndWaitForSingleObject
+#define NtWaitForDebugEvent wrap_NtWaitForDebugEvent
+#define NtWaitForKeyedEvent wrap_NtWaitForKeyedEvent
+#define NtWaitForMultipleObjects wrap_NtWaitForMultipleObjects
+#define NtWaitForSingleObject wrap_NtWaitForSingleObject
+
+#undef ARG1
+#undef ARG2
+#undef ARG3
+#undef ARG4
+#undef ARG5
+#undef ARG6
+#undef ARG7
+#undef ARG8
+#undef ARGn
+#undef WRAP_FUNC
+
+#endif  /* (__x86_64__ && __clang__) || (__aarch64__ && __APPLE__) */
+
 
 static void stub_syscall( const char *name )
 {
