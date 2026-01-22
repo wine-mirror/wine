@@ -929,6 +929,23 @@ static NTSTATUS disk_type( struct cdrom *cdrom, CDROM_DISK_DATA *data )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_drive_geometry( struct cdrom *cdrom, DISK_GEOMETRY *geometry )
+{
+    unsigned int frame_size;
+    NTSTATUS status;
+
+    if (!cdrom->toc_valid && (status = update_toc_cache( cdrom )))
+        return status;
+
+    frame_size = track_to_frame( &cdrom->toc, cdrom->toc.LastTrack + 1 ) - track_to_frame( &cdrom->toc, 1 );
+    geometry->Cylinders.QuadPart = frame_size / (64 * 32);
+    geometry->MediaType = RemovableMedia;
+    geometry->TracksPerCylinder = 64;
+    geometry->SectorsPerTrack = 32;
+    geometry->BytesPerSector= 2048;
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -945,6 +962,12 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(CDROM_DISK_DATA);
             return disk_type( params->cdrom, params->output );
+
+        case IOCTL_CDROM_GET_DRIVE_GEOMETRY:
+            if (params->output_size < sizeof(DISK_GEOMETRY))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(DISK_GEOMETRY);
+            return get_drive_geometry( params->cdrom, params->output );
 
         case IOCTL_CDROM_GET_VOLUME:
             if (params->output_size < sizeof(VOLUME_CONTROL))
