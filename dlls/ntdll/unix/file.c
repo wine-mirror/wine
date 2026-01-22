@@ -2843,7 +2843,7 @@ static unsigned int get_cached_dir_data( HANDLE handle, struct dir_data **data_r
     }
 
     *data_ret = dir_data_cache[entry];
-    if (restart_scan) (*data_ret)->pos = 0;
+    if (restart_scan && *data_ret) (*data_ret)->pos = 0;
     return status;
 }
 
