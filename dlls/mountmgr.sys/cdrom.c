@@ -982,6 +982,22 @@ static NTSTATUS eject_media( struct cdrom *cdrom )
 #endif
 }
 
+static NTSTATUS load_media( struct cdrom *cdrom )
+{
+#if defined(linux)
+    if (ioctl( cdrom->fd, CDROMCLOSETRAY ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    if (ioctl( cdrom->fd, CDIOCCLOSE, NULL ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -1013,6 +1029,10 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(VOLUME_CONTROL);
             return get_volume( params->cdrom, params->output );
+
+        case IOCTL_CDROM_LOAD_MEDIA:
+        case IOCTL_STORAGE_LOAD_MEDIA:
+            return load_media( params->cdrom );
 
         case IOCTL_CDROM_MEDIA_REMOVAL:
         case IOCTL_DISK_MEDIA_REMOVAL:
