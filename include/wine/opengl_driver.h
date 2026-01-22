@@ -59,6 +59,18 @@ struct wgl_pixel_format
     int float_components;
 };
 
+struct opengl_client_context
+{
+    struct HGLRC__              obj;            /* client object header */
+    UINT64                      unix_handle;
+    UINT64                      unix_funcs;
+};
+
+static inline struct opengl_client_context *opengl_client_context_from_client( HGLRC client_context )
+{
+    return CONTAINING_RECORD( client_context, struct opengl_client_context, obj );
+}
+
 struct opengl_client_pbuffer
 {
     struct HPBUFFERARB__        obj;            /* client object header */
@@ -82,13 +94,20 @@ struct opengl_drawable;
 
 struct wgl_context
 {
-    void                   *driver_private;     /* driver context / private data */
-    void                   *internal_context;   /* driver context for win32u internal use */
-    int                     format;             /* pixel format of the context */
-    struct opengl_drawable *draw;               /* currently bound draw surface */
-    struct opengl_drawable *read;               /* currently bound read surface */
-    GLenum                  error;              /* wrapped GL error */
+    HGLRC                       client_context;     /* client side context pointer */
+    void                       *driver_private;     /* driver context / private data */
+    void                       *internal_context;   /* driver context for win32u internal use */
+    int                         format;             /* pixel format of the context */
+    struct opengl_drawable     *draw;               /* currently bound draw surface */
+    struct opengl_drawable     *read;               /* currently bound read surface */
+    GLenum                      error;              /* wrapped GL error */
 };
+
+static inline struct wgl_context *opengl_context_from_handle( HGLRC client_context )
+{
+    struct opengl_client_context *client = opengl_client_context_from_client( client_context );
+    return client_context ? (struct wgl_context *)(UINT_PTR)client->unix_handle : NULL;
+}
 
 /* interface between opengl32 and win32u */
 struct opengl_funcs

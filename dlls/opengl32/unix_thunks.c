@@ -26,9 +26,9 @@ static GLboolean const_true = 1;
 static NTSTATUS wgl_wglCopyContext( void *args )
 {
     struct wglCopyContext_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
+    const struct opengl_funcs *funcs = get_context_funcs( params->hglrcSrc );
+    if (!funcs || !funcs->p_wglCopyContext) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglCopyContext( params->teb, params->hglrcSrc, params->hglrcDst, params->mask );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -37,18 +37,16 @@ static NTSTATUS wgl_wglCreateContext( void *args )
     struct wglCreateContext_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
     if (!funcs || !funcs->p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglCreateContext( params->teb, params->hDc );
-    pthread_mutex_unlock( &wgl_lock );
+    params->ret = wrap_wglCreateContext( params->teb, params->hDc, params->ret );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wgl_wglDeleteContext( void *args )
 {
     struct wglDeleteContext_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
+    const struct opengl_funcs *funcs = get_context_funcs( params->oldContext );
+    if (!funcs || !funcs->p_wglDeleteContext) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglDeleteContext( params->teb, params->oldContext );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -71,9 +69,7 @@ static NTSTATUS wgl_wglGetProcAddress( void *args )
 static NTSTATUS wgl_wglMakeCurrent( void *args )
 {
     struct wglMakeCurrent_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
     params->ret = wrap_wglMakeCurrent( params->teb, params->hDc, params->newContext );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -89,9 +85,9 @@ static NTSTATUS wgl_wglSetPixelFormat( void *args )
 static NTSTATUS wgl_wglShareLists( void *args )
 {
     struct wglShareLists_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
+    const struct opengl_funcs *funcs = get_context_funcs( params->hrcSrvShare );
+    if (!funcs || !funcs->p_wglShareLists) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglShareLists( params->teb, params->hrcSrvShare, params->hrcSrvSource );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -30319,9 +30315,7 @@ static NTSTATUS ext_wglCreateContextAttribsARB( void *args )
     struct wglCreateContextAttribsARB_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
     if (!funcs || !funcs->p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglCreateContextAttribsARB( params->teb, params->hDC, params->hShareContext, params->attribList );
-    pthread_mutex_unlock( &wgl_lock );
+    params->ret = wrap_wglCreateContextAttribsARB( params->teb, params->hDC, params->hShareContext, params->attribList, params->ret );
     return STATUS_SUCCESS;
 }
 
@@ -30409,9 +30403,7 @@ static NTSTATUS ext_wglGetSwapIntervalEXT( void *args )
 static NTSTATUS ext_wglMakeContextCurrentARB( void *args )
 {
     struct wglMakeContextCurrentARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
     params->ret = wrap_wglMakeContextCurrentARB( params->teb, params->hDrawDC, params->hReadDC, params->hglrc );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -33630,9 +33622,9 @@ static NTSTATUS wow64_wgl_wglCopyContext( void *args )
         BOOL ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    pthread_mutex_lock( &wgl_lock );
+    const struct opengl_funcs *funcs = get_context_funcs( ULongToPtr(params->hglrcSrc) );
+    if (!funcs || !funcs->p_wglCopyContext) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglCopyContext( teb, ULongToPtr(params->hglrcSrc), ULongToPtr(params->hglrcDst), params->mask );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -33647,9 +33639,7 @@ static NTSTATUS wow64_wgl_wglCreateContext( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDc) );
     if (!funcs || !funcs->p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = (UINT_PTR)wrap_wglCreateContext( teb, ULongToPtr(params->hDc) );
-    pthread_mutex_unlock( &wgl_lock );
+    params->ret = (UINT_PTR)wrap_wglCreateContext( teb, ULongToPtr(params->hDc), UlongToHandle( params->ret ) );
     return STATUS_SUCCESS;
 }
 
@@ -33662,9 +33652,9 @@ static NTSTATUS wow64_wgl_wglDeleteContext( void *args )
         BOOL ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    pthread_mutex_lock( &wgl_lock );
+    const struct opengl_funcs *funcs = get_context_funcs( ULongToPtr(params->oldContext) );
+    if (!funcs || !funcs->p_wglDeleteContext) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglDeleteContext( teb, ULongToPtr(params->oldContext) );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -33705,9 +33695,7 @@ static NTSTATUS wow64_wgl_wglMakeCurrent( void *args )
         BOOL ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    pthread_mutex_lock( &wgl_lock );
     params->ret = wrap_wglMakeCurrent( teb, ULongToPtr(params->hDc), ULongToPtr(params->newContext) );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -33737,9 +33725,9 @@ static NTSTATUS wow64_wgl_wglShareLists( void *args )
         BOOL ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    pthread_mutex_lock( &wgl_lock );
+    const struct opengl_funcs *funcs = get_context_funcs( ULongToPtr(params->hrcSrvShare) );
+    if (!funcs || !funcs->p_wglShareLists) return STATUS_NOT_IMPLEMENTED;
     params->ret = wrap_wglShareLists( teb, ULongToPtr(params->hrcSrvShare), ULongToPtr(params->hrcSrvSource) );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -86527,9 +86515,7 @@ static NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDC) );
     if (!funcs || !funcs->p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = (UINT_PTR)wrap_wglCreateContextAttribsARB( teb, ULongToPtr(params->hDC), ULongToPtr(params->hShareContext), ULongToPtr(params->attribList) );
-    pthread_mutex_unlock( &wgl_lock );
+    params->ret = (UINT_PTR)wrap_wglCreateContextAttribsARB( teb, ULongToPtr(params->hDC), ULongToPtr(params->hShareContext), ULongToPtr(params->attribList), UlongToHandle( params->ret ) );
     return STATUS_SUCCESS;
 }
 
@@ -86686,9 +86672,7 @@ static NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
         BOOL ret;
     } *params = args;
     TEB *teb = get_teb64( params->teb );
-    pthread_mutex_lock( &wgl_lock );
     params->ret = wrap_wglMakeContextCurrentARB( teb, ULongToPtr(params->hDrawDC), ULongToPtr(params->hReadDC), ULongToPtr(params->hglrc) );
-    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -89960,17 +89944,17 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif
 
-static BOOL null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask )
+static BOOL null_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
 {
     WARN( "unsupported\n" );
     return 0;
 }
-static struct wgl_context * null_wglCreateContext( HDC hDc )
+static HGLRC null_wglCreateContext( HDC hDc, HGLRC client_context )
 {
     WARN( "unsupported\n" );
     return 0;
 }
-static BOOL null_wglDeleteContext( struct wgl_context * oldContext )
+static BOOL null_wglDeleteContext( HGLRC oldContext )
 {
     WARN( "unsupported\n" );
     return 0;
@@ -89986,7 +89970,7 @@ static PROC null_wglGetProcAddress( LPCSTR lpszProc )
     WARN( "unsupported\n" );
     return 0;
 }
-static BOOL null_wglMakeCurrent( HDC hDc, struct wgl_context * newContext )
+static BOOL null_wglMakeCurrent( HDC hDc, HGLRC newContext )
 {
     WARN( "unsupported\n" );
     return 0;
@@ -89996,7 +89980,7 @@ static BOOL null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPT
     WARN( "unsupported\n" );
     return 0;
 }
-static BOOL null_wglShareLists( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource )
+static BOOL null_wglShareLists( HGLRC hrcSrvShare, HGLRC hrcSrvSource )
 {
     WARN( "unsupported\n" );
     return 0;

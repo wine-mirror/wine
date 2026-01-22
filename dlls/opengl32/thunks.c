@@ -18,37 +18,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 BOOL WINAPI wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
 {
-    struct wglCopyContext_params args = { .teb = NtCurrentTeb(), .hglrcSrc = hglrcSrc, .hglrcDst = hglrcDst, .mask = mask };
+    struct wglCopyContext_params args = { .teb = NtCurrentTeb(), .mask = mask };
     NTSTATUS status;
     TRACE( "hglrcSrc %p, hglrcDst %p, mask %u\n", hglrcSrc, hglrcDst, mask );
+    if (!get_context_from_handle( hglrcSrc, &args.hglrcSrc )) return 0;
+    if (!get_context_from_handle( hglrcDst, &args.hglrcDst )) return 0;
     if ((status = UNIX_CALL( wglCopyContext, &args ))) WARN( "wglCopyContext returned %#lx\n", status );
-    return args.ret;
-}
-
-HGLRC WINAPI wglCreateContext( HDC hDc )
-{
-    struct wglCreateContext_params args = { .teb = NtCurrentTeb(), .hDc = hDc };
-    NTSTATUS status;
-    TRACE( "hDc %p\n", hDc );
-    if ((status = UNIX_CALL( wglCreateContext, &args ))) WARN( "wglCreateContext returned %#lx\n", status );
-    return args.ret;
-}
-
-BOOL WINAPI wglDeleteContext( HGLRC oldContext )
-{
-    struct wglDeleteContext_params args = { .teb = NtCurrentTeb(), .oldContext = oldContext };
-    NTSTATUS status;
-    TRACE( "oldContext %p\n", oldContext );
-    if ((status = UNIX_CALL( wglDeleteContext, &args ))) WARN( "wglDeleteContext returned %#lx\n", status );
-    return args.ret;
-}
-
-BOOL WINAPI wglMakeCurrent( HDC hDc, HGLRC newContext )
-{
-    struct wglMakeCurrent_params args = { .teb = NtCurrentTeb(), .hDc = hDc, .newContext = newContext };
-    NTSTATUS status;
-    TRACE( "hDc %p, newContext %p\n", hDc, newContext );
-    if ((status = UNIX_CALL( wglMakeCurrent, &args ))) WARN( "wglMakeCurrent returned %#lx\n", status );
     return args.ret;
 }
 
@@ -63,9 +38,11 @@ BOOL WINAPI wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *p
 
 BOOL WINAPI wglShareLists( HGLRC hrcSrvShare, HGLRC hrcSrvSource )
 {
-    struct wglShareLists_params args = { .teb = NtCurrentTeb(), .hrcSrvShare = hrcSrvShare, .hrcSrvSource = hrcSrvSource };
+    struct wglShareLists_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "hrcSrvShare %p, hrcSrvSource %p\n", hrcSrvShare, hrcSrvSource );
+    if (!get_context_from_handle( hrcSrvShare, &args.hrcSrvShare )) return 0;
+    if (!get_context_from_handle( hrcSrvSource, &args.hrcSrvSource )) return 0;
     if ((status = UNIX_CALL( wglShareLists, &args ))) WARN( "wglShareLists returned %#lx\n", status );
     return args.ret;
 }
@@ -24743,15 +24720,6 @@ static BOOL WINAPI wglBindTexImageARB( HPBUFFERARB hPbuffer, int iBuffer )
     return args.ret;
 }
 
-static HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, const int *attribList )
-{
-    struct wglCreateContextAttribsARB_params args = { .teb = NtCurrentTeb(), .hDC = hDC, .hShareContext = hShareContext, .attribList = attribList };
-    NTSTATUS status;
-    TRACE( "hDC %p, hShareContext %p, attribList %p\n", hDC, hShareContext, attribList );
-    if ((status = UNIX_CALL( wglCreateContextAttribsARB, &args ))) WARN( "wglCreateContextAttribsARB returned %#lx\n", status );
-    return args.ret;
-}
-
 static void WINAPI wglFreeMemoryNV( void *pointer )
 {
     struct wglFreeMemoryNV_params args = { .teb = NtCurrentTeb(), .pointer = pointer };
@@ -24776,15 +24744,6 @@ static int WINAPI wglGetSwapIntervalEXT(void)
     NTSTATUS status;
     TRACE( "\n" );
     if ((status = UNIX_CALL( wglGetSwapIntervalEXT, &args ))) WARN( "wglGetSwapIntervalEXT returned %#lx\n", status );
-    return args.ret;
-}
-
-static BOOL WINAPI wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, HGLRC hglrc )
-{
-    struct wglMakeContextCurrentARB_params args = { .teb = NtCurrentTeb(), .hDrawDC = hDrawDC, .hReadDC = hReadDC, .hglrc = hglrc };
-    NTSTATUS status;
-    TRACE( "hDrawDC %p, hReadDC %p, hglrc %p\n", hDrawDC, hReadDC, hglrc );
-    if ((status = UNIX_CALL( wglMakeContextCurrentARB, &args ))) WARN( "wglMakeContextCurrentARB returned %#lx\n", status );
     return args.ret;
 }
 
@@ -24866,6 +24825,7 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
 
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index );
 extern BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
+extern HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, const int *attribList );
 extern HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );
 extern BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB hPbuffer );
 extern HDC WINAPI wglGetCurrentReadDCARB(void);
@@ -24873,6 +24833,7 @@ extern const char * WINAPI wglGetExtensionsStringARB( HDC hdc );
 extern const char * WINAPI wglGetExtensionsStringEXT(void);
 extern BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues );
 extern BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues );
+extern BOOL WINAPI wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, HGLRC hglrc );
 extern const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute );
 extern const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute );
 const void *extension_procs[] =

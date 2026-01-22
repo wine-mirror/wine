@@ -33,5 +33,6 @@ extern const void *extension_procs[];
 
 extern int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
 extern BOOL get_pbuffer_from_handle( HPBUFFERARB handle, HPBUFFERARB *obj );
+extern BOOL get_context_from_handle( HGLRC handle, HGLRC *obj );
 
 #endif /* __WINE_OPENGL32_PRIVATE_H */

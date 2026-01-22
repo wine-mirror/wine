@@ -1882,8 +1882,9 @@ static void pop_internal_context( struct wgl_context *context )
     driver_funcs->p_make_current( context->draw, context->read, context->driver_private );
 }
 
-static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *context )
+static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC client_context )
 {
+    struct wgl_context *context = opengl_context_from_handle( client_context );
     struct wgl_context *prev_context = NtCurrentTeb()->glContext;
     BOOL created;
     int format;
@@ -1930,9 +1931,9 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
     return TRUE;
 }
 
-static BOOL win32u_wglMakeCurrent( HDC hdc, struct wgl_context *context )
+static BOOL win32u_wglMakeCurrent( HDC hdc, HGLRC client_context )
 {
-    return win32u_wglMakeContextCurrentARB( hdc, hdc, context );
+    return win32u_wglMakeContextCurrentARB( hdc, hdc, client_context );
 }
 
 static void opengl_client_pbuffer_init( HPBUFFERARB client_pbuffer, struct pbuffer *pbuffer, const struct opengl_funcs *funcs )

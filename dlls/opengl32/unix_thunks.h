@@ -3,7 +3,7 @@
 typedef ULONG PTR32;
 
 extern BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
-extern HGLRC wrap_wglCreateContext( TEB *teb, HDC hDc );
+extern HGLRC wrap_wglCreateContext( TEB *teb, HDC hDc, HGLRC handle );
 extern BOOL wrap_wglDeleteContext( TEB *teb, HGLRC oldContext );
 extern PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR lpszProc );
 extern BOOL wrap_wglMakeCurrent( TEB *teb, HDC hDc, HGLRC newContext );
@@ -37,7 +37,7 @@ extern void wrap_glGetUnsignedBytevEXT( TEB *teb, GLenum pname, GLubyte *data );
 extern void wrap_glNamedFramebufferDrawBuffer( TEB *teb, GLuint framebuffer, GLenum buf );
 extern void wrap_glNamedFramebufferDrawBuffers( TEB *teb, GLuint framebuffer, GLsizei n, const GLenum *bufs );
 extern void wrap_glNamedFramebufferReadBuffer( TEB *teb, GLuint framebuffer, GLenum src );
-extern HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hDC, HGLRC hShareContext, const int *attribList );
+extern HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hDC, HGLRC hShareContext, const int *attribList, HGLRC handle );
 extern BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC hDrawDC, HDC hReadDC, HGLRC hglrc );
 
 #ifdef _WIN64

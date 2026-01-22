@@ -24,7 +24,6 @@
 #define EGL_CAST(t,x) ((t)(x))
 #endif
 
-struct wgl_context;
 typedef void *EGLNativeDisplayType;
 typedef void *EGLNativePixmapType;
 typedef void *EGLNativeWindowType;
@@ -6284,23 +6283,23 @@ void       GLAPIENTRY glViewport( GLint x, GLint y, GLsizei width, GLsizei heigh
 #endif
 
 typedef int        (GLAPIENTRY *PFN_wglChoosePixelFormat)( HDC hDc, const PIXELFORMATDESCRIPTOR *pPfd );
-typedef BOOL       (GLAPIENTRY *PFN_wglCopyContext)( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask );
-typedef struct wgl_context * (GLAPIENTRY *PFN_wglCreateContext)( HDC hDc );
-typedef struct wgl_context * (GLAPIENTRY *PFN_wglCreateLayerContext)( HDC hDc, int level );
-typedef BOOL       (GLAPIENTRY *PFN_wglDeleteContext)( struct wgl_context * oldContext );
+typedef BOOL       (GLAPIENTRY *PFN_wglCopyContext)( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
+typedef HGLRC      (GLAPIENTRY *PFN_wglCreateContext)( HDC hDc, HGLRC client_context );
+typedef HGLRC      (GLAPIENTRY *PFN_wglCreateLayerContext)( HDC hDc, int level, HGLRC client_context );
+typedef BOOL       (GLAPIENTRY *PFN_wglDeleteContext)( HGLRC oldContext );
 typedef BOOL       (GLAPIENTRY *PFN_wglDescribeLayerPlane)( HDC hDc, int pixelFormat, int layerPlane, UINT nBytes, LAYERPLANEDESCRIPTOR *plpd );
 typedef int        (GLAPIENTRY *PFN_wglDescribePixelFormat)( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
-typedef struct wgl_context * (GLAPIENTRY *PFN_wglGetCurrentContext)(void);
+typedef HGLRC      (GLAPIENTRY *PFN_wglGetCurrentContext)(void);
 typedef HDC        (GLAPIENTRY *PFN_wglGetCurrentDC)(void);
 typedef PROC       (GLAPIENTRY *PFN_wglGetDefaultProcAddress)( LPCSTR lpszProc );
 typedef int        (GLAPIENTRY *PFN_wglGetLayerPaletteEntries)( HDC hdc, int iLayerPlane, int iStart, int cEntries, COLORREF *pcr );
 typedef int        (GLAPIENTRY *PFN_wglGetPixelFormat)( HDC hdc );
 typedef PROC       (GLAPIENTRY *PFN_wglGetProcAddress)( LPCSTR lpszProc );
-typedef BOOL       (GLAPIENTRY *PFN_wglMakeCurrent)( HDC hDc, struct wgl_context * newContext );
+typedef BOOL       (GLAPIENTRY *PFN_wglMakeCurrent)( HDC hDc, HGLRC newContext );
 typedef BOOL       (GLAPIENTRY *PFN_wglRealizeLayerPalette)( HDC hdc, int iLayerPlane, BOOL bRealize );
 typedef int        (GLAPIENTRY *PFN_wglSetLayerPaletteEntries)( HDC hdc, int iLayerPlane, int iStart, int cEntries, const COLORREF *pcr );
 typedef BOOL       (GLAPIENTRY *PFN_wglSetPixelFormat)( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd );
-typedef BOOL       (GLAPIENTRY *PFN_wglShareLists)( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource );
+typedef BOOL       (GLAPIENTRY *PFN_wglShareLists)( HGLRC hrcSrvShare, HGLRC hrcSrvSource );
 typedef BOOL       (GLAPIENTRY *PFN_wglSwapBuffers)( HDC hdc );
 typedef BOOL       (GLAPIENTRY *PFN_wglSwapLayerBuffers)( HDC hdc, UINT fuFlags );
 typedef BOOL       (GLAPIENTRY *PFN_wglUseFontBitmapsA)( HDC hDC, DWORD first, DWORD count, DWORD listBase );
@@ -9519,7 +9518,7 @@ typedef void       (GLAPIENTRY *PFN_glWriteMaskEXT)( GLuint res, GLuint in, GLen
 typedef void *     (GLAPIENTRY *PFN_wglAllocateMemoryNV)( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority );
 typedef BOOL       (GLAPIENTRY *PFN_wglBindTexImageARB)( HPBUFFERARB hPbuffer, int iBuffer );
 typedef BOOL       (GLAPIENTRY *PFN_wglChoosePixelFormatARB)( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
-typedef struct wgl_context * (GLAPIENTRY *PFN_wglCreateContextAttribsARB)( HDC hDC, struct wgl_context * hShareContext, const int *attribList );
+typedef HGLRC      (GLAPIENTRY *PFN_wglCreateContextAttribsARB)( HDC hDC, HGLRC hShareContext, const int *attribList, HGLRC client_context );
 typedef HPBUFFERARB (GLAPIENTRY *PFN_wglCreatePbufferARB)( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList, HPBUFFERARB client_pbuffer );
 typedef BOOL       (GLAPIENTRY *PFN_wglDestroyPbufferARB)( HPBUFFERARB hPbuffer );
 typedef void       (GLAPIENTRY *PFN_wglFreeMemoryNV)( void *pointer );
@@ -9530,7 +9529,7 @@ typedef HDC        (GLAPIENTRY *PFN_wglGetPbufferDCARB)( HPBUFFERARB hPbuffer );
 typedef BOOL       (GLAPIENTRY *PFN_wglGetPixelFormatAttribfvARB)( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues );
 typedef BOOL       (GLAPIENTRY *PFN_wglGetPixelFormatAttribivARB)( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues );
 typedef int        (GLAPIENTRY *PFN_wglGetSwapIntervalEXT)(void);
-typedef BOOL       (GLAPIENTRY *PFN_wglMakeContextCurrentARB)( HDC hDrawDC, HDC hReadDC, struct wgl_context * hglrc );
+typedef BOOL       (GLAPIENTRY *PFN_wglMakeContextCurrentARB)( HDC hDrawDC, HDC hReadDC, HGLRC hglrc );
 typedef BOOL       (GLAPIENTRY *PFN_wglQueryCurrentRendererIntegerWINE)( GLenum attribute, GLuint *value );
 typedef const GLchar * (GLAPIENTRY *PFN_wglQueryCurrentRendererStringWINE)( GLenum attribute );
 typedef BOOL       (GLAPIENTRY *PFN_wglQueryPbufferARB)( HPBUFFERARB hPbuffer, int iAttribute, int *piValue );
