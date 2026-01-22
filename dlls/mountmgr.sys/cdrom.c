@@ -962,6 +962,26 @@ static NTSTATUS media_removal( struct cdrom *cdrom, const PREVENT_MEDIA_REMOVAL 
 #endif
 }
 
+static NTSTATUS eject_media( struct cdrom *cdrom )
+{
+#if defined(linux)
+    if (ioctl( cdrom->fd, CDROMEJECT ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    if (ioctl( cdrom->fd, CDIOCEJECT, NULL ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__APPLE__)
+    if (ioctl( cdrom->fd, DKIOCEJECT, NULL ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -978,6 +998,9 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(CDROM_DISK_DATA);
             return disk_type( params->cdrom, params->output );
+
+        case IOCTL_STORAGE_EJECT_MEDIA:
+            return eject_media( params->cdrom );
 
         case IOCTL_CDROM_GET_DRIVE_GEOMETRY:
             if (params->output_size < sizeof(DISK_GEOMETRY))
