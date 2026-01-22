@@ -1045,6 +1045,32 @@ static NTSTATUS dvd_start_session( struct cdrom *cdrom, DVD_SESSION_ID *id )
 #endif
 }
 
+static NTSTATUS dvd_end_session( struct cdrom *cdrom, const DVD_SESSION_ID *id )
+{
+#if defined(linux)
+    dvd_authinfo auth_info;
+
+    memset( &auth_info, 0, sizeof( auth_info ) );
+    auth_info.type = DVD_INVALIDATE_AGID;
+    auth_info.lsa.agid = *id;
+    if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__APPLE__)
+    dk_dvd_send_key_t dvdsk;
+
+    dvdsk.format = kDVDKeyFormatAGID_Invalidate;
+    dvdsk.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+    dvdsk.grantID = *id;
+    if (ioctl( cdrom->fd, DKIOCDVDSENDKEY, &dvdsk ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 static NTSTATUS dvd_read_key( struct cdrom *cdrom, const DVD_COPY_PROTECT_KEY *input, DVD_COPY_PROTECT_KEY *output )
 {
 #if defined(linux)
@@ -1440,6 +1466,11 @@ NTSTATUS cdrom_ioctl( void *args )
 
         case IOCTL_CDROM_STOP_AUDIO:
             return stop_audio( params->cdrom );
+
+        case IOCTL_DVD_END_SESSION:
+            if (params->input_size < sizeof(DVD_SESSION_ID))
+                return STATUS_INVALID_PARAMETER;
+            return dvd_end_session( params->cdrom, params->input );
 
         case IOCTL_DVD_READ_KEY:
             if (params->input_size < sizeof(DVD_COPY_PROTECT_KEY))
