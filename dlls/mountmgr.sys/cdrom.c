@@ -56,6 +56,7 @@
 #endif
 
 #include "mountmgr.h"
+#include "ddk/ntddcdvd.h"
 #include "unixlib.h"
 #include "wine/debug.h"
 
@@ -1014,6 +1015,36 @@ static NTSTATUS reset_device( struct cdrom *cdrom )
 #endif
 }
 
+static NTSTATUS dvd_start_session( struct cdrom *cdrom, DVD_SESSION_ID *id )
+{
+#if defined(linux)
+    dvd_authinfo auth_info;
+
+    memset( &auth_info, 0, sizeof( auth_info ) );
+    auth_info.type = DVD_LU_SEND_AGID;
+    if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ))
+        return errno_to_status( errno );
+    *id = auth_info.lsa.agid;
+    return STATUS_SUCCESS;
+#elif defined(__APPLE__)
+    DVDAuthenticationGrantIDInfo agid_info;
+    dk_dvd_report_key_t dvdrk;
+
+    dvdrk.format = kDVDKeyFormatAGID_CSS;
+    dvdrk.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+    dvdrk.bufferLength = sizeof(DVDAuthenticationGrantIDInfo);
+    dvdrk.buffer = &agid_info;
+
+    if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &dvdrk ))
+        return errno_to_status( errno );
+    *id = agid_info.grantID;
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -1103,6 +1134,12 @@ NTSTATUS cdrom_ioctl( void *args )
 
         case IOCTL_CDROM_STOP_AUDIO:
             return stop_audio( params->cdrom );
+
+        case IOCTL_DVD_START_SESSION:
+            if (params->output_size < sizeof(DVD_SESSION_ID))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(DVD_SESSION_ID);
+            return dvd_start_session( params->cdrom, params->output );
 
         default:
             FIXME("Unsupported ioctl %#x (device=%#x access=%#x func=%#x method=%#x)\n",
