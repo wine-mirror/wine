@@ -2,7 +2,7 @@
 
 #define ALL_SYSCALLS32 \
     SYSCALL_ENTRY( 0x0000, NtAccessCheck, 32 ) \
-    SYSCALL_ENTRY( 0x0001, NtWorkerFactoryWorkerReady, 0 ) \
+    SYSCALL_ENTRY( 0x0001, NtWorkerFactoryWorkerReady, 4 ) \
     SYSCALL_ENTRY( 0x0002, NtAcceptConnectPort, 24 ) \
     SYSCALL_ENTRY( 0x0003, NtMapUserPhysicalPagesScatter, 0 ) \
     SYSCALL_ENTRY( 0x0004, NtWaitForSingleObject, 12 ) \
@@ -268,7 +268,7 @@
 #ifdef _WIN64
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( 0x0000, NtAccessCheck, 64 ) \
-    SYSCALL_ENTRY( 0x0001, NtWorkerFactoryWorkerReady, 0 ) \
+    SYSCALL_ENTRY( 0x0001, NtWorkerFactoryWorkerReady, 8 ) \
     SYSCALL_ENTRY( 0x0002, NtAcceptConnectPort, 48 ) \
     SYSCALL_ENTRY( 0x0003, NtMapUserPhysicalPagesScatter, 0 ) \
     SYSCALL_ENTRY( 0x0004, NtWaitForSingleObject, 24 ) \
@@ -533,7 +533,6 @@
     SYSCALL_STUB( NtCreateProcessEx ) \
     SYSCALL_STUB( NtMapUserPhysicalPagesScatter ) \
     SYSCALL_STUB( NtTraceEvent ) \
-    SYSCALL_STUB( NtWaitForMultipleObjects32 ) \
-    SYSCALL_STUB( NtWorkerFactoryWorkerReady )
+    SYSCALL_STUB( NtWaitForMultipleObjects32 )
 #define SYSCALL_ENTRY_NtQueryInformationProcess(id,name,args) SYSCALL_ENTRY(id,name,args)
 #define SYSCALL_ENTRY_NtQuerySystemTime(id,name,args) SYSCALL_ENTRY(id,name,args)

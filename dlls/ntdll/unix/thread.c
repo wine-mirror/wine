@@ -2743,3 +2743,14 @@ NTSTATUS WINAPI NtGetNextThread( HANDLE process, HANDLE thread, ACCESS_MASK acce
     *handle = ret_handle;
     return ret;
 }
+
+
+/******************************************************************************
+ *              NtWorkerFactoryWorkerReady  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWorkerFactoryWorkerReady( HANDLE handle )
+{
+    FIXME( "handle %p stub.\n", handle );
+
+    return STATUS_NOT_IMPLEMENTED;
+}
