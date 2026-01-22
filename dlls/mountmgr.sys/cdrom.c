@@ -1045,6 +1045,238 @@ static NTSTATUS dvd_start_session( struct cdrom *cdrom, DVD_SESSION_ID *id )
 #endif
 }
 
+static NTSTATUS dvd_read_key( struct cdrom *cdrom, const DVD_COPY_PROTECT_KEY *input, DVD_COPY_PROTECT_KEY *output )
+{
+#if defined(linux)
+    dvd_struct dvd;
+    dvd_authinfo auth_info;
+
+    memcpy( output, input, input->KeyLength );
+
+    memset( &dvd, 0, sizeof( dvd_struct ) );
+    memset( &auth_info, 0, sizeof( auth_info ) );
+    switch (input->KeyType)
+    {
+    case DvdDiskKey:
+        TRACE( "DvdDiskKey\n" );
+        dvd.type = DVD_STRUCT_DISCKEY;
+        dvd.disckey.agid = input->SessionId;
+        memset( dvd.disckey.value, 0, DVD_DISCKEY_SIZE );
+        if (ioctl( cdrom->fd, DVD_READ_STRUCT, &dvd ))
+            return errno_to_status( errno );
+        memcpy( output->KeyData, dvd.disckey.value, DVD_DISCKEY_SIZE );
+        return STATUS_SUCCESS;
+
+    case DvdTitleKey:
+        TRACE( "DvdTitleKey session %u offset %s\n",
+               input->SessionId, wine_dbgstr_longlong(input->Parameters.TitleOffset.QuadPart) );
+        auth_info.type = DVD_LU_SEND_TITLE_KEY;
+        auth_info.lstk.agid = input->SessionId;
+        auth_info.lstk.lba = input->Parameters.TitleOffset.QuadPart >> 11;
+        if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ))
+            return errno_to_status( errno );
+        memcpy( output->KeyData, auth_info.lstk.title_key, DVD_KEY_SIZE );
+        return STATUS_SUCCESS;
+
+    case DvdChallengeKey:
+        TRACE( "DvdChallengeKey\n" );
+        auth_info.type = DVD_LU_SEND_CHALLENGE;
+        auth_info.lsc.agid = input->SessionId;
+        if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ))
+            return errno_to_status( errno );
+        memcpy( output->KeyData, auth_info.lsc.chal, DVD_CHALLENGE_SIZE );
+        return STATUS_SUCCESS;
+
+    case DvdAsf:
+        TRACE( "DvdAsf\n" );
+        auth_info.type = DVD_LU_SEND_ASF;
+        auth_info.lsasf.asf = ((DVD_ASF *)input->KeyData)->SuccessFlag;
+        if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ))
+            return errno_to_status( errno );
+        ((DVD_ASF *)output->KeyData)->SuccessFlag = auth_info.lsasf.asf;
+        return STATUS_SUCCESS;
+
+    case DvdBusKey1:
+        TRACE( "DvdBusKey1\n" );
+        auth_info.type = DVD_LU_SEND_KEY1;
+        auth_info.lsk.agid = input->SessionId;
+        if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ))
+            return errno_to_status( errno );
+        memcpy( output->KeyData, auth_info.lsk.key, DVD_KEY_SIZE );
+        return STATUS_SUCCESS;
+
+    case DvdGetRpcKey:
+        TRACE( "DvdGetRpcKey\n" );
+        auth_info.type = DVD_LU_SEND_RPC_STATE;
+        if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ))
+            return errno_to_status( errno );
+        ((DVD_RPC_KEY *)output->KeyData)->TypeCode = auth_info.lrpcs.type;
+        ((DVD_RPC_KEY *)output->KeyData)->RegionMask = auth_info.lrpcs.region_mask;
+        ((DVD_RPC_KEY *)output->KeyData)->RpcScheme = auth_info.lrpcs.rpc_scheme;
+        ((DVD_RPC_KEY *)output->KeyData)->UserResetsAvailable = auth_info.lrpcs.ucca;
+        ((DVD_RPC_KEY *)output->KeyData)->ManufacturerResetsAvailable = auth_info.lrpcs.vra;
+        return STATUS_SUCCESS;
+
+    default:
+        FIXME( "unhandled key type %#x\n", input->KeyType );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+#elif defined(__APPLE__)
+    dk_dvd_report_key_t key;
+    dk_dvd_read_structure_t disk_key;
+
+    memcpy( output, input, input->KeyLength );
+
+    switch (input->KeyType)
+    {
+    case DvdChallengeKey:
+    {
+        DVDChallengeKeyInfo info;
+
+        key.format = kDVDKeyFormatChallengeKey;
+        key.grantID = input->SessionId;
+        key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        key.bufferLength = sizeof(info);
+        key.buffer = &info;
+        OSWriteBigInt16( info.dataLength, 0, input->KeyLength );
+        if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &key ))
+            return errno_to_status( errno );
+        output->KeyLength = OSReadBigInt16( info.dataLength, 0 );
+        memcpy( output->KeyData, info.challengeKeyValue, output->KeyLength );
+        return STATUS_SUCCESS;
+    }
+
+    case DvdBusKey1:
+    {
+        DVDKey1Info info;
+
+        key.format = kDVDKeyFormatKey1;
+        key.grantID = input->SessionId;
+        key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        key.bufferLength = sizeof(info);
+        key.buffer = &info;
+        OSWriteBigInt16( info.dataLength, 0, input->KeyLength );
+        if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &key ))
+            return errno_to_status( errno );
+        output->KeyLength = OSReadBigInt16( info.dataLength, 0 );
+        memcpy( output->KeyData, info.key1Value, output->KeyLength );
+        return STATUS_SUCCESS;
+    }
+
+    case DvdTitleKey:
+    {
+        DVDTitleKeyInfo info;
+
+        key.format = kDVDKeyFormatTitleKey;
+        key.grantID = input->SessionId;
+        key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        key.bufferLength = sizeof(info);
+        key.buffer = &info;
+        key.address = input->Parameters.TitleOffset.QuadPart >> 11;
+        OSWriteBigInt16( info.dataLength, 0, input->KeyLength );
+        if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &key ))
+            return errno_to_status( errno );
+        output->KeyLength = OSReadBigInt16( info.dataLength, 0 );
+        memcpy( output->KeyData, info.titleKeyValue, output->KeyLength );
+        output->KeyFlags = 0;
+        if (info.CPM)
+        {
+            /* output->KeyFlags |= DVD_COPYRIGHTED; */
+            if (info.CP_SEC)
+                output->KeyFlags |= DVD_SECTOR_PROTECTED;
+#if 0
+            switch (info.CGMS)
+            {
+            case 0:
+                output->KeyFlags |= DVD_CGMS_COPY_PERMITTED;
+                break;
+            case 2:
+                output->KeyFlags |= DVD_CGMS_COPY_ONCE;
+                break;
+            case 3:
+                output->KeyFlags |= DVD_CGMS_NO_COPY;
+                break;
+            }
+#endif
+        }
+        return STATUS_SUCCESS;
+    }
+
+    case DvdAsf:
+    {
+        DVDAuthenticationSuccessFlagInfo info;
+
+        key.format = kDVDKeyFormatASF;
+        key.grantID = input->SessionId;
+        key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        key.bufferLength = sizeof(info);
+        key.buffer = &info;
+        OSWriteBigInt16( info.dataLength, 0, input->KeyLength );
+        if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &key ))
+            return errno_to_status( errno );
+        output->KeyLength = OSReadBigInt16( info.dataLength, 0 );
+        ((DVD_ASF *)output->KeyData)->SuccessFlag = info.successFlag;
+        return STATUS_SUCCESS;
+    }
+
+    case DvdGetRpcKey:
+    {
+        DVDRegionPlaybackControlInfo info;
+
+        key.format = kDVDKeyFormatRegionState;
+        key.grantID = input->SessionId;
+        key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        key.bufferLength = sizeof(info);
+        key.buffer = &info;
+        OSWriteBigInt16( info.dataLength, 0, input->KeyLength );
+        if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &key ))
+            return errno_to_status( errno );
+        output->KeyLength = OSReadBigInt16( info.dataLength, 0 );
+        ((DVD_RPC_KEY *)output->KeyData)->UserResetsAvailable = info.numberUserResets;
+        ((DVD_RPC_KEY *)output->KeyData)->ManufacturerResetsAvailable = info.numberVendorResets;
+        ((DVD_RPC_KEY *)output->KeyData)->TypeCode = info.typeCode;
+        ((DVD_RPC_KEY *)output->KeyData)->RegionMask = info.driveRegion;
+        ((DVD_RPC_KEY *)output->KeyData)->RpcScheme = info.rpcScheme;
+        return STATUS_SUCCESS;
+    }
+
+    case DvdDiskKey:
+    {
+        DVDDiscKeyInfo info;
+
+        disk_key.format = kDVDStructureFormatDiscKeyInfo;
+        disk_key.grantID = input->SessionId;
+        disk_key.bufferLength = sizeof(info);
+        disk_key.buffer = &info;
+        if (ioctl( cdrom->fd, DKIOCDVDREADSTRUCTURE, &disk_key ))
+            return errno_to_status( errno );
+        output->KeyLength = OSReadBigInt16( info.dataLength, 0 );
+        memcpy( output->KeyData, info.discKeyStructures, output->KeyLength );
+        return STATUS_SUCCESS;
+    }
+
+    case DvdInvalidateAGID:
+        key.format = kDVDKeyFormatAGID_Invalidate;
+        key.grantID = input->SessionId;
+        key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+        if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &key ))
+            return errno_to_status( errno );
+        return STATUS_SUCCESS;
+
+    case DvdBusKey2:
+    case DvdSetRpcKey:
+        ERR( "attempted to read write-only key type %#x\n", input->KeyType );
+        return STATUS_NOT_SUPPORTED;
+    default:
+        FIXME( "unhandled key type %#x\n", input->KeyType );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -1134,6 +1366,14 @@ NTSTATUS cdrom_ioctl( void *args )
 
         case IOCTL_CDROM_STOP_AUDIO:
             return stop_audio( params->cdrom );
+
+        case IOCTL_DVD_READ_KEY:
+            if (params->input_size < sizeof(DVD_COPY_PROTECT_KEY))
+                return STATUS_INVALID_PARAMETER;
+            if (params->output_size < sizeof(DVD_COPY_PROTECT_KEY))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(DVD_COPY_PROTECT_KEY);
+            return dvd_read_key( params->cdrom, params->input, params->output );
 
         case IOCTL_DVD_START_SESSION:
             if (params->output_size < sizeof(DVD_SESSION_ID))
