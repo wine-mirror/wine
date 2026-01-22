@@ -998,6 +998,22 @@ static NTSTATUS load_media( struct cdrom *cdrom )
 #endif
 }
 
+static NTSTATUS reset_device( struct cdrom *cdrom )
+{
+#if defined(linux)
+    if (ioctl( cdrom->fd, CDROMRESET ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    if (ioctl( cdrom->fd, CDIOCRESET, NULL ))
+        return errno_to_status( errno );
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -1068,6 +1084,9 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(CDROM_TOC);
             return read_toc( params->cdrom, params->output );
+
+        case IOCTL_STORAGE_RESET_DEVICE:
+            return reset_device( params->cdrom );
 
         case IOCTL_CDROM_RESUME_AUDIO:
             return resume_audio( params->cdrom );
