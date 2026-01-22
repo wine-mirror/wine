@@ -911,6 +911,24 @@ static NTSTATUS raw_read( struct cdrom *cdrom, const RAW_READ_INFO *info,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS disk_type( struct cdrom *cdrom, CDROM_DISK_DATA *data )
+{
+    NTSTATUS status;
+
+    if (!cdrom->toc_valid && (status = update_toc_cache( cdrom )))
+        return status;
+
+    data->DiskData = 0;
+    for (unsigned int i = cdrom->toc.FirstTrack; i <= cdrom->toc.LastTrack; ++i)
+    {
+        if (cdrom->toc.TrackData[i - cdrom->toc.FirstTrack].Control & 0x04)
+            data->DiskData |= CDROM_DISK_DATA_TRACK;
+        else
+            data->DiskData |= CDROM_DISK_AUDIO_TRACK;
+    }
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -922,6 +940,12 @@ NTSTATUS cdrom_ioctl( void *args )
 
     switch (code)
     {
+        case IOCTL_CDROM_DISK_TYPE:
+            if (params->output_size < sizeof(CDROM_DISK_DATA))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(CDROM_DISK_DATA);
+            return disk_type( params->cdrom, params->output );
+
         case IOCTL_CDROM_GET_VOLUME:
             if (params->output_size < sizeof(VOLUME_CONTROL))
                 return STATUS_BUFFER_TOO_SMALL;
