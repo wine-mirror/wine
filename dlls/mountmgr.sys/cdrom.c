@@ -780,6 +780,137 @@ static NTSTATUS read_q_channel( struct cdrom *cdrom, const CDROM_SUB_Q_DATA_FORM
 #endif
 }
 
+/* Some features of this IOCTL are rather poorly documented and
+ * not really intuitive either:
+ *
+ *   1. Although the DiskOffset parameter is meant to be a
+ *      byte offset into the disk, it is in fact the sector
+ *      number multiplied by 2048 regardless of the actual
+ *      sector size.
+ *
+ *   2. The least significant 11 bits of DiskOffset are ignored.
+ *
+ *   3. The TrackMode parameter has no effect on the sector
+ *      size. The entire info sector (i.e. 2352 bytes of data)
+ *      is always returned. IMO the TrackMode is only used
+ *      to check the correct sector type.
+ */
+static NTSTATUS raw_read( struct cdrom *cdrom, const RAW_READ_INFO *info,
+        unsigned int size, void *buffer, unsigned int *ret_size )
+{
+#ifdef __APPLE__
+    dk_cd_read_t cdrd;
+#endif
+
+    TRACE( "DiskOffset=%s SectorCount=%u TrackMode=%#x\n",
+            wine_dbgstr_longlong(info->DiskOffset.QuadPart), info->SectorCount, info->TrackMode );
+
+    if (size < info->SectorCount * 2352)
+        return STATUS_BUFFER_TOO_SMALL;
+
+#if defined(linux)
+    if (info->DiskOffset.u.HighPart & ~2047)
+    {
+        WARN( "DiskOffset points to a sector >= 2**32\n" );
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    switch (info->TrackMode)
+    {
+        case YellowMode2:
+        case XAForm2:
+        {
+            unsigned int lba = info->DiskOffset.QuadPart >> 11;
+            struct cdrom_msf *msf;
+            BYTE **bp = buffer;
+
+            if ((lba + info->SectorCount) >
+                ((1 << 8 * sizeof(msf->cdmsf_min0)) * CD_SECS * CD_FRAMES - CD_MSF_OFFSET))
+            {
+                FIXME( "DiskOffset not accessible with MSF\n" );
+                return STATUS_NOT_SUPPORTED;
+            }
+
+            /* Linux reads only one sector at a time.
+             * ioctl CDROMREADRAW takes struct cdrom_msf as an argument
+             * on the contrary to what header comments state.
+             */
+            lba += CD_MSF_OFFSET;
+            for (unsigned int i = 0; i < info->SectorCount; i++, lba++, bp += 2352)
+            {
+                msf = (struct cdrom_msf *)bp;
+                msf->cdmsf_min0 = lba / CD_FRAMES / CD_SECS;
+                msf->cdmsf_sec0 = lba / CD_FRAMES % CD_SECS;
+                msf->cdmsf_frame0 = lba % CD_FRAMES;
+                if (ioctl( cdrom->fd, CDROMREADRAW, msf ))
+                {
+                    *ret_size = 2352 * i;
+                    return errno_to_status( errno );
+                }
+            }
+            break;
+        }
+
+        case CDDA:
+        {
+            struct cdrom_read_audio cdra;
+
+            cdra.addr.lba = info->DiskOffset.QuadPart >> 11;
+            TRACE("reading at %u\n", cdra.addr.lba);
+            cdra.addr_format = CDROM_LBA;
+            cdra.nframes = info->SectorCount;
+            cdra.buf = buffer;
+            if (ioctl( cdrom->fd, CDROMREADAUDIO, &cdra ))
+                return errno_to_status( errno );
+            break;
+        }
+
+        default:
+            FIXME( "unhandled mode %#x\n", info->TrackMode );
+            return STATUS_NOT_IMPLEMENTED;
+    }
+#elif defined(__APPLE__)
+    /* Mac OS lets us read multiple parts of the sector at a time.
+     * We can read all the sectors in at once, unlike Linux. */
+    memset( &cdrd, 0, sizeof(cdrd) );
+    cdrd.offset = (info->DiskOffset.QuadPart >> 11) * kCDSectorSizeWhole;
+    cdrd.buffer = buffer;
+    cdrd.bufferLength = info->SectorCount * kCDSectorSizeWhole;
+    switch (info->TrackMode)
+    {
+        case YellowMode2:
+            cdrd.sectorType = kCDSectorTypeMode2;
+            cdrd.sectorArea = kCDSectorAreaSync | kCDSectorAreaHeader | kCDSectorAreaUser;
+            break;
+
+        case XAForm2:
+            cdrd.sectorType = kCDSectorTypeMode2Form2;
+            cdrd.sectorArea = kCDSectorAreaSync | kCDSectorAreaHeader | kCDSectorAreaSubHeader | kCDSectorAreaUser;
+            break;
+
+        case CDDA:
+            cdrd.sectorType = kCDSectorTypeCDDA;
+            cdrd.sectorArea = kCDSectorAreaUser;
+            break;
+
+        default:
+            FIXME( "unhandled mode %#x\n", info->TrackMode );
+            return STATUS_NOT_IMPLEMENTED;
+    }
+    if (ioctl( cdrom->fd, DKIOCCDREAD, &cdrd ))
+    {
+        *ret_size = cdrd.bufferLength;
+        return errno_to_status( errno );
+    }
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+
+    *ret_size = 2352 * info->SectorCount;
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -804,6 +935,11 @@ NTSTATUS cdrom_ioctl( void *args )
             if (params->input_size < sizeof(CDROM_PLAY_AUDIO_MSF))
                 return STATUS_INFO_LENGTH_MISMATCH;
             return play_audio_msf( params->cdrom, params->input );
+
+        case IOCTL_CDROM_RAW_READ:
+            if (params->input_size < sizeof(RAW_READ_INFO))
+                return STATUS_BUFFER_TOO_SMALL;
+            return raw_read( params->cdrom, params->input, params->output_size, params->output, &params->ret_size );
 
         case IOCTL_CDROM_READ_Q_CHANNEL:
             if (params->input_size < sizeof(CDROM_SUB_Q_DATA_FORMAT))
