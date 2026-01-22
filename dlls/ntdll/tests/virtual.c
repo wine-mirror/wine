@@ -2510,6 +2510,33 @@ static void test_syscall_numbers(void)
     }
 }
 
+static void test_syscall_abi(void)
+{
+    LCID user_lcid, system_lcid, prev_user_lcid = 0, lcid;
+    NTSTATUS (WINAPI *pNtQueryDefaultLocale)( ULONG user, LCID *lcid );
+
+    /* test that BOOLEAN values are correctly extended */
+
+    pNtQueryDefaultLocale = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtQueryDefaultLocale" );
+    pNtQueryDefaultLocale( 0, &system_lcid );
+    pNtQueryDefaultLocale( 1, &user_lcid );
+    if (system_lcid == user_lcid)
+    {
+        prev_user_lcid = user_lcid;
+        user_lcid += 0x400;
+        NtSetDefaultLocale( TRUE, user_lcid );
+    }
+    pNtQueryDefaultLocale( 0, &lcid );
+    ok( lcid == system_lcid, "got %04lx / %04lx\n", lcid, system_lcid );
+    for (ULONG i = 1; i < 0x10000; i <<= 1)
+    {
+        LCID expect = LOBYTE(i) ? user_lcid : system_lcid;
+        pNtQueryDefaultLocale( i, &lcid );
+        ok( lcid == expect, "%lx: got %04lx / %04lx\n", i, lcid, expect );
+    }
+    if (prev_user_lcid) NtSetDefaultLocale( TRUE, prev_user_lcid );
+}
+
 static void test_NtFreeVirtualMemory(void)
 {
     void *addr1, *addr;
@@ -3574,6 +3601,7 @@ START_TEST(virtual)
     test_syscalls();
     test_invalid_syscalls();
     test_syscall_numbers();
+    test_syscall_abi();
     test_query_region_information();
     test_query_image_information();
     test_exec_memory_writes();
