@@ -31,6 +31,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#ifdef MAJOR_IN_MKDEV
+# include <sys/mkdev.h>
+#elif defined(MAJOR_IN_SYSMACROS)
+# include <sys/sysmacros.h>
+#endif
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #ifdef HAVE_SCSI_SG_H
 # include <scsi/sg.h>
@@ -45,6 +52,9 @@
 #endif
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>
+#endif
+#ifdef HAVE_LINUX_MAJOR_H
+# include <linux/major.h>
 #endif
 #ifdef HAVE_SYS_CDIO_H
 # include <sys/cdio.h>
@@ -2184,6 +2194,91 @@ done:
     return status;
 }
 
+static NTSTATUS scsi_get_address( struct cdrom *cdrom, SCSI_ADDRESS *address )
+{
+#if defined(linux)
+    struct stat st;
+
+    if (fstat( cdrom->fd, &st ) == -1)
+        return errno_to_status( errno );
+    if (!S_ISBLK(st.st_mode))
+        return STATUS_INVALID_DEVICE_REQUEST;
+    memset( address, 0, sizeof(SCSI_ADDRESS) );
+    address->Length = sizeof(SCSI_ADDRESS);
+    switch (major( st.st_rdev ))
+    {
+    case IDE0_MAJOR: address->PortNumber = 0; break;
+    case IDE1_MAJOR: address->PortNumber = 1; break;
+    case IDE2_MAJOR: address->PortNumber = 2; break;
+    case IDE3_MAJOR: address->PortNumber = 3; break;
+    case IDE4_MAJOR: address->PortNumber = 4; break;
+    case IDE5_MAJOR: address->PortNumber = 5; break;
+    case IDE6_MAJOR: address->PortNumber = 6; break;
+    case IDE7_MAJOR: address->PortNumber = 7; break;
+    default: address->PathId = 1; break;
+    }
+
+    if (address->PathId == 0)
+        address->TargetId = (minor( st.st_rdev ) >> 6);
+    else
+    {
+#ifdef SCSI_IOCTL_GET_IDLUN
+        __u32 idlun[2];
+        if (ioctl( cdrom->fd, SCSI_IOCTL_GET_IDLUN, idlun ) != -1)
+        {
+            address->PathId = (idlun[0] >> 24) & 0xff;
+            address->PortNumber = ((idlun[0] >> 16) & 0xff) + 2;
+            address->TargetId = idlun[0] & 0xff;
+            address->Lun = (idlun[0] >> 8) & 0xff;
+        }
+        else
+#endif
+        {
+            WARN( "CD-ROM device (%u, %u) not supported\n", major( st.st_rdev ), minor( st.st_rdev ));
+            return STATUS_NOT_SUPPORTED;
+        }
+    }
+    return STATUS_SUCCESS;
+#elif defined(__NetBSD__)
+    struct scsi_addr addr;
+
+    if (ioctl( cdrom->fd, SCIOCIDENTIFY, &addr ) == -1)
+        return errno_to_status( errno );
+    switch (addr.type)
+    {
+    case TYPE_SCSI:
+        address->PathId = 1;
+        address->PortNumber = addr.addr.scsi.scbus;
+        address->TargetId = addr.addr.scsi.target;
+        address->Lun = addr.addr.scsi.lun;
+        return STATUS_SUCCESS;
+    case TYPE_ATAPI:
+        address->PathId = 0;
+        address->PortNumber = addr.addr.atapi.atbus;
+        address->TargetId = addr.addr.atapi.drive;
+        address->Lun = 0;
+        return STATUS_SUCCESS;
+    default:
+        FIXME( "unhandled type %#x\n", addr.type );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+#elif defined(__APPLE__)
+    dk_scsi_identify_t addr;
+
+    if (ioctl( cdrom->fd, DKIOCSCSIIDENTIFY, &addr ) == -1)
+        return errno_to_status( errno );
+    address->PathId = addr.bus;
+    address->PortNumber = addr.port;
+    address->TargetId = addr.target;
+    address->Lun = addr.lun;
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -2315,6 +2410,12 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(DVD_SESSION_ID);
             return dvd_start_session( params->cdrom, params->output );
+
+        case IOCTL_SCSI_GET_ADDRESS:
+            if (params->output_size < sizeof(SCSI_ADDRESS))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(SCSI_ADDRESS);
+            return scsi_get_address( params->cdrom, params->output );
 
         case IOCTL_SCSI_PASS_THROUGH:
             if (params->wow64)
