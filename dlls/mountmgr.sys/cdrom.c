@@ -1036,6 +1036,31 @@ static NTSTATUS reset_device( struct cdrom *cdrom )
 #endif
 }
 
+static NTSTATUS check_verify( struct cdrom *cdrom )
+{
+#if defined(linux)
+    int ret;
+
+    if ((ret = ioctl( cdrom->fd, CDROM_DRIVE_STATUS, NULL )) == -1)
+        return errno_to_status( errno );
+    else if (ret == CDS_DISC_OK)
+        return STATUS_SUCCESS;
+    else
+        return STATUS_NO_MEDIA_IN_DEVICE;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__DragonFly__)
+    if (!ioctl( cdrom->fd, CDIOCSTART, NULL ))
+        return STATUS_SUCCESS;
+    else
+        return STATUS_NO_MEDIA_IN_DEVICE;
+#elif defined(__APPLE__)
+    /* Mac OS X only creates the device file when media is present. */
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 static NTSTATUS dvd_start_session( struct cdrom *cdrom, DVD_SESSION_ID *id )
 {
 #if defined(linux)
@@ -1766,6 +1791,12 @@ NTSTATUS cdrom_ioctl( void *args )
 
         case IOCTL_CDROM_STOP_AUDIO:
             return stop_audio( params->cdrom );
+
+        case IOCTL_CDROM_CHECK_VERIFY:
+        case IOCTL_DISK_CHECK_VERIFY:
+        case IOCTL_STORAGE_CHECK_VERIFY:
+        case IOCTL_STORAGE_CHECK_VERIFY2:
+            return check_verify( params->cdrom );
 
         case IOCTL_DVD_END_SESSION:
             if (params->input_size < sizeof(DVD_SESSION_ID))
