@@ -1425,14 +1425,17 @@ static void test_file_full_size_information(void)
         "[ffsie] TotalAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
         wine_dbgstr_longlong(ffsi.TotalAllocationUnits.QuadPart),
         wine_dbgstr_longlong(ffsie.ActualTotalAllocationUnits));
-    ok(ffsie.CallerAvailableAllocationUnits == ffsi.CallerAvailableAllocationUnits.QuadPart,
-        "[ffsie] CallerAvailableAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
-        wine_dbgstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart),
-        wine_dbgstr_longlong(ffsie.CallerAvailableAllocationUnits));
-    ok(ffsie.ActualAvailableAllocationUnits == ffsi.ActualAvailableAllocationUnits.QuadPart,
-        "[ffsie] ActualAvailableAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
-        wine_dbgstr_longlong(ffsi.ActualAvailableAllocationUnits.QuadPart),
-        wine_dbgstr_longlong(ffsie.ActualAvailableAllocationUnits));
+    flaky  /* available disk space can change outside of our control */
+    {
+        ok(ffsie.CallerAvailableAllocationUnits == ffsi.CallerAvailableAllocationUnits.QuadPart,
+           "[ffsie] CallerAvailableAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
+           wine_dbgstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart),
+           wine_dbgstr_longlong(ffsie.CallerAvailableAllocationUnits));
+        ok(ffsie.ActualAvailableAllocationUnits == ffsi.ActualAvailableAllocationUnits.QuadPart,
+           "[ffsie] ActualAvailableAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
+           wine_dbgstr_longlong(ffsi.ActualAvailableAllocationUnits.QuadPart),
+           wine_dbgstr_longlong(ffsie.ActualAvailableAllocationUnits));
+    }
 
     /* Assume file system is NTFS */
     ok(ffsie.BytesPerSector == 512, "[ffsie] BytesPerSector expected 512, got %ld\n",ffsie.BytesPerSector);
