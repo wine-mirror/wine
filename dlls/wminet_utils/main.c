@@ -21,9 +21,19 @@
 #include "windef.h"
 #include "winbase.h"
 
+#define COBJMACROS
+
+#include "objidl.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wminet_utils);
+
+HRESULT WINAPI GetCurrentApartmentType(int vFunc, IComThreadingInfo *ptr, APTTYPE *aptType)
+{
+    TRACE("%i %p %p\n", vFunc, ptr, aptType);
+    return IComThreadingInfo_GetCurrentApartmentType(ptr, aptType);
+}
 
 HRESULT WINAPI Initialize(BOOLEAN bAllowIManagementObjectQI)
 {

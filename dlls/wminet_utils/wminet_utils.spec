@@ -19,7 +19,7 @@
 @ stub ExecNotificationQueryWmi
 @ stub ExecQueryWmi
 @ stub Get
-@ stub GetCurrentApartmentType
+@ stdcall GetCurrentApartmentType(long ptr ptr)
 @ stub GetDemultiplexedStub
 @ stub GetErrorInfo
 @ stub GetMethod
