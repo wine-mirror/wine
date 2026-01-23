@@ -59,6 +59,20 @@ HRESULT WINAPI ConnectServerWmi(BSTR strNetworkResource, BSTR strUser, BSTR strP
     return hr;
 }
 
+HRESULT WINAPI ExecQueryWmi(BSTR strQueryLanguage, BSTR strQuery, long lFlags, IWbemContext *pCtx,
+    IEnumWbemClassObject **ppEnum, DWORD authLevel, DWORD impLevel, IWbemServices *pCurrentNamespace,
+    BSTR strUser, BSTR strPassword, BSTR strAuthority)
+{
+    TRACE("%s %s %lx\n", debugstr_w(strQueryLanguage), debugstr_w(strQuery), lFlags);
+
+    if (!ppEnum)
+        return E_POINTER;
+
+    *ppEnum = NULL;
+
+    return IWbemServices_ExecQuery(pCurrentNamespace, strQueryLanguage, strQuery, lFlags, pCtx, ppEnum);
+}
+
 HRESULT WINAPI GetCurrentApartmentType(int vFunc, IComThreadingInfo *ptr, APTTYPE *aptType)
 {
     TRACE("%i %p %p\n", vFunc, ptr, aptType);
