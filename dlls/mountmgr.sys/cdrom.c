@@ -1377,6 +1377,50 @@ static NTSTATUS dvd_send_key( struct cdrom *cdrom, const DVD_COPY_PROTECT_KEY *k
 #endif
 }
 
+static NTSTATUS dvd_get_region( struct cdrom *cdrom, DVD_REGION *region )
+{
+#if defined(linux)
+    dvd_struct dvd;
+    dvd_authinfo auth_info;
+
+    dvd.type = DVD_STRUCT_COPYRIGHT;
+    dvd.copyright.layer_num = 0;
+    auth_info.type = DVD_LU_SEND_RPC_STATE;
+
+    if (ioctl( cdrom->fd, DVD_AUTH, &auth_info ) || ioctl( cdrom->fd, DVD_READ_STRUCT, &dvd ))
+        return errno_to_status( errno );
+    region->CopySystem = dvd.copyright.cpst;
+    region->RegionData = dvd.copyright.rmi;
+    region->SystemRegion = auth_info.lrpcs.region_mask;
+    region->ResetCount = auth_info.lrpcs.ucca;
+    return STATUS_SUCCESS;
+#elif defined(__APPLE__)
+    dk_dvd_report_key_t key;
+    dk_dvd_read_structure_t dvd;
+    DVDRegionPlaybackControlInfo rpc;
+    DVDCopyrightInfo copy;
+
+    key.format = kDVDKeyFormatRegionState;
+    key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
+    key.bufferLength = sizeof(rpc);
+    key.buffer = &rpc;
+    dvd.format = kDVDStructureFormatCopyrightInfo;
+    dvd.bufferLength = sizeof(copy);
+    dvd.buffer = &copy;
+
+    if (ioctl( cdrom->fd, DKIOCDVDREPORTKEY, &key ) || ioctl( cdrom->fd, DKIOCDVDREADSTRUCTURE, &dvd ))
+        return errno_to_status( errno );
+    region->CopySystem = copy.copyrightProtectionSystemType;
+    region->RegionData = copy.regionMask;
+    region->SystemRegion = rpc.driveRegion;
+    region->ResetCount = rpc.numberUserResets;
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -1471,6 +1515,12 @@ NTSTATUS cdrom_ioctl( void *args )
             if (params->input_size < sizeof(DVD_SESSION_ID))
                 return STATUS_INVALID_PARAMETER;
             return dvd_end_session( params->cdrom, params->input );
+
+        case IOCTL_DVD_GET_REGION:
+            if (params->output_size < sizeof(DVD_REGION))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(DVD_REGION);
+            return dvd_get_region( params->cdrom, params->output );
 
         case IOCTL_DVD_READ_KEY:
             if (params->input_size < sizeof(DVD_COPY_PROTECT_KEY))
