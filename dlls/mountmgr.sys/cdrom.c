@@ -2312,6 +2312,72 @@ static NTSTATUS scsi_get_capabilities( struct cdrom *cdrom, IO_SCSI_CAPABILITIES
 #endif
 }
 
+#define INQ_CMD_LEN 6
+#define INQ_REPLY_LEN 36
+
+static NTSTATUS scsi_get_inquiry_data( struct cdrom *cdrom, unsigned int size,
+                                       SCSI_ADAPTER_BUS_INFO *info, unsigned int *ret_size )
+{
+#ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
+    UCHAR inquiry[INQ_CMD_LEN] = {INQUIRY, 0, 0, 0, INQ_REPLY_LEN, 0};
+    SCSI_INQUIRY_DATA *inq_data;
+    unsigned int needed_size;
+    UCHAR sense_buffer[32];
+    SCSI_ADDRESS address;
+    sg_io_hdr_t cmd;
+    NTSTATUS status;
+    int version;
+
+    needed_size = offsetof( SCSI_ADAPTER_BUS_INFO, BusData[1] );
+    needed_size += offsetof( SCSI_INQUIRY_DATA, InquiryData[INQ_REPLY_LEN] );
+    needed_size = (needed_size + 3) & ~3;
+    if (size < needed_size)
+        return STATUS_INVALID_PARAMETER;
+
+    /* Check we have a SCSI device and a supported driver */
+    if (ioctl( cdrom->fd, SG_GET_VERSION_NUM, &version ))
+        return errno_to_status( errno );
+    if (version < 30000)
+        return STATUS_NOT_SUPPORTED;
+
+    /* FIXME: Enumerate devices on the bus */
+    info->NumberOfBuses = 1;
+    info->BusData[0].NumberOfLogicalUnits = 1;
+    info->BusData[0].InquiryDataOffset = sizeof(SCSI_ADAPTER_BUS_INFO);
+
+    inq_data = (SCSI_INQUIRY_DATA *)&info->BusData[1];
+
+    memset( &cmd, 0, sizeof(cmd) );
+    cmd.interface_id = 'S';
+    cmd.cmd_len = sizeof(inquiry);
+    cmd.mx_sb_len = sizeof(sense_buffer);
+    cmd.dxfer_direction = SG_DXFER_FROM_DEV;
+    cmd.dxfer_len = INQ_REPLY_LEN;
+    cmd.dxferp = inq_data->InquiryData;
+    cmd.cmdp = inquiry;
+    cmd.sbp = sense_buffer;
+    cmd.timeout = 1000;
+
+    if (ioctl( cdrom->fd, SG_IO, &cmd ))
+        WARN( "failed to send SCSI command: %s\n", strerror( errno ));
+
+    if ((status = scsi_get_address( cdrom, &address )))
+        return status;
+    info->BusData[0].InitiatorBusId = address.PortNumber;
+    inq_data->PathId = address.PathId;
+    inq_data->TargetId = address.TargetId;
+    inq_data->Lun = address.Lun;
+    inq_data->DeviceClaimed = TRUE;
+    inq_data->InquiryDataLength = INQ_REPLY_LEN;
+    inq_data->NextInquiryDataOffset = 0;
+    *ret_size = needed_size;
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -2455,6 +2521,10 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(IO_SCSI_CAPABILITIES);
             return scsi_get_capabilities( params->cdrom, params->output );
+
+        case IOCTL_SCSI_GET_INQUIRY_DATA:
+            return scsi_get_inquiry_data( params->cdrom, params->output_size,
+                                          params->output, &params->ret_size );
 
         case IOCTL_SCSI_PASS_THROUGH:
             if (params->wow64)
