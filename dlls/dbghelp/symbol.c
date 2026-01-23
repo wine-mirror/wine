@@ -789,7 +789,7 @@ static BOOL symt_fill_sym_info(struct module_pair* pair,
                 {
                 case loc_tlsrel:
                     sym_info->Flags |= SYMFLAG_TLSREL;
-                    /* fall through */
+                    break;
                 case loc_absolute:
                     symt_get_address(sym, &sym_info->Address);
                     break;
