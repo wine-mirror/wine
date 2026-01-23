@@ -1577,6 +1577,7 @@ enable_wmadmod
 enable_wmasf
 enable_wmi
 enable_wmilib_sys
+enable_wminet_utils
 enable_wmiutils
 enable_wmp
 enable_wmphoto
@@ -23271,6 +23272,7 @@ wine_fn_config_makefile dlls/wmadmod enable_wmadmod
 wine_fn_config_makefile dlls/wmasf enable_wmasf
 wine_fn_config_makefile dlls/wmi enable_wmi
 wine_fn_config_makefile dlls/wmilib.sys enable_wmilib_sys
+wine_fn_config_makefile dlls/wminet_utils enable_wminet_utils
 wine_fn_config_makefile dlls/wmiutils enable_wmiutils
 wine_fn_config_makefile dlls/wmiutils/tests enable_tests
 wine_fn_config_makefile dlls/wmp enable_wmp

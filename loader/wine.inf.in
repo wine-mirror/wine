@@ -763,6 +763,7 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 11,,regasm.exe,-
 11,,servicemodelreg.exe,-
 11,,presentationfontcache.exe,-
+11,,wminet_utils.dll,-
 ; some programs are 64-bit only
 11,,conhost.exe,-
 11,,plugplay.exe,-
@@ -827,6 +828,7 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 11,,regasm.exe,-
 11,,servicemodelreg.exe,-
 11,,presentationfontcache.exe,-
+11,,wminet_utils.dll,-
 ; registration order matters for these
 11,,msxml.dll
 11,,msxml2.dll
