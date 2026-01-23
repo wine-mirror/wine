@@ -1882,6 +1882,9 @@ class Record(Type):
             if self.name == m.type_name:
                 continue
 
+            if m.is_generic_handle() and not check_extensions:
+                continue
+
             if m.is_next():
                 # pNext is a pointer, so it always needs conversion
                 if conv and direction == Direction.INPUT:
@@ -2117,6 +2120,9 @@ class StructConversionFunction(object):
                         continue
                     if m.is_next():
                         body += f"            out_ext->{m.name} = NULL;\n"
+                        continue
+                    if m.is_generic_handle():
+                        body += f"            out_ext->{m.name} = in_ext->{m.name};\n"
                         continue
                     body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions)
 

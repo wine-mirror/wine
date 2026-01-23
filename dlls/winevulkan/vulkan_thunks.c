@@ -16381,465 +16381,6 @@ static void convert_VkCommandPoolCreateInfo_win32_to_host(struct conversion_cont
     }
 }
 
-#ifdef _WIN64
-static void convert_VkSamplerCreateInfo_win64_to_host(struct conversion_context *ctx, const VkSamplerCreateInfo *in, VkSamplerCreateInfo *out)
-{
-    const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->flags = in->flags;
-    out->magFilter = in->magFilter;
-    out->minFilter = in->minFilter;
-    out->mipmapMode = in->mipmapMode;
-    out->addressModeU = in->addressModeU;
-    out->addressModeV = in->addressModeV;
-    out->addressModeW = in->addressModeW;
-    out->mipLodBias = in->mipLodBias;
-    out->anisotropyEnable = in->anisotropyEnable;
-    out->maxAnisotropy = in->maxAnisotropy;
-    out->compareEnable = in->compareEnable;
-    out->compareOp = in->compareOp;
-    out->minLod = in->minLod;
-    out->maxLod = in->maxLod;
-    out->borderColor = in->borderColor;
-    out->unnormalizedCoordinates = in->unnormalizedCoordinates;
-
-    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT:
-        {
-            VkDebugUtilsObjectNameInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkDebugUtilsObjectNameInfoEXT *in_ext = (const VkDebugUtilsObjectNameInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->objectType = in_ext->objectType;
-            out_ext->objectHandle = wine_vk_unwrap_handle(in_ext->objectType, in_ext->objectHandle);
-            out_ext->pObjectName = in_ext->pObjectName;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DESCRIPTOR_DATA_CREATE_INFO_EXT:
-        {
-            VkOpaqueCaptureDescriptorDataCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkOpaqueCaptureDescriptorDataCreateInfoEXT *in_ext = (const VkOpaqueCaptureDescriptorDataCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DESCRIPTOR_DATA_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->opaqueCaptureDescriptorData = in_ext->opaqueCaptureDescriptorData;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SAMPLER_BLOCK_MATCH_WINDOW_CREATE_INFO_QCOM:
-        {
-            VkSamplerBlockMatchWindowCreateInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSamplerBlockMatchWindowCreateInfoQCOM *in_ext = (const VkSamplerBlockMatchWindowCreateInfoQCOM *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_BLOCK_MATCH_WINDOW_CREATE_INFO_QCOM;
-            out_ext->pNext = NULL;
-            out_ext->windowExtent = in_ext->windowExtent;
-            out_ext->windowCompareMode = in_ext->windowCompareMode;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SAMPLER_BORDER_COLOR_COMPONENT_MAPPING_CREATE_INFO_EXT:
-        {
-            VkSamplerBorderColorComponentMappingCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSamplerBorderColorComponentMappingCreateInfoEXT *in_ext = (const VkSamplerBorderColorComponentMappingCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_BORDER_COLOR_COMPONENT_MAPPING_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->components = in_ext->components;
-            out_ext->srgb = in_ext->srgb;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SAMPLER_CUBIC_WEIGHTS_CREATE_INFO_QCOM:
-        {
-            VkSamplerCubicWeightsCreateInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSamplerCubicWeightsCreateInfoQCOM *in_ext = (const VkSamplerCubicWeightsCreateInfoQCOM *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_CUBIC_WEIGHTS_CREATE_INFO_QCOM;
-            out_ext->pNext = NULL;
-            out_ext->cubicWeights = in_ext->cubicWeights;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_CREATE_INFO_EXT:
-        {
-            VkSamplerCustomBorderColorCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSamplerCustomBorderColorCreateInfoEXT *in_ext = (const VkSamplerCustomBorderColorCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->customBorderColor = in_ext->customBorderColor;
-            out_ext->format = in_ext->format;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_INDEX_CREATE_INFO_EXT:
-        {
-            VkSamplerCustomBorderColorIndexCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSamplerCustomBorderColorIndexCreateInfoEXT *in_ext = (const VkSamplerCustomBorderColorIndexCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_CUSTOM_BORDER_COLOR_INDEX_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->index = in_ext->index;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO:
-        {
-            VkSamplerReductionModeCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSamplerReductionModeCreateInfo *in_ext = (const VkSamplerReductionModeCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->reductionMode = in_ext->reductionMode;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO:
-        {
-            VkSamplerYcbcrConversionInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkSamplerYcbcrConversionInfo *in_ext = (const VkSamplerYcbcrConversionInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
-            out_ext->pNext = NULL;
-            out_ext->conversion = in_ext->conversion;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkSamplerCreateInfo *convert_VkSamplerCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkSamplerCreateInfo *in, uint32_t count)
-{
-    VkSamplerCreateInfo *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkSamplerCreateInfo_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkDescriptorMappingSourceConstantOffsetEXT_win64_to_host(struct conversion_context *ctx, const VkDescriptorMappingSourceConstantOffsetEXT *in, VkDescriptorMappingSourceConstantOffsetEXT *out)
-{
-    if (!in) return;
-
-    out->heapOffset = in->heapOffset;
-    out->heapArrayStride = in->heapArrayStride;
-    out->pEmbeddedSampler = convert_VkSamplerCreateInfo_array_win64_to_host(ctx, in->pEmbeddedSampler, 1);
-    out->samplerHeapOffset = in->samplerHeapOffset;
-    out->samplerHeapArrayStride = in->samplerHeapArrayStride;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkDescriptorMappingSourcePushIndexEXT_win64_to_host(struct conversion_context *ctx, const VkDescriptorMappingSourcePushIndexEXT *in, VkDescriptorMappingSourcePushIndexEXT *out)
-{
-    if (!in) return;
-
-    out->heapOffset = in->heapOffset;
-    out->pushOffset = in->pushOffset;
-    out->heapIndexStride = in->heapIndexStride;
-    out->heapArrayStride = in->heapArrayStride;
-    out->pEmbeddedSampler = convert_VkSamplerCreateInfo_array_win64_to_host(ctx, in->pEmbeddedSampler, 1);
-    out->useCombinedImageSamplerIndex = in->useCombinedImageSamplerIndex;
-    out->samplerHeapOffset = in->samplerHeapOffset;
-    out->samplerPushOffset = in->samplerPushOffset;
-    out->samplerHeapIndexStride = in->samplerHeapIndexStride;
-    out->samplerHeapArrayStride = in->samplerHeapArrayStride;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkDescriptorMappingSourceIndirectIndexEXT_win64_to_host(struct conversion_context *ctx, const VkDescriptorMappingSourceIndirectIndexEXT *in, VkDescriptorMappingSourceIndirectIndexEXT *out)
-{
-    if (!in) return;
-
-    out->heapOffset = in->heapOffset;
-    out->pushOffset = in->pushOffset;
-    out->addressOffset = in->addressOffset;
-    out->heapIndexStride = in->heapIndexStride;
-    out->heapArrayStride = in->heapArrayStride;
-    out->pEmbeddedSampler = convert_VkSamplerCreateInfo_array_win64_to_host(ctx, in->pEmbeddedSampler, 1);
-    out->useCombinedImageSamplerIndex = in->useCombinedImageSamplerIndex;
-    out->samplerHeapOffset = in->samplerHeapOffset;
-    out->samplerPushOffset = in->samplerPushOffset;
-    out->samplerAddressOffset = in->samplerAddressOffset;
-    out->samplerHeapIndexStride = in->samplerHeapIndexStride;
-    out->samplerHeapArrayStride = in->samplerHeapArrayStride;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkDescriptorMappingSourceIndirectIndexArrayEXT_win64_to_host(struct conversion_context *ctx, const VkDescriptorMappingSourceIndirectIndexArrayEXT *in, VkDescriptorMappingSourceIndirectIndexArrayEXT *out)
-{
-    if (!in) return;
-
-    out->heapOffset = in->heapOffset;
-    out->pushOffset = in->pushOffset;
-    out->addressOffset = in->addressOffset;
-    out->heapIndexStride = in->heapIndexStride;
-    out->pEmbeddedSampler = convert_VkSamplerCreateInfo_array_win64_to_host(ctx, in->pEmbeddedSampler, 1);
-    out->useCombinedImageSamplerIndex = in->useCombinedImageSamplerIndex;
-    out->samplerHeapOffset = in->samplerHeapOffset;
-    out->samplerPushOffset = in->samplerPushOffset;
-    out->samplerAddressOffset = in->samplerAddressOffset;
-    out->samplerHeapIndexStride = in->samplerHeapIndexStride;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkDescriptorMappingSourceShaderRecordIndexEXT_win64_to_host(struct conversion_context *ctx, const VkDescriptorMappingSourceShaderRecordIndexEXT *in, VkDescriptorMappingSourceShaderRecordIndexEXT *out)
-{
-    if (!in) return;
-
-    out->heapOffset = in->heapOffset;
-    out->shaderRecordOffset = in->shaderRecordOffset;
-    out->heapIndexStride = in->heapIndexStride;
-    out->heapArrayStride = in->heapArrayStride;
-    out->pEmbeddedSampler = convert_VkSamplerCreateInfo_array_win64_to_host(ctx, in->pEmbeddedSampler, 1);
-    out->useCombinedImageSamplerIndex = in->useCombinedImageSamplerIndex;
-    out->samplerHeapOffset = in->samplerHeapOffset;
-    out->samplerShaderRecordOffset = in->samplerShaderRecordOffset;
-    out->samplerHeapIndexStride = in->samplerHeapIndexStride;
-    out->samplerHeapArrayStride = in->samplerHeapArrayStride;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkDescriptorMappingSourceDataEXT_win64_to_host(struct conversion_context *ctx, const VkDescriptorMappingSourceDataEXT *in, VkDescriptorMappingSourceDataEXT *out, VkFlags selector)
-{
-    if (!in) return;
-
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_HEAP_WITH_CONSTANT_OFFSET_EXT)
-        convert_VkDescriptorMappingSourceConstantOffsetEXT_win64_to_host(ctx, &in->constantOffset, &out->constantOffset);
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_HEAP_WITH_PUSH_INDEX_EXT)
-        convert_VkDescriptorMappingSourcePushIndexEXT_win64_to_host(ctx, &in->pushIndex, &out->pushIndex);
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_HEAP_WITH_INDIRECT_INDEX_EXT)
-        convert_VkDescriptorMappingSourceIndirectIndexEXT_win64_to_host(ctx, &in->indirectIndex, &out->indirectIndex);
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_HEAP_WITH_INDIRECT_INDEX_ARRAY_EXT)
-        convert_VkDescriptorMappingSourceIndirectIndexArrayEXT_win64_to_host(ctx, &in->indirectIndexArray, &out->indirectIndexArray);
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_RESOURCE_HEAP_DATA_EXT)
-        out->heapData = in->heapData;
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_PUSH_DATA_EXT)
-        out->pushDataOffset = in->pushDataOffset;
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_PUSH_ADDRESS_EXT)
-        out->pushAddressOffset = in->pushAddressOffset;
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_INDIRECT_ADDRESS_EXT)
-        out->indirectAddress = in->indirectAddress;
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_HEAP_WITH_SHADER_RECORD_INDEX_EXT)
-        convert_VkDescriptorMappingSourceShaderRecordIndexEXT_win64_to_host(ctx, &in->shaderRecordIndex, &out->shaderRecordIndex);
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_SHADER_RECORD_DATA_EXT)
-        out->shaderRecordDataOffset = in->shaderRecordDataOffset;
-    if (selector == VK_DESCRIPTOR_MAPPING_SOURCE_SHADER_RECORD_ADDRESS_EXT)
-        out->shaderRecordAddressOffset = in->shaderRecordAddressOffset;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkDescriptorSetAndBindingMappingEXT_win64_to_host(struct conversion_context *ctx, const VkDescriptorSetAndBindingMappingEXT *in, VkDescriptorSetAndBindingMappingEXT *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->descriptorSet = in->descriptorSet;
-    out->firstBinding = in->firstBinding;
-    out->bindingCount = in->bindingCount;
-    out->resourceMask = in->resourceMask;
-    out->source = in->source;
-    convert_VkDescriptorMappingSourceDataEXT_win64_to_host(ctx, &in->sourceData, &out->sourceData, in->source);
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkDescriptorSetAndBindingMappingEXT *convert_VkDescriptorSetAndBindingMappingEXT_array_win64_to_host(struct conversion_context *ctx, const VkDescriptorSetAndBindingMappingEXT *in, uint32_t count)
-{
-    VkDescriptorSetAndBindingMappingEXT *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkDescriptorSetAndBindingMappingEXT_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkPipelineShaderStageCreateInfo_win64_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, VkPipelineShaderStageCreateInfo *out)
-{
-    const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->flags = in->flags;
-    out->stage = in->stage;
-    out->module = in->module;
-    out->pName = in->pName;
-    out->pSpecializationInfo = in->pSpecializationInfo;
-
-    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT:
-        {
-            VkDebugUtilsObjectNameInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkDebugUtilsObjectNameInfoEXT *in_ext = (const VkDebugUtilsObjectNameInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->objectType = in_ext->objectType;
-            out_ext->objectHandle = wine_vk_unwrap_handle(in_ext->objectType, in_ext->objectHandle);
-            out_ext->pObjectName = in_ext->pObjectName;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO:
-        {
-            VkPipelineRobustnessCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineRobustnessCreateInfo *in_ext = (const VkPipelineRobustnessCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->storageBuffers = in_ext->storageBuffers;
-            out_ext->uniformBuffers = in_ext->uniformBuffers;
-            out_ext->vertexInputs = in_ext->vertexInputs;
-            out_ext->images = in_ext->images;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_MODULE_IDENTIFIER_CREATE_INFO_EXT:
-        {
-            VkPipelineShaderStageModuleIdentifierCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineShaderStageModuleIdentifierCreateInfoEXT *in_ext = (const VkPipelineShaderStageModuleIdentifierCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_MODULE_IDENTIFIER_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->identifierSize = in_ext->identifierSize;
-            out_ext->pIdentifier = in_ext->pIdentifier;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO:
-        {
-            VkPipelineShaderStageRequiredSubgroupSizeCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineShaderStageRequiredSubgroupSizeCreateInfo *in_ext = (const VkPipelineShaderStageRequiredSubgroupSizeCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->requiredSubgroupSize = in_ext->requiredSubgroupSize;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SHADER_DESCRIPTOR_SET_AND_BINDING_MAPPING_INFO_EXT:
-        {
-            VkShaderDescriptorSetAndBindingMappingInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkShaderDescriptorSetAndBindingMappingInfoEXT *in_ext = (const VkShaderDescriptorSetAndBindingMappingInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SHADER_DESCRIPTOR_SET_AND_BINDING_MAPPING_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->mappingCount = in_ext->mappingCount;
-            out_ext->pMappings = convert_VkDescriptorSetAndBindingMappingEXT_array_win64_to_host(ctx, in_ext->pMappings, in_ext->mappingCount);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO:
-        {
-            VkShaderModuleCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkShaderModuleCreateInfo *in_ext = (const VkShaderModuleCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->flags = in_ext->flags;
-            out_ext->codeSize = in_ext->codeSize;
-            out_ext->pCode = in_ext->pCode;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SHADER_MODULE_VALIDATION_CACHE_CREATE_INFO_EXT:
-        {
-            VkShaderModuleValidationCacheCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkShaderModuleValidationCacheCreateInfoEXT *in_ext = (const VkShaderModuleValidationCacheCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SHADER_MODULE_VALIDATION_CACHE_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->validationCache = in_ext->validationCache;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkComputePipelineCreateInfo_win64_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, VkComputePipelineCreateInfo *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->flags = in->flags;
-    convert_VkPipelineShaderStageCreateInfo_win64_to_host(ctx, &in->stage, &out->stage);
-    out->layout = in->layout;
-    out->basePipelineHandle = in->basePipelineHandle;
-    out->basePipelineIndex = in->basePipelineIndex;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkComputePipelineCreateInfo *convert_VkComputePipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, uint32_t count)
-{
-    VkComputePipelineCreateInfo *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkComputePipelineCreateInfo_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
 static void convert_VkSpecializationMapEntry_win32_to_host(const VkSpecializationMapEntry32 *in, VkSpecializationMapEntry *out)
 {
     if (!in) return;
@@ -16928,7 +16469,7 @@ static void convert_VkSamplerCreateInfo_win32_to_host(struct conversion_context 
             out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->objectType = in_ext->objectType;
-            out_ext->objectHandle = wine_vk_unwrap_handle(in_ext->objectType, in_ext->objectHandle);
+            out_ext->objectHandle = in_ext->objectHandle;
             out_ext->pObjectName = UlongToPtr(in_ext->pObjectName);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
@@ -17233,7 +16774,7 @@ static void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct convers
             out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->objectType = in_ext->objectType;
-            out_ext->objectHandle = wine_vk_unwrap_handle(in_ext->objectType, in_ext->objectHandle);
+            out_ext->objectHandle = in_ext->objectHandle;
             out_ext->pObjectName = UlongToPtr(in_ext->pObjectName);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
@@ -24400,342 +23941,6 @@ static void convert_VkFramebufferCreateInfo_win32_to_host(struct conversion_cont
     }
 }
 
-#ifdef _WIN64
-static const VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderStageCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, uint32_t count)
-{
-    VkPipelineShaderStageCreateInfo *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkPipelineShaderStageCreateInfo_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkGraphicsShaderGroupCreateInfoNV_win64_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV *in, VkGraphicsShaderGroupCreateInfoNV *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->stageCount = in->stageCount;
-    out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win64_to_host(ctx, in->pStages, in->stageCount);
-    out->pVertexInputState = in->pVertexInputState;
-    out->pTessellationState = in->pTessellationState;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkGraphicsShaderGroupCreateInfoNV *convert_VkGraphicsShaderGroupCreateInfoNV_array_win64_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV *in, uint32_t count)
-{
-    VkGraphicsShaderGroupCreateInfoNV *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkGraphicsShaderGroupCreateInfoNV_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static void convert_VkGraphicsPipelineCreateInfo_win64_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, VkGraphicsPipelineCreateInfo *out)
-{
-    const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->flags = in->flags;
-    out->stageCount = in->stageCount;
-    out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win64_to_host(ctx, in->pStages, in->stageCount);
-    out->pVertexInputState = in->pVertexInputState;
-    out->pInputAssemblyState = in->pInputAssemblyState;
-    out->pTessellationState = in->pTessellationState;
-    out->pViewportState = in->pViewportState;
-    out->pRasterizationState = in->pRasterizationState;
-    out->pMultisampleState = in->pMultisampleState;
-    out->pDepthStencilState = in->pDepthStencilState;
-    out->pColorBlendState = in->pColorBlendState;
-    out->pDynamicState = in->pDynamicState;
-    out->layout = in->layout;
-    out->renderPass = in->renderPass;
-    out->subpass = in->subpass;
-    out->basePipelineHandle = in->basePipelineHandle;
-    out->basePipelineIndex = in->basePipelineIndex;
-
-    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_ATTACHMENT_SAMPLE_COUNT_INFO_AMD:
-        {
-            VkAttachmentSampleCountInfoAMD *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkAttachmentSampleCountInfoAMD *in_ext = (const VkAttachmentSampleCountInfoAMD *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_ATTACHMENT_SAMPLE_COUNT_INFO_AMD;
-            out_ext->pNext = NULL;
-            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
-            out_ext->pColorAttachmentSamples = in_ext->pColorAttachmentSamples;
-            out_ext->depthStencilAttachmentSamples = in_ext->depthStencilAttachmentSamples;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_CUSTOM_RESOLVE_CREATE_INFO_EXT:
-        {
-            VkCustomResolveCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkCustomResolveCreateInfoEXT *in_ext = (const VkCustomResolveCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_CUSTOM_RESOLVE_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->customResolve = in_ext->customResolve;
-            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
-            out_ext->pColorAttachmentFormats = in_ext->pColorAttachmentFormats;
-            out_ext->depthAttachmentFormat = in_ext->depthAttachmentFormat;
-            out_ext->stencilAttachmentFormat = in_ext->stencilAttachmentFormat;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT:
-        {
-            VkGraphicsPipelineLibraryCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkGraphicsPipelineLibraryCreateInfoEXT *in_ext = (const VkGraphicsPipelineLibraryCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->flags = in_ext->flags;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_SHADER_GROUPS_CREATE_INFO_NV:
-        {
-            VkGraphicsPipelineShaderGroupsCreateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkGraphicsPipelineShaderGroupsCreateInfoNV *in_ext = (const VkGraphicsPipelineShaderGroupsCreateInfoNV *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_SHADER_GROUPS_CREATE_INFO_NV;
-            out_ext->pNext = NULL;
-            out_ext->groupCount = in_ext->groupCount;
-            out_ext->pGroups = convert_VkGraphicsShaderGroupCreateInfoNV_array_win64_to_host(ctx, in_ext->pGroups, in_ext->groupCount);
-            out_ext->pipelineCount = in_ext->pipelineCount;
-            out_ext->pPipelines = in_ext->pPipelines;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_BINARY_INFO_KHR:
-        {
-            VkPipelineBinaryInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineBinaryInfoKHR *in_ext = (const VkPipelineBinaryInfoKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_BINARY_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->binaryCount = in_ext->binaryCount;
-            out_ext->pPipelineBinaries = in_ext->pPipelineBinaries;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_COMPILER_CONTROL_CREATE_INFO_AMD:
-        {
-            VkPipelineCompilerControlCreateInfoAMD *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineCompilerControlCreateInfoAMD *in_ext = (const VkPipelineCompilerControlCreateInfoAMD *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_COMPILER_CONTROL_CREATE_INFO_AMD;
-            out_ext->pNext = NULL;
-            out_ext->compilerControlFlags = in_ext->compilerControlFlags;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO:
-        {
-            VkPipelineCreateFlags2CreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineCreateFlags2CreateInfo *in_ext = (const VkPipelineCreateFlags2CreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->flags = in_ext->flags;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
-        {
-            VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->pPipelineCreationFeedback = in_ext->pPipelineCreationFeedback;
-            out_ext->pipelineStageCreationFeedbackCount = in_ext->pipelineStageCreationFeedbackCount;
-            out_ext->pPipelineStageCreationFeedbacks = in_ext->pPipelineStageCreationFeedbacks;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT:
-        {
-            VkPipelineDiscardRectangleStateCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineDiscardRectangleStateCreateInfoEXT *in_ext = (const VkPipelineDiscardRectangleStateCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_DISCARD_RECTANGLE_STATE_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->flags = in_ext->flags;
-            out_ext->discardRectangleMode = in_ext->discardRectangleMode;
-            out_ext->discardRectangleCount = in_ext->discardRectangleCount;
-            out_ext->pDiscardRectangles = in_ext->pDiscardRectangles;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_DENSITY_MAP_LAYERED_CREATE_INFO_VALVE:
-        {
-            VkPipelineFragmentDensityMapLayeredCreateInfoVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineFragmentDensityMapLayeredCreateInfoVALVE *in_ext = (const VkPipelineFragmentDensityMapLayeredCreateInfoVALVE *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_DENSITY_MAP_LAYERED_CREATE_INFO_VALVE;
-            out_ext->pNext = NULL;
-            out_ext->maxFragmentDensityMapLayers = in_ext->maxFragmentDensityMapLayers;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_ENUM_STATE_CREATE_INFO_NV:
-        {
-            VkPipelineFragmentShadingRateEnumStateCreateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineFragmentShadingRateEnumStateCreateInfoNV *in_ext = (const VkPipelineFragmentShadingRateEnumStateCreateInfoNV *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_ENUM_STATE_CREATE_INFO_NV;
-            out_ext->pNext = NULL;
-            out_ext->shadingRateType = in_ext->shadingRateType;
-            out_ext->shadingRate = in_ext->shadingRate;
-            memcpy(out_ext->combinerOps, in_ext->combinerOps, 2 * sizeof(VkFragmentShadingRateCombinerOpKHR));
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR:
-        {
-            VkPipelineFragmentShadingRateStateCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineFragmentShadingRateStateCreateInfoKHR *in_ext = (const VkPipelineFragmentShadingRateStateCreateInfoKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->fragmentSize = in_ext->fragmentSize;
-            memcpy(out_ext->combinerOps, in_ext->combinerOps, 2 * sizeof(VkFragmentShadingRateCombinerOpKHR));
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR:
-        {
-            VkPipelineLibraryCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineLibraryCreateInfoKHR *in_ext = (const VkPipelineLibraryCreateInfoKHR *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR;
-            out_ext->pNext = NULL;
-            out_ext->libraryCount = in_ext->libraryCount;
-            out_ext->pLibraries = in_ext->pLibraries;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO:
-        {
-            VkPipelineRenderingCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineRenderingCreateInfo *in_ext = (const VkPipelineRenderingCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->viewMask = in_ext->viewMask;
-            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
-            out_ext->pColorAttachmentFormats = in_ext->pColorAttachmentFormats;
-            out_ext->depthAttachmentFormat = in_ext->depthAttachmentFormat;
-            out_ext->stencilAttachmentFormat = in_ext->stencilAttachmentFormat;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_REPRESENTATIVE_FRAGMENT_TEST_STATE_CREATE_INFO_NV:
-        {
-            VkPipelineRepresentativeFragmentTestStateCreateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineRepresentativeFragmentTestStateCreateInfoNV *in_ext = (const VkPipelineRepresentativeFragmentTestStateCreateInfoNV *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_REPRESENTATIVE_FRAGMENT_TEST_STATE_CREATE_INFO_NV;
-            out_ext->pNext = NULL;
-            out_ext->representativeFragmentTestEnable = in_ext->representativeFragmentTestEnable;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO:
-        {
-            VkPipelineRobustnessCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineRobustnessCreateInfo *in_ext = (const VkPipelineRobustnessCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->storageBuffers = in_ext->storageBuffers;
-            out_ext->uniformBuffers = in_ext->uniformBuffers;
-            out_ext->vertexInputs = in_ext->vertexInputs;
-            out_ext->images = in_ext->images;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_LOCATION_INFO:
-        {
-            VkRenderingAttachmentLocationInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkRenderingAttachmentLocationInfo *in_ext = (const VkRenderingAttachmentLocationInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_LOCATION_INFO;
-            out_ext->pNext = NULL;
-            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
-            out_ext->pColorAttachmentLocations = in_ext->pColorAttachmentLocations;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO:
-        {
-            VkRenderingInputAttachmentIndexInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkRenderingInputAttachmentIndexInfo *in_ext = (const VkRenderingInputAttachmentIndexInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO;
-            out_ext->pNext = NULL;
-            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
-            out_ext->pColorAttachmentInputIndices = in_ext->pColorAttachmentInputIndices;
-            out_ext->pDepthInputAttachmentIndex = in_ext->pDepthInputAttachmentIndex;
-            out_ext->pStencilInputAttachmentIndex = in_ext->pStencilInputAttachmentIndex;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkGraphicsPipelineCreateInfo *convert_VkGraphicsPipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, uint32_t count)
-{
-    VkGraphicsPipelineCreateInfo *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkGraphicsPipelineCreateInfo_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
 static const VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo32 *in, uint32_t count)
 {
     VkPipelineShaderStageCreateInfo *out;
@@ -27105,46 +26310,6 @@ static void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion_contex
     }
 }
 
-#ifdef _WIN64
-static void convert_VkRayTracingPipelineCreateInfoKHR_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, VkRayTracingPipelineCreateInfoKHR *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->flags = in->flags;
-    out->stageCount = in->stageCount;
-    out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win64_to_host(ctx, in->pStages, in->stageCount);
-    out->groupCount = in->groupCount;
-    out->pGroups = in->pGroups;
-    out->maxPipelineRayRecursionDepth = in->maxPipelineRayRecursionDepth;
-    out->pLibraryInfo = in->pLibraryInfo;
-    out->pLibraryInterface = in->pLibraryInterface;
-    out->pDynamicState = in->pDynamicState;
-    out->layout = in->layout;
-    out->basePipelineHandle = in->basePipelineHandle;
-    out->basePipelineIndex = in->basePipelineIndex;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkRayTracingPipelineCreateInfoKHR *convert_VkRayTracingPipelineCreateInfoKHR_array_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, uint32_t count)
-{
-    VkRayTracingPipelineCreateInfoKHR *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkRayTracingPipelineCreateInfoKHR_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
 static void convert_VkRayTracingShaderGroupCreateInfoKHR_win32_to_host(const VkRayTracingShaderGroupCreateInfoKHR32 *in, VkRayTracingShaderGroupCreateInfoKHR *out)
 {
     if (!in) return;
@@ -27382,43 +26547,6 @@ static void convert_VkRayTracingPipelineCreateInfoKHR_array_host_to_win32(const 
         convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(&in[i], &out[i]);
     }
 }
-
-#ifdef _WIN64
-static void convert_VkRayTracingPipelineCreateInfoNV_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, VkRayTracingPipelineCreateInfoNV *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = in->pNext;
-    out->flags = in->flags;
-    out->stageCount = in->stageCount;
-    out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win64_to_host(ctx, in->pStages, in->stageCount);
-    out->groupCount = in->groupCount;
-    out->pGroups = in->pGroups;
-    out->maxRecursionDepth = in->maxRecursionDepth;
-    out->layout = in->layout;
-    out->basePipelineHandle = in->basePipelineHandle;
-    out->basePipelineIndex = in->basePipelineIndex;
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkRayTracingPipelineCreateInfoNV *convert_VkRayTracingPipelineCreateInfoNV_array_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, uint32_t count)
-{
-    VkRayTracingPipelineCreateInfoNV *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkRayTracingPipelineCreateInfoNV_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
 
 static void convert_VkRayTracingShaderGroupCreateInfoNV_win32_to_host(const VkRayTracingShaderGroupCreateInfoNV32 *in, VkRayTracingShaderGroupCreateInfoNV *out)
 {
@@ -28285,111 +27413,6 @@ static void convert_VkShaderModuleCreateInfo_win32_to_host(struct conversion_con
         }
     }
 }
-
-#ifdef _WIN64
-static void convert_VkShaderCreateInfoEXT_win64_to_host(struct conversion_context *ctx, const VkShaderCreateInfoEXT *in, VkShaderCreateInfoEXT *out)
-{
-    const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->flags = in->flags;
-    out->stage = in->stage;
-    out->nextStage = in->nextStage;
-    out->codeType = in->codeType;
-    out->codeSize = in->codeSize;
-    out->pCode = in->pCode;
-    out->pName = in->pName;
-    out->setLayoutCount = in->setLayoutCount;
-    out->pSetLayouts = in->pSetLayouts;
-    out->pushConstantRangeCount = in->pushConstantRangeCount;
-    out->pPushConstantRanges = in->pPushConstantRanges;
-    out->pSpecializationInfo = in->pSpecializationInfo;
-
-    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_CUSTOM_RESOLVE_CREATE_INFO_EXT:
-        {
-            VkCustomResolveCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkCustomResolveCreateInfoEXT *in_ext = (const VkCustomResolveCreateInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_CUSTOM_RESOLVE_CREATE_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->customResolve = in_ext->customResolve;
-            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
-            out_ext->pColorAttachmentFormats = in_ext->pColorAttachmentFormats;
-            out_ext->depthAttachmentFormat = in_ext->depthAttachmentFormat;
-            out_ext->stencilAttachmentFormat = in_ext->stencilAttachmentFormat;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO:
-        {
-            VkPipelineShaderStageRequiredSubgroupSizeCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPipelineShaderStageRequiredSubgroupSizeCreateInfo *in_ext = (const VkPipelineShaderStageRequiredSubgroupSizeCreateInfo *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO;
-            out_ext->pNext = NULL;
-            out_ext->requiredSubgroupSize = in_ext->requiredSubgroupSize;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_SHADER_DESCRIPTOR_SET_AND_BINDING_MAPPING_INFO_EXT:
-        {
-            VkShaderDescriptorSetAndBindingMappingInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkShaderDescriptorSetAndBindingMappingInfoEXT *in_ext = (const VkShaderDescriptorSetAndBindingMappingInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_SHADER_DESCRIPTOR_SET_AND_BINDING_MAPPING_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->mappingCount = in_ext->mappingCount;
-            out_ext->pMappings = convert_VkDescriptorSetAndBindingMappingEXT_array_win64_to_host(ctx, in_ext->pMappings, in_ext->mappingCount);
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT:
-        {
-            VkValidationFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkValidationFeaturesEXT *in_ext = (const VkValidationFeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-            out_ext->pNext = NULL;
-            out_ext->enabledValidationFeatureCount = in_ext->enabledValidationFeatureCount;
-            out_ext->pEnabledValidationFeatures = in_ext->pEnabledValidationFeatures;
-            out_ext->disabledValidationFeatureCount = in_ext->disabledValidationFeatureCount;
-            out_ext->pDisabledValidationFeatures = in_ext->pDisabledValidationFeatures;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkShaderCreateInfoEXT *convert_VkShaderCreateInfoEXT_array_win64_to_host(struct conversion_context *ctx, const VkShaderCreateInfoEXT *in, uint32_t count)
-{
-    VkShaderCreateInfoEXT *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkShaderCreateInfoEXT_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
 
 static void convert_VkShaderCreateInfoEXT_win32_to_host(struct conversion_context *ctx, const VkShaderCreateInfoEXT32 *in, VkShaderCreateInfoEXT *out)
 {
@@ -44433,62 +43456,6 @@ static void convert_VkSemaphoreWaitInfo_win32_to_host(struct conversion_context 
         FIXME("Unexpected pNext\n");
 }
 
-#ifdef _WIN64
-static void convert_VkResourceDescriptorInfoEXT_win64_to_host(struct conversion_context *ctx, const VkResourceDescriptorInfoEXT *in, VkResourceDescriptorInfoEXT *out)
-{
-    const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
-
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->type = in->type;
-    out->data = in->data;
-
-    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
-    {
-        switch (in_header->sType)
-        {
-        case VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT:
-        {
-            VkDebugUtilsObjectNameInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkDebugUtilsObjectNameInfoEXT *in_ext = (const VkDebugUtilsObjectNameInfoEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-            out_ext->pNext = NULL;
-            out_ext->objectType = in_ext->objectType;
-            out_ext->objectHandle = wine_vk_unwrap_handle(in_ext->objectType, in_ext->objectHandle);
-            out_ext->pObjectName = in_ext->pObjectName;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        default:
-            FIXME("Unhandled sType %u.\n", in_header->sType);
-            break;
-        }
-    }
-}
-#endif /* _WIN64 */
-
-#ifdef _WIN64
-static const VkResourceDescriptorInfoEXT *convert_VkResourceDescriptorInfoEXT_array_win64_to_host(struct conversion_context *ctx, const VkResourceDescriptorInfoEXT *in, uint32_t count)
-{
-    VkResourceDescriptorInfoEXT *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_VkResourceDescriptorInfoEXT_win64_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-#endif /* _WIN64 */
-
 static const VkImageViewCreateInfo *convert_VkImageViewCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkImageViewCreateInfo32 *in, uint32_t count)
 {
     VkImageViewCreateInfo *out;
@@ -44630,7 +43597,7 @@ static void convert_VkResourceDescriptorInfoEXT_win32_to_host(struct conversion_
             out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->objectType = in_ext->objectType;
-            out_ext->objectHandle = wine_vk_unwrap_handle(in_ext->objectType, in_ext->objectHandle);
+            out_ext->objectHandle = in_ext->objectHandle;
             out_ext->pObjectName = UlongToPtr(in_ext->pObjectName);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
@@ -52679,16 +51646,10 @@ static NTSTATUS thunk32_vkCreateCommandPool(void *args)
 static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 {
     struct vkCreateComputePipelines_params *params = args;
-    const VkComputePipelineCreateInfo *pCreateInfos_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    init_conversion_context(ctx);
-    pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win64_to_host(ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = vulkan_device_from_handle(params->device)->p_vkCreateComputePipelines(vulkan_device_from_handle(params->device)->host.device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-    free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkCreateComputePipelines(vulkan_device_from_handle(params->device)->host.device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -53244,16 +52205,10 @@ static NTSTATUS thunk32_vkCreateFramebuffer(void *args)
 static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 {
     struct vkCreateGraphicsPipelines_params *params = args;
-    const VkGraphicsPipelineCreateInfo *pCreateInfos_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    init_conversion_context(ctx);
-    pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win64_to_host(ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = vulkan_device_from_handle(params->device)->p_vkCreateGraphicsPipelines(vulkan_device_from_handle(params->device)->host.device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-    free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkCreateGraphicsPipelines(vulkan_device_from_handle(params->device)->host.device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -53775,20 +52730,10 @@ static NTSTATUS thunk32_vkCreateQueryPool(void *args)
 static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 {
     struct vkCreateRayTracingPipelinesKHR_params *params = args;
-    const VkRayTracingPipelineCreateInfoKHR *pCreateInfos_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    if (params->deferredOperation == VK_NULL_HANDLE)
-        init_conversion_context(ctx);
-    else
-        ctx = &wine_deferred_operation_from_handle(params->deferredOperation)->ctx;
-    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win64_to_host(ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = vulkan_device_from_handle(params->device)->p_vkCreateRayTracingPipelinesKHR(vulkan_device_from_handle(params->device)->host.device, params->deferredOperation ? wine_deferred_operation_from_handle(params->deferredOperation)->host.deferred_operation : 0, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-    if (params->deferredOperation == VK_NULL_HANDLE)
-        free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkCreateRayTracingPipelinesKHR(vulkan_device_from_handle(params->device)->host.device, params->deferredOperation ? wine_deferred_operation_from_handle(params->deferredOperation)->host.deferred_operation : 0, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -53828,16 +52773,10 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
 static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 {
     struct vkCreateRayTracingPipelinesNV_params *params = args;
-    const VkRayTracingPipelineCreateInfoNV *pCreateInfos_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
 
-    init_conversion_context(ctx);
-    pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win64_to_host(ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = vulkan_device_from_handle(params->device)->p_vkCreateRayTracingPipelinesNV(vulkan_device_from_handle(params->device)->host.device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
-    free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkCreateRayTracingPipelinesNV(vulkan_device_from_handle(params->device)->host.device, params->pipelineCache, params->createInfoCount, params->pCreateInfos, NULL, params->pPipelines);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -53977,16 +52916,10 @@ static NTSTATUS thunk32_vkCreateRenderPass2KHR(void *args)
 static NTSTATUS thunk64_vkCreateSampler(void *args)
 {
     struct vkCreateSampler_params *params = args;
-    VkSamplerCreateInfo pCreateInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pSampler);
 
-    init_conversion_context(ctx);
-    convert_VkSamplerCreateInfo_win64_to_host(ctx, params->pCreateInfo, &pCreateInfo_host);
-    params->result = vulkan_device_from_handle(params->device)->p_vkCreateSampler(vulkan_device_from_handle(params->device)->host.device, &pCreateInfo_host, NULL, params->pSampler);
-    free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkCreateSampler(vulkan_device_from_handle(params->device)->host.device, params->pCreateInfo, NULL, params->pSampler);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -54164,16 +53097,10 @@ static NTSTATUS thunk32_vkCreateShaderModule(void *args)
 static NTSTATUS thunk64_vkCreateShadersEXT(void *args)
 {
     struct vkCreateShadersEXT_params *params = args;
-    const VkShaderCreateInfoEXT *pCreateInfos_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %u, %p, %p, %p\n", params->device, params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pShaders);
 
-    init_conversion_context(ctx);
-    pCreateInfos_host = convert_VkShaderCreateInfoEXT_array_win64_to_host(ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = vulkan_device_from_handle(params->device)->p_vkCreateShadersEXT(vulkan_device_from_handle(params->device)->host.device, params->createInfoCount, pCreateInfos_host, NULL, params->pShaders);
-    free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkCreateShadersEXT(vulkan_device_from_handle(params->device)->host.device, params->createInfoCount, params->pCreateInfos, NULL, params->pShaders);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -61207,16 +60134,10 @@ static NTSTATUS thunk32_vkGetPipelineIndirectDeviceAddressNV(void *args)
 static NTSTATUS thunk64_vkGetPipelineIndirectMemoryRequirementsNV(void *args)
 {
     struct vkGetPipelineIndirectMemoryRequirementsNV_params *params = args;
-    VkComputePipelineCreateInfo pCreateInfo_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pCreateInfo, params->pMemoryRequirements);
 
-    init_conversion_context(ctx);
-    convert_VkComputePipelineCreateInfo_win64_to_host(ctx, params->pCreateInfo, &pCreateInfo_host);
-    vulkan_device_from_handle(params->device)->p_vkGetPipelineIndirectMemoryRequirementsNV(vulkan_device_from_handle(params->device)->host.device, &pCreateInfo_host, params->pMemoryRequirements);
-    free_conversion_context(ctx);
+    vulkan_device_from_handle(params->device)->p_vkGetPipelineIndirectMemoryRequirementsNV(vulkan_device_from_handle(params->device)->host.device, params->pCreateInfo, params->pMemoryRequirements);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -64298,14 +63219,8 @@ static NTSTATUS thunk32_vkWriteMicromapsPropertiesEXT(void *args)
 static void thunk64_vkWriteResourceDescriptorsEXT(void *args)
 {
     struct vkWriteResourceDescriptorsEXT_params *params = args;
-    const VkResourceDescriptorInfoEXT *pResources_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
-    init_conversion_context(ctx);
-    pResources_host = convert_VkResourceDescriptorInfoEXT_array_win64_to_host(ctx, params->pResources, params->resourceCount);
-    params->result = vulkan_device_from_handle(params->device)->p_vkWriteResourceDescriptorsEXT(vulkan_device_from_handle(params->device)->host.device, params->resourceCount, pResources_host, params->pDescriptors);
-    free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkWriteResourceDescriptorsEXT(vulkan_device_from_handle(params->device)->host.device, params->resourceCount, params->pResources, params->pDescriptors);
 }
 #endif /* _WIN64 */
 
@@ -64335,14 +63250,8 @@ static void thunk32_vkWriteResourceDescriptorsEXT(void *args)
 static void thunk64_vkWriteSamplerDescriptorsEXT(void *args)
 {
     struct vkWriteSamplerDescriptorsEXT_params *params = args;
-    const VkSamplerCreateInfo *pSamplers_host;
-    struct conversion_context local_ctx;
-    struct conversion_context *ctx = &local_ctx;
 
-    init_conversion_context(ctx);
-    pSamplers_host = convert_VkSamplerCreateInfo_array_win64_to_host(ctx, params->pSamplers, params->samplerCount);
-    params->result = vulkan_device_from_handle(params->device)->p_vkWriteSamplerDescriptorsEXT(vulkan_device_from_handle(params->device)->host.device, params->samplerCount, pSamplers_host, params->pDescriptors);
-    free_conversion_context(ctx);
+    params->result = vulkan_device_from_handle(params->device)->p_vkWriteSamplerDescriptorsEXT(vulkan_device_from_handle(params->device)->host.device, params->samplerCount, params->pSamplers, params->pDescriptors);
 }
 #endif /* _WIN64 */
 
