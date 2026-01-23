@@ -70,6 +70,8 @@ enum unix_call
     unix_vkCmdBindInvocationMaskHUAWEI,
     unix_vkCmdBindPipeline,
     unix_vkCmdBindPipelineShaderGroupNV,
+    unix_vkCmdBindResourceHeapEXT,
+    unix_vkCmdBindSamplerHeapEXT,
     unix_vkCmdBindShadersEXT,
     unix_vkCmdBindShadingRateImageNV,
     unix_vkCmdBindTileMemoryQCOM,
@@ -184,6 +186,7 @@ enum unix_call
     unix_vkCmdPushConstants,
     unix_vkCmdPushConstants2,
     unix_vkCmdPushConstants2KHR,
+    unix_vkCmdPushDataEXT,
     unix_vkCmdPushDescriptorSet,
     unix_vkCmdPushDescriptorSet2,
     unix_vkCmdPushDescriptorSet2KHR,
@@ -491,6 +494,7 @@ enum unix_call
     unix_vkGetDeviceAccelerationStructureCompatibilityKHR,
     unix_vkGetDeviceBufferMemoryRequirements,
     unix_vkGetDeviceBufferMemoryRequirementsKHR,
+    unix_vkGetDeviceCombinedImageSamplerIndexNVX,
     unix_vkGetDeviceFaultInfoEXT,
     unix_vkGetDeviceGroupPeerMemoryFeatures,
     unix_vkGetDeviceGroupPeerMemoryFeaturesKHR,
@@ -521,6 +525,7 @@ enum unix_call
     unix_vkGetImageMemoryRequirements,
     unix_vkGetImageMemoryRequirements2,
     unix_vkGetImageMemoryRequirements2KHR,
+    unix_vkGetImageOpaqueCaptureDataEXT,
     unix_vkGetImageOpaqueCaptureDescriptorDataEXT,
     unix_vkGetImageSparseMemoryRequirements,
     unix_vkGetImageSparseMemoryRequirements2,
@@ -546,6 +551,7 @@ enum unix_call
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     unix_vkGetPhysicalDeviceCooperativeVectorPropertiesNV,
+    unix_vkGetPhysicalDeviceDescriptorSizeEXT,
     unix_vkGetPhysicalDeviceExternalBufferProperties,
     unix_vkGetPhysicalDeviceExternalBufferPropertiesKHR,
     unix_vkGetPhysicalDeviceExternalFenceProperties,
@@ -625,6 +631,7 @@ enum unix_call
     unix_vkGetShaderModuleIdentifierEXT,
     unix_vkGetSwapchainImagesKHR,
     unix_vkGetTensorMemoryRequirementsARM,
+    unix_vkGetTensorOpaqueCaptureDataARM,
     unix_vkGetTensorOpaqueCaptureDescriptorDataARM,
     unix_vkGetTensorViewOpaqueCaptureDescriptorDataARM,
     unix_vkGetValidationCacheDataEXT,
@@ -650,6 +657,7 @@ enum unix_call
     unix_vkQueueSubmit2,
     unix_vkQueueSubmit2KHR,
     unix_vkQueueWaitIdle,
+    unix_vkRegisterCustomBorderColorEXT,
     unix_vkReleaseCapturedPipelineDataKHR,
     unix_vkReleasePerformanceConfigurationINTEL,
     unix_vkReleaseProfilingLockKHR,
@@ -682,6 +690,7 @@ enum unix_call
     unix_vkUnmapMemory,
     unix_vkUnmapMemory2,
     unix_vkUnmapMemory2KHR,
+    unix_vkUnregisterCustomBorderColorEXT,
     unix_vkUpdateDescriptorSetWithTemplate,
     unix_vkUpdateDescriptorSetWithTemplateKHR,
     unix_vkUpdateDescriptorSets,
@@ -695,6 +704,8 @@ enum unix_call
     unix_vkWaitSemaphoresKHR,
     unix_vkWriteAccelerationStructuresPropertiesKHR,
     unix_vkWriteMicromapsPropertiesEXT,
+    unix_vkWriteResourceDescriptorsEXT,
+    unix_vkWriteSamplerDescriptorsEXT,
     unix_count,
 };
 
@@ -1062,6 +1073,18 @@ struct vkCmdBindPipelineShaderGroupNV_params
     VkPipelineBindPoint pipelineBindPoint;
     VkPipeline DECLSPEC_ALIGN(8) pipeline;
     uint32_t groupIndex;
+};
+
+struct vkCmdBindResourceHeapEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkBindHeapInfoEXT *pBindInfo;
+};
+
+struct vkCmdBindSamplerHeapEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkBindHeapInfoEXT *pBindInfo;
 };
 
 struct vkCmdBindShadersEXT_params
@@ -1951,6 +1974,12 @@ struct vkCmdPushConstants2KHR_params
 {
     VkCommandBuffer commandBuffer;
     const VkPushConstantsInfo *pPushConstantsInfo;
+};
+
+struct vkCmdPushDataEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkPushDataInfoEXT *pPushDataInfo;
 };
 
 struct vkCmdPushDescriptorSet_params
@@ -4280,6 +4309,14 @@ struct vkGetDeviceBufferMemoryRequirementsKHR_params
     VkMemoryRequirements2 *pMemoryRequirements;
 };
 
+struct vkGetDeviceCombinedImageSamplerIndexNVX_params
+{
+    VkDevice device;
+    uint64_t DECLSPEC_ALIGN(8) imageViewIndex;
+    uint64_t DECLSPEC_ALIGN(8) samplerIndex;
+    uint64_t result;
+};
+
 struct vkGetDeviceFaultInfoEXT_params
 {
     VkDevice device;
@@ -4507,6 +4544,15 @@ struct vkGetImageMemoryRequirements2KHR_params
     VkMemoryRequirements2 *pMemoryRequirements;
 };
 
+struct vkGetImageOpaqueCaptureDataEXT_params
+{
+    VkDevice device;
+    uint32_t imageCount;
+    const VkImage *pImages;
+    VkHostAddressRangeEXT *pDatas;
+    VkResult result;
+};
+
 struct vkGetImageOpaqueCaptureDescriptorDataEXT_params
 {
     VkDevice device;
@@ -4703,6 +4749,13 @@ struct vkGetPhysicalDeviceCooperativeVectorPropertiesNV_params
     uint32_t *pPropertyCount;
     VkCooperativeVectorPropertiesNV *pProperties;
     VkResult result;
+};
+
+struct vkGetPhysicalDeviceDescriptorSizeEXT_params
+{
+    VkPhysicalDevice physicalDevice;
+    VkDescriptorType descriptorType;
+    VkDeviceSize result;
 };
 
 struct vkGetPhysicalDeviceExternalBufferProperties_params
@@ -5336,6 +5389,15 @@ struct vkGetTensorMemoryRequirementsARM_params
     VkMemoryRequirements2 *pMemoryRequirements;
 };
 
+struct vkGetTensorOpaqueCaptureDataARM_params
+{
+    VkDevice device;
+    uint32_t tensorCount;
+    const VkTensorARM *pTensors;
+    VkHostAddressRangeEXT *pDatas;
+    VkResult result;
+};
+
 struct vkGetTensorOpaqueCaptureDescriptorDataARM_params
 {
     VkDevice device;
@@ -5528,6 +5590,15 @@ struct vkQueueSubmit2KHR_params
 struct vkQueueWaitIdle_params
 {
     VkQueue queue;
+    VkResult result;
+};
+
+struct vkRegisterCustomBorderColorEXT_params
+{
+    VkDevice device;
+    const VkSamplerCustomBorderColorCreateInfoEXT *pBorderColor;
+    VkBool32 requestIndex;
+    uint32_t *pIndex;
     VkResult result;
 };
 
@@ -5767,6 +5838,12 @@ struct vkUnmapMemory2KHR_params
     VkResult result;
 };
 
+struct vkUnregisterCustomBorderColorEXT_params
+{
+    VkDevice device;
+    uint32_t index;
+};
+
 struct vkUpdateDescriptorSetWithTemplate_params
 {
     VkDevice device;
@@ -5880,6 +5957,24 @@ struct vkWriteMicromapsPropertiesEXT_params
     size_t dataSize;
     void *pData;
     size_t stride;
+    VkResult result;
+};
+
+struct vkWriteResourceDescriptorsEXT_params
+{
+    VkDevice device;
+    uint32_t resourceCount;
+    const VkResourceDescriptorInfoEXT *pResources;
+    const VkHostAddressRangeEXT *pDescriptors;
+    VkResult result;
+};
+
+struct vkWriteSamplerDescriptorsEXT_params
+{
+    VkDevice device;
+    uint32_t samplerCount;
+    const VkSamplerCreateInfo *pSamplers;
+    const VkHostAddressRangeEXT *pDescriptors;
     VkResult result;
 };
 
