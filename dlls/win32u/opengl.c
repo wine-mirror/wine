@@ -2409,12 +2409,13 @@ static int win32u_wglGetSwapIntervalEXT(void)
 
 static void set_gl_error( GLenum error )
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
     const struct opengl_funcs *funcs = &display_funcs;
+    struct opengl_client_context *client;
+    struct wgl_context *ctx;
 
-    if (!ctx || ctx->error) return;
-    if ((ctx->error = funcs->p_glGetError())) return;
-    ctx->error = error;
+    if (!(ctx = NtCurrentTeb()->glContext)) return;
+    if (!(client = opengl_client_context_from_client( ctx->client_context ))) return;
+    if (!client->last_error && !(client->last_error = funcs->p_glGetError())) client->last_error = error;
 }
 
 static struct egl_platform *egl_platform_from_index( GLint index )

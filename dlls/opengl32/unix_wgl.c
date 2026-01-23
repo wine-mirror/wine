@@ -745,10 +745,12 @@ static BOOL is_any_extension_supported( struct context *ctx, const char *extensi
 static void set_gl_error( TEB *teb, GLenum error )
 {
     const struct opengl_funcs *funcs = teb->glTable;
+    struct opengl_client_context *client;
     struct context *ctx;
 
-    if (!(ctx = get_current_context( teb, NULL, NULL )) || ctx->base.error) return;
-    if (!(ctx->base.error = funcs->p_glGetError())) ctx->base.error = error;
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return;
+    if (!(client = opengl_client_context_from_client( ctx->base.client_context ))) return;
+    if (!client->last_error && !(client->last_error = funcs->p_glGetError())) client->last_error = error;
 }
 
 static BOOL get_default_fbo_integer( struct context *ctx, struct opengl_drawable *draw, struct opengl_drawable *read,
@@ -1961,13 +1963,16 @@ void wrap_glGetFramebufferParameterivEXT( TEB *teb, GLuint fbo, GLenum pname, GL
 GLenum wrap_glGetError( TEB *teb )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    struct wgl_context *ctx;
+    struct opengl_client_context *client;
     GLenum error, wrapped;
+    struct context *ctx;
 
-    if (!(ctx = &get_current_context( teb, NULL, NULL )->base)) return GL_INVALID_OPERATION;
+    if (!(ctx = get_current_context( teb, NULL, NULL ))) return GL_INVALID_OPERATION;
+    if (!(client = opengl_client_context_from_client( ctx->base.client_context ))) return GL_INVALID_OPERATION;
+
     error = funcs->p_glGetError();
-    wrapped = ctx->error;
-    ctx->error = GL_NO_ERROR;
+    wrapped = client->last_error;
+    client->last_error = GL_NO_ERROR;
     return wrapped ? wrapped : error;
 }
 

@@ -64,6 +64,7 @@ struct opengl_client_context
     struct HGLRC__              obj;            /* client object header */
     UINT64                      unix_handle;
     UINT64                      unix_funcs;
+    GLenum                      last_error;
 };
 
 static inline struct opengl_client_context *opengl_client_context_from_client( HGLRC client_context )
@@ -100,7 +101,6 @@ struct wgl_context
     int                         format;             /* pixel format of the context */
     struct opengl_drawable     *draw;               /* currently bound draw surface */
     struct opengl_drawable     *read;               /* currently bound read surface */
-    GLenum                      error;              /* wrapped GL error */
 };
 
 static inline struct wgl_context *opengl_context_from_handle( HGLRC client_context )
