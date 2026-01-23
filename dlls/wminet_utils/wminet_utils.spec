@@ -5,7 +5,7 @@
 @ stub Clone
 @ stub CloneEnumWbemClassObject
 @ stub CompareTo
-@ stub ConnectServerWmi
+@ stdcall ConnectServerWmi(wstr wstr wstr wstr long wstr ptr ptr long long)
 @ stub CreateClassEnumWmi
 @ stub CreateInstanceEnumWmi
 @ stub Delete

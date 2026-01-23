@@ -1,4 +1,5 @@
 MODULE    = wminet_utils.dll
+IMPORTS   = ole32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
