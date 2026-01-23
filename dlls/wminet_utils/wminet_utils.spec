@@ -3,7 +3,7 @@
 @ stub BlessIWbemServices
 @ stub BlessIWbemServicesObject
 @ stub Clone
-@ stub CloneEnumWbemClassObject
+@ stdcall CloneEnumWbemClassObject(ptr long long ptr wstr wstr wstr)
 @ stub CompareTo
 @ stdcall ConnectServerWmi(wstr wstr wstr wstr long wstr ptr ptr long long)
 @ stub CreateClassEnumWmi

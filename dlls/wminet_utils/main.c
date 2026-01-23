@@ -31,6 +31,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wminet_utils);
 
+HRESULT WINAPI CloneEnumWbemClassObject(IEnumWbemClassObject **ppEnum, DWORD authLevel,
+    DWORD impLevel, IEnumWbemClassObject *pCurrentEnumWbemClassObject, BSTR strUser,
+    BSTR strPassword, BSTR strAuthority)
+{
+    TRACE("\n");
+
+    if (!ppEnum)
+        return E_POINTER;
+
+    *ppEnum = NULL;
+
+    return IEnumWbemClassObject_Clone(pCurrentEnumWbemClassObject, ppEnum);
+}
+
 HRESULT WINAPI ConnectServerWmi(BSTR strNetworkResource, BSTR strUser, BSTR strPassword,
     BSTR strLocale, long lSecurityFlags, BSTR strAuthority, IWbemContext *pCtx,
     IWbemServices** ppNamespace, DWORD impLevel, DWORD authLevel)
