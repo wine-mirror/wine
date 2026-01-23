@@ -62,6 +62,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
 
+/* The documented format of DVD_LAYER_DESCRIPTOR is wrong. Even the format in
+ * the DDK's header is wrong. There are four bytes at the start defined by
+ * MMC-5. The first two are the size of the structure in big-endian order as
+ * defined by MMC-5. The other two are reserved.
+ */
+struct dvd_layer_descriptor
+{
+    DVD_DESCRIPTOR_HEADER Header;
+    DVD_LAYER_DESCRIPTOR Descriptor;
+    UCHAR Padding;
+};
+C_ASSERT(sizeof(struct dvd_layer_descriptor) == 22);
+
+struct dvd_manufacturer_descriptor
+{
+    DVD_DESCRIPTOR_HEADER Header;
+    DVD_MANUFACTURER_DESCRIPTOR Descriptor;
+    UCHAR Padding;
+};
+C_ASSERT(sizeof(struct dvd_manufacturer_descriptor) == 2053);
+
 struct cdrom
 {
     int fd;
@@ -1421,6 +1442,241 @@ static NTSTATUS dvd_get_region( struct cdrom *cdrom, DVD_REGION *region )
 #endif
 }
 
+static NTSTATUS dvd_read_structure( struct cdrom *cdrom, const DVD_READ_STRUCTURE *structure,
+                                    unsigned int size, void *buffer, unsigned int *ret_size )
+{
+#ifdef DVD_READ_STRUCT
+    if (structure->BlockByteOffset.QuadPart)
+        FIXME( "ignoring offset\n" );
+
+    switch (structure->Format)
+    {
+    case DvdPhysicalDescriptor:
+    {
+        struct dvd_layer_descriptor *desc = buffer;
+        const struct dvd_layer *layer;
+        struct dvd_physical physical;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        physical.type = DVD_STRUCT_PHYSICAL;
+        physical.layer_num = structure->LayerNumber;
+        if (ioctl( cdrom->fd, DVD_READ_STRUCT, &physical ) < 0)
+            return errno_to_status( errno );
+        layer = &physical.layer[physical.layer_num];
+        desc->Header.Length = 0x0802;
+        desc->Header.Reserved[0] = 0;
+        desc->Header.Reserved[1] = 0;
+        desc->Descriptor.BookVersion = layer->book_version;
+        desc->Descriptor.BookType = layer->book_type;
+        desc->Descriptor.MinimumRate = layer->min_rate;
+        desc->Descriptor.DiskSize = layer->disc_size;
+        desc->Descriptor.LayerType = layer->layer_type;
+        desc->Descriptor.TrackPath = layer->track_path;
+        desc->Descriptor.NumberOfLayers = layer->nlayers;
+        desc->Descriptor.Reserved1 = 0;
+        desc->Descriptor.TrackDensity = layer->track_density;
+        desc->Descriptor.LinearDensity = layer->linear_density;
+        desc->Descriptor.StartingDataSector = layer->start_sector;
+        desc->Descriptor.EndDataSector = layer->end_sector;
+        desc->Descriptor.EndLayerZeroSector = layer->end_sector_l0;
+        desc->Descriptor.Reserved5 = 0;
+        desc->Descriptor.BCAFlag = layer->bca;
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    case DvdCopyrightDescriptor:
+    {
+        DVD_COPYRIGHT_DESCRIPTOR *desc = buffer;
+        struct dvd_copyright copyright;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        copyright.type = DVD_STRUCT_COPYRIGHT;
+        copyright.layer_num = structure->LayerNumber;
+        if (ioctl( cdrom->fd, DVD_READ_STRUCT, &copyright ) < 0)
+            return errno_to_status( errno );
+        desc->CopyrightProtectionType = copyright.cpst;
+        desc->RegionManagementInformation = copyright.rmi;
+        desc->Reserved = 0;
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    case DvdDiskKeyDescriptor:
+    {
+        DVD_DISK_KEY_DESCRIPTOR *desc = buffer;
+        struct dvd_disckey disckey;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        disckey.type = DVD_STRUCT_DISCKEY;
+        disckey.agid = structure->SessionId;
+        if (ioctl( cdrom->fd, DVD_READ_STRUCT, &disckey ) < 0)
+            return errno_to_status( errno );
+        memcpy( desc->DiskKeyData, disckey.value, 2048 );
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    case DvdBCADescriptor:
+    {
+        DVD_BCA_DESCRIPTOR *desc = buffer;
+        struct dvd_bca bca;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        bca.type = DVD_STRUCT_BCA;
+        if (ioctl( cdrom->fd, DVD_READ_STRUCT, &bca ) < 0)
+            return errno_to_status( errno );
+        memcpy( desc->BCAInformation, bca.value, bca.len );
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    case DvdManufacturerDescriptor:
+    {
+        struct dvd_manufacturer_descriptor *desc = buffer;
+        struct dvd_manufact manufact;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        manufact.type = DVD_STRUCT_MANUFACT;
+        manufact.layer_num = structure->LayerNumber;
+        if (ioctl( cdrom->fd, DVD_READ_STRUCT, &manufact ) < 0)
+            return errno_to_status( errno );
+        desc->Header.Length = 0x0802;
+        desc->Header.Reserved[0] = 0;
+        desc->Header.Reserved[1] = 0;
+        memcpy( desc->Descriptor.ManufacturingInformation, manufact.value, 2048 );
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    default:
+        FIXME( "unhandled structure %#x\n", structure->Format );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+#elif defined(__APPLE__)
+    dk_dvd_read_structure_t dvdrs;
+
+    memset( &dvdrs, 0, sizeof(dvdrs) );
+    dvdrs.address = structure->BlockByteOffset.QuadPart >> 11;
+    dvdrs.grantID = structure->SessionId;
+    dvdrs.layer = structure->LayerNumber;
+
+    switch (structure->Format)
+    {
+    case DvdPhysicalDescriptor:
+    {
+        struct dvd_layer_descriptor *desc = buffer;
+        DVDPhysicalFormatInfo phys;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        dvdrs.format = kDVDStructureFormatPhysicalFormatInfo;
+        dvdrs.bufferLength = sizeof(phys);
+        dvdrs.buffer = &phys;
+        if (ioctl( cdrom->fd, DKIOCDVDREADSTRUCTURE, &dvdrs ))
+            return errno_to_status( errno );
+        desc->Header.Length = 0x0802;
+        desc->Header.Reserved[0] = 0;
+        desc->Header.Reserved[1] = 0;
+        desc->Descriptor.BookVersion = phys.partVersion;
+        desc->Descriptor.BookType = phys.bookType;
+        desc->Descriptor.MinimumRate = phys.minimumRate;
+        desc->Descriptor.DiskSize = phys.discSize;
+        desc->Descriptor.LayerType = phys.layerType;
+        desc->Descriptor.TrackPath = phys.trackPath;
+        desc->Descriptor.NumberOfLayers = phys.numberOfLayers;
+        desc->Descriptor.Reserved1 = 0;
+        desc->Descriptor.TrackDensity = phys.trackDensity;
+        desc->Descriptor.LinearDensity = phys.linearDensity;
+        desc->Descriptor.StartingDataSector = *(ULONG *)&phys.zero1;
+        desc->Descriptor.EndDataSector = *(ULONG *)&phys.zero2;
+        desc->Descriptor.EndLayerZeroSector = *(ULONG *)&phys.zero3;
+        desc->Descriptor.Reserved5 = 0;
+        desc->Descriptor.BCAFlag = phys.bcaFlag;
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    case DvdCopyrightDescriptor:
+    {
+        DVD_COPYRIGHT_DESCRIPTOR *desc = buffer;
+        DVDCopyrightInfo copy;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        dvdrs.format = kDVDStructureFormatCopyrightInfo;
+        dvdrs.bufferLength = sizeof(copy);
+        dvdrs.buffer = &copy;
+        if (ioctl( cdrom->fd, DKIOCDVDREADSTRUCTURE, &dvdrs ))
+            return errno_to_status( errno );
+        desc->CopyrightProtectionType = copy.copyrightProtectionSystemType;
+        desc->RegionManagementInformation = copy.regionMask;
+        desc->Reserved = 0;
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    case DvdDiskKeyDescriptor:
+    {
+        DVD_COPYRIGHT_DESCRIPTOR *desc = buffer;
+        DVDDiscKeyInfo disk_key;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        dvdrs.format = kDVDStructureFormatDiscKeyInfo;
+        dvdrs.bufferLength = sizeof(disk_key);
+        dvdrs.buffer = &disk_key;
+        if (ioctl( cdrom->fd, DKIOCDVDREADSTRUCTURE, &dvdrs ))
+            return errno_to_status( errno );
+        memcpy( desc->DiskKeyData, disk_key.discKeyStructures, 2048 );
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    case DvdManufacturerDescriptor:
+    {
+        struct dvd_manufacturer_descriptor *desc = buffer;
+        DVDManufacturingInfo manf;
+
+        if (size < sizeof(*desc))
+            return STATUS_INVALID_PARAMETER;
+
+        dvdrs.format = kDVDStructureFormatManufacturingInfo;
+        dvdrs.bufferLength = sizeof(manf);
+        dvdrs.buffer = &manf;
+        if (ioctl( cdrom->fd, DKIOCDVDREADSTRUCTURE, &dvdrs ))
+            return errno_to_status( errno );
+        desc->Header.Length = 0x0802;
+        desc->Header.Reserved[0] = 0;
+        desc->Header.Reserved[1] = 0;
+        memcpy( desc->Descriptor.ManufacturingInformation, manf.discManufacturingInfo, 2048 );
+        *ret_size = sizeof(*desc);
+        return STATUS_SUCCESS;
+    }
+
+    default:
+        FIXME( "unhandled structure %#x\n", structure->Format );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_SUPPORTED;
+#endif
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -1529,6 +1785,12 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(DVD_COPY_PROTECT_KEY);
             return dvd_read_key( params->cdrom, params->input, params->output );
+
+        case IOCTL_DVD_READ_STRUCTURE:
+            if (params->input_size < sizeof(DVD_READ_STRUCTURE))
+                return STATUS_INVALID_PARAMETER;
+            return dvd_read_structure( params->cdrom, params->input, params->output_size,
+                                       params->output, &params->ret_size );
 
         case IOCTL_DVD_SEND_KEY:
             if (params->input_size < sizeof(DVD_COPY_PROTECT_KEY))
