@@ -4207,9 +4207,10 @@ static void WINAPI glClientWaitSemaphoreui64NVX( GLsizei fenceObjectCount, const
 
 static GLenum WINAPI glClientWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
-    struct glClientWaitSync_params args = { .teb = NtCurrentTeb(), .sync = sync, .flags = flags, .timeout = timeout };
+    struct glClientWaitSync_params args = { .teb = NtCurrentTeb(), .flags = flags, .timeout = timeout };
     NTSTATUS status;
     TRACE( "sync %p, flags %d, timeout %s\n", sync, flags, wine_dbgstr_longlong(timeout) );
+    if (!get_sync_from_handle( sync, &args.sync )) { set_gl_error( GL_INVALID_VALUE ); return 0; }
     if ((status = UNIX_CALL( glClientWaitSync, &args ))) WARN( "glClientWaitSync returned %#lx\n", status );
     return args.ret;
 }
@@ -5461,15 +5462,6 @@ static void WINAPI glCreateStatesNV( GLsizei n, GLuint *states )
     if ((status = UNIX_CALL( glCreateStatesNV, &args ))) WARN( "glCreateStatesNV returned %#lx\n", status );
 }
 
-static GLsync WINAPI glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags )
-{
-    struct glCreateSyncFromCLeventARB_params args = { .teb = NtCurrentTeb(), .context = context, .event = event, .flags = flags };
-    NTSTATUS status;
-    TRACE( "context %p, event %p, flags %d\n", context, event, flags );
-    if ((status = UNIX_CALL( glCreateSyncFromCLeventARB, &args ))) WARN( "glCreateSyncFromCLeventARB returned %#lx\n", status );
-    return args.ret;
-}
-
 static void WINAPI glCreateTextures( GLenum target, GLsizei n, GLuint *textures )
 {
     struct glCreateTextures_params args = { .teb = NtCurrentTeb(), .target = target, .n = n, .textures = textures };
@@ -5868,14 +5860,6 @@ static void WINAPI glDeleteStatesNV( GLsizei n, const GLuint *states )
     NTSTATUS status;
     TRACE( "n %d, states %p\n", n, states );
     if ((status = UNIX_CALL( glDeleteStatesNV, &args ))) WARN( "glDeleteStatesNV returned %#lx\n", status );
-}
-
-static void WINAPI glDeleteSync( GLsync sync )
-{
-    struct glDeleteSync_params args = { .teb = NtCurrentTeb(), .sync = sync };
-    NTSTATUS status;
-    TRACE( "sync %p\n", sync );
-    if ((status = UNIX_CALL( glDeleteSync, &args ))) WARN( "glDeleteSync returned %#lx\n", status );
 }
 
 static void WINAPI glDeleteTexturesEXT( GLsizei n, const GLuint *textures )
@@ -6812,15 +6796,6 @@ static void WINAPI glFeedbackBufferxOES( GLsizei n, GLenum type, const GLfixed *
     NTSTATUS status;
     TRACE( "n %d, type %d, buffer %p\n", n, type, buffer );
     if ((status = UNIX_CALL( glFeedbackBufferxOES, &args ))) WARN( "glFeedbackBufferxOES returned %#lx\n", status );
-}
-
-static GLsync WINAPI glFenceSync( GLenum condition, GLbitfield flags )
-{
-    struct glFenceSync_params args = { .teb = NtCurrentTeb(), .condition = condition, .flags = flags };
-    NTSTATUS status;
-    TRACE( "condition %d, flags %d\n", condition, flags );
-    if ((status = UNIX_CALL( glFenceSync, &args ))) WARN( "glFenceSync returned %#lx\n", status );
-    return args.ret;
 }
 
 static void WINAPI glFinalCombinerInputNV( GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage )
@@ -10077,9 +10052,10 @@ static GLint WINAPI glGetSubroutineUniformLocation( GLuint program, GLenum shade
 
 static void WINAPI glGetSynciv( GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values )
 {
-    struct glGetSynciv_params args = { .teb = NtCurrentTeb(), .sync = sync, .pname = pname, .count = count, .length = length, .values = values };
+    struct glGetSynciv_params args = { .teb = NtCurrentTeb(), .pname = pname, .count = count, .length = length, .values = values };
     NTSTATUS status;
     TRACE( "sync %p, pname %d, count %d, length %p, values %p\n", sync, pname, count, length, values );
+    if (!get_sync_from_handle( sync, &args.sync )) { set_gl_error( GL_INVALID_VALUE ); return; }
     if ((status = UNIX_CALL( glGetSynciv, &args ))) WARN( "glGetSynciv returned %#lx\n", status );
 }
 
@@ -11422,15 +11398,6 @@ static void WINAPI glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum handl
     if ((status = UNIX_CALL( glImportSemaphoreWin32NameEXT, &args ))) WARN( "glImportSemaphoreWin32NameEXT returned %#lx\n", status );
 }
 
-static GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags )
-{
-    struct glImportSyncEXT_params args = { .teb = NtCurrentTeb(), .external_sync_type = external_sync_type, .external_sync = external_sync, .flags = flags };
-    NTSTATUS status;
-    TRACE( "external_sync_type %d, external_sync %Id, flags %d\n", external_sync_type, external_sync, flags );
-    if ((status = UNIX_CALL( glImportSyncEXT, &args ))) WARN( "glImportSyncEXT returned %#lx\n", status );
-    return args.ret;
-}
-
 static void WINAPI glIndexFormatNV( GLenum type, GLsizei stride )
 {
     struct glIndexFormatNV_params args = { .teb = NtCurrentTeb(), .type = type, .stride = stride };
@@ -11891,9 +11858,10 @@ static GLboolean WINAPI glIsStateNV( GLuint state )
 
 static GLboolean WINAPI glIsSync( GLsync sync )
 {
-    struct glIsSync_params args = { .teb = NtCurrentTeb(), .sync = sync };
+    struct glIsSync_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "sync %p\n", sync );
+    if (!get_sync_from_handle( sync, &args.sync )) return 0;
     if ((status = UNIX_CALL( glIsSync, &args ))) WARN( "glIsSync returned %#lx\n", status );
     return args.ret;
 }
@@ -24143,9 +24111,10 @@ static void WINAPI glWaitSemaphoreui64NVX( GLuint waitGpu, GLsizei fenceObjectCo
 
 static void WINAPI glWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout )
 {
-    struct glWaitSync_params args = { .teb = NtCurrentTeb(), .sync = sync, .flags = flags, .timeout = timeout };
+    struct glWaitSync_params args = { .teb = NtCurrentTeb(), .flags = flags, .timeout = timeout };
     NTSTATUS status;
     TRACE( "sync %p, flags %d, timeout %s\n", sync, flags, wine_dbgstr_longlong(timeout) );
+    if (!get_sync_from_handle( sync, &args.sync )) { set_gl_error( GL_INVALID_VALUE ); return; }
     if ((status = UNIX_CALL( glWaitSync, &args ))) WARN( "glWaitSync returned %#lx\n", status );
 }
 
@@ -24823,7 +24792,11 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
     return args.ret;
 }
 
+extern GLsync WINAPI glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags );
+extern void WINAPI glDeleteSync( GLsync sync );
+extern GLsync WINAPI glFenceSync( GLenum condition, GLbitfield flags );
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index );
+extern GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags );
 extern BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
 extern HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, const int *attribList );
 extern HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );

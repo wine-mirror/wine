@@ -165,8 +165,12 @@ my %manual_win_functions =
     );
 my %manual_win_thunks =
     (
+     "glCreateSyncFromCLeventARB" => 1,
+     "glDeleteSync" => 1,
+     "glFenceSync" => 1,
      "glGetString" => 1,
      "glGetStringi" => 1,
+     "glImportSyncEXT" => 1,
      "wglChoosePixelFormatARB" => 1,
      "wglCreateContext" => 1,
      "wglCreateContextAttribsARB" => 1,
@@ -188,12 +192,14 @@ my %manual_win_thunks =
 my %manual_unix_thunks =
     (
      "glClear" => 1,
+     "glCreateSyncFromCLeventARB" => 1,
      "glDebugMessageCallback" => 1,
      "glDebugMessageCallbackAMD" => 1,
      "glDebugMessageCallbackARB" => 1,
      "glDrawBuffer" => 1,
      "glDrawBuffers" => 1,
      "glDrawPixels" => 1,
+     "glFenceSync" => 1,
      "glFinish" => 1,
      "glFlush" => 1,
      "glFramebufferDrawBufferEXT" => 1,
@@ -209,6 +215,7 @@ my %manual_unix_thunks =
      "glGetString" => 1,
      "glGetStringi" => 1,
      "glGetUnsignedBytevEXT" => 1,
+     "glImportSyncEXT" => 1,
      "glNamedFramebufferDrawBuffer" => 1,
      "glNamedFramebufferDrawBuffers" => 1,
      "glNamedFramebufferReadBuffer" => 1,
@@ -289,10 +296,7 @@ my %map_default_fbo_thunks =
 my %manual_wow64_wrappers =
     (
      "glBufferStorage" => 0,
-     "glClientWaitSync" => 0,
      "glDeleteBuffers" => 0,
-     "glDeleteSync" => 0,
-     "glFenceSync" => 0,
      "glFlushMappedBufferRange" => 0,
      "glFlushMappedNamedBufferRange" => 0,
      "glFlushMappedNamedBufferRangeEXT" => 0,
@@ -300,8 +304,6 @@ my %manual_wow64_wrappers =
      "glGetBufferPointervARB" => 0,
      "glGetNamedBufferPointerv" => 0,
      "glGetNamedBufferPointervEXT" => 0,
-     "glGetSynciv" => 0,
-     "glIsSync" => 0,
      "glMapBuffer" => 0,
      "glMapBufferARB" => 0,
      "glMapBufferRange" => 0,
@@ -315,7 +317,6 @@ my %manual_wow64_wrappers =
      "glUnmapBufferARB" => 0,
      "glUnmapNamedBuffer" => 0,
      "glUnmapNamedBufferEXT" => 0,
-     "glWaitSync" => 0,
     );
 my %wow64_invalidate_buffer =
     (
@@ -516,6 +517,10 @@ sub generate_unix_thunk($$$$)
             {
                 $call_args .= " (" . $arg_type . ")ULongToPtr(params->$pname),";
             }
+            elsif ($arg_type =~ /GLsync/)
+            {
+                $call_args .= " get_unix_sync( ULongToPtr(params->$pname) ),";
+            }
             else
             {
                 $call_args .= " ULongToPtr(params->$pname),";
@@ -523,7 +528,7 @@ sub generate_unix_thunk($$$$)
                 $need_lock = 1 if $arg_type =~ /GLsync/;
             }
         }
-        $call_args .= " UlongToHandle( params->ret )," if $func_ret =~ /HPBUFFERARB|HGLRC/;
+        $call_args .= " UlongToHandle( params->ret )," if $func_ret =~ /HPBUFFERARB|HGLRC|GLsync/;
         if (!is_void_func($func))
         {
             my $ret_type = get_arg_type( $func->[0] );
@@ -538,7 +543,7 @@ sub generate_unix_thunk($$$$)
             elsif ($ptype eq "PTR32")
             {
                 $ret_expr .= "(UINT_PTR)";
-                $need_manual_thunk = 1 if $func_ret !~ /HDC|HPBUFFERARB|HGLRC/;
+                $need_manual_thunk = 1 if $func_ret !~ /HDC|HPBUFFERARB|HGLRC|GLsync/;
             }
         }
         $ret .= "    } *params = args;\n";
@@ -567,9 +572,16 @@ sub generate_unix_thunk($$$$)
         {
             my $ptype = get_arg_type( $arg );
             my $pname = get_arg_name( $arg );
-            $call_args .= " params->$pname,";
+            if ($ptype =~ /GLsync/)
+            {
+                $call_args .= " get_unix_sync( params->$pname ),";
+            }
+            else
+            {
+                $call_args .= " params->$pname,";
+            }
         }
-        $call_args .= " params->ret," if $func_ret =~ /HPBUFFERARB|HGLRC/;
+        $call_args .= " params->ret," if $func_ret =~ /HPBUFFERARB|HGLRC|GLsync/;
         $ret .= "    struct $name\_params *params = args;\n";
     }
     $ret .= $vars;
@@ -663,6 +675,7 @@ sub generate_wrapper_declaration($$$)
     }
     $ret .= " HPBUFFERARB handle," if $ret_type =~ /HPBUFFERARB/;
     $ret .= " HGLRC handle," if $ret_type =~ /HGLRC/;
+    $ret .= " GLsync handle," if $ret_type =~ /GLsync/;
     $ret =~ s/,$/ /;
     $ret .= ");\n";
     return $ret;
@@ -673,6 +686,7 @@ sub get_handle_function($)
     my $ptype = shift;
     return "get_pbuffer_from_handle" if $ptype =~ /HPBUFFERARB/;
     return "get_context_from_handle" if $ptype =~ /HGLRC/;
+    return "get_sync_from_handle" if $ptype =~ /GLsync/;
     return 0;
 }
 
@@ -696,6 +710,7 @@ sub generate_win_thunk($$)
         if (my $get_handle = get_handle_function( $ptype ))
         {
             my $retval = is_void_func($func) ? "return;" : "return 0;";
+            $retval = "{ set_gl_error( GL_INVALID_VALUE ); $retval }" if $ptype =~ /GLsync/ && $name !~ /glIsSync/;
             $checks .= "    if (!$get_handle( $pname, &args.$pname )) $retval\n";
         }
         else

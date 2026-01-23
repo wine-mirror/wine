@@ -112,6 +112,7 @@ static PFN_glFlushMappedBufferRange pglFlushMappedBufferRange;
 static PFN_glFlushMappedNamedBufferRange pglFlushMappedNamedBufferRange;
 static PFN_glGenBuffers pglGenBuffers;
 static PFN_glIsSync pglIsSync;
+static PFN_glFenceSync pglFenceSync;
 static PFN_glMapBuffer pglMapBuffer;
 static PFN_glMapBufferRange pglMapBufferRange;
 static PFN_glMapNamedBuffer pglMapNamedBuffer;
@@ -198,6 +199,7 @@ static void init_functions(void)
     GET_PROC(glFlushMappedNamedBufferRange)
     GET_PROC(glGenBuffers)
     GET_PROC(glIsSync)
+    GET_PROC(glFenceSync)
     GET_PROC(glMapBuffer)
     GET_PROC(glMapBufferRange)
     GET_PROC(glMapNamedBuffer)
@@ -3500,6 +3502,7 @@ static void test_gl_error( HDC hdc )
     HGLRC rc, old_rc;
     int i;
     BOOL ret;
+    GLsync sync;
 
     if (!pglDeleteSync)
     {
@@ -3534,6 +3537,17 @@ static void test_gl_error( HDC hdc )
 
     ret = pglIsSync( (GLsync)0xdeadbeef );
     ok( !ret, "glIsSync returned %x\n", ret );
+    check_gl_error( GL_NO_ERROR );
+
+    sync = pglFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+    ok( !!sync, "got %p\n", sync );
+    check_gl_error( GL_NO_ERROR );
+
+    ret = pglIsSync( sync );
+    ok( !!ret, "glIsSync returned %x\n", ret );
+    check_gl_error( GL_NO_ERROR );
+
+    pglDeleteSync( sync );
     check_gl_error( GL_NO_ERROR );
 
     wglMakeCurrent( hdc, old_rc );

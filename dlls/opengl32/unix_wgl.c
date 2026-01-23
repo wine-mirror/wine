@@ -56,14 +56,6 @@ static BOOL is_wow64(void)
 static UINT64 call_gl_debug_message_callback;
 pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
 
-/* handle management */
-
-enum wgl_handle_type
-{
-    HANDLE_GLSYNC = 2 << 12,
-    HANDLE_TYPE_MASK = 15 << 12,
-};
-
 /* context state management */
 
 struct pixel_mode_state
@@ -1976,6 +1968,45 @@ GLenum wrap_glGetError( TEB *teb )
     return wrapped ? wrapped : error;
 }
 
+GLsync wrap_glCreateSyncFromCLeventARB( TEB *teb, struct _cl_context *context, struct _cl_event *event, GLbitfield flags, GLsync client_sync )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLsync sync;
+
+    FIXME( "stub!\n" );
+
+    if (!(sync = funcs->p_glCreateSyncFromCLeventARB( context, event, flags ))) return NULL;
+    client_sync->unix_handle = (UINT_PTR)sync;
+
+    return client_sync;
+}
+
+GLsync wrap_glFenceSync( TEB *teb, GLenum condition, GLbitfield flags, GLsync client_sync )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLsync sync;
+
+    TRACE( "condition %#x, flags %#x, client_sync %p\n", condition, flags, client_sync );
+
+    if (!(sync = funcs->p_glFenceSync( condition, flags ))) return NULL;
+    client_sync->unix_handle = (UINT_PTR)sync;
+
+    return client_sync;
+}
+
+GLsync wrap_glImportSyncEXT( TEB *teb, GLenum external_sync_type, GLintptr external_sync, GLbitfield flags, GLsync client_sync )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    GLsync sync;
+
+    FIXME( "stub!\n" );
+
+    if (!(sync = funcs->p_glImportSyncEXT( external_sync_type, external_sync, flags ))) return NULL;
+    client_sync->unix_handle = (UINT_PTR)sync;
+
+    return client_sync;
+}
+
 NTSTATUS process_attach( void *args )
 {
     struct process_attach_params *params = args;
@@ -2072,136 +2103,6 @@ NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
     if (*wow64_str) return STATUS_SUCCESS;
     *wow64_str = strlen( str ) + 1;
     return STATUS_BUFFER_TOO_SMALL;
-}
-
-struct wgl_handle
-{
-    UINT handle;
-    const struct opengl_funcs *funcs;
-    union
-    {
-        GLsync sync;                    /* for HANDLE_GLSYNC */
-        struct wgl_handle *next;        /* for free handles */
-        void *data;
-    } u;
-};
-
-#define MAX_WGL_HANDLES 1024
-static struct wgl_handle wgl_handles[MAX_WGL_HANDLES];
-static struct wgl_handle *next_free;
-static unsigned int handle_count;
-
-static HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
-{
-    WORD generation = HIWORD( ptr->handle ) + 1;
-    if (!generation) generation++;
-    ptr->handle = MAKELONG( ptr - wgl_handles, generation ) | type;
-    return ULongToHandle( ptr->handle );
-}
-
-static HANDLE alloc_handle( enum wgl_handle_type type, const struct opengl_funcs *funcs, void *user_ptr )
-{
-    HANDLE handle = 0;
-    struct wgl_handle *ptr = NULL;
-
-    if ((ptr = next_free))
-        next_free = next_free->u.next;
-    else if (handle_count < MAX_WGL_HANDLES)
-        ptr = &wgl_handles[handle_count++];
-
-    if (ptr)
-    {
-        ptr->funcs = funcs;
-        ptr->u.data = user_ptr;
-        handle = next_handle( ptr, type );
-    }
-    else RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
-    return handle;
-}
-
-static void free_handle_ptr( struct wgl_handle *ptr )
-{
-    ptr->handle |= 0xffff;
-    ptr->u.next = next_free;
-    ptr->funcs = NULL;
-    next_free = ptr;
-}
-
-static struct wgl_handle *get_handle_ptr( HANDLE handle )
-{
-    unsigned int index = LOWORD( handle ) & ~HANDLE_TYPE_MASK;
-
-    if (index < handle_count && ULongToHandle(wgl_handles[index].handle) == handle)
-        return &wgl_handles[index];
-
-    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-    return NULL;
-}
-
-static struct wgl_handle *get_sync_ptr( TEB *teb, GLsync sync )
-{
-    struct wgl_handle *handle = get_handle_ptr( sync );
-    if (!handle) set_gl_error( teb, GL_INVALID_VALUE );
-    return handle;
-}
-
-GLenum wow64_glClientWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    struct wgl_handle *handle;
-
-    if (!(handle = get_sync_ptr( teb, sync ))) return GL_INVALID_VALUE;
-    return funcs->p_glClientWaitSync( handle->u.sync, flags, timeout );
-}
-
-void wow64_glDeleteSync( TEB *teb, GLsync sync )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    struct wgl_handle *handle;
-
-    if ((handle = get_sync_ptr( teb, sync )))
-    {
-        funcs->p_glDeleteSync( handle->u.sync );
-        free_handle_ptr( handle );
-    }
-}
-
-GLsync wow64_glFenceSync( TEB *teb, GLenum condition, GLbitfield flags )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    GLsync sync, handle;
-
-    if (!(sync = funcs->p_glFenceSync( condition, flags ))) return NULL;
-
-    pthread_mutex_lock( &wgl_lock );
-    if (!(handle = alloc_handle( HANDLE_GLSYNC, NULL, sync ))) funcs->p_glDeleteSync( sync );
-    pthread_mutex_unlock( &wgl_lock );
-    return handle;
-}
-
-void wow64_glGetSynciv( TEB *teb, GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    struct wgl_handle *handle;
-
-    if ((handle = get_sync_ptr( teb, sync ))) funcs->p_glGetSynciv( handle->u.sync, pname, count, length, values );
-}
-
-GLboolean wow64_glIsSync( TEB *teb, GLsync sync )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    struct wgl_handle *handle;
-
-    if (!(handle = get_handle_ptr( sync ))) return FALSE;
-    return funcs->p_glIsSync( handle->u.sync );
-}
-
-void wow64_glWaitSync( TEB *teb, GLsync sync, GLbitfield flags, GLuint64 timeout )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    struct wgl_handle *handle;
-
-    if ((handle = get_sync_ptr( teb, sync ))) funcs->p_glWaitSync( handle->u.sync, flags, timeout );
 }
 
 static GLint get_buffer_param( TEB *teb, GLenum target, GLenum param )

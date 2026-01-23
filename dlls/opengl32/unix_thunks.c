@@ -5240,7 +5240,7 @@ static NTSTATUS ext_glClientWaitSync( void *args )
     struct glClientWaitSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glClientWaitSync) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->p_glClientWaitSync( params->sync, params->flags, params->timeout );
+    params->ret = funcs->p_glClientWaitSync( get_unix_sync( params->sync ), params->flags, params->timeout );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -6805,7 +6805,7 @@ static NTSTATUS ext_glCreateSyncFromCLeventARB( void *args )
     struct glCreateSyncFromCLeventARB_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glCreateSyncFromCLeventARB) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->p_glCreateSyncFromCLeventARB( params->context, params->event, params->flags );
+    params->ret = wrap_glCreateSyncFromCLeventARB( params->teb, params->context, params->event, params->flags, params->ret );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -7315,7 +7315,7 @@ static NTSTATUS ext_glDeleteSync( void *args )
     struct glDeleteSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glDeleteSync) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glDeleteSync( params->sync );
+    funcs->p_glDeleteSync( get_unix_sync( params->sync ) );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -8495,7 +8495,7 @@ static NTSTATUS ext_glFenceSync( void *args )
     struct glFenceSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glFenceSync) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->p_glFenceSync( params->condition, params->flags );
+    params->ret = wrap_glFenceSync( params->teb, params->condition, params->flags, params->ret );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -12299,7 +12299,7 @@ static NTSTATUS ext_glGetSynciv( void *args )
     struct glGetSynciv_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glGetSynciv) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glGetSynciv( params->sync, params->pname, params->count, params->length, params->values );
+    funcs->p_glGetSynciv( get_unix_sync( params->sync ), params->pname, params->count, params->length, params->values );
     return STATUS_SUCCESS;
 }
 
@@ -13824,7 +13824,7 @@ static NTSTATUS ext_glImportSyncEXT( void *args )
     struct glImportSyncEXT_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glImportSyncEXT) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->p_glImportSyncEXT( params->external_sync_type, params->external_sync, params->flags );
+    params->ret = wrap_glImportSyncEXT( params->teb, params->external_sync_type, params->external_sync, params->flags, params->ret );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -14332,7 +14332,7 @@ static NTSTATUS ext_glIsSync( void *args )
     struct glIsSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glIsSync) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->p_glIsSync( params->sync );
+    params->ret = funcs->p_glIsSync( get_unix_sync( params->sync ) );
     return STATUS_SUCCESS;
 }
 
@@ -29588,7 +29588,7 @@ static NTSTATUS ext_glWaitSync( void *args )
     struct glWaitSync_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     if (!funcs->p_glWaitSync) return STATUS_NOT_IMPLEMENTED;
-    funcs->p_glWaitSync( params->sync, params->flags, params->timeout );
+    funcs->p_glWaitSync( get_unix_sync( params->sync ), params->flags, params->timeout );
     set_context_attribute( params->teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -42408,9 +42408,7 @@ static NTSTATUS wow64_ext_glClientWaitSync( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glClientWaitSync) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wow64_glClientWaitSync( teb, ULongToPtr(params->sync), params->flags, params->timeout );
-    pthread_mutex_unlock( &wgl_lock );
+    params->ret = funcs->p_glClientWaitSync( get_unix_sync( ULongToPtr(params->sync) ), params->flags, params->timeout );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -45411,8 +45409,12 @@ static NTSTATUS wow64_ext_glCreateSyncFromCLeventARB( void *args )
         GLbitfield flags;
         PTR32 ret;
     } *params = args;
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    if (!funcs->p_glCreateSyncFromCLeventARB) return STATUS_NOT_IMPLEMENTED;
+    params->ret = (UINT_PTR)wrap_glCreateSyncFromCLeventARB( teb, ULongToPtr(params->context), ULongToPtr(params->event), params->flags, UlongToHandle( params->ret ) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_ext_glCreateTextures( void *args )
@@ -46264,9 +46266,7 @@ static NTSTATUS wow64_ext_glDeleteSync( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glDeleteSync) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    wow64_glDeleteSync( teb, ULongToPtr(params->sync) );
-    pthread_mutex_unlock( &wgl_lock );
+    funcs->p_glDeleteSync( get_unix_sync( ULongToPtr(params->sync) ) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -48232,7 +48232,7 @@ static NTSTATUS wow64_ext_glFenceSync( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glFenceSync) return STATUS_NOT_IMPLEMENTED;
-    params->ret = (UINT_PTR)wow64_glFenceSync( teb, params->condition, params->flags );
+    params->ret = (UINT_PTR)wrap_glFenceSync( teb, params->condition, params->flags, UlongToHandle( params->ret ) );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }
@@ -55016,9 +55016,7 @@ static NTSTATUS wow64_ext_glGetSynciv( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glGetSynciv) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    wow64_glGetSynciv( teb, ULongToPtr(params->sync), params->pname, params->count, ULongToPtr(params->length), ULongToPtr(params->values) );
-    pthread_mutex_unlock( &wgl_lock );
+    funcs->p_glGetSynciv( get_unix_sync( ULongToPtr(params->sync) ), params->pname, params->count, ULongToPtr(params->length), ULongToPtr(params->values) );
     return STATUS_SUCCESS;
 }
 
@@ -57774,8 +57772,12 @@ static NTSTATUS wow64_ext_glImportSyncEXT( void *args )
         GLbitfield flags;
         PTR32 ret;
     } *params = args;
-    FIXME( "params %p stub!\n", params );
-    return STATUS_NOT_IMPLEMENTED;
+    TEB *teb = get_teb64( params->teb );
+    const struct opengl_funcs *funcs = teb->glTable;
+    if (!funcs->p_glImportSyncEXT) return STATUS_NOT_IMPLEMENTED;
+    params->ret = (UINT_PTR)wrap_glImportSyncEXT( teb, params->external_sync_type, (GLintptr)ULongToPtr(params->external_sync), params->flags, UlongToHandle( params->ret ) );
+    set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wow64_ext_glIndexFormatNV( void *args )
@@ -58633,9 +58635,7 @@ static NTSTATUS wow64_ext_glIsSync( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glIsSync) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wow64_glIsSync( teb, ULongToPtr(params->sync) );
-    pthread_mutex_unlock( &wgl_lock );
+    params->ret = funcs->p_glIsSync( get_unix_sync( ULongToPtr(params->sync) ) );
     return STATUS_SUCCESS;
 }
 
@@ -85342,9 +85342,7 @@ static NTSTATUS wow64_ext_glWaitSync( void *args )
     TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = teb->glTable;
     if (!funcs->p_glWaitSync) return STATUS_NOT_IMPLEMENTED;
-    pthread_mutex_lock( &wgl_lock );
-    wow64_glWaitSync( teb, ULongToPtr(params->sync), params->flags, params->timeout );
-    pthread_mutex_unlock( &wgl_lock );
+    funcs->p_glWaitSync( get_unix_sync( ULongToPtr(params->sync) ), params->flags, params->timeout );
     set_context_attribute( teb, -1 /* unsupported */, NULL, 0 );
     return STATUS_SUCCESS;
 }

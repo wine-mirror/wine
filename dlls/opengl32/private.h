@@ -34,5 +34,7 @@ extern const void *extension_procs[];
 extern int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
 extern BOOL get_pbuffer_from_handle( HPBUFFERARB handle, HPBUFFERARB *obj );
 extern BOOL get_context_from_handle( HGLRC handle, HGLRC *obj );
+extern BOOL get_sync_from_handle( GLsync handle, GLsync *obj );
+extern void set_gl_error( GLenum error );
 
 #endif /* __WINE_OPENGL32_PRIVATE_H */

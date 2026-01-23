@@ -84,6 +84,12 @@ static inline struct opengl_client_pbuffer *opengl_client_pbuffer_from_client( H
     return CONTAINING_RECORD( client_pbuffer, struct opengl_client_pbuffer, obj );
 }
 
+/* client-side opengl sync */
+struct __GLsync
+{
+    UINT64                      unix_handle;
+};
+
 #ifdef WINE_UNIX_LIB
 
 #include "wine/gdi_driver.h"

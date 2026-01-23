@@ -238,6 +238,17 @@ BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
     return args.ret;
 }
 
+struct context
+{
+    struct opengl_client_context base;
+    struct handle_table syncs;
+};
+
+static struct context *context_from_opengl_client_context( struct opengl_client_context *base )
+{
+    return CONTAINING_RECORD( base, struct context, base );
+}
+
 static struct opengl_client_context *opengl_client_context_from_handle( HGLRC handle )
 {
     struct handle_entry *ptr;
@@ -245,16 +256,21 @@ static struct opengl_client_context *opengl_client_context_from_handle( HGLRC ha
     return ptr->context;
 }
 
+static struct context *context_from_handle( HGLRC handle )
+{
+    return context_from_opengl_client_context( opengl_client_context_from_handle( handle ) );
+}
+
 BOOL get_context_from_handle( HGLRC handle, HGLRC *obj )
 {
-    struct opengl_client_context *context = opengl_client_context_from_handle( handle );
-    *obj = context ? &context->obj : NULL;
+    struct context *context = context_from_handle( handle );
+    *obj = context ? &context->base.obj : NULL;
     return context || !handle;
 }
 
 static struct handle_entry *alloc_client_context(void)
 {
-    struct opengl_client_context *context;
+    struct context *context;
     struct handle_entry *ptr;
 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
@@ -269,9 +285,16 @@ static struct handle_entry *alloc_client_context(void)
 
 static void free_client_context( struct handle_entry *ptr )
 {
-    struct opengl_client_context *context = ptr->context;
+    struct context *context = context_from_opengl_client_context( ptr->context );
     free_handle( &contexts, ptr );
     free( context );
+}
+
+void set_gl_error( GLenum error )
+{
+    struct opengl_client_context *context;
+    if (!(context = opengl_client_context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
+    if (!context->last_error && !(context->last_error = glGetError())) context->last_error = error;
 }
 
 HGLRC WINAPI wglCreateContext( HDC hdc )
@@ -1844,6 +1867,128 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
 GLint WINAPI glDebugEntry( GLint unknown1, GLint unknown2 )
 {
     return 0;
+}
+
+static GLsync sync_from_handle( GLsync handle )
+{
+    struct handle_entry *ptr;
+    struct context *ctx;
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+    if (!(ptr = get_handle_ptr( &ctx->syncs, handle ))) return NULL;
+    return ptr->user_data;
+}
+
+BOOL get_sync_from_handle( GLsync handle, GLsync *obj )
+{
+    *obj = sync_from_handle( handle );
+    return *obj || !handle;
+}
+
+static struct handle_entry *alloc_client_sync( struct context *ctx )
+{
+    struct handle_entry *ptr;
+    GLsync *sync;
+
+    if (!(sync = calloc( 1, sizeof(*sync) ))) return NULL;
+    if (!(ptr = alloc_handle( &ctx->syncs, sync )))
+    {
+        free( sync );
+        return NULL;
+    }
+
+    return ptr;
+}
+
+static void free_client_sync( struct context *ctx, struct handle_entry *ptr )
+{
+    GLsync sync = ptr->user_data;
+    free_handle( &ctx->syncs, ptr );
+    free( sync );
+}
+
+GLsync WINAPI glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glCreateSyncFromCLeventARB_params args = { .teb = teb, .context = context, .event = event, .flags = flags };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "context %p, event %p, flags %d\n", context, event, flags );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return NULL;
+    if (!(ptr = alloc_client_sync( ctx ))) return NULL;
+    args.ret = ptr->user_data;
+
+    if ((status = UNIX_CALL( glCreateSyncFromCLeventARB, &args ))) WARN( "glCreateSyncFromCLeventARB returned %#lx\n", status );
+    assert( args.ret == ptr->user_data || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_context( ptr );
+    return NULL;
+}
+
+void WINAPI glDeleteSync( GLsync sync )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glDeleteSync_params args = { .teb = teb };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "sync %p\n", sync );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return;
+    if (!(ptr = get_handle_ptr( &ctx->syncs, sync ))) return set_gl_error( GL_INVALID_VALUE );
+    args.sync = ptr->user_data;
+
+    if ((status = UNIX_CALL( glDeleteSync, &args ))) WARN( "glDeleteSync returned %#lx\n", status );
+    if (!status) free_client_sync( ctx, ptr );
+}
+
+GLsync WINAPI glFenceSync( GLenum condition, GLbitfield flags )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glFenceSync_params args = { .teb = teb, .condition = condition, .flags = flags };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "condition %d, flags %d\n", condition, flags );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return NULL;
+    if (!(ptr = alloc_client_sync( ctx ))) return NULL;
+    args.ret = ptr->user_data;
+
+    if ((status = UNIX_CALL( glFenceSync, &args ))) WARN( "glFenceSync returned %#lx\n", status );
+    assert( args.ret == ptr->user_data || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_context( ptr );
+    return NULL;
+}
+
+GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags )
+{
+    TEB *teb = NtCurrentTeb();
+    struct glImportSyncEXT_params args = { .teb = teb, .external_sync_type = external_sync_type, .external_sync = external_sync, .flags = flags };
+    struct handle_entry *ptr;
+    struct context *ctx;
+    NTSTATUS status;
+
+    TRACE( "external_sync_type %d, external_sync %Id, flags %d\n", external_sync_type, external_sync, flags );
+
+    if (!(ctx = context_from_handle( teb->glCurrentRC ))) return NULL;
+    if (!(ptr = alloc_client_sync( ctx ))) return NULL;
+    args.ret = ptr->user_data;
+
+    if ((status = UNIX_CALL( glImportSyncEXT, &args ))) WARN( "glImportSyncEXT returned %#lx\n", status );
+    assert( args.ret == ptr->user_data || !args.ret );
+
+    if (!status && args.ret) return UlongToHandle( ptr->handle );
+    free_client_context( ptr );
+    return NULL;
 }
 
 const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )
