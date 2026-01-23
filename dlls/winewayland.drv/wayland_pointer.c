@@ -336,7 +336,9 @@ static const struct wl_pointer_listener pointer_listener =
     pointer_handle_axis_source,
     pointer_handle_axis_stop,
     pointer_handle_axis_discrete,
+#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
     pointer_handle_axis_value120
+#endif
 };
 
 /**********************************************************************
