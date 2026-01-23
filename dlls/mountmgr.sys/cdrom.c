@@ -2378,6 +2378,39 @@ static NTSTATUS scsi_get_inquiry_data( struct cdrom *cdrom, unsigned int size,
 #endif
 }
 
+static NTSTATUS get_media_types_ex( struct cdrom *cdrom, GET_MEDIA_TYPES *types )
+{
+    FIXME( "semi-stub\n" );
+    types->DeviceType = FILE_DEVICE_CD_ROM;
+    types->MediaInfoCount = 0;
+
+#if defined(HAVE_SG_IO_HDR_T_INTERFACE_ID) && defined(HAVE_LINUX_CDROM_H)
+    {
+        unsigned char drive_config[8];
+        unsigned char get_config_cmd[10] = { GPCMD_GET_CONFIGURATION, 0, 0xff, 0xff,
+                                             0, 0, 0, 0, sizeof(drive_config), 0 };
+        sg_io_hdr_t cmd =
+        {
+            .interface_id = 'S',
+            .dxfer_direction = SG_DXFER_FROM_DEV,
+            .cmd_len = sizeof(get_config_cmd),
+            .dxfer_len = sizeof(drive_config),
+            .dxferp = drive_config,
+            .cmdp = get_config_cmd,
+            .timeout = 1000,
+        };
+
+        if (ioctl( cdrom->fd, SG_IO, &cmd ))
+            return errno_to_status( errno );
+
+        if (cmd.status == 0 && (drive_config[6] || drive_config[7] >= 0x10))
+            types->DeviceType = FILE_DEVICE_DVD;
+    }
+#endif
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS cdrom_ioctl( void *args )
 {
     struct cdrom_ioctl_params *params = args;
@@ -2565,6 +2598,12 @@ NTSTATUS cdrom_ioctl( void *args )
                 params->ret_size = sizeof(SCSI_PASS_THROUGH_DIRECT);
                 return scsi_pass_through_direct( params->cdrom, params->input, params->output );
             }
+
+        case IOCTL_STORAGE_GET_MEDIA_TYPES_EX:
+            if (params->output_size < sizeof(GET_MEDIA_TYPES))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(GET_MEDIA_TYPES);
+            return get_media_types_ex( params->cdrom, params->output );
 
         default:
             FIXME("Unsupported ioctl %#x (device=%#x access=%#x func=%#x method=%#x)\n",
