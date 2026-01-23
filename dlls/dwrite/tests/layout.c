@@ -2416,6 +2416,7 @@ static void test_GetClusterMetrics(void)
         'g',0x0085,'h',0x2028,'i',0x2029,0xad,0xa,0};
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
+    static const WCHAR str6W[] = {0x0646,0x0627,'a',0x0646,0x0627,0};
 
     struct test_inline_obj *testinlineobj, *testinlineobj2, *testinlineobj3;
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
@@ -2587,6 +2588,104 @@ static void test_GetClusterMetrics(void)
     ok(metrics[2].isNewline == 0, "got %d\n", metrics[2].isNewline);
     ok(metrics[2].isSoftHyphen == 0, "got %d\n", metrics[2].isSoftHyphen);
     ok(metrics[2].isRightToLeft == 0, "got %d\n", metrics[2].isRightToLeft);
+
+    IDWriteTextLayout_Release(layout);
+
+    /* RTL text with RTL reading direction. Inline object covers some characters. */
+    hr = IDWriteFactory_CreateTextLayout(factory, str6W, 5, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 5, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 5, "Unexpected count %u.\n", count);
+
+    ok(metrics[0].isRightToLeft == 1, "Unexpected value %d.\n", metrics[0].isRightToLeft);
+    ok(metrics[1].isRightToLeft == 1, "Unexpected value %d.\n", metrics[1].isRightToLeft);
+    ok(metrics[2].isRightToLeft == 0, "Unexpected value %d.\n", metrics[2].isRightToLeft);
+    ok(metrics[3].isRightToLeft == 1, "Unexpected value %d.\n", metrics[3].isRightToLeft);
+    ok(metrics[4].isRightToLeft == 1, "Unexpected value %d.\n", metrics[4].isRightToLeft);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj->IDWriteInlineObject_iface, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 5, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 5, "Unexpected count %u.\n", count);
+
+    ok(metrics[0].isRightToLeft == 1, "Unexpected value %d.\n", metrics[0].isRightToLeft);
+    todo_wine
+    ok(metrics[1].isRightToLeft == 1, "Unexpected value %d.\n", metrics[1].isRightToLeft);
+    ok(metrics[2].isRightToLeft == 0, "Unexpected value %d.\n", metrics[2].isRightToLeft);
+    ok(metrics[3].isRightToLeft == 1, "Unexpected value %d.\n", metrics[3].isRightToLeft);
+    ok(metrics[4].isRightToLeft == 1, "Unexpected value %d.\n", metrics[4].isRightToLeft);
+
+    range.startPosition = 1;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj->IDWriteInlineObject_iface, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 5, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 4, "Unexpected count %u.\n", count);
+
+    ok(metrics[0].isRightToLeft == 1, "Unexpected value %d.\n", metrics[0].isRightToLeft);
+    todo_wine
+    ok(metrics[1].isRightToLeft == 1, "Unexpected value %d.\n", metrics[1].isRightToLeft);
+    ok(metrics[1].length == 2, "Unexpected value %d.\n", metrics[1].length);
+    ok(metrics[2].isRightToLeft == 1, "Unexpected value %d.\n", metrics[2].isRightToLeft);
+    ok(metrics[2].length == 1, "Unexpected value %d.\n", metrics[2].length);
+    ok(metrics[3].isRightToLeft == 1, "Unexpected value %d.\n", metrics[3].isRightToLeft);
+    ok(metrics[3].length == 1, "Unexpected value %d.\n", metrics[3].length);
+
+    range.startPosition = 1;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetInlineObject(layout, NULL, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    range.startPosition = 2;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj->IDWriteInlineObject_iface, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 5, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 5, "Unexpected count %u.\n", count);
+
+    ok(metrics[0].isRightToLeft == 1, "Unexpected value %d.\n", metrics[0].isRightToLeft);
+    ok(metrics[1].isRightToLeft == 1, "Unexpected value %d.\n", metrics[1].isRightToLeft);
+    ok(metrics[2].isRightToLeft == 0, "Unexpected value %d.\n", metrics[2].isRightToLeft);
+    ok(metrics[3].isRightToLeft == 1, "Unexpected value %d.\n", metrics[3].isRightToLeft);
+    ok(metrics[4].isRightToLeft == 1, "Unexpected value %d.\n", metrics[4].isRightToLeft);
+
+    range.startPosition = 2;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj->IDWriteInlineObject_iface, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 5, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 4, "Unexpected count %u.\n", count);
+
+    ok(metrics[0].isRightToLeft == 1, "Unexpected value %d.\n", metrics[0].isRightToLeft);
+    ok(metrics[1].isRightToLeft == 1, "Unexpected value %d.\n", metrics[1].isRightToLeft);
+    ok(metrics[1].length == 1, "Unexpected value %d.\n", metrics[1].length);
+    ok(metrics[2].isRightToLeft == 0, "Unexpected value %d.\n", metrics[2].isRightToLeft);
+    ok(metrics[2].length == 2, "Unexpected value %d.\n", metrics[2].length);
+    todo_wine
+    ok(metrics[3].isRightToLeft == 1, "Unexpected value %d.\n", metrics[3].isRightToLeft);
+    ok(metrics[3].length == 1, "Unexpected value %d.\n", metrics[3].length);
 
     IDWriteTextLayout_Release(layout);
 
