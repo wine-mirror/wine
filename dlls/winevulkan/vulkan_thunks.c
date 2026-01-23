@@ -3,14 +3,14 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2025 The Khronos Group Inc.
+ * Copyright 2015-2026 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * and from Vulkan video.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2021-2025 The Khronos Group Inc.
+ * Copyright 2021-2026 The Khronos Group Inc.
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
@@ -2206,6 +2206,14 @@ typedef struct VkCommandPoolCreateInfo32
     VkCommandPoolCreateFlags flags;
     uint32_t queueFamilyIndex;
 } VkCommandPoolCreateInfo32;
+
+typedef struct VkComputeOccupancyPriorityParametersNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    float occupancyPriority;
+    float occupancyThrottling;
+} VkComputeOccupancyPriorityParametersNV32;
 
 typedef struct VkComputePipelineCreateInfo32
 {
@@ -4447,6 +4455,13 @@ typedef struct VkPhysicalDeviceCommandBufferInheritanceFeaturesNV32
     PTR32 pNext;
     VkBool32 commandBufferInheritance;
 } VkPhysicalDeviceCommandBufferInheritanceFeaturesNV32;
+
+typedef struct VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 computeOccupancyPriority;
+} VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV32;
 
 typedef struct VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR32
 {
@@ -6750,6 +6765,20 @@ typedef struct VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL32
     VkBool32 shaderIntegerFunctions2;
 } VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL32;
 
+typedef struct VkPhysicalDeviceShaderLongVectorFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 longVector;
+} VkPhysicalDeviceShaderLongVectorFeaturesEXT32;
+
+typedef struct VkPhysicalDeviceShaderLongVectorPropertiesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxVectorComponents;
+} VkPhysicalDeviceShaderLongVectorPropertiesEXT32;
+
 typedef struct VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR32
 {
     VkStructureType sType;
@@ -7037,6 +7066,13 @@ typedef struct VkPhysicalDeviceTexelBufferAlignmentProperties32
     VkBool32 uniformTexelBufferOffsetSingleTexelAlignment;
 } VkPhysicalDeviceTexelBufferAlignmentProperties32;
 typedef VkPhysicalDeviceTexelBufferAlignmentProperties32 VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT32;
+
+typedef struct VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 textureCompressionASTC_3D;
+} VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT32;
 
 typedef struct VkPhysicalDeviceTextureCompressionASTCHDRFeatures32
 {
@@ -15100,6 +15136,18 @@ static const VkCoarseSampleOrderCustomNV *convert_VkCoarseSampleOrderCustomNV_ar
     return out;
 }
 
+static void convert_VkComputeOccupancyPriorityParametersNV_win32_to_host(const VkComputeOccupancyPriorityParametersNV32 *in, VkComputeOccupancyPriorityParametersNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->occupancyPriority = in->occupancyPriority;
+    out->occupancyThrottling = in->occupancyThrottling;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
 static void convert_VkDepthBiasInfoEXT_win32_to_host(struct conversion_context *ctx, const VkDepthBiasInfoEXT32 *in, VkDepthBiasInfoEXT *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -17362,6 +17410,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV:
+        {
+            VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV *in_ext = (const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->computeOccupancyPriority = in_ext->computeOccupancyPriority;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR:
         {
             VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -19276,6 +19335,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderLongVectorFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderLongVectorFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->longVector = in_ext->longVector;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -19524,6 +19594,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->texelBufferAlignment = in_ext->texelBufferAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT *in_ext = (const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->textureCompressionASTC_3D = in_ext->textureCompressionASTC_3D;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20375,6 +20456,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMMAND_BUFFER_INHERITANCE_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->commandBufferInheritance = in_ext->commandBufferInheritance;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV:
+        {
+            VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV32 *in_ext = (const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->computeOccupancyPriority = in_ext->computeOccupancyPriority;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -22293,6 +22385,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderLongVectorFeaturesEXT32 *in_ext = (const VkPhysicalDeviceShaderLongVectorFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->longVector = in_ext->longVector;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -22541,6 +22644,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->texelBufferAlignment = in_ext->texelBufferAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT32 *in_ext = (const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->textureCompressionASTC_3D = in_ext->textureCompressionASTC_3D;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -28485,9 +28599,6 @@ static void convert_VkDataGraphPipelineSessionBindPointRequirementARM_win32_to_h
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->bindPoint = in->bindPoint;
-    out->bindPointType = in->bindPointType;
-    out->numObjects = in->numObjects;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -30426,6 +30537,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV:
+        {
+            VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV32 *in_ext = (const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->computeOccupancyPriority = in_ext->computeOccupancyPriority;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR:
         {
             VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -32329,6 +32451,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderLongVectorFeaturesEXT32 *in_ext = (const VkPhysicalDeviceShaderLongVectorFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->longVector = in_ext->longVector;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -32577,6 +32710,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->texelBufferAlignment = in_ext->texelBufferAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT32 *in_ext = (const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->textureCompressionASTC_3D = in_ext->textureCompressionASTC_3D;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -33208,6 +33352,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             const VkPhysicalDeviceCommandBufferInheritanceFeaturesNV *in_ext = (const VkPhysicalDeviceCommandBufferInheritanceFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMMAND_BUFFER_INHERITANCE_FEATURES_NV;
             out_ext->commandBufferInheritance = in_ext->commandBufferInheritance;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV:
+        {
+            VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV);
+            const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV *in_ext = (const VkPhysicalDeviceComputeOccupancyPriorityFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_OCCUPANCY_PRIORITY_FEATURES_NV;
+            out_ext->computeOccupancyPriority = in_ext->computeOccupancyPriority;
             out_header = (void *)out_ext;
             break;
         }
@@ -34796,6 +34949,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT);
+            const VkPhysicalDeviceShaderLongVectorFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderLongVectorFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_FEATURES_EXT;
+            out_ext->longVector = in_ext->longVector;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR);
@@ -35001,6 +35163,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             const VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *in_ext = (const VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
             out_ext->texelBufferAlignment = in_ext->texelBufferAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT:
+        {
+            VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT);
+            const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT *in_ext = (const VkPhysicalDeviceTextureCompressionASTC3DFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_3D_FEATURES_EXT;
+            out_ext->textureCompressionASTC_3D = in_ext->textureCompressionASTC_3D;
             out_header = (void *)out_ext;
             break;
         }
@@ -36986,6 +37157,15 @@ static void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT:
         {
             VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -38276,6 +38456,15 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDe
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT);
+            const VkPhysicalDeviceShaderLongVectorPropertiesEXT *in_ext = (const VkPhysicalDeviceShaderLongVectorPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT;
+            out_ext->maxVectorComponents = in_ext->maxVectorComponents;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT:
         {
             VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT);
@@ -38654,8 +38843,6 @@ static void convert_VkQueueFamilyDataGraphProcessingEnginePropertiesARM_win32_to
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->foreignSemaphoreHandleTypes = in->foreignSemaphoreHandleTypes;
-    out->foreignMemoryHandleTypes = in->foreignMemoryHandleTypes;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -38674,8 +38861,6 @@ static void convert_VkQueueFamilyDataGraphPropertiesARM_win32_to_host(const VkQu
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->engine = in->engine;
-    out->operation = in->operation;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -47660,6 +47845,28 @@ static void thunk32_vkCmdSetColorWriteMaskEXT(void *args)
     } *params = args;
 
     vulkan_command_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdSetColorWriteMaskEXT(vulkan_command_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, params->firstAttachment, params->attachmentCount, (const VkColorComponentFlags *)UlongToPtr(params->pColorWriteMasks));
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdSetComputeOccupancyPriorityNV(void *args)
+{
+    struct vkCmdSetComputeOccupancyPriorityNV_params *params = args;
+
+    vulkan_command_buffer_from_handle(params->commandBuffer)->device->p_vkCmdSetComputeOccupancyPriorityNV(vulkan_command_buffer_from_handle(params->commandBuffer)->host.command_buffer, params->pParameters);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdSetComputeOccupancyPriorityNV(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        PTR32 pParameters;
+    } *params = args;
+    VkComputeOccupancyPriorityParametersNV pParameters_host;
+
+    convert_VkComputeOccupancyPriorityParametersNV_win32_to_host((const VkComputeOccupancyPriorityParametersNV32 *)UlongToPtr(params->pParameters), &pParameters_host);
+    vulkan_command_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdSetComputeOccupancyPriorityNV(vulkan_command_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, &pParameters_host);
 }
 
 #ifdef _WIN64
@@ -62379,6 +62586,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdSetColorBlendEquationEXT,
     (void *)thunk64_vkCmdSetColorWriteEnableEXT,
     (void *)thunk64_vkCmdSetColorWriteMaskEXT,
+    (void *)thunk64_vkCmdSetComputeOccupancyPriorityNV,
     (void *)thunk64_vkCmdSetConservativeRasterizationModeEXT,
     (void *)thunk64_vkCmdSetCoverageModulationModeNV,
     (void *)thunk64_vkCmdSetCoverageModulationTableEnableNV,
@@ -63064,6 +63272,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdSetColorBlendEquationEXT,
     (void *)thunk32_vkCmdSetColorWriteEnableEXT,
     (void *)thunk32_vkCmdSetColorWriteMaskEXT,
+    (void *)thunk32_vkCmdSetComputeOccupancyPriorityNV,
     (void *)thunk32_vkCmdSetConservativeRasterizationModeEXT,
     (void *)thunk32_vkCmdSetCoverageModulationModeNV,
     (void *)thunk32_vkCmdSetCoverageModulationTableEnableNV,

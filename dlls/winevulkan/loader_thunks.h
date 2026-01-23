@@ -3,14 +3,14 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2025 The Khronos Group Inc.
+ * Copyright 2015-2026 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * and from Vulkan video.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2021-2025 The Khronos Group Inc.
+ * Copyright 2021-2026 The Khronos Group Inc.
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
@@ -210,6 +210,7 @@ enum unix_call
     unix_vkCmdSetColorBlendEquationEXT,
     unix_vkCmdSetColorWriteEnableEXT,
     unix_vkCmdSetColorWriteMaskEXT,
+    unix_vkCmdSetComputeOccupancyPriorityNV,
     unix_vkCmdSetConservativeRasterizationModeEXT,
     unix_vkCmdSetCoverageModulationModeNV,
     unix_vkCmdSetCoverageModulationTableEnableNV,
@@ -2141,6 +2142,12 @@ struct vkCmdSetColorWriteMaskEXT_params
     uint32_t firstAttachment;
     uint32_t attachmentCount;
     const VkColorComponentFlags *pColorWriteMasks;
+};
+
+struct vkCmdSetComputeOccupancyPriorityNV_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkComputeOccupancyPriorityParametersNV *pParameters;
 };
 
 struct vkCmdSetConservativeRasterizationModeEXT_params

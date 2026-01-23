@@ -3,14 +3,14 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2025 The Khronos Group Inc.
+ * Copyright 2015-2026 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * and from Vulkan video.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2021-2025 The Khronos Group Inc.
+ * Copyright 2021-2026 The Khronos Group Inc.
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
@@ -1869,6 +1869,14 @@ void WINAPI vkCmdSetColorWriteMaskEXT(VkCommandBuffer commandBuffer, uint32_t fi
     params.attachmentCount = attachmentCount;
     params.pColorWriteMasks = pColorWriteMasks;
     UNIX_CALL(vkCmdSetColorWriteMaskEXT, &params);
+}
+
+void WINAPI vkCmdSetComputeOccupancyPriorityNV(VkCommandBuffer commandBuffer, const VkComputeOccupancyPriorityParametersNV *pParameters)
+{
+    struct vkCmdSetComputeOccupancyPriorityNV_params params;
+    params.commandBuffer = commandBuffer;
+    params.pParameters = pParameters;
+    UNIX_CALL(vkCmdSetComputeOccupancyPriorityNV, &params);
 }
 
 void WINAPI vkCmdSetConservativeRasterizationModeEXT(VkCommandBuffer commandBuffer, VkConservativeRasterizationModeEXT conservativeRasterizationMode)
@@ -7389,6 +7397,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetColorBlendEquationEXT", vkCmdSetColorBlendEquationEXT},
     {"vkCmdSetColorWriteEnableEXT", vkCmdSetColorWriteEnableEXT},
     {"vkCmdSetColorWriteMaskEXT", vkCmdSetColorWriteMaskEXT},
+    {"vkCmdSetComputeOccupancyPriorityNV", vkCmdSetComputeOccupancyPriorityNV},
     {"vkCmdSetConservativeRasterizationModeEXT", vkCmdSetConservativeRasterizationModeEXT},
     {"vkCmdSetCoverageModulationModeNV", vkCmdSetCoverageModulationModeNV},
     {"vkCmdSetCoverageModulationTableEnableNV", vkCmdSetCoverageModulationTableEnableNV},

@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.4.335"
+VK_XML_VERSION = "1.4.339"
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
@@ -920,10 +920,20 @@ class FunctionPointer(object):
 
     @staticmethod
     def from_xml(xml):
-        value = innertext(xml).replace('\n', '')
-        value = re.sub(r'\s*//.*$', '', value, flags=re.M)
-        value = re.sub(r'\s+', ' ', value, flags=re.M)
-        return FunctionPointer(value.strip())
+        proto = xml.find("proto")
+        name = proto.find("name").text
+        return_type = " ".join(innertext(proto).replace(name, "").split())
+
+        params = [" ".join(innertext(p).split()) for p in xml.findall("param")]
+
+        value = "typedef {} (VKAPI_PTR *{})(".format(return_type, name)
+        if params:
+            value += ", ".join(params)
+        else:
+            value += "void"
+        value += ");"
+
+        return FunctionPointer(value)
 
     def definition(self):
         return self.value + '\n'
@@ -3248,8 +3258,11 @@ class Generator(object):
             # Name is in general within a name tag else it is an optional
             # attribute on the type tag.
             name_elem = t.find("name")
+            proto_elm = t.find("proto")
             if name_elem is not None:
                 type_info["name"] = name_elem.text
+            elif proto_elm is not None:
+                type_info["name"] = proto_elm.find("name").text
             else:
                 type_info["name"] = t.attrib.get("name", None)
 
