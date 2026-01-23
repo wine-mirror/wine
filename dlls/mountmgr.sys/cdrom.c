@@ -2278,6 +2278,39 @@ static NTSTATUS scsi_get_address( struct cdrom *cdrom, SCSI_ADDRESS *address )
 #endif
 }
 
+static NTSTATUS scsi_get_capabilities( struct cdrom *cdrom, IO_SCSI_CAPABILITIES *caps )
+{
+#ifdef SG_SCATTER_SZ
+    caps->Length = sizeof(*caps);
+    caps->MaximumTransferLength = SG_SCATTER_SZ; /* FIXME */
+    caps->MaximumPhysicalPages = SG_SCATTER_SZ / 0x1000;
+    caps->SupportedAsynchronousEvents = TRUE;
+    caps->AlignmentMask = 0x1000;
+    caps->TaggedQueuing = FALSE; /* we could check that it works and answer TRUE */
+    caps->AdapterScansDown = FALSE; /* FIXME ? */
+    caps->AdapterUsesPio = FALSE; /* FIXME ? */
+    return STATUS_SUCCESS;
+#elif defined __APPLE__
+    uint64_t bytesr, bytesw, align;
+
+    if (ioctl( cdrom->fd, DKIOCGETMAXBYTECOUNTREAD, &bytesr ) ||
+        ioctl( cdrom->fd, DKIOCGETMAXBYTECOUNTWRITE, &bytesw ) ||
+        ioctl( cdrom->fd, DKIOCGETMINSEGMENTALIGNMENTBYTECOUNT, &align ))
+        return errno_to_status( errno );
+    caps->Length = sizeof(*caps);
+    caps->MaximumTransferLength = min( bytesr, bytesw );
+    caps->MaximumPhysicalPages = caps->MaximumTransferLength / 0x1000;
+    caps->SupportedAsynchronousEvents = TRUE;
+    caps->AlignmentMask = align - 1;
+    caps->TaggedQueuing = FALSE; /* we could check that it works and answer TRUE */
+    caps->AdapterScansDown = FALSE; /* FIXME ? */
+    caps->AdapterUsesPio = FALSE; /* FIXME ? */
+    return STATUS_SUCCESS;
+#else
+    FIXME( "not implemented for this platform\n" );
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
 
 NTSTATUS cdrom_ioctl( void *args )
 {
@@ -2416,6 +2449,12 @@ NTSTATUS cdrom_ioctl( void *args )
                 return STATUS_BUFFER_TOO_SMALL;
             params->ret_size = sizeof(SCSI_ADDRESS);
             return scsi_get_address( params->cdrom, params->output );
+
+        case IOCTL_SCSI_GET_CAPABILITIES:
+            if (params->output_size < sizeof(IO_SCSI_CAPABILITIES))
+                return STATUS_BUFFER_TOO_SMALL;
+            params->ret_size = sizeof(IO_SCSI_CAPABILITIES);
+            return scsi_get_capabilities( params->cdrom, params->output );
 
         case IOCTL_SCSI_PASS_THROUGH:
             if (params->wow64)
