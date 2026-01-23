@@ -1981,6 +1981,11 @@ static NTSTATUS WINAPI disk_ioctl( DEVICE_OBJECT *device, IRP *irp )
             params.output_size = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
             params.input = irp->AssociatedIrp.SystemBuffer;
             params.output = irp->UserBuffer;
+#ifdef _WIN64
+            params.wow64 = IoIs32bitProcess( irp );
+#else
+            params.wow64 = FALSE;
+#endif
             status = MOUNTMGR_CALL( cdrom_ioctl, &params );
             irp->IoStatus.Information = params.ret_size;
             break;

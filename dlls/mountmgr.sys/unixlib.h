@@ -128,6 +128,7 @@ struct cdrom_ioctl_params
     unsigned int input_size;
     unsigned int output_size;
     unsigned int ret_size;
+    int wow64;
 };
 
 struct detect_ports_params
