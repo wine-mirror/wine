@@ -1,3 +1,6 @@
 MODULE    = wminet_utils.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
+
+SOURCES = \
+	main.c

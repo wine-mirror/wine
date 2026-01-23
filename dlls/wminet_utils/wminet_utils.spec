@@ -33,7 +33,7 @@
 @ stub GetPropertyQualifierSet
 @ stub GetQualifierSet
 @ stub InheritsFrom
-@ stub Initialize
+@ stdcall Initialize(long)
 @ stub Lock
 @ stub Next
 @ stub NextMethod
