@@ -463,15 +463,13 @@ class Type(object):
             return Type.types[name]
         if name in Type.alias:
             return Type.get(Type.alias[name])
-        if name not in ("vk_platform"):
-            print(f'Type {name} not found')
         return None
 
 
-class VkBaseType(Type):
-    def __init__(self, name, _type, requires=None):
+class Flags(Type):
+    def __init__(self, name, type, requires=None):
         Type.__init__(self, name, requires=[requires] if requires else [])
-        self.type = _type
+        self.type = type
 
     def definition(self):
         type = f"typedef {self.type}" if self.type else "struct"
@@ -649,13 +647,13 @@ class Function(Type):
         return Function(alias.type, func_name, alias.params, alias=alias)
 
     @staticmethod
-    def from_xml(command, types):
+    def from_xml(command):
         proto = command.find("proto")
         func_name = proto.find("name").text
         func_type = proto.find("type").text
 
         params = filter(is_api_supported, command.findall("param"))
-        params = [Parameter.from_xml(param, types) for param in params]
+        params = [Parameter.from_xml(param) for param in params]
         return Function(func_type, func_name, params)
 
     def is_alias(self):
@@ -1064,11 +1062,10 @@ class Handle(Type):
 
 
 class VkVariable(object):
-    def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_lens=[],
+    def __init__(self, const=False, type=None, name=None, pointer=None, array_lens=[],
                  dyn_array_len=None, object_type=None, optional=False, returnedonly=False,
                  selection=None, selector=None):
         self.const = const
-        self.type_info = type_info
         self.type_name = type
         self.name = name
         self.object_type = object_type
@@ -1076,6 +1073,7 @@ class VkVariable(object):
         self.returnedonly = returnedonly
         self.selection = selection
         self.selector = selector
+        self._type = None
 
         self.pointer = pointer
         self.array_lens = array_lens
@@ -1087,21 +1085,23 @@ class VkVariable(object):
                 self.dyn_array_len = dyn_array_len[0:i]
                 self.pointer_array = True
 
-        if type_info:
-            self.set_type_info(type_info)
-
     def __eq__(self, other):
         """ Compare member based on name against a string. """
         return self.name == other
 
-    def set_type_info(self, type_info):
-        """ Helper function to set type information from the type registry.
-        This is needed, because not all type data is available at time of
-        parsing.
-        """
-        self.type_info = type_info
-        self.handle = type_info["data"] if type_info["category"] == "handle" else None
-        self.struct = type_info["data"] if type_info["category"] == "struct" or type_info["category"] == "union" else None
+    @property
+    def type(self):
+        if not self._type:
+            self._type = Type.get(self.type_name)
+        return self._type
+
+    @property
+    def handle(self):
+        return self.type if type(self.type) is Handle else None
+
+    @property
+    def struct(self):
+        return self.type if type(self.type) is Record else None
 
     def is_const(self):
         return "const" in self.const
@@ -1122,19 +1122,19 @@ class VkVariable(object):
         return self.is_pointer_pointer()
 
     def is_handle(self):
-        return self.handle is not None
+        return type(self.type) is Handle
 
     def is_struct(self):
-        return self.type_info["category"] == "struct"
+        return type(self.type) is Record and not self.struct.union
 
     def is_union(self):
-        return self.type_info["category"] == "union"
+        return type(self.type) is Record and self.struct.union
 
-    def is_bitmask(self):
-        return self.type_info["category"] == "bitmask"
+    def is_flags(self):
+        return type(self.type) is Flags
 
     def is_enum(self):
-        return self.type_info["category"] == "enum"
+        return type(self.type) is Enum
 
     def is_dynamic_array(self):
         """ Returns if the member is an array element.
@@ -1168,12 +1168,12 @@ class VkVariable(object):
             return False
         elif self.type_name in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
             return True
-        elif self.is_bitmask():
-            return self.type_info["data"].type == "VkFlags64"
+        elif self.is_flags():
+            return self.type.type == "VkFlags64"
         elif self.is_enum():
-            return self.type_info["data"].bitwidth == 64
+            return self.type.bitwidth == 64
         elif self.is_struct() or self.is_union():
-            return self.type_info["data"].needs_alignment()
+            return self.type.needs_alignment()
         elif self.is_handle():
             # Dispatchable handles are pointers to objects, while
             # non-dispatchable are uint64_t and hence need alignment.
@@ -1356,15 +1356,14 @@ class VkMember(VkVariable):
                     LOGGER.warn("TODO: implement copying of static array for {0}.{1}".format(self.type_name, self.name))
 
             elif self.is_handle() and self.is_wrapped():
-                handle = self.type_info["data"]
                 if direction == Direction.OUTPUT:
                     LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type_name, self.name))
                 elif self.optional:
                     return "{0}{1} = {2} ? {3} : 0;\n".format(output, self.name, self.value(input, conv),
-                        handle.unwrap_handle(self.value(input, conv), unwrap))
+                        self.handle.unwrap_handle(self.value(input, conv), unwrap))
                 else:
                     return "{0}{1} = {2};\n".format(output, self.name,
-                        handle.unwrap_handle(self.value(input, conv), unwrap))
+                        self.handle.unwrap_handle(self.value(input, conv), unwrap))
 
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
@@ -1488,16 +1487,16 @@ class VkMember(VkVariable):
 class Parameter(VkVariable):
     """ Helper class which describes a parameter to a function call. """
 
-    def __init__(self, type_info, const=None, pointer=None, name=None, array_lens=None,
+    def __init__(self, type, const=None, pointer=None, name=None, array_lens=None,
                  dyn_array_len=None, object_type=None, optional=False):
-        VkVariable.__init__(self, const=const, type_info=type_info, type=type_info["name"], name=name,
+        VkVariable.__init__(self, const=const, type=type, name=name,
                             pointer=pointer, array_lens=array_lens, dyn_array_len=dyn_array_len,
                             object_type=object_type, optional=optional)
 
         self._set_format_string()
 
     @staticmethod
-    def from_xml(param, types):
+    def from_xml(param):
         # Parameter parsing is slightly tricky. All the data is contained within
         # a param tag, but some data is within subtags while others are text
         # before or after the type tag.
@@ -1524,12 +1523,7 @@ class Parameter(VkVariable):
         # Some uint64_t are actually handles with a separate type param
         object_type = param.get("objecttype", None)
 
-        # Since we have parsed all types before hand, this should not happen.
-        type_info = types.get(type_elem.text, None)
-        if type_info is None:
-            LOGGER.error("type info not found for: {0}".format(type_elem.text))
-
-        return Parameter(type_info, const=const, pointer=pointer, name=name, array_lens=array_lens,
+        return Parameter(type_elem.text, const=const, pointer=pointer, name=name, array_lens=array_lens,
                          dyn_array_len=dyn_array_len, object_type=object_type, optional=optional)
 
     def _set_format_string(self):
@@ -1541,14 +1535,14 @@ class Parameter(VkVariable):
         if self.is_static_array() or self.is_pointer():
             self.format_str = "%p"
         else:
-            if self.type_info["category"] in ["bitmask"]:
+            if self.is_flags():
                 # Since 1.2.170 bitmasks can be 32 or 64-bit, check the basetype.
-                if self.type_info["data"].type == "VkFlags64":
+                if self.type.type == "VkFlags64":
                     self.format_str = "0x%s"
                     self.format_conv = "wine_dbgstr_longlong({0})"
                 else:
                     self.format_str = "%#x"
-            elif self.type_info["category"] in ["enum"]:
+            elif self.is_enum():
                 self.format_str = "%#x"
             elif self.is_handle():
                 # We use uint64_t for non-dispatchable handles as opposed to pointers
@@ -1578,7 +1572,7 @@ class Parameter(VkVariable):
                 # Don't care about specific types for non-Windows platforms.
                 self.format_str = ""
             else:
-                LOGGER.warn("Unhandled type: {0}".format(self.type_info))
+                LOGGER.warn("Unhandled type: {0}".format(self.type_name))
 
     def get_dyn_array_len(self, params, prefix, conv):
         if isinstance(self.dyn_array_len, int):
@@ -1729,13 +1723,13 @@ class Parameter(VkVariable):
             return "str"
         if self.is_dispatchable() or self.is_pointer() or self.is_static_array():
             return "ptr"
-        if self.type_info["category"] in ["bitmask"]:
+        if self.is_flags():
             # Since 1.2.170 bitmasks can be 32 or 64-bit, check the basetype.
-            if self.type_info["data"].type == "VkFlags64":
+            if self.type.type == "VkFlags64":
                 return "int64"
             else:
                 return "long"
-        if self.type_info["category"] in ["enum"]:
+        if self.is_enum():
             return "long"
         if self.is_handle() and not self.is_dispatchable():
             return "int64"
@@ -1797,7 +1791,6 @@ class Record(Type):
         self.structextends = structextends
         self.alias = alias
         self.union = union
-        self.type_info = None # To be set later.
         self._struct_extensions = None
         self.aliased_by = []
 
@@ -2041,15 +2034,6 @@ class Record(Type):
                 return True
             if (m.is_struct() or m.is_union()) and m.struct.needs_win32_type():
                 return True
-
-    def set_type_info(self, types):
-        """ Helper function to set type information from the type registry.
-        This is needed, because not all type data is available at time of
-        parsing.
-        """
-        for m in self.members:
-            type_info = types[m.type_name]
-            m.set_type_info(type_info)
 
 
 class StructConversionFunction(object):
@@ -2405,7 +2389,6 @@ class ArrayConversionFunction(object):
 class Generator(object):
     def __init__(self, vk_xml, video_xml):
         # We aggregate all types in here for cross-referencing.
-        self.types = {}
         self.surface_extensions = []
 
         # Overall strategy for parsing the registry is to first
@@ -2729,10 +2712,6 @@ class Generator(object):
                  f.write(handle.definition())
         f.write("\n")
 
-        for base_type in Context.base_types:
-            f.write(base_type.definition())
-        f.write("\n")
-
         # Reorder bitmasks to handle aliases correctly.
         remaining_bitmasks = list(Context.bitmasks)
         while len(remaining_bitmasks) > 0:
@@ -2862,7 +2841,7 @@ class Generator(object):
                 alias_commands.append(command)
                 continue
 
-            func = Function.from_xml(command, self.types)
+            func = Function.from_xml(command)
             funcs[func.name] = func
 
         for command in alias_commands:
@@ -2900,19 +2879,17 @@ class Generator(object):
 
     def _process_require_enum(self, enum_elem, ext=None, only_aliased=False):
         if "extends" in enum_elem.keys():
-            enum = self.types[enum_elem.attrib["extends"]]["data"]
+            enum = Type.get(enum_elem.attrib["extends"])
 
             # Need to define EnumValues which were aliased to by another value. This is necessary
             # from VK spec version 1.2.135 where the provisional VK_KHR_ray_tracing extension was
             # added which altered VK_NV_ray_tracing's EnumValues to alias to the provisional
             # extension.
             aliased = False
-            for _, t in self.types.items():
-                if t["category"] != "enum":
+            for t in Type.types.values():
+                if type(t) is not Enum:
                     continue
-                if not t["data"]:
-                    continue
-                for value in t["data"].values:
+                for value in t.values:
                     if value.alias == enum_elem.attrib["name"]:
                         aliased = True
 
@@ -3032,10 +3009,9 @@ class Generator(object):
                     # specific vk_video/* headers (which we don't use).
                     # We don't even parse <type category="include"> tags.
                     # Therefore just skip any types that aren't found.
-                    if t.attrib["name"] in self.types:
-                        type_info = self.types[t.attrib["name"]]
-                        type_info["data"].extensions.add(extension)
-                        type_info["data"].require()
+                    if type := Type.get(t.get("name")):
+                        type.extensions.add(extension)
+                        type.require()
 
                 # Pull in any commands we need. We infer types to pull in from the command
                 # as well.
@@ -3072,20 +3048,10 @@ class Generator(object):
                 for tag in require:
                     if tag.tag == "comment":
                         continue
-                    elif tag.tag == "command":
-                        name = tag.attrib["name"]
-                        Context.funcs[name].require()
-                    elif tag.tag == "enum":
+                    if type := Type.get(tag.get("name")):
+                        type.require()
+                    if tag.tag == "enum":
                         self._process_require_enum(tag)
-                    elif tag.tag == "type":
-                        name = tag.attrib["name"]
-
-                        # Skip pull in for vk_platform.h for now.
-                        if name == "vk_platform":
-                            continue
-
-                        type_info = self.types[name]
-                        type_info["data"].require()
 
     def _parse_types(self, root):
         """ Parse types section, which contains all data types e.g. structs, typedefs etcetera. """
@@ -3102,10 +3068,6 @@ class Generator(object):
         for t in filter(is_api_supported, types):
             category, requires = t.get("category"), t.get("requires")
             name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
-            type_info = {"category": category, "name": name}
-
-            if category is None and name not in Type.types:
-                Type(name)
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -3114,58 +3076,27 @@ class Generator(object):
                 alias_types.append(t)
                 continue
 
-            if category in ["include"]:
-                continue
-
-            # video.xml redefines stdint types which we already parsed in vk.xml.
-            # For some reason, it doesn't define them the same way.
-            if requires == "stdint":
-                continue
-
             if category == "basetype":
                 define = Define.from_xml(t)
                 defines.append(define)
-                type_info["data"] = define
-
-            # Basic C types don't need us to define them, but we do need data for them
-            elif requires == "vk_platform":
-                basic_c = VkBaseType(name, name, requires=requires)
-                type_info["data"] = basic_c
 
             elif category == "bitmask":
-                _type = t.find("type").text
-
                 # Most bitmasks have a requires attribute used to pull in
                 # required '*FlagBits" enum.
-                bitmask = VkBaseType(name, _type, requires=requires)
+                bitmask = Flags(name, t.findtext("type"), requires=requires)
                 bitmasks.append(bitmask)
-                type_info["data"] = bitmask
 
             elif category == "define":
                 define = Define.from_xml(t)
                 defines.append(define)
-                type_info["data"] = define
-
-            elif category == "enum":
-                # The type section only contains enum names, not the actual definition.
-                # Since we already parsed the enum before, just link it in.
-                try:
-                    type_info["data"] = Context.enums[name]
-                except KeyError:
-                    # Not all enums seem to be defined yet, typically that's for
-                    # ones ending in 'FlagBits' where future extensions may add
-                    # definitions.
-                    type_info["data"] = None
 
             elif category == "funcpointer":
                 funcpointer = FunctionPointer.from_xml(t)
                 funcpointers.append(funcpointer)
-                type_info["data"] = funcpointer
 
             elif category == "handle":
                 handle = Handle.from_xml(t)
                 handles.append(handle)
-                type_info["data"] = handle
 
             elif category in ["struct", "union"]:
                 # We store unions among structs as some structs depend
@@ -3174,31 +3105,23 @@ class Generator(object):
                 # a similar kind of hack.
                 struct = Record.from_xml(t)
                 structs.append(struct)
-                type_info["data"] = struct
 
-            # Store all type data in a shared dictionary, so we can easily
-            # look up information for a given type. There are no duplicate
-            # names.
-            self.types[name] = type_info
+            elif name not in Type.types:
+                Type(name)
 
         # Second pass for alias types, so we can retrieve all data from
         # the aliased object.
         for t in alias_types:
             category, requires = t.get("category"), t.get("requires")
             name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
-            type_info = {"category": category, "name": name}
 
             alias = t.get("alias")
             Type.alias[alias].append(name)
             Type.alias[name] = alias
-            type_info["data"] = Type.get(alias)
 
             if category == "struct":
-                struct = Record.from_alias(t, self.types[alias]["data"])
+                struct = Record.from_alias(t, Type.get(alias))
                 structs.append(struct)
-                type_info["data"] = struct
-
-            self.types[name] = type_info
 
         # We need detailed type information during code generation
         # on structs for alignment reasons. Unfortunately structs
@@ -3206,9 +3129,6 @@ class Generator(object):
         # that any types needed have been parsed already, so set
         # the data now.
         structs = {struct.name: struct for struct in structs}
-        for struct in structs.values():
-            struct.set_type_info(self.types)
-
         for struct in structs.values():
             struct.set_order()
 
