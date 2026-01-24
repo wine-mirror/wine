@@ -123,11 +123,11 @@ static BOOL WINAPI init_trash_dirs( INIT_ONCE *once, void *param, void **context
         lstrcpyW( info, files );
         lstrcatW( files, L"\\files" );
         lstrcatW( info, L"\\info" );
-        if (!CreateDirectoryW( info, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
+        if (!SHCreateDirectoryExW( NULL, info, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
         trash_info_dir = info;
     }
 
-    if (!CreateDirectoryW( files, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
+    if (!SHCreateDirectoryExW( NULL, files, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS) goto done;
     trash_dir = files;
     random_seed = GetTickCount();
     return TRUE;
