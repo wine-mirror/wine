@@ -1465,6 +1465,107 @@ static void test_flatten(void)
     GdipDeletePath(path);
 }
 
+static path_test_t warp_path[] = {
+    {7.53, 0.25, PathPointTypeStart, 0, 1}, /*0*/
+    {21.5, 0.25, PathPointTypeLine,  0, 1}, /*1*/
+    {20.5, 8.25, PathPointTypeLine,  0, 1}, /*2*/
+    {6.53, 8.25, PathPointTypeLine| PathPointTypeCloseSubpath, 0, 1} /*3*/
+    };
+
+static path_test_t transformed_warp_path[] = {
+    {16.56, 4.25,  PathPointTypeStart, 0, 1}, /*0*/
+    {44.56, 4.25,  PathPointTypeLine,  0, 1}, /*1*/
+    {42.56, 12.25, PathPointTypeLine,  0, 1}, /*2*/
+    {14.56, 12.25, PathPointTypeLine| PathPointTypeCloseSubpath, 0, 1} /*3*/
+    };
+
+static path_test_t warp_pie_path[] = {
+    {19.37, 8.75,  PathPointTypeStart, 0, 1}, /*0*/
+    {21.5,  8.97,  PathPointTypeLine,  0, 1}, /*1*/
+    {20.95, 10.36, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 1} /*2*/
+    };
+
+static void test_warp_path(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpMatrix *mat;
+    INT count = 3;
+    GpPointF dest_points[3] = { { 8.0, 0.0 }, { 64.0, 0.0 }, { 0.0, 64.0 } };
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipCreateMatrix(&mat);
+    expect(Ok, status);
+
+    status = GdipAddPathRectangle(path, -1.0, 0.5, 32.0, 16.0);
+    expect(Ok, status);
+
+    /* NULL path */
+    status = GdipWarpPath(NULL, NULL, dest_points, count, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
+    todo_wine expect(InvalidParameter, status);
+
+    /* NULL destination points */
+    status = GdipWarpPath(path, NULL, NULL, count, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
+    todo_wine expect(InvalidParameter, status);
+
+    /* Zero number of point in destination points */
+    status = GdipWarpPath(path, NULL, dest_points, 0, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
+    todo_wine expect(InvalidParameter, status);
+
+    /* Valid warp with one destination point */
+    status = GdipWarpPath(path, NULL, dest_points, 1, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
+    todo_wine expect(Ok, status);
+    ok_path(path, warp_path, ARRAY_SIZE(warp_path), FALSE);
+    status = GdipResetPath(path);
+    expect(Ok, status);
+
+     /* Valid warp with two destination points */
+    status = GdipAddPathRectangle(path, -1.0, 0.5, 32.0, 16.0);
+    expect(Ok, status);
+    status = GdipWarpPath(path, NULL, dest_points, 2, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
+    todo_wine expect(Ok, status);
+    ok_path(path, warp_path, ARRAY_SIZE(warp_path), FALSE);
+    status = GdipResetPath(path);
+    expect(Ok, status);
+
+    /* Valid warp without transformation matrix */
+    status = GdipAddPathRectangle(path, -1.0, 0.5, 32.0, 16.0);
+    expect(Ok, status);
+    status = GdipWarpPath(path, NULL, dest_points, count, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
+    todo_wine expect(Ok, status);
+    ok_path(path, warp_path, ARRAY_SIZE(warp_path), FALSE);
+
+    status = GdipResetPath(path);
+    expect(Ok, status);
+
+    /* Valid warp with transformation matrix */
+    status = GdipAddPathRectangle(path, -1.0, 0.5, 32.0, 16.0);
+    expect(Ok, status);
+    status = GdipScaleMatrix(mat, 2.0, 1.0, MatrixOrderAppend);
+    expect(Ok, status);
+    status = GdipTranslateMatrix(mat, 1.5, 4.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipWarpPath(path, mat, dest_points, count, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
+    todo_wine expect(Ok, status);
+    ok_path(path, transformed_warp_path, ARRAY_SIZE(transformed_warp_path), FALSE);
+
+    status = GdipResetPath(path);
+    expect(Ok, status);
+
+    /* Valid Pie Path warp with transformation matrix */
+    status = GdipAddPathPie(path, 1.0, 2.0, 5.0, 15.0, 10.0, 45.0);
+    expect(Ok, status);
+
+    status = GdipWarpPath(path, mat, dest_points, count, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, 0.75f);
+    todo_wine expect(Ok, status);
+    ok_path(path, warp_pie_path, ARRAY_SIZE(warp_pie_path), TRUE);
+
+    GdipDeleteMatrix(mat);
+    GdipDeletePath(path);
+}
+
 static path_test_t widenline_path[] = {
     {5.0, 5.0,   PathPointTypeStart, 0, 0}, /*0*/
     {50.0, 5.0,  PathPointTypeLine,  0, 0}, /*1*/
@@ -2364,6 +2465,7 @@ START_TEST(graphicspath)
     test_reverse();
     test_addpie();
     test_flatten();
+    test_warp_path();
     test_widen();
     test_widen_cap();
     test_isvisible();
