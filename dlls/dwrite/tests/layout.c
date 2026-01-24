@@ -2752,18 +2752,59 @@ static void test_GetClusterMetrics(void)
     IDWriteTextLayout_Release(layout);
 
     /* Whitespace */
-    hr = IDWriteFactory_CreateTextLayout(factory, L"a ", 2, format, 1000.0f, 1000.0f, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a b ", 4, format, 1000.0f, 1000.0f, &layout);
     ok(hr == S_OK, "Failed to create text layout, hr %#lx.\n", hr);
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
-    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 2, &count);
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 4, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(count == 2, "got %u\n", count);
+    ok(count == 4, "got %u\n", count);
     ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
-    ok(metrics[0].canWrapLineAfter == 0, "got %d\n", metrics[0].canWrapLineAfter);
+    ok(!metrics[0].canWrapLineAfter, "Unexpected value %d.\n", metrics[0].canWrapLineAfter);
     ok(metrics[1].isWhitespace == 1, "got %d\n", metrics[1].isWhitespace);
-    ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
+    ok(metrics[1].canWrapLineAfter == 1, "Unexpected value %d.\n", metrics[1].canWrapLineAfter);
+    ok(metrics[2].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
+    ok(!metrics[2].canWrapLineAfter, "Unexpected value %d.\n", metrics[2].canWrapLineAfter);
+    ok(metrics[3].isWhitespace == 1, "got %d\n", metrics[1].isWhitespace);
+    ok(metrics[3].canWrapLineAfter == 1, "Unexpected value %d.\n", metrics[3].canWrapLineAfter);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj3->IDWriteInlineObject_iface, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 4, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 4, "Unexpected count %u.\n", count);
+    ok(!metrics[0].isWhitespace, "Unexpected value %d.\n", metrics[0].isWhitespace);
+    todo_wine
+    ok(metrics[1].isWhitespace == 1, "Unexpected value %d.\n", metrics[1].isWhitespace);
+    ok(!metrics[2].isWhitespace, "Unexpected value %d.\n", metrics[2].isWhitespace);
+    ok(metrics[3].isWhitespace == 1, "Unexpected value %d.\n", metrics[3].isWhitespace);
+
+    range.startPosition = 0;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj3->IDWriteInlineObject_iface, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 4, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 3, "Unexpected count %u.\n", count);
+    ok(!metrics[0].isWhitespace, "Unexpected value %d.\n", metrics[0].isWhitespace);
+    ok(!metrics[0].canWrapLineAfter, "Unexpected value %d.\n", metrics[0].canWrapLineAfter);
+    ok(metrics[0].length == 2, "Unexpected length %u.\n", metrics[0].length);
+    ok(!metrics[1].isWhitespace, "Unexpected value %d.\n", metrics[1].isWhitespace);
+    ok(!metrics[1].canWrapLineAfter, "Unexpected value %d.\n", metrics[1].canWrapLineAfter);
+    ok(metrics[1].length == 1, "Unexpected length %u.\n", metrics[1].length);
+    ok(metrics[2].isWhitespace == 1, "Unexpected value %d.\n", metrics[2].isWhitespace);
+    ok(metrics[2].canWrapLineAfter == 1, "Unexpected value %d.\n", metrics[2].canWrapLineAfter);
+    ok(metrics[2].length == 1, "Unexpected length %u.\n", metrics[2].length);
+
     IDWriteTextLayout_Release(layout);
 
     /* Layout is fully covered by inline object with after condition DWRITE_BREAK_CONDITION_MAY_NOT_BREAK. */
@@ -2771,6 +2812,7 @@ static void test_GetClusterMetrics(void)
     ok(hr == S_OK, "Failed to create text layout, hr %#lx.\n", hr);
 
     range.startPosition = 0;
+    range.length = 2;
     hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj3->IDWriteInlineObject_iface, range);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
