@@ -419,19 +419,44 @@ def parse_array_lens(element):
 
 
 class Type(object):
-    def __init__(self, name):
+    types = {}
+
+    def __init__(self, name, requires=[]):
         self.order = 0
-        self.required = False
+        self._required = False
         self.extensions = set()
+        self.requires = requires
         self.name = name
+
+        Type.types[name] = self
+
+    def require(self):
+        if self._required:
+            return
+        self._required = True
+
+        is_other = lambda t: t and t != self
+        for type in filter(is_other, map(Type.types.get, self.requires)):
+            type.require()
+
+    def is_required(self):
+        return self._required
+
+    def set_order(self, order=0):
+        if order < self.order:
+            return
+        self.order = order + 1
+
+        is_other = lambda t: t and t != self
+        for type in filter(is_other, map(Type.types.get, self.requires)):
+            type.set_order(self.order)
 
 
 class VkBaseType(Type):
     def __init__(self, name, _type, alias=None, requires=None):
-        Type.__init__(self, name)
+        Type.__init__(self, name, requires=[requires] if requires else [])
         self.type = _type
         self.alias = alias
-        self.requires = requires
 
     def definition(self):
         # Definition is similar for alias or non-alias as type
@@ -467,8 +492,8 @@ class VkConstant(object):
 
 
 class Define(Type):
-    def __init__(self, name, value):
-        Type.__init__(self, name)
+    def __init__(self, name, value, requires=None):
+        Type.__init__(self, name, requires=requires if requires else [])
         self.value = value
 
     @staticmethod
@@ -485,7 +510,8 @@ class Define(Type):
         name = re.sub(r"^.*?typedef\s+[^;]+?(\w+);.*$", r"\1", name)
         name = re.sub(r"^.*?struct\s+(\w+);.*$", r"\1", name)
 
-        return Define(name, value)
+        requires = [elem.text for elem in define.iterfind("type")]
+        return Define(name, value, requires=requires)
 
     def definition(self):
         return self.value + '\n'
@@ -591,7 +617,7 @@ class EnumValue(object):
 
 class Function(Type):
     def __init__(self, _type, name, params, alias=None):
-        Type.__init__(self, name)
+        Type.__init__(self, name, [_type] + [p.type_name for p in params])
         self.platforms = set()
         self.type = _type
         self.params = params
@@ -603,7 +629,8 @@ class Function(Type):
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
-        self.required = True if func_info else False
+        if func_info:
+            self.require()
 
         if self.name in MANUAL_UNIX_THUNKS | USER_DRIVER_FUNCS:
             self.unwrap = Unwrap.NONE
@@ -664,9 +691,6 @@ class Function(Type):
         if self.params[0].type_name == "VkPhysicalDevice":
             return True
         return False
-
-    def is_required(self):
-        return self.required
 
     def returns_longlong(self):
         return self.type in ["uint64_t", "VkDeviceAddress"]
@@ -998,9 +1022,6 @@ class Handle(Type):
         which means they contain a dispatch table of function pointers.
         """
         return self.type == "VK_DEFINE_HANDLE"
-
-    def is_required(self):
-        return self.required
 
     def host_handle(self, name):
         """ Provide access to the host handle of a wrapped object. """
@@ -1776,7 +1797,7 @@ class Parameter(VkVariable):
 
 class Record(Type):
     def __init__(self, name, members, returnedonly, structextends, alias=None, union=False):
-        Type.__init__(self, name)
+        Type.__init__(self, name, [m.type_name for m in members])
         self.members = members
         self.returnedonly = returnedonly
         self.structextends = structextends
@@ -1825,20 +1846,6 @@ class Record(Type):
         members = filter(is_api_supported, struct.findall("member"))
         members = [VkMember.from_xml(member, returnedonly) for member in members]
         return Record(name, members, returnedonly, structextends, union=union)
-
-    def set_order(self, order, structs):
-        if order < self.order:
-            return
-
-        self.order = order + 1
-        for member in self.members:
-            if member.type_name == self.name:
-                continue
-            if not member.is_union() and not member.is_struct():
-                continue
-            if structs[member.type_name].is_alias():
-                structs[member.type_name].alias.set_order(self.order, structs)
-            structs[member.type_name].set_order(self.order, structs)
 
     @property
     def struct_extensions(self):
@@ -1937,7 +1944,7 @@ class Record(Type):
             is_const = True
 
         for e in struct_extensions:
-            if not e.required:
+            if not e.is_required():
                 continue
             if e.needs_conversion(conv, Unwrap.HOST, direction, is_const, check_extensions=False):
                 return True
@@ -2191,7 +2198,7 @@ class StructConversionFunction(object):
                 body += ident + "break;\n"
 
             for ext in self.operand.struct_extensions:
-                if not ext.required:
+                if not ext.is_required():
                     continue
 
                 if self.direction == Direction.OUTPUT and not any([self.member_needs_copy(ext, m) for m in ext.members]):
@@ -2489,7 +2496,7 @@ class Generator(object):
         for definition, conversion in enum_conversions(conversions):
             if isinstance(conversion, StructConversionFunction):
                 for e in conversion.operand.struct_extensions:
-                    if not e.required or not e.needs_win32_type():
+                    if not e.is_required() or not e.needs_win32_type():
                         continue
                     win32_structs.append(e)
                 if conversion.operand.needs_win32_type():
@@ -2745,13 +2752,13 @@ class Generator(object):
 
         # Define enums, this includes values for some of the bitmask types as well.
         for enum in Context.enums.values():
-            if enum.required:
+            if enum.is_required():
                 f.write(enum.definition())
 
         f.write("typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;\n")
 
         for fp in Context.func_ptrs:
-            if fp.required:
+            if fp.is_required():
                 f.write(fp.definition())
         f.write("\n")
 
@@ -2761,7 +2768,7 @@ class Generator(object):
         # Note: unions are stored in structs for dependency reasons,
         # see comment in parsing section.
         for struct in Context.structs:
-            if struct.required and struct.name != "SECURITY_ATTRIBUTES":
+            if struct.is_required() and struct.name != "SECURITY_ATTRIBUTES":
                 LOGGER.debug("Generating struct: {0}".format(struct.name))
                 f.write(struct.definition(align=True))
                 f.write("\n")
@@ -2827,50 +2834,6 @@ class Generator(object):
 
         for func in filter(Function.is_core, Context.funcs.values()):
             f.write(func.spec(symbol=f"winevulkan.{func.name}"))
-
-    def _mark_command_required(self, command):
-        """ Helper function to mark a certain command and the datatypes it needs as required."""
-        def mark_bitmask_dependencies(bitmask, types):
-            if bitmask.requires is not None:
-                types[bitmask.requires]["data"].required = True
-
-        def mark_struct_dependencies(struct, types):
-             for m in struct.members:
-                type_info = types[m.type_name]
-
-                # Complex types have a matching definition e.g. Record.
-                # Not needed for base types such as uint32_t.
-                if "data" in type_info:
-                    types[m.type_name]["data"].required = True
-
-                if type_info["category"] == "struct" and struct.name != m.type_name:
-                    # Yay, recurse
-                    mark_struct_dependencies(type_info["data"], types)
-                elif type_info["category"] == "bitmask":
-                    mark_bitmask_dependencies(type_info["data"], types)
-
-        func = Context.funcs[command]
-        func.required = True
-
-        # Pull in return type
-        if func.type != "void":
-            self.types[func.type]["data"].required = True
-
-        # Analyze parameter dependencies and pull in any type needed.
-        for p in func.params:
-            type_info = self.types[p.type_name]
-
-            # Check if we are dealing with a complex type e.g. Enum, Record and others.
-            if "data" not in type_info:
-                continue
-
-            # Mark the complex type as required.
-            type_info["data"].required = True
-            if type_info["category"] == "struct":
-                struct = type_info["data"]
-                mark_struct_dependencies(struct, self.types)
-            elif type_info["category"] == "bitmask":
-                mark_bitmask_dependencies(type_info["data"], self.types)
 
     def _match_object_types(self):
         """ Matches each handle with the correct object type. """
@@ -2994,16 +2957,6 @@ class Generator(object):
 
             Context.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["alias"]))
 
-    @staticmethod
-    def _require_type(type_info):
-        if type(type_info) not in (Define, Enum) and type_info.is_alias():
-            type_info = type_info.alias
-        type_info.required = True
-        if type(type_info) == Record:
-            for member in type_info.members:
-                if "data" in member.type_info:
-                  Generator._require_type(member.type_info["data"])
-
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extension. """
         exts = root.findall("./extensions/extension")
@@ -3088,13 +3041,13 @@ class Generator(object):
                     if t.attrib["name"] in self.types:
                         type_info = self.types[t.attrib["name"]]
                         type_info["data"].extensions.add(extension)
-                        self._require_type(type_info["data"])
+                        type_info["data"].require()
 
                 # Pull in any commands we need. We infer types to pull in from the command
                 # as well.
                 for command in require.findall("command"):
                     cmd_name = command.attrib["name"]
-                    self._mark_command_required(cmd_name)
+                    Context.funcs[cmd_name].require()
 
 
             # Store a list with extensions.
@@ -3127,7 +3080,7 @@ class Generator(object):
                         continue
                     elif tag.tag == "command":
                         name = tag.attrib["name"]
-                        self._mark_command_required(name)
+                        Context.funcs[name].require()
                     elif tag.tag == "enum":
                         self._process_require_enum(tag)
                     elif tag.tag == "type":
@@ -3138,7 +3091,7 @@ class Generator(object):
                             continue
 
                         type_info = self.types[name]
-                        type_info["data"].required = True
+                        type_info["data"].require()
 
     def _parse_types(self, root):
         """ Parse types section, which contains all data types e.g. structs, typedefs etcetera. """
@@ -3156,6 +3109,9 @@ class Generator(object):
             category, requires = t.get("category"), t.get("requires")
             name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
             type_info = {"category": category, "name": name}
+
+            if category is None and name not in Type.types:
+                Type("extern", name)
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -3271,7 +3227,7 @@ class Generator(object):
             struct.set_type_info(self.types)
 
         for struct in structs.values():
-            struct.set_order(0, structs)
+            struct.set_order()
 
         # Guarantee everything is sorted, so code generation doesn't have
         # to deal with this.
