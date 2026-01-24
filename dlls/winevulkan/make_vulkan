@@ -26,7 +26,6 @@ import re
 import urllib.request
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
-from collections.abc import Sequence
 from enum import Enum
 
 # This script generates code for a Wine Vulkan ICD driver from Vulkan's vk.xml.
@@ -418,26 +417,21 @@ def parse_array_lens(element):
             LOGGER.warning("Ignoring tag <{0}> while trying to parse array sizes".format(e.tag))
     return [i.strip('[]') for i in re.findall(r'\[\w+\]', text)]
 
-class VkBaseType(object):
-    def __init__(self, name, _type, alias=None, requires=None):
-        """ Vulkan base type class.
 
-        VkBaseType is mostly used by Vulkan to define its own
-        base types like VkFlags through typedef out of e.g. uint32_t.
-
-        Args:
-            name (:obj:'str'): Name of the base type.
-            _type (:obj:'str'): Underlying type
-            alias (bool): type is an alias or not.
-            requires (:obj:'str', optional): Other types required.
-                Often bitmask values pull in a *FlagBits type.
-        """
+class Type(object):
+    def __init__(self, name):
+        self.order = 0
+        self.required = False
         self.extensions = set()
         self.name = name
+
+
+class VkBaseType(Type):
+    def __init__(self, name, _type, alias=None, requires=None):
+        Type.__init__(self, name)
         self.type = _type
         self.alias = alias
         self.requires = requires
-        self.required = False
 
     def definition(self):
         # Definition is similar for alias or non-alias as type
@@ -472,35 +466,38 @@ class VkConstant(object):
         return text
 
 
-class VkDefine(object):
-    def __init__(self, value):
-        self.extensions = set()
+class Define(Type):
+    def __init__(self, name, value):
+        Type.__init__(self, name)
         self.value = value
 
     @staticmethod
     def from_xml(define):
         value = innertext(define)
-        value = re.sub(r'\s*//.*$', '', value, flags=re.M)
+        value = re.sub(r"\s*//.*$", "", value, flags=re.M)
         value = value.strip()
 
         if "#define VK_USE_64_BIT_PTR_DEFINES" in value:
-            return VkDefine("#define VK_USE_64_BIT_PTR_DEFINES 0")
-        return VkDefine(value)
+            value = "#define VK_USE_64_BIT_PTR_DEFINES 0"
+
+        name = define.findtext("name") or value.replace("\n", "")
+        name = re.sub(r"^.*?#define\s+(\w+).*$", r"\1", name)
+        name = re.sub(r"^.*?typedef\s+[^;]+?(\w+);.*$", r"\1", name)
+        name = re.sub(r"^.*?struct\s+(\w+);.*$", r"\1", name)
+
+        return Define(name, value)
 
     def definition(self):
         return self.value + '\n'
 
 
-class Enum(object):
+class Enum(Type):
     def __init__(self, values, name, bitwidth="32", **kwargs):
-        self.name = name
+        Type.__init__(self, name)
         self.values = values
         self.bitwidth = int(bitwidth)
         assert self.bitwidth in (32, 64)
-
-        self.extensions = set()
         self.typedefs = []
-        self.required = False
 
     @staticmethod
     def from_xml(node):
@@ -592,11 +589,10 @@ class EnumValue(object):
         return f"{self.name} = {value}{suffix}"
 
 
-class Function(object):
+class Function(Type):
     def __init__(self, _type, name, params, alias=None):
-        self.extensions = set()
+        Type.__init__(self, name)
         self.platforms = set()
-        self.name = name
         self.type = _type
         self.params = params
         self.alias = alias
@@ -914,11 +910,10 @@ class Function(object):
         return f"{cast}thunk{bitness}_{self.name}"
 
 
-class FunctionPointer(object):
-    def __init__(self, value):
-        self.extensions = set()
+class FunctionPointer(Type):
+    def __init__(self, name, value):
+        Type.__init__(self, name)
         self.value = value
-        self.required = False
 
     @staticmethod
     def from_xml(xml):
@@ -935,7 +930,7 @@ class FunctionPointer(object):
             value += "void"
         value += ");"
 
-        return FunctionPointer(value)
+        return FunctionPointer(name, value)
 
     def definition(self):
         return self.value + '\n'
@@ -944,27 +939,25 @@ class FunctionPointer(object):
         return False
 
 
-class VkHandle(object):
+class Handle(Type):
     def __init__(self, name, _type, parent, alias=None):
-        self.extensions = set()
-        self.name = name
+        Type.__init__(self, name)
         self.type = _type
         self.parent = parent
         self.alias = alias
-        self.required = False
         self.object_type = None
 
     @staticmethod
     def from_alias(handle, alias):
         name = handle.attrib.get("name")
-        return VkHandle(name, alias.type, alias.parent, alias=alias)
+        return Handle(name, alias.type, alias.parent, alias=alias)
 
     @staticmethod
     def from_xml(handle):
         name = handle.find("name").text
         _type = handle.find("type").text
         parent = handle.attrib.get("parent") # Most objects have a parent e.g. VkQueue has VkDevice.
-        return VkHandle(name, _type, parent)
+        return Handle(name, _type, parent)
 
     def dispatch_table(self, param):
         if not self.is_dispatchable():
@@ -1310,7 +1303,7 @@ class VkMember(VkVariable):
             return self.dyn_array_len
         length = self.dyn_array_len
 
-        var = parent[parent.index(length)]
+        var = parent.members[parent.members.index(length)]
         length = var.value(prefix, conv, deref=True)
 
         expr = MEMBER_LENGTH_EXPRESSIONS.get((parent.name, self.name), "{length}")
@@ -1583,7 +1576,7 @@ class Parameter(VkVariable):
             var = params[params.index(param)]
             prefix = var.value(prefix, conv)
 
-            var = var.struct[var.struct.index(length)]
+            var = var.struct.members[var.struct.members.index(length)]
             return var.value(f"({prefix})->", conv, deref=True)
 
         var = params[params.index(length)]
@@ -1781,37 +1774,26 @@ class Parameter(VkVariable):
         return p
 
 
-class VkStruct(Sequence):
-    """ Class which represents the type union and struct. """
-
+class Record(Type):
     def __init__(self, name, members, returnedonly, structextends, alias=None, union=False):
-        self.extensions = set()
-        self.name = name
+        Type.__init__(self, name)
         self.members = members
         self.returnedonly = returnedonly
         self.structextends = structextends
-        self.required = False
         self.alias = alias
         self.union = union
         self.type_info = None # To be set later.
         self._struct_extensions = None
         self.aliased_by = []
-        self.order = 0
 
         # struct type is the (only one possible) value of the sType member, if present
         member = next((x for x in self.members if x.name == "sType"), None)
         self.struct_type = member.values if member else None
 
-    def __getitem__(self, i):
-        return self.members[i]
-
-    def __len__(self):
-        return len(self.members)
-
     @staticmethod
     def from_alias(struct, alias):
         name = struct.attrib.get("name")
-        aliasee = VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
+        aliasee = Record(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
 
         alias.add_aliased_by(aliasee)
         return aliasee
@@ -1842,7 +1824,7 @@ class VkStruct(Sequence):
 
         members = filter(is_api_supported, struct.findall("member"))
         members = [VkMember.from_xml(member, returnedonly) for member in members]
-        return VkStruct(name, members, returnedonly, structextends, union=union)
+        return Record(name, members, returnedonly, structextends, union=union)
 
     def set_order(self, order, structs):
         if order < self.order:
@@ -1895,7 +1877,7 @@ class VkStruct(Sequence):
 
         text += "\n{\n"
 
-        for m in self:
+        for m in self.members:
             if align and m.needs_alignment():
                 text += "    {0};\n".format(m.definition(align=align, conv=conv))
             else:
@@ -1946,7 +1928,7 @@ class VkStruct(Sequence):
         if direction == Direction.INPUT and self.name in STRUCT_CHAIN_CONVERSIONS:
             return any(struct_extensions)
 
-        if not "pNext" in self:
+        if not "pNext" in self.members:
             return False
         is_const = self.members[self.members.index("pNext")].is_const()
         # VkOpticalFlowSessionCreateInfoNV is missing const in its pNext pointer
@@ -2107,7 +2089,7 @@ class StructConversionFunction(object):
 
         # It doesn't make sense to generate conversion functions for non-struct variables
         # which aren't in arrays, as this should be handled by the copy() function
-        if not isinstance(self.operand, VkStruct):
+        if not isinstance(self.operand, Record):
             return ""
 
         body = ""
@@ -2155,7 +2137,7 @@ class StructConversionFunction(object):
 
         needs_extensions = self.operand.needs_extensions_conversion(self.conv, self.direction)
 
-        if self.direction == Direction.OUTPUT and not any([any([self.member_needs_copy(ext, m) for m in ext]) for ext in self.operand.struct_extensions]):
+        if self.direction == Direction.OUTPUT and not any([any([self.member_needs_copy(ext, m) for m in ext.members]) for ext in self.operand.struct_extensions]):
             needs_extensions = False
         if len(self.operand.struct_extensions) == 0:
             needs_extensions = False
@@ -2177,7 +2159,7 @@ class StructConversionFunction(object):
 
         body += "    if (!in) return;\n\n"
 
-        for m in self.operand:
+        for m in self.operand.members:
             if not self.member_needs_copy(self.operand, m):
                 continue
             if m.name == "pNext" and (needs_extensions or self.conv):
@@ -2212,7 +2194,7 @@ class StructConversionFunction(object):
                 if not ext.required:
                     continue
 
-                if self.direction == Direction.OUTPUT and not any([self.member_needs_copy(ext, m) for m in ext]):
+                if self.direction == Direction.OUTPUT and not any([self.member_needs_copy(ext, m) for m in ext.members]):
                     continue
 
                 win_type = ext.name + "32" if self.conv and ext.needs_win32_type() else ext.name
@@ -2232,10 +2214,10 @@ class StructConversionFunction(object):
                 else:
                     body += f"            {out_type} *out_ext = find_next_struct(out_header, {ext.struct_type});\n"
 
-                if any(self.member_needs_copy(ext, m) for m in ext if m.name not in ("sType", "pNext")):
+                if any(self.member_needs_copy(ext, m) for m in ext.members if m.name not in ("sType", "pNext")):
                     body += f"            {in_type} *in_ext = ({in_type} *)in_header;\n"
 
-                for m in ext:
+                for m in ext.members:
                     if m.name == "sType":
                         body += f"            out_ext->sType = {ext.struct_type};\n"
                         continue
@@ -2258,7 +2240,7 @@ class StructConversionFunction(object):
             body += "            break;\n"
             body += "        }\n"
             body += "    }\n"
-        elif self.conv and self.direction == Direction.INPUT and "pNext" in self.operand:
+        elif self.conv and self.direction == Direction.INPUT and "pNext" in self.operand.members:
             body += "    if (in->pNext)\n"
             body += "        FIXME(\"Unexpected pNext\\n\");\n"
 
@@ -2325,7 +2307,7 @@ class ArrayConversionFunction(object):
             return_type = self.type
 
         needs_copy = not self.array.is_struct() or self.direction != Direction.INPUT or \
-            not self.array.struct.returnedonly or "pNext" in self.array.struct
+            not self.array.struct.returnedonly or "pNext" in self.array.struct.members
 
         # Generate function prototype.
         if return_type:
@@ -2853,10 +2835,10 @@ class Generator(object):
                 types[bitmask.requires]["data"].required = True
 
         def mark_struct_dependencies(struct, types):
-             for m in struct:
+             for m in struct.members:
                 type_info = types[m.type_name]
 
-                # Complex types have a matching definition e.g. VkStruct.
+                # Complex types have a matching definition e.g. Record.
                 # Not needed for base types such as uint32_t.
                 if "data" in type_info:
                     types[m.type_name]["data"].required = True
@@ -2878,7 +2860,7 @@ class Generator(object):
         for p in func.params:
             type_info = self.types[p.type_name]
 
-            # Check if we are dealing with a complex type e.g. Enum, VkStruct and others.
+            # Check if we are dealing with a complex type e.g. Enum, Record and others.
             if "data" not in type_info:
                 continue
 
@@ -3014,10 +2996,10 @@ class Generator(object):
 
     @staticmethod
     def _require_type(type_info):
-        if type(type_info) not in (VkDefine, Enum) and type_info.is_alias():
+        if type(type_info) not in (Define, Enum) and type_info.is_alias():
             type_info = type_info.alias
         type_info.required = True
-        if type(type_info) == VkStruct:
+        if type(type_info) == Record:
             for member in type_info.members:
                 if "data" in member.type_info:
                   Generator._require_type(member.type_info["data"])
@@ -3191,7 +3173,7 @@ class Generator(object):
                 continue
 
             if category == "basetype":
-                define = VkDefine.from_xml(t)
+                define = Define.from_xml(t)
                 defines.append(define)
                 type_info["data"] = define
 
@@ -3210,7 +3192,7 @@ class Generator(object):
                 type_info["data"] = bitmask
 
             elif category == "define":
-                define = VkDefine.from_xml(t)
+                define = Define.from_xml(t)
                 defines.append(define)
                 type_info["data"] = define
 
@@ -3231,7 +3213,7 @@ class Generator(object):
                 type_info["data"] = funcpointer
 
             elif category == "handle":
-                handle = VkHandle.from_xml(t)
+                handle = Handle.from_xml(t)
                 handles.append(handle)
                 type_info["data"] = handle
 
@@ -3240,7 +3222,7 @@ class Generator(object):
                 # on unions. The types are very similar in parsing and
                 # generation anyway. The official Vulkan scripts use
                 # a similar kind of hack.
-                struct = VkStruct.from_xml(t)
+                struct = Record.from_xml(t)
                 structs.append(struct)
                 type_info["data"] = struct
 
@@ -3268,12 +3250,12 @@ class Generator(object):
                 Context.enums[alias].typedefs += [name]
 
             if category == "handle":
-                handle = VkHandle.from_alias(t, self.types[alias]["data"])
+                handle = Handle.from_alias(t, self.types[alias]["data"])
                 handles.append(handle)
                 type_info["data"] = handle
 
             if category == "struct":
-                struct = VkStruct.from_alias(t, self.types[alias]["data"])
+                struct = Record.from_alias(t, self.types[alias]["data"])
                 structs.append(struct)
                 type_info["data"] = struct
 
