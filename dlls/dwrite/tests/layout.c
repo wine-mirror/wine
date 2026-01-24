@@ -2681,7 +2681,6 @@ static void test_GetClusterMetrics(void)
     ok(metrics[1].length == 1, "Unexpected value %d.\n", metrics[1].length);
     ok(metrics[2].isRightToLeft == 0, "Unexpected value %d.\n", metrics[2].isRightToLeft);
     ok(metrics[2].length == 2, "Unexpected value %d.\n", metrics[2].length);
-    todo_wine
     ok(metrics[3].isRightToLeft == 1, "Unexpected value %d.\n", metrics[3].isRightToLeft);
     ok(metrics[3].length == 1, "Unexpected value %d.\n", metrics[3].length);
 

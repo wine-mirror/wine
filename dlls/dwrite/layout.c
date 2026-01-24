@@ -690,22 +690,11 @@ static void layout_itemize_next_range(struct itemization_context *context)
 
 static void layout_itemize_set_run_end(struct itemization_context *context)
 {
-    /* Inline objects take precedence, skip level and script ranges accordingly. */
+    /* Inline objects take precedence. */
 
     if (context->range.value->object)
     {
-        UINT8 level = context->level.value;
-        UINT16 script = context->script.script;
-
         context->run_end = context->range.end;
-
-        while (context->level.end < context->run_end)
-            layout_itemize_next_level(context);
-        while (context->script.end < context->run_end)
-            layout_itemize_next_script(context);
-
-        context->level.value = level;
-        context->script.script = script;
     }
     else
     {
@@ -734,10 +723,10 @@ static bool layout_itemize_get_next(struct itemization_context *context)
 
     context->run_start = context->run_end;
 
-    if (context->run_end == context->level.end)
+    while (context->level.end <= context->run_end)
         layout_itemize_next_level(context);
 
-    if (context->run_end == context->script.end)
+    while (context->script.end <= context->run_end)
         layout_itemize_next_script(context);
 
     if (context->run_end == context->range.end)
