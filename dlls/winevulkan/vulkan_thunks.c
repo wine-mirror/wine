@@ -2790,7 +2790,7 @@ typedef struct VkDataGraphPipelineCreateInfoARM32
 {
     VkStructureType sType;
     PTR32 pNext;
-    VkPipelineCreateFlags2KHR flags;
+    VkPipelineCreateFlags2KHR DECLSPEC_ALIGN(8) flags;
     VkPipelineLayout DECLSPEC_ALIGN(8) layout;
     uint32_t resourceInfoCount;
     PTR32 pResourceInfos;
@@ -2970,7 +2970,7 @@ typedef struct VkDecompressMemoryRegionNV32
     VkDeviceAddress DECLSPEC_ALIGN(8) dstAddress;
     VkDeviceSize DECLSPEC_ALIGN(8) compressedSize;
     VkDeviceSize DECLSPEC_ALIGN(8) decompressedSize;
-    VkMemoryDecompressionMethodFlagsNV decompressionMethod;
+    VkMemoryDecompressionMethodFlagsNV DECLSPEC_ALIGN(8) decompressionMethod;
 } VkDecompressMemoryRegionNV32;
 
 typedef struct VkDedicatedAllocationBufferCreateInfoNV32

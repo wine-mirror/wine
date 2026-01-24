@@ -420,6 +420,7 @@ def parse_array_lens(element):
 
 class Type(object):
     types = {}
+    alias = {}
 
     def __init__(self, name, requires=[]):
         self.order = 0
@@ -429,6 +430,7 @@ class Type(object):
         self.name = name
 
         Type.types[name] = self
+        Type.alias[name] = []
 
     def require(self):
         if self._required:
@@ -436,7 +438,7 @@ class Type(object):
         self._required = True
 
         is_other = lambda t: t and t != self
-        for type in filter(is_other, map(Type.types.get, self.requires)):
+        for type in filter(is_other, map(Type.get, self.requires)):
             type.require()
 
     def is_required(self):
@@ -448,26 +450,35 @@ class Type(object):
         self.order = order + 1
 
         is_other = lambda t: t and t != self
-        for type in filter(is_other, map(Type.types.get, self.requires)):
+        for type in filter(is_other, map(Type.get, self.requires)):
             type.set_order(self.order)
+
+    def definition(self):
+        aliases = ", ".join(Type.alias[self.name])
+        return f"typedef {self.name} {aliases};\n" if len(aliases) else ""
+
+    @staticmethod
+    def get(name):
+        if name in Type.types:
+            return Type.types[name]
+        if name in Type.alias:
+            return Type.get(Type.alias[name])
+        if name not in ("vk_platform"):
+            print(f'Type {name} not found')
+        return None
 
 
 class VkBaseType(Type):
-    def __init__(self, name, _type, alias=None, requires=None):
+    def __init__(self, name, _type, requires=None):
         Type.__init__(self, name, requires=[requires] if requires else [])
         self.type = _type
-        self.alias = alias
 
     def definition(self):
-        # Definition is similar for alias or non-alias as type
-        # is already set to alias.
-        if not self.type is None:
-            return "typedef {0} {1};\n".format(self.type, self.name)
-        else:
-            return "struct {0};\n".format(self.name)
+        type = f"typedef {self.type}" if self.type else "struct"
+        return f"{type} {self.name};\n" + Type.definition(self)
 
     def is_alias(self):
-        return bool(self.alias)
+        return False
 
 
 class Extension(object):
@@ -523,7 +534,6 @@ class Enum(Type):
         self.values = values
         self.bitwidth = int(bitwidth)
         assert self.bitwidth in (32, 64)
-        self.typedefs = []
 
     @staticmethod
     def from_xml(node):
@@ -579,11 +589,7 @@ class Enum(Type):
             for value in values:
                 text += f"static const {self.name} {value.definition(size=8)};\n"
 
-        for name in self.typedefs:
-            text += f"typedef {self.name} {name};\n"
-
-        text += "\n"
-        return text
+        return text + Type.definition(self) + "\n"
 
 
 class EnumValue(object):
@@ -964,17 +970,11 @@ class FunctionPointer(Type):
 
 
 class Handle(Type):
-    def __init__(self, name, _type, parent, alias=None):
+    def __init__(self, name, _type, parent):
         Type.__init__(self, name)
         self.type = _type
         self.parent = parent
-        self.alias = alias
         self.object_type = None
-
-    @staticmethod
-    def from_alias(handle, alias):
-        name = handle.attrib.get("name")
-        return Handle(name, alias.type, alias.parent, alias=alias)
 
     @staticmethod
     def from_xml(handle):
@@ -1006,16 +1006,10 @@ class Handle(Type):
             LOGGER.error("Unhandled dispatchable parent: {0}".format(self.parent))
 
     def definition(self):
-        """ Generates handle definition e.g. VK_DEFINE_HANDLE(vkInstance) """
-
-        # Legacy types are typedef'ed to the new type if they are aliases.
-        if self.is_alias():
-            return "typedef {0} {1};\n".format(self.alias.name, self.name)
-
-        return "{0}({1})\n".format(self.type, self.name)
+        return f"{self.type}({self.name})\n" + Type.definition(self)
 
     def is_alias(self):
-        return self.alias is not None
+        return False
 
     def is_dispatchable(self):
         """ Some handles like VkInstance, VkDevice are dispatchable objects,
@@ -3111,7 +3105,7 @@ class Generator(object):
             type_info = {"category": category, "name": name}
 
             if category is None and name not in Type.types:
-                Type("extern", name)
+                Type(name)
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -3195,20 +3189,9 @@ class Generator(object):
             type_info = {"category": category, "name": name}
 
             alias = t.get("alias")
-
-            if category == "bitmask":
-                bitmask = VkBaseType(name, alias, alias=self.types[alias]["data"])
-                bitmasks.append(bitmask)
-                type_info["data"] = bitmask
-
-            if category == "enum":
-                type_info["data"] = Context.enums[alias]
-                Context.enums[alias].typedefs += [name]
-
-            if category == "handle":
-                handle = Handle.from_alias(t, self.types[alias]["data"])
-                handles.append(handle)
-                type_info["data"] = handle
+            Type.alias[alias].append(name)
+            Type.alias[name] = alias
+            type_info["data"] = Type.get(alias)
 
             if category == "struct":
                 struct = Record.from_alias(t, self.types[alias]["data"])

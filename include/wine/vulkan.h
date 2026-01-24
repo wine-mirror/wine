@@ -4115,8 +4115,7 @@ typedef enum VkLineRasterizationMode
     VK_LINE_RASTERIZATION_MODE_BRESENHAM_KHR = VK_LINE_RASTERIZATION_MODE_BRESENHAM,
     VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_KHR = VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH,
 } VkLineRasterizationMode;
-typedef VkLineRasterizationMode VkLineRasterizationModeKHR;
-typedef VkLineRasterizationMode VkLineRasterizationModeEXT;
+typedef VkLineRasterizationMode VkLineRasterizationModeKHR, VkLineRasterizationModeEXT;
 
 typedef enum VkLogicOp
 {
@@ -5023,8 +5022,7 @@ typedef enum VkQueueGlobalPriority
     VK_QUEUE_GLOBAL_PRIORITY_HIGH_KHR = VK_QUEUE_GLOBAL_PRIORITY_HIGH,
     VK_QUEUE_GLOBAL_PRIORITY_REALTIME_KHR = VK_QUEUE_GLOBAL_PRIORITY_REALTIME,
 } VkQueueGlobalPriority;
-typedef VkQueueGlobalPriority VkQueueGlobalPriorityKHR;
-typedef VkQueueGlobalPriority VkQueueGlobalPriorityEXT;
+typedef VkQueueGlobalPriority VkQueueGlobalPriorityKHR, VkQueueGlobalPriorityEXT;
 
 typedef enum VkRasterizationOrderAMD
 {
@@ -11941,7 +11939,7 @@ typedef struct VkDataGraphPipelineCreateInfoARM
 {
     VkStructureType sType;
     const void *pNext;
-    VkPipelineCreateFlags2KHR flags;
+    VkPipelineCreateFlags2KHR WINE_VK_ALIGN(8) flags;
     VkPipelineLayout WINE_VK_ALIGN(8) layout;
     uint32_t resourceInfoCount;
     const VkDataGraphPipelineResourceInfoARM *pResourceInfos;
@@ -12121,7 +12119,7 @@ typedef struct VkDecompressMemoryRegionNV
     VkDeviceAddress WINE_VK_ALIGN(8) dstAddress;
     VkDeviceSize WINE_VK_ALIGN(8) compressedSize;
     VkDeviceSize WINE_VK_ALIGN(8) decompressedSize;
-    VkMemoryDecompressionMethodFlagsNV decompressionMethod;
+    VkMemoryDecompressionMethodFlagsNV WINE_VK_ALIGN(8) decompressionMethod;
 } VkDecompressMemoryRegionNV;
 
 typedef struct VkDedicatedAllocationBufferCreateInfoNV
