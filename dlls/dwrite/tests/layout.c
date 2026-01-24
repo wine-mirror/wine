@@ -2619,7 +2619,6 @@ static void test_GetClusterMetrics(void)
     ok(count == 5, "Unexpected count %u.\n", count);
 
     ok(metrics[0].isRightToLeft == 1, "Unexpected value %d.\n", metrics[0].isRightToLeft);
-    todo_wine
     ok(metrics[1].isRightToLeft == 1, "Unexpected value %d.\n", metrics[1].isRightToLeft);
     ok(metrics[2].isRightToLeft == 0, "Unexpected value %d.\n", metrics[2].isRightToLeft);
     ok(metrics[3].isRightToLeft == 1, "Unexpected value %d.\n", metrics[3].isRightToLeft);
@@ -2637,7 +2636,6 @@ static void test_GetClusterMetrics(void)
     ok(count == 4, "Unexpected count %u.\n", count);
 
     ok(metrics[0].isRightToLeft == 1, "Unexpected value %d.\n", metrics[0].isRightToLeft);
-    todo_wine
     ok(metrics[1].isRightToLeft == 1, "Unexpected value %d.\n", metrics[1].isRightToLeft);
     ok(metrics[1].length == 2, "Unexpected value %d.\n", metrics[1].length);
     ok(metrics[2].isRightToLeft == 1, "Unexpected value %d.\n", metrics[2].isRightToLeft);

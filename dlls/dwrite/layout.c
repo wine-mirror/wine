@@ -124,6 +124,7 @@ enum layout_run_kind {
 struct inline_object_run {
     IDWriteInlineObject *object;
     UINT16 length;
+    UINT8 bidi_level;
 };
 
 struct regular_layout_run {
@@ -767,6 +768,7 @@ static HRESULT layout_itemize_add_run(struct itemization_context *context)
 
         run->u.object.object = context->range.value->object;
         run->u.object.length = length;
+        run->u.object.bidi_level = context->level.value;
     }
     else
     {
@@ -1360,7 +1362,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             metrics->isWhitespace = 0;
             metrics->isNewline = 0;
             metrics->isSoftHyphen = 0;
-            metrics->isRightToLeft = 0;
+            metrics->isRightToLeft = r->u.object.bidi_level & 1;
             metrics->padding = 0;
             c->run = r;
             c->position = 0; /* there's always one cluster per inline object, so 0 is valid value */
