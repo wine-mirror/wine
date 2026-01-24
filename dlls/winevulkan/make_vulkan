@@ -657,7 +657,7 @@ class Function(object):
         if self.is_global():
             return False
         # Instance functions are passed VkInstance.
-        if self.params[0].type == "VkInstance":
+        if self.params[0].type_name == "VkInstance":
             return True
         return self.is_physical_device()
 
@@ -665,7 +665,7 @@ class Function(object):
         if self.is_global():
             return False
         # Physical device functions are passed VkPhysicalDevice.
-        if self.params[0].type == "VkPhysicalDevice":
+        if self.params[0].type_name == "VkPhysicalDevice":
             return True
         return False
 
@@ -748,19 +748,19 @@ class Function(object):
         for p in self.params:
             if p.needs_variable(conv, self.unwrap):
                 if p.is_dynamic_array():
-                    body += "    {3}{0}{1} *{2}_host;\n".format(
-                        p.type, p.pointer[:-1] if p.pointer else "",
-                        p.name, "const " if p.is_const() else "")
+                    const = "const " if p.is_const() else ""
+                    ptr = p.pointer[:-1] if p.pointer else ""
+                    body += f"    {const}{p.type_name}{ptr} *{p.name}_host;\n"
                 elif p.optional:
-                    body += "    {0} *{1}_host = NULL;\n".format(p.type, p.name)
+                    body += f"    {p.type_name} *{p.name}_host = NULL;\n"
                     needs_alloc = True
                 elif p.pointer:
-                    body += "    {0} {1}{2}_host;\n".format(p.type, p.pointer[:-1], p.name)
+                    body += f"    {p.type_name} {p.pointer[:-1]}{p.name}_host;\n"
                 else:
-                    body += "    {0} {1}_host;\n".format(p.type, p.name)
+                    body += f"    {p.type_name} {p.name}_host;\n"
             if p.needs_alloc(conv, self.unwrap):
                 needs_alloc = True
-            if p.type == "VkDeferredOperationKHR" and not p.is_pointer():
+            if p.type_name == "VkDeferredOperationKHR" and not p.is_pointer():
                 deferred_op = p.name
 
         if needs_alloc:
@@ -1061,7 +1061,7 @@ class VkVariable(object):
                  selection=None, selector=None):
         self.const = const
         self.type_info = type_info
-        self.type = type
+        self.type_name = type
         self.name = name
         self.object_type = object_type
         self.optional = optional
@@ -1105,7 +1105,9 @@ class VkVariable(object):
         return self.pointer and self.pointer.count('*') > 1
 
     def is_pointer_size(self):
-        if self.type in ["size_t", "HWND", "HINSTANCE", "HANDLE", "LPCWSTR"] or self.type.startswith("PFN"):
+        if self.type_name in ["size_t", "HWND", "HINSTANCE", "HANDLE", "LPCWSTR"]:
+            return True
+        if self.type_name.startswith("PFN"):
             return True
         if self.is_handle() and self.handle.is_dispatchable():
             return True
@@ -1144,7 +1146,7 @@ class VkVariable(object):
         """ Returns True if the member is a unit64_t containing
         a handle with a separate object type
         """
-        return self.object_type != None and self.type == "uint64_t"
+        return self.object_type != None and self.type_name == "uint64_t"
 
     def needs_alignment(self):
         """ Check if this member needs alignment for 64-bit data.
@@ -1154,9 +1156,9 @@ class VkVariable(object):
 
         if self.is_pointer():
             return False
-        elif self.type == "size_t":
+        elif self.type_name == "size_t":
             return False
-        elif self.type in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
+        elif self.type_name in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
             return True
         elif self.is_bitmask():
             return self.type_info["data"].type == "VkFlags64"
@@ -1201,7 +1203,7 @@ class VkVariable(object):
         return self.is_pointer() or self.is_pointer_size() or self.is_static_array()
 
     def value(self, prefix, conv, deref=False):
-        if not conv or not self.needs_ptr32_type() or (not self.is_pointer() and self.type == "size_t"):
+        if not conv or not self.needs_ptr32_type() or (not self.is_pointer() and self.type_name == "size_t"):
             return prefix + self.name
 
         cast_type = self.const
@@ -1209,7 +1211,7 @@ class VkVariable(object):
         if self.pointer_array or ((self.is_pointer() or self.is_static_array()) and self.is_pointer_size()):
             cast_type += "PTR32 *"
         else:
-            cast_type += self.type
+            cast_type += self.type_name
             if self.needs_win32_type():
                 cast_type += "32"
 
@@ -1238,10 +1240,6 @@ class VkMember(VkVariable):
         self.struct_fwd_decl = struct_fwd_decl
         self.values = values
         self.bit_width = bit_width
-
-    def __repr__(self):
-        return "{0} {1} {2} {3} {4} {5} {6}".format(self.const, self.struct_fwd_decl, self.type, self.pointer,
-                self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
     def from_xml(member, returnedonly):
@@ -1341,18 +1339,18 @@ class VkMember(VkVariable):
 
                 count = self.array_lens[0]
                 if len(self.array_lens) > 1:
-                    LOGGER.warn("TODO: implement conversion of multidimensional static array for {0}.{1}".format(self.type, self.name))
+                    LOGGER.warn("TODO: implement conversion of multidimensional static array for {0}.{1}".format(self.type_name, self.name))
                 elif direction == Direction.OUTPUT:
                     # Needed by VkMemoryHeap.memoryHeaps
                     return f"{convert.name}({input}{self.name}, {output}{self.name}, {count});\n"
                 else:
                     # Nothing needed this yet.
-                    LOGGER.warn("TODO: implement copying of static array for {0}.{1}".format(self.type, self.name))
+                    LOGGER.warn("TODO: implement copying of static array for {0}.{1}".format(self.type_name, self.name))
 
             elif self.is_handle() and self.is_wrapped():
                 handle = self.type_info["data"]
                 if direction == Direction.OUTPUT:
-                    LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
+                    LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type_name, self.name))
                 elif self.optional:
                     return "{0}{1} = {2} ? {3} : 0;\n".format(output, self.name, self.value(input, conv),
                         handle.unwrap_handle(self.value(input, conv), unwrap))
@@ -1362,7 +1360,7 @@ class VkMember(VkVariable):
 
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
-                    LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
+                    LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type_name, self.name))
                 return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
             else:
                 convert = StructConversionFunction(self.struct, direction, conv, unwrap, is_const)
@@ -1377,9 +1375,7 @@ class VkMember(VkVariable):
                     return f"{convert.name}({ctx}&{input}{self.name}, &{output}{self.name}{sel});\n"
 
         elif self.is_static_array():
-            bytes_count = "sizeof({0})".format(self.type)
-            for l in self.array_lens:
-                bytes_count = "{0} * ".format(l) + bytes_count
+            bytes_count = " * ".join(self.array_lens + [f"sizeof({self.type_name})"])
             return "memcpy({0}{1}, {2}{1}, {3});\n".format(output, self.name, input, bytes_count)
         elif conv and direction == Direction.OUTPUT and self.is_pointer():
             return "{0}{1} = PtrToUlong({2}{1});\n".format(output, self.name, input)
@@ -1411,7 +1407,7 @@ class VkMember(VkVariable):
         if self.is_struct_forward_declaration():
             text += "struct "
 
-        text += self.type
+        text += self.type_name
         if conv and self.needs_win32_type():
             text += "32"
 
@@ -1492,9 +1488,6 @@ class Parameter(VkVariable):
 
         self._set_format_string()
 
-    def __repr__(self):
-        return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_lens, self.dyn_array_len)
-
     @staticmethod
     def from_xml(param, types):
         # Parameter parsing is slightly tricky. All the data is contained within
@@ -1557,23 +1550,23 @@ class Parameter(VkVariable):
                 else:
                     self.format_str = "0x%s"
                     self.format_conv = "wine_dbgstr_longlong({0})"
-            elif self.type == "float":
+            elif self.type_name == "float":
                 self.format_str = "%f"
-            elif self.type == "int":
+            elif self.type_name == "int":
                 self.format_str = "%d"
-            elif self.type == "int32_t":
+            elif self.type_name == "int32_t":
                 self.format_str = "%d"
-            elif self.type == "size_t":
+            elif self.type_name == "size_t":
                 self.format_str = "0x%s"
                 self.format_conv = "wine_dbgstr_longlong({0})"
-            elif self.type in ["uint16_t", "uint32_t", "VkBool32"]:
+            elif self.type_name in ["uint16_t", "uint32_t", "VkBool32"]:
                 self.format_str = "%u"
-            elif self.type in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
+            elif self.type_name in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
                 self.format_str = "0x%s"
                 self.format_conv = "wine_dbgstr_longlong({0})"
-            elif self.type == "HANDLE":
+            elif self.type_name == "HANDLE":
                 self.format_str = "%p"
-            elif self.type in ["VisualID", "xcb_visualid_t", "RROutput", "zx_handle_t", "NvSciBufObj", "NvSciBufAttrList", "NvSciSyncAttrList"]:
+            elif self.type_name in ["VisualID", "xcb_visualid_t", "RROutput", "zx_handle_t", "NvSciBufObj", "NvSciBufAttrList", "NvSciSyncAttrList"]:
                 # Don't care about specific types for non-Windows platforms.
                 self.format_str = ""
             else:
@@ -1626,7 +1619,7 @@ class Parameter(VkVariable):
 
                 return f"    {convert.name}({ctx_param}{value}, &{self.name}_host);\n"
 
-            elif self.is_pointer_size() and self.type != "size_t":
+            elif self.is_pointer_size() and self.type_name != "size_t":
                 return "    {0}_host = UlongToPtr(*{1});\n".format(self.name, self.value(prefix, conv))
             else:
                 return "    {0}_host = *{1};\n".format(self.name, self.value(prefix, conv))
@@ -1646,7 +1639,7 @@ class Parameter(VkVariable):
                 ref_part = "" if self.optional else "&"
                 return f"    {convert.name}({ref_part}{self.name}_host, {value});\n"
 
-            elif self.is_pointer_size() and self.type != "size_t":
+            elif self.is_pointer_size() and self.type_name != "size_t":
                 return "    *{0} = PtrToUlong({1}_host);\n".format(self.value(prefix, conv), self.name)
             else:
                 return "    *{0} = {1}_host;\n".format(self.value(prefix, conv), self.name)
@@ -1654,7 +1647,7 @@ class Parameter(VkVariable):
     def as_param(self):
         ptr = self.pointer if self.is_pointer() else ""
         array = "".join(f"[{len}]" for len in self.array_lens)
-        return f"{self.const}{self.type} {ptr}{self.name}{array}"
+        return f"{self.const}{self.type_name} {ptr}{self.name}{array}"
 
     def as_member(self, wow64=False):
         if wow64 and self.needs_ptr32_type():
@@ -1662,7 +1655,7 @@ class Parameter(VkVariable):
 
         ptr = self.pointer if self.is_pointer() else "*" if self.is_static_array() else ""
         align = " DECLSPEC_ALIGN(8)" if self.needs_alignment() else ""
-        return f"{self.const}{self.type}{align} {ptr}{self.name}"
+        return f"{self.const}{self.type_name}{align} {ptr}{self.name}"
 
     def dispatch_table(self, params_prefix, conv):
         """ Return functions dispatch table pointer for dispatchable objects. """
@@ -1673,7 +1666,7 @@ class Parameter(VkVariable):
         return self.handle.dispatch_table(self.value(params_prefix, conv))
 
     def format_string(self, conv):
-        if conv and self.needs_ptr32_type() and (self.type != "size_t" or self.is_pointer()):
+        if conv and self.needs_ptr32_type() and (self.type_name != "size_t" or self.is_pointer()):
             return "%#x"
         return self.format_str
 
@@ -1686,7 +1679,7 @@ class Parameter(VkVariable):
     def needs_conversion(self, conv, unwrap, direction, parent_const=False):
         """ Check if param needs conversion. """
 
-        if self.is_pointer_pointer() and self.type != 'void':
+        if self.is_pointer_pointer() and self.type_name != 'void':
             if direction == Direction.INPUT or not self.is_const():
                 return conv
 
@@ -1724,7 +1717,7 @@ class Parameter(VkVariable):
     def spec(self):
         """ Generate spec file entry for this parameter. """
 
-        if self.is_pointer() and self.type == "char":
+        if self.is_pointer() and self.type_name == "char":
             return "str"
         if self.is_dispatchable() or self.is_pointer() or self.is_static_array():
             return "ptr"
@@ -1738,14 +1731,14 @@ class Parameter(VkVariable):
             return "long"
         if self.is_handle() and not self.is_dispatchable():
             return "int64"
-        if self.type == "float":
+        if self.type_name == "float":
             return "float"
-        if self.type in ["int", "int32_t", "size_t", "uint16_t", "uint32_t", "VkBool32"]:
+        if self.type_name in ["int", "int32_t", "size_t", "uint16_t", "uint32_t", "VkBool32"]:
             return "long"
-        if self.type in ["uint64_t", "VkDeviceSize"]:
+        if self.type_name in ["uint64_t", "VkDeviceSize"]:
             return "int64"
 
-        LOGGER.error("Unhandled spec conversion for type: {0}".format(self.type))
+        LOGGER.error("Unhandled spec conversion for type: {0}".format(self.type_name))
 
     def variable(self, conv, unwrap, params_prefix=""):
         """ Returns 'glue' code during generation of a function call on how to access the variable.
@@ -1758,7 +1751,7 @@ class Parameter(VkVariable):
 
         # Hack until we enable allocation callbacks from ICD to application. These are a joy
         # to enable one day, because of calling convention conversion.
-        if unwrap != Unwrap.NONE and "VkAllocationCallbacks" in self.type:
+        if unwrap != Unwrap.NONE and "VkAllocationCallbacks" in self.type_name:
             LOGGER.debug("TODO: setting NULL VkAllocationCallbacks for {0}".format(self.name))
             return "NULL"
 
@@ -1772,7 +1765,7 @@ class Parameter(VkVariable):
 
         if unwrap != Unwrap.NONE:
             unwrap_handle = None
-            if self.object_type != None and self.type == "uint64_t":
+            if self.object_type != None and self.type_name == "uint64_t":
                 unwrap_handle = "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(
                     params_prefix, self.object_type, self.name)
 
@@ -1857,13 +1850,13 @@ class VkStruct(Sequence):
 
         self.order = order + 1
         for member in self.members:
-            if member.type == self.name:
+            if member.type_name == self.name:
                 continue
             if not member.is_union() and not member.is_struct():
                 continue
-            if structs[member.type].is_alias():
-                structs[member.type].alias.set_order(self.order, structs)
-            structs[member.type].set_order(self.order, structs)
+            if structs[member.type_name].is_alias():
+                structs[member.type_name].alias.set_order(self.order, structs)
+            structs[member.type_name].set_order(self.order, structs)
 
     @property
     def struct_extensions(self):
@@ -1928,7 +1921,7 @@ class VkStruct(Sequence):
         """
 
         for m in self.members:
-            if self.name == m.type:
+            if self.name == m.type_name:
                 continue
             if m.needs_alignment():
                 return True
@@ -1938,7 +1931,7 @@ class VkStruct(Sequence):
         """ Returns if struct members need unwrapping of handle. """
 
         for m in self.members:
-            if self.name == m.type:
+            if self.name == m.type_name:
                 continue
             if m.is_wrapped():
                 return True
@@ -1993,7 +1986,7 @@ class VkStruct(Sequence):
         needs_output_copy = False
 
         for m in self.members:
-            if self.name == m.type:
+            if self.name == m.type_name:
                 continue
 
             if m.name == "pNext":
@@ -2007,7 +2000,7 @@ class VkStruct(Sequence):
                 continue
 
             # for non-pointer members, check for returnedonly and const attributes
-            if not m.is_pointer() or m.type == "void":
+            if not m.is_pointer() or m.type_name == "void":
                 if direction == Direction.INPUT:
                     if self.returnedonly:
                         continue
@@ -2044,7 +2037,7 @@ class VkStruct(Sequence):
             return True
 
         for m in self.members:
-            if self.name == m.type:
+            if self.name == m.type_name:
                 continue
             if m.needs_alloc(conv, unwrap):
                 return True
@@ -2057,7 +2050,7 @@ class VkStruct(Sequence):
             return False
 
         for m in self.members:
-            if self.name == m.type:
+            if self.name == m.type_name:
                 continue
             if m.is_pointer() or m.is_pointer_size():
                 return True
@@ -2072,7 +2065,7 @@ class VkStruct(Sequence):
         parsing.
         """
         for m in self.members:
-            type_info = types[m.type]
+            type_info = types[m.type_name]
             m.set_type_info(type_info)
 
 
@@ -2281,20 +2274,17 @@ class ArrayConversionFunction(object):
     def __init__(self, array, direction, conv, unwrap):
         self.array = array
         self.direction = direction
-        self.type = array.type
+        self.type = array.type_name
         self.conv = conv
         self.unwrap = unwrap
 
         if array.is_static_array() and direction == Direction.INPUT:
             LOGGER.error("Static array input conversion is not supported")
 
-        name = "convert_{0}_".format(array.type)
-        if array.pointer_array:
-            name += "pointer_"
-        name += "array_"
         win_type = "win32" if self.conv else "win64"
-        name += convert_suffix(direction, win_type, unwrap, array.is_wrapped())
-        self.name = name
+        ptr = "pointer_" if array.pointer_array else ""
+
+        self.name = f"convert_{self.type}_{ptr}array_" + convert_suffix(direction, win_type, unwrap, array.is_wrapped())
 
     def __eq__(self, other):
         return self.name == other.name
@@ -2864,14 +2854,14 @@ class Generator(object):
 
         def mark_struct_dependencies(struct, types):
              for m in struct:
-                type_info = types[m.type]
+                type_info = types[m.type_name]
 
                 # Complex types have a matching definition e.g. VkStruct.
                 # Not needed for base types such as uint32_t.
                 if "data" in type_info:
-                    types[m.type]["data"].required = True
+                    types[m.type_name]["data"].required = True
 
-                if type_info["category"] == "struct" and struct.name != m.type:
+                if type_info["category"] == "struct" and struct.name != m.type_name:
                     # Yay, recurse
                     mark_struct_dependencies(type_info["data"], types)
                 elif type_info["category"] == "bitmask":
@@ -2886,7 +2876,7 @@ class Generator(object):
 
         # Analyze parameter dependencies and pull in any type needed.
         for p in func.params:
-            type_info = self.types[p.type]
+            type_info = self.types[p.type_name]
 
             # Check if we are dealing with a complex type e.g. Enum, VkStruct and others.
             if "data" not in type_info:
