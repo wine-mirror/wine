@@ -3171,9 +3171,9 @@ class Generator(object):
 
         alias_types = []
         for t in filter(is_api_supported, types):
-            type_info = {}
-            type_info["category"] = t.attrib.get("category", None)
-            type_info["requires"] = t.attrib.get("requires", None)
+            category, requires = t.get("category"), t.get("requires")
+            name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
+            type_info = {"category": category, "name": name}
 
             # We parse aliases in a second pass when we know more.
             alias = t.attrib.get("alias")
@@ -3182,45 +3182,39 @@ class Generator(object):
                 alias_types.append(t)
                 continue
 
-            if type_info["category"] in ["include"]:
+            if category in ["include"]:
                 continue
 
             # video.xml redefines stdint types which we already parsed in vk.xml.
             # For some reason, it doesn't define them the same way.
-            if type_info["requires"] == "stdint":
+            if requires == "stdint":
                 continue
 
-            if type_info["category"] == "basetype":
-                name = t.find("name").text
+            if category == "basetype":
                 define = VkDefine.from_xml(t)
                 defines.append(define)
                 type_info["data"] = define
 
             # Basic C types don't need us to define them, but we do need data for them
-            elif type_info["requires"] == "vk_platform":
-                name = t.attrib.get("name")
-                requires = type_info["requires"]
+            elif requires == "vk_platform":
                 basic_c = VkBaseType(name, name, requires=requires)
                 type_info["data"] = basic_c
 
-            elif type_info["category"] == "bitmask":
-                name = t.find("name").text
+            elif category == "bitmask":
                 _type = t.find("type").text
 
                 # Most bitmasks have a requires attribute used to pull in
                 # required '*FlagBits" enum.
-                requires = type_info["requires"]
                 bitmask = VkBaseType(name, _type, requires=requires)
                 bitmasks.append(bitmask)
                 type_info["data"] = bitmask
 
-            elif type_info["category"] == "define":
+            elif category == "define":
                 define = VkDefine.from_xml(t)
                 defines.append(define)
                 type_info["data"] = define
 
-            elif type_info["category"] == "enum":
-                name = t.attrib.get("name")
+            elif category == "enum":
                 # The type section only contains enum names, not the actual definition.
                 # Since we already parsed the enum before, just link it in.
                 try:
@@ -3231,17 +3225,17 @@ class Generator(object):
                     # definitions.
                     type_info["data"] = None
 
-            elif type_info["category"] == "funcpointer":
+            elif category == "funcpointer":
                 funcpointer = FunctionPointer.from_xml(t)
                 funcpointers.append(funcpointer)
                 type_info["data"] = funcpointer
 
-            elif type_info["category"] == "handle":
+            elif category == "handle":
                 handle = VkHandle.from_xml(t)
                 handles.append(handle)
                 type_info["data"] = handle
 
-            elif type_info["category"] in ["struct", "union"]:
+            elif category in ["struct", "union"]:
                 # We store unions among structs as some structs depend
                 # on unions. The types are very similar in parsing and
                 # generation anyway. The official Vulkan scripts use
@@ -3250,51 +3244,40 @@ class Generator(object):
                 structs.append(struct)
                 type_info["data"] = struct
 
-            # Name is in general within a name tag else it is an optional
-            # attribute on the type tag.
-            name_elem = t.find("name")
-            proto_elm = t.find("proto")
-            if name_elem is not None:
-                type_info["name"] = name_elem.text
-            elif proto_elm is not None:
-                type_info["name"] = proto_elm.find("name").text
-            else:
-                type_info["name"] = t.attrib.get("name", None)
-
             # Store all type data in a shared dictionary, so we can easily
             # look up information for a given type. There are no duplicate
             # names.
-            self.types[type_info["name"]] = type_info
+            self.types[name] = type_info
 
         # Second pass for alias types, so we can retrieve all data from
         # the aliased object.
         for t in alias_types:
-            type_info = {}
-            type_info["category"] = t.attrib.get("category")
-            type_info["name"] = t.attrib.get("name")
+            category, requires = t.get("category"), t.get("requires")
+            name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
+            type_info = {"category": category, "name": name}
 
-            alias = t.attrib.get("alias")
+            alias = t.get("alias")
 
-            if type_info["category"] == "bitmask":
-                bitmask = VkBaseType(type_info["name"], alias, alias=self.types[alias]["data"])
+            if category == "bitmask":
+                bitmask = VkBaseType(name, alias, alias=self.types[alias]["data"])
                 bitmasks.append(bitmask)
                 type_info["data"] = bitmask
 
-            if type_info["category"] == "enum":
+            if category == "enum":
                 type_info["data"] = Context.enums[alias]
-                Context.enums[alias].typedefs += [type_info["name"]]
+                Context.enums[alias].typedefs += [name]
 
-            if type_info["category"] == "handle":
+            if category == "handle":
                 handle = VkHandle.from_alias(t, self.types[alias]["data"])
                 handles.append(handle)
                 type_info["data"] = handle
 
-            if type_info["category"] == "struct":
+            if category == "struct":
                 struct = VkStruct.from_alias(t, self.types[alias]["data"])
                 structs.append(struct)
                 type_info["data"] = struct
 
-            self.types[type_info["name"]] = type_info
+            self.types[name] = type_info
 
         # We need detailed type information during code generation
         # on structs for alignment reasons. Unfortunately structs
