@@ -5180,6 +5180,9 @@ static NTSTATUS find_string(ACTIVATION_CONTEXT* actctx, ULONG section_kind,
 
     switch (section_kind)
     {
+    case ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION:
+        FIXME("Unsupported yet section_kind %x\n", section_kind);
+        return STATUS_SXS_KEY_NOT_FOUND;
     case ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION:
         status = find_dll_redirection(actctx, section_name, data);
         break;
