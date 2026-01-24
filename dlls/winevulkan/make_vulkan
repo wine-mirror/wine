@@ -453,9 +453,9 @@ class Type(object):
         for type in filter(is_other, map(Type.get, self.requires)):
             type.set_order(self.order)
 
-    def definition(self):
-        aliases = ", ".join(Type.alias[self.name])
-        return f"typedef {self.name} {aliases};\n" if len(aliases) else ""
+    def definition(self, suffix=""):
+        aliases = ", ".join(f"{alias}{suffix}" for alias in Type.alias[self.name])
+        return f"typedef {self.name}{suffix} {aliases};\n" if len(aliases) else ""
 
     @staticmethod
     def get(name):
@@ -1255,6 +1255,7 @@ class VkMember(VkVariable):
         self.struct_fwd_decl = struct_fwd_decl
         self.values = values
         self.bit_width = bit_width
+        self.parent = None
 
     @staticmethod
     def from_xml(member, returnedonly):
@@ -1320,18 +1321,18 @@ class VkMember(VkVariable):
                         values=values, object_type=object_type, bit_width=bit_width, returnedonly=returnedonly,
                         selection=selection, selector=selector)
 
-    def get_dyn_array_len(self, parent, prefix, conv):
+    def get_dyn_array_len(self, prefix, conv):
         if isinstance(self.dyn_array_len, int):
             return self.dyn_array_len
         length = self.dyn_array_len
 
-        var = parent.members[parent.members.index(length)]
+        var = self.parent.members[self.parent.members.index(length)]
         length = var.value(prefix, conv, deref=True)
 
-        expr = MEMBER_LENGTH_EXPRESSIONS.get((parent.name, self.name), "{length}")
+        expr = MEMBER_LENGTH_EXPRESSIONS.get((self.parent.name, self.name), "{length}")
         return expr.format(prefix=prefix, length=length)
 
-    def copy(self, input, output, direction, conv, unwrap, parent_const, conversions, parent):
+    def copy(self, input, output, direction, conv, unwrap, parent_const, conversions):
         is_const = self.is_const() if self.is_pointer() else parent_const
 
         if self.needs_conversion(conv, unwrap, direction, False):
@@ -1340,7 +1341,7 @@ class VkMember(VkVariable):
                 conversions.append(convert)
 
                 # Array length is either a variable name (string) or an int.
-                count = self.get_dyn_array_len(parent, input, conv)
+                count = self.get_dyn_array_len(input, conv)
                 if direction == Direction.OUTPUT:
                     value = self.value(output, conv)
                     return f"{convert.name}({input}{self.name}, {value}, {count});\n"
@@ -1400,15 +1401,8 @@ class VkMember(VkVariable):
         else:
             return "{0}{1} = {2}{1};\n".format(output, self.name, input)
 
-    def definition(self, align=False, conv=False):
-        """ Generate prototype for given function.
-
-        Args:
-            align (bool, optional): Enable alignment if a type needs it. This adds WINE_VK_ALIGN(8) to a member.
-            conv (bool, optional): Enable conversion if a type needs it. This appends '_host' to the name.
-        """
-
-        if conv and (self.is_pointer() or self.is_pointer_size()):
+    def definition(self, suffix):
+        if suffix and (self.is_pointer() or self.is_pointer_size()):
             text = "PTR32 " + self.name
             for l in self.array_lens:
                 text += "[{0}]".format(l)
@@ -1422,14 +1416,14 @@ class VkMember(VkVariable):
             text += "struct "
 
         text += self.type_name
-        if conv and self.needs_win32_type():
+        if suffix and self.needs_win32_type():
             text += "32"
 
         if self.is_pointer():
             text += " {0}{1}".format(self.pointer, self.name)
         else:
-            if align and self.needs_alignment():
-                if conv:
+            if self.needs_alignment():
+                if suffix:
                     text += " DECLSPEC_ALIGN(8) " + self.name
                 else:
                     text += " WINE_VK_ALIGN(8) " + self.name
@@ -1791,55 +1785,25 @@ class Parameter(VkVariable):
 
 
 class Record(Type):
-    def __init__(self, name, members, returnedonly, structextends, alias=None, union=False):
+    def __init__(self, members, name, returnedonly=False, structextends=None, category="struct", **kwargs):
         Type.__init__(self, name, [m.type_name for m in members])
+        self.union = category == "union"
         self.members = members
         self.returnedonly = returnedonly
-        self.structextends = structextends
-        self.alias = alias
-        self.union = union
+        self.structextends = structextends.split(",") if structextends else []
         self._struct_extensions = None
-        self.aliased_by = []
 
-        # struct type is the (only one possible) value of the sType member, if present
-        member = next((x for x in self.members if x.name == "sType"), None)
-        self.struct_type = member.values if member else None
-
-    @staticmethod
-    def from_alias(struct, alias):
-        name = struct.attrib.get("name")
-        aliasee = Record(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
-
-        alias.add_aliased_by(aliasee)
-        return aliasee
+        for m in self.members:
+            if m.name == "sType":
+                self.struct_type = m.values
+            m.parent = self
 
     @staticmethod
     def from_xml(struct):
-        # Unions and structs are the same parsing wise, but we need to
-        # know which one we are dealing with later on for code generation.
-        union = True if struct.attrib["category"] == "union" else False
-
-        name = struct.attrib.get("name")
-
-        # 'Output' structures for which data is filled in by the API are
-        # marked as 'returnedonly'.
-        returnedonly = True if struct.attrib.get("returnedonly") else False
-
-        # Those structs seem to be broken in spec, they are specified as
-        # returned only, but documented as input structs.
-        if name in ["VkPipelineShaderStageRequiredSubgroupSizeCreateInfo"]:
-            returnedonly = False
-
-        # Those structs don't have returnedonly in spec, but they could (should?).
-        if name in ["VkSurfaceCapabilitiesPresentBarrierNV"]:
-            returnedonly = True
-
-        structextends = struct.attrib.get("structextends")
-        structextends = structextends.split(",") if structextends else []
-
+        returnedonly = "returnedonly" in struct.attrib
         members = filter(is_api_supported, struct.findall("member"))
         members = [VkMember.from_xml(member, returnedonly) for member in members]
-        return Record(name, members, returnedonly, structextends, union=union)
+        return Record(members, **struct.attrib)
 
     @property
     def struct_extensions(self):
@@ -1848,7 +1812,7 @@ class Record(Type):
 
             def is_struct_extension(struct):
                 if not struct.extensions or any(ext.is_exposed for ext in struct.extensions):
-                    return not struct.alias and self.name in struct.structextends
+                    return self.name in struct.structextends
                 return False
 
             structs = sorted(Context.structs, key=lambda s: s.name)
@@ -1857,45 +1821,16 @@ class Record(Type):
 
         return self._struct_extensions
 
-    def definition(self, align=False, conv=False):
-        """ Convert structure to textual definition.
-
-        Args:
-            align (bool, optional): enable alignment to 64-bit for win32 struct compatibility.
-            conv (bool, optional): enable struct conversion if the struct needs it.
-            postfix (str, optional): text to append to end of struct name, useful for struct renaming.
-        """
-
-        if self.is_alias():
-            return ""
-
-        suffix = "32" if conv else ""
-        if self.union:
-            text = "typedef union {0}".format(self.name)
-        else:
-            text = "typedef struct {0}".format(self.name)
-        text += suffix
-
-        text += "\n{\n"
-
+    def definition(self, suffix=""):
+        kind = "union" if self.union else "struct"
+        text = f"typedef {kind} {self.name}{suffix}\n{{\n"
         for m in self.members:
-            if align and m.needs_alignment():
-                text += "    {0};\n".format(m.definition(align=align, conv=conv))
-            else:
-                text += "    {0};\n".format(m.definition(conv=conv))
-
-        text += "}} {0}{1};\n".format(self.name, suffix)
-
-        for aliasee in self.aliased_by:
-            text += "typedef {0}{2} {1}{2};\n".format(self.name, aliasee.name, suffix)
-
-        return text
+            text += f"    {m.definition(suffix)};\n"
+        text += f"}} {self.name}{suffix};\n"
+        return text + Type.definition(self, suffix) + '\n'
 
     def is_alias(self):
-        return bool(self.alias)
-
-    def add_aliased_by(self, aliasee):
-        self.aliased_by.append(aliasee)
+        return False
 
     def needs_alignment(self):
         """ Check if structure needs alignment for 64-bit data.
@@ -2163,7 +2098,7 @@ class StructConversionFunction(object):
                 body += " || ".join("selector == {}".format(s) for s in m.selection)
                 body += ")\n    "
 
-            body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap, self.const, conversions, self.operand)
+            body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap, self.const, conversions)
 
         if needs_extensions:
             if self.conv and self.direction == Direction.INPUT:
@@ -2218,7 +2153,7 @@ class StructConversionFunction(object):
                     if m.name == "pNext":
                         body += u"            out_ext->pNext = NULL;\n"
                         continue
-                    body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions, ext)
+                    body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions)
 
                 if self.direction == Direction.INPUT:
                     body += ident + "out_header->pNext = (void *)out_ext;\n"
@@ -2491,8 +2426,7 @@ class Generator(object):
 
         win32_structs = sorted(win32_structs, key=lambda struct: (-struct.order, struct.name))
         for struct in unique(win32_structs, key=lambda struct: struct.name):
-            f.write(struct.definition(conv=True, align=True))
-            f.write("\n")
+            f.write(struct.definition(suffix="32"))
 
         f.write("static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)\n")
         f.write("{\n")
@@ -2749,9 +2683,7 @@ class Generator(object):
         # see comment in parsing section.
         for struct in Context.structs:
             if struct.is_required() and struct.name != "SECURITY_ATTRIBUTES":
-                LOGGER.debug("Generating struct: {0}".format(struct.name))
-                f.write(struct.definition(align=True))
-                f.write("\n")
+                f.write(struct.definition())
 
         for func in filter(Function.is_required, Context.funcs.values()):
             f.write(func.gen_pointer())
@@ -3092,16 +3024,11 @@ class Generator(object):
         # Second pass for alias types, so we can retrieve all data from
         # the aliased object.
         for t in alias_types:
-            category, requires = t.get("category"), t.get("requires")
             name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
 
             alias = t.get("alias")
             Type.alias[alias].append(name)
             Type.alias[name] = alias
-
-            if category == "struct":
-                struct = Record.from_alias(t, Type.get(alias))
-                structs.append(struct)
 
         # We need detailed type information during code generation
         # on structs for alignment reasons. Unfortunately structs

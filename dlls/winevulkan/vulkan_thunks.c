@@ -1225,8 +1225,7 @@ typedef struct VkImageSubresource232
     PTR32 pNext;
     VkImageSubresource imageSubresource;
 } VkImageSubresource232;
-typedef VkImageSubresource232 VkImageSubresource2KHR32;
-typedef VkImageSubresource232 VkImageSubresource2EXT32;
+typedef VkImageSubresource232 VkImageSubresource2KHR32, VkImageSubresource2EXT32;
 
 typedef struct VkImageToMemoryCopy32
 {
@@ -2215,8 +2214,7 @@ typedef struct VkBufferDeviceAddressInfo32
     PTR32 pNext;
     VkBuffer DECLSPEC_ALIGN(8) buffer;
 } VkBufferDeviceAddressInfo32;
-typedef VkBufferDeviceAddressInfo32 VkBufferDeviceAddressInfoKHR32;
-typedef VkBufferDeviceAddressInfo32 VkBufferDeviceAddressInfoEXT32;
+typedef VkBufferDeviceAddressInfo32 VkBufferDeviceAddressInfoKHR32, VkBufferDeviceAddressInfoEXT32;
 
 typedef struct VkBufferImageCopy32
 {
@@ -3342,8 +3340,7 @@ typedef struct VkDeviceQueueGlobalPriorityCreateInfo32
     PTR32 pNext;
     VkQueueGlobalPriority globalPriority;
 } VkDeviceQueueGlobalPriorityCreateInfo32;
-typedef VkDeviceQueueGlobalPriorityCreateInfo32 VkDeviceQueueGlobalPriorityCreateInfoKHR32;
-typedef VkDeviceQueueGlobalPriorityCreateInfo32 VkDeviceQueueGlobalPriorityCreateInfoEXT32;
+typedef VkDeviceQueueGlobalPriorityCreateInfo32 VkDeviceQueueGlobalPriorityCreateInfoKHR32, VkDeviceQueueGlobalPriorityCreateInfoEXT32;
 
 typedef struct VkDeviceQueueInfo232
 {
@@ -4192,7 +4189,6 @@ typedef struct VkMemoryRequirements232
     VkMemoryRequirements32 DECLSPEC_ALIGN(8) memoryRequirements;
 } VkMemoryRequirements232;
 typedef VkMemoryRequirements232 VkMemoryRequirements2KHR32;
-
 
 typedef struct VkMemoryUnmapInfo32
 {
@@ -5547,8 +5543,7 @@ typedef struct VkPhysicalDeviceGlobalPriorityQueryFeatures32
     PTR32 pNext;
     VkBool32 globalPriorityQuery;
 } VkPhysicalDeviceGlobalPriorityQueryFeatures32;
-typedef VkPhysicalDeviceGlobalPriorityQueryFeatures32 VkPhysicalDeviceGlobalPriorityQueryFeaturesKHR32;
-typedef VkPhysicalDeviceGlobalPriorityQueryFeatures32 VkPhysicalDeviceGlobalPriorityQueryFeaturesEXT32;
+typedef VkPhysicalDeviceGlobalPriorityQueryFeatures32 VkPhysicalDeviceGlobalPriorityQueryFeaturesKHR32, VkPhysicalDeviceGlobalPriorityQueryFeaturesEXT32;
 
 typedef struct VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT32
 {
@@ -5747,8 +5742,7 @@ typedef struct VkPhysicalDeviceIndexTypeUint8Features32
     PTR32 pNext;
     VkBool32 indexTypeUint8;
 } VkPhysicalDeviceIndexTypeUint8Features32;
-typedef VkPhysicalDeviceIndexTypeUint8Features32 VkPhysicalDeviceIndexTypeUint8FeaturesKHR32;
-typedef VkPhysicalDeviceIndexTypeUint8Features32 VkPhysicalDeviceIndexTypeUint8FeaturesEXT32;
+typedef VkPhysicalDeviceIndexTypeUint8Features32 VkPhysicalDeviceIndexTypeUint8FeaturesKHR32, VkPhysicalDeviceIndexTypeUint8FeaturesEXT32;
 
 typedef struct VkPhysicalDeviceInheritedViewportScissorFeaturesNV32
 {
@@ -5846,8 +5840,7 @@ typedef struct VkPhysicalDeviceLineRasterizationFeatures32
     VkBool32 stippledBresenhamLines;
     VkBool32 stippledSmoothLines;
 } VkPhysicalDeviceLineRasterizationFeatures32;
-typedef VkPhysicalDeviceLineRasterizationFeatures32 VkPhysicalDeviceLineRasterizationFeaturesKHR32;
-typedef VkPhysicalDeviceLineRasterizationFeatures32 VkPhysicalDeviceLineRasterizationFeaturesEXT32;
+typedef VkPhysicalDeviceLineRasterizationFeatures32 VkPhysicalDeviceLineRasterizationFeaturesKHR32, VkPhysicalDeviceLineRasterizationFeaturesEXT32;
 
 typedef struct VkPhysicalDeviceLineRasterizationProperties32
 {
@@ -5855,8 +5848,7 @@ typedef struct VkPhysicalDeviceLineRasterizationProperties32
     PTR32 pNext;
     uint32_t lineSubPixelPrecisionBits;
 } VkPhysicalDeviceLineRasterizationProperties32;
-typedef VkPhysicalDeviceLineRasterizationProperties32 VkPhysicalDeviceLineRasterizationPropertiesKHR32;
-typedef VkPhysicalDeviceLineRasterizationProperties32 VkPhysicalDeviceLineRasterizationPropertiesEXT32;
+typedef VkPhysicalDeviceLineRasterizationProperties32 VkPhysicalDeviceLineRasterizationPropertiesKHR32, VkPhysicalDeviceLineRasterizationPropertiesEXT32;
 
 typedef struct VkPhysicalDeviceLinearColorAttachmentFeaturesNV32
 {
@@ -6935,8 +6927,7 @@ typedef struct VkPhysicalDeviceShaderFloat16Int8Features32
     VkBool32 shaderFloat16;
     VkBool32 shaderInt8;
 } VkPhysicalDeviceShaderFloat16Int8Features32;
-typedef VkPhysicalDeviceShaderFloat16Int8Features32 VkPhysicalDeviceShaderFloat16Int8FeaturesKHR32;
-typedef VkPhysicalDeviceShaderFloat16Int8Features32 VkPhysicalDeviceFloat16Int8FeaturesKHR32;
+typedef VkPhysicalDeviceShaderFloat16Int8Features32 VkPhysicalDeviceShaderFloat16Int8FeaturesKHR32, VkPhysicalDeviceFloat16Int8FeaturesKHR32;
 
 typedef struct VkPhysicalDeviceShaderFloat8FeaturesEXT32
 {
@@ -7481,9 +7472,7 @@ typedef struct VkPhysicalDeviceVariablePointersFeatures32
     VkBool32 variablePointersStorageBuffer;
     VkBool32 variablePointers;
 } VkPhysicalDeviceVariablePointersFeatures32;
-typedef VkPhysicalDeviceVariablePointersFeatures32 VkPhysicalDeviceVariablePointersFeaturesKHR32;
-typedef VkPhysicalDeviceVariablePointersFeatures32 VkPhysicalDeviceVariablePointerFeaturesKHR32;
-typedef VkPhysicalDeviceVariablePointersFeatures32 VkPhysicalDeviceVariablePointerFeatures32;
+typedef VkPhysicalDeviceVariablePointersFeatures32 VkPhysicalDeviceVariablePointersFeaturesKHR32, VkPhysicalDeviceVariablePointerFeaturesKHR32, VkPhysicalDeviceVariablePointerFeatures32;
 
 typedef struct VkPhysicalDeviceVertexAttributeDivisorFeatures32
 {
@@ -7492,8 +7481,7 @@ typedef struct VkPhysicalDeviceVertexAttributeDivisorFeatures32
     VkBool32 vertexAttributeInstanceRateDivisor;
     VkBool32 vertexAttributeInstanceRateZeroDivisor;
 } VkPhysicalDeviceVertexAttributeDivisorFeatures32;
-typedef VkPhysicalDeviceVertexAttributeDivisorFeatures32 VkPhysicalDeviceVertexAttributeDivisorFeaturesKHR32;
-typedef VkPhysicalDeviceVertexAttributeDivisorFeatures32 VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT32;
+typedef VkPhysicalDeviceVertexAttributeDivisorFeatures32 VkPhysicalDeviceVertexAttributeDivisorFeaturesKHR32, VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT32;
 
 typedef struct VkPhysicalDeviceVertexAttributeDivisorProperties32
 {
@@ -8101,7 +8089,6 @@ typedef struct VkPipelineIndirectDeviceAddressInfoNV32
     VkPipeline DECLSPEC_ALIGN(8) pipeline;
 } VkPipelineIndirectDeviceAddressInfoNV32;
 
-
 typedef struct VkPipelineInfoKHR32
 {
     VkStructureType sType;
@@ -8147,8 +8134,7 @@ typedef struct VkPipelineRasterizationLineStateCreateInfo32
     uint32_t lineStippleFactor;
     uint16_t lineStipplePattern;
 } VkPipelineRasterizationLineStateCreateInfo32;
-typedef VkPipelineRasterizationLineStateCreateInfo32 VkPipelineRasterizationLineStateCreateInfoKHR32;
-typedef VkPipelineRasterizationLineStateCreateInfo32 VkPipelineRasterizationLineStateCreateInfoEXT32;
+typedef VkPipelineRasterizationLineStateCreateInfo32 VkPipelineRasterizationLineStateCreateInfoKHR32, VkPipelineRasterizationLineStateCreateInfoEXT32;
 
 typedef struct VkPipelineRasterizationProvokingVertexStateCreateInfoEXT32
 {
@@ -8224,8 +8210,7 @@ typedef struct VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32
     PTR32 pNext;
     uint32_t requiredSubgroupSize;
 } VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32;
-typedef VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32 VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT32;
-typedef VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32 VkShaderRequiredSubgroupSizeCreateInfoEXT32;
+typedef VkPipelineShaderStageRequiredSubgroupSizeCreateInfo32 VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT32, VkShaderRequiredSubgroupSizeCreateInfoEXT32;
 
 typedef struct VkPipelineTessellationDomainOriginStateCreateInfo32
 {
@@ -8242,8 +8227,7 @@ typedef struct VkPipelineVertexInputDivisorStateCreateInfo32
     uint32_t vertexBindingDivisorCount;
     PTR32 pVertexBindingDivisors;
 } VkPipelineVertexInputDivisorStateCreateInfo32;
-typedef VkPipelineVertexInputDivisorStateCreateInfo32 VkPipelineVertexInputDivisorStateCreateInfoKHR32;
-typedef VkPipelineVertexInputDivisorStateCreateInfo32 VkPipelineVertexInputDivisorStateCreateInfoEXT32;
+typedef VkPipelineVertexInputDivisorStateCreateInfo32 VkPipelineVertexInputDivisorStateCreateInfoKHR32, VkPipelineVertexInputDivisorStateCreateInfoEXT32;
 
 typedef struct VkPipelineViewportCoarseSampleOrderStateCreateInfoNV32
 {
@@ -8491,8 +8475,7 @@ typedef struct VkQueueFamilyGlobalPriorityProperties32
     uint32_t priorityCount;
     VkQueueGlobalPriority priorities[VK_MAX_GLOBAL_PRIORITY_SIZE];
 } VkQueueFamilyGlobalPriorityProperties32;
-typedef VkQueueFamilyGlobalPriorityProperties32 VkQueueFamilyGlobalPriorityPropertiesKHR32;
-typedef VkQueueFamilyGlobalPriorityProperties32 VkQueueFamilyGlobalPriorityPropertiesEXT32;
+typedef VkQueueFamilyGlobalPriorityProperties32 VkQueueFamilyGlobalPriorityPropertiesKHR32, VkQueueFamilyGlobalPriorityPropertiesEXT32;
 
 typedef struct VkQueueFamilyOwnershipTransferPropertiesKHR32
 {
@@ -9151,8 +9134,7 @@ typedef struct VkSubresourceLayout232
     PTR32 pNext;
     VkSubresourceLayout32 DECLSPEC_ALIGN(8) subresourceLayout;
 } VkSubresourceLayout232;
-typedef VkSubresourceLayout232 VkSubresourceLayout2KHR32;
-typedef VkSubresourceLayout232 VkSubresourceLayout2EXT32;
+typedef VkSubresourceLayout232 VkSubresourceLayout2KHR32, VkSubresourceLayout2EXT32;
 
 typedef struct VkSubsampledImageFormatPropertiesEXT32
 {
@@ -29576,66 +29558,6 @@ static void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win32_to_hos
         FIXME("Unexpected pNext\n");
 }
 
-static void convert_VkMemoryRequirements2KHR_win32_to_host(const VkMemoryRequirements2KHR32 *in, VkMemoryRequirements2KHR *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
-}
-
-static void convert_VkMemoryRequirements_host_to_win32(const VkMemoryRequirements *in, VkMemoryRequirements32 *out)
-{
-    if (!in) return;
-
-    out->size = in->size;
-    out->alignment = in->alignment;
-    out->memoryTypeBits = in->memoryTypeBits;
-}
-
-static void convert_VkMemoryRequirements2KHR_host_to_win32(const VkMemoryRequirements2KHR *in, VkMemoryRequirements2KHR32 *out)
-{
-    if (!in) return;
-
-    convert_VkMemoryRequirements_host_to_win32(&in->memoryRequirements, &out->memoryRequirements);
-}
-
-static void convert_VkAccelerationStructureCaptureDescriptorDataInfoEXT_win32_to_host(const VkAccelerationStructureCaptureDescriptorDataInfoEXT32 *in, VkAccelerationStructureCaptureDescriptorDataInfoEXT *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->accelerationStructure = in->accelerationStructure;
-    out->accelerationStructureNV = in->accelerationStructureNV;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
-}
-
-static void convert_VkBufferDeviceAddressInfo_win32_to_host(const VkBufferDeviceAddressInfo32 *in, VkBufferDeviceAddressInfo *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->buffer = in->buffer;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
-}
-
-static void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const VkBufferMemoryRequirementsInfo232 *in, VkBufferMemoryRequirementsInfo2 *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
-    out->buffer = in->buffer;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
-}
-
 static void convert_VkMemoryRequirements2_win32_to_host(struct conversion_context *ctx, const VkMemoryRequirements232 *in, VkMemoryRequirements2 *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -29678,6 +29600,15 @@ static void convert_VkMemoryRequirements2_win32_to_host(struct conversion_contex
     }
 }
 
+static void convert_VkMemoryRequirements_host_to_win32(const VkMemoryRequirements *in, VkMemoryRequirements32 *out)
+{
+    if (!in) return;
+
+    out->size = in->size;
+    out->alignment = in->alignment;
+    out->memoryTypeBits = in->memoryTypeBits;
+}
+
 static void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryRequirements2 *in, VkMemoryRequirements232 *out)
 {
     const VkBaseInStructure *in_header;
@@ -29715,6 +29646,40 @@ static void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryRequiremen
             break;
         }
     }
+}
+
+static void convert_VkAccelerationStructureCaptureDescriptorDataInfoEXT_win32_to_host(const VkAccelerationStructureCaptureDescriptorDataInfoEXT32 *in, VkAccelerationStructureCaptureDescriptorDataInfoEXT *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->accelerationStructure = in->accelerationStructure;
+    out->accelerationStructureNV = in->accelerationStructureNV;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static void convert_VkBufferDeviceAddressInfo_win32_to_host(const VkBufferDeviceAddressInfo32 *in, VkBufferDeviceAddressInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->buffer = in->buffer;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const VkBufferMemoryRequirementsInfo232 *in, VkBufferMemoryRequirementsInfo2 *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->buffer = in->buffer;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static void convert_VkBufferCaptureDescriptorDataInfoEXT_win32_to_host(const VkBufferCaptureDescriptorDataInfoEXT32 *in, VkBufferCaptureDescriptorDataInfoEXT *out)
@@ -41811,17 +41776,6 @@ static void convert_VkPipelineIndirectDeviceAddressInfoNV_win32_to_host(const Vk
     out->sType = in->sType;
     out->pNext = NULL;
     out->pipelineBindPoint = in->pipelineBindPoint;
-    out->pipeline = in->pipeline;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
-}
-
-static void convert_VkPipelineInfoEXT_win32_to_host(const VkPipelineInfoEXT32 *in, VkPipelineInfoEXT *out)
-{
-    if (!in) return;
-
-    out->sType = in->sType;
-    out->pNext = NULL;
     out->pipeline = in->pipeline;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -56508,13 +56462,17 @@ static NTSTATUS thunk32_vkGetAccelerationStructureMemoryRequirementsNV(void *arg
     } *params = args;
     VkAccelerationStructureMemoryRequirementsInfoNV pInfo_host;
     VkMemoryRequirements2KHR pMemoryRequirements_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pInfo, params->pMemoryRequirements);
 
+    init_conversion_context(ctx);
     convert_VkAccelerationStructureMemoryRequirementsInfoNV_win32_to_host((const VkAccelerationStructureMemoryRequirementsInfoNV32 *)UlongToPtr(params->pInfo), &pInfo_host);
-    convert_VkMemoryRequirements2KHR_win32_to_host((VkMemoryRequirements2KHR32 *)UlongToPtr(params->pMemoryRequirements), &pMemoryRequirements_host);
+    convert_VkMemoryRequirements2_win32_to_host(ctx, (VkMemoryRequirements2KHR32 *)UlongToPtr(params->pMemoryRequirements), &pMemoryRequirements_host);
     vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetAccelerationStructureMemoryRequirementsNV(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pInfo_host, &pMemoryRequirements_host);
-    convert_VkMemoryRequirements2KHR_host_to_win32(&pMemoryRequirements_host, (VkMemoryRequirements2KHR32 *)UlongToPtr(params->pMemoryRequirements));
+    convert_VkMemoryRequirements2_host_to_win32(&pMemoryRequirements_host, (VkMemoryRequirements2KHR32 *)UlongToPtr(params->pMemoryRequirements));
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -61354,7 +61312,7 @@ static NTSTATUS thunk32_vkGetPipelinePropertiesEXT(void *args)
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pPipelineInfo, params->pPipelineProperties);
 
-    convert_VkPipelineInfoEXT_win32_to_host((const VkPipelineInfoEXT32 *)UlongToPtr(params->pPipelineInfo), &pPipelineInfo_host);
+    convert_VkPipelineInfoKHR_win32_to_host((const VkPipelineInfoEXT32 *)UlongToPtr(params->pPipelineInfo), &pPipelineInfo_host);
     params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetPipelinePropertiesEXT(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pPipelineInfo_host, (VkBaseOutStructure *)UlongToPtr(params->pPipelineProperties));
     return STATUS_SUCCESS;
 }
