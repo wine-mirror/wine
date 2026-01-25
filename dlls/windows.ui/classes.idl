@@ -35,6 +35,10 @@ import "windows.ui.input.idl";
 import "windows.ui.windowmanagement.idl";
 import "windows.ui.viewmanagement.idl";
 
+namespace Windows.UI.Core {
+    runtimeclass CoreWindow;
+}
+
 namespace Windows.UI.ViewManagement {
     runtimeclass AccessibilitySettings;
     runtimeclass UISettings;
