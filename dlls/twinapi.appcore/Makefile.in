@@ -8,4 +8,5 @@ SOURCES = \
 	application_view.c \
 	classes.idl \
 	client_device_information.c \
+	core_application.c \
 	main.c

@@ -31,6 +31,7 @@ import "windows.security.exchangeactivesyncprovisioning.idl";
 import "windows.system.profile.idl";
 import "windows.system.userprofile.idl";
 import "windows.ui.viewmanagement.idl";
+import "windows.applicationmodel.core.idl";
 
 namespace Windows.Security.ExchangeActiveSyncProvisioning {
     runtimeclass EasClientDeviceInformation;
@@ -43,4 +44,7 @@ namespace Windows.System.UserProfile {
 }
 namespace Windows.UI.ViewManagement {
     runtimeclass ApplicationView;
+}
+namespace Windows.ApplicationModel.Core {
+    runtimeclass CoreApplication;
 }
