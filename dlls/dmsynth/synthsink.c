@@ -273,6 +273,12 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
         IDirectSoundNotify_Release(notify);
     }
 
+    if (!buffer_event || FAILED(hr))
+    {
+        SetEvent(params->started_event);
+        goto done;
+    }
+
     samples_size = caps.dwBufferBytes / BUFFER_SUBDIVISIONS;
     if (!(samples = malloc(samples_size)))
     {
