@@ -82,7 +82,6 @@ static void test_CoreWindow(void)
     core_window = (ICoreWindow *)0xdeadbeef;
     hr = ICoreWindowStatic_GetForCurrentThread( core_window_static, &core_window );
     ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    todo_wine
     ok( core_window == NULL, "Got unexpected core_window.\n" );
 
     ICoreWindowStatic_Release( core_window_static );

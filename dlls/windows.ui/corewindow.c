@@ -120,7 +120,9 @@ DEFINE_IINSPECTABLE( corewindow_static, ICoreWindowStatic, struct corewindow_sta
 static HRESULT STDMETHODCALLTYPE corewindow_static_GetForCurrentThread( ICoreWindowStatic *iface, ICoreWindow **windows )
 {
     FIXME( "iface %p, windows %p stub!\n", iface, windows );
-    return E_NOTIMPL;
+
+    *windows = NULL;
+    return S_OK;
 }
 
 static const struct ICoreWindowStaticVtbl corewindow_static_vtbl =
