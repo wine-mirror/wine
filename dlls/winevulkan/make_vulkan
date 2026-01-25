@@ -458,7 +458,8 @@ class Type(object):
 
     @staticmethod
     def all(klass, which=lambda t: True, sort=True, by_name=False):
-        types = filter(lambda t: type(t) is klass and which(t), Type.types.values())
+        klass = [klass] if type(klass) not in (list, tuple) else klass
+        types = filter(lambda t: type(t) in klass and which(t), Type.types.values())
         return sorted(types, key=lambda type: (0 if by_name else -type.order, type.name)) if sort else types
 
 
@@ -646,14 +647,15 @@ class Function(Type):
         return Function(alias.type, func_name, alias.params)
 
     @staticmethod
-    def from_xml(command):
+    def from_xml(command, pointer=False):
         proto = command.find("proto")
         func_name = proto.find("name").text
-        func_type = proto.find("type").text
+        func_type = innertext(proto).replace(func_name, "").replace('\n', '').strip()
 
         params = filter(is_api_supported, command.findall("param"))
         params = [Parameter.from_xml(param) for param in params]
-        return Function(func_type, func_name, params)
+        klass = FunctionPointer if pointer else Function
+        return klass(func_type, func_name, params)
 
     def is_core(self):
         return not self.extensions or any(ext.is_core for ext in self.extensions)
@@ -730,10 +732,11 @@ class Function(Type):
         return self.name in PERF_CRITICAL_FUNCTIONS
 
     def gen_params(self):
-        return ", ".join(p.as_param() for p in self.params)
+        return ", ".join(p.as_param() for p in self.params) if len(self.params) else "void"
 
     def gen_pointer(self):
-        return f"typedef {self.type} (VKAPI_PTR *PFN_{self.name})({self.gen_params()});\n"
+        name = self.name[4:] if self.name.startswith('PFN_') else self.name
+        return f"typedef {self.type} (VKAPI_PTR *PFN_{name})({self.gen_params()});\n"
 
     def gen_prototype(self):
         return f"{self.type} VKAPI_CALL {self.name}({self.gen_params()});\n"
@@ -934,30 +937,16 @@ class Function(Type):
         return f"{cast}thunk{bitness}_{self.name}"
 
 
-class FunctionPointer(Type):
-    def __init__(self, name, value):
-        Type.__init__(self, name)
-        self.value = value
+class FunctionPointer(Function):
+    def __init__(self, type, name, params):
+        Function.__init__(self, type, name, params)
 
     @staticmethod
-    def from_xml(xml):
-        proto = xml.find("proto")
-        name = proto.find("name").text
-        return_type = " ".join(innertext(proto).replace(name, "").split())
-
-        params = [" ".join(innertext(p).split()) for p in xml.findall("param")]
-
-        value = "typedef {} (VKAPI_PTR *{})(".format(return_type, name)
-        if params:
-            value += ", ".join(params)
-        else:
-            value += "void"
-        value += ");"
-
-        return FunctionPointer(name, value)
+    def from_xml(command):
+        return Function.from_xml(command, pointer=True)
 
     def definition(self):
-        return self.value + '\n'
+        return self.gen_pointer() + '\n'
 
 
 class Handle(Type):
@@ -2641,21 +2630,9 @@ class Generator(object):
             if enum.is_required():
                 f.write(enum.definition())
 
-        f.write("typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;\n")
-
-        for fp in Type.all(FunctionPointer, by_name=True):
-            if fp.is_required():
-                f.write(fp.definition())
-        f.write("\n")
-
-        # This generates both structures and unions. Since structures
-        # may depend on other structures/unions, we need a list of
-        # decoupled structs.
-        # Note: unions are stored in structs for dependency reasons,
-        # see comment in parsing section.
-        for struct in Type.all(Record):
-            if struct.is_required() and struct.name != "SECURITY_ATTRIBUTES":
-                f.write(struct.definition())
+        for type in Type.all((Record, FunctionPointer)):
+            if type.is_required() and type.name != "SECURITY_ATTRIBUTES":
+                f.write(type.definition())
 
         for func in Type.all(Function, Function.is_required):
             f.write(func.gen_pointer())

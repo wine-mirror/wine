@@ -163,6 +163,23 @@ typedef struct VkClusterAccelerationStructureTriangleClusterInputNV32
     uint32_t minPositionTruncateBitCount;
 } VkClusterAccelerationStructureTriangleClusterInputNV32;
 
+typedef struct VkDebugUtilsLabelEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pLabelName;
+    float color[4];
+} VkDebugUtilsLabelEXT32;
+
+typedef struct VkDebugUtilsObjectNameInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkObjectType objectType;
+    uint64_t DECLSPEC_ALIGN(8) objectHandle;
+    PTR32 pObjectName;
+} VkDebugUtilsObjectNameInfoEXT32;
+
 typedef struct VkDescriptorMappingSourceConstantOffsetEXT32
 {
     uint32_t heapOffset;
@@ -491,6 +508,22 @@ typedef union VkClusterAccelerationStructureOpInputNV32
     PTR32 pTriangleClusters;
     PTR32 pMoveObjects;
 } VkClusterAccelerationStructureOpInputNV32;
+
+typedef struct VkDebugUtilsMessengerCallbackDataEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDebugUtilsMessengerCallbackDataFlagsEXT flags;
+    PTR32 pMessageIdName;
+    int32_t messageIdNumber;
+    PTR32 pMessage;
+    uint32_t queueLabelCount;
+    PTR32 pQueueLabels;
+    uint32_t cmdBufLabelCount;
+    PTR32 pCmdBufLabels;
+    uint32_t objectCount;
+    PTR32 pObjects;
+} VkDebugUtilsMessengerCallbackDataEXT32;
 
 typedef struct VkDescriptorAddressInfoEXT32
 {
@@ -1032,23 +1065,6 @@ typedef struct VkDataGraphPipelineResourceInfoARM32
     uint32_t binding;
     uint32_t arrayElement;
 } VkDataGraphPipelineResourceInfoARM32;
-
-typedef struct VkDebugUtilsLabelEXT32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    PTR32 pLabelName;
-    float color[4];
-} VkDebugUtilsLabelEXT32;
-
-typedef struct VkDebugUtilsObjectNameInfoEXT32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkObjectType objectType;
-    uint64_t DECLSPEC_ALIGN(8) objectHandle;
-    PTR32 pObjectName;
-} VkDebugUtilsObjectNameInfoEXT32;
 
 typedef struct VkDecompressMemoryRegionEXT32
 {
@@ -2914,22 +2930,6 @@ typedef struct VkDebugReportCallbackCreateInfoEXT32
     PTR32 pfnCallback;
     PTR32 pUserData;
 } VkDebugReportCallbackCreateInfoEXT32;
-
-typedef struct VkDebugUtilsMessengerCallbackDataEXT32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkDebugUtilsMessengerCallbackDataFlagsEXT flags;
-    PTR32 pMessageIdName;
-    int32_t messageIdNumber;
-    PTR32 pMessage;
-    uint32_t queueLabelCount;
-    PTR32 pQueueLabels;
-    uint32_t cmdBufLabelCount;
-    PTR32 pCmdBufLabels;
-    uint32_t objectCount;
-    PTR32 pObjects;
-} VkDebugUtilsMessengerCallbackDataEXT32;
 
 typedef struct VkDebugUtilsMessengerCreateInfoEXT32
 {

@@ -1114,6 +1114,8 @@ typedef VkFlags VkShaderStageFlags;
 typedef VkFlags VkImageViewCreateFlags;
 typedef VkFlags VkSampleCountFlags;
 typedef VkFlags VkColorComponentFlags;
+typedef VkFlags VkDebugUtilsMessengerCallbackDataFlagsEXT;
+typedef VkFlags VkDeviceMemoryReportFlagsEXT;
 typedef VkFlags VkGeometryFlagsKHR;
 typedef VkGeometryFlagsKHR VkGeometryFlagsNV;
 typedef VkFlags VkGeometryInstanceFlagsKHR;
@@ -1140,6 +1142,8 @@ typedef VkFlags VkBuildAccelerationStructureFlagsKHR;
 typedef VkBuildAccelerationStructureFlagsKHR VkBuildAccelerationStructureFlagsNV;
 typedef VkFlags VkCompositeAlphaFlagsKHR;
 typedef VkFlags VkCullModeFlags;
+typedef VkFlags VkDebugReportFlagsEXT;
+typedef VkFlags VkDebugUtilsMessageTypeFlagsEXT;
 typedef VkFlags VkDependencyFlags;
 typedef VkFlags VkDeviceQueueCreateFlags;
 typedef VkFlags VkDirectDriverLoadingFlagsLUNARG;
@@ -1195,10 +1199,7 @@ typedef VkFlags VkCommandPoolCreateFlags;
 typedef VkFlags VkConditionalRenderingFlagsEXT;
 typedef VkFlags64 VkDataGraphPipelineDispatchFlagsARM;
 typedef VkFlags64 VkDataGraphPipelineSessionCreateFlagsARM;
-typedef VkFlags VkDebugReportFlagsEXT;
 typedef VkFlags VkDebugUtilsMessageSeverityFlagsEXT;
-typedef VkFlags VkDebugUtilsMessageTypeFlagsEXT;
-typedef VkFlags VkDebugUtilsMessengerCallbackDataFlagsEXT;
 typedef VkFlags VkDebugUtilsMessengerCreateFlagsEXT;
 typedef VkFlags VkDescriptorBindingFlags;
 typedef VkDescriptorBindingFlags VkDescriptorBindingFlagsEXT;
@@ -1210,7 +1211,6 @@ typedef VkFlags VkDeviceAddressBindingFlagsEXT;
 typedef VkFlags VkDeviceCreateFlags;
 typedef VkFlags VkDeviceDiagnosticsConfigFlagsNV;
 typedef VkFlags VkDeviceGroupPresentModeFlagsKHR;
-typedef VkFlags VkDeviceMemoryReportFlagsEXT;
 typedef VkFlags VkDirectFBSurfaceCreateFlagsEXT;
 typedef VkFlags VkDisplayModeCreateFlagsKHR;
 typedef VkFlags VkDisplaySurfaceCreateFlagsKHR;
@@ -7278,16 +7278,6 @@ typedef enum VkViewportCoordinateSwizzleNV
     VK_VIEWPORT_COORDINATE_SWIZZLE_NV_MAX_ENUM = 0x7fffffff,
 } VkViewportCoordinateSwizzleNV;
 
-typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;
-typedef void* (VKAPI_PTR *PFN_vkAllocationFunction)(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
-typedef VkBool32 (VKAPI_PTR *PFN_vkDebugReportCallbackEXT)(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData);
-typedef VkBool32 (VKAPI_PTR *PFN_vkDebugUtilsMessengerCallbackEXT)(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
-typedef void (VKAPI_PTR *PFN_vkFreeFunction)(void* pUserData, void* pMemory);
-typedef void (VKAPI_PTR *PFN_vkInternalAllocationNotification)(void* pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
-typedef void (VKAPI_PTR *PFN_vkInternalFreeNotification)(void* pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
-typedef void* (VKAPI_PTR *PFN_vkReallocationFunction)(void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
-typedef void (VKAPI_PTR *PFN_vkVoidFunction)(void);
-
 typedef struct StdVideoH265HrdFlags
 {
     uint32_t nal_hrd_parameters_present_flag:1;
@@ -7496,6 +7486,8 @@ typedef struct VkSpecializationMapEntry
     uint32_t offset;
     size_t size;
 } VkSpecializationMapEntry;
+
+typedef void (VKAPI_PTR *PFN_vkVoidFunction)(void);
 
 typedef struct StdVideoAV1ColorConfigFlags
 {
@@ -7939,6 +7931,23 @@ typedef struct VkClusterAccelerationStructureTriangleClusterInputNV
     uint32_t maxTotalVertexCount;
     uint32_t minPositionTruncateBitCount;
 } VkClusterAccelerationStructureTriangleClusterInputNV;
+
+typedef struct VkDebugUtilsLabelEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    const char *pLabelName;
+    float color[4];
+} VkDebugUtilsLabelEXT;
+
+typedef struct VkDebugUtilsObjectNameInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkObjectType objectType;
+    uint64_t WINE_VK_ALIGN(8) objectHandle;
+    const char *pObjectName;
+} VkDebugUtilsObjectNameInfoEXT;
 
 typedef struct VkDescriptorMappingSourceConstantOffsetEXT
 {
@@ -8918,6 +8927,22 @@ typedef struct VkCoarseSampleLocationNV
     uint32_t sample;
 } VkCoarseSampleLocationNV;
 
+typedef struct VkDebugUtilsMessengerCallbackDataEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkDebugUtilsMessengerCallbackDataFlagsEXT flags;
+    const char *pMessageIdName;
+    int32_t messageIdNumber;
+    const char *pMessage;
+    uint32_t queueLabelCount;
+    const VkDebugUtilsLabelEXT *pQueueLabels;
+    uint32_t cmdBufLabelCount;
+    const VkDebugUtilsLabelEXT *pCmdBufLabels;
+    uint32_t objectCount;
+    const VkDebugUtilsObjectNameInfoEXT *pObjects;
+} VkDebugUtilsMessengerCallbackDataEXT;
+
 typedef struct VkDescriptorAddressInfoEXT
 {
     VkStructureType sType;
@@ -9217,6 +9242,20 @@ typedef struct VkViewport
     float minDepth;
     float maxDepth;
 } VkViewport;
+
+typedef void* (VKAPI_PTR *PFN_vkAllocationFunction)(void *pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
+
+typedef VkBool32 (VKAPI_PTR *PFN_vkDebugReportCallbackEXT)(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char *pLayerPrefix, const char *pMessage, void *pUserData);
+
+typedef VkBool32 (VKAPI_PTR *PFN_vkDebugUtilsMessengerCallbackEXT)(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData);
+
+typedef void (VKAPI_PTR *PFN_vkFreeFunction)(void *pUserData, void *pMemory);
+
+typedef void (VKAPI_PTR *PFN_vkInternalAllocationNotification)(void *pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
+
+typedef void (VKAPI_PTR *PFN_vkInternalFreeNotification)(void *pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
+
+typedef void* (VKAPI_PTR *PFN_vkReallocationFunction)(void *pUserData, void *pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
 typedef struct StdVideoAV1SequenceHeader
 {
@@ -9659,23 +9698,6 @@ typedef struct VkDataGraphPipelineResourceInfoARM
     uint32_t binding;
     uint32_t arrayElement;
 } VkDataGraphPipelineResourceInfoARM;
-
-typedef struct VkDebugUtilsLabelEXT
-{
-    VkStructureType sType;
-    const void *pNext;
-    const char *pLabelName;
-    float color[4];
-} VkDebugUtilsLabelEXT;
-
-typedef struct VkDebugUtilsObjectNameInfoEXT
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkObjectType objectType;
-    uint64_t WINE_VK_ALIGN(8) objectHandle;
-    const char *pObjectName;
-} VkDebugUtilsObjectNameInfoEXT;
 
 typedef struct VkDecompressMemoryRegionEXT
 {
@@ -12025,22 +12047,6 @@ typedef struct VkDebugReportCallbackCreateInfoEXT
     PFN_vkDebugReportCallbackEXT pfnCallback;
     void *pUserData;
 } VkDebugReportCallbackCreateInfoEXT;
-
-typedef struct VkDebugUtilsMessengerCallbackDataEXT
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkDebugUtilsMessengerCallbackDataFlagsEXT flags;
-    const char *pMessageIdName;
-    int32_t messageIdNumber;
-    const char *pMessage;
-    uint32_t queueLabelCount;
-    const VkDebugUtilsLabelEXT *pQueueLabels;
-    uint32_t cmdBufLabelCount;
-    const VkDebugUtilsLabelEXT *pCmdBufLabels;
-    uint32_t objectCount;
-    const VkDebugUtilsObjectNameInfoEXT *pObjects;
-} VkDebugUtilsMessengerCallbackDataEXT;
 
 typedef struct VkDebugUtilsMessengerCreateInfoEXT
 {
