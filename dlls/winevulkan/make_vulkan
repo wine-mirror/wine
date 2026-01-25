@@ -471,9 +471,6 @@ class Flags(Type):
         type = f"typedef {self.type}" if self.type else "struct"
         return f"{type} {self.name};\n" + Type.definition(self)
 
-    def is_alias(self):
-        return False
-
 
 class Extension(object):
     def __init__(self, name, type=None, platform=None, **kwargs):
@@ -623,12 +620,11 @@ class EnumValue(object):
 
 
 class Function(Type):
-    def __init__(self, _type, name, params, alias=None):
+    def __init__(self, _type, name, params):
         Type.__init__(self, name, requires=[_type] + [p.type_name for p in params])
         self.platforms = set()
         self.type = _type
         self.params = params
-        self.alias = alias
 
         # For some functions we need some extra metadata from FUNCTION_OVERRIDES.
         func_info = FUNCTION_OVERRIDES.get(self.name, {})
@@ -647,7 +643,7 @@ class Function(Type):
     @staticmethod
     def from_alias(command, alias):
         func_name = command.attrib.get("name")
-        return Function(alias.type, func_name, alias.params, alias=alias)
+        return Function(alias.type, func_name, alias.params)
 
     @staticmethod
     def from_xml(command):
@@ -658,9 +654,6 @@ class Function(Type):
         params = filter(is_api_supported, command.findall("param"))
         params = [Parameter.from_xml(param) for param in params]
         return Function(func_type, func_name, params)
-
-    def is_alias(self):
-        return bool(self.alias)
 
     def is_core(self):
         return not self.extensions or any(ext.is_core for ext in self.extensions)
@@ -966,9 +959,6 @@ class FunctionPointer(Type):
     def definition(self):
         return self.value + '\n'
 
-    def is_alias(self):
-        return False
-
 
 class Handle(Type):
     def __init__(self, name, _type, parent):
@@ -1008,9 +998,6 @@ class Handle(Type):
 
     def definition(self):
         return f"{self.type}({self.name})\n" + Type.definition(self)
-
-    def is_alias(self):
-        return False
 
     def is_dispatchable(self):
         """ Some handles like VkInstance, VkDevice are dispatchable objects,
@@ -1824,9 +1811,6 @@ class Record(Type):
         text += f"}} {self.name}{suffix};\n"
         return text + Type.definition(self, suffix) + '\n'
 
-    def is_alias(self):
-        return False
-
     def needs_alignment(self):
         """ Check if structure needs alignment for 64-bit data.
         Various structures need alignment on 64-bit variables due
@@ -2428,7 +2412,7 @@ class Generator(object):
         f.write("    switch(type)\n")
         f.write("    {\n")
         for handle in Type.all(Handle, by_name=True):
-            if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
+            if not handle.is_required() or not handle.is_wrapped():
                 continue
             f.write("    case {}:\n".format(handle.object_type))
             if handle.is_dispatchable():
@@ -2450,7 +2434,7 @@ class Generator(object):
         f.write("{\n")
         f.write("    return FALSE")
         for handle in Type.all(Handle, by_name=True):
-            if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
+            if not handle.is_required() or not handle.is_wrapped():
                 continue
             f.write(" ||\n        type == {}".format(handle.object_type))
         f.write(";\n")
@@ -2644,7 +2628,7 @@ class Generator(object):
             # For backward compatibility also create definitions for aliases.
             # These types normally don't get pulled in as we use the new types
             # even in legacy functions if they are aliases.
-            if handle.is_required() or handle.is_alias():
+            if handle.is_required():
                  f.write(handle.definition())
         f.write("\n")
 
