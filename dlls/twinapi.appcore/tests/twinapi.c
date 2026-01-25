@@ -238,7 +238,9 @@ static void test_AdvertisingManager(void)
 static void test_ApplicationView(void)
 {
     static const WCHAR *class_name = RuntimeClass_Windows_UI_ViewManagement_ApplicationView;
+    IApplicationViewStatics2 *app_view_statics2;
     IActivationFactory *factory;
+    IApplicationView *app_view;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -261,6 +263,17 @@ static void test_ApplicationView(void)
     check_interface( factory, &IID_IActivationFactory, TRUE );
     check_interface( factory, &IID_IApplicationViewStatics, TRUE );
     check_interface( factory, &IID_IApplicationViewStatics2, TRUE );
+
+    /* Test IApplicationViewStatics2 */
+    hr = IActivationFactory_QueryInterface( factory, &IID_IApplicationViewStatics2,
+                                            (void **)&app_view_statics2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IApplicationViewStatics2_GetForCurrentView( app_view_statics2, &app_view );
+    todo_wine
+    ok( hr == 0x80070490, "got hr %#lx.\n", hr );
+
+    IApplicationViewStatics2_Release( app_view_statics2 );
 
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
