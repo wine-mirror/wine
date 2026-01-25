@@ -270,7 +270,6 @@ static void test_ApplicationView(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IApplicationViewStatics2_GetForCurrentView( app_view_statics2, &app_view );
-    todo_wine
     ok( hr == 0x80070490, "got hr %#lx.\n", hr );
 
     IApplicationViewStatics2_Release( app_view_statics2 );

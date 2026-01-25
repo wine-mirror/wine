@@ -158,7 +158,7 @@ DEFINE_IINSPECTABLE(statics2, IApplicationViewStatics2, struct factory, IActivat
 static HRESULT WINAPI statics2_GetForCurrentView(IApplicationViewStatics2 *iface, IApplicationView **current)
 {
     FIXME("iface %p, current %p stub!\n", iface, current);
-    return E_NOTIMPL;
+    return 0x80070490;
 }
 
 static HRESULT WINAPI statics2_get_TerminateAppOnFinalViewClose(IApplicationViewStatics2 *iface, boolean *value)
