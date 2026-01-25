@@ -277,6 +277,7 @@ static DWORD CALLBACK synth_sink_render_thread(void *args)
     if (!(samples = malloc(samples_size)))
     {
         ERR("Failed to allocate memory for samples\n");
+        SetEvent(params->started_event);
         goto done;
     }
 
