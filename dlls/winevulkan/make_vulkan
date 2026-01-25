@@ -457,10 +457,10 @@ class Type(object):
         return None
 
     @staticmethod
-    def all(klass, which=lambda t: True, sort=True, by_name=False):
+    def all(klass, which=lambda t: True, by_name=False):
         klass = [klass] if type(klass) not in (list, tuple) else klass
         types = filter(lambda t: type(t) in klass and which(t), Type.types.values())
-        return sorted(types, key=lambda type: (0 if by_name else -type.order, type.name)) if sort else types
+        return sorted(types, key=lambda type: (0 if by_name else -type.order, type.name))
 
 
 class Flags(Type):
@@ -2601,17 +2601,9 @@ class Generator(object):
         f.write("typedef struct _XDisplay Display;\n")
         f.write("#endif\n")
 
-        # The overall strategy is to define independent constants and datatypes,
-        # prior to complex structures and function calls to avoid forward declarations.
-        for const in Type.all(Constant, sort=False):
-            # For now just generate things we may not need. The amount of parsing needed
-            # to get some of the info is tricky as you need to figure out which structure
-            # references a certain constant.
-            f.write(const.definition())
+        for type in Type.all((Constant, Define)):
+            f.write(type.definition())
         f.write("\n")
-
-        for define in Type.all(Define, sort=False):
-            f.write(define.definition())
 
         for handle in Type.all(Handle, by_name=True):
             # For backward compatibility also create definitions for aliases.
