@@ -25,7 +25,6 @@ import os
 import re
 import urllib.request
 import xml.etree.ElementTree as ET
-from collections import OrderedDict
 from enum import Enum
 
 # This script generates code for a Wine Vulkan ICD driver from Vulkan's vk.xml.
@@ -346,18 +345,6 @@ MEMBER_LENGTH_EXPRESSIONS = {
 }
 
 
-class Context(object):
-    base_types = []
-    bitmasks = []
-    consts = []
-    defines = []
-    enums = []
-    func_ptrs = []
-    handles = []
-    structs = []
-    funcs = []
-
-
 class Direction(Enum):
     """ Parameter direction: input, output, input_output. """
     INPUT = 1
@@ -422,15 +409,19 @@ class Type(object):
     types = {}
     alias = {}
 
-    def __init__(self, name, requires=[]):
+    def __init__(self, name, requires=[], alias=None):
         self.order = 0
         self._required = False
         self.extensions = set()
         self.requires = requires
         self.name = name
 
-        Type.types[name] = self
-        Type.alias[name] = []
+        if not alias:
+            Type.types[name] = self
+            Type.alias[name] = Type.alias.get(name, [])
+        else:
+            Type.alias[name] = alias
+            Type.alias[alias] = Type.alias.get(alias, []) + [name]
 
     def require(self):
         if self._required:
@@ -454,7 +445,7 @@ class Type(object):
             type.set_order(self.order)
 
     def definition(self, suffix=""):
-        aliases = ", ".join(f"{alias}{suffix}" for alias in Type.alias[self.name])
+        aliases = ", ".join(f"{alias}{suffix}" for alias in Type.alias.get(self.name, []))
         return f"typedef {self.name}{suffix} {aliases};\n" if len(aliases) else ""
 
     @staticmethod
@@ -464,6 +455,11 @@ class Type(object):
         if name in Type.alias:
             return Type.get(Type.alias[name])
         return None
+
+    @staticmethod
+    def all(klass, which=lambda t: True, sort=True, by_name=False):
+        types = filter(lambda t: type(t) is klass and which(t), Type.types.values())
+        return sorted(types, key=lambda type: (0 if by_name else -type.order, type.name)) if sort else types
 
 
 class Flags(Type):
@@ -628,7 +624,7 @@ class EnumValue(object):
 
 class Function(Type):
     def __init__(self, _type, name, params, alias=None):
-        Type.__init__(self, name, [_type] + [p.type_name for p in params])
+        Type.__init__(self, name, requires=[_type] + [p.type_name for p in params])
         self.platforms = set()
         self.type = _type
         self.params = params
@@ -1786,7 +1782,7 @@ class Parameter(VkVariable):
 
 class Record(Type):
     def __init__(self, members, name, returnedonly=False, structextends=None, category="struct", **kwargs):
-        Type.__init__(self, name, [m.type_name for m in members])
+        Type.__init__(self, name, requires=[m.type_name for m in members])
         self.union = category == "union"
         self.members = members
         self.returnedonly = returnedonly
@@ -1815,8 +1811,7 @@ class Record(Type):
                     return self.name in struct.structextends
                 return False
 
-            structs = sorted(Context.structs, key=lambda s: s.name)
-            for struct in filter(is_struct_extension, structs):
+            for struct in Type.all(Record, is_struct_extension, by_name=True):
                 self._struct_extensions.append(struct)
 
         return self._struct_extensions
@@ -2360,7 +2355,7 @@ class Generator(object):
         self._parse_features(root)
         self._parse_extensions(root)
 
-        for enum in Context.enums.values():
+        for enum in Type.all(Enum):
             enum.fixup_64bit_aliases()
 
         self._match_object_types()
@@ -2398,9 +2393,9 @@ class Generator(object):
         thunks = ""
         conversions = []
 
-        for vk_func in filter(Function.needs_thunk, Context.funcs.values()):
-            thunks += vk_func.thunk(conversions, prefix="thunk64_")
-            thunks += vk_func.thunk(conversions, prefix="thunk32_", conv=True)
+        for func in Type.all(Function, Function.needs_thunk):
+            thunks += func.thunk(conversions, prefix="thunk64_")
+            thunks += func.thunk(conversions, prefix="thunk32_", conv=True)
 
         # iterate over each of the conversion function dependencies first
         def enum_conversions(conversions, seen=set()):
@@ -2432,7 +2427,7 @@ class Generator(object):
         f.write("{\n")
         f.write("    switch(type)\n")
         f.write("    {\n")
-        for handle in Context.handles:
+        for handle in Type.all(Handle, by_name=True):
             if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
                 continue
             f.write("    case {}:\n".format(handle.object_type))
@@ -2454,7 +2449,7 @@ class Generator(object):
         f.write("BOOL wine_vk_is_type_wrapped(VkObjectType type)\n")
         f.write("{\n")
         f.write("    return FALSE")
-        for handle in Context.handles:
+        for handle in Type.all(Handle, by_name=True):
             if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
                 continue
             f.write(" ||\n        type == {}".format(handle.object_type))
@@ -2467,7 +2462,7 @@ class Generator(object):
         f.write("    init_vulkan,\n")
         f.write("    vk_is_available_instance_function,\n")
         f.write("    vk_is_available_device_function,\n")
-        for func in filter(Function.needs_thunk, Context.funcs.values()):
+        for func in Type.all(Function, Function.needs_thunk):
             f.write(f"    {func.unixlib_entry(64)},\n")
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
@@ -2482,7 +2477,7 @@ class Generator(object):
         f.write("    wow64_init_vulkan,\n")
         f.write("    vk_is_available_instance_function32,\n")
         f.write("    vk_is_available_device_function32,\n")
-        for func in filter(Function.needs_thunk, Context.funcs.values()):
+        for func in Type.all(Function, Function.needs_thunk):
             f.write(f"    {func.unixlib_entry(32)},\n")
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n")
@@ -2498,7 +2493,7 @@ class Generator(object):
 
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
-        for func in filter(Function.needs_private_thunk, Context.funcs.values()):
+        for func in Type.all(Function, Function.needs_private_thunk):
             f.write(func.gen_wrapper())
         f.write("\n")
 
@@ -2511,21 +2506,21 @@ class Generator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
-        for func in filter(Function.needs_loader_thunk, Context.funcs.values()):
+        for func in Type.all(Function, Function.needs_loader_thunk):
             f.write(func.loader_thunk())
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
-        for func in filter(Function.is_client_device, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_client_device):
             f.write(f"    {{\"{func.name}\", {func.name}}},\n")
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_phys_dev_dispatch_table[] =\n{\n")
-        for func in filter(Function.is_client_physical_device, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_client_physical_device):
             f.write(f"    {{\"{func.name}\", {func.name}}},\n")
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
-        for func in filter(Function.is_client_instance, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_client_instance):
             f.write(f"    {{\"{func.name}\", {func.name}}},\n")
         f.write("};\n\n")
 
@@ -2582,7 +2577,7 @@ class Generator(object):
         f.write("    unix_init,\n")
         f.write("    unix_is_available_instance_function,\n")
         f.write("    unix_is_available_device_function,\n")
-        for func in filter(Function.needs_thunk, Context.funcs.values()):
+        for func in Type.all(Function, Function.needs_thunk):
             f.write(f"    unix_{func.name},\n")
         f.write("    unix_count,\n")
         f.write("};\n\n")
@@ -2597,7 +2592,7 @@ class Generator(object):
             ret += "};\n\n"
             return ret
 
-        for func in filter(Function.needs_thunk, Context.funcs.values()):
+        for func in Type.all(Function, Function.needs_thunk):
             f.write(function_params(func))
         f.write("#endif /* __WINE_VULKAN_LOADER_THUNKS_H */\n")
 
@@ -2635,17 +2630,17 @@ class Generator(object):
 
         # The overall strategy is to define independent constants and datatypes,
         # prior to complex structures and function calls to avoid forward declarations.
-        for const in Context.consts:
+        for const in Type.all(Constant, sort=False):
             # For now just generate things we may not need. The amount of parsing needed
             # to get some of the info is tricky as you need to figure out which structure
             # references a certain constant.
             f.write(const.definition())
         f.write("\n")
 
-        for define in Context.defines:
+        for define in Type.all(Define, sort=False):
             f.write(define.definition())
 
-        for handle in Context.handles:
+        for handle in Type.all(Handle, by_name=True):
             # For backward compatibility also create definitions for aliases.
             # These types normally don't get pulled in as we use the new types
             # even in legacy functions if they are aliases.
@@ -2653,25 +2648,18 @@ class Generator(object):
                  f.write(handle.definition())
         f.write("\n")
 
-        # Reorder bitmasks to handle aliases correctly.
-        remaining_bitmasks = list(Context.bitmasks)
-        while len(remaining_bitmasks) > 0:
-            for bitmask in remaining_bitmasks:
-                if bitmask.is_alias() and bitmask.alias in remaining_bitmasks:
-                    continue
-                f.write(bitmask.definition())
-                remaining_bitmasks.remove(bitmask)
-                break
+        for flags in Type.all(Flags):
+            f.write(flags.definition())
         f.write("\n")
 
         # Define enums, this includes values for some of the bitmask types as well.
-        for enum in Context.enums.values():
+        for enum in Type.all(Enum, by_name=True):
             if enum.is_required():
                 f.write(enum.definition())
 
         f.write("typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;\n")
 
-        for fp in Context.func_ptrs:
+        for fp in Type.all(FunctionPointer, by_name=True):
             if fp.is_required():
                 f.write(fp.definition())
         f.write("\n")
@@ -2681,21 +2669,21 @@ class Generator(object):
         # decoupled structs.
         # Note: unions are stored in structs for dependency reasons,
         # see comment in parsing section.
-        for struct in Context.structs:
+        for struct in Type.all(Record):
             if struct.is_required() and struct.name != "SECURITY_ATTRIBUTES":
                 f.write(struct.definition())
 
-        for func in filter(Function.is_required, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_required):
             f.write(func.gen_pointer())
         f.write("\n")
 
         f.write("#ifndef VK_NO_PROTOTYPES\n")
-        for func in filter(Function.is_required, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_required):
             f.write(func.gen_prototype())
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS")
-        for func in filter(Function.is_host_device, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_host_device):
             f.write(f" \\\n    USE_VK_FUNC({func.name})")
         f.write("\n\n")
 
@@ -2712,7 +2700,7 @@ class Generator(object):
         f.write("\n\n")
 
         f.write("#define ALL_VK_INSTANCE_FUNCS")
-        for func in filter(Function.is_host_instance, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_host_instance):
             f.write(f" \\\n    USE_VK_FUNC({func.name})")
         f.write("\n\n")
 
@@ -2736,7 +2724,7 @@ class Generator(object):
         f.write("@ stdcall -private vk_icdGetInstanceProcAddr(ptr str)\n")
         f.write("@ stdcall -private vk_icdGetPhysicalDeviceProcAddr(ptr str)\n")
         f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr)\n")
-        for func in filter(Function.is_core, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_core):
             f.write(func.spec())
         f.write("@ stdcall -private DllRegisterServer()\n")
         f.write("@ stdcall -private DllUnregisterServer()\n")
@@ -2744,18 +2732,18 @@ class Generator(object):
     def generate_vulkan_loader_spec(self, f):
         self._generate_copyright(f, spec_file=True)
 
-        for func in filter(Function.is_core, Context.funcs.values()):
+        for func in Type.all(Function, Function.is_core):
             f.write(func.spec(symbol=f"winevulkan.{func.name}"))
 
     def _match_object_types(self):
         """ Matches each handle with the correct object type. """
         # Use upper case comparison for simplicity.
         object_types = {}
-        for value in Context.enums["VkObjectType"].values:
+        for value in Type.get("VkObjectType").values:
             object_name = "VK" + value.name[len("VK_OBJECT_TYPE"):].replace("_", "")
             object_types[object_name] = value.name
 
-        for handle in Context.handles:
+        for handle in Type.all(Handle):
             if not handle.is_required():
                 continue
             handle.object_type = object_types.get(handle.name.upper())
@@ -2764,7 +2752,6 @@ class Generator(object):
 
     def _parse_commands(self, root):
         """ Parse command section containing the Vulkan function calls. """
-        funcs = {}
         commands = root.findall("./commands/")
 
         # As of Vulkan 1.1, various extensions got promoted to Core.
@@ -2780,18 +2767,12 @@ class Generator(object):
                 alias_commands.append(command)
                 continue
 
-            func = Function.from_xml(command)
-            funcs[func.name] = func
+            Function.from_xml(command)
 
         for command in alias_commands:
             alias_name = command.attrib.get("alias")
-            alias = funcs[alias_name]
-            func = Function.from_alias(command, alias)
-            funcs[func.name] = func
-
-        # The funcs dictionary is used as a convenient way to lookup function
-        # calls when needed e.g. to adjust member variables.
-        Context.funcs = OrderedDict(sorted(funcs.items()))
+            alias = Type.get(alias_name)
+            Function.from_alias(command, alias)
 
     def _parse_enums(self, root):
         """ Parse enums section or better described as constants section. """
@@ -2808,10 +2789,7 @@ class Generator(object):
                 for value in enum.findall("enum"):
                     # If enum is an alias, set the value to the alias name.
                     # E.g. VK_LUID_SIZE_KHR is an alias to VK_LUID_SIZE.
-                    const = Constant(value.get("name"), value.get("alias") or value.get("value"))
-                    Context.consts.append(const)
-
-        Context.enums = OrderedDict(sorted(enums.items()))
+                    Constant(value.get("name"), value.get("alias") or value.get("value"))
 
     def process_enum_alias(self, enum_elem, extension):
         if extends := enum_elem.get("extends"):
@@ -2819,26 +2797,16 @@ class Generator(object):
             # from VK spec version 1.2.135 where the provisional VK_KHR_ray_tracing extension was
             # added which altered VK_NV_ray_tracing's EnumValues to alias to the provisional
             # extension.
-            aliased = False
-            for t in Type.types.values():
-                if type(t) is not Enum:
-                    continue
-                for value in t.values:
-                    if value.alias == enum_elem.attrib["name"]:
-                        aliased = True
-
-            if aliased:
+            if any(value.alias == enum_elem.get("name") for enum in Type.all(Enum) for value in enum.values):
                 Type.get(extends).add(EnumValue.from_xml(enum_elem, extension))
         elif alias := enum_elem.get("alias"):
-            const = Constant(enum_elem.get("name"), alias)
-            Context.consts.append(const)
+            Constant(enum_elem.get("name"), alias)
 
     def process_enum_value(self, enum_elem, extension=None):
         if extends := enum_elem.get("extends"):
             Type.get(extends).add(EnumValue.from_xml(enum_elem, extension))
         elif value := enum_elem.get("value"):
-            const = Constant(enum_elem.get("name"), value)
-            Context.consts.append(const)
+            Constant(enum_elem.get("name"), value)
 
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extension. """
@@ -2893,7 +2861,8 @@ class Generator(object):
             # Set extension name on any functions calls part of this extension as we
             # were not aware of the name during initial parsing.
             for command in ext.findall("require/command"):
-                Context.funcs[command.attrib["name"]].extensions.add(extension)
+                name = command.get("name")
+                Type.get(name).extensions.add(extension)
 
             if not extension.is_supported:
                 return
@@ -2928,8 +2897,8 @@ class Generator(object):
                 # Pull in any commands we need. We infer types to pull in from the command
                 # as well.
                 for command in require.findall("command"):
-                    cmd_name = command.attrib["name"]
-                    Context.funcs[cmd_name].require()
+                    name = command.get("name")
+                    Type.get(name).require()
 
 
             # Store a list with extensions.
@@ -2969,66 +2938,28 @@ class Generator(object):
         """ Parse types section, which contains all data types e.g. structs, typedefs etcetera. """
         types = root.findall("./types/type")
 
-        base_types = []
-        bitmasks = []
-        defines = []
-        funcpointers = []
-        handles = []
-        structs = []
-
-        alias_types = []
         for t in filter(is_api_supported, types):
             category, requires = t.get("category"), t.get("requires")
             name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
 
-            # We parse aliases in a second pass when we know more.
-            alias = t.attrib.get("alias")
-            if alias:
-                LOGGER.debug("Alias found: {0}".format(alias))
-                alias_types.append(t)
+            if alias := t.get("alias"):
+                Type(name, alias=alias)
                 continue
 
             if category == "basetype":
-                define = Define.from_xml(t)
-                defines.append(define)
-
+                Define.from_xml(t)
             elif category == "bitmask":
-                # Most bitmasks have a requires attribute used to pull in
-                # required '*FlagBits" enum.
-                bitmask = Flags(name, t.findtext("type"), requires=requires)
-                bitmasks.append(bitmask)
-
+                Flags(name, t.findtext("type"), requires=requires)
             elif category == "define":
-                define = Define.from_xml(t)
-                defines.append(define)
-
+                Define.from_xml(t)
             elif category == "funcpointer":
-                funcpointer = FunctionPointer.from_xml(t)
-                funcpointers.append(funcpointer)
-
+                FunctionPointer.from_xml(t)
             elif category == "handle":
-                handle = Handle.from_xml(t)
-                handles.append(handle)
-
+                Handle.from_xml(t)
             elif category in ["struct", "union"]:
-                # We store unions among structs as some structs depend
-                # on unions. The types are very similar in parsing and
-                # generation anyway. The official Vulkan scripts use
-                # a similar kind of hack.
-                struct = Record.from_xml(t)
-                structs.append(struct)
-
+                Record.from_xml(t)
             elif name not in Type.types:
                 Type(name)
-
-        # Second pass for alias types, so we can retrieve all data from
-        # the aliased object.
-        for t in alias_types:
-            name = t.findtext("name") or t.findtext("proto/name") or t.get("name")
-
-            alias = t.get("alias")
-            Type.alias[alias].append(name)
-            Type.alias[name] = alias
 
         # We need detailed type information during code generation
         # on structs for alignment reasons. Unfortunately structs
@@ -3037,16 +2968,6 @@ class Generator(object):
         # the data now.
         for type in Type.types.values():
             type.set_order()
-
-        # Guarantee everything is sorted, so code generation doesn't have
-        # to deal with this.
-        Context.base_types = sorted(base_types, key=lambda base_type: base_type.name)
-        Context.bitmasks = sorted(bitmasks, key=lambda bitmask: bitmask.name)
-        Context.defines = defines
-        Context.enums = OrderedDict(sorted(Context.enums.items()))
-        Context.func_ptrs = sorted(funcpointers, key=lambda fp: fp.value)
-        Context.handles = sorted(handles, key=lambda handle: handle.name)
-        Context.structs = sorted(structs, key=lambda struct: (-struct.order, struct.name))
 
 def generate_vulkan_json(f):
     f.write("{\n")
