@@ -3035,9 +3035,8 @@ class Generator(object):
         # are parsed among other types, so there is no guarantee
         # that any types needed have been parsed already, so set
         # the data now.
-        structs = {struct.name: struct for struct in structs}
-        for struct in structs.values():
-            struct.set_order()
+        for type in Type.types.values():
+            type.set_order()
 
         # Guarantee everything is sorted, so code generation doesn't have
         # to deal with this.
@@ -3047,7 +3046,7 @@ class Generator(object):
         Context.enums = OrderedDict(sorted(Context.enums.items()))
         Context.func_ptrs = sorted(funcpointers, key=lambda fp: fp.value)
         Context.handles = sorted(handles, key=lambda handle: handle.name)
-        Context.structs = sorted(structs.values(), key=lambda struct: (-struct.order, struct.name))
+        Context.structs = sorted(structs, key=lambda struct: (-struct.order, struct.name))
 
 def generate_vulkan_json(f):
     f.write("{\n")
