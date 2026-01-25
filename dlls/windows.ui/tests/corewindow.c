@@ -42,7 +42,9 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
 static void test_CoreWindow(void)
 {
     static const WCHAR *class_name = RuntimeClass_Windows_UI_Core_CoreWindow;
+    ICoreWindowStatic *core_window_static;
     IActivationFactory *factory;
+    ICoreWindow *core_window;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -64,6 +66,26 @@ static void test_CoreWindow(void)
     check_interface( factory, &IID_IInspectable, TRUE );
     check_interface( factory, &IID_IActivationFactory, TRUE );
     check_interface( factory, &IID_ICoreWindowStatic, TRUE );
+
+    /* Test ICoreWindowStatic */
+    hr = IActivationFactory_QueryInterface( factory, &IID_ICoreWindowStatic, (void **)&core_window_static );
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+
+    /* Crash on Windows */
+    if (0)
+    {
+    hr = ICoreWindowStatic_GetForCurrentThread( core_window_static, 0 );
+    ok( hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr );
+    }
+
+    /* How to create a ICoreWindow? */
+    core_window = (ICoreWindow *)0xdeadbeef;
+    hr = ICoreWindowStatic_GetForCurrentThread( core_window_static, &core_window );
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    todo_wine
+    ok( core_window == NULL, "Got unexpected core_window.\n" );
+
+    ICoreWindowStatic_Release( core_window_static );
 
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "Got unexpected ref %ld.\n", ref );
