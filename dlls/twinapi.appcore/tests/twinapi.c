@@ -39,6 +39,8 @@
 #include "windows.system.userprofile.h"
 #define WIDL_using_Windows_UI_ViewManagement
 #include "windows.ui.viewmanagement.h"
+#define WIDL_using_Windows_ApplicationModel_Core
+#include "windows.applicationmodel.core.h"
 
 #include "wine/test.h"
 
@@ -264,6 +266,35 @@ static void test_ApplicationView(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_CoreApplication(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_ApplicationModel_Core_CoreApplication;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (FAILED( hr ))
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown, TRUE );
+    check_interface( factory, &IID_IInspectable, TRUE );
+    check_interface( factory, &IID_IAgileObject, TRUE );
+    check_interface( factory, &IID_IActivationFactory, TRUE );
+
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(twinapi)
 {
     HRESULT hr;
@@ -275,6 +306,7 @@ START_TEST(twinapi)
     test_AnalyticsVersionInfo();
     test_AdvertisingManager();
     test_ApplicationView();
+    test_CoreApplication();
 
     RoUninitialize();
 }
