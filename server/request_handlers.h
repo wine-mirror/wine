@@ -70,6 +70,7 @@ DECL_HANDLER(socket_get_icmp_id);
 DECL_HANDLER(get_next_console_request);
 DECL_HANDLER(read_directory_changes);
 DECL_HANDLER(read_change);
+DECL_HANDLER(unmount_device);
 DECL_HANDLER(create_mapping);
 DECL_HANDLER(open_mapping);
 DECL_HANDLER(get_mapping_info);
@@ -382,6 +383,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_next_console_request,
     (req_handler)req_read_directory_changes,
     (req_handler)req_read_change,
+    (req_handler)req_unmount_device,
     (req_handler)req_create_mapping,
     (req_handler)req_open_mapping,
     (req_handler)req_get_mapping_info,
@@ -1084,6 +1086,8 @@ C_ASSERT( sizeof(struct read_directory_changes_request) == 64 );
 C_ASSERT( offsetof(struct read_change_request, handle) == 12 );
 C_ASSERT( sizeof(struct read_change_request) == 16 );
 C_ASSERT( sizeof(struct read_change_reply) == 8 );
+C_ASSERT( offsetof(struct unmount_device_request, dev) == 12 );
+C_ASSERT( sizeof(struct unmount_device_request) == 16 );
 C_ASSERT( offsetof(struct create_mapping_request, access) == 12 );
 C_ASSERT( offsetof(struct create_mapping_request, flags) == 16 );
 C_ASSERT( offsetof(struct create_mapping_request, file_access) == 20 );

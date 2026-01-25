@@ -4579,6 +4579,13 @@ static NTSTATUS unmount_device( HANDLE handle )
             status = STATUS_INVALID_PARAMETER;
         else
         {
+            SERVER_START_REQ( unmount_device )
+            {
+                req->dev = st.st_rdev;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+
             if ((mount_point = get_device_mount_point( st.st_rdev )))
             {
 #ifdef __APPLE__
@@ -6777,10 +6784,7 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
     switch (code)
     {
     case FSCTL_DISMOUNT_VOLUME:
-        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
-                                    in_buffer, in_size, out_buffer, out_size );
-        if (!status) status = unmount_device( handle );
-        return status;
+        return unmount_device( handle );
 
     case FSCTL_PIPE_IMPERSONATE:
         FIXME("FSCTL_PIPE_IMPERSONATE: impersonating self\n");

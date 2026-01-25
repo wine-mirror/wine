@@ -2305,35 +2305,15 @@ static int is_dir_empty( int fd )
     return empty;
 }
 
-static inline int is_valid_mounted_device( struct stat *st )
-{
-#if defined(linux) || defined(__sun__)
-    return S_ISBLK( st->st_mode );
-#else
-    /* disks are char devices on *BSD */
-    return S_ISCHR( st->st_mode );
-#endif
-}
-
 /* close all Unix file descriptors on a device to allow unmounting it */
-static void unmount_device( struct fd *device_fd )
+static void unmount_device( dev_t dev )
 {
     unsigned int i;
-    struct stat st;
     struct device *device;
     struct inode *inode;
     struct fd *fd;
-    int unix_fd = get_unix_fd( device_fd );
 
-    if (unix_fd == -1) return;
-
-    if (fstat( unix_fd, &st ) == -1 || !is_valid_mounted_device( &st ))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
-    if (!(device = get_device( st.st_rdev, -1 ))) return;
+    if (!(device = get_device( dev, -1 ))) return;
 
     for (i = 0; i < INODE_HASH_SIZE; i++)
     {
@@ -2638,10 +2618,6 @@ void default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     switch(code)
     {
-    case FSCTL_DISMOUNT_VOLUME:
-        unmount_device( fd );
-        break;
-
     case FSCTL_SET_REPARSE_POINT:
         set_reparse_point( fd, async );
         break;
@@ -3255,4 +3231,9 @@ DECL_HANDLER(set_fd_eof_info)
         set_fd_eof( fd, req->eof );
         release_object( fd );
     }
+}
+
+DECL_HANDLER(unmount_device)
+{
+    unmount_device( req->dev );
 }
