@@ -457,9 +457,10 @@ class Type(object):
         return None
 
     @staticmethod
-    def all(klass, which=lambda t: True, by_name=False):
+    def all(klass, which=lambda t: True, by_name=False, required=True):
+        types = filter(lambda t: t.is_required() if required else True, Type.types.values())
         klass = [klass] if type(klass) not in (list, tuple) else klass
-        types = filter(lambda t: type(t) in klass and which(t), Type.types.values())
+        types = filter(lambda t: type(t) in klass and which(t), types)
         return sorted(types, key=lambda type: (0 if by_name else -type.order, type.name))
 
 
@@ -708,13 +709,13 @@ class Function(Type):
 
     def needs_exposing(self):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
-        return self.is_required() and (not self.extensions or any(ext.is_exposed for ext in self.extensions))
+        return not self.extensions or any(ext.is_exposed for ext in self.extensions)
 
     def is_host_instance(self):
-        return self.is_required() and self.dispatch and self.is_instance()
+        return self.dispatch and self.is_instance()
 
     def is_host_device(self):
-        return self.is_required() and self.dispatch and self.is_device()
+        return self.dispatch and self.is_device()
 
     def is_client_instance(self):
         return self.needs_exposing() and self.is_instance()
@@ -1841,8 +1842,6 @@ class Record(Type):
             is_const = True
 
         for e in struct_extensions:
-            if not e.is_required():
-                continue
             if e.needs_conversion(conv, Unwrap.HOST, direction, is_const, check_extensions=False):
                 return True
             if direction == Direction.INPUT:
@@ -2086,9 +2085,6 @@ class StructConversionFunction(object):
                 body += ident + "break;\n"
 
             for ext in self.operand.struct_extensions:
-                if not ext.is_required():
-                    continue
-
                 if self.direction == Direction.OUTPUT and not any([self.member_needs_copy(ext, m) for m in ext.members]):
                     continue
 
@@ -2383,7 +2379,7 @@ class Generator(object):
         for definition, conversion in enum_conversions(conversions):
             if isinstance(conversion, StructConversionFunction):
                 for e in conversion.operand.struct_extensions:
-                    if not e.is_required() or not e.needs_win32_type():
+                    if not e.needs_win32_type():
                         continue
                     win32_structs.append(e)
                 if conversion.operand.needs_win32_type():
@@ -2400,9 +2396,7 @@ class Generator(object):
         f.write("{\n")
         f.write("    switch(type)\n")
         f.write("    {\n")
-        for handle in Type.all(Handle, by_name=True):
-            if not handle.is_required() or not handle.is_wrapped():
-                continue
+        for handle in Type.all(Handle, Handle.is_wrapped, by_name=True):
             f.write("    case {}:\n".format(handle.object_type))
             if handle.is_dispatchable():
                 f.write("        return (uint64_t) (uintptr_t) ")
@@ -2422,9 +2416,7 @@ class Generator(object):
         f.write("BOOL wine_vk_is_type_wrapped(VkObjectType type)\n")
         f.write("{\n")
         f.write("    return FALSE")
-        for handle in Type.all(Handle, by_name=True):
-            if not handle.is_required() or not handle.is_wrapped():
-                continue
+        for handle in Type.all(Handle, Handle.is_wrapped, by_name=True):
             f.write(" ||\n        type == {}".format(handle.object_type))
         f.write(";\n")
         f.write("}\n\n")
@@ -2601,7 +2593,7 @@ class Generator(object):
         f.write("typedef struct _XDisplay Display;\n")
         f.write("#endif\n")
 
-        for type in Type.all((Constant, Define)):
+        for type in Type.all((Constant, Define), required=False):
             f.write(type.definition())
         f.write("\n")
 
@@ -2609,8 +2601,7 @@ class Generator(object):
             # For backward compatibility also create definitions for aliases.
             # These types normally don't get pulled in as we use the new types
             # even in legacy functions if they are aliases.
-            if handle.is_required():
-                 f.write(handle.definition())
+            f.write(handle.definition())
         f.write("\n")
 
         for flags in Type.all(Flags):
@@ -2619,19 +2610,18 @@ class Generator(object):
 
         # Define enums, this includes values for some of the bitmask types as well.
         for enum in Type.all(Enum, by_name=True):
-            if enum.is_required():
-                f.write(enum.definition())
+            f.write(enum.definition())
 
         for type in Type.all((Record, FunctionPointer)):
-            if type.is_required() and type.name != "SECURITY_ATTRIBUTES":
+            if type.name != "SECURITY_ATTRIBUTES":
                 f.write(type.definition())
 
-        for func in Type.all(Function, Function.is_required):
+        for func in Type.all(Function):
             f.write(func.gen_pointer())
         f.write("\n")
 
         f.write("#ifndef VK_NO_PROTOTYPES\n")
-        for func in Type.all(Function, Function.is_required):
+        for func in Type.all(Function):
             f.write(func.gen_prototype())
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
 
@@ -2677,7 +2667,7 @@ class Generator(object):
         f.write("@ stdcall -private vk_icdGetInstanceProcAddr(ptr str)\n")
         f.write("@ stdcall -private vk_icdGetPhysicalDeviceProcAddr(ptr str)\n")
         f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr)\n")
-        for func in Type.all(Function, Function.is_core):
+        for func in Type.all(Function, Function.is_core, required=False):
             f.write(func.spec())
         f.write("@ stdcall -private DllRegisterServer()\n")
         f.write("@ stdcall -private DllUnregisterServer()\n")
@@ -2685,7 +2675,7 @@ class Generator(object):
     def generate_vulkan_loader_spec(self, f):
         self._generate_copyright(f, spec_file=True)
 
-        for func in Type.all(Function, Function.is_core):
+        for func in Type.all(Function, Function.is_core, required=False):
             f.write(func.spec(symbol=f"winevulkan.{func.name}"))
 
     def _match_object_types(self):
@@ -2697,8 +2687,6 @@ class Generator(object):
             object_types[object_name] = value.name
 
         for handle in Type.all(Handle):
-            if not handle.is_required():
-                continue
             handle.object_type = object_types.get(handle.name.upper())
             if not handle.object_type:
                 LOGGER.warning("No object type found for {}".format(handle.name))
