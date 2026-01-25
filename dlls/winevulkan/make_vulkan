@@ -490,16 +490,6 @@ class Extension(object):
         self.is_core = name in CORE_EXTENSIONS
 
 
-class VkConstant(object):
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-    def definition(self):
-        text = "#define {0} {1}\n".format(self.name, self.value)
-        return text
-
-
 class Define(Type):
     def __init__(self, name, value, requires=None):
         Type.__init__(self, name, requires=requires if requires else [])
@@ -524,6 +514,11 @@ class Define(Type):
 
     def definition(self):
         return self.value + '\n'
+
+
+class Constant(Define):
+    def __init__(self, name, value):
+        Define.__init__(self, name, f"#define {name} {value}")
 
 
 class Enum(Type):
@@ -604,6 +599,18 @@ class EnumValue(object):
         else:
             self.hex = "0x" in value
             self.value = int(value, 0)
+
+    @staticmethod
+    def from_xml(element, extension):
+        if offset := element.get("offset"):
+            # Extensions promoted to Core, have the extension number as part
+            # of the enum value. Else retrieve from the extension tag.
+            number = element.get("extnumber") or extension.get("number")
+            value = EXT_BASE + (int(number) - 1) * EXT_BLOCK_SIZE + int(offset)
+            value *= int((element.get("dir") or "+") + "1")
+            return EnumValue(**element.attrib, value=str(value))
+
+        return EnumValue(**element.attrib)
 
     def is_alias(self):
         return self.alias is not None
@@ -2869,18 +2876,13 @@ class Generator(object):
                 for value in enum.findall("enum"):
                     # If enum is an alias, set the value to the alias name.
                     # E.g. VK_LUID_SIZE_KHR is an alias to VK_LUID_SIZE.
-                    alias = value.attrib.get("alias")
-                    if alias:
-                        Context.consts.append(VkConstant(value.attrib.get("name"), alias))
-                    else:
-                        Context.consts.append(VkConstant(value.attrib.get("name"), value.attrib.get("value")))
+                    const = Constant(value.get("name"), value.get("alias") or value.get("value"))
+                    Context.consts.append(const)
 
         Context.enums = OrderedDict(sorted(enums.items()))
 
-    def _process_require_enum(self, enum_elem, ext=None, only_aliased=False):
-        if "extends" in enum_elem.keys():
-            enum = Type.get(enum_elem.attrib["extends"])
-
+    def process_enum_alias(self, enum_elem, extension):
+        if extends := enum_elem.get("extends"):
             # Need to define EnumValues which were aliased to by another value. This is necessary
             # from VK spec version 1.2.135 where the provisional VK_KHR_ray_tracing extension was
             # added which altered VK_NV_ray_tracing's EnumValues to alias to the provisional
@@ -2893,40 +2895,18 @@ class Generator(object):
                     if value.alias == enum_elem.attrib["name"]:
                         aliased = True
 
-            if only_aliased and not aliased:
-                return
+            if aliased:
+                Type.get(extends).add(EnumValue.from_xml(enum_elem, extension))
+        elif alias := enum_elem.get("alias"):
+            const = Constant(enum_elem.get("name"), alias)
+            Context.consts.append(const)
 
-            if "offset" in enum_elem.keys():
-                # Extensions promoted to Core, have the extension number as part
-                # of the enum value. Else retrieve from the extension tag.
-                if enum_elem.attrib.get("extnumber"):
-                    ext_number = int(enum_elem.attrib.get("extnumber"))
-                else:
-                    ext_number = int(ext.attrib["number"])
-                offset = int(enum_elem.attrib["offset"])
-                value = EXT_BASE + (ext_number - 1) * EXT_BLOCK_SIZE + offset
-
-                # Deal with negative values.
-                direction = enum_elem.attrib.get("dir")
-                if direction is not None:
-                    value = -value
-
-                enum.add(EnumValue(**enum_elem.attrib, value=str(value)))
-            else:
-                enum.add(EnumValue(**enum_elem.attrib))
-
-        elif "value" in enum_elem.keys():
-            # Constant with an explicit value
-            if only_aliased:
-                return
-
-            Context.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
-        elif "alias" in enum_elem.keys():
-            # Aliased constant
-            if not only_aliased:
-                return
-
-            Context.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["alias"]))
+    def process_enum_value(self, enum_elem, extension=None):
+        if extends := enum_elem.get("extends"):
+            Type.get(extends).add(EnumValue.from_xml(enum_elem, extension))
+        elif value := enum_elem.get("value"):
+            const = Constant(enum_elem.get("name"), value)
+            Context.consts.append(const)
 
     def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extension. """
@@ -2991,7 +2971,7 @@ class Generator(object):
             for require in ext.findall("require"):
                 # Extensions can add enum values to Core / extension enums, so add these.
                 for enum_elem in require.findall("enum"):
-                    self._process_require_enum(enum_elem, ext, only_aliased=True)
+                    self.process_enum_alias(enum_elem, ext)
 
             LOGGER.debug("Loading extension: {0}".format(extension.name))
 
@@ -3001,7 +2981,7 @@ class Generator(object):
             for require in ext.findall("require"):
                 # Extensions can add enum values to Core / extension enums, so add these.
                 for enum_elem in require.findall("enum"):
-                    self._process_require_enum(enum_elem, ext)
+                    self.process_enum_value(enum_elem, ext)
 
                 for t in require.findall("type"):
                     # video.xml uses "type" to include various headers,
@@ -3051,7 +3031,7 @@ class Generator(object):
                     if type := Type.get(tag.get("name")):
                         type.require()
                     if tag.tag == "enum":
-                        self._process_require_enum(tag)
+                        self.process_enum_value(tag)
 
     def _parse_types(self, root):
         """ Parse types section, which contains all data types e.g. structs, typedefs etcetera. """
