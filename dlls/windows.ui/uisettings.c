@@ -197,10 +197,46 @@ static HRESULT WINAPI uisettings_get_MouseHoverTime( IUISettings *iface, UINT32 
     return E_NOTIMPL;
 }
 
+static void colorref_to_winui_color( COLORREF colorref, Color *color )
+{
+    color->A = 255;
+    color->R = GetRValue( colorref );
+    color->G = GetGValue( colorref );
+    color->B = GetBValue( colorref );
+}
+
 static HRESULT WINAPI uisettings_UIElementColor( IUISettings *iface, enum UIElementType element, struct Color *value )
 {
-    FIXME( "iface %p, element %d value %p stub!\n", iface, element, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, element %d value %p.\n", iface, element, value );
+
+    switch (element)
+    {
+#define X( element_type, syscolor_index )                                \
+    case element_type:                                                   \
+        colorref_to_winui_color( GetSysColor( syscolor_index ), value ); \
+        break;
+
+    X( UIElementType_ActiveCaption, COLOR_ACTIVECAPTION )
+    X( UIElementType_Background, COLOR_BACKGROUND )
+    X( UIElementType_ButtonFace, COLOR_BTNFACE )
+    X( UIElementType_ButtonText, COLOR_BTNTEXT )
+    X( UIElementType_CaptionText, COLOR_CAPTIONTEXT )
+    X( UIElementType_GrayText, COLOR_GRAYTEXT )
+    X( UIElementType_Highlight, COLOR_HIGHLIGHT )
+    X( UIElementType_HighlightText, COLOR_HIGHLIGHTTEXT )
+    X( UIElementType_Hotlight, COLOR_HOTLIGHT )
+    X( UIElementType_InactiveCaption, COLOR_INACTIVECAPTION )
+    X( UIElementType_InactiveCaptionText, COLOR_INACTIVECAPTIONTEXT )
+    X( UIElementType_Window, COLOR_WINDOW )
+    X( UIElementType_WindowText, COLOR_WINDOWTEXT )
+
+#undef X
+    default:
+        memset( value, 0, sizeof(*value) );
+        break;
+    }
+
+    return S_OK;
 }
 
 static const struct IUISettingsVtbl uisettings_vtbl =
