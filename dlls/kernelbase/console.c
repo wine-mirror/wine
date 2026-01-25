@@ -2340,8 +2340,8 @@ void WINAPI ClosePseudoConsole( HPCON handle )
  */
 HRESULT WINAPI ResizePseudoConsole( HPCON handle, COORD size )
 {
-    FIXME( "%p (%u,%u)\n", handle, size.X, size.Y );
-    return E_NOTIMPL;
+    FIXME( "%p (%u,%u) stub, faking success\n", handle, size.X, size.Y );
+    return S_OK;
 }
 
 static BOOL is_tty_handle( HANDLE handle )
