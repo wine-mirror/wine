@@ -2467,9 +2467,15 @@ static void test_GetClusterMetrics(void)
     hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, ARRAY_SIZE(metrics), &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 4, "got %u\n", count);
-    for (i = 0; i < count; i++) {
-        ok(metrics[i].width > 0.0, "%u: got width %.2f\n", i, metrics[i].width);
-        ok(metrics[i].length == 1, "%u: got length %u\n", i, metrics[i].length);
+    for (i = 0; i < count; i++)
+    {
+        winetest_push_context("Test %#x", i);
+
+        ok(metrics[i].width > 0.0, "Unexpected width %.8e.\n", metrics[i].width);
+        ok(metrics[i].length == 1, "Unexpected length %u.\n", metrics[i].length);
+        ok(!metrics[i].padding, "Unexpected padding %#x.\n", metrics[i].padding);
+
+        winetest_pop_context();
     }
 
     /* apply spacing and check widths again */
@@ -2546,6 +2552,7 @@ static void test_GetClusterMetrics(void)
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#lx.\n", hr);
     ok(count == 3, "got %u\n", count);
     ok(metrics[0].length == 2, "got %u\n", metrics[0].length);
+    ok(!metrics[0].padding, "Unexpected value %#x.\n", metrics[0].padding);
 
     hr = IDWriteInlineObject_GetMetrics(trimm, &inline_metrics);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2950,6 +2957,7 @@ static void test_GetClusterMetrics(void)
     hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 4, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 4, "got %u\n", count);
+    ok(!metrics[3].padding, "Unexpected padding %#x.\n", metrics[3].padding);
 
     hr = IDWriteTextLayout_GetLineMetrics(layout, &line, 1, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3013,6 +3021,18 @@ static void test_GetClusterMetrics(void)
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0f, 0.0f);
     ok(hr == S_OK, "Draw() failed, hr %#lx.\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_trimmed_seq, "Trimmed draw test", FALSE);
+
+    IDWriteTextLayout_Release(layout);
+
+    /* No text */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"", 0, format, 1000.0f, 200.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#lx.\n", hr);
+
+    count = 1;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, ARRAYSIZE(metrics), &count);
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#lx.\n", hr);
+    ok(!count, "Unexpected cluster count %u.\n", count);
 
     IDWriteTextLayout_Release(layout);
 
@@ -4427,6 +4447,19 @@ static void test_GetLineMetrics(void)
     }
     else
         win_skip("Proportional spacing is not supported.\n");
+
+    /* No text */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"", 0, format, 1000.0f, 200.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#lx.\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAYSIZE(metrics), &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected line count %u.\n", count);
+    ok(metrics[0].height > 0.0f, "Unexpected line height %.8e.\n", metrics[0].height);
+
+    IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
     IDWriteFontFace_Release(fontface);
