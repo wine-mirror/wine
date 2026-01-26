@@ -2787,7 +2787,6 @@ static void test_GetClusterMetrics(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 4, "Unexpected count %u.\n", count);
     ok(!metrics[0].isWhitespace, "Unexpected value %d.\n", metrics[0].isWhitespace);
-    todo_wine
     ok(metrics[1].isWhitespace == 1, "Unexpected value %d.\n", metrics[1].isWhitespace);
     ok(!metrics[2].isWhitespace, "Unexpected value %d.\n", metrics[2].isWhitespace);
     ok(metrics[3].isWhitespace == 1, "Unexpected value %d.\n", metrics[3].isWhitespace);
@@ -3401,7 +3400,6 @@ static void test_DetermineMinWidth(void)
     hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, ARRAYSIZE(metrics), &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 2, "Unexpected count %u.\n", count);
-    todo_wine
     ok(metrics[1].isWhitespace, "Unexpected value %d.\n", metrics[1].isWhitespace);
 
     hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_NO_WRAP);
@@ -3410,7 +3408,6 @@ static void test_DetermineMinWidth(void)
     minwidth = 0.0f;
     hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(minwidth == metrics[0].width, "Unexpected width %.8e.\n", minwidth);
 
     IDWriteTextLayout_Release(layout);
@@ -3426,7 +3423,6 @@ static void test_DetermineMinWidth(void)
     minwidth = 0.0f;
     hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(minwidth == 0.0f, "Unexpected width %.8e.\n", minwidth);
 
     IDWriteTextLayout_Release(layout);
@@ -4554,7 +4550,6 @@ static void test_GetLineMetrics(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 2, "Unexpected count %u.\n", count);
     ok(!clusters[0].isWhitespace, "Unexpected value %d.\n", clusters[0].isWhitespace);
-    todo_wine
     ok(clusters[1].isWhitespace, "Unexpected value %d.\n", clusters[1].isWhitespace);
 
     count = 0;
@@ -4562,7 +4557,6 @@ static void test_GetLineMetrics(void)
     hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAYSIZE(metrics), &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 1, "Unexpected line count %u.\n", count);
-    todo_wine
     ok(metrics[0].trailingWhitespaceLength == 1, "Unexpected length %u.\n", metrics[0].trailingWhitespaceLength);
     ok(metrics[0].length == 2, "Unexpected length %u.\n", metrics[0].length);
 

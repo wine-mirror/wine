@@ -432,11 +432,8 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
         UINT32 start, UINT32 length)
 {
     DWRITE_BREAK_CONDITION before, after;
-    HRESULT hr;
 
-    /* ignore returned conditions if failed */
-    hr = IDWriteInlineObject_GetBreakConditions(object, &before, &after);
-    if (FAILED(hr))
+    if (FAILED(IDWriteInlineObject_GetBreakConditions(object, &before, &after)))
         after = before = DWRITE_BREAK_CONDITION_NEUTRAL;
 
     if (!layout->actual_breakpoints)
@@ -474,7 +471,6 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
             layout->actual_breakpoints[i].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
         }
 
-        layout->actual_breakpoints[i].isWhitespace = 0;
         layout->actual_breakpoints[i].isSoftHyphen = 0;
     }
 
@@ -1340,7 +1336,9 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         DWRITE_FONT_METRICS fontmetrics = { 0 };
 
         /* we need to do very little in case of inline objects */
-        if (r->kind == LAYOUT_RUN_INLINE) {
+        if (r->kind == LAYOUT_RUN_INLINE)
+        {
+            DWRITE_LINE_BREAKPOINT bp = get_effective_breakpoint(layout, r->start_position);
             DWRITE_CLUSTER_METRICS *metrics = &layout->clustermetrics[cluster];
             struct layout_cluster *c = &layout->clusters[cluster];
             DWRITE_INLINE_OBJECT_METRICS inlinemetrics;
@@ -1348,7 +1346,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             metrics->width = 0.0f;
             metrics->length = r->u.object.length;
             metrics->canWrapLineAfter = 0;
-            metrics->isWhitespace = 0;
+            metrics->isWhitespace = bp.isWhitespace;
             metrics->isNewline = 0;
             metrics->isSoftHyphen = 0;
             metrics->isRightToLeft = r->u.object.bidi_level & 1;
@@ -2065,8 +2063,6 @@ static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cl
         struct layout_cluster *lc = &layout->clusters[index];
         WCHAR ch;
 
-        /* This also filters out clusters added from inline objects, those are never
-           treated as a white space. */
         if (!cluster->isWhitespace)
             break;
 
