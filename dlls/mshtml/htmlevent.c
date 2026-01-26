@@ -4748,10 +4748,11 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
         return set_event_handler_disp(event_target, eid, V_DISPATCH(var));
 
     case VT_BSTR: {
+        compat_mode_t compat_mode = dispex_compat_mode(&event_target->dispex);
         VARIANT *v;
         HRESULT hres;
 
-        if(!use_event_quirks(event_target))
+        if(compat_mode == COMPAT_MODE_IE8)
             FIXME("Setting to string %s not supported\n", debugstr_w(V_BSTR(var)));
 
         /*
@@ -4761,6 +4762,8 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
          * properties.
          */
         remove_event_handler(event_target, eid);
+        if(compat_mode >= COMPAT_MODE_IE9)
+            return S_OK;
 
         hres = get_event_dispex_ref(event_target, eid, TRUE, &v);
         if(FAILED(hres))

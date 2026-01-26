@@ -2545,7 +2545,6 @@ static void test_onclick(IHTMLDocument2 *doc)
         ok(V_VT(&v) == VT_BSTR, "V_VT(onclick) = %d\n", V_VT(&v));
         ok(!lstrcmpW(V_BSTR(&v), L"function();"), "V_BSTR(onclick) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     }else {
-        todo_wine
         ok(V_VT(&v) == VT_NULL, "V_VT(onclick) = %d\n", V_VT(&v));
     }
     VariantClear(&v);

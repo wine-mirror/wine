@@ -2892,7 +2892,6 @@ sync_test("elem_attr", function() {
     ok(r === (v < 9 ? "test" : "string"), "onclick attr = " + r);
     r = elem.removeAttribute("onclick");
     ok(r === (v < 9 ? true : undefined), "removeAttribute returned " + r);
-    todo_wine_if(v >= 9).
     ok(elem.onclick === null, "removed onclick = " + elem.onclick);
 
     elem.setAttribute("ondblclick", arr);
