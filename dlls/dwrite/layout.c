@@ -2072,7 +2072,7 @@ static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cl
 
         /* Every isNewline cluster is also isWhitespace, but not every
            newline character cluster has isNewline set, so go back to original string. */
-        ch = lc->run->u.regular.descr.string[lc->position];
+        ch = layout->text[lc->run->start_position + lc->position];
         if (cluster->length == 1 && lb_is_newline_char(ch))
             metrics.newlineLength += cluster->length;
 
