@@ -3317,10 +3317,13 @@ static void test_DetermineMinWidth(void)
         { {'a','\n',' ',' ','b',0}, {'b',0} },
         { {'a','b','c','\n',' ',' ','b',0}, {'a','b','c',0} },
     };
+    DWRITE_INLINE_OBJECT_METRICS inline_metrics;
     DWRITE_CLUSTER_METRICS metrics[10];
+    IDWriteInlineObject *sign;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE range;
     UINT32 count, i, j;
     FLOAT minwidth;
     HRESULT hr;
@@ -3351,6 +3354,8 @@ static void test_DetermineMinWidth(void)
     for (i = 0; i < ARRAY_SIZE(minwidth_tests); i++) {
         FLOAT width = 0.0f;
 
+        winetest_push_context("Test %u", i);
+
         /* measure expected width */
         hr = IDWriteFactory_CreateTextLayout(factory, minwidth_tests[i].mintext, lstrlenW(minwidth_tests[i].mintext), format, 1000.0f, 1000.0f, &layout);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3369,10 +3374,64 @@ static void test_DetermineMinWidth(void)
         minwidth = 0.0f;
         hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(minwidth == width, "test %u: expected width %f, got %f\n", i, width, minwidth);
+        ok(minwidth == width, "Unexpected width %.8e, got %.8e.\n", width, minwidth);
 
         IDWriteTextLayout_Release(layout);
+
+        winetest_pop_context();
     }
+
+    /* Trailing white space, replaced with by an inline object. */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a ", 2, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDWriteInlineObject_GetMetrics(sign, &inline_metrics);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(inline_metrics.width > 0.0f, "Unexpected width %.8e.\n", inline_metrics.width);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, sign, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, ARRAYSIZE(metrics), &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+    todo_wine
+    ok(metrics[1].isWhitespace, "Unexpected value %d.\n", metrics[1].isWhitespace);
+
+    hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_NO_WRAP);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    minwidth = 0.0f;
+    hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(minwidth == metrics[0].width, "Unexpected width %.8e.\n", minwidth);
+
+    IDWriteTextLayout_Release(layout);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, L" ", 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    range.startPosition = 0;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, sign, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    minwidth = 0.0f;
+    hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(minwidth == 0.0f, "Unexpected width %.8e.\n", minwidth);
+
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteInlineObject_Release(sign);
 
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
@@ -4127,7 +4186,10 @@ static void test_GetLineMetrics(void)
     static const WCHAR strW[] = {'a','b','c','d',' ',0};
     static const WCHAR str2W[] = {'a','b','\r','c','d',0};
     static const WCHAR str4W[] = {'a','\r',0};
+    struct test_inline_obj *inline_object;
     IDWriteFontCollection *syscollection;
+    DWRITE_CLUSTER_METRICS clusters[16];
+    DWRITE_TEXT_METRICS text_metrics;
     DWRITE_FONT_METRICS fontmetrics;
     DWRITE_LINE_METRICS metrics[6];
     UINT32 count, i, familycount;
@@ -4459,6 +4521,58 @@ static void test_GetLineMetrics(void)
     ok(count == 1, "Unexpected line count %u.\n", count);
     ok(metrics[0].height > 0.0f, "Unexpected line height %.8e.\n", metrics[0].height);
 
+    IDWriteTextLayout_Release(layout);
+
+    /* Trailing spaces, replaced by an inline object. */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a ", 2, format, 1000.0f, 200.0f, &layout);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAYSIZE(clusters), &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+    ok(!clusters[0].isWhitespace, "Unexpected value %d.\n", clusters[0].isWhitespace);
+    ok(clusters[1].isWhitespace, "Unexpected value %d.\n", clusters[1].isWhitespace);
+
+    inline_object = create_test_inline_object(&testinlineobjvtbl);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAYSIZE(metrics), &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected line count %u.\n", count);
+    ok(metrics[0].trailingWhitespaceLength == 1, "Unexpected length %u.\n", metrics[0].trailingWhitespaceLength);
+    ok(metrics[0].length == 2, "Unexpected length %u.\n", metrics[0].length);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, &inline_object->IDWriteInlineObject_iface, range);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAYSIZE(clusters), &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+    ok(!clusters[0].isWhitespace, "Unexpected value %d.\n", clusters[0].isWhitespace);
+    todo_wine
+    ok(clusters[1].isWhitespace, "Unexpected value %d.\n", clusters[1].isWhitespace);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, ARRAYSIZE(metrics), &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected line count %u.\n", count);
+    todo_wine
+    ok(metrics[0].trailingWhitespaceLength == 1, "Unexpected length %u.\n", metrics[0].trailingWhitespaceLength);
+    ok(metrics[0].length == 2, "Unexpected length %u.\n", metrics[0].length);
+
+    hr = IDWriteTextLayout_GetMetrics(layout, &text_metrics);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(text_metrics.width == clusters[0].width, "Unexpected width %.8e.\n", text_metrics.width);
+    ok(text_metrics.widthIncludingTrailingWhitespace == (clusters[0].width + clusters[1].width),
+            "Unexpected width %.8e.\n", text_metrics.widthIncludingTrailingWhitespace);
+
+    IDWriteInlineObject_Release(&inline_object->IDWriteInlineObject_iface);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
