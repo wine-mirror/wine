@@ -785,8 +785,27 @@ static void NSAPI nsDocumentObserver_AttributeWillChange(nsIDocumentObserver *if
 }
 
 static void NSAPI nsDocumentObserver_AttributeChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        void *aElement, LONG aNameSpaceID, nsIAtom *aAttribute, LONG aModType, const nsAttrValue *aOldValue)
+        /*mozilla::dom::Element*/ void *aElement, LONG aNameSpaceID, nsIAtom *aAttribute, LONG aModType, const nsAttrValue *aOldValue)
 {
+    HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
+    nsIDOMElement *elem;
+    nsAString name_str;
+    const WCHAR *name;
+    nsresult nsres;
+
+    nsAString_Init(&name_str, NULL);
+    nsres = nsIAtom_ScriptableToString(aAttribute, &name_str);
+    assert(nsres == NS_OK);
+    nsAString_GetData(&name_str, &name);
+
+    TRACE("(%p)->(%p, %s)\n", This, aElement, debugstr_w(name));
+
+    nsres = nsISupports_QueryInterface(aElement, &IID_nsIDOMElement, (void **)&elem);
+    assert(nsres == NS_OK);
+
+    event_attr_changed(This, elem, name);
+    nsAString_Finish(&name_str);
+    nsIDOMElement_Release(elem);
 }
 
 static void NSAPI nsDocumentObserver_NativeAnonymousChildListChange(nsIDocumentObserver *iface, nsIDocument *aDocument,

@@ -4884,6 +4884,45 @@ void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
     }
 }
 
+void event_attr_changed(HTMLDocumentNode *doc, nsIDOMElement *nselem, const WCHAR *name)
+{
+    nsAString name_str, value_str;
+    const PRUnichar *value;
+    HTMLDOMNode *node;
+    IDispatch *disp;
+    eventid_t eid;
+    nsresult nsres;
+    HRESULT hres;
+
+    eid = attr_to_eid(name);
+    if(eid == EVENTID_LAST)
+        return;
+
+    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
+    if(FAILED(hres))
+        return;
+
+    nsAString_InitDepend(&name_str, name);
+    nsAString_InitDepend(&value_str, NULL);
+
+    nsres = nsIDOMElement_GetAttribute(nselem, &name_str, &value_str);
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&value_str, &value);
+
+        TRACE("%p.%s = %s\n", nselem, debugstr_w(name), debugstr_w(value));
+
+        disp = script_parse_event(doc->window, value);
+        if(disp) {
+            set_event_handler_disp(get_node_event_prop_target(node, eid), eid, disp);
+            IDispatch_Release(disp);
+        }
+    }
+
+    node_release(node);
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&value_str);
+}
+
 void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
 {
     nsIDOMMozNamedAttrMap *attr_map;

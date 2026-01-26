@@ -3169,6 +3169,39 @@ sync_test("elem_attrNS", function() {
     ok(r === "13", "numattr = " + r);
 });
 
+
+var rec;
+
+sync_test("event attr", function() {
+    document.body.innerHTML = '<div></div>';
+    var elem = document.body.firstChild, prev;
+    var v = document.documentMode;
+
+    ok(elem.onclick === null, "elem.onclick = " + elem.onclick);
+    elem.setAttribute("onclick", "rec += 'attr';");
+    if (v < 8)
+        ok(elem.onclick === "rec += 'attr';", "elem.onclick = " + elem.onclick);
+    else
+        todo_wine_if(v == 8).
+        ok(typeof(elem.onclick) === "function", "elem.onclick = " + elem.onclick);
+    rec = "";
+    elem.click();
+    todo_wine_if(v == 8).
+    ok(rec === (v < 8 ? "" : "attr"), "unexpected rec = " + rec );
+
+    elem.setAttribute("onclick", "rec += 'attr2';");
+    rec = "";
+    elem.click();
+    todo_wine_if(v == 8).
+    ok(rec === (v < 8 ? "" : "attr2"), "unexpected rec = " + rec );
+
+    elem.onclick = "rec += 'prop';";
+    ok(elem.onclick === (v < 9 ? "rec += 'prop';" : null), "elem.onclick = " + elem.onclick);
+    rec = "";
+    elem.click();
+    ok(rec === "", "unexpected rec = " + rec );
+});
+
 sync_test("builtins_diffs", function() {
     var v = document.documentMode;
 
