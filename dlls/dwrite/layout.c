@@ -2042,25 +2042,28 @@ static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout)
     return layout_set_line_metrics(layout, &metrics);
 }
 
-static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cluster, UINT32 last_cluster,
-        UINT32 *textpos)
+static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cluster,
+        UINT32 cluster_count, UINT32 *textpos)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_final_splitting_params params, prev_params;
     DWRITE_INLINE_OBJECT_METRICS sign_metrics = { 0 };
-    UINT32 line = layout->metrics.lineCount, i;
+    UINT32 count, start, end, pos = *textpos;
+    UINT32 line = layout->metrics.lineCount;
     DWRITE_LINE_METRICS1 metrics = { 0 };
-    UINT32 index, start, pos = *textpos;
     FLOAT descent, trailingspacewidth;
-    BOOL append_trimming_run = FALSE;
+    bool append_trimming_run = false;
     const struct layout_run *run;
     float width = 0.0f, origin_x;
     HRESULT hr;
 
-    /* Take a look at clusters we got for this line in reverse order to set trailing properties for current line */
-    for (index = last_cluster, trailingspacewidth = 0.0f; index >= first_cluster; index--) {
-        DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
-        struct layout_cluster *lc = &layout->clusters[index];
+    /* Set trailing properties for current line */
+    trailingspacewidth = 0.0f;
+    count = cluster_count;
+    while (count--)
+    {
+        DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[first_cluster + count];
+        struct layout_cluster *lc = &layout->clusters[first_cluster + count];
         WCHAR ch;
 
         if (!cluster->isWhitespace)
@@ -2074,48 +2077,54 @@ static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cl
 
         metrics.trailingWhitespaceLength += cluster->length;
         trailingspacewidth += cluster->width;
-
-        if (index == 0)
-            break;
     }
 
-    /* Line metrics length includes trailing whitespace length too */
-    for (i = first_cluster; i <= last_cluster; i++)
+    /* Line length includes every cluster. */
+    for (UINT32 i = first_cluster; i < first_cluster + cluster_count; ++i)
         metrics.length += layout->clustermetrics[i].length;
 
     /* Ignore trailing whitespaces */
-    while (last_cluster > first_cluster) {
-        if (!layout->clustermetrics[last_cluster].isWhitespace)
-            break;
-
-        last_cluster--;
-    }
+    while (cluster_count && layout->clustermetrics[first_cluster + cluster_count - 1].isWhitespace)
+        --cluster_count;
 
     /* Does not include trailing space width */
-    if (!layout->clustermetrics[last_cluster].isWhitespace)
-        width = get_cluster_range_width(layout, first_cluster, last_cluster + 1);
+    width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
 
     /* Append trimming run if necessary */
-    if (width > layout->metrics.layoutWidth && layout->format.trimmingsign != NULL &&
-            layout->format.trimming.granularity != DWRITE_TRIMMING_GRANULARITY_NONE) {
+
+    if (width > layout->metrics.layoutWidth
+            && cluster_count > 1
+            && layout->format.trimmingsign != NULL
+            && layout->format.trimming.granularity != DWRITE_TRIMMING_GRANULARITY_NONE)
+    {
         FLOAT trimmed_width = width;
 
         hr = IDWriteInlineObject_GetMetrics(layout->format.trimmingsign, &sign_metrics);
-        if (SUCCEEDED(hr)) {
-            while (last_cluster > first_cluster) {
+        if (SUCCEEDED(hr))
+        {
+            while (cluster_count)
+            {
                 if (trimmed_width + sign_metrics.width <= layout->metrics.layoutWidth)
                     break;
+
                 if (layout->format.trimming.granularity == DWRITE_TRIMMING_GRANULARITY_CHARACTER)
-                    trimmed_width -= layout->clustermetrics[last_cluster--].width;
-                else {
-                    while (last_cluster > first_cluster) {
-                        trimmed_width -= layout->clustermetrics[last_cluster].width;
-                        if (layout->clustermetrics[last_cluster--].canWrapLineAfter)
+                {
+                    --cluster_count;
+                    trimmed_width -= layout->clustermetrics[first_cluster + cluster_count].width;
+                }
+                else /* DWRITE_TRIMMING_GRANULARITY_WORD */
+                {
+                    while (cluster_count)
+                    {
+                        --cluster_count;
+                        trimmed_width -= layout->clustermetrics[first_cluster + cluster_count].width;
+                        if (layout->clustermetrics[first_cluster + cluster_count].canWrapLineAfter)
                             break;
                     }
                 }
             }
-            append_trimming_run = TRUE;
+
+            append_trimming_run = true;
         }
         else
             WARN("Failed to get trimming sign metrics, lines won't be trimmed, hr %#lx.\n", hr);
@@ -2129,30 +2138,32 @@ static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cl
 
     /* Form runs from a range of clusters; this is what will be reported with DrawGlyphRun() */
     origin_x = is_rtl ? layout->metrics.layoutWidth : 0.0f;
-    for (start = first_cluster, i = first_cluster; i <= last_cluster; i++) {
+    for (start = first_cluster, end = first_cluster; end < first_cluster + cluster_count; ++end)
+    {
         layout_splitting_params_from_pos(layout, pos, &params);
 
-        if (run != layout->clusters[i].run || !is_same_splitting_params(&prev_params, &params)) {
-            hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, &prev_params);
+        if (run != layout->clusters[end].run || !is_same_splitting_params(&prev_params, &params))
+        {
+            hr = layout_add_effective_run(layout, run, start, end - start, line, origin_x, &prev_params);
             if (FAILED(hr))
                 return hr;
 
-            origin_x += is_rtl ? -get_cluster_range_width(layout, start, i) :
-                get_cluster_range_width(layout, start, i);
-            run = layout->clusters[i].run;
-            start = i;
+            origin_x += is_rtl ? -get_cluster_range_width(layout, start, end) :
+                    get_cluster_range_width(layout, start, end);
+            run = layout->clusters[end].run;
+            start = end;
         }
 
         prev_params = params;
-        pos += layout->clustermetrics[i].length;
+        pos += layout->clustermetrics[end].length;
     }
 
     /* Final run from what's left from cluster range */
-    if (FAILED(hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, &prev_params)))
-        return hr;
-
-    if (get_cluster_range_width(layout, start, i) + sign_metrics.width > layout->metrics.layoutWidth)
-        append_trimming_run = FALSE;
+    if (end - start)
+    {
+        if (FAILED(hr = layout_add_effective_run(layout, run, start, end - start, line, origin_x, &prev_params)))
+            return hr;
+    }
 
     if (append_trimming_run)
     {
@@ -2163,7 +2174,7 @@ static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cl
 
         trimming_sign->object = layout->format.trimmingsign;
         trimming_sign->width = sign_metrics.width;
-        origin_x += is_rtl ? -get_cluster_range_width(layout, start, i) : get_cluster_range_width(layout, start, i);
+        origin_x += is_rtl ? -get_cluster_range_width(layout, start, end) : get_cluster_range_width(layout, start, end);
         trimming_sign->origin.x = is_rtl ? origin_x - trimming_sign->width : origin_x;
         trimming_sign->origin.y = 0.0f; /* set after line is built */
         trimming_sign->align_dx = 0.0f;
@@ -2173,22 +2184,24 @@ static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cl
         trimming_sign->is_rtl = false;
         trimming_sign->line = line;
 
-        trimming_sign->effect = layout_get_effect_from_pos(layout, layout->clusters[i].position +
-                layout->clusters[i].run->start_position);
+        trimming_sign->effect = layout_get_effect_from_pos(layout, layout->clusters[end].position +
+                layout->clusters[end].run->start_position);
 
         list_add_tail(&layout->inlineobjects, &trimming_sign->draw_entry);
         list_add_tail(&layout->effective_runs, &trimming_sign->entry);
     }
 
     /* Look for max baseline and descent for this line */
-    for (index = first_cluster, metrics.baseline = 0.0f, descent = 0.0f; index <= last_cluster; index++) {
-        const struct layout_run *cur = layout->clusters[index].run;
-        FLOAT cur_descent = cur->height - cur->baseline;
+    run = layout->clusters[first_cluster].run;
+    metrics.baseline = run->baseline;
+    descent = run->height - run->baseline;
 
-        if (cur->baseline > metrics.baseline)
-            metrics.baseline = cur->baseline;
-        if (cur_descent > descent)
-            descent = cur_descent;
+    for (UINT32 cluster = first_cluster + 1; cluster < first_cluster + cluster_count; ++cluster)
+    {
+        run = layout->clusters[cluster].run;
+
+        metrics.baseline = max(metrics.baseline, run->baseline);
+        descent = max(descent, run->height - run->baseline);
     }
 
     layout->metrics.width = max(width, layout->metrics.width);
@@ -2243,7 +2256,7 @@ static bool layout_can_wrap_after(const struct dwrite_textlayout *layout, UINT32
 static HRESULT layout_compute_lines(struct dwrite_textlayout *layout)
 {
     bool wraps = layout->format.wrapping != DWRITE_WORD_WRAPPING_NO_WRAP;
-    UINT32 remaining_clusters = layout->cluster_count;
+    UINT32 remaining_clusters = layout->cluster_count, cluster_count;
     UINT32 start_cluster, end_cluster, break_cluster;
     UINT32 text_position = 0;
     float width, max_width;
@@ -2292,10 +2305,11 @@ static HRESULT layout_compute_lines(struct dwrite_textlayout *layout)
             }
         }
 
-        if (FAILED(hr = layout_add_line(layout, start_cluster, end_cluster, &text_position)))
+        cluster_count = end_cluster - start_cluster + 1;
+        if (FAILED(hr = layout_add_line(layout, start_cluster, cluster_count, &text_position)))
             break;
 
-        remaining_clusters -= end_cluster - start_cluster + 1;
+        remaining_clusters -= cluster_count;
 
         start_cluster = end_cluster + 1;
     }
