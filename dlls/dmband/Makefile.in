@@ -2,10 +2,12 @@ MODULE    = dmband.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 PARENTSRC = ../dmusic
 
+VER_FILEDESCRIPTION_STR = "Wine DirectMusic Band"
+VER_PRODUCTVERSION      = 5,3,0,900
+
 SOURCES = \
 	band.c \
 	bandtrack.c \
 	dmband.idl \
 	dmband_main.c \
-	dmobject.c \
-	version.rc
+	dmobject.c

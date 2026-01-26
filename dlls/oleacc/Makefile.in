@@ -2,6 +2,9 @@ MODULE    = oleacc.dll
 IMPORTLIB = oleacc
 IMPORTS   = uuid oleaut32 ole32 user32 rpcrt4
 
+VER_FILEDESCRIPTION_STR = "Wine OLE Accessibility"
+VER_PRODUCTVERSION      = 7,0,0,0
+
 SOURCES = \
 	client.c \
 	main.c \

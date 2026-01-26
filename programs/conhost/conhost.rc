@@ -116,11 +116,5 @@ FONT 8, "MS Shell Dlg"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
-#define WINE_FILEDESCRIPTION_STR "Wine conhost"
-#define WINE_FILENAME_STR "conhost.exe"
-#define WINE_FILEVERSION 6,1,7601,22045
-
-#include "wine/wine_common_ver.rc"
-
 /* @makedep: conhost.manifest */
 1 RT_MANIFEST conhost.manifest

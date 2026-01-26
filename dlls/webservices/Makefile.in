@@ -2,6 +2,9 @@ MODULE    = webservices.dll
 IMPORTLIB = webservices
 IMPORTS   = winhttp rpcrt4 user32 ws2_32
 
+VER_FILEDESCRIPTION_STR = "Wine Web Services"
+VER_PRODUCTVERSION      = 10,0,14393,0
+
 SOURCES = \
 	channel.c \
 	error.c \
@@ -10,7 +13,6 @@ SOURCES = \
 	msg.c \
 	proxy.c \
 	reader.c \
-	rsrc.rc \
 	string.c \
 	url.c \
 	writer.c

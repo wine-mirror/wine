@@ -3,6 +3,9 @@ IMPORTS   = oleaut32 ole32 urlmon shlwapi user32 gdi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine Media Player"
+VER_PRODUCTVERSION      = 12,0,7601,16982
+
 SOURCES = \
 	events.c \
 	oleobj.c \

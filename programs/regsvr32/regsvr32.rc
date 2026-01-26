@@ -55,10 +55,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: regsvr32.manifest */
 1 RT_MANIFEST regsvr32.manifest
-
-#define WINE_FILEDESCRIPTION_STR "Wine Register Server"
-#define WINE_FILENAME_STR "REGSVR32.EXE"
-#define WINE_FILETYPE VFT_APP
-#define WINE_FILEVERSION 5,1,2600,2180
-
-#include "wine/wine_common_ver.rc"

@@ -5,6 +5,8 @@ IMPORTS = d3dcompiler d3dx11
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine D3DX11"
+VER_PRODUCTVERSION      = 9,29,952,3111
+
 SOURCES = \
-	d3dx11_42_main.c \
-	version.rc
+	d3dx11_42_main.c

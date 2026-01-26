@@ -59,13 +59,6 @@ FONT 8, "MS Shell Dlg"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
-#define WINE_FILEDESCRIPTION_STR "Wine HTML Viewer"
-#define WINE_FILENAME_STR "mshtml.dll"
-#define WINE_FILEVERSION 6,0,2800,1106
-#define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
-
-#include "wine/wine_common_ver.rc"
-
 /* @makedep: mshtml.inf */
 REGINST REGINST mshtml.inf
 

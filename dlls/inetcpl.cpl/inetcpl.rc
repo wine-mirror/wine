@@ -136,14 +136,6 @@ END
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
-#define WINE_FILENAME_STR "inetcpl.cpl"
-#define WINE_FILEDESCRIPTION_STR "Internet Control Panel"
-
-/* Same Version as IE 8 on WinXP */
-#define WINE_FILEVERSION      8,0,6001,18939
-
-#include "wine/wine_common_ver.rc"
-
 /* @makedep: inetcpl.manifest */
 123 RT_MANIFEST inetcpl.manifest
 

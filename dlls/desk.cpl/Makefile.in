@@ -1,6 +1,8 @@
 MODULE    = desk.cpl
 IMPORTS   = advapi32 ole32 comctl32 user32 gdi32
 
+VER_FILEDESCRIPTION_STR = "Display Settings Panel"
+
 SOURCES = \
 	desk.rc \
 	desk.svg \

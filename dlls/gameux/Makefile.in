@@ -1,9 +1,12 @@
 MODULE    = gameux.dll
 IMPORTS   = uuid shell32 oleaut32 ole32 user32 advapi32 shlwapi
 
+VER_FILEDESCRIPTION_STR = "Wine Games Explorer"
+VER_PRODUCTVERSION      = 6,1,7600,16385
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	factory.c \
 	gameexplorer.c \
 	gamestatistics.c \
-	gameux_tlb.idl \
-	rsrc.rc
+	gameux_tlb.idl

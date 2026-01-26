@@ -3,7 +3,8 @@ IMPORTLIB = imm32
 IMPORTS   = user32 gdi32 advapi32 kernelbase win32u
 DELAYIMPORTS = ole32
 
+VER_PRODUCTVERSION = 5,1,2600,2180
+
 SOURCES = \
 	ime.c \
-	imm.c \
-	version.rc
+	imm.c

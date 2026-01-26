@@ -2,6 +2,7 @@ MODULE    = robocopy.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
+VER_PRODUCTVERSION = 5,1,10,1027
+
 SOURCES = \
-	main.c \
-	robocopy.rc
+	main.c

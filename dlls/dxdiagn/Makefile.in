@@ -1,6 +1,9 @@
 MODULE    = dxdiagn.dll
 IMPORTS   = strmiids dxguid d3d9 ddraw dsound version ole32 oleaut32 user32 advapi32
 
+VER_FILEDESCRIPTION_STR = "Wine DxDiag 8"
+VER_PRODUCTVERSION      = 5,3,1,904
+
 SOURCES = \
 	container.c \
 	dxdiag_main.c \

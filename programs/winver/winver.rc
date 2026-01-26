@@ -18,12 +18,5 @@
 #include <windef.h>
 #include <winuser.h>
 
-#define WINE_FILEDESCRIPTION_STR "Windows Version"
-#define WINE_FILENAME_STR "winver.exe"
-#define WINE_FILETYPE VFT_APP
-#define WINE_FILEVERSION 5,1,2600,0
-
-#include "wine/wine_common_ver.rc"
-
 /* @makedep: winver.manifest */
 1 RT_MANIFEST winver.manifest

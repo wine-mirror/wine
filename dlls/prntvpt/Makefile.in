@@ -2,7 +2,9 @@ MODULE    = prntvpt.dll
 IMPORTLIB = prntvpt
 IMPORTS   = gdi32 winspool ole32 oleaut32
 
+VER_FILEDESCRIPTION_STR = "Print Ticket Services Module"
+VER_PRODUCTVERSION      = 10,0,19041,3636
+
 SOURCES = \
 	main.c \
-	prntvpt.rc \
 	ticket.c

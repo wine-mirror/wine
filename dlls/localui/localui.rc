@@ -56,14 +56,3 @@ BEGIN
     DEFPUSHBUTTON "OK", IDOK, 164, 10, 50, 14, WS_VISIBLE
     PUSHBUTTON "Cancel", IDCANCEL, 164, 27, 50, 14, WS_VISIBLE
 END
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#define WINE_FILENAME_STR "localui.dll"
-#define WINE_FILEDESCRIPTION_STR "User Interface for the Local Monitor"
-
-/* Same Version as WinXP_sp2 */
-#define WINE_FILEVERSION      5,1,2600,2180
-
-
-#include "wine/wine_common_ver.rc"

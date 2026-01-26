@@ -2,6 +2,8 @@ MODULE    = d3d10core.dll
 IMPORTLIB = d3d10core
 IMPORTS   = d3d11 dxgi
 
+VER_FILEDESCRIPTION_STR = "Wine D3D10 Core"
+VER_PRODUCTVERSION      = 6,0,6000,16386
+
 SOURCES = \
-	d3d10core_main.c \
-	version.rc
+	d3d10core_main.c

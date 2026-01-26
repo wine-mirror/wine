@@ -3,6 +3,9 @@ IMPORTS   = shell32 comctl32
 
 EXTRADLLFLAGS = -mwindows
 
+VER_FILEDESCRIPTION_STR = "Windows Version"
+VER_PRODUCTVERSION      = 5,1,2600,0
+
 SOURCES = \
 	winver.c \
 	winver.rc

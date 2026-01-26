@@ -3,6 +3,8 @@ IMPORTLIB = d3dx10_36
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine D3DX10"
+VER_PRODUCTVERSION      = 9,19,949,2009
+
 SOURCES = \
-	d3dx10_36_main.c \
-	version.rc
+	d3dx10_36_main.c

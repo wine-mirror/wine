@@ -4,6 +4,8 @@ IMPORTLIB = rpcrt4
 IMPORTS   = uuid advapi32
 DELAYIMPORTS = iphlpapi wininet secur32 user32 ws2_32 ole32 oleaut32
 
+VER_PRODUCTVERSION = 5,1,2600,2180
+
 SOURCES = \
 	cproxy.c \
 	cpsf.c \
@@ -26,5 +28,4 @@ SOURCES = \
 	rpc_server.c \
 	rpc_transport.c \
 	rpcrt4_main.c \
-	thunks.c \
-	version.rc
+	thunks.c

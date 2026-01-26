@@ -2,6 +2,9 @@ MODULE = light.msstyles
 
 EXTRADLLFLAGS = -Wb,--data-only
 
+VER_FILEDESCRIPTION_STR = "Light Theme"
+VER_PRODUCTVERSION      = 1,0,0,1
+
 SOURCES = \
 	blue_button.svg \
 	blue_checkbox_13px.svg \

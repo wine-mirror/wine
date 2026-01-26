@@ -3,6 +3,9 @@ IMPORTS   = oleaut32 ole32 user32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine VBScript"
+VER_PRODUCTVERSION      = 5,8,7601,16978
+
 SOURCES = \
 	compile.c \
 	global.c \

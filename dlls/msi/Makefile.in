@@ -4,6 +4,8 @@ IMPORTS   = uuid urlmon wininet comctl32 shell32 shlwapi cabinet oleaut32 ole32 
 
 EXTRAIDLFLAGS = --prefix-server=s_
 
+VER_PRODUCTVERSION = 4,5,6001,22308
+
 SOURCES = \
 	action.c \
 	alter.c \

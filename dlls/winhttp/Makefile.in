@@ -4,13 +4,15 @@ IMPORTLIB = winhttp
 IMPORTS   = uuid jsproxy user32 advapi32 ws2_32
 DELAYIMPORTS = oleaut32 crypt32 secur32 iphlpapi dhcpcsvc
 
+VER_FILEDESCRIPTION_STR = "Wine HTTP Library"
+VER_PRODUCTVERSION      = 5,1,2600,2180
+
 SOURCES = \
 	cookie.c \
 	handle.c \
 	main.c \
 	net.c \
 	request.c \
-	rsrc.rc \
 	session.c \
 	url.c \
 	winhttp_tlb.idl

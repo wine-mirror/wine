@@ -2,10 +2,12 @@ MODULE    = d3dxof.dll
 IMPORTLIB = d3dxof
 IMPORTS   = dxguid uuid ole32 advapi32
 
+VER_FILEDESCRIPTION_STR = "DirectX Files dll"
+VER_PRODUCTVERSION      = 5,0,2135,1
+
 SOURCES = \
 	d3dxof.c \
 	d3dxof.idl \
 	main.c \
 	mszip.c \
-	parsing.c \
-	version.rc
+	parsing.c

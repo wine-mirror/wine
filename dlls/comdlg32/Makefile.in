@@ -4,6 +4,9 @@ IMPORTLIB = comdlg32
 IMPORTS   = uuid shell32 shlwapi comctl32 user32 gdi32 advapi32
 DELAYIMPORTS = ole32 winspool
 
+VER_FILEDESCRIPTION_STR = "Common Dialog Boxes"
+VER_PRODUCTVERSION      = 6,0,2900,5512
+
 SOURCES = \
 	cdlg32.c \
 	colordlg.c \

@@ -4,6 +4,8 @@ IMPORTLIB = ole32
 IMPORTS   = uuid advapi32 user32 gdi32 combase rpcrt4 kernelbase coml2
 DELAYIMPORTS = oleaut32
 
+VER_OLESELFREGISTER = 1
+
 SOURCES = \
 	antimoniker.c \
 	bindctx.c \

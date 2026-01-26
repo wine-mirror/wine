@@ -4,6 +4,9 @@ IMPORTLIB = vulkan-1
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine Vulkan Loader"
+# Set to 1.0.0 so the official Vulkan runtime installer will replace this file
+VER_PRODUCTVERSION      = 1,0,0,0
+
 SOURCES = \
-	version.rc \
 	vulkan.c

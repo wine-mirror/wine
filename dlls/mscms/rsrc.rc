@@ -1,5 +1,5 @@
 /*
- * Version information for mscms.dll
+ * Resources for mscms.dll
  *
  * Copyright 2004 Hans Leidekker
  *
@@ -20,8 +20,3 @@
 
 /* @makedep: srgb2014.icc */
 1 WINE_DATA_FILE srgb2014.icc
-
-#define WINE_FILEDESCRIPTION_STR "Wine Color Management System"
-#define WINE_FILENAME_STR "mscms.dll"
-
-#include <wine/wine_common_ver.rc>

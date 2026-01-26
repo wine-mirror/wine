@@ -2,6 +2,10 @@ MODULE    = dsound.dll
 IMPORTLIB = dsound
 IMPORTS   = dxguid uuid winmm ole32 advapi32 user32
 
+VER_FILEDESCRIPTION_STR = "Wine DirectSound"
+VER_PRODUCTVERSION      = 5,3,1,904
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	buffer.c \
 	capture.c \
@@ -13,5 +17,4 @@ SOURCES = \
 	mixer.c \
 	primary.c \
 	propset.c \
-	sound3d.c \
-	version.rc
+	sound3d.c

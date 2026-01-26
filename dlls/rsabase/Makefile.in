@@ -1,5 +1,4 @@
 MODULE    = rsabase.dll
 IMPORTS   = rsaenh
 
-SOURCES = \
-	version.rc
+VER_PRODUCTVERSION = 5,1,2600,2180

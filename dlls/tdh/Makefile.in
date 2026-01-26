@@ -3,6 +3,8 @@ IMPORTLIB = tdh
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine Event Trace Helper Library"
+VER_PRODUCTVERSION      = 10,0,16299,15
+
 SOURCES = \
-	tdh_main.c \
-	version.rc
+	tdh_main.c

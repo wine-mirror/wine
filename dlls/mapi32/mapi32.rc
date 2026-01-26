@@ -30,11 +30,3 @@ STRINGTABLE
    IDS_NO_MAPI_CLIENT, "Mail sending failed as you do not have a MAPI mail client installed."
    IDS_SEND_MAIL, "Send Mail"
 }
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#define WINE_FILEDESCRIPTION_STR "Wine Messaging API"
-#define WINE_FILENAME_STR "mapi32.dll"
-#define WINE_FILEVERSION 1,0,0,0
-
-#include "wine/wine_common_ver.rc"

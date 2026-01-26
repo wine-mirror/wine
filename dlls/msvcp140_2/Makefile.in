@@ -1,5 +1,7 @@
 MODULE       = msvcp140_2.dll
 
+VER_FILEDESCRIPTION_STR = "Wine runtime library"
+VER_PRODUCTVERSION      = 14,50,35719,0
+
 SOURCES = \
-	math.c \
-	version.rc
+	math.c

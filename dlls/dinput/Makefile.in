@@ -3,6 +3,9 @@ IMPORTLIB = dinput
 IMPORTS   = dinput dxguid uuid comctl32 ole32 user32 advapi32 hid setupapi
 EXTRADEFS = -DDIRECTINPUT_VERSION=0x0700
 
+VER_FILEDESCRIPTION_STR = "Wine DirectInput"
+VER_PRODUCTVERSION      = 5,1,2600,881
+
 SOURCES = \
 	ansi.c \
 	config.c \
@@ -14,5 +17,4 @@ SOURCES = \
 	dinput_main.c \
 	joystick_hid.c \
 	keyboard.c \
-	mouse.c \
-	version.rc
+	mouse.c

@@ -2,6 +2,8 @@ MODULE    = fltlib.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine Filter Library"
+VER_PRODUCTVERSION      = 5,1,2600,5512
+
 SOURCES = \
-	fltlib.c \
-	rsrc.rc
+	fltlib.c

@@ -3,7 +3,8 @@ IMPORTS   = dmoguids strmiids uuid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_PRODUCTVERSION = 5,3,2600,5512
+
 SOURCES = \
 	dsdmo.idl \
-	main.c \
-	version.rc
+	main.c

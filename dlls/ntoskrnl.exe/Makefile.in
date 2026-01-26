@@ -3,10 +3,11 @@ IMPORTLIB = ntoskrnl
 IMPORTS   = advapi32 hal msvcrt
 DELAYIMPORTS = rpcrt4 setupapi
 
+VER_PRODUCTVERSION = 6,1,7601,21863
+
 SOURCES = \
 	instr.c \
 	ntoskrnl.c \
-	ntoskrnl.rc \
 	plugplay.idl \
 	pnp.c \
 	sync.c

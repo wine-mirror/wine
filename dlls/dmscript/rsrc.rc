@@ -18,9 +18,3 @@
 
 /* @makedep: dmscript.rgs */
 1 WINE_REGISTRY dmscript.rgs
-
-#define WINE_FILEDESCRIPTION_STR "Wine DirectMusic Scripting"
-#define WINE_FILENAME_STR "dmscript.dll"
-#define WINE_FILEVERSION 5,3,0,900
-
-#include "wine/wine_common_ver.rc"

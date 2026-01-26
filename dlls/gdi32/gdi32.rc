@@ -43,10 +43,3 @@ STRINGTABLE
   IDS_OEM_DOS           "OEM/DOS"
   IDS_OTHER             "Other"
 }
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#define WINE_FILEDESCRIPTION_STR "Wine core dll"
-#define WINE_FILENAME_STR "gdi32.dll"
-
-#include "wine/wine_common_ver.rc"

@@ -4,6 +4,8 @@ DELAYIMPORTS = comctl32
 
 EXTRADLLFLAGS = -mwindows -municode
 
+VER_PRODUCTVERSION = 6,1,7601,22045
+
 SOURCES = \
 	conhost.c \
 	conhost.rc \

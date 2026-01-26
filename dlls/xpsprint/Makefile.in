@@ -2,5 +2,5 @@ MODULE = xpsprint.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-SOURCES = \
-	xpsprint.rc
+VER_FILEDESCRIPTION_STR = "Wine XPS Print dll"
+VER_PRODUCTVERSION      = 7,0,6002,18363

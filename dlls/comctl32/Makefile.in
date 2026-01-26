@@ -4,6 +4,9 @@ IMPORTLIB = comctl32
 IMPORTS   = uuid user32 gdi32 advapi32 imm32 kernelbase oleaut32
 DELAYIMPORTS = oleacc winmm
 
+VER_FILEDESCRIPTION_STR = "Wine Common Controls"
+VER_PRODUCTVERSION      = 5,81,4704,1100
+
 SOURCES = \
 	animate.c \
 	comboex.c \
@@ -43,5 +46,4 @@ SOURCES = \
 	tooltips.c \
 	trackbar.c \
 	treeview.c \
-	updown.c \
-	version.rc
+	updown.c

@@ -4611,10 +4611,3 @@ BLUE_WINDOW_SMALL_FRAME_LEFT_BMP BITMAP "blue_window_small_frame_left.bmp"
 
 /* @makedep: blue_window_small_frame_right.bmp */
 BLUE_WINDOW_SMALL_FRAME_RIGHT_BMP BITMAP "blue_window_small_frame_right.bmp"
-
-/* File version */
-#define WINE_FILEDESCRIPTION_STR "Light Theme"
-#define WINE_FILENAME_STR "light.msstyles"
-#define WINE_FILEVERSION 1,0,0,1
-
-#include "wine/wine_common_ver.rc"

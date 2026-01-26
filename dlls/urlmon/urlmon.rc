@@ -71,8 +71,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: urlmon.inf */
 REGINST REGINST urlmon.inf
-
-#define WINE_FILENAME_STR "urlmon.dll"
-#define WINE_FILEVERSION 6,0,2800,1485
-
-#include "wine/wine_common_ver.rc"

@@ -4,6 +4,8 @@ IMPORTLIB = gdi32
 IMPORTS   = user32 advapi32 win32u
 DELAYIMPORTS = winspool
 
+VER_FILEDESCRIPTION_STR = "Wine graphics library"
+
 SOURCES = \
 	dc.c \
 	emfdc.c \

@@ -4,6 +4,8 @@ IMPORTLIB = advapi32
 IMPORTS   = kernelbase sechost msvcrt
 DELAYIMPORTS = cryptsp rpcrt4 user32 userenv
 
+VER_PRODUCTVERSION = 10,0,10240,16384
+
 SOURCES = \
 	advapi.c \
 	cred.c \
@@ -13,5 +15,4 @@ SOURCES = \
 	registry.c \
 	security.c \
 	service.c \
-	version.rc \
 	wmi.c

@@ -48,8 +48,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: desk.ico */
 ICO_MAIN ICON "desk.ico"
-
-#define WINE_FILENAME_STR "desk.cpl"
-#define WINE_FILEDESCRIPTION_STR "Display Settings Panel"
-
-#include "wine/wine_common_ver.rc"

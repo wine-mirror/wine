@@ -1,6 +1,8 @@
 MODULE    = dmusic32.dll
 IMPORTS   = uuid
 
+VER_FILEDESCRIPTION_STR = "Wine DirectMusic Legacy Port"
+VER_PRODUCTVERSION      = 5,3,0,900
+
 SOURCES = \
-	dmusic32_main.c \
-	version.rc
+	dmusic32_main.c

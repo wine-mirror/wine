@@ -3,9 +3,11 @@ IMPORTS   = $(FLUIDSYNTH_PE_LIBS) dxguid uuid ole32 advapi32 user32
 EXTRAINCL = $(FLUIDSYNTH_PE_CFLAGS)
 PARENTSRC = ../dmusic
 
+VER_FILEDESCRIPTION_STR = "Wine DirectMusic Software Synthesizer"
+VER_PRODUCTVERSION      = 5,3,0,900
+
 SOURCES = \
 	dmsynth.idl \
 	dmsynth_main.c \
 	synth.c \
-	synthsink.c \
-	version.rc
+	synthsink.c

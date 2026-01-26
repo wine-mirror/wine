@@ -2,6 +2,7 @@ MODULE    = dcomp.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_PRODUCTVERSION = 10,0,14393,0
+
 SOURCES = \
-	device.c \
-	version.rc
+	device.c

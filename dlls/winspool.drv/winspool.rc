@@ -46,15 +46,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: generic.ppd */
 1 PPDFILE generic.ppd
-
-#define WINE_FILENAME_STR "winspool.drv"
-#define WINE_FILEDESCRIPTION_STR "Wine core printer driver"
-
-#define VER_FILETYPE    VFT_DRV
-#define VER_FILESUBTYPE VFT2_DRV_PRINTER
-
-/* Same Version as WinXP_sp2 */
-#define WINE_FILEVERSION      5,1,2600,2180
-
-
-#include "wine/wine_common_ver.rc"

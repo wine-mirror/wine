@@ -4,6 +4,8 @@ UNIX_CFLAGS = $(EGL_CFLAGS) $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_EGL_CFLAGS) $(XKB
 UNIX_LIBS = -lwin32u $(WAYLAND_CLIENT_LIBS) $(WAYLAND_EGL_LIBS) $(XKBCOMMON_LIBS) $(XKBREGISTRY_LIBS) $(PTHREAD_LIBS) -lm
 IMPORTS = user32 win32u
 
+VER_FILEDESCRIPTION_STR = "Wine Wayland driver"
+
 SOURCES = \
 	cursor-shape-v1.xml \
 	display.c \
@@ -12,7 +14,6 @@ SOURCES = \
 	pointer-constraints-unstable-v1.xml \
 	relative-pointer-unstable-v1.xml \
 	text-input-unstable-v3.xml \
-	version.rc \
 	viewporter.xml \
 	vulkan.c \
 	wayland.c \

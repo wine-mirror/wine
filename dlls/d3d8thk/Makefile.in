@@ -2,5 +2,5 @@ MODULE    = d3d8thk.dll
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
-SOURCES = \
-	version.rc
+VER_FILEDESCRIPTION_STR = "Wine d3d8thk"
+VER_PRODUCTVERSION      = 5,3,2600,5512

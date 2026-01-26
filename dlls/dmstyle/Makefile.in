@@ -2,6 +2,9 @@ MODULE    = dmstyle.dll
 IMPORTS   = dxguid uuid ole32 advapi32
 PARENTSRC = ../dmusic
 
+VER_FILEDESCRIPTION_STR = "Wine DirectMusic Style Engine"
+VER_PRODUCTVERSION      = 5,3,0,900
+
 SOURCES = \
 	auditiontrack.c \
 	chordtrack.c \
@@ -12,5 +15,4 @@ SOURCES = \
 	motiftrack.c \
 	mutetrack.c \
 	style.c \
-	styletrack.c \
-	version.rc
+	styletrack.c

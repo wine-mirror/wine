@@ -1,6 +1,9 @@
 MODULE    = jscript.dll
 IMPORTS   = oleaut32 ole32 user32 advapi32
 
+VER_FILEDESCRIPTION_STR = "Wine JScript"
+VER_PRODUCTVERSION      = 5,8,7601,16982
+
 SOURCES = \
 	activex.c \
 	array.c \

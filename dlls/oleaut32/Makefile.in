@@ -4,6 +4,10 @@ IMPORTLIB = oleaut32
 IMPORTS   = uuid ole32 rpcrt4 user32 gdi32 advapi32
 DELAYIMPORTS = comctl32 urlmon windowscodecs
 
+VER_FILEDESCRIPTION_STR = "Wine OLE dll"
+VER_PRODUCTVERSION      = 10,0,19043,1466
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	connpt.c \
 	dispatch.c \

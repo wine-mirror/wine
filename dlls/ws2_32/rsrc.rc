@@ -27,9 +27,3 @@
 
 /* @makedep: services */
 4 WINE_DATA_FILE services
-
-#define WINE_FILEDESCRIPTION_STR "Wine core dll"
-#define WINE_FILENAME_STR "ws2_32.dll"
-#define WINE_FILEVERSION 5,1,2600,5512
-
-#include "wine/wine_common_ver.rc"

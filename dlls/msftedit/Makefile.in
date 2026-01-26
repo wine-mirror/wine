@@ -3,6 +3,8 @@ IMPORTS   = uuid riched20
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Rich Text Edit Control"
+VER_PRODUCTVERSION      = 5,41,15,1509
+
 SOURCES = \
-	msftedit_main.c \
-	version.rc
+	msftedit_main.c

@@ -3,10 +3,11 @@ IMPORTS   = user32 advapi32 gdi32 win32u
 
 EXTRADLLFLAGS = -m16 -Wb,--main-module,gdi32.dll,--heap,65520
 
+VER_PRODUCTVERSION = 1,0,0,0
+
 SOURCES = \
 	bidi.c \
 	env.c \
 	gdi.c \
 	metafile.c \
-	printdrv.c \
-	version.rc
+	printdrv.c

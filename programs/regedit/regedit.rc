@@ -459,11 +459,3 @@ IDI_BIN  ICON bin.ico
 
 /* @makedep: regedit.ico */
 IDI_REGEDIT ICON regedit.ico
-
-#define WINE_FILEDESCRIPTION_STR "Wine Registry Editor"
-#define WINE_FILENAME "REGEDIT"
-#define WINE_FILENAME_STR "REGEDIT.EXE"
-#define WINE_FILETYPE VFT_APP
-#define WINE_FILEVERSION 5,2,3790,0
-
-#include "wine/wine_common_ver.rc"

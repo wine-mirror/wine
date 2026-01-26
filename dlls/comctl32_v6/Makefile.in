@@ -4,6 +4,10 @@ DELAYIMPORTS = oleacc winmm uxtheme
 EXTRADEFS = -D_COMCTL32_ -D__WINE_COMCTL32_VERSION=6
 PARENTSRC = ../comctl32
 
+VER_FILEDESCRIPTION_STR = "Wine Common Controls"
+VER_PRODUCTVERSION      = 6,0,2600,2982
+VER_INTERNALNAME_STR    = "comctl32.dll"
+
 SOURCES = \
 	animate.c \
 	button.c \

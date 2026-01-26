@@ -150,14 +150,3 @@ STRINGTABLE
     IDS_FORM_PRC_ENVELOPE_9_ROTATED "PRC Envelope #9 Rotated"
     IDS_FORM_PRC_ENVELOPE_10_ROTATED "PRC Envelope #10 Rotated"
 }
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#define WINE_FILENAME_STR "localspl.dll"
-#define WINE_FILEDESCRIPTION_STR "Wine Printer spooler component"
-
-/* Same Version as WinXP_sp2 */
-#define WINE_FILEVERSION      5,1,2600,2180
-
-
-#include "wine/wine_common_ver.rc"

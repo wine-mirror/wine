@@ -6,6 +6,9 @@ DELAYIMPORTS = windowscodecs
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine D3DX9"
+VER_PRODUCTVERSION      = 9,10,455,0
+
 SOURCES = \
 	animation.c \
 	core.c \
@@ -24,6 +27,5 @@ SOURCES = \
 	surface.c \
 	texture.c \
 	util.c \
-	version.rc \
 	volume.c \
 	xfile.c

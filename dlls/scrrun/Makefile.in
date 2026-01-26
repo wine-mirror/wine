@@ -4,6 +4,8 @@ IMPORTS   = uuid oleaut32 version advapi32 kernelbase
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_PRODUCTVERSION = 5,8,7600,16385
+
 SOURCES = \
 	dictionary.c \
 	filesystem.c \

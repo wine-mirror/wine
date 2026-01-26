@@ -1,11 +1,12 @@
 MODULE    = qedit.dll
 IMPORTS   = strmiids strmbase uuid oleaut32 ole32 advapi32 msvcrt
 
+VER_PRODUCTVERSION = 5,3,2600,5512
+
 SOURCES = \
 	main.c \
 	mediadet.c \
 	nullrenderer.c \
 	qedit_classes.idl \
 	samplegrabber.c \
-	timeline.c \
-	version.rc
+	timeline.c

@@ -3,7 +3,8 @@ IMPORTLIB = hid
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine HID"
+
 SOURCES = \
 	hidd.c \
-	hidp.c \
-	version.rc
+	hidp.c

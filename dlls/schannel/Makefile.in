@@ -3,8 +3,9 @@ IMPORTS   = secur32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_PRODUCTVERSION = 5,1,2600,2180
+
 SOURCES = \
 	lsamode.c \
 	schannel_main.c \
-	usermode.c \
-	version.rc
+	usermode.c

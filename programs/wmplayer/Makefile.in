@@ -2,6 +2,8 @@ MODULE    = wmplayer.exe
 
 EXTRADLLFLAGS = -mwindows -municode
 
+VER_FILEDESCRIPTION_STR = "Windows Media Player"
+VER_PRODUCTVERSION      = 12,0,7601,18840
+
 SOURCES = \
-	main.c \
-	version.rc
+	main.c

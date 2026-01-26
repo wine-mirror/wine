@@ -1,9 +1,10 @@
 MODULE    = qasf.dll
 IMPORTS   = strmbase dmoguids strmiids uuid ole32 oleaut32 wmvcore msvcrt
 
+VER_PRODUCTVERSION = 9,0,0,4503
+
 SOURCES = \
 	asfreader.c \
 	dmowrapper.c \
 	qasf_classes.idl \
-	qasf_main.c \
-	version.rc
+	qasf_main.c

@@ -5,6 +5,8 @@ IMPORTLIB = ws2_32
 DELAYIMPORTS = dnsapi advapi32 iphlpapi user32
 UNIX_LIBS    = $(PTHREAD_LIBS)
 
+VER_PRODUCTVERSION = 5,1,2600,5512
+
 SOURCES = \
 	async.c \
 	inaddr.c \

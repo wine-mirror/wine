@@ -3,6 +3,8 @@ IMPORTLIB = rsaenh
 IMPORTS   = $(TOMCRYPT_PE_LIBS) crypt32 advapi32
 EXTRAINCL = $(TOMCRYPT_PE_CFLAGS)
 
+VER_PRODUCTVERSION = 5,1,2600,2180
+
 SOURCES = \
 	handle.c \
 	implglue.c \

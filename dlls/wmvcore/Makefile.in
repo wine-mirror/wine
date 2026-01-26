@@ -5,8 +5,10 @@ DELAYIMPORTS = winegstreamer
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine Media Playback dll"
+VER_PRODUCTVERSION      = 12,0,7601,17514
+
 SOURCES = \
 	async_reader.c \
-	version.rc \
 	wmvcore_main.c \
 	writer.c

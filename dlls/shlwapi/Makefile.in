@@ -4,6 +4,8 @@ IMPORTLIB = shlwapi
 IMPORTS   = uuid shcore user32 gdi32 advapi32 kernelbase
 DELAYIMPORTS = userenv oleaut32 ole32 comctl32 comdlg32 mpr mlang urlmon shell32 winmm
 
+VER_PRODUCTVERSION = 6,0,2800,1692
+
 SOURCES = \
 	assoc.c \
 	clist.c \

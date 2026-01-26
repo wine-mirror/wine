@@ -8,9 +8,13 @@ UNIX_LIBS    = -lwin32u
 
 EXTRADLLFLAGS = -Wl,--image-base,0x7a800000
 
+VER_FILEDESCRIPTION_STR = "Wine OpenGL Client"
+VER_PRODUCTVERSION      = 5,1,2600,2082
+# CATIA needs 'Microsoft' in both CompanyName _and_ LegalCopyright
+VER_LEGALCOPYRIGHT_STR  = "Copyright (c) 1993-2026 the Wine project. Not Microsoft"
+
 SOURCES = \
 	thunks.c \
 	unix_thunks.c \
 	unix_wgl.c \
-	version.rc \
 	wgl.c

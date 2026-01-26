@@ -3,6 +3,8 @@ IMPORTLIB = gdiplus
 IMPORTS   = uuid shlwapi ole32 oleaut32 user32 gdi32
 DELAYIMPORTS = mlang windowscodecs
 
+VER_PRODUCTVERSION = 6,1,7601,17514
+
 SOURCES = \
 	brush.c \
 	customlinecap.c \

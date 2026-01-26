@@ -6,6 +6,9 @@ DELAYIMPORTS = mfplat mf
 UNIX_CFLAGS  = $(GSTREAMER_CFLAGS)
 UNIX_LIBS    = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 
+VER_FILEDESCRIPTION_STR = "Wine GStreamer"
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	aac_decoder.c \
 	color_convert.c \

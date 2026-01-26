@@ -2,7 +2,9 @@ MODULE    = olepro32.dll
 IMPORTLIB = olepro32
 IMPORTS   = oleaut32
 
+VER_PRODUCTVERSION  = 5,0,4522,0
+VER_OLESELFREGISTER = 1
+
 SOURCES = \
 	olepro.idl \
-	olepro32stubs.c \
-	version.rc
+	olepro32stubs.c

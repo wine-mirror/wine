@@ -4,6 +4,8 @@ IMPORTLIB = winevulkan
 IMPORTS   = advapi32
 UNIX_LIBS = -lwin32u $(PTHREAD_LIBS)
 
+VER_FILEDESCRIPTION_STR = "Wine Vulkan ICD"
+
 SOURCES = \
 	loader.c \
 	loader_thunks.c \

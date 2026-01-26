@@ -2,6 +2,10 @@ MODULE    = ieframe.dll
 IMPORTLIB = ieframe
 IMPORTS   = uuid urlmon shell32 comctl32 shlwapi oleaut32 ole32 user32 gdi32 advapi32
 
+VER_FILEDESCRIPTION_STR = "Internet Browser"
+VER_PRODUCTVERSION      = 8,00,7601,17601
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	classinfo.c \
 	client.c \

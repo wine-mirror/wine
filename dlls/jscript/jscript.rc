@@ -102,9 +102,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: jscript.rgs */
 2 WINE_REGISTRY jscript.rgs
-
-#define WINE_FILEDESCRIPTION_STR "Wine JScript"
-#define WINE_FILENAME_STR "jscript.dll"
-#define WINE_FILEVERSION 5,8,7601,16982
-
-#include "wine/wine_common_ver.rc"

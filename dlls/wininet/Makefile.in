@@ -5,6 +5,9 @@ IMPORTS   = $(ZLIB_PE_LIBS) mpr shlwapi shell32 user32 ws2_32 advapi32
 EXTRAINCL = $(ZLIB_PE_CFLAGS)
 DELAYIMPORTS = secur32 crypt32 cryptui dhcpcsvc iphlpapi
 
+VER_FILEDESCRIPTION_STR = "Wine Internet Connectivity"
+VER_PRODUCTVERSION      = 8,00,7601,17601
+
 SOURCES = \
 	cookie.c \
 	dialogs.c \

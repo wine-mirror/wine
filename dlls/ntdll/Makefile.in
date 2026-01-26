@@ -11,6 +11,8 @@ EXTRADLLFLAGS = -nodefaultlibs
 i386_EXTRADLLFLAGS = -Wl,--image-base,0x7bc00000
 x86_64_EXTRADLLFLAGS = -Wl,--image-base,0x170000000
 
+VER_PRODUCTVERSION = 6,1,7601,24059
+
 SOURCES = \
 	actctx.c \
 	atom.c \
@@ -70,7 +72,6 @@ SOURCES = \
 	unix/virtual.c \
 	unwind.c \
 	version.c \
-	version.rc \
 	wcstring.c
 
 EXTRA_OBJS = unix/version.o

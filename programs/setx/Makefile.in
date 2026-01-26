@@ -2,6 +2,7 @@ MODULE    = setx.exe
 
 EXTRADLLFLAGS = -mconsole -municode
 
+VER_PRODUCTVERSION = 10,0,19041,1
+
 SOURCES = \
-	main.c \
-	version.rc
+	main.c

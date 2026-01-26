@@ -1113,12 +1113,3 @@ AUTHORS RCDATA ../../AUTHORS
 
 /* @makedep: shell32.manifest */
 124 RT_MANIFEST shell32.manifest
-
-/* please keep in sync with version.h values */
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#define WINE_FILENAME_STR "shell32.dll"
-#define WINE_FILEVERSION 6,0,2900,6242
-#define WINE_EXTRAVALUES VALUE "OLESelfRegister",""
-
-#include "wine/wine_common_ver.rc"

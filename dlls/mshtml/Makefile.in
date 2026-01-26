@@ -3,6 +3,10 @@ IMPORTLIB = mshtml
 IMPORTS   = strmiids uuid urlmon shlwapi shell32 ole32 oleaut32 user32 gdi32 advapi32
 DELAYIMPORTS = wininet inetcomm
 
+VER_FILEDESCRIPTION_STR = "Wine HTML Viewer"
+VER_PRODUCTVERSION      = 6,0,2800,1106
+VER_OLESELFREGISTER     = 1
+
 SOURCES = \
 	conpoint.c \
 	dispex.c \

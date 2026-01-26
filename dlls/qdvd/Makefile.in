@@ -3,9 +3,10 @@ IMPORTS   = strmbase strmiids uuid ole32 msvcrt
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_PRODUCTVERSION = 6,5,1,904
+
 SOURCES = \
 	graph.c \
 	navigator.c \
 	qdvd_classes.idl \
-	qdvd_main.c \
-	version.rc
+	qdvd_main.c

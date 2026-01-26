@@ -6,6 +6,9 @@ EXTRAINCL = $(VKD3D_PE_CFLAGS)
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
+VER_FILEDESCRIPTION_STR = "Wine D3DCompiler"
+VER_PRODUCTVERSION      = 9,29,952,3111
+
 SOURCES = \
 	asmparser.c \
 	asmshader.l \
@@ -15,5 +18,4 @@ SOURCES = \
 	compiler.c \
 	linker.c \
 	reflection.c \
-	utils.c \
-	version.rc
+	utils.c

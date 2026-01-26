@@ -330,14 +330,3 @@ OIC_WINLOGO ICON resources/oic_winlogo.ico
 
 /* @makedep: resources/oic_shield.ico */
 OIC_SHIELD ICON resources/oic_shield.ico
-
-/****************************************************************/
-/* Version */
-
-#define WINE_FILEDESCRIPTION_STR "Wine core dll"
-#define WINE_FILENAME_STR "user32.dll"
-
-/* these values come from Windows XP SP2 */
-#define WINE_FILEVERSION 5,1,2600,2180
-
-#include "wine/wine_common_ver.rc"
