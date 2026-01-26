@@ -266,6 +266,12 @@ typedef struct _DEVICE_SEEK_PENALTY_DESCRIPTOR {
     BOOLEAN                     IncursSeekPenalty;
 } DEVICE_SEEK_PENALTY_DESCRIPTOR, *PDEVICE_SEEK_PENALTY_DESCRIPTOR;
 
+typedef struct _DEVICE_TRIM_DESCRIPTOR {
+    DWORD                       Version;
+    DWORD                       Size;
+    BOOLEAN                     TrimEnabled;
+} DEVICE_TRIM_DESCRIPTOR, *PDEVICE_TRIM_DESCRIPTOR;
+
 typedef struct _STORAGE_DESCRIPTOR_HEADER {
     ULONG                       Version;
     ULONG                       Size;
