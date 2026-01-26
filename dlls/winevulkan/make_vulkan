@@ -1292,6 +1292,12 @@ class VkMember(VkVariable):
                         values=values, object_type=object_type, bit_width=bit_width, returnedonly=returnedonly,
                         selection=selection, selector=selector)
 
+    def is_next(self):
+        return self.name == "pNext"
+
+    def is_type(self):
+        return self.name == "sType"
+
     def get_dyn_array_len(self, prefix, conv):
         if isinstance(self.dyn_array_len, int):
             return self.dyn_array_len
@@ -1763,10 +1769,14 @@ class Record(Type):
         self.returnedonly = returnedonly
         self.structextends = structextends.split(",") if structextends else []
         self._struct_extensions = None
+        self.chain_type = None
+        self.chain_next = None
 
         for m in self.members:
-            if m.name == "sType":
-                self.struct_type = m.values
+            if m.is_type():
+                self.chain_type = m
+            if m.is_next():
+                self.chain_next = m
             m.parent = self
 
     @staticmethod
@@ -1826,14 +1836,14 @@ class Record(Type):
         """ Check if struct contains extensions chain that needs to be converted """
 
         stripped = STRUCT_CHAIN_CONVERSIONS.get(self.name, {}).get("strip", [])
-        struct_extensions = filter(lambda s: s.struct_type not in stripped, self.struct_extensions)
+        struct_extensions = filter(lambda s: s.chain_type.values not in stripped, self.struct_extensions)
 
         if direction == Direction.INPUT and self.name in STRUCT_CHAIN_CONVERSIONS:
             return any(struct_extensions)
 
-        if not "pNext" in self.members:
+        if not self.chain_next:
             return False
-        is_const = self.members[self.members.index("pNext")].is_const()
+        is_const = self.chain_next.is_const()
         # VkOpticalFlowSessionCreateInfoNV is missing const in its pNext pointer
         if self.name in ["VkOpticalFlowSessionCreateInfoNV",
                          "VkDescriptorBufferBindingInfoEXT"]:
@@ -1872,7 +1882,7 @@ class Record(Type):
             if self.name == m.type_name:
                 continue
 
-            if m.name == "pNext":
+            if m.is_next():
                 # pNext is a pointer, so it always needs conversion
                 if conv and direction == Direction.INPUT:
                     return True
@@ -1962,28 +1972,21 @@ class StructConversionFunction(object):
 
     def member_needs_copy(self, struct, m):
         if self.direction == Direction.OUTPUT:
-            if m.name in ["sType", "pNext"]:
+            if m.is_type() or m.is_next():
                 return False
             if self.const and not m.is_pointer():
                 return False
             if m.is_const() and not m.needs_conversion(self.conv, self.unwrap, Direction.OUTPUT, self.const):
                 return False
         else:
-            if m.name == "pNext":
+            if m.is_type() or m.is_next():
                 return True
-            if m.name != "sType" and struct.returnedonly and not m.needs_conversion(
+            if struct.returnedonly and not m.needs_conversion(
                     self.conv, self.unwrap, Direction.INPUT, self.const):
                 return False
         return True
 
     def definition(self, conversions):
-        """ Helper function for generating a struct conversion function. """
-
-        # It doesn't make sense to generate conversion functions for non-struct variables
-        # which aren't in arrays, as this should be handled by the copy() function
-        if not isinstance(self.operand, Record):
-            return ""
-
         body = ""
 
         if not self.conv:
@@ -2054,8 +2057,8 @@ class StructConversionFunction(object):
         for m in self.operand.members:
             if not self.member_needs_copy(self.operand, m):
                 continue
-            if m.name == "pNext" and (needs_extensions or self.conv):
-                body += "    out->pNext = NULL;\n"
+            if m.is_next() and (needs_extensions or self.conv):
+                body += f"    out->{m.name} = NULL;\n"
                 continue
 
             if m.selection:
@@ -2067,11 +2070,11 @@ class StructConversionFunction(object):
 
         if needs_extensions:
             if self.conv and self.direction == Direction.INPUT:
-                body += "\n    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))\n"
+                body += f"\n    for (in_header = UlongToPtr(in->{self.operand.chain_next.name}); in_header; in_header = UlongToPtr(in_header->{self.operand.chain_next.name}))\n"
             else:
-                body += "\n    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)\n"
+                body += f"\n    for (in_header = (void *)in->{self.operand.chain_next.name}; in_header; in_header = (void *)in_header->{self.operand.chain_next.name})\n"
             body += "    {\n"
-            body += "        switch (in_header->sType)\n"
+            body += f"        switch (in_header->{self.operand.chain_type.name})\n"
             body += "        {\n"
 
             ident = "            "
@@ -2094,44 +2097,44 @@ class StructConversionFunction(object):
                     in_type = "const " + ext.name
                     out_type = win_type
 
-                body += f"        case {ext.struct_type}:\n"
+                body += f"        case {ext.chain_type.values}:\n"
                 body += u"        {\n"
                 if self.direction == Direction.INPUT:
                     body += f"            {out_type} *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));\n"
                 elif self.conv:
-                    body += f"            {out_type} *out_ext = find_next_struct32(out_header, {ext.struct_type});\n"
+                    body += f"            {out_type} *out_ext = find_next_struct32(out_header, {ext.chain_type.values});\n"
                 else:
-                    body += f"            {out_type} *out_ext = find_next_struct(out_header, {ext.struct_type});\n"
+                    body += f"            {out_type} *out_ext = find_next_struct(out_header, {ext.chain_type.values});\n"
 
-                if any(self.member_needs_copy(ext, m) for m in ext.members if m.name not in ("sType", "pNext")):
+                if any(self.member_needs_copy(ext, m) for m in ext.members if not m.is_type() and not m.is_next()):
                     body += f"            {in_type} *in_ext = ({in_type} *)in_header;\n"
 
                 for m in ext.members:
-                    if m.name == "sType":
-                        body += f"            out_ext->sType = {ext.struct_type};\n"
+                    if m.is_type():
+                        body += f"            out_ext->{m.name} = {ext.chain_type.values};\n"
                         continue
                     if not self.member_needs_copy(ext, m):
                         continue
-                    if m.name == "pNext":
-                        body += u"            out_ext->pNext = NULL;\n"
+                    if m.is_next():
+                        body += f"            out_ext->{m.name} = NULL;\n"
                         continue
                     body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, Unwrap.HOST, self.const, conversions)
 
                 if self.direction == Direction.INPUT:
-                    body += ident + "out_header->pNext = (void *)out_ext;\n"
+                    body += ident + f"out_header->{ext.chain_next.name} = (void *)out_ext;\n"
                 body += ident + "out_header = (void *)out_ext;\n"
                 body += ident + "break;\n"
                 body += "        }\n"
 
             body += "        default:\n"
             if self.direction == Direction.INPUT:
-                body += ident + "FIXME(\"Unhandled sType %u.\\n\", in_header->sType);\n"
+                body += ident + f"FIXME(\"Unhandled {self.operand.chain_type.name} %u.\\n\", in_header->{self.operand.chain_type.name});\n"
             body += "            break;\n"
             body += "        }\n"
             body += "    }\n"
-        elif self.conv and self.direction == Direction.INPUT and "pNext" in self.operand.members:
-            body += "    if (in->pNext)\n"
-            body += "        FIXME(\"Unexpected pNext\\n\");\n"
+        elif self.conv and self.direction == Direction.INPUT and self.operand.chain_next:
+            body += f"    if (in->{self.operand.chain_next.name})\n"
+            body += f"        FIXME(\"Unexpected {self.operand.chain_next.name}\\n\");\n"
 
         body += "}\n"
         if not self.conv:
@@ -2196,7 +2199,7 @@ class ArrayConversionFunction(object):
             return_type = self.type
 
         needs_copy = not self.array.is_struct() or self.direction != Direction.INPUT or \
-            not self.array.struct.returnedonly or "pNext" in self.array.struct.members
+            not self.array.struct.returnedonly or self.array.struct.chain_next
 
         # Generate function prototype.
         if return_type:
