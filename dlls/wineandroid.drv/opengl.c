@@ -47,7 +47,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
-static const struct client_surface_funcs android_client_surface_funcs;
 static const struct opengl_drawable_funcs android_drawable_funcs;
 
 struct gl_drawable
@@ -82,11 +81,11 @@ void update_gl_drawable( HWND hwnd )
     NtUserRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
 }
 
-static BOOL android_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
+static BOOL android_surface_create( struct client_surface *client, int format, struct opengl_drawable **drawable )
 {
     struct gl_drawable *gl;
 
-    TRACE( "hwnd %p, format %d, drawable %p\n", hwnd, format, drawable );
+    TRACE( "hwnd %p, format %d, drawable %p\n", client->hwnd, format, drawable );
 
     if (*drawable)
     {
@@ -106,14 +105,10 @@ static BOOL android_surface_create( HWND hwnd, int format, struct opengl_drawabl
     {
         static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
         EGLConfig config = egl_config_for_format( format );
-        struct client_surface *client;
 
-        if (!(client = ANDROID_CreateClientSurface( hwnd, format ))) return FALSE;
-        gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, client );
-        client_surface_release( client );
-        if (!gl) return FALSE;
-
+        if (!(gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, client ))) return FALSE;
         gl->window = get_client_window( client->hwnd );
+
         if (!has_client_surface( client->hwnd )) gl->base.surface = funcs->p_eglCreatePbufferSurface( egl->display, config, attribs );
         else gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, config, gl->window, NULL );
 

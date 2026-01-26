@@ -660,14 +660,9 @@ static void egldrv_init_extensions( struct opengl_funcs *funcs, BOOLEAN extensio
 {
 }
 
-static BOOL egldrv_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
+static BOOL egldrv_surface_create( struct client_surface *client, int format, struct opengl_drawable **drawable )
 {
-    struct client_surface *client;
-
-    if (!(client = user_driver->pCreateClientSurface( hwnd, format ))) return FALSE;
     *drawable = framebuffer_surface_create( format, client );
-    client_surface_release( client );
-
     return !!*drawable;
 }
 
@@ -1276,7 +1271,7 @@ static void nulldrv_init_extensions( struct opengl_funcs *funcs, BOOLEAN extensi
 {
 }
 
-static BOOL nulldrv_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
+static BOOL nulldrv_surface_create( struct client_surface *client, int format, struct opengl_drawable **drawable )
 {
     return TRUE;
 }
@@ -1407,7 +1402,17 @@ static struct opengl_drawable *get_window_unused_drawable( HWND hwnd, int format
      */
     if (!drawable)
     {
-        driver_funcs->p_surface_create( hwnd, format, &drawable );
+        struct client_surface *client;
+
+        if (!(client = user_driver->pCreateClientSurface( hwnd, format )))
+            WARN( "Failed to create a surface for window %p, format %d\n", hwnd, format );
+        else
+        {
+            if (!(driver_funcs->p_surface_create( client, format, &drawable )))
+                WARN( "Failed to create a drawable for window %p, format %d\n", hwnd, format );
+            client_surface_release( client );
+        }
+
         if (drawable && drawable->client) add_window_client_surface( hwnd, drawable->client );
     }
 

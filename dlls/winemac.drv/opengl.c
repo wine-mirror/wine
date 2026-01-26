@@ -1455,28 +1455,23 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
     return TRUE;
 }
 
-static BOOL macdrv_surface_create(HWND hwnd, int format, struct opengl_drawable **drawable)
+static BOOL macdrv_surface_create(struct client_surface *client, int format, struct opengl_drawable **drawable)
 {
-    struct client_surface *client;
     struct macdrv_win_data *data;
+    HWND hwnd = client->hwnd;
     struct gl_drawable *gl;
 
-    TRACE("hwnd %p, format %d, drawable %p\n", hwnd, format, drawable);
+    TRACE("client %s, format %d, drawable %p\n", debugstr_client_surface(client), format, drawable);
 
     if (!(data = get_win_data(hwnd)))
     {
         FIXME("DC for window %p of other process: not implemented\n", hwnd);
         return FALSE;
     }
-
     data->pixel_format = format;
     release_win_data(data);
 
-    if (!(client = macdrv_CreateClientSurface(hwnd, format))) return FALSE;
-    gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, client);
-    client_surface_release(client);
-    if (!gl) return FALSE;
-
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_surface_funcs, format, client))) return FALSE;
     *drawable = &gl->base;
     return TRUE;
 }
