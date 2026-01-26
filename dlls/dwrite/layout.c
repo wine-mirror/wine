@@ -165,6 +165,7 @@ struct layout_effective_run
     float align_dx;               /* adjustment from text alignment */
     float width;                  /* run width */
     UINT32 line;                  /* 0-based line index in line metrics array */
+    UINT8 bidi_level;             /* For inline objects level is derived from the first character */
 
     /* Text run fields */
     const struct layout_run *run; /* nominal run this one is based on */
@@ -177,7 +178,6 @@ struct layout_effective_run
     IDWriteInlineObject *object;  /* User object or automatically added trimming sign. */
     float baseline;
     bool is_sideways;             /* Vertical flow direction flag passed to DrawInlineObject() */
-    bool is_rtl;                  /* Reading direction flag passed to DrawInlineObject() */
 };
 
 struct layout_underline {
@@ -1513,38 +1513,34 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     UINT32 i, start, length, last_cluster;
     struct layout_effective_run *run;
 
+    if (!(run = calloc(1, sizeof(*run))))
+        return E_OUTOFMEMORY;
+
     if (r->kind == LAYOUT_RUN_INLINE)
     {
-        struct layout_effective_run *inlineobject;
-
-        if (!(inlineobject = calloc(1, sizeof(*inlineobject))))
-            return E_OUTOFMEMORY;
-
-        inlineobject->object = r->u.object.object;
-        inlineobject->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
-        inlineobject->origin.x = is_rtl ? origin_x - inlineobject->width : origin_x;
-        inlineobject->origin.y = 0.0f; /* set after line is built */
-        inlineobject->align_dx = 0.0f;
-        inlineobject->baseline = r->baseline;
+        run->object = r->u.object.object;
+        run->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
+        run->origin.x = is_rtl ? origin_x - run->width : origin_x;
+        run->origin.y = 0.0f; /* set after line is built */
+        run->align_dx = 0.0f;
+        run->baseline = r->baseline;
 
         /* It's not clear how these two are set, possibly directionality
            is derived from surrounding text (replaced text could have
            different ranges which differ in reading direction). */
-        inlineobject->is_sideways = false;
-        inlineobject->is_rtl = false;
-        inlineobject->line = line;
+        run->is_sideways = false;
+        run->bidi_level = r->u.object.bidi_level;
+        run->line = line;
 
         /* effect assigned from start position and on is used for inline objects */
-        inlineobject->effect = layout_get_effect_from_pos(layout, layout->clusters[first_cluster].position +
+        run->effect = layout_get_effect_from_pos(layout, layout->clusters[first_cluster].position +
                 layout->clusters[first_cluster].run->start_position);
 
-        list_add_tail(&layout->inlineobjects, &inlineobject->draw_entry);
-        list_add_tail(&layout->effective_runs, &inlineobject->entry);
+        list_add_tail(&layout->inlineobjects, &run->draw_entry);
+        list_add_tail(&layout->effective_runs, &run->entry);
+
         return S_OK;
     }
-
-    if (!(run = calloc(1, sizeof(*run))))
-        return E_OUTOFMEMORY;
 
     /* No need to iterate for that, use simple fact that:
        <last cluster position> = <first cluster position> + <sum of cluster lengths not including last one> */
@@ -1562,6 +1558,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     run->start = start = layout->clusters[first_cluster].position;
     run->length = length;
     run->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
+    run->bidi_level = r->u.regular.run.bidiLevel;
 
     /* Adjust by run width if direction differs. */
     if (is_run_rtl(run) != is_rtl)
@@ -2181,7 +2178,6 @@ static HRESULT layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cl
         trimming_sign->baseline = sign_metrics.baseline;
 
         trimming_sign->is_sideways = false;
-        trimming_sign->is_rtl = false;
         trimming_sign->line = line;
 
         trimming_sign->effect = layout_get_effect_from_pos(layout, layout->clusters[end].position +
@@ -3795,7 +3791,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout4 *iface,
             SNAP_COORD(run->origin.y + origin_y),
             run->object,
             run->is_sideways,
-            run->is_rtl,
+            run->bidi_level & 1,
             run->effect);
     }
 
