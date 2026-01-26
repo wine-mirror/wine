@@ -281,6 +281,19 @@ typedef enum _STORAGE_BUS_TYPE {
     BusTypeFibre,
     BusTypeUsb,
     BusTypeRAID,
+    BusTypeiScsi,
+    BusTypeSas,
+    BusTypeSata,
+    BusTypeSd,
+    BusTypeMmc,
+    BusTypeVirtual,
+    BusTypeFileBackedVirtual,
+    BusTypeSpaces,
+    BusTypeNvme,
+    BusTypeSCM,
+    BusTypeUfs,
+    BusTypeNvmeof,
+    BusTypeMax,
     BusTypeMaxReserved = 0x7F
 } STORAGE_BUS_TYPE, *PSTORAGE_BUS_TYPE;
 
