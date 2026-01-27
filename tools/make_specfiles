@@ -321,20 +321,6 @@ sub update_spec_file($)
     update_file( $file, $new ) if $old ne $new;
 }
 
-sub get_args_size($)
-{
-    my $args = shift;
-    my $ret32 = 0;
-    my $ret64 = 0;
-    if ($args =~ /^\((.*)\)$/)
-    {
-        my @args = split /\s+/, $1;
-        $ret64 += 8 * scalar @args;
-        map { $ret32 += ($_ eq "int64") ? 8 : 4; } @args;
-    }
-    return ($ret32, $ret64);
-}
-
 sub get_syscalls_str($$@)
 {
     my $base = shift;
@@ -388,7 +374,11 @@ sub read_syscalls($)
     {
         my $descr = $funcs{$func};
         next unless $descr->{flags} =~ /-syscall/;
-        my ($args32, $args64) = get_args_size( $funcs{$func}->{args} );
+        my $arg_count = 0;
+        if ($funcs{$func}->{args} =~ /^\((.*)\)$/)
+        {
+            $arg_count = scalar split /\s+/, $1;
+        }
         my $id;
         if ($descr->{flags} =~ /-syscall=(0[Xx][0-9a-fA-F]+)/)
         {
@@ -398,8 +388,8 @@ sub read_syscalls($)
         {
             $id = $1;
         }
-        push @syscalls32, [ $func, $args32, $id ] unless $descr->{flags} =~ /-arch=win64/;
-        push @syscalls64, [ $func, $args64, $id ] unless $descr->{flags} =~ /-arch=win32/;
+        push @syscalls32, [ $func, $arg_count * 4, $id ] unless $descr->{flags} =~ /-arch=win64/;
+        push @syscalls64, [ $func, $arg_count * 8, $id ] unless $descr->{flags} =~ /-arch=win32/;
         push @stubs, $func if $descr->{callconv} eq "stub";
     }
     return (\@syscalls32, \@syscalls64, \@stubs);

@@ -450,12 +450,12 @@
 # @ stub NtWaitHighEventPair
 # @ stub NtWaitLowEventPair
 @ stdcall -syscall=0x0001 NtWorkerFactoryWorkerReady(ptr)
-@ stdcall -syscall -arch=win32 NtWow64AllocateVirtualMemory64(long ptr int64 ptr long long)
+@ stdcall -syscall -arch=win32 NtWow64AllocateVirtualMemory64(long ptr long long ptr long long)
 @ stdcall -syscall -arch=win32 NtWow64GetNativeSystemInformation(long ptr long ptr)
 @ stdcall -syscall -arch=win32 NtWow64IsProcessorFeaturePresent(long)
 @ stdcall -syscall -arch=win32 NtWow64QueryInformationProcess64(long long ptr long ptr)
-@ stdcall -syscall -arch=win32 NtWow64ReadVirtualMemory64(long int64 ptr int64 ptr)
-@ stdcall -syscall -arch=win32 NtWow64WriteVirtualMemory64(long int64 ptr int64 ptr)
+@ stdcall -syscall -arch=win32 NtWow64ReadVirtualMemory64(long long long ptr long long ptr)
+@ stdcall -syscall -arch=win32 NtWow64WriteVirtualMemory64(long long long ptr long long ptr)
 @ stdcall -syscall=0x0008 NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stdcall -syscall=0x001b NtWriteFileGather(long long ptr ptr ptr ptr long ptr ptr)
 @ stdcall -syscall=0x0057 NtWriteRequestData(long ptr long ptr long ptr)
@@ -1522,12 +1522,12 @@
 # @ stub ZwWaitHighEventPair
 # @ stub ZwWaitLowEventPair
 @ stdcall -private ZwWorkerFactoryWorkerReady(ptr) NtWorkerFactoryWorkerReady
-@ stdcall -private -arch=win32 ZwWow64AllocateVirtualMemory64(long ptr int64 ptr long long) NtWow64AllocateVirtualMemory64
+@ stdcall -private -arch=win32 ZwWow64AllocateVirtualMemory64(long ptr long long ptr long long) NtWow64AllocateVirtualMemory64
 @ stdcall -private -arch=win32 ZwWow64GetNativeSystemInformation(long ptr long ptr) NtWow64GetNativeSystemInformation
 @ stdcall -private -arch=win32 ZwWow64IsProcessorFeaturePresent(long) NtWow64IsProcessorFeaturePresent
 @ stdcall -private -arch=win32 ZwWow64QueryInformationProcess64(long long ptr long ptr) NtWow64QueryInformationProcess64
-@ stdcall -private -arch=win32 ZwWow64ReadVirtualMemory64(long int64 ptr int64 ptr) NtWow64ReadVirtualMemory64
-@ stdcall -private -arch=win32 ZwWow64WriteVirtualMemory64(long int64 ptr int64 ptr) NtWow64WriteVirtualMemory64
+@ stdcall -private -arch=win32 ZwWow64ReadVirtualMemory64(long long long ptr long long ptr) NtWow64ReadVirtualMemory64
+@ stdcall -private -arch=win32 ZwWow64WriteVirtualMemory64(long long long ptr long long ptr) NtWow64WriteVirtualMemory64
 @ stdcall -private ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stdcall -private ZwWriteFileGather(long long ptr ptr ptr ptr long ptr ptr) NtWriteFileGather
 @ stdcall -private ZwWriteRequestData(long ptr long ptr long ptr) NtWriteRequestData

@@ -254,6 +254,8 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
             if (!is_win32) break;
             error( "Argument type '%s' only allowed for Win16\n", token );
             return 0;
+        case ARG_INT64:
+        case ARG_INT128:
         case ARG_FLOAT:
         case ARG_DOUBLE:
             if (!(odp->flags & FLAG_SYSCALL)) break;
