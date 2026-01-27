@@ -1888,7 +1888,7 @@ BOOL get_sync_from_handle( GLsync handle, GLsync *obj )
 static struct handle_entry *alloc_client_sync( struct context *ctx )
 {
     struct handle_entry *ptr;
-    GLsync *sync;
+    GLsync sync;
 
     if (!(sync = calloc( 1, sizeof(*sync) ))) return NULL;
     if (!(ptr = alloc_handle( &ctx->syncs, sync )))
