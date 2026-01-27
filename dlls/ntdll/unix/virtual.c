@@ -4257,16 +4257,27 @@ NTSTATUS ldt_get_entry( WORD sel, CLIENT_ID client_id, LDT_ENTRY *entry )
  *           NtSetLdtEntries   (NTDLL.@)
  *           ZwSetLdtEntries   (NTDLL.@)
  */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
+NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, ULONG entry1_low, ULONG entry1_high, ULONG sel2, ULONG entry2_low, ULONG entry2_high )
 {
     sigset_t sigset;
+    union { LDT_ENTRY entry; ULONG ul[2]; } entry;
 
     if (is_win64 && !is_wow64()) return STATUS_NOT_IMPLEMENTED;
     if (sel1 >> 16 || sel2 >> 16) return STATUS_INVALID_LDT_DESCRIPTOR;
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-    if (sel1) ldt_update_entry( sel1, entry1 );
-    if (sel2) ldt_update_entry( sel2, entry2 );
+    if (sel1)
+    {
+        entry.ul[0] = entry1_low;
+        entry.ul[1] = entry1_high;
+        ldt_update_entry( sel1, entry.entry );
+    }
+    if (sel2)
+    {
+        entry.ul[0] = entry2_low;
+        entry.ul[1] = entry2_high;
+        ldt_update_entry( sel2, entry.entry );
+    }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return STATUS_SUCCESS;
 }
@@ -4277,7 +4288,7 @@ NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_E
  *           NtSetLdtEntries   (NTDLL.@)
  *           ZwSetLdtEntries   (NTDLL.@)
  */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
+NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, ULONG entry1_low, ULONG entry1_high, ULONG sel2, ULONG entry2_low, ULONG entry2_high )
 {
     return STATUS_NOT_IMPLEMENTED;
 }

@@ -403,7 +403,7 @@
 @ stdcall -syscall NtSetIntervalProfile(long long)
 @ stdcall -syscall NtSetIoCompletion(ptr long long long long)
 @ stdcall -syscall NtSetIoCompletionEx(ptr ptr long long long long)
-@ stdcall -syscall NtSetLdtEntries(long int64 long int64)
+@ stdcall -syscall NtSetLdtEntries(long long long long long long)
 # @ stub NtSetLowEventPair
 # @ stub NtSetLowWaitHighEventPair
 # @ stub NtSetQuotaInformationFile
@@ -1475,7 +1475,7 @@
 @ stdcall -private ZwSetIntervalProfile(long long) NtSetIntervalProfile
 @ stdcall -private ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
 @ stdcall -private ZwSetIoCompletionEx(ptr ptr long long long long) NtSetIoCompletionEx
-@ stdcall -private ZwSetLdtEntries(long int64 long int64) NtSetLdtEntries
+@ stdcall -private ZwSetLdtEntries(long long long long long long) NtSetLdtEntries
 # @ stub ZwSetLowEventPair
 # @ stub ZwSetLowWaitHighEventPair
 # @ stub ZwSetQuotaInformationFile

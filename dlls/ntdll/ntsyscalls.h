@@ -502,7 +502,7 @@
     SYSCALL_ENTRY( 0x00e8, NtSetIntervalProfile, 16 ) \
     SYSCALL_ENTRY( 0x00e9, NtSetIoCompletion, 40 ) \
     SYSCALL_ENTRY( 0x00ea, NtSetIoCompletionEx, 48 ) \
-    SYSCALL_ENTRY( 0x00eb, NtSetLdtEntries, 32 ) \
+    SYSCALL_ENTRY( 0x00eb, NtSetLdtEntries, 48 ) \
     SYSCALL_ENTRY( 0x00ec, NtSetSecurityObject, 24 ) \
     SYSCALL_ENTRY( 0x00ed, NtSetSystemInformation, 24 ) \
     SYSCALL_ENTRY( 0x00ee, NtSetSystemTime, 16 ) \

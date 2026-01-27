@@ -777,11 +777,13 @@ NTSTATUS WINAPI wow64_NtSetInformationVirtualMemory( UINT *args )
 NTSTATUS WINAPI wow64_NtSetLdtEntries( UINT *args )
 {
     ULONG sel1 = get_ulong( &args );
-    ULONG64 entry1 = get_ulong64( &args );
+    ULONG entry1_low = get_ulong( &args );
+    ULONG entry1_high = get_ulong( &args );
     ULONG sel2 = get_ulong( &args );
-    ULONG64 entry2 = get_ulong64( &args );
+    ULONG entry2_low = get_ulong( &args );
+    ULONG entry2_high = get_ulong( &args );
 
-    return NtSetLdtEntries( sel1, *(LDT_ENTRY *)&entry1, sel2, *(LDT_ENTRY *)&entry2 );
+    return NtSetLdtEntries( sel1, entry1_low, entry1_high, sel2, entry2_low, entry2_high );
 }
 
 

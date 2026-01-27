@@ -42,7 +42,7 @@ static NTSTATUS (WINAPI *pRtlWow64GetSharedInfoProcess)(HANDLE,BOOLEAN*,WOW64INF
 static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 static NTSTATUS (WINAPI *pNtMapViewOfSectionEx)(HANDLE,HANDLE,PVOID*,const LARGE_INTEGER*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
-static NTSTATUS (WINAPI *pNtSetLdtEntries)(ULONG,LDT_ENTRY,ULONG,LDT_ENTRY);
+static NTSTATUS (WINAPI *pNtSetLdtEntries)(ULONG,ULONG,ULONG,ULONG,ULONG,ULONG);
 #ifdef _WIN64
 static NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
@@ -1174,7 +1174,7 @@ static void test_selectors(void)
     THREAD_DESCRIPTOR_INFORMATION info;
     NTSTATUS status;
     ULONG base, limit, sel, retlen;
-    LDT_ENTRY ds_entry = { 0 };
+    union { LDT_ENTRY entry; ULONG ul[2]; } ds_entry = { .ul[0] = 0 };
     I386_CONTEXT context = { CONTEXT_I386_CONTROL | CONTEXT_I386_SEGMENTS };
 
 #ifdef _WIN64
@@ -1273,7 +1273,7 @@ static void test_selectors(void)
             ok( !info.Entry.HighWord.Bits.Sys, "wrong sys\n" );
             ok( info.Entry.HighWord.Bits.Default_Big, "wrong big\n" );
             ok( info.Entry.HighWord.Bits.Granularity, "wrong granularity\n" );
-            ds_entry = info.Entry;
+            ds_entry.entry = info.Entry;
         }
         else if (sel == context.SegFs)  /* TEB selector */
         {
@@ -1312,12 +1312,12 @@ static void test_selectors(void)
         }
     }
 
-    status = pNtSetLdtEntries( 0, ds_entry, 0, ds_entry );
+    status = pNtSetLdtEntries( 0, ds_entry.ul[0], ds_entry.ul[1], 0, ds_entry.ul[0], ds_entry.ul[1] );
     if (status != STATUS_NOT_IMPLEMENTED)
     {
         ok( !status, "NtSetLdtEntries failed: %08lx\n", status );
 
-        status = pNtSetLdtEntries( 0x000f, ds_entry, 0x001f, ds_entry );
+        status = pNtSetLdtEntries( 0x000f, ds_entry.ul[0], ds_entry.ul[1], 0x001f, ds_entry.ul[0], ds_entry.ul[1] );
         ok( !status, "NtSetLdtEntries failed: %08lx\n", status );
 
         info.Selector = 0x000f;
