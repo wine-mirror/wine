@@ -1548,7 +1548,7 @@ static void load_ntdll_wow64_functions( HMODULE module )
     GET_FUNC( RtlpFreezeTimeBias );
     GET_FUNC( RtlpQueryProcessDebugInformationRemote );
 #undef GET_FUNC
-
+    pDbgUiRemoteBreakin = (void *)find_named_export( module, exports, "DbgUiRemoteBreakin" );
     p__wine_ctrl_routine = (void *)find_named_export( module, exports, "__wine_ctrl_routine" );
 
 #ifdef _WIN64
