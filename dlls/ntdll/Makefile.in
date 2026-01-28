@@ -15,6 +15,7 @@ VER_PRODUCTVERSION = 6,1,7601,24059
 
 SOURCES = \
 	actctx.c \
+	async_modern.c \
 	atom.c \
 	crypt.c \
 	debugbuffer.c \

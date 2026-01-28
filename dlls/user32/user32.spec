@@ -1230,3 +1230,5 @@
 @ varargs wsprintfW(wstr wstr)
 @ stdcall wvsprintfA(ptr str ptr)
 @ stdcall wvsprintfW(ptr wstr ptr)
+@ stdcall GetDpiHostingBehavior()
+@ stdcall SetDpiHostingBehavior(long)

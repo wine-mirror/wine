@@ -22,6 +22,7 @@ SOURCES = \
 	path.c \
 	powermgnt.c \
 	process.c \
+	process_modern.c \
 	profile.c \
 	resource.c \
 	sync.c \

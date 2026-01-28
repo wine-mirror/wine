@@ -20,6 +20,7 @@ SOURCES = \
 	defwnd.c \
 	desktop.c \
 	dialog.c \
+	dpi_modern.c \
 	edit.c \
 	exticon.c \
 	hook.c \
