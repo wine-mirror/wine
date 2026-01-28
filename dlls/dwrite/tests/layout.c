@@ -7401,10 +7401,7 @@ static void test_HitTestTextPosition(void)
 
     /* Out of bounds */
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 10, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 6, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 0, "Unexpected length %u.\n", metrics.length);
@@ -7415,12 +7412,9 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 10, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 6, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 0, "Unexpected length %u.\n", metrics.length);
@@ -7431,13 +7425,10 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     /* Text-only, simple clusters, one line. */
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == 0.0f && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7448,12 +7439,9 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.width && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7464,12 +7452,9 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 5, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 5, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7480,12 +7465,9 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 5, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left + metrics.width && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 5, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7496,16 +7478,13 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     /* Right-to-left direction. */
     hr = IDWriteTextLayout_SetReadingDirection(layout, DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 10, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 6, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 0, "Unexpected length %u.\n", metrics.length);
@@ -7516,12 +7495,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 10, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 6, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 0, "Unexpected length %u.\n", metrics.length);
@@ -7532,12 +7508,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7548,12 +7521,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left + metrics.width && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7564,12 +7534,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 5, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 5, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7580,12 +7547,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 5, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == layout_metrics.layoutWidth && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 5, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7596,7 +7560,7 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     /* Trimming */
     hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_NO_WRAP);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7610,53 +7574,53 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left != 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.top == 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
+    todo_wine
     ok(metrics.height > 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
-    ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
-    hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, TRUE, &posx, &posy, &metrics);
     todo_wine
+    ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
+
+    hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, TRUE, &posx, &posy, &metrics);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left + metrics.width && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left != 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.top == 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
+    todo_wine
     ok(metrics.height > 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
-    ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
-    hr = IDWriteTextLayout_HitTestTextPosition(layout, 5, TRUE, &posx, &posy, &metrics);
     todo_wine
+    ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
+
+    hr = IDWriteTextLayout_HitTestTextPosition(layout, 5, TRUE, &posx, &posy, &metrics);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left + metrics.width && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
+    todo_wine
     ok(metrics.textPosition == 1, "Unexpected text position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 5, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left > 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.top == 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
+    todo_wine
     ok(metrics.height > 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     /* Width can't fit a single cluster. */
     hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAYSIZE(clusters), &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7669,37 +7633,38 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 1, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
+    todo_wine
     ok(posx > 0.0f && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
+    todo_wine
     ok(metrics.textPosition == 1, "Unexpected text position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 5, "Unexpected length %u.\n", metrics.length);
+    todo_wine
     ok(metrics.left != 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.top == 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
+    todo_wine
     ok(metrics.height > 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left == 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.top == 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
+    todo_wine
     ok(metrics.height > 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
+    todo_wine
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
 
     hr = IDWriteTextLayout_SetReadingDirection(layout, DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7716,73 +7681,65 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == 0.0f && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 2, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left == 0.0f, "Unexpected left %.8e.\n", metrics.left);
+    todo_wine
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.height == 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.width && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 2, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left == 0.0f, "Unexpected left %.8e.\n", metrics.left);
+    todo_wine
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.height == 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     /* Inline object, RTL */
     hr = IDWriteTextLayout_SetReadingDirection(layout, DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 2, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left > 0.0f, "Unexpected left %.8e.\n", metrics.left);
+    todo_wine
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.height == 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left + metrics.width && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 2, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left > 0.0f, "Unexpected left %.8e.\n", metrics.left);
+    todo_wine
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.height == 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     IDWriteTextLayout_Release(layout);
 
     /* Non-trivial clusters */
@@ -7793,10 +7750,7 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == 100.0f && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7807,12 +7761,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 1, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 0, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 0, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7823,12 +7774,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 1, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 10, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 6, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 0, "Unexpected length %u.\n", metrics.length);
@@ -7839,12 +7787,9 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 1, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 10, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == 0.0f, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 6, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 0, "Unexpected length %u.\n", metrics.length);
@@ -7855,7 +7800,6 @@ if (hr == S_OK)
     ok(metrics.bidiLevel == 1, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
 
     /* Set inline object to contain both Arabic and Latin, Arabic first */
     range.startPosition = 1;
@@ -7864,21 +7808,19 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 1, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left + metrics.width && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 1, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 2, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left > 0.0f, "Unexpected left %.8e.\n", metrics.left);
+    todo_wine
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.height == 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(metrics.bidiLevel == 1, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_SetInlineObject(layout, NULL, range);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -7889,21 +7831,18 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 4, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 4, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 2, "Unexpected length %u.\n", metrics.length);
     ok(metrics.left > 0.0f, "Unexpected left %.8e.\n", metrics.left);
+    todo_wine
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.width > 0.0f, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.height == 0.0f, "Unexpected height %.8e.\n", metrics.height);
     ok(metrics.bidiLevel == 2, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(!metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
 
     IDWriteTextLayout_Release(layout);
 
@@ -7912,10 +7851,7 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 1, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 1, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7926,12 +7862,9 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 1, TRUE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.textPosition == 1, "Unexpected text position %u.\n", metrics.textPosition);
     ok(metrics.length == 1, "Unexpected length %u.\n", metrics.length);
@@ -7942,7 +7875,7 @@ if (hr == S_OK)
     ok(!metrics.bidiLevel, "Unexpected bidi level %u.\n", metrics.bidiLevel);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
     ok(!metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     IDWriteTextLayout_Release(layout);
 
     /* A few lines with mandatory breaks, some lines trimmed away */
@@ -7960,9 +7893,7 @@ if (hr == S_OK)
     ok(count == 3, "Unexpected count %u.\n", count);
 
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 4, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
 
     hr = IDWriteTextLayout_SetMaxHeight(layout, line_metrics[0].height * 1.5f);
@@ -7974,20 +7905,21 @@ if (hr == S_OK)
 
     /* Everything past the first line was trimmed. It's reported in a single hit box. */
     hr = IDWriteTextLayout_HitTestTextPosition(layout, 4, FALSE, &posx, &posy, &metrics);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(posx == metrics.left && posy == metrics.top, "Unexpected position {%.8e,%.8e}.\n", posx, posy);
     ok(metrics.left == 0.0f, "Unexpected left %.8e.\n", metrics.left);
     ok(metrics.top > 0.0f, "Unexpected top %.8e.\n", metrics.top);
     ok(metrics.textPosition == 4, "Unexpected text position %u.\n", metrics.textPosition);
+    todo_wine
     ok(metrics.length == 7, "Unexpected length %u.\n", metrics.length);
+    todo_wine
     ok(metrics.height == 0.0f, "Unexpected height %.8e.\n", metrics.height);
+    todo_wine
     ok(metrics.width == 0.0f, "Unexpected width %.8e.\n", metrics.width);
     ok(metrics.isText, "Unexpected isText %d.\n", metrics.isText);
+    todo_wine
     ok(metrics.isTrimmed, "Unexpected isTrimmed %d.\n", metrics.isTrimmed);
-}
+
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(trimming_sign);
