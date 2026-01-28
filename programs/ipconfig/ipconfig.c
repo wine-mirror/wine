@@ -143,7 +143,6 @@ static BOOL socket_address_to_string(WCHAR *buf, DWORD len, SOCKET_ADDRESS *addr
                                addr->iSockaddrLength, NULL,
                                buf, &len) == 0;
 }
-
 /* Helper function for calculating and printing the subnet mask */
 static void print_subnet_mask(UINT8 prefix_len, ADDRESS_FAMILY family)
 {
@@ -152,20 +151,26 @@ static void print_subnet_mask(UINT8 prefix_len, ADDRESS_FAMILY family)
     if (family == AF_INET)
     {
         ULONG mask = 0;
-        struct in_addr in;
+        struct sockaddr_in sa; /* Use full socket structure */
+        DWORD buf_len = ARRAY_SIZE(buf);
 
         if (prefix_len > 0 && prefix_len <= 32)
             mask = htonl(prefix_len == 32 ? 0xffffffff : ~(0xffffffff >> prefix_len));
         else if (prefix_len == 0)
             mask = 0;
 
-        in.S_un.S_addr = mask;
+        /* Initialize structure and set address family */
+        memset(&sa, 0, sizeof(sa));
+        sa.sin_family = AF_INET;
+        sa.sin_addr.S_un.S_addr = mask;
 
-        if (WSAAddressToStringW((LPSOCKADDR)&in, sizeof(in), NULL, buf, &(DWORD){ARRAY_SIZE(buf)}) == 0)
+        /* Pass sockaddr_in pointer and size */
+        if (WSAAddressToStringW((LPSOCKADDR)&sa, sizeof(sa), NULL, buf, &buf_len) == 0)
         {
             print_field(STRING_SUBNET_MASK, buf);
         }
     }
+    /* IPv6 subnet masks are typically omitted in the basic ipconfig output */
 }
 
 static IP_ADAPTER_ADDRESSES *get_adapters(void)
