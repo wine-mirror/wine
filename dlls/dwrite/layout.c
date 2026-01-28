@@ -2268,22 +2268,19 @@ static void layout_set_line_positions(struct dwrite_textlayout *layout)
         layout_apply_par_alignment(layout);
 }
 
-static bool layout_can_wrap_after(const struct dwrite_textlayout *layout, UINT32 cluster)
-{
-    if (layout->format.wrapping == DWRITE_WORD_WRAPPING_CHARACTER)
-        return true;
-
-    return layout->clustermetrics[cluster].canWrapLineAfter;
-}
-
 static HRESULT layout_compute_lines(struct dwrite_textlayout *layout)
 {
-    bool wraps = layout->format.wrapping != DWRITE_WORD_WRAPPING_NO_WRAP;
     UINT32 remaining_clusters = layout->cluster_count, cluster_count;
+    DWRITE_WORD_WRAPPING wrap_mode = layout->format.wrapping;
     UINT32 start_cluster, end_cluster, break_cluster;
     UINT32 text_position = 0;
     float width, max_width;
+    bool trims, wraps;
     HRESULT hr = S_OK;
+
+    wraps = wrap_mode != DWRITE_WORD_WRAPPING_NO_WRAP;
+    trims = layout->format.trimming.granularity != DWRITE_TRIMMING_GRANULARITY_NONE
+            && layout->format.trimmingsign != NULL;
 
     start_cluster = 0;
     break_cluster = layout->cluster_count;
@@ -2295,9 +2292,15 @@ static HRESULT layout_compute_lines(struct dwrite_textlayout *layout)
         {
             if (layout->clustermetrics[end_cluster].isNewline) break;
             width += layout->clustermetrics[end_cluster].width;
-            if (wraps && width > max_width) break;
+            if (wraps && width > max_width)
+            {
+                /* Do not consume cluster that caused overflow, while making sure
+                   some clusters are still consumed. */
+                if (end_cluster > start_cluster) --end_cluster;
+                break;
+            }
 
-            if (layout_can_wrap_after(layout, end_cluster))
+            if (layout->clustermetrics[end_cluster].canWrapLineAfter)
                 break_cluster = end_cluster;
         }
         end_cluster = min(end_cluster, layout->cluster_count - 1);
@@ -2305,25 +2308,42 @@ static HRESULT layout_compute_lines(struct dwrite_textlayout *layout)
         /* Adjust end cluster for wrapping. */
         if (wraps && width > max_width)
         {
-            /* Use the most recent breaking cluster, or look forward for the next breaking point. */
-            if (!(layout->clustermetrics[end_cluster].isWhitespace && layout_can_wrap_after(layout, end_cluster)))
+            /* Break position depends on the wrapping mode:
+
+               WRAP / EMERGENCY_BREAK - use most recent breaking point if exists,
+                                        otherwise break at cluster boundary;
+               WHOLE_WORD - use most recent breaking point if exists, otherwise look ahead for
+                            next explicit or allowed break;
+               CHARACTER - break at any cluster boundary; */
+
+            if (!(layout->clustermetrics[end_cluster].isWhitespace))
             {
-                if (break_cluster < layout->cluster_count)
+                switch (wrap_mode)
                 {
-                    end_cluster = break_cluster;
-                    break_cluster = layout->cluster_count;
-                }
-                else
-                {
-                    for (; end_cluster < layout->cluster_count; ++end_cluster)
-                    {
-                        if (layout_can_wrap_after(layout, end_cluster)
-                                || layout->clustermetrics[end_cluster].isNewline)
+                    case DWRITE_WORD_WRAPPING_EMERGENCY_BREAK:
+                        end_cluster = min(end_cluster, break_cluster);
+                        break;
+                    case DWRITE_WORD_WRAPPING_WRAP:
+                    case DWRITE_WORD_WRAPPING_WHOLE_WORD:
+                        if (break_cluster < layout->cluster_count)
                         {
-                            break;
+                            end_cluster = break_cluster;
                         }
-                    }
-                    end_cluster = min(end_cluster, layout->cluster_count - 1);
+                        else if (trims || wrap_mode == DWRITE_WORD_WRAPPING_WHOLE_WORD)
+                        {
+                            for (; end_cluster < layout->cluster_count; ++end_cluster)
+                            {
+                                if (layout->clustermetrics[end_cluster].canWrapLineAfter
+                                        || layout->clustermetrics[end_cluster].isNewline)
+                                {
+                                    break;
+                                }
+                            }
+                            end_cluster = min(end_cluster, layout->cluster_count - 1);
+                        }
+                        break;
+                    default:
+                        ;
                 }
             }
         }
@@ -2335,6 +2355,7 @@ static HRESULT layout_compute_lines(struct dwrite_textlayout *layout)
         remaining_clusters -= cluster_count;
 
         start_cluster = end_cluster + 1;
+        break_cluster = layout->cluster_count;
     }
 
     return hr;
