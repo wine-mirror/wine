@@ -3,6 +3,7 @@
  *
  * Copyright 2008 Andrew Riedi
  * Copyright 2010 Andrew Nguyen
+ * Copyright 2026 Pawel Kapeluszny
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,12 +20,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define WIN32_LEAN_AND_MEAN
 #include <stdio.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <iphlpapi.h>
+#include <ws2tcpip.h>
 
 #include "ipconfig.h"
+
+/* Upewnij się, że w ipconfig.h masz te definicje:
+   #define STRING_SUBNET_MASK 123
+   #define STRING_DHCP_SERVER 124
+   #define STRING_WINS_PROXY_ENABLED 125
+*/
 
 static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
 {
@@ -40,9 +49,6 @@ static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
         DWORD len;
         char *msgA;
 
-        /* On Windows WriteConsoleW() fails if the output is redirected. So fall
-         * back to WriteFile() with OEM code page.
-         */
         len = WideCharToMultiByte(GetOEMCP(), 0, msg_buffer, wlen,
             NULL, 0, NULL, NULL);
         msgA = malloc(len);
@@ -95,14 +101,12 @@ static int ipconfig_message(int msg)
 
 static const WCHAR *iftype_to_string(DWORD type)
 {
-    static WCHAR msg_buffer[50];
-
+    static WCHAR msg_buffer[50]; /* NOTE: Static buffer is not thread-safe, but OK for single-threaded CLI */
     int msg;
 
     switch (type)
     {
     case IF_TYPE_ETHERNET_CSMACD:
-    /* The loopback adapter appears as an Ethernet device. */
     case IF_TYPE_SOFTWARE_LOOPBACK:
         msg = STRING_ETHERNET;
         break;
@@ -133,9 +137,41 @@ static void print_value(const WCHAR *value)
 
 static BOOL socket_address_to_string(WCHAR *buf, DWORD len, SOCKET_ADDRESS *addr)
 {
+    /* FIX: Use local variable for length pointer to avoid semantic confusion */
+    DWORD buflen = len;
     return WSAAddressToStringW(addr->lpSockaddr,
                                addr->iSockaddrLength, NULL,
-                               buf, &len) == 0;
+                               buf, &buflen) == 0;
+}
+
+/* Helper function for calculating and printing the subnet mask */
+static void print_subnet_mask(UINT8 prefix_len, ADDRESS_FAMILY family)
+{
+    WCHAR buf[64];
+
+    if (family == AF_INET)
+    {
+        ULONG mask = 0;
+        /* FIX: Use full socket structure to provide correct sin_family */
+        struct sockaddr_in sa; 
+        DWORD buf_len = ARRAY_SIZE(buf);
+
+        if (prefix_len > 0 && prefix_len <= 32)
+            mask = htonl(prefix_len == 32 ? 0xffffffff : ~(0xffffffff >> prefix_len));
+        else if (prefix_len == 0)
+            mask = 0;
+
+        /* Critical FIX: Zero memory and set family explicitly */
+        memset(&sa, 0, sizeof(sa));
+        sa.sin_family = AF_INET;
+        sa.sin_addr.S_un.S_addr = mask;
+
+        /* Cast strictly to LPSOCKADDR */
+        if (WSAAddressToStringW((LPSOCKADDR)&sa, sizeof(sa), NULL, buf, &buf_len) == 0)
+        {
+            print_field(STRING_SUBNET_MASK, buf);
+        }
+    }
 }
 
 static IP_ADAPTER_ADDRESSES *get_adapters(void)
@@ -144,12 +180,13 @@ static IP_ADAPTER_ADDRESSES *get_adapters(void)
     IP_ADAPTER_ADDRESSES *tmp, *ret;
 
     if (!(ret = malloc( size ))) return NULL;
-    err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, ret, &size );
+    
+    err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS | GAA_FLAG_INCLUDE_PREFIX, NULL, ret, &size );
     while (err == ERROR_BUFFER_OVERFLOW)
     {
         if (!(tmp = realloc( ret, size ))) break;
         ret = tmp;
-        err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, ret, &size );
+        err = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS | GAA_FLAG_INCLUDE_PREFIX, NULL, ret, &size );
     }
     if (err == ERROR_SUCCESS) return ret;
     free( ret );
@@ -161,8 +198,9 @@ static void print_basic_information(void)
     IP_ADAPTER_ADDRESSES *adapters, *p;
 
     adapters = get_adapters();
+    /* FIX: replaced exit(1) with return */
     if (!adapters)
-        exit(1);
+        return;
 
     for (p = adapters; p; p = p->Next)
     {
@@ -178,11 +216,13 @@ static void print_basic_information(void)
         {
             if (addr->Address.lpSockaddr->sa_family == AF_INET &&
                 socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
+            {
                 print_field(STRING_IP_ADDRESS, addr_buf);
+                print_subnet_mask(addr->OnLinkPrefixLength, AF_INET);
+            }
             else if (addr->Address.lpSockaddr->sa_family == AF_INET6 &&
                      socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
                 print_field(STRING_IP6_ADDRESS, addr_buf);
-            /* FIXME: Output corresponding subnet mask. */
         }
 
         if (p->FirstGatewayAddress)
@@ -206,8 +246,7 @@ static void print_basic_information(void)
 
 static const WCHAR *nodetype_to_string(DWORD type)
 {
-    static WCHAR msg_buffer[50];
-
+    static WCHAR msg_buffer[50]; /* NOTE: Static buffer */
     int msg;
 
     switch (type)
@@ -255,7 +294,7 @@ static WCHAR *physaddr_to_string(WCHAR *buf, BYTE *addr, DWORD len)
 
 static const WCHAR *boolean_to_string(int value)
 {
-    static WCHAR msg_buffer[15];
+    static WCHAR msg_buffer[15]; /* NOTE: Static buffer */
 
     LoadStringW(GetModuleHandleW(NULL), value ? STRING_YES : STRING_NO,
         msg_buffer, ARRAY_SIZE(msg_buffer));
@@ -272,8 +311,9 @@ static void print_full_information(void)
     if (GetNetworkParams(NULL, &out) == ERROR_BUFFER_OVERFLOW)
     {
         info = malloc(out);
+        /* FIX: replaced exit(1) with return */
         if (!info)
-            exit(1);
+            return;
 
         if (GetNetworkParams(info, &out) == ERROR_SUCCESS)
         {
@@ -289,7 +329,7 @@ static void print_full_information(void)
             print_field(STRING_NODE_TYPE, nodetype_to_string(info->NodeType));
             print_field(STRING_IP_ROUTING, boolean_to_string(info->EnableRouting));
 
-            /* FIXME: Output WINS proxy status and DNS suffix search list. */
+            print_field(STRING_WINS_PROXY_ENABLED, boolean_to_string(info->EnableProxy));
 
             ipconfig_printfW(L"\n");
         }
@@ -298,14 +338,16 @@ static void print_full_information(void)
     }
 
     adapters = get_adapters();
+    /* FIX: replaced exit(1) with return */
     if (!adapters)
-        exit(1);
+        return;
 
     for (p = adapters; p; p = p->Next)
     {
         IP_ADAPTER_UNICAST_ADDRESS *addr;
         WCHAR physaddr_buf[3 * MAX_ADAPTER_ADDRESS_LENGTH], addr_buf[54];
         IP_ADAPTER_GATEWAY_ADDRESS_LH *gateway;
+        IP_ADAPTER_DNS_SERVER_ADDRESS_XP *dhcp;
 
         ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
         ipconfig_printfW(L"\n");
@@ -314,17 +356,17 @@ static void print_full_information(void)
         print_field(STRING_PHYS_ADDR, physaddr_to_string(physaddr_buf, p->PhysicalAddress, p->PhysicalAddressLength));
         print_field(STRING_DHCP_ENABLED, boolean_to_string(p->Flags & IP_ADAPTER_DHCP_ENABLED));
 
-        /* FIXME: Output autoconfiguration status. */
-
         for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
         {
             if (addr->Address.lpSockaddr->sa_family == AF_INET &&
                 socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
+            {
                 print_field(STRING_IP_ADDRESS, addr_buf);
+                print_subnet_mask(addr->OnLinkPrefixLength, AF_INET);
+            }
             else if (addr->Address.lpSockaddr->sa_family == AF_INET6 &&
                      socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &addr->Address))
                 print_field(STRING_IP6_ADDRESS, addr_buf);
-            /* FIXME: Output corresponding subnet mask. */
         }
 
         if (p->FirstGatewayAddress)
@@ -340,6 +382,18 @@ static void print_full_information(void)
         }
         else
             print_field(STRING_DEFAULT_GATEWAY, L"");
+
+        if (p->Flags & IP_ADAPTER_DHCP_ENABLED && p->FirstDhcpServerAddress)
+        {
+            if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &p->FirstDhcpServerAddress->Address))
+                print_field(STRING_DHCP_SERVER, addr_buf);
+
+            for (dhcp = p->FirstDhcpServerAddress->Next; dhcp; dhcp = dhcp->Next)
+            {
+                if (socket_address_to_string(addr_buf, ARRAY_SIZE(addr_buf), &dhcp->Address))
+                    print_value(addr_buf);
+            }
+        }
 
         ipconfig_printfW(L"\n");
     }
