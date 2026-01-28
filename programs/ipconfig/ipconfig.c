@@ -29,11 +29,6 @@
 
 #include "ipconfig.h"
 
-/* Upewnij się, że w ipconfig.h masz te definicje:
-   #define STRING_SUBNET_MASK 123
-   #define STRING_DHCP_SERVER 124
-   #define STRING_WINS_PROXY_ENABLED 125
-*/
 
 static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
 {
