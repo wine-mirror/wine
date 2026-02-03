@@ -1990,34 +1990,6 @@ NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
     return STATUS_BUFFER_TOO_SMALL;
 }
 
-static GLint get_buffer_param( TEB *teb, GLenum target, GLenum param )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    GLint size = 0;
-    if (funcs->p_glGetBufferParameteriv) funcs->p_glGetBufferParameteriv( target, param, &size );
-    return size;
-}
-
-static GLint get_named_buffer_param( TEB *teb, GLint buffer, GLenum param )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    GLint size = 0;
-    if (funcs->p_glGetNamedBufferParameteriv) funcs->p_glGetNamedBufferParameteriv( buffer, param, &size );
-    return size;
-}
-
-static void unmap_buffer( TEB *teb, GLenum target )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    if (funcs->p_glUnmapBuffer) funcs->p_glUnmapBuffer( target );
-}
-
-static void unmap_named_buffer( TEB *teb, GLint buffer )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-    if (funcs->p_glUnmapNamedBuffer) funcs->p_glUnmapNamedBuffer( buffer );
-}
-
 static GLuint get_target_name( TEB *teb, GLenum target )
 {
     const struct opengl_funcs *funcs = teb->glTable;
@@ -2259,6 +2231,8 @@ static struct buffer *create_buffer_storage( TEB *teb, GLenum target, GLuint nam
 static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, GLuint name, GLintptr offset,
                                size_t length, GLbitfield access, void *ptr )
 {
+    const struct opengl_funcs *funcs = teb->glTable;
+
     if (buffer && buffer->map_ptr)
     {
         set_gl_error( teb, GL_INVALID_OPERATION );
@@ -2309,10 +2283,14 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
     if (!buffer)
     {
         struct context *ctx = get_current_context( teb, NULL, NULL );
+        GLint size;
+
+        if (name) funcs->p_glGetNamedBufferParameteriv( name, GL_BUFFER_SIZE, &size );
+        else funcs->p_glGetBufferParameteriv( target, GL_BUFFER_SIZE, &size );
 
         if (!(buffer = calloc( 1, sizeof(*buffer) ))) return NULL;
         buffer->name = name ? name : get_target_name( teb, target );
-        buffer->size = name ? get_named_buffer_param( teb, name, GL_BUFFER_SIZE ) : get_buffer_param( teb, target, GL_BUFFER_SIZE );
+        buffer->size = size;
         rb_put( &ctx->buffers->map, &buffer->name, &buffer->entry );
         TRACE( "allocated buffer %p for %u\n", buffer, buffer->name );
     }
@@ -2349,10 +2327,8 @@ static void *wow64_map_buffer( TEB *teb, struct buffer *buffer, GLenum target, G
     return buffer->map_ptr;
 
 unmap:
-    if (name)
-        unmap_named_buffer( teb, name );
-    else
-        unmap_buffer( teb, target );
+    if (name) funcs->p_glUnmapNamedBuffer( name );
+    else funcs->p_glUnmapBuffer( target );
     return 0;
 }
 
