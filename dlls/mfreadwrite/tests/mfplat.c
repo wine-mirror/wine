@@ -1194,14 +1194,14 @@ static void test_source_reader_aspect_ratio(void)
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
-            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 3, 4, .not_present = TRUE, .todo = TRUE),
             {0},
         },
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ARGB32),
-            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 4, 3, .not_present = TRUE, .todo = TRUE),
             {0},
         },
@@ -1258,10 +1258,10 @@ static void test_source_reader_aspect_ratio(void)
     };
     static const struct attribute_desc output_desc_for_input_desc[] =
     {
-        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128, .todo_value = TRUE),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 214, .todo_value = TRUE),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128, .todo_value = TRUE),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 256, .todo_value = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 214),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 256),
     };
 
     IMFStreamDescriptor *video_streams[4];
