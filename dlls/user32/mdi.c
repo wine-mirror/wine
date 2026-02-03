@@ -469,7 +469,7 @@ static void MDI_SwitchActiveChild( MDICLIENTINFO *ci, HWND hwndTo, BOOL activate
     {
         BOOL was_zoomed = IsZoomed(hwndPrev);
 
-        if (was_zoomed)
+        if (was_zoomed && (GetWindowLongW( hwndTo, GWL_STYLE ) & WS_MAXIMIZEBOX))
         {
             /* restore old MDI child */
             SendMessageW( hwndPrev, WM_SETREDRAW, FALSE, 0 );

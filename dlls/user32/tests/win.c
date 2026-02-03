@@ -8408,7 +8408,6 @@ static void test_ShowWindow_mdichild(void)
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
     ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
-    todo_wine
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
 
     DestroyWindow(hwnd2);
