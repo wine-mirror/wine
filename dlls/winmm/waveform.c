@@ -928,7 +928,8 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_Device *device, WAVEFORMATEX *fmt,
     }
 
     hr = IAudioClient_Initialize(device->client, AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST
+            | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
             AC_BUFLEN, 0, &target, &device->parent->session);
     if(hr != S_OK){
         WARN("Initialize failed: %08lx\n", hr);
@@ -1139,8 +1140,10 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_OpenInfo *info,
     }
 
     hr = IAudioClient_Initialize(device->client, AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST
+            | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
             AC_BUFLEN, 0, device->orig_fmt, &device->parent->session);
+
     if(FAILED(hr)){
         if(hr == AUDCLNT_E_UNSUPPORTED_FORMAT && !(info->flags & WAVE_FORMAT_DIRECT)){
             ret = WINMM_MapDevice(device, FALSE, is_out);
