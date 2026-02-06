@@ -906,7 +906,7 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_Device *device, WAVEFORMATEX *fmt,
     hr = IAudioClient_IsFormatSupported(device->client,
             AUDCLNT_SHAREMODE_SHARED, &target, &closer_fmt);
     CoTaskMemFree(closer_fmt);
-    if(hr != S_OK)
+    if(FAILED(hr))
         return WAVERR_BADFORMAT;
 
     /* device supports our target format, so see if MSACM can
@@ -1132,10 +1132,15 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_OpenInfo *info,
         hr = IAudioClient_IsFormatSupported(device->client,
                 AUDCLNT_SHAREMODE_SHARED, device->orig_fmt, &closer_fmt);
         CoTaskMemFree(closer_fmt);
-        if((hr == S_FALSE || hr == AUDCLNT_E_UNSUPPORTED_FORMAT) && !(info->flags & WAVE_FORMAT_DIRECT))
-            ret = WINMM_MapDevice(device, TRUE, is_out);
+
+        /* S_FALSE means that the format requires conversion, but AUTOCONVERTPCM will do that for us. */
+        if (SUCCEEDED(hr))
+            ret = MMSYSERR_NOERROR;
+        else if (info->flags & WAVE_FORMAT_DIRECT)
+            ret = hr2mmr(hr);
         else
-            ret = hr == S_FALSE ? WAVERR_BADFORMAT : hr2mmr(hr);
+            ret = WINMM_MapDevice(device, TRUE, is_out);
+
         goto error;
     }
 
