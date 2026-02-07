@@ -322,8 +322,8 @@ static void downsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 fr
         /* opos is in the range [-(fir_width - 1), count) */
         int opos = opos_num / freq_adjust_num - fir_width;
 
-        UINT idx_num = (freq_adjust_num - 1 - opos_num % freq_adjust_num) * fir_step;
-        UINT idx = idx_num / freq_adjust_num * fir_width;
+        UINT idx_num = (freq_adjust_num - 1 - opos_num % freq_adjust_num) << fir_step_shift;
+        UINT idx = (idx_num / freq_adjust_num) << fir_width_shift;
         float rem = idx_num % freq_adjust_num / (float)freq_adjust_num;
 
         float input_value = input[j] * firgain;
@@ -345,8 +345,8 @@ static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
         LONG64 ipos_num = freq_acc_start + i * freq_adjust_num;
         UINT ipos = ipos_num / freq_adjust_den;
 
-        UINT idx_num = ipos_num % freq_adjust_den * fir_step;
-        UINT idx = (fir_step - 1 - idx_num / freq_adjust_den) * fir_width;
+        UINT idx_num = (ipos_num % freq_adjust_den) << fir_step_shift;
+        UINT idx = (fir_step - 1 - idx_num / freq_adjust_den) << fir_width_shift;
         float rem_inv = idx_num % freq_adjust_den / (float)freq_adjust_den;
         float rem = 1.0f - rem_inv;
 
