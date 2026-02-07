@@ -86,10 +86,10 @@ int main()
     fprintf(stderr, "q %f\n", (double)output.q);
     fprintf(stderr, "status %s\n", get_pm_status_str(output.status));
 
-    printf("static const int fir_width_shift = %d;\n", fir_width_shift);
-    printf("static const int fir_width = %d;\n", fir_width);
-    printf("static const int fir_step_shift = %d;\n", fir_step_shift);
-    printf("static const int fir_step = %d;\n", fir_step);
+    printf("#define FIR_WIDTH_SHIFT %d\n", fir_width_shift);
+    printf("#define FIR_WIDTH %d\n", fir_width);
+    printf("#define FIR_STEP_SHIFT %d\n", fir_step_shift);
+    printf("#define FIR_STEP %d\n", fir_step);
     printf("static const float fir[] = {");
     // Print the FIR array with an additional row at the end. This simplifies
     // calculation of the interpolated value by allowing the index to overflow
@@ -114,10 +114,10 @@ int main()
     printf("};\n");
 }
 */
-static const int fir_width_shift = 6;
-static const int fir_width = 64;
-static const int fir_step_shift = 7;
-static const int fir_step = 128;
+#define FIR_WIDTH_SHIFT 6
+#define FIR_WIDTH 64
+#define FIR_STEP_SHIFT 7
+#define FIR_STEP 128
 static const float fir[] = {
      0.0000000000e+00, -2.4830013102e-06,  1.9318705150e-06,  2.6614854151e-06,
     -1.5313785194e-05,  4.2076214553e-05, -9.1417167945e-05,  1.7455895136e-04,
