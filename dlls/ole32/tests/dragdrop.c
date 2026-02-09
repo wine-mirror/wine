@@ -265,6 +265,23 @@ static int test_reentrance;
 /* helper macros to make tests a bit leaner */
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error %#08lx\n", hr)
 
+static void run_child_test(const char *name)
+{
+    char path_name[MAX_PATH];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char **argv;
+
+    winetest_get_mainargs(&argv);
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    sprintf(path_name, "\"%s\" dragdrop %s", argv[0], name);
+    ok(CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+            "CreateProcess failed.\n" );
+    wait_child_process(&info);
+}
+
 static HRESULT WINAPI DropTarget_QueryInterface(IDropTarget* iface, REFIID riid,
                                                 void** ppvObject)
 {
@@ -753,10 +770,61 @@ static void test_DoDragDrop(void)
     DestroyWindow(hwnd);
 }
 
+static void test_mismatched_cleanup(void)
+{
+    HRESULT hr;
+    HWND hwnd;
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_OK, "OleInitialize failed, got %#lx\n", hr);
+
+    /* Mismatched cleanup (left dangling window class registration) */
+    CoUninitialize();
+
+    /* Now, RegisterDragDrop call fails with another error code */
+    hwnd = CreateWindowExA(WS_EX_TOPMOST, "WineOleTestClass", "Test", 0,
+        CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL,
+        NULL, NULL, NULL);
+    ok(IsWindow(hwnd), "failed to create window\n");
+
+    hr = RegisterDragDrop(hwnd, &DropTarget);
+    todo_wine ok(hr == CO_E_NOTINITIALIZED, "expected CO_E_NOTINITIALIZED, got %#lx\n", hr);
+
+    DestroyWindow(hwnd);
+
+    /* However, RegisterDragDrop succeeds after creating MTA */
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "CoInitializeEx failed, got %#lx\n", hr);
+
+    hwnd = CreateWindowExA(WS_EX_TOPMOST, "WineOleTestClass", "Test", 0,
+        CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL,
+        NULL, NULL, NULL);
+    ok(IsWindow(hwnd), "failed to create window\n");
+
+    hr = RegisterDragDrop(hwnd, &DropTarget);
+    todo_wine ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
+
+    DestroyWindow(hwnd);
+
+    CoUninitialize();
+}
+
 START_TEST(dragdrop)
 {
+    int argc;
+    char **argv;
+
     register_dummy_class();
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc > 2)
+    {
+        if (!strcmp(argv[2], "mismatched_cleanup"))
+            test_mismatched_cleanup();
+        return;
+    }
 
     test_Register_Revoke();
     test_DoDragDrop();
+    run_child_test("mismatched_cleanup");
 }
