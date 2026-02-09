@@ -3800,9 +3800,10 @@ HKEY WINAPI SetupDiOpenClassRegKeyExA(const GUID *class, REGSAM access, DWORD fl
 HKEY WINAPI SetupDiOpenClassRegKeyExW(const GUID *class, REGSAM access, DWORD flags,
         const WCHAR *machine_name, void *reserved)
 {
-    const WCHAR *key_name;
+    DWORD open_flags = 0;
+    GUID guid = {0};
+    CONFIGRET ret;
     HKEY key;
-    LONG ret;
 
     TRACE("class %s, access %#lx, flags %#lx, machine_name %s, reserved %p.\n", debugstr_guid(class),
             access, flags, debugstr_w(machine_name), reserved);
@@ -3813,14 +3814,10 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(const GUID *class, REGSAM access, DWORD fl
         return INVALID_HANDLE_VALUE;
     }
 
-    if (flags == DIOCR_INSTALLER)
-    {
-        key_name = ControlClass;
-    }
-    else if (flags == DIOCR_INTERFACE)
-    {
-        key_name = DeviceClasses;
-    }
+    if (flags & DIOCR_INSTALLER)
+        open_flags = CM_OPEN_CLASS_KEY_INSTALLER;
+    else if (flags & DIOCR_INTERFACE)
+        open_flags = CM_OPEN_CLASS_KEY_INTERFACE;
     else
     {
         ERR("Invalid flags parameter!\n");
@@ -3828,36 +3825,19 @@ HKEY WINAPI SetupDiOpenClassRegKeyExW(const GUID *class, REGSAM access, DWORD fl
         return INVALID_HANDLE_VALUE;
     }
 
-    if (!class)
+    if (class)
     {
-        if ((ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, key_name, 0, access, &key)))
-        {
-            SetLastError(ret);
-            key = INVALID_HANDLE_VALUE;
-        }
+        guid = *class;
+        class = &guid;
     }
-    else
+
+    if ((ret = CM_Open_Class_Key_ExW((GUID *)class, NULL, access,
+                 RegDisposition_OpenExisting, &key, open_flags, NULL)))
     {
-        WCHAR guid_str[39];
-        HKEY root;
-
-        SETUPDI_GuidToString(class, guid_str);
-
-        if (!(ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, key_name, 0, access, &root)))
-        {
-            if ((ret = RegOpenKeyExW(root, guid_str, 0, access, &key)))
-            {
-                SetLastError(ret);
-                key = INVALID_HANDLE_VALUE;
-            }
-            RegCloseKey(root);
-        }
-        else
-        {
-            SetLastError(ret);
-            key = INVALID_HANDLE_VALUE;
-        }
+        SetLastError(CM_MapCrToWin32Err(ret, ERROR_INVALID_PARAMETER));
+        return INVALID_HANDLE_VALUE;
     }
+
     return key;
 }
 
