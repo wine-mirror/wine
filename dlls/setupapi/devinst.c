@@ -1141,176 +1141,115 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(
 /***********************************************************************
  *		SetupDiClassGuidsFromNameA  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiClassGuidsFromNameA(
-        LPCSTR ClassName,
-        LPGUID ClassGuidList,
-        DWORD ClassGuidListSize,
-        PDWORD RequiredSize)
+BOOL WINAPI SetupDiClassGuidsFromNameA(const char *class_name, GUID *guids, DWORD guids_size, DWORD *guid_count)
 {
-  return SetupDiClassGuidsFromNameExA(ClassName, ClassGuidList,
-                                      ClassGuidListSize, RequiredSize,
-                                      NULL, NULL);
+    return SetupDiClassGuidsFromNameExA(class_name, guids, guids_size, guid_count, NULL, NULL);
 }
 
 /***********************************************************************
  *		SetupDiClassGuidsFromNameW  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiClassGuidsFromNameW(
-        LPCWSTR ClassName,
-        LPGUID ClassGuidList,
-        DWORD ClassGuidListSize,
-        PDWORD RequiredSize)
+BOOL WINAPI SetupDiClassGuidsFromNameW(const WCHAR *class_name, GUID *guids, DWORD guids_size, DWORD *guid_count)
 {
-  return SetupDiClassGuidsFromNameExW(ClassName, ClassGuidList,
-                                      ClassGuidListSize, RequiredSize,
-                                      NULL, NULL);
+    return SetupDiClassGuidsFromNameExW(class_name, guids, guids_size, guid_count, NULL, NULL);
 }
 
 /***********************************************************************
  *		SetupDiClassGuidsFromNameExA  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiClassGuidsFromNameExA(
-        LPCSTR ClassName,
-        LPGUID ClassGuidList,
-        DWORD ClassGuidListSize,
-        PDWORD RequiredSize,
-        LPCSTR MachineName,
-        PVOID Reserved)
+BOOL WINAPI SetupDiClassGuidsFromNameExA(const char *class_nameA, GUID *guids, DWORD guids_size,
+        DWORD *guid_count, const char *machine_nameA, void *reserved)
 {
-    LPWSTR ClassNameW = NULL;
-    LPWSTR MachineNameW = NULL;
-    BOOL bResult;
+    WCHAR *class_nameW = strdupAtoW(class_nameA), *machine_nameW = strdupAtoW(machine_nameA);
+    BOOL ret;
 
-    ClassNameW = MultiByteToUnicode(ClassName, CP_ACP);
-    if (ClassNameW == NULL)
-        return FALSE;
+    TRACE("class_nameA %s, guids %p, guids_size %#lx, guid_count %p, machine_nameA %s, reserved %p.\n",
+            debugstr_a(class_nameA), guids, guids_size, guid_count, debugstr_a(machine_nameA), reserved);
 
-    if (MachineName)
-    {
-        MachineNameW = MultiByteToUnicode(MachineName, CP_ACP);
-        if (MachineNameW == NULL)
-        {
-            MyFree(ClassNameW);
-            return FALSE;
-        }
-    }
-
-    bResult = SetupDiClassGuidsFromNameExW(ClassNameW, ClassGuidList,
-                                           ClassGuidListSize, RequiredSize,
-                                           MachineNameW, Reserved);
-
-    MyFree(MachineNameW);
-    MyFree(ClassNameW);
-
-    return bResult;
+    ret = SetupDiClassGuidsFromNameExW(class_nameW, guids, guids_size, guid_count, machine_nameW, reserved);
+    free(class_nameW);
+    free(machine_nameW);
+    return ret;
 }
 
 /***********************************************************************
  *		SetupDiClassGuidsFromNameExW  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiClassGuidsFromNameExW(
-        LPCWSTR ClassName,
-        LPGUID ClassGuidList,
-        DWORD ClassGuidListSize,
-        PDWORD RequiredSize,
-        LPCWSTR MachineName,
-        PVOID Reserved)
+BOOL WINAPI SetupDiClassGuidsFromNameExW(const WCHAR *class_name, GUID *guids, DWORD guids_size,
+        DWORD *guid_count, const WCHAR *machine_name, void *reserved)
 {
-    WCHAR szKeyName[40];
-    WCHAR szClassName[256];
-    HKEY hClassesKey;
-    HKEY hClassKey;
-    DWORD dwLength;
-    DWORD dwIndex;
-    LONG lError;
-    DWORD dwGuidListIndex = 0;
+    DWORD len, index, guid_index = 0;
+    WCHAR key_name[40], buffer[256];
+    HKEY hkey, class_key;
+    LONG err;
 
-    if (RequiredSize != NULL)
-	*RequiredSize = 0;
+    TRACE("class_name %s, guids %p, guids_size %#lx, guid_count %p, machine_name %s, reserved "
+          "%p.\n",
+            debugstr_w(class_name), guids, guids_size, guid_count, debugstr_w(machine_name), reserved);
 
-    hClassesKey = SetupDiOpenClassRegKeyExW(NULL,
-                                            KEY_ALL_ACCESS,
-                                            DIOCR_INSTALLER,
-                                            MachineName,
-                                            Reserved);
-    if (hClassesKey == INVALID_HANDLE_VALUE)
+    if (guid_count)
+        *guid_count = 0;
+
+    hkey = SetupDiOpenClassRegKeyExW(NULL, KEY_ALL_ACCESS, DIOCR_INSTALLER, machine_name, reserved);
+    if (hkey == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    for (index = 0;; index++)
     {
-	return FALSE;
+        len = ARRAY_SIZE(key_name);
+        err = RegEnumKeyExW(hkey, index, key_name, &len, NULL, NULL, NULL, NULL);
+        TRACE("RegEnumKeyExW() returns %ld\n", err);
+        if (err == ERROR_SUCCESS || err == ERROR_MORE_DATA)
+        {
+            TRACE("Key name: %p\n", key_name);
+
+            if (RegOpenKeyExW(hkey, key_name, 0, KEY_ALL_ACCESS, &class_key))
+            {
+                RegCloseKey(hkey);
+                return FALSE;
+            }
+
+            len = sizeof(buffer);
+            if (!RegQueryValueExW(class_key, L"Class", NULL, NULL, (LPBYTE)buffer, &len))
+            {
+                TRACE("Class name: %p\n", buffer);
+
+                if (wcsicmp(buffer, class_name) == 0)
+                {
+                    TRACE("Found matching class name\n");
+
+                    TRACE("Guid: %p\n", key_name);
+                    if (guid_index < guids_size)
+                    {
+                        if (key_name[0] == '{' && key_name[37] == '}')
+                        {
+                            key_name[37] = 0;
+                        }
+                        TRACE("Guid: %p\n", &key_name[1]);
+
+                        UuidFromStringW(&key_name[1], &guids[guid_index]);
+                    }
+
+                    guid_index++;
+                }
+            }
+
+            RegCloseKey(class_key);
+        }
+
+        if (err != ERROR_SUCCESS)
+            break;
     }
 
-    for (dwIndex = 0; ; dwIndex++)
+    RegCloseKey(hkey);
+
+    if (guid_count)
+        *guid_count = guid_index;
+
+    if (guids_size < guid_index)
     {
-        dwLength = ARRAY_SIZE(szKeyName);
-	lError = RegEnumKeyExW(hClassesKey,
-			       dwIndex,
-			       szKeyName,
-			       &dwLength,
-			       NULL,
-			       NULL,
-			       NULL,
-			       NULL);
-	TRACE("RegEnumKeyExW() returns %ld\n", lError);
-	if (lError == ERROR_SUCCESS || lError == ERROR_MORE_DATA)
-	{
-	    TRACE("Key name: %p\n", szKeyName);
-
-	    if (RegOpenKeyExW(hClassesKey,
-			      szKeyName,
-			      0,
-			      KEY_ALL_ACCESS,
-			      &hClassKey))
-	    {
-		RegCloseKey(hClassesKey);
-		return FALSE;
-	    }
-
-	    dwLength = sizeof(szClassName);
-	    if (!RegQueryValueExW(hClassKey,
-				  L"Class",
-				  NULL,
-				  NULL,
-				  (LPBYTE)szClassName,
-				  &dwLength))
-	    {
-		TRACE("Class name: %p\n", szClassName);
-
-		if (wcsicmp(szClassName, ClassName) == 0)
-		{
-		    TRACE("Found matching class name\n");
-
-		    TRACE("Guid: %p\n", szKeyName);
-		    if (dwGuidListIndex < ClassGuidListSize)
-		    {
-			if (szKeyName[0] == '{' && szKeyName[37] == '}')
-			{
-			    szKeyName[37] = 0;
-			}
-			TRACE("Guid: %p\n", &szKeyName[1]);
-
-			UuidFromStringW(&szKeyName[1],
-					&ClassGuidList[dwGuidListIndex]);
-		    }
-
-		    dwGuidListIndex++;
-		}
-	    }
-
-	    RegCloseKey(hClassKey);
-	}
-
-	if (lError != ERROR_SUCCESS)
-	    break;
-    }
-
-    RegCloseKey(hClassesKey);
-
-    if (RequiredSize != NULL)
-	*RequiredSize = dwGuidListIndex;
-
-    if (ClassGuidListSize < dwGuidListIndex)
-    {
-	SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	return FALSE;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
     }
 
     return TRUE;
