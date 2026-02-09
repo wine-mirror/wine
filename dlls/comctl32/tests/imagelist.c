@@ -2204,6 +2204,8 @@ static void test_iconsize(void)
 static void test_create_destroy(void)
 {
     HIMAGELIST himl;
+    IMAGEINFO info;
+    HBITMAP hbm;
     INT cx, cy;
     BOOL rc;
     INT ret;
@@ -2263,6 +2265,19 @@ static void test_create_destroy(void)
     ok(himl == NULL, "got %p\n", himl);
     himl = pImageList_Create(1, -1, ILC_COLORDDB, 4, 4);
     ok(himl == NULL, "got %p\n", himl);
+
+    /* Test creating an imagelist with an excessively large initial image count */
+    himl = pImageList_Create(32, 32, ILC_COLOR32, 0xc0c0c0, 10);
+    ok(himl != NULL, "got %p\n", himl);
+    hbm = create_bitmap(32, 32, 0, "");
+    ret = pImageList_Add(himl, hbm, NULL);
+    ok(ret != -1, "Failed to add an image.\n");
+    ret = pImageList_GetImageInfo(himl, 0, &info);
+    ok(ret, "got %d\n", ret);
+    todo_wine
+    ok(info.hbmImage != NULL, "got %p\n", info.hbmImage);
+    DeleteObject(hbm);
+    pImageList_Destroy(himl);
 }
 
 static void check_color_table(const char *name, HDC hdc, HIMAGELIST himl, UINT ilc,
