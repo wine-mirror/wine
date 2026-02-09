@@ -1178,10 +1178,9 @@ BOOL WINAPI SetupDiClassGuidsFromNameExA(const char *class_nameA, GUID *guids, D
 BOOL WINAPI SetupDiClassGuidsFromNameExW(const WCHAR *class_name, GUID *guids, DWORD guids_size,
         DWORD *guid_count, const WCHAR *machine_name, void *reserved)
 {
-    DWORD len, index, guid_index = 0;
-    WCHAR key_name[40], buffer[256];
-    HKEY hkey, class_key;
-    LONG err;
+    DWORD guid_index = 0;
+    CONFIGRET ret;
+    GUID guid;
 
     TRACE("class_name %s, guids %p, guids_size %#lx, guid_count %p, machine_name %s, reserved "
           "%p.\n",
@@ -1190,58 +1189,33 @@ BOOL WINAPI SetupDiClassGuidsFromNameExW(const WCHAR *class_name, GUID *guids, D
     if (guid_count)
         *guid_count = 0;
 
-    hkey = SetupDiOpenClassRegKeyExW(NULL, KEY_ALL_ACCESS, DIOCR_INSTALLER, machine_name, reserved);
-    if (hkey == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    for (index = 0;; index++)
+    if (machine_name && *machine_name)
     {
-        len = ARRAY_SIZE(key_name);
-        err = RegEnumKeyExW(hkey, index, key_name, &len, NULL, NULL, NULL, NULL);
-        TRACE("RegEnumKeyExW() returns %ld\n", err);
-        if (err == ERROR_SUCCESS || err == ERROR_MORE_DATA)
-        {
-            TRACE("Key name: %p\n", key_name);
-
-            if (RegOpenKeyExW(hkey, key_name, 0, KEY_ALL_ACCESS, &class_key))
-            {
-                RegCloseKey(hkey);
-                return FALSE;
-            }
-
-            len = sizeof(buffer);
-            if (!RegQueryValueExW(class_key, L"Class", NULL, NULL, (LPBYTE)buffer, &len))
-            {
-                TRACE("Class name: %p\n", buffer);
-
-                if (wcsicmp(buffer, class_name) == 0)
-                {
-                    TRACE("Found matching class name\n");
-
-                    TRACE("Guid: %p\n", key_name);
-                    if (guid_index < guids_size)
-                    {
-                        if (key_name[0] == '{' && key_name[37] == '}')
-                        {
-                            key_name[37] = 0;
-                        }
-                        TRACE("Guid: %p\n", &key_name[1]);
-
-                        UuidFromStringW(&key_name[1], &guids[guid_index]);
-                    }
-
-                    guid_index++;
-                }
-            }
-
-            RegCloseKey(class_key);
-        }
-
-        if (err != ERROR_SUCCESS)
-            break;
+        FIXME("Remote access not supported yet!\n");
+        SetLastError(ERROR_INVALID_MACHINENAME);
+        return FALSE;
     }
 
-    RegCloseKey(hkey);
+    for (UINT i = 0; !(ret = CM_Enumerate_Classes(i, &guid, CM_ENUMERATE_CLASSES_INSTALLER)); i++)
+    {
+        WCHAR buffer[MAX_CLASS_NAME_LEN];
+        ULONG size = sizeof(buffer);
+        DEVPROPTYPE type;
+
+        if ((ret = CM_Get_Class_PropertyW(&guid, &DEVPKEY_NAME, &type, (BYTE *)buffer, &size, 0)))
+            break;
+        if (!wcsicmp(buffer, class_name))
+        {
+            if (guid_index < guids_size)
+                guids[guid_index] = guid;
+            guid_index++;
+        }
+    }
+    if (ret && ret != CR_NO_SUCH_VALUE)
+    {
+        SetLastError(CM_MapCrToWin32Err(ret, ERROR_GEN_FAILURE));
+        return FALSE;
+    }
 
     if (guid_count)
         *guid_count = guid_index;
