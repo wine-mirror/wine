@@ -658,7 +658,7 @@ static inline WORD ldt_alloc_entry( LDT_ENTRY entry )
     for (idx = 0; idx < ARRAY_SIZE(ldt_bitmap); idx++)
     {
         if (ldt_bitmap[idx] == ~0u) continue;
-        idx = idx * 32 + ffs( ~ldt_bitmap[idx] ) - 1;
+        idx = idx * 32 + __builtin_ffs( ~ldt_bitmap[idx] ) - 1;
         return ldt_update_entry( (idx << 3) | 7, entry );
     }
     return 0;
