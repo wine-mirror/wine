@@ -1027,19 +1027,6 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
         }
         break;
         }
-    case WAVE_FORMAT_ALAW:
-    case WAVE_FORMAT_MULAW:
-        if (fmt->wBitsPerSample != 8) {
-            FIXME("Unsupported bpp %u for LAW\n", fmt->wBitsPerSample);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-        if (fmt->nChannels != 1 && fmt->nChannels != 2) {
-            FIXME("Unsupported channels %u for LAW\n", fmt->nChannels);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-        stream->ss.format = fmt->wFormatTag == WAVE_FORMAT_MULAW ? PA_SAMPLE_ULAW : PA_SAMPLE_ALAW;
-        pa_channel_map_init_auto(&stream->map, fmt->nChannels, PA_CHANNEL_MAP_ALSA);
-        break;
     default:
         WARN("Unhandled tag %x\n", fmt->wFormatTag);
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
