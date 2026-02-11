@@ -1,0 +1,42 @@
+STATICLIB = libc++.a
+EXTRAINCL = -I$(srcdir)/src $(CXXABI_PE_CFLAGS)
+EXTRADEFS = -D_LIBCPP_BUILDING_LIBRARY -D_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS
+
+SOURCES = \
+	src/algorithm.cpp \
+	src/any.cpp \
+	src/bind.cpp \
+	src/charconv.cpp \
+	src/chrono.cpp \
+	src/condition_variable.cpp \
+	src/debug.cpp \
+	src/exception.cpp \
+	src/experimental/memory_resource.cpp \
+	src/functional.cpp \
+	src/future.cpp \
+	src/hash.cpp \
+	src/ios.cpp \
+	src/iostream.cpp \
+	src/locale.cpp \
+	src/memory.cpp \
+	src/mutex.cpp \
+	src/new.cpp \
+	src/optional.cpp \
+	src/random.cpp \
+	src/regex.cpp \
+	src/shared_mutex.cpp \
+	src/stdexcept.cpp \
+	src/string.cpp \
+	src/strstream.cpp \
+	src/support/win32/locale_win32.cpp \
+	src/support/win32/support.cpp \
+	src/support/win32/thread_win32.cpp \
+	src/system_error.cpp \
+	src/thread.cpp \
+	src/typeinfo.cpp \
+	src/utility.cpp \
+	src/valarray.cpp \
+	src/variant.cpp \
+	src/vector.cpp
+
+INSTALL_DEV = $(STATICLIB)
