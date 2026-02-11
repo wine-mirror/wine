@@ -60,6 +60,8 @@ struct property
     DWORD *size;
 };
 
+extern LSTATUS init_property( struct property *prop, const DEVPROPKEY *key, DEVPROPTYPE *type, void *buffer, DWORD *size );
+
 struct device_interface
 {
     GUID class_guid;
@@ -71,3 +73,4 @@ struct device_interface
 extern LSTATUS init_device_interface( struct device_interface *iface, const WCHAR *name );
 extern LSTATUS open_device_interface_key( const struct device_interface *iface, REGSAM access, BOOL open, HKEY *hkey );
 extern LSTATUS enum_device_interface_property_keys( HKEY hkey, const struct device_interface *iface, DEVPROPKEY *buffer, ULONG *size );
+extern LSTATUS query_device_interface_property( HKEY hkey, const struct device_interface *iface, struct property *prop );

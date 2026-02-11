@@ -120,7 +120,7 @@ static LSTATUS open_device_classes_key( HKEY root, const WCHAR *key, REGSAM acce
     return open_key( root, path, access, open, hkey );
 }
 
-static LSTATUS init_property( struct property *prop, const DEVPROPKEY *key, DEVPROPTYPE *type, void *buffer, DWORD *size )
+LSTATUS init_property( struct property *prop, const DEVPROPKEY *key, DEVPROPTYPE *type, void *buffer, DWORD *size )
 {
     if (!key) return ERROR_INVALID_PARAMETER;
     if (!(prop->type = type) || !(prop->size = size)) return ERROR_INVALID_USER_BUFFER;
@@ -420,7 +420,7 @@ static const struct property_desc device_interface_properties[] =
     { &DEVPKEY_DeviceInterface_FriendlyName,                DEVPROP_TYPE_STRING,        L"FriendlyName" },
 };
 
-static LSTATUS query_device_interface_property( HKEY hkey, const struct device_interface *iface, struct property *prop )
+LSTATUS query_device_interface_property( HKEY hkey, const struct device_interface *iface, struct property *prop )
 {
     WCHAR prefix[MAX_PATH];
 
