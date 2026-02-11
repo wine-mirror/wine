@@ -1872,6 +1872,8 @@ static void test_PlaySound(void)
     ok(br, "PlaySound failed, got %d\n", br);
 
     br = PlaySoundA("test_s24_32le.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
+    /* Not supported on some Wine drivers. */
+    todo_wine_if(!br)
     ok(br, "PlaySound failed, got %d\n", br);
 
     br = PlaySoundA("test_alaw.wav", GetModuleHandleA(NULL), SND_RESOURCE | SND_NODEFAULT);
@@ -2086,7 +2088,9 @@ static void test_format(WAVEFORMATEXTENSIBLE *fmt)
             || fmt->Format.wFormatTag == WAVE_FORMAT_ALAW || fmt->Format.wFormatTag == WAVE_FORMAT_MULAW
             || fmt->Format.cbSize > sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)
             /* Native seems to largely ignore when the channel mask has nonsensical values, while Wine is more picky. */
-            || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && __popcnt(fmt->dwChannelMask) != fmt->Format.nChannels)))
+            || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && __popcnt(fmt->dwChannelMask) != fmt->Format.nChannels)
+            /* Some drivers do not support 24-on-32 bits samples. */
+            || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && fmt->Format.wBitsPerSample == 32 && fmt->Samples.wValidBitsPerSample == 24)))
     ok(mmr == expected || broken(channel_mismatch), "waveOutOpen(0) got result %#08x, expected %#08x\n", mmr, expected);
     ok((mmr == MMSYSERR_NOERROR) == !!hwo, "Unexpected waveout %p\n", hwo);
 
@@ -2104,7 +2108,9 @@ static void test_format(WAVEFORMATEXTENSIBLE *fmt)
             || fmt->Format.cbSize > sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)
             /* Wine currently doesn't accept 24-bit PCM in direct mode. */
             || fmt->Format.wBitsPerSample == 24
-            || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && __popcnt(fmt->dwChannelMask) != fmt->Format.nChannels)))
+            || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && __popcnt(fmt->dwChannelMask) != fmt->Format.nChannels)
+            /* Some drivers do not support 24-on-32 bits samples. */
+            || (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && fmt->Format.wBitsPerSample == 32 && fmt->Samples.wValidBitsPerSample == 24)))
     ok(mmr == expected || (mmr == MMSYSERR_INVALPARAM && expected == WAVERR_BADFORMAT) || broken(channel_mismatch),
             "waveOutOpen(DIRECT) got result %#08x, expected %#08x\n", mmr, expected);
     ok((mmr == MMSYSERR_NOERROR) == !!hwo, "Unexpected waveout %p\n", hwo);

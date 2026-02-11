@@ -999,9 +999,7 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
                         stream->ss.format = PA_SAMPLE_S24LE;
                     break;
                 case 32:
-                    if (valid == 24)
-                        stream->ss.format = PA_SAMPLE_S24_32LE;
-                    else if (valid == 32)
+                    if (valid == 32)
                         stream->ss.format = PA_SAMPLE_S32LE;
                     break;
                 default:
