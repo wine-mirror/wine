@@ -1855,7 +1855,7 @@ static void test_avi_end_position(void)
     /* test "step to" range */
     parm.step.dwFrames = frames;
     err = mciSendCommandW(id, MCI_STEP, MCI_DGV_STEP_FRAMES | MCI_TEST, (DWORD_PTR)&parm);
-    todo_wine ok(!err, "mciCommand step by %lu: %s\n", parm.step.dwFrames, dbg_mcierr(err));
+    ok(!err, "mciCommand step by %lu: %s\n", parm.step.dwFrames, dbg_mcierr(err));
 
     parm.step.dwFrames = frames + 1;
     err = mciSendCommandW(id, MCI_STEP, MCI_DGV_STEP_FRAMES | MCI_TEST, (DWORD_PTR)&parm);

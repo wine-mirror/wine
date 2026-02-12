@@ -863,7 +863,7 @@ static	DWORD	MCIAVI_mciStep(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STEP_PARMS lpP
     if (dwFlags & MCI_DGV_STEP_FRAMES)  delta = lpParms->dwFrames;
     if (dwFlags & MCI_DGV_STEP_REVERSE) delta = -delta;
     position = wma->dwCurrVideoFrame + delta;
-    if (position >= wma->dwPlayableVideoFrames) return MCIERR_OUTOFRANGE;
+    if (position > wma->dwPlayableVideoFrames) return MCIERR_OUTOFRANGE;
     if (dwFlags & MCI_TEST)	return 0;
 
     MCIAVI_mciStop(wDevID, MCI_WAIT, NULL);
