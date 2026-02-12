@@ -588,23 +588,29 @@ double MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
 {
     void* 		pBitmapData;
     LPBITMAPINFO	pBitmapInfo;
+    DWORD		frame;
 
     if (!hDC || !wma->inbih)
 	return 0;
 
-    TRACE("Painting frame %lu (cached %lu)\n", wma->dwCurrVideoFrame, wma->dwCachedFrame);
+    if (wma->dwCurrVideoFrame >= wma->dwPlayableVideoFrames)
+        frame = wma->dwPlayableVideoFrames - 1;
+    else
+        frame = wma->dwCurrVideoFrame;
 
-    if (wma->dwCurrVideoFrame != wma->dwCachedFrame)
+    TRACE("Painting frame %lu (cached %lu)\n", frame, wma->dwCachedFrame);
+
+    if (frame != wma->dwCachedFrame)
     {
-        if (!wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset)
+        if (!wma->lpVideoIndex[frame].dwOffset)
 	    return 0;
 
-        if (wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize)
+        if (wma->lpVideoIndex[frame].dwSize)
         {
-            mmioSeek(wma->hFile, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset, SEEK_SET);
-            mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize);
+            mmioSeek(wma->hFile, wma->lpVideoIndex[frame].dwOffset, SEEK_SET);
+            mmioRead(wma->hFile, wma->indata, wma->lpVideoIndex[frame].dwSize);
 
-            wma->inbih->biSizeImage = wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize;
+            wma->inbih->biSizeImage = wma->lpVideoIndex[frame].dwSize;
 
             if (wma->hic && ICDecompress(wma->hic, 0, wma->inbih, wma->indata,
                                          wma->outbih, wma->outdata) != ICERR_OK)
@@ -614,7 +620,7 @@ double MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
             }
         }
 
-        wma->dwCachedFrame = wma->dwCurrVideoFrame;
+        wma->dwCachedFrame = frame;
     }
 
     if (wma->hic) {

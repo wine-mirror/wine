@@ -1808,7 +1808,7 @@ static void test_avi_end_position(void)
     parm.status.dwReturn = 0xFEEDABAD;
     err = mciSendCommandW(id, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err, "mciCommand status position: %s\n", dbg_mcierr(err));
-    todo_wine ok(parm.status.dwReturn == frames, "Got %Iu, expected %Iu\n", parm.status.dwReturn, frames);
+    ok(parm.status.dwReturn == frames, "Got %Iu, expected %Iu\n", parm.status.dwReturn, frames);
 
     /* test "play to" range */
     parm.play.dwTo = frames;
@@ -1817,7 +1817,7 @@ static void test_avi_end_position(void)
 
     parm.play.dwTo = frames + 1;
     err = mciSendCommandW(id, MCI_PLAY, MCI_TO | MCI_WAIT, (DWORD_PTR)&parm);
-    todo_wine ok(err == MCIERR_OUTOFRANGE, "mciCommand play to %lu: %s\n", parm.play.dwTo, dbg_mcierr(err));
+    ok(err == MCIERR_OUTOFRANGE, "mciCommand play to %lu: %s\n", parm.play.dwTo, dbg_mcierr(err));
 
     /* test "seek to" range */
     parm.seek.dwTo = frames;

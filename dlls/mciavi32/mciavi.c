@@ -570,7 +570,7 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     }
 
     dwFromFrame = wma->dwCurrVideoFrame;
-    dwToFrame = wma->dwPlayableVideoFrames - 1;
+    dwToFrame = wma->dwPlayableVideoFrames;
 
     if (dwFlags & MCI_FROM) {
 	dwFromFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwFrom);
@@ -578,8 +578,11 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (dwFlags & MCI_TO) {
 	dwToFrame = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
     }
-    if (dwToFrame >= wma->dwPlayableVideoFrames)
-	dwToFrame = wma->dwPlayableVideoFrames - 1;
+    if (dwToFrame > wma->dwPlayableVideoFrames)
+    {
+        LeaveCriticalSection(&wma->cs);
+        return MCIERR_OUTOFRANGE;
+    }
 
     TRACE("Playing from frame=%lu to frame=%lu\n", dwFromFrame, dwToFrame);
 
