@@ -760,12 +760,12 @@ static	DWORD	MCIAVI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
     if (dwFlags & MCI_TO) {
 	position = MCIAVI_ConvertTimeFormatToFrame(wma, lpParms->dwTo);
-	if (position >= wma->dwPlayableVideoFrames)
+	if (position > wma->dwPlayableVideoFrames)
 	    return MCIERR_OUTOFRANGE;
     } else if (dwFlags & MCI_SEEK_TO_START) {
 	position = 0;
     } else {
-	position = wma->dwPlayableVideoFrames - 1;
+	position = wma->dwPlayableVideoFrames;
     }
     if (dwFlags & MCI_TEST)	return 0;
 
