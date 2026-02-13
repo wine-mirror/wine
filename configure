@@ -744,6 +744,8 @@ JXR_PE_LIBS
 JXR_PE_CFLAGS
 JPEG_PE_LIBS
 JPEG_PE_CFLAGS
+ICUI18N_PE_LIBS
+ICUI18N_PE_CFLAGS
 ICUCOMMON_PE_LIBS
 ICUCOMMON_PE_CFLAGS
 GSM_PE_LIBS
@@ -1683,6 +1685,7 @@ enable_faudio
 enable_fluidsynth
 enable_gsm
 enable_icucommon
+enable_icui18n
 enable_jpeg
 enable_jxr
 enable_lcms2
@@ -1860,6 +1863,8 @@ GSM_PE_CFLAGS
 GSM_PE_LIBS
 ICUCOMMON_PE_CFLAGS
 ICUCOMMON_PE_LIBS
+ICUI18N_PE_CFLAGS
+ICUI18N_PE_LIBS
 JPEG_PE_CFLAGS
 JPEG_PE_LIBS
 JXR_PE_CFLAGS
@@ -2688,6 +2693,11 @@ Some influential environment variables:
   ICUCOMMON_PE_LIBS
               Linker flags for the PE icucommon, overriding the bundled
               version
+  ICUI18N_PE_CFLAGS
+              C compiler flags for the PE icui18n, overriding the bundled
+              version
+  ICUI18N_PE_LIBS
+              Linker flags for the PE icui18n, overriding the bundled version
   JPEG_PE_CFLAGS
               C compiler flags for the PE jpeg, overriding the bundled version
   JPEG_PE_LIBS
@@ -15065,6 +15075,23 @@ fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: icucommon cflags: $ICUCOMMON_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: icucommon libs: $ICUCOMMON_PE_LIBS" >&5
 
+if ${ICUI18N_PE_LIBS:+false} :
+then :
+  ICUI18N_PE_LIBS=icui18n
+   if ${ICUI18N_PE_CFLAGS:+false} :
+then :
+  ICUI18N_PE_CFLAGS=
+else case e in #(
+  e) enable_icui18n=no ;;
+esac
+fi
+else case e in #(
+  e) enable_icui18n=no ;;
+esac
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: icui18n cflags: $ICUI18N_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: icui18n libs: $ICUI18N_PE_LIBS" >&5
+
 if ${JPEG_PE_LIBS:+false} :
 then :
   JPEG_PE_LIBS=jpeg
@@ -24408,6 +24435,7 @@ wine_fn_config_makefile libs/faudio enable_faudio
 wine_fn_config_makefile libs/fluidsynth enable_fluidsynth
 wine_fn_config_makefile libs/gsm enable_gsm
 wine_fn_config_makefile libs/icucommon enable_icucommon
+wine_fn_config_makefile libs/icui18n enable_icui18n
 wine_fn_config_makefile libs/jpeg enable_jpeg
 wine_fn_config_makefile libs/jxr enable_jxr
 wine_fn_config_makefile libs/lcms2 enable_lcms2
@@ -24647,7 +24675,7 @@ dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle ${wine_sr
 	mv dlls/wineandroid.drv/build/outputs/apk/wine-debug.apk \$@"
 
 
-EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/c++abi libs/faudio libs/fluidsynth libs/gsm libs/icucommon libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/tiff libs/tomcrypt libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
+EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/c++abi libs/faudio libs/fluidsynth libs/gsm libs/icucommon libs/icui18n libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/tiff libs/tomcrypt libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
 
 TAGSFLAGS="--langmap='c:+.idl.l.rh,make:(Make*.in)'"
 
@@ -25551,6 +25579,8 @@ GSM_PE_CFLAGS = $GSM_PE_CFLAGS
 GSM_PE_LIBS = $GSM_PE_LIBS
 ICUCOMMON_PE_CFLAGS = $ICUCOMMON_PE_CFLAGS
 ICUCOMMON_PE_LIBS = $ICUCOMMON_PE_LIBS
+ICUI18N_PE_CFLAGS = $ICUI18N_PE_CFLAGS
+ICUI18N_PE_LIBS = $ICUI18N_PE_LIBS
 JPEG_PE_CFLAGS = $JPEG_PE_CFLAGS
 JPEG_PE_LIBS = $JPEG_PE_LIBS
 JXR_PE_CFLAGS = $JXR_PE_CFLAGS
