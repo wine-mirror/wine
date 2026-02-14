@@ -1908,26 +1908,19 @@ BOOL WINAPI SetupDiGetClassDescriptionExA(const GUID *class, char *buffer, DWORD
 BOOL WINAPI SetupDiGetClassDescriptionExW(const GUID *class, WCHAR *buffer, DWORD buffer_len,
         DWORD *required_len, const WCHAR *machine_name, void *reserved)
 {
-    HKEY hkey;
-    DWORD len;
-    LSTATUS ls;
+    DEVPROPTYPE type;
+    CONFIGRET ret;
+    ULONG size;
 
     TRACE("class %s, buffer %p, buffer_len %#lx, required_len %p, machine_name %s, reserved %p.\n",
             debugstr_guid(class), buffer, buffer_len, required_len, debugstr_w(machine_name), reserved);
 
-    hkey = SetupDiOpenClassRegKeyExW(class, KEY_ALL_ACCESS, DIOCR_INSTALLER, machine_name, reserved);
-    if (hkey == INVALID_HANDLE_VALUE)
-    {
-        WARN("SetupDiOpenClassRegKeyExW() failed (Error %lu)\n", GetLastError());
-        return FALSE;
-    }
+    size = buffer_len * sizeof(WCHAR);
+    ret = CM_Get_Class_PropertyW(class, &DEVPKEY_DeviceClass_Name, &type, (BYTE *)buffer, &size, 0);
+    if ((!ret || ret == CR_BUFFER_SMALL) && required_len)
+        *required_len = size / sizeof(WCHAR);
 
-    len = buffer_len * sizeof(WCHAR);
-    ls = RegQueryValueExW(hkey, NULL, NULL, NULL, (BYTE *)buffer, &len);
-    RegCloseKey(hkey);
-    if ((!ls || ls == ERROR_MORE_DATA) && required_len)
-        *required_len = len / sizeof(WCHAR);
-    return !ls;
+    return !ret;
 }
 
 /***********************************************************************
