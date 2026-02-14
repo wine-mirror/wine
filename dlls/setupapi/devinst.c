@@ -1864,96 +1864,69 @@ BOOL WINAPI SetupDiGetActualSectionToInstallW(HINF hinf, const WCHAR *section, W
 /***********************************************************************
  *		SetupDiGetClassDescriptionA  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetClassDescriptionA(
-        const GUID* ClassGuid,
-        PSTR ClassDescription,
-        DWORD ClassDescriptionSize,
-        PDWORD RequiredSize)
+BOOL WINAPI SetupDiGetClassDescriptionA(const GUID *class, char *buffer, DWORD buffer_len, DWORD *required_len)
 {
-  return SetupDiGetClassDescriptionExA(ClassGuid, ClassDescription,
-                                       ClassDescriptionSize,
-                                       RequiredSize, NULL, NULL);
+    return SetupDiGetClassDescriptionExA(class, buffer, buffer_len, required_len, NULL, NULL);
 }
 
 /***********************************************************************
  *		SetupDiGetClassDescriptionW  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetClassDescriptionW(
-        const GUID* ClassGuid,
-        PWSTR ClassDescription,
-        DWORD ClassDescriptionSize,
-        PDWORD RequiredSize)
+BOOL WINAPI SetupDiGetClassDescriptionW(const GUID *class, PWSTR buffer, DWORD buffer_len, DWORD *required_len)
 {
-  return SetupDiGetClassDescriptionExW(ClassGuid, ClassDescription,
-                                       ClassDescriptionSize,
-                                       RequiredSize, NULL, NULL);
+    return SetupDiGetClassDescriptionExW(class, buffer, buffer_len, required_len, NULL, NULL);
 }
 
 /***********************************************************************
  *		SetupDiGetClassDescriptionExA  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetClassDescriptionExA(
-        const GUID* ClassGuid,
-        PSTR ClassDescription,
-        DWORD ClassDescriptionSize,
-        PDWORD RequiredSize,
-        PCSTR MachineName,
-        PVOID Reserved)
+BOOL WINAPI SetupDiGetClassDescriptionExA(const GUID *class, char *buffer, DWORD buffer_len,
+        DWORD *required_len, const char *machine_nameA, void *reserved)
 {
-    HKEY hKey;
-    DWORD dwLength;
-    LSTATUS ls;
+    WCHAR *bufferW, *machine_nameW = strdupAtoW(machine_nameA);
+    ULONG lenW = 0, lenA = *required_len;
+    BOOL ret;
 
-    hKey = SetupDiOpenClassRegKeyExA(ClassGuid,
-                                     KEY_ALL_ACCESS,
-                                     DIOCR_INSTALLER,
-                                     MachineName,
-                                     Reserved);
-    if (hKey == INVALID_HANDLE_VALUE)
-    {
-	WARN("SetupDiOpenClassRegKeyExA() failed (Error %lu)\n", GetLastError());
-	return FALSE;
-    }
+    TRACE("class %s, buffer %p, buffer_len %#lx, required_len %p, machine_nameA %s, reserved %p.\n",
+            debugstr_guid(class), buffer, buffer_len, required_len, debugstr_a(machine_nameA), reserved);
 
-    dwLength = ClassDescriptionSize;
-    ls = RegQueryValueExA(hKey, NULL, NULL, NULL, (BYTE *)ClassDescription, &dwLength);
-    RegCloseKey(hKey);
-    if ((!ls || ls == ERROR_MORE_DATA) && RequiredSize)
-        *RequiredSize = dwLength;
-    return !ls;
+    ret = SetupDiGetClassDescriptionExW(class, NULL, 0, &lenW, machine_nameW, reserved);
+    bufferW = lenW ? malloc(lenW) : NULL;
+    if (bufferW && (ret = SetupDiGetClassDescriptionExW(class, bufferW, lenW, &lenW, machine_nameW, reserved)) && lenW)
+        lenA = WideCharToMultiByte(CP_ACP, 0, bufferW, lenW, buffer, buffer_len, NULL, NULL);
+    free(bufferW);
+    free(machine_nameW);
+
+    if (required_len)
+        *required_len = lenA;
+    return ret && buffer_len >= lenA;
 }
 
 /***********************************************************************
  *		SetupDiGetClassDescriptionExW  (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetClassDescriptionExW(
-        const GUID* ClassGuid,
-        PWSTR ClassDescription,
-        DWORD ClassDescriptionSize,
-        PDWORD RequiredSize,
-        PCWSTR MachineName,
-        PVOID Reserved)
+BOOL WINAPI SetupDiGetClassDescriptionExW(const GUID *class, WCHAR *buffer, DWORD buffer_len,
+        DWORD *required_len, const WCHAR *machine_name, void *reserved)
 {
-    HKEY hKey;
-    DWORD dwLength;
+    HKEY hkey;
+    DWORD len;
     LSTATUS ls;
 
-    hKey = SetupDiOpenClassRegKeyExW(ClassGuid,
-                                     KEY_ALL_ACCESS,
-                                     DIOCR_INSTALLER,
-                                     MachineName,
-                                     Reserved);
-    if (hKey == INVALID_HANDLE_VALUE)
+    TRACE("class %s, buffer %p, buffer_len %#lx, required_len %p, machine_name %s, reserved %p.\n",
+            debugstr_guid(class), buffer, buffer_len, required_len, debugstr_w(machine_name), reserved);
+
+    hkey = SetupDiOpenClassRegKeyExW(class, KEY_ALL_ACCESS, DIOCR_INSTALLER, machine_name, reserved);
+    if (hkey == INVALID_HANDLE_VALUE)
     {
-	WARN("SetupDiOpenClassRegKeyExW() failed (Error %lu)\n", GetLastError());
-	return FALSE;
+        WARN("SetupDiOpenClassRegKeyExW() failed (Error %lu)\n", GetLastError());
+        return FALSE;
     }
 
-    dwLength = ClassDescriptionSize * sizeof(WCHAR);
-    ls = RegQueryValueExW(hKey, NULL, NULL, NULL, (BYTE *)ClassDescription, &dwLength);
-    RegCloseKey(hKey);
-    if ((!ls || ls == ERROR_MORE_DATA) && RequiredSize)
-        *RequiredSize = dwLength / sizeof(WCHAR);
+    len = buffer_len * sizeof(WCHAR);
+    ls = RegQueryValueExW(hkey, NULL, NULL, NULL, (BYTE *)buffer, &len);
+    RegCloseKey(hkey);
+    if ((!ls || ls == ERROR_MORE_DATA) && required_len)
+        *required_len = len / sizeof(WCHAR);
     return !ls;
 }
 
