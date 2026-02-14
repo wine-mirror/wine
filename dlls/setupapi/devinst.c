@@ -946,10 +946,9 @@ BOOL WINAPI SetupDiBuildClassInfoListExA(DWORD flags, GUID *guids, DWORD guids_s
 BOOL WINAPI SetupDiBuildClassInfoListExW(DWORD flags, GUID *guids, DWORD guids_size,
         DWORD *guid_count, const WCHAR *machine_name, void *reserved)
 {
-    DWORD len, index, guid_index = 0;
-    HKEY root_key, class_key;
-    WCHAR key_name[40];
-    LONG err;
+    DWORD guid_index = 0;
+    CONFIGRET ret;
+    GUID guid;
 
     TRACE("flags %#lx, guids %p, guids_size %#lx, guid_count %p, machine_name %s, reserved %p.\n",
             flags, guids, guids_size, guid_count, debugstr_w(machine_name), reserved);
@@ -957,72 +956,28 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(DWORD flags, GUID *guids, DWORD guids_s
     if (guid_count)
         *guid_count = 0;
 
-    root_key = SetupDiOpenClassRegKeyExW(NULL, KEY_ALL_ACCESS, DIOCR_INSTALLER, machine_name, reserved);
-    if (root_key == INVALID_HANDLE_VALUE)
+    for (UINT i = 0; !(ret = CM_Enumerate_Classes(i, &guid, CM_ENUMERATE_CLASSES_INSTALLER)); i++)
     {
-        return FALSE;
+        DEVPROPTYPE type;
+        ULONG size;
+        BYTE value;
+
+        size = sizeof(value);
+        if (!CM_Get_Class_PropertyW(&guid, &DEVPKEY_DeviceClass_NoUseClass, &type, &value, &size, 0) && value)
+            continue;
+
+        size = sizeof(value);
+        if ((flags & DIBCI_NOINSTALLCLASS) && !CM_Get_Class_PropertyW(&guid, &DEVPKEY_DeviceClass_NoInstallClass, &type, &value, &size, 0) && value)
+            continue;
+
+        size = sizeof(value);
+        if ((flags & DIBCI_NOINSTALLCLASS) && !CM_Get_Class_PropertyW(&guid, &DEVPKEY_DeviceClass_NoDisplayClass, &type, &value, &size, 0) && value)
+            continue;
+
+        if (guid_index < guids_size)
+            guids[guid_index] = guid;
+        guid_index++;
     }
-
-    for (index = 0;; index++)
-    {
-        len = 40;
-        err = RegEnumKeyExW(root_key, index, key_name, &len, NULL, NULL, NULL, NULL);
-        TRACE("RegEnumKeyExW() returns %ld\n", err);
-        if (err == ERROR_SUCCESS || err == ERROR_MORE_DATA)
-        {
-            TRACE("Key name: %p\n", key_name);
-
-            if (RegOpenKeyExW(root_key, key_name, 0, KEY_ALL_ACCESS, &class_key))
-            {
-                RegCloseKey(root_key);
-                return FALSE;
-            }
-
-            if (!RegQueryValueExW(class_key, L"NoUseClass", NULL, NULL, NULL, NULL))
-            {
-                TRACE("'NoUseClass' value found!\n");
-                RegCloseKey(class_key);
-                continue;
-            }
-
-            if ((flags & DIBCI_NOINSTALLCLASS) &&
-                    !RegQueryValueExW(class_key, L"NoInstallClass", NULL, NULL, NULL, NULL))
-            {
-                TRACE("'NoInstallClass' value found!\n");
-                RegCloseKey(class_key);
-                continue;
-            }
-
-            if ((flags & DIBCI_NODISPLAYCLASS) &&
-                    !RegQueryValueExW(class_key, L"NoDisplayClass", NULL, NULL, NULL, NULL))
-            {
-                TRACE("'NoDisplayClass' value found!\n");
-                RegCloseKey(class_key);
-                continue;
-            }
-
-            RegCloseKey(class_key);
-
-            TRACE("Guid: %p\n", key_name);
-            if (guid_index < guids_size)
-            {
-                if (key_name[0] == '{' && key_name[37] == '}')
-                {
-                    key_name[37] = 0;
-                }
-                TRACE("Guid: %p\n", &key_name[1]);
-
-                UuidFromStringW(&key_name[1], &guids[guid_index]);
-            }
-
-            guid_index++;
-        }
-
-        if (err != ERROR_SUCCESS)
-            break;
-    }
-
-    RegCloseKey(root_key);
 
     if (guid_count)
         *guid_count = guid_index;
