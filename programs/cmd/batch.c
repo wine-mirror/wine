@@ -423,11 +423,16 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
      the batch label is in                                                     */
   if (*lastModifier == '0' && modifierLen > 1 && context->batch_file) {
     lstrcpyW(outputparam, context->batch_file->path_name);
-  } else if ((*lastModifier >= '0' && *lastModifier <= '9')) {
-    lstrcpyW(outputparam,
-            WCMD_parameter (context -> command,
-                            *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
-                            NULL, FALSE, TRUE));
+  } else if (*lastModifier >= '0' && *lastModifier <= '9') {
+      WCHAR *start;
+      size_t length;
+      if (WCMD_get_positional_argument(context->command, *lastModifier, &start, &length) && length)
+      {
+          memcpy(outputparam, start, length * sizeof(WCHAR));
+          outputparam[length] = L'\0';
+      }
+      else
+          *outputparam = L'\0';
   } else {
     if (for_var_is_valid(*lastModifier))
         lstrcpyW(outputparam, forloopcontext->variable[*lastModifier]);

@@ -219,9 +219,11 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, BOOL raw,
                                    BOOL wholecmdline, const WCHAR *delims);
 #define SPACE_DELIMS      L" \t"
 #define STANDARD_DELIMS   SPACE_DELIMS L",=;"
+#define EXECUTABLE_DELIMS STANDARD_DELIMS L"("
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, const WCHAR *ptr);
 void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute);
+BOOL WCMD_get_positional_argument(WCHAR *line, WCHAR arg_char, WCHAR **start, size_t *length);
 
 WCHAR *WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
