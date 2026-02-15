@@ -34,9 +34,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 /* Delimiters for tab-completion support */
-#define BASE_DELIMS             L",=;~!^&()+{}[]"
-#define PATH_SEPARATION_DELIMS  L" " BASE_DELIMS
-#define INTRA_PATH_DELIMS       L"\\:" BASE_DELIMS
+#define COMPLETION_BASE_DELIMS             L",=;~!^&()+{}[]"
+#define COMPLETION_PATH_SEPARATION_DELIMS  L" " COMPLETION_BASE_DELIMS
+#define COMPLETION_INTRA_PATH_DELIMS       L"\\:" COMPLETION_BASE_DELIMS
 
 typedef struct _SEARCH_CONTEXT
 {
@@ -146,7 +146,7 @@ static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
         if (stripped_copy) {
             wcsncpy_s(last_stripped_copy, ARRAY_SIZE(last_stripped_copy), stripped_copy, _TRUNCATE);
         }
-        stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, FALSE, PATH_SEPARATION_DELIMS);
+        stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, FALSE, COMPLETION_PATH_SEPARATION_DELIMS);
     } while (param);
 
     if (last_param) {
@@ -177,7 +177,7 @@ static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
      * We do this after the parsing because the parsing is needed to determine if the user specified
      * quotes on the current path that is subject to tab completion.
      */
-    if (!sc->user_specified_quotes && len && wcschr(PATH_SEPARATION_DELIMS, inputBuffer[len-1])) {
+    if (!sc->user_specified_quotes && len && wcschr(COMPLETION_PATH_SEPARATION_DELIMS, inputBuffer[len-1])) {
         cc = len;
         sc->searchstr[0] = L'\0';
         need_wildcard = TRUE;
@@ -208,11 +208,11 @@ static void find_insert_pos(const WCHAR *inputBuffer, int len, SEARCH_CONTEXT *s
             cc++;
         }
     } else {
-        while (cc > sc->search_pos && !wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
+        while (cc > sc->search_pos && !wcschr(COMPLETION_INTRA_PATH_DELIMS, inputBuffer[cc])) {
             cc--;
         }
 
-        if (inputBuffer[cc] == L'\"' || wcschr(INTRA_PATH_DELIMS, inputBuffer[cc])) {
+        if (inputBuffer[cc] == L'\"' || wcschr(COMPLETION_INTRA_PATH_DELIMS, inputBuffer[cc])) {
             cc++;
         }
     }
@@ -285,7 +285,7 @@ static void update_input_buffer(WCHAR *inputBuffer, const DWORD inputBufferLengt
     /* If there are no spaces or delimiters in the path then we can remove quotes when appending
      * the search result, unless the search result itself requires them.
      */
-    if (sc->have_quotes && !sc->user_specified_quotes && !wcspbrk(&inputBuffer[sc->search_pos], PATH_SEPARATION_DELIMS)) {
+    if (sc->have_quotes && !sc->user_specified_quotes && !wcspbrk(&inputBuffer[sc->search_pos], COMPLETION_PATH_SEPARATION_DELIMS)) {
         TRACE("removeQuotes = TRUE\n");
         removeQuotes = TRUE;
     }
@@ -294,7 +294,7 @@ static void update_input_buffer(WCHAR *inputBuffer, const DWORD inputBufferLengt
      * file names or contain spaces.  In practice, modern Windows seems to quote paths/files
      * only if they contain spaces or delimiters.
      */
-    needQuotes = !!wcspbrk(sc->fd[sc->current_entry].cFileName, PATH_SEPARATION_DELIMS);
+    needQuotes = !!wcspbrk(sc->fd[sc->current_entry].cFileName, COMPLETION_PATH_SEPARATION_DELIMS);
     len = lstrlenW(inputBuffer);
     /* Remove starting quotes, if able. */
     if (removeQuotes && !needQuotes) {
