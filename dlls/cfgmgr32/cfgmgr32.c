@@ -96,9 +96,14 @@ static HKEY cache_root_key( HKEY root, const WCHAR *key, const WCHAR **path )
 
 static LSTATUS open_key( HKEY root, const WCHAR *key, REGSAM access, BOOL open, HKEY *hkey )
 {
+    LSTATUS err;
+
     if ((root = cache_root_key( root, key, &key )) == (HKEY)-1) return ERROR_FILE_NOT_FOUND;
     if (open) return RegOpenKeyExW( root, key, 0, access, hkey );
-    return RegCreateKeyExW( root, key, 0, NULL, 0, access, NULL, hkey, NULL );
+
+    err = RegCreateKeyExW( root, key, 0, NULL, 0, access, NULL, hkey, NULL );
+    if (err == ERROR_CHILD_MUST_BE_VOLATILE) err = RegCreateKeyExW( root, key, 0, NULL, REG_OPTION_VOLATILE, access, NULL, hkey, NULL );
+    return err;
 }
 
 static LSTATUS query_value( HKEY hkey, const WCHAR *value, WCHAR *buffer, DWORD len )
@@ -1342,4 +1347,53 @@ CONFIGRET WINAPI CM_Get_Device_IDW( DEVINST node, WCHAR *buffer, ULONG len, ULON
 CONFIGRET WINAPI CM_Get_Device_IDA( DEVINST node, char *buffer, ULONG len, ULONG flags )
 {
     return CM_Get_Device_ID_ExA( node, buffer, len, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Open_DevNode_Key_Ex (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Open_DevNode_Key_Ex( DEVINST node, REGSAM access, ULONG profile, REGDISPOSITION disposition, HKEY *hkey, ULONG flags, HMACHINE machine )
+{
+    BOOL open = disposition == RegDisposition_OpenExisting;
+    HKEY root = HKEY_LOCAL_MACHINE, dev_key;
+    struct device dev;
+    LSTATUS err;
+
+    TRACE( "node %#lx, access %#lx, profile %lu, disposition %#lx, hkey %p, flags %#lx, machine %p\n", node, access, profile, disposition, hkey, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+
+    if (devnode_get_device( node, &dev )) return CR_NO_SUCH_DEVNODE;
+    if ((flags & (CM_REGISTRY_USER | CM_REGISTRY_CONFIG)) == (CM_REGISTRY_USER | CM_REGISTRY_CONFIG)) return CR_INVALID_FLAG;
+
+    if (flags & CM_REGISTRY_CONFIG) root = HKEY_CURRENT_CONFIG;
+    else if (flags & CM_REGISTRY_USER) root = HKEY_CURRENT_USER;
+
+    if (flags & CM_REGISTRY_SOFTWARE)
+    {
+        WCHAR driver[MAX_PATH];
+        DWORD len = sizeof(driver);
+
+        if ((err = open_device_key( HKEY_LOCAL_MACHINE, &dev, access, open, &dev_key ))) return map_error( err );
+        if (RegQueryValueExW( dev_key, L"Driver", NULL, NULL, (BYTE *)driver, &len )) err = ERROR_NOT_FOUND;
+        RegCloseKey( dev_key );
+
+        if (!err) err = open_class_key( root, driver, access, open, hkey );
+        return map_error( err );
+    }
+
+    if (root != HKEY_LOCAL_MACHINE) return map_error( open_device_key( root, &dev, access, open, hkey ) );
+
+    if ((err = open_device_key( root, &dev, access, open, &dev_key ))) return map_error( err );
+    err = open_key( dev_key, L"Device Parameters", access, open, hkey );
+    RegCloseKey( dev_key );
+
+    return map_error( err );
+}
+
+/***********************************************************************
+ *           CM_Open_DevNode_Key (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Open_DevNode_Key( DEVINST node, REGSAM access, ULONG profile, REGDISPOSITION disposition, HKEY *hkey, ULONG flags )
+{
+    return CM_Open_DevNode_Key_Ex( node, access, profile, disposition, hkey, flags, NULL );
 }

@@ -2253,8 +2253,8 @@ static BOOL compare_unicode_string( const UNICODE_STRING *string, const WCHAR *e
            !wcsnicmp( string->Buffer, expect, string->Length / sizeof(WCHAR) );
 }
 
-#define check_object_name( a, b ) _check_object_name( __LINE__, a, b )
-static void _check_object_name( unsigned line, HANDLE handle, const WCHAR *expected_name )
+#define check_object_name( a, b ) check_object_name_( __LINE__, a, b, FALSE )
+static void check_object_name_( unsigned line, HANDLE handle, const WCHAR *expected_name, BOOL todo )
 {
     char buffer[1024];
     UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
@@ -2267,6 +2267,7 @@ static void _check_object_name( unsigned line, HANDLE handle, const WCHAR *expec
     status = NtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
     ok_(__FILE__, line)( status == STATUS_SUCCESS, "NtQueryObject failed %lx\n", status );
     ok_(__FILE__, line)( len >= sizeof(OBJECT_NAME_INFORMATION) + str->Length, "unexpected len %lu\n", len );
+    todo_wine_if(todo)
     ok_(__FILE__, line)( compare_unicode_string( str, expected_name ), "got %s, expected %s\n",
                          debugstr_w(str->Buffer), debugstr_w(expected_name) );
 }
@@ -2995,6 +2996,99 @@ static void test_CM_Locate_DevNode(void)
     ok_wcs( instance_id, path );
 }
 
+static void test_CM_Open_DevNode_Key(void)
+{
+    WCHAR iface[4096], driver[MAX_PATH], path[MAX_PATH], instance_id[MAX_PATH];
+    UNICODE_STRING user;
+    DWORD size, type;
+    CONFIGRET ret;
+    DEVINST node;
+    GUID guid;
+    HKEY hkey;
+
+    RtlFormatCurrentUserKeyPath( &user );
+
+    guid = GUID_DEVINTERFACE_HID;
+    ret = CM_Get_Device_Interface_ListW( &guid, NULL, iface, ARRAY_SIZE(iface), CM_GET_DEVICE_INTERFACE_LIST_PRESENT );
+    if (broken( !*iface ))
+    {
+        skip( "No HID device present, skipping tests\n" );
+        return;
+    }
+    ok_x4( ret, ==, CR_SUCCESS );
+    size = sizeof(instance_id);
+    ret = CM_Get_Device_Interface_PropertyW( iface, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( type, ==, DEVPROP_TYPE_STRING );
+
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, instance_id, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( node, ==, next_devinst - 1 );
+
+    size = ARRAY_SIZE(driver);
+    swprintf( path, ARRAY_SIZE(path), L"System\\CurrentControlSet\\Enum\\%s", instance_id );
+    ret = RegGetValueW( HKEY_LOCAL_MACHINE, path, L"Driver", RRF_RT_ANY, NULL, (BYTE *)driver, &size );
+    ok_u4( ret, ==, ERROR_SUCCESS );
+
+
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenExisting, &hkey, CM_REGISTRY_HARDWARE );
+    ok_x4( ret, ==, CR_SUCCESS );
+    swprintf( path, ARRAY_SIZE(path), L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Enum\\%s\\Device Parameters", instance_id );
+    check_object_name( hkey, path );
+    RegCloseKey( hkey );
+
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenExisting, &hkey, CM_REGISTRY_USER );
+    ok_x4( ret, ==, CR_NO_SUCH_REGISTRY_KEY );
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenAlways, &hkey, CM_REGISTRY_USER );
+    ok_x4( ret, ==, CR_SUCCESS );
+    swprintf( path, ARRAY_SIZE(path), L"%s\\System\\CurrentControlSet\\Enum\\%s", user.Buffer, instance_id );
+    check_object_name( hkey, path );
+    RegCloseKey( hkey );
+    swprintf( path, ARRAY_SIZE(path), L"System\\CurrentControlSet\\Enum\\%s", instance_id );
+    RegDeleteKeyW( HKEY_CURRENT_USER, path );
+
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenExisting, &hkey, CM_REGISTRY_CONFIG );
+    ok_x4( ret, ==, CR_NO_SUCH_REGISTRY_KEY );
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenAlways, &hkey, CM_REGISTRY_CONFIG );
+    ok_x4( ret, ==, CR_SUCCESS );
+    swprintf( path, ARRAY_SIZE(path), L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Hardware Profiles\\0001\\System\\CurrentControlSet\\Enum\\%s", instance_id );
+    check_object_name_( __LINE__, hkey, path, TRUE );
+    RegCloseKey( hkey );
+    swprintf( path, ARRAY_SIZE(path), L"System\\CurrentControlSet\\Enum\\%s", instance_id );
+    RegDeleteKeyW( HKEY_CURRENT_CONFIG, path );
+
+
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenExisting, &hkey, CM_REGISTRY_SOFTWARE );
+    ok_x4( ret, ==, CR_SUCCESS );
+    swprintf( path, ARRAY_SIZE(path), L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Control\\Class\\%s", driver );
+    check_object_name( hkey, path );
+    RegCloseKey( hkey );
+
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenExisting, &hkey, CM_REGISTRY_SOFTWARE | CM_REGISTRY_USER );
+    ok_x4( ret, ==, CR_NO_SUCH_REGISTRY_KEY );
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenAlways, &hkey, CM_REGISTRY_SOFTWARE | CM_REGISTRY_USER );
+    ok_x4( ret, ==, CR_SUCCESS );
+    swprintf( path, ARRAY_SIZE(path), L"%s\\System\\CurrentControlSet\\Control\\Class\\%s", user.Buffer, driver );
+    check_object_name( hkey, path );
+    RegCloseKey( hkey );
+    swprintf( path, ARRAY_SIZE(path), L"System\\CurrentControlSet\\Control\\Class\\%s", driver );
+    RegDeleteKeyW( HKEY_CURRENT_USER, path );
+
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenExisting, &hkey, CM_REGISTRY_SOFTWARE | CM_REGISTRY_CONFIG );
+    ok_x4( ret, ==, CR_NO_SUCH_REGISTRY_KEY );
+    ret = CM_Open_DevNode_Key( node, KEY_QUERY_VALUE, 0, RegDisposition_OpenAlways, &hkey, CM_REGISTRY_SOFTWARE | CM_REGISTRY_CONFIG );
+    ok_x4( ret, ==, CR_SUCCESS );
+    swprintf( path, ARRAY_SIZE(path), L"\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Hardware Profiles\\0001\\System\\CurrentControlSet\\Control\\Class\\%s", driver );
+    check_object_name_( __LINE__, hkey, path, TRUE );
+    RegCloseKey( hkey );
+    swprintf( path, ARRAY_SIZE(path), L"System\\CurrentControlSet\\Control\\Class\\%s", driver );
+    RegDeleteKeyW( HKEY_CURRENT_CONFIG, path );
+
+
+    RtlFreeUnicodeString( &user );
+}
+
 static void test_CM_Get_Class_Property_Keys(void)
 {
     GUID guid = GUID_DEVCLASS_HIDCLASS;
@@ -3069,6 +3163,7 @@ START_TEST(cfgmgr32)
     test_CM_Get_Device_Interface_Property_setupapi();
     test_CM_Get_Device_ID_List();
     test_CM_Register_Notification();
+    test_CM_Open_DevNode_Key();
     test_DevGetObjects();
     test_DevCreateObjectQuery();
     test_DevGetObjectProperties_invalid();
