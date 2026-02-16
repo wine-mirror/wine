@@ -79,18 +79,6 @@ CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)
 }
 
 /***********************************************************************
- *             CM_Open_DevNode_Key  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Open_DevNode_Key(
-    DEVINST dnDevInst, REGSAM access, ULONG ulHardwareProfile, REGDISPOSITION disposition,
-    PHKEY phkDevice, ULONG ulFlags)
-{
-    FIXME("0x%08lx 0x%08lx 0x%08lx 0x%08lx %p 0x%08lx : stub\n", dnDevInst, access, ulHardwareProfile,
-          disposition, phkDevice, ulFlags);
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
  *             CM_Get_Child  (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_Child(

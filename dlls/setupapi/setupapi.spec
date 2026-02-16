@@ -146,8 +146,8 @@
 @ stdcall CM_Open_Class_KeyW(ptr wstr long long ptr long) cfgmgr32.CM_Open_Class_KeyW
 @ stdcall CM_Open_Class_Key_ExA(ptr str long long ptr long ptr) cfgmgr32.CM_Open_Class_Key_ExA
 @ stdcall CM_Open_Class_Key_ExW(ptr wstr long long ptr long ptr) cfgmgr32.CM_Open_Class_Key_ExW
-@ stdcall CM_Open_DevNode_Key(long long long long ptr long)
-@ stub CM_Open_DevNode_Key_Ex
+@ stdcall CM_Open_DevNode_Key(long long long long ptr long) cfgmgr32.CM_Open_DevNode_Key
+@ stdcall CM_Open_DevNode_Key_Ex(long long long long ptr long ptr) cfgmgr32.CM_Open_DevNode_Key_Ex
 @ stub CM_Query_And_Remove_SubTreeA
 @ stub CM_Query_And_Remove_SubTreeW
 @ stub CM_Query_And_Remove_SubTree_ExA
