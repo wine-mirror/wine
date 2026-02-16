@@ -896,9 +896,11 @@ static struct device *create_device(struct DeviceInfoSet *set,
 
 static struct device *get_devnode_device(DEVINST devnode, HDEVINFO *set, SP_DEVINFO_DATA *data)
 {
+    WCHAR instance_id[MAX_PATH];
+
     data->cbSize = sizeof(*data);
     *set = NULL;
-    if (devnode >= devinst_table_size || !devinst_table[devnode])
+    if (CM_Get_Device_IDW(devnode, instance_id, ARRAY_SIZE(instance_id), 0))
     {
         WARN("device node %lu not found\n", devnode);
         return NULL;
@@ -906,7 +908,7 @@ static struct device *get_devnode_device(DEVINST devnode, HDEVINFO *set, SP_DEVI
 
     *set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
     if (*set == INVALID_HANDLE_VALUE) return NULL;
-    if (!SetupDiOpenDeviceInfoW(*set, devinst_table[devnode], NULL, 0, data))
+    if (!SetupDiOpenDeviceInfoW(*set, instance_id, NULL, 0, data))
     {
         SetupDiDestroyDeviceInfoList(*set);
         *set = NULL;
