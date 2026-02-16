@@ -111,26 +111,6 @@ CONFIGRET WINAPI CM_Get_Child_Ex(
 }
 
 /***********************************************************************
- *             CM_Get_Device_ID_ExA  (SETUPAPI.@)
- */
-DWORD WINAPI CM_Get_Device_ID_ExA(
-    DEVINST dnDevInst, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags, HMACHINE hMachine)
-{
-    FIXME("0x%08lx %p 0x%08lx 0x%08lx %p: stub\n", dnDevInst, Buffer, BufferLen, ulFlags, hMachine);
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
- *             CM_Get_Device_ID_ExW  (SETUPAPI.@)
- */
-DWORD WINAPI CM_Get_Device_ID_ExW(
-    DEVINST dnDevInst, PWCHAR Buffer, ULONG BufferLen, ULONG ulFlags, HMACHINE hMachine)
-{
-    FIXME("0x%08lx %p 0x%08lx 0x%08lx %p: stub\n", dnDevInst, Buffer, BufferLen, ulFlags, hMachine);
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
  *              CM_Get_Parent (SETUPAPI.@)
  */
 DWORD WINAPI CM_Get_Parent(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags)

@@ -106,6 +106,13 @@ static LSTATUS query_value( HKEY hkey, const WCHAR *value, WCHAR *buffer, DWORD 
     return RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)buffer, &len );
 }
 
+static LSTATUS open_enum_key( HKEY root, const WCHAR *key, REGSAM access, BOOL open, HKEY *hkey )
+{
+    WCHAR path[MAX_PATH];
+    swprintf( path, ARRAY_SIZE(path), L"%s%s", enum_rootW, key );
+    return open_key( root, path, access, open, hkey );
+}
+
 static LSTATUS open_class_key( HKEY root, const WCHAR *key, REGSAM access, BOOL open, HKEY *hkey )
 {
     WCHAR path[MAX_PATH];
@@ -528,6 +535,99 @@ static LSTATUS get_device_interface_property_keys( const struct device_interface
     return err;
 }
 
+struct device
+{
+    WCHAR enumerator[MAX_PATH];
+    WCHAR device[MAX_PATH];
+    WCHAR instance[MAX_PATH];
+};
+
+static LSTATUS init_device( struct device *dev, const WCHAR *name )
+{
+    WCHAR *tmp;
+
+    dev->enumerator[0] = dev->device[0] = dev->instance[0] = 0;
+    tmp = lstrcpynW( dev->enumerator, name, ARRAY_SIZE(dev->enumerator) );
+    if (!(tmp = wcschr( dev->enumerator, '\\' ))) return ERROR_INVALID_DATA;
+
+    *tmp++ = 0;
+    wcscpy( dev->device, tmp );
+    if ((tmp = wcschr( dev->device, '\\' ))) *tmp++ = 0;
+    if (tmp) wcscpy( dev->instance, tmp );
+
+    return ERROR_SUCCESS;
+}
+
+static LSTATUS open_device_key( HKEY root, const struct device *dev, REGSAM access, BOOL open, HKEY *hkey )
+{
+    WCHAR path[MAX_PATH];
+    UINT len;
+
+    len = swprintf( path, ARRAY_SIZE(path), L"%s", dev->enumerator );
+    if (*dev->device) len += swprintf( path + len, ARRAY_SIZE(path) - len, L"\\%s", dev->device );
+    if (*dev->instance) len += swprintf( path + len, ARRAY_SIZE(path) - len, L"\\%s", dev->instance );
+
+    return open_enum_key( root, path, access, open, hkey );
+}
+
+static CRITICAL_SECTION devnode_cs;
+static CRITICAL_SECTION_DEBUG devnode_cs_debug = {
+    0, 0, &devnode_cs,
+    { &devnode_cs_debug.ProcessLocksList,
+      &devnode_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": devnode_cs") }
+};
+static CRITICAL_SECTION devnode_cs = { &devnode_cs_debug, -1, 0, 0, 0, 0 };
+
+/* tree of the devnodes which have been accessed */
+static struct device *devnodes;
+static UINT devnodes_count, devnodes_capacity;
+
+/* devnode_cs must be held */
+static DEVINST devnodes_lookup( const struct device *dev )
+{
+    for (DEVINST i = 0; i < devnodes_count; ++i)
+    {
+        if (wcsicmp( devnodes[i].enumerator, dev->enumerator )) continue;
+        if (wcsicmp( devnodes[i].device, dev->device )) continue;
+        if (!wcsicmp( devnodes[i].instance, dev->instance )) return i + 1;
+    }
+
+    return 0;
+}
+
+/* devnode_cs must be held */
+static LSTATUS devnodes_append( const struct device *dev, DEVINST *node )
+{
+    if (devnodes_count == devnodes_capacity)
+    {
+        UINT capacity = max( 256, devnodes_capacity * 3 / 2 );
+        struct device *tmp;
+
+        if (capacity <= devnodes_capacity || !(tmp = realloc( devnodes, capacity * sizeof(*devnodes) ))) return ERROR_OUTOFMEMORY;
+        memset( tmp + devnodes_capacity, 0, (capacity - devnodes_capacity) * sizeof(*devnodes) );
+        devnodes_capacity = capacity;
+        devnodes = tmp;
+    }
+
+    devnodes[devnodes_count] = *dev;
+    *node = ++devnodes_count; /* index 0 is reserved */
+
+    return ERROR_SUCCESS;
+}
+
+static LSTATUS devnode_get_device( DEVINST node, struct device *dev )
+{
+    LSTATUS err = ERROR_SUCCESS;
+
+    EnterCriticalSection( &devnode_cs );
+    if (!node || node > devnodes_count) err = ERROR_NO_SUCH_DEVICE;
+    else *dev = devnodes[node - 1];
+    LeaveCriticalSection( &devnode_cs );
+
+    return err;
+}
+
 static CONFIGRET map_error( LSTATUS err )
 {
     switch (err)
@@ -541,6 +641,17 @@ static CONFIGRET map_error( LSTATUS err )
     case ERROR_SUCCESS:                           return CR_SUCCESS;
     case ERROR_UNKNOWN_PROPERTY:                  return CR_INVALID_PROPERTY;
     default: WARN( "unmapped error %lu\n", err ); return CR_FAILURE;
+    }
+}
+
+static CONFIGRET map_error_node( LSTATUS err )
+{
+    switch (err)
+    {
+    case ERROR_INVALID_DATA: return CR_INVALID_DEVNODE;
+    case ERROR_NOT_FOUND: return CR_NO_SUCH_DEVNODE;
+    case ERROR_FILE_NOT_FOUND: return CR_NO_SUCH_DEVNODE;
+    default: return map_error( err );
     }
 }
 
@@ -1079,4 +1190,156 @@ CONFIGRET WINAPI CM_Get_Device_Interface_Property_Keys_ExW( const WCHAR *name, D
 CONFIGRET WINAPI CM_Get_Device_Interface_Property_KeysW( const WCHAR *iface, DEVPROPKEY *keys, ULONG *count, ULONG flags )
 {
     return CM_Get_Device_Interface_Property_Keys_ExW( iface, keys, count, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Locate_DevNode_ExW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNode_ExW( DEVINST *node, DEVINSTID_W instance_id, ULONG flags, HMACHINE machine )
+{
+    const WCHAR *instance = instance_id && *instance_id ? instance_id : L"HTREE\\ROOT\\0";
+    struct device dev;
+    LSTATUS err;
+    HKEY hkey;
+
+    TRACE( "node %p, instance_id %s, flags %#lx, machine %p\n", node, debugstr_w(instance_id), flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+    if (flags) FIXME( "flags %#lx not implemented!\n", flags );
+    if (!node) return CR_INVALID_POINTER;
+    *node = 0;
+
+    if (init_device( &dev, instance )) return CR_INVALID_DEVICE_ID;
+
+    EnterCriticalSection( &devnode_cs );
+
+    if ((*node = devnodes_lookup( &dev ))) err = ERROR_SUCCESS;
+    else if (!(err = open_device_key( HKEY_LOCAL_MACHINE, &dev, KEY_ALL_ACCESS, TRUE, &hkey )))
+    {
+        err = devnodes_append( &dev, node );
+        RegCloseKey( hkey );
+    }
+
+    LeaveCriticalSection( &devnode_cs );
+
+    return map_error_node( err );
+}
+
+/***********************************************************************
+ *           CM_Locate_DevNode_ExA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNode_ExA( DEVINST *node, DEVINSTID_A instance_idA, ULONG flags, HMACHINE machine )
+{
+    WCHAR instance_idW[MAX_PATH];
+
+    TRACE( "node %p, instance_idA %s, flags %#lx, machine %p\n", node, debugstr_a(instance_idA), flags, machine );
+
+    if (instance_idA) MultiByteToWideChar( CP_ACP, 0, instance_idA, -1, instance_idW, ARRAY_SIZE(instance_idW) );
+    return CM_Locate_DevNode_ExW( node, instance_idA ? instance_idW : NULL, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Locate_DevNodeW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNodeW( DEVINST *node, DEVINSTID_W instance_id, ULONG flags )
+{
+    return CM_Locate_DevNode_ExW( node, instance_id, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Locate_DevNodeA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNodeA( DEVINST *node, DEVINSTID_A instance_id, ULONG flags )
+{
+    return CM_Locate_DevNode_ExA( node, instance_id, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_Device_ID_Size_Ex (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_Size_Ex( ULONG *len, DEVINST node, ULONG flags, HMACHINE machine )
+{
+    struct device dev;
+
+    TRACE( "len %p, node %#lx, flags %#lx, machine %p\n", len, node, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+    if (flags) FIXME( "flags %#lx not implemented!\n", flags );
+
+    if (!len) return CR_INVALID_POINTER;
+    if (devnode_get_device( node, &dev )) return CR_INVALID_DEVNODE;
+
+    *len = wcslen( dev.enumerator );
+    if (*dev.device) *len += 1 + wcslen( dev.device );
+    if (*dev.instance) *len += 1 + wcslen( dev.instance );
+
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *           CM_Get_Device_ID_Size (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_Size( ULONG *len, DEVINST node, ULONG flags )
+{
+    return CM_Get_Device_ID_Size_Ex( len, node, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_Device_ID_ExW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_ExW( DEVINST node, WCHAR *buffer, ULONG len, ULONG flags, HMACHINE machine )
+{
+    WCHAR path[MAX_PATH];
+    struct device dev;
+    ULONG path_len;
+
+    TRACE( "node %#lx, buffer %p, len %lu, flags %#lx, machine %p\n", node, buffer, len, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+    if (flags) FIXME( "flags %#lx not implemented!\n", flags );
+
+    if (!buffer) return CR_INVALID_POINTER;
+    if (devnode_get_device( node, &dev )) return CR_INVALID_DEVNODE;
+
+    path_len = swprintf( path, ARRAY_SIZE(path), L"%s", dev.enumerator );
+    if (*dev.device) path_len += swprintf( path + path_len, ARRAY_SIZE(path) - path_len, L"\\%s", dev.device );
+    if (*dev.instance) path_len += swprintf( path + path_len, ARRAY_SIZE(path) - path_len, L"\\%s", dev.instance );
+
+    if (path_len > len) return CR_BUFFER_SMALL;
+    memcpy( buffer, path, (path_len + 1) * sizeof(WCHAR) );
+
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *           CM_Get_Device_ID_ExA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_ExA( DEVINST node, char *bufferA, ULONG len, ULONG flags, HMACHINE machine )
+{
+    WCHAR *bufferW;
+    CONFIGRET ret;
+
+    bufferW = bufferA ? malloc( len * sizeof(WCHAR) ) : NULL;
+    ret = CM_Get_Device_ID_ExW( node, bufferA ? bufferW : NULL, len, flags, machine );
+    if (!ret && bufferA && len && !WideCharToMultiByte( CP_ACP, 0, bufferW, len, bufferA, len, 0, 0 ))
+    {
+        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) ret = CR_BUFFER_SMALL;
+        else ret = CR_FAILURE;
+    }
+    free( bufferW );
+
+    return ret;
+}
+
+/***********************************************************************
+ *           CM_Get_Device_IDW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_IDW( DEVINST node, WCHAR *buffer, ULONG len, ULONG flags )
+{
+    return CM_Get_Device_ID_ExW( node, buffer, len, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_Device_IDA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_IDA( DEVINST node, char *buffer, ULONG len, ULONG flags )
+{
+    return CM_Get_Device_ID_ExA( node, buffer, len, flags, NULL );
 }

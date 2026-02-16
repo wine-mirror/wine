@@ -86,6 +86,8 @@ static const WCHAR *guid_string( const GUID *guid, WCHAR *buffer, UINT length )
     return buffer;
 }
 
+static DEVINST next_devinst = 1;
+
 static void test_CM_MapCrToWin32Err(void)
 {
     unsigned int i;
@@ -2889,6 +2891,110 @@ static void test_CM_Open_Device_Interface_Key(void)
     }
 }
 
+static void test_CM_Locate_DevNode(void)
+{
+    WCHAR iface[4096], path[MAX_PATH], instance_id[MAX_PATH];
+    DEVINST node, root = 0;
+    DWORD size, type, len;
+    CONFIGRET ret;
+    GUID guid;
+
+    ret = CM_Locate_DevNodeW( NULL, (WCHAR *)L"INVALID", 0 );
+    ok_x4( ret, ==, CR_INVALID_POINTER );
+
+    ret = CM_Get_Device_ID_Size( &len, 0, 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVNODE );
+    ret = CM_Get_Device_ID_Size( &len, 1, 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVNODE );
+    ret = CM_Get_Device_ID_Size( &len, 2, 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVNODE );
+
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, NULL, 0 );
+    todo_wine ok_x4( ret, ==, CR_SUCCESS );
+    todo_wine ok_x4( node, ==, next_devinst );
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, (WCHAR *)L"", 0 );
+    todo_wine ok_x4( ret, ==, CR_SUCCESS );
+    todo_wine ok_x4( node, ==, next_devinst );
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, (WCHAR *)L"HTREE\\ROOT\\0", 0 );
+    todo_wine ok_x4( ret, ==, CR_SUCCESS );
+    todo_wine ok_x4( node, ==, next_devinst );
+    if (node == next_devinst) root = next_devinst++;
+
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, (WCHAR *)L"INVALID", 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVICE_ID );
+    ok_x4( node, ==, 0 );
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, (WCHAR *)L"WINETEST\\WINETEST\\0123456", 0 );
+    ok_x4( ret, ==, CR_NO_SUCH_DEVNODE );
+    ok_x4( node, ==, 0 );
+
+    guid = GUID_DEVINTERFACE_HID;
+    ret = CM_Get_Device_Interface_ListW( &guid, NULL, iface, ARRAY_SIZE(iface), CM_GET_DEVICE_INTERFACE_LIST_PRESENT );
+    if (broken( !*iface ))
+    {
+        skip( "No HID device present, skipping tests\n" );
+        return;
+    }
+    ok_x4( ret, ==, CR_SUCCESS );
+    size = sizeof(instance_id);
+    ret = CM_Get_Device_Interface_PropertyW( iface, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( type, ==, DEVPROP_TYPE_STRING );
+
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, instance_id, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( node, ==, next_devinst );
+
+    wcslwr( instance_id );
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, instance_id, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( node, ==, next_devinst );
+
+    wcsupr( instance_id );
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, instance_id, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( node, ==, next_devinst );
+    if (node == next_devinst) next_devinst++;
+
+
+    ret = CM_Get_Device_ID_Size( &len, 0, 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVNODE );
+
+    len = 0xdeadbeef;
+    ret = CM_Get_Device_ID_Size( &len, root, 0 );
+    todo_wine ok_x4( ret, ==, CR_SUCCESS );
+    todo_wine ok_u4( len, ==, 12 );
+    len = 0xdeadbeef;
+    ret = CM_Get_Device_ID_Size( &len, node, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_u4( len, ==, wcslen( instance_id ) );
+
+
+    ret = CM_Get_Device_IDW( 0, path, ARRAY_SIZE(path), 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVNODE );
+    ret = CM_Get_Device_IDW( root, path, 0, 0 );
+    todo_wine ok_x4( ret, ==, CR_INVALID_POINTER );
+    ret = CM_Get_Device_IDW( root, NULL, ARRAY_SIZE(path), 0 );
+    ok_x4( ret, ==, CR_INVALID_POINTER );
+
+    memset( path, 0xcd, sizeof(path) );
+    ret = CM_Get_Device_IDW( root, path, ARRAY_SIZE(path), 0 );
+    todo_wine ok_x4( ret, ==, CR_SUCCESS );
+    todo_wine ok_wcs( L"HTREE\\ROOT\\0", path );
+
+    memset( path, 0xcd, sizeof(path) );
+    ret = CM_Get_Device_IDW( node, path, ARRAY_SIZE(path), 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_wcs( instance_id, path );
+}
+
 static void test_CM_Get_Class_Property_Keys(void)
 {
     GUID guid = GUID_DEVCLASS_HIDCLASS;
@@ -2947,6 +3053,7 @@ START_TEST(cfgmgr32)
     pDevFindProperty = (void *)GetProcAddress(mod, "DevFindProperty");
 
     test_CM_MapCrToWin32Err();
+    test_CM_Locate_DevNode();
     test_CM_Enumerate_Classes();
     test_CM_Enumerate_Enumerators();
     test_CM_Get_Class_Key_Name();

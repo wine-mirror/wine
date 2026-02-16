@@ -75,10 +75,10 @@
 @ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Status(ptr ptr long long)
 @ stdcall CM_Get_DevNode_Status_Ex(ptr ptr long long ptr)
-@ stdcall CM_Get_Device_IDA(ptr ptr long long)
-@ stdcall CM_Get_Device_IDW(ptr ptr long long)
-@ stdcall CM_Get_Device_ID_ExA(ptr ptr long long ptr)
-@ stdcall CM_Get_Device_ID_ExW(ptr ptr long long ptr)
+@ stdcall CM_Get_Device_IDA(ptr ptr long long) cfgmgr32.CM_Get_Device_IDA
+@ stdcall CM_Get_Device_IDW(ptr ptr long long) cfgmgr32.CM_Get_Device_IDW
+@ stdcall CM_Get_Device_ID_ExA(ptr ptr long long ptr) cfgmgr32.CM_Get_Device_ID_ExA
+@ stdcall CM_Get_Device_ID_ExW(ptr ptr long long ptr) cfgmgr32.CM_Get_Device_ID_ExW
 @ stdcall CM_Get_Device_ID_ListA(str ptr long long)
 @ stdcall CM_Get_Device_ID_ListW(wstr ptr long long)
 @ stdcall CM_Get_Device_ID_List_ExA(str ptr long long ptr)
@@ -87,8 +87,8 @@
 @ stdcall CM_Get_Device_ID_List_SizeW(ptr wstr long)
 @ stdcall CM_Get_Device_ID_List_Size_ExA(ptr str long ptr)
 @ stdcall CM_Get_Device_ID_List_Size_ExW(ptr wstr long ptr)
-@ stdcall CM_Get_Device_ID_Size(ptr ptr long)
-@ stub CM_Get_Device_ID_Size_Ex
+@ stdcall CM_Get_Device_ID_Size(ptr ptr long) cfgmgr32.CM_Get_Device_ID_Size
+@ stdcall CM_Get_Device_ID_Size_Ex(ptr ptr long ptr) cfgmgr32.CM_Get_Device_ID_Size_Ex
 @ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long)
 @ stdcall CM_Get_Device_Interface_AliasW(wstr ptr ptr ptr long)
 @ stub CM_Get_Device_Interface_Alias_ExA
@@ -132,10 +132,10 @@
 @ stub CM_Intersect_Range_List
 @ stub CM_Invert_Range_List
 @ stub CM_Is_Dock_Station_Present
-@ stdcall CM_Locate_DevNodeA(ptr str long)
-@ stdcall CM_Locate_DevNodeW(ptr wstr long)
-@ stdcall CM_Locate_DevNode_ExA(ptr str long long)
-@ stdcall CM_Locate_DevNode_ExW(ptr wstr long long)
+@ stdcall CM_Locate_DevNodeA(ptr str long) cfgmgr32.CM_Locate_DevNodeA
+@ stdcall CM_Locate_DevNodeW(ptr wstr long) cfgmgr32.CM_Locate_DevNodeW
+@ stdcall CM_Locate_DevNode_ExA(ptr str long long) cfgmgr32.CM_Locate_DevNode_ExA
+@ stdcall CM_Locate_DevNode_ExW(ptr wstr long long) cfgmgr32.CM_Locate_DevNode_ExW
 @ stub CM_Merge_Range_List
 @ stub CM_Modify_Res_Des
 @ stub CM_Modify_Res_Des_Ex
