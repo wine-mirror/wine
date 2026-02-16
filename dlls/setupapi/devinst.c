@@ -872,7 +872,7 @@ static struct device *create_device(struct DeviceInfoSet *set,
     device->phantom = phantom;
     list_init(&device->interfaces);
     device->class = *class;
-    device->devnode = alloc_devinst_for_device_id(device->instanceId);
+    CM_Locate_DevNodeW(&device->devnode, device->instanceId, 0);
     device->removed = FALSE;
     list_add_tail(&set->devices, &device->entry);
     device->params.cbSize = sizeof(SP_DEVINSTALL_PARAMS_W);
@@ -4319,7 +4319,8 @@ CONFIGRET WINAPI CM_Locate_DevNode_ExA(DEVINST *devinst, DEVINSTID_A device_id, 
  */
 CONFIGRET WINAPI CM_Locate_DevNode_ExW(DEVINST *devinst, DEVINSTID_W device_id, ULONG flags, HMACHINE machine)
 {
-    DEVINST ret;
+    HKEY enum_hkey, device_hkey;
+    LSTATUS status;
 
     TRACE("%p %s %#lx %p.\n", devinst, debugstr_w(device_id), flags, machine);
 
@@ -4339,13 +4340,15 @@ CONFIGRET WINAPI CM_Locate_DevNode_ExW(DEVINST *devinst, DEVINSTID_W device_id, 
         return CR_CALL_NOT_IMPLEMENTED;
     }
 
-    if ((ret = get_devinst_for_device_id(device_id)) < devinst_table_size && devinst_table[ret])
-    {
-        *devinst = ret;
-        return CR_SUCCESS;
-    }
+    RegCreateKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, NULL, 0, KEY_READ, NULL, &enum_hkey, NULL);
+    if (!(status = RegOpenKeyExW(enum_hkey, device_id, 0, KEY_READ, &device_hkey)))
+        RegCloseKey(device_hkey);
+    RegCloseKey(enum_hkey);
+    if (status)
+        return CR_NO_SUCH_DEVNODE;
 
-    return CR_NO_SUCH_DEVNODE;
+    *devinst = alloc_devinst_for_device_id(device_id);
+    return CR_SUCCESS;
 }
 
 static CONFIGRET get_device_id_list(const WCHAR *filter, WCHAR *buffer, ULONG *len, ULONG flags)
