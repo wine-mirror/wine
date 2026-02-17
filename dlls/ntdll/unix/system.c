@@ -2790,13 +2790,75 @@ static BOOL reg_query_value( HKEY key, LPCWSTR name, DWORD type, void *data, DWO
     return TRUE;
 }
 
-static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char* tz_name, int year)
+static BOOL read_reg_tz_info( HANDLE key, UNICODE_STRING *zone_key_name, int year, RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 {
     static const WCHAR stdW[] = { 'S','t','d',0 };
     static const WCHAR dltW[] = { 'D','l','t',0 };
     static const WCHAR mui_stdW[] = { 'M','U','I','_','S','t','d',0 };
     static const WCHAR mui_dltW[] = { 'M','U','I','_','D','l','t',0 };
     static const WCHAR tziW[] = { 'T','Z','I',0 };
+    static const WCHAR Dynamic_DstW[] = { 'D','y','n','a','m','i','c',' ','D','S','T',0 };
+    HANDLE subkey, subkey_dyn;
+    OBJECT_ATTRIBUTES attr;
+    struct tz_reg_data
+    {
+        LONG bias;
+        LONG std_bias;
+        LONG dlt_bias;
+        RTL_SYSTEM_TIME std_date;
+        RTL_SYSTEM_TIME dlt_date;
+    } tz_data;
+    BOOL is_dynamic = FALSE;
+    UNICODE_STRING name;
+    BOOL ret = FALSE;
+    char buffer[16];
+    WCHAR yearW[16];
+
+    InitializeObjectAttributes( &attr, zone_key_name, 0, key, NULL );
+    if (NtOpenKey( &subkey, KEY_READ, &attr )) return FALSE;
+
+    memset( tzi, 0, sizeof(*tzi) );
+    memcpy(tzi->TimeZoneKeyName, zone_key_name->Buffer, zone_key_name->Length);
+    tzi->TimeZoneKeyName[zone_key_name->Length / sizeof(WCHAR)] = 0;
+
+    if (!reg_query_value(subkey, mui_stdW, REG_SZ, tzi->StandardName, sizeof(tzi->StandardName)) &&
+        !reg_query_value(subkey, stdW, REG_SZ, tzi->StandardName, sizeof(tzi->StandardName)))
+        goto done;
+
+    if (!reg_query_value(subkey, mui_dltW, REG_SZ, tzi->DaylightName, sizeof(tzi->DaylightName)) &&
+        !reg_query_value(subkey, dltW, REG_SZ, tzi->DaylightName, sizeof(tzi->DaylightName)))
+        goto done;
+
+    /* Check for Dynamic DST entry first */
+    name.Buffer = (WCHAR *)Dynamic_DstW;
+    name.Length = sizeof(Dynamic_DstW) - sizeof(WCHAR);
+    attr.RootDirectory = subkey;
+    attr.ObjectName = &name;
+    if (!NtOpenKey( &subkey_dyn, KEY_READ, &attr ))
+    {
+        snprintf( buffer, sizeof(buffer), "%u", year );
+        ascii_to_unicode( yearW, buffer, strlen(buffer) + 1 );
+        is_dynamic = reg_query_value( subkey_dyn, yearW, REG_BINARY, &tz_data, sizeof(tz_data) );
+        NtClose( subkey_dyn );
+    }
+    if (!is_dynamic && !reg_query_value( subkey, tziW, REG_BINARY, &tz_data, sizeof(tz_data) ))
+        goto done;
+
+    tzi->Bias = tz_data.bias;
+    tzi->StandardBias = tz_data.std_bias;
+    tzi->DaylightBias = tz_data.dlt_bias;
+    tzi->StandardDate = tz_data.std_date;
+    tzi->DaylightDate = tz_data.dlt_date;
+
+    ret = TRUE;
+
+done:
+    NtClose( subkey );
+    return ret;
+}
+
+static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char* tz_name, int year)
+{
     static const WCHAR Time_ZonesW[] = { '\\','R','e','g','i','s','t','r','y','\\',
         'M','a','c','h','i','n','e','\\',
         'S','o','f','t','w','a','r','e','\\',
@@ -2804,18 +2866,14 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
         'W','i','n','d','o','w','s',' ','N','T','\\',
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
         'T','i','m','e',' ','Z','o','n','e','s',0 };
-    static const WCHAR Dynamic_DstW[] = { 'D','y','n','a','m','i','c',' ','D','S','T',0 };
     RTL_DYNAMIC_TIME_ZONE_INFORMATION reg_tzi;
-    HANDLE key, subkey, subkey_dyn = 0;
+    HANDLE key;
     ULONG idx, len;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    WCHAR yearW[16];
     char buffer[128];
     KEY_BASIC_INFORMATION *info = (KEY_BASIC_INFORMATION *)buffer;
 
-    snprintf( buffer, sizeof(buffer), "%u", year );
-    ascii_to_unicode( yearW, buffer, strlen(buffer) + 1 );
     init_unicode_string( &nameW, Time_ZonesW );
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     if (NtOpenKey( &key, KEY_READ, &attr )) return;
@@ -2823,50 +2881,9 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
     idx = 0;
     while (!NtEnumerateKey( key, idx++, KeyBasicInformation, buffer, sizeof(buffer), &len ))
     {
-        struct tz_reg_data
-        {
-            LONG bias;
-            LONG std_bias;
-            LONG dlt_bias;
-            RTL_SYSTEM_TIME std_date;
-            RTL_SYSTEM_TIME dlt_date;
-        } tz_data;
-        BOOL is_dynamic = FALSE;
-
         nameW.Buffer = info->Name;
         nameW.Length = info->NameLength;
-        attr.RootDirectory = key;
-        if (NtOpenKey( &subkey, KEY_READ, &attr )) continue;
-
-        memset( &reg_tzi, 0, sizeof(reg_tzi) );
-        memcpy(reg_tzi.TimeZoneKeyName, nameW.Buffer, nameW.Length);
-        reg_tzi.TimeZoneKeyName[nameW.Length/sizeof(WCHAR)] = 0;
-
-        if (!reg_query_value(subkey, mui_stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName)) &&
-            !reg_query_value(subkey, stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName)))
-            goto next;
-
-        if (!reg_query_value(subkey, mui_dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName)) &&
-            !reg_query_value(subkey, dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName)))
-            goto next;
-
-        /* Check for Dynamic DST entry first */
-        nameW.Buffer = (WCHAR *)Dynamic_DstW;
-        nameW.Length = sizeof(Dynamic_DstW) - sizeof(WCHAR);
-        attr.RootDirectory = subkey;
-        if (!NtOpenKey( &subkey_dyn, KEY_READ, &attr ))
-        {
-            is_dynamic = reg_query_value( subkey_dyn, yearW, REG_BINARY, &tz_data, sizeof(tz_data) );
-            NtClose( subkey_dyn );
-        }
-        if (!is_dynamic && !reg_query_value( subkey, tziW, REG_BINARY, &tz_data, sizeof(tz_data) ))
-            goto next;
-
-        reg_tzi.Bias = tz_data.bias;
-        reg_tzi.StandardBias = tz_data.std_bias;
-        reg_tzi.DaylightBias = tz_data.dlt_bias;
-        reg_tzi.StandardDate = tz_data.std_date;
-        reg_tzi.DaylightDate = tz_data.dlt_date;
+        if (!read_reg_tz_info( key, &nameW, year, &reg_tzi )) continue;
 
         TRACE("%s: bias %d\n", debugstr_us(&nameW), reg_tzi.Bias);
         TRACE("std (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
@@ -2885,12 +2902,9 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
         if (match_tz_info( tzi, &reg_tzi ) && match_tz_name( tz_name, &reg_tzi ))
         {
             *tzi = reg_tzi;
-            NtClose( subkey );
             NtClose( key );
             return;
         }
-    next:
-        NtClose( subkey );
     }
     NtClose( key );
 
