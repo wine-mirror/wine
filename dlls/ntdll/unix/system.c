@@ -263,6 +263,15 @@ static ULONG_PTR system_cpu_mask;
 
 static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+static const char default_tzinfo_dir[] = "/usr/share/zoneinfo";
+static const WCHAR Time_ZonesW[] = { '\\','R','e','g','i','s','t','r','y','\\',
+    'M','a','c','h','i','n','e','\\',
+    'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s',' ','N','T','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'T','i','m','e',' ','Z','o','n','e','s',0 };
+
 /*******************************************************************************
  * Architecture specific feature detection for CPUs
  *
@@ -2859,13 +2868,6 @@ done:
 
 static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char* tz_name, int year)
 {
-    static const WCHAR Time_ZonesW[] = { '\\','R','e','g','i','s','t','r','y','\\',
-        'M','a','c','h','i','n','e','\\',
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s',' ','N','T','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'T','i','m','e',' ','Z','o','n','e','s',0 };
     RTL_DYNAMIC_TIME_ZONE_INFORMATION reg_tzi;
     HANDLE key;
     ULONG idx, len;
@@ -2940,6 +2942,76 @@ static time_t find_dst_change(time_t start, time_t end, int *is_dst)
     return min;
 }
 
+static BOOL get_tz_info_from_zoneinfo_name( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char *name, int year )
+{
+    static const WCHAR wine_tz_map[] = { '\\','R','e','g','i','s','t','r','y','\\',
+        'M','a','c','h','i','n','e','\\',
+        'S','o','f','t','w','a','r','e','\\',
+        'W','i','n','e','\\',
+        'T','i','m','e',' ','Z','o','n','e','s','\\',
+        'T','Z',' ','M','a','p','p','i','n','g',
+        0 };
+
+    const char *tzinfo_dir = getenv( "TZDIR" );
+    UNICODE_STRING key_name, win_name;
+    WCHAR nameW[64], win_nameW[64];
+    OBJECT_ATTRIBUTES attr;
+    char buf[MAX_PATH];
+    HANDLE key;
+    BOOL ret;
+    FILE *f;
+
+    TRACE( "name %s.\n", debugstr_a( name ));
+
+    if (strlen(name) >= ARRAY_SIZE(nameW)) return FALSE;
+
+    if (!tzinfo_dir) tzinfo_dir = default_tzinfo_dir;
+    snprintf( buf, sizeof(buf), "%s/%s", tzinfo_dir, name );
+
+    if (!(f = fopen( buf, "r" )))
+    {
+        WARN( "Could not open %s.\n", debugstr_a( buf ));
+        return FALSE;
+    }
+    fclose( f );
+
+    init_unicode_string( &key_name, wine_tz_map );
+    InitializeObjectAttributes( &attr, &key_name, 0, NULL, NULL );
+    if (NtOpenKey( &key, KEY_READ, &attr )) return FALSE;
+
+    ascii_to_unicode( nameW, name, strlen( name ) + 1 );
+    ret = reg_query_value( key, nameW, REG_SZ, win_nameW, sizeof(win_nameW) );
+    NtClose( key );
+    if (!ret) return FALSE;
+    TRACE( "got %s for %s.\n", debugstr_w(win_nameW), debugstr_a( name ) );
+
+    init_unicode_string( &key_name, Time_ZonesW );
+    if (NtOpenKey( &key, KEY_READ, &attr )) return FALSE;
+    init_unicode_string( &win_name, win_nameW );
+    ret = read_reg_tz_info( key, &win_name, year, tzi );
+    NtClose( key );
+    return ret;
+}
+
+static BOOL get_system_config_tz_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, int year )
+{
+    char path[PATH_MAX];
+    const char *str;
+    int len;
+
+    if ((str = getenv( "TZ" )))
+    {
+        if (*str == ':') ++str;
+        return get_tz_info_from_zoneinfo_name( tzi, str, year );
+    }
+
+    if (!realpath( "/etc/localtime", path )) return FALSE;
+    len = sizeof( default_tzinfo_dir ) - 1;
+    if (strncmp( path, default_tzinfo_dir, len )) return FALSE;
+    if (path[len] != '/') return FALSE;
+    return get_tz_info_from_zoneinfo_name( tzi, path + len + 1, year );
+}
+
 static LONG64 get_current_tz_bias(void)
 {
     ULONG high, low;
@@ -2958,6 +3030,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 {
     static RTL_DYNAMIC_TIME_ZONE_INFORMATION cached_tzi;
     static int current_year = -1, current_bias = 65535;
+    RTL_DYNAMIC_TIME_ZONE_INFORMATION reg_tzi;
     struct tm *tm, tm1, tm2;
     char tz_name[16];
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
@@ -3074,6 +3147,16 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
             tzi->StandardBias);
     }
 
+    if (get_system_config_tz_info( &reg_tzi, current_year + 1900 ))
+    {
+        if (match_tz_info( tzi, &reg_tzi ) && match_tz_name( tz_name, &reg_tzi ))
+        {
+            cached_tzi = *tzi = reg_tzi;
+            mutex_unlock( &timezone_mutex );
+            return;
+        }
+        WARN( "System config TZ info didn't match guessed parameters, falling back to search.\n" );
+    }
     find_reg_tz_info(tzi, tz_name, current_year + 1900);
     cached_tzi = *tzi;
     mutex_unlock( &timezone_mutex );

@@ -71,6 +71,7 @@ my $MAX_CHAR = 0x10ffff;
 
 my $nlskey = "-SYSTEM\\-CurrentControlSet\\-Control\\-Nls";
 my $zonekey = "-Software\\-Microsoft\\-Windows NT\\-CurrentVersion\\Time Zones";
+my $winezonekey = "-Software\\-Wine\\Time Zones";
 
 my @allfiles =
 (
@@ -5501,6 +5502,7 @@ sub load_windows_zones()
 {
     my $current_name;
     my %names;
+    my %mapping;
     my $base = "cldr-release-$CLDRVERSION";
     my $INPUT = open_data_file( "cldr", "$base/common/supplemental/windowsZones.xml" );
     while (<$INPUT>)
@@ -5513,9 +5515,16 @@ sub load_windows_zones()
         {
             $names{$1} = [ $current_name, $2 ];
         }
+        if (/<mapZone other="(.*)" territory=(.*) type="(.*)"\/>/)
+        {
+            foreach my $name (split ' ', $3)
+            {
+                $mapping{$name} = $1;
+            }
+        }
     }
     close $INPUT;
-    return %names;
+    return (\%names, \%mapping);
 }
 
 
@@ -5638,7 +5647,7 @@ sub dump_timezones($@)
     my $FIRST_YEAR = 2000;
     my $LAST_YEAR = 2030;
 
-    my %names = load_windows_zones();
+    my ($names, $mapping) = load_windows_zones();
     my %zones;
     my %rules;
     my %links;
@@ -5694,9 +5703,10 @@ sub dump_timezones($@)
         close $FILE;
     }
 
-    foreach my $name (sort { uc($a) cmp uc($b) } keys %names)
+    foreach my $name (sort { uc($a) cmp uc($b) } keys %{$names})
     {
-        my ($display, $zone) = @{$names{$name}};
+        my ($display, $zone) = @{%{$names}{$name}};
+
         $zone = $links{$zone} if defined $links{$zone};
 
         # build list of transitions
@@ -5863,6 +5873,12 @@ sub dump_timezones($@)
         }
         add_registry_dword_value( $zonekey, "$name\\Dynamic DST", "FirstEntry", $first_year );
         add_registry_dword_value( $zonekey, "$name\\Dynamic DST", "LastEntry", $last_year );
+    }
+
+    foreach my $map (sort { uc($a) cmp uc($b) } keys %{$mapping})
+    {
+        my $name = %{$mapping}{$map};
+        add_registry_string_value( $winezonekey, "TZ Mapping", $map, $name );
     }
 
     print OUTPUT "}\n";
