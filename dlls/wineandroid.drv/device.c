@@ -805,7 +805,7 @@ static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, 
     struct ANativeWindow *parent;
     struct ioctl_android_dequeueBuffer *res = data;
     struct native_win_data *win_data;
-    struct ANativeWindowBuffer *buffer;
+    struct ANativeWindowBuffer *buffer = NULL;
     int fence, ret, is_new;
 
     if (out_size < sizeof( *res )) return STATUS_BUFFER_OVERFLOW;
@@ -823,6 +823,12 @@ static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, 
     if (!ret)
     {
         HANDLE mapping = 0;
+
+        if (!buffer)
+        {
+            TRACE( "got invalid buffer\n" );
+            return STATUS_UNSUCCESSFUL;
+        }
 
         TRACE( "%08x got buffer %p fence %d\n", res->hdr.hwnd, buffer, fence );
         res->width  = buffer->width;
@@ -1255,7 +1261,7 @@ static void buffer_decRef( struct android_native_base_t *base )
 static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer, int *fence )
 {
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
-    struct ioctl_android_dequeueBuffer res;
+    struct ioctl_android_dequeueBuffer res = {0};
     DWORD size = sizeof(res);
     int ret, use_win32 = !gralloc_module && !gralloc1_device;
 
@@ -1469,10 +1475,15 @@ static int perform( ANativeWindow *window, int operation, ... )
     }
     case NATIVE_WINDOW_LOCK:
     {
-        struct ANativeWindowBuffer *buffer;
+        struct ANativeWindowBuffer *buffer = NULL;
         struct ANativeWindow_Buffer *buffer_ret = va_arg( args, ANativeWindow_Buffer * );
         ARect *bounds = va_arg( args, ARect * );
         int ret = window->dequeueBuffer_DEPRECATED( window, &buffer );
+        if (!ret && !buffer)
+        {
+            ret = -EWOULDBLOCK;
+            TRACE( "got invalid buffer\n" );
+        }
         if (!ret)
         {
             if ((ret = gralloc_lock( buffer, &buffer_ret->bits )))
