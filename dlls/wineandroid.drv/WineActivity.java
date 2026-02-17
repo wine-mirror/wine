@@ -64,6 +64,7 @@ public class WineActivity extends Activity
     private final String LOGTAG = "wine";
     private ProgressDialog progress_dialog;
 
+    protected TopView top_view;
     protected WineWindow desktop_window;
     protected WineWindow message_window;
     private PointerIcon current_cursor;
@@ -761,13 +762,9 @@ public class WineActivity extends Activity
 
     protected class TopView extends ViewGroup
     {
-        public TopView( Context context, int hwnd )
+        public TopView( Context context )
         {
             super( context );
-            desktop_window = new WineWindow( hwnd, null, 1.0f );
-            addView( desktop_window.create_whole_view() );
-            desktop_window.client_group.bringToFront();
-
             message_window = new WineWindow( WineWindow.HWND_MESSAGE, null, 1.0f );
             message_window.create_window_groups();
         }
@@ -793,22 +790,28 @@ public class WineActivity extends Activity
 
     // Entry points for the device driver
 
-    public void create_desktop_window( int hwnd )
+    public void create_desktop_view()
     {
-        Log.i( LOGTAG, String.format( "create desktop view %08x", hwnd ));
-        setContentView( new TopView( this, hwnd ));
+        Log.i( LOGTAG, "create desktop view ");
+        setContentView( top_view = new TopView( this ));
         progress_dialog.dismiss();
         wine_config_changed( getResources().getConfiguration().densityDpi );
     }
 
-    public void create_window( int hwnd, boolean opengl, int parent, float scale, int pid )
+    public void create_window( int hwnd, boolean is_desktop, boolean opengl, int parent, float scale, int pid )
     {
         WineWindow win = get_window( hwnd );
         if (win == null)
         {
-            win = new WineWindow( hwnd, get_window( parent ), scale );
+            win = new WineWindow( hwnd, is_desktop ? null : get_window( parent ), scale );
             win.create_window_groups();
             if (win.parent == desktop_window) win.create_whole_view();
+            if (is_desktop)
+            {
+                desktop_window = win;
+                top_view.addView( desktop_window.create_whole_view() );
+                desktop_window.client_group.bringToFront();
+            }
         }
         if (opengl) win.create_client_view();
     }
@@ -847,14 +850,14 @@ public class WineActivity extends Activity
             win.pos_changed( flags, insert_after, owner, style, window_rect, client_rect, visible_rect );
     }
 
-    public void createDesktopWindow( final int hwnd )
+    public void createDesktopView()
     {
-        runOnUiThread( new Runnable() { public void run() { create_desktop_window( hwnd ); }} );
+        runOnUiThread( new Runnable() { public void run() { create_desktop_view(); }} );
     }
 
-    public void createWindow( final int hwnd, final boolean opengl, final int parent, final float scale, final int pid )
+    public void createWindow( final int hwnd, final boolean is_desktop, final boolean opengl, final int parent, final float scale, final int pid )
     {
-        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, opengl, parent, scale, pid ); }} );
+        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, is_desktop, opengl, parent, scale, pid ); }} );
     }
 
     public void destroyWindow( final int hwnd )

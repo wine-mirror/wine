@@ -309,6 +309,7 @@ static const struct user_driver_funcs android_drv_funcs =
     .pUpdateDisplayDevices = ANDROID_UpdateDisplayDevices,
     .pCreateDesktop = ANDROID_CreateDesktop,
     .pCreateWindow = ANDROID_CreateWindow,
+    .pSetDesktopWindow = ANDROID_SetDesktopWindow,
     .pDesktopWindowProc = ANDROID_DesktopWindowProc,
     .pDestroyWindow = ANDROID_DestroyWindow,
     .pProcessEvents = ANDROID_ProcessEvents,

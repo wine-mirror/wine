@@ -85,6 +85,7 @@ extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl );
 extern void ANDROID_SetCursor( HWND hwnd, HCURSOR handle );
 extern BOOL ANDROID_CreateDesktop( const WCHAR *name, UINT width, UINT height );
 extern BOOL ANDROID_CreateWindow( HWND hwnd );
+extern void ANDROID_SetDesktopWindow( HWND hwnd );
 extern void ANDROID_DestroyWindow( HWND hwnd );
 extern BOOL ANDROID_ProcessEvents( DWORD mask );
 extern LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
