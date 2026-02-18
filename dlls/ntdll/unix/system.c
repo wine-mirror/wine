@@ -2924,6 +2924,20 @@ static time_t find_dst_change(time_t start, time_t end, int *is_dst)
     return min;
 }
 
+static LONG64 get_current_tz_bias(void)
+{
+    ULONG high, low;
+
+    do
+    {
+        high = user_shared_data->TimeZoneBias.High1Time;
+        low = user_shared_data->TimeZoneBias.LowPart;
+    }
+    while (high != user_shared_data->TimeZoneBias.High2Time);
+
+    return ((LONG64)high << 32) | low;
+}
+
 static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 {
     static RTL_DYNAMIC_TIME_ZONE_INFORMATION cached_tzi;
@@ -3226,27 +3240,10 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemTimeOfDayInformation:  /* 3 */
     {
-        static LONGLONG last_bias;
-        static time_t last_utc;
-        struct tm *tm;
-        time_t utc;
         SYSTEM_TIMEOFDAY_INFORMATION sti = {{{ 0 }}};
 
         sti.BootTime.QuadPart = server_start_time;
-
-        utc = time( NULL );
-        pthread_mutex_lock( &timezone_mutex );
-        if (utc != last_utc)
-        {
-            last_utc = utc;
-            tm = gmtime( &utc );
-            last_bias = mktime( tm ) - utc;
-            tm = localtime( &utc );
-            if (tm->tm_isdst) last_bias -= 3600;
-            last_bias *= TICKSPERSEC;
-        }
-        sti.TimeZoneBias.QuadPart = last_bias;
-        pthread_mutex_unlock( &timezone_mutex );
+        sti.TimeZoneBias.QuadPart = get_current_tz_bias();
 
         NtQuerySystemTime( &sti.SystemTime );
 
