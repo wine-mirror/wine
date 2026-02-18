@@ -8252,7 +8252,7 @@ static void test_ShowWindow_mdichild(void)
 {
     RECT rect, orig, expect, nc;
     LPARAM ret;
-    HWND mdi_hwndMain, mdiclient, hwnd, hwnd2;
+    HWND mdi_hwndMain, mdiclient, hwnd, hwnd2, hwnd3;
     LONG style;
     POINT pt = {0};
     CLIENTCREATESTRUCT mdi_client_cs = {0,1};
@@ -8379,6 +8379,37 @@ static void test_ShowWindow_mdichild(void)
     GetWindowRect(hwnd, &rect);
     ok(EqualRect(&orig, &rect), "expected %s, got %s\n",
        wine_dbgstr_rect(&orig), wine_dbgstr_rect(&rect));
+
+    /* test switching from a maximized MDI child to a child without WS_MAXIMIZEBOX */
+    ret = ShowWindow(hwnd2, SW_MAXIMIZE);
+    ok(ret, "wrong ret %Iu\n", ret);
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    ok(!(style & WS_DISABLED), "window should not be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should be minimized\n");
+    ok(style & WS_MAXIMIZE, "window should be maximized\n");
+
+    hwnd3 = (HWND)SendMessageA(mdiclient, WM_MDIGETACTIVE, 0, 0);
+    ok(hwnd3 == hwnd2, "wrong active child %p\n", hwnd3);
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    SetWindowLongA(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX);
+
+    GetWindowRect(hwndMain, &rect);
+    trace("hwndMain window rect %s\n", wine_dbgstr_rect(&rect));
+    GetWindowRect(mdiclient, &rect);
+    trace("mdiclient window rect %s\n", wine_dbgstr_rect(&rect));
+
+    SendMessageA(mdiclient, WM_MDIACTIVATE, (WPARAM)hwnd, 0);
+    hwnd3 = (HWND)SendMessageA(mdiclient, WM_MDIGETACTIVE, 0, 0);
+    ok(hwnd3 == hwnd, "wrong active child %p\n", hwnd3);
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok(!(style & WS_DISABLED), "window should not be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
+    todo_wine
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
 
     DestroyWindow(hwnd2);
     DestroyWindow(hwnd);
