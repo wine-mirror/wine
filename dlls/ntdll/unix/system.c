@@ -2882,14 +2882,25 @@ static time_t find_dst_change(time_t start, time_t end, int *is_dst)
     struct tm *tm;
     ULONGLONG min = (sizeof(time_t) == sizeof(int)) ? (ULONG)start : start;
     ULONGLONG max = (sizeof(time_t) == sizeof(int)) ? (ULONG)end : end;
+    time_t pos;
 
     tm = localtime(&start);
     *is_dst = !tm->tm_isdst;
     TRACE("starting date isdst %d, %s", !*is_dst, ctime(&start));
 
+    for (pos = min; pos <= max; pos += 30 * 24 * 3600)
+    {
+        tm = localtime(&pos);
+        if (tm->tm_isdst == *is_dst)
+        {
+            max = pos;
+            break;
+        }
+    }
+
     while (min <= max)
     {
-        time_t pos = (min + max) / 2;
+        pos = (min + max) / 2;
         tm = localtime(&pos);
 
         if (tm->tm_isdst != *is_dst)
