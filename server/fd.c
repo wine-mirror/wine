@@ -381,7 +381,7 @@ static void set_user_shared_data_time(void)
     timeout_t tick_count = monotonic_time / 10000;
     static timeout_t last_timezone_update;
     timeout_t timezone_bias;
-    struct tm *tm;
+    struct tm *tm, tm1, tm2;
     time_t now;
 
     if (monotonic_time - last_timezone_update > TICKS_PER_SEC)
@@ -390,7 +390,13 @@ static void set_user_shared_data_time(void)
         tm = gmtime( &now );
         timezone_bias = mktime( tm ) - now;
         tm = localtime( &now );
-        if (tm->tm_isdst) timezone_bias -= 3600;
+        if (tm->tm_isdst)
+        {
+            tm1 = tm2 = *tm;
+            tm1.tm_isdst = 0;
+            tm2.tm_isdst = 1;
+            timezone_bias += mktime(&tm1) < mktime(&tm2) ? 3600 : -3600;
+        }
         timezone_bias *= TICKS_PER_SEC;
 
         atomic_store_long(&user_shared_data->TimeZoneBias.High2Time, timezone_bias >> 32);
