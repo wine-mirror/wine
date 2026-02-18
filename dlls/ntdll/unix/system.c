@@ -2675,6 +2675,7 @@ static int weekday_to_mday(int year, int day, int mon, int day_of_week)
     do
     {
         date.tm_mday++;
+        date.tm_isdst = -1;
         tmp = mktime(&date);
     } while (date.tm_wday != day_of_week || date.tm_mon != mon);
 
@@ -2687,6 +2688,7 @@ static int weekday_to_mday(int year, int day, int mon, int day_of_week)
         struct tm *tm;
 
         date.tm_mday += 7;
+        date.tm_isdst = -1;
         tmp = mktime(&date);
         tm = localtime(&tmp);
         if (tm->tm_mon != mon)
@@ -2942,10 +2944,11 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 {
     static RTL_DYNAMIC_TIME_ZONE_INFORMATION cached_tzi;
     static int current_year = -1, current_bias = 65535;
-    struct tm *tm;
+    struct tm *tm, tm1, tm2;
     char tz_name[16];
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
     int is_dst, bias;
+    BOOL inverted_dst;
 
     mutex_lock( &timezone_mutex );
 
@@ -2954,6 +2957,12 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     bias = (LONG)(mktime(tm) - year_start) / 60;
 
     tm = localtime(&year_start);
+    tm1 = tm2 = *tm;
+    tm1.tm_isdst = 0;
+    tm2.tm_isdst = 1;
+    inverted_dst = mktime(&tm1) < mktime(&tm2);
+    if (inverted_dst) bias += 60;
+
     if (current_year == tm->tm_year && current_bias == bias)
     {
         *tzi = cached_tzi;
@@ -2967,18 +2976,19 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
         tz_name[0] = '\0';
     }
 
-    TRACE("tz data will be valid through year %d, bias %d\n", tm->tm_year + 1900, bias);
+    TRACE("tz data will be valid through year %d, bias %d, inverted_dst %d\n", tm->tm_year + 1900, bias, inverted_dst);
     current_year = tm->tm_year;
     current_bias = bias;
 
     tzi->Bias = bias;
 
-    tm->tm_isdst = 0;
+    tm->tm_isdst = inverted_dst;
     tm->tm_mday = 1;
     tm->tm_mon = tm->tm_hour = tm->tm_min = tm->tm_sec = tm->tm_wday = tm->tm_yday = 0;
     year_start = mktime(tm);
     TRACE("year_start: %s", ctime(&year_start));
 
+    tm->tm_isdst = inverted_dst;
     tm->tm_mday = tm->tm_wday = tm->tm_yday = 0;
     tm->tm_mon = 12;
     tm->tm_hour = 23;
@@ -2987,12 +2997,14 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     TRACE("year_end: %s", ctime(&year_end));
 
     tmp = find_dst_change(year_start, year_end, &is_dst);
+    if (inverted_dst) is_dst = !is_dst;
     if (is_dst)
         dlt = tmp;
     else
         std = tmp;
 
     tmp = find_dst_change(tmp, year_end, &is_dst);
+    if (inverted_dst) is_dst = !is_dst;
     if (is_dst)
         dlt = tmp;
     else
