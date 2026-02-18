@@ -35,6 +35,7 @@ enum audio_renderer_flags
     SAR_SHUT_DOWN = 0x1,
     SAR_PREROLLED = 0x2,
     SAR_SAMPLE_REQUESTED = 0x4,
+    SAR_SEEKING = 0x8,
 };
 
 enum queued_object_type
@@ -105,6 +106,7 @@ struct audio_renderer
     MFCLOCK_STATE clock_state;
     DWORD sample_rate;
     LONGLONG pts;
+    LONGLONG seek_pts;
     UINT64 position;
     UINT64 audio_clock_frequency;
     float rate;
@@ -656,6 +658,11 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStart(IMFClockStateSink *
     EnterCriticalSection(&renderer->cs);
     if (renderer->audio_client)
     {
+        if (offset != PRESENTATION_CURRENT_POSITION)
+        {
+            renderer->seek_pts = offset;
+            renderer->flags |= SAR_SEEKING;
+        }
         if (renderer->clock_state != MFCLOCK_STATE_RUNNING)
         {
             if (renderer->rate != 0.0f && FAILED(hr = IAudioClient_Start(renderer->audio_client)))
@@ -1513,6 +1520,13 @@ static HRESULT stream_queue_sample(struct audio_renderer *renderer, IMFSample *s
         return MF_E_INVALID_TIMESTAMP;
 
     sample_frames = sample_len / renderer->frame_size;
+
+    /* Discard samples that are prior to our seeking location */
+    if (renderer->flags & SAR_SEEKING && start_time +
+            (LONGLONG)sample_frames * MFCLOCK_FREQUENCY_HNS / renderer->sample_rate < renderer->seek_pts)
+        return S_OK;
+
+    renderer->flags &= ~SAR_SEEKING;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
