@@ -2726,7 +2726,7 @@ static BOOL match_tz_date( const RTL_SYSTEM_TIME *st, const RTL_SYSTEM_TIME *reg
 
     return (st->wDay == wDay &&
             st->wHour == reg_st->wHour &&
-            st->wMinute == reg_st->wMinute &&
+            (st->wMinute == reg_st->wMinute || (st->wMinute == 30 && !reg_st->wMinute)) &&
             st->wSecond == reg_st->wSecond &&
             st->wMilliseconds == reg_st->wMilliseconds);
 }
