@@ -2486,6 +2486,11 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
+static LRESULT WINAPI mdi_child_wnd_proc_3(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    return DefMDIChildProcA(hwnd, msg, wparam, lparam);
+}
+
 static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static HWND mdi_client;
@@ -2574,6 +2579,10 @@ static BOOL mdi_RegisterWindowClasses(void)
 
     cls.lpfnWndProc = mdi_child_wnd_proc_2;
     cls.lpszClassName = "MDI_child_Class_2";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = mdi_child_wnd_proc_3;
+    cls.lpszClassName = "MDI_child_Class_3";
     if(!RegisterClassA(&cls)) return FALSE;
 
     return TRUE;
@@ -8239,33 +8248,40 @@ static void test_ShowWindow_child(HWND hwndMain)
     DestroyWindow(hwnd);
 }
 
-static void test_ShowWindow_mdichild(HWND hwndMain)
+static void test_ShowWindow_mdichild(void)
 {
     RECT rect, orig, expect, nc;
     LPARAM ret;
-    HWND mdiclient, hwnd, hwnd2;
+    HWND mdi_hwndMain, mdiclient, hwnd, hwnd2;
     LONG style;
     POINT pt = {0};
     CLIENTCREATESTRUCT mdi_client_cs = {0,1};
 
+    mdi_hwndMain = CreateWindowExA(0, "MDI_parent_Class", "MDI parent window",
+                                   WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+                                   100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
+                                   GetDesktopWindow(), 0,
+                                   GetModuleHandleA(NULL), NULL);
+    ok(!!mdi_hwndMain, "failed to create window, error %lu\n", GetLastError());
+
     SetRect(&orig, 20, 20, 210, 110);
     GetClientRect(hwndMain, &rect);
-    mdiclient = CreateWindowA("mdiclient", "MDI client", WS_CHILD,
+    mdiclient = CreateWindowA("mdiclient", "MDI client", WS_CHILD | WS_VISIBLE,
                               rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                              hwndMain, 0, 0, &mdi_client_cs);
+                              mdi_hwndMain, 0, 0, &mdi_client_cs);
     ok(!!mdiclient, "failed to create window, error %lu\n", GetLastError());
-    hwnd = CreateWindowExA(WS_EX_MDICHILD, "MainWindowClass", "MDI child",
+    hwnd = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_3", "MDI child",
                            WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
                            orig.left, orig.top, orig.right - orig.left,
                            orig.bottom - orig.top, mdiclient, 0, 0, NULL);
     ok(!!hwnd, "failed to create window, error %lu\n", GetLastError());
-    hwnd2 = CreateWindowExA(WS_EX_MDICHILD, "MainWindowClass", "MDI child 2",
+    hwnd2 = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_3", "MDI child 2",
                             WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
                             orig.left, orig.top, orig.right - orig.left,
                             orig.bottom - orig.top, mdiclient, 0, 0, NULL);
     ok(!!hwnd2, "failed to create window, error %lu\n", GetLastError());
 
-    ClientToScreen(hwndMain, &pt);
+    ClientToScreen(mdi_hwndMain, &pt);
     OffsetRect(&orig, pt.x, pt.y);
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
@@ -8285,7 +8301,7 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
     ok(style & WS_MINIMIZE, "window should be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
     GetWindowRect(hwnd, &rect);
-    GetClientRect(hwndMain, &expect);
+    GetClientRect(mdiclient, &expect);
     SetRect(&expect, 0, expect.bottom - GetSystemMetrics(SM_CYMINIMIZED),
             GetSystemMetrics(SM_CXMINIMIZED), expect.bottom);
     OffsetRect(&expect, pt.x, pt.y);
@@ -8336,10 +8352,10 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
     ok(!(style & WS_DISABLED), "window should not be disabled\n");
     ok(style & WS_VISIBLE, "window should be visible\n");
     ok(!(style & WS_MINIMIZE), "window should be minimized\n");
-    ok(style & WS_MAXIMIZE, "window should not be maximized\n");
+    ok(style & WS_MAXIMIZE, "window should be maximized\n");
     GetWindowRect(hwnd, &rect);
-    GetClientRect(hwndMain, &expect);
-    AdjustWindowRectEx(&expect, GetWindowLongA(hwnd, GWL_STYLE) & ~WS_BORDER,
+    GetClientRect(mdiclient, &expect);
+    AdjustWindowRectEx(&expect, GetWindowLongA(hwnd, GWL_STYLE),
                        0, GetWindowLongA(hwnd, GWL_EXSTYLE));
     OffsetRect(&expect, pt.x, pt.y);
     ok(EqualRect(&expect, &rect), "expected %s, got %s\n",
@@ -8367,6 +8383,7 @@ static void test_ShowWindow_mdichild(HWND hwndMain)
     DestroyWindow(hwnd2);
     DestroyWindow(hwnd);
     DestroyWindow(mdiclient);
+    DestroyWindow(mdi_hwndMain);
 }
 
 static DWORD CALLBACK enablewindow_thread(LPVOID arg)
@@ -14500,7 +14517,7 @@ START_TEST(win)
     test_ShowWindow();
     test_ShowWindow_owned(hwndMain);
     test_ShowWindow_child(hwndMain);
-    test_ShowWindow_mdichild(hwndMain);
+    test_ShowWindow_mdichild();
     test_EnableWindow();
     test_gettext();
     test_GetUpdateRect();
