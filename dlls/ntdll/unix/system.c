@@ -2739,48 +2739,6 @@ static BOOL match_tz_info( const RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi,
             match_tz_date(&tzi->DaylightDate, &reg_tzi->DaylightDate));
 }
 
-static BOOL match_past_tz_bias( time_t past_time, LONG past_bias )
-{
-    LONG bias;
-    struct tm *tm;
-    if (!past_time) return TRUE;
-
-    tm = gmtime( &past_time );
-    bias = (LONG)(mktime(tm) - past_time) / 60;
-    return bias == past_bias;
-}
-
-static BOOL match_tz_name( const char *tz_name, const RTL_DYNAMIC_TIME_ZONE_INFORMATION *reg_tzi )
-{
-    static const struct {
-        WCHAR key_name[32];
-        const char *short_name;
-        time_t past_time;
-        LONG past_bias;
-    }
-    mapping[] =
-    {
-        { {'N','o','r','t','h',' ','K','o','r','e','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
-          "KST", 1451606400 /* 2016-01-01 00:00:00 UTC */, -510 },
-        { {'K','o','r','e','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
-          "KST", 1451606400 /* 2016-01-01 00:00:00 UTC */, -540 },
-        { {'T','o','k','y','o',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
-          "JST" },
-        { {'Y','a','k','u','t','s','k',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
-          "+09" }, /* YAKST was used until tzdata 2016f */
-    };
-    unsigned int i;
-
-    if (reg_tzi->DaylightDate.wMonth) return TRUE;
-    for (i = 0; i < ARRAY_SIZE(mapping); i++)
-    {
-        if (!wcscmp( mapping[i].key_name, reg_tzi->TimeZoneKeyName ))
-            return !strcmp( mapping[i].short_name, tz_name )
-                && match_past_tz_bias( mapping[i].past_time, mapping[i].past_bias );
-    }
-    return TRUE;
-}
-
 static BOOL reg_query_value( HKEY key, LPCWSTR name, DWORD type, void *data, DWORD count )
 {
     char buf[256];
@@ -2866,7 +2824,7 @@ done:
     return ret;
 }
 
-static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char* tz_name, int year)
+static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, int year)
 {
     RTL_DYNAMIC_TIME_ZONE_INFORMATION reg_tzi;
     HANDLE key;
@@ -2901,7 +2859,7 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
               reg_tzi.DaylightDate.wSecond, reg_tzi.DaylightDate.wMilliseconds,
               reg_tzi.DaylightBias);
 
-        if (match_tz_info( tzi, &reg_tzi ) && match_tz_name( tz_name, &reg_tzi ))
+        if (match_tz_info( tzi, &reg_tzi ))
         {
             *tzi = reg_tzi;
             NtClose( key );
@@ -2913,8 +2871,8 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
     if (idx == 1) return;  /* registry info not initialized yet */
 
     FIXME("Can't find matching timezone information in the registry for "
-          "%s, bias %d, std (d/m/y): %u/%02u/%04u, dlt (d/m/y): %u/%02u/%04u\n",
-          tz_name, tzi->Bias,
+          "bias %d, std (d/m/y): %u/%02u/%04u, dlt (d/m/y): %u/%02u/%04u\n",
+          tzi->Bias,
           tzi->StandardDate.wDay, tzi->StandardDate.wMonth, tzi->StandardDate.wYear,
           tzi->DaylightDate.wDay, tzi->DaylightDate.wMonth, tzi->DaylightDate.wYear);
 }
@@ -3032,7 +2990,6 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     static int current_year = -1, current_bias = 65535;
     RTL_DYNAMIC_TIME_ZONE_INFORMATION reg_tzi;
     struct tm *tm, tm1, tm2;
-    char tz_name[16];
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
     int is_dst, bias;
     BOOL inverted_dst;
@@ -3058,11 +3015,6 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     }
 
     memset(tzi, 0, sizeof(*tzi));
-    if (!strftime(tz_name, sizeof(tz_name), "%Z", tm)) {
-        /* not enough room or another error */
-        tz_name[0] = '\0';
-    }
-
     TRACE("tz data will be valid through year %d, bias %d, inverted_dst %d\n", tm->tm_year + 1900, bias, inverted_dst);
     current_year = tm->tm_year;
     current_bias = bias;
@@ -3149,7 +3101,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 
     if (get_system_config_tz_info( &reg_tzi, current_year + 1900 ))
     {
-        if (match_tz_info( tzi, &reg_tzi ) && match_tz_name( tz_name, &reg_tzi ))
+        if (match_tz_info( tzi, &reg_tzi ))
         {
             cached_tzi = *tzi = reg_tzi;
             mutex_unlock( &timezone_mutex );
@@ -3157,7 +3109,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
         }
         WARN( "System config TZ info didn't match guessed parameters, falling back to search.\n" );
     }
-    find_reg_tz_info(tzi, tz_name, current_year + 1900);
+    find_reg_tz_info(tzi, current_year + 1900);
     cached_tzi = *tzi;
     mutex_unlock( &timezone_mutex );
 }
