@@ -38,6 +38,40 @@
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
+static BOOL is_ime_hkl(HKL hkl)
+{
+    /* See https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values#input-method-editors */
+    switch (HIWORD(hkl))
+    {
+    case MAKELANGID(LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_BENGALI, SUBLANG_BENGALI_INDIA): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL): return TRUE;
+    case MAKELANGID(LANG_GUJARATI, SUBLANG_GUJARATI_INDIA): return TRUE;
+    case MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA): return TRUE;
+    case MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN): return TRUE;
+    case MAKELANGID(LANG_KANNADA, SUBLANG_KANNADA_INDIA): return TRUE;
+    case MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN): return TRUE;
+    case MAKELANGID(LANG_MALAYALAM, SUBLANG_MALAYALAM_INDIA): return TRUE;
+    case MAKELANGID(LANG_MARATHI, SUBLANG_MARATHI_INDIA): return TRUE;
+    case MAKELANGID(LANG_NEPALI, SUBLANG_NEPALI_NEPAL): return TRUE;
+    case MAKELANGID(LANG_ODIA, SUBLANG_ODIA_INDIA): return TRUE;
+    case MAKELANGID(LANG_PUNJABI, SUBLANG_PUNJABI_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_SRI_LANKA): return TRUE;
+    case MAKELANGID(LANG_TELUGU, SUBLANG_TELUGU_INDIA): return TRUE;
+    case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
+    case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
+    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
+    }
+}
+
+static HKL get_ime_hkl(LCID locale)
+{
+    return ULongToHandle(MAKELONG(locale, 0xe001));
+}
+
 struct layout
 {
     struct list entry;
@@ -75,6 +109,13 @@ static struct list xkb_layouts = LIST_INIT(xkb_layouts);
 /* These are only used from the wayland event thread and don't need locking */
 static struct rxkb_context *rxkb_context;
 static HKL keyboard_hkl; /* the HKL matching the currently active xkb group */
+
+void activate_keyboard_hkl(HWND hwnd, BOOL ime)
+{
+    HKL hkl = ime && !is_ime_hkl(keyboard_hkl) ? get_ime_hkl(LOWORD(keyboard_hkl)) : keyboard_hkl;
+    TRACE("Changing keyboard layout to %p\n", hkl);
+    NtUserPostMessage(hwnd, WM_INPUTLANGCHANGEREQUEST, 0 /*FIXME*/, (LPARAM)hkl);
+}
 
 static void xkb_layout_addref(struct layout *layout)
 {
@@ -573,9 +614,11 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
 
 static void set_current_xkb_group(xkb_layout_index_t xkb_group)
 {
+    struct wayland_text_input *text_input = &process_wayland.text_input;
     struct wayland_keyboard *keyboard = &process_wayland.keyboard;
     LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
     struct layout *layout;
+    BOOL ime;
     HKL hkl;
 
     pthread_mutex_lock(&xkb_layouts_mutex);
@@ -595,9 +638,11 @@ static void set_current_xkb_group(xkb_layout_index_t xkb_group)
     if (hkl == keyboard_hkl) return;
     keyboard_hkl = hkl;
 
-    TRACE("Changing keyboard layout to %p\n", hkl);
-    NtUserPostMessage(keyboard->focused_hwnd, WM_INPUTLANGCHANGEREQUEST, 0 /*FIXME*/,
-                      (LPARAM)keyboard_hkl);
+    pthread_mutex_lock(&text_input->mutex);
+    ime = text_input->focused_hwnd == keyboard->focused_hwnd;
+    pthread_mutex_unlock(&text_input->mutex);
+
+    activate_keyboard_hkl(keyboard->focused_hwnd, ime);
 }
 
 static BOOL find_xkb_layout_variant(const char *name, const char **layout, const char **variant)
@@ -961,6 +1006,8 @@ const KBDTABLES *WAYLAND_KbdLayerDescriptor(HKL hkl)
     struct layout *layout;
 
     TRACE("hkl=%p\n", hkl);
+
+    if (hkl == get_ime_hkl(LOWORD(hkl))) hkl = keyboard_hkl;
 
     pthread_mutex_lock(&xkb_layouts_mutex);
 

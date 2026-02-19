@@ -97,6 +97,8 @@ static void text_input_enter(void *data, struct zwp_text_input_v3 *zwp_text_inpu
     zwp_text_input_v3_set_cursor_rectangle(text_input->zwp_text_input_v3, 0, 0, 0, 0);
     zwp_text_input_v3_commit(text_input->zwp_text_input_v3);
     pthread_mutex_unlock(&text_input->mutex);
+
+    activate_keyboard_hkl(hwnd, TRUE);
 }
 
 static void text_input_leave(void *data, struct zwp_text_input_v3 *zwp_text_input_v3,
