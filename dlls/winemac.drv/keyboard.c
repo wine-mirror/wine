@@ -37,6 +37,34 @@
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
+static BOOL is_ime_hkl( HKL hkl )
+{
+    /* See https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values#input-method-editors */
+    switch (HIWORD(hkl))
+    {
+    case MAKELANGID(LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_BENGALI, SUBLANG_BENGALI_INDIA): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL): return TRUE;
+    case MAKELANGID(LANG_GUJARATI, SUBLANG_GUJARATI_INDIA): return TRUE;
+    case MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA): return TRUE;
+    case MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN): return TRUE;
+    case MAKELANGID(LANG_KANNADA, SUBLANG_KANNADA_INDIA): return TRUE;
+    case MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN): return TRUE;
+    case MAKELANGID(LANG_MALAYALAM, SUBLANG_MALAYALAM_INDIA): return TRUE;
+    case MAKELANGID(LANG_MARATHI, SUBLANG_MARATHI_INDIA): return TRUE;
+    case MAKELANGID(LANG_NEPALI, SUBLANG_NEPALI_NEPAL): return TRUE;
+    case MAKELANGID(LANG_ODIA, SUBLANG_ODIA_INDIA): return TRUE;
+    case MAKELANGID(LANG_PUNJABI, SUBLANG_PUNJABI_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_SRI_LANKA): return TRUE;
+    case MAKELANGID(LANG_TELUGU, SUBLANG_TELUGU_INDIA): return TRUE;
+    case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
+    case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
+    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
+    }
+}
 
 /* Indexed by Mac virtual keycode values defined above. */
 static const struct {
@@ -313,7 +341,9 @@ static struct list layout_list = LIST_INIT( layout_list );
 struct layout
 {
     struct list entry;
-    HKL hkl;
+    LANGID lang;
+    /* "Layout Id", used by NtUserGetKeyboardLayoutName / LoadKeyboardLayoutW */
+    WORD layout_id;
     TISInputSourceRef input_source;
     BOOL enabled; /* is the input source enabled - ie displayed in the input source selector UI */
 };
@@ -412,27 +442,10 @@ static DWORD get_lcid(CFStringRef lang)
     return locale->inotneutral ? entry->id : locale->idefaultlanguage;
 }
 
-static HKL get_hkl(CFStringRef lang, CFStringRef type)
+static HKL get_layout_hkl(struct layout *layout, LCID locale)
 {
-    ULONG_PTR lcid = get_lcid(lang);
-    struct layout *layout;
-
-    /* Look for the last occurrence of this lcid in the list and if
-       present use that value + 0x10000 */
-    LIST_FOR_EACH_ENTRY_REV(layout, &layout_list, struct layout, entry)
-    {
-        ULONG_PTR hkl = HandleToUlong(layout->hkl);
-
-        if (LOWORD(hkl) == lcid)
-        {
-            lcid = (hkl & ~0xe0000000) + 0x10000;
-            break;
-        }
-    }
-
-    if (!CFEqual(type, kTISTypeKeyboardLayout)) lcid |= 0xe0000000;
-
-    return (HKL)lcid;
+    if (!layout->layout_id) return UlongToHandle(MAKELONG(locale, layout->lang));
+    return UlongToHandle(MAKELONG(locale, layout->layout_id));
 }
 
 /******************************************************************
@@ -468,6 +481,7 @@ static struct layout *get_layout_from_source(TISInputSourceRef input)
  */
 static void update_layout_list(void)
 {
+    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
     CFArrayRef sources;
     struct layout *layout;
     int i;
@@ -486,18 +500,28 @@ static void update_layout_list(void)
         layout = get_layout_from_source(input);
         if (!layout)
         {
-            CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
-            CFStringRef lang = CFDictionaryGetValue(dict, macdrv_input_source_lang_key);
+            static WORD next_layout_id = 1;
 
-            layout = malloc(sizeof(*layout));
+            CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
+            LANGID lang = get_lcid(CFDictionaryGetValue(dict, macdrv_input_source_lang_key));
+            HKL lang_hkl = UlongToPtr(MAKELONG(lang, lang));
+            UINT index = 0;
+
+            LIST_FOR_EACH_ENTRY_REV(layout, &layout_list, struct layout, entry)
+                if (layout->lang == lang) index++;
+
+            layout = calloc(1, sizeof(*layout));
             layout->input_source = (TISInputSourceRef)CFRetain(input);
-            layout->hkl = get_hkl(lang, type);
+            layout->lang = lang;
+            if (is_ime_hkl(lang_hkl) && !index) layout->layout_id = 0; /* HKL has a builtin IME */
+            else if (!CFEqual(type, kTISTypeKeyboardLayout)) layout->layout_id = 0xe000 | next_layout_id++;
+            else if (index) layout->layout_id = 0xf000 | next_layout_id++;
 
             list_add_tail(&layout_list, &layout->entry);
-            TRACE("adding new layout %p\n", layout->hkl);
+            TRACE("adding new layout %p\n", get_layout_hkl(layout, locale));
         }
         else
-            TRACE("enabling already existing layout %p\n", layout->hkl);
+            TRACE("enabling already existing layout %p\n", get_layout_hkl(layout, locale));
 
         layout->enabled = TRUE;
     }
@@ -512,6 +536,7 @@ static void update_layout_list(void)
  */
 HKL macdrv_get_hkl_from_source(TISInputSourceRef input)
 {
+    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
     struct layout *layout;
     HKL ret = 0;
 
@@ -519,7 +544,7 @@ HKL macdrv_get_hkl_from_source(TISInputSourceRef input)
 
     update_layout_list();
     layout = get_layout_from_source(input);
-    if (layout) ret = layout->hkl;
+    if (layout) ret = get_layout_hkl(layout, locale);
 
     pthread_mutex_unlock(&layout_list_mutex);
 
@@ -1165,7 +1190,7 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 
     LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
     {
-        if (layout->hkl == hkl)
+        if (HIWORD(hkl) == layout->layout_id ? layout->layout_id : layout->lang)
         {
             if (macdrv_select_input_source(layout->input_source))
             {
@@ -1302,6 +1327,7 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
  */
 UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
 {
+    LCID locale = LOWORD(NtUserGetKeyboardLayout(0));
     int count = 0;
     struct layout *layout;
 
@@ -1317,7 +1343,7 @@ UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
         if (list)
         {
             if (count >= size) break;
-            list[count] = layout->hkl;
+            list[count] = get_layout_hkl(layout, locale);
             TRACE("\t%d: %p\n", count, list[count]);
         }
         count++;
