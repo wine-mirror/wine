@@ -4569,7 +4569,7 @@ NTSTATUS virtual_handle_fault( struct thread_data *data, EXCEPTION_RECORD *rec, 
     mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
     vprot = get_host_page_vprot( page );
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && defined(__x86_64__)
     /* Rosetta on Apple Silicon misreports certain write faults as read faults. */
     if (err == EXCEPTION_READ_FAULT && (get_unix_prot( vprot ) & PROT_READ))
     {
