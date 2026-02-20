@@ -43,7 +43,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 #define FREQ_ADJUST_SHIFT 32
-#define FIXED_0_32_TO_FLOAT(x) ((x) * (1.0f / (1ll << 32)))
+#define FIXED_0_32_TO_FLOAT(x) ((int)((x) >> 1) * (1.0f / (1ll << 31)))
 
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 {
