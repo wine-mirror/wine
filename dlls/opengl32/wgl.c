@@ -259,10 +259,38 @@ BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
     return args.ret;
 }
 
+struct display_lists
+{
+    LONG refcount;
+};
+
+static struct display_lists *display_lists_create(void)
+{
+    struct display_lists *lists;
+
+    if (!(lists = calloc( 1, sizeof(*lists) ))) return NULL;
+    lists->refcount = 1;
+
+    return lists;
+}
+
+static struct display_lists *display_lists_acquire( struct display_lists *lists )
+{
+    InterlockedIncrement( &lists->refcount );
+    return lists;
+}
+
+static void display_lists_release( struct display_lists *lists )
+{
+    if (InterlockedDecrement( &lists->refcount )) return;
+    free( lists );
+}
+
 struct context
 {
     struct opengl_client_context base;
-    struct handle_table syncs;
+    struct handle_table          syncs;
+    struct display_lists        *lists;
 };
 
 static struct context *context_from_opengl_client_context( struct opengl_client_context *base )
@@ -293,19 +321,23 @@ BOOL get_context_from_handle( HGLRC handle, HGLRC *obj )
     return context || !handle;
 }
 
-static struct handle_entry *alloc_client_context(void)
+static struct handle_entry *alloc_client_context( struct context *share )
 {
     struct context *context;
     struct handle_entry *ptr;
 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
+    if (!(context->lists = share ? display_lists_acquire( share->lists ) : display_lists_create())) goto failed;
 
     EnterCriticalSection( &wgl_cs );
     ptr = alloc_handle( &contexts, context );
     LeaveCriticalSection( &wgl_cs );
+    if (ptr) return ptr;
 
-    if (!ptr) free( context );
-    return ptr;
+    display_lists_release( context->lists );
+failed:
+    free( context );
+    return NULL;
 }
 
 static void free_client_context( struct handle_entry *ptr )
@@ -318,6 +350,7 @@ static void free_client_context( struct handle_entry *ptr )
         if (LOWORD(entry->handle) == 0xffff) continue;
         free( entry->user_data );
     }
+    display_lists_release( context->lists );
 
     EnterCriticalSection( &wgl_cs );
     free_handle( &contexts, ptr );
@@ -342,17 +375,20 @@ HGLRC WINAPI wglCreateContext( HDC hdc )
 HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
 {
     struct wglCreateContextAttribsARB_params args = { .teb = NtCurrentTeb(), .hDC = hdc, .attribList = attribs };
+    struct context *share_context = NULL;
     struct handle_entry *ptr;
     NTSTATUS status;
 
     TRACE( "hdc %p, share %p, attribs %p\n", hdc, share, attribs );
 
-    if (!get_context_from_handle( share, &args.hShareContext ))
+    if (share && !(share_context = context_from_handle( share )))
     {
         SetLastError( ERROR_INVALID_OPERATION );
         return NULL;
     }
-    if (!(ptr = alloc_client_context())) return NULL;
+    if (share) args.hShareContext = &share_context->base.obj;
+
+    if (!(ptr = alloc_client_context( share_context ))) return NULL;
     args.ret = &ptr->context->obj;
 
     if ((status = UNIX_CALL( wglCreateContextAttribsARB, &args ))) WARN( "wglCreateContextAttribsARB returned %#lx\n", status );
