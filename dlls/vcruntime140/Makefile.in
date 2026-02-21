@@ -2,6 +2,7 @@ MODULE    = vcruntime140.dll
 IMPORTLIB = vcruntime140
 
 SOURCES = \
+	init_thread.c \
 	misc.c \
 	new.cpp \
 	typeinfo_root.cpp
