@@ -3448,6 +3448,16 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
     return pFunc;
 }
 
+
+/***********************************************************************
+ *           MmGetPhysicalAddress   (NTOSKRNL.EXE.@)
+ */
+PHYSICAL_ADDRESS WINAPI MmGetPhysicalAddress(PVOID BaseAddress)
+{
+    FIXME("stub\n");
+    return (PHYSICAL_ADDRESS) VirtualAddress;
+}
+
 /***********************************************************************
  *           MmIsThisAnNtAsSystem   (NTOSKRNL.EXE.@)
  */
