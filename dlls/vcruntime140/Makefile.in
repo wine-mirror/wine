@@ -3,4 +3,5 @@ IMPORTLIB = vcruntime140
 
 SOURCES = \
 	misc.c \
-	new.cpp
+	new.cpp \
+	typeinfo_root.cpp
