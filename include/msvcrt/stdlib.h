@@ -39,6 +39,7 @@ typedef struct
 #define _MAX_DIR            _MAX_FNAME
 #define _MAX_EXT            _MAX_FNAME
 #define _MAX_PATH           260
+#define _MAX_ENV            32767
 #endif
 
 /* Make the secure string functions (names end in "_s") truncate their output */
