@@ -14438,6 +14438,175 @@ static void test_validate_on_parse_values(void)
     }
 }
 
+static void test_put_text(void)
+{
+    IXMLDOMElement *element;
+    IXMLDOMNamedNodeMap *map;
+    IXMLDOMDocument2 *doc;
+    IXMLDOMNode *node, *node2;
+    VARIANT_BOOL b;
+    BSTR str;
+    const WCHAR *expected;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    b = VARIANT_FALSE;
+    str = SysAllocString(L"<?xml version='1.0' encoding='UTF-16'?>\n<open what=\"door\">sesame</open>\n");
+    hr = IXMLDOMDocument2_loadXML(doc, str, &b);
+    ok(hr == S_OK, "Unable to create instance hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    element = NULL;
+    hr = IXMLDOMDocument2_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    node = NULL;
+    hr = IXMLDOMElement_get_firstChild(element, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* put_text on text node */
+    hr = IXMLDOMNode_put_text(node, _bstr_("SESAME"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    expected = L"<open what=\"door\">SESAME</open>";
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* put_text on attribute node */
+    map = NULL;
+    hr = IXMLDOMElement_get_attributes(element, &map);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    node2 = NULL;
+    hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNode_put_text(node2, _bstr_("window"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* put_text on element parent */
+    hr = IXMLDOMElement_put_text(element, _bstr_("sesame"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    expected = L"<open what=\"window\">sesame</open>";
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* calling put_text on text node again doesn't affect element */
+    hr = IXMLDOMNode_put_text(node, _bstr_("SeSaMe"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IXMLDOMNode_get_text(node, &str);
+    expected = L"SeSaMe";
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, expected), "Incorrect node string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = NULL;
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    expected = L"<open what=\"window\">sesame</open>";
+    todo_wine
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMNode_Release(node2);
+    IXMLDOMNamedNodeMap_Release(map);
+    if (!winetest_platform_is_wine) /* crashes on wine with IXMLDOMElement_put_text */
+        IXMLDOMNode_Release(node);
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument2_Release(doc);
+
+    /* put_text on element when children is not a text node */
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    b = VARIANT_FALSE;
+    str = SysAllocString(L"<?xml version='1.0' encoding='UTF-16'?>\n"
+                          "<open>\r\n"
+                            "\t<inside>sesame</inside>\r\n"
+                          "</open>\n");
+    hr = IXMLDOMDocument2_loadXML(doc, str, &b);
+    ok(hr == S_OK, "Unable to create instance hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    element = NULL;
+    hr = IXMLDOMDocument2_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    node = NULL;
+    hr = IXMLDOMElement_get_firstChild(element, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    expected = L"<open>\r\n"
+                    "\t<inside>sesame</inside>\r\n"
+                "</open>";
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_put_text(element, _bstr_("sesame"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    expected = L"<open>sesame</open>";
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMNode_Release(node);
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument2_Release(doc);
+
+    /* put_text on element with no children */
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    b = VARIANT_FALSE;
+    str = SysAllocString(L"<?xml version='1.0' encoding='UTF-16'?>\n"
+                          "<open></open>\n");
+    hr = IXMLDOMDocument2_loadXML(doc, str, &b);
+    ok(hr == S_OK, "Unable to create instance hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    element = NULL;
+    hr = IXMLDOMDocument2_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    node = NULL;
+    hr = IXMLDOMElement_get_firstChild(element, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_put_text(element, _bstr_("sesame"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    expected = L"<open>sesame</open>";
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument2_Release(doc);
+    free_bstrs();
+}
+
 static void test_indent(void)
 {
     HRESULT hr;
@@ -14596,6 +14765,7 @@ START_TEST(domdoc)
     test_xsltext();
     test_max_element_depth_values();
     test_get_parentNode();
+    test_put_text();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
