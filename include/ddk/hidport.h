@@ -68,6 +68,14 @@ typedef struct _HID_DESCRIPTOR
 #define HID_HID_DESCRIPTOR_TYPE 0x21
 #define HID_REPORT_DESCRIPTOR_TYPE 0x22
 
+/*
+ * String IDs used with IOCTL_HID_GET_STRING.
+ * These values match the string field offsets in chapter 9 of the USB spec.
+ */
+#define HID_STRING_ID_IMANUFACTURER 14
+#define HID_STRING_ID_IPRODUCT      15
+#define HID_STRING_ID_ISERIALNUMBER 16
+
 #define IOCTL_HID_GET_DEVICE_DESCRIPTOR          HID_CTL_CODE(0)
 #define IOCTL_HID_GET_REPORT_DESCRIPTOR          HID_CTL_CODE(1)
 #define IOCTL_HID_READ_REPORT                    HID_CTL_CODE(2)
