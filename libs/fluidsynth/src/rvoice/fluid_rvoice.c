@@ -465,7 +465,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         //
         // Currently, this does access the sample buffers, which is redundant and could be optimized away.
         // On the other hand, entering this if-clause is not supposed to happen often.
-        return fluid_rvoice_dsp_interpolate_none(voice, dsp_buf, is_looping);
+        return fluid_rvoice_dsp_silence(voice, dsp_buf, is_looping);
     }
 
     switch(voice->dsp.interp_method)

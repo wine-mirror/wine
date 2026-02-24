@@ -177,6 +177,10 @@ typedef gintptr  intptr_t;
 
 /* #include <glib/gstdio.h> */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Macro used for safely accessing a message from a GError and using a default
  * message if it is NULL.
@@ -798,4 +802,7 @@ static FLUID_INLINE void *fluid_align_ptr(const void *ptr, unsigned int alignmen
 
 #define FLUID_DEFAULT_ALIGNMENT (64U)
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _FLUID_SYS_H */

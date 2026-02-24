@@ -211,7 +211,7 @@ fluid_real_t
 fluid_sec2tc(fluid_real_t sec)
 {
     fluid_real_t res;
-    if(sec < 0)
+    if(sec <= 0)
     {
         // would require a complex solution of fluid_tc2sec(), but this is real-only
         return -32768.f;

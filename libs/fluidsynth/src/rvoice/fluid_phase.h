@@ -22,6 +22,9 @@
 #ifndef _FLUID_PHASE_H
 #define _FLUID_PHASE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
  *  phase
  */
@@ -110,4 +113,7 @@ typedef uint64_t fluid_phase_t;
  * Creates the expression a.index++. */
 #define fluid_phase_index_plusplus(a)  (((a) += 0x100000000LL)
 
+#ifdef __cplusplus
+}
+#endif
 #endif  /* _FLUID_PHASE_H */

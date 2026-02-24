@@ -66,7 +66,8 @@
  *  - width (0 to 100): controls the left/right output separation.
  *    When 0, there are no separation and the signal on left and right.
  *    output is the same. This sounds like a monophonic signal.
- *    When 100, the separation between left and right is maximum.
+ *    When 1, the separation between left and right is maximum.
+ *    When 100 the perception of this separation is further "exaggerated".
  *
  *  - level (0 to 1), controls the output level reverberation.
  *

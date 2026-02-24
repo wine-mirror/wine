@@ -81,6 +81,13 @@ enum fluid_synth_status
     FLUID_SYNTH_STOPPED
 };
 
+enum fluid_msgs_note_cut
+{
+    FLUID_MSGS_DISABLED = 0,
+    FLUID_MSGS_DRUM_CUT = 1,
+    FLUID_MSGS_ALL_CUT  = 2
+};
+
 #define SYNTH_REVERB_CHANNEL 0
 #define SYNTH_CHORUS_CHANNEL 1
 
@@ -115,8 +122,7 @@ struct _fluid_synth_t
     int midi_channels;                 /**< the number of MIDI channels (>= 16) */
     int bank_select;                   /**< the style of Bank Select MIDI messages */
     int audio_channels;                /**< the number of audio channels (1 channel=left+right) */
-    int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth.
-					  Typically equal to audio_channels. */
+    int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth. Typically equal to audio_channels. */
     int effects_channels;              /**< the number of effects channels (>= 2) */
     int effects_groups;                /**< the number of effects units (>= 1) */
     int state;                         /**< the synthesizer state */
@@ -164,6 +170,7 @@ struct _fluid_synth_t
     fluid_ladspa_fx_t *ladspa_fx;      /**< Effects unit for LADSPA support */
     enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
     enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
+    enum fluid_msgs_note_cut msgs_note_cut_mode;
 };
 
 /**

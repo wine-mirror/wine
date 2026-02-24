@@ -20,7 +20,7 @@ SOURCES = \
 	src/rvoice/fluid_lfo.c \
 	src/rvoice/fluid_rev.c \
 	src/rvoice/fluid_rvoice.c \
-	src/rvoice/fluid_rvoice_dsp.c \
+	src/rvoice/fluid_rvoice_dsp.cpp \
 	src/rvoice/fluid_rvoice_event.c \
 	src/rvoice/fluid_rvoice_mixer.c \
 	src/sfloader/fluid_defsfont.c \

@@ -78,7 +78,7 @@ extern void g_clear_error( GError **error );
 
 extern int g_file_test( const char *path, int test );
 
-#define g_new( type, count ) calloc( (count), sizeof(type) )
+#define g_new( type, count ) ((type *)calloc( (count), sizeof(type) ))
 static inline void g_free( void *ptr ) { free( ptr ); }
 
 typedef SRWLOCK GMutex;

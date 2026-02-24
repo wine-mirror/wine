@@ -2446,6 +2446,8 @@ else
     enable_wow64cpu=${enable_wow64cpu:-no}
     enable_xtajit64=${enable_xtajit64:-no}
     enable_compiler_rt=${enable_compiler_rt:-no}
+    dnl Disable modules that need C++
+    enable_dmsynth=${enable_dmsynth:-no}
 fi
 
 dnl Disable some programs for other PE archs

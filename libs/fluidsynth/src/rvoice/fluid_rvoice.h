@@ -29,6 +29,9 @@
 #include "fluid_phase.h"
 #include "fluid_sfont.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct _fluid_rvoice_envlfo_t fluid_rvoice_envlfo_t;
 typedef struct _fluid_rvoice_dsp_t fluid_rvoice_dsp_t;
 typedef struct _fluid_rvoice_buffers_t fluid_rvoice_buffers_t;
@@ -200,6 +203,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample);
 
 /* defined in fluid_rvoice_dsp.c */
 void fluid_rvoice_dsp_config(void);
+int fluid_rvoice_dsp_silence(fluid_rvoice_t *rvoice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping);
 int fluid_rvoice_dsp_interpolate_none(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
 int fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
 int fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
@@ -211,21 +215,40 @@ int fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_t *voice, fluid_real_t *
  * least sig. 8 bit part in order to create a 24 bit sample.
  */
 static FLUID_INLINE int32_t
-fluid_rvoice_get_sample(const short int *dsp_msb, const char *dsp_lsb, unsigned int idx)
+fluid_rvoice_get_sample24(const short int *FLUID_RESTRICT dsp_msb, const char *FLUID_RESTRICT dsp_lsb, unsigned int idx)
 {
     /* cast sample to unsigned type, so we can safely shift and bitwise or
      * without relying on undefined behaviour (should never happen anyway ofc...) */
     uint32_t msb = (uint32_t)dsp_msb[idx];
-    uint8_t lsb = 0U;
-
-    /* most soundfonts have 16 bit samples, assume that it's unlikely we
-     * experience 24 bit samples here */
-    if(FLUID_UNLIKELY(dsp_lsb != NULL))
-    {
-        lsb = (uint8_t)dsp_lsb[idx];
-    }
+    uint8_t lsb = (uint8_t)dsp_lsb[idx];
 
     return (int32_t)((msb << 8) | lsb);
 }
 
+static FLUID_INLINE int32_t
+fluid_rvoice_get_sample16(const short int *FLUID_RESTRICT dsp_msb, unsigned int idx)
+{
+    /* cast sample to unsigned type, so we can safely shift and bitwise or
+     * without relying on undefined behaviour (should never happen anyway ofc...) */
+    uint32_t msb = (uint32_t)dsp_msb[idx];
+
+    return (int32_t)((msb << 8) | 0);
+}
+
+static FLUID_INLINE int32_t
+fluid_rvoice_get_sample(const short int *FLUID_RESTRICT dsp_msb, const char *FLUID_RESTRICT dsp_lsb, unsigned int idx)
+{
+    if (dsp_lsb != NULL)
+    {
+        return fluid_rvoice_get_sample24(dsp_msb, dsp_lsb, idx);
+    }
+    else
+    {
+        return fluid_rvoice_get_sample16(dsp_msb, idx);
+    }
+}
+
+#ifdef __cplusplus
+}
+#endif
 #endif
