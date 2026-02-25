@@ -323,12 +323,12 @@ static void downsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 fr
         int opos = opos_num / freq_adjust_num - fir_width;
 
         UINT idx_num = (freq_adjust_num - 1 - opos_num % freq_adjust_num) * fir_step;
-        UINT idx = idx_num / freq_adjust_num;
+        UINT idx = idx_num / freq_adjust_num * fir_width;
         float rem = idx_num % freq_adjust_num / (float)freq_adjust_num;
 
         UINT i;
         for (i = 0; i < fir_width; ++i)
-            output[opos + i] += (fir[idx + i * fir_step] * (1.0f - rem) + fir[idx + i * fir_step + 1] * rem) * input[j] * firgain;
+            output[opos + i] += (fir[idx + i] * (1.0f - rem) + fir[idx + i + fir_width] * rem) * input[j] * firgain;
     }
 }
 
@@ -342,7 +342,7 @@ static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
         UINT ipos = ipos_num / freq_adjust_den;
 
         UINT idx_num = ipos_num % freq_adjust_den * fir_step;
-        UINT idx = fir_step - 1 - idx_num / freq_adjust_den;
+        UINT idx = (fir_step - 1 - idx_num / freq_adjust_den) * fir_width;
         float rem_inv = idx_num % freq_adjust_den / (float)freq_adjust_den;
         float rem = 1.0f - rem_inv;
 
@@ -351,7 +351,7 @@ static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
         float* cache = &input[ipos];
 
         for (j = 0; j < fir_width; j++)
-            sum += (fir[idx + j * fir_step] * rem_inv + fir[idx + j * fir_step + 1] * rem) * cache[j];
+            sum += (fir[idx + j] * rem_inv + fir[idx + j + fir_width] * rem) * cache[j];
         output[i] = sum;
     }
 }
