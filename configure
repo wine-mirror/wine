@@ -724,6 +724,8 @@ XML2_PE_LIBS
 XML2_PE_CFLAGS
 VKD3D_PE_LIBS
 VKD3D_PE_CFLAGS
+UNWIND_PE_LIBS
+UNWIND_PE_CFLAGS
 TOMCRYPT_PE_LIBS
 TOMCRYPT_PE_CFLAGS
 TIFF_PE_LIBS
@@ -1688,6 +1690,7 @@ enable_strmiids
 enable_strsafe
 enable_tiff
 enable_tomcrypt
+enable_unwind
 enable_uuid
 enable_vkd3d
 enable_wbemuuid
@@ -1865,6 +1868,8 @@ TIFF_PE_CFLAGS
 TIFF_PE_LIBS
 TOMCRYPT_PE_CFLAGS
 TOMCRYPT_PE_LIBS
+UNWIND_PE_CFLAGS
+UNWIND_PE_LIBS
 VKD3D_PE_CFLAGS
 VKD3D_PE_LIBS
 XML2_PE_CFLAGS
@@ -2699,6 +2704,11 @@ Some influential environment variables:
               version
   TOMCRYPT_PE_LIBS
               Linker flags for the PE tomcrypt, overriding the bundled version
+  UNWIND_PE_CFLAGS
+              C compiler flags for the PE unwind, overriding the bundled
+              version
+  UNWIND_PE_LIBS
+              Linker flags for the PE unwind, overriding the bundled version
   VKD3D_PE_CFLAGS
               C compiler flags for the PE vkd3d, overriding the bundled
               version
@@ -15149,6 +15159,23 @@ fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tomcrypt cflags: $TOMCRYPT_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tomcrypt libs: $TOMCRYPT_PE_LIBS" >&5
 
+if ${UNWIND_PE_LIBS:+false} :
+then :
+  UNWIND_PE_LIBS=unwind
+   if ${UNWIND_PE_CFLAGS:+false} :
+then :
+  UNWIND_PE_CFLAGS="-I\$(top_srcdir)/libs/unwind/include"
+else case e in #(
+  e) enable_unwind=no ;;
+esac
+fi
+else case e in #(
+  e) enable_unwind=no ;;
+esac
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: unwind cflags: $UNWIND_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: unwind libs: $UNWIND_PE_LIBS" >&5
+
 if ${VKD3D_PE_LIBS:+false} :
 then :
   VKD3D_PE_LIBS=vkd3d
@@ -24330,6 +24357,7 @@ wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/strsafe enable_strsafe
 wine_fn_config_makefile libs/tiff enable_tiff
 wine_fn_config_makefile libs/tomcrypt enable_tomcrypt
+wine_fn_config_makefile libs/unwind enable_unwind
 wine_fn_config_makefile libs/uuid enable_uuid
 wine_fn_config_makefile libs/vkd3d enable_vkd3d
 wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
@@ -24555,7 +24583,7 @@ dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle ${wine_sr
 	mv dlls/wineandroid.drv/build/outputs/apk/wine-debug.apk \$@"
 
 
-EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/faudio libs/fluidsynth libs/gsm libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/tiff libs/tomcrypt libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
+EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/faudio libs/fluidsynth libs/gsm libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/tiff libs/tomcrypt libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
 
 TAGSFLAGS="--langmap='c:+.idl.l.rh,make:(Make*.in)'"
 
@@ -25473,6 +25501,8 @@ TIFF_PE_CFLAGS = $TIFF_PE_CFLAGS
 TIFF_PE_LIBS = $TIFF_PE_LIBS
 TOMCRYPT_PE_CFLAGS = $TOMCRYPT_PE_CFLAGS
 TOMCRYPT_PE_LIBS = $TOMCRYPT_PE_LIBS
+UNWIND_PE_CFLAGS = $UNWIND_PE_CFLAGS
+UNWIND_PE_LIBS = $UNWIND_PE_LIBS
 VKD3D_PE_CFLAGS = $VKD3D_PE_CFLAGS
 VKD3D_PE_LIBS = $VKD3D_PE_LIBS
 XML2_PE_CFLAGS = $XML2_PE_CFLAGS

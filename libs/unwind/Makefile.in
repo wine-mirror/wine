@@ -1,0 +1,13 @@
+STATICLIB = libunwind.a
+EXTRAINCL = -I$(srcdir)/include
+EXTRADEFS = -D_LIBUNWIND_DISABLE_VISIBILITY_ANNOTATIONS -D_LIBUNWIND_IS_NATIVE_ONLY
+
+SOURCES = \
+	src/Unwind-seh.cpp \
+	src/Unwind-sjlj.c \
+	src/UnwindLevel1-gcc-ext.c \
+	src/UnwindLevel1.c \
+	src/UnwindRegistersRestore.S \
+	src/UnwindRegistersSave.S \
+	src/config.h \
+	src/libunwind.cpp
