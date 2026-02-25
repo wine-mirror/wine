@@ -42,6 +42,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+#define FREQ_ADJUST_SHIFT 32
+#define FIXED_0_32_TO_FLOAT(x) ((x) * (1.0f / (1ll << 32)))
+
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 {
 	double temp;
@@ -312,19 +315,19 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
  * Note that this function will overwrite up to fir_width - 1 frames before and
  * after output[].
  */
-static void downsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
-        float firgain, UINT required_input, float *input, float *output)
+static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgain,
+        UINT required_input, float *input, float *output)
 {
     int j;
 
     for (j = 0; j < required_input; ++j) {
-        LONG64 opos_num = freq_adjust_den - freq_acc_start + j * freq_adjust_den + freq_adjust_num - 1;
+        LONG64 opos_num = freq_adjust_den - freq_acc_start + j * (LONG64)freq_adjust_den +
+                (1ll << FREQ_ADJUST_SHIFT) - 1;
         /* opos is in the range [-(fir_width - 1), count) */
-        int opos = opos_num / freq_adjust_num - fir_width;
+        int opos = (int)(opos_num >> FREQ_ADJUST_SHIFT) - fir_width;
 
-        UINT idx_num = (freq_adjust_num - 1 - opos_num % freq_adjust_num) << fir_step_shift;
-        UINT idx = (idx_num / freq_adjust_num) << fir_width_shift;
-        float rem = idx_num % freq_adjust_num / (float)freq_adjust_num;
+        UINT idx = ~(DWORD)opos_num >> (FREQ_ADJUST_SHIFT - fir_step_shift) << fir_width_shift;
+        float rem = FIXED_0_32_TO_FLOAT(~(DWORD)opos_num << fir_step_shift);
 
         float input_value = input[j] * firgain;
         float input_value0 = (1.0f - rem) * input_value;
@@ -336,18 +339,17 @@ static void downsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 fr
     }
 }
 
-static void upsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
-        UINT count, float *input, float *output)
+static void upsample(DWORD freq_adjust_num, DWORD freq_acc_start, UINT count, float *input,
+        float *output)
 {
     UINT i;
 
     for(i = 0; i < count; ++i) {
-        LONG64 ipos_num = freq_acc_start + i * freq_adjust_num;
-        UINT ipos = ipos_num / freq_adjust_den;
+        LONG64 ipos_num = freq_acc_start + i * (LONG64)freq_adjust_num;
+        UINT ipos = ipos_num >> FREQ_ADJUST_SHIFT;
 
-        UINT idx_num = (ipos_num % freq_adjust_den) << fir_step_shift;
-        UINT idx = (fir_step - 1 - idx_num / freq_adjust_den) << fir_width_shift;
-        float rem_inv = idx_num % freq_adjust_den / (float)freq_adjust_den;
+        UINT idx = ~(DWORD)ipos_num >> (FREQ_ADJUST_SHIFT - fir_step_shift) << fir_width_shift;
+        float rem_inv = FIXED_0_32_TO_FLOAT((DWORD)ipos_num << fir_step_shift);
         float rem = 1.0f - rem_inv;
 
         int j;
@@ -368,11 +370,26 @@ static void resample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
         float firgain, UINT required_input, UINT count, float *input, float *output)
 {
     if (freq_adjust_num > freq_adjust_den) {
+        /* Take a reciprocal of the resampling ratio and convert it to a 0.32
+         * fixed point. Round down to prevent output buffer overflow. */
+        DWORD freq_adjust_fixed_den = (freq_adjust_den << FREQ_ADJUST_SHIFT) / freq_adjust_num;
+        /* Convert the subsample position to a 0.32 fixed point. Round up to
+         * prevent output buffer overflow. */
+        DWORD freq_acc_fixed_start = (freq_acc_start * freq_adjust_fixed_den + freq_adjust_den - 1)
+                / freq_adjust_den;
+
         memset(output, 0, count * sizeof(float));
-        downsample(freq_adjust_num, freq_adjust_den, freq_acc_start, firgain, required_input,
-                input, output);
+        downsample(freq_adjust_fixed_den, freq_acc_fixed_start, firgain, required_input, input,
+                output);
     } else {
-        upsample(freq_adjust_num, freq_adjust_den, freq_acc_start, count, input, output);
+        /* Convert the resampling ratio to a 0.32 fixed point. Round down to
+         * prevent input buffer overflow. */
+        DWORD freq_adjust_fixed_num = (freq_adjust_num << FREQ_ADJUST_SHIFT) / freq_adjust_den;
+        /* Convert the subsample position to a 0.32 fixed point. Round down to
+         * prevent input buffer overflow. */
+        DWORD freq_acc_fixed_start = (freq_acc_start << FREQ_ADJUST_SHIFT) / freq_adjust_den;
+
+        upsample(freq_adjust_fixed_num, freq_acc_fixed_start, count, input, output);
     }
 }
 
