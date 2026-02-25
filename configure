@@ -750,6 +750,8 @@ FLUIDSYNTH_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
 FAUDIO_PE_LIBS
 FAUDIO_PE_CFLAGS
+CXXABI_PE_LIBS
+CXXABI_PE_CFLAGS
 CXX_PE_LIBS
 CXX_PE_CFLAGS
 CAPSTONE_PE_LIBS
@@ -1668,6 +1670,7 @@ enable_fonts
 enable_include
 enable_adsiid
 enable_cpp
+enable_cppabi
 enable_capstone
 enable_compiler_rt
 enable_dmoguids
@@ -1844,6 +1847,8 @@ CAPSTONE_PE_CFLAGS
 CAPSTONE_PE_LIBS
 CXX_PE_CFLAGS
 CXX_PE_LIBS
+CXXABI_PE_CFLAGS
+CXXABI_PE_LIBS
 FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
@@ -2653,6 +2658,11 @@ Some influential environment variables:
   CXX_PE_CFLAGS
               C compiler flags for the PE c++, overriding the bundled version
   CXX_PE_LIBS Linker flags for the PE c++, overriding the bundled version
+  CXXABI_PE_CFLAGS
+              C compiler flags for the PE c++abi, overriding the bundled
+              version
+  CXXABI_PE_LIBS
+              Linker flags for the PE c++abi, overriding the bundled version
   FAUDIO_PE_CFLAGS
               C compiler flags for the PE faudio, overriding the bundled
               version
@@ -8844,6 +8854,10 @@ else case e in #(
 esac
 fi
 
+    case "$target" in
+      *mingw*|*-windows-gnu) enable_cppabi="$enable_cppabi,$wine_arch" ;;
+    esac
+
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5
 printf %s "checking whether $CC supports -fno-strict-aliasing... " >&6; }
@@ -14940,7 +14954,7 @@ printf "%s\n" "$as_me:${as_lineno-$LINENO}: capstone libs: $CAPSTONE_PE_LIBS" >&
 
 if ${CXX_PE_LIBS:+false} :
 then :
-  CXX_PE_LIBS="c++ msvcp140 vcruntime140"
+  CXX_PE_LIBS="c++ \$(CXXABI_PE_LIBS) msvcp140 vcruntime140"
    if ${CXX_PE_CFLAGS:+false} :
 then :
   CXX_PE_CFLAGS=
@@ -14954,6 +14968,23 @@ esac
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: c++ cflags: $CXX_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: c++ libs: $CXX_PE_LIBS" >&5
+
+if ${CXXABI_PE_LIBS:+false} :
+then :
+  CXXABI_PE_LIBS="c++abi \$(UNWIND_PE_LIBS) c++"
+   if ${CXXABI_PE_CFLAGS:+false} :
+then :
+  CXXABI_PE_CFLAGS="-I\$(top_srcdir)/libs/c++abi/include"
+else case e in #(
+  e) enable_cppabi=no ;;
+esac
+fi
+else case e in #(
+  e) enable_cppabi=no ;;
+esac
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: c++abi cflags: $CXXABI_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: c++abi libs: $CXXABI_PE_LIBS" >&5
 
 if ${FAUDIO_PE_LIBS:+false} :
 then :
@@ -23223,6 +23254,8 @@ fi ;;
 esac
 
 
+enable_cppabi=${enable_cppabi:-no}
+enable_unwind=${enable_unwind:-$enable_cppabi}
 enable_vcruntime140_1=${enable_vcruntime140_1:-x86_64,arm64ec}
 
 if test -n "$PE_ARCHS"
@@ -24335,6 +24368,7 @@ wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/adsiid enable_adsiid
 wine_fn_config_makefile libs/c++ enable_cpp
+wine_fn_config_makefile libs/c++abi enable_cppabi
 wine_fn_config_makefile libs/capstone enable_capstone
 wine_fn_config_makefile libs/compiler-rt enable_compiler_rt
 wine_fn_config_makefile libs/dmoguids enable_dmoguids
@@ -24583,7 +24617,7 @@ dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle ${wine_sr
 	mv dlls/wineandroid.drv/build/outputs/apk/wine-debug.apk \$@"
 
 
-EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/faudio libs/fluidsynth libs/gsm libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/tiff libs/tomcrypt libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
+EXTERNAL_SUBDIRS="libs/capstone libs/c++ libs/c++abi libs/faudio libs/fluidsynth libs/gsm libs/jpeg libs/jxr libs/lcms2 libs/ldap libs/mpg123 libs/musl libs/png libs/tiff libs/tomcrypt libs/unwind libs/vkd3d libs/xml2 libs/xslt libs/zlib libs/compiler-rt"
 
 TAGSFLAGS="--langmap='c:+.idl.l.rh,make:(Make*.in)'"
 
@@ -25477,6 +25511,8 @@ CAPSTONE_PE_CFLAGS = $CAPSTONE_PE_CFLAGS
 CAPSTONE_PE_LIBS = $CAPSTONE_PE_LIBS
 CXX_PE_CFLAGS = $CXX_PE_CFLAGS
 CXX_PE_LIBS = $CXX_PE_LIBS
+CXXABI_PE_CFLAGS = $CXXABI_PE_CFLAGS
+CXXABI_PE_LIBS = $CXXABI_PE_LIBS
 FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS = $FAUDIO_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS = $FLUIDSYNTH_PE_CFLAGS
