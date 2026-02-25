@@ -97,7 +97,8 @@ struct incl_file
 #define FLAG_SFD_FONTS      0x00400000  /* sfd file generated bitmap fonts */
 #define FLAG_C_IMPLIB       0x01000000  /* file is part of an import library */
 #define FLAG_C_UNIX         0x02000000  /* file is part of a Unix library */
-#define FLAG_ARM64EC_X64    0x04000000  /* use x86_64 object on ARM64EC */
+#define FLAG_C_CXX          0x04000000  /* file uses C++ */
+#define FLAG_ARM64EC_X64    0x08000000  /* use x86_64 object on ARM64EC */
 
 static const struct
 {
@@ -181,7 +182,7 @@ static const char *delay_load_flags[MAX_ARCHS];
 static struct strarray debug_flags[MAX_ARCHS];
 static struct strarray target_flags[MAX_ARCHS];
 static struct strarray extra_cflags[MAX_ARCHS];
-static struct strarray extra_cflags_extlib[MAX_ARCHS];
+static struct strarray extra_cxxflags[MAX_ARCHS];
 static struct strarray disabled_dirs[MAX_ARCHS];
 static unsigned int native_archs[MAX_ARCHS];
 static unsigned int hybrid_archs[MAX_ARCHS];
@@ -1141,6 +1142,16 @@ static void parse_c_file( struct file *source, FILE *file )
 
 
 /*******************************************************************
+ *         parse_cxx_file
+ */
+static void parse_cxx_file( struct file *source, FILE *file )
+{
+    source->flags |= FLAG_C_CXX;
+    parse_c_file( source, file );
+}
+
+
+/*******************************************************************
  *         parse_rc_file
  */
 static void parse_rc_file( struct file *source, FILE *file )
@@ -1256,6 +1267,9 @@ static const struct
     { ".x",   parse_c_file },
     { ".y",   parse_c_file },
     { ".idl", parse_idl_file },
+    { ".cpp", parse_cxx_file },
+    { ".hpp", parse_cxx_file },
+    { ".ipp", parse_cxx_file },
     { ".rc",  parse_rc_file },
     { ".ver", parse_rc_file },
     { ".in",  parse_in_file },
@@ -1286,6 +1300,12 @@ static struct file *load_file( const char *name )
         if (!strendswith( name, parse_functions[i].ext )) continue;
         parse_functions[i].parse( file, f );
         break;
+    }
+    if (i == ARRAY_SIZE(parse_functions))
+    {
+        /* check for C++ header with no extension */
+        char *dir = strstr( name, "/msvcrt/" );
+        if (dir && !strchr( dir, '.' )) parse_cxx_file( file, f );
     }
 
     fclose( f );
@@ -1658,7 +1678,7 @@ static void parse_file( struct makefile *make, struct incl_file *source, bool sr
 
     if (strendswith( file->name, ".m" )) file->flags |= FLAG_C_UNIX;
     if (file->flags & FLAG_C_UNIX) source->use_msvcrt = false;
-    else if (file->flags & FLAG_C_IMPLIB) source->use_msvcrt = true;
+    else if (file->flags & (FLAG_C_IMPLIB | FLAG_C_CXX)) source->use_msvcrt = true;
 
     if (source->sourcename)
     {
@@ -2128,6 +2148,10 @@ static void get_dependencies( struct incl_file *file, struct incl_file *source )
     if (file != source)
     {
         if (file->owner == source) return;  /* already processed */
+        if (!(source->file->flags & FLAG_C_CXX)) /* ignore C++ dependencies for non-C++ sources */
+        {
+            if (file->file && (file->file->flags & FLAG_C_CXX)) return;
+        }
         if (file->type == INCL_IMPORTLIB)
         {
             if (!(source->file->flags & (FLAG_IDL_TYPELIB | FLAG_IDL_REGTYPELIB)))
@@ -3489,6 +3513,10 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     {
         if (!unix_lib_supported) return;
     }
+    else if (source->file->flags & FLAG_C_CXX)
+    {
+        return;
+    }
     else if (archs.count > 1 && is_using_msvcrt( make ))
     {
         if (!so_dll_supported) return;
@@ -3517,11 +3545,23 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         strarray_add( &cflags, "-D__arm64ec_x64__" );
         strarray_addall( &cflags, get_expanded_make_var_array( top_makefile, "x86_64_EXTRACFLAGS" ));
     }
+    else if (source->file->flags & FLAG_C_CXX)
+    {
+        var_cc     = arch_make_variable( "CXX", arch );
+        var_cflags = arch_make_variable( "CXXFLAGS", arch );
+        if (make->external)
+            strarray_addall( &cflags, remove_warning_flags( extra_cxxflags[arch] ));
+        else
+            strarray_addall( &cflags, extra_cxxflags[arch] );
+    }
     else
     {
         var_cc     = arch_make_variable( "CC", arch );
         var_cflags = arch_make_variable( "CFLAGS", arch );
-        strarray_addall( &cflags, make->external ? extra_cflags_extlib[arch] : extra_cflags[arch] );
+        if (make->external)
+            strarray_addall( &cflags, remove_warning_flags( extra_cflags[arch] ));
+        else
+            strarray_addall( &cflags, extra_cflags[arch] );
     }
 
     if (!arch)
@@ -3602,6 +3642,12 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
     {
         char *cflags = get_expanded_make_variable( make, "x86_64_CFLAGS" );
         cmd->cmd = get_expanded_make_variable( make, "x86_64_CC" );
+        if (cflags) strarray_add( &cmd->args, cflags );
+    }
+    else if (source->file->flags & FLAG_C_CXX)
+    {
+        char *cflags = get_expanded_arch_var( make, "CXXFLAGS", arch );
+        cmd->cmd = get_expanded_arch_var( make, "CXX", arch );
         if (cflags) strarray_add( &cmd->args, cflags );
     }
     else
@@ -4168,13 +4214,23 @@ static void output_sources( struct makefile *make )
         char *obj = xstrdup( source->name );
         char *ext = get_extension( obj );
 
-        if (!ext) fatal_error( "unsupported file type %s\n", source->name );
-        *ext++ = 0;
+        if (ext)
+        {
+            *ext++ = 0;
 
-        for (j = 0; output_source_funcs[j].ext; j++)
-            if (!strcmp( ext, output_source_funcs[j].ext )) break;
+            for (j = 0; output_source_funcs[j].ext; j++)
+                if (!strcmp( ext, output_source_funcs[j].ext )) break;
 
-        output_source_funcs[j].fn( make, source, obj );
+            output_source_funcs[j].fn( make, source, obj );
+        }
+        else
+        {
+            if (source->file->flags & FLAG_C_CXX)
+                output_source_h( make, source, obj );
+            else
+                fatal_error( "unsupported file type %s\n", source->name );
+        }
+
         strarray_addall_uniq( &make->dependencies, source->dependencies );
     }
 
@@ -4950,7 +5006,7 @@ int main( int argc, char *argv[] )
     {
         arch_pe_dirs[arch] = strmake( "%s-windows", archs.str[arch] );
         extra_cflags[arch] = get_expanded_arch_var_array( top_makefile, "EXTRACFLAGS", arch );
-        extra_cflags_extlib[arch] = remove_warning_flags( extra_cflags[arch] );
+        extra_cxxflags[arch] = get_expanded_arch_var_array( top_makefile, "EXTRACXXFLAGS", arch );
         disabled_dirs[arch] = get_expanded_arch_var_array( top_makefile, "DISABLED_SUBDIRS", arch );
         if (!is_multiarch( arch )) continue;
         delay_load_flags[arch] = get_expanded_arch_var( top_makefile, "DELAYLOADFLAG", arch );

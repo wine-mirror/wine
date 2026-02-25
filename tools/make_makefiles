@@ -252,7 +252,7 @@ sub assign_sources_to_makefiles(@)
         my $subdir = $dir;
 
         while ($dir && !defined $makefiles{"$dir/Makefile.in"}) { $dir = dirname( $dir ); }
-        $subdir =~ s/^$dir\/?//;
+        $subdir =~ s/^\Q$dir\E\/?//;
         next unless $dir;
 
         die "no makefile found for $file\n" unless defined $makefiles{"$dir/Makefile.in"};
@@ -291,7 +291,11 @@ sub assign_sources_to_makefiles(@)
         {
             next unless $dir eq "dlls/winewayland.drv";
         }
-        elsif ($name !~ /\.(S|c|desktop|in|inl|l|m|mc|po|rc|rh|sfd|svg|ver|x|y)$/)
+        elsif ($name =~ /^msvcrt\/[^.]+$/) # C++ header without extension
+        {
+            next unless $dir eq "include";
+        }
+        elsif ($name !~ /\.(S|c|cpp|desktop|in|inl|l|m|mc|po|rc|rh|sfd|svg|ver|x|y)$/)
         {
             next;
         }
