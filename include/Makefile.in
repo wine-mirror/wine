@@ -518,8 +518,50 @@ SOURCES = \
 	msstkppg.h \
 	mstask.idl \
 	mstcpip.h \
+	msvcrt/__bit_reference \
+	msvcrt/__config \
+	msvcrt/__debug \
+	msvcrt/__errc \
+	msvcrt/__functional_03 \
+	msvcrt/__functional_base \
+	msvcrt/__functional_base_03 \
+	msvcrt/__hash_table \
+	msvcrt/__locale \
+	msvcrt/__mutex_base \
+	msvcrt/__node_handle \
+	msvcrt/__split_buffer \
+	msvcrt/__sso_allocator \
+	msvcrt/__std_stream \
+	msvcrt/__string \
+	msvcrt/__threading_support \
+	msvcrt/__tree \
+	msvcrt/__tuple \
+	msvcrt/__undef_macros \
+	msvcrt/algorithm \
+	msvcrt/any \
+	msvcrt/array \
 	msvcrt/assert.h \
+	msvcrt/atomic \
+	msvcrt/bit \
+	msvcrt/bitset \
+	msvcrt/cassert \
+	msvcrt/ccomplex \
+	msvcrt/cctype \
+	msvcrt/cerrno \
+	msvcrt/cfenv \
+	msvcrt/cfloat \
+	msvcrt/charconv \
+	msvcrt/chrono \
+	msvcrt/cinttypes \
+	msvcrt/ciso646 \
+	msvcrt/climits \
+	msvcrt/clocale \
+	msvcrt/cmath \
+	msvcrt/codecvt \
+	msvcrt/compare \
+	msvcrt/complex \
 	msvcrt/complex.h \
+	msvcrt/condition_variable \
 	msvcrt/conio.h \
 	msvcrt/corecrt.h \
 	msvcrt/corecrt_io.h \
@@ -537,54 +579,142 @@ SOURCES = \
 	msvcrt/corecrt_wtime.h \
 	msvcrt/crtdbg.h \
 	msvcrt/crtdefs.h \
+	msvcrt/csetjmp \
+	msvcrt/csignal \
+	msvcrt/cstdarg \
+	msvcrt/cstdbool \
+	msvcrt/cstddef \
+	msvcrt/cstdint \
+	msvcrt/cstdio \
+	msvcrt/cstdlib \
+	msvcrt/cstring \
+	msvcrt/ctgmath \
+	msvcrt/ctime \
 	msvcrt/ctype.h \
+	msvcrt/cwchar \
+	msvcrt/cwctype \
+	msvcrt/deque \
 	msvcrt/direct.h \
 	msvcrt/dirent.h \
 	msvcrt/dos.h \
 	msvcrt/eh.h \
 	msvcrt/errno.h \
+	msvcrt/exception \
+	msvcrt/experimental/__config \
+	msvcrt/experimental/__memory \
+	msvcrt/experimental/algorithm \
+	msvcrt/experimental/coroutine \
+	msvcrt/experimental/deque \
+	msvcrt/experimental/filesystem \
+	msvcrt/experimental/forward_list \
+	msvcrt/experimental/functional \
+	msvcrt/experimental/iterator \
+	msvcrt/experimental/list \
+	msvcrt/experimental/map \
+	msvcrt/experimental/memory_resource \
+	msvcrt/experimental/propagate_const \
+	msvcrt/experimental/regex \
+	msvcrt/experimental/set \
+	msvcrt/experimental/simd \
+	msvcrt/experimental/string \
+	msvcrt/experimental/type_traits \
+	msvcrt/experimental/unordered_map \
+	msvcrt/experimental/unordered_set \
+	msvcrt/experimental/utility \
+	msvcrt/experimental/vector \
 	msvcrt/fcntl.h \
 	msvcrt/fenv.h \
+	msvcrt/filesystem \
 	msvcrt/float.h \
+	msvcrt/forward_list \
 	msvcrt/fpieee.h \
+	msvcrt/fstream \
+	msvcrt/functional \
+	msvcrt/future \
+	msvcrt/initializer_list \
 	msvcrt/intrin.h \
 	msvcrt/inttypes.h \
 	msvcrt/io.h \
+	msvcrt/iomanip \
+	msvcrt/ios \
+	msvcrt/iosfwd \
+	msvcrt/iostream \
+	msvcrt/istream \
+	msvcrt/iterator \
+	msvcrt/limits \
 	msvcrt/limits.h \
+	msvcrt/list \
+	msvcrt/locale \
 	msvcrt/locale.h \
 	msvcrt/malloc.h \
+	msvcrt/map \
 	msvcrt/math.h \
 	msvcrt/mbctype.h \
 	msvcrt/mbstring.h \
+	msvcrt/memory \
 	msvcrt/memory.h \
+	msvcrt/mutex \
+	msvcrt/new \
 	msvcrt/new.h \
+	msvcrt/numeric \
+	msvcrt/optional \
+	msvcrt/ostream \
 	msvcrt/process.h \
+	msvcrt/queue \
+	msvcrt/random \
+	msvcrt/ratio \
+	msvcrt/regex \
+	msvcrt/scoped_allocator \
 	msvcrt/search.h \
+	msvcrt/set \
 	msvcrt/setjmp.h \
 	msvcrt/share.h \
+	msvcrt/shared_mutex \
 	msvcrt/signal.h \
+	msvcrt/span \
+	msvcrt/sstream \
+	msvcrt/stack \
 	msvcrt/stdarg.h \
 	msvcrt/stdbool.h \
 	msvcrt/stddef.h \
+	msvcrt/stdexcept \
 	msvcrt/stdint.h \
 	msvcrt/stdio.h \
 	msvcrt/stdlib.h \
+	msvcrt/streambuf \
+	msvcrt/string \
 	msvcrt/string.h \
+	msvcrt/string_view \
+	msvcrt/strstream \
 	msvcrt/sys/locking.h \
 	msvcrt/sys/stat.h \
 	msvcrt/sys/timeb.h \
 	msvcrt/sys/types.h \
 	msvcrt/sys/unistd.h \
 	msvcrt/sys/utime.h \
+	msvcrt/system_error \
+	msvcrt/thread \
 	msvcrt/time.h \
+	msvcrt/tuple \
+	msvcrt/type_traits \
+	msvcrt/typeindex \
+	msvcrt/typeinfo \
 	msvcrt/uchar.h \
 	msvcrt/unistd.h \
+	msvcrt/unordered_map \
+	msvcrt/unordered_set \
+	msvcrt/utility \
 	msvcrt/vadefs.h \
+	msvcrt/valarray \
+	msvcrt/variant \
 	msvcrt/vcruntime_exception.h \
 	msvcrt/vcruntime_new.h \
 	msvcrt/vcruntime_typeinfo.h \
+	msvcrt/vector \
+	msvcrt/version \
 	msvcrt/wchar.h \
 	msvcrt/wctype.h \
+	msvcrt/xlocinfo \
 	mswsock.h \
 	msxml.idl \
 	msxml2.idl \
