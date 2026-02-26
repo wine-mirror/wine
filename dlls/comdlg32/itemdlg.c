@@ -3602,6 +3602,10 @@ static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
         hr = IExplorerBrowser_QueryInterface(This->peb, riid, ppv);
     else if(IsEqualGUID(guidService, &SID_SExplorerBrowserFrame))
         hr = IFileDialog2_QueryInterface(&This->IFileDialog2_iface, riid, ppv);
+    else if((IsEqualIID(riid, &IID_IFolderView) || IsEqualIID(riid, &IID_IFolderView2)) && This->peb)
+    {
+        hr = IExplorerBrowser_GetCurrentView(This->peb, riid, ppv);
+    }
     else
         FIXME("Interface %s requested from unknown service %s\n",
               debugstr_guid(riid), debugstr_guid(guidService));
