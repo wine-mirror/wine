@@ -2187,6 +2187,51 @@ static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const 
                 return;
             }
         }
+        else if (!strcmp( iface, BLUEZ_INTERFACE_GATT_CHARACTERISTICS ))
+        {
+            struct winebluetooth_watcher_event_gatt_characteristic_value_changed changed_event = {0};
+            union winebluetooth_watcher_event_data event;
+            DBusMessageIter changed_props_iter, variant;
+            const char *prop_name, *object_path;
+            struct unix_name *chrc_name;
+            BOOL val_changed = FALSE;
+
+            p_dbus_message_iter_next( &iter );
+            p_dbus_message_iter_recurse( &iter, &changed_props_iter );
+            while ((prop_name = bluez_next_dict_entry( &changed_props_iter, &variant )))
+            {
+                if (!strcmp( prop_name, "Value" )
+                    && p_dbus_message_iter_get_arg_type( &variant ) == DBUS_TYPE_ARRAY
+                    && p_dbus_message_iter_get_element_type( &variant ) == DBUS_TYPE_BYTE)
+                {
+                    val_changed = bluez_gatt_characteristic_value_new_from_iter( msg, &variant, &changed_event.value );
+                    break;
+                }
+            }
+            if (!val_changed)
+                return;
+
+            object_path = p_dbus_message_get_path( msg );
+            TRACE( "Value changed for GATT characteristic %s\n", debugstr_a( object_path ) );
+            if (!(chrc_name = unix_name_get_or_create( object_path )))
+            {
+                ERR( "Failed to allocate memory for GATT characteristic path %s\n", debugstr_a( object_path ) );
+                bluez_gatt_characteristic_value_free(
+                    (struct bluez_gatt_characteristic_value *)changed_event.value.handle );
+                return;
+            }
+
+            changed_event.characteristic.handle = (UINT_PTR)chrc_name;
+            event.gatt_characteristic_value_changed = changed_event;
+            if (!bluez_event_list_queue_new_event( event_list, BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_VALUE_CHANGED,
+                                                   event ))
+            {
+                unix_name_free( chrc_name );
+                bluez_gatt_characteristic_value_free(
+                    (struct bluez_gatt_characteristic_value *)changed_event.value.handle );
+                return;
+            }
+        }
     }
 }
 
@@ -2295,6 +2340,11 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
             break;
         case BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_REMOVED:
             unix_name_free( (struct unix_name *)event1->event.gatt_characterisic_removed.handle );
+            break;
+        case BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_VALUE_CHANGED:
+            unix_name_free( (struct unix_name *)event1->event.gatt_characteristic_value_changed.characteristic.handle );
+            bluez_gatt_characteristic_value_free(
+                (struct bluez_gatt_characteristic_value *)event1->event.gatt_characteristic_added.value.handle );
             break;
         }
         free( event1 );
