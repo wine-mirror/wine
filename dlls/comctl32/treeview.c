@@ -2660,7 +2660,7 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
      */
 
     /* Don't paint item's text if it's being edited */
-    if (!infoPtr->hwndEdit || (infoPtr->selectedItem != item))
+    if (!infoPtr->hwndEdit || (infoPtr->editItem != item))
     {
 	if (item->pszText)
 	{
