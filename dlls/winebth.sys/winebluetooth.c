@@ -1,8 +1,7 @@
 /*
  * Wine bluetooth APIs
  *
- * Copyright 2024 Vibhav Pant
- * Copyright 2025 Vibhav Pant
+ * Copyright 2024-2026 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -222,6 +221,33 @@ void winebluetooth_gatt_characteristic_free( winebluetooth_gatt_characteristic_t
 
     args.characteristic = characteristic.handle;
     UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_free, &args );
+}
+
+static const char *
+debugstr_winebluetooth_gatt_characteristic_value( const struct winebluetooth_gatt_characteristic_value *val )
+{
+    return val ? wine_dbg_sprintf( "{ %I32u { %#Ix } }", val->size, val->handle ) : "(null)";
+}
+
+void winebluetooth_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *val, BYTE *dest )
+{
+    struct bluetooth_gatt_characteristic_value_move_params args = {0};
+
+    TRACE( "(%s, %p)\n", debugstr_winebluetooth_gatt_characteristic_value( val ), dest );
+
+    args.val = val;
+    args.buf = dest;
+    UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_value_move, &args );
+}
+
+void winebluetooth_gatt_characteristic_value_free( struct winebluetooth_gatt_characteristic_value *val )
+{
+    struct bluetooth_gatt_characteristic_value_free_params args = {0};
+
+    TRACE( "(%#Ix)\n", val->handle );
+
+    args.handle = val->handle;
+    UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_value_free, &args );
 }
 
 NTSTATUS winebluetooth_get_event( struct winebluetooth_event *result )

@@ -275,6 +275,21 @@ static NTSTATUS bluetooth_gatt_characteristic_free( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS bluetooth_gatt_characteristic_value_move( void *args )
+{
+    struct bluetooth_gatt_characteristic_value_move_params *params = args;
+    if (!dbus_connection) return STATUS_NOT_SUPPORTED;
+    bluez_gatt_characteristic_value_move( params->val, params->buf );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS bluetooth_gatt_characteristic_value_free( void *args )
+{
+    struct bluetooth_gatt_characteristic_value_free_params *params = args;
+    if (!dbus_connection) return STATUS_NOT_SUPPORTED;
+    bluez_gatt_characteristic_value_free( (void *)params->handle );
+    return STATUS_SUCCESS;
+}
 
 static NTSTATUS bluetooth_get_event( void *args )
 {
@@ -308,6 +323,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_gatt_service_free,
 
     bluetooth_gatt_characteristic_free,
+    bluetooth_gatt_characteristic_value_move,
+    bluetooth_gatt_characteristic_value_free,
 
     bluetooth_get_event,
 };

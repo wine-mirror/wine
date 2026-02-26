@@ -262,6 +262,15 @@ static inline BOOL winebluetooth_gatt_characteristic_equal( winebluetooth_gatt_c
     return c1.handle == c2.handle;
 }
 
+struct winebluetooth_gatt_characteristic_value
+{
+    UINT32 size;
+    UINT_PTR handle;
+};
+
+void winebluetooth_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *val, BYTE *dest );
+void winebluetooth_gatt_characteristic_value_free( struct winebluetooth_gatt_characteristic_value *val );
+
 enum winebluetooth_watcher_event_type
 {
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED,
@@ -346,6 +355,7 @@ struct winebluetooth_watcher_event_gatt_characteristic_added
     winebluetooth_gatt_characteristic_t characteristic;
     winebluetooth_gatt_service_t service;
     BTH_LE_GATT_CHARACTERISTIC props;
+    struct winebluetooth_gatt_characteristic_value value;
 };
 
 union winebluetooth_watcher_event_data

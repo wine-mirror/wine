@@ -1,8 +1,7 @@
 /*
  * Support for communicating with BlueZ over DBus.
  *
- * Copyright 2024 Vibhav Pant
- * Copyright 2025 Vibhav Pant
+ * Copyright 2024-2026 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -982,6 +981,50 @@ static NTSTATUS bluez_device_get_props_by_path_async( DBusConnection *connection
         return STATUS_INTERNAL_ERROR;
 
     return STATUS_SUCCESS;
+}
+
+struct bluez_gatt_characteristic_value
+{
+    DBusMessage *message;
+    const BYTE *buf; /* Points into message */
+};
+
+/* array_iter must point to the start of the byte array, message should be the DBus message that the iterator belongs
+ * to. */
+static BOOL bluez_gatt_characteristic_value_new_from_iter( DBusMessage *message, DBusMessageIter *array_iter,
+                                                           struct winebluetooth_gatt_characteristic_value *value )
+{
+    struct bluez_gatt_characteristic_value *val;
+    DBusMessageIter bytes_iter;
+    int size;
+
+    TRACE_( dbus )( "(%s, %s, %p)\n", dbgstr_dbus_message( message ), dbgstr_dbus_iter( array_iter ), value );
+
+    if (!(val = calloc( 1, sizeof( *val ) ))) return FALSE;
+    val->message = p_dbus_message_ref( message );
+    p_dbus_message_iter_recurse( array_iter, &bytes_iter );
+    p_dbus_message_iter_get_fixed_array( &bytes_iter, &val->buf, &size );
+
+    value->size = size;
+    value->handle = (UINT_PTR)val;
+
+    return TRUE;
+}
+
+void bluez_gatt_characteristic_value_free( void *val )
+{
+    struct bluez_gatt_characteristic_value *value = val;
+
+    p_dbus_message_unref( value->message );
+    free( value );
+}
+
+void bluez_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *value, BYTE *dest )
+{
+    struct bluez_gatt_characteristic_value *val = (struct bluez_gatt_characteristic_value *)value->handle;
+
+    memcpy( dest, val->buf, value->size );
+    bluez_gatt_characteristic_value_free( val );
 }
 
 struct bluez_watcher_ctx
@@ -2247,6 +2290,8 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
         case BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_ADDED:
             unix_name_free( (struct unix_name *)event1->event.gatt_characteristic_added.characteristic.handle );
             unix_name_free( (struct unix_name *)event1->event.gatt_characteristic_added.service.handle );
+            bluez_gatt_characteristic_value_free(
+                (struct bluez_gatt_characteristic_value *)event1->event.gatt_characteristic_added.value.handle );
             break;
         case BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_REMOVED:
             unix_name_free( (struct unix_name *)event1->event.gatt_characterisic_removed.handle );
@@ -2510,10 +2555,28 @@ static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct lis
 
                 init_entry->object.characteristic.characteristic.handle = (UINT_PTR)char_name;
                 while ((prop_name = bluez_next_dict_entry( &prop_iter, &variant )))
-                    bluez_gatt_characteristic_props_from_dict_entry( prop_name, &variant,
-                                                                     &init_entry->object.characteristic );
+                {
+                    if (!strcmp( prop_name, "Value" )
+                        && p_dbus_message_iter_get_arg_type( &variant ) == DBUS_TYPE_ARRAY
+                        && p_dbus_message_iter_get_element_type( &variant ) == DBUS_TYPE_BYTE)
+                    {
+                        if (!bluez_gatt_characteristic_value_new_from_iter( reply, &variant,
+                                                                            &init_entry->object.characteristic.value ))
+                        {
+                            unix_name_free( char_name );
+                            free( init_entry );
+                            status = STATUS_NO_MEMORY;
+                            goto done;
+                        }
+                    }
+                    else
+                        bluez_gatt_characteristic_props_from_dict_entry( prop_name, &variant,
+                                                                         &init_entry->object.characteristic );
+                }
                 if (!init_entry->object.characteristic.service.handle)
                 {
+                    bluez_gatt_characteristic_value_free(
+                        (struct bluez_gatt_characteristic_value *)init_entry->object.characteristic.value.handle );
                     unix_name_free( char_name );
                     free( init_entry );
                     ERR( "Could not find the associated service for the GATT charcteristic %s\n", debugstr_a( path ) );
@@ -2732,5 +2795,7 @@ NTSTATUS bluez_device_start_pairing( void *connection, void *watcher_ctx, struct
 {
     return STATUS_NOT_SUPPORTED;
 }
+void bluez_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *value, BYTE *buf ) {}
+void bluez_gatt_characteristic_value_free( void *val ) {}
 
 #endif /* SONAME_LIBDBUS_1 */

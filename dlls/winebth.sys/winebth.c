@@ -130,6 +130,7 @@ struct bluetooth_gatt_characteristic
 
     winebluetooth_gatt_characteristic_t characteristic;
     BTH_LE_GATT_CHARACTERISTIC props;
+    BTH_LE_GATT_CHARACTERISTIC_VALUE *value;
 };
 
 enum bluetooth_pdo_ext_type
@@ -1333,6 +1334,18 @@ bluetooth_gatt_service_add_characteristic( struct winebluetooth_watcher_event_ga
                         LeaveCriticalSection( &device->props_cs );
                         goto failed;
                     }
+                    if (characteristic.value.size)
+                    {
+                        entry->value = calloc( 1, offsetof( BTH_LE_GATT_CHARACTERISTIC_VALUE, Data[characteristic.value.size] ) );
+                        if (!entry->value)
+                        {
+                            LeaveCriticalSection( &device->props_cs );
+                            free( entry );
+                            goto failed;
+                        }
+                        entry->value->DataSize = characteristic.value.size;
+                        winebluetooth_gatt_characteristic_value_move( &characteristic.value, entry->value->Data );
+                    }
 
                     TRACE( "Adding GATT characteristic %#x under service %s for device %p\n",
                            characteristic.props.AttributeHandle, debugstr_guid( &svc->uuid ),
@@ -1352,6 +1365,7 @@ bluetooth_gatt_service_add_characteristic( struct winebluetooth_watcher_event_ga
     }
 failed:
     LeaveCriticalSection( &device_list_cs );
+    winebluetooth_gatt_characteristic_value_free( &characteristic.value );
     winebluetooth_gatt_characteristic_free( characteristic.characteristic );
     winebluetooth_gatt_service_free( characteristic.service );
 }
@@ -1390,6 +1404,8 @@ static void bluetooth_gatt_characteristic_remove( winebluetooth_gatt_characteris
 
                         winebluetooth_gatt_characteristic_free( chrc->characteristic );
                         winebluetooth_gatt_characteristic_free( handle );
+                        if (chrc->value)
+                            free( chrc->value );
                         free( chrc );
                         return;
                     }
