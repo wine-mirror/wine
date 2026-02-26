@@ -1,7 +1,7 @@
 /*
  * Tests for Bluetooth GATT methods
  *
- * Copyright 2025 Vibhav Pant
+ * Copyright 2025-2026 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -118,6 +118,80 @@ static const char *debugstr_BTH_LE_GATT_CHARACTERISTIC( const BTH_LE_GATT_CHARAC
                              chrc->IsIndicatable, chrc->HasExtendedProperties );
 }
 
+static BTH_LE_GATT_CHARACTERISTIC_VALUE *get_characteristic_value( int line, HANDLE service, BTH_LE_GATT_CHARACTERISTIC *chrc, ULONG flags )
+{
+    BTH_LE_GATT_CHARACTERISTIC_VALUE *val;
+    USHORT actual;
+    HRESULT ret;
+    ULONG size;
+
+    ret = BluetoothGATTGetCharacteristicValue( service, chrc, 0, NULL, &actual, flags );
+    ok_( __FILE__, line )( HRESULT_CODE( ret ) == ERROR_MORE_DATA, "%lu != %d\n", HRESULT_CODE( ret ), ERROR_MORE_DATA );
+    if (FAILED( ret ) && HRESULT_CODE( ret ) != ERROR_MORE_DATA)
+        return NULL;
+
+    size = actual;
+    val = calloc( 1, size );
+    ret = BluetoothGATTGetCharacteristicValue( service, chrc, size, val, &actual, flags );
+    ok_( __FILE__, line )( ret == S_OK, "BluetoothGATTGetCharacteristicValue failed: %#lx\n", ret );
+    if (FAILED( ret ))
+    {
+        free( val );
+        return NULL;
+    }
+    ok_( __FILE__, line )( actual == size, "%u != %lu\n", actual, size );
+    return val;
+}
+
+static void test_service_BluetoothGATTGetCharacteristicValue( HANDLE service, BTH_LE_GATT_CHARACTERISTIC *chrc )
+{
+    BTH_LE_GATT_CHARACTERISTIC_VALUE *val1, *val2;
+    char buf[5];
+    USHORT actual = 0;
+    HRESULT ret;
+
+    ret = BluetoothGATTGetCharacteristicValue( NULL, NULL, 0, NULL, NULL, 0 );
+    ok( HRESULT_CODE( ret ) == ERROR_INVALID_HANDLE, "%lu != %d\n", HRESULT_CODE( ret ), ERROR_INVALID_HANDLE );
+    ret = BluetoothGATTGetCharacteristicValue( service, NULL, 0, NULL, NULL, 0 );
+    ok( HRESULT_CODE( ret ) == ERROR_INVALID_PARAMETER, "%lu != %d\n", HRESULT_CODE ( ret ), ERROR_INVALID_PARAMETER );
+    ret = BluetoothGATTGetCharacteristicValue( service, NULL, 0, NULL, &actual, 0 );
+    ok( HRESULT_CODE( ret ) == ERROR_INVALID_PARAMETER, "%lu != %d\n", HRESULT_CODE ( ret ), ERROR_INVALID_PARAMETER );
+    ret = BluetoothGATTGetCharacteristicValue( service, chrc, 0, NULL, NULL, 0 );
+    ok( HRESULT_CODE( ret ) == ERROR_INVALID_PARAMETER, "%lu != %d\n", HRESULT_CODE ( ret ), ERROR_INVALID_PARAMETER );
+    ret = BluetoothGATTGetCharacteristicValue( service, chrc, sizeof( buf ), (void *)&buf, &actual, 0 );
+    ok( HRESULT_CODE( ret ) == ERROR_INVALID_PARAMETER, "%lu != %d\n", HRESULT_CODE( ret ), ERROR_INVALID_PARAMETER );
+    ret = BluetoothGATTGetCharacteristicValue( service, chrc, 100, NULL, NULL, 0 );
+    ok( ret == E_POINTER, "%#lx != %#lx\n", ret, E_POINTER );
+    ret = BluetoothGATTGetCharacteristicValue( service, chrc, 100, NULL, &actual, 0 );
+    ok( ret == E_POINTER, "%#lx != %#lx\n", ret, E_POINTER );
+
+    if (!chrc->IsReadable)
+    {
+        ret = BluetoothGATTGetCharacteristicValue( service, chrc, 0, NULL, &actual, 0 );
+        ok( HRESULT_CODE( ret ) == ERROR_INVALID_ACCESS, "%lu != %d\n", HRESULT_CODE( ret ), ERROR_INVALID_ACCESS );
+        return;
+    }
+
+    val1 = get_characteristic_value( __LINE__, service, chrc, 0 );
+    if (val1)
+        trace( "value: %lu bytes\n", val1->DataSize );
+    free( val1 );
+
+    val1 = get_characteristic_value( __LINE__, service, chrc, BLUETOOTH_GATT_FLAG_FORCE_READ_FROM_DEVICE );
+    val2 = get_characteristic_value( __LINE__, service, chrc, BLUETOOTH_GATT_FLAG_FORCE_READ_FROM_CACHE );
+    if (val1 && val2)
+    {
+        ok( val1->DataSize == val2->DataSize, "%lu != %lu\n", val1->DataSize, val2->DataSize );
+        if (val1->DataSize == val2->DataSize)
+            ok( !memcmp( val1->Data, val2->Data, val1->DataSize ),
+                "Cached value does not match value previously read from device.\n" );
+    }
+    else
+        skip( "Couldn't read characteristic value.\n" );
+    free( val1 );
+    free( val2 );
+}
+
 static void test_service_BluetoothGATTGetCharacteristics( HANDLE service, const BTH_LE_GATT_CHARACTERISTIC *chars, USHORT len )
 {
     HRESULT ret;
@@ -204,7 +278,13 @@ static void test_BluetoothGATTGetCharacteristics( HANDLE device, HANDLE service,
     ok( ret == S_OK, "BluetoothGATTGetCharacteristics failed: %#lx\n", ret );
 
     for (i = 0; i < actual; i++)
-        trace( "characteristic %u: %s\n", i, debugstr_BTH_LE_GATT_CHARACTERISTIC( &buf[i] ) );
+    {
+        winetest_push_context( "characteristic %u", i );
+        trace( "%s\n", debugstr_BTH_LE_GATT_CHARACTERISTIC( &buf[i] ) );
+        if (service)
+            test_service_BluetoothGATTGetCharacteristicValue( service, &buf[i] );
+        winetest_pop_context();
+    }
 
     if (service)
         test_service_BluetoothGATTGetCharacteristics( service, buf, actual );
