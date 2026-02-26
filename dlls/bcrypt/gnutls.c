@@ -2313,7 +2313,7 @@ static NTSTATUS pubkey_set_rsa_pss_params( gnutls_pubkey_t key, gnutls_digest_al
     gnutls_x509_spki_t spki;
     int ret;
 
-    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    if ((ret = pgnutls_x509_spki_init( &spki )) < 0)
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -2509,7 +2509,7 @@ static NTSTATUS privkey_set_rsa_pss_params( gnutls_privkey_t key, gnutls_digest_
     gnutls_x509_spki_t spki;
     int ret;
 
-    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    if ((ret = pgnutls_x509_spki_init( &spki )) < 0)
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -2841,12 +2841,18 @@ static NTSTATUS privkey_set_rsa_oaep_params( gnutls_privkey_t key, gnutls_digest
     gnutls_x509_spki_t spki;
     int ret;
 
-    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    if ((ret = pgnutls_x509_spki_init( &spki )) < 0)
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
     }
-    pgnutls_x509_spki_set_rsa_oaep_params( spki, dig, label );
+    if ((ret = pgnutls_x509_spki_set_rsa_oaep_params( spki, dig, label )) < 0)
+    {
+        pgnutls_x509_spki_deinit( spki );
+        if (ret == GNUTLS_E_UNKNOWN_PK_ALGORITHM) return STATUS_NOT_SUPPORTED;
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
     ret = pgnutls_privkey_set_spki( key, spki, 0 );
     pgnutls_x509_spki_deinit( spki );
     if (ret < 0)
@@ -2864,7 +2870,7 @@ static NTSTATUS key_asymmetric_decrypt( void *args )
     NTSTATUS status = STATUS_SUCCESS;
     int ret;
 
-    if (params->key->alg_id == ALG_ID_RSA && params->flags & BCRYPT_PAD_OAEP)
+    if (params->key->alg_id == ALG_ID_RSA && (params->flags & BCRYPT_PAD_OAEP))
     {
         BCRYPT_OAEP_PADDING_INFO *pad = params->padding;
         gnutls_digest_algorithm_t dig;
@@ -2875,15 +2881,21 @@ static NTSTATUS key_asymmetric_decrypt( void *args )
             WARN( "padding info not found\n" );
             return STATUS_INVALID_PARAMETER;
         }
+
         if ((dig = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
         {
             FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
             return STATUS_NOT_SUPPORTED;
         }
 
-        label.data = pad->pbLabel;
-        label.size = pad->cbLabel;
-        if ((status = privkey_set_rsa_oaep_params( key_data(params->key)->a.privkey, dig, &label ))) return status;
+        if (pad->pbLabel && pad->cbLabel)
+        {
+            label.data = pad->pbLabel;
+            label.size = pad->cbLabel;
+            status = privkey_set_rsa_oaep_params( key_data(params->key)->a.privkey, dig, &label );
+            if (status == STATUS_NOT_SUPPORTED) status = STATUS_SUCCESS;
+            if (status) return status;
+        }
     }
 
     e.data = params->input;
@@ -2907,12 +2919,18 @@ static NTSTATUS pubkey_set_rsa_oaep_params( gnutls_pubkey_t key, gnutls_digest_a
     gnutls_x509_spki_t spki;
     int ret;
 
-    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    if ((ret = pgnutls_x509_spki_init( &spki )) < 0)
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
     }
-    pgnutls_x509_spki_set_rsa_oaep_params( spki, dig, label );
+    if ((ret = pgnutls_x509_spki_set_rsa_oaep_params( spki, dig, label )) < 0)
+    {
+        pgnutls_x509_spki_deinit( spki );
+        if (ret == GNUTLS_E_UNKNOWN_PK_ALGORITHM) return STATUS_NOT_SUPPORTED;
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
     ret = pgnutls_pubkey_set_spki( key, spki, 0 );
     pgnutls_x509_spki_deinit( spki );
     if (ret < 0)
@@ -2939,26 +2957,32 @@ static NTSTATUS key_asymmetric_encrypt( void *args )
         return !params->output ? STATUS_SUCCESS : STATUS_BUFFER_TOO_SMALL;
     }
 
-    if (params->key->alg_id == ALG_ID_RSA && params->flags & BCRYPT_PAD_OAEP)
+    if (params->key->alg_id == ALG_ID_RSA && (params->flags & BCRYPT_PAD_OAEP))
     {
         BCRYPT_OAEP_PADDING_INFO *pad = params->padding;
         gnutls_digest_algorithm_t dig;
         gnutls_datum_t label;
 
-        if (!pad || !pad->pszAlgId || !pad->pbLabel)
+        if (!pad || !pad->pszAlgId)
         {
             WARN( "padding info not found\n" );
             return STATUS_INVALID_PARAMETER;
         }
+
         if ((dig = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
         {
             FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
             return STATUS_NOT_SUPPORTED;
         }
 
-        label.data = pad->pbLabel;
-        label.size = pad->cbLabel;
-        if ((status = pubkey_set_rsa_oaep_params( key_data(params->key)->a.pubkey, dig, &label ))) return status;
+        if (pad->pbLabel && pad->cbLabel)
+        {
+            label.data = pad->pbLabel;
+            label.size = pad->cbLabel;
+            status = pubkey_set_rsa_oaep_params( key_data(params->key)->a.pubkey, dig, &label );
+            if (status == STATUS_NOT_SUPPORTED) status = STATUS_SUCCESS;
+            if (status) return status;
+        }
     }
 
     d.data = params->input;

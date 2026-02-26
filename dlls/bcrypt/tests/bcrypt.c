@@ -2776,10 +2776,6 @@ static void test_rsa_encrypt(void)
     encrypted_b = realloc(encrypted_b, encrypted_size);
     memset(encrypted_b, 0, encrypted_size);
 
-    ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, NULL, encrypted_size, &encrypted_size, BCRYPT_PAD_OAEP);
-    ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
-    ok(encrypted_size == 80, "got size of %ld\n", encrypted_size);
-
     encrypted_size = 0;
     ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, encrypted_a, 0, &encrypted_size, BCRYPT_PAD_OAEP);
     ok(ret == STATUS_BUFFER_TOO_SMALL, "got %lx\n", ret);
@@ -2809,6 +2805,56 @@ static void test_rsa_encrypt(void)
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(decrypted_size == sizeof(input), "got %lu\n", decrypted_size);
     ok(!memcmp(decrypted, input, sizeof(input)), "unexpected output\n");
+
+    /* Prove empty label (pbLabel NULL, cbLabel 0) works for OAEP. */
+    {
+        BCRYPT_OAEP_PADDING_INFO sha1_empty_label;
+        UCHAR roundtrip_plain[sizeof(input)];
+        DWORD roundtrip_size;
+
+        sha1_empty_label.pszAlgId = BCRYPT_SHA1_ALGORITHM;
+        sha1_empty_label.pbLabel = NULL;
+        sha1_empty_label.cbLabel = 0;
+
+        encrypted_size = 0;
+        ret = BCryptEncrypt(key, input, sizeof(input), &sha1_empty_label, NULL, 0, NULL, 0, &encrypted_size, BCRYPT_PAD_OAEP);
+        ok(ret == STATUS_SUCCESS, "encrypt with empty label failed: %lx\n", ret);
+
+        encrypted_a = realloc(encrypted_a, encrypted_size);
+        ret = BCryptEncrypt(key, input, sizeof(input), &sha1_empty_label, NULL, 0, encrypted_a, encrypted_size, &encrypted_size, BCRYPT_PAD_OAEP);
+        ok(ret == STATUS_SUCCESS, "encrypt with empty label failed: %lx\n", ret);
+
+        roundtrip_size = 0;
+        ret = BCryptDecrypt(key, encrypted_a, encrypted_size, &sha1_empty_label, NULL, 0, NULL, 0, &roundtrip_size, BCRYPT_PAD_OAEP);
+        ok(ret == STATUS_SUCCESS, "decrypt with empty label failed: %lx\n", ret);
+        ok(roundtrip_size == sizeof(input), "decrypted size %lu, expected %lu\n", roundtrip_size, (unsigned long)sizeof(input));
+
+        ret = BCryptDecrypt(key, encrypted_a, encrypted_size, &sha1_empty_label, NULL, 0, roundtrip_plain, roundtrip_size, &roundtrip_size, BCRYPT_PAD_OAEP);
+        ok(ret == STATUS_SUCCESS, "decrypt failed: %lx\n", ret);
+        ok(!memcmp(roundtrip_plain, input, sizeof(input)), "roundtrip plaintext mismatch\n");
+    }
+
+    /* OAEP(NULL) behavior observed on native Windows:
+     * - size query succeeds
+     * - actual encryption fails with STATUS_INVALID_PARAMETER */
+    {
+        UCHAR *encrypted_null = NULL;
+        DWORD encrypted_null_size = 0;
+
+        ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, NULL, 0, &encrypted_null_size, BCRYPT_PAD_OAEP);
+        ok(ret == STATUS_SUCCESS, "unexpected OAEP(NULL) size query status %lx\n", ret);
+
+        if (ret == STATUS_SUCCESS)
+        {
+            encrypted_null = malloc(encrypted_null_size);
+            ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, encrypted_null, encrypted_null_size,
+                                &encrypted_null_size, BCRYPT_PAD_OAEP);
+            ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_SUCCESS),
+               "unexpected OAEP(NULL) encrypt status %lx\n", ret);
+
+            free(encrypted_null);
+        }
+    }
 
     free(encrypted_a);
     free(encrypted_b);
