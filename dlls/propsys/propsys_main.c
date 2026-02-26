@@ -855,6 +855,8 @@ static struct system_property_description system_properties[] =
     {L"System.Devices.Aep.DeviceAddress", &PKEY_Devices_Aep_DeviceAddress, VT_LPWSTR},
     {L"System.Devices.AepContainer.IsPaired", &PKEY_Devices_AepContainer_IsPaired, VT_BOOL},
     {L"System.Devices.AepService.ProtocolId", &PKEY_Devices_AepService_ProtocolId, VT_CLSID},
+    {L"System.Devices.ModelName", &PKEY_Devices_ModelName, VT_LPWSTR},
+    {L"System.Devices.Manufacturer", &PKEY_Devices_Manufacturer, VT_LPWSTR},
 };
 
 static HRESULT propdesc_from_system_property( const struct system_property_description *desc, IPropertyDescription **out )

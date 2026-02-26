@@ -3102,7 +3102,9 @@ static void test_PropertySystem(void)
         {&PKEY_Devices_ContainerId, L"System.Devices.ContainerId", VT_CLSID},
         {&PKEY_Devices_InterfaceClassGuid, L"System.Devices.InterfaceClassGuid", VT_CLSID, TYPE_E_ELEMENTNOTFOUND /* Win7 */},
         {&PKEY_Devices_HardwareIds, L"System.Devices.HardwareIds", VT_VECTOR | VT_LPWSTR, TYPE_E_ELEMENTNOTFOUND /* Win7 */},
-        {&PKEY_Devices_ClassGuid, L"System.Devices.ClassGuid", VT_CLSID, TYPE_E_ELEMENTNOTFOUND /* <= Win8 */}
+        {&PKEY_Devices_ClassGuid, L"System.Devices.ClassGuid", VT_CLSID, TYPE_E_ELEMENTNOTFOUND /* <= Win8 */},
+        {&PKEY_Devices_ModelName, L"System.Devices.ModelName", VT_LPWSTR},
+        {&PKEY_Devices_Manufacturer, L"System.Devices.Manufacturer", VT_LPWSTR},
     };
     IPropertySystem *system;
     HRESULT hr;
