@@ -10556,18 +10556,21 @@ static void test_media_session_seek(void)
     static const struct object_state_record expected_seek_start_no_pending_request_records = {{SOURCE_STOP, MFT_FLUSH, SOURCE_START, SINK_FLUSH, SINK_ON_CLOCK_START}, 5};
     static const struct object_state_record expected_seek_start_pending_request_records = {{SOURCE_STOP, MFT_FLUSH, SOURCE_START, MFT_PROCESS_OUTPUT, SOURCE_REQUEST_SAMPLE, SINK_FLUSH, SINK_ON_CLOCK_START}, 7};
 
+    IMFTopologyNode *src_node, *mft_node, *sink_node;
     MFT_OUTPUT_STREAM_INFO output_stream_info = {0};
     struct test_callback *test_callback;
     struct test_media_sink *media_sink;
     struct test_source *media_source;
     struct test_handler *handler;
     IMFAsyncCallback *callback;
+    IMFCollection *collection;
     IMFMediaSession *session;
     IMFMediaSource *source;
     IMFTopology *topology;
     PROPVARIANT propvar;
     IMFMediaType *type;
     IMFTransform *mft;
+    DWORD input_idx;
     UINT32 status;
     HRESULT hr;
     INT i;
@@ -10599,11 +10602,35 @@ static void test_media_session_seek(void)
     hr = test_transform_create(1, &type, 1, &type, FALSE, &mft);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     test_transform_set_output_stream_info(mft, &output_stream_info);
-    IMFMediaType_Release(type);
 
     SET_EXPECT(test_transform_ProcessMessage_BEGIN_STREAMING);
     topology = create_test_topology_unk(source, (IUnknown*)media_sink->stream, (IUnknown*) mft, NULL);
-    hr = IMFMediaSession_SetTopology(session, 0, topology);
+
+    hr = IMFTopology_GetSourceNodeCollection(topology, &collection);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFCollection_GetElement(collection, 0, (IUnknown**)&src_node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFCollection_Release(collection);
+
+    hr = IMFTopologyNode_SetUINT64(src_node, &MF_TOPONODE_MEDIASTART, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyNode_GetOutput(src_node, 0, &mft_node, &input_idx);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopologyNode_Release(src_node);
+
+    hr = IMFTopologyNode_SetUINT32(mft_node, &MF_TOPONODE_MARKIN_HERE, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyNode_SetUINT32(mft_node, &MF_TOPONODE_MARKOUT_HERE, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyNode_GetOutput(mft_node, 0, &sink_node, &input_idx);
+    IMFTopologyNode_Release(mft_node);
+
+    hr = IMFTopologyNode_SetInputPrefType(sink_node, 0, type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopologyNode_Release(sink_node);
+    IMFMediaType_Release(type);
+
+    hr = IMFMediaSession_SetTopology(session, MFSESSION_SETTOPOLOGY_NORESOLUTION, topology);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFTopology_Release(topology);
 
