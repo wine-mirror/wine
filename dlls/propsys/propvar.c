@@ -1161,6 +1161,12 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
     return res;
 }
 
+INT WINAPI VariantCompare(const VARIANT *var1, const VARIANT *var2)
+{
+    FIXME("%s %s: stub!\n", debugstr_variant(var1), debugstr_variant(var2));
+    return 0;
+}
+
 HRESULT WINAPI PropVariantToVariant(const PROPVARIANT *propvar, VARIANT *var)
 {
     HRESULT hr = S_OK;
