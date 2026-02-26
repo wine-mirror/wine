@@ -22,6 +22,10 @@
 extern "C" {
 #endif
 
+#define BLUETOOTH_GATT_FLAG_NONE                   0
+#define BLUETOOTH_GATT_FLAG_FORCE_READ_FROM_DEVICE 0x0004
+#define BLUETOOTH_GATT_FLAG_FORCE_READ_FROM_CACHE  0x0008
+
 typedef struct _BTH_LE_UUID
 {
     BOOLEAN IsShortUuid;

@@ -1,7 +1,7 @@
 /*
  * BLE Generic Attribute Profile (GATT) APIs
  *
- * Copyright 2025 Vibhav Pant
+ * Copyright 2025-2026 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -143,4 +143,74 @@ HRESULT WINAPI BluetoothGATTGetCharacteristics( HANDLE device, BTH_LE_GATT_SERVI
     if (count < *actual)
         return HRESULT_FROM_WIN32( ERROR_INVALID_USER_BUFFER );
     return S_OK;
+}
+
+HRESULT WINAPI BluetoothGATTGetCharacteristicValue( HANDLE device, BTH_LE_GATT_CHARACTERISTIC *chrc, ULONG size,
+                                                    BTH_LE_GATT_CHARACTERISTIC_VALUE *val, USHORT *actual, ULONG flags )
+{
+    struct winebth_gatt_service_read_characterisitic_value_params *params;
+    DWORD bytes, outsize, err;
+    OVERLAPPED ovl = {0};
+    HRESULT ret;
+
+   TRACE( "(%p, %p, %lu, %p, %p, %#lx)\n", device, chrc, size, val, actual, flags );
+
+    if (!device)
+        return E_HANDLE;
+    if (!chrc || !(size || val || actual) || (size && size < sizeof( *val )))
+        return E_INVALIDARG;
+    if (size && !val)
+        return E_POINTER;
+    outsize = size ? offsetof( struct winebth_gatt_service_read_characterisitic_value_params,
+                               buf[size - offsetof( BTH_LE_GATT_CHARACTERISTIC_VALUE, Data )] )
+                   : sizeof( *params );
+
+    if (!(params = calloc( 1, outsize )))
+        return HRESULT_FROM_WIN32( ERROR_NO_SYSTEM_RESOURCES );
+
+    /* FIXME: Figure out what native does when both flags are set. */
+    if (flags & BLUETOOTH_GATT_FLAG_FORCE_READ_FROM_DEVICE)
+        params->from_device = 1;
+    if (flags & BLUETOOTH_GATT_FLAG_FORCE_READ_FROM_CACHE)
+        params->from_device = 0;
+
+    params->uuid = chrc->CharacteristicUuid;
+    params->handle = chrc->AttributeHandle;
+    ovl.hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
+    err = ERROR_SUCCESS;
+    if (!DeviceIoControl( device, IOCTL_WINEBTH_GATT_SERVICE_READ_CHARACTERISITIC_VALUE, params, sizeof( *params ),
+                          params, outsize, &bytes, &ovl ))
+    {
+        err = GetLastError();
+        if (err == ERROR_IO_PENDING)
+        {
+            err = ERROR_SUCCESS;
+            if (!GetOverlappedResult( device, &ovl, &bytes, TRUE ))
+                err = GetLastError();
+        }
+    }
+    CloseHandle( ovl.hEvent );
+
+    if (err)
+    {
+        free( params );
+        return HRESULT_FROM_WIN32( err == ERROR_PRIVILEGE_NOT_HELD ? ERROR_INVALID_ACCESS : err );
+    }
+
+    ret = S_OK;
+    *actual = max( offsetof( BTH_LE_GATT_CHARACTERISTIC_VALUE, Data[params->size] ), sizeof( *val ) );
+    if (val)
+    {
+        if (size >= params->size)
+        {
+            val->DataSize = params->size;
+            memcpy( val->Data, params->buf, params->size );
+        }
+        else
+            ret = HRESULT_FROM_WIN32( ERROR_INVALID_USER_BUFFER );
+    }
+    else
+        ret = HRESULT_FROM_WIN32( ERROR_MORE_DATA );
+    free( params );
+    return ret;
 }
