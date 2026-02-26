@@ -1925,16 +1925,34 @@ static HRESULT WINAPI test_media_stream_GetStreamDescriptor(IMFMediaStream *ifac
     return S_OK;
 }
 
+static void test_media_stream_send_delayed_samples(struct test_media_stream *stream)
+{
+    DWORD delayed_samples;
+    IMFSample *sample;
+    HRESULT hr;
+    int i;
+
+    hr = IMFCollection_GetElementCount(stream->delayed_samples, &delayed_samples);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < delayed_samples; i++)
+    {
+        hr = IMFCollection_RemoveElement(stream->delayed_samples, 0, (IUnknown **)&sample);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample, &GUID_NULL, S_OK,
+                (IUnknown *)sample);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+}
+
 DEFINE_EXPECT(test_media_stream_RequestSample);
 
 static HRESULT WINAPI test_media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
 {
     struct test_media_stream *stream = impl_from_IMFMediaStream(iface);
-    IMFSample *sample, *delayed_sample;
     IMFMediaBuffer *buffer;
-    DWORD delayed_samples;
+    IMFSample *sample;
     HRESULT hr;
-    INT i;
 
     if (stream->test_expect)
     {
@@ -1989,17 +2007,7 @@ static HRESULT WINAPI test_media_stream_RequestSample(IMFMediaStream *iface, IUn
     }
     else
     {
-        hr = IMFCollection_GetElementCount(stream->delayed_samples, &delayed_samples);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-        for (i = 0; i < delayed_samples; i++)
-        {
-            hr = IMFCollection_RemoveElement(stream->delayed_samples, 0, (IUnknown **)&delayed_sample);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            hr = IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample, &GUID_NULL, S_OK,
-                (IUnknown *)delayed_sample);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        }
+        test_media_stream_send_delayed_samples(stream);
 
         hr = IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample, &GUID_NULL, S_OK,
                 (IUnknown *)sample);
