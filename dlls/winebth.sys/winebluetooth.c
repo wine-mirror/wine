@@ -223,6 +223,16 @@ void winebluetooth_gatt_characteristic_free( winebluetooth_gatt_characteristic_t
     UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_free, &args );
 }
 
+NTSTATUS winebluetooth_gatt_characteristic_read_async( winebluetooth_gatt_characteristic_t chrc, IRP *irp )
+{
+    struct bluetooth_gatt_characteristic_read_params params = {0};
+
+    TRACE( "(%p, %p)\n", (void *)chrc.handle, irp );
+    params.chrc = chrc.handle;
+    params.irp = irp;
+    return UNIX_BLUETOOTH_CALL( bluetooth_gatt_characteristic_read, &params );
+}
+
 static const char *
 debugstr_winebluetooth_gatt_characteristic_value( const struct winebluetooth_gatt_characteristic_value *val )
 {

@@ -1027,6 +1027,104 @@ void bluez_gatt_characteristic_value_move( struct winebluetooth_gatt_characteris
     bluez_gatt_characteristic_value_free( val );
 }
 
+static NTSTATUS bluez_gatt_error_to_status( const DBusError *error )
+{
+    if (p_dbus_error_has_name( error, "org.bluez.Error.NotPermitted" ))
+    {
+        if (!strcmp( error->message, "Read not permitted" ))
+            return STATUS_BTH_ATT_READ_NOT_PERMITTED;
+        else if (!strcmp( error->message, "Write not permitted" ))
+            return STATUS_BTH_ATT_WRITE_NOT_PERMITTED;
+        else
+            return STATUS_BTH_ATT_INSUFFICIENT_AUTHENTICATION;
+    }
+    else if (p_dbus_error_has_name( error, "org.bluez.Error.NotAuthorized" ))
+        return STATUS_BTH_ATT_INSUFFICIENT_AUTHORIZATION;
+    else if (p_dbus_error_has_name( error, "org.bluez.Error.NotSupported" ))
+        return STATUS_BTH_ATT_REQUEST_NOT_SUPPORTED;
+    else if (p_dbus_error_has_name( error, "org.bluez.Error.InvalidArguments" ))
+    {
+        if (!strcmp( error->message, "Invalid offset" ))
+            return STATUS_BTH_ATT_INVALID_OFFSET;
+        else if (!strcmp( error->message, "Invalid Length" ))
+            return STATUS_BTH_ATT_INVALID_ATTRIBUTE_VALUE_LENGTH;
+        return STATUS_BTH_ATT_UNKNOWN_ERROR;
+    }
+    else if (p_dbus_error_has_name( error, "org.bluez.Error.Failed" ) && !strcmp( error->message, "Not connected" ))
+        return STATUS_DEVICE_NOT_CONNECTED;
+    return bluez_dbus_error_to_ntstatus( error );
+}
+
+struct bluez_async_req_data
+{
+    IRP *irp;
+    struct bluez_watcher_ctx *watcher_ctx;
+};
+
+static void bluez_gatt_characteristic_read_callback( DBusPendingCall *pending, void *param );
+
+NTSTATUS bluez_gatt_characteristic_read( void *connection, void *watcher_ctx, struct unix_name *characteristic,
+                                         IRP *irp )
+{
+    DBusMessageIter args_iter, dict_iter = DBUS_MESSAGE_ITER_INIT_CLOSED;
+    struct bluez_async_req_data *data = NULL;
+    DBusPendingCall *pending_call = NULL;
+    DBusMessage *request;
+    NTSTATUS status;
+    dbus_bool_t success;
+
+    TRACE( "(%s, %p)\n", debugstr_a( characteristic->str ), irp );
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, characteristic->str, BLUEZ_INTERFACE_GATT_CHARACTERISTICS,
+                                              "ReadValue" );
+    if (!request)
+        return STATUS_NO_MEMORY;
+    if (!(data = malloc( sizeof( *data ) )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto failed;
+    }
+
+    data->irp = irp;
+    data->watcher_ctx = watcher_ctx;
+    p_dbus_message_iter_init_append( request, &args_iter );
+    if (!p_dbus_message_iter_open_container( &args_iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter ))
+    {
+        status = STATUS_NO_MEMORY;
+        goto failed;
+    }
+    if (!p_dbus_message_iter_close_container( &args_iter, &dict_iter ))
+    {
+        status = STATUS_NO_MEMORY;
+        goto failed;
+    }
+    success = p_dbus_connection_send_with_reply( connection, request, &pending_call, bluez_timeout );
+    if (!success)
+    {
+        status = STATUS_NO_MEMORY;
+        goto failed;
+    }
+    if (!pending_call)
+    {
+        status = STATUS_INTERNAL_ERROR;
+        goto failed;
+    }
+    if (!p_dbus_pending_call_set_notify( pending_call, bluez_gatt_characteristic_read_callback, data, free ))
+    {
+        p_dbus_pending_call_cancel( pending_call );
+        p_dbus_pending_call_unref( pending_call );
+        status = STATUS_NO_MEMORY;
+        goto failed;
+    }
+    p_dbus_pending_call_unref( pending_call );
+    p_dbus_message_unref( request );
+    return STATUS_PENDING;
+failed:
+    p_dbus_message_iter_abandon_container_if_open( &args_iter, &dict_iter );
+    p_dbus_message_unref( request );
+    return status;
+}
+
 struct bluez_watcher_ctx
 {
     char *bluez_dbus_unique_name;
@@ -1044,6 +1142,40 @@ struct bluez_watcher_ctx
     /* struct bluez_watcher_event */
     struct list event_list;
 };
+
+static BOOL bluez_event_list_queue_new_event( struct list *event_list,
+                                              enum winebluetooth_watcher_event_type event_type,
+                                              union winebluetooth_watcher_event_data event );
+
+static void bluez_gatt_characteristic_read_callback( DBusPendingCall *pending, void *param )
+{
+    struct winebluetooth_watcher_event_gatt_characteristic_value_read read = {0};
+    union winebluetooth_watcher_event_data event;
+    struct bluez_async_req_data *data = param;
+    DBusMessage *reply;
+    DBusError error;
+
+    read.irp = data->irp;
+    reply = p_dbus_pending_call_steal_reply( pending );
+    p_dbus_error_init( &error );
+    if (p_dbus_set_error_from_message( &error, reply ))
+        read.result = bluez_gatt_error_to_status( &error );
+    else
+    {
+        DBusMessageIter iter;
+
+        p_dbus_message_iter_init( reply, &iter );
+        if (!bluez_gatt_characteristic_value_new_from_iter( reply, &iter, &read.value ))
+            read.result = STATUS_NO_MEMORY;
+    }
+
+    event.gatt_characteristic_value_read = read;
+    if (!bluez_event_list_queue_new_event( &data->watcher_ctx->event_list,
+                                           BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_VALUE_READ, event ))
+        bluez_gatt_characteristic_value_free( (struct bluez_gatt_characteristic_value *)read.value.handle );
+    p_dbus_error_free( &error );
+    p_dbus_message_unref( reply );
+}
 
 struct bluez_init_entry
 {
@@ -1510,18 +1642,9 @@ NTSTATUS bluez_device_disconnect( void *connection, const char *device_path )
     return STATUS_SUCCESS;
 }
 
-static BOOL bluez_event_list_queue_new_event( struct list *event_list,
-                                              enum winebluetooth_watcher_event_type event_type,
-                                              union winebluetooth_watcher_event_data event );
-struct bluez_device_pair_data
-{
-    IRP *irp;
-    struct bluez_watcher_ctx *watcher_ctx;
-};
-
 static void bluez_device_pair_callback( DBusPendingCall *pending, void *param )
 {
-    struct bluez_device_pair_data *data = param;
+    struct bluez_async_req_data *data = param;
     DBusMessage *reply;
     DBusError error;
     union winebluetooth_watcher_event_data event = {0};
@@ -1545,7 +1668,7 @@ NTSTATUS bluez_device_start_pairing( void *connection, void *watcher_ctx, struct
 {
     DBusMessage *request;
     DBusPendingCall *pending_call = NULL;
-    struct bluez_device_pair_data *data;
+    struct bluez_async_req_data *data;
     dbus_bool_t success;
 
     TRACE( "(%p, %p, %s, %p)\n", connection, watcher_ctx, debugstr_a( device->str ), irp );
@@ -2346,6 +2469,10 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
             bluez_gatt_characteristic_value_free(
                 (struct bluez_gatt_characteristic_value *)event1->event.gatt_characteristic_added.value.handle );
             break;
+        case BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_VALUE_READ:
+            bluez_gatt_characteristic_value_free(
+                (struct bluez_gatt_characteristic_value *)event1->event.gatt_characteristic_value_read.value.handle );
+            break;
         }
         free( event1 );
     }
@@ -2847,5 +2974,8 @@ NTSTATUS bluez_device_start_pairing( void *connection, void *watcher_ctx, struct
 }
 void bluez_gatt_characteristic_value_move( struct winebluetooth_gatt_characteristic_value *value, BYTE *buf ) {}
 void bluez_gatt_characteristic_value_free( void *val ) {}
-
+NTSTATUS bluez_gatt_characteristic_read( void *connection, void *watcher, struct unix_name *characteristic, IRP *irp )
+{
+    return STATUS_NOT_SUPPORTED;
+}
 #endif /* SONAME_LIBDBUS_1 */
