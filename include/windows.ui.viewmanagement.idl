@@ -121,6 +121,7 @@ namespace Windows.UI.ViewManagement
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, Windows.UI.ViewManagement.UISettingsAutoHideScrollBarsChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, Windows.UI.ViewManagement.UISettingsMessageDurationChangedEventArgs *>;
         interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.InputPane*, Windows.UI.ViewManagement.InputPaneVisibilityEventArgs*>;
+        interface Windows.Foundation.IReference<Windows.UI.ViewManagement.UIElementType>;
     }
 
     [
