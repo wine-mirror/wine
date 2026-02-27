@@ -172,6 +172,7 @@ struct transform_stream
     struct list samples;
     unsigned int requests;
     unsigned int min_buffer_size;
+    BOOL samples_independent;
     BOOL draining;
 };
 
@@ -179,6 +180,7 @@ enum topo_node_flags
 {
     TOPO_NODE_END_OF_STREAM = 0x1,
     TOPO_NODE_SCRUB_SAMPLE_COMPLETE = 0x2,
+    TOPO_NODE_MARKIN_HERE = 0x4,
 };
 
 struct topo_node
@@ -1749,9 +1751,9 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
     DWORD *input_map = NULL, *output_map = NULL;
     DWORD i, input_count, output_count;
     struct transform_stream *streams;
+    UINT32 bytes_per_second, value;
     unsigned int block_alignment;
     IMFMediaType *media_type;
-    UINT32 bytes_per_second;
     GUID major = { 0 };
     HRESULT hr;
 
@@ -1796,6 +1798,8 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
                     if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &bytes_per_second)))
                         streams[i].min_buffer_size = max(streams[i].min_buffer_size, bytes_per_second);
                 }
+                if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)) && value)
+                    streams[i].samples_independent = TRUE;
                 IMFMediaType_Release(media_type);
             }
         }
@@ -1869,6 +1873,7 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
     IMFMediaType *media_type;
     IMFStreamDescriptor *sd;
     HRESULT hr = S_OK;
+    UINT32 value;
 
     if (!(topo_node = calloc(1, sizeof(*topo_node))))
         return E_OUTOFMEMORY;
@@ -1878,6 +1883,8 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
     topo_node->node = node;
     IMFTopologyNode_AddRef(topo_node->node);
     topo_node->session = session;
+    if (SUCCEEDED(IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_MARKIN_HERE, &value)) && value)
+        topo_node->flags |= TOPO_NODE_MARKIN_HERE;
 
     switch (topo_node->type)
     {
@@ -3639,6 +3646,58 @@ static void release_output_samples(struct topo_node *node, MFT_OUTPUT_DATA_BUFFE
     }
 }
 
+static BOOL transform_node_markin_need_more_input(const struct media_session *session, struct topo_node *node, MFT_OUTPUT_DATA_BUFFER *buffers)
+{
+    BOOL need_more_input, drop_sample;
+    LONGLONG time, duration;
+    HRESULT hr;
+    UINT i;
+
+    if (!(node->flags & TOPO_NODE_MARKIN_HERE) || session->presentation.start_position.vt != VT_I8)
+        return FALSE;
+
+    need_more_input = TRUE;
+
+    for (i = 0; i < node->u.transform.output_count; ++i)
+    {
+        struct transform_stream *stream = &node->u.transform.outputs[i];
+
+        drop_sample = FALSE;
+
+        if (buffers[i].pEvents)
+            need_more_input = FALSE;
+
+        if (buffers[i].dwStatus & MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE)
+            continue;
+
+        if (!stream->samples_independent)
+        {
+            need_more_input = FALSE;
+            continue;
+        }
+
+        if (FAILED(hr = IMFSample_GetSampleTime(buffers[i].pSample, &time)))
+            WARN("Failed to get sample time, hr %#lx\n", hr);
+        else if (FAILED(hr = IMFSample_GetSampleDuration(buffers[i].pSample, &duration)))
+            WARN("Failed to get sample time, hr %#lx\n", hr);
+        else if (time + duration <= session->presentation.start_position.hVal.QuadPart)
+            drop_sample = TRUE;
+
+        if (drop_sample)
+        {
+            IMFSample_Release(buffers[i].pSample);
+            buffers[i].pSample = NULL;
+            buffers[i].dwStatus |= MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
+        }
+        else
+        {
+            need_more_input = FALSE;
+        }
+    }
+
+    return need_more_input;
+}
+
 static HRESULT transform_node_pull_samples(const struct media_session *session, struct topo_node *node)
 {
     MFT_OUTPUT_DATA_BUFFER *buffers;
@@ -3652,17 +3711,22 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
         goto done;
 
     status = 0;
-    hr = IMFTransform_ProcessOutput(node->object.transform, 0, node->u.transform.output_count, buffers, &status);
-    if (hr == MF_E_TRANSFORM_STREAM_CHANGE && SUCCEEDED(hr = transform_node_format_changed(node, buffers)))
+
+    do
     {
-        release_output_samples(node, buffers);
-
-        memset(buffers, 0, node->u.transform.output_count * sizeof(*buffers));
-        if (FAILED(hr = allocate_output_samples(session, node, buffers)))
-            goto done;
-
         hr = IMFTransform_ProcessOutput(node->object.transform, 0, node->u.transform.output_count, buffers, &status);
+        if (hr == MF_E_TRANSFORM_STREAM_CHANGE && SUCCEEDED(hr = transform_node_format_changed(node, buffers)))
+        {
+            release_output_samples(node, buffers);
+
+            memset(buffers, 0, node->u.transform.output_count * sizeof(*buffers));
+            if (FAILED(hr = allocate_output_samples(session, node, buffers)))
+                goto done;
+
+            hr = IMFTransform_ProcessOutput(node->object.transform, 0, node->u.transform.output_count, buffers, &status);
+        }
     }
+    while (hr == S_OK && transform_node_markin_need_more_input(session, node, buffers));
 
     /* Collect returned samples for all streams. */
     for (i = 0; i < node->u.transform.output_count; ++i)
