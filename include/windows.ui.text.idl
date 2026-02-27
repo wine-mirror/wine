@@ -1,0 +1,64 @@
+/*
+ * Copyright (C) 2026 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.globalization.idl";
+
+
+namespace Windows.UI.Text
+{
+    typedef enum UnderlineType UnderlineType;
+
+    declare
+    {
+        interface Windows.Foundation.IReference<Windows.UI.Text.UnderlineType>;
+    }
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum UnderlineType
+    {
+        Undefined       = 0,
+        None            = 1,
+        Single          = 2,
+        Words           = 3,
+        Double          = 4,
+        Dotted          = 5,
+        Dash            = 6,
+        DashDot         = 7,
+        DashDotDot      = 8,
+        Wave            = 9,
+        Thick           = 10,
+        Thin            = 11,
+        DoubleWave      = 12,
+        HeavyWave       = 13,
+        LongDash        = 14,
+        ThickDash       = 15,
+        ThickDashDot    = 16,
+        ThickDashDotDot = 17,
+        ThickDotted     = 18,
+        ThickLongDash   = 19
+    };
+}
