@@ -424,7 +424,7 @@ static struct strarray build_tool_name( const char *target_name, struct tool_nam
     if (cc_cmd && !strncmp( tool.llvm_base, "clang", 5 ))
     {
         ret = strarray_fromstring( cc_cmd, " " );
-        if (target.platform == PLATFORM_WINDOWS) add_clang_options( target_name, &ret );
+        if (is_llvm_pe_target( target )) add_clang_options( target_name, &ret );
         return ret;
     }
 
@@ -543,6 +543,7 @@ static struct strarray get_link_args( const char *output_name )
 
     case PLATFORM_MINGW:
     case PLATFORM_CYGWIN:
+    case PLATFORM_WINDOWS_GNU:
         strarray_add( &link_args, "-nodefaultlibs" );
         strarray_add( &link_args, "-nostartfiles" );
 

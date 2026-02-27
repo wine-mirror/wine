@@ -110,6 +110,7 @@ struct target
         PLATFORM_FREEBSD,
         PLATFORM_SOLARIS,
         PLATFORM_WINDOWS,
+        PLATFORM_WINDOWS_GNU,
         PLATFORM_MINGW,
         PLATFORM_CYGWIN
     } platform;
@@ -617,9 +618,16 @@ static inline void set_target_ptr_size( struct target *target, unsigned int size
 }
 
 
+static inline bool is_llvm_pe_target( struct target target )
+{
+    return target.platform == PLATFORM_WINDOWS ||
+           target.platform == PLATFORM_WINDOWS_GNU;
+}
+
+
 static inline bool is_pe_target( struct target target )
 {
-    return (target.platform == PLATFORM_WINDOWS ||
+    return (is_llvm_pe_target( target ) ||
             target.platform == PLATFORM_MINGW ||
             target.platform == PLATFORM_CYGWIN);
 }
@@ -668,7 +676,7 @@ static inline int get_platform_from_name( const char *name )
         { "freebsd",     PLATFORM_FREEBSD },
         { "solaris",     PLATFORM_SOLARIS },
         { "mingw32",     PLATFORM_MINGW },
-        { "windows-gnu", PLATFORM_MINGW },
+        { "windows-gnu", PLATFORM_WINDOWS_GNU },
         { "winnt",       PLATFORM_MINGW },
         { "windows",     PLATFORM_WINDOWS },
         { "cygwin",      PLATFORM_CYGWIN },

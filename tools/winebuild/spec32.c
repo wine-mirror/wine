@@ -751,6 +751,7 @@ void output_module( DLLSPEC *spec )
     {
     case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
+    case PLATFORM_WINDOWS_GNU:
         return;  /* nothing to do */
     case PLATFORM_APPLE:
         output( "\t.text\n" );
