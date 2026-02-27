@@ -28,7 +28,13 @@
 
 #define WIDL_using_Windows_UI_ViewManagement_Core
 #define WIDL_using_Windows_Foundation_Collections
+#define WIDL_using_Windows_UI_Core
+#define WIDL_using_Windows_UI_Text_Core
+#define WIDL_using_Windows_Globalization
+#include "windows.globalization.h"
 #include "windows.ui.viewmanagement.core.h"
+#include "windows.ui.text.core.h"
+
 
 #define check_interface(obj, iid, supported) _check_interface(__LINE__, obj, iid, supported)
 static void _check_interface(unsigned int line, void *obj, const IID *iid, BOOL supported)
@@ -123,6 +129,48 @@ static void test_CoreInputView(void)
     ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
 }
 
+static void test_CoreTextServicesManager(void)
+{
+    ICoreTextServicesManager *core_text_manager;
+    ICoreTextServicesManagerStatics *core_text_manager_stat;
+    IActivationFactory *factory;
+    HSTRING str = NULL;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString(RuntimeClass_Windows_UI_Text_Core_CoreTextServicesManager,
+                             wcslen(RuntimeClass_Windows_UI_Text_Core_CoreTextServicesManager), &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    WindowsDeleteString(str);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "got hr %#lx.\n", hr);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n",
+                 wine_dbgstr_w(RuntimeClass_Windows_UI_Text_Core_CoreTextServicesManager));
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_ICoreTextServicesManagerStatics,
+                                           (void **)&core_text_manager_stat);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ICoreTextServicesManagerStatics_GetForCurrentView(core_text_manager_stat, &core_text_manager);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ICoreTextServicesManager_Release(core_text_manager);
+
+    check_interface(core_text_manager, &IID_IUnknown, TRUE);
+    check_interface(core_text_manager, &IID_IInspectable, TRUE);
+    check_interface(core_text_manager, &IID_IAgileObject, TRUE);
+    check_interface(core_text_manager, &IID_ICoreTextServicesManagerStatics, FALSE);
+    check_interface(core_text_manager, &IID_ICoreTextServicesManager, TRUE);
+
+    ref = ICoreTextServicesManagerStatics_Release(core_text_manager_stat);
+    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ref = IActivationFactory_Release(factory);
+    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+}
+
 START_TEST(textinput)
 {
     HRESULT hr;
@@ -132,6 +180,7 @@ START_TEST(textinput)
 
     test_CoreInputViewStatics();
     test_CoreInputView();
+    test_CoreTextServicesManager();
 
     RoUninitialize();
 }

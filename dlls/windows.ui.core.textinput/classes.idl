@@ -22,7 +22,15 @@
 #pragma winrt ns_prefix
 
 import "windows.ui.viewmanagement.core.idl";
+import "windows.ui.text.core.idl";
 
-namespace Windows.UI.ViewManagement.Core {
-    runtimeclass CoreInputView;
+namespace Windows.UI {
+
+    namespace ViewManagement.Core {
+        runtimeclass CoreInputView;
+    }
+
+    namespace Text.Core {
+        runtimeclass CoreTextServicesManager;
+    }
 }
