@@ -171,6 +171,9 @@ struct transform_stream
 {
     struct list samples;
     unsigned int requests;
+    BOOL raw_audio;
+    unsigned int block_alignment;
+    unsigned int bytes_per_second;
     unsigned int min_buffer_size;
     BOOL samples_independent;
     BOOL draining;
@@ -1749,12 +1752,12 @@ static DWORD transform_node_get_stream_id(struct topo_node *node, BOOL output, u
 static HRESULT session_set_transform_stream_info(struct topo_node *node)
 {
     DWORD *input_map = NULL, *output_map = NULL;
+    GUID major = { 0 }, subtype = { 0 };
     DWORD i, input_count, output_count;
     struct transform_stream *streams;
     UINT32 bytes_per_second, value;
     unsigned int block_alignment;
     IMFMediaType *media_type;
-    GUID major = { 0 };
     HRESULT hr;
 
     hr = IMFTransform_GetStreamCount(node->object.transform, &input_count, &output_count);
@@ -1794,9 +1797,16 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
                 if (SUCCEEDED(IMFMediaType_GetMajorType(media_type, &major)) && IsEqualGUID(&major, &MFMediaType_Audio)
                         && SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
                 {
+                    streams[i].block_alignment = block_alignment;
                     streams[i].min_buffer_size = block_alignment;
                     if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &bytes_per_second)))
+                    {
+                        streams[i].bytes_per_second = bytes_per_second;
                         streams[i].min_buffer_size = max(streams[i].min_buffer_size, bytes_per_second);
+                    }
+                    if (SUCCEEDED(IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype)) &&
+                            (IsEqualGUID(&subtype, &MFAudioFormat_Float) || IsEqualGUID(&subtype, &MFAudioFormat_PCM)))
+                        streams[i].raw_audio = TRUE;
                 }
                 if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)) && value)
                     streams[i].samples_independent = TRUE;
@@ -3682,6 +3692,41 @@ static BOOL transform_node_markin_need_more_input(const struct media_session *se
             WARN("Failed to get sample time, hr %#lx\n", hr);
         else if (time + duration <= session->presentation.start_position.hVal.QuadPart)
             drop_sample = TRUE;
+
+        if (!drop_sample && time < session->presentation.start_position.hVal.QuadPart)
+        {
+            LONGLONG delta = session->presentation.start_position.hVal.QuadPart - time;
+            duration -= delta;
+            IMFSample_SetSampleTime(buffers[i].pSample, session->presentation.start_position.hVal.QuadPart);
+            IMFSample_SetSampleDuration(buffers[i].pSample, duration);
+
+            if (stream->raw_audio && stream->bytes_per_second && stream->block_alignment)
+            {
+                IMFMediaBuffer *buffer;
+                LONGLONG delta_bytes;
+                DWORD current_length;
+                BYTE *data;
+
+                delta_bytes = stream->bytes_per_second * delta / MFCLOCK_FREQUENCY_HNS / stream->block_alignment * stream->block_alignment;
+
+                if (FAILED(hr = IMFSample_GetTotalLength(buffers[i].pSample, &current_length)))
+                    WARN("Failed to get total length of sample, hr %#lx\n", hr);
+                else if (delta_bytes >= current_length)
+                {
+                    drop_sample = TRUE;
+                }
+                else if (SUCCEEDED(IMFSample_ConvertToContiguousBuffer(buffers[i].pSample, &buffer)))
+                {
+                    if (SUCCEEDED(IMFMediaBuffer_Lock(buffer, &data, NULL, NULL)))
+                    {
+                        memmove(data, data + delta_bytes, current_length - delta_bytes);
+                        IMFMediaBuffer_Unlock(buffer);
+                        IMFMediaBuffer_SetCurrentLength(buffer, current_length - delta_bytes);
+                    }
+                    IMFMediaBuffer_Release(buffer);
+                }
+            }
+        }
 
         if (drop_sample)
         {

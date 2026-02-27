@@ -10840,9 +10840,7 @@ static void test_media_session_seek(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = IMFSample_GetSampleDuration(sample, &duration);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(time == 10000000, "Unexpected time %I64d.\n", time);
-        todo_wine
         ok(duration == (media_source->streams[0]->sample_duration+1)/2, "Unexpected duration %I64d.\n", duration);
 
         IMFSample_Release(sample);
