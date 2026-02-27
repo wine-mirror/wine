@@ -3226,16 +3226,12 @@ todo_wine {
 
                 value = 0;
                 hr = IMFTopologyNode_GetUINT32(mft_node, &MF_TOPONODE_MARKIN_HERE, &value);
-                todo_wine
                 ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
-                todo_wine
                 ok(value == 1, "Unexpected value.\n");
 
                 value = 0;
                 hr = IMFTopologyNode_GetUINT32(mft_node, &MF_TOPONODE_MARKOUT_HERE, &value);
-                todo_wine
                 ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
-                todo_wine
                 ok(value == 1, "Unexpected value.\n");
 
                 class_id = GUID_NULL;

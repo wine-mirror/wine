@@ -313,6 +313,8 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
     else
     {
         IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_DECODER, 1);
+        IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_MARKIN_HERE, 1);
+        IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_MARKOUT_HERE, 1);
         method_mask = MF_CONNECT_ALLOW_CONVERTER;
     }
 
