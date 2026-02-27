@@ -7703,9 +7703,13 @@ fi
         target_strip=${target:-llvm}-strip
     if test "$wine_try_msvc" = yes -o -z "$target"
     then
-        llvm_target="$mingw_cpu-windows"
+        case $wine_arch in
+          arm)  llvm_target="$mingw_cpu-windows-gnu"
+                llvm_cflags="-mconsole -Wl,--fatal-warnings" ;;
+          *)    llvm_target="$mingw_cpu-windows"
+                llvm_cflags="-Wl,-subsystem:console -Wl,-WX" ;;
+        esac
         llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
-        llvm_cflags="-Wl,-subsystem:console -Wl,-WX"
     else
         llvm_target=$target
         llvm_extra_cflags="-fuse-ld=lld"
