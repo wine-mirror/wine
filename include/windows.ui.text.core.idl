@@ -1,0 +1,593 @@
+/*
+ * Copyright (C) 2026 Alistair Leslie-Hughes
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.globalization.idl";
+import "windows.ui.viewmanagement.idl";
+import "windows.ui.text.idl";
+
+namespace Windows.UI.Text.Core
+{
+    interface ICoreTextCompositionCompletedEventArgs;
+    interface ICoreTextCompositionSegment;
+    interface ICoreTextCompositionStartedEventArgs;
+    interface ICoreTextEditContext;
+    interface ICoreTextFormatUpdatingEventArgs;
+    interface ICoreTextLayoutBounds;
+    interface ICoreTextLayoutRequest;
+    interface ICoreTextLayoutRequestedEventArgs;
+    interface ICoreTextSelectionRequest;
+    interface ICoreTextSelectionRequestedEventArgs;
+    interface ICoreTextSelectionUpdatingEventArgs;
+    interface ICoreTextServicesManager;
+    interface ICoreTextServicesManagerStatics;
+    interface ICoreTextTextRequest;
+    interface ICoreTextTextRequestedEventArgs;
+    interface ICoreTextTextUpdatingEventArgs;
+
+    typedef enum CoreTextFormatUpdatingReason CoreTextFormatUpdatingReason;
+    typedef enum CoreTextFormatUpdatingResult CoreTextFormatUpdatingResult;
+    typedef enum CoreTextInputPaneDisplayPolicy CoreTextInputPaneDisplayPolicy;
+    typedef enum CoreTextInputScope CoreTextInputScope;
+    typedef enum CoreTextSelectionUpdatingResult CoreTextSelectionUpdatingResult;
+    typedef enum CoreTextTextUpdatingResult CoreTextTextUpdatingResult;
+
+    runtimeclass CoreTextCompositionCompletedEventArgs;
+    runtimeclass CoreTextCompositionSegment;
+    runtimeclass CoreTextCompositionStartedEventArgs;
+    runtimeclass CoreTextEditContext;
+    runtimeclass CoreTextFormatUpdatingEventArgs;
+    runtimeclass CoreTextLayoutBounds;
+    runtimeclass CoreTextLayoutRequest;
+    runtimeclass CoreTextLayoutRequestedEventArgs;
+    runtimeclass CoreTextSelectionRequest;
+    runtimeclass CoreTextSelectionRequestedEventArgs;
+    runtimeclass CoreTextSelectionUpdatingEventArgs;
+    runtimeclass CoreTextServicesManager;
+    runtimeclass CoreTextTextRequest;
+    runtimeclass CoreTextTextRequestedEventArgs;
+    runtimeclass CoreTextTextUpdatingEventArgs;
+
+    typedef struct CoreTextRange CoreTextRange;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    struct CoreTextRange
+    {
+        INT32 StartCaretPosition;
+        INT32 EndCaretPosition;
+    };
+
+    declare
+    {
+        interface Windows.Foundation.Collections.IVectorView<Windows.UI.Text.Core.CoreTextCompositionSegment*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, IInspectable*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextCompositionCompletedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextCompositionStartedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextFormatUpdatingEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextLayoutRequestedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextSelectionRequestedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextSelectionUpdatingEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextTextRequestedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*, Windows.UI.Text.Core.CoreTextTextUpdatingEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextServicesManager*, IInspectable*>;
+    }
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum CoreTextFormatUpdatingResult
+    {
+        Succeeded = 0,
+        Failed    = 1
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    enum CoreTextFormatUpdatingReason
+    {
+        None                         = 0,
+        CompositionUnconverted       = 1,
+        CompositionConverted         = 2,
+        CompositionTargetUnconverted = 3,
+        CompositionTargetConverted   = 4
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CoreTextSelectionUpdatingResult
+    {
+        Succeeded = 0,
+        Failed    = 1
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CoreTextTextUpdatingResult
+    {
+        Succeeded = 0,
+        Failed    = 1
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CoreTextInputPaneDisplayPolicy
+    {
+        Automatic = 0,
+        Manual    = 1
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CoreTextInputScope
+    {
+        Default                 = 0,
+        Url                     = 1,
+        FilePath                = 2,
+        FileName                = 3,
+        EmailUserName           = 4,
+        EmailAddress            = 5,
+        UserName                = 6,
+        PersonalFullName        = 7,
+        PersonalNamePrefix      = 8,
+        PersonalGivenName       = 9,
+        PersonalMiddleName      = 10,
+        PersonalSurname         = 11,
+        PersonalNameSuffix      = 12,
+        Address                 = 13,
+        AddressPostalCode       = 14,
+        AddressStreet           = 15,
+        AddressStateOrProvince  = 16,
+        AddressCity             = 17,
+        AddressCountryName      = 18,
+        AddressCountryShortName = 19,
+        CurrencyAmountAndSymbol = 20,
+        CurrencyAmount          = 21,
+        Date                    = 22,
+        DateMonth               = 23,
+        DateDay                 = 24,
+        DateYear                = 25,
+        DateMonthName           = 26,
+        DateDayName             = 27,
+        Number                  = 29,
+        SingleCharacter         = 30,
+        Password                = 31,
+        TelephoneNumber         = 32,
+        TelephoneCountryCode    = 33,
+        TelephoneAreaCode       = 34,
+        TelephoneLocalNumber    = 35,
+        Time                    = 36,
+        TimeHour                = 37,
+        TimeMinuteOrSecond      = 38,
+        NumberFullWidth         = 39,
+        AlphanumericHalfWidth   = 40,
+        AlphanumericFullWidth   = 41,
+        CurrencyChinese         = 42,
+        Bopomofo                = 43,
+        Hiragana                = 44,
+        KatakanaHalfWidth       = 45,
+        KatakanaFullWidth       = 46,
+        Hanja                   = 47,
+        HangulHalfWidth         = 48,
+        HangulFullWidth         = 49,
+        Search                  = 50,
+        Formula                 = 51,
+        SearchIncremental       = 52,
+        ChineseHalfWidth        = 53,
+        ChineseFullWidth        = 54,
+        NativeScript            = 55,
+        Text                    = 57,
+        Chat                    = 58,
+        NameOrPhoneNumber       = 59,
+        EmailUserNameOrAddress  = 60,
+        Private                 = 61,
+        Maps                    = 62,
+        PasswordNumeric         = 63,
+        FormulaNumber           = 67
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextServicesManager),
+        uuid(1520a388-e2cf-4d65-aeb9-b32d86fe39b9)
+    ]
+    interface ICoreTextServicesManagerStatics : IInspectable
+    {
+        HRESULT GetForCurrentView([out, retval] Windows.UI.Text.Core.CoreTextServicesManager** value);
+    }
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    [exclusiveto(Windows.UI.Text.Core.CoreTextCompositionSegment)]
+    [uuid(776c6bd9-4ead-4da7-8f47-3a88b523cc34)]
+    interface ICoreTextCompositionSegment : IInspectable
+    {
+        [propget] HRESULT PreconversionString([out, retval] HSTRING* value);
+        [propget] HRESULT Range([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+    }
+
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextCompositionCompletedEventArgs),
+        uuid(1f34ebb6-b79f-4121-a5e7-fda9b8616e30)
+    ]
+    interface ICoreTextCompositionCompletedEventArgs : IInspectable
+    {
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        [propget] HRESULT CompositionSegments([out, retval] Windows.Foundation.Collections.IVectorView<Windows.UI.Text.Core.CoreTextCompositionSegment*>** value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextCompositionStartedEventArgs),
+        uuid(276b16a9-64e7-4ab0-bc4b-a02d73835bfb)
+    ]
+    interface ICoreTextCompositionStartedEventArgs : IInspectable
+    {
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextFormatUpdatingEventArgs),
+        uuid(7310bd33-b4a8-43b1-b37b-0724d4aca7ab)
+    ]
+    interface ICoreTextFormatUpdatingEventArgs : IInspectable
+    {
+        [propget] HRESULT Range([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+        [propget] HRESULT TextColor([out, retval] Windows.Foundation.IReference<Windows.UI.ViewManagement.UIElementType>** value);
+        [propget] HRESULT BackgroundColor([out, retval] Windows.Foundation.IReference<Windows.UI.ViewManagement.UIElementType>** value);
+        [propget] HRESULT UnderlineColor([out, retval] Windows.Foundation.IReference<Windows.UI.ViewManagement.UIElementType>** value);
+        [propget] HRESULT UnderlineType([out, retval] Windows.Foundation.IReference<Windows.UI.Text.UnderlineType>** value);
+        [propget] HRESULT Reason([out, retval] Windows.UI.Text.Core.CoreTextFormatUpdatingReason* value);
+        [propget] HRESULT Result([out, retval] Windows.UI.Text.Core.CoreTextFormatUpdatingResult* value);
+        [propput] HRESULT Result([in] Windows.UI.Text.Core.CoreTextFormatUpdatingResult value);
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    [exclusiveto(Windows.UI.Text.Core.CoreTextSelectionUpdatingEventArgs)]
+    [uuid(d445839f-fe7f-4bd5-8a26-0922c1b3e639)]
+    interface ICoreTextSelectionUpdatingEventArgs : IInspectable
+    {
+        [propget] HRESULT Selection([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+        [propget] HRESULT Result([out, retval] Windows.UI.Text.Core.CoreTextSelectionUpdatingResult* value);
+        [propput] HRESULT Result([in] Windows.UI.Text.Core.CoreTextSelectionUpdatingResult value);
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextTextUpdatingEventArgs),
+        uuid(eea7918d-cc2b-4f03-8ff6-02fd217db450)
+    ]
+    interface ICoreTextTextUpdatingEventArgs : IInspectable
+    {
+        [propget] HRESULT Range([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+        [propget] HRESULT Text([out, retval] HSTRING* value);
+        [propget] HRESULT NewSelection([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+        [propget] HRESULT InputLanguage([out, retval] Windows.Globalization.Language** value);
+        [propget] HRESULT Result([out, retval] Windows.UI.Text.Core.CoreTextTextUpdatingResult* value);
+        [propput] HRESULT Result([in] Windows.UI.Text.Core.CoreTextTextUpdatingResult value);
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextLayoutBounds),
+        uuid(e972c974-4436-4917-80d0-a525e4ca6780)
+    ]
+    interface ICoreTextLayoutBounds : IInspectable
+    {
+        [propget] HRESULT TextBounds([out, retval] Windows.Foundation.Rect* value);
+        [propput] HRESULT TextBounds([in] Windows.Foundation.Rect value);
+        [propget] HRESULT ControlBounds([out, retval] Windows.Foundation.Rect* value);
+        [propput] HRESULT ControlBounds([in] Windows.Foundation.Rect value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextLayoutRequest),
+        uuid(2555a8cc-51fd-4f03-98bf-ac78174d68e0)
+    ]
+    interface ICoreTextLayoutRequest : IInspectable
+    {
+        [propget] HRESULT Range([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+        [propget] HRESULT LayoutBounds([out, retval] Windows.UI.Text.Core.CoreTextLayoutBounds** value);
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextLayoutRequestedEventArgs),
+        uuid(b1dc6ae0-9a7b-4e9e-a566-4a6b5f8ad676)
+    ]
+    interface ICoreTextLayoutRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT Request([out, retval] Windows.UI.Text.Core.CoreTextLayoutRequest** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextSelectionRequest),
+        uuid(f0a70403-208b-4301-883c-74ca7485fd8d)
+    ]
+    interface ICoreTextSelectionRequest : IInspectable
+    {
+        [propget] HRESULT Selection([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+        [propput] HRESULT Selection([in] Windows.UI.Text.Core.CoreTextRange value);
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextSelectionRequestedEventArgs),
+        uuid(13c6682b-f614-421a-8f4b-9ec8a5a37fcd)
+    ]
+    interface ICoreTextSelectionRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT Request([out, retval] Windows.UI.Text.Core.CoreTextSelectionRequest** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextTextRequest),
+        uuid(50d950a9-f51e-4cc1-8ca1-e6346d1a61be)
+    ]
+    interface ICoreTextTextRequest : IInspectable
+    {
+        [propget] HRESULT Range([out, retval] Windows.UI.Text.Core.CoreTextRange* value);
+        [propget] HRESULT Text([out, retval] HSTRING* value);
+        [propput] HRESULT Text([in] HSTRING value);
+        [propget] HRESULT IsCanceled([out, retval] boolean* value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral** value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextTextRequestedEventArgs),
+        uuid(f096a2d0-41c6-4c02-8b1a-d953b00cabb3)
+    ]
+    interface ICoreTextTextRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT Request([out, retval] Windows.UI.Text.Core.CoreTextTextRequest** value);
+    }
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    [exclusiveto(Windows.UI.Text.Core.CoreTextEditContext)]
+    [uuid(bf6608af-4041-47c3-b263-a918eb5eaef2)]
+    interface ICoreTextEditContext : IInspectable
+    {
+        [propget] HRESULT Name([out, retval] HSTRING* value);
+        [propput] HRESULT Name([in] HSTRING value);
+        [propget] HRESULT InputScope([out, retval] Windows.UI.Text.Core.CoreTextInputScope* value);
+        [propput] HRESULT InputScope([in] Windows.UI.Text.Core.CoreTextInputScope value);
+        [propget] HRESULT IsReadOnly([out, retval] boolean* value);
+        [propput] HRESULT IsReadOnly([in] boolean value);
+        [propget] HRESULT InputPaneDisplayPolicy([out, retval] Windows.UI.Text.Core.CoreTextInputPaneDisplayPolicy* value);
+        [propput] HRESULT InputPaneDisplayPolicy([in] Windows.UI.Text.Core.CoreTextInputPaneDisplayPolicy value);
+        [eventadd] HRESULT TextRequested([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextTextRequestedEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT TextRequested([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT SelectionRequested([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextSelectionRequestedEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT SelectionRequested([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT LayoutRequested([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextLayoutRequestedEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT LayoutRequested([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT TextUpdating([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextTextUpdatingEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT TextUpdating([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT SelectionUpdating([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextSelectionUpdatingEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT SelectionUpdating([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT FormatUpdating([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextFormatUpdatingEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT FormatUpdating([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT CompositionStarted([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextCompositionStartedEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT CompositionStarted([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT CompositionCompleted([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            Windows.UI.Text.Core.CoreTextCompositionCompletedEventArgs*>* handler,
+                                            [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT CompositionCompleted([in] EventRegistrationToken cookie);
+        [eventadd] HRESULT FocusRemoved([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextEditContext*,
+                                            IInspectable*>* handler, [out, retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT FocusRemoved([in] EventRegistrationToken cookie);
+        HRESULT NotifyFocusEnter();
+        HRESULT NotifyFocusLeave();
+        HRESULT NotifyTextChanged([in] Windows.UI.Text.Core.CoreTextRange modifiedRange, [in] INT32 newLength,
+                                            [in] Windows.UI.Text.Core.CoreTextRange newSelection);
+        HRESULT NotifySelectionChanged([in] Windows.UI.Text.Core.CoreTextRange selection);
+        HRESULT NotifyLayoutChanged();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.Text.Core.CoreTextServicesManager),
+        uuid(c2507d83-6e0a-4a8a-bdf8-1948874854ba)
+    ]
+    interface ICoreTextServicesManager : IInspectable
+    {
+        [propget] HRESULT InputLanguage([out, retval] Windows.Globalization.Language** value);
+        [eventadd] HRESULT InputLanguageChanged([in] Windows.Foundation.TypedEventHandler<Windows.UI.Text.Core.CoreTextServicesManager*,
+                                            IInspectable*>* handler, [out,retval] EventRegistrationToken* cookie);
+        [eventremove] HRESULT InputLanguageChanged([in] EventRegistrationToken cookie);
+        HRESULT CreateEditContext([out,retval] Windows.UI.Text.Core.CoreTextEditContext** out);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.UI.Text.Core.ICoreTextServicesManagerStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass CoreTextServicesManager
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextServicesManager;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextFormatUpdatingEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextFormatUpdatingEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextEditContext
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextEditContext;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextCompositionCompletedEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextCompositionCompletedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextCompositionStartedEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextCompositionStartedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextLayoutRequestedEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextLayoutRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextSelectionRequestedEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextSelectionRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextSelectionUpdatingEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextSelectionUpdatingEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextTextRequestedEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextTextRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextTextUpdatingEventArgs
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextTextUpdatingEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextLayoutBounds
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextLayoutBounds;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextLayoutRequest
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextLayoutRequest;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextSelectionRequest
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextSelectionRequest;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass CoreTextTextRequest
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextTextRequest;
+    }
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    [marshaling_behavior(agile)]
+    runtimeclass CoreTextCompositionSegment
+    {
+        [default] interface Windows.UI.Text.Core.ICoreTextCompositionSegment;
+    }
+
+}
