@@ -208,18 +208,16 @@ void WINAPI DECLSPEC_HOTPATCH GetNativeSystemInfo( SYSTEM_INFO *si )
 {
     SYSTEM_BASIC_INFORMATION basic_info;
     SYSTEM_CPU_INFORMATION cpu_info;
+    USHORT current_machine, native_machine;
 
-    if (is_wow64)
+    RtlWow64GetProcessMachines( 0, &current_machine, &native_machine );
+
+    if (!is_wow64 || native_machine != IMAGE_FILE_MACHINE_AMD64)
     {
-        USHORT current_machine, native_machine;
-
-        RtlWow64GetProcessMachines( 0, &current_machine, &native_machine );
-        if (native_machine != IMAGE_FILE_MACHINE_AMD64)
-        {
-            GetSystemInfo( si );
+        GetSystemInfo( si );
+        if (is_wow64 && native_machine != IMAGE_FILE_MACHINE_AMD64)
             si->wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
-            return;
-        }
+        return;
     }
 
     if (!set_ntstatus( RtlGetNativeSystemInformation( SystemBasicInformation,
