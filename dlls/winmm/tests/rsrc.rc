@@ -24,6 +24,10 @@
 /* @makedep: test.mpg */
 test.mpg RCDATA "test.mpg"
 
+/* ffmpeg -f lavfi -i smptebars -t 0.16 -r 24 -f avi -vcodec msvideo1 -pix_fmt pal8 -vf scale=32x24 test.avi */
+/* @makedep: test.avi */
+test.avi RCDATA "test.avi"
+
 /* ffmpeg -f lavfi -i "sine=frequency=1000" -t 0.1 -c:a pcm_s24le test_s24le.wav */
 /* @makedep: test_s24le.wav */
 test_s24le.wav WAVE "test_s24le.wav"
