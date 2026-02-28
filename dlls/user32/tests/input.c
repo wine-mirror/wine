@@ -5463,6 +5463,32 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
         WIN_MSG(WM_MOUSEMOVE, 0, 0, 0/*rel*/),
         {0},
     };
+    struct user_call mouse_drag_seq[] =
+    {
+        WIN_MSG(WM_LBUTTONDOWN, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_RBUTTONDOWN, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_RBUTTONUP, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_LBUTTONUP, 0, 0, 0/*rel*/),
+        {0},
+    };
+    struct user_call pointer_drag_seq[] =
+    {
+        WIN_MSG(WM_POINTERDOWN, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_PRIMARY|POINTER_MESSAGE_FLAG_INRANGE|down_flags), 0/*abs*/),
+        WIN_MSG(WM_LBUTTONDOWN, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|down_flags), 0/*abs*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|POINTER_MESSAGE_FLAG_SECONDBUTTON|down_flags), 0/*abs*/),
+        WIN_MSG(WM_RBUTTONDOWN, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|POINTER_MESSAGE_FLAG_SECONDBUTTON|down_flags), 0/*abs*/),
+        WIN_MSG(WM_MOUSEMOVE, 0, 3, 0/*rel*/),
+        WIN_MSG(WM_POINTERUPDATE, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE|down_flags), 0/*abs*/),
+        WIN_MSG(WM_RBUTTONUP, 0, 1, 0/*rel*/),
+        WIN_MSG(WM_POINTERUP, 0, MAKELONG(1, POINTER_MESSAGE_FLAG_INRANGE), 0/*abs*/),
+        WIN_MSG(WM_LBUTTONUP, 0, 0, 0/*rel*/),
+        {0},
+    };
 #undef WIN_MSG
 
     POINTER_INFO pointer_info[4], expect_pointer;
@@ -5481,7 +5507,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ATOM class;
     DWORD res;
     HWND hwnd;
-    POINT pt;
+    POINT pt[3];
     BOOL ret;
 
     if (!pGetPointerType)
@@ -5549,10 +5575,10 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     wait_messages( 100, FALSE );
 
     /* fixup flaky windows mouse position */
-    GetCursorPos( &pt );
-    button_down_seq[0].message.lparam = MAKELONG(pt.x - 100, pt.y - 100);
-    pointer_down_seq[0].message.lparam = MAKELONG(pt.x, pt.y);
-    pointer_down_seq[1].message.lparam = MAKELONG(pt.x - 100, pt.y - 100);
+    GetCursorPos( pt );
+    button_down_seq[0].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+    pointer_down_seq[0].message.lparam = MAKELONG(pt->x, pt->y);
+    pointer_down_seq[1].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
 
     if (mouse_in_pointer_enabled) ok_seq( pointer_down_seq );
     else ok_seq( button_down_seq );
@@ -5561,10 +5587,10 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     wait_messages( 100, FALSE );
 
     /* fixup flaky windows mouse position */
-    GetCursorPos( &pt );
-    button_up_seq[0].message.lparam = MAKELONG(pt.x - 100, pt.y - 100);
-    pointer_up_seq[0].message.lparam = MAKELONG(pt.x, pt.y);
-    pointer_up_seq[1].message.lparam = MAKELONG(pt.x - 100, pt.y - 100);
+    GetCursorPos( pt );
+    button_up_seq[0].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+    pointer_up_seq[0].message.lparam = MAKELONG(pt->x, pt->y);
+    pointer_up_seq[1].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
 
     if (mouse_in_pointer_enabled) ok_seq( pointer_up_seq );
     else ok_seq( button_up_seq );
@@ -5573,13 +5599,47 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     wait_messages( 100, FALSE );
 
     /* fixup flaky windows mouse position */
-    GetCursorPos( &pt );
-    mouse_move_seq[0].message.lparam = MAKELONG(pt.x - 100, pt.y - 100);
-    pointer_move_seq[0].message.lparam = MAKELONG(pt.x, pt.y);
-    pointer_move_seq[1].message.lparam = MAKELONG(pt.x - 100, pt.y - 100);
+    GetCursorPos( pt );
+    mouse_move_seq[0].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
+    pointer_move_seq[0].message.lparam = MAKELONG(pt->x, pt->y);
+    pointer_move_seq[1].message.lparam = MAKELONG(pt->x - 100, pt->y - 100);
 
     if (mouse_in_pointer_enabled) ok_seq( pointer_move_seq );
     else ok_seq( mouse_move_seq );
+
+    GetCursorPos( pt );
+    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+    mouse_event( MOUSEEVENTF_MOVE, 20, 20, 0, 0 );
+    GetCursorPos( pt + 1 );
+    mouse_event( MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0 );
+    mouse_event( MOUSEEVENTF_MOVE, -10, -10, 0, 0 );
+    GetCursorPos( pt + 2 );
+    mouse_event( MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0 );
+    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
+    wait_messages( 100, FALSE );
+
+    /* fixup flaky windows mouse position */
+    mouse_drag_seq[0].message.lparam = MAKELONG(pt[0].x - 100, pt[0].y - 100);
+    mouse_drag_seq[1].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    mouse_drag_seq[2].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    mouse_drag_seq[3].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    mouse_drag_seq[4].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    mouse_drag_seq[5].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    pointer_drag_seq[0].message.lparam = MAKELONG(pt[0].x, pt[0].y);
+    pointer_drag_seq[1].message.lparam = MAKELONG(pt[0].x - 100, pt[0].y - 100);
+    pointer_drag_seq[2].message.lparam = MAKELONG(pt[1].x, pt[1].y);
+    pointer_drag_seq[3].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    pointer_drag_seq[4].message.lparam = MAKELONG(pt[1].x, pt[1].y);
+    pointer_drag_seq[5].message.lparam = MAKELONG(pt[1].x - 100, pt[1].y - 100);
+    pointer_drag_seq[6].message.lparam = MAKELONG(pt[2].x, pt[2].y);
+    pointer_drag_seq[7].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    pointer_drag_seq[8].message.lparam = MAKELONG(pt[2].x, pt[2].y);
+    pointer_drag_seq[9].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+    pointer_drag_seq[10].message.lparam = MAKELONG(pt[2].x, pt[2].y);
+    pointer_drag_seq[11].message.lparam = MAKELONG(pt[2].x - 100, pt[2].y - 100);
+
+    if (mouse_in_pointer_enabled) ok_seq( pointer_drag_seq );
+    else ok_seq( mouse_drag_seq );
 
     p_accept_message = NULL;
 
@@ -5604,7 +5664,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( pointer_info[0].pointerId == 1, "got pointerId %u\n", pointer_info[0].pointerId );
     ok( !!pointer_info[0].frameId, "got frameId %u\n", pointer_info[0].frameId );
     todo_wine
-    ok( pointer_info[0].pointerFlags == (0x20000 | POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_PRIMARY),
+    ok( pointer_info[0].pointerFlags == (0x40000 | POINTER_MESSAGE_FLAG_INRANGE),
         "got pointerFlags %#x\n", pointer_info[0].pointerFlags );
     todo_wine
     ok( pointer_info[0].sourceDevice == INVALID_HANDLE_VALUE || broken(!!pointer_info[0].sourceDevice) /* < w10 & 32bit */,
@@ -5628,7 +5688,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     ok( pointer_info[0].dwKeyStates == 0, "got dwKeyStates %lu\n", pointer_info[0].dwKeyStates );
     ok( !!pointer_info[0].PerformanceCount, "got PerformanceCount %I64u\n", pointer_info[0].PerformanceCount );
     todo_wine
-    ok( pointer_info[0].ButtonChangeType == 0, "got ButtonChangeType %u\n", pointer_info[0].ButtonChangeType );
+    ok( pointer_info[0].ButtonChangeType == POINTER_CHANGE_FIRSTBUTTON_UP, "got ButtonChangeType %u\n", pointer_info[0].ButtonChangeType );
 
     thread = CreateThread( NULL, 0, test_GetPointerInfo_thread, NULL, 0, NULL );
     res = WaitForSingleObject( thread, 5000 );
