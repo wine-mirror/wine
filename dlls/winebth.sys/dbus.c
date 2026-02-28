@@ -255,8 +255,9 @@ static const char *dbgstr_dbus_message( DBusMessage *message )
 
 static inline const char *dbgstr_dbus_connection( DBusConnection *connection )
 {
-    return wine_dbg_sprintf( "{%p connected=%d}", connection,
-                             p_dbus_connection_get_is_connected( connection ) );
+    return wine_dbg_sprintf( "{%p connected=%d name=%s}", connection,
+                             p_dbus_connection_get_is_connected( connection ),
+                             debugstr_a( p_dbus_bus_get_unique_name( connection ) ) );
 }
 
 static const char *dbgstr_dbus_error( const DBusError *error )
@@ -986,7 +987,8 @@ static NTSTATUS bluez_device_get_props_by_path_async( DBusConnection *connection
 
 struct bluez_watcher_ctx
 {
-    void *init_device_list_call;
+    char *bluez_dbus_unique_name;
+    DBusPendingCall *init_device_list_call;
 
     /* struct bluez_init_entry */
     struct list initial_radio_list;
@@ -1059,6 +1061,50 @@ void *bluez_dbus_init( void )
     }
 
     return connection;
+}
+
+/* Return the unique connection name for org.bluez. We use this to ensure that only BlueZ can make method calls to us. */
+static NTSTATUS bluez_dbus_get_unique_name( DBusConnection *connection, char **unique_name )
+{
+    const char *bluez_name = BLUEZ_DEST, *name;
+    NTSTATUS ret = STATUS_SUCCESS;
+    DBusMessage *request, *reply;
+    DBusError error;
+
+    request = p_dbus_message_new_method_call( "org.freedesktop.DBus", "/org/freedesktop/DBus", DBUS_INTERFACE_DBUS,
+                                              "GetNameOwner" );
+    if (!request) return STATUS_NO_MEMORY;
+
+    if (!p_dbus_message_append_args( request, DBUS_TYPE_STRING, &bluez_name, DBUS_TYPE_INVALID ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+
+    p_dbus_error_init( &error );
+    reply = p_dbus_connection_send_with_reply_and_block( connection, request, bluez_timeout, &error );
+    p_dbus_message_unref( request );
+    if (!reply)
+    {
+        ret = bluez_dbus_error_to_ntstatus( &error );
+        WARN_(dbus)( "Failed to get unique name for org.bluez: %s\n", dbgstr_dbus_error( &error ) );
+        p_dbus_error_free( &error );
+        return ret;
+    }
+
+    if (!p_dbus_message_get_args( reply, &error, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID ))
+    {
+        ERR_(dbus)( "Failed to read string from GetNameOwner reply: %s\n", dbgstr_dbus_error( &error ) );
+        ret = bluez_dbus_error_to_ntstatus( &error );
+    }
+    else if (!(*unique_name = strdup( name )))
+        ret = STATUS_NO_MEMORY;
+    else
+        TRACE_(dbus)( "Got unique connection name for org.bluez: %s", debugstr_a( name ) );
+    p_dbus_message_unref( reply );
+    p_dbus_error_free( &error );
+
+    return ret;
 }
 
 void bluez_dbus_close( void *connection )
@@ -2104,17 +2150,34 @@ static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const 
 
 static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, void *data )
 {
-    struct list *event_list;
+    struct bluez_watcher_ctx *ctx = data;
     int type;
 
     if (TRACE_ON( dbus ))
         TRACE_( dbus )( "(%s, %s, %p)\n", dbgstr_dbus_connection( conn ), dbgstr_dbus_message( msg ), data );
 
-    event_list = &((struct bluez_watcher_ctx *)data)->event_list;
     type = p_dbus_message_get_type( msg );
     if (type == DBUS_MESSAGE_TYPE_SIGNAL)
         bluez_signal_handler( conn, msg, p_dbus_message_get_interface( msg ), p_dbus_message_get_member( msg ),
-                              p_dbus_message_get_signature( msg ), event_list );
+                              p_dbus_message_get_signature( msg ), &ctx->event_list );
+    else if (type == DBUS_MESSAGE_TYPE_METHOD_CALL)
+    {
+        DBusMessage *reply;
+        const char *sender;
+        dbus_bool_t success;
+
+        /* Only allow incoming method calls from org.bluez. */
+        if (!(sender = p_dbus_message_get_sender( msg )) || strcmp( sender, ctx->bluez_dbus_unique_name ))
+        {
+            if (!(reply = p_dbus_message_new_error( msg, DBUS_ERROR_ACCESS_DENIED, "Access Denied" )))
+                return DBUS_HANDLER_RESULT_NEED_MEMORY;
+
+            ERR_(dbus)("Denying method call from unknown sender: %s\n", debugstr_a( sender ) );
+            success = p_dbus_connection_send( conn, reply, NULL );
+            p_dbus_message_unref( reply );
+            return success ? DBUS_HANDLER_RESULT_HANDLED : DBUS_HANDLER_RESULT_NEED_MEMORY;
+        }
+    }
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
@@ -2193,6 +2256,7 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
         free( event1 );
     }
 
+    free( watcher->bluez_dbus_unique_name );
     free( watcher );
 }
 
@@ -2200,20 +2264,20 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
 {
     DBusError err;
     NTSTATUS status;
-    DBusPendingCall *call;
     struct bluez_watcher_ctx *watcher_ctx =
         calloc( 1, sizeof( struct bluez_watcher_ctx ) );
     SIZE_T i;
 
     if (watcher_ctx == NULL) return STATUS_NO_MEMORY;
-    status = bluez_get_objects_async( connection, &call );
-    if (status != STATUS_SUCCESS)
+    p_dbus_error_init( &err );
+    status = bluez_dbus_get_unique_name( connection, &watcher_ctx->bluez_dbus_unique_name );
+    if (status) goto done;
+    status = bluez_get_objects_async( connection, &watcher_ctx->init_device_list_call );
+    if (status)
     {
-        free( watcher_ctx );
         ERR( "could not create async GetManagedObjects call: %#x\n", status);
-        return status;
+        goto done;
     }
-    watcher_ctx->init_device_list_call = call;
     list_init( &watcher_ctx->initial_radio_list );
     list_init( &watcher_ctx->initial_device_list );
     list_init( &watcher_ctx->initial_gatt_service_list );
@@ -2225,33 +2289,41 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
      * is racy as the filter is removed from a different thread. */
     if (!p_dbus_connection_add_filter( connection, bluez_filter, watcher_ctx, NULL ))
     {
-        p_dbus_pending_call_cancel( call );
-        p_dbus_pending_call_unref( call );
-        free( watcher_ctx );
         ERR( "Could not add DBus filter\n" );
-        return STATUS_NO_MEMORY;
+        status = STATUS_NO_MEMORY;
+        goto done;
     }
-    p_dbus_error_init( &err );
     for (i = 0; i < ARRAY_SIZE( BLUEZ_MATCH_RULES ); i++)
     {
-        TRACE( "Adding DBus match rule %s\n", debugstr_a( BLUEZ_MATCH_RULES[i] ) );
+        const char *rule = BLUEZ_MATCH_RULES[i];
 
-        p_dbus_bus_add_match( connection, BLUEZ_MATCH_RULES[i], &err );
+        TRACE( "Adding DBus match rule %s\n", debugstr_a( rule ) );
+        p_dbus_bus_add_match( connection, rule, &err );
         if (p_dbus_error_is_set( &err ))
         {
-            NTSTATUS status = bluez_dbus_error_to_ntstatus( &err );
-            ERR( "Could not add DBus match %s: %s\n", debugstr_a( BLUEZ_MATCH_RULES[i] ), dbgstr_dbus_error( &err ) );
-            p_dbus_pending_call_cancel( call );
-            p_dbus_pending_call_unref( call );
-            p_dbus_error_free( &err );
-            free( watcher_ctx );
-            return status;
+            ERR( "Could not add DBus match %s: %s\n", debugstr_a( rule ), dbgstr_dbus_error( &err ) );
+            status = bluez_dbus_error_to_ntstatus( &err );
+            goto done;
         }
     }
+done:
     p_dbus_error_free( &err );
-    *ctx = watcher_ctx;
-    TRACE( "ctx=%p\n", ctx );
-    return STATUS_SUCCESS;
+    if (status)
+    {
+        if (watcher_ctx->init_device_list_call)
+        {
+            p_dbus_pending_call_cancel( watcher_ctx->init_device_list_call );
+            p_dbus_pending_call_unref( watcher_ctx->init_device_list_call );
+        }
+        free( watcher_ctx->bluez_dbus_unique_name );
+        free( watcher_ctx );
+    }
+    else
+    {
+        *ctx = watcher_ctx;
+        TRACE( "ctx=%p\n", ctx );
+    }
+    return status;
 }
 
 void bluez_watcher_close( void *connection, void *ctx )

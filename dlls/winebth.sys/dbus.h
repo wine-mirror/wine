@@ -37,6 +37,7 @@
     DO_FUNC(dbus_bus_get); \
     DO_FUNC(dbus_bus_get_id); \
     DO_FUNC(dbus_bus_get_private); \
+    DO_FUNC(dbus_bus_get_unique_name); \
     DO_FUNC(dbus_bus_remove_match); \
     DO_FUNC(dbus_connection_add_filter); \
     DO_FUNC(dbus_connection_close); \
