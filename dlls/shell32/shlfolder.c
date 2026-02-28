@@ -443,15 +443,18 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder2 *psf, LPCITEMIDLIST pidl, LPDWO
 
             *pdwAttributes |= (SFGAO_FOLDER | SFGAO_FILESYSANCESTOR | SFGAO_STORAGEANCESTOR | SFGAO_STORAGE);
 
-            if (SUCCEEDED(IShellFolder2_BindToObject(psf, pidl, NULL, &IID_IShellFolder, (void **)&child)))
+            if (dwAttributes & SFGAO_HASSUBFOLDER)
             {
-                if (IShellFolder_EnumObjects(child, NULL, SHCONTF_FOLDERS|SHCONTF_INCLUDEHIDDEN, &enum_ids) == S_OK)
+                if (SUCCEEDED(IShellFolder2_BindToObject(psf, pidl, NULL, &IID_IShellFolder, (void **)&child)))
                 {
-                    if (IEnumIDList_Skip(enum_ids, 1) != S_OK)
-                        *pdwAttributes &= ~SFGAO_HASSUBFOLDER;
-                    IEnumIDList_Release(enum_ids);
+                    if (IShellFolder_EnumObjects(child, NULL, SHCONTF_FOLDERS|SHCONTF_INCLUDEHIDDEN, &enum_ids) == S_OK)
+                    {
+                        if (IEnumIDList_Skip(enum_ids, 1) != S_OK)
+                            *pdwAttributes &= ~SFGAO_HASSUBFOLDER;
+                        IEnumIDList_Release(enum_ids);
+                    }
+                    IShellFolder_Release(child);
                 }
-                IShellFolder_Release(child);
             }
         }
 	else
