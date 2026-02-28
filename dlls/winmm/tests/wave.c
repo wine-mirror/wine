@@ -2450,12 +2450,15 @@ static void test_formats(void)
     for (i = 0; i < wave_format_count; ++i)
     {
         const char *additional_context = wave_formats[i].additional_context;
-        WAVEFORMATEXTENSIBLE fmt = wave_formats[i].format;
+        /* The test "cbSize += 1" needs to reserve additional memory. */
+        char buf[sizeof(WAVEFORMATEXTENSIBLE) + 1];
+        WAVEFORMATEXTENSIBLE *fmt = (WAVEFORMATEXTENSIBLE*)&buf;
+        *fmt = wave_formats[i].format;
 
         winetest_push_context("test %u%s%s", i, additional_context ? ", " : "",
                 additional_context ? additional_context : "");
-        push_format_context(&fmt);
-        test_format(&fmt);
+        push_format_context(fmt);
+        test_format(fmt);
         winetest_pop_context();
         winetest_pop_context();
     }
