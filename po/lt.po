@@ -1,12 +1,12 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011-2025.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-12-06 13:21+0200\n"
+"PO-Revision-Date: 2026-02-28 23:50+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -1018,14 +1018,14 @@ msgstr ""
 
 #: dlls/comdlg32/comdlg32.rc:37
 msgid "Invalid character(s) in path"
-msgstr "Kelyje yra netinkamų simbolių"
+msgstr "Kelyje yra netinkamų ženklų"
 
 #: dlls/comdlg32/comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
-"Failo vardas negali turėti šių simbolių:\n"
+"Failo vardas negali turėti šių ženklų:\n"
 "                          / : < > |"
 
 #: dlls/comdlg32/comdlg32.rc:39
@@ -4012,7 +4012,7 @@ msgstr "Tikėtasi „=“"
 
 #: dlls/jscript/jscript.rc:44
 msgid "Invalid character"
-msgstr "Neteisingas simbolis"
+msgstr "Neteisingas ženklas"
 
 #: dlls/jscript/jscript.rc:45
 msgid "Unterminated string constant"
@@ -4128,7 +4128,7 @@ msgstr "Išimtinė situacija sugeneruota ir neapdorota"
 
 #: dlls/jscript/jscript.rc:71
 msgid "URI to be encoded contains invalid characters"
-msgstr "Koduotiname URI yra netinkamų simbolių"
+msgstr "Koduotiname URI yra netinkamų ženklų"
 
 #: dlls/jscript/jscript.rc:70
 msgid "URI to be decoded is incorrect"
@@ -6588,7 +6588,7 @@ msgstr "Inicijuotas paleidimas iš naujo po sėkmingo įdiegimo.\n"
 
 #: dlls/kernelbase/winerror.mc:2935
 msgid "Invalid string binding.\n"
-msgstr "Neteisingas simbolių eilučių saistymas.\n"
+msgstr "Neteisingas eilučių saistymas.\n"
 
 #: dlls/kernelbase/winerror.mc:2940
 msgid "Wrong kind of binding.\n"
@@ -8860,226 +8860,172 @@ msgid "Wine Video 1 video codec"
 msgstr "„Wine“ Video 1 vaizdo kodekas"
 
 #: dlls/msxml3/msxml.mc:31
-#, fuzzy
-#| msgid "Undefined external error."
 msgid "Undefined reference\n"
-msgstr "Neapibrėžta išorinė klaida."
+msgstr "Neapibrėžta nuoroda\n"
 
 #: dlls/msxml3/msxml.mc:38
 msgid "Found self-referential entity\n"
-msgstr ""
+msgstr "Rasta į save rodanti esybė\n"
 
 #: dlls/msxml3/msxml.mc:45
 msgid "Unparsed entity reference\n"
-msgstr ""
+msgstr "Neišanalizuota esybės nuoroda\n"
 
 #: dlls/msxml3/msxml.mc:52
 msgid "Name text contains colon ':'\n"
-msgstr ""
+msgstr "Vardo tekstas turi dvitaškį „:“\n"
 
 #: dlls/msxml3/msxml.mc:59
 msgid "Namespace prefix hasn't been declared\n"
-msgstr ""
+msgstr "Vardų erdvės prefiksas nebuvo apibrėžtas\n"
 
 #: dlls/msxml3/msxml.mc:66
-#, fuzzy
-#| msgid "Expected '='"
 msgid "Expected '=' character\n"
-msgstr "Tikėtasi „=“"
+msgstr "Tikėtasi ženklo „=“\n"
 
 #: dlls/msxml3/msxml.mc:73
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected a quote character\n"
-msgstr "Tikėtasi operacijos ženklo.\n"
+msgstr "Tikėtasi kabučių ženklo\n"
 
 #: dlls/msxml3/msxml.mc:80
 msgid "Malformed comment\n"
-msgstr ""
+msgstr "Netaisyklingas komentaras\n"
 
 #: dlls/msxml3/msxml.mc:87
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid name start character\n"
-msgstr "Neteisingas simbolis"
+msgstr "Neteisingas vardo pradžios ženklas\n"
 
 #: dlls/msxml3/msxml.mc:94
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid name character\n"
-msgstr "Neteisingas simbolis"
+msgstr "Neteisingas vardo ženklas\n"
 
 #: dlls/msxml3/msxml.mc:101
 msgid "The '<' character found in attribute value\n"
-msgstr ""
+msgstr "Ženklas „<“ rastas atributo reikšmėje\n"
 
 #: dlls/msxml3/msxml.mc:108
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected whitespace character\n"
-msgstr "Tikėtasi operacijos ženklo.\n"
+msgstr "Tikėtasi matomo tarpo ženklo\n"
 
 #: dlls/msxml3/msxml.mc:115
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected end tag character '>'\n"
-msgstr "Tikėtasi operacijos ženklo.\n"
+msgstr "Tikėtasi žymės pabaigos ženklo „>“\n"
 
 #: dlls/msxml3/msxml.mc:122
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in DTD content\n"
-msgstr "Kelyje yra netinkamų simbolių"
+msgstr "Neteisingas ženklas DTD turinyje\n"
 
 #: dlls/msxml3/msxml.mc:129
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected ';' character\n"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi ženklo „;“\n"
 
 #: dlls/msxml3/msxml.mc:136
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in entity reference\n"
-msgstr "Kelyje yra netinkamų simbolių"
+msgstr "Neteisingas ženklas esybės nuorodoje\n"
 
 #: dlls/msxml3/msxml.mc:143
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in mixed DTD content\n"
-msgstr "Kelyje yra netinkamų simbolių"
+msgstr "Neteisingas ženklas mišriame DTD turinyje\n"
 
 #: dlls/msxml3/msxml.mc:150
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected '*' character\n"
-msgstr "Tikėtasi operacijos ženklo.\n"
+msgstr "Tikėtasi ženklo „*“\n"
 
 #: dlls/msxml3/msxml.mc:157
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected parenthesis character\n"
-msgstr "Tikėtasi operacijos ženklo.\n"
+msgstr "Tikėtasi skliaustų ženklo\n"
 
 #: dlls/msxml3/msxml.mc:164
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in DTD enumeration\n"
-msgstr "Kelyje yra netinkamų simbolių"
+msgstr "Neteisingas ženklas DTD išvardijime\n"
 
 #: dlls/msxml3/msxml.mc:171
-#, fuzzy
-#| msgid "Invalid name syntax.\n"
 msgid "Invalid PI syntax\n"
-msgstr "Neteisinga vardo sintaksė.\n"
+msgstr "Neteisinga PI sintaksė\n"
 
 #: dlls/msxml3/msxml.mc:178
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected closing quote character\n"
-msgstr "Tikėtasi operacijos ženklo.\n"
+msgstr "Tikėtasi uždaromosios kabutės ženklo\n"
 
 #: dlls/msxml3/msxml.mc:185
 msgid "Multiple colon character found\n"
-msgstr ""
+msgstr "Rasti daugybiniai dvitaškio ženklai\n"
 
 #: dlls/msxml3/msxml.mc:192
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid Unicode character\n"
-msgstr "Neteisingas simbolis"
+msgstr "Neteisingas Unikodo ženklas\n"
 
 #: dlls/msxml3/msxml.mc:199
 msgid "Expected whitespace or '?' character\n"
-msgstr ""
+msgstr "Tikėtasi matomo tarpo arba ženklo „?“\n"
 
 #: dlls/msxml3/msxml.mc:206
 msgid "Unexpected end tag '>' character\n"
-msgstr ""
+msgstr "Netikėtas pabaigos žymės ženklas „>“\n"
 
 #: dlls/msxml3/msxml.mc:213
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Found duplicate attribute\n"
-msgstr "Neteisingi grupės požymiai.\n"
+msgstr "Rastas dubliuotas atributas\n"
 
 #: dlls/msxml3/msxml.mc:220
-#, fuzzy
-#| msgid "Key is invalid.\n"
 msgid "Document root is invalid\n"
-msgstr "Raktas neteisingas.\n"
+msgstr "Dokumento šaknis neteisinga\n"
 
 #: dlls/msxml3/msxml.mc:227
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "Invalid xml declaration\n"
-msgstr "Neteisinga rodyklės operacija.\n"
+msgstr "Neteisingas xml aprašas\n"
 
 #: dlls/msxml3/msxml.mc:234
-#, fuzzy
-#| msgid "Source is missing.\n"
 msgid "Document root is missing\n"
-msgstr "Trūksta šaltinio.\n"
+msgstr "Trūksta dokumento šaknies\n"
 
 #: dlls/msxml3/msxml.mc:241
 msgid "Unexpected end of input data stream\n"
-msgstr ""
+msgstr "Netikėta duomenų srauto įvesties pabaiga\n"
 
 #: dlls/msxml3/msxml.mc:248
 msgid "Found unexpected CDATA closing markup ']]>'\n"
-msgstr ""
+msgstr "Rastas netikėtas CDATA pabaigos ženklinimas „]]>“\n"
 
 #: dlls/msxml3/msxml.mc:255
 msgid "Found unterminated PI declaration\n"
-msgstr ""
+msgstr "Rastas nebaigtas PI aprašas\n"
 
 #: dlls/msxml3/msxml.mc:262
 msgid "Found unterminated end tag\n"
-msgstr ""
+msgstr "Rasta nebaigta pabaigos žymė\n"
 
 #: dlls/msxml3/msxml.mc:269
 msgid "Found unterminated CDATA block\n"
-msgstr ""
+msgstr "Rastas nebaigtas CDATA blokas\n"
 
 #: dlls/msxml3/msxml.mc:276
 msgid "Use namespace prefix is reserved\n"
-msgstr ""
+msgstr "Panaudotas rezervuotas vardų srities priešdėlis\n"
 
 #: dlls/msxml3/msxml.mc:283
-#, fuzzy
-#| msgid "The passwords do not match."
 msgid "End tag does not match\n"
-msgstr "Slaptažodžiai nesutampa."
+msgstr "Pabaigos žymė nesutampa\n"
 
 #: dlls/msxml3/msxml.mc:290
-#, fuzzy
-#| msgid "Invalid domain name.\n"
 msgid "Invalid encoding name\n"
-msgstr "Neteisingas srities vardas.\n"
+msgstr "Neteisingas koduotės vardas\n"
 
 #: dlls/msxml3/msxml.mc:297
-#, fuzzy
-#| msgid "Invalid media type.\n"
 msgid "Invalid model in DTD contentspec\n"
-msgstr "Neteisingas medijos tipas.\n"
+msgstr "Neteisingas modelis DTD turinio specifikacijoje\n"
 
 #: dlls/msxml3/msxml.mc:304
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid DTD attribute type\n"
-msgstr "Neteisingi grupės požymiai.\n"
+msgstr "Neteisingas DTD atributo tipas\n"
 
 #: dlls/msxml3/msxml.mc:311
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "Invalid standalone declaration\n"
-msgstr "Neteisinga rodyklės operacija.\n"
+msgstr "Neteisingas atskiras aprašas\n"
 
 #: dlls/msxml3/msxml.mc:318
-#, fuzzy
-#| msgid "Invalid version option.\n"
 msgid "Invalid xml version\n"
-msgstr "Neteisinga versijos išvestis.\n"
+msgstr "Neteisinga xml versija\n"
 
 #: dlls/oleacc/oleacc.rc:31
 msgid "unknown object"
@@ -13600,12 +13546,12 @@ msgid ""
 "characters, followed by a period and an extension."
 msgstr ""
 "Netinkamas failo vardas. Įsitikinkite, kad failo vardas neilgesnis kaip 8 "
-"simbolių, o po jų seka taškas ir plėtinys."
+"ženklų, o po jų seka taškas ir plėtinys."
 
 #: dlls/winmm/winmm.rc:104
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
-msgstr "Negalima nurodyti papildomų simbolių po eilutės apsuptos kabutėmis."
+msgstr "Negalima nurodyti papildomų ženklų po eilutės apsuptos kabutėmis."
 
 #: dlls/winmm/winmm.rc:105
 msgid ""
@@ -13643,12 +13589,12 @@ msgstr ""
 msgid "Specify a device or driver name that is less than 79 characters."
 msgstr ""
 "Nurodykite įrenginio ar tvarkyklės vardą, kuris yra trumpesnis nei 79 "
-"simboliai."
+"ženklai."
 
 #: dlls/winmm/winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
 msgstr ""
-"Nurodykite įrenginio ar tvarkyklės vardą, kuris trumpesnis nei 69 simboliai."
+"Nurodykite įrenginio ar tvarkyklės vardą, kuris trumpesnis nei 69 ženklai."
 
 #: dlls/winmm/winmm.rc:111
 msgid ""
@@ -14258,7 +14204,7 @@ msgstr ""
 "\n"
 "ECHO OFF panaikina ankstesnės ECHO ON komandos veikimą (ECHO OFF –\n"
 "numatyta). ECHO OFF komandos rodymo galima išvengti prieš ją pridedant\n"
-"simbolį @.\n"
+"ženklą @.\n"
 
 #: programs/cmd/cmd.rc:75
 msgid "ERASE <filename> deletes a file or set of files.\n"
@@ -14276,7 +14222,7 @@ msgstr ""
 "\n"
 "Sintaksė: FOR %kintamasis IN (aibė) DO komanda\n"
 "\n"
-"Simbolis % privalo būti dubliuotas, kai FOR naudojamas komandų faile.\n"
+"Ženklas % privalo būti dubliuotas, kai FOR naudojamas komandų faile.\n"
 
 #: programs/cmd/cmd.rc:94
 msgid ""
@@ -14293,7 +14239,7 @@ msgid ""
 msgstr ""
 "GOTO komanda nukreipia vykdymą į kitą sakinį komandų faile.\n"
 "\n"
-"Žymė, kuri yra GOTO komandos tikslas, gali būti 255 simbolių ilgio, bet be\n"
+"Žymė, kuri yra GOTO komandos tikslas, gali būti 255 ženklų ilgio, bet be\n"
 "tarpų (tai skiriasi nuo kitų operacinių sistemų). Jei komandų faile\n"
 "egzistuoja dvi ar daugiau identiškos žymės, visuomet bus vykdoma pirmoji.\n"
 "Mėginimas nukreipti vykdymą į neegzistuojančią žymę nutraukia komandų failo\n"
@@ -14427,10 +14373,10 @@ msgid ""
 msgstr ""
 "PROMPT nustato komandos eilutės raginimą.\n"
 "\n"
-"Simbolių eilutė, einanti po PROMPT komandos (ir tarpas iškart po to),\n"
+"Eilutė, einanti po PROMPT komandos (ir tarpas iškart po to),\n"
 "atsiranda eilutės pradžioje, kai cmd laukia įvedimo.\n"
 "\n"
-"Šie simboliai turi nurodytą specialią reikšmę:\n"
+"Šie ženklai turi nurodytą specialią reikšmę:\n"
 "\n"
 "$$    Dolerio ženklas     $_    Eilutės patraukimas $b    Status brūkšnys "
 "(|)\n"
@@ -14440,7 +14386,7 @@ msgstr ""
 "\n"
 "Pastebėkite, kad PROMPT komandos be raginimo eilutės įvedimas atkuria\n"
 "numatytąją raginimo reikšmę, kuri yra dabartinis kelias (įskaitant\n"
-"dabartinio disko raidę) ir daugiau-už (>) simbolis.\n"
+"dabartinio disko raidę) ir daugiau-už (>) ženklas.\n"
 "(Taip pat, kaip komanda PROMPT $p$g).\n"
 "\n"
 "Raginimas taip pat gali būti pakeistas keičiant PROMPT aplinkos kintamąjį,\n"
@@ -14937,7 +14883,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:390
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "Tomo vardas (11 simbolių, <Įvesti> – bevardis)?"
+msgstr "Tomo vardas (11 ženklų, <Įvesti> – bevardis)?"
 
 #: programs/cmd/cmd.rc:391
 msgid "Press any key to continue... "
@@ -15172,8 +15118,7 @@ msgstr "Ekrano buferio dydis turi būti didesnis arba lygus lango dydžiui."
 
 #: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr ""
-"Kiekvienas simbolis yra %1!u! pikselių pločio ir %2!u! pikselių aukščio"
+msgstr "Kiekvienas ženklas yra %1!u! pikselių pločio ir %2!u! pikselių aukščio"
 
 #: programs/conhost/conhost.rc:42
 msgid "This is a test"
@@ -16613,7 +16558,7 @@ msgstr ""
 "     Jei [/t] nenurodytas, numatytasis duomenų tipas yra REG_SZ.\n"
 "\n"
 "  /s <skirtukas>\n"
-"     Simbolis naudojamas eilutėms REG_MULTI_SZ duomenyse atskirti.\n"
+"     Ženklas naudojamas eilutėms REG_MULTI_SZ duomenyse atskirti.\n"
 "     Jei [/s] nenurodytas, numatytasis skirtukas yra \\0.\n"
 "\n"
 "  /d <duomenys>\n"
