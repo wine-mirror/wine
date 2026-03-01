@@ -24,6 +24,7 @@
 #include <windef.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <schannel.h>
 #include <winhttp.h>
 #include <wincrypt.h>
 #include <winreg.h>
@@ -69,6 +70,7 @@ static void test_WinHttpQueryOption(void)
     BOOL ret;
     HINTERNET session, request, connection;
     DWORD feature, size;
+    WINHTTP_SECURITY_INFO info;
 
     SetLastError(0xdeadbeef);
     session = WinHttpOpen(L"winetest", 0, 0, 0, 0);
@@ -282,6 +284,17 @@ static void test_WinHttpQueryOption(void)
     ret = WinHttpQueryOption(request, WINHTTP_OPTION_DECOMPRESSION, &feature, &size);
     ok(!ret, "should fail to query option\n");
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", GetLastError() );
+
+    size = sizeof(info);
+    info.ConnectionInfo.dwProtocol = 0xdeadbeef;
+    info.ConnectionInfo.dwCipherStrength = 0xdeadbeef;
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_SECURITY_INFO, &info, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    if (ret)
+    {
+        ok(info.ConnectionInfo.dwProtocol == 0, "got %lu\n", info.ConnectionInfo.dwProtocol);
+        ok(info.ConnectionInfo.dwCipherStrength == 0, "got %lu\n", info.ConnectionInfo.dwCipherStrength);
+    }
 
     SetLastError(0xdeadbeef);
     ret = WinHttpCloseHandle(request);
@@ -1088,6 +1101,7 @@ static void test_secure_connection(void)
     BOOL ret;
     CERT_CONTEXT *cert;
     WINHTTP_CERTIFICATE_INFO info;
+    WINHTTP_SECURITY_INFO secinfo;
     char buffer[32];
 
     ses = WinHttpOpen(L"winetest", 0, NULL, NULL, 0);
@@ -1211,6 +1225,15 @@ static void test_secure_connection(void)
         trace("dwKeySize %lu\n", info.dwKeySize);
         LocalFree( info.lpszSubjectInfo );
         LocalFree( info.lpszIssuerInfo );
+    }
+
+    size = sizeof(secinfo);
+    ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_INFO, &secinfo, &size);
+    ok(ret, "got %lu\n", GetLastError());
+    if (ret)
+    {
+        ok(secinfo.ConnectionInfo.dwProtocol == SP_PROT_TLS1_2_CLIENT, "got %lu\n", secinfo.ConnectionInfo.dwProtocol);
+        ok(secinfo.ConnectionInfo.dwCipherStrength == info.dwKeySize, "got %lu\n", secinfo.ConnectionInfo.dwCipherStrength);
     }
 
     ret = WinHttpReceiveResponse(req, NULL);

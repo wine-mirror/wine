@@ -23,6 +23,7 @@
 #include "winsock2.h"
 #include "ws2ipdef.h"
 #include "ws2tcpip.h"
+#include "schannel.h"
 #include "winhttp.h"
 #include "winreg.h"
 #include "winternl.h"
@@ -819,6 +820,24 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         }
         *(DWORD *)buffer = flags;
         *buflen = sizeof(flags);
+        return TRUE;
+    }
+    case WINHTTP_OPTION_SECURITY_INFO:
+    {
+        WINHTTP_SECURITY_INFO *info = (WINHTTP_SECURITY_INFO *)buffer;
+        SECURITY_STATUS res;
+
+        if (!validate_buffer( buffer, buflen, sizeof(WINHTTP_SECURITY_INFO) )) return FALSE;
+
+        memset(info, 0 , sizeof(WINHTTP_SECURITY_INFO));
+        if (!request->netconn || !request->netconn->secure) return TRUE;
+        res = QueryContextAttributesW( &request->netconn->ssl_ctx, SECPKG_ATTR_CONNECTION_INFO,
+                                      (void*)&info->ConnectionInfo );
+        if(res != SEC_E_OK)
+            WARN( "QueryContextAttributesW failed: %#lx\n", res );
+        res = QueryContextAttributesW( &request->netconn->ssl_ctx, SECPKG_ATTR_CIPHER_INFO, (void*)&info->CipherInfo );
+        if(res != SEC_E_OK)
+            WARN( "QueryContextAttributesW failed: %#lx\n", res );
         return TRUE;
     }
     case WINHTTP_OPTION_SERVER_CERT_CONTEXT:
