@@ -304,7 +304,8 @@ static HRESULT WINAPI core_input_view4_add_PrimaryViewHiding(ICoreInputView4 *if
                                                              EventRegistrationToken *token)
 {
     FIXME("iface %p, handler %p, token %p stub!\n", iface, handler, token);
-    return E_NOTIMPL;
+    token->value = 0xdeadbeef;
+    return S_OK;
 }
 
 static HRESULT WINAPI core_input_view4_remove_PrimaryViewHiding(ICoreInputView4 *iface,
