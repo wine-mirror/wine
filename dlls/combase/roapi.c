@@ -588,3 +588,12 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
 
     return REGDB_E_CLASSNOTREG;
 }
+
+/***********************************************************************
+ *      RoFailFastWithErrorContext (combase.@)
+ */
+void WINAPI RoFailFastWithErrorContext(HRESULT hr)
+{
+    FIXME("(0x%08lx)\n", hr);
+    RaiseFailFastException(NULL, NULL, 0);
+}

@@ -33,6 +33,7 @@ typedef enum
 } RO_ERROR_REPORTING_FLAGS;
 
 HRESULT WINAPI GetRestrictedErrorInfo(IRestrictedErrorInfo **info);
+void    WINAPI RoFailFastWithErrorContext(HRESULT hr);
 HRESULT WINAPI RoGetErrorReportingFlags(UINT32 *flags);
 BOOL    WINAPI RoOriginateError(HRESULT error, HSTRING message);
 BOOL    WINAPI RoOriginateErrorW(HRESULT error, UINT max_len, const WCHAR *message);
