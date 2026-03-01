@@ -26,6 +26,7 @@
 #include "winstring.h"
 #include "appnotify.h"
 #include "activation.h"
+#include "shlobj.h"
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
@@ -40,6 +41,8 @@
 #include "windows.ui.viewmanagement.h"
 #define WIDL_using_Windows_ApplicationModel_Core
 #include "windows.applicationmodel.core.h"
+#define WIDL_using_Windows_ApplicationModel_DataTransfer
+#include "windows.applicationmodel.datatransfer.h"
 
 #include "wine/debug.h"
 
@@ -48,6 +51,7 @@ extern IActivationFactory *client_device_information_factory;
 extern IActivationFactory *analytics_info_factory;
 extern IActivationFactory *advertising_manager_factory;
 extern IActivationFactory *core_application_factory;
+extern IActivationFactory *data_transfer_manager_statics_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
