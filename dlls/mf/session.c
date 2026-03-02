@@ -227,6 +227,9 @@ struct topo_node
             struct transform_stream *outputs;
             DWORD *output_map;
             unsigned int output_count;
+
+            BOOL async;
+            IMFMediaEventGenerator *event_source;
         } transform;
     } u;
 };
@@ -800,6 +803,8 @@ static void release_topo_node(struct topo_node *node)
             free(node->u.transform.outputs);
             free(node->u.transform.input_map);
             free(node->u.transform.output_map);
+            if (node->u.transform.event_source)
+                IMFMediaEventGenerator_Release(node->u.transform.event_source);
             break;
         case MF_TOPOLOGY_OUTPUT_NODE:
             if (node->u.sink.allocator)
@@ -824,17 +829,18 @@ static void release_topo_node(struct topo_node *node)
 static void topology_shutdown(IMFTopology *topology)
 {
     IMFStreamSink *stream_sink;
+    IMFAttributes *attributes;
     IMFTopologyNode *node;
     IMFActivate *activate;
     IMFMediaSink *sink;
     WORD idx = 0;
     HRESULT hr;
 
-    /* FIXME: should handle async MFTs, but these are not supported by the rest of the pipeline currently. */
-
     while (SUCCEEDED(IMFTopology_GetNode(topology, idx++, &node)))
     {
-        if (topology_node_get_type(node) == MF_TOPOLOGY_OUTPUT_NODE)
+        MF_TOPOLOGY_TYPE node_type = topology_node_get_type(node);
+
+        if (node_type == MF_TOPOLOGY_OUTPUT_NODE)
         {
             /* MF_TOPONODE_NOSHUTDOWN_ON_REMOVE is ignored, at least for sinks. */
 
@@ -855,6 +861,21 @@ static void topology_shutdown(IMFTopology *topology)
 
                 IMFStreamSink_Release(stream_sink);
             }
+        }
+        else if (node_type == MF_TOPOLOGY_TRANSFORM_NODE
+                && (attributes = topology_node_transform_async_get_attributes(node)))
+        {
+            IMFShutdown *shutdown;
+            if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFShutdown, (void **)&shutdown)))
+            {
+                IMFShutdown_Shutdown(shutdown);
+                IMFShutdown_Release(shutdown);
+            }
+            else
+            {
+                WARN("Failed to get shutdown interface, hr %#lx.\n", hr);
+            }
+            IMFAttributes_Release(attributes);
         }
 
         IMFTopologyNode_Release(node);
@@ -1754,6 +1775,7 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
     struct transform_stream *streams;
     UINT32 bytes_per_second, value;
     unsigned int block_alignment;
+    IMFAttributes *attributes;
     IMFMediaType *media_type;
     HRESULT hr;
 
@@ -1782,6 +1804,17 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
             list_init(&streams[i].samples);
         node->u.transform.inputs = streams;
         node->u.transform.input_count = input_count;
+
+        if ((attributes = topology_node_transform_async_get_attributes(node->node)))
+        {
+            IMFAttributes_SetUINT32(attributes, &MF_TRANSFORM_ASYNC_UNLOCK, TRUE);
+            IMFAttributes_Release(attributes);
+
+            node->u.transform.async = TRUE;
+            if (FAILED(hr = IMFTransform_QueryInterface(node->object.transform, &IID_IMFMediaEventGenerator,
+                    (void **)&node->u.transform.event_source)))
+                WARN("Failed to get event source, hr %#lx.\n", hr);
+        }
 
         streams = calloc(output_count, sizeof(*streams));
         for (i = 0; i < output_count; ++i)
@@ -3234,7 +3267,12 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
                 LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
                 {
                     if (node->type == MF_TOPOLOGY_TRANSFORM_NODE)
+                    {
+                        if (node->u.transform.async && FAILED(hr = IMFMediaEventGenerator_BeginGetEvent(node->u.transform.event_source,
+                                &session->events_callback, (IUnknown *)node->u.transform.event_source)))
+                            WARN("Failed to subscribe to transform events, hr %#lx.\n", hr);
                         IMFTransform_ProcessMessage(node->object.transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+                    }
                 }
             }
 
@@ -3873,7 +3911,8 @@ static HRESULT transform_node_handle_format_change(struct media_session *session
         IMFAttributes_Release(attributes);
     }
 
-    if (!support_dynamic_format_change)
+    /* all async MFTs must support dynamic format change, but async is checked here in case a bugged MFT doesn't set the flag */
+    if (!support_dynamic_format_change && !topo_node->u.transform.async)
     {
         if (SUCCEEDED(hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, id)))
         {
@@ -3986,6 +4025,8 @@ static void transform_node_deliver_samples(struct media_session *session, struct
 
             if (FAILED(hr = transform_stream_pop_event(stream, &event)))
             {
+                if (topo_node->u.transform.async)
+                    break;
                 /* try getting more samples by calling IMFTransform_ProcessOutput */
                 if (FAILED(hr = transform_node_pull_samples(session, topo_node)))
                     break;
@@ -4007,7 +4048,7 @@ static void transform_node_deliver_samples(struct media_session *session, struct
         }
     }
 
-    if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && transform_node_has_requests(topo_node))
+    if (!topo_node->u.transform.async && hr == MF_E_TRANSFORM_NEED_MORE_INPUT && transform_node_has_requests(topo_node))
     {
         struct transform_stream *stream;
 
@@ -4062,8 +4103,11 @@ static void session_deliver_sample_to_node(struct media_session *session, struct
         case MF_TOPOLOGY_TRANSFORM_NODE:
             if (FAILED(hr = transform_node_push_sample(session, topo_node, input, sample)))
                 WARN("Failed to push or queue sample to transform, hr %#lx\n", hr);
-            transform_node_pull_samples(session, topo_node);
-            transform_node_deliver_samples(session, topo_node);
+            if (!topo_node->u.transform.async)
+            {
+                transform_node_pull_samples(session, topo_node);
+                transform_node_deliver_samples(session, topo_node);
+            }
             break;
         case MF_TOPOLOGY_TEE_NODE:
             FIXME("Unhandled downstream node type %d.\n", topo_node->type);
@@ -4116,7 +4160,7 @@ static HRESULT session_request_sample_from_node(struct media_session *session, s
                     ERR("Failed to handle stream event, hr %#lx\n", hr);
                 IMFMediaEvent_Release(event);
             }
-            else if (transform_node_has_requests(topo_node))
+            else if (transform_node_has_requests(topo_node) || topo_node->u.transform.async)
             {
                 /* there's already requests pending, just increase the counter */
                 stream->requests++;
@@ -4379,6 +4423,20 @@ static void session_sink_stream_scrub_complete(struct media_session *session, IM
     }
 }
 
+static struct topo_node *session_get_async_transform_node(const struct media_session *session,
+        IMFMediaEventGenerator *event_source)
+{
+    struct topo_node *node;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == MF_TOPOLOGY_TRANSFORM_NODE && node->u.transform.event_source == event_source)
+            return node;
+    }
+    FIXME("Failed to get transform.\n");
+    return NULL;
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
@@ -4592,6 +4650,54 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             }
 
             break;
+
+        case METransformNeedInput:
+        {
+            struct topo_node *up_node, *topo_node = session_get_async_transform_node(session, event_source);
+            struct transform_stream *stream;
+            IMFMediaEvent *stream_event;
+            UINT32 input = 0;
+            BOOL is_sample;
+            DWORD output;
+
+            if (FAILED(hr = IMFMediaEvent_GetUINT32(event, &MF_EVENT_MFT_INPUT_STREAM_ID, &input)))
+                WARN("Failed to get input id, hr %#lx.\n", hr);
+
+            stream = &topo_node->u.transform.inputs[input];
+
+            for (is_sample = FALSE; !is_sample && SUCCEEDED(hr); )
+            {
+                if (SUCCEEDED(hr = transform_stream_pop_event(stream, &stream_event)))
+                {
+                    MediaEventType event_type;
+                    if (FAILED(hr = transform_stream_handle_event(session, stream, topo_node, input, stream_event)))
+                        ERR("Failed to handle stream event, hr %#lx\n", hr);
+                    is_sample = SUCCEEDED(hr = IMFMediaEvent_GetType(stream_event, &event_type)) && event_type == MEMediaSample;
+                    IMFMediaEvent_Release(stream_event);
+                }
+            }
+
+            if (is_sample)
+                break;
+
+            if (!(up_node = session_get_topo_node_input(session, topo_node, input, &output)))
+                WARN("Failed to get node %p/%u input\n", topo_node, input);
+            else if (FAILED(hr = session_request_sample_from_node(session, up_node, output)))
+                WARN("Failed to request sample from upstream node %p/%lu, hr %#lx\n", up_node, output, hr);
+            break;
+        }
+
+        case METransformHaveOutput:
+        {
+            struct topo_node *topo_node = session_get_async_transform_node(session, event_source);
+
+            if (topo_node)
+            {
+                transform_node_pull_samples(session, topo_node);
+                transform_node_deliver_samples(session, topo_node);
+            }
+            break;
+        }
 
         case MEError:
             /* Wine-specific extension */

@@ -101,6 +101,17 @@ static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
     return refcount;
 }
 
+static void topology_node_transform_unlock_async(IMFTopologyNode *node)
+{
+    IMFAttributes *attributes;
+
+    if ((attributes = topology_node_transform_async_get_attributes(node)))
+    {
+        IMFAttributes_SetUINT32(attributes, &MF_TRANSFORM_ASYNC_UNLOCK, TRUE);
+        IMFAttributes_Release(attributes);
+    }
+}
+
 static HRESULT topology_clone_node(IMFTopology *topology, IMFTopologyNode *node, IMFTopologyNode **clone)
 {
     HRESULT hr;
@@ -115,7 +126,13 @@ static HRESULT topology_clone_node(IMFTopology *topology, IMFTopologyNode *node,
 
     hr = IMFTopologyNode_CloneFrom(*clone, node);
     if (SUCCEEDED(hr))
+    {
+        /* unlock transforms now to enable querying of types */
+        if (topology_node_get_type(*clone) == MF_TOPOLOGY_TRANSFORM_NODE)
+            topology_node_transform_unlock_async(*clone);
+
         hr = IMFTopology_AddNode(topology, *clone);
+    }
 
     if (FAILED(hr))
     {
@@ -888,6 +905,21 @@ BOOL topology_node_is_d3d_aware(IMFTopologyNode *node)
     IMFAttributes_Release(attributes);
 
     return d3d_aware || d3d11_aware;
+}
+
+IMFAttributes *topology_node_transform_async_get_attributes(IMFTopologyNode *node)
+{
+    IMFAttributes *attributes;
+
+    if (SUCCEEDED(topology_node_get_object_attributes(node, &attributes)))
+    {
+        UINT32 async;
+        if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_TRANSFORM_ASYNC, &async)) && async)
+            return attributes;
+        IMFAttributes_Release(attributes);
+    }
+
+    return NULL;
 }
 
 static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, DWORD upstream_output,

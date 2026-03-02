@@ -10261,7 +10261,6 @@ static void test_transform_check_unlocked_(int line, struct test_transform *tran
         return;
     hr = IMFAttributes_GetUINT32(transform->attributes, &MF_TRANSFORM_ASYNC_UNLOCK, &unlock);
     ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok_(__FILE__, line)(unlock, "Transform is locked.\n");
 }
 
@@ -11886,7 +11885,6 @@ static void test_async_transform(void)
     for (i = 0, ret = WAIT_OBJECT_0; i < 10 && ret == WAIT_OBJECT_0; ++i)
     {
         ret = WaitForSingleObject(grabber_callback->ready_event, 1000);
-        todo_wine
         ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
     }
 
@@ -11907,7 +11905,6 @@ static void test_async_transform(void)
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    todo_wine
     ok(transform->is_shut_down, "Transform was not shut down.\n");
 
     IMFTransform_Release(mft);
