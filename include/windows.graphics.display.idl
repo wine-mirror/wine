@@ -1,0 +1,229 @@
+/*
+ * Copyright 2026 Zhiyi Zhang for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.graphics.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Graphics.Display {
+    typedef enum AdvancedColorKind AdvancedColorKind;
+    typedef enum DisplayOrientations DisplayOrientations;
+    typedef enum HdrMetadataFormat HdrMetadataFormat;
+    typedef enum ResolutionScale ResolutionScale;
+
+    interface IAdvancedColorInfo;
+    interface IDisplayInformationStatics;
+
+    runtimeclass AdvancedColorInfo;
+    runtimeclass DisplayInformation;
+
+    declare {
+        interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Display.DisplayInformation *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0)
+    ]
+    enum AdvancedColorKind
+    {
+        StandardDynamicRange = 0,
+        WideColorGamut = 1,
+        HighDynamicRange = 2
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum DisplayOrientations
+    {
+        None = 0x0,
+        Landscape = 0x1,
+        Portrait = 0x2,
+        LandscapeFlipped = 0x4,
+        PortraitFlipped = 0x8
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0)
+    ]
+    enum HdrMetadataFormat
+    {
+        Hdr10 = 0,
+        Hdr10Plus = 1
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum ResolutionScale
+    {
+        Invalid = 0,
+        Scale100Percent = 100,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale120Percent = 120,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale125Percent = 125,
+        Scale140Percent = 140,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale150Percent = 150,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale160Percent = 160,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale175Percent = 175,
+        Scale180Percent = 180,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale200Percent = 200,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale225Percent = 225,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale250Percent = 250,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale300Percent = 300,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale350Percent = 350,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale400Percent = 400,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale450Percent = 450,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] Scale500Percent = 500
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Display.AdvancedColorInfo),
+        uuid(8797dcfb-b229-4081-ae9a-2cc85e34ad6a)
+    ]
+    interface IAdvancedColorInfo : IInspectable
+    {
+        [propget] HRESULT CurrentAdvancedColorKind([out, retval] Windows.Graphics.Display.AdvancedColorKind *value);
+        [propget] HRESULT RedPrimary([out, retval] Windows.Foundation.Point *value);
+        [propget] HRESULT GreenPrimary([out, retval] Windows.Foundation.Point *value);
+        [propget] HRESULT BluePrimary([out, retval] Windows.Foundation.Point *value);
+        [propget] HRESULT WhitePoint([out, retval] Windows.Foundation.Point *value);
+        [propget] HRESULT MaxLuminanceInNits([out, retval] FLOAT *value);
+        [propget] HRESULT MinLuminanceInNits([out, retval] FLOAT *value);
+        [propget] HRESULT MaxAverageFullFrameLuminanceInNits([out, retval] FLOAT *value);
+        [propget] HRESULT SdrWhiteLevelInNits([out, retval] FLOAT *value);
+        HRESULT IsHdrMetadataFormatCurrentlySupported([in] Windows.Graphics.Display.HdrMetadataFormat format, [out, retval] boolean *result);
+        HRESULT IsAdvancedColorKindAvailable([in] Windows.Graphics.Display.AdvancedColorKind kind, [out, retval] boolean *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Display.DisplayInformation),
+        uuid(bed112ae-adc3-4dc9-ae65-851f4d7d4799)
+    ]
+    interface IDisplayInformation : IInspectable
+    {
+        [propget] HRESULT CurrentOrientation([out, retval] Windows.Graphics.Display.DisplayOrientations *value);
+        [propget] HRESULT NativeOrientation([out, retval] Windows.Graphics.Display.DisplayOrientations *value);
+        [eventadd] HRESULT OrientationChanged([in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Display.DisplayInformation *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT OrientationChanged([in] EventRegistrationToken token);
+        [propget] HRESULT ResolutionScale([out, retval] Windows.Graphics.Display.ResolutionScale *value);
+        [propget] HRESULT LogicalDpi([out, retval] FLOAT *value);
+        [propget] HRESULT RawDpiX([out, retval] FLOAT *value);
+        [propget] HRESULT RawDpiY([out, retval] FLOAT *value);
+        [eventadd] HRESULT DpiChanged([in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Display.DisplayInformation *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT DpiChanged([in] EventRegistrationToken token);
+        [propget] HRESULT StereoEnabled([out, retval] boolean *value);
+        [eventadd] HRESULT StereoEnabledChanged([in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Display.DisplayInformation *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT StereoEnabledChanged([in] EventRegistrationToken token);
+        HRESULT GetColorProfileAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *> **async_info);
+        [eventadd] HRESULT ColorProfileChanged([in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Display.DisplayInformation *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ColorProfileChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Display.DisplayInformation),
+        uuid(4dcd0021-fad1-4b8e-8edf-775887b8bf19)
+    ]
+    interface IDisplayInformation2 : IInspectable
+        requires Windows.Graphics.Display.IDisplayInformation
+    {
+        [propget] HRESULT RawPixelsPerViewPixel([out, retval] DOUBLE *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.Graphics.Display.DisplayInformation),
+        uuid(db15011d-0f09-4466-8ff3-11de9a3c929a)
+    ]
+    interface IDisplayInformation3 : IInspectable
+    {
+        [propget] HRESULT DiagonalSizeInInches([out, retval] Windows.Foundation.IReference<DOUBLE> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Graphics.Display.DisplayInformation),
+        uuid(c972ce2f-1242-46be-b536-e1aafe9e7acf)
+    ]
+    interface IDisplayInformation4 : IInspectable
+    {
+        [propget] HRESULT ScreenWidthInRawPixels([out, retval] UINT32 *value);
+        [propget] HRESULT ScreenHeightInRawPixels([out, retval] UINT32 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Display.DisplayInformation),
+        uuid(3a5442dc-2cde-4a8d-80d1-21dc5adcc1aa)
+    ]
+    interface IDisplayInformation5 : IInspectable
+    {
+        HRESULT GetAdvancedColorInfo([out, retval] Windows.Graphics.Display.AdvancedColorInfo **value);
+        [eventadd] HRESULT AdvancedColorInfoChanged([in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Display.DisplayInformation *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT AdvancedColorInfoChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Display.DisplayInformation),
+        uuid(c6a02a6c-d452-44dc-ba07-96f3c6adf9d1)
+    ]
+    interface IDisplayInformationStatics : IInspectable
+    {
+        HRESULT GetForCurrentView([out, retval] Windows.Graphics.Display.DisplayInformation **current);
+        [propget] HRESULT AutoRotationPreferences([out, retval] Windows.Graphics.Display.DisplayOrientations *value);
+        [propput] HRESULT AutoRotationPreferences([in] Windows.Graphics.Display.DisplayOrientations value);
+        [eventadd] HRESULT DisplayContentsInvalidated([in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Display.DisplayInformation *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT DisplayContentsInvalidated([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass AdvancedColorInfo
+    {
+        [default] interface Windows.Graphics.Display.IAdvancedColorInfo;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Graphics.Display.IDisplayInformationStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass DisplayInformation
+    {
+        [default] interface Windows.Graphics.Display.IDisplayInformation;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Graphics.Display.IDisplayInformation2;
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.Graphics.Display.IDisplayInformation3;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Graphics.Display.IDisplayInformation4;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Graphics.Display.IDisplayInformation5;
+    }
+}
