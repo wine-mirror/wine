@@ -1,0 +1,5 @@
+TESTDLL = windows.graphics.dll
+IMPORTS = combase
+
+SOURCES = \
+	graphics.c
