@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(display);
 struct display_info_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IDisplayInformationStatics IDisplayInformationStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,12 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     {
         *out = &impl->IActivationFactory_iface;
         IActivationFactory_AddRef( *out );
+        return S_OK;
+    }
+    else if (IsEqualGUID( iid, &IID_IDisplayInformationStatics ))
+    {
+        *out = &impl->IDisplayInformationStatics_iface;
+        IDisplayInformationStatics_AddRef( *out );
         return S_OK;
     }
 
@@ -106,9 +113,65 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( display_info_statics, IDisplayInformationStatics, struct display_info_statics,
+                     IActivationFactory_iface )
+
+static HRESULT WINAPI display_info_statics_GetForCurrentView( IDisplayInformationStatics *iface,
+        IDisplayInformation **current )
+{
+    FIXME( "iface %p, current %p stub!\n", iface, current );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_info_statics_get_AutoRotationPreferences( IDisplayInformationStatics *iface,
+        DisplayOrientations *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_info_statics_put_AutoRotationPreferences( IDisplayInformationStatics *iface,
+        DisplayOrientations value )
+{
+    FIXME( "iface %p, value %#x stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_info_statics_add_DisplayContentsInvalidated( IDisplayInformationStatics *iface,
+        ITypedEventHandler_DisplayInformation_IInspectable *handler, EventRegistrationToken *token )
+{
+    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI display_info_statics_remove_DisplayContentsInvalidated( IDisplayInformationStatics *iface,
+        EventRegistrationToken token )
+{
+    FIXME( "iface %p, token %I64x stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+static const struct IDisplayInformationStaticsVtbl display_info_statics_vtbl =
+{
+    display_info_statics_QueryInterface,
+    display_info_statics_AddRef,
+    display_info_statics_Release,
+    /* IInspectable methods */
+    display_info_statics_GetIids,
+    display_info_statics_GetRuntimeClassName,
+    display_info_statics_GetTrustLevel,
+    /* IDisplayInformationStatics methods */
+    display_info_statics_GetForCurrentView,
+    display_info_statics_get_AutoRotationPreferences,
+    display_info_statics_put_AutoRotationPreferences,
+    display_info_statics_add_DisplayContentsInvalidated,
+    display_info_statics_remove_DisplayContentsInvalidated
+};
+
 static struct display_info_statics display_info_statics =
 {
     {&factory_vtbl},
+    {&display_info_statics_vtbl},
     1,
 };
 

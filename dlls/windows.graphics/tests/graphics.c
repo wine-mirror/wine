@@ -62,7 +62,6 @@ static void test_DisplayInformationStatics(void)
     check_interface( factory, &IID_IUnknown, TRUE );
     check_interface( factory, &IID_IInspectable, TRUE );
     check_interface( factory, &IID_IActivationFactory, TRUE );
-    todo_wine
     check_interface( factory, &IID_IDisplayInformationStatics, TRUE );
     check_interface( factory, &IID_IAgileObject, FALSE );
 
