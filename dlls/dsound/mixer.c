@@ -318,11 +318,11 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
 static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgain,
         UINT required_input, float *input, float *output)
 {
+    LONG64 opos_num = freq_adjust_den - freq_acc_start + (1ll << FREQ_ADJUST_SHIFT) - 1;
+    DWORD opos_num_step = freq_adjust_den;
     int j;
 
     for (j = 0; j < required_input; ++j) {
-        LONG64 opos_num = freq_adjust_den - freq_acc_start + j * (LONG64)freq_adjust_den +
-                (1ll << FREQ_ADJUST_SHIFT) - 1;
         /* opos is in the range [-(fir_width - 1), count) */
         int opos = (int)(opos_num >> FREQ_ADJUST_SHIFT) - fir_width;
 
@@ -336,16 +336,19 @@ static void downsample(DWORD freq_adjust_den, DWORD freq_acc_start, float firgai
         int i;
         for (i = 0; i < fir_width; ++i)
             output[opos + i] += fir[idx + i] * input_value0 + fir[idx + fir_width + i] * input_value1;
+
+        opos_num += opos_num_step;
     }
 }
 
 static void upsample(DWORD freq_adjust_num, DWORD freq_acc_start, UINT count, float *input,
         float *output)
 {
+    LONG64 ipos_num = freq_acc_start;
+    DWORD ipos_num_step = freq_adjust_num;
     UINT i;
 
     for(i = 0; i < count; ++i) {
-        LONG64 ipos_num = freq_acc_start + i * (LONG64)freq_adjust_num;
         UINT ipos = ipos_num >> FREQ_ADJUST_SHIFT;
 
         UINT idx = ~(DWORD)ipos_num >> (FREQ_ADJUST_SHIFT - fir_step_shift) << fir_width_shift;
@@ -359,6 +362,8 @@ static void upsample(DWORD freq_adjust_num, DWORD freq_acc_start, UINT count, fl
         for (j = 0; j < fir_width; j++)
             sum += (fir[idx + j] * rem_inv + fir[idx + j + fir_width] * rem) * cache[j];
         output[i] = sum;
+
+        ipos_num += ipos_num_step;
     }
 }
 
