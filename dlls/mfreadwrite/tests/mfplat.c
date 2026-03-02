@@ -2172,6 +2172,8 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     IMFTransform *transform;
     IMFMediaSource *source;
     GUID category;
+    UINT32 count;
+    UINT64 value;
     HRESULT hr;
 
     winetest_push_context("vp %u adv %u", enable_processing, enable_advanced);
@@ -2255,6 +2257,12 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
         todo_wine_if(enable_processing) /* Wine enables advanced video processing in all cases */
         ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
     }
+    /* SetCurrentMediaType shouldn't modify media_type */
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetCount(media_type, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected attribute count: %u\n", count);
     IMFMediaType_Release(media_type);
 
     hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);

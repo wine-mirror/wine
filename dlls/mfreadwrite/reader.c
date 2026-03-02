@@ -2171,24 +2171,32 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {
                 BOOL enable_advanced;
+                IMFMediaType *output_type_copy = NULL;
+
+                hr = MFCreateMediaType(&output_type_copy);
+                if (SUCCEEDED(hr))
+                    hr = IMFMediaType_CopyAllItems(output_type, (IMFAttributes *)output_type_copy);
 
                 source_reader_allow_video_processor(reader, &enable_advanced);
 
-                if ((SUCCEEDED(hr = update_media_type(output_type, media_type, enable_advanced)))
-                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0))
-                        && FAILED(hr = set_matching_transform_output_type(transform, output_type)) && allow_processor
+                if (SUCCEEDED(hr) && (SUCCEEDED(hr = update_media_type(output_type_copy, media_type, enable_advanced)))
+                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type_copy, 0))
+                        && FAILED(hr = set_matching_transform_output_type(transform, output_type_copy)) && allow_processor
                         && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
                 {
                     struct transform_entry *converter;
 
                     if (SUCCEEDED(hr = IMFTransform_SetOutputType(transform, 0, media_type, 0))
-                            && SUCCEEDED(hr = update_media_type(output_type, media_type, enable_advanced))
-                            && (enable_advanced || SUCCEEDED(hr = set_default_video_attributes(reader, output_type)))
-                            && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type, &converter)))
+                            && SUCCEEDED(hr = update_media_type(output_type_copy, media_type, enable_advanced))
+                            && (enable_advanced || SUCCEEDED(hr = set_default_video_attributes(reader, output_type_copy)))
+                            && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type_copy, &converter)))
                         list_add_tail(&entry->entry, &converter->entry);
 
                     IMFMediaType_Release(media_type);
                 }
+
+                if(output_type_copy)
+                    IMFMediaType_Release(output_type_copy);
 
                 if (SUCCEEDED(hr))
                 {
