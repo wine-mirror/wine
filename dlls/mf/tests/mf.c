@@ -8998,10 +8998,8 @@ static void test_mpeg4_media_sink(void)
     ok(clock2 == (void *)0xdeadbeef, "Unexpected pointer %p.\n", clock2);
 
     hr = IMFMediaSink_SetPresentationClock(sink, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaSink_SetPresentationClock(sink, clock);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     clock2 = NULL;
@@ -9097,10 +9095,8 @@ static void test_mpeg4_media_sink(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSink_SetPresentationClock(sink, NULL);
-    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaSink_SetPresentationClock(sink, clock);
-    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSink_GetPresentationClock(sink, NULL);

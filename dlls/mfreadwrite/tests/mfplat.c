@@ -1788,7 +1788,6 @@ static void test_sink_writer_get_object(void)
     ok(!sink, "Unexpected sink %p.\n", sink);
 
     hr = IMFSinkWriter_BeginWriting(writer);
-    todo_wine
     ok(hr == S_OK, "BeginWriting returned %#lx.\n", hr);
 
     /* Get media sink after BeginWriting. */
@@ -1936,10 +1935,8 @@ static void test_sink_writer_sample_process(void)
 
     /* BeginWriting after adding stream. */
     hr = IMFSinkWriter_BeginWriting(writer);
-    todo_wine
     ok(hr == S_OK, "BeginWriting returned %#lx.\n", hr);
     hr = IMFSinkWriter_BeginWriting(writer);
-    todo_wine
     ok(hr == MF_E_INVALIDREQUEST, "BeginWriting returned %#lx.\n", hr);
 
     /* WriteSample. */
@@ -1953,7 +1950,6 @@ static void test_sink_writer_sample_process(void)
         hr = IMFSample_SetSampleDuration(sample, 333333);
         ok(hr == S_OK, "SetSampleDuration returned %#lx.\n", hr);
         hr = IMFSinkWriter_WriteSample(writer, 0, sample);
-        todo_wine
         ok(hr == S_OK, "WriteSample returned %#lx.\n", hr);
         IMFSample_Release(sample);
     }
