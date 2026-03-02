@@ -886,18 +886,17 @@ static inline BOOL WINMM_IsMapper(UINT device)
 }
 
 static MMRESULT WINMM_TryDeviceMapping(WINMM_Device *device, WAVEFORMATEX *fmt,
-        WORD channels, DWORD freq, DWORD bits_per_samp, BOOL is_query, BOOL is_out)
+        DWORD bits_per_samp, BOOL is_query, BOOL is_out)
 {
     WAVEFORMATEX target, *closer_fmt = NULL;
     HRESULT hr;
     MMRESULT mr;
 
-    TRACE("format: %u, channels: %u, sample rate: %lu, bit depth: %lu\n",
-            WAVE_FORMAT_PCM, channels, freq, bits_per_samp);
+    TRACE("format: %u, bit depth: %lu\n", WAVE_FORMAT_PCM, bits_per_samp);
 
     target.wFormatTag = WAVE_FORMAT_PCM;
-    target.nChannels = channels;
-    target.nSamplesPerSec = freq;
+    target.nChannels = fmt->nChannels;
+    target.nSamplesPerSec = fmt->nSamplesPerSec;
     target.wBitsPerSample = bits_per_samp;
     target.nBlockAlign = (target.nChannels * target.wBitsPerSample) / 8;
     target.nAvgBytesPerSec = target.nSamplesPerSec * target.nBlockAlign;
@@ -949,119 +948,16 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_Device *device, WAVEFORMATEX *fmt,
 static MMRESULT WINMM_MapDevice(WINMM_Device *device, BOOL is_query, BOOL is_out)
 {
     MMRESULT mr;
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)device->orig_fmt;
 
     TRACE("(%p, %u)\n", device, is_out);
 
-    /* set up the ACM stream */
-    if(device->orig_fmt->wFormatTag != WAVE_FORMAT_PCM &&
-            !(device->orig_fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
-        /* convert to PCM format if it's not already */
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt,
-                device->orig_fmt->nChannels, device->orig_fmt->nSamplesPerSec,
-                16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
+    mr = WINMM_TryDeviceMapping(device, device->orig_fmt, 16, is_query, is_out);
+    if(mr == MMSYSERR_NOERROR)
+        return mr;
 
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt,
-                device->orig_fmt->nChannels, device->orig_fmt->nSamplesPerSec,
-                8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-    }else{
-        WORD channels;
-
-        /* first try just changing bit depth and channels */
-        channels = device->orig_fmt->nChannels;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels,
-                device->orig_fmt->nSamplesPerSec, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels,
-                device->orig_fmt->nSamplesPerSec, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-
-        channels = (channels == 2) ? 1 : 2;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels,
-                device->orig_fmt->nSamplesPerSec, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels,
-                device->orig_fmt->nSamplesPerSec, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-
-        /* that didn't work, so now try different sample rates */
-        channels = device->orig_fmt->nChannels;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 96000, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 48000, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 44100, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 22050, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 11025, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-
-        channels = (channels == 2) ? 1 : 2;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 96000, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 48000, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 44100, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 22050, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 11025, 16, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-
-        channels = device->orig_fmt->nChannels;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 96000, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 48000, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 44100, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 22050, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 11025, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-
-        channels = (channels == 2) ? 1 : 2;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 96000, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 48000, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 44100, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 22050, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-        mr = WINMM_TryDeviceMapping(device, device->orig_fmt, channels, 11025, 8, is_query, is_out);
-        if(mr == MMSYSERR_NOERROR)
-            return mr;
-    }
+    mr = WINMM_TryDeviceMapping(device, device->orig_fmt, 8, is_query, is_out);
+    if(mr == MMSYSERR_NOERROR)
+        return mr;
 
     WARN("Unable to find compatible device!\n");
     return WAVERR_BADFORMAT;
