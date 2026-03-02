@@ -927,9 +927,26 @@ static HRESULT WINAPI media_sink_SetPresentationClock(IMFFinalizableMediaSink *i
 
 static HRESULT WINAPI media_sink_GetPresentationClock(IMFFinalizableMediaSink *iface, IMFPresentationClock **clock)
 {
-    FIXME("iface %p, clock %p stub!\n", iface, clock);
+    struct media_sink *media_sink = impl_from_IMFFinalizableMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, clock %p.\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    EnterCriticalSection(&media_sink->cs);
+
+    if (media_sink->state == STATE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (media_sink->clock)
+        IMFPresentationClock_AddRef((*clock = media_sink->clock));
+    else
+        hr = MF_E_NO_CLOCK;
+
+    LeaveCriticalSection(&media_sink->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_sink_Shutdown(IMFFinalizableMediaSink *iface)

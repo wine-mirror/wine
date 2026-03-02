@@ -8988,12 +8988,10 @@ static void test_mpeg4_media_sink(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSink_GetPresentationClock(sink, NULL);
-    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
     clock2 = (void *)0xdeadbeef;
     hr = IMFMediaSink_GetPresentationClock(sink, &clock2);
-    todo_wine
     ok(hr == MF_E_NO_CLOCK, "Unexpected hr %#lx.\n", hr);
     ok(clock2 == (void *)0xdeadbeef, "Unexpected pointer %p.\n", clock2);
 
@@ -9004,13 +9002,9 @@ static void test_mpeg4_media_sink(void)
 
     clock2 = NULL;
     hr = IMFMediaSink_GetPresentationClock(sink, &clock2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(clock2 == clock, "Unexpected pointer %p.\n", clock2);
-        IMFPresentationClock_Release(clock2);
-    }
+    ok(clock2 == clock, "Unexpected pointer %p.\n", clock2);
+    IMFPresentationClock_Release(clock2);
 
     /* Test stream. */
     hr = IMFMediaSink_GetStreamSinkByIndex(sink_audio, 0, &stream_sink);
@@ -9100,11 +9094,9 @@ static void test_mpeg4_media_sink(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaSink_GetPresentationClock(sink, NULL);
-    todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     clock2 = (void *)0xdeadbeef;
     hr = IMFMediaSink_GetPresentationClock(sink, &clock2);
-    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     ok(clock2 == (void *)0xdeadbeef, "Unexpected pointer %p.\n", clock2);
 
