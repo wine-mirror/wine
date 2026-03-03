@@ -163,8 +163,15 @@ static HRESULT WINAPI uisettings_get_MessageDuration( IUISettings *iface, UINT32
 
 static HRESULT WINAPI uisettings_get_AnimationsEnabled( IUISettings *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    BOOL enabled, ret;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    ret = SystemParametersInfoW( SPI_GETCLIENTAREAANIMATION, 0, &enabled, 0 );
+    if (!ret) return E_FAIL;
+
+    *value = !!enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI uisettings_get_CaretBrowsingEnabled( IUISettings *iface, boolean *value )

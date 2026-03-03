@@ -260,25 +260,19 @@ static void test_AnimationsEnabled( IUISettings *uisettings )
     ret = SystemParametersInfoW( SPI_GETCLIENTAREAANIMATION, 0, &client_area_animation, 0 );
     ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
     hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
-    todo_wine
     ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    todo_wine
     ok( enabled == client_area_animation, "Expected %d, got %d.\n", client_area_animation, enabled );
 
     ret = SystemParametersInfoW( SPI_SETCLIENTAREAANIMATION, 0, IntToPtr(!client_area_animation), 0 );
     ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
     hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
-    todo_wine
     ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    todo_wine
     ok( enabled == !client_area_animation, "Expected %d, got %d.\n", !client_area_animation, enabled );
 
     ret = SystemParametersInfoW( SPI_SETCLIENTAREAANIMATION, 0, IntToPtr(client_area_animation), 0 );
     ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
     hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
-    todo_wine
     ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
-    todo_wine
     ok( enabled == client_area_animation, "Expected %d, got %d.\n", client_area_animation, enabled );
 }
 
