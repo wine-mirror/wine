@@ -5005,80 +5005,17 @@ static void set_content_length_header( http_request_t *request, DWORD len, DWORD
     HTTP_HttpAddRequestHeadersW( request, buf, ~0u, flags );
 }
 
-/***********************************************************************
- *           HTTP_HttpSendRequestW (internal)
- *
- * Sends the specified request to the HTTP server
- *
- * RETURNS
- *    ERROR_SUCCESS on success
- *    win32 error code on failure
- *
- */
-static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
-	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
-	DWORD dwContentLength, BOOL bEndRequest)
+static DWORD create_request(http_request_t *request, void *optional, DWORD optlen, DWORD content_length,
+                            BOOL end_request)
 {
     BOOL redirected = FALSE, secure_proxy_connect = FALSE, loop_next;
     WCHAR *request_header = NULL;
     INT responseLen, cnt;
     DWORD res;
-    const WCHAR *appinfo_agent;
-
-    TRACE("--> %p\n", request);
-
-    assert(request->hdr.htype == WH_HHTTPREQ);
-
-    /* if the verb is NULL default to GET */
-    if (!request->verb)
-        request->verb = wcsdup(L"GET");
-
-    HTTP_ProcessHeader(request, L"Host", request->server->canon_host_port,
-                       HTTP_ADDREQ_FLAG_ADD_IF_NEW | HTTP_ADDHDR_FLAG_REQ);
-
-    if (dwContentLength || wcscmp(request->verb, L"GET"))
-    {
-        set_content_length_header(request, dwContentLength, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
-        request->bytesToWrite = dwContentLength;
-    }
-
-    appinfo_agent = request->session->appInfo->agent;
-
-    if (appinfo_agent && *appinfo_agent)
-    {
-        WCHAR *agent_header;
-        int len;
-
-        len = lstrlenW(appinfo_agent) + lstrlenW(L"User-Agent: %s\r\n");
-        agent_header = malloc(len * sizeof(WCHAR));
-        swprintf(agent_header, len, L"User-Agent: %s\r\n", appinfo_agent);
-
-        HTTP_HttpAddRequestHeadersW(request, agent_header, lstrlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
-        free(agent_header);
-    }
-    if (request->hdr.dwFlags & INTERNET_FLAG_PRAGMA_NOCACHE)
-    {
-        HTTP_HttpAddRequestHeadersW(request, L"Pragma: no-cache\r\n",
-                                    lstrlenW(L"Pragma: no-cache\r\n"), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
-    }
-    if ((request->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE) && wcscmp(request->verb, L"GET"))
-    {
-        HTTP_HttpAddRequestHeadersW(request, L"Cache-Control: no-cache\r\n",
-                                    lstrlenW(L"Cache-Control: no-cache\r\n"), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
-    }
-
-    /* add the headers the caller supplied */
-    if (lpszHeaders)
-    {
-        if (dwHeaderLength == 0)
-            dwHeaderLength = lstrlenW(lpszHeaders);
-
-        HTTP_HttpAddRequestHeadersW(request, lpszHeaders, dwHeaderLength, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
-    }
 
     do
     {
-        DWORD len, data_len = dwOptionalLength;
+        DWORD len, data_len = optlen;
         BOOL reusing_connection;
         char *ascii_req;
 
@@ -5147,7 +5084,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         else
         {
             if (request->proxy && HTTP_GetCustomHeaderIndex(request, L"Content-Length", 0, TRUE) >= 0)
-                set_content_length_header(request, dwContentLength, HTTP_ADDREQ_FLAG_REPLACE);
+                set_content_length_header(request, content_length, HTTP_ADDREQ_FLAG_REPLACE);
 
             request_header = build_request_header(request, request->verb, request->path, request->version, TRUE);
         }
@@ -5155,10 +5092,10 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         TRACE("Request header -> %s\n", debugstr_w(request_header) );
 
         /* send the request as ASCII, tack on the optional data */
-        if (!lpOptional || redirected || secure_proxy_connect)
+        if (!optional || redirected || secure_proxy_connect)
             data_len = 0;
 
-        ascii_req = build_ascii_request(request_header, lpOptional, data_len, &len);
+        ascii_req = build_ascii_request(request_header, optional, data_len, &len);
         free(request_header);
         TRACE("full request -> %s\n", debugstr_a(ascii_req) );
 
@@ -5183,7 +5120,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                               INTERNET_STATUS_REQUEST_SENT,
                               &len, sizeof(DWORD));
 
-        if (bEndRequest)
+        if (end_request)
         {
             DWORD dwBufferSize;
 
@@ -5338,6 +5275,79 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     while (loop_next);
 
 lend:
+    return res;
+}
+
+/***********************************************************************
+ *           HTTP_HttpSendRequestW (internal)
+ *
+ * Sends the specified request to the HTTP server
+ *
+ * RETURNS
+ *    ERROR_SUCCESS on success
+ *    win32 error code on failure
+ *
+ */
+static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
+	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
+	DWORD dwContentLength, BOOL bEndRequest)
+{
+    DWORD res;
+    const WCHAR *appinfo_agent;
+
+    TRACE("--> %p\n", request);
+
+    assert(request->hdr.htype == WH_HHTTPREQ);
+
+    /* if the verb is NULL default to GET */
+    if (!request->verb)
+        request->verb = wcsdup(L"GET");
+
+    HTTP_ProcessHeader(request, L"Host", request->server->canon_host_port,
+                       HTTP_ADDREQ_FLAG_ADD_IF_NEW | HTTP_ADDHDR_FLAG_REQ);
+
+    if (dwContentLength || wcscmp(request->verb, L"GET"))
+    {
+        set_content_length_header(request, dwContentLength, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        request->bytesToWrite = dwContentLength;
+    }
+
+    appinfo_agent = request->session->appInfo->agent;
+
+    if (appinfo_agent && *appinfo_agent)
+    {
+        WCHAR *agent_header;
+        int len;
+
+        len = lstrlenW(appinfo_agent) + lstrlenW(L"User-Agent: %s\r\n");
+        agent_header = malloc(len * sizeof(WCHAR));
+        swprintf(agent_header, len, L"User-Agent: %s\r\n", appinfo_agent);
+
+        HTTP_HttpAddRequestHeadersW(request, agent_header, lstrlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        free(agent_header);
+    }
+    if (request->hdr.dwFlags & INTERNET_FLAG_PRAGMA_NOCACHE)
+    {
+        HTTP_HttpAddRequestHeadersW(request, L"Pragma: no-cache\r\n",
+                                    lstrlenW(L"Pragma: no-cache\r\n"), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    }
+    if ((request->hdr.dwFlags & INTERNET_FLAG_NO_CACHE_WRITE) && wcscmp(request->verb, L"GET"))
+    {
+        HTTP_HttpAddRequestHeadersW(request, L"Cache-Control: no-cache\r\n",
+                                    lstrlenW(L"Cache-Control: no-cache\r\n"), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    }
+
+    /* add the headers the caller supplied */
+    if (lpszHeaders)
+    {
+        if (dwHeaderLength == 0)
+            dwHeaderLength = lstrlenW(lpszHeaders);
+
+        HTTP_HttpAddRequestHeadersW(request, lpszHeaders, dwHeaderLength, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+    }
+
+    res = create_request(request, lpOptional, dwOptionalLength, dwContentLength, bEndRequest);
+
     /* TODO: send notification for P3P header */
 
     if(res == ERROR_SUCCESS)
