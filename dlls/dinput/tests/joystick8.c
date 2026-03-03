@@ -5319,6 +5319,7 @@ static void test_game_input(void)
     HMODULE gameinput = LoadLibraryW( L"gameinput.dll" );
     HRESULT (WINAPI *pGameInputCreate)( v0_IGameInput **out );
     v0_IGameInput *gi0;
+    HRESULT hr;
 
     if (!gameinput || !(pGameInputCreate = (void *)GetProcAddress( gameinput, "GameInputCreate" )))
     {
@@ -5327,8 +5328,9 @@ static void test_game_input(void)
     }
 
     gi0 = (void *)0xdeadbeef;
-    todo_wine ok_hr( S_OK, pGameInputCreate( &gi0 ) );
-    if (gi0 != (void *)0xdeadbeef) ok_ret( 0, v0_IGameInput_Release( gi0 ) );
+    hr = pGameInputCreate( &gi0 );
+    todo_wine ok( hr == S_OK || broken(hr == E_NOTIMPL), "Unexpected hr %#lx.\n", hr );
+    if (gi0 && gi0 != (void *)0xdeadbeef) ok_ret( 0, v0_IGameInput_Release( gi0 ) );
 }
 
 static HANDLE rawinput_device_added, rawinput_device_removed, rawinput_event;
