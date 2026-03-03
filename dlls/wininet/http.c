@@ -329,7 +329,6 @@ static void reset_data_stream(http_request_t *req)
     destroy_data_stream(req->data_stream);
     req->data_stream = &req->netconn_stream.data_stream;
     req->read_pos = req->read_size = req->netconn_stream.content_read = 0;
-    req->content_pos = 0;
     req->read_gzip = FALSE;
 }
 
