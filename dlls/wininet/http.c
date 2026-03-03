@@ -2428,6 +2428,27 @@ static void commit_cache_entry(http_request_t *req)
     free(header);
 }
 
+static void write_cache_file(http_request_t *req, const BYTE *buf, DWORD len)
+{
+    if(!req->hCacheFile) {
+        return;
+    }
+
+    if(len) {
+        BOOL bres;
+        DWORD written;
+
+        bres = WriteFile(req->hCacheFile, buf, len, &written, NULL);
+        if(bres)
+            req->cache_size += written;
+        else
+            FIXME("WriteFile failed: %lu\n", GetLastError());
+    }
+
+    if(req->data_stream->vtbl->end_of_data(req->data_stream, req))
+        commit_cache_entry(req);
+}
+
 static void create_cache_entry(http_request_t *req)
 {
     WCHAR file_name[MAX_PATH+1];
@@ -2513,18 +2534,7 @@ static void create_cache_entry(http_request_t *req)
         return;
     }
 
-    if(req->read_size) {
-        DWORD written;
-
-        b = WriteFile(req->hCacheFile, req->read_buf+req->read_pos, req->read_size, &written, NULL);
-        if(b)
-            req->cache_size += written;
-        else
-            FIXME("WriteFile failed: %lu\n", GetLastError());
-
-        if(req->data_stream->vtbl->end_of_data(req->data_stream, req))
-            commit_cache_entry(req);
-    }
+    write_cache_file(req, req->read_buf+req->read_pos, req->read_size);
 }
 
 /* read some more data into the read buffer (the read section must be held) */
@@ -2622,21 +2632,7 @@ static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD 
         *read = 0;
     assert(*read <= size);
 
-    if(req->hCacheFile) {
-        if(*read) {
-            BOOL bres;
-            DWORD written;
-
-            bres = WriteFile(req->hCacheFile, buf, *read, &written, NULL);
-            if(bres)
-                req->cache_size += written;
-            else
-                FIXME("WriteFile failed: %lu\n", GetLastError());
-        }
-
-        if((res == ERROR_SUCCESS && !*read) || req->data_stream->vtbl->end_of_data(req->data_stream, req))
-            commit_cache_entry(req);
-    }
+    write_cache_file(req, buf, *read);
 
     return res;
 }
