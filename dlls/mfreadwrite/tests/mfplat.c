@@ -1512,6 +1512,27 @@ static void test_source_reader_from_media_source(void)
         IMFStreamDescriptor_Release(audio_streams[i]);
 }
 
+static void test_source_reader_release(void)
+{
+    IMFByteStream *stream = get_resource_stream("test.wav");
+    IMFAttributes *attributes;
+    IMFSourceReader *reader;
+    HRESULT hr;
+    LONG ref;
+
+    hr = MFCreateAttributes(&attributes, 1);
+    ok(hr == S_OK, "failed to create IMFAttributes hr %#lx\n", hr);
+
+    hr = MFCreateSourceReaderFromByteStream(stream, attributes, &reader);
+    ok(hr == S_OK, "failed to create SourceReader hr %#lx\n", hr);
+
+    ref = IMFSourceReader_Release(reader);
+    ok(ref == 0, "got unexpected ref %lu\n", ref);
+
+    ref = IMFByteStream_Release(stream);
+    flaky_wine ok(ref == 0, "got unexpected ref %lu\n", ref);
+}
+
 static void test_reader_d3d9(void)
 {
     static const struct attribute_desc audio_stream_type_desc[] =
@@ -3887,6 +3908,7 @@ START_TEST(mfplat)
     test_source_reader_transform_stream_change();
     test_source_reader_transforms_d3d9();
     test_source_reader_transforms_d3d11();
+    test_source_reader_release();
     test_reader_d3d9();
     test_sink_writer_create();
     test_sink_writer_get_object();
