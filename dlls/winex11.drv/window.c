@@ -1846,6 +1846,15 @@ static BOOL handle_state_change( unsigned long serial, unsigned long *expect_ser
     return TRUE;
 }
 
+static void window_request_desired_state( struct x11drv_win_data *data )
+{
+    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
+    window_set_net_wm_state( data, data->desired_state.net_wm_state );
+    window_set_net_wm_fullscreen_monitors( data, &data->desired_state.monitors );
+    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
+    window_set_config( data, data->desired_state.rect, FALSE );
+}
+
 void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value, Time time )
 {
     UINT *desired = &data->desired_state.wm_state, *pending = &data->pending_state.wm_state, *current = &data->current_state.wm_state;
@@ -1865,10 +1874,7 @@ void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial,
     data->reparenting = 0;
 
     /* send any pending changes from the desired state */
-    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
-    window_set_net_wm_state( data, data->desired_state.net_wm_state );
-    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
-    window_set_config( data, data->desired_state.rect, FALSE );
+    window_request_desired_state( data );
 
     if (data->current_state.wm_state == NormalState) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)time );
     else if (!data->wm_state_serial) NtUserRemoveProp( data->hwnd, focus_time_prop );
@@ -1889,10 +1895,7 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
         return;
 
     /* send any pending changes from the desired state */
-    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
-    window_set_net_wm_state( data, data->desired_state.net_wm_state );
-    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
-    window_set_config( data, data->desired_state.rect, FALSE );
+    window_request_desired_state( data );
 }
 
 void window_wm_hints_notify( struct x11drv_win_data *data, unsigned long serial, const XWMHints *value )
@@ -1924,10 +1927,7 @@ void window_mwm_hints_notify( struct x11drv_win_data *data, unsigned long serial
         return;
 
     /* send any pending changes from the desired state */
-    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
-    window_set_net_wm_state( data, data->desired_state.net_wm_state );
-    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
-    window_set_config( data, data->desired_state.rect, FALSE );
+    window_request_desired_state( data );
 }
 
 void window_wm_normal_hints_notify( struct x11drv_win_data *data, unsigned long serial, const XSizeHints *value )
@@ -1968,10 +1968,7 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
     data->pending_state.above = FALSE; /* allow requesting it again */
 
     /* send any pending changes from the desired state */
-    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
-    window_set_net_wm_state( data, data->desired_state.net_wm_state );
-    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
-    window_set_config( data, data->desired_state.rect, FALSE );
+    window_request_desired_state( data );
 }
 
 void net_active_window_notify( unsigned long serial, Window value, Time time )
