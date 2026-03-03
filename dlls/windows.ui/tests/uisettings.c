@@ -244,6 +244,44 @@ static void test_UIElementColor( IUISettings *uisettings )
     }
 }
 
+static void test_AnimationsEnabled( IUISettings *uisettings )
+{
+    BOOL client_area_animation, ret;
+    boolean enabled;
+    HRESULT hr;
+
+    /* Crash on Windows */
+    if (0)
+    {
+    hr = IUISettings_get_AnimationsEnabled( uisettings, NULL );
+    ok( hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr );
+    }
+
+    ret = SystemParametersInfoW( SPI_GETCLIENTAREAANIMATION, 0, &client_area_animation, 0 );
+    ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
+    hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
+    todo_wine
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    todo_wine
+    ok( enabled == client_area_animation, "Expected %d, got %d.\n", client_area_animation, enabled );
+
+    ret = SystemParametersInfoW( SPI_SETCLIENTAREAANIMATION, 0, IntToPtr(!client_area_animation), 0 );
+    ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
+    hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
+    todo_wine
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    todo_wine
+    ok( enabled == !client_area_animation, "Expected %d, got %d.\n", !client_area_animation, enabled );
+
+    ret = SystemParametersInfoW( SPI_SETCLIENTAREAANIMATION, 0, IntToPtr(client_area_animation), 0 );
+    ok( ret, "SystemParametersInfoW failed, error %ld.\n", GetLastError() );
+    hr = IUISettings_get_AnimationsEnabled( uisettings, &enabled );
+    todo_wine
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    todo_wine
+    ok( enabled == client_area_animation, "Expected %d, got %d.\n", client_area_animation, enabled );
+}
+
 static void test_UISettings(void)
 {
     static const WCHAR *uisettings_name = L"Windows.UI.ViewManagement.UISettings";
@@ -308,6 +346,7 @@ static void test_UISettings(void)
 
     IUISettings2_Release( uisettings2 );
 
+    test_AnimationsEnabled( uisettings );
     test_AccentColor( uisettings3 );
 
     default_theme = get_app_theme();
