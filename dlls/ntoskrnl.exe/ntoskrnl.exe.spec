@@ -526,6 +526,7 @@
 @ stub IoWriteOperationCount
 @ stub IoWritePartitionTableEx
 @ stub IoWriteTransferCount
+@ stdcall KdChangeOption(long long ptr long ptr ptr)
 @ extern KdDebuggerEnabled
 @ stub KdDebuggerNotPresent
 @ stdcall KdDisableDebugger()
