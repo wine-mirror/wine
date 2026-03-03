@@ -945,7 +945,7 @@ static void test_release(void)
     ok(hr == S_OK, "IMFMediaSource_Shutdown failed with hr %#lx\n", hr);
 
     ref = IMFByteStream_Release(byte_stream);
-    todo_wine ok(ref == 0, "got unexpected ref %lu\n", ref);
+    ok(ref == 0, "got unexpected ref %lu\n", ref);
 
     ref = IMFMediaSource_Release(source);
     ok(ref == 0, "got unexpected ref %lu\n", ref);

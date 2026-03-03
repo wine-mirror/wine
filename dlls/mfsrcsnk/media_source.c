@@ -1259,7 +1259,6 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
         free(source->streams);
 
         IMFMediaEventQueue_Release(source->queue);
-        IMFByteStream_Release(source->stream);
         free(source->url);
 
         source->cs.DebugInfo->Spare[0] = 0;
@@ -1463,6 +1462,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     IMFMediaEventQueue_QueueEventParamVar(source->queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
     IMFMediaEventQueue_Shutdown(source->queue);
     IMFByteStream_Close(source->stream);
+    IMFByteStream_Release(source->stream);
 
     while (source->stream_count--)
     {

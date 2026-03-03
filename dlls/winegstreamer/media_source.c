@@ -1380,7 +1380,6 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
     {
         IMFMediaSource_Shutdown(iface);
         IMFMediaEventQueue_Release(source->event_queue);
-        IMFByteStream_Release(source->byte_stream);
         wg_parser_destroy(source->wg_parser);
         source->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&source->cs);
@@ -1585,6 +1584,7 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MEError, &GUID_NULL, MF_E_SHUTDOWN, NULL);
     IMFMediaEventQueue_Shutdown(source->event_queue);
     IMFByteStream_Close(source->byte_stream);
+    IMFByteStream_Release(source->byte_stream);
 
     while (source->stream_count--)
     {

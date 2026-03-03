@@ -1530,7 +1530,7 @@ static void test_source_reader_release(void)
     ok(ref == 0, "got unexpected ref %lu\n", ref);
 
     ref = IMFByteStream_Release(stream);
-    flaky_wine ok(ref == 0, "got unexpected ref %lu\n", ref);
+    ok(ref == 0, "got unexpected ref %lu\n", ref);
 }
 
 static void test_reader_d3d9(void)
