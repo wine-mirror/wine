@@ -66,6 +66,13 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 static void test_wave_sink(void)
 {
     IMFMediaType *media_type, *media_type2;
@@ -920,6 +927,30 @@ static void test_end_of_presentation(void)
     IMFAsyncCallback_Release(callback);
 }
 
+static void test_release(void)
+{
+    IMFByteStream *byte_stream;
+    IMFMediaSource *source;
+    HRESULT hr;
+    LONG ref;
+
+    byte_stream = create_resource_byte_stream(L"test_thinning.avi");
+    hr = create_source(&CLSID_AVIByteStreamPlugin, byte_stream, &source);
+    ok(hr == S_OK, "failed to create MediaSource with hr %#lx\n", hr);
+
+    ref = get_refcount(byte_stream);
+    ok(ref > 1, "got unexpected ref %lu\n", ref);
+
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "IMFMediaSource_Shutdown failed with hr %#lx\n", hr);
+
+    ref = IMFByteStream_Release(byte_stream);
+    todo_wine ok(ref == 0, "got unexpected ref %lu\n", ref);
+
+    ref = IMFMediaSource_Release(source);
+    ok(ref == 0, "got unexpected ref %lu\n", ref);
+}
+
 START_TEST(mfsrcsnk)
 {
     HRESULT hr;
@@ -930,6 +961,7 @@ START_TEST(mfsrcsnk)
     test_wave_sink();
     test_thinning();
     test_end_of_presentation();
+    test_release();
 
     hr = MFShutdown();
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
