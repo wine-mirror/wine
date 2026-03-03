@@ -89,6 +89,17 @@ typedef enum _DWM_SOURCE_FRAME_SAMPLING {
     DWM_SOURCE_FRAME_SAMPLING_LAST
 } DWM_SOURCE_FRAME_SAMPLING;
 
+enum DWM_SHOWCONTACT
+{
+    DWMSC_NONE      = 0x00000000,
+    DWMSC_DOWN      = 0x00000001,
+    DWMSC_UP        = 0x00000002,
+    DWMSC_DRAG      = 0x00000004,
+    DWMSC_HOLD      = 0x00000008,
+    DWMSC_PENBARREL = 0x00000010,
+    DWMSC_ALL       = 0xFFFFFFFF
+};
+
 typedef struct _UNSIGNED_RATIO {
     UINT32 uiNumerator;
     UINT32 uiDenominator;
@@ -220,6 +231,7 @@ DWMAPI DwmSetIconicLivePreviewBitmap(HWND, HBITMAP, POINT*, DWORD);
 DWMAPI DwmSetIconicThumbnail(HWND, HBITMAP, DWORD);
 DWMAPI DwmSetPresentParameters(HWND, DWM_PRESENT_PARAMETERS *);
 DWMAPI DwmSetWindowAttribute(HWND, DWORD, LPCVOID, DWORD);
+DWMAPI DwmShowContact(DWORD, enum DWM_SHOWCONTACT);
 DWMAPI DwmUnregisterThumbnail(HTHUMBNAIL);
 DWMAPI DwmUpdateThumbnailProperties(HTHUMBNAIL, const DWM_THUMBNAIL_PROPERTIES *);
 

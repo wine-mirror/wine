@@ -376,3 +376,12 @@ HRESULT WINAPI DwmpGetColorizationParameters(void *params)
     FIXME("(%p) stub\n", params);
     return E_NOTIMPL;
 }
+
+/**********************************************************************
+ *           DwmShowContact         (DWMAPI.@)
+ */
+HRESULT WINAPI DwmShowContact(DWORD pointer_id, enum DWM_SHOWCONTACT showcontact)
+{
+    FIXME("pointer_id %#lx, showcontact %#x stub\n", pointer_id, showcontact);
+    return S_OK;
+}
