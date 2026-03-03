@@ -560,13 +560,8 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
         if (pid == 0x1839) prefer_hidraw = TRUE; /* Fanatec ClubSport Pedals v1/v2 */
         break;
     case 0x231d:
-        /* comes with 128 buttons in the default configuration */
-        if (buttons == 128) prefer_hidraw = TRUE;
-        /* if customized, less than 128 buttons may be shown, decide by PID */
-        if (pid == 0x0200) prefer_hidraw = TRUE; /* VKBsim Gladiator EVO Right Grip */
-        if (pid == 0x0201) prefer_hidraw = TRUE; /* VKBsim Gladiator EVO Left Grip */
-        if (pid == 0x0126) prefer_hidraw = TRUE; /* VKB-Sim Space Gunfighter */
-        if (pid == 0x0127) prefer_hidraw = TRUE; /* VKB-Sim Space Gunfighter L */
+        /* all vkb devices require hidraw, vkb pid & button/axis count are variable by user & modular hardware config */
+        prefer_hidraw = TRUE;
         break;
     case 0x3344:
         /* all VPC devices require hidraw, have variable numbers of axis/buttons, & in many cases
