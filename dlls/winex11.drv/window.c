@@ -1272,39 +1272,28 @@ void window_set_user_time( struct x11drv_win_data *data, Time time, BOOL init )
                           32, PropModeReplace, (unsigned char *)&time, 1 );
 }
 
-/* Update _NET_WM_FULLSCREEN_MONITORS when _NET_WM_STATE_FULLSCREEN is set to support fullscreen
- * windows spanning multiple monitors */
-static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
+static void window_set_net_wm_fullscreen_monitors( struct x11drv_win_data *data, const struct monitor_indices *new_monitors )
 {
-    struct monitor_indices *old_monitors = &data->pending_state.monitors, monitors;
-    XEvent xev;
+    const struct monitor_indices *old_monitors = &data->pending_state.monitors;
+    data->desired_state.monitors = *new_monitors;
 
-    if (!(data->pending_state.net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop()
-        || NtUserGetWindowLongW( data->hwnd, GWL_STYLE ) & WS_MINIMIZE)
-        return;
+    if (!(data->pending_state.net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop()) return; /* window isn't fullscreen, delay updating */
+    if (!data->whole_window || !data->managed || data->embedded) return; /* no window or not managed, nothing to update */
+    if (!memcmp( old_monitors, new_monitors, sizeof(*new_monitors) )) return; /* states are the same, nothing to update */
 
-    /* If the current display device handler cannot detect dynamic device changes, do not use
-     * _NET_WM_FULLSCREEN_MONITORS because xinerama_get_fullscreen_monitors() may report wrong
-     * indices because of stale xinerama monitor information */
-    if (!X11DRV_DisplayDevices_SupportEventHandlers())
-        return;
-
-    if (!xinerama_get_fullscreen_monitors( &data->rects.visible, &monitors.generation, monitors.indices ))
-        return;
-    data->desired_state.monitors = monitors;
-
-    if (!memcmp( old_monitors, &monitors, sizeof(monitors) )) return; /* states are the same, nothing to update */
-
+    if (data->pending_state.wm_state == IconicState) return; /* window is iconic and may be mapped or not, don't update its state now */
     if (data->pending_state.wm_state == WithdrawnState)
     {
-        memcpy( &data->pending_state.monitors, &monitors, sizeof(monitors) );
+        memcpy( &data->pending_state.monitors, new_monitors, sizeof(*new_monitors) );
         TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %s serial %lu\n", data->hwnd, data->whole_window,
-               debugstr_monitor_indices( &monitors ), NextRequest( data->display ) );
+               debugstr_monitor_indices( new_monitors ), NextRequest( data->display ) );
         XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
-                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors.indices, 4 );
+                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)new_monitors->indices, 4 );
     }
     else
     {
+        XEvent xev;
+
         xev.xclient.type = ClientMessage;
         xev.xclient.window = data->whole_window;
         xev.xclient.message_type = x11drv_atom(_NET_WM_FULLSCREEN_MONITORS);
@@ -1313,17 +1302,31 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
         xev.xclient.send_event = True;
         xev.xclient.format = 32;
         xev.xclient.data.l[4] = 1;
-        memcpy( xev.xclient.data.l, monitors.indices, sizeof(monitors.indices) );
+        memcpy( xev.xclient.data.l, new_monitors->indices, sizeof(new_monitors->indices) );
 
-        memcpy( &data->pending_state.monitors, &monitors, sizeof(monitors) );
+        memcpy( &data->pending_state.monitors, new_monitors, sizeof(*new_monitors) );
         TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %s serial %lu\n", data->hwnd, data->whole_window,
-               debugstr_monitor_indices( &monitors ), NextRequest( data->display ) );
+               debugstr_monitor_indices( new_monitors ), NextRequest( data->display ) );
         XSendEvent( data->display, DefaultRootWindow( data->display ), False,
                     SubstructureRedirectMask | SubstructureNotifyMask, &xev );
     }
 
     /* assume it changes immediately, we don't track the property for now */
-    memcpy( &data->current_state.monitors, &monitors, sizeof(monitors) );
+    memcpy( &data->current_state.monitors, new_monitors, sizeof(*new_monitors) );
+}
+
+/* Update _NET_WM_FULLSCREEN_MONITORS when _NET_WM_STATE_FULLSCREEN is set to support fullscreen
+ * windows spanning multiple monitors */
+static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
+{
+    struct monitor_indices monitors;
+
+    /* If the current display device handler cannot detect dynamic device changes, do not use
+     * _NET_WM_FULLSCREEN_MONITORS because xinerama_get_fullscreen_monitors() may report wrong
+     * indices because of stale xinerama monitor information */
+    if (!X11DRV_DisplayDevices_SupportEventHandlers()) return;
+    if (!xinerama_get_fullscreen_monitors( &data->rects.visible, &monitors.generation, monitors.indices )) return;
+    window_set_net_wm_fullscreen_monitors( data, &monitors );
 }
 
 static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_state )
