@@ -31,6 +31,13 @@
 typedef double max_align_t;
 
 #ifdef __cplusplus
+
+namespace std
+{
+    typedef decltype(nullptr) nullptr_t;
+}
+using ::std::nullptr_t;
+
 extern "C" {
 #endif
 
