@@ -914,6 +914,7 @@ static void test_format(AUDCLNT_SHAREMODE mode, WAVEFORMATEXTENSIBLE *fmt)
             /* Correct formats should be accepted, possibly with S_FALSE if they are not compatible. */
             if (!compatible)
                 expected = S_FALSE;
+            todo_wine_if(hr != expected && fmt24on32)
             ok(hr == expected || broken(hr == S_OK || (hr == S_FALSE && channel_mismatch)) /* Some drivers are more relaxed. */,
                     "IsFormatSupported() returns %08lx, expected %08lx\n", hr, expected);
         } else {

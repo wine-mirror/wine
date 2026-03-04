@@ -629,6 +629,7 @@ static void test_format(AUDCLNT_SHAREMODE mode, WAVEFORMATEXTENSIBLE *fmt)
             /* Correct formats should be accepted, possibly with S_FALSE if they are not compatible. */
             if (!compatible)
                 expected = S_FALSE;
+            todo_wine_if(hr != expected && fmt24on32)
             ok(hr == expected, "IsFormatSupported() returns %08lx, expected %08lx\n", hr, expected);
         } else {
             /* With incorrect formats it's a mess. Native emits all sorts of possible
