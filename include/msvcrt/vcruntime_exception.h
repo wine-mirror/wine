@@ -19,6 +19,8 @@
 #ifndef __WINE_VCRUNTIME_EXCEPTION_H
 #define __WINE_VCRUNTIME_EXCEPTION_H
 
+#include <eh.h>
+
 struct __std_exception_data
 {
     const char *_What;
@@ -70,6 +72,12 @@ public:
     {
         return data._What ? data._What : "Unknown exception";
     }
+};
+
+class bad_exception : public exception
+{
+public:
+    bad_exception() noexcept : exception("bad exception", 1) {}
 };
 
 class bad_alloc : public exception

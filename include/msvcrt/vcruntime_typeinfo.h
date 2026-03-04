@@ -94,6 +94,30 @@ private:
     bad_cast(const char *const message, int) noexcept : exception(message, 1) {}
 };
 
+class bad_typeid : public exception
+{
+public:
+    bad_typeid() noexcept : exception("bad typeid", 1) {}
+
+    static bad_typeid __construct_from_string_literal(const char* message) noexcept
+    {
+        return bad_typeid(message, 1);
+    }
+
+private:
+    friend class __non_rtti_object;
+    bad_typeid(const char* message, int) noexcept : exception(message, 1) { }
+};
+
+class __non_rtti_object : public bad_typeid
+{
+public:
+    static __non_rtti_object __construct_from_string_literal(const char* message) noexcept { return __non_rtti_object(message, 1); }
+
+private:
+    __non_rtti_object(const char* message, int) noexcept : bad_typeid(message, 1) { }
+};
+
 }
 
 #endif /* __WINE_VCRUNTIME_TYPEINFO_H */

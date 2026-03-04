@@ -28,6 +28,8 @@
 
 #pragma pack(push,8)
 
+extern "C" {
+
 struct _EXCEPTION_POINTERS;
 
 typedef void (__cdecl *terminate_handler)(void);
@@ -36,12 +38,19 @@ typedef void (__cdecl *unexpected_handler)(void);
 typedef void (__cdecl *unexpected_function)(void);
 typedef void (__cdecl *_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
 
-_ACRTIMP terminate_function __cdecl set_terminate(terminate_function func);
-_ACRTIMP unexpected_function __cdecl set_unexpected(unexpected_function func);
+_ACRTIMP terminate_handler __cdecl set_terminate(terminate_handler func) noexcept;
+_ACRTIMP terminate_handler __cdecl _get_terminate(void);
+_ACRTIMP unexpected_handler __cdecl set_unexpected(unexpected_handler func) noexcept;
+_ACRTIMP unexpected_handler __cdecl _get_unexpected(void) noexcept;
 _ACRTIMP _se_translator_function __cdecl set_se_translator(_se_translator_function func);
 
 _ACRTIMP DECLSPEC_NORETURN void __cdecl terminate(void);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl unexpected(void);
+
+_ACRTIMP bool __cdecl __uncaught_exception(void);
+_ACRTIMP int  __cdecl __uncaught_exceptions(void);
+
+} /* extern "C" */
 
 #pragma pack(pop)
 
