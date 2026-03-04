@@ -1388,15 +1388,6 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 
     pthread_mutex_lock( &kbd_mutex );
 
-    /* If XKB extensions are used, the state mask for AltGr will use the group
-       index instead of the modifier mask. The group index is set in bits
-       13-14 of the state field in the XKeyEvent structure. So if AltGr is
-       pressed, look if the group index is different than 0. From XKB
-       extension documentation, the group index for AltGr should be 2
-       (event->state = 0x2000). It's probably better to not assume a
-       predefined group index and find it dynamically
-
-       Ref: X Keyboard Extension: Library specification (section 14.1.1 and 17.1.1) */
     /* Save also all possible modifier states. */
     AltGrMask = event->state & (0x6000 | Mod1Mask | Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask);
 
@@ -1436,15 +1427,28 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 }
 
 /* fuzzy layout detection through keysym / keycode matching, kbd_section must be held */
-static void detect_keyboard_layout( Display *display )
+static void detect_keyboard_layout( Display *display, XModifierKeymap *modmap, unsigned int xkb_group )
 {
   unsigned current, match, mismatch, seq, i, syms;
   int score, keyc, key, pkey, ok;
-  KeySym keysym = 0;
+  KeySym keysym;
   const char (*lkey)[MAIN_LEN][4];
   unsigned max_seq = 0;
   int max_score = INT_MIN, ismatch = 0;
   char ckey[256][4];
+  unsigned int state, altgr_mod = 0, dummy, mod;
+
+  TRACE( "display %p, mmp %p, xkb_group %u\n", display, modmap, xkb_group );
+
+  for (mod = 0; mod < 8 * modmap->max_keypermod; mod++)
+  {
+      int xmod = 1 << (mod / modmap->max_keypermod);
+
+      if (!(keyc = modmap->modifiermap[mod])) continue;
+      XkbLookupKeySym( display, keyc, xkb_group * 0x2000, &dummy, &keysym );
+      if (keysym == XK_ISO_Level3_Shift) altgr_mod = xmod;
+  }
+  TRACE( "AltGr is mapped to mod %#x\n", altgr_mod );
 
   syms = keysyms_per_keycode;
   if (syms > 4) {
@@ -1453,10 +1457,16 @@ static void detect_keyboard_layout( Display *display )
   }
 
   memset( ckey, 0, sizeof(ckey) );
-  for (keyc = min_keycode; keyc <= max_keycode; keyc++) {
+  for (keyc = min_keycode; keyc <= max_keycode; keyc++)
+  {
       /* get data for keycode from X server */
-      for (i = 0; i < syms; i++) {
-        if (!(keysym = XkbKeycodeToKeysym( display, keyc, 0, i ))) continue;
+      for (i = 0; i < syms; i++)
+      {
+          /* With Xkb, the current group index is encoded in bits 13-14 of the state field.
+           * Ref: X Keyboard Extension: Library specification (section 18.1.1)
+           */
+          state = xkb_group << 13 | (i & 1 ? ShiftMask : 0) | (i & 2 ? altgr_mod : 0);
+          if (!XkbLookupKeySym( display, keyc, state, &dummy, &keysym )) continue;
 	/* Allow both one-byte and two-byte national keysyms */
 	if ((keysym < 0x8000) && (keysym != ' '))
         {
@@ -1807,7 +1817,6 @@ void init_keyboard_layouts( Display *display )
             }
         }
     }
-    XFreeModifiermap( mmp );
 
     status = XkbGetState( display, XkbUseCoreKbd, &xkb_state );
     xkb_group = status ? 0 : xkb_state.group;
@@ -1832,7 +1841,8 @@ void init_keyboard_layouts( Display *display )
         XkbFreeKeyboard( xkb_desc, 0, True );
     }
 
-    detect_keyboard_layout( display );
+    detect_keyboard_layout( display, mmp, xkb_group );
+    XFreeModifiermap( mmp );
 
     init_keycode_mappings( display );
 
