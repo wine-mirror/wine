@@ -85,6 +85,9 @@ struct hid_device_desc
 
     HIDP_CAPS caps;
     HID_DEVICE_ATTRIBUTES attributes;
+    WCHAR vendor_str[64];
+    WCHAR product_str[64];
+    WCHAR serial_str[64];
 
     ULONG input_size;
     struct hid_expect input[64];

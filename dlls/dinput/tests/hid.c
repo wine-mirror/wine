@@ -2713,10 +2713,10 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     HidD_FreePreparsedData( preparsed_data );
 }
 
-static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *expect_caps, WORD vid, WORD pid )
+static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *expect_caps, struct hid_device_desc *desc )
 {
+    WCHAR device_path[MAX_PATH], buffer[1024];
     ULONG count, poll_freq, out_len;
-    WCHAR device_path[MAX_PATH];
     HANDLE file, async_file;
     DWORD ret;
 
@@ -2730,13 +2730,23 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
 
-    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", vid, pid );
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc->attributes.VendorID, desc->attributes.ProductID );
     ret = find_hid_device_path( device_path );
     ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
 
     file = CreateFileW( device_path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
     ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+
+    ret = HidD_GetManufacturerString( file, buffer, ARRAY_SIZE(buffer) );
+    ok( ret, "HidD_GetManufacturerString failed last error %lu\n", GetLastError() );
+    ok( !wcscmp( desc->vendor_str, buffer ), "HidD_GetManufacturerString returned %s\n", debugstr_w(buffer) );
+    ret = HidD_GetProductString( file, buffer, ARRAY_SIZE(buffer) );
+    ok( ret, "HidD_GetProductString failed last error %lu\n", GetLastError() );
+    ok( !wcscmp( desc->product_str, buffer ), "HidD_GetProductString returned %s\n", debugstr_w(buffer) );
+    ret = HidD_GetSerialNumberString( file, buffer, ARRAY_SIZE(buffer) );
+    ok( ret, "HidD_GetSerialNumberString failed last error %lu\n", GetLastError() );
+    ok( !wcscmp( desc->serial_str, buffer ), "HidD_GetSerialNumberString returned %s\n", debugstr_w(buffer) );
 
     count = 0xdeadbeef;
     SetLastError( 0xdeadbeef );
@@ -3150,6 +3160,9 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
         .use_report_id = report_id,
         .caps = caps,
         .attributes = default_attributes,
+        .vendor_str = L"Wine",
+        .product_str = L"Test Device",
+        .serial_str = L"0&1234&5",
     };
 
     desc.report_descriptor_len = sizeof(report_desc);
@@ -3158,7 +3171,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     memcpy( desc.input, &expect_in, sizeof(expect_in) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (hid_device_start( &desc, 1 )) test_hid_device( report_id, polled, &caps, desc.attributes.VendorID, desc.attributes.ProductID );
+    if (hid_device_start( &desc, 1 )) test_hid_device( report_id, polled, &caps, &desc );
     hid_device_stop( &desc, 1 );
 }
 

@@ -505,6 +505,10 @@ struct phys_device
     struct device base;
     struct func_device *fdo; /* parent FDO */
 
+    WCHAR vendor_str[64];
+    WCHAR product_str[64];
+    WCHAR serial_str[64];
+
     WCHAR instance_id[MAX_PATH];
     WCHAR device_id[MAX_PATH];
     IRP *pending_remove;
@@ -903,11 +907,16 @@ static NTSTATUS create_child_pdo( DEVICE_OBJECT *device, struct hid_device_desc 
 
     impl = pdo_from_DEVICE_OBJECT( child );
     KeInitializeSpinLock( &impl->base.lock );
+
+    wcscpy( impl->vendor_str, *desc->vendor_str ? desc->vendor_str : L"WineTest" );
+    wcscpy( impl->product_str, *desc->product_str ? desc->product_str : L"Wine Test" );
+    wcscpy( impl->serial_str, *desc->serial_str ? desc->serial_str : L"0&0000&0" );
+
     swprintf( impl->device_id, MAX_PATH, L"WINETEST\\VID_%04X&PID_%04X", desc->attributes.VendorID,
               desc->attributes.ProductID );
     /* use a different device ID so that driver cache select the polled driver */
     if (desc->is_polled) wcscat( impl->device_id, L"&POLL" );
-    swprintf( impl->instance_id, MAX_PATH, L"0&0000&0" );
+    swprintf( impl->instance_id, MAX_PATH, L"%s", impl->serial_str );
     impl->base.is_phys = TRUE;
     impl->fdo = fdo;
 
@@ -1238,10 +1247,41 @@ static NTSTATUS pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
 
     case IOCTL_HID_GET_STRING:
-        memcpy( irp->UserBuffer, L"Wine Test", sizeof(L"Wine Test") );
-        irp->IoStatus.Information = sizeof(L"Wine Test");
-        status = STATUS_SUCCESS;
+    {
+        UINT index = (UINT_PTR)stack->Parameters.DeviceIoControl.Type3InputBuffer & 0xffff;
+        UINT lcid = ((UINT_PTR)stack->Parameters.DeviceIoControl.Type3InputBuffer) >> 16;
+
+        todo_wine ok( lcid, "Unexpected LCID %#x.\n", lcid );
+        if (winetest_debug > 1)
+            trace( "%s: device %p, code %#lx %s, lcid %#x, idx %#x.\n", __func__, device, code, debugstr_ioctl(code),
+                    lcid, index );
+        switch (index)
+        {
+        case HID_STRING_ID_IMANUFACTURER:
+            irp->IoStatus.Information = (wcslen( impl->vendor_str ) + 1) * sizeof(WCHAR);
+            memcpy( irp->UserBuffer, impl->vendor_str, irp->IoStatus.Information );
+            status = STATUS_SUCCESS;
+            break;
+
+        case HID_STRING_ID_IPRODUCT:
+            irp->IoStatus.Information = (wcslen( impl->product_str ) + 1) * sizeof(WCHAR);
+            memcpy( irp->UserBuffer, impl->product_str, irp->IoStatus.Information );
+            status = STATUS_SUCCESS;
+            break;
+
+        case HID_STRING_ID_ISERIALNUMBER:
+            irp->IoStatus.Information = (wcslen(impl->serial_str) + 1) * sizeof(WCHAR);
+            memcpy( irp->UserBuffer, impl->serial_str, irp->IoStatus.Information );
+            status = STATUS_SUCCESS;
+            break;
+
+        default:
+            ok(0, "Unknown string type %#x.\n", index);
+            status = STATUS_NOT_IMPLEMENTED;
+            break;
+        }
         break;
+    }
 
     case IOCTL_GET_PHYSICAL_DESCRIPTOR:
         irp->IoStatus.Information = 0;
