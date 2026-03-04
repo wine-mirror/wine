@@ -3614,13 +3614,27 @@ done:
     hid_device_stop( &desc, 1 );
 }
 
+static void cleanup_registry_tree( HKEY root, const WCHAR *path )
+{
+    WCHAR buf[MAX_PATH];
+    HKEY hkey;
+
+    RegCreateKeyExW( root, path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL );
+    for (ULONG i = 0, size = ARRAY_SIZE(buf); !RegEnumKeyExW( hkey, i, buf, &size, NULL, NULL, NULL, NULL ); i++, size = ARRAY_SIZE(buf))
+    {
+        if (wcsnicmp( buf, L"VID_1209", 8 )) continue;
+        RegDeleteTreeW( hkey, buf );
+        i = -1;
+    }
+    RegCloseKey( hkey );
+}
+
 void cleanup_registry_keys(void)
 {
     static const WCHAR joystick_oem_path[] = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
                                               "PrivateProperties\\Joystick\\OEM";
     static const WCHAR dinput_path[] = L"System\\CurrentControlSet\\Control\\MediaProperties\\"
                                        "PrivateProperties\\DirectInput";
-    HKEY root_key;
 
     /* These keys are automatically created by DInput and they store the
        list of supported force-feedback effects. OEM drivers are supposed
@@ -3630,21 +3644,10 @@ void cleanup_registry_keys(void)
        We need to clean them up, or DInput will not refresh the list of
        effects from the PID report changes.
     */
-    RegCreateKeyExW( HKEY_CURRENT_USER, joystick_oem_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
-    RegDeleteTreeW( root_key, expect_vidpid_str );
-    RegCloseKey( root_key );
-
-    RegCreateKeyExW( HKEY_CURRENT_USER, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
-    RegDeleteTreeW( root_key, expect_vidpid_str );
-    RegCloseKey( root_key );
-
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, joystick_oem_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
-    RegDeleteTreeW( root_key, expect_vidpid_str );
-    RegCloseKey( root_key );
-
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
-    RegDeleteTreeW( root_key, expect_vidpid_str );
-    RegCloseKey( root_key );
+    cleanup_registry_tree( HKEY_CURRENT_USER, joystick_oem_path );
+    cleanup_registry_tree( HKEY_CURRENT_USER, dinput_path );
+    cleanup_registry_tree( HKEY_LOCAL_MACHINE, joystick_oem_path );
+    cleanup_registry_tree( HKEY_LOCAL_MACHINE, dinput_path );
 }
 
 static LRESULT CALLBACK monitor_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
