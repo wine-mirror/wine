@@ -160,7 +160,8 @@ static HRESULT WINAPI core_input_view_GetCoreInputViewOcclusions(ICoreInputView 
 static HRESULT WINAPI core_input_view_TryShowPrimaryView(ICoreInputView *iface, boolean *result)
 {
     FIXME("iface %p, boolean %p stub!\n", iface, result);
-    return E_NOTIMPL;
+    *result = TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI core_input_view_TryHidePrimaryView(ICoreInputView *iface, boolean *result)
