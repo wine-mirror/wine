@@ -64,6 +64,7 @@ void cleanup_registry_keys(void);
 void dinput_test_init_( const char *file, int line );
 void dinput_test_exit(void);
 
+HRESULT dinput_test_create_device_instance( DWORD version, const GUID *guid_inst, IDirectInputDevice8W **device );
 HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device );
 DWORD WINAPI dinput_test_device_thread( void *stop_event );
 

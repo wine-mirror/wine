@@ -302,6 +302,39 @@ static BOOL CALLBACK enum_device_count( const DIDEVICEINSTANCEW *devinst, void *
     return DIENUM_CONTINUE;
 }
 
+struct dinput
+{
+    DWORD version;
+    union
+    {
+        IDirectInput8W *di8;
+        IDirectInputW *di;
+    };
+};
+
+static HRESULT dinput_create( struct dinput *di )
+{
+    return di->version < 0x0800 ? DirectInputCreateEx( instance, di->version, &IID_IDirectInput2W, (void **)&di->di, NULL )
+                                : DirectInput8Create( instance, di->version, &IID_IDirectInput8W, (void **)&di->di, NULL );
+}
+
+static ULONG dinput_release( struct dinput *di )
+{
+    return di->version < 0x0800 ? IDirectInput_Release( di->di ) : IDirectInput8_Release( di->di8 );
+}
+
+static HRESULT dinput_enum_devices( struct dinput *di, LPDIENUMDEVICESCALLBACKW callback, void *context )
+{
+    return di->version < 0x0800 ? IDirectInput_EnumDevices( di->di, 0, callback, context, DIEDFL_ALLDEVICES )
+                                : IDirectInput8_EnumDevices( di->di8, DI8DEVCLASS_ALL, callback, context, DIEDFL_ALLDEVICES );
+}
+
+static HRESULT dinput_create_device( struct dinput *di, const GUID *guid, IDirectInputDevice8W **device )
+{
+    return di->version < 0x0800 ? IDirectInput_CreateDevice( di->di, guid, (IDirectInputDeviceW **)device, NULL )
+                                : IDirectInput8_CreateDevice( di->di8, guid, device, NULL );
+}
+
 static void check_dinput_devices( DWORD version, DIDEVICEINSTANCEW *devinst )
 {
     DIPROPDWORD prop_dword =
@@ -5973,6 +6006,484 @@ static void test_rawinput_desktop( const char *path, BOOL input )
     DestroyWindow( hwnd );
 }
 
+static BOOL CALLBACK find_test_device_instances( const DIDEVICEINSTANCEW *devinst, void *context )
+{
+    GUID **instance = context;
+
+    if (LOWORD(devinst->guidProduct.Data1) == LOWORD(EXPECT_VIDPID))
+    {
+        **instance = devinst->guidInstance;
+        (*instance)++;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
+#define check_device_hid_serial( a, b ) check_device_hid_serial_( __LINE__, a, b )
+static void check_device_hid_serial_( int line, IDirectInputDevice8W *device, const WCHAR *expect )
+{
+    DIPROPGUIDANDPATH prop_guid_path =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPGUIDANDPATH),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    WCHAR device_id[MAX_PATH] = {0};
+    HANDLE file_handle;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
+    ok_(__FILE__, line)( hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+    file_handle = CreateFileW( prop_guid_path.wszPath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    ok_(__FILE__, line)( file_handle != INVALID_HANDLE_VALUE, "Got error %lu.\n", GetLastError() );
+
+    ret = HidD_GetSerialNumberString( file_handle, device_id, ARRAY_SIZE(device_id) );
+    ok_(__FILE__, line)( ret, "Failed to get HID serial number string.\n" );
+    ok_(__FILE__, line)( !wcscmp( expect, device_id ), "Unexpected device serial %s.\n", debugstr_w(device_id) );
+
+    CloseHandle( file_handle );
+}
+
+static void test_joystick_instance_guid( DWORD version )
+{
+#include "psh_hid_macros.h"
+    static const unsigned char report_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Physical),
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 6),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    C_ASSERT( sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN );
+#include "pop_hid_macros.h"
+    struct hid_device_desc descs[4] =
+    {
+#define MAKE_ATTR( pid) { sizeof(HID_DEVICE_ATTRIBUTES), LOWORD(EXPECT_VIDPID), pid, 0x0100 }
+#define MAKE_DESC( pid, serial ) {.use_report_id = TRUE, .caps = {.InputReportByteLength = 1}, .attributes = MAKE_ATTR( pid ), .serial_str = serial}
+        MAKE_DESC( 0x0001, L"1&2345&6" ),
+        MAKE_DESC( 0x0001, L"2&7812&1" ),
+        MAKE_DESC( 0x0002, L"3&4580&7" ),
+        MAKE_DESC( 0x0002, L"4&5880&3" ),
+#undef MAKE_DESC
+#undef MAKE_ATTR
+    };
+    const GUID instance_uuid_init = {0x00000000, 0x0000, 0x1000, {0x80, 0x00, 0x00, 0x00, 'D', 'E', 'S', 'T'}};
+    struct dinput di = {.version = version}, di2 = {.version = version};
+    GUID expect_instances[4], instances[64], *instances_end;
+    IDirectInputDevice8W *device;
+    HRESULT hr;
+    ULONG ref;
+
+    winetest_push_context( "%#lx", version );
+    cleanup_registry_keys();
+
+    if (FAILED(hr = dinput_create( &di )))
+    {
+        win_skip( "DirectInput8Create returned %#lx\n", hr );
+        return;
+    }
+
+    for (UINT i = 0; i < ARRAY_SIZE(descs); i++)
+    {
+        descs[i].report_descriptor_len = sizeof(report_desc);
+        memcpy( descs[i].report_descriptor_buf, report_desc, sizeof(report_desc) );
+    }
+
+    if (!hid_device_start( descs, ARRAY_SIZE(descs) )) goto done;
+
+    /* Enumerate all devices, each with a unique guidInstance. */
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances + 4, "Unexpected count %Iu.\n", instances_end - instances );
+
+    for (UINT i = 0; i < instances_end - instances; i++)
+    {
+        winetest_push_context( "device %d", i );
+
+        hr = dinput_create_device( &di, &instances[i], &device );
+        ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+        expect_instances[i] = instances[i];
+
+        check_device_hid_serial( device, descs[i].serial_str );
+
+        IDirectInputDevice8_Release( device );
+        winetest_pop_context();
+    }
+
+    /*
+     * Delete the existing registry keys, this will result in a new set of
+     * guidInstance values being generated on the next call to EnumDevices().
+     */
+    cleanup_registry_keys();
+
+    /*
+     * EnumDevices() hasn't been called yet, guidInstance values are still
+     * valid.
+     */
+    for (UINT i = 0; i < instances_end - instances; i++)
+    {
+        winetest_push_context( "device %d", i );
+
+        hr = dinput_create_device( &di, &expect_instances[i], &device );
+        ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+
+        check_device_hid_serial( device, descs[i].serial_str );
+
+        IDirectInputDevice8_Release( device );
+        winetest_pop_context();
+    }
+
+    /* The cache is module-local, other dinput version will fail to find
+     * the devices, but it doesn't cause the list to be refreshed.
+     */
+    di2.version = 0x0500;
+    hr = dinput_create( &di2 );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+
+    hr = dinput_create_device( &di2, &expect_instances[0], &device );
+    if (version == 0x800) todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+    else ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr))
+    {
+        check_device_hid_serial( device, descs[0].serial_str );
+        IDirectInputDevice8_Release( device );
+    }
+
+    ref = dinput_release( &di2 );
+    ok( ref == 0, "Release returned %ld\n", ref );
+
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    check_device_hid_serial( device, descs[0].serial_str );
+    IDirectInputDevice8_Release( device );
+
+
+    /*
+     * Call EnumDevices(), a new set of guidInstance values and registry entries
+     * will be created.
+     */
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances + 4, "Unexpected count %Iu.\n", instances_end - instances );
+
+    for (UINT i = 0; i < instances_end - instances; i++)
+    {
+        winetest_push_context( "device %d", i );
+
+        todo_wine ok( !IsEqualGUID( &expect_instances[i], &instances[i] ),
+                      "Unexpected instance %s.\n", debugstr_guid( &instances[i] ) );
+
+        /* Old guidInstance no longer works. */
+        hr = dinput_create_device( &di, &expect_instances[i], &device );
+        todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+        if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+        expect_instances[i] = instances[i];
+
+        /* New guidInstance, same device. */
+        hr = dinput_create_device( &di, &instances[i], &device );
+        ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+
+        check_device_hid_serial( device, descs[i].serial_str );
+
+        IDirectInputDevice8_Release( device );
+        winetest_pop_context();
+    }
+
+
+    /* Opening a device with an unknown instance GUID will cause a refresh
+     * of the device list, the same was as calling EnumDevices.
+     */
+    cleanup_registry_keys();
+
+    instances[0] = instance_uuid_init;
+    instances[0].Data1 = 0xdeadbeef;
+    instances[0].Data2 = 0xdead;
+    instances[0].Data3 = 0xbeef;
+    hr = dinput_create_device( &di, &instances[0], &device );
+    ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances + 4, "Unexpected count %Iu.\n", instances_end - instances );
+    memcpy( expect_instances, instances, 4 * sizeof(*instances) );
+
+
+    /* Opening a device with an unknown product GUID will cause a refresh
+     * of the device list, the same was as calling EnumDevices.
+     */
+    cleanup_registry_keys();
+
+    instances[0] = expect_guid_product;
+    instances[0].Data1 = MAKELONG( LOWORD(EXPECT_VIDPID), 0x0003 );
+    hr = dinput_create_device( &di, &instances[0], &device );
+    ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    todo_wine ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances + 4, "Unexpected count %Iu.\n", instances_end - instances );
+    memcpy( expect_instances, instances, 4 * sizeof(*instances) );
+
+
+    /* Opening a cached device that has been unplugged fails but does
+     * not invalidate the cache, and other cached devices stay valid.
+     */
+    cleanup_registry_keys();
+    hid_device_stop( &descs[0], 1 );
+
+    hr = dinput_create_device( &di, &instances[1], &device );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    check_device_hid_serial( device, descs[1].serial_str );
+    IDirectInputDevice8_Release( device );
+
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+
+    hr = dinput_create_device( &di, &instances[1], &device );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    check_device_hid_serial( device, descs[1].serial_str );
+    IDirectInputDevice8_Release( device );
+
+    hid_device_start( &descs[0], 1 );
+
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances + 4, "Unexpected count %Iu.\n", instances_end - instances );
+    memcpy( expect_instances, instances, 4 * sizeof(*instances) );
+
+
+    /*
+     * Stop devices 0 and 2. After enumeration, their guidInstance values will
+     * be assigned to devices 1 and 3.
+     */
+    hid_device_stop( &descs[0], 1 );
+    hid_device_stop( &descs[2], 1 );
+
+    /* Stopped devices should return E_FAIL. */
+    hr = dinput_create_device( &di, &instances[0], &device );
+    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+    hr = dinput_create_device( &di, &instances[2], &device );
+    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+
+    /* After calling EnumDevices(), guidInstance values will be reassigned. */
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances + 2, "Unexpected count %Iu.\n", instances_end - instances );
+
+    for (UINT i = 0; i < instances_end - instances; i++)
+    {
+        const unsigned int expected_joystick = !i ? 1 : 3;
+
+        winetest_push_context( "device %d", i );
+
+        todo_wine ok( IsEqualGUID( &expect_instances[expected_joystick - 1], &instances[i] ),
+                      "Unexpected instance %s.\n", debugstr_guid( &instances[i] ) );
+        hr = dinput_create_device( &di, &instances[i], &device );
+        ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+
+        check_device_hid_serial( device, descs[expected_joystick].serial_str );
+
+        IDirectInputDevice8_Release( device );
+        winetest_pop_context();
+    }
+
+    /*
+     * Restart devices 0 and 2, they should get their old guidInstance values
+     * back after another call to EnumDevices().
+     */
+    hid_device_start( &descs[0], 1 );
+    hid_device_start( &descs[2], 1 );
+
+    for (UINT i = 0; i < instances_end - instances; i++)
+    {
+        const unsigned int expected_joystick = !i ? 1 : 3;
+
+        winetest_push_context( "device %d", i );
+
+        todo_wine ok( IsEqualGUID( &expect_instances[expected_joystick - 1], &instances[i] ),
+                      "Unexpected instance %s.\n", debugstr_guid( &instances[i] ) );
+        hr = dinput_create_device( &di, &instances[i], &device );
+        ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+
+        check_device_hid_serial( device, descs[expected_joystick].serial_str );
+
+        IDirectInputDevice8_Release( device );
+        winetest_pop_context();
+    }
+
+    /* guidInstance values are all back to what they were. */
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances + 4, "Unexpected count %Iu.\n", instances_end - instances );
+
+    for (UINT i = 0; i < instances_end - instances; i++)
+    {
+        winetest_push_context( "device %d", i );
+
+        todo_wine_if( !(i & 0x1) )
+        ok( IsEqualGUID( &expect_instances[i], &instances[i] ),
+            "Unexpected guidInstance %s.\n", debugstr_guid( &instances[i] ) );
+
+        hr = dinput_create_device( &di, &instances[i], &device );
+        ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+
+        check_device_hid_serial( device, descs[i].serial_str );
+
+        IDirectInputDevice8_Release( device );
+        winetest_pop_context();
+    }
+
+    /* Stop all devices. */
+    hid_device_stop( descs, ARRAY_SIZE(descs) );
+
+
+    /*
+     * Call EnumDevices() with all devices stopped. Test behavior of device
+     * creation without calling EnumDevices() with the devices present
+     * beforehand.
+     */
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances, "Unexpected count %Iu.\n", instances_end - instances );
+
+    for (UINT i = 0; i < ARRAY_SIZE(descs); i++)
+    {
+        winetest_push_context( "device %d", i );
+
+        hr = dinput_create_device( &di, &expect_instances[i], &device );
+        ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+
+        /*
+         * Start the joystick device. This will succeed, even without having
+         * called EnumDevices() beforehand.
+         */
+        hid_device_start( &descs[i], 1 );
+
+        hr = dinput_create_device( &di, &expect_instances[i], &device );
+        todo_wine ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+        if (SUCCEEDED(hr))
+        {
+            check_device_hid_serial( device, descs[i].serial_str );
+            IDirectInputDevice8_Release( device );
+        }
+        hid_device_stop( &descs[i], 1 );
+
+        hr = dinput_create_device( &di, &expect_instances[i], &device );
+        todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+        if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+
+        hid_device_start( &descs[i], 1 );
+        winetest_pop_context();
+    }
+
+    hid_device_stop( descs, ARRAY_SIZE(descs) );
+
+
+    /* Reset device list. */
+    instances_end = instances;
+    hr = dinput_enum_devices( &di, find_test_device_instances, &instances_end );
+    ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    ok( instances_end == instances, "Unexpected count %Iu.\n", instances_end - instances );
+
+
+    /*
+     * Start device 0, create a device with guidInstance 0.
+     * Stop device 0.
+     * Start device 1, attempt to create a device with guidInstance 1.
+     * Fails.
+     * Try to create a device with guidInstance 0, which is now associated
+     * with device 1.
+     */
+    hid_device_start( &descs[0], 1 );
+
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    todo_wine ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr))
+    {
+        check_device_hid_serial( device, descs[0].serial_str );
+        IDirectInputDevice8_Release( device );
+    }
+    hid_device_stop( &descs[0], 1 );
+
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+
+
+    /* Start device 1. */
+    hid_device_start( &descs[1], 1 );
+
+    /*
+     * This still fails with E_FAIL, as expect_instances[0] is still associated
+     * with device 0.
+     */
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
+
+    /*
+     * expect_instances[1] is not currently associated with a device, which
+     * means attempting to use this GUID results in what seems to be an
+     * internal call to EnumDevices(). With device 0 currently stopped,
+     * expect_instances[0] gets reassigned to device 1.
+     */
+    hr = dinput_create_device( &di, &expect_instances[1], &device );
+    ok( hr == DIERR_DEVICENOTREG, "Unexpected hr %#lx.\n", hr );
+
+    hr = dinput_create_device( &di, &expect_instances[0], &device );
+    todo_wine ok( hr == DI_OK, "Unexpected hr %#lx.\n", hr );
+    if (SUCCEEDED(hr))
+    {
+        check_device_hid_serial( device, descs[1].serial_str );
+        IDirectInputDevice8_Release( device );
+    }
+    hid_device_stop( &descs[1], 1 );
+
+
+done:
+    ref = dinput_release( &di );
+    ok( ref == 0, "Release returned %ld\n", ref );
+    cleanup_registry_keys();
+    winetest_pop_context();
+}
+
 START_TEST( joystick8 )
 {
     char **argv;
@@ -5999,6 +6510,10 @@ START_TEST( joystick8 )
         test_simple_joystick( 0x500 );
         test_simple_joystick( 0x700 );
         test_simple_joystick( 0x800 );
+
+        test_joystick_instance_guid( 0x500 );
+        test_joystick_instance_guid( 0x700 );
+        test_joystick_instance_guid( 0x800 );
 
         test_many_axes_joystick();
         test_driving_wheel_axes();
