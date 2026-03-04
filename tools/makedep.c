@@ -2201,19 +2201,30 @@ static struct strarray get_local_dependencies( const struct makefile *make, cons
 
 
 /*******************************************************************
+ *         get_import_lib
+ *
+ * Find the makefile that builds the named import library.
+ */
+static struct makefile *get_import_lib( const char *name )
+{
+    for (unsigned int i = 0; i < subdirs.count; i++)
+        if (submakes[i]->importlib && !strcmp( submakes[i]->importlib, name )) return submakes[i];
+    return NULL;
+}
+
+
+/*******************************************************************
  *         get_static_lib
  *
- * Find the makefile that builds the named static library (which may be an import lib).
+ * Find the makefile that builds the named static library.
  */
-static struct makefile *get_static_lib( const char *name, unsigned int arch )
+static struct makefile *get_static_lib( const char *name )
 {
     unsigned int i;
 
     for (i = 0; i < subdirs.count; i++)
     {
-        if (submakes[i]->importlib && !strcmp( submakes[i]->importlib, name )) return submakes[i];
         if (!submakes[i]->staticlib) continue;
-        if (submakes[i]->disabled[arch]) continue;
         if (strncmp( submakes[i]->staticlib, "lib", 3 )) continue;
         if (strncmp( submakes[i]->staticlib + 3, name, strlen(name) )) continue;
         if (strcmp( submakes[i]->staticlib + 3 + strlen(name), ".a" )) continue;
@@ -2396,6 +2407,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
     STRARRAY_FOR_EACH( name, &imports )
     {
         struct makefile *submake;
+        const char *basename, *lib = NULL;
 
         /* add crt import lib only when adding the default imports libs */
         if (is_crt_module( name ) && type != IMPORT_TYPE_DEFAULT) continue;
@@ -2405,20 +2417,35 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
             switch (name[1])
             {
             case 'L': strarray_add( &ret, name ); continue;
-            case 'l': name += 2; break;
+            case 'l': basename = name + 2; break;
             default: continue;
             }
         }
-        else name = get_base_name( name );
+        else basename = get_base_name( name );
 
-        if ((submake = get_static_lib( name, link_arch )))
+        if ((submake = get_import_lib( basename )))
         {
             const char *ext = (type == IMPORT_TYPE_DELAYED && !delay_load_flags[arch]) ? ".delay.a" : ".a";
-            const char *lib = obj_dir_path( submake, strmake( "%slib%s%s", arch_dirs[arch], name, ext ));
-            strarray_add_uniq( deps, lib );
-            strarray_add( &ret, lib );
+            lib = obj_dir_path( submake, strmake( "%slib%s%s", arch_dirs[arch], basename, ext ));
         }
-        else strarray_add( &ret, strmake( "-l%s", name ));
+        else if ((submake = get_static_lib( basename )))
+        {
+            if (submake->disabled[link_arch]) continue;
+            lib = obj_dir_path( submake, strmake( "%slib%s.a", arch_dirs[arch], basename ));
+        }
+        else if (name[0] == '-')  /* pass the original -l option to the linker */
+        {
+            strarray_add( &ret, name );
+            continue;
+        }
+        else
+        {
+            input_file_name = src_dir_path( make, "Makefile.in" );
+            fatal_error( "library %s not found\n", basename );
+        }
+
+        strarray_add_uniq( deps, lib );
+        strarray_add( &ret, lib );
     }
     return ret;
 }
@@ -3801,7 +3828,7 @@ static void output_module( struct makefile *make, unsigned int arch )
         {
             STRARRAY_FOR_EACH( imp, &make->delayimports )
             {
-                struct makefile *import = get_static_lib( imp, arch );
+                struct makefile *import = get_import_lib( imp );
                 if (import) strarray_add( &all_libs, strmake( "%s%s", delay_load_flags[arch], import->module ));
             }
         }
