@@ -1166,7 +1166,13 @@ static void test_setpixelformat(HDC winhdc)
 static void test_sharelists(HDC winhdc)
 {
     BOOL res, nvidia, amd, source_current, source_sharing, dest_current, dest_sharing;
+    const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
     HGLRC source, dest, other;
+    BOOL ms_hint_supported;
+
+    ms_hint_supported = gl_extension_supported(extensions, "GL_NV_multisample_filter_hint");
+    if (!ms_hint_supported)
+        skip("GL_NV_multisample_filter_hint is not supported.\n");
 
     res = wglShareLists(NULL, NULL);
     ok(!res, "Sharing display lists for no contexts passed!\n");
@@ -1211,8 +1217,15 @@ static void test_sharelists(HDC winhdc)
                         glDisable(GL_DITHER);
                         glDepthFunc(GL_LESS);
                         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+                        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+                        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+                        glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+                        glHint(GL_FOG_HINT, GL_NICEST);
+                        if (ms_hint_supported)
+                            glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
                         glShadeModel(GL_SMOOTH);
                         glClearColor(0.1, 0.2, 0.3, 1.0);
+
                     }
                     if (source_sharing)
                     {
@@ -1236,7 +1249,13 @@ static void test_sharelists(HDC winhdc)
                         glEnable(GL_FOG);
                         glEnable(GL_DITHER);
                         glDepthFunc(GL_GREATER);
-                        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+                        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+                        glHint(GL_POINT_SMOOTH_HINT, GL_FASTEST);
+                        glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
+                        glHint(GL_POLYGON_SMOOTH_HINT, GL_FASTEST);
+                        glHint(GL_FOG_HINT, GL_FASTEST);
+                        if (ms_hint_supported)
+                            glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_FASTEST);
                         glShadeModel(GL_FLAT);
                         glClearColor(0.3, 0.2, 0.1, 1.0);
                     }
@@ -1253,7 +1272,7 @@ static void test_sharelists(HDC winhdc)
                     if (source_current)
                     {
                         float floats[4];
-                        int ints[4];
+                        int ints[4], val;
 
                         res = wglMakeCurrent(winhdc, source);
                         ok(res, "Make source current failed\n");
@@ -1291,11 +1310,26 @@ static void test_sharelists(HDC winhdc)
                         ok(floats[1] == 0.2f, "got %f\n", floats[1]);
                         ok(floats[2] == 0.3f, "got %f\n", floats[2]);
                         ok(floats[3] == 1.0f, "got %f\n", floats[3]);
+                        glGetIntegerv(GL_PERSPECTIVE_CORRECTION_HINT, &val);
+                        ok(val == GL_NICEST, "got %#x\n", val);
+                        glGetIntegerv(GL_POINT_SMOOTH_HINT, &val);
+                        ok(val == GL_NICEST, "got %#x\n", val);
+                        glGetIntegerv(GL_LINE_SMOOTH_HINT, &val);
+                        ok(val == GL_NICEST, "got %#x\n", val);
+                        glGetIntegerv(GL_POLYGON_SMOOTH_HINT, &val);
+                        ok(val == GL_NICEST, "got %#x\n", val);
+                        glGetIntegerv(GL_FOG_HINT, &val);
+                        ok(val == GL_NICEST, "got %#x\n", val);
+                        if (ms_hint_supported)
+                        {
+                            glGetIntegerv(GL_MULTISAMPLE_FILTER_HINT_NV, &val);
+                            ok(val == GL_NICEST, "got %#x\n", val);
+                        }
                     }
                     if (dest_current)
                     {
                         float floats[4];
-                        int ints[4];
+                        int ints[4], val;
 
                         res = wglMakeCurrent(winhdc, dest);
                         ok(res, "Make dest current failed\n");
@@ -1333,6 +1367,21 @@ static void test_sharelists(HDC winhdc)
                         ok(floats[1] == 0.2f, "got %f\n", floats[1]);
                         ok(floats[2] == 0.1f, "got %f\n", floats[2]);
                         ok(floats[3] == 1.0f, "got %f\n", floats[3]);
+                        glGetIntegerv(GL_PERSPECTIVE_CORRECTION_HINT, &val);
+                        ok(val == GL_FASTEST, "got %#x\n", val);
+                        glGetIntegerv(GL_POINT_SMOOTH_HINT, &val);
+                        ok(val == GL_FASTEST, "got %#x\n", val);
+                        glGetIntegerv(GL_LINE_SMOOTH_HINT, &val);
+                        ok(val == GL_FASTEST, "got %#x\n", val);
+                        glGetIntegerv(GL_POLYGON_SMOOTH_HINT, &val);
+                        ok(val == GL_FASTEST, "got %#x\n", val);
+                        glGetIntegerv(GL_FOG_HINT, &val);
+                        ok(val == GL_FASTEST, "got %#x\n", val);
+                        if (ms_hint_supported)
+                        {
+                            glGetIntegerv(GL_MULTISAMPLE_FILTER_HINT_NV, &val);
+                            ok(val == GL_FASTEST, "got %#x\n", val);
+                        }
                     }
 
                     if (source_current || dest_current)

@@ -109,6 +109,11 @@ struct color_buffer_state
 struct hint_state
 {
     GLenum perspective_correction;
+    GLenum point_smooth;
+    GLenum line_smooth;
+    GLenum polygon_smooth;
+    GLenum fog;
+    GLenum multisample_nv;
 };
 
 struct buffers
@@ -222,6 +227,7 @@ static struct context *get_current_context( TEB *teb, struct opengl_drawable **d
 
 struct context_attribute_desc
 {
+    GLenum name;
     GLbitfield bit;
     unsigned short offset;
     unsigned short size;
@@ -229,7 +235,7 @@ struct context_attribute_desc
 
 static struct context_attribute_desc context_attributes[] =
 {
-#define CONTEXT_ATTRIBUTE_DESC(bit, name, field) [name] = { bit, offsetof(struct context, field), sizeof(((struct context *)0)->field) }
+#define CONTEXT_ATTRIBUTE_DESC(bit, name, field) { name, bit, offsetof(struct context, field), sizeof(((struct context *)0)->field) }
     CONTEXT_ATTRIBUTE_DESC( GL_COLOR_BUFFER_BIT, GL_COLOR_CLEAR_VALUE, color_buffer.clear_color ),
     CONTEXT_ATTRIBUTE_DESC( GL_DEPTH_BUFFER_BIT, GL_DEPTH_FUNC, depth_buffer.depth_func ),
     CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_CULL_FACE, enable.cull_face ),
@@ -239,6 +245,11 @@ static struct context_attribute_desc context_attributes[] =
     CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_LIGHTING, enable.lighting ),
     CONTEXT_ATTRIBUTE_DESC( GL_ENABLE_BIT, GL_NORMALIZE, enable.normalize ),
     CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_PERSPECTIVE_CORRECTION_HINT, hint.perspective_correction ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POINT_SMOOTH_HINT, hint.point_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_LINE_SMOOTH_HINT, hint.line_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_POLYGON_SMOOTH_HINT, hint.polygon_smooth ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_FOG_HINT, hint.fog ),
+    CONTEXT_ATTRIBUTE_DESC( GL_HINT_BIT, GL_MULTISAMPLE_FILTER_HINT_NV, hint.multisample_nv ),
     CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_AMBIENT, lighting.model.ambient ),
     CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_LIGHT_MODEL_TWO_SIDE, lighting.model.two_side ),
     CONTEXT_ATTRIBUTE_DESC( GL_LIGHTING_BIT, GL_SHADE_MODEL, lighting.shade_model ),
@@ -246,22 +257,36 @@ static struct context_attribute_desc context_attributes[] =
 #undef CONTEXT_ATTRIBUTE_DESC
 };
 
-/* GL constants used as indexes should be small, make sure size is reasonable */
-C_ASSERT( sizeof(context_attributes) <= 64 * 1024 );
+static int compare_context_attributes( const void *v1, const void *v2 )
+{
+    const struct context_attribute_desc *a1 = v1, *a2 = v2;
+
+    return (int)a1->name - (int)a2->name;
+};
 
 void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t size )
 {
+    struct context_attribute_desc key = { .name = name };
+    const struct context_attribute_desc *desc;
     struct context *ctx;
-    GLbitfield bit;
 
     if (!(ctx = get_current_context( teb, NULL, NULL ))) return;
 
-    if (name >= ARRAY_SIZE(context_attributes) || !(bit = context_attributes[name].bit)) bit = -1 /* unsupported */;
-    else if (size && size != context_attributes[name].size) ERR( "Invalid state attrib %#x parameter size %#zx\n", name, size );
-    else memcpy( (char *)ctx + context_attributes[name].offset, value, context_attributes[name].size );
-
-    if (bit == -1 && ctx->used != -1) WARN( "Unsupported attribute on context %p\n", ctx );
-    ctx->used |= bit;
+    if (name != -1 && (desc = bsearch( &key, context_attributes, ARRAY_SIZE(context_attributes),
+                                       sizeof(*context_attributes), compare_context_attributes )))
+    {
+        if (size && size != desc->size) ERR( "Invalid state attrib %#x parameter size %#zx\n", name, size );
+        else
+        {
+            memcpy( (char *)ctx + desc->offset, value, desc->size );
+            ctx->used |= desc->bit;
+        }
+    }
+    else
+    {
+        if (ctx->used != -1) WARN( "Unsupported attribute on context %p/%p\n", teb->glCurrentRC, ctx );
+        ctx->used |= -1;
+    }
 }
 
 static BOOL copy_context_attributes( TEB *teb, HGLRC client_dst, struct context *dst,
@@ -326,7 +351,12 @@ static BOOL copy_context_attributes( TEB *teb, HGLRC client_dst, struct context 
     }
     if (mask & GL_HINT_BIT)
     {
-        funcs->p_glHint( GL_PERSPECTIVE_CORRECTION_HINT, src->hint.perspective_correction );
+        if (src->hint.perspective_correction) funcs->p_glHint( GL_PERSPECTIVE_CORRECTION_HINT, src->hint.perspective_correction );
+        if (src->hint.point_smooth)           funcs->p_glHint( GL_POINT_SMOOTH_HINT, src->hint.point_smooth );
+        if (src->hint.line_smooth)            funcs->p_glHint( GL_LINE_SMOOTH_HINT, src->hint.line_smooth );
+        if (src->hint.polygon_smooth)         funcs->p_glHint( GL_POLYGON_SMOOTH_HINT, src->hint.polygon_smooth );
+        if (src->hint.fog)                    funcs->p_glHint( GL_FOG_HINT, src->hint.fog );
+        if (src->hint.multisample_nv)         funcs->p_glHint( GL_MULTISAMPLE_FILTER_HINT_NV, src->hint.multisample_nv );
         dst->hint = src->hint;
     }
     if (mask & GL_LIGHTING_BIT)
@@ -2022,6 +2052,7 @@ NTSTATUS process_attach( void *args )
         zero_bits = (ULONG_PTR)info.HighestUserAddress | 0x7fffffff;
     }
 
+    qsort( context_attributes, ARRAY_SIZE(context_attributes), sizeof(*context_attributes), compare_context_attributes );
     return STATUS_SUCCESS;
 }
 
