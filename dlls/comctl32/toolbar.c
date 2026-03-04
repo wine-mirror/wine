@@ -248,6 +248,7 @@ static void TOOLBAR_TooltipAddTool(const TOOLBAR_INFO *infoPtr, const TBUTTON_IN
 static void TOOLBAR_TooltipSetRect(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *button);
 static LRESULT TOOLBAR_SetButtonInfo(TOOLBAR_INFO *infoPtr, INT Id,
                                      const TBBUTTONINFOW *lptbbi, BOOL isW);
+static int TOOLBAR_AutoSizeButtonWidth(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr);
 
 
 static inline int default_top_margin(const TOOLBAR_INFO *infoPtr)
@@ -1687,6 +1688,25 @@ static inline SIZE TOOLBAR_MeasureButton(const TOOLBAR_INFO *infoPtr, SIZE sizeS
     return sizeButton;
 }
 
+static int
+TOOLBAR_AutoSizeButtonWidth(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *btnPtr)
+{
+    SIZE sz, sizeButton;
+    HDC hdc;
+    HFONT hOldFont;
+    BOOL validBitmapIndex, validImageList;
+
+    hdc = GetDC(infoPtr->hwndSelf);
+    hOldFont = SelectObject(hdc, infoPtr->hFont);
+    validBitmapIndex = TOOLBAR_IsValidBitmapIndex(infoPtr, btnPtr->iBitmap);
+    validImageList = TOOLBAR_IsValidImageList(infoPtr, 0);
+    TOOLBAR_MeasureString(infoPtr, btnPtr, hdc, &sz);
+    SelectObject(hdc, hOldFont);
+    ReleaseDC(infoPtr->hwndSelf, hdc);
+    sizeButton = TOOLBAR_MeasureButton(infoPtr, sz, validBitmapIndex, validImageList);
+
+    return sizeButton.cx;
+}
 
 /***********************************************************************
 * 		TOOLBAR_CalcToolbar
@@ -1727,11 +1747,9 @@ static void
 TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr)
 {
     TBUTTON_INFO *btnPtr;
-    SIZE sizeButton;
     INT i, nRows, nSepRows;
     INT x, y, cx, cy;
     BOOL bWrap;
-    BOOL validImageList = TOOLBAR_IsValidImageList(infoPtr, 0);
 
     TOOLBAR_WrapToolbar(infoPtr);
 
@@ -1777,24 +1795,7 @@ TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr)
             if (btnPtr->cx)
               cx = btnPtr->cx;
             else if (btnPtr->fsStyle & BTNS_AUTOSIZE)
-            {
-              SIZE sz;
-	      HDC hdc;
-	      HFONT hOldFont;
-
-	      hdc = GetDC (infoPtr->hwndSelf);
-	      hOldFont = SelectObject (hdc, infoPtr->hFont);
-
-              TOOLBAR_MeasureString(infoPtr, btnPtr, hdc, &sz);
-
-	      SelectObject (hdc, hOldFont);
-	      ReleaseDC (infoPtr->hwndSelf, hdc);
-
-              sizeButton = TOOLBAR_MeasureButton(infoPtr, sz,
-                  TOOLBAR_IsValidBitmapIndex(infoPtr, infoPtr->buttons[i].iBitmap),
-                  validImageList);
-              cx = sizeButton.cx;
-            }
+              cx = TOOLBAR_AutoSizeButtonWidth(infoPtr, btnPtr);
             else
 	      cx = infoPtr->nButtonWidth;
 
