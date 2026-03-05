@@ -305,12 +305,12 @@ void DECLSPEC_NORETURN CDECL _wassert(const wchar_t* str, const wchar_t* file, u
     wchar_t text[2048];
     _snwprintf(text, sizeof(text), L"File: %ls\nLine: %d\n\nExpression: \"%ls\"", file, line, str);
     DoMessageBoxW(L"Assertion failed!", text);
+    raise(SIGABRT);
+    _exit(3);
   }
-  else
-    fwprintf(stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
 
-  raise(SIGABRT);
-  _exit(3);
+  fwprintf(stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
+  abort();
 }
 
 /*********************************************************************
