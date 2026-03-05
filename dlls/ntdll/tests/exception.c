@@ -6473,6 +6473,154 @@ static void test_backtrace_without_runtime_function(void)
     ok( ret, "RtlDeleteFunctionTable failed.\n" );
 }
 
+static DWORD WINAPI test_set_context_mxcsr_thread_proc( void *dummy )
+{
+    return 0;
+}
+
+static int set_context_mxcsr_test_ctx_flags;
+
+static LONG WINAPI test_set_context_mxcsr_handler(struct _EXCEPTION_POINTERS *e)
+{
+    EXCEPTION_RECORD *rec = e->ExceptionRecord;
+    CONTEXT *ctx = e->ContextRecord;
+
+    ok( rec->ExceptionCode == 0x80000003, "got %#lx.\n", rec->ExceptionCode );
+    ++ctx->Rip;
+
+    ctx->MxCsr = 0x1f81;
+    ctx->FltSave.MxCsr = 0x1f82;
+    if (set_context_mxcsr_test_ctx_flags) ctx->ContextFlags = set_context_mxcsr_test_ctx_flags;
+    else                                  set_context_mxcsr_test_ctx_flags = ctx->ContextFlags;
+
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void test_set_context_mxcsr(void)
+{
+    static BYTE func[] =
+    {
+        0x51,               /* push %rcx */
+        0x0f, 0xae, 0x11,   /* ldmxcsr (%rcx) */
+        0xcc,               /* int3 */
+        0x59,               /* pop %rcx */
+        0x0f, 0xae, 0x19,   /* stmxcsr (%rcx) */
+        0xc3,               /* ret */
+    };
+    char context_buffer[sizeof(CONTEXT) + sizeof(CONTEXT_EX) + sizeof(XSTATE) + 4096];
+    NTSTATUS (*func_ptr)( DWORD *mxcsr );
+    CONTEXT_EX *c_ex;
+    XSAVE_FORMAT *xs;
+    XSTATE *xstate;
+    void *handler;
+    HANDLE thread;
+    CONTEXT *ctx;
+    DWORD length;
+    DWORD mxcsr;
+    BOOL bret;
+
+    if (!pRtlGetEnabledExtendedFeatures || !pRtlGetEnabledExtendedFeatures( 1 << XSTATE_LEGACY_FLOATING_POINT ))
+    {
+        skip( "XState legacy FP is not supported.\n" );
+        return;
+    }
+
+    length = sizeof(context_buffer);
+    bret = pInitializeContext (context_buffer, CONTEXT_ALL | CONTEXT_XSTATE, &ctx, &length );
+    ok( bret, "got error %lu.\n", GetLastError() );
+
+    xs = LocateXStateFeature( ctx, XSTATE_LEGACY_FLOATING_POINT, NULL );
+    ok( xs == &ctx->FltSave, "got %p, %p.\n", xs, &ctx->FltSave );
+
+    thread = CreateThread( NULL, 0, test_set_context_mxcsr_thread_proc, NULL, CREATE_SUSPENDED, NULL );
+    ok( !!thread, "got NULL.\n" );
+
+    memset( ctx, 0xcc, sizeof(*ctx) );
+    ctx->ContextFlags = CONTEXT_ALL | CONTEXT_XSTATE;
+    bret = GetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+
+    ok( ctx->MxCsr == 0x1f80, "got %#lx.\n", ctx->MxCsr );
+    ok( xs->MxCsr == 0x1f80, "got %#lx.\n", ctx->MxCsr );
+
+    ctx->MxCsr = 0x1f81;
+    xs->MxCsr = 0x1f82;
+
+    ctx->ContextFlags = CONTEXT_FLOATING_POINT;
+    bret = SetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ctx->ContextFlags = CONTEXT_ALL | CONTEXT_XSTATE;
+    bret = GetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    todo_wine ok( ctx->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+    todo_wine ok( xs->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+
+    if (ctx->MxCsr == 0x1f82)
+    {
+        ctx->ContextFlags = CONTEXT_FLOATING_POINT;
+        xs->MxCsr = 0x1f81;
+        bret = SetThreadContext( thread, ctx );
+        ok( bret, "got error %lu.\n", GetLastError() );
+    }
+
+    ctx->MxCsr = 0x1f83;
+    xs->MxCsr = 0x1f84;
+    ctx->ContextFlags = CONTEXT_CONTROL;
+    bret = SetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ctx->ContextFlags = CONTEXT_ALL | CONTEXT_XSTATE;
+    bret = GetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( ctx->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+    ok( xs->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+
+    ctx->MxCsr = 0x1f83;
+    xs->MxCsr = 0x1f84;
+    c_ex = (CONTEXT_EX *)(ctx + 1);
+    xstate = (XSTATE *)((char *)c_ex + c_ex->XState.Offset);
+    xstate->Mask |= XSTATE_MASK_LEGACY;
+    ctx->ContextFlags = CONTEXT_XSTATE;
+    bret = SetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ctx->ContextFlags = CONTEXT_ALL | CONTEXT_XSTATE;
+    bret = GetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( ctx->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+    ok( xs->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+
+    ctx->MxCsr = 0x1f83;
+    xs->MxCsr = 0x1f84;
+    ctx->ContextFlags = (CONTEXT_ALL & ~CONTEXT_FLOATING_POINT) | CONTEXT_AMD64;
+    bret = SetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ctx->ContextFlags = CONTEXT_ALL | CONTEXT_XSTATE;
+    bret = GetThreadContext( thread, ctx );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( ctx->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+    ok( xs->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+
+    ResumeThread( thread );
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
+
+    handler = AddVectoredExceptionHandler( TRUE, test_set_context_mxcsr_handler );
+
+    memcpy( code_mem, func, sizeof(func) );
+    func_ptr = code_mem;
+
+    set_context_mxcsr_test_ctx_flags = 0;
+    mxcsr = 0x1f85;
+    func_ptr( &mxcsr );
+    todo_wine ok( mxcsr == 0x1f81, "got %#lx.\n", mxcsr );
+
+    set_context_mxcsr_test_ctx_flags &= ~CONTEXT_FLOATING_POINT | CONTEXT_AMD64;
+    mxcsr = 0x1f85;
+    func_ptr( &mxcsr );
+    ok( mxcsr == 0x1f85, "got %#lx.\n", mxcsr );
+
+    RemoveVectoredExceptionHandler( handler );
+}
+
 #elif defined(__arm__)
 
 static void test_thread_context(void)
@@ -12771,6 +12919,7 @@ START_TEST(exception)
     test_single_step_address();
     test_base_init_thunk_unwind();
     test_backtrace_without_runtime_function();
+    test_set_context_mxcsr();
 
 #elif defined(__aarch64__)
 
