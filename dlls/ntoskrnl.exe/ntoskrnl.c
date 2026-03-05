@@ -2461,6 +2461,31 @@ NTSTATUS WINAPI ExInitializeZone(PZONE_HEADER Zone,
 }
 
 /***********************************************************************
+ *           FsRtlGetFileSize   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI FsRtlGetFileSize( PFILE_OBJECT file_obj, PLARGE_INTEGER file_size )
+{
+    FILE_STANDARD_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+    HANDLE handle;
+
+    TRACE( "file_obj %p, file_size %p\n", file_obj, file_size );
+
+    status = ObOpenObjectByPointer( file_obj, 0, NULL, 0, IoFileObjectType, KernelMode, &handle );
+    if (status) return status;
+
+    status = NtQueryInformationFile( handle, &iosb, &info, sizeof(info), FileStandardInformation );
+    NtClose( handle );
+    if (!status)
+    {
+        if (info.Directory) return STATUS_FILE_IS_A_DIRECTORY;
+        file_size->QuadPart = info.EndOfFile.QuadPart;
+    }
+    return status;
+}
+
+/***********************************************************************
 *           FsRtlIsNameInExpression   (NTOSKRNL.EXE.@)
 */
 BOOLEAN WINAPI FsRtlIsNameInExpression(PUNICODE_STRING expression, PUNICODE_STRING name,
