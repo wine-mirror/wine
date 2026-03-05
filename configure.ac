@@ -1437,6 +1437,13 @@ else
     X_LIBS=""
 fi
 
+if test "x$have_x$with_wayland" != "xnono"
+then
+    WINE_PACKAGE_FLAGS(XKBREGISTRY,[xkbregistry],,,,
+        [AC_CHECK_HEADER([xkbcommon/xkbregistry.h],
+                [WINE_CHECK_SONAME(xkbregistry,rxkb_context_new,[:],[XKBREGISTRY_LIBS=""],[$XKBREGISTRY_LIBS])])])
+fi
+
 if test "x$with_wayland" != "xno"
 then
     WINE_PACKAGE_FLAGS(WAYLAND_CLIENT,[wayland-client],,,,
@@ -1447,8 +1454,6 @@ then
               [WAYLAND_CLIENT_LIBS=""],[$WAYLAND_CLIENT_LIBS])])])
     WINE_PACKAGE_FLAGS(XKBCOMMON,[xkbcommon],,,,
         [AC_CHECK_LIB(xkbcommon,xkb_context_new,[:],[XKBCOMMON_LIBS=""],[$XKBCOMMON_LIBS])])
-    WINE_PACKAGE_FLAGS(XKBREGISTRY,[xkbregistry],,,,
-        [AC_CHECK_LIB(xkbregistry,rxkb_context_new,[:],[XKBREGISTRY_LIBS=""],[$XKBREGISTRY_LIBS])])
     if test "x$with_opengl" != "xno"
     then
         WINE_PACKAGE_FLAGS(WAYLAND_EGL,[wayland-egl],,,,

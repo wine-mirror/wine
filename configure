@@ -700,13 +700,13 @@ PCSCLITE_LIBS
 PCAP_LIBS
 WAYLAND_EGL_LIBS
 WAYLAND_EGL_CFLAGS
-XKBREGISTRY_LIBS
-XKBREGISTRY_CFLAGS
 XKBCOMMON_LIBS
 XKBCOMMON_CFLAGS
 WAYLAND_SCANNER
 WAYLAND_CLIENT_LIBS
 WAYLAND_CLIENT_CFLAGS
+XKBREGISTRY_LIBS
+XKBREGISTRY_CFLAGS
 X_LIBS
 X_CFLAGS
 CPP
@@ -1900,12 +1900,12 @@ EGL_CFLAGS
 EGL_LIBS
 XMKMF
 CPP
+XKBREGISTRY_CFLAGS
+XKBREGISTRY_LIBS
 WAYLAND_CLIENT_CFLAGS
 WAYLAND_CLIENT_LIBS
 XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS
-XKBREGISTRY_CFLAGS
-XKBREGISTRY_LIBS
 WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS
 INOTIFY_CFLAGS
@@ -2760,6 +2760,10 @@ Some influential environment variables:
   EGL_LIBS    Linker flags for egl, overriding pkg-config
   XMKMF       Path to xmkmf, Makefile generator for X Window System
   CPP         C preprocessor
+  XKBREGISTRY_CFLAGS
+              C compiler flags for xkbregistry, overriding pkg-config
+  XKBREGISTRY_LIBS
+              Linker flags for xkbregistry, overriding pkg-config
   WAYLAND_CLIENT_CFLAGS
               C compiler flags for wayland-client, overriding pkg-config
   WAYLAND_CLIENT_LIBS
@@ -2768,10 +2772,6 @@ Some influential environment variables:
               C compiler flags for xkbcommon, overriding pkg-config
   XKBCOMMON_LIBS
               Linker flags for xkbcommon, overriding pkg-config
-  XKBREGISTRY_CFLAGS
-              C compiler flags for xkbregistry, overriding pkg-config
-  XKBREGISTRY_LIBS
-              Linker flags for xkbregistry, overriding pkg-config
   WAYLAND_EGL_CFLAGS
               C compiler flags for wayland-egl, overriding pkg-config
   WAYLAND_EGL_LIBS
@@ -16846,6 +16846,110 @@ else
     X_LIBS=""
 fi
 
+if test "x$have_x$with_wayland" != "xnono"
+then
+    rm -f conftest.err
+if ${XKBREGISTRY_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  XKBREGISTRY_CFLAGS=`$PKG_CONFIG --cflags xkbregistry 2>conftest.err`
+fi
+fi
+
+if ${XKBREGISTRY_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  XKBREGISTRY_LIBS=`$PKG_CONFIG --libs xkbregistry 2>/dev/null`
+fi
+fi
+
+
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xkbregistry cflags: $XKBREGISTRY_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: xkbregistry libs: $XKBREGISTRY_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: xkbregistry errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+if test -n "$XKBREGISTRY_CFLAGS$XKBREGISTRY_LIBS"
+then :
+  ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $XKBREGISTRY_CFLAGS"
+ac_fn_c_check_header_compile "$LINENO" "xkbcommon/xkbregistry.h" "ac_cv_header_xkbcommon_xkbregistry_h" "$ac_includes_default"
+if test "x$ac_cv_header_xkbcommon_xkbregistry_h" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lxkbregistry" >&5
+printf %s "checking for -lxkbregistry... " >&6; }
+if test ${ac_cv_lib_soname_xkbregistry+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_soname_save_LIBS=$LIBS
+LIBS="-lxkbregistry $XKBREGISTRY_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rxkb_context_new (void);
+int
+main (void)
+{
+return rxkb_context_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_xkbregistry=`$ac_cv_path_LDD conftest.exe | grep "xkbregistry" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_xkbregistry=`$OTOOL -L conftest$ac_exeext | grep "libxkbregistry\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libxkbregistry\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_xkbregistry=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libxkbregistry\\.$LIBEXT" | sed -e "s/^.*\\[\\(libxkbregistry\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_xkbregistry:+false} :
+then :
+  ac_cv_lib_soname_xkbregistry=`$LDD conftest$ac_exeext | grep "libxkbregistry\\.$LIBEXT" | sed -e "s/^.*\(libxkbregistry\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else case e in #(
+  e) ac_cv_lib_soname_xkbregistry= ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS ;;
+esac
+fi
+if ${ac_cv_lib_soname_xkbregistry:+false} :
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf "%s\n" "not found" >&6; }
+       XKBREGISTRY_LIBS=""
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_xkbregistry" >&5
+printf "%s\n" "$ac_cv_lib_soname_xkbregistry" >&6; }
+
+printf "%s\n" "#define SONAME_LIBXKBREGISTRY \"$ac_cv_lib_soname_xkbregistry\"" >>confdefs.h
+
+       : ;;
+esac
+fi
+fi
+
+CPPFLAGS=$ac_save_CPPFLAGS
+fi
+
+fi
+
 if test "x$with_wayland" != "xno"
 then
     rm -f conftest.err
@@ -17059,89 +17163,6 @@ then :
   :
 else case e in #(
   e) XKBCOMMON_LIBS="" ;;
-esac
-fi
-
-CPPFLAGS=$ac_save_CPPFLAGS
-fi
-
-    rm -f conftest.err
-if ${XKBREGISTRY_CFLAGS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  XKBREGISTRY_CFLAGS=`$PKG_CONFIG --cflags xkbregistry 2>conftest.err`
-fi
-fi
-
-if ${XKBREGISTRY_LIBS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  XKBREGISTRY_LIBS=`$PKG_CONFIG --libs xkbregistry 2>/dev/null`
-fi
-fi
-
-
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: xkbregistry cflags: $XKBREGISTRY_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: xkbregistry libs: $XKBREGISTRY_LIBS" >&5
-if test -s conftest.err; then
-     printf %s "$as_me:${as_lineno-$LINENO}: xkbregistry errors: " >&5
-     cat conftest.err >&5
-fi
-rm -f conftest.err
-if test -n "$XKBREGISTRY_CFLAGS$XKBREGISTRY_LIBS"
-then :
-  ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $XKBREGISTRY_CFLAGS"
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for rxkb_context_new in -lxkbregistry" >&5
-printf %s "checking for rxkb_context_new in -lxkbregistry... " >&6; }
-if test ${ac_cv_lib_xkbregistry_rxkb_context_new+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxkbregistry $XKBREGISTRY_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char rxkb_context_new (void);
-int
-main (void)
-{
-return rxkb_context_new ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_xkbregistry_rxkb_context_new=yes
-else case e in #(
-  e) ac_cv_lib_xkbregistry_rxkb_context_new=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xkbregistry_rxkb_context_new" >&5
-printf "%s\n" "$ac_cv_lib_xkbregistry_rxkb_context_new" >&6; }
-if test "x$ac_cv_lib_xkbregistry_rxkb_context_new" = xyes
-then :
-  :
-else case e in #(
-  e) XKBREGISTRY_LIBS="" ;;
 esac
 fi
 
@@ -25145,13 +25166,13 @@ XMKMF = $XMKMF
 CPP = $CPP
 X_CFLAGS = $X_CFLAGS
 X_LIBS = $X_LIBS
+XKBREGISTRY_CFLAGS = $XKBREGISTRY_CFLAGS
+XKBREGISTRY_LIBS = $XKBREGISTRY_LIBS
 WAYLAND_CLIENT_CFLAGS = $WAYLAND_CLIENT_CFLAGS
 WAYLAND_CLIENT_LIBS = $WAYLAND_CLIENT_LIBS
 WAYLAND_SCANNER = $WAYLAND_SCANNER
 XKBCOMMON_CFLAGS = $XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS = $XKBCOMMON_LIBS
-XKBREGISTRY_CFLAGS = $XKBREGISTRY_CFLAGS
-XKBREGISTRY_LIBS = $XKBREGISTRY_LIBS
 WAYLAND_EGL_CFLAGS = $WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS = $WAYLAND_EGL_LIBS
 PCAP_LIBS = $PCAP_LIBS
