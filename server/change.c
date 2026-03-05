@@ -93,6 +93,7 @@ struct dir
     struct inode  *inode;    /* inode of the associated directory */
     struct process *client_process;  /* client process that has a cache for this directory */
     int             client_entry;    /* entry in client process cache */
+    struct list    kernel_object;    /* list of kernel object pointers */
 };
 
 static struct fd *dir_get_fd( struct object *obj );
@@ -102,6 +103,7 @@ static int dir_set_sd( struct object *obj, const struct security_descriptor *sd,
 static void dir_dump( struct object *obj, int verbose );
 static int dir_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void dir_destroy( struct object *obj );
+static struct list *dir_get_kernel_obj_list( struct object *obj );
 
 static const struct object_ops dir_ops =
 {
@@ -123,7 +125,7 @@ static const struct object_ops dir_ops =
     no_link_name,             /* link_name */
     NULL,                     /* unlink_name */
     no_open_file,             /* open_file */
-    no_kernel_obj_list,       /* get_kernel_obj_list */
+    dir_get_kernel_obj_list,  /* get_kernel_obj_list */
     dir_close_handle,         /* close_handle */
     dir_destroy               /* destroy */
 };
@@ -449,6 +451,12 @@ static void dir_destroy( struct object *obj )
         release_object( inotify_fd );
         inotify_fd = NULL;
     }
+}
+
+static struct list *dir_get_kernel_obj_list( struct object *obj )
+{
+    struct dir *dir = (struct dir *)obj;
+    return &dir->kernel_object;
 }
 
 struct dir *get_dir_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -1142,6 +1150,7 @@ struct object *create_dir_obj( struct fd *fd, unsigned int access, mode_t mode )
         return NULL;
 
     list_init( &dir->change_records );
+    list_init( &dir->kernel_object );
     dir->filter = 0;
     dir->notified = 0;
     dir->want_data = 0;
