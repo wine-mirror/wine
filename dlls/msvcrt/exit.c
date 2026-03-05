@@ -265,7 +265,14 @@ void CDECL abort(void)
       _cputs("\nabnormal program termination\n");
   }
 #endif
+
   raise(SIGABRT);
+
+#if _MSVCR_VER >= 110
+  if (MSVCRT_abort_behavior & _CALL_REPORTFAULT)
+    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
+#endif
+
   /* in case raise() returns */
   _exit(3);
 }
@@ -279,8 +286,6 @@ unsigned int CDECL _set_abort_behavior(unsigned int flags, unsigned int mask)
   unsigned int old = MSVCRT_abort_behavior;
 
   TRACE("%x, %x\n", flags, mask);
-  if (mask & _CALL_REPORTFAULT)
-    FIXME("_WRITE_CALL_REPORTFAULT unhandled\n");
 
   MSVCRT_abort_behavior = (MSVCRT_abort_behavior & ~mask) | (flags & mask);
   return old;
