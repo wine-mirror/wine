@@ -29,6 +29,9 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#ifdef HAVE_LINUX_MEMFD_H
+# include <linux/memfd.h>
+#endif
 
 #include "ntstatus.h"
 #include "windef.h"
@@ -364,6 +367,13 @@ static int create_temp_file( file_pos_t size )
     char tmpfn[16];
     int fd;
 
+#if defined(HAVE_MEMFD_CREATE) && defined(MFD_EXEC)
+    if ((fd = memfd_create( "wine-mapping", MFD_EXEC )) != -1)
+    {
+        if (grow_file( fd, size )) return fd;
+        close( fd );
+    }
+#endif
     if (temp_dir_fd == -1)
     {
         temp_dir_fd = server_dir_fd;

@@ -10045,6 +10045,12 @@ then :
   printf "%s\n" "#define HAVE_LINUX_MAJOR_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "linux/memfd.h" "ac_cv_header_linux_memfd_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_memfd_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LINUX_MEMFD_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "linux/ntsync.h" "ac_cv_header_linux_ntsync_h" "$ac_includes_default"
 if test "x$ac_cv_header_linux_ntsync_h" = xyes
 then :
@@ -21385,6 +21391,12 @@ ac_fn_c_check_func "$LINENO" "kqueue" "ac_cv_func_kqueue"
 if test "x$ac_cv_func_kqueue" = xyes
 then :
   printf "%s\n" "#define HAVE_KQUEUE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "memfd_create" "ac_cv_func_memfd_create"
+if test "x$ac_cv_func_memfd_create" = xyes
+then :
+  printf "%s\n" "#define HAVE_MEMFD_CREATE 1" >>confdefs.h
 
 fi
 ac_fn_c_check_func "$LINENO" "pipe2" "ac_cv_func_pipe2"
