@@ -628,14 +628,14 @@ static bool is_native_arch_disabled( struct makefile *make )
  */
 static bool is_subdir_other_arch( const char *name, unsigned int arch )
 {
+    int cpu;
     const char *dir, *p = strrchr( name, '/' );
 
-    if (!p || p == name) return 0;
+    if (!p || p == name) return false;
     dir = get_basename( strmake( "%.*s", (int)(p - name), name ));
-    if (!strcmp( dir, "arm64" )) dir = "aarch64";
-    if (!strcmp( dir, "amd64" )) dir = "x86_64";
-    if (native_archs[arch] && !strcmp( dir, archs.str[native_archs[arch]] )) return false;
-    return strcmp( dir, archs.str[arch] );
+    if ((cpu = get_cpu_from_name( dir )) == -1) return false;
+    if (native_archs[arch] && cpu == get_cpu_from_name( archs.str[native_archs[arch]] )) return false;
+    return cpu != get_cpu_from_name( archs.str[arch] );
 }
 
 
