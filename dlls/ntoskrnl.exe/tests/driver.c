@@ -1981,6 +1981,40 @@ static void test_object_name(void)
     ok(!name->Name.MaximumLength, "got maximum length %u\n", name->Name.MaximumLength);
 }
 
+static void test_dir_kernel_object(void)
+{
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+    UNICODE_STRING pathU;
+    IO_STATUS_BLOCK io;
+    FILE_OBJECT *file_obj;
+    HANDLE dir_handle, handle;
+    NTSTATUS status;
+
+    RtlInitUnicodeString(&pathU, L"\\??\\C:\\windows");
+    InitializeObjectAttributes(&attr, &pathU, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
+    status = ZwOpenFile(&dir_handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &io,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
+    ok(!status, "ZwOpenFile failed: %#lx\n", status);
+    if (status)
+        return;
+
+    status = ObReferenceObjectByHandle(dir_handle, 0, *pIoFileObjectType, KernelMode,
+                                       (void **)&file_obj, NULL);
+    ok(!status, "ObReferenceObjectByHandle failed: %#lx\n", status);
+    if (!status)
+    {
+        status = ObOpenObjectByPointer(file_obj, OBJ_KERNEL_HANDLE, NULL, 0,
+                                       *pIoFileObjectType, KernelMode, &handle);
+        ok(!status, "ObOpenObjectByPointer failed: %#lx\n", status);
+        if (!status)
+            ZwClose(handle);
+        ObDereferenceObject(file_obj);
+    }
+
+    ZwClose(dir_handle);
+}
+
 static PIO_WORKITEM work_item;
 
 static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
@@ -2523,6 +2557,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_lookup_thread();
     test_IoAttachDeviceToDeviceStack();
     test_object_name();
+    test_dir_kernel_object();
 #if defined(__i386__) || defined(__x86_64__)
     test_executable_pool();
 #endif
