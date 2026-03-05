@@ -6552,16 +6552,8 @@ static void test_set_context_mxcsr(void)
     ctx->ContextFlags = CONTEXT_ALL | CONTEXT_XSTATE;
     bret = GetThreadContext( thread, ctx );
     ok( bret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( ctx->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
-    todo_wine ok( xs->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
-
-    if (ctx->MxCsr == 0x1f82)
-    {
-        ctx->ContextFlags = CONTEXT_FLOATING_POINT;
-        xs->MxCsr = 0x1f81;
-        bret = SetThreadContext( thread, ctx );
-        ok( bret, "got error %lu.\n", GetLastError() );
-    }
+    ok( ctx->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
+    ok( xs->MxCsr == 0x1f81, "got %#lx.\n", ctx->MxCsr );
 
     ctx->MxCsr = 0x1f83;
     xs->MxCsr = 0x1f84;
@@ -6611,7 +6603,7 @@ static void test_set_context_mxcsr(void)
     set_context_mxcsr_test_ctx_flags = 0;
     mxcsr = 0x1f85;
     func_ptr( &mxcsr );
-    todo_wine ok( mxcsr == 0x1f81, "got %#lx.\n", mxcsr );
+    ok( mxcsr == 0x1f81, "got %#lx.\n", mxcsr );
 
     set_context_mxcsr_test_ctx_flags &= ~CONTEXT_FLOATING_POINT | CONTEXT_AMD64;
     mxcsr = 0x1f85;
