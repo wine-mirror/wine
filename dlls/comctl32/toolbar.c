@@ -1439,11 +1439,7 @@ TOOLBAR_WrapToolbar(TOOLBAR_INFO *infoPtr)
 	    continue;
 	}
 
-	/* The layout makes sure the bitmap is visible, but not the button. */
-	/* Test added to also wrap after a button that starts a row but     */
-	/* is bigger than the area.  - GA  8/01                             */
-        if ((x + cx - (infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2 > width) ||
-            ((x == infoPtr->nIndent) && (cx > width)))
+        if (x + cx > width)
 	{
 	    BOOL bFound = FALSE;
 
