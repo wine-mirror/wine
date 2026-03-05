@@ -180,7 +180,7 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
  * imagelist_copy_images()
  *
  * Copies a block of count images from offset src in the list to offset dest.
- * Images are copied a row at at time. Assumes hdcSrc and hdcDest are different.
+ * Images are copied a row at a time. Assumes hdcSrc and hdcDest are different.
  */
 static inline void imagelist_copy_images( HIMAGELIST himl, HDC hdcSrc, HDC hdcDest,
                                           UINT src, UINT count, UINT dest )

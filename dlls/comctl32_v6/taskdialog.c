@@ -269,7 +269,7 @@ static void taskdialog_toggle_expando_control(struct taskdialog_info *dialog_inf
 
     GetWindowRect(dialog_info->expanded_info, &info_rect);
     /* If expanded information starts up not expanded, call taskdialog_layout()
-     * to to set size for expanded information control at least once */
+     * to set size for expanded information control at least once */
     if (IsRectEmpty(&info_rect))
     {
         taskdialog_layout(dialog_info);
