@@ -2435,6 +2435,55 @@ static void test_class_name(void)
     UnregisterClassW(wcex.lpszClassName, hinst);
 }
 
+struct class_register_info
+{
+    const WCHAR *class_name;
+    int total_test_count;
+};
+
+static DWORD WINAPI thread_register_class_proc(void *param)
+{
+    struct class_register_info *info = param;
+    for (int i = 0; i < info->total_test_count; i++)
+    {
+        WNDCLASSEXW wcex = {0};
+        wcex.cbSize        = sizeof wcex;
+        wcex.lpfnWndProc   = ClassTest_WndProc;
+        wcex.hIcon         = LoadIconW(0, (LPCWSTR)IDI_APPLICATION);
+        wcex.lpszClassName = info->class_name;
+        RegisterClassExW(&wcex);
+    }
+
+    return 0;
+}
+
+static DWORD WINAPI thread_unregister_class_proc(void *param)
+{
+    struct class_register_info *info = param;
+    for (int i = 0; i < info->total_test_count; i++)
+    {
+        UnregisterClassW(info->class_name, 0);
+    }
+
+    return 0;
+}
+
+void test_class_multithread(void)
+{
+    struct class_register_info info_register = {L"test_class_multithread", 100};
+    struct class_register_info info_unregister = {L"test_class_multithread", 100};
+
+    HANDLE thread_register = CreateThread(NULL, 0, thread_register_class_proc, &info_register, 0, NULL);
+    HANDLE thread_unregister = CreateThread(NULL, 0, thread_unregister_class_proc, &info_unregister, 0, NULL);
+
+    ok(thread_register != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(WaitForSingleObject(thread_register, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread_register);
+    ok(thread_unregister != NULL, "CreateThread failed, error %ld\n", GetLastError());
+    ok(WaitForSingleObject(thread_unregister, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread_unregister);
+}
+
 START_TEST(class)
 {
     char **argv;
@@ -2471,6 +2520,7 @@ START_TEST(class)
     test_comctl32_classes();
     test_actctx_classes();
     test_class_name();
+    test_class_multithread();
 
     /* this test unregisters the Button class so it should be executed at the end */
     test_instances();
