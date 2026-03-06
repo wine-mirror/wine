@@ -437,83 +437,14 @@ static HRESULT WINMM_GetFriendlyName(IMMDevice *device, WCHAR *out,
     return S_OK;
 }
 
-static HRESULT WINMM_TestFormat(IAudioClient *client, DWORD rate, DWORD depth,
-        WORD channels)
-{
-    WAVEFORMATEX fmt, *junk;
-    HRESULT hr;
-
-    fmt.wFormatTag = WAVE_FORMAT_PCM;
-    fmt.nChannels = channels;
-    fmt.nSamplesPerSec = rate;
-    fmt.wBitsPerSample = depth;
-    fmt.nBlockAlign = (channels * depth) / 8;
-    fmt.nAvgBytesPerSec = rate * fmt.nBlockAlign;
-    fmt.cbSize = 0;
-
-    hr = IAudioClient_IsFormatSupported(client, AUDCLNT_SHAREMODE_SHARED,
-            &fmt, &junk);
-    if(SUCCEEDED(hr))
-        CoTaskMemFree(junk);
-
-    return hr;
-}
-
-static struct _TestFormat {
-    DWORD flag;
-    DWORD rate;
-    DWORD depth;
-    WORD channels;
-} formats_to_test[] = {
-    { WAVE_FORMAT_1M08, 11025, 8, 1 },
-    { WAVE_FORMAT_1M16, 11025, 16, 1 },
-    { WAVE_FORMAT_1S08, 11025, 8, 2 },
-    { WAVE_FORMAT_1S16, 11025, 16, 2 },
-    { WAVE_FORMAT_2M08, 22050, 8, 1 },
-    { WAVE_FORMAT_2M16, 22050, 16, 1 },
-    { WAVE_FORMAT_2S08, 22050, 8, 2 },
-    { WAVE_FORMAT_2S16, 22050, 16, 2 },
-    { WAVE_FORMAT_4M08, 44100, 8, 1 },
-    { WAVE_FORMAT_4M16, 44100, 16, 1 },
-    { WAVE_FORMAT_4S08, 44100, 8, 2 },
-    { WAVE_FORMAT_4S16, 44100, 16, 2 },
-    { WAVE_FORMAT_48M08, 48000, 8, 1 },
-    { WAVE_FORMAT_48M16, 48000, 16, 1 },
-    { WAVE_FORMAT_48S08, 48000, 8, 2 },
-    { WAVE_FORMAT_48S16, 48000, 16, 2 },
-    { WAVE_FORMAT_96M08, 96000, 8, 1 },
-    { WAVE_FORMAT_96M16, 96000, 16, 1 },
-    { WAVE_FORMAT_96S08, 96000, 8, 2 },
-    { WAVE_FORMAT_96S16, 96000, 16, 2 },
-    {0}
-};
-
-static DWORD WINMM_GetSupportedFormats(IMMDevice *device)
-{
-    DWORD flags = 0;
-    HRESULT hr;
-    struct _TestFormat *fmt;
-    IAudioClient *client;
-
-    hr = IMMDevice_Activate(device, &IID_IAudioClient,
-            CLSCTX_INPROC_SERVER, NULL, (void**)&client);
-    if(FAILED(hr))
-        return 0;
-
-    for(fmt = formats_to_test; fmt->flag; ++fmt){
-        hr = WINMM_TestFormat(client, fmt->rate, fmt->depth, fmt->channels);
-        if(hr == S_OK)
-            flags |= fmt->flag;
-    }
-
-    IAudioClient_Release(client);
-
-    return flags;
-}
-
 static HRESULT WINMM_InitMMDevice(EDataFlow flow, IMMDevice *device,
         WINMM_MMDevice *dev, UINT index)
 {
+    static const DWORD all_formats = WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16
+            | WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16
+            | WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16
+            | WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16
+            | WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16;
     HRESULT hr;
 
     dev->dataflow = flow;
@@ -521,7 +452,7 @@ static HRESULT WINMM_InitMMDevice(EDataFlow flow, IMMDevice *device,
         dev->out_caps.wMid = 0xFF;
         dev->out_caps.wPid = 0xFF;
         dev->out_caps.vDriverVersion = 0x00010001;
-        dev->out_caps.dwFormats = WINMM_GetSupportedFormats(device);
+        dev->out_caps.dwFormats = all_formats;
         dev->out_caps.wReserved1 = 0;
         dev->out_caps.dwSupport = WAVECAPS_LRVOLUME | WAVECAPS_VOLUME |
             WAVECAPS_SAMPLEACCURATE;
@@ -537,7 +468,7 @@ static HRESULT WINMM_InitMMDevice(EDataFlow flow, IMMDevice *device,
         dev->in_caps.wMid = 0xFF;
         dev->in_caps.wPid = 0xFF;
         dev->in_caps.vDriverVersion = 0x00010001;
-        dev->in_caps.dwFormats = WINMM_GetSupportedFormats(device);
+        dev->in_caps.dwFormats = all_formats;
         dev->in_caps.wReserved1 = 0;
         dev->in_caps.wChannels = 2;
         dev->in_caps.szPname[0] = '\0';
