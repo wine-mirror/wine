@@ -329,10 +329,152 @@ static void test_STM_SETIMAGE(void)
     DeleteEnhMetaFile(emf);
 }
 
+static WNDPROC static_proc;
+static int test_data_off;
+static LRESULT WINAPI static_wrapper_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    LRESULT ret;
+    LONG v;
+
+    /* overwriting internal data works before static window proc is executed for the first time*/
+    if (msg == WM_NCCREATE)
+    {
+        SetLastError(0xdeadbeef);
+        v = SetWindowLongA(hwnd, 0, 1);
+        ok(!v, "got %lx\n", v);
+        ok(GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
+
+        v = GetWindowLongA(hwnd, 0);
+        ok(v == 1, "got %lx\n", v);
+
+        SetWindowLongA(hwnd, 0, 0);
+    }
+
+    SetWindowLongA(hwnd, test_data_off, 2);
+    v = GetWindowLongA(hwnd, test_data_off);
+    ok(v == 2, "got %lx\n", v);
+
+    ret = static_proc(hwnd, msg, wparam, lparam);
+
+    if (msg != WM_NCDESTROY)
+    {
+        SetLastError(0xdeadbeef);
+        v = SetWindowLongA(hwnd, 0, 3);
+        todo_wine_if(msg != WM_NCCREATE) ok(!v, "got %lx\n", v);
+        todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+    }
+
+    v = SetWindowLongA(hwnd, test_data_off, 4);
+    ok(v == 2, "got %lx\n", v);
+
+    SetLastError(0xdeadbeef);
+    v = GetWindowLongA(hwnd, 0);
+    todo_wine ok(!v, "got %lx\n", v);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+
+    v = GetWindowLongA(hwnd, test_data_off);
+    ok(v == 4, "got %lx\n", v);
+    return ret;
+}
+
+static void test_window_extra_data(char **argv)
+{
+    PROCESS_INFORMATION pi = {0};
+    HWND hwnd = build_static(0);
+    STARTUPINFOA si = {0};
+    char buffer[MAX_PATH];
+    WNDCLASSW info;
+    LRESULT res;
+    MSG msg;
+    LONG v;
+    BOOL r;
+
+    r = GetClassInfoW(NULL, L"static", &info);
+    ok(r, "GetClassInfo failed\n");
+    ok(info.cbWndExtra >= sizeof(LONG), "info.cbWndExtra = %d\n", info.cbWndExtra);
+
+    SendMessageA(hwnd, WM_SETFONT, 0xcafe, 0);
+    res = SendMessageA(hwnd, WM_GETFONT, 0, 0);
+    ok(res == 0xcafe, "got %Ix\n", res);
+
+    SetLastError(0xdeadbeef);
+    v = GetWindowLongA(hwnd, 0);
+    todo_wine ok(!v, "got %lx\n", v);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    v = SetWindowLongA(hwnd, 0, 1);
+    todo_wine ok(!v, "got %lx\n", v);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    v = GetWindowLongW(hwnd, 0);
+    todo_wine ok(!v, "got %lx\n", v);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+
+    si.cb = sizeof(si);
+    sprintf(buffer, "\"%s\" %s window_extra_data %p", argv[0], argv[1], hwnd);
+    r = CreateProcessA(argv[0], buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(r, "CreateProcessA failed, error %lu.\n", GetLastError());
+    while(GetMessageA(&msg, 0, 0, 0)) DispatchMessageA(&msg);
+    wait_child_process(&pi);
+
+    DestroyWindow(hwnd);
+
+    static_proc = info.lpfnWndProc;
+    test_data_off = info.cbWndExtra;
+    info.lpfnWndProc = static_wrapper_proc;
+    info.cbWndExtra += sizeof(LONG);
+    info.lpszClassName = L"static_wrapper";
+    r = RegisterClassW(&info);
+    ok(r, "RegisterClass failed\n");
+
+    hwnd = CreateWindowA("static_wrapper", "", WS_CHILD, 0, 0, 100, 100, hMainWnd, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+    DestroyWindow(hwnd);
+
+    r = UnregisterClassA("static_wrapper", NULL);
+    ok(r, "UnregisterClass failed\n");
+}
+
+static void test_window_extra_data_proc(char *arg)
+{
+    HWND hwnd;
+    LONG v;
+
+    sscanf(arg, "%p", &hwnd);
+
+    SetLastError(0xdeadbeef);
+    v = GetWindowLongA(hwnd, 0);
+    todo_wine ok(!v, "v = %ld\n", v);
+    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    v = SetWindowLongA(hwnd, 0, 1);
+    todo_wine ok(!v, "v = %ld\n", v);
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
+
+    v = SetWindowLongA(hwnd, 0, 1);
+    todo_wine ok(!v, "v = %ld\n", v);
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
+
+    PostMessageA(hwnd, WM_QUIT, 0, 0);
+}
+
 START_TEST(static)
 {
     static const char szClassName[] = "testclass";
     WNDCLASSEXA  wndclass;
+    char **argv;
+    int argc;
+
+    argc = winetest_get_mainargs(&argv);
+    if (argc > 2)
+    {
+        if (!lstrcmpA(argv[2], "window_extra_data"))
+            test_window_extra_data_proc(argv[3]);
+        return;
+    }
 
     wndclass.cbSize         = sizeof(wndclass);
     wndclass.style          = CS_HREDRAW | CS_VREDRAW;
@@ -369,6 +511,7 @@ START_TEST(static)
     test_set_text();
     test_set_image();
     test_STM_SETIMAGE();
+    test_window_extra_data(argv);
 
     DestroyWindow(hMainWnd);
 }
