@@ -121,18 +121,6 @@ struct transform_output_type
     IMFActivate *activate;
 };
 
-struct connect_context
-{
-    struct topoloader_context *context;
-    IMFTopologyNode *upstream_node;
-    IMFTopologyNode *sink;
-    IMFMediaTypeHandler *sink_handler;
-    unsigned int output_index;
-    unsigned int input_index;
-    GUID converter_category;
-    GUID decoder_category;
-};
-
 struct topology_branch
 {
     struct
