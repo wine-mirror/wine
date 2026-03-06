@@ -2445,6 +2445,11 @@ static void test_formats(void)
     };
     unsigned int i;
 
+    if(waveOutGetNumDevs() == 0) {
+        skip("No output devices available\n");
+        return;
+    }
+
     fill_wave_formats(&base_fmt);
 
     for (i = 0; i < wave_format_count; ++i)
