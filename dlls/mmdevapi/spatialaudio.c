@@ -931,9 +931,6 @@ static IAudioFormatEnumeratorVtbl IAudioFormatEnumerator_vtbl = {
 HRESULT SpatialAudioClient_Create(IMMDevice *mmdev, ISpatialAudioClient **out)
 {
     SpatialAudioImpl *obj;
-    IAudioClient *aclient;
-    WAVEFORMATEX *closest;
-    HRESULT hr;
 
     obj = calloc(1, sizeof(*obj));
 
@@ -948,45 +945,6 @@ HRESULT SpatialAudioClient_Create(IMMDevice *mmdev, ISpatialAudioClient **out)
     obj->object_fmtex.Format.nBlockAlign = (obj->object_fmtex.Format.nChannels * obj->object_fmtex.Format.wBitsPerSample) / 8;
     obj->object_fmtex.Format.nAvgBytesPerSec = obj->object_fmtex.Format.nSamplesPerSec * obj->object_fmtex.Format.nBlockAlign;
     obj->object_fmtex.Format.cbSize = 0;
-
-    hr = IMMDevice_Activate(mmdev, &IID_IAudioClient,
-            CLSCTX_INPROC_SERVER, NULL, (void**)&aclient);
-    if(FAILED(hr)){
-        WARN("Activate failed: %08lx\n", hr);
-        free(obj);
-        return hr;
-    }
-
-    hr = IAudioClient_IsFormatSupported(aclient, AUDCLNT_SHAREMODE_SHARED, &obj->object_fmtex.Format, &closest);
-
-    IAudioClient_Release(aclient);
-
-    if(hr == S_FALSE){
-        if(sizeof(WAVEFORMATEX) + closest->cbSize > sizeof(obj->object_fmtex)){
-            ERR("Returned format too large: %s\n", debugstr_fmtex(closest));
-            CoTaskMemFree(closest);
-            free(obj);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }else if(!((closest->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-                    (closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                     IsEqualGUID(&((WAVEFORMATEXTENSIBLE *)closest)->SubFormat,
-                         &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))) &&
-                    closest->wBitsPerSample == 32)){
-            ERR("Returned format not 32-bit float: %s\n", debugstr_fmtex(closest));
-            CoTaskMemFree(closest);
-            free(obj);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-        WARN("The audio stack doesn't support 48kHz 32bit float. Using the closest match. Audio may be glitchy. %s\n", debugstr_fmtex(closest));
-        memcpy(&obj->object_fmtex,
-               closest,
-               sizeof(WAVEFORMATEX) + closest->cbSize);
-        CoTaskMemFree(closest);
-    } else if(hr != S_OK){
-        WARN("Checking supported formats failed: %08lx\n", hr);
-        free(obj);
-        return hr;
-    }
 
     obj->mmdev = mmdev;
     IMMDevice_AddRef(mmdev);
