@@ -2283,7 +2283,6 @@ void fill_wave_formats(const WAVEFORMATEXTENSIBLE *base_fmt)
         {WAVE_FORMAT_PCM, 32, 32},
         {WAVE_FORMAT_PCM, 64, 64},
         {WAVE_FORMAT_PCM, 96, 96},
-        {WAVE_FORMAT_PCM, 100, 100},
 
         {WAVE_FORMAT_IEEE_FLOAT, 0, 0},
         {WAVE_FORMAT_IEEE_FLOAT, 1, 1},
@@ -2340,7 +2339,6 @@ void fill_wave_formats(const WAVEFORMATEXTENSIBLE *base_fmt)
         48000,
         96000,
         192000,
-        384000,
     };
 
     WAVEFORMATEXTENSIBLE *fmt;
