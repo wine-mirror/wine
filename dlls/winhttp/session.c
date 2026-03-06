@@ -1452,6 +1452,11 @@ static BOOL set_option( struct object_header *hdr, DWORD option, void *buffer, D
         hdr->context = *(DWORD_PTR *)buffer;
         return TRUE;
     }
+
+    case WINHTTP_OPTION_DECOMPRESSION:
+        FIXME( "WINHTTP_OPTION_DECOMPRESSION, %#lx stub.\n", *(DWORD *)buffer );
+        return TRUE;
+
     default:
         if (hdr->vtbl->set_option) ret = hdr->vtbl->set_option( hdr, option, buffer, buflen );
         else

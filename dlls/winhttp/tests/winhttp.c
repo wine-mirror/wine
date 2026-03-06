@@ -165,6 +165,17 @@ static void test_WinHttpQueryOption(void)
     ok(GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_TYPE,
        "expected ERROR_WINHTTP_INCORRECT_HANDLE_TYPE, got %lu\n", GetLastError());
 
+    feature = WINHTTP_DECOMPRESSION_FLAG_ALL;
+    ret = WinHttpSetOption(session, WINHTTP_OPTION_DECOMPRESSION, &feature, sizeof(feature));
+    ok(ret, "failed to set option %lu\n", GetLastError());
+
+    feature = 0xdeadbeef;
+    size = sizeof(feature);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryOption(session, WINHTTP_OPTION_DECOMPRESSION, &feature, &size);
+    ok(!ret, "should fail to query option\n");
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", GetLastError() );
+
     SetLastError(0xdeadbeef);
     request = WinHttpOpenRequest(connection, NULL, NULL, NULL, WINHTTP_NO_REFERER,
                                  WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
@@ -260,6 +271,17 @@ static void test_WinHttpQueryOption(void)
     size = sizeof(feature);
     ret = WinHttpSetOption(request, WINHTTP_OPTION_CONNECT_RETRIES, &feature, sizeof(feature));
     ok(ret, "failed to set WINHTTP_OPTION_CONNECT_RETRIES %lu\n", GetLastError());
+
+    feature = WINHTTP_DECOMPRESSION_FLAG_ALL;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_DECOMPRESSION, &feature, sizeof(feature));
+    ok(ret, "failed to set option %lu\n", GetLastError());
+
+    feature = 0xdeadbeef;
+    size = sizeof(feature);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_DECOMPRESSION, &feature, &size);
+    ok(!ret, "should fail to query option\n");
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
     ret = WinHttpCloseHandle(request);
