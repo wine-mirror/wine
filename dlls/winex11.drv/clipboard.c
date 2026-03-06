@@ -81,7 +81,6 @@
 #include <assert.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "x11drv.h"
 
 #ifdef HAVE_X11_EXTENSIONS_XFIXES_H

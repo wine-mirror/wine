@@ -22,7 +22,6 @@
 
 #define IPHLPAPI_DLL_LINKAGE
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"

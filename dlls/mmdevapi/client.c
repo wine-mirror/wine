@@ -22,7 +22,6 @@
 #define COBJMACROS
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 
 #include <wchar.h>
 

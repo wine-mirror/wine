@@ -27,7 +27,6 @@
 #include <stdlib.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #define WINNORMALIZEAPI
 #include "windef.h"
 #include "winbase.h"

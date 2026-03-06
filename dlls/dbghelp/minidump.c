@@ -22,7 +22,6 @@
 #include <intrin.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "dbghelp_private.h"
 #include "winternl.h"
 #include "psapi.h"

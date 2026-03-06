@@ -26,7 +26,6 @@
 #include <sys/types.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"

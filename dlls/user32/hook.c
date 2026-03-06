@@ -63,7 +63,6 @@
  */
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "wine/asm.h"
 #include "wine/debug.h"

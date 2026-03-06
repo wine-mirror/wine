@@ -19,7 +19,6 @@
 
 #define COBJMACROS
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #define USE_COM_CONTEXT_DEF
 #include "objbase.h"
 #include "ctxtcall.h"

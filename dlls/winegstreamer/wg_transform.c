@@ -33,7 +33,6 @@
 #include <gst/audio/audio.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "mferror.h"
 #include "mfapi.h"

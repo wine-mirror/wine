@@ -21,7 +21,6 @@
 #define EXTERN_GUID DEFINE_GUID
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "initguid.h"
 #include "gst_private.h"
 #include "winternl.h"

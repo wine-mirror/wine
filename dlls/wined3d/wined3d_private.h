@@ -36,7 +36,6 @@
 #define LIBVKD3D_SHADER_SOURCE
 #include <vkd3d_shader.h>
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"

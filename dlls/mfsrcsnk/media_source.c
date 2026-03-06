@@ -17,7 +17,6 @@
  */
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "mfsrcsnk_private.h"
 
 #include "wine/list.h"

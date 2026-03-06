@@ -32,7 +32,6 @@
 #include <termios.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "handle.h"
 #include "process.h"
 #include "request.h"

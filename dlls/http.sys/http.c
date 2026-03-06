@@ -21,7 +21,6 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "wine/http.h"
 #include "winternl.h"
 #include "ddk/wdm.h"

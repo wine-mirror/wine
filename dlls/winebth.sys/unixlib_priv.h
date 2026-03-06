@@ -23,7 +23,6 @@
 #define __WINE_WINEBTH_UNIXLIB_PRIV_H
 
 #include <ntstatus.h>
-#define WIN32_NO_STATUS
 #include <windef.h>
 
 #include <wine/list.h>

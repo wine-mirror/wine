@@ -42,7 +42,6 @@
 #include <string.h>
 
 #include <ntstatus.h>
-#define WIN32_NO_STATUS
 #include <windows.h>
 #include <winternl.h>
 #include <shlwapi.h>

@@ -33,7 +33,6 @@
 #include <gphoto2/gphoto2-camera.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "unixlib.h"
 #include "wine/list.h"

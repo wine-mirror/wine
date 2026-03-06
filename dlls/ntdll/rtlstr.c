@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "winsock2.h"
 #include "windef.h"
 #include "winnt.h"

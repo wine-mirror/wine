@@ -27,7 +27,6 @@
 #define OEMRESOURCE
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "wine/winuser16.h"
 #include "windef.h"
 #include "winbase.h"

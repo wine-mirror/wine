@@ -30,7 +30,6 @@
 
 #include "wcmd.h"
 #include <shellapi.h>
-#define WIN32_NO_STATUS
 #include "winternl.h"
 #include "winioctl.h"
 #include "ddk/ntifs.h"

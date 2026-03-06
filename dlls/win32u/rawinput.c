@@ -28,7 +28,6 @@
 
 #include "win32u_private.h"
 #include "ntuser_private.h"
-#define WIN32_NO_STATUS
 #include "winioctl.h"
 #include "ddk/hidclass.h"
 #include "wine/hid.h"

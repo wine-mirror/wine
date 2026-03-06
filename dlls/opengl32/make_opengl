@@ -1585,7 +1585,6 @@ print OUT "#include <stdarg.h>\n";
 print OUT "#include <stddef.h>\n\n";
 
 print OUT "#include \"ntstatus.h\"\n";
-print OUT "#define WIN32_NO_STATUS\n";
 print OUT "#include \"windef.h\"\n";
 print OUT "#include \"winbase.h\"\n";
 print OUT "#include \"winternl.h\"\n";
@@ -1679,7 +1678,6 @@ print OUT "#include <stdarg.h>\n";
 print OUT "#include <stddef.h>\n\n";
 
 print OUT "#include \"ntstatus.h\"\n";
-print OUT "#define WIN32_NO_STATUS\n";
 print OUT "#include \"windef.h\"\n";
 print OUT "#include \"winbase.h\"\n";
 print OUT "#include \"wingdi.h\"\n\n";
@@ -1791,7 +1789,6 @@ print OUT "#include <stdarg.h>\n";
 print OUT "#include <stddef.h>\n\n";
 
 print OUT "#include \"ntstatus.h\"\n";
-print OUT "#define WIN32_NO_STATUS\n";
 print OUT "#include \"windef.h\"\n";
 print OUT "#include \"winbase.h\"\n";
 print OUT "#include \"wingdi.h\"\n\n";

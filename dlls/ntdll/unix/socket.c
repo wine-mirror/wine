@@ -68,7 +68,6 @@
 #endif
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winioctl.h"
 #define USE_WS_PREFIX

@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 
 #include "unicode.h"
 #include "request.h"

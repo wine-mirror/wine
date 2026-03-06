@@ -21,7 +21,6 @@
 #define __WINE_VULKAN_LOADER_H
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include <stdarg.h>
 #include <stdlib.h>
 #include <assert.h>

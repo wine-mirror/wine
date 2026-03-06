@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "waylanddrv.h"
 #include "wine/debug.h"
 

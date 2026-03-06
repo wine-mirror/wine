@@ -23,7 +23,6 @@
 #include <errno.h>
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "wine/debug.h"

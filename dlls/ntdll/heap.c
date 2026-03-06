@@ -28,7 +28,6 @@
 #define RUNNING_ON_VALGRIND 0  /* FIXME */
 
 #include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"

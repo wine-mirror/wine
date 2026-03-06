@@ -616,7 +616,7 @@ typedef DWORD FLONG;
 
 /* Defines */
 
-#ifndef WIN32_NO_STATUS
+#if !defined(WIN32_NO_STATUS) && !defined(UMDF_USING_NTSTATUS) && !defined(_NTSTATUS_)
 
 #define STATUS_WAIT_0                    ((DWORD) 0x00000000)
 #define STATUS_ABANDONED_WAIT_0          ((DWORD) 0x00000080)
