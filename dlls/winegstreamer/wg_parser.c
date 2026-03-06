@@ -114,7 +114,7 @@ struct wg_parser_stream
     GstBuffer *buffer;
     GstMapInfo map_info;
 
-    bool flushing, eos, enabled, has_tags, has_buffer, no_more_pads;
+    bool flushing, eos, enabled, has_tags, has_buffer, no_more_pads, get_buffer_called;
 
     uint64_t duration;
     gchar *tags[WG_PARSER_TAG_COUNT];
@@ -376,6 +376,8 @@ static NTSTATUS wg_parser_stream_get_buffer(void *args)
     wg_buffer->size = gst_buffer_get_size(buffer);
     wg_buffer->stream = stream->number;
 
+    stream->get_buffer_called = true;
+
     pthread_mutex_unlock(&parser->mutex);
     return S_OK;
 }
@@ -390,7 +392,7 @@ static NTSTATUS wg_parser_stream_copy_buffer(void *args)
 
     pthread_mutex_lock(&parser->mutex);
 
-    if (!stream->buffer)
+    if (!stream->buffer || !stream->get_buffer_called)
     {
         pthread_mutex_unlock(&parser->mutex);
         return VFW_E_WRONG_STATE;
@@ -417,6 +419,8 @@ static NTSTATUS wg_parser_stream_release_buffer(void *args)
         gst_buffer_unref(stream->buffer);
         stream->buffer = NULL;
     }
+
+    stream->get_buffer_called = false;
 
     pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&stream->event_empty_cond);
@@ -659,6 +663,8 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
                 gst_buffer_unref(stream->buffer);
                 stream->buffer = NULL;
             }
+
+            stream->get_buffer_called = false;
 
             pthread_mutex_unlock(&parser->mutex);
             break;
