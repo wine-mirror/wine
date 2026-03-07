@@ -410,8 +410,14 @@ static UINT read_table_from_storage( MSIDATABASE *db, MSITABLE *t, IStorage *stg
 
     if( rawsize % row_size )
     {
-        WARN("Table size is invalid %d/%d\n", rawsize, row_size );
-        goto err;
+        UINT padding = rawsize % row_size;
+        if (padding < 4)
+            rawsize -= padding;
+        else
+        {
+            WARN("Table size is invalid %d/%d\n", rawsize, row_size );
+            goto err;
+        }
     }
 
     if ((t->row_count = rawsize / row_size))
