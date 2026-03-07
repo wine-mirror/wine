@@ -394,11 +394,12 @@ static UINT table_get_row_size( MSIDATABASE *db, const struct column_info *cols,
 static UINT read_table_from_storage( MSIDATABASE *db, MSITABLE *t, IStorage *stg )
 {
     BYTE *rawdata = NULL;
-    UINT rawsize = 0, i, j, row_size, row_size_mem;
+    UINT rawsize = 0, i, j, row_size, row_size_mem, bytes_per_strref;
 
     TRACE("%s\n",debugstr_w(t->name));
 
-    row_size = table_get_row_size( db, t->colinfo, t->col_count, db->bytes_per_strref );
+    bytes_per_strref = db->bytes_per_strref;
+    row_size = table_get_row_size( db, t->colinfo, t->col_count, bytes_per_strref );
     row_size_mem = table_get_row_size( db, t->colinfo, t->col_count, LONG_STR_BYTES );
 
     /* if we can't read the table, just assume that it's empty */
@@ -407,6 +408,23 @@ static UINT read_table_from_storage( MSIDATABASE *db, MSITABLE *t, IStorage *stg
         return ERROR_SUCCESS;
 
     TRACE("Read %d bytes\n", rawsize );
+
+    if( rawsize % row_size )
+    {
+        /* Check if the data was written with a different bytes_per_strref. This can happen
+         * when transforms change the string pool metadata without re-encoding all table streams. */
+        if (bytes_per_strref == LONG_STR_BYTES)
+        {
+            UINT alt_row_size = table_get_row_size( db, t->colinfo, t->col_count, sizeof(USHORT) );
+            if (alt_row_size != row_size && rawsize % alt_row_size == 0)
+            {
+                WARN("Table %s: data uses %u-byte string refs, not %u\n",
+                     debugstr_w(t->name), (UINT)sizeof(USHORT), bytes_per_strref);
+                bytes_per_strref = sizeof(USHORT);
+                row_size = alt_row_size;
+            }
+        }
+    }
 
     if( rawsize % row_size )
     {
@@ -440,7 +458,7 @@ static UINT read_table_from_storage( MSIDATABASE *db, MSITABLE *t, IStorage *stg
         for (j = 0; j < t->col_count; j++)
         {
             UINT m = bytes_per_column( db, &t->colinfo[j], LONG_STR_BYTES );
-            UINT n = bytes_per_column( db, &t->colinfo[j], db->bytes_per_strref );
+            UINT n = bytes_per_column( db, &t->colinfo[j], bytes_per_strref );
             UINT k;
 
             if ( n != 2 && n != 3 && n != 4 )
