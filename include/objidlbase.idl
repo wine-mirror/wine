@@ -1249,5 +1249,27 @@ interface IObjContext : IContext
     void Reserved7();
 }
 
+[
+    local,
+    object,
+    uuid(00000017-0000-0000-c000-000000000046)
+]
+interface IActivationFilter : IUnknown
+{
+  typedef enum tagACTIVATIONTYPE {
+    ACTIVATIONTYPE_UNCATEGORIZED  = 0x0,
+    ACTIVATIONTYPE_FROM_MONIKER   = 0x1,
+    ACTIVATIONTYPE_FROM_DATA      = 0x2,
+    ACTIVATIONTYPE_FROM_STORAGE   = 0x4,
+    ACTIVATIONTYPE_FROM_STREAM    = 0x8,
+    ACTIVATIONTYPE_FROM_FILE      = 0x10
+  } ACTIVATIONTYPE;
+
+  HRESULT HandleActivation(
+    [in] DWORD dwActivationType,
+    [in] REFCLSID rclsid,
+    [out] CLSID *pReplacementClsId);
+}
+
 cpp_quote("#endif /* defined USE_COM_CONTEXT_DEF */")
 cpp_quote("#endif /* defined _OBJIDLBASE_ */")
