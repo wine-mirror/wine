@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-12-22 23:29+0900\n"
+"PO-Revision-Date: 2026-03-08 22:38+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -3979,23 +3979,23 @@ msgstr "構文エラー"
 
 #: dlls/jscript/jscript.rc:39
 msgid "Expected ';'"
-msgstr "';'を期待していました"
+msgstr "「;」が必要です"
 
 #: dlls/jscript/jscript.rc:40
 msgid "Expected '('"
-msgstr "'('を期待していました"
+msgstr "「(」が必要です"
 
 #: dlls/jscript/jscript.rc:41
 msgid "Expected ')'"
-msgstr "')'を期待していました"
+msgstr "「)」が必要です"
 
 #: dlls/jscript/jscript.rc:42
 msgid "Expected identifier"
-msgstr "識別子を期待していました"
+msgstr "識別子が必要です"
 
 #: dlls/jscript/jscript.rc:43
 msgid "Expected '='"
-msgstr "'='を期待していました"
+msgstr "「=」が必要です"
 
 #: dlls/jscript/jscript.rc:44
 msgid "Invalid character"
@@ -4027,7 +4027,7 @@ msgstr "ラベルが見つかりません"
 
 #: dlls/jscript/jscript.rc:51
 msgid "Expected '@end'"
-msgstr "'@end'を期待していました"
+msgstr "「@end」が必要です"
 
 #: dlls/jscript/jscript.rc:52
 msgid "Conditional compilation is turned off"
@@ -4035,7 +4035,7 @@ msgstr "条件コンパイルはオフにされています"
 
 #: dlls/jscript/jscript.rc:53
 msgid "Expected '@'"
-msgstr "'@'を期待していました"
+msgstr "「@」が必要です"
 
 #: dlls/jscript/jscript.rc:97
 msgid "Microsoft JScript compilation error"
@@ -4051,11 +4051,11 @@ msgstr "未知の実行時エラー"
 
 #: dlls/jscript/jscript.rc:57
 msgid "Number expected"
-msgstr "数値を期待していました"
+msgstr "数値が必要です"
 
 #: dlls/jscript/jscript.rc:54
 msgid "Function expected"
-msgstr "関数を期待していました"
+msgstr "関数が必要です"
 
 #: dlls/jscript/jscript.rc:55
 msgid "'[object]' is not a string object"
@@ -4079,7 +4079,7 @@ msgstr "'|'は未定義です"
 
 #: dlls/jscript/jscript.rc:61
 msgid "Boolean object expected"
-msgstr "Boolean オブジェクトを期待していました"
+msgstr "Boolean オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:62
 msgid "Cannot delete '|'"
@@ -4087,19 +4087,19 @@ msgstr "'|'を削除できません"
 
 #: dlls/jscript/jscript.rc:63
 msgid "VBArray object expected"
-msgstr "VBArray オブジェクトを期待していました"
+msgstr "VBArray オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:64
 msgid "JScript object expected"
-msgstr "JScript オブジェクトを期待していました"
+msgstr "JScript オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Enumerator object expected"
-msgstr "列挙子オブジェクトを期待していました"
+msgstr "列挙子オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Regular Expression object expected"
-msgstr "正規表現オブジェクトを期待していました"
+msgstr "正規表現オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:67
 msgid "Syntax error in regular expression"
@@ -4131,7 +4131,7 @@ msgstr "精度指定が範囲外です"
 
 #: dlls/jscript/jscript.rc:74
 msgid "Array or arguments object expected"
-msgstr "配列または引数オブジェクトを期待していました"
+msgstr "配列または引数オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Array length must be a finite positive integer"
@@ -4139,7 +4139,7 @@ msgstr "配列の長さは有限の正整数である必要があります"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Array object expected"
-msgstr "配列オブジェクトを期待していました"
+msgstr "配列オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:77
 msgid ""
@@ -4216,7 +4216,7 @@ msgstr "'key' はオブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:94
 msgid "ArrayBuffer object expected"
-msgstr "ArrayBuffer オブジェクトを期待していました"
+msgstr "ArrayBuffer オブジェクトが必要です"
 
 #: dlls/jscript/jscript.rc:95
 msgid "Property cannot have both accessors and a value"
@@ -4224,7 +4224,7 @@ msgstr "プロパティはアクセサーと値の両方になることはでき
 
 #: include/common.ver:77
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "Wine カーネル DLL"
 
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
@@ -7268,10 +7268,8 @@ msgid "Call failed.\n"
 msgstr "呼び出しが失敗しました。\n"
 
 #: dlls/kernelbase/winerror.mc:3817
-#, fuzzy
-#| msgid "Unable to unload media.\n"
 msgid "Unable to find matching object.\n"
-msgstr "メディアをアンロードできません。\n"
+msgstr "一致するオブジェクトを見つけられません。\n"
 
 #: dlls/kernelbase/winerror.mc:3824
 msgid "No Signature found in file.\n"
@@ -8850,226 +8848,172 @@ msgid "Wine Video 1 video codec"
 msgstr "Wine ビデオ 1 ビデオコーデック"
 
 #: dlls/msxml3/msxml.mc:31
-#, fuzzy
-#| msgid "Undefined external error."
 msgid "Undefined reference\n"
-msgstr "不明な外部エラーです。"
+msgstr "未定義の参照です\n"
 
 #: dlls/msxml3/msxml.mc:38
 msgid "Found self-referential entity\n"
-msgstr ""
+msgstr "自己参照実体が見つかりました\n"
 
 #: dlls/msxml3/msxml.mc:45
 msgid "Unparsed entity reference\n"
-msgstr ""
+msgstr "未解析の実体参照です\n"
 
 #: dlls/msxml3/msxml.mc:52
 msgid "Name text contains colon ':'\n"
-msgstr ""
+msgstr "名前のテキストがコロン「:」を含みます\n"
 
 #: dlls/msxml3/msxml.mc:59
 msgid "Namespace prefix hasn't been declared\n"
-msgstr ""
+msgstr "名前空間プレフィックスが宣言されていません\n"
 
 #: dlls/msxml3/msxml.mc:66
-#, fuzzy
-#| msgid "Expected '='"
 msgid "Expected '=' character\n"
-msgstr "'='を期待していました"
+msgstr "「=」文字が必要です\n"
 
 #: dlls/msxml3/msxml.mc:73
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected a quote character\n"
-msgstr "演算子がありません。\n"
+msgstr "引用符が必要です\n"
 
 #: dlls/msxml3/msxml.mc:80
 msgid "Malformed comment\n"
-msgstr ""
+msgstr "コメントの形式が正しくありません\n"
 
 #: dlls/msxml3/msxml.mc:87
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid name start character\n"
-msgstr "使用できない文字です"
+msgstr "名前の先頭に利用できない文字です\n"
 
 #: dlls/msxml3/msxml.mc:94
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid name character\n"
-msgstr "使用できない文字です"
+msgstr "名前に使用できない文字です\n"
 
 #: dlls/msxml3/msxml.mc:101
 msgid "The '<' character found in attribute value\n"
-msgstr ""
+msgstr "属性値で「<」文字が見つかりました\n"
 
 #: dlls/msxml3/msxml.mc:108
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected whitespace character\n"
-msgstr "演算子がありません。\n"
+msgstr "空白文字が必要です\n"
 
 #: dlls/msxml3/msxml.mc:115
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected end tag character '>'\n"
-msgstr "演算子がありません。\n"
+msgstr "タグ末尾の文字「>」が必要です\n"
 
 #: dlls/msxml3/msxml.mc:122
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in DTD content\n"
-msgstr "ファイル名に使えない文字"
+msgstr "DTD 内に使えない文字があります\n"
 
 #: dlls/msxml3/msxml.mc:129
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected ';' character\n"
-msgstr "';'を期待していました"
+msgstr "「;」文字が必要です\n"
 
 #: dlls/msxml3/msxml.mc:136
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in entity reference\n"
-msgstr "ファイル名に使えない文字"
+msgstr "実体参照に使えない文字があります\n"
 
 #: dlls/msxml3/msxml.mc:143
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in mixed DTD content\n"
-msgstr "ファイル名に使えない文字"
+msgstr "mixed DTD 内容に使えない文字があります\n"
 
 #: dlls/msxml3/msxml.mc:150
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected '*' character\n"
-msgstr "演算子がありません。\n"
+msgstr "「*」文字が必要です\n"
 
 #: dlls/msxml3/msxml.mc:157
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected parenthesis character\n"
-msgstr "演算子がありません。\n"
+msgstr "括弧が必要です。\n"
 
 #: dlls/msxml3/msxml.mc:164
-#, fuzzy
-#| msgid "Invalid character(s) in path"
 msgid "Invalid character in DTD enumeration\n"
-msgstr "ファイル名に使えない文字"
+msgstr "DTD enumeration に使えない文字があります\n"
 
 #: dlls/msxml3/msxml.mc:171
-#, fuzzy
-#| msgid "Invalid name syntax.\n"
 msgid "Invalid PI syntax\n"
-msgstr "名前の構文が正しくありません。\n"
+msgstr "PI の構文が正しくありません。\n"
 
 #: dlls/msxml3/msxml.mc:178
-#, fuzzy
-#| msgid "Expected an operator.\n"
 msgid "Expected closing quote character\n"
-msgstr "演算子がありません。\n"
+msgstr "閉じ引用符が必要です\n"
 
 #: dlls/msxml3/msxml.mc:185
 msgid "Multiple colon character found\n"
-msgstr ""
+msgstr "複数のコロンが見つかりました\n"
 
 #: dlls/msxml3/msxml.mc:192
-#, fuzzy
-#| msgid "Invalid character"
 msgid "Invalid Unicode character\n"
-msgstr "使用できない文字です"
+msgstr "使用できない Unicode 文字です\n"
 
 #: dlls/msxml3/msxml.mc:199
 msgid "Expected whitespace or '?' character\n"
-msgstr ""
+msgstr "空白文字または「?」文字が必要です\n"
 
 #: dlls/msxml3/msxml.mc:206
 msgid "Unexpected end tag '>' character\n"
-msgstr ""
+msgstr "予期しない終了タグ「>」文字です\n"
 
 #: dlls/msxml3/msxml.mc:213
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Found duplicate attribute\n"
-msgstr "グループ属性が正しくありません。\n"
+msgstr "属性の重複を見つけました\n"
 
 #: dlls/msxml3/msxml.mc:220
-#, fuzzy
-#| msgid "Key is invalid.\n"
 msgid "Document root is invalid\n"
-msgstr "キーが正しくありません。\n"
+msgstr "文書のルートが正しくありません。\n"
 
 #: dlls/msxml3/msxml.mc:227
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "Invalid xml declaration\n"
-msgstr "ハンドル操作が正しくありません。\n"
+msgstr "XML 宣言が正しくありません。\n"
 
 #: dlls/msxml3/msxml.mc:234
-#, fuzzy
-#| msgid "Source is missing.\n"
 msgid "Document root is missing\n"
-msgstr "ソースが見つかりません。\n"
+msgstr "文書のルートが見当たりません\n"
 
 #: dlls/msxml3/msxml.mc:241
 msgid "Unexpected end of input data stream\n"
-msgstr ""
+msgstr "予期しない入力データ ストリームの終端です\n"
 
 #: dlls/msxml3/msxml.mc:248
 msgid "Found unexpected CDATA closing markup ']]>'\n"
-msgstr ""
+msgstr "予期しない CDATA 終じマークアップ「]]>」です\n"
 
 #: dlls/msxml3/msxml.mc:255
 msgid "Found unterminated PI declaration\n"
-msgstr ""
+msgstr "未終端の PI 宣言が見つかりました\n"
 
 #: dlls/msxml3/msxml.mc:262
 msgid "Found unterminated end tag\n"
-msgstr ""
+msgstr "未終端の終了タグが見つかりました\n"
 
 #: dlls/msxml3/msxml.mc:269
 msgid "Found unterminated CDATA block\n"
-msgstr ""
+msgstr "未終端の CDATA ブロックが見つかりました\n"
 
 #: dlls/msxml3/msxml.mc:276
 msgid "Use namespace prefix is reserved\n"
-msgstr ""
+msgstr "利用した名前空間プレフィックスは予約されています\n"
 
 #: dlls/msxml3/msxml.mc:283
-#, fuzzy
-#| msgid "The passwords do not match."
 msgid "End tag does not match\n"
-msgstr "パスワードが一致しません。"
+msgstr "終了タグが一致しません\n"
 
 #: dlls/msxml3/msxml.mc:290
-#, fuzzy
-#| msgid "Invalid domain name.\n"
 msgid "Invalid encoding name\n"
-msgstr "ドメイン名が正しくありません。\n"
+msgstr "符号化名が正しくありません。\n"
 
 #: dlls/msxml3/msxml.mc:297
-#, fuzzy
-#| msgid "Invalid media type.\n"
 msgid "Invalid model in DTD contentspec\n"
-msgstr "メディア タイプが正しくありません。\n"
+msgstr "DTD contentspec 内のモデルが正しくありません\n"
 
 #: dlls/msxml3/msxml.mc:304
-#, fuzzy
-#| msgid "Invalid group attributes.\n"
 msgid "Invalid DTD attribute type\n"
-msgstr "グループ属性が正しくありません。\n"
+msgstr "DTD 属性の型が正しくありません\n"
 
 #: dlls/msxml3/msxml.mc:311
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "Invalid standalone declaration\n"
-msgstr "ハンドル操作が正しくありません。\n"
+msgstr "standalone 宣言が正しくありません\n"
 
 #: dlls/msxml3/msxml.mc:318
-#, fuzzy
-#| msgid "Invalid version option.\n"
 msgid "Invalid xml version\n"
-msgstr "バージョン オプションが正しくありません。\n"
+msgstr "XML バージョンが正しくありません\n"
 
 #: dlls/oleacc/oleacc.rc:31
 msgid "unknown object"
