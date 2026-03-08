@@ -73,6 +73,20 @@ HRESULT WINAPI ConnectServerWmi(BSTR strNetworkResource, BSTR strUser, BSTR strP
     return hr;
 }
 
+HRESULT WINAPI CreateInstanceEnumWmi(BSTR strFilter, long lFlags, IWbemContext *pCtx,
+    IEnumWbemClassObject **ppEnum, DWORD authLevel, DWORD impLevel, IWbemServices *pCurrentNamespace,
+    BSTR strUser, BSTR strPassword, BSTR strAuthority)
+{
+    TRACE("%s %lx %p %p %p\n", debugstr_w(strFilter), lFlags, pCtx, ppEnum, pCurrentNamespace);
+
+    if (!ppEnum)
+        return E_POINTER;
+
+    *ppEnum = NULL;
+
+    return IWbemServices_CreateInstanceEnum(pCurrentNamespace, strFilter, lFlags, pCtx, ppEnum);
+}
+
 HRESULT WINAPI ExecQueryWmi(BSTR strQueryLanguage, BSTR strQuery, long lFlags, IWbemContext *pCtx,
     IEnumWbemClassObject **ppEnum, DWORD authLevel, DWORD impLevel, IWbemServices *pCurrentNamespace,
     BSTR strUser, BSTR strPassword, BSTR strAuthority)

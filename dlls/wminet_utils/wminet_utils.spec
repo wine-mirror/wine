@@ -7,7 +7,7 @@
 @ stub CompareTo
 @ stdcall ConnectServerWmi(wstr wstr wstr wstr long wstr ptr ptr long long)
 @ stub CreateClassEnumWmi
-@ stub CreateInstanceEnumWmi
+@ stdcall CreateInstanceEnumWmi(wstr long ptr ptr long long ptr wstr wstr wstr)
 @ stub Delete
 @ stub DeleteMethod
 @ stub DllCanUnloadNow
