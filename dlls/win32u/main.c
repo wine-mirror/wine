@@ -2347,6 +2347,11 @@ BOOL SYSCALL_API NtUserSetWindowContextHelpId( HWND hwnd, DWORD id )
     SYSCALL_FUNC( NtUserSetWindowContextHelpId );
 }
 
+BOOL SYSCALL_API NtUserSetWindowFNID( HWND hwnd, WORD fnid )
+{
+    SYSCALL_FUNC( NtUserSetWindowFNID );
+}
+
 LONG SYSCALL_API NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     SYSCALL_FUNC( NtUserSetWindowLong );

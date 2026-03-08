@@ -92,6 +92,8 @@ struct window
     int              prop_inuse;      /* number of in-use window properties */
     int              prop_alloc;      /* number of allocated window properties */
     struct property *properties;      /* window properties array */
+    int              private_off;     /* offset of private extra bytes range */
+    int              private_len;     /* length of private extra bytes range */
     int              nb_extra_bytes;  /* number of extra bytes */
     char            *extra_bytes;     /* extra bytes storage */
     window_shm_t    *shared;          /* window in session shared memory */
@@ -2273,6 +2275,11 @@ DECL_HANDLER(create_window)
     reply->class_ptr   = get_class_client_ptr( win->class );
 }
 
+static BOOL in_private_data_range( const struct window *win, int offset, int size )
+{
+    return offset < win->private_off + win->private_len && offset + size >= win->private_off;
+}
+
 
 /* set the parent of a window */
 DECL_HANDLER(set_parent)
@@ -2396,7 +2403,8 @@ DECL_HANDLER(get_window_info)
     case GWLP_USERDATA:   reply->info = win->user_data;  break;
     default:
         if (req->size > sizeof(reply->info) || req->offset < 0 ||
-            req->offset > win->nb_extra_bytes - (int)req->size)
+            req->offset > win->nb_extra_bytes - (int)req->size ||
+            in_private_data_range( win, req->offset, req->size ))
         {
             set_win32_error( ERROR_INVALID_INDEX );
             break;
@@ -2462,6 +2470,10 @@ DECL_HANDLER(set_window_info)
     case GWLP_USERDATA:
         reply->old_info = win->user_data;
         win->user_data = req->new_info;
+        break;
+    case GWLP_FNID_INTERNAL:
+        win->private_off = FNID_OFF(req->new_info);
+        win->private_len = FNID_LEN(req->new_info);
         break;
     default:
         if (req->size > sizeof(req->new_info) || req->offset < 0 ||

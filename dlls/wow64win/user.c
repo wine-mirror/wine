@@ -4622,6 +4622,14 @@ NTSTATUS WINAPI wow64_NtUserSetWindowContextHelpId( UINT *args )
     return NtUserSetWindowContextHelpId( hwnd, id );
 }
 
+NTSTATUS WINAPI wow64_NtUserSetWindowFNID( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    WORD fnid = get_ulong( &args );
+
+    return NtUserSetWindowFNID( hwnd, fnid );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetWindowLong( UINT *args )
 {
     HWND hwnd = get_handle( &args );

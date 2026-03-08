@@ -76,6 +76,8 @@ typedef struct tagWND
     int                clip_clients;  /* Has client surfaces that needs to be clipped out */
     int                cbWndExtra;    /* class cbWndExtra at window creation */
     DWORD_PTR          userdata;      /* User private data */
+    int                private_off;   /* offset of private extra bytes range */
+    int                private_len;   /* length of private extra bytes range */
     DWORD              wExtra[1];     /* Window extra bytes */
 } WND;
 

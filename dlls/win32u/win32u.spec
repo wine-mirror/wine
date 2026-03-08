@@ -1439,7 +1439,7 @@
 @ stub -syscall NtUserSetWindowCompositionTransition
 @ stdcall -syscall NtUserSetWindowContextHelpId(long long)
 @ stub -syscall NtUserSetWindowDisplayAffinity
-@ stub -syscall NtUserSetWindowFNID
+@ stdcall -syscall NtUserSetWindowFNID(long long)
 @ stub -syscall NtUserSetWindowFeedbackSetting
 @ stub -syscall NtUserSetWindowGroup
 @ stdcall -syscall NtUserSetWindowLong(long long long long)

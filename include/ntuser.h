@@ -667,6 +667,12 @@ enum wine_internal_message
 #define IMN_WINE_SET_OPEN_STATUS  0x000f
 #define IMN_WINE_SET_COMP_STRING  0x0010
 
+/* not compatible with Windows */
+#define GWLP_FNID_INTERNAL (-1000)
+#define MAKE_FNID(off, len) (((off) << 8) + len)
+#define FNID_OFF(fnid) ((fnid) >> 8)
+#define FNID_LEN(fnid) ((fnid) & 0xff)
+
 /* builtin IME driver calls */
 enum wine_ime_call
 {
@@ -1017,6 +1023,7 @@ W32KAPI HWND    WINAPI NtUserSetTaskmanWindow( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserSetThreadDesktop( HDESK handle );
 W32KAPI UINT_PTR WINAPI NtUserSetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc, ULONG tolerance );
 W32KAPI BOOL    WINAPI NtUserSetWindowContextHelpId( HWND hwnd, DWORD id );
+W32KAPI BOOL    WINAPI NtUserSetWindowFNID( HWND hwnd, WORD fnid );
 W32KAPI LONG    WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi );
 W32KAPI LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
 W32KAPI BOOL    WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl );
@@ -1422,6 +1429,8 @@ enum
     NtUserCallHwndParam_ExposeWindowSurface,
     NtUserCallHwndParam_GetWinMonitorDpi,
     NtUserCallHwndParam_SetRawWindowPos,
+    NtUserCallHwndParam_GetPrivateData,
+    NtUserCallHwndParam_SetPrivateData,
 };
 
 struct get_window_rects_params
@@ -1646,6 +1655,31 @@ static inline BOOL NtUserSetRawWindowPos( HWND hwnd, RECT rect, UINT flags, BOOL
 {
     struct set_raw_window_pos_params params = {.rect = rect, .flags = flags, .internal = internal};
     return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_SetRawWindowPos );
+}
+
+struct get_private_data_params
+{
+    UINT offset;
+    UINT size;
+};
+
+static inline LONG_PTR NtUserGetPrivateData( HWND hwnd, UINT offset, UINT size )
+{
+    struct get_private_data_params params = { .offset = offset, .size = size };
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetPrivateData );
+}
+
+struct set_private_data_params
+{
+    UINT offset;
+    UINT size;
+    LONG64 value;
+};
+
+static inline LONG_PTR NtUserSetPrivateData( HWND hwnd, UINT offset, UINT size, LONG_PTR value )
+{
+    struct set_private_data_params params = { .offset = offset, .size = size, .value = value };
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_SetPrivateData );
 }
 
 #endif /* _NTUSER_ */

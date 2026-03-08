@@ -360,8 +360,8 @@ static LRESULT WINAPI static_wrapper_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
     {
         SetLastError(0xdeadbeef);
         v = SetWindowLongA(hwnd, 0, 3);
-        todo_wine_if(msg != WM_NCCREATE) ok(!v, "got %lx\n", v);
-        todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+        ok(!v, "got %lx\n", v);
+        ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
     }
 
     v = SetWindowLongA(hwnd, test_data_off, 4);
@@ -369,8 +369,8 @@ static LRESULT WINAPI static_wrapper_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
     SetLastError(0xdeadbeef);
     v = GetWindowLongA(hwnd, 0);
-    todo_wine ok(!v, "got %lx\n", v);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+    ok(!v, "got %lx\n", v);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
 
     v = GetWindowLongA(hwnd, test_data_off);
     ok(v == 4, "got %lx\n", v);
@@ -399,18 +399,18 @@ static void test_window_extra_data(char **argv)
 
     SetLastError(0xdeadbeef);
     v = GetWindowLongA(hwnd, 0);
-    todo_wine ok(!v, "got %lx\n", v);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+    ok(!v, "got %lx\n", v);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     v = SetWindowLongA(hwnd, 0, 1);
-    todo_wine ok(!v, "got %lx\n", v);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+    ok(!v, "got %lx\n", v);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     v = GetWindowLongW(hwnd, 0);
-    todo_wine ok(!v, "got %lx\n", v);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+    ok(!v, "got %lx\n", v);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
 
     si.cb = sizeof(si);
     sprintf(buffer, "\"%s\" %s window_extra_data %p", argv[0], argv[1], hwnd);
@@ -446,16 +446,16 @@ static void test_window_extra_data_proc(char *arg)
 
     SetLastError(0xdeadbeef);
     v = GetWindowLongA(hwnd, 0);
-    todo_wine ok(!v, "v = %ld\n", v);
-    todo_wine ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
+    ok(!v, "v = %ld\n", v);
+    ok(GetLastError() == ERROR_INVALID_INDEX, "GetLastError() = %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     v = SetWindowLongA(hwnd, 0, 1);
-    todo_wine ok(!v, "v = %ld\n", v);
+    ok(!v, "v = %ld\n", v);
     ok(GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
 
     v = SetWindowLongA(hwnd, 0, 1);
-    todo_wine ok(!v, "v = %ld\n", v);
+    ok(!v, "v = %ld\n", v);
     ok(GetLastError() == 0xdeadbeef, "GetLastError() = %ld\n", GetLastError());
 
     PostMessageA(hwnd, WM_QUIT, 0, 0);
