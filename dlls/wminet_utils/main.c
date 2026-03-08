@@ -87,6 +87,14 @@ HRESULT WINAPI ExecQueryWmi(BSTR strQueryLanguage, BSTR strQuery, long lFlags, I
     return IWbemServices_ExecQuery(pCurrentNamespace, strQueryLanguage, strQuery, lFlags, pCtx, ppEnum);
 }
 
+HRESULT WINAPI Get(int vFunc, IWbemClassObject *ptr, LPCWSTR wszName, LONG lFlags, VARIANT *pVal,
+    CIMTYPE *pvtType, LONG *plFlavor)
+{
+    TRACE("%i %p %s %lx %p %p %p\n", vFunc, ptr, debugstr_w(wszName), lFlags, pVal, pvtType, plFlavor);
+
+    return IWbemClassObject_Get(ptr, wszName, lFlags, pVal, pvtType, plFlavor);
+}
+
 HRESULT WINAPI GetCurrentApartmentType(int vFunc, IComThreadingInfo *ptr, APTTYPE *aptType)
 {
     TRACE("%i %p %p\n", vFunc, ptr, aptType);

@@ -18,7 +18,7 @@
 @ stub EndMethodEnumeration
 @ stub ExecNotificationQueryWmi
 @ stdcall ExecQueryWmi(wstr wstr long ptr ptr long long ptr wstr wstr wstr)
-@ stub Get
+@ stdcall Get(long ptr wstr long ptr ptr ptr)
 @ stdcall GetCurrentApartmentType(long ptr ptr)
 @ stub GetDemultiplexedStub
 @ stub GetErrorInfo
