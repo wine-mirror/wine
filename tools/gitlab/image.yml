@@ -7,18 +7,18 @@
       changes:
         - tools/gitlab/image.yml
         - tools/gitlab/image.docker
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
+  image: quay.io/buildah/stable
   variables:
-    IMAGE_SOURCE: "$CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:trixie"
-    IMAGE_LOCAL: "$CI_REGISTRY_IMAGE:debian-trixie-$ARCH"
-    DOCKER_FILE: "$CI_PROJECT_DIR/tools/gitlab/image.docker"
+    STORAGE_DRIVER: vfs
+    IMAGE_SOURCE: $CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:trixie
+    IMAGE_DEST: $CI_REGISTRY_IMAGE:debian-trixie
+    DOCKER_FILE: $CI_PROJECT_DIR/tools/gitlab/image.docker
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | buildah login --username="$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
   script:
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(printf "%s:%s" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"},\"$CI_DEPENDENCY_PROXY_SERVER\":{\"auth\":\"$(printf "%s:%s" "$CI_DEPENDENCY_PROXY_USER" "$CI_DEPENDENCY_PROXY_PASSWORD" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
-    - sed -i "1iFROM $IMAGE_SOURCE" "$DOCKER_FILE"
-    - /kaniko/executor --context "$CI_PROJECT_DIR" --dockerfile "$DOCKER_FILE" --destination "$IMAGE_LOCAL" --build-arg="ARCH=$ARCH"
+    - echo "$CI_DEPENDENCY_PROXY_PASSWORD" | buildah login --username="$CI_DEPENDENCY_PROXY_USER" --password-stdin $CI_DEPENDENCY_PROXY_SERVER
+    - buildah build --from $IMAGE_SOURCE --platform=linux/$ARCH --tag $IMAGE_DEST-$ARCH --file $DOCKER_FILE --env "ARCH=$ARCH"
+    - buildah push $IMAGE_DEST-$ARCH
 
 build-image-amd64:
   extends: .build-image
@@ -34,11 +34,9 @@ build-image-arm64:
 
 build-image:
   extends: .build-image
-  image:
-    name: curlimages/curl:latest
-    entrypoint: [""]
   needs: ["build-image-amd64", "build-image-arm64"]
   script:
-    - curl -s -L https://github.com/estesp/manifest-tool/releases/download/v2.2.0/binaries-manifest-tool-2.2.0.tar.gz | tar xz manifest-tool-linux-amd64
-    - ./manifest-tool-linux-amd64 --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}" push from-args
-      --platforms linux/amd64,linux/arm64 --template ${CI_REGISTRY_IMAGE}:debian-trixie-ARCH --target ${CI_REGISTRY_IMAGE}:debian-trixie
+    - buildah manifest create $IMAGE_DEST
+    - buildah manifest add $IMAGE_DEST docker://$IMAGE_DEST-amd64
+    - buildah manifest add $IMAGE_DEST docker://$IMAGE_DEST-arm64
+    - buildah manifest push --all $IMAGE_DEST

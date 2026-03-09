@@ -1,6 +1,5 @@
-# FROM line will be added dynamically
+FROM debian:trixie
 
-ARG ARCH
 WORKDIR /tmp
 
 RUN export DEBIAN_FRONTEND=noninteractive; \
