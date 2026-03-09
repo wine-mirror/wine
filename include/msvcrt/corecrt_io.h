@@ -6,6 +6,7 @@
 #ifndef _IO_DEFINED
 #define _IO_DEFINED
 
+#include <share.h>
 #include <corecrt_wio.h>
 
 #pragma pack(push,8)
@@ -99,6 +100,7 @@ _ACRTIMP int      __cdecl _chmod(const char*,int);
 _ACRTIMP int      __cdecl _chsize(int,__msvcrt_long);
 _ACRTIMP int      __cdecl _chsize_s(int,__int64);
 _ACRTIMP int      __cdecl _close(int);
+_ACRTIMP int      __cdecl _commit(int);
 _ACRTIMP int      __cdecl _creat(const char*,int);
 _ACRTIMP int      __cdecl _dup(int);
 _ACRTIMP int      __cdecl _dup2(int,int);

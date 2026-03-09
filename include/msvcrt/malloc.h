@@ -65,6 +65,7 @@ _ACRTIMP int    __cdecl _heapwalk(_HEAPINFO*);
 _ACRTIMP intptr_t __cdecl _get_heap_handle(void);
 _ACRTIMP size_t __cdecl _get_sbh_threshold(void);
 _ACRTIMP int    __cdecl _set_sbh_threshold(size_t size);
+_ACRTIMP int    __cdecl _resetstkoflw(void);
 
 #ifdef _MSC_VER
 void *_alloca(size_t size);
