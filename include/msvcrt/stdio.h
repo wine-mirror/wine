@@ -209,6 +209,12 @@ static inline int __cdecl _vsnprintf_s_l(char *buffer, size_t size, size_t count
     return ret < 0 ? -1 : ret;
 }
 
+static inline int __cdecl vsnprintf_s(char *buffer, size_t size, size_t count, const char *format, va_list args) __WINE_CRT_PRINTF_ATTR(4, 0);
+static inline int __cdecl vsnprintf_s(char *buffer, size_t size, size_t count, const char *format, va_list args)
+{
+    return _vsnprintf_s_l(buffer, size, count, format, NULL, args);
+}
+
 static inline int __cdecl _snprintf_s(char *buffer, size_t size, size_t count, const char *format, ...) __WINE_CRT_PRINTF_ATTR(4, 5);
 static inline int __cdecl _snprintf_s(char *buffer, size_t size, size_t count, const char *format, ...)
 {
