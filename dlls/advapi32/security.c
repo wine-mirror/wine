@@ -3221,3 +3221,14 @@ DWORD WINAPI LookupSecurityDescriptorPartsW(TRUSTEEW *owner, TRUSTEEW *group, UL
           access_list, audit_count, audit_list, descriptor);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * AddConditionalAce [ADVAPI32.@]
+ */
+BOOL WINAPI AddConditionalAce(PACL acl, DWORD ace_revision, DWORD ace_flags, UCHAR ace_type,
+                               DWORD access_mask, PSID sid, PWCHAR condition, DWORD *length)
+{
+    FIXME("(%p %lx %lx %x %lx %p %s %p) stub\n", acl, ace_revision, ace_flags, ace_type,
+           access_mask, sid, debugstr_w(condition), length);
+    return FALSE;
+}
