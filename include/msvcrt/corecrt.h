@@ -154,6 +154,10 @@
 # endif
 #endif
 
+#ifndef _HAS_EXCEPTIONS
+#define _HAS_EXCEPTIONS 1
+#endif
+
 #define _ARGMAX 100
 #define _CRT_INT_MAX 0x7fffffff
 #define _TRUNCATE ((size_t)-1)

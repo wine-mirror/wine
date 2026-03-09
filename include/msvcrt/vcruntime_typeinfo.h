@@ -79,6 +79,11 @@ private:
 namespace std
 {
 using ::type_info;
+}
+
+#if _HAS_EXCEPTIONS
+namespace std
+{
 
 class bad_cast : public exception
 {
@@ -119,5 +124,6 @@ private:
 };
 
 }
+#endif
 
 #endif /* __WINE_VCRUNTIME_TYPEINFO_H */
