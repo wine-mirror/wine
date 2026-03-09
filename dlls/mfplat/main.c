@@ -9501,3 +9501,21 @@ HRESULT WINAPI MFCreatePathFromURL(const WCHAR *url, WCHAR **ret_path)
     memcpy(*ret_path, path, (length + 1) * sizeof(*path));
     return S_OK;
 }
+
+/***********************************************************************
+ *      MFSerializeAttributesToStream (mfplat.@)
+ */
+HRESULT WINAPI MFSerializeAttributesToStream(IMFAttributes *attr, DWORD options, IStream *stream)
+{
+    FIXME("%p %lx %p: stub!\n", attr, options, stream);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *      MFDeserializeAttributesFromStream (mfplat.@)
+ */
+HRESULT WINAPI MFDeserializeAttributesFromStream(IMFAttributes *attr, DWORD options, IStream *stream)
+{
+    FIXME("%p %lx %p: stub!\n", attr, options, stream);
+    return E_NOTIMPL;
+}
