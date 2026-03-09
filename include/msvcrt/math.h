@@ -318,9 +318,6 @@ inline bool signbit(long double x) throw() { return _ldsign(x) != 0; }
 inline int _fpcomp(float x, float y) throw() { return _fdpcomp(x, y); }
 inline int _fpcomp(double x, double y) throw() { return _dpcomp(x, y); }
 inline int _fpcomp(long double x, long double y) throw() { return _ldpcomp(x, y); }
-inline float abs(float x) throw() { return ::fabsf(x); }
-inline double abs(double x) throw() { return ::fabs(x); }
-inline long double abs(long double x) throw() { return ::fabs((double)x); }
 template <class T> inline bool isfinite(T x) throw() { return fpclassify(x) <= 0; }
 template <class T> inline bool isinf(T x) throw() { return fpclassify(x) == FP_INFINITE; }
 template <class T> inline bool isnan(T x) throw() { return fpclassify(x) == FP_NAN; }
