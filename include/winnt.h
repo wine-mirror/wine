@@ -4634,7 +4634,7 @@ typedef DWORD SECURITY_INFORMATION, *PSECURITY_INFORMATION;
 typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
 
 /* The security descriptor structure */
-typedef struct {
+typedef struct _SECURITY_DESCRIPTOR_RELATIVE {
     BYTE Revision;
     BYTE Sbz1;
     SECURITY_DESCRIPTOR_CONTROL Control;
@@ -4644,7 +4644,7 @@ typedef struct {
     DWORD Dacl;
 } SECURITY_DESCRIPTOR_RELATIVE, *PISECURITY_DESCRIPTOR_RELATIVE;
 
-typedef struct {
+typedef struct _SECURITY_DESCRIPTOR {
     BYTE Revision;
     BYTE Sbz1;
     SECURITY_DESCRIPTOR_CONTROL Control;
