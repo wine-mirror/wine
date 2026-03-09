@@ -156,6 +156,7 @@
 
 #define _ARGMAX 100
 #define _CRT_INT_MAX 0x7fffffff
+#define _TRUNCATE ((size_t)-1)
 
 #ifndef _MSVCRT_LONG_DEFINED
 #define _MSVCRT_LONG_DEFINED
@@ -354,5 +355,7 @@ typedef struct threadlocaleinfostruct {
 #else
 #define __WINE_MALLOC
 #endif
+
+#define _SECURECRT_FILL_BUFFER_PATTERN 0xFE
 
 #endif /* __WINE_CORECRT_H */
