@@ -2418,7 +2418,12 @@ ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
  */
 DWORD WINAPI RtlGetLastWin32Error(void)
 {
-    return NtCurrentTeb()->LastErrorValue;
+    TEB *teb = NtCurrentTeb();
+#ifdef _WIN64
+    WOW_TEB *wow_teb = get_wow_teb( teb );
+    if (wow_teb) return wow_teb->LastErrorValue;
+#endif
+    return teb->LastErrorValue;
 }
 
 /**********************************************************************
