@@ -155,3 +155,11 @@ EVT_HANDLE WINAPI EvtCreateRenderContext(DWORD pathcount, const WCHAR **paths, D
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 }
+
+BOOL WINAPI EvtRender(EVT_HANDLE context, EVT_HANDLE fragment, DWORD flags, DWORD buffer_size, void *buffer,
+                      DWORD *buffer_used, DWORD *property_count)
+{
+    FIXME("(%p %p %#lx %lu %p %p %p) stub!\n", context, fragment, flags, buffer_size, buffer, buffer_used, property_count);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
