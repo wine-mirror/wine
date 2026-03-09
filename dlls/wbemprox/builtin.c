@@ -3359,20 +3359,34 @@ static struct array *get_ipaddress( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
     }
     for (address = list; address; address = address->Next)
     {
+        if (address->Address.lpSockaddr->sa_family != AF_INET)
+            continue;
         buflen = ARRAY_SIZE( buf );
         if (WSAAddressToStringW( address->Address.lpSockaddr, address->Address.iSockaddrLength,
-                                 NULL, buf, &buflen) || !(ptr[i++] = wcsdup( buf )))
-        {
-            for (; i > 0; i--) free( ptr[i - 1] );
-            free( ptr );
-            free( ret );
-            return NULL;
-        }
+                                 NULL, buf, &buflen ) || !(ptr[i++] = wcsdup( buf )))
+            goto error;
     }
+
+    for (address = list; address; address = address->Next)
+    {
+        if (address->Address.lpSockaddr->sa_family != AF_INET6)
+            continue;
+        buflen = ARRAY_SIZE( buf );
+        if (WSAAddressToStringW( address->Address.lpSockaddr, address->Address.iSockaddrLength,
+                                 NULL, buf, &buflen ) || !(ptr[i++] = wcsdup( buf )))
+            goto error;
+    }
+
     ret->elem_size = sizeof(*ptr);
     ret->count     = count;
     ret->ptr       = ptr;
     return ret;
+
+error:
+    for (; i > 0; i--) free( ptr[i - 1] );
+    free( ptr );
+    free( ret );
+    return NULL;
 }
 static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
 {
