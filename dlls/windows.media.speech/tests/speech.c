@@ -1492,7 +1492,7 @@ static void test_SpeechRecognizer(void)
         compilation_result = (void *)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
         todo_wine ok(hr == E_UNEXPECTED, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(compilation_result == NULL, "Got %p.\n", compilation_result);
+        todo_wine ok(compilation_result == (void *)0xdeadbeef, "Got %p.\n", compilation_result);
         if (compilation_result && compilation_result != (void *)0xdeadbeef) ISpeechRecognitionCompilationResult_Release(compilation_result);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_QueryInterface(operation, &IID_IAsyncInfo, (void **)&info);
