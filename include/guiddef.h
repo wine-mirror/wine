@@ -142,16 +142,40 @@ typedef GUID FMTID,*LPFMTID;
 
 #endif /* ndef __IID_DEFINED__ */
 
+#ifndef _REFGUID_DEFINED
 #ifdef __cplusplus
 #define REFGUID             const GUID &
-#define REFCLSID            const CLSID &
-#define REFIID              const IID &
-#define REFFMTID            const FMTID &
 #else
 #define REFGUID             const GUID* __MIDL_CONST
-#define REFCLSID            const CLSID* __MIDL_CONST
+#endif
+#define _REFGUID_DEFINED
+#endif
+
+#ifndef _REFIID_DEFINED
+#ifdef __cplusplus
+#define REFIID              const IID &
+#else
 #define REFIID              const IID* __MIDL_CONST
+#endif
+#define _REFIID_DEFINED
+#endif
+
+#ifndef _REFCLSID_DEFINED
+#ifdef __cplusplus
+#define REFCLSID            const CLSID &
+#else
+#define REFCLSID            const CLSID* __MIDL_CONST
+#endif
+#define _REFCLSID_DEFINED
+#endif
+
+#ifndef _REFFMTID_DEFINED
+#ifdef __cplusplus
+#define REFFMTID            const FMTID &
+#else
 #define REFFMTID            const FMTID* __MIDL_CONST
+#endif
+#define _REFFMTID_DEFINED
 #endif
 
 #ifdef __cplusplus
