@@ -861,7 +861,7 @@ static void test_SpeechSynthesizer(void)
     IClosable *closable;
     struct async_inspectable_handler async_inspectable_handler;
     HMODULE hdll;
-    HSTRING str, str2, default_voice_id;
+    HSTRING str, str2, default_voice_id = NULL;
     UINT64 value;
     HRESULT hr;
     UINT32 size, idx;
@@ -936,7 +936,10 @@ static void test_SpeechSynthesizer(void)
     IAgileObject_Release(tmp_agile_object);
 
     hr = IInstalledVoicesStatic_get_AllVoices(voices_static, &voices);
-    ok(hr == S_OK, "IInstalledVoicesStatic_get_AllVoices failed, hr %#lx\n", hr);
+    ok(hr == S_OK || broken(hr == COR_E_FILENOTFOUND) /* Broken on Win 8 + 8.1 */, "IInstalledVoicesStatic_get_AllVoices failed, hr %#lx\n", hr);
+
+    if (FAILED(hr))
+        goto skip_voices;
 
     hr = IVectorView_VoiceInformation_QueryInterface(voices, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(hr == S_OK, "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#lx\n", hr);
@@ -1012,6 +1015,7 @@ static void test_SpeechSynthesizer(void)
     ref = IVectorView_VoiceInformation_Release(voices);
     ok(!ref, "Got unexpected ref %lu.\n", ref);
 
+skip_voices:
     IInstalledVoicesStatic_Release(voices_static);
     IAgileObject_Release(agile_object);
     IInspectable_Release(inspectable);
@@ -1033,8 +1037,11 @@ static void test_SpeechSynthesizer(void)
     hr = IVoiceInformation_get_Id(voice, &str);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    hr = WindowsCompareStringOrdinal(str, default_voice_id, &cmp);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (default_voice_id)
+    {
+        hr = WindowsCompareStringOrdinal(str, default_voice_id, &cmp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    }
 
     hr = WindowsDeleteString(str);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
