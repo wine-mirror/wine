@@ -58,11 +58,7 @@ typedef struct WS(addrinfoW)
 typedef WINELIB_NAME_AW(ADDRINFO) ADDRINFOT, *PADDRINFOT;
 #endif
 
-#ifdef USE_WS_PREFIX
-typedef int WS_socklen_t;
-#else
-#define socklen_t int  /* avoid conflicts with the system's socklen_t typedef */
-#endif
+typedef int WS(socklen_t);
 
 typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 
