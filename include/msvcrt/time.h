@@ -99,6 +99,8 @@ _ACRTIMP struct tm*  __cdecl _localtime32(const __time32_t*);
 _ACRTIMP errno_t     __cdecl _localtime32_s(struct tm*, const __time32_t*);
 _ACRTIMP struct tm*  __cdecl _localtime64(const __time64_t*);
 _ACRTIMP errno_t     __cdecl _localtime64_s(struct tm*, const __time64_t*);
+_ACRTIMP __time32_t  __cdecl _mkgmtime32(struct tm*);
+_ACRTIMP __time64_t  __cdecl _mkgmtime64(struct tm*);
 _ACRTIMP __time32_t  __cdecl _mktime32(struct tm*);
 _ACRTIMP __time64_t  __cdecl _mktime64(struct tm*);
 _ACRTIMP size_t      __cdecl strftime(char*,size_t,const char*,const struct tm*);
@@ -114,6 +116,7 @@ static inline struct tm* gmtime(const time_t *t) { return _gmtime64(t); }
 static inline int gmtime_s(struct tm* res, const time_t *t) { return _gmtime64_s(res, t); }
 static inline struct tm* localtime(const time_t *t) { return _localtime64(t); }
 static inline errno_t localtime_s(struct tm *res, const time_t *t) { return _localtime64_s(res, t); }
+static inline time_t _mkgmtime(struct tm *tm) { return _mkgmtime64(tm); }
 static inline time_t mktime(struct tm *tm) { return _mktime64(tm); }
 static inline time_t time(time_t *t) { return _time64(t); }
 #elif defined(_UCRT)
@@ -124,6 +127,7 @@ static inline struct tm* gmtime(const time_t *t) { return _gmtime32(t); }
 static inline int gmtime_s(struct tm* res, const time_t *t) { return _gmtime32_s(res, t); }
 static inline struct tm* localtime(const time_t *t) { return _localtime32(t); }
 static inline errno_t localtime_s(struct tm *res, const time_t *t) { return _localtime32_s(res, t); }
+static inline time_t _mkgmtime(struct tm *tm) { return _mkgmtime32(tm); }
 static inline time_t mktime(struct tm *tm) { return _mktime32(tm); }
 static inline time_t time(time_t *t) { return _time32(t); }
 #endif
