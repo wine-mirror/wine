@@ -37,6 +37,21 @@ static struct interaction_context *context_from_handle(HINTERACTIONCONTEXT handl
     return (struct interaction_context *)handle;
 }
 
+HRESULT WINAPI BufferPointerPacketsInteractionContext(HINTERACTIONCONTEXT context,
+        UINT32 entries_count, const POINTER_INFO *pointer_info)
+{
+    FIXME("context %p, entries_count %u, pointer_info %p: stub!\n", context, entries_count, pointer_info);
+
+    if (!context)
+        return E_HANDLE;
+    if (!entries_count)
+        return E_INVALIDARG;
+    if (!pointer_info)
+        return E_POINTER;
+
+    return S_OK;
+}
+
 HRESULT WINAPI CreateInteractionContext(HINTERACTIONCONTEXT *handle)
 {
     struct interaction_context *context;

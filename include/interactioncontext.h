@@ -170,6 +170,9 @@ typedef struct INTERACTION_CONTEXT_OUTPUT
 typedef void (CALLBACK *INTERACTION_CONTEXT_OUTPUT_CALLBACK)(void *data,
         const INTERACTION_CONTEXT_OUTPUT *output);
 
+HRESULT WINAPI BufferPointerPacketsInteractionContext(HINTERACTIONCONTEXT context,
+        UINT32 entries_count, const POINTER_INFO *pointer_info);
+
 HRESULT WINAPI CreateInteractionContext(HINTERACTIONCONTEXT *context);
 HRESULT WINAPI DestroyInteractionContext(HINTERACTIONCONTEXT context);
 
