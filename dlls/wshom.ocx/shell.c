@@ -1064,8 +1064,19 @@ static HRESULT WINAPI WshShortcut_put_RelativePath(IWshShortcut *iface, BSTR rhs
 static HRESULT WINAPI WshShortcut_get_TargetPath(IWshShortcut *iface, BSTR *Path)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%p): stub\n", This, Path);
-    return E_NOTIMPL;
+    WCHAR fn[MAX_PATH];
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, Path);
+
+    if (FAILED(hr = IShellLinkW_GetPath(This->link, fn, ARRAY_SIZE(fn), NULL, 0)))
+    {
+        *Path = NULL;
+        return hr;
+    }
+
+    *Path = SysAllocString(fn);
+    return S_OK;
 }
 
 static HRESULT WINAPI WshShortcut_put_TargetPath(IWshShortcut *iface, BSTR Path)
