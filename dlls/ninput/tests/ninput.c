@@ -108,7 +108,7 @@ static void test_configuration(void)
     HINTERACTIONCONTEXT context;
     HRESULT hr;
 
-    static const INTERACTION_CONTEXT_CONFIGURATION config[] =
+    static const INTERACTION_CONTEXT_CONFIGURATION test_config[] =
     {
         {
             INTERACTION_ID_MANIPULATION,
@@ -119,11 +119,52 @@ static void test_configuration(void)
             INTERACTION_CONFIGURATION_FLAG_MANIPULATION_TRANSLATION_INERTIA |
             INTERACTION_CONFIGURATION_FLAG_MANIPULATION_SCALING_INERTIA
         },
+        {
+            INTERACTION_ID_TAP,
+            INTERACTION_CONFIGURATION_FLAG_TAP
+        },
     };
+    INTERACTION_CONTEXT_CONFIGURATION input_config, output_config[ARRAY_SIZE(test_config)] = {0};
 
     hr = CreateInteractionContext(&context);
     ok(hr == S_OK, "Failed to create context, hr %#lx.\n", hr);
 
+    /* Check GetInteractionConfigurationInteractionContext() parameters */
+    hr = GetInteractionConfigurationInteractionContext(NULL, 1, output_config);
+    ok(hr == E_HANDLE, "Got hr %#lx.\n", hr);
+
+    hr = GetInteractionConfigurationInteractionContext(context, 0, output_config);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = GetInteractionConfigurationInteractionContext(context, 1, NULL);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+    hr = GetInteractionConfigurationInteractionContext(context, 1, output_config);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    output_config->interactionId = INTERACTION_ID_NONE;
+    hr = GetInteractionConfigurationInteractionContext(context, 1, output_config);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    output_config->interactionId = INTERACTION_ID_CROSS_SLIDE + 1;
+    hr = GetInteractionConfigurationInteractionContext(context, 1, output_config);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    /* Check GetInteractionConfigurationInteractionContext() default config */
+    for (INTERACTION_ID id = INTERACTION_ID_MANIPULATION; id <= INTERACTION_ID_CROSS_SLIDE; id++)
+    {
+        winetest_push_context("id %d", id);
+
+        output_config[0].interactionId = id;
+        hr = GetInteractionConfigurationInteractionContext(context, 1, output_config);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(output_config[0].enable == INTERACTION_CONFIGURATION_FLAG_NONE,
+                "Got unexpected flags %#x.\n", output_config[0].enable);
+
+        winetest_pop_context();
+    }
+
+    /* Check SetInteractionConfigurationInteractionContext() parameters */
     hr = SetInteractionConfigurationInteractionContext(NULL, 0, NULL);
     ok(hr == E_HANDLE, "Got hr %#lx.\n", hr);
     hr = SetInteractionConfigurationInteractionContext(context, 0, NULL);
@@ -131,8 +172,52 @@ static void test_configuration(void)
     hr = SetInteractionConfigurationInteractionContext(context, 1, NULL);
     ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
 
-    hr = SetInteractionConfigurationInteractionContext(context, ARRAY_SIZE(config), config);
+    input_config.interactionId = INTERACTION_ID_NONE;
+    input_config.enable = INTERACTION_CONFIGURATION_FLAG_NONE;
+    hr = SetInteractionConfigurationInteractionContext(context, 1, &input_config);
+    ok(hr == E_INVALIDARG, "Failed to set configuration, hr %#lx.\n", hr);
+
+    input_config.interactionId = INTERACTION_ID_CROSS_SLIDE + 1;
+    input_config.enable = INTERACTION_CONFIGURATION_FLAG_NONE;
+    hr = SetInteractionConfigurationInteractionContext(context, 1, &input_config);
+    ok(hr == E_INVALIDARG, "Failed to set configuration, hr %#lx.\n", hr);
+
+    input_config.interactionId = INTERACTION_ID_MANIPULATION;
+    input_config.enable = INTERACTION_CONFIGURATION_FLAG_MAX;
+    hr = SetInteractionConfigurationInteractionContext(context, 1, &input_config);
     ok(hr == S_OK, "Failed to set configuration, hr %#lx.\n", hr);
+
+    output_config[0].interactionId = INTERACTION_ID_MANIPULATION;
+    hr = GetInteractionConfigurationInteractionContext(context, 1, output_config);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(output_config[0].enable == INTERACTION_CONFIGURATION_FLAG_MAX,
+            "Got unexpected flags %#x.\n", output_config[0].enable);
+
+    /* Check normal SetInteractionConfigurationInteractionContext() calls */
+    hr = SetInteractionConfigurationInteractionContext(context, ARRAY_SIZE(test_config), test_config);
+    ok(hr == S_OK, "Failed to set configuration, hr %#lx.\n", hr);
+
+    /* Check normal GetInteractionConfigurationInteractionContext() calls */
+    output_config[0].interactionId = INTERACTION_ID_MANIPULATION;
+    hr = GetInteractionConfigurationInteractionContext(context, 1, output_config);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(output_config[0].enable == test_config[0].enable,
+            "Got unexpected flags %#x.\n", output_config[0].enable);
+
+    output_config[0].interactionId = INTERACTION_ID_TAP;
+    output_config[1].interactionId = INTERACTION_ID_MANIPULATION;
+    hr = GetInteractionConfigurationInteractionContext(context, 2, output_config);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(output_config[0].enable == test_config[1].enable,
+            "Got unexpected flags %#x.\n", output_config[0].enable);
+    ok(output_config[1].enable == test_config[0].enable,
+            "Got unexpected flags %#x.\n", output_config[1].enable);
+
+    output_config[0].interactionId = INTERACTION_ID_DRAG;
+    hr = GetInteractionConfigurationInteractionContext(context, 1, output_config);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(output_config[0].enable == INTERACTION_CONFIGURATION_FLAG_NONE,
+            "Got unexpected flags %#x.\n", output_config[0].enable);
 
     hr = DestroyInteractionContext(context);
     ok(hr == S_OK, "Failed to destroy context, hr %#lx.\n", hr);
