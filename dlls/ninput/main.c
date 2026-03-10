@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ninput);
 struct interaction_context
 {
     BOOL filter_pointers;
+    BOOL ui_feedback;
 };
 
 static struct interaction_context *context_from_handle(HINTERACTIONCONTEXT handle)
@@ -49,6 +50,7 @@ HRESULT WINAPI CreateInteractionContext(HINTERACTIONCONTEXT *handle)
         return E_OUTOFMEMORY;
 
     context->filter_pointers = TRUE;
+    context->ui_feedback = TRUE;
 
     TRACE("Created context %p.\n", context);
 
@@ -85,10 +87,13 @@ HRESULT WINAPI GetPropertyInteractionContext(HINTERACTIONCONTEXT handle,
     switch (property)
     {
         case INTERACTION_CONTEXT_PROPERTY_MEASUREMENT_UNITS:
-        case INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK:
             FIXME("Unhandled property %#x.\n", property);
             *value = 0;
             return E_NOTIMPL;
+
+        case INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK:
+            *value = context->ui_feedback;
+            return S_OK;
 
         case INTERACTION_CONTEXT_PROPERTY_FILTER_POINTERS:
             *value = context->filter_pointers;
@@ -113,9 +118,14 @@ HRESULT WINAPI SetPropertyInteractionContext(HINTERACTIONCONTEXT handle,
     switch (property)
     {
         case INTERACTION_CONTEXT_PROPERTY_MEASUREMENT_UNITS:
-        case INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK:
             FIXME("Unhandled property %#x.\n", property);
             return E_NOTIMPL;
+
+        case INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK:
+            if (value != FALSE && value != TRUE)
+                return E_INVALIDARG;
+            context->ui_feedback = value;
+            return S_OK;
 
         case INTERACTION_CONTEXT_PROPERTY_FILTER_POINTERS:
             if (value != FALSE && value != TRUE)

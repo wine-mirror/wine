@@ -81,30 +81,22 @@ static void test_properties(void)
 
     /* Test INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK */
     hr = GetPropertyInteractionContext(context, INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK, &value);
-    todo_wine
     ok(hr == S_OK, "Failed to get property, hr %#lx.\n", hr);
-    todo_wine
     ok(value == TRUE, "Got unexpected value %#x.\n", value);
 
     hr = SetPropertyInteractionContext(context, INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK, FALSE);
-    todo_wine
     ok(hr == S_OK, "Failed to set property, hr %#lx.\n", hr);
     hr = GetPropertyInteractionContext(context, INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK, &value);
-    todo_wine
     ok(hr == S_OK, "Failed to get property, hr %#lx.\n", hr);
     ok(value == FALSE, "Got unexpected value %#x.\n", value);
 
     hr = SetPropertyInteractionContext(context, INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK, TRUE);
-    todo_wine
     ok(hr == S_OK, "Failed to set property, hr %#lx.\n", hr);
     hr = GetPropertyInteractionContext(context, INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK, &value);
-    todo_wine
     ok(hr == S_OK, "Failed to get property, hr %#lx.\n", hr);
-    todo_wine
     ok(value == TRUE, "Got unexpected value %#x.\n", value);
 
     hr = SetPropertyInteractionContext(context, INTERACTION_CONTEXT_PROPERTY_INTERACTION_UI_FEEDBACK, 2);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     hr = DestroyInteractionContext(context);
