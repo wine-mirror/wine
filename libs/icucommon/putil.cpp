@@ -1383,28 +1383,40 @@ static BOOL U_CALLCONV getIcuDataDirectoryUnderWindowsDirectory(char* directoryB
 {
     wchar_t windowsPath[MAX_PATH];
     char windowsPathUtf8[MAX_PATH];
+    int32_t windowsPathUtf8Len = 0;
+    UErrorCode status = U_ZERO_ERROR;
+    const char *data_dir = ICU_DATA_DIR_WINDOWS;
+    wchar_t *dir;
 
-    UINT length = GetSystemWindowsDirectoryW(windowsPath, UPRV_LENGTHOF(windowsPath));
-    if ((length > 0) && (length < (UPRV_LENGTHOF(windowsPath) - 1))) {
-        // Convert UTF-16 to a UTF-8 string.
-        UErrorCode status = U_ZERO_ERROR;
-        int32_t windowsPathUtf8Len = 0;
-        u_strToUTF8(windowsPathUtf8, static_cast<int32_t>(UPRV_LENGTHOF(windowsPathUtf8)),
-            &windowsPathUtf8Len, reinterpret_cast<const UChar*>(windowsPath), -1, &status);
+    if ((dir = _wgetenv( L"WINEBUILDDIR" )) || (dir = _wgetenv( L"WINEDATADIR" )))
+    {
+        data_dir = "nls";
+    }
+    else
+    {
+        UINT length = GetSystemWindowsDirectoryW(windowsPath, UPRV_LENGTHOF(windowsPath));
+        if ((length > 0) && (length < (UPRV_LENGTHOF(windowsPath) - 1)))
+            dir = windowsPath;
+        else
+            return false;
+    }
 
-        if (U_SUCCESS(status) && (status != U_STRING_NOT_TERMINATED_WARNING) &&
-            (windowsPathUtf8Len < (UPRV_LENGTHOF(windowsPathUtf8) - 1))) {
-            // Ensure it always has a separator, so we can append the ICU data path.
-            if (windowsPathUtf8[windowsPathUtf8Len - 1] != U_FILE_SEP_CHAR) {
-                windowsPathUtf8[windowsPathUtf8Len++] = U_FILE_SEP_CHAR;
-                windowsPathUtf8[windowsPathUtf8Len] = '\0';
-            }
-            // Check if the concatenated string will fit.
-            if ((windowsPathUtf8Len + UPRV_LENGTHOF(ICU_DATA_DIR_WINDOWS)) < bufferLength) {
-                uprv_strcpy(directoryBuffer, windowsPathUtf8);
-                uprv_strcat(directoryBuffer, ICU_DATA_DIR_WINDOWS);
-                return true;
-            }
+    // Convert UTF-16 to a UTF-8 string.
+    u_strToUTF8(windowsPathUtf8, static_cast<int32_t>(UPRV_LENGTHOF(windowsPathUtf8)),
+        &windowsPathUtf8Len, reinterpret_cast<const UChar*>(dir), -1, &status);
+
+    if (U_SUCCESS(status) && (status != U_STRING_NOT_TERMINATED_WARNING) &&
+        (windowsPathUtf8Len < (UPRV_LENGTHOF(windowsPathUtf8) - 1))) {
+        // Ensure it always has a separator, so we can append the ICU data path.
+        if (windowsPathUtf8[windowsPathUtf8Len - 1] != U_FILE_SEP_CHAR) {
+            windowsPathUtf8[windowsPathUtf8Len++] = U_FILE_SEP_CHAR;
+            windowsPathUtf8[windowsPathUtf8Len] = '\0';
+        }
+        // Check if the concatenated string will fit.
+        if ((windowsPathUtf8Len + uprv_strlen(data_dir)) < bufferLength) {
+            uprv_strcpy(directoryBuffer, windowsPathUtf8);
+            uprv_strcat(directoryBuffer, data_dir);
+            return true;
         }
     }
 

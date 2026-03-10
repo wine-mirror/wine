@@ -287,6 +287,10 @@ sub assign_sources_to_makefiles(@)
         {
             push @nls_files, $name if $dir eq "nls";
         }
+        elsif ($name =~ /\.dat$/)
+        {
+            next unless $dir eq "nls";
+        }
         elsif ($name =~ /\.xml$/)
         {
             next unless $dir eq "dlls/winewayland.drv";

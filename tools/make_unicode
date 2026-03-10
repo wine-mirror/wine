@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Generate code page .c files from ftp.unicode.org descriptions
+# Generate Unicode data files
 #
 # Copyright 2000 Alexandre Julliard
 #
@@ -29,6 +29,7 @@ my $UNIVERSION = "17.0.0";
 my $CLDRVERSION = "48";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2025a";
+my $ICUVERSION = "v72.1.0.3";
 
 my %data_files =
 (
@@ -60,6 +61,8 @@ my %data_files =
                 sha  => "a3b2f61ced9f3644cc0d4ecde5c59df34ca286c689d9484a43a710a81c466789" },
  psfonts   => { url  => "https://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz",
                 sha  => "034ed3025cff4c48bbefae90f9eff7dc6237dd384443c594c017b571e49d0649" },
+ icu       => { url  => "https://github.com/microsoft/icu/releases/download/$ICUVERSION/msicu-icu4c-$ICUVERSION-src.tgz",
+                sha  => "8b769d613dddca081c4f77e09395a63f41b1e25496419ff17448131836f30b6f" },
 );
 
 
@@ -6220,6 +6223,21 @@ sub dump_psfonts($)
 
 
 ################################################################
+# build the ICU data file
+sub dump_icu($)
+{
+    my $filename = shift;
+
+    printf "Building %s\n", $filename;
+    !system "tar", "xf", $data_files{icu}->{filename} or die "failed to extract";
+    !system "(cd icu/source && mkdir -p data/out/tmp && ./runConfigureICU Linux/gcc --disable-extras --disable-samples --disable-tests --with-data-packaging=archive && make) >icu.log 2>&1" or die "build failed";
+    rename "icu/source/data/out/icudt72l.dat", "$filename.new" or die "cannot find icudt72l.dat";
+    save_file($filename);
+    system "rm -rf icu icu.log";
+}
+
+
+################################################################
 # save a file if modified
 sub save_file($)
 {
@@ -6257,6 +6275,7 @@ dump_indic( "dlls/gdi32/uniscribe/indicsyllable.c" );
 dump_vertical( "dlls/win32u/vertical.c", 1 );
 dump_vertical( "dlls/wineps.drv/vertical.c", 0 );
 dump_psfonts( "dlls/wineps.drv" );
+dump_icu( "nls/icudtl.dat" );
 dump_intl_nls("nls/l_intl.nls");
 dump_norm_table( "nls/normnfc.nls" );
 dump_norm_table( "nls/normnfd.nls" );
