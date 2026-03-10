@@ -42,6 +42,8 @@ typedef enum FEATURE_ENABLED_STATE
     FEATURE_ENABLED_STATE_ENABLED
 } FEATURE_ENABLED_STATE;
 
+void WINAPI RecordFeatureUsage(UINT32 feature_id, UINT32 kind, UINT32 addend, const CHAR *origin_name);
+
 #ifdef __cplusplus
 }
 #endif

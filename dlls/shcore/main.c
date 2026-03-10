@@ -2549,3 +2549,11 @@ HRESULT WINAPI CreateRandomAccessStreamOverStream(IStream *stream, BSOS_OPTIONS 
     FIXME("(%p, %d, %s, %p) stub\n", stream, options, debugstr_guid(riid), ppv);
     return E_NOTIMPL;
 }
+
+/*************************************************************************
+ * RecordFeatureUsage        [SHCORE.@]
+ */
+void WINAPI RecordFeatureUsage(UINT32 feature_id, UINT32 kind, UINT32 addend, const CHAR *origin_name)
+{
+    FIXME("(%u, %u, %u, %s) stub!\n", feature_id, kind, addend, wine_dbgstr_a(origin_name));
+}
