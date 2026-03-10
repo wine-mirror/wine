@@ -248,10 +248,41 @@ static void test_BufferPointerPacketsInteractionContext(void)
     ok(hr == S_OK, "Failed to destroy context, hr %#lx.\n", hr);
 }
 
+static void test_GetStateInteractionContext(void)
+{
+    POINTER_INFO pointer_info = {0};
+    HINTERACTIONCONTEXT context;
+    INTERACTION_STATE state;
+    HRESULT hr;
+
+    hr = CreateInteractionContext(&context);
+    ok(hr == S_OK, "Failed to create context, hr %#lx.\n", hr);
+
+    hr = GetStateInteractionContext(NULL, &pointer_info, &state);
+    ok(hr == E_HANDLE, "Got unexpected hr %#lx.\n", hr);
+
+    state = INTERACTION_STATE_MAX;
+    hr = GetStateInteractionContext(context, 0, &state);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(state == INTERACTION_STATE_IDLE, "Got unexpected state %d.\n", state);
+
+    hr = GetStateInteractionContext(context, &pointer_info, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    state = INTERACTION_STATE_MAX;
+    hr = GetStateInteractionContext(context, &pointer_info, &state);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(state == INTERACTION_STATE_IDLE, "Got unexpected state %d.\n", state);
+
+    hr = DestroyInteractionContext(context);
+    ok(hr == S_OK, "Failed to destroy context, hr %#lx.\n", hr);
+}
+
 START_TEST(ninput)
 {
     test_context();
     test_properties();
     test_configuration();
     test_BufferPointerPacketsInteractionContext();
+    test_GetStateInteractionContext();
 }

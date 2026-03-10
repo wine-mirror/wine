@@ -121,6 +121,20 @@ HRESULT WINAPI GetPropertyInteractionContext(HINTERACTIONCONTEXT handle,
     }
 }
 
+HRESULT WINAPI GetStateInteractionContext(HINTERACTIONCONTEXT context,
+        const POINTER_INFO *pointer_info, INTERACTION_STATE *state)
+{
+    FIXME("context %p, pointer_info %p, state %p: stub!.\n", context, pointer_info, state);
+
+    if (!context)
+        return E_HANDLE;
+    if (!state)
+        return E_POINTER;
+
+    *state = INTERACTION_STATE_IDLE;
+    return S_OK;
+}
+
 HRESULT WINAPI SetPropertyInteractionContext(HINTERACTIONCONTEXT handle,
         INTERACTION_CONTEXT_PROPERTY property, UINT32 value)
 {
