@@ -30,6 +30,7 @@ struct interaction_context
 {
     BOOL filter_pointers;
     BOOL ui_feedback;
+    INTERACTION_CONFIGURATION_FLAGS config_flags[INTERACTION_ID_CROSS_SLIDE];
 };
 
 static struct interaction_context *context_from_handle(HINTERACTIONCONTEXT handle)
@@ -61,7 +62,7 @@ HRESULT WINAPI CreateInteractionContext(HINTERACTIONCONTEXT *handle)
     if (!handle)
         return E_POINTER;
 
-    if (!(context = malloc(sizeof(*context))))
+    if (!(context = calloc(1, sizeof(*context))))
         return E_OUTOFMEMORY;
 
     context->filter_pointers = TRUE;
@@ -159,7 +160,7 @@ HRESULT WINAPI SetInteractionConfigurationInteractionContext(HINTERACTIONCONTEXT
 {
     struct interaction_context *context = context_from_handle(handle);
 
-    FIXME("context %p, count %u, configuration %p: stub!.\n", context, count, configuration);
+    FIXME("context %p, count %u, configuration %p: semi-stub!.\n", context, count, configuration);
 
     if (!context)
         return E_HANDLE;
@@ -167,6 +168,49 @@ HRESULT WINAPI SetInteractionConfigurationInteractionContext(HINTERACTIONCONTEXT
         return E_INVALIDARG;
     if (!configuration)
         return E_POINTER;
+
+    for (unsigned int i = 0; i < count; i++)
+    {
+        if (configuration[i].interactionId == INTERACTION_ID_NONE ||
+                configuration[i].interactionId > INTERACTION_ID_CROSS_SLIDE)
+            return E_INVALIDARG;
+    }
+
+    for (unsigned int i = 0; i < count; i++)
+    {
+        unsigned int index = configuration[i].interactionId - 1;
+        context->config_flags[index] = configuration[i].enable;
+    }
+
+    return S_OK;
+}
+
+HRESULT WINAPI GetInteractionConfigurationInteractionContext(HINTERACTIONCONTEXT handle,
+        UINT32 count, INTERACTION_CONTEXT_CONFIGURATION *configuration)
+{
+    struct interaction_context *context = context_from_handle(handle);
+
+    FIXME("context %p, count %u, configuration %p: semi-stub!\n", context, count, configuration);
+
+    if (!context)
+        return E_HANDLE;
+    if (!count)
+        return S_OK;
+    if (!configuration)
+        return E_POINTER;
+
+    for (unsigned int i = 0; i < count; i++)
+    {
+        if (configuration[i].interactionId == INTERACTION_ID_NONE ||
+                configuration[i].interactionId > INTERACTION_ID_CROSS_SLIDE)
+            return E_INVALIDARG;
+    }
+
+    for (unsigned int i = 0; i < count; i++)
+    {
+        unsigned int index = configuration[i].interactionId - 1;
+        configuration[i].enable = context->config_flags[index];
+    }
 
     return S_OK;
 }

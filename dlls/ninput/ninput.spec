@@ -5,7 +5,7 @@
 @ stdcall DestroyInteractionContext(ptr)
 @ stub GetCrossSlideParameterInteractionContext
 @ stub GetInertiaParameterInteractionContext
-@ stub GetInteractionConfigurationInteractionContext
+@ stdcall GetInteractionConfigurationInteractionContext(ptr long ptr)
 @ stub GetMouseWheelParameterInteractionContext
 @ stdcall GetPropertyInteractionContext(ptr long ptr)
 @ stub GetStateInteractionContext
