@@ -815,6 +815,20 @@ static void test_wshshortcut(void)
     ref = IWshShortcut_Release(shcut);
     ok(!ref, "got %ld.\n", ref);
 
+    hr = IWshShell3_CreateShortcut(sh3, path, &shortcut);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IDispatch_QueryInterface(shortcut, &IID_IWshShortcut, (void**)&shcut);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    IDispatch_Release(shortcut);
+
+    hr = IWshShortcut_get_TargetPath(shcut, &str);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"C:\\missing\\q"), "got %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    ref = IWshShortcut_Release(shcut);
+    ok(!ref, "got %ld.\n", ref);
+
     DeleteFileW(path);
 }
 

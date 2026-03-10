@@ -1179,6 +1179,7 @@ static const IWshShortcutVtbl WshShortcutVtbl = {
 static HRESULT WshShortcut_Create(const WCHAR *path, IDispatch **shortcut)
 {
     WshShortcut *object;
+    IPersistFile *pf;
     HRESULT hr;
 
     *shortcut = NULL;
@@ -1206,6 +1207,12 @@ static HRESULT WshShortcut_Create(const WCHAR *path, IDispatch **shortcut)
 
     init_classinfo(&IID_IWshShortcut, (IUnknown *)&object->IWshShortcut_iface, &object->classinfo);
     *shortcut = (IDispatch *)&object->IWshShortcut_iface;
+
+    if (SUCCEEDED(hr = IShellLinkW_QueryInterface(object->link, &IID_IPersistFile, (void **)&pf)))
+    {
+        IPersistFile_Load(pf, path, 0);
+        IPersistFile_Release(pf);
+    }
 
     return S_OK;
 }
