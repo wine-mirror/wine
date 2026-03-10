@@ -278,6 +278,24 @@ static void test_GetStateInteractionContext(void)
     ok(hr == S_OK, "Failed to destroy context, hr %#lx.\n", hr);
 }
 
+static void test_ProcessBufferedPacketsInteractionContext(void)
+{
+    HINTERACTIONCONTEXT context;
+    HRESULT hr;
+
+    hr = CreateInteractionContext(&context);
+    ok(hr == S_OK, "Failed to create context, hr %#lx.\n", hr);
+
+    hr = ProcessBufferedPacketsInteractionContext(NULL);
+    ok(hr == E_HANDLE, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ProcessBufferedPacketsInteractionContext(context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = DestroyInteractionContext(context);
+    ok(hr == S_OK, "Failed to destroy context, hr %#lx.\n", hr);
+}
+
 START_TEST(ninput)
 {
     test_context();
@@ -285,4 +303,5 @@ START_TEST(ninput)
     test_configuration();
     test_BufferPointerPacketsInteractionContext();
     test_GetStateInteractionContext();
+    test_ProcessBufferedPacketsInteractionContext();
 }

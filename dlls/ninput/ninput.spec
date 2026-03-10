@@ -9,7 +9,7 @@
 @ stub GetMouseWheelParameterInteractionContext
 @ stdcall GetPropertyInteractionContext(ptr long ptr)
 @ stdcall GetStateInteractionContext(ptr ptr ptr)
-@ stub ProcessBufferedPacketsInteractionContext
+@ stdcall ProcessBufferedPacketsInteractionContext(ptr)
 @ stdcall ProcessInertiaInteractionContext(ptr)
 @ stub ProcessPointerFramesInteractionContext
 @ stdcall RegisterOutputCallbackInteractionContext(ptr ptr ptr)

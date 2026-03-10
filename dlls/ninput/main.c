@@ -242,6 +242,16 @@ HRESULT WINAPI RegisterOutputCallbackInteractionContext(HINTERACTIONCONTEXT hand
     return S_OK;
 }
 
+HRESULT WINAPI ProcessBufferedPacketsInteractionContext(HINTERACTIONCONTEXT context)
+{
+    FIXME("context %p: stub!\n", context);
+
+    if (!context)
+        return E_HANDLE;
+
+    return S_OK;
+}
+
 HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context)
 {
     FIXME("context %p: stub!\n", context);

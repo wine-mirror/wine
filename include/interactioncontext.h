@@ -184,6 +184,7 @@ HRESULT WINAPI BufferPointerPacketsInteractionContext(HINTERACTIONCONTEXT contex
 HRESULT WINAPI CreateInteractionContext(HINTERACTIONCONTEXT *context);
 HRESULT WINAPI DestroyInteractionContext(HINTERACTIONCONTEXT context);
 
+HRESULT WINAPI ProcessBufferedPacketsInteractionContext(HINTERACTIONCONTEXT context);
 HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context);
 
 HRESULT WINAPI RegisterOutputCallbackInteractionContext(HINTERACTIONCONTEXT context,
