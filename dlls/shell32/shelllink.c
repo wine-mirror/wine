@@ -2086,7 +2086,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 {
     IShellLinkImpl *This = impl_from_IShellLinkW(iface);
     WCHAR buffer[MAX_PATH];
-    LPWSTR fname, unquoted = NULL;
+    LPWSTR unquoted = NULL;
     UINT len;
 
     TRACE("(%p)->(path=%s)\n",This, debugstr_w(pszFile));
@@ -2094,7 +2094,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
     if (!pszFile) return E_INVALIDARG;
 
     /* quotes at the ends of the string are stripped */
-    len = lstrlenW(pszFile);
+    len = wcslen(pszFile);
     if (pszFile[0] == '"' && pszFile[len-1] == '"')
     {
         unquoted = wcsdup(pszFile);
@@ -2123,7 +2123,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
     {
         if (*pszFile == '\0')
             *buffer = '\0';
-        else if (!GetFullPathNameW(pszFile, MAX_PATH, buffer, &fname))
+        else if (!GetFullPathNameW(pszFile, MAX_PATH, buffer, NULL))
         {
             free(unquoted);
             return E_FAIL;
@@ -2132,6 +2132,10 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
         {
             SearchPathW(NULL, pszFile, NULL, MAX_PATH, buffer, NULL);
         }
+
+        len = wcslen(buffer);
+        if (len && buffer[len - 1] == '\\')
+            buffer[len - 1] = 0;
 
         This->pPidl = SHSimpleIDListFromPathW(pszFile);
         ShellLink_GetVolumeInfo(buffer, &This->volume);
