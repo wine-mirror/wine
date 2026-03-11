@@ -3453,6 +3453,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
         if (link_arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", link_arch ));
         if (!strcmp( ext, ".dll" )) output_filename( "-shared" );
         if (spec_file) output_filename( spec_file->filename );
+        if (strchr( obj, '.' )) output_filename( strmake( "-Wb,-F,%s%s", obj, ext ));
         output_filename( obj_name );
         if (hybrid_obj_name) output_filename( hybrid_obj_name );
         if (res_name) output_filename( res_name );
@@ -3768,7 +3769,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     struct strarray dep_libs = empty_strarray;
     struct strarray imports = make->imports;
     const char *module_name;
-    char *spec_file = NULL;
+    char *p, *spec_file = NULL;
     unsigned int link_arch;
 
     if (!make->is_exe)
@@ -3831,7 +3832,14 @@ static void output_module( struct makefile *make, unsigned int arch )
     output_winegcc_command( make, link_arch );
     if (arch) output_filename( "-Wl,--wine-builtin" );
     if (!make->is_exe) output_filename( "-shared" );
-    if (spec_file) output_filename( spec_file );
+    if (spec_file)
+    {
+        output_filename( spec_file );
+        if (strendswith( make->module, ".dll" ) &&
+            (p = strchr( make->module, '.' )) &&
+            (p < make->module + strlen(make->module) - strlen(".dll")))
+            output_filename( strmake( "-Wb,-F,%s", make->module ));
+    }
     output_filenames( make->extradllflags );
     if (link_arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", link_arch ));
     output_filenames_obj_dir( make, make->object_files[arch] );
