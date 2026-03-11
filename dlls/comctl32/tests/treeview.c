@@ -251,8 +251,8 @@ static const struct message test_click_delete_seq[] = {
     { WM_SHOWWINDOW, sent|defwinproc|wparam|lparam,  0, 0 },
     { WM_WINDOWPOSCHANGING, sent|defwinproc },
     { WM_WINDOWPOSCHANGED, sent|defwinproc },
-    { WM_KILLFOCUS, sent|defwinproc },
-    { WM_IME_SETCONTEXT, sent|defwinproc|wparam, 0 },
+    { WM_KILLFOCUS, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|defwinproc|wparam|optional, 0 },
     { WM_DESTROY, sent|defwinproc },
     { WM_NCDESTROY, sent|defwinproc },
     { 0 }
@@ -266,6 +266,7 @@ static const struct message parent_expand_seq[] = {
 
 static const struct message parent_expand_kb_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, TVN_KEYDOWN },
+    { WM_CANCELMODE, sent|optional },
     { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDINGA },
     { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDEDA },
     { WM_CHANGEUISTATE, sent|optional },
