@@ -166,7 +166,7 @@ struct tagVARIANT {
       WORD wReserved2;
       WORD wReserved3;
       union {
-        signed char cVal;
+        CHAR cVal;
         USHORT uiVal;
         ULONG ulVal;
         INT intVal;
@@ -189,7 +189,7 @@ struct tagVARIANT {
         SAFEARRAY *parray;
         LONGLONG llVal;
         ULONGLONG ullVal;
-        signed char *pcVal;
+        CHAR *pcVal;
         USHORT *puiVal;
         ULONG *pulVal;
         INT *pintVal;
@@ -257,7 +257,7 @@ struct _wireVARIANT {
   USHORT wReserved3;
   [switch_is(vt)] union {
   [case(VT_EMPTY, VT_NULL)]    ;
-  [case(VT_I1)]                signed char cVal;
+  [case(VT_I1)]                CHAR cVal;
   [case(VT_UI2)]               USHORT uiVal;
   [case(VT_UI4)]               ULONG ulVal;
   [case(VT_INT)]               INT intVal;
@@ -276,7 +276,7 @@ struct _wireVARIANT {
   [case(VT_UNKNOWN)]           IUnknown *punkVal;
   [case(VT_DISPATCH)]          IDispatch *pdispVal;
   [case(VT_ARRAY)]             wireSAFEARRAY parray;
-  [case(VT_I1|VT_BYREF)]       signed char *pcVal;
+  [case(VT_I1|VT_BYREF)]       CHAR *pcVal;
   [case(VT_UI2|VT_BYREF)]      USHORT *puiVal;
   [case(VT_UI4|VT_BYREF)]      ULONG *pulVal;
   [case(VT_INT|VT_BYREF)]      INT *pintVal;

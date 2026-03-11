@@ -1138,7 +1138,7 @@ static HRESULT WINAPI Widget_VarArg_Ref_Run(
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, signed char c, short s, LONG l, hyper h,
+static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, CHAR c, short s, LONG l, hyper h,
         unsigned char uc, unsigned short us, ULONG ul, MIDL_uhyper uh,
         float f, double d, STATE st)
 {
@@ -1157,7 +1157,7 @@ static HRESULT WINAPI Widget_basetypes_in(IWidget *iface, signed char c, short s
     return S_OK;
 }
 
-static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, signed char *c, short *s, LONG *l, hyper *h,
+static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, CHAR *c, short *s, LONG *l, hyper *h,
         unsigned char *uc, unsigned short *us, ULONG *ul, MIDL_uhyper *uh,
         float *f, double *d, STATE *st)
 {
@@ -2012,7 +2012,7 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     DISPPARAMS dispparams = {arg, NULL, ARRAY_SIZE(arg), 0};
     HRESULT hr;
 
-    signed char c;
+    CHAR c;
     short s;
     LONG l;
     int i, i2, *pi;

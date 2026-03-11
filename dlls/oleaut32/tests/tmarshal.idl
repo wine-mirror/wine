@@ -291,12 +291,12 @@ cpp_quote("struct Coclass3 { ICoclass1 *iface; };")
         HRESULT VarArg_Ref_Run([in] BSTR name, [in] SAFEARRAY(VARIANT) *params, [out, retval] VARIANT *result);
 
         [id(DISPID_TM_BASETYPES_IN)]
-        HRESULT basetypes_in([in] signed char c, [in] short s, [in] long l, [in] hyper h,
+        HRESULT basetypes_in([in] CHAR c, [in] short s, [in] long l, [in] hyper h,
                 [in] unsigned char uc, [in] unsigned short us, [in] unsigned long ul,
                 [in] unsigned hyper uh, [in] float f, [in] double d, [in] STATE st);
 
         [id(DISPID_TM_BASETYPES_OUT)]
-        HRESULT basetypes_out([out] signed char *c, [out] short *s, [out] long *l, [out] hyper *h,
+        HRESULT basetypes_out([out] CHAR *c, [out] short *s, [out] long *l, [out] hyper *h,
                 [out] unsigned char *uc, [out] unsigned short *us, [out] unsigned long *ul,
                 [out] unsigned hyper *uh, [out] float *f, [out] double *d, [out] STATE *st);
 

@@ -411,7 +411,7 @@ static void init_test_dispatch(LONG ref, VARTYPE vt, DummyDispatch *dispatch)
  */
 
 #undef CONV_TYPE
-#define CONV_TYPE signed char
+#define CONV_TYPE CHAR
 #undef EXPECTRES
 #define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
 
@@ -638,7 +638,7 @@ static void test_VarI1Copy(void)
 static void test_VarI1ChangeTypeEx(void)
 {
   HRESULT hres;
-  signed char in;
+  CHAR in;
   VARIANTARG vSrc, vDst;
 
   in = 1;
@@ -655,7 +655,7 @@ static void test_VarI1ChangeTypeEx(void)
 
 static void test_VarUI1FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   OVERFLOWRANGE(VarUI1FromI1, -128, 0);
@@ -951,7 +951,7 @@ static void test_VarUI1ChangeTypeEx(void)
 
 static void test_VarI2FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   CONVERTRANGE(VarI2FromI1, -128, 128);
@@ -1189,7 +1189,7 @@ static void test_VarI2ChangeTypeEx(void)
 
 static void test_VarUI2FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   OVERFLOWRANGE(VarUI2FromI1, -128, 0);
@@ -1424,7 +1424,7 @@ static void test_VarUI2ChangeTypeEx(void)
 
 static void test_VarI4FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   CONVERTRANGE(VarI4FromI1, -128, 128);
@@ -1657,7 +1657,7 @@ static void test_VarI4ChangeTypeEx(void)
 
 static void test_VarUI4FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   OVERFLOWRANGE(VarUI4FromI1, -127, 0);
@@ -1883,7 +1883,7 @@ static void test_VarUI4ChangeTypeEx(void)
 
 static void test_VarI8FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   CONVERTRANGE(VarI8FromI1, -128, 128);
@@ -2095,7 +2095,7 @@ static void test_VarI8ChangeTypeEx(void)
 
 static void test_VarUI8FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   OVERFLOWRANGE(VarUI8FromI1, -128, 0);
@@ -2313,7 +2313,7 @@ static void test_VarUI8ChangeTypeEx(void)
 
 static void test_VarR4FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   CONVERTRANGE(VarR4FromI1, -128, 128);
@@ -2500,7 +2500,7 @@ static void test_VarR4ChangeTypeEx(void)
 
 static void test_VarR8FromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   CONVERTRANGE(VarR8FromI1, -128, 128);
@@ -2734,7 +2734,7 @@ static void test_VarR8Round(void)
 
 static void test_VarDateFromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   CONVERTRANGE(VarDateFromI1, -128, 128);
@@ -3160,7 +3160,7 @@ static void test_VarDateChangeTypeEx(void)
 
 static void test_VarCyFromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   for (i = -128; i < 128; i++)
@@ -3649,7 +3649,7 @@ static void test_VarCyInt(void)
 
 static void test_VarDecFromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   for (i = -128; i < 128; i++)
@@ -4259,7 +4259,7 @@ static void test_VarDecRound(void)
 
 static void test_VarBoolFromI1(void)
 {
-  CONVVARS(signed char);
+  CONVVARS(CHAR);
   int i;
 
   CONVERTRANGE(VarBoolFromI1, -128, 128);
