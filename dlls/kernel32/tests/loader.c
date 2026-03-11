@@ -1571,7 +1571,6 @@ static void test_getmodulefilenamew_string_termination(void)
     ok(err == ERROR_INSUFFICIENT_BUFFER, "didn't get expected error: %lu\n", err);
     ok(dll_name[rv] == 0xcccc, "buffer overflow\n" );
     dll_name_term = wcsnlen(dll_name, MAX_PATH);
-    todo_wine
     ok(dll_name_term == dll_name_len - 1, "incorrect path termination. Expected %lu got %lu.\n", dll_name_len - 1, dll_name_term);
 }
 
@@ -1594,7 +1593,6 @@ static void test_getmodulefilenamea_string_termination(void)
     ok(err == ERROR_INSUFFICIENT_BUFFER, "didn't get expected error: %lu\n", err);
     ok(dll_name[rv] == '*', "buffer overflow\n" );
     dll_name_term = strnlen(dll_name, MAX_PATH);
-    todo_wine
     ok(dll_name_term == dll_name_len - 1, "incorrect path termination. Expected %lu got %lu.\n", dll_name_len - 1, dll_name_term);
 }
 
