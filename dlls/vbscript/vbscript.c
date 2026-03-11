@@ -859,7 +859,7 @@ static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR
     }
 
     script_obj = This->ctx->script_obj;
-    if(pstrItemName) {
+    if(pstrItemName && *pstrItemName) {
         named_item_t *item = lookup_named_item(This->ctx, pstrItemName, 0);
         if(!item) return E_INVALIDARG;
         if(item->script_obj) script_obj = item->script_obj;
