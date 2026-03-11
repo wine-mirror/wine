@@ -1502,6 +1502,13 @@ End Sub
 Call ConstTestSub
 Dim funcconst
 
+if forward_const = 99 then
+    Call ok(true, "forward_const = 99")
+else
+    Call ok(false, "forward_const <> 99")
+end if
+Const forward_const = 99
+
 ' Property may be used as an identifier (although it's a keyword)
 Sub TestProperty
     Dim Property

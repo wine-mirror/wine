@@ -1199,10 +1199,11 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
     do {
         decl = next_decl;
 
-        if(lookup_const_decls(ctx, decl->name, FALSE) || lookup_args_name(ctx, decl->name)
-                || lookup_dim_decls(ctx, decl->name)) {
-            FIXME("%s redefined\n", debugstr_w(decl->name));
-            return E_FAIL;
+        if(!lookup_const_decls(ctx, decl->name, FALSE)) {
+            if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
+                FIXME("%s redefined\n", debugstr_w(decl->name));
+                return E_FAIL;
+            }
         }
 
         if(ctx->func->type == FUNC_GLOBAL) {
@@ -1221,8 +1222,10 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
         }
 
         next_decl = decl->next;
-        decl->next = ctx->const_decls;
-        ctx->const_decls = decl;
+        if(!lookup_const_decls(ctx, decl->name, FALSE)) {
+            decl->next = ctx->const_decls;
+            ctx->const_decls = decl;
+        }
     } while(next_decl);
 
     return S_OK;
@@ -1354,6 +1357,107 @@ static HRESULT compile_retval_statement(compile_ctx_t *ctx, retval_statement_t *
     if(FAILED(hres))
         return hres;
 
+    return S_OK;
+}
+
+static HRESULT collect_const_decls(compile_ctx_t *ctx, statement_t *stat)
+{
+    HRESULT hres;
+
+    while(stat) {
+        switch(stat->type) {
+        case STAT_CONST: {
+            const_statement_t *const_stat = (const_statement_t*)stat;
+            const_decl_t *decl;
+
+            for(decl = const_stat->decls; decl; decl = decl->next) {
+                const_decl_t *new_decl;
+
+                if(lookup_const_decls(ctx, decl->name, FALSE))
+                    break; /* already collected */
+
+                if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
+                    FIXME("%s redefined\n", debugstr_w(decl->name));
+                    return E_FAIL;
+                }
+
+                new_decl = compiler_alloc(ctx->code, sizeof(*new_decl));
+                if(!new_decl)
+                    return E_OUTOFMEMORY;
+                new_decl->name = decl->name;
+                new_decl->value_expr = decl->value_expr;
+                new_decl->next = ctx->const_decls;
+                ctx->const_decls = new_decl;
+            }
+            break;
+        }
+        case STAT_IF: {
+            if_statement_t *if_stat = (if_statement_t*)stat;
+            elseif_decl_t *elseif;
+
+            hres = collect_const_decls(ctx, if_stat->if_stat);
+            if(FAILED(hres))
+                return hres;
+            for(elseif = if_stat->elseifs; elseif; elseif = elseif->next) {
+                hres = collect_const_decls(ctx, elseif->stat);
+                if(FAILED(hres))
+                    return hres;
+            }
+            hres = collect_const_decls(ctx, if_stat->else_stat);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+        case STAT_WHILE:
+        case STAT_WHILELOOP:
+        case STAT_DOWHILE:
+        case STAT_DOUNTIL:
+        case STAT_UNTIL: {
+            while_statement_t *while_stat = (while_statement_t*)stat;
+            hres = collect_const_decls(ctx, while_stat->body);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+        case STAT_FORTO: {
+            forto_statement_t *forto_stat = (forto_statement_t*)stat;
+            hres = collect_const_decls(ctx, forto_stat->body);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+        case STAT_FOREACH: {
+            foreach_statement_t *foreach_stat = (foreach_statement_t*)stat;
+            hres = collect_const_decls(ctx, foreach_stat->body);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+        case STAT_SELECT: {
+            select_statement_t *select_stat = (select_statement_t*)stat;
+            case_clausule_t *clause;
+            for(clause = select_stat->case_clausules; clause; clause = clause->next) {
+                hres = collect_const_decls(ctx, clause->stat);
+                if(FAILED(hres))
+                    return hres;
+            }
+            break;
+        }
+        case STAT_WITH: {
+            with_statement_t *with_stat = (with_statement_t*)stat;
+            hres = collect_const_decls(ctx, with_stat->body);
+            if(FAILED(hres))
+                return hres;
+            break;
+        }
+        case STAT_FUNC:
+            /* Don't recurse into sub/function bodies; they are compiled separately */
+            break;
+        default:
+            break;
+        }
+        stat = stat->next;
+    }
     return S_OK;
 }
 
@@ -1529,6 +1633,11 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     ctx->func = func;
     ctx->dim_decls = ctx->dim_decls_tail = NULL;
     ctx->const_decls = NULL;
+
+    hres = collect_const_decls(ctx, stat);
+    if(FAILED(hres))
+        return hres;
+
     hres = compile_statement(ctx, NULL, stat);
     ctx->func = NULL;
     if(FAILED(hres))
