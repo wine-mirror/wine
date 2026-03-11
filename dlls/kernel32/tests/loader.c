@@ -1552,6 +1552,52 @@ static void test_filenames(void)
     DeleteFileA( long_path );
 }
 
+static void test_getmodulefilenamew_string_termination(void)
+{
+    WCHAR dll_name[MAX_PATH];
+    DWORD rv, err,  dll_name_len, dll_name_term;
+
+    SetLastError(0xdeadbeef);
+    dll_name_len = GetModuleFileNameW(NULL, dll_name, MAX_PATH);
+    ok(dll_name_len > 0, "can't get path for NULL module\n");
+    err = GetLastError();
+    ok(err == ERROR_SUCCESS, "error getting path for NULL module: %lu\n", err);
+
+    memset(dll_name, 0xcc, sizeof(dll_name));
+    SetLastError(0xdeadbeef);
+    rv = GetModuleFileNameW(NULL, dll_name, dll_name_len);
+    ok(rv == dll_name_len, "unexpected return value %lu != %lu\n", rv, dll_name_len);
+    err = GetLastError();
+    ok(err == ERROR_INSUFFICIENT_BUFFER, "didn't get expected error: %lu\n", err);
+    ok(dll_name[rv] == 0xcccc, "buffer overflow\n" );
+    dll_name_term = wcsnlen(dll_name, MAX_PATH);
+    todo_wine
+    ok(dll_name_term == dll_name_len - 1, "incorrect path termination. Expected %lu got %lu.\n", dll_name_len - 1, dll_name_term);
+}
+
+static void test_getmodulefilenamea_string_termination(void)
+{
+    char dll_name[MAX_PATH];
+    DWORD rv, err, dll_name_len, dll_name_term;
+
+    SetLastError(0xdeadbeef);
+    dll_name_len = GetModuleFileNameA(NULL, dll_name, MAX_PATH);
+    ok(dll_name_len > 0, "can't get path for NULL module\n");
+    err = GetLastError();
+    ok(err == ERROR_SUCCESS, "error getting path for NULL module: %lu\n", err);
+
+    memset(dll_name, '*', sizeof(dll_name));
+    SetLastError(0xdeadbeef);
+    rv = GetModuleFileNameA(NULL, dll_name, dll_name_len);
+    ok(rv == dll_name_len, "unexpected return value %lu != %lu\n", rv, dll_name_len);
+    err = GetLastError();
+    ok(err == ERROR_INSUFFICIENT_BUFFER, "didn't get expected error: %lu\n", err);
+    ok(dll_name[rv] == '*', "buffer overflow\n" );
+    dll_name_term = strnlen(dll_name, MAX_PATH);
+    todo_wine
+    ok(dll_name_term == dll_name_len - 1, "incorrect path termination. Expected %lu got %lu.\n", dll_name_len - 1, dll_name_term);
+}
+
 /* Verify linking style of import descriptors */
 static void test_ImportDescriptors(void)
 {
@@ -4859,6 +4905,8 @@ START_TEST(loader)
     }
 
     test_filenames();
+    test_getmodulefilenamew_string_termination();
+    test_getmodulefilenamea_string_termination();
     test_ResolveDelayLoadedAPI();
     test_ImportDescriptors();
     test_section_access();
