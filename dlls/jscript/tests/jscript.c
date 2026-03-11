@@ -1442,6 +1442,9 @@ static void test_named_items(void)
     CHECK_CALLED(GetItemInfo_global_code);
 
     dispex = get_script_dispatch(script, NULL);
+    dispex2 = get_script_dispatch(script, L"");
+    ok(dispex == dispex2, "get_script_dispatch(L\"\") returned different dispatch object than NULL.\n");
+    IDispatchEx_Release(dispex2);
     dispex2 = get_script_dispatch(script, L"globalItem");
     ok(dispex == dispex2, "get_script_dispatch returned different dispatch objects.\n");
     IDispatchEx_Release(dispex2);
