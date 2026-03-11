@@ -304,7 +304,7 @@ static ULONG WINAPI vector_view_voice_information_Release( IVectorView_VoiceInfo
         for (i = 0; i < impl->provider.num_voices; ++i)
         {
             IVoiceInformation_Release(impl->provider.voices[i]);
-            impl->provider.voices[i] = 0;
+            impl->provider.voices[i] = NULL;
         }
         impl->provider.num_voices = 0;
     }
