@@ -368,6 +368,61 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static const WCHAR *get_ip_type(const WCHAR *ip)
+{
+    const WCHAR *dot_pos;
+    const WCHAR *colon_pos;
+
+    if (!ip) return L"Invalid";
+
+    dot_pos = wcschr(ip, L'.');
+    colon_pos = wcschr(ip, L':');
+
+    if (dot_pos && colon_pos) return L"Unknown";
+    if (dot_pos) return L"IPv4";
+    else if (colon_pos) return L"IPv6";
+
+    return L"Unknown";
+}
+
+static void check_ip_address_order( ULONG line, IWbemClassObject *obj )
+{
+    CIMTYPE type = 0xdeadbeef;
+    VARIANT val;
+    HRESULT hr;
+
+    VariantInit( &val );
+    hr = IWbemClassObject_Get( obj, L"IPAddress", 0, &val, &type, NULL );
+    if (hr != S_OK)
+    {
+        win_skip( "IPAddress not available\n" );
+        VariantClear( &val );
+        return;
+    }
+
+    if (V_VT( &val ) == (VT_BSTR | VT_ARRAY))
+    {
+        SAFEARRAY *sa;
+        LONG bound = -1, j;
+        BSTR ip_str;
+        sa = V_ARRAY( &val );
+        SafeArrayGetUBound( sa, 1, &bound );
+        if (bound >= 0)
+        {
+            trace( "%s\n", wine_dbgstr_w(L"IPAddress:") );
+            for (j = 0; j <= bound; j++)
+            {
+                SafeArrayGetElement( sa, &j, &ip_str );
+                trace( "[%02lu]: %s\n", j + 1, wine_dbgstr_w(ip_str) );
+                if (j == 0) ok( wcscmp(L"IPv4", get_ip_type(ip_str)) == 0, "%lu: unexpected ip address order %s\n", line, wine_dbgstr_w(ip_str) );
+                SysFreeString( ip_str );
+            }
+        }
+    }
+
+    VariantClear( &val );
+}
+
 static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *prop, VARTYPE vartype, CIMTYPE cimtype,
                              BOOL nullable)
 {
@@ -405,6 +460,7 @@ static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *pro
 }
 #define check_property(a,b,c,d) _check_property(__LINE__,a,b,c,d,FALSE)
 #define check_property_nullable(a,b,c,d) _check_property(__LINE__,a,b,c,d,TRUE)
+#define check_ip_address_order(a) check_ip_address_order(__LINE__,a)
 
 static void test_Win32_Service( IWbemServices *services )
 {
@@ -1536,6 +1592,7 @@ static void test_Win32_NetworkAdapterConfiguration( IWbemServices *services )
         check_property( obj, L"Index", VT_I4, CIM_UINT32 );
         check_property( obj, L"IPEnabled", VT_BOOL, CIM_BOOLEAN );
         check_property_nullable( obj, L"DNSDomain", VT_BSTR, CIM_STRING );
+        check_ip_address_order( obj );
 
         IWbemClassObject_Release( obj );
     }
