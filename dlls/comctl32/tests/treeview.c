@@ -39,6 +39,11 @@ static HTHEME (WINAPI *pGetWindowTheme)(HWND);
 static BOOL (WINAPI *pIsThemeBackgroundPartiallyTransparent)(HTHEME, int, int);
 
 static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
+
+static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
+static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
+static int (WINAPI *pImageList_Add)(HIMAGELIST, HBITMAP, HBITMAP);
+
 static const char *TEST_CALLBACK_TEXT = "callback_text";
 
 static TVITEMA g_item_expanding, g_item_expanded;
@@ -2565,6 +2570,67 @@ static void test_htreeitem_layout(BOOL is_version_6)
     DestroyWindow(hTree);
 }
 
+/* Create a 3-state (unchecked/checked/indeterminate) image list */
+static HIMAGELIST setup_3state_imagelist(HWND wndTree)
+{
+    int itemHeight;
+    HDC dc; HBITMAP bmp;
+    RECT rcDraw;
+    const HBRUSH brush = (HBRUSH)GetStockObject(DC_BRUSH);
+    HIMAGELIST images;
+    HGDIOBJ restore;
+
+    if (wndTree == NULL) return NULL;
+    itemHeight = (int)SendMessageA(wndTree, TVM_GETITEMHEIGHT, 0, 0);
+    if ( itemHeight <= 0 ) return NULL;
+    dc = GetDC(wndTree);
+    if ( dc == NULL ) return NULL;
+    bmp = CreateCompatibleBitmap(dc, itemHeight, itemHeight);
+    ReleaseDC(wndTree, dc);
+    if ( bmp == NULL ) return NULL;
+
+    images = pImageList_Create(itemHeight, itemHeight, ILC_COLORDDB, 0, 5);
+    if ( images == NULL ) return NULL;
+
+    dc = CreateCompatibleDC(NULL);
+    if ( dc == NULL )
+    {
+        pImageList_Destroy(images);
+        return NULL;
+    }
+
+    rcDraw.left = 0; rcDraw.top = 0; rcDraw.right = itemHeight; rcDraw.bottom = itemHeight;
+
+    SetDCBrushColor(dc, GetSysColor(COLOR_WINDOW));
+
+    restore = SelectObject(dc, bmp);
+    FillRect(dc, &rcDraw, brush);
+    SelectObject(dc, restore);
+    pImageList_Add(images, bmp, NULL);
+
+    restore = SelectObject(dc, bmp);
+    FillRect(dc, &rcDraw, brush);
+    DrawFrameControl(dc, &rcDraw, DFC_BUTTON, DFCS_BUTTONCHECK);
+    SelectObject(dc, restore);
+    pImageList_Add(images, bmp, NULL);
+
+    restore = SelectObject(dc, bmp);
+    FillRect(dc, &rcDraw, brush);
+    DrawFrameControl(dc, &rcDraw, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_CHECKED);
+    SelectObject(dc, restore);
+    pImageList_Add(images, bmp, NULL);
+
+    restore = SelectObject(dc, bmp);
+    FillRect(dc, &rcDraw, brush);
+    DrawFrameControl(dc, &rcDraw, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_CHECKED | DFCS_BUTTON3STATE);
+    SelectObject(dc, restore);
+    pImageList_Add(images, bmp, NULL);
+
+    DeleteDC(dc);
+
+    return images;
+}
+
 static void test_TVS_CHECKBOXES(void)
 {
     HIMAGELIST himl, himl2;
@@ -2746,6 +2812,79 @@ static void test_TVS_CHECKBOXES(void)
 
     himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
     ok(himl != NULL, "got %p\n", himl);
+
+    /*
+    Check cycling item states with default image list
+    1 >> 2 >> 1
+    */
+
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(1);
+    ret = SendMessageA(hTree, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(hTree,TVM_SELECTITEM,TVGN_CARET,(LPARAM)hChild);
+    expect(TRUE, ret);
+
+    SendMessageA(hTree, WM_KEYDOWN, VK_SPACE, 0);
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2), "item.state=%x\n", item.state);
+
+    SendMessageA(hTree, WM_KEYDOWN, VK_SPACE, 0);
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(1), "item.state=%x\n", item.state);
+
+    /*
+    Check cycling item states with 3-state image list
+    1 >> 2 >> 3 >> 1
+    */
+
+    himl2 = setup_3state_imagelist(hTree);
+    ok(himl2 != NULL, "setup_3state_imagelist: %p\n", himl2);
+
+    himl = (HIMAGELIST)SendMessageA(hTree, TVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)himl2);
+    ok(himl != NULL, "got %p\n", himl);
+
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(1);
+    ret = SendMessageA(hTree, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(hTree,TVM_SELECTITEM,TVGN_CARET,(LPARAM)hChild);
+    expect(TRUE, ret);
+
+    SendMessageA(hTree, WM_KEYDOWN, VK_SPACE, 0);
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2), "item.state=%x\n", item.state);
+
+    SendMessageA(hTree, WM_KEYDOWN, VK_SPACE, 0);
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    todo_wine ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(3), "item.state=%x\n", item.state);
+
+    SendMessageA(hTree, WM_KEYDOWN, VK_SPACE, 0);
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    todo_wine ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(1), "item.state=%x\n", item.state);
+
+    himl = (HIMAGELIST)SendMessageA(hTree, TVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)himl);
+    ok(himl == himl2, "got %p\n", himl);
+    pImageList_Destroy(himl2);
 
     DestroyWindow(hTree);
 }
@@ -3192,6 +3331,9 @@ static void init_functions(void)
 
 #define X(module, f) p##f = (void*)GetProcAddress(module, #f);
     X(hComCtl32, InitCommonControlsEx);
+    X(hComCtl32, ImageList_Create);
+    X(hComCtl32, ImageList_Destroy);
+    X(hComCtl32, ImageList_Add);
 
     X(hUxtheme, GetWindowTheme);
     X(hUxtheme, IsThemeBackgroundPartiallyTransparent);
