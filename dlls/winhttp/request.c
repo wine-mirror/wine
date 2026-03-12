@@ -3176,6 +3176,12 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
         SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return FALSE;
     }
+    if (request->state < REQUEST_RESPONSE_STATE_RESPONSE_RECEIVED)
+    {
+        release_object( &request->hdr );
+        SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_STATE );
+        return FALSE;
+    }
 
     if (!(async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) || skip_async_queue( request, &wont_block, 1 ))
     {

@@ -3239,13 +3239,10 @@ static void test_no_content(int port)
     size = 12345;
     SetLastError(0xdeadbeef);
     ret = WinHttpQueryDataAvailable(req, &size);
-    todo_wine {
     ok(!ret, "expected error\n");
     ok(GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_STATE,
        "expected ERROR_WINHTTP_INCORRECT_HANDLE_STATE, got %lu\n", GetLastError());
-    ok(size == 12345 || broken(size == 0) /* Win <= 2003 */,
-       "expected 12345, got %lu\n", size);
-    }
+    ok(size == 12345, "expected 12345, got %lu\n", size);
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     ok(ret, "expected success\n");
