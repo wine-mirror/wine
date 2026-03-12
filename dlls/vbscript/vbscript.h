@@ -179,6 +179,7 @@ HRESULT create_func_ref(script_ctx_t*,function_t*,IDispatch**);
 function_t *script_disp_find_func(ScriptDisp*,const WCHAR*);
 
 HRESULT to_int(VARIANT*,int*);
+HRESULT to_double(VARIANT*,double*);
 
 static inline unsigned arg_cnt(const DISPPARAMS *dp)
 {

@@ -425,7 +425,7 @@ HRESULT to_int(VARIANT *v, int *ret)
     return S_OK;
 }
 
-static HRESULT to_double(VARIANT *v, double *ret)
+HRESULT to_double(VARIANT *v, double *ret)
 {
     VARIANT dst;
     HRESULT hres;
