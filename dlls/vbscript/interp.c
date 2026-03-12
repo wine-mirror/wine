@@ -724,13 +724,20 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
 static HRESULT interp_vcall(exec_ctx_t *ctx)
 {
     const unsigned arg_cnt = ctx->instr->arg1.uint;
-    VARIANT res, *v;
+    VARIANT res = {0}, *v;
     HRESULT hres;
 
     TRACE("\n");
 
     v = stack_pop(ctx);
     hres = variant_call(ctx, v, arg_cnt, &res);
+    if(SUCCEEDED(hres) && V_VT(&res) == (VT_BYREF|VT_VARIANT)) {
+        VARIANT tmp;
+        V_VT(&tmp) = VT_EMPTY;
+        hres = VariantCopyInd(&tmp, &res);
+        if(SUCCEEDED(hres))
+            res = tmp;
+    }
     VariantClear(v);
     if(FAILED(hres))
         return hres;

@@ -1695,6 +1695,25 @@ ok arr2(1,2) = 2, "arr2(1,2) = " & arr2(1,2)
 x = Array(Array(3))
 call ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
 
+Class ArrayReturnContainer
+    Public Default Property Get Item(key)
+        If key = "Key" Then
+            Item = Array("Value1", Array("SubValue1", "SubValue2"))
+        End If
+    End Property
+End Class
+
+Dim containerObj
+Set containerObj = New ArrayReturnContainer
+call ok(containerObj.Item("Key")(0) = "Value1", "containerObj.Item(Key)(0) = " & containerObj.Item("Key")(0))
+call ok(containerObj.Item("Key")(1)(0) = "SubValue1", "containerObj.Item(Key)(1)(0) = " & containerObj.Item("Key")(1)(0))
+call ok(containerObj.Item("Key")(1)(1) = "SubValue2", "containerObj.Item(Key)(1)(1) = " & containerObj.Item("Key")(1)(1))
+call ok(containerObj("Key")(0) = "Value1", "containerObj(Key)(0) = " & containerObj("Key")(0))
+call ok(containerObj("Key")(1)(0) = "SubValue1", "containerObj(Key)(1)(0) = " & containerObj("Key")(1)(0))
+
+call ok(Split("1;2", ";")(0) = "1", "Split(""1;2"", "";"")(0) = " & Split("1;2", ";")(0))
+call ok(Split("1;2", ";")(1) = "2", "Split(""1;2"", "";"")(1) = " & Split("1;2", ";")(1))
+
 function seta0(arr)
     arr(0) = 2
     seta0 = 1
