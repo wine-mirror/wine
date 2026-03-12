@@ -788,7 +788,7 @@ static void test_mismatched_cleanup(void)
     ok(IsWindow(hwnd), "failed to create window\n");
 
     hr = RegisterDragDrop(hwnd, &DropTarget);
-    todo_wine ok(hr == CO_E_NOTINITIALIZED, "expected CO_E_NOTINITIALIZED, got %#lx\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "expected CO_E_NOTINITIALIZED, got %#lx\n", hr);
 
     DestroyWindow(hwnd);
 
@@ -802,7 +802,7 @@ static void test_mismatched_cleanup(void)
     ok(IsWindow(hwnd), "failed to create window\n");
 
     hr = RegisterDragDrop(hwnd, &DropTarget);
-    todo_wine ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
+    ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
 
     DestroyWindow(hwnd);
 
