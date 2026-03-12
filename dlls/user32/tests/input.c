@@ -432,6 +432,7 @@ static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static HKL (WINAPI *pLoadKeyboardLayoutEx)(HKL, const WCHAR *, UINT);
 static INT (WINAPI *pScheduleDispatchNotification)(HWND);
 static UINT_PTR (WINAPI *pDelegateInput)(void *, void *, void *, void *, void *, void *);
+static void (WINAPI *pUndelegateInput)(void *, void *);
 
 /**********************adapted from input.c **********************************/
 
@@ -461,6 +462,7 @@ static void init_function_pointers(void)
     GET_PROC(GetRawInputDeviceInfoW);
     GET_PROC(GetRawInputDeviceInfoA);
     GET_PROC(LoadKeyboardLayoutEx);
+    GET_PROC(UndelegateInput);
 
     hdll = GetModuleHandleA("kernel32");
     GET_PROC(IsWow64Process);
@@ -6478,15 +6480,17 @@ static void test_DelegateInput(void)
 {
     UINT_PTR ret;
 
-    if (!pDelegateInput)
+    if (!pDelegateInput || !pUndelegateInput)
     {
-        win_skip("DelegateInput is unavailable.\n");
+        win_skip("DelegateInput or UndelegateInput is unavailable.\n");
         return;
     }
 
     ret = pDelegateInput(0, 0, 0, 0, 0, 0);
     todo_wine
     ok(ret == 0, "Got unexpected ret %Ix.\n", ret);
+
+    pUndelegateInput(0, 0);
 }
 
 START_TEST(input)

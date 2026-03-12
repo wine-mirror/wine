@@ -859,3 +859,13 @@ UINT_PTR WINAPI DelegateInput(void *p1, void *p2, void *p3, void *p4, void *p5, 
     FIXME( "p1 %p p2 %p p3 %p p4 %p p5 %p p6 %p stub!\n", p1, p2, p3, p4, p5, p6 );
     return 1;
 }
+
+/***********************************************************************
+ *           UndelegateInput (USER32.@)
+ *
+ * Undocumented. Function prototype might be wrong.
+ */
+void WINAPI UndelegateInput(void *p1, void *p2)
+{
+    FIXME( "p1 %p p2 %p stub!\n", p1, p2 );
+}
