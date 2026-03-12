@@ -2269,7 +2269,9 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     if (connect->hostname)
         add_host_header( request, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
 
-    if (request->creds[TARGET_SERVER][SCHEME_BASIC].username)
+    if (request->creds[TARGET_SERVER][SCHEME_NTLM].username)
+        do_authorization( request, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_NTLM );
+    else if (request->creds[TARGET_SERVER][SCHEME_BASIC].username)
         do_authorization( request, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC );
 
     clear_response_headers( request );
