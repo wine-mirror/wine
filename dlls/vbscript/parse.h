@@ -302,6 +302,7 @@ typedef struct {
 
     int last_token;
     unsigned last_nl;
+    BOOL after_continuation;
 
     statement_t *stats;
     statement_t *stats_tail;

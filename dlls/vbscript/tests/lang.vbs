@@ -261,6 +261,21 @@ x _
 
 x = 3
 
+Class ChainedCallTarget
+    Public Function Ret()
+        Set Ret = Me
+    End Function
+End Class
+
+Dim chainObj
+Set chainObj = New ChainedCallTarget
+chainObj.Ret().Ret()
+chainObj.Ret() _
+.Ret()
+chainObj _
+.Ret() _
+.Ret()
+
 if true then y = true : x = y
 ok x, "x is false"
 
