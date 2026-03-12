@@ -3482,13 +3482,14 @@ static const IMFGetServiceVtbl media_engine_get_service_vtbl =
     media_engine_gs_GetService,
 };
 
-static HRESULT WINAPI media_engine_factory_QueryInterface(IMFMediaEngineClassFactory *iface, REFIID riid, void **obj)
+static HRESULT WINAPI media_engine_factory_QueryInterface(IMFMediaEngineClassFactoryEx *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFMediaEngineClassFactory) ||
+        IsEqualIID(riid, &IID_IMFMediaEngineClassFactoryEx) ||
         IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IMFMediaEngineClassFactory_AddRef(iface);
+        IMFMediaEngineClassFactoryEx_AddRef(iface);
         return S_OK;
     }
 
@@ -3497,12 +3498,12 @@ static HRESULT WINAPI media_engine_factory_QueryInterface(IMFMediaEngineClassFac
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI media_engine_factory_AddRef(IMFMediaEngineClassFactory *iface)
+static ULONG WINAPI media_engine_factory_AddRef(IMFMediaEngineClassFactoryEx *iface)
 {
     return 2;
 }
 
-static ULONG WINAPI media_engine_factory_Release(IMFMediaEngineClassFactory *iface)
+static ULONG WINAPI media_engine_factory_Release(IMFMediaEngineClassFactoryEx *iface)
 {
     return 1;
 }
@@ -3586,7 +3587,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     return S_OK;
 }
 
-static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFactory *iface, DWORD flags,
+static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFactoryEx *iface, DWORD flags,
                                                           IMFAttributes *attributes, IMFMediaEngine **engine)
 {
     struct media_engine *object;
@@ -3613,7 +3614,7 @@ static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFac
     return S_OK;
 }
 
-static HRESULT WINAPI media_engine_factory_CreateTimeRange(IMFMediaEngineClassFactory *iface,
+static HRESULT WINAPI media_engine_factory_CreateTimeRange(IMFMediaEngineClassFactoryEx *iface,
         IMFMediaTimeRange **range)
 {
     TRACE("%p, %p.\n", iface, range);
@@ -3621,14 +3622,36 @@ static HRESULT WINAPI media_engine_factory_CreateTimeRange(IMFMediaEngineClassFa
     return create_time_range(range);
 }
 
-static HRESULT WINAPI media_engine_factory_CreateError(IMFMediaEngineClassFactory *iface, IMFMediaError **error)
+static HRESULT WINAPI media_engine_factory_CreateError(IMFMediaEngineClassFactoryEx *iface, IMFMediaError **error)
 {
     TRACE("%p, %p.\n", iface, error);
 
     return create_media_error(error);
 }
 
-static const IMFMediaEngineClassFactoryVtbl media_engine_factory_vtbl =
+static HRESULT WINAPI media_engine_factory_CreateMediaSourceExtension(IMFMediaEngineClassFactoryEx *iface, DWORD flags, IMFAttributes *attr, IMFMediaSourceExtension **mse)
+{
+    FIXME("iface %p, flags %#lx, attr %p, mse %p stub.\n", iface, flags, attr, mse);
+    *mse = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_engine_factory_CreateMediaKeys(IMFMediaEngineClassFactoryEx *iface, BSTR key_system, BSTR cdm_store_path, IMFMediaKeys **keys)
+{
+    FIXME("iface %p, key_system %s, cdm_store_path %s, keys %p stub.\n",
+            iface, debugstr_w(key_system), debugstr_w(cdm_store_path), keys);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_engine_factory_IsTypeSupported(IMFMediaEngineClassFactoryEx *iface, BSTR type, BSTR key_system, BOOL *is_supported)
+{
+    FIXME("iface %p, type %s, key_system %s, is_supported %p stub.\n",
+            iface, debugstr_w(type), debugstr_w(key_system), is_supported);
+    *is_supported = FALSE;
+    return S_OK;
+}
+
+static const IMFMediaEngineClassFactoryExVtbl media_engine_factory_vtbl =
 {
     media_engine_factory_QueryInterface,
     media_engine_factory_AddRef,
@@ -3636,9 +3659,12 @@ static const IMFMediaEngineClassFactoryVtbl media_engine_factory_vtbl =
     media_engine_factory_CreateInstance,
     media_engine_factory_CreateTimeRange,
     media_engine_factory_CreateError,
+    media_engine_factory_CreateMediaSourceExtension,
+    media_engine_factory_CreateMediaKeys,
+    media_engine_factory_IsTypeSupported,
 };
 
-static IMFMediaEngineClassFactory media_engine_factory = { &media_engine_factory_vtbl };
+static IMFMediaEngineClassFactoryEx media_engine_factory = { &media_engine_factory_vtbl };
 
 static HRESULT WINAPI classfactory_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
 {
@@ -3676,7 +3702,7 @@ static HRESULT WINAPI classfactory_CreateInstance(IClassFactory *iface, IUnknown
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    return IMFMediaEngineClassFactory_QueryInterface(&media_engine_factory, riid, obj);
+    return IMFMediaEngineClassFactoryEx_QueryInterface(&media_engine_factory, riid, obj);
 }
 
 static HRESULT WINAPI classfactory_LockServer(IClassFactory *iface, BOOL dolock)
