@@ -166,14 +166,17 @@ static HRESULT WINAPI propsys_GetPropertyDescription(IPropertySystem *iface,
     HRESULT hr;
     IPropertyDescription *desc;
 
-    FIXME("(%p, %s, %s, %p): semi-stub!\n", iface, debugstr_propkey(propkey), debugstr_guid(riid), ppv);
+    TRACE("(%p, %s, %s, %p)\n", iface, debugstr_propkey(propkey), debugstr_guid(riid), ppv);
 
     if (!ppv)
         return E_INVALIDARG;
     *ppv = NULL;
     hr = propdesc_get_by_key( propkey, &desc );
     if (FAILED( hr ))
+    {
+        FIXME("propkey not found %s\n", debugstr_propkey(propkey));
         return hr;
+    }
 
     hr = IPropertyDescription_QueryInterface( desc, riid, ppv );
     IPropertyDescription_Release( desc );
@@ -186,14 +189,17 @@ static HRESULT WINAPI propsys_GetPropertyDescriptionByName(IPropertySystem *ifac
     HRESULT hr;
     IPropertyDescription *desc;
 
-    FIXME("(%p, %s, %s, %p): stub\n", iface, debugstr_w(canonical_name), debugstr_guid(riid), ppv);
+    TRACE("(%p, %s, %s, %p)\n", iface, debugstr_w(canonical_name), debugstr_guid(riid), ppv);
 
     if (!ppv)
         return E_INVALIDARG;
     *ppv = NULL;
     hr = propdesc_get_by_name( canonical_name, &desc );
     if (FAILED( hr ))
+    {
+        FIXME("canonical_name not found %s\n", debugstr_w(canonical_name));
         return hr;
+    }
     hr = IPropertyDescription_QueryInterface( desc, riid, ppv );
     IPropertyDescription_Release( desc );
     return hr;
