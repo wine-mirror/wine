@@ -31,6 +31,19 @@
 #define _CRT_ASSERT                     2
 #define _CRT_ERRCNT                     3
 
+#define _CRTDBG_MODE_FILE               0x1
+#define _CRTDBG_MODE_DEBUG              0x2
+#define _CRTDBG_MODE_WNDW               0x4
+#define _CRTDBG_REPORT_MODE             -1
+
+typedef void *_HFILE;
+
+#define _CRTDBG_INVALID_HFILE           ((_HFILE)(intptr_t)-1)
+#define _CRTDBG_HFILE_ERROR             ((_HFILE)(intptr_t)-2)
+#define _CRTDBG_FILE_STDOUT             ((_HFILE)(intptr_t)-4)
+#define _CRTDBG_FILE_STDERR             ((_HFILE)(intptr_t)-5)
+#define _CRTDBG_REPORT_FILE             ((_HFILE)(intptr_t)-6)
+
 #define _FREE_BLOCK                     0
 #define _NORMAL_BLOCK                   1
 #define _CRT_BLOCK                      2
@@ -50,6 +63,26 @@ typedef struct _CrtMemState
     __msvcrt_ulong lTotalCount;
 } _CrtMemState;
 
+typedef int (__cdecl* _CRT_REPORT_HOOK )(int, char*,    int*);
+typedef int (__cdecl* _CRT_REPORT_HOOKW)(int, wchar_t*, int*);
+
+#define _CRT_RPTHOOK_INSTALL        0
+#define _CRT_RPTHOOK_REMOVE         1
+
+#define _CRTDBG_ALLOC_MEM_DF        0x01
+#define _CRTDBG_DELAY_FREE_MEM_DF   0x02
+#define _CRTDBG_CHECK_ALWAYS_DF     0x04
+#define _CRTDBG_RESERVED_DF         0x08
+#define _CRTDBG_CHECK_CRT_DF        0x10
+#define _CRTDBG_LEAK_CHECK_DF       0x20
+
+#define _CRTDBG_CHECK_EVERY_16_DF   0x00100000
+#define _CRTDBG_CHECK_EVERY_128_DF  0x00800000
+#define _CRTDBG_CHECK_EVERY_1024_DF 0x04000000
+
+#define _CRTDBG_CHECK_DEFAULT_DF    0
+
+#define _CRTDBG_REPORT_FLAG         -1
 
 #ifndef _DEBUG
 
@@ -64,6 +97,10 @@ typedef struct _CrtMemState
 #define _CrtSetDbgFlag(f)               ((int)0)
 #define _CrtSetDumpClient(f)            ((void)0)
 #define _CrtSetReportMode(t,m)          ((int)0)
+#define _CrtSetReportFile(t,f)          ((void*)0)
+
+#define _CrtGetReportHook()             ((_CRT_REPORT_HOOK)0)
+#define _CrtSetReportHook(f)            ((_CRT_REPORT_HOOK)0)
 
 #else /* _DEBUG */
 
@@ -89,11 +126,17 @@ extern int _crtDbgFlag;
 _ACRTIMP int   __cdecl _CrtCheckMemory(void);
 _ACRTIMP int   __cdecl _CrtDbgReport(int reportType, const char *filename, int linenumber,
                                      const char *moduleName, const char *format, ...) __WINE_CRT_PRINTF_ATTR(5, 6);
+_ACRTIMP int   __cdecl _CrtDbgReportW(int reportType, const wchar_t *filename, int linenumber,
+                                      const wchar_t *moduleName, const wchar_t *format, ...);
 _ACRTIMP int   __cdecl _CrtDumpMemoryLeaks(void);
 _ACRTIMP int   __cdecl _CrtSetBreakAlloc(int);
 _ACRTIMP int   __cdecl _CrtSetDbgFlag(int);
 _ACRTIMP void *__cdecl _CrtSetDumpClient(void *dumpClient);
 _ACRTIMP int   __cdecl _CrtSetReportMode(int reportType, int reportMode);
+_ACRTIMP void *__cdecl _CrtSetReportFile(int reportType, void *reportFile); /* void* for HFILE */
+
+_ACRTIMP _CRT_REPORT_HOOK __cdecl _CrtGetReportHook(void);
+_ACRTIMP _CRT_REPORT_HOOK __cdecl _CrtSetReportHook(_CRT_REPORT_HOOK);
 
 #ifdef __cplusplus
 }
