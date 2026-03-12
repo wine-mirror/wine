@@ -360,8 +360,8 @@ CMAPI CONFIGRET WINAPI CM_Create_DevNodeA( DEVINST *node, DEVINSTID_A instance_i
 CMAPI CONFIGRET WINAPI CM_Create_DevNodeW( DEVINST *node, DEVINSTID_W instance_id, DEVINST parent, ULONG flags );
 #define                CM_Create_DevNode WINELIB_NAME_AW(CM_Create_DevNode)
 CMAPI CONFIGRET WINAPI CM_Create_Range_List( RANGE_LIST *ranges, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Delete_Class_Key( GUID *class, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Delete_Class_Key_Ex( GUID *class, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Delete_Class_Key( GUID *class_, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Delete_Class_Key_Ex( GUID *class_, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Delete_Device_Interface_Key_ExA( const char *iface, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Delete_Device_Interface_Key_ExW( const WCHAR *iface, ULONG flags, HMACHINE machine );
 #define                CM_Delete_Device_Interface_Key_Ex WINELIB_NAME_AW(CM_Delete_Device_Interface_Key_Ex)
@@ -379,8 +379,8 @@ CMAPI CONFIGRET WINAPI CM_Disconnect_Machine( HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Dup_Range_List( RANGE_LIST old_ranges, RANGE_LIST new_ranges, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Enable_DevNode( DEVINST node, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Enable_DevNode_Ex( DEVINST node, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Enumerate_Classes( ULONG index, GUID *class, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Enumerate_Classes_Ex( ULONG index, GUID *class, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Enumerate_Classes( ULONG index, GUID *class_, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Enumerate_Classes_Ex( ULONG index, GUID *class_, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Enumerate_Enumerators_ExA( ULONG index, char *buffer, ULONG *len, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Enumerate_Enumerators_ExW( ULONG index, WCHAR *buffer, ULONG *len, ULONG flags, HMACHINE machine );
 #define                CM_Enumerate_Enumerators_Ex WINELIB_NAME_AW(CM_Enumerate_Enumerators_Ex)
@@ -399,24 +399,24 @@ CMAPI CONFIGRET WINAPI CM_Free_Res_Des_Handle( RES_DES desc );
 CMAPI CONFIGRET WINAPI CM_Free_Resource_Conflict_Handle( CONFLICT_LIST conflicts );
 CMAPI CONFIGRET WINAPI CM_Get_Child( DEVINST *child, DEVINST node, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Get_Child_Ex( DEVINST *child, DEVINST node, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Key_Name_ExA( GUID *class, char *name, ULONG *len, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Key_Name_ExW( GUID *class, WCHAR *name, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Key_Name_ExA( GUID *class_, char *name, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Key_Name_ExW( GUID *class_, WCHAR *name, ULONG *len, ULONG flags, HMACHINE machine );
 #define                CM_Get_Class_Key_Name_Ex WINELIB_NAME_AW(CM_Get_Class_Key_Name_Ex)
-CMAPI CONFIGRET WINAPI CM_Get_Class_Key_NameA( GUID *class, char *name, ULONG *len, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Key_NameW( GUID *class, WCHAR *name, ULONG *len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Key_NameA( GUID *class_, char *name, ULONG *len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Key_NameW( GUID *class_, WCHAR *name, ULONG *len, ULONG flags );
 #define                CM_Get_Class_Key_Name WINELIB_NAME_AW(CM_Get_Class_Key_Name)
-CMAPI CONFIGRET WINAPI CM_Get_Class_Name_ExA( GUID *class, char *buffer, ULONG *len, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Name_ExW( GUID *class, WCHAR *buffer, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Name_ExA( GUID *class_, char *buffer, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Name_ExW( GUID *class_, WCHAR *buffer, ULONG *len, ULONG flags, HMACHINE machine );
 #define                CM_Get_Class_Name_Ex WINELIB_NAME_AW(CM_Get_Class_Name_Ex)
-CMAPI CONFIGRET WINAPI CM_Get_Class_NameA( GUID *class, char *buffer, ULONG *len, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Get_Class_NameW( GUID *class, WCHAR *buffer, ULONG *len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Class_NameA( GUID *class_, char *buffer, ULONG *len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Class_NameW( GUID *class_, WCHAR *buffer, ULONG *len, ULONG flags );
 #define                CM_Get_Class_Name WINELIB_NAME_AW(CM_Get_Class_Name)
-CMAPI CONFIGRET WINAPI CM_Get_Class_Property_ExW( const GUID *class, const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buffer, ULONG *size, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Property_Keys( const GUID *class, DEVPROPKEY *keys, ULONG *count, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Property_Keys_Ex( const GUID *class, DEVPROPKEY *keys, ULONG *count, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Class_PropertyW( const GUID *class, const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buffer, ULONG *size, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Registry_PropertyA( GUID *class, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Class_Registry_PropertyW( GUID *class, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Property_ExW( const GUID *class_, const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buffer, ULONG *size, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Property_Keys( const GUID *class_, DEVPROPKEY *keys, ULONG *count, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Property_Keys_Ex( const GUID *class_, DEVPROPKEY *keys, ULONG *count, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_PropertyW( const GUID *class_, const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buffer, ULONG *size, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Registry_PropertyA( GUID *class_, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Class_Registry_PropertyW( GUID *class_, ULONG property, ULONG *type, void *buffer, ULONG *len, ULONG flags, HMACHINE machine );
 #define                CM_Get_Class_Registry_Property WINELIB_NAME_AW(CM_Get_Class_Registry_Property)
 CMAPI CONFIGRET WINAPI CM_Get_Depth( ULONG *depth, DEVINST node, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Get_Depth_Ex( ULONG *depth, DEVINST node, ULONG flags, HMACHINE machine );
@@ -446,17 +446,17 @@ CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_Alias_ExW( const WCHAR *iface, GU
 CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_AliasA( const char *iface, GUID *alias_guid, char *alias_iface, ULONG *len, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_AliasW( const WCHAR *iface, GUID *alias_guid, WCHAR *alias_iface, ULONG *len, ULONG flags );
 #define                CM_Get_Device_Interface_Alias WINELIB_NAME_AW(CM_Get_Device_Interface_Alias)
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_ExA( GUID *class, DEVINSTID_A instance_id, char *buffer, ULONG len, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_ExW( GUID *class, DEVINSTID_W instance_id, WCHAR *buffer, ULONG len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_ExA( GUID *class_, DEVINSTID_A instance_id, char *buffer, ULONG len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_ExW( GUID *class_, DEVINSTID_W instance_id, WCHAR *buffer, ULONG len, ULONG flags, HMACHINE machine );
 #define                CM_Get_Device_Interface_List_Ex WINELIB_NAME_AW(CM_Get_Device_Interface_List_Ex)
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExA( ULONG *len, GUID *class, DEVINSTID_A instance_id, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW( ULONG *len, GUID *class, DEVINSTID_W instance_id, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExA( ULONG *len, GUID *class_, DEVINSTID_A instance_id, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW( ULONG *len, GUID *class_, DEVINSTID_W instance_id, ULONG flags, HMACHINE machine );
 #define                CM_Get_Device_Interface_List_Size_Ex WINELIB_NAME_AW(CM_Get_Device_Interface_List_Size_Ex)
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeA( ULONG *len, GUID *class, DEVINSTID_A instance_id, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeW( ULONG *len, GUID *class, DEVINSTID_W instance_id, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeA( ULONG *len, GUID *class_, DEVINSTID_A instance_id, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeW( ULONG *len, GUID *class_, DEVINSTID_W instance_id, ULONG flags );
 #define                CM_Get_Device_Interface_List_Size WINELIB_NAME_AW(CM_Get_Device_Interface_List_Size)
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_ListA( GUID *class, DEVINSTID_A instance_id, char *buffer, ULONG len, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_ListW( GUID *class, DEVINSTID_W instance_id, WCHAR *buffer, ULONG len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_ListA( GUID *class_, DEVINSTID_A instance_id, char *buffer, ULONG len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_ListW( GUID *class_, DEVINSTID_W instance_id, WCHAR *buffer, ULONG len, ULONG flags );
 #define                CM_Get_Device_Interface_List WINELIB_NAME_AW(CM_Get_Device_Interface_List)
 CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_Property_ExW( const WCHAR *iface, const DEVPROPKEY *key, DEVPROPTYPE *type, BYTE *buffer, ULONG *size, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Get_Device_Interface_Property_Keys_ExW( const WCHAR *iface, DEVPROPKEY *keys, ULONG *count, ULONG flags, HMACHINE machine );
@@ -535,11 +535,11 @@ CMAPI CONFIGRET WINAPI CM_Modify_Res_Des_Ex( RES_DES *new_desc, RES_DES old_desc
 CMAPI CONFIGRET WINAPI CM_Move_DevNode( DEVINST node_src, DEVINST node_dst, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Move_DevNode_Ex( DEVINST node_src, DEVINST node_dst, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Next_Range( RANGE_ELEMENT *element, DWORDLONG *start, DWORDLONG *end, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Open_Class_Key_ExA( GUID *class, const char *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Open_Class_Key_ExW( GUID *class, const WCHAR *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Open_Class_Key_ExA( GUID *class_, const char *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Open_Class_Key_ExW( GUID *class_, const WCHAR *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags, HMACHINE machine );
 #define                CM_Open_Class_Key_Ex WINELIB_NAME_AW(CM_Open_Class_Key_Ex)
-CMAPI CONFIGRET WINAPI CM_Open_Class_KeyA( GUID *class, const char *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Open_Class_KeyW( GUID *class, const WCHAR *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Open_Class_KeyA( GUID *class_, const char *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Open_Class_KeyW( GUID *class_, const WCHAR *name, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags );
 #define                CM_Open_Class_Key WINELIB_NAME_AW(CM_Open_Class_Key)
 CMAPI CONFIGRET WINAPI CM_Open_Device_Interface_Key_ExA( const char *iface, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Open_Device_Interface_Key_ExW( const WCHAR *iface, REGSAM access, REGDISPOSITION disposition, HKEY *hkey, ULONG flags, HMACHINE machine );
@@ -566,11 +566,11 @@ CMAPI CONFIGRET WINAPI CM_Reenumerate_DevNode( DEVINST node, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Reenumerate_DevNode_Ex( DEVINST node, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Register_Device_Driver( DEVINST node, ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Register_Device_Driver_Ex( DEVINST node, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Register_Device_Interface_ExA( DEVINST node, GUID *class, const char *reference, char *iface, ULONG *len, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Register_Device_Interface_ExW( DEVINST node, GUID *class, const WCHAR *reference, WCHAR *iface, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Register_Device_Interface_ExA( DEVINST node, GUID *class_, const char *reference, char *iface, ULONG *len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Register_Device_Interface_ExW( DEVINST node, GUID *class_, const WCHAR *reference, WCHAR *iface, ULONG *len, ULONG flags, HMACHINE machine );
 #define                CM_Register_Device_Interface_Ex WINELIB_NAME_AW(CM_Register_Device_Interface_Ex)
-CMAPI CONFIGRET WINAPI CM_Register_Device_InterfaceA( DEVINST node, GUID *class, const char *reference, char *iface, ULONG *len, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Register_Device_InterfaceW( DEVINST node, GUID *class, const WCHAR *reference, WCHAR *iface, ULONG *len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Register_Device_InterfaceA( DEVINST node, GUID *class_, const char *reference, char *iface, ULONG *len, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Register_Device_InterfaceW( DEVINST node, GUID *class_, const WCHAR *reference, WCHAR *iface, ULONG *len, ULONG flags );
 #define                CM_Register_Device_Interface WINELIB_NAME_AW(CM_Register_Device_Interface)
 CMAPI CONFIGRET WINAPI CM_Register_Notification( CM_NOTIFY_FILTER *filter, void *context, PCM_NOTIFY_CALLBACK callback, HCMNOTIFICATION *notify );
 CMAPI CONFIGRET WINAPI CM_Remove_SubTree( DEVINST ancestor, ULONG flags );
@@ -585,10 +585,10 @@ CMAPI CONFIGRET WINAPI CM_Request_Eject_PC(void);
 CMAPI CONFIGRET WINAPI CM_Request_Eject_PC_Ex( HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Run_Detection( ULONG flags );
 CMAPI CONFIGRET WINAPI CM_Run_Detection_Ex( ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Set_Class_Property_ExW( const GUID *class, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buffer, ULONG size, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Set_Class_PropertyW( const GUID *class, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buffer, ULONG size, ULONG flags );
-CMAPI CONFIGRET WINAPI CM_Set_Class_Registry_PropertyA( GUID *class, ULONG property, const void *buffer, ULONG len, ULONG flags, HMACHINE machine );
-CMAPI CONFIGRET WINAPI CM_Set_Class_Registry_PropertyW( GUID *class, ULONG property, const void *buffer, ULONG len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Set_Class_Property_ExW( const GUID *class_, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buffer, ULONG size, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Set_Class_PropertyW( const GUID *class_, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buffer, ULONG size, ULONG flags );
+CMAPI CONFIGRET WINAPI CM_Set_Class_Registry_PropertyA( GUID *class_, ULONG property, const void *buffer, ULONG len, ULONG flags, HMACHINE machine );
+CMAPI CONFIGRET WINAPI CM_Set_Class_Registry_PropertyW( GUID *class_, ULONG property, const void *buffer, ULONG len, ULONG flags, HMACHINE machine );
 #define                CM_Set_Class_Registry_Property WINELIB_NAME_AW(CM_Set_Class_Registry_Property)
 CMAPI CONFIGRET WINAPI CM_Set_Device_Interface_Property_ExW( const WCHAR *iface, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buffer, ULONG size, ULONG flags, HMACHINE machine );
 CMAPI CONFIGRET WINAPI CM_Set_Device_Interface_PropertyW( const WCHAR *iface, const DEVPROPKEY *key, DEVPROPTYPE type, const BYTE *buffer, ULONG size, ULONG flags );
