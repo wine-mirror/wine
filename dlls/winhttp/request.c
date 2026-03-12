@@ -3116,7 +3116,7 @@ static DWORD query_data_available( struct request *request, DWORD *available, BO
 {
     DWORD ret = ERROR_SUCCESS, count = 0;
 
-    if (end_of_read_data( request )) goto done;
+    if (!request->content_length || end_of_read_data( request )) goto done;
 
     if (!(count = query_data_ready( request )))
     {

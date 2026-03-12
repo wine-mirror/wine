@@ -2305,6 +2305,7 @@ static const char switchprotocols[] =
 "HTTP/1.1 101 Switching Protocols\r\n"
 "Server: winetest\r\n"
 "Upgrade: websocket\r\n"
+"Content-Length: 4\r\n"
 "Connection: Upgrade\r\n";
 
 static const char temp_redirectmsg[] =
@@ -2370,7 +2371,7 @@ static void create_websocket_accept(const char *key, char *buf, unsigned int buf
 
     buf[0] = 0;
     len = buflen;
-    CryptBinaryToStringA( (BYTE *)sha1, sizeof(sha1), CRYPT_STRING_BASE64, buf, &len);
+    CryptBinaryToStringA((BYTE *)sha1, sizeof(sha1), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, buf, &len);
 }
 
 static int server_receive_request(int c, char *buffer, size_t buffer_size)
@@ -2570,6 +2571,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 strcat(headers, "\r\n\r\n");
 
                 send(c, headers, strlen(headers), 0);
+                send(c, "data", 4, 0);
                 continue;
             }
             else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
@@ -3558,7 +3560,8 @@ static void test_websocket(int port)
     size = sizeof(len);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &len,
                               &size, NULL);
-    ok(!ret, "success\n");
+    ok(ret, "failure\n");
+    ok(len == 4, "got %lu\n", len);
 
     index = 0;
     size = sizeof(buf);
