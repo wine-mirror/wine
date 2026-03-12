@@ -928,6 +928,7 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
     struct media_engine *engine = impl_from_session_events_IMFAsyncCallback(iface);
     IMFMediaEvent *event = NULL;
     MediaEventType event_type;
+    BOOL ended_event = FALSE;
     HRESULT hr;
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(engine->session, result, &event)))
@@ -1008,14 +1009,21 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAYING, 0, 0);
             break;
         case MESessionEnded:
-
             EnterCriticalSection(&engine->cs);
-            media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, FALSE);
-            media_engine_set_flag(engine, FLAGS_ENGINE_IS_ENDED, TRUE);
-            engine->video_frame.pts = MINLONGLONG;
+            if (engine->flags & FLAGS_ENGINE_LOOP)
+            {
+                 media_engine_set_current_time(engine, 0.0);
+            }
+            else
+            {
+                engine->video_frame.pts = MINLONGLONG;
+                media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, FALSE);
+                media_engine_set_flag(engine, FLAGS_ENGINE_IS_ENDED, TRUE);
+                ended_event = TRUE;
+            }
             LeaveCriticalSection(&engine->cs);
-
-            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_ENDED, 0, 0);
+            if (ended_event)
+                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_ENDED, 0, 0);
             break;
 
         case MEEndOfPresentationSegment:
