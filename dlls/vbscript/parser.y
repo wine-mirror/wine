@@ -310,7 +310,9 @@ IfStatement
                                                 { $$ = new_if_statement(ctx, @$, $2, $6, $7, $8); CHECK_ERROR; }
     | tIF Expression tTHEN Statement EndIf_opt { $$ = new_if_statement(ctx, @$, $2, $4, NULL, NULL); CHECK_ERROR; }
     | tIF Expression tTHEN Statement tELSE Statement EndIf_opt
-                                               { $$ = new_if_statement(ctx, @$, $2, $4, NULL, $6); CHECK_ERROR; }
+                                                { $$ = new_if_statement(ctx, @$, $2, $4, NULL, $6); CHECK_ERROR; }
+    | tIF Expression tTHEN Statement tELSE EndIf_opt
+                                                { $$ = new_if_statement(ctx, @$, $2, $4, NULL, NULL); CHECK_ERROR; }
 
 EndIf_opt
     : /* empty */

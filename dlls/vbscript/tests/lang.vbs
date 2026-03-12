@@ -359,6 +359,9 @@ ElseIf not False Then
 End If
 Call ok(x, "elseif not called?")
 
+If false Then x = 1 Else
+If false Then x = 1 Else:
+
 x = false
 If true Then
   :x = true
