@@ -2262,7 +2262,6 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     }
 
     drain_content( request );
-    clear_response_headers( request );
 
     if (session->agent)
         process_header( request, L"User-Agent", session->agent, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
@@ -2272,6 +2271,8 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
 
     if (request->creds[TARGET_SERVER][SCHEME_BASIC].username)
         do_authorization( request, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_BASIC );
+
+    clear_response_headers( request );
 
     buflen = sizeof(buf);
     chunked = !query_headers( request, WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_TRANSFER_ENCODING,
