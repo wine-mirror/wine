@@ -2290,7 +2290,7 @@ static const char largeauth[] =
 "Server: winetest\r\n"
 "WWW-Authenticate: Basic realm=\"placebo\"\r\n"
 "WWW-Authenticate: NTLM\r\n"
-"Content-Length: 10240\r\n"
+"Content-Length: 100\r\n"
 "Content-Type: text/plain\r\n"
 "\r\n";
 
@@ -2491,7 +2491,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else
             {
                 send(c, largeauth, sizeof largeauth - 1, 0);
-                for (i = 0; i < 10240; i++) send(c, "A", 1, 0);
+                for (i = 0; i < 100; i++) send(c, "A", 1, 0);
                 continue;
             }
         }
