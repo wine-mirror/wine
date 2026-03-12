@@ -309,26 +309,6 @@ static void init_custom_draw(NMCUSTOMDRAW *nmcd, const BUTTON_INFO *infoPtr, HDC
     /* FIXME: Handle it properly when we support keyboard cues? */
 }
 
-HRGN set_control_clipping( HDC hdc, const RECT *rect )
-{
-    RECT rc = *rect;
-    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-
-    if (GetClipRgn( hdc, hrgn ) != 1)
-    {
-        DeleteObject( hrgn );
-        hrgn = 0;
-    }
-    DPtoLP( hdc, (POINT *)&rc, 2 );
-    if (GetLayout( hdc ) & LAYOUT_RTL)  /* compensate for the shifting done by IntersectClipRect */
-    {
-        rc.left++;
-        rc.right++;
-    }
-    IntersectClipRect( hdc, rc.left, rc.top, rc.right, rc.bottom );
-    return hrgn;
-}
-
 static WCHAR *heap_strndupW(const WCHAR *src, size_t length)
 {
     size_t size = (length + 1) * sizeof(WCHAR);

@@ -1705,12 +1705,9 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
   if ((infoPtr->dwStyle & TCS_OWNERDRAWFIXED) && IsWindow(infoPtr->hwndNotify))
   {
     DRAWITEMSTRUCT dis;
+    RECT clipRect;
+    HRGN hrgn;
     UINT id;
-
-    drawRect->top += 2;
-    drawRect->right -= 1;
-    if ( iItem == infoPtr->iSelected )
-        InflateRect(drawRect, -1, 0);
 
     id = (UINT)GetWindowLongPtrW( infoPtr->hwnd, GWLP_ID );
 
@@ -1739,8 +1736,17 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
         memcpy(&dis.itemData, (ULONG_PTR*)TAB_GetItem(infoPtr, iItem)->extra, 4);
     }
 
+    /* Avoid overwriting the background */
+    SetRect( &clipRect, drawRect->left, drawRect->top + 2, drawRect->right - 1, drawRect->bottom );
+    if ( iItem == infoPtr->iSelected )
+        InflateRect( &clipRect, -1, 0 );
+    hrgn = set_control_clipping( hdc, &clipRect );
+
     /* draw notification */
     SendMessageW( infoPtr->hwndNotify, WM_DRAWITEM, id, (LPARAM)&dis );
+
+    SelectClipRgn( hdc, hrgn );
+    if (hrgn) DeleteObject( hrgn );
   }
   else
   {

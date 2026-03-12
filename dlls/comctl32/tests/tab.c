@@ -1487,7 +1487,6 @@ static void test_TCS_OWNERDRAWFIXED(void)
     RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
 
     /* Check the draw rect from WM_DRAWITEM */
-    todo_wine
     ok(g_drawitem.rcItem.top == 0 && g_drawitem.rcItem.left == 0 && g_drawitem.rcItem.right > 0 &&
        g_drawitem.rcItem.bottom > 0, "Got unexpected rect %s.\n", wine_dbgstr_rect(&g_drawitem.rcItem));
     /* Check that tab item background is not overwritten */
