@@ -431,6 +431,7 @@ static UINT (WINAPI *pGetRawInputDeviceInfoA) (HANDLE, UINT, void *, UINT *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static HKL (WINAPI *pLoadKeyboardLayoutEx)(HKL, const WCHAR *, UINT);
 static INT (WINAPI *pScheduleDispatchNotification)(HWND);
+static UINT_PTR (WINAPI *pDelegateInput)(void *, void *, void *, void *, void *, void *);
 
 /**********************adapted from input.c **********************************/
 
@@ -446,6 +447,7 @@ static void init_function_pointers(void)
     if (!(p ## func = (void*)GetProcAddress(hdll, #func))) \
       trace("GetProcAddress(%s) failed\n", #func)
 
+    GET_PROC(DelegateInput);
     GET_PROC(EnableMouseInPointer);
     GET_PROC(IsMouseInPointerEnabled);
     GET_PROC(GetCurrentInputMessageSource);
@@ -6472,6 +6474,21 @@ static void test_ScheduleDispatchNotification(void)
     DestroyWindow(hwnd);
 }
 
+static void test_DelegateInput(void)
+{
+    UINT_PTR ret;
+
+    if (!pDelegateInput)
+    {
+        win_skip("DelegateInput is unavailable.\n");
+        return;
+    }
+
+    ret = pDelegateInput(0, 0, 0, 0, 0, 0);
+    todo_wine
+    ok(ret == 0, "Got unexpected ret %Ix.\n", ret);
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -6517,6 +6534,7 @@ START_TEST(input)
     test_rawinput(argv[0]);
     test_DefRawInputProc();
     test_ScheduleDispatchNotification();
+    test_DelegateInput();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx( argv );

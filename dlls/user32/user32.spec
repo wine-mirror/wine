@@ -14,7 +14,7 @@
 
 2010 stub -noname SlicerControl  # NtUserSlicerControl
 
-2503 stub DelegateInput  # NtUserDelegateInput
+2503 stdcall DelegateInput(ptr ptr ptr ptr ptr ptr)  # NtUserDelegateInput
 2504 stub UndelegateInput  # NtUserUndelegateInput
 2505 stub HandleDelegatedInput  # NtUserHandleDelegatedInput
 2506 stub @
