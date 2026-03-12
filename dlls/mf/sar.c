@@ -36,6 +36,7 @@ enum audio_renderer_flags
     SAR_PREROLLED = 0x2,
     SAR_SAMPLE_REQUESTED = 0x4,
     SAR_SEEKING = 0x8,
+    SAR_REPORT_SEEK_TIME = 0x10,
 };
 
 enum queued_object_type
@@ -661,7 +662,7 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStart(IMFClockStateSink *
         if (offset != PRESENTATION_CURRENT_POSITION)
         {
             renderer->seek_pts = offset;
-            renderer->flags |= SAR_SEEKING;
+            renderer->flags |= (SAR_SEEKING | SAR_REPORT_SEEK_TIME);
         }
         if (renderer->clock_state != MFCLOCK_STATE_RUNNING)
         {
@@ -1230,25 +1231,49 @@ static HRESULT WINAPI audio_renderer_time_source_GetClockCharacteristics(IMFPres
     return S_OK;
 }
 
-static HRESULT WINAPI audio_renderer_time_source_GetCorrelatedTime(IMFPresentationTimeSource *iface, DWORD reserved, LONGLONG *clock_time,
+static HRESULT audio_renderer_get_correlated_time(struct audio_renderer *renderer, LONGLONG *clock_time,
         MFTIME *system_time)
 {
-    struct audio_renderer *renderer = impl_from_IMFPresentationTimeSource(iface);
     UINT64 position, counter;
+    LONGLONG time;
     HRESULT hr;
-
-    TRACE("%p, %#lx, %p, %p.\n", iface, reserved, clock_time, system_time);
-
-    if (!renderer->audio_clock)
-        return MF_E_NOT_INITIALIZED;
 
     if (FAILED(hr = IAudioClock_GetPosition(renderer->audio_clock, &position, &counter)))
         return hr;
 
-    *clock_time = renderer->pts + (INT64)(position - renderer->position) * MFCLOCK_FREQUENCY_HNS / (INT64)renderer->audio_clock_frequency;
-    *system_time = counter;
+    time = renderer->pts + (INT64)(position - renderer->position) * MFCLOCK_FREQUENCY_HNS / (INT64)renderer->audio_clock_frequency;
+    if (renderer->flags & SAR_REPORT_SEEK_TIME)
+    {
+        if (time < renderer->seek_pts)
+            time = renderer->seek_pts;
+        else
+            renderer->flags &= ~SAR_REPORT_SEEK_TIME;
+    }
+
+    if (clock_time)
+        *clock_time = time;
+    if (system_time)
+        *system_time = counter;
 
     return S_OK;
+}
+
+static HRESULT WINAPI audio_renderer_time_source_GetCorrelatedTime(IMFPresentationTimeSource *iface, DWORD reserved, LONGLONG *clock_time,
+        MFTIME *system_time)
+{
+    struct audio_renderer *renderer = impl_from_IMFPresentationTimeSource(iface);
+    HRESULT hr;
+
+    TRACE("%p, %#lx, %p, %p.\n", iface, reserved, clock_time, system_time);
+
+    EnterCriticalSection(&renderer->cs);
+    if (!renderer->audio_clock)
+        hr = MF_E_NOT_INITIALIZED;
+    else
+        hr = audio_renderer_get_correlated_time(renderer, clock_time, system_time);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_time_source_GetContinuityKey(IMFPresentationTimeSource *iface, DWORD *key)
