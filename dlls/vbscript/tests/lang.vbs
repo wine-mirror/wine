@@ -360,6 +360,12 @@ End If
 Call ok(x, "elseif not called?")
 
 x = false
+If true Then
+  :x = true
+End If
+Call ok(x, "colon-prefixed statement in If block not executed")
+
+x = false
 if 1 then x = true
 Call ok(x, "if 1 not run?")
 
