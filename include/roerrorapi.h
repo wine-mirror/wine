@@ -23,6 +23,10 @@
 #include <restrictederrorinfo.h>
 #include <rpc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
     RO_ERROR_REPORTING_NONE                 = 0x0,
@@ -41,5 +45,9 @@ BOOL    WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnk
 HRESULT WINAPI RoReportUnhandledError(IRestrictedErrorInfo *info);
 HRESULT WINAPI RoSetErrorReportingFlags(UINT32 flags);
 HRESULT WINAPI SetRestrictedErrorInfo(IRestrictedErrorInfo *info);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ROERROR_H */

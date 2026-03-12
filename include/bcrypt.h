@@ -44,6 +44,10 @@ typedef LONG NTSTATUS;
 #define BCRYPT_SUCCESS(st) ((NTSTATUS)(st) >= 0)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #define BCRYPT_ALGORITHM_NAME       L"AlgorithmName"
 #define BCRYPT_AUTH_TAG_LENGTH      L"AuthTagLength"
@@ -603,5 +607,9 @@ NTSTATUS WINAPI BCryptSecretAgreement(BCRYPT_KEY_HANDLE, BCRYPT_KEY_HANDLE, BCRY
 NTSTATUS WINAPI BCryptSetProperty(BCRYPT_HANDLE, LPCWSTR, PUCHAR, ULONG, ULONG);
 NTSTATUS WINAPI BCryptSignHash(BCRYPT_KEY_HANDLE, void *, PUCHAR, ULONG, PUCHAR, ULONG, ULONG *, ULONG);
 NTSTATUS WINAPI BCryptVerifySignature(BCRYPT_KEY_HANDLE, void *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_BCRYPT_H */
