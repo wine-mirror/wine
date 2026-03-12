@@ -1010,6 +1010,7 @@ static HRESULT video_frame_sink_set_state(struct video_frame_sink *sink, enum si
             {
                 video_frame_sink_sample_queue_flush(sink);
                 video_frame_sink_set_flag(sink, FLAGS_FIRST_FRAME, FALSE);
+                sink->sample_request_pending = FALSE;
             }
 
             if (state == SINK_STATE_RUNNING && (sink->state == SINK_STATE_STOPPED || sink->state == SINK_STATE_PAUSED ||
