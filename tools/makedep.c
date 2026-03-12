@@ -2427,23 +2427,23 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
         {
             const char *ext = (type == IMPORT_TYPE_DELAYED && !delay_load_flags[arch]) ? ".delay.a" : ".a";
             lib = obj_dir_path( submake, strmake( "%slib%s%s", arch_dirs[arch], basename, ext ));
+            goto found;
         }
-        else if ((submake = get_static_lib( basename )))
+        if ((submake = get_static_lib( basename )) && !submake->disabled[link_arch])
         {
-            if (submake->disabled[link_arch]) continue;
             lib = obj_dir_path( submake, strmake( "%slib%s.a", arch_dirs[arch], basename ));
+            goto found;
         }
-        else if (name[0] == '-')  /* pass the original -l option to the linker */
+        if (name[0] == '-')  /* pass the original -l option to the linker */
         {
             strarray_add( &ret, name );
             continue;
         }
-        else
-        {
-            input_file_name = src_dir_path( make, "Makefile.in" );
-            fatal_error( "library %s not found\n", basename );
-        }
+        if (submake) continue;  /* ignore disabled lib */
+        input_file_name = src_dir_path( make, "Makefile.in" );
+        fatal_error( "library %s not found\n", basename );
 
+     found:
         strarray_add_uniq( deps, lib );
         strarray_add( &ret, lib );
     }
