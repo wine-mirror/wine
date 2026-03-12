@@ -97,4 +97,13 @@ static inline wchar_t* wcsrev(wchar_t* str) { return _wcsrev(str); }
 static inline wchar_t* wcsset(wchar_t* str, wchar_t c) { return _wcsset(str, c); }
 static inline wchar_t* wcsupr(wchar_t* str) { return _wcsupr(str); }
 
+#ifdef __cplusplus
+extern "C++" {
+template <size_t S> inline errno_t strcat_s(char (&dst)[S], const char *arg) throw() { return strcat_s(dst, S, arg); }
+template <size_t S> inline errno_t strncat_s(char (&dst)[S], const char *arg, size_t count) throw() { return strcat_s(dst, S, arg, count); }
+template <size_t S> inline errno_t strcpy_s(char (&dst)[S], const char *arg) throw() { return strcpy_s(dst, S, arg); }
+template <size_t S> inline errno_t strncpy_s(char (&dst)[S], const char *arg, size_t count) throw() { return strcpy_s(dst, S, arg, count); }
+} /* extern "C++" */
+#endif /* __cplusplus */
+
 #endif /* __WINE_STRING_H */

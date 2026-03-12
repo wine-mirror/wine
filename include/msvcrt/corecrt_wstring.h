@@ -94,6 +94,9 @@ _ACRTIMP wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*);
 #ifdef __cplusplus
 extern "C++" {
 template <size_t S> inline errno_t wcscat_s(wchar_t (&dst)[S], const wchar_t *arg) throw() { return wcscat_s(dst, S, arg); }
+template <size_t S> inline errno_t wcsncat_s(wchar_t (&dst)[S], const wchar_t *arg, size_t count) throw() { return wcscat_s(dst, S, arg, count); }
+template <size_t S> inline errno_t wcscpy_s(wchar_t (&dst)[S], const wchar_t *arg) throw() { return wcscpy_s(dst, S, arg); }
+template <size_t S> inline errno_t wcsncpy_s(wchar_t (&dst)[S], const wchar_t *arg, size_t count) throw() { return wcscpy_s(dst, S, arg, count); }
 } /* extern "C++" */
 #endif /* __cplusplus */
 

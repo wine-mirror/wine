@@ -835,4 +835,14 @@ static inline int getw(FILE* file) { return _getw(file); }
 static inline int putw(int val, FILE* file) { return _putw(val, file); }
 static inline FILE* wpopen(const wchar_t* command,const wchar_t* mode) { return _wpopen(command, mode); }
 
+#ifdef __cplusplus
+extern "C++" {
+template <size_t S> inline char *get_s(char (&dst)[S]) { return wget_s(dst, S); }
+template <size_t S> inline char *tmpnam_s(char (&dst)[S]) { return tmpnam_s(dst, S); }
+template <size_t S> inline int vsprintf_s(char (&dst)[S], const char *fmt, va_list args) {return vsprintf_s(dst, S, fmt, args);}
+template <size_t S> inline int _vsnprintf_s(char (&dst)[S], size_t count, const char *fmt, va_list args) {return _vsnprintf_s(dst, S, count, fmt, args);}
+template <size_t S> inline int vsnprintf_s(char (&dst)[S], size_t count, const char *fmt, va_list args) {return vsnprintf_s(dst, S, count, fmt, args);}
+} /* extern "C++" */
+#endif /* __cplusplus */
+
 #endif /* __WINE_STDIO_H */
