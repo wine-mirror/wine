@@ -462,6 +462,12 @@ extern "C++" { \
 #define STDMETHODIMPV           HRESULT STDMETHODVCALLTYPE
 #define STDMETHODIMPV_(type)    type STDMETHODVCALLTYPE
 
+#define STDOVERRIDEMETHODIMP        STDMETHODIMP
+#define STDOVERRIDEMETHODIMP_(type) STDMETHODIMP_(type)
+
+#define IFACEMETHODIMP          STDMETHODIMP
+#define IFACEMETHODIMP_(type)   STDMETHODIMP_(type)
+
 /* Define the basic types */
 #ifndef VOID
 #define VOID void
@@ -1073,7 +1079,11 @@ NTSYSAPI WORD         WINAPI RtlQueryDepthSList(PSLIST_HEADER);
 #define HEAP_SHARED                     0x04000000
 
 typedef enum _HEAP_INFORMATION_CLASS {
-    HeapCompatibilityInformation,
+    HeapCompatibilityInformation = 0,
+    HeapEnableTerminationOnCorruption = 1,
+    HeapOptimizeResources = 3,
+    HeapTag = 7,
+    HeapMemoryUsageInformation = 8,
 } HEAP_INFORMATION_CLASS;
 
 /* Processor feature flags.  */
@@ -2340,8 +2350,63 @@ typedef void (CALLBACK *PTERMINATION_HANDLER)(BOOLEAN,DWORD64);
 #define PRODUCT_PROFESSIONAL_S_N                        0x00000080
 #define PRODUCT_ENTERPRISE_S_EVALUATION                 0x00000081
 #define PRODUCT_ENTERPRISE_S_N_EVALUATION               0x00000082
+#define PRODUCT_HOLOGRAPHIC                             0x00000087
+#define PRODUCT_HOLOGRAPHIC_BUSINESS                    0x00000088
+#define PRODUCT_PRO_SINGLE_LANGUAGE                     0x0000008A
+#define PRODUCT_PRO_CHINA                               0x0000008B
+#define PRODUCT_ENTERPRISE_SUBSCRIPTION                 0x0000008C
+#define PRODUCT_ENTERPRISE_SUBSCRIPTION_N               0x0000008D
+#define PRODUCT_DATACENTER_NANO_SERVER                  0x0000008F
+#define PRODUCT_STANDARD_NANO_SERVER                    0x00000090
+#define PRODUCT_DATACENTER_A_SERVER_CORE                0x00000091
+#define PRODUCT_STANDARD_A_SERVER_CORE                  0x00000092
+#define PRODUCT_DATACENTER_WS_SERVER_CORE               0x00000093
+#define PRODUCT_STANDARD_WS_SERVER_CORE                 0x00000094
+#define PRODUCT_UTILITY_VM                              0x00000095
+#define PRODUCT_DATACENTER_EVALUATION_SERVER_CORE       0x0000009F
+#define PRODUCT_STANDARD_EVALUATION_SERVER_CORE         0x000000A0
+#define PRODUCT_PRO_WORKSTATION                         0x000000A1
+#define PRODUCT_PRO_WORKSTATION_N                       0x000000A2
+#define PRODUCT_PRO_FOR_EDUCATION                       0x000000A4
+#define PRODUCT_PRO_FOR_EDUCATION_N                     0x000000A5
+#define PRODUCT_AZURE_SERVER_CORE                       0x000000A8
+#define PRODUCT_AZURE_NANO_SERVER                       0x000000A9
+#define PRODUCT_ENTERPRISEG                             0x000000AB
+#define PRODUCT_ENTERPRISEGN                            0x000000AC
+#define PRODUCT_SERVERRDSH                              0x000000AF
+#define PRODUCT_CLOUD                                   0x000000B2
+#define PRODUCT_CLOUDN                                  0x000000B3
+#define PRODUCT_HUBOS                                   0x000000B4
+#define PRODUCT_ONECOREUPDATEOS                         0x000000B6
+#define PRODUCT_CLOUDE                                  0x000000B7
+#define PRODUCT_IOTOS                                   0x000000B9
+#define PRODUCT_CLOUDEN                                 0x000000BA
+#define PRODUCT_IOTEDGEOS                               0x000000BB
+#define PRODUCT_IOTENTERPRISE                           0x000000BC
+#define PRODUCT_LITE                                    0x000000BD
+#define PRODUCT_IOTENTERPRISES                          0x000000BF
+#define PRODUCT_XBOX_SYSTEMOS                           0x000000C0
+#define PRODUCT_XBOX_GAMEOS                             0x000000C2
+#define PRODUCT_XBOX_ERAOS                              0x000000C3
+#define PRODUCT_XBOX_DURANGOHOSTOS                      0x000000C4
+#define PRODUCT_XBOX_SCARLETTHOSTOS                     0x000000C5
+#define PRODUCT_XBOX_KEYSTONE                           0x000000C6
+#define PRODUCT_AZURE_SERVER_CLOUDHOST                  0x000000C7
+#define PRODUCT_AZURE_SERVER_CLOUDMOS                   0x000000C8
+#define PRODUCT_CLOUDEDITIONN                           0x000000CA
+#define PRODUCT_CLOUDEDITION                            0x000000CB
+#define PRODUCT_VALIDATION                              0x000000CC
+#define PRODUCT_IOTENTERPRISESK                         0x000000CD
+#define PRODUCT_IOTENTERPRISEK                          0x000000CE
+#define PRODUCT_IOTENTERPRISESEVAL                      0x000000CF
+#define PRODUCT_AZURE_SERVER_AGENTBRIDGE                0x000000D0
+#define PRODUCT_AZURE_SERVER_NANOHOST                   0x000000D1
+#define PRODUCT_WNC                                     0x000000D2
+#define PRODUCT_AZURESTACKHCI_SERVER_CORE               0x00000196
+#define PRODUCT_DATACENTER_SERVER_AZURE_EDITION         0x00000197
+#define PRODUCT_DATACENTER_SERVER_CORE_AZURE_EDITION    0x00000198
+#define PRODUCT_DATACENTER_WS_SERVER_CORE_AZURE_EDITION 0x00000199
 #define PRODUCT_UNLICENSED                              0xABCDABCD
-
 
 /*
  * Language IDs
@@ -4831,7 +4896,24 @@ typedef struct _SID_AND_ATTRIBUTES_HASH {
 #define SECURITY_CAPABILITY_RID_COUNT           __MSABI_LONG(0x000000005)
 #define SECURITY_PARENT_PACKAGE_RID_COUNT       SECURITY_APP_PACKAGE_RID_COUNT
 #define SECURITY_CHILD_PACKAGE_RID_COUNT        __MSABI_LONG(0x00000000c)
+
 #define SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE    __MSABI_LONG(0x000000001)
+#define SECURITY_BUILTIN_PACKAGE_ANY_RESTRICTED_PACKAGE __MSABI_LONG(0x00000002)
+
+#define SECURITY_CAPABILITY_INTERNET_CLIENT     __MSABI_LONG(0x00000001)
+#define SECURITY_CAPABILITY_INTERNET_CLIENT_SERVER __MSABI_LONG(0x00000002)
+#define SECURITY_CAPABILITY_PRIVATE_NETWORK_CLIENT_SERVER __MSABI_LONG(0x00000003)
+#define SECURITY_CAPABILITY_PICTURES_LIBRARY    __MSABI_LONG(0x00000004)
+#define SECURITY_CAPABILITY_VIDEOS_LIBRARY      __MSABI_LONG(0x00000005)
+#define SECURITY_CAPABILITY_MUSIC_LIBRARY       __MSABI_LONG(0x00000006)
+#define SECURITY_CAPABILITY_DOCUMENTS_LIBRARY   __MSABI_LONG(0x00000007)
+#define SECURITY_CAPABILITY_ENTERPRISE_AUTHENTICATION  __MSABI_LONG(0x00000008)
+#define SECURITY_CAPABILITY_SHARED_USER_CERTIFICATES __MSABI_LONG(0x00000009)
+#define SECURITY_CAPABILITY_REMOVABLE_STORAGE   __MSABI_LONG(0x0000000A)
+#define SECURITY_CAPABILITY_APPOINTMENTS        __MSABI_LONG(0x0000000B)
+#define SECURITY_CAPABILITY_CONTACTS            __MSABI_LONG(0x0000000C)
+
+#define SECURITY_CAPABILITY_INTERNET_EXPLORER   __MSABI_LONG(0x00001000)
 
 #define SECURITY_MANDATORY_LABEL_AUTHORITY {0,0,0,0,0,16}
 #define SECURITY_MANDATORY_UNTRUSTED_RID        __MSABI_LONG(0x00000000)
@@ -6430,7 +6512,7 @@ typedef struct _IO_COUNTERS {
 } IO_COUNTERS, *PIO_COUNTERS;
 #pragma pack(pop)
 
-typedef struct {
+typedef struct _OSVERSIONINFOA {
 	DWORD dwOSVersionInfoSize;
 	DWORD dwMajorVersion;
 	DWORD dwMinorVersion;
@@ -6439,7 +6521,7 @@ typedef struct {
 	CHAR szCSDVersion[128];
 } OSVERSIONINFOA, *POSVERSIONINFOA, *LPOSVERSIONINFOA;
 
-typedef struct {
+typedef struct _OSVERSIONINFOW {
 	DWORD dwOSVersionInfoSize;
 	DWORD dwMajorVersion;
 	DWORD dwMinorVersion;
@@ -6452,7 +6534,7 @@ DECL_WINELIB_TYPE_AW(OSVERSIONINFO)
 DECL_WINELIB_TYPE_AW(POSVERSIONINFO)
 DECL_WINELIB_TYPE_AW(LPOSVERSIONINFO)
 
-typedef struct {
+typedef struct _OSVERSIONINFOEXA {
 	DWORD dwOSVersionInfoSize;
 	DWORD dwMajorVersion;
 	DWORD dwMinorVersion;
@@ -6466,7 +6548,7 @@ typedef struct {
 	BYTE wReserved;
 } OSVERSIONINFOEXA, *POSVERSIONINFOEXA, *LPOSVERSIONINFOEXA;
 
-typedef struct {
+typedef struct _OSVERSIONINFOEXW {
 	DWORD dwOSVersionInfoSize;
 	DWORD dwMajorVersion;
 	DWORD dwMinorVersion;
@@ -7144,6 +7226,13 @@ typedef enum _FIRMWARE_TYPE
     FirmwareTypeUefi,
     FirmwareTypeMax
 } FIRMWARE_TYPE, *PFIRMWARE_TYPE;
+
+#define MEMORY_PRIORITY_LOWEST       0
+#define MEMORY_PRIORITY_VERY_LOW     1
+#define MEMORY_PRIORITY_LOW          2
+#define MEMORY_PRIORITY_MEDIUM       3
+#define MEMORY_PRIORITY_BELOW_NORMAL 4
+#define MEMORY_PRIORITY_NORMAL       5
 
 #ifndef __has_builtin
 # define __has_builtin(x) 0
