@@ -11187,6 +11187,12 @@ then :
   printf "%s\n" "#define HAVE_SYS_PARAM_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "sys/personality.h" "ac_cv_header_sys_personality_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_personality_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYS_PERSONALITY_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "sys/prctl.h" "ac_cv_header_sys_prctl_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_prctl_h" = xyes
 then :

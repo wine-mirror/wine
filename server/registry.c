@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -36,6 +37,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_PERSONALITY_H
+#include <sys/personality.h>
+#endif
 
 #include "ntstatus.h"
 #include "object.h"
@@ -1844,6 +1848,19 @@ static WCHAR *format_user_registry_path( const struct sid *sid, struct unicode_s
     return ascii_to_unicode_str( buffer, path );
 }
 
+#ifdef __aarch64__
+static bool supports_aarch32(void)
+{
+#if defined(HAVE_SYS_PERSONALITY_H)
+    int old = personality( PER_LINUX32 );
+    if (old == -1) return false;
+    personality( old );
+    return true;
+#endif
+    return false;
+}
+#endif
+
 static void init_supported_machines(void)
 {
     unsigned int count = 0;
@@ -1859,7 +1876,7 @@ static void init_supported_machines(void)
     {
         supported_machines[count++] = IMAGE_FILE_MACHINE_ARM64;
         supported_machines[count++] = IMAGE_FILE_MACHINE_I386;
-        supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
+        if (supports_aarch32()) supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
     }
 #else
 #error Unsupported machine
