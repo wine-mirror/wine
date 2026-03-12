@@ -2350,6 +2350,8 @@ START_TEST(converter)
     test_conversion(&testdata_BlackWhite, &testdata_1bppIndexed, "BlackWhite -> 1bppIndexed", FALSE);
     test_conversion(&testdata_BlackWhite, &testdata_8bppIndexed_BW, "BlackWhite -> 8bppIndexed", FALSE);
     test_conversion(&testdata_BlackWhite, &testdata_24bppBGR_BW, "BlackWhite -> 24bppBGR", FALSE);
+    test_conversion(&testdata_1bppIndexed, &testdata_BlackWhite, "1bppIndexed -> BlackWhite", FALSE);
+    test_conversion(&testdata_24bppBGR_BW, &testdata_BlackWhite, "24bppBGR -> BlackWhite", FALSE);
     test_conversion(&testdata_1bppIndexed, &testdata_8bppIndexed_BW, "1bppIndexed -> 8bppIndexed", FALSE);
     test_conversion(&testdata_2bppIndexed, &testdata_8bppIndexed_4colors, "2bppIndexed -> 8bppIndexed", FALSE);
     test_conversion(&testdata_4bppIndexed, &testdata_8bppIndexed, "4bppIndexed -> 8bppIndexed", FALSE);

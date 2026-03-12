@@ -1940,6 +1940,106 @@ static HRESULT copypixels_to_1bppIndexed(struct FormatConverter *This, const WIC
     }
 }
 
+static HRESULT copypixels_to_BlackWhite(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    switch (source_format)
+    {
+    case format_BlackWhite:
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+        return S_OK;
+
+    case format_1bppIndexed:
+        if (prc)
+        {
+            HRESULT res;
+            IWICPalette *palette;
+            WICColor colors[2];
+            UINT actualcolors;
+            BOOL invert = FALSE;
+
+            res = PaletteImpl_Create(&palette);
+            if (FAILED(res)) return res;
+
+            res = IWICBitmapSource_CopyPalette(This->source, palette);
+            if (SUCCEEDED(res))
+                res = IWICPalette_GetColors(palette, 2, colors, &actualcolors);
+
+            IWICPalette_Release(palette);
+            if (FAILED(res)) return res;
+
+            /* BlackWhite: bit 1 = white (0xFFFFFFFF), bit 0 = black (0xFF000000).
+             * If the indexed palette has white first, we need to invert. */
+            if (actualcolors >= 2 && (colors[0] & 0xFFFFFF) > (colors[1] & 0xFFFFFF))
+                invert = TRUE;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+
+            if (SUCCEEDED(res) && invert)
+            {
+                UINT srcstride = (prc->Width + 7) / 8;
+                INT y;
+                BYTE *row = pbBuffer;
+                for (y = 0; y < prc->Height; y++)
+                {
+                    UINT i;
+                    for (i = 0; i < srcstride; i++)
+                        row[i] = ~row[i];
+                    row += cbStride;
+                }
+            }
+
+            return res;
+        }
+        return S_OK;
+
+    default:
+        /* For all other formats, convert via 32bppBGRA and threshold. */
+        if (prc)
+        {
+            HRESULT res;
+            INT x, y;
+            UINT bgra_stride, bgra_size;
+            BYTE *bgra_data, *bgra_row, *dst_row;
+
+            bgra_stride = prc->Width * 4;
+            bgra_size = bgra_stride * prc->Height;
+
+            bgra_data = malloc(bgra_size);
+            if (!bgra_data) return E_OUTOFMEMORY;
+
+            res = copypixels_to_32bppBGRA(This, prc, bgra_stride, bgra_size, bgra_data, source_format);
+
+            if (SUCCEEDED(res))
+            {
+                bgra_row = bgra_data;
+                dst_row = pbBuffer;
+                for (y = 0; y < prc->Height; y++)
+                {
+                    for (x = 0; x < prc->Width; x++)
+                    {
+                        BYTE b = bgra_row[x * 4];
+                        BYTE g = bgra_row[x * 4 + 1];
+                        BYTE r = bgra_row[x * 4 + 2];
+                        /* Luminance threshold: >= 128 -> white (bit=1), < 128 -> black (bit=0) */
+                        if ((r * 77 + g * 150 + b * 29) >= 128 * 256)
+                            dst_row[x >> 3] |= 0x80 >> (x & 7);
+                        else
+                            dst_row[x >> 3] &= ~(0x80 >> (x & 7));
+                    }
+                    bgra_row += bgra_stride;
+                    dst_row += cbStride;
+                }
+            }
+
+            free(bgra_data);
+            return res;
+        }
+        return S_OK;
+    }
+}
+
 static HRESULT copypixels_to_16bppBGRA5551(struct FormatConverter *This, const WICRect *prc,
     UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
 {
@@ -2449,7 +2549,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_2bppIndexed, &GUID_WICPixelFormat2bppIndexed, NULL, TRUE},
     {format_4bppIndexed, &GUID_WICPixelFormat4bppIndexed, NULL, TRUE},
     {format_8bppIndexed, &GUID_WICPixelFormat8bppIndexed, copypixels_to_8bppIndexed, TRUE},
-    {format_BlackWhite, &GUID_WICPixelFormatBlackWhite, NULL},
+    {format_BlackWhite, &GUID_WICPixelFormatBlackWhite, copypixels_to_BlackWhite},
     {format_2bppGray, &GUID_WICPixelFormat2bppGray, NULL},
     {format_4bppGray, &GUID_WICPixelFormat4bppGray, NULL},
     {format_8bppGray, &GUID_WICPixelFormat8bppGray, copypixels_to_8bppGray},
