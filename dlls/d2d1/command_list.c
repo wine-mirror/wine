@@ -116,7 +116,6 @@ struct d2d_command_push_layer
 {
     struct d2d_command c;
     D2D1_LAYER_PARAMETERS1 params;
-    ID2D1Layer *layer;
 };
 
 struct d2d_command_draw_line
@@ -447,7 +446,7 @@ static HRESULT STDMETHODCALLTYPE d2d_command_list_Stream(ID2D1CommandList *iface
             case D2D_COMMAND_PUSH_LAYER:
             {
                 const struct d2d_command_push_layer *c = data;
-                hr = ID2D1CommandSink_PushLayer(sink, &c->params, c->layer);
+                hr = ID2D1CommandSink_PushLayer(sink, &c->params, NULL);
                 break;
             }
             case D2D_COMMAND_POP_CLIP:
@@ -713,7 +712,7 @@ void d2d_command_list_pop_clip(struct d2d_command_list *command_list)
 }
 
 void d2d_command_list_push_layer(struct d2d_command_list *command_list, const struct d2d_device_context *context,
-        const D2D1_LAYER_PARAMETERS1 *params, ID2D1Layer *layer)
+        const D2D1_LAYER_PARAMETERS1 *params)
 {
     struct d2d_command_push_layer *command;
     ID2D1Brush *opacity_brush = NULL;
@@ -725,14 +724,12 @@ void d2d_command_list_push_layer(struct d2d_command_list *command_list, const st
         return;
     }
 
-    d2d_command_list_reference_object(command_list, layer);
     d2d_command_list_reference_object(command_list, params->geometricMask);
 
     command = d2d_command_list_require_space(command_list, sizeof(*command));
     command->c.op = D2D_COMMAND_PUSH_LAYER;
     command->params = *params;
     command->params.opacityBrush = opacity_brush;
-    command->layer = layer;
 }
 
 void d2d_command_list_pop_layer(struct d2d_command_list *command_list)
