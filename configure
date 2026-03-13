@@ -23714,6 +23714,7 @@ wine_fn_config_makefile dlls/icmp enable_icmp
 wine_fn_config_makefile dlls/icmui enable_icmui
 wine_fn_config_makefile dlls/icmui/tests enable_tests
 wine_fn_config_makefile dlls/icu enable_icu
+wine_fn_config_makefile dlls/icu/tests enable_tests
 wine_fn_config_makefile dlls/icuin enable_icuin
 wine_fn_config_makefile dlls/icuuc enable_icuuc
 wine_fn_config_makefile dlls/ieframe enable_ieframe

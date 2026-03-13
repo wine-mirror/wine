@@ -1,0 +1,5 @@
+TESTDLL = icu.dll
+IMPORTS = icu
+
+SOURCES = \
+	icu.c
