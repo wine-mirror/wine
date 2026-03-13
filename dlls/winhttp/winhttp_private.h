@@ -46,6 +46,7 @@ struct object_header
     DWORD logon_policy;
     DWORD redirect_policy;
     DWORD error;
+    DWORD decompression;
     DWORD_PTR context;
     LONG refs;
     WINHTTP_STATUS_CALLBACK callback;

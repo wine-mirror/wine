@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <wchar.h>
+#include <zlib.h>
 
 #define COBJMACROS
 #include "windef.h"
@@ -360,6 +361,154 @@ const struct data_stream_vtbl chunked_stream_vtbl =
     chunked_drain_data,
     chunked_destroy
 };
+
+struct gzip_stream
+{
+    struct data_stream data_stream;
+    struct data_stream *parent_stream;
+    z_stream zstream;
+    BYTE buf[READ_BUFFER_SIZE];
+    DWORD buf_size;
+    DWORD buf_pos;
+    BOOL end_of_data;
+};
+
+static DWORD gzip_query_data( struct data_stream *stream, struct request *request )
+{
+    struct gzip_stream *gzip_stream = (struct gzip_stream *)stream;
+    return gzip_stream->buf_size;
+}
+
+static BOOL gzip_end_of_data( struct data_stream *stream, struct request *request )
+{
+    struct gzip_stream *gzip_stream = (struct gzip_stream *)stream;
+    return gzip_stream->end_of_data ||
+           (!gzip_stream->buf_size && gzip_stream->parent_stream->vtbl->end_of_data( gzip_stream->parent_stream, request ));
+}
+
+static DWORD gzip_read( struct data_stream *stream, struct request *request, char *buf, DWORD to_read, DWORD *read )
+{
+    struct gzip_stream *gzip_stream = (struct gzip_stream *)stream;
+    z_stream *zstream = &gzip_stream->zstream;
+    DWORD size, ret_read = 0;
+    int zres;
+    DWORD ret = ERROR_SUCCESS;
+
+    while (to_read && !gzip_stream->end_of_data)
+    {
+        if (!gzip_stream->buf_size)
+        {
+            if (gzip_stream->buf_pos)
+            {
+                if (gzip_stream->buf_size)
+                    memmove( gzip_stream->buf, gzip_stream->buf + gzip_stream->buf_pos, gzip_stream->buf_size );
+                gzip_stream->buf_pos = 0;
+            }
+            ret = gzip_stream->parent_stream->vtbl->read_data( gzip_stream->parent_stream, request,
+                                                               (char *)gzip_stream->buf + gzip_stream->buf_size,
+                                                               sizeof(gzip_stream->buf) - gzip_stream->buf_size, &size );
+            if (ret) break;
+            gzip_stream->buf_size += size;
+            if (!size)
+            {
+                WARN( "unexpected end of data\n" );
+                gzip_stream->end_of_data = TRUE;
+                break;
+            }
+        }
+
+        zstream->next_in = gzip_stream->buf + gzip_stream->buf_pos;
+        zstream->avail_in = gzip_stream->buf_size;
+        zstream->next_out = (Bytef *)buf + ret_read;
+        zstream->avail_out = to_read;
+        zres = inflate( &gzip_stream->zstream, 0 );
+        size = to_read - zstream->avail_out;
+        to_read -= size;
+        ret_read += size;
+        gzip_stream->buf_size -= zstream->next_in - (gzip_stream->buf + gzip_stream->buf_pos);
+        gzip_stream->buf_pos = zstream->next_in - gzip_stream->buf;
+        if (zres == Z_STREAM_END)
+        {
+            TRACE( "end of data\n" );
+            gzip_stream->end_of_data = TRUE;
+            inflateEnd( zstream );
+        }
+        else if (zres != Z_OK)
+        {
+            WARN( "inflate failed %d: %s\n", zres, debugstr_a(zstream->msg) );
+            if (!ret_read) ret = ERROR_NO_DATA;
+            break;
+        }
+    }
+
+    if (ret_read) ret = ERROR_SUCCESS;
+    *read = ret_read;
+    return ret;
+}
+
+static DWORD gzip_drain_content( struct data_stream *stream, struct request *request )
+{
+    struct gzip_stream *gzip_stream = (struct gzip_stream *)stream;
+    return gzip_stream->parent_stream->vtbl->drain_data( gzip_stream->parent_stream, request );
+}
+
+static void gzip_destroy( struct data_stream *stream )
+{
+    struct gzip_stream *gzip_stream = (struct gzip_stream *)stream;
+    destroy_data_stream( gzip_stream->parent_stream );
+    if (!gzip_stream->end_of_data) inflateEnd( &gzip_stream->zstream );
+    free( gzip_stream );
+}
+
+static const struct data_stream_vtbl gzip_stream_vtbl =
+{
+    gzip_query_data,
+    gzip_end_of_data,
+    gzip_read,
+    gzip_drain_content,
+    gzip_destroy
+};
+
+static voidpf gzip_zalloc( voidpf opaque, uInt items, uInt size )
+{
+    return malloc( items * size );
+}
+
+static void gzip_zfree( voidpf opaque, voidpf address )
+{
+    free( address );
+}
+
+static DWORD init_gzip_stream( struct request *request, BOOL is_gzip )
+{
+    struct gzip_stream *gzip_stream;
+    int zres;
+
+    if (!(gzip_stream = calloc( 1, sizeof(*gzip_stream) ))) return ERROR_OUTOFMEMORY;
+
+    gzip_stream->data_stream.vtbl = &gzip_stream_vtbl;
+    gzip_stream->zstream.zalloc = gzip_zalloc;
+    gzip_stream->zstream.zfree = gzip_zfree;
+
+    zres = inflateInit2( &gzip_stream->zstream, is_gzip ? 31 : -15 );
+    if (zres != Z_OK)
+    {
+        ERR( "inflateInit failed: %d\n", zres );
+        free( gzip_stream );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    if (request->read_size)
+    {
+        memcpy( gzip_stream->buf, request->read_buf + request->read_pos, request->read_size );
+        gzip_stream->buf_size = request->read_size;
+        request->read_pos = request->read_size = 0;
+    }
+
+    gzip_stream->parent_stream = request->data_stream;
+    request->data_stream = &gzip_stream->data_stream;
+    return ERROR_SUCCESS;
+}
 
 static int request_receive_response_timeout( struct request *req )
 {
@@ -731,6 +880,12 @@ static void delete_header( struct request *request, DWORD index )
     memmove( &request->headers[index], &request->headers[index + 1],
              (request->num_headers - index) * sizeof(struct header) );
     memset( &request->headers[request->num_headers], 0, sizeof(struct header) );
+}
+
+static void remove_header( struct request *request, const WCHAR *header, BOOL request_only )
+{
+    int index = get_header_index( request, header, 0, request_only );
+    if (index != -1) delete_header( request, index );
 }
 
 DWORD process_header( struct request *request, const WCHAR *field, const WCHAR *value, DWORD flags, BOOL request_only )
@@ -2442,6 +2597,14 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
         TRACE( "failed to add request headers: %lu\n", ret );
         return ret;
     }
+    if (request->hdr.decompression)
+    {
+        WCHAR encoding[16];
+        if (request->hdr.decompression == WINHTTP_DECOMPRESSION_FLAG_ALL) wcscpy( encoding, L"gzip, deflate" );
+        else if (request->hdr.decompression == WINHTTP_DECOMPRESSION_FLAG_GZIP) wcscpy( encoding, L"gzip" );
+        else if (request->hdr.decompression == WINHTTP_DECOMPRESSION_FLAG_DEFLATE) wcscpy( encoding, L"deflate" );
+        process_header( request, L"Accept-Encoding", encoding, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE, TRUE );
+    }
     if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES) && (ret = add_cookie_headers( request )))
     {
         WARN( "failed to add cookie headers: %lu\n", ret );
@@ -2689,7 +2852,7 @@ static DWORD handle_authorization( struct request *request, DWORD status )
 static DWORD set_content_length( struct request *request, DWORD status )
 {
     WCHAR buf[21];
-    DWORD buflen = sizeof(buf);
+    DWORD buflen = sizeof(buf), ret = ERROR_SUCCESS;
 
     if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED ||
         status == HTTP_STATUS_SWITCH_PROTOCOLS || !wcscmp( request->verb, L"HEAD" ))
@@ -2728,9 +2891,22 @@ static DWORD set_content_length( struct request *request, DWORD status )
             request->data_stream = &chunked_stream->data_stream;
             request->content_length = ~0ull;
         }
+
+        buflen = sizeof(buf);
+        if (!query_headers( request, WINHTTP_QUERY_CONTENT_ENCODING, NULL, buf, &buflen, NULL ))
+        {
+            if (!wcsicmp( buf, L"gzip" )) ret = init_gzip_stream( request, TRUE );
+            else if (!wcsicmp( buf, L"deflate" )) ret = init_gzip_stream( request, FALSE );
+            else ret = ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+            if (!ret)
+            {
+                remove_header( request, L"Content-Length", FALSE );
+                request->content_length = ~0ull;
+            }
+        }
     }
     request->content_read = 0;
-    return ERROR_SUCCESS;
+    return ret;
 }
 
 /* remove some amount of data from the read buffer */

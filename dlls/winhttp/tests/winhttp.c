@@ -6316,6 +6316,58 @@ static void test_connection_cache(int port)
     WinHttpCloseHandle(ses);
 }
 
+static void test_decompression(void)
+{
+    HINTERNET ses, req, con;
+    DWORD decompression, len, status, size;
+    BOOL ret;
+
+    ses = WinHttpOpen( L"winetest", WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
+    ok( ses != NULL, "got %lu\n", GetLastError() );
+
+    decompression = WINHTTP_DECOMPRESSION_FLAG_ALL;
+    ret = WinHttpSetOption( ses, WINHTTP_OPTION_DECOMPRESSION, &decompression, sizeof(decompression) );
+    ok( ret, "got %lu\n", GetLastError() );
+
+    con = WinHttpConnect( ses, L"test.winehq.org", 0, 0 );
+    ok( con != NULL, "got %lu\n", GetLastError() );
+
+    req = WinHttpOpenRequest( con, NULL, L"tests/gzip.php", NULL, NULL, NULL, 0 );
+    ok( req != NULL, "got %lu\n", GetLastError() );
+
+    ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
+    ok( ret, "got %lu\n", GetLastError() );
+
+    ret = WinHttpReceiveResponse( req, NULL );
+    ok( ret, "got %lu\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
+    ok( ret, "got %lu\n", GetLastError() );
+    ok( status == HTTP_STATUS_OK, "got %lu\n", status );
+
+    len = 0xdeadbeef;
+    size = sizeof(len);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &len, &size, 0 );
+    ok( !ret && GetLastError() == ERROR_WINHTTP_HEADER_NOT_FOUND, "got %lu\n", GetLastError() );
+    ok( len == 0xdeadbeef, "got %lu\n", len );
+
+    for (;;)
+    {
+        char buf[4096];
+
+        size = 0;
+        ret = WinHttpReadData( req, buf, sizeof(buf), &size );
+        ok( ret, "got %lu\n", GetLastError() );
+        if (!ret || !size) break;
+    }
+
+    WinHttpCloseHandle( req );
+    WinHttpCloseHandle( con );
+    WinHttpCloseHandle( ses );
+}
+
 START_TEST (winhttp)
 {
     struct server_info si;
@@ -6350,6 +6402,7 @@ START_TEST (winhttp)
     test_WinHttpGetIEProxyConfigForCurrentUser();
     test_chunked_read();
     test_max_http_automatic_redirects();
+    test_decompression();
 
     si.event = CreateEventW(NULL, 0, 0, NULL);
     si.port = 7532;
