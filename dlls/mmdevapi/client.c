@@ -360,12 +360,14 @@ skip:
 
 HRESULT validate_fmt(const WAVEFORMATEXTENSIBLE *fmt, BOOL compatible)
 {
-    WAVEFORMATEXTENSIBLE fmt2 = *fmt;
+    WAVEFORMATEXTENSIBLE fmt2;
     HRESULT ret;
 
     /* Reduce non-extensible formats to extensible ones. */
-    if (fmt2.Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+    if (fmt->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
     {
+        fmt2.Format = fmt->Format;
+
         switch (fmt2.Format.wFormatTag)
         {
             case WAVE_FORMAT_PCM: fmt2.SubFormat = KSDATAFORMAT_SUBTYPE_PCM; break;
@@ -380,10 +382,14 @@ HRESULT validate_fmt(const WAVEFORMATEXTENSIBLE *fmt, BOOL compatible)
         fmt2.Samples.wValidBitsPerSample = fmt2.Format.wBitsPerSample;
         fmt2.Format.cbSize = sizeof(fmt2) - sizeof(fmt2.Format);
     }
+    else
+    {
+        if (fmt->Format.cbSize < sizeof(fmt2) - sizeof(fmt2.Format))
+            return E_INVALIDARG;
+        fmt2 = *fmt;
+    }
 
-    if (fmt2.Format.cbSize < sizeof(fmt2) - sizeof(fmt2.Format))
-        ret = E_INVALIDARG;
-    else if (fmt2.Format.nChannels == 0 || fmt2.Format.nSamplesPerSec == 0)
+    if (fmt2.Format.nChannels == 0 || fmt2.Format.nSamplesPerSec == 0)
         ret = E_INVALIDARG;
     else if (fmt2.Format.nBlockAlign != fmt2.Format.nChannels * fmt2.Format.wBitsPerSample / 8)
         ret = E_INVALIDARG;

@@ -1901,13 +1901,14 @@ static void test_PlaySound(void)
 
 static MMRESULT validate_fmt(const WAVEFORMATEXTENSIBLE *fmt, BOOL direct)
 {
-    WAVEFORMATEXTENSIBLE fmt2 = *fmt;
+    WAVEFORMATEXTENSIBLE fmt2;
     BOOL extensible = TRUE;
     MMRESULT ret;
 
     /* Reduce non-extensible formats to extensible ones. */
-    if (fmt2.Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+    if (fmt->Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE)
     {
+        fmt2.Format = fmt->Format;
         extensible = FALSE;
 
         switch (fmt2.Format.wFormatTag)
@@ -1926,10 +1927,14 @@ static MMRESULT validate_fmt(const WAVEFORMATEXTENSIBLE *fmt, BOOL direct)
         fmt2.Samples.wValidBitsPerSample = fmt2.Format.wBitsPerSample;
         fmt2.Format.cbSize = sizeof(fmt2) - sizeof(fmt2.Format);
     }
+    else
+    {
+        if (fmt->Format.cbSize < sizeof(fmt2) - sizeof(fmt2.Format))
+            return WAVERR_BADFORMAT;
+        fmt2 = *fmt;
+    }
 
-    if (fmt2.Format.cbSize < sizeof(fmt2) - sizeof(fmt2.Format))
-        ret = direct ? MMSYSERR_INVALPARAM : WAVERR_BADFORMAT;
-    else if ((fmt2.Format.nChannels == 0) || fmt2.Format.nSamplesPerSec == 0)
+    if ((fmt2.Format.nChannels == 0) || fmt2.Format.nSamplesPerSec == 0)
         ret = WAVERR_BADFORMAT;
     else if (fmt2.Format.nBlockAlign != fmt2.Format.nChannels * fmt2.Format.wBitsPerSample / 8)
         ret = WAVERR_BADFORMAT;
