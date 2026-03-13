@@ -1604,7 +1604,9 @@ NTSTATUS WINAPI NtGdiDdDDIAcquireKeyedMutex2( D3DKMT_ACQUIREKEYEDMUTEX2 *params 
 
             status = wine_server_call( req );
             params->FenceValue = reply->fence_value;
-            wait_handle = wine_server_ptr_handle( reply->wait_handle );
+            /* server never creates a new handle if one is provided, and always returns a handle if pending */
+            if (reply->wait_handle) wait_handle = wine_server_ptr_handle( reply->wait_handle );
+            else if (wait_handle) NtClose( wait_handle );
         }
         SERVER_END_REQ;
     } while (status == STATUS_PENDING);

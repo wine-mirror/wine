@@ -752,7 +752,7 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
     struct d3dkmt_mutex *mutex;
     struct object *sync;
 
-    if (!(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) goto done;
+    if (!(mutex = d3dkmt_object_open( req->mutex, D3DKMT_MUTEX ))) return;
 
     if (req->wait_status) set_error( req->wait_status );
     else if (mutex->abandoned) set_error( STATUS_ABANDONED );
@@ -770,12 +770,7 @@ DECL_HANDLER(d3dkmt_mutex_acquire)
 
     release_object( mutex );
 
-done:
-    if (get_error() != STATUS_PENDING && req->wait_handle)
-    {
-        close_handle( current->process, req->wait_handle );
-        if (mutex) keyed_wait_release( mutex, req->key_value );
-    }
+    if (get_error() != STATUS_PENDING && req->wait_handle) keyed_wait_release( mutex, req->key_value );
 }
 
 /* Release a global d3dkmt keyed mutex */
