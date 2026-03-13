@@ -388,7 +388,8 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *
     UINT max_ipos = (freqAcc_start + count * dsb->freqAdjustNum) / dsb->freqAdjustDen;
 
     UINT fir_cachesize = (fir_len + dsbfirstep - 2) / dsbfirstep;
-    UINT required_input = max_ipos + fir_cachesize;
+    UINT required_input = (freqAcc_start + (count - 1) * dsb->freqAdjustNum) / dsb->freqAdjustDen +
+            max(fir_width, fir_cachesize);
     float *intermediate, *output, *itmp;
 
     DWORD len = required_input * channels;
