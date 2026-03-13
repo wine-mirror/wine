@@ -3503,6 +3503,9 @@ static void saxreader_add_default_attributes(struct saxlocator *locator, struct 
             {
                 const struct attlist_attr *attr = &decl->attributes[i];
 
+                if (!attr->value)
+                    continue;
+
                 if (!saxreader_has_attribute(locator, attr->name.qname))
                     saxreader_add_attribute(locator, &attr->name, attr->value, false);
             }
