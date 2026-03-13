@@ -6237,7 +6237,6 @@ static void test_direct_syscalls(void)
     func = code_mem;
     func(find_syscall_nr("NtSetEvent"), event, NULL);
 
-    todo_wine
     ok(WaitForSingleObject(event, 0) == WAIT_OBJECT_0, "Event not signaled.\n");
     CloseHandle(event);
 }

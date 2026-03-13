@@ -35,6 +35,9 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#ifdef HAVE_LINK_H
+# include <link.h>
+#endif
 #ifdef HAVE_MACHINE_SYSARCH_H
 # include <machine/sysarch.h>
 #endif
@@ -43,6 +46,9 @@
 #endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_PRCTL_H
+# include <sys/prctl.h>
 #endif
 #ifdef HAVE_SYSCALL_H
 # include <syscall.h>
@@ -506,6 +512,7 @@ struct amd64_thread_data
     void                **instrumentation_callback; /* 0330 */
     DWORD                 fs;            /* 0338 WOW TEB selector */
     DWORD                 mxcsr;         /* 033c Unix-side mxcsr register */
+    char                  syscall_dispatch; /* 0340 */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
@@ -514,6 +521,7 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fra
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, instrumentation_callback ) == 0x330 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x338 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, mxcsr ) == 0x33c );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_dispatch ) == 0x340 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -908,15 +916,15 @@ static inline ucontext_t *init_handler( void *sigcontext )
 {
     clear_alignment_flag();
 #ifdef __linux__
-    if (fs32_sel)
     {
-        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&get_current_teb()->GdiTebBatch;
-        arch_prctl( ARCH_SET_FS, ((struct amd64_thread_data *)thread_data->cpu_data)->pthread_teb );
+        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&get_current_teb()->GdiTebBatch;
+        thread_data->syscall_dispatch = 0; /* SYSCALL_DISPATCH_FILTER_ALLOW */
+        if (fs32_sel) arch_prctl( ARCH_SET_FS, thread_data->pthread_teb );
     }
 #elif defined __APPLE__
     {
-        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&get_current_teb()->GdiTebBatch;
-        _thread_set_tsd_base( (uint64_t)((struct amd64_thread_data *)thread_data->cpu_data)->pthread_teb );
+        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&get_current_teb()->GdiTebBatch;
+        _thread_set_tsd_base( (uint64_t)thread_data->pthread_teb );
 
         /* When in a syscall, CS will be the kernel's selector (0x07, SYSCALL_CS in xnu source)
          * instead of the user selector (cs64_sel: 0x2b, USER64_CS).
@@ -938,10 +946,13 @@ static inline ucontext_t *init_handler( void *sigcontext )
 static inline void leave_handler( ucontext_t *sigcontext )
 {
 #ifdef __linux__
-    if (fs32_sel &&
-        !is_inside_signal_stack( (void *)RSP_sig(sigcontext )) &&
+    struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&NtCurrentTeb()->GdiTebBatch;
+    if (!is_inside_signal_stack( (void *)RSP_sig(sigcontext )) &&
         !is_inside_syscall( RSP_sig(sigcontext) ))
-        __asm__ volatile( "movw %0,%%fs" :: "r" (fs32_sel) );
+    {
+        thread_data->syscall_dispatch = 1;  /* SYSCALL_DISPATCH_FILTER_BLOCK */
+        if (fs32_sel) __asm__ volatile( "movw %0,%%fs" :: "r" (fs32_sel) );
+    }
 #elif defined __APPLE__
     if (!is_inside_signal_stack( (void *)RSP_sig(sigcontext )) &&
         !is_inside_syscall( RSP_sig(sigcontext )))
@@ -1802,6 +1813,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movq 0x98(%r14),%rbp\n\t"  /* prev_frame->rbp */
                    "ldmxcsr 0xd8(%r14)\n\t"    /* prev_frame->xsave.MxCsr */
 #ifdef __linux__
+                   "movb $1,0x340(%r13)\n\t"   /* amd64_thread_data()->syscall_dispatch */
                    "movw 0x338(%r13),%ax\n"    /* amd64_thread_data()->fs */
                    "testw %ax,%ax\n\t"
                    "jz 1f\n\t"
@@ -2682,12 +2694,12 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 }
 
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(PR_SET_SYSCALL_USER_DISPATCH)
 /**********************************************************************
  *		sigsys_handler
  *
  * Handler for SIGSYS, signals that a non-existent system call was invoked.
- * Only called on macOS 14 Sonoma and later.
+ * On Mac, this is only called on macOS 14 Sonoma and later.
  */
 static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
@@ -2825,6 +2837,29 @@ static void *mac_thread_gsbase(void)
 }
 #endif
 
+#ifdef PR_SET_SYSCALL_USER_DISPATCH
+static uintptr_t libc_addr, libc_size;
+
+static int libc_addr_cb( struct dl_phdr_info *info, size_t size, void *arg )
+{
+    const char *p;
+
+    if ((p = strrchr( info->dlpi_name, '/' )))
+        ++p;
+    else
+        p = info->dlpi_name;
+
+    if (strcmp( p, "libc.so.6" ))
+        return 0;
+
+    libc_addr = info->dlpi_addr;
+    libc_size = 0;
+    for (unsigned int i = 0; i < info->dlpi_phnum; ++i)
+        libc_size = max( libc_size, info->dlpi_phdr[i].p_vaddr + info->dlpi_phdr[i].p_memsz );
+
+    return 1;
+}
+#endif
 
 /**********************************************************************
  *		signal_init_process
@@ -2858,6 +2893,11 @@ void signal_init_process(void)
 #endif
     }
 
+#ifdef PR_SET_SYSCALL_USER_DISPATCH
+    if (!dl_iterate_phdr( libc_addr_cb, NULL ))
+        WARN_(seh)( "could not find libc\n" );
+#endif
+
     signal_alloc_thread( NtCurrentTeb() );
 
     sig_act.sa_mask = server_block_set;
@@ -2879,7 +2919,7 @@ void signal_init_process(void)
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(PR_SET_SYSCALL_USER_DISPATCH)
     sig_act.sa_sigaction = sigsys_handler;
     if (sigaction( SIGSYS, &sig_act, NULL ) == -1) goto error;
 #endif
@@ -2912,6 +2952,11 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
         arch_prctl( ARCH_GET_FS, &thread_data->pthread_teb );
         alloc_fs_sel( fs32_sel >> 3, get_wow_teb( teb ));
     }
+#ifdef PR_SET_SYSCALL_USER_DISPATCH
+    if (libc_addr && prctl( PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON,
+                            libc_addr, libc_size, &thread_data->syscall_dispatch ) < 0)
+        WARN_(seh)( "could not enable syscall user dispatch\n" );
+#endif
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
@@ -3115,6 +3160,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     * (on macOS, signal handlers set gsbase to pthread_teb when on the kernel stack).
                     */
 #ifdef __linux__
+                   "movb $0,0x340(%r13)\n\t"       /* amd64_thread_data()->syscall_dispatch */
                    "movq 0x320(%r13),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
                    "testq %rsi,%rsi\n\t"
                    "jz 2f\n\t"
@@ -3174,6 +3220,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI_CFA_IS_AT2(rcx, 0xa8, 0x01) /* frame->syscall_cfa */
                    "leaq 0x70(%rcx),%rsp\n\t"      /* %rsp > frame means no longer inside syscall */
 #ifdef __linux__
+                   "movb $1,0x340(%r13)\n\t"       /* amd64_thread_data()->syscall_dispatch */
                    "movw 0x338(%r13),%dx\n"        /* amd64_thread_data()->fs */
                    "testw %dx,%dx\n\t"
                    "jz 1f\n\t"
@@ -3404,6 +3451,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_undefined %rdi\n\t")
                    __ASM_CFI(".cfi_undefined %rsi\n\t")
 #ifdef __linux__
+                   "movb $0,0x340(%r13)\n\t"       /* amd64_thread_data()->syscall_dispatch */
                    "movq 0x320(%r13),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
                    "testq %rsi,%rsi\n\t"
                    "jz 2f\n\t"
@@ -3442,6 +3490,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
 #ifdef __linux__
+                   "movb $1,0x340(%r13)\n\t"       /* amd64_thread_data()->syscall_dispatch */
                    "movw 0x338(%r13),%dx\n"        /* amd64_thread_data()->fs */
                    "testw %dx,%dx\n\t"
                    "jz 1f\n\t"
