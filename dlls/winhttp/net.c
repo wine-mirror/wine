@@ -689,6 +689,11 @@ DWORD netconn_set_timeout( struct netconn *netconn, BOOL send, int value )
     return ERROR_SUCCESS;
 }
 
+BOOL netconn_is_valid( struct netconn *netconn )
+{
+    return netconn && netconn->socket != -1;
+}
+
 BOOL netconn_is_alive( struct netconn *netconn )
 {
     SIZE_T size;

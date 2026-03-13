@@ -187,6 +187,34 @@ enum request_response_state
     REQUEST_RESPONSE_STATE_RESPONSE_RECEIVED,
 };
 
+#define READ_BUFFER_SIZE 8192
+
+struct data_stream;
+struct request;
+
+struct data_stream_vtbl
+{
+    DWORD (*query_data)( struct data_stream *, struct request * );
+    BOOL  (*end_of_data)( struct data_stream *, struct request * );
+    DWORD (*read_data)( struct data_stream *, struct request *, char *, DWORD, DWORD * );
+    DWORD (*drain_data)( struct data_stream *, struct request * );
+    void  (*destroy)( struct data_stream * );
+};
+
+struct data_stream
+{
+    const struct data_stream_vtbl *vtbl;
+};
+
+struct netconn_stream
+{
+    struct data_stream data_stream;
+    UINT64 content_length;
+    UINT64 content_read;
+};
+
+extern const struct data_stream_vtbl netconn_stream_vtbl;
+
 struct request
 {
     struct object_header hdr;
@@ -215,12 +243,11 @@ struct request
     WCHAR *status_text;
     UINT64 content_length; /* total number of bytes to be read */
     UINT64 content_read;   /* bytes read so far */
-    BOOL  read_chunked;   /* are we reading in chunked mode? */
-    BOOL  read_chunked_eof;  /* end of stream in chunked mode */
-    BOOL  read_chunked_size; /* chunk size remaining */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
-    char  read_buf[8192]; /* buffer for already read but not returned data */
+    char  read_buf[READ_BUFFER_SIZE]; /* buffer for already read but not returned data */
+    struct data_stream *data_stream;
+    struct netconn_stream netconn_stream;
     struct header *headers;
     DWORD num_headers;
     struct authinfo *authinfo;
@@ -415,6 +442,7 @@ BOOL netconn_wait_overlapped_result( struct netconn *conn, WSAOVERLAPPED *ovr, D
 void netconn_cancel_io( struct netconn *conn );
 DWORD netconn_set_timeout( struct netconn *, BOOL, int );
 BOOL netconn_is_alive( struct netconn * );
+BOOL netconn_is_valid( struct netconn * );
 const void *netconn_get_certificate( struct netconn * );
 int netconn_get_cipher_strength( struct netconn * );
 
@@ -424,6 +452,7 @@ DWORD add_request_headers( struct request *, const WCHAR *, DWORD, DWORD );
 void destroy_cookies( struct session * );
 BOOL set_server_for_hostname( struct connect *, const WCHAR *, INTERNET_PORT );
 void destroy_authinfo( struct authinfo * );
+void destroy_data_stream( struct data_stream * );
 
 void release_host( struct hostdata * );
 DWORD process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOOL );

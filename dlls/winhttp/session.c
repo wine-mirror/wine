@@ -678,6 +678,7 @@ static void request_destroy( struct object_header *hdr )
         }
     }
 
+    destroy_data_stream( request->data_stream );
     free( request );
 }
 
@@ -1322,6 +1323,8 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, const WCHAR *verb, cons
     request->websocket_send_buffer_size = connect->session->websocket_send_buffer_size;
     request->websocket_set_send_buffer_size = request->websocket_send_buffer_size;
     request->read_reply_status = ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+    request->netconn_stream.data_stream.vtbl = &netconn_stream_vtbl;
+    request->data_stream = &request->netconn_stream.data_stream;
 
     if (!verb || !verb[0]) verb = L"GET";
     if (!(request->verb = wcsdup( verb ))) goto end;
