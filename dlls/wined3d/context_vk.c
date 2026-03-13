@@ -167,6 +167,22 @@ static VkColorComponentFlags vk_colour_write_mask_from_wined3d(uint32_t wined3d_
     return vk_mask;
 }
 
+static VkPolygonMode vk_polygon_mode_from_wined3d(enum wined3d_fill_mode mode)
+{
+    switch (mode)
+    {
+        case WINED3D_FILL_POINT:
+            return VK_POLYGON_MODE_POINT;
+        case WINED3D_FILL_SOLID:
+            return VK_POLYGON_MODE_FILL;
+        case WINED3D_FILL_WIREFRAME:
+            return VK_POLYGON_MODE_LINE;
+        default:
+            FIXME("Unhandled fill mode %#x.\n", mode);
+            return VK_POLYGON_MODE_FILL;
+    }
+}
+
 static VkCullModeFlags vk_cull_mode_from_wined3d(enum wined3d_cull mode)
 {
     switch (mode)
@@ -2403,6 +2419,7 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     {
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_DEPTH_CLAMP_ENABLE_EXT;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT;
+        dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_POLYGON_MODE_EXT;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_CULL_MODE_EXT;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_FRONT_FACE_EXT;
         dynamic_states[dynamic_state_count++] = VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT;
@@ -2486,6 +2503,7 @@ static void rasterizer_state_from_wined3d(VkPipelineRasterizationStateCreateInfo
     {
         desc->depthClampEnable = VK_FALSE;
         desc->rasterizerDiscardEnable = is_rasterization_disabled(state->shader[WINED3D_SHADER_TYPE_GEOMETRY]);
+        desc->polygonMode = VK_POLYGON_MODE_FILL;
         desc->cullMode = VK_CULL_MODE_BACK_BIT;
         desc->frontFace = VK_FRONT_FACE_CLOCKWISE;
         desc->depthBiasEnable = VK_FALSE;
@@ -2499,6 +2517,7 @@ static void rasterizer_state_from_wined3d(VkPipelineRasterizationStateCreateInfo
     r = &state->rasterizer_state->desc;
     desc->depthClampEnable = !r->depth_clip;
     desc->rasterizerDiscardEnable = is_rasterization_disabled(state->shader[WINED3D_SHADER_TYPE_GEOMETRY]);
+    desc->polygonMode = vk_polygon_mode_from_wined3d(r->fill_mode);
     desc->cullMode = vk_cull_mode_from_wined3d(r->cull_mode);
     desc->frontFace = r->front_ccw ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
 
@@ -2547,6 +2566,7 @@ static void wined3d_context_vk_set_dynamic_rasterizer_state(const struct wined3d
 
     VK_CALL(vkCmdSetRasterizerDiscardEnableEXT(vk_command_buffer, desc.rasterizerDiscardEnable));
     VK_CALL(vkCmdSetDepthClampEnableEXT(vk_command_buffer, desc.depthClampEnable));
+    VK_CALL(vkCmdSetPolygonModeEXT(vk_command_buffer, desc.polygonMode));
     VK_CALL(vkCmdSetCullModeEXT(vk_command_buffer, desc.cullMode));
     VK_CALL(vkCmdSetFrontFaceEXT(vk_command_buffer, desc.frontFace));
     VK_CALL(vkCmdSetDepthBiasEnableEXT(vk_command_buffer, desc.depthBiasEnable));

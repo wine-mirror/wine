@@ -200,6 +200,7 @@ struct wined3d_device_vk;
     VK_DEVICE_EXT_PFN(vkCmdSetDepthBiasEnableEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetDepthClampEnableEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetFrontFaceEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdSetPolygonModeEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetRasterizationSamplesEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetRasterizerDiscardEnableEXT) \
     VK_DEVICE_EXT_PFN(vkCmdSetSampleMaskEXT) \
@@ -653,7 +654,7 @@ struct wined3d_context_vk
 
     const struct wined3d_vk_info *vk_info;
 
-    VkDynamicState dynamic_states[27];
+    VkDynamicState dynamic_states[28];
 
     uint32_t update_compute_pipeline : 1;
     uint32_t update_stream_output : 1;
