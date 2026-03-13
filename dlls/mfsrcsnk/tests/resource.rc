@@ -29,3 +29,18 @@
  */
 /* @makedep: test_thinning.avi */
 test_thinning.avi RCDATA test_thinning.avi
+
+/* Generated with:
+  ffmpeg -filter_complex "smptebars=s=64x64[vout]" -map "[vout]" -t 0.25 -r 25 -vcodec h264 \
+  -brand mp42 -aspect 3:4 -an test.mp4
+
+  Then, manually remove the pasp atom from the generated mp4 file.
+ */
+/* @makedep: test_metadata.mp4 */
+test_metadata.mp4 RCDATA test_metadata.mp4
+
+/* Same as above, but instead of removing the pasp, it's modify to have an aspect ratio of 15:16
+ * (it was 3:4 originally)
+ */
+/* @makedep: test_metadata2.mp4 */
+test_metadata2.mp4 RCDATA test_metadata2.mp4

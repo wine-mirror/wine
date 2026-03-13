@@ -831,6 +831,88 @@ static void test_thinning(void)
     IMFMediaSource_Release(source);
 }
 
+static void test_mp4_extra_metadata(void)
+{
+    IMFPresentationDescriptor *presentation_descriptor;
+    IMFStreamDescriptor *stream_descriptor;
+    IMFMediaTypeHandler *type_handler;
+    IMFMediaType *media_type;
+    IMFMediaSource *source;
+    IMFByteStream *stream;
+    DWORD stream_count;
+    UINT64 value64;
+    BOOL selected;
+    HRESULT hr;
+
+    /* Some metadata are duplicated at multiple levels in a mp4. Notably, the pixel aspect ratio
+     * is defined in both: 1) the pasp atom, and 2) the avcC atom.
+     * This test checks how they are treated by the byte stream handler. For example: are they both
+     * parsed? Which one takes precedence if both are present? */
+
+    /* 1. has no pasp atom. Aspect ratio set to 3:4 in the SPS contained by the avcC atom. */
+    stream = create_resource_byte_stream(L"test_metadata.mp4");
+    hr = create_source(&CLSID_MPEG4ByteStreamHandlerPlugin, stream, &source);
+    IMFByteStream_Release(stream);
+
+    if (FAILED(hr))
+    {
+        win_skip("Failed to create MPEG4 source: %#lx.\n", hr);
+        return;
+    }
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(source, &presentation_descriptor);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFPresentationDescriptor_GetStreamDescriptorCount(presentation_descriptor, &stream_count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(stream_count == 1, "Unexpected stream count %lu.\n", stream_count);
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(presentation_descriptor, 0, &selected, &stream_descriptor);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(stream_descriptor, &type_handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value64 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &value64);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value64 == 0x300000004, "Unexpected aspect ratio %#I64x.\n", value64);
+    IMFMediaType_Release(media_type);
+    IMFMediaTypeHandler_Release(type_handler);
+    IMFStreamDescriptor_Release(stream_descriptor);
+    IMFPresentationDescriptor_Release(presentation_descriptor);
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSource_Release(source);
+
+    /* 2. has pasp atom. Aspect ratio set to 3:4 in the SPS, and 15:16 in the pasp. */
+    stream = create_resource_byte_stream(L"test_metadata2.mp4");
+    hr = create_source(&CLSID_MPEG4ByteStreamHandlerPlugin, stream, &source);
+    IMFByteStream_Release(stream);
+
+    hr = IMFMediaSource_CreatePresentationDescriptor(source, &presentation_descriptor);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFPresentationDescriptor_GetStreamDescriptorCount(presentation_descriptor, &stream_count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(stream_count == 1, "Unexpected stream count %lu.\n", stream_count);
+    hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(presentation_descriptor, 0, &selected, &stream_descriptor);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(stream_descriptor, &type_handler);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value64 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &value64);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* pasp takes precedence */
+    todo_wine ok(value64 == 0xf00000010, "Unexpected aspect ratio: %#I64x.\n", value64);
+    IMFMediaType_Release(media_type);
+    IMFMediaTypeHandler_Release(type_handler);
+    IMFStreamDescriptor_Release(stream_descriptor);
+    IMFPresentationDescriptor_Release(presentation_descriptor);
+    hr = IMFMediaSource_Shutdown(source);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSource_Release(source);
+}
+
 static void test_end_of_presentation(void)
 {
     IMFPresentationDescriptor *pd;
@@ -960,6 +1042,7 @@ START_TEST(mfsrcsnk)
 
     test_wave_sink();
     test_thinning();
+    test_mp4_extra_metadata();
     test_end_of_presentation();
     test_release();
 
