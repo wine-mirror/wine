@@ -2678,7 +2678,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     apply_window_pos( hwnd, 0, swp_flags, surface, &new_rects, NULL );
     if (!surface) return FALSE;
 
-    if (!hdc_src || surface == &dummy_surface)
+    if (!hdc_src || surface == &dummy_surface || NtUserWindowFromDC( hdc_src ) == hwnd)
     {
         user_driver->pUpdateLayeredWindow( hwnd, source_alpha, flags );
         ret = TRUE;
