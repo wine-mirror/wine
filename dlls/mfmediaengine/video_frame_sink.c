@@ -165,13 +165,6 @@ static void video_frame_sink_sample_queue_flush(struct video_frame_sink *sink)
     queue->used = 0;
     queue->front = 0;
     queue->back = ARRAY_SIZE(queue->samples) - 1;
-
-    if (queue->presentation_sample)
-    {
-        IMFSample_Release(queue->presentation_sample);
-        queue->presentation_sample = NULL;
-        queue->sample_presented = FALSE;
-    }
 }
 
 static void video_frame_sink_sample_queue_free(struct video_frame_sink *sink)
