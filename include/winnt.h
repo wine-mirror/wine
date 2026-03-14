@@ -751,6 +751,30 @@ typedef struct _MEMORY_BASIC_INFORMATION
     DWORD    Type;
 } MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
 
+typedef struct _MEMORY_BASIC_INFORMATION32
+{
+    ULONG     BaseAddress;
+    ULONG     AllocationBase;
+    DWORD     AllocationProtect;
+    ULONG     RegionSize;
+    DWORD     State;
+    DWORD     Protect;
+    DWORD     Type;
+} MEMORY_BASIC_INFORMATION32, *PMEMORY_BASIC_INFORMATION32;
+
+typedef struct DECLSPEC_ALIGN(16) _MEMORY_BASIC_INFORMATION64
+{
+    ULONGLONG BaseAddress;
+    ULONGLONG AllocationBase;
+    DWORD     AllocationProtect;
+    DWORD     __alignment1;
+    ULONGLONG RegionSize;
+    DWORD     State;
+    DWORD     Protect;
+    DWORD     Type;
+    DWORD     __alignment2;
+} MEMORY_BASIC_INFORMATION64, *PMEMORY_BASIC_INFORMATION64;
+
 typedef struct _MEM_ADDRESS_REQUIREMENTS
 {
   void      *LowestStartingAddress;

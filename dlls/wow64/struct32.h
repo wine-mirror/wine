@@ -163,17 +163,6 @@ typedef struct
 
 typedef struct
 {
-    ULONG    BaseAddress;
-    ULONG    AllocationBase;
-    DWORD    AllocationProtect;
-    ULONG    RegionSize;
-    DWORD    State;
-    DWORD    Protect;
-    DWORD    Type;
-} MEMORY_BASIC_INFORMATION32;
-
-typedef struct
-{
     ULONG AllocationBase;
     ULONG AllocationProtect;
     ULONG RegionType;
