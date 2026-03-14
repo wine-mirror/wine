@@ -2657,6 +2657,21 @@ static void test_parse_errors(void)
             1, 10
         },
         {
+            /* ElseIf...End If */
+            L"If False Then\n"
+            "    x = 0\n"
+            "ElseIf True Then\n"
+            "    x = 1 End If\n",
+            3, 10
+        },
+        {
+            /* Else End If (no separator) */
+            L"If False Then\n"
+            "    x = 0\n"
+            "Else End If\n",
+            2, 5
+        },
+        {
             /* While...End While */
             L"While False\n"
             "    x = 0 End While\n",
