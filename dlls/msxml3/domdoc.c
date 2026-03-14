@@ -1284,16 +1284,10 @@ static HRESULT WINAPI domdoc_cloneNode(
         return E_FAIL;
 
     clone->doc->_private = create_priv();
-    xmldoc_add_orphan(clone->doc, clone);
-    xmldoc_add_ref(clone->doc);
-
     priv_from_xmlDocPtr(clone->doc)->properties = copy_properties(This->properties);
+    xmldoc_release(clone->doc);
     if (!(*outNode = (IXMLDOMNode*)create_domdoc(clone)))
-    {
-        xmldoc_release(clone->doc);
         return E_FAIL;
-    }
-
     return S_OK;
 }
 
