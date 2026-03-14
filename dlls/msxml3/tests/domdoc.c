@@ -14449,6 +14449,9 @@ static void test_put_text(void)
     const WCHAR *expected;
     HRESULT hr;
 
+    if (winetest_platform_is_wine) /* put_text causes ASan errors and crash in Release */
+        return;
+
     doc = create_document(&IID_IXMLDOMDocument2);
 
     b = VARIANT_FALSE;
@@ -14523,8 +14526,7 @@ static void test_put_text(void)
 
     IXMLDOMNode_Release(node2);
     IXMLDOMNamedNodeMap_Release(map);
-    if (!winetest_platform_is_wine) /* crashes on wine with IXMLDOMElement_put_text */
-        IXMLDOMNode_Release(node);
+    IXMLDOMNode_Release(node);
     IXMLDOMElement_Release(element);
     IXMLDOMDocument2_Release(doc);
 
