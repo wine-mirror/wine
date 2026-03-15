@@ -521,6 +521,13 @@ typedef struct tagNC_ADDRESS
    BYTE                     PrefixLength;
 } NC_ADDRESS, *PNC_ADDRESS;
 
+#if defined(_MSC_VER) || defined(__MINGW32__)
+# define WC_NETADDRESS       L"msctls_netaddress"
+#else
+static const WCHAR WC_NETADDRESS[] = { 'm','s','c','t','l','s','_',
+  'n','e','t','a','d','d','r','e','s','s',0 };
+#endif
+
 #define NCM_GETADDRESS      (WM_USER+1)
 #define NCM_SETALLOWTYPE    (WM_USER+2)
 #define NCM_GETALLOWTYPE    (WM_USER+3)
