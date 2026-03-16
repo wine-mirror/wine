@@ -531,6 +531,7 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
 static unsigned int frame_size;
 static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
 static UINT64 xstate_extended_features;
+static LONG syscall_dispatch_enabled = TRUE;
 
 #if defined(__linux__) || defined(__APPLE__)
 static inline TEB *get_current_teb(void)
@@ -2709,6 +2710,15 @@ static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
     TRACE_(seh)("SIGSYS, rax %#llx, rip %#llx.\n", RAX_sig(ucontext), RIP_sig(ucontext));
 
+#ifdef PR_SET_SYSCALL_USER_DISPATCH
+    if (!syscall_dispatch_enabled)
+    {
+        prctl( PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_OFF, 0, 0, 0 );
+        RIP_sig(ucontext) -= 2;  /* retry the syscall */
+        return;
+    }
+#endif
+
     frame->rip = RIP_sig(ucontext) + 0xb;
     frame->rcx = RIP_sig(ucontext);
     frame->eflags = EFL_sig(ucontext);
@@ -2819,6 +2829,15 @@ void signal_free_thread( TEB *teb )
     if (teb->WowTebOffset && !fs32_sel) ldt_free_entry( thread_data->fs );
 }
 
+
+/**********************************************************************
+ *		signal_disable_syscall_dispatch
+ */
+void signal_disable_syscall_dispatch(void)
+{
+    if (InterlockedExchange( &syscall_dispatch_enabled, FALSE )) TRACE_(seh)( "disabled\n" );
+}
+
 #ifdef __APPLE__
 /**********************************************************************
  *		mac_thread_gsbase
@@ -2894,8 +2913,11 @@ void signal_init_process(void)
     }
 
 #ifdef PR_SET_SYSCALL_USER_DISPATCH
-    if (!dl_iterate_phdr( libc_addr_cb, NULL ))
+    if (syscall_dispatch_enabled && !dl_iterate_phdr( libc_addr_cb, NULL ))
+    {
         WARN_(seh)( "could not find libc\n" );
+        syscall_dispatch_enabled = FALSE;
+    }
 #endif
 
     signal_alloc_thread( NtCurrentTeb() );
@@ -2953,8 +2975,8 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
         alloc_fs_sel( fs32_sel >> 3, get_wow_teb( teb ));
     }
 #ifdef PR_SET_SYSCALL_USER_DISPATCH
-    if (libc_addr && prctl( PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON,
-                            libc_addr, libc_size, &thread_data->syscall_dispatch ) < 0)
+    if (syscall_dispatch_enabled && prctl( PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON,
+                                           libc_addr, libc_size, &thread_data->syscall_dispatch ) < 0)
         WARN_(seh)( "could not enable syscall user dispatch\n" );
 #endif
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
