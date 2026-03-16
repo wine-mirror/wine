@@ -1691,7 +1691,6 @@ static const struct instrument_download default_instrument_download =
     {
         .RangeKey = {.usLow = 0, .usHigh = 127},
         .RangeVelocity = {.usLow = 0, .usHigh = 127},
-        .fusOptions = F_RGN_OPTION_SELFNONEXCLUSIVE,
         .WaveLink = {.ulChannel = 1, .ulTableIndex = 1},
         .WSMP = {.cbSize = sizeof(WSMPL), .usUnityNote = 60, .fulOptions = F_WSMP_NO_TRUNCATION, .cSampleLoops = 1},
         .WLOOP[0] = {.cbSize = sizeof(WLOOP), .ulType = WLOOP_TYPE_FORWARD, .ulLength = SINE_LENGTH},
@@ -3235,6 +3234,50 @@ static void test_instrument_selection(void)
     IDirectMusicSynth_Release(synth);
 }
 
+static void test_polyphony(void)
+{
+    struct instrument_download download;
+    IDirectMusicSynth *synth;
+    struct envelope envelope;
+    struct midi midi;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (void **)&synth);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    /* on the drum channel, note-on causes an immediate shutdown of voices playing the same note */
+    download = default_instrument_download;
+    download.instrument.ulPatch = F_INSTRUMENT_DRUMS;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(1000);
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_note_on(0, 9, 60, 127);
+    midi.messages[1] = make_note_on(0, 9, 60, 1);
+    envelope = default_volume_envelope;
+    envelope.gain = -969.;
+    check_volume_envelope(synth, &download, &midi, &envelope, TRUE);
+
+    /* in mono mode, only one voice can play at a time */
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 126, 0);
+    midi.messages[1] = make_note_on(0, 0, 60, 127);
+    midi.messages[2] = make_note_on(0, 0, 61, 1);
+    envelope = default_volume_envelope;
+    envelope.sustain.duration = 0.;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, FALSE);
+
+    /* enabling mono mode on one channel doesn't affect other channels */
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 126, 0);
+    midi.messages[1] = make_note_on(0, 1, 60, 127);
+    midi.messages[2] = make_note_on(0, 1, 61, 1);
+    midi.messages[3] = make_note_off(10000000, 1, 60, 127);
+    check_volume_envelope(synth, &default_instrument_download, &midi, &default_volume_envelope, TRUE);
+
+    IDirectMusicSynth_Release(synth);
+}
+
 static void test_IDirectMusicSynthSink(void)
 {
     IReferenceClock *latency_clock;
@@ -3427,6 +3470,7 @@ START_TEST(dmsynth)
     test_IKsControl();
     test_dls();
     test_instrument_selection();
+    test_polyphony();
     test_IDirectMusicSynthSink();
 
     CoUninitialize();
