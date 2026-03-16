@@ -1934,17 +1934,29 @@ foreach (sort keys %ext_functions)
 {
     next unless is_exposed_function( $ext_functions{$_} );
     my $func = $ext_functions{$_};
+    my $major = 0;
+    my $minor = 0;
     my @exts;
     foreach my $ext (@{$func->[2]})
     {
+        if ($ext =~ /GL_VERSION_(\d+)_(\d+)/)
+        {
+            ($major, $minor) = ($1, $2);
+            next;
+        }
         next unless is_exposed_extension( $ext );
         push @exts, $ext;
         foreach my $alias (@{$extension_aliases{$ext}})
         {
+            if ($alias =~ /GL_VERSION_(\d+)_(\d+)/)
+            {
+                ($major, $minor) = ($1, $2);
+                next;
+            }
             push @exts, $alias;
         }
     }
-    printf OUT "    { \"%s\", \"%s\\0\", offsetof(struct opengl_funcs, p_$_) },\n", $_, join("\\0", sort @exts);
+    printf OUT "    { \"%s\", \"%s\\0\", offsetof(struct opengl_funcs, p_$_), $major, $minor },\n", $_, join("\\0", sort @exts);
 }
 print OUT "};\n";
 

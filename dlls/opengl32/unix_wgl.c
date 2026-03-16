@@ -737,9 +737,10 @@ static GLubyte *filter_extensions( struct context *ctx, const char *str, const s
 }
 
 /* Check if any GL extension from the list is supported */
-static BOOL is_any_extension_supported( struct context *ctx, const char *extension )
+static BOOL is_function_supported( struct context *ctx, const struct registry_entry *func )
 {
     struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
+    const char *extension = func->extension;
     size_t len;
 
     /* We use the GetProcAddress function from the display driver to retrieve function pointers
@@ -748,30 +749,16 @@ static BOOL is_any_extension_supported( struct context *ctx, const char *extensi
      * require the function to return NULL when an extension isn't found. For this reason we check
      * if the OpenGL extension required for the function we are looking up is supported. */
 
+    if (func->major && (client->major_version > func->major
+                        || (client->major_version == func->major && client->minor_version >= func->minor)))
+        return TRUE;
+
     while ((len = strlen( extension )))
     {
         TRACE( "Checking for extension '%s'\n", extension );
 
         /* Check if the extension is part of the GL extension string to see if it is supported. */
         if (is_extension_supported( ctx, extension )) return TRUE;
-
-        /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
-         * it becomes part of the core OpenGL library and can be reached without the ARB/EXT
-         * suffix as well. In the extension table, these functions contain GL_VERSION_major_minor.
-         * Check if we are searching for a core GL function */
-        if (!strncmp( extension, "GL_VERSION_", 11 ))
-        {
-            int major = extension[11] - '0'; /* Move past 'GL_VERSION_' */
-            int minor = extension[13] - '0';
-
-            /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
-             * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
-            if (client->major_version > major || (client->major_version == major && client->minor_version >= minor)) return TRUE;
-
-            WARN( "The function requires OpenGL version '%d.%d' while your drivers only provide '%d.%d'\n",
-                  major, minor, client->major_version, client->minor_version );
-        }
-
         extension += len + 1;
     }
 
@@ -934,7 +921,7 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     {
         void *driver_func = funcs->p_wglGetProcAddress( name );
 
-        if (!is_any_extension_supported( ctx, found->extension ))
+        if (!is_function_supported( ctx, found ))
         {
             WARN( "Extension %s required for %s not supported\n", found->extension, name );
             return (void *)-1;

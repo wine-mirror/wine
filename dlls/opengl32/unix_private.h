@@ -38,6 +38,8 @@ struct registry_entry
     const char *name;      /* name of the extension */
     const char *extension; /* name of the GL/WGL extension */
     size_t offset;         /* offset in the opengl_funcs table */
+    UINT16 major;
+    UINT16 minor;
 };
 
 extern const struct registry_entry extension_registry[];
