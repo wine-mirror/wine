@@ -2032,6 +2032,9 @@ static BOOL get_integer( struct context *ctx, GLenum name, GLint *data )
     case GL_MINOR_VERSION:
         *data = ctx->base.minor_version;
         return TRUE;
+    case GL_NUM_EXTENSIONS:
+        *data = ctx->base.extension_count;
+        return TRUE;
     }
 
     return FALSE;

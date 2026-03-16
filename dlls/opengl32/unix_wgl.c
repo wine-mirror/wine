@@ -136,7 +136,6 @@ struct context
     char *wow64_version;           /* wow64 GL version override */
     struct buffers *buffers;       /* wow64 buffers map */
     const char **extension_array;  /* array of supported extensions */
-    size_t extension_count;        /* size of supported extensions */
     BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
 
     /* semi-stub state tracker for wglCopyContext */
@@ -677,7 +676,8 @@ static int string_array_cmp( const void *p1, const void *p2 )
 /* Check if a GL extension is supported */
 static BOOL is_extension_supported( struct context *ctx, const char *extension )
 {
-    return bsearch( &extension, ctx->extension_array, ctx->extension_count,
+    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
+    return bsearch( &extension, ctx->extension_array, client->extension_count,
                     sizeof(ctx->extension_array[0]), string_array_cmp ) != NULL;
 }
 
@@ -837,9 +837,6 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 
     switch (pname)
     {
-    case GL_NUM_EXTENSIONS:
-        *data = ctx->extension_count;
-        return TRUE;
     case GL_DRAW_FRAMEBUFFER_BINDING:
         if (!draw->draw_fbo) break;
         *data = ctx->draw_fbo;
@@ -917,7 +914,8 @@ const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
     if (name == GL_EXTENSIONS)
     {
         struct context *ctx = get_current_context( teb, NULL, NULL );
-        if (index < ctx->extension_count) return (const GLubyte *)ctx->extension_array[index];
+        struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
+        if (index < client->extension_count) return (const GLubyte *)ctx->extension_array[index];
         index = -1;
     }
 
@@ -1264,7 +1262,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     for (i = 0; legacy_extensions[i]; i++) extensions[count++] = legacy_extensions[i];
     qsort( extensions, count, sizeof(*extensions), string_array_cmp );
     ctx->extension_array = extensions;
-    ctx->extension_count = count;
+    client->extension_count = count;
 
     if (is_win64 && ctx->buffers && (!has_GL_EXT_memory_object_fd || !initialize_vk_device( teb, ctx ))
         && !(ctx->use_pinned_memory = is_extension_supported( ctx, "GL_AMD_pinned_memory" )))
@@ -1286,7 +1284,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
             }
             extensions[j++] = ext;
         }
-        ctx->extension_count = j;
+        client->extension_count = j;
     }
 
     if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", extensions[i] );

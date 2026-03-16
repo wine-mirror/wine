@@ -77,6 +77,7 @@ struct opengl_client_context
     int                         major_version;
     int                         minor_version;
     BOOLEAN                     extensions[GL_EXTENSION_COUNT];         /* exposed client extensions */
+    UINT32                      extension_count;                        /* size of supported extensions */
 };
 
 static inline struct opengl_client_context *opengl_client_context_from_client( HGLRC client_context )
