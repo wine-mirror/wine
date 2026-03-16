@@ -819,6 +819,372 @@ static HRESULT RegistrationTrigger_create(ITrigger **trigger)
     return S_OK;
 }
 
+typedef struct {
+    ILogonTrigger ILogonTrigger_iface;
+    BOOL enabled;
+    LONG ref;
+    WCHAR *user_id;
+    WCHAR *id;
+    WCHAR *execution_time_limit;
+    WCHAR *start_boundary;
+    WCHAR *end_boundary;
+    WCHAR *delay;
+} LogonTrigger;
+
+static inline LogonTrigger *impl_from_ILogonTrigger(ILogonTrigger *iface)
+{
+    return CONTAINING_RECORD(iface, LogonTrigger, ILogonTrigger_iface);
+}
+
+static HRESULT WINAPI LogonTrigger_QueryInterface(ILogonTrigger *iface, REFIID riid, void **ppv)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) ||
+       IsEqualGUID(&IID_IDispatch, riid) ||
+       IsEqualGUID(&IID_ITrigger, riid) ||
+       IsEqualGUID(&IID_ILogonTrigger, riid))
+    {
+        *ppv = &This->ILogonTrigger_iface;
+    }
+    else
+    {
+        FIXME("unsupported riid %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI LogonTrigger_AddRef(ILogonTrigger *iface)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI LogonTrigger_Release(ILogonTrigger *iface)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        free(This->user_id);
+        free(This->id);
+        free(This->execution_time_limit);
+        free(This->start_boundary);
+        free(This->end_boundary);
+        free(This->delay);
+        free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI LogonTrigger_GetTypeInfoCount(ILogonTrigger *iface, UINT *count)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI LogonTrigger_GetTypeInfo(ILogonTrigger *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    FIXME("(%p)->(%u %lu %p)\n", This, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI LogonTrigger_GetIDsOfNames(ILogonTrigger *iface, REFIID riid, LPOLESTR *names,
+                                        UINT count, LCID lcid, DISPID *dispid)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    FIXME("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI LogonTrigger_Invoke(ILogonTrigger *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                 DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    FIXME("(%p)->(%ld %s %lx %x %p %p %p %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI LogonTrigger_get_Type(ILogonTrigger *iface, TASK_TRIGGER_TYPE2 *type)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, type);
+
+    if (!type) return E_POINTER;
+
+    *type = TASK_TRIGGER_LOGON;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_get_Id(ILogonTrigger *iface, BSTR *id)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, id);
+
+    if (!id) return E_POINTER;
+
+    if (!This->id) *id = NULL;
+    else if (!(*id = SysAllocString(This->id))) return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_put_Id(ILogonTrigger *iface, BSTR id)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(id));
+
+    if (id && !(str = wcsdup(id))) return E_OUTOFMEMORY;
+    free(This->id);
+    This->id = str;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_get_Repetition(ILogonTrigger *iface, IRepetitionPattern **repeat)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, repeat);
+
+    if (!repeat) return E_POINTER;
+
+    return RepetitionPattern_create(repeat);
+}
+
+static HRESULT WINAPI LogonTrigger_put_Repetition(ILogonTrigger *iface, IRepetitionPattern *repeat)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    FIXME("(%p)->(%p)\n", This, repeat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI LogonTrigger_get_ExecutionTimeLimit(ILogonTrigger *iface, BSTR *limit)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, limit);
+
+    if (!limit) return E_POINTER;
+
+    if (!This->execution_time_limit) *limit = NULL;
+    else if (!(*limit = SysAllocString(This->execution_time_limit))) return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_put_ExecutionTimeLimit(ILogonTrigger *iface, BSTR limit)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(limit));
+
+    if (limit && !(str = wcsdup(limit))) return E_OUTOFMEMORY;
+    free(This->execution_time_limit);
+    This->execution_time_limit = str;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_get_StartBoundary(ILogonTrigger *iface, BSTR *start)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, start);
+
+    if (!start) return E_POINTER;
+
+    if (!This->start_boundary) *start = NULL;
+    else if (!(*start = SysAllocString(This->start_boundary))) return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_put_StartBoundary(ILogonTrigger *iface, BSTR start)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(start));
+
+    if (start && !(str = wcsdup(start))) return E_OUTOFMEMORY;
+    free(This->start_boundary);
+    This->start_boundary = str;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_get_EndBoundary(ILogonTrigger *iface, BSTR *end)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, end);
+
+    if (!end) return E_POINTER;
+
+    if (!This->end_boundary) *end = NULL;
+    else if (!(*end = SysAllocString(This->end_boundary))) return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_put_EndBoundary(ILogonTrigger *iface, BSTR end)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(end));
+
+    if (end && !(str = wcsdup(end))) return E_OUTOFMEMORY;
+    free(This->end_boundary);
+    This->end_boundary = str;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_get_Enabled(ILogonTrigger *iface, VARIANT_BOOL *enabled)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, enabled);
+
+    if (!enabled) return E_POINTER;
+
+    *enabled = This->enabled ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_put_Enabled(ILogonTrigger *iface, VARIANT_BOOL enabled)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%x)\n", This, enabled);
+
+    This->enabled = !!enabled;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_get_Delay(ILogonTrigger *iface, BSTR *pDelay)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, pDelay);
+
+    if (!pDelay) return E_POINTER;
+
+    if (!This->delay) *pDelay = NULL;
+    else if (!(*pDelay = SysAllocString(This->delay))) return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_put_Delay(ILogonTrigger *iface, BSTR delay)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(delay));
+
+    if (delay && !(str = wcsdup(delay))) return E_OUTOFMEMORY;
+    free(This->delay);
+    This->delay = str;
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_get_UserId(ILogonTrigger *iface, BSTR *pUser)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+
+    TRACE("(%p)->(%p)\n", This, pUser);
+
+    if (!pUser) return E_POINTER;
+
+    if (!This->user_id) *pUser = NULL;
+    else if (!(*pUser = SysAllocString(This->user_id))) return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI LogonTrigger_put_UserId(ILogonTrigger *iface, BSTR user)
+{
+    LogonTrigger *This = impl_from_ILogonTrigger(iface);
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(user));
+
+    if (user && !(str = wcsdup(user))) return E_OUTOFMEMORY;
+    free(This->user_id);
+    This->user_id = str;
+    return S_OK;
+}
+
+static const ILogonTriggerVtbl LogonTrigger_vtbl = {
+    LogonTrigger_QueryInterface,
+    LogonTrigger_AddRef,
+    LogonTrigger_Release,
+    LogonTrigger_GetTypeInfoCount,
+    LogonTrigger_GetTypeInfo,
+    LogonTrigger_GetIDsOfNames,
+    LogonTrigger_Invoke,
+    LogonTrigger_get_Type,
+    LogonTrigger_get_Id,
+    LogonTrigger_put_Id,
+    LogonTrigger_get_Repetition,
+    LogonTrigger_put_Repetition,
+    LogonTrigger_get_ExecutionTimeLimit,
+    LogonTrigger_put_ExecutionTimeLimit,
+    LogonTrigger_get_StartBoundary,
+    LogonTrigger_put_StartBoundary,
+    LogonTrigger_get_EndBoundary,
+    LogonTrigger_put_EndBoundary,
+    LogonTrigger_get_Enabled,
+    LogonTrigger_put_Enabled,
+    LogonTrigger_get_Delay,
+    LogonTrigger_put_Delay,
+    LogonTrigger_get_UserId,
+    LogonTrigger_put_UserId
+};
+
+static HRESULT LogonTrigger_create(ITrigger **trigger)
+{
+    LogonTrigger *logon_trigger;
+
+    logon_trigger = malloc(sizeof(*logon_trigger));
+    if (!logon_trigger)
+        return E_OUTOFMEMORY;
+
+    logon_trigger->ILogonTrigger_iface.lpVtbl = &LogonTrigger_vtbl;
+    logon_trigger->ref = 1;
+    logon_trigger->enabled = TRUE;
+    logon_trigger->user_id = NULL;
+    logon_trigger->id = NULL;
+    logon_trigger->execution_time_limit = NULL;
+    logon_trigger->start_boundary = NULL;
+    logon_trigger->end_boundary = NULL;
+    logon_trigger->delay = NULL;
+
+    *trigger = (ITrigger*)&logon_trigger->ILogonTrigger_iface;
+    return S_OK;
+}
+
 typedef struct
 {
     ITriggerCollection ITriggerCollection_iface;
@@ -936,6 +1302,8 @@ static HRESULT WINAPI TriggerCollection_Create(ITriggerCollection *iface, TASK_T
         return DailyTrigger_create(trigger);
     case TASK_TRIGGER_REGISTRATION:
         return RegistrationTrigger_create(trigger);
+    case TASK_TRIGGER_LOGON:
+        return LogonTrigger_create(trigger);
     default:
         FIXME("Unimplemented type %d\n", type);
         return E_NOTIMPL;

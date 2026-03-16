@@ -1949,7 +1949,6 @@ static void test_TaskDefinition(void)
     ITrigger_Release(trigger);
 
     hr = ITriggerCollection_Create(trigger_col, TASK_TRIGGER_LOGON, &trigger);
-    todo_wine
     ok(hr == S_OK, "Create failed: %08lx\n", hr);
     ok(trigger != NULL, "trigger = NULL\n");
     test_logon_trigger(trigger);
