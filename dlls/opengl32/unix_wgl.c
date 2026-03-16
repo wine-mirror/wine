@@ -135,7 +135,6 @@ struct context
     GLubyte *extensions;           /* extension string */
     char *wow64_version;           /* wow64 GL version override */
     struct buffers *buffers;       /* wow64 buffers map */
-    const char **extension_array;  /* array of supported extensions */
     BOOL use_pinned_memory;        /* use GL_AMD_pinned_memory to emulate persistent maps */
 
     /* semi-stub state tracker for wglCopyContext */
@@ -477,6 +476,40 @@ static int *memdup_attribs( const int *attribs )
     return copy;
 }
 
+struct extension_entry
+{
+    const char *name;
+    size_t len;
+};
+
+#define USE_GL_EXT(x) [x] = { .name = #x, .len = sizeof(#x) - 1 },
+static const struct extension_entry all_extensions[] = { ALL_GL_EXTS ALL_WGL_EXTS };
+#undef USE_GL_EXT
+
+static int extension_entry_cmp( const void *a, const void *b )
+{
+    const struct extension_entry *entry_a = a, *entry_b = b;
+    size_t len = max( entry_a->len, entry_b->len );
+    return strncmp( entry_a->name, entry_b->name, len );
+};
+
+static enum opengl_extension parse_extension( const char *ext, size_t len )
+{
+    const struct extension_entry entry = { .name = ext, .len = len }, *found;
+
+    if ((found = bsearch( &entry, all_extensions, ARRAY_SIZE(all_extensions), sizeof(entry), extension_entry_cmp )))
+        return found - all_extensions;
+
+    /* Map host extensions */
+    if (len == ARRAYSIZE("GL_EXT_memory_object_fd") - 1 && !memcmp( ext, "GL_EXT_memory_object_fd", len ))
+        return GL_EXT_memory_object_win32;
+    if (len == ARRAYSIZE("GL_EXT_semaphore_fd") - 1 && !memcmp( ext, "GL_EXT_semaphore_fd", len ))
+        return GL_EXT_semaphore_win32;
+
+    WARN( "Extension %s unknown\n", debugstr_an(ext, len) );
+    return GL_EXTENSION_COUNT;
+}
+
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext, size_t len )
 {
@@ -666,19 +699,12 @@ static char *query_opengl_option( const char *name )
     return str;
 }
 
-static int string_array_cmp( const void *p1, const void *p2 )
-{
-    const char *const *s1 = p1;
-    const char *const *s2 = p2;
-    return strcmp( *s1, *s2 );
-}
-
 /* Check if a GL extension is supported */
 static BOOL is_extension_supported( struct context *ctx, const char *extension )
 {
     struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
-    return bsearch( &extension, ctx->extension_array, client->extension_count,
-                    sizeof(ctx->extension_array[0]), string_array_cmp ) != NULL;
+    enum opengl_extension ext = parse_extension( extension, strlen( extension ));
+    return ext != GL_EXTENSION_COUNT && client->extensions[ext];
 }
 
 static char *append_extension( char *ptr, const char *name )
@@ -688,6 +714,22 @@ static char *append_extension( char *ptr, const char *name )
     ptr += size;
     *ptr++ = ' ';
     return ptr;
+}
+
+static size_t parse_extensions( const char *name, enum opengl_extension extensions[GL_EXTENSION_COUNT] )
+{
+    size_t count = 0;
+
+    while (*name)
+    {
+        const char *end = name + 1;
+        while (*end && *end != ' ') end++;
+        if ((extensions[count] = parse_extension( name, end - name )) != GL_EXTENSION_COUNT) count++;
+        name = end;
+        if (*name == ' ') name++;
+    }
+
+    return count;
 }
 
 /* build the extension string by filtering out the disabled extensions */
@@ -915,7 +957,8 @@ const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
     {
         struct context *ctx = get_current_context( teb, NULL, NULL );
         struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
-        if (index < client->extension_count) return (const GLubyte *)ctx->extension_array[index];
+        if (index < client->extension_count)
+            return (const GLubyte *)all_extensions[client->extension_array[index]].name;
         index = -1;
     }
 
@@ -986,6 +1029,7 @@ BOOL wrap_wglCopyContext( TEB *teb, HGLRC client_src, HGLRC client_dst, UINT mas
 
 static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
 {
+    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
     struct opengl_funcs *funcs = teb->glTable;
     VkPhysicalDevice *vk_physical_devices = NULL;
     struct vk_device *vk_device = NULL;
@@ -999,6 +1043,11 @@ static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
     static PFN_vkGetPhysicalDeviceProperties2KHR p_vkGetPhysicalDeviceProperties2KHR;
 
     if (ctx->buffers->vk_device) return TRUE; /* already initialized */
+    if (!client->extensions[GL_EXT_memory_object_win32] )
+    {
+        TRACE( "GL_EXT_memory_object_win32 is not supported\n" );
+        return FALSE;
+    }
 
     if (!vk_funcs)
     {
@@ -1173,10 +1222,8 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 {
     struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    size_t size = ARRAYSIZE(legacy_extensions) - 1, count = 0;
-    const char *version, *rest = "", **extensions;
-    BOOL has_GL_EXT_memory_object_fd = FALSE;
-    int i, j;
+    const char *version, *rest = "";
+    size_t count = 0, i;
 
     static const char *disabled, *enabled;
 
@@ -1195,9 +1242,6 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 
     funcs->p_init_extensions( client->extensions );
 
-    if (funcs->p_glImportMemoryWin32HandleEXT) size++;
-    if (funcs->p_glImportSemaphoreWin32HandleEXT) size++;
-
     if (client->major_version >= 3)
     {
         GLint extensions_count;
@@ -1209,34 +1253,18 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
         }
 
         funcs->p_glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
-        size += extensions_count;
-        if (!(extensions = malloc( size * sizeof(*extensions) ))) return;
-        for (i = 0; i < extensions_count; i++) extensions[count++] = (const char *)funcs->p_glGetStringi( GL_EXTENSIONS, i );
+        for (i = 0; i < extensions_count; i++)
+        {
+            const char *name = (const char *)funcs->p_glGetStringi( GL_EXTENSIONS, i );
+            enum opengl_extension ext = parse_extension( name, strlen( name ) );
+            if (ext != GL_EXTENSION_COUNT) client->extensions[ext] = TRUE;
+        }
     }
     else
     {
-        const char *str = (const char *)funcs->p_glGetString( GL_EXTENSIONS );
-        size_t len = strlen( str );
-        const char *p;
-        char *ext;
-        if (!str) str = "";
-        if ((len = strlen( str )) && str[len - 1] == ' ') len--;
-        if (*str) size++;
-        for (p = str; p < str + len; p++) if (*p == ' ') size++;
-        if (!(extensions = malloc( size * sizeof(*extensions) + len + 1 ))) return;
-        ext = (char *)&extensions[size];
-        memcpy( ext, str, len );
-        ext[len] = 0;
-        if (*ext) extensions[count++] = ext;
-        while (*ext)
-        {
-            if (*ext == ' ')
-            {
-                *ext = 0;
-                extensions[count++] = ext + 1;
-            }
-            ext++;
-        }
+        enum opengl_extension extensions[GL_EXTENSION_COUNT];
+        size_t extension_count = parse_extensions( (const char *)funcs->p_glGetString( GL_EXTENSIONS ), extensions);
+        for (i = 0; i < extension_count; i++) client->extensions[i] = TRUE;
     }
 
     if (!disabled && !(disabled = query_opengl_option( "DisabledExtensions" ))) disabled = "";
@@ -1245,27 +1273,20 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
 #undef USE_GL_EXT
     if (*enabled || *disabled)
     {
-        for (i = 0, j = 0; i < count; i++)
+        for (i = 0; i < WGL_FIRST_EXTENSION; i++)
         {
-            size_t len = strlen( extensions[i] );
-            if (!strcmp( extensions[i], "GL_EXT_memory_object_fd" )) has_GL_EXT_memory_object_fd = TRUE;
-            if (!has_extension( disabled, extensions[i], len ) && (!*enabled || has_extension( enabled, extensions[i], len )))
-                extensions[j++] = extensions[i];
-            else
-                TRACE( "-- %s (disabled by config)\n", extensions[i] );
+            const char *ext = all_extensions[i].name;
+            size_t len = all_extensions[i].len;
+            if (!client->extensions[i]) continue;
+            if (!has_extension( disabled, ext, len ) && (!*enabled || has_extension( enabled, ext, len )))
+                continue;
+            client->extensions[i] = FALSE;
+            TRACE( "-- %s (disabled by config)\n", ext );
         }
-        count = j;
     }
 
-    if (funcs->p_glImportMemoryWin32HandleEXT) extensions[count++] = "GL_EXT_memory_object_win32";
-    if (funcs->p_glImportSemaphoreWin32HandleEXT) extensions[count++] = "GL_EXT_semaphore_win32";
-    for (i = 0; legacy_extensions[i]; i++) extensions[count++] = legacy_extensions[i];
-    qsort( extensions, count, sizeof(*extensions), string_array_cmp );
-    ctx->extension_array = extensions;
-    client->extension_count = count;
-
-    if (is_win64 && ctx->buffers && (!has_GL_EXT_memory_object_fd || !initialize_vk_device( teb, ctx ))
-        && !(ctx->use_pinned_memory = is_extension_supported( ctx, "GL_AMD_pinned_memory" )))
+    if (is_win64 && ctx->buffers && !initialize_vk_device( teb, ctx )
+        && !(ctx->use_pinned_memory = client->extensions[GL_AMD_pinned_memory]))
     {
         if (client->major_version > 4 || (client->major_version == 4 && client->minor_version > 3))
         {
@@ -1274,20 +1295,19 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
             client->minor_version = 3;
             asprintf( &ctx->wow64_version, "4.3%s", rest );
         }
-        for (i = 0, j = 0; i < count; i++)
+        if (client->extensions[GL_ARB_buffer_storage])
         {
-            const char *ext = extensions[i];
-            if (!strcmp( ext, "GL_ARB_buffer_storage" ) || !strcmp( ext, "GL_ARB_buffer_storage" ))
-            {
-                FIXME( "Disabling %s extension on wow64\n", ext );
-                continue;
-            }
-            extensions[j++] = ext;
+            FIXME( "Disabling has_GL_ARB_buffer_storage extension on wow64\n" );
+            client->extensions[GL_ARB_buffer_storage] = FALSE;
         }
-        client->extension_count = j;
     }
 
-    if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", extensions[i] );
+    for (i = 0; i < WGL_FIRST_EXTENSION; i++) if (client->extensions[i]) client->extension_array[count++] = i;
+    if (client->extensions[WGL_EXT_extensions_string]) client->extension_array[count++] = WGL_EXT_extensions_string;
+    if (client->extensions[WGL_EXT_swap_control])      client->extension_array[count++] = WGL_EXT_swap_control;
+    client->extension_count = count;
+
+    if (TRACE_ON(opengl)) for (i = 0; i < count; i++) TRACE( "++ %s\n", all_extensions[client->extension_array[i]].name );
 }
 
 BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC client_context )
@@ -1327,7 +1347,6 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC client_context )
 static void free_context( struct context *ctx )
 {
     free( ctx->wow64_version );
-    free( ctx->extension_array );
     free( ctx->extensions );
     free( ctx->attribs );
     free( ctx );
