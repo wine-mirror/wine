@@ -4224,7 +4224,7 @@ static struct opengl_device *create_opengl_device( HWND hwnd, LUID *luid )
     PFN_glGetUnsignedBytevEXT p_glGetUnsignedBytevEXT;
     PFN_glGetUnsignedBytei_vEXT p_glGetUnsignedBytei_vEXT;
 
-    const char *extensions, *ptr;
+    const char *extensions, *renderer, *ptr;
     struct opengl_device *dev;
     unsigned int nodes = 0;
     LUID device_luid = {0};
@@ -4261,9 +4261,14 @@ static struct opengl_device *create_opengl_device( HWND hwnd, LUID *luid )
     ok_x4( glGetError(), ==, 0 );
     ok_ptr( extensions, !=, NULL );
 
+    renderer = (char *)glGetString( GL_RENDERER );
+    ok_x4( glGetError(), ==, 0 );
+    ok_ptr( renderer, !=, NULL );
+
     ptr = find_opengl_extension( extensions, "GL_EXT_memory_object_win32" );
     ok_ptr( ptr, !=, NULL );
     ptr = find_opengl_extension( extensions, "GL_EXT_semaphore_win32" );
+    todo_wine_if( strstr( renderer, "llvmpipe" ))
     ok_ptr( ptr, !=, NULL );
     ptr = find_opengl_extension( extensions, "GL_EXT_win32_keyed_mutex" );
     dev->broken = !winetest_platform_is_wine && ptr == NULL; /* missing on AMD, as is support for importing D3D handles */

@@ -893,16 +893,16 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
         return (void *)-1;
     }
 
+    if (!is_function_supported( ctx, found ))
+    {
+        WARN( "Extensions required for %s not supported\n", name );
+        return (void *)-1;
+    }
+
     func_ptr = (const void **)((char *)funcs + found->offset);
     if (!*func_ptr)
     {
         void *driver_func = funcs->p_wglGetProcAddress( name );
-
-        if (!is_function_supported( ctx, found ))
-        {
-            WARN( "Extensions required for %s not supported\n", name );
-            return (void *)-1;
-        }
 
         if (driver_func == NULL)
         {
