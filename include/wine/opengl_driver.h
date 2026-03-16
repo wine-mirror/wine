@@ -65,6 +65,8 @@ struct opengl_client_context
     UINT64                      unix_handle;
     UINT64                      unix_funcs;
     GLenum                      last_error;
+    int                         major_version;
+    int                         minor_version;
 };
 
 static inline struct opengl_client_context *opengl_client_context_from_client( HGLRC client_context )

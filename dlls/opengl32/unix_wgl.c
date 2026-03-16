@@ -130,8 +130,6 @@ struct context
     HGLRC share;                   /* context to be shared with */
     int *attribs;                  /* creation attributes */
     DWORD tid;                     /* thread that the context is current in */
-    int major_version;             /* major GL version */
-    int minor_version;             /* minor GL version */
     UINT64 debug_callback;         /* client pointer */
     UINT64 debug_user;             /* client pointer */
     GLubyte *extensions;           /* extension string */
@@ -741,6 +739,7 @@ static GLubyte *filter_extensions( struct context *ctx, const char *extensions, 
 /* Check if any GL extension from the list is supported */
 static BOOL is_any_extension_supported( struct context *ctx, const char *extension )
 {
+    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
     size_t len;
 
     /* We use the GetProcAddress function from the display driver to retrieve function pointers
@@ -767,10 +766,10 @@ static BOOL is_any_extension_supported( struct context *ctx, const char *extensi
 
             /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
              * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
-            if (ctx->major_version > major || (ctx->major_version == major && ctx->minor_version >= minor)) return TRUE;
+            if (client->major_version > major || (client->major_version == major && client->minor_version >= minor)) return TRUE;
 
             WARN( "The function requires OpenGL version '%d.%d' while your drivers only provide '%d.%d'\n",
-                  major, minor, ctx->major_version, ctx->minor_version );
+                  major, minor, client->major_version, client->minor_version );
         }
 
         extension += len + 1;
@@ -838,12 +837,6 @@ static BOOL get_integer( TEB *teb, GLenum pname, GLint *data )
 
     switch (pname)
     {
-    case GL_MAJOR_VERSION:
-        *data = ctx->major_version;
-        return TRUE;
-    case GL_MINOR_VERSION:
-        *data = ctx->minor_version;
-        return TRUE;
     case GL_NUM_EXTENSIONS:
         *data = ctx->extension_count;
         return TRUE;
@@ -1180,6 +1173,7 @@ static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
 static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HDC draw_hdc, HDC read_hdc,
                                   HGLRC client_context, struct context *ctx )
 {
+    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     size_t size = ARRAYSIZE(legacy_extensions) - 1, count = 0;
     const char *version, *rest = "", **extensions;
@@ -1194,17 +1188,17 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     teb->glTable = (void *)funcs;
     pop_default_fbo( teb );
 
-    if (ctx->major_version) return; /* already synced */
+    if (client->major_version) return; /* already synced */
 
     version = (const char *)funcs->p_glGetString( GL_VERSION );
-    if (version) rest = parse_gl_version( version, &ctx->major_version, &ctx->minor_version );
-    if (!ctx->major_version) ctx->major_version = 1;
-    TRACE( "context %p version %d.%d\n", ctx, ctx->major_version, ctx->minor_version );
+    if (version) rest = parse_gl_version( version, &client->major_version, &client->minor_version );
+    if (!client->major_version) client->major_version = 1;
+    TRACE( "context %p version %d.%d\n", ctx, client->major_version, client->minor_version );
 
     if (funcs->p_glImportMemoryWin32HandleEXT) size++;
     if (funcs->p_glImportSemaphoreWin32HandleEXT) size++;
 
-    if (ctx->major_version >= 3)
+    if (client->major_version >= 3)
     {
         GLint extensions_count;
 
@@ -1273,11 +1267,11 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     if (is_win64 && ctx->buffers && (!has_GL_EXT_memory_object_fd || !initialize_vk_device( teb, ctx ))
         && !(ctx->use_pinned_memory = is_extension_supported( ctx, "GL_AMD_pinned_memory" )))
     {
-        if (ctx->major_version > 4 || (ctx->major_version == 4 && ctx->minor_version > 3))
+        if (client->major_version > 4 || (client->major_version == 4 && client->minor_version > 3))
         {
-            FIXME( "GL version %d.%d is not supported on wow64, using 4.3\n", ctx->major_version, ctx->minor_version );
-            ctx->major_version = 4;
-            ctx->minor_version = 3;
+            FIXME( "GL version %d.%d is not supported on wow64, using 4.3\n", client->major_version, client->minor_version );
+            client->major_version = 4;
+            client->minor_version = 3;
             asprintf( &ctx->wow64_version, "4.3%s", rest );
         }
         for (i = 0, j = 0; i < count; i++)
