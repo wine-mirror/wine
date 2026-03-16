@@ -2049,11 +2049,23 @@ const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )
         .index = index,
     };
     NTSTATUS status;
+    struct context *ctx;
 #ifndef _WIN64
     GLubyte *wow64_str = NULL;
 #endif
 
     TRACE( "name %d, index %d\n", name, index );
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+
+    switch (name)
+    {
+    case GL_EXTENSIONS:
+        if (index < ctx->base.extension_count)
+            return (const GLubyte *)extension_names[ctx->base.extension_array[index]];
+        set_gl_error( GL_INVALID_VALUE );
+        return NULL;
+    }
 
 #ifndef _WIN64
     if (UNIX_CALL( glGetStringi, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );

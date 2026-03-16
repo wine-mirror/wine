@@ -943,28 +943,6 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
     return ret;
 }
 
-const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
-{
-    const struct opengl_funcs *funcs = teb->glTable;
-
-    if (!funcs->p_glGetStringi)
-    {
-        void **func_ptr = (void **)&funcs->p_glGetStringi;
-        *func_ptr = funcs->p_wglGetProcAddress( "glGetStringi" );
-    }
-
-    if (name == GL_EXTENSIONS)
-    {
-        struct context *ctx = get_current_context( teb, NULL, NULL );
-        struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
-        if (index < client->extension_count)
-            return (const GLubyte *)all_extensions[client->extension_array[index]].name;
-        index = -1;
-    }
-
-    return funcs->p_glGetStringi( name, index );
-}
-
 static int registry_entry_cmp( const void *a, const void *b )
 {
     const struct registry_entry *entry_a = a, *entry_b = b;

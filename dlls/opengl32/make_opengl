@@ -218,7 +218,6 @@ my %manual_unix_thunks =
      "glGetInteger64v" => 1,
      "glGetIntegerv" => 1,
      "glGetString" => 1,
-     "glGetStringi" => 1,
      "glGetUnsignedBytevEXT" => 1,
      "glImportSyncEXT" => 1,
      "glNamedFramebufferDrawBuffer" => 1,
