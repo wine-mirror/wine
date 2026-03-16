@@ -43,7 +43,6 @@ struct registry_entry
 };
 
 extern const struct registry_entry extension_registry[];
-extern const int extension_registry_size;
 
 extern struct opengl_funcs null_opengl_funcs;
 
@@ -112,5 +111,6 @@ extern GLuint get_default_fbo( TEB *teb, GLenum target );
 extern void push_default_fbo( TEB *teb );
 extern void pop_default_fbo( TEB *teb );
 extern void resolve_default_fbo( TEB *teb, BOOL read );
+extern struct registry_entry *get_function_entry( const char *name );
 
 #endif /* __WINE_OPENGL32_UNIX_PRIVATE_H */

@@ -871,15 +871,9 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
     return ret;
 }
 
-static int registry_entry_cmp( const void *a, const void *b )
-{
-    const struct registry_entry *entry_a = a, *entry_b = b;
-    return strcmp( entry_a->name, entry_b->name );
-}
-
 PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
 {
-    const struct registry_entry entry = {.name = name}, *found;
+    const struct registry_entry *found;
     struct opengl_funcs *funcs = teb->glTable;
     const void **func_ptr;
     struct context *ctx;
@@ -893,7 +887,7 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
         return (void *)-1;
     }
 
-    if (!(found = bsearch( &entry, extension_registry, extension_registry_size, sizeof(entry), registry_entry_cmp )))
+    if (!(found = get_function_entry( name )))
     {
         WARN( "Function %s unknown\n", name );
         return (void *)-1;

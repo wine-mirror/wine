@@ -91799,9 +91799,7 @@ struct opengl_funcs null_opengl_funcs =
     .p_glVertexPointer = null_glVertexPointer,
     .p_glViewport = null_glViewport,
 };
-
-const int extension_registry_size = 2758;
-const struct registry_entry extension_registry[2758] =
+const struct registry_entry extension_registry[] =
 {
     { "glAccumxOES", offsetof(struct opengl_funcs, p_glAccumxOES), 0, 0, { GL_OES_fixed_point, GL_EXTENSION_COUNT }},
     { "glAcquireKeyedMutexWin32EXT", offsetof(struct opengl_funcs, p_glAcquireKeyedMutexWin32EXT), 0, 0, { GL_EXT_win32_keyed_mutex, GL_EXTENSION_COUNT }},
@@ -94562,3 +94560,14 @@ const struct registry_entry extension_registry[2758] =
     { "wglSetPixelFormatWINE", offsetof(struct opengl_funcs, p_wglSetPixelFormatWINE), 0, 0, { WGL_WINE_pixel_format_passthrough, GL_EXTENSION_COUNT }},
     { "wglSwapIntervalEXT", offsetof(struct opengl_funcs, p_wglSwapIntervalEXT), 0, 0, { WGL_EXT_swap_control, GL_EXTENSION_COUNT }},
 };
+
+static int registry_entry_cmp( const void *a, const void *b )
+{
+    const struct registry_entry *entry = b;
+    return strcmp( a, entry->name );
+}
+
+struct registry_entry *get_function_entry( const char *name )
+{
+    return bsearch( name, extension_registry, ARRAYSIZE(extension_registry), sizeof(extension_registry[0]), registry_entry_cmp );
+}

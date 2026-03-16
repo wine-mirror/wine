@@ -1921,14 +1921,7 @@ foreach (sort keys %norm_functions)
 print OUT "};\n";
 
 # Then the table giving the string <-> function correspondence */
-my $count = 0;
-foreach (keys %ext_functions)
-{
-    next unless is_exposed_function( $ext_functions{$_} );
-    $count += 1;
-}
-print OUT "\nconst int extension_registry_size = $count;\n";
-print OUT "const struct registry_entry extension_registry[$count] =\n";
+print OUT "const struct registry_entry extension_registry[] =\n";
 print OUT "{\n";
 foreach (sort keys %ext_functions)
 {
@@ -1960,5 +1953,16 @@ foreach (sort keys %ext_functions)
     printf OUT "    { \"%s\", offsetof(struct opengl_funcs, p_$_), $major, $minor, { %s }},\n", $_, join(", ", @exts);
 }
 print OUT "};\n";
+print OUT "\n";
+print OUT "static int registry_entry_cmp( const void *a, const void *b )\n";
+print OUT "{\n";
+print OUT "    const struct registry_entry *entry = b;\n";
+print OUT "    return strcmp( a, entry->name );\n";
+print OUT "}\n";
+print OUT "\n";
+print OUT "struct registry_entry *get_function_entry( const char *name )\n";
+print OUT "{\n";
+print OUT "    return bsearch( name, extension_registry, ARRAYSIZE(extension_registry), sizeof(extension_registry[0]), registry_entry_cmp );\n";
+print OUT "}\n";
 
 close OUT;
