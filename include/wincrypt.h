@@ -3497,7 +3497,8 @@ typedef struct _CERT_CHAIN_ENGINE_CONFIG
     DWORD       MaximumCachedCertificates;
     DWORD       CycleDetectionModulus;
     HCERTSTORE  hExclusiveRoot;
-    HCERTSTORE  hExclusiveRootTrustedPeople;
+    HCERTSTORE  hExclusiveTrustedPeople;
+    DWORD       dwExclusiveFlags;
 } CERT_CHAIN_ENGINE_CONFIG, *PCERT_CHAIN_ENGINE_CONFIG;
 
 /* message-related definitions */
