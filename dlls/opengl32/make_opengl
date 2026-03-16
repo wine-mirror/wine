@@ -157,6 +157,7 @@ my %manual_win_functions =
      "wglGetExtensionsStringARB" => 1,
      "wglGetExtensionsStringEXT" => 1,
      "wglGetLayerPaletteEntries" => 1,
+     "wglGetProcAddress" => 1,
      "wglRealizeLayerPalette" => 1,
      "wglSetLayerPaletteEntries" => 1,
      "wglSwapLayerBuffers" => 1,
@@ -187,7 +188,6 @@ my %manual_win_thunks =
      "wglGetPixelFormat" => 1,
      "wglGetPixelFormatAttribfvARB" => 1,
      "wglGetPixelFormatAttribivARB" => 1,
-     "wglGetProcAddress" => 1,
      "wglMakeContextCurrentARB" => 1,
      "wglMakeCurrent" => 1,
      "wglQueryCurrentRendererStringWINE" => 1,
@@ -230,7 +230,6 @@ my %manual_unix_thunks =
      "wglCreateContext" => 1,
      "wglCreateContextAttribsARB" => 1,
      "wglDeleteContext" => 1,
-     "wglGetProcAddress" => 1,
      "wglMakeContextCurrentARB" => 1,
      "wglMakeCurrent" => 1,
      "wglShareLists" => 1,
@@ -1675,7 +1674,8 @@ open OUT, ">thunks.c" or die "cannot create thunks.c";
 print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
 
 print OUT "#include <stdarg.h>\n";
-print OUT "#include <stddef.h>\n\n";
+print OUT "#include <stddef.h>\n";
+print OUT "#include <stdlib.h>\n\n";
 
 print OUT "#include \"ntstatus.h\"\n";
 print OUT "#include \"windef.h\"\n";
@@ -1725,6 +1725,50 @@ foreach (sort keys %ext_functions)
     printf OUT "    %s,\n", $_;
 }
 print OUT "};\n";
+# Then the table giving the string <-> function correspondence */
+print OUT "const struct registry_entry extension_registry[] =\n";
+print OUT "{\n";
+foreach (sort keys %ext_functions)
+{
+    next unless is_exposed_function( $ext_functions{$_} );
+    my $func = $ext_functions{$_};
+    my $major = 0;
+    my $minor = 0;
+    my @exts;
+    foreach my $ext (@{$func->[2]})
+    {
+        if ($ext =~ /GL_VERSION_(\d+)_(\d+)/)
+        {
+            ($major, $minor) = ($1, $2);
+            next;
+        }
+        next unless is_exposed_extension( $ext );
+        push @exts, $ext;
+        foreach my $alias (@{$extension_aliases{$ext}})
+        {
+            if ($alias =~ /GL_VERSION_(\d+)_(\d+)/)
+            {
+                ($major, $minor) = ($1, $2);
+                next;
+            }
+            push @exts, $alias;
+        }
+    }
+    push @exts, "GL_EXTENSION_COUNT";
+    printf OUT "    { \"%s\", $_, $major, $minor, { %s }},\n", $_, join(", ", @exts);
+}
+print OUT "};\n";
+print OUT "\n";
+print OUT "static int registry_entry_cmp( const void *a, const void *b )\n";
+print OUT "{\n";
+print OUT "    const struct registry_entry *entry = b;\n";
+print OUT "    return strcmp( a, entry->name );\n";
+print OUT "}\n";
+print OUT "\n";
+print OUT "struct registry_entry *get_function_entry( const char *name )\n";
+print OUT "{\n";
+print OUT "    return bsearch( name, extension_registry, ARRAYSIZE(extension_registry), sizeof(extension_registry[0]), registry_entry_cmp );\n";
+print OUT "}\n";
 
 close OUT;
 
@@ -1919,50 +1963,4 @@ foreach (sort keys %norm_functions)
     print OUT "    .p_$_ = null_$_,\n";
 }
 print OUT "};\n";
-
-# Then the table giving the string <-> function correspondence */
-print OUT "const struct registry_entry extension_registry[] =\n";
-print OUT "{\n";
-foreach (sort keys %ext_functions)
-{
-    next unless is_exposed_function( $ext_functions{$_} );
-    my $func = $ext_functions{$_};
-    my $major = 0;
-    my $minor = 0;
-    my @exts;
-    foreach my $ext (@{$func->[2]})
-    {
-        if ($ext =~ /GL_VERSION_(\d+)_(\d+)/)
-        {
-            ($major, $minor) = ($1, $2);
-            next;
-        }
-        next unless is_exposed_extension( $ext );
-        push @exts, $ext;
-        foreach my $alias (@{$extension_aliases{$ext}})
-        {
-            if ($alias =~ /GL_VERSION_(\d+)_(\d+)/)
-            {
-                ($major, $minor) = ($1, $2);
-                next;
-            }
-            push @exts, $alias;
-        }
-    }
-    push @exts, "GL_EXTENSION_COUNT";
-    printf OUT "    { \"%s\", offsetof(struct opengl_funcs, p_$_), $major, $minor, { %s }},\n", $_, join(", ", @exts);
-}
-print OUT "};\n";
-print OUT "\n";
-print OUT "static int registry_entry_cmp( const void *a, const void *b )\n";
-print OUT "{\n";
-print OUT "    const struct registry_entry *entry = b;\n";
-print OUT "    return strcmp( a, entry->name );\n";
-print OUT "}\n";
-print OUT "\n";
-print OUT "struct registry_entry *get_function_entry( const char *name )\n";
-print OUT "{\n";
-print OUT "    return bsearch( name, extension_registry, ARRAYSIZE(extension_registry), sizeof(extension_registry[0]), registry_entry_cmp );\n";
-print OUT "}\n";
-
 close OUT;

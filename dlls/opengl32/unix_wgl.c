@@ -728,26 +728,6 @@ static GLubyte *filter_extensions( struct context *ctx, const char *str, const s
     return (GLubyte *)ret;
 }
 
-/* Check if any GL extension from the list is supported */
-static BOOL is_function_supported( struct context *ctx, const struct registry_entry *func )
-{
-    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
-    const enum opengl_extension *ext;
-
-    /* We use the GetProcAddress function from the display driver to retrieve function pointers
-     * for OpenGL and WGL extensions. In case of winex11.drv the OpenGL extension lookup is done
-     * using glXGetProcAddress. This function is quite unreliable in the sense that its specs don't
-     * require the function to return NULL when an extension isn't found. For this reason we check
-     * if the OpenGL extension required for the function we are looking up is supported. */
-
-    if (func->major && (client->major_version > func->major
-                        || (client->major_version == func->major && client->minor_version >= func->minor)))
-        return TRUE;
-
-    for (ext = func->extensions; *ext != GL_EXTENSION_COUNT; ext++) if (client->extensions[*ext]) return TRUE;
-    return FALSE;
-}
-
 static void set_gl_error( TEB *teb, GLenum error )
 {
     const struct opengl_funcs *funcs = teb->glTable;
@@ -869,38 +849,6 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
     }
 
     return ret;
-}
-
-PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
-{
-    const struct registry_entry *found;
-    struct context *ctx;
-
-    /* Without an active context opengl32 doesn't know to what
-     * driver it has to dispatch wglGetProcAddress.
-     */
-    if (!(ctx = get_current_context( teb, NULL, NULL )))
-    {
-        WARN( "No active WGL context found\n" );
-        return (void *)-1;
-    }
-
-    if (!(found = get_function_entry( name )))
-    {
-        WARN( "Function %s unknown\n", name );
-        return (void *)-1;
-    }
-
-    if (!is_function_supported( ctx, found ))
-    {
-        WARN( "Extensions required for %s not supported\n", name );
-        return (void *)-1;
-    }
-
-    /* Return the index into the extension registry instead of a useless
-     * function pointer, PE side will returns its own function pointers.
-     */
-    return (void *)(UINT_PTR)(found - extension_registry);
 }
 
 BOOL wrap_wglCopyContext( TEB *teb, HGLRC client_src, HGLRC client_dst, UINT mask )

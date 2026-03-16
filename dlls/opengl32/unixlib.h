@@ -51,13 +51,6 @@ struct wglGetPixelFormat_params
     int ret;
 };
 
-struct wglGetProcAddress_params
-{
-    TEB *teb;
-    LPCSTR lpszProc;
-    PROC ret;
-};
-
 struct wglMakeCurrent_params
 {
     TEB *teb;
@@ -25881,7 +25874,6 @@ enum unix_funcs
     unix_wglCreateContext,
     unix_wglDeleteContext,
     unix_wglGetPixelFormat,
-    unix_wglGetProcAddress,
     unix_wglMakeCurrent,
     unix_wglSetPixelFormat,
     unix_wglShareLists,

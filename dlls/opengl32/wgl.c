@@ -36,7 +36,6 @@
 
 #include "wine/glu.h"
 #include "wine/debug.h"
-#include "wine/opengl_driver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
@@ -1354,17 +1353,17 @@ int WINAPI wglGetLayerPaletteEntries( HDC hdc, int plane, int start, int count, 
  */
 PROC WINAPI wglGetProcAddress( LPCSTR name )
 {
-    struct wglGetProcAddress_params args = { .teb = NtCurrentTeb(), .lpszProc = name };
+    const struct registry_entry *func;
+    const enum opengl_extension *ext;
     struct context *ctx;
-    const void *proc;
-    NTSTATUS status;
 
-    if (!name) return NULL;
     if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
 
-    if ((status = UNIX_CALL( wglGetProcAddress, &args )))
-        WARN( "wglGetProcAddress %s returned %#lx\n", debugstr_a(name), status );
-    if (args.ret == (void *)-1) return NULL;
+    if (!(func = get_function_entry( name )))
+    {
+        WARN( "Function %s unknown\n", name );
+        return NULL;
+    }
 
     if (!strncmp( name, "wglGetExtensionsString", 22 ))
     {
@@ -1373,9 +1372,17 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
         LeaveCriticalSection( &wgl_cs );
     }
 
-    proc = extension_procs[(UINT_PTR)args.ret];
-    TRACE( "returning %s -> %p\n", name, proc );
-    return proc;
+    if (func->major && (ctx->base.major_version > func->major
+                        || (ctx->base.major_version == func->major && ctx->base.minor_version >= func->minor)))
+        return func->func;
+
+    for (ext = func->extensions; *ext != GL_EXTENSION_COUNT; ext++)
+    {
+        if (ctx->base.extensions[*ext]) return func->func;
+    }
+
+    WARN( "Extensions required for %s not supported\n", name );
+    return NULL;
 }
 
 /***********************************************************************

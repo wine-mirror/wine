@@ -33,17 +33,6 @@
 #include "wine/opengl_driver.h"
 #include "unix_thunks.h"
 
-struct registry_entry
-{
-    const char *name;      /* name of the extension */
-    size_t offset;         /* offset in the opengl_funcs table */
-    UINT16 major;
-    UINT16 minor;
-    enum opengl_extension extensions[4];
-};
-
-extern const struct registry_entry extension_registry[];
-
 extern struct opengl_funcs null_opengl_funcs;
 
 static inline const struct opengl_funcs *get_dc_funcs( HDC hdc )
@@ -111,6 +100,5 @@ extern GLuint get_default_fbo( TEB *teb, GLenum target );
 extern void push_default_fbo( TEB *teb );
 extern void pop_default_fbo( TEB *teb );
 extern void resolve_default_fbo( TEB *teb, BOOL read );
-extern struct registry_entry *get_function_entry( const char *name );
 
 #endif /* __WINE_OPENGL32_UNIX_PRIVATE_H */
