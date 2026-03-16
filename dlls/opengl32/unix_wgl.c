@@ -511,13 +511,6 @@ static enum opengl_extension parse_extension( const char *ext, size_t len )
     return GL_EXTENSION_COUNT;
 }
 
-static const char *legacy_extensions[] =
-{
-    "WGL_EXT_extensions_string",
-    "WGL_EXT_swap_control",
-    NULL,
-};
-
 static const char *parse_gl_version( const char *gl_version, int *major, int *minor )
 {
     const char *ptr = gl_version;
@@ -696,15 +689,6 @@ static BOOL is_extension_supported( struct context *ctx, const char *extension )
     return ext != GL_EXTENSION_COUNT && client->extensions[ext];
 }
 
-static char *append_extension( char *ptr, const char *name )
-{
-    size_t size = strlen( name );
-    memcpy( ptr, name, size );
-    ptr += size;
-    *ptr++ = ' ';
-    return ptr;
-}
-
 static size_t parse_extensions( const char *name, enum opengl_extension extensions[GL_EXTENSION_COUNT] )
 {
     size_t count = 0;
@@ -722,49 +706,34 @@ static size_t parse_extensions( const char *name, enum opengl_extension extensio
 }
 
 /* build the extension string by filtering out the disabled extensions */
-static GLubyte *filter_extensions( struct context *ctx, const char *extensions, const struct opengl_funcs *funcs )
+static GLubyte *filter_extensions( struct context *ctx, const char *str, const struct opengl_funcs *funcs )
 {
-    const char *end, **extra;
-    size_t size;
-    char *p, *str;
+    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
+    enum opengl_extension extensions[GL_EXTENSION_COUNT];
+    size_t count, i, size = 1;
+    char *ret, *p;
 
-    size = strlen( extensions ) + 2;
-    if (funcs->p_glImportMemoryWin32HandleEXT) size += strlen( "GL_EXT_memory_object_win32" ) + 1;
-    if (funcs->p_glImportSemaphoreWin32HandleEXT) size += strlen( "GL_EXT_semaphore_win32" ) + 1;
-    for (extra = legacy_extensions; *extra; extra++) size += strlen( *extra ) + 1;
-    if (!(p = str = malloc( size ))) return NULL;
+    if (!(count = parse_extensions( str, extensions ))) return NULL;
+    extensions[count++] = WGL_EXT_extensions_string;
+    extensions[count++] = WGL_EXT_swap_control;
 
-    TRACE( "GL_EXTENSIONS:\n" );
-
-    for (;;)
+    for (i = 0; i < count; i++)
     {
-        while (*extensions == ' ') extensions++;
-        if (!*extensions) break;
-
-        if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
-        memcpy( p, extensions, end - extensions );
-        p[end - extensions] = 0;
-
-        if (is_extension_supported( ctx, p ))
-        {
-            TRACE( "++ %s\n", p );
-            p += end - extensions;
-            *p++ = ' ';
-        }
-        else
-        {
-            TRACE( "-- %s (disabled in context)\n", p );
-        }
-        extensions = end;
+        if (!client->extensions[extensions[i]]) continue;
+        size += all_extensions[extensions[i]].len + 1;
     }
 
-    if (funcs->p_glImportMemoryWin32HandleEXT) p = append_extension( p, "GL_EXT_memory_object_win32" );
-    if (funcs->p_glImportSemaphoreWin32HandleEXT) p = append_extension( p, "GL_EXT_semaphore_win32" );
-    for (extra = legacy_extensions; *extra; extra++) p = append_extension( p, *extra );
+    if (!(p = ret = malloc( size ))) return NULL;
 
-    if (p != str) --p;
-    *p = 0;
-    return (GLubyte *)str;
+    for (i = 0; i < count; i++)
+    {
+        if (!client->extensions[extensions[i]]) continue;
+        memcpy( p, all_extensions[extensions[i]].name, all_extensions[extensions[i]].len );
+        p += all_extensions[extensions[i]].len;
+        *p++ = ' ';
+    }
+
+    return (GLubyte *)ret;
 }
 
 /* Check if any GL extension from the list is supported */
