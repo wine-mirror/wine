@@ -681,14 +681,6 @@ static char *query_opengl_option( const char *name )
     return str;
 }
 
-/* Check if a GL extension is supported */
-static BOOL is_extension_supported( struct context *ctx, const char *extension )
-{
-    struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
-    enum opengl_extension ext = parse_extension( extension, strlen( extension ));
-    return ext != GL_EXTENSION_COUNT && client->extensions[ext];
-}
-
 static size_t parse_extensions( const char *name, enum opengl_extension extensions[GL_EXTENSION_COUNT] )
 {
     size_t count = 0;
@@ -740,8 +732,7 @@ static GLubyte *filter_extensions( struct context *ctx, const char *str, const s
 static BOOL is_function_supported( struct context *ctx, const struct registry_entry *func )
 {
     struct opengl_client_context *client = opengl_client_context_from_client( ctx->base.client_context );
-    const char *extension = func->extension;
-    size_t len;
+    const enum opengl_extension *ext;
 
     /* We use the GetProcAddress function from the display driver to retrieve function pointers
      * for OpenGL and WGL extensions. In case of winex11.drv the OpenGL extension lookup is done
@@ -753,15 +744,7 @@ static BOOL is_function_supported( struct context *ctx, const struct registry_en
                         || (client->major_version == func->major && client->minor_version >= func->minor)))
         return TRUE;
 
-    while ((len = strlen( extension )))
-    {
-        TRACE( "Checking for extension '%s'\n", extension );
-
-        /* Check if the extension is part of the GL extension string to see if it is supported. */
-        if (is_extension_supported( ctx, extension )) return TRUE;
-        extension += len + 1;
-    }
-
+    for (ext = func->extensions; *ext != GL_EXTENSION_COUNT; ext++) if (client->extensions[*ext]) return TRUE;
     return FALSE;
 }
 
@@ -923,7 +906,7 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
 
         if (!is_function_supported( ctx, found ))
         {
-            WARN( "Extension %s required for %s not supported\n", found->extension, name );
+            WARN( "Extensions required for %s not supported\n", name );
             return (void *)-1;
         }
 

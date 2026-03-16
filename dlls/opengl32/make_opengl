@@ -1956,7 +1956,8 @@ foreach (sort keys %ext_functions)
             push @exts, $alias;
         }
     }
-    printf OUT "    { \"%s\", \"%s\\0\", offsetof(struct opengl_funcs, p_$_), $major, $minor },\n", $_, join("\\0", sort @exts);
+    push @exts, "GL_EXTENSION_COUNT";
+    printf OUT "    { \"%s\", offsetof(struct opengl_funcs, p_$_), $major, $minor, { %s }},\n", $_, join(", ", @exts);
 }
 print OUT "};\n";
 
