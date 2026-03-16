@@ -10760,6 +10760,8 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(WGL_WINE_pixel_format_passthrough) \
     USE_GL_EXT(WGL_WINE_query_renderer)
 
+#define WGL_FIRST_EXTENSION WGL_3DFX_multisample
+
 #define ALL_WGL_FUNCS \
     USE_GL_FUNC(wglChoosePixelFormat) \
     USE_GL_FUNC(wglCopyContext) \

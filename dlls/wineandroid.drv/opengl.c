@@ -156,16 +156,16 @@ static void android_drawable_flush( struct opengl_drawable *base, UINT flags )
     if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval( egl->display, abs( base->interval ) );
 }
 
-static const char *android_init_wgl_extensions( struct opengl_funcs *funcs )
+static void android_init_extensions( struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT] )
 {
-    return "WGL_EXT_framebuffer_sRGB";
+    extensions[WGL_EXT_framebuffer_sRGB] = 1;
 }
 
 static struct opengl_driver_funcs android_driver_funcs =
 {
     .p_init_egl_platform = android_init_egl_platform,
     .p_get_proc_address = android_get_proc_address,
-    .p_init_wgl_extensions = android_init_wgl_extensions,
+    .p_init_extensions = android_init_extensions,
     .p_surface_create = android_surface_create,
 };
 

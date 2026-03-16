@@ -1195,6 +1195,8 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     if (!client->major_version) client->major_version = 1;
     TRACE( "context %p version %d.%d\n", ctx, client->major_version, client->minor_version );
 
+    funcs->p_init_extensions( client->extensions );
+
     if (funcs->p_glImportMemoryWin32HandleEXT) size++;
     if (funcs->p_glImportSemaphoreWin32HandleEXT) size++;
 

@@ -58,6 +58,13 @@ static const char *debugstr_ok( const char *cond )
     } while (0)
 #define ok_ret( e, r )      ok_ex( r, ==, e, UINT, "%#x" )
 
+#define check_gl_error(exp) check_gl_error_(__LINE__, exp)
+static void check_gl_error_( unsigned int line, GLenum exp )
+{
+    GLenum err = glGetError();
+    ok_(__FILE__,line)( err == exp, "glGetError returned %x, expected %x\n", err, exp );
+}
+
 static NTSTATUS (WINAPI *pD3DKMTCreateDCFromMemory)( D3DKMT_CREATEDCFROMMEMORY *desc );
 static NTSTATUS (WINAPI *pD3DKMTDestroyDCFromMemory)( const D3DKMT_DESTROYDCFROMMEMORY *desc );
 
@@ -66,6 +73,7 @@ static HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext,
 
 /* WGL_ARB_extensions_string */
 static const char* (WINAPI *pwglGetExtensionsStringARB)(HDC);
+static const char* (WINAPI *pwglGetExtensionsStringEXT)(void);
 
 /* WGL_ARB_make_current_read */
 static BOOL (WINAPI *pwglMakeContextCurrentARB)(HDC hdraw, HDC hread, HGLRC hglrc);
@@ -108,11 +116,12 @@ static PFN_glCopyNamedBufferSubData pglCopyNamedBufferSubData;
 static PFN_glCreateBuffers pglCreateBuffers;
 static PFN_glDeleteBuffers pglDeleteBuffers;
 static PFN_glDeleteSync pglDeleteSync;
+static PFN_glFenceSync pglFenceSync;
 static PFN_glFlushMappedBufferRange pglFlushMappedBufferRange;
 static PFN_glFlushMappedNamedBufferRange pglFlushMappedNamedBufferRange;
 static PFN_glGenBuffers pglGenBuffers;
+static PFN_glGetStringi pglGetStringi;
 static PFN_glIsSync pglIsSync;
-static PFN_glFenceSync pglFenceSync;
 static PFN_glMapBuffer pglMapBuffer;
 static PFN_glMapBufferRange pglMapBufferRange;
 static PFN_glMapNamedBuffer pglMapNamedBuffer;
@@ -153,6 +162,7 @@ static void init_functions(void)
 
     /* WGL_ARB_extensions_string */
     GET_PROC(wglGetExtensionsStringARB)
+    GET_PROC(wglGetExtensionsStringEXT)
 
     /* WGL_ARB_make_current_read */
     GET_PROC(wglMakeContextCurrentARB);
@@ -195,11 +205,12 @@ static void init_functions(void)
     GET_PROC(glCreateBuffers)
     GET_PROC(glDeleteBuffers)
     GET_PROC(glDeleteSync)
+    GET_PROC(glFenceSync)
     GET_PROC(glFlushMappedBufferRange)
     GET_PROC(glFlushMappedNamedBufferRange)
     GET_PROC(glGenBuffers)
+    GET_PROC(glGetStringi)
     GET_PROC(glIsSync)
-    GET_PROC(glFenceSync)
     GET_PROC(glMapBuffer)
     GET_PROC(glMapBufferRange)
     GET_PROC(glMapNamedBuffer)
@@ -1702,6 +1713,11 @@ static void test_bitmap_rendering( BOOL use_dib )
     ret = wglMakeCurrent( hdc, hglrc );
     ok( ret, "wglMakeCurrent failed, error %lu\n", GetLastError() );
 
+    pwglGetExtensionsStringEXT = (void *)wglGetProcAddress( "wglGetExtensionsStringEXT" );
+    todo_wine ok(!pwglGetExtensionsStringEXT, "got wglGetExtensionsStringEXT %p\n", pwglGetExtensionsStringEXT);
+    pwglGetExtensionsStringARB = (void *)wglGetProcAddress( "wglGetExtensionsStringARB" );
+    todo_wine ok(!pwglGetExtensionsStringARB, "got wglGetExtensionsStringARB %p\n", pwglGetExtensionsStringARB);
+
     glGetIntegerv( GL_READ_BUFFER, &object );
     ok( object == GL_FRONT, "got %u\n", object );
     glGetIntegerv( GL_DRAW_BUFFER, &object );
@@ -2430,12 +2446,26 @@ static void test_opengl3(HDC hdc)
     {
         int attribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3, WGL_CONTEXT_MINOR_VERSION_ARB, 0, 0};
         HGLRC gl3Ctx = pwglCreateContextAttribsARB(hdc, 0, attribs);
+        const GLubyte *ext;
+        GLint num;
 
         if(gl3Ctx == NULL)
         {
             skip("Skipping the rest of the WGL_ARB_create_context test due to lack of OpenGL 3.0\n");
             return;
         }
+
+        wglMakeCurrent(hdc, gl3Ctx);
+
+        glGetIntegerv(GL_NUM_EXTENSIONS, &num);
+        ok(num > 0, "got %u\n", num);
+        check_gl_error(0);
+        ext = pglGetStringi(GL_EXTENSIONS, 0);
+        ok(!!ext, "got %p\n", ext);
+        check_gl_error(0);
+        ext = pglGetStringi(GL_EXTENSIONS, num);
+        ok(!ext, "got %p\n", ext);
+        check_gl_error(GL_INVALID_VALUE);
 
         wglDeleteContext(gl3Ctx);
     }
@@ -3577,13 +3607,6 @@ static void test_child_window(HWND hwnd, PIXELFORMATDESCRIPTOR *pfd)
     DestroyWindow(child);
 }
 
-#define check_gl_error(exp) check_gl_error_(__LINE__, exp)
-static void check_gl_error_( unsigned int line, GLenum exp )
-{
-    GLenum err = glGetError();
-    ok_(__FILE__,line)( err == exp, "glGetError returned %x, expected %x\n", err, exp );
-}
-
 static void test_gl_error( HDC hdc )
 {
     HGLRC rc, old_rc;
@@ -3888,6 +3911,7 @@ START_TEST(opengl)
         HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
         HDC hdc;
         int iPixelFormat, res;
+        const char *tmp;
         HGLRC hglrc;
         DWORD error;
 
@@ -3976,7 +4000,14 @@ START_TEST(opengl)
         test_memory_map(hdc);
         test_gl_error(hdc);
 
-        wgl_extensions = pwglGetExtensionsStringARB(hdc);
+        tmp = pwglGetExtensionsStringEXT();
+        ok(tmp && *tmp, "got wgl_extensions %s\n", debugstr_a(tmp));
+        wgl_extensions = tmp;
+
+        tmp = pwglGetExtensionsStringARB(hdc);
+        ok(tmp && *tmp, "got wgl_extensions %s\n", debugstr_a(tmp));
+        ok(!strcmp(tmp, wgl_extensions), "got wgl_extensions %s\n", debugstr_a(tmp));
+
         if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
 
         if(strstr(wgl_extensions, "WGL_ARB_create_context"))

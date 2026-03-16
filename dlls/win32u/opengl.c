@@ -63,9 +63,9 @@ static struct list devices_egl = LIST_INIT( devices_egl );
 static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
 
+static BOOLEAN global_extensions[GL_EXTENSION_COUNT];
 static struct wgl_pixel_format *pixel_formats;
 static UINT formats_count, onscreen_count;
-static char wgl_extensions[4096];
 
 static BOOL has_extension( const char *list, const char *ext )
 {
@@ -96,17 +96,6 @@ static void dump_extensions( const char *list )
     }
 
     TRACE( "%s\n", start );
-}
-
-static void register_extension( char *list, size_t size, const char *name )
-{
-    if (!has_extension( list, name ))
-    {
-        size_t len = strlen( list );
-        assert( size - len >= strlen( name ) + 1 );
-        if (*list) strcat( list + len, " " );
-        strcat( list + len, name );
-    }
 }
 
 void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, struct client_surface *client )
@@ -651,9 +640,8 @@ static BOOL egldrv_describe_pixel_format( int format, struct wgl_pixel_format *d
     return describe_egl_config( egl->configs[format % count], desc, pixel_format_flags[format / count] );
 }
 
-static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )
+static void egldrv_init_extensions( struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT] )
 {
-    return "";
 }
 
 static BOOL egldrv_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
@@ -862,7 +850,7 @@ static const struct opengl_driver_funcs egldrv_funcs =
     .p_get_proc_address = egldrv_get_proc_address,
     .p_init_pixel_formats = egldrv_init_pixel_formats,
     .p_describe_pixel_format = egldrv_describe_pixel_format,
-    .p_init_wgl_extensions = egldrv_init_wgl_extensions,
+    .p_init_extensions = egldrv_init_extensions,
     .p_surface_create = egldrv_surface_create,
     .p_pbuffer_create = egldrv_pbuffer_create,
     .p_pbuffer_updated = egldrv_pbuffer_updated,
@@ -1268,9 +1256,8 @@ static BOOL nulldrv_describe_pixel_format( int format, struct wgl_pixel_format *
     return TRUE;
 }
 
-static const char *nulldrv_init_wgl_extensions( struct opengl_funcs *funcs )
+static void nulldrv_init_extensions( struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT] )
 {
-    return "";
 }
 
 static BOOL nulldrv_surface_create( HWND hwnd, int format, struct opengl_drawable **drawable )
@@ -1314,7 +1301,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_get_proc_address = nulldrv_get_proc_address,
     .p_init_pixel_formats = nulldrv_init_pixel_formats,
     .p_describe_pixel_format = nulldrv_describe_pixel_format,
-    .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
+    .p_init_extensions = nulldrv_init_extensions,
     .p_surface_create = nulldrv_surface_create,
     .p_pbuffer_create = nulldrv_pbuffer_create,
     .p_pbuffer_updated = nulldrv_pbuffer_updated,
@@ -1323,20 +1310,6 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_context_destroy = nulldrv_context_destroy,
     .p_make_current = nulldrv_make_current,
 };
-
-static const char *win32u_wglGetExtensionsStringARB( HDC hdc )
-{
-    TRACE( "hdc %p\n", hdc );
-    if (TRACE_ON(wgl)) dump_extensions( wgl_extensions );
-    return wgl_extensions;
-}
-
-static const char *win32u_wglGetExtensionsStringEXT(void)
-{
-    TRACE( "\n" );
-    if (TRACE_ON(wgl)) dump_extensions( wgl_extensions );
-    return wgl_extensions;
-}
 
 static int win32u_wglGetPixelFormat( HDC hdc )
 {
@@ -1758,6 +1731,11 @@ static PROC win32u_wglGetProcAddress( const char *name )
     ret = driver_funcs->p_get_proc_address( name );
     TRACE( "%s -> %p\n", debugstr_a(name), ret );
     return ret;
+}
+
+static void win32u_init_extensions( BOOLEAN extensions[GL_EXTENSION_COUNT] )
+{
+    memcpy( extensions, global_extensions, sizeof(global_extensions) );
 }
 
 static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
@@ -2728,9 +2706,10 @@ static void display_funcs_init(void)
 #undef USE_GL_FUNC
 
     display_funcs.p_wglGetProcAddress = win32u_wglGetProcAddress;
+    display_funcs.p_init_extensions = win32u_init_extensions;
     display_funcs.p_get_pixel_formats = win32u_get_pixel_formats;
 
-    strcpy( wgl_extensions, driver_funcs->p_init_wgl_extensions( &display_funcs ) );
+    driver_funcs->p_init_extensions( &display_funcs, global_extensions );
     display_funcs.p_wglGetPixelFormat = win32u_wglGetPixelFormat;
     display_funcs.p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 
@@ -2746,54 +2725,54 @@ static void display_funcs_init(void)
     display_funcs.p_context_destroy = win32u_context_destroy;
     display_funcs.p_context_reset = win32u_context_reset;
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_multisample" );
+    global_extensions[WGL_ARB_multisample] = 1;
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pixel_format" );
+    global_extensions[WGL_ARB_pixel_format] = 1;
     display_funcs.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
     display_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
     display_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 
     if (display_egl.has_EGL_EXT_pixel_format_float)
     {
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pixel_format_float" );
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ATI_pixel_format_float" );
+        global_extensions[WGL_ARB_pixel_format_float] = 1;
+        global_extensions[WGL_ATI_pixel_format_float] = 1;
     }
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_extensions_string" );
-    display_funcs.p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
+    global_extensions[WGL_ARB_extensions_string] = 1;
+    display_funcs.p_wglGetExtensionsStringARB = (void *)1 /* never called */;
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_extensions_string" );
-    display_funcs.p_wglGetExtensionsStringEXT = win32u_wglGetExtensionsStringEXT;
+    global_extensions[WGL_EXT_extensions_string] = 1;
+    display_funcs.p_wglGetExtensionsStringEXT = (void *)1 /* never called */;
 
     /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
      * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
      */
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_pixel_format_passthrough" );
+    global_extensions[WGL_WINE_pixel_format_passthrough] = 1;
     display_funcs.p_wglSetPixelFormatWINE = win32u_wglSetPixelFormatWINE;
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context" );
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_no_error" );
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_profile" );
+    global_extensions[WGL_ARB_create_context] = 1;
+    global_extensions[WGL_ARB_create_context_no_error] = 1;
+    global_extensions[WGL_ARB_create_context_profile] = 1;
     display_funcs.p_wglCreateContextAttribsARB = (void *)1; /* never called */
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_make_current_read" );
+    global_extensions[WGL_ARB_make_current_read] = 1;
     display_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
     display_funcs.p_wglMakeContextCurrentARB = win32u_wglMakeContextCurrentARB;
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pbuffer" );
+    global_extensions[WGL_ARB_pbuffer] = 1;
     display_funcs.p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
     display_funcs.p_wglDestroyPbufferARB   = win32u_wglDestroyPbufferARB;
     display_funcs.p_wglGetPbufferDCARB     = win32u_wglGetPbufferDCARB;
     display_funcs.p_wglReleasePbufferDCARB = win32u_wglReleasePbufferDCARB;
     display_funcs.p_wglQueryPbufferARB     = win32u_wglQueryPbufferARB;
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_render_texture" );
+    global_extensions[WGL_ARB_render_texture] = 1;
     display_funcs.p_wglBindTexImageARB     = win32u_wglBindTexImageARB;
     display_funcs.p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
     display_funcs.p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
 
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control" );
-    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control_tear" );
+    global_extensions[WGL_EXT_swap_control] = 1;
+    global_extensions[WGL_EXT_swap_control_tear] = 1;
     display_funcs.p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
     display_funcs.p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
 
@@ -2810,7 +2789,7 @@ static void display_funcs_init(void)
 
     if (!list_empty( &devices_egl ))
     {
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_query_renderer" );
+        global_extensions[WGL_WINE_query_renderer] = 1;
         display_funcs.p_query_renderer = win32u_query_renderer;
         display_funcs.p_wglQueryCurrentRendererIntegerWINE = win32u_wglQueryCurrentRendererIntegerWINE;
         display_funcs.p_wglQueryCurrentRendererStringWINE = win32u_wglQueryCurrentRendererStringWINE;

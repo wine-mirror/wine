@@ -56,6 +56,11 @@ static CRITICAL_SECTION_DEBUG wgl_cs_debug = {
     0, 0, { (DWORD_PTR)(__FILE__ ": wgl_cs") }
 };
 static CRITICAL_SECTION wgl_cs = { &wgl_cs_debug, -1, 0, 0, 0, 0 };
+static char *wgl_extensions;
+
+#define USE_GL_EXT(x) #x,
+static const char *extension_names[] = { ALL_GL_EXTS ALL_WGL_EXTS };
+#undef USE_GL_EXT
 
 #ifndef _WIN64
 
@@ -96,6 +101,23 @@ static void cleanup_wow64_strings(void)
 }
 
 #endif
+
+static void init_wgl_extensions( const BOOLEAN extensions[GL_EXTENSION_COUNT] )
+{
+    UINT pos = 0, len = 0, ext;
+    char *str;
+
+    for (ext = WGL_FIRST_EXTENSION; ext < GL_EXTENSION_COUNT; ext++)
+        if (extensions[ext]) len += strlen( extension_names[ext] ) + 1;
+
+    if (!(str = malloc( len + 1 ))) return;
+
+    for (ext = WGL_FIRST_EXTENSION; ext < GL_EXTENSION_COUNT; ext++)
+        if (extensions[ext]) pos += sprintf( str + pos, "%s ", extension_names[ext] );
+    str[pos - 1] = 0;
+
+    wgl_extensions = str;
+}
 
 struct handle_entry
 {
@@ -1333,13 +1355,23 @@ int WINAPI wglGetLayerPaletteEntries( HDC hdc, int plane, int start, int count, 
 PROC WINAPI wglGetProcAddress( LPCSTR name )
 {
     struct wglGetProcAddress_params args = { .teb = NtCurrentTeb(), .lpszProc = name };
+    struct context *ctx;
     const void *proc;
     NTSTATUS status;
 
     if (!name) return NULL;
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return NULL;
+
     if ((status = UNIX_CALL( wglGetProcAddress, &args )))
         WARN( "wglGetProcAddress %s returned %#lx\n", debugstr_a(name), status );
     if (args.ret == (void *)-1) return NULL;
+
+    if (!strncmp( name, "wglGetExtensionsString", 22 ))
+    {
+        EnterCriticalSection( &wgl_cs );
+        if (!wgl_extensions) init_wgl_extensions( ctx->base.extensions );
+        LeaveCriticalSection( &wgl_cs );
+    }
 
     proc = extension_procs[(UINT_PTR)args.ret];
     TRACE( "returning %s -> %p\n", name, proc );
@@ -2127,44 +2159,14 @@ void WINAPI glGetIntegerv( GLenum pname, GLint *data )
 
 const char * WINAPI wglGetExtensionsStringARB( HDC hdc )
 {
-    struct wglGetExtensionsStringARB_params args = { .teb = NtCurrentTeb(), .hdc = hdc };
-    NTSTATUS status;
-#ifndef _WIN64
-    char *wow64_str = NULL;
-#endif
-
     TRACE( "hdc %p\n", hdc );
-
-#ifndef _WIN64
-    if (UNIX_CALL( wglGetExtensionsStringARB, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );
-#endif
-    if ((status = UNIX_CALL( wglGetExtensionsStringARB, &args ))) WARN( "wglGetExtensionsStringARB returned %#lx\n", status );
-#ifndef _WIN64
-    if (args.ret != wow64_str) free( wow64_str );
-    else if (args.ret) append_wow64_string( wow64_str );
-#endif
-    return args.ret;
+    return wgl_extensions;
 }
 
 const char * WINAPI wglGetExtensionsStringEXT(void)
 {
-    struct wglGetExtensionsStringEXT_params args = { .teb = NtCurrentTeb() };
-    NTSTATUS status;
-#ifndef _WIN64
-    char *wow64_str = NULL;
-#endif
-
     TRACE( "\n" );
-
-#ifndef _WIN64
-    if (UNIX_CALL( wglGetExtensionsStringEXT, &args ) == STATUS_BUFFER_TOO_SMALL) args.ret = wow64_str = malloc( (size_t)args.ret );
-#endif
-    if ((status = UNIX_CALL( wglGetExtensionsStringEXT, &args ))) WARN( "wglGetExtensionsStringEXT returned %#lx\n", status );
-#ifndef _WIN64
-    if (args.ret != wow64_str) free( wow64_str );
-    else if (args.ret) append_wow64_string( wow64_str );
-#endif
-    return args.ret;
+    return wgl_extensions;
 }
 
 const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute )

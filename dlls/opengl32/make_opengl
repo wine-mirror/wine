@@ -154,6 +154,8 @@ my %manual_win_functions =
      "wglGetCurrentDC" => 1,
      "wglGetCurrentReadDCARB" => 1,
      "wglGetDefaultProcAddress" => 1,
+     "wglGetExtensionsStringARB" => 1,
+     "wglGetExtensionsStringEXT" => 1,
      "wglGetLayerPaletteEntries" => 1,
      "wglRealizeLayerPalette" => 1,
      "wglSetLayerPaletteEntries" => 1,
@@ -182,8 +184,6 @@ my %manual_win_thunks =
      "wglCreatePbufferARB" => 1,
      "wglDeleteContext" => 1,
      "wglDestroyPbufferARB" => 1,
-     "wglGetExtensionsStringARB" => 1,
-     "wglGetExtensionsStringEXT" => 1,
      "wglGetPixelFormat" => 1,
      "wglGetPixelFormatAttribfvARB" => 1,
      "wglGetPixelFormatAttribivARB" => 1,
@@ -1499,6 +1499,7 @@ foreach (sort keys %wgl_extensions)
     printf HEADER " \\\n    USE_GL_EXT(\%s)", $_;
 }
 print HEADER "\n\n";
+print HEADER "#define WGL_FIRST_EXTENSION " . (sort keys %wgl_extensions)[0] . "\n\n";
 print HEADER "#define ALL_WGL_FUNCS";
 foreach (sort keys %wgl_functions)
 {
