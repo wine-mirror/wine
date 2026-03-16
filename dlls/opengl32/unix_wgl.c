@@ -874,8 +874,6 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
 PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
 {
     const struct registry_entry *found;
-    struct opengl_funcs *funcs = teb->glTable;
-    const void **func_ptr;
     struct context *ctx;
 
     /* Without an active context opengl32 doesn't know to what
@@ -897,20 +895,6 @@ PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     {
         WARN( "Extensions required for %s not supported\n", name );
         return (void *)-1;
-    }
-
-    func_ptr = (const void **)((char *)funcs + found->offset);
-    if (!*func_ptr)
-    {
-        void *driver_func = funcs->p_wglGetProcAddress( name );
-
-        if (driver_func == NULL)
-        {
-            WARN( "Function %s not supported by driver\n", name );
-            return (void *)-1;
-        }
-
-        *func_ptr = driver_func;
     }
 
     /* Return the index into the extension registry instead of a useless
@@ -989,15 +973,6 @@ static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
 #undef GET_VK_FUNC
     }
     if (!vk_instance) return FALSE;
-
-#define GET_GL_FUNC(name) if (!funcs->p_##name) funcs->p_##name = (void *)funcs->p_wglGetProcAddress( #name )
-    GET_GL_FUNC( glBufferStorageMemEXT );
-    GET_GL_FUNC( glCreateMemoryObjectsEXT );
-    GET_GL_FUNC( glDeleteMemoryObjectsEXT );
-    GET_GL_FUNC( glGetUnsignedBytei_vEXT );
-    GET_GL_FUNC( glImportMemoryFdEXT );
-    GET_GL_FUNC( glNamedBufferStorageMemEXT );
-#undef GET_GL_FUNC
 
     funcs->p_glGetIntegerv( GL_NUM_DEVICE_UUIDS_EXT, &uuid_count );
     for (i = 0; i < uuid_count; i++)
@@ -1171,13 +1146,6 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     if (client->major_version >= 3)
     {
         GLint extensions_count;
-
-        if (!funcs->p_glGetStringi)
-        {
-            void **func_ptr = (void **)&funcs->p_glGetStringi;
-            *func_ptr = funcs->p_wglGetProcAddress( "glGetStringi" );
-        }
-
         funcs->p_glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
         for (i = 0; i < extensions_count; i++)
         {
@@ -2070,37 +2038,29 @@ NTSTATUS return_wow64_string( const void *str, PTR32 *wow64_str )
 static GLint get_buffer_param( TEB *teb, GLenum target, GLenum param )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    typeof(*funcs->p_glGetBufferParameteriv) *func;
     GLint size = 0;
-    if (!(func = funcs->p_glGetBufferParameteriv)) func = (void *)funcs->p_wglGetProcAddress( "glGetBufferParameteriv" );
-    if (func) func( target, param, &size );
+    if (funcs->p_glGetBufferParameteriv) funcs->p_glGetBufferParameteriv( target, param, &size );
     return size;
 }
 
 static GLint get_named_buffer_param( TEB *teb, GLint buffer, GLenum param )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    typeof(*funcs->p_glGetNamedBufferParameteriv) *func;
     GLint size = 0;
-    if (!(func = funcs->p_glGetNamedBufferParameteriv)) func = (void *)funcs->p_wglGetProcAddress( "glGetNamedBufferParameteriv" );
-    if (func) func( buffer, param, &size );
+    if (funcs->p_glGetNamedBufferParameteriv) funcs->p_glGetNamedBufferParameteriv( buffer, param, &size );
     return size;
 }
 
 static void unmap_buffer( TEB *teb, GLenum target )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    typeof(*funcs->p_glUnmapBuffer) *func;
-    if (!(func = funcs->p_glUnmapBuffer)) func = (void *)funcs->p_wglGetProcAddress( "glUnmapBuffer" );
-    if (func) func( target );
+    if (funcs->p_glUnmapBuffer) funcs->p_glUnmapBuffer( target );
 }
 
 static void unmap_named_buffer( TEB *teb, GLint buffer )
 {
     const struct opengl_funcs *funcs = teb->glTable;
-    typeof(*funcs->p_glUnmapNamedBuffer) *func;
-    if (!(func = funcs->p_glUnmapNamedBuffer)) func = (void *)funcs->p_wglGetProcAddress( "glUnmapNamedBuffer" );
-    if (func) func( buffer );
+    if (funcs->p_glUnmapNamedBuffer) funcs->p_glUnmapNamedBuffer( buffer );
 }
 
 static GLuint get_target_name( TEB *teb, GLenum target )

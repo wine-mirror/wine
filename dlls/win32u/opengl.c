@@ -2687,22 +2687,7 @@ static void display_funcs_init(void)
     if (!display_funcs.p_##func && !(display_funcs.p_##func = driver_funcs->p_get_proc_address( #func ))) \
         WARN( "%s not found.\n", #func );
     ALL_GL_FUNCS
-    USE_GL_FUNC(glBindFramebuffer)
-    USE_GL_FUNC(glBlitFramebuffer)
-    USE_GL_FUNC(glCheckNamedFramebufferStatus)
-    USE_GL_FUNC(glCreateFramebuffers)
-    USE_GL_FUNC(glCreateRenderbuffers)
-    USE_GL_FUNC(glDeleteFramebuffers)
-    USE_GL_FUNC(glDeleteRenderbuffers)
-    USE_GL_FUNC(glGetNamedFramebufferAttachmentParameteriv)
-    USE_GL_FUNC(glGetUnsignedBytei_vEXT)
-    USE_GL_FUNC(glGetUnsignedBytevEXT)
-    USE_GL_FUNC(glImportMemoryFdEXT)
-    USE_GL_FUNC(glImportSemaphoreFdEXT)
-    USE_GL_FUNC(glNamedFramebufferDrawBuffer)
-    USE_GL_FUNC(glNamedFramebufferReadBuffer)
-    USE_GL_FUNC(glNamedFramebufferRenderbuffer)
-    USE_GL_FUNC(glNamedRenderbufferStorageMultisample)
+    ALL_GL_EXT_FUNCS
 #undef USE_GL_FUNC
 
     display_funcs.p_wglGetProcAddress = win32u_wglGetProcAddress;
