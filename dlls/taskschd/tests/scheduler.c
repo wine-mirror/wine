@@ -1426,6 +1426,103 @@ static void test_registration_trigger(ITrigger *trigger)
     IRegistrationTrigger_Release(reg_trigger);
 }
 
+static void test_logon_trigger(ITrigger *trigger)
+{
+    ILogonTrigger *log_trigger;
+    HRESULT hr;
+    TASK_TRIGGER_TYPE2 type;
+    BSTR id, exc_time_limit, start_boundary, end_boundary, delay, user_id;
+    VARIANT_BOOL enabled;
+    static WCHAR id_str[] = L"Trigger_id_test";
+    static WCHAR exc_time_limit_str[] = L"Time_limit_test";
+    static WCHAR start_boundary_str[] = L"2023-01-01T00:00:00";
+    static WCHAR end_boundary_str[] = L"2026-01-01T01:00:00";
+    static WCHAR delay_str[] = L"10H";
+    static WCHAR user_id_str[] = L"User_id_test";
+
+    hr = ITrigger_QueryInterface(trigger, &IID_ILogonTrigger, (void**)&log_trigger);
+    ok(hr == S_OK, "Could not get IRegistrationTrigger iface: %08lx\n", hr);
+
+    hr = ILogonTrigger_get_Type(log_trigger, &type);
+    ok(hr == S_OK, "get_Type failed: %08lx\n", hr);
+    ok(type == TASK_TRIGGER_LOGON, "got %u\n", type);
+
+    hr = ILogonTrigger_get_Id(log_trigger, &id);
+    ok(hr == S_OK, "get_Id failed: %08lx\n", hr);
+    ok(id == NULL, "test ok!\n");
+
+    hr = ILogonTrigger_put_Id(log_trigger, id_str);
+    ok(hr == S_OK, "put_Id failed: %08lx\n", hr);
+    hr = ILogonTrigger_get_Id(log_trigger, &id);
+    ok(hr == S_OK, "get_Id failed: %08lx\n", hr);
+    ok(!lstrcmpW(id, id_str), "got %s\n", wine_dbgstr_w(id));
+
+    hr = ILogonTrigger_get_ExecutionTimeLimit(log_trigger, &exc_time_limit);
+    ok(hr == S_OK, "get_ExecutionTimeLimit failed: %08lx\n", hr);
+    ok(exc_time_limit == NULL, "test ok!\n");
+
+    hr = ILogonTrigger_put_ExecutionTimeLimit(log_trigger, exc_time_limit_str);
+    ok(hr == S_OK, "put_ExecutionTimeLimit failed: %08lx\n", hr);
+    hr = ILogonTrigger_get_ExecutionTimeLimit(log_trigger, &exc_time_limit);
+    ok(hr == S_OK, "get_ExecutionTimeLimit failed: %08lx\n", hr);
+    ok(!lstrcmpW(exc_time_limit, exc_time_limit_str), "got %s\n", wine_dbgstr_w(exc_time_limit));
+
+    hr = ILogonTrigger_get_StartBoundary(log_trigger, &start_boundary);
+    ok(hr == S_OK, "get_StartBoundary failed: %08lx\n", hr);
+    ok(start_boundary == NULL, "test ok!\n");
+
+    hr = ILogonTrigger_put_StartBoundary(log_trigger, start_boundary_str);
+    ok(hr == S_OK, "put_StartBoundary failed: %08lx\n", hr);
+    hr = ILogonTrigger_get_StartBoundary(log_trigger, &start_boundary);
+    ok(hr == S_OK, "get_StartBoundary failed: %08lx\n", hr);
+    ok(!lstrcmpW(start_boundary, start_boundary_str), "got %s\n", wine_dbgstr_w(start_boundary));
+
+    hr = ILogonTrigger_get_EndBoundary(log_trigger, &end_boundary);
+    ok(hr == S_OK, "get_EndBoundary failed: %08lx\n", hr);
+    ok(end_boundary == NULL, "test ok!\n");
+
+    hr = ILogonTrigger_put_EndBoundary(log_trigger, end_boundary_str);
+    ok(hr == S_OK, "put_EndBoundary failed: %08lx\n", hr);
+    hr = ILogonTrigger_get_EndBoundary(log_trigger, &end_boundary);
+    ok(hr == S_OK, "get_EndBoundary failed: %08lx\n", hr);
+    ok(!lstrcmpW(end_boundary, end_boundary_str), "got %s\n", wine_dbgstr_w(end_boundary));
+
+    enabled = VARIANT_FALSE;
+    hr = ILogonTrigger_get_Enabled(log_trigger, &enabled);
+    ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
+    ok(enabled == VARIANT_TRUE, "got %d\n", enabled);
+
+    hr = ILogonTrigger_put_Enabled(log_trigger, VARIANT_FALSE);
+    ok(hr == S_OK, "put_Enabled failed: %08lx\n", hr);
+
+    enabled = VARIANT_TRUE;
+    hr = ILogonTrigger_get_Enabled(log_trigger, &enabled);
+    ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
+    ok(enabled == VARIANT_FALSE, "got %d\n", enabled);
+
+    hr = ILogonTrigger_get_Delay(log_trigger, &delay);
+    ok(hr == S_OK, "get_Delay failed: %08lx\n", hr);
+    ok(delay == NULL, "test ok!\n");
+
+    hr = ILogonTrigger_put_Delay(log_trigger, delay_str);
+    ok(hr == S_OK, "put_Delay failed: %08lx\n", hr);
+    hr = ILogonTrigger_get_Delay(log_trigger, &delay);
+    ok(hr == S_OK, "get_EndBoundary failed: %08lx\n", hr);
+    ok(!lstrcmpW(delay, delay_str), "got %s\n", wine_dbgstr_w(delay));
+
+    hr = ILogonTrigger_get_UserId(log_trigger, &user_id);
+    ok(hr == S_OK, "get_UserId failed: %08lx\n", hr);
+    ok(user_id == NULL, "test ok!\n");
+
+    hr = ILogonTrigger_put_UserId(log_trigger, user_id_str);
+    ok(hr == S_OK, "put_UserId failed: %08lx\n", hr);
+    hr = ILogonTrigger_get_UserId(log_trigger, &user_id);
+    ok(hr == S_OK, "get_UserId failed: %08lx\n", hr);
+    ok(!lstrcmpW(user_id, user_id_str), "got %s\n", wine_dbgstr_w(user_id));
+
+    ILogonTrigger_Release(log_trigger);
+}
+
 static void create_action(ITaskDefinition *taskdef)
 {
     static WCHAR task1_exe[] = L"task1.exe";
@@ -1849,6 +1946,13 @@ static void test_TaskDefinition(void)
     ok(hr == S_OK, "Create failed: %08lx\n", hr);
     ok(trigger != NULL, "trigger = NULL\n");
     test_registration_trigger(trigger);
+    ITrigger_Release(trigger);
+
+    hr = ITriggerCollection_Create(trigger_col, TASK_TRIGGER_LOGON, &trigger);
+    todo_wine
+    ok(hr == S_OK, "Create failed: %08lx\n", hr);
+    ok(trigger != NULL, "trigger = NULL\n");
+    test_logon_trigger(trigger);
     ITrigger_Release(trigger);
     ITriggerCollection_Release(trigger_col);
 
