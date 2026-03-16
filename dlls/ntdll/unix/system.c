@@ -3012,12 +3012,6 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     bias = (LONG)(mktime(tm) - year_start) / 60;
 
     tm = localtime(&year_start);
-    tm1 = tm2 = *tm;
-    tm1.tm_isdst = 0;
-    tm2.tm_isdst = 1;
-    inverted_dst = mktime(&tm1) < mktime(&tm2);
-    if (inverted_dst) bias += 60;
-
     if (current_year == tm->tm_year && current_bias == bias)
     {
         *tzi = cached_tzi;
@@ -3025,10 +3019,16 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
         return;
     }
 
-    memset(tzi, 0, sizeof(*tzi));
-    TRACE("tz data will be valid through year %d, bias %d, inverted_dst %d\n", tm->tm_year + 1900, bias, inverted_dst);
     current_year = tm->tm_year;
     current_bias = bias;
+    tm1 = tm2 = *tm;
+    tm1.tm_isdst = 0;
+    tm2.tm_isdst = 1;
+    inverted_dst = mktime(&tm1) < mktime(&tm2);
+    if (inverted_dst) bias += 60;
+
+    memset(tzi, 0, sizeof(*tzi));
+    TRACE("tz data will be valid through year %d, bias %d, inverted_dst %d\n", tm->tm_year + 1900, bias, inverted_dst);
 
     tzi->Bias = bias;
 
