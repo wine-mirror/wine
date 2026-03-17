@@ -9,6 +9,7 @@
         android:icon="@drawable/wine"
         android:label="Wine" >
         <activity
+            android:exported="true"
             android:label="Wine"
             android:name=".WineActivity"
             android:launchMode="singleInstance"
