@@ -1775,7 +1775,11 @@ static void init_keycode_mappings( Display *display )
 /* initialize or update keyboard layouts */
 void init_keyboard_layouts( Display *display )
 {
+    unsigned int xkb_group;
+    XkbStateRec xkb_state;
     XModifierKeymap *mmp;
+    XkbDescRec *xkb_desc;
+    Status status;
     KeyCode *kcp;
 
     pthread_mutex_lock( &kbd_mutex );
@@ -1804,6 +1808,29 @@ void init_keyboard_layouts( Display *display )
         }
     }
     XFreeModifiermap( mmp );
+
+    status = XkbGetState( display, XkbUseCoreKbd, &xkb_state );
+    xkb_group = status ? 0 : xkb_state.group;
+    TRACE( "current group %u (status %#x)\n", xkb_group, status );
+
+    if ((xkb_desc = XkbGetMap( display, XkbAllClientInfoMask, XkbUseCoreKbd )))
+    {
+        char *names[4];
+        int count;
+
+        XkbGetNames( display, XkbGroupNamesMask, xkb_desc );
+        for (count = 0; count < ARRAY_SIZE(xkb_desc->names->groups); count++)
+            if (!xkb_desc->names->groups[count]) break;
+
+        if (!XGetAtomNames( display, xkb_desc->names->groups, count, names )) count = 0;
+        for (int i = 0; i < count; i++)
+        {
+            TRACE( "group %u name %s\n", i, debugstr_a(names[i]) );
+            XFree( names[i] );
+        }
+
+        XkbFreeKeyboard( xkb_desc, 0, True );
+    }
 
     detect_keyboard_layout( display );
 
