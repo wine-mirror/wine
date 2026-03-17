@@ -3273,7 +3273,7 @@ static void test_polyphony(void)
     midi.messages[1] = make_note_on(0, 1, 60, 127);
     midi.messages[2] = make_note_on(0, 1, 61, 1);
     midi.messages[3] = make_note_off(10000000, 1, 60, 127);
-    check_volume_envelope(synth, &default_instrument_download, &midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &midi, &default_volume_envelope, FALSE);
 
     IDirectMusicSynth_Release(synth);
 }

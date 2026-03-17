@@ -466,9 +466,11 @@ static void synth_reset_default_values(struct synth *This)
     BYTE chan;
 
     fluid_synth_system_reset(This->fluid_synth);
+    fluid_synth_reset_basic_channel(This->fluid_synth, 0);
 
     for (chan = 0; chan < 0x10; chan++)
     {
+        fluid_synth_set_basic_channel(This->fluid_synth, chan, FLUID_CHANNEL_MODE_OMNION_POLY, 1);
         fluid_synth_program_select(This->fluid_synth, chan, fluid_sfont_get_id(This->fluid_sfont), 0, 0);
 
         fluid_synth_cc(This->fluid_synth, chan | 0xe0 /* PITCH_BEND */, 0, 0);
