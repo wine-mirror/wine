@@ -8,5 +8,6 @@ VER_PRODUCTVERSION      = 5,0,2147,1
 
 SOURCES = \
 	cabinet_main.c \
+	compressapi.c \
 	fci.c \
 	fdi.c

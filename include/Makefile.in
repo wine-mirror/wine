@@ -92,6 +92,7 @@ SOURCES = \
 	common.ver \
 	commoncontrols.idl \
 	compobj.h \
+	compressapi.h \
 	comsvcs.idl \
 	concurrencysal.h \
 	config.h.in \
