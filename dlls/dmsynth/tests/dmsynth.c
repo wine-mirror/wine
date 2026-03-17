@@ -3256,7 +3256,7 @@ static void test_polyphony(void)
     midi.messages[1] = make_note_on(0, 9, 60, 1);
     envelope = default_volume_envelope;
     envelope.gain = -969.;
-    check_volume_envelope(synth, &download, &midi, &envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &envelope, FALSE);
 
     /* in mono mode, only one voice can play at a time */
     memset(&midi, 0, sizeof(midi));

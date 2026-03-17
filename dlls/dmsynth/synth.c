@@ -604,6 +604,7 @@ static HRESULT WINAPI synth_Open(IDirectMusicSynth8 *iface, DMUS_PORTPARAMS *par
             !!(actual.dwEffectFlags & DMUS_EFFECT_REVERB));
     fluid_settings_setint(This->fluid_settings, "synth.chorus.active",
             !!(actual.dwEffectFlags & DMUS_EFFECT_CHORUS));
+    fluid_settings_setint(This->fluid_settings, "synth.note-cut", 1);
 
     /* native limits the total voice gain to 6 dB */
     gain = BASE_GAIN;
