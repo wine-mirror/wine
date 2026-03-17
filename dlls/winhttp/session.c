@@ -370,6 +370,7 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     HINTERNET handle = NULL;
 
     TRACE( "%s, %lu, %s, %s, %#lx\n", debugstr_w(agent), access, debugstr_w(proxy), debugstr_w(bypass), flags );
+    if (flags & ~WINHTTP_FLAG_ASYNC) FIXME( "flags %#lx not supported\n", flags );
 
     if (!(session = calloc( 1, sizeof(*session) ))) return NULL;
 
@@ -1428,12 +1429,16 @@ static WCHAR *get_request_path( const WCHAR *object )
 HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, const WCHAR *verb, const WCHAR *object, const WCHAR *version,
                                      const WCHAR *referrer, const WCHAR **types, DWORD flags )
 {
+    static const DWORD supported_flags = WINHTTP_FLAG_ESCAPE_PERCENT | WINHTTP_FLAG_ESCAPE_DISABLE |
+                                         WINHTTP_FLAG_ESCAPE_DISABLE_QUERY | WINHTTP_FLAG_REFRESH |
+                                         WINHTTP_FLAG_SECURE;
     struct request *request;
     struct connect *connect;
     HINTERNET hrequest = NULL;
 
     TRACE( "%p, %s, %s, %s, %s, %p, %#lx\n", hconnect, debugstr_w(verb), debugstr_w(object),
           debugstr_w(version), debugstr_w(referrer), types, flags );
+    if (flags & ~supported_flags) FIXME( "flags %lx not supported\n", flags );
 
     if (types && TRACE_ON(winhttp))
     {
