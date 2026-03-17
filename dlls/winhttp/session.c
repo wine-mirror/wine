@@ -337,6 +337,15 @@ static BOOL session_set_option( struct object_header *hdr, DWORD option, void *b
         session->hdr.decompression = decompression;
         return TRUE;
     }
+    case WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL:
+        if (buflen != sizeof(DWORD))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        FIXME( "WINHTTP_OPTION_ENABLE_HTTP_PROTOCOL: %lx\n", *(DWORD *)buffer );
+        return TRUE;
+
     default:
         FIXME( "unimplemented option %lu\n", option );
         SetLastError( ERROR_WINHTTP_INVALID_OPTION );
