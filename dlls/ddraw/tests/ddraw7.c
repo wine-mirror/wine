@@ -15937,6 +15937,7 @@ static void test_map_synchronisation(void)
     unsigned int colour, i, j, tri_count;
     IDirect3DVertexBuffer7 *buffer;
     D3DVERTEXBUFFERDESC vb_desc;
+    BOOL small_buffer = FALSE;
     IDirect3DDevice7 *device;
     BOOL unsynchronised, ret;
     IDirectDrawSurface7 *rt;
@@ -16084,7 +16085,15 @@ static void test_map_synchronisation(void)
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &buffer, 0);
-        ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#lx.\n", hr);
+        ok(SUCCEEDED(hr) || hr == D3DERR_TOOMANYVERTICES, "Failed to create vertex buffer, hr %#lx.\n", hr);
+        if (hr == D3DERR_TOOMANYVERTICES && vb_desc.dwNumVertices >= 65535)
+        {
+            trace("Test draw needs more than 64k vertices, test results might be flaky.\n");
+            small_buffer = TRUE;
+            vb_desc.dwNumVertices = 65534;
+            hr = IDirect3D7_CreateVertexBuffer(d3d, &vb_desc, &buffer, 0);
+            ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#lx.\n", hr);
+        }
         hr = IDirect3DVertexBuffer7_Lock(buffer, DDLOCK_DISCARDCONTENTS, (void **)&quads, NULL);
         ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#lx.\n", hr);
         for (j = 0; j < vb_desc.dwNumVertices / 4; ++j)
@@ -16113,6 +16122,7 @@ static void test_map_synchronisation(void)
 
         colour = get_surface_color(rt, 320, 240);
         unsynchronised = compare_color(colour, 0x00ffff00, 1);
+        flaky_if(small_buffer && tests[i].unsynchronised)
         ok(tests[i].unsynchronised == unsynchronised, "Expected %s map for flags %#x.\n",
                 tests[i].unsynchronised ? "unsynchronised" : "synchronised", tests[i].flags);
 
