@@ -9297,6 +9297,12 @@ static void test_layered_window(void)
     HBITMAP hbm;
     BOOL ret;
     MSG msg;
+    HDC hdc_from_hwnd;
+    BLENDFUNCTION bf;
+    bf.AlphaFormat = 0;
+    bf.BlendFlags = 0;
+    bf.BlendOp = 0;
+    bf.SourceConstantAlpha = 180;
 
     if (!pGetLayeredWindowAttributes || !pSetLayeredWindowAttributes || !pUpdateLayeredWindow)
     {
@@ -9320,9 +9326,17 @@ static void test_layered_window(void)
     ret = pSetLayeredWindowAttributes( hwnd, 0, 0, LWA_ALPHA );
     ok( !ret, "SetLayeredWindowAttributes should fail on non-layered window\n" );
     SetWindowLongA( hwnd, GWL_EXSTYLE, GetWindowLongA(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
+    hdc_from_hwnd = GetDC( hwnd );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc_from_hwnd, &pt, 0, &bf, ULW_ALPHA );
+    ReleaseDC ( hwnd, hdc_from_hwnd );
+    ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
     ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
+    hdc_from_hwnd = GetDC( hwnd );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc_from_hwnd, &pt, 0, &bf, ULW_ALPHA );
+    ReleaseDC ( hwnd, hdc_from_hwnd );
     ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
@@ -9458,6 +9472,10 @@ static void test_layered_window(void)
     SetWindowLongA( hwnd, GWL_EXSTYLE, GetWindowLongA(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED );
     SetWindowLongA( hwnd, GWL_EXSTYLE, GetWindowLongA(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
     ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
+    hdc_from_hwnd = GetDC( hwnd );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc_from_hwnd, &pt, 0, &bf, ULW_ALPHA );
+    ReleaseDC ( hwnd, hdc_from_hwnd );
     ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
 
     ret = pSetLayeredWindowAttributes( hwnd, 0, 255, LWA_ALPHA );
