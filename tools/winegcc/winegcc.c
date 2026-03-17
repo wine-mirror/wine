@@ -1289,6 +1289,12 @@ static void build(struct strarray input_files, const char *output)
         if (is_pe) add_library(lib_dirs, &files, "compiler-rt");
         if (use_msvcrt)
         {
+            if (processor == proc_cxx)
+            {
+                add_library(lib_dirs, &files, "c++");
+                add_library(lib_dirs, &files, "msvcp140");
+                add_library(lib_dirs, &files, "vcruntime140");
+            }
             if (!crt_lib)
             {
                 if (strncmp( output_name, "msvcr", 5 ) &&
