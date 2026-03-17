@@ -132,7 +132,7 @@ struct ioctl_android_create_window
     struct ioctl_header hdr;
     int                 parent;
     float               scale;
-    bool                is_desktop;
+    BOOL                is_desktop;
 };
 
 struct ioctl_android_destroy_window
