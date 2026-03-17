@@ -18176,11 +18176,17 @@ static void test_caps(void)
         {
             .dwSize = sizeof(DDSURFACEDESC2),
             .dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT,
-            .ddsCaps.dwCaps = DDSCAPS_ZBUFFER,
-            .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
-            .ddpfPixelFormat.dwFlags = DDPF_ZBUFFER,
-            .ddpfPixelFormat.dwZBufferBitDepth = depth_caps[i].depth,
-            .ddpfPixelFormat.dwZBitMask = depth_caps[i].mask,
+            .ddsCaps =
+            {
+                .dwCaps = DDSCAPS_ZBUFFER,
+            },
+            .ddpfPixelFormat =
+            {
+                .dwSize = sizeof(DDPIXELFORMAT),
+                .dwFlags = DDPF_ZBUFFER,
+                .dwZBufferBitDepth = depth_caps[i].depth,
+                .dwZBitMask = depth_caps[i].mask,
+            },
             .dwWidth = 64,
             .dwHeight = 64,
         };
@@ -18272,11 +18278,17 @@ static void test_caps(void)
             {
                 .dwSize = sizeof(DDSURFACEDESC2),
                 .dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT,
-                .ddsCaps.dwCaps = DDSCAPS_ZBUFFER,
-                .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
-                .ddpfPixelFormat.dwFlags = DDPF_ZBUFFER,
-                .ddpfPixelFormat.dwZBufferBitDepth = depth_caps[i].depth,
-                .ddpfPixelFormat.dwZBitMask = depth_caps[i].mask,
+                .ddsCaps =
+                {
+                    .dwCaps = DDSCAPS_ZBUFFER,
+                },
+                .ddpfPixelFormat =
+                {
+                    .dwSize = sizeof(DDPIXELFORMAT),
+                    .dwFlags = DDPF_ZBUFFER,
+                    .dwZBufferBitDepth = depth_caps[i].depth,
+                    .dwZBitMask = depth_caps[i].mask,
+                },
                 .dwWidth = 64,
                 .dwHeight = 64,
             };
