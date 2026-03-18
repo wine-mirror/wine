@@ -215,6 +215,16 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         process_wayland.wp_fractional_scale_manager_v1 =
             wl_registry_bind(registry, id, &wp_fractional_scale_manager_v1_interface, 1);
     }
+#ifdef WL_FIXES_ACK_GLOBAL_REMOVE
+    else if (strcmp(interface, "wl_fixes") == 0)
+    {
+        if (version < 2)
+            return;
+
+        process_wayland.wl_fixes =
+            wl_registry_bind(registry, id, &wl_fixes_interface, 2);
+    }
+#endif
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
@@ -224,6 +234,11 @@ static void registry_handle_global_remove(void *data, struct wl_registry *regist
     struct wayland_seat *seat;
 
     TRACE("id=%u\n", id);
+
+#ifdef WL_FIXES_ACK_GLOBAL_REMOVE
+    if (process_wayland.wl_fixes)
+        wl_fixes_ack_global_remove(process_wayland.wl_fixes, registry, id);
+#endif
 
     wl_list_for_each_safe(output, tmp, &process_wayland.output_list, link)
     {

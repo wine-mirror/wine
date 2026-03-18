@@ -190,6 +190,9 @@ struct wayland
     struct wayland_pointer pointer;
     struct wayland_text_input text_input;
     struct wayland_data_device data_device;
+#ifdef WL_FIXES_ACK_GLOBAL_REMOVE
+    struct wl_fixes *wl_fixes;
+#endif
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
     pthread_mutex_t output_mutex;
