@@ -2664,6 +2664,7 @@ static void test_window_style(void)
     RECT fullscreen_rect, r;
     HWND window, window2;
     IDirectDraw *ddraw;
+    unsigned int i;
     HRESULT hr;
     ULONG ref;
     BOOL ret;
@@ -2874,10 +2875,19 @@ static void test_window_style(void)
     ok(tmp & WS_VISIBLE, "Expected WS_VISIBLE.\n");
     tmp = GetWindowLongA(window, GWL_EXSTYLE);
     ok(tmp & WS_EX_TOPMOST, "Expected WS_EX_TOPMOST.\n");
-    ret = ShowWindow(window, SW_HIDE);
-    ok(ret, "ShowWindow failed, error %#lx.\n", GetLastError());
-    ret = SetWindowPos(window, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-    ok(ret, "SetWindowPos failed, error %#lx.\n", GetLastError());
+    for (i = 0; i < 5; ++i)
+    {
+        /* Try a few times to hide the window. Something in Win11 26H1 shows it again and makes it
+         * topmost. This is in addition to the ddraw periodic check below, which only makes it
+         * topmost but not visible */
+        ret = SetWindowPos(window, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_HIDEWINDOW);
+        ok(ret, "SetWindowPos failed, error %#lx.\n", GetLastError());
+        tmp = GetWindowLongA(window, GWL_STYLE);
+        if (!(tmp & WS_VISIBLE))
+            break;
+        Sleep(100);
+    }
+    ok(i < 5, "Failed to hide the window.\n");
     tmp = GetWindowLongA(window, GWL_STYLE);
     ok(!(tmp & WS_VISIBLE), "Got unexpected WS_VISIBLE.\n");
     tmp = GetWindowLongA(window, GWL_EXSTYLE);
