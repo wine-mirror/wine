@@ -1841,6 +1841,53 @@ call ok(containerObj("Key")(1)(0) = "SubValue1", "containerObj(Key)(1)(0) = " & 
 
 call ok(Split("1;2", ";")(0) = "1", "Split(""1;2"", "";"")(0) = " & Split("1;2", ";")(0))
 call ok(Split("1;2", ";")(1) = "2", "Split(""1;2"", "";"")(1) = " & Split("1;2", ";")(1))
+Function GetABC()
+    GetABC = Array("a", "b", "c")
+End Function
+call ok(GetABC()(0) = "a", "GetABC()(0) = " & GetABC()(0))
+call ok(GetABC()(1) = "b", "GetABC()(1) = " & GetABC()(1))
+call ok(GetABC()(2) = "c", "GetABC()(2) = " & GetABC()(2))
+
+Function GetNested()
+    GetNested = Array(Array(1, 2), Array(3, 4))
+End Function
+call ok(GetNested()(0)(0) = 1, "GetNested()(0)(0) = " & GetNested()(0)(0))
+call ok(GetNested()(0)(1) = 2, "GetNested()(0)(1) = " & GetNested()(0)(1))
+call ok(GetNested()(1)(0) = 3, "GetNested()(1)(0) = " & GetNested()(1)(0))
+call ok(GetNested()(1)(1) = 4, "GetNested()(1)(1) = " & GetNested()(1)(1))
+
+x = GetABC()(0) & GetABC()(2)
+call ok(x = "ac", "GetABC()(0) & GetABC()(2) = " & x)
+
+call ok(Array(10,20,30)(1) = 20, "Array(10,20,30)(1) = " & Array(10,20,30)(1))
+
+' Chained call with dot accessor: dict.Keys()(0)
+Dim chainDict
+Set chainDict = CreateObject("Scripting.Dictionary")
+chainDict.Add "first", 1
+chainDict.Add "second", 2
+call ok(chainDict.Keys()(0) = "first", "dict.Keys()(0) = " & chainDict.Keys()(0))
+call ok(chainDict.Keys()(1) = "second", "dict.Keys()(1) = " & chainDict.Keys()(1))
+call ok(chainDict.Items()(0) = 1, "dict.Items()(0) = " & chainDict.Items()(0))
+
+' Dot accessor after chained index: dict.Items()(0).Item("key")
+Dim chainInner
+Set chainInner = CreateObject("Scripting.Dictionary")
+chainInner.Add "x", 42
+Dim chainOuter
+Set chainOuter = CreateObject("Scripting.Dictionary")
+chainOuter.Add "inner", chainInner
+call ok(chainOuter.Items()(0).Item("x") = 42, "dict.Items()(0).Item(""x"") = " & chainOuter.Items()(0).Item("x"))
+
+' Chained call as argument to function: Len(GetABC()(0))
+call ok(Len(GetABC()(0)) = 1, "Len(GetABC()(0)) = " & Len(GetABC()(0)))
+call ok(UBound(GetABC()) = 2, "UBound(GetABC()) = " & UBound(GetABC()))
+
+' Function call as argument to built-in
+Function GetStr()
+    GetStr = "hello"
+End Function
+call ok(Len(GetStr()) = 5, "Len(GetStr()) = " & Len(GetStr()))
 
 function seta0(arr)
     arr(0) = 2
