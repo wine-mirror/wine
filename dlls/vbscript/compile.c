@@ -1211,7 +1211,30 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, expression_t *left, expres
         break;
     case EXPR_CALL:
         call_expr = (call_expression_t*)left;
-        assert(call_expr->call_expr->type == EXPR_MEMBER);
+        if(call_expr->call_expr->type != EXPR_MEMBER) {
+            /* Chained call assignment, e.g. aryOrder(0)(1) = 5:
+             * compile the inner expression as a read, then assign to the result. */
+            hres = compile_expression(ctx, call_expr->call_expr);
+            if(FAILED(hres))
+                return hres;
+
+            hres = compile_expression(ctx, value_expr);
+            if(FAILED(hres))
+                return hres;
+
+            hres = compile_args(ctx, call_expr->args, &args_cnt);
+            if(FAILED(hres))
+                return hres;
+
+            hres = push_instr_uint(ctx, is_set ? OP_set_call : OP_assign_call, args_cnt);
+            if(FAILED(hres))
+                return hres;
+
+            if(!emit_catch(ctx, 0))
+                return E_OUTOFMEMORY;
+
+            return S_OK;
+        }
         member_expr = (member_expression_t*)call_expr->call_expr;
         break;
     default:

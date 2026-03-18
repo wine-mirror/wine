@@ -2587,6 +2587,34 @@ x = Array(Array(3))
 seta0 (x(0))
 call ok(x(0)(0) = 3, "x(0)(0) = " & x(0)(0))
 
+x = Array(Array("a", 0))
+x(0)(1) = 5
+call ok(x(0)(1) = 5, "x(0)(1) = " & x(0)(1))
+
+x = Array(Array(Empty, Empty))
+Set x(0)(1) = New EmptyClass
+call ok(getVT(x(0)(1)) = "VT_DISPATCH*", "getVT(x(0)(1)) = " & getVT(x(0)(1)))
+Set x(0)(0) = Nothing
+call ok(x(0)(0) Is Nothing, "x(0)(0) is not Nothing")
+
+On Error Resume Next
+x = Array(Nothing)
+x(0)(0) = 5
+call ok(Err.Number = 13, "assign to Nothing(0): Err.Number = " & Err.Number)
+Err.Clear
+x = Array(42)
+x(0)(0) = 5
+call ok(Err.Number = 13, "assign to Integer(0): Err.Number = " & Err.Number)
+Err.Clear
+x = Array(Empty)
+x(0)(0) = 5
+call ok(Err.Number = 13, "assign to Empty(0): Err.Number = " & Err.Number)
+Err.Clear
+x = Array(Null)
+x(0)(0) = 5
+call ok(Err.Number = 13, "assign to Null(0): Err.Number = " & Err.Number)
+On Error GoTo 0
+
 y = (seta0)(x)
 ok y = 1, "y = " & y
 
