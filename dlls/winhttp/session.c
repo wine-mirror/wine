@@ -832,6 +832,26 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         *buflen = sizeof(cert);
         return TRUE;
     }
+    case WINHTTP_OPTION_SERVER_CERT_CHAIN_CONTEXT:
+    {
+        const CERT_CHAIN_CONTEXT *cert_chain;
+
+        char oid_server_auth[] = szOID_PKIX_KP_SERVER_AUTH;
+        char *server_auth[] = { oid_server_auth };
+
+        CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
+
+        chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
+        chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = server_auth;
+
+        if (!validate_buffer( buffer, buflen, sizeof(cert_chain) )) return FALSE;
+        if (!CertGetCertificateChain(NULL, request->server_cert, NULL, NULL, &chainPara, 0, NULL, &cert_chain)) return FALSE;
+
+        *(CERT_CHAIN_CONTEXT **)buffer = (CERT_CHAIN_CONTEXT *)cert_chain;
+        *buflen = sizeof(cert_chain);
+
+        return TRUE;
+    }
     case WINHTTP_OPTION_SECURITY_CERTIFICATE_STRUCT:
     {
         const CERT_CONTEXT *cert = request->server_cert;
