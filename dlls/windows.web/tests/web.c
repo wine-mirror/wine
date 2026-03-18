@@ -45,6 +45,51 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
     IUnknown_Release( unk );
 }
 
+static void test_JsonArrayStatics(void)
+{
+    static const WCHAR *json_array_name = L"Windows.Data.Json.JsonArray";
+    IActivationFactory *factory = (void *)0xdeadbeef;
+    IInspectable *inspectable = (void *)0xdeadbeef;
+    IJsonArray *json_array = (void *)0xdeadbeef;
+    HSTRING str = NULL;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( json_array_name, wcslen( json_array_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( json_array_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IAgileObject );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IJsonArray, (void **)&json_array );
+    ok( hr == E_NOINTERFACE, "got hr %#lx.\n", hr );
+
+    hr = WindowsCreateString( json_array_name, wcslen( json_array_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = RoActivateInstance( str, &inspectable );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IJsonArray, (void **)&json_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( inspectable, &IID_IAgileObject );
+
+    IJsonArray_Release( json_array );
+    IInspectable_Release( inspectable );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 static void test_JsonObjectStatics(void)
 {
     static const WCHAR *json_object_name = L"Windows.Data.Json.JsonObject";
@@ -434,6 +479,7 @@ START_TEST(web)
     hr = RoInitialize( RO_INIT_MULTITHREADED );
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
+    test_JsonArrayStatics();
     test_JsonObjectStatics();
     test_JsonValueStatics();
 

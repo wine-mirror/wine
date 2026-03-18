@@ -36,6 +36,7 @@
 #define WIDL_using_Windows_Data_Json
 #include "windows.data.json.h"
 
+extern IActivationFactory *json_array_factory;
 extern IActivationFactory *json_object_factory;
 extern IActivationFactory *json_value_factory;
 
