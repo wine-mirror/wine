@@ -2370,4 +2370,8 @@ f1 not 1 = 0
 
 arr (0) = 2 xor -2
 
+' Test calling a named item object with arguments (DISPID_VALUE)
+Call ok(indexedObj(3) = 6, "indexedObj(3) = " & indexedObj(3))
+Call ok(indexedObj(0) = 0, "indexedObj(0) = " & indexedObj(0))
+
 reportSuccess()

@@ -1105,6 +1105,45 @@ static IDispatchExVtbl collectionObjVtbl = {
 
 static IDispatchEx collectionObj = { &collectionObjVtbl };
 
+static HRESULT WINAPI indexedObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    switch(id) {
+    case DISPID_VALUE:
+        ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+
+        V_VT(pvarRes) = VT_I2;
+        V_I2(pvarRes) = V_I2(pdp->rgvarg) * 2;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %ld\n", id);
+    return E_NOTIMPL;
+}
+
+static IDispatchExVtbl indexedObjVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    indexedObj_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx indexedObj = { &indexedObjVtbl };
+
 static ULONG refobj_ref;
 
 static ULONG WINAPI RefObj_AddRef(IDispatchEx *iface)
@@ -1935,10 +1974,16 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     ok(dwReturnMask == SCRIPTINFO_IUNKNOWN, "unexpected dwReturnMask %lx\n", dwReturnMask);
     ok(!ppti, "ppti != NULL\n");
 
-    if(lstrcmpW(pstrName, L"test"))
+    if(!lstrcmpW(pstrName, L"test")) {
+        *ppiunkItem = (IUnknown*)&Global;
+    }else if(!lstrcmpW(pstrName, L"indexedObj")) {
+        *ppiunkItem = (IUnknown*)&indexedObj;
+    }else {
         ok(0, "unexpected pstrName %s\n", wine_dbgstr_w(pstrName));
+        *ppiunkItem = NULL;
+        return E_FAIL;
+    }
 
-    *ppiunkItem = (IUnknown*)&Global;
     IUnknown_AddRef(*ppiunkItem);
     return S_OK;
 }
@@ -2060,6 +2105,10 @@ static IActiveScript *create_and_init_script(DWORD flags, BOOL start)
 
     hres = IActiveScript_AddNamedItem(engine, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|flags);
+    ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, L"indexedObj",
+            SCRIPTITEM_ISVISIBLE);
     ok(hres == S_OK, "AddNamedItem failed: %08lx\n", hres);
 
     if (start)

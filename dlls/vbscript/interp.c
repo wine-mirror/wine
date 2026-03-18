@@ -648,8 +648,11 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned
         break;
     case REF_OBJ:
         if(arg_cnt) {
-            FIXME("arguments on object\n");
-            return E_NOTIMPL;
+            vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
+            hres = disp_call(ctx->script, ref.u.obj, DISPID_VALUE, &dp, res);
+            if(FAILED(hres))
+                return hres;
+            break;
         }
 
         if(res) {
