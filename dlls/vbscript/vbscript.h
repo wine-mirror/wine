@@ -52,6 +52,7 @@ heap_pool_t *heap_pool_mark(heap_pool_t*);
 typedef struct _function_t function_t;
 typedef struct _vbscode_t vbscode_t;
 typedef struct _script_ctx_t script_ctx_t;
+typedef struct _exec_ctx_t exec_ctx_t;
 typedef struct _vbdisp_t vbdisp_t;
 
 typedef enum {
@@ -207,6 +208,9 @@ struct _script_ctx_t {
 
     BuiltinDisp *global_obj;
     BuiltinDisp *err_obj;
+
+    exec_ctx_t *current_exec;
+    exec_ctx_t *caller_exec;
 
     EXCEPINFO ei;
     vbscode_t *error_loc_code;
@@ -392,12 +396,16 @@ static inline void grab_vbscode(vbscode_t *code)
 }
 
 void release_vbscode(vbscode_t*);
-HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,vbscode_t**);
+HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,BOOL,vbscode_t**);
 HRESULT compile_procedure(script_ctx_t*,const WCHAR*,const WCHAR*,const WCHAR*,DWORD_PTR,unsigned,DWORD,class_desc_t**);
 HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*);
+HRESULT exec_global_code(script_ctx_t*,vbscode_t*,VARIANT*,BOOL);
+BOOL is_exec_local_scope(exec_ctx_t*);
+HRESULT exec_add_caller_dynamic_var(script_ctx_t*,exec_ctx_t*,const WCHAR*);
 void release_dynamic_var(dynamic_var_t*);
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned);
 void release_named_item(named_item_t*);
+void clear_error_loc(script_ctx_t*);
 void clear_ei(EXCEPINFO*);
 HRESULT report_script_error(script_ctx_t*,vbscode_t*,unsigned,BOOL);
 void detach_global_objects(script_ctx_t*);

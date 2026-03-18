@@ -575,8 +575,8 @@ static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
     if(ctx->error_loc == -1)
         ctx->error_loc = *loc;
     if(ctx->hres == S_OK) {
-        FIXME("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
-        ctx->hres = E_FAIL;
+        WARN("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
+        ctx->hres = MAKE_VBSERROR(VBSE_SYNTAX_ERROR);
     }else {
         WARN("%s: %08lx\n", debugstr_w(ctx->code + *loc), ctx->hres);
     }

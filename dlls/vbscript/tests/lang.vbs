@@ -2734,6 +2734,250 @@ Err.Clear
 Set getRefRef = GetRef(vbNullString)
 Call ok(Err.Number = 5, "GetRef vbNullString error is " & Err.Number)
 
+' Eval tests
+Call ok(Eval("1 + 2") = 3, "Eval(""1 + 2"") = " & Eval("1 + 2"))
+Call ok(Eval("""test""") = "test", "Eval(""""""test"""""") = " & Eval("""test"""))
+Call ok(Eval("true") = true, "Eval(""true"") = " & Eval("true"))
+
+x = 5
+Call ok(Eval("x + 1") = 6, "Eval(""x + 1"") = " & Eval("x + 1"))
+Call ok(Eval("x * x") = 25, "Eval(""x * x"") = " & Eval("x * x"))
+
+Sub TestEvalLocalScope
+    Dim a
+    a = 10
+    Call ok(Eval("a") = 10, "Eval(""a"") in local scope = " & Eval("a"))
+    Call ok(Eval("a + 5") = 15, "Eval(""a + 5"") in local scope = " & Eval("a + 5"))
+End Sub
+Call TestEvalLocalScope
+
+Function TestEvalLocalArgs(x)
+    TestEvalLocalArgs = Eval("x * 2")
+End Function
+Call ok(TestEvalLocalArgs(7) = 14, "TestEvalLocalArgs(7) = " & TestEvalLocalArgs(7))
+
+Dim evalLocal
+Sub TestEvalNoLeak
+    Dim evalLocal
+    evalLocal = 77
+    Call ok(Eval("evalLocal") = 77, "Eval evalLocal = " & Eval("evalLocal"))
+End Sub
+Call TestEvalNoLeak
+Call ok(getVT(evalLocal) = "VT_EMPTY*", "evalLocal leaked from Eval scope: " & getVT(evalLocal))
+
+' ExecuteGlobal tests
+x = 0
+ExecuteGlobal "x = 42"
+Call ok(x = 42, "ExecuteGlobal x = " & x)
+
+ExecuteGlobal "Function evalTestFunc : evalTestFunc = 7 : End Function"
+Call ok(evalTestFunc() = 7, "evalTestFunc() = " & evalTestFunc())
+
+' ExecuteGlobal: Dim creates a new global variable
+ExecuteGlobal "Dim egVar1 : egVar1 = 42"
+Call ok(egVar1 = 42, "ExecuteGlobal Dim egVar1 = " & egVar1)
+
+' ExecuteGlobal: Dim variable persists across calls
+ExecuteGlobal "Dim egVar2"
+ExecuteGlobal "egVar2 = 99"
+Call ok(egVar2 = 99, "ExecuteGlobal Dim egVar2 (set later) = " & egVar2)
+
+' ExecuteGlobal inside Sub: Dim creates a GLOBAL variable
+Sub TestExecGlobalDimInSub
+    ExecuteGlobal "Dim egFromSub : egFromSub = 123"
+End Sub
+Call TestExecGlobalDimInSub
+Call ok(egFromSub = 123, "ExecuteGlobal Dim in Sub - egFromSub = " & egFromSub)
+
+' ExecuteGlobal: Dim + Function in same call
+ExecuteGlobal "Dim egFuncVar : Function egGetVar() : egGetVar = egFuncVar : End Function"
+egFuncVar = 777
+Call ok(egGetVar() = 777, "ExecuteGlobal Dim+Function: egGetVar() = " & egGetVar())
+
+' ExecuteGlobal: ReDim creates global dynamic array
+ExecuteGlobal "ReDim egDynArr(1) : egDynArr(0) = ""a"" : egDynArr(1) = ""b"""
+Call ok(egDynArr(0) = "a", "ExecuteGlobal ReDim egDynArr(0) = " & egDynArr(0))
+Call ok(egDynArr(1) = "b", "ExecuteGlobal ReDim egDynArr(1) = " & egDynArr(1))
+
+' Execute tests
+x = 0
+Execute "x = 99"
+Call ok(x = 99, "Execute x = " & x)
+
+Sub TestExecuteLocalScope
+    Dim a
+    a = 10
+    Execute "a = 20"
+    Call ok(a = 20, "Execute local assign: a = " & a)
+End Sub
+Call TestExecuteLocalScope
+
+Dim executeLocal
+Sub TestExecuteNoLeak
+    Dim executeLocal
+    executeLocal = 10
+    Execute "executeLocal = 55"
+    Call ok(executeLocal = 55, "executeLocal = " & executeLocal)
+End Sub
+Call TestExecuteNoLeak
+Call ok(getVT(executeLocal) = "VT_EMPTY*", "executeLocal leaked from Execute scope: " & getVT(executeLocal))
+
+' Execute at global scope: Dim creates a new global variable
+Execute "Dim exVar1 : exVar1 = 77"
+Call ok(exVar1 = 77, "Execute (global) Dim exVar1 = " & exVar1)
+
+' Execute inside Sub: Dim creates variable visible in caller's scope
+Sub TestExecuteDimInSub
+    Dim localA
+    localA = 10
+    Execute "Dim localB : localB = 20"
+    Call ok(localB = 20, "Execute Dim in Sub - localB = " & localB)
+    Call ok(localA = 10, "Execute Dim in Sub - localA still = " & localA)
+End Sub
+Call TestExecuteDimInSub
+
+' Execute inside Function: Dim creates variable visible in function scope
+Function TestExecuteDimInFunc
+    Execute "Dim funcVar : funcVar = 55"
+    TestExecuteDimInFunc = funcVar
+End Function
+Call ok(TestExecuteDimInFunc() = 55, "Execute Dim in Function = " & TestExecuteDimInFunc())
+
+' Execute: Dim same name as existing local has no effect, value preserved
+Sub TestExecuteDimShadow
+    Dim x
+    x = 100
+    Execute "Dim x"
+    Call ok(x = 100, "x after Execute Dim x = " & x)
+    Execute "x = 200"
+    Call ok(x = 200, "x after Execute x=200 = " & x)
+End Sub
+Call TestExecuteDimShadow
+
+' Execute: Dim then use in same string, visible in caller
+Sub TestExecuteDimAndUse
+    Execute "Dim euVar : euVar = 999"
+    Call ok(euVar = 999, "Execute Dim+use euVar = " & euVar)
+End Sub
+Call TestExecuteDimAndUse
+
+' Execute: ReDim creates dynamic array visible in caller
+Sub TestExecuteReDim
+    Execute "ReDim dynArr(2) : dynArr(0) = 10 : dynArr(1) = 20 : dynArr(2) = 30"
+    Call ok(dynArr(1) = 20, "Execute ReDim dynArr(1) = " & dynArr(1))
+End Sub
+Call TestExecuteReDim
+
+' Option Explicit is per-compilation-unit in Execute/ExecuteGlobal
+On Error Resume Next
+
+' Option Explicit inside same Execute string enforces Dim requirement
+Err.Clear
+Execute "Option Explicit : noDimExec = 101"
+Call ok(Err.Number <> 0, "Execute Option Explicit undeclared should error: err=" & Err.Number)
+todo_wine_ok Err.Number = 500, "Execute Option Explicit undeclared: err=" & Err.Number & " expected 500"
+
+' Option Explicit inside same ExecuteGlobal string enforces Dim requirement
+Err.Clear
+ExecuteGlobal "Option Explicit : noDimExecGlobal = 102"
+Call ok(Err.Number <> 0, "ExecuteGlobal Option Explicit undeclared should error: err=" & Err.Number)
+todo_wine_ok Err.Number = 500, "ExecuteGlobal Option Explicit undeclared: err=" & Err.Number & " expected 500"
+
+' Option Explicit with Dim in same string works
+Err.Clear
+ExecuteGlobal "Option Explicit : Dim oeDimVar : oeDimVar = 555"
+Call ok(Err.Number = 0, "ExecuteGlobal Option Explicit + Dim: err=" & Err.Number)
+Call ok(oeDimVar = 555, "ExecuteGlobal Option Explicit + Dim: oeDimVar = " & oeDimVar)
+
+' Option Explicit does not propagate to subsequent calls
+Err.Clear
+ExecuteGlobal "Option Explicit"
+Call ok(Err.Number = 0, "ExecuteGlobal Option Explicit alone: err=" & Err.Number)
+Err.Clear
+ExecuteGlobal "noDimAfterOE = 123"
+Call ok(Err.Number = 0, "ExecuteGlobal after separate OE: err=" & Err.Number)
+
+On Error Goto 0
+
+
+' Eval/Execute/ExecuteGlobal error handling tests
+On Error Resume Next
+
+' Test Eval with syntax error
+Err.Clear
+Call Eval("1 + ")
+Call ok(Err.Number = 1002, "Eval syntax error: Err.Number = " & Err.Number & " expected 1002")
+Call ok(Err.Description = "Syntax error", "Eval syntax error: Err.Description = """ & Err.Description & """ expected ""Syntax error""")
+Call ok(Err.Source = "Microsoft VBScript compilation error", "Eval syntax error: Err.Source = """ & Err.Source & """")
+
+' Test Execute with syntax error
+Err.Clear
+Execute "x = "
+Call ok(Err.Number = 1002, "Execute syntax error: Err.Number = " & Err.Number & " expected 1002")
+Call ok(Err.Description = "Syntax error", "Execute syntax error: Err.Description = """ & Err.Description & """ expected ""Syntax error""")
+Call ok(Err.Source = "Microsoft VBScript compilation error", "Execute syntax error: Err.Source = """ & Err.Source & """")
+
+' Test ExecuteGlobal with syntax error
+Err.Clear
+ExecuteGlobal "y = "
+Call ok(Err.Number = 1002, "ExecuteGlobal syntax error: Err.Number = " & Err.Number & " expected 1002")
+Call ok(Err.Description = "Syntax error", "ExecuteGlobal syntax error: Err.Description = """ & Err.Description & """ expected ""Syntax error""")
+Call ok(Err.Source = "Microsoft VBScript compilation error", "ExecuteGlobal syntax error: Err.Source = """ & Err.Source & """")
+
+' Eval with non-string arguments returns the value directly
+Err.Clear
+Call ok(Eval(123) = 123, "Eval(123) = " & Eval(123))
+Call ok(Err.Number = 0, "Eval(123) Err.Number = " & Err.Number)
+
+Err.Clear
+Call ok(Eval(True) = True, "Eval(True) = " & Eval(True))
+Call ok(Err.Number = 0, "Eval(True) Err.Number = " & Err.Number)
+
+Err.Clear
+Call ok(IsNull(Eval(Null)), "Eval(Null) should be Null")
+Call ok(Err.Number = 0, "Eval(Null) Err.Number = " & Err.Number)
+
+Err.Clear
+Call ok(IsEmpty(Eval(Empty)), "Eval(Empty) should be Empty")
+Call ok(Err.Number = 0, "Eval(Empty) Err.Number = " & Err.Number)
+
+' Execute with non-string arguments returns type mismatch
+Err.Clear
+Execute 123
+Call ok(Err.Number = 13, "Execute 123 Err.Number = " & Err.Number)
+
+Err.Clear
+Execute Null
+Call ok(Err.Number = 13, "Execute Null Err.Number = " & Err.Number)
+
+Err.Clear
+Execute Empty
+Call ok(Err.Number = 13, "Execute Empty Err.Number = " & Err.Number)
+
+' ExecuteGlobal with non-string arguments returns type mismatch
+Err.Clear
+ExecuteGlobal 123
+Call ok(Err.Number = 13, "ExecuteGlobal 123 Err.Number = " & Err.Number)
+
+Err.Clear
+ExecuteGlobal Null
+Call ok(Err.Number = 13, "ExecuteGlobal Null Err.Number = " & Err.Number)
+
+Err.Clear
+ExecuteGlobal Empty
+Call ok(Err.Number = 13, "ExecuteGlobal Empty Err.Number = " & Err.Number)
+
+' Eval with Dim is a syntax error (Eval expects an expression, not a statement)
+Err.Clear
+Eval "Dim evalDimVar"
+Call ok(Err.Number = 1002, "Eval Dim: Err.Number = " & Err.Number & " expected 1002")
+
+' Test runtime error in Eval is caught by On Error Resume Next
+Err.Clear
+Call Eval("CBool(""notabool"")")
+Call ok(Err.Number = 13, "Eval type mismatch: Err.Number = " & Err.Number & " expected 13")
+Call ok(Err.Source = "Microsoft VBScript runtime error", "Eval type mismatch: Err.Source = """ & Err.Source & """")
+
 On Error Goto 0
 
 ' Test calling a dispatch variable as statement (invokes default property)

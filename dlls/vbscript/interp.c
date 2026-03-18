@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static DISPID propput_dispid = DISPID_PROPERTYPUT;
 
-typedef struct {
+typedef struct _exec_ctx_t {
     vbscode_t *code;
     instr_t *instr;
     script_ctx_t *script;
@@ -47,6 +47,8 @@ typedef struct {
     VARIANT *stack;
 
     VARIANT ret_val;
+
+    exec_ctx_t *caller;
 } exec_ctx_t;
 
 typedef HRESULT (*instr_func_t)(exec_ctx_t*);
@@ -182,6 +184,29 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
+    if(ctx->func->type == FUNC_GLOBAL && ctx->caller) {
+        exec_ctx_t *caller = ctx->caller;
+
+        for(i=0; i < caller->func->var_cnt; i++) {
+            if(!wcsicmp(caller->func->vars[i].name, name)) {
+                ref->type = REF_VAR;
+                ref->u.v = caller->vars+i;
+                return S_OK;
+            }
+        }
+
+        for(i=0; i < caller->func->arg_cnt; i++) {
+            if(!wcsicmp(caller->func->args[i].name, name)) {
+                ref->type = REF_VAR;
+                ref->u.v = caller->args+i;
+                return S_OK;
+            }
+        }
+
+        if(lookup_dynamic_vars(caller->dynamic_vars, name, ref))
+            return S_OK;
+    }
+
     if(ctx->code->named_item) {
         if(lookup_global_vars(ctx->code->named_item->script_obj, name, ref))
             return S_OK;
@@ -293,7 +318,7 @@ void clear_ei(EXCEPINFO *ei)
     memset(ei, 0, sizeof(*ei));
 }
 
-static void clear_error_loc(script_ctx_t *ctx)
+void clear_error_loc(script_ctx_t *ctx)
 {
     if(ctx->error_loc_code) {
         release_vbscode(ctx->error_loc_code);
@@ -2551,14 +2576,67 @@ static void release_exec(exec_ctx_t *ctx)
     free(ctx->stack);
 }
 
+BOOL is_exec_local_scope(exec_ctx_t *ctx)
+{
+    return ctx && ctx->func->type != FUNC_GLOBAL;
+}
+
+HRESULT exec_add_caller_dynamic_var(script_ctx_t *script, exec_ctx_t *ctx, const WCHAR *name)
+{
+    dynamic_var_t *new_var;
+    heap_pool_t *heap;
+    WCHAR *str;
+    unsigned size, i;
+
+    /* Skip if name already exists in caller's locals, args, or dynamic vars */
+    for(i = 0; i < ctx->func->var_cnt; i++) {
+        if(!wcsicmp(ctx->func->vars[i].name, name))
+            return S_OK;
+    }
+    for(i = 0; i < ctx->func->arg_cnt; i++) {
+        if(!wcsicmp(ctx->func->args[i].name, name))
+            return S_OK;
+    }
+    {
+        dynamic_var_t *var;
+        for(var = ctx->dynamic_vars; var; var = var->next) {
+            if(!wcsicmp(var->name, name))
+                return S_OK;
+        }
+    }
+
+    heap = &ctx->heap;
+
+    new_var = heap_pool_alloc(heap, sizeof(*new_var));
+    if(!new_var)
+        return E_OUTOFMEMORY;
+
+    size = (lstrlenW(name) + 1) * sizeof(WCHAR);
+    str = heap_pool_alloc(heap, size);
+    if(!str)
+        return E_OUTOFMEMORY;
+    memcpy(str, name, size);
+    new_var->name = str;
+    new_var->is_const = FALSE;
+    new_var->array = NULL;
+    V_VT(&new_var->v) = VT_EMPTY;
+
+    new_var->next = ctx->dynamic_vars;
+    ctx->dynamic_vars = new_var;
+    return S_OK;
+}
+
 HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbdisp_t *vbthis, DISPPARAMS *dp, VARIANT *res)
 {
     exec_ctx_t exec = {func->code_ctx};
     named_item_t *prev_named_item;
+    exec_ctx_t *prev_exec;
     vbsop_t op;
     HRESULT hres = S_OK;
 
     exec.code = func->code_ctx;
+    exec.caller = ctx->caller_exec;
+    ctx->caller_exec = NULL;
 
     if(dp ? func->arg_cnt != arg_cnt(dp) : func->arg_cnt) {
         FIXME("wrong arg_cnt %d, expected %d\n", dp ? arg_cnt(dp) : 0, func->arg_cnt);
@@ -2631,6 +2709,9 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     prev_named_item = ctx->current_named_item;
     ctx->current_named_item = exec.code->named_item;
 
+    prev_exec = ctx->current_exec;
+    ctx->current_exec = &exec;
+
     while(exec.instr) {
         op = exec.instr->op;
         hres = op_funcs[op](&exec);
@@ -2690,6 +2771,8 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
 
         exec.instr += op_move[op];
     }
+
+    ctx->current_exec = prev_exec;
 
     assert(!exec.top);
 

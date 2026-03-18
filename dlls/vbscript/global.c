@@ -3524,20 +3524,85 @@ static HRESULT Global_Unescape(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
 
 static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    vbscode_t *code;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) != VT_BSTR) {
+        if(res)
+            return VariantCopy(res, arg);
+        return S_OK;
+    }
+
+    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
+                          SCRIPTTEXT_ISEXPRESSION, FALSE, &code);
+    if(FAILED(hres)) {
+        clear_error_loc(This->ctx);
+        return hres;
+    }
+
+    if(is_exec_local_scope(This->ctx->current_exec)) {
+        This->ctx->caller_exec = This->ctx->current_exec;
+        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
+    }
+
+    return exec_global_code(This->ctx, code, res, FALSE);
 }
 
 static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    vbscode_t *code;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) != VT_BSTR)
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+
+    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
+                          0, TRUE, &code);
+    if(FAILED(hres)) {
+        clear_error_loc(This->ctx);
+        return hres;
+    }
+
+    if(is_exec_local_scope(This->ctx->current_exec)) {
+        unsigned i;
+
+        /* Pre-register Dim variables in the caller's scope */
+        for(i = 0; i < code->main_code.var_cnt; i++) {
+            hres = exec_add_caller_dynamic_var(This->ctx, This->ctx->current_exec,
+                                               code->main_code.vars[i].name);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        This->ctx->caller_exec = This->ctx->current_exec;
+        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
+    }
+
+    return exec_global_code(This->ctx, code, res, FALSE);
 }
 
 static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    vbscode_t *code;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) != VT_BSTR)
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+
+    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
+                          0, TRUE, &code);
+    if(FAILED(hres)) {
+        clear_error_loc(This->ctx);
+        return hres;
+    }
+
+    return exec_global_code(This->ctx, code, res, FALSE);
 }
 
 static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
