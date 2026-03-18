@@ -573,14 +573,40 @@ static HRESULT WINAPI json_value_statics_TryParse( IJsonValueStatics *iface, HST
 
 static HRESULT WINAPI json_value_statics_CreateBooleanValue( IJsonValueStatics *iface, boolean input, IJsonValue **value )
 {
-    FIXME( "iface %p, input %d, value %p stub!\n", iface, input, value );
-    return E_NOTIMPL;
+    struct json_value *impl;
+
+    TRACE( "iface %p, input %d, value %p\n", iface, input, value );
+
+    if (!value) return E_POINTER;
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+
+    impl->IJsonValue_iface.lpVtbl = &json_value_vtbl;
+    impl->ref = 1;
+    impl->json_value_type = JsonValueType_Boolean;
+    impl->boolean_value = input != FALSE;
+
+    *value = &impl->IJsonValue_iface;
+    TRACE( "created IJsonValue %p.\n", *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI json_value_statics_CreateNumberValue( IJsonValueStatics *iface, DOUBLE input, IJsonValue **value )
 {
-    FIXME( "iface %p, input %f, value %p stub!\n", iface, input, value );
-    return E_NOTIMPL;
+    struct json_value *impl;
+
+    TRACE( "iface %p, input %f, value %p\n", iface, input, value );
+
+    if (!value) return E_POINTER;
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+
+    impl->IJsonValue_iface.lpVtbl = &json_value_vtbl;
+    impl->ref = 1;
+    impl->json_value_type = JsonValueType_Number;
+    impl->number_value = input;
+
+    *value = &impl->IJsonValue_iface;
+    TRACE( "created IJsonValue %p.\n", *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI json_value_statics_CreateStringValue( IJsonValueStatics *iface, HSTRING input, IJsonValue **value )

@@ -453,6 +453,30 @@ static void test_JsonValueStatics(void)
     hr = IActivationFactory_QueryInterface( factory, &IID_IJsonValueStatics, (void **)&json_value_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
+    hr = IJsonValueStatics_CreateBooleanValue( json_value_statics, FALSE, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_CreateBooleanValue( json_value_statics, FALSE, &json_value );
+    ok( hr == S_OK, "got hr %#lx,\n", hr );
+    hr = IJsonValue_get_ValueType( json_value, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonValue_get_ValueType( json_value, &json_value_type );
+    ok( json_value_type == JsonValueType_Boolean, "got JsonValueType %d.\n", json_value_type );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ref = IJsonValue_Release( json_value );
+    ok( ref == 0, "got ref %ld.\n", ref );
+
+    hr = IJsonValueStatics_CreateNumberValue( json_value_statics, 0, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_CreateNumberValue( json_value_statics, 0, &json_value );
+    ok( hr == S_OK, "got hr %#lx,\n", hr );
+    hr = IJsonValue_get_ValueType( json_value, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonValue_get_ValueType( json_value, &json_value_type );
+    ok( json_value_type == JsonValueType_Number, "got JsonValueType %d.\n", json_value_type );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ref = IJsonValue_Release( json_value );
+    ok( ref == 0, "got ref %ld.\n", ref );
+
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, NULL, &json_value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IJsonValue_get_ValueType( json_value, NULL );
