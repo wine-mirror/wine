@@ -894,6 +894,18 @@ next
 call ok(err.number = 92, "for (UBound(empty)): err.number = " & err.number)
 call ok(z = 99, "for (UBound(empty)): z = " & z)
 
+' For loop variable set to incompatible type during iteration
+x = 0
+y = 0
+err.clear
+for x = 1 to 5
+    y = y + 1
+    if x = 3 then x = "not a number"
+next
+call ok(y = 3, "for (type change): y = " & y)
+call ok(x = "not a number", "for (type change): x = " & x)
+call ok(err.number = 13, "for (type change): err.number = " & err.number)
+
 on error goto 0
 
 ' For loop expression evaluation order: from, to, step

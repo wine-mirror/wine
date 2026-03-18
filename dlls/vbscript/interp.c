@@ -1601,7 +1601,7 @@ static HRESULT interp_step(exec_ctx_t *ctx)
     V_I2(&zero) = 0;
     hres = VarCmp(stack_top(ctx, 0), &zero, ctx->script->lcid, 0);
     if(FAILED(hres))
-        return hres;
+        goto loop_not_initialized;
 
     gteq_zero = hres == VARCMP_GT || hres == VARCMP_EQ;
 
@@ -1616,7 +1616,7 @@ static HRESULT interp_step(exec_ctx_t *ctx)
 
     hres = VarCmp(ref.u.v, stack_top(ctx, 1), ctx->script->lcid, 0);
     if(FAILED(hres))
-        return hres;
+        goto loop_not_initialized;
 
     if(hres == VARCMP_EQ || hres == (gteq_zero ? VARCMP_LT : VARCMP_GT)) {
         ctx->instr++;
@@ -1625,6 +1625,12 @@ static HRESULT interp_step(exec_ctx_t *ctx)
         instr_jmp(ctx, ctx->instr->arg1.uint);
     }
     return S_OK;
+
+loop_not_initialized:
+    WARN("For loop not initialized\n");
+    stack_popn(ctx, 2);
+    instr_jmp(ctx, ctx->instr->arg1.uint);
+    return hres;
 }
 
 static HRESULT interp_newenum(exec_ctx_t *ctx)
@@ -2548,7 +2554,7 @@ static HRESULT interp_incc(exec_ctx_t *ctx)
 
     hres = VarAdd(stack_top(ctx, 0), ref.u.v, &v);
     if(FAILED(hres))
-        return MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
+        return hres;
 
     VariantClear(ref.u.v);
     *ref.u.v = v;
