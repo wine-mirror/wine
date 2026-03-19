@@ -331,6 +331,33 @@ static void test_basic(void)
     ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    /* Failing start of line test */
+    run_find_file("^c", "abc", 1);
+    ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    /* Successful start of line test */
+    run_find_file("^c", "cab", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "cab");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    /* Start of word at start of line should be the same */
+    run_find_file("\\<c", "abc", 1);
+    ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    run_find_file("\\<c", "cab", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "cab");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
 }
 
 START_TEST(findstr)
