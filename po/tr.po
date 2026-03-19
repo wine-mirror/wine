@@ -3994,7 +3994,7 @@ msgstr "Alt indis kapsama dışında"
 msgid "Out of stack space"
 msgstr "Yetersiz yığın alanı"
 
-#: dlls/jscript/jscript.rc:32
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
 msgid "Object required"
 msgstr "Nesne gerekli"
 
@@ -4002,19 +4002,19 @@ msgstr "Nesne gerekli"
 msgid "Automation server can't create object"
 msgstr "Otomasyon sunucusu nesneyi oluşturamadı"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this property or method"
 msgstr "Nesne bu özelliği veya yöntemi desteklemiyor"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this action"
 msgstr "Nesne bu işlemi desteklemiyor"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
 msgid "Argument not optional"
 msgstr "Değişken isteğe bağlı değil"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
 msgid "Object not a collection"
 msgstr "Nesne bir koleksiyon değil"
 
@@ -4090,7 +4090,7 @@ msgstr "Microsoft JScript derleme hatası"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript çalışma zamanı hatası"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
 msgid "Unknown runtime error"
 msgstr "Bilinmeyen çalışma zamanı hatası"
 
@@ -13038,55 +13038,55 @@ msgstr "'Null' hatalı kullanılmış"
 msgid "Can't create necessary temporary file"
 msgstr "Gereken geçici dosya oluşturulamıyor"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "ActiveX component can't create object"
 msgstr "ActiveX bileşeni nesneyi oluşturamadı"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "Class doesn't support Automation"
 msgstr "Sınıf otomasyonu desteklemiyor"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "File name or class name not found during Automation operation"
 msgstr "Otomasyon işlemi sırasında dosya adı veya sınıf adı bulunamadı"
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support named arguments"
 msgstr "Nesne isimlendirilmiş değişkenleri desteklemiyor"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support current locale setting"
 msgstr "Nesne şimdiki konum ayarını desteklemiyor"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Named argument not found"
 msgstr "İsimlendirilmiş değişken bulunamadı"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "Hatalı değişken sayısı veya geçersiz özellik ataması"
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 msgid "Specified DLL function not found"
 msgstr "Belirtilen DLL fonksiyonu bulunamadı"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr "Değişken, VBScript'te desteklenmeyeb bir otomasyon türü kullanıyor"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "Uzak sunucu makinesi yok veya kullanılamıyor"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Invalid or unqualified reference"
 msgstr "Geçersiz veya yetersiz referans"
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript derleme hatası"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript çalışma zamanı hatası"
 

@@ -4002,7 +4002,7 @@ msgstr "Індекс поза діапазоном"
 msgid "Out of stack space"
 msgstr "В стеку немає місця"
 
-#: dlls/jscript/jscript.rc:32
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
 msgid "Object required"
 msgstr "Вимагається об'єкт"
 
@@ -4010,19 +4010,19 @@ msgstr "Вимагається об'єкт"
 msgid "Automation server can't create object"
 msgstr "Сервер автоматизації не може створити об'єкт"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this property or method"
 msgstr "Об'єкт не підтримує цю властивість чи метод"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this action"
 msgstr "Об'єкт не підтримує цю дію"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
 msgid "Argument not optional"
 msgstr "Відсутній обов'язковий аргумент"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
 msgid "Object not a collection"
 msgstr "Об'єкт не є набором"
 
@@ -4106,7 +4106,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -13335,56 +13335,56 @@ msgstr "Неправильне використання Null"
 msgid "Can't create necessary temporary file"
 msgstr "Не вдається створити необхідний тимчасовий файл"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "ActiveX component can't create object"
 msgstr "Компонент ActiveX не може створити об’єкт"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "Class doesn't support Automation"
 msgstr "Клас не підтримує автоматизацію"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "File name or class name not found during Automation operation"
 msgstr "Ім'я файлу або ім'я класу не знайдено під час операції автоматизації"
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support named arguments"
 msgstr "Об'єкт не підтримує названі аргументи"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support current locale setting"
 msgstr "Об’єкт не підтримує поточні налаштування мови"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Named argument not found"
 msgstr "Названий аргумент не знайдено"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "Неправильна кількість аргументів або недійсне призначення властивості"
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 msgid "Specified DLL function not found"
 msgstr "Вказану функцію DLL не знайдено"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 "Змінна використовує тип автоматизації, який не підтримується у VBScript"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "Віддалений сервер не існує або недоступний"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Invalid or unqualified reference"
 msgstr "Недійсне або невизначене посилання"
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript compilation error"
 msgstr "Помилка компіляції Microsoft VBScript"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript runtime error"
 msgstr "Помилка виконання Microsoft VBScript"
 

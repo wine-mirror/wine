@@ -3938,7 +3938,7 @@ msgstr "첨자가 범위를 벗어남"
 msgid "Out of stack space"
 msgstr "스택 공간이 부족함"
 
-#: dlls/jscript/jscript.rc:32
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
 msgid "Object required"
 msgstr "개체가 필요함"
 
@@ -3946,19 +3946,19 @@ msgstr "개체가 필요함"
 msgid "Automation server can't create object"
 msgstr "자동화 서버가 개체를 만들 수 없음"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this property or method"
 msgstr "개체가 이 속성이나 메소드를 지원하지 않습니다"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this action"
 msgstr "개체는 이 행동을 지원하지 않음"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
 msgid "Argument not optional"
 msgstr "인수는 옵션이 아닙니다"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
 msgid "Object not a collection"
 msgstr "컬렉션이 아닌 개체입니다"
 
@@ -4034,7 +4034,7 @@ msgstr "Microsoft JScript 컴파일 오류"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 런타임 오류"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
 msgid "Unknown runtime error"
 msgstr "알 수 없는 런타임 오류"
 
@@ -12951,55 +12951,55 @@ msgstr "잘못된 널 사용"
 msgid "Can't create necessary temporary file"
 msgstr "필요한 임시 파일을 만들 수 없습니다"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "ActiveX component can't create object"
 msgstr "ActiveX 구성 요소는 개체를 만들 수 없습니다"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "Class doesn't support Automation"
 msgstr "클래스는 자동화를 지원하지 않습니다"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "File name or class name not found during Automation operation"
 msgstr "자동화 작업 중에 파일 이름 또는 클래스 이름을 찾을 수 없습니다"
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support named arguments"
 msgstr "개체는 명명된 인수를 지원하지 않습니다"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support current locale setting"
 msgstr "개체는 현재 로캘 설정을 지원하지 않습니다"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Named argument not found"
 msgstr "명명된 인수를 찾을 수 없습니다"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "인수의 개수나 속성 할당이 잘못되었습니다"
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 msgid "Specified DLL function not found"
 msgstr "지정한 DLL 함수를 찾을 수 없습니다"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr "변수에 VBScript에서 지원되지 않는 자동화 형식이 사용되었습니다"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "원격 서버가 없거나 사용할 수 없습니다"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Invalid or unqualified reference"
 msgstr "잘못된 참조입니다"
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript 컴파일 오류"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript 런타임 오류"
 

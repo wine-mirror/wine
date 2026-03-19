@@ -4012,7 +4012,7 @@ msgstr "Indice hors limites"
 msgid "Out of stack space"
 msgstr "Dépassement de capacité de pile"
 
-#: dlls/jscript/jscript.rc:32
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
 msgid "Object required"
 msgstr "Objet requis"
 
@@ -4020,19 +4020,19 @@ msgstr "Objet requis"
 msgid "Automation server can't create object"
 msgstr "Le serveur d'automatisation ne peut créer l'objet"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this property or method"
 msgstr "Cet objet ne supporte pas cette propriété ou méthode"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this action"
 msgstr "Cet objet ne supporte pas cette action"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
 msgid "Argument not optional"
 msgstr "Argument non optionnel"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
 msgid "Object not a collection"
 msgstr "L'objet n'est pas une collection"
 
@@ -4108,7 +4108,7 @@ msgstr "Erreur de compilation Microsoft JScript"
 msgid "Microsoft JScript runtime error"
 msgstr "Erreur d'exécution de Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
 msgid "Unknown runtime error"
 msgstr "Erreur d'exécution inconnue"
 
@@ -13560,58 +13560,58 @@ msgstr "Utilisation non valide de Null"
 msgid "Can't create necessary temporary file"
 msgstr "Impossible de créer le fichier temporaire nécessaire"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "ActiveX component can't create object"
 msgstr "Le composant ActiveX ne peut créer l'objet"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "Class doesn't support Automation"
 msgstr "La classe ne supporte pas l'automatisation"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "File name or class name not found during Automation operation"
 msgstr ""
 "Le nom de fichier ou de classe n'a pas été trouvé pendant l'opération "
 "d'automatisation."
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support named arguments"
 msgstr "Cet objet ne supporte pas les arguments nommés"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support current locale setting"
 msgstr "Cet objet ne supporte pas les paramètres régionaux actuels"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Named argument not found"
 msgstr "Élément nommé introuvable"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 msgid "Specified DLL function not found"
 msgstr "La fonction spécifiée n'a pas été trouvée dans la DLL"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 "La variable utilise un type d'automatisation non pris en charge dans VBScript"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "Le serveur distant soit n'existe pas soit n'est pas disponible"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Invalid or unqualified reference"
 msgstr "Référence non validée ou non qualifiée"
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript compilation error"
 msgstr "Erreur de compilation Microsoft VBScript"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript runtime error"
 msgstr "Erreur d'exécution Microsoft VBScript"
 

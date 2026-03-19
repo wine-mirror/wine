@@ -472,14 +472,12 @@ static HRESULT stack_assume_disp(exec_ctx_t *ctx, unsigned n, IDispatch **disp)
 
     if(V_VT(v) != VT_DISPATCH && (disp || V_VT(v) != VT_UNKNOWN)) {
         if(V_VT(v) != (VT_VARIANT|VT_BYREF)) {
-            FIXME("not supported type: %s\n", debugstr_variant(v));
-            return E_FAIL;
+            return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
         }
 
         ref = V_VARIANTREF(v);
         if(V_VT(ref) != VT_DISPATCH && (disp || V_VT(ref) != VT_UNKNOWN)) {
-            FIXME("not disp %s\n", debugstr_variant(ref));
-            return E_FAIL;
+            return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
         }
 
         V_VT(v) = V_VT(ref);

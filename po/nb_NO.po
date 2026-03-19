@@ -4011,7 +4011,7 @@ msgstr "ID'ene er utenfor rekkevidde"
 msgid "Out of stack space"
 msgstr "Tom for papir; "
 
-#: dlls/jscript/jscript.rc:32
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
 msgid "Object required"
 msgstr "Trenger et objekt"
 
@@ -4019,19 +4019,19 @@ msgstr "Trenger et objekt"
 msgid "Automation server can't create object"
 msgstr "Automatiseringstjeneren klarte ikke opprette objekt"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this property or method"
 msgstr "Objektet støtter ikke denne egenskapen eller metoden"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this action"
 msgstr "Objektet støtter ikke denne handlingen"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
 msgid "Argument not optional"
 msgstr "Argumentet er ikke valgfritt"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
 #, fuzzy
 #| msgid "Object Class Violation"
 msgid "Object not a collection"
@@ -4109,7 +4109,7 @@ msgstr "Microsoft JScript kompileringsfeil"
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -13828,67 +13828,67 @@ msgstr "Ugyldig lagringsplass for brukerminne.\n"
 msgid "Can't create necessary temporary file"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 #, fuzzy
 #| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
 msgstr "Automatiseringstjeneren klarte ikke opprette objekt"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
 msgstr "Objektet støtter ikke denne handlingen"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "File name or class name not found during Automation operation"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
 msgstr "Objektet støtter ikke denne handlingen"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
 msgstr "Objektet støtter ikke denne handlingen"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"
 msgstr "Kan ikke finne elementet.\n"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 #, fuzzy
 #| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
 msgstr "Den oppgitte kontrolleren ble ikke funnet i meldingen"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "The remote server machine does not exist or is unavailable"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Invalid or unqualified reference"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript compilation error"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript runtime error"
 msgstr ""
 

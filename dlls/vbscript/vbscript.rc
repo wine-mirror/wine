@@ -42,6 +42,7 @@ STRINGTABLE
     VBSE_OBJECT_VARIABLE_NOT_SET       "Object variable not set"
     VBSE_ILLEGAL_NULL_USE              "Invalid use of Null"
     VBSE_CANT_CREATE_TMP_FILE          "Can't create necessary temporary file"
+    VBSE_OBJECT_REQUIRED               "Object required"
     VBSE_CANT_CREATE_OBJECT            "ActiveX component can't create object"
     VBSE_OLE_NOT_SUPPORTED             "Class doesn't support Automation"
     VBSE_OLE_FILE_NOT_FOUND            "File name or class name not found during Automation operation"

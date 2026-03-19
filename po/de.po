@@ -4000,7 +4000,7 @@ msgstr "Index außerhalb des Bereichs"
 msgid "Out of stack space"
 msgstr "Stackspeicher voll"
 
-#: dlls/jscript/jscript.rc:32
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
 msgid "Object required"
 msgstr "Objekt benötigt"
 
@@ -4008,19 +4008,19 @@ msgstr "Objekt benötigt"
 msgid "Automation server can't create object"
 msgstr "Automatisierungsserver konnte das Objekt nicht erstellen"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this property or method"
 msgstr "Das Objekt unterstützt diese Eigenschaft oder Methode nicht"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this action"
 msgstr "Das Objekt unterstützt diese Aktion nicht"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
 msgid "Argument not optional"
 msgstr "Argument nicht optional"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
 msgid "Object not a collection"
 msgstr "Objekt ist keine Kollektion"
 
@@ -4096,7 +4096,7 @@ msgstr "Microsoft JScript Übersetzungsfehler"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript Laufzeitfehler"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
 msgid "Unknown runtime error"
 msgstr "Unbekannter Laufzeitfehler"
 
@@ -13055,56 +13055,56 @@ msgstr "Ungültige Verwendung von Null"
 msgid "Can't create necessary temporary file"
 msgstr "Notwendige temporäre Datei konnte nicht erzeugt werden"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "ActiveX component can't create object"
 msgstr "ActiveX-Komponente konnte Objekt nicht erstellen"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "Class doesn't support Automation"
 msgstr "Klasse unterstützt keine Automation"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "File name or class name not found during Automation operation"
 msgstr "Datei- oder Klassenname nicht gefunden während Automationsablauf"
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support named arguments"
 msgstr "Objekt unterstützt keine benannten Argumente"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support current locale setting"
 msgstr "Objekt unterstützt aktuelle Regionseinstellung nicht"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Named argument not found"
 msgstr "Benanntes Argument nicht gefunden"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "Falsche Anzahl an Argumenten oder ungültige Merkmalszuweisung"
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 msgid "Specified DLL function not found"
 msgstr "Angegebene DLL-Funktion nicht gefunden"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 "Variable verwendet einen in VBScript nicht unterstützten Automationstyp"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "Remoteserver existiert nicht oder ist nicht verfügbar"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Invalid or unqualified reference"
 msgstr "Ungültige oder unqualifizierte Referenz"
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript Übersetzungsfehler"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript Laufzeitfehler"
 

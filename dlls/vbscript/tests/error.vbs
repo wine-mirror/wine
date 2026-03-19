@@ -340,7 +340,7 @@ sub testWithError()
     with throwInt(E_TESTERROR)
         x = true
         .prop = 1
-        todo_wine_ok Err.Number = 424, "Err.Number = " & Err.Number
+        ok Err.Number = 424, "Err.Number = " & Err.Number
     end with
     ok x, "with statement body not executed"
 
@@ -348,7 +348,7 @@ sub testWithError()
     x = false
     with empty
         .prop = 1
-        todo_wine_ok Err.Number = 424, "Err.Number = " & Err.Number
+        ok Err.Number = 424, "Err.Number = " & Err.Number
         x = true
     end with
     ok x, "with statement body not executed"

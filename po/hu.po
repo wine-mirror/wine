@@ -4071,7 +4071,7 @@ msgstr "Érvénytelen alszkript"
 msgid "Out of stack space"
 msgstr "Elfogyott a papír; "
 
-#: dlls/jscript/jscript.rc:32
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
 msgid "Object required"
 msgstr "Objektum szükséges"
 
@@ -4079,19 +4079,19 @@ msgstr "Objektum szükséges"
 msgid "Automation server can't create object"
 msgstr "Az automatizáló (automation) kiszolgáló nem tud objektumot létrehozni"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this property or method"
 msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this action"
 msgstr "Az objektum nem támogatja ezt a műveletet"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
 msgid "Argument not optional"
 msgstr "Az argumentum nem opcionális"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
 #, fuzzy
 #| msgid "Object Class Violation"
 msgid "Object not a collection"
@@ -4179,7 +4179,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -14127,67 +14127,67 @@ msgstr "Érvénytelen felhasználói puffer.\n"
 msgid "Can't create necessary temporary file"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 #, fuzzy
 #| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
 msgstr "Az automatizáló (automation) kiszolgáló nem tud objektumot létrehozni"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
 msgstr "Az objektum nem támogatja ezt a műveletet"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "File name or class name not found during Automation operation"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
 msgstr "Az objektum nem támogatja ezt a műveletet"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
 msgstr "Az objektum nem támogatja ezt a műveletet"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"
 msgstr "A tétel nem található.\n"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 #, fuzzy
 #| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
 msgstr "A megadott vezérlő nem található az üzenetben"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "The remote server machine does not exist or is unavailable"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Invalid or unqualified reference"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript compilation error"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript runtime error"
 msgstr ""
 
