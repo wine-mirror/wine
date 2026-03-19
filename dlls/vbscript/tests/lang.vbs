@@ -1779,6 +1779,24 @@ x = obj.publicArrayProp(2)
 Call ok(getVT(x) = "VT_EMPTY*", "getVT(x) = " & getVT(x))
 Call ok(obj.publicArrayProp("0") = 1, "obj.publicArrayProp(0) = " & obj.publicArrayProp("0"))
 
+' Indexing a scalar (non-array) public property: native raises 438 for both
+' get and set (regardless of arg count or arg type).
+On Error Resume Next
+Err.Clear
+x = obj.publicProp(0)
+Call ok(Err.number = 438, "obj.publicProp(0) Err.number = " & Err.number)
+Err.Clear
+obj.publicProp(0) = 5
+Call ok(Err.number = 438, "obj.publicProp(0) = 5 Err.number = " & Err.number)
+Err.Clear
+x = obj.publicProp(0, 1)
+Call ok(Err.number = 438, "obj.publicProp(0, 1) Err.number = " & Err.number)
+Err.Clear
+obj.publicProp("k") = 5
+Call ok(Err.number = 438, "obj.publicProp(""k"") = 5 Err.number = " & Err.number)
+Err.Clear
+On Error Goto 0
+
 x = (New testclass).publicProp
 
 Class TermTest
@@ -2578,7 +2596,7 @@ End Class
 
 Set obj = new ArrClass
 Call ok(getVT(obj.classarr) = "VT_ARRAY|VT_VARIANT", "getVT(obj.classarr) = " & getVT(obj.classarr))
-'todo_wine Call ok(obj.classarr(1) = 2, "obj.classarr(1) = " & obj.classarr(1))
+Call ok(obj.classarr(1) = 2, "obj.classarr(1) = " & obj.classarr(1))
 
 obj.var = arr
 Call ok(getVT(obj.var) = "VT_ARRAY|VT_VARIANT", "getVT(obj.var) = " & getVT(obj.var))
@@ -3099,8 +3117,7 @@ call ok(x.pub2 = 2, "x.pub2 = " & x.pub2)
 call ok(ubound(x.pubArray) = 3, "ubound(x.pubArray) = " & ubound(x.pubArray))
 call ok(ubound(x.pubArray2, 1) = 5, "ubound(x.pubArray2, 1) = " & ubound(x.pubArray2, 1))
 call ok(ubound(x.pubArray2, 2) = 10, "ubound(x.pubArray2, 2) = " & ubound(x.pubArray2, 2))
-' TODO: this does not parse: accessing class variable of array type element directly
-' call ok(x.pubArray(0) = 3, "x.pubArray(0) = " & x.pubArray(0))
+call ok(x.pubArray(0) = 3, "x.pubArray(0) = " & x.pubArray(0))
 call ok(x.dim1 = 7, "x.dim1 = " & x.dim1)
 call ok(x.dim2 = 8, "x.dim2 = " & x.dim2)
 
@@ -3111,9 +3128,9 @@ err.clear
 x.priv2 = 2
 call ok(err.number = 438, "err.number = " & err.number)
 err.clear
-' TODO: set class variable of array type element directly
 x.pubArray(0) = 1
-call todo_wine_ok(err.number = 0, "set x.pubArray(0) err.number = " & err.number)
+call ok(err.number = 0, "set x.pubArray(0) err.number = " & err.number)
+call ok(x.pubArray(0) = 1, "x.pubArray(0) = " & x.pubArray(0))
 on error goto 0
 
 funcCalled = ""

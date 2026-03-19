@@ -146,6 +146,22 @@ static HRESULT get_propput_arg(script_ctx_t *ctx, const DISPPARAMS *dp, WORD fla
     return S_OK;
 }
 
+static HRESULT get_array_from_variant(VARIANT *v, SAFEARRAY **array)
+{
+    switch(V_VT(v)) {
+    case VT_ARRAY|VT_BYREF|VT_VARIANT:
+        *array = *V_ARRAYREF(v);
+        return S_OK;
+    case VT_ARRAY|VT_VARIANT:
+        *array = V_ARRAY(v);
+        return S_OK;
+    default:
+        if(V_ISARRAY(v))
+            FIXME("Unsupported array type %x\n", V_VT(v));
+        return DISP_E_MEMBERNOTFOUND;
+    }
+}
+
 static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DISPPARAMS *dp, VARIANT *res)
 {
     HRESULT hres;
@@ -154,14 +170,12 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
     case DISPATCH_PROPERTYGET:
         if(dp->cArgs) {
-            if (!V_ISARRAY(v))
-            {
-                WARN("called with arguments for non-array property\n");
-                return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
-            }
+            SAFEARRAY *array;
 
-            if (FAILED(hres = array_access(V_ARRAY(v), dp, &v)))
-            {
+            if(FAILED(hres = get_array_from_variant(v, &array)))
+                return hres;
+
+            if(FAILED(hres = array_access(array, dp, &v))) {
                 WARN("failed to access array element\n");
                 return hres;
             }
@@ -181,17 +195,31 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
             return hres;
 
         if(arg_cnt(dp)) {
-            FIXME("Arguments not supported\n");
-            return E_NOTIMPL;
+            SAFEARRAY *array;
+
+            if(FAILED(hres = get_array_from_variant(v, &array))) {
+                if(own_val)
+                    VariantClear(&put_val);
+                return hres;
+            }
+
+            hres = array_access(array, dp, &v);
+            if(FAILED(hres)) {
+                if(own_val)
+                    VariantClear(&put_val);
+                return hres;
+            }
         }
 
         if(res)
             V_VT(res) = VT_EMPTY;
 
-        if(own_val)
+        if(own_val) {
+            VariantClear(v);
             *v = put_val;
-        else
+        } else {
             hres = VariantCopyInd(v, &put_val);
+        }
         break;
     }
 
