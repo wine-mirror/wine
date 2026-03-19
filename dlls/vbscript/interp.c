@@ -1516,9 +1516,8 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
         break;
     }
     default:
-        FIXME("Unsupported for %s\n", debugstr_variant(v.v));
         release_val(&v);
-        return E_NOTIMPL;
+        return MAKE_VBSERROR(VBSE_NOT_ENUM);
     }
 
     return S_OK;
@@ -1537,8 +1536,7 @@ static HRESULT interp_enumnext(exec_ctx_t *ctx)
     TRACE("\n");
 
     if(V_VT(stack_top(ctx, 0)) == VT_EMPTY) {
-        FIXME("uninitialized\n");
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_NOT_ENUM);
     }
 
     assert(V_VT(stack_top(ctx, 0)) == VT_UNKNOWN);

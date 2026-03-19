@@ -197,7 +197,7 @@ sub testThrow
     next
     call ok(x = 2, "x = " & x)
     call ok(y = 1, "y = " & y)
-    call todo_wine_ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
+    call ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
 
     Err.clear()
     y = 0
@@ -318,7 +318,7 @@ sub testForEachError()
     z = true
     call ok(y, "for each not executed")
     call ok(z, "line after next not executed")
-    call todo_wine_ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
+    call ok(Err.Number = VB_E_OBJNOTCOLLECTION, "Err.Number = " & Err.Number)
 end sub
 
 call testForEachError()
