@@ -1438,6 +1438,25 @@ End Class
 Set obj = New TestMe
 Call obj.test(obj)
 
+Class TestMeIndex
+    Private arr_(1)
+    Public Default Property Get Item(idx)
+        Item = arr_(idx)
+    End Property
+    Public Sub SetVal(idx, val)
+        arr_(idx) = val
+    End Sub
+    Public Sub TestAccess()
+        SetVal 0, "hello"
+        SetVal 1, "world"
+        Call ok(Me(0) = "hello", "Me(0) = " & Me(0))
+        Call ok(Me(1) = "world", "Me(1) = " & Me(1))
+    End Sub
+End Class
+
+Set obj = New TestMeIndex
+Call obj.TestAccess()
+
 Call ok(getVT(test) = "VT_DISPATCH", "getVT(test) = " & getVT(test))
 Call ok(Me is Test, "Me is not Test")
 

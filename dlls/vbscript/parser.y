@@ -746,7 +746,7 @@ static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *
 {
     call_expression_t *call_expr;
 
-    if(callee_expr->type == EXPR_MEMBER)
+    if(callee_expr->type == EXPR_MEMBER || callee_expr->type == EXPR_ME)
         return new_call_expression(ctx, callee_expr, arguments);
     if(callee_expr->type != EXPR_CALL) {
         FIXME("Unhandled for expr type %u\n", callee_expr->type);

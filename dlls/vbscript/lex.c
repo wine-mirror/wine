@@ -465,7 +465,7 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
          * Parser can't predict if bracket is part of argument expression or an argument
          * in call expression. We predict it here instead.
          */
-        if(ctx->last_token == tIdentifier || ctx->last_token == ')')
+        if(ctx->last_token == tIdentifier || ctx->last_token == ')' || ctx->last_token == tME)
             return '(';
         return tEXPRLBRACKET;
     case '"':
