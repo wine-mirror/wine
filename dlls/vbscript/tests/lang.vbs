@@ -62,6 +62,20 @@ Call ok(&hfffe& = 65534, "&hfffe& <> -2")
 Call ok(&hffffffff& = -1, "&hffffffff& <> -1")
 Call ok((&h01or&h02)=3,"&h01or&h02 <> 3")
 
+' Hex literals with excess leading zeros
+Call ok(&H000000031 = 49, "&H000000031 <> 49")
+Call ok(&H0000000000000031 = 49, "&H0000000000000031 <> 49")
+Call ok(&H00000000000000FF = 255, "&H00000000000000FF <> 255")
+Call ok(&H0FFFFFFFF = -1, "&H0FFFFFFFF <> -1")
+Call ok(&H007FFFFFFF = 2147483647, "&H007FFFFFFF <> 2147483647")
+Call ok(&H000000031& = 49, "&H000000031& <> 49")
+Call ok(getVT(&H00000000000000FF) = "VT_I2", "getVT(&H00000000000000FF) is not VT_I2")
+Call ok(getVT(&H007FFFFFFF) = "VT_I4", "getVT(&H007FFFFFFF) is not VT_I4")
+Call ok(&h0 = 0, "&h0 <> 0")
+Call ok(&h0& = 0, "&h0& <> 0")
+Call ok(&h00 = 0, "&h00 <> 0")
+Call ok(&h000000000 = 0, "&h000000000 <> 0")
+
 ' Test concat when no space and var begins with h
 hi = "y"
 x = "x" &hi

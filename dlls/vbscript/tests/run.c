@@ -2857,6 +2857,12 @@ static void test_parse_errors(void)
             "end if\n",
             2, 1,
             NULL, E_FAIL
+        },
+        {
+            /* Hex literal overflow */
+            L"x = &H100000001\n",
+            0, 4,
+            L"x = &H100000001", S_OK
         }
     };
     HRESULT hres;

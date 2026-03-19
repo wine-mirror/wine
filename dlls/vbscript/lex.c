@@ -351,14 +351,20 @@ static int hex_to_int(WCHAR c)
 
 static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
 {
-    const WCHAR *begin = ctx->ptr;
+    const WCHAR *begin;
     unsigned l = 0, d;
+
+    /* Skip leading zeros — Windows allows any number of them. */
+    while(ctx->ptr[1] == '0')
+        ctx->ptr++;
+
+    begin = ctx->ptr;
 
     while((d = hex_to_int(*++ctx->ptr)) != -1)
         l = l*16 + d;
 
-    if(begin + 9 /* max digits+1 */ < ctx->ptr) {
-        FIXME("invalid literal\n");
+    if(begin + 9 /* max 8 significant digits + 1 */ < ctx->ptr) {
+        WARN("overflow in hex literal\n");
         return 0;
     }
 
