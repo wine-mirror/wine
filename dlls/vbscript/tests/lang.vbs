@@ -2187,6 +2187,7 @@ Class TestPropParam
     Public oDict
     Public gotNothing
     Public m_obj
+    Public m_objType
 
     Public Property Set bar(obj)
         Set m_obj = obj
@@ -2205,6 +2206,14 @@ Class TestPropParam
     Public Property Let ten(a,b,c,d,e,f,g,h,i,j)
         oDict = a & b & c & d & e & f & g & h & i & j
     End Property
+    Public Property Let objProp(aInput)
+        m_objType = getVT(aInput)
+        If IsObject(aInput) Then
+            Set m_obj = aInput
+        Else
+            m_obj = aInput
+        End If
+    End Property
 End Class
 
 Set x = new TestPropParam
@@ -2219,6 +2228,24 @@ call ok(x.gotNothing=Empty,"x.gotNothing = " & x.gotNothing  & " expected Empty"
 Set x.foo("123") = Nothing
 call ok(x.oDict = "123","x.oDict = " & x.oDict & " expected 123")
 call ok(x.gotNothing=True,"x.gotNothing = " & x.gotNothing  & " expected true")
+
+' Property Let receives VT_DISPATCH argument as-is (does not extract default value)
+Set y = New EndTestClassWithProperty
+y.x = 42
+x.objProp = y
+call ok(x.m_objType = "VT_DISPATCH*", "Property Let aInput type: " & x.m_objType & " expected VT_DISPATCH*")
+call ok(x.m_obj = 42, "Property Let with object argument failed, m_obj = " & x.m_obj)
+
+' Property Let receives object without default property as VT_DISPATCH
+Set z = New EmptyClass
+x.objProp = z
+call ok(x.m_objType = "VT_DISPATCH*", "Property Let no-default aInput type: " & x.m_objType & " expected VT_DISPATCH*")
+
+' Set with only Property Let defined should fail (no fallback to Let)
+On Error Resume Next
+Set x.objProp = y
+call ok(Err.Number = 438, "Set Property Let only: Err.Number = " & Err.Number & " expected 438")
+On Error GoTo 0
 
 set x = new TestPropSyntax
 set x.prop = new TestPropSyntax

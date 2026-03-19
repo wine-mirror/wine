@@ -219,14 +219,14 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
                 dp.rgvarg = buf;
             }
 
-            hres = get_propput_arg(This->desc->ctx, params, flags, dp.rgvarg, &needs_release);
+            hres = get_propput_arg(This->desc->ctx, params, flags | DISPATCH_PROPERTYPUTREF, dp.rgvarg, &needs_release);
             if(FAILED(hres)) {
                 if(dp.rgvarg != buf)
                     free(dp.rgvarg);
                 return hres;
             }
 
-            func = This->desc->funcs[id].entries[V_VT(dp.rgvarg) == VT_DISPATCH ? VBDISP_SET : VBDISP_LET];
+            func = This->desc->funcs[id].entries[(flags & DISPATCH_PROPERTYPUTREF) ? VBDISP_SET : VBDISP_LET];
             if(!func) {
                 FIXME("no letter/setter\n");
                 if(dp.rgvarg != buf)
