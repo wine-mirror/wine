@@ -2391,19 +2391,26 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
         codepage = get_name_record_codepage(platform, encoding);
         get_name_record_locale(platform, lang_id, locale, ARRAY_SIZE(locale));
 
-        if (codepage)
+        if (length)
         {
-            DWORD len = MultiByteToWideChar(codepage, 0, name, length, NULL, 0);
-            name_string = malloc(sizeof(WCHAR) * (len+1));
-            MultiByteToWideChar(codepage, 0, name, length, name_string, len);
-            name_string[len] = 0;
+            if (codepage)
+            {
+                DWORD len = MultiByteToWideChar(codepage, 0, name, length, NULL, 0);
+                name_string = malloc(sizeof(WCHAR) * (len+1));
+                MultiByteToWideChar(codepage, 0, name, length, name_string, len);
+                name_string[len] = 0;
+            }
+            else
+            {
+                length /= sizeof(WCHAR);
+                name_string = heap_strdupnW(name, length);
+                for (i = 0; i < length; i++)
+                    name_string[i] = GET_BE_WORD(name_string[i]);
+            }
         }
         else
         {
-            length /= sizeof(WCHAR);
-            name_string = heap_strdupnW(name, length);
-            for (i = 0; i < length; i++)
-                name_string[i] = GET_BE_WORD(name_string[i]);
+            name_string = calloc(1, sizeof(*name_string));
         }
 
         TRACE("string %s for locale %s found\n", debugstr_w(name_string), debugstr_w(locale));
