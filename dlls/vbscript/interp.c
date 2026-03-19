@@ -1145,6 +1145,12 @@ static HRESULT interp_numval(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
+    if(V_VT(val.v) == VT_EMPTY) {
+        V_VT(&v) = VT_I2;
+        V_I2(&v) = 0;
+        return stack_push(ctx, &v);
+    }
+
     if (V_VT(val.v) == VT_BSTR) {
         V_VT(&v) = VT_EMPTY;
         hres = VariantChangeType(&v, val.v, 0, VT_R8);
@@ -1541,6 +1547,9 @@ static HRESULT interp_step(exec_ctx_t *ctx)
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(ident));
+
+    if(V_VT(stack_top(ctx, 0)) == VT_EMPTY || V_VT(stack_top(ctx, 1)) == VT_EMPTY)
+        return MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
 
     V_VT(&zero) = VT_I2;
     V_I2(&zero) = 0;

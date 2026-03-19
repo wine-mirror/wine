@@ -809,6 +809,21 @@ if (isEnglishLang) then
     Call testfor ("1", "2.5", "0.5", 4)
 end if
 
+' Empty is treated as 0 in for-to loop expressions
+y = 0
+for x = empty to 3
+    y = y + 1
+next
+call ok(y = 4, "for empty to 3: y = " & y)
+call ok(x = 4, "for empty to 3: x = " & x)
+
+y = 0
+for x = 0 to empty
+    y = y + 1
+next
+call ok(y = 1, "for 0 to empty: y = " & y)
+call ok(x = 1, "for 0 to empty: x = " & x)
+
 for x = 1.5 to 1
     Call ok(false, "for..to called when unexpected")
 next

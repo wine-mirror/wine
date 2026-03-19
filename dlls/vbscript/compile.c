@@ -871,7 +871,7 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
 static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
 {
     statement_ctx_t loop_ctx = {2};
-    unsigned step_instr, instr;
+    unsigned step_instr, loop_start, instr;
     BSTR identifier;
     HRESULT hres;
 
@@ -925,27 +925,30 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(!emit_catch(ctx, 2))
         return E_OUTOFMEMORY;
 
+    loop_start = ctx->instr_cnt;
     hres = compile_statement(ctx, &loop_ctx, stat->body);
     if(FAILED(hres))
         return hres;
 
-    /* FIXME: Error handling can't be done compatible with native using OP_incc here. */
+    /* We need a separated OP_step here so that errors jump to the end-of-loop catch. */
+    ctx->loc = stat->stat.loc;
     instr = push_instr(ctx, OP_incc);
     if(!instr)
         return E_OUTOFMEMORY;
     instr_ptr(ctx, instr)->arg1.bstr = identifier;
 
-    hres = push_instr_addr(ctx, OP_jmp, step_instr);
-    if(FAILED(hres))
-        return hres;
+    instr = push_instr(ctx, OP_step);
+    if(!instr)
+        return E_OUTOFMEMORY;
+    instr_ptr(ctx, instr)->arg2.bstr = identifier;
+    instr_ptr(ctx, instr)->arg1.uint = loop_ctx.for_end_label;
 
-    hres = push_instr_uint(ctx, OP_pop, 2);
+    hres = push_instr_addr(ctx, OP_jmp, loop_start);
     if(FAILED(hres))
         return hres;
 
     label_set_addr(ctx, loop_ctx.for_end_label);
 
-    /* FIXME: reconsider after OP_incc fixup. */
     if(!emit_catch(ctx, 0))
         return E_OUTOFMEMORY;
 

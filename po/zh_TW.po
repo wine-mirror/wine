@@ -3953,7 +3953,7 @@ msgstr "註標超出範圍"
 msgid "Out of stack space"
 msgstr "堆疊空間不足"
 
-#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:47
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:48
 msgid "Object required"
 msgstr "需要物件"
 
@@ -3961,23 +3961,23 @@ msgstr "需要物件"
 msgid "Automation server can't create object"
 msgstr "自動作業伺服器無法建立物件"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:51
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support this property or method"
 msgstr "物件不支援這個屬性或方法"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:52
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support this action"
 msgstr "物件不支援這個動作"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:56
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:57
 msgid "Argument not optional"
 msgstr "引數並非可選的"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:58
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:59
 msgid "Object not a collection"
 msgstr "物件並非集合物件"
 
-#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:65
 msgid "Syntax error"
 msgstr "語法錯誤"
 
@@ -3985,7 +3985,7 @@ msgstr "語法錯誤"
 msgid "Expected ';'"
 msgstr "預期為 ';'"
 
-#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:65
+#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:66
 msgid "Expected '('"
 msgstr "預期為 '('"
 
@@ -3993,19 +3993,19 @@ msgstr "預期為 '('"
 msgid "Expected ')'"
 msgstr "預期為 ')'"
 
-#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:66
+#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:67
 msgid "Expected identifier"
 msgstr "預期為識別碼"
 
-#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:67
+#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:68
 msgid "Expected '='"
 msgstr "預期為 '='"
 
-#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:80
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:81
 msgid "Invalid character"
 msgstr "無效的字元"
 
-#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:81
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:82
 msgid "Unterminated string constant"
 msgstr "未終結的字串常數"
 
@@ -4049,7 +4049,7 @@ msgstr "Microsoft JScript 編譯錯誤"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 執行期錯誤"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:99
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:100
 msgid "Unknown runtime error"
 msgstr "不明執行期錯誤"
 
@@ -12977,206 +12977,212 @@ msgid "Object variable not set"
 msgstr "沒有設定物件變數"
 
 #: dlls/vbscript/vbscript.rc:45
+#, fuzzy
+#| msgid "Object is not initialized.\n"
+msgid "For loop not initialized"
+msgstr "物件未初始化。\n"
+
+#: dlls/vbscript/vbscript.rc:46
 msgid "Invalid use of Null"
 msgstr "Null 的使用不正確"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "Can't create necessary temporary file"
 msgstr "無法建立必須的暫存檔案"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "ActiveX component can't create object"
 msgstr "ActiveX 元件無法建立物件"
 
-#: dlls/vbscript/vbscript.rc:49
+#: dlls/vbscript/vbscript.rc:50
 msgid "Class doesn't support Automation"
 msgstr "物件類別不支援自動化"
 
-#: dlls/vbscript/vbscript.rc:50
+#: dlls/vbscript/vbscript.rc:51
 msgid "File name or class name not found during Automation operation"
 msgstr "在自動化運作過程中找不到檔案名稱或物件類別名稱"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Object doesn't support named arguments"
 msgstr "物件不支援指名的引數"
 
-#: dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:55
 msgid "Object doesn't support current locale setting"
 msgstr "物件不支援目前的地區設定"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Named argument not found"
 msgstr "找不到指名的引數"
 
-#: dlls/vbscript/vbscript.rc:57
+#: dlls/vbscript/vbscript.rc:58
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "引數的個數錯誤或指派的屬性無效"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "Specified DLL function not found"
 msgstr "找不到指定的 DLL 函數"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr "變數使用了 VBScript 不支援的自動化類型"
 
-#: dlls/vbscript/vbscript.rc:61
+#: dlls/vbscript/vbscript.rc:62
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "遠端伺服器不存在或無法使用"
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 #, fuzzy
 #| msgid "'|' is undefined"
 msgid "Variable is undefined"
 msgstr "'|' 未定義"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Invalid or unqualified reference"
 msgstr "無效或不合格的引用"
 
-#: dlls/vbscript/vbscript.rc:68
+#: dlls/vbscript/vbscript.rc:69
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'To'"
 msgstr "預期為 ';'"
 
-#: dlls/vbscript/vbscript.rc:69
+#: dlls/vbscript/vbscript.rc:70
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'End'"
 msgstr "預期為 '@end'"
 
-#: dlls/vbscript/vbscript.rc:70
+#: dlls/vbscript/vbscript.rc:71
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'Then'"
 msgstr "預期為 '@end'"
 
-#: dlls/vbscript/vbscript.rc:71
+#: dlls/vbscript/vbscript.rc:72
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'Wend'"
 msgstr "預期為 '@end'"
 
-#: dlls/vbscript/vbscript.rc:72
+#: dlls/vbscript/vbscript.rc:73
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Loop'"
 msgstr "預期為 ';'"
 
-#: dlls/vbscript/vbscript.rc:73
+#: dlls/vbscript/vbscript.rc:74
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Next'"
 msgstr "預期為 ';'"
 
-#: dlls/vbscript/vbscript.rc:74
+#: dlls/vbscript/vbscript.rc:75
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Case'"
 msgstr "預期為 ';'"
 
-#: dlls/vbscript/vbscript.rc:75
+#: dlls/vbscript/vbscript.rc:76
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected statement"
 msgstr "預期為 '@end'"
 
-#: dlls/vbscript/vbscript.rc:76
+#: dlls/vbscript/vbscript.rc:77
 #, fuzzy
 #| msgid "Expected an operand.\n"
 msgid "Expected end of statement"
 msgstr "預期為一個運算元。\n"
 
-#: dlls/vbscript/vbscript.rc:77
+#: dlls/vbscript/vbscript.rc:78
 #, fuzzy
 #| msgid "Unterminated string constant"
 msgid "Expected integer constant"
 msgstr "未終結的字串常數"
 
-#: dlls/vbscript/vbscript.rc:78
+#: dlls/vbscript/vbscript.rc:79
 msgid "Expected 'While', 'Until' or end of statement"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:79
+#: dlls/vbscript/vbscript.rc:80
 #, fuzzy
 #| msgid "Invalid flag number.\n"
 msgid "Invalid number"
 msgstr "無效的旗標號碼。\n"
 
-#: dlls/vbscript/vbscript.rc:82
+#: dlls/vbscript/vbscript.rc:83
 msgid "'loop' without 'do'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:83
+#: dlls/vbscript/vbscript.rc:84
 #, fuzzy
 #| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
 msgstr "無效的印表機狀態。\n"
 
-#: dlls/vbscript/vbscript.rc:84
+#: dlls/vbscript/vbscript.rc:85
 #, fuzzy
 #| msgid "Label redefined"
 msgid "Name redefined"
 msgstr "標貼重複定義"
 
-#: dlls/vbscript/vbscript.rc:85
+#: dlls/vbscript/vbscript.rc:86
 msgid "Must be first statement on the line"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:86
+#: dlls/vbscript/vbscript.rc:87
 msgid "Cannot use parentheses when calling a Sub"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:87
+#: dlls/vbscript/vbscript.rc:88
 #, fuzzy
 #| msgid "Expected an operator.\n"
 msgid "Expected literal constant"
 msgstr "預期為一個運算子。\n"
 
-#: dlls/vbscript/vbscript.rc:88
+#: dlls/vbscript/vbscript.rc:89
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'In'"
 msgstr "預期為 ';'"
 
-#: dlls/vbscript/vbscript.rc:89
+#: dlls/vbscript/vbscript.rc:90
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Class'"
 msgstr "預期為 ';'"
 
-#: dlls/vbscript/vbscript.rc:90
+#: dlls/vbscript/vbscript.rc:91
 msgid "Must be defined inside a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:91
+#: dlls/vbscript/vbscript.rc:92
 msgid "Expected Let or Set or Get in property declaration"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:92
+#: dlls/vbscript/vbscript.rc:93
 msgid "Class initialize or terminate do not have arguments"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:93
+#: dlls/vbscript/vbscript.rc:94
 msgid "Property set or let must have at least one argument"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:94
+#: dlls/vbscript/vbscript.rc:95
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
 msgstr "預期為 ';'"
 
-#: dlls/vbscript/vbscript.rc:95
+#: dlls/vbscript/vbscript.rc:96
 msgid "'Default' specification must also specify 'Public'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:97
+#: dlls/vbscript/vbscript.rc:98
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript 編譯錯誤"
 
-#: dlls/vbscript/vbscript.rc:98
+#: dlls/vbscript/vbscript.rc:99
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript 執行期錯誤"
 

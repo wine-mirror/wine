@@ -252,6 +252,7 @@
 #define VBSE_PATH_FILE_ACCESS              75
 #define VBSE_PATH_NOT_FOUND                76
 #define VBSE_OBJECT_VARIABLE_NOT_SET       91
+#define VBSE_FOR_LOOP_NOT_INITIALIZED      92
 #define VBSE_ILLEGAL_NULL_USE              94
 #define VBSE_CANT_CREATE_TMP_FILE         322
 #define VBSE_OBJECT_REQUIRED              424
