@@ -608,7 +608,7 @@ static HRESULT variant_call(exec_ctx_t *ctx, VARIANT *v, unsigned arg_cnt, VARIA
     return S_OK;
 }
 
-static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned arg_cnt)
+static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned arg_cnt, BOOL is_call)
 {
     DISPPARAMS dp;
     ref_t ref;
@@ -625,6 +625,24 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned
     case REF_CONST:
         if(arg_cnt)
             return variant_call(ctx, ref.u.v, arg_cnt, res);
+
+        if(is_call) {
+            VARIANT *v;
+
+            v = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
+            if(V_VT(v) == VT_DISPATCH) {
+                VARIANT result;
+                V_VT(&result) = VT_EMPTY;
+                hres = get_disp_value(ctx->script, V_DISPATCH(v), &result);
+                if(FAILED(hres))
+                    return hres;
+                if(res)
+                    *res = result;
+                else
+                    VariantClear(&result);
+                break;
+            }
+        }
 
         if(!res) {
             FIXME("REF_VAR no res\n");
@@ -688,7 +706,7 @@ static HRESULT interp_icall(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    hres = do_icall(ctx, &v, identifier, arg_cnt);
+    hres = do_icall(ctx, &v, identifier, arg_cnt, TRUE);
     if(FAILED(hres))
         return hres;
 
@@ -702,7 +720,7 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    return do_icall(ctx, NULL, identifier, arg_cnt);
+    return do_icall(ctx, NULL, identifier, arg_cnt, TRUE);
 }
 
 static HRESULT interp_vcall(exec_ctx_t *ctx)
@@ -803,7 +821,7 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
         return stack_push(ctx, &v);
     }
 
-    hres = do_icall(ctx, &v, identifier, 0);
+    hres = do_icall(ctx, &v, identifier, 0, FALSE);
     if(FAILED(hres))
         return hres;
 

@@ -2233,7 +2233,7 @@ set x.getprop.getprop().prop = obj
 call ok(x.getprop.getprop().prop is obj, "x.getprop.getprop().prop is not obj (emptyclass)")
 
 ok getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x)
-todo_wine_ok getVT(x()) = "VT_BSTR", "getVT(x()) = " & getVT(x())
+ok getVT(x()) = "VT_BSTR", "getVT(x()) = " & getVT(x())
 
 Class TestClassVariablesMulti
     Public pub1, pub2
