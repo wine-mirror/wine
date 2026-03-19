@@ -3007,6 +3007,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 } while (tkn != TKN_CLOSEPAR);
                 ERROR_IF(!node_builder_expect_token(builder, TKN_DO));
                 ERROR_IF(!node_builder_parse(builder, 0, &do_block));
+                if (!for_ctrl->set) for_control_append_set(for_ctrl, L"");
                 left = node_create_for(for_ctrl, do_block, do_echo);
                 for_ctrl = NULL;
             }
@@ -4427,13 +4428,8 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     int numbers[3] = {0, 0, 0}, var;
     int i;
 
-    if (for_ctrl->set)
-    {
-        wcscpy(set, for_ctrl->set);
-        handleExpansion(set, TRUE);
-    }
-    else
-        set[0] = L'\0';
+    wcscpy(set, for_ctrl->set);
+    handleExpansion(set, TRUE);
 
     /* Note: native doesn't check the actual number of parameters, and set
      * them by default to 0.
@@ -4466,7 +4462,7 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
 {
     RETURN_CODE return_code;
 
-    if (!for_ctrl->set && for_ctrl->operator != CMD_FOR_NUMBERS) return NO_ERROR;
+    if (!for_ctrl->set[0] && for_ctrl->operator != CMD_FOR_NUMBERS) return NO_ERROR;
 
     WCMD_save_for_loop_context(FALSE);
 
