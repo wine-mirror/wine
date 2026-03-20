@@ -30,6 +30,7 @@ STRINGTABLE
     VBSE_OUT_OF_MEMORY                 "Out of memory"
     VBSE_OUT_OF_BOUNDS                 "Subscript out of range"
     VBSE_ARRAY_LOCKED                  "This array is fixed or temporarily locked"
+    VBSE_DIVISION_BY_ZERO              "Division by zero"
     VBSE_TYPE_MISMATCH                 "Type mismatch"
     VBSE_FILE_NOT_FOUND                "File not found"
     VBSE_IO_ERROR                      "Device I/O error"

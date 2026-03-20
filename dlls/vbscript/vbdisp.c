@@ -1621,6 +1621,7 @@ void map_vbs_exception(EXCEPINFO *ei)
         case DISP_E_NONAMEDARGS:         vbse_number = VBSE_NAMED_ARGS_NOT_SUPPORTED; break;
         case DISP_E_BADVARTYPE:          vbse_number = VBSE_INVALID_TYPELIB_VARIABLE; break;
         case DISP_E_OVERFLOW:            vbse_number = VBSE_OVERFLOW; break;
+        case DISP_E_DIVBYZERO:           vbse_number = VBSE_DIVISION_BY_ZERO; break;
         case DISP_E_BADINDEX:            vbse_number = VBSE_OUT_OF_BOUNDS; break;
         case DISP_E_UNKNOWNLCID:         vbse_number = VBSE_LOCALE_SETTING_NOT_SUPPORTED; break;
         case DISP_E_ARRAYISLOCKED:       vbse_number = VBSE_ARRAY_LOCKED; break;

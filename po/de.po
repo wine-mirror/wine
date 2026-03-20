@@ -995,7 +995,7 @@ msgstr "Dateiname:"
 msgid "Files of type:"
 msgstr "Dateien vom Typ:"
 
-#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:35
+#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:36
 msgid "File not found"
 msgstr "Datei nicht gefunden"
 
@@ -4000,7 +4000,7 @@ msgstr "Index außerhalb des Bereichs"
 msgid "Out of stack space"
 msgstr "Stackspeicher voll"
 
-#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:47
 msgid "Object required"
 msgstr "Objekt benötigt"
 
@@ -4008,19 +4008,19 @@ msgstr "Objekt benötigt"
 msgid "Automation server can't create object"
 msgstr "Automatisierungsserver konnte das Objekt nicht erstellen"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this property or method"
 msgstr "Das Objekt unterstützt diese Eigenschaft oder Methode nicht"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support this action"
 msgstr "Das Objekt unterstützt diese Aktion nicht"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:56
 msgid "Argument not optional"
 msgstr "Argument nicht optional"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:58
 msgid "Object not a collection"
 msgstr "Objekt ist keine Kollektion"
 
@@ -4096,7 +4096,7 @@ msgstr "Microsoft JScript Übersetzungsfehler"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript Laufzeitfehler"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:66
 msgid "Unknown runtime error"
 msgstr "Unbekannter Laufzeitfehler"
 
@@ -13012,99 +13012,105 @@ msgid "This array is fixed or temporarily locked"
 msgstr "Array ist fixiert oder temporär gesperrt"
 
 #: dlls/vbscript/vbscript.rc:34
+#, fuzzy
+#| msgid "Division by zero error.\n"
+msgid "Division by zero"
+msgstr "'Division durch Null'-Fehler.\n"
+
+#: dlls/vbscript/vbscript.rc:35
 msgid "Type mismatch"
 msgstr "Datentypen inkongruent"
 
-#: dlls/vbscript/vbscript.rc:36
+#: dlls/vbscript/vbscript.rc:37
 msgid "Device I/O error"
 msgstr "E/A-Gerätefehler"
 
-#: dlls/vbscript/vbscript.rc:37
+#: dlls/vbscript/vbscript.rc:38
 msgid "File already exists"
 msgstr "Datei existiert bereits"
 
-#: dlls/vbscript/vbscript.rc:38
+#: dlls/vbscript/vbscript.rc:39
 msgid "Disk full"
 msgstr "Datenträger voll"
 
-#: dlls/vbscript/vbscript.rc:39
+#: dlls/vbscript/vbscript.rc:40
 msgid "Too many files"
 msgstr "Zu viele Dateien"
 
-#: dlls/vbscript/vbscript.rc:40
+#: dlls/vbscript/vbscript.rc:41
 msgid "Permission denied"
 msgstr "Keine Berechtigung"
 
-#: dlls/vbscript/vbscript.rc:41
+#: dlls/vbscript/vbscript.rc:42
 msgid "Path/File access error"
 msgstr "Pfad-/Dateizugriffsfehler"
 
-#: dlls/vbscript/vbscript.rc:42
+#: dlls/vbscript/vbscript.rc:43
 msgid "Path not found"
 msgstr "Pfad nicht gefunden"
 
-#: dlls/vbscript/vbscript.rc:43
+#: dlls/vbscript/vbscript.rc:44
 msgid "Object variable not set"
 msgstr "Objektvariable nicht gesetzt"
 
-#: dlls/vbscript/vbscript.rc:44
+#: dlls/vbscript/vbscript.rc:45
 msgid "Invalid use of Null"
 msgstr "Ungültige Verwendung von Null"
 
-#: dlls/vbscript/vbscript.rc:45
+#: dlls/vbscript/vbscript.rc:46
 msgid "Can't create necessary temporary file"
 msgstr "Notwendige temporäre Datei konnte nicht erzeugt werden"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "ActiveX component can't create object"
 msgstr "ActiveX-Komponente konnte Objekt nicht erstellen"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "Class doesn't support Automation"
 msgstr "Klasse unterstützt keine Automation"
 
-#: dlls/vbscript/vbscript.rc:49
+#: dlls/vbscript/vbscript.rc:50
 msgid "File name or class name not found during Automation operation"
 msgstr "Datei- oder Klassenname nicht gefunden während Automationsablauf"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support named arguments"
 msgstr "Objekt unterstützt keine benannten Argumente"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Object doesn't support current locale setting"
 msgstr "Objekt unterstützt aktuelle Regionseinstellung nicht"
 
-#: dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:55
 msgid "Named argument not found"
 msgstr "Benanntes Argument nicht gefunden"
 
-#: dlls/vbscript/vbscript.rc:56
+#: dlls/vbscript/vbscript.rc:57
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "Falsche Anzahl an Argumenten oder ungültige Merkmalszuweisung"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Specified DLL function not found"
 msgstr "Angegebene DLL-Funktion nicht gefunden"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 "Variable verwendet einen in VBScript nicht unterstützten Automationstyp"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "Remoteserver existiert nicht oder ist nicht verfügbar"
 
-#: dlls/vbscript/vbscript.rc:61
+#: dlls/vbscript/vbscript.rc:62
 msgid "Invalid or unqualified reference"
 msgstr "Ungültige oder unqualifizierte Referenz"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript Übersetzungsfehler"
 
-#: dlls/vbscript/vbscript.rc:64
+#: dlls/vbscript/vbscript.rc:65
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript Laufzeitfehler"
 

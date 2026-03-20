@@ -460,6 +460,26 @@ end sub
 
 call testVBErrorCodes
 
+sub testDivisionByZero()
+    on error resume next
+    dim x
+
+    Err.Clear()
+    x = 1 / 0
+    call ok(Err.Number = 11, "1 / 0 Err.Number = " & Err.Number)
+    call ok(Err.Description = "Division by zero", "1 / 0 Err.Description = " & Err.Description)
+
+    Err.Clear()
+    x = 1 \ 0
+    call ok(Err.Number = 11, "1 \ 0 Err.Number = " & Err.Number)
+
+    Err.Clear()
+    x = 1 Mod 0
+    call ok(Err.Number = 11, "1 Mod 0 Err.Number = " & Err.Number)
+end sub
+
+call testDivisionByZero
+
 on error resume next
 
 throwWithDesc

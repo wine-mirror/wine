@@ -991,7 +991,7 @@ msgstr "ファイル名:"
 msgid "Files of type:"
 msgstr "ファイルの種類:"
 
-#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:35
+#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:36
 msgid "File not found"
 msgstr "ファイルが見つかりません"
 
@@ -3949,7 +3949,7 @@ msgstr "添字が範囲外です"
 msgid "Out of stack space"
 msgstr "スタック スペースが不足しています"
 
-#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:47
 msgid "Object required"
 msgstr "オブジェクトが必要です"
 
@@ -3957,19 +3957,19 @@ msgstr "オブジェクトが必要です"
 msgid "Automation server can't create object"
 msgstr "オートメーション サーバーはオブジェクトを生成できません"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this property or method"
 msgstr "オブジェクトはこのプロパティまたはメソッドをサポートしていません"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support this action"
 msgstr "オブジェクトはこの操作をサポートしていません"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:56
 msgid "Argument not optional"
 msgstr "引数は省略できません"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:58
 msgid "Object not a collection"
 msgstr "オブジェクトはコレクションではありません"
 
@@ -4045,7 +4045,7 @@ msgstr "Microsoft JScript コンパイル エラー"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 実行時エラー"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:66
 msgid "Unknown runtime error"
 msgstr "未知の実行時エラー"
 
@@ -12876,98 +12876,104 @@ msgid "This array is fixed or temporarily locked"
 msgstr "この配列は固定長か一時的にロックされています"
 
 #: dlls/vbscript/vbscript.rc:34
+#, fuzzy
+#| msgid "Division by zero error.\n"
+msgid "Division by zero"
+msgstr "0 による除算エラー。\n"
+
+#: dlls/vbscript/vbscript.rc:35
 msgid "Type mismatch"
 msgstr "型が不一致です"
 
-#: dlls/vbscript/vbscript.rc:36
+#: dlls/vbscript/vbscript.rc:37
 msgid "Device I/O error"
 msgstr "デバイス入出力エラーです"
 
-#: dlls/vbscript/vbscript.rc:37
+#: dlls/vbscript/vbscript.rc:38
 msgid "File already exists"
 msgstr "ファイルはすでに存在します"
 
-#: dlls/vbscript/vbscript.rc:38
+#: dlls/vbscript/vbscript.rc:39
 msgid "Disk full"
 msgstr "ディスクがいっぱいです"
 
-#: dlls/vbscript/vbscript.rc:39
+#: dlls/vbscript/vbscript.rc:40
 msgid "Too many files"
 msgstr "ファイルが多すぎます"
 
-#: dlls/vbscript/vbscript.rc:40
+#: dlls/vbscript/vbscript.rc:41
 msgid "Permission denied"
 msgstr "許可がありません"
 
-#: dlls/vbscript/vbscript.rc:41
+#: dlls/vbscript/vbscript.rc:42
 msgid "Path/File access error"
 msgstr "パス/ファイルのアクセス エラーです"
 
-#: dlls/vbscript/vbscript.rc:42
+#: dlls/vbscript/vbscript.rc:43
 msgid "Path not found"
 msgstr "パスが見つかりません"
 
-#: dlls/vbscript/vbscript.rc:43
+#: dlls/vbscript/vbscript.rc:44
 msgid "Object variable not set"
 msgstr "オブジェクト変数は設定されていません"
 
-#: dlls/vbscript/vbscript.rc:44
+#: dlls/vbscript/vbscript.rc:45
 msgid "Invalid use of Null"
 msgstr "Null の使い方が正しくありません"
 
-#: dlls/vbscript/vbscript.rc:45
+#: dlls/vbscript/vbscript.rc:46
 msgid "Can't create necessary temporary file"
 msgstr "必要な一時ファイルを作成できません"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "ActiveX component can't create object"
 msgstr "ActiveX コンポーネントはオブジェクトを生成できません"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 msgid "Class doesn't support Automation"
 msgstr "クラスはこのオートメーションをサポートしていません"
 
-#: dlls/vbscript/vbscript.rc:49
+#: dlls/vbscript/vbscript.rc:50
 msgid "File name or class name not found during Automation operation"
 msgstr "オートメーション操作中にファイル名またはクラス名が見つかりません"
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support named arguments"
 msgstr "オブジェクトは名前付き引数をサポートしていません"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 msgid "Object doesn't support current locale setting"
 msgstr "オブジェクトは現在のロケール設定をサポートしていません"
 
-#: dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:55
 msgid "Named argument not found"
 msgstr "名前付き引数が見つかりません"
 
-#: dlls/vbscript/vbscript.rc:56
+#: dlls/vbscript/vbscript.rc:57
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "引数の数に誤りがあるかプロパティの代入が正しくありません"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Specified DLL function not found"
 msgstr "指定された DLL 関数が見つかりません"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr "VBScript ではオートメーション型を使う変数はサポートされていません"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "リモートのサーバー機が存在しないか使用できません"
 
-#: dlls/vbscript/vbscript.rc:61
+#: dlls/vbscript/vbscript.rc:62
 msgid "Invalid or unqualified reference"
 msgstr "正しくないか資格のない参照です"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript コンパイル エラー"
 
-#: dlls/vbscript/vbscript.rc:64
+#: dlls/vbscript/vbscript.rc:65
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript 実行時エラー"
 

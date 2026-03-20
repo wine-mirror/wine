@@ -992,7 +992,7 @@ msgstr "Nume fișier:"
 msgid "Files of type:"
 msgstr "Tip de fișier:"
 
-#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:35
+#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:36
 msgid "File not found"
 msgstr "Fișierul nu a fost găsit"
 
@@ -4008,7 +4008,7 @@ msgstr ""
 msgid "Out of stack space"
 msgstr "Fără hârtia; "
 
-#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:46
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:47
 msgid "Object required"
 msgstr "Se necesită un obiect"
 
@@ -4016,19 +4016,19 @@ msgstr "Se necesită un obiect"
 msgid "Automation server can't create object"
 msgstr "Serverul de automatizare nu poate crea obiectul"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:50
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support this property or method"
 msgstr "Obiectul nu suportă această proprietate sau metodă"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:51
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:52
 msgid "Object doesn't support this action"
 msgstr "Obiectul nu suportă această acțiune"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:55
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:56
 msgid "Argument not optional"
 msgstr "Argumentul nu este opțional"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:57
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:58
 #, fuzzy
 #| msgid "Object Class Violation"
 msgid "Object not a collection"
@@ -4106,7 +4106,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:65
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:66
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -14000,126 +14000,132 @@ msgstr ""
 
 #: dlls/vbscript/vbscript.rc:34
 #, fuzzy
+#| msgid "Division by zero error.\n"
+msgid "Division by zero"
+msgstr "Eroare de împărțire la zero.\n"
+
+#: dlls/vbscript/vbscript.rc:35
+#, fuzzy
 #| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
 msgstr "Tip de date nepotrivit.\n"
 
-#: dlls/vbscript/vbscript.rc:36
+#: dlls/vbscript/vbscript.rc:37
 #, fuzzy
 #| msgid "I/O device error.\n"
 msgid "Device I/O error"
 msgstr "Eroare de dispozitiv de intrare/ieșire.\n"
 
-#: dlls/vbscript/vbscript.rc:37
+#: dlls/vbscript/vbscript.rc:38
 #, fuzzy
 #| msgid "File already exists.\n"
 msgid "File already exists"
 msgstr "Fișierul există deja.\n"
 
-#: dlls/vbscript/vbscript.rc:38
+#: dlls/vbscript/vbscript.rc:39
 #, fuzzy
 #| msgid "Disk full.\n"
 msgid "Disk full"
 msgstr "Disc plin.\n"
 
-#: dlls/vbscript/vbscript.rc:39
+#: dlls/vbscript/vbscript.rc:40
 #, fuzzy
 #| msgid "Too many open files.\n"
 msgid "Too many files"
 msgstr "Prea multe fișiere deschise.\n"
 
-#: dlls/vbscript/vbscript.rc:40
+#: dlls/vbscript/vbscript.rc:41
 #, fuzzy
 #| msgid "Access denied.\n"
 msgid "Permission denied"
 msgstr "Acces refuzat.\n"
 
-#: dlls/vbscript/vbscript.rc:41
+#: dlls/vbscript/vbscript.rc:42
 msgid "Path/File access error"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:42
+#: dlls/vbscript/vbscript.rc:43
 #, fuzzy
 #| msgid "Path not found.\n"
 msgid "Path not found"
 msgstr "Calea nu a fost găsită.\n"
 
-#: dlls/vbscript/vbscript.rc:43
+#: dlls/vbscript/vbscript.rc:44
 #, fuzzy
 #| msgid "(value not set)"
 msgid "Object variable not set"
 msgstr "(valoare nestabilită)"
 
-#: dlls/vbscript/vbscript.rc:44
+#: dlls/vbscript/vbscript.rc:45
 #, fuzzy
 msgid "Invalid use of Null"
 msgstr "Formatul de număr nu este valid."
 
-#: dlls/vbscript/vbscript.rc:45
+#: dlls/vbscript/vbscript.rc:46
 msgid "Can't create necessary temporary file"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 #, fuzzy
 #| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
 msgstr "Serverul de automatizare nu poate crea obiectul"
 
-#: dlls/vbscript/vbscript.rc:48
+#: dlls/vbscript/vbscript.rc:49
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
 msgstr "Obiectul nu suportă această acțiune"
 
-#: dlls/vbscript/vbscript.rc:49
+#: dlls/vbscript/vbscript.rc:50
 msgid "File name or class name not found during Automation operation"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:52
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
 msgstr "Obiectul nu suportă această acțiune"
 
-#: dlls/vbscript/vbscript.rc:53
+#: dlls/vbscript/vbscript.rc:54
 #, fuzzy
 #| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
 msgstr "Obiectul nu suportă această acțiune"
 
-#: dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:55
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"
 msgstr "Element negăsit.\n"
 
-#: dlls/vbscript/vbscript.rc:56
+#: dlls/vbscript/vbscript.rc:57
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 #, fuzzy
 #| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
 msgstr "Controlul specificat nu a fost găsit în mesaj"
 
-#: dlls/vbscript/vbscript.rc:59
+#: dlls/vbscript/vbscript.rc:60
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "The remote server machine does not exist or is unavailable"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:61
+#: dlls/vbscript/vbscript.rc:62
 msgid "Invalid or unqualified reference"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "Microsoft VBScript compilation error"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:64
+#: dlls/vbscript/vbscript.rc:65
 msgid "Microsoft VBScript runtime error"
 msgstr ""
 

@@ -241,6 +241,7 @@
 #define VBSE_OUT_OF_MEMORY                  7
 #define VBSE_OUT_OF_BOUNDS                  9
 #define VBSE_ARRAY_LOCKED                  10
+#define VBSE_DIVISION_BY_ZERO              11
 #define VBSE_TYPE_MISMATCH                 13
 #define VBSE_FILE_NOT_FOUND                53
 #define VBSE_IO_ERROR                      57
