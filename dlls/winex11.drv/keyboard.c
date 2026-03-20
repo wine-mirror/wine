@@ -55,6 +55,7 @@
 #include "kbd.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 /* log format (add 0-padding as appropriate):
     keycode  %u  as in output from xev
@@ -65,6 +66,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
+struct layout
+{
+    struct list entry;
+
+    int xkb_group;
+    char *xkb_layout;
+
+    LANGID lang;
+};
+
 static const unsigned int ControlMask = 1 << 2;
 
 static int min_keycode, max_keycode, keysyms_per_keycode;
@@ -73,8 +84,40 @@ static WORD keyc2vkey[256], keyc2scan[256];
 static int NumLockMask, ScrollLockMask, AltGrMask; /* mask in the XKeyEvent state */
 
 static pthread_mutex_t kbd_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct list xkb_layouts = LIST_INIT( xkb_layouts );
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
+
+static void create_layout_from_xkb( int xkb_group, const char *xkb_layout, LANGID lang )
+{
+    struct layout *layout;
+
+    TRACE( "xkb_group %u, xkb_layout %s, lang %04x\n", xkb_group, xkb_layout, lang );
+
+    LIST_FOR_EACH_ENTRY( layout, &xkb_layouts, struct layout, entry )
+    {
+        if (!strcmp( layout->xkb_layout, xkb_layout ))
+        {
+            TRACE( "Found existing layout entry %p, lang %04x\n", layout, layout->lang );
+            if (layout->xkb_group == -1) layout->xkb_group = xkb_group;
+            return;
+        }
+    }
+
+    if (!(layout = calloc( 1, sizeof(*layout) + strlen( xkb_layout ) + 1 )))
+    {
+        WARN( "Failed to allocate memory for Xkb layout entry\n" );
+        return;
+    }
+    list_add_tail( &xkb_layouts, &layout->entry );
+
+    layout->xkb_group = xkb_group;
+    layout->xkb_layout = strcpy( (char *)(layout + 1), xkb_layout );
+
+    layout->lang = lang;
+
+    TRACE( "Created layout entry %p, lang %04x\n", layout, layout->lang );
+}
 
 /* Keyboard translation tables */
 #define MAIN_LEN 49
@@ -1960,6 +2003,7 @@ void init_keyboard_layouts( Display *display )
     XkbStateRec xkb_state;
     XModifierKeymap *mmp;
     XkbDescRec *xkb_desc;
+    struct layout *entry;
     LANGID xkb_lang = 0;
     Status status;
     KeyCode *kcp;
@@ -1990,6 +2034,10 @@ void init_keyboard_layouts( Display *display )
         }
     }
 
+    /* Flag any previously created Xkb layout as invalid */
+    LIST_FOR_EACH_ENTRY( entry, &xkb_layouts, struct layout, entry )
+        entry->xkb_group = -1;
+
     status = XkbGetState( display, XkbUseCoreKbd, &xkb_state );
     xkb_group = status ? 0 : xkb_state.group;
     TRACE( "current group %u (status %#x)\n", xkb_group, status );
@@ -2004,9 +2052,11 @@ void init_keyboard_layouts( Display *display )
             if (!xkb_desc->names->groups[count]) break;
 
         if (!XGetAtomNames( display, xkb_desc->names->groups, count, names )) count = 0;
+        TRACE("Found %u group names\n", count);
         for (int i = 0; i < count; i++)
         {
             const char *layout, *variant = NULL;
+            char buffer[1024];
             LANGID lang;
 
             if (!names[i]) continue;
@@ -2017,6 +2067,9 @@ void init_keyboard_layouts( Display *display )
 
                 TRACE( "Found group %u with name %s -> layout %s:%s, lang %04x\n", i, debugstr_a(names[i]),
                        debugstr_a(layout), debugstr_a(variant), lang );
+
+                snprintf( buffer, ARRAY_SIZE(buffer), "%s:%s", layout, variant );
+                create_layout_from_xkb( i, buffer, lang );
             }
             XFree( names[i] );
         }
