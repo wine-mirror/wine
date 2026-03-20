@@ -1335,6 +1335,90 @@ static DWORD table_read_dword(const struct dwrite_fonttable *table, unsigned int
     return ptr ? *ptr : 0;
 }
 
+HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
+    void **table_context, UINT32 *table_size, BOOL *found)
+{
+    void *table_directory_context, *sfnt_context;
+    const struct ot_table_record *table_record = NULL;
+    const struct ot_table_dir *table_dir = NULL;
+    UINT32 table_offset = 0;
+    UINT16 table_count;
+    HRESULT hr;
+
+    if (found) *found = FALSE;
+    if (table_size) *table_size = 0;
+
+    *table_data = NULL;
+    *table_context = NULL;
+
+    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION)
+    {
+        const struct ttc_header *ttc_header;
+        void * ttc_context;
+
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&ttc_header, 0,
+                sizeof(*ttc_header), &ttc_context);
+        if (SUCCEEDED(hr))
+        {
+            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->num_fonts))
+                hr = E_INVALIDARG;
+            else
+            {
+                table_offset = GET_BE_DWORD(ttc_header->offsets[stream_desc->face_index]);
+                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, table_offset,
+                        sizeof(*table_dir), &sfnt_context);
+            }
+            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, ttc_context);
+        }
+    }
+    else
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, 0,
+                sizeof(*table_dir), &sfnt_context);
+
+    if (FAILED(hr))
+        return hr;
+
+    table_count = GET_BE_WORD(table_dir->numTables);
+    table_offset += sizeof(*table_dir);
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, sfnt_context);
+
+    hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_record, table_offset,
+            table_count * sizeof(*table_record), &table_directory_context);
+    if (hr == S_OK)
+    {
+        UINT16 i;
+
+        for (i = 0; i < table_count; ++i)
+        {
+            if (table_record->tag == tag)
+            {
+                UINT32 offset = GET_BE_DWORD(table_record->offset);
+                UINT32 length = GET_BE_DWORD(table_record->length);
+
+                if (found)
+                    *found = TRUE;
+                if (table_size)
+                    *table_size = length;
+                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, table_data, offset,
+                        length, table_context);
+                break;
+            }
+            table_record++;
+        }
+
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, table_directory_context);
+    }
+
+    return hr;
+}
+
+static HRESULT opentype_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag,
+        struct dwrite_fonttable *table)
+{
+    return opentype_try_get_font_table(stream_desc, tag, (const void **)&table->data, &table->context, &table->size, &table->exists);
+}
+
 BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
 {
     return (type == DWRITE_FONT_FACE_TYPE_CFF) ||
@@ -1524,90 +1608,6 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, BOOL *supported, DW
 
     *supported = is_face_type_supported(*face_type);
     return S_OK;
-}
-
-HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **table_data,
-    void **table_context, UINT32 *table_size, BOOL *found)
-{
-    void *table_directory_context, *sfnt_context;
-    const struct ot_table_record *table_record = NULL;
-    const struct ot_table_dir *table_dir = NULL;
-    UINT32 table_offset = 0;
-    UINT16 table_count;
-    HRESULT hr;
-
-    if (found) *found = FALSE;
-    if (table_size) *table_size = 0;
-
-    *table_data = NULL;
-    *table_context = NULL;
-
-    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION)
-    {
-        const struct ttc_header *ttc_header;
-        void * ttc_context;
-
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&ttc_header, 0,
-                sizeof(*ttc_header), &ttc_context);
-        if (SUCCEEDED(hr))
-        {
-            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->num_fonts))
-                hr = E_INVALIDARG;
-            else
-            {
-                table_offset = GET_BE_DWORD(ttc_header->offsets[stream_desc->face_index]);
-                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, table_offset,
-                        sizeof(*table_dir), &sfnt_context);
-            }
-            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, ttc_context);
-        }
-    }
-    else
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, 0,
-                sizeof(*table_dir), &sfnt_context);
-
-    if (FAILED(hr))
-        return hr;
-
-    table_count = GET_BE_WORD(table_dir->numTables);
-    table_offset += sizeof(*table_dir);
-
-    IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, sfnt_context);
-
-    hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_record, table_offset,
-            table_count * sizeof(*table_record), &table_directory_context);
-    if (hr == S_OK)
-    {
-        UINT16 i;
-
-        for (i = 0; i < table_count; ++i)
-        {
-            if (table_record->tag == tag)
-            {
-                UINT32 offset = GET_BE_DWORD(table_record->offset);
-                UINT32 length = GET_BE_DWORD(table_record->length);
-
-                if (found)
-                    *found = TRUE;
-                if (table_size)
-                    *table_size = length;
-                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, table_data, offset,
-                        length, table_context);
-                break;
-            }
-            table_record++;
-        }
-
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, table_directory_context);
-    }
-
-    return hr;
-}
-
-static HRESULT opentype_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag,
-        struct dwrite_fonttable *table)
-{
-    return opentype_try_get_font_table(stream_desc, tag, (const void **)&table->data, &table->context, &table->size, &table->exists);
 }
 
 /**********
