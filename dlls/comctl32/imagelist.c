@@ -3663,6 +3663,9 @@ static HRESULT WINAPI ImageListImpl_Initialize(IImageList2 *iface, INT cx, INT c
         grow = 256;
     }
 
+    /* Some applications mistakenly use a very large initial image count. Limit it to something reasonable */
+    initial = min(initial, 256);
+
     himl->cx        = cx;
     himl->cy        = cy;
     himl->flags     = flags;

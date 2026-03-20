@@ -2274,7 +2274,6 @@ static void test_create_destroy(void)
     ok(ret != -1, "Failed to add an image.\n");
     ret = pImageList_GetImageInfo(himl, 0, &info);
     ok(ret, "got %d\n", ret);
-    todo_wine
     ok(info.hbmImage != NULL, "got %p\n", info.hbmImage);
     DeleteObject(hbm);
     pImageList_Destroy(himl);
