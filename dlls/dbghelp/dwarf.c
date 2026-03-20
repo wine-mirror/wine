@@ -4215,13 +4215,20 @@ static BOOL dwarf2_load_CU_module(dwarf2_parse_module_context_t* module_ctx, str
     mod_ctx.end_data = mod_ctx.data + sections[section_debug].size;
     while (mod_ctx.data < mod_ctx.end_data)
     {
-        dwarf2_parse_context_t **punit_ctx = vector_add(&module_ctx->unit_contexts, &module_ctx->module->pool);
+        dwarf2_parse_context_t* unit;
 
-        if (!(*punit_ctx = pool_alloc(&module_ctx->module->pool, sizeof(dwarf2_parse_context_t))))
+        if (!(unit = pool_alloc(&module_ctx->module->pool, sizeof(dwarf2_parse_context_t))))
             return FALSE;
 
-        (*punit_ctx)->module_ctx = module_ctx;
-        dwarf2_parse_compilation_unit_head(*punit_ctx, &mod_ctx);
+        unit->module_ctx = module_ctx;
+        if (dwarf2_parse_compilation_unit_head(unit, &mod_ctx))
+        {
+            dwarf2_parse_context_t **punit_ctx = vector_add(&module_ctx->unit_contexts, &module_ctx->module->pool);
+            if (!punit_ctx) return FALSE;
+            *punit_ctx = unit;
+        }
+        else
+            pool_free(&module_ctx->module->pool, unit);
     }
 
     /* phase2: load content of all CU
