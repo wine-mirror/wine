@@ -204,6 +204,7 @@ typedef struct _function_decl_t {
     BOOL is_default;
     arg_decl_t *args;
     statement_t *body;
+    unsigned loc;
     struct _function_decl_t *next;
     struct _function_decl_t *next_prop_func;
 } function_decl_t;

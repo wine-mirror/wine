@@ -3033,13 +3033,24 @@ static void test_parse_errors(void)
             1, 9,
             NULL, S_OK, -1049
         },
-        /* TODO: Wine allows arguments on Class_Initialize/Class_Terminate
         {
-            Class initialize/terminate no arguments - error 1053
-            L"Class C\nSub Class_Initialize(x)\nEnd Sub\nEnd Class\n",
-            1, 20, 1053
+            /* Class_Initialize with arguments - error 1053 */
+            L"Class C\n"
+            "Sub Class_Initialize(x)\n"
+            "End Sub\n"
+            "End Class\n",
+            1, -23,
+            NULL, S_OK, 1053
         },
-        */
+        {
+            /* Class_Terminate with arguments - error 1053 */
+            L"Class C\n"
+            "Sub Class_Terminate(x)\n"
+            "End Sub\n"
+            "End Class\n",
+            1, -22,
+            NULL, S_OK, 1053
+        },
         {
             /* Property Let/Set needs at least one argument - error 1054 */
             L"Class C\nProperty Let x\nEnd Property\nEnd Class\n",

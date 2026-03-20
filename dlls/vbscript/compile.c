@@ -1958,12 +1958,20 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
                 FIXME("class initializer is not sub\n");
                 return E_FAIL;
             }
+            if(func_decl->args) {
+                ctx->loc = func_decl->loc;
+                return MAKE_VBSERROR(VBSE_CLASS_INIT_NO_ARGS);
+            }
 
             class_desc->class_initialize_id = i;
         }else  if(!vbs_wcsicmp(L"class_terminate", func_decl->name)) {
             if(func_decl->type != FUNC_SUB) {
                 FIXME("class terminator is not sub\n");
                 return E_FAIL;
+            }
+            if(func_decl->args) {
+                ctx->loc = func_decl->loc;
+                return MAKE_VBSERROR(VBSE_CLASS_INIT_NO_ARGS);
             }
 
             class_desc->class_terminate_id = i;
