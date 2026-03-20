@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-02-28 23:50+0200\n"
+"PO-Revision-Date: 2026-03-20 22:52+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12885,10 +12885,8 @@ msgid "This array is fixed or temporarily locked"
 msgstr "Šis masyvas yra fiksuotas arba laikinai užblokuotas"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Division by zero error.\n"
 msgid "Division by zero"
-msgstr "Dalybos iš nulio klaida.\n"
+msgstr "Dalyba iš nulio"
 
 #: dlls/vbscript/vbscript.rc:35
 msgid "Type mismatch"
