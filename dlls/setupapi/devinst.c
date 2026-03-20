@@ -1852,7 +1852,7 @@ BOOL WINAPI SetupDiGetClassDescriptionExA(const GUID *class, char *buffer, DWORD
             debugstr_guid(class), buffer, buffer_len, required_len, debugstr_a(machine_nameA), reserved);
 
     ret = SetupDiGetClassDescriptionExW(class, NULL, 0, &lenW, machine_nameW, reserved);
-    bufferW = lenW ? malloc(lenW) : NULL;
+    bufferW = lenW ? malloc(lenW * sizeof(WCHAR)) : NULL;
     if (bufferW && (ret = SetupDiGetClassDescriptionExW(class, bufferW, lenW, &lenW, machine_nameW, reserved)) && lenW)
         lenA = WideCharToMultiByte(CP_ACP, 0, bufferW, lenW, buffer, buffer_len, NULL, NULL);
     free(bufferW);
