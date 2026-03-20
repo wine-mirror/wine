@@ -860,10 +860,8 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
                 break;
             }
 
-            if(!(V_VT(v) & VT_ARRAY)) {
-                FIXME("array assign on type %d\n", V_VT(v));
-                return E_FAIL;
-            }
+            if(!(V_VT(v) & VT_ARRAY))
+                return DISP_E_TYPEMISMATCH;
 
             switch(V_VT(v)) {
             case VT_ARRAY|VT_BYREF|VT_VARIANT:
@@ -912,10 +910,8 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
         }else {
             VARIANT *new_var;
 
-            if(arg_cnt(dp)) {
-                FIXME("arg_cnt %d not supported\n", arg_cnt(dp));
-                return E_NOTIMPL;
-            }
+            if(arg_cnt(dp))
+                return DISP_E_TYPEMISMATCH;
 
             TRACE("creating variable %s\n", debugstr_w(name));
             hres = add_dynamic_var(ctx, name, FALSE, &new_var);

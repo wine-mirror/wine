@@ -496,4 +496,23 @@ ok err.helpfile = "test.chm", "err.helpfile = " & err.helpfile
 
 on error goto 0
 
+' indexed assign to non-array variable should give type mismatch
+dim z
+z = 42
+on error resume next
+z(0) = 1
+ok err.number = 13, "err.number = " & err.number
+err.clear
+
+' Option Explicit: assigning to undeclared variable should give error 500
+undeclaredVar = 1
+todo_wine_ok err.number = 500, "err.number = " & err.number
+err.clear
+
+' Option Explicit: reading undeclared variable should give error 500
+dim unused
+unused = undeclaredVar2
+todo_wine_ok err.number = 500, "err.number = " & err.number
+on error goto 0
+
 call reportSuccess()

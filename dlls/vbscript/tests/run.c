@@ -3493,6 +3493,7 @@ static void run_tests(void)
     run_from_res("api.vbs");
     run_from_res("regexp.vbs");
     run_from_res("error.vbs");
+    run_from_res("noexplicit.vbs");
 
     test_procedures();
     test_gc();
