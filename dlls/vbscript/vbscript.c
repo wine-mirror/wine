@@ -64,6 +64,8 @@ typedef struct {
     DWORD_PTR cookie;
     unsigned line;
     unsigned character;
+    vbscode_t *code;
+    unsigned loc;
 } VBScriptError;
 
 static inline WCHAR *heap_pool_strdup(heap_pool_t *heap, const WCHAR *str)
@@ -505,8 +507,12 @@ static ULONG WINAPI VBScriptError_Release(IActiveScriptError *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        clear_ei(&This->ei);
+        if(This->code)
+            release_vbscode(This->code);
         free(This);
+    }
 
     return ref;
 }
@@ -542,8 +548,28 @@ static HRESULT WINAPI VBScriptError_GetSourcePosition(IActiveScriptError *iface,
 static HRESULT WINAPI VBScriptError_GetSourceLineText(IActiveScriptError *iface, BSTR *source)
 {
     VBScriptError *This = impl_from_IActiveScriptError(iface);
-    FIXME("(%p)->(%p)\n", This, source);
-    return E_NOTIMPL;
+    const WCHAR *nl, *line_end;
+
+    TRACE("(%p)->(%p)\n", This, source);
+
+    if(!source)
+        return E_POINTER;
+
+    if(!This->code) {
+        *source = NULL;
+        return E_FAIL;
+    }
+
+    nl = This->code->source + This->loc;
+    while(nl > This->code->source && nl[-1] != '\n')
+        nl--;
+
+    line_end = This->code->source + This->loc;
+    while(*line_end && *line_end != '\n' && *line_end != '\r')
+        line_end++;
+
+    *source = SysAllocStringLen(nl, line_end - nl);
+    return *source ? S_OK : E_OUTOFMEMORY;
 }
 
 static const IActiveScriptErrorVtbl VBScriptErrorVtbl = {
@@ -555,7 +581,7 @@ static const IActiveScriptErrorVtbl VBScriptErrorVtbl = {
     VBScriptError_GetSourceLineText
 };
 
-HRESULT report_script_error(script_ctx_t *ctx, const vbscode_t *code, unsigned loc)
+HRESULT report_script_error(script_ctx_t *ctx, vbscode_t *code, unsigned loc, BOOL store_source)
 {
     VBScriptError *error;
     const WCHAR *p, *nl;
@@ -579,6 +605,15 @@ HRESULT report_script_error(script_ctx_t *ctx, const vbscode_t *code, unsigned l
         nl = p + 1;
     }
     error->character = code->source + loc - nl;
+
+    if(store_source) {
+        grab_vbscode(code);
+        error->code = code;
+        error->loc = loc;
+    }else {
+        error->code = NULL;
+        error->loc = 0;
+    }
 
     hres = IActiveScriptSite_OnScriptError(ctx->site, &error->IActiveScriptError_iface);
     IActiveScriptError_Release(&error->IActiveScriptError_iface);

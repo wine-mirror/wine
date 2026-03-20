@@ -2593,7 +2593,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         if(FAILED(hres)) {
             if(!ctx->ei.scode)
                 ctx->ei.scode = hres;
-            hres = report_script_error(ctx, ctx->error_loc_code, ctx->error_loc_offset);
+            hres = report_script_error(ctx, ctx->error_loc_code, ctx->error_loc_offset, FALSE);
             clear_error_loc(ctx);
         }
         IActiveScriptSite_OnLeaveScript(ctx->site);

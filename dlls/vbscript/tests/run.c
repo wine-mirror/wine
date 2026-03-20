@@ -2007,6 +2007,8 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
 static IActiveScriptError **store_script_error;
 static ULONG error_line;
 static LONG error_char;
+static BSTR error_source_line;
+static HRESULT error_source_line_hres;
 
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
 {
@@ -2014,6 +2016,10 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, I
 
     hres = IActiveScriptError_GetSourcePosition(pscripterror, NULL, &error_line, &error_char);
     ok(hres == S_OK, "GetSourcePosition failed: %08lx\n", hres);
+
+    SysFreeString(error_source_line);
+    error_source_line = NULL;
+    error_source_line_hres = IActiveScriptError_GetSourceLineText(pscripterror, &error_source_line);
 
     if(!expect_OnScriptError) {
         EXCEPINFO info;
@@ -2696,6 +2702,8 @@ static void test_parse_errors(void)
         const WCHAR *src;
         unsigned error_line;
         int error_char;
+        const WCHAR *source_line;
+        HRESULT source_line_hres;
     }
     invalid_scripts[] =
     {
@@ -2703,7 +2711,8 @@ static void test_parse_errors(void)
             /* If...End If */
             L"If 0 > 1 Then\n"
             "    x = 0 End If\n",
-            1, 10
+            1, 10,
+            L"    x = 0 End If", S_OK
         },
         {
             /* ElseIf...End If */
@@ -2711,50 +2720,58 @@ static void test_parse_errors(void)
             "    x = 0\n"
             "ElseIf True Then\n"
             "    x = 1 End If\n",
-            3, 10
+            3, 10,
+            L"    x = 1 End If", S_OK
         },
         {
             /* Else End If (no separator) */
             L"If False Then\n"
             "    x = 0\n"
             "Else End If\n",
-            2, 5
+            2, 5,
+            L"Else End If", S_OK
         },
         {
             /* While...End While */
             L"While False\n"
             "    x = 0 End While\n",
-            1, 10
+            1, 10,
+            L"    x = 0 End While", S_OK
         },
         {
             /* While...Wend */
             L"While False\n"
             "    x = 0 Wend\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Wend", S_OK
         },
         {
             /* Do While...Loop */
             L"Do While False\n"
             "    x = 0 Loop\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop", S_OK
         },
         {
             /* Do Until...Loop */
             L"Do Until True\n"
             "    x = 0 Loop\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop", S_OK
         },
         {
             /* Do...Loop While */
             L"Do\n"
             "    x = 0 Loop While False\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop While False", S_OK
         },
         {
             /* Do...Loop Until */
             L"Do\n"
             "    x = 0 Loop Until True\n",
-            1, 10
+            1, 10,
+            L"    x = 0 Loop Until True", S_OK
         },
         {
             /* Select...End Select */
@@ -2765,36 +2782,43 @@ static void test_parse_errors(void)
             "    Case 42\n"
             "        x = True End Select\n"
             "Call ok(x, \"wrong case\")\n",
-            5, 17
+            5, 17,
+            L"        x = True End Select", S_OK
         },
         {
             /* Class...End Class  (empty) */
             L"Class C End Class",
-            0, 8
+            0, 8,
+            L"Class C End Class", S_OK
         },
         {
             /* Class...End Class  (empty) */
             L"Class C _\nEnd Class",
-            1, 0
+            1, 0,
+            L"End Class", S_OK
         },
         {
             /* invalid use of parentheses for call statement */
             L"strcomp(\"x\", \"y\")",
-            0, 17
+            0, 17,
+            L"strcomp(\"x\", \"y\")", S_OK
         },
         {
             L"\n\n\n  cint _\n   throwInt(&h80001234&)",
-            3, 2
+            3, 2,
+            NULL, E_FAIL
         },
         {
             L"dim x\n"
             "if true then throwInt(&h80001234&)",
-            1, 13
+            1, 13,
+            NULL, E_FAIL
         },
         {
             L"dim x\n"
             "if x = throwInt(&h80001234&) then x = 1",
-            1, 0
+            1, 0,
+            NULL, E_FAIL
         },
         {
             L"sub test\n"
@@ -2802,14 +2826,16 @@ static void test_parse_errors(void)
             "    if x = throwInt(&h80001234&) then x = 1\n"
             "end sub\n"
             "test\n",
-            2, 4
+            2, 4,
+            NULL, E_FAIL
         },
         {
             L"dim x\n"
             "do\n"
             "    x = 1\n"
             "loop until throwInt(&h80001234&)\n",
-            3, 0
+            3, 0,
+            NULL, E_FAIL
         },
         {
             L"\n  select case 3\n"
@@ -2818,7 +2844,8 @@ static void test_parse_errors(void)
             "    case throwInt(&h80001234&)\n"
             "        throwInt &h87001234&\n"
             "end select\n",
-            1, 2
+            1, 2,
+            NULL, E_FAIL
         },
         {
             L"if false then\n"
@@ -2828,7 +2855,8 @@ static void test_parse_errors(void)
             "else\n"
             "    throwInt &h87001234&\n"
             "end if\n",
-            2, 1
+            2, 1,
+            NULL, E_FAIL
         }
     };
     HRESULT hres;
@@ -2850,7 +2878,15 @@ static void test_parse_errors(void)
         todo_wine_if(invalid_scripts[i].error_char < 0)
         ok(error_char == abs(invalid_scripts[i].error_char), "[%u] error char %ld expected %d\n",
            i, error_char, invalid_scripts[i].error_char);
+        ok(error_source_line_hres == invalid_scripts[i].source_line_hres,
+           "[%u] GetSourceLineText returned: %08lx\n", i, error_source_line_hres);
+        if(error_source_line_hres == S_OK && invalid_scripts[i].source_line)
+            ok(!wcscmp(error_source_line, invalid_scripts[i].source_line),
+               "[%u] source line %s expected %s\n", i,
+               wine_dbgstr_w(error_source_line), wine_dbgstr_w(invalid_scripts[i].source_line));
     }
+    SysFreeString(error_source_line);
+    error_source_line = NULL;
 }
 
 static void test_msgbox(void)
