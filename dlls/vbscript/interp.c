@@ -326,6 +326,37 @@ void clear_error_loc(script_ctx_t *ctx)
     }
 }
 
+static HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *identifier)
+{
+    BSTR desc, source;
+
+    desc = get_vbscript_string(HRESULT_CODE(error));
+    if(desc && identifier) {
+        unsigned desc_len = SysStringLen(desc);
+        unsigned ident_len = lstrlenW(identifier);
+        /* format: "Error text: 'identifier'" */
+        BSTR new_desc = SysAllocStringLen(NULL, desc_len + 3 + ident_len + 1);
+        if(new_desc) {
+            memcpy(new_desc, desc, desc_len * sizeof(WCHAR));
+            new_desc[desc_len] = ':';
+            new_desc[desc_len + 1] = ' ';
+            new_desc[desc_len + 2] = '\'';
+            memcpy(new_desc + desc_len + 3, identifier, ident_len * sizeof(WCHAR));
+            new_desc[desc_len + 3 + ident_len] = '\'';
+            SysFreeString(desc);
+            desc = new_desc;
+        }
+    }
+
+    source = get_vbscript_string(VBS_RUNTIME_ERROR);
+
+    clear_ei(&ctx->ei);
+    ctx->ei.scode = error;
+    ctx->ei.bstrDescription = desc;
+    ctx->ei.bstrSource = source;
+    return SCRIPT_E_RECORDED;
+}
+
 static inline VARIANT *stack_pop(exec_ctx_t *ctx)
 {
     assert(ctx->top);
@@ -716,6 +747,8 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned
             V_BYREF(res) = new;
             break;
         }
+        if(ctx->func->code_ctx->option_explicit)
+            return throw_error(ctx->script, MAKE_VBSERROR(VBSE_VARIABLE_UNDEFINED), identifier);
         FIXME("%s not found\n", debugstr_w(identifier));
         return DISP_E_UNKNOWNNAME;
     }
@@ -955,21 +988,20 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
     case REF_CONST:
         WARN("assign to const %s\n", debugstr_w(name));
         return MAKE_VBSERROR(VBSE_ILLEGAL_ASSIGNMENT);
-    case REF_NONE:
-        if(ctx->func->code_ctx->option_explicit) {
-            FIXME("throw exception\n");
-            hres = E_FAIL;
-        }else {
-            VARIANT *new_var;
+    case REF_NONE: {
+        VARIANT *new_var;
 
-            if(arg_cnt(dp))
-                return DISP_E_TYPEMISMATCH;
+        if(ctx->func->code_ctx->option_explicit)
+            return throw_error(ctx->script, MAKE_VBSERROR(VBSE_VARIABLE_UNDEFINED), name);
 
-            TRACE("creating variable %s\n", debugstr_w(name));
-            hres = add_dynamic_var(ctx, name, FALSE, &new_var);
-            if(SUCCEEDED(hres))
-                hres = assign_value(ctx, new_var, dp->rgvarg, flags);
-        }
+        if(arg_cnt(dp))
+            return DISP_E_TYPEMISMATCH;
+
+        TRACE("creating variable %s\n", debugstr_w(name));
+        hres = add_dynamic_var(ctx, name, FALSE, &new_var);
+        if(SUCCEEDED(hres))
+            hres = assign_value(ctx, new_var, dp->rgvarg, flags);
+    }
     }
 
     return hres;

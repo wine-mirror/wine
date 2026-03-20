@@ -2979,13 +2979,13 @@ On Error Resume Next
 Err.Clear
 Execute "Option Explicit : noDimExec = 101"
 Call ok(Err.Number <> 0, "Execute Option Explicit undeclared should error: err=" & Err.Number)
-todo_wine_ok Err.Number = 500, "Execute Option Explicit undeclared: err=" & Err.Number & " expected 500"
+ok Err.Number = 500, "Execute Option Explicit undeclared: err=" & Err.Number & " expected 500"
 
 ' Option Explicit inside same ExecuteGlobal string enforces Dim requirement
 Err.Clear
 ExecuteGlobal "Option Explicit : noDimExecGlobal = 102"
 Call ok(Err.Number <> 0, "ExecuteGlobal Option Explicit undeclared should error: err=" & Err.Number)
-todo_wine_ok Err.Number = 500, "ExecuteGlobal Option Explicit undeclared: err=" & Err.Number & " expected 500"
+ok Err.Number = 500, "ExecuteGlobal Option Explicit undeclared: err=" & Err.Number & " expected 500"
 
 ' Option Explicit with Dim in same string works
 Err.Clear

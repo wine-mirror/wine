@@ -2205,6 +2205,38 @@ static HRESULT parse_script_wr(const WCHAR *src)
     return hres;
 }
 
+static void test_option_explicit_errors(void)
+{
+    IActiveScriptError *error;
+    EXCEPINFO ei;
+    HRESULT hres;
+
+    /* Without Option Explicit: assigning to undefined variable should succeed (implicit creation) */
+    parse_script_wf(SCRIPTITEM_GLOBALMEMBERS, L"x = 1\nCall ok(x = 1, \"x = \" & x)");
+
+    /* Without Option Explicit: reading undefined variable should succeed and return Empty */
+    parse_script_wf(SCRIPTITEM_GLOBALMEMBERS, L"Call ok(getVT(y) = \"VT_EMPTY*\", \"getVT(y) = \" & getVT(y))");
+
+    /* Option Explicit: assigning to undefined variable should give error 500 */
+    store_script_error = &error;
+    SET_EXPECT(OnScriptError);
+    hres = parse_script_wr(L"Option Explicit\nx = 1");
+    ok(hres == MAKE_VBSERROR(500), "expected MAKE_VBSERROR(500), got: %08lx\n", hres);
+    CHECK_CALLED(OnScriptError);
+
+    memset(&ei, 0, sizeof(ei));
+    hres = IActiveScriptError_GetExceptionInfo(error, &ei);
+    ok(hres == S_OK, "GetExceptionInfo returned %08lx\n", hres);
+    ok(ei.scode == MAKE_VBSERROR(500), "scode = %lx\n", ei.scode);
+    if(is_english)
+        ok(ei.bstrDescription && !wcscmp(ei.bstrDescription, L"Variable is undefined: 'x'"),
+           "bstrDescription = %s\n", wine_dbgstr_w(ei.bstrDescription));
+    SysFreeString(ei.bstrSource);
+    SysFreeString(ei.bstrDescription);
+    SysFreeString(ei.bstrHelpFile);
+    IActiveScriptError_Release(error);
+}
+
 static void test_parse_context(void)
 {
     IActiveScriptParse *parser;
@@ -3784,6 +3816,7 @@ static void run_tests(void)
     test_gc();
     test_msgbox();
     test_isexpression();
+    test_option_explicit_errors();
     test_parse_errors();
     test_parse_context();
     test_callbacks();
