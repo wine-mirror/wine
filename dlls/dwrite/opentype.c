@@ -1456,6 +1456,9 @@ static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font
 static HRESULT opentype_ttf_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
     DWRITE_FONT_FACE_TYPE *face_type)
 {
+    struct file_stream_desc stream_desc = { .stream = stream };
+    const struct colr_header *colr_header;
+    struct dwrite_fonttable colr;
     const DWORD *header;
     void *context;
     HRESULT hr;
@@ -1464,15 +1467,25 @@ static HRESULT opentype_ttf_analyzer(IDWriteFontFileStream *stream, UINT32 *font
     if (FAILED(hr))
         return hr;
 
-    if (GET_BE_DWORD(*header) == 0x10000) {
-        *font_count = 1;
-        *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
-        *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
-    }
+    if (GET_BE_DWORD(*header) == 0x10000)
+        stream_desc.face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
 
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
 
-    return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
+    if (stream_desc.face_type != DWRITE_FONT_FACE_TYPE_TRUETYPE)
+        return S_FALSE;
+
+    opentype_get_font_table(&stream_desc, MS_COLR_TAG, &colr);
+    if (colr.data && (colr_header = table_read_ensure(&colr, 0, sizeof(*header)))
+            && colr_header->version && !colr_header->num_baseglyph_records)
+    {
+        FIXME("COLR version %d, skipping font.\n", GET_BE_WORD(colr_header->version));
+        return S_FALSE;
+    }
+    *font_count = 1;
+    *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
+    *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
+    return S_OK;
 }
 
 static HRESULT opentype_otf_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
