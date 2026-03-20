@@ -12851,7 +12851,24 @@ static void yuv_color_test(void)
         /* A pixel is effectively 16 bit large, but two pixels are stored together, so the minimum size is 2x1.
          * However, Nvidia Windows drivers have problems with 2x1 YUY2/UYVY surfaces, so use a 4x1 surface and
          * fill the second block with dummy data. If the surface has a size of 2x1, those drivers ignore the
-         * second luminance value, resulting in an incorrect color in the right pixel. */
+         * second luminance value, resulting in an incorrect color in the right pixel.
+         *
+         * What appears to be happening at least on Nvidia is that the driver internally loads the 4x1
+         * YUV surface into a 2x1 ARGB surface - and not a 4x1 RG surface - and then makes a filtering
+         * decision based on the 2x1 vs destination size. The chroma channels from two adjacent, but
+         * supposedly independent pixels, get averaged together. So store the same chroma in the left
+         * (tested) and right (ignored) blocks.
+         *
+         * Nvidia, but also some VM drivers insist on doing linear filtering although we asked for point
+         * filtering. Be careful when reading the results and use the pixel centers. In the future we may
+         * want to add tests for the filtered pixels as well. Blitting to a 4x1 destination doesn't work
+         * properly either on Nvidia, for the 4x1->2x1 map reason outlined above. Blitting a 4x1 YUV source
+         * to a 2x1 destination applies minification filters after YUV->RGB conversion, which we don't want
+         * either.
+         *
+         * Unfortunately different implementations(Windows-Nvidia and Mac-AMD tested) interpret some colors
+         * vastly differently, so we need a max diff of 18. */
+
         hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 1, test_data[i].format,
                 D3DPOOL_DEFAULT, &surface, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n", hr);
@@ -12860,7 +12877,16 @@ static void yuv_color_test(void)
         hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
         ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         ((DWORD *)lr.pBits)[0] = test_data[i].in;
-        ((DWORD *)lr.pBits)[1] = 0x00800080;
+        if (test_data[i].format == D3DFMT_UYVY)
+        {
+            ((DWORD *)lr.pBits)[1] = 0xff000000;
+            ((DWORD *)lr.pBits)[1] |= test_data[i].in & 0x00ff00ff;
+        }
+        else
+        {
+            ((DWORD*)lr.pBits)[1] = 0x00ff0000;
+            ((DWORD*)lr.pBits)[1] |= test_data[i].in & 0xff00ff00;
+        }
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
@@ -12869,12 +12895,6 @@ static void yuv_color_test(void)
         hr = IDirect3DDevice9_StretchRect(device, surface, NULL, target, NULL, D3DTEXF_POINT);
         ok(SUCCEEDED(hr), "Failed to draw surface onto backbuffer, hr %#lx.\n", hr);
 
-        /* Some Windows drivers (mostly Nvidia, but also some VM drivers) insist on doing linear filtering
-         * although we asked for point filtering. Be careful when reading the results and use the pixel
-         * centers. In the future we may want to add tests for the filtered pixels as well.
-         *
-         * Unfortunately different implementations(Windows-Nvidia and Mac-AMD tested) interpret some colors
-         * vastly differently, so we need a max diff of 18. */
         color = getPixelColor(device, 1, 240);
         ok(color_match(color, test_data[i].left, 18),
                 "Input 0x%08x: Got color 0x%08x for pixel 1/1, expected 0x%08x, format %s.\n",
