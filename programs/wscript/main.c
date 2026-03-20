@@ -120,11 +120,65 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface,
     return S_OK;
 }
 
+static void print_error(const WCHAR *string)
+{
+    DWORD count, ret, len, lena;
+    char *buf;
+
+    if(wshInteractive) {
+        MessageBoxW(NULL, string, L"Windows Script Host", MB_OK);
+        return;
+    }
+
+    len = lstrlenW(string);
+    ret = WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), string, len, &count, NULL);
+    if(ret) {
+        WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), L"\r\n", 2, &count, NULL);
+        return;
+    }
+
+    lena = WideCharToMultiByte(GetOEMCP(), 0, string, len, NULL, 0, NULL, NULL);
+    buf = malloc(lena);
+    if(!buf)
+        return;
+
+    WideCharToMultiByte(GetOEMCP(), 0, string, len, buf, lena, NULL, NULL);
+    WriteFile(GetStdHandle(STD_ERROR_HANDLE), buf, lena, &count, FALSE);
+    free(buf);
+    WriteFile(GetStdHandle(STD_ERROR_HANDLE), "\r\n", 2, &count, FALSE);
+}
+
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface,
         IActiveScriptError *pscripterror)
 {
-    WINE_FIXME("()\n");
-    return E_NOTIMPL;
+    EXCEPINFO excepinfo;
+    ULONG line;
+    LONG character;
+    HRESULT hres;
+    WCHAR buf[1024];
+
+    WINE_TRACE("()\n");
+
+    memset(&excepinfo, 0, sizeof(excepinfo));
+    hres = IActiveScriptError_GetExceptionInfo(pscripterror, &excepinfo);
+    if(SUCCEEDED(hres)) {
+        line = 0;
+        character = 0;
+        IActiveScriptError_GetSourcePosition(pscripterror, NULL, &line, &character);
+
+        swprintf(buf, ARRAY_SIZE(buf), L"%s(%lu, %ld) %s: %s",
+                scriptFullName, line + 1, character + 1,
+                excepinfo.bstrSource ? excepinfo.bstrSource : L"",
+                excepinfo.bstrDescription ? excepinfo.bstrDescription : L"");
+
+        print_error(buf);
+
+        SysFreeString(excepinfo.bstrSource);
+        SysFreeString(excepinfo.bstrDescription);
+        SysFreeString(excepinfo.bstrHelpFile);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSite_OnEnterScript(IActiveScriptSite *iface)
@@ -364,7 +418,7 @@ static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScri
         return;
     }
 
-    hres = IActiveScriptParse_ParseScriptText(parser, text, NULL, NULL, NULL, 1, 1,
+    hres = IActiveScriptParse_ParseScriptText(parser, text, NULL, NULL, NULL, 1, 0,
             SCRIPTTEXT_HOSTMANAGESSOURCE|SCRIPTITEM_ISVISIBLE, NULL, NULL);
     SysFreeString(text);
     if(FAILED(hres)) {

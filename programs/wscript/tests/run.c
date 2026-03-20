@@ -455,6 +455,77 @@ static BOOL register_activex(void)
     return TRUE;
 }
 
+static void run_cscript_error_test(void)
+{
+    static const char script_data[] = "y = \"hello\" + 1\n";
+    char file_name[] = "test_err.vbs";
+    char command[MAX_PATH];
+    SECURITY_ATTRIBUTES sa = {sizeof(sa), NULL, TRUE};
+    STARTUPINFOA si = {sizeof(si)};
+    PROCESS_INFORMATION pi;
+    HANDLE stderr_read, stderr_write;
+    char stderr_buf[4096];
+    DWORD exit_code, size;
+    HANDLE file;
+    BOOL bres;
+
+    file = CreateFileA(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
+    if(file == INVALID_HANDLE_VALUE)
+        return;
+
+    bres = WriteFile(file, script_data, sizeof(script_data) - 1, &size, NULL);
+    CloseHandle(file);
+    ok(bres, "Could not write to file: %lu\n", GetLastError());
+    if(!bres)
+        goto cleanup;
+
+    bres = CreatePipe(&stderr_read, &stderr_write, &sa, 0);
+    ok(bres, "CreatePipe failed: %lu\n", GetLastError());
+    if(!bres)
+        goto cleanup;
+
+    SetHandleInformation(stderr_read, HANDLE_FLAG_INHERIT, 0);
+
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    si.hStdError = stderr_write;
+
+    sprintf(command, "cscript.exe //nologo %s", file_name);
+    bres = CreateProcessA(NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+    CloseHandle(stderr_write);
+    if(!bres) {
+        win_skip("cscript.exe is not available\n");
+        CloseHandle(stderr_read);
+        goto cleanup;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    bres = GetExitCodeProcess(pi.hProcess, &exit_code);
+    ok(bres, "GetExitCodeProcess failed: %lu\n", GetLastError());
+    ok(exit_code == 0, "exit_code = %lu\n", exit_code);
+
+    memset(stderr_buf, 0, sizeof(stderr_buf));
+    ReadFile(stderr_read, stderr_buf, sizeof(stderr_buf) - 1, &size, NULL);
+    stderr_buf[size] = 0;
+
+    ok(size > 0, "expected error output on stderr, got nothing\n");
+    ok(strstr(stderr_buf, "test_err.vbs(1,") != NULL,
+       "expected file and line reference in error, got: %s\n", stderr_buf);
+    ok(strstr(stderr_buf, "Type mismatch") != NULL,
+       "expected 'Type mismatch' in output, got: %s\n", stderr_buf);
+
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    CloseHandle(stderr_read);
+
+cleanup:
+    DeleteFileA(file_name);
+}
+
 START_TEST(run)
 {
     char **argv;
@@ -478,6 +549,8 @@ START_TEST(run)
                            "winetest.reportSuccess();\n"
                            "WScript.Quit(3);\n"
                            "winetest.ok(false, 'not quit?');\n", 3);
+
+        run_cscript_error_test();
 }
 
     init_registry(FALSE);
