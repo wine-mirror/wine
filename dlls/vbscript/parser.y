@@ -762,6 +762,7 @@ static call_expression_t *make_call_expression(parser_ctx_t *ctx, expression_t *
     if(call_expr->args->next) {
         FIXME("Invalid syntax: invalid use of parentheses for arguments\n");
         ctx->hres = E_FAIL;
+        ctx->error_loc = ctx->ptr - ctx->code;
         return NULL;
     }
 

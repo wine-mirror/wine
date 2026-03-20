@@ -2780,7 +2780,7 @@ static void test_parse_errors(void)
         {
             /* invalid use of parentheses for call statement */
             L"strcomp(\"x\", \"y\")",
-            0, -17
+            0, 17
         },
         {
             L"\n\n\n  cint _\n   throwInt(&h80001234&)",
