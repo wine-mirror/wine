@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(radios);
 struct radio_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IRadioStatics IRadioStatics_iface;
     LONG ref;
 };
 
@@ -47,6 +48,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IRadioStatics ))
+    {
+        *out = &impl->IRadioStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -110,9 +118,53 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( radio_statics, IRadioStatics, struct radio_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI radio_statics_GetRadiosAsync( IRadioStatics *iface, IAsyncOperation_IVectorView_Radio **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI radio_statics_GetDeviceSelector( IRadioStatics *iface, HSTRING *selector )
+{
+    FIXME( "iface %p, selector %p stub!\n", iface, selector );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI radio_statics_FromIdAsync( IRadioStatics *iface, HSTRING id, IAsyncOperation_Radio **value )
+{
+    FIXME( "iface %p, id %s, value %p stub!\n", iface, debugstr_hstring( id ), value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI radio_statics_RequestAccessAsync( IRadioStatics *iface, IAsyncOperation_RadioAccessStatus **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IRadioStaticsVtbl radio_statics_vtbl =
+{
+    /* IUnknown methods */
+    radio_statics_QueryInterface,
+    radio_statics_AddRef,
+    radio_statics_Release,
+    /* IInspectable methods */
+    radio_statics_GetIids,
+    radio_statics_GetRuntimeClassName,
+    radio_statics_GetTrustLevel,
+    /* IRadioStatics methods */
+    radio_statics_GetRadiosAsync,
+    radio_statics_GetDeviceSelector,
+    radio_statics_FromIdAsync,
+    radio_statics_RequestAccessAsync,
+};
+
 static struct radio_statics radio_statics =
 {
     {&factory_vtbl},
+    {&radio_statics_vtbl},
     1,
 };
 

@@ -49,6 +49,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_RadioStatics(void)
 {
     static const WCHAR *radio_statics_name = L"Windows.Devices.Radios.Radio";
+    IRadioStatics *radio_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str;
     HRESULT hr;
@@ -70,6 +71,11 @@ static void test_RadioStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IRadioStatics, (void **)&radio_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IRadioStatics_Release( radio_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
