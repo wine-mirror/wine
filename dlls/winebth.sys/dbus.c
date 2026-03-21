@@ -291,22 +291,61 @@ static NTSTATUS bluez_get_objects_async( DBusConnection *connection, DBusPending
     DBusMessage *request;
     dbus_bool_t success;
 
-    TRACE( "Getting managed objects under '/' at service '%s'\n", BLUEZ_DEST );
-    request = p_dbus_message_new_method_call(
-        BLUEZ_DEST, "/", DBUS_INTERFACE_OBJECTMANAGER, "GetManagedObjects" );
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, "/", DBUS_INTERFACE_OBJECTMANAGER, "GetManagedObjects" );
     if (!request)
-    {
         return STATUS_NO_MEMORY;
-    }
 
     success = p_dbus_connection_send_with_reply( connection, request, call, -1 );
     p_dbus_message_unref( request );
-    if (!success)
+    return success ? (*call ? STATUS_SUCCESS : STATUS_INTERNAL_ERROR) : STATUS_NO_MEMORY;
+}
+
+#define WINE_BLUEZ_AUTH_AGENT_PATH "/org/winehq/wine/winebth/AuthAgent"
+
+static void bluez_register_auth_agent_callback( DBusPendingCall *call, void *data )
+{
+    DBusMessage *reply = p_dbus_pending_call_steal_reply( call );
+    DBusError error;
+
+    p_dbus_error_init( &error );
+    if (p_dbus_set_error_from_message( &error, reply ))
+        ERR( "Failed to register authentication agent with BlueZ, expect issues with pairing: %s\n",
+             dbgstr_dbus_error( &error ) );
+    else
+        TRACE( "Registered authentication agent %s with BlueZ\n", WINE_BLUEZ_AUTH_AGENT_PATH );
+    p_dbus_error_free( &error );
+    p_dbus_message_unref( reply );
+}
+
+static NTSTATUS bluez_register_auth_agent_async( DBusConnection *connection )
+{
+    static const char *wine_bluez_auth_agent_path = WINE_BLUEZ_AUTH_AGENT_PATH;
+    static const char *capability = "KeyboardDisplay";
+    DBusPendingCall *call;
+    DBusMessage *request;
+    dbus_bool_t success;
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, "/org/bluez", BLUEZ_INTERFACE_AGENT_MANAGER, "RegisterAgent" );
+    if (!request)
         return STATUS_NO_MEMORY;
 
-    if (*call == NULL)
-        return STATUS_INVALID_PARAMETER;
+    success = p_dbus_message_append_args( request, DBUS_TYPE_OBJECT_PATH, &wine_bluez_auth_agent_path, DBUS_TYPE_STRING,
+                                          &capability, DBUS_TYPE_INVALID );
+    if (!success)
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
 
+    success = p_dbus_connection_send_with_reply( connection, request, &call, -1 );
+    p_dbus_message_unref( request );
+    if (!success)
+        return STATUS_NO_MEMORY;
+    if (!call)
+        return STATUS_INTERNAL_ERROR;
+
+    p_dbus_pending_call_set_notify( call, bluez_register_auth_agent_callback, NULL, NULL );
+    p_dbus_pending_call_unref( call );
     return STATUS_SUCCESS;
 }
 
@@ -1127,6 +1166,7 @@ failed:
 
 struct bluez_watcher_ctx
 {
+    DBusConnection *connection;
     char *bluez_dbus_unique_name;
     DBusPendingCall *init_device_list_call;
 
@@ -1237,13 +1277,15 @@ void *bluez_dbus_init( void )
     return connection;
 }
 
-/* Return the unique connection name for org.bluez. We use this to ensure that only BlueZ can make method calls to us. */
-static NTSTATUS bluez_dbus_get_unique_name( DBusConnection *connection, char **unique_name )
+/* Return the unique connection name for org.bluez. We use this to ensure that:
+ * - BlueZ is actually available on this sytem before we make any calls to it.
+ * - Only BlueZ can make method calls to us.
+ */
+static NTSTATUS bluez_dbus_get_unique_name_async( DBusConnection *connection, DBusPendingCall **call )
 {
-    const char *bluez_name = BLUEZ_DEST, *name;
-    NTSTATUS ret = STATUS_SUCCESS;
-    DBusMessage *request, *reply;
-    DBusError error;
+    const char *bluez_name = BLUEZ_DEST;
+    DBusMessage *request;
+    dbus_bool_t success;
 
     request = p_dbus_message_new_method_call( "org.freedesktop.DBus", "/org/freedesktop/DBus", DBUS_INTERFACE_DBUS,
                                               "GetNameOwner" );
@@ -1255,30 +1297,40 @@ static NTSTATUS bluez_dbus_get_unique_name( DBusConnection *connection, char **u
         return STATUS_NO_MEMORY;
     }
 
-    p_dbus_error_init( &error );
-    reply = p_dbus_connection_send_with_reply_and_block( connection, request, bluez_timeout, &error );
+    success = p_dbus_connection_send_with_reply( connection, request, call, bluez_timeout);
     p_dbus_message_unref( request );
-    if (!reply)
-    {
-        ret = bluez_dbus_error_to_ntstatus( &error );
+    return success ? (*call ? STATUS_SUCCESS : STATUS_INTERNAL_ERROR) : STATUS_NO_MEMORY;
+}
+
+/* Called once the BlueZ service has been activated by the system. */
+static void bluez_on_service_available( struct bluez_watcher_ctx *ctx )
+{
+    NTSTATUS status;
+
+    TRACE_(dbus)( "org.bluez available on %s, initializing bluetooth.\n", debugstr_a( ctx->bluez_dbus_unique_name ) );
+
+    if ((status = bluez_register_auth_agent_async( ctx->connection )))
+        ERR_(dbus)( "Failed to create async RegisterAgent call: %#x\n", status );
+    if ((status = bluez_get_objects_async( ctx->connection, &ctx->init_device_list_call )))
+        ERR_(dbus)( "Failed to create async GetManagedObjects call: %#x\n", status );
+}
+
+static void bluez_dbus_get_name_owner_callback( DBusPendingCall *call, void *data )
+{
+    DBusMessage *reply = p_dbus_pending_call_steal_reply( call );
+    struct bluez_watcher_ctx *ctx = data;
+    const char *name;
+    DBusError error;
+
+    p_dbus_error_init( &error );
+    if (p_dbus_set_error_from_message( &error, reply ))
         WARN_(dbus)( "Failed to get unique name for org.bluez: %s\n", dbgstr_dbus_error( &error ) );
-        p_dbus_error_free( &error );
-        return ret;
-    }
-
-    if (!p_dbus_message_get_args( reply, &error, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID ))
-    {
-        ERR_(dbus)( "Failed to read string from GetNameOwner reply: %s\n", dbgstr_dbus_error( &error ) );
-        ret = bluez_dbus_error_to_ntstatus( &error );
-    }
-    else if (!(*unique_name = strdup( name )))
-        ret = STATUS_NO_MEMORY;
-    else
-        TRACE_(dbus)( "Got unique connection name for org.bluez: %s", debugstr_a( name ) );
-    p_dbus_message_unref( reply );
+    else if (!p_dbus_message_get_args( reply, &error, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID ))
+        ERR_(dbus)( "Failed to read string from GetNameOwner reply: %s\n", dbgstr_dbus_error(  &error ) );
+    else if ((ctx->bluez_dbus_unique_name = strdup( name )))
+        bluez_on_service_available( ctx );
     p_dbus_error_free( &error );
-
-    return ret;
+    p_dbus_message_unref( reply );
 }
 
 void bluez_dbus_close( void *connection )
@@ -1411,17 +1463,12 @@ static DBusHandlerResult bluez_auth_agent_vtable_message_handler( DBusConnection
 const static struct DBusObjectPathVTable bluez_auth_agent_object_vtable = {
     .message_function = bluez_auth_agent_vtable_message_handler };
 
-#define WINE_BLUEZ_AUTH_AGENT_PATH "/org/winehq/wine/winebth/AuthAgent"
-
 NTSTATUS bluez_auth_agent_start( void *connection, void **auth_agent_ctx )
 {
-    static const char *wine_bluez_auth_agent_path = WINE_BLUEZ_AUTH_AGENT_PATH;
-    static const char *capability = "KeyboardDisplay";
     struct bluez_auth_agent_ctx *ctx;
-    DBusMessage *request;
+    NTSTATUS status = STATUS_SUCCESS;
     dbus_bool_t success;
     DBusError error;
-    NTSTATUS status;
 
     TRACE( "(%s, %p)\n", dbgstr_dbus_connection( connection ), auth_agent_ctx );
 
@@ -1444,40 +1491,9 @@ NTSTATUS bluez_auth_agent_start( void *connection, void **auth_agent_ctx )
         ERR_(dbus)( "Failed to register object: %s\n", dbgstr_dbus_error( &error ) );
         status = bluez_dbus_error_to_ntstatus( &error );
         bluez_auth_agent_ctx_decref( ctx );
-        goto done;
     }
-
-    request = p_dbus_message_new_method_call( BLUEZ_DEST, "/org/bluez", BLUEZ_INTERFACE_AGENT_MANAGER,
-                                              "RegisterAgent" );
-    if (!request)
-    {
-        status = STATUS_NO_MEMORY;
-        goto failure;
-    }
-
-    success = p_dbus_message_append_args( request, DBUS_TYPE_OBJECT_PATH, &wine_bluez_auth_agent_path, DBUS_TYPE_STRING,
-                                          &capability, DBUS_TYPE_INVALID );
-    if (!success)
-    {
-        status = STATUS_NO_MEMORY;
-        goto failure;
-    }
-
-    success = p_dbus_connection_send( connection, request, NULL );
-    p_dbus_message_unref( request );
-    if (!success)
-    {
-        status = STATUS_NO_MEMORY;
-        goto failure;
-    }
-    status = STATUS_SUCCESS;
-    *auth_agent_ctx = ctx;
-    goto done;
-
-failure:
-    p_dbus_connection_unregister_object_path( connection, WINE_BLUEZ_AUTH_AGENT_PATH );
-    bluez_auth_agent_ctx_decref( ctx );
-done:
+    else
+        *auth_agent_ctx = ctx;
     p_dbus_error_free( &error );
     return status;
 }
@@ -2377,7 +2393,8 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
         dbus_bool_t success;
 
         /* Only allow incoming method calls from org.bluez. */
-        if (!(sender = p_dbus_message_get_sender( msg )) || strcmp( sender, ctx->bluez_dbus_unique_name ))
+        if (!(sender = p_dbus_message_get_sender( msg )) || !ctx->bluez_dbus_unique_name ||
+            strcmp( sender, ctx->bluez_dbus_unique_name ))
         {
             if (!(reply = p_dbus_message_new_error( msg, DBUS_ERROR_ACCESS_DENIED, "Access Denied" )))
                 return DBUS_HANDLER_RESULT_NEED_MEMORY;
@@ -2483,20 +2500,19 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
 
 NTSTATUS bluez_watcher_init( void *connection, void **ctx )
 {
-    DBusError err;
+    struct bluez_watcher_ctx *watcher_ctx;
+    DBusPendingCall *call;
     NTSTATUS status;
-    struct bluez_watcher_ctx *watcher_ctx =
-        calloc( 1, sizeof( struct bluez_watcher_ctx ) );
+    DBusError err;
     SIZE_T i;
 
-    if (watcher_ctx == NULL) return STATUS_NO_MEMORY;
+    if (!(watcher_ctx = calloc( 1, sizeof( struct bluez_watcher_ctx ) ))) return STATUS_NO_MEMORY;
     p_dbus_error_init( &err );
-    status = bluez_dbus_get_unique_name( connection, &watcher_ctx->bluez_dbus_unique_name );
-    if (status) goto done;
-    status = bluez_get_objects_async( connection, &watcher_ctx->init_device_list_call );
-    if (status)
+    watcher_ctx->connection = connection;
+    if ((status = bluez_dbus_get_unique_name_async( connection, &call ))) goto done;
+    if (!p_dbus_pending_call_set_notify( call, bluez_dbus_get_name_owner_callback, watcher_ctx, NULL ))
     {
-        ERR( "could not create async GetManagedObjects call: %#x\n", status);
+        status = STATUS_NO_MEMORY;
         goto done;
     }
     list_init( &watcher_ctx->initial_radio_list );
@@ -2531,6 +2547,7 @@ done:
     p_dbus_error_free( &err );
     if (status)
     {
+        p_dbus_pending_call_cancel( call );
         if (watcher_ctx->init_device_list_call)
         {
             p_dbus_pending_call_cancel( watcher_ctx->init_device_list_call );
@@ -2544,6 +2561,7 @@ done:
         *ctx = watcher_ctx;
         TRACE( "ctx=%p\n", ctx );
     }
+    p_dbus_pending_call_unref( call );
     return status;
 }
 
