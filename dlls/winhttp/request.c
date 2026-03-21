@@ -173,14 +173,6 @@ struct chunked_stream
     } state;
 };
 
-static DWORD chunked_query_data( struct data_stream *stream, struct request *request )
-{
-    struct chunked_stream *chunked_stream = (struct chunked_stream *)stream;
-
-    if (chunked_stream->state != CHUNKED_STREAM_STATE_READING_CHUNK ) return 0;
-    return min( chunked_stream->chunk_size, chunked_stream->buf_size - chunked_stream->buf_pos );
-}
-
 static BOOL chunked_end_of_data( struct data_stream *stream, struct request *request )
 {
     struct chunked_stream *chunked_stream = (struct chunked_stream *)stream;
@@ -329,6 +321,18 @@ static DWORD chunked_read_data( struct data_stream *stream, struct request *requ
 
     *read = ret_read;
     return ERROR_SUCCESS;
+}
+
+static DWORD chunked_query_data( struct data_stream *stream, struct request *request )
+{
+    struct chunked_stream *chunked_stream = (struct chunked_stream *)stream;
+
+    while (chunked_stream->state < CHUNKED_STREAM_STATE_READING_CHUNK)
+    {
+        DWORD size;
+        if (chunked_read_data( stream, request, NULL, 0, &size )) return 0;
+    }
+    return chunked_stream->chunk_size;
 }
 
 static DWORD chunked_drain_data( struct data_stream *stream, struct request *request )
