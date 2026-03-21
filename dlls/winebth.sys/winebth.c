@@ -822,6 +822,22 @@ static NTSTATUS radio_get_hw_name_w( winebluetooth_radio_t radio, WCHAR **name )
     free( name_a );
     return STATUS_SUCCESS;
 }
+
+static void bluetooth_remove_all_radios( void )
+{
+    struct bluetooth_radio *radio, *radio2;
+
+    EnterCriticalSection( &device_list_cs );
+    LIST_FOR_EACH_ENTRY_SAFE( radio, radio2, &device_list, struct bluetooth_radio, entry )
+    {
+        radio->removed = TRUE;
+        list_remove( &radio->entry );
+    }
+    LeaveCriticalSection( &device_list_cs );
+
+    IoInvalidateDeviceRelations( bus_pdo, BusRelations );
+}
+
 static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added event )
 {
     struct bluetooth_pdo_ext *ext;
@@ -1646,6 +1662,9 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                 struct winebluetooth_watcher_event *event = &result.data.watcher_event;
                 switch (event->event_type)
                 {
+                    case BLUETOOTH_WATCHER_EVENT_TYPE_SERVICE_DOWN:
+                        bluetooth_remove_all_radios();
+                        break;
                     case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED:
                         add_bluetooth_radio( event->event_data.radio_added );
                         break;

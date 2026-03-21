@@ -274,6 +274,7 @@ NTSTATUS winebluetooth_gatt_characteristic_read_async( winebluetooth_gatt_charac
 
 enum winebluetooth_watcher_event_type
 {
+    BLUETOOTH_WATCHER_EVENT_TYPE_SERVICE_DOWN,
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED,
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED,
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED,

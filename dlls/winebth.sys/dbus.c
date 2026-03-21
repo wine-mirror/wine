@@ -90,6 +90,7 @@ const int bluez_timeout = -1;
 #define DBUS_OBJECTMANAGER_SIGNAL_INTERFACESADDED "InterfacesAdded"
 #define DBUS_OBJECTMANAGER_SIGNAL_INTERFACESREMOVED "InterfacesRemoved"
 #define DBUS_PROPERTIES_SIGNAL_PROPERTIESCHANGED "PropertiesChanged"
+#define DBUS_DBUS_SIGNAL_NAMEOWNERCHANGED "NameOwnerChanged"
 
 #define DBUS_INTERFACES_ADDED_SIGNATURE                                                            \
     DBUS_TYPE_OBJECT_PATH_AS_STRING                                                                \
@@ -112,6 +113,9 @@ const int bluez_timeout = -1;
     DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING                                         \
     DBUS_DICT_ENTRY_END_CHAR_AS_STRING                                                             \
     DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_STRING_AS_STRING
+
+#define DBUS_NAMEOWNERCHANGED_SIGNATURE \
+    DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_STRING_AS_STRING
 
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_INTERFACE_ADAPTER "org.bluez.Adapter1"
@@ -1327,7 +1331,9 @@ static void bluez_dbus_get_name_owner_callback( DBusPendingCall *call, void *dat
         WARN_(dbus)( "Failed to get unique name for org.bluez: %s\n", dbgstr_dbus_error( &error ) );
     else if (!p_dbus_message_get_args( reply, &error, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID ))
         ERR_(dbus)( "Failed to read string from GetNameOwner reply: %s\n", dbgstr_dbus_error(  &error ) );
-    else if ((ctx->bluez_dbus_unique_name = strdup( name )))
+    /* If bluez_signal_handler has already set a unique_name, nothing needs to be done. This can happen if BlueZ
+     * (re)starts right after we set up the signal handler in bluez_watcher_init. */
+    else if (!ctx->bluez_dbus_unique_name && ((ctx->bluez_dbus_unique_name = strdup( name ))))
         bluez_on_service_available( ctx );
     p_dbus_error_free( &error );
     p_dbus_message_unref( reply );
@@ -1871,9 +1877,47 @@ static UINT16 bluez_dbus_get_invalidated_properties_from_iter(
     return mask;
 }
 
-static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const char *signal_iface, const char *signal_name, const char *signal_sig, struct list *event_list )
+static void bluez_signal_handler( DBusConnection *conn, DBusMessage *msg, const char *signal_iface,
+                                  const char *signal_name, const char *signal_sig, struct bluez_watcher_ctx *ctx )
 {
+    struct list *event_list = &ctx->event_list;
 
+    if (!strcmp( signal_iface, DBUS_INTERFACE_DBUS ) &&
+        !strcmp( signal_name, DBUS_DBUS_SIGNAL_NAMEOWNERCHANGED ) &&
+        !strcmp( signal_sig, DBUS_NAMEOWNERCHANGED_SIGNATURE ))
+    {
+        const static union winebluetooth_watcher_event_data empty_event;
+        const char *name, *old_owner, *new_owner;
+        DBusError error;
+
+        p_dbus_error_init( &error );
+        if (!p_dbus_message_get_args( msg, &error, DBUS_TYPE_STRING, &name, DBUS_TYPE_STRING, &old_owner,
+                                      DBUS_TYPE_STRING, &new_owner, DBUS_TYPE_INVALID ))
+        {
+            ERR( "Failed to read NameOwnerChanged arguments: %s\n", dbgstr_dbus_error( &error ) );
+            p_dbus_error_free( &error );
+            return;
+        }
+        p_dbus_error_free( &error );
+        if (strcmp( name, BLUEZ_DEST )) return;
+        if (new_owner[0] && (!ctx->bluez_dbus_unique_name || strcmp( ctx->bluez_dbus_unique_name, new_owner )))
+        {
+            free( ctx->bluez_dbus_unique_name );
+            if ((ctx->bluez_dbus_unique_name = strdup( new_owner )))
+                bluez_on_service_available( ctx );
+        }
+        else if (ctx->bluez_dbus_unique_name)
+        {
+            TRACE_(dbus)( "org.bluez down, removing all entries.\n" );
+
+            free( ctx->bluez_dbus_unique_name );
+            ctx->bluez_dbus_unique_name = NULL;
+            /* When BlueZ shuts down gracefully, we will already have received InterfaceRemoved signals for
+             * all previously added Bluetooth entries. This event is useful for when BlueZ crashes, in which
+             * case we would have to remove the entries ourselves. */
+            bluez_event_list_queue_new_event( event_list, BLUETOOTH_WATCHER_EVENT_TYPE_SERVICE_DOWN, empty_event );
+        }
+    }
     if (!strcmp( signal_iface, DBUS_INTERFACE_OBJECTMANAGER ) &&
         !strcmp( signal_name, DBUS_OBJECTMANAGER_SIGNAL_INTERFACESADDED ) &&
         !strcmp( signal_sig, DBUS_INTERFACES_ADDED_SIGNATURE ))
@@ -2385,7 +2429,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
     type = p_dbus_message_get_type( msg );
     if (type == DBUS_MESSAGE_TYPE_SIGNAL)
         bluez_signal_handler( conn, msg, p_dbus_message_get_interface( msg ), p_dbus_message_get_member( msg ),
-                              p_dbus_message_get_signature( msg ), &ctx->event_list );
+                              p_dbus_message_get_signature( msg ), ctx );
     else if (type == DBUS_MESSAGE_TYPE_METHOD_CALL)
     {
         DBusMessage *reply;
@@ -2417,8 +2461,14 @@ static const char BLUEZ_MATCH_PROPERTIES[] = "type='signal',"
                                              "interface='"DBUS_INTERFACE_PROPERTIES"',"
                                              "member='PropertiesChanged',"
                                              "sender='"BLUEZ_DEST"',";
+static const char DBUS_MATCH_NAMEOWNERCHANGED[] = "type='signal',"
+                                                  "interface='"DBUS_INTERFACE_DBUS"',"
+                                                  "member='NameOwnerChanged',"
+                                                  "arg0='"BLUEZ_DEST"',"
+                                                  "path='/org/freedesktop/DBus',"
+                                                  "sender='org.freedesktop.DBus'";
 
-static const char *BLUEZ_MATCH_RULES[] = { BLUEZ_MATCH_OBJECTMANAGER, BLUEZ_MATCH_PROPERTIES };
+static const char *BLUEZ_MATCH_RULES[] = { BLUEZ_MATCH_OBJECTMANAGER, BLUEZ_MATCH_PROPERTIES, DBUS_MATCH_NAMEOWNERCHANGED };
 
 /* Free up the watcher alongside any remaining events and initial devices and other associated resources. */
 static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
@@ -2444,6 +2494,8 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
         list_remove( &event1->entry );
         switch (event1->event_type)
         {
+        case BLUETOOTH_WATCHER_EVENT_TYPE_SERVICE_DOWN:
+            break;
         case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED:
             unix_name_free( (struct unix_name *)event1->event.radio_added.radio.handle );
             break;
@@ -2494,6 +2546,7 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
         free( event1 );
     }
 
+    p_dbus_connection_unref( watcher->connection );
     free( watcher->bluez_dbus_unique_name );
     free( watcher );
 }
@@ -2507,14 +2560,7 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
     SIZE_T i;
 
     if (!(watcher_ctx = calloc( 1, sizeof( struct bluez_watcher_ctx ) ))) return STATUS_NO_MEMORY;
-    p_dbus_error_init( &err );
-    watcher_ctx->connection = connection;
-    if ((status = bluez_dbus_get_unique_name_async( connection, &call ))) goto done;
-    if (!p_dbus_pending_call_set_notify( call, bluez_dbus_get_name_owner_callback, watcher_ctx, NULL ))
-    {
-        status = STATUS_NO_MEMORY;
-        goto done;
-    }
+    watcher_ctx->connection = p_dbus_connection_ref( connection );
     list_init( &watcher_ctx->initial_radio_list );
     list_init( &watcher_ctx->initial_device_list );
     list_init( &watcher_ctx->initial_gatt_service_list );
@@ -2526,33 +2572,43 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
      * is racy as the filter is removed from a different thread. */
     if (!p_dbus_connection_add_filter( connection, bluez_filter, watcher_ctx, NULL ))
     {
-        ERR( "Could not add DBus filter\n" );
+        ERR_(dbus)( "Could not add DBus filter\n" );
         status = STATUS_NO_MEMORY;
         goto done;
     }
+    p_dbus_error_init( &err );
     for (i = 0; i < ARRAY_SIZE( BLUEZ_MATCH_RULES ); i++)
     {
         const char *rule = BLUEZ_MATCH_RULES[i];
 
-        TRACE( "Adding DBus match rule %s\n", debugstr_a( rule ) );
+        TRACE_(dbus)( "Adding DBus match rule %s\n", debugstr_a( rule ) );
         p_dbus_bus_add_match( connection, rule, &err );
         if (p_dbus_error_is_set( &err ))
         {
-            ERR( "Could not add DBus match %s: %s\n", debugstr_a( rule ), dbgstr_dbus_error( &err ) );
+            ERR_(dbus)( "Could not add DBus match %s: %s\n", debugstr_a( rule ), dbgstr_dbus_error( &err ) );
             status = bluez_dbus_error_to_ntstatus( &err );
             goto done;
         }
     }
+    /* Get the unique name after setting up a signal handler, this avoids a race condition if BlueZ (re)starts (and thus
+     * gets a new unique name) between the call to GetNameOwner and dbus_connection_add_filter. */
+    if ((status = bluez_dbus_get_unique_name_async( connection, &call ))) goto done;
+    if (!p_dbus_pending_call_set_notify( call, bluez_dbus_get_name_owner_callback, watcher_ctx, NULL ))
+    {
+        status = STATUS_NO_MEMORY;
+        p_dbus_pending_call_cancel( call );
+    }
+    p_dbus_pending_call_unref( call );
 done:
     p_dbus_error_free( &err );
     if (status)
     {
-        p_dbus_pending_call_cancel( call );
         if (watcher_ctx->init_device_list_call)
         {
             p_dbus_pending_call_cancel( watcher_ctx->init_device_list_call );
             p_dbus_pending_call_unref( watcher_ctx->init_device_list_call );
         }
+        p_dbus_connection_unref( watcher_ctx->connection );
         free( watcher_ctx->bluez_dbus_unique_name );
         free( watcher_ctx );
     }
@@ -2561,7 +2617,6 @@ done:
         *ctx = watcher_ctx;
         TRACE( "ctx=%p\n", ctx );
     }
-    p_dbus_pending_call_unref( call );
     return status;
 }
 
