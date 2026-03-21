@@ -120,10 +120,38 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( radio_statics, IRadioStatics, struct radio_statics, IActivationFactory_iface )
 
+static HRESULT get_radios_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result, BOOL called_async )
+{
+    struct vector_iids iids =
+    {
+        .iterable = &IID_IIterable_Radio,
+        .iterator = &IID_IIterator_Radio,
+        .vector = &IID_IVector_IInspectable,
+        .view = &IID_IVectorView_Radio,
+    };
+    IVector_IInspectable *vector;
+    IVectorView_Radio *view;
+    HRESULT hr;
+
+    FIXME( "stub!\n" );
+
+    if (FAILED(hr = vector_create( &iids, (void **)&vector ))) return hr;
+
+    hr = IVector_IInspectable_GetView( vector, (IVectorView_IInspectable **)&view );
+    IVector_IInspectable_Release( vector );
+    if (FAILED(hr)) return hr;
+
+    result->vt = VT_UNKNOWN;
+    result->punkVal = (IUnknown *)view;
+    return S_OK;
+}
+
 static HRESULT WINAPI radio_statics_GetRadiosAsync( IRadioStatics *iface, IAsyncOperation_IVectorView_Radio **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!value) return E_POINTER;
+    return async_operation_inspectable_create( &IID_IAsyncOperation_IVectorView_Radio, NULL, NULL, get_radios_async, (IAsyncOperation_IInspectable **)value );
 }
 
 static HRESULT WINAPI radio_statics_GetDeviceSelector( IRadioStatics *iface, HSTRING *selector )

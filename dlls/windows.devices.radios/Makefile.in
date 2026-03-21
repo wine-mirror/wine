@@ -2,5 +2,8 @@ MODULE  = windows.devices.radios.dll
 IMPORTS = combase
 
 SOURCES = \
+	async.c \
+	async_private.idl \
 	classes.idl \
-	main.c
+	main.c \
+	vector.c
