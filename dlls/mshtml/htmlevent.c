@@ -108,7 +108,7 @@ typedef struct {
 #define EVENT_CANCELABLE         0x0008
 /* Event may have default handler (so we always have to register Gecko listener). */
 #define EVENT_HASDEFAULTHANDLERS 0x0020
-/* Ecent is not supported properly, print FIXME message when it's used. */
+/* Event is not supported properly, print FIXME message when it's used. */
 #define EVENT_FIXME              0x0040
 
 /* mouse event flags for fromElement and toElement implementation */
