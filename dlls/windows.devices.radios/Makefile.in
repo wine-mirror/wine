@@ -1,0 +1,6 @@
+MODULE  = windows.devices.radios.dll
+IMPORTS = combase
+
+SOURCES = \
+	classes.idl \
+	main.c

@@ -1538,6 +1538,7 @@ enable_winbrand
 enable_windows_applicationmodel
 enable_windows_devices_bluetooth
 enable_windows_devices_enumeration
+enable_windows_devices_radios
 enable_windows_devices_usb
 enable_windows_gaming_input
 enable_windows_gaming_ui_gamebar
@@ -24249,6 +24250,8 @@ wine_fn_config_makefile dlls/windows.devices.bluetooth enable_windows_devices_bl
 wine_fn_config_makefile dlls/windows.devices.bluetooth/tests enable_tests
 wine_fn_config_makefile dlls/windows.devices.enumeration enable_windows_devices_enumeration
 wine_fn_config_makefile dlls/windows.devices.enumeration/tests enable_tests
+wine_fn_config_makefile dlls/windows.devices.radios enable_windows_devices_radios
+wine_fn_config_makefile dlls/windows.devices.radios/tests enable_tests
 wine_fn_config_makefile dlls/windows.devices.usb enable_windows_devices_usb
 wine_fn_config_makefile dlls/windows.devices.usb/tests enable_tests
 wine_fn_config_makefile dlls/windows.gaming.input enable_windows_gaming_input

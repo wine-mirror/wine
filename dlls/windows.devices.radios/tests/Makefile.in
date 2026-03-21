@@ -1,0 +1,5 @@
+TESTDLL = windows.devices.radios.dll
+IMPORTS = combase
+
+SOURCES = \
+	radios.c
