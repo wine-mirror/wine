@@ -4345,7 +4345,17 @@ static void SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
 			       const char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 			       const SLTG_TypeInfoTail *pTITail, const BYTE *hlp_strings)
 {
-  SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars, pNameTable, NULL, hlp_strings);
+  sltg_ref_lookup_t *ref_lookup = NULL;
+
+  if (pTIHeader->href_table != 0xffffffff)
+      ref_lookup = SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table),
+                               pTI->pTypeLib, (char *)pNameTable);
+
+  if (pTITail->vars_off != 0xffff)
+    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars,
+                pNameTable, ref_lookup, hlp_strings);
+
+  free(ref_lookup);
 }
 
 static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
