@@ -883,7 +883,6 @@ static void remove_bluetooth_radio( winebluetooth_radio_t radio )
             TRACE( "Removing bluetooth radio %p\n", (void *)radio.handle );
             device->removed = TRUE;
             list_remove( &device->entry );
-            IoInvalidateDeviceRelations( device->device_obj, BusRelations );
             break;
         }
     }
