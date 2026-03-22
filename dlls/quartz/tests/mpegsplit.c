@@ -2027,10 +2027,12 @@ static void test_streamselect(IAMStreamSelect *sel)
 
 static void test_video_file(void)
 {
+    static const unsigned char SEQ_START_CODE[] = {0, 0, 1, 0xb3};
     const WCHAR *filename = load_resource(L"test.mpg");
     IBaseFilter *filter = create_mpeg_splitter();
     struct testfilter testsink_video;
     struct testfilter testsink_audio;
+    const MPEG1VIDEOINFO *format;
     IPin *source_video = NULL;
     IPin *source_audio = NULL;
     IMediaControl *control;
@@ -2074,6 +2076,13 @@ static void test_video_file(void)
     ok(IsEqualGUID(&testsink_video.sink.pin.mt.majortype, &MEDIATYPE_Video), "Media types didn't match.\n");
     ok(IsEqualGUID(&testsink_video.sink.pin.mt.subtype, &MEDIASUBTYPE_MPEG1Payload), "Media types didn't match.\n");
     ok(IsEqualGUID(&testsink_video.sink.pin.mt.formattype, &FORMAT_MPEGVideo), "Media types didn't match.\n");
+
+    format = (const MPEG1VIDEOINFO *)testsink_video.sink.pin.mt.pbFormat;
+    ret = offsetof(MPEG1VIDEOINFO, bSequenceHeader[0]) + format->cbSequenceHeader;
+    todo_wine ok(testsink_video.sink.pin.mt.cbFormat == ret, "cbFormat didn't match, got %lu.\n", testsink_video.sink.pin.mt.cbFormat);
+    todo_wine ok(format->dwStartTimeCode == 4096, "dwStartTimeCode didn't match, got %lu.\n", format->dwStartTimeCode);
+    todo_wine ok(format->cbSequenceHeader == 12, "cbSequenceHeader didn't match, got %lu.\n", format->cbSequenceHeader);
+    todo_wine ok(!memcmp(format->bSequenceHeader, SEQ_START_CODE, sizeof(SEQ_START_CODE)), "Sequence header didn't match.\n");
 
     ok(IsEqualGUID(&testsink_audio.sink.pin.mt.majortype, &MEDIATYPE_Audio), "Media types didn't match.\n");
     ok(IsEqualGUID(&testsink_audio.sink.pin.mt.subtype, &MEDIASUBTYPE_MPEG1AudioPayload), "Media types didn't match.\n");
