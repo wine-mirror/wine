@@ -6291,7 +6291,8 @@ static void d2d_transformed_geometry_stream(struct d2d_geometry *geometry,
 {
     D2D_MATRIX_3X2_F m = geometry->transform;
 
-    d2d_matrix_multiply(&m, transform);
+    if (transform)
+        d2d_matrix_multiply(&m, transform);
     d2d_geometry_stream(geometry->u.transformed.src_geometry, &m, sink);
 }
 

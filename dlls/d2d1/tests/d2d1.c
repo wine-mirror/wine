@@ -11559,6 +11559,7 @@ static void test_colour_space(BOOL d3d11)
 
 static void test_geometry_group(BOOL d3d11)
 {
+    ID2D1TransformedGeometry *transformed_geometry;
     struct d2d1_test_context ctx;
     ID2D1Geometry *geometries[2];
     ID2D1GeometryGroup *group;
@@ -11646,8 +11647,23 @@ static void test_geometry_group(BOOL d3d11)
             rect.left, rect.top, rect.right, rect.bottom);
 
     ID2D1GeometryGroup_Release(group);
-    ID2D1PathGeometry_Release(path);
 
+    /* Group using transformed geometry */
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 2.0f, 4.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(ctx.factory, (ID2D1Geometry *)path, &matrix,
+            &transformed_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Factory_CreateGeometryGroup(ctx.factory, D2D1_FILL_MODE_ALTERNATE,
+            (ID2D1Geometry **)&transformed_geometry, 1, &group);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1GeometryGroup_Release(group);
+
+    ID2D1TransformedGeometry_Release(transformed_geometry);
+
+    ID2D1PathGeometry_Release(path);
     release_test_context(&ctx);
 }
 
