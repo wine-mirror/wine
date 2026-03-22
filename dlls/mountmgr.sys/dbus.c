@@ -60,6 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mountmgr);
     DO_FUNC(dbus_error_init); \
     DO_FUNC(dbus_error_is_set); \
     DO_FUNC(dbus_free_string_array); \
+    DO_FUNC(dbus_threads_init_default); \
     DO_FUNC(dbus_message_get_args); \
     DO_FUNC(dbus_message_get_interface); \
     DO_FUNC(dbus_message_get_member); \
@@ -551,6 +552,7 @@ void run_dbus_loop(void)
 
     if (!load_dbus_functions()) return;
 
+    p_dbus_threads_init_default();
     p_dbus_error_init( &error );
     if (!(connection = p_dbus_bus_get( DBUS_BUS_SYSTEM, &error )))
     {
@@ -591,6 +593,7 @@ static DBusConnection *get_dhcp_connection(void)
     if (!dhcp_connection)
     {
         DBusError error;
+        p_dbus_threads_init_default();
         p_dbus_error_init( &error );
         if (!(dhcp_connection = p_dbus_bus_get_private( DBUS_BUS_SYSTEM, &error )))
         {
