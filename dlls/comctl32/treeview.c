@@ -2342,21 +2342,30 @@ TREEVIEW_ToggleItemState(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 {
     if (infoPtr->dwStyle & TVS_CHECKBOXES)
     {
-	static const unsigned int state_table[] = { 0, 2, 1 };
+        unsigned int state, stateImage, numStates;
 
-	unsigned int state;
+        /* Toggle item state cycles through images other than zero, if image list with more state images is set */
+        numStates = 0;
+        if ( infoPtr->himlState ) numStates = ImageList_GetImageCount(infoPtr->himlState);
+        if ( numStates < 3 ) numStates = 3;
 
-	state = STATEIMAGEINDEX(item->state);
-	TRACE("state: 0x%x\n", state);
-	item->state &= ~TVIS_STATEIMAGEMASK;
+        state = item->state;
+        stateImage = STATEIMAGEINDEX(state);
+        TRACE("stateImage: 0x%x\n", stateImage);
+        state &= ~TVIS_STATEIMAGEMASK;
 
-	if (state < 3)
-	    state = state_table[state];
+        if ( stateImage > 0 )
+        {
+            ++ stateImage;
+            if ( stateImage >= numStates ) stateImage = 1;
+        }
 
-	item->state |= INDEXTOSTATEIMAGEMASK(state);
+        state |= INDEXTOSTATEIMAGEMASK(stateImage);
 
-	TRACE("state: 0x%x\n", state);
-	TREEVIEW_Invalidate(infoPtr, item);
+        TRACE("stateImage: 0x%x\n", stateImage);
+
+        item->state = state;
+        TREEVIEW_Invalidate(infoPtr, item);
     }
 }
 

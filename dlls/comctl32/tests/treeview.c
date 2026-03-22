@@ -2873,14 +2873,14 @@ static void test_TVS_CHECKBOXES(void)
     item.mask = TVIF_STATE;
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    todo_wine ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(3), "item.state=%x\n", item.state);
+    ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(3), "item.state=%x\n", item.state);
 
     SendMessageA(hTree, WM_KEYDOWN, VK_SPACE, 0);
     item.hItem = hChild;
     item.mask = TVIF_STATE;
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    todo_wine ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(1), "item.state=%x\n", item.state);
+    ok((item.state&TVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(1), "item.state=%x\n", item.state);
 
     himl = (HIMAGELIST)SendMessageA(hTree, TVM_SETIMAGELIST, TVSIL_STATE, (LPARAM)himl);
     ok(himl == himl2, "got %p\n", himl);
