@@ -745,8 +745,10 @@ static bool amt_from_wg_format_video_mpeg1(AM_MEDIA_TYPE *mt, const struct wg_fo
 {
     MPEG1VIDEOINFO *video_format;
     uint32_t frame_time;
+    DWORD size;
 
-    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format))))
+    size = offsetof(MPEG1VIDEOINFO, bSequenceHeader) + format->u.video.codec_data_len;
+    if (!(video_format = CoTaskMemAlloc(size)))
         return false;
 
     mt->majortype = MEDIATYPE_Video;
@@ -754,10 +756,10 @@ static bool amt_from_wg_format_video_mpeg1(AM_MEDIA_TYPE *mt, const struct wg_fo
     mt->bTemporalCompression = TRUE;
     mt->lSampleSize = 1;
     mt->formattype = FORMAT_MPEGVideo;
-    mt->cbFormat = sizeof(MPEG1VIDEOINFO);
+    mt->cbFormat = size;
     mt->pbFormat = (BYTE *)video_format;
 
-    memset(video_format, 0, sizeof(*video_format));
+    memset(video_format, 0, size);
     if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
         video_format->hdr.AvgTimePerFrame = frame_time;
     video_format->hdr.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -767,6 +769,30 @@ static bool amt_from_wg_format_video_mpeg1(AM_MEDIA_TYPE *mt, const struct wg_fo
     video_format->hdr.bmiHeader.biBitCount = 12;
     video_format->hdr.bmiHeader.biCompression = mt->subtype.Data1;
     video_format->hdr.bmiHeader.biSizeImage = wg_format_get_max_size(format);
+
+    /* Ignore additional start code units after the sequence header. */
+    size = 12; /* minimum sequence header length */
+    if (format->u.video.codec_data_len >= size
+            && format->u.video.codec_data[0] == 0x00
+            && format->u.video.codec_data[1] == 0x00
+            && format->u.video.codec_data[2] == 0x01
+            && format->u.video.codec_data[3] == 0xb3)
+    {
+        /* has intra quantiser matrix? */
+        if (format->u.video.codec_data[size-1] & 2)
+            size += 64;
+
+        /* has non-intra quantiser matrix? */
+        if (format->u.video.codec_data_len >= size
+                && (format->u.video.codec_data[size-1] & 1))
+            size += 64;
+
+        if (format->u.video.codec_data_len >= size)
+        {
+            video_format->cbSequenceHeader = size;
+            memcpy(video_format->bSequenceHeader, format->u.video.codec_data, size);
+        }
+    }
 
     return true;
 }
@@ -1136,7 +1162,7 @@ static bool amt_to_wg_format_video_mpeg1(const AM_MEDIA_TYPE *mt, struct wg_form
         FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
         return false;
     }
-    if (mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
+    if (!mt->pbFormat || mt->cbFormat < offsetof(MPEG1VIDEOINFO, bSequenceHeader) + video_format->cbSequenceHeader)
     {
         ERR("Unexpected format size %lu.\n", mt->cbFormat);
         return false;
@@ -1148,6 +1174,13 @@ static bool amt_to_wg_format_video_mpeg1(const AM_MEDIA_TYPE *mt, struct wg_form
     format->u.video.fps_n = 10000000;
     format->u.video.fps_d = video_format->hdr.AvgTimePerFrame;
 
+    format->u.video.codec_data_len = video_format->cbSequenceHeader;
+    if (format->u.video.codec_data_len > sizeof(format->u.video.codec_data))
+    {
+        ERR("Too big codec_data value (%u).\n", format->u.video.codec_data_len);
+        format->u.video.codec_data_len = 0;
+    }
+    memcpy(format->u.video.codec_data, video_format->bSequenceHeader, format->u.video.codec_data_len);
     return true;
 }
 

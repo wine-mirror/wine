@@ -470,6 +470,10 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
     gint width, height, fps_n, fps_d;
+    const GValue *codec_data_value;
+    GstBuffer *codec_data;
+    GstMapInfo map;
+    guint size;
 
     if (!gst_structure_get_int(structure, "width", &width))
     {
@@ -479,6 +483,12 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
     if (!gst_structure_get_int(structure, "height", &height))
     {
         GST_WARNING("Missing \"height\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!(codec_data_value = gst_structure_get_value(structure, "codec_data"))
+            || !(codec_data = gst_value_get_buffer(codec_data_value)))
+    {
+        GST_WARNING("Missing \"codec_data\" value in %" GST_PTR_FORMAT ".", caps);
         return;
     }
     if (!gst_structure_get_fraction(structure, "framerate", &fps_n, &fps_d))
@@ -492,6 +502,15 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
     format->u.video.height = height;
     format->u.video.fps_n = fps_n;
     format->u.video.fps_d = fps_d;
+
+    gst_buffer_map(codec_data, &map, GST_MAP_READ);
+
+    assert(sizeof(format->u.video.codec_data) >= MAX_SIZE_MPEG1_SEQUENCE_INFO);
+    size = min(map.size, MAX_SIZE_MPEG1_SEQUENCE_INFO);
+    format->u.video.codec_data_len = size;
+    memcpy(format->u.video.codec_data, map.data, size);
+
+    gst_buffer_unmap(codec_data, &map);
 }
 
 static const struct
@@ -1077,6 +1096,7 @@ static GstCaps *wg_format_to_caps_video_indeo(const struct wg_format *format)
 
 static GstCaps *wg_format_to_caps_video_mpeg1(const struct wg_format *format)
 {
+    GstBuffer *buffer;
     GstCaps *caps;
 
     if (!(caps = gst_caps_new_empty_simple("video/mpeg")))
@@ -1091,6 +1111,20 @@ static GstCaps *wg_format_to_caps_video_mpeg1(const struct wg_format *format)
         gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video.height, NULL);
     if (format->u.video.fps_d || format->u.video.fps_n)
         gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video.fps_n, format->u.video.fps_d, NULL);
+
+    if (format->u.video.codec_data_len)
+    {
+        if (!(buffer = gst_buffer_new_and_alloc(format->u.video.codec_data_len)))
+        {
+            gst_caps_unref(caps);
+            return NULL;
+        }
+
+        gst_buffer_fill(buffer, 0, format->u.video.codec_data, format->u.video.codec_data_len);
+        gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
+        gst_buffer_unref(buffer);
+    }
+
     return caps;
 }
 
