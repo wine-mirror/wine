@@ -8714,9 +8714,7 @@ static void test_createProcessingInstruction(void)
 {
     static const WCHAR xml1[] = L"<?xml version=\"1.0\"?>\r\n<test/>\r\n";
     static const char xml2[] = "<?xml version=\"1.0\" encoding=\"windows-1252\"?>\r\n<test/>\r\n";
-    static const char xml2_wine[] = "<?xml version=\"1.0\" encoding=\"windows-1252\"?>\n<test/>\n";
     static const char xml3[] = "<?xml version=\"1.0\" standalone=\"yes\"?>\r\n<test/>\r\n";
-    static const char xml3_wine[] = "<?xml version=\"1.0\" standalone=\"yes\"?>\n<test/>\n";
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMDocument *doc;
     IXMLDOMNode *node, *item;
@@ -8828,7 +8826,8 @@ static void test_createProcessingInstruction(void)
     hr = GetHGlobalFromStream(stream, &global);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     p = GlobalLock(global);
-    ok(!memcmp(p, xml2, sizeof(xml2) - 1) || !memcmp(p, xml2_wine, sizeof(xml2_wine) - 1), "got %s\n", wine_dbgstr_a(p));
+    todo_wine
+    ok(!memcmp(p, xml2, sizeof(xml2) - 1), "Unexpected output %s.\n", wine_dbgstr_a(p));
     GlobalUnlock(global);
 
     /* Verify the result after load+save */
@@ -8850,7 +8849,8 @@ static void test_createProcessingInstruction(void)
     hr = GetHGlobalFromStream(stream, &global);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     p = GlobalLock(global);
-    ok(!memcmp(p, xml2, sizeof(xml2) - 1) || !memcmp(p, xml2_wine, sizeof(xml2_wine) - 1), "got %s\n", wine_dbgstr_a(p));
+    todo_wine
+    ok(!memcmp(p, xml2, sizeof(xml2) - 1), "Unexpected output %s.\n", wine_dbgstr_a(p));
     GlobalUnlock(global);
 
     IStream_Release(stream);
@@ -8871,7 +8871,8 @@ static void test_createProcessingInstruction(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     p = GlobalLock(global);
-    ok(!memcmp(p, xml3, sizeof(xml3) - 1) || !memcmp(p, xml3_wine, sizeof(xml3_wine) - 1), "got %s\n", wine_dbgstr_a(p));
+    todo_wine
+    ok(!memcmp(p, xml3, sizeof(xml3) - 1), "Unexpected output %s.\n", wine_dbgstr_a(p));
     GlobalUnlock(global);
 
     IStream_Release(stream);
