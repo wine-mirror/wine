@@ -5668,12 +5668,10 @@ static void test_xmlTypes(void)
     IXMLDOMDocument *doc;
     IXMLDOMElement *pRoot;
     HRESULT hr;
-    IXMLDOMComment *pComment;
     IXMLDOMElement *pElement;
     IXMLDOMAttribute *pAttribute;
     IXMLDOMNamedNodeMap *pAttribs;
     IXMLDOMCDATASection *pCDataSec;
-    IXMLDOMImplementation *pIXMLDOMImplementation = NULL;
     IXMLDOMDocumentFragment *pDocFrag = NULL;
     IXMLDOMEntityReference *pEntityRef = NULL;
     BSTR str;
@@ -5707,59 +5705,6 @@ static void test_xmlTypes(void)
     ok( V_VT(&v) == VT_NULL, "incorrect dataType type\n");
     VariantClear(&v);
 
-    /* test implementation */
-    hr = IXMLDOMDocument_get_implementation(doc, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-    hr = IXMLDOMDocument_get_implementation(doc, &pIXMLDOMImplementation);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-    if(hr == S_OK)
-    {
-        VARIANT_BOOL hasFeature = VARIANT_TRUE;
-        BSTR sEmpty = SysAllocStringLen(NULL, 0);
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, NULL, sEmpty, &hasFeature);
-        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, sEmpty, sEmpty, NULL);
-        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), sEmpty, &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_FALSE, "hasFeature returned false\n");
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, sEmpty, sEmpty, &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_FALSE, "hasFeature returned true\n");
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), NULL, &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_TRUE, "hasFeature returned false\n");
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), sEmpty, &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_FALSE, "hasFeature returned false\n");
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("DOM"), _bstr_("1.0"), &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_TRUE, "hasFeature returned true\n");
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("XML"), _bstr_("1.0"), &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_TRUE, "hasFeature returned true\n");
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("MS-DOM"), _bstr_("1.0"), &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_TRUE, "hasFeature returned true\n");
-
-        hr = IXMLDOMImplementation_hasFeature(pIXMLDOMImplementation, _bstr_("SSS"), NULL, &hasFeature);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(hasFeature == VARIANT_FALSE, "hasFeature returned false\n");
-
-        SysFreeString(sEmpty);
-        IXMLDOMImplementation_Release(pIXMLDOMImplementation);
-    }
-
     pRoot = (IXMLDOMElement*)0x1;
     hr = IXMLDOMDocument_createElement(doc, NULL, &pRoot);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
@@ -5778,299 +5723,6 @@ static void test_xmlTypes(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
         if(hr == S_OK)
         {
-            /* Comment */
-            str = SysAllocString(L"A Comment");
-            hr = IXMLDOMDocument_createComment(doc, str, &pComment);
-            SysFreeString(str);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-            if(hr == S_OK)
-            {
-                hr = IXMLDOMElement_appendChild(pRoot, (IXMLDOMNode*)pComment, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_get_nodeName(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok( !lstrcmpW( str, L"#comment" ), "incorrect comment node Name\n");
-                SysFreeString(str);
-
-                hr = IXMLDOMComment_get_xml(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok( !lstrcmpW( str, L"<!--A Comment-->" ), "incorrect comment xml\n");
-                SysFreeString(str);
-
-                /* put data Tests */
-                hr = IXMLDOMComment_put_data(pComment, _bstr_("This &is a ; test <>\\"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                /* get data Tests */
-                hr = IXMLDOMComment_get_data(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect get_data string\n");
-                SysFreeString(str);
-
-                /* Confirm XML text is good */
-                hr = IXMLDOMComment_get_xml(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"<!--This &is a ; test <>\\-->"), "incorrect xml string\n");
-                SysFreeString(str);
-
-                /* Confirm we get the put_data Text back */
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect xml string\n");
-                SysFreeString(str);
-
-                /* test length property */
-                hr = IXMLDOMComment_get_length(pComment, &len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(len == 21, "expected 21 got %ld\n", len);
-
-                /* test substringData */
-                hr = IXMLDOMComment_substringData(pComment, 0, 4, NULL);
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-                /* test substringData - Invalid offset */
-                str = (void *)0xdeadbeef;
-                hr = IXMLDOMComment_substringData(pComment, -1, 4, &str);
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-                ok( str == NULL, "incorrect string\n");
-
-                /* test substringData - Invalid offset */
-                str = (void *)0xdeadbeef;
-                hr = IXMLDOMComment_substringData(pComment, 30, 0, &str);
-                ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
-                ok( str == NULL, "incorrect string\n");
-
-                /* test substringData - Invalid size */
-                str = (void *)0xdeadbeef;
-                hr = IXMLDOMComment_substringData(pComment, 0, -1, &str);
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-                ok( str == NULL, "incorrect string\n");
-
-                /* test substringData - Invalid size */
-                str = (void *)0xdeadbeef;
-                hr = IXMLDOMComment_substringData(pComment, 2, 0, &str);
-                ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
-                ok( str == NULL, "incorrect string\n");
-
-                /* test substringData - Start of string */
-                hr = IXMLDOMComment_substringData(pComment, 0, 4, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"This"), "incorrect substringData string\n");
-                SysFreeString(str);
-
-                /* test substringData - Middle of string */
-                hr = IXMLDOMComment_substringData(pComment, 13, 4, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"test"), "incorrect substringData string\n");
-                SysFreeString(str);
-
-                /* test substringData - End of string */
-                hr = IXMLDOMComment_substringData(pComment, 20, 4, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"\\"), "incorrect substringData string\n");
-                SysFreeString(str);
-
-                /* test appendData */
-                hr = IXMLDOMComment_appendData(pComment, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_appendData(pComment, _bstr_(""));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_appendData(pComment, _bstr_("Append"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"This &is a ; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* test insertData */
-                str = SysAllocStringLen(NULL, 0);
-                hr = IXMLDOMComment_insertData(pComment, -1, str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, -1, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 1000, str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 1000, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 0, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 0, str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                SysFreeString(str);
-
-                hr = IXMLDOMComment_insertData(pComment, -1, _bstr_("Inserting"));
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 1000, _bstr_("Inserting"));
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 0, _bstr_("Begin "));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 17, _bstr_("Middle"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 39, _bstr_(" End"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"Begin This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* delete data */
-                /* invalid arguments */
-                hr = IXMLDOMComment_deleteData(pComment, -1, 1);
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_deleteData(pComment, 0, 0);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_deleteData(pComment, 0, -1);
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_get_length(pComment, &len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(len == 43, "expected 43 got %ld\n", len);
-
-                hr = IXMLDOMComment_deleteData(pComment, len, 1);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_deleteData(pComment, len+1, 1);
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-
-                /* delete from start */
-                hr = IXMLDOMComment_deleteData(pComment, 0, 5);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_get_length(pComment, &len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(len == 38, "expected 38 got %ld\n", len);
-
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* delete from end */
-                hr = IXMLDOMComment_deleteData(pComment, 35, 3);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_get_length(pComment, &len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(len == 35, "expected 35 got %ld\n", len);
-
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append "), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* delete from inside */
-                hr = IXMLDOMComment_deleteData(pComment, 1, 33);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_get_length(pComment, &len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(len == 2, "expected 2 got %ld\n", len);
-
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"  "), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* delete whole data ... */
-                hr = IXMLDOMComment_get_length(pComment, &len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_deleteData(pComment, 0, len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                /* ... and try again with empty string */
-                hr = IXMLDOMComment_deleteData(pComment, 0, len);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                /* ::replaceData() */
-                V_VT(&v) = VT_BSTR;
-                V_BSTR(&v) = SysAllocString(L"str1");
-                hr = IXMLDOMComment_put_nodeValue(pComment, v);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                VariantClear(&v);
-
-                hr = IXMLDOMComment_replaceData(pComment, 6, 0, NULL);
-                ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                hr = IXMLDOMComment_replaceData(pComment, 0, 0, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* NULL pointer means delete */
-                hr = IXMLDOMComment_replaceData(pComment, 0, 1, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"tr1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* empty string means delete */
-                hr = IXMLDOMComment_replaceData(pComment, 0, 1, _bstr_(""));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"r1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* zero count means insert */
-                hr = IXMLDOMComment_replaceData(pComment, 0, 0, _bstr_("a"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"ar1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                hr = IXMLDOMComment_replaceData(pComment, 0, 2, NULL);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-
-                hr = IXMLDOMComment_insertData(pComment, 0, _bstr_("m"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"m1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* nonempty string, count greater than its length */
-                hr = IXMLDOMComment_replaceData(pComment, 0, 2, _bstr_("a1.2"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"a1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                /* nonempty string, count less than its length */
-                hr = IXMLDOMComment_replaceData(pComment, 0, 1, _bstr_("wine"));
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                hr = IXMLDOMComment_get_text(pComment, &str);
-                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-                ok(!lstrcmpW(str, L"wine1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
-                SysFreeString(str);
-
-                IXMLDOMComment_Release(pComment);
-            }
-
             /* Element */
             str = SysAllocString(L"EleTest");
             hr = IXMLDOMDocument_createElement(doc, str, &pElement);
@@ -8753,6 +8405,7 @@ static const char get_prefix_doc[] =
 static void test_get_prefix(void)
 {
     IXMLDOMDocumentFragment *fragment;
+    IXMLDOMProcessingInstruction *pi;
     IXMLDOMCDATASection *cdata;
     IXMLDOMElement *element;
     IXMLDOMComment *comment;
@@ -8858,6 +8511,22 @@ static void test_get_prefix(void)
     hr = IXMLDOMElement_get_namespaceURI(element, &str);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
+
+    /* PI */
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("ns:target"), _bstr_("data"), &pi);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = (void *)0xdeadbeef;
+    hr = IXMLDOMProcessingInstruction_get_prefix(pi, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected prefix %s.\n", debugstr_w(str));
+
+    hr = IXMLDOMProcessingInstruction_get_baseName(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"ns:target"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMProcessingInstruction_Release(pi);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();
@@ -14675,6 +14344,1578 @@ static void test_get_parentNode(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_removeAttributeNode(void)
+{
+    IXMLDOMElement *element;
+    IXMLDOMAttribute *attr;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    VARIANT var;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a ns:attr1=\"attr1-value\" xmlns:ns=\"uri\" ><ns:b ns:attr=\"attr-value\" /></a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<a ns:attr1=\"attr1-value\" xmlns:ns=\"uri\"><ns:b ns:attr=\"attr-value\"/></a>"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    V_VT(&var) = VT_EMPTY;
+    hr = IXMLDOMElement_getAttribute(element, _bstr_("ns"), &var);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&var) == VT_NULL, "Unexpected value %s.\n", debugstr_variant(&var));
+
+    V_VT(&var) = VT_EMPTY;
+    hr = IXMLDOMElement_getAttribute(element, _bstr_("xmlns:ns"), &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(V_BSTR(&var), L"uri"), "Unexpected value %s.\n", debugstr_variant(&var));
+    VariantClear(&var);
+
+    /* Try to remove namespace definition that's in use */
+    hr = IXMLDOMElement_removeAttribute(element, _bstr_("xmlns:ns"));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<a xmlns:ns=\"uri\" ns:attr1=\"attr1-value\"><ns:b ns:attr=\"attr-value\"/></a>"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_getAttribute(element, _bstr_("xmlns:ns"), &var);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_getAttributeNode(element, _bstr_("attr1"), &attr);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_getAttributeNode(element, _bstr_("ns:attr1"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMAttribute_get_namespaceURI(attr, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"uri"), "Unexpected uri %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMAttribute_Release(attr);
+
+    hr = IXMLDOMElement_removeAttribute(element, _bstr_("ns:attr1"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<a><ns:b xmlns:ns=\"uri\" ns:attr=\"attr-value\"/></a>"), "Unexpected str %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMElement_Release(element);
+
+    /* Change uri via attribute value, detach an attribute that's using it */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a xmlns:ns=\"uri\" ns:attr1=\"attr1-value\" >text</a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_getAttributeNode(element, _bstr_("xmlns:ns"), &attr);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        hr = IXMLDOMAttribute_put_text(attr, _bstr_("uri-2"));
+        ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+        IXMLDOMAttribute_Release(attr);
+    }
+
+    hr = IXMLDOMElement_getAttributeNode(element, _bstr_("ns:attr1"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("uri2");
+    hr = IXMLDOMElement_setAttribute(element, _bstr_("xmlns:ns"), var);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("uri");
+    hr = IXMLDOMElement_setAttribute(element, _bstr_("xmlns:ns"), var);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMAttribute_get_namespaceURI(attr, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"uri"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_removeAttribute(element, _bstr_("ns:attr1"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("uri2");
+    hr = IXMLDOMElement_setAttribute(element, _bstr_("xmlns:ns"), var);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMAttribute_get_namespaceURI(attr, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"uri"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMAttribute_Release(attr);
+
+    IXMLDOMElement_Release(element);
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
+static void test_comment(void)
+{
+    IXMLDOMComment *comment;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+    LONG len;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument2, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (int i = 0; i < 2; ++i)
+    {
+        hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, i == 0 ? VARIANT_TRUE : VARIANT_FALSE);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IXMLDOMDocument_createComment(doc, _bstr_("A Comment -->"), &comment);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMDocument_createComment(doc, _bstr_("A \nCo\rmment\r\n  & < \""), &comment);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_nodeName(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"#comment"), "Unexpected name %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_xml(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"<!--A \r\nCo\r\nmment\r\n  & < \"-->"), "Unexpected xml %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_data(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_nodeValue(comment, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        VariantClear(&v);
+
+        V_BSTR(&v) = _bstr_("comment --> a");
+        V_VT(&v) = VT_BSTR;
+        hr = IXMLDOMComment_put_nodeValue(comment, v);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        V_BSTR(&v) = _bstr_("comment \ra");
+        V_VT(&v) = VT_BSTR;
+        hr = IXMLDOMComment_put_nodeValue(comment, v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_data(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"comment \na"), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_nodeValue(comment, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(V_BSTR(&v), L"comment \na"), "Unexpected text %s.\n", debugstr_w(V_BSTR(&v)));
+        VariantClear(&v);
+
+        V_BSTR(&v) = _bstr_("comment \na");
+        V_VT(&v) = VT_BSTR;
+        hr = IXMLDOMComment_put_nodeValue(comment, v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_xml(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW( str, L"<!--comment \r\na-->" ), "Unexpected xml %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"comment \na"), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_data(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"comment \na"), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_get_nodeValue(comment, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(V_BSTR(&v), L"comment \na"), "Unexpected text %s.\n", debugstr_w(V_BSTR(&v)));
+        VariantClear(&v);
+
+        /* put data Tests */
+        hr = IXMLDOMComment_put_data(comment, _bstr_("This &is a ; test <>\\"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        /* get data Tests */
+        hr = IXMLDOMComment_get_data(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect get_data string\n");
+        SysFreeString(str);
+
+        /* Confirm XML text is good */
+        hr = IXMLDOMComment_get_xml(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"<!--This &is a ; test <>\\-->"), "incorrect xml string\n");
+        SysFreeString(str);
+
+        /* Confirm we get the put_data Text back */
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect xml string\n");
+        SysFreeString(str);
+
+        /* test length property */
+        hr = IXMLDOMComment_get_length(comment, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(len == 21, "expected 21 got %ld\n", len);
+
+        /* test substringData */
+        hr = IXMLDOMComment_substringData(comment, 0, 4, NULL);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        /* test substringData - Invalid offset */
+        str = (void *)0xdeadbeef;
+        hr = IXMLDOMComment_substringData(comment, -1, 4, &str);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Invalid offset */
+        str = (void *)0xdeadbeef;
+        hr = IXMLDOMComment_substringData(comment, 30, 0, &str);
+        ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Invalid size */
+        str = (void *)0xdeadbeef;
+        hr = IXMLDOMComment_substringData(comment, 0, -1, &str);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Invalid size */
+        str = (void *)0xdeadbeef;
+        hr = IXMLDOMComment_substringData(comment, 2, 0, &str);
+        ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
+        ok( str == NULL, "incorrect string\n");
+
+        /* test substringData - Start of string */
+        hr = IXMLDOMComment_substringData(comment, 0, 4, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"This"), "incorrect substringData string\n");
+        SysFreeString(str);
+
+        /* test substringData - Middle of string */
+        hr = IXMLDOMComment_substringData(comment, 13, 4, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"test"), "incorrect substringData string\n");
+        SysFreeString(str);
+
+        /* test substringData - End of string */
+        hr = IXMLDOMComment_substringData(comment, 20, 4, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"\\"), "incorrect substringData string\n");
+        SysFreeString(str);
+
+        /* test appendData */
+        hr = IXMLDOMComment_appendData(comment, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_appendData(comment, _bstr_(""));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_appendData(comment, _bstr_("Append"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* test insertData */
+        str = SysAllocStringLen(NULL, 0);
+        hr = IXMLDOMComment_insertData(comment, -1, str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, -1, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 1000, str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 1000, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 0, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 0, str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_insertData(comment, -1, _bstr_("Inserting"));
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 1000, _bstr_("Inserting"));
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 0, _bstr_("Begin "));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 17, _bstr_("Middle"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 39, _bstr_(" End"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"Begin This &is a Middle; test <>\\Append End"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* delete data */
+        /* invalid arguments */
+        hr = IXMLDOMComment_deleteData(comment, -1, 1);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_deleteData(comment, 0, 0);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_deleteData(comment, 0, -1);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_length(comment, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(len == 43, "expected 43 got %ld\n", len);
+
+        hr = IXMLDOMComment_deleteData(comment, len, 1);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_deleteData(comment, len+1, 1);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        /* delete from start */
+        hr = IXMLDOMComment_deleteData(comment, 0, 5);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_length(comment, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(len == 38, "expected 38 got %ld\n", len);
+
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append End"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* delete from end */
+        hr = IXMLDOMComment_deleteData(comment, 35, 3);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_length(comment, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(len == 35, "expected 35 got %ld\n", len);
+
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L" This &is a Middle; test <>\\Append "), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* delete from inside */
+        hr = IXMLDOMComment_deleteData(comment, 1, 33);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_get_length(comment, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(len == 2, "expected 2 got %ld\n", len);
+
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"  "), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* delete whole data ... */
+        hr = IXMLDOMComment_get_length(comment, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_deleteData(comment, 0, len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        /* ... and try again with empty string */
+        hr = IXMLDOMComment_deleteData(comment, 0, len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        /* ::replaceData() */
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = SysAllocString(L"str1");
+        hr = IXMLDOMComment_put_nodeValue(comment, v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        VariantClear(&v);
+
+        hr = IXMLDOMComment_replaceData(comment, 6, 0, NULL);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"str1"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_replaceData(comment, 0, 0, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"str1"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* NULL pointer means delete */
+        hr = IXMLDOMComment_replaceData(comment, 0, 1, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"tr1"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* empty string means delete */
+        hr = IXMLDOMComment_replaceData(comment, 0, 1, _bstr_(""));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"r1"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* zero count means insert */
+        hr = IXMLDOMComment_replaceData(comment, 0, 0, _bstr_("a"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"ar1"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_replaceData(comment, 0, 2, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMComment_insertData(comment, 0, _bstr_("m"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"m1"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* nonempty string, count greater than its length */
+        hr = IXMLDOMComment_replaceData(comment, 0, 2, _bstr_("a1.2"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"a1.2"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* nonempty string, count less than its length */
+        hr = IXMLDOMComment_replaceData(comment, 0, 1, _bstr_("wine"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        hr = IXMLDOMComment_get_text(comment, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"wine1.2"), "Unexpected text %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMComment_put_data(comment, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IXMLDOMComment_get_length(comment, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!len, "Unexpected length %ld.\n", len);
+
+        IXMLDOMComment_Release(comment);
+    }
+
+    IXMLDOMDocument_Release(doc);
+}
+
+static void test_pi(void)
+{
+    IXMLDOMProcessingInstruction *pi;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument2, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (int i = 0; i < 2; ++i)
+    {
+        hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, i == 0 ? VARIANT_TRUE : VARIANT_FALSE);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("target"), _bstr_("Some text ?>"), &pi);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("target"), _bstr_("A \nCo\rmment\r\n  & < \""), &pi);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMProcessingInstruction_get_nodeName(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"target"), "Unexpected name %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"<?target A \r\nCo\r\nmment\r\n  & < \"?>"), "Unexpected xml %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_get_data(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_get_nodeValue(pi, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        VariantClear(&v);
+
+        V_BSTR(&v) = _bstr_("comment ?> a");
+        V_VT(&v) = VT_BSTR;
+        hr = IXMLDOMProcessingInstruction_put_nodeValue(pi, v);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr );
+
+        V_BSTR(&v) = _bstr_("comment \na");
+        V_VT(&v) = VT_BSTR;
+        hr = IXMLDOMProcessingInstruction_put_nodeValue(pi, v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        todo_wine
+        ok(!lstrcmpW( str, L"<?target comment \r\na?>"), "Unexpected xml %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"comment \na"), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_get_data(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"comment \na"), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_get_nodeValue(pi, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"comment \na"), "Unexpected text %s.\n", debugstr_w(str));
+        VariantClear(&v);
+
+        /* put data Tests */
+        hr = IXMLDOMProcessingInstruction_put_data(pi, _bstr_("This &is a ; test <>\\"));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+        /* get data Tests */
+        hr = IXMLDOMProcessingInstruction_get_data(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect get_data string\n");
+        SysFreeString(str);
+
+        /* Confirm XML text is good */
+        hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"<?target This &is a ; test <>\\?>"), "Unexpected string %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        /* Confirm we get the put_data Text back */
+        hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect xml string\n");
+        SysFreeString(str);
+
+        hr = IXMLDOMProcessingInstruction_put_data(pi, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+        ok(!*str, "Unexpected string %s.\n", debugstr_w(str));
+        SysFreeString(str);
+
+        /* Can't have markup */
+        hr = IXMLDOMProcessingInstruction_put_data(pi, _bstr_("da?>ta"));
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+        hr = IXMLDOMProcessingInstruction_put_text(pi, _bstr_("da?>ta"));
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = SysAllocString(L"da?>ta");
+        hr = IXMLDOMProcessingInstruction_put_nodeValue(pi, v);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        VariantClear(&v);
+
+        IXMLDOMProcessingInstruction_Release(pi);
+    }
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
+static void test_dom_impl(void)
+{
+    IXMLDOMImplementation *impl;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL v;
+    BSTR sEmpty;
+    HRESULT hr;
+
+    sEmpty = SysAllocStringLen(NULL, 0);
+
+    hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_implementation(doc, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_implementation(doc, &impl);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMImplementation_hasFeature(impl, NULL, sEmpty, &v);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMImplementation_hasFeature(impl, sEmpty, sEmpty, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    v = VARIANT_TRUE;
+    hr = IXMLDOMImplementation_hasFeature(impl, _bstr_("DOM"), sEmpty, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    ok(v == VARIANT_FALSE, "Unexpected value %d.\n", v);
+
+    v = VARIANT_TRUE;
+    hr = IXMLDOMImplementation_hasFeature(impl, sEmpty, sEmpty, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(v == VARIANT_FALSE, "Unexpected value %d.\n", v);
+
+    v = VARIANT_FALSE;
+    hr = IXMLDOMImplementation_hasFeature(impl, _bstr_("DOM"), NULL, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(v == VARIANT_TRUE, "Unexpected value %d.\n", v);
+
+    v = VARIANT_TRUE;
+    hr = IXMLDOMImplementation_hasFeature(impl, _bstr_("DOM"), sEmpty, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(v == VARIANT_FALSE, "Unexpected value %d.\n", v);
+
+    v = VARIANT_FALSE;
+    hr = IXMLDOMImplementation_hasFeature(impl, _bstr_("DOM"), _bstr_("1.0"), &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    ok(v == VARIANT_TRUE, "Unexpected value %d.\n", v);
+
+    hr = IXMLDOMImplementation_hasFeature(impl, _bstr_("XML"), _bstr_("1.0"), &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    ok(v == VARIANT_TRUE, "Unexpected value %d.\n", v);
+
+    hr = IXMLDOMImplementation_hasFeature(impl, _bstr_("MS-DOM"), _bstr_("1.0"), &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    ok(v == VARIANT_TRUE, "Unexpected value %d.\n", v);
+
+    hr = IXMLDOMImplementation_hasFeature(impl, _bstr_("SSS"), NULL, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    ok(v == VARIANT_FALSE, "Unexpected value %d.\n", v);
+
+    SysFreeString(sEmpty);
+    IXMLDOMImplementation_Release(impl);
+
+    IXMLDOMDocument_Release(doc);
+}
+
+static void test_doc_fragment(void)
+{
+    IXMLDOMElement *element, *element2;
+    IXMLDOMDocumentFragment *fragment;
+    IXMLDOMProcessingInstruction *pi;
+    IXMLDOMCDATASection *cdata;
+    IXMLDOMComment *comment;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    IXMLDOMText *text;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("e"), &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createDocumentFragment(doc, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &fragment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_get_parentNode(fragment, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    node = (IXMLDOMNode *)0x1;
+    hr = IXMLDOMDocumentFragment_get_parentNode(fragment, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected value %p.\n", node);
+
+    hr = IXMLDOMElement_appendChild(element, (IXMLDOMNode *)fragment, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_get_nodeName(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"#document-fragment"), "Unexpected name %s\n", debugstr_w(str));
+    SysFreeString(str);
+
+    /* Siblings */
+    hr = IXMLDOMDocumentFragment_get_nextSibling(fragment, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    node = (IXMLDOMNode *)0x1;
+    hr = IXMLDOMDocumentFragment_get_nextSibling(fragment, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected value %p.\n", node);
+
+    hr = IXMLDOMDocumentFragment_get_previousSibling(fragment, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    node = (IXMLDOMNode *)0x1;
+    hr = IXMLDOMDocumentFragment_get_previousSibling(fragment, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected value %p.\n", node);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!*str, "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocumentFragment_get_text(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!*str, "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("t"), _bstr_("pi-text"), &pi);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)pi, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"<?t pi-text?>"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocumentFragment_get_text(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!*str, "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_("text-node"), &text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)text, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMText_Release(text);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"<?t pi-text?>text-node"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocumentFragment_get_text(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"text-node"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createComment(doc, _bstr_("comment"), &comment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)comment, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMComment_Release(comment);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"<?t pi-text?>text-node<!--comment-->"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocumentFragment_get_text(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"text-node"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("cdata"), &cdata);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)cdata, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMCDATASection_Release(cdata);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"<?t pi-text?>text-node<!--comment--><![CDATA[cdata]]>"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocumentFragment_get_text(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"text-nodecdata"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("e2"), &element2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_("text-node2"), &text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_appendChild(element2, (IXMLDOMNode *)text, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMText_Release(text);
+
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)element2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"<?t pi-text?>text-node<!--comment--><![CDATA[cdata]]><e2>text-node2</e2>"),
+            "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocumentFragment_get_text(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"text-nodecdatatext-node2"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createComment(doc, _bstr_("comment2"), &comment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_appendChild(element2, (IXMLDOMNode *)comment, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMComment_Release(comment);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"<?t pi-text?>text-node<!--comment--><![CDATA[cdata]]>"
+            "<e2>text-node2<!--comment2--></e2>"),
+            "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocumentFragment_get_text(fragment, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"text-nodecdatatext-node2"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_get_text(element2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"text-node2"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMElement_Release(element2);
+
+    IXMLDOMProcessingInstruction_Release(pi);
+    IXMLDOMDocumentFragment_Release(fragment);
+    IXMLDOMElement_Release(element);
+
+    IXMLDOMDocument_Release(doc);
+}
+
+static void test_text(void)
+{
+    IXMLDOMText *nodetext;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    VARIANT var;
+    LONG length;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = SysAllocString( L"open" );
+    hr = IXMLDOMDocument_createTextNode(doc, str, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createTextNode(doc, str, &nodetext);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString( str );
+
+    check_interface(nodetext, &IID_IXMLDOMElement, FALSE);
+
+    /* Text Last Child Checks */
+    hr = IXMLDOMText_get_lastChild(nodetext, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    node = (IXMLDOMNode *)0x1;
+    hr = IXMLDOMText_get_lastChild(nodetext, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected node %p.\n", node);
+
+    /* test length property */
+    hr = IXMLDOMText_get_length(nodetext, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 4, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMText_put_data(nodetext, _bstr_("t\ne\rx\r\nt"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 7, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMText_get_data(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_get_nodeValue(nodetext, &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(V_BSTR(&var), L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    hr = IXMLDOMText_put_text(nodetext, _bstr_("t\ne\rx\r\nt"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_data(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_get_nodeValue(nodetext, &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(V_BSTR(&var), L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    V_BSTR(&var) = _bstr_("t\ne\rx\r\nt");
+    V_VT(&var) = VT_BSTR;
+    hr = IXMLDOMText_put_nodeValue(nodetext, var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_data(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(str, L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_get_nodeValue(nodetext, &var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!lstrcmpW(V_BSTR(&var), L"t\ne\nx\nt"), "Unexpected data %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    hr = IXMLDOMText_put_data(nodetext, _bstr_("&amp;\"<>\'"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMText_hasChildNodes(nodetext, &b);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_FALSE, "Unexpected value %d.\n", b);
+
+    hr = IXMLDOMText_get_data(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"&amp;\"<>\'"), "Unexpected data %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_get_xml(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"&amp;amp;\"&lt;&gt;\'"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_put_data(nodetext, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!length, "Unexpected length %ld.\n", length);
+
+    /* put data Tests */
+    hr = IXMLDOMText_put_data(nodetext, _bstr_("This &is a ; test <>\\"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* get data Tests */
+    hr = IXMLDOMText_get_data(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect put_data string\n");
+    SysFreeString(str);
+
+    /* Confirm XML text is good */
+    hr = IXMLDOMText_get_xml(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"This &amp;is a ; test &lt;&gt;\\"), "incorrect xml string\n");
+    SysFreeString(str);
+
+    /* Confirm we get the put_data Text back */
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"This &is a ; test <>\\"), "incorrect xml string\n");
+    SysFreeString(str);
+
+    /* test substringData */
+    hr = IXMLDOMText_substringData(nodetext, 0, 4, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* test substringData - Invalid offset */
+    str = (void *)0xdeadbeef;
+    hr = IXMLDOMText_substringData(nodetext, -1, 4, &str);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok( str == NULL, "incorrect string\n");
+
+    /* test substringData - Invalid offset */
+    str = (void *)0xdeadbeef;
+    hr = IXMLDOMText_substringData(nodetext, 30, 0, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok( str == NULL, "incorrect string\n");
+
+    /* test substringData - Invalid size */
+    str = (void *)0xdeadbeef;
+    hr = IXMLDOMText_substringData(nodetext, 0, -1, &str);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok( str == NULL, "incorrect string\n");
+
+    /* test substringData - Invalid size */
+    str = (void *)0xdeadbeef;
+    hr = IXMLDOMText_substringData(nodetext, 2, 0, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok( str == NULL, "incorrect string\n");
+
+    /* test substringData - Start of string */
+    hr = IXMLDOMText_substringData(nodetext, 0, 4, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"This"), "incorrect substringData string\n");
+    SysFreeString(str);
+
+    /* test substringData - Middle of string */
+    hr = IXMLDOMText_substringData(nodetext, 13, 4, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"test"), "incorrect substringData string\n");
+    SysFreeString(str);
+
+    /* test substringData - End of string */
+    hr = IXMLDOMText_substringData(nodetext, 20, 4, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"\\"), "incorrect substringData string\n");
+    SysFreeString(str);
+
+    /* test appendData */
+    hr = IXMLDOMText_appendData(nodetext, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_appendData(nodetext, _bstr_(""));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_appendData(nodetext, _bstr_("Append"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"This &is a ; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* test insertData */
+    str = SysAllocStringLen(NULL, 0);
+    hr = IXMLDOMText_insertData(nodetext, -1, str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, -1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 1000, str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 1000, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 0, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 0, str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    hr = IXMLDOMText_insertData(nodetext, -1, _bstr_("Inserting"));
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 1000, _bstr_("Inserting"));
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 0, _bstr_("Begin "));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 17, _bstr_("Middle"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 39, _bstr_(" End"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"Begin This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* delete data */
+    /* invalid arguments */
+    hr = IXMLDOMText_deleteData(nodetext, -1, 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_deleteData(nodetext, 0, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_deleteData(nodetext, 0, -1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 43, "expected 43 got %ld\n", length);
+
+    hr = IXMLDOMText_deleteData(nodetext, length, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_deleteData(nodetext, length + 1, 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* delete from start */
+    hr = IXMLDOMText_deleteData(nodetext, 0, 5);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 38, "expected 38 got %ld\n", length);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"This &is a Middle; test <>\\Append End"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* delete from end */
+    hr = IXMLDOMText_deleteData(nodetext, 35, 3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 35, "expected 35 got %ld\n", length);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"This &is a Middle; test <>\\Append"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* delete from inside */
+    hr = IXMLDOMText_deleteData(nodetext, 1, 33);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 2, "expected 2 got %ld\n", length);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L""), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* delete whole data ... */
+    hr = IXMLDOMText_get_length(nodetext, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_deleteData(nodetext, 0, length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    /* ... and try again with empty string */
+    hr = IXMLDOMText_deleteData(nodetext, 0, length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* test put_data */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"str1");
+    hr = IXMLDOMText_put_nodeValue(nodetext, var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok( !lstrcmpW( str, L"str1" ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
+    SysFreeString(str);
+
+    /* test put_data */
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 99;
+    hr = IXMLDOMText_put_nodeValue(nodetext, var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"99"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* ::replaceData() */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"str1");
+    hr = IXMLDOMText_put_nodeValue(nodetext, var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&var);
+
+    hr = IXMLDOMText_replaceData(nodetext, 6, 0, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_replaceData(nodetext, 0, 0, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"str1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* NULL pointer means delete */
+    hr = IXMLDOMText_replaceData(nodetext, 0, 1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"tr1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* empty string means delete */
+    hr = IXMLDOMText_replaceData(nodetext, 0, 1, _bstr_(""));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"r1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* zero count means insert */
+    hr = IXMLDOMText_replaceData(nodetext, 0, 0, _bstr_("a"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"ar1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMText_replaceData(nodetext, 0, 2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_insertData(nodetext, 0, _bstr_("m"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"m1"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* nonempty string, count greater than its length */
+    hr = IXMLDOMText_replaceData(nodetext, 0, 2, _bstr_("a1.2"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"a1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* nonempty string, count less than its length */
+    hr = IXMLDOMText_replaceData(nodetext, 0, 1, _bstr_("wine"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_text(nodetext, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, L"wine1.2"), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMText_Release( nodetext );
+
+    IXMLDOMDocument_Release(doc);
+}
+
+static void test_attribute_value(void)
+{
+    IXMLDOMAttribute *attr;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *child;
+    IXMLDOMText *text;
+    DOMNodeType type;
+    VARIANT_BOOL b;
+    VARIANT value;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("attr"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMAttribute_hasChildNodes(attr, &b);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_FALSE, "Unexpected value %d.\n", b);
+
+    V_VT(&value) = VT_EMPTY;
+    hr = IXMLDOMAttribute_get_value(attr, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&value) == VT_BSTR, "Unexpected type %d.\n", V_VT(&value));
+    ok(!*V_BSTR(&value), "Unexpected string %s.\n", debugstr_w(V_BSTR(&value)));
+    VariantClear(&value);
+
+    hr = IXMLDOMAttribute_get_text(attr, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!*str, "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMAttribute_put_text(attr, _bstr_("a<b>c\"d\'&lt;"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMAttribute_get_text(attr, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"a<b>c\"d\'&lt;"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMAttribute_get_value(attr, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&value) == VT_BSTR, "Unexpected type %d.\n", V_VT(&value));
+    ok(!wcscmp(L"a<b>c\"d\'&lt;", V_BSTR(&value)), "Unexpected string %s.\n", debugstr_w(V_BSTR(&value)));
+    VariantClear(&value);
+
+    hr = IXMLDOMAttribute_get_xml(attr, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"attr=\"a&lt;b&gt;c&quot;d\'&amp;lt;\""), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMAttribute_get_firstChild(attr, &child);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(child, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == NODE_TEXT, "Unexpected type %d.\n", type);
+
+    hr = IXMLDOMNode_QueryInterface(child, &IID_IXMLDOMText, (void **)&text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_data(text, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"a<b>c\"d\'&lt;"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMText_Release(text);
+
+    hr = IXMLDOMNode_get_xml(child, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"a&lt;b&gt;c\"d\'&amp;lt;"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMNode_get_text(child, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"a<b>c\"d\'&lt;"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMNode_get_nodeValue(child, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&value) == VT_BSTR, "Unexpected type %d.\n", V_VT(&value));
+    ok(!wcscmp(L"a<b>c\"d\'&lt;", V_BSTR(&value)), "Unexpected string %s.\n", debugstr_w(V_BSTR(&value)));
+    VariantClear(&value);
+
+    IXMLDOMNode_Release(child);
+
+    /* Set via 'value' property */
+    V_VT(&value) = VT_BSTR;
+    V_BSTR(&value) = _bstr_("");
+    hr = IXMLDOMAttribute_put_value(attr, value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&value);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMAttribute_hasChildNodes(attr, &b);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(b == VARIANT_TRUE, "Unexpected value %d.\n", b);
+
+    V_VT(&value) = VT_EMPTY;
+    hr = IXMLDOMAttribute_put_value(attr, value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMAttribute_hasChildNodes(attr, &b);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(b == VARIANT_TRUE, "Unexpected value %d.\n", b);
+
+    V_VT(&value) = VT_BSTR;
+    V_BSTR(&value) = _bstr_("<>\"\'");
+    hr = IXMLDOMAttribute_put_value(attr, value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&value);
+
+    hr = IXMLDOMAttribute_get_nodeValue(attr, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&value) == VT_BSTR, "Unexpected type %d.\n", V_VT(&value));
+    ok(!wcscmp(L"<>\"\'", V_BSTR(&value)), "Unexpected string %s.\n", debugstr_w(V_BSTR(&value)));
+    VariantClear(&value);
+
+    hr = IXMLDOMAttribute_get_value(attr, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&value) == VT_BSTR, "Unexpected type %d.\n", V_VT(&value));
+    ok(!wcscmp(L"<>\"\'", V_BSTR(&value)), "Unexpected string %s.\n", debugstr_w(V_BSTR(&value)));
+    VariantClear(&value);
+
+    IXMLDOMAttribute_Release(attr);
+
+    IXMLDOMDocument_Release(doc);
+}
+
+static void test_xmldecl_attributes(void)
+{
+    IXMLDOMProcessingInstruction *pi;
+    IXMLDOMNamedNodeMap *map;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    LONG length;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"yes\" ?><a>text</a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_firstChild(doc, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMProcessingInstruction, (void **)&pi);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMProcessingInstruction_get_attributes(pi, &map);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    node = NULL;
+    hr = IXMLDOMNamedNodeMap_removeNamedItem(map, _bstr_("encoding"), &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (node)
+        IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?xml version=\"1.0\" standalone=\"yes\"?>"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    node = NULL;
+    hr = IXMLDOMNamedNodeMap_removeNamedItem(map, _bstr_("standalone"), &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (node)
+        IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?xml version=\"1.0\"?>"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMProcessingInstruction_get_data(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"version=\"1.0\""), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    node = NULL;
+    hr = IXMLDOMNamedNodeMap_removeNamedItem(map, _bstr_("version"), &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (node)
+        IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMProcessingInstruction_get_data(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L""), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!length, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?xml version=\"1.0\"?>"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMNamedNodeMap_Release(map);
+
+    IXMLDOMProcessingInstruction_Release(pi);
+    IXMLDOMDocument_Release(doc);
+}
+
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -14768,6 +16009,14 @@ START_TEST(domdoc)
     test_max_element_depth_values();
     test_get_parentNode();
     test_put_text();
+    test_removeAttributeNode();
+    test_comment();
+    test_pi();
+    test_dom_impl();
+    test_doc_fragment();
+    test_text();
+    test_attribute_value();
+    test_xmldecl_attributes();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
