@@ -16049,6 +16049,29 @@ static void test_xmldecl_attributes(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_loadXML(void)
+{
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument2, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_loadXML(doc, NULL, NULL);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_loadXML(doc, NULL, &b);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_FALSE, "Unexpected value %d.\n", b);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>text</a>"), NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDOMDocument_Release(doc);
+}
 
 START_TEST(domdoc)
 {
@@ -16150,6 +16173,7 @@ START_TEST(domdoc)
     test_text();
     test_attribute_value();
     test_xmldecl_attributes();
+    test_loadXML();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
