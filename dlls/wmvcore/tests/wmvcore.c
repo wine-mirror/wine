@@ -2069,11 +2069,9 @@ void test_sync_reader_rawvideo_file(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_OpenStream(reader, stream);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IWMSyncReader_Close(reader);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     IStream_Release(stream);

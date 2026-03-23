@@ -915,16 +915,20 @@ static bool stream_create_post_processing_elements(GstPad *pad, struct wg_parser
 
     if (!strcmp(name, "video/x-raw"))
     {
-        /* DirectShow can express interlaced video, but downstream filters can't
-         * necessarily consume it. In particular, the video renderer can't. */
-        if (!(element = create_element("deinterlace", "good"))
-                || !append_element(parser->container, element, &first, &last))
-            return false;
+        /* decodebin doesn't provide framerate for raw video. This causes the
+         * the deinterlace element to reject the caps. So we need to go through
+         * videoconvert first (as it fixates the framerate) */
 
         /* decodebin considers many YUV formats to be "raw", but some quartz
          * filters can't handle those. Also, videoflip can't handle all "raw"
          * formats either. Add a videoconvert to swap color spaces. */
         if (!(element = create_element("videoconvert", "base"))
+                || !append_element(parser->container, element, &first, &last))
+            return false;
+
+        /* DirectShow can express interlaced video, but downstream filters can't
+         * necessarily consume it. In particular, the video renderer can't. */
+        if (!(element = create_element("deinterlace", "good"))
                 || !append_element(parser->container, element, &first, &last))
             return false;
 
