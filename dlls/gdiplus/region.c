@@ -1003,6 +1003,16 @@ GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
     return Ok;
 }
 
+static size_t grow_capacity_geometric(size_t capacity, size_t max_capacity, size_t count)
+{
+    size_t new_capacity = max(4, capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        return max_capacity;
+    return new_capacity;
+}
+
 static GpStatus edge_list_reserve(struct edge_list *edges, size_t count)
 {
     size_t new_capacity, max_capacity;
@@ -1015,11 +1025,7 @@ static GpStatus edge_list_reserve(struct edge_list *edges, size_t count)
     if (count > max_capacity)
         return OutOfMemory;
 
-    new_capacity = max(4, edges->capacity);
-    while (new_capacity < count && new_capacity <= max_capacity / 2)
-        new_capacity *= 2;
-    if (new_capacity < count)
-        new_capacity = max_capacity;
+    new_capacity = grow_capacity_geometric(edges->capacity, max_capacity, count);
 
     new_edges = realloc(edges->edges, new_capacity * sizeof(edges->edges[0]));
     if (!new_edges)
@@ -1036,6 +1042,14 @@ static const REAL RGN_ROUND_OFS = 0.03; /* arbitrary constant found by experimen
 static inline INT rgn_round(REAL x)
 {
     return (INT) ceilf(x - RGN_ROUND_OFS);
+}
+
+static inline void rect_round_from_gp_rect_f(RECT *rc, const GpRectF *rect)
+{
+    rc->left = rgn_round(rect->X);
+    rc->top = rgn_round(rect->Y);
+    rc->right = rgn_round(rect->X + rect->Width);
+    rc->bottom = rgn_round(rect->Y + rect->Height);
 }
 
 static GpStatus line_to_edge_list(GpPointF p1, GpPointF p2, const RECT *bounds, struct edge_list *edges)
@@ -2205,4 +2219,260 @@ GpStatus WINGDIPAPI GdipGetRegionScans(GpRegion *region, GpRectF *scans, INT *co
     }
 
     return Ok;
+}
+
+static GpStatus span_list_reserve(struct span_list *spans, size_t count)
+{
+    size_t new_capacity, max_capacity;
+    struct span *new_spans;
+
+    if (count <= spans->capacity)
+        return Ok;
+
+    max_capacity = ~(SIZE_T)0 / sizeof(spans->spans[0]);
+    if (count > max_capacity)
+        return OutOfMemory;
+
+    new_capacity = grow_capacity_geometric(spans->capacity, max_capacity, count);
+
+    new_spans = realloc(spans->spans, new_capacity * sizeof(spans->spans[0]));
+    if (!new_spans)
+        return OutOfMemory;
+
+    spans->spans = new_spans;
+    spans->capacity = new_capacity;
+
+    return Ok;
+}
+
+static GpStatus edge_list_to_spans_alternate(struct edge_list *edges, struct span_list *spans)
+{
+    GpStatus stat;
+    size_t i;
+
+    stat = span_list_reserve(spans, spans->length + edges->length / 2u);
+    if (stat != Ok)
+        return stat;
+
+    for (i = 0; i + 1 < edges->length; i += 2)
+    {
+        struct edge *edge = &edges->edges[i];
+        struct span *span;
+
+        assert(edge[0].y == edge[1].y);
+
+        span = &spans->spans[spans->length++];
+        span->x[0] = edge[0].x;
+        span->x[1] = edge[1].x;
+        span->y = edge[0].y;
+    }
+
+    return Ok;
+}
+
+static GpStatus edge_list_to_spans_winding(struct edge_list *edges, struct span_list *spans)
+{
+    int start_x = 0, winding_count = 0;
+    GpStatus stat = Ok;
+    size_t i;
+
+    for (i = 0; i < edges->length; i++)
+    {
+        struct edge *edge = &edges->edges[i];
+
+        if (winding_count && start_x < edge->x)
+        {
+            struct span *span;
+
+            stat = span_list_reserve(spans, spans->length + 1);
+            if (stat != Ok)
+                break;
+
+            span = &spans->spans[spans->length++];
+            span->x[0] = start_x;
+            span->x[1] = edge->x;
+            span->y = edge->y;
+        }
+
+        start_x = edge->x;
+        winding_count += edge->rising ? 1 : -1;
+    }
+
+    return stat;
+}
+
+static GpStatus rect_to_spans(const RECT *rc, struct span_list *spans)
+{
+    GpStatus stat;
+    LONG y;
+
+    stat = span_list_reserve(spans, spans->length + rc->bottom - rc->top);
+    if (stat != Ok)
+        return stat;
+
+    for (y = rc->top; y < rc->bottom; ++y)
+    {
+        struct span *span = &spans->spans[spans->length++];
+        span->x[0] = rc->left;
+        span->x[1] = rc->right;
+        span->y = y;
+    }
+
+    return Ok;
+}
+
+static GpStatus combine_regions_to_spans(const struct region_element *left, const struct region_element *right,
+    DWORD type, const RECT *bounds, struct span_list *spans)
+{
+    struct span_list spans_left = {0}, spans_right = {0};
+    size_t i_left = 0, i_right = 0;
+    const struct span *cur_left, *cur_right;
+    BOOL in_left, in_right, in_result;
+    int x, y, x1_left, x1_right, x1_min;
+    GpStatus stat;
+
+    stat = region_element_to_spans(left, bounds, &spans_left);
+
+    if (stat == Ok)
+        stat = region_element_to_spans(right, bounds, &spans_right);
+
+    cur_left = spans_left.length ? &spans_left.spans[0] : NULL;
+    cur_right = spans_right.length ? &spans_right.spans[0] : NULL;
+
+    for (y = bounds->top; stat == Ok && y < bounds->bottom; ++y)
+    {
+        for (x = bounds->left; stat == Ok && x < bounds->right; )
+        {
+            /* Update the current left and right spans */
+
+            if (cur_left && ((x >= cur_left->x[1] && y == cur_left->y) || y > cur_left->y))
+                cur_left = (++i_left < spans_left.length) ? &spans_left.spans[i_left] : NULL;
+
+            if (cur_right && ((x >= cur_right->x[1] && y == cur_right->y) || y > cur_right->y))
+                cur_right = (++i_right < spans_right.length) ? &spans_right.spans[i_right] : NULL;
+
+            assert(!cur_left || cur_left->y >= y);
+            assert(!cur_right || cur_right->y >= y);
+
+            /* For both left and right, if x lies within a span, set the next x to its end,
+             * otherwise set the next x to the start of the next span, or the right boundary,
+             * to support combine modes Exclude and Complement. */
+
+            if (cur_left && y == cur_left->y)
+            {
+                in_left = x >= cur_left->x[0];
+                x1_left = cur_left->x[in_left];
+            }
+            else
+            {
+                in_left = FALSE;
+                x1_left = bounds->right;
+            }
+
+            if (cur_right && y == cur_right->y)
+            {
+                in_right = x >= cur_right->x[0];
+                x1_right = cur_right->x[in_right];
+            }
+            else
+            {
+                in_right = FALSE;
+                x1_right = bounds->right;
+            }
+
+            x1_min = min(x1_left, x1_right);
+
+            switch (type)
+            {
+                case CombineModeIntersect:  in_result = in_left & in_right; break;
+                case CombineModeUnion:      in_result = in_left | in_right; break;
+                case CombineModeXor:        in_result = in_left ^ in_right; break;
+                case CombineModeExclude:    in_result = in_left & !in_right; break;
+                case CombineModeComplement: in_result = (!in_left) & in_right; break;
+                default: FIXME("Unhandled mode %lu.\n", type); in_result = FALSE; break;
+            }
+
+            if (in_result)
+            {
+                struct span *result;
+
+                stat = span_list_reserve(spans, spans->length + 1);
+                if (stat == Ok)
+                {
+                    result = &spans->spans[spans->length++];
+                    result->x[0] = x;
+                    result->x[1] = x1_min;
+                    result->y = y;
+                }
+            }
+
+            assert(x1_min > x);
+            x = x1_min;
+        }
+    }
+
+    free(spans_left.spans);
+    free(spans_right.spans);
+
+    return stat;
+}
+
+/* Objects in the region element may be modified */
+GpStatus region_element_to_spans(const struct region_element *element, const RECT *bounds, struct span_list *spans)
+{
+    GpStatus stat = Ok;
+
+    switch (element->type)
+    {
+        case RegionDataRect:
+        {
+            const GpRectF *rect = &element->elementdata.rect;
+            RECT rc;
+
+            rect_round_from_gp_rect_f(&rc, rect);
+
+            if (IntersectRect(&rc, &rc, bounds))
+                stat = rect_to_spans(&rc, spans);
+
+            break;
+        }
+
+        case RegionDataPath:
+        {
+            GpPath *path = element->elementdata.path;
+            struct edge_list edge_list = { 0 };
+
+            stat = GdipFlattenPath(path, NULL, FlatnessDefault);
+
+            if (stat == Ok)
+                stat = flat_path_to_edge_list(path, bounds, &edge_list);
+
+            if (stat == Ok)
+            {
+                qsort(edge_list.edges, edge_list.length, sizeof(edge_list.edges[0]), cmp_edges);
+
+                if (path->fill == FillModeWinding)
+                    stat = edge_list_to_spans_winding(&edge_list, spans);
+                else
+                    stat = edge_list_to_spans_alternate(&edge_list, spans);
+            }
+
+            free(edge_list.edges);
+            break;
+        }
+
+        case RegionDataEmptyRect:
+            break;
+
+        case RegionDataInfiniteRect:
+            stat = rect_to_spans(bounds, spans);
+            break;
+
+        default:
+            stat = combine_regions_to_spans(element->elementdata.combine.left, element->elementdata.combine.right,
+                element->type, bounds, spans);
+            break;
+    }
+
+    return stat;
 }
