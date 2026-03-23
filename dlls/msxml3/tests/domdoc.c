@@ -8989,8 +8989,7 @@ static void test_put_nodeTypedValue(void)
     hr = IXMLDOMElement_get_nodeTypedValue(elem, &type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&type) == VT_BSTR, "got %d, expected VT_BSTR\n", V_VT(&type));
-    ok(memcmp(V_BSTR(&type), L"1", 2*sizeof(WCHAR)) == 0,
-       "got %s, expected \"1\"\n", wine_dbgstr_w(V_BSTR(&type)));
+    ok(!wcscmp(V_BSTR(&type), L"1"), "Unexpected value %s.\n", wine_dbgstr_w(V_BSTR(&type)));
     VariantClear(&type);
 
     /* int */
@@ -9163,13 +9162,7 @@ static void test_put_nodeTypedValue(void)
 
 static void test_get_xml(void)
 {
-    static const char xmlA[] = "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n<a>test</a>\r\n";
     static const char xml2A[] = "<?xml version=\"1.0\"?>\n<Root>\n\t<Sub val=\"A\" />\n</Root>";
-    static const char attrA[] = "attr=\"&quot;a &amp; b&quot;\"";
-    static const char attr2A[] = "\"a & b\"";
-    static const char attr3A[] = "attr=\"&amp;quot;a\"";
-    static const char attr4A[] = "&quot;a";
-    static const char fooA[] = "<foo/>";
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMNode *first;
     IXMLDOMElement *elem = NULL;
@@ -9205,9 +9198,7 @@ static void test_get_xml(void)
 
     hr = IXMLDOMDocument_get_xml(doc, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    ok(memcmp(xml, _bstr_(xmlA), sizeof(xmlA)*sizeof(WCHAR)) == 0,
-        "got %s, expected %s\n", wine_dbgstr_w(xml), xmlA);
+    ok(!wcscmp(xml, L"<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n<a>test</a>\r\n"), "Unexpected %s.\n", wine_dbgstr_w(xml));
     SysFreeString(xml);
 
     IXMLDOMDocument_Release(doc);
@@ -9222,9 +9213,7 @@ static void test_get_xml(void)
 
     hr = IXMLDOMDocument_get_xml(doc, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    ok(memcmp(xml, _bstr_(fooA), (sizeof(fooA)-1)*sizeof(WCHAR)) == 0,
-        "got %s, expected %s\n", wine_dbgstr_w(xml), fooA);
+    ok(!wcscmp(xml, L"<foo/>\r\n"), "Unexpected %s.\n", debugstr_w(xml));
     SysFreeString(xml);
 
     IXMLDOMElement_Release(elem);
@@ -9241,15 +9230,14 @@ static void test_get_xml(void)
     xml = NULL;
     hr = IXMLDOMAttribute_get_xml(attr, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(xml, _bstr_(attrA), (sizeof(attrA)-1)*sizeof(WCHAR)), "got %s\n", wine_dbgstr_w(xml));
+    ok(!wcscmp(xml, L"attr=\"&quot;a &amp; b&quot;\""), "Unexpected %s.\n", wine_dbgstr_w(xml));
     SysFreeString(xml);
 
     VariantInit(&v);
     hr = IXMLDOMAttribute_get_value(attr, &v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
-    ok(!memcmp(V_BSTR(&v), _bstr_(attr2A), (sizeof(attr2A)-1)*sizeof(WCHAR)),
-        "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!wcscmp(V_BSTR(&v), L"\"a & b\""), "Unexpected %s.\n", debugstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     V_VT(&v) = VT_BSTR;
@@ -9260,15 +9248,14 @@ static void test_get_xml(void)
     xml = NULL;
     hr = IXMLDOMAttribute_get_xml(attr, &xml);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!memcmp(xml, _bstr_(attr3A), (sizeof(attr3A)-1)*sizeof(WCHAR)), "got %s\n", wine_dbgstr_w(xml));
+    ok(!wcscmp(xml, L"attr=\"&amp;quot;a\""), "Unexpected %s.\n", debugstr_w(xml));
     SysFreeString(xml);
 
     VariantInit(&v);
     hr = IXMLDOMAttribute_get_value(attr, &v);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
-    ok(!memcmp(V_BSTR(&v), _bstr_(attr4A), (sizeof(attr4A)-1)*sizeof(WCHAR)),
-        "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(!wcscmp(V_BSTR(&v), L"&quot;a"), "Unexpected %s.\n", debugstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     IXMLDOMAttribute_Release(attr);
