@@ -3735,6 +3735,7 @@ static void test_get_childNodes(void)
     IXMLDOMNode *node, *node2;
     IXMLDOMElement *element;
     IUnknown *unk1, *unk2;
+    DOMNodeType node_type;
     ULONG fetched;
     VARIANT v[2];
     HRESULT hr;
@@ -3742,6 +3743,61 @@ static void test_get_childNodes(void)
     LONG len;
 
     doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    /* Document children */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szEmailXML), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_TRUE, "Unexpected value %d\n", b);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_get_childNodes(doc, &node_list);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNodeList_get_length(node_list, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(len == 3, "Unexpected length %ld.\n", len);
+
+    hr = IXMLDOMNodeList_nextNode(node_list, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_PROCESSING_INSTRUCTION, "Unexpected node %d.\n", node_type);
+    hr = IXMLDOMDocument_removeChild(doc, node, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMNodeList_nextNode(node_list, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_DOCUMENT_TYPE, "Unexpected node %d.\n", node_type);
+    hr = IXMLDOMDocument_removeChild(doc, node, NULL);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMNodeList_nextNode(node_list, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_ELEMENT, "Unexpected node %d.\n", node_type);
+    hr = IXMLDOMDocument_removeChild(doc, node, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMNodeList_get_length(node_list, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(len == 1, "Unexpected length %ld.\n", len);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDOMNodeList_Release(node_list);
 
     hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
