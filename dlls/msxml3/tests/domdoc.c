@@ -5160,6 +5160,7 @@ static void test_XPath(void)
 {
     const selection_ns_t *ptr = selection_ns_data;
     const xpath_test_t *xptest = xpath_test;
+    IXMLDOMNamedNodeMap *map;
     VARIANT var;
     VARIANT_BOOL b;
     IXMLDOMDocument2 *doc;
@@ -5223,10 +5224,38 @@ static void test_XPath(void)
             IXMLDOMNodeList_Release(list);
     }
 
-if (0)
+if (!winetest_platform_is_wine)
 {
     /* namespace:: axis test is disabled until namespace definitions
-       are supported as attribute nodes, currently it's another node type */
+       are supported as attribute nodes, currently it's another node type.
+
+       Query returns not only actually present attributes, but implicit as well. */
+
+    hr = IXMLDOMDocument2_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_attributes(elem, &map);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+    hr = IXMLDOMNamedNodeMap_get_length(map, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(len == 3, "Unexpected length %ld.\n", len);
+
+    hr = IXMLDOMNamedNodeMap_getNamedItem(map, _bstr_("xmlns:foo"), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMNamedNodeMap_getNamedItem(map, _bstr_("a"), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMNamedNodeMap_getNamedItem(map, _bstr_("foo:b"), &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMNamedNodeMap_Release(map);
+    IXMLDOMElement_Release(elem);
+
     hr = IXMLDOMDocument2_selectNodes(doc, _bstr_("/root/namespace::*"), &list);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     len = -1;
@@ -5240,6 +5269,22 @@ if (0)
     hr = IXMLDOMNode_get_nodeType(node, &type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(type == NODE_ATTRIBUTE, "got %d\n", type);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"xmlns:xml"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMNodeList_nextNode(list, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    type = NODE_INVALID;
+    hr = IXMLDOMNode_get_nodeType(node, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == NODE_ATTRIBUTE, "got %d\n", type);
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"xmlns:foo"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
     IXMLDOMNode_Release(node);
 
     IXMLDOMNodeList_Release(list);
