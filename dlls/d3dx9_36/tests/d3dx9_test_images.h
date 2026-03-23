@@ -95,6 +95,24 @@ test_filter_values[] =
     { 0xff800001,           D3DERR_INVALIDCALL },
 };
 
+static inline const char *debug_d3dx_filter(uint32_t filter_flags)
+{
+    static const char *filter_types[] = { "", "D3DX_FILTER_NONE", "D3DX_FILTER_POINT", "D3DX_FILTER_LINEAR",
+                                          "D3DX_FILTER_TRIANGLE", "D3DX_FILTER_BOX", "", "" };
+    static const char *srgb_types[] = { "", "|D3DX_FILTER_SRGB_IN", "|D3DX_FILTER_SRGB_OUT", "|D3DX_FILTER_SRGB" };
+    static const char *dither_types[] = { "", "|D3DX_FILTER_DITHER", "|D3DX_FILTER_DITHER_DIFFUSION", ""};
+    static const char *mirror_types[] = { "", "|D3DX_FILTER_MIRROR_U", "|D3DX_FILTER_MIRROR_V",
+                                          "|D3DX_FILTER_MIRROR_U|D3DX_FILTER_MIRROR_V", "|D3DX_FILTER_MIRROR_W",
+                                          "|D3DX_FILTER_MIRROR_U|D3DX_FILTER_MIRROR_W",
+                                          "|D3DX_FILTER_MIRROR_V|D3DX_FILTER_MIRROR_W", "|D3DX_FILTER_MIRROR", };
+    const uint8_t mirror = ((filter_flags >> 16) & 0x7);
+    const uint8_t dither = ((filter_flags >> 19) & 0x3);
+    const uint8_t srgb = ((filter_flags >> 21) & 0x3);
+    const uint8_t filter = (filter_flags & 0x7);
+
+    return wine_dbg_sprintf("%s%s%s%s", filter_types[filter], mirror_types[mirror], dither_types[dither], srgb_types[srgb]);
+}
+
 static const PALETTEENTRY test_palette[256] =
 {
     {0x00,0x00,0x00,0x00}, {0x00,0x00,0x80,0x01}, {0x00,0x80,0x00,0x02}, {0x00,0x80,0x80,0x03},
@@ -1972,6 +1990,19 @@ static inline BOOL compare_uint(uint32_t x, uint32_t y, uint32_t max_diff)
     return diff <= max_diff;
 }
 
+static inline BOOL compare_float(float f, float g, uint32_t ulps)
+{
+    int32_t x = *(int32_t *)&f;
+    int32_t y = *(int32_t *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    return compare_uint(x, y, ulps);
+}
+
 static inline BOOL compare_color_4bpp(uint32_t c1, uint32_t c2, uint8_t max_diff)
 {
     return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
@@ -2008,6 +2039,15 @@ static inline BOOL check_readback_pixel_4bpp_rgba(const void *got, const void *e
     return compare_color_4bpp(*a, *b, max_diff);
 }
 
+static inline BOOL check_readback_pixel_float4_rgba(const void *got, const void *expected, uint32_t max_diff)
+{
+    const float *a = got;
+    const float *b = expected;
+
+    return (compare_float(a[0], b[0], max_diff) && compare_float(a[1], b[1], max_diff)
+        && compare_float(a[2], b[2], max_diff) && compare_float(a[3], b[3], max_diff));
+}
+
 typedef BOOL (*check_readback_pixel_func)(const void *, const void *, uint32_t);
 static inline check_readback_pixel_func get_readback_pixel_func_for_d3dformat(D3DFORMAT format)
 {
@@ -2016,6 +2056,9 @@ static inline check_readback_pixel_func get_readback_pixel_func_for_d3dformat(D3
         case D3DFMT_A8B8G8R8:
         case D3DFMT_A8R8G8B8:
             return check_readback_pixel_4bpp_rgba;
+
+        case D3DFMT_A32B32G32R32F:
+            return check_readback_pixel_float4_rgba;
 
         default:
             assert(0 && "Need to add format to get_readback_pixel_func_for_d3dformat().");
