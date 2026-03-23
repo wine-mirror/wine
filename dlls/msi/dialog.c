@@ -1363,6 +1363,8 @@ static LRESULT WINAPI MSIComboBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
     struct msi_combobox_info *info;
     LRESULT r;
     DWORD j;
+    LPWSTR value, text = NULL;
+    INT index, len;
 
     TRACE( "%p %04x %#Ix %#Ix\n", hWnd, msg, wParam, lParam );
 
@@ -1374,6 +1376,31 @@ static LRESULT WINAPI MSIComboBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
 
     switch (msg)
     {
+    case WM_COMMAND:
+        if (HIWORD(wParam) == CBN_SELCHANGE)
+        {
+            index = SendMessageW( hWnd, CB_GETCURSEL, 0, 0 );
+            if (index != CB_ERR)
+            {
+                value = (LPWSTR)SendMessageW( hWnd, CB_GETITEMDATA, index, 0 );
+                if (value) SetWindowTextW( hWnd, value );
+                else
+                {
+                    len = (INT)SendMessageW( hWnd, CB_GETLBTEXTLEN, index, 0 );
+                    if (len != CB_ERR && len >= 0)
+                    {
+                        text = (LPWSTR)malloc( (len + 1) * sizeof(WCHAR) );
+                        if (text)
+                        {
+                            SendMessageW( hWnd, CB_GETLBTEXT, index, (LPARAM)text );
+                            SetWindowTextW( hWnd, text );
+                            free( text );
+                        }
+                    }
+                }
+            }
+        }
+        break;
     case WM_NCDESTROY:
         for (j = 0; j < info->num_items; j++)
             free( info->items[j] );
