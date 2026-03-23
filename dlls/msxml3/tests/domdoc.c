@@ -704,6 +704,13 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
 }
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 #define EXPECT_LIST_LEN(list,len) _expect_list_len(list, len, __LINE__)
 static void _expect_list_len(IXMLDOMNodeList *list, LONG len, int line)
 {
@@ -9901,6 +9908,7 @@ static void test_get_doctype(void)
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     HRESULT hr;
+    VARIANT v;
     BSTR s;
 
     doc = create_document(&IID_IXMLDOMDocument);
@@ -9929,6 +9937,17 @@ static void test_get_doctype(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(L"email", s), "got name %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
+
+    hr = IXMLDOMDocumentType_get_nodeValue(doctype, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IXMLDOMDocumentType_get_nodeValue(doctype, &v);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_NULL, "Unexpected type %d.\n", V_VT(&v));
 
     hr = IXMLDOMDocumentType_get_nodeName(doctype, &s);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -12213,10 +12232,12 @@ static void test_supporterrorinfo(void)
     ISupportErrorInfo *errorinfo, *info2;
     IXMLDOMSchemaCollection *schemacache;
     IXMLDOMNamedNodeMap *map, *map2;
+    IXMLDOMDocumentType *doctype;
     IXMLDOMDocument *doc;
     IXMLDOMElement *elem;
     VARIANT_BOOL b;
     IUnknown *unk;
+    LONG refcount;
     REFIID *iid;
     void *dummy;
     HRESULT hr;
@@ -12351,6 +12372,38 @@ static void test_supporterrorinfo(void)
 
     ISupportErrorInfo_Release(errorinfo);
     IXMLDOMSchemaCollection_Release(schemacache);
+
+    /* IXMLDOMDocumentType */
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szEmailXML), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_TRUE, "Unexpected value %d.\n", b);
+
+    hr = IXMLDOMDocument_get_doctype(doc, &doctype);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    refcount = get_refcount(doctype);
+    hr = IXMLDOMDocumentType_QueryInterface(doctype, &IID_ISupportErrorInfo, (void **)&errorinfo);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(refcount == get_refcount(doctype), "Unexpected refcount %ld.\n", refcount);
+
+if (hr == S_OK)
+{
+    check_interface(errorinfo, &IID_IXMLDOMNode, FALSE);
+
+    hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, &IID_IXMLDOMNode);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, &IID_IXMLDOMDocumentType);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ISupportErrorInfo_Release(errorinfo);
+}
+    IXMLDOMDocumentType_Release(doctype);
+
+    IXMLDOMDocument_Release(doc);
 
     free_bstrs();
 }
