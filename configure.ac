@@ -545,6 +545,21 @@ This is an error since --enable-archs=$wine_arch was requested.])])
           AS_VAR_APPEND([${wine_arch}_CC],[" $res"]) ;;
     esac
 
+    AS_VAR_IF([wine_arch],[i386],[],
+              [AS_VAR_PUSHDEF([wine_cv_seh_support],[ac_cv_${wine_arch}_seh_support])
+               AC_CACHE_CHECK([whether $CC supports SEH directives], wine_cv_seh_support,
+                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");]])],
+                                     [AS_VAR_SET([wine_cv_seh_support],[yes])],[AS_VAR_SET([wine_cv_seh_support],[no])]))
+               AS_VAR_COPY([res],[wine_cv_seh_support])
+               AS_VAR_POPDEF([wine_cv_seh_support])
+               AS_VAR_IF([res],[yes],[],
+                         [AS_VAR_SET_IF([enable_archs],
+                             [AC_MSG_ERROR([The $wine_arch PE cross-compiler doesn't support SEH directives.
+This is an error since --enable-archs=$wine_arch was requested.])])
+                          continue])])
+
+    AS_VAR_IF([wine_arch],[$extra_arch],[],[AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])])
+
     AS_VAR_PUSHDEF([wine_cv_crosscxx_cxx17],[ac_cv_${wine_arch}_crosscxx_cxx17])
     AC_MSG_CHECKING([for $CXX option to enable C++17 features])
     AC_LANG_PUSH([C++])
@@ -563,35 +578,19 @@ This is an error since --enable-archs=$wine_arch was requested.])])
     AC_LANG_POP([C++])
     AS_VAR_POPDEF([wine_cv_crosscxx_cxx17])
     case "x$res" in
-      x) AC_MSG_RESULT([none needed]) ;;
+      x) AC_MSG_RESULT([none needed])
+         enable_cplusplus="$enable_cplusplus,$wine_arch" ;;
       xno) AC_MSG_RESULT([unsupported])
-           AS_VAR_SET_IF([enable_archs],
-                [AC_MSG_ERROR([$wine_arch PE cross-compiler supporting C++17 not found.
-This is an error since --enable-archs=$wine_arch was requested.])])
-           continue
-           ;;
+           WINE_WARNING([$wine_arch PE cross-compiler supporting C++17 not found, some modules won't be built.]) ;;
       x*) AC_MSG_RESULT([$res])
-          AS_VAR_APPEND([${wine_arch}_CXX],[" $res"]) ;;
+          AS_VAR_APPEND([${wine_arch}_CXX],[" $res"])
+          enable_cplusplus="$enable_cplusplus,$wine_arch" ;;
     esac
 
-    AS_VAR_IF([wine_arch],[i386],[],
-              [AS_VAR_PUSHDEF([wine_cv_seh_support],[ac_cv_${wine_arch}_seh_support])
-               AC_CACHE_CHECK([whether $CC supports SEH directives], wine_cv_seh_support,
-                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");]])],
-                                     [AS_VAR_SET([wine_cv_seh_support],[yes])],[AS_VAR_SET([wine_cv_seh_support],[no])]))
-               AS_VAR_COPY([res],[wine_cv_seh_support])
-               AS_VAR_POPDEF([wine_cv_seh_support])
-               AS_VAR_IF([res],[yes],[],
-                         [AS_VAR_SET_IF([enable_archs],
-                             [AC_MSG_ERROR([The $wine_arch PE cross-compiler doesn't support SEH directives.
-This is an error since --enable-archs=$wine_arch was requested.])])
-                          continue])])
-
-    AS_VAR_IF([wine_arch],[$extra_arch],[],[AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])])
-
-    case "$target" in
-      *mingw*|*-windows-gnu) enable_cppabi="$enable_cppabi,$wine_arch" ;;
-    esac
+    AS_VAR_IF([res],[no],[AS_VAR_SET([${wine_arch}_CXX],[])],
+              [case "$target" in
+                 *mingw*|*-windows-gnu) enable_cppabi="$enable_cppabi,$wine_arch" ;;
+               esac])
 
     WINE_TRY_PE_CFLAGS([-fno-strict-aliasing])
     dnl clang needs to be told to fail on unknown options
@@ -2433,8 +2432,6 @@ esac
 
 dnl *** Check for modules to disable by default
 
-enable_cppabi=${enable_cppabi:-no}
-enable_unwind=${enable_unwind:-$enable_cppabi}
 enable_vcruntime140_1=${enable_vcruntime140_1:-x86_64,arm64ec}
 
 if test -n "$PE_ARCHS"
@@ -2449,10 +2446,18 @@ else
     enable_wow64cpu=${enable_wow64cpu:-no}
     enable_xtajit64=${enable_xtajit64:-no}
     enable_compiler_rt=${enable_compiler_rt:-no}
-    dnl Disable modules that need C++
-    enable_icu=${enable_icu:-no}
-    enable_dmsynth=${enable_dmsynth:-no}
 fi
+
+dnl Disable modules that need C++
+enable_cplusplus=${enable_cplusplus:-no}
+enable_cpp=${enable_cpp:-$enable_cplusplus}
+enable_cppabi=${enable_cppabi:-no}
+enable_unwind=${enable_unwind:-$enable_cppabi}
+enable_dmsynth=${enable_dmsynth:-$enable_cplusplus}
+enable_fluidsynth=${enable_fluidsynth:-$enable_cplusplus}
+enable_icu=${enable_icu:-$enable_cplusplus}
+enable_icucommon=${enable_icucommon:-$enable_cplusplus}
+enable_icui18n=${enable_icui18n:-$enable_cplusplus}
 
 dnl Disable some programs for other PE archs
 enable_conhost=${enable_conhost:-$HOST_ARCH}

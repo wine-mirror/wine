@@ -3546,6 +3546,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         if (source->file->flags & FLAG_C_UNIX) return;
         if (!is_multiarch( arch )) return;
         if (!is_using_msvcrt( make ) && !make->staticlib && !(source->file->flags & FLAG_C_IMPLIB)) return;
+        if ((source->file->flags & FLAG_C_CXX) && !get_expanded_arch_var( make, "CXX", arch )) return;
     }
     else if (source->file->flags & FLAG_C_UNIX)
     {
