@@ -14460,13 +14460,17 @@ static DWORD WINAPI new_thread(void *arg)
 
 static void test_get_parentNode(void)
 {
+    IXMLDOMNode *node, *child;
+    IXMLDOMAttribute *attr;
+    IXMLDOMElement *e, *e2;
     IXMLDOMDocument *doc;
-    IXMLDOMNode *node;
+    VARIANT_BOOL b;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_DOMDocument2, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    /* Document parent */
     hr = IXMLDOMDocument_get_parentNode(doc, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
@@ -14474,6 +14478,29 @@ static void test_get_parentNode(void)
     hr = IXMLDOMDocument_get_parentNode(doc, &node);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     ok(!node, "Unexpected node %p.\n", node);
+
+    /* Attribute parent */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a><b attr1=\"value\" /></a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &e);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_firstChild(e, &child);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_QueryInterface(child, &IID_IXMLDOMElement, (void **)&e2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(child);
+
+    hr = IXMLDOMElement_getAttributeNode(e2, _bstr_("attr1"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_get_parentNode(attr, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_get_parentNode(attr, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected node %p.\n", node);
+    IXMLDOMAttribute_Release(attr);
+
+    IXMLDOMElement_Release(e2);
+    IXMLDOMElement_Release(e);
 
     IXMLDOMDocument_Release(doc);
 }
