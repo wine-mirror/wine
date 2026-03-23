@@ -6821,42 +6821,6 @@ static void test_namespaces_basic(void)
     free_bstrs();
 }
 
-static void test_FormattingXML(void)
-{
-    IXMLDOMDocument *doc;
-    IXMLDOMElement *pElement;
-    VARIANT_BOOL bSucc;
-    HRESULT hr;
-    BSTR str;
-    static const CHAR szLinefeedXML[] = "<?xml version=\"1.0\"?>\n<Root>\n\t<Sub val=\"A\" />\n</Root>";
-    static const CHAR szLinefeedRootXML[] = "<Root>\r\n\t<Sub val=\"A\"/>\r\n</Root>";
-
-    doc = create_document(&IID_IXMLDOMDocument);
-
-    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szLinefeedXML), &bSucc);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-    ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
-
-    if(bSucc == VARIANT_TRUE)
-    {
-        hr = IXMLDOMDocument_get_documentElement(doc, &pElement);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        if(hr == S_OK)
-        {
-            hr = IXMLDOMElement_get_xml(pElement, &str);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-            ok( !lstrcmpW( str, _bstr_(szLinefeedRootXML) ), "incorrect element xml\n");
-            SysFreeString(str);
-
-            IXMLDOMElement_Release(pElement);
-        }
-    }
-
-    IXMLDOMDocument_Release(doc);
-
-    free_bstrs();
-}
-
 typedef struct _nodetypedvalue_t {
     const char *name;
     VARTYPE type;
@@ -9094,6 +9058,7 @@ static void test_put_nodeTypedValue(void)
 static void test_get_xml(void)
 {
     static const char xmlA[] = "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n<a>test</a>\r\n";
+    static const char xml2A[] = "<?xml version=\"1.0\"?>\n<Root>\n\t<Sub val=\"A\" />\n</Root>";
     static const char attrA[] = "attr=\"&quot;a &amp; b&quot;\"";
     static const char attr2A[] = "\"a & b\"";
     static const char attr3A[] = "attr=\"&amp;quot;a\"";
@@ -9201,6 +9166,20 @@ static void test_get_xml(void)
     VariantClear(&v);
 
     IXMLDOMAttribute_Release(attr);
+
+    /* More complicated formatting */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(xml2A), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+
+    hr = IXMLDOMElement_get_xml(elem, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    ok(!lstrcmpW(xml, L"<Root>\r\n\t<Sub val=\"A\"/>\r\n</Root>"), "Unexpected xml %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release(doc);
 
@@ -16004,7 +15983,6 @@ START_TEST(domdoc)
     test_testTransforms();
     test_namespaces_basic();
     test_namespaces_change();
-    test_FormattingXML();
     test_nodeTypedValue();
     test_TransformWithLoadingLocalFile();
     test_put_nodeValue();
