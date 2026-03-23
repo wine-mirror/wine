@@ -257,3 +257,14 @@ HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context)
     FIXME("context %p: stub!\n", context);
     return E_NOTIMPL;
 }
+
+/* Undocumented function at ordinal 2502 */
+HRESULT WINAPI NINPUT_2502(HINTERACTIONCONTEXT *context, void *p1, void *p2)
+{
+    FIXME("context %p p1 %p p2 %p: stub!\n", context, p1, p2);
+
+    if (!context)
+        return E_HANDLE;
+
+    return S_OK;
+}

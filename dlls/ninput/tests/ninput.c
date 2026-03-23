@@ -296,6 +296,30 @@ static void test_ProcessBufferedPacketsInteractionContext(void)
     ok(hr == S_OK, "Failed to destroy context, hr %#lx.\n", hr);
 }
 
+static void test_ordinal_2502(void)
+{
+    static HRESULT (WINAPI *pOrdinal2502)(void *, void *, void *);
+    HINTERACTIONCONTEXT context;
+    HMODULE module;
+    HRESULT hr;
+
+    module = GetModuleHandleA("ninput");
+    pOrdinal2502 = (void *)GetProcAddress(module, (LPCSTR)2502);
+    ok(!!pOrdinal2502, "Failed to retrieve the function at ordinal 2502.\n");
+
+    hr = pOrdinal2502(NULL, NULL, NULL);
+    ok(hr == E_HANDLE, "Got unexpected hr %#lx.\n", hr);
+
+    hr = CreateInteractionContext(&context);
+    ok(hr == S_OK, "Failed to create context, hr %#lx.\n", hr);
+
+    hr = pOrdinal2502(context, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = DestroyInteractionContext(context);
+    ok(hr == S_OK, "Failed to destroy context, hr %#lx.\n", hr);
+}
+
 START_TEST(ninput)
 {
     test_context();
@@ -304,4 +328,5 @@ START_TEST(ninput)
     test_BufferPointerPacketsInteractionContext();
     test_GetStateInteractionContext();
     test_ProcessBufferedPacketsInteractionContext();
+    test_ordinal_2502();
 }
