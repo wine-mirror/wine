@@ -1800,30 +1800,41 @@ static IP_ADAPTER_ADDRESSES *get_network_adapters(void)
     return NULL;
 }
 
-static inline BOOL is_link_local( const SOCKADDR *addr )
+static void has_ipv6_address( const IP_ADAPTER_ADDRESSES *aa, BOOL *has_local, BOOL *has_global )
 {
-    const struct sockaddr_in6 *in = (const struct sockaddr_in6 *)addr;
-    return in->sin6_family == AF_INET6 && in->sin6_addr.u.Byte[0] == 0xfe && (in->sin6_addr.u.Byte[1] & 0xc0) == 0x80;
+    const IP_ADAPTER_UNICAST_ADDRESS *addr = aa->FirstUnicastAddress;
+    const struct in6_addr *sa6;
+
+    *has_local = *has_global = FALSE;
+    for (addr = aa->FirstUnicastAddress; addr; addr = addr->Next)
+    {
+        if (addr->Address.lpSockaddr->sa_family != AF_INET6) continue;
+        sa6 = &((struct sockaddr_in6 *)addr->Address.lpSockaddr)->sin6_addr;
+        if (IN6_IS_ADDR_LINKLOCAL(sa6) || IN6_IS_ADDR_SITELOCAL(sa6))
+            *has_local = TRUE;
+        else if (!IN6_IS_ADDR_UNSPECIFIED(sa6) && !IN6_IS_ADDR_MULTICAST(sa6) && !IN6_IS_ADDR_LOOPBACK(sa6))
+            *has_global = TRUE;
+    }
 }
 
-static BOOL has_address( const IP_ADAPTER_ADDRESSES *aa, USHORT family )
+static BOOL has_ipv4_address( const IP_ADAPTER_ADDRESSES *aa )
 {
     const IP_ADAPTER_UNICAST_ADDRESS *addr = aa->FirstUnicastAddress;
     while (addr)
     {
-        if (addr->Address.lpSockaddr->sa_family == family && !is_link_local( addr->Address.lpSockaddr ))
+        if (addr->Address.lpSockaddr->sa_family == AF_INET)
             return TRUE;
         addr = addr->Next;
     }
     return FALSE;
 }
 
-static BOOL has_gateway_address( const IP_ADAPTER_ADDRESSES *aa, USHORT family )
+static BOOL has_ipv4_gateway_address( const IP_ADAPTER_ADDRESSES *aa )
 {
     const IP_ADAPTER_GATEWAY_ADDRESS *addr = aa->FirstGatewayAddress;
     while (addr)
     {
-        if (addr->Address.lpSockaddr->sa_family == family && !is_link_local( addr->Address.lpSockaddr ))
+        if (addr->Address.lpSockaddr->sa_family == AF_INET)
             return TRUE;
         addr = addr->Next;
     }
@@ -1832,6 +1843,7 @@ static BOOL has_gateway_address( const IP_ADAPTER_ADDRESSES *aa, USHORT family )
 
 static void init_networks( struct list_manager *mgr )
 {
+    BOOL has_local, has_global;
     IP_ADAPTER_ADDRESSES *buf, *aa;
     GUID id;
 
@@ -1862,25 +1874,26 @@ static void init_networks( struct list_manager *mgr )
             goto done;
         }
 
-        if (has_address( aa, AF_INET ))
-        {
-            network->connected_v4 = VARIANT_TRUE;
-            connection->connected_v4 = VARIANT_TRUE;
-        }
-        if (has_address( aa, AF_INET6 ))
+        has_ipv6_address( aa, &has_local, &has_global );
+        if (has_local || has_global)
         {
             network->connected_v6 = VARIANT_TRUE;
             connection->connected_v6 = VARIANT_TRUE;
         }
-        if (has_gateway_address( aa, AF_INET ))
-        {
-            network->connected_to_internet_v4 = VARIANT_TRUE;
-            connection->connected_to_internet_v4 = VARIANT_TRUE;
-        }
-        if (has_gateway_address( aa, AF_INET6 ))
+        if (has_global)
         {
             network->connected_to_internet_v6 = VARIANT_TRUE;
             connection->connected_to_internet_v6 = VARIANT_TRUE;
+        }
+        if (has_ipv4_address( aa ))
+        {
+            network->connected_v4 = VARIANT_TRUE;
+            connection->connected_v4 = VARIANT_TRUE;
+        }
+        if (has_ipv4_gateway_address( aa ))
+        {
+            network->connected_to_internet_v4 = VARIANT_TRUE;
+            connection->connected_to_internet_v4 = VARIANT_TRUE;
         }
 
         network->mgr = &mgr->INetworkListManager_iface;
