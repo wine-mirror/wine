@@ -5625,7 +5625,9 @@ if (!winetest_platform_is_wine)
 
 static void test_cloneNode(void )
 {
+    IXMLDOMDocumentType *doctype, *doctype2;
     IXMLDOMDocument2 *doc, *doc_clone;
+    IXMLDOMElement *element;
     IXMLDOMDocument *doc2;
     VARIANT_BOOL b;
     IXMLDOMNodeList *pList;
@@ -5639,6 +5641,47 @@ static void test_cloneNode(void )
     HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument2);
+
+    /* Shallow cloning with a DTD */
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_TRUE, "Unexpected value %d.\n", b);
+
+    hr = IXMLDOMDocument2_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument2_get_doctype(doc, &doctype);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    IXMLDOMDocumentType_Release(doctype);
+
+    hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!node, "Got node %p.\n", node);
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocument2, (void **)&doc_clone);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument2_get_doctype(doc_clone, &doctype2);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr );
+    hr = IXMLDOMDocument2_get_documentElement(doc_clone, &element);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMDocument2_Release(doc_clone);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_TRUE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!node, "Got node %p.\n", node);
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocument2, (void **)&doc_clone);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument2_get_doctype(doc_clone, &doctype2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
+    IXMLDOMDocumentType_Release(doctype2);
+    hr = IXMLDOMDocument2_get_documentElement(doc_clone, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument2_Release(doc_clone);
+    IXMLDOMNode_Release(node);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(complete4A), &b);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
