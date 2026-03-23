@@ -5601,6 +5601,95 @@ static void test_image_filters(void)
     ok(!ID3D10Device_Release(device), "Unexpected refcount.\n");
 }
 
+/*
+ * DXT2 and DXT4 are decoded without taking premultiplied alpha
+ * into account on d3dx10/d3dx11.
+ */
+static void test_dxt_formats(void)
+{
+    static const uint8_t expected_dst[] =
+    {
+        0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,
+        0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,
+        0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,
+        0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,0x21,0x20,0x21,0x88,0x31,0x31,0x31,0x88,
+    };
+    static const uint8_t test_dxt2_dxt3_data[] =
+    {
+        0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x86,0x31,0x04,0x21,0x11,0x11,0x11,0x11,
+    };
+    static const uint8_t test_dxt4_dxt5_data[] =
+    {
+        0x88,0x88,0x00,0x00,0x00,0x00,0x00,0x00,0x86,0x31,0x04,0x21,0x11,0x11,0x11,0x11,
+    };
+    static const struct
+    {
+        DWORD format;
+        const void *data;
+        unsigned int size;
+    } tests[] =
+    {
+        { MAKEFOURCC('D','X','T','2'), test_dxt2_dxt3_data, sizeof(test_dxt2_dxt3_data) },
+        { MAKEFOURCC('D','X','T','3'), test_dxt2_dxt3_data, sizeof(test_dxt2_dxt3_data) },
+        { MAKEFOURCC('D','X','T','4'), test_dxt4_dxt5_data, sizeof(test_dxt4_dxt5_data) },
+        { MAKEFOURCC('D','X','T','5'), test_dxt4_dxt5_data, sizeof(test_dxt4_dxt5_data) },
+    };
+    struct
+    {
+        DWORD magic;
+        struct dds_header header;
+        BYTE data[256];
+    } dds;
+    D3DX10_IMAGE_LOAD_INFO load_info;
+    struct resource_readback rb;
+    ID3D10Resource *resource;
+    ID3D10Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    device = create_device();
+    if (!device)
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    CoInitialize(NULL);
+
+    dds.magic = MAKEFOURCC('D','D','S',' ');
+    fill_dds_header(&dds.header);
+    dds.header.pixel_format.flags = DDS_PF_FOURCC;
+    dds.header.pixel_format.bpp = 0;
+    dds.header.pixel_format.rmask = 0;
+    dds.header.pixel_format.gmask = 0;
+    dds.header.pixel_format.bmask = 0;
+    dds.header.pixel_format.amask = 0;
+
+    memset(dds.data, 0, sizeof(dds.data));
+    load_info = d3dx10_default_load_info;
+    load_info.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    load_info.Filter = load_info.MipFilter = D3DX10_FILTER_NONE;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Test %u (%s)", i, debugstr_fourcc(tests[i].format));
+        memcpy(dds.data, tests[i].data, tests[i].size);
+        dds.header.pixel_format.fourcc = tests[i].format;
+
+        hr = D3DX10CreateTextureFromMemory(device, &dds, sizeof(dds), &load_info, NULL, &resource, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        get_resource_readback(resource, 0, &rb);
+        check_test_readback(&rb, expected_dst, 4, 4, 1, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+        release_resource_readback(&rb);
+        ID3D10Resource_Release(resource);
+        winetest_pop_context();
+    }
+
+    CoUninitialize();
+    ok(!ID3D10Device_Release(device), "Unexpected refcount.\n");
+}
+
 #define check_rect(rect, left, top, right, bottom) _check_rect(__LINE__, rect, left, top, right, bottom)
 static inline void _check_rect(unsigned int line, const RECT *rect, int left, int top, int right, int bottom)
 {
@@ -7090,4 +7179,5 @@ START_TEST(d3dx10)
     test_legacy_dds_header_image_info();
     test_dxt10_dds_header_image_info();
     test_image_filters();
+    test_dxt_formats();
 }
