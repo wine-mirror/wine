@@ -1510,7 +1510,8 @@ static UINT dialog_combobox_handler( msi_dialog *dialog, struct control *control
 static void dialog_combobox_update( msi_dialog *dialog, struct control *control )
 {
     struct msi_combobox_info *info;
-    LPWSTR value, tmp;
+    LPWSTR value, tmp, text = NULL;
+    INT len;
     DWORD j;
 
     info = GetPropW( control->hwnd, L"MSIDATA" );
@@ -1524,21 +1525,31 @@ static void dialog_combobox_update( msi_dialog *dialog, struct control *control 
 
     for (j = 0; j < info->num_items; j++)
     {
-        tmp = (LPWSTR) SendMessageW( control->hwnd, CB_GETITEMDATA, j, 0 );
-        if (!wcscmp( value, tmp ))
-            break;
+        tmp = (LPWSTR)SendMessageW( control->hwnd, CB_GETITEMDATA, j, 0 );
+        if (!tmp)
+        {
+            len = (INT)SendMessageW( control->hwnd, CB_GETLBTEXTLEN, j, 0 );
+            if (len != CB_ERR && len >= 0)
+            {
+                text = (LPWSTR)malloc( (len + 1) * sizeof(WCHAR) );
+                if (text)
+                SendMessageW( control->hwnd, CB_GETLBTEXT, j, (LPARAM)text );
+            }
+        }
+
+        if ((tmp && !wcscmp( value, tmp )) || (text && !wcscmp( value, text )))
+        {
+            SendMessageW( control->hwnd, CB_SETCURSEL, j, 0 );
+            SetWindowTextW( control->hwnd, tmp ? tmp : text );
+            free( value );
+            if (text) free( text );
+            return;
+        }
+        if (text) free( text );
     }
 
-    if (j < info->num_items)
-    {
-        SendMessageW( control->hwnd, CB_SETCURSEL, j, 0 );
-    }
-    else
-    {
-        SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
-        SetWindowTextW( control->hwnd, value );
-    }
-
+    SendMessageW( control->hwnd, CB_SETCURSEL, -1, 0 );
+    SetWindowTextW( control->hwnd, value );
     free( value );
 }
 
