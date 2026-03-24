@@ -939,13 +939,31 @@ my @extra_wgl_functions = ( "wglGetDefaultProcAddress" );
 
 my %unsupported_extgroups =
    (
-    "EGL_ANDROID_" => 1,
-    "EGL_ANGLE_" => 1,
-    "EGL_ARM_" => 1,
-    "EGL_HI_" => 1,
-    "EGL_NOK_" => 1,
-    "EGL_QNX_" => 1,
-    "EGL_TIZEN_" => 1,
+    "WGL_3DL_" => 1,
+    "WGL_I3D_" => 1,
+    "WGL_OML_" => 1,
+   );
+my %unsupported_extensions =
+   (
+    "WGL_AMD_gpu_association" => 1,
+    "WGL_ARB_buffer_region" => 1,
+    "WGL_EXT_display_color_table" => 1,
+    "WGL_EXT_make_current_read" => 1,
+    "WGL_EXT_pbuffer" => 1,
+    "WGL_EXT_pixel_format" => 1,
+    "WGL_NV_copy_image" => 1,
+    "WGL_NV_delay_before_swap" => 1,
+    "WGL_NV_DX_interop" => 1,
+    "WGL_NV_DX_interop2" => 1,
+    "WGL_NV_gpu_affinity" => 1,
+    "WGL_NV_present_video" => 1,
+    "WGL_NV_swap_group" => 1,
+    "WGL_NV_video_capture" => 1,
+    "WGL_NV_video_output" => 1,
+   );
+my %unexposed_extgroups =
+   (
+    "EGL_" => 1,
     "GL_ANDROID_" => 1,
     "GL_ANGLE_" => 1,
     "GL_ARM_" => 1,
@@ -954,12 +972,12 @@ my %unsupported_extgroups =
     "GL_HUAWEI_" => 1,
     "GL_QCOM_" => 1,
     "GL_VIV_" => 1,
-    "WGL_3DL_" => 1,
-    "WGL_I3D_" => 1,
-    "WGL_OML_" => 1,
    );
-my %unsupported_extensions =
+my %unexposed_extensions =
    (
+    "GL_EXT_memory_object_fd" => 1,
+    "GL_EXT_semaphore_fd" => 1,
+    # GLES-only extensions:
     "GL_APPLE_copy_texture_levels" => 1,
     "GL_APPLE_framebuffer_multisample" => 1,
     "GL_APPLE_sync" => 1,
@@ -1034,30 +1052,6 @@ my %unsupported_extensions =
     "GL_OES_vertex_array_object" => 1,
     "GL_OES_viewport_array" => 1,
     "GL_OVR_multiview_multisampled_render_to_texture" => 1,
-    "WGL_AMD_gpu_association" => 1,
-    "WGL_ARB_buffer_region" => 1,
-    "WGL_EXT_display_color_table" => 1,
-    "WGL_EXT_make_current_read" => 1,
-    "WGL_EXT_pbuffer" => 1,
-    "WGL_EXT_pixel_format" => 1,
-    "WGL_NV_copy_image" => 1,
-    "WGL_NV_delay_before_swap" => 1,
-    "WGL_NV_DX_interop" => 1,
-    "WGL_NV_DX_interop2" => 1,
-    "WGL_NV_gpu_affinity" => 1,
-    "WGL_NV_present_video" => 1,
-    "WGL_NV_swap_group" => 1,
-    "WGL_NV_video_capture" => 1,
-    "WGL_NV_video_output" => 1,
-   );
-my %unexposed_extgroups =
-   (
-    "EGL_" => 1,
-   );
-my %unexposed_extensions =
-   (
-    "GL_EXT_memory_object_fd" => 1,
-    "GL_EXT_semaphore_fd" => 1,
    );
 my %extension_aliases =
     (
