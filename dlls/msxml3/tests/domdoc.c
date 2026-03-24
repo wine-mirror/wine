@@ -1191,19 +1191,7 @@ static const WCHAR nonexistent_fileW[] = L"c:\\Nonexistent.xml";
 
 static const WCHAR szStrangeChars[] = L"&x \x2103";
 
-#define expect_bstr_eq_and_free(bstr, expect) { \
-    BSTR bstrExp = alloc_str_from_narrow(expect); \
-    ok(lstrcmpW(bstr, bstrExp) == 0, "String differs\n"); \
-    SysFreeString(bstr); \
-    SysFreeString(bstrExp); \
-}
-
 #define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
-
-#define ole_expect(expr, expect) { \
-    HRESULT r = expr; \
-    ok(r == (expect), #expr " returned %x, expected %x\n", r, expect); \
-}
 
 #define double_eq(x, y) ok((x)-(y)<=1e-14*(x) && (x)-(y)>=-1e-14*(x), "expected %.16g, got %.16g\n", x, y)
 
@@ -3671,7 +3659,8 @@ static void test_get_text(void)
     {
         hr = IXMLDOMNode_get_text( nodeRoot, &str );
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        expect_bstr_eq_and_free(str, "fn1.txt\n \nfn2.txt\n \nf1");
+        ok(!wcscmp(str, L"fn1.txt\n \nfn2.txt\n \nf1"), "Unexpected text %s.\n", debugstr_w(str));
+        SysFreeString(str);
 
         IXMLDOMNode_Release(nodeRoot);
     }
@@ -4614,7 +4603,8 @@ static void test_IXMLDOMDocument2(void)
     hr = IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionLanguage"), &var);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     expect_eq(V_VT(&var), VT_BSTR, int, "%x");
-    expect_bstr_eq_and_free(V_BSTR(&var), "XSLPattern");
+    ok(!wcscmp(V_BSTR(&var), L"XSLPattern"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
     V_VT(&var) = VT_R4;
 
     /* the variant didn't get cleared*/
@@ -4649,7 +4639,8 @@ static void test_IXMLDOMDocument2(void)
     hr = IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionLanguage"), &var);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     expect_eq(V_VT(&var), VT_BSTR, int, "%x");
-    expect_bstr_eq_and_free(V_BSTR(&var), "XSLPattern");
+    ok(!wcscmp(V_BSTR(&var), L"XSLPattern"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    VariantClear(&var);
 
     IXMLDOMDocument2_Release( doc2 );
     IXMLDOMDocument_Release( doc );
@@ -5463,7 +5454,11 @@ if (!winetest_platform_is_wine)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     expect_eq(V_VT(&var), VT_BSTR, int, "%x");
     if (V_VT(&var) == VT_BSTR)
-        expect_bstr_eq_and_free(V_BSTR(&var), "xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' xmlns:foo=###");
+    {
+        ok(!wcscmp(V_BSTR(&var), L"xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' xmlns:foo=###"),
+                "Unexpected value %s.\n", debugstr_w(V_BSTR(&var)));
+    }
+    VariantClear(&var);
 
     /* extra attributes - same thing*/
     hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
