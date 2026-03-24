@@ -442,8 +442,7 @@ static void test_kerberos(void)
     static const ULONG optional_mask =
           SECPKG_FLAG_RESTRICTED_TOKENS
         | SECPKG_FLAG_APPCONTAINER_CHECKS
-        | 0x02000000; /* not defined in the SDK */
-
+        | SECPKG_FLAG_APPLY_LOOPBACK;
 
     status = QuerySecurityPackageInfoA(provider, &info);
     ok(status == SEC_E_OK, "Kerberos package not installed (%08lx), skipping test\n", status);
