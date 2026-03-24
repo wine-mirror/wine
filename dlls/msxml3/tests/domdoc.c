@@ -14654,6 +14654,9 @@ static void test_removeAttributeNode(void)
     HRESULT hr;
     BSTR str;
 
+    if (winetest_platform_is_wine)
+        return;
+
     hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
