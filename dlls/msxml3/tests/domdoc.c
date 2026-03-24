@@ -9900,8 +9900,17 @@ static void test_insertBefore(void)
 
 static void test_appendChild(void)
 {
+    IXMLDOMComment *comment1, *comment2;
+    IXMLDOMDocumentFragment *fragment;
+    IXMLDOMProcessingInstruction *pi;
     IXMLDOMDocument *doc, *doc2;
     IXMLDOMElement *elem, *elem2;
+    IXMLDOMText *text1, *text2;
+    IXMLDOMNodeList *list;
+    DOMNodeType node_type;
+    IXMLDOMNode *node;
+    LONG length;
+    VARIANT var;
     HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument);
@@ -9941,6 +9950,100 @@ static void test_appendChild(void)
     IXMLDOMElement_Release(elem2);
     IXMLDOMDocument_Release(doc);
     IXMLDOMDocument_Release(doc2);
+
+    /* Append a child to a document */
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem2"), &elem2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)elem, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)elem2, NULL);
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createComment(doc, _bstr_("Comment1"), &comment1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createComment(doc, _bstr_("Comment2"), &comment2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)comment1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch *)elem;
+    hr = IXMLDOMDocument_insertBefore(doc, (IXMLDOMNode *)comment2, var, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDOMComment_Release(comment1);
+    IXMLDOMComment_Release(comment2);
+
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\""), &pi);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)pi, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDOMProcessingInstruction_Release(pi);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMElement_Release(elem2);
+
+    /* Append document fragment with multiple children. */
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &fragment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_("text1"), &text1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_("text2"), &text2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    EXPECT_NO_CHILDREN(fragment);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)text1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)text2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_CHILDREN(fragment);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_appendChild(elem, (IXMLDOMNode *)fragment, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node == (IXMLDOMNode *)fragment, "Unexpected child %p.\n", node);
+    IXMLDOMNode_Release(node);
+    todo_wine
+    EXPECT_NO_CHILDREN(fragment);
+
+    hr = IXMLDOMElement_get_childNodes(elem, &list);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNodeList_get_length(list, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 2, "Unexpected length %ld.\n", length);
+    while (IXMLDOMNodeList_nextNode(list, &node) == S_OK)
+    {
+        hr = IXMLDOMNode_get_nodeType(node, &node_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(node_type == NODE_TEXT, "Unexpected type %d.\n", node_type);
+        IXMLDOMNode_Release(node);
+    }
+
+    IXMLDOMNodeList_Release(list);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMText_Release(text1);
+    IXMLDOMText_Release(text2);
+    IXMLDOMDocumentFragment_Release(fragment);
+
+    IXMLDOMDocument_Release(doc);
 }
 
 static void test_get_doctype(void)
