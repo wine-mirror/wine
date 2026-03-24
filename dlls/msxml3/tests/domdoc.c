@@ -9274,6 +9274,17 @@ static void test_get_xml(void)
 
     IXMLDOMElement_Release(elem);
 
+    /* Excessive namespace definitions */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a xmlns:ns=\"uri\" ><b ns:attr=\"value\" xmlns:ns=\"uri\" /></a>"), &b );
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a xmlns:ns=\"uri\"><b ns:attr=\"value\" xmlns:ns=\"uri\"/></a>\r\n"),
+            "Unexpected xml %s.\n", wine_dbgstr_w(xml));
+    SysFreeString(xml);
+
     IXMLDOMDocument_Release(doc);
 
     free_bstrs();
