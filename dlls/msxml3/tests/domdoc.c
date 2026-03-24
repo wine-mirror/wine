@@ -16220,6 +16220,7 @@ static void test_xmldecl_attributes(void)
 
 static void test_loadXML(void)
 {
+    IXMLDOMElement *element;
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     HRESULT hr;
@@ -16238,6 +16239,17 @@ static void test_loadXML(void)
     hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>text</a>"), NULL);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IXMLDOMElement_Release(element);
+
+    /* Clears current document */
+    hr = IXMLDOMDocument_loadXML(doc, NULL, NULL);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     IXMLDOMDocument_Release(doc);
 }
