@@ -121,10 +121,12 @@ struct json_value
     LONG ref;
 
     JsonValueType json_value_type;
-    HSTRING parsed_string;
-    double parsed_number;
-    boolean parsed_boolean;
-    HSTRING string_value;
+    union
+    {
+        boolean boolean_value;
+        HSTRING string_value;
+        double number_value;
+    };
 };
 
 static inline struct json_value *impl_from_IJsonValue( IJsonValue *iface )
@@ -170,8 +172,9 @@ static ULONG WINAPI json_value_Release( IJsonValue *iface )
 
     if (!ref)
     {
-        WindowsDeleteString( impl->parsed_string );
-        WindowsDeleteString( impl->string_value );
+        if (impl->json_value_type == JsonValueType_String)
+            WindowsDeleteString( impl->string_value );
+
         free( impl );
     }
     return ref;
@@ -222,7 +225,7 @@ static HRESULT WINAPI json_value_GetString( IJsonValue *iface, HSTRING *value )
     if (impl->json_value_type != JsonValueType_String) return E_ILLEGAL_METHOD_CALL;
     if (!value) return E_POINTER;
 
-    return WindowsDuplicateString( impl->parsed_string, value );
+    return WindowsDuplicateString( impl->string_value, value );
 }
 
 static HRESULT WINAPI json_value_GetNumber( IJsonValue *iface, DOUBLE *value )
@@ -234,7 +237,7 @@ static HRESULT WINAPI json_value_GetNumber( IJsonValue *iface, DOUBLE *value )
     if (impl->json_value_type != JsonValueType_Number) return E_ILLEGAL_METHOD_CALL;
     if (!value) return E_POINTER;
 
-    *value = impl->parsed_number;
+    *value = impl->number_value;
     return S_OK;
 }
 
@@ -247,7 +250,7 @@ static HRESULT WINAPI json_value_GetBoolean( IJsonValue *iface, boolean *value )
     if (impl->json_value_type != JsonValueType_Boolean) return E_ILLEGAL_METHOD_CALL;
     if (!value) return E_POINTER;
 
-    *value = impl->parsed_boolean;
+    *value = impl->boolean_value;
     return S_OK;
 }
 
@@ -324,15 +327,19 @@ static HRESULT trim_string( HSTRING input, HSTRING *output )
     return WindowsCreateString( json + start, end - start, output );
 }
 
-static HRESULT parse_json_value( HSTRING input, struct json_value *impl )
+static HRESULT parse_json_value( HSTRING input, IJsonValue **value )
 {
     UINT32 len;
     const WCHAR *json = WindowsGetStringRawBuffer( input, &len );
+    struct json_value *impl;
     HRESULT hr = S_OK;
 
     /* FIXME: Handle all JSON edge cases */
 
     if (!len) return WEB_E_INVALID_JSON_STRING;
+    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
+    impl->IJsonValue_iface.lpVtbl = &json_value_vtbl;
+    impl->ref = 1;
 
     if (len == 4 && !wcsncmp( L"null", json, 4 ))
     {
@@ -340,7 +347,7 @@ static HRESULT parse_json_value( HSTRING input, struct json_value *impl )
     }
     else if ((len == 4 && !wcsncmp( L"true", json, 4 )) || (len == 5 && !wcsncmp( L"false", json, 5 )))
     {
-        impl->parsed_boolean = len == 4;
+        impl->boolean_value = len == 4;
         impl->json_value_type = JsonValueType_Boolean;
     }
     else if (json[0] == '\"' && json[len - 1] == '\"')
@@ -348,9 +355,8 @@ static HRESULT parse_json_value( HSTRING input, struct json_value *impl )
         json++;
         len -= 2;
 
-        if (len <= 2) return WEB_E_INVALID_JSON_STRING;
-        if (FAILED(hr = unescape_string( json, &impl->parsed_string ))) return hr;
-
+        if (len <= 2) hr = WEB_E_INVALID_JSON_STRING;
+        else hr = unescape_string( json, &impl->string_value );
         impl->json_value_type = JsonValueType_String;
     }
     else if (json[0] == '[' && json[len - 1] == ']')
@@ -371,22 +377,24 @@ static HRESULT parse_json_value( HSTRING input, struct json_value *impl )
         errno = 0;
         result = wcstold( json, &end );
 
-        if (errno || errno == ERANGE || end != json + len) return WEB_E_INVALID_JSON_NUMBER;
+        if (errno || errno == ERANGE || end != json + len) hr = WEB_E_INVALID_JSON_NUMBER;
 
-        impl->parsed_number = result;
+        impl->number_value = result;
         impl->json_value_type = JsonValueType_Number;
     }
 
+    if (FAILED(hr)) free( impl );
+    else *value = &impl->IJsonValue_iface;
     return hr;
 }
 
-static HRESULT parse_json( HSTRING json, struct json_value *impl )
+static HRESULT parse_json( HSTRING json, IJsonValue **value )
 {
     HSTRING trimmed_json = NULL;
     HRESULT hr = trim_string( json, &trimmed_json );
 
     if (SUCCEEDED(hr) && WindowsIsStringEmpty( trimmed_json )) hr = WEB_E_INVALID_JSON_STRING;
-    if (SUCCEEDED(hr)) hr = parse_json_value( trimmed_json, impl );
+    if (SUCCEEDED(hr)) hr = parse_json_value( trimmed_json, value );
 
     WindowsDeleteString( trimmed_json );
     return hr;
@@ -394,26 +402,17 @@ static HRESULT parse_json( HSTRING json, struct json_value *impl )
 
 static HRESULT WINAPI json_value_statics_Parse( IJsonValueStatics *iface, HSTRING input, IJsonValue **value )
 {
-    struct json_value *impl;
     HRESULT hr;
 
     FIXME( "iface %p, input %s, value %p semi-stub\n", iface, debugstr_hstring( input ), value );
 
     if (!value) return E_POINTER;
     if (!input) return WEB_E_INVALID_JSON_STRING;
-    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
 
-    if (FAILED(hr = parse_json( input, impl )))
-    {
-        free( impl );
-        return hr;
-    }
-    impl->IJsonValue_iface.lpVtbl = &json_value_vtbl;
-    impl->ref = 1;
+    if (SUCCEEDED(hr = parse_json( input, value )))
+        TRACE( "created IJsonValue %p.\n", *value );
 
-    *value = &impl->IJsonValue_iface;
-    TRACE( "created IJsonValue %p.\n", *value );
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI json_value_statics_TryParse( IJsonValueStatics *iface, HSTRING input, IJsonValue **result, boolean *succeeded )
@@ -449,8 +448,8 @@ static HRESULT WINAPI json_value_statics_CreateStringValue( IJsonValueStatics *i
     impl->json_value_type = JsonValueType_String;
     if (FAILED(hr = WindowsDuplicateString( input, &impl->string_value )))
     {
-         free( impl );
-         return hr;
+        free( impl );
+        return hr;
     }
 
     *value = &impl->IJsonValue_iface;
