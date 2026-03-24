@@ -1574,13 +1574,13 @@ static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wine
     return true;
 }
 
-static bool use_raw_blit(enum wined3d_blit_op op, const struct wined3d_format_vk *src_format_vk,
-        const struct wined3d_format_vk *dst_format_vk, const RECT *src_rect, const RECT *dst_rect)
+static bool use_raw_blit(enum wined3d_blit_op op, VkFormat src_format,
+        VkFormat dst_format, const RECT *src_rect, const RECT *dst_rect)
 {
     if (op == WINED3D_BLIT_OP_RAW_BLIT)
         return true;
 
-    return src_format_vk->vk_format == dst_format_vk->vk_format
+    return src_format == dst_format
             && src_rect->right - src_rect->left == dst_rect->right - dst_rect->left
             && src_rect->bottom - src_rect->top == dst_rect->bottom - dst_rect->top;
 }
@@ -1694,6 +1694,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         VkImageType vk_image_type;
         VkImageCopy copy_region;
         VkFormat vk_format;
+        bool raw;
 
         if (resolve_format)
         {
@@ -1807,7 +1808,9 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             resolve_region.srcOffset.z = 0;
         }
 
-        if (dst_format_vk->vk_format != vk_format)
+        raw = use_raw_blit(op, vk_format, dst_format_vk->vk_format, src_rect, dst_rect);
+
+        if (dst_format_vk->vk_format != vk_format || !raw)
         {
             struct wined3d_image_vk dst_image;
 
@@ -1857,29 +1860,60 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
                     resolve_dst_layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                     dst_vk_image, &vk_range);
 
-            copy_region.srcSubresource.aspectMask = vk_dst_range.aspectMask;
-            copy_region.srcSubresource.mipLevel = 0;
-            copy_region.srcSubresource.baseArrayLayer = 0;
-            copy_region.srcSubresource.layerCount = 1;
-            copy_region.srcOffset.x = 0;
-            copy_region.srcOffset.y = 0;
-            copy_region.srcOffset.z = 0;
-            copy_region.dstSubresource.aspectMask = vk_dst_range.aspectMask;
-            copy_region.dstSubresource.mipLevel = vk_dst_range.baseMipLevel;
-            copy_region.dstSubresource.baseArrayLayer = vk_dst_range.baseArrayLayer;
-            copy_region.dstSubresource.layerCount = 1;
-            copy_region.dstOffset.x = dst_rect->left;
-            copy_region.dstOffset.y = dst_rect->top;
-            copy_region.dstOffset.z = 0;
-            copy_region.extent.width = resolve_region.extent.width;
-            copy_region.extent.height = resolve_region.extent.height;
-            copy_region.extent.depth = 1;
+            if (raw)
+            {
+                copy_region.srcSubresource.aspectMask = vk_dst_range.aspectMask;
+                copy_region.srcSubresource.mipLevel = 0;
+                copy_region.srcSubresource.baseArrayLayer = 0;
+                copy_region.srcSubresource.layerCount = 1;
+                copy_region.srcOffset.x = 0;
+                copy_region.srcOffset.y = 0;
+                copy_region.srcOffset.z = 0;
+                copy_region.dstSubresource.aspectMask = vk_dst_range.aspectMask;
+                copy_region.dstSubresource.mipLevel = vk_dst_range.baseMipLevel;
+                copy_region.dstSubresource.baseArrayLayer = vk_dst_range.baseArrayLayer;
+                copy_region.dstSubresource.layerCount = 1;
+                copy_region.dstOffset.x = dst_rect->left;
+                copy_region.dstOffset.y = dst_rect->top;
+                copy_region.dstOffset.z = 0;
+                copy_region.extent.width = resolve_region.extent.width;
+                copy_region.extent.height = resolve_region.extent.height;
+                copy_region.extent.depth = 1;
 
-            VK_CALL(vkCmdCopyImage(vk_command_buffer, dst_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    dst_texture_vk->image.vk_image, dst_layout, 1, &copy_region));
+                VK_CALL(vkCmdCopyImage(vk_command_buffer, dst_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                        dst_texture_vk->image.vk_image, dst_layout, 1, &copy_region));
+            }
+            else
+            {
+                VkImageBlit blit_region;
+
+                blit_region.srcSubresource.aspectMask = vk_dst_range.aspectMask;
+                blit_region.srcSubresource.mipLevel = 0;
+                blit_region.srcSubresource.baseArrayLayer = 0;
+                blit_region.srcSubresource.layerCount = 1;
+                blit_region.srcOffsets[0].x = 0;
+                blit_region.srcOffsets[0].y = 0;
+                blit_region.srcOffsets[0].z = 0;
+                blit_region.srcOffsets[1].x = resolve_region.extent.width;
+                blit_region.srcOffsets[1].y = resolve_region.extent.height;
+                blit_region.srcOffsets[1].z = 1;
+                blit_region.dstSubresource.aspectMask = vk_dst_range.aspectMask;
+                blit_region.dstSubresource.mipLevel = vk_dst_range.baseMipLevel;
+                blit_region.dstSubresource.baseArrayLayer = vk_dst_range.baseArrayLayer;
+                blit_region.dstSubresource.layerCount = 1;
+                blit_region.dstOffsets[0].x = dst_rect->left;
+                blit_region.dstOffsets[0].y = dst_rect->top;
+                blit_region.dstOffsets[0].z = 0;
+                blit_region.dstOffsets[1].x = dst_rect->right;
+                blit_region.dstOffsets[1].y = dst_rect->bottom;
+                blit_region.dstOffsets[1].z = 1;
+
+                VK_CALL(vkCmdBlitImage(vk_command_buffer, dst_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                        dst_texture_vk->image.vk_image, dst_layout, 1, &blit_region, vk_filter_from_wined3d(filter)));
+            }
         }
     }
-    else if (use_raw_blit(op, src_format_vk, dst_format_vk, src_rect, dst_rect))
+    else if (use_raw_blit(op, src_format_vk->vk_format, dst_format_vk->vk_format, src_rect, dst_rect))
     {
         const struct wined3d_format *src_format = src_texture_vk->t.resource.format;
         VkImageCopy region;
