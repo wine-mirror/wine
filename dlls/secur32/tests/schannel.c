@@ -1378,7 +1378,6 @@ static void test_communication(void)
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_MISSING, "Expected first buffer to be SECBUFFER_MISSING\n");
     ok(buffers[0].pBuffers[0].cbBuffer == 5, "Expected first buffer to be a five bytes\n");
     ok(buffers[0].pBuffers[1].BufferType == SECBUFFER_MISSING, "Unexpected buffer type\n");
-    todo_wine
     ok(buffers[0].pBuffers[1].cbBuffer == 5, "Unexpected buffer size\n");
 
     /* Renegotiate */
