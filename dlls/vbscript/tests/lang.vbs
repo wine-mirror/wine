@@ -1948,6 +1948,44 @@ redim preserve dynarr2(5)
 ok ubound(dynarr2) = 5, "ubound(dynarr2) = " & ubound(dynarr2)
 ok dynarr2(0) = "x", "dynarr2(0) after redim preserve = " & dynarr2(0)
 
+' Array dimension mismatch: should give error 9 (Subscript out of range)
+dim dimArr2d(3, 3)
+dimArr2d(0, 0) = "hello"
+on error resume next
+
+' 2D array accessed with 1 index
+err.clear
+y = dimArr2d(0)
+ok err.number = 9, "2D array 1 index: err.number = " & err.number
+
+' 1D array accessed with 2 indices
+dim dimArr1d(3)
+err.clear
+y = dimArr1d(0, 0)
+ok err.number = 9, "1D array 2 indices: err.number = " & err.number
+
+' 2D array accessed with 3 indices
+err.clear
+y = dimArr2d(0, 0, 0)
+ok err.number = 9, "2D array 3 indices: err.number = " & err.number
+
+' Assign to 2D array with 1 index
+err.clear
+dimArr2d(0) = "test"
+ok err.number = 9, "assign 2D array 1 index: err.number = " & err.number
+
+' Assign to 1D array with 2 indices
+err.clear
+dimArr1d(0, 0) = "test"
+ok err.number = 9, "assign 1D array 2 indices: err.number = " & err.number
+
+' Uninitialized dynamic array access
+dim dimDynArr()
+err.clear
+y = dimDynArr(0)
+ok err.number = 9, "uninitialized dynamic array access: err.number = " & err.number
+on error goto 0
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()

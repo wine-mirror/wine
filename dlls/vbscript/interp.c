@@ -527,8 +527,8 @@ HRESULT array_access(SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret)
     HRESULT hres;
 
     if(!array) {
-        FIXME("NULL array\n");
-        return E_FAIL;
+        WARN("NULL array\n");
+        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
     }
 
     hres = SafeArrayLock(array);
@@ -536,9 +536,9 @@ HRESULT array_access(SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret)
         return hres;
 
     if(array->cDims != argc) {
-        FIXME("argc %d does not match cDims %d\n", dp->cArgs, array->cDims);
+        WARN("argc %d does not match cDims %d\n", dp->cArgs, array->cDims);
         SafeArrayUnlock(array);
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
     }
 
     indices = malloc(sizeof(*indices) * argc);
@@ -583,29 +583,27 @@ static HRESULT variant_call(exec_ctx_t *ctx, VARIANT *v, unsigned arg_cnt, VARIA
     case VT_DISPATCH:
         vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
         hres = disp_call(ctx->script, V_DISPATCH(v), DISPID_VALUE, &dp, res);
-        break;
+        stack_popn(ctx, arg_cnt);
+        return hres;
     default:
         FIXME("unsupported on %s\n", debugstr_variant(v));
         return E_NOTIMPL;
     }
 
-    if(array) {
-        if(!res) {
-            FIXME("no res\n");
-            return E_NOTIMPL;
-        }
+    if(!res) {
+        FIXME("no res\n");
+        return E_NOTIMPL;
+    }
 
-        vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-        hres = array_access(array, &dp, &v);
-        if(FAILED(hres))
-            return hres;
-
+    vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
+    hres = array_access(array, &dp, &v);
+    if(SUCCEEDED(hres)) {
         V_VT(res) = VT_BYREF|VT_VARIANT;
         V_BYREF(res) = v;
     }
 
     stack_popn(ctx, arg_cnt);
-    return S_OK;
+    return hres;
 }
 
 static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned arg_cnt, BOOL is_call)
@@ -894,8 +892,8 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
             }
 
             if(!array) {
-                FIXME("null array\n");
-                return E_FAIL;
+                WARN("null array\n");
+                return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
             }
 
             hres = array_access(array, dp, &v);
