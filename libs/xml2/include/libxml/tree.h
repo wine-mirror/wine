@@ -265,6 +265,7 @@ typedef struct _xmlAttribute xmlAttribute;
 typedef xmlAttribute *xmlAttributePtr;
 struct _xmlAttribute {
     void           *_private;	        /* application data */
+    void           *_private2;
     xmlElementType          type;       /* XML_ATTRIBUTE_DECL, must be second ! */
     const xmlChar          *name;	/* Attribute name */
     struct _xmlNode    *children;	/* NULL */
@@ -350,6 +351,7 @@ typedef struct _xmlElement xmlElement;
 typedef xmlElement *xmlElementPtr;
 struct _xmlElement {
     void           *_private;	        /* application data */
+    void           *_private2;
     xmlElementType          type;       /* XML_ELEMENT_DECL, must be second ! */
     const xmlChar          *name;	/* Element name */
     struct _xmlNode    *children;	/* NULL */
@@ -393,6 +395,7 @@ typedef struct _xmlNs xmlNs;
 typedef xmlNs *xmlNsPtr;
 struct _xmlNs {
     struct _xmlNs  *next;	/* next Ns link for this node  */
+    void *_pad;
     xmlNsType      type;	/* global or local */
     const xmlChar *href;	/* URL for the namespace */
     const xmlChar *prefix;	/* prefix for the namespace */
@@ -410,6 +413,7 @@ typedef struct _xmlDtd xmlDtd;
 typedef xmlDtd *xmlDtdPtr;
 struct _xmlDtd {
     void           *_private;	/* application data */
+    void           *_private2;
     xmlElementType  type;       /* XML_DTD_NODE, must be second ! */
     const xmlChar *name;	/* Name of the DTD */
     struct _xmlNode *children;	/* the value of the property link */
@@ -438,6 +442,7 @@ typedef struct _xmlAttr xmlAttr;
 typedef xmlAttr *xmlAttrPtr;
 struct _xmlAttr {
     void           *_private;	/* application data */
+    void           *_private2;
     xmlElementType   type;      /* XML_ATTRIBUTE_NODE, must be second ! */
     const xmlChar   *name;      /* the name of the property */
     struct _xmlNode *children;	/* the value of the property */
@@ -493,6 +498,7 @@ typedef struct _xmlNode xmlNode;
 typedef xmlNode *xmlNodePtr;
 struct _xmlNode {
     void           *_private;	/* application data */
+    void           *_private2;	/* application data, slot 2 */
     xmlElementType   type;	/* type number, must be second ! */
     const xmlChar   *name;      /* the name of the node, or the entity */
     struct _xmlNode *children;	/* parent->childs link */
@@ -555,6 +561,7 @@ typedef struct _xmlDoc xmlDoc;
 typedef xmlDoc *xmlDocPtr;
 struct _xmlDoc {
     void           *_private;	/* application data */
+    void           *_private2;
     xmlElementType  type;       /* XML_DOCUMENT_NODE, must be second ! */
     char           *name;	/* name/filename/URI of the document */
     struct _xmlNode *children;	/* the document tree */

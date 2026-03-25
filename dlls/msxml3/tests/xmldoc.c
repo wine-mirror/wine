@@ -1280,7 +1280,6 @@ static void test_xmldoc_charset(void)
 
     /* Invalid encoding */
     hr = load_document(doc, doc_data3, sizeof(doc_data3) - 1);
-    todo_wine
     ok(hr == XML_E_INVALIDENCODING, "Unexpected hr %#lx.\n", hr);
 
     IXMLDocument_Release(doc);

@@ -21,8 +21,6 @@
 #define COBJMACROS
 
 #include <stdarg.h>
-#include <libxml/parser.h>
-#include <libxml/xmlerror.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -38,12 +36,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _entityref
 {
-    xmlnode node;
+    DispatchEx dispex;
     IXMLDOMEntityReference IXMLDOMEntityReference_iface;
-    LONG ref;
+    LONG refcount;
+    struct domnode *node;
 } entityref;
 
-static const tid_t domentityref_se_tids[] = {
+static const tid_t domentityref_se_tids[] =
+{
     IXMLDOMNode_tid,
     IXMLDOMEntityReference_tid,
     NULL_tid
@@ -54,463 +54,395 @@ static inline entityref *impl_from_IXMLDOMEntityReference( IXMLDOMEntityReferenc
     return CONTAINING_RECORD(iface, entityref, IXMLDOMEntityReference_iface);
 }
 
-static HRESULT WINAPI entityref_QueryInterface(
-    IXMLDOMEntityReference *iface,
-    REFIID riid,
-    void** ppvObject )
+static HRESULT WINAPI entityref_QueryInterface(IXMLDOMEntityReference *iface, REFIID riid, void **obj)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+    entityref *ref = impl_from_IXMLDOMEntityReference( iface );
 
-    if ( IsEqualGUID( riid, &IID_IXMLDOMEntityReference ) ||
-         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
-         IsEqualGUID( riid, &IID_IDispatch ) ||
-         IsEqualGUID( riid, &IID_IUnknown ) )
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IXMLDOMEntityReference) ||
+        IsEqualGUID(riid, &IID_IXMLDOMNode) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown) )
     {
-        *ppvObject = iface;
+        *obj = iface;
     }
-    else if(node_query_interface(&This->node, riid, ppvObject))
+    else if (dispex_query_interface(&ref->dispex, riid, obj))
     {
-        return *ppvObject ? S_OK : E_NOINTERFACE;
+        return *obj ? S_OK : E_NOINTERFACE;
     }
-    else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    else if (node_query_interface(ref->node, riid, obj))
     {
-        return node_create_supporterrorinfo(domentityref_se_tids, ppvObject);
+        return *obj ? S_OK : E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(riid, &IID_ISupportErrorInfo))
+    {
+        return node_create_supporterrorinfo(domentityref_se_tids, obj);
     }
     else
     {
         TRACE("Unsupported interface %s\n", debugstr_guid(riid));
-        *ppvObject = NULL;
+        *obj = NULL;
         return E_NOINTERFACE;
     }
 
-    IUnknown_AddRef((IUnknown*)*ppvObject);
+    IUnknown_AddRef((IUnknown *)*obj);
     return S_OK;
 }
 
-static ULONG WINAPI entityref_AddRef(
-    IXMLDOMEntityReference *iface )
+static ULONG WINAPI entityref_AddRef(IXMLDOMEntityReference *iface)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("%p, refcount %lu.\n", iface, ref);
-    return ref;
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+    ULONG refcount = InterlockedIncrement(&ref->refcount);
+
+    TRACE("%p, refcount %lu.\n", iface, refcount);
+
+    return refcount;
 }
 
-static ULONG WINAPI entityref_Release(
-    IXMLDOMEntityReference *iface )
+static ULONG WINAPI entityref_Release(IXMLDOMEntityReference *iface)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    ULONG ref = InterlockedDecrement( &This->ref );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+    ULONG refcount = InterlockedDecrement(&ref->refcount);
 
-    TRACE("%p, refcount %lu.\n", iface, ref);
+    TRACE("%p, refcount %lu.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        destroy_xmlnode(&This->node);
-        free(This);
+        domnode_release(ref->node);
+        free(ref);
     }
 
-    return ref;
+    return refcount;
 }
 
-static HRESULT WINAPI entityref_GetTypeInfoCount(
-    IXMLDOMEntityReference *iface,
-    UINT* pctinfo )
+static HRESULT WINAPI entityref_GetTypeInfoCount(IXMLDOMEntityReference *iface, UINT *count)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+    return IDispatchEx_GetTypeInfoCount(&ref->dispex.IDispatchEx_iface, count);
 }
 
-static HRESULT WINAPI entityref_GetTypeInfo(
-    IXMLDOMEntityReference *iface,
-    UINT iTInfo, LCID lcid,
-    ITypeInfo** ppTInfo )
+static HRESULT WINAPI entityref_GetTypeInfo(IXMLDOMEntityReference *iface, UINT index, LCID lcid, ITypeInfo **ti)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface,
-        iTInfo, lcid, ppTInfo);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+    return IDispatchEx_GetTypeInfo(&ref->dispex.IDispatchEx_iface, index, lcid, ti);
 }
 
-static HRESULT WINAPI entityref_GetIDsOfNames(
-    IXMLDOMEntityReference *iface,
-    REFIID riid, LPOLESTR* rgszNames,
-    UINT cNames, LCID lcid, DISPID* rgDispId )
+static HRESULT WINAPI entityref_GetIDsOfNames(IXMLDOMEntityReference *iface, REFIID riid, LPOLESTR* rgszNames,
+        UINT cNames, LCID lcid, DISPID* rgDispId )
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface,
-        riid, rgszNames, cNames, lcid, rgDispId);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+    return IDispatchEx_GetIDsOfNames(&ref->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI entityref_Invoke(
-    IXMLDOMEntityReference *iface,
-    DISPID dispIdMember, REFIID riid, LCID lcid,
-    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult,
-    EXCEPINFO* pExcepInfo, UINT* puArgErr )
+static HRESULT WINAPI entityref_Invoke(IXMLDOMEntityReference *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *ei, UINT *puArgErr)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface,
-        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+    return IDispatchEx_Invoke(&ref->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, flags, params, result, ei, puArgErr);
 }
 
-static HRESULT WINAPI entityref_get_nodeName(
-    IXMLDOMEntityReference *iface,
-    BSTR* p )
+static HRESULT WINAPI entityref_get_nodeName(IXMLDOMEntityReference *iface, BSTR *p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    FIXME("%p, %p.\n", iface, p);
 
-    return node_get_nodeName(&This->node, p);
+    return node_get_name(ref->node, p);
 }
 
-static HRESULT WINAPI entityref_get_nodeValue(
-    IXMLDOMEntityReference *iface,
-    VARIANT* value)
+static HRESULT WINAPI entityref_get_nodeValue(IXMLDOMEntityReference *iface, VARIANT *value)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p)\n", This, value);
+    TRACE("%p, %p.\n", iface, value);
+
     return return_null_var(value);
 }
 
-static HRESULT WINAPI entityref_put_nodeValue(
-    IXMLDOMEntityReference *iface,
-    VARIANT value)
+static HRESULT WINAPI entityref_put_nodeValue(IXMLDOMEntityReference *iface, VARIANT value)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
+    TRACE("%p, %s.\n", iface, debugstr_variant(&value));
+
     return E_FAIL;
 }
 
-static HRESULT WINAPI entityref_get_nodeType(
-    IXMLDOMEntityReference *iface,
-    DOMNodeType* domNodeType )
+static HRESULT WINAPI entityref_get_nodeType(IXMLDOMEntityReference *iface, DOMNodeType *type)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    TRACE("%p, %p.\n", iface, type);
 
-    TRACE("(%p)->(%p)\n", This, domNodeType);
-
-    *domNodeType = NODE_ENTITY_REFERENCE;
+    *type = NODE_ENTITY_REFERENCE;
     return S_OK;
 }
 
-static HRESULT WINAPI entityref_get_parentNode(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode** parent )
+static HRESULT WINAPI entityref_get_parentNode(IXMLDOMEntityReference *iface, IXMLDOMNode **parent)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    TRACE("(%p)->(%p)\n", This, parent);
+    TRACE("%p, %p.\n", iface, parent);
 
-    return node_get_parent(&This->node, parent);
+    return node_get_parent(ref->node, parent);
 }
 
-static HRESULT WINAPI entityref_get_childNodes(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNodeList** outList)
+static HRESULT WINAPI entityref_get_childNodes(IXMLDOMEntityReference *iface, IXMLDOMNodeList **list)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    TRACE("(%p)->(%p)\n", This, outList);
+    TRACE("%p, %p.\n", iface, list);
 
-    return node_get_child_nodes(&This->node, outList);
+    return node_get_child_nodes(ref->node, list);
 }
 
-static HRESULT WINAPI entityref_get_firstChild(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode** domNode)
+static HRESULT WINAPI entityref_get_firstChild(IXMLDOMEntityReference *iface, IXMLDOMNode **node)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    TRACE("(%p)->(%p)\n", This, domNode);
+    TRACE("%p, %p.\n", iface, node);
 
-    return node_get_first_child(&This->node, domNode);
+    return node_get_first_child(ref->node, node);
 }
 
-static HRESULT WINAPI entityref_get_lastChild(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode** domNode)
+static HRESULT WINAPI entityref_get_lastChild(IXMLDOMEntityReference *iface, IXMLDOMNode **node)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    TRACE("(%p)->(%p)\n", This, domNode);
+    TRACE("%p, %p.\n", iface, node);
 
-    return node_get_last_child(&This->node, domNode);
+    return node_get_last_child(ref->node, node);
 }
 
-static HRESULT WINAPI entityref_get_previousSibling(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode** domNode)
+static HRESULT WINAPI entityref_get_previousSibling(IXMLDOMEntityReference *iface, IXMLDOMNode **node)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    TRACE("(%p)->(%p)\n", This, domNode);
+    TRACE("%p, %p.\n", iface, node);
 
-    return node_get_previous_sibling(&This->node, domNode);
+    return node_get_previous_sibling(ref->node, node);
 }
 
-static HRESULT WINAPI entityref_get_nextSibling(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode** domNode)
+static HRESULT WINAPI entityref_get_nextSibling(IXMLDOMEntityReference *iface, IXMLDOMNode **node)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    TRACE("(%p)->(%p)\n", This, domNode);
+    TRACE("%p, %p.\n", iface, node);
 
-    return node_get_next_sibling(&This->node, domNode);
+    return node_get_next_sibling(ref->node, node);
 }
 
-static HRESULT WINAPI entityref_get_attributes(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNamedNodeMap** attributeMap)
+static HRESULT WINAPI entityref_get_attributes(IXMLDOMEntityReference *iface, IXMLDOMNamedNodeMap **map)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    TRACE("%p, %p.\n", iface, map);
 
-    TRACE("(%p)->(%p)\n", This, attributeMap);
-
-    return return_null_ptr((void**)attributeMap);
+    return return_null_ptr((void **)map);
 }
 
-static HRESULT WINAPI entityref_insertBefore(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode* newNode, VARIANT refChild,
-    IXMLDOMNode** outOldNode)
+static HRESULT WINAPI entityref_insertBefore(IXMLDOMEntityReference *iface,
+    IXMLDOMNode* newNode, VARIANT refChild, IXMLDOMNode** outOldNode)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), outOldNode);
+    FIXME("%p, %p, %s, %p needs test\n", iface, newNode, debugstr_variant(&refChild), outOldNode);
 
-    return node_insert_before(&This->node, newNode, &refChild, outOldNode);
+    return node_insert_before(ref->node, newNode, &refChild, outOldNode);
 }
 
-static HRESULT WINAPI entityref_replaceChild(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode* newNode,
-    IXMLDOMNode* oldNode,
-    IXMLDOMNode** outOldNode)
+static HRESULT WINAPI entityref_replaceChild(IXMLDOMEntityReference *iface,
+    IXMLDOMNode* newNode, IXMLDOMNode* oldNode, IXMLDOMNode** outOldNode)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    FIXME("(%p)->(%p %p %p) needs test\n", This, newNode, oldNode, outOldNode);
+    FIXME("%p, %p, %p, %p needs test\n", iface, newNode, oldNode, outOldNode);
 
-    return node_replace_child(&This->node, newNode, oldNode, outOldNode);
+    return node_replace_child(ref->node, newNode, oldNode, outOldNode);
 }
 
-static HRESULT WINAPI entityref_removeChild(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode *child, IXMLDOMNode **oldChild)
+static HRESULT WINAPI entityref_removeChild(IXMLDOMEntityReference *iface,
+        IXMLDOMNode *child, IXMLDOMNode **oldChild)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p %p)\n", This, child, oldChild);
-    return node_remove_child(&This->node, child, oldChild);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %p, %p.\n", iface, child, oldChild);
+
+    return node_remove_child(ref->node, child, oldChild);
 }
 
-static HRESULT WINAPI entityref_appendChild(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode *child, IXMLDOMNode **outChild)
+static HRESULT WINAPI entityref_appendChild(IXMLDOMEntityReference *iface,
+        IXMLDOMNode *child, IXMLDOMNode **outChild)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p %p)\n", This, child, outChild);
-    return node_append_child(&This->node, child, outChild);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %p, %p.\n", iface, child, outChild);
+
+    return node_append_child(ref->node, child, outChild);
 }
 
-static HRESULT WINAPI entityref_hasChildNodes(
-    IXMLDOMEntityReference *iface,
-    VARIANT_BOOL *ret)
+static HRESULT WINAPI entityref_hasChildNodes(IXMLDOMEntityReference *iface, VARIANT_BOOL *ret)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p)\n", This, ret);
-    return node_has_childnodes(&This->node, ret);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %p.\n", iface, ret);
+
+    return node_has_childnodes(ref->node, ret);
 }
 
-static HRESULT WINAPI entityref_get_ownerDocument(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMDocument **doc)
+static HRESULT WINAPI entityref_get_ownerDocument(IXMLDOMEntityReference *iface, IXMLDOMDocument **doc)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p)\n", This, doc);
-    return node_get_owner_doc(&This->node, doc);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %p.\n", iface, doc);
+
+    return node_get_owner_document(ref->node, doc);
 }
 
-static HRESULT WINAPI entityref_cloneNode(
-    IXMLDOMEntityReference *iface,
-    VARIANT_BOOL deep, IXMLDOMNode** outNode)
+static HRESULT WINAPI entityref_cloneNode(IXMLDOMEntityReference *iface, VARIANT_BOOL deep, IXMLDOMNode **node)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%d %p)\n", This, deep, outNode);
-    return node_clone( &This->node, deep, outNode );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %d, %p.\n", iface, deep, node);
+
+    return node_clone(ref->node, deep, node);
 }
 
-static HRESULT WINAPI entityref_get_nodeTypeString(
-    IXMLDOMEntityReference *iface,
-    BSTR* p)
+static HRESULT WINAPI entityref_get_nodeTypeString(IXMLDOMEntityReference *iface, BSTR *p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-
-    TRACE("(%p)->(%p)\n", This, p);
+    TRACE("%p, %p.\n", iface, p);
 
     return return_bstr(L"entityreference", p);
 }
 
-static HRESULT WINAPI entityref_get_text(
-    IXMLDOMEntityReference *iface,
-    BSTR* p)
+static HRESULT WINAPI entityref_get_text(IXMLDOMEntityReference *iface, BSTR *p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p)\n", This, p);
-    return node_get_text(&This->node, p);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_text(ref->node, p);
 }
 
-static HRESULT WINAPI entityref_put_text(
-    IXMLDOMEntityReference *iface,
-    BSTR p)
+static HRESULT WINAPI entityref_put_text(IXMLDOMEntityReference *iface, BSTR p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
-    return node_put_text( &This->node, p );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_w(p));
+
+    return node_put_data(ref->node, p);
 }
 
-static HRESULT WINAPI entityref_get_specified(
-    IXMLDOMEntityReference *iface,
-    VARIANT_BOOL* isSpecified)
+static HRESULT WINAPI entityref_get_specified(IXMLDOMEntityReference *iface, VARIANT_BOOL *v)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p) stub!\n", This, isSpecified);
-    *isSpecified = VARIANT_TRUE;
+    FIXME("%p, %p stub!\n", iface, v);
+
+    *v = VARIANT_TRUE;
     return S_OK;
 }
 
-static HRESULT WINAPI entityref_get_definition(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode** definitionNode)
+static HRESULT WINAPI entityref_get_definition(IXMLDOMEntityReference *iface, IXMLDOMNode **node)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p)\n", This, definitionNode);
+    FIXME("%p, %p.\n", iface, node);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI entityref_get_nodeTypedValue(
-    IXMLDOMEntityReference *iface,
-    VARIANT* var1)
+static HRESULT WINAPI entityref_get_nodeTypedValue(IXMLDOMEntityReference *iface, VARIANT *v)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p)\n", This, var1);
-    return return_null_var(var1);
+    FIXME("%p, %p.\n", iface, v);
+
+    return return_null_var(v);
 }
 
-static HRESULT WINAPI entityref_put_nodeTypedValue(
-    IXMLDOMEntityReference *iface,
-    VARIANT typedValue)
+static HRESULT WINAPI entityref_put_nodeTypedValue(IXMLDOMEntityReference *iface, VARIANT v)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&typedValue));
+    FIXME("%p, %s.\n", iface, debugstr_variant(&v));
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI entityref_get_dataType(
-    IXMLDOMEntityReference *iface,
-    VARIANT* typename)
+static HRESULT WINAPI entityref_get_dataType(IXMLDOMEntityReference *iface, VARIANT *v)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p): should return a valid value\n", This, typename);
-    return return_null_var( typename );
+    FIXME("%p, %p: should return a valid value\n", iface, v);
+
+    return return_null_var(v);
 }
 
-static HRESULT WINAPI entityref_put_dataType(
-    IXMLDOMEntityReference *iface,
-    BSTR p)
+static HRESULT WINAPI entityref_put_dataType(IXMLDOMEntityReference *iface, BSTR p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    TRACE("%p, %s.\n", iface, debugstr_w(p));
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
-
-    if(!p)
+    if (!p)
         return E_INVALIDARG;
 
     return E_FAIL;
 }
 
-static HRESULT WINAPI entityref_get_xml(
-    IXMLDOMEntityReference *iface,
-    BSTR* p)
+static HRESULT WINAPI entityref_get_xml(IXMLDOMEntityReference *iface, BSTR *p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
 
-    TRACE("(%p)->(%p)\n", This, p);
+    TRACE("%p, %p.\n", iface, p);
 
-    return node_get_xml(&This->node, FALSE, p);
+    return node_get_xml(ref->node, p);
 }
 
-static HRESULT WINAPI entityref_transformNode(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode *node, BSTR *p)
+static HRESULT WINAPI entityref_transformNode(IXMLDOMEntityReference *iface, IXMLDOMNode *node, BSTR *p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p %p)\n", This, node, p);
-    return node_transform_node(&This->node, node, p);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %p, %p.\n", iface, node, p);
+
+    return node_transform_node(ref->node, node, p);
 }
 
-static HRESULT WINAPI entityref_selectNodes(
-    IXMLDOMEntityReference *iface,
-    BSTR p, IXMLDOMNodeList** outList)
+static HRESULT WINAPI entityref_selectNodes(IXMLDOMEntityReference *iface, BSTR p, IXMLDOMNodeList **list)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outList);
-    return node_select_nodes(&This->node, p, outList);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_w(p), list);
+
+    return node_select_nodes(ref->node, p, list);
 }
 
-static HRESULT WINAPI entityref_selectSingleNode(
-    IXMLDOMEntityReference *iface,
-    BSTR p, IXMLDOMNode** outNode)
+static HRESULT WINAPI entityref_selectSingleNode(IXMLDOMEntityReference *iface, BSTR p, IXMLDOMNode **node)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outNode);
-    return node_select_singlenode(&This->node, p, outNode);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_w(p), node);
+
+    return node_select_singlenode(ref->node, p, node);
 }
 
-static HRESULT WINAPI entityref_get_parsed(
-    IXMLDOMEntityReference *iface,
-    VARIANT_BOOL* isParsed)
+static HRESULT WINAPI entityref_get_parsed(IXMLDOMEntityReference *iface, VARIANT_BOOL *v)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p) stub!\n", This, isParsed);
-    *isParsed = VARIANT_TRUE;
+    FIXME("%p, %p: stub!\n", iface, v);
+
+    *v = VARIANT_TRUE;
     return S_OK;
 }
 
-static HRESULT WINAPI entityref_get_namespaceURI(
-    IXMLDOMEntityReference *iface,
-    BSTR* p)
+static HRESULT WINAPI entityref_get_namespaceURI(IXMLDOMEntityReference *iface, BSTR *p)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p)\n", This, p);
-    return node_get_namespaceURI(&This->node, p);
+    entityref *ref = impl_from_IXMLDOMEntityReference(iface);
+
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_namespaceURI(ref->node, p);
 }
 
-static HRESULT WINAPI entityref_get_prefix(
-    IXMLDOMEntityReference *iface,
-    BSTR* prefix)
+static HRESULT WINAPI entityref_get_prefix(IXMLDOMEntityReference *iface, BSTR *prefix)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p): stub\n", This, prefix);
-    return return_null_bstr( prefix );
+    FIXME("%p, %p: stub\n", iface, prefix);
+
+    return return_null_bstr(prefix);
 }
 
-static HRESULT WINAPI entityref_get_baseName(
-    IXMLDOMEntityReference *iface,
-    BSTR* name)
+static HRESULT WINAPI entityref_get_baseName(IXMLDOMEntityReference *iface, BSTR *name)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p): needs test\n", This, name);
-    return return_null_bstr( name );
+    FIXME("%p, %p: needs test\n", iface, name);
+
+    return return_null_bstr(name);
 }
 
-static HRESULT WINAPI entityref_transformNodeToObject(
-    IXMLDOMEntityReference *iface,
-    IXMLDOMNode* domNode, VARIANT var1)
+static HRESULT WINAPI entityref_transformNodeToObject(IXMLDOMEntityReference *iface, IXMLDOMNode *node, VARIANT var1)
 {
-    entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
+    FIXME("%p, %p, %s.\n", iface, node, debugstr_variant(&var1));
+
     return E_NOTIMPL;
 }
 
@@ -561,30 +493,36 @@ static const struct IXMLDOMEntityReferenceVtbl entityref_vtbl =
     entityref_transformNodeToObject,
 };
 
-static const tid_t domentityref_iface_tids[] = {
+static const tid_t domentityref_iface_tids[] =
+{
     IXMLDOMEntityReference_tid,
     0
 };
 
-static dispex_static_data_t domentityref_dispex = {
+static dispex_static_data_t domentityref_dispex =
+{
     NULL,
     IXMLDOMEntityReference_tid,
     NULL,
     domentityref_iface_tids
 };
 
-IUnknown* create_doc_entity_ref( xmlNodePtr entity )
+HRESULT create_entity_ref(struct domnode *node, IUnknown **obj)
 {
-    entityref *This;
+    entityref *object;
 
-    This = malloc(sizeof(*This));
-    if ( !This )
-        return NULL;
+    *obj = NULL;
 
-    This->IXMLDOMEntityReference_iface.lpVtbl = &entityref_vtbl;
-    This->ref = 1;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    init_xmlnode(&This->node, entity, (IXMLDOMNode*)&This->IXMLDOMEntityReference_iface, &domentityref_dispex);
+    object->IXMLDOMEntityReference_iface.lpVtbl = &entityref_vtbl;
+    object->refcount = 1;
+    object->node = domnode_addref(node);
 
-    return (IUnknown*)&This->IXMLDOMEntityReference_iface;
+    init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMEntityReference_iface, &domentityref_dispex);
+
+    *obj = (IUnknown *)&object->IXMLDOMEntityReference_iface;
+
+    return S_OK;
 }

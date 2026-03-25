@@ -123,26 +123,114 @@ struct xslprocessor_params
 extern void schemasInit(void);
 extern void schemasCleanup(void);
 
-/* IXMLDOMNode Internal Structure */
-typedef struct _xmlnode
+struct dom_namespace
 {
-    DispatchEx   dispex;
-    IXMLDOMNode *iface;
-    IXMLDOMNode *parent;
-    xmlNodePtr   node;
-} xmlnode;
+    struct list entry;
+    BSTR qname;
+    BSTR name;
+    BSTR uri;
+};
+
+enum domnode_flags
+{
+    DOMNODE_READONLY_VALUE = 0x1,
+    DOMNODE_IGNORED_WS_AFTER_STARTTAG = 0x2,
+    DOMNODE_IGNORED_WS = 0x4,
+};
+
+typedef struct _select_ns_entry
+{
+    struct list entry;
+    xmlChar const* prefix;
+    xmlChar prefix_end;
+    xmlChar const* href;
+    xmlChar href_end;
+} select_ns_entry;
+
+struct domdoc_properties
+{
+    MSXML_VERSION version;
+    VARIANT_BOOL preserving;
+    VARIANT_BOOL validating;
+    IXMLDOMSchemaCollection2* schemaCache;
+    struct list selectNsList;
+    xmlChar const* selectNsStr;
+    LONG selectNsStr_len;
+    BOOL XPath;
+    IUri *uri;
+};
+
+struct domnode
+{
+    struct list entry;
+    struct list owner_entry;
+    unsigned int refcount;
+
+    DOMNodeType type;
+    unsigned int flags;
+
+    BSTR name;
+    BSTR prefix;
+    BSTR qname;
+    BSTR data;
+    BSTR uri;
+
+    struct domdoc_properties *properties;
+
+    struct domnode *parent;
+    struct domnode *owner;
+    struct list children;
+    struct list attributes;
+    struct list namespaces;
+    struct list owned;
+};
+
+extern IXMLDOMSchemaCollection2 *doc_properties_get_schema(struct domdoc_properties *properties);
+extern MSXML_VERSION doc_properties_get_version(struct domdoc_properties *properties);
+
+extern void domdoc_properties_clear_selection_namespaces(struct list *);
+extern struct domdoc_properties *domdoc_create_properties(MSXML_VERSION version);
+extern MSXML_VERSION domdoc_version(const struct domnode *doc);
+extern HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len,
+        const WCHAR *uri, int uri_len, struct domnode *owner, struct domnode **node);
+extern void domnode_destroy_tree(struct domnode *tree);
+extern struct domnode *domnode_addref(struct domnode *node);
+extern void domnode_release(struct domnode *node);
+extern struct domnode *domnode_get_first_child(struct domnode *node);
+extern struct domnode *domnode_get_next_sibling(struct domnode *node);
+extern HRESULT domnode_get_attribute(const struct domnode *node, const WCHAR *name, struct domnode **attr);
+extern HRESULT node_clone_domnode(struct domnode *, bool, struct domnode **);
+extern HRESULT parse_stream(ISequentialStream *stream, bool utf16, VARIANT_BOOL preserve, struct domnode **tree);
+extern void dump_doc_refcounts(struct domnode *node);
+
+struct parsed_name
+{
+    BSTR prefix;
+    BSTR local;
+    BSTR qname;
+};
+
+extern HRESULT parse_qualified_name(const WCHAR *src, struct parsed_name *name);
+void parsed_name_cleanup(struct parsed_name *name);
+
+/* Compat glue */
+extern xmlDocPtr create_xmldoc_from_domdoc(struct domnode *node, xmlNodePtr *xmlnode);
+static inline bool xml_is_space(WCHAR ch)
+{
+    return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
+}
 
 /* IXMLDOMNamedNodeMap custom function table */
 struct nodemap_funcs
 {
-    HRESULT (*get_named_item)(const xmlNodePtr,BSTR,IXMLDOMNode**);
-    HRESULT (*set_named_item)(xmlNodePtr,IXMLDOMNode*,IXMLDOMNode**);
-    HRESULT (*remove_named_item)(xmlNodePtr,BSTR,IXMLDOMNode**);
-    HRESULT (*get_item)(xmlNodePtr,LONG,IXMLDOMNode**);
-    HRESULT (*get_length)(xmlNodePtr,LONG*);
-    HRESULT (*get_qualified_item)(const xmlNodePtr,BSTR,BSTR,IXMLDOMNode**);
-    HRESULT (*remove_qualified_item)(xmlNodePtr,BSTR,BSTR,IXMLDOMNode**);
-    HRESULT (*next_node)(const xmlNodePtr,LONG*,IXMLDOMNode**);
+    HRESULT (*get_named_item)(const struct domnode *,BSTR,IXMLDOMNode**);
+    HRESULT (*set_named_item)(struct domnode *,IXMLDOMNode*,IXMLDOMNode**);
+    HRESULT (*remove_named_item)(struct domnode *,BSTR,IXMLDOMNode**);
+    HRESULT (*get_item)(struct domnode *,LONG,IXMLDOMNode**);
+    HRESULT (*get_length)(struct domnode *,LONG*);
+    HRESULT (*get_qualified_item)(const struct domnode *,BSTR,BSTR,IXMLDOMNode**);
+    HRESULT (*remove_qualified_item)(struct domnode *,BSTR,BSTR,IXMLDOMNode**);
+    HRESULT (*next_node)(const struct domnode *,LONG *,IXMLDOMNode **);
 };
 
 /* used by IEnumVARIANT to access outer object items */
@@ -153,44 +241,25 @@ struct enumvariant_funcs
 };
 
 /* constructors */
-extern IUnknown         *create_domdoc( xmlNodePtr );
-extern IUnknown         *create_xmldoc( void );
-extern IXMLDOMNode      *create_node( xmlNodePtr );
-extern IUnknown         *create_element( xmlNodePtr );
-extern IUnknown         *create_attribute( xmlNodePtr, BOOL );
-extern IUnknown         *create_text( xmlNodePtr );
-extern IUnknown         *create_pi( xmlNodePtr );
-extern IUnknown         *create_comment( xmlNodePtr );
-extern IUnknown         *create_cdata( xmlNodePtr );
-extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
-extern IXMLDOMNamedNodeMap *create_nodemap( xmlNodePtr, const struct nodemap_funcs* );
-extern IUnknown         *create_doc_fragment( xmlNodePtr );
-extern IUnknown         *create_doc_entity_ref( xmlNodePtr );
-extern IUnknown         *create_doc_type( xmlNodePtr );
-extern HRESULT           create_selection( xmlNodePtr, xmlChar*, IXMLDOMNodeList** );
-extern HRESULT           create_selection_from_nodeset( xmlXPathObjectPtr, IXMLDOMNodeList ** );
-extern HRESULT           create_enumvariant( IUnknown*, BOOL, const struct enumvariant_funcs*, IEnumVARIANT**);
-extern HRESULT           create_dom_implementation(IXMLDOMImplementation **obj);
-
-/* data accessors */
-xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
-
-/* helpers */
-extern xmlChar *xmlChar_from_wchar( LPCWSTR str );
-
-extern void xmldoc_init( xmlDocPtr doc, MSXML_VERSION version );
-extern LONG xmldoc_add_ref( xmlDocPtr doc );
-extern LONG xmldoc_release( xmlDocPtr doc );
-extern LONG xmldoc_add_refs( xmlDocPtr doc, LONG refs );
-extern LONG xmldoc_release_refs ( xmlDocPtr doc, LONG refs );
-extern void xmlnode_add_ref(xmlNodePtr node);
-extern void xmlnode_release(xmlNodePtr node);
-extern int xmlnode_get_inst_cnt( xmlnode *node );
-extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node );
-extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node );
-extern void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node);
-extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc);
-extern MSXML_VERSION xmldoc_version( xmlDocPtr doc );
+extern HRESULT create_domdoc(struct domnode *node, IUnknown **);
+extern HRESULT create_node(struct domnode *node, IXMLDOMNode **);
+extern HRESULT create_element(struct domnode *, IUnknown **);
+extern HRESULT create_attribute(struct domnode *, IUnknown **);
+extern HRESULT create_attribute_node(const WCHAR *name, const WCHAR *uri, struct domnode *, IXMLDOMNode **);
+extern HRESULT create_text(struct domnode *, IUnknown **);
+extern HRESULT create_pi(struct domnode *, IUnknown **);
+extern HRESULT create_pi_node(struct domnode *, const WCHAR *, const WCHAR *, IXMLDOMProcessingInstruction **);
+extern HRESULT create_comment(struct domnode *, IUnknown **);
+extern HRESULT create_cdata(struct domnode *, IUnknown **);
+extern HRESULT create_children_nodelist(struct domnode *, IXMLDOMNodeList **);
+extern HRESULT create_nodemap(struct domnode *, const struct nodemap_funcs *, IXMLDOMNamedNodeMap **);
+extern HRESULT create_doc_fragment(struct domnode *, IUnknown **);
+extern HRESULT create_entity_ref(struct domnode *, IUnknown **);
+extern HRESULT create_doc_type(struct domnode *, IUnknown **);
+extern HRESULT create_selection(struct domnode *, BSTR, bool xpath, IXMLDOMNodeList** );
+extern HRESULT create_selection_from_nodeset( xmlXPathObjectPtr, IXMLDOMNodeList ** );
+extern HRESULT create_enumvariant( IUnknown*, BOOL, const struct enumvariant_funcs*, IEnumVARIANT**);
+extern HRESULT create_dom_implementation(IXMLDOMImplementation **obj);
 
 extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap);
 extern void wineXmlCallbackError(char const* caller, const xmlError* err);
@@ -208,64 +277,70 @@ extern void wineXmlCallbackError(char const* caller, const xmlError* err);
 
 #define LIBXML2_CALLBACK_SERROR(caller, err) wineXmlCallbackError(#caller, err)
 
-extern BOOL is_preserving_whitespace(xmlNodePtr node);
-extern BOOL is_xpathmode(const xmlDocPtr doc);
-extern void set_xpathmode(xmlDocPtr doc, BOOL xpath);
+extern bool node_query_interface(struct domnode*,REFIID,void**);
+extern struct domnode *get_node_obj(void *iface);
+extern bool parser_is_valid_qualified_name(const WCHAR *name);
+extern HRESULT parse_xml_decl_body(const WCHAR *text, BSTR *version, BSTR *encoding, BSTR *standalone);
 
-extern void init_xmlnode(xmlnode*,xmlNodePtr,IXMLDOMNode*,dispex_static_data_t*);
-extern void destroy_xmlnode(xmlnode*);
-extern BOOL node_query_interface(xmlnode*,REFIID,void**);
-extern xmlnode *get_node_obj(IXMLDOMNode*);
-
-extern HRESULT node_append_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**);
-extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
-extern HRESULT node_get_content(xmlnode*,VARIANT*);
-extern HRESULT node_set_content(xmlnode*,LPCWSTR);
-extern HRESULT node_put_value(xmlnode*,VARIANT*);
-extern HRESULT node_put_value_escaped(xmlnode*,VARIANT*);
-extern HRESULT node_get_parent(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_child_nodes(xmlnode*,IXMLDOMNodeList**);
-extern HRESULT node_get_first_child(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_last_child(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_previous_sibling(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_next_sibling(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_insert_before(xmlnode*,IXMLDOMNode*,const VARIANT*,IXMLDOMNode**);
-extern HRESULT node_replace_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode**);
-extern HRESULT node_put_text(xmlnode*,BSTR);
-extern HRESULT node_get_xml(xmlnode*,BOOL,BSTR*);
-extern HRESULT node_clone(xmlnode*,VARIANT_BOOL,IXMLDOMNode**);
-extern HRESULT node_get_prefix(xmlnode*,BSTR*);
-extern HRESULT node_get_base_name(xmlnode*,BSTR*);
-extern HRESULT node_get_namespaceURI(xmlnode*,BSTR*);
-extern HRESULT node_remove_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**);
-extern HRESULT node_has_childnodes(const xmlnode*,VARIANT_BOOL*);
-extern HRESULT node_get_owner_doc(const xmlnode*,IXMLDOMDocument**);
-extern HRESULT node_get_text(const xmlnode*,BSTR*);
-extern HRESULT node_select_nodes(const xmlnode*,BSTR,IXMLDOMNodeList**);
-extern HRESULT node_select_singlenode(const xmlnode*,BSTR,IXMLDOMNode**);
-extern HRESULT node_transform_node(const xmlnode*,IXMLDOMNode*,BSTR*);
-extern HRESULT node_transform_node_params(const xmlnode*,IXMLDOMNode*,BSTR*,ISequentialStream*,
+extern HRESULT node_append_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
+extern HRESULT node_attribute_get_namespace_uri(struct domnode *, BSTR *);
+extern HRESULT node_get_name(struct domnode*,BSTR*);
+extern HRESULT node_put_data(struct domnode*, const WCHAR *);
+extern HRESULT node_get_data(struct domnode*, BSTR *);
+extern XDR_DT node_get_data_type(const struct domnode*);
+extern HRESULT node_append_data(struct domnode*, BSTR);
+extern HRESULT node_put_value(struct domnode*,VARIANT*);
+extern HRESULT node_get_attribute(const struct domnode *,const WCHAR *,IXMLDOMAttribute **);
+extern HRESULT node_get_qualified_attribute(const struct domnode *, const WCHAR *name, const WCHAR *uri, IXMLDOMNode **);
+extern HRESULT node_get_attribute_by_index(const struct domnode *, LONG, IXMLDOMNode **);
+extern HRESULT node_get_attribute_value(struct domnode *,const WCHAR *,VARIANT *);
+extern HRESULT node_set_attribute(struct domnode *, IXMLDOMNode *, IXMLDOMNode **);
+extern HRESULT node_set_attribute_value(struct domnode *,const WCHAR *,const VARIANT *);
+extern HRESULT node_remove_attribute(struct domnode *, const WCHAR *, IXMLDOMNode **);
+extern HRESULT node_remove_attribute_node(struct domnode *,IXMLDOMAttribute *,IXMLDOMAttribute **);
+extern HRESULT node_remove_qualified_attribute(struct domnode *, const WCHAR *, const WCHAR *, IXMLDOMNode **);
+extern HRESULT node_get_parent(struct domnode*,IXMLDOMNode**);
+extern HRESULT node_get_child_nodes(struct domnode *,IXMLDOMNodeList**);
+extern HRESULT node_get_first_child(struct domnode *,IXMLDOMNode**);
+extern HRESULT node_get_last_child(struct domnode *,IXMLDOMNode**);
+extern HRESULT node_get_previous_sibling(struct domnode*,IXMLDOMNode**);
+extern HRESULT node_get_next_sibling(struct domnode*,IXMLDOMNode**);
+extern HRESULT node_insert_before(struct domnode*,IXMLDOMNode*,const VARIANT*,IXMLDOMNode**);
+extern HRESULT node_replace_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode**);
+extern HRESULT node_get_xml(struct domnode *, BSTR*);
+extern HRESULT node_clone(struct domnode*,VARIANT_BOOL,IXMLDOMNode**);
+extern HRESULT node_get_prefix(struct domnode*,BSTR*);
+extern HRESULT node_get_base_name(struct domnode*,BSTR*);
+extern HRESULT node_get_namespaceURI(struct domnode*, BSTR *);
+extern HRESULT node_remove_child(struct domnode*,IXMLDOMNode*,IXMLDOMNode**);
+extern HRESULT node_has_childnodes(const struct domnode*,VARIANT_BOOL*);
+extern HRESULT node_get_owner_document(const struct domnode*,IXMLDOMDocument**);
+extern HRESULT node_get_text(const struct domnode*,BSTR*);
+extern HRESULT node_get_preserved_text(const struct domnode*,BSTR*);
+extern HRESULT node_get_value(struct domnode *node, VARIANT *value);
+extern HRESULT node_select_nodes(struct domnode*,BSTR,IXMLDOMNodeList**);
+extern HRESULT node_select_singlenode(struct domnode *,BSTR,IXMLDOMNode**);
+extern HRESULT node_transform_node(struct domnode*,IXMLDOMNode*,BSTR*);
+extern HRESULT node_transform_node_params(struct domnode*,IXMLDOMNode*,BSTR*,ISequentialStream*,
     const struct xslprocessor_params*);
 extern HRESULT node_create_supporterrorinfo(const tid_t*,void**);
+extern HRESULT node_save(struct domnode *, IStream *);
+extern HRESULT node_get_elements_by_tagname(struct domnode *,BSTR,IXMLDOMNodeList**);
+extern HRESULT node_validate(struct domnode *, IXMLDOMNode *, IXMLDOMParseError **);
+extern void node_move_children(struct domnode *dst, struct domnode *src);
 
-extern HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
+extern UINT get_codepage_for_encoding(const WCHAR *encoding);
 
 extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2*, xmlNodePtr);
-extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2*, xmlNodePtr);
-extern HRESULT cache_from_doc_ns(IXMLDOMSchemaCollection2*, xmlnode*);
+extern XDR_DT SchemaCache_get_node_dt(IXMLDOMSchemaCollection2 *, const WCHAR *name, const WCHAR *uri);
+extern HRESULT cache_from_doc_ns(IXMLDOMSchemaCollection2*, struct domnode *);
 
 extern XDR_DT str_to_dt(xmlChar const* str, int len /* calculated if -1 */);
 extern XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */);
 extern xmlChar const* dt_to_str(XDR_DT dt);
 extern const char* debugstr_dt(XDR_DT dt);
 extern OLECHAR const* dt_to_bstr(XDR_DT dt);
-extern HRESULT dt_validate(XDR_DT dt, xmlChar const* content);
-
-extern BSTR EnsureCorrectEOL(BSTR);
-
-extern xmlChar* tagName_to_XPath(const BSTR tagName);
-
-extern HRESULT dom_pi_put_xml_decl(IXMLDOMNode *node, BSTR data);
+extern HRESULT dt_validate(XDR_DT dt, const WCHAR *content);
 
 #include <libxslt/documents.h>
 extern xmlDocPtr xslt_doc_default_loader(const xmlChar *uri, xmlDictPtr dict, int options,
@@ -343,6 +418,7 @@ static inline HRESULT return_null_var(VARIANT *p)
         return E_INVALIDARG;
 
     V_VT(p) = VT_NULL;
+    V_UINT_PTR(p) = 0;
     return S_FALSE;
 }
 
@@ -378,6 +454,8 @@ extern HRESULT MXNamespaceManager_create(void**);
 extern HRESULT XMLParser_create(void**);
 extern HRESULT XMLView_create(void**);
 
+extern HRESULT stream_wrapper_create(const void *, DWORD, ISequentialStream **);
+
 /* Error Codes - not defined anywhere in the public headers */
 #define E_XML_ELEMENT_UNDECLARED            0xC00CE00D
 #define E_XML_ELEMENT_ID_NOT_FOUND          0xC00CE00E
@@ -393,7 +471,4 @@ extern HRESULT XMLView_create(void**);
 /* ... */
 #define E_XML_REQUIRED_ATTRIBUTE_MISSING    0xC00CE020
 
-#define NODE_PRIV_TRAILING_IGNORABLE_WS     0x40000000
-#define NODE_PRIV_CHILD_IGNORABLE_WS        0x80000000
-#define NODE_PRIV_REFCOUNT_MASK             ~(NODE_PRIV_TRAILING_IGNORABLE_WS|NODE_PRIV_CHILD_IGNORABLE_WS)
 #endif /* __MSXML_PRIVATE__ */

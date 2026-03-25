@@ -3461,7 +3461,6 @@ static void test_saxreader_encoding(void)
 
     create_test_file(testXmlA, xml_win936_test, sizeof(xml_win936_test) - 1);
     hr = ISAXXMLReader_parseURL(reader, L"test.xml");
-    todo_wine
     ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
     flush_sequence(sequences, CONTENT_HANDLER_INDEX);
     DeleteFileA(testXmlA);
@@ -6450,7 +6449,6 @@ static void test_saxreader_parse_input(void)
     V_BSTR(&var) = SysAllocStringByteLen("<a>text</a>", 11);
 
     hr = ISAXXMLReader_parse(reader, var);
-    todo_wine
     ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
 
     VariantClear(&var);

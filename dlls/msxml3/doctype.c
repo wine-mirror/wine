@@ -21,8 +21,6 @@
 #define COBJMACROS
 
 #include <stdarg.h>
-#include <libxml/parser.h>
-#include <libxml/xmlerror.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -39,468 +37,395 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _domdoctype
 {
-    xmlnode node;
+    DispatchEx dispex;
     IXMLDOMDocumentType IXMLDOMDocumentType_iface;
-    LONG ref;
+    LONG refcount;
+    struct domnode *node;
 } domdoctype;
+
+static const tid_t doctype_se_tids[] =
+{
+    IXMLDOMNode_tid,
+    IXMLDOMDocumentType_tid,
+    NULL_tid
+};
 
 static inline domdoctype *impl_from_IXMLDOMDocumentType( IXMLDOMDocumentType *iface )
 {
     return CONTAINING_RECORD(iface, domdoctype, IXMLDOMDocumentType_iface);
 }
 
-static HRESULT WINAPI domdoctype_QueryInterface(
-    IXMLDOMDocumentType *iface,
-    REFIID riid,
-    void** ppvObject )
+static HRESULT WINAPI domdoctype_QueryInterface(IXMLDOMDocumentType *iface, REFIID riid, void **obj)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
-    if ( IsEqualGUID( riid, &IID_IXMLDOMDocumentType ) ||
-         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
-         IsEqualGUID( riid, &IID_IDispatch ) ||
-         IsEqualGUID( riid, &IID_IUnknown ) )
+    if (IsEqualGUID(riid, &IID_IXMLDOMDocumentType) ||
+        IsEqualGUID(riid, &IID_IXMLDOMNode) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ppvObject = &This->IXMLDOMDocumentType_iface;
+        *obj = &doctype->IXMLDOMDocumentType_iface;
     }
-    else if(node_query_interface(&This->node, riid, ppvObject))
+    else if (dispex_query_interface(&doctype->dispex, riid, obj))
     {
-        return *ppvObject ? S_OK : E_NOINTERFACE;
+        return *obj ? S_OK : E_NOINTERFACE;
+    }
+    else if (node_query_interface(doctype->node, riid, obj))
+    {
+        return *obj ? S_OK : E_NOINTERFACE;
+    }
+    else if (IsEqualGUID(riid, &IID_ISupportErrorInfo))
+    {
+        return node_create_supporterrorinfo(doctype_se_tids, obj);
     }
     else
     {
         TRACE("interface %s not implemented\n", debugstr_guid(riid));
-        *ppvObject = NULL;
+        *obj = NULL;
         return E_NOINTERFACE;
     }
 
-    IUnknown_AddRef( (IUnknown*)*ppvObject );
+    IUnknown_AddRef( (IUnknown*)*obj );
     return S_OK;
 }
 
 static ULONG WINAPI domdoctype_AddRef(IXMLDOMDocumentType *iface)
 {
     domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
-    LONG ref = InterlockedIncrement(&doctype->ref);
-    TRACE("%p, refcount %ld.\n", iface, ref);
-    return ref;
+    LONG refcount = InterlockedIncrement(&doctype->refcount);
+
+    TRACE("%p, refcount %ld.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI domdoctype_Release(IXMLDOMDocumentType *iface)
 {
     domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
-    ULONG ref = InterlockedDecrement(&doctype->ref);
+    ULONG refcount = InterlockedDecrement(&doctype->refcount);
 
-    TRACE("%p, refcount %ld.\n", iface, ref);
+    TRACE("%p, refcount %ld.\n", iface, refcount);
 
-    if (!ref)
+    if (!refcount)
     {
-        destroy_xmlnode(&doctype->node);
+        domnode_release(doctype->node);
         free(doctype);
     }
 
-    return ref;
+    return refcount;
 }
 
-static HRESULT WINAPI domdoctype_GetTypeInfoCount(
-    IXMLDOMDocumentType *iface,
-    UINT* pctinfo )
+static HRESULT WINAPI domdoctype_GetTypeInfoCount(IXMLDOMDocumentType *iface, UINT *count)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
+    return IDispatchEx_GetTypeInfoCount(&doctype->dispex.IDispatchEx_iface, count);
 }
 
-static HRESULT WINAPI domdoctype_GetTypeInfo(
-    IXMLDOMDocumentType *iface,
-    UINT iTInfo, LCID lcid,
-    ITypeInfo** ppTInfo )
+static HRESULT WINAPI domdoctype_GetTypeInfo(IXMLDOMDocumentType *iface, UINT index, LCID lcid, ITypeInfo **ti)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface,
-        iTInfo, lcid, ppTInfo);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
+    return IDispatchEx_GetTypeInfo(&doctype->dispex.IDispatchEx_iface, index, lcid, ti);
 }
 
-static HRESULT WINAPI domdoctype_GetIDsOfNames(
-    IXMLDOMDocumentType *iface,
-    REFIID riid, LPOLESTR* rgszNames,
-    UINT cNames, LCID lcid, DISPID* rgDispId )
+static HRESULT WINAPI domdoctype_GetIDsOfNames(IXMLDOMDocumentType *iface, REFIID riid, LPOLESTR* rgszNames,
+    UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface,
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
+    return IDispatchEx_GetIDsOfNames(&doctype->dispex.IDispatchEx_iface,
         riid, rgszNames, cNames, lcid, rgDispId);
 }
 
-static HRESULT WINAPI domdoctype_Invoke(
-    IXMLDOMDocumentType *iface,
-    DISPID dispIdMember, REFIID riid, LCID lcid,
-    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult,
-    EXCEPINFO* pExcepInfo, UINT* puArgErr )
+static HRESULT WINAPI domdoctype_Invoke(IXMLDOMDocumentType *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *ei, UINT *puArgErr)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface,
-        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
+    return IDispatchEx_Invoke(&doctype->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, flags, params,
+            result, ei, puArgErr);
 }
 
-static HRESULT WINAPI domdoctype_get_nodeName(
-    IXMLDOMDocumentType *iface,
-    BSTR* p )
+static HRESULT WINAPI domdoctype_get_nodeName(IXMLDOMDocumentType *iface, BSTR *p)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    TRACE("(%p)->(%p)\n", This, p);
-    return node_get_nodeName(&This->node, p);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
+
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_name(doctype->node, p);
 }
 
-static HRESULT WINAPI domdoctype_get_nodeValue(
-    IXMLDOMDocumentType *iface,
-    VARIANT* value)
+static HRESULT WINAPI domdoctype_get_nodeValue(IXMLDOMDocumentType *iface, VARIANT *v)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
-}
+    TRACE("%p, %p.\n", iface, v);
 
-static HRESULT WINAPI domdoctype_put_nodeValue(
-    IXMLDOMDocumentType *iface,
-    VARIANT value)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%s): stub\n", This, debugstr_variant(&value));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_nodeType(
-    IXMLDOMDocumentType *iface,
-    DOMNodeType* domNodeType )
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-
-    TRACE("(%p)->(%p)\n", This, domNodeType);
-
-    *domNodeType = NODE_DOCUMENT_TYPE;
-    return S_OK;
-}
-
-static HRESULT WINAPI domdoctype_get_parentNode(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode** parent )
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, parent);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_childNodes(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNodeList** outList)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, outList);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_firstChild(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode** domNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, domNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_lastChild(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode** domNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, domNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_previousSibling(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode** domNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, domNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_nextSibling(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode** domNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, domNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_attributes(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNamedNodeMap** attributeMap)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, attributeMap);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_insertBefore(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode* newNode, VARIANT refChild,
-    IXMLDOMNode** outOldNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-
-    FIXME("(%p)->(%p %s %p): stub\n", This, newNode, debugstr_variant(&refChild), outOldNode);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_replaceChild(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode* newNode,
-    IXMLDOMNode* oldNode,
-    IXMLDOMNode** outOldNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-
-    FIXME("(%p)->(%p %p %p): stub\n", This, newNode, oldNode, outOldNode);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_removeChild(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p %p): stub\n", This, domNode, oldNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_appendChild(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p %p): stub\n", This, newNode, outNewNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_hasChildNodes(
-    IXMLDOMDocumentType *iface,
-    VARIANT_BOOL* pbool)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, pbool);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_ownerDocument(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMDocument** domDocument)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, domDocument);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_cloneNode(
-    IXMLDOMDocumentType *iface,
-    VARIANT_BOOL deep, IXMLDOMNode** outNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%d %p): stub\n", This, deep, outNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_nodeTypeString(
-    IXMLDOMDocumentType *iface,
-    BSTR* p)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, p);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_text(
-    IXMLDOMDocumentType *iface,
-    BSTR* p)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, p);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_put_text(
-    IXMLDOMDocumentType *iface,
-    BSTR p)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(p));
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_specified(
-    IXMLDOMDocumentType *iface,
-    VARIANT_BOOL* isSpecified)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, isSpecified);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_definition(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode** definitionNode)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p)\n", This, definitionNode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI domdoctype_get_nodeTypedValue(
-    IXMLDOMDocumentType *iface,
-    VARIANT* v)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    TRACE("(%p)->(%p)\n", This, v);
     return return_null_var(v);
 }
 
-static HRESULT WINAPI domdoctype_put_nodeTypedValue(
-    IXMLDOMDocumentType *iface,
-    VARIANT value)
+static HRESULT WINAPI domdoctype_put_nodeValue(IXMLDOMDocumentType *iface, VARIANT v)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%s): stub\n", This, debugstr_variant(&value));
+    FIXME("%p, %s: stub\n", iface, debugstr_variant(&v));
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_dataType(
-    IXMLDOMDocumentType *iface,
-    VARIANT* typename)
+static HRESULT WINAPI domdoctype_get_nodeType(IXMLDOMDocumentType *iface, DOMNodeType *type)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, typename);
+    TRACE("%p, %p.\n", iface, type);
+
+    *type = NODE_DOCUMENT_TYPE;
+    return S_OK;
+}
+
+static HRESULT WINAPI domdoctype_get_parentNode(IXMLDOMDocumentType *iface, IXMLDOMNode **parent)
+{
+    FIXME("%p, %p: stub\n", iface, parent);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_put_dataType(
-    IXMLDOMDocumentType *iface,
-    BSTR p)
+static HRESULT WINAPI domdoctype_get_childNodes(IXMLDOMDocumentType *iface, IXMLDOMNodeList **list)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(p));
+    FIXME("%p, %p: stub\n", iface, list);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_xml(
-    IXMLDOMDocumentType *iface,
-    BSTR* p)
+static HRESULT WINAPI domdoctype_get_firstChild(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, p);
+    FIXME("%p, %p: stub\n", iface, node);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_transformNode(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode* domNode, BSTR* p)
+static HRESULT WINAPI domdoctype_get_lastChild(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p %p): stub\n", This, domNode, p);
+    FIXME("%p, %p: stub\n", iface, node);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_selectNodes(
-    IXMLDOMDocumentType *iface,
-    BSTR p, IXMLDOMNodeList** outList)
+static HRESULT WINAPI domdoctype_get_previousSibling(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_w(p), outList);
+    FIXME("%p, %p: stub\n", iface, node);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_selectSingleNode(
-    IXMLDOMDocumentType *iface,
-    BSTR p, IXMLDOMNode** outNode)
+static HRESULT WINAPI domdoctype_get_nextSibling(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_w(p), outNode);
+    FIXME("%p, %p: stub\n", iface, node);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_parsed(
-    IXMLDOMDocumentType *iface,
-    VARIANT_BOOL* isParsed)
+static HRESULT WINAPI domdoctype_get_attributes(IXMLDOMDocumentType *iface, IXMLDOMNamedNodeMap **map)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, isParsed);
+    FIXME("%p, %p: stub\n", iface, map);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_namespaceURI(
-    IXMLDOMDocumentType *iface,
-    BSTR* p)
+static HRESULT WINAPI domdoctype_insertBefore(IXMLDOMDocumentType *iface, IXMLDOMNode *node,
+        VARIANT refChild, IXMLDOMNode **out_node)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, p);
+    FIXME("%p, %p, %s, %p: stub\n", iface, node, debugstr_variant(&refChild), out_node);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_prefix(
-    IXMLDOMDocumentType *iface,
-    BSTR* prefix)
+static HRESULT WINAPI domdoctype_replaceChild(IXMLDOMDocumentType *iface, IXMLDOMNode *newNode,
+        IXMLDOMNode *oldNode, IXMLDOMNode **outOldNode)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, prefix);
+    FIXME("%p, %p, %p, %p: stub\n", iface, newNode, oldNode, outOldNode);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_baseName(
-    IXMLDOMDocumentType *iface,
-    BSTR* name)
+static HRESULT WINAPI domdoctype_removeChild(IXMLDOMDocumentType *iface, IXMLDOMNode *node,
+        IXMLDOMNode **oldNode)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, name);
+    FIXME("%p, %p, %p: stub\n", iface, node, oldNode);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_transformNodeToObject(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNode* domNode, VARIANT var1)
+static HRESULT WINAPI domdoctype_appendChild(IXMLDOMDocumentType *iface, IXMLDOMNode *newNode,
+        IXMLDOMNode **outNewNode)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p %s): stub\n", This, domNode, debugstr_variant(&var1));
+    FIXME("%p, %p, %p: stub\n", iface, newNode, outNewNode);
+
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_name(
-    IXMLDOMDocumentType *iface,
-    BSTR *p)
+static HRESULT WINAPI domdoctype_hasChildNodes(IXMLDOMDocumentType *iface, VARIANT_BOOL *v)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    TRACE("(%p)->(%p)\n", This, p);
-    return node_get_nodeName(&This->node, p);
-}
+    FIXME("%p, %p: stub\n", iface, v);
 
-static HRESULT WINAPI domdoctype_get_entities(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNamedNodeMap **entityMap)
-{
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, entityMap);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI domdoctype_get_notations(
-    IXMLDOMDocumentType *iface,
-    IXMLDOMNamedNodeMap **notationMap)
+static HRESULT WINAPI domdoctype_get_ownerDocument(IXMLDOMDocumentType *iface, IXMLDOMDocument **doc)
 {
-    domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, notationMap);
+    FIXME("%p, %p: stub\n", iface, doc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_cloneNode(IXMLDOMDocumentType *iface, VARIANT_BOOL deep, IXMLDOMNode **node)
+{
+    FIXME("%p, %d, %p: stub\n", iface, deep, node);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_nodeTypeString(IXMLDOMDocumentType *iface, BSTR *p)
+{
+    FIXME("%p, %p: stub\n", iface, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_text(IXMLDOMDocumentType *iface, BSTR *p)
+{
+    TRACE("%p, %p.\n", iface, p);
+
+    return return_bstr(L"", p);
+}
+
+static HRESULT WINAPI domdoctype_put_text(IXMLDOMDocumentType *iface, BSTR p)
+{
+    FIXME("%p, %s: stub\n", iface, debugstr_w(p));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_specified(IXMLDOMDocumentType *iface, VARIANT_BOOL *v)
+{
+    FIXME("%p, %p: stub\n", iface, v);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_definition(IXMLDOMDocumentType *iface, IXMLDOMNode **node)
+{
+    FIXME("%p, %p\n", iface, node);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_nodeTypedValue(IXMLDOMDocumentType *iface, VARIANT *v)
+{
+    TRACE("%p, %p.\n", iface, v);
+
+    return return_null_var(v);
+}
+
+static HRESULT WINAPI domdoctype_put_nodeTypedValue(IXMLDOMDocumentType *iface, VARIANT value)
+{
+    FIXME("%p, %s: stub\n", iface, debugstr_variant(&value));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_dataType(IXMLDOMDocumentType *iface, VARIANT *v)
+{
+    FIXME("%p, %p: stub\n", iface, v);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_put_dataType(IXMLDOMDocumentType *iface, BSTR p)
+{
+    FIXME("%p, %s: stub\n", iface, debugstr_w(p));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_xml(IXMLDOMDocumentType *iface, BSTR *p)
+{
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
+
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_xml(doctype->node, p);
+}
+
+static HRESULT WINAPI domdoctype_transformNode(IXMLDOMDocumentType *iface, IXMLDOMNode *node, BSTR *p)
+{
+    FIXME("%p, %p, %p: stub\n", iface, node, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_selectNodes(IXMLDOMDocumentType *iface, BSTR p, IXMLDOMNodeList **list)
+{
+    FIXME("%p, %s, %p: stub\n", iface, debugstr_w(p), list);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_selectSingleNode(IXMLDOMDocumentType *iface, BSTR p, IXMLDOMNode **node)
+{
+    FIXME("%p, %s, %p: stub\n", iface, debugstr_w(p), node);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_parsed(IXMLDOMDocumentType *iface, VARIANT_BOOL *v)
+{
+    FIXME("%p, %p: stub\n", iface, v);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_namespaceURI(IXMLDOMDocumentType *iface, BSTR *p)
+{
+    FIXME("%p, %p: stub\n", iface, p);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_prefix(IXMLDOMDocumentType *iface, BSTR *prefix)
+{
+    FIXME("%p, %p: stub\n", iface, prefix);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_baseName(IXMLDOMDocumentType *iface, BSTR *name)
+{
+    FIXME("%p, %p: stub\n", iface, name);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_transformNodeToObject(IXMLDOMDocumentType *iface, IXMLDOMNode *node, VARIANT var1)
+{
+    FIXME("%p, %p, %s: stub\n", iface, node, debugstr_variant(&var1));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_name(IXMLDOMDocumentType *iface, BSTR *p)
+{
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
+
+    TRACE("%p, %p.\n", iface, p);
+
+    return node_get_name(doctype->node, p);
+}
+
+static HRESULT WINAPI domdoctype_get_entities(IXMLDOMDocumentType *iface, IXMLDOMNamedNodeMap **entities)
+{
+    FIXME("%p, %p: stub\n", iface, entities);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domdoctype_get_notations(IXMLDOMDocumentType *iface, IXMLDOMNamedNodeMap **notations)
+{
+    FIXME("%p, %p: stub\n", iface, notations);
+
     return E_NOTIMPL;
 }
 
@@ -554,31 +479,36 @@ static const struct IXMLDOMDocumentTypeVtbl domdoctype_vtbl =
     domdoctype_get_notations
 };
 
-static const tid_t domdoctype_iface_tids[] = {
+static const tid_t domdoctype_iface_tids[] =
+{
     IXMLDOMDocumentType_tid,
     0
 };
 
-static dispex_static_data_t domdoctype_dispex = {
+static dispex_static_data_t domdoctype_dispex =
+{
     NULL,
     IXMLDOMDocumentType_tid,
     NULL,
     domdoctype_iface_tids
 };
 
-IUnknown* create_doc_type( xmlNodePtr doctype )
+HRESULT create_doc_type(struct domnode *node, IUnknown **obj)
 {
-    domdoctype *This;
+    domdoctype *object;
 
-    This = malloc(sizeof(*This));
-    if ( !This )
-        return NULL;
+    *obj = NULL;
 
-    This->IXMLDOMDocumentType_iface.lpVtbl = &domdoctype_vtbl;
-    This->ref = 1;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    init_xmlnode(&This->node, doctype, (IXMLDOMNode*)&This->IXMLDOMDocumentType_iface,
-            &domdoctype_dispex);
+    object->IXMLDOMDocumentType_iface.lpVtbl = &domdoctype_vtbl;
+    object->refcount = 1;
+    object->node = domnode_addref(node);
 
-    return (IUnknown*)&This->IXMLDOMDocumentType_iface;
+    init_dispex(&object->dispex, (IUnknown *)&object->IXMLDOMDocumentType_iface, &domdoctype_dispex);
+
+    *obj = (IUnknown *)&object->IXMLDOMDocumentType_iface;
+
+    return S_OK;
 }

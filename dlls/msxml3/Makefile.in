@@ -32,6 +32,7 @@ SOURCES = \
 	pi.c \
 	rsrc.rc \
 	saxreader.c \
+	saxreader_extensions.idl \
 	schema.c \
 	schemas.rc \
 	selection.c \

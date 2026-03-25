@@ -22,7 +22,6 @@
 #define COBJMACROS
 
 #include <stdarg.h>
-#include <libxml/parser.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -215,7 +214,7 @@ static HRESULT _node_append_attribute(struct node *node, const WCHAR *name, int 
     return S_OK;
 }
 
-static HRESULT node_set_attribute_value(struct node *node, const WCHAR *name, const VARIANT *value)
+static HRESULT _node_set_attribute_value(struct node *node, const WCHAR *name, const VARIANT *value)
 {
     struct attribute *attr;
 
@@ -230,7 +229,7 @@ static HRESULT node_set_attribute_value(struct node *node, const WCHAR *name, co
 }
 
 /* TODO: add a test for xml:lang */
-static HRESULT node_get_attribute_value(struct node *node, const WCHAR *name, VARIANT *value)
+static HRESULT _node_get_attribute_value(struct node *node, const WCHAR *name, VARIANT *value)
 {
     struct attribute *attr;
 
@@ -888,7 +887,7 @@ static HRESULT WINAPI xmlelem_setAttribute(IXMLElement2 *iface, BSTR name, VARIA
 
     TRACE("%p, %s, %s.\n", iface, debugstr_w(name), debugstr_variant(&value));
 
-    return node_set_attribute_value(element->node, name, &value);
+    return _node_set_attribute_value(element->node, name, &value);
 }
 
 static HRESULT WINAPI xmlelem_getAttribute(IXMLElement2 *iface, BSTR name,
@@ -898,7 +897,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement2 *iface, BSTR name,
 
     TRACE("%p, %s, %p.\n", iface, debugstr_w(name), value);
 
-    return node_get_attribute_value(element->node, name, value);
+    return _node_get_attribute_value(element->node, name, value);
 }
 
 static HRESULT WINAPI xmlelem_removeAttribute(IXMLElement2 *iface, BSTR name)

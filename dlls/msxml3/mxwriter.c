@@ -279,6 +279,17 @@ static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
     return S_OK;
 }
 
+UINT get_codepage_for_encoding(const WCHAR *encoding)
+{
+    for (int i = 0; i < ARRAYSIZE(xml_encoding_map); ++i)
+    {
+        if (!wcsicmp(encoding, xml_encoding_map[i].encoding))
+            return xml_encoding_map[i].cp;
+    }
+
+    return 0;
+}
+
 static HRESULT init_output_buffer(xml_encoding encoding, output_buffer *buffer)
 {
     HRESULT hr;
