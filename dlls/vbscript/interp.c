@@ -1348,7 +1348,7 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
 
     if(V_ISARRAY(v)) {
         SAFEARRAY *sa = V_ISBYREF(v) ? *V_ARRAYREF(v) : V_ARRAY(v);
-        if(sa->fFeatures & FADF_FIXEDSIZE)
+        if(sa && (sa->fFeatures & FADF_FIXEDSIZE))
             return MAKE_VBSERROR(VBSE_ARRAY_LOCKED);
     }
 

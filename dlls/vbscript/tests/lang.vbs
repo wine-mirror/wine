@@ -1927,6 +1927,27 @@ call TestReDimPreserveByRef(rx)
 ok ubound(rx) = 7, "ubound(rx) = " & ubound(rx)
 ok rx(3) = 2, "rx(3) = " & rx(3)
 
+' ReDim on an uninitialized dynamic array (Dim arr() has a NULL SAFEARRAY pointer)
+dim dynarr()
+redim dynarr(3)
+ok ubound(dynarr) = 3, "ubound(dynarr) = " & ubound(dynarr)
+dynarr(0) = "a"
+dynarr(3) = "b"
+ok dynarr(0) = "a", "dynarr(0) = " & dynarr(0)
+ok dynarr(3) = "b", "dynarr(3) = " & dynarr(3)
+redim dynarr(5)
+ok ubound(dynarr) = 5, "ubound(dynarr) = " & ubound(dynarr)
+ok dynarr(0) = empty, "dynarr(0) after redim = " & dynarr(0)
+
+' ReDim Preserve on an uninitialized dynamic array should also work and retain data
+dim dynarr2()
+redim preserve dynarr2(3)
+ok ubound(dynarr2) = 3, "ubound(dynarr2) = " & ubound(dynarr2)
+dynarr2(0) = "x"
+redim preserve dynarr2(5)
+ok ubound(dynarr2) = 5, "ubound(dynarr2) = " & ubound(dynarr2)
+ok dynarr2(0) = "x", "dynarr2(0) after redim preserve = " & dynarr2(0)
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()
