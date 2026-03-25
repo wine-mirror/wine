@@ -3929,7 +3929,7 @@ msgstr "参数不是可选参数"
 msgid "Object not a collection"
 msgstr "对象不是集合"
 
-#: dlls/jscript/jscript.rc:38
+#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:63
 msgid "Syntax error"
 msgstr "语法错误"
 
@@ -3937,7 +3937,7 @@ msgstr "语法错误"
 msgid "Expected ';'"
 msgstr "期望得到 ';'"
 
-#: dlls/jscript/jscript.rc:40
+#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:64
 msgid "Expected '('"
 msgstr "期望得到 '('"
 
@@ -3945,19 +3945,19 @@ msgstr "期望得到 '('"
 msgid "Expected ')'"
 msgstr "期望得到 ')'"
 
-#: dlls/jscript/jscript.rc:42
+#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:65
 msgid "Expected identifier"
 msgstr "期望标识符"
 
-#: dlls/jscript/jscript.rc:43
+#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:66
 msgid "Expected '='"
 msgstr "期望得到 '='"
 
-#: dlls/jscript/jscript.rc:44
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:79
 msgid "Invalid character"
 msgstr "无效字符"
 
-#: dlls/jscript/jscript.rc:45
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:80
 msgid "Unterminated string constant"
 msgstr "未终止的字符串常量"
 
@@ -4001,7 +4001,7 @@ msgstr "Microsoft JScript 编译错误"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 运行时错误"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:66
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:98
 msgid "Unknown runtime error"
 msgstr "未知运行时错误"
 
@@ -12942,11 +12942,149 @@ msgstr "远程服务器不存在或不可用"
 msgid "Invalid or unqualified reference"
 msgstr "无效或不合格引用"
 
-#: dlls/vbscript/vbscript.rc:64
+#: dlls/vbscript/vbscript.rc:67
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'To'"
+msgstr "期望得到 ';'"
+
+#: dlls/vbscript/vbscript.rc:68
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected 'End'"
+msgstr "期望 '@end'"
+
+#: dlls/vbscript/vbscript.rc:69
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected 'Then'"
+msgstr "期望 '@end'"
+
+#: dlls/vbscript/vbscript.rc:70
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected 'Wend'"
+msgstr "期望 '@end'"
+
+#: dlls/vbscript/vbscript.rc:71
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Loop'"
+msgstr "期望得到 ';'"
+
+#: dlls/vbscript/vbscript.rc:72
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Next'"
+msgstr "期望得到 ';'"
+
+#: dlls/vbscript/vbscript.rc:73
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Case'"
+msgstr "期望得到 ';'"
+
+#: dlls/vbscript/vbscript.rc:74
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected statement"
+msgstr "期望 '@end'"
+
+#: dlls/vbscript/vbscript.rc:75
+#, fuzzy
+#| msgid "Expected an operand.\n"
+msgid "Expected end of statement"
+msgstr "期望一个操作数。\n"
+
+#: dlls/vbscript/vbscript.rc:76
+#, fuzzy
+#| msgid "Unterminated string constant"
+msgid "Expected integer constant"
+msgstr "未终止的字符串常量"
+
+#: dlls/vbscript/vbscript.rc:77
+msgid "Expected 'While', 'Until' or end of statement"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:78
+#, fuzzy
+#| msgid "Invalid flag number.\n"
+msgid "Invalid number"
+msgstr "标志数无效。\n"
+
+#: dlls/vbscript/vbscript.rc:81
+msgid "'loop' without 'do'"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:82
+#, fuzzy
+#| msgid "Invalid printer state.\n"
+msgid "Invalid 'exit' statement"
+msgstr "打印机状态无效。\n"
+
+#: dlls/vbscript/vbscript.rc:83
+#, fuzzy
+#| msgid "Label redefined"
+msgid "Name redefined"
+msgstr "标签被重复定义"
+
+#: dlls/vbscript/vbscript.rc:84
+msgid "Must be first statement on the line"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:85
+msgid "Cannot use parentheses when calling a Sub"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:86
+#, fuzzy
+#| msgid "Expected an operator.\n"
+msgid "Expected literal constant"
+msgstr "期望一个操作符。\n"
+
+#: dlls/vbscript/vbscript.rc:87
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'In'"
+msgstr "期望得到 ';'"
+
+#: dlls/vbscript/vbscript.rc:88
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Class'"
+msgstr "期望得到 ';'"
+
+#: dlls/vbscript/vbscript.rc:89
+msgid "Must be defined inside a Class"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:90
+msgid "Expected Let or Set or Get in property declaration"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:91
+msgid "Class initialize or terminate do not have arguments"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:92
+msgid "Property set or let must have at least one argument"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:93
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Unexpected 'Next'"
+msgstr "期望得到 ';'"
+
+#: dlls/vbscript/vbscript.rc:94
+msgid "'Default' specification must also specify 'Public'"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:96
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript 编译错误"
 
-#: dlls/vbscript/vbscript.rc:65
+#: dlls/vbscript/vbscript.rc:97
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript 运行时错误"
 

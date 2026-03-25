@@ -2007,6 +2007,7 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface, S
 static IActiveScriptError **store_script_error;
 static ULONG error_line;
 static LONG error_char;
+static USHORT error_code;
 static BSTR error_source_line;
 static HRESULT error_source_line_hres;
 
@@ -2029,6 +2030,15 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, I
             trace("Error in line %lu: %x %s\n", error_line + 1, info.wCode, wine_dbgstr_w(info.bstrDescription));
     }else {
         IDispatchEx *dispex;
+        EXCEPINFO info;
+
+        hres = IActiveScriptError_GetExceptionInfo(pscripterror, &info);
+        if(SUCCEEDED(hres)) {
+            error_code = HRESULT_CODE(info.scode);
+            SysFreeString(info.bstrSource);
+            SysFreeString(info.bstrDescription);
+            SysFreeString(info.bstrHelpFile);
+        }
 
         hres = IActiveScriptError_QueryInterface(pscripterror, &IID_IDispatchEx, (void**)&dispex);
         ok(hres == E_NOINTERFACE, "QI(IDispatchEx) returned: %08lx\n", hres);
@@ -2704,6 +2714,7 @@ static void test_parse_errors(void)
         int error_char;
         const WCHAR *source_line;
         HRESULT source_line_hres;
+        int error_code;
     }
     invalid_scripts[] =
     {
@@ -2712,7 +2723,7 @@ static void test_parse_errors(void)
             L"If 0 > 1 Then\n"
             "    x = 0 End If\n",
             1, 10,
-            L"    x = 0 End If", S_OK
+            L"    x = 0 End If", S_OK, -1042
         },
         {
             /* ElseIf...End If */
@@ -2721,7 +2732,7 @@ static void test_parse_errors(void)
             "ElseIf True Then\n"
             "    x = 1 End If\n",
             3, 10,
-            L"    x = 1 End If", S_OK
+            L"    x = 1 End If", S_OK, -1042
         },
         {
             /* Else End If (no separator) */
@@ -2729,49 +2740,49 @@ static void test_parse_errors(void)
             "    x = 0\n"
             "Else End If\n",
             2, 5,
-            L"Else End If", S_OK
+            L"Else End If", S_OK, -1024
         },
         {
             /* While...End While */
             L"While False\n"
             "    x = 0 End While\n",
             1, 10,
-            L"    x = 0 End While", S_OK
+            L"    x = 0 End While", S_OK, -1024
         },
         {
             /* While...Wend */
             L"While False\n"
             "    x = 0 Wend\n",
             1, 10,
-            L"    x = 0 Wend", S_OK
+            L"    x = 0 Wend", S_OK, -1025
         },
         {
             /* Do While...Loop */
             L"Do While False\n"
             "    x = 0 Loop\n",
             1, 10,
-            L"    x = 0 Loop", S_OK
+            L"    x = 0 Loop", S_OK, -1025
         },
         {
             /* Do Until...Loop */
             L"Do Until True\n"
             "    x = 0 Loop\n",
             1, 10,
-            L"    x = 0 Loop", S_OK
+            L"    x = 0 Loop", S_OK, -1025
         },
         {
             /* Do...Loop While */
             L"Do\n"
             "    x = 0 Loop While False\n",
             1, 10,
-            L"    x = 0 Loop While False", S_OK
+            L"    x = 0 Loop While False", S_OK, -1025
         },
         {
             /* Do...Loop Until */
             L"Do\n"
             "    x = 0 Loop Until True\n",
             1, 10,
-            L"    x = 0 Loop Until True", S_OK
+            L"    x = 0 Loop Until True", S_OK, -1025
         },
         {
             /* Select...End Select */
@@ -2783,25 +2794,25 @@ static void test_parse_errors(void)
             "        x = True End Select\n"
             "Call ok(x, \"wrong case\")\n",
             5, 17,
-            L"        x = True End Select", S_OK
+            L"        x = True End Select", S_OK, -1042
         },
         {
             /* Class...End Class  (empty) */
             L"Class C End Class",
             0, 8,
-            L"Class C End Class", S_OK
+            L"Class C End Class", S_OK, -1024
         },
         {
             /* Class...End Class  (empty) */
             L"Class C _\nEnd Class",
             1, 0,
-            L"End Class", S_OK
+            L"End Class", S_OK, -1024
         },
         {
             /* invalid use of parentheses for call statement */
             L"strcomp(\"x\", \"y\")",
             0, 17,
-            L"strcomp(\"x\", \"y\")", S_OK
+            L"strcomp(\"x\", \"y\")", S_OK, -1044
         },
         {
             L"\n\n\n  cint _\n   throwInt(&h80001234&)",
@@ -2863,6 +2874,157 @@ static void test_parse_errors(void)
             L"x = &H100000001\n",
             0, 4,
             L"x = &H100000001", S_OK
+        },
+        {
+            /* Unterminated string constant - error 1033 */
+            L"x = \"hello\n",
+            0, -10,
+            NULL, S_OK, -1033
+        },
+        {
+            /* Expected 'End' - error 1014 */
+            L"If True Then\nx = 1\n",
+            2, 0,
+            NULL, S_OK, -1014
+        },
+        {
+            /* Name redefined - error 1041 */
+            L"Dim a\nDim a\n",
+            1, -4,
+            NULL, S_OK, -1041
+        },
+        {
+            /* Expected identifier - error 1010 */
+            L"Dim If\n",
+            0, 4,
+            NULL, S_OK, -1010
+        },
+        {
+            /* Invalid character - error 1032 */
+            L"x = @invalid\n",
+            0, 4,
+            NULL, S_OK, -1032
+        },
+        {
+            /* Expected literal constant - error 1045 */
+            L"Const x = 1 + \"a\"\n",
+            0, -17,
+            NULL, S_OK, -1045
+        },
+        {
+            /* Expected '(' - error 1005 */
+            L"Sub x)\nEnd Sub\n",
+            0, 5,
+            NULL, S_OK, -1005
+        },
+        {
+            /* Expected '=' - error 1011 */
+            L"Const x\n",
+            0, 7,
+            NULL, S_OK, -1011
+        },
+        {
+            /* Expected 'To' - error 1013 */
+            L"For i = 1 x 10\nNext\n",
+            0, 10,
+            NULL, S_OK, -1013
+        },
+        {
+            /* Expected 'Then' - error 1017 */
+            L"If True\nEnd If\n",
+            0, 7,
+            NULL, S_OK, -1017
+        },
+        {
+            /* Expected 'Wend' - error 1018 */
+            L"While True\nx = 1\n",
+            2, 0,
+            NULL, S_OK, -1018
+        },
+        {
+            /* Expected 'Loop' - error 1019 */
+            L"Do\nx = 1\n",
+            2, 0,
+            NULL, S_OK, -1019
+        },
+        {
+            /* Expected 'Next' - error 1020 */
+            L"For i = 1 To 10\nx = 1\n",
+            2, 0,
+            NULL, S_OK, -1020
+        },
+        {
+            /* Expected 'Case' - error 1021 */
+            L"Select x\nEnd Select\n",
+            0, 7,
+            NULL, S_OK, -1021
+        },
+        {
+            /* Expected integer constant - error 1026 */
+            L"Dim x(\"a\")\n",
+            0, 6,
+            NULL, S_OK, -1026
+        },
+        {
+            /* Invalid number - error 1031 */
+            L"x = 1e999\n",
+            0, -9,
+            NULL, S_OK, -1031
+        },
+        {
+            /* 'loop' without 'do' - error 1038 */
+            L"Loop\n",
+            0, 0,
+            NULL, S_OK, -1038
+        },
+        {
+            /* Invalid 'exit' statement - error 1039 */
+            L"Exit Do\n",
+            0, -5,
+            NULL, S_OK, -1039
+        },
+        {
+            /* Expected 'In' - error 1046 */
+            L"For Each x = arr\nNext\n",
+            0, 11,
+            NULL, S_OK, -1046
+        },
+        {
+            /* Must be defined inside a Class - error 1048 */
+            L"Property Get x\nEnd Property\n",
+            0, 9,
+            NULL, S_OK, -1048
+        },
+        {
+            /* Expected Let or Set or Get - error 1049 */
+            L"Class C\nProperty x\nEnd Property\nEnd Class\n",
+            1, 9,
+            NULL, S_OK, -1049
+        },
+        /* TODO: Wine allows arguments on Class_Initialize/Class_Terminate
+        {
+            Class initialize/terminate no arguments - error 1053
+            L"Class C\nSub Class_Initialize(x)\nEnd Sub\nEnd Class\n",
+            1, 20, 1053
+        },
+        */
+        {
+            /* Property Let/Set needs at least one argument - error 1054 */
+            L"Class C\nProperty Let x\nEnd Property\nEnd Class\n",
+            1, 14,
+            NULL, S_OK, -1054
+        },
+        {
+            /* Unexpected 'Next' - error 1055 */
+            L"Next\n",
+            0, 0,
+            NULL, S_OK, -1055
+        },
+        {
+            /* 'Default' must also specify 'Public' - error 1057 */
+            L"Class C\nDefault Private Function f()\nf = 1\nEnd Function\nEnd Class\n",
+            1, 0,
+            NULL, S_OK, -1057
         }
     };
     HRESULT hres;
@@ -2872,6 +3034,7 @@ static void test_parse_errors(void)
     {
         error_line = ~0;
         error_char = -1;
+        error_code = 0;
         onerror_hres = S_OK;
 
         SET_EXPECT(OnScriptError);
@@ -2884,6 +3047,10 @@ static void test_parse_errors(void)
         todo_wine_if(invalid_scripts[i].error_char < 0)
         ok(error_char == abs(invalid_scripts[i].error_char), "[%u] error char %ld expected %d\n",
            i, error_char, invalid_scripts[i].error_char);
+        if(invalid_scripts[i].error_code)
+            todo_wine_if(invalid_scripts[i].error_code < 0)
+            ok(error_code == abs(invalid_scripts[i].error_code), "[%u] error code %u expected %u\n",
+               i, error_code, abs(invalid_scripts[i].error_code));
         ok(error_source_line_hres == invalid_scripts[i].source_line_hres,
            "[%u] GetSourceLineText returned: %08lx\n", i, error_source_line_hres);
         if(error_source_line_hres == S_OK && invalid_scripts[i].source_line)

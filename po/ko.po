@@ -3962,7 +3962,7 @@ msgstr "인수는 옵션이 아닙니다"
 msgid "Object not a collection"
 msgstr "컬렉션이 아닌 개체입니다"
 
-#: dlls/jscript/jscript.rc:38
+#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:63
 msgid "Syntax error"
 msgstr "문법 오류"
 
@@ -3970,7 +3970,7 @@ msgstr "문법 오류"
 msgid "Expected ';'"
 msgstr "';' 필요"
 
-#: dlls/jscript/jscript.rc:40
+#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:64
 msgid "Expected '('"
 msgstr "'(' 필요"
 
@@ -3978,19 +3978,19 @@ msgstr "'(' 필요"
 msgid "Expected ')'"
 msgstr "')' 필요"
 
-#: dlls/jscript/jscript.rc:42
+#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:65
 msgid "Expected identifier"
 msgstr "필요한 식별자"
 
-#: dlls/jscript/jscript.rc:43
+#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:66
 msgid "Expected '='"
 msgstr "'=' 필요"
 
-#: dlls/jscript/jscript.rc:44
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:79
 msgid "Invalid character"
 msgstr "잘못된 문자"
 
-#: dlls/jscript/jscript.rc:45
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:80
 msgid "Unterminated string constant"
 msgstr "끝나지 않은 문자열 상수"
 
@@ -4034,7 +4034,7 @@ msgstr "Microsoft JScript 컴파일 오류"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 런타임 오류"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:66
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:98
 msgid "Unknown runtime error"
 msgstr "알 수 없는 런타임 오류"
 
@@ -13001,11 +13001,149 @@ msgstr "원격 서버가 없거나 사용할 수 없습니다"
 msgid "Invalid or unqualified reference"
 msgstr "잘못된 참조입니다"
 
-#: dlls/vbscript/vbscript.rc:64
+#: dlls/vbscript/vbscript.rc:67
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'To'"
+msgstr "';' 필요"
+
+#: dlls/vbscript/vbscript.rc:68
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected 'End'"
+msgstr "'@end'가 필요합니다"
+
+#: dlls/vbscript/vbscript.rc:69
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected 'Then'"
+msgstr "'@end'가 필요합니다"
+
+#: dlls/vbscript/vbscript.rc:70
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected 'Wend'"
+msgstr "'@end'가 필요합니다"
+
+#: dlls/vbscript/vbscript.rc:71
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Loop'"
+msgstr "';' 필요"
+
+#: dlls/vbscript/vbscript.rc:72
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Next'"
+msgstr "';' 필요"
+
+#: dlls/vbscript/vbscript.rc:73
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Case'"
+msgstr "';' 필요"
+
+#: dlls/vbscript/vbscript.rc:74
+#, fuzzy
+#| msgid "Expected '@end'"
+msgid "Expected statement"
+msgstr "'@end'가 필요합니다"
+
+#: dlls/vbscript/vbscript.rc:75
+#, fuzzy
+#| msgid "Expected an operand.\n"
+msgid "Expected end of statement"
+msgstr "피연산자가 필요합니다.\n"
+
+#: dlls/vbscript/vbscript.rc:76
+#, fuzzy
+#| msgid "Unterminated string constant"
+msgid "Expected integer constant"
+msgstr "끝나지 않은 문자열 상수"
+
+#: dlls/vbscript/vbscript.rc:77
+msgid "Expected 'While', 'Until' or end of statement"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:78
+#, fuzzy
+#| msgid "Invalid flag number.\n"
+msgid "Invalid number"
+msgstr "잘못된 플래그.\n"
+
+#: dlls/vbscript/vbscript.rc:81
+msgid "'loop' without 'do'"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:82
+#, fuzzy
+#| msgid "Invalid printer state.\n"
+msgid "Invalid 'exit' statement"
+msgstr "프린터 상태가 잘못되었습니다.\n"
+
+#: dlls/vbscript/vbscript.rc:83
+#, fuzzy
+#| msgid "Label redefined"
+msgid "Name redefined"
+msgstr "레이블이 재정의되었습니다"
+
+#: dlls/vbscript/vbscript.rc:84
+msgid "Must be first statement on the line"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:85
+msgid "Cannot use parentheses when calling a Sub"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:86
+#, fuzzy
+#| msgid "Expected an operator.\n"
+msgid "Expected literal constant"
+msgstr "연산자가 필요합니다.\n"
+
+#: dlls/vbscript/vbscript.rc:87
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'In'"
+msgstr "';' 필요"
+
+#: dlls/vbscript/vbscript.rc:88
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected 'Class'"
+msgstr "';' 필요"
+
+#: dlls/vbscript/vbscript.rc:89
+msgid "Must be defined inside a Class"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:90
+msgid "Expected Let or Set or Get in property declaration"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:91
+msgid "Class initialize or terminate do not have arguments"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:92
+msgid "Property set or let must have at least one argument"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:93
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Unexpected 'Next'"
+msgstr "';' 필요"
+
+#: dlls/vbscript/vbscript.rc:94
+msgid "'Default' specification must also specify 'Public'"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:96
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript 컴파일 오류"
 
-#: dlls/vbscript/vbscript.rc:65
+#: dlls/vbscript/vbscript.rc:97
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript 런타임 오류"
 
