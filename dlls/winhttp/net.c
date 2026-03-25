@@ -672,11 +672,6 @@ void netconn_cancel_io( struct netconn *conn )
     closesocket( socket );
 }
 
-ULONG netconn_query_data_available( struct netconn *conn )
-{
-    return conn->secure ? conn->peek_len : 0;
-}
-
 DWORD netconn_set_timeout( struct netconn *netconn, BOOL send, int value )
 {
     int opt = send ? SO_SNDTIMEO : SO_RCVTIMEO;
