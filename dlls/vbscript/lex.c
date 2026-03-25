@@ -28,6 +28,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+static int lex_error(parser_ctx_t *ctx, HRESULT hres)
+{
+    ctx->hres = hres;
+    ctx->error_loc = ctx->ptr - ctx->code;
+    return 0;
+}
+
 static const struct {
     const WCHAR *word;
     int token;
@@ -169,8 +176,7 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
 
     while(ctx->ptr < ctx->end) {
         if(*ctx->ptr == '\n' || *ctx->ptr == '\r') {
-            FIXME("newline inside string literal\n");
-            return 0;
+            return lex_error(ctx, MAKE_VBSERROR(VBSE_UNTERMINATED_STRING));
         }
 
        if(*ctx->ptr == '"') {
@@ -183,8 +189,7 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
     }
 
     if(ctx->ptr == ctx->end) {
-        FIXME("unterminated string literal\n");
-        return 0;
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_UNTERMINATED_STRING));
     }
 
     len += ctx->ptr-ptr;
@@ -298,8 +303,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
         }
 
         if(!is_digit(*ctx->ptr)) {
-            FIXME("Invalid numeric literal\n");
-            return 0;
+            return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
         }
 
         use_int = FALSE;
@@ -315,8 +319,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             }
 
             if(sign*e + exp > INT_MAX/100) {
-                FIXME("Invalid numeric literal\n");
-                return 0;
+                return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
             }
         } while(is_digit(*ctx->ptr));
 
@@ -330,8 +333,7 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
 
     r = exp>=0 ? d*pow(10, exp) : d/pow(10, -exp);
     if(isinf(r)) {
-        FIXME("Invalid numeric literal\n");
-        return 0;
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
     }
 
     *(double*)ret = r;
@@ -524,7 +526,7 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         }
         return '>';
     default:
-        FIXME("Unhandled char %c in %s\n", *ctx->ptr, debugstr_w(ctx->ptr));
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_CHAR));
     }
 
     return 0;

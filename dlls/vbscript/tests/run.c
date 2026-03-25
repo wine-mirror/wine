@@ -2878,8 +2878,8 @@ static void test_parse_errors(void)
         {
             /* Unterminated string constant - error 1033 */
             L"x = \"hello\n",
-            0, -10,
-            NULL, S_OK, -1033
+            0, 10,
+            NULL, S_OK, 1033
         },
         {
             /* Expected 'End' - error 1014 */
@@ -2903,7 +2903,7 @@ static void test_parse_errors(void)
             /* Invalid character - error 1032 */
             L"x = @invalid\n",
             0, 4,
-            NULL, S_OK, -1032
+            NULL, S_OK, 1032
         },
         {
             /* Expected literal constant - error 1045 */
@@ -2968,8 +2968,8 @@ static void test_parse_errors(void)
         {
             /* Invalid number - error 1031 */
             L"x = 1e999\n",
-            0, -9,
-            NULL, S_OK, -1031
+            0, 9,
+            NULL, S_OK, 1031
         },
         {
             /* 'loop' without 'do' - error 1038 */
