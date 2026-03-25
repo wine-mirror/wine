@@ -94,6 +94,15 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %define api.pure
 %start Program
 
+/* Resolve dangling Else / End If conflicts via precedence: the empty
+ * EndIf_opt rule gets lower precedence than tELSE and tEND so that
+ * shift (binding to innermost If) always wins. The remaining 8
+ * shift/reduce conflicts are benign colon-chain ambiguities where
+ * bison's default shift gives the correct greedy behavior. */
+%nonassoc LOWER_THAN_ELSE
+%nonassoc tELSE tEND
+%expect 8
+
 %union {
     const WCHAR *string;
     statement_t *statement;
@@ -404,7 +413,7 @@ IfStatement
     | tIF Expression error                       { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_THEN); YYABORT; }
 
 EndIf_opt
-    : /* empty */
+    : /* empty */ %prec LOWER_THAN_ELSE
     | tEND tIF
 
 ElseIfs_opt
