@@ -300,21 +300,6 @@ static const struct IJsonValueVtbl json_value_vtbl =
 
 DEFINE_IINSPECTABLE( json_value_statics, IJsonValueStatics, struct json_value_statics, IActivationFactory_iface )
 
-static HRESULT unescape_string( const WCHAR *src, HSTRING *output )
-{
-    UINT32 len = wcslen( src ) - 1, n;
-    const WCHAR *end = src + len;
-    HSTRING_BUFFER buf;
-    HRESULT hr;
-    WCHAR *dst;
-
-    for (len = n = 0; len + n < end - src; len++) { if (src[len + n] == '\\') n++; }
-    if (FAILED(hr = WindowsPreallocateStringBuffer( len, &dst, &buf ))) return hr;
-    while (src != end) { if (*src == '\\' && ++src == end) break; *dst++ = *src++; }
-
-    return WindowsPromoteStringBuffer( buf, output );
-}
-
 struct json_buffer
 {
     const WCHAR *str;
@@ -344,6 +329,81 @@ static BOOL json_buffer_take( struct json_buffer *json, const WCHAR *str )
     return TRUE;
 }
 
+static WCHAR json_buffer_next( struct json_buffer *json, const WCHAR *valid )
+{
+    const WCHAR chr = *json->str;
+
+    if (!json->len) return 0;
+    if (valid && !wcschr( valid, chr )) return 0;
+    json->str++;
+    json->len--;
+
+    return chr;
+}
+
+static HRESULT parse_json_string( struct json_buffer *json, HSTRING *output )
+{
+    const WCHAR valid_hex_chars[] = L"abcdefABCDEF0123456789";
+    WCHAR chr, *buf, *dst;
+    HRESULT hr;
+
+    /* validate and escape string, assuming string occupies remainder of buffer */
+
+    if (!json_buffer_take( json, L"\"" )) return WEB_E_INVALID_JSON_STRING;
+    if (!json->len) return WEB_E_INVALID_JSON_STRING;
+    if (!(buf = calloc( json->len, sizeof( WCHAR )))) return E_OUTOFMEMORY;
+    dst = buf;
+
+    while (json->len)
+    {
+        if (*json->str == '"') break;
+        if (json_buffer_take( json, L"\\\"" ))      *(dst++) = '"';
+        else if (json_buffer_take( json, L"\\\\" )) *(dst++) = '\\';
+        else if (json_buffer_take( json, L"\\/"  )) *(dst++) = '/';
+        else if (json_buffer_take( json, L"\\b"  )) *(dst++) = '\b';
+        else if (json_buffer_take( json, L"\\f"  )) *(dst++) = '\f';
+        else if (json_buffer_take( json, L"\\n"  )) *(dst++) = '\n';
+        else if (json_buffer_take( json, L"\\r"  )) *(dst++) = '\r';
+        else if (json_buffer_take( json, L"\\t"  )) *(dst++) = '\t';
+        else if (json_buffer_take( json, L"\\u"  ))
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (!(chr = json_buffer_next( json, valid_hex_chars )))
+                {
+                    free( buf );
+                    return WEB_E_INVALID_JSON_STRING;
+                }
+
+                *dst <<= 4;
+                if (chr >= 'A') *dst |= (chr & 0x7) + 9;
+                else *dst |= chr & 0xf;
+            }
+            dst++;
+        }
+        else if (*json->str >= ' ')
+        {
+            *(dst++) = *(json->str++);
+            json->len--;
+        }
+        else
+        {
+            free( buf );
+            return WEB_E_INVALID_JSON_STRING;
+        }
+    }
+
+    if (!json_buffer_take( json, L"\"" ))
+    {
+        free( buf );
+        return WEB_E_INVALID_JSON_STRING;
+    }
+
+    hr = WindowsCreateString( buf, dst - buf, output );
+    free( buf );
+    return hr;
+}
+
 static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value )
 {
     struct json_value *impl;
@@ -370,13 +430,9 @@ static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value )
         impl->boolean_value = FALSE;
         impl->json_value_type = JsonValueType_Boolean;
     }
-    else if (*json->str == '"' && json->str[json->len - 1] == '"')
+    else if (*json->str == '"')
     {
-        json->str++;
-        json->len -= 2;
-
-        if (json->len <= 2) hr = WEB_E_INVALID_JSON_STRING;
-        else hr = unescape_string( json->str, &impl->string_value );
+        hr = parse_json_string( json, &impl->string_value );
         impl->json_value_type = JsonValueType_String;
     }
     else if (*json->str == '[')
