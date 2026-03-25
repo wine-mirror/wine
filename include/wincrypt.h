@@ -4707,6 +4707,11 @@ HRESULT WINAPI FindCertsByIssuer(PCERT_CHAIN pCertChains, DWORD *pcbCertChains,
  DWORD *pcCertChains, BYTE* pbEncodedIssuerName, DWORD cbEncodedIssuerName,
  LPCWSTR pwszPurpose, DWORD dwKeySpec);
 
+#define CRYPT_ACQUIRE_NCRYPT_KEY_FLAGS_MASK  0x00070000
+#define CRYPT_ACQUIRE_ALLOW_NCRYPT_KEY_FLAG  0x00010000
+#define CRYPT_ACQUIRE_PREFER_NCRYPT_KEY_FLAG 0x00020000
+#define CRYPT_ACQUIRE_ONLY_NCRYPT_KEY_FLAG   0x00040000
+
 #ifdef __cplusplus
 }
 #endif

@@ -42,6 +42,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "bcrypt.h"
 #include "sspi.h"
 #include "secur32_priv.h"
 
@@ -1300,24 +1301,11 @@ static NTSTATUS schan_set_dtls_timeouts( void *args )
     return SEC_E_OK;
 }
 
-static inline void reverse_bytes(BYTE *buf, ULONG len)
-{
-    BYTE tmp;
-    ULONG i;
-    for (i = 0; i < len / 2; i++)
-    {
-        tmp = buf[i];
-        buf[i] = buf[len - i - 1];
-        buf[len - i - 1] = tmp;
-    }
-}
-
 static ULONG set_component(gnutls_datum_t *comp, BYTE *data, ULONG len, ULONG *buflen)
 {
     comp->data = data;
     comp->size = len;
-    reverse_bytes(comp->data, comp->size);
-    if (comp->data[0] & 0x80) /* add leading 0 byte if most significant bit is set */
+    if (comp->size > 0 && comp->data[0] & 0x80) /* add leading 0 byte if most significant bit is set */
     {
         memmove(comp->data + 1, comp->data, *buflen);
         comp->data[0] = 0;
@@ -1327,32 +1315,40 @@ static ULONG set_component(gnutls_datum_t *comp, BYTE *data, ULONG len, ULONG *b
     return comp->size;
 }
 
+/* BCRYPT_RSAKEY_BLOB layout: already big-endian, matching GnuTLS expectations. */
 static gnutls_x509_privkey_t get_x509_key(ULONG key_size, const BYTE *key_blob)
 {
     gnutls_privkey_t key = NULL;
     gnutls_x509_privkey_t x509key = NULL;
     gnutls_datum_t m, e, d, p, q, u, e1, e2;
+    const BCRYPT_RSAKEY_BLOB *hdr = (const BCRYPT_RSAKEY_BLOB *)key_blob;
     BYTE *ptr;
-    RSAPUBKEY *rsakey;
-    DWORD size = key_size;
+    DWORD size;
     int ret;
 
-    if (size < sizeof(BLOBHEADER)) return NULL;
+    if (key_size < sizeof(*hdr)) return NULL;
+    if (hdr->Magic != BCRYPT_RSAFULLPRIVATE_MAGIC)
+    {
+        TRACE("unexpected magic %#x\n", (unsigned)hdr->Magic);
+        return NULL;
+    }
 
-    rsakey = (RSAPUBKEY *)(key_blob + sizeof(BLOBHEADER));
-    TRACE("RSA key bitlen %u pubexp %u\n", (unsigned)rsakey->bitlen, (unsigned)rsakey->pubexp);
+    TRACE("BCRYPT RSA key bitlen %u cbExp %u cbMod %u cbP1 %u cbP2 %u\n",
+          (unsigned)hdr->BitLength, (unsigned)hdr->cbPublicExp, (unsigned)hdr->cbModulus,
+          (unsigned)hdr->cbPrime1, (unsigned)hdr->cbPrime2);
 
-    size -= sizeof(BLOBHEADER) + FIELD_OFFSET(RSAPUBKEY, pubexp);
-    set_component(&e, (BYTE *)&rsakey->pubexp, sizeof(rsakey->pubexp), &size);
+    size = key_size - sizeof(*hdr);
+    ptr = (BYTE *)(hdr + 1);
 
-    ptr = (BYTE *)(rsakey + 1);
-    ptr += set_component(&m, ptr, rsakey->bitlen / 8, &size);
-    ptr += set_component(&p, ptr, rsakey->bitlen / 16, &size);
-    ptr += set_component(&q, ptr, rsakey->bitlen / 16, &size);
-    ptr += set_component(&e1, ptr, rsakey->bitlen / 16, &size);
-    ptr += set_component(&e2, ptr, rsakey->bitlen / 16, &size);
-    ptr += set_component(&u, ptr, rsakey->bitlen / 16, &size);
-    ptr += set_component(&d, ptr, rsakey->bitlen / 8, &size);
+    /* BCRYPT blob: PublicExp, Modulus, Prime1, Prime2, Exponent1, Exponent2, Coefficient, PrivateExponent */
+    ptr += set_component(&e, ptr, hdr->cbPublicExp, &size);
+    ptr += set_component(&m, ptr, hdr->cbModulus, &size);
+    ptr += set_component(&p, ptr, hdr->cbPrime1, &size);
+    ptr += set_component(&q, ptr, hdr->cbPrime2, &size);
+    ptr += set_component(&e1, ptr, hdr->cbPrime1, &size);
+    ptr += set_component(&e2, ptr, hdr->cbPrime2, &size);
+    ptr += set_component(&u, ptr, hdr->cbPrime1, &size);
+    ptr += set_component(&d, ptr, hdr->cbModulus, &size);
 
     if ((ret = pgnutls_privkey_init(&key)) < 0)
     {
