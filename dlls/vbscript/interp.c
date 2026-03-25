@@ -2472,6 +2472,7 @@ static void release_exec(exec_ctx_t *ctx)
 HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbdisp_t *vbthis, DISPPARAMS *dp, VARIANT *res)
 {
     exec_ctx_t exec = {func->code_ctx};
+    named_item_t *prev_named_item;
     vbsop_t op;
     HRESULT hres = S_OK;
 
@@ -2544,6 +2545,9 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     exec.instr = exec.code->instrs + func->code_off;
     exec.script = ctx;
     exec.func = func;
+
+    prev_named_item = ctx->current_named_item;
+    ctx->current_named_item = exec.code->named_item;
 
     while(exec.instr) {
         op = exec.instr->op;
@@ -2622,6 +2626,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         V_VT(&exec.ret_val) = VT_EMPTY;
     }
 
+    ctx->current_named_item = prev_named_item;
     release_exec(&exec);
     return hres;
 }

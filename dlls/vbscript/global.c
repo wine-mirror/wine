@@ -3351,8 +3351,54 @@ static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned ar
 
 static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    named_item_t *item;
+    function_t **funcs;
+    IDispatch *disp;
+    const WCHAR *name;
+    size_t i, cnt;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(V_VT(arg) != VT_BSTR)
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+
+    name = V_BSTR(arg);
+    if(!name || !name[0])
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
+    /* Search the current named item's script object first */
+    item = This->ctx->current_named_item;
+    if(item && item->script_obj) {
+        funcs = item->script_obj->global_funcs;
+        cnt = item->script_obj->global_funcs_cnt;
+        for(i = 0; i < cnt; i++) {
+            if(!wcsicmp(funcs[i]->name, name)) {
+                hres = create_func_ref(This->ctx, funcs[i], &disp);
+                if(FAILED(hres))
+                    return hres;
+                V_VT(res) = VT_DISPATCH;
+                V_DISPATCH(res) = disp;
+                return S_OK;
+            }
+        }
+    }
+
+    /* Search global script object */
+    funcs = This->ctx->script_obj->global_funcs;
+    cnt = This->ctx->script_obj->global_funcs_cnt;
+    for(i = 0; i < cnt; i++) {
+        if(!wcsicmp(funcs[i]->name, name)) {
+            hres = create_func_ref(This->ctx, funcs[i], &disp);
+            if(FAILED(hres))
+                return hres;
+            V_VT(res) = VT_DISPATCH;
+            V_DISPATCH(res) = disp;
+            return S_OK;
+        }
+    }
+
+    return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
 }
 
 static HRESULT Global_Err(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

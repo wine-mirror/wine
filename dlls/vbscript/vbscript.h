@@ -167,6 +167,7 @@ HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,WORD,DISPPARAMS*);
 HRESULT get_disp_value(script_ctx_t*,IDispatch*,VARIANT*);
 void collect_objects(script_ctx_t*);
 HRESULT create_script_disp(script_ctx_t*,ScriptDisp**);
+HRESULT create_func_ref(script_ctx_t*,function_t*,IDispatch**);
 
 HRESULT to_int(VARIANT*,int*);
 
@@ -201,6 +202,8 @@ struct _script_ctx_t {
     DWORD safeopt;
 
     ScriptDisp *script_obj;
+
+    named_item_t *current_named_item;
 
     BuiltinDisp *global_obj;
     BuiltinDisp *err_obj;

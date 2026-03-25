@@ -563,6 +563,121 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     return S_OK;
 }
 
+typedef struct {
+    IDispatch IDispatch_iface;
+    LONG ref;
+    function_t *func;
+    script_ctx_t *ctx;
+} FuncRef;
+
+static inline FuncRef *FuncRef_from_IDispatch(IDispatch *iface)
+{
+    return CONTAINING_RECORD(iface, FuncRef, IDispatch_iface);
+}
+
+static HRESULT WINAPI FuncRef_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    FuncRef *This = FuncRef_from_IDispatch(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = &This->IDispatch_iface;
+        IDispatch_AddRef(&This->IDispatch_iface);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI FuncRef_AddRef(IDispatch *iface)
+{
+    FuncRef *This = FuncRef_from_IDispatch(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI FuncRef_Release(IDispatch *iface)
+{
+    FuncRef *This = FuncRef_from_IDispatch(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+    if(!ref) {
+        release_vbscode(This->func->code_ctx);
+        free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI FuncRef_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    FuncRef *This = FuncRef_from_IDispatch(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI FuncRef_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    FuncRef *This = FuncRef_from_IDispatch(iface);
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+    return DISP_E_BADINDEX;
+}
+
+static HRESULT WINAPI FuncRef_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    FuncRef *This = FuncRef_from_IDispatch(iface);
+    TRACE("(%p)->(%s %p %u %lu %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT WINAPI FuncRef_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    FuncRef *This = FuncRef_from_IDispatch(iface);
+
+    TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    if(dispIdMember != DISPID_VALUE)
+        return DISP_E_MEMBERNOTFOUND;
+
+    return exec_script(This->ctx, TRUE, This->func, NULL, pDispParams, pVarResult);
+}
+
+static const IDispatchVtbl FuncRefVtbl = {
+    FuncRef_QueryInterface,
+    FuncRef_AddRef,
+    FuncRef_Release,
+    FuncRef_GetTypeInfoCount,
+    FuncRef_GetTypeInfo,
+    FuncRef_GetIDsOfNames,
+    FuncRef_Invoke
+};
+
+HRESULT create_func_ref(script_ctx_t *ctx, function_t *func, IDispatch **ret)
+{
+    FuncRef *ref;
+
+    ref = calloc(1, sizeof(*ref));
+    if(!ref)
+        return E_OUTOFMEMORY;
+
+    ref->IDispatch_iface.lpVtbl = &FuncRefVtbl;
+    ref->ref = 1;
+    ref->func = func;
+    ref->ctx = ctx;
+    grab_vbscode(func->code_ctx);
+
+    *ret = &ref->IDispatch_iface;
+    return S_OK;
+}
+
 struct typeinfo_func {
     function_t *func;
     MEMBERID memid;

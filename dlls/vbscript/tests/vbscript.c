@@ -2234,6 +2234,45 @@ static void test_named_items(void)
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
 
+    /* GetRef should only find functions in the current named item context */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse,
+        L"set x = GetRef(\"testSub_global\")\n", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "GetRef(testSub_global) from global context failed: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse,
+        L"set x = GetRef(\"testSub\")\n", L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "GetRef(testSub) from codeOnlyItem context failed: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* GetRef should NOT find functions from other named items' contexts */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnScriptError);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse,
+        L"set x = GetRef(\"testSub\")\n", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(FAILED(hres), "GetRef(testSub) from global context should fail: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnScriptError);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* GetRef from codeOnlyItem should find global functions (global scope is always accessible) */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse,
+        L"set x = GetRef(\"testSub_global\")\n", L"codeOnlyItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "GetRef(testSub_global) from codeOnlyItem context failed: %08lx\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
     IDispatchEx_Release(script_disp2);
     IDispatchEx_Release(script_disp);
 
