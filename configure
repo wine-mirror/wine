@@ -1236,6 +1236,7 @@ enable_ir50_32
 enable_irprops_cpl
 enable_itircl
 enable_itss
+enable_iyuv_32
 enable_joy_cpl
 enable_jscript
 enable_jsproxy
@@ -23669,6 +23670,7 @@ wine_fn_config_makefile dlls/irprops.cpl enable_irprops_cpl
 wine_fn_config_makefile dlls/itircl enable_itircl
 wine_fn_config_makefile dlls/itss enable_itss
 wine_fn_config_makefile dlls/itss/tests enable_tests
+wine_fn_config_makefile dlls/iyuv_32 enable_iyuv_32
 wine_fn_config_makefile dlls/joy.cpl enable_joy_cpl
 wine_fn_config_makefile dlls/jscript enable_jscript
 wine_fn_config_makefile dlls/jscript/tests enable_tests
