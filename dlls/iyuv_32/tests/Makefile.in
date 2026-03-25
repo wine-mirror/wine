@@ -2,4 +2,5 @@ TESTDLL   = iyuv_32.dll
 IMPORTS   = msvfw32
 
 SOURCES = \
-	iyuv_32.c
+	iyuv_32.c \
+	resource.rc
