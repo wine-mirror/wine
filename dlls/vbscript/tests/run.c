@@ -2812,7 +2812,7 @@ static void test_parse_errors(void)
             /* invalid use of parentheses for call statement */
             L"strcomp(\"x\", \"y\")",
             0, 17,
-            L"strcomp(\"x\", \"y\")", S_OK, -1044
+            L"strcomp(\"x\", \"y\")", S_OK, 1044
         },
         {
             L"\n\n\n  cint _\n   throwInt(&h80001234&)",
@@ -3024,7 +3024,7 @@ static void test_parse_errors(void)
             /* 'Default' must also specify 'Public' - error 1057 */
             L"Class C\nDefault Private Function f()\nf = 1\nEnd Function\nEnd Class\n",
             1, 0,
-            NULL, S_OK, -1057
+            NULL, S_OK, 1057
         }
     };
     HRESULT hres;
