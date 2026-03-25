@@ -652,8 +652,38 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
         ret = CertContext_GetProperty(cert,
          CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
         if (ret)
-            ret = CertContext_CopyParam(pvData, pcbData, &keyContext.hCryptProv,
-             sizeof(keyContext.hCryptProv));
+        {
+            if (keyContext.dwKeySpec == CERT_NCRYPT_KEY_SPEC)
+            {
+                SetLastError(CRYPT_E_NOT_FOUND);
+                ret = FALSE;
+            }
+            else
+                ret = CertContext_CopyParam(pvData, pcbData, &keyContext.hCryptProv,
+                 sizeof(keyContext.hCryptProv));
+        }
+        break;
+    }
+    case CERT_NCRYPT_KEY_HANDLE_PROP_ID:
+    {
+        CERT_KEY_CONTEXT keyContext;
+        DWORD size = sizeof(keyContext);
+
+        ret = CertContext_GetProperty(cert,
+         CERT_KEY_CONTEXT_PROP_ID, &keyContext, &size);
+        if (ret)
+        {
+            if (keyContext.dwKeySpec != CERT_NCRYPT_KEY_SPEC)
+            {
+                SetLastError(CRYPT_E_NOT_FOUND);
+                ret = FALSE;
+            }
+            else
+                ret = CertContext_CopyParam(pvData, pcbData, &keyContext.hCryptProv,
+                 sizeof(keyContext.hCryptProv));
+        }
+        else
+            SetLastError(CRYPT_E_NOT_FOUND);
         break;
     }
     case CERT_KEY_PROV_INFO_PROP_ID:
@@ -836,6 +866,23 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
             }
             ret = CertContext_SetProperty(cert, CERT_KEY_CONTEXT_PROP_ID,
              0, &keyContext);
+            break;
+        }
+        case CERT_NCRYPT_KEY_HANDLE_PROP_ID:
+        {
+            CERT_KEY_CONTEXT keyContext;
+
+            if (!pvData)
+            {
+                ContextPropertyList_RemoveProperty(cert->base.properties,
+                 CERT_KEY_CONTEXT_PROP_ID);
+                ret = TRUE;
+                break;
+            }
+            keyContext.cbSize = sizeof(keyContext);
+            keyContext.hCryptProv = *(const HCRYPTPROV *)pvData;
+            keyContext.dwKeySpec = CERT_NCRYPT_KEY_SPEC;
+            ret = CertContext_SetKeyContextProperty(cert->base.properties, &keyContext);
             break;
         }
         default:
