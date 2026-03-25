@@ -513,6 +513,17 @@ struct enum_root_certs_params
     DWORD *needed;
 };
 
+struct export_cert_store_params
+{
+    const BYTE *cert_data;
+    DWORD       cert_size;
+    const BYTE *key_blob;
+    DWORD       key_blob_size;
+    const WCHAR *password;
+    BYTE        *pfx_data;
+    DWORD       *pfx_size;
+};
+
 enum unix_funcs
 {
     unix_process_attach,
@@ -522,6 +533,7 @@ enum unix_funcs
     unix_import_store_cert,
     unix_close_cert_store,
     unix_enum_root_certs,
+    unix_export_cert_store,
     unix_funcs_count,
 };
 

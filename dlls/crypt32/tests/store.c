@@ -3541,6 +3541,170 @@ static void test_PFXImportCertStore(void)
     CertCloseStore( store, 0 );
 }
 
+static void test_PFXExportCertStoreEx(void)
+{
+    HCERTSTORE store, store2;
+    CRYPT_DATA_BLOB pfx, exported;
+    const CERT_CONTEXT *cert, *cert2;
+    DWORD count, size;
+    BOOL ret;
+
+    /* Test NULL parameters. */
+    SetLastError( 0xdeadbeef );
+    ret = PFXExportCertStoreEx( NULL, NULL, NULL, NULL, 0 );
+    ok( !ret, "expected failure\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lx\n", GetLastError() );
+
+    exported.pbData = NULL;
+    exported.cbData = 0;
+
+    SetLastError( 0xdeadbeef );
+    ret = PFXExportCertStoreEx( NULL, &exported, NULL, NULL, 0 );
+    ok( !ret, "expected failure\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %lx\n", GetLastError() );
+
+    /* Empty store succeeds (produces a valid but empty PFX). */
+    store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL );
+    ok( store != NULL, "CertOpenStore failed %lx\n", GetLastError() );
+
+    exported.pbData = NULL;
+    exported.cbData = 0;
+    ret = PFXExportCertStoreEx( store, &exported, NULL, NULL, 0 );
+    ok( ret, "PFXExportCertStoreEx empty store size query failed %lx\n", GetLastError() );
+    ok( exported.cbData > 0, "expected nonzero size\n" );
+    CertCloseStore( store, 0 );
+
+    /* Import pfxdata (cert + private key), then export without private key. */
+    pfx.pbData = (BYTE *)pfxdata;
+    pfx.cbData = sizeof(pfxdata);
+    store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE | CRYPT_USER_KEYSET | PKCS12_NO_PERSIST_KEY );
+    ok( store != NULL, "PFXImportCertStore failed %lx\n", GetLastError() );
+
+    /* Size query. */
+    exported.pbData = NULL;
+    exported.cbData = 0;
+    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, 0 );
+    ok( ret, "PFXExportCertStoreEx size query failed %lx\n", GetLastError() );
+    ok( exported.cbData > 0, "expected nonzero size\n" );
+
+    /* Buffer too small. */
+    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
+    ok( exported.pbData != NULL, "HeapAlloc failed\n" );
+    size = exported.cbData;
+    exported.cbData = 1;
+    SetLastError( 0xdeadbeef );
+    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, 0 );
+    ok( !ret, "PFXExportCertStoreEx failed %lx\n", GetLastError() );
+    ok( GetLastError() == ERROR_SUCCESS, "got %lx\n", GetLastError() );
+    exported.cbData = size;
+
+    /* Actual export. */
+    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
+    ok( exported.pbData != NULL, "HeapAlloc failed\n" );
+    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, 0 );
+    ok( ret, "PFXExportCertStoreEx failed %lx\n", GetLastError() );
+
+    /* Verify exported blob is valid PFX. */
+    ret = PFXIsPFXBlob( &exported );
+    ok( ret, "exported blob is not valid PFX\n" );
+
+    /* Re-import and verify certificate round-trip. */
+    store2 = PFXImportCertStore( &exported, L"test", PKCS12_NO_PERSIST_KEY );
+    ok( store2 != NULL, "PFXImportCertStore of exported data failed %lx\n", GetLastError() );
+    if (store2)
+    {
+        count = countCertsInStore( store2 );
+        ok( count == 1, "expected 1 cert, got %lu\n", count );
+
+        cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+        cert2 = CertFindCertificateInStore( store2, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+        ok( cert != NULL && cert2 != NULL, "failed to find certs\n" );
+        if (cert && cert2)
+        {
+            ok( cert->cbCertEncoded == cert2->cbCertEncoded,
+                "cert size mismatch: %lu vs %lu\n", cert->cbCertEncoded, cert2->cbCertEncoded );
+            ok( !memcmp( cert->pbCertEncoded, cert2->pbCertEncoded, cert->cbCertEncoded ),
+                "cert data mismatch\n" );
+        }
+        if (cert) CertFreeCertificateContext( cert );
+        if (cert2) CertFreeCertificateContext( cert2 );
+        CertCloseStore( store2, 0 );
+    }
+    HeapFree( GetProcessHeap(), 0, exported.pbData );
+
+    /* Export with EXPORT_PRIVATE_KEYS. */
+    exported.pbData = NULL;
+    exported.cbData = 0;
+    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, EXPORT_PRIVATE_KEYS );
+    ok( ret, "PFXExportCertStoreEx size query failed %lx\n", GetLastError() );
+    ok( exported.cbData > 0, "expected nonzero size\n" );
+
+    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
+    ok( exported.pbData != NULL, "HeapAlloc failed\n" );
+    ret = PFXExportCertStoreEx( store, &exported, L"test", NULL, EXPORT_PRIVATE_KEYS );
+    ok( ret, "PFXExportCertStoreEx with EXPORT_PRIVATE_KEYS failed %lx\n", GetLastError() );
+
+    ret = PFXIsPFXBlob( &exported );
+    ok( ret, "exported blob with private key is not valid PFX\n" );
+
+    /* Re-import with private key and verify it's present. */
+    store2 = PFXImportCertStore( &exported, L"test", PKCS12_NO_PERSIST_KEY );
+    ok( store2 != NULL, "PFXImportCertStore failed %lx\n", GetLastError() );
+    if (store2)
+    {
+        CERT_KEY_CONTEXT key;
+        DWORD size;
+
+        cert2 = CertFindCertificateInStore( store2, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+        ok( cert2 != NULL, "no cert in re-imported store %lx\n", GetLastError() );
+        if (cert2)
+        {
+            size = sizeof(key);
+            ret = CertGetCertificateContextProperty( cert2, CERT_KEY_CONTEXT_PROP_ID, &key, &size );
+            ok( ret, "no key context on re-imported cert %lx\n", GetLastError() );
+            if (ret)
+            {
+                ok( key.hCryptProv != 0, "expected non-zero hCryptProv\n" );
+            }
+            CertFreeCertificateContext( cert2 );
+        }
+        CertCloseStore( store2, 0 );
+    }
+    HeapFree( GetProcessHeap(), 0, exported.pbData );
+
+    /* Test cert-only export (import pfx_cert_only which has no private key). */
+    CertCloseStore( store, 0 );
+    pfx.pbData = (BYTE *)pfx_cert_only;
+    pfx.cbData = sizeof(pfx_cert_only);
+    store = PFXImportCertStore( &pfx, L"", 0 );
+    ok( store != NULL, "PFXImportCertStore failed %lx\n", GetLastError() );
+
+    exported.pbData = NULL;
+    exported.cbData = 0;
+    ret = PFXExportCertStoreEx( store, &exported, L"", NULL, 0 );
+    ok( ret, "PFXExportCertStoreEx cert-only size query failed %lx\n", GetLastError() );
+    ok( exported.cbData > 0, "expected nonzero size\n" );
+
+    exported.pbData = HeapAlloc( GetProcessHeap(), 0, exported.cbData );
+    ret = PFXExportCertStoreEx( store, &exported, L"", NULL, 0 );
+    ok( ret, "PFXExportCertStoreEx cert-only failed %lx\n", GetLastError() );
+
+    ret = PFXIsPFXBlob( &exported );
+    ok( ret, "cert-only exported blob is not valid PFX\n" );
+
+    store2 = PFXImportCertStore( &exported, L"", 0 );
+    ok( store2 != NULL, "PFXImportCertStore of cert-only export failed %lx\n", GetLastError() );
+    if (store2)
+    {
+        count = countCertsInStore( store2 );
+        ok( count == 1, "expected 1 cert, got %lu\n", count );
+        CertCloseStore( store2, 0 );
+    }
+    HeapFree( GetProcessHeap(), 0, exported.pbData );
+
+    CertCloseStore( store, 0 );
+}
+
 static void test_CryptQueryObject(void)
 {
     CRYPT_DATA_BLOB pfx;
@@ -3605,5 +3769,6 @@ START_TEST(store)
 
     test_I_UpdateStore();
     test_PFXImportCertStore();
+    test_PFXExportCertStoreEx();
     test_CryptQueryObject();
 }

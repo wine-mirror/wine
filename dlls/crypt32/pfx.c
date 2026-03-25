@@ -22,6 +22,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
+#include "bcrypt.h"
+#include "ncrypt.h"
 #include "snmp.h"
 #include "crypt32_private.h"
 
@@ -241,9 +243,217 @@ BOOL WINAPI PFXExportCertStore( HCERTSTORE store, CRYPT_DATA_BLOB *pfx, const WC
     return PFXExportCertStoreEx( store, pfx, password, NULL, flags );
 }
 
+static void reverse_bytes( const BYTE *src, BYTE *dst, DWORD len )
+{
+    DWORD i;
+    for (i = 0; i < len; i++) dst[i] = src[len - i - 1];
+}
+
+static BYTE *export_capi_key( HCRYPTPROV prov, DWORD key_spec, DWORD *out_size )
+{
+    HCRYPTKEY hkey;
+    BYTE *capi_blob = NULL, *bcrypt_blob = NULL;
+    DWORD capi_size, bitlen, mod_len, prime_len, pos, out_pos;
+    BLOBHEADER *hdr;
+    RSAPUBKEY *rsakey;
+    BCRYPT_RSAKEY_BLOB *rsa_hdr;
+
+    if (!CryptGetUserKey( prov, key_spec, &hkey ))
+    {
+        WARN( "CryptGetUserKey failed %08lx\n", GetLastError() );
+        return NULL;
+    }
+
+    /* Query size. */
+    capi_size = 0;
+    if (!CryptExportKey( hkey, 0, PRIVATEKEYBLOB, 0, NULL, &capi_size ))
+    {
+        WARN( "CryptExportKey size query failed %08lx\n", GetLastError() );
+        CryptDestroyKey( hkey );
+        return NULL;
+    }
+
+    capi_blob = CryptMemAlloc( capi_size );
+    if (!capi_blob)
+    {
+        CryptDestroyKey( hkey );
+        return NULL;
+    }
+
+    if (!CryptExportKey( hkey, 0, PRIVATEKEYBLOB, 0, capi_blob, &capi_size ))
+    {
+        WARN( "CryptExportKey failed %08lx\n", GetLastError() );
+        CryptMemFree( capi_blob );
+        CryptDestroyKey( hkey );
+        return NULL;
+    }
+    CryptDestroyKey( hkey );
+
+    hdr = (BLOBHEADER *)capi_blob;
+    rsakey = (RSAPUBKEY *)(hdr + 1);
+    bitlen = rsakey->bitlen;
+    mod_len = bitlen / 8;
+    prime_len = bitlen / 16;
+
+    /* Build BCRYPT_RSAFULLPRIVATE_BLOB. */
+    *out_size = sizeof(BCRYPT_RSAKEY_BLOB) + sizeof(rsakey->pubexp) + mod_len * 2 + prime_len * 5;
+    bcrypt_blob = CryptMemAlloc( *out_size );
+    if (!bcrypt_blob)
+    {
+        CryptMemFree( capi_blob );
+        return NULL;
+    }
+
+    rsa_hdr = (BCRYPT_RSAKEY_BLOB *)bcrypt_blob;
+    rsa_hdr->Magic = BCRYPT_RSAFULLPRIVATE_MAGIC;
+    rsa_hdr->BitLength = bitlen;
+    rsa_hdr->cbPublicExp = sizeof(rsakey->pubexp);
+    rsa_hdr->cbModulus = mod_len;
+    rsa_hdr->cbPrime1 = prime_len;
+    rsa_hdr->cbPrime2 = prime_len;
+
+    out_pos = sizeof(BCRYPT_RSAKEY_BLOB);
+    /* PublicExp (big-endian). */
+    reverse_bytes( (const BYTE *)&rsakey->pubexp, bcrypt_blob + out_pos, sizeof(rsakey->pubexp) );
+    out_pos += sizeof(rsakey->pubexp);
+
+    /* CAPI data starts after BLOBHEADER + RSAPUBKEY. */
+    pos = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY);
+
+    /* Modulus */
+    reverse_bytes( capi_blob + pos, bcrypt_blob + out_pos, mod_len );
+    pos += mod_len; out_pos += mod_len;
+    /* Prime1 */
+    reverse_bytes( capi_blob + pos, bcrypt_blob + out_pos, prime_len );
+    pos += prime_len; out_pos += prime_len;
+    /* Prime2 */
+    reverse_bytes( capi_blob + pos, bcrypt_blob + out_pos, prime_len );
+    pos += prime_len; out_pos += prime_len;
+    /* Exponent1 */
+    reverse_bytes( capi_blob + pos, bcrypt_blob + out_pos, prime_len );
+    pos += prime_len; out_pos += prime_len;
+    /* Exponent2 */
+    reverse_bytes( capi_blob + pos, bcrypt_blob + out_pos, prime_len );
+    pos += prime_len; out_pos += prime_len;
+    /* Coefficient */
+    reverse_bytes( capi_blob + pos, bcrypt_blob + out_pos, prime_len );
+    pos += prime_len; out_pos += prime_len;
+    /* PrivateExponent */
+    reverse_bytes( capi_blob + pos, bcrypt_blob + out_pos, mod_len );
+
+    CryptMemFree( capi_blob );
+    return bcrypt_blob;
+}
+
 BOOL WINAPI PFXExportCertStoreEx( HCERTSTORE store, CRYPT_DATA_BLOB *pfx, const WCHAR *password, void *reserved,
                                   DWORD flags )
 {
-    FIXME( "(%p, %p, %p, %p, %08lx): stub\n", store, pfx, password, reserved, flags );
-    return FALSE;
+    const CERT_CONTEXT *cert;
+    CERT_KEY_CONTEXT key_ctx;
+    struct export_cert_store_params params;
+    DWORD key_ctx_size, key_blob_size;
+    BYTE *key_blob = NULL;
+    SECURITY_STATUS sec_status;
+    NTSTATUS status;
+    BOOL ret = FALSE;
+
+    TRACE( "(%p, %p, %p, %p, %08lx)\n", store, pfx, password, reserved, flags );
+
+    if (!store || !pfx)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    /* Find the first certificate in the store (may be NULL for empty stores). */
+    cert = CertEnumCertificatesInStore( store, NULL );
+
+    /* Get the private key if EXPORT_PRIVATE_KEYS is requested. */
+    if (cert && (flags & EXPORT_PRIVATE_KEYS))
+    {
+        key_ctx_size = sizeof(key_ctx);
+        if (!CertGetCertificateContextProperty( cert, CERT_KEY_CONTEXT_PROP_ID, &key_ctx, &key_ctx_size ))
+        {
+            WARN( "no key context on certificate, error %08lx\n", GetLastError() );
+            if (flags & REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)
+            {
+                SetLastError( NTE_NOT_FOUND );
+                CertFreeCertificateContext( cert );
+                return FALSE;
+            }
+        }
+        else if (key_ctx.dwKeySpec == CERT_NCRYPT_KEY_SPEC)
+        {
+            /* Query key blob size first. */
+            sec_status = NCryptExportKey( key_ctx.hCryptProv, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL,
+                                          NULL, 0, &key_blob_size, 0 );
+            if (sec_status)
+            {
+                WARN( "NCryptExportKey size query failed %08lx\n", sec_status );
+                SetLastError( sec_status );
+                CertFreeCertificateContext( cert );
+                return FALSE;
+            }
+
+            key_blob = CryptMemAlloc( key_blob_size );
+            if (!key_blob)
+            {
+                SetLastError( ERROR_OUTOFMEMORY );
+                CertFreeCertificateContext( cert );
+                return FALSE;
+            }
+
+            sec_status = NCryptExportKey( key_ctx.hCryptProv, 0, BCRYPT_RSAFULLPRIVATE_BLOB, NULL,
+                                          key_blob, key_blob_size, &key_blob_size, 0 );
+            if (sec_status)
+            {
+                WARN( "NCryptExportKey failed %08lx\n", sec_status );
+                SetLastError( sec_status );
+                CryptMemFree( key_blob );
+                CertFreeCertificateContext( cert );
+                return FALSE;
+            }
+        }
+        else if (key_ctx.dwKeySpec == AT_KEYEXCHANGE || key_ctx.dwKeySpec == AT_SIGNATURE)
+        {
+            key_blob = export_capi_key( key_ctx.hCryptProv, key_ctx.dwKeySpec, &key_blob_size );
+            if (!key_blob)
+            {
+                WARN( "failed to export CAPI key\n" );
+                if (flags & REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)
+                {
+                    SetLastError( NTE_NOT_FOUND );
+                    CertFreeCertificateContext( cert );
+                    return FALSE;
+                }
+            }
+        }
+        else
+        {
+            FIXME( "dwKeySpec %lu not supported\n", key_ctx.dwKeySpec );
+            if (flags & REPORT_NOT_ABLE_TO_EXPORT_PRIVATE_KEY)
+            {
+                SetLastError( NTE_NOT_FOUND );
+                CertFreeCertificateContext( cert );
+                return FALSE;
+            }
+        }
+    }
+
+    params.cert_data     = cert ? cert->pbCertEncoded : NULL;
+    params.cert_size     = cert ? cert->cbCertEncoded : 0;
+    params.key_blob      = key_blob;
+    params.key_blob_size = key_blob ? key_blob_size : 0;
+    params.password      = password;
+    params.pfx_data      = pfx->pbData;
+    params.pfx_size      = &pfx->cbData;
+    status = CRYPT32_CALL( export_cert_store, &params );
+    if (status == STATUS_BUFFER_TOO_SMALL) status = STATUS_SUCCESS;
+    else if (status) WARN( "unix export_cert_store failed %08lx\n", status );
+    else ret = TRUE;
+
+    CryptMemFree( key_blob );
+    CertFreeCertificateContext( cert );
+    SetLastError( RtlNtStatusToDosError( status ) );
+    return ret;
 }

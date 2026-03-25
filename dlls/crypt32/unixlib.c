@@ -41,6 +41,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wincrypt.h"
+#include "bcrypt.h"
 #include "crypt32_private.h"
 #include "wine/debug.h"
 
@@ -65,10 +66,15 @@ MAKE_FUNCPTR(gnutls_pkcs12_bag_get_count);
 MAKE_FUNCPTR(gnutls_pkcs12_bag_get_data);
 MAKE_FUNCPTR(gnutls_pkcs12_bag_get_type);
 MAKE_FUNCPTR(gnutls_pkcs12_bag_init);
+MAKE_FUNCPTR(gnutls_pkcs12_bag_set_crt);
+MAKE_FUNCPTR(gnutls_pkcs12_bag_set_privkey);
 MAKE_FUNCPTR(gnutls_pkcs12_deinit);
+MAKE_FUNCPTR(gnutls_pkcs12_export2);
+MAKE_FUNCPTR(gnutls_pkcs12_generate_mac2);
 MAKE_FUNCPTR(gnutls_pkcs12_get_bag);
 MAKE_FUNCPTR(gnutls_pkcs12_import);
 MAKE_FUNCPTR(gnutls_pkcs12_init);
+MAKE_FUNCPTR(gnutls_pkcs12_set_bag);
 MAKE_FUNCPTR(gnutls_pkcs12_verify_mac);
 MAKE_FUNCPTR(gnutls_x509_crt_deinit);
 MAKE_FUNCPTR(gnutls_x509_crt_export);
@@ -78,6 +84,7 @@ MAKE_FUNCPTR(gnutls_x509_privkey_deinit);
 MAKE_FUNCPTR(gnutls_x509_privkey_export_rsa_raw2);
 MAKE_FUNCPTR(gnutls_x509_privkey_get_pk_algorithm2);
 MAKE_FUNCPTR(gnutls_x509_privkey_import_pkcs8);
+MAKE_FUNCPTR(gnutls_x509_privkey_import_rsa_raw);
 MAKE_FUNCPTR(gnutls_x509_privkey_init);
 #undef MAKE_FUNCPTR
 
@@ -125,10 +132,15 @@ static NTSTATUS process_attach( void *args )
     LOAD_FUNCPTR(gnutls_pkcs12_bag_get_data)
     LOAD_FUNCPTR(gnutls_pkcs12_bag_get_type)
     LOAD_FUNCPTR(gnutls_pkcs12_bag_init)
+    LOAD_FUNCPTR(gnutls_pkcs12_bag_set_crt)
+    LOAD_FUNCPTR(gnutls_pkcs12_bag_set_privkey)
     LOAD_FUNCPTR(gnutls_pkcs12_deinit)
+    LOAD_FUNCPTR(gnutls_pkcs12_export2)
+    LOAD_FUNCPTR(gnutls_pkcs12_generate_mac2)
     LOAD_FUNCPTR(gnutls_pkcs12_get_bag)
     LOAD_FUNCPTR(gnutls_pkcs12_import)
     LOAD_FUNCPTR(gnutls_pkcs12_init)
+    LOAD_FUNCPTR(gnutls_pkcs12_set_bag)
     LOAD_FUNCPTR(gnutls_pkcs12_verify_mac)
     LOAD_FUNCPTR(gnutls_x509_crt_deinit)
     LOAD_FUNCPTR(gnutls_x509_crt_export)
@@ -138,6 +150,7 @@ static NTSTATUS process_attach( void *args )
     LOAD_FUNCPTR(gnutls_x509_privkey_export_rsa_raw2)
     LOAD_FUNCPTR(gnutls_x509_privkey_get_pk_algorithm2)
     LOAD_FUNCPTR(gnutls_x509_privkey_import_pkcs8)
+    LOAD_FUNCPTR(gnutls_x509_privkey_import_rsa_raw)
     LOAD_FUNCPTR(gnutls_x509_privkey_init)
 #undef LOAD_FUNCPTR
 
@@ -521,6 +534,127 @@ static NTSTATUS close_cert_store( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS export_cert_store( void *args )
+{
+    struct export_cert_store_params *params = args;
+    gnutls_pkcs12_t p12 = NULL;
+    gnutls_pkcs12_bag_t cert_bag = NULL, key_bag = NULL;
+    gnutls_x509_crt_t crt = NULL;
+    gnutls_x509_privkey_t key = NULL;
+    gnutls_datum_t out = { NULL, 0 };
+    char *pwd = NULL;
+    int ret;
+    NTSTATUS status = STATUS_INVALID_PARAMETER;
+
+    if (!libgnutls_handle) return STATUS_DLL_NOT_FOUND;
+
+    if (params->password && !(pwd = password_to_ascii( params->password )))
+        return STATUS_NO_MEMORY;
+
+    /* Create cert bag (always initialized, even for empty stores). */
+    if ((ret = pgnutls_pkcs12_bag_init( &cert_bag )) < 0) goto error;
+
+    /* Import the certificate if provided. */
+    if (params->cert_data && params->cert_size)
+    {
+        if ((ret = pgnutls_x509_crt_init( &crt )) < 0) goto error;
+        {
+            gnutls_datum_t cert_datum = { (unsigned char *)params->cert_data, params->cert_size };
+            if ((ret = pgnutls_x509_crt_import( crt, &cert_datum, GNUTLS_X509_FMT_DER )) < 0) goto error;
+        }
+        if ((ret = pgnutls_pkcs12_bag_set_crt( cert_bag, crt )) < 0) goto error;
+    }
+
+    /* Import private key from BCRYPT_RSAKEY_BLOB if provided. */
+    if (params->key_blob && params->key_blob_size)
+    {
+        const BCRYPT_RSAKEY_BLOB *hdr = (const BCRYPT_RSAKEY_BLOB *)params->key_blob;
+        const BYTE *ptr = params->key_blob + sizeof(*hdr);
+        gnutls_datum_t m, e, d, p, q, u;
+
+        if (hdr->Magic != BCRYPT_RSAFULLPRIVATE_MAGIC)
+        {
+            WARN( "unexpected key blob magic %08lx\n", (unsigned long)hdr->Magic );
+            status = STATUS_INVALID_PARAMETER;
+            goto done;
+        }
+
+        /* Layout after header: PublicExp, Modulus, Prime1, Prime2, Exponent1, Exponent2, Coefficient, PrivateExponent */
+        e.data = (unsigned char *)ptr;                    e.size = hdr->cbPublicExp;
+        ptr += hdr->cbPublicExp;
+        m.data = (unsigned char *)ptr;                    m.size = hdr->cbModulus;
+        ptr += hdr->cbModulus;
+        p.data = (unsigned char *)ptr;                    p.size = hdr->cbPrime1;
+        ptr += hdr->cbPrime1;
+        q.data = (unsigned char *)ptr;                    q.size = hdr->cbPrime2;
+        ptr += hdr->cbPrime2;
+        /* Skip Exponent1 and Exponent2 - GnuTLS computes them. */
+        ptr += hdr->cbPrime1;  /* Exponent1 */
+        ptr += hdr->cbPrime2;  /* Exponent2 */
+        u.data = (unsigned char *)ptr;                    u.size = hdr->cbPrime1;
+        ptr += hdr->cbPrime1;
+        d.data = (unsigned char *)ptr;                    d.size = hdr->cbModulus;
+
+        if ((ret = pgnutls_x509_privkey_init( &key )) < 0) goto error;
+        if ((ret = pgnutls_x509_privkey_import_rsa_raw( key, &m, &e, &d, &p, &q, &u )) < 0)
+        {
+            pgnutls_x509_privkey_deinit( key );
+            key = NULL;
+            goto error;
+        }
+
+        /* Create key bag. */
+        if ((ret = pgnutls_pkcs12_bag_init( &key_bag )) < 0) goto error;
+        if ((ret = pgnutls_pkcs12_bag_set_privkey( key_bag, key, pwd ? pwd : "", 0 )) < 0) goto error;
+    }
+
+    /* Build PKCS#12. */
+    if ((ret = pgnutls_pkcs12_init( &p12 )) < 0) goto error;
+    if ((ret = pgnutls_pkcs12_set_bag( p12, cert_bag )) < 0) goto error;
+    if (key_bag)
+    {
+        if ((ret = pgnutls_pkcs12_set_bag( p12, key_bag )) < 0) goto error;
+    }
+
+    /* Generate MAC. */
+    if ((ret = pgnutls_pkcs12_generate_mac2( p12, GNUTLS_MAC_SHA256, pwd ? pwd : "" )) < 0) goto error;
+
+    /* Export. */
+    if ((ret = pgnutls_pkcs12_export2( p12, GNUTLS_X509_FMT_DER, &out )) < 0) goto error;
+
+    if (!params->pfx_data)
+    {
+        /* Size query. */
+        *params->pfx_size = out.size + 8;
+        status = STATUS_SUCCESS;
+    }
+    else if (*params->pfx_size < out.size)
+    {
+        *params->pfx_size = out.size + 8;
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+    else
+    {
+        memcpy( params->pfx_data, out.data, out.size );
+        *params->pfx_size = out.size;
+        status = STATUS_SUCCESS;
+    }
+    goto done;
+
+error:
+    pgnutls_perror( ret );
+    status = STATUS_INVALID_PARAMETER;
+done:
+    free( out.data );
+    if (p12) pgnutls_pkcs12_deinit( p12 );
+    if (key_bag) pgnutls_pkcs12_bag_deinit( key_bag );
+    if (cert_bag) pgnutls_pkcs12_bag_deinit( cert_bag );
+    if (key) pgnutls_x509_privkey_deinit( key );
+    if (crt) pgnutls_x509_crt_deinit( crt );
+    free( pwd );
+    return status;
+}
+
 #else /* SONAME_LIBGNUTLS */
 
 static NTSTATUS process_attach( void *args ) { return STATUS_SUCCESS; }
@@ -529,6 +663,7 @@ static NTSTATUS open_cert_store( void *args ) { return STATUS_DLL_NOT_FOUND; }
 static NTSTATUS import_store_key( void *args ) { return STATUS_DLL_NOT_FOUND; }
 static NTSTATUS import_store_cert( void *args ) { return STATUS_DLL_NOT_FOUND; }
 static NTSTATUS close_cert_store( void *args ) { return STATUS_DLL_NOT_FOUND; }
+static NTSTATUS export_cert_store( void *args ) { return STATUS_DLL_NOT_FOUND; }
 
 #endif /* SONAME_LIBGNUTLS */
 
@@ -860,6 +995,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     import_store_cert,
     close_cert_store,
     enum_root_certs,
+    export_cert_store,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
@@ -956,6 +1092,33 @@ static NTSTATUS wow64_enum_root_certs( void *args )
     return enum_root_certs( &params );
 }
 
+static NTSTATUS wow64_export_cert_store( void *args )
+{
+    struct
+    {
+        PTR32 cert_data;
+        DWORD cert_size;
+        PTR32 key_blob;
+        DWORD key_blob_size;
+        PTR32 password;
+        PTR32 pfx_data;
+        PTR32 pfx_size;
+    } const *params32 = args;
+
+    struct export_cert_store_params params =
+    {
+        ULongToPtr( params32->cert_data ),
+        params32->cert_size,
+        ULongToPtr( params32->key_blob ),
+        params32->key_blob_size,
+        ULongToPtr( params32->password ),
+        ULongToPtr( params32->pfx_data ),
+        ULongToPtr( params32->pfx_size )
+    };
+
+    return export_cert_store( &params );
+}
+
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     process_attach,
@@ -965,6 +1128,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_import_store_cert,
     close_cert_store,
     wow64_enum_root_certs,
+    wow64_export_cert_store,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
