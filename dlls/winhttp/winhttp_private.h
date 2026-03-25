@@ -190,6 +190,13 @@ enum request_response_state
 
 #define READ_BUFFER_SIZE 8192
 
+struct read_buffer
+{
+    DWORD pos;  /* current read position in buf */
+    DWORD size; /* valid data size in buf */
+    BYTE  buf[READ_BUFFER_SIZE]; /* buffer for already read but not returned data */
+};
+
 struct data_stream;
 struct request;
 
@@ -244,9 +251,7 @@ struct request
     WCHAR *status_text;
     UINT64 content_length; /* total number of bytes to be read */
     UINT64 content_read;   /* bytes read so far */
-    DWORD read_pos;       /* current read position in read_buf */
-    DWORD read_size;      /* valid data size in read_buf */
-    char  read_buf[READ_BUFFER_SIZE]; /* buffer for already read but not returned data */
+    struct read_buffer read;
     struct data_stream *data_stream;
     struct netconn_stream netconn_stream;
     struct header *headers;
