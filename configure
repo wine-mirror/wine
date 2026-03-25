@@ -23671,6 +23671,7 @@ wine_fn_config_makefile dlls/itircl enable_itircl
 wine_fn_config_makefile dlls/itss enable_itss
 wine_fn_config_makefile dlls/itss/tests enable_tests
 wine_fn_config_makefile dlls/iyuv_32 enable_iyuv_32
+wine_fn_config_makefile dlls/iyuv_32/tests enable_tests
 wine_fn_config_makefile dlls/joy.cpl enable_joy_cpl
 wine_fn_config_makefile dlls/jscript enable_jscript
 wine_fn_config_makefile dlls/jscript/tests enable_tests
