@@ -1,6 +1,7 @@
 /* WinRT Windows.Data.Json.JsonValue Implementation
  *
  * Copyright (C) 2024 Mohamad Al-Jaf
+ * Copyright (C) 2026 Olivia Ryan
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -314,60 +315,81 @@ static HRESULT unescape_string( const WCHAR *src, HSTRING *output )
     return WindowsPromoteStringBuffer( buf, output );
 }
 
-static HRESULT trim_string( HSTRING input, HSTRING *output )
+struct json_buffer
+{
+    const WCHAR *str;
+    UINT32 len;
+};
+
+static void json_buffer_trim( struct json_buffer *json )
 {
     static const WCHAR valid_whitespace[] = L" \t\n\r";
-    UINT32 len, start = 0, end;
-    const WCHAR *json = WindowsGetStringRawBuffer( input, &len );
+    UINT32 start = 0, end = json->len;
 
-    end = len;
-    while (start < end && wcschr( valid_whitespace, json[start] )) start++;
-    while (end > start && wcschr( valid_whitespace, json[end - 1] )) end--;
+    while (start < end && wcschr( valid_whitespace, json->str[start] )) start++;
+    while (end > start && wcschr( valid_whitespace, json->str[end - 1] )) end--;
 
-    return WindowsCreateString( json + start, end - start, output );
+    json->str += start;
+    json->len = end - start;
 }
 
-static HRESULT parse_json_value( HSTRING input, IJsonValue **value )
+static BOOL json_buffer_take( struct json_buffer *json, const WCHAR *str )
 {
-    UINT32 len;
-    const WCHAR *json = WindowsGetStringRawBuffer( input, &len );
+    UINT32 len = wcslen( str );
+
+    if (json->len < len || wcsncmp( json->str, str, len )) return FALSE;
+    json->str += len;
+    json->len -= len;
+
+    return TRUE;
+}
+
+static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value )
+{
     struct json_value *impl;
     HRESULT hr = S_OK;
 
     /* FIXME: Handle all JSON edge cases */
 
-    if (!len) return WEB_E_INVALID_JSON_STRING;
+    if (!json->len) return WEB_E_INVALID_JSON_STRING;
     if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
     impl->IJsonValue_iface.lpVtbl = &json_value_vtbl;
     impl->ref = 1;
 
-    if (len == 4 && !wcsncmp( L"null", json, 4 ))
+    if (json_buffer_take( json, L"null" ))
     {
         impl->json_value_type = JsonValueType_Null;
     }
-    else if ((len == 4 && !wcsncmp( L"true", json, 4 )) || (len == 5 && !wcsncmp( L"false", json, 5 )))
+    else if (json_buffer_take( json, L"true" ))
     {
-        impl->boolean_value = len == 4;
+        impl->boolean_value = TRUE;
         impl->json_value_type = JsonValueType_Boolean;
     }
-    else if (json[0] == '\"' && json[len - 1] == '\"')
+    else if (json_buffer_take( json, L"false" ))
     {
-        json++;
-        len -= 2;
+        impl->boolean_value = FALSE;
+        impl->json_value_type = JsonValueType_Boolean;
+    }
+    else if (*json->str == '"' && json->str[json->len - 1] == '"')
+    {
+        json->str++;
+        json->len -= 2;
 
-        if (len <= 2) hr = WEB_E_INVALID_JSON_STRING;
-        else hr = unescape_string( json, &impl->string_value );
+        if (json->len <= 2) hr = WEB_E_INVALID_JSON_STRING;
+        else hr = unescape_string( json->str, &impl->string_value );
         impl->json_value_type = JsonValueType_String;
     }
-    else if (json[0] == '[' && json[len - 1] == ']')
+    else if (*json->str == '[')
     {
         FIXME( "Array parsing not implemented!\n" );
         impl->json_value_type = JsonValueType_Array;
+        hr = WEB_E_INVALID_JSON_STRING;
     }
-    else if (json[0] == '{' && json[len - 1] == '}')
+    else if (*json->str == '{')
     {
         FIXME( "Object parsing not implemented!\n" );
         impl->json_value_type = JsonValueType_Object;
+        hr = WEB_E_INVALID_JSON_STRING;
     }
     else
     {
@@ -375,9 +397,12 @@ static HRESULT parse_json_value( HSTRING input, IJsonValue **value )
         WCHAR *end;
 
         errno = 0;
-        result = wcstold( json, &end );
+        result = wcstold( json->str, &end );
 
-        if (errno || errno == ERANGE || end != json + len) hr = WEB_E_INVALID_JSON_NUMBER;
+        json->len -= end - json->str;
+        json->str = end;
+
+        if (errno || errno == ERANGE) hr = WEB_E_INVALID_JSON_NUMBER;
 
         impl->number_value = result;
         impl->json_value_type = JsonValueType_Number;
@@ -388,16 +413,17 @@ static HRESULT parse_json_value( HSTRING input, IJsonValue **value )
     return hr;
 }
 
-static HRESULT parse_json( HSTRING json, IJsonValue **value )
+static HRESULT parse_json( HSTRING string, IJsonValue **value )
 {
-    HSTRING trimmed_json = NULL;
-    HRESULT hr = trim_string( json, &trimmed_json );
+    HRESULT hr;
+    struct json_buffer json;
+    json.str = WindowsGetStringRawBuffer( string, &json.len );
 
-    if (SUCCEEDED(hr) && WindowsIsStringEmpty( trimmed_json )) hr = WEB_E_INVALID_JSON_STRING;
-    if (SUCCEEDED(hr)) hr = parse_json_value( trimmed_json, value );
-
-    WindowsDeleteString( trimmed_json );
-    return hr;
+    json_buffer_trim( &json );
+    if (!json.len) return WEB_E_INVALID_JSON_STRING;
+    if (FAILED(hr = parse_json_value( &json, value ))) return hr;
+    if (json.len) return WEB_E_INVALID_JSON_STRING;
+    return S_OK;
 }
 
 static HRESULT WINAPI json_value_statics_Parse( IJsonValueStatics *iface, HSTRING input, IJsonValue **value )
