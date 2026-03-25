@@ -943,7 +943,7 @@ DWORD get_last_input_time(void)
 {
     DWORD ret;
 
-    SERVER_START_REQ( get_last_input_time )
+    SERVER_START_REQ( set_user_input_time )
     {
         wine_server_call( req );
         ret = reply->time;

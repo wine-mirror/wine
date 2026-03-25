@@ -4243,12 +4243,12 @@ struct get_thread_input_reply
 
 
 
-struct get_last_input_time_request
+struct set_user_input_time_request
 {
     struct request_header __header;
-    char __pad_12[4];
+    int          set;
 };
-struct get_last_input_time_reply
+struct set_user_input_time_reply
 {
     struct reply_header __header;
     unsigned int time;
@@ -6350,7 +6350,7 @@ enum request
     REQ_unregister_hotkey,
     REQ_attach_thread_input,
     REQ_get_thread_input,
-    REQ_get_last_input_time,
+    REQ_set_user_input_time,
     REQ_get_key_state,
     REQ_set_key_state,
     REQ_set_foreground_window,
@@ -6663,7 +6663,7 @@ union generic_request
     struct unregister_hotkey_request unregister_hotkey_request;
     struct attach_thread_input_request attach_thread_input_request;
     struct get_thread_input_request get_thread_input_request;
-    struct get_last_input_time_request get_last_input_time_request;
+    struct set_user_input_time_request set_user_input_time_request;
     struct get_key_state_request get_key_state_request;
     struct set_key_state_request set_key_state_request;
     struct set_foreground_window_request set_foreground_window_request;
@@ -6974,7 +6974,7 @@ union generic_reply
     struct unregister_hotkey_reply unregister_hotkey_reply;
     struct attach_thread_input_reply attach_thread_input_reply;
     struct get_thread_input_reply get_thread_input_reply;
-    struct get_last_input_time_reply get_last_input_time_reply;
+    struct set_user_input_time_reply set_user_input_time_reply;
     struct get_key_state_reply get_key_state_reply;
     struct set_key_state_reply set_key_state_reply;
     struct set_foreground_window_reply set_foreground_window_reply;
@@ -7093,6 +7093,6 @@ union generic_reply
     struct d3dkmt_mutex_release_reply d3dkmt_mutex_release_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 930
+#define SERVER_PROTOCOL_VERSION 931
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

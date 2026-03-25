@@ -3095,10 +3095,11 @@ enum coords_relative
 @END
 
 
-/* Get the time of the last input event */
-@REQ(get_last_input_time)
+/* Get/Set the time of the input event */
+@REQ(set_user_input_time)
+    int          set;             /* update queue input time */
 @REPLY
-    unsigned int time;
+    unsigned int time;            /* time of the last session-wide user input */
 @END
 
 

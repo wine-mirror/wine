@@ -752,6 +752,13 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                 NtUserIsWindowEnabled( hwnd ), NtUserIsWindowVisible( hwnd ), NtUserGetWindowLongW( hwnd, GWL_STYLE ),
                 get_focus(), get_active_window(), last_focus );
 
+        if (event_time) SERVER_START_REQ( set_user_input_time )
+        {
+            req->set = 1;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+
         if (can_activate_window(hwnd))
         {
             set_focus( event->display, hwnd, event_time );

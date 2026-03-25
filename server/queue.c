@@ -4001,9 +4001,17 @@ DECL_HANDLER(set_caret_info)
 }
 
 
-/* get the time of the last input event */
-DECL_HANDLER(get_last_input_time)
+/* get/set the time of the last user input event */
+DECL_HANDLER(set_user_input_time)
 {
+    struct msg_queue *queue;
+
+    if (req->set && (queue = current->queue))
+    {
+        queue->input->user_time = monotonic_time;
+        last_input_time = get_tick_count();
+    }
+
     reply->time = last_input_time;
 }
 
