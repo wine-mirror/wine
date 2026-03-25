@@ -2891,7 +2891,7 @@ static void test_parse_errors(void)
             /* Name redefined - error 1041 */
             L"Dim a\nDim a\n",
             1, -4,
-            NULL, S_OK, -1041
+            NULL, S_OK, 1041
         },
         {
             /* Expected identifier - error 1010 */
@@ -2981,7 +2981,7 @@ static void test_parse_errors(void)
             /* Invalid 'exit' statement - error 1039 */
             L"Exit Do\n",
             0, -5,
-            NULL, S_OK, -1039
+            NULL, S_OK, 1039
         },
         {
             /* Expected 'In' - error 1046 */

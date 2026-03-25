@@ -1138,8 +1138,7 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
     while(1) {
         if(lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)
            || lookup_const_decls(ctx, dim_decl->name, FALSE)) {
-            FIXME("dim %s name redefined\n", debugstr_w(dim_decl->name));
-            return E_FAIL;
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         }
 
         ctx->func->var_cnt++;
@@ -1201,8 +1200,7 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
 
         if(!lookup_const_decls(ctx, decl->name, FALSE)) {
             if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
-                FIXME("%s redefined\n", debugstr_w(decl->name));
-                return E_FAIL;
+                return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
             }
         }
 
@@ -1254,8 +1252,7 @@ static HRESULT compile_exitdo_statement(compile_ctx_t *ctx)
             break;
     }
     if(!iter) {
-        FIXME("Exit Do outside Do Loop\n");
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_INVALID_EXIT);
     }
 
     if(pop_cnt) {
@@ -1280,8 +1277,7 @@ static HRESULT compile_exitfor_statement(compile_ctx_t *ctx)
             break;
     }
     if(!iter) {
-        FIXME("Exit For outside For loop\n");
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_INVALID_EXIT);
     }
 
     if(pop_cnt) {
@@ -1313,8 +1309,7 @@ static HRESULT exit_label(compile_ctx_t *ctx, unsigned jmp_label)
 static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
 {
     if(!ctx->sub_end_label) {
-        FIXME("Exit Sub outside Sub?\n");
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_INVALID_EXIT);
     }
 
     return exit_label(ctx, ctx->sub_end_label);
@@ -1323,8 +1318,7 @@ static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
 static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
 {
     if(!ctx->func_end_label) {
-        FIXME("Exit Function outside Function?\n");
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_INVALID_EXIT);
     }
 
     return exit_label(ctx, ctx->func_end_label);
@@ -1333,8 +1327,7 @@ static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
 static HRESULT compile_exitprop_statement(compile_ctx_t *ctx)
 {
     if(!ctx->prop_end_label) {
-        FIXME("Exit Property outside Property?\n");
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_INVALID_EXIT);
     }
 
     return exit_label(ctx, ctx->prop_end_label);
@@ -1377,8 +1370,7 @@ static HRESULT collect_const_decls(compile_ctx_t *ctx, statement_t *stat)
                     break; /* already collected */
 
                 if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
-                    FIXME("%s redefined\n", debugstr_w(decl->name));
-                    return E_FAIL;
+                    return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
                 }
 
                 new_decl = compiler_alloc(ctx->code, sizeof(*new_decl));
@@ -1712,8 +1704,7 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     HRESULT hres;
 
     if(lookup_dim_decls(ctx, decl->name) || lookup_const_decls(ctx, decl->name, FALSE)) {
-        FIXME("%s: redefinition\n", debugstr_w(decl->name));
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
     }
 
     func = compiler_alloc(ctx->code, sizeof(*func));
@@ -1835,8 +1826,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
     if(lookup_dim_decls(ctx, class_decl->name) || lookup_funcs_name(ctx, class_decl->name)
             || lookup_const_decls(ctx, class_decl->name, FALSE) || lookup_class_name(ctx, class_decl->name)) {
-        FIXME("%s: redefinition\n", debugstr_w(class_decl->name));
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
     }
 
     class_desc = compiler_alloc_zero(ctx->code, sizeof(*class_desc));
@@ -1908,8 +1898,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
     for(prop_decl = class_decl->props, i=0; prop_decl; prop_decl = prop_decl->next, i++) {
         if(lookup_class_funcs(class_desc, prop_decl->name)) {
-            FIXME("Property %s redefined\n", debugstr_w(prop_decl->name));
-            return E_FAIL;
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         }
 
         class_desc->props[i].name = compiler_alloc_string(ctx->code, prop_decl->name);
@@ -2006,15 +1995,13 @@ static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
 
     for(i = 0; i < var_cnt; i++) {
         if(lookup_script_identifier(ctx, script, vars[i].name)) {
-            FIXME("%s: redefined\n", debugstr_w(vars[i].name));
-            return E_FAIL;
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         }
     }
 
     for(class = ctx->code->classes; class; class = class->next) {
         if(lookup_script_identifier(ctx, script, class->name)) {
-            FIXME("%s: redefined\n", debugstr_w(class->name));
-            return E_FAIL;
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         }
     }
 
