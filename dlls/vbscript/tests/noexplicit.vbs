@@ -30,6 +30,11 @@ ok y = "", "y = " & y
 on error resume next
 z(0) = 42
 ok err.number = 13, "err.number = " & err.number
+err.clear
+
+' Erase on undeclared variable without Option Explicit: error 13 (Type mismatch)
+Erase eraseUndeclared
+ok err.number = 13, "Erase undeclared no explicit: err.number = " & err.number
 on error goto 0
 
 call reportSuccess()

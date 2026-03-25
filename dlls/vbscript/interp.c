@@ -1444,6 +1444,69 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
     return hres;
 }
 
+static HRESULT interp_erase(exec_ctx_t *ctx)
+{
+    const BSTR identifier = ctx->instr->arg1.bstr;
+    VARIANT *v;
+    SAFEARRAY *array;
+    ref_t ref;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(identifier));
+
+    hres = lookup_identifier(ctx, identifier, VBDISP_LET, &ref);
+    if(FAILED(hres))
+        return hres;
+
+    if(ref.type == REF_NONE) {
+        if(ctx->func->code_ctx->option_explicit)
+            return MAKE_VBSERROR(VBSE_VARIABLE_UNDEFINED);
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    if(ref.type != REF_VAR)
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+
+
+    v = ref.u.v;
+    if(V_VT(v) == (VT_VARIANT|VT_BYREF))
+        v = V_VARIANTREF(v);
+
+    if(!(V_VT(v) & VT_ARRAY)) {
+        WARN("Erase on non-array type %d\n", V_VT(v));
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    array = V_ISBYREF(v) ? *V_ARRAYREF(v) : V_ARRAY(v);
+    if(!array)
+        return S_OK;
+
+    if(array->fFeatures & FADF_FIXEDSIZE) {
+        /* Fixed-size array: reinitialize all elements to default values. */
+        unsigned i, element_cnt = 1;
+        VARIANT *data;
+
+        for(i = 0; i < array->cDims; i++)
+            element_cnt *= array->rgsabound[i].cElements;
+
+        hres = SafeArrayAccessData(array, (void**)&data);
+        if(SUCCEEDED(hres)) {
+            for(i = 0; i < element_cnt; i++)
+                VariantClear(&data[i]);
+            SafeArrayUnaccessData(array);
+        }
+    }else {
+        /* Dynamic array: deallocate it. */
+        SafeArrayDestroy(array);
+        if(V_ISBYREF(v))
+            *V_ARRAYREF(v) = NULL;
+        else
+            V_ARRAY(v) = NULL;
+    }
+
+    return hres;
+}
+
 static HRESULT interp_step(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg2.bstr;

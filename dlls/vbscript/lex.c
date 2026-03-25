@@ -55,6 +55,7 @@ static const struct {
     {L"empty",     tEMPTY},
     {L"end",       tEND},
     {L"eqv",       tEQV},
+    {L"erase",     tERASE},
     {L"error",     tERROR},
     {L"exit",      tEXIT},
     {L"explicit",  tEXPLICIT},

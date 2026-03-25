@@ -58,6 +58,7 @@ STRINGTABLE
     VBSE_INVALID_DLL_FUNCTION_NAME     "Specified DLL function not found"
     VBSE_INVALID_TYPELIB_VARIABLE      "Variable uses an Automation type not supported in VBScript"
     VBSE_SERVER_NOT_FOUND              "The remote server machine does not exist or is unavailable"
+    VBSE_VARIABLE_UNDEFINED            "Variable is undefined"
     VBSE_UNQUALIFIED_REFERENCE         "Invalid or unqualified reference"
     VBSE_SYNTAX_ERROR                  "Syntax error"
     VBSE_EXPECTED_LPAREN               "Expected '('"

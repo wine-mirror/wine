@@ -2017,6 +2017,124 @@ y = dimDynArr(0)
 ok err.number = 9, "uninitialized dynamic array access: err.number = " & err.number
 on error goto 0
 
+' Erase on fixed-size array: clears elements to default values
+dim eraseFixed(3)
+eraseFixed(0) = "a"
+eraseFixed(1) = 2
+eraseFixed(2) = True
+Erase eraseFixed
+ok eraseFixed(0) = empty, "eraseFixed(0) after Erase = " & eraseFixed(0)
+ok eraseFixed(1) = empty, "eraseFixed(1) after Erase = " & eraseFixed(1)
+ok eraseFixed(2) = empty, "eraseFixed(2) after Erase = " & eraseFixed(2)
+ok ubound(eraseFixed) = 3, "ubound(eraseFixed) after Erase = " & ubound(eraseFixed)
+
+' Erase on dynamic array: deallocates the array
+dim eraseDyn()
+redim eraseDyn(3)
+eraseDyn(0) = "x"
+Erase eraseDyn
+on error resume next
+y = eraseDyn(0)
+e = err.number
+on error goto 0
+ok e = 9, "access after Erase dynamic: err.number = " & e
+
+' Erase with multiple arrays (separate statements)
+dim eraseMulti1(2), eraseMulti2(2)
+eraseMulti1(0) = "a"
+eraseMulti2(0) = "b"
+Erase eraseMulti1
+Erase eraseMulti2
+ok eraseMulti1(0) = empty, "eraseMulti1(0) after Erase = " & eraseMulti1(0)
+ok eraseMulti2(0) = empty, "eraseMulti2(0) after Erase = " & eraseMulti2(0)
+
+' Erase on non-array variable: should give type mismatch error
+dim eraseNotArray
+eraseNotArray = 42
+on error resume next
+Erase eraseNotArray
+ok err.number = 13, "Erase non-array: err.number = " & err.number
+err.clear
+
+' Erase on Empty variable: should give type mismatch error
+dim eraseEmpty
+Erase eraseEmpty
+ok err.number = 13, "Erase empty var: err.number = " & err.number
+err.clear
+
+' Erase on Null variable: should give type mismatch error
+dim eraseNull
+eraseNull = Null
+Erase eraseNull
+ok err.number = 13, "Erase null var: err.number = " & err.number
+err.clear
+
+' Erase on Object variable: should give type mismatch error
+dim eraseObj
+set eraseObj = new regexp
+Erase eraseObj
+ok err.number = 13, "Erase object var: err.number = " & err.number
+err.clear
+
+' Erase on Nothing variable: should give type mismatch error
+dim eraseNothing
+set eraseNothing = Nothing
+Erase eraseNothing
+ok err.number = 13, "Erase nothing var: err.number = " & err.number
+err.clear
+
+' Erase on undeclared identifier: error 500 (Variable is undefined) with Option Explicit
+Erase eraseUndeclared
+ok err.number = 500, "Erase undeclared: err.number = " & err.number
+err.clear
+on error goto 0
+
+' Erase on uninitialized dynamic array: no error
+dim eraseUninit()
+Erase eraseUninit
+
+' Erase twice on fixed-size array: no error
+dim eraseTwice(2)
+eraseTwice(0) = "x"
+Erase eraseTwice
+Erase eraseTwice
+ok eraseTwice(0) = empty, "eraseTwice(0) after double Erase = " & eraseTwice(0)
+
+' Erase twice on dynamic array: no error
+dim eraseTwiceDyn()
+redim eraseTwiceDyn(2)
+eraseTwiceDyn(0) = "y"
+Erase eraseTwiceDyn
+Erase eraseTwiceDyn
+
+' ReDim after Erase on dynamic array
+dim eraseReDim()
+redim eraseReDim(3)
+eraseReDim(0) = "before"
+Erase eraseReDim
+redim eraseReDim(5)
+ok ubound(eraseReDim) = 5, "ubound(eraseReDim) after Erase+ReDim = " & ubound(eraseReDim)
+ok eraseReDim(0) = empty, "eraseReDim(0) after Erase+ReDim = " & eraseReDim(0)
+
+' Erase on ByRef array parameter: clears the original
+sub TestEraseByRef(ByRef arr)
+    Erase arr
+end sub
+dim eraseByRefArr(2)
+eraseByRefArr(0) = "hello"
+call TestEraseByRef(eraseByRefArr)
+ok eraseByRefArr(0) = empty, "eraseByRefArr(0) after ByRef Erase = " & eraseByRefArr(0)
+ok ubound(eraseByRefArr) = 2, "ubound(eraseByRefArr) after ByRef Erase = " & ubound(eraseByRefArr)
+
+' Erase on ByVal array parameter: does not affect the original
+sub TestEraseByVal(ByVal arr)
+    Erase arr
+end sub
+dim eraseByValArr(2)
+eraseByValArr(0) = "world"
+call TestEraseByVal(eraseByValArr)
+ok eraseByValArr(0) = "world", "eraseByValArr(0) after ByVal Erase = " & eraseByValArr(0)
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()

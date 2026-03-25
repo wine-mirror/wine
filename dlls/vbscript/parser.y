@@ -52,6 +52,7 @@ static statement_t *new_assign_statement(parser_ctx_t*,unsigned,expression_t*,ex
 static statement_t *new_set_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,unsigned,dim_decl_t*);
 static statement_t *new_redim_statement(parser_ctx_t*,unsigned,BOOL,redim_decl_t*);
+static statement_t *new_erase_statement(parser_ctx_t*,unsigned,const WCHAR*);
 static statement_t *new_while_statement(parser_ctx_t*,unsigned,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_forto_statement(parser_ctx_t*,unsigned,const WCHAR*,expression_t*,expression_t*,expression_t*,statement_t*);
 static statement_t *new_foreach_statement(parser_ctx_t*,unsigned,const WCHAR*,expression_t*,statement_t*);
@@ -121,7 +122,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token <string> tNOT tAND tOR tXOR tEQV tIMP
 %token <string> tIS tMOD
 %token <string> tCALL tSUB tFUNCTION tGET tLET tCONST
-%token <string> tDIM tREDIM tPRESERVE
+%token <string> tDIM tREDIM tPRESERVE tERASE
 %token <string> tIF tELSE tELSEIF tEND tTHEN tEXIT
 %token <string> tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tEACH tIN
 %token <string> tSELECT tCASE tWITH
@@ -220,6 +221,7 @@ SimpleStatement
                                             { $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
     | tREDIM Preserve_opt ReDimDeclList     { $$ = new_redim_statement(ctx, @$, $2, $3); CHECK_ERROR; }
+    | tERASE Identifier                    { $$ = new_erase_statement(ctx, @$, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression StSep StatementsNl_opt tWEND
                                             { $$ = new_while_statement(ctx, @$, STAT_WHILE, $2, $4); CHECK_ERROR; }
@@ -275,6 +277,7 @@ ReDimDecl
 ReDimDeclList
     : ReDimDecl                             { $$ = $1; }
     | ReDimDecl ',' ReDimDeclList           { $1->next = $3; $$ = $1; }
+
 
 DimDeclList
     : DimDecl                               { $$ = $1; }
@@ -927,6 +930,18 @@ static statement_t *new_redim_statement(parser_ctx_t *ctx, unsigned loc, BOOL pr
 
     stat->preserve = preserve;
     stat->redim_decls = decls;
+    return &stat->stat;
+}
+
+static statement_t *new_erase_statement(parser_ctx_t *ctx, unsigned loc, const WCHAR *identifier)
+{
+    erase_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_ERASE, sizeof(*stat), loc);
+    if(!stat)
+        return NULL;
+
+    stat->identifier = identifier;
     return &stat->stat;
 }
 
