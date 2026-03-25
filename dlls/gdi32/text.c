@@ -2530,6 +2530,27 @@ static void redirect_path( UNICODE_STRING *path )
 #endif
 }
 
+static BOOL get_system_dir_path( UNICODE_STRING *path, const WCHAR *str )
+{
+    WCHAR *system_dir;
+
+    if (!(system_dir = malloc( (MAX_PATH + 1 + wcslen( str )) * sizeof(WCHAR) ))) return FALSE;
+    GetSystemDirectoryW( system_dir, MAX_PATH );
+    wcscat( system_dir, L"\\" );
+    wcscat( system_dir, str );
+    if (!RtlDosPathNameToNtPathName_U( system_dir, path, NULL, NULL ))
+    {
+        free( system_dir );
+        return FALSE;
+    }
+
+    /* Windows does not redirect the path here, which is presumably a bug.
+     * Stratego (1997) tries to create a font resource in system32
+     * and fails on 64-bit Windows. */
+    redirect_path( path );
+    return TRUE;
+}
+
 static int add_font_resource( const WCHAR *str, DWORD flags, void *dv )
 {
     UNICODE_STRING nt_name;
@@ -2542,26 +2563,11 @@ static int add_font_resource( const WCHAR *str, DWORD flags, void *dv )
     if (!ret && !wcschr( str, '\\' ))
     {
         /* try as system font */
-        WCHAR *system_dir;
 
         if ((ret = NtGdiAddFontResourceW( str, wcslen( str ) + 1, 1, flags, 0, dv )))
             return ret;
 
-        if (!(system_dir = malloc( (MAX_PATH + 1 + wcslen( str )) * sizeof(WCHAR) )))
-            return 0;
-        GetSystemDirectoryW( system_dir, MAX_PATH + 1 + wcslen( str ));
-        wcscat( system_dir, L"\\" );
-        wcscat( system_dir, str );
-        if (!RtlDosPathNameToNtPathName_U( system_dir, &nt_name, NULL, NULL ))
-        {
-            free( system_dir );
-            return 0;
-        }
-
-        /* Windows does not redirect the path here, which is presumably a bug.
-         * Stratego (1997) tries to create a font resource in system32
-         * and fails on 64-bit Windows. */
-        redirect_path( &nt_name );
+        if (!get_system_dir_path( &nt_name, str )) return 0;
 
         ret = NtGdiAddFontResourceW( nt_name.Buffer, nt_name.Length / sizeof(WCHAR) + 1,
                                      1, flags, 0, dv );
@@ -2602,21 +2608,12 @@ static int remove_font_resource( const WCHAR *str, DWORD flags, void *dv )
     if (!ret && !wcschr( str, '\\' ))
     {
         /* try as system font */
-        WCHAR *system_dir;
 
         if ((ret = NtGdiRemoveFontResourceW( str, wcslen( str ) + 1, 1, flags, 0, dv )))
             return ret;
 
-        if (!(system_dir = malloc( (MAX_PATH + 1 + wcslen( str )) * sizeof(WCHAR) )))
-            return 0;
-        GetSystemDirectoryW( system_dir, MAX_PATH + 1 + wcslen( str ));
-        wcscat( system_dir, L"\\" );
-        wcscat( system_dir, str );
-        if (!RtlDosPathNameToNtPathName_U( system_dir, &nt_name, NULL, NULL ))
-        {
-            free( system_dir );
-            return 0;
-        }
+        if (!get_system_dir_path( &nt_name, str )) return 0;
+
         ret = NtGdiRemoveFontResourceW( nt_name.Buffer, nt_name.Length / sizeof(WCHAR) + 1,
                                         1, flags, 0, dv );
         RtlFreeUnicodeString( &nt_name );

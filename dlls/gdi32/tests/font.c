@@ -7998,7 +7998,7 @@ static void test_add_font_path(void)
         todo_wine ok( !wcscmp( path, L"C:\\WINDOWS\\SYSTEM32\\WINETEST_FONT.TTF" ),
             "got %s\n", debugstr_w( path ));
         ret = RemoveFontResourceExA( "winetest_font.ttf", 0, NULL );
-        todo_wine ok( ret, "got error %lu\n", GetLastError() );
+        ok( ret, "got error %lu\n", GetLastError() );
     }
 
     ret = DeleteFileA( system32_path );
