@@ -299,6 +299,7 @@ typedef enum {
     X(val,            1, 0,           0)          \
     X(vcall,          1, ARG_UINT,    0)          \
     X(vcallv,         1, ARG_UINT,    0)          \
+    X(with,           1, 0,           0)          \
     X(xor,            1, 0,           0)
 
 typedef enum {

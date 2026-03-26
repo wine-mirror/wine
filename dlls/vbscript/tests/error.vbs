@@ -515,4 +515,89 @@ unused = undeclaredVar2
 todo_wine_ok err.number = 500, "err.number = " & err.number
 on error goto 0
 
+sub testObjectRequired()
+    on error resume next
+    dim x, r
+
+    ' Is operator with non-object operands
+    err.clear
+    r = "hello" Is Nothing
+    ok err.number = 424, "Is string: err.number = " & err.number
+
+    err.clear
+    r = Nothing Is "hello"
+    ok err.number = 424, "Is string rhs: err.number = " & err.number
+
+    err.clear
+    r = 42 Is 42
+    ok err.number = 424, "Is int: err.number = " & err.number
+
+    err.clear
+    r = Empty Is Empty
+    ok err.number = 424, "Is empty: err.number = " & err.number
+
+    err.clear
+    r = Null Is Nothing
+    ok err.number = 424, "Is null: err.number = " & err.number
+
+    ' Member call on Nothing
+    err.clear
+    set x = Nothing
+    x.Prop
+    ok err.number = 424, "Nothing.Prop: err.number = " & err.number
+
+    ' Assign member on Nothing
+    err.clear
+    set x = Nothing
+    x.Prop = 1
+    ok err.number = 424, "Nothing.Prop = 1: err.number = " & err.number
+
+    ' Set member on Nothing
+    err.clear
+    set x = Nothing
+    set x.Child = Nothing
+    ok err.number = 424, "Set Nothing.Child: err.number = " & err.number
+
+    ' With on non-object types (no member access)
+    err.clear
+    with 42
+    end with
+    ok err.number = 424, "With 42: err.number = " & err.number
+
+    err.clear
+    with "hello"
+    end with
+    ok err.number = 424, "With string: err.number = " & err.number
+
+    err.clear
+    with empty
+    end with
+    ok err.number = 424, "With empty: err.number = " & err.number
+
+    err.clear
+    with null
+    end with
+    ok err.number = 424, "With null: err.number = " & err.number
+
+    err.clear
+    with true
+    end with
+    ok err.number = 424, "With true: err.number = " & err.number
+
+    ' With Nothing should NOT raise 424 at entry
+    err.clear
+    with Nothing
+    end with
+    ok err.number = 0, "With Nothing: err.number = " & err.number
+
+    ' With Nothing + member access should raise 424
+    err.clear
+    with Nothing
+        .Prop = 1
+    end with
+    ok err.number = 424, "With Nothing .Prop: err.number = " & err.number
+end sub
+
+call testObjectRequired()
+
 call reportSuccess()

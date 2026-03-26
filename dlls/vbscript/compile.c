@@ -954,6 +954,9 @@ static HRESULT compile_with_statement(compile_ctx_t *ctx, with_statement_t *stat
     if(FAILED(hres))
         return hres;
 
+    if(!push_instr(ctx, OP_with))
+        return E_OUTOFMEMORY;
+
     if(!emit_catch(ctx, 1))
         return E_OUTOFMEMORY;
 

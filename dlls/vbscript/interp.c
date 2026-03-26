@@ -449,15 +449,15 @@ static HRESULT stack_pop_disp(exec_ctx_t *ctx, IDispatch **ret)
     }
 
     if(V_VT(v) != (VT_VARIANT|VT_BYREF)) {
-        FIXME("not supported type: %s\n", debugstr_variant(v));
+        WARN("not supported type: %s\n", debugstr_variant(v));
         VariantClear(v);
-        return E_FAIL;
+        return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     }
 
     v = V_BYREF(v);
     if(V_VT(v) != VT_DISPATCH) {
-        FIXME("not disp %s\n", debugstr_variant(v));
-        return E_FAIL;
+        WARN("not disp %s\n", debugstr_variant(v));
+        return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     }
 
     if(V_DISPATCH(v))
@@ -768,8 +768,8 @@ static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
         return hres;
 
     if(!obj) {
-        FIXME("NULL obj\n");
-        return E_FAIL;
+        WARN("NULL obj\n");
+        return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     }
 
     vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
@@ -997,8 +997,8 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
         return hres;
 
     if(!obj) {
-        FIXME("NULL obj\n");
-        return E_FAIL;
+        WARN("NULL obj\n");
+        return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     }
 
     hres = disp_get_id(obj, identifier, VBDISP_LET, FALSE, &id);
@@ -1029,8 +1029,8 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
         return hres;
 
     if(!obj) {
-        FIXME("NULL obj\n");
-        return E_FAIL;
+        WARN("NULL obj\n");
+        return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     }
 
     hres = stack_assume_disp(ctx, arg_cnt, NULL);
@@ -2127,8 +2127,8 @@ static HRESULT interp_is(exec_ctx_t *ctx)
 
     stack_pop_deref(ctx, &v);
     if(V_VT(v.v) != VT_DISPATCH && V_VT(v.v) != VT_UNKNOWN) {
-        FIXME("Unhandled type %s\n", debugstr_variant(v.v));
-        hres = E_NOTIMPL;
+        WARN("Unhandled type %s\n", debugstr_variant(v.v));
+        hres = MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     }else if(V_UNKNOWN(v.v)) {
         hres = IUnknown_QueryInterface(V_UNKNOWN(v.v), &IID_IUnknown, (void**)&r);
     }
@@ -2138,8 +2138,8 @@ static HRESULT interp_is(exec_ctx_t *ctx)
 
     stack_pop_deref(ctx, &v);
     if(V_VT(v.v) != VT_DISPATCH && V_VT(v.v) != VT_UNKNOWN) {
-        FIXME("Unhandled type %s\n", debugstr_variant(v.v));
-        hres = E_NOTIMPL;
+        WARN("Unhandled type %s\n", debugstr_variant(v.v));
+        hres = MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     }else if(V_UNKNOWN(v.v)) {
         hres = IUnknown_QueryInterface(V_UNKNOWN(v.v), &IID_IUnknown, (void**)&l);
     }
@@ -2404,6 +2404,20 @@ static HRESULT interp_incc(exec_ctx_t *ctx)
 
     VariantClear(ref.u.v);
     *ref.u.v = v;
+    return S_OK;
+}
+
+static HRESULT interp_with(exec_ctx_t *ctx)
+{
+    VARIANT *v;
+
+    TRACE("\n");
+
+    v = stack_top(ctx, 0);
+    if(V_VT(v) == (VT_VARIANT|VT_BYREF))
+        v = V_VARIANTREF(v);
+    if(V_VT(v) != VT_DISPATCH && V_VT(v) != VT_UNKNOWN)
+        return MAKE_VBSERROR(VBSE_OBJECT_REQUIRED);
     return S_OK;
 }
 
