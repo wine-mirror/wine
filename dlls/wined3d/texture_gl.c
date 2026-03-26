@@ -697,7 +697,7 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
 {
     struct wined3d_texture *required_texture, *restore_texture, *dst_save_texture = dst_texture;
     unsigned int restore_idx, dst_save_sub_resource_idx = dst_sub_resource_idx;
-    bool resolve, scaled_resolve, restore_context = false;
+    bool resolve, scaled_resolve, typeless_resolve, restore_context = false;
     struct wined3d_texture *src_staging_texture = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
@@ -715,6 +715,19 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
     scaled_resolve = resolve
             && (abs(src_rect->bottom - src_rect->top) != abs(dst_rect->bottom - dst_rect->top)
             || abs(src_rect->right - src_rect->left) != abs(dst_rect->right - dst_rect->left));
+    typeless_resolve = resolve && (wined3d_format_is_typeless(src_texture->resource.format)
+                || wined3d_format_is_typeless(dst_texture->resource.format))
+                && (src_texture->resource.format->typeless_id == dst_texture->resource.format->typeless_id);
+
+    if (resolve && !typeless_resolve)
+    {
+        if ((scaled_resolve && !context->d3d_info->scaled_resolve)
+                || src_texture->resource.format->id != dst_texture->resource.format->id)
+        {
+            src_location = WINED3D_LOCATION_RB_RESOLVED;
+            resolve = scaled_resolve = typeless_resolve = false;
+        }
+    }
 
     if (filter == WINED3D_TEXF_LINEAR)
         gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_NICEST_EXT : GL_LINEAR;
