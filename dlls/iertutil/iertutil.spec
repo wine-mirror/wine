@@ -1,5 +1,6 @@
 @ stdcall CreateIUriBuilder(ptr long long ptr)
 @ stdcall CreateUri(wstr long long ptr)
+@ stdcall CreateUriWithFragment(wstr wstr long long ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetActivationFactory(ptr ptr)
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
