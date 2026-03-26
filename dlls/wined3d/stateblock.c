@@ -2806,7 +2806,7 @@ static void resolve_depth_buffer(struct wined3d_device *device)
         return;
 
     wined3d_device_context_resolve_sub_resource(&device->cs->c, dst_resource, 0,
-            src_view->resource, src_view->sub_resource_idx, dst_resource->format->id);
+            src_view->resource, src_view->sub_resource_idx, 0, dst_resource->format->id);
 }
 
 static void wined3d_device_set_render_state(struct wined3d_device *device,

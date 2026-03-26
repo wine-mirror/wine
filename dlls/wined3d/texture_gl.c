@@ -697,14 +697,14 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
 /* Blit between surface locations. Onscreen on different swapchains is not supported.
  * Depth / stencil is not supported. Context activation is done by the caller. */
 static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_context *context,
-        enum wined3d_texture_filter_type filter, struct wined3d_texture *src_texture,
+        enum wined3d_blit_op blit_op, enum wined3d_texture_filter_type filter, struct wined3d_texture *src_texture,
         unsigned int src_sub_resource_idx, DWORD src_location, const RECT *src_rect,
         struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, DWORD dst_location,
         const RECT *dst_rect, const struct wined3d_format *resolve_format)
 {
     struct wined3d_texture *required_texture, *restore_texture, *dst_save_texture = dst_texture;
     unsigned int restore_idx, dst_save_sub_resource_idx = dst_sub_resource_idx;
-    bool resolve, scaled_resolve, typeless_resolve, restore_context = false;
+    bool resolve, scaled_resolve, restore_context = false;
     struct wined3d_texture *src_staging_texture = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
@@ -722,17 +722,14 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
     scaled_resolve = resolve
             && (abs(src_rect->bottom - src_rect->top) != abs(dst_rect->bottom - dst_rect->top)
             || abs(src_rect->right - src_rect->left) != abs(dst_rect->right - dst_rect->left));
-    typeless_resolve = resolve && (wined3d_format_is_typeless(src_texture->resource.format)
-                || wined3d_format_is_typeless(dst_texture->resource.format))
-                && (src_texture->resource.format->typeless_id == dst_texture->resource.format->typeless_id);
 
-    if (resolve && !typeless_resolve)
+    if (resolve && blit_op == WINED3D_BLIT_OP_COLOR_BLIT)
     {
         if ((scaled_resolve && !context->d3d_info->scaled_resolve)
                 || src_texture->resource.format->id != dst_texture->resource.format->id)
         {
             src_location = WINED3D_LOCATION_RB_RESOLVED;
-            resolve = scaled_resolve = typeless_resolve = false;
+            resolve = scaled_resolve = false;
         }
     }
 
@@ -1095,7 +1092,7 @@ static DWORD fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     if (blit_op == WINED3D_BLIT_OP_COLOR_BLIT || blit_op == WINED3D_BLIT_OP_RAW_BLIT)
     {
         TRACE("Colour blit.\n");
-        texture2d_blt_fbo(device, context, filter, src_texture, src_sub_resource_idx, src_location,
+        texture2d_blt_fbo(device, context, blit_op, filter, src_texture, src_sub_resource_idx, src_location,
                 src_rect, dst_texture, dst_sub_resource_idx, dst_location, dst_rect, resolve_format);
         return dst_location;
     }
@@ -2125,7 +2122,7 @@ static BOOL wined3d_texture_load_renderbuffer(struct wined3d_texture *texture,
     else /* texture2d_blt_fbo() will load the source location if necessary. */
         src_location = WINED3D_LOCATION_TEXTURE_RGB;
 
-    texture2d_blt_fbo(texture->resource.device, context, WINED3D_TEXF_POINT, texture,
+    texture2d_blt_fbo(texture->resource.device, context, WINED3D_BLIT_OP_COLOR_BLIT, WINED3D_TEXF_POINT, texture,
             sub_resource_idx, src_location, &rect, texture, sub_resource_idx, dst_location, &rect, NULL);
 
     return TRUE;
@@ -2159,11 +2156,11 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
 
         SetRect(&src_rect, src_box.left, src_box.top, src_box.right, src_box.bottom);
         if (srgb)
-            texture2d_blt_fbo(device, &context_gl->c, WINED3D_TEXF_POINT,
+            texture2d_blt_fbo(device, &context_gl->c, WINED3D_BLIT_OP_COLOR_BLIT, WINED3D_TEXF_POINT,
                     &texture_gl->t, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB, &src_rect,
                     &texture_gl->t, sub_resource_idx, WINED3D_LOCATION_TEXTURE_SRGB, &src_rect, NULL);
         else
-            texture2d_blt_fbo(device, &context_gl->c, WINED3D_TEXF_POINT,
+            texture2d_blt_fbo(device, &context_gl->c, WINED3D_BLIT_OP_COLOR_BLIT, WINED3D_TEXF_POINT,
                     &texture_gl->t, sub_resource_idx, WINED3D_LOCATION_TEXTURE_SRGB, &src_rect,
                     &texture_gl->t, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB, &src_rect, NULL);
 
@@ -2181,7 +2178,8 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
         dst_location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
         if (fbo_blitter_supported(WINED3D_BLIT_OP_COLOR_BLIT, gl_info,
                 &texture_gl->t.resource, src_location, &texture_gl->t.resource, dst_location))
-            texture2d_blt_fbo(device, &context_gl->c, WINED3D_TEXF_POINT, &texture_gl->t, sub_resource_idx,
+            texture2d_blt_fbo(device, &context_gl->c, WINED3D_BLIT_OP_COLOR_BLIT,
+                    WINED3D_TEXF_POINT, &texture_gl->t, sub_resource_idx,
                     src_location, &src_rect, &texture_gl->t, sub_resource_idx, dst_location, &src_rect, NULL);
 
         return TRUE;

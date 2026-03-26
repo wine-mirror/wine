@@ -2565,7 +2565,8 @@ HRESULT __cdecl wined3d_device_context_map(struct wined3d_device_context *contex
 void __cdecl wined3d_device_context_reset_state(struct wined3d_device_context *context);
 void __cdecl wined3d_device_context_resolve_sub_resource(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx,
-        struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx, enum wined3d_format_id format_id);
+        struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx,
+        uint32_t flags, enum wined3d_format_id format_id);
 void __cdecl wined3d_device_context_set_blend_state(struct wined3d_device_context *context,
         struct wined3d_blend_state *state, const struct wined3d_color *blend_factor, unsigned int sample_mask);
 void __cdecl wined3d_device_context_set_constant_buffers(struct wined3d_device_context *context,

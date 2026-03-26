@@ -1985,7 +1985,7 @@ static void resolve_depth_buffer(struct d3d8_device *device)
     d3d8_dsv = wined3d_rendertarget_view_get_sub_resource_parent(wined3d_dsv);
 
     wined3d_device_context_resolve_sub_resource(device->immediate_context, dst_resource, 0,
-            wined3d_rendertarget_view_get_resource(wined3d_dsv), d3d8_dsv->sub_resource_idx, desc.format);
+            wined3d_rendertarget_view_get_resource(wined3d_dsv), d3d8_dsv->sub_resource_idx, 0, desc.format);
 }
 
 static HRESULT WINAPI d3d8_device_SetRenderState(IDirect3DDevice8 *iface,

@@ -4441,7 +4441,7 @@ void CDECL wined3d_device_context_update_sub_resource(struct wined3d_device_cont
 void CDECL wined3d_device_context_resolve_sub_resource(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx,
         struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx,
-        enum wined3d_format_id format_id)
+        uint32_t flags, enum wined3d_format_id format_id)
 {
     struct wined3d_texture *dst_texture, *src_texture;
     unsigned int dst_level, src_level;
@@ -4485,7 +4485,7 @@ void CDECL wined3d_device_context_resolve_sub_resource(struct wined3d_device_con
     SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(src_texture, src_level),
             wined3d_texture_get_level_height(src_texture, src_level));
     wined3d_device_context_blt(context, dst_texture, dst_sub_resource_idx, &dst_rect,
-            src_texture, src_sub_resource_idx, &src_rect, 0, &fx, WINED3D_TEXF_POINT);
+            src_texture, src_sub_resource_idx, &src_rect, flags, &fx, WINED3D_TEXF_POINT);
     wined3d_device_context_unlock(context);
 }
 
