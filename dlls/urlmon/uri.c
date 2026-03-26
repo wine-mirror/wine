@@ -365,15 +365,6 @@ static inline BOOL is_hierarchical_scheme(URL_SCHEME type) {
            type == URL_SCHEME_RES);
 }
 
-/* Checks if 'flags' contains an invalid combination of Uri_CREATE flags. */
-static inline BOOL has_invalid_flag_combination(DWORD flags) {
-    return((flags & Uri_CREATE_DECODE_EXTRA_INFO && flags & Uri_CREATE_NO_DECODE_EXTRA_INFO) ||
-           (flags & Uri_CREATE_CANONICALIZE && flags & Uri_CREATE_NO_CANONICALIZE) ||
-           (flags & Uri_CREATE_CRACK_UNKNOWN_SCHEMES && flags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES) ||
-           (flags & Uri_CREATE_PRE_PROCESS_HTML_URI && flags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI) ||
-           (flags & Uri_CREATE_IE_SETTINGS && flags & Uri_CREATE_NO_IE_SETTINGS));
-}
-
 /* Applies each default Uri_CREATE flags to 'flags' if it
  * doesn't cause a flag conflict.
  */
@@ -657,45 +648,6 @@ static INT find_file_extension(const WCHAR *path, DWORD path_len) {
     }
 
     return -1;
-}
-
-/* Removes all the leading and trailing white spaces or
- * control characters from the URI and removes all control
- * characters inside of the URI string.
- */
-static BSTR pre_process_uri(LPCWSTR uri) {
-    const WCHAR *start, *end, *ptr;
-    WCHAR *ptr2;
-    DWORD len;
-    BSTR ret;
-
-    start = uri;
-    /* Skip leading controls and whitespace. */
-    while(*start && (iswcntrl(*start) || iswspace(*start))) ++start;
-
-    /* URI consisted only of control/whitespace. */
-    if(!*start)
-        return SysAllocStringLen(NULL, 0);
-
-    end = start + lstrlenW(start);
-    while(--end > start && (iswcntrl(*end) || iswspace(*end)));
-
-    len = ++end - start;
-    for(ptr = start; ptr < end; ptr++) {
-        if(iswcntrl(*ptr))
-            len--;
-    }
-
-    ret = SysAllocStringLen(NULL, len);
-    if(!ret)
-        return NULL;
-
-    for(ptr = start, ptr2=ret; ptr < end; ptr++) {
-        if(!iswcntrl(*ptr))
-            *ptr2++ = *ptr;
-    }
-
-    return ret;
 }
 
 /* Converts an IPv4 address in numerical form into its fully qualified
@@ -4897,106 +4849,6 @@ HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     ret->ref = 1;
 
     *ppobj = &ret->IUri_iface;
-    return S_OK;
-}
-
-/***********************************************************************
- *           CreateUri (urlmon.@)
- *
- * Creates a new IUri object using the URI represented by pwzURI. This function
- * parses and validates the components of pwzURI and then canonicalizes the
- * parsed components.
- *
- * PARAMS
- *  pwzURI      [I] The URI to parse, validate, and canonicalize.
- *  dwFlags     [I] Flags which can affect how the parsing/canonicalization is performed.
- *  dwReserved  [I] Reserved (not used).
- *  ppURI       [O] The resulting IUri after parsing/canonicalization occurs.
- *
- * RETURNS
- *  Success: Returns S_OK. ppURI contains the pointer to the newly allocated IUri.
- *  Failure: E_INVALIDARG if there are invalid flag combinations in dwFlags, or an
- *           invalid parameter, or pwzURI doesn't represent a valid URI.
- *           E_OUTOFMEMORY if any memory allocation fails.
- *
- * NOTES
- *  Default flags:
- *      Uri_CREATE_CANONICALIZE, Uri_CREATE_DECODE_EXTRA_INFO, Uri_CREATE_CRACK_UNKNOWN_SCHEMES,
- *      Uri_CREATE_PRE_PROCESS_HTML_URI, Uri_CREATE_NO_IE_SETTINGS.
- */
-HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IUri **ppURI)
-{
-    const DWORD supported_flags = Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME|
-        Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME|Uri_CREATE_NO_CANONICALIZE|Uri_CREATE_CANONICALIZE|
-        Uri_CREATE_DECODE_EXTRA_INFO|Uri_CREATE_NO_DECODE_EXTRA_INFO|Uri_CREATE_CRACK_UNKNOWN_SCHEMES|
-        Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES|Uri_CREATE_PRE_PROCESS_HTML_URI|Uri_CREATE_NO_PRE_PROCESS_HTML_URI|
-        Uri_CREATE_NO_IE_SETTINGS|Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS|Uri_CREATE_FILE_USE_DOS_PATH;
-    Uri *ret;
-    HRESULT hr;
-    parse_data data;
-
-    TRACE("(%s %lx %Ix %p)\n", debugstr_w(pwzURI), dwFlags, dwReserved, ppURI);
-
-    if(!ppURI)
-        return E_INVALIDARG;
-
-    if(!pwzURI) {
-        *ppURI = NULL;
-        return E_INVALIDARG;
-    }
-
-    /* Check for invalid flags. */
-    if(has_invalid_flag_combination(dwFlags)) {
-        *ppURI = NULL;
-        return E_INVALIDARG;
-    }
-
-    /* Currently unsupported. */
-    if(dwFlags & ~supported_flags)
-        FIXME("Ignoring unsupported flag(s) %lx\n", dwFlags & ~supported_flags);
-
-    hr = Uri_Construct(NULL, (void**)&ret);
-    if(FAILED(hr)) {
-        *ppURI = NULL;
-        return hr;
-    }
-
-    /* Explicitly set the default flags if it doesn't cause a flag conflict. */
-    apply_default_flags(&dwFlags);
-
-    /* Pre process the URI, unless told otherwise. */
-    if(!(dwFlags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI))
-        ret->raw_uri = pre_process_uri(pwzURI);
-    else
-        ret->raw_uri = SysAllocString(pwzURI);
-
-    if(!ret->raw_uri) {
-        free(ret);
-        return E_OUTOFMEMORY;
-    }
-
-    memset(&data, 0, sizeof(parse_data));
-    data.uri = ret->raw_uri;
-
-    /* Validate and parse the URI into its components. */
-    if(!parse_uri(&data, dwFlags)) {
-        /* Encountered an unsupported or invalid URI */
-        IUri_Release(&ret->IUri_iface);
-        *ppURI = NULL;
-        return E_INVALIDARG;
-    }
-
-    /* Canonicalize the URI. */
-    hr = canonicalize_uri(&data, ret, dwFlags);
-    if(FAILED(hr)) {
-        IUri_Release(&ret->IUri_iface);
-        *ppURI = NULL;
-        return hr;
-    }
-
-    ret->create_flags = dwFlags;
-
-    *ppURI = &ret->IUri_iface;
     return S_OK;
 }
 

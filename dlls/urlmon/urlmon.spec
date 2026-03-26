@@ -34,7 +34,7 @@
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
 @ stdcall CreateFormatEnumerator(long ptr ptr)
 @ stdcall CreateIUriBuilder(ptr long long ptr) iertutil.CreateIUriBuilder
-@ stdcall CreateUri(wstr long long ptr)
+@ stdcall CreateUri(wstr long long ptr) iertutil.CreateUri
 @ stdcall CreateUriWithFragment(wstr wstr long long ptr)
 @ stdcall CreateURLMoniker(ptr wstr ptr)
 @ stdcall CreateURLMonikerEx(ptr wstr ptr long)
