@@ -35,6 +35,8 @@ struct bmp_header
 };
 #pragma pack(pop)
 
+typedef UINT32 (*yuv_to_bgr32_converter)(WORD x, WORD y, WORD stride, WORD height, const BYTE *data);
+
 static void write_bitmap_to_file(const BITMAPINFOHEADER *bitmap_header, const BYTE *data, HANDLE output)
 {
     struct bmp_header header =
@@ -81,6 +83,81 @@ static void write_bitmap(const BITMAPINFOHEADER *bitmap_header, const BYTE *data
     write_bitmap_to_file(bitmap_header, data, output);
 
     CloseHandle(output);
+}
+
+static void convert_yuv_and_write_bitmap(const BITMAPINFOHEADER *bitmap_header, const BYTE *data,
+                                         yuv_to_bgr32_converter convert, const WCHAR *output_filename)
+{
+    BITMAPINFOHEADER bgr32_header;
+    UINT32 *bgr32_ptr;
+    BYTE *bgr32_data;
+    HANDLE output;
+    DWORD written;
+    WORD x, y;
+    BOOL ret;
+
+    bgr32_header = *bitmap_header;
+    bgr32_header.biBitCount = 32;
+    bgr32_header.biCompression = BI_RGB;
+    bgr32_header.biSizeImage = bgr32_header.biWidth * bgr32_header.biHeight * bgr32_header.biBitCount / 8;
+    bgr32_header.biHeight = -bitmap_header->biHeight;
+    bgr32_data = malloc(bgr32_header.biSizeImage);
+
+    output = open_temp_file(output_filename);
+    bgr32_ptr = (UINT32 *)bgr32_data;
+    for (y = 0; y < bitmap_header->biWidth; y++)
+        for (x = 0; x < bitmap_header->biHeight; x++)
+            *bgr32_ptr++ = convert(x, y, bitmap_header->biWidth, bitmap_header->biHeight, data);
+
+    write_bitmap_to_file(&bgr32_header, (BYTE *)bgr32_data, output);
+    ret = WriteFile(output, data, bitmap_header->biSizeImage, &written, NULL);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(written == bitmap_header->biSizeImage, "written %lu bytes\n", written);
+
+    free(bgr32_data);
+    CloseHandle(output);
+}
+
+#define CLAMP(x) ((x) > 255 ? 255 : (x) < 0 ? 0 : (x))
+
+static UINT32 convert_yuv_to_bgr32(INT y, INT u, INT v)
+{
+    const INT y_offset = 16;
+    const INT uv_offset = 128;
+    const INT adj = 1024;
+    const INT c1 = 1.164 * adj + .5;
+    const INT c2 = 1.596 * adj + .5;
+    const INT c3 = 0.391 * adj + .5;
+    const INT c4 = 0.813 * adj + .5;
+    const INT c5 = 2.018 * adj + .5;
+
+    INT r, g, b;
+
+    y -= y_offset;
+    u -= uv_offset;
+    v -= uv_offset;
+
+    r = CLAMP((c1 * y + c2 * v) / adj);
+    g = CLAMP((c1 * y - c4 * v - c3 * u) / adj);
+    b = CLAMP((c1 * y + c5 * u) / adj);
+
+    return 0xff000000 | r << 16 | g << 8 | b;
+}
+
+static UINT32 convert_i420_to_bgr32(WORD x, WORD y, WORD stride, WORD height, const BYTE *data)
+{
+    WORD uv_offset, u_offset, v_offset;
+    BYTE yuv_y, yuv_u, yuv_v;
+
+    u_offset = height * stride;
+    v_offset = u_offset * 5 / 4;
+    uv_offset = (y / 2) * stride / 2 + x / 2;
+
+    yuv_y = data[y * stride + x];
+    yuv_u = data[u_offset + uv_offset];
+    yuv_v = data[v_offset + uv_offset];
+
+    return convert_yuv_to_bgr32(yuv_y, yuv_u, yuv_v);
 }
 
 static void test_formats(DWORD handler)
@@ -282,6 +359,87 @@ skip_decompression_tests:
     ok(res == ICERR_OK, "Got %ld.\n", res);
 }
 
+static void test_compress(DWORD handler)
+{
+    const struct bmp_header *expect_i420_header;
+    const struct bmp_header *rgb_header;
+    const BITMAPINFOHEADER *rgb_info;
+    BYTE i420_data[96 * 96 * 3 / 2];
+    const BYTE *expect_i420_data;
+    BITMAPINFOHEADER i420_info;
+    DWORD res, flags, diff;
+    const BYTE *rgb_data;
+    HRSRC resource;
+    HIC hic;
+
+    hic = ICOpen(ICTYPE_VIDEO, handler, ICMODE_COMPRESS);
+    ok(!!hic, "Failed to open codec.\n");
+
+    resource = FindResourceW(NULL, L"rgb24frame_flip.bmp", (const WCHAR *)RT_RCDATA);
+    rgb_header = ((const struct bmp_header *)LockResource(LoadResource(GetModuleHandleW(NULL), resource)));
+    rgb_info = (const BITMAPINFOHEADER *)(rgb_header + 1);
+    rgb_data = (const BYTE *)(rgb_info + 1);
+
+    res = ICCompressQuery(hic, rgb_info, NULL);
+    todo_wine
+    ok(res == ICERR_OK, "Got %ld.\n", res);
+
+    if (res != ICERR_OK)
+        goto skip_compression_tests;
+
+    res = ICCompressGetSize(hic, rgb_info, NULL);
+    ok(res == rgb_info->biWidth * rgb_info->biHeight * 3, "Got %ld.\n", res);
+
+    res = ICCompressGetFormatSize(hic, rgb_info);
+    ok(res == sizeof(BITMAPINFOHEADER), "Got %ld.\n", res);
+
+    memset(&i420_info, 0xcc, sizeof(i420_info));
+    res = ICCompressGetFormat(hic, rgb_info, &i420_info);
+    ok(res == ICERR_OK, "Got %ld.\n", res);
+    ok(i420_info.biSize == sizeof(BITMAPINFOHEADER), "Got size %lu.\n", i420_info.biSize);
+    ok(i420_info.biWidth == 96, "Got width %ld.\n", i420_info.biWidth);
+    ok(i420_info.biHeight == 96, "Got height %ld.\n", i420_info.biHeight);
+    ok(i420_info.biPlanes == 1, "Got %u planes.\n", i420_info.biPlanes);
+    ok(i420_info.biBitCount == 24, "Got depth %u.\n", i420_info.biBitCount);
+    ok(i420_info.biCompression == FOURCC_IYUV, "Got compression %#lx.\n", i420_info.biCompression);
+    ok(i420_info.biSizeImage == rgb_info->biWidth * rgb_info->biHeight * 3, "Got image size %lu.\n",
+       i420_info.biSizeImage);
+    ok(!i420_info.biXPelsPerMeter, "Got horizontal resolution %ld.\n", i420_info.biXPelsPerMeter);
+    ok(!i420_info.biYPelsPerMeter, "Got vertical resolution %ld.\n", i420_info.biYPelsPerMeter);
+    ok(!i420_info.biClrUsed, "Got %lu used colours.\n", i420_info.biClrUsed);
+    ok(!i420_info.biClrImportant, "Got %lu important colours.\n", i420_info.biClrImportant);
+
+    res = ICCompressQuery(hic, rgb_info, &i420_info);
+    ok(res == ICERR_OK, "Got %ld.\n", res);
+
+    res = ICCompressBegin(hic, rgb_info, &i420_info);
+    ok(res == ICERR_OK, "Got %ld.\n", res);
+    memset(i420_data, 0xcd, sizeof(i420_data));
+    res = ICCompress(hic, ICCOMPRESS_KEYFRAME, &i420_info, i420_data, (BITMAPINFOHEADER *)rgb_info, (void *)rgb_data,
+                     NULL, &flags, 1, 0, 0, NULL, NULL);
+    ok(res == ICERR_OK, "Got %ld.\n", res);
+    ok(flags == AVIIF_KEYFRAME, "got flags %#lx\n", flags);
+    ok(i420_info.biSizeImage == sizeof(i420_data), "Got size %ld.\n", i420_info.biSizeImage);
+    res = ICCompressEnd(hic);
+    ok(res == ICERR_OK, "Got %ld.\n", res);
+
+    convert_yuv_and_write_bitmap(&i420_info, i420_data, convert_i420_to_bgr32, L"i420frame.bmp");
+
+    resource = FindResourceW(NULL, L"i420frame.bmp", (const WCHAR *)RT_RCDATA);
+    expect_i420_header = ((const struct bmp_header *)LockResource(LoadResource(GetModuleHandleW(NULL), resource)));
+    expect_i420_data = (const BYTE *)((uintptr_t)expect_i420_header + expect_i420_header->length);
+
+    diff = 0;
+    for (unsigned int i = 0; i < i420_info.biSizeImage; ++i)
+        diff += abs((int)i420_data[i] - (int)expect_i420_data[i]);
+    diff = diff * 100 / 256 / i420_info.biSizeImage;
+    ok(diff == 0, "Got %lu%% difference.\n", diff);
+
+skip_compression_tests:
+    res = ICClose(hic);
+    ok(res == ICERR_OK, "Got %ld.\n", res);
+}
+
 START_TEST(iyuv_32)
 {
     static const DWORD handler[] = {FOURCC_IYUV, FOURCC_I420};
@@ -309,6 +467,7 @@ START_TEST(iyuv_32)
         winetest_push_context("handler %.4s", (char *)&handler[i]);
         test_formats(handler[i]);
         test_decompress(handler[i]);
+        test_compress(handler[i]);
         winetest_pop_context();
     }
 }
