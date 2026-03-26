@@ -106,13 +106,6 @@ coclass PSFactoryBuffer { interface IPSFactoryBuffer; }
 coclass DeCompMimeFilter { interface IInternetProtocol; interface IInternetProtocolSink; }
 
 [
-    helpstring("CUri"),
-    threading(apartment),
-    uuid(df2fce13-25ec-45bb-9d4c-cecd47c2430c)
-]
-coclass CUri { interface IUri; }
-
-[
     helpstring("Persistent Zone Identifier"),
     threading(both),
     uuid(0968e258-16c7-4dba-aa86-462dd61e31a3)

@@ -17,6 +17,7 @@
  */
 
 #include "private.h"
+#include "iertutil_classes.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iertutil);
 
@@ -390,9 +391,89 @@ static struct iertutil iertutil =
     1
 };
 
+typedef struct
+{
+    IClassFactory IClassFactory_iface;
+    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+} ClassFactory;
+
+static inline ClassFactory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, ClassFactory, IClassFactory_iface);
+}
+
+static HRESULT WINAPI CF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI CF_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI CF_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI CF_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid,
+                                        void **ppv)
+{
+    ClassFactory *This = impl_from_IClassFactory(iface);
+    IUnknown *unk;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %s %p)\n", iface, outer, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    if (outer && !IsEqualGUID(riid, &IID_IUnknown))
+        return CLASS_E_NOAGGREGATION;
+
+    hr = This->pfnCreateInstance(outer, (void **)&unk);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IUnknown_QueryInterface(unk, riid, ppv);
+    IUnknown_Release(unk);
+    return hr;
+}
+
+static HRESULT WINAPI CF_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    TRACE("(%d)\n", dolock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl =
+{
+    CF_QueryInterface,
+    CF_AddRef,
+    CF_Release,
+    CF_CreateInstance,
+    CF_LockServer
+};
+
+static ClassFactory CUriCF = {{&ClassFactoryVtbl}, Uri_Construct};
+
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 {
-    FIXME("clsid %s, riid %s, out %p stub!\n", debugstr_guid(clsid), debugstr_guid(riid), out);
+    TRACE("clsid %s, riid %s, out %p.\n", debugstr_guid(clsid), debugstr_guid(riid), out);
+
+    if (IsEqualGUID(clsid, &CLSID_CUri))
+        return IClassFactory_QueryInterface(&CUriCF.IClassFactory_iface, riid, out);
+
+    FIXME("%s: no class found.\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 

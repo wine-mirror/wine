@@ -4,5 +4,6 @@ IMPORTS = ole32 oleaut32 rpcrt4 shlwapi combase
 
 SOURCES = \
 	classes.idl \
+	iertutil_classes.idl \
 	main.c \
 	uri.c

@@ -71,4 +71,6 @@
     DEFINE_IINSPECTABLE_(pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, \
                          &impl->base_iface)
 
+extern HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
+
 #endif /* __WINE_IERTUTIL_PRIVATE_H */

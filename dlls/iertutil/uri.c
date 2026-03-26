@@ -41,6 +41,7 @@
 #include "inaddr.h"
 #include "in6addr.h"
 #include "ip2string.h"
+#include "iertutil_classes.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iertutil);
 
@@ -58,8 +59,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(iertutil);
 #define RAW_URI_CONVERT_TO_DOS_PATH      0x2
 
 #define COMBINE_URI_FORCE_FLAG_USE       0x1
-
-static const GUID CLSID_CUri = {0xDF2FCE13,0x25EC,0x45BB,{0x9D,0x4C,0xCE,0xCD,0x47,0xC2,0x43,0x0C}};
 
 static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x20,0x0c,0x9a,0x66}};
 
