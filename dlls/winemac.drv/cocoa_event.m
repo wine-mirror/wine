@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
-#include <libkern/OSAtomic.h>
 
 #include "macdrv_cocoa.h"
 #import "cocoa_event.h"
@@ -277,7 +276,7 @@ static const OSType WineHotKeySignature = 'Wine';
                 [events removeObjectAtIndex:index];
 
                 if (event->event->deliver == INT_MAX ||
-                    OSAtomicDecrement32Barrier(&event->event->deliver) >= 0)
+                    __atomic_sub_fetch(&event->event->deliver, 1, __ATOMIC_SEQ_CST) >= 0)
                 {
                     ret = event;
                     break;
@@ -647,7 +646,7 @@ macdrv_event* macdrv_create_event(int type, WineWindow* window)
  */
 macdrv_event* macdrv_retain_event(macdrv_event *event)
 {
-    OSAtomicIncrement32Barrier(&event->refs);
+    __atomic_add_fetch(&event->refs, 1, __ATOMIC_SEQ_CST);
     return event;
 }
 
@@ -662,7 +661,7 @@ void macdrv_release_event(macdrv_event *event)
 {
 @autoreleasepool
 {
-    if (OSAtomicDecrement32Barrier(&event->refs) <= 0)
+    if (__atomic_sub_fetch(&event->refs, 1, __ATOMIC_SEQ_CST) <= 0)
     {
         switch (event->type)
         {
@@ -706,7 +705,7 @@ macdrv_query* macdrv_create_query(void)
  */
 macdrv_query* macdrv_retain_query(macdrv_query *query)
 {
-    OSAtomicIncrement32Barrier(&query->refs);
+    __atomic_add_fetch(&query->refs, 1, __ATOMIC_SEQ_CST);
     return query;
 }
 
@@ -715,7 +714,7 @@ macdrv_query* macdrv_retain_query(macdrv_query *query)
  */
 void macdrv_release_query(macdrv_query *query)
 {
-    if (OSAtomicDecrement32Barrier(&query->refs) <= 0)
+    if (__atomic_sub_fetch(&query->refs, 1, __ATOMIC_SEQ_CST) <= 0)
     {
         switch (query->type)
         {
