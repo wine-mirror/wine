@@ -496,6 +496,29 @@ static bool gl_formats_compatible(struct wined3d_texture *src_texture, DWORD src
     return src_internal == dst_internal;
 }
 
+static bool raw_blitter_supported(enum wined3d_blit_op op, struct wined3d_texture *src_texture,
+        uint32_t src_location, struct wined3d_texture *dst_texture, uint32_t dst_location)
+{
+    if (op != WINED3D_BLIT_OP_RAW_BLIT)
+        return false;
+
+    if (!gl_formats_compatible(src_texture, src_location, dst_texture, dst_location))
+        return false;
+
+    if (((src_texture->resource.format_attrs | dst_texture->resource.format_attrs) & WINED3D_FORMAT_ATTR_HEIGHT_SCALE))
+        return false;
+
+    /* If we would need to copy from a renderbuffer or drawable, we'd probably
+     * be better off using the FBO blitter directly, since we'd need to use it
+     * to copy the resource contents to the texture anyway. */
+    if (src_texture->resource.format->id == dst_texture->resource.format->id
+            && (!(src_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
+            || !(dst_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))))
+        return false;
+
+    return true;
+}
+
 static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
         struct wined3d_context *context, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
         DWORD src_location, const RECT *src_rect, struct wined3d_texture *dst_texture,
@@ -512,18 +535,7 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     GLuint src_name, dst_name;
     DWORD location;
 
-    /* If we would need to copy from a renderbuffer or drawable, we'd probably
-     * be better off using the FBO blitter directly, since we'd need to use it
-     * to copy the resource contents to the texture anyway.
-     *
-     * We also can't copy between depth/stencil and colour resources, since
-     * the formats are considered incompatible in OpenGL. */
-    if (op != WINED3D_BLIT_OP_RAW_BLIT || !gl_formats_compatible(src_texture, src_location, dst_texture, dst_location)
-            || ((src_texture->resource.format_attrs | dst_texture->resource.format_attrs)
-                    & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
-            || (src_texture->resource.format->id == dst_texture->resource.format->id
-            && (!(src_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
-            || !(dst_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB)))))
+    if (!raw_blitter_supported(op, src_texture, src_location, dst_texture, dst_location))
     {
         if (!(next = blitter->next))
         {
