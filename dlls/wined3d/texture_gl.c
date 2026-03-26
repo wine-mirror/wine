@@ -508,6 +508,10 @@ static bool raw_blitter_supported(enum wined3d_blit_op op, struct wined3d_textur
     if (((src_texture->resource.format_attrs | dst_texture->resource.format_attrs) & WINED3D_FORMAT_ATTR_HEIGHT_SCALE))
         return false;
 
+    if (wined3d_resource_get_sample_count(&src_texture->resource)
+            != wined3d_resource_get_sample_count(&dst_texture->resource))
+        return false;
+
     /* If we would need to copy from a renderbuffer or drawable, we'd probably
      * be better off using the FBO blitter directly, since we'd need to use it
      * to copy the resource contents to the texture anyway. */
