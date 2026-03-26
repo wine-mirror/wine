@@ -241,13 +241,36 @@ static void test_JsonArrayStatics(void)
 
 static void test_JsonObjectStatics(void)
 {
+    static const WCHAR *json_value_statics_name = L"Windows.Data.Json.JsonValue";
     static const WCHAR *json_object_name = L"Windows.Data.Json.JsonObject";
+    IJsonValueStatics *json_value_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     IInspectable *inspectable = (void *)0xdeadbeef;
+    IJsonObject *child_object = (void *)0xdeadbeef;
     IJsonObject *json_object = (void *)0xdeadbeef;
+    IJsonArray *child_array = (void *)0xdeadbeef;
+    IJsonValue *child_value = (void *)0xdeadbeef;
+    BOOLEAN child_boolean;
+    HSTRING child_string;
+    DOUBLE child_number;
     HSTRING str = NULL;
     HRESULT hr;
     LONG ref;
+
+    hr = WindowsCreateString( json_value_statics_name, wcslen( json_value_statics_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( json_value_statics_name ) );
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IJsonValueStatics, (void **)&json_value_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ref = IActivationFactory_Release( factory );
 
     hr = WindowsCreateString( json_object_name, wcslen( json_object_name ), &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
@@ -277,9 +300,179 @@ static void test_JsonObjectStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     check_interface( inspectable, &IID_IAgileObject );
+    IInspectable_Release( inspectable );
+
+    hr = WindowsCreateString( L"key", wcslen( L"key" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    /* key pair does not exist */
+
+    hr = IJsonObject_GetNamedValue( json_object, NULL, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedValue( json_object, str, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedValue( json_object, NULL, &child_value );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedValue( json_object, str, &child_value );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+
+    hr = IJsonObject_GetNamedObject( json_object, NULL, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedObject( json_object, str, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedObject( json_object, NULL, &child_object );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedObject( json_object, str, &child_object );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+
+    hr = IJsonObject_GetNamedArray( json_object, NULL, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedArray( json_object, str, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedArray( json_object, NULL, &child_array );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedArray( json_object, str, &child_array );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+
+    hr = IJsonObject_GetNamedString( json_object, NULL, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedString( json_object, str, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedString( json_object, NULL, &child_string );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedString( json_object, str, &child_string );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+
+    hr = IJsonObject_GetNamedNumber( json_object, NULL, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedNumber( json_object, str, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedNumber( json_object, NULL, &child_number );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedNumber( json_object, str, &child_number );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+
+    hr = IJsonObject_GetNamedBoolean( json_object, NULL, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, str, NULL );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, NULL, &child_boolean );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, str, &child_boolean );
+    ok( hr == WEB_E_JSON_VALUE_NOT_FOUND, "got hr %#lx.\n", hr );
+
+    /* key pair exists */
+
+    WindowsDeleteString( str );
+    hr = WindowsCreateString( L"{}", wcslen( L"{}" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_Parse( json_value_statics, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+    hr = WindowsCreateString( L"key", wcslen( L"key" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_SetNamedValue( json_object, str, child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedValue( json_object, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedObject( json_object, str, &child_object );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonObject_Release( child_object );
+    hr = IJsonObject_GetNamedArray( json_object, str, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedString( json_object, str, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedNumber( json_object, str, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, str, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+
+    WindowsDeleteString( str );
+    hr = WindowsCreateString( L"[]", wcslen( L"[]" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_Parse( json_value_statics, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+    hr = WindowsCreateString( L"key", wcslen( L"key" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_SetNamedValue( json_object, str, child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedValue( json_object, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedObject( json_object, str, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedArray( json_object, str, &child_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonArray_Release( child_array );
+    hr = IJsonObject_GetNamedString( json_object, str, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedNumber( json_object, str, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, str, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+
+    hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_SetNamedValue( json_object, str, child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedValue( json_object, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedObject( json_object, str, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedArray( json_object, str, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedString( json_object, str, &child_string );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( child_string );
+    hr = IJsonObject_GetNamedNumber( json_object, str, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, str, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+
+    hr = IJsonValueStatics_CreateNumberValue( json_value_statics, 10, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_SetNamedValue( json_object, str, child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedValue( json_object, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedObject( json_object, str, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedArray( json_object, str, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedString( json_object, str, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedNumber( json_object, str, &child_number );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, str, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+
+    hr = IJsonValueStatics_CreateBooleanValue( json_value_statics, FALSE, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonObject_SetNamedValue( json_object, str, child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedValue( json_object, str, &child_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( child_value );
+    hr = IJsonObject_GetNamedObject( json_object, str, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedArray( json_object, str, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedString( json_object, str, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedNumber( json_object, str, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonObject_GetNamedBoolean( json_object, str, &child_boolean );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     IJsonObject_Release( json_object );
-    IInspectable_Release( inspectable );
+    IJsonValueStatics_Release( json_value_statics );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }

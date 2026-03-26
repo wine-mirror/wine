@@ -125,32 +125,97 @@ static HRESULT WINAPI json_object_SetNamedValue( IJsonObject *iface, HSTRING nam
 
 static HRESULT WINAPI json_object_GetNamedObject( IJsonObject *iface, HSTRING name, IJsonObject **value )
 {
-    FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
-    return E_NOTIMPL;
+    IJsonValue *internal_value;
+    JsonValueType value_type;
+    HRESULT hr;
+
+    TRACE( "iface %p, name %s, value %p.\n", iface, debugstr_hstring( name ), value );
+
+    if (!value) return E_POINTER;
+    if (FAILED(hr = IJsonObject_GetNamedValue( iface, name, &internal_value )))
+        return hr;
+
+    IJsonValue_Release( internal_value );
+    IJsonValue_get_ValueType( internal_value, &value_type );
+    if (value_type != JsonValueType_Object) return E_ILLEGAL_METHOD_CALL;
+
+    return IJsonValue_GetObject( internal_value, value );
 }
 
 static HRESULT WINAPI json_object_GetNamedArray( IJsonObject *iface, HSTRING name, IJsonArray **value )
 {
-    FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
-    return E_NOTIMPL;
+    IJsonValue *internal_value;
+    JsonValueType value_type;
+    HRESULT hr;
+
+    TRACE( "iface %p, name %s, value %p.\n", iface, debugstr_hstring( name ), value );
+
+    if (!value) return E_POINTER;
+    if (FAILED(hr = IJsonObject_GetNamedValue( iface, name, &internal_value )))
+        return hr;
+
+    IJsonValue_Release( internal_value );
+    IJsonValue_get_ValueType( internal_value, &value_type );
+    if (value_type != JsonValueType_Array) return E_ILLEGAL_METHOD_CALL;
+
+    return IJsonValue_GetArray( internal_value, value );
 }
 
 static HRESULT WINAPI json_object_GetNamedString( IJsonObject *iface, HSTRING name, HSTRING *value )
 {
-    FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
-    return E_NOTIMPL;
+    IJsonValue *internal_value;
+    JsonValueType value_type;
+    HRESULT hr;
+
+    TRACE( "iface %p, name %s, value %p.\n", iface, debugstr_hstring( name ), value );
+
+    if (!value) return E_POINTER;
+    if (FAILED(hr = IJsonObject_GetNamedValue( iface, name, &internal_value )))
+        return hr;
+
+    IJsonValue_Release( internal_value );
+    IJsonValue_get_ValueType( internal_value, &value_type );
+    if (value_type != JsonValueType_String) return E_ILLEGAL_METHOD_CALL;
+
+    return IJsonValue_GetString( internal_value, value );
 }
 
 static HRESULT WINAPI json_object_GetNamedNumber( IJsonObject *iface, HSTRING name, DOUBLE *value )
 {
-    FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
-    return E_NOTIMPL;
+    IJsonValue *internal_value;
+    JsonValueType value_type;
+    HRESULT hr;
+
+    TRACE( "iface %p, name %s, value %p.\n", iface, debugstr_hstring( name ), value );
+
+    if (!value) return E_POINTER;
+    if (FAILED(hr = IJsonObject_GetNamedValue( iface, name, &internal_value )))
+        return hr;
+
+    IJsonValue_Release( internal_value );
+    IJsonValue_get_ValueType( internal_value, &value_type );
+    if (value_type != JsonValueType_Number) return E_ILLEGAL_METHOD_CALL;
+
+    return IJsonValue_GetNumber( internal_value, value );
 }
 
 static HRESULT WINAPI json_object_GetNamedBoolean( IJsonObject *iface, HSTRING name, boolean *value )
 {
-    FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
-    return E_NOTIMPL;
+    IJsonValue *internal_value;
+    JsonValueType value_type;
+    HRESULT hr;
+
+    TRACE( "iface %p, name %s, value %p.\n", iface, debugstr_hstring( name ), value );
+
+    if (!value) return E_POINTER;
+    if (FAILED(hr = IJsonObject_GetNamedValue( iface, name, &internal_value )))
+        return hr;
+
+    IJsonValue_Release( internal_value );
+    IJsonValue_get_ValueType( internal_value, &value_type );
+    if (value_type != JsonValueType_Boolean) return E_ILLEGAL_METHOD_CALL;
+
+    return IJsonValue_GetBoolean( internal_value, value );
 }
 
 static const struct IJsonObjectVtbl json_object_vtbl =
