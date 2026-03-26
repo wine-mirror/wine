@@ -2528,6 +2528,186 @@ end sub
 
 call testDatePartError()
 
+sub testDateDiff(interval, d1, d2, expected)
+    dim x
+    x = DateDiff(interval, d1, d2)
+    call ok(x = expected, "DateDiff(""" & interval & """, " & d1 & ", " & d2 & ") = " & x & " expected " & expected)
+    call ok(getVT(x) = "VT_I4*", "DateDiff getVT = " & getVT(x))
+end sub
+
+sub testDateDiffFdow(interval, d1, d2, fdow, expected)
+    dim x
+    x = DateDiff(interval, d1, d2, fdow)
+    call ok(x = expected, "DateDiff(""" & interval & """, " & d1 & ", " & d2 & ", " & fdow & ") = " & x & " expected " & expected)
+    call ok(getVT(x) = "VT_I4*", "DateDiff fdow getVT = " & getVT(x))
+end sub
+
+' yyyy (year)
+call testDateDiff("yyyy", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 1)
+call testDateDiff("yyyy", DateSerial(2000, 12, 31), DateSerial(2001, 1, 1), 1)
+call testDateDiff("yyyy", DateSerial(2001, 1, 1), DateSerial(2000, 1, 1), -1)
+call testDateDiff("yyyy", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+call testDateDiff("yyyy", DateSerial(2000, 6, 15), DateSerial(2005, 3, 15), 5)
+call testDateDiff("yyyy", DateSerial(2000, 1, 1), DateSerial(2000, 12, 31), 0)
+
+' Case insensitive
+call testDateDiff("YYYY", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 1)
+call testDateDiff("Yyyy", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 1)
+
+' q (quarter)
+call testDateDiff("q", DateSerial(2000, 1, 1), DateSerial(2000, 4, 1), 1)
+call testDateDiff("q", DateSerial(2000, 1, 1), DateSerial(2000, 3, 31), 0)
+call testDateDiff("q", DateSerial(2000, 1, 1), DateSerial(2000, 7, 1), 2)
+call testDateDiff("q", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 4)
+call testDateDiff("q", DateSerial(2000, 3, 31), DateSerial(2000, 4, 1), 1)
+call testDateDiff("q", DateSerial(2000, 4, 1), DateSerial(2000, 1, 1), -1)
+call testDateDiff("q", DateSerial(2000, 1, 15), DateSerial(2001, 12, 15), 7)
+
+' m (month)
+call testDateDiff("m", DateSerial(2000, 1, 1), DateSerial(2000, 2, 1), 1)
+call testDateDiff("m", DateSerial(2000, 1, 31), DateSerial(2000, 2, 1), 1)
+call testDateDiff("m", DateSerial(2000, 1, 1), DateSerial(2000, 1, 31), 0)
+call testDateDiff("m", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 12)
+call testDateDiff("m", DateSerial(2000, 2, 1), DateSerial(2000, 1, 1), -1)
+call testDateDiff("m", DateSerial(2000, 3, 15), DateSerial(2002, 6, 15), 27)
+
+' y (day of year) - same as d
+call testDateDiff("y", DateSerial(2000, 1, 1), DateSerial(2000, 1, 2), 1)
+call testDateDiff("y", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 366)
+call testDateDiff("y", DateSerial(2000, 1, 2), DateSerial(2000, 1, 1), -1)
+
+' d (day)
+call testDateDiff("d", DateSerial(2000, 1, 1), DateSerial(2000, 1, 2), 1)
+call testDateDiff("d", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 366)
+call testDateDiff("d", DateSerial(2000, 1, 2), DateSerial(2000, 1, 1), -1)
+call testDateDiff("d", DateSerial(2000, 1, 1), DateSerial(2000, 12, 31), 365)
+call testDateDiff("d", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+
+' w (weekday) - integer division of day diff by 7
+call testDateDiff("w", DateSerial(2000, 1, 1), DateSerial(2000, 1, 8), 1)
+call testDateDiff("w", DateSerial(2000, 1, 1), DateSerial(2000, 1, 2), 0)
+call testDateDiff("w", DateSerial(2000, 1, 1), DateSerial(2000, 1, 7), 0)
+call testDateDiff("w", DateSerial(2000, 1, 1), DateSerial(2000, 1, 15), 2)
+call testDateDiff("w", DateSerial(2000, 1, 8), DateSerial(2000, 1, 1), -1)
+
+' ww (calendar week) with firstdayofweek
+' 1/1/2000 = Saturday, 1/3/2000 = Monday
+call testDateDiffFdow("ww", DateSerial(2000, 1, 1), DateSerial(2000, 1, 3), vbSunday, 1)
+call testDateDiffFdow("ww", DateSerial(2000, 1, 1), DateSerial(2000, 1, 3), vbMonday, 1)
+call testDateDiffFdow("ww", DateSerial(2000, 1, 1), DateSerial(2000, 1, 3), vbSaturday, 0)
+call testDateDiffFdow("ww", DateSerial(2000, 1, 1), DateSerial(2000, 1, 8), vbSunday, 1)
+call testDateDiffFdow("ww", DateSerial(2000, 1, 1), DateSerial(2000, 1, 15), vbSunday, 2)
+call testDateDiffFdow("ww", DateSerial(2000, 1, 8), DateSerial(2000, 1, 1), vbSunday, -1)
+' ww across pre-1899 (negative DATE) boundary:
+' 12/24/1899 = Sunday, 12/27/1899 = Wednesday, 12/31/1899 = Sunday, 1/3/1900 = Wednesday
+call testDateDiffFdow("ww", DateSerial(1899, 12, 24), DateSerial(1899, 12, 27), vbSunday, 0)
+call testDateDiffFdow("ww", DateSerial(1899, 12, 24), DateSerial(1899, 12, 31), vbSunday, 1)
+call testDateDiffFdow("ww", DateSerial(1899, 12, 27), DateSerial(1900, 1, 3), vbSunday, 1)
+call testDateDiffFdow("ww", DateSerial(1900, 1, 3), DateSerial(1899, 12, 27), vbSunday, -1)
+
+' h (hour)
+call testDateDiff("h", DateSerial(2000, 1, 1), DateSerial(2000, 1, 2), 24)
+call testDateDiff("h", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1), 8784)
+
+' n (minute)
+call testDateDiff("n", DateSerial(2000, 1, 1), DateSerial(2000, 1, 2), 1440)
+
+' s (second)
+call testDateDiff("s", DateSerial(2000, 1, 1), DateSerial(2000, 1, 2), 86400)
+
+' Same date for all intervals
+call testDateDiff("yyyy", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+call testDateDiff("q", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+call testDateDiff("m", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+call testDateDiff("d", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+call testDateDiff("h", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+call testDateDiff("n", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+call testDateDiff("s", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1), 0)
+
+' Non-zero fractional part
+call testDateDiff("h", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1) + TimeSerial(6, 0, 0), 6)
+call testDateDiff("n", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1) + TimeSerial(0, 30, 0), 30)
+call testDateDiff("s", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1) + TimeSerial(0, 0, 45), 45)
+call testDateDiff("d", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1) + TimeSerial(23, 0, 0), 0)
+call testDateDiff("d", DateSerial(2000, 1, 1) + TimeSerial(6, 0, 0), DateSerial(2000, 1, 2), 1)
+call testDateDiff("h", DateSerial(2000, 1, 1) + TimeSerial(23, 0, 0), DateSerial(2000, 1, 2) + TimeSerial(1, 0, 0), 2)
+call testDateDiff("h", DateSerial(2000, 1, 1) + TimeSerial(0, 30, 0), DateSerial(2000, 1, 1) + TimeSerial(1, 0, 0), 1)
+call testDateDiff("h", DateSerial(2000, 1, 1) + TimeSerial(12, 0, 0), DateSerial(2000, 1, 1) + TimeSerial(6, 0, 0), -6)
+call testDateDiff("yyyy", DateSerial(2000, 1, 1), DateSerial(2000, 1, 1) + TimeSerial(12, 0, 0), 0)
+
+' Negative DATE values (years before 1899-12-30)
+call testDateDiff("yyyy", DateSerial(1800, 1, 1), DateSerial(1801, 1, 1), 1)
+call testDateDiff("yyyy", DateSerial(1899, 1, 1), DateSerial(1900, 1, 1), 1)
+call testDateDiff("yyyy", DateSerial(1801, 1, 1), DateSerial(1800, 1, 1), -1)
+call testDateDiff("yyyy", DateSerial(1800, 1, 1), DateSerial(2000, 1, 1), 200)
+call testDateDiff("q", DateSerial(1800, 1, 1), DateSerial(1801, 1, 1), 4)
+call testDateDiff("m", DateSerial(1800, 6, 15), DateSerial(1801, 6, 15), 12)
+call testDateDiff("d", DateSerial(1899, 12, 29), DateSerial(1899, 12, 30), 1)
+call testDateDiff("d", DateSerial(1899, 12, 30), DateSerial(1899, 12, 31), 1)
+call testDateDiff("d", DateSerial(1899, 12, 29), DateSerial(1899, 12, 31), 2)
+call testDateDiff("d", DateSerial(2000, 1, 1), DateSerial(1800, 1, 1), -73048)
+call testDateDiff("w", DateSerial(1800, 1, 1), DateSerial(1800, 1, 15), 2)
+
+' Negative DATE crossing 1899-12-30 with fractional part
+call testDateDiff("h", DateSerial(1899, 12, 29) + TimeSerial(18, 0, 0), DateSerial(1899, 12, 30), -6)
+call testDateDiff("h", DateSerial(1899, 12, 30), DateSerial(1899, 12, 29) + TimeSerial(18, 0, 0), 6)
+call testDateDiff("d", DateSerial(1899, 12, 29) + TimeSerial(12, 0, 0), DateSerial(1899, 12, 30) + TimeSerial(12, 0, 0), 0)
+call testDateDiff("n", DateSerial(1899, 12, 29) + TimeSerial(23, 59, 30), DateSerial(1899, 12, 30) + TimeSerial(0, 0, 30), 0)
+
+sub testDateDiffError()
+    on error resume next
+    dim x
+
+    ' Null date1 returns Null
+    err.clear
+    x = DateDiff("d", null, DateSerial(2000, 1, 1))
+    call ok(getVT(x) = "VT_NULL*", "null date1 getVT = " & getVT(x))
+    call ok(err.number = 0, "null date1 err = " & err.number)
+
+    ' Null date2 returns Null
+    err.clear
+    x = DateDiff("d", DateSerial(2000, 1, 1), null)
+    call ok(getVT(x) = "VT_NULL*", "null date2 getVT = " & getVT(x))
+    call ok(err.number = 0, "null date2 err = " & err.number)
+
+    ' Null interval is error 94
+    err.clear
+    x = DateDiff(null, DateSerial(2000, 1, 1), DateSerial(2001, 1, 1))
+    call ok(err.number = 94, "null interval err = " & err.number)
+
+    ' Invalid interval is error 5
+    err.clear
+    x = DateDiff("k", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1))
+    call ok(err.number = 5, "invalid interval err = " & err.number)
+
+    ' Empty interval is error 5
+    err.clear
+    x = DateDiff("", DateSerial(2000, 1, 1), DateSerial(2001, 1, 1))
+    call ok(err.number = 5, "empty interval err = " & err.number)
+
+    ' Invalid date is error 13
+    err.clear
+    x = DateDiff("d", "not a date", DateSerial(2001, 1, 1))
+    call ok(err.number = 13, "invalid date1 err = " & err.number)
+
+    ' String date conversion
+    err.clear
+    x = DateDiff("d", "1/1/2000", "1/2/2000")
+    call ok(err.number = 0, "string date err = " & err.number)
+
+    ' Null firstdayofweek is error 94
+    err.clear
+    x = DateDiff("d", DateSerial(2000, 1, 1), DateSerial(2000, 1, 2), null)
+    call ok(err.number = 94, "null fdow err = " & err.number)
+
+    ' Null firstweekofyear is error 94
+    err.clear
+    x = DateDiff("ww", DateSerial(2000, 1, 1), DateSerial(2000, 1, 8), vbSunday, null)
+    call ok(err.number = 94, "null fwoy err = " & err.number)
+end sub
+
+call testDateDiffError()
+
 sub testWeekday(d, firstday, wd)
     dim x, x2
     x = Weekday(d, firstday)
