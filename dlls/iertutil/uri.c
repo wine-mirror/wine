@@ -6402,6 +6402,429 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
     return S_OK;
 }
 
+static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
+                                  DWORD output_len, DWORD *result_len)
+{
+    const WCHAR *ptr = NULL;
+    WCHAR *path = NULL;
+    const WCHAR **pptr;
+    DWORD len = 0;
+    BOOL reduce_path;
+
+    /* URL_UNESCAPE only has effect if none of the URL_ESCAPE flags are set. */
+    const BOOL allow_unescape = !(flags & URL_ESCAPE_UNSAFE) &&
+                                !(flags & URL_ESCAPE_SPACES_ONLY) &&
+                                !(flags & URL_ESCAPE_PERCENT);
+
+
+    /* Check if the dot segments need to be removed from the
+     * path component.
+     */
+    if(uri->scheme_start > -1 && uri->path_start > -1) {
+        ptr = uri->canon_uri+uri->scheme_start+uri->scheme_len+1;
+        pptr = &ptr;
+    }
+    reduce_path = !(flags & URL_DONT_SIMPLIFY) &&
+                  ptr && check_hierarchical(pptr);
+
+    for(ptr = uri->canon_uri; ptr < uri->canon_uri+uri->canon_len; ++ptr) {
+        BOOL do_default_action = TRUE;
+
+        /* Keep track of the path if we need to remove dot segments from
+         * it later.
+         */
+        if(reduce_path && !path && ptr == uri->canon_uri+uri->path_start)
+            path = output+len;
+
+        /* Check if it's time to reduce the path. */
+        if(reduce_path && ptr == uri->canon_uri+uri->path_start+uri->path_len) {
+            DWORD current_path_len = (output+len) - path;
+            DWORD new_path_len = remove_dot_segments(path, current_path_len);
+
+            /* Update the current length. */
+            len -= (current_path_len-new_path_len);
+            reduce_path = FALSE;
+        }
+
+        if(*ptr == '%') {
+            const WCHAR decoded = decode_pct_val(ptr);
+            if(decoded) {
+                if(allow_unescape && (flags & URL_UNESCAPE)) {
+                    if(len < output_len)
+                        output[len] = decoded;
+                    len++;
+                    ptr += 2;
+                    do_default_action = FALSE;
+                }
+            }
+
+            /* See if %'s needed to encoded. */
+            if(do_default_action && (flags & URL_ESCAPE_PERCENT)) {
+                if(len + 3 < output_len)
+                    pct_encode_val(*ptr, output+len);
+                len += 3;
+                do_default_action = FALSE;
+            }
+        } else if(*ptr == ' ') {
+            if((flags & URL_ESCAPE_SPACES_ONLY) &&
+               !(flags & URL_ESCAPE_UNSAFE)) {
+                if(len + 3 < output_len)
+                    pct_encode_val(*ptr, output+len);
+                len += 3;
+                do_default_action = FALSE;
+            }
+        } else if(is_ascii(*ptr) && !is_reserved(*ptr) && !is_unreserved(*ptr)) {
+            if(flags & URL_ESCAPE_UNSAFE) {
+                if(len + 3 < output_len)
+                    pct_encode_val(*ptr, output+len);
+                len += 3;
+                do_default_action = FALSE;
+            }
+        }
+
+        if(do_default_action) {
+            if(len < output_len)
+                output[len] = *ptr;
+            len++;
+        }
+    }
+
+    /* Sometimes the path is the very last component of the IUri, so
+     * see if the dot segments need to be reduced now.
+     */
+    if(reduce_path && path) {
+        DWORD current_path_len = (output+len) - path;
+        DWORD new_path_len = remove_dot_segments(path, current_path_len);
+
+        /* Update the current length. */
+        len -= (current_path_len-new_path_len);
+    }
+
+    if(len < output_len)
+        output[len] = 0;
+    else
+        output[output_len-1] = 0;
+
+    /* The null terminator isn't included in the length. */
+    *result_len = len;
+    if(len >= output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    return S_OK;
+}
+
+static HRESULT parse_friendly(IUri *uri, LPWSTR output, DWORD output_len,
+                              DWORD *result_len)
+{
+    HRESULT hr;
+    DWORD display_len;
+    BSTR display;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_DISPLAY_URI, &display_len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = display_len;
+    if(display_len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetDisplayUri(uri, &display);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, display, (display_len+1)*sizeof(WCHAR));
+    SysFreeString(display);
+    return S_OK;
+}
+
+static HRESULT parse_rootdocument(const Uri *uri, LPWSTR output, DWORD output_len,
+                                  DWORD *result_len)
+{
+    static const WCHAR colon_slashesW[] = {':','/','/'};
+
+    WCHAR *ptr;
+    DWORD len = 0;
+
+    /* Windows only returns the root document if the URI has an authority
+     * and it's not an unknown scheme type or a file scheme type.
+     */
+    if(uri->authority_start == -1 ||
+       uri->scheme_type == URL_SCHEME_UNKNOWN ||
+       uri->scheme_type == URL_SCHEME_FILE) {
+        *result_len = 0;
+        if(!output_len)
+            return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+        output[0] = 0;
+        return S_OK;
+    }
+
+    len = uri->scheme_len+uri->authority_len;
+    /* For the "://" and '/' which will be added. */
+    len += 4;
+
+    if(len+1 > output_len) {
+        *result_len = len;
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+    }
+
+    ptr = output;
+    memcpy(ptr, uri->canon_uri+uri->scheme_start, uri->scheme_len*sizeof(WCHAR));
+
+    /* Add the "://". */
+    ptr += uri->scheme_len;
+    memcpy(ptr, colon_slashesW, sizeof(colon_slashesW));
+
+    /* Add the authority. */
+    ptr += ARRAY_SIZE(colon_slashesW);
+    memcpy(ptr, uri->canon_uri+uri->authority_start, uri->authority_len*sizeof(WCHAR));
+
+    /* Add the '/' after the authority. */
+    ptr += uri->authority_len;
+    *ptr = '/';
+    ptr[1] = 0;
+
+    *result_len = len;
+    return S_OK;
+}
+
+static HRESULT parse_document(const Uri *uri, LPWSTR output, DWORD output_len,
+                              DWORD *result_len)
+{
+    DWORD len = 0;
+
+    /* It has to be a known scheme type, but, it can't be a file
+     * scheme. It also has to hierarchical.
+     */
+    if(uri->scheme_type == URL_SCHEME_UNKNOWN ||
+       uri->scheme_type == URL_SCHEME_FILE ||
+       uri->authority_start == -1) {
+        *result_len = 0;
+        if(output_len < 1)
+            return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+        output[0] = 0;
+        return S_OK;
+    }
+
+    if(uri->fragment_start > -1)
+        len = uri->fragment_start;
+    else
+        len = uri->canon_len;
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    memcpy(output, uri->canon_uri, len*sizeof(WCHAR));
+    output[len] = 0;
+    return S_OK;
+}
+
+static HRESULT parse_path_from_url(const Uri *uri, LPWSTR output, DWORD output_len,
+                                   DWORD *result_len)
+{
+    const WCHAR *path_ptr;
+    WCHAR buffer[INTERNET_MAX_URL_LENGTH+1];
+    WCHAR *ptr;
+
+    if(uri->scheme_type != URL_SCHEME_FILE) {
+        *result_len = 0;
+        if(output_len > 0)
+            output[0] = 0;
+        return E_INVALIDARG;
+    }
+
+    ptr = buffer;
+    if(uri->host_start > -1) {
+        static const WCHAR slash_slashW[] = {'\\','\\'};
+
+        memcpy(ptr, slash_slashW, sizeof(slash_slashW));
+        ptr += ARRAY_SIZE(slash_slashW);
+        memcpy(ptr, uri->canon_uri+uri->host_start, uri->host_len*sizeof(WCHAR));
+        ptr += uri->host_len;
+    }
+
+    path_ptr = uri->canon_uri+uri->path_start;
+    if(uri->path_len > 3 && *path_ptr == '/' && is_drive_path(path_ptr+1))
+        /* Skip past the '/' in front of the drive path. */
+        ++path_ptr;
+
+    for(; path_ptr < uri->canon_uri+uri->path_start+uri->path_len; ++path_ptr, ++ptr) {
+        BOOL do_default_action = TRUE;
+
+        if(*path_ptr == '%') {
+            const WCHAR decoded = decode_pct_val(path_ptr);
+            if(decoded) {
+                *ptr = decoded;
+                path_ptr += 2;
+                do_default_action = FALSE;
+            }
+        } else if(*path_ptr == '/') {
+            *ptr = '\\';
+            do_default_action = FALSE;
+        }
+
+        if(do_default_action)
+            *ptr = *path_ptr;
+    }
+
+    *ptr = 0;
+
+    *result_len = ptr-buffer;
+    if(*result_len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    memcpy(output, buffer, (*result_len+1)*sizeof(WCHAR));
+    return S_OK;
+}
+
+static HRESULT parse_url_from_path(IUri *uri, LPWSTR output, DWORD output_len,
+                                   DWORD *result_len)
+{
+    HRESULT hr;
+    BSTR received;
+    DWORD len = 0;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_ABSOLUTE_URI, &len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetAbsoluteUri(uri, &received);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, received, (len+1)*sizeof(WCHAR));
+    SysFreeString(received);
+
+    return S_OK;
+}
+
+static HRESULT parse_schema(IUri *uri, LPWSTR output, DWORD output_len,
+                            DWORD *result_len)
+{
+    HRESULT hr;
+    DWORD len;
+    BSTR received;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_SCHEME_NAME, &len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetSchemeName(uri, &received);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, received, (len+1)*sizeof(WCHAR));
+    SysFreeString(received);
+
+    return S_OK;
+}
+
+static HRESULT parse_site(IUri *uri, LPWSTR output, DWORD output_len, DWORD *result_len)
+{
+    HRESULT hr;
+    DWORD len;
+    BSTR received;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_HOST, &len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetHost(uri, &received);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, received, (len+1)*sizeof(WCHAR));
+    SysFreeString(received);
+
+    return S_OK;
+}
+
+static HRESULT parse_domain(IUri *uri, LPWSTR output, DWORD output_len, DWORD *result_len)
+{
+    HRESULT hr;
+    DWORD len;
+    BSTR received;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_DOMAIN, &len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetDomain(uri, &received);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, received, (len+1)*sizeof(WCHAR));
+    SysFreeString(received);
+
+    return S_OK;
+}
+
+static HRESULT parse_anchor(IUri *uri, LPWSTR output, DWORD output_len, DWORD *result_len)
+{
+    HRESULT hr;
+    DWORD len;
+    BSTR received;
+
+    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_FRAGMENT, &len, 0);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    *result_len = len;
+    if(len+1 > output_len)
+        return STRSAFE_E_INSUFFICIENT_BUFFER;
+
+    hr = IUri_GetFragment(uri, &received);
+    if(FAILED(hr)) {
+        *result_len = 0;
+        return hr;
+    }
+
+    memcpy(output, received, (len+1)*sizeof(WCHAR));
+    SysFreeString(received);
+
+    return S_OK;
+}
+
 /***********************************************************************
  *           PrivateCoInternetCombineIUri (iertutil.@)
  */
@@ -6433,4 +6856,84 @@ HRESULT WINAPI PrivateCoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri,
     }
 
     return combine_uri(base, relative, dwCombineFlags, ppCombinedUri, dwReserved);
+}
+
+/***********************************************************************
+ *           PrivateCoInternetParseIUri (iertutil.@)
+ */
+HRESULT WINAPI PrivateCoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD dwFlags,
+                                          LPWSTR pwzResult, DWORD cchResult, DWORD *pcchResult,
+                                          DWORD_PTR dwReserved)
+{
+    HRESULT hr;
+    Uri *uri;
+
+    TRACE("(%p %d %lx %p %ld %p %Ix)\n", pIUri, ParseAction, dwFlags, pwzResult, cchResult,
+          pcchResult, dwReserved);
+
+    if (!pcchResult)
+        return E_POINTER;
+
+    if (!pwzResult || !pIUri)
+    {
+        *pcchResult = 0;
+        return E_INVALIDARG;
+    }
+
+    if (!(uri = get_uri_obj(pIUri)))
+    {
+        *pcchResult = 0;
+        FIXME("(%p %d %lx %p %ld %p %Ix) Unknown IUri's not supported for this action.\n", pIUri,
+              ParseAction, dwFlags, pwzResult, cchResult, pcchResult, dwReserved);
+        return E_NOTIMPL;
+    }
+
+    switch (ParseAction)
+    {
+    case PARSE_CANONICALIZE:
+        hr = parse_canonicalize(uri, dwFlags, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_FRIENDLY:
+        hr = parse_friendly(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_ROOTDOCUMENT:
+        hr = parse_rootdocument(uri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_DOCUMENT:
+        hr = parse_document(uri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_PATH_FROM_URL:
+        hr = parse_path_from_url(uri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_URL_FROM_PATH:
+        hr = parse_url_from_path(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_SCHEMA:
+        hr = parse_schema(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_SITE:
+        hr = parse_site(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_DOMAIN:
+        hr = parse_domain(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_LOCATION:
+    case PARSE_ANCHOR:
+        hr = parse_anchor(pIUri, pwzResult, cchResult, pcchResult);
+        break;
+    case PARSE_SECURITY_URL:
+    case PARSE_MIME:
+    case PARSE_SERVER:
+    case PARSE_SECURITY_DOMAIN:
+        *pcchResult = 0;
+        hr = E_FAIL;
+        break;
+    default:
+        *pcchResult = 0;
+        hr = E_NOTIMPL;
+        FIXME("(%p %d %lx %p %ld %p %Ix) Partial stub.\n", pIUri, ParseAction, dwFlags, pwzResult,
+              cchResult, pcchResult, dwReserved);
+    }
+
+    return hr;
 }

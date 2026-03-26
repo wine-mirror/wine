@@ -5,3 +5,4 @@
 @ stdcall -private DllGetActivationFactory(ptr ptr)
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall PrivateCoInternetCombineIUri(ptr ptr long ptr long)
+@ stdcall PrivateCoInternetParseIUri(ptr long long ptr long ptr long)
