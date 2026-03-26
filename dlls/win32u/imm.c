@@ -664,28 +664,32 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
     switch (call)
     {
     case WINE_IME_PROCESS_KEY:
-    {
-        struct imm_thread_data *data = get_imm_thread_data();
-
-        data->ime_process_scan = HIWORD(lparam);
-        data->ime_process_vkey = LOWORD(wparam);
         res = user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
-        data->ime_process_vkey = data->ime_process_scan = 0;
-
-        if (data->update)
-        {
-            data->update->key_consumed = res;
-            pthread_mutex_lock( &imm_mutex );
-            list_add_tail( &ime_updates, &data->update->entry );
-            pthread_mutex_unlock( &imm_mutex );
-            data->update = NULL;
-            res = TRUE;
-        }
-
-        TRACE( "processing vkey %#x, scan %#x -> %lu\n", LOWORD(wparam), HIWORD(lparam), res );
+        TRACE( "ImeProcessKey vkey %#x, scan %#x -> %lu\n", LOWORD(wparam), HIWORD(lparam), res );
         return res;
-    }
     case WINE_IME_TO_ASCII_EX:
+        if (params->state)
+        {
+            struct imm_thread_data *data = get_imm_thread_data();
+
+            data->ime_process_scan = LOWORD(lparam);
+            data->ime_process_vkey = LOWORD(wparam);
+            res = user_driver->pImeToAsciiEx( wparam, lparam, params->state, params->himc );
+            data->ime_process_vkey = data->ime_process_scan = 0;
+
+            if (data->update)
+            {
+                data->update->key_consumed = !res;
+                pthread_mutex_lock( &imm_mutex );
+                list_add_tail( &ime_updates, &data->update->entry );
+                pthread_mutex_unlock( &imm_mutex );
+                data->update = NULL;
+                res = STATUS_SUCCESS;
+            }
+
+            TRACE( "processing vkey %#x, scan %#x -> %lu\n", LOWORD(wparam), LOWORD(lparam), res );
+            if (res) return res;
+        }
         return ime_to_tascii_ex( wparam, lparam, params->state, params->compstr, params->key_consumed, params->himc );
     case WINE_IME_POST_UPDATE:
         post_ime_update( hwnd, wparam, (WCHAR *)lparam, (WCHAR *)params );

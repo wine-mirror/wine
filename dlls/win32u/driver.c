@@ -672,7 +672,7 @@ static void nulldrv_ReleaseKbdTables( const KBDTABLES *tables )
 
 static UINT nulldrv_ImeProcessKey( HIMC himc, UINT wparam, UINT lparam, const BYTE *state )
 {
-    return 0;
+    return 1;
 }
 
 static UINT nulldrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, HIMC himc )
