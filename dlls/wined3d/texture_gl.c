@@ -653,6 +653,13 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
     if (src_ds != dst_ds)
         return false;
 
+    /* We can't do raw blits, but we are the only blitter that can do resolve,
+     * so we handle this case by delegating the format conversion to the raw
+     * blitter. */
+    if (blit_op == WINED3D_BLIT_OP_RAW_BLIT && src_resource->multisample_type != WINED3D_MULTISAMPLE_NONE
+            && dst_resource->multisample_type == WINED3D_MULTISAMPLE_NONE)
+        blit_op = src_ds ? WINED3D_BLIT_OP_DEPTH_BLIT : WINED3D_BLIT_OP_COLOR_BLIT;
+
     switch (blit_op)
     {
         case WINED3D_BLIT_OP_COLOR_BLIT:
@@ -1085,7 +1092,7 @@ static DWORD fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
                 resolve_format);
     }
 
-    if (blit_op == WINED3D_BLIT_OP_COLOR_BLIT)
+    if (blit_op == WINED3D_BLIT_OP_COLOR_BLIT || blit_op == WINED3D_BLIT_OP_RAW_BLIT)
     {
         TRACE("Colour blit.\n");
         texture2d_blt_fbo(device, context, filter, src_texture, src_sub_resource_idx, src_location,
