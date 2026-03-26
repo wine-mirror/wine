@@ -23,6 +23,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
+static BOOL is_ime_hkl( HKL hkl )
+{
+    /* See https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values#input-method-editors */
+    switch (HIWORD(hkl))
+    {
+    case MAKELANGID(LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_BENGALI, SUBLANG_BENGALI_INDIA): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED): return TRUE;
+    case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL): return TRUE;
+    case MAKELANGID(LANG_GUJARATI, SUBLANG_GUJARATI_INDIA): return TRUE;
+    case MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA): return TRUE;
+    case MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN): return TRUE;
+    case MAKELANGID(LANG_KANNADA, SUBLANG_KANNADA_INDIA): return TRUE;
+    case MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN): return TRUE;
+    case MAKELANGID(LANG_MALAYALAM, SUBLANG_MALAYALAM_INDIA): return TRUE;
+    case MAKELANGID(LANG_MARATHI, SUBLANG_MARATHI_INDIA): return TRUE;
+    case MAKELANGID(LANG_NEPALI, SUBLANG_NEPALI_NEPAL): return TRUE;
+    case MAKELANGID(LANG_ODIA, SUBLANG_ODIA_INDIA): return TRUE;
+    case MAKELANGID(LANG_PUNJABI, SUBLANG_PUNJABI_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_INDIA): return TRUE;
+    case MAKELANGID(LANG_TAMIL, SUBLANG_TAMIL_SRI_LANKA): return TRUE;
+    case MAKELANGID(LANG_TELUGU, SUBLANG_TELUGU_INDIA): return TRUE;
+    case MAKELANGID(LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA): return TRUE;
+    case MAKELANGID(LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM): return TRUE;
+    case MAKELANGID(LANG_YI, SUBLANG_YI_PRC): return TRUE;
+    default: return (HIWORD(hkl) & 0xe000) == 0xe000;
+    }
+}
+
 struct ime_private
 {
     BOOL in_composition;
@@ -517,6 +546,8 @@ BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
 
     TRACE( "himc %p, vkey %#x, lparam %#Ix, state %p\n", himc, vkey, lparam, state );
 
+    if (!is_ime_hkl( GetKeyboardLayout( 0 ) )) return FALSE;
+
     if (!(ctx = ImmLockIMC( himc ))) return FALSE;
     ret = NtUserMessageCall( ctx->hWnd, WINE_IME_PROCESS_KEY, vkey, lparam, &params,
                              NtUserImeDriverCall, FALSE );
@@ -535,6 +566,8 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
 
     TRACE( "vkey %#x, vsc %#x, state %p, msgs %p, flags %#x, himc %p\n",
            vkey, vsc, state, msgs, flags, himc );
+
+    if (!is_ime_hkl( GetKeyboardLayout( 0 ) )) return 0;
 
     if (!(ctx = ImmLockIMC( himc ))) return 0;
     if (!(compstr = ImmLockIMCC( ctx->hCompStr ))) goto done;
