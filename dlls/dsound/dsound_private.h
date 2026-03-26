@@ -134,7 +134,7 @@ struct IDirectSoundBufferImpl
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
     DWORD                       playflags,state;
-    DWORD                       writelead,maxwritelead,buflen;
+    DWORD                       buflen;
     DWORD                       freq;
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
@@ -144,12 +144,7 @@ struct IDirectSoundBufferImpl
     DWORD                       freqAccNum;
     /* used for mixing */
     DWORD                       sec_mixpos;
-    /* Holds a copy of the next 'writelead' bytes, to be used for mixing. This makes it
-     * so that these bytes get played once even if this region of the buffer gets overwritten,
-     * which is more in-line with native DirectSound behavior. */
-    BOOL                        use_committed;
-    LPVOID                      committedbuff;
-    DWORD                       committed_mixpos;
+    DWORD                       sec_playpos;
     /* IDirectSoundNotify fields */
     LPDSBPOSITIONNOTIFY         notifies;
     int                         nrofnotifies;

@@ -164,7 +164,7 @@ static void getieee32(const IDirectSoundBufferImpl *dsb, BYTE *base, float *dst,
 }
 
 /**
- * Recalculate the size for temporary buffer, and new writelead
+ * Recalculate the size for temporary buffer
  * Should be called when one of the following things occur:
  * - Primary buffer format is changed
  * - This buffer format (frequency) is changed
@@ -192,10 +192,6 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	 * output by in order to attenuate it correctly.
 	 */
 	dsb->firgain = min(1.0f, dsb->freqAdjustDen / (float)dsb->freqAdjustNum);
-
-	/* calculate the 10ms write lead */
-	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
-	dsb->maxwritelead = (DSBFREQUENCY_MAX / 100) * dsb->pwfx->nBlockAlign;
 
 	if (oldFreqAdjustDen)
 		dsb->freqAccNum = (dsb->freqAccNum * (LONG64)dsb->freqAdjustDen +
@@ -369,6 +365,11 @@ static inline void get_samples(const IDirectSoundBufferImpl *dsb, BYTE *buffer, 
     UINT istride = dsb->pwfx->nBlockAlign;
     DWORD advance;
     DWORD pos;
+
+    if (dsb->state == STATE_STOPPING) {
+        memset(dst, 0, count * sizeof(float));
+        return;
+    }
 
     if (!(dsb->playflags & DSBPLAY_LOOPING)) {
         advance = buflen < mixpos ? 0 : min((buflen - mixpos) / istride, count);
@@ -624,9 +625,7 @@ static void resample(DWORD freq_adjust_num, DWORD freq_adjust_den, DWORD freq_ac
 static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *freqAccNum)
 {
     UINT i, channel;
-    UINT istride = dsb->pwfx->nBlockAlign;
     UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
-    UINT committed_samples = 0;
 
     LONG64 freqAcc_start = *freqAccNum;
     LONG64 freqAcc_end = freqAcc_start + count * dsb->freqAdjustNum;
@@ -661,23 +660,13 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
     intermediate = dsb->device->cp_buffer;
     output = intermediate + required_input * channels + FIR_WIDTH - 1;
 
-    if(dsb->use_committed) {
-        committed_samples = (dsb->writelead - dsb->committed_mixpos) / istride;
-        committed_samples = committed_samples <= required_input ? committed_samples : required_input;
-    }
-
     /* Important: this buffer MUST be non-interleaved
      * if you want -msse3 to have any effect.
      * This is good for CPU cache effects, too.
      */
     for (channel = 0; channel < channels; channel++) {
-        get_samples(dsb, dsb->committedbuff, dsb->writelead, dsb->committed_mixpos, channel,
-                committed_samples, intermediate + channel * required_input);
-        if (required_input > committed_samples)
-            get_samples(dsb, dsb->buffer->memory, dsb->buflen,
-                    dsb->sec_mixpos + committed_samples * istride, channel,
-                    required_input - committed_samples,
-                    intermediate + channel * required_input + committed_samples);
+        get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel,
+                required_input, intermediate + channel * required_input);
     }
 
     for (channel = 0; channel < channels; channel++)
@@ -694,9 +683,7 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
 
 static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
 {
-    UINT istride = dsb->pwfx->nBlockAlign;
     UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
-    UINT committed_samples = 0;
     float *intermediate;
     DWORD channel, i;
 
@@ -716,19 +703,10 @@ static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
 
     intermediate = dsb->device->cp_buffer;
 
-    if(dsb->use_committed) {
-        committed_samples = (dsb->writelead - dsb->committed_mixpos) / istride;
-        committed_samples = committed_samples <= count ? committed_samples : count;
-    }
-
     for (channel = 0; channel < dsb->mix_channels; channel++)
     {
-        get_samples(dsb, dsb->committedbuff, dsb->writelead, dsb->committed_mixpos, channel,
-                committed_samples, intermediate + channel * count);
-        if (count > committed_samples)
-            get_samples(dsb, dsb->buffer->memory, dsb->buflen,
-                    dsb->sec_mixpos + committed_samples * istride, channel,
-                    count - committed_samples, intermediate + channel * count + committed_samples);
+        get_samples(dsb, dsb->buffer->memory, dsb->buflen, dsb->sec_mixpos, channel, count,
+                intermediate + channel * count);
     }
 
     for (i = 0; i < count; i++)
@@ -747,23 +725,24 @@ static void cp_fields(IDirectSoundBufferImpl *dsb, UINT count, DWORD *freqAccNum
     else
         adv = cp_fields_resample(dsb, count, freqAccNum);
 
+    if (dsb->state == STATE_STOPPING) {
+        dsb->sec_playpos = dsb->sec_mixpos;
+        dsb->state = STATE_STOPPED;
+        return;
+    }
+
     ipos = dsb->sec_mixpos + adv * dsb->pwfx->nBlockAlign;
     if (ipos >= dsb->buflen) {
         if (dsb->playflags & DSBPLAY_LOOPING)
             ipos %= dsb->buflen;
         else {
             ipos = 0;
-            dsb->state = STATE_STOPPED;
+            dsb->state = STATE_STOPPING;
         }
     }
 
+    dsb->sec_playpos = dsb->sec_mixpos;
     dsb->sec_mixpos = ipos;
-
-    if(dsb->use_committed) {
-        dsb->committed_mixpos += adv * dsb->pwfx->nBlockAlign;
-        if(dsb->committed_mixpos >= dsb->writelead)
-            dsb->use_committed = FALSE;
-    }
 }
 
 /**
@@ -875,7 +854,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, 
 	TRACE("(%p, frames=%ld)\n",dsb,frames);
 
 	/* Resample buffer to temporary buffer specifically allocated for this purpose, if needed */
-	oldpos = dsb->sec_mixpos;
+	oldpos = dsb->sec_playpos;
 	DSOUND_MixToTemporary(dsb, frames);
 	ibuf = dsb->device->tmp_buffer;
 
@@ -888,7 +867,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, 
 
 	/* check for notification positions */
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY) {
-		INT ilen = DSOUND_BufPtrDiff(dsb->buflen, dsb->sec_mixpos, oldpos);
+		INT ilen = DSOUND_BufPtrDiff(dsb->buflen, dsb->sec_playpos, oldpos);
 		DSOUND_CheckEvent(dsb, oldpos, ilen);
 	}
 
