@@ -2509,10 +2509,167 @@ static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
     return E_NOTIMPL;
 }
 
-static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR interval = NULL;
+    int firstday = 0, firstweek = 0;
+    UDATE ud;
+    DATE date;
+    VARIANT date_var;
+    HRESULT hres;
+    int result;
+
+    TRACE("\n");
+
+    assert(args_cnt >= 2 && args_cnt <= 4);
+
+    if(V_VT(args) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(args_cnt >= 3)
+    {
+        if(V_VT(args + 2) == VT_NULL)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        hres = to_int(args + 2, &firstday);
+        if(FAILED(hres))
+            return hres;
+        if(firstday < 0 || firstday > 7)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    if(args_cnt >= 4)
+    {
+        if(V_VT(args + 3) == VT_NULL)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        hres = to_int(args + 3, &firstweek);
+        if(FAILED(hres))
+            return hres;
+        if(firstweek < 0 || firstweek > 3)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    if(V_VT(args + 1) == VT_NULL)
+        return return_null(res);
+
+    hres = to_string(args, &interval);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&date_var) = VT_EMPTY;
+    hres = VariantChangeType(&date_var, args + 1, 0, VT_DATE);
+    if(FAILED(hres))
+    {
+        SysFreeString(interval);
+        return hres;
+    }
+    date = V_DATE(&date_var);
+
+    hres = VarUdateFromDate(date, 0, &ud);
+    if(FAILED(hres))
+    {
+        SysFreeString(interval);
+        return hres;
+    }
+
+    /* Resolve firstdayofweek: 0 = system default, 1-7 = vbSunday-vbSaturday */
+    if(!firstday)
+    {
+        GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTDAYOFWEEK,
+                (LPWSTR)&firstday, sizeof(firstday) / sizeof(WCHAR));
+        firstday = (firstday + 1) % 7;
+    }
+    else
+    {
+        firstday--;
+    }
+
+    /* Resolve firstweekofyear: 0 = system default */
+    if(!firstweek)
+    {
+        GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTWEEKOFYEAR,
+                (LPWSTR)&firstweek, sizeof(firstweek) / sizeof(WCHAR));
+        firstweek++;
+    }
+
+    if(!wcsicmp(interval, L"yyyy"))
+        result = ud.st.wYear;
+    else if(!wcsicmp(interval, L"q"))
+        result = (ud.st.wMonth - 1) / 3 + 1;
+    else if(!wcsicmp(interval, L"m"))
+        result = ud.st.wMonth;
+    else if(!wcsicmp(interval, L"y"))
+        result = ud.wDayOfYear;
+    else if(!wcsicmp(interval, L"d"))
+        result = ud.st.wDay;
+    else if(!wcsicmp(interval, L"w"))
+        result = 1 + (ud.st.wDayOfWeek - firstday + 7) % 7;
+    else if(!wcsicmp(interval, L"ww"))
+    {
+        int jan1_wday, jan1_pos, week1_start;
+
+        /* Day of week for Jan 1 of this year */
+        jan1_wday = (ud.st.wDayOfWeek - (ud.wDayOfYear - 1) % 7 + 7) % 7;
+        /* Position of Jan 1 within its week (0 = starts week, 6 = ends week) */
+        jan1_pos = (jan1_wday - firstday + 7) % 7;
+
+        switch(firstweek)
+        {
+        case 1: /* vbFirstJan1: week containing Jan 1 is week 1 */
+        default:
+            week1_start = 1 - jan1_pos;
+            break;
+        case 2: /* vbFirstFourDays: first week has >= 4 days in year */
+            week1_start = (jan1_pos <= 3) ? 1 - jan1_pos : 8 - jan1_pos;
+            break;
+        case 3: /* vbFirstFullWeek: first week is entirely in year */
+            week1_start = (jan1_pos == 0) ? 1 : 8 - jan1_pos;
+            break;
+        }
+
+        if(ud.wDayOfYear >= week1_start)
+        {
+            result = (ud.wDayOfYear - week1_start) / 7 + 1;
+        }
+        else
+        {
+            /* Date falls before week 1 — belongs to last week of previous year */
+            int prev_year = ud.st.wYear - 1;
+            int prev_days = (prev_year % 4 == 0 && (prev_year % 100 != 0 || prev_year % 400 == 0)) ? 366 : 365;
+            int jan1_prev_wday = (jan1_wday - prev_days % 7 + 7) % 7;
+            int jan1_prev_pos = (jan1_prev_wday - firstday + 7) % 7;
+            int prev_week1_start;
+
+            switch(firstweek)
+            {
+            case 1:
+            default:
+                prev_week1_start = 1 - jan1_prev_pos;
+                break;
+            case 2:
+                prev_week1_start = (jan1_prev_pos <= 3) ? 1 - jan1_prev_pos : 8 - jan1_prev_pos;
+                break;
+            case 3:
+                prev_week1_start = (jan1_prev_pos == 0) ? 1 : 8 - jan1_prev_pos;
+                break;
+            }
+            result = (prev_days - prev_week1_start) / 7 + 1;
+        }
+    }
+    else if(!wcsicmp(interval, L"h"))
+        result = ud.st.wHour;
+    else if(!wcsicmp(interval, L"n"))
+        result = ud.st.wMinute;
+    else if(!wcsicmp(interval, L"s"))
+        result = ud.st.wSecond;
+    else
+    {
+        WARN("Unrecognized interval %s.\n", debugstr_w(interval));
+        SysFreeString(interval);
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    SysFreeString(interval);
+    return return_short(res, result);
 }
 
 static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

@@ -2395,6 +2395,113 @@ call testDateAdd(DateSerial(2000, 1, 1), "ww", -1, DateSerial(1999, 12, 25))
 call testDateAdd(DateSerial(2000, 1, 1), "Ww", -1, DateSerial(1999, 12, 25))
 call testDateAddError()
 
+sub testDatePart(interval, d, expected)
+    dim x
+    x = DatePart(interval, d)
+    call ok(x = expected, "DatePart(""" & interval & """, " & d & ") = " & x & " expected " & expected)
+    call ok(getVT(x) = "VT_I2*", "getVT = " & getVT(x))
+end sub
+
+sub testDatePartFdow(interval, d, fdow, expected)
+    dim x
+    x = DatePart(interval, d, fdow)
+    call ok(x = expected, "DatePart(""" & interval & """, " & d & ", " & fdow & ") = " & x & " expected " & expected)
+end sub
+
+sub testDatePartFull(interval, d, fdow, fwoy, expected)
+    dim x
+    x = DatePart(interval, d, fdow, fwoy)
+    call ok(x = expected, "DatePart(""" & interval & """, " & d & ", " & fdow & ", " & fwoy & ") = " & x & " expected " & expected)
+end sub
+
+dim datepartDate
+datepartDate = DateSerial(2000, 3, 15) + TimeSerial(14, 30, 45)
+
+' Basic interval tests
+call testDatePart("yyyy", datepartDate, 2000)
+call testDatePart("q", datepartDate, 1)
+call testDatePart("m", datepartDate, 3)
+call testDatePart("y", datepartDate, 75)
+call testDatePart("d", datepartDate, 15)
+call testDatePart("w", datepartDate, 4)
+call testDatePart("ww", datepartDate, 12)
+call testDatePart("h", datepartDate, 14)
+call testDatePart("n", datepartDate, 30)
+call testDatePart("s", datepartDate, 45)
+
+' Case insensitive
+call testDatePart("YYYY", datepartDate, 2000)
+call testDatePart("Q", datepartDate, 1)
+
+' Quarter boundaries
+call testDatePart("q", DateSerial(2000, 1, 1), 1)
+call testDatePart("q", DateSerial(2000, 3, 31), 1)
+call testDatePart("q", DateSerial(2000, 4, 1), 2)
+call testDatePart("q", DateSerial(2000, 6, 30), 2)
+call testDatePart("q", DateSerial(2000, 7, 1), 3)
+call testDatePart("q", DateSerial(2000, 9, 30), 3)
+call testDatePart("q", DateSerial(2000, 10, 1), 4)
+call testDatePart("q", DateSerial(2000, 12, 31), 4)
+
+' Day of year
+call testDatePart("y", DateSerial(2000, 1, 1), 1)
+call testDatePart("y", DateSerial(2000, 12, 31), 366)
+call testDatePart("y", DateSerial(2000, 3, 1), 61)
+
+' Weekday with firstdayofweek (2000-01-01 is Saturday)
+call testDatePartFdow("w", DateSerial(2000, 1, 1), vbSunday, 7)
+call testDatePartFdow("w", DateSerial(2000, 1, 1), vbMonday, 6)
+call testDatePartFdow("w", DateSerial(2000, 1, 1), vbSaturday, 1)
+
+' Week of year with firstdayofweek and firstweekofyear
+call testDatePartFull("ww", DateSerial(2000, 1, 1), vbSunday, vbFirstJan1, 1)
+call testDatePartFull("ww", DateSerial(2000, 1, 1), vbMonday, vbFirstJan1, 1)
+call testDatePartFull("ww", DateSerial(2000, 1, 1), vbSunday, vbFirstFourDays, 52)
+call testDatePartFull("ww", DateSerial(2000, 1, 1), vbSunday, vbFirstFullWeek, 52)
+
+sub testDatePartError()
+    on error resume next
+    dim x
+
+    ' Null date returns Null
+    err.clear
+    x = DatePart("yyyy", null)
+    call ok(getVT(x) = "VT_NULL*", "null date getVT = " & getVT(x))
+    call ok(err.number = 0, "null date err = " & err.number)
+
+    ' Null interval is error 94
+    err.clear
+    x = DatePart(null, datepartDate)
+    call ok(err.number = 94, "null interval err = " & err.number)
+
+    ' Invalid interval is error 5
+    err.clear
+    x = DatePart("k", datepartDate)
+    call ok(err.number = 5, "invalid interval err = " & err.number)
+
+    ' String date conversion
+    err.clear
+    x = DatePart("yyyy", "2000-03-15")
+    call ok(x = 2000, "string date = " & x)
+    call ok(err.number = 0, "string date err = " & err.number)
+
+    ' Invalid firstdayofweek
+    err.clear
+    x = DatePart("w", datepartDate, 8)
+    call ok(err.number = 5, "fdow=8 err = " & err.number)
+
+    err.clear
+    x = DatePart("w", datepartDate, -1)
+    call ok(err.number = 5, "fdow=-1 err = " & err.number)
+
+    ' Invalid firstweekofyear
+    err.clear
+    x = DatePart("ww", datepartDate, vbSunday, 4)
+    call ok(err.number = 5, "fwoy=4 err = " & err.number)
+end sub
+
+call testDatePartError()
+
 sub testWeekday(d, firstday, wd)
     dim x, x2
     x = Weekday(d, firstday)
