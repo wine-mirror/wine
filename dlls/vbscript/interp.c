@@ -643,8 +643,8 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res, BSTR identifier, unsigned
         }
 
         if(!res) {
-            FIXME("REF_VAR no res\n");
-            return E_NOTIMPL;
+            WARN("REF_VAR no res\n");
+            return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
         }
 
         V_VT(res) = VT_BYREF|VT_VARIANT;

@@ -2587,4 +2587,44 @@ Call ok(Err.Number = 5, "GetRef vbNullString error is " & Err.Number)
 
 On Error Goto 0
 
+' Test calling a dispatch variable as statement (invokes default property)
+funcCalled = ""
+Set obj = New DefaultSubTest1
+obj 3
+Call ok(funcCalled = "init3", "dispatch var as statement: funcCalled = " & funcCalled)
+
+' Test calling a dispatch variable (default Function, no args) as statement
+funcCalled = ""
+Set obj = New DefaultSubTest2
+obj
+Call ok(funcCalled = "init", "dispatch var (default func) as statement: funcCalled = " & funcCalled)
+
+' Test calling non-dispatch variables as statement gives type mismatch (error 13)
+On Error Resume Next
+
+dim intCallVar
+intCallVar = 42
+Err.Clear
+intCallVar
+Call ok(Err.Number = 13, "int var as statement: err = " & Err.Number)
+
+dim strCallVar
+strCallVar = "hello"
+Err.Clear
+strCallVar
+Call ok(Err.Number = 13, "string var as statement: err = " & Err.Number)
+
+dim emptyCallVar
+Err.Clear
+emptyCallVar
+Call ok(Err.Number = 13, "empty var as statement: err = " & Err.Number)
+
+dim boolCallVar
+boolCallVar = True
+Err.Clear
+boolCallVar
+Call ok(Err.Number = 13, "bool var as statement: err = " & Err.Number)
+
+On Error GoTo 0
+
 reportSuccess()
