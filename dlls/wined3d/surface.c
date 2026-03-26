@@ -1614,8 +1614,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     context = context_acquire(device, dst_texture, dst_sub_resource_idx);
 
     if (src_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE && !resolve_typeless
-            && ((scale && !context->d3d_info->scaled_resolve)
-            || convert || !wined3d_is_colour_blit(blit_op)))
+            && ((scale && !context->d3d_info->scaled_resolve) || convert))
         src_location = WINED3D_LOCATION_RB_RESOLVED;
     else
         src_location = src_texture->resource.draw_binding;
