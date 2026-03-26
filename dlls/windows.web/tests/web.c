@@ -47,13 +47,36 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 
 static void test_JsonArrayStatics(void)
 {
+    static const WCHAR *json_value_statics_name = L"Windows.Data.Json.JsonValue";
     static const WCHAR *json_array_name = L"Windows.Data.Json.JsonArray";
+    IJsonValueStatics *json_value_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     IInspectable *inspectable = (void *)0xdeadbeef;
+    IJsonObject *child_object = (void *)0xdeadbeef;
+    IJsonArray *child_array = (void *)0xdeadbeef;
     IJsonArray *json_array = (void *)0xdeadbeef;
+    IJsonValue *json_value = (void *)0xdeadbeef;
+    BOOLEAN child_boolean;
+    HSTRING child_string;
+    DOUBLE child_number;
     HSTRING str = NULL;
     HRESULT hr;
     LONG ref;
+
+    hr = WindowsCreateString( json_value_statics_name, wcslen( json_value_statics_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( json_value_statics_name ) );
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IJsonValueStatics, (void **)&json_value_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ref = IActivationFactory_Release( factory );
 
     hr = WindowsCreateString( json_array_name, wcslen( json_array_name ), &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
@@ -84,10 +107,136 @@ static void test_JsonArrayStatics(void)
 
     check_interface( inspectable, &IID_IAgileObject );
 
+    hr = IJsonArray_GetObjectAt( json_array, 0, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetObjectAt( json_array, 0, &child_object );
+    ok( hr == E_BOUNDS, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetArrayAt( json_array, 0, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetArrayAt( json_array, 0, &child_array );
+    ok( hr == E_BOUNDS, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetStringAt( json_array, 0, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetStringAt( json_array, 0, &child_string );
+    ok( hr == E_BOUNDS, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetNumberAt( json_array, 0, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetNumberAt( json_array, 0, &child_number );
+    ok( hr == E_BOUNDS, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetBooleanAt( json_array, 0, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetBooleanAt( json_array, 0, &child_boolean );
+    ok( hr == E_BOUNDS, "got hr %#lx.\n", hr );
+
     IJsonArray_Release( json_array );
     IInspectable_Release( inspectable );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
+
+    hr = WindowsCreateString( L"[{}]", wcslen( L"[{}]" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_Parse( json_value_statics, str, &json_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+    hr = IJsonValue_GetArray( json_value, &json_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( json_value );
+    hr = IJsonArray_GetObjectAt( json_array, 0, &child_object );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonObject_Release( child_object );
+    hr = IJsonArray_GetArrayAt( json_array, 0, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetStringAt( json_array, 0, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetNumberAt( json_array, 0, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetBooleanAt( json_array, 0, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    IJsonArray_Release( json_array );
+
+    hr = WindowsCreateString( L"[[]]", wcslen( L"[[]]" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_Parse( json_value_statics, str, &json_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+    hr = IJsonValue_GetArray( json_value, &json_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( json_value );
+    hr = IJsonArray_GetObjectAt( json_array, 0, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetArrayAt( json_array, 0, &child_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonArray_Release( child_array );
+    hr = IJsonArray_GetStringAt( json_array, 0, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetNumberAt( json_array, 0, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetBooleanAt( json_array, 0, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    IJsonArray_Release( json_array );
+
+    hr = WindowsCreateString( L"[\"Hello, World!\"]", wcslen( L"[\"Hello, World!\"]" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_Parse( json_value_statics, str, &json_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+    hr = IJsonValue_GetArray( json_value, &json_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( json_value );
+    hr = IJsonArray_GetObjectAt( json_array, 0, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetArrayAt( json_array, 0, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetStringAt( json_array, 0, &child_string );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( child_string );
+    hr = IJsonArray_GetNumberAt( json_array, 0, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetBooleanAt( json_array, 0, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    IJsonArray_Release( json_array );
+
+    hr = WindowsCreateString( L"[12.6]", wcslen( L"[12.6]" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_Parse( json_value_statics, str, &json_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+    hr = IJsonValue_GetArray( json_value, &json_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( json_value );
+    hr = IJsonArray_GetObjectAt( json_array, 0, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetArrayAt( json_array, 0, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetStringAt( json_array, 0, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetNumberAt( json_array, 0, &child_number );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetBooleanAt( json_array, 0, &child_boolean );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    IJsonArray_Release( json_array );
+
+    hr = WindowsCreateString( L"[true]", wcslen( L"[true]" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_Parse( json_value_statics, str, &json_value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+    hr = IJsonValue_GetArray( json_value, &json_array );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonValue_Release( json_value );
+    hr = IJsonArray_GetObjectAt( json_array, 0, &child_object );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetArrayAt( json_array, 0, &child_array );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetStringAt( json_array, 0, &child_string );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetNumberAt( json_array, 0, &child_number );
+    ok( hr == E_ILLEGAL_METHOD_CALL, "got hr %#lx.\n", hr );
+    hr = IJsonArray_GetBooleanAt( json_array, 0, &child_boolean );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IJsonArray_Release( json_array );
+
+    IJsonValueStatics_Release( json_value_statics );
 }
 
 static void test_JsonObjectStatics(void)
