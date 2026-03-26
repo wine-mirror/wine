@@ -12081,6 +12081,13 @@ static void test_builtin_effect(BOOL d3d11)
             ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
             winetest_pop_context();
         }
+
+        /* Test setting NULL bitmap */
+        image_a = (ID2D1Image *)0xdeadbeef;
+        ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)NULL, FALSE);
+        ID2D1Effect_GetInput(effect, 0, &image_a);
+        ok(image_a == NULL, "Got unexpected image_a %p.\n", image_a);
+
         ID2D1Bitmap_Release(bitmap);
 
         ID2D1Effect_Release(effect);
