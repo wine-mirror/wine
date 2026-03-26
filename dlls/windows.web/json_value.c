@@ -306,29 +306,6 @@ struct json_buffer
     UINT32 len;
 };
 
-static void json_buffer_trim( struct json_buffer *json )
-{
-    static const WCHAR valid_whitespace[] = L" \t\n\r";
-    UINT32 start = 0, end = json->len;
-
-    while (start < end && wcschr( valid_whitespace, json->str[start] )) start++;
-    while (end > start && wcschr( valid_whitespace, json->str[end - 1] )) end--;
-
-    json->str += start;
-    json->len = end - start;
-}
-
-static BOOL json_buffer_take( struct json_buffer *json, const WCHAR *str )
-{
-    UINT32 len = wcslen( str );
-
-    if (json->len < len || wcsncmp( json->str, str, len )) return FALSE;
-    json->str += len;
-    json->len -= len;
-
-    return TRUE;
-}
-
 static WCHAR json_buffer_next( struct json_buffer *json, const WCHAR *valid )
 {
     const WCHAR chr = *json->str;
@@ -341,6 +318,19 @@ static WCHAR json_buffer_next( struct json_buffer *json, const WCHAR *valid )
     return chr;
 }
 
+static BOOL json_buffer_take( struct json_buffer *json, const WCHAR *str, BOOL skip )
+{
+    static const WCHAR valid_whitespace[] = L" \t\n\r";
+    UINT32 len = wcslen( str );
+
+    while (skip && json_buffer_next( json, valid_whitespace )) { /* nothing */ }
+    if (json->len < len || wcsncmp( json->str, str, len )) return FALSE;
+    json->str += len;
+    json->len -= len;
+
+    return TRUE;
+}
+
 static HRESULT parse_json_string( struct json_buffer *json, HSTRING *output )
 {
     const WCHAR valid_hex_chars[] = L"abcdefABCDEF0123456789";
@@ -349,23 +339,21 @@ static HRESULT parse_json_string( struct json_buffer *json, HSTRING *output )
 
     /* validate and escape string, assuming string occupies remainder of buffer */
 
-    if (!json_buffer_take( json, L"\"" )) return WEB_E_INVALID_JSON_STRING;
     if (!json->len) return WEB_E_INVALID_JSON_STRING;
     if (!(buf = calloc( json->len, sizeof( WCHAR )))) return E_OUTOFMEMORY;
     dst = buf;
 
-    while (json->len)
+    while (json->len && *json->str != '"')
     {
-        if (*json->str == '"') break;
-        if (json_buffer_take( json, L"\\\"" ))      *(dst++) = '"';
-        else if (json_buffer_take( json, L"\\\\" )) *(dst++) = '\\';
-        else if (json_buffer_take( json, L"\\/"  )) *(dst++) = '/';
-        else if (json_buffer_take( json, L"\\b"  )) *(dst++) = '\b';
-        else if (json_buffer_take( json, L"\\f"  )) *(dst++) = '\f';
-        else if (json_buffer_take( json, L"\\n"  )) *(dst++) = '\n';
-        else if (json_buffer_take( json, L"\\r"  )) *(dst++) = '\r';
-        else if (json_buffer_take( json, L"\\t"  )) *(dst++) = '\t';
-        else if (json_buffer_take( json, L"\\u"  ))
+        if (json_buffer_take( json, L"\\\"", FALSE ))      *(dst++) = '"';
+        else if (json_buffer_take( json, L"\\\\", FALSE )) *(dst++) = '\\';
+        else if (json_buffer_take( json, L"\\/", FALSE ))  *(dst++) = '/';
+        else if (json_buffer_take( json, L"\\b", FALSE ))  *(dst++) = '\b';
+        else if (json_buffer_take( json, L"\\f", FALSE ))  *(dst++) = '\f';
+        else if (json_buffer_take( json, L"\\n", FALSE ))  *(dst++) = '\n';
+        else if (json_buffer_take( json, L"\\r", FALSE ))  *(dst++) = '\r';
+        else if (json_buffer_take( json, L"\\t", FALSE ))  *(dst++) = '\t';
+        else if (json_buffer_take( json, L"\\u", FALSE ))
         {
             for (int i = 0; i < 4; i++)
             {
@@ -393,12 +381,6 @@ static HRESULT parse_json_string( struct json_buffer *json, HSTRING *output )
         }
     }
 
-    if (!json_buffer_take( json, L"\"" ))
-    {
-        free( buf );
-        return WEB_E_INVALID_JSON_STRING;
-    }
-
     hr = WindowsCreateString( buf, dst - buf, output );
     free( buf );
     return hr;
@@ -411,41 +393,43 @@ static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value )
 
     /* FIXME: Handle all JSON edge cases */
 
-    if (!json->len) return WEB_E_INVALID_JSON_STRING;
     if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
     impl->IJsonValue_iface.lpVtbl = &json_value_vtbl;
     impl->ref = 1;
 
-    if (json_buffer_take( json, L"null" ))
+    if (json_buffer_take( json, L"null", TRUE ))
     {
         impl->json_value_type = JsonValueType_Null;
     }
-    else if (json_buffer_take( json, L"true" ))
+    else if (json_buffer_take( json, L"true", TRUE ))
     {
         impl->boolean_value = TRUE;
         impl->json_value_type = JsonValueType_Boolean;
     }
-    else if (json_buffer_take( json, L"false" ))
+    else if (json_buffer_take( json, L"false", TRUE ))
     {
         impl->boolean_value = FALSE;
         impl->json_value_type = JsonValueType_Boolean;
     }
-    else if (*json->str == '"')
+    else if (json_buffer_take( json, L"\"", TRUE ))
     {
-        hr = parse_json_string( json, &impl->string_value );
-        impl->json_value_type = JsonValueType_String;
+        if (SUCCEEDED(hr = parse_json_string( json, &impl->string_value )))
+        {
+            impl->json_value_type = JsonValueType_String;
+            if (!json_buffer_take( json, L"\"", FALSE )) hr = WEB_E_INVALID_JSON_STRING;
+        }
     }
-    else if (*json->str == '[')
+    else if (json_buffer_take( json, L"[", TRUE ))
     {
         FIXME( "Array parsing not implemented!\n" );
         impl->json_value_type = JsonValueType_Array;
-        hr = WEB_E_INVALID_JSON_STRING;
+        if (!json_buffer_take( json, L"]", TRUE )) hr = WEB_E_INVALID_JSON_STRING;
     }
-    else if (*json->str == '{')
+    else if (json_buffer_take( json, L"{", TRUE ))
     {
         FIXME( "Object parsing not implemented!\n" );
         impl->json_value_type = JsonValueType_Object;
-        hr = WEB_E_INVALID_JSON_STRING;
+        if (!json_buffer_take( json, L"}", TRUE )) hr = WEB_E_INVALID_JSON_STRING;
     }
     else
     {
@@ -464,7 +448,7 @@ static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value )
         impl->json_value_type = JsonValueType_Number;
     }
 
-    if (FAILED(hr)) free( impl );
+    if (FAILED(hr)) IJsonValue_Release( &impl->IJsonValue_iface );
     else *value = &impl->IJsonValue_iface;
     return hr;
 }
@@ -475,10 +459,8 @@ static HRESULT parse_json( HSTRING string, IJsonValue **value )
     struct json_buffer json;
     json.str = WindowsGetStringRawBuffer( string, &json.len );
 
-    json_buffer_trim( &json );
-    if (!json.len) return WEB_E_INVALID_JSON_STRING;
     if (FAILED(hr = parse_json_value( &json, value ))) return hr;
-    if (json.len) return WEB_E_INVALID_JSON_STRING;
+    if (!json_buffer_take( &json, L"", TRUE ) || json.len) return WEB_E_INVALID_JSON_STRING;
     return S_OK;
 }
 
