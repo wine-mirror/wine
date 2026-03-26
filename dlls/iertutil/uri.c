@@ -6087,3 +6087,350 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
     *ppIUriBuilder = &ret->IUriBuilder_iface;
     return S_OK;
 }
+
+/* Merges the base path with the relative path and stores the resulting path
+ * and path len in 'result' and 'result_len'.
+ */
+static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, const WCHAR *relative,
+                           DWORD relative_len, WCHAR **result, DWORD *result_len, DWORD flags)
+{
+    const WCHAR *end = NULL;
+    DWORD base_copy_len = 0;
+    WCHAR *ptr;
+
+    if(base_len) {
+        if(data->scheme_type == URL_SCHEME_MK && *relative == '/') {
+            /* Find '::' segment */
+            for(end = base; end < base+base_len-1; end++) {
+                if(end[0] == ':' && end[1] == ':') {
+                    end++;
+                    break;
+                }
+            }
+
+            /* If not found, try finding the end of @xxx: */
+            if(end == base+base_len-1)
+                end = *base == '@' ? wmemchr(base, ':', base_len) : NULL;
+        }else {
+            /* Find the characters that will be copied over from the base path. */
+            for (end = base + base_len - 1; end >= base; end--) if (*end == '/') break;
+            if(end < base && data->scheme_type == URL_SCHEME_FILE)
+                /* Try looking for a '\\'. */
+                for (end = base + base_len - 1; end >= base; end--) if (*end == '\\') break;
+        }
+    }
+
+    if (end) base_copy_len = (end+1)-base;
+    *result = malloc((base_copy_len + relative_len + 1) * sizeof(WCHAR));
+
+    if(!(*result)) {
+        *result_len = 0;
+        return E_OUTOFMEMORY;
+    }
+
+    ptr = *result;
+    memcpy(ptr, base, base_copy_len*sizeof(WCHAR));
+    ptr += base_copy_len;
+
+    memcpy(ptr, relative, relative_len*sizeof(WCHAR));
+    ptr += relative_len;
+    *ptr = '\0';
+
+    *result_len = (ptr-*result);
+    TRACE("ret %s\n", debugstr_wn(*result, *result_len));
+    return S_OK;
+}
+
+static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result, DWORD extras) {
+    Uri *ret;
+    HRESULT hr;
+    parse_data data;
+    Uri *proc_uri = base;
+    DWORD create_flags = 0, len = 0;
+
+    memset(&data, 0, sizeof(parse_data));
+
+    /* Base case is when the relative Uri has a scheme name,
+     * if it does, then 'result' will contain the same data
+     * as the relative Uri.
+     */
+    if(relative->scheme_start > -1) {
+        data.uri = SysAllocString(relative->raw_uri);
+        if(!data.uri) {
+            *result = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        parse_uri(&data, Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME);
+
+        hr = Uri_Construct(NULL, (void**)&ret);
+        if(FAILED(hr)) {
+            *result = NULL;
+            return hr;
+        }
+
+        if(extras & COMBINE_URI_FORCE_FLAG_USE) {
+            if(flags & URL_DONT_SIMPLIFY)
+                create_flags |= Uri_CREATE_NO_CANONICALIZE;
+            if(flags & URL_DONT_UNESCAPE_EXTRA_INFO)
+                create_flags |= Uri_CREATE_NO_DECODE_EXTRA_INFO;
+        }
+
+        ret->raw_uri = data.uri;
+        hr = canonicalize_uri(&data, ret, create_flags);
+        if(FAILED(hr)) {
+            IUri_Release(&ret->IUri_iface);
+            *result = NULL;
+            return hr;
+        }
+
+        apply_default_flags(&create_flags);
+        ret->create_flags = create_flags;
+
+        *result = &ret->IUri_iface;
+    } else {
+        WCHAR *path = NULL;
+        DWORD raw_flags = 0;
+
+        if(base->scheme_start > -1) {
+            data.scheme = base->canon_uri+base->scheme_start;
+            data.scheme_len = base->scheme_len;
+            data.scheme_type = base->scheme_type;
+        } else {
+            data.is_relative = TRUE;
+            data.scheme_type = URL_SCHEME_UNKNOWN;
+            create_flags |= Uri_CREATE_ALLOW_RELATIVE;
+        }
+
+        if(relative->authority_start > -1)
+            proc_uri = relative;
+
+        if(proc_uri->authority_start > -1) {
+            if(proc_uri->userinfo_start > -1 && proc_uri->userinfo_split != 0) {
+                data.username = proc_uri->canon_uri+proc_uri->userinfo_start;
+                data.username_len = (proc_uri->userinfo_split > -1) ? proc_uri->userinfo_split : proc_uri->userinfo_len;
+            }
+
+            if(proc_uri->userinfo_split > -1) {
+                data.password = proc_uri->canon_uri+proc_uri->userinfo_start+proc_uri->userinfo_split+1;
+                data.password_len = proc_uri->userinfo_len-proc_uri->userinfo_split-1;
+            }
+
+            if(proc_uri->host_start > -1) {
+                const WCHAR *host = proc_uri->canon_uri+proc_uri->host_start;
+                parse_host(&host, &data, 0);
+            }
+
+            if(proc_uri->has_port) {
+                data.has_port = TRUE;
+                data.port_value = proc_uri->port;
+            }
+        } else if(base->scheme_type != URL_SCHEME_FILE)
+            data.is_opaque = TRUE;
+
+        if(proc_uri == relative || relative->path_start == -1 || !relative->path_len) {
+            if(proc_uri->path_start > -1) {
+                data.path = proc_uri->canon_uri+proc_uri->path_start;
+                data.path_len = proc_uri->path_len;
+            } else if(!data.is_opaque) {
+                /* Just set the path as a '/' if the base didn't have
+                 * one and if it's a hierarchical URI.
+                 */
+                data.path = L"/";
+                data.path_len = 1;
+            }
+
+            if(relative->query_start > -1)
+                proc_uri = relative;
+
+            if(proc_uri->query_start > -1) {
+                data.query = proc_uri->canon_uri+proc_uri->query_start;
+                data.query_len = proc_uri->query_len;
+            }
+        } else {
+            const WCHAR *ptr, **pptr;
+            DWORD path_offset = 0, path_len = 0;
+
+            /* There's two possibilities on what will happen to the path component
+             * of the result IUri. First, if the relative path begins with a '/'
+             * then the resulting path will just be the relative path. Second, if
+             * relative path doesn't begin with a '/' then the base path and relative
+             * path are merged together.
+             */
+            if(relative->path_len && *(relative->canon_uri+relative->path_start) == '/' && data.scheme_type != URL_SCHEME_MK) {
+                WCHAR *tmp = NULL;
+                BOOL copy_drive_path = FALSE;
+
+                /* If the relative IUri's path starts with a '/', then we
+                 * don't use the base IUri's path. Unless the base IUri
+                 * is a file URI, in which case it uses the drive path of
+                 * the base IUri (if it has any) in the new path.
+                 */
+                if(base->scheme_type == URL_SCHEME_FILE) {
+                    if(base->path_len > 3 && *(base->canon_uri+base->path_start) == '/' &&
+                       is_drive_path(base->canon_uri+base->path_start+1)) {
+                        path_len += 3;
+                        copy_drive_path = TRUE;
+                    }
+                }
+
+                path_len += relative->path_len;
+
+                path = malloc((path_len + 1) * sizeof(WCHAR));
+                if(!path) {
+                    *result = NULL;
+                    return E_OUTOFMEMORY;
+                }
+
+                tmp = path;
+
+                /* Copy the base paths, drive path over. */
+                if(copy_drive_path) {
+                    memcpy(tmp, base->canon_uri+base->path_start, 3*sizeof(WCHAR));
+                    tmp += 3;
+                }
+
+                memcpy(tmp, relative->canon_uri+relative->path_start, relative->path_len*sizeof(WCHAR));
+                path[path_len] = '\0';
+            } else {
+                /* Merge the base path with the relative path. */
+                hr = merge_paths(&data, base->canon_uri+base->path_start, base->path_len,
+                                 relative->canon_uri+relative->path_start, relative->path_len,
+                                 &path, &path_len, flags);
+                if(FAILED(hr)) {
+                    *result = NULL;
+                    return hr;
+                }
+
+                /* If the resulting IUri is a file URI, the drive path isn't
+                 * reduced out when the dot segments are removed.
+                 */
+                if(path_len >= 3 && data.scheme_type == URL_SCHEME_FILE && !data.host) {
+                    if(*path == '/' && is_drive_path(path+1))
+                        path_offset = 2;
+                    else if(is_drive_path(path))
+                        path_offset = 1;
+                }
+            }
+
+            /* Check if the dot segments need to be removed from the path. */
+            if(!(flags & URL_DONT_SIMPLIFY) && !data.is_opaque) {
+                DWORD offset = (path_offset > 0) ? path_offset+1 : 0;
+                DWORD new_len = remove_dot_segments(path+offset,path_len-offset);
+
+                if(new_len != path_len) {
+                    WCHAR *tmp = realloc(path, (offset + new_len + 1) * sizeof(WCHAR));
+                    if(!tmp) {
+                        free(path);
+                        *result = NULL;
+                        return E_OUTOFMEMORY;
+                    }
+
+                    tmp[new_len+offset] = '\0';
+                    path = tmp;
+                    path_len = new_len+offset;
+                }
+            }
+
+            if(relative->query_start > -1) {
+                data.query = relative->canon_uri+relative->query_start;
+                data.query_len = relative->query_len;
+            }
+
+            /* Make sure the path component is valid. */
+            ptr = path;
+            pptr = &ptr;
+            if((data.is_opaque && !parse_path_opaque(pptr, &data, 0)) ||
+               (!data.is_opaque && !parse_path_hierarchical(pptr, &data, 0))) {
+                free(path);
+                *result = NULL;
+                return E_INVALIDARG;
+            }
+        }
+
+        if(relative->fragment_start > -1) {
+            data.fragment = relative->canon_uri+relative->fragment_start;
+            data.fragment_len = relative->fragment_len;
+        }
+
+        if(flags & URL_DONT_SIMPLIFY)
+            raw_flags |= RAW_URI_FORCE_PORT_DISP;
+        if(flags & URL_FILE_USE_PATHURL)
+            raw_flags |= RAW_URI_CONVERT_TO_DOS_PATH;
+
+        len = generate_raw_uri(&data, data.uri, raw_flags);
+        data.uri = SysAllocStringLen(NULL, len);
+        if(!data.uri) {
+            free(path);
+            *result = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        generate_raw_uri(&data, data.uri, raw_flags);
+
+        hr = Uri_Construct(NULL, (void**)&ret);
+        if(FAILED(hr)) {
+            SysFreeString(data.uri);
+            free(path);
+            *result = NULL;
+            return hr;
+        }
+
+        if(flags & URL_DONT_SIMPLIFY)
+            create_flags |= Uri_CREATE_NO_CANONICALIZE;
+        if(flags & URL_FILE_USE_PATHURL)
+            create_flags |= Uri_CREATE_FILE_USE_DOS_PATH;
+
+        ret->raw_uri = data.uri;
+        hr = canonicalize_uri(&data, ret, create_flags);
+        if(FAILED(hr)) {
+            IUri_Release(&ret->IUri_iface);
+            *result = NULL;
+            return hr;
+        }
+
+        if(flags & URL_DONT_SIMPLIFY)
+            ret->display_modifiers |= URI_DISPLAY_NO_DEFAULT_PORT_AUTH;
+
+        apply_default_flags(&create_flags);
+        ret->create_flags = create_flags;
+        *result = &ret->IUri_iface;
+
+        free(path);
+    }
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           PrivateCoInternetCombineIUri (iertutil.@)
+ */
+HRESULT WINAPI PrivateCoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri,
+                                            DWORD dwCombineFlags, IUri **ppCombinedUri,
+                                            DWORD_PTR dwReserved)
+{
+    Uri *relative, *base;
+
+    TRACE("(%p %p %lx %p %Ix)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, dwReserved);
+
+    if (!ppCombinedUri)
+        return E_INVALIDARG;
+
+    if (!pBaseUri || !pRelativeUri)
+    {
+        *ppCombinedUri = NULL;
+        return E_INVALIDARG;
+    }
+
+    relative = get_uri_obj(pRelativeUri);
+    base = get_uri_obj(pBaseUri);
+    if (!relative || !base)
+    {
+        *ppCombinedUri = NULL;
+        FIXME("(%p %p %lx %p %Ix) Unknown IUri types not supported yet.\n", pBaseUri, pRelativeUri,
+              dwCombineFlags, ppCombinedUri, dwReserved);
+        return E_NOTIMPL;
+    }
+
+    return combine_uri(base, relative, dwCombineFlags, ppCombinedUri, dwReserved);
+}

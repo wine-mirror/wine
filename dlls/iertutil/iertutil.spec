@@ -4,3 +4,4 @@
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetActivationFactory(ptr ptr)
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall PrivateCoInternetCombineIUri(ptr ptr long ptr long)
