@@ -18,9 +18,19 @@
  */
 
 #include <limits.h>
+#include <stdarg.h>
 #include <wchar.h>
 
-#include "urlmon_main.h"
+#define COBJMACROS
+
+#include "initguid.h"
+#include "private.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "ole2.h"
+#include "urlmon.h"
+#include "wininet.h"
 #include "wine/debug.h"
 
 #define NO_SHLWAPI_REG
@@ -32,22 +42,24 @@
 #include "in6addr.h"
 #include "ip2string.h"
 
-#define URI_DISPLAY_NO_ABSOLUTE_URI         0x1
-#define URI_DISPLAY_NO_DEFAULT_PORT_AUTH    0x2
+WINE_DEFAULT_DEBUG_CHANNEL(iertutil);
 
-#define ALLOW_NULL_TERM_SCHEME          0x01
-#define ALLOW_NULL_TERM_USER_NAME       0x02
-#define ALLOW_NULL_TERM_PASSWORD        0x04
-#define ALLOW_BRACKETLESS_IP_LITERAL    0x08
-#define SKIP_IP_FUTURE_CHECK            0x10
-#define IGNORE_PORT_DELIMITER           0x20
+#define URI_DISPLAY_NO_ABSOLUTE_URI      0x1
+#define URI_DISPLAY_NO_DEFAULT_PORT_AUTH 0x2
 
-#define RAW_URI_FORCE_PORT_DISP     0x1
-#define RAW_URI_CONVERT_TO_DOS_PATH 0x2
+#define ALLOW_NULL_TERM_SCHEME           0x01
+#define ALLOW_NULL_TERM_USER_NAME        0x02
+#define ALLOW_NULL_TERM_PASSWORD         0x04
+#define ALLOW_BRACKETLESS_IP_LITERAL     0x08
+#define SKIP_IP_FUTURE_CHECK             0x10
+#define IGNORE_PORT_DELIMITER            0x20
 
-#define COMBINE_URI_FORCE_FLAG_USE  0x1
+#define RAW_URI_FORCE_PORT_DISP          0x1
+#define RAW_URI_CONVERT_TO_DOS_PATH      0x2
 
-WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
+#define COMBINE_URI_FORCE_FLAG_USE       0x1
+
+static const GUID CLSID_CUri = {0xDF2FCE13,0x25EC,0x45BB,{0x9D,0x4C,0xCE,0xCD,0x47,0xC2,0x43,0x0C}};
 
 static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x20,0x0c,0x9a,0x66}};
 
@@ -474,7 +486,7 @@ static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
  * It's implied that if there is a domain name its range is:
  * [host+domain_start, host+host_len).
  */
-void find_domain_name(const WCHAR *host, DWORD host_len,
+static void find_domain_name(const WCHAR *host, DWORD host_len,
                              INT *domain_start) {
     const WCHAR *last_tld, *sec_last_tld, *end, *p;
 
@@ -657,45 +669,6 @@ static INT find_file_extension(const WCHAR *path, DWORD path_len) {
     }
 
     return -1;
-}
-
-/* Removes all the leading and trailing white spaces or
- * control characters from the URI and removes all control
- * characters inside of the URI string.
- */
-static BSTR pre_process_uri(LPCWSTR uri) {
-    const WCHAR *start, *end, *ptr;
-    WCHAR *ptr2;
-    DWORD len;
-    BSTR ret;
-
-    start = uri;
-    /* Skip leading controls and whitespace. */
-    while(*start && (iswcntrl(*start) || iswspace(*start))) ++start;
-
-    /* URI consisted only of control/whitespace. */
-    if(!*start)
-        return SysAllocStringLen(NULL, 0);
-
-    end = start + lstrlenW(start);
-    while(--end > start && (iswcntrl(*end) || iswspace(*end)));
-
-    len = ++end - start;
-    for(ptr = start; ptr < end; ptr++) {
-        if(iswcntrl(*ptr))
-            len--;
-    }
-
-    ret = SysAllocStringLen(NULL, len);
-    if(!ret)
-        return NULL;
-
-    for(ptr = start, ptr2=ret; ptr < end; ptr++) {
-        if(!iswcntrl(*ptr))
-            *ptr2++ = *ptr;
-    }
-
-    return ret;
 }
 
 /* Converts an IPv4 address in numerical form into its fully qualified
@@ -3040,6 +3013,441 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     return S_OK;
 }
 
+static HRESULT get_builder_component(LPWSTR *component, DWORD *component_len,
+                                     LPCWSTR source, DWORD source_len,
+                                     LPCWSTR *output, DWORD *output_len)
+{
+    if(!output_len) {
+        if(output)
+            *output = NULL;
+        return E_POINTER;
+    }
+
+    if(!output) {
+        *output_len = 0;
+        return E_POINTER;
+    }
+
+    if(!(*component) && source) {
+        /* Allocate 'component', and copy the contents from 'source'
+         * into the new allocation.
+         */
+        *component = malloc((source_len + 1) * sizeof(WCHAR));
+        if(!(*component))
+            return E_OUTOFMEMORY;
+
+        memcpy(*component, source, source_len*sizeof(WCHAR));
+        (*component)[source_len] = '\0';
+        *component_len = source_len;
+    }
+
+    *output = *component;
+    *output_len = *component_len;
+    return *output ? S_OK : S_FALSE;
+}
+
+/* Allocates 'component' and copies the string from 'new_value' into 'component'.
+ * If 'prefix' is set and 'new_value' isn't NULL, then it checks if 'new_value'
+ * starts with 'prefix'. If it doesn't then 'prefix' is prepended to 'component'.
+ *
+ * If everything is successful, then will set 'success_flag' in 'flags'.
+ */
+static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LPCWSTR new_value,
+                                     WCHAR prefix, DWORD *flags, DWORD success_flag)
+{
+    free(*component);
+
+    if(!new_value) {
+        *component = NULL;
+        *component_len = 0;
+    } else {
+        BOOL add_prefix = FALSE;
+        DWORD len = lstrlenW(new_value);
+        DWORD pos = 0;
+
+        if(prefix && *new_value != prefix) {
+            add_prefix = TRUE;
+            *component = malloc((len + 2) * sizeof(WCHAR));
+        } else
+            *component = malloc((len + 1) * sizeof(WCHAR));
+
+        if(!(*component))
+            return E_OUTOFMEMORY;
+
+        if(add_prefix)
+            (*component)[pos++] = prefix;
+
+        memcpy(*component+pos, new_value, (len+1)*sizeof(WCHAR));
+        *component_len = len+pos;
+    }
+
+    *flags |= success_flag;
+    return S_OK;
+}
+
+static void reset_builder(UriBuilder *builder) {
+    if(builder->uri)
+        IUri_Release(&builder->uri->IUri_iface);
+    builder->uri = NULL;
+
+    free(builder->fragment);
+    builder->fragment = NULL;
+    builder->fragment_len = 0;
+
+    free(builder->host);
+    builder->host = NULL;
+    builder->host_len = 0;
+
+    free(builder->password);
+    builder->password = NULL;
+    builder->password_len = 0;
+
+    free(builder->path);
+    builder->path = NULL;
+    builder->path_len = 0;
+
+    free(builder->query);
+    builder->query = NULL;
+    builder->query_len = 0;
+
+    free(builder->scheme);
+    builder->scheme = NULL;
+    builder->scheme_len = 0;
+
+    free(builder->username);
+    builder->username = NULL;
+    builder->username_len = 0;
+
+    builder->has_port = FALSE;
+    builder->port = 0;
+    builder->modified_props = 0;
+}
+
+static HRESULT validate_scheme_name(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *component;
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->scheme) {
+        ptr = builder->scheme;
+        expected_len = builder->scheme_len;
+    } else if(builder->uri && builder->uri->scheme_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->scheme_start;
+        expected_len = builder->uri->scheme_len;
+    } else {
+        ptr = L"";
+        expected_len = 0;
+    }
+
+    component = ptr;
+    pptr = &ptr;
+    if(parse_scheme(pptr, data, flags, ALLOW_NULL_TERM_SCHEME) &&
+       data->scheme_len == expected_len) {
+        if(data->scheme)
+            TRACE("(%p %p %lx): Found valid scheme component %s len=%ld.\n", builder, data, flags,
+               debugstr_wn(data->scheme, data->scheme_len), data->scheme_len);
+    } else {
+        TRACE("(%p %p %lx): Invalid scheme component found %s.\n", builder, data, flags,
+            debugstr_wn(component, expected_len));
+        return INET_E_INVALID_URL;
+   }
+
+    return S_OK;
+}
+
+static HRESULT validate_username(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->username) {
+        ptr = builder->username;
+        expected_len = builder->username_len;
+    } else if(!(builder->modified_props & Uri_HAS_USER_NAME) && builder->uri &&
+              builder->uri->userinfo_start > -1 && builder->uri->userinfo_split != 0) {
+        /* Just use the username from the base Uri. */
+        data->username = builder->uri->canon_uri+builder->uri->userinfo_start;
+        data->username_len = (builder->uri->userinfo_split > -1) ?
+                                        builder->uri->userinfo_split : builder->uri->userinfo_len;
+        ptr = NULL;
+    } else {
+        ptr = NULL;
+        expected_len = 0;
+    }
+
+    if(ptr) {
+        const WCHAR *component = ptr;
+        pptr = &ptr;
+        if(parse_username(pptr, data, flags, ALLOW_NULL_TERM_USER_NAME) &&
+           data->username_len == expected_len)
+            TRACE("(%p %p %lx): Found valid username component %s len=%ld.\n", builder, data, flags,
+                debugstr_wn(data->username, data->username_len), data->username_len);
+        else {
+            TRACE("(%p %p %lx): Invalid username component found %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_password(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->password) {
+        ptr = builder->password;
+        expected_len = builder->password_len;
+    } else if(!(builder->modified_props & Uri_HAS_PASSWORD) && builder->uri &&
+              builder->uri->userinfo_split > -1) {
+        data->password = builder->uri->canon_uri+builder->uri->userinfo_start+builder->uri->userinfo_split+1;
+        data->password_len = builder->uri->userinfo_len-builder->uri->userinfo_split-1;
+        ptr = NULL;
+    } else {
+        ptr = NULL;
+        expected_len = 0;
+    }
+
+    if(ptr) {
+        const WCHAR *component = ptr;
+        pptr = &ptr;
+        if(parse_password(pptr, data, flags, ALLOW_NULL_TERM_PASSWORD) &&
+           data->password_len == expected_len)
+            TRACE("(%p %p %lx): Found valid password component %s len=%ld.\n", builder, data, flags,
+                debugstr_wn(data->password, data->password_len), data->password_len);
+        else {
+            TRACE("(%p %p %lx): Invalid password component found %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_userinfo(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    HRESULT hr;
+
+    hr = validate_username(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    hr = validate_password(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    return S_OK;
+}
+
+static HRESULT validate_host(const UriBuilder *builder, parse_data *data) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->host) {
+        ptr = builder->host;
+        expected_len = builder->host_len;
+    } else if(!(builder->modified_props & Uri_HAS_HOST) && builder->uri && builder->uri->host_start > -1) {
+        ptr = builder->uri->canon_uri + builder->uri->host_start;
+        expected_len = builder->uri->host_len;
+    } else
+        ptr = NULL;
+
+    if(ptr) {
+        const WCHAR *component = ptr;
+        DWORD extras = ALLOW_BRACKETLESS_IP_LITERAL|IGNORE_PORT_DELIMITER|SKIP_IP_FUTURE_CHECK;
+        pptr = &ptr;
+
+        if(parse_host(pptr, data, extras) && data->host_len == expected_len)
+            TRACE("(%p %p): Found valid host name %s len=%ld type=%d.\n", builder, data,
+                debugstr_wn(data->host, data->host_len), data->host_len, data->host_type);
+        else {
+            TRACE("(%p %p): Invalid host name found %s.\n", builder, data,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static void setup_port(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    if(builder->modified_props & Uri_HAS_PORT) {
+        if(builder->has_port) {
+            data->has_port = TRUE;
+            data->port_value = builder->port;
+        }
+    } else if(builder->uri && builder->uri->has_port) {
+        data->has_port = TRUE;
+        data->port_value = builder->uri->port;
+    }
+
+    if(data->has_port)
+        TRACE("(%p %p %lx): Using %lu as port for IUri.\n", builder, data, flags, data->port_value);
+}
+
+static HRESULT validate_path(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr = NULL;
+    const WCHAR *component;
+    const WCHAR **pptr;
+    DWORD expected_len;
+    BOOL check_len = TRUE;
+    BOOL valid = FALSE;
+
+    if(builder->path) {
+        ptr = builder->path;
+        expected_len = builder->path_len;
+    } else if(!(builder->modified_props & Uri_HAS_PATH) &&
+              builder->uri && builder->uri->path_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->path_start;
+        expected_len = builder->uri->path_len;
+    } else {
+        ptr = L"";
+        check_len = FALSE;
+        expected_len = -1;
+    }
+
+    component = ptr;
+    pptr = &ptr;
+
+    /* How the path is validated depends on what type of
+     * URI it is.
+     */
+    valid = data->is_opaque ?
+        parse_path_opaque(pptr, data, flags) : parse_path_hierarchical(pptr, data, flags);
+
+    if(!valid || (check_len && expected_len != data->path_len)) {
+        TRACE("(%p %p %lx): Invalid path component %s.\n", builder, data, flags,
+            debugstr_wn(component, expected_len) );
+        return INET_E_INVALID_URL;
+    }
+
+    TRACE("(%p %p %lx): Valid path component %s len=%ld.\n", builder, data, flags,
+        debugstr_wn(data->path, data->path_len), data->path_len);
+
+    return S_OK;
+}
+
+static HRESULT validate_query(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr = NULL;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->query) {
+        ptr = builder->query;
+        expected_len = builder->query_len;
+    } else if(!(builder->modified_props & Uri_HAS_QUERY) && builder->uri &&
+              builder->uri->query_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->query_start;
+        expected_len = builder->uri->query_len;
+    }
+
+    if(ptr) {
+        const WCHAR *component = ptr;
+        pptr = &ptr;
+
+        if(parse_query(pptr, data, flags) && expected_len == data->query_len)
+            TRACE("(%p %p %lx): Valid query component %s len=%ld.\n", builder, data, flags,
+                debugstr_wn(data->query, data->query_len), data->query_len);
+        else {
+            TRACE("(%p %p %lx): Invalid query component %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_fragment(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr = NULL;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->fragment) {
+        ptr = builder->fragment;
+        expected_len = builder->fragment_len;
+    } else if(!(builder->modified_props & Uri_HAS_FRAGMENT) && builder->uri &&
+              builder->uri->fragment_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->fragment_start;
+        expected_len = builder->uri->fragment_len;
+    }
+
+    if(ptr) {
+        const WCHAR *component = ptr;
+        pptr = &ptr;
+
+        if(parse_fragment(pptr, data, flags) && expected_len == data->fragment_len)
+            TRACE("(%p %p %lx): Valid fragment component %s len=%ld.\n", builder, data, flags,
+                debugstr_wn(data->fragment, data->fragment_len), data->fragment_len);
+        else {
+            TRACE("(%p %p %lx): Invalid fragment component %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_components(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    HRESULT hr;
+
+    memset(data, 0, sizeof(parse_data));
+
+    TRACE("(%p %p %lx): Beginning to validate builder components.\n", builder, data, flags);
+
+    hr = validate_scheme_name(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    /* Extra validation for file schemes. */
+    if(data->scheme_type == URL_SCHEME_FILE) {
+        if((builder->password || (builder->uri && builder->uri->userinfo_split > -1)) ||
+           (builder->username || (builder->uri && builder->uri->userinfo_start > -1))) {
+            TRACE("(%p %p %lx): File schemes can't contain a username or password.\n",
+                builder, data, flags);
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    hr = validate_userinfo(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    hr = validate_host(builder, data);
+    if(FAILED(hr))
+        return hr;
+
+    setup_port(builder, data, flags);
+
+    /* The URI is opaque if it doesn't have an authority component. */
+    if(!data->is_relative)
+        data->is_opaque = !data->username && !data->password && !data->host && !data->has_port
+            && data->scheme_type != URL_SCHEME_FILE;
+    else
+        data->is_opaque = !data->host && !data->has_port;
+
+    hr = validate_path(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    hr = validate_query(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    hr = validate_fragment(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    TRACE("(%p %p %lx): Finished validating builder components.\n", builder, data, flags);
+
+    return S_OK;
+}
+
 static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
 {
     WCHAR *canon_path_a, *canon_path_b;
@@ -3349,6 +3757,26 @@ static DWORD generate_raw_uri(const parse_data *data, BSTR uri, DWORD flags) {
         TRACE("(%p %p): Computed raw uri len=%ld\n", data, uri, length);
 
     return length;
+}
+
+static HRESULT generate_uri(const UriBuilder *builder, const parse_data *data, Uri *uri, DWORD flags) {
+    HRESULT hr;
+    DWORD length = generate_raw_uri(data, NULL, 0);
+    uri->raw_uri = SysAllocStringLen(NULL, length);
+    if(!uri->raw_uri)
+        return E_OUTOFMEMORY;
+
+    generate_raw_uri(data, uri->raw_uri, 0);
+
+    hr = canonicalize_uri(data, uri, flags);
+    if(FAILED(hr)) {
+        if(hr == E_INVALIDARG)
+            return INET_E_INVALID_URL;
+        return hr;
+    }
+
+    uri->create_flags = flags;
+    return S_OK;
 }
 
 static inline Uri* impl_from_IUri(IUri *iface)
@@ -4900,1107 +5328,549 @@ HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     return S_OK;
 }
 
-/***********************************************************************
- *           CreateUri (urlmon.@)
- *
- * Creates a new IUri object using the URI represented by pwzURI. This function
- * parses and validates the components of pwzURI and then canonicalizes the
- * parsed components.
- *
- * PARAMS
- *  pwzURI      [I] The URI to parse, validate, and canonicalize.
- *  dwFlags     [I] Flags which can affect how the parsing/canonicalization is performed.
- *  dwReserved  [I] Reserved (not used).
- *  ppURI       [O] The resulting IUri after parsing/canonicalization occurs.
- *
- * RETURNS
- *  Success: Returns S_OK. ppURI contains the pointer to the newly allocated IUri.
- *  Failure: E_INVALIDARG if there are invalid flag combinations in dwFlags, or an
- *           invalid parameter, or pwzURI doesn't represent a valid URI.
- *           E_OUTOFMEMORY if any memory allocation fails.
- *
- * NOTES
- *  Default flags:
- *      Uri_CREATE_CANONICALIZE, Uri_CREATE_DECODE_EXTRA_INFO, Uri_CREATE_CRACK_UNKNOWN_SCHEMES,
- *      Uri_CREATE_PRE_PROCESS_HTML_URI, Uri_CREATE_NO_IE_SETTINGS.
- */
-HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IUri **ppURI)
+static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_flags,
+                         DWORD use_orig_flags, DWORD encoding_mask)
 {
-    const DWORD supported_flags = Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME|
-        Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME|Uri_CREATE_NO_CANONICALIZE|Uri_CREATE_CANONICALIZE|
-        Uri_CREATE_DECODE_EXTRA_INFO|Uri_CREATE_NO_DECODE_EXTRA_INFO|Uri_CREATE_CRACK_UNKNOWN_SCHEMES|
-        Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES|Uri_CREATE_PRE_PROCESS_HTML_URI|Uri_CREATE_NO_PRE_PROCESS_HTML_URI|
-        Uri_CREATE_NO_IE_SETTINGS|Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS|Uri_CREATE_FILE_USE_DOS_PATH;
-    Uri *ret;
     HRESULT hr;
     parse_data data;
+    Uri *ret;
 
-    TRACE("(%s %lx %Ix %p)\n", debugstr_w(pwzURI), dwFlags, dwReserved, ppURI);
+    if(!uri)
+        return E_POINTER;
 
-    if(!ppURI)
-        return E_INVALIDARG;
-
-    if(!pwzURI) {
-        *ppURI = NULL;
-        return E_INVALIDARG;
+    if(encoding_mask && (!builder->uri || builder->modified_props)) {
+        *uri = NULL;
+        return E_NOTIMPL;
     }
 
-    /* Check for invalid flags. */
-    if(has_invalid_flag_combination(dwFlags)) {
-        *ppURI = NULL;
-        return E_INVALIDARG;
-    }
-
-    /* Currently unsupported. */
-    if(dwFlags & ~supported_flags)
-        FIXME("Ignoring unsupported flag(s) %lx\n", dwFlags & ~supported_flags);
-
-    hr = Uri_Construct(NULL, (void**)&ret);
-    if(FAILED(hr)) {
-        *ppURI = NULL;
-        return hr;
-    }
-
-    /* Explicitly set the default flags if it doesn't cause a flag conflict. */
-    apply_default_flags(&dwFlags);
-
-    /* Pre process the URI, unless told otherwise. */
-    if(!(dwFlags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI))
-        ret->raw_uri = pre_process_uri(pwzURI);
-    else
-        ret->raw_uri = SysAllocString(pwzURI);
-
-    if(!ret->raw_uri) {
-        free(ret);
-        return E_OUTOFMEMORY;
-    }
-
-    memset(&data, 0, sizeof(parse_data));
-    data.uri = ret->raw_uri;
-
-    /* Validate and parse the URI into its components. */
-    if(!parse_uri(&data, dwFlags)) {
-        /* Encountered an unsupported or invalid URI */
-        IUri_Release(&ret->IUri_iface);
-        *ppURI = NULL;
-        return E_INVALIDARG;
-    }
-
-    /* Canonicalize the URI. */
-    hr = canonicalize_uri(&data, ret, dwFlags);
-    if(FAILED(hr)) {
-        IUri_Release(&ret->IUri_iface);
-        *ppURI = NULL;
-        return hr;
-    }
-
-    ret->create_flags = dwFlags;
-
-    *ppURI = &ret->IUri_iface;
-    return S_OK;
-}
-
-/***********************************************************************
- *           CreateUriWithFragment (urlmon.@)
- *
- * Creates a new IUri object. This is almost the same as CreateUri, expect that
- * it allows you to explicitly specify a fragment (pwzFragment) for pwzURI.
- *
- * PARAMS
- *  pwzURI      [I] The URI to parse and perform canonicalization on.
- *  pwzFragment [I] The explicit fragment string which should be added to pwzURI.
- *  dwFlags     [I] The flags which will be passed to CreateUri.
- *  dwReserved  [I] Reserved (not used).
- *  ppURI       [O] The resulting IUri after parsing/canonicalization.
- *
- * RETURNS
- *  Success: S_OK. ppURI contains the pointer to the newly allocated IUri.
- *  Failure: E_INVALIDARG if pwzURI already contains a fragment and pwzFragment
- *           isn't NULL. Will also return E_INVALIDARG for the same reasons as
- *           CreateUri will. E_OUTOFMEMORY if any allocation fails.
- */
-HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD dwFlags,
-                                     DWORD_PTR dwReserved, IUri **ppURI)
-{
-    HRESULT hres;
-    TRACE("(%s %s %lx %Ix %p)\n", debugstr_w(pwzURI), debugstr_w(pwzFragment), dwFlags, dwReserved, ppURI);
-
-    if(!ppURI)
-        return E_INVALIDARG;
-
-    if(!pwzURI) {
-        *ppURI = NULL;
-        return E_INVALIDARG;
-    }
-
-    /* Check if a fragment should be appended to the URI string. */
-    if(pwzFragment) {
-        WCHAR *uriW;
-        DWORD uri_len, frag_len;
-        BOOL add_pound;
-
-        /* Check if the original URI already has a fragment component. */
-        if(StrChrW(pwzURI, '#')) {
-            *ppURI = NULL;
+    /* Decide what flags should be used when creating the Uri. */
+    if((use_orig_flags & UriBuilder_USE_ORIGINAL_FLAGS) && builder->uri)
+        create_flags = builder->uri->create_flags;
+    else {
+        if(has_invalid_flag_combination(create_flags)) {
+            *uri = NULL;
             return E_INVALIDARG;
         }
 
-        uri_len = lstrlenW(pwzURI);
-        frag_len = lstrlenW(pwzFragment);
+        /* Set the default flags if they don't cause a conflict. */
+        apply_default_flags(&create_flags);
+    }
 
-        /* If the fragment doesn't start with a '#', one will be added. */
-        add_pound = *pwzFragment != '#';
+    /* Return the base IUri if no changes have been made and the create_flags match. */
+    if(builder->uri && !builder->modified_props && builder->uri->create_flags == create_flags) {
+        *uri = &builder->uri->IUri_iface;
+        IUri_AddRef(*uri);
+        return S_OK;
+    }
 
-        if(add_pound)
-            uriW = malloc((uri_len + frag_len + 2) * sizeof(WCHAR));
-        else
-            uriW = malloc((uri_len + frag_len + 1) * sizeof(WCHAR));
+    hr = validate_components(builder, &data, create_flags);
+    if(FAILED(hr)) {
+        *uri = NULL;
+        return hr;
+    }
 
-        if(!uriW)
-            return E_OUTOFMEMORY;
+    hr = Uri_Construct(NULL, (void**)&ret);
+    if(FAILED(hr)) {
+        *uri = NULL;
+        return hr;
+    }
 
-        memcpy(uriW, pwzURI, uri_len*sizeof(WCHAR));
-        if(add_pound)
-            uriW[uri_len++] = '#';
-        memcpy(uriW+uri_len, pwzFragment, (frag_len+1)*sizeof(WCHAR));
+    hr = generate_uri(builder, &data, ret, create_flags);
+    if(FAILED(hr)) {
+        IUri_Release(&ret->IUri_iface);
+        *uri = NULL;
+        return hr;
+    }
 
-        hres = CreateUri(uriW, dwFlags, 0, ppURI);
+    *uri = &ret->IUri_iface;
+    return S_OK;
+}
 
-        free(uriW);
+static inline UriBuilder* impl_from_IUriBuilder(IUriBuilder *iface)
+{
+    return CONTAINING_RECORD(iface, UriBuilder, IUriBuilder_iface);
+}
+
+static HRESULT WINAPI UriBuilder_QueryInterface(IUriBuilder *iface, REFIID riid, void **ppv)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IUriBuilder_iface;
+    }else if(IsEqualGUID(&IID_IUriBuilder, riid)) {
+        TRACE("(%p)->(IID_IUriBuilder %p)\n", This, ppv);
+        *ppv = &This->IUriBuilder_iface;
+    }else {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI UriBuilder_AddRef(IUriBuilder *iface)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref) {
+        if(This->uri) IUri_Release(&This->uri->IUri_iface);
+        free(This->fragment);
+        free(This->host);
+        free(This->password);
+        free(This->path);
+        free(This->query);
+        free(This->scheme);
+        free(This->username);
+        free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI UriBuilder_CreateUriSimple(IUriBuilder *iface,
+                                                 DWORD        dwAllowEncodingPropertyMask,
+                                                 DWORD_PTR    dwReserved,
+                                                 IUri       **ppIUri)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    HRESULT hr;
+    TRACE("(%p)->(%ld %Id %p)\n", This, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
+
+    hr = build_uri(This, ppIUri, 0, UriBuilder_USE_ORIGINAL_FLAGS, dwAllowEncodingPropertyMask);
+    if(hr == E_NOTIMPL)
+        FIXME("(%p)->(%ld %Id %p)\n", This, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
+    return hr;
+}
+
+static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
+                                           DWORD        dwCreateFlags,
+                                           DWORD        dwAllowEncodingPropertyMask,
+                                           DWORD_PTR    dwReserved,
+                                           IUri       **ppIUri)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    HRESULT hr;
+    TRACE("(%p)->(0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
+
+    if(dwCreateFlags == -1)
+        hr = build_uri(This, ppIUri, 0, UriBuilder_USE_ORIGINAL_FLAGS, dwAllowEncodingPropertyMask);
+    else
+        hr = build_uri(This, ppIUri, dwCreateFlags, 0, dwAllowEncodingPropertyMask);
+
+    if(hr == E_NOTIMPL)
+        FIXME("(%p)->(0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
+    return hr;
+}
+
+static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
+                                         DWORD        dwCreateFlags,
+                                         DWORD        dwUriBuilderFlags,
+                                         DWORD        dwAllowEncodingPropertyMask,
+                                         DWORD_PTR    dwReserved,
+                                         IUri       **ppIUri)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    HRESULT hr;
+    TRACE("(%p)->(0x%08lx 0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
+        dwAllowEncodingPropertyMask, dwReserved, ppIUri);
+
+    hr = build_uri(This, ppIUri, dwCreateFlags, dwUriBuilderFlags, dwAllowEncodingPropertyMask);
+    if(hr == E_NOTIMPL)
+        FIXME("(%p)->(0x%08lx 0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
+            dwAllowEncodingPropertyMask, dwReserved, ppIUri);
+    return hr;
+}
+
+static HRESULT WINAPI  UriBuilder_GetIUri(IUriBuilder *iface, IUri **ppIUri)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p)\n", This, ppIUri);
+
+    if(!ppIUri)
+        return E_POINTER;
+
+    if(This->uri) {
+        IUri *uri = &This->uri->IUri_iface;
+        IUri_AddRef(uri);
+        *ppIUri = uri;
     } else
-        /* A fragment string wasn't specified, so just forward the call. */
-        hres = CreateUri(pwzURI, dwFlags, 0, ppURI);
+        *ppIUri = NULL;
 
-    return hres;
-}
-
-/* Merges the base path with the relative path and stores the resulting path
- * and path len in 'result' and 'result_len'.
- */
-static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, const WCHAR *relative,
-                           DWORD relative_len, WCHAR **result, DWORD *result_len, DWORD flags)
-{
-    const WCHAR *end = NULL;
-    DWORD base_copy_len = 0;
-    WCHAR *ptr;
-
-    if(base_len) {
-        if(data->scheme_type == URL_SCHEME_MK && *relative == '/') {
-            /* Find '::' segment */
-            for(end = base; end < base+base_len-1; end++) {
-                if(end[0] == ':' && end[1] == ':') {
-                    end++;
-                    break;
-                }
-            }
-
-            /* If not found, try finding the end of @xxx: */
-            if(end == base+base_len-1)
-                end = *base == '@' ? wmemchr(base, ':', base_len) : NULL;
-        }else {
-            /* Find the characters that will be copied over from the base path. */
-            for (end = base + base_len - 1; end >= base; end--) if (*end == '/') break;
-            if(end < base && data->scheme_type == URL_SCHEME_FILE)
-                /* Try looking for a '\\'. */
-                for (end = base + base_len - 1; end >= base; end--) if (*end == '\\') break;
-        }
-    }
-
-    if (end) base_copy_len = (end+1)-base;
-    *result = malloc((base_copy_len + relative_len + 1) * sizeof(WCHAR));
-
-    if(!(*result)) {
-        *result_len = 0;
-        return E_OUTOFMEMORY;
-    }
-
-    ptr = *result;
-    memcpy(ptr, base, base_copy_len*sizeof(WCHAR));
-    ptr += base_copy_len;
-
-    memcpy(ptr, relative, relative_len*sizeof(WCHAR));
-    ptr += relative_len;
-    *ptr = '\0';
-
-    *result_len = (ptr-*result);
-    TRACE("ret %s\n", debugstr_wn(*result, *result_len));
     return S_OK;
 }
 
-static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result, DWORD extras) {
-    Uri *ret;
-    HRESULT hr;
-    parse_data data;
-    Uri *proc_uri = base;
-    DWORD create_flags = 0, len = 0;
+static HRESULT WINAPI UriBuilder_SetIUri(IUriBuilder *iface, IUri *pIUri)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p)\n", This, pIUri);
 
-    memset(&data, 0, sizeof(parse_data));
+    if(pIUri) {
+        Uri *uri;
 
-    /* Base case is when the relative Uri has a scheme name,
-     * if it does, then 'result' will contain the same data
-     * as the relative Uri.
-     */
-    if(relative->scheme_start > -1) {
-        data.uri = SysAllocString(relative->raw_uri);
-        if(!data.uri) {
-            *result = NULL;
-            return E_OUTOFMEMORY;
-        }
-
-        parse_uri(&data, Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME);
-
-        hr = Uri_Construct(NULL, (void**)&ret);
-        if(FAILED(hr)) {
-            *result = NULL;
-            return hr;
-        }
-
-        if(extras & COMBINE_URI_FORCE_FLAG_USE) {
-            if(flags & URL_DONT_SIMPLIFY)
-                create_flags |= Uri_CREATE_NO_CANONICALIZE;
-            if(flags & URL_DONT_UNESCAPE_EXTRA_INFO)
-                create_flags |= Uri_CREATE_NO_DECODE_EXTRA_INFO;
-        }
-
-        ret->raw_uri = data.uri;
-        hr = canonicalize_uri(&data, ret, create_flags);
-        if(FAILED(hr)) {
-            IUri_Release(&ret->IUri_iface);
-            *result = NULL;
-            return hr;
-        }
-
-        apply_default_flags(&create_flags);
-        ret->create_flags = create_flags;
-
-        *result = &ret->IUri_iface;
-    } else {
-        WCHAR *path = NULL;
-        DWORD raw_flags = 0;
-
-        if(base->scheme_start > -1) {
-            data.scheme = base->canon_uri+base->scheme_start;
-            data.scheme_len = base->scheme_len;
-            data.scheme_type = base->scheme_type;
-        } else {
-            data.is_relative = TRUE;
-            data.scheme_type = URL_SCHEME_UNKNOWN;
-            create_flags |= Uri_CREATE_ALLOW_RELATIVE;
-        }
-
-        if(relative->authority_start > -1)
-            proc_uri = relative;
-
-        if(proc_uri->authority_start > -1) {
-            if(proc_uri->userinfo_start > -1 && proc_uri->userinfo_split != 0) {
-                data.username = proc_uri->canon_uri+proc_uri->userinfo_start;
-                data.username_len = (proc_uri->userinfo_split > -1) ? proc_uri->userinfo_split : proc_uri->userinfo_len;
-            }
-
-            if(proc_uri->userinfo_split > -1) {
-                data.password = proc_uri->canon_uri+proc_uri->userinfo_start+proc_uri->userinfo_split+1;
-                data.password_len = proc_uri->userinfo_len-proc_uri->userinfo_split-1;
-            }
-
-            if(proc_uri->host_start > -1) {
-                const WCHAR *host = proc_uri->canon_uri+proc_uri->host_start;
-                parse_host(&host, &data, 0);
-            }
-
-            if(proc_uri->has_port) {
-                data.has_port = TRUE;
-                data.port_value = proc_uri->port;
-            }
-        } else if(base->scheme_type != URL_SCHEME_FILE)
-            data.is_opaque = TRUE;
-
-        if(proc_uri == relative || relative->path_start == -1 || !relative->path_len) {
-            if(proc_uri->path_start > -1) {
-                data.path = proc_uri->canon_uri+proc_uri->path_start;
-                data.path_len = proc_uri->path_len;
-            } else if(!data.is_opaque) {
-                /* Just set the path as a '/' if the base didn't have
-                 * one and if it's a hierarchical URI.
-                 */
-                data.path = L"/";
-                data.path_len = 1;
-            }
-
-            if(relative->query_start > -1)
-                proc_uri = relative;
-
-            if(proc_uri->query_start > -1) {
-                data.query = proc_uri->canon_uri+proc_uri->query_start;
-                data.query_len = proc_uri->query_len;
-            }
-        } else {
-            const WCHAR *ptr, **pptr;
-            DWORD path_offset = 0, path_len = 0;
-
-            /* There's two possibilities on what will happen to the path component
-             * of the result IUri. First, if the relative path begins with a '/'
-             * then the resulting path will just be the relative path. Second, if
-             * relative path doesn't begin with a '/' then the base path and relative
-             * path are merged together.
+        if((uri = get_uri_obj(pIUri))) {
+            /* Only reset the builder if its Uri isn't the same as
+             * the Uri passed to the function.
              */
-            if(relative->path_len && *(relative->canon_uri+relative->path_start) == '/' && data.scheme_type != URL_SCHEME_MK) {
-                WCHAR *tmp = NULL;
-                BOOL copy_drive_path = FALSE;
+            if(This->uri != uri) {
+                reset_builder(This);
 
-                /* If the relative IUri's path starts with a '/', then we
-                 * don't use the base IUri's path. Unless the base IUri
-                 * is a file URI, in which case it uses the drive path of
-                 * the base IUri (if it has any) in the new path.
-                 */
-                if(base->scheme_type == URL_SCHEME_FILE) {
-                    if(base->path_len > 3 && *(base->canon_uri+base->path_start) == '/' &&
-                       is_drive_path(base->canon_uri+base->path_start+1)) {
-                        path_len += 3;
-                        copy_drive_path = TRUE;
-                    }
-                }
+                This->uri = uri;
+                if(uri->has_port)
+                    This->port = uri->port;
 
-                path_len += relative->path_len;
-
-                path = malloc((path_len + 1) * sizeof(WCHAR));
-                if(!path) {
-                    *result = NULL;
-                    return E_OUTOFMEMORY;
-                }
-
-                tmp = path;
-
-                /* Copy the base paths, drive path over. */
-                if(copy_drive_path) {
-                    memcpy(tmp, base->canon_uri+base->path_start, 3*sizeof(WCHAR));
-                    tmp += 3;
-                }
-
-                memcpy(tmp, relative->canon_uri+relative->path_start, relative->path_len*sizeof(WCHAR));
-                path[path_len] = '\0';
-            } else {
-                /* Merge the base path with the relative path. */
-                hr = merge_paths(&data, base->canon_uri+base->path_start, base->path_len,
-                                 relative->canon_uri+relative->path_start, relative->path_len,
-                                 &path, &path_len, flags);
-                if(FAILED(hr)) {
-                    *result = NULL;
-                    return hr;
-                }
-
-                /* If the resulting IUri is a file URI, the drive path isn't
-                 * reduced out when the dot segments are removed.
-                 */
-                if(path_len >= 3 && data.scheme_type == URL_SCHEME_FILE && !data.host) {
-                    if(*path == '/' && is_drive_path(path+1))
-                        path_offset = 2;
-                    else if(is_drive_path(path))
-                        path_offset = 1;
-                }
+                IUri_AddRef(pIUri);
             }
-
-            /* Check if the dot segments need to be removed from the path. */
-            if(!(flags & URL_DONT_SIMPLIFY) && !data.is_opaque) {
-                DWORD offset = (path_offset > 0) ? path_offset+1 : 0;
-                DWORD new_len = remove_dot_segments(path+offset,path_len-offset);
-
-                if(new_len != path_len) {
-                    WCHAR *tmp = realloc(path, (offset + new_len + 1) * sizeof(WCHAR));
-                    if(!tmp) {
-                        free(path);
-                        *result = NULL;
-                        return E_OUTOFMEMORY;
-                    }
-
-                    tmp[new_len+offset] = '\0';
-                    path = tmp;
-                    path_len = new_len+offset;
-                }
-            }
-
-            if(relative->query_start > -1) {
-                data.query = relative->canon_uri+relative->query_start;
-                data.query_len = relative->query_len;
-            }
-
-            /* Make sure the path component is valid. */
-            ptr = path;
-            pptr = &ptr;
-            if((data.is_opaque && !parse_path_opaque(pptr, &data, 0)) ||
-               (!data.is_opaque && !parse_path_hierarchical(pptr, &data, 0))) {
-                free(path);
-                *result = NULL;
-                return E_INVALIDARG;
-            }
+        } else {
+            FIXME("(%p)->(%p) Unknown IUri types not supported yet.\n", This, pIUri);
+            return E_NOTIMPL;
         }
-
-        if(relative->fragment_start > -1) {
-            data.fragment = relative->canon_uri+relative->fragment_start;
-            data.fragment_len = relative->fragment_len;
-        }
-
-        if(flags & URL_DONT_SIMPLIFY)
-            raw_flags |= RAW_URI_FORCE_PORT_DISP;
-        if(flags & URL_FILE_USE_PATHURL)
-            raw_flags |= RAW_URI_CONVERT_TO_DOS_PATH;
-
-        len = generate_raw_uri(&data, data.uri, raw_flags);
-        data.uri = SysAllocStringLen(NULL, len);
-        if(!data.uri) {
-            free(path);
-            *result = NULL;
-            return E_OUTOFMEMORY;
-        }
-
-        generate_raw_uri(&data, data.uri, raw_flags);
-
-        hr = Uri_Construct(NULL, (void**)&ret);
-        if(FAILED(hr)) {
-            SysFreeString(data.uri);
-            free(path);
-            *result = NULL;
-            return hr;
-        }
-
-        if(flags & URL_DONT_SIMPLIFY)
-            create_flags |= Uri_CREATE_NO_CANONICALIZE;
-        if(flags & URL_FILE_USE_PATHURL)
-            create_flags |= Uri_CREATE_FILE_USE_DOS_PATH;
-
-        ret->raw_uri = data.uri;
-        hr = canonicalize_uri(&data, ret, create_flags);
-        if(FAILED(hr)) {
-            IUri_Release(&ret->IUri_iface);
-            *result = NULL;
-            return hr;
-        }
-
-        if(flags & URL_DONT_SIMPLIFY)
-            ret->display_modifiers |= URI_DISPLAY_NO_DEFAULT_PORT_AUTH;
-
-        apply_default_flags(&create_flags);
-        ret->create_flags = create_flags;
-        *result = &ret->IUri_iface;
-
-        free(path);
-    }
+    } else if(This->uri)
+        /* Only reset the builder if its Uri isn't NULL. */
+        reset_builder(This);
 
     return S_OK;
 }
 
-/***********************************************************************
- *           CoInternetCombineIUri (urlmon.@)
- */
-HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD dwCombineFlags,
-                                     IUri **ppCombinedUri, DWORD_PTR dwReserved)
+static HRESULT WINAPI UriBuilder_GetFragment(IUriBuilder *iface, DWORD *pcchFragment, LPCWSTR *ppwzFragment)
 {
-    HRESULT hr;
-    IInternetProtocolInfo *info;
-    Uri *relative, *base;
-    TRACE("(%p %p %lx %p %Ix)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, dwReserved);
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchFragment, ppwzFragment);
 
-    if(!ppCombinedUri)
-        return E_INVALIDARG;
-
-    if(!pBaseUri || !pRelativeUri) {
-        *ppCombinedUri = NULL;
-        return E_INVALIDARG;
-    }
-
-    relative = get_uri_obj(pRelativeUri);
-    base = get_uri_obj(pBaseUri);
-    if(!relative || !base) {
-        *ppCombinedUri = NULL;
-        FIXME("(%p %p %lx %p %Ix) Unknown IUri types not supported yet.\n",
-            pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, dwReserved);
-        return E_NOTIMPL;
-    }
-
-    info = get_protocol_info(base->canon_uri);
-    if(info) {
-        WCHAR result[INTERNET_MAX_URL_LENGTH+1];
-        DWORD result_len = 0;
-
-        hr = IInternetProtocolInfo_CombineUrl(info, base->canon_uri, relative->canon_uri, dwCombineFlags,
-                                              result, INTERNET_MAX_URL_LENGTH+1, &result_len, 0);
-        IInternetProtocolInfo_Release(info);
-        if(SUCCEEDED(hr)) {
-            hr = CreateUri(result, Uri_CREATE_ALLOW_RELATIVE, 0, ppCombinedUri);
-            if(SUCCEEDED(hr))
-                return hr;
-        }
-    }
-
-    return combine_uri(base, relative, dwCombineFlags, ppCombinedUri, 0);
+    if(!This->uri || This->uri->fragment_start == -1 || This->modified_props & Uri_HAS_FRAGMENT)
+        return get_builder_component(&This->fragment, &This->fragment_len, NULL, 0, ppwzFragment, pcchFragment);
+    else
+        return get_builder_component(&This->fragment, &This->fragment_len, This->uri->canon_uri+This->uri->fragment_start,
+                                     This->uri->fragment_len, ppwzFragment, pcchFragment);
 }
 
-/***********************************************************************
- *           CoInternetCombineUrlEx (urlmon.@)
- */
-HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags,
-                                      IUri **ppCombinedUri, DWORD_PTR dwReserved)
+static HRESULT WINAPI UriBuilder_GetHost(IUriBuilder *iface, DWORD *pcchHost, LPCWSTR *ppwzHost)
 {
-    IUri *relative;
-    Uri *base;
-    HRESULT hr;
-    IInternetProtocolInfo *info;
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchHost, ppwzHost);
 
-    TRACE("(%p %s %lx %p %Ix)\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
-        ppCombinedUri, dwReserved);
+    if(!This->uri || This->uri->host_start == -1 || This->modified_props & Uri_HAS_HOST)
+        return get_builder_component(&This->host, &This->host_len, NULL, 0, ppwzHost, pcchHost);
+    else {
+        if(This->uri->host_type == Uri_HOST_IPV6)
+            /* Don't include the '[' and ']' around the address. */
+            return get_builder_component(&This->host, &This->host_len, This->uri->canon_uri+This->uri->host_start+1,
+                                         This->uri->host_len-2, ppwzHost, pcchHost);
+        else
+            return get_builder_component(&This->host, &This->host_len, This->uri->canon_uri+This->uri->host_start,
+                                         This->uri->host_len, ppwzHost, pcchHost);
+    }
+}
 
-    if(!ppCombinedUri)
+static HRESULT WINAPI UriBuilder_GetPassword(IUriBuilder *iface, DWORD *pcchPassword, LPCWSTR *ppwzPassword)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchPassword, ppwzPassword);
+
+    if(!This->uri || This->uri->userinfo_split == -1 || This->modified_props & Uri_HAS_PASSWORD)
+        return get_builder_component(&This->password, &This->password_len, NULL, 0, ppwzPassword, pcchPassword);
+    else {
+        const WCHAR *start = This->uri->canon_uri+This->uri->userinfo_start+This->uri->userinfo_split+1;
+        DWORD len = This->uri->userinfo_len-This->uri->userinfo_split-1;
+        return get_builder_component(&This->password, &This->password_len, start, len, ppwzPassword, pcchPassword);
+    }
+}
+
+static HRESULT WINAPI UriBuilder_GetPath(IUriBuilder *iface, DWORD *pcchPath, LPCWSTR *ppwzPath)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchPath, ppwzPath);
+
+    if(!This->uri || This->uri->path_start == -1 || This->modified_props & Uri_HAS_PATH)
+        return get_builder_component(&This->path, &This->path_len, NULL, 0, ppwzPath, pcchPath);
+    else
+        return get_builder_component(&This->path, &This->path_len, This->uri->canon_uri+This->uri->path_start,
+                                     This->uri->path_len, ppwzPath, pcchPath);
+}
+
+static HRESULT WINAPI UriBuilder_GetPort(IUriBuilder *iface, BOOL *pfHasPort, DWORD *pdwPort)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pfHasPort, pdwPort);
+
+    if(!pfHasPort) {
+        if(pdwPort)
+            *pdwPort = 0;
+        return E_POINTER;
+    }
+
+    if(!pdwPort) {
+        *pfHasPort = FALSE;
+        return E_POINTER;
+    }
+
+    *pfHasPort = This->has_port;
+    *pdwPort = This->port;
+    return S_OK;
+}
+
+static HRESULT WINAPI UriBuilder_GetQuery(IUriBuilder *iface, DWORD *pcchQuery, LPCWSTR *ppwzQuery)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchQuery, ppwzQuery);
+
+    if(!This->uri || This->uri->query_start == -1 || This->modified_props & Uri_HAS_QUERY)
+        return get_builder_component(&This->query, &This->query_len, NULL, 0, ppwzQuery, pcchQuery);
+    else
+        return get_builder_component(&This->query, &This->query_len, This->uri->canon_uri+This->uri->query_start,
+                                     This->uri->query_len, ppwzQuery, pcchQuery);
+}
+
+static HRESULT WINAPI UriBuilder_GetSchemeName(IUriBuilder *iface, DWORD *pcchSchemeName, LPCWSTR *ppwzSchemeName)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchSchemeName, ppwzSchemeName);
+
+    if(!This->uri || This->uri->scheme_start == -1 || This->modified_props & Uri_HAS_SCHEME_NAME)
+        return get_builder_component(&This->scheme, &This->scheme_len, NULL, 0, ppwzSchemeName, pcchSchemeName);
+    else
+        return get_builder_component(&This->scheme, &This->scheme_len, This->uri->canon_uri+This->uri->scheme_start,
+                                     This->uri->scheme_len, ppwzSchemeName, pcchSchemeName);
+}
+
+static HRESULT WINAPI UriBuilder_GetUserName(IUriBuilder *iface, DWORD *pcchUserName, LPCWSTR *ppwzUserName)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchUserName, ppwzUserName);
+
+    if(!This->uri || This->uri->userinfo_start == -1 || This->uri->userinfo_split == 0 ||
+       This->modified_props & Uri_HAS_USER_NAME)
+        return get_builder_component(&This->username, &This->username_len, NULL, 0, ppwzUserName, pcchUserName);
+    else {
+        const WCHAR *start = This->uri->canon_uri+This->uri->userinfo_start;
+
+        /* Check if there's a password in the userinfo section. */
+        if(This->uri->userinfo_split > -1)
+            /* Don't include the password. */
+            return get_builder_component(&This->username, &This->username_len, start,
+                                         This->uri->userinfo_split, ppwzUserName, pcchUserName);
+        else
+            return get_builder_component(&This->username, &This->username_len, start,
+                                         This->uri->userinfo_len, ppwzUserName, pcchUserName);
+    }
+}
+
+static HRESULT WINAPI UriBuilder_SetFragment(IUriBuilder *iface, LPCWSTR pwzNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->fragment, &This->fragment_len, pwzNewValue, '#',
+                                 &This->modified_props, Uri_HAS_FRAGMENT);
+}
+
+static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+
+    /* Host name can't be set to NULL. */
+    if(!pwzNewValue)
+        return E_INVALIDARG;
+
+    return set_builder_component(&This->host, &This->host_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_HOST);
+}
+
+static HRESULT WINAPI UriBuilder_SetPassword(IUriBuilder *iface, LPCWSTR pwzNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->password, &This->password_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_PASSWORD);
+}
+
+static HRESULT WINAPI UriBuilder_SetPath(IUriBuilder *iface, LPCWSTR pwzNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->path, &This->path_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_PATH);
+}
+
+static HRESULT WINAPI UriBuilder_SetPort(IUriBuilder *iface, BOOL fHasPort, DWORD dwNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%d %ld)\n", This, fHasPort, dwNewValue);
+
+    This->has_port = fHasPort;
+    This->port = dwNewValue;
+    This->modified_props |= Uri_HAS_PORT;
+    return S_OK;
+}
+
+static HRESULT WINAPI UriBuilder_SetQuery(IUriBuilder *iface, LPCWSTR pwzNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->query, &This->query_len, pwzNewValue, '?',
+                                 &This->modified_props, Uri_HAS_QUERY);
+}
+
+static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+
+    /* Only set the scheme name if it's not NULL or empty. */
+    if(!pwzNewValue || !*pwzNewValue)
+        return E_INVALIDARG;
+
+    return set_builder_component(&This->scheme, &This->scheme_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_SCHEME_NAME);
+}
+
+static HRESULT WINAPI UriBuilder_SetUserName(IUriBuilder *iface, LPCWSTR pwzNewValue)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->username, &This->username_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_USER_NAME);
+}
+
+static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPropertyMask)
+{
+    const DWORD accepted_flags = Uri_HAS_AUTHORITY|Uri_HAS_DOMAIN|Uri_HAS_EXTENSION|Uri_HAS_FRAGMENT|Uri_HAS_HOST|
+                                 Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|
+                                 Uri_HAS_USER_INFO|Uri_HAS_USER_NAME;
+
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(0x%08lx)\n", This, dwPropertyMask);
+
+    if(dwPropertyMask & ~accepted_flags)
+        return E_INVALIDARG;
+
+    if(dwPropertyMask & Uri_HAS_FRAGMENT)
+        UriBuilder_SetFragment(iface, NULL);
+
+    /* Even though you can't set the host name to NULL or an
+     * empty string, you can still remove it... for some reason.
+     */
+    if(dwPropertyMask & Uri_HAS_HOST)
+        set_builder_component(&This->host, &This->host_len, NULL, 0,
+                              &This->modified_props, Uri_HAS_HOST);
+
+    if(dwPropertyMask & Uri_HAS_PASSWORD)
+        UriBuilder_SetPassword(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_PATH)
+        UriBuilder_SetPath(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_PORT)
+        UriBuilder_SetPort(iface, FALSE, 0);
+
+    if(dwPropertyMask & Uri_HAS_QUERY)
+        UriBuilder_SetQuery(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_USER_NAME)
+        UriBuilder_SetUserName(iface, NULL);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI UriBuilder_HasBeenModified(IUriBuilder *iface, BOOL *pfModified)
+{
+    UriBuilder *This = impl_from_IUriBuilder(iface);
+    TRACE("(%p)->(%p)\n", This, pfModified);
+
+    if(!pfModified)
         return E_POINTER;
 
-    if(!pwzRelativeUrl) {
-        *ppCombinedUri = NULL;
-        return E_UNEXPECTED;
-    }
-
-    if(!pBaseUri) {
-        *ppCombinedUri = NULL;
-        return E_INVALIDARG;
-    }
-
-    base = get_uri_obj(pBaseUri);
-    if(!base) {
-        *ppCombinedUri = NULL;
-        FIXME("(%p %s %lx %p %Ix) Unknown IUri's not supported yet.\n", pBaseUri, debugstr_w(pwzRelativeUrl),
-            dwCombineFlags, ppCombinedUri, dwReserved);
-        return E_NOTIMPL;
-    }
-
-    info = get_protocol_info(base->canon_uri);
-    if(info) {
-        WCHAR result[INTERNET_MAX_URL_LENGTH+1];
-        DWORD result_len = 0;
-
-        hr = IInternetProtocolInfo_CombineUrl(info, base->canon_uri, pwzRelativeUrl, dwCombineFlags,
-                                              result, INTERNET_MAX_URL_LENGTH+1, &result_len, 0);
-        IInternetProtocolInfo_Release(info);
-        if(SUCCEEDED(hr)) {
-            hr = CreateUri(result, Uri_CREATE_ALLOW_RELATIVE, 0, ppCombinedUri);
-            if(SUCCEEDED(hr))
-                return hr;
-        }
-    }
-
-    hr = CreateUri(pwzRelativeUrl, Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &relative);
-    if(FAILED(hr)) {
-        *ppCombinedUri = NULL;
-        return hr;
-    }
-
-    hr = combine_uri(base, get_uri_obj(relative), dwCombineFlags, ppCombinedUri, COMBINE_URI_FORCE_FLAG_USE);
-
-    IUri_Release(relative);
-    return hr;
-}
-
-static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
-                                  DWORD output_len, DWORD *result_len)
-{
-    const WCHAR *ptr = NULL;
-    WCHAR *path = NULL;
-    const WCHAR **pptr;
-    DWORD len = 0;
-    BOOL reduce_path;
-
-    /* URL_UNESCAPE only has effect if none of the URL_ESCAPE flags are set. */
-    const BOOL allow_unescape = !(flags & URL_ESCAPE_UNSAFE) &&
-                                !(flags & URL_ESCAPE_SPACES_ONLY) &&
-                                !(flags & URL_ESCAPE_PERCENT);
-
-
-    /* Check if the dot segments need to be removed from the
-     * path component.
-     */
-    if(uri->scheme_start > -1 && uri->path_start > -1) {
-        ptr = uri->canon_uri+uri->scheme_start+uri->scheme_len+1;
-        pptr = &ptr;
-    }
-    reduce_path = !(flags & URL_DONT_SIMPLIFY) &&
-                  ptr && check_hierarchical(pptr);
-
-    for(ptr = uri->canon_uri; ptr < uri->canon_uri+uri->canon_len; ++ptr) {
-        BOOL do_default_action = TRUE;
-
-        /* Keep track of the path if we need to remove dot segments from
-         * it later.
-         */
-        if(reduce_path && !path && ptr == uri->canon_uri+uri->path_start)
-            path = output+len;
-
-        /* Check if it's time to reduce the path. */
-        if(reduce_path && ptr == uri->canon_uri+uri->path_start+uri->path_len) {
-            DWORD current_path_len = (output+len) - path;
-            DWORD new_path_len = remove_dot_segments(path, current_path_len);
-
-            /* Update the current length. */
-            len -= (current_path_len-new_path_len);
-            reduce_path = FALSE;
-        }
-
-        if(*ptr == '%') {
-            const WCHAR decoded = decode_pct_val(ptr);
-            if(decoded) {
-                if(allow_unescape && (flags & URL_UNESCAPE)) {
-                    if(len < output_len)
-                        output[len] = decoded;
-                    len++;
-                    ptr += 2;
-                    do_default_action = FALSE;
-                }
-            }
-
-            /* See if %'s needed to encoded. */
-            if(do_default_action && (flags & URL_ESCAPE_PERCENT)) {
-                if(len + 3 < output_len)
-                    pct_encode_val(*ptr, output+len);
-                len += 3;
-                do_default_action = FALSE;
-            }
-        } else if(*ptr == ' ') {
-            if((flags & URL_ESCAPE_SPACES_ONLY) &&
-               !(flags & URL_ESCAPE_UNSAFE)) {
-                if(len + 3 < output_len)
-                    pct_encode_val(*ptr, output+len);
-                len += 3;
-                do_default_action = FALSE;
-            }
-        } else if(is_ascii(*ptr) && !is_reserved(*ptr) && !is_unreserved(*ptr)) {
-            if(flags & URL_ESCAPE_UNSAFE) {
-                if(len + 3 < output_len)
-                    pct_encode_val(*ptr, output+len);
-                len += 3;
-                do_default_action = FALSE;
-            }
-        }
-
-        if(do_default_action) {
-            if(len < output_len)
-                output[len] = *ptr;
-            len++;
-        }
-    }
-
-    /* Sometimes the path is the very last component of the IUri, so
-     * see if the dot segments need to be reduced now.
-     */
-    if(reduce_path && path) {
-        DWORD current_path_len = (output+len) - path;
-        DWORD new_path_len = remove_dot_segments(path, current_path_len);
-
-        /* Update the current length. */
-        len -= (current_path_len-new_path_len);
-    }
-
-    if(len < output_len)
-        output[len] = 0;
-    else
-        output[output_len-1] = 0;
-
-    /* The null terminator isn't included in the length. */
-    *result_len = len;
-    if(len >= output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
+    *pfModified = This->modified_props > 0;
     return S_OK;
 }
 
-static HRESULT parse_friendly(IUri *uri, LPWSTR output, DWORD output_len,
-                              DWORD *result_len)
-{
-    HRESULT hr;
-    DWORD display_len;
-    BSTR display;
-
-    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_DISPLAY_URI, &display_len, 0);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    *result_len = display_len;
-    if(display_len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    hr = IUri_GetDisplayUri(uri, &display);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    memcpy(output, display, (display_len+1)*sizeof(WCHAR));
-    SysFreeString(display);
-    return S_OK;
-}
-
-static HRESULT parse_rootdocument(const Uri *uri, LPWSTR output, DWORD output_len,
-                                  DWORD *result_len)
-{
-    static const WCHAR colon_slashesW[] = {':','/','/'};
-
-    WCHAR *ptr;
-    DWORD len = 0;
-
-    /* Windows only returns the root document if the URI has an authority
-     * and it's not an unknown scheme type or a file scheme type.
-     */
-    if(uri->authority_start == -1 ||
-       uri->scheme_type == URL_SCHEME_UNKNOWN ||
-       uri->scheme_type == URL_SCHEME_FILE) {
-        *result_len = 0;
-        if(!output_len)
-            return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-        output[0] = 0;
-        return S_OK;
-    }
-
-    len = uri->scheme_len+uri->authority_len;
-    /* For the "://" and '/' which will be added. */
-    len += 4;
-
-    if(len+1 > output_len) {
-        *result_len = len;
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-    }
-
-    ptr = output;
-    memcpy(ptr, uri->canon_uri+uri->scheme_start, uri->scheme_len*sizeof(WCHAR));
-
-    /* Add the "://". */
-    ptr += uri->scheme_len;
-    memcpy(ptr, colon_slashesW, sizeof(colon_slashesW));
-
-    /* Add the authority. */
-    ptr += ARRAY_SIZE(colon_slashesW);
-    memcpy(ptr, uri->canon_uri+uri->authority_start, uri->authority_len*sizeof(WCHAR));
-
-    /* Add the '/' after the authority. */
-    ptr += uri->authority_len;
-    *ptr = '/';
-    ptr[1] = 0;
-
-    *result_len = len;
-    return S_OK;
-}
-
-static HRESULT parse_document(const Uri *uri, LPWSTR output, DWORD output_len,
-                              DWORD *result_len)
-{
-    DWORD len = 0;
-
-    /* It has to be a known scheme type, but, it can't be a file
-     * scheme. It also has to hierarchical.
-     */
-    if(uri->scheme_type == URL_SCHEME_UNKNOWN ||
-       uri->scheme_type == URL_SCHEME_FILE ||
-       uri->authority_start == -1) {
-        *result_len = 0;
-        if(output_len < 1)
-            return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-        output[0] = 0;
-        return S_OK;
-    }
-
-    if(uri->fragment_start > -1)
-        len = uri->fragment_start;
-    else
-        len = uri->canon_len;
-
-    *result_len = len;
-    if(len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    memcpy(output, uri->canon_uri, len*sizeof(WCHAR));
-    output[len] = 0;
-    return S_OK;
-}
-
-static HRESULT parse_path_from_url(const Uri *uri, LPWSTR output, DWORD output_len,
-                                   DWORD *result_len)
-{
-    const WCHAR *path_ptr;
-    WCHAR buffer[INTERNET_MAX_URL_LENGTH+1];
-    WCHAR *ptr;
-
-    if(uri->scheme_type != URL_SCHEME_FILE) {
-        *result_len = 0;
-        if(output_len > 0)
-            output[0] = 0;
-        return E_INVALIDARG;
-    }
-
-    ptr = buffer;
-    if(uri->host_start > -1) {
-        static const WCHAR slash_slashW[] = {'\\','\\'};
-
-        memcpy(ptr, slash_slashW, sizeof(slash_slashW));
-        ptr += ARRAY_SIZE(slash_slashW);
-        memcpy(ptr, uri->canon_uri+uri->host_start, uri->host_len*sizeof(WCHAR));
-        ptr += uri->host_len;
-    }
-
-    path_ptr = uri->canon_uri+uri->path_start;
-    if(uri->path_len > 3 && *path_ptr == '/' && is_drive_path(path_ptr+1))
-        /* Skip past the '/' in front of the drive path. */
-        ++path_ptr;
-
-    for(; path_ptr < uri->canon_uri+uri->path_start+uri->path_len; ++path_ptr, ++ptr) {
-        BOOL do_default_action = TRUE;
-
-        if(*path_ptr == '%') {
-            const WCHAR decoded = decode_pct_val(path_ptr);
-            if(decoded) {
-                *ptr = decoded;
-                path_ptr += 2;
-                do_default_action = FALSE;
-            }
-        } else if(*path_ptr == '/') {
-            *ptr = '\\';
-            do_default_action = FALSE;
-        }
-
-        if(do_default_action)
-            *ptr = *path_ptr;
-    }
-
-    *ptr = 0;
-
-    *result_len = ptr-buffer;
-    if(*result_len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    memcpy(output, buffer, (*result_len+1)*sizeof(WCHAR));
-    return S_OK;
-}
-
-static HRESULT parse_url_from_path(IUri *uri, LPWSTR output, DWORD output_len,
-                                   DWORD *result_len)
-{
-    HRESULT hr;
-    BSTR received;
-    DWORD len = 0;
-
-    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_ABSOLUTE_URI, &len, 0);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    *result_len = len;
-    if(len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    hr = IUri_GetAbsoluteUri(uri, &received);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    memcpy(output, received, (len+1)*sizeof(WCHAR));
-    SysFreeString(received);
-
-    return S_OK;
-}
-
-static HRESULT parse_schema(IUri *uri, LPWSTR output, DWORD output_len,
-                            DWORD *result_len)
-{
-    HRESULT hr;
-    DWORD len;
-    BSTR received;
-
-    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_SCHEME_NAME, &len, 0);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    *result_len = len;
-    if(len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    hr = IUri_GetSchemeName(uri, &received);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    memcpy(output, received, (len+1)*sizeof(WCHAR));
-    SysFreeString(received);
-
-    return S_OK;
-}
-
-static HRESULT parse_site(IUri *uri, LPWSTR output, DWORD output_len, DWORD *result_len)
-{
-    HRESULT hr;
-    DWORD len;
-    BSTR received;
-
-    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_HOST, &len, 0);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    *result_len = len;
-    if(len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    hr = IUri_GetHost(uri, &received);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    memcpy(output, received, (len+1)*sizeof(WCHAR));
-    SysFreeString(received);
-
-    return S_OK;
-}
-
-static HRESULT parse_domain(IUri *uri, LPWSTR output, DWORD output_len, DWORD *result_len)
-{
-    HRESULT hr;
-    DWORD len;
-    BSTR received;
-
-    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_DOMAIN, &len, 0);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    *result_len = len;
-    if(len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    hr = IUri_GetDomain(uri, &received);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    memcpy(output, received, (len+1)*sizeof(WCHAR));
-    SysFreeString(received);
-
-    return S_OK;
-}
-
-static HRESULT parse_anchor(IUri *uri, LPWSTR output, DWORD output_len, DWORD *result_len)
-{
-    HRESULT hr;
-    DWORD len;
-    BSTR received;
-
-    hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_FRAGMENT, &len, 0);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    *result_len = len;
-    if(len+1 > output_len)
-        return STRSAFE_E_INSUFFICIENT_BUFFER;
-
-    hr = IUri_GetFragment(uri, &received);
-    if(FAILED(hr)) {
-        *result_len = 0;
-        return hr;
-    }
-
-    memcpy(output, received, (len+1)*sizeof(WCHAR));
-    SysFreeString(received);
-
-    return S_OK;
-}
+static const IUriBuilderVtbl UriBuilderVtbl = {
+    UriBuilder_QueryInterface,
+    UriBuilder_AddRef,
+    UriBuilder_Release,
+    UriBuilder_CreateUriSimple,
+    UriBuilder_CreateUri,
+    UriBuilder_CreateUriWithFlags,
+    UriBuilder_GetIUri,
+    UriBuilder_SetIUri,
+    UriBuilder_GetFragment,
+    UriBuilder_GetHost,
+    UriBuilder_GetPassword,
+    UriBuilder_GetPath,
+    UriBuilder_GetPort,
+    UriBuilder_GetQuery,
+    UriBuilder_GetSchemeName,
+    UriBuilder_GetUserName,
+    UriBuilder_SetFragment,
+    UriBuilder_SetHost,
+    UriBuilder_SetPassword,
+    UriBuilder_SetPath,
+    UriBuilder_SetPort,
+    UriBuilder_SetQuery,
+    UriBuilder_SetSchemeName,
+    UriBuilder_SetUserName,
+    UriBuilder_RemoveProperties,
+    UriBuilder_HasBeenModified,
+};
 
 /***********************************************************************
- *           CoInternetParseIUri (urlmon.@)
+ *           CreateIUriBuilder (iertutil.@)
  */
-HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD dwFlags,
-                                   LPWSTR pwzResult, DWORD cchResult, DWORD *pcchResult,
-                                   DWORD_PTR dwReserved)
+HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserved, IUriBuilder **ppIUriBuilder)
 {
-    HRESULT hr;
-    Uri *uri;
-    IInternetProtocolInfo *info;
+    UriBuilder *ret;
 
-    TRACE("(%p %d %lx %p %ld %p %Ix)\n", pIUri, ParseAction, dwFlags, pwzResult,
-        cchResult, pcchResult, dwReserved);
+    TRACE("(%p %lx %Ix %p)\n", pIUri, dwFlags, dwReserved, ppIUriBuilder);
 
-    if(!pcchResult)
+    if(!ppIUriBuilder)
         return E_POINTER;
 
-    if(!pwzResult || !pIUri) {
-        *pcchResult = 0;
-        return E_INVALIDARG;
+    ret = calloc(1, sizeof(UriBuilder));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IUriBuilder_iface.lpVtbl = &UriBuilderVtbl;
+    ret->ref = 1;
+
+    if(pIUri) {
+        Uri *uri;
+
+        if((uri = get_uri_obj(pIUri))) {
+            if(!uri->create_flags) {
+                free(ret);
+                return E_UNEXPECTED;
+            }
+            IUri_AddRef(pIUri);
+            ret->uri = uri;
+
+            if(uri->has_port)
+                /* Windows doesn't set 'has_port' to TRUE in this case. */
+                ret->port = uri->port;
+
+        } else {
+            free(ret);
+            *ppIUriBuilder = NULL;
+            FIXME("(%p %lx %Ix %p): Unknown IUri types not supported yet.\n", pIUri, dwFlags,
+                  dwReserved, ppIUriBuilder);
+            return E_NOTIMPL;
+        }
     }
 
-    if(!(uri = get_uri_obj(pIUri))) {
-        *pcchResult = 0;
-        FIXME("(%p %d %lx %p %ld %p %Ix) Unknown IUri's not supported for this action.\n",
-            pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, dwReserved);
-        return E_NOTIMPL;
-    }
-
-    info = get_protocol_info(uri->canon_uri);
-    if(info) {
-        hr = IInternetProtocolInfo_ParseUrl(info, uri->canon_uri, ParseAction, dwFlags,
-                                            pwzResult, cchResult, pcchResult, 0);
-        IInternetProtocolInfo_Release(info);
-        if(SUCCEEDED(hr)) return hr;
-    }
-
-    switch(ParseAction) {
-    case PARSE_CANONICALIZE:
-        hr = parse_canonicalize(uri, dwFlags, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_FRIENDLY:
-        hr = parse_friendly(pIUri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_ROOTDOCUMENT:
-        hr = parse_rootdocument(uri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_DOCUMENT:
-        hr = parse_document(uri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_PATH_FROM_URL:
-        hr = parse_path_from_url(uri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_URL_FROM_PATH:
-        hr = parse_url_from_path(pIUri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_SCHEMA:
-        hr = parse_schema(pIUri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_SITE:
-        hr = parse_site(pIUri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_DOMAIN:
-        hr = parse_domain(pIUri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_LOCATION:
-    case PARSE_ANCHOR:
-        hr = parse_anchor(pIUri, pwzResult, cchResult, pcchResult);
-        break;
-    case PARSE_SECURITY_URL:
-    case PARSE_MIME:
-    case PARSE_SERVER:
-    case PARSE_SECURITY_DOMAIN:
-        *pcchResult = 0;
-        hr = E_FAIL;
-        break;
-    default:
-        *pcchResult = 0;
-        hr = E_NOTIMPL;
-        FIXME("(%p %d %lx %p %ld %p %Ix) Partial stub.\n", pIUri, ParseAction, dwFlags,
-            pwzResult, cchResult, pcchResult, dwReserved);
-    }
-
-    return hr;
+    *ppIUriBuilder = &ret->IUriBuilder_iface;
+    return S_OK;
 }
