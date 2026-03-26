@@ -33,7 +33,7 @@ static inline struct json_object *impl_from_IJsonObject( IJsonObject *iface )
     return CONTAINING_RECORD( iface, struct json_object, IJsonObject_iface );
 }
 
-static HRESULT WINAPI json_object_statics_QueryInterface( IJsonObject *iface, REFIID iid, void **out )
+static HRESULT WINAPI json_object_QueryInterface( IJsonObject *iface, REFIID iid, void **out )
 {
     struct json_object *impl = impl_from_IJsonObject( iface );
 
@@ -54,7 +54,7 @@ static HRESULT WINAPI json_object_statics_QueryInterface( IJsonObject *iface, RE
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI json_object_statics_AddRef( IJsonObject *iface )
+static ULONG WINAPI json_object_AddRef( IJsonObject *iface )
 {
     struct json_object *impl = impl_from_IJsonObject( iface );
     ULONG ref = InterlockedIncrement( &impl->ref );
@@ -62,7 +62,7 @@ static ULONG WINAPI json_object_statics_AddRef( IJsonObject *iface )
     return ref;
 }
 
-static ULONG WINAPI json_object_statics_Release( IJsonObject *iface )
+static ULONG WINAPI json_object_Release( IJsonObject *iface )
 {
     struct json_object *impl = impl_from_IJsonObject( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
@@ -73,83 +73,83 @@ static ULONG WINAPI json_object_statics_Release( IJsonObject *iface )
     return ref;
 }
 
-static HRESULT WINAPI json_object_statics_GetIids( IJsonObject *iface, ULONG *iid_count, IID **iids )
+static HRESULT WINAPI json_object_GetIids( IJsonObject *iface, ULONG *iid_count, IID **iids )
 {
     FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetRuntimeClassName( IJsonObject *iface, HSTRING *class_name )
+static HRESULT WINAPI json_object_GetRuntimeClassName( IJsonObject *iface, HSTRING *class_name )
 {
     FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetTrustLevel( IJsonObject *iface, TrustLevel *trust_level )
+static HRESULT WINAPI json_object_GetTrustLevel( IJsonObject *iface, TrustLevel *trust_level )
 {
     FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetNamedValue( IJsonObject *iface, HSTRING name, IJsonValue **value )
+static HRESULT WINAPI json_object_GetNamedValue( IJsonObject *iface, HSTRING name, IJsonValue **value )
 {
     FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_SetNamedValue( IJsonObject *iface, HSTRING name, IJsonValue *value )
+static HRESULT WINAPI json_object_SetNamedValue( IJsonObject *iface, HSTRING name, IJsonValue *value )
 {
     FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetNamedObject( IJsonObject *iface, HSTRING name, IJsonObject **value )
+static HRESULT WINAPI json_object_GetNamedObject( IJsonObject *iface, HSTRING name, IJsonObject **value )
 {
     FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetNamedArray( IJsonObject *iface, HSTRING name, IJsonArray **value )
+static HRESULT WINAPI json_object_GetNamedArray( IJsonObject *iface, HSTRING name, IJsonArray **value )
 {
     FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetNamedString( IJsonObject *iface, HSTRING name, HSTRING *value )
+static HRESULT WINAPI json_object_GetNamedString( IJsonObject *iface, HSTRING name, HSTRING *value )
 {
     FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetNamedNumber( IJsonObject *iface, HSTRING name, DOUBLE *value )
+static HRESULT WINAPI json_object_GetNamedNumber( IJsonObject *iface, HSTRING name, DOUBLE *value )
 {
     FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI json_object_statics_GetNamedBoolean( IJsonObject *iface, HSTRING name, boolean *value )
+static HRESULT WINAPI json_object_GetNamedBoolean( IJsonObject *iface, HSTRING name, boolean *value )
 {
     FIXME( "iface %p, name %s, value %p stub!\n", iface, debugstr_hstring( name ), value );
     return E_NOTIMPL;
 }
 
-static const struct IJsonObjectVtbl json_object_statics_vtbl =
+static const struct IJsonObjectVtbl json_object_vtbl =
 {
-    json_object_statics_QueryInterface,
-    json_object_statics_AddRef,
-    json_object_statics_Release,
+    json_object_QueryInterface,
+    json_object_AddRef,
+    json_object_Release,
     /* IInspectable methods */
-    json_object_statics_GetIids,
-    json_object_statics_GetRuntimeClassName,
-    json_object_statics_GetTrustLevel,
+    json_object_GetIids,
+    json_object_GetRuntimeClassName,
+    json_object_GetTrustLevel,
     /* IJsonObject methods */
-    json_object_statics_GetNamedValue,
-    json_object_statics_SetNamedValue,
-    json_object_statics_GetNamedObject,
-    json_object_statics_GetNamedArray,
-    json_object_statics_GetNamedString,
-    json_object_statics_GetNamedNumber,
-    json_object_statics_GetNamedBoolean,
+    json_object_GetNamedValue,
+    json_object_SetNamedValue,
+    json_object_GetNamedObject,
+    json_object_GetNamedArray,
+    json_object_GetNamedString,
+    json_object_GetNamedNumber,
+    json_object_GetNamedBoolean,
 };
 
 struct json_object_statics
@@ -227,7 +227,7 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
     *instance = NULL;
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
 
-    impl->IJsonObject_iface.lpVtbl = &json_object_statics_vtbl;
+    impl->IJsonObject_iface.lpVtbl = &json_object_vtbl;
     impl->ref = 1;
 
     *instance = (IInspectable *)&impl->IJsonObject_iface;
