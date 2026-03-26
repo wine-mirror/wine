@@ -646,8 +646,8 @@ static HRESULT variant_call(exec_ctx_t *ctx, VARIANT *v, unsigned arg_cnt, VARIA
         stack_popn(ctx, arg_cnt);
         return hres;
     default:
-        FIXME("unsupported on %s\n", debugstr_variant(v));
-        return E_NOTIMPL;
+        WARN("unsupported on %s\n", debugstr_variant(v));
+        return DISP_E_TYPEMISMATCH;
     }
 
     if(!res) {

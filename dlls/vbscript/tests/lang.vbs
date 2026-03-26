@@ -2393,6 +2393,97 @@ for each x in noarr
     Call ok(false, "Empty array contains: " & x)
 next
 
+' Indexing non-array variables should give type mismatch (error 13)
+sub test_index_non_array
+    dim tmp
+    on error resume next
+
+    ' indexed assign
+    x = 42
+    err.clear
+    x(0) = 1
+    call ok(err.number = 13, "assign int(0): err.number = " & err.number)
+
+    x = "hello"
+    err.clear
+    x(0) = 1
+    call ok(err.number = 13, "assign str(0): err.number = " & err.number)
+
+    x = True
+    err.clear
+    x(0) = 1
+    call ok(err.number = 13, "assign bool(0): err.number = " & err.number)
+
+    x = Empty
+    err.clear
+    x(0) = 1
+    call ok(err.number = 13, "assign empty(0): err.number = " & err.number)
+
+    x = Null
+    err.clear
+    x(0) = 1
+    call ok(err.number = 13, "assign null(0): err.number = " & err.number)
+
+    x = 3.14
+    err.clear
+    x(0) = 1
+    call ok(err.number = 13, "assign double(0): err.number = " & err.number)
+
+    x = Now
+    err.clear
+    x(0) = 1
+    call ok(err.number = 13, "assign date(0): err.number = " & err.number)
+
+    ' indexed read
+    x = 42
+    err.clear
+    tmp = x(0)
+    call ok(err.number = 13, "read int(0): err.number = " & err.number)
+
+    x = "hello"
+    err.clear
+    tmp = x(0)
+    call ok(err.number = 13, "read str(0): err.number = " & err.number)
+
+    x = True
+    err.clear
+    tmp = x(0)
+    call ok(err.number = 13, "read bool(0): err.number = " & err.number)
+
+    x = Empty
+    err.clear
+    tmp = x(0)
+    call ok(err.number = 13, "read empty(0): err.number = " & err.number)
+
+    x = Null
+    err.clear
+    tmp = x(0)
+    call ok(err.number = 13, "read null(0): err.number = " & err.number)
+
+    x = 3.14
+    err.clear
+    tmp = x(0)
+    call ok(err.number = 13, "read double(0): err.number = " & err.number)
+
+    x = Now
+    err.clear
+    tmp = x(0)
+    call ok(err.number = 13, "read date(0): err.number = " & err.number)
+
+    ' multi-index on non-array
+    x = 42
+    err.clear
+    tmp = x(0, 1)
+    call ok(err.number = 13, "read int(0,1): err.number = " & err.number)
+
+    err.clear
+    x(0, 1) = 1
+    call ok(err.number = 13, "assign int(0,1): err.number = " & err.number)
+
+    on error goto 0
+end sub
+call test_index_non_array
+
 ' It's allowed to declare non-builtin RegExp class...
 class RegExp
      public property get Global()
