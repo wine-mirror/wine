@@ -127,6 +127,7 @@ struct json_value
         boolean boolean_value;
         HSTRING string_value;
         double number_value;
+        IJsonArray *array_value;
     };
 };
 
@@ -175,6 +176,8 @@ static ULONG WINAPI json_value_Release( IJsonValue *iface )
     {
         if (impl->json_value_type == JsonValueType_String)
             WindowsDeleteString( impl->string_value );
+        else if (impl->json_value_type == JsonValueType_Array)
+            IJsonArray_Release( impl->array_value );
 
         free( impl );
     }
@@ -259,12 +262,14 @@ static HRESULT WINAPI json_value_GetArray( IJsonValue *iface, IJsonArray **value
 {
     struct json_value *impl = impl_from_IJsonValue( iface );
 
-    FIXME( "iface %p, value %p stub!\n", iface, value );
+    TRACE( "iface %p, value %p\n", iface, value );
 
     if (!value) return E_POINTER;
     if (impl->json_value_type != JsonValueType_Array) return E_ILLEGAL_METHOD_CALL;
 
-    return E_NOTIMPL;
+    IJsonArray_AddRef( impl->array_value );
+    *value = impl->array_value;
+    return S_OK;
 }
 
 static HRESULT WINAPI json_value_GetObject( IJsonValue *iface, IJsonObject **value )
@@ -386,6 +391,34 @@ static HRESULT parse_json_string( struct json_buffer *json, HSTRING *output )
     return hr;
 }
 
+static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value );
+
+static HRESULT parse_json_array( struct json_buffer *json, IJsonArray **value )
+{
+    IJsonArray *array;
+    IJsonValue *child;
+    HRESULT hr;
+
+    if (FAILED(hr = IActivationFactory_ActivateInstance( json_array_factory, (IInspectable **)&array ))) return hr;
+
+    while (json->len && *json->str != ']')
+    {
+        if (FAILED(hr = parse_json_value( json, &child ))) break;
+        hr = json_array_push( array, child );
+        IJsonValue_Release( child );
+        if (FAILED(hr) || !json_buffer_take( json, L",", TRUE )) break;
+        if (json_buffer_take( json, L"]", TRUE ))
+        {
+            hr = WEB_E_INVALID_JSON_STRING;
+            break;
+        }
+    }
+
+    if (FAILED(hr)) IJsonArray_Release( array );
+    else *value = array;
+    return hr;
+}
+
 static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value )
 {
     struct json_value *impl;
@@ -421,9 +454,11 @@ static HRESULT parse_json_value( struct json_buffer *json, IJsonValue **value )
     }
     else if (json_buffer_take( json, L"[", TRUE ))
     {
-        FIXME( "Array parsing not implemented!\n" );
-        impl->json_value_type = JsonValueType_Array;
-        if (!json_buffer_take( json, L"]", TRUE )) hr = WEB_E_INVALID_JSON_STRING;
+        if (SUCCEEDED(hr = parse_json_array( json, &impl->array_value )))
+        {
+            impl->json_value_type = JsonValueType_Array;
+            if (!json_buffer_take( json, L"]", TRUE )) hr = WEB_E_INVALID_JSON_STRING;
+        }
     }
     else if (json_buffer_take( json, L"{", TRUE ))
     {

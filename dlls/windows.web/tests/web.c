@@ -163,7 +163,7 @@ static void check_json_( unsigned int line, IJsonValueStatics *json_value_static
         return;
     }
 
-    todo_wine_if(expected_json_value_type == JsonValueType_Array || expected_json_value_type == JsonValueType_Object)
+    todo_wine_if(expected_json_value_type == JsonValueType_Object)
     ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
     if (FAILED(hr)) return;
     hr = IJsonValue_get_ValueType( json_value, &json_value_type );
@@ -234,7 +234,6 @@ static void check_json_( unsigned int line, IJsonValueStatics *json_value_static
             break;
         case JsonValueType_Array:
             hr = IJsonValue_GetArray( json_value, &json_array );
-            todo_wine
             ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
             if (hr == S_OK) IJsonArray_Release( json_array );
             break;
@@ -459,6 +458,8 @@ static void test_JsonValueStatics(void)
     json = L"\"\\u123\"";
     check_json( json_value_statics, json, JsonValueType_String, FALSE );
     json = L"[\"Wine\" \"Linux\"]";
+    check_json( json_value_statics, json, JsonValueType_Array, FALSE );
+    json = L"[\"Wine\", \"Linux\",]";
     check_json( json_value_statics, json, JsonValueType_Array, FALSE );
     json = L"{"
             "    \"Wine\": \"The Wine Project\","

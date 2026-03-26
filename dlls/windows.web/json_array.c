@@ -26,11 +26,34 @@ struct json_array
 {
     IJsonArray IJsonArray_iface;
     LONG ref;
+    IJsonValue **elements;
+    ULONG capacity;
+    ULONG length;
 };
 
 static inline struct json_array *impl_from_IJsonArray( IJsonArray *iface )
 {
     return CONTAINING_RECORD( iface, struct json_array, IJsonArray_iface );
+}
+
+HRESULT json_array_push( IJsonArray *iface, IJsonValue *value )
+{
+    struct json_array *impl = impl_from_IJsonArray( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (impl->length == impl->capacity)
+    {
+        UINT32 capacity = max( 32, impl->capacity * 3 / 2 );
+        IJsonValue **new = impl->elements;
+        if (!(new = realloc( new, capacity * sizeof(*new) ))) return E_OUTOFMEMORY;
+        impl->elements = new;
+        impl->capacity = capacity;
+    }
+
+    impl->elements[impl->length++] = value;
+    IJsonValue_AddRef( value );
+    return S_OK;
 }
 
 static HRESULT WINAPI json_array_QueryInterface( IJsonArray *iface, REFIID iid, void **out )
@@ -69,7 +92,14 @@ static ULONG WINAPI json_array_Release( IJsonArray *iface )
 
     TRACE( "iface %p, ref %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        for (UINT32 i = 0; i < impl->length; i++)
+            IJsonValue_Release( impl->elements[i] );
+
+        free( impl->elements );
+        free( impl );
+    }
     return ref;
 }
 
