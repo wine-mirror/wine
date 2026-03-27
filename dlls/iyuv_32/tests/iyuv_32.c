@@ -333,7 +333,6 @@ static void test_decompress(DWORD handler)
     ok(res == ICERR_OK, "Got %ld.\n", res);
 
     res = ICDecompress(hic, 0, &i420_info, i420_data, &rgb_info, rgb_data);
-    todo_wine
     ok(res == ICERR_OK, "Got %ld.\n", res);
     res = ICDecompressEnd(hic);
     ok(res == ICERR_OK, "Got %ld.\n", res);
@@ -348,7 +347,6 @@ static void test_decompress(DWORD handler)
     for (unsigned int i = 0; i < rgb_info.biSizeImage; ++i)
         diff += abs((int)rgb_data[i] - (int)expect_rgb_data[i]);
     diff = diff * 100 / 256 / rgb_info.biSizeImage;
-    todo_wine
     ok(diff == 0, "Got %lu%% difference.\n", diff);
 
     res = ICClose(hic);

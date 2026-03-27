@@ -194,9 +194,76 @@ done:
 
 static LRESULT IYUV_Decompress(IMFTransform *transform, const ICDECOMPRESS *params)
 {
-    FIXME("ICM_DECOMPRESS %p %p\n", transform, params);
+    IMFSample *in_sample = NULL, *out_sample = NULL;
+    IMFMediaBuffer *in_buf = NULL, *out_buf = NULL;
+    MFT_OUTPUT_DATA_BUFFER mft_buf;
+    LRESULT r = ICERR_INTERNAL;
+    DWORD mft_status;
+    BYTE *data;
 
-    return ICERR_UNSUPPORTED;
+    TRACE("transform %p, params %p.\n", transform, params);
+
+    if (FAILED(MFCreateSample(&in_sample)))
+        return ICERR_INTERNAL;
+
+    if (FAILED(MFCreateMemoryBuffer(params->lpbiInput->biSizeImage, &in_buf)))
+        goto done;
+
+    if (FAILED(IMFSample_AddBuffer(in_sample, in_buf)))
+        goto done;
+
+    if (FAILED(MFCreateSample(&out_sample)))
+        goto done;
+
+    if (FAILED(MFCreateMemoryBuffer(params->lpbiOutput->biSizeImage, &out_buf)))
+        goto done;
+
+    if (FAILED(IMFSample_AddBuffer(out_sample, out_buf)))
+        goto done;
+
+    if (FAILED(IMFMediaBuffer_Lock(in_buf, &data, NULL, NULL)))
+        goto done;
+
+    memcpy(data, params->lpInput, params->lpbiInput->biSizeImage);
+
+    if (FAILED(IMFMediaBuffer_Unlock(in_buf)))
+        goto done;
+
+    if (FAILED(IMFMediaBuffer_SetCurrentLength(in_buf, params->lpbiInput->biSizeImage)))
+        goto done;
+
+    if (FAILED(IMFTransform_ProcessInput(transform, 0, in_sample, 0)))
+        goto done;
+
+    memset(&mft_buf, 0, sizeof(mft_buf));
+    mft_buf.pSample = out_sample;
+
+    if (SUCCEEDED(IMFTransform_ProcessOutput(transform, 0, 1, &mft_buf, &mft_status)))
+    {
+        LONG depth = params->lpbiOutput->biBitCount / 8;
+        LONG width = params->lpbiOutput->biWidth * depth;
+        LONG stride = (width + 3) & ~3;
+
+        if (FAILED(IMFMediaBuffer_Lock(out_buf, &data, NULL, NULL)))
+            goto done;
+
+        MFCopyImage(params->lpOutput, stride, data, stride, width, params->lpbiOutput->biHeight);
+
+        IMFMediaBuffer_Unlock(out_buf);
+        r = ICERR_OK;
+    }
+
+done:
+    if (in_buf)
+        IMFMediaBuffer_Release(in_buf);
+    if (in_sample)
+        IMFSample_Release(in_sample);
+    if (out_buf)
+        IMFMediaBuffer_Release(out_buf);
+    if (out_sample)
+        IMFSample_Release(out_sample);
+
+    return r;
 }
 
 static LRESULT IYUV_GetInfo(ICINFO *icinfo, DWORD size)
