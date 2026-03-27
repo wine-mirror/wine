@@ -3664,7 +3664,9 @@ static HRESULT WINAPI ImageListImpl_Initialize(IImageList2 *iface, INT cx, INT c
     }
 
     /* Some applications mistakenly use a very large initial image count. Limit it to something reasonable */
-    initial = min(initial, 256);
+    if (initial > USHRT_MAX)
+        WARN("Image count has been truncated\n");
+    initial = min(initial, USHRT_MAX);
 
     himl->cx        = cx;
     himl->cy        = cy;
