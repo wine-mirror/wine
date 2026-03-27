@@ -254,6 +254,13 @@ static Uri *get_uri_obj(IUri *uri)
     return SUCCEEDED(hres) ? ret : NULL;
 }
 
+/* Wine internal export for urlmon.dll for getting the canonicalized URI from an IUri */
+const WCHAR * WINAPI wine_get_canonicalized_uri(IUri *uri)
+{
+    const Uri *obj = get_uri_obj(uri);
+    return obj ? obj->canon_uri : NULL;
+}
+
 static inline BOOL is_alpha(WCHAR val) {
     return ((val >= 'a' && val <= 'z') || (val >= 'A' && val <= 'Z'));
 }

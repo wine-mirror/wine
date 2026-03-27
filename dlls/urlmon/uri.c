@@ -49,6 +49,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
+const WCHAR * WINAPI wine_get_canonicalized_uri(IUri *uri);
 HRESULT WINAPI PrivateCoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD dwCombineFlags,
                                             IUri **ppCombinedUri, DWORD_PTR dwReserved);
 HRESULT WINAPI PrivateCoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD dwFlags,
@@ -4683,7 +4684,8 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
 {
     HRESULT hr;
     IInternetProtocolInfo *info;
-    Uri *relative, *base;
+    const WCHAR *relative_canon_uri, *base_canon_uri;
+
     TRACE("(%p %p %lx %p %Ix)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, dwReserved);
 
     if(!ppCombinedUri)
@@ -4694,21 +4696,21 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
         return E_INVALIDARG;
     }
 
-    relative = get_uri_obj(pRelativeUri);
-    base = get_uri_obj(pBaseUri);
-    if(!relative || !base) {
+    relative_canon_uri = wine_get_canonicalized_uri(pRelativeUri);
+    base_canon_uri = wine_get_canonicalized_uri(pBaseUri);
+    if(!relative_canon_uri || !base_canon_uri) {
         *ppCombinedUri = NULL;
         FIXME("(%p %p %lx %p %Ix) Unknown IUri types not supported yet.\n",
             pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, dwReserved);
         return E_NOTIMPL;
     }
 
-    info = get_protocol_info(base->canon_uri);
+    info = get_protocol_info(base_canon_uri);
     if(info) {
         WCHAR result[INTERNET_MAX_URL_LENGTH+1];
         DWORD result_len = 0;
 
-        hr = IInternetProtocolInfo_CombineUrl(info, base->canon_uri, relative->canon_uri, dwCombineFlags,
+        hr = IInternetProtocolInfo_CombineUrl(info, base_canon_uri, relative_canon_uri, dwCombineFlags,
                                               result, INTERNET_MAX_URL_LENGTH+1, &result_len, 0);
         IInternetProtocolInfo_Release(info);
         if(SUCCEEDED(hr)) {
@@ -4728,7 +4730,7 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
                                       IUri **ppCombinedUri, DWORD_PTR dwReserved)
 {
     IUri *relative;
-    Uri *base;
+    const WCHAR *base_canon_uri;
     HRESULT hr;
     IInternetProtocolInfo *info;
 
@@ -4748,20 +4750,20 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
         return E_INVALIDARG;
     }
 
-    base = get_uri_obj(pBaseUri);
-    if(!base) {
+    base_canon_uri = wine_get_canonicalized_uri(pBaseUri);
+    if(!base_canon_uri) {
         *ppCombinedUri = NULL;
         FIXME("(%p %s %lx %p %Ix) Unknown IUri's not supported yet.\n", pBaseUri, debugstr_w(pwzRelativeUrl),
             dwCombineFlags, ppCombinedUri, dwReserved);
         return E_NOTIMPL;
     }
 
-    info = get_protocol_info(base->canon_uri);
+    info = get_protocol_info(base_canon_uri);
     if(info) {
         WCHAR result[INTERNET_MAX_URL_LENGTH+1];
         DWORD result_len = 0;
 
-        hr = IInternetProtocolInfo_CombineUrl(info, base->canon_uri, pwzRelativeUrl, dwCombineFlags,
+        hr = IInternetProtocolInfo_CombineUrl(info, base_canon_uri, pwzRelativeUrl, dwCombineFlags,
                                               result, INTERNET_MAX_URL_LENGTH+1, &result_len, 0);
         IInternetProtocolInfo_Release(info);
         if(SUCCEEDED(hr)) {
@@ -4791,7 +4793,7 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
                                    DWORD_PTR dwReserved)
 {
     HRESULT hr;
-    Uri *uri;
+    const WCHAR *canon_uri;
     IInternetProtocolInfo *info;
 
     TRACE("(%p %d %lx %p %ld %p %Ix)\n", pIUri, ParseAction, dwFlags, pwzResult,
@@ -4805,16 +4807,16 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
         return E_INVALIDARG;
     }
 
-    if(!(uri = get_uri_obj(pIUri))) {
+    if(!(canon_uri = wine_get_canonicalized_uri(pIUri))) {
         *pcchResult = 0;
         FIXME("(%p %d %lx %p %ld %p %Ix) Unknown IUri's not supported for this action.\n",
             pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, dwReserved);
         return E_NOTIMPL;
     }
 
-    info = get_protocol_info(uri->canon_uri);
+    info = get_protocol_info(canon_uri);
     if(info) {
-        hr = IInternetProtocolInfo_ParseUrl(info, uri->canon_uri, ParseAction, dwFlags,
+        hr = IInternetProtocolInfo_ParseUrl(info, canon_uri, ParseAction, dwFlags,
                                             pwzResult, cchResult, pcchResult, 0);
         IInternetProtocolInfo_Release(info);
         if(SUCCEEDED(hr)) return hr;
