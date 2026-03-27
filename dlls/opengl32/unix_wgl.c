@@ -1250,7 +1250,9 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     }
 
     if (!disabled && !(disabled = query_opengl_option( "DisabledExtensions" ))) disabled = "";
-    if (!enabled && !(enabled = query_opengl_option( "EnabledExtensions" ))) enabled = "";
+#define USE_GL_EXT(x) #x " "
+    if (!enabled && !(enabled = query_opengl_option( "EnabledExtensions" ))) enabled = ALL_GL_CLIENT_EXTS;
+#undef USE_GL_EXT
     if (*enabled || *disabled)
     {
         for (i = 0, j = 0; i < count; i++)
