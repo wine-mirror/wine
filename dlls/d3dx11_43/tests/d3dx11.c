@@ -806,6 +806,25 @@ static const uint8_t dds_cube_map_4_4[] =
     0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x00,
 };
 
+/* 4x4 DXT10 DDS file with a format of DXGI_FORMAT_R8G8B8A8_UNORM. */
+static const uint8_t dds_dxt10_4_4[] =
+{
+    0x44,0x44,0x53,0x20,0x7c,0x00,0x00,0x00,0x01,0x10,0x00,0x00,0x04,0x00,0x00,0x00,
+    0x04,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x00,0x00,0x00,
+    0x04,0x00,0x00,0x00,0x44,0x58,0x31,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x1c,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x10,0x10,0x10,0x20,0x20,0x20,0x20,
+    0x30,0x30,0x30,0x30,0x40,0x40,0x40,0x40,0x50,0x50,0x50,0x50,0x60,0x60,0x60,0x60,
+    0x70,0x70,0x70,0x70,0x80,0x80,0x80,0x80,0x90,0x90,0x90,0x90,0xa0,0xa0,0xa0,0xa0,
+    0xb0,0xb0,0xb0,0xb0,0xc0,0xc0,0xc0,0xc0,0xd0,0xd0,0xd0,0xd0,0xe0,0xe0,0xe0,0xe0,
+    0xf0,0xf0,0xf0,0xf0,
+};
+
 /* 1x1 wmp image */
 static const uint8_t test_wmp[] =
 {
@@ -1795,6 +1814,24 @@ static const struct test_image_load_info
             .desc_2d =
             {
                 8, 8, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0
+            }
+        }
+    },
+    /*
+     * Pass in invalid filter flags. Ignored if the dimensions and format of the
+     * destination texture match the source image.
+     */
+    {
+        dds_dxt10_4_4, sizeof(dds_dxt10_4_4),
+        {
+            D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT, 1, (D3D11_USAGE)D3DX11_DEFAULT,
+            D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT, D3DX11_DEFAULT, 7, D3DX11_DEFAULT
+        },
+        S_OK, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+        {
+            .desc_2d =
+            {
+                4, 4, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0
             }
         }
     },
@@ -3868,7 +3905,7 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromMemory(device, test->data, test->size, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4063,7 +4100,7 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromFileW(device, path, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4073,7 +4110,7 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromFileA(device, get_str_a(path), &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4184,7 +4221,7 @@ static void test_create_texture(void)
         hr = D3DX11CreateTextureFromResourceW(device, resource_module,
                 test_resource_name, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4195,7 +4232,7 @@ static void test_create_texture(void)
         hr = D3DX11CreateTextureFromResourceA(device, resource_module,
                 get_str_a(test_resource_name), &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
