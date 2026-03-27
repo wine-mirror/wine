@@ -644,20 +644,20 @@ static void test_async( void )
     SetLastError( 0xdeadbeef );
     WinHttpSetStatusCallback( ses, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
     err = GetLastError();
-    ok( err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     SetLastError( 0xdeadbeef );
     ret = WinHttpSetOption( ses, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
     err = GetLastError();
     ok( ret, "failed to set context value %lu\n", err );
-    ok( err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     setup_test( &info, winhttp_connect, __LINE__ );
     SetLastError( 0xdeadbeef );
     con = WinHttpConnect( ses, L"test.winehq.org", 0, 0 );
     err = GetLastError();
     ok( con != NULL, "failed to open a connection %lu\n", err );
-    ok( err == ERROR_SUCCESS || broken(err == WSAEINVAL) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     setup_test( &info, winhttp_open_request, __LINE__ );
     SetLastError( 0xdeadbeef );
@@ -709,14 +709,14 @@ static void test_async( void )
     err = GetLastError();
     ok( ret, "failed unexpectedly %lu\n", err );
     ok( status == 200, "request failed unexpectedly %lu\n", status );
-    ok( err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     setup_test( &info, winhttp_query_data, __LINE__ );
     SetLastError( 0xdeadbeef );
     ret = WinHttpQueryDataAvailable( req, NULL );
     err = GetLastError();
     ok( ret, "failed to query data available %lu\n", err );
-    ok( err == ERROR_SUCCESS || err == ERROR_IO_PENDING || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS || err == ERROR_IO_PENDING, "got %lu\n", err );
 
     WaitForSingleObject( info.wait, INFINITE );
     ok( info.last_status == WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, "got status %#lx\n", status );
@@ -924,20 +924,20 @@ static void test_websocket(void)
     SetLastError( 0xdeadbeef );
     WinHttpSetStatusCallback( session, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
     err = GetLastError();
-    ok( err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     SetLastError( 0xdeadbeef );
     ret = WinHttpSetOption( session, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(context) );
     err = GetLastError();
     ok( ret, "got %lu\n", err );
-    ok( err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     setup_test( &info, winhttp_connect, __LINE__ );
     SetLastError( 0xdeadbeef );
     connection = WinHttpConnect( session, L"ws.ifelse.io", 0, 0 );
     err = GetLastError();
     ok( connection != NULL, "got %lu\n", err );
-    ok( err == ERROR_SUCCESS || broken(err == WSAEINVAL) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     setup_test( &info, winhttp_open_request, __LINE__ );
     SetLastError( 0xdeadbeef );
@@ -999,7 +999,7 @@ static void test_websocket(void)
     err = GetLastError();
     ok( ret, "failed unexpectedly %lu\n", err );
     ok( status == 101, "got %lu\n", status );
-    ok( err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err );
+    ok( err == ERROR_SUCCESS, "got %lu\n", err );
 
     setup_test( &info, winhttp_websocket_complete_upgrade, __LINE__ );
     SetLastError( 0xdeadbeef );
@@ -1838,8 +1838,7 @@ struct test_recursion_context
     BYTE *send_buffer;
 };
 
-/* The limit is 128 before Win7 and 3 on newer Windows. */
-#define TEST_RECURSION_LIMIT 128
+#define TEST_RECURSION_LIMIT 3
 
 static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR context_ptr,
                                               DWORD status, void *buffer, DWORD buflen )
@@ -1939,7 +1938,7 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
             err = GetLastError();
             ok( ret, "failed to query data available, GetLastError() %lu\n", err );
             ok( err == ERROR_SUCCESS || err == ERROR_IO_PENDING, "got %lu\n", err );
-            ok( len != 0xdeadbeef || broken( len == 0xdeadbeef ) /* Win7 */, "got %lu.\n", len );
+            ok( len != 0xdeadbeef, "got %lu\n", len );
             if (err == ERROR_SUCCESS) context->have_sync_callback = TRUE;
             InterlockedDecrement( &context->recursion_count );
             break;
@@ -2122,7 +2121,6 @@ START_TEST (notification)
 
     test_persistent_connection( si.port );
 
-    /* send the basic request again to shutdown the server thread */
     test_basic_request( si.port, NULL, L"/quit" );
 
     WaitForSingleObject( thread, 3000 );

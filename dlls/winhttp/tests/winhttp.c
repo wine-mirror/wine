@@ -51,8 +51,7 @@ static BOOL proxy_active(void)
     SetLastError(0xdeadbeef);
     if (WinHttpGetDefaultProxyConfiguration(&proxy_info))
     {
-        ok( GetLastError() == ERROR_SUCCESS || broken(GetLastError() == 0xdeadbeef) /* < win7 */,
-            "got %lu\n", GetLastError() );
+        ok( GetLastError() == ERROR_SUCCESS, "got %lu\n", GetLastError() );
         active = (proxy_info.lpszProxy != NULL);
         if (active)
             GlobalFree(proxy_info.lpszProxy);
@@ -110,8 +109,7 @@ static void test_WinHttpQueryOption(void)
     SetLastError(0xdeadbeef);
     ret = WinHttpQueryOption(session, WINHTTP_OPTION_REDIRECT_POLICY, &feature, &size);
     ok(ret, "failed to query option %lu\n", GetLastError());
-    ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == 0xdeadbeef) /* < win7 */,
-       "got %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got %lu\n", GetLastError());
     ok(size == sizeof(feature), "WinHttpQueryOption should set the size: %lu\n", size);
     ok(feature == WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP,
        "expected WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP, got %#lx\n", feature);
@@ -334,7 +332,7 @@ static void test_WinHttpOpenRequest (void)
     connection = WinHttpConnect (session, L"test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, 0);
     err = GetLastError();
     ok(connection != NULL, "WinHttpConnect failed to open a connection, error: %lu.\n", err);
-    ok(err == ERROR_SUCCESS || broken(err == WSAEINVAL) /* < win7 */, "got %lu\n", err);
+    ok(err == ERROR_SUCCESS, "got %lu\n", err);
 
     SetLastError(0xdeadbeef);
     request = WinHttpOpenRequest(connection, NULL, NULL, NULL, WINHTTP_NO_REFERER,
@@ -489,8 +487,7 @@ static void test_WinHttpSendRequest (void)
 
     SetLastError(0xdeadbeef);
     ret = WinHttpReceiveResponse(request, NULL);
-    ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == ERROR_NO_TOKEN) /* < win7 */,
-       "Expected ERROR_SUCCESS got %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got %lu\n", GetLastError());
     ok(ret == TRUE, "WinHttpReceiveResponse failed: %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -575,7 +572,7 @@ static void test_WinHttpTimeFromSystemTime(void)
     ret = WinHttpTimeFromSystemTime(&time, time_string);
     err = GetLastError();
     ok(ret, "WinHttpTimeFromSystemTime failed: %lu\n", err);
-    ok(err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err);
+    ok(err == ERROR_SUCCESS, "got %lu\n", err);
     ok(!memcmp(time_string, L"Mon, 28 Jul 2008 10:05:52 GMT", sizeof(L"Mon, 28 Jul 2008 10:05:52 GMT")),
         "Time string returned did not match expected time string.\n");
 }
@@ -603,7 +600,7 @@ static void test_WinHttpTimeToSystemTime(void)
     ret = WinHttpTimeToSystemTime(L"Mon, 28 Jul 2008 10:05:52 GMT\n", &time);
     err = GetLastError();
     ok(ret, "WinHttpTimeToSystemTime failed: %lu\n", err);
-    ok(err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err);
+    ok(err == ERROR_SUCCESS, "got %lu\n", err);
     ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
         "Returned SYSTEMTIME structure did not match expected SYSTEMTIME structure.\n");
 
@@ -611,7 +608,7 @@ static void test_WinHttpTimeToSystemTime(void)
     ret = WinHttpTimeToSystemTime(L" mon 28 jul 2008 10 05 52\n", &time);
     err = GetLastError();
     ok(ret, "WinHttpTimeToSystemTime failed: %lu\n", err);
-    ok(err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err);
+    ok(err == ERROR_SUCCESS, "got %lu\n", err);
     ok(memcmp(&time, &expected_time, sizeof(SYSTEMTIME)) == 0,
         "Returned SYSTEMTIME structure did not match expected SYSTEMTIME structure.\n");
 }
@@ -679,7 +676,7 @@ static void test_WinHttpAddHeaders(void)
     ret = WinHttpAddRequestHeaders(request, test_headers[0], -1L, WINHTTP_ADDREQ_FLAG_ADD);
     err = GetLastError();
     ok(ret, "WinHttpAddRequestHeaders failed to add new header, got %d with error %lu\n", ret, err);
-    ok(err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %lu\n", err);
+    ok(err == ERROR_SUCCESS, "got %lu\n", err);
 
     index = 0;
     len = sizeof(buffer);
@@ -1114,7 +1111,7 @@ static void test_secure_connection(void)
     protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
     ret = WinHttpSetOption(ses, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
     err = GetLastError();
-    ok(ret || err == ERROR_INVALID_PARAMETER /* < win7 */, "failed to set protocols %lu\n", err);
+    ok(ret, "failed to set protocols %lu\n", err);
 
     con = WinHttpConnect(ses, L"test.winehq.org", 443, 0);
     ok(con != NULL, "failed to open a connection %lu\n", GetLastError());
@@ -1133,8 +1130,7 @@ static void test_secure_connection(void)
     ret = WinHttpSetOption(req, WINHTTP_OPTION_CLIENT_CERT_CONTEXT, WINHTTP_NO_CLIENT_CERT_CONTEXT, 0);
     err = GetLastError();
     ok(!ret, "unexpected success\n");
-    ok(err == ERROR_WINHTTP_INCORRECT_HANDLE_STATE || broken(err == ERROR_INVALID_PARAMETER) /* winxp */,
-       "setting client cert context returned %lu\n", err);
+    ok(err == ERROR_WINHTTP_INCORRECT_HANDLE_STATE, "setting client cert context returned %lu\n", err);
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
     err = GetLastError();
@@ -1188,7 +1184,7 @@ static void test_secure_connection(void)
 
     ret = WinHttpSetOption(req, WINHTTP_OPTION_CLIENT_CERT_CONTEXT, WINHTTP_NO_CLIENT_CERT_CONTEXT, 0);
     err = GetLastError();
-    ok(ret || broken(!ret && err == ERROR_INVALID_PARAMETER) /* winxp */, "failed to set client cert context %lu\n", err);
+    ok(ret, "failed to set client cert context %lu\n", err);
 
     WinHttpSetStatusCallback(req, cert_error, WINHTTP_CALLBACK_STATUS_SECURE_FAILURE, 0);
 
@@ -1501,8 +1497,7 @@ static void test_set_default_proxy_config(void)
     else
     {
         ok(ret, "WinHttpSetDefaultProxyConfiguration failed: %lu\n", GetLastError());
-        ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == 0xdeadbeef) /* < win7 */,
-           "got %lu\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "got %lu\n", GetLastError());
     }
     set_default_proxy_reg_value( saved_proxy_settings, len, type );
 }
@@ -1539,8 +1534,7 @@ static void test_timeouts(void)
     SetLastError(0xdeadbeef);
     ret = WinHttpSetTimeouts(ses, -1, -1, -1, -1);
     ok(ret, "%lu\n", GetLastError());
-    ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == 0xdeadbeef) /* < win7 */,
-       "expected ERROR_SUCCESS, got %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "got %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WinHttpSetTimeouts(ses, 0, 0, 0, 0);
@@ -2197,9 +2191,7 @@ static void test_resolve_timeout(void)
            "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %lu\n", GetLastError());
 
         ret = WinHttpReceiveResponse( req, NULL );
-        ok( !ret && (GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_STATE ||
-                     GetLastError() == ERROR_WINHTTP_OPERATION_CANCELLED /* < win7 */),
-            "got %lu\n", GetLastError() );
+        ok( !ret && GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_STATE, "got %lu\n", GetLastError() );
 
         WinHttpCloseHandle(req);
         WinHttpCloseHandle(con);
@@ -2914,7 +2906,7 @@ static void test_basic_authentication(int port)
     ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
     error = GetLastError();
     ok(ret, "failed to query authentication schemes %lu\n", error);
-    ok(error == ERROR_SUCCESS || broken(error == 0xdeadbeef) /* < win7 */, "expected ERROR_SUCCESS, got %lu\n", error);
+    ok(error == ERROR_SUCCESS, "got %lu\n", error);
     ok(supported == WINHTTP_AUTH_SCHEME_BASIC, "got %lu\n", supported);
     ok(first == WINHTTP_AUTH_SCHEME_BASIC, "got %lu\n", first);
     ok(target == WINHTTP_AUTH_TARGET_SERVER, "got %lu\n", target);
@@ -2923,7 +2915,7 @@ static void test_basic_authentication(int port)
     ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_NTLM, NULL, NULL, NULL);
     error = GetLastError();
     ok(ret, "failed to set credentials %lu\n", error);
-    ok(error == ERROR_SUCCESS || broken(error == 0xdeadbeef) /* < win7 */, "expected ERROR_SUCCESS, got %lu\n", error);
+    ok(error == ERROR_SUCCESS, "got %lu\n", error);
 
     ret = WinHttpSetCredentials(req, WINHTTP_AUTH_TARGET_SERVER, WINHTTP_AUTH_SCHEME_PASSPORT, NULL, NULL, NULL);
     ok(ret, "failed to set credentials %lu\n", GetLastError());
@@ -3295,15 +3287,13 @@ static void test_no_content(int port)
     size = 12345;
     ret = WinHttpQueryDataAvailable(req, &size);
     ok(ret, "expected success\n");
-    ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == 0xdeadbeef) /* < win7 */,
-       "wrong error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "wrong error %lu\n", GetLastError());
     ok(!size, "expected 0, got %lu\n", size);
 
     SetLastError(0xdeadbeef);
     ret = WinHttpReadData(req, buf, len, &bytes_read);
     ok(ret, "expected success\n");
-    ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == 0xdeadbeef) /* < win7 */,
-       "wrong error %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS, "wrong error %lu\n", GetLastError());
     ok(!bytes_read, "expected 0, got %lu\n", bytes_read);
 
     size = 12345;
@@ -4261,8 +4251,7 @@ static void test_cookies( int port )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %lu\n", GetLastError() );
-    ok( status == HTTP_STATUS_OK || broken(status == HTTP_STATUS_BAD_REQUEST) /* < win7 */,
-        "request failed unexpectedly %lu\n", status );
+    todo_wine ok( status == HTTP_STATUS_BAD_REQUEST, "request failed unexpectedly %lu\n", status );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
@@ -4288,8 +4277,7 @@ static void do_request( HINTERNET con, const WCHAR *obj, DWORD flags )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %lu\n", GetLastError() );
-    ok( status == HTTP_STATUS_OK || broken(status == HTTP_STATUS_BAD_REQUEST) /* < win7 */,
-        "request %s with flags %#lx failed %lu\n", wine_dbgstr_w(obj), flags, status );
+    ok( status == HTTP_STATUS_OK, "request %s with flags %#lx failed %lu\n", wine_dbgstr_w(obj), flags, status );
     WinHttpCloseHandle( req );
 }
 
@@ -4422,8 +4410,7 @@ static void test_passport_auth( int port )
 
     ret = WinHttpReceiveResponse( req, NULL );
     err = GetLastError();
-    ok( ret || broken(!ret && err == ERROR_WINHTTP_LOGIN_FAILURE) /* winxp */
-            || broken(!ret && err == ERROR_WINHTTP_INVALID_SERVER_RESPONSE ), "got %lu\n", err );
+    ok( ret || broken(!ret && err == ERROR_WINHTTP_INVALID_SERVER_RESPONSE ), "got %lu\n", err );
     if (!ret)
     {
         win_skip("no support for Passport redirects\n");
@@ -4440,13 +4427,12 @@ static void test_passport_auth( int port )
     size = sizeof(buf);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_TEXT, NULL, buf, &size, NULL );
     ok( ret, "got %lu\n", GetLastError() );
-    ok( !lstrcmpW(L"Found", buf) || broken(!lstrcmpW(L"Unauthorized", buf)) /* < win7 */, "got %s\n",
-        wine_dbgstr_w(buf) );
+    ok( !lstrcmpW(L"Found", buf), "got %s\n", wine_dbgstr_w(buf) );
 
     buf[0] = 0;
     size = sizeof(buf);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, buf, &size, NULL );
-    ok( ret || broken(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER) /* < win7 */, "got %lu\n", GetLastError() );
+    ok( ret, "got %lu\n", GetLastError() );
     if (ret)
     {
         ok( size == lstrlenW(headersW) * sizeof(WCHAR), "got %lu\n", size );
@@ -5266,9 +5252,7 @@ static void test_IWinHttpRequest(int port)
     SysFreeString( url );
 
     hr = IWinHttpRequest_Send( req, empty );
-    ok( hr == S_OK ||
-        hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE ) ||
-        hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_SECURE_CHANNEL_ERROR ) /* win7 */, "got %#lx\n", hr );
+    ok( hr == S_OK || hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE ), "got %#lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = IWinHttpRequest_get_ResponseText( req, &response );
@@ -5624,7 +5608,7 @@ static void test_WinHttpGetIEProxyConfigForCurrentUser(void)
     ret = WinHttpGetIEProxyConfigForCurrentUser( &cfg );
     error = GetLastError();
     ok( ret, "expected success\n" );
-    ok( error == ERROR_SUCCESS || broken(error == ERROR_NO_TOKEN) /* < win7 */, "got %lu\n", error );
+    ok( error == ERROR_SUCCESS, "got %lu\n", error );
 
     trace("IEProxy.AutoDetect=%d\n", cfg.fAutoDetect);
     trace("IEProxy.AutoConfigUrl=%s\n", wine_dbgstr_w(cfg.lpszAutoConfigUrl));
@@ -6241,8 +6225,7 @@ static void test_client_cert_authentication(void)
     ok( req != NULL, "failed to open a request %lu\n", GetLastError() );
 
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    ok( ret || broken(!ret && GetLastError() == ERROR_WINHTTP_SECURE_FAILURE) /* win7 */,
-        "failed to send request %lu\n", GetLastError() );
+    ok( ret, "failed to send request %lu\n", GetLastError() );
     if (!ret) goto done;
 
     SetLastError( 0xdeadbeef );
