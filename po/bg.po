@@ -3860,6 +3860,14 @@ msgstr "&Съдържание"
 msgid "Indeo Video Interactive version 5 video codec"
 msgstr "Wine MS-RLE видео кодек"
 
+#: dlls/iyuv_32/iyuv_32.rc:28
+msgid "IYUV codec"
+msgstr ""
+
+#: dlls/iyuv_32/iyuv_32.rc:29
+msgid "Intel Indeo IYUV codec"
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
 msgstr ""

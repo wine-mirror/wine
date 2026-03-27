@@ -31,18 +31,21 @@
 #include "vfw.h"
 #include "wmcodecdsp.h"
 
+#include "iyuv_private.h"
 #include "wine/debug.h"
 
 #define COBJMACROS
 #include "mfapi.h"
 #include "mferror.h"
-#include "mfobjects.h"
 #include "mfidl.h"
+#include "mfobjects.h"
 #include "mftransform.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iyuv_32);
 
 static HINSTANCE IYUV_32_module;
+
+#define FOURCC_IYUV mmioFOURCC('I', 'Y', 'U', 'V')
 
 static LRESULT IYUV_Open(const ICINFO *icinfo)
 {
@@ -81,9 +84,25 @@ static LRESULT IYUV_Decompress(IMFTransform *transform, const ICDECOMPRESS *para
 
 static LRESULT IYUV_GetInfo(ICINFO *icinfo, DWORD size)
 {
-    FIXME("ICM_GETINFO %p %lu\n", icinfo, size);
+    TRACE("ICM_GETINFO %p %lu\n", icinfo, size);
 
-    return ICERR_UNSUPPORTED;
+    if (!icinfo)
+        return sizeof(ICINFO);
+    if (size < sizeof(ICINFO))
+        return 0;
+
+    icinfo->dwSize = sizeof(ICINFO);
+    icinfo->fccType = ICTYPE_VIDEO;
+    icinfo->fccHandler = FOURCC_IYUV;
+    icinfo->dwFlags = 0;
+    icinfo->dwVersion = 0;
+    icinfo->dwVersionICM = ICVERSION;
+
+    LoadStringW(IYUV_32_module, IDS_NAME, icinfo->szName, ARRAY_SIZE(icinfo->szName));
+    LoadStringW(IYUV_32_module, IDS_DESCRIPTION, icinfo->szDescription, ARRAY_SIZE(icinfo->szDescription));
+    /* msvfw32 will fill icinfo->szDriver for us */
+
+    return sizeof(ICINFO);
 }
 
 /***********************************************************************
