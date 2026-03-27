@@ -3537,6 +3537,37 @@ static DWORD shader_glsl_append_dst(struct wined3d_string_buffer *buffer, const 
     return shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], 0, ins->dst[0].reg.data_type);
 }
 
+static void shader_glsl_get_coord_size(enum wined3d_shader_resource_type resource_type,
+        unsigned int *coord_size, unsigned int *deriv_size)
+{
+    const BOOL is_array = resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY
+            || resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY;
+
+    *coord_size = resource_type_info[resource_type].coord_size;
+    *deriv_size = *coord_size;
+    if (is_array)
+        --(*deriv_size);
+}
+
+static void shader_glsl_add_offset_immdata_param(const struct wined3d_shader_context *ctx,
+        const struct wined3d_shader_texel_offset *offset, enum wined3d_shader_resource_type resource_type,
+        struct glsl_src_param *glsl_src)
+{
+    struct shader_glsl_ctx_priv *priv = ctx->backend_data;
+    struct wined3d_string_buffer *imm_str = string_buffer_get(priv->string_buffers);
+    int offset_immdata[4] = {offset->u, offset->v, offset->w};
+    unsigned int coord_size, deriv_size;
+
+    shader_glsl_get_coord_size(resource_type, &coord_size, &deriv_size);
+
+    glsl_src->param_str[0] = '\0';
+
+    shader_glsl_append_imm_ivec(imm_str, offset_immdata, coord_size);
+    sprintf(glsl_src->param_str, "%s", imm_str->buffer);
+
+    string_buffer_release(priv->string_buffers, imm_str);
+}
+
 /** Process GLSL instruction modifiers */
 static void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instruction *ins)
 {
@@ -3600,18 +3631,6 @@ static const char *shader_glsl_get_rel_op(enum wined3d_shader_rel_op op)
 static BOOL shader_glsl_has_core_grad(const struct wined3d_gl_info *gl_info)
 {
     return shader_glsl_get_version(gl_info) >= 130 || gl_info->supported[EXT_GPU_SHADER4];
-}
-
-static void shader_glsl_get_coord_size(enum wined3d_shader_resource_type resource_type,
-        unsigned int *coord_size, unsigned int *deriv_size)
-{
-    const BOOL is_array = resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY
-            || resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY;
-
-    *coord_size = resource_type_info[resource_type].coord_size;
-    *deriv_size = *coord_size;
-    if (is_array)
-        --(*deriv_size);
 }
 
 static void shader_glsl_get_sample_function(const struct wined3d_shader_context *ctx,
@@ -3848,12 +3867,15 @@ static void PRINTF_ATTR(9, 10) shader_glsl_gen_sample_code(const struct wined3d_
         shader_addline(ins->ctx->buffer, ", %s, %s", dx, dy);
     else if (bias)
         shader_addline(ins->ctx->buffer, ", %s", bias);
+
+    assert(!sample_function->offset_size || offset);
     if (sample_function->offset_size)
     {
         int offset_immdata[4] = {offset->u, offset->v, offset->w};
         shader_addline(ins->ctx->buffer, ", ");
         shader_glsl_append_imm_ivec(ins->ctx->buffer, offset_immdata, sample_function->offset_size);
     }
+
     shader_addline(ins->ctx->buffer, ")");
 
     if (sample_function->output_single_component)
@@ -6192,15 +6214,12 @@ static void shader_glsl_interpolate(const struct wined3d_shader_instruction *ins
 
 static void shader_glsl_ld(const struct wined3d_shader_instruction *ins)
 {
+    struct glsl_src_param coord_param, lod_param, sample_param, offset_param;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
-    struct glsl_src_param coord_param, lod_param, sample_param;
     unsigned int resource_idx, sampler_idx, sampler_bind_idx;
     struct glsl_sample_function sample_function;
+    BOOL has_lod_param, just_add_offset = false;
     DWORD flags = WINED3D_GLSL_SAMPLE_LOAD;
-    BOOL has_lod_param;
-
-    if (wined3d_shader_instruction_has_texel_offset(ins))
-        flags |= WINED3D_GLSL_SAMPLE_OFFSET;
 
     resource_idx = ins->src[1].reg.idx[0].offset;
     sampler_idx = WINED3D_SAMPLER_DEFAULT;
@@ -6212,11 +6231,42 @@ static void shader_glsl_ld(const struct wined3d_shader_instruction *ins)
     }
     has_lod_param = is_mipmapped(reg_maps->resource_info[resource_idx].type);
 
+    /* texelFetchOffset() is not defined for BUFFER, TEXTURE_2DMS, and
+     * TEXTURE_2DMSARRAY, so for these we just add the texel offset to the
+     * coordinates. */
+    if (wined3d_shader_instruction_has_texel_offset(ins))
+    {
+        if (has_lod_param)
+            flags |= WINED3D_GLSL_SAMPLE_OFFSET;
+        else
+            just_add_offset = true;
+    }
+
     shader_glsl_get_sample_function(ins->ctx, resource_idx, sampler_idx, flags, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
     sampler_bind_idx = shader_glsl_find_sampler(&reg_maps->sampler_map, resource_idx, sampler_idx);
-    if (is_multisampled(reg_maps->resource_info[resource_idx].type))
+
+    if (just_add_offset)
+    {
+        shader_glsl_add_offset_immdata_param(ins->ctx, &ins->texel_offset,
+                reg_maps->resource_info[resource_idx].type, &offset_param);
+
+        if (is_multisampled(reg_maps->resource_info[resource_idx].type))
+        {
+            shader_glsl_add_src_param(ins, &ins->src[2], WINED3DSP_WRITEMASK_0, &sample_param);
+            shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, ins->src[1].swizzle,
+                    NULL, NULL, NULL, NULL, "%s + %s, %s", coord_param.param_str,
+                    offset_param.param_str, sample_param.param_str);
+        }
+        else
+        {
+            shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, ins->src[1].swizzle,
+                    NULL, NULL, has_lod_param ? lod_param.param_str : NULL, NULL,
+                    "%s + %s", coord_param.param_str, offset_param.param_str);
+        }
+    }
+    else if (is_multisampled(reg_maps->resource_info[resource_idx].type))
     {
         shader_glsl_add_src_param(ins, &ins->src[2], WINED3DSP_WRITEMASK_0, &sample_param);
         shader_glsl_gen_sample_code(ins, sampler_bind_idx, &sample_function, ins->src[1].swizzle,
