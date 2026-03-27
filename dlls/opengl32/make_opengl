@@ -905,7 +905,15 @@ chdir(dirname($0));
 #  - reference to an array of XML nodes giving the list of arguments (an empty array
 #    for a 'void' function).
 #
-my %gl_extensions;
+my %gl_extensions =
+    (
+     # exposed by native drivers, but not included in registry xml:
+     "GL_APPLE_packed_pixels" => 1, # no specification
+     "GL_ATI_texture_compression_3dc" => 1, # no specification
+     "GL_EXT_texture_edge_clamp" => 1, # https://developer.download.nvidia.com/opengl/specs/GL_EXT_texture_edge_clamp.txt
+     "GL_EXT_texture_rectangle" => 1, # https://people.freedesktop.org/~marcheu/extensions/static/GL_EXT_texture_rectangle.txt
+     "GL_MESA_texture_signed_rgba" => 1, # https://docs.mesa3d.org/specs/MESA_texture_signed_rgba.spec
+    );
 my %norm_functions;
 my %ext_functions;
 my %wgl_extensions;

@@ -11199,6 +11199,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_APPLE_float_pixels) \
     USE_GL_EXT(GL_APPLE_flush_buffer_range) \
     USE_GL_EXT(GL_APPLE_object_purgeable) \
+    USE_GL_EXT(GL_APPLE_packed_pixels) \
     USE_GL_EXT(GL_APPLE_rgb_422) \
     USE_GL_EXT(GL_APPLE_row_bytes) \
     USE_GL_EXT(GL_APPLE_specular_vector) \
@@ -11396,6 +11397,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_ATI_pn_triangles) \
     USE_GL_EXT(GL_ATI_separate_stencil) \
     USE_GL_EXT(GL_ATI_text_fragment_shader) \
+    USE_GL_EXT(GL_ATI_texture_compression_3dc) \
     USE_GL_EXT(GL_ATI_texture_env_combine3) \
     USE_GL_EXT(GL_ATI_texture_float) \
     USE_GL_EXT(GL_ATI_texture_mirror_once) \
@@ -11544,6 +11546,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_EXT_texture_compression_s3tc_srgb) \
     USE_GL_EXT(GL_EXT_texture_cube_map) \
     USE_GL_EXT(GL_EXT_texture_cube_map_array) \
+    USE_GL_EXT(GL_EXT_texture_edge_clamp) \
     USE_GL_EXT(GL_EXT_texture_env) \
     USE_GL_EXT(GL_EXT_texture_env_add) \
     USE_GL_EXT(GL_EXT_texture_env_combine) \
@@ -11561,6 +11564,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_EXT_texture_object) \
     USE_GL_EXT(GL_EXT_texture_perturb_normal) \
     USE_GL_EXT(GL_EXT_texture_query_lod) \
+    USE_GL_EXT(GL_EXT_texture_rectangle) \
     USE_GL_EXT(GL_EXT_texture_rg) \
     USE_GL_EXT(GL_EXT_texture_sRGB) \
     USE_GL_EXT(GL_EXT_texture_sRGB_R8) \
@@ -11637,6 +11641,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_MESA_resize_buffers) \
     USE_GL_EXT(GL_MESA_shader_integer_functions) \
     USE_GL_EXT(GL_MESA_texture_const_bandwidth) \
+    USE_GL_EXT(GL_MESA_texture_signed_rgba) \
     USE_GL_EXT(GL_MESA_tile_raster_order) \
     USE_GL_EXT(GL_MESA_window_pos) \
     USE_GL_EXT(GL_MESA_ycbcr_texture) \
