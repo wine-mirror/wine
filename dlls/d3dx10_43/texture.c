@@ -649,14 +649,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         return E_FAIL;
 
     *resource_data = NULL;
-    if (!load_info->Filter || load_info->Filter == D3DX10_DEFAULT)
-        load_info->Filter = D3DX10_FILTER_LINEAR;
-    if (FAILED(hr = d3dx_validate_filter(load_info->Filter)))
-    {
-        WARN("Invalid filter argument %#x.\n", load_info->Filter);
-        return hr;
-    }
-
     hr = d3dx_image_init(data, size, &image, 0, D3DX_IMAGE_SUPPORT_DXT10);
     if (FAILED(hr))
         return E_FAIL;
@@ -709,6 +701,23 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     if (!load_info->MipLevels || load_info->MipLevels == D3DX10_DEFAULT || load_info->MipLevels == D3DX10_FROM_FILE)
         load_info->MipLevels = (load_info->MipLevels == D3DX10_FROM_FILE) ? img_info.MipLevels : max_mip_level_count;
     load_info->MipLevels = min(max_mip_level_count, load_info->MipLevels);
+
+    if ((load_info->Width != image.size.width) || (load_info->Height != image.size.height)
+            || (load_info->Depth != image.size.depth) || (load_info->MipLevels != image.mip_levels)
+            || (fmt_desc->format != image.format))
+    {
+        if (!load_info->Filter || load_info->Filter == D3DX10_DEFAULT)
+            load_info->Filter = D3DX10_FILTER_LINEAR;
+        if (FAILED(hr = d3dx_validate_filter(load_info->Filter)))
+        {
+            WARN("Invalid filter argument %#x.\n", load_info->Filter);
+            goto end;
+        }
+    }
+    else
+    {
+        load_info->Filter = D3DX10_FILTER_NONE;
+    }
 
     hr = d3dx_create_subresource_data_for_texture(load_info->Width, load_info->Height, load_info->Depth,
             load_info->MipLevels, img_info.ArraySize, fmt_desc, &sub_rsrcs);
