@@ -45,7 +45,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(iyuv_32);
 
 static HINSTANCE IYUV_32_module;
 
+#define FOURCC_I420 mmioFOURCC('I', '4', '2', '0')
 #define FOURCC_IYUV mmioFOURCC('I', 'Y', 'U', 'V')
+
+#define compare_fourcc(fcc1, fcc2) (((fcc1) ^ (fcc2)) & ~0x20202020)
 
 static LRESULT IYUV_Open(const ICINFO *icinfo)
 {
@@ -56,9 +59,41 @@ static LRESULT IYUV_Open(const ICINFO *icinfo)
 
 static LRESULT IYUV_DecompressQuery(const BITMAPINFOHEADER *in, const BITMAPINFOHEADER *out)
 {
-    FIXME("ICM_DECOMPRESS_QUERY %p %p\n", in, out);
+    TRACE("in->planes  = %d\n", in->biPlanes);
+    TRACE("in->bpp     = %d\n", in->biBitCount);
+    TRACE("in->height  = %ld\n", in->biHeight);
+    TRACE("in->width   = %ld\n", in->biWidth);
+    TRACE("in->compr   = %#lx\n", in->biCompression);
 
-    return ICERR_UNSUPPORTED;
+    if (compare_fourcc(in->biCompression, FOURCC_I420) && compare_fourcc(in->biCompression, FOURCC_IYUV))
+    {
+        TRACE("can't do %#lx decompression\n", in->biCompression);
+        return ICERR_BADFORMAT;
+    }
+
+    if (!in->biHeight || !in->biWidth)
+        return ICERR_BADFORMAT;
+
+    /* output must be same dimensions as input */
+    if (out)
+    {
+        TRACE("out->planes = %d\n", out->biPlanes);
+        TRACE("out->bpp    = %d\n", out->biBitCount);
+        TRACE("out->height = %ld\n", out->biHeight);
+        TRACE("out->width  = %ld\n", out->biWidth);
+        TRACE("out->compr  = %#lx\n", out->biCompression);
+
+        if (out->biCompression != BI_RGB)
+            return ICERR_BADFORMAT;
+
+        if (out->biBitCount != 24 && out->biBitCount != 16 && out->biBitCount != 8)
+            return ICERR_BADFORMAT;
+
+        if (in->biWidth != out->biWidth || in->biHeight != out->biHeight)
+            return ICERR_BADFORMAT;
+    }
+
+    return ICERR_OK;
 }
 
 static LRESULT IYUV_DecompressGetFormat(BITMAPINFOHEADER *in, BITMAPINFOHEADER *out)
