@@ -471,37 +471,6 @@ static void gzip_zfree( voidpf opaque, voidpf address )
     free( address );
 }
 
-static DWORD init_gzip_stream( struct request *request, BOOL is_gzip )
-{
-    struct gzip_stream *gzip_stream;
-    int zres;
-
-    if (!(gzip_stream = calloc( 1, sizeof(*gzip_stream) ))) return ERROR_OUTOFMEMORY;
-
-    gzip_stream->data_stream.vtbl = &gzip_stream_vtbl;
-    gzip_stream->zstream.zalloc = gzip_zalloc;
-    gzip_stream->zstream.zfree = gzip_zfree;
-
-    zres = inflateInit2( &gzip_stream->zstream, is_gzip ? 31 : -15 );
-    if (zres != Z_OK)
-    {
-        ERR( "inflateInit failed: %d\n", zres );
-        free( gzip_stream );
-        return ERROR_OUTOFMEMORY;
-    }
-
-    if (request->read.size)
-    {
-        memcpy( gzip_stream->buf.buf, request->read.buf + request->read.pos, request->read.size );
-        gzip_stream->buf.size = request->read.size;
-        request->read.pos = request->read.size = 0;
-    }
-
-    gzip_stream->parent = request->data_stream;
-    request->data_stream = &gzip_stream->data_stream;
-    return ERROR_SUCCESS;
-}
-
 static int request_receive_response_timeout( struct request *req )
 {
     if (req->receive_response_timeout == -1) return ACTUAL_DEFAULT_RECEIVE_RESPONSE_TIMEOUT;
@@ -2808,6 +2777,40 @@ static DWORD handle_authorization( struct request *request, DWORD status )
     return ERROR_WINHTTP_LOGIN_FAILURE;
 }
 
+static DWORD init_gzip_stream( struct request *request, BOOL is_gzip )
+{
+    struct gzip_stream *gzip_stream;
+    int zres;
+
+    if (!(gzip_stream = calloc( 1, sizeof(*gzip_stream) ))) return ERROR_OUTOFMEMORY;
+
+    gzip_stream->data_stream.vtbl = &gzip_stream_vtbl;
+    gzip_stream->zstream.zalloc = gzip_zalloc;
+    gzip_stream->zstream.zfree = gzip_zfree;
+
+    zres = inflateInit2( &gzip_stream->zstream, is_gzip ? 31 : 15 );
+    if (zres != Z_OK)
+    {
+        ERR( "inflateInit failed: %d\n", zres );
+        free( gzip_stream );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    if (request->read.size)
+    {
+        memcpy( gzip_stream->buf.buf, request->read.buf + request->read.pos, request->read.size );
+        gzip_stream->buf.size = request->read.size;
+        request->read.pos = request->read.size = 0;
+    }
+
+    gzip_stream->parent = request->data_stream;
+    request->data_stream = &gzip_stream->data_stream;
+
+    remove_header( request, L"Content-Length", FALSE );
+    request->content_length = ~0ull;
+    return ERROR_SUCCESS;
+}
+
 /* set the request content length based on the headers */
 static DWORD set_content_length( struct request *request, DWORD status )
 {
@@ -2849,16 +2852,14 @@ static DWORD set_content_length( struct request *request, DWORD status )
             request->content_length = ~0ull;
         }
 
-        buflen = sizeof(buf);
-        if (!query_headers( request, WINHTTP_QUERY_CONTENT_ENCODING, NULL, buf, &buflen, NULL ))
+        if (request->hdr.decompression)
         {
-            if (!wcsicmp( buf, L"gzip" )) ret = init_gzip_stream( request, TRUE );
-            else if (!wcsicmp( buf, L"deflate" )) ret = init_gzip_stream( request, FALSE );
-            else ret = ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
-            if (!ret)
+            buflen = sizeof(buf);
+            if (!query_headers( request, WINHTTP_QUERY_CONTENT_ENCODING, NULL, buf, &buflen, NULL ))
             {
-                remove_header( request, L"Content-Length", FALSE );
-                request->content_length = ~0ull;
+                if (!wcsicmp( buf, L"gzip" )) ret = init_gzip_stream( request, TRUE );
+                else if (!wcsicmp( buf, L"deflate" )) ret = init_gzip_stream( request, FALSE );
+                else WARN( "unexpected content encoding %s\n", debugstr_w(buf) );
             }
         }
     }
