@@ -21,6 +21,12 @@
 
 #include "windef.h"
 
+#define COBJMACROS
+#include "mfapi.h"
+#include "mftransform.h"
+
+HRESULT WINAPI winegstreamer_create_color_converter(IMFTransform **out);
+
 #define IDS_NAME        100
 #define IDS_DESCRIPTION 101
 

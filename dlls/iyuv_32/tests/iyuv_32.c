@@ -458,10 +458,7 @@ START_TEST(iyuv_32)
     int i;
 
     hic = ICLocate(ICTYPE_VIDEO, FOURCC_I420, &in, NULL, ICMODE_DECOMPRESS);
-    todo_wine
     ok(!!hic, "Failed to locate iyuv codec\n");
-    if (!hic)
-        return;
     ICClose(hic);
 
     for (i = 0; i < ARRAY_SIZE(handler); i++)

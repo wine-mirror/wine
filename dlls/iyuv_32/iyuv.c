@@ -34,12 +34,7 @@
 #include "iyuv_private.h"
 #include "wine/debug.h"
 
-#define COBJMACROS
-#include "mfapi.h"
 #include "mferror.h"
-#include "mfidl.h"
-#include "mfobjects.h"
-#include "mftransform.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iyuv_32);
 
@@ -52,9 +47,17 @@ static HINSTANCE IYUV_32_module;
 
 static LRESULT IYUV_Open(const ICINFO *icinfo)
 {
-    FIXME("DRV_OPEN %p\n", icinfo);
+    IMFTransform *transform;
 
-    return 0;
+    TRACE("DRV_OPEN %p\n", icinfo);
+
+    if (icinfo && compare_fourcc(icinfo->fccType, ICTYPE_VIDEO))
+        return 0;
+
+    if (FAILED(winegstreamer_create_color_converter(&transform)))
+        transform = NULL;
+
+    return (LRESULT)transform;
 }
 
 static LRESULT IYUV_DecompressQuery(const BITMAPINFOHEADER *in, const BITMAPINFOHEADER *out)
