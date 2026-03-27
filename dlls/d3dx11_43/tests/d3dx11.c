@@ -3905,7 +3905,7 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromMemory(device, test->data, test->size, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4100,7 +4100,7 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromFileW(device, path, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4110,7 +4110,7 @@ static void test_create_texture(void)
         hr2 = 0xdeadbeef;
         hr = D3DX11CreateTextureFromFileA(device, get_str_a(path), &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4221,7 +4221,7 @@ static void test_create_texture(void)
         hr = D3DX11CreateTextureFromResourceW(device, resource_module,
                 test_resource_name, &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
@@ -4232,7 +4232,7 @@ static void test_create_texture(void)
         hr = D3DX11CreateTextureFromResourceA(device, resource_module,
                 get_str_a(test_resource_name), &load_info, NULL, &resource, &hr2);
         ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
-        todo_wine_if(i == 2) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             check_test_image_load_info_resource(resource, test);
