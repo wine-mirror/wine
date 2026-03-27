@@ -124,7 +124,7 @@ static DWORD netconn_fill_buffer( struct data_stream *stream, struct request *re
 
     if (to_read > buf->size && netconn_is_valid( request->netconn ))
     {
-        if (!(ret = netconn_recv( request->netconn, buf->buf + buf->pos, to_read, 0, &received )))
+        if (!(ret = netconn_recv( request->netconn, buf->buf + buf->size, to_read, 0, &received )))
         {
             if (!received) request->content_length = request->content_read;
             buf->size += received;
