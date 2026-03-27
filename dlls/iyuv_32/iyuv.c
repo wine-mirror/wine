@@ -98,9 +98,25 @@ static LRESULT IYUV_DecompressQuery(const BITMAPINFOHEADER *in, const BITMAPINFO
 
 static LRESULT IYUV_DecompressGetFormat(BITMAPINFOHEADER *in, BITMAPINFOHEADER *out)
 {
-    FIXME("ICM_DECOMPRESS_GETFORMAT %p %p\n", in, out);
+    TRACE("ICM_DECOMPRESS_GETFORMAT %p %p\n", in, out);
 
-    return ICERR_UNSUPPORTED;
+    if (compare_fourcc(in->biCompression, FOURCC_I420) && compare_fourcc(in->biCompression, FOURCC_IYUV))
+        return ICERR_BADFORMAT;
+
+    if (out)
+    {
+        memset(out, 0, sizeof(*out));
+        out->biSize = sizeof(BITMAPINFOHEADER);
+        out->biWidth = in->biWidth;
+        out->biHeight = abs(in->biHeight);
+        out->biCompression = BI_RGB;
+        out->biPlanes = 1;
+        out->biBitCount = 24;
+        out->biSizeImage = out->biWidth * out->biHeight * 3;
+        return ICERR_OK;
+    }
+
+    return sizeof(*out);
 }
 
 static LRESULT IYUV_DecompressBegin(IMFTransform *transform, const BITMAPINFOHEADER *in, const BITMAPINFOHEADER *out)
