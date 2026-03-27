@@ -53,6 +53,7 @@ static void dump_varargs_unicode_str( const char *prefix, data_size_t size );
 static void dump_varargs_unicode_strings( const char *prefix, data_size_t size );
 static void dump_varargs_user_handles( const char *prefix, data_size_t size );
 static void dump_varargs_ushorts( const char *prefix, data_size_t size );
+static void dump_varargs_version_res( const char *prefix, data_size_t size );
 
 static const void *cur_data;
 static data_size_t cur_size;
@@ -884,8 +885,10 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
     fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", shared_file=%04x", req->shared_file );
     fprintf( stderr, ", name_len=%u", req->name_len );
+    fprintf( stderr, ", ver_len=%u", req->ver_len );
     fprintf( stderr, ", total=%u", req->total );
     dump_varargs_pe_image_info( ", image=", cur_size );
+    dump_varargs_version_res( ", version=", min( cur_size, req->ver_len ));
     dump_varargs_unicode_str( ", name=", min( cur_size, req->name_len ));
     dump_varargs_string( ", exp_name=", cur_size );
 }

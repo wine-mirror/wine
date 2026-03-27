@@ -2211,10 +2211,13 @@ struct get_mapping_info_reply
     unsigned int flags;
     obj_handle_t shared_file;
     data_size_t  name_len;
+    data_size_t  ver_len;
     data_size_t  total;
     /* VARARG(image,pe_image_info); */
+    /* VARARG(version,version_res,ver_len); */
     /* VARARG(name,unicode_str,name_len); */
     /* VARARG(exp_name,string); */
+    char __pad_36[4];
 };
 
 

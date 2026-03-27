@@ -82,6 +82,17 @@ static const char *get_status_name( unsigned int status )
     return buffer;
 }
 
+static void dump_ushorts( const char *prefix, const unsigned short *ptr, int len )
+{
+    fprintf( stderr, "%s{", prefix );
+    while (len > 0)
+    {
+        fprintf( stderr, "%04x", *ptr++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 static void dump_uints( const char *prefix, const unsigned int *ptr, int len )
 {
     fprintf( stderr, "%s{", prefix );
@@ -548,16 +559,7 @@ static void dump_varargs_uints64( const char *prefix, data_size_t size )
 
 static void dump_varargs_ushorts( const char *prefix, data_size_t size )
 {
-    const unsigned short *data = cur_data;
-    data_size_t len = size / sizeof(*data);
-
-    fprintf( stderr, "%s{", prefix );
-    while (len > 0)
-    {
-        fprintf( stderr, "%04x", *data++ );
-        if (--len) fputc( ',', stderr );
-    }
-    fputc( '}', stderr );
+    dump_ushorts( prefix, cur_data, size / sizeof(unsigned short) );
     remove_data( size );
 }
 
@@ -1383,6 +1385,104 @@ static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
              info.dll_charact, info.machine, info.contains_code, info.image_flags, info.loader_flags,
              info.header_size, info.file_size, info.checksum );
     remove_data( min( size, sizeof(info) ));
+}
+
+struct version_info
+{
+    unsigned short len;
+    unsigned short val_len;
+    unsigned short type;
+    WCHAR          key[1];
+};
+
+struct version_entry
+{
+    const struct version_info *info;
+    const void                *value;
+    const void                *next;
+    const void                *child;
+    data_size_t                namelen;
+};
+
+static int get_version_entry( struct version_entry *entry, const void *ptr, const void *end )
+{
+    unsigned int len;
+    const struct version_info *info = ptr;
+
+    if ((const char *)(info + 1) > (const char *)end) return 0;
+    if ((const char *)info + info->len > (const char *)end) return 0;
+
+    for (len = 0; info->key[len]; len++)
+        if (offsetof(struct version_info, key[len + 1]) > info->len) return 0;
+
+    entry->info  = info;
+    entry->namelen = len * sizeof(WCHAR);
+
+    len = (offsetof(struct version_info, key[len + 1]) + 3) & ~3;
+    if (len + info->val_len * (info->type ? 2 : 1) > info->len) return 0;
+
+    entry->value = (const char *)info + len;
+    entry->child = (const char *)info + len + ((info->val_len * (info->type ? 2 : 1) + 3) & ~3);
+    entry->next  = (const char *)info + ((info->len + 3) & ~3);
+    return 1;
+}
+
+static void dump_version_children( const struct version_entry *parent )
+{
+    struct version_entry child;
+
+    if (!get_version_entry( &child, parent->child, parent->next )) return;
+    fputc( '{', stderr );
+    for (;;)
+    {
+        if (child.info->val_len || child.value == child.next)
+        {
+            dump_unicode_str( "", child.info->key, child.namelen );
+            if (child.info->type)
+            {
+                data_size_t len = child.info->val_len;
+                if (len && !((WCHAR *)child.value)[len - 1]) len--;
+                dump_unicode_str( "=", child.value, len * sizeof(WCHAR) );
+            }
+            else dump_ushorts( "=", child.value, child.info->val_len / sizeof(unsigned short) );
+        }
+        else
+        {
+            dump_unicode_str( "", child.info->key, child.namelen );
+            fputc( '=', stderr );
+        }
+        dump_version_children( &child );
+        if (!get_version_entry( &child, child.next, parent->next )) break;
+        fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
+static void dump_varargs_version_res( const char *prefix, data_size_t size )
+{
+    struct version_entry entry;
+
+    fprintf( stderr, "%s{", prefix );
+    if (get_version_entry( &entry, cur_data, (char *)cur_data + size ))
+    {
+        const VS_FIXEDFILEINFO *info = entry.value;
+        if (entry.info->val_len >= sizeof(VS_FIXEDFILEINFO))
+        {
+            fprintf( stderr, "signature=%08x,version=%u.%u,filever=%u.%u.%u.%u,prodver=%u.%u.%u.%u,",
+                     info->dwSignature, HIWORD(info->dwStrucVersion), LOWORD(info->dwStrucVersion),
+                     HIWORD(info->dwFileVersionMS), LOWORD(info->dwFileVersionMS),
+                     HIWORD(info->dwFileVersionLS), LOWORD(info->dwFileVersionLS),
+                     HIWORD(info->dwProductVersionMS), LOWORD(info->dwProductVersionMS),
+                     HIWORD(info->dwProductVersionLS), LOWORD(info->dwProductVersionLS) );
+            fprintf( stderr, "mask=%x,flags=%x,os=%u.%u,type=%u.%u,date=%x.%x,",
+                     info->dwFileFlagsMask, info->dwFileFlags,
+                     HIWORD(info->dwFileOS), LOWORD(info->dwFileOS),
+                     info->dwFileType, info->dwFileSubtype, info->dwFileDateMS, info->dwFileDateLS );
+        }
+        dump_version_children( &entry );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
 }
 
 static void dump_varargs_rawinput_devices(const char *prefix, data_size_t size )

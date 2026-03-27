@@ -166,7 +166,9 @@ struct mapping
     struct ranges       *committed;  /* list of committed ranges in this mapping */
     struct shared_map   *shared;     /* temp file for shared PE mapping */
     char                *exp_name;   /* export name (for PE image mapping) */
+    void                *ver_res;    /* version resource (for PE image mapping) */
     data_size_t          exp_len;    /* length of export name (for PE image mapping) */
+    data_size_t          ver_len;    /* length of version resource (for PE image mapping) */
 };
 
 static void mapping_dump( struct object *obj, int verbose );
@@ -748,6 +750,79 @@ static int load_export_name( char **ret_buf, IMAGE_DATA_DIRECTORY *data, size_t 
     return end - buffer;
 }
 
+/* find a resource entry by id */
+static size_t find_resource_id( const IMAGE_RESOURCE_DIRECTORY_ENTRY *entries, unsigned int count,
+                                unsigned int id, int want_dir )
+{
+    for (unsigned int i = 0; i < count; i++)
+        if (entries[i].Id == id && !entries[i].DataIsDirectory == !want_dir)
+            return entries[i].OffsetToDirectory;
+    return 0;
+}
+
+/* find a resource entry in a directory */
+static size_t find_resource_entry( unsigned int id, IMAGE_DATA_DIRECTORY *data,
+                                   size_t offset, size_t align_mask, int unix_fd,
+                                   IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+{
+    IMAGE_RESOURCE_DIRECTORY_ENTRY *entries;
+    IMAGE_RESOURCE_DIRECTORY res;
+    size_t size;
+    int ret;
+
+    if (offset >= data->Size) return 0;
+    ret = load_data_dir( &res, sizeof(res), data->VirtualAddress + offset, data->Size - offset,
+                         align_mask, unix_fd, sec, nb_sec );
+    if (ret != sizeof(res)) return 0;
+    offset += ret + res.NumberOfNamedEntries * sizeof(*entries);
+    if (offset >= data->Size) return 0;
+    size = res.NumberOfIdEntries * sizeof(*entries);
+    if (!(entries = malloc( size ))) return 0;
+    ret = load_data_dir( entries, size, data->VirtualAddress + offset, data->Size - offset,
+                         align_mask, unix_fd, sec, nb_sec );
+    offset = 0;
+    if (ret >= sizeof(*entries))
+    {
+        unsigned int count = ret / sizeof(*entries);
+        if (!id)  /* try various languages */
+        {
+            if (!(offset = find_resource_id( entries, count, 0x0409, 0 )) &&
+                !(offset = find_resource_id( entries, count, 0x0000, 0 )) &&
+                !entries[0].DataIsDirectory)
+                offset = entries[0].OffsetToData;
+        }
+        else offset = find_resource_id( entries, count, id, 1 );
+    }
+    free( entries );
+    return offset;
+}
+
+/* load the version resource */
+static int load_version_resource( void **ret_buf, IMAGE_DATA_DIRECTORY *data, size_t align_mask,
+                                  int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+{
+    IMAGE_RESOURCE_DATA_ENTRY entry;
+    size_t offset;
+    int ret;
+
+    if (!(offset = find_resource_entry( RT_VERSION, data, 0, align_mask, unix_fd, sec, nb_sec ))) return 0;
+    if (!(offset = find_resource_entry( 1, data, offset, align_mask, unix_fd, sec, nb_sec ))) return 0;
+    if (!(offset = find_resource_entry( 0, data, offset, align_mask, unix_fd, sec, nb_sec ))) return 0;
+    if (offset >= data->Size) return 0;
+    ret = load_data_dir( &entry, sizeof(entry), data->VirtualAddress + offset, data->Size - offset,
+                         align_mask, unix_fd, sec, nb_sec );
+    if (ret != sizeof(entry)) return 0;
+    if (!(*ret_buf = malloc( entry.Size + 3 ))) return 0;
+    if ((ret = load_data_dir( *ret_buf, entry.Size, entry.OffsetToData, entry.Size,
+                              align_mask, unix_fd, sec, nb_sec )) > 0)
+    {
+        if (ret % 4) memset( (char *)*ret_buf + ret, 0, 4 - ret % 4 );
+        return (ret + 3) & ~3;
+    }
+    free( *ret_buf );
+    return 0;
+}
+
 /* load the CLR header from its section */
 static int load_clr_header( IMAGE_COR20_HEADER *hdr, IMAGE_DATA_DIRECTORY *data, size_t align_mask,
                             int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
@@ -808,7 +883,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     } cfg;
     off_t pos;
     int size, has_relocs;
-    IMAGE_DATA_DIRECTORY *data_dirs, *exp_dir, *cfg_dir, *clr_dir;
+    IMAGE_DATA_DIRECTORY *data_dirs, *exp_dir, *res_dir, *cfg_dir, *clr_dir;
     size_t mz_size, align_mask;
     unsigned int i, ret, nb_data_dirs;
 
@@ -912,6 +987,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     (dir < nb_data_dirs && data_dirs[dir].VirtualAddress && data_dirs[dir].Size ? &data_dirs[dir] : NULL)
 
     exp_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_EXPORT );
+    res_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_RESOURCE );
     cfg_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG );
     clr_dir = GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR );
     has_relocs = (GET_DATA_DIR( IMAGE_DIRECTORY_ENTRY_BASERELOC ) &&
@@ -967,6 +1043,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         if (exp_dir) mapping->exp_len = load_export_name( &mapping->exp_name, exp_dir, align_mask,
                                                           unix_fd, sec, nt.FileHeader.NumberOfSections );
     }
+    else if (res_dir)
+        mapping->ver_len = load_version_resource( &mapping->ver_res, res_dir, align_mask,
+                                                  unix_fd, sec, nt.FileHeader.NumberOfSections );
 
     if (clr_dir &&
         load_clr_header( &clr, clr_dir, align_mask, unix_fd, sec, nt.FileHeader.NumberOfSections ) &&
@@ -1057,7 +1136,9 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
     mapping->shared      = NULL;
     mapping->committed   = NULL;
     mapping->exp_name    = NULL;
+    mapping->ver_res     = NULL;
     mapping->exp_len     = 0;
+    mapping->ver_len     = 0;
 
     if (!(mapping->flags = get_mapping_flags( handle, flags ))) goto error;
 
@@ -1148,7 +1229,9 @@ struct mapping *create_fd_mapping( struct object *root, const struct unicode_str
     mapping->shared    = NULL;
     mapping->committed = NULL;
     mapping->exp_name  = NULL;
+    mapping->ver_res   = NULL;
     mapping->exp_len   = 0;
+    mapping->ver_len   = 0;
     mapping->flags     = SEC_FILE;
     mapping->fd        = (struct fd *)grab_object( fd );
     set_fd_user( mapping->fd, &mapping_fd_ops, NULL );
@@ -1261,6 +1344,7 @@ static void mapping_destroy( struct object *obj )
     if (mapping->committed) release_object( mapping->committed );
     if (mapping->shared) release_object( mapping->shared );
     free( mapping->exp_name );
+    free( mapping->ver_res );
 }
 
 static enum server_fd_type mapping_get_fd_type( struct fd *fd )
@@ -1554,12 +1638,19 @@ DECL_HANDLER(get_mapping_info)
         void *data;
 
         if (mapping->fd) get_nt_name( mapping->fd, &name );
-        reply->total = sizeof(struct pe_image_info) + name.len + mapping->exp_len;
-        size = min( reply->total, get_reply_max_size() );
+        size = reply->total = sizeof(struct pe_image_info) + mapping->ver_len + name.len + mapping->exp_len;
+        if (size > get_reply_max_size()) size = sizeof(struct pe_image_info) + mapping->ver_len + name.len;
+        if (size > get_reply_max_size()) size = sizeof(struct pe_image_info) + mapping->ver_len;
+        if (size > get_reply_max_size()) size = sizeof(struct pe_image_info);
         if ((data = set_reply_data_size( size )))
         {
             data = mem_append( data, &mapping->image, min( sizeof(struct pe_image_info), size ));
-            if (size >= sizeof(struct pe_image_info) + name.len)
+            if (size >= sizeof(struct pe_image_info) + mapping->ver_len)
+            {
+                data = mem_append( data, mapping->ver_res, mapping->ver_len );
+                reply->ver_len = mapping->ver_len;
+            }
+            if (size >= sizeof(struct pe_image_info) + mapping->ver_len + name.len)
             {
                 data = mem_append( data, name.str, name.len );
                 reply->name_len = name.len;

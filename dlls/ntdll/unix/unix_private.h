@@ -154,6 +154,8 @@ struct pe_mapping_info
     HANDLE               shared_file;
     UNICODE_STRING       nt_name;
     ANSI_STRING          exp_name;
+    void                *version_res;
+    ULONG                version_len;
     struct pe_image_info image;
     char                 data[];
 };

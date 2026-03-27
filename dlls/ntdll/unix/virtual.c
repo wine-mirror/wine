@@ -3284,7 +3284,7 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
                                       mem_size_t *full_size, struct pe_mapping_info **info_ret )
 {
     struct pe_mapping_info *info;
-    SIZE_T total, size = 1024;
+    SIZE_T total, size = 2048;
     unsigned int status;
 
     *info_ret = NULL;
@@ -3302,6 +3302,7 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
             *full_size   = reply->size;
             total        = reply->total;
             info->shared_file = wine_server_ptr_handle( reply->shared_file );
+            info->version_len = reply->ver_len;
             info->nt_name.Length = info->nt_name.MaximumLength = reply->name_len;
         }
         SERVER_END_REQ;
@@ -3313,11 +3314,11 @@ static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigne
 
     if (total)
     {
-        assert( total >= sizeof(info->image) );
-        total -= sizeof(info->image);
-        info->nt_name.Buffer  = (WCHAR *)info->data;
-        info->exp_name.Buffer = info->data + info->nt_name.Length;
-        info->exp_name.Length = info->exp_name.MaximumLength = total - info->nt_name.Length;
+        info->version_res     = info->data;
+        info->nt_name.Buffer  = (WCHAR *)(info->data + info->version_len);
+        info->exp_name.Buffer = info->data + info->version_len + info->nt_name.Length;
+        info->exp_name.Length = total - sizeof(info->image) - info->version_len - info->nt_name.Length;
+        info->exp_name.MaximumLength = info->exp_name.Length;
         *info_ret = info;
     }
     else free_pe_mapping_info( info );
