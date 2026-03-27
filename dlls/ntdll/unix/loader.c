@@ -861,7 +861,7 @@ static NTSTATUS load_so_dll( void *args )
     NTSTATUS status;
     DWORD len;
 
-    if (get_load_order( nt_name ) == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
+    if (get_load_order( nt_name, NULL, 0 ) == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
     InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, 0 );
     if (!get_nt_and_unix_names( &attr, &true_nt_name, &unix_name, FILE_OPEN, FALSE ))
     {
@@ -1257,7 +1257,8 @@ NTSTATUS load_builtin( struct pe_mapping_info *pe_mapping, USHORT machine,
 {
     NTSTATUS status;
     USHORT search_machine = pe_mapping->image.machine;
-    enum loadorder loadorder = get_load_order( &pe_mapping->nt_name );
+    enum loadorder loadorder = get_load_order( &pe_mapping->nt_name,
+                                               pe_mapping->version_res, pe_mapping->version_len );
 
     if (loadorder == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
 
@@ -1464,7 +1465,7 @@ static NTSTATUS open_main_image( UNICODE_STRING *nt_name, void **module, SECTION
  */
 NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **module )
 {
-    enum loadorder loadorder = get_load_order( nt_name );
+    enum loadorder loadorder = get_load_order( nt_name, NULL, 0 );
     unsigned int status;
     SIZE_T size;
     USHORT search_machine;

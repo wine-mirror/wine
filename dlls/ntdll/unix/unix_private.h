@@ -569,7 +569,7 @@ enum loadorder
 };
 
 extern void set_load_order_app_name( const WCHAR *app_name );
-extern enum loadorder get_load_order( const UNICODE_STRING *nt_name );
+extern enum loadorder get_load_order( const UNICODE_STRING *nt_name, void *version_res, ULONG version_len );
 
 static inline WCHAR ntdll_towupper( WCHAR ch )
 {
