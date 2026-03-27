@@ -269,7 +269,6 @@ static void test_formats(DWORD handler)
     out.biCompression = BI_RGB;
     out.biBitCount = 24;
     res = ICDecompressBegin(hic, &in, &out);
-    todo_wine
     ok(res == ICERR_OK, "Got %ld.\n", res);
 
     res = ICDecompressEnd(hic);
@@ -331,11 +330,7 @@ static void test_decompress(DWORD handler)
     ok(!!hic, "Failed to open codec.\n");
 
     res = ICDecompressBegin(hic, &i420_info, &rgb_info);
-    todo_wine
     ok(res == ICERR_OK, "Got %ld.\n", res);
-
-    if (res != ICERR_OK)
-        goto skip_decompression_tests;
 
     res = ICDecompress(hic, 0, &i420_info, i420_data, &rgb_info, rgb_data);
     todo_wine
@@ -356,7 +351,6 @@ static void test_decompress(DWORD handler)
     todo_wine
     ok(diff == 0, "Got %lu%% difference.\n", diff);
 
-skip_decompression_tests:
     res = ICClose(hic);
     ok(res == ICERR_OK, "Got %ld.\n", res);
 }

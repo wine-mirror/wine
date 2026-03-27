@@ -45,6 +45,11 @@ static HINSTANCE IYUV_32_module;
 
 #define compare_fourcc(fcc1, fcc2) (((fcc1) ^ (fcc2)) & ~0x20202020)
 
+static inline UINT64 make_uint64(UINT32 high, UINT32 low)
+{
+    return ((UINT64)high << 32) | low;
+}
+
 static LRESULT IYUV_Open(const ICINFO *icinfo)
 {
     IMFTransform *transform;
@@ -124,9 +129,67 @@ static LRESULT IYUV_DecompressGetFormat(BITMAPINFOHEADER *in, BITMAPINFOHEADER *
 
 static LRESULT IYUV_DecompressBegin(IMFTransform *transform, const BITMAPINFOHEADER *in, const BITMAPINFOHEADER *out)
 {
-    FIXME("ICM_DECOMPRESS_BEGIN %p %p %p\n", transform, in, out);
+    IMFMediaType *input_type, *output_type;
+    LRESULT r = ICERR_INTERNAL;
+    const GUID *output_subtype;
+    LONG stride, depth;
 
-    return ICERR_UNSUPPORTED;
+    TRACE("transform %p, in %p, out %p.\n", transform, in, out);
+
+    if (!transform)
+        return ICERR_BADPARAM;
+
+    if (out->biCompression != BI_RGB)
+        return ICERR_BADFORMAT;
+
+    if (out->biBitCount == 24)
+        output_subtype = &MFVideoFormat_RGB24;
+    else if (out->biBitCount == 16)
+        output_subtype = &MFVideoFormat_RGB555;
+    else if (out->biBitCount == 8)
+        output_subtype = &MFVideoFormat_RGB8;
+    else
+        return ICERR_BADFORMAT;
+
+    if (in->biWidth != out->biWidth || in->biHeight != out->biHeight)
+        return ICERR_BADFORMAT;
+
+    depth = out->biBitCount / 8;
+    stride = -((out->biWidth * depth + 3) & ~3);
+
+    if (FAILED(MFCreateMediaType(&input_type)))
+        return ICERR_INTERNAL;
+
+    if (FAILED(MFCreateMediaType(&output_type)))
+    {
+        IMFMediaType_Release(input_type);
+        return ICERR_INTERNAL;
+    }
+
+    if (FAILED(IMFMediaType_SetGUID(input_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video)) ||
+        FAILED(IMFMediaType_SetGUID(input_type, &MF_MT_SUBTYPE, &MFVideoFormat_I420)))
+        goto done;
+    if (FAILED(IMFMediaType_SetUINT64(input_type, &MF_MT_FRAME_SIZE, make_uint64(in->biWidth, in->biHeight))))
+        goto done;
+
+    if (FAILED(IMFMediaType_SetGUID(output_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video)) ||
+        FAILED(IMFMediaType_SetGUID(output_type, &MF_MT_SUBTYPE, output_subtype)))
+        goto done;
+    if (FAILED(IMFMediaType_SetUINT64(output_type, &MF_MT_FRAME_SIZE, make_uint64(out->biWidth, out->biHeight))))
+        goto done;
+    if (FAILED(IMFMediaType_SetUINT32(output_type, &MF_MT_DEFAULT_STRIDE, stride)))
+        goto done;
+
+    if (FAILED(IMFTransform_SetInputType(transform, 0, input_type, 0)) ||
+        FAILED(IMFTransform_SetOutputType(transform, 0, output_type, 0)))
+        goto done;
+
+    r = ICERR_OK;
+
+done:
+    IMFMediaType_Release(input_type);
+    IMFMediaType_Release(output_type);
+    return r;
 }
 
 static LRESULT IYUV_Decompress(IMFTransform *transform, const ICDECOMPRESS *params)
