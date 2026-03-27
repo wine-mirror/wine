@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-03-21 17:30+0100\n"
+"PO-Revision-Date: 2026-03-27 22:42+0100\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -13009,142 +13009,108 @@ msgid "Invalid or unqualified reference"
 msgstr "Nieprawidłowe lub niezwartościowane odniesienie"
 
 #: dlls/vbscript/vbscript.rc:67
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'To'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano 'To'"
 
 #: dlls/vbscript/vbscript.rc:68
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'End'"
-msgstr "Oczekiwano '@end'"
+msgstr "Oczekiwano 'End'"
 
 #: dlls/vbscript/vbscript.rc:69
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'Then'"
-msgstr "Oczekiwano '@end'"
+msgstr "Oczekiwano 'Then'"
 
 #: dlls/vbscript/vbscript.rc:70
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'Wend'"
-msgstr "Oczekiwano '@end'"
+msgstr "Oczekiwano 'Wend'"
 
 #: dlls/vbscript/vbscript.rc:71
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Loop'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano 'Loop'"
 
 #: dlls/vbscript/vbscript.rc:72
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Next'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano 'Next'"
 
 #: dlls/vbscript/vbscript.rc:73
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Case'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano 'Case'"
 
 #: dlls/vbscript/vbscript.rc:74
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected statement"
-msgstr "Oczekiwano '@end'"
+msgstr "Oczekiwano instrukcji"
 
 #: dlls/vbscript/vbscript.rc:75
-#, fuzzy
-#| msgid "Unexpected end of input data stream\n"
 msgid "Expected end of statement"
-msgstr "Nieoczekiwany koniec strumienia danych wejściowych\n"
+msgstr "Oczekiwano końca instrukcji"
 
 #: dlls/vbscript/vbscript.rc:76
-#, fuzzy
-#| msgid "Unterminated string constant"
 msgid "Expected integer constant"
-msgstr "Niezakończona stała znakowa"
+msgstr "Oczekiwano stałej całkowitej"
 
 #: dlls/vbscript/vbscript.rc:77
 msgid "Expected 'While', 'Until' or end of statement"
-msgstr ""
+msgstr "Oczekiwano 'While', 'Until' lub końca instrukcji"
 
 #: dlls/vbscript/vbscript.rc:78
-#, fuzzy
-#| msgid "Invalid flag number.\n"
 msgid "Invalid number"
-msgstr "Niepoprawny numer flagi.\n"
+msgstr "Nieprawidłowa liczba"
 
 #: dlls/vbscript/vbscript.rc:81
 msgid "'loop' without 'do'"
-msgstr ""
+msgstr "'loop' bez 'do'"
 
 #: dlls/vbscript/vbscript.rc:82
-#, fuzzy
-#| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
-msgstr "Nieprawidłowy stan drukarki.\n"
+msgstr "Nieprawidłowa instrukcja 'Exit'"
 
 #: dlls/vbscript/vbscript.rc:83
-#, fuzzy
-#| msgid "Label redefined"
 msgid "Name redefined"
-msgstr "Etykieta zdefiniowana na nowo"
+msgstr "Nazwa zdefiniowana na nowo"
 
 #: dlls/vbscript/vbscript.rc:84
 msgid "Must be first statement on the line"
-msgstr ""
+msgstr "Musi być pierwszą instrukcją w wierszu"
 
 #: dlls/vbscript/vbscript.rc:85
 msgid "Cannot use parentheses when calling a Sub"
-msgstr ""
+msgstr "Nie można używać nawiasów podczas wywoływania funkcji Sub"
 
 #: dlls/vbscript/vbscript.rc:86
-#, fuzzy
-#| msgid "Expected whitespace character\n"
 msgid "Expected literal constant"
-msgstr "Oczekiwano znaku odstępu\n"
+msgstr "Oczekiwano stałej literałowej"
 
 #: dlls/vbscript/vbscript.rc:87
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'In'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano 'In'"
 
 #: dlls/vbscript/vbscript.rc:88
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Class'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano 'Class'"
 
 #: dlls/vbscript/vbscript.rc:89
 msgid "Must be defined inside a Class"
-msgstr ""
+msgstr "Musi być określone wewnątrz funkcji 'Class'"
 
 #: dlls/vbscript/vbscript.rc:90
 msgid "Expected Let or Set or Get in property declaration"
-msgstr ""
+msgstr "Oczekiwano Let, Set lub Get w deklaracji właściwości"
 
 #: dlls/vbscript/vbscript.rc:91
 msgid "Class initialize or terminate do not have arguments"
-msgstr ""
+msgstr "Inicjalizacja lub zakończenie funkcji Class nie ma argumentów"
 
 #: dlls/vbscript/vbscript.rc:92
 msgid "Property set or let must have at least one argument"
-msgstr ""
+msgstr "Właściwość Set lub Let musi mieć co najmniej jeden argument"
 
 #: dlls/vbscript/vbscript.rc:93
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano 'Next'"
 
 #: dlls/vbscript/vbscript.rc:94
 msgid "'Default' specification must also specify 'Public'"
-msgstr ""
+msgstr "Specyfikacja 'Default' musi również określać 'Public'"
 
 #: dlls/vbscript/vbscript.rc:96
 msgid "Microsoft VBScript compilation error"
