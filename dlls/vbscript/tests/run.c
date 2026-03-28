@@ -2890,7 +2890,7 @@ static void test_parse_errors(void)
         {
             /* Name redefined - error 1041 */
             L"Dim a\nDim a\n",
-            1, -4,
+            1, 4,
             NULL, S_OK, 1041
         },
         {
@@ -2980,7 +2980,7 @@ static void test_parse_errors(void)
         {
             /* Invalid 'exit' statement - error 1039 */
             L"Exit Do\n",
-            0, -5,
+            0, 5,
             NULL, S_OK, 1039
         },
         {

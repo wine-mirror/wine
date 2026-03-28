@@ -162,6 +162,7 @@ typedef struct _dim_list_t {
 
 typedef struct _dim_decl_t {
     const WCHAR *name;
+    unsigned loc;
     BOOL is_array;
     BOOL is_public; /* Used only for class members. */
     dim_list_t *dims;

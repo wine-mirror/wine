@@ -1151,6 +1151,7 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
     while(1) {
         if(lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)
            || lookup_const_decls(ctx, dim_decl->name, FALSE)) {
+            ctx->loc = dim_decl->loc;
             return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         }
 
