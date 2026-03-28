@@ -159,6 +159,8 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
 
     TRACE("window=%s style=%#x\n", wine_dbgstr_rect(&conf->rect), style);
 
+    conf->minimized = !!(style & WS_MINIMIZE);
+
     /* The fullscreen state is implied by the window position and style. */
     if (data->is_fullscreen)
     {
@@ -267,12 +269,14 @@ static void wayland_surface_update_state_toplevel(struct wayland_surface *surfac
          /* First do all state unsettings, before setting new state. Some
           * Wayland compositors misbehave if the order is reversed. */
         if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
-            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED))
+            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+            !surface->window.minimized)
         {
             xdg_toplevel_unset_maximized(surface->xdg_toplevel);
         }
         if (!(surface->window.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
-            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
+            (surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
+            !surface->window.minimized)
         {
             xdg_toplevel_unset_fullscreen(surface->xdg_toplevel);
         }
@@ -286,6 +290,10 @@ static void wayland_surface_update_state_toplevel(struct wayland_surface *surfac
            !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN))
         {
             xdg_toplevel_set_fullscreen(surface->xdg_toplevel, NULL);
+        }
+        if (surface->window.minimized)
+        {
+            xdg_toplevel_set_minimized(surface->xdg_toplevel);
         }
     }
     else

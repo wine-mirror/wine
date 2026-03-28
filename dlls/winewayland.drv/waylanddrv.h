@@ -235,6 +235,7 @@ struct wayland_window_config
     double scale;
     BOOL visible;
     BOOL managed;
+    BOOL minimized;
 };
 
 struct wayland_client_surface
