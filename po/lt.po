@@ -4066,7 +4066,7 @@ msgstr "Microsoft JScript kompiliavimo klaida"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:117
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:118
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
@@ -13176,75 +13176,79 @@ msgid "Invalid 'exit' statement"
 msgstr "Neteisingas „exit“ sakinys"
 
 #: dlls/vbscript/vbscript.rc:98
+msgid "Invalid 'for' loop control variable"
+msgstr ""
+
+#: dlls/vbscript/vbscript.rc:99
 msgid "Name redefined"
 msgstr "Vardas apibrėžtas iš naujo"
 
-#: dlls/vbscript/vbscript.rc:99
+#: dlls/vbscript/vbscript.rc:100
 msgid "Must be first statement on the line"
 msgstr "Privalo būti pirmas sakinys eilutėje"
 
-#: dlls/vbscript/vbscript.rc:100
+#: dlls/vbscript/vbscript.rc:101
 msgid "Cannot use parentheses when calling a Sub"
 msgstr "Negalima naudoti skliaustų kviečiant „Sub“"
 
-#: dlls/vbscript/vbscript.rc:101
+#: dlls/vbscript/vbscript.rc:102
 msgid "Expected literal constant"
 msgstr "Tikėtasi literalinės konstantos"
 
-#: dlls/vbscript/vbscript.rc:102
+#: dlls/vbscript/vbscript.rc:103
 msgid "Expected 'In'"
 msgstr "Tikėtasi „In“"
 
-#: dlls/vbscript/vbscript.rc:103
+#: dlls/vbscript/vbscript.rc:104
 msgid "Expected 'Class'"
 msgstr "Tikėtasi „Class“"
 
-#: dlls/vbscript/vbscript.rc:104
+#: dlls/vbscript/vbscript.rc:105
 msgid "Must be defined inside a Class"
 msgstr "Privalo būti apibrėžtas klasėje"
 
-#: dlls/vbscript/vbscript.rc:105
+#: dlls/vbscript/vbscript.rc:106
 msgid "Expected Let or Set or Get in property declaration"
 msgstr "Tikėtasi „Let“, „Set“ arba „Get“ savybės apraše"
 
-#: dlls/vbscript/vbscript.rc:106
+#: dlls/vbscript/vbscript.rc:107
 msgid "Expected 'Property'"
 msgstr "Tikėtasi „Property“"
 
-#: dlls/vbscript/vbscript.rc:107
+#: dlls/vbscript/vbscript.rc:108
 msgid "Number of arguments must be consistent across properties specification"
 msgstr ""
 "Argumentų skaičius privalo būti atitinkantis tarp savybių specifikacijų"
 
-#: dlls/vbscript/vbscript.rc:108
+#: dlls/vbscript/vbscript.rc:109
 msgid "Cannot have multiple default property/method in a Class"
 msgstr "Negalima turėti daugybinių numatytųjų savybių/metodų klasėje"
 
-#: dlls/vbscript/vbscript.rc:109
+#: dlls/vbscript/vbscript.rc:110
 msgid "Class initialize or terminate do not have arguments"
 msgstr "Klasės inicijavimas arba pabaiga neturi argumentų"
 
-#: dlls/vbscript/vbscript.rc:110
+#: dlls/vbscript/vbscript.rc:111
 msgid "Property set or let must have at least one argument"
 msgstr "Savybė „Set“ arba „Let“ privalo turėti bent vieną argumentą"
 
-#: dlls/vbscript/vbscript.rc:111
+#: dlls/vbscript/vbscript.rc:112
 msgid "Unexpected 'Next'"
 msgstr "Netikėtas „Next“"
 
-#: dlls/vbscript/vbscript.rc:112
+#: dlls/vbscript/vbscript.rc:113
 msgid "'Default' specification must also specify 'Public'"
 msgstr "„Default“ specifikacija privalo nurodyti ir „Public“"
 
-#: dlls/vbscript/vbscript.rc:113
+#: dlls/vbscript/vbscript.rc:114
 msgid "'Default' specification can only be on Property Get"
 msgstr "„Default“ specifikacija galima tik savybei „Get“"
 
-#: dlls/vbscript/vbscript.rc:115
+#: dlls/vbscript/vbscript.rc:116
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript kompiliavimo klaida"
 
-#: dlls/vbscript/vbscript.rc:116
+#: dlls/vbscript/vbscript.rc:117
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript vykdymo klaida"
 

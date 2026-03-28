@@ -257,16 +257,27 @@ SimpleStatement
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, @$, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, @$, FALSE); CHECK_ERROR; }
     | tCONST ConstDeclList                  { $$ = new_const_statement(ctx, @$, $2); CHECK_ERROR; }
-    | tFOR Identifier '=' Expression tTO Expression Step_opt StSep StatementsNl_opt tNEXT
-                                            { $$ = new_forto_statement(ctx, @$, $2, $4, $6, $7, $9); CHECK_ERROR; }
-    | tFOR Identifier '=' Expression error
+    | tFOR MemberExpression '=' Expression tTO Expression Step_opt StSep StatementsNl_opt tNEXT
+                                            { if($2->obj_expr) {
+                                                  ctx->error_loc = @3;
+                                                  ctx->hres = MAKE_VBSERROR(VBSE_INVALID_FOR_CONTROL);
+                                                  CHECK_ERROR;
+                                              }
+                                              $$ = new_forto_statement(ctx, @$, $2->identifier, $4, $6, $7, $9);
+                                              CHECK_ERROR; }
+    | tFOR MemberExpression '=' Expression error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_TO); YYABORT; }
-    | tFOR Identifier '=' Expression tTO Expression Step_opt StSep StatementsNl_opt error
+    | tFOR MemberExpression '=' Expression tTO Expression Step_opt StSep StatementsNl_opt error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_NEXT); YYABORT; }
-    | tFOR tEACH Identifier tIN Expression StSep StatementsNl_opt tNEXT
-                                            { $$ = new_foreach_statement(ctx, @$, $3, $5, $7); }
-    | tFOR tEACH Identifier error           { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IN); YYABORT; }
-    | tFOR tEACH Identifier tIN Expression StSep StatementsNl_opt error
+    | tFOR tEACH MemberExpression tIN Expression StSep StatementsNl_opt tNEXT
+                                            { if($3->obj_expr) {
+                                                  ctx->error_loc = @4;
+                                                  ctx->hres = MAKE_VBSERROR(VBSE_INVALID_FOR_CONTROL);
+                                                  CHECK_ERROR;
+                                              }
+                                              $$ = new_foreach_statement(ctx, @$, $3->identifier, $5, $7); }
+    | tFOR tEACH MemberExpression error     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IN); YYABORT; }
+    | tFOR tEACH MemberExpression tIN Expression StSep StatementsNl_opt error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_NEXT); YYABORT; }
     | tSELECT tCASE Expression StSep CaseClausules tEND tSELECT
                                             { $$ = new_select_statement(ctx, @$, $3, $5); }

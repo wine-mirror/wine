@@ -94,6 +94,7 @@ STRINGTABLE
     VBSE_INVALID_USE_OF_ME             "Invalid use of 'Me' keyword"
     VBSE_LOOP_WITHOUT_DO               "'loop' without 'do'"
     VBSE_INVALID_EXIT                  "Invalid 'exit' statement"
+    VBSE_INVALID_FOR_CONTROL           "Invalid 'for' loop control variable"
     VBSE_NAME_REDEFINED                "Name redefined"
     VBSE_MUST_BE_FIRST_STATEMENT       "Must be first statement on the line"
     VBSE_CANNOT_USE_PARENS_CALLING_SUB "Cannot use parentheses when calling a Sub"
