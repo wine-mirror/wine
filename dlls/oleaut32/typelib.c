@@ -4366,6 +4366,23 @@ static void SLTG_ProcessRecord(char *pBlk, ITypeInfoImpl *pTI,
   free(ref_lookup);
 }
 
+static void SLTG_ProcessUnion(char *pBlk, ITypeInfoImpl *pTI,
+			       const char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
+			       const SLTG_TypeInfoTail *pTITail, const BYTE *hlp_strings)
+{
+  sltg_ref_lookup_t *ref_lookup = NULL;
+
+  if (pTIHeader->href_table != 0xffffffff)
+      ref_lookup = SLTG_DoRefs((SLTG_RefInfo*)((char *)pTIHeader + pTIHeader->href_table),
+                               pTI->pTypeLib, (char *)pNameTable);
+
+  if (pTITail->vars_off != 0xffff)
+    SLTG_DoVars(pBlk, pBlk + pTITail->vars_off, pTI, pTITail->cVars,
+                pNameTable, ref_lookup, hlp_strings);
+
+  free(ref_lookup);
+}
+
 static void SLTG_ProcessAlias(char *pBlk, ITypeInfoImpl *pTI,
 			      char *pNameTable, SLTG_TypeInfoHeader *pTIHeader,
 			      const SLTG_TypeInfoTail *pTITail)
@@ -4724,8 +4741,13 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
                            pTIHeader, pTITail, hlp_strings);
 	break;
 
+      case TKIND_UNION:
+	SLTG_ProcessUnion((char *)(pMemHeader + 1), *ppTypeInfoImpl, pNameTable,
+                           pTIHeader, pTITail, hlp_strings);
+	break;
+
       default:
-	FIXME("Not processing typekind %d\n", pTIHeader->typekind);
+	ERR("Unknown typekind %d, expected < %d\n", pTIHeader->typekind, TKIND_MAX);
 	break;
 
       }
