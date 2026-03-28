@@ -255,13 +255,28 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
     return r>=0 ? ret : r;
 }
 
+static inline BOOL FUNC_NAME(pf_is_str_wide)(pf_flags *flags, BOOL legacy_wide)
+{
+    BOOL api_is_wide = sizeof(APICHAR) == sizeof(wchar_t);
+    BOOL complement_is_narrow = legacy_wide && api_is_wide;
+
+    if((flags->NaturalString && api_is_wide) || flags->WideString || flags->IntegerLength == LEN_LONG)
+        return TRUE;
+    if((flags->NaturalString && !api_is_wide) || flags->IntegerLength == LEN_SHORT)
+        return FALSE;
+
+#if _MSVCR_VER < 140
+    if (flags->Format == 'Z')
+        return FALSE;
+#endif
+
+    return (flags->Format=='s' || flags->Format=='c') == complement_is_narrow;
+}
+
 static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
         const void *str, int len, pf_flags *flags, _locale_t locale, BOOL legacy_wide)
 {
-    BOOL api_is_wide = sizeof(APICHAR) == sizeof(wchar_t);
-    BOOL complement_is_narrow = legacy_wide ? api_is_wide : FALSE;
 #ifdef PRINTF_WIDE
-
     if(!str)
         return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, L"(null)", 6, flags, locale);
 #else
@@ -269,15 +284,10 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, "(null)", 6, flags, locale);
 #endif
 
-    if((flags->NaturalString && api_is_wide) || flags->WideString || flags->IntegerLength == LEN_LONG)
+    if(FUNC_NAME(pf_is_str_wide)(flags, legacy_wide))
         return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locale);
-    if((flags->NaturalString && !api_is_wide) || flags->IntegerLength == LEN_SHORT)
-        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locale);
-
-    if((flags->Format=='S' || flags->Format=='C') == complement_is_narrow)
-        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locale);
     else
-        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locale);
+        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locale);
 }
 
 static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
@@ -1142,6 +1152,21 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, &ch, 1, &flags, locale, legacy_wide);
             if(i < 0) i = 0; /* ignore conversion error */
+        } else if(flags.Format == 'Z') {
+            /* UNICODE_STRING and ANSI_STRING have the same layout. */
+            UNICODE_STRING *ustr = pf_args(args_ctx, pos, VT_PTR, valist).get_ptr;
+            void *str = ustr ? ustr->Buffer : NULL;
+            int len = ustr ? ustr->Length : 0;
+
+            if(FUNC_NAME(pf_is_str_wide)(&flags, legacy_wide)) {
+                if(len % sizeof(wchar_t)) {
+                    *_errno() = EINVAL;
+                    return -1;
+                }
+                len /= sizeof(wchar_t);
+            }
+            i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, str, len,
+                    &flags, locale, legacy_wide);
         } else if(flags.Format == 'p') {
             flags.Format = 'X';
             flags.PadZero = TRUE;
