@@ -2238,30 +2238,6 @@ static void finished_reading( struct request *request )
     request->netconn = NULL;
 }
 
-static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD *read, BOOL async )
-{
-    DWORD bytes_read = 0, ret;
-
-    ret = read_data_stream( request, buffer, size, &bytes_read );
-
-    TRACE( "retrieved %lu bytes (%I64u/%I64u)\n", bytes_read, request->content_read, request->content_length );
-    if (end_of_data_stream( request )) finished_reading( request );
-    if (async)
-    {
-        if (!ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, bytes_read );
-        else
-        {
-            WINHTTP_ASYNC_RESULT result;
-            result.dwResult = API_READ_DATA;
-            result.dwError  = ret;
-            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
-        }
-    }
-
-    if (!ret && read) *read = bytes_read;
-    return ret;
-}
-
 enum escape_flags
 {
     ESCAPE_FLAG_NON_PRINTABLE = 0x01,
@@ -3544,6 +3520,30 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
     release_object( &request->hdr );
     SetLastError( ret );
     return !ret || ret == ERROR_IO_PENDING;
+}
+
+static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+{
+    DWORD bytes_read = 0, ret;
+
+    ret = read_data_stream( request, buffer, size, &bytes_read );
+
+    TRACE( "%lu bytes read\n", bytes_read );
+    if (end_of_data_stream( request )) finished_reading( request );
+    if (async)
+    {
+        if (!ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, buffer, bytes_read );
+        else
+        {
+            WINHTTP_ASYNC_RESULT result;
+            result.dwResult = API_READ_DATA;
+            result.dwError  = ret;
+            send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
+
+    if (!ret && read) *read = bytes_read;
+    return ret;
 }
 
 static void task_read_data( void *ctx, BOOL abort )
