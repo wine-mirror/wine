@@ -1188,6 +1188,37 @@ Sub TestDimVsConst
 End Sub
 Call TestDimVsConst
 
+Sub TestIllegalAssignment
+    on error resume next
+
+    ' Assign to Const should give error 501
+    err.clear
+    c10 = 99
+    Call ok(err.number = 501, "assign to const: err.number = " & err.number)
+    Call ok(c10 = 10, "c10 = " & c10)
+
+    ' Set on Const should give error 501
+    err.clear
+    set c10 = Nothing
+    Call ok(err.number = 501, "set const: err.number = " & err.number)
+
+    ' Assign to Sub name should give error 501
+    err.clear
+    TestIllegalAssignment = 10
+    Call ok(err.number = 501, "assign to sub name: err.number = " & err.number)
+End Sub
+Call TestIllegalAssignment
+
+' Assign to function name from outside should give error 501
+Function IllegalAssignTarget
+    IllegalAssignTarget = 0
+End Function
+on error resume next
+err.clear
+IllegalAssignTarget = 10
+Call ok(err.number = 501, "assign to func name: err.number = " & err.number)
+on error goto 0
+
 Function TestFuncMultiArgs(a,b,c,d,e)
     Call ok(a=1, "a = " & a)
     Call ok(b=2, "b = " & b)

@@ -271,6 +271,7 @@
 #define VBSE_INVALID_TYPELIB_VARIABLE     458
 #define VBSE_SERVER_NOT_FOUND             462
 #define VBSE_VARIABLE_UNDEFINED           500
+#define VBSE_ILLEGAL_ASSIGNMENT           501
 #define VBSE_UNQUALIFIED_REFERENCE        505
 #define VBSE_SYNTAX_ERROR                1002
 #define VBSE_EXPECTED_LPAREN             1005

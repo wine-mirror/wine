@@ -943,14 +943,14 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
         hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, flags, dp);
         break;
     case REF_FUNC:
-        FIXME("functions not implemented\n");
-        return E_NOTIMPL;
+        WARN("assign to function %s\n", debugstr_w(name));
+        return MAKE_VBSERROR(VBSE_ILLEGAL_ASSIGNMENT);
     case REF_OBJ:
         FIXME("REF_OBJ\n");
         return E_NOTIMPL;
     case REF_CONST:
-        FIXME("REF_CONST\n");
-        return E_NOTIMPL;
+        WARN("assign to const %s\n", debugstr_w(name));
+        return MAKE_VBSERROR(VBSE_ILLEGAL_ASSIGNMENT);
     case REF_NONE:
         if(ctx->func->code_ctx->option_explicit) {
             FIXME("throw exception\n");
