@@ -2339,8 +2339,12 @@ GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
         return InvalidParameter;
 
     if(image->type == ImageTypeMetafile)
+    {
+        if(!((GpMetafile*)image)->hemf)
+            return InvalidParameter;
         *width = units_to_pixels(((GpMetafile*)image)->bounds.Width, ((GpMetafile*)image)->unit,
                                  image->xres, ((GpMetafile*)image)->printer_display);
+    }
     else if(image->type == ImageTypeBitmap)
         *width = ((GpBitmap*)image)->width;
     else
