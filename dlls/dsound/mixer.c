@@ -330,7 +330,7 @@ static void downsample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 fr
         float input_value0 = (1.0f - rem) * input_value;
         float input_value1 = rem * input_value;
 
-        UINT i;
+        int i;
         for (i = 0; i < fir_width; ++i)
             output[opos + i] += fir[idx + i] * input_value0 + fir[idx + fir_width + i] * input_value1;
     }
