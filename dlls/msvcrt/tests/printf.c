@@ -33,6 +33,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winternl.h"
 
 #include "wine/test.h"
 
@@ -170,6 +171,7 @@ static void test_sprintf( void )
         { "% d", " 1", 0, INT_ARG, 1 },
         { "%+ d", "+1", 0, INT_ARG, 1 },
         { "%S", "wide", 0, PTR_ARG, 0, 0, 0, L"wide" },
+        { "%Z", "ansi", 0, PTR_ARG, 0, 0, 0, &(ANSI_STRING){ 4, 4, (char *)"ansi" } },
         { "%04c", "0001", 0, INT_ARG, '1' },
         { "%-04c", "1   ", 0, INT_ARG, '1' },
         { "%#012x", "0x0000000001", 0, INT_ARG, 1 },
@@ -194,6 +196,9 @@ static void test_sprintf( void )
         { "%w-s", "-s", 0, PTR_ARG, 0, 0, 0, L"wide" },
         { "%ls", "wide", 0, PTR_ARG, 0, 0, 0, L"wide" },
         { "%Ls", "not wide", 0, PTR_ARG, 0, 0, 0, "not wide" },
+        { "%wZ", "wide", 0, PTR_ARG, 0, 0, 0, &(UNICODE_STRING){ 8, 8, (wchar_t *)L"wide" } },
+        { "%wZ", "wi", 0, PTR_ARG, 0, 0, 0, &(UNICODE_STRING){ 4, 8, (wchar_t *)L"wide" } },
+        { "%hZ", "not wide", 0, PTR_ARG, 0, 0, 0, &(ANSI_STRING){ 8, 8, (char *)"not wide" } },
         { "%b", "b", 0, NO_ARG },
         { "%3c", "  a", 0, INT_ARG, 'a' },
         { "%3d", "1234", 0, INT_ARG, 1234 },
@@ -215,6 +220,10 @@ static void test_sprintf( void )
         { "%o", "12", 0, INT_ARG, 10 },
         { "%s", "(null)", 0, PTR_ARG, 0, 0, 0, NULL },
         { "%s", "%%%%", 0, PTR_ARG, 0, 0, 0, "%%%%" },
+        { "%Z", "(null)", 0, PTR_ARG, 0, 0, 0, NULL },
+        { "%Z", "(null)", 0, PTR_ARG, 0, 0, 0, &(ANSI_STRING){ 0, 0, NULL } },
+        { "%Z", "(null)", 0, PTR_ARG, 0, 0, 0, &(ANSI_STRING){ 1, 1, NULL } },
+        { "%Z", "no", 0, PTR_ARG, 0, 0, 0, &(ANSI_STRING){ 2, 8, (char *)"not wide" } },
         { "%u", "4294967295", 0, INT_ARG, -1 },
         { "%w", "", 0, INT_ARG, -1 },
         { "%h", "", 0, INT_ARG, -1 },
@@ -434,6 +443,11 @@ static void test_sprintf( void )
     r = p_sprintf(buffer, "% *2d", 0, 7);
     ok(r==2, "r = %d\n", r);
     ok(!strcmp(buffer, " 7"), "failed: \"%s\"\n", buffer);
+
+    errno = 0;
+    r = p_sprintf(buffer, "%wZ", &(UNICODE_STRING){ 5, 8, (wchar_t *)L"wide" });
+    ok(r==-1, "r = %d\n", r);
+    ok(errno == EINVAL, "errno = %d\n", errno);
 }
 
 static void test_swprintf( void )
@@ -441,6 +455,7 @@ static void test_swprintf( void )
     wchar_t buffer[100];
     double pnumber = 789456123;
     const char string[] = "string";
+    ANSI_STRING ansi_string = { 11, 11, (char *)"ansi string" };
 
     swprintf(buffer, L"%+#23.15e", pnumber);
     ok(wcsstr(buffer, L"e+008") != 0, "Sprintf different\n");
@@ -450,6 +465,10 @@ static void test_swprintf( void )
     ok(wcslen(buffer) == 6, "Problem with \"%%S\" interpretation\n");
     swprintf(buffer, L"%hs", string);
     ok(!wcscmp(L"string", buffer), "swprintf failed with %%hs\n");
+    swprintf(buffer, L"%Z", &ansi_string);
+    ok(!wcscmp(L"ansi string", buffer), "swprintf failed with %%Z\n");
+    swprintf(buffer, L"%hZ", &ansi_string);
+    ok(!wcscmp(L"ansi string", buffer), "swprintf failed with %%hZ\n");
 }
 
 static void test_snprintf (void)

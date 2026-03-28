@@ -29,6 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winternl.h"
 
 #include "wine/test.h"
 
@@ -533,14 +534,19 @@ static void test_printf_legacy_wide(void)
 {
     const wchar_t wide[] = {'A','B','C','D',0};
     const char narrow[] = "abcd";
+    const UNICODE_STRING wide_str = { 8, sizeof(wide), (wchar_t *)wide };
+    const ANSI_STRING narrow_str = { 4, sizeof(narrow), (char *)narrow };
     const char out[] = "abcd ABCD";
     /* The legacy wide flag doesn't affect narrow printfs, so the same
      * format should behave the same both with and without the flag. */
     const char narrow_fmt[] = "%s %ls";
+    const char narrow_str_fmt[] = "%hZ %Z";
     /* The standard behaviour is to use the same format as for the narrow
      * case, while the legacy case has got a different meaning for %s. */
     const wchar_t std_wide_fmt[] = {'%','s',' ','%','l','s',0};
     const wchar_t legacy_wide_fmt[] = {'%','h','s',' ','%','s',0};
+    const wchar_t std_wide_str_fmt[] = {'%','h','Z',' ','%','Z',0};
+    const wchar_t legacy_wide_str_fmt[] = {'%','Z',' ','%','l','Z',0};
     char buffer[20];
     wchar_t wbuffer[20];
 
@@ -549,10 +555,25 @@ static void test_printf_legacy_wide(void)
     vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
 
+    vsprintf_wrapper(0, buffer, sizeof(buffer), narrow_str_fmt, &narrow_str, &wide_str);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, buffer,
+            sizeof(buffer), narrow_str_fmt, &narrow_str, &wide_str);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+
     vswprintf_wrapper(0, wbuffer, sizeof(wbuffer), std_wide_fmt, narrow, wide);
     WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
-    vswprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer, sizeof(wbuffer), legacy_wide_fmt, narrow, wide);
+    vswprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer,
+            sizeof(wbuffer), legacy_wide_fmt, narrow, wide);
+    WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+
+    vswprintf_wrapper(0, wbuffer, sizeof(wbuffer), std_wide_str_fmt, &narrow_str, &wide_str);
+    WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+    vswprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer,
+            sizeof(wbuffer), legacy_wide_str_fmt, &narrow_str, &wide_str);
     WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
 }
