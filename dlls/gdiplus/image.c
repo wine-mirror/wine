@@ -2321,6 +2321,9 @@ GpStatus WINGDIPAPI GdipGetImageVerticalResolution(GpImage *image, REAL *res)
     if(!image || !res)
         return InvalidParameter;
 
+    if((image->type == ImageTypeMetafile) && !((GpMetafile*)image)->hemf)
+        return InvalidParameter;
+
     *res = image->yres;
 
     TRACE("(%p) <-- %0.2f\n", image, *res);

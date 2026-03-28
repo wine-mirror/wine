@@ -1480,7 +1480,7 @@ static void test_pagetransform(void)
     expect(InvalidParameter, stat);
 
     stat = GdipGetImageVerticalResolution((GpImage*)metafile, &dpiy);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = GdipGetImageWidth((GpImage*)metafile, &width);
     todo_wine expect(InvalidParameter, stat);
