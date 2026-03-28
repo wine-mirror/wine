@@ -3007,7 +3007,7 @@ static void test_parse_errors(void)
             /* 'loop' without 'do' - error 1038 */
             L"Loop\n",
             0, 0,
-            NULL, S_OK, -1038
+            NULL, S_OK, 1038
         },
         {
             /* Invalid 'exit' statement - error 1039 */
@@ -3073,7 +3073,7 @@ static void test_parse_errors(void)
             /* Unexpected 'Next' - error 1055 */
             L"Next\n",
             0, 0,
-            NULL, S_OK, -1055
+            NULL, S_OK, 1055
         },
         {
             /* 'Default' must also specify 'Public' - error 1057 */

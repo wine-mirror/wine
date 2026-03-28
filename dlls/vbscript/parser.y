@@ -687,8 +687,17 @@ static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
     if(ctx->error_loc == -1)
         ctx->error_loc = *loc;
     if(ctx->hres == S_OK) {
-        WARN("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
-        ctx->hres = MAKE_VBSERROR(VBSE_SYNTAX_ERROR);
+        switch(ctx->last_token) {
+        case tLOOP:
+            ctx->hres = MAKE_VBSERROR(VBSE_LOOP_WITHOUT_DO);
+            break;
+        case tNEXT:
+            ctx->hres = MAKE_VBSERROR(VBSE_UNEXPECTED_NEXT);
+            break;
+        default:
+            WARN("%s: %s\n", debugstr_w(ctx->code + *loc), debugstr_a(str));
+            ctx->hres = MAKE_VBSERROR(VBSE_SYNTAX_ERROR);
+        }
     }else {
         WARN("%s: %08lx\n", debugstr_w(ctx->code + *loc), ctx->hres);
     }
