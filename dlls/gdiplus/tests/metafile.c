@@ -1427,8 +1427,7 @@ static void test_nullframerect(void) {
     expect(UnitPixel, unit);
     expectf_(20.0, bounds.X, 0.05);
     expectf_(25.0, bounds.Y, 0.05);
-    expectf_(55.0, bounds.Width, 1.00);
-    todo_wine expectf_(55.0, bounds.Width, 0.05);
+    expectf_(55.0, bounds.Width, 0.05);
     expectf_(85.0, bounds.Height, 0.05);
 
     stat = GdipDisposeImage((GpImage*)metafile);
