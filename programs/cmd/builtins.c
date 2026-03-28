@@ -301,7 +301,7 @@ RETURN_CODE WCMD_choice(WCHAR *args)
 
     for (argno = 0; ; argno++)
     {
-        WCHAR *arg = WCMD_parameter(args, argno, NULL, FALSE, FALSE);
+        WCHAR *arg = WCMD_parameter(args, argno, NULL, FALSE);
         if (!*arg) break;
 
         if (!wcsicmp(arg, L"/N")) opt_n = TRUE;
@@ -311,7 +311,7 @@ RETURN_CODE WCMD_choice(WCHAR *args)
             WCHAR opt = towupper(arg[1]);
             if (arg[2] == L'\0')
             {
-                arg = WCMD_parameter(args, ++argno, NULL, FALSE, FALSE);
+                arg = WCMD_parameter(args, ++argno, NULL, FALSE);
                 if (!*arg)
                 {
                     return_code = ERROR_INVALID_FUNCTION;
@@ -704,7 +704,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
   opt_d = opt_v = opt_n = opt_z = opt_y = opt_noty = FALSE;
 
   /* Walk through all args, building up a list of files to process */
-  thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE, FALSE);
+  thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
   while (*(thisparam)) {
     WCHAR *pos1, *pos2;
     BOOL inquotes;
@@ -762,7 +762,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
       }
 
       /* This parameter was purely switches, get the next one */
-      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE, FALSE);
+      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
       continue;
     }
 
@@ -787,7 +787,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
       /* Move to next thing to process */
       thisparam++;
       if (*thisparam == 0x00)
-        thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE, FALSE);
+        thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
       continue;
     }
 
@@ -842,7 +842,7 @@ RETURN_CODE WCMD_copy(WCHAR * args)
       thisparam = pos1;
       continue;
     } else {
-      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE, FALSE);
+      thisparam = WCMD_parameter(args, argno++, &rawarg, TRUE);
     }
   }
 
@@ -1269,7 +1269,7 @@ RETURN_CODE WCMD_create_dir(WCHAR *args)
     /* Loop through all args */
     for (;;)
     {
-        WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, FALSE, FALSE);
+        WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, FALSE);
         if (!argN) break;
         if (!create_full_path(thisArg))
         {
@@ -1562,7 +1562,7 @@ RETURN_CODE WCMD_delete(WCHAR *args)
         WCHAR *thisArg;
 
         argN = NULL;
-        thisArg = WCMD_parameter(args, argno, &argN, FALSE, FALSE);
+        thisArg = WCMD_parameter(args, argno, &argN, FALSE);
         if (!argN)
             break;       /* no more parameters */
         if (argN[0] == '/')
@@ -1689,7 +1689,7 @@ static int find_in_array(const WCHAR array[][10], size_t sz, const WCHAR *what)
 
 RETURN_CODE WCMD_give_help(WCHAR *args)
 {
-    WCHAR *help_on = WCMD_parameter(args, 0, NULL, FALSE, FALSE);
+    WCHAR *help_on = WCMD_parameter(args, 0, NULL, FALSE);
 
     /* yes, return code / errorlevel look inverted, but native does it this way */
     if (!*help_on)
@@ -1995,7 +1995,7 @@ RETURN_CODE WCMD_remove_dir(WCHAR *args)
 
   /* Loop through all args */
   while (argN) {
-    WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
+    WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
     if (argN && argN[0] != '/') {
       WINE_TRACE("rd: Processing arg %s (quals:%s)\n", wine_dbgstr_w(thisArg),
                  wine_dbgstr_w(quals));
@@ -2195,7 +2195,7 @@ RETURN_CODE WCMD_setlocal(WCHAR *args)
   newdelay = delayedsubst;
   while (argN)
   {
-      WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
+      WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
       if (!thisArg || !*thisArg) break;
       if (!wcsicmp(thisArg, L"ENABLEDELAYEDEXPANSION"))
           newdelay = TRUE;
@@ -2853,7 +2853,7 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
       } else {
 
         /* For a variable - just push it onto the stack */
-        parm = WCMD_parameter_with_delims(pos, 0, &parmstart, FALSE, FALSE, mathDelims);
+        parm = WCMD_parameter_with_delims(pos, 0, &parmstart, FALSE, mathDelims);
         dupparm = xstrdupW(parm);
         WCMD_pushnumber(dupparm, 0, &varstackhead);
         pos = parmstart + lstrlenW(dupparm);
@@ -3353,7 +3353,7 @@ RETURN_CODE WCMD_start(WCHAR *args)
         WCHAR *thisArg, *argN;
 
         argN = NULL;
-        thisArg = WCMD_parameter_with_delims(args, argno, &argN, FALSE, FALSE, L" \t/");
+        thisArg = WCMD_parameter_with_delims(args, argno, &argN, FALSE, L" \t/");
 
         /* No more parameters */
         if (!argN)
@@ -3374,7 +3374,7 @@ RETURN_CODE WCMD_start(WCHAR *args)
             lstrcatW(cmdline_params, L"\\\"\"");
 
             /* Concatenate remaining command-line */
-            thisArg = WCMD_parameter_with_delims(args, argno, &argN, TRUE, FALSE, L" \t/");
+            thisArg = WCMD_parameter_with_delims(args, argno, &argN, TRUE, L" \t/");
             lstrcatW(cmdline_params, argN + lstrlenW(thisArg));
 
             break;
@@ -3460,7 +3460,7 @@ RETURN_CODE WCMD_type(WCHAR *args)
 
   /* Loop through all args */
   while (argN) {
-    WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
+    WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
 
     HANDLE hIn;
 
@@ -3662,7 +3662,7 @@ RETURN_CODE WCMD_more(WCHAR *args)
         for (argno = 0; return_code == NO_ERROR; argno++)
         {
             LARGE_INTEGER lizero = {.QuadPart = 0}, lifilelen;
-            WCHAR *thisArg = WCMD_parameter(args, argno, &argN, FALSE, FALSE);
+            WCHAR *thisArg = WCMD_parameter(args, argno, &argN, FALSE);
             HANDLE h;
 
             if (!argN) break;
@@ -4166,7 +4166,7 @@ RETURN_CODE WCMD_mklink(WCHAR *args)
     file1[0] = file2[0] = L'\0';
 
     while (argN && ret) {
-        WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
+        WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE);
 
         if (!argN) break;
 

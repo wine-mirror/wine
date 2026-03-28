@@ -88,7 +88,7 @@ static BOOL is_directory_operation(WCHAR *inputBuffer)
     WCHAR *param = NULL, *first_param;
     BOOL ret = FALSE;
 
-    first_param = WCMD_parameter(inputBuffer, 0, &param, TRUE, FALSE);
+    first_param = WCMD_parameter(inputBuffer, 0, &param, TRUE);
 
     if (!wcsicmp(first_param, L"cd") ||
         !wcsicmp(first_param, L"rd") ||
@@ -146,7 +146,7 @@ static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
         if (stripped_copy) {
             wcsncpy_s(last_stripped_copy, ARRAY_SIZE(last_stripped_copy), stripped_copy, _TRUNCATE);
         }
-        stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, FALSE, COMPLETION_PATH_SEPARATION_DELIMS);
+        stripped_copy = WCMD_parameter_with_delims(inputBuffer, nn++, &param, FALSE, COMPLETION_PATH_SEPARATION_DELIMS);
     } while (param);
 
     if (last_param) {
@@ -1530,41 +1530,41 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
     int narg = 0;
 
     if (cond) memset(cond, 0, sizeof(*cond));
-    param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+    param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
     /* /I is the only option supported */
     if (!wcsicmp(param_copy, L"/I"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
         if (cond) cond->case_insensitive = 1;
     }
     if (!wcsicmp(param_copy, L"NOT"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
         if (cond) cond->negated = 1;
     }
     if (!wcsicmp(param_copy, L"errorlevel"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
         if (cond) cond->op = CMD_IF_ERRORLEVEL;
-        if (cond) cond->operand = wcsdup(param_copy);
+        if (cond) cond->operand = xstrdupW(param_copy);
     }
     else if (!wcsicmp(param_copy, L"exist"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, FALSE, FALSE);
+        param_copy = WCMD_parameter(start, narg++, &param_start, FALSE);
         if (cond) cond->op = CMD_IF_EXIST;
-        if (cond) cond->operand = wcsdup(param_copy);
+        if (cond) cond->operand = xstrdupW(param_copy);
     }
     else if (!wcsicmp(param_copy, L"defined"))
     {
-        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE);
         if (cond) cond->op = CMD_IF_DEFINED;
-        if (cond) cond->operand = wcsdup(param_copy);
+        if (cond) cond->operand = xstrdupW(param_copy);
     }
     else /* comparison operation */
     {
         if (*param_copy == L'\0') return FALSE;
-        param_copy = WCMD_parameter(start, narg - 1, &param_start, TRUE, FALSE);
-        if (cond) cond->left = wcsdup(param_copy);
+        param_copy = WCMD_parameter(start, narg - 1, &param_start, TRUE);
+        if (cond) cond->left = xstrdupW(param_copy);
 
         start = WCMD_skip_leading_spaces(param_start + wcslen(param_copy));
 
@@ -1590,7 +1590,7 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
             };
             int i;
 
-            param_copy = WCMD_parameter(start, 0, &param_start, FALSE, FALSE);
+            param_copy = WCMD_parameter(start, 0, &param_start, FALSE);
             for (i = 0; i < ARRAY_SIZE(allowed_operators); i++)
                 if (!wcsicmp(param_copy, allowed_operators[i].name)) break;
             if (i == ARRAY_SIZE(allowed_operators))
@@ -1602,7 +1602,7 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
             start += wcslen(param_copy);
         }
 
-        param_copy = WCMD_parameter(start, 0, &param_start, TRUE, FALSE);
+        param_copy = WCMD_parameter(start, 0, &param_start, TRUE);
         if (*param_copy == L'\0')
         {
             if (cond) free((void*)cond->left);
@@ -1614,7 +1614,7 @@ static BOOL if_condition_parse(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond
         narg = 0;
     }
     /* check all remaning args are present, and compute pointer to end of condition */
-    param_copy = WCMD_parameter(start, narg, end, TRUE, FALSE);
+    param_copy = WCMD_parameter(start, narg, end, TRUE);
     return cond || *param_copy != L'\0';
 }
 
@@ -1829,8 +1829,10 @@ static RETURN_CODE spawn_external_full_path(const WCHAR *file, WCHAR *full_cmdli
     {
         SHELLEXECUTEINFOW sei = {.cbSize = sizeof(sei)};
         WCHAR *args;
+        size_t length;
 
-        WCMD_parameter(full_cmdline, 1, &args, FALSE, TRUE);
+        if (!WCMD_get_positional_argument(full_cmdline, L'*', &args, &length))
+            args = NULL;
         /* FIXME: when the file extension is not registered,
          * native cmd does popup a dialog box to register an app for this extension.
          * Also, ShellExecuteW returns before the dialog box is closed.
@@ -2018,7 +2020,7 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
         sc->end_command = p - command;
         return RETURN_CODE_CANT_LAUNCH;
     }
-    firstParam = wcsdup(WCMD_parameter_with_delims(command, 0, &end_command, TRUE, FALSE, EXECUTABLE_DELIMS));
+    firstParam = wcsdup(WCMD_parameter_with_delims(command, 0, &end_command, TRUE, EXECUTABLE_DELIMS));
     end_command += wcslen(firstParam);
     WCMD_unquote(firstParam);
 
@@ -2181,7 +2183,7 @@ BOOL WCMD_get_positional_argument(WCHAR *from, WCHAR arg_char, WCHAR **start, si
     }
     else if (search_command(from, &sc, TRUE) == RETURN_CODE_CANT_LAUNCH && sc.cmd_index > WCMD_EXIT)
     {
-        arg = WCMD_parameter(from, 0, &st, TRUE, FALSE);
+        arg = WCMD_parameter(from, 0, &st, TRUE);
         if (!*arg || !st || st != from) return FALSE;
         command_len = st + wcslen(arg) - from;
     }
@@ -2199,7 +2201,7 @@ BOOL WCMD_get_positional_argument(WCHAR *from, WCHAR arg_char, WCHAR **start, si
     {
         for (from += command_len; *from; from = st + wcslen(arg))
         {
-            arg = WCMD_parameter(from, 0, &st, TRUE, FALSE);
+            arg = WCMD_parameter(from, 0, &st, TRUE);
             if (!*arg || !st) return FALSE;
             if (!--idx)
             {
@@ -3244,7 +3246,7 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
+                    filename = WCMD_parameter(p, 0, NULL, FALSE);
                     tkn_pmt.redirection = redirection_create_file(REDIR_READ_FROM, 0, filename);
                 }
             }
@@ -3262,7 +3264,7 @@ static void lexer_push_command(struct node_builder *builder,
                 }
                 else
                 {
-                    filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
+                    filename = WCMD_parameter(p, 0, NULL, FALSE);
                     tkn_pmt.redirection = redirection_create_file(op, fd, filename);
                 }
             }
@@ -4240,7 +4242,7 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, 
     {
         if (flv.has_star && i + 1 == flv.last)
         {
-            WCMD_parameter_with_delims(buffer, flv.table[i], &parm, FALSE, FALSE, forf_delims);
+            WCMD_parameter_with_delims(buffer, flv.table[i], &parm, FALSE, forf_delims);
             TRACE("Parsed all remaining tokens %d(%s) as parameter %s\n",
                   flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(parm));
             if (parm)
@@ -4248,7 +4250,7 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, 
             break;
         }
         /* Extract the token number requested and set into the next variable context */
-        parm = WCMD_parameter_with_delims(buffer, flv.table[i], NULL, TRUE, FALSE, forf_delims);
+        parm = WCMD_parameter_with_delims(buffer, flv.table[i], NULL, TRUE, forf_delims);
         TRACE("Parsed token %d(%s) as parameter %s\n",
               flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(parm));
         if (parm)
@@ -4397,7 +4399,7 @@ static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     {
         for (i = 0; !WCMD_is_break(return_code); i++)
         {
-            WCHAR *element = WCMD_parameter(args, i, NULL, TRUE, FALSE);
+            WCHAR *element = WCMD_parameter(args, i, NULL, TRUE);
             if (!element || !*element) break;
             if (element[0] == L'"' && match_ending_delim(element)) element++;
             /* Open the file, read line by line and process */
@@ -4438,7 +4440,7 @@ static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHA
     handleExpansion(set, TRUE);
     for (i = 0; !WCMD_is_break(return_code); i++)
     {
-        WCHAR *element = WCMD_parameter(set, i, NULL, TRUE, FALSE);
+        WCHAR *element = WCMD_parameter(set, i, NULL, TRUE);
         if (!element || !*element) break;
         if (len + wcslen(element) + 1 >= ARRAY_SIZE(buffer)) continue;
 
@@ -4537,7 +4539,7 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
      */
     for (i = 0; i < ARRAY_SIZE(numbers); i++)
     {
-        WCHAR *element = WCMD_parameter(set, i, NULL, FALSE, FALSE);
+        WCHAR *element = WCMD_parameter(set, i, NULL, FALSE);
         if (!element || !*element) break;
         /* native doesn't no error handling */
         numbers[i] = wcstol(element, NULL, 0);

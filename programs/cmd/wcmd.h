@@ -213,10 +213,9 @@ RETURN_CODE WCMD_volume(void);
 RETURN_CODE WCMD_mklink(WCHAR *args);
 RETURN_CODE WCMD_change_drive(WCHAR drive);
 
-WCHAR *WCMD_fgets (WCHAR *buf, DWORD n, HANDLE stream);
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw, BOOL wholecmdline);
-WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, BOOL raw,
-                                   BOOL wholecmdline, const WCHAR *delims);
+WCHAR *WCMD_fgets(WCHAR *buf, DWORD n, HANDLE stream);
+WCHAR *WCMD_parameter(WCHAR *s, int n, WCHAR **start, BOOL raw);
+WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, const WCHAR *delims);
 #define SPACE_DELIMS      L" \t"
 #define STANDARD_DELIMS   SPACE_DELIMS L",=;"
 #define EXECUTABLE_DELIMS STANDARD_DELIMS L"("

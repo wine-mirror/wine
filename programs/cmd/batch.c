@@ -172,8 +172,7 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
  *  other API calls, e.g. c:\"a b"\c is returned as c:\a b\c. However, some commands
  *  need to preserve the exact syntax (echo, for, etc) hence the raw option.
  */
-WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
-                                   BOOL raw, BOOL wholecmdline, const WCHAR *delims)
+WCHAR *WCMD_parameter_with_delims(WCHAR *s, int n, WCHAR **start, BOOL raw, const WCHAR *delims)
 {
     int curParamNb = 0;
     static WCHAR param[MAXSTRING];
@@ -200,12 +199,6 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
         while (*p) {
             /* Once we have found a delimiter, break */
             if (wcschr(delims, *p) != NULL) break;
-
-            /* Very odd special case - Seems as if a ( acts as a delimiter which is
-               not swallowed but is effective only when it comes between the program
-               name and the parameters. Need to avoid this triggering when used
-               to walk parameters generally.                                         */
-            if (wholecmdline && curParamNb == 0 && *p=='(') break;
 
             /* If we find a quote, copy until we get the end quote */
             if (*p == '"') {
@@ -244,10 +237,9 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start,
  * default set of delimiter characters. For parameters, see the main
  * function above.
  */
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
-                       BOOL wholecmdline)
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw)
 {
-  return WCMD_parameter_with_delims (s, n, start, raw, wholecmdline, L" \t,=;");
+    return WCMD_parameter_with_delims(s, n, start, raw, STANDARD_DELIMS);
 }
 
 /****************************************************************************
