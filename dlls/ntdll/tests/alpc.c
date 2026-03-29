@@ -21,11 +21,13 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winternl.h>
+#include <ntstatus.h>
 #include "wine/test.h"
 
 #define DECL_FUNCPTR(f) static typeof(f) *p##f;
 
 DECL_FUNCPTR(AlpcGetHeaderSize)
+DECL_FUNCPTR(AlpcInitializeMessageAttribute)
 
 #undef DECL_FUNCPTR
 
@@ -39,6 +41,7 @@ static void init_functions(void)
 #define LOAD_FUNCPTR(f) p##f = (void *)GetProcAddress(ntdll, #f);
 
     LOAD_FUNCPTR(AlpcGetHeaderSize)
+    LOAD_FUNCPTR(AlpcInitializeMessageAttribute)
 
 #undef LOAD_FUNCPTR
 }
@@ -128,9 +131,122 @@ static void test_AlpcGetHeaderSize(void)
     }
 }
 
+static void test_AlpcInitializeMessageAttribute(void)
+{
+    unsigned char buffer[1024];
+    ALPC_MESSAGE_ATTRIBUTES *attr = (ALPC_MESSAGE_ATTRIBUTES *)buffer;
+    SIZE_T required_size, size;
+    unsigned int i, j, k;
+    NTSTATUS status;
+
+    static const ULONG attributes[] =
+    {
+        0,
+        ALPC_MESSAGE_WORK_ON_BEHALF_ATTRIBUTE,
+        ALPC_MESSAGE_DIRECT_ATTRIBUTE,
+        ALPC_MESSAGE_TOKEN_ATTRIBUTE,
+        ALPC_MESSAGE_HANDLE_ATTRIBUTE,
+        ALPC_MESSAGE_CONTEXT_ATTRIBUTE,
+        ALPC_MESSAGE_VIEW_ATTRIBUTE,
+        ALPC_MESSAGE_SECURITY_ATTRIBUTE,
+        0xffffffff,
+    };
+
+    if (!pAlpcInitializeMessageAttribute)
+    {
+        todo_wine
+        win_skip("AlpcInitializeMessageAttribute is unavailable.\n");
+        return;
+    }
+
+    /* Check parameters */
+    for (i = 0; i < ARRAY_SIZE(attributes); i++)
+    {
+        winetest_push_context("i %d", i);
+
+        size = pAlpcGetHeaderSize(attributes[i]);
+
+        /* Null message pointer */
+        required_size = 0;
+        status = pAlpcInitializeMessageAttribute(attributes[i], NULL, size, &required_size);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+        ok(required_size == size, "Expected %Ix, got %Ix.\n", size, required_size);
+
+        /* Buffer too small */
+        attr->AllocatedAttributes = 0xdeadbeef;
+        attr->ValidAttributes = 0xdeadbeef;
+        required_size = 0;
+        status = pAlpcInitializeMessageAttribute(attributes[i], attr, size - 1, &required_size);
+        ok(status == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", status);
+        ok(attr->AllocatedAttributes == 0xdeadbeef, "Got unexpected %#lx.\n", attr->AllocatedAttributes);
+        ok(attr->ValidAttributes == 0xdeadbeef, "Got unexpected %#lx.\n", attr->ValidAttributes);
+        ok(required_size == size, "Expected %Ix, got %Ix.\n", size, required_size);
+
+        /* Buffer too large */
+        attr->AllocatedAttributes = 0xdeadbeef;
+        attr->ValidAttributes = 0xdeadbeef;
+        required_size = 0;
+        status = pAlpcInitializeMessageAttribute(attributes[i], attr, size + 1, &required_size);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+        ok(attr->AllocatedAttributes == attributes[i], "Got unexpected %#lx.\n", attr->AllocatedAttributes);
+        ok(attr->ValidAttributes == 0, "Got unexpected %#lx.\n", attr->ValidAttributes);
+        ok(required_size == size, "Expected %Ix, got %Ix.\n", size, required_size);
+
+        /* Correct buffer size */
+        memset(buffer, 0xa1, sizeof(buffer));
+        required_size = 0;
+        status = pAlpcInitializeMessageAttribute(attributes[i], attr, size, &required_size);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+        ok(attr->AllocatedAttributes == attributes[i], "Got unexpected %#lx.\n", attr->AllocatedAttributes);
+        ok(attr->ValidAttributes == 0, "Got unexpected %#lx.\n", attr->ValidAttributes);
+        ok(required_size == size, "Expected %Ix, got %Ix.\n", size, required_size);
+        /* Test that AlpcInitializeMessageAttribute() only sets AllocatedAttributes and ValidAttributes */
+        for (k = sizeof(*attr); k < sizeof(buffer); k++)
+        {
+            if (buffer[k] != 0xa1)
+            {
+                ok(0, "Marker got overwritten at %d.\n", k);
+                break;
+            }
+        }
+
+        /* Two attributes */
+        for (j = 0; j < ARRAY_SIZE(attributes); j++)
+        {
+            if (attributes[i] & attributes[j])
+                continue;
+
+            winetest_push_context("j %d", j);
+
+            memset(buffer, 0xb2, sizeof(buffer));
+            size = pAlpcGetHeaderSize(attributes[i] | attributes[j]);
+            required_size = 0;
+            status = pAlpcInitializeMessageAttribute(attributes[i] | attributes[j], attr, size, &required_size);
+            ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+            ok(attr->AllocatedAttributes == (attributes[i] | attributes[j]),
+               "Got unexpected %#lx.\n", attr->AllocatedAttributes);
+            ok(attr->ValidAttributes == 0, "Got unexpected %#lx.\n", attr->ValidAttributes);
+            ok(required_size == size, "Expected %Ix, got %Ix.\n", size, required_size);
+            /* Test that AlpcInitializeMessageAttribute() only sets AllocatedAttributes and ValidAttributes */
+            for (k = sizeof(*attr); k < sizeof(buffer); k++)
+            {
+                if (buffer[k] != 0xb2)
+                {
+                    ok(0, "Marker got overwritten at %d.\n", k);
+                    break;
+                }
+            }
+
+            winetest_pop_context();
+        }
+        winetest_pop_context();
+    }
+}
+
 START_TEST(alpc)
 {
     init_functions();
 
     test_AlpcGetHeaderSize();
+    test_AlpcInitializeMessageAttribute();
 }
