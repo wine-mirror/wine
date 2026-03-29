@@ -2755,7 +2755,7 @@ static void test_parse_errors(void)
             L"If 0 > 1 Then\n"
             "    x = 0 End If\n",
             1, 10,
-            L"    x = 0 End If", S_OK, -1042
+            L"    x = 0 End If", S_OK, 1042
         },
         {
             /* ElseIf...End If */
@@ -2764,7 +2764,7 @@ static void test_parse_errors(void)
             "ElseIf True Then\n"
             "    x = 1 End If\n",
             3, 10,
-            L"    x = 1 End If", S_OK, -1042
+            L"    x = 1 End If", S_OK, 1042
         },
         {
             /* Else End If (no separator) */
@@ -2772,49 +2772,49 @@ static void test_parse_errors(void)
             "    x = 0\n"
             "Else End If\n",
             2, 5,
-            L"Else End If", S_OK, -1024
+            L"Else End If", S_OK, 1024
         },
         {
             /* While...End While */
             L"While False\n"
             "    x = 0 End While\n",
             1, 10,
-            L"    x = 0 End While", S_OK, -1024
+            L"    x = 0 End While", S_OK, 1024
         },
         {
             /* While...Wend */
             L"While False\n"
             "    x = 0 Wend\n",
             1, 10,
-            L"    x = 0 Wend", S_OK, -1025
+            L"    x = 0 Wend", S_OK, 1025
         },
         {
             /* Do While...Loop */
             L"Do While False\n"
             "    x = 0 Loop\n",
             1, 10,
-            L"    x = 0 Loop", S_OK, -1025
+            L"    x = 0 Loop", S_OK, 1025
         },
         {
             /* Do Until...Loop */
             L"Do Until True\n"
             "    x = 0 Loop\n",
             1, 10,
-            L"    x = 0 Loop", S_OK, -1025
+            L"    x = 0 Loop", S_OK, 1025
         },
         {
             /* Do...Loop While */
             L"Do\n"
             "    x = 0 Loop While False\n",
             1, 10,
-            L"    x = 0 Loop While False", S_OK, -1025
+            L"    x = 0 Loop While False", S_OK, 1025
         },
         {
             /* Do...Loop Until */
             L"Do\n"
             "    x = 0 Loop Until True\n",
             1, 10,
-            L"    x = 0 Loop Until True", S_OK, -1025
+            L"    x = 0 Loop Until True", S_OK, 1025
         },
         {
             /* Select...End Select */
@@ -2826,19 +2826,19 @@ static void test_parse_errors(void)
             "        x = True End Select\n"
             "Call ok(x, \"wrong case\")\n",
             5, 17,
-            L"        x = True End Select", S_OK, -1042
+            L"        x = True End Select", S_OK, 1042
         },
         {
             /* Class...End Class  (empty) */
             L"Class C End Class",
             0, 8,
-            L"Class C End Class", S_OK, -1024
+            L"Class C End Class", S_OK, 1024
         },
         {
             /* Class...End Class  (empty) */
             L"Class C _\nEnd Class",
             1, 0,
-            L"End Class", S_OK, -1024
+            L"End Class", S_OK, 1024
         },
         {
             /* invalid use of parentheses for call statement */

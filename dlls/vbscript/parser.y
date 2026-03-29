@@ -202,6 +202,13 @@ StatementsNl_opt
 StatementsNl
     : SimpleStatement StSep                 { $$ = $1; }
     | SimpleStatement StSep StatementsNl    { $$ = link_statements($1, $3); }
+    | SimpleStatement tEND tIF              { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_FIRST_STATEMENT); YYABORT; }
+    | SimpleStatement tEND tSELECT         { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_MUST_BE_FIRST_STATEMENT); YYABORT; }
+    | SimpleStatement tEND tWHILE          { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
+    | SimpleStatement tWEND                { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT); YYABORT; }
+    | SimpleStatement tLOOP DoType Expression
+                                            { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT); YYABORT; }
+    | SimpleStatement tLOOP                { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END_OF_STATEMENT); YYABORT; }
 
 StatementNl
     : Statement tNL                         { $$ = $1; }
@@ -353,6 +360,7 @@ Else_opt
     : /* empty */                           { $$ = NULL; }
     | tELSE StSep StatementsBody_opt        { $$ = $3; }
     | tELSE StatementsBody                  { $$ = $2; }
+    | tELSE tEND tIF                        { ctx->error_loc = @2; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
 
 StatementsBody_opt
     : /* empty */                           { $$ = NULL; }
@@ -493,6 +501,7 @@ PrimaryExpression
 
 ClassDeclaration
     : tCLASS Identifier StSep ClassBody tEND tCLASS StSep       { $4->name = $2; $$ = $4; }
+    | tCLASS Identifier tEND tCLASS         { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
 
 ClassBody
     : /* empty */                                 { $$ = new_class_decl(ctx); }
