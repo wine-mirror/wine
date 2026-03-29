@@ -248,7 +248,7 @@ Call ok(11.6 Mod 5.5 = False, "11.6 Mod 5.5 = " & (11.6 Mod 5.5 = 0.6))
 Call ok(7 Mod 4+2 = 5, "7 Mod 4+2 <> 5")
 Call ok(getVT(2 mod null) = "VT_NULL", "getVT(2 mod null) = " & getVT(2 mod null))
 Call ok(getVT(null mod 2) = "VT_NULL", "getVT(null mod 2) = " & getVT(null mod 2))
-'FIXME: Call ok(empty mod 2 = 0, "empty mod 2 = " & (empty mod 2))
+Call ok(empty mod 2 = 0, "empty mod 2 = " & (empty mod 2))
 
 Call ok(5 \ 2 = 2, "5 \ 2 = " & (5\2))
 Call ok(4.6 \ 1.5 = 2, "4.6 \ 1.5 = " & (4.6\1.5))
