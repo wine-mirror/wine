@@ -211,6 +211,7 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
 
 static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
 {
+    const WCHAR *start = ctx->ptr;
     const WCHAR *ptr = ++ctx->ptr;
     WCHAR *rptr;
     int len = 0;
@@ -218,8 +219,8 @@ static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
 
     while(ctx->ptr < ctx->end) {
         if(*ctx->ptr == '\n' || *ctx->ptr == '\r') {
-            FIXME("newline inside date literal\n");
-            return 0;
+            ctx->ptr = start;
+            return lex_error(ctx, MAKE_VBSERROR(VBSE_SYNTAX_ERROR));
         }
 
        if(*ctx->ptr == '#')
@@ -228,8 +229,8 @@ static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
     }
 
     if(ctx->ptr == ctx->end) {
-        FIXME("unterminated date literal\n");
-        return 0;
+        ctx->ptr = start;
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_SYNTAX_ERROR));
     }
 
     len += ctx->ptr-ptr;
@@ -243,8 +244,8 @@ static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
     res = VarDateFromStr(rptr, ctx->lcid, 0, ret);
     free(rptr);
     if (FAILED(res)) {
-        FIXME("Invalid date literal\n");
-        return 0;
+        ctx->ptr = start;
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_SYNTAX_ERROR));
     }
 
     ctx->ptr++;
@@ -547,8 +548,7 @@ int parser_lex(void *lval, unsigned *loc, parser_ctx_t *ctx)
         if(ret == '_') {
             skip_spaces(ctx);
             if(*ctx->ptr != '\n' && *ctx->ptr != '\r') {
-                FIXME("'_' not followed by newline\n");
-                return 0;
+                return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_CHAR));
             }
             if(*ctx->ptr == '\r')
                 ctx->ptr++;

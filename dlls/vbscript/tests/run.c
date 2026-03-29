@@ -3025,6 +3025,30 @@ static void test_parse_errors(void)
             L"Class C\nDefault Private Function f()\nf = 1\nEnd Function\nEnd Class\n",
             1, 0,
             NULL, S_OK, 1057
+        },
+        {
+            /* Unterminated date literal */
+            L"x = #1/1/2000\n",
+            0, 4,
+            NULL, S_OK, 1002
+        },
+        {
+            /* Newline inside date literal */
+            L"x = #1/1/\n2000#\n",
+            0, 4,
+            NULL, S_OK, 1002
+        },
+        {
+            /* Invalid date literal */
+            L"x = #notadate#\n",
+            0, 4,
+            NULL, S_OK, 1002
+        },
+        {
+            /* '_' not followed by newline */
+            L"x = 1 _x\n",
+            0, 7,
+            NULL, S_OK, 1032
         }
     };
     HRESULT hres;
