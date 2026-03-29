@@ -2953,19 +2953,19 @@ static void test_parse_errors(void)
             /* Expected '=' - error 1011 */
             L"Const x\n",
             0, 7,
-            NULL, S_OK, -1011
+            NULL, S_OK, 1011
         },
         {
             /* Expected 'To' - error 1013 */
             L"For i = 1 x 10\nNext\n",
             0, 10,
-            NULL, S_OK, -1013
+            NULL, S_OK, 1013
         },
         {
             /* Expected 'Then' - error 1017 */
             L"If True\nEnd If\n",
             0, 7,
-            NULL, S_OK, -1017
+            NULL, S_OK, 1017
         },
         {
             /* Expected 'Wend' - error 1018 */
@@ -2989,7 +2989,7 @@ static void test_parse_errors(void)
             /* Expected 'Case' - error 1021 */
             L"Select x\nEnd Select\n",
             0, 7,
-            NULL, S_OK, -1021
+            NULL, S_OK, 1021
         },
         {
             /* Expected integer constant - error 1026 */
@@ -3019,7 +3019,7 @@ static void test_parse_errors(void)
             /* Expected 'In' - error 1046 */
             L"For Each x = arr\nNext\n",
             0, 11,
-            NULL, S_OK, -1046
+            NULL, S_OK, 1046
         },
         {
             /* Must be defined inside a Class - error 1048 */

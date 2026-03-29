@@ -254,12 +254,16 @@ SimpleStatement
     | tCONST ConstDeclList                  { $$ = new_const_statement(ctx, @$, $2); CHECK_ERROR; }
     | tFOR Identifier '=' Expression tTO Expression Step_opt StSep StatementsNl_opt tNEXT
                                             { $$ = new_forto_statement(ctx, @$, $2, $4, $6, $7, $9); CHECK_ERROR; }
+    | tFOR Identifier '=' Expression error
+                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_TO); YYABORT; }
     | tFOR tEACH Identifier tIN Expression StSep StatementsNl_opt tNEXT
                                             { $$ = new_foreach_statement(ctx, @$, $3, $5, $7); }
+    | tFOR tEACH Identifier error           { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IN); YYABORT; }
     | tSELECT tCASE Expression StSep CaseClausules tEND tSELECT
                                             { $$ = new_select_statement(ctx, @$, $3, $5); }
     | tSELECT tCASE Expression StSep CaseClausules tEND error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SELECT); YYABORT; }
+    | tSELECT error                         { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_CASE); YYABORT; }
     | tWITH Expression StSep StatementsNl_opt tEND tWITH
                                             { $$ = new_with_statement(ctx, @$, $2, $4); }
     | tWITH Expression StSep StatementsNl_opt tEND error
@@ -315,6 +319,7 @@ ConstDeclList
 
 ConstDecl
     : Identifier '=' ConstExpression        { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
+    | Identifier error                      { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_ASSIGN); YYABORT; }
 
 ConstExpression
     : LiteralExpression                     { $$ = $1; }
@@ -338,6 +343,7 @@ IfStatement
                                                 { $$ = new_if_statement(ctx, @$, $2, $4, NULL, NULL); CHECK_ERROR; }
     | tIF Expression tTHEN tNL StSep_opt StatementsNl_opt ElseIfs_opt Else_opt tEND error
                                                 { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IF); YYABORT; }
+    | tIF Expression error                       { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_THEN); YYABORT; }
 
 EndIf_opt
     : /* empty */
