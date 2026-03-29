@@ -98,7 +98,6 @@ static void test_AlpcGetHeaderSize(void)
 
     if (!pAlpcGetHeaderSize)
     {
-        todo_wine
         win_skip("AlpcGetHeaderSize is unavailable.\n");
         return;
     }

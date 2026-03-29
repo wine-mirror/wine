@@ -6,6 +6,7 @@
 @ stdcall A_SHAFinal(ptr ptr)
 @ stdcall A_SHAInit(ptr)
 @ stdcall A_SHAUpdate(ptr ptr long)
+@ stdcall AlpcGetHeaderSize(long)
 @ stdcall ApiSetQueryApiSetPresence(ptr ptr)
 @ stdcall ApiSetQueryApiSetPresenceEx(ptr ptr ptr)
 @ stub CsrAllocateCaptureBuffer
