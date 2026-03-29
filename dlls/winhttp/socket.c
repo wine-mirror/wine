@@ -139,7 +139,7 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
         release_object( &request->hdr );
         return NULL;
     }
-    socket->hdr.type = WINHTTP_HANDLE_TYPE_SOCKET;
+    socket->hdr.type = WINHTTP_HANDLE_TYPE_WEBSOCKET;
     socket->hdr.vtbl = &socket_vtbl;
     socket->hdr.refs = 1;
     socket->hdr.callback = request->hdr.callback;
@@ -468,7 +468,7 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
     if (len && !buf) return ERROR_INVALID_PARAMETER;
 
     if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
-    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
+    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_WEBSOCKET)
     {
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
@@ -904,7 +904,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
     if (!buf || !len) return ERROR_INVALID_PARAMETER;
 
     if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
-    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
+    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_WEBSOCKET)
     {
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
@@ -1043,7 +1043,7 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
     if ((len && !reason) || len > sizeof(socket->reason)) return ERROR_INVALID_PARAMETER;
 
     if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
-    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
+    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_WEBSOCKET)
     {
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
@@ -1125,7 +1125,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
     if ((len && !reason) || len > sizeof(socket->reason)) return ERROR_INVALID_PARAMETER;
 
     if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
-    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
+    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_WEBSOCKET)
     {
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
@@ -1187,7 +1187,7 @@ DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status
     if (!status || (len && !reason) || !ret_len) return ERROR_INVALID_PARAMETER;
 
     if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
-    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
+    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_WEBSOCKET)
     {
         release_object( &socket->hdr );
         return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;

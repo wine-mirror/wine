@@ -25,8 +25,6 @@
 
 #include "wine/list.h"
 
-#define WINHTTP_HANDLE_TYPE_SOCKET 4
-
 struct object_header;
 struct object_vtbl
 {
