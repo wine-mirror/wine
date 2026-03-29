@@ -2229,8 +2229,43 @@ static HRESULT Global_Second(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 
 static HRESULT Global_SetLocale(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    LCID old_lcid = This->ctx->lcid;
+    LCID new_lcid;
+    HRESULT hres;
+
+    TRACE("%s\n", args_cnt ? debugstr_variant(args) : "()");
+
+    if(!args_cnt || V_VT(args) == VT_EMPTY) {
+        new_lcid = This->ctx->host_lcid;
+    }else {
+        switch(V_VT(args)) {
+        case VT_NULL:
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        case VT_BSTR: {
+            int i;
+            /* Try numeric conversion first (e.g. "1033"), then locale name (e.g. "en-us"). */
+            if(SUCCEEDED(to_int(args, &i)))
+                new_lcid = i;
+            else
+                new_lcid = LocaleNameToLCID(V_BSTR(args), 0);
+            break;
+        }
+        default: {
+            int i;
+            hres = to_int(args, &i);
+            if(FAILED(hres))
+                return hres;
+            new_lcid = i;
+            break;
+        }
+        }
+
+        if(!IsValidLocale(new_lcid, LCID_INSTALLED))
+            return MAKE_VBSERROR(VBSE_LOCALE_SETTING_NOT_SUPPORTED);
+    }
+
+    This->ctx->lcid = new_lcid;
+    return return_int(res, old_lcid);
 }
 
 static HRESULT Global_DateValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -3543,8 +3578,8 @@ static HRESULT Global_FormatPercent(BuiltinDisp *This, VARIANT *args, unsigned a
 
 static HRESULT Global_GetLocale(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("() = %#lx\n", This->ctx->lcid);
+    return return_int(res, This->ctx->lcid);
 }
 
 static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)

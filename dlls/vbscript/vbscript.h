@@ -204,7 +204,8 @@ struct vbcaller {
 
 struct _script_ctx_t {
     IActiveScriptSite *site;
-    LCID lcid;
+    LCID lcid;      /* current, mutable via SetLocale */
+    LCID host_lcid; /* embedder-supplied baseline (IActiveScriptSite::GetLCID) */
     UINT codepage;
 
     IInternetHostSecurityManager *secmgr;

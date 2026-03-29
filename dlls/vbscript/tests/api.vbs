@@ -2901,4 +2901,55 @@ end sub
 
 call testFilterError()
 
+' GetLocale/SetLocale tests
+Dim origLocale
+origLocale = GetLocale()
+Call ok(getVT(GetLocale()) = "VT_I4", "getVT(GetLocale()) = " & getVT(GetLocale()))
+
+Dim prevLocale
+prevLocale = SetLocale(1033)
+Call ok(getVT(prevLocale) = "VT_I4*", "getVT(SetLocale result) = " & getVT(prevLocale))
+Call ok(prevLocale = origLocale, "SetLocale(1033) returned " & prevLocale & " expected " & origLocale)
+Call ok(GetLocale() = 1033, "GetLocale() after SetLocale(1033) = " & GetLocale())
+
+prevLocale = SetLocale(1031)
+Call ok(prevLocale = 1033, "SetLocale(1031) returned " & prevLocale & " expected 1033")
+Call ok(GetLocale() = 1031, "GetLocale() after SetLocale(1031) = " & GetLocale())
+
+' SetLocale with string locale name
+prevLocale = SetLocale("en-us")
+Call ok(prevLocale = 1031, "SetLocale(""en-us"") returned " & prevLocale & " expected 1031")
+Call ok(GetLocale() = 1033, "GetLocale() after SetLocale(""en-us"") = " & GetLocale())
+
+' SetLocale with numeric string
+prevLocale = SetLocale("1031")
+Call ok(prevLocale = 1033, "SetLocale(""1031"") returned " & prevLocale & " expected 1033")
+Call ok(GetLocale() = 1031, "GetLocale() after SetLocale(""1031"") = " & GetLocale())
+
+' SetLocale() with no args resets to system default
+SetLocale(1033)
+prevLocale = SetLocale()
+Call ok(prevLocale = 1033, "SetLocale() returned " & prevLocale & " expected 1033")
+
+sub testSetLocaleError()
+    on error resume next
+
+    ' SetLocale(Null) should raise error 94
+    call Err.clear()
+    call SetLocale(Null)
+    Call ok(Err.number = 94, "SetLocale(Null) Err.number = " & Err.number)
+
+    ' SetLocale with invalid numeric LCID should raise error 447
+    call Err.clear()
+    dim prev
+    prev = SetLocale(99999)
+    Call ok(Err.number = 447, "SetLocale(99999) Err.number = " & Err.number)
+end sub
+
+call testSetLocaleError()
+
+' Restore original locale
+SetLocale(origLocale)
+Call ok(GetLocale() = origLocale, "GetLocale() after restore = " & GetLocale() & " expected " & origLocale)
+
 Call reportSuccess()

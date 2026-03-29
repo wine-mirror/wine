@@ -735,6 +735,7 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
 
     IActiveScriptSite_GetLCID(This->ctx->site, &lcid);
     This->ctx->lcid = IsValidLocale(lcid, 0) ? lcid : GetUserDefaultLCID();
+    This->ctx->host_lcid = This->ctx->lcid;
     GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (WCHAR *)&This->ctx->codepage,
             sizeof(This->ctx->codepage)/sizeof(WCHAR));
     if (!This->ctx->codepage)

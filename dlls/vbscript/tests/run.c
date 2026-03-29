@@ -1962,9 +1962,12 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
     return 1;
 }
 
+/* 0 = use the user default; otherwise return this LCID to the engine. */
+static LCID site_lcid_override;
+
 static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *plcid)
 {
-    *plcid = GetUserDefaultLCID();
+    *plcid = site_lcid_override ? site_lcid_override : GetUserDefaultLCID();
     return S_OK;
 }
 
@@ -3854,11 +3857,27 @@ static void run_from_res(const char *name)
     test_name = "";
 }
 
+static void test_setlocale_reset_uses_host_lcid(void)
+{
+    /* The engine takes the LCID returned by IActiveScriptSite::GetLCID as the
+     * baseline; SetLocale with no argument must restore it regardless of the
+     * user default. */
+    site_lcid_override = 1036; /* fr-FR */
+    parse_script_w(L"Call ok(GetLocale() = 1036, \"initial GetLocale = \" & GetLocale())\n"
+                   L"SetLocale 1041\n"
+                   L"Call ok(GetLocale() = 1041, \"after SetLocale 1041: \" & GetLocale())\n"
+                   L"SetLocale\n"
+                   L"Call ok(GetLocale() = 1036, \"after SetLocale reset: \" & GetLocale())\n");
+    site_lcid_override = 0;
+}
+
 static void run_tests(void)
 {
     HRESULT hres;
 
     strict_dispid_check = TRUE;
+
+    test_setlocale_reset_uses_host_lcid();
 
     parse_script_w(L"");
     parse_script_w(L"' empty ;");
