@@ -58,6 +58,25 @@ SIZE_T WINAPI AlpcGetHeaderSize(ULONG attribute_flags)
     return size;
 }
 
+void * WINAPI AlpcGetMessageAttribute(ALPC_MESSAGE_ATTRIBUTES *attributes, ULONG attribute_flag)
+{
+    TRACE("%p, %lx.\n", attributes, attribute_flag);
+
+    /* If no flag is specified */
+    if (!attribute_flag)
+        return NULL;
+
+    /* If more than one flag is specified */
+    if (attribute_flag & (attribute_flag - 1))
+        return NULL;
+
+    /* If the specified flag is not in allocated attributes */
+    if ((attribute_flag & attributes->AllocatedAttributes & ALPC_MESSAGE_ATTRIBUTE_ALL) != attribute_flag)
+        return NULL;
+
+    return (unsigned char *)attributes + AlpcGetHeaderSize(attributes->AllocatedAttributes & ~(attribute_flag | (attribute_flag - 1)));
+}
+
 NTSTATUS WINAPI AlpcInitializeMessageAttribute(ULONG attribute_flags, ALPC_MESSAGE_ATTRIBUTES *buffer,
                                                SIZE_T buffer_size, SIZE_T *required_buffer_size)
 {

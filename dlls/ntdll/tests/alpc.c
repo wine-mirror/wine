@@ -154,7 +154,6 @@ static void test_AlpcGetMessageAttribute(void)
 
     if (!pAlpcGetMessageAttribute)
     {
-        todo_wine
         win_skip("AlpcGetMessageAttribute is unavailable.\n");
         return;
     }
