@@ -322,15 +322,15 @@ static DWORD complete_send_frame( struct socket *socket, WSAOVERLAPPED *ovr, con
     return ERROR_SUCCESS;
 }
 
-static void send_io_complete( struct object_header *hdr )
+static void send_io_complete( struct socket *socket )
 {
-    LONG count = InterlockedDecrement( &hdr->pending_sends );
+    LONG count = InterlockedDecrement( &socket->pending_sends );
     assert( count >= 0 );
 }
 
 static void receive_io_complete( struct socket *socket )
 {
-    LONG count = InterlockedDecrement( &socket->hdr.pending_receives );
+    LONG count = InterlockedDecrement( &socket->pending_receives );
     assert( count >= 0 );
 }
 
@@ -453,7 +453,7 @@ static void task_socket_send( void *ctx, BOOL abort )
     if (s->complete_async) ret = complete_send_frame( socket, &s->ovr, s->buf );
     else ret = socket_send( socket, s->type, s->buf, s->len, NULL );
 
-    send_io_complete( &socket->hdr );
+    send_io_complete( socket );
     InterlockedExchange( &socket->pending_noncontrol_send, 0 );
     socket_send_complete( socket, ret, s->type, s->len );
 }
@@ -506,7 +506,7 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
         }
 
         AcquireSRWLockExclusive( &socket->send_lock );
-        async_send = InterlockedIncrement( &socket->hdr.pending_sends ) > 1 || socket->hdr.recursion_count >= 3;
+        async_send = InterlockedIncrement( &socket->pending_sends ) > 1 || socket->hdr.recursion_count >= 3;
         if (!async_send)
         {
             memset( &s->ovr, 0, sizeof(s->ovr) );
@@ -530,7 +530,7 @@ DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_
         }
         if (!async_send || ret)
         {
-            InterlockedDecrement( &socket->hdr.pending_sends );
+            InterlockedDecrement( &socket->pending_sends );
             InterlockedExchange( &socket->pending_noncontrol_send, 0 );
         }
         ReleaseSRWLockExclusive( &socket->send_lock );
@@ -650,7 +650,7 @@ static void task_socket_send_pong( void *ctx, BOOL abort )
     if (s->complete_async) complete_send_frame( socket, &s->ovr, NULL );
     else send_frame( socket, SOCKET_OPCODE_PONG, 0, NULL, 0, TRUE, NULL );
 
-    send_io_complete( &socket->hdr );
+    send_io_complete( socket );
 }
 
 static DWORD socket_send_pong( struct socket *socket )
@@ -665,7 +665,7 @@ static DWORD socket_send_pong( struct socket *socket )
     if (!(s = malloc( sizeof(*s) ))) return ERROR_OUTOFMEMORY;
 
     AcquireSRWLockExclusive( &socket->send_lock );
-    async_send = InterlockedIncrement( &socket->hdr.pending_sends ) > 1;
+    async_send = InterlockedIncrement( &socket->pending_sends ) > 1;
     if (!async_send)
     {
         memset( &s->ovr, 0, sizeof(s->ovr) );
@@ -681,13 +681,13 @@ static DWORD socket_send_pong( struct socket *socket )
         s->complete_async = complete_async;
         if ((ret = queue_task( &socket->send_q, task_socket_send_pong, &s->task_hdr, &socket->hdr )))
         {
-            InterlockedDecrement( &socket->hdr.pending_sends );
+            InterlockedDecrement( &socket->pending_sends );
             free( s );
         }
     }
     else
     {
-        InterlockedDecrement( &socket->hdr.pending_sends );
+        InterlockedDecrement( &socket->pending_sends );
         free( s );
     }
     ReleaseSRWLockExclusive( &socket->send_lock );
@@ -919,9 +919,9 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
     {
         struct socket_receive *r;
 
-        if (InterlockedIncrement( &socket->hdr.pending_receives ) > 1)
+        if (InterlockedIncrement( &socket->pending_receives ) > 1)
         {
-            InterlockedDecrement( &socket->hdr.pending_receives );
+            InterlockedDecrement( &socket->pending_receives );
             WARN( "attempt to queue receive while another is pending\n" );
             release_object( &socket->hdr );
             return ERROR_INVALID_OPERATION;
@@ -929,7 +929,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
 
         if (!(r = malloc( sizeof(*r) )))
         {
-            InterlockedDecrement( &socket->hdr.pending_receives );
+            InterlockedDecrement( &socket->pending_receives );
             release_object( &socket->hdr );
             return ERROR_OUTOFMEMORY;
         }
@@ -938,7 +938,7 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
 
         if ((ret = queue_task( &socket->recv_q, task_socket_receive, &r->task_hdr, &socket->hdr )))
         {
-            InterlockedDecrement( &socket->hdr.pending_receives );
+            InterlockedDecrement( &socket->pending_receives );
             free( r );
         }
     }
@@ -974,7 +974,7 @@ static void task_socket_shutdown( void *ctx, BOOL abort )
     if (s->complete_async) ret = complete_send_frame( socket, &s->ovr, s->reason );
     else ret = send_frame( socket, SOCKET_OPCODE_CLOSE, s->status, s->reason, s->len, TRUE, NULL );
 
-    send_io_complete( &socket->hdr );
+    send_io_complete( socket );
     if (s->send_callback) socket_shutdown_complete( socket, ret );
 }
 
@@ -993,7 +993,7 @@ static DWORD send_socket_shutdown( struct socket *socket, USHORT status, const v
     if (!(s = malloc( sizeof(*s) ))) return FALSE;
 
     AcquireSRWLockExclusive( &socket->send_lock );
-    async_send = InterlockedIncrement( &socket->hdr.pending_sends ) > 1 || socket->hdr.recursion_count >= 3;
+    async_send = InterlockedIncrement( &socket->pending_sends ) > 1 || socket->hdr.recursion_count >= 3;
     if (!async_send)
     {
         memset( &s->ovr, 0, sizeof(s->ovr) );
@@ -1014,11 +1014,11 @@ static DWORD send_socket_shutdown( struct socket *socket, USHORT status, const v
 
         if ((ret = queue_task( &socket->send_q, task_socket_shutdown, &s->task_hdr, &socket->hdr )))
         {
-            InterlockedDecrement( &socket->hdr.pending_sends );
+            InterlockedDecrement( &socket->pending_sends );
             free( s );
         }
     }
-    else InterlockedDecrement( &socket->hdr.pending_sends );
+    else InterlockedDecrement( &socket->pending_sends );
 
     ReleaseSRWLockExclusive( &socket->send_lock );
     if (!async_send)
@@ -1141,7 +1141,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
 
     if (socket->hdr.flags & WINHTTP_FLAG_ASYNC)
     {
-        pending_receives = InterlockedIncrement( &socket->hdr.pending_receives );
+        pending_receives = InterlockedIncrement( &socket->pending_receives );
         cancel_queue( &socket->recv_q );
     }
 
@@ -1165,7 +1165,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
         }
         if ((ret = queue_task( &socket->recv_q, task_socket_close, &s->task_hdr, &socket->hdr )))
         {
-            InterlockedDecrement( &socket->hdr.pending_receives );
+            InterlockedDecrement( &socket->pending_receives );
             free( s );
         }
     }

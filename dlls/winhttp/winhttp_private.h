@@ -51,8 +51,6 @@ struct object_header
     DWORD notify_mask;
     LONG recursion_count;
     struct list entry;
-    volatile LONG pending_sends;
-    volatile LONG pending_receives;
 };
 
 struct hostdata
@@ -324,6 +322,8 @@ struct socket
     unsigned int bytes_in_read_buffer;
     SRWLOCK send_lock;
     volatile LONG pending_noncontrol_send;
+    volatile LONG pending_sends;
+    volatile LONG pending_receives;
     enum fragment_type sending_fragment_type;
     enum fragment_type receiving_fragment_type;
     BOOL last_receive_final;
