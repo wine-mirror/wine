@@ -15,5 +15,6 @@ SOURCES = \
 	net.c \
 	request.c \
 	session.c \
+	socket.c \
 	url.c \
 	winhttp_tlb.idl

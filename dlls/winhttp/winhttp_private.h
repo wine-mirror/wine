@@ -429,8 +429,11 @@ BOOL free_handle( HINTERNET );
 
 void send_callback( struct object_header *, DWORD, LPVOID, DWORD );
 void close_connection( struct request * );
-void init_queue( struct queue *queue );
+void init_queue( struct queue * );
+BOOL cancel_queue( struct queue * );
 void stop_queue( struct queue * );
+DWORD queue_task( struct queue *, TASK_CALLBACK, struct task_header *, struct object_header * );
+BOOL task_needs_completion( struct task_header * );
 
 void netconn_addref( struct netconn * );
 void netconn_release( struct netconn * );
