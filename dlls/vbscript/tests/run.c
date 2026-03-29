@@ -2947,7 +2947,7 @@ static void test_parse_errors(void)
             /* Expected '(' - error 1005 */
             L"Sub x)\nEnd Sub\n",
             0, 5,
-            NULL, S_OK, -1005
+            NULL, S_OK, 1005
         },
         {
             /* Expected '=' - error 1011 */

@@ -538,6 +538,10 @@ FunctionDecl
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_FUNCTION); YYABORT; }
     | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_FUNCTION); YYABORT; }
+    | Storage_opt tSUB Identifier error
+                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
+    | Storage_opt tFUNCTION Identifier error
+                                    { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LPAREN); YYABORT; }
 
 Storage_opt
     : /* empty*/                    { $$ = 0; }
