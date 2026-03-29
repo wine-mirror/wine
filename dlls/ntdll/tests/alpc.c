@@ -27,6 +27,7 @@
 #define DECL_FUNCPTR(f) static typeof(f) *p##f;
 
 DECL_FUNCPTR(AlpcGetHeaderSize)
+DECL_FUNCPTR(AlpcGetMessageAttribute)
 DECL_FUNCPTR(AlpcInitializeMessageAttribute)
 
 #undef DECL_FUNCPTR
@@ -41,6 +42,7 @@ static void init_functions(void)
 #define LOAD_FUNCPTR(f) p##f = (void *)GetProcAddress(ntdll, #f);
 
     LOAD_FUNCPTR(AlpcGetHeaderSize)
+    LOAD_FUNCPTR(AlpcGetMessageAttribute)
     LOAD_FUNCPTR(AlpcInitializeMessageAttribute)
 
 #undef LOAD_FUNCPTR
@@ -127,6 +129,105 @@ static void test_AlpcGetHeaderSize(void)
 
             winetest_pop_context();
         }
+        winetest_pop_context();
+    }
+}
+
+static void test_AlpcGetMessageAttribute(void)
+{
+    unsigned char buffer[1024];
+    ALPC_MESSAGE_ATTRIBUTES *attr = (ALPC_MESSAGE_ATTRIBUTES *)buffer;
+    unsigned int i, j;
+    void *ptr;
+
+    static const ULONG attributes[] =
+    {
+        0,
+        ALPC_MESSAGE_WORK_ON_BEHALF_ATTRIBUTE,
+        ALPC_MESSAGE_DIRECT_ATTRIBUTE,
+        ALPC_MESSAGE_TOKEN_ATTRIBUTE,
+        ALPC_MESSAGE_HANDLE_ATTRIBUTE,
+        ALPC_MESSAGE_CONTEXT_ATTRIBUTE,
+        ALPC_MESSAGE_VIEW_ATTRIBUTE,
+        ALPC_MESSAGE_SECURITY_ATTRIBUTE,
+    };
+
+    if (!pAlpcGetMessageAttribute)
+    {
+        todo_wine
+        win_skip("AlpcGetMessageAttribute is unavailable.\n");
+        return;
+    }
+
+    /* Invalid flag */
+    attr->AllocatedAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL;
+    attr->ValidAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL;
+    ptr = pAlpcGetMessageAttribute(attr, 0x1);
+    ok(ptr == NULL, "Got unexpected ptr.\n");
+
+    for (i = 0; i < ARRAY_SIZE(attributes); i++)
+    {
+        winetest_push_context("%#lx", attributes[i]);
+
+        /* The message has no allocated attributes */
+        attr->AllocatedAttributes = 0;
+        attr->ValidAttributes = attributes[i];
+        ptr = pAlpcGetMessageAttribute(attr, attributes[i]);
+        ok(ptr == NULL, "Got unexpected ptr.\n");
+
+        /* The message has no valid attributes */
+        attr->AllocatedAttributes = attributes[i];
+        attr->ValidAttributes = 0;
+        ptr = pAlpcGetMessageAttribute(attr, attributes[i]);
+        if (attributes[i])
+            ok(ptr == ((unsigned char *)attr + sizeof(*attr)), "Got unexpected ptr.\n");
+        else
+            ok(ptr == NULL, "Got unexpected ptr.\n");
+
+        /* Normal calls */
+        attr->AllocatedAttributes = attributes[i];
+        attr->ValidAttributes = attributes[i];
+        ptr = pAlpcGetMessageAttribute(attr, attributes[i]);
+        if (attributes[i])
+            ok(ptr == ((unsigned char *)attr + sizeof(*attr)), "Got unexpected ptr.\n");
+        else
+            ok(ptr == NULL, "Got unexpected ptr.\n");
+
+        /* The message has full attributes */
+        attr->AllocatedAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL;
+        attr->ValidAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL;
+        ptr = pAlpcGetMessageAttribute(attr, attributes[i]);
+        if (attributes[i])
+            ok(ptr == ((unsigned char *)attr + pAlpcGetHeaderSize(attr->AllocatedAttributes & ~(attributes[i] | (attributes[i] - 1)))),
+               "Got unexpected ptr.\n");
+        else
+            ok(ptr == NULL, "Got unexpected ptr.\n");
+
+        /* The message has some valid attributes */
+        for (j = 0; j < ARRAY_SIZE(attributes); j++)
+        {
+            attr->AllocatedAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL;
+            attr->ValidAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL & ~attributes[j];
+            ptr = pAlpcGetMessageAttribute(attr, attributes[i]);
+            if (attributes[i])
+                ok(ptr == ((unsigned char *)attr + pAlpcGetHeaderSize(attr->AllocatedAttributes & ~(attributes[i] | (attributes[i] - 1)))),
+                   "Got unexpected ptr.\n");
+            else
+                ok(ptr == NULL, "Got unexpected ptr.\n");
+        }
+
+        /* Two attributes are passed to AlpcGetMessageAttribute() */
+        for (j = 0; j < ARRAY_SIZE(attributes); j++)
+        {
+            if (!attributes[i] || !attributes[j] || attributes[i] == attributes[j])
+                continue;
+
+            attr->AllocatedAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL;
+            attr->ValidAttributes = ALPC_MESSAGE_ATTRIBUTE_ALL;
+            ptr = pAlpcGetMessageAttribute(attr, attributes[i] | attributes[j]);
+            ok(ptr == NULL, "Got unexpected ptr.\n");
+        }
+
         winetest_pop_context();
     }
 }
@@ -247,5 +348,6 @@ START_TEST(alpc)
     init_functions();
 
     test_AlpcGetHeaderSize();
+    test_AlpcGetMessageAttribute();
     test_AlpcInitializeMessageAttribute();
 }
