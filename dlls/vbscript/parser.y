@@ -145,7 +145,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression ExpressionNl_opt
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
 %type <expression> UnaryExpression AndExpression OrExpression XorExpression EqvExpression SignExpression
-%type <expression> ConstExpression NumericLiteralExpression
+%type <expression> NumericLiteralExpression
 %type <member> MemberExpression
 %type <expression> Arguments ArgumentList ArgumentList_opt Step_opt ExpressionList
 %type <boolean> DoType Preserve_opt
@@ -327,12 +327,8 @@ ConstDeclList
     | ConstDecl ',' ConstDeclList           { $1->next = $3; $$ = $1; }
 
 ConstDecl
-    : Identifier '=' ConstExpression        { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
+    : Identifier '=' Expression             { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
     | Identifier error                      { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_ASSIGN); YYABORT; }
-
-ConstExpression
-    : LiteralExpression                     { $$ = $1; }
-    | '-' NumericLiteralExpression          { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
 
 DoType
     : tWHILE        { $$ = TRUE; }
@@ -1294,9 +1290,36 @@ static class_decl_t *add_dim_prop(parser_ctx_t *ctx, class_decl_t *class_decl, d
     return class_decl;
 }
 
+static BOOL is_const_expression(expression_t *expr)
+{
+    switch(expr->type) {
+    case EXPR_INT:
+    case EXPR_DOUBLE:
+    case EXPR_STRING:
+    case EXPR_BOOL:
+    case EXPR_DATE:
+    case EXPR_EMPTY:
+    case EXPR_NULL:
+    case EXPR_NOTHING:
+        return TRUE;
+    case EXPR_NEG: {
+        unary_expression_t *unary = (unary_expression_t*)expr;
+        return unary->subexpr->type == EXPR_INT || unary->subexpr->type == EXPR_DOUBLE;
+    }
+    default:
+        return FALSE;
+    }
+}
+
 static const_decl_t *new_const_decl(parser_ctx_t *ctx, const WCHAR *name, expression_t *expr)
 {
     const_decl_t *decl;
+
+    if(!is_const_expression(expr)) {
+        ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LITERAL_CONSTANT);
+        ctx->error_loc = ctx->ptr - ctx->code - 1;
+        return NULL;
+    }
 
     decl = parser_alloc(ctx, sizeof(*decl));
     if(!decl)

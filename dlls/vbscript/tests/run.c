@@ -2940,8 +2940,8 @@ static void test_parse_errors(void)
         {
             /* Expected literal constant - error 1045 */
             L"Const x = 1 + \"a\"\n",
-            0, -17,
-            NULL, S_OK, -1045
+            0, 17,
+            NULL, S_OK, 1045
         },
         {
             /* Expected '(' - error 1005 */
