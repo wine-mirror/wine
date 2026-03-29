@@ -870,8 +870,8 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
 
 static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
 {
-    statement_ctx_t loop_ctx = {2};
-    unsigned step_instr, loop_start, instr;
+    statement_ctx_t loop_ctx = {3};
+    unsigned step_instr, instr, expr_err_label, past_err_label, body_label, from_offset;
     BSTR identifier;
     HRESULT hres;
 
@@ -879,23 +879,32 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(!identifier)
         return E_OUTOFMEMORY;
 
+    expr_err_label = alloc_label(ctx);
+    if(!expr_err_label)
+        return E_OUTOFMEMORY;
+
+    past_err_label = alloc_label(ctx);
+    if(!past_err_label)
+        return E_OUTOFMEMORY;
+
+    body_label = alloc_label(ctx);
+    if(!body_label)
+        return E_OUTOFMEMORY;
+
+    /* Evaluate all three expressions (from, to, step) before assignment,
+     * so that the control variable is not modified if any expression fails.
+     * Stack layout after evaluation: [from, to, step] (step on top). */
+    from_offset = stack_offset(ctx);
+
     hres = compile_expression(ctx, stat->from_expr);
     if(FAILED(hres))
         return hres;
     if(!push_instr(ctx, OP_numval))
         return E_OUTOFMEMORY;
 
-    /* FIXME: Assign should happen after both expressions evaluation. */
-    instr = push_instr(ctx, OP_assign_ident);
-    if(!instr)
-        return E_OUTOFMEMORY;
-    instr_ptr(ctx, instr)->arg1.bstr = identifier;
-    instr_ptr(ctx, instr)->arg2.uint = 0;
-
     hres = compile_expression(ctx, stat->to_expr);
     if(FAILED(hres))
         return hres;
-
     if(!push_instr(ctx, OP_numval))
         return E_OUTOFMEMORY;
 
@@ -912,6 +921,24 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
             return hres;
     }
 
+    /* If any expression failed, clean up and enter body with empty sentinels. */
+    if(!emit_catch_jmp(ctx, 0, expr_err_label))
+        return E_OUTOFMEMORY;
+
+    /* Copy from (buried at depth 2) to top and assign to control variable. */
+    hres = push_instr_uint(ctx, OP_stack, from_offset);
+    if(FAILED(hres))
+        return hres;
+
+    instr = push_instr(ctx, OP_assign_ident);
+    if(!instr)
+        return E_OUTOFMEMORY;
+    instr_ptr(ctx, instr)->arg1.bstr = identifier;
+    instr_ptr(ctx, instr)->arg2.uint = 0;
+
+    if(!emit_catch_jmp(ctx, 0, expr_err_label))
+        return E_OUTOFMEMORY;
+
     loop_ctx.for_end_label = alloc_label(ctx);
     if(!loop_ctx.for_end_label)
         return E_OUTOFMEMORY;
@@ -922,16 +949,16 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
     instr_ptr(ctx, step_instr)->arg1.uint = loop_ctx.for_end_label;
 
-    if(!emit_catch(ctx, 2))
+    if(!emit_catch(ctx, 3))
         return E_OUTOFMEMORY;
 
-    loop_start = ctx->instr_cnt;
+    label_set_addr(ctx, body_label);
+
     hres = compile_statement(ctx, &loop_ctx, stat->body);
     if(FAILED(hres))
         return hres;
 
-    /* We need a separated OP_step here so that errors jump to the end-of-loop catch. */
-    ctx->loc = stat->stat.loc;
+
     instr = push_instr(ctx, OP_incc);
     if(!instr)
         return E_OUTOFMEMORY;
@@ -943,7 +970,11 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     instr_ptr(ctx, instr)->arg2.bstr = identifier;
     instr_ptr(ctx, instr)->arg1.uint = loop_ctx.for_end_label;
 
-    hres = push_instr_addr(ctx, OP_jmp, loop_start);
+    hres = push_instr_addr(ctx, OP_jmp, step_instr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = push_instr_uint(ctx, OP_pop, 3);
     if(FAILED(hres))
         return hres;
 
@@ -951,6 +982,28 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
 
     if(!emit_catch(ctx, 0))
         return E_OUTOFMEMORY;
+
+    hres = push_instr_addr(ctx, OP_jmp, past_err_label);
+    if(FAILED(hres))
+        return hres;
+
+    /* Expression error path: push empty from/to/step sentinels and enter body. */
+    label_set_addr(ctx, expr_err_label);
+
+    if(!push_instr(ctx, OP_empty))
+        return E_OUTOFMEMORY;
+
+    if(!push_instr(ctx, OP_empty))
+        return E_OUTOFMEMORY;
+
+    if(!push_instr(ctx, OP_empty))
+        return E_OUTOFMEMORY;
+
+    hres = push_instr_addr(ctx, OP_jmp, body_label);
+    if(FAILED(hres))
+        return hres;
+
+    label_set_addr(ctx, past_err_label);
 
     return S_OK;
 }

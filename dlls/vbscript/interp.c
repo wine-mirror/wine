@@ -1552,8 +1552,18 @@ static HRESULT interp_step(exec_ctx_t *ctx)
 
     TRACE("%s\n", debugstr_w(ident));
 
-    if(V_VT(stack_top(ctx, 0)) == VT_EMPTY || V_VT(stack_top(ctx, 1)) == VT_EMPTY)
-        return MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
+    /* If to and step are VT_EMPTY, the For loop was not properly initialized
+     * (expression evaluation failed during On Error Resume Next). Set error 92
+     * and exit the loop. */
+    if(V_VT(stack_top(ctx, 0)) == VT_EMPTY && V_VT(stack_top(ctx, 1)) == VT_EMPTY) {
+        WARN("For loop not initialized\n");
+        clear_ei(&ctx->script->ei);
+        ctx->script->ei.scode = MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
+        map_vbs_exception(&ctx->script->ei);
+        stack_popn(ctx, 3);
+        instr_jmp(ctx, ctx->instr->arg1.uint);
+        return S_OK;
+    }
 
     V_VT(&zero) = VT_I2;
     V_I2(&zero) = 0;
@@ -1579,7 +1589,7 @@ static HRESULT interp_step(exec_ctx_t *ctx)
     if(hres == VARCMP_EQ || hres == (gteq_zero ? VARCMP_LT : VARCMP_GT)) {
         ctx->instr++;
     }else {
-        stack_popn(ctx, 2);
+        stack_popn(ctx, 3);
         instr_jmp(ctx, ctx->instr->arg1.uint);
     }
     return S_OK;
@@ -2506,7 +2516,7 @@ static HRESULT interp_incc(exec_ctx_t *ctx)
 
     hres = VarAdd(stack_top(ctx, 0), ref.u.v, &v);
     if(FAILED(hres))
-        return hres;
+        return MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
 
     VariantClear(ref.u.v);
     *ref.u.v = v;

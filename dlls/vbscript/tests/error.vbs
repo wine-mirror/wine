@@ -216,11 +216,11 @@ sub testThrow
     x = 6
     for x = 100 to throwInt(E_TESTERROR)
         call ok(Err.Number = E_TESTERROR, "Err.Number = " & Err.Number)
-        call todo_wine_ok(x = 6, "x = " & x)
+        call ok(x = 6, "x = " & x)
         y = y+1
     next
     call ok(y = 1, "y = " & y)
-    call todo_wine_ok(x = 6, "x = " & x)
+    call ok(x = 6, "x = " & x)
     call ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
 
     Err.clear()
@@ -228,12 +228,12 @@ sub testThrow
     x = 6
     for x = 100 to 200 step throwInt(E_TESTERROR)
         call ok(Err.Number = E_TESTERROR, "Err.Number = " & Err.Number)
-        call todo_wine_ok(x = 6, "x = " & x)
+        call ok(x = 6, "x = " & x)
         y = y+1
     next
     call ok(y = 1, "y = " & y)
-    call todo_wine_ok(x = 6, "x = " & x)
-    call todo_wine_ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
+    call ok(x = 6, "x = " & x)
+    call ok(Err.Number = VB_E_FORLOOPNOTINITIALIZED, "Err.Number = " & Err.Number)
 
     select case throwInt(E_TESTERROR)
     case true

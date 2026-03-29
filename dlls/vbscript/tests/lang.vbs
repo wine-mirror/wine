@@ -855,6 +855,64 @@ do while true
     next
 loop
 
+' For loop control variable should not be modified when expression evaluation fails
+on error resume next
+
+x = 6
+y = 0
+err.clear
+for x = 1/0 to 100
+    y = y + 1
+next
+call ok(err.number = 92, "for (from error): err.number = " & err.number)
+call ok(x = 6, "for (from error): x = " & x)
+
+x = 6
+y = 0
+err.clear
+for x = 100 to 1/0
+    y = y + 1
+next
+call ok(err.number = 92, "for (to error): err.number = " & err.number)
+call ok(x = 6, "for (to error): x = " & x)
+
+x = 6
+y = 0
+err.clear
+for x = 100 to 200 step 1/0
+    y = y + 1
+next
+call ok(err.number = 92, "for (step error): err.number = " & err.number)
+call ok(x = 6, "for (step error): x = " & x)
+
+z = 99
+y = 0
+err.clear
+for z = 1 to UBound(empty)
+    y = y + 1
+next
+call ok(err.number = 92, "for (UBound(empty)): err.number = " & err.number)
+call ok(z = 99, "for (UBound(empty)): z = " & z)
+
+on error goto 0
+
+' For loop expression evaluation order: from, to, step
+dim eval_order
+function trackEval(val, label)
+    eval_order = eval_order & label
+    trackEval = val
+end function
+
+eval_order = ""
+for x = trackEval(1, "F") to trackEval(5, "T") step trackEval(1, "S")
+next
+call ok(eval_order = "FTS", "for eval order = " & eval_order)
+
+eval_order = ""
+for x = trackEval(1, "F") to trackEval(5, "T")
+next
+call ok(eval_order = "FT", "for eval order (no step) = " & eval_order)
+
 if null then call ok(false, "if null evaluated")
 
 while null
