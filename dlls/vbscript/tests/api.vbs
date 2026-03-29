@@ -2144,6 +2144,59 @@ if Asc(Chr(&h81)) = &h8145 then
 end if
 call testAscError()
 
+sub testAscW(arg, expected)
+    dim x
+    x = AscW(arg)
+    call ok(x = expected, "AscW: x = " & x & " expected " & expected)
+    call ok(getVT(x) = "VT_I2*", "AscW: getVT = " & getVT(x))
+end sub
+
+call testAscW("T", 84)
+call testAscW("test", 116)
+call testAscW("3", 51)
+call testAscW(3, 51)
+call testAscW(Chr(0), 0)
+call testAscW(Chr(255), 255)
+if isEnglishLang then testAscW true, 84
+
+sub testAscWError()
+    on error resume next
+    call Err.clear()
+    call AscW(null)
+    Call ok(Err.number = 94, "AscW null: Err.number = " & Err.number)
+    call Err.clear()
+    call AscW(empty)
+    Call ok(Err.number = 5, "AscW empty: Err.number = " & Err.number)
+    call Err.clear()
+    call AscW("")
+    Call ok(Err.number = 5, "AscW """": Err.number = " & Err.number)
+end sub
+
+call testAscWError()
+
+Call ok(getVT(ChrW(120)) = "VT_BSTR", "getVT(ChrW(120)) = " & getVT(ChrW(120)))
+Call ok(ChrW(120) = "x", "ChrW(120) = " & ChrW(120))
+Call ok(ChrW(0) <> "", "ChrW(0) = """"")
+Call ok(ChrW(120.5) = "x", "ChrW(120.5) = " & ChrW(120.5))
+Call ok(ChrW(119.5) = "x", "ChrW(119.5) = " & ChrW(119.5))
+Call ok(ChrW("120") = "x", "ChrW(""120"") = " & ChrW("120"))
+Call ok(ChrW(255) = Chr(255), "ChrW(255) <> Chr(255)")
+Call ok(ChrW(0) = Chr(0), "ChrW(0) <> Chr(0)")
+Call ok(AscW(ChrW(8364)) = 8364, "AscW(ChrW(8364)) = " & AscW(ChrW(8364)))
+Call ok(AscW(ChrW(65535)) = -1, "AscW(ChrW(65535)) = " & AscW(ChrW(65535)))
+
+sub testChrWError()
+    on error resume next
+    call Err.clear()
+    call ChrW(65536)
+    call ok(Err.number = 5, "ChrW 65536: Err.number = " & Err.number)
+    call Err.clear()
+    call ChrW(-32769)
+    call ok(Err.number = 5, "ChrW -32769: Err.number = " & Err.number)
+end sub
+
+call testChrWError()
+
 sub testErrNumber(n)
     call ok(err.number = n, "err.number = " & err.number & " expected " & n)
 end sub

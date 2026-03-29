@@ -1927,14 +1927,60 @@ static HRESULT Global_Chr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_AscW(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR conv_str = NULL, str;
+    HRESULT hres = S_OK;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    switch(V_VT(arg)) {
+    case VT_NULL:
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+    case VT_EMPTY:
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    case VT_BSTR:
+        str = V_BSTR(arg);
+        break;
+    default:
+        hres = to_string(arg, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    if(!SysStringLen(str))
+        hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    else
+        hres = return_short(res, *str);
+
+    SysFreeString(conv_str);
+    return hres;
 }
 
 static HRESULT Global_ChrW(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int c;
+    WCHAR ch;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    hres = to_int(arg, &c);
+    if(FAILED(hres))
+        return hres;
+
+    if(c != (short)c && c != (unsigned short)c) {
+        WARN("invalid arg %d\n", c);
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    ch = c;
+    if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = SysAllocStringLen(&ch, 1);
+        if(!V_BSTR(res))
+            return E_OUTOFMEMORY;
+    }
+    return S_OK;
 }
 
 static HRESULT Global_Abs(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
