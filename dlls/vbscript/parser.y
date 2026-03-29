@@ -311,6 +311,9 @@ ReDimDeclList
 DimDeclList
     : DimDecl                               { $$ = $1; }
     | DimDecl ',' DimDeclList               { $1->next = $3; $$ = $1; }
+    | error                                 { if(ctx->hres == MAKE_VBSERROR(VBSE_SYNTAX_ERROR))
+                                                 ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IDENTIFIER);
+                                               YYABORT; }
 
 DimDecl
     : Identifier                            { $$ = new_dim_decl(ctx, $1, @1, FALSE, NULL); CHECK_ERROR; }

@@ -2929,7 +2929,7 @@ static void test_parse_errors(void)
             /* Expected identifier - error 1010 */
             L"Dim If\n",
             0, 4,
-            NULL, S_OK, -1010
+            NULL, S_OK, 1010
         },
         {
             /* Invalid character - error 1032 */
