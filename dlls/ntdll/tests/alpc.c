@@ -154,7 +154,6 @@ static void test_AlpcInitializeMessageAttribute(void)
 
     if (!pAlpcInitializeMessageAttribute)
     {
-        todo_wine
         win_skip("AlpcInitializeMessageAttribute is unavailable.\n");
         return;
     }

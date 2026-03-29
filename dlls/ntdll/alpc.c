@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winternl.h>
+#include <ntstatus.h>
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(alpc);
@@ -55,4 +56,24 @@ SIZE_T WINAPI AlpcGetHeaderSize(ULONG attribute_flags)
     }
 
     return size;
+}
+
+NTSTATUS WINAPI AlpcInitializeMessageAttribute(ULONG attribute_flags, ALPC_MESSAGE_ATTRIBUTES *buffer,
+                                               SIZE_T buffer_size, SIZE_T *required_buffer_size)
+{
+    TRACE("%#lx, %p, %Ix, %p.\n", attribute_flags, buffer, buffer_size, required_buffer_size);
+
+    *required_buffer_size = AlpcGetHeaderSize(attribute_flags);
+
+    if (buffer_size < *required_buffer_size)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    if (buffer)
+    {
+        buffer->AllocatedAttributes = attribute_flags;
+        buffer->ValidAttributes = 0;
+    }
+
+    return STATUS_SUCCESS;
+
 }
