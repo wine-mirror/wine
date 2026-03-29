@@ -3025,7 +3025,19 @@ static void test_parse_errors(void)
             /* Must be defined inside a Class - error 1048 */
             L"Property Get x\nEnd Property\n",
             0, 9,
-            NULL, S_OK, -1048
+            NULL, S_OK, 1048
+        },
+        {
+            /* Must be defined inside a Class - error 1048 (Let) */
+            L"Property Let x\nEnd Property\n",
+            0, 9,
+            NULL, S_OK, 1048
+        },
+        {
+            /* Must be defined inside a Class - error 1048 (Set) */
+            L"Property Set x\nEnd Property\n",
+            0, 9,
+            NULL, S_OK, 1048
         },
         {
             /* Expected Let or Set or Get - error 1049 */
