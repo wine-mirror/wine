@@ -2995,7 +2995,7 @@ static void test_parse_errors(void)
             /* Expected integer constant - error 1026 */
             L"Dim x(\"a\")\n",
             0, 6,
-            NULL, S_OK, -1026
+            NULL, S_OK, 1026
         },
         {
             /* Invalid number - error 1031 */
@@ -3031,7 +3031,7 @@ static void test_parse_errors(void)
             /* Expected Let or Set or Get - error 1049 */
             L"Class C\nProperty x\nEnd Property\nEnd Class\n",
             1, 9,
-            NULL, S_OK, -1049
+            NULL, S_OK, 1049
         },
         {
             /* Class_Initialize with arguments - error 1053 */

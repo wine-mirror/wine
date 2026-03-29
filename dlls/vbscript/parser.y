@@ -296,6 +296,7 @@ DimDecl
 DimList
     : IntegerValue                          { $$ = new_dim(ctx, $1, NULL); }
     | IntegerValue ',' DimList              { $$ = new_dim(ctx, $1, $3); }
+    | error                                 { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_INTEGER_CONSTANT); YYABORT; }
 
 ConstDeclList
     : ConstDecl                             { $$ = $1; }
@@ -520,6 +521,7 @@ PropertyDecl
                                     { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
     | Storage_opt tPROPERTY tSET Identifier error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
+    | Storage_opt tPROPERTY error   { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LET_SET_GET); YYABORT; }
 
 FunctionDecl
     : Storage_opt tSUB Identifier StSep BodyStatements tEND tSUB
