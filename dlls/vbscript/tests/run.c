@@ -2917,7 +2917,7 @@ static void test_parse_errors(void)
             /* Expected 'End' - error 1014 */
             L"If True Then\nx = 1\n",
             2, 0,
-            NULL, S_OK, -1014
+            NULL, S_OK, 1014
         },
         {
             /* Name redefined - error 1041 */
@@ -2971,19 +2971,19 @@ static void test_parse_errors(void)
             /* Expected 'Wend' - error 1018 */
             L"While True\nx = 1\n",
             2, 0,
-            NULL, S_OK, -1018
+            NULL, S_OK, 1018
         },
         {
             /* Expected 'Loop' - error 1019 */
             L"Do\nx = 1\n",
             2, 0,
-            NULL, S_OK, -1019
+            NULL, S_OK, 1019
         },
         {
             /* Expected 'Next' - error 1020 */
             L"For i = 1 To 10\nx = 1\n",
             2, 0,
-            NULL, S_OK, -1020
+            NULL, S_OK, 1020
         },
         {
             /* Expected 'Case' - error 1021 */

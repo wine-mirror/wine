@@ -232,13 +232,18 @@ SimpleStatement
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression StSep StatementsNl_opt tWEND
                                             { $$ = new_while_statement(ctx, @$, STAT_WHILE, $2, $4); CHECK_ERROR; }
+    | tWHILE Expression StSep StatementsNl_opt error
+                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WEND); YYABORT; }
     | tDO DoType Expression StSep StatementsNl_opt tLOOP
                                             { $$ = new_while_statement(ctx, @$, $2 ? STAT_WHILELOOP : STAT_UNTIL, $3, $5);
                                               CHECK_ERROR; }
+    | tDO DoType Expression StSep StatementsNl_opt error
+                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LOOP); YYABORT; }
     | tDO StSep StatementsNl_opt tLOOP DoType Expression
                                             { $$ = new_while_statement(ctx, @4, $5 ? STAT_DOWHILE : STAT_DOUNTIL, $6, $3);
                                               CHECK_ERROR; }
     | tDO StSep StatementsNl_opt tLOOP      { $$ = new_while_statement(ctx, @$, STAT_DOWHILE, NULL, $3); CHECK_ERROR; }
+    | tDO StSep StatementsNl_opt error      { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_LOOP); YYABORT; }
     | tDO error                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WHILE_UNTIL_EOS); YYABORT; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, @$, $1); CHECK_ERROR; }
     | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0, @2); CHECK_ERROR; }
@@ -256,9 +261,13 @@ SimpleStatement
                                             { $$ = new_forto_statement(ctx, @$, $2, $4, $6, $7, $9); CHECK_ERROR; }
     | tFOR Identifier '=' Expression error
                                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_TO); YYABORT; }
+    | tFOR Identifier '=' Expression tTO Expression Step_opt StSep StatementsNl_opt error
+                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_NEXT); YYABORT; }
     | tFOR tEACH Identifier tIN Expression StSep StatementsNl_opt tNEXT
                                             { $$ = new_foreach_statement(ctx, @$, $3, $5, $7); }
     | tFOR tEACH Identifier error           { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_IN); YYABORT; }
+    | tFOR tEACH Identifier tIN Expression StSep StatementsNl_opt error
+                                            { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_NEXT); YYABORT; }
     | tSELECT tCASE Expression StSep CaseClausules tEND tSELECT
                                             { $$ = new_select_statement(ctx, @$, $3, $5); }
     | tSELECT tCASE Expression StSep CaseClausules tEND error
@@ -336,6 +345,8 @@ Step_opt
 IfStatement
     : tIF Expression tTHEN tNL StSep_opt StatementsNl_opt ElseIfs_opt Else_opt tEND tIF
                                                 { $$ = new_if_statement(ctx, @$, $2, $6, $7, $8); CHECK_ERROR; }
+    | tIF Expression tTHEN tNL StSep_opt StatementsNl_opt ElseIfs_opt Else_opt error
+                                                { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_END); YYABORT; }
     | tIF Expression tTHEN Statement EndIf_opt { $$ = new_if_statement(ctx, @$, $2, $4, NULL, NULL); CHECK_ERROR; }
     | tIF Expression tTHEN Statement tELSE Statement EndIf_opt
                                                 { $$ = new_if_statement(ctx, @$, $2, $4, NULL, $6); CHECK_ERROR; }
