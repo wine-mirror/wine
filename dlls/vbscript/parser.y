@@ -516,6 +516,10 @@ PropertyDecl
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
     | Storage_opt tPROPERTY tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
+    | Storage_opt tPROPERTY tLET Identifier error
+                                    { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
+    | Storage_opt tPROPERTY tSET Identifier error
+                                    { ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_LET_SET_NEEDS_ARG); YYABORT; }
 
 FunctionDecl
     : Storage_opt tSUB Identifier StSep BodyStatements tEND tSUB

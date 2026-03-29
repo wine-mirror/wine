@@ -3055,7 +3055,7 @@ static void test_parse_errors(void)
             /* Property Let/Set needs at least one argument - error 1054 */
             L"Class C\nProperty Let x\nEnd Property\nEnd Class\n",
             1, 14,
-            NULL, S_OK, -1054
+            NULL, S_OK, 1054
         },
         {
             /* Unexpected 'Next' - error 1055 */
