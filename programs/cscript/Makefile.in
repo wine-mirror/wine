@@ -9,4 +9,5 @@ SOURCES = \
 	arguments.c \
 	host.c \
 	ihost.idl \
-	main.c
+	main.c \
+	wscript.rc

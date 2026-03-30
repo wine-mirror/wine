@@ -29,6 +29,7 @@
 #include <initguid.h>
 
 #include "wscript.h"
+#include "resource.h"
 
 #include <wine/debug.h>
 
@@ -51,6 +52,8 @@ WCHAR scriptFullName[MAX_PATH];
 
 ITypeInfo *host_ti;
 ITypeInfo *arguments_ti;
+
+static BOOL nologo;
 
 static HRESULT query_interface(REFIID,void**);
 
@@ -120,20 +123,15 @@ static HRESULT WINAPI ActiveScriptSite_OnStateChange(IActiveScriptSite *iface,
     return S_OK;
 }
 
-static void print_error(const WCHAR *string)
+static void write_to_handle(HANDLE handle, const WCHAR *string)
 {
     DWORD count, ret, len, lena;
     char *buf;
 
-    if(wshInteractive) {
-        MessageBoxW(NULL, string, L"Windows Script Host", MB_OK);
-        return;
-    }
-
     len = lstrlenW(string);
-    ret = WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), string, len, &count, NULL);
+    ret = WriteConsoleW(handle, string, len, &count, NULL);
     if(ret) {
-        WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), L"\r\n", 2, &count, NULL);
+        WriteConsoleW(handle, L"\r\n", 2, &count, NULL);
         return;
     }
 
@@ -143,9 +141,101 @@ static void print_error(const WCHAR *string)
         return;
 
     WideCharToMultiByte(GetOEMCP(), 0, string, len, buf, lena, NULL, NULL);
-    WriteFile(GetStdHandle(STD_ERROR_HANDLE), buf, lena, &count, FALSE);
+    WriteFile(handle, buf, lena, &count, FALSE);
     free(buf);
-    WriteFile(GetStdHandle(STD_ERROR_HANDLE), "\r\n", 2, &count, FALSE);
+    WriteFile(handle, "\r\n", 2, &count, FALSE);
+}
+
+static void print_error(const WCHAR *string)
+{
+    if(wshInteractive) {
+        MessageBoxW(NULL, string, L"Windows Script Host", MB_OK);
+        return;
+    }
+
+    write_to_handle(GetStdHandle(STD_ERROR_HANDLE), string);
+}
+
+static void print_string(const WCHAR *string)
+{
+    write_to_handle(GetStdHandle(STD_OUTPUT_HANDLE), string);
+}
+
+static void output_writeconsole(const WCHAR *str, DWORD wlen)
+{
+    DWORD count;
+
+    if(!WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, wlen, &count, NULL)) {
+        DWORD len;
+        char *buf;
+
+        /* On Windows WriteConsoleW() fails if the output is redirected. So fall
+         * back to WriteFile() with OEM code page. */
+        len = WideCharToMultiByte(GetOEMCP(), 0, str, wlen, NULL, 0, NULL, NULL);
+        buf = malloc(len);
+
+        WideCharToMultiByte(GetOEMCP(), 0, str, wlen, buf, len, NULL, NULL);
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, len, &count, FALSE);
+        free(buf);
+    }
+}
+
+static void output_formatstring(const WCHAR *fmt, va_list va_args)
+{
+    WCHAR *str;
+    DWORD len;
+
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         fmt, 0, 0, (WCHAR *)&str, 0, &va_args);
+    if(len == 0 && GetLastError() != ERROR_NO_WORK_DONE) {
+        WINE_FIXME("Could not format string: le=%lu, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        return;
+    }
+    if(wshInteractive) {
+        MessageBoxW(NULL, str, L"Windows Script Host", MB_OK);
+    }else {
+        output_writeconsole(str, len);
+    }
+    LocalFree(str);
+}
+
+static void WINAPIV print_resource(unsigned int id, ...)
+{
+    WCHAR *fmt = NULL;
+    int len;
+    va_list va_args;
+
+    if(!(len = LoadStringW(GetModuleHandleW(NULL), id, (WCHAR *)&fmt, 0))) {
+        WINE_FIXME("LoadString failed with %ld\n", GetLastError());
+        return;
+    }
+
+    len++;
+    fmt = malloc(len * sizeof(WCHAR));
+    if(!fmt)
+        return;
+
+    LoadStringW(GetModuleHandleW(NULL), id, fmt, len);
+
+    va_start(va_args, id);
+    output_formatstring(fmt, va_args);
+    va_end(va_args);
+
+    free(fmt);
+}
+
+static void print_banner(void)
+{
+    const char * (CDECL *wine_get_version)(void);
+    WCHAR header[64];
+
+    wine_get_version = (void *)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "wine_get_version");
+    if(wine_get_version)
+        swprintf(header, ARRAY_SIZE(header), L"Wine %S Script Host", wine_get_version());
+    else
+        swprintf(header, ARRAY_SIZE(header), L"Wine Script Host");
+    print_string(header);
+    print_string(L"");
 }
 
 static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface,
@@ -389,6 +479,11 @@ static BSTR get_script_str(const WCHAR *filename)
         return NULL;
 
     size = GetFileSize(file, NULL);
+    if(!size) {
+        CloseHandle(file);
+        return SysAllocStringLen(NULL, 0);
+    }
+
     map = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, NULL);
     CloseHandle(file);
     if(map == INVALID_HANDLE_VALUE)
@@ -407,28 +502,25 @@ static BSTR get_script_str(const WCHAR *filename)
     return ret;
 }
 
-static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScriptParse *parser)
+static BOOL run_script(BSTR text, IActiveScript *script, IActiveScriptParse *parser)
 {
-    BSTR text;
     HRESULT hres;
-
-    text = get_script_str(filename);
-    if(!text) {
-        WINE_FIXME("Could not get script text\n");
-        return;
-    }
 
     hres = IActiveScriptParse_ParseScriptText(parser, text, NULL, NULL, NULL, 1, 0,
             SCRIPTTEXT_HOSTMANAGESSOURCE|SCRIPTITEM_ISVISIBLE, NULL, NULL);
-    SysFreeString(text);
     if(FAILED(hres)) {
-        WINE_FIXME("ParseScriptText failed: %08lx\n", hres);
-        return;
+        if(hres != SCRIPT_E_REPORTED)
+            WINE_WARN("ParseScriptText failed: %08lx\n", hres);
+        return FALSE;
     }
 
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
-    if(FAILED(hres))
-        WINE_FIXME("SetScriptState failed: %08lx\n", hres);
+    if(FAILED(hres)) {
+        if(hres != SCRIPT_E_REPORTED)
+            WINE_WARN("SetScriptState failed: %08lx\n", hres);
+    }
+
+    return TRUE;
 }
 
 static BOOL set_host_properties(const WCHAR *prop)
@@ -446,16 +538,27 @@ static BOOL set_host_properties(const WCHAR *prop)
     else if(wcsicmp(prop, L"b") == 0)
         wshInteractive = VARIANT_FALSE;
     else if(wcsicmp(prop, L"nologo") == 0)
-        WINE_FIXME("ignored %s switch\n", debugstr_w(L"nologo"));
+        nologo = TRUE;
+    else if(wcsicmp(prop, L"logo") == 0)
+        nologo = FALSE;
     else if(wcsicmp(prop, L"d") == 0)
-        WINE_FIXME("ignoring /d\n");
+        WINE_FIXME("ignoring //d\n");
+    else if(wcsicmp(prop, L"x") == 0)
+        WINE_FIXME("ignoring //x\n");
     else if(wcsicmp(prop, L"u") == 0)
-        WINE_FIXME("ignoring /u\n");
+        WINE_FIXME("ignoring //u\n");
+    else if(wcsicmp(prop, L"s") == 0)
+        WINE_FIXME("ignoring //s\n");
+    else if(wcsnicmp(prop, L"e:", 2) == 0)
+        WINE_FIXME("ignoring //e:\n");
+    else if(wcsnicmp(prop, L"h:", 2) == 0)
+        WINE_FIXME("ignoring //h:\n");
+    else if(wcsnicmp(prop, L"job:", 4) == 0)
+        WINE_FIXME("ignoring //job:\n");
+    else if(wcsnicmp(prop, L"t:", 2) == 0)
+        WINE_FIXME("ignoring //t:\n");
     else
-    {
-        WINE_FIXME("unsupported switch %s\n", debugstr_w(prop));
         return FALSE;
-    }
     return TRUE;
 }
 
@@ -464,9 +567,11 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     WCHAR *ext, *filepart, *filename = NULL;
     IActiveScriptParse *parser;
     IActiveScript *script;
+    BSTR script_text;
     WCHAR **argv;
     CLSID clsid;
     int argc, i;
+    int ret = 0;
     DWORD res;
 
     WINE_TRACE("(%p %p %s %x)\n", hInst, hPrevInst, wine_dbgstr_w(cmdline), cmdshow);
@@ -475,25 +580,83 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     if(!argv)
         return 1;
 
+    /* Pass 1: consume // host options from all positions. */
     for(i=1; i<argc; i++) {
-        if(*argv[i] == '/' || *argv[i] == '-') {
-            if(!set_host_properties(argv[i]))
-                return 1;
-        }else {
-            filename = argv[i];
-            argums = argv+i+1;
-            numOfArgs = argc-i-1;
-            break;
-        }
+        if(argv[i][0] == '/' && argv[i][1] == '/' && set_host_properties(argv[i]))
+            argv[i] = NULL;
     }
 
+    /* Pass 2: find filename, consuming single-/ and - options before it. */
+    for(i=1; i<argc; i++) {
+        if(!argv[i])
+            continue;
+        if(argv[i][0] == '-' && argv[i][1] == '-' && !argv[i][2])
+            continue; /* -- separator */
+        if((*argv[i] == '/' || *argv[i] == '-') && set_host_properties(argv[i]))
+            continue;
+        filename = argv[i];
+        i++;
+        break;
+    }
+
+    /* Pass 3: compact script args, skipping consumed // options. */
+    if(filename) {
+        int j = 0, first_arg = i;
+        for(; i<argc; i++) {
+            if(!argv[i])
+                continue;
+            argv[first_arg + j] = argv[i];
+            j++;
+        }
+        argums = argv + first_arg;
+        numOfArgs = j;
+    }
+
+    if(!filename && argc == 1) {
+        if(wshInteractive) {
+            WINE_FIXME("Settings dialog not implemented\n");
+            return 0;
+        }
+        if(!nologo)
+            print_banner();
+        print_resource(IDS_USAGE);
+        return 0;
+    }
+
+    if(!nologo)
+        print_banner();
+
     if(!filename) {
-        WINE_FIXME("No file name specified\n");
+        print_resource(IDS_NO_SCRIPT_FILE);
         return 1;
     }
+
     res = GetFullPathNameW(filename, ARRAY_SIZE(scriptFullName), scriptFullName, &filepart);
     if(!res || res > ARRAY_SIZE(scriptFullName))
         return 1;
+
+    script_text = get_script_str(scriptFullName);
+    if(!script_text) {
+        DWORD err = GetLastError();
+        if(err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND) {
+            print_resource(IDS_FILE_NOT_FOUND, scriptFullName);
+        }else {
+            WCHAR *syserr = NULL;
+            FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                           NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (WCHAR *)&syserr, 0, NULL);
+            if(syserr) {
+                /* Trim trailing whitespace from system error message. */
+                int len = lstrlenW(syserr);
+                while(len > 0 && (syserr[len - 1] == '\r' || syserr[len - 1] == '\n' || syserr[len - 1] == ' '))
+                    syserr[--len] = 0;
+                print_resource(IDS_SCRIPT_LOAD_ERROR, scriptFullName, syserr);
+                LocalFree(syserr);
+            }else {
+                print_resource(IDS_SCRIPT_LOAD_ERROR, scriptFullName, L"");
+            }
+        }
+        return 1;
+    }
 
     ext = wcsrchr(filepart, '.');
     if(!ext || !get_engine_clsid(ext, &clsid)) {
@@ -510,17 +673,19 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     }
 
     if(init_engine(script, parser)) {
-        run_script(filename, script, parser);
+        if(!run_script(script_text, script, parser))
+            ret = 1;
         IActiveScript_Close(script);
         ITypeInfo_Release(host_ti);
     }else {
         WINE_FIXME("Script initialization failed\n");
     }
 
+    SysFreeString(script_text);
     IActiveScript_Release(script);
     IActiveScriptParse_Release(parser);
 
     CoUninitialize();
 
-    return 0;
+    return ret;
 }

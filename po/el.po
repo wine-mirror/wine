@@ -15096,6 +15096,39 @@ msgstr ""
 msgid "This is a test"
 msgstr ""
 
+#: programs/wscript/wscript.rc:45
+msgid ""
+"Usage: CScript scriptname.extension [option...] [arguments...]\n"
+"\n"
+"Options:\n"
+"//B         Batch mode: Suppresses script errors and prompts from "
+"displaying\n"
+"//D         Enable Active Debugging\n"
+"//E:engine  Use engine for executing script\n"
+"//H:CScript Changes the default script host to CScript.exe\n"
+"//H:WScript Changes the default script host to WScript.exe (default)\n"
+"//I         Interactive mode (default, opposite of //B)\n"
+"//Job:xxxx  Execute a WSF job\n"
+"//Logo      Display logo (default)\n"
+"//Nologo    Prevent logo display: No banner will be shown at execution time\n"
+"//S         Save current command line options for this user\n"
+"//T:nn      Time out in seconds:  Maximum time a script is permitted to run\n"
+"//X         Execute script in debugger\n"
+"//U         Use Unicode for redirected I/O from the console\n"
+msgstr ""
+
+#: programs/wscript/wscript.rc:47
+msgid "Input Error: There is no script file specified.\n"
+msgstr ""
+
+#: programs/wscript/wscript.rc:48
+msgid "Input Error: Can not find script file \"%1\".\n"
+msgstr ""
+
+#: programs/wscript/wscript.rc:49
+msgid "CScript Error: Loading script \"%1\" failed (%2).\n"
+msgstr ""
+
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
 msgstr ""
