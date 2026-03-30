@@ -289,6 +289,7 @@ typedef enum {
     X(incc,           1, ARG_BSTR,    0)          \
     X(int,            1, ARG_INT,     0)          \
     X(is,             1, 0,           0)          \
+    X(local,          1, ARG_INT,     0)          \
     X(jmp,            0, ARG_ADDR,    0)          \
     X(jmp_false,      0, ARG_ADDR,    0)          \
     X(jmp_true,       0, ARG_ADDR,    0)          \

@@ -892,6 +892,27 @@ static HRESULT interp_mget(exec_ctx_t *ctx)
     return stack_push(ctx, &res);
 }
 
+static HRESULT interp_local(exec_ctx_t *ctx)
+{
+    const int arg = ctx->instr->arg1.lng;
+    VARIANT *v;
+    VARIANT r;
+
+    if(arg < 0)
+        v = ctx->args - arg - 1;
+    else
+        v = ctx->vars + arg;
+
+    TRACE("%s\n", debugstr_variant(v));
+
+    if(V_VT(v) == (VT_BYREF|VT_VARIANT))
+        v = V_VARIANTREF(v);
+
+    V_VT(&r) = VT_BYREF|VT_VARIANT;
+    V_BYREF(&r) = v;
+    return stack_push(ctx, &r);
+}
+
 static HRESULT interp_ident(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;

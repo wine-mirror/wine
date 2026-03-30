@@ -493,6 +493,34 @@ static BOOL lookup_func_decls(compile_ctx_t *ctx, const WCHAR *name)
     return FALSE;
 }
 
+/* Resolve an identifier to a local variable or argument index at compile time.
+ * Returns TRUE if bound, with *ret set to: non-negative = dim var index, negative = arg index (-1 = arg 0, etc.).
+ * This mirrors jscript's bind_local() / local_off() convention. */
+static BOOL bind_local(compile_ctx_t *ctx, const WCHAR *name, int *ret)
+{
+    dim_decl_t *dim_decl;
+    unsigned i;
+
+    if(ctx->func->type == FUNC_GLOBAL)
+        return FALSE;
+
+    for(dim_decl = ctx->dim_decls, i = 0; dim_decl; dim_decl = dim_decl->next, i++) {
+        if(!vbs_wcsicmp(dim_decl->name, name)) {
+            *ret = i;
+            return TRUE;
+        }
+    }
+
+    for(i = 0; i < ctx->func->arg_cnt; i++) {
+        if(!vbs_wcsicmp(ctx->func->args[i].name, name)) {
+            *ret = -(int)i - 1;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *ret)
 {
     unsigned arg_cnt = 0;
@@ -544,6 +572,7 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
 {
     expression_t *const_expr;
     HRESULT hres;
+    int local_ref;
 
     if (expr->obj_expr) {
         hres = compile_expression(ctx, expr->obj_expr);
@@ -552,11 +581,13 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
         return push_instr_bstr(ctx, OP_mget, expr->identifier);
     }
 
-    if (!lookup_dim_decls(ctx, expr->identifier) && !lookup_args_name(ctx, expr->identifier)) {
-        const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
-        if(const_expr)
-            return compile_expression(ctx, const_expr);
-    }
+    if(bind_local(ctx, expr->identifier, &local_ref))
+        return push_instr_int(ctx, OP_local, local_ref);
+
+    const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
+    if(const_expr)
+        return compile_expression(ctx, const_expr);
+
     return push_instr_bstr(ctx, OP_ident, expr->identifier);
 }
 
