@@ -2621,10 +2621,169 @@ static HRESULT Global_Erase(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Filter(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Filter(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT *data;
+    SAFEARRAY *sa, *out_sa;
+    SAFEARRAYBOUND bounds;
+    LONG lbound, ubound, i, count, match_count;
+    BSTR search, conv_search = NULL, str, conv_str;
+    BSTR *matches = NULL;
+    int include = 1, mode = 0, found;
+    HRESULT hres;
+
+    TRACE("%s %u...\n", debugstr_variant(args), args_cnt);
+
+    assert(2 <= args_cnt && args_cnt <= 4);
+
+    if(V_VT(args) == VT_NULL || V_VT(args+1) == VT_NULL
+            || (args_cnt > 2 && V_VT(args+2) == VT_NULL)
+            || (args_cnt > 3 && V_VT(args+3) == VT_NULL))
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    switch(V_VT(args)) {
+    case VT_VARIANT|VT_ARRAY:
+        sa = V_ARRAY(args);
+        break;
+    case VT_VARIANT|VT_ARRAY|VT_BYREF:
+        sa = *V_ARRAYREF(args);
+        break;
+    default:
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    if(V_VT(args+1) == VT_BSTR) {
+        search = V_BSTR(args+1);
+    }else {
+        hres = to_string(args+1, &conv_search);
+        if(FAILED(hres))
+            return hres;
+        search = conv_search;
+    }
+
+    if(args_cnt > 2) {
+        hres = to_int(args+2, &include);
+        if(FAILED(hres))
+            goto done;
+    }
+
+    if(args_cnt > 3) {
+        hres = to_int(args+3, &mode);
+        if(FAILED(hres))
+            goto done;
+        if(mode != 0 && mode != 1) {
+            hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+            goto done;
+        }
+    }
+
+    if(SafeArrayGetDim(sa) != 1) {
+        hres = MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+        goto done;
+    }
+
+    hres = SafeArrayGetLBound(sa, 1, &lbound);
+    if(FAILED(hres))
+        goto done;
+    hres = SafeArrayGetUBound(sa, 1, &ubound);
+    if(FAILED(hres))
+        goto done;
+
+    hres = SafeArrayAccessData(sa, (void**)&data);
+    if(FAILED(hres))
+        goto done;
+
+    /* Single pass: convert, match, and collect results into a temporary array */
+    count = ubound - lbound + 1;
+    if(count > 0) {
+        matches = calloc(count, sizeof(BSTR));
+        if(!matches) {
+            SafeArrayUnaccessData(sa);
+            hres = E_OUTOFMEMORY;
+            goto done;
+        }
+    }
+
+    match_count = 0;
+    for(i = 0; i < count; i++) {
+        conv_str = NULL;
+        if(V_VT(&data[i]) == VT_BSTR) {
+            str = V_BSTR(&data[i]);
+        }else {
+            hres = to_string(&data[i], &conv_str);
+            if(FAILED(hres)) {
+                SafeArrayUnaccessData(sa);
+                goto done;
+            }
+            str = conv_str;
+        }
+
+        if(!SysStringLen(search))
+            found = 1;
+        else
+            found = FindStringOrdinal(FIND_FROMSTART, str, SysStringLen(str),
+                                      search, SysStringLen(search), mode) >= 0;
+
+        if(include ? found : !found) {
+            matches[match_count] = SysAllocString(str);
+            if(!matches[match_count]) {
+                SysFreeString(conv_str);
+                SafeArrayUnaccessData(sa);
+                hres = E_OUTOFMEMORY;
+                goto done;
+            }
+            match_count++;
+        }
+
+        SysFreeString(conv_str);
+    }
+
+    SafeArrayUnaccessData(sa);
+
+    /* Create result array from collected matches */
+    bounds.lLbound = 0;
+    bounds.cElements = match_count;
+    out_sa = SafeArrayCreate(VT_VARIANT, 1, &bounds);
+    if(!out_sa) {
+        hres = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    if(match_count) {
+        VARIANT *out_data;
+
+        hres = SafeArrayAccessData(out_sa, (void**)&out_data);
+        if(FAILED(hres)) {
+            SafeArrayDestroy(out_sa);
+            goto done;
+        }
+
+        for(i = 0; i < match_count; i++) {
+            V_VT(&out_data[i]) = VT_BSTR;
+            V_BSTR(&out_data[i]) = matches[i];
+            matches[i] = NULL;
+        }
+
+        SafeArrayUnaccessData(out_sa);
+    }
+
+    if(res) {
+        V_VT(res) = VT_ARRAY|VT_VARIANT;
+        V_ARRAY(res) = out_sa;
+    }else {
+        SafeArrayDestroy(out_sa);
+    }
+
+    hres = S_OK;
+
+done:
+    if(matches) {
+        for(i = 0; i < match_count; i++)
+            SysFreeString(matches[i]);
+        free(matches);
+    }
+    SysFreeString(conv_search);
+    return hres;
 }
 
 static HRESULT Global_Join(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)

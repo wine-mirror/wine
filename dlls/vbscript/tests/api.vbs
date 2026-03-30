@@ -2728,4 +2728,70 @@ end sub
 
 call testEscapeError()
 
+' Filter tests
+Dim filterArr, filterResult
+filterArr = Array("apple", "banana", "grape", "pineapple", "orange")
+
+' Include matches (default)
+filterResult = Filter(filterArr, "ap")
+Call ok(UBound(filterResult) = 2, "Filter include UBound = " & UBound(filterResult))
+Call ok(LBound(filterResult) = 0, "Filter include LBound = " & LBound(filterResult))
+Call ok(filterResult(0) = "apple", "Filter include (0) = " & filterResult(0))
+Call ok(filterResult(1) = "grape", "Filter include (1) = " & filterResult(1))
+Call ok(filterResult(2) = "pineapple", "Filter include (2) = " & filterResult(2))
+
+' Exclude matches
+filterResult = Filter(filterArr, "ap", False)
+Call ok(UBound(filterResult) = 1, "Filter exclude UBound = " & UBound(filterResult))
+Call ok(filterResult(0) = "banana", "Filter exclude (0) = " & filterResult(0))
+Call ok(filterResult(1) = "orange", "Filter exclude (1) = " & filterResult(1))
+
+' Case-sensitive (default binary compare)
+filterResult = Filter(filterArr, "AP")
+Call ok(UBound(filterResult) = -1, "Filter case-sensitive UBound = " & UBound(filterResult))
+
+' Case-insensitive (text compare)
+filterResult = Filter(filterArr, "AP", True, 1)
+Call ok(UBound(filterResult) = 2, "Filter text compare UBound = " & UBound(filterResult))
+
+' Empty search string returns all elements
+filterResult = Filter(filterArr, "")
+Call ok(UBound(filterResult) = UBound(filterArr), "Filter empty search UBound = " & UBound(filterResult))
+
+' No matches returns empty array
+filterResult = Filter(filterArr, "xyz")
+Call ok(UBound(filterResult) = -1, "Filter no match UBound = " & UBound(filterResult))
+
+' Single element match
+filterResult = Filter(Array("hello"), "ell")
+Call ok(UBound(filterResult) = 0, "Filter single match UBound = " & UBound(filterResult))
+Call ok(filterResult(0) = "hello", "Filter single match (0) = " & filterResult(0))
+
+' Single element no match
+filterResult = Filter(Array("hello"), "xyz")
+Call ok(UBound(filterResult) = -1, "Filter single no match UBound = " & UBound(filterResult))
+
+sub testFilterError()
+    on error resume next
+    dim r
+
+    call Err.clear()
+    r = Filter(Null, "test")
+    Call ok(Err.number = 94, "Filter(Null) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = Filter(filterArr, Null)
+    Call ok(Err.number = 94, "Filter(arr, Null) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = Filter("not_array", "test")
+    Call ok(Err.number = 13, "Filter(string) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = Filter(filterArr, "ap", True, 5)
+    Call ok(Err.number = 5, "Filter(mode=5) Err.number = " & Err.number)
+end sub
+
+call testFilterError()
+
 Call reportSuccess()
