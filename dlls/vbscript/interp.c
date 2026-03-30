@@ -913,6 +913,21 @@ static HRESULT interp_local(exec_ctx_t *ctx)
     return stack_push(ctx, &r);
 }
 
+static HRESULT interp_local_prop(exec_ctx_t *ctx)
+{
+    const unsigned arg = ctx->instr->arg1.uint;
+    VARIANT *v;
+    VARIANT r;
+
+    v = ctx->vbthis->props + arg;
+
+    TRACE("%s\n", debugstr_variant(v));
+
+    V_VT(&r) = VT_BYREF|VT_VARIANT;
+    V_BYREF(&r) = v;
+    return stack_push(ctx, &r);
+}
+
 static HRESULT interp_ident(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
@@ -1128,6 +1143,46 @@ static HRESULT interp_set_local(exec_ctx_t *ctx)
 
     vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
     hres = assign_local_var(ctx, v, DISPATCH_PROPERTYPUTREF, &dp);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, arg_cnt + 1);
+    return S_OK;
+}
+
+static HRESULT interp_assign_local_prop(exec_ctx_t *ctx)
+{
+    const unsigned ref = ctx->instr->arg1.uint;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
+    DISPPARAMS dp;
+    HRESULT hres;
+
+    TRACE("%u\n", ref);
+
+    vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+    hres = assign_local_var(ctx, ctx->vbthis->props + ref, DISPATCH_PROPERTYPUT, &dp);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, arg_cnt+1);
+    return S_OK;
+}
+
+static HRESULT interp_set_local_prop(exec_ctx_t *ctx)
+{
+    const unsigned ref = ctx->instr->arg1.uint;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
+    DISPPARAMS dp;
+    HRESULT hres;
+
+    TRACE("%u %u\n", ref, arg_cnt);
+
+    hres = stack_assume_disp(ctx, arg_cnt, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+    hres = assign_local_var(ctx, ctx->vbthis->props + ref, DISPATCH_PROPERTYPUTREF, &dp);
     if(FAILED(hres))
         return hres;
 

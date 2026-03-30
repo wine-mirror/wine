@@ -258,10 +258,11 @@ typedef enum {
 #define OP_LIST                                   \
     X(add,            1, 0,           0)          \
     X(and,            1, 0,           0)          \
-    X(assign_ident,   1, ARG_BSTR,    ARG_UINT)   \
-    X(assign_local,   1, ARG_INT,     ARG_UINT)   \
-    X(assign_member,  1, ARG_BSTR,    ARG_UINT)   \
-    X(assign_call,    1, ARG_UINT,    0)          \
+    X(assign_ident,      1, ARG_BSTR,    ARG_UINT)   \
+    X(assign_local,      1, ARG_INT,     ARG_UINT)   \
+    X(assign_local_prop, 1, ARG_UINT,    ARG_UINT)   \
+    X(assign_member,     1, ARG_BSTR,    ARG_UINT)   \
+    X(assign_call,       1, ARG_UINT,    0)          \
     X(bool,           1, ARG_INT,     0)          \
     X(catch,          1, ARG_ADDR,    ARG_UINT)   \
     X(case,           0, ARG_ADDR,    ARG_UINT)   \
@@ -291,10 +292,11 @@ typedef enum {
     X(incc_local,     1, ARG_INT,     0)          \
     X(int,            1, ARG_INT,     0)          \
     X(is,             1, 0,           0)          \
-    X(local,          1, ARG_INT,     0)          \
     X(jmp,            0, ARG_ADDR,    0)          \
     X(jmp_false,      0, ARG_ADDR,    0)          \
     X(jmp_true,       0, ARG_ADDR,    0)          \
+    X(local,          1, ARG_INT,     0)          \
+    X(local_prop,     1, ARG_UINT,    0)          \
     X(lt,             1, ARG_UINT,    0)          \
     X(lteq,           1, ARG_UINT,    0)          \
     X(mcall,          1, ARG_BSTR,    ARG_UINT)   \
@@ -319,6 +321,7 @@ typedef enum {
     X(retval,         1, 0,           0)          \
     X(set_ident,      1, ARG_BSTR,    ARG_UINT)   \
     X(set_local,      1, ARG_INT,     ARG_UINT)   \
+    X(set_local_prop, 1, ARG_UINT,    ARG_UINT)   \
     X(set_member,     1, ARG_BSTR,    ARG_UINT)   \
     X(set_call,       1, ARG_UINT,    0)          \
     X(stack,          1, ARG_UINT,    0)          \

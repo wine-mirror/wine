@@ -63,6 +63,7 @@ typedef struct {
 
     function_t *func;
     function_decl_t *func_decls;
+    dim_decl_t *class_props;
 } compile_ctx_t;
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
@@ -201,6 +202,19 @@ static HRESULT push_instr_int_uint(compile_ctx_t *ctx, vbsop_t op, LONG arg1, un
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, ret)->arg1.lng = arg1;
+    instr_ptr(ctx, ret)->arg2.uint = arg2;
+    return S_OK;
+}
+
+static HRESULT push_instr_uint_uint(compile_ctx_t *ctx, vbsop_t op, unsigned arg1, unsigned arg2)
+{
+    unsigned ret;
+
+    ret = push_instr(ctx, op);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, ret)->arg1.uint = arg1;
     instr_ptr(ctx, ret)->arg2.uint = arg2;
     return S_OK;
 }
@@ -534,6 +548,26 @@ static BOOL bind_local(compile_ctx_t *ctx, const WCHAR *name, int *ret)
     return FALSE;
 }
 
+/* Resolve an identifier to a class property index at compile time.
+ * Only valid when compiling inside a class method (ctx->class_props != NULL). */
+static BOOL bind_class_prop(compile_ctx_t *ctx, const WCHAR *name, unsigned *ret)
+{
+    dim_decl_t *prop;
+    unsigned i;
+
+    if(!ctx->class_props)
+        return FALSE;
+
+    for(prop = ctx->class_props, i = 0; prop; prop = prop->next, i++) {
+        if(!vbs_wcsicmp(prop->name, name)) {
+            *ret = i;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *ret)
 {
     unsigned arg_cnt = 0;
@@ -585,6 +619,7 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
 {
     expression_t *const_expr;
     HRESULT hres;
+    unsigned prop_ref;
     int local_ref;
 
     if (expr->obj_expr) {
@@ -596,6 +631,9 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
 
     if(bind_local(ctx, expr->identifier, &local_ref))
         return push_instr_int(ctx, OP_local, local_ref);
+
+    if(bind_class_prop(ctx, expr->identifier, &prop_ref))
+        return push_instr_uint(ctx, OP_local_prop, prop_ref);
 
     const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
     if(const_expr)
@@ -1333,9 +1371,21 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, expression_t *left, expres
 
     if(!member_expr->obj_expr) {
         int local_ref;
+        unsigned prop_ref;
         if(bind_local(ctx, member_expr->identifier, &local_ref)) {
             hres = push_instr_int_uint(ctx, is_set ? OP_set_local : OP_assign_local,
                                        local_ref, args_cnt);
+            if(FAILED(hres))
+                return hres;
+
+            if(!emit_catch(ctx, 0))
+                return E_OUTOFMEMORY;
+
+            return S_OK;
+        }
+        if(bind_class_prop(ctx, member_expr->identifier, &prop_ref)) {
+            hres = push_instr_uint_uint(ctx, is_set ? OP_set_local_prop : OP_assign_local_prop,
+                                        prop_ref, args_cnt);
             if(FAILED(hres))
                 return hres;
 
@@ -2155,6 +2205,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
        before compiling the methods. Same-class collisions are caught below. */
     ctx->dim_decls = ctx->dim_decls_tail = NULL;
     ctx->const_decls = NULL;
+    ctx->class_props = class_decl->props;
 
     for(func_decl = class_decl->funcs, i=1; func_decl; func_decl = func_decl->next, i++) {
         for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
@@ -2192,6 +2243,8 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         if(FAILED(hres))
             return hres;
     }
+
+    ctx->class_props = NULL;
 
     for(prop_decl = class_decl->props; prop_decl; prop_decl = prop_decl->next)
         class_desc->prop_cnt++;
