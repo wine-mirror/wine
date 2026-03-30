@@ -1649,6 +1649,60 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
 
         if (pRtlVirtualUnwind2)
         {
+            if (test->unwind_info)
+            {
+                /* EXCEPTION_ACCESS_VIOLATION is thrown on Windows with NULL handler_data if there is no runtime function. */
+                new_context = context;
+                frame = 0xdeadbeef;
+                status = pRtlVirtualUnwind2( UNW_FLAG_NHANDLER, (ULONG_PTR)code_mem, orig_pc,
+                                             (RUNTIME_FUNCTION *)&runtime_func,
+                                             (CONTEXT *)&new_context, NULL, NULL,
+                                             &frame, &ctx_ptr, NULL, NULL, NULL, 0 );
+                ok( status == STATUS_ACCESS_VIOLATION, "got %#lx\n", status );
+                ok( frame == (test->results[i].frame_offset ? (ULONG64)fake_stack : 0) + test->results[i].frame, "wrong frame %p/%p\n",
+                    (void *)frame, (char *)(test->results[i].frame_offset ? fake_stack : NULL) + test->results[i].frame );
+
+                new_context = context;
+                handler = (void *)0xdeadbeef;
+                frame = 0xdeadbeef;
+                status = pRtlVirtualUnwind2( UNW_FLAG_NHANDLER, (ULONG_PTR)code_mem, orig_pc,
+                                             (RUNTIME_FUNCTION *)&runtime_func,
+                                             (CONTEXT *)&new_context, NULL, NULL,
+                                             &frame, &ctx_ptr, NULL, NULL, &handler, 0 );
+                ok( status == STATUS_ACCESS_VIOLATION, "got %#lx\n", status );
+                ok( frame == (test->results[i].frame_offset ? (ULONG64)fake_stack : 0) + test->results[i].frame, "wrong frame %p/%p\n",
+                    (void *)frame, (char *)(test->results[i].frame_offset ? fake_stack : NULL) + test->results[i].frame );
+                if (test->results[i].handler > 0)
+                    ok( (char *)handler == (char *)code_mem + 0x200, "got %p\n", handler );
+                else
+                    ok( !handler, "got %p\n", handler );
+            }
+
+            new_context = context;
+            data = (void *)0xdeadbeef;
+            frame = 0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_NHANDLER, (ULONG_PTR)code_mem, orig_pc,
+                                         test->unwind_info ? (RUNTIME_FUNCTION *)&runtime_func : NULL,
+                                         (CONTEXT *)&new_context, NULL, &data,
+                                         &frame, &ctx_ptr, NULL, NULL, NULL, 0 );
+            ok( frame == (test->results[i].frame_offset ? (ULONG64)fake_stack : 0) + test->results[i].frame, "wrong frame %p/%p\n",
+                (void *)frame, (char *)(test->results[i].frame_offset ? fake_stack : NULL) + test->results[i].frame );
+            if (runtime_func.Flag && test->results[i].handler > 0)
+            {
+                ok( status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status );
+                ok( data == (void *)0xdeadbeef, "got %p.\n", data );
+            }
+            else if (test->results[i].handler < -1)
+            {
+                ok( status == STATUS_BAD_FUNCTION_TABLE, "RtlVirtualUnwind2 failed %lx\n", status );
+                ok( data == (void *)0xdeadbeef, "handler data set to %p\n", data );
+            }
+            else
+            {
+                ok( !status, "got %#lx\n", status );
+                ok( data != (void *)0xdeadbeef, "got %p.\n", data );
+            }
+
             new_context = context;
             handler = (void *)0xdeadbeef;
             data = (void *)0xdeadbeef;
