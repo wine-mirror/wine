@@ -287,7 +287,7 @@ static void test_WinHttpQueryOption(void)
     info.ConnectionInfo.dwProtocol = 0xdeadbeef;
     info.ConnectionInfo.dwCipherStrength = 0xdeadbeef;
     ret = WinHttpQueryOption(request, WINHTTP_OPTION_SECURITY_INFO, &info, &size);
-    ok(ret, "got %lu\n", GetLastError());
+    ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* win10 <= 1909 */, "got %lu\n", GetLastError());
     if (ret)
     {
         ok(info.ConnectionInfo.dwProtocol == 0, "got %lu\n", info.ConnectionInfo.dwProtocol);
@@ -1225,7 +1225,7 @@ static void test_secure_connection(void)
 
     size = sizeof(secinfo);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_SECURITY_INFO, &secinfo, &size);
-    ok(ret, "got %lu\n", GetLastError());
+    ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* win10 <= 1909 */, "got %lu\n", GetLastError());
     if (ret)
     {
         ok(secinfo.ConnectionInfo.dwProtocol == SP_PROT_TLS1_2_CLIENT, "got %lu\n", secinfo.ConnectionInfo.dwProtocol);
