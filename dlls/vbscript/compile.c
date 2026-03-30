@@ -192,6 +192,19 @@ static HRESULT push_instr_uint(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
     return S_OK;
 }
 
+static HRESULT push_instr_int_uint(compile_ctx_t *ctx, vbsop_t op, LONG arg1, unsigned arg2)
+{
+    unsigned ret;
+
+    ret = push_instr(ctx, op);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, ret)->arg1.lng = arg1;
+    instr_ptr(ctx, ret)->arg2.uint = arg2;
+    return S_OK;
+}
+
 static HRESULT push_instr_addr(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
 {
     unsigned ret;
@@ -1297,6 +1310,21 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, expression_t *left, expres
         hres = compile_args(ctx, call_expr->args, &args_cnt);
         if(FAILED(hres))
             return hres;
+    }
+
+    if(!member_expr->obj_expr) {
+        int local_ref;
+        if(bind_local(ctx, member_expr->identifier, &local_ref)) {
+            hres = push_instr_int_uint(ctx, is_set ? OP_set_local : OP_assign_local,
+                                       local_ref, args_cnt);
+            if(FAILED(hres))
+                return hres;
+
+            if(!emit_catch(ctx, 0))
+                return E_OUTOFMEMORY;
+
+            return S_OK;
+        }
     }
 
     hres = push_instr_bstr_uint(ctx, op, member_expr->identifier, args_cnt);

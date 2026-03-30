@@ -1089,6 +1089,52 @@ static HRESULT interp_set_ident(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_assign_local(exec_ctx_t *ctx)
+{
+    const int ref = ctx->instr->arg1.lng;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
+    VARIANT *v;
+    DISPPARAMS dp;
+    HRESULT hres;
+
+    v = ref < 0 ? ctx->args - ref - 1 : ctx->vars + ref;
+
+    TRACE("%d\n", ref);
+
+    vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+    hres = assign_local_var(ctx, v, DISPATCH_PROPERTYPUT, &dp);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, arg_cnt+1);
+    return S_OK;
+}
+
+static HRESULT interp_set_local(exec_ctx_t *ctx)
+{
+    const int ref = ctx->instr->arg1.lng;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
+    VARIANT *v;
+    DISPPARAMS dp;
+    HRESULT hres;
+
+    v = ref < 0 ? ctx->args - ref - 1 : ctx->vars + ref;
+
+    TRACE("%d %u\n", ref, arg_cnt);
+
+    hres = stack_assume_disp(ctx, arg_cnt, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    vbstack_to_dp(ctx, arg_cnt, TRUE, &dp);
+    hres = assign_local_var(ctx, v, DISPATCH_PROPERTYPUTREF, &dp);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, arg_cnt + 1);
+    return S_OK;
+}
+
 static HRESULT interp_assign_member(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;

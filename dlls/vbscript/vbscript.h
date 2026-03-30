@@ -259,6 +259,7 @@ typedef enum {
     X(add,            1, 0,           0)          \
     X(and,            1, 0,           0)          \
     X(assign_ident,   1, ARG_BSTR,    ARG_UINT)   \
+    X(assign_local,   1, ARG_INT,     ARG_UINT)   \
     X(assign_member,  1, ARG_BSTR,    ARG_UINT)   \
     X(assign_call,    1, ARG_UINT,    0)          \
     X(bool,           1, ARG_INT,     0)          \
@@ -316,6 +317,7 @@ typedef enum {
     X(ret,            0, 0,           0)          \
     X(retval,         1, 0,           0)          \
     X(set_ident,      1, ARG_BSTR,    ARG_UINT)   \
+    X(set_local,      1, ARG_INT,     ARG_UINT)   \
     X(set_member,     1, ARG_BSTR,    ARG_UINT)   \
     X(set_call,       1, ARG_UINT,    0)          \
     X(stack,          1, ARG_UINT,    0)          \
