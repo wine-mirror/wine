@@ -695,9 +695,9 @@ CPPFLAGS=$saved_CPPFLAGS
 CXXFLAGS=$saved_CXXFLAGS
 LDFLAGS=$saved_LDFLAGS
 
-case $HOST_ARCH in
-  arm|aarch64)
-    test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw.])
+case $HOST_ARCH-$host_os in
+  x86_64-darwin*|arm-*|aarch64-*)
+    test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $host, please install clang/llvm-dlltool/lld, or llvm-mingw.])
     DLLEXT="" ;;
   *)
     AC_SUBST(DLLEXT,".so")
