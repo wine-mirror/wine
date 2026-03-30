@@ -759,6 +759,7 @@ CXX_PE_CFLAGS
 CAPSTONE_PE_LIBS
 CAPSTONE_PE_CFLAGS
 MINGW_PKG_CONFIG
+ANDROID_HOME
 GRADLE
 WINELOADER_DEPENDS
 ac_ct_OBJC
@@ -13093,6 +13094,8 @@ fi
 
 
     test -n "$GRADLE" || as_fn_error $? "gradle is required for the Android build" "$LINENO" 5
+    ANDROID_HOME=$ANDROID_HOME
+
 
     if test "x$exec_prefix" = xNONE
     then
@@ -24599,7 +24602,7 @@ dlls/ntdll/unix/version.c: dummy
 programs/winetest/build.rc: dummy
 	@build=\"STRINGTABLE { 1 \\\"\`GIT_DIR=${wine_srcdir}.git git rev-parse HEAD 2>/dev/null\`\\\" }\" && (echo \$\$build | cmp -s - \$@) || echo \$\$build >\$@ || (rm -f \$@ && exit 1)
 dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle ${wine_srcdir}dlls/wineandroid.drv/AndroidManifest.xml ${wine_srcdir}dlls/wineandroid.drv/WineActivity.java ${wine_srcdir}dlls/wineandroid.drv/wine.svg
-	cd dlls/wineandroid.drv && \$(GRADLE) -q -Psrcdir=$srcdir assembleDebug
+	cd dlls/wineandroid.drv && env ANDROID_HOME=\"\$(ANDROID_HOME)\" \$(GRADLE) -q -Psrcdir=$srcdir assembleDebug
 	mv dlls/wineandroid.drv/build/outputs/apk/debug/wine-debug.apk \$@"
 
 
@@ -25493,6 +25496,7 @@ OBJCFLAGS = $OBJCFLAGS
 ac_ct_OBJC = $ac_ct_OBJC
 WINELOADER_DEPENDS = $WINELOADER_DEPENDS
 GRADLE = $GRADLE
+ANDROID_HOME = $ANDROID_HOME
 MINGW_PKG_CONFIG = $MINGW_PKG_CONFIG
 CAPSTONE_PE_CFLAGS = $CAPSTONE_PE_CFLAGS
 CAPSTONE_PE_LIBS = $CAPSTONE_PE_LIBS
