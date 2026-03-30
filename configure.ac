@@ -58,7 +58,6 @@ AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio s
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
 AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
 AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug and play support)]))
-AC_ARG_WITH(unwind,    AS_HELP_STRING([--without-unwind],[do not use the libunwind library (exception handling)]))
 AC_ARG_WITH(usb,       AS_HELP_STRING([--without-usb],[do not use the libusb library]))
 AC_ARG_WITH(v4l2,      AS_HELP_STRING([--without-v4l2],[do not use v4l2 (video capture)]))
 AC_ARG_WITH(vulkan,    AS_HELP_STRING([--without-vulkan],[do not use Vulkan]))
@@ -1824,44 +1823,6 @@ then
 fi
 WINE_NOTICE_WITH(udev,[test "x$UDEV_LIBS" = "x"],
                  [libudev ${notice_platform}development files not found, plug and play won't be supported.])
-
-dnl **** Check for libunwind ****
-if test $HOST_ARCH = x86_64
-then
-  if test "x$with_unwind" != xno
-  then
-    WINE_PACKAGE_FLAGS(UNWIND,[libunwind],[-lunwind],,,
-       [AC_CACHE_CHECK([for unw_step],wine_cv_have_unw_step,
-           [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define UNW_LOCAL_ONLY
-#include <libunwind.h>]],
-                [[unw_cursor_t cursor; unw_step( &cursor );]])],
-                [wine_cv_have_unw_step="yes"],[wine_cv_have_unw_step="no"])])
-        if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
-        then
-            save_libs=$LIBS
-            dnl Force static libgcc, libunwind breaks libgcc_s unwinding
-            UNWIND_LIBS="-static-libgcc $UNWIND_LIBS"
-            LIBS="$UNWIND_LIBS $LIBS"
-            AC_CACHE_CHECK([for unw_step in libunwind],wine_cv_have_libunwind_unw_step,
-               [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define UNW_LOCAL_ONLY
-#include <libunwind.h>]],
-                    [[unw_cursor_t cursor; unw_step( &cursor );]])],
-                    [wine_cv_have_libunwind_unw_step="yes"],
-                    [wine_cv_have_libunwind_unw_step="no"])])
-            LIBS=$save_libs
-        fi
-        test "$wine_cv_have_libunwind_unw_step" = yes || UNWIND_LIBS=""
-        if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono
-        then
-            AC_DEFINE(HAVE_LIBUNWIND,1,[Define to 1 if you have the 'unwind' library (-lunwind).])
-        fi])
-  fi
-  case $host in
-  *-darwin*)
-    WINE_NOTICE_WITH(unwind,[test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" = xnono],
-                     [libunwind ${notice_platform}development files not found, stack unwinding won't work.]) ;;
-  esac
-fi
 
 dnl **** Check for libSDL2 ****
 if test "x$with_sdl" != "xno"

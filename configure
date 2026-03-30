@@ -664,8 +664,6 @@ CAPI20_LIBS
 CAPI20_CFLAGS
 SDL2_LIBS
 SDL2_CFLAGS
-UNWIND_LIBS
-UNWIND_CFLAGS
 UDEV_LIBS
 UDEV_CFLAGS
 OSS4_LIBS
@@ -977,7 +975,6 @@ with_pulse
 with_sane
 with_sdl
 with_udev
-with_unwind
 with_usb
 with_v4l2
 with_vulkan
@@ -1937,8 +1934,6 @@ ALSA_CFLAGS
 ALSA_LIBS
 UDEV_CFLAGS
 UDEV_LIBS
-UNWIND_CFLAGS
-UNWIND_LIBS
 SDL2_CFLAGS
 SDL2_LIBS
 CAPI20_CFLAGS
@@ -2628,8 +2623,6 @@ Optional Packages:
   --without-sane          do not use SANE (scanner support)
   --without-sdl           do not use SDL
   --without-udev          do not use udev (plug and play support)
-  --without-unwind        do not use the libunwind library (exception
-                          handling)
   --without-usb           do not use the libusb library
   --without-v4l2          do not use v4l2 (video capture)
   --without-vulkan        do not use Vulkan
@@ -2827,9 +2820,6 @@ Some influential environment variables:
   ALSA_LIBS   Linker flags for alsa, overriding pkg-config
   UDEV_CFLAGS C compiler flags for libudev, overriding pkg-config
   UDEV_LIBS   Linker flags for libudev, overriding pkg-config
-  UNWIND_CFLAGS
-              C compiler flags for libunwind, overriding pkg-config
-  UNWIND_LIBS Linker flags for libunwind, overriding pkg-config
   SDL2_CFLAGS C compiler flags for sdl2, overriding pkg-config
   SDL2_LIBS   Linker flags for sdl2, overriding pkg-config
   CAPI20_CFLAGS
@@ -4576,13 +4566,6 @@ fi
 if test ${with_udev+y}
 then :
   withval=$with_udev;
-fi
-
-
-# Check whether --with-unwind was given.
-if test ${with_unwind+y}
-then :
-  withval=$with_unwind;
 fi
 
 
@@ -19894,134 +19877,6 @@ esac
 
 fi
 
-if test $HOST_ARCH = x86_64
-then
-  if test "x$with_unwind" != xno
-  then
-    rm -f conftest.err
-if ${UNWIND_CFLAGS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  UNWIND_CFLAGS=`$PKG_CONFIG --cflags libunwind 2>conftest.err`
-fi
-fi
-
-if ${UNWIND_LIBS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  UNWIND_LIBS=`$PKG_CONFIG --libs libunwind 2>/dev/null`
-fi
-fi
-
-UNWIND_LIBS=${UNWIND_LIBS:-"-lunwind"}
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libunwind cflags: $UNWIND_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libunwind libs: $UNWIND_LIBS" >&5
-if test -s conftest.err; then
-     printf %s "$as_me:${as_lineno-$LINENO}: libunwind errors: " >&5
-     cat conftest.err >&5
-fi
-rm -f conftest.err
-if test -n "$UNWIND_CFLAGS$UNWIND_LIBS"
-then :
-  ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $UNWIND_CFLAGS"
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for unw_step" >&5
-printf %s "checking for unw_step... " >&6; }
-if test ${wine_cv_have_unw_step+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#define UNW_LOCAL_ONLY
-#include <libunwind.h>
-int
-main (void)
-{
-unw_cursor_t cursor; unw_step( &cursor );
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  wine_cv_have_unw_step="yes"
-else case e in #(
-  e) wine_cv_have_unw_step="no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_unw_step" >&5
-printf "%s\n" "$wine_cv_have_unw_step" >&6; }
-        if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
-        then
-            save_libs=$LIBS
-                        UNWIND_LIBS="-static-libgcc $UNWIND_LIBS"
-            LIBS="$UNWIND_LIBS $LIBS"
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for unw_step in libunwind" >&5
-printf %s "checking for unw_step in libunwind... " >&6; }
-if test ${wine_cv_have_libunwind_unw_step+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#define UNW_LOCAL_ONLY
-#include <libunwind.h>
-int
-main (void)
-{
-unw_cursor_t cursor; unw_step( &cursor );
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  wine_cv_have_libunwind_unw_step="yes"
-else case e in #(
-  e) wine_cv_have_libunwind_unw_step="no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_libunwind_unw_step" >&5
-printf "%s\n" "$wine_cv_have_libunwind_unw_step" >&6; }
-            LIBS=$save_libs
-        fi
-        test "$wine_cv_have_libunwind_unw_step" = yes || UNWIND_LIBS=""
-        if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono
-        then
-
-printf "%s\n" "#define HAVE_LIBUNWIND 1" >>confdefs.h
-
-        fi
-CPPFLAGS=$ac_save_CPPFLAGS
-fi
-
-  fi
-  case $host in
-  *-darwin*)
-    if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" = xnono
-then :
-  case "x$with_unwind" in
-  x)   as_fn_append wine_notices "|libunwind ${notice_platform}development files not found, stack unwinding won't work." ;;
-  xno) ;;
-  *)   as_fn_error $? "libunwind ${notice_platform}development files not found, stack unwinding won't work.
-This is an error since --with-unwind was requested." "$LINENO" 5 ;;
-esac
-
-fi ;;
-  esac
-fi
-
 if test "x$with_sdl" != "xno"
 then
     rm -f conftest.err
@@ -25684,8 +25539,6 @@ OSS4_CFLAGS = $OSS4_CFLAGS
 OSS4_LIBS = $OSS4_LIBS
 UDEV_CFLAGS = $UDEV_CFLAGS
 UDEV_LIBS = $UDEV_LIBS
-UNWIND_CFLAGS = $UNWIND_CFLAGS
-UNWIND_LIBS = $UNWIND_LIBS
 SDL2_CFLAGS = $SDL2_CFLAGS
 SDL2_LIBS = $SDL2_LIBS
 CAPI20_CFLAGS = $CAPI20_CFLAGS

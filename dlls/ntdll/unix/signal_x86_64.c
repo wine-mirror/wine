@@ -63,10 +63,6 @@
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
-#ifdef HAVE_LIBUNWIND
-# define UNW_LOCAL_ONLY
-# include <libunwind.h>
-#endif
 #ifdef __APPLE__
 # include <mach/mach.h>
 /* _thread_set_tsd_base is private API for setting GSBASE, added in macOS 10.12.
@@ -716,137 +712,6 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
 }
 
 
-#ifdef HAVE_LIBUNWIND
-/***********************************************************************
- *           libunwind_virtual_unwind
- *
- * Equivalent of RtlVirtualUnwind for builtin modules.
- */
-static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *context,
-                                          PEXCEPTION_ROUTINE *handler, void **handler_data )
-{
-    unw_context_t unw_context;
-    unw_cursor_t cursor;
-    unw_proc_info_t info;
-    int rc;
-
-#ifdef __APPLE__
-    rc = unw_getcontext( &unw_context );
-    if (rc == UNW_ESUCCESS)
-        rc = unw_init_local( &cursor, &unw_context );
-    if (rc == UNW_ESUCCESS)
-    {
-        unw_set_reg( &cursor, UNW_REG_IP,     context->Rip );
-        unw_set_reg( &cursor, UNW_REG_SP,     context->Rsp );
-        unw_set_reg( &cursor, UNW_X86_64_RAX, context->Rax );
-        unw_set_reg( &cursor, UNW_X86_64_RDX, context->Rdx );
-        unw_set_reg( &cursor, UNW_X86_64_RCX, context->Rcx );
-        unw_set_reg( &cursor, UNW_X86_64_RBX, context->Rbx );
-        unw_set_reg( &cursor, UNW_X86_64_RSI, context->Rsi );
-        unw_set_reg( &cursor, UNW_X86_64_RDI, context->Rdi );
-        unw_set_reg( &cursor, UNW_X86_64_RBP, context->Rbp );
-        unw_set_reg( &cursor, UNW_X86_64_R8,  context->R8 );
-        unw_set_reg( &cursor, UNW_X86_64_R9,  context->R9 );
-        unw_set_reg( &cursor, UNW_X86_64_R10, context->R10 );
-        unw_set_reg( &cursor, UNW_X86_64_R11, context->R11 );
-        unw_set_reg( &cursor, UNW_X86_64_R12, context->R12 );
-        unw_set_reg( &cursor, UNW_X86_64_R13, context->R13 );
-        unw_set_reg( &cursor, UNW_X86_64_R14, context->R14 );
-        unw_set_reg( &cursor, UNW_X86_64_R15, context->R15 );
-    }
-#else
-    RAX_sig(&unw_context) = context->Rax;
-    RCX_sig(&unw_context) = context->Rcx;
-    RDX_sig(&unw_context) = context->Rdx;
-    RBX_sig(&unw_context) = context->Rbx;
-    RSP_sig(&unw_context) = context->Rsp;
-    RBP_sig(&unw_context) = context->Rbp;
-    RSI_sig(&unw_context) = context->Rsi;
-    RDI_sig(&unw_context) = context->Rdi;
-    R8_sig(&unw_context)  = context->R8;
-    R9_sig(&unw_context)  = context->R9;
-    R10_sig(&unw_context) = context->R10;
-    R11_sig(&unw_context) = context->R11;
-    R12_sig(&unw_context) = context->R12;
-    R13_sig(&unw_context) = context->R13;
-    R14_sig(&unw_context) = context->R14;
-    R15_sig(&unw_context) = context->R15;
-    RIP_sig(&unw_context) = context->Rip;
-    CS_sig(&unw_context)  = context->SegCs;
-    FS_sig(&unw_context)  = context->SegFs;
-    GS_sig(&unw_context)  = context->SegGs;
-    EFL_sig(&unw_context) = context->EFlags;
-    rc = unw_init_local( &cursor, &unw_context );
-#endif
-    if (rc != UNW_ESUCCESS)
-    {
-        WARN( "setup failed: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-
-    *handler = NULL;
-    *frame = context->Rsp;
-
-    rc = unw_get_proc_info(&cursor, &info);
-    if (UNW_ENOINFO < 0) rc = -rc;  /* LLVM libunwind has negative error codes */
-    if (rc != UNW_ESUCCESS && rc != -UNW_ENOINFO)
-    {
-        WARN( "failed to get info: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-    if (rc == -UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip || info.end_ip == info.start_ip + 1)
-        return STATUS_UNSUCCESSFUL;
-
-    TRACE( "ip %#lx function %#lx-%#lx personality %#lx lsda %#lx fde %#lx\n",
-           ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
-           (unsigned long)info.lsda, (unsigned long)info.unwind_info );
-
-    if (!(rc = unw_step( &cursor )))
-    {
-        WARN( "last frame\n" );
-        return STATUS_UNSUCCESSFUL;
-    }
-    if (rc < 0)
-    {
-        WARN( "failed to unwind: %d\n", rc );
-        return STATUS_INVALID_DISPOSITION;
-    }
-
-    unw_get_reg( &cursor, UNW_REG_IP,     (unw_word_t *)&context->Rip );
-    unw_get_reg( &cursor, UNW_REG_SP,     (unw_word_t *)&context->Rsp );
-    unw_get_reg( &cursor, UNW_X86_64_RAX, (unw_word_t *)&context->Rax );
-    unw_get_reg( &cursor, UNW_X86_64_RDX, (unw_word_t *)&context->Rdx );
-    unw_get_reg( &cursor, UNW_X86_64_RCX, (unw_word_t *)&context->Rcx );
-    unw_get_reg( &cursor, UNW_X86_64_RBX, (unw_word_t *)&context->Rbx );
-    unw_get_reg( &cursor, UNW_X86_64_RSI, (unw_word_t *)&context->Rsi );
-    unw_get_reg( &cursor, UNW_X86_64_RDI, (unw_word_t *)&context->Rdi );
-    unw_get_reg( &cursor, UNW_X86_64_RBP, (unw_word_t *)&context->Rbp );
-    unw_get_reg( &cursor, UNW_X86_64_R8,  (unw_word_t *)&context->R8 );
-    unw_get_reg( &cursor, UNW_X86_64_R9,  (unw_word_t *)&context->R9 );
-    unw_get_reg( &cursor, UNW_X86_64_R10, (unw_word_t *)&context->R10 );
-    unw_get_reg( &cursor, UNW_X86_64_R11, (unw_word_t *)&context->R11 );
-    unw_get_reg( &cursor, UNW_X86_64_R12, (unw_word_t *)&context->R12 );
-    unw_get_reg( &cursor, UNW_X86_64_R13, (unw_word_t *)&context->R13 );
-    unw_get_reg( &cursor, UNW_X86_64_R14, (unw_word_t *)&context->R14 );
-    unw_get_reg( &cursor, UNW_X86_64_R15, (unw_word_t *)&context->R15 );
-    *handler = (void*)info.handler;
-    *handler_data = (void*)info.lsda;
-
-    TRACE( "next function rip=%016lx\n", context->Rip );
-    TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
-           context->Rax, context->Rbx, context->Rcx, context->Rdx );
-    TRACE( "  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
-           context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-    TRACE( "   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
-           context->R8, context->R9, context->R10, context->R11 );
-    TRACE( "  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
-           context->R12, context->R13, context->R14, context->R15 );
-
-    return STATUS_SUCCESS;
-}
-#endif
-
-
 /***********************************************************************
  *           unwind_builtin_dll
  */
@@ -861,10 +726,6 @@ NTSTATUS unwind_builtin_dll( void *args )
     if (fde)
         return dwarf_virtual_unwind( context->Rip, &dispatch->EstablisherFrame, context, fde,
                                      &bases, &dispatch->LanguageHandler, &dispatch->HandlerData );
-#ifdef HAVE_LIBUNWIND
-    return libunwind_virtual_unwind( context->Rip, &dispatch->EstablisherFrame, context,
-                                     &dispatch->LanguageHandler, &dispatch->HandlerData );
-#endif
     return STATUS_UNSUCCESSFUL;
 }
 

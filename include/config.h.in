@@ -144,9 +144,6 @@
 /* Define to 1 if you have the <libudev.h> header file. */
 #undef HAVE_LIBUDEV_H
 
-/* Define to 1 if you have the 'unwind' library (-lunwind). */
-#undef HAVE_LIBUNWIND
-
 /* Define if we have the wayland-egl development environment */
 #undef HAVE_LIBWAYLAND_EGL
 
