@@ -3365,16 +3365,161 @@ static HRESULT Global_Round(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     return return_double(res, d);
 }
 
+/* Check that the character is one of the 69 non-blank characters as defined by ECMA-262 B.2.1 */
+static inline BOOL is_ecma_nonblank(WCHAR c)
+{
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+        || c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.' || c == '/';
+}
+
+static WCHAR int_to_hex(int i)
+{
+    if(i < 10) return '0' + i;
+    return 'A' + i - 10;
+}
+
+static int hex_to_int(WCHAR c)
+{
+    if(c >= '0' && c <= '9') return c - '0';
+    if(c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if(c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return -1;
+}
+
 static HRESULT Global_Escape(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR conv_str = NULL, str, ret;
+    const WCHAR *ptr;
+    DWORD len = 0;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(V_VT(arg) == VT_BSTR) {
+        str = V_BSTR(arg);
+    }else {
+        hres = to_string(arg, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    for(ptr = str; *ptr; ptr++) {
+        if(*ptr > 0xff)
+            len += 6;
+        else if(is_ecma_nonblank(*ptr))
+            len++;
+        else
+            len += 3;
+    }
+
+    ret = SysAllocStringLen(NULL, len);
+    if(!ret) {
+        SysFreeString(conv_str);
+        return E_OUTOFMEMORY;
+    }
+
+    len = 0;
+    for(ptr = str; *ptr; ptr++) {
+        if(*ptr > 0xff) {
+            ret[len++] = '%';
+            ret[len++] = 'u';
+            ret[len++] = int_to_hex(*ptr >> 12);
+            ret[len++] = int_to_hex((*ptr >> 8) & 0xf);
+            ret[len++] = int_to_hex((*ptr >> 4) & 0xf);
+            ret[len++] = int_to_hex(*ptr & 0xf);
+        }else if(is_ecma_nonblank(*ptr)) {
+            ret[len++] = *ptr;
+        }else {
+            ret[len++] = '%';
+            ret[len++] = int_to_hex(*ptr >> 4);
+            ret[len++] = int_to_hex(*ptr & 0xf);
+        }
+    }
+
+    SysFreeString(conv_str);
+
+    if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = ret;
+    }else {
+        SysFreeString(ret);
+    }
+    return S_OK;
 }
 
 static HRESULT Global_Unescape(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR conv_str = NULL, str, ret;
+    const WCHAR *ptr;
+    DWORD len = 0;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(V_VT(arg) == VT_BSTR) {
+        str = V_BSTR(arg);
+    }else {
+        hres = to_string(arg, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
+
+    /* First pass: compute output length */
+    for(ptr = str; *ptr; ptr++) {
+        if(*ptr == '%') {
+            if(hex_to_int(ptr[1]) != -1 && hex_to_int(ptr[2]) != -1)
+                ptr += 2;
+            else if(ptr[1] == 'u' && hex_to_int(ptr[2]) != -1 && hex_to_int(ptr[3]) != -1
+                    && hex_to_int(ptr[4]) != -1 && hex_to_int(ptr[5]) != -1)
+                ptr += 5;
+        }
+        len++;
+    }
+
+    ret = SysAllocStringLen(NULL, len);
+    if(!ret) {
+        SysFreeString(conv_str);
+        return E_OUTOFMEMORY;
+    }
+
+    /* Second pass: decode */
+    len = 0;
+    for(ptr = str; *ptr; ptr++) {
+        if(*ptr == '%') {
+            if(hex_to_int(ptr[1]) != -1 && hex_to_int(ptr[2]) != -1) {
+                ret[len] = (hex_to_int(ptr[1]) << 4) + hex_to_int(ptr[2]);
+                ptr += 2;
+            }else if(ptr[1] == 'u' && hex_to_int(ptr[2]) != -1 && hex_to_int(ptr[3]) != -1
+                    && hex_to_int(ptr[4]) != -1 && hex_to_int(ptr[5]) != -1) {
+                ret[len] = (hex_to_int(ptr[2]) << 12) + (hex_to_int(ptr[3]) << 8)
+                    + (hex_to_int(ptr[4]) << 4) + hex_to_int(ptr[5]);
+                ptr += 5;
+            }else {
+                ret[len] = *ptr;
+            }
+        }else {
+            ret[len] = *ptr;
+        }
+        len++;
+    }
+
+    SysFreeString(conv_str);
+
+    if(res) {
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = ret;
+    }else {
+        SysFreeString(ret);
+    }
+    return S_OK;
 }
 
 static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

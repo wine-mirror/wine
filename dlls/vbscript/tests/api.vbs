@@ -2677,4 +2677,55 @@ end sub
 call testFormatNumber()
 call testFormatNumberError()
 
+' Escape tests
+Call ok(Escape("hello") = "hello", "Escape(""hello"") = " & Escape("hello"))
+Call ok(Escape("hello world") = "hello%20world", "Escape(""hello world"") = " & Escape("hello world"))
+Call ok(Escape("@") = "@", "@ should not be escaped")
+Call ok(Escape("*") = "*", "* should not be escaped")
+Call ok(Escape("_") = "_", "_ should not be escaped")
+Call ok(Escape("+") = "+", "+ should not be escaped")
+Call ok(Escape("-") = "-", "- should not be escaped")
+Call ok(Escape(".") = ".", ". should not be escaped")
+Call ok(Escape("/") = "/", "/ should not be escaped")
+Call ok(Escape("ABC") = "ABC", "ABC should not be escaped")
+Call ok(Escape("abc") = "abc", "abc should not be escaped")
+Call ok(Escape("012") = "012", "012 should not be escaped")
+Call ok(Escape("<") = "%3C", "< escape = " & Escape("<"))
+Call ok(Escape(">") = "%3E", "> escape = " & Escape(">"))
+Call ok(Escape(" ") = "%20", "space escape = " & Escape(" "))
+Call ok(Escape("=") = "%3D", "= escape = " & Escape("="))
+Call ok(Escape("&") = "%26", "& escape = " & Escape("&"))
+Call ok(Escape(Unescape("%u20AC")) = "%u20AC", "Euro sign roundtrip escape")
+Call ok(Escape(Unescape("%u0100")) = "%u0100", "U+0100 roundtrip escape")
+Call ok(Escape("") = "", "Escape("""") should be empty")
+Call ok(getVT(Escape("test")) = "VT_BSTR", "getVT(Escape) = " & getVT(Escape("test")))
+
+' Unescape tests
+Call ok(Unescape("hello") = "hello", "Unescape(""hello"") = " & Unescape("hello"))
+Call ok(Unescape("hello%20world") = "hello world", "Unescape(""hello%20world"") = " & Unescape("hello%20world"))
+Call ok(Unescape("%3C%3E") = "<>", "Unescape(""%3C%3E"") = " & Unescape("%3C%3E"))
+Call ok(Unescape("%3c") = "<", "Unescape(""%3c"") lowercase")
+Call ok(Unescape("%3C") = "<", "Unescape(""%3C"") uppercase")
+Call ok(Unescape("%") = "%", "Unescape(""%"") incomplete")
+Call ok(Unescape("%2") = "%2", "Unescape(""%2"") incomplete")
+Call ok(Unescape("%2G") = "%2G", "Unescape(""%2G"") invalid hex")
+Call ok(Unescape(Escape("hello world!")) = "hello world!", "Roundtrip basic")
+Call ok(Unescape("") = "", "Unescape("""") should be empty")
+Call ok(getVT(Unescape("test")) = "VT_BSTR", "getVT(Unescape) = " & getVT(Unescape("test")))
+
+sub testEscapeError()
+    on error resume next
+    dim r
+
+    call Err.clear()
+    r = Escape(Null)
+    Call ok(Err.number = 94, "Escape(Null) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = Unescape(Null)
+    Call ok(Err.number = 94, "Unescape(Null) Err.number = " & Err.number)
+end sub
+
+call testEscapeError()
+
 Call reportSuccess()
