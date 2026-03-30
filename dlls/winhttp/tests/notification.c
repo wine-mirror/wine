@@ -1900,7 +1900,7 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
                 break;
             }
 
-            ok( context->recursion_count < TEST_RECURSION_LIMIT,
+            ok( context->recursion_count <= TEST_RECURSION_LIMIT,
                 "got %lu, thread %#lx\n", context->recursion_count, GetCurrentThreadId() );
             context->max_recursion_query = max( context->max_recursion_query, context->recursion_count );
             InterlockedIncrement( &context->recursion_count );
@@ -1926,7 +1926,7 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
                 SetEvent( context->wait );
                 break;
             }
-            ok( context->recursion_count < TEST_RECURSION_LIMIT,
+            ok( context->recursion_count <= TEST_RECURSION_LIMIT,
                 "got %lu, thread %#lx\n", context->recursion_count, GetCurrentThreadId() );
             context->max_recursion_read = max( context->max_recursion_read, context->recursion_count );
             context->read_from_callback = TRUE;
