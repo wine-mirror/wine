@@ -1810,6 +1810,28 @@ static HRESULT interp_step(exec_ctx_t *ctx)
     return do_for_step(ctx, ref.u.v);
 }
 
+static HRESULT interp_step_local(exec_ctx_t *ctx)
+{
+    const int ref = ctx->instr->arg2.lng;
+    VARIANT *v;
+
+    TRACE("%d\n", ref);
+
+    v = ref < 0 ? ctx->args - ref - 1 : ctx->vars + ref;
+
+    if(V_VT(stack_top(ctx, 0)) == VT_EMPTY && V_VT(stack_top(ctx, 1)) == VT_EMPTY) {
+        WARN("For loop not initialized\n");
+        clear_ei(&ctx->script->ei);
+        ctx->script->ei.scode = MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
+        map_vbs_exception(&ctx->script->ei);
+        stack_popn(ctx, 3);
+        instr_jmp(ctx, ctx->instr->arg1.uint);
+        return S_OK;
+    }
+
+    return do_for_step(ctx, v);
+}
+
 static HRESULT interp_newenum(exec_ctx_t *ctx)
 {
     variant_val_t v;
@@ -2930,6 +2952,15 @@ static HRESULT interp_incc(exec_ctx_t *ctx)
     }
 
     return do_incc(ctx, ref.u.v);
+}
+
+static HRESULT interp_incc_local(exec_ctx_t *ctx)
+{
+    const int ref = ctx->instr->arg1.lng;
+
+    TRACE("%d\n", ref);
+
+    return do_incc(ctx, ref < 0 ? ctx->args - ref - 1 : ctx->vars + ref);
 }
 
 static HRESULT interp_with(exec_ctx_t *ctx)

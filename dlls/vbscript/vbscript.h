@@ -288,6 +288,7 @@ typedef enum {
     X(idiv,           1, 0,           0)          \
     X(imp,            1, 0,           0)          \
     X(incc,           1, ARG_BSTR,    0)          \
+    X(incc_local,     1, ARG_INT,     0)          \
     X(int,            1, ARG_INT,     0)          \
     X(is,             1, 0,           0)          \
     X(local,          1, ARG_INT,     0)          \
@@ -322,6 +323,7 @@ typedef enum {
     X(set_call,       1, ARG_UINT,    0)          \
     X(stack,          1, ARG_UINT,    0)          \
     X(step,           0, ARG_ADDR,    ARG_BSTR)   \
+    X(step_local,     0, ARG_ADDR,    ARG_INT)    \
     X(stop,           1, 0,           0)          \
     X(string,         1, ARG_STR,     0)          \
     X(sub,            1, 0,           0)          \

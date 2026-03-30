@@ -988,7 +988,11 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     statement_ctx_t loop_ctx = {3};
     unsigned step_instr, instr, expr_err_label, past_err_label, body_label, from_offset;
     BSTR identifier;
+    int local_ref;
+    BOOL is_local;
     HRESULT hres;
+
+    is_local = bind_local(ctx, stat->identifier, &local_ref);
 
     identifier = alloc_bstr_arg(ctx, stat->identifier);
     if(!identifier)
@@ -1058,10 +1062,17 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(!loop_ctx.for_end_label)
         return E_OUTOFMEMORY;
 
-    step_instr = push_instr(ctx, OP_step);
-    if(!step_instr)
-        return E_OUTOFMEMORY;
-    instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
+    if(is_local) {
+        step_instr = push_instr(ctx, OP_step_local);
+        if(!step_instr)
+            return E_OUTOFMEMORY;
+        instr_ptr(ctx, step_instr)->arg2.lng = local_ref;
+    }else {
+        step_instr = push_instr(ctx, OP_step);
+        if(!step_instr)
+            return E_OUTOFMEMORY;
+        instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
+    }
     instr_ptr(ctx, step_instr)->arg1.uint = loop_ctx.for_end_label;
 
     if(!emit_catch(ctx, 3))
@@ -1073,11 +1084,19 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(FAILED(hres))
         return hres;
 
-
-    instr = push_instr(ctx, OP_incc);
-    if(!instr)
-        return E_OUTOFMEMORY;
-    instr_ptr(ctx, instr)->arg1.bstr = identifier;
+    /* We need a separated OP_step here so that errors jump to the end-of-loop catch. */
+    ctx->loc = stat->stat.loc;
+    if(is_local) {
+        instr = push_instr(ctx, OP_incc_local);
+        if(!instr)
+            return E_OUTOFMEMORY;
+        instr_ptr(ctx, instr)->arg1.lng = local_ref;
+    }else {
+        instr = push_instr(ctx, OP_incc);
+        if(!instr)
+            return E_OUTOFMEMORY;
+        instr_ptr(ctx, instr)->arg1.bstr = identifier;
+    }
 
     instr = push_instr(ctx, OP_step);
     if(!instr)
