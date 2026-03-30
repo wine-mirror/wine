@@ -55,9 +55,9 @@ struct pdb_reader
     PDB_STRING_TABLE* global_string_table;
 };
 
-static ssize_t pdb_read_at(int fd, void *buffer, size_t count, off_t offset)
+static size_t pdb_read_at(int fd, void *buffer, size_t count, off_t offset)
 {
-    return lseek(fd, offset, SEEK_SET) == (off_t)-1 ? (ssize_t)-1 : read(fd, buffer, count);
+    return lseek(fd, offset, SEEK_SET) == (off_t)-1 ? (size_t)-1 : read(fd, buffer, count);
 }
 
 static inline BOOL has_stream_been_read(struct pdb_reader* reader, unsigned stream_nr)
