@@ -3034,4 +3034,111 @@ end sub
 
 call testByteCharErrors()
 
+' DateValue tests
+Dim dv
+dv = DateValue("2026-03-30")
+Call ok(getVT(dv) = "VT_DATE*", "getVT(DateValue) = " & getVT(dv))
+Call ok(Year(dv) = 2026, "DateValue Year = " & Year(dv))
+Call ok(Month(dv) = 3, "DateValue Month = " & Month(dv))
+Call ok(Day(dv) = 30, "DateValue Day = " & Day(dv))
+
+' DateValue strips time component
+dv = DateValue("2026-03-30 14:30:00")
+Call ok(Hour(dv) = 0, "DateValue Hour should be 0, got " & Hour(dv))
+Call ok(Minute(dv) = 0, "DateValue Minute should be 0, got " & Minute(dv))
+Call ok(Second(dv) = 0, "DateValue Second should be 0, got " & Second(dv))
+Call ok(Year(dv) = 2026, "DateValue Year = " & Year(dv))
+
+' DateValue of time-only string gives date zero (Dec 30, 1899)
+dv = DateValue("14:30:00")
+Call ok(Year(dv) = 1899, "DateValue time-only Year = " & Year(dv))
+Call ok(Month(dv) = 12, "DateValue time-only Month = " & Month(dv))
+Call ok(Day(dv) = 30, "DateValue time-only Day = " & Day(dv))
+
+' DateValue accepts VT_DATE input
+dv = DateValue(CDate("2026-03-30 14:30:00"))
+Call ok(Hour(dv) = 0, "DateValue CDate Hour = " & Hour(dv))
+Call ok(Year(dv) = 2026, "DateValue CDate Year = " & Year(dv))
+
+' TimeValue tests
+Dim tv
+tv = TimeValue("14:30:45")
+Call ok(getVT(tv) = "VT_DATE*", "getVT(TimeValue) = " & getVT(tv))
+Call ok(Hour(tv) = 14, "TimeValue Hour = " & Hour(tv))
+Call ok(Minute(tv) = 30, "TimeValue Minute = " & Minute(tv))
+Call ok(Second(tv) = 45, "TimeValue Second = " & Second(tv))
+
+' TimeValue strips date component
+tv = TimeValue("2026-03-30 14:30:45")
+Call ok(Hour(tv) = 14, "TimeValue datetime Hour = " & Hour(tv))
+Call ok(Year(tv) = 1899, "TimeValue datetime Year = " & Year(tv))
+
+' TimeValue of date-only string gives midnight
+tv = TimeValue("2026-03-30")
+Call ok(Hour(tv) = 0, "TimeValue date-only Hour = " & Hour(tv))
+Call ok(Minute(tv) = 0, "TimeValue date-only Minute = " & Minute(tv))
+
+' TimeValue accepts VT_DATE input
+tv = TimeValue(CDate("2026-03-30 14:30:45"))
+Call ok(Hour(tv) = 14, "TimeValue CDate Hour = " & Hour(tv))
+Call ok(Year(tv) = 1899, "TimeValue CDate Year = " & Year(tv))
+
+sub testDateValueError()
+    on error resume next
+    dim r
+
+    call Err.clear()
+    r = DateValue(Null)
+    Call ok(Err.number = 94, "DateValue(Null) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = DateValue("not a date")
+    Call ok(Err.number = 13, "DateValue(invalid) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = DateValue("")
+    Call ok(Err.number = 13, "DateValue("""") Err.number = " & Err.number)
+
+    call Err.clear()
+    r = DateValue(44000)
+    Call ok(Err.number = 13, "DateValue(number) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = TimeValue(Null)
+    Call ok(Err.number = 94, "TimeValue(Null) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = TimeValue("not a time")
+    Call ok(Err.number = 13, "TimeValue(invalid) Err.number = " & Err.number)
+
+    call Err.clear()
+    r = TimeValue("")
+    Call ok(Err.number = 13, "TimeValue("""") Err.number = " & Err.number)
+end sub
+
+call testDateValueError()
+
+' Locale-sensitive date parsing: "3/4/2026" is ambiguous (March 4 vs April 3).
+' DateValue uses the script locale set by SetLocale.
+sub testDateValueLocale()
+    on error resume next
+    dim origLcid, ambigDate
+
+    origLcid = GetLocale()
+
+    SetLocale(1033)  ' en-US: month/day/year
+    ambigDate = DateValue("3/4/2026")
+    Call ok(Month(ambigDate) = 3, "DateValue en-US Month = " & Month(ambigDate))
+    Call ok(Day(ambigDate) = 4, "DateValue en-US Day = " & Day(ambigDate))
+
+    SetLocale(1036)  ' fr-FR: day/month/year
+    ambigDate = DateValue("3/4/2026")
+    Call ok(Month(ambigDate) = 4, "DateValue fr-FR Month = " & Month(ambigDate))
+    Call ok(Day(ambigDate) = 3, "DateValue fr-FR Day = " & Day(ambigDate))
+
+    if not IsEmpty(origLcid) then SetLocale(origLcid)
+end sub
+
+call testDateValueLocale()
+
 Call reportSuccess()

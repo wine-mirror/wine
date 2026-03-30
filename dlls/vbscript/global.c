@@ -2553,14 +2553,54 @@ static HRESULT Global_SetLocale(BuiltinDisp *This, VARIANT *args, unsigned args_
 
 static HRESULT Global_DateValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+    DATE date;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(V_VT(arg) == VT_DATE) {
+        date = V_DATE(arg);
+    }else if(V_VT(arg) == VT_BSTR) {
+        V_VT(&v) = VT_EMPTY;
+        hres = VariantChangeTypeEx(&v, arg, This->ctx->lcid, 0, VT_DATE);
+        if(FAILED(hres))
+            return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+        date = V_DATE(&v);
+    }else {
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    return return_date(res, trunc(date));
 }
 
 static HRESULT Global_TimeValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+    DATE date;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(V_VT(arg) == VT_DATE) {
+        date = V_DATE(arg);
+    }else if(V_VT(arg) == VT_BSTR) {
+        V_VT(&v) = VT_EMPTY;
+        hres = VariantChangeTypeEx(&v, arg, This->ctx->lcid, 0, VT_DATE);
+        if(FAILED(hres))
+            return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+        date = V_DATE(&v);
+    }else {
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
+
+    return return_date(res, date - trunc(date));
 }
 
 static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
