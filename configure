@@ -10353,7 +10353,7 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   as_fn_append ${wine_arch}_EXTRACFLAGS " -Werror"
 fi }
-            test "x$enable_build_id" != xyes || as_fn_append ${wine_arch}_LDFLAGS " -Wl,--build-id"
+            test "x$enable_build_id" != xno && as_fn_append ${wine_arch}_LDFLAGS " -Wl,--build-id"
 
         eval ${wine_arch}_EXTRACXXFLAGS=\$${wine_arch}_EXTRACFLAGS
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wdeclaration-after-statement" | sed "$as_sed_sh"`
