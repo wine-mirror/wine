@@ -1781,6 +1781,8 @@ class Record(Type):
 
     @staticmethod
     def from_xml(struct):
+        if struct.attrib["name"] == "VkPhysicalDeviceVulkan14Properties":
+            del struct.attrib["returnedonly"]
         returnedonly = "returnedonly" in struct.attrib
         members = filter(is_api_supported, struct.findall("member"))
         members = [VkMember.from_xml(member, returnedonly) for member in members]
