@@ -1151,6 +1151,48 @@ void DSOUND_ParseSpeakerConfig(DirectSoundDevice *device)
             device->lfe_channel = 3;
         break;
 
+        case DSSPEAKER_7POINT1_WIDE:
+            device->speaker_angles[0] = M_PI/180.0f * -135.0f;
+            device->speaker_angles[1] = M_PI/180.0f *  -45.0f;
+            device->speaker_angles[2] = M_PI/180.0f *    0.0f;
+            device->speaker_angles[3] = M_PI/180.0f *   45.0f;
+            device->speaker_angles[4] = M_PI/180.0f *  135.0f;
+            device->speaker_angles[5] = M_PI/180.0f *  -10.0f;
+            device->speaker_angles[6] = M_PI/180.0f *   10.0f;
+            device->speaker_angles[7] = 9999.0f;
+            device->speaker_num[0] = 4; /* Rear left */
+            device->speaker_num[1] = 0; /* Front left */
+            device->speaker_num[2] = 2; /* Front centre */
+            device->speaker_num[3] = 1; /* Front right */
+            device->speaker_num[4] = 5; /* Rear right */
+            device->speaker_num[5] = 6; /* Front left of center */
+            device->speaker_num[6] = 7; /* Front right of center */
+            device->speaker_num[7] = 3; /* LFE */
+            device->num_speakers = 8;
+            device->lfe_channel = 3;
+        break;
+
+        case DSSPEAKER_7POINT1_SURROUND:
+            device->speaker_angles[0] = M_PI/180.0f * -135.0f;
+            device->speaker_angles[1] = M_PI/180.0f *  -45.0f;
+            device->speaker_angles[2] = M_PI/180.0f *    0.0f;
+            device->speaker_angles[3] = M_PI/180.0f *   45.0f;
+            device->speaker_angles[4] = M_PI/180.0f *  135.0f;
+            device->speaker_angles[5] = M_PI/180.0f *  -90.0f;
+            device->speaker_angles[6] = M_PI/180.0f *   90.0f;
+            device->speaker_angles[7] = 9999.0f;
+            device->speaker_num[0] = 4; /* Rear left */
+            device->speaker_num[1] = 0; /* Front left */
+            device->speaker_num[2] = 2; /* Front centre */
+            device->speaker_num[3] = 1; /* Front right */
+            device->speaker_num[4] = 5; /* Rear right */
+            device->speaker_num[5] = 6; /* Side left */
+            device->speaker_num[6] = 7; /* Side right */
+            device->speaker_num[7] = 3; /* LFE */
+            device->num_speakers = 8;
+            device->lfe_channel = 3;
+        break;
+
         default:
             WARN("unknown speaker_config %lu\n", device->speaker_config);
     }

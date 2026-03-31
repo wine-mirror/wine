@@ -52,6 +52,12 @@ static DWORD speaker_config_to_channel_mask(DWORD speaker_config)
 
         case DSSPEAKER_5POINT1_BACK:
             return SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT | SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY | SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT;
+
+        case DSSPEAKER_7POINT1_SURROUND:
+            return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT;
+
+        case DSSPEAKER_7POINT1_WIDE:
+            return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_FRONT_LEFT_OF_CENTER | SPEAKER_FRONT_RIGHT_OF_CENTER;
     }
 
     WARN("unknown speaker_config %lu\n", speaker_config);
@@ -93,7 +99,11 @@ static DWORD DSOUND_FindSpeakerConfig(IMMDevice *mmdevice, int channels)
     PropVariantClear(&pv);
     IPropertyStore_Release(store);
 
-    if ((channels >= 6 || channels == 0) && (phys_speakers & KSAUDIO_SPEAKER_5POINT1) == KSAUDIO_SPEAKER_5POINT1)
+    if ((channels >= 8 || channels == 0) && (phys_speakers & KSAUDIO_SPEAKER_7POINT1_SURROUND) == KSAUDIO_SPEAKER_7POINT1_SURROUND)
+        return DSSPEAKER_7POINT1_SURROUND;
+    else if ((channels >= 8 || channels == 0) && (phys_speakers & KSAUDIO_SPEAKER_7POINT1) == KSAUDIO_SPEAKER_7POINT1)
+        return DSSPEAKER_7POINT1_WIDE;
+    else if ((channels >= 6 || channels == 0) && (phys_speakers & KSAUDIO_SPEAKER_5POINT1) == KSAUDIO_SPEAKER_5POINT1)
         return DSSPEAKER_5POINT1_BACK;
     else if ((channels >= 6 || channels == 0) && (phys_speakers & KSAUDIO_SPEAKER_5POINT1_SURROUND) == KSAUDIO_SPEAKER_5POINT1_SURROUND)
         return DSSPEAKER_5POINT1_SURROUND;
