@@ -112,7 +112,7 @@ android
     defaultConfig
     {
         applicationId "org.winehq.wine"
-        minSdkVersion 17
+        minSdkVersion 26
         versionCode 1
         versionName "@PACKAGE_VERSION@"
     }

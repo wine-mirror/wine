@@ -119,7 +119,7 @@ enum android_window_messages
     WM_ANDROID_REFRESH = WM_WINE_FIRST_DRIVER_MSG,
 };
 
-extern void init_gralloc( const struct hw_module_t *module );
+extern void init_ahardwarebuffers(void);
 extern HWND get_capture_window(void);
 extern void init_monitors( int width, int height );
 extern void set_screen_dpi( DWORD dpi );
