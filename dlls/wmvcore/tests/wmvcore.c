@@ -27,6 +27,7 @@
 #include "amvideo.h"
 #include "uuids.h"
 #include "wmcodecdsp.h"
+#include "shlwapi.h"
 
 #include "wine/test.h"
 
@@ -127,6 +128,24 @@ static WCHAR *load_resource(const WCHAR *name)
     CloseHandle(file);
 
     return pathW;
+}
+
+static IStream *load_resource_as_stream(const WCHAR *name)
+{
+    IStream *stream;
+    DWORD size;
+    HRSRC res;
+    void *ptr;
+
+    res = FindResourceW(NULL, name, (LPCWSTR)RT_RCDATA);
+    ok(!!res, "Failed to load resource, error %lu.\n", GetLastError());
+    size = SizeofResource(NULL, res);
+    ptr = LockResource(LoadResource(NULL, res));
+
+    stream = SHCreateMemStream(ptr, size);
+    ok(!!stream, "Failed to create stream");
+
+    return stream;
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -2036,6 +2055,29 @@ static void test_sync_reader_compressed_output(void)
 
     IWMSyncReader_Release(reader);
     IWMProfile_Release(profile);
+}
+
+void test_sync_reader_rawvideo_file(void)
+{
+    IWMSyncReader *reader;
+    IStream *stream;
+    HRESULT hr;
+
+    stream = load_resource_as_stream(L"test_rawvideo.wmv");
+
+    hr = WMCreateSyncReader(NULL, WMT_RIGHT_PLAYBACK, &reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMSyncReader_OpenStream(reader, stream);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMSyncReader_Close(reader);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IStream_Release(stream);
+    IWMSyncReader_Release(reader);
 }
 
 struct callback
@@ -4290,6 +4332,7 @@ START_TEST(wmvcore)
     test_sync_reader_types();
     test_sync_reader_file();
     test_sync_reader_compressed_output();
+    test_sync_reader_rawvideo_file();
     test_async_reader_settings();
     test_async_reader_streaming();
     test_async_reader_types();
