@@ -2876,12 +2876,9 @@ static void test_readvirtualmemory(void)
     ok( strcmp(teststring, buffer) == 0, "Expected read memory to be the same as original memory\n");
 
     /* illegal remote address */
-    todo_wine{
     status = pNtReadVirtualMemory(process, (void *) 0x1234, buffer, 12, &readcount);
     ok( status == STATUS_PARTIAL_COPY, "Expected STATUS_PARTIAL_COPY, got %08lx\n", status);
-    if (status == STATUS_PARTIAL_COPY)
-        ok( readcount == 0, "Expected to read 0 bytes, got %Id\n",readcount);
-    }
+    ok( readcount == 0, "Expected to read 0 bytes, got %Id\n",readcount);
 
     /* 0 handle */
     status = pNtReadVirtualMemory(0, teststring, buffer, 12, &readcount);
