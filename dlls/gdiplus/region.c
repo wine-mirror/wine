@@ -2321,9 +2321,33 @@ static GpStatus rect_to_spans(const RECT *rc, struct span_list *spans)
     return Ok;
 }
 
-static GpStatus combine_regions_to_spans(const struct region_element *left, const struct region_element *right,
-    DWORD type, const RECT *bounds, struct span_list *spans)
+static BOOL bounds_intersect_region_element_rect(RECT *bounds, const struct region_element *element)
 {
+    switch (element->type)
+    {
+        case RegionDataInfiniteRect:
+            return TRUE;
+        case RegionDataRect:
+        {
+            RECT rc;
+            rect_round_from_gp_rect_f(&rc, &element->elementdata.rect);
+            IntersectRect(bounds, bounds, &rc);
+            return TRUE;
+        }
+        case CombineModeIntersect:
+            return bounds_intersect_region_element_rect(bounds, element->elementdata.combine.left)
+                && bounds_intersect_region_element_rect(bounds, element->elementdata.combine.right);
+        default:
+            break;
+    }
+
+    return FALSE;
+}
+
+static GpStatus combine_regions_to_spans(const struct region_element *left, const struct region_element *right,
+    DWORD type, const RECT *bound_rect, struct span_list *spans)
+{
+    RECT bounds = *bound_rect;
     struct span_list spans_left = {0}, spans_right = {0};
     size_t i_left = 0, i_right = 0;
     const struct span *cur_left, *cur_right;
@@ -2331,17 +2355,27 @@ static GpStatus combine_regions_to_spans(const struct region_element *left, cons
     int x, y, x1_left, x1_right, x1_min;
     GpStatus stat;
 
-    stat = region_element_to_spans(left, bounds, &spans_left);
+    if (type == CombineModeIntersect)
+    {
+        /* In intersect mode, where one side is a rect, it is sufficient to intersect
+         * it with the bounds and convert the other side to spans */
+        if (bounds_intersect_region_element_rect(&bounds, left))
+            return region_element_to_spans(right, &bounds, spans);
+        if (bounds_intersect_region_element_rect(&bounds, right))
+            return region_element_to_spans(left, &bounds, spans);
+    }
+
+    stat = region_element_to_spans(left, &bounds, &spans_left);
 
     if (stat == Ok)
-        stat = region_element_to_spans(right, bounds, &spans_right);
+        stat = region_element_to_spans(right, &bounds, &spans_right);
 
     cur_left = spans_left.length ? &spans_left.spans[0] : NULL;
     cur_right = spans_right.length ? &spans_right.spans[0] : NULL;
 
-    for (y = bounds->top; stat == Ok && y < bounds->bottom; ++y)
+    for (y = bounds.top; stat == Ok && y < bounds.bottom; ++y)
     {
-        for (x = bounds->left; stat == Ok && x < bounds->right; )
+        for (x = bounds.left; stat == Ok && x < bounds.right; )
         {
             /* Update the current left and right spans */
 
@@ -2366,7 +2400,7 @@ static GpStatus combine_regions_to_spans(const struct region_element *left, cons
             else
             {
                 in_left = FALSE;
-                x1_left = bounds->right;
+                x1_left = bounds.right;
             }
 
             if (cur_right && y == cur_right->y)
@@ -2377,7 +2411,7 @@ static GpStatus combine_regions_to_spans(const struct region_element *left, cons
             else
             {
                 in_right = FALSE;
-                x1_right = bounds->right;
+                x1_right = bounds.right;
             }
 
             x1_min = min(x1_left, x1_right);
