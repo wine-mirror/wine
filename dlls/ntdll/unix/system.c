@@ -4091,11 +4091,14 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
     }
 
     case SystemSupportedProcessorArchitectures:
+    case SystemSupportedProcessorArchitectures2:
     {
         SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION *machines = info;
         HANDLE process;
         ULONG i;
         USHORT machine = 0;
+        USHORT machines_to_return[8];
+        unsigned int machines_to_return_count = 0;
 
         if (!query || query_len < sizeof(HANDLE)) return STATUS_INVALID_PARAMETER;
         process = *(HANDLE *)query;
@@ -4110,7 +4113,18 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
             if (ret) return ret;
         }
 
-        len = (supported_machines_count + 1) * sizeof(*machines);
+        for (i = 0; i < supported_machines_count; i++)
+        {
+#ifdef __aarch64__
+            if (class == SystemSupportedProcessorArchitectures &&
+                supported_machines[i] == IMAGE_FILE_MACHINE_AMD64)
+                continue;
+#endif
+            machines_to_return[machines_to_return_count] = supported_machines[i];
+            machines_to_return_count++;
+        }
+
+        len = (machines_to_return_count + 1) * sizeof(*machines);
         if (size < len)
         {
             ret = STATUS_BUFFER_TOO_SMALL;
@@ -4119,20 +4133,23 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
         memset( machines, 0, len );
 
         /* native machine */
-        machines[0].Machine = supported_machines[0];
+        machines[0].Machine = machines_to_return[0];
         machines[0].UserMode = 1;
         machines[0].KernelMode = 1;
         machines[0].Native = 1;
-        machines[0].Process = (supported_machines[0] == machine || is_machine_64bit( machine ));
+        machines[0].Process = (machines_to_return[0] == machine ||
+                               (class == SystemSupportedProcessorArchitectures &&
+                                machine == IMAGE_FILE_MACHINE_AMD64));
         machines[0].WoW64Container = 0;
         machines[0].ReservedZero0 = 0;
-        /* wow64 machines */
-        for (i = 1; i < supported_machines_count; i++)
+        /* other machines */
+        for (i = 1; i < machines_to_return_count; i++)
         {
-            machines[i].Machine = supported_machines[i];
+            machines[i].Machine = machines_to_return[i];
             machines[i].UserMode = 1;
-            machines[i].Process = supported_machines[i] == machine;
-            machines[i].WoW64Container = 1;
+            machines[i].Process = machines_to_return[i] == machine;
+            if (!is_machine_64bit( machines_to_return[i] ))
+                machines[i].WoW64Container = 1;
         }
         ret = STATUS_SUCCESS;
         break;

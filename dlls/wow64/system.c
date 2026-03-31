@@ -680,6 +680,7 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformationEx( UINT *args )
 
     case SystemCpuSetInformation:  /* SYSTEM_CPU_SET_INFORMATION */
     case SystemSupportedProcessorArchitectures:  /* SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION */
+    case SystemSupportedProcessorArchitectures2: /* SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION */
         if (!query || query_len < sizeof(LONG)) return STATUS_INVALID_PARAMETER;
         handle = LongToHandle( *(LONG *)query );
         return NtQuerySystemInformationEx( class, &handle, sizeof(handle), ptr, len, retlen );
