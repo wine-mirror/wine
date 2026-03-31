@@ -5093,6 +5093,17 @@ uint64_t WINAPI vkGetDeviceCombinedImageSamplerIndexNVX(VkDevice device, uint64_
     return params.result;
 }
 
+VkResult WINAPI vkGetDeviceFaultDebugInfoKHR(VkDevice device, VkDeviceFaultDebugInfoKHR *pDebugInfo)
+{
+    struct vkGetDeviceFaultDebugInfoKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pDebugInfo = pDebugInfo;
+    status = UNIX_CALL(vkGetDeviceFaultDebugInfoKHR, &params);
+    assert(!status && "vkGetDeviceFaultDebugInfoKHR");
+    return params.result;
+}
+
 VkResult WINAPI vkGetDeviceFaultInfoEXT(VkDevice device, VkDeviceFaultCountsEXT *pFaultCounts, VkDeviceFaultInfoEXT *pFaultInfo)
 {
     struct vkGetDeviceFaultInfoEXT_params params;
@@ -5102,6 +5113,19 @@ VkResult WINAPI vkGetDeviceFaultInfoEXT(VkDevice device, VkDeviceFaultCountsEXT 
     params.pFaultInfo = pFaultInfo;
     status = UNIX_CALL(vkGetDeviceFaultInfoEXT, &params);
     assert(!status && "vkGetDeviceFaultInfoEXT");
+    return params.result;
+}
+
+VkResult WINAPI vkGetDeviceFaultReportsKHR(VkDevice device, uint64_t timeout, uint32_t *pFaultCounts, VkDeviceFaultInfoKHR *pFaultInfo)
+{
+    struct vkGetDeviceFaultReportsKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.timeout = timeout;
+    params.pFaultCounts = pFaultCounts;
+    params.pFaultInfo = pFaultInfo;
+    status = UNIX_CALL(vkGetDeviceFaultReportsKHR, &params);
+    assert(!status && "vkGetDeviceFaultReportsKHR");
     return params.result;
 }
 
@@ -8136,7 +8160,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetDeviceBufferMemoryRequirements", vkGetDeviceBufferMemoryRequirements},
     {"vkGetDeviceBufferMemoryRequirementsKHR", vkGetDeviceBufferMemoryRequirementsKHR},
     {"vkGetDeviceCombinedImageSamplerIndexNVX", vkGetDeviceCombinedImageSamplerIndexNVX},
+    {"vkGetDeviceFaultDebugInfoKHR", vkGetDeviceFaultDebugInfoKHR},
     {"vkGetDeviceFaultInfoEXT", vkGetDeviceFaultInfoEXT},
+    {"vkGetDeviceFaultReportsKHR", vkGetDeviceFaultReportsKHR},
     {"vkGetDeviceGroupPeerMemoryFeatures", vkGetDeviceGroupPeerMemoryFeatures},
     {"vkGetDeviceGroupPeerMemoryFeaturesKHR", vkGetDeviceGroupPeerMemoryFeaturesKHR},
     {"vkGetDeviceGroupPresentCapabilitiesKHR", vkGetDeviceGroupPresentCapabilitiesKHR},

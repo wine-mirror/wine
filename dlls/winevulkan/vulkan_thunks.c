@@ -1127,19 +1127,21 @@ typedef struct VkDescriptorUpdateTemplateEntry32
 } VkDescriptorUpdateTemplateEntry32;
 typedef VkDescriptorUpdateTemplateEntry32 VkDescriptorUpdateTemplateEntryKHR32;
 
-typedef struct VkDeviceFaultAddressInfoEXT32
+typedef struct VkDeviceFaultAddressInfoKHR32
 {
-    VkDeviceFaultAddressTypeEXT addressType;
+    VkDeviceFaultAddressTypeKHR addressType;
     VkDeviceAddress DECLSPEC_ALIGN(8) reportedAddress;
     VkDeviceSize DECLSPEC_ALIGN(8) addressPrecision;
-} VkDeviceFaultAddressInfoEXT32;
+} VkDeviceFaultAddressInfoKHR32;
+typedef VkDeviceFaultAddressInfoKHR32 VkDeviceFaultAddressInfoEXT32;
 
-typedef struct VkDeviceFaultVendorInfoEXT32
+typedef struct VkDeviceFaultVendorInfoKHR32
 {
     char description[VK_MAX_DESCRIPTION_SIZE];
     uint64_t DECLSPEC_ALIGN(8) vendorFaultCode;
     uint64_t DECLSPEC_ALIGN(8) vendorFaultData;
-} VkDeviceFaultVendorInfoEXT32;
+} VkDeviceFaultVendorInfoKHR32;
+typedef VkDeviceFaultVendorInfoKHR32 VkDeviceFaultVendorInfoEXT32;
 
 typedef struct VkDeviceMemoryCopyKHR32
 {
@@ -3334,6 +3336,14 @@ typedef struct VkDeviceFaultCountsEXT32
     VkDeviceSize DECLSPEC_ALIGN(8) vendorBinarySize;
 } VkDeviceFaultCountsEXT32;
 
+typedef struct VkDeviceFaultDebugInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t vendorBinarySize;
+    PTR32 pVendorBinaryData;
+} VkDeviceFaultDebugInfoKHR32;
+
 typedef struct VkDeviceFaultInfoEXT32
 {
     VkStructureType sType;
@@ -3343,6 +3353,26 @@ typedef struct VkDeviceFaultInfoEXT32
     PTR32 pVendorInfos;
     PTR32 pVendorBinaryData;
 } VkDeviceFaultInfoEXT32;
+
+typedef struct VkDeviceFaultInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceFaultFlagsKHR flags;
+    uint64_t DECLSPEC_ALIGN(8) groupId;
+    char description[VK_MAX_DESCRIPTION_SIZE];
+    VkDeviceFaultAddressInfoKHR32 DECLSPEC_ALIGN(8) faultAddressInfo;
+    VkDeviceFaultAddressInfoKHR32 DECLSPEC_ALIGN(8) instructionAddressInfo;
+    VkDeviceFaultVendorInfoKHR32 DECLSPEC_ALIGN(8) vendorInfo;
+} VkDeviceFaultInfoKHR32;
+
+typedef struct VkDeviceFaultShaderAbortMessageInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint64_t DECLSPEC_ALIGN(8) messageDataSize;
+    PTR32 pMessageData;
+} VkDeviceFaultShaderAbortMessageInfoKHR32;
 
 typedef struct VkDeviceGroupBindSparseInfo32
 {
@@ -5555,6 +5585,23 @@ typedef struct VkPhysicalDeviceFaultFeaturesEXT32
     VkBool32 deviceFaultVendorBinary;
 } VkPhysicalDeviceFaultFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceFaultFeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 deviceFault;
+    VkBool32 deviceFaultVendorBinary;
+    VkBool32 deviceFaultReportMasked;
+    VkBool32 deviceFaultDeviceLostOnMasked;
+} VkPhysicalDeviceFaultFeaturesKHR32;
+
+typedef struct VkPhysicalDeviceFaultPropertiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxDeviceFaultCount;
+} VkPhysicalDeviceFaultPropertiesKHR32;
+
 typedef struct VkPhysicalDeviceFeatures232
 {
     VkStructureType sType;
@@ -6992,6 +7039,20 @@ typedef struct VkPhysicalDeviceShader64BitIndexingFeaturesEXT32
     VkBool32 shader64BitIndexing;
 } VkPhysicalDeviceShader64BitIndexingFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceShaderAbortFeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 shaderAbort;
+} VkPhysicalDeviceShaderAbortFeaturesKHR32;
+
+typedef struct VkPhysicalDeviceShaderAbortPropertiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint64_t DECLSPEC_ALIGN(8) maxShaderAbortMessageSize;
+} VkPhysicalDeviceShaderAbortPropertiesKHR32;
+
 typedef struct VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32
 {
     VkStructureType sType;
@@ -7060,6 +7121,13 @@ typedef struct VkPhysicalDeviceShaderClockFeaturesKHR32
     VkBool32 shaderSubgroupClock;
     VkBool32 shaderDeviceClock;
 } VkPhysicalDeviceShaderClockFeaturesKHR32;
+
+typedef struct VkPhysicalDeviceShaderConstantDataFeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 shaderConstantData;
+} VkPhysicalDeviceShaderConstantDataFeaturesKHR32;
 
 typedef struct VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM32
 {
@@ -19194,6 +19262,20 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceFaultFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceFaultFeaturesKHR *in_ext = (const VkPhysicalDeviceFaultFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->deviceFault = in_ext->deviceFault;
+            out_ext->deviceFaultVendorBinary = in_ext->deviceFaultVendorBinary;
+            out_ext->deviceFaultReportMasked = in_ext->deviceFaultReportMasked;
+            out_ext->deviceFaultDeviceLostOnMasked = in_ext->deviceFaultDeviceLostOnMasked;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2:
         {
             VkPhysicalDeviceFeatures2 *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -20396,6 +20478,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAbortFeaturesKHR *in_ext = (const VkPhysicalDeviceShaderAbortFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->shaderAbort = in_ext->shaderAbort;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
         {
             VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -20484,6 +20577,17 @@ static void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *
             out_ext->pNext = NULL;
             out_ext->shaderSubgroupClock = in_ext->shaderSubgroupClock;
             out_ext->shaderDeviceClock = in_ext->shaderDeviceClock;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderConstantDataFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderConstantDataFeaturesKHR *in_ext = (const VkPhysicalDeviceShaderConstantDataFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->shaderConstantData = in_ext->shaderConstantData;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -21494,7 +21598,7 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
     out->queueCreateInfoCount = in->queueCreateInfoCount;
     out->pQueueCreateInfos = convert_VkDeviceQueueCreateInfo_array_win32_to_host(ctx, (const VkDeviceQueueCreateInfo32 *)UlongToPtr(in->pQueueCreateInfos), in->queueCreateInfoCount);
     out->enabledLayerCount = in->enabledLayerCount;
-    out->ppEnabledLayerNames = convert_char_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppEnabledLayerNames), in->enabledLayerCount);
+    out->ppEnabledLayerNames = UlongToPtr(in->ppEnabledLayerNames);
     out->enabledExtensionCount = in->enabledExtensionCount;
     out->ppEnabledExtensionNames = convert_char_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppEnabledExtensionNames), in->enabledExtensionCount);
     out->pEnabledFeatures = UlongToPtr(in->pEnabledFeatures);
@@ -22356,6 +22460,20 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_ext->pNext = NULL;
             out_ext->deviceFault = in_ext->deviceFault;
             out_ext->deviceFaultVendorBinary = in_ext->deviceFaultVendorBinary;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceFaultFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceFaultFeaturesKHR32 *in_ext = (const VkPhysicalDeviceFaultFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->deviceFault = in_ext->deviceFault;
+            out_ext->deviceFaultVendorBinary = in_ext->deviceFaultVendorBinary;
+            out_ext->deviceFaultReportMasked = in_ext->deviceFaultReportMasked;
+            out_ext->deviceFaultDeviceLostOnMasked = in_ext->deviceFaultDeviceLostOnMasked;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -23562,6 +23680,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAbortFeaturesKHR32 *in_ext = (const VkPhysicalDeviceShaderAbortFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->shaderAbort = in_ext->shaderAbort;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
         {
             VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -23650,6 +23779,17 @@ static void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *
             out_ext->pNext = NULL;
             out_ext->shaderSubgroupClock = in_ext->shaderSubgroupClock;
             out_ext->shaderDeviceClock = in_ext->shaderDeviceClock;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderConstantDataFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderConstantDataFeaturesKHR32 *in_ext = (const VkPhysicalDeviceShaderConstantDataFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->shaderConstantData = in_ext->shaderConstantData;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -30048,6 +30188,66 @@ static void convert_VkDeviceBufferMemoryRequirements_win32_to_host(struct conver
         FIXME("Unexpected pNext\n");
 }
 
+static void convert_VkDeviceFaultDebugInfoKHR_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultDebugInfoKHR32 *in, VkDeviceFaultDebugInfoKHR *out)
+{
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_DEVICE_FAULT_SHADER_ABORT_MESSAGE_INFO_KHR:
+        {
+            VkDeviceFaultShaderAbortMessageInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_FAULT_SHADER_ABORT_MESSAGE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+
+static void convert_VkDeviceFaultDebugInfoKHR_host_to_win32(const VkDeviceFaultDebugInfoKHR *in, VkDeviceFaultDebugInfoKHR32 *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure32 *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->vendorBinarySize = in->vendorBinarySize;
+    out->pVendorBinaryData = PtrToUlong(in->pVendorBinaryData);
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_DEVICE_FAULT_SHADER_ABORT_MESSAGE_INFO_KHR:
+        {
+            VkDeviceFaultShaderAbortMessageInfoKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_DEVICE_FAULT_SHADER_ABORT_MESSAGE_INFO_KHR);
+            const VkDeviceFaultShaderAbortMessageInfoKHR *in_ext = (const VkDeviceFaultShaderAbortMessageInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_FAULT_SHADER_ABORT_MESSAGE_INFO_KHR;
+            out_ext->messageDataSize = in_ext->messageDataSize;
+            out_ext->pMessageData = PtrToUlong(in_ext->pMessageData);
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+
 static void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFaultCountsEXT32 *in, VkDeviceFaultCountsEXT *out)
 {
     if (!in) return;
@@ -30061,9 +30261,9 @@ static void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFaultCoun
         FIXME("Unexpected pNext\n");
 }
 
-static VkDeviceFaultAddressInfoEXT *convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultAddressInfoEXT32 *in, uint32_t count)
+static VkDeviceFaultAddressInfoKHR *convert_VkDeviceFaultAddressInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultAddressInfoKHR32 *in, uint32_t count)
 {
-    VkDeviceFaultAddressInfoEXT *out;
+    VkDeviceFaultAddressInfoKHR *out;
     if (!in || !count) return NULL;
 
     out = conversion_context_alloc(ctx, count * sizeof(*out));
@@ -30071,9 +30271,9 @@ static VkDeviceFaultAddressInfoEXT *convert_VkDeviceFaultAddressInfoEXT_array_wi
     return out;
 }
 
-static VkDeviceFaultVendorInfoEXT *convert_VkDeviceFaultVendorInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultVendorInfoEXT32 *in, uint32_t count)
+static VkDeviceFaultVendorInfoKHR *convert_VkDeviceFaultVendorInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultVendorInfoKHR32 *in, uint32_t count)
 {
-    VkDeviceFaultVendorInfoEXT *out;
+    VkDeviceFaultVendorInfoKHR *out;
     if (!in || !count) return NULL;
 
     out = conversion_context_alloc(ctx, count * sizeof(*out));
@@ -30087,8 +30287,8 @@ static void convert_VkDeviceFaultInfoEXT_win32_to_host(struct conversion_context
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->pAddressInfos = convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(ctx, (VkDeviceFaultAddressInfoEXT32 *)UlongToPtr(in->pAddressInfos), 1);
-    out->pVendorInfos = convert_VkDeviceFaultVendorInfoEXT_array_win32_to_host(ctx, (VkDeviceFaultVendorInfoEXT32 *)UlongToPtr(in->pVendorInfos), 1);
+    out->pAddressInfos = convert_VkDeviceFaultAddressInfoKHR_array_win32_to_host(ctx, (VkDeviceFaultAddressInfoKHR32 *)UlongToPtr(in->pAddressInfos), 1);
+    out->pVendorInfos = convert_VkDeviceFaultVendorInfoKHR_array_win32_to_host(ctx, (VkDeviceFaultVendorInfoKHR32 *)UlongToPtr(in->pVendorInfos), 1);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -30102,7 +30302,7 @@ static void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFaultCoun
     out->vendorBinarySize = in->vendorBinarySize;
 }
 
-static void convert_VkDeviceFaultAddressInfoEXT_host_to_win32(const VkDeviceFaultAddressInfoEXT *in, VkDeviceFaultAddressInfoEXT32 *out)
+static void convert_VkDeviceFaultAddressInfoKHR_host_to_win32(const VkDeviceFaultAddressInfoKHR *in, VkDeviceFaultAddressInfoKHR32 *out)
 {
     if (!in) return;
 
@@ -30111,7 +30311,7 @@ static void convert_VkDeviceFaultAddressInfoEXT_host_to_win32(const VkDeviceFaul
     out->addressPrecision = in->addressPrecision;
 }
 
-static void convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(const VkDeviceFaultAddressInfoEXT *in, VkDeviceFaultAddressInfoEXT32 *out, uint32_t count)
+static void convert_VkDeviceFaultAddressInfoKHR_array_host_to_win32(const VkDeviceFaultAddressInfoKHR *in, VkDeviceFaultAddressInfoKHR32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -30119,11 +30319,11 @@ static void convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(const VkDevi
 
     for (i = 0; i < count; i++)
     {
-        convert_VkDeviceFaultAddressInfoEXT_host_to_win32(&in[i], &out[i]);
+        convert_VkDeviceFaultAddressInfoKHR_host_to_win32(&in[i], &out[i]);
     }
 }
 
-static void convert_VkDeviceFaultVendorInfoEXT_host_to_win32(const VkDeviceFaultVendorInfoEXT *in, VkDeviceFaultVendorInfoEXT32 *out)
+static void convert_VkDeviceFaultVendorInfoKHR_host_to_win32(const VkDeviceFaultVendorInfoKHR *in, VkDeviceFaultVendorInfoKHR32 *out)
 {
     if (!in) return;
 
@@ -30132,7 +30332,7 @@ static void convert_VkDeviceFaultVendorInfoEXT_host_to_win32(const VkDeviceFault
     out->vendorFaultData = in->vendorFaultData;
 }
 
-static void convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(const VkDeviceFaultVendorInfoEXT *in, VkDeviceFaultVendorInfoEXT32 *out, uint32_t count)
+static void convert_VkDeviceFaultVendorInfoKHR_array_host_to_win32(const VkDeviceFaultVendorInfoKHR *in, VkDeviceFaultVendorInfoKHR32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -30140,7 +30340,7 @@ static void convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(const VkDevic
 
     for (i = 0; i < count; i++)
     {
-        convert_VkDeviceFaultVendorInfoEXT_host_to_win32(&in[i], &out[i]);
+        convert_VkDeviceFaultVendorInfoKHR_host_to_win32(&in[i], &out[i]);
     }
 }
 
@@ -30149,9 +30349,59 @@ static void convert_VkDeviceFaultInfoEXT_host_to_win32(const VkDeviceFaultInfoEX
     if (!in) return;
 
     memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
-    convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(in->pAddressInfos, (VkDeviceFaultAddressInfoEXT32 *)UlongToPtr(out->pAddressInfos), 1);
-    convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(in->pVendorInfos, (VkDeviceFaultVendorInfoEXT32 *)UlongToPtr(out->pVendorInfos), 1);
+    convert_VkDeviceFaultAddressInfoKHR_array_host_to_win32(in->pAddressInfos, (VkDeviceFaultAddressInfoKHR32 *)UlongToPtr(out->pAddressInfos), 1);
+    convert_VkDeviceFaultVendorInfoKHR_array_host_to_win32(in->pVendorInfos, (VkDeviceFaultVendorInfoKHR32 *)UlongToPtr(out->pVendorInfos), 1);
     out->pVendorBinaryData = PtrToUlong(in->pVendorBinaryData);
+}
+
+static void convert_VkDeviceFaultInfoKHR_win32_to_host(const VkDeviceFaultInfoKHR32 *in, VkDeviceFaultInfoKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static VkDeviceFaultInfoKHR *convert_VkDeviceFaultInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultInfoKHR32 *in, uint32_t count)
+{
+    VkDeviceFaultInfoKHR *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDeviceFaultInfoKHR_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static void convert_VkDeviceFaultInfoKHR_host_to_win32(const VkDeviceFaultInfoKHR *in, VkDeviceFaultInfoKHR32 *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->groupId = in->groupId;
+    memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
+    convert_VkDeviceFaultAddressInfoKHR_host_to_win32(&in->faultAddressInfo, &out->faultAddressInfo);
+    convert_VkDeviceFaultAddressInfoKHR_host_to_win32(&in->instructionAddressInfo, &out->instructionAddressInfo);
+    convert_VkDeviceFaultVendorInfoKHR_host_to_win32(&in->vendorInfo, &out->vendorInfo);
+}
+
+static void convert_VkDeviceFaultInfoKHR_array_host_to_win32(const VkDeviceFaultInfoKHR *in, VkDeviceFaultInfoKHR32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDeviceFaultInfoKHR_host_to_win32(&in[i], &out[i]);
+    }
 }
 
 static void convert_VkDeviceGroupPresentCapabilitiesKHR_win32_to_host(const VkDeviceGroupPresentCapabilitiesKHR32 *in, VkDeviceGroupPresentCapabilitiesKHR *out)
@@ -32390,6 +32640,20 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceFaultFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceFaultFeaturesKHR32 *in_ext = (const VkPhysicalDeviceFaultFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->deviceFault = in_ext->deviceFault;
+            out_ext->deviceFaultVendorBinary = in_ext->deviceFaultVendorBinary;
+            out_ext->deviceFaultReportMasked = in_ext->deviceFaultReportMasked;
+            out_ext->deviceFaultDeviceLostOnMasked = in_ext->deviceFaultDeviceLostOnMasked;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FORMAT_PACK_FEATURES_ARM:
         {
             VkPhysicalDeviceFormatPackFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -33581,6 +33845,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAbortFeaturesKHR32 *in_ext = (const VkPhysicalDeviceShaderAbortFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->shaderAbort = in_ext->shaderAbort;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
         {
             VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -33669,6 +33944,17 @@ static void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_co
             out_ext->pNext = NULL;
             out_ext->shaderSubgroupClock = in_ext->shaderSubgroupClock;
             out_ext->shaderDeviceClock = in_ext->shaderDeviceClock;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderConstantDataFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderConstantDataFeaturesKHR32 *in_ext = (const VkPhysicalDeviceShaderConstantDataFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->shaderConstantData = in_ext->shaderConstantData;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -35236,6 +35522,18 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceFaultFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR);
+            const VkPhysicalDeviceFaultFeaturesKHR *in_ext = (const VkPhysicalDeviceFaultFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR;
+            out_ext->deviceFault = in_ext->deviceFault;
+            out_ext->deviceFaultVendorBinary = in_ext->deviceFaultVendorBinary;
+            out_ext->deviceFaultReportMasked = in_ext->deviceFaultReportMasked;
+            out_ext->deviceFaultDeviceLostOnMasked = in_ext->deviceFaultDeviceLostOnMasked;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FORMAT_PACK_FEATURES_ARM:
         {
             VkPhysicalDeviceFormatPackFeaturesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FORMAT_PACK_FEATURES_ARM);
@@ -36219,6 +36517,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR);
+            const VkPhysicalDeviceShaderAbortFeaturesKHR *in_ext = (const VkPhysicalDeviceShaderAbortFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR;
+            out_ext->shaderAbort = in_ext->shaderAbort;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
         {
             VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV);
@@ -36296,6 +36603,15 @@ static void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDevi
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR;
             out_ext->shaderSubgroupClock = in_ext->shaderSubgroupClock;
             out_ext->shaderDeviceClock = in_ext->shaderDeviceClock;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR:
+        {
+            VkPhysicalDeviceShaderConstantDataFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR);
+            const VkPhysicalDeviceShaderConstantDataFeaturesKHR *in_ext = (const VkPhysicalDeviceShaderConstantDataFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR;
+            out_ext->shaderConstantData = in_ext->shaderConstantData;
             out_header = (void *)out_ext;
             break;
         }
@@ -38165,6 +38481,15 @@ static void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFaultPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES:
         {
             VkPhysicalDeviceFloatControlsProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -38657,6 +38982,17 @@ static void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_
             VkPhysicalDeviceSchedulingControlsPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM;
             out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAbortPropertiesKHR32 *in_ext = (const VkPhysicalDeviceShaderAbortPropertiesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->maxShaderAbortMessageSize = in_ext->maxShaderAbortMessageSize;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -39321,6 +39657,15 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDe
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFaultPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR);
+            const VkPhysicalDeviceFaultPropertiesKHR *in_ext = (const VkPhysicalDeviceFaultPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR;
+            out_ext->maxDeviceFaultCount = in_ext->maxDeviceFaultCount;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES:
         {
             VkPhysicalDeviceFloatControlsProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES);
@@ -39969,6 +40314,15 @@ static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDe
             const VkPhysicalDeviceSchedulingControlsPropertiesARM *in_ext = (const VkPhysicalDeviceSchedulingControlsPropertiesARM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM;
             out_ext->schedulingControlsFlags = in_ext->schedulingControlsFlags;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR);
+            const VkPhysicalDeviceShaderAbortPropertiesKHR *in_ext = (const VkPhysicalDeviceShaderAbortPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR;
+            out_ext->maxShaderAbortMessageSize = in_ext->maxShaderAbortMessageSize;
             out_header = (void *)out_ext;
             break;
         }
@@ -58410,6 +58764,40 @@ static NTSTATUS thunk32_vkGetDeviceCombinedImageSamplerIndexNVX(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetDeviceFaultDebugInfoKHR(void *args)
+{
+    struct vkGetDeviceFaultDebugInfoKHR_params *params = args;
+
+    TRACE("%p, %p\n", params->device, params->pDebugInfo);
+
+    params->result = vulkan_device_from_handle(params->device)->p_vkGetDeviceFaultDebugInfoKHR(vulkan_device_from_handle(params->device)->host.device, params->pDebugInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetDeviceFaultDebugInfoKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pDebugInfo;
+        VkResult result;
+    } *params = args;
+    VkDeviceFaultDebugInfoKHR pDebugInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, %#x\n", params->device, params->pDebugInfo);
+
+    init_conversion_context(ctx);
+    convert_VkDeviceFaultDebugInfoKHR_win32_to_host(ctx, (VkDeviceFaultDebugInfoKHR32 *)UlongToPtr(params->pDebugInfo), &pDebugInfo_host);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetDeviceFaultDebugInfoKHR(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pDebugInfo_host);
+    convert_VkDeviceFaultDebugInfoKHR_host_to_win32(&pDebugInfo_host, (VkDeviceFaultDebugInfoKHR32 *)UlongToPtr(params->pDebugInfo));
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetDeviceFaultInfoEXT(void *args)
 {
     struct vkGetDeviceFaultInfoEXT_params *params = args;
@@ -58447,6 +58835,42 @@ static NTSTATUS thunk32_vkGetDeviceFaultInfoEXT(void *args)
     params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetDeviceFaultInfoEXT(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pFaultCounts_host, pFaultInfo_host);
     convert_VkDeviceFaultCountsEXT_host_to_win32(&pFaultCounts_host, (VkDeviceFaultCountsEXT32 *)UlongToPtr(params->pFaultCounts));
     convert_VkDeviceFaultInfoEXT_host_to_win32(pFaultInfo_host, (VkDeviceFaultInfoEXT32 *)UlongToPtr(params->pFaultInfo));
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkGetDeviceFaultReportsKHR(void *args)
+{
+    struct vkGetDeviceFaultReportsKHR_params *params = args;
+
+    TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->timeout), params->pFaultCounts, params->pFaultInfo);
+
+    params->result = vulkan_device_from_handle(params->device)->p_vkGetDeviceFaultReportsKHR(vulkan_device_from_handle(params->device)->host.device, params->timeout, params->pFaultCounts, params->pFaultInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetDeviceFaultReportsKHR(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        uint64_t DECLSPEC_ALIGN(8) timeout;
+        PTR32 pFaultCounts;
+        PTR32 pFaultInfo;
+        VkResult result;
+    } *params = args;
+    VkDeviceFaultInfoKHR *pFaultInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->timeout), params->pFaultCounts, params->pFaultInfo);
+
+    init_conversion_context(ctx);
+    pFaultInfo_host = convert_VkDeviceFaultInfoKHR_array_win32_to_host(ctx, (VkDeviceFaultInfoKHR32 *)UlongToPtr(params->pFaultInfo), *(uint32_t *)UlongToPtr(params->pFaultCounts));
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetDeviceFaultReportsKHR(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->timeout, (uint32_t *)UlongToPtr(params->pFaultCounts), pFaultInfo_host);
+    convert_VkDeviceFaultInfoKHR_array_host_to_win32(pFaultInfo_host, (VkDeviceFaultInfoKHR32 *)UlongToPtr(params->pFaultInfo), *(uint32_t *)UlongToPtr(params->pFaultCounts));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -66001,7 +66425,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetDeviceBufferMemoryRequirements,
     thunk64_vkGetDeviceBufferMemoryRequirementsKHR,
     thunk64_vkGetDeviceCombinedImageSamplerIndexNVX,
+    thunk64_vkGetDeviceFaultDebugInfoKHR,
     thunk64_vkGetDeviceFaultInfoEXT,
+    thunk64_vkGetDeviceFaultReportsKHR,
     thunk64_vkGetDeviceGroupPeerMemoryFeatures,
     thunk64_vkGetDeviceGroupPeerMemoryFeaturesKHR,
     thunk64_vkGetDeviceGroupPresentCapabilitiesKHR,
@@ -66731,7 +67157,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetDeviceBufferMemoryRequirements,
     thunk32_vkGetDeviceBufferMemoryRequirementsKHR,
     thunk32_vkGetDeviceCombinedImageSamplerIndexNVX,
+    thunk32_vkGetDeviceFaultDebugInfoKHR,
     thunk32_vkGetDeviceFaultInfoEXT,
+    thunk32_vkGetDeviceFaultReportsKHR,
     thunk32_vkGetDeviceGroupPeerMemoryFeatures,
     thunk32_vkGetDeviceGroupPeerMemoryFeaturesKHR,
     thunk32_vkGetDeviceGroupPresentCapabilitiesKHR,

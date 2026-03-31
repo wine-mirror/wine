@@ -523,7 +523,9 @@ enum unix_call
     unix_vkGetDeviceBufferMemoryRequirements,
     unix_vkGetDeviceBufferMemoryRequirementsKHR,
     unix_vkGetDeviceCombinedImageSamplerIndexNVX,
+    unix_vkGetDeviceFaultDebugInfoKHR,
     unix_vkGetDeviceFaultInfoEXT,
+    unix_vkGetDeviceFaultReportsKHR,
     unix_vkGetDeviceGroupPeerMemoryFeatures,
     unix_vkGetDeviceGroupPeerMemoryFeaturesKHR,
     unix_vkGetDeviceGroupPresentCapabilitiesKHR,
@@ -4548,11 +4550,27 @@ struct vkGetDeviceCombinedImageSamplerIndexNVX_params
     uint64_t result;
 };
 
+struct vkGetDeviceFaultDebugInfoKHR_params
+{
+    VkDevice device;
+    VkDeviceFaultDebugInfoKHR *pDebugInfo;
+    VkResult result;
+};
+
 struct vkGetDeviceFaultInfoEXT_params
 {
     VkDevice device;
     VkDeviceFaultCountsEXT *pFaultCounts;
     VkDeviceFaultInfoEXT *pFaultInfo;
+    VkResult result;
+};
+
+struct vkGetDeviceFaultReportsKHR_params
+{
+    VkDevice device;
+    uint64_t DECLSPEC_ALIGN(8) timeout;
+    uint32_t *pFaultCounts;
+    VkDeviceFaultInfoKHR *pFaultInfo;
     VkResult result;
 };
 

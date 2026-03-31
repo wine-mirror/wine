@@ -121,7 +121,7 @@ struct OH_NativeBuffer;
     #endif
 #endif
 #define VK_FALSE 0
-#define VK_HEADER_VERSION 346
+#define VK_HEADER_VERSION 347
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 4, VK_HEADER_VERSION)
 #define VK_LOD_CLAMP_NONE 1000.0F
 #define VK_LUID_SIZE 8
@@ -642,6 +642,8 @@ typedef void* VkRemoteAddressNV;
 #define VK_KHR_DESCRIPTOR_UPDATE_TEMPLATE_SPEC_VERSION 1
 #define VK_KHR_DEVICE_ADDRESS_COMMANDS_EXTENSION_NAME "VK_KHR_device_address_commands"
 #define VK_KHR_DEVICE_ADDRESS_COMMANDS_SPEC_VERSION 1
+#define VK_KHR_DEVICE_FAULT_EXTENSION_NAME "VK_KHR_device_fault"
+#define VK_KHR_DEVICE_FAULT_SPEC_VERSION 1
 #define VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME "VK_KHR_device_group_creation"
 #define VK_KHR_DEVICE_GROUP_CREATION_SPEC_VERSION 1
 #define VK_KHR_DEVICE_GROUP_EXTENSION_NAME "VK_KHR_device_group"
@@ -776,12 +778,16 @@ typedef void* VkRemoteAddressNV;
 #define VK_KHR_SAMPLER_YCBCR_CONVERSION_SPEC_VERSION 14
 #define VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME "VK_KHR_separate_depth_stencil_layouts"
 #define VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_SPEC_VERSION 1
+#define VK_KHR_SHADER_ABORT_EXTENSION_NAME "VK_KHR_shader_abort"
+#define VK_KHR_SHADER_ABORT_SPEC_VERSION 1
 #define VK_KHR_SHADER_ATOMIC_INT64_EXTENSION_NAME "VK_KHR_shader_atomic_int64"
 #define VK_KHR_SHADER_ATOMIC_INT64_SPEC_VERSION 1
 #define VK_KHR_SHADER_BFLOAT16_EXTENSION_NAME "VK_KHR_shader_bfloat16"
 #define VK_KHR_SHADER_BFLOAT16_SPEC_VERSION 1
 #define VK_KHR_SHADER_CLOCK_EXTENSION_NAME "VK_KHR_shader_clock"
 #define VK_KHR_SHADER_CLOCK_SPEC_VERSION 1
+#define VK_KHR_SHADER_CONSTANT_DATA_EXTENSION_NAME "VK_KHR_shader_constant_data"
+#define VK_KHR_SHADER_CONSTANT_DATA_SPEC_VERSION 1
 #define VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME "VK_KHR_shader_draw_parameters"
 #define VK_KHR_SHADER_DRAW_PARAMETERS_SPEC_VERSION 1
 #define VK_KHR_SHADER_EXPECT_ASSUME_EXTENSION_NAME "VK_KHR_shader_expect_assume"
@@ -1218,6 +1224,7 @@ typedef VkDescriptorUpdateTemplateCreateFlags VkDescriptorUpdateTemplateCreateFl
 typedef VkFlags VkDeviceAddressBindingFlagsEXT;
 typedef VkFlags VkDeviceCreateFlags;
 typedef VkFlags VkDeviceDiagnosticsConfigFlagsNV;
+typedef VkFlags VkDeviceFaultFlagsKHR;
 typedef VkFlags VkDeviceGroupPresentModeFlagsKHR;
 typedef VkFlags VkEventCreateFlags;
 typedef VkFlags VkExternalFenceFeatureFlags;
@@ -2849,23 +2856,44 @@ typedef enum VkDeviceDiagnosticsConfigFlagBitsNV
     VK_DEVICE_DIAGNOSTICS_CONFIG_FLAG_BITS_NV_MAX_ENUM = 0x7fffffff,
 } VkDeviceDiagnosticsConfigFlagBitsNV;
 
-typedef enum VkDeviceFaultAddressTypeEXT
+typedef enum VkDeviceFaultAddressTypeKHR
 {
-    VK_DEVICE_FAULT_ADDRESS_TYPE_NONE_EXT = 0,
-    VK_DEVICE_FAULT_ADDRESS_TYPE_READ_INVALID_EXT = 1,
-    VK_DEVICE_FAULT_ADDRESS_TYPE_WRITE_INVALID_EXT = 2,
-    VK_DEVICE_FAULT_ADDRESS_TYPE_EXECUTE_INVALID_EXT = 3,
-    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_UNKNOWN_EXT = 4,
-    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_INVALID_EXT = 5,
-    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_FAULT_EXT = 6,
-    VK_DEVICE_FAULT_ADDRESS_TYPE_EXT_MAX_ENUM = 0x7fffffff,
-} VkDeviceFaultAddressTypeEXT;
+    VK_DEVICE_FAULT_ADDRESS_TYPE_NONE_KHR = 0,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_READ_INVALID_KHR = 1,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_WRITE_INVALID_KHR = 2,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_EXECUTE_INVALID_KHR = 3,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_UNKNOWN_KHR = 4,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_INVALID_KHR = 5,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_FAULT_KHR = 6,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_KHR_MAX_ENUM = 0x7fffffff,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_NONE_EXT = VK_DEVICE_FAULT_ADDRESS_TYPE_NONE_KHR,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_READ_INVALID_EXT = VK_DEVICE_FAULT_ADDRESS_TYPE_READ_INVALID_KHR,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_WRITE_INVALID_EXT = VK_DEVICE_FAULT_ADDRESS_TYPE_WRITE_INVALID_KHR,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_EXECUTE_INVALID_EXT = VK_DEVICE_FAULT_ADDRESS_TYPE_EXECUTE_INVALID_KHR,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_UNKNOWN_EXT = VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_UNKNOWN_KHR,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_INVALID_EXT = VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_INVALID_KHR,
+    VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_FAULT_EXT = VK_DEVICE_FAULT_ADDRESS_TYPE_INSTRUCTION_POINTER_FAULT_KHR,
+} VkDeviceFaultAddressTypeKHR;
+typedef VkDeviceFaultAddressTypeKHR VkDeviceFaultAddressTypeEXT;
 
-typedef enum VkDeviceFaultVendorBinaryHeaderVersionEXT
+typedef enum VkDeviceFaultFlagBitsKHR
 {
-    VK_DEVICE_FAULT_VENDOR_BINARY_HEADER_VERSION_ONE_EXT = 1,
-    VK_DEVICE_FAULT_VENDOR_BINARY_HEADER_VERSION_EXT_MAX_ENUM = 0x7fffffff,
-} VkDeviceFaultVendorBinaryHeaderVersionEXT;
+    VK_DEVICE_FAULT_FLAG_DEVICE_LOST_KHR = 0x00000001,
+    VK_DEVICE_FAULT_FLAG_MEMORY_ADDRESS_KHR = 0x00000002,
+    VK_DEVICE_FAULT_FLAG_INSTRUCTION_ADDRESS_KHR = 0x00000004,
+    VK_DEVICE_FAULT_FLAG_VENDOR_KHR = 0x00000008,
+    VK_DEVICE_FAULT_FLAG_WATCHDOG_TIMEOUT_KHR = 0x00000010,
+    VK_DEVICE_FAULT_FLAG_OVERFLOW_KHR = 0x00000020,
+    VK_DEVICE_FAULT_FLAG_BITS_KHR_MAX_ENUM = 0x7fffffff,
+} VkDeviceFaultFlagBitsKHR;
+
+typedef enum VkDeviceFaultVendorBinaryHeaderVersionKHR
+{
+    VK_DEVICE_FAULT_VENDOR_BINARY_HEADER_VERSION_ONE_KHR = 1,
+    VK_DEVICE_FAULT_VENDOR_BINARY_HEADER_VERSION_KHR_MAX_ENUM = 0x7fffffff,
+    VK_DEVICE_FAULT_VENDOR_BINARY_HEADER_VERSION_ONE_EXT = VK_DEVICE_FAULT_VENDOR_BINARY_HEADER_VERSION_ONE_KHR,
+} VkDeviceFaultVendorBinaryHeaderVersionKHR;
+typedef VkDeviceFaultVendorBinaryHeaderVersionKHR VkDeviceFaultVendorBinaryHeaderVersionEXT;
 
 typedef enum VkDeviceGroupPresentModeFlagBitsKHR
 {
@@ -5924,9 +5952,13 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_KHR = 1000226004,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD = 1000227000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COHERENT_MEMORY_FEATURES_AMD = 1000229000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CONSTANT_DATA_FEATURES_KHR = 1000231000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_LOCAL_READ_FEATURES = 1000232000,
     VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_LOCATION_INFO = 1000232001,
     VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO = 1000232002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_FEATURES_KHR = 1000233000,
+    VK_STRUCTURE_TYPE_DEVICE_FAULT_SHADER_ABORT_MESSAGE_INFO_KHR = 1000233001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR = 1000233002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT = 1000234000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_QUAD_CONTROL_FEATURES_KHR = 1000235000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT = 1000237000,
@@ -6480,6 +6512,10 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_INDIRECT_EXECUTION_SET_SHADER_LAYOUT_INFO_EXT = 1000572012,
     VK_STRUCTURE_TYPE_GENERATED_COMMANDS_PIPELINE_INFO_EXT = 1000572013,
     VK_STRUCTURE_TYPE_GENERATED_COMMANDS_SHADER_INFO_EXT = 1000572014,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_KHR = 1000573000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR = 1000573001,
+    VK_STRUCTURE_TYPE_DEVICE_FAULT_INFO_KHR = 1000573002,
+    VK_STRUCTURE_TYPE_DEVICE_FAULT_DEBUG_INFO_KHR = 1000573003,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR = 1000574000,
     VK_STRUCTURE_TYPE_MEMORY_BARRIER_ACCESS_FLAGS_3_KHR = 1000574002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA = 1000575000,
@@ -9838,19 +9874,21 @@ typedef struct VkDescriptorUpdateTemplateEntry
 } VkDescriptorUpdateTemplateEntry;
 typedef VkDescriptorUpdateTemplateEntry VkDescriptorUpdateTemplateEntryKHR;
 
-typedef struct VkDeviceFaultAddressInfoEXT
+typedef struct VkDeviceFaultAddressInfoKHR
 {
-    VkDeviceFaultAddressTypeEXT addressType;
+    VkDeviceFaultAddressTypeKHR addressType;
     VkDeviceAddress WINE_VK_ALIGN(8) reportedAddress;
     VkDeviceSize WINE_VK_ALIGN(8) addressPrecision;
-} VkDeviceFaultAddressInfoEXT;
+} VkDeviceFaultAddressInfoKHR;
+typedef VkDeviceFaultAddressInfoKHR VkDeviceFaultAddressInfoEXT;
 
-typedef struct VkDeviceFaultVendorInfoEXT
+typedef struct VkDeviceFaultVendorInfoKHR
 {
     char description[VK_MAX_DESCRIPTION_SIZE];
     uint64_t WINE_VK_ALIGN(8) vendorFaultCode;
     uint64_t WINE_VK_ALIGN(8) vendorFaultData;
-} VkDeviceFaultVendorInfoEXT;
+} VkDeviceFaultVendorInfoKHR;
+typedef VkDeviceFaultVendorInfoKHR VkDeviceFaultVendorInfoEXT;
 
 typedef struct VkDeviceMemoryCopyKHR
 {
@@ -12517,20 +12555,48 @@ typedef struct VkDeviceFaultCountsEXT
     VkDeviceSize WINE_VK_ALIGN(8) vendorBinarySize;
 } VkDeviceFaultCountsEXT;
 
+typedef struct VkDeviceFaultDebugInfoKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t vendorBinarySize;
+    void *pVendorBinaryData;
+} VkDeviceFaultDebugInfoKHR;
+
 typedef struct VkDeviceFaultInfoEXT
 {
     VkStructureType sType;
     void *pNext;
     char description[VK_MAX_DESCRIPTION_SIZE];
-    VkDeviceFaultAddressInfoEXT *pAddressInfos;
-    VkDeviceFaultVendorInfoEXT *pVendorInfos;
+    VkDeviceFaultAddressInfoKHR *pAddressInfos;
+    VkDeviceFaultVendorInfoKHR *pVendorInfos;
     void *pVendorBinaryData;
 } VkDeviceFaultInfoEXT;
 
-typedef struct VkDeviceFaultVendorBinaryHeaderVersionOneEXT
+typedef struct VkDeviceFaultInfoKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceFaultFlagsKHR flags;
+    uint64_t WINE_VK_ALIGN(8) groupId;
+    char description[VK_MAX_DESCRIPTION_SIZE];
+    VkDeviceFaultAddressInfoKHR WINE_VK_ALIGN(8) faultAddressInfo;
+    VkDeviceFaultAddressInfoKHR WINE_VK_ALIGN(8) instructionAddressInfo;
+    VkDeviceFaultVendorInfoKHR WINE_VK_ALIGN(8) vendorInfo;
+} VkDeviceFaultInfoKHR;
+
+typedef struct VkDeviceFaultShaderAbortMessageInfoKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    uint64_t WINE_VK_ALIGN(8) messageDataSize;
+    void *pMessageData;
+} VkDeviceFaultShaderAbortMessageInfoKHR;
+
+typedef struct VkDeviceFaultVendorBinaryHeaderVersionOneKHR
 {
     uint32_t headerSize;
-    VkDeviceFaultVendorBinaryHeaderVersionEXT headerVersion;
+    VkDeviceFaultVendorBinaryHeaderVersionKHR headerVersion;
     uint32_t vendorID;
     uint32_t deviceID;
     uint32_t driverVersion;
@@ -12540,7 +12606,8 @@ typedef struct VkDeviceFaultVendorBinaryHeaderVersionOneEXT
     uint32_t engineNameOffset;
     uint32_t engineVersion;
     uint32_t apiVersion;
-} VkDeviceFaultVendorBinaryHeaderVersionOneEXT;
+} VkDeviceFaultVendorBinaryHeaderVersionOneKHR;
+typedef VkDeviceFaultVendorBinaryHeaderVersionOneKHR VkDeviceFaultVendorBinaryHeaderVersionOneEXT;
 
 typedef struct VkDeviceGroupBindSparseInfo
 {
@@ -15038,6 +15105,23 @@ typedef struct VkPhysicalDeviceFaultFeaturesEXT
     VkBool32 deviceFaultVendorBinary;
 } VkPhysicalDeviceFaultFeaturesEXT;
 
+typedef struct VkPhysicalDeviceFaultFeaturesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 deviceFault;
+    VkBool32 deviceFaultVendorBinary;
+    VkBool32 deviceFaultReportMasked;
+    VkBool32 deviceFaultDeviceLostOnMasked;
+} VkPhysicalDeviceFaultFeaturesKHR;
+
+typedef struct VkPhysicalDeviceFaultPropertiesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t maxDeviceFaultCount;
+} VkPhysicalDeviceFaultPropertiesKHR;
+
 typedef struct VkPhysicalDeviceFeatures2
 {
     VkStructureType sType;
@@ -16501,6 +16585,20 @@ typedef struct VkPhysicalDeviceShader64BitIndexingFeaturesEXT
     VkBool32 shader64BitIndexing;
 } VkPhysicalDeviceShader64BitIndexingFeaturesEXT;
 
+typedef struct VkPhysicalDeviceShaderAbortFeaturesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 shaderAbort;
+} VkPhysicalDeviceShaderAbortFeaturesKHR;
+
+typedef struct VkPhysicalDeviceShaderAbortPropertiesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    uint64_t WINE_VK_ALIGN(8) maxShaderAbortMessageSize;
+} VkPhysicalDeviceShaderAbortPropertiesKHR;
+
 typedef struct VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV
 {
     VkStructureType sType;
@@ -16569,6 +16667,13 @@ typedef struct VkPhysicalDeviceShaderClockFeaturesKHR
     VkBool32 shaderSubgroupClock;
     VkBool32 shaderDeviceClock;
 } VkPhysicalDeviceShaderClockFeaturesKHR;
+
+typedef struct VkPhysicalDeviceShaderConstantDataFeaturesKHR
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 shaderConstantData;
+} VkPhysicalDeviceShaderConstantDataFeaturesKHR;
 
 typedef struct VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM
 {
@@ -20617,7 +20722,9 @@ typedef void (VKAPI_PTR *PFN_vkGetDeviceAccelerationStructureCompatibilityKHR)(V
 typedef void (VKAPI_PTR *PFN_vkGetDeviceBufferMemoryRequirements)(VkDevice device, const VkDeviceBufferMemoryRequirements *pInfo, VkMemoryRequirements2 *pMemoryRequirements);
 typedef void (VKAPI_PTR *PFN_vkGetDeviceBufferMemoryRequirementsKHR)(VkDevice device, const VkDeviceBufferMemoryRequirements *pInfo, VkMemoryRequirements2 *pMemoryRequirements);
 typedef uint64_t (VKAPI_PTR *PFN_vkGetDeviceCombinedImageSamplerIndexNVX)(VkDevice device, uint64_t imageViewIndex, uint64_t samplerIndex);
+typedef VkResult (VKAPI_PTR *PFN_vkGetDeviceFaultDebugInfoKHR)(VkDevice device, VkDeviceFaultDebugInfoKHR *pDebugInfo);
 typedef VkResult (VKAPI_PTR *PFN_vkGetDeviceFaultInfoEXT)(VkDevice device, VkDeviceFaultCountsEXT *pFaultCounts, VkDeviceFaultInfoEXT *pFaultInfo);
+typedef VkResult (VKAPI_PTR *PFN_vkGetDeviceFaultReportsKHR)(VkDevice device, uint64_t timeout, uint32_t *pFaultCounts, VkDeviceFaultInfoKHR *pFaultInfo);
 typedef void (VKAPI_PTR *PFN_vkGetDeviceGroupPeerMemoryFeatures)(VkDevice device, uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags *pPeerMemoryFeatures);
 typedef void (VKAPI_PTR *PFN_vkGetDeviceGroupPeerMemoryFeaturesKHR)(VkDevice device, uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags *pPeerMemoryFeatures);
 typedef VkResult (VKAPI_PTR *PFN_vkGetDeviceGroupPresentCapabilitiesKHR)(VkDevice device, VkDeviceGroupPresentCapabilitiesKHR *pDeviceGroupPresentCapabilities);
@@ -21354,7 +21461,9 @@ void VKAPI_CALL vkGetDeviceAccelerationStructureCompatibilityKHR(VkDevice device
 void VKAPI_CALL vkGetDeviceBufferMemoryRequirements(VkDevice device, const VkDeviceBufferMemoryRequirements *pInfo, VkMemoryRequirements2 *pMemoryRequirements);
 void VKAPI_CALL vkGetDeviceBufferMemoryRequirementsKHR(VkDevice device, const VkDeviceBufferMemoryRequirements *pInfo, VkMemoryRequirements2 *pMemoryRequirements);
 uint64_t VKAPI_CALL vkGetDeviceCombinedImageSamplerIndexNVX(VkDevice device, uint64_t imageViewIndex, uint64_t samplerIndex);
+VkResult VKAPI_CALL vkGetDeviceFaultDebugInfoKHR(VkDevice device, VkDeviceFaultDebugInfoKHR *pDebugInfo);
 VkResult VKAPI_CALL vkGetDeviceFaultInfoEXT(VkDevice device, VkDeviceFaultCountsEXT *pFaultCounts, VkDeviceFaultInfoEXT *pFaultInfo);
+VkResult VKAPI_CALL vkGetDeviceFaultReportsKHR(VkDevice device, uint64_t timeout, uint32_t *pFaultCounts, VkDeviceFaultInfoKHR *pFaultInfo);
 void VKAPI_CALL vkGetDeviceGroupPeerMemoryFeatures(VkDevice device, uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags *pPeerMemoryFeatures);
 void VKAPI_CALL vkGetDeviceGroupPeerMemoryFeaturesKHR(VkDevice device, uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags *pPeerMemoryFeatures);
 VkResult VKAPI_CALL vkGetDeviceGroupPresentCapabilitiesKHR(VkDevice device, VkDeviceGroupPresentCapabilitiesKHR *pDeviceGroupPresentCapabilities);
@@ -22066,7 +22175,9 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_FUNC(vkGetDeviceBufferMemoryRequirements) \
     USE_VK_FUNC(vkGetDeviceBufferMemoryRequirementsKHR) \
     USE_VK_FUNC(vkGetDeviceCombinedImageSamplerIndexNVX) \
+    USE_VK_FUNC(vkGetDeviceFaultDebugInfoKHR) \
     USE_VK_FUNC(vkGetDeviceFaultInfoEXT) \
+    USE_VK_FUNC(vkGetDeviceFaultReportsKHR) \
     USE_VK_FUNC(vkGetDeviceGroupPeerMemoryFeatures) \
     USE_VK_FUNC(vkGetDeviceGroupPeerMemoryFeaturesKHR) \
     USE_VK_FUNC(vkGetDeviceGroupPresentCapabilitiesKHR) \
@@ -22422,6 +22533,7 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_KHR_depth_stencil_resolve) \
     USE_VK_EXT(VK_KHR_descriptor_update_template) \
     USE_VK_EXT(VK_KHR_device_address_commands) \
+    USE_VK_EXT(VK_KHR_device_fault) \
     USE_VK_EXT(VK_KHR_device_group) \
     USE_VK_EXT(VK_KHR_draw_indirect_count) \
     USE_VK_EXT(VK_KHR_driver_properties) \
@@ -22476,9 +22588,11 @@ VkResult VKAPI_CALL vkWriteSamplerDescriptorsEXT(VkDevice device, uint32_t sampl
     USE_VK_EXT(VK_KHR_sampler_mirror_clamp_to_edge) \
     USE_VK_EXT(VK_KHR_sampler_ycbcr_conversion) \
     USE_VK_EXT(VK_KHR_separate_depth_stencil_layouts) \
+    USE_VK_EXT(VK_KHR_shader_abort) \
     USE_VK_EXT(VK_KHR_shader_atomic_int64) \
     USE_VK_EXT(VK_KHR_shader_bfloat16) \
     USE_VK_EXT(VK_KHR_shader_clock) \
+    USE_VK_EXT(VK_KHR_shader_constant_data) \
     USE_VK_EXT(VK_KHR_shader_draw_parameters) \
     USE_VK_EXT(VK_KHR_shader_expect_assume) \
     USE_VK_EXT(VK_KHR_shader_float16_int8) \
