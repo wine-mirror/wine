@@ -2849,9 +2849,9 @@ static void remove_data( struct request *request, int count )
 }
 
 /* read some more data into the read buffer */
-static DWORD read_more_data( struct request *request, int max_len, BOOL notify )
+static DWORD read_more_data( struct request *request )
 {
-    int len;
+    int len, max_len;
     DWORD ret;
 
     if (request->read.pos)
@@ -2859,13 +2859,9 @@ static DWORD read_more_data( struct request *request, int max_len, BOOL notify )
         if (request->read.size) memmove( request->read.buf, request->read.buf + request->read.pos, request->read.size );
         request->read.pos = 0;
     }
-    if (max_len == -1) max_len = sizeof(request->read.buf);
+    max_len = sizeof(request->read.buf) - request->read.size;
 
-    if (notify) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
-
-    ret = netconn_recv( request->netconn, request->read.buf + request->read.size, max_len - request->read.size, 0, &len );
-
-    if (notify) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, &len, sizeof(len) );
+    ret = netconn_recv( request->netconn, request->read.buf + request->read.size, max_len, 0, &len );
 
     request->read_reply_len += len;
     request->read.size += len;
@@ -2893,7 +2889,7 @@ static DWORD read_line( struct request *request, char *buffer, DWORD *len )
         remove_data( request, bytes_read );
         if (eol) break;
 
-        if ((ret = read_more_data( request, -1, FALSE ))) return ret;
+        if ((ret = read_more_data( request ))) return ret;
         if (!request->read.size)
         {
             *len = 0;
