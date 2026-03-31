@@ -2092,14 +2092,11 @@ static void testCertOpenSystemStore(void)
     size = sizeof(pp_type);
     pp_type = 0xdeadbeef;
     ret = CryptGetProvParam(prov, PP_PROVTYPE, (BYTE *)&pp_type, &size, 0);
-    todo_wine
     ok(ret, "CryptGetProvParam failed: %08lx\n", GetLastError());
-    todo_wine
     ok(pp_type == PROV_RSA_FULL, "got %lu\n", pp_type);
 
     CertCloseStore(store, 0);
     ret = CryptReleaseContext(prov, 0);
-    todo_wine
     ok(ret, "CryptReleaseContext: %08lx\n", GetLastError());
 }
 

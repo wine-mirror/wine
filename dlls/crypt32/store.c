@@ -948,7 +948,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv,
         return 0;
     }
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, hProv,
-     CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_NO_CRYPT_RELEASE_FLAG, szSubSystemProtocol);
 }
 
 HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
@@ -960,7 +960,7 @@ HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
         return 0;
     }
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, hProv,
-     CERT_SYSTEM_STORE_CURRENT_USER, szSubSystemProtocol);
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_NO_CRYPT_RELEASE_FLAG, szSubSystemProtocol);
 }
 
 PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev)
