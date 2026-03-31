@@ -10616,6 +10616,10 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
     }
 }
 
+static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties232 *out);
+#ifdef _WIN64
+static void convert_VkPhysicalDeviceProperties2_host_to_win64(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties2 *out);
+#endif
 static void convert_VkAcquireNextImageInfoKHR_win32_to_unwrapped_host(const VkAcquireNextImageInfoKHR32 *in, VkAcquireNextImageInfoKHR *out)
 {
     if (!in) return;
@@ -38203,14 +38207,2681 @@ static void convert_VkPhysicalDeviceProperties_host_to_win32(const VkPhysicalDev
     out->sparseProperties = in->sparseProperties;
 }
 
-static void convert_VkPhysicalDeviceLayeredApiPropertiesKHR_win32_to_host(const VkPhysicalDeviceLayeredApiPropertiesKHR32 *in, VkPhysicalDeviceLayeredApiPropertiesKHR *out)
+#ifdef _WIN64
+static void convert_VkPhysicalDeviceLayeredApiPropertiesKHR_win64_to_host(struct conversion_context *ctx, const VkPhysicalDeviceLayeredApiPropertiesKHR *in, VkPhysicalDeviceLayeredApiPropertiesKHR *out)
 {
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = NULL;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceLayeredApiVulkanPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static VkPhysicalDeviceLayeredApiPropertiesKHR *convert_VkPhysicalDeviceLayeredApiPropertiesKHR_array_win64_to_host(struct conversion_context *ctx, const VkPhysicalDeviceLayeredApiPropertiesKHR *in, uint32_t count)
+{
+    VkPhysicalDeviceLayeredApiPropertiesKHR *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkPhysicalDeviceLayeredApiPropertiesKHR_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static void convert_VkPhysicalDeviceProperties2_win64_to_host(struct conversion_context *ctx, const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties2 *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceAccelerationStructurePropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_PROPERTIES_HUAWEI:
+        {
+            VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_PROPERTIES_HUAWEI;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceComputeShaderDerivativesPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceConservativeRasterizationPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2PropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceCooperativeMatrixPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrixPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceCopyMemoryIndirectPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceCustomBorderColorPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES:
+        {
+            VkPhysicalDeviceDepthStencilResolveProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_DENSITY_MAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDescriptorBufferDensityMapPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_DENSITY_MAP_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDescriptorBufferPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_TENSOR_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceDescriptorBufferTensorPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDescriptorBufferTensorPropertiesARM *in_ext = (const VkPhysicalDeviceDescriptorBufferTensorPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_TENSOR_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->tensorCaptureReplayDescriptorDataSize = in_ext->tensorCaptureReplayDescriptorDataSize;
+            out_ext->tensorViewCaptureReplayDescriptorDataSize = in_ext->tensorViewCaptureReplayDescriptorDataSize;
+            out_ext->tensorDescriptorSize = in_ext->tensorDescriptorSize;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDescriptorHeapPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_TENSOR_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceDescriptorHeapTensorPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_TENSOR_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES:
+        {
+            VkPhysicalDeviceDescriptorIndexingProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDiscardRectanglePropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES:
+        {
+            VkPhysicalDeviceDriverProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceExtendedDynamicState3PropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_SPARSE_ADDRESS_SPACE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceExtendedSparseAddressSpacePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_SPARSE_ADDRESS_SPACE_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceExternalMemoryHostPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFaultPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES:
+        {
+            VkPhysicalDeviceFloatControlsProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceFragmentDensityMap2PropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_LAYERED_PROPERTIES_VALVE:
+        {
+            VkPhysicalDeviceFragmentDensityMapLayeredPropertiesVALVE *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_LAYERED_PROPERTIES_VALVE;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceFragmentDensityMapOffsetPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceFragmentDensityMapPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFragmentShadingRatePropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES:
+        {
+            VkPhysicalDeviceHostImageCopyProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceHostImageCopyProperties *in_ext = (const VkPhysicalDeviceHostImageCopyProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_ext->copySrcLayoutCount = in_ext->copySrcLayoutCount;
+            out_ext->pCopySrcLayouts = in_ext->pCopySrcLayouts;
+            out_ext->copyDstLayoutCount = in_ext->copyDstLayoutCount;
+            out_ext->pCopyDstLayouts = in_ext->pCopyDstLayouts;
+            memcpy(out_ext->optimalTilingLayoutUUID, in_ext->optimalTilingLayoutUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            out_ext->identicalMemoryTypeRequirements = in_ext->identicalMemoryTypeRequirements;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES:
+        {
+            VkPhysicalDeviceIDProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlPropertiesMESA *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_2_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceImageProcessing2PropertiesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_2_PROPERTIES_QCOM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceImageProcessingPropertiesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES:
+        {
+            VkPhysicalDeviceInlineUniformBlockProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_LIST_KHR:
+        {
+            VkPhysicalDeviceLayeredApiPropertiesListKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceLayeredApiPropertiesListKHR *in_ext = (const VkPhysicalDeviceLayeredApiPropertiesListKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_LIST_KHR;
+            out_ext->pNext = NULL;
+            out_ext->layeredApiCount = in_ext->layeredApiCount;
+            out_ext->pLayeredApis = convert_VkPhysicalDeviceLayeredApiPropertiesKHR_array_win64_to_host(ctx, in_ext->pLayeredApis, in_ext->layeredApiCount);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_DRIVER_PROPERTIES_MSFT:
+        {
+            VkPhysicalDeviceLayeredDriverPropertiesMSFT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_DRIVER_PROPERTIES_MSFT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES:
+        {
+            VkPhysicalDeviceLineRasterizationProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_10_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceMaintenance10PropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_10_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance3Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance4Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance5Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance6Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_7_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceMaintenance7PropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_7_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_9_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceMaintenance9PropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_9_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMemoryDecompressionPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMeshShaderPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceMeshShaderPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMultiDrawPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES:
+        {
+            VkPhysicalDeviceMultiviewProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NESTED_COMMAND_BUFFER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceNestedCommandBufferPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NESTED_COMMAND_BUFFER_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceOpacityMicromapPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceOpticalFlowPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT:
+        {
+            VkPhysicalDevicePCIBusInfoPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_COUNTERS_BY_REGION_PROPERTIES_ARM:
+        {
+            VkPhysicalDevicePerformanceCountersByRegionPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_COUNTERS_BY_REGION_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR:
+        {
+            VkPhysicalDevicePerformanceQueryPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_PROPERTIES_KHR:
+        {
+            VkPhysicalDevicePipelineBinaryPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES:
+        {
+            VkPhysicalDevicePipelineRobustnessProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES:
+        {
+            VkPhysicalDevicePointClippingProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES:
+        {
+            VkPhysicalDeviceProtectedMemoryProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceProvokingVertexPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_CONSTANT_BANK_PROPERTIES_NV:
+        {
+            VkPhysicalDevicePushConstantBankPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_CONSTANT_BANK_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES:
+        {
+            VkPhysicalDevicePushDescriptorProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceRayTracingPipelinePropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceRayTracingPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceRobustness2PropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceSampleLocationsPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES:
+        {
+            VkPhysicalDeviceSamplerFilterMinmaxProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAbortPropertiesKHR *in_ext = (const VkPhysicalDeviceShaderAbortPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->maxShaderAbortMessageSize = in_ext->maxShaderAbortMessageSize;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD:
+        {
+            VkPhysicalDeviceShaderCoreProperties2AMD *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD:
+        {
+            VkPhysicalDeviceShaderCorePropertiesAMD *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderCorePropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INSTRUMENTATION_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderInstrumentationPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INSTRUMENTATION_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES:
+        {
+            VkPhysicalDeviceShaderIntegerDotProductProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceShaderSMBuiltinsPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImagePropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceShadingRateImagePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES:
+        {
+            VkPhysicalDeviceSubgroupProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES:
+        {
+            VkPhysicalDeviceSubgroupSizeControlProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI:
+        {
+            VkPhysicalDeviceSubpassShadingPropertiesHUAWEI *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TENSOR_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceTensorPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TENSOR_PROPERTIES_ARM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES:
+        {
+            VkPhysicalDeviceTexelBufferAlignmentProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *in_ext = (const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->queueSubmitBoundary = in_ext->queueSubmitBoundary;
+            out_ext->tileBufferTransfers = in_ext->tileBufferTransfers;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_SHADING_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceTileShadingPropertiesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_SHADING_PROPERTIES_QCOM;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES:
+        {
+            VkPhysicalDeviceTimelineSemaphoreProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceTransformFeedbackPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES:
+        {
+            VkPhysicalDeviceVertexAttributeDivisorProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan11Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan12Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan13Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan14Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static void convert_VkPhysicalDeviceLayeredApiPropertiesKHR_host_to_win64(const VkPhysicalDeviceLayeredApiPropertiesKHR *in, VkPhysicalDeviceLayeredApiPropertiesKHR *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->vendorID = in->vendorID;
+    out->deviceID = in->deviceID;
+    out->layeredAPI = in->layeredAPI;
+    memcpy(out->deviceName, in->deviceName, VK_MAX_PHYSICAL_DEVICE_NAME_SIZE * sizeof(char));
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceLayeredApiVulkanPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR);
+            const VkPhysicalDeviceLayeredApiVulkanPropertiesKHR *in_ext = (const VkPhysicalDeviceLayeredApiVulkanPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR;
+            convert_VkPhysicalDeviceProperties2_host_to_win64(&in_ext->properties, &out_ext->properties);
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static void convert_VkPhysicalDeviceLayeredApiPropertiesKHR_array_host_to_win64(const VkPhysicalDeviceLayeredApiPropertiesKHR *in, VkPhysicalDeviceLayeredApiPropertiesKHR *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkPhysicalDeviceLayeredApiPropertiesKHR_host_to_win64(&in[i], &out[i]);
+    }
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static void convert_VkPhysicalDeviceProperties2_host_to_win64(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties2 *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->properties = in->properties;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceAccelerationStructurePropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR);
+            const VkPhysicalDeviceAccelerationStructurePropertiesKHR *in_ext = (const VkPhysicalDeviceAccelerationStructurePropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+            out_ext->maxGeometryCount = in_ext->maxGeometryCount;
+            out_ext->maxInstanceCount = in_ext->maxInstanceCount;
+            out_ext->maxPrimitiveCount = in_ext->maxPrimitiveCount;
+            out_ext->maxPerStageDescriptorAccelerationStructures = in_ext->maxPerStageDescriptorAccelerationStructures;
+            out_ext->maxPerStageDescriptorUpdateAfterBindAccelerationStructures = in_ext->maxPerStageDescriptorUpdateAfterBindAccelerationStructures;
+            out_ext->maxDescriptorSetAccelerationStructures = in_ext->maxDescriptorSetAccelerationStructures;
+            out_ext->maxDescriptorSetUpdateAfterBindAccelerationStructures = in_ext->maxDescriptorSetUpdateAfterBindAccelerationStructures;
+            out_ext->minAccelerationStructureScratchOffsetAlignment = in_ext->minAccelerationStructureScratchOffsetAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT);
+            const VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT *in_ext = (const VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT;
+            out_ext->advancedBlendMaxColorAttachments = in_ext->advancedBlendMaxColorAttachments;
+            out_ext->advancedBlendIndependentBlend = in_ext->advancedBlendIndependentBlend;
+            out_ext->advancedBlendNonPremultipliedSrcColor = in_ext->advancedBlendNonPremultipliedSrcColor;
+            out_ext->advancedBlendNonPremultipliedDstColor = in_ext->advancedBlendNonPremultipliedDstColor;
+            out_ext->advancedBlendCorrelatedOverlap = in_ext->advancedBlendCorrelatedOverlap;
+            out_ext->advancedBlendAllOperations = in_ext->advancedBlendAllOperations;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV);
+            const VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *in_ext = (const VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->maxVerticesPerCluster = in_ext->maxVerticesPerCluster;
+            out_ext->maxTrianglesPerCluster = in_ext->maxTrianglesPerCluster;
+            out_ext->clusterScratchByteAlignment = in_ext->clusterScratchByteAlignment;
+            out_ext->clusterByteAlignment = in_ext->clusterByteAlignment;
+            out_ext->clusterTemplateByteAlignment = in_ext->clusterTemplateByteAlignment;
+            out_ext->clusterBottomLevelByteAlignment = in_ext->clusterBottomLevelByteAlignment;
+            out_ext->clusterTemplateBoundsByteAlignment = in_ext->clusterTemplateBoundsByteAlignment;
+            out_ext->maxClusterGeometryIndex = in_ext->maxClusterGeometryIndex;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_PROPERTIES_HUAWEI:
+        {
+            VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_PROPERTIES_HUAWEI);
+            const VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI *in_ext = (const VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_PROPERTIES_HUAWEI;
+            memcpy(out_ext->maxWorkGroupCount, in_ext->maxWorkGroupCount, 3 * sizeof(uint32_t));
+            memcpy(out_ext->maxWorkGroupSize, in_ext->maxWorkGroupSize, 3 * sizeof(uint32_t));
+            out_ext->maxOutputClusterCount = in_ext->maxOutputClusterCount;
+            out_ext->indirectBufferOffsetAlignment = in_ext->indirectBufferOffsetAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceComputeShaderDerivativesPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_PROPERTIES_KHR);
+            const VkPhysicalDeviceComputeShaderDerivativesPropertiesKHR *in_ext = (const VkPhysicalDeviceComputeShaderDerivativesPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_PROPERTIES_KHR;
+            out_ext->meshAndTaskShaderDerivatives = in_ext->meshAndTaskShaderDerivatives;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceConservativeRasterizationPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT);
+            const VkPhysicalDeviceConservativeRasterizationPropertiesEXT *in_ext = (const VkPhysicalDeviceConservativeRasterizationPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
+            out_ext->primitiveOverestimationSize = in_ext->primitiveOverestimationSize;
+            out_ext->maxExtraPrimitiveOverestimationSize = in_ext->maxExtraPrimitiveOverestimationSize;
+            out_ext->extraPrimitiveOverestimationSizeGranularity = in_ext->extraPrimitiveOverestimationSizeGranularity;
+            out_ext->primitiveUnderestimation = in_ext->primitiveUnderestimation;
+            out_ext->conservativePointAndLineRasterization = in_ext->conservativePointAndLineRasterization;
+            out_ext->degenerateTrianglesRasterized = in_ext->degenerateTrianglesRasterized;
+            out_ext->degenerateLinesRasterized = in_ext->degenerateLinesRasterized;
+            out_ext->fullyCoveredFragmentShaderInputVariable = in_ext->fullyCoveredFragmentShaderInputVariable;
+            out_ext->conservativeRasterizationPostDepthCoverage = in_ext->conservativeRasterizationPostDepthCoverage;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2PropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV);
+            const VkPhysicalDeviceCooperativeMatrix2PropertiesNV *in_ext = (const VkPhysicalDeviceCooperativeMatrix2PropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV;
+            out_ext->cooperativeMatrixWorkgroupScopeMaxWorkgroupSize = in_ext->cooperativeMatrixWorkgroupScopeMaxWorkgroupSize;
+            out_ext->cooperativeMatrixFlexibleDimensionsMaxDimension = in_ext->cooperativeMatrixFlexibleDimensionsMaxDimension;
+            out_ext->cooperativeMatrixWorkgroupScopeReservedSharedMemory = in_ext->cooperativeMatrixWorkgroupScopeReservedSharedMemory;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceCooperativeMatrixPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_KHR);
+            const VkPhysicalDeviceCooperativeMatrixPropertiesKHR *in_ext = (const VkPhysicalDeviceCooperativeMatrixPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_KHR;
+            out_ext->cooperativeMatrixSupportedStages = in_ext->cooperativeMatrixSupportedStages;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrixPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV);
+            const VkPhysicalDeviceCooperativeMatrixPropertiesNV *in_ext = (const VkPhysicalDeviceCooperativeMatrixPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV;
+            out_ext->cooperativeMatrixSupportedStages = in_ext->cooperativeMatrixSupportedStages;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV);
+            const VkPhysicalDeviceCooperativeVectorPropertiesNV *in_ext = (const VkPhysicalDeviceCooperativeVectorPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV;
+            out_ext->cooperativeVectorSupportedStages = in_ext->cooperativeVectorSupportedStages;
+            out_ext->cooperativeVectorTrainingFloat16Accumulation = in_ext->cooperativeVectorTrainingFloat16Accumulation;
+            out_ext->cooperativeVectorTrainingFloat32Accumulation = in_ext->cooperativeVectorTrainingFloat32Accumulation;
+            out_ext->maxCooperativeVectorComponents = in_ext->maxCooperativeVectorComponents;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceCopyMemoryIndirectPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_KHR);
+            const VkPhysicalDeviceCopyMemoryIndirectPropertiesKHR *in_ext = (const VkPhysicalDeviceCopyMemoryIndirectPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_KHR;
+            out_ext->supportedQueues = in_ext->supportedQueues;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceCustomBorderColorPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT);
+            const VkPhysicalDeviceCustomBorderColorPropertiesEXT *in_ext = (const VkPhysicalDeviceCustomBorderColorPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT;
+            out_ext->maxCustomBorderColorSamplers = in_ext->maxCustomBorderColorSamplers;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES:
+        {
+            VkPhysicalDeviceDepthStencilResolveProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES);
+            const VkPhysicalDeviceDepthStencilResolveProperties *in_ext = (const VkPhysicalDeviceDepthStencilResolveProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES;
+            out_ext->supportedDepthResolveModes = in_ext->supportedDepthResolveModes;
+            out_ext->supportedStencilResolveModes = in_ext->supportedStencilResolveModes;
+            out_ext->independentResolveNone = in_ext->independentResolveNone;
+            out_ext->independentResolve = in_ext->independentResolve;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_DENSITY_MAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDescriptorBufferDensityMapPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_DENSITY_MAP_PROPERTIES_EXT);
+            const VkPhysicalDeviceDescriptorBufferDensityMapPropertiesEXT *in_ext = (const VkPhysicalDeviceDescriptorBufferDensityMapPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_DENSITY_MAP_PROPERTIES_EXT;
+            out_ext->combinedImageSamplerDensityMapDescriptorSize = in_ext->combinedImageSamplerDensityMapDescriptorSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDescriptorBufferPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT);
+            const VkPhysicalDeviceDescriptorBufferPropertiesEXT *in_ext = (const VkPhysicalDeviceDescriptorBufferPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT;
+            out_ext->combinedImageSamplerDescriptorSingleArray = in_ext->combinedImageSamplerDescriptorSingleArray;
+            out_ext->bufferlessPushDescriptors = in_ext->bufferlessPushDescriptors;
+            out_ext->allowSamplerImageViewPostSubmitCreation = in_ext->allowSamplerImageViewPostSubmitCreation;
+            out_ext->descriptorBufferOffsetAlignment = in_ext->descriptorBufferOffsetAlignment;
+            out_ext->maxDescriptorBufferBindings = in_ext->maxDescriptorBufferBindings;
+            out_ext->maxResourceDescriptorBufferBindings = in_ext->maxResourceDescriptorBufferBindings;
+            out_ext->maxSamplerDescriptorBufferBindings = in_ext->maxSamplerDescriptorBufferBindings;
+            out_ext->maxEmbeddedImmutableSamplerBindings = in_ext->maxEmbeddedImmutableSamplerBindings;
+            out_ext->maxEmbeddedImmutableSamplers = in_ext->maxEmbeddedImmutableSamplers;
+            out_ext->bufferCaptureReplayDescriptorDataSize = in_ext->bufferCaptureReplayDescriptorDataSize;
+            out_ext->imageCaptureReplayDescriptorDataSize = in_ext->imageCaptureReplayDescriptorDataSize;
+            out_ext->imageViewCaptureReplayDescriptorDataSize = in_ext->imageViewCaptureReplayDescriptorDataSize;
+            out_ext->samplerCaptureReplayDescriptorDataSize = in_ext->samplerCaptureReplayDescriptorDataSize;
+            out_ext->accelerationStructureCaptureReplayDescriptorDataSize = in_ext->accelerationStructureCaptureReplayDescriptorDataSize;
+            out_ext->samplerDescriptorSize = in_ext->samplerDescriptorSize;
+            out_ext->combinedImageSamplerDescriptorSize = in_ext->combinedImageSamplerDescriptorSize;
+            out_ext->sampledImageDescriptorSize = in_ext->sampledImageDescriptorSize;
+            out_ext->storageImageDescriptorSize = in_ext->storageImageDescriptorSize;
+            out_ext->uniformTexelBufferDescriptorSize = in_ext->uniformTexelBufferDescriptorSize;
+            out_ext->robustUniformTexelBufferDescriptorSize = in_ext->robustUniformTexelBufferDescriptorSize;
+            out_ext->storageTexelBufferDescriptorSize = in_ext->storageTexelBufferDescriptorSize;
+            out_ext->robustStorageTexelBufferDescriptorSize = in_ext->robustStorageTexelBufferDescriptorSize;
+            out_ext->uniformBufferDescriptorSize = in_ext->uniformBufferDescriptorSize;
+            out_ext->robustUniformBufferDescriptorSize = in_ext->robustUniformBufferDescriptorSize;
+            out_ext->storageBufferDescriptorSize = in_ext->storageBufferDescriptorSize;
+            out_ext->robustStorageBufferDescriptorSize = in_ext->robustStorageBufferDescriptorSize;
+            out_ext->inputAttachmentDescriptorSize = in_ext->inputAttachmentDescriptorSize;
+            out_ext->accelerationStructureDescriptorSize = in_ext->accelerationStructureDescriptorSize;
+            out_ext->maxSamplerDescriptorBufferRange = in_ext->maxSamplerDescriptorBufferRange;
+            out_ext->maxResourceDescriptorBufferRange = in_ext->maxResourceDescriptorBufferRange;
+            out_ext->samplerDescriptorBufferAddressSpaceSize = in_ext->samplerDescriptorBufferAddressSpaceSize;
+            out_ext->resourceDescriptorBufferAddressSpaceSize = in_ext->resourceDescriptorBufferAddressSpaceSize;
+            out_ext->descriptorBufferAddressSpaceSize = in_ext->descriptorBufferAddressSpaceSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_TENSOR_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceDescriptorBufferTensorPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_TENSOR_PROPERTIES_ARM);
+            const VkPhysicalDeviceDescriptorBufferTensorPropertiesARM *in_ext = (const VkPhysicalDeviceDescriptorBufferTensorPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_TENSOR_PROPERTIES_ARM;
+            out_ext->tensorCaptureReplayDescriptorDataSize = in_ext->tensorCaptureReplayDescriptorDataSize;
+            out_ext->tensorViewCaptureReplayDescriptorDataSize = in_ext->tensorViewCaptureReplayDescriptorDataSize;
+            out_ext->tensorDescriptorSize = in_ext->tensorDescriptorSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDescriptorHeapPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_PROPERTIES_EXT);
+            const VkPhysicalDeviceDescriptorHeapPropertiesEXT *in_ext = (const VkPhysicalDeviceDescriptorHeapPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_PROPERTIES_EXT;
+            out_ext->samplerHeapAlignment = in_ext->samplerHeapAlignment;
+            out_ext->resourceHeapAlignment = in_ext->resourceHeapAlignment;
+            out_ext->maxSamplerHeapSize = in_ext->maxSamplerHeapSize;
+            out_ext->maxResourceHeapSize = in_ext->maxResourceHeapSize;
+            out_ext->minSamplerHeapReservedRange = in_ext->minSamplerHeapReservedRange;
+            out_ext->minSamplerHeapReservedRangeWithEmbedded = in_ext->minSamplerHeapReservedRangeWithEmbedded;
+            out_ext->minResourceHeapReservedRange = in_ext->minResourceHeapReservedRange;
+            out_ext->samplerDescriptorSize = in_ext->samplerDescriptorSize;
+            out_ext->imageDescriptorSize = in_ext->imageDescriptorSize;
+            out_ext->bufferDescriptorSize = in_ext->bufferDescriptorSize;
+            out_ext->samplerDescriptorAlignment = in_ext->samplerDescriptorAlignment;
+            out_ext->imageDescriptorAlignment = in_ext->imageDescriptorAlignment;
+            out_ext->bufferDescriptorAlignment = in_ext->bufferDescriptorAlignment;
+            out_ext->maxPushDataSize = in_ext->maxPushDataSize;
+            out_ext->imageCaptureReplayOpaqueDataSize = in_ext->imageCaptureReplayOpaqueDataSize;
+            out_ext->maxDescriptorHeapEmbeddedSamplers = in_ext->maxDescriptorHeapEmbeddedSamplers;
+            out_ext->samplerYcbcrConversionCount = in_ext->samplerYcbcrConversionCount;
+            out_ext->sparseDescriptorHeaps = in_ext->sparseDescriptorHeaps;
+            out_ext->protectedDescriptorHeaps = in_ext->protectedDescriptorHeaps;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_TENSOR_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceDescriptorHeapTensorPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_TENSOR_PROPERTIES_ARM);
+            const VkPhysicalDeviceDescriptorHeapTensorPropertiesARM *in_ext = (const VkPhysicalDeviceDescriptorHeapTensorPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_TENSOR_PROPERTIES_ARM;
+            out_ext->tensorDescriptorSize = in_ext->tensorDescriptorSize;
+            out_ext->tensorDescriptorAlignment = in_ext->tensorDescriptorAlignment;
+            out_ext->tensorCaptureReplayOpaqueDataSize = in_ext->tensorCaptureReplayOpaqueDataSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES:
+        {
+            VkPhysicalDeviceDescriptorIndexingProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES);
+            const VkPhysicalDeviceDescriptorIndexingProperties *in_ext = (const VkPhysicalDeviceDescriptorIndexingProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
+            out_ext->maxUpdateAfterBindDescriptorsInAllPools = in_ext->maxUpdateAfterBindDescriptorsInAllPools;
+            out_ext->shaderUniformBufferArrayNonUniformIndexingNative = in_ext->shaderUniformBufferArrayNonUniformIndexingNative;
+            out_ext->shaderSampledImageArrayNonUniformIndexingNative = in_ext->shaderSampledImageArrayNonUniformIndexingNative;
+            out_ext->shaderStorageBufferArrayNonUniformIndexingNative = in_ext->shaderStorageBufferArrayNonUniformIndexingNative;
+            out_ext->shaderStorageImageArrayNonUniformIndexingNative = in_ext->shaderStorageImageArrayNonUniformIndexingNative;
+            out_ext->shaderInputAttachmentArrayNonUniformIndexingNative = in_ext->shaderInputAttachmentArrayNonUniformIndexingNative;
+            out_ext->robustBufferAccessUpdateAfterBind = in_ext->robustBufferAccessUpdateAfterBind;
+            out_ext->quadDivergentImplicitLod = in_ext->quadDivergentImplicitLod;
+            out_ext->maxPerStageDescriptorUpdateAfterBindSamplers = in_ext->maxPerStageDescriptorUpdateAfterBindSamplers;
+            out_ext->maxPerStageDescriptorUpdateAfterBindUniformBuffers = in_ext->maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+            out_ext->maxPerStageDescriptorUpdateAfterBindStorageBuffers = in_ext->maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+            out_ext->maxPerStageDescriptorUpdateAfterBindSampledImages = in_ext->maxPerStageDescriptorUpdateAfterBindSampledImages;
+            out_ext->maxPerStageDescriptorUpdateAfterBindStorageImages = in_ext->maxPerStageDescriptorUpdateAfterBindStorageImages;
+            out_ext->maxPerStageDescriptorUpdateAfterBindInputAttachments = in_ext->maxPerStageDescriptorUpdateAfterBindInputAttachments;
+            out_ext->maxPerStageUpdateAfterBindResources = in_ext->maxPerStageUpdateAfterBindResources;
+            out_ext->maxDescriptorSetUpdateAfterBindSamplers = in_ext->maxDescriptorSetUpdateAfterBindSamplers;
+            out_ext->maxDescriptorSetUpdateAfterBindUniformBuffers = in_ext->maxDescriptorSetUpdateAfterBindUniformBuffers;
+            out_ext->maxDescriptorSetUpdateAfterBindUniformBuffersDynamic = in_ext->maxDescriptorSetUpdateAfterBindUniformBuffersDynamic;
+            out_ext->maxDescriptorSetUpdateAfterBindStorageBuffers = in_ext->maxDescriptorSetUpdateAfterBindStorageBuffers;
+            out_ext->maxDescriptorSetUpdateAfterBindStorageBuffersDynamic = in_ext->maxDescriptorSetUpdateAfterBindStorageBuffersDynamic;
+            out_ext->maxDescriptorSetUpdateAfterBindSampledImages = in_ext->maxDescriptorSetUpdateAfterBindSampledImages;
+            out_ext->maxDescriptorSetUpdateAfterBindStorageImages = in_ext->maxDescriptorSetUpdateAfterBindStorageImages;
+            out_ext->maxDescriptorSetUpdateAfterBindInputAttachments = in_ext->maxDescriptorSetUpdateAfterBindInputAttachments;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_EXT);
+            const VkPhysicalDeviceDeviceGeneratedCommandsPropertiesEXT *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_EXT;
+            out_ext->maxIndirectPipelineCount = in_ext->maxIndirectPipelineCount;
+            out_ext->maxIndirectShaderObjectCount = in_ext->maxIndirectShaderObjectCount;
+            out_ext->maxIndirectSequenceCount = in_ext->maxIndirectSequenceCount;
+            out_ext->maxIndirectCommandsTokenCount = in_ext->maxIndirectCommandsTokenCount;
+            out_ext->maxIndirectCommandsTokenOffset = in_ext->maxIndirectCommandsTokenOffset;
+            out_ext->maxIndirectCommandsIndirectStride = in_ext->maxIndirectCommandsIndirectStride;
+            out_ext->supportedIndirectCommandsInputModes = in_ext->supportedIndirectCommandsInputModes;
+            out_ext->supportedIndirectCommandsShaderStages = in_ext->supportedIndirectCommandsShaderStages;
+            out_ext->supportedIndirectCommandsShaderStagesPipelineBinding = in_ext->supportedIndirectCommandsShaderStagesPipelineBinding;
+            out_ext->supportedIndirectCommandsShaderStagesShaderBinding = in_ext->supportedIndirectCommandsShaderStagesShaderBinding;
+            out_ext->deviceGeneratedCommandsTransformFeedback = in_ext->deviceGeneratedCommandsTransformFeedback;
+            out_ext->deviceGeneratedCommandsMultiDrawIndirectCount = in_ext->deviceGeneratedCommandsMultiDrawIndirectCount;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV);
+            const VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV;
+            out_ext->maxGraphicsShaderGroupCount = in_ext->maxGraphicsShaderGroupCount;
+            out_ext->maxIndirectSequenceCount = in_ext->maxIndirectSequenceCount;
+            out_ext->maxIndirectCommandsTokenCount = in_ext->maxIndirectCommandsTokenCount;
+            out_ext->maxIndirectCommandsStreamCount = in_ext->maxIndirectCommandsStreamCount;
+            out_ext->maxIndirectCommandsTokenOffset = in_ext->maxIndirectCommandsTokenOffset;
+            out_ext->maxIndirectCommandsStreamStride = in_ext->maxIndirectCommandsStreamStride;
+            out_ext->minSequencesCountBufferOffsetAlignment = in_ext->minSequencesCountBufferOffsetAlignment;
+            out_ext->minSequencesIndexBufferOffsetAlignment = in_ext->minSequencesIndexBufferOffsetAlignment;
+            out_ext->minIndirectCommandsBufferOffsetAlignment = in_ext->minIndirectCommandsBufferOffsetAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceDiscardRectanglePropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT);
+            const VkPhysicalDeviceDiscardRectanglePropertiesEXT *in_ext = (const VkPhysicalDeviceDiscardRectanglePropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT;
+            out_ext->maxDiscardRectangles = in_ext->maxDiscardRectangles;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES:
+        {
+            VkPhysicalDeviceDriverProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES);
+            const VkPhysicalDeviceDriverProperties *in_ext = (const VkPhysicalDeviceDriverProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+            out_ext->driverID = in_ext->driverID;
+            memcpy(out_ext->driverName, in_ext->driverName, VK_MAX_DRIVER_NAME_SIZE * sizeof(char));
+            memcpy(out_ext->driverInfo, in_ext->driverInfo, VK_MAX_DRIVER_INFO_SIZE * sizeof(char));
+            out_ext->conformanceVersion = in_ext->conformanceVersion;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceExtendedDynamicState3PropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT);
+            const VkPhysicalDeviceExtendedDynamicState3PropertiesEXT *in_ext = (const VkPhysicalDeviceExtendedDynamicState3PropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT;
+            out_ext->dynamicPrimitiveTopologyUnrestricted = in_ext->dynamicPrimitiveTopologyUnrestricted;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_SPARSE_ADDRESS_SPACE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceExtendedSparseAddressSpacePropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_SPARSE_ADDRESS_SPACE_PROPERTIES_NV);
+            const VkPhysicalDeviceExtendedSparseAddressSpacePropertiesNV *in_ext = (const VkPhysicalDeviceExtendedSparseAddressSpacePropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_SPARSE_ADDRESS_SPACE_PROPERTIES_NV;
+            out_ext->extendedSparseAddressSpaceSize = in_ext->extendedSparseAddressSpaceSize;
+            out_ext->extendedSparseImageUsageFlags = in_ext->extendedSparseImageUsageFlags;
+            out_ext->extendedSparseBufferUsageFlags = in_ext->extendedSparseBufferUsageFlags;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceExternalMemoryHostPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT);
+            const VkPhysicalDeviceExternalMemoryHostPropertiesEXT *in_ext = (const VkPhysicalDeviceExternalMemoryHostPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT;
+            out_ext->minImportedHostPointerAlignment = in_ext->minImportedHostPointerAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFaultPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR);
+            const VkPhysicalDeviceFaultPropertiesKHR *in_ext = (const VkPhysicalDeviceFaultPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_PROPERTIES_KHR;
+            out_ext->maxDeviceFaultCount = in_ext->maxDeviceFaultCount;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES:
+        {
+            VkPhysicalDeviceFloatControlsProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES);
+            const VkPhysicalDeviceFloatControlsProperties *in_ext = (const VkPhysicalDeviceFloatControlsProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES;
+            out_ext->denormBehaviorIndependence = in_ext->denormBehaviorIndependence;
+            out_ext->roundingModeIndependence = in_ext->roundingModeIndependence;
+            out_ext->shaderSignedZeroInfNanPreserveFloat16 = in_ext->shaderSignedZeroInfNanPreserveFloat16;
+            out_ext->shaderSignedZeroInfNanPreserveFloat32 = in_ext->shaderSignedZeroInfNanPreserveFloat32;
+            out_ext->shaderSignedZeroInfNanPreserveFloat64 = in_ext->shaderSignedZeroInfNanPreserveFloat64;
+            out_ext->shaderDenormPreserveFloat16 = in_ext->shaderDenormPreserveFloat16;
+            out_ext->shaderDenormPreserveFloat32 = in_ext->shaderDenormPreserveFloat32;
+            out_ext->shaderDenormPreserveFloat64 = in_ext->shaderDenormPreserveFloat64;
+            out_ext->shaderDenormFlushToZeroFloat16 = in_ext->shaderDenormFlushToZeroFloat16;
+            out_ext->shaderDenormFlushToZeroFloat32 = in_ext->shaderDenormFlushToZeroFloat32;
+            out_ext->shaderDenormFlushToZeroFloat64 = in_ext->shaderDenormFlushToZeroFloat64;
+            out_ext->shaderRoundingModeRTEFloat16 = in_ext->shaderRoundingModeRTEFloat16;
+            out_ext->shaderRoundingModeRTEFloat32 = in_ext->shaderRoundingModeRTEFloat32;
+            out_ext->shaderRoundingModeRTEFloat64 = in_ext->shaderRoundingModeRTEFloat64;
+            out_ext->shaderRoundingModeRTZFloat16 = in_ext->shaderRoundingModeRTZFloat16;
+            out_ext->shaderRoundingModeRTZFloat32 = in_ext->shaderRoundingModeRTZFloat32;
+            out_ext->shaderRoundingModeRTZFloat64 = in_ext->shaderRoundingModeRTZFloat64;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceFragmentDensityMap2PropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT);
+            const VkPhysicalDeviceFragmentDensityMap2PropertiesEXT *in_ext = (const VkPhysicalDeviceFragmentDensityMap2PropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT;
+            out_ext->subsampledLoads = in_ext->subsampledLoads;
+            out_ext->subsampledCoarseReconstructionEarlyAccess = in_ext->subsampledCoarseReconstructionEarlyAccess;
+            out_ext->maxSubsampledArrayLayers = in_ext->maxSubsampledArrayLayers;
+            out_ext->maxDescriptorSetSubsampledSamplers = in_ext->maxDescriptorSetSubsampledSamplers;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_LAYERED_PROPERTIES_VALVE:
+        {
+            VkPhysicalDeviceFragmentDensityMapLayeredPropertiesVALVE *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_LAYERED_PROPERTIES_VALVE);
+            const VkPhysicalDeviceFragmentDensityMapLayeredPropertiesVALVE *in_ext = (const VkPhysicalDeviceFragmentDensityMapLayeredPropertiesVALVE *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_LAYERED_PROPERTIES_VALVE;
+            out_ext->maxFragmentDensityMapLayers = in_ext->maxFragmentDensityMapLayers;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceFragmentDensityMapOffsetPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_EXT);
+            const VkPhysicalDeviceFragmentDensityMapOffsetPropertiesEXT *in_ext = (const VkPhysicalDeviceFragmentDensityMapOffsetPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_EXT;
+            out_ext->fragmentDensityOffsetGranularity = in_ext->fragmentDensityOffsetGranularity;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceFragmentDensityMapPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT);
+            const VkPhysicalDeviceFragmentDensityMapPropertiesEXT *in_ext = (const VkPhysicalDeviceFragmentDensityMapPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT;
+            out_ext->minFragmentDensityTexelSize = in_ext->minFragmentDensityTexelSize;
+            out_ext->maxFragmentDensityTexelSize = in_ext->maxFragmentDensityTexelSize;
+            out_ext->fragmentDensityInvocations = in_ext->fragmentDensityInvocations;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR);
+            const VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *in_ext = (const VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR;
+            out_ext->triStripVertexOrderIndependentOfProvokingVertex = in_ext->triStripVertexOrderIndependentOfProvokingVertex;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV);
+            const VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV *in_ext = (const VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV;
+            out_ext->maxFragmentShadingRateInvocationCount = in_ext->maxFragmentShadingRateInvocationCount;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceFragmentShadingRatePropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR);
+            const VkPhysicalDeviceFragmentShadingRatePropertiesKHR *in_ext = (const VkPhysicalDeviceFragmentShadingRatePropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+            out_ext->minFragmentShadingRateAttachmentTexelSize = in_ext->minFragmentShadingRateAttachmentTexelSize;
+            out_ext->maxFragmentShadingRateAttachmentTexelSize = in_ext->maxFragmentShadingRateAttachmentTexelSize;
+            out_ext->maxFragmentShadingRateAttachmentTexelSizeAspectRatio = in_ext->maxFragmentShadingRateAttachmentTexelSizeAspectRatio;
+            out_ext->primitiveFragmentShadingRateWithMultipleViewports = in_ext->primitiveFragmentShadingRateWithMultipleViewports;
+            out_ext->layeredShadingRateAttachments = in_ext->layeredShadingRateAttachments;
+            out_ext->fragmentShadingRateNonTrivialCombinerOps = in_ext->fragmentShadingRateNonTrivialCombinerOps;
+            out_ext->maxFragmentSize = in_ext->maxFragmentSize;
+            out_ext->maxFragmentSizeAspectRatio = in_ext->maxFragmentSizeAspectRatio;
+            out_ext->maxFragmentShadingRateCoverageSamples = in_ext->maxFragmentShadingRateCoverageSamples;
+            out_ext->maxFragmentShadingRateRasterizationSamples = in_ext->maxFragmentShadingRateRasterizationSamples;
+            out_ext->fragmentShadingRateWithShaderDepthStencilWrites = in_ext->fragmentShadingRateWithShaderDepthStencilWrites;
+            out_ext->fragmentShadingRateWithSampleMask = in_ext->fragmentShadingRateWithSampleMask;
+            out_ext->fragmentShadingRateWithShaderSampleMask = in_ext->fragmentShadingRateWithShaderSampleMask;
+            out_ext->fragmentShadingRateWithConservativeRasterization = in_ext->fragmentShadingRateWithConservativeRasterization;
+            out_ext->fragmentShadingRateWithFragmentShaderInterlock = in_ext->fragmentShadingRateWithFragmentShaderInterlock;
+            out_ext->fragmentShadingRateWithCustomSampleLocations = in_ext->fragmentShadingRateWithCustomSampleLocations;
+            out_ext->fragmentShadingRateStrictMultiplyCombiner = in_ext->fragmentShadingRateStrictMultiplyCombiner;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT);
+            const VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *in_ext = (const VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT;
+            out_ext->graphicsPipelineLibraryFastLinking = in_ext->graphicsPipelineLibraryFastLinking;
+            out_ext->graphicsPipelineLibraryIndependentInterpolationDecoration = in_ext->graphicsPipelineLibraryIndependentInterpolationDecoration;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES:
+        {
+            VkPhysicalDeviceHostImageCopyProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES);
+            const VkPhysicalDeviceHostImageCopyProperties *in_ext = (const VkPhysicalDeviceHostImageCopyProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES;
+            out_ext->copySrcLayoutCount = in_ext->copySrcLayoutCount;
+            out_ext->pCopySrcLayouts = in_ext->pCopySrcLayouts;
+            out_ext->copyDstLayoutCount = in_ext->copyDstLayoutCount;
+            out_ext->pCopyDstLayouts = in_ext->pCopyDstLayouts;
+            memcpy(out_ext->optimalTilingLayoutUUID, in_ext->optimalTilingLayoutUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            out_ext->identicalMemoryTypeRequirements = in_ext->identicalMemoryTypeRequirements;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES:
+        {
+            VkPhysicalDeviceIDProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES);
+            const VkPhysicalDeviceIDProperties *in_ext = (const VkPhysicalDeviceIDProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+            memcpy(out_ext->deviceUUID, in_ext->deviceUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            memcpy(out_ext->driverUUID, in_ext->driverUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            memcpy(out_ext->deviceLUID, in_ext->deviceLUID, VK_LUID_SIZE * sizeof(uint8_t));
+            out_ext->deviceNodeMask = in_ext->deviceNodeMask;
+            out_ext->deviceLUIDValid = in_ext->deviceLUIDValid;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlPropertiesMESA *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA);
+            const VkPhysicalDeviceImageAlignmentControlPropertiesMESA *in_ext = (const VkPhysicalDeviceImageAlignmentControlPropertiesMESA *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA;
+            out_ext->supportedImageAlignmentMask = in_ext->supportedImageAlignmentMask;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_2_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceImageProcessing2PropertiesQCOM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_2_PROPERTIES_QCOM);
+            const VkPhysicalDeviceImageProcessing2PropertiesQCOM *in_ext = (const VkPhysicalDeviceImageProcessing2PropertiesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_2_PROPERTIES_QCOM;
+            out_ext->maxBlockMatchWindow = in_ext->maxBlockMatchWindow;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceImageProcessingPropertiesQCOM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM);
+            const VkPhysicalDeviceImageProcessingPropertiesQCOM *in_ext = (const VkPhysicalDeviceImageProcessingPropertiesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM;
+            out_ext->maxWeightFilterPhases = in_ext->maxWeightFilterPhases;
+            out_ext->maxWeightFilterDimension = in_ext->maxWeightFilterDimension;
+            out_ext->maxBlockMatchRegion = in_ext->maxBlockMatchRegion;
+            out_ext->maxBoxFilterBlockSize = in_ext->maxBoxFilterBlockSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES:
+        {
+            VkPhysicalDeviceInlineUniformBlockProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES);
+            const VkPhysicalDeviceInlineUniformBlockProperties *in_ext = (const VkPhysicalDeviceInlineUniformBlockProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES;
+            out_ext->maxInlineUniformBlockSize = in_ext->maxInlineUniformBlockSize;
+            out_ext->maxPerStageDescriptorInlineUniformBlocks = in_ext->maxPerStageDescriptorInlineUniformBlocks;
+            out_ext->maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks = in_ext->maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks;
+            out_ext->maxDescriptorSetInlineUniformBlocks = in_ext->maxDescriptorSetInlineUniformBlocks;
+            out_ext->maxDescriptorSetUpdateAfterBindInlineUniformBlocks = in_ext->maxDescriptorSetUpdateAfterBindInlineUniformBlocks;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_LIST_KHR:
+        {
+            VkPhysicalDeviceLayeredApiPropertiesListKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_LIST_KHR);
+            const VkPhysicalDeviceLayeredApiPropertiesListKHR *in_ext = (const VkPhysicalDeviceLayeredApiPropertiesListKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_PROPERTIES_LIST_KHR;
+            out_ext->layeredApiCount = in_ext->layeredApiCount;
+            convert_VkPhysicalDeviceLayeredApiPropertiesKHR_array_host_to_win64(in_ext->pLayeredApis, out_ext->pLayeredApis, in_ext->layeredApiCount);
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_DRIVER_PROPERTIES_MSFT:
+        {
+            VkPhysicalDeviceLayeredDriverPropertiesMSFT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_DRIVER_PROPERTIES_MSFT);
+            const VkPhysicalDeviceLayeredDriverPropertiesMSFT *in_ext = (const VkPhysicalDeviceLayeredDriverPropertiesMSFT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_DRIVER_PROPERTIES_MSFT;
+            out_ext->underlyingAPI = in_ext->underlyingAPI;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT);
+            const VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT *in_ext = (const VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT;
+            out_ext->nativeUnalignedPerformance = in_ext->nativeUnalignedPerformance;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES:
+        {
+            VkPhysicalDeviceLineRasterizationProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES);
+            const VkPhysicalDeviceLineRasterizationProperties *in_ext = (const VkPhysicalDeviceLineRasterizationProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES;
+            out_ext->lineSubPixelPrecisionBits = in_ext->lineSubPixelPrecisionBits;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_10_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceMaintenance10PropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_10_PROPERTIES_KHR);
+            const VkPhysicalDeviceMaintenance10PropertiesKHR *in_ext = (const VkPhysicalDeviceMaintenance10PropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_10_PROPERTIES_KHR;
+            out_ext->rgba4OpaqueBlackSwizzled = in_ext->rgba4OpaqueBlackSwizzled;
+            out_ext->resolveSrgbFormatAppliesTransferFunction = in_ext->resolveSrgbFormatAppliesTransferFunction;
+            out_ext->resolveSrgbFormatSupportsTransferFunctionControl = in_ext->resolveSrgbFormatSupportsTransferFunctionControl;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance3Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES);
+            const VkPhysicalDeviceMaintenance3Properties *in_ext = (const VkPhysicalDeviceMaintenance3Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
+            out_ext->maxPerSetDescriptors = in_ext->maxPerSetDescriptors;
+            out_ext->maxMemoryAllocationSize = in_ext->maxMemoryAllocationSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance4Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES);
+            const VkPhysicalDeviceMaintenance4Properties *in_ext = (const VkPhysicalDeviceMaintenance4Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES;
+            out_ext->maxBufferSize = in_ext->maxBufferSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance5Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_PROPERTIES);
+            const VkPhysicalDeviceMaintenance5Properties *in_ext = (const VkPhysicalDeviceMaintenance5Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_PROPERTIES;
+            out_ext->earlyFragmentMultisampleCoverageAfterSampleCounting = in_ext->earlyFragmentMultisampleCoverageAfterSampleCounting;
+            out_ext->earlyFragmentSampleMaskTestBeforeSampleCounting = in_ext->earlyFragmentSampleMaskTestBeforeSampleCounting;
+            out_ext->depthStencilSwizzleOneSupport = in_ext->depthStencilSwizzleOneSupport;
+            out_ext->polygonModePointSize = in_ext->polygonModePointSize;
+            out_ext->nonStrictSinglePixelWideLinesUseParallelogram = in_ext->nonStrictSinglePixelWideLinesUseParallelogram;
+            out_ext->nonStrictWideLinesUseParallelogram = in_ext->nonStrictWideLinesUseParallelogram;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_PROPERTIES:
+        {
+            VkPhysicalDeviceMaintenance6Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_PROPERTIES);
+            const VkPhysicalDeviceMaintenance6Properties *in_ext = (const VkPhysicalDeviceMaintenance6Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_PROPERTIES;
+            out_ext->blockTexelViewCompatibleMultipleLayers = in_ext->blockTexelViewCompatibleMultipleLayers;
+            out_ext->maxCombinedImageSamplerDescriptorCount = in_ext->maxCombinedImageSamplerDescriptorCount;
+            out_ext->fragmentShadingRateClampCombinerInputs = in_ext->fragmentShadingRateClampCombinerInputs;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_7_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceMaintenance7PropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_7_PROPERTIES_KHR);
+            const VkPhysicalDeviceMaintenance7PropertiesKHR *in_ext = (const VkPhysicalDeviceMaintenance7PropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_7_PROPERTIES_KHR;
+            out_ext->robustFragmentShadingRateAttachmentAccess = in_ext->robustFragmentShadingRateAttachmentAccess;
+            out_ext->separateDepthStencilAttachmentAccess = in_ext->separateDepthStencilAttachmentAccess;
+            out_ext->maxDescriptorSetTotalUniformBuffersDynamic = in_ext->maxDescriptorSetTotalUniformBuffersDynamic;
+            out_ext->maxDescriptorSetTotalStorageBuffersDynamic = in_ext->maxDescriptorSetTotalStorageBuffersDynamic;
+            out_ext->maxDescriptorSetTotalBuffersDynamic = in_ext->maxDescriptorSetTotalBuffersDynamic;
+            out_ext->maxDescriptorSetUpdateAfterBindTotalUniformBuffersDynamic = in_ext->maxDescriptorSetUpdateAfterBindTotalUniformBuffersDynamic;
+            out_ext->maxDescriptorSetUpdateAfterBindTotalStorageBuffersDynamic = in_ext->maxDescriptorSetUpdateAfterBindTotalStorageBuffersDynamic;
+            out_ext->maxDescriptorSetUpdateAfterBindTotalBuffersDynamic = in_ext->maxDescriptorSetUpdateAfterBindTotalBuffersDynamic;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_9_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceMaintenance9PropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_9_PROPERTIES_KHR);
+            const VkPhysicalDeviceMaintenance9PropertiesKHR *in_ext = (const VkPhysicalDeviceMaintenance9PropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_9_PROPERTIES_KHR;
+            out_ext->image2DViewOf3DSparse = in_ext->image2DViewOf3DSparse;
+            out_ext->defaultVertexAttributeValue = in_ext->defaultVertexAttributeValue;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMemoryDecompressionPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_EXT);
+            const VkPhysicalDeviceMemoryDecompressionPropertiesEXT *in_ext = (const VkPhysicalDeviceMemoryDecompressionPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_EXT;
+            out_ext->decompressionMethods = in_ext->decompressionMethods;
+            out_ext->maxDecompressionIndirectCount = in_ext->maxDecompressionIndirectCount;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMeshShaderPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT);
+            const VkPhysicalDeviceMeshShaderPropertiesEXT *in_ext = (const VkPhysicalDeviceMeshShaderPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
+            out_ext->maxTaskWorkGroupTotalCount = in_ext->maxTaskWorkGroupTotalCount;
+            memcpy(out_ext->maxTaskWorkGroupCount, in_ext->maxTaskWorkGroupCount, 3 * sizeof(uint32_t));
+            out_ext->maxTaskWorkGroupInvocations = in_ext->maxTaskWorkGroupInvocations;
+            memcpy(out_ext->maxTaskWorkGroupSize, in_ext->maxTaskWorkGroupSize, 3 * sizeof(uint32_t));
+            out_ext->maxTaskPayloadSize = in_ext->maxTaskPayloadSize;
+            out_ext->maxTaskSharedMemorySize = in_ext->maxTaskSharedMemorySize;
+            out_ext->maxTaskPayloadAndSharedMemorySize = in_ext->maxTaskPayloadAndSharedMemorySize;
+            out_ext->maxMeshWorkGroupTotalCount = in_ext->maxMeshWorkGroupTotalCount;
+            memcpy(out_ext->maxMeshWorkGroupCount, in_ext->maxMeshWorkGroupCount, 3 * sizeof(uint32_t));
+            out_ext->maxMeshWorkGroupInvocations = in_ext->maxMeshWorkGroupInvocations;
+            memcpy(out_ext->maxMeshWorkGroupSize, in_ext->maxMeshWorkGroupSize, 3 * sizeof(uint32_t));
+            out_ext->maxMeshSharedMemorySize = in_ext->maxMeshSharedMemorySize;
+            out_ext->maxMeshPayloadAndSharedMemorySize = in_ext->maxMeshPayloadAndSharedMemorySize;
+            out_ext->maxMeshOutputMemorySize = in_ext->maxMeshOutputMemorySize;
+            out_ext->maxMeshPayloadAndOutputMemorySize = in_ext->maxMeshPayloadAndOutputMemorySize;
+            out_ext->maxMeshOutputComponents = in_ext->maxMeshOutputComponents;
+            out_ext->maxMeshOutputVertices = in_ext->maxMeshOutputVertices;
+            out_ext->maxMeshOutputPrimitives = in_ext->maxMeshOutputPrimitives;
+            out_ext->maxMeshOutputLayers = in_ext->maxMeshOutputLayers;
+            out_ext->maxMeshMultiviewViewCount = in_ext->maxMeshMultiviewViewCount;
+            out_ext->meshOutputPerVertexGranularity = in_ext->meshOutputPerVertexGranularity;
+            out_ext->meshOutputPerPrimitiveGranularity = in_ext->meshOutputPerPrimitiveGranularity;
+            out_ext->maxPreferredTaskWorkGroupInvocations = in_ext->maxPreferredTaskWorkGroupInvocations;
+            out_ext->maxPreferredMeshWorkGroupInvocations = in_ext->maxPreferredMeshWorkGroupInvocations;
+            out_ext->prefersLocalInvocationVertexOutput = in_ext->prefersLocalInvocationVertexOutput;
+            out_ext->prefersLocalInvocationPrimitiveOutput = in_ext->prefersLocalInvocationPrimitiveOutput;
+            out_ext->prefersCompactVertexOutput = in_ext->prefersCompactVertexOutput;
+            out_ext->prefersCompactPrimitiveOutput = in_ext->prefersCompactPrimitiveOutput;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceMeshShaderPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV);
+            const VkPhysicalDeviceMeshShaderPropertiesNV *in_ext = (const VkPhysicalDeviceMeshShaderPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
+            out_ext->maxDrawMeshTasksCount = in_ext->maxDrawMeshTasksCount;
+            out_ext->maxTaskWorkGroupInvocations = in_ext->maxTaskWorkGroupInvocations;
+            memcpy(out_ext->maxTaskWorkGroupSize, in_ext->maxTaskWorkGroupSize, 3 * sizeof(uint32_t));
+            out_ext->maxTaskTotalMemorySize = in_ext->maxTaskTotalMemorySize;
+            out_ext->maxTaskOutputCount = in_ext->maxTaskOutputCount;
+            out_ext->maxMeshWorkGroupInvocations = in_ext->maxMeshWorkGroupInvocations;
+            memcpy(out_ext->maxMeshWorkGroupSize, in_ext->maxMeshWorkGroupSize, 3 * sizeof(uint32_t));
+            out_ext->maxMeshTotalMemorySize = in_ext->maxMeshTotalMemorySize;
+            out_ext->maxMeshOutputVertices = in_ext->maxMeshOutputVertices;
+            out_ext->maxMeshOutputPrimitives = in_ext->maxMeshOutputPrimitives;
+            out_ext->maxMeshMultiviewViewCount = in_ext->maxMeshMultiviewViewCount;
+            out_ext->meshOutputPerVertexGranularity = in_ext->meshOutputPerVertexGranularity;
+            out_ext->meshOutputPerPrimitiveGranularity = in_ext->meshOutputPerPrimitiveGranularity;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMultiDrawPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT);
+            const VkPhysicalDeviceMultiDrawPropertiesEXT *in_ext = (const VkPhysicalDeviceMultiDrawPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT;
+            out_ext->maxMultiDrawCount = in_ext->maxMultiDrawCount;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES:
+        {
+            VkPhysicalDeviceMultiviewProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES);
+            const VkPhysicalDeviceMultiviewProperties *in_ext = (const VkPhysicalDeviceMultiviewProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
+            out_ext->maxMultiviewViewCount = in_ext->maxMultiviewViewCount;
+            out_ext->maxMultiviewInstanceIndex = in_ext->maxMultiviewInstanceIndex;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NESTED_COMMAND_BUFFER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceNestedCommandBufferPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NESTED_COMMAND_BUFFER_PROPERTIES_EXT);
+            const VkPhysicalDeviceNestedCommandBufferPropertiesEXT *in_ext = (const VkPhysicalDeviceNestedCommandBufferPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NESTED_COMMAND_BUFFER_PROPERTIES_EXT;
+            out_ext->maxCommandBufferNestingLevel = in_ext->maxCommandBufferNestingLevel;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceOpacityMicromapPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT);
+            const VkPhysicalDeviceOpacityMicromapPropertiesEXT *in_ext = (const VkPhysicalDeviceOpacityMicromapPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT;
+            out_ext->maxOpacity2StateSubdivisionLevel = in_ext->maxOpacity2StateSubdivisionLevel;
+            out_ext->maxOpacity4StateSubdivisionLevel = in_ext->maxOpacity4StateSubdivisionLevel;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceOpticalFlowPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV);
+            const VkPhysicalDeviceOpticalFlowPropertiesNV *in_ext = (const VkPhysicalDeviceOpticalFlowPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV;
+            out_ext->supportedOutputGridSizes = in_ext->supportedOutputGridSizes;
+            out_ext->supportedHintGridSizes = in_ext->supportedHintGridSizes;
+            out_ext->hintSupported = in_ext->hintSupported;
+            out_ext->costSupported = in_ext->costSupported;
+            out_ext->bidirectionalFlowSupported = in_ext->bidirectionalFlowSupported;
+            out_ext->globalFlowSupported = in_ext->globalFlowSupported;
+            out_ext->minWidth = in_ext->minWidth;
+            out_ext->minHeight = in_ext->minHeight;
+            out_ext->maxWidth = in_ext->maxWidth;
+            out_ext->maxHeight = in_ext->maxHeight;
+            out_ext->maxNumRegionsOfInterest = in_ext->maxNumRegionsOfInterest;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT:
+        {
+            VkPhysicalDevicePCIBusInfoPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT);
+            const VkPhysicalDevicePCIBusInfoPropertiesEXT *in_ext = (const VkPhysicalDevicePCIBusInfoPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT;
+            out_ext->pciDomain = in_ext->pciDomain;
+            out_ext->pciBus = in_ext->pciBus;
+            out_ext->pciDevice = in_ext->pciDevice;
+            out_ext->pciFunction = in_ext->pciFunction;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV);
+            const VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV *in_ext = (const VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->maxPartitionCount = in_ext->maxPartitionCount;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_COUNTERS_BY_REGION_PROPERTIES_ARM:
+        {
+            VkPhysicalDevicePerformanceCountersByRegionPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_COUNTERS_BY_REGION_PROPERTIES_ARM);
+            const VkPhysicalDevicePerformanceCountersByRegionPropertiesARM *in_ext = (const VkPhysicalDevicePerformanceCountersByRegionPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_COUNTERS_BY_REGION_PROPERTIES_ARM;
+            out_ext->maxPerRegionPerformanceCounters = in_ext->maxPerRegionPerformanceCounters;
+            out_ext->performanceCounterRegionSize = in_ext->performanceCounterRegionSize;
+            out_ext->rowStrideAlignment = in_ext->rowStrideAlignment;
+            out_ext->regionAlignment = in_ext->regionAlignment;
+            out_ext->identityTransformOrder = in_ext->identityTransformOrder;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR:
+        {
+            VkPhysicalDevicePerformanceQueryPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR);
+            const VkPhysicalDevicePerformanceQueryPropertiesKHR *in_ext = (const VkPhysicalDevicePerformanceQueryPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR;
+            out_ext->allowCommandBufferQueryCopies = in_ext->allowCommandBufferQueryCopies;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_PROPERTIES_KHR:
+        {
+            VkPhysicalDevicePipelineBinaryPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_PROPERTIES_KHR);
+            const VkPhysicalDevicePipelineBinaryPropertiesKHR *in_ext = (const VkPhysicalDevicePipelineBinaryPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_BINARY_PROPERTIES_KHR;
+            out_ext->pipelineBinaryInternalCache = in_ext->pipelineBinaryInternalCache;
+            out_ext->pipelineBinaryInternalCacheControl = in_ext->pipelineBinaryInternalCacheControl;
+            out_ext->pipelineBinaryPrefersInternalCache = in_ext->pipelineBinaryPrefersInternalCache;
+            out_ext->pipelineBinaryPrecompiledInternalCache = in_ext->pipelineBinaryPrecompiledInternalCache;
+            out_ext->pipelineBinaryCompressedData = in_ext->pipelineBinaryCompressedData;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES:
+        {
+            VkPhysicalDevicePipelineRobustnessProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES);
+            const VkPhysicalDevicePipelineRobustnessProperties *in_ext = (const VkPhysicalDevicePipelineRobustnessProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES;
+            out_ext->defaultRobustnessStorageBuffers = in_ext->defaultRobustnessStorageBuffers;
+            out_ext->defaultRobustnessUniformBuffers = in_ext->defaultRobustnessUniformBuffers;
+            out_ext->defaultRobustnessVertexInputs = in_ext->defaultRobustnessVertexInputs;
+            out_ext->defaultRobustnessImages = in_ext->defaultRobustnessImages;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES:
+        {
+            VkPhysicalDevicePointClippingProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES);
+            const VkPhysicalDevicePointClippingProperties *in_ext = (const VkPhysicalDevicePointClippingProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES;
+            out_ext->pointClippingBehavior = in_ext->pointClippingBehavior;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES:
+        {
+            VkPhysicalDeviceProtectedMemoryProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES);
+            const VkPhysicalDeviceProtectedMemoryProperties *in_ext = (const VkPhysicalDeviceProtectedMemoryProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES;
+            out_ext->protectedNoFault = in_ext->protectedNoFault;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceProvokingVertexPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT);
+            const VkPhysicalDeviceProvokingVertexPropertiesEXT *in_ext = (const VkPhysicalDeviceProvokingVertexPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT;
+            out_ext->provokingVertexModePerPipeline = in_ext->provokingVertexModePerPipeline;
+            out_ext->transformFeedbackPreservesTriangleFanProvokingVertex = in_ext->transformFeedbackPreservesTriangleFanProvokingVertex;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_CONSTANT_BANK_PROPERTIES_NV:
+        {
+            VkPhysicalDevicePushConstantBankPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_CONSTANT_BANK_PROPERTIES_NV);
+            const VkPhysicalDevicePushConstantBankPropertiesNV *in_ext = (const VkPhysicalDevicePushConstantBankPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_CONSTANT_BANK_PROPERTIES_NV;
+            out_ext->maxGraphicsPushConstantBanks = in_ext->maxGraphicsPushConstantBanks;
+            out_ext->maxComputePushConstantBanks = in_ext->maxComputePushConstantBanks;
+            out_ext->maxGraphicsPushDataBanks = in_ext->maxGraphicsPushDataBanks;
+            out_ext->maxComputePushDataBanks = in_ext->maxComputePushDataBanks;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES:
+        {
+            VkPhysicalDevicePushDescriptorProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES);
+            const VkPhysicalDevicePushDescriptorProperties *in_ext = (const VkPhysicalDevicePushDescriptorProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES;
+            out_ext->maxPushDescriptors = in_ext->maxPushDescriptors;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT);
+            const VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_EXT;
+            out_ext->rayTracingInvocationReorderReorderingHint = in_ext->rayTracingInvocationReorderReorderingHint;
+            out_ext->maxShaderBindingTableRecordIndex = in_ext->maxShaderBindingTableRecordIndex;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV);
+            const VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV;
+            out_ext->rayTracingInvocationReorderReorderingHint = in_ext->rayTracingInvocationReorderReorderingHint;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceRayTracingPipelinePropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR);
+            const VkPhysicalDeviceRayTracingPipelinePropertiesKHR *in_ext = (const VkPhysicalDeviceRayTracingPipelinePropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+            out_ext->shaderGroupHandleSize = in_ext->shaderGroupHandleSize;
+            out_ext->maxRayRecursionDepth = in_ext->maxRayRecursionDepth;
+            out_ext->maxShaderGroupStride = in_ext->maxShaderGroupStride;
+            out_ext->shaderGroupBaseAlignment = in_ext->shaderGroupBaseAlignment;
+            out_ext->shaderGroupHandleCaptureReplaySize = in_ext->shaderGroupHandleCaptureReplaySize;
+            out_ext->maxRayDispatchInvocationCount = in_ext->maxRayDispatchInvocationCount;
+            out_ext->shaderGroupHandleAlignment = in_ext->shaderGroupHandleAlignment;
+            out_ext->maxRayHitAttributeSize = in_ext->maxRayHitAttributeSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceRayTracingPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV);
+            const VkPhysicalDeviceRayTracingPropertiesNV *in_ext = (const VkPhysicalDeviceRayTracingPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
+            out_ext->shaderGroupHandleSize = in_ext->shaderGroupHandleSize;
+            out_ext->maxRecursionDepth = in_ext->maxRecursionDepth;
+            out_ext->maxShaderGroupStride = in_ext->maxShaderGroupStride;
+            out_ext->shaderGroupBaseAlignment = in_ext->shaderGroupBaseAlignment;
+            out_ext->maxGeometryCount = in_ext->maxGeometryCount;
+            out_ext->maxInstanceCount = in_ext->maxInstanceCount;
+            out_ext->maxTriangleCount = in_ext->maxTriangleCount;
+            out_ext->maxDescriptorSetAccelerationStructures = in_ext->maxDescriptorSetAccelerationStructures;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceRenderPassStripedPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM);
+            const VkPhysicalDeviceRenderPassStripedPropertiesARM *in_ext = (const VkPhysicalDeviceRenderPassStripedPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RENDER_PASS_STRIPED_PROPERTIES_ARM;
+            out_ext->renderPassStripeGranularity = in_ext->renderPassStripeGranularity;
+            out_ext->maxRenderPassStripes = in_ext->maxRenderPassStripes;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceRobustness2PropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR);
+            const VkPhysicalDeviceRobustness2PropertiesKHR *in_ext = (const VkPhysicalDeviceRobustness2PropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR;
+            out_ext->robustStorageBufferAccessSizeAlignment = in_ext->robustStorageBufferAccessSizeAlignment;
+            out_ext->robustUniformBufferAccessSizeAlignment = in_ext->robustUniformBufferAccessSizeAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceSampleLocationsPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT);
+            const VkPhysicalDeviceSampleLocationsPropertiesEXT *in_ext = (const VkPhysicalDeviceSampleLocationsPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
+            out_ext->sampleLocationSampleCounts = in_ext->sampleLocationSampleCounts;
+            out_ext->maxSampleLocationGridSize = in_ext->maxSampleLocationGridSize;
+            memcpy(out_ext->sampleLocationCoordinateRange, in_ext->sampleLocationCoordinateRange, 2 * sizeof(float));
+            out_ext->sampleLocationSubPixelBits = in_ext->sampleLocationSubPixelBits;
+            out_ext->variableSampleLocations = in_ext->variableSampleLocations;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES:
+        {
+            VkPhysicalDeviceSamplerFilterMinmaxProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES);
+            const VkPhysicalDeviceSamplerFilterMinmaxProperties *in_ext = (const VkPhysicalDeviceSamplerFilterMinmaxProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES;
+            out_ext->filterMinmaxSingleComponentFormats = in_ext->filterMinmaxSingleComponentFormats;
+            out_ext->filterMinmaxImageComponentMapping = in_ext->filterMinmaxImageComponentMapping;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceSchedulingControlsPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM);
+            const VkPhysicalDeviceSchedulingControlsPropertiesARM *in_ext = (const VkPhysicalDeviceSchedulingControlsPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCHEDULING_CONTROLS_PROPERTIES_ARM;
+            out_ext->schedulingControlsFlags = in_ext->schedulingControlsFlags;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceShaderAbortPropertiesKHR *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR);
+            const VkPhysicalDeviceShaderAbortPropertiesKHR *in_ext = (const VkPhysicalDeviceShaderAbortPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ABORT_PROPERTIES_KHR;
+            out_ext->maxShaderAbortMessageSize = in_ext->maxShaderAbortMessageSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM);
+            const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *in_ext = (const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM;
+            out_ext->shaderCoreMask = in_ext->shaderCoreMask;
+            out_ext->shaderCoreCount = in_ext->shaderCoreCount;
+            out_ext->shaderWarpsPerCore = in_ext->shaderWarpsPerCore;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD:
+        {
+            VkPhysicalDeviceShaderCoreProperties2AMD *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD);
+            const VkPhysicalDeviceShaderCoreProperties2AMD *in_ext = (const VkPhysicalDeviceShaderCoreProperties2AMD *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD;
+            out_ext->shaderCoreFeatures = in_ext->shaderCoreFeatures;
+            out_ext->activeComputeUnitCount = in_ext->activeComputeUnitCount;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD:
+        {
+            VkPhysicalDeviceShaderCorePropertiesAMD *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD);
+            const VkPhysicalDeviceShaderCorePropertiesAMD *in_ext = (const VkPhysicalDeviceShaderCorePropertiesAMD *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD;
+            out_ext->shaderEngineCount = in_ext->shaderEngineCount;
+            out_ext->shaderArraysPerEngineCount = in_ext->shaderArraysPerEngineCount;
+            out_ext->computeUnitsPerShaderArray = in_ext->computeUnitsPerShaderArray;
+            out_ext->simdPerComputeUnit = in_ext->simdPerComputeUnit;
+            out_ext->wavefrontsPerSimd = in_ext->wavefrontsPerSimd;
+            out_ext->wavefrontSize = in_ext->wavefrontSize;
+            out_ext->sgprsPerSimd = in_ext->sgprsPerSimd;
+            out_ext->minSgprAllocation = in_ext->minSgprAllocation;
+            out_ext->maxSgprAllocation = in_ext->maxSgprAllocation;
+            out_ext->sgprAllocationGranularity = in_ext->sgprAllocationGranularity;
+            out_ext->vgprsPerSimd = in_ext->vgprsPerSimd;
+            out_ext->minVgprAllocation = in_ext->minVgprAllocation;
+            out_ext->maxVgprAllocation = in_ext->maxVgprAllocation;
+            out_ext->vgprAllocationGranularity = in_ext->vgprAllocationGranularity;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderCorePropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM);
+            const VkPhysicalDeviceShaderCorePropertiesARM *in_ext = (const VkPhysicalDeviceShaderCorePropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_ARM;
+            out_ext->pixelRate = in_ext->pixelRate;
+            out_ext->texelRate = in_ext->texelRate;
+            out_ext->fmaRate = in_ext->fmaRate;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INSTRUMENTATION_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceShaderInstrumentationPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INSTRUMENTATION_PROPERTIES_ARM);
+            const VkPhysicalDeviceShaderInstrumentationPropertiesARM *in_ext = (const VkPhysicalDeviceShaderInstrumentationPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INSTRUMENTATION_PROPERTIES_ARM;
+            out_ext->numMetrics = in_ext->numMetrics;
+            out_ext->perBasicBlockGranularity = in_ext->perBasicBlockGranularity;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES:
+        {
+            VkPhysicalDeviceShaderIntegerDotProductProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES);
+            const VkPhysicalDeviceShaderIntegerDotProductProperties *in_ext = (const VkPhysicalDeviceShaderIntegerDotProductProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES;
+            out_ext->integerDotProduct8BitUnsignedAccelerated = in_ext->integerDotProduct8BitUnsignedAccelerated;
+            out_ext->integerDotProduct8BitSignedAccelerated = in_ext->integerDotProduct8BitSignedAccelerated;
+            out_ext->integerDotProduct8BitMixedSignednessAccelerated = in_ext->integerDotProduct8BitMixedSignednessAccelerated;
+            out_ext->integerDotProduct4x8BitPackedUnsignedAccelerated = in_ext->integerDotProduct4x8BitPackedUnsignedAccelerated;
+            out_ext->integerDotProduct4x8BitPackedSignedAccelerated = in_ext->integerDotProduct4x8BitPackedSignedAccelerated;
+            out_ext->integerDotProduct4x8BitPackedMixedSignednessAccelerated = in_ext->integerDotProduct4x8BitPackedMixedSignednessAccelerated;
+            out_ext->integerDotProduct16BitUnsignedAccelerated = in_ext->integerDotProduct16BitUnsignedAccelerated;
+            out_ext->integerDotProduct16BitSignedAccelerated = in_ext->integerDotProduct16BitSignedAccelerated;
+            out_ext->integerDotProduct16BitMixedSignednessAccelerated = in_ext->integerDotProduct16BitMixedSignednessAccelerated;
+            out_ext->integerDotProduct32BitUnsignedAccelerated = in_ext->integerDotProduct32BitUnsignedAccelerated;
+            out_ext->integerDotProduct32BitSignedAccelerated = in_ext->integerDotProduct32BitSignedAccelerated;
+            out_ext->integerDotProduct32BitMixedSignednessAccelerated = in_ext->integerDotProduct32BitMixedSignednessAccelerated;
+            out_ext->integerDotProduct64BitUnsignedAccelerated = in_ext->integerDotProduct64BitUnsignedAccelerated;
+            out_ext->integerDotProduct64BitSignedAccelerated = in_ext->integerDotProduct64BitSignedAccelerated;
+            out_ext->integerDotProduct64BitMixedSignednessAccelerated = in_ext->integerDotProduct64BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating8BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating8BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating8BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating8BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating16BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating16BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating16BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating16BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating32BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating32BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating32BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating32BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating64BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating64BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating64BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating64BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderLongVectorPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT);
+            const VkPhysicalDeviceShaderLongVectorPropertiesEXT *in_ext = (const VkPhysicalDeviceShaderLongVectorPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_LONG_VECTOR_PROPERTIES_EXT;
+            out_ext->maxVectorComponents = in_ext->maxVectorComponents;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT);
+            const VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT *in_ext = (const VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT;
+            memcpy(out_ext->shaderModuleIdentifierAlgorithmUUID, in_ext->shaderModuleIdentifierAlgorithmUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderObjectPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT);
+            const VkPhysicalDeviceShaderObjectPropertiesEXT *in_ext = (const VkPhysicalDeviceShaderObjectPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OBJECT_PROPERTIES_EXT;
+            memcpy(out_ext->shaderBinaryUUID, in_ext->shaderBinaryUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            out_ext->shaderBinaryVersion = in_ext->shaderBinaryVersion;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceShaderSMBuiltinsPropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV);
+            const VkPhysicalDeviceShaderSMBuiltinsPropertiesNV *in_ext = (const VkPhysicalDeviceShaderSMBuiltinsPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV;
+            out_ext->shaderSMCount = in_ext->shaderSMCount;
+            out_ext->shaderWarpsPerSM = in_ext->shaderWarpsPerSM;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceShaderTileImagePropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT);
+            const VkPhysicalDeviceShaderTileImagePropertiesEXT *in_ext = (const VkPhysicalDeviceShaderTileImagePropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TILE_IMAGE_PROPERTIES_EXT;
+            out_ext->shaderTileImageCoherentReadAccelerated = in_ext->shaderTileImageCoherentReadAccelerated;
+            out_ext->shaderTileImageReadSampleFromPixelRateInvocation = in_ext->shaderTileImageReadSampleFromPixelRateInvocation;
+            out_ext->shaderTileImageReadFromHelperInvocation = in_ext->shaderTileImageReadFromHelperInvocation;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceShadingRateImagePropertiesNV *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV);
+            const VkPhysicalDeviceShadingRateImagePropertiesNV *in_ext = (const VkPhysicalDeviceShadingRateImagePropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV;
+            out_ext->shadingRateTexelSize = in_ext->shadingRateTexelSize;
+            out_ext->shadingRatePaletteSize = in_ext->shadingRatePaletteSize;
+            out_ext->shadingRateMaxCoarseSamples = in_ext->shadingRateMaxCoarseSamples;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES:
+        {
+            VkPhysicalDeviceSubgroupProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES);
+            const VkPhysicalDeviceSubgroupProperties *in_ext = (const VkPhysicalDeviceSubgroupProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+            out_ext->subgroupSize = in_ext->subgroupSize;
+            out_ext->supportedStages = in_ext->supportedStages;
+            out_ext->supportedOperations = in_ext->supportedOperations;
+            out_ext->quadOperationsInAllStages = in_ext->quadOperationsInAllStages;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES:
+        {
+            VkPhysicalDeviceSubgroupSizeControlProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES);
+            const VkPhysicalDeviceSubgroupSizeControlProperties *in_ext = (const VkPhysicalDeviceSubgroupSizeControlProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES;
+            out_ext->minSubgroupSize = in_ext->minSubgroupSize;
+            out_ext->maxSubgroupSize = in_ext->maxSubgroupSize;
+            out_ext->maxComputeWorkgroupSubgroups = in_ext->maxComputeWorkgroupSubgroups;
+            out_ext->requiredSubgroupSizeStages = in_ext->requiredSubgroupSizeStages;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI:
+        {
+            VkPhysicalDeviceSubpassShadingPropertiesHUAWEI *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI);
+            const VkPhysicalDeviceSubpassShadingPropertiesHUAWEI *in_ext = (const VkPhysicalDeviceSubpassShadingPropertiesHUAWEI *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI;
+            out_ext->maxSubpassShadingWorkgroupSizeAspectRatio = in_ext->maxSubpassShadingWorkgroupSizeAspectRatio;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TENSOR_PROPERTIES_ARM:
+        {
+            VkPhysicalDeviceTensorPropertiesARM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TENSOR_PROPERTIES_ARM);
+            const VkPhysicalDeviceTensorPropertiesARM *in_ext = (const VkPhysicalDeviceTensorPropertiesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TENSOR_PROPERTIES_ARM;
+            out_ext->maxTensorDimensionCount = in_ext->maxTensorDimensionCount;
+            out_ext->maxTensorElements = in_ext->maxTensorElements;
+            out_ext->maxPerDimensionTensorElements = in_ext->maxPerDimensionTensorElements;
+            out_ext->maxTensorStride = in_ext->maxTensorStride;
+            out_ext->maxTensorSize = in_ext->maxTensorSize;
+            out_ext->maxTensorShaderAccessArrayLength = in_ext->maxTensorShaderAccessArrayLength;
+            out_ext->maxTensorShaderAccessSize = in_ext->maxTensorShaderAccessSize;
+            out_ext->maxDescriptorSetStorageTensors = in_ext->maxDescriptorSetStorageTensors;
+            out_ext->maxPerStageDescriptorSetStorageTensors = in_ext->maxPerStageDescriptorSetStorageTensors;
+            out_ext->maxDescriptorSetUpdateAfterBindStorageTensors = in_ext->maxDescriptorSetUpdateAfterBindStorageTensors;
+            out_ext->maxPerStageDescriptorUpdateAfterBindStorageTensors = in_ext->maxPerStageDescriptorUpdateAfterBindStorageTensors;
+            out_ext->shaderStorageTensorArrayNonUniformIndexingNative = in_ext->shaderStorageTensorArrayNonUniformIndexingNative;
+            out_ext->shaderTensorSupportedStages = in_ext->shaderTensorSupportedStages;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES:
+        {
+            VkPhysicalDeviceTexelBufferAlignmentProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES);
+            const VkPhysicalDeviceTexelBufferAlignmentProperties *in_ext = (const VkPhysicalDeviceTexelBufferAlignmentProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES;
+            out_ext->storageTexelBufferOffsetAlignmentBytes = in_ext->storageTexelBufferOffsetAlignmentBytes;
+            out_ext->storageTexelBufferOffsetSingleTexelAlignment = in_ext->storageTexelBufferOffsetSingleTexelAlignment;
+            out_ext->uniformTexelBufferOffsetAlignmentBytes = in_ext->uniformTexelBufferOffsetAlignmentBytes;
+            out_ext->uniformTexelBufferOffsetSingleTexelAlignment = in_ext->uniformTexelBufferOffsetSingleTexelAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM);
+            const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *in_ext = (const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM;
+            out_ext->queueSubmitBoundary = in_ext->queueSubmitBoundary;
+            out_ext->tileBufferTransfers = in_ext->tileBufferTransfers;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_SHADING_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceTileShadingPropertiesQCOM *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_SHADING_PROPERTIES_QCOM);
+            const VkPhysicalDeviceTileShadingPropertiesQCOM *in_ext = (const VkPhysicalDeviceTileShadingPropertiesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_SHADING_PROPERTIES_QCOM;
+            out_ext->maxApronSize = in_ext->maxApronSize;
+            out_ext->preferNonCoherent = in_ext->preferNonCoherent;
+            out_ext->tileGranularity = in_ext->tileGranularity;
+            out_ext->maxTileShadingRate = in_ext->maxTileShadingRate;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES:
+        {
+            VkPhysicalDeviceTimelineSemaphoreProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES);
+            const VkPhysicalDeviceTimelineSemaphoreProperties *in_ext = (const VkPhysicalDeviceTimelineSemaphoreProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES;
+            out_ext->maxTimelineSemaphoreValueDifference = in_ext->maxTimelineSemaphoreValueDifference;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceTransformFeedbackPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT);
+            const VkPhysicalDeviceTransformFeedbackPropertiesEXT *in_ext = (const VkPhysicalDeviceTransformFeedbackPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
+            out_ext->maxTransformFeedbackStreams = in_ext->maxTransformFeedbackStreams;
+            out_ext->maxTransformFeedbackBuffers = in_ext->maxTransformFeedbackBuffers;
+            out_ext->maxTransformFeedbackBufferSize = in_ext->maxTransformFeedbackBufferSize;
+            out_ext->maxTransformFeedbackStreamDataSize = in_ext->maxTransformFeedbackStreamDataSize;
+            out_ext->maxTransformFeedbackBufferDataSize = in_ext->maxTransformFeedbackBufferDataSize;
+            out_ext->maxTransformFeedbackBufferDataStride = in_ext->maxTransformFeedbackBufferDataStride;
+            out_ext->transformFeedbackQueries = in_ext->transformFeedbackQueries;
+            out_ext->transformFeedbackStreamsLinesTriangles = in_ext->transformFeedbackStreamsLinesTriangles;
+            out_ext->transformFeedbackRasterizationStreamSelect = in_ext->transformFeedbackRasterizationStreamSelect;
+            out_ext->transformFeedbackDraw = in_ext->transformFeedbackDraw;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES:
+        {
+            VkPhysicalDeviceVertexAttributeDivisorProperties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES);
+            const VkPhysicalDeviceVertexAttributeDivisorProperties *in_ext = (const VkPhysicalDeviceVertexAttributeDivisorProperties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES;
+            out_ext->maxVertexAttribDivisor = in_ext->maxVertexAttribDivisor;
+            out_ext->supportsNonZeroFirstInstance = in_ext->supportsNonZeroFirstInstance;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT);
+            const VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *in_ext = (const VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT;
+            out_ext->maxVertexAttribDivisor = in_ext->maxVertexAttribDivisor;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan11Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
+            const VkPhysicalDeviceVulkan11Properties *in_ext = (const VkPhysicalDeviceVulkan11Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
+            memcpy(out_ext->deviceUUID, in_ext->deviceUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            memcpy(out_ext->driverUUID, in_ext->driverUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            memcpy(out_ext->deviceLUID, in_ext->deviceLUID, VK_LUID_SIZE * sizeof(uint8_t));
+            out_ext->deviceNodeMask = in_ext->deviceNodeMask;
+            out_ext->deviceLUIDValid = in_ext->deviceLUIDValid;
+            out_ext->subgroupSize = in_ext->subgroupSize;
+            out_ext->subgroupSupportedStages = in_ext->subgroupSupportedStages;
+            out_ext->subgroupSupportedOperations = in_ext->subgroupSupportedOperations;
+            out_ext->subgroupQuadOperationsInAllStages = in_ext->subgroupQuadOperationsInAllStages;
+            out_ext->pointClippingBehavior = in_ext->pointClippingBehavior;
+            out_ext->maxMultiviewViewCount = in_ext->maxMultiviewViewCount;
+            out_ext->maxMultiviewInstanceIndex = in_ext->maxMultiviewInstanceIndex;
+            out_ext->protectedNoFault = in_ext->protectedNoFault;
+            out_ext->maxPerSetDescriptors = in_ext->maxPerSetDescriptors;
+            out_ext->maxMemoryAllocationSize = in_ext->maxMemoryAllocationSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan12Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES);
+            const VkPhysicalDeviceVulkan12Properties *in_ext = (const VkPhysicalDeviceVulkan12Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
+            out_ext->driverID = in_ext->driverID;
+            memcpy(out_ext->driverName, in_ext->driverName, VK_MAX_DRIVER_NAME_SIZE * sizeof(char));
+            memcpy(out_ext->driverInfo, in_ext->driverInfo, VK_MAX_DRIVER_INFO_SIZE * sizeof(char));
+            out_ext->conformanceVersion = in_ext->conformanceVersion;
+            out_ext->denormBehaviorIndependence = in_ext->denormBehaviorIndependence;
+            out_ext->roundingModeIndependence = in_ext->roundingModeIndependence;
+            out_ext->shaderSignedZeroInfNanPreserveFloat16 = in_ext->shaderSignedZeroInfNanPreserveFloat16;
+            out_ext->shaderSignedZeroInfNanPreserveFloat32 = in_ext->shaderSignedZeroInfNanPreserveFloat32;
+            out_ext->shaderSignedZeroInfNanPreserveFloat64 = in_ext->shaderSignedZeroInfNanPreserveFloat64;
+            out_ext->shaderDenormPreserveFloat16 = in_ext->shaderDenormPreserveFloat16;
+            out_ext->shaderDenormPreserveFloat32 = in_ext->shaderDenormPreserveFloat32;
+            out_ext->shaderDenormPreserveFloat64 = in_ext->shaderDenormPreserveFloat64;
+            out_ext->shaderDenormFlushToZeroFloat16 = in_ext->shaderDenormFlushToZeroFloat16;
+            out_ext->shaderDenormFlushToZeroFloat32 = in_ext->shaderDenormFlushToZeroFloat32;
+            out_ext->shaderDenormFlushToZeroFloat64 = in_ext->shaderDenormFlushToZeroFloat64;
+            out_ext->shaderRoundingModeRTEFloat16 = in_ext->shaderRoundingModeRTEFloat16;
+            out_ext->shaderRoundingModeRTEFloat32 = in_ext->shaderRoundingModeRTEFloat32;
+            out_ext->shaderRoundingModeRTEFloat64 = in_ext->shaderRoundingModeRTEFloat64;
+            out_ext->shaderRoundingModeRTZFloat16 = in_ext->shaderRoundingModeRTZFloat16;
+            out_ext->shaderRoundingModeRTZFloat32 = in_ext->shaderRoundingModeRTZFloat32;
+            out_ext->shaderRoundingModeRTZFloat64 = in_ext->shaderRoundingModeRTZFloat64;
+            out_ext->maxUpdateAfterBindDescriptorsInAllPools = in_ext->maxUpdateAfterBindDescriptorsInAllPools;
+            out_ext->shaderUniformBufferArrayNonUniformIndexingNative = in_ext->shaderUniformBufferArrayNonUniformIndexingNative;
+            out_ext->shaderSampledImageArrayNonUniformIndexingNative = in_ext->shaderSampledImageArrayNonUniformIndexingNative;
+            out_ext->shaderStorageBufferArrayNonUniformIndexingNative = in_ext->shaderStorageBufferArrayNonUniformIndexingNative;
+            out_ext->shaderStorageImageArrayNonUniformIndexingNative = in_ext->shaderStorageImageArrayNonUniformIndexingNative;
+            out_ext->shaderInputAttachmentArrayNonUniformIndexingNative = in_ext->shaderInputAttachmentArrayNonUniformIndexingNative;
+            out_ext->robustBufferAccessUpdateAfterBind = in_ext->robustBufferAccessUpdateAfterBind;
+            out_ext->quadDivergentImplicitLod = in_ext->quadDivergentImplicitLod;
+            out_ext->maxPerStageDescriptorUpdateAfterBindSamplers = in_ext->maxPerStageDescriptorUpdateAfterBindSamplers;
+            out_ext->maxPerStageDescriptorUpdateAfterBindUniformBuffers = in_ext->maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+            out_ext->maxPerStageDescriptorUpdateAfterBindStorageBuffers = in_ext->maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+            out_ext->maxPerStageDescriptorUpdateAfterBindSampledImages = in_ext->maxPerStageDescriptorUpdateAfterBindSampledImages;
+            out_ext->maxPerStageDescriptorUpdateAfterBindStorageImages = in_ext->maxPerStageDescriptorUpdateAfterBindStorageImages;
+            out_ext->maxPerStageDescriptorUpdateAfterBindInputAttachments = in_ext->maxPerStageDescriptorUpdateAfterBindInputAttachments;
+            out_ext->maxPerStageUpdateAfterBindResources = in_ext->maxPerStageUpdateAfterBindResources;
+            out_ext->maxDescriptorSetUpdateAfterBindSamplers = in_ext->maxDescriptorSetUpdateAfterBindSamplers;
+            out_ext->maxDescriptorSetUpdateAfterBindUniformBuffers = in_ext->maxDescriptorSetUpdateAfterBindUniformBuffers;
+            out_ext->maxDescriptorSetUpdateAfterBindUniformBuffersDynamic = in_ext->maxDescriptorSetUpdateAfterBindUniformBuffersDynamic;
+            out_ext->maxDescriptorSetUpdateAfterBindStorageBuffers = in_ext->maxDescriptorSetUpdateAfterBindStorageBuffers;
+            out_ext->maxDescriptorSetUpdateAfterBindStorageBuffersDynamic = in_ext->maxDescriptorSetUpdateAfterBindStorageBuffersDynamic;
+            out_ext->maxDescriptorSetUpdateAfterBindSampledImages = in_ext->maxDescriptorSetUpdateAfterBindSampledImages;
+            out_ext->maxDescriptorSetUpdateAfterBindStorageImages = in_ext->maxDescriptorSetUpdateAfterBindStorageImages;
+            out_ext->maxDescriptorSetUpdateAfterBindInputAttachments = in_ext->maxDescriptorSetUpdateAfterBindInputAttachments;
+            out_ext->supportedDepthResolveModes = in_ext->supportedDepthResolveModes;
+            out_ext->supportedStencilResolveModes = in_ext->supportedStencilResolveModes;
+            out_ext->independentResolveNone = in_ext->independentResolveNone;
+            out_ext->independentResolve = in_ext->independentResolve;
+            out_ext->filterMinmaxSingleComponentFormats = in_ext->filterMinmaxSingleComponentFormats;
+            out_ext->filterMinmaxImageComponentMapping = in_ext->filterMinmaxImageComponentMapping;
+            out_ext->maxTimelineSemaphoreValueDifference = in_ext->maxTimelineSemaphoreValueDifference;
+            out_ext->framebufferIntegerColorSampleCounts = in_ext->framebufferIntegerColorSampleCounts;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan13Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES);
+            const VkPhysicalDeviceVulkan13Properties *in_ext = (const VkPhysicalDeviceVulkan13Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES;
+            out_ext->minSubgroupSize = in_ext->minSubgroupSize;
+            out_ext->maxSubgroupSize = in_ext->maxSubgroupSize;
+            out_ext->maxComputeWorkgroupSubgroups = in_ext->maxComputeWorkgroupSubgroups;
+            out_ext->requiredSubgroupSizeStages = in_ext->requiredSubgroupSizeStages;
+            out_ext->maxInlineUniformBlockSize = in_ext->maxInlineUniformBlockSize;
+            out_ext->maxPerStageDescriptorInlineUniformBlocks = in_ext->maxPerStageDescriptorInlineUniformBlocks;
+            out_ext->maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks = in_ext->maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks;
+            out_ext->maxDescriptorSetInlineUniformBlocks = in_ext->maxDescriptorSetInlineUniformBlocks;
+            out_ext->maxDescriptorSetUpdateAfterBindInlineUniformBlocks = in_ext->maxDescriptorSetUpdateAfterBindInlineUniformBlocks;
+            out_ext->maxInlineUniformTotalSize = in_ext->maxInlineUniformTotalSize;
+            out_ext->integerDotProduct8BitUnsignedAccelerated = in_ext->integerDotProduct8BitUnsignedAccelerated;
+            out_ext->integerDotProduct8BitSignedAccelerated = in_ext->integerDotProduct8BitSignedAccelerated;
+            out_ext->integerDotProduct8BitMixedSignednessAccelerated = in_ext->integerDotProduct8BitMixedSignednessAccelerated;
+            out_ext->integerDotProduct4x8BitPackedUnsignedAccelerated = in_ext->integerDotProduct4x8BitPackedUnsignedAccelerated;
+            out_ext->integerDotProduct4x8BitPackedSignedAccelerated = in_ext->integerDotProduct4x8BitPackedSignedAccelerated;
+            out_ext->integerDotProduct4x8BitPackedMixedSignednessAccelerated = in_ext->integerDotProduct4x8BitPackedMixedSignednessAccelerated;
+            out_ext->integerDotProduct16BitUnsignedAccelerated = in_ext->integerDotProduct16BitUnsignedAccelerated;
+            out_ext->integerDotProduct16BitSignedAccelerated = in_ext->integerDotProduct16BitSignedAccelerated;
+            out_ext->integerDotProduct16BitMixedSignednessAccelerated = in_ext->integerDotProduct16BitMixedSignednessAccelerated;
+            out_ext->integerDotProduct32BitUnsignedAccelerated = in_ext->integerDotProduct32BitUnsignedAccelerated;
+            out_ext->integerDotProduct32BitSignedAccelerated = in_ext->integerDotProduct32BitSignedAccelerated;
+            out_ext->integerDotProduct32BitMixedSignednessAccelerated = in_ext->integerDotProduct32BitMixedSignednessAccelerated;
+            out_ext->integerDotProduct64BitUnsignedAccelerated = in_ext->integerDotProduct64BitUnsignedAccelerated;
+            out_ext->integerDotProduct64BitSignedAccelerated = in_ext->integerDotProduct64BitSignedAccelerated;
+            out_ext->integerDotProduct64BitMixedSignednessAccelerated = in_ext->integerDotProduct64BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating8BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating8BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating8BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating8BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating16BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating16BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating16BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating16BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating32BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating32BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating32BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating32BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating64BitUnsignedAccelerated = in_ext->integerDotProductAccumulatingSaturating64BitUnsignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating64BitSignedAccelerated = in_ext->integerDotProductAccumulatingSaturating64BitSignedAccelerated;
+            out_ext->integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated = in_ext->integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated;
+            out_ext->storageTexelBufferOffsetAlignmentBytes = in_ext->storageTexelBufferOffsetAlignmentBytes;
+            out_ext->storageTexelBufferOffsetSingleTexelAlignment = in_ext->storageTexelBufferOffsetSingleTexelAlignment;
+            out_ext->uniformTexelBufferOffsetAlignmentBytes = in_ext->uniformTexelBufferOffsetAlignmentBytes;
+            out_ext->uniformTexelBufferOffsetSingleTexelAlignment = in_ext->uniformTexelBufferOffsetSingleTexelAlignment;
+            out_ext->maxBufferSize = in_ext->maxBufferSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES:
+        {
+            VkPhysicalDeviceVulkan14Properties *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES);
+            const VkPhysicalDeviceVulkan14Properties *in_ext = (const VkPhysicalDeviceVulkan14Properties *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_PROPERTIES;
+            out_ext->lineSubPixelPrecisionBits = in_ext->lineSubPixelPrecisionBits;
+            out_ext->maxVertexAttribDivisor = in_ext->maxVertexAttribDivisor;
+            out_ext->supportsNonZeroFirstInstance = in_ext->supportsNonZeroFirstInstance;
+            out_ext->maxPushDescriptors = in_ext->maxPushDescriptors;
+            out_ext->dynamicRenderingLocalReadDepthStencilAttachments = in_ext->dynamicRenderingLocalReadDepthStencilAttachments;
+            out_ext->dynamicRenderingLocalReadMultisampledAttachments = in_ext->dynamicRenderingLocalReadMultisampledAttachments;
+            out_ext->earlyFragmentMultisampleCoverageAfterSampleCounting = in_ext->earlyFragmentMultisampleCoverageAfterSampleCounting;
+            out_ext->earlyFragmentSampleMaskTestBeforeSampleCounting = in_ext->earlyFragmentSampleMaskTestBeforeSampleCounting;
+            out_ext->depthStencilSwizzleOneSupport = in_ext->depthStencilSwizzleOneSupport;
+            out_ext->polygonModePointSize = in_ext->polygonModePointSize;
+            out_ext->nonStrictSinglePixelWideLinesUseParallelogram = in_ext->nonStrictSinglePixelWideLinesUseParallelogram;
+            out_ext->nonStrictWideLinesUseParallelogram = in_ext->nonStrictWideLinesUseParallelogram;
+            out_ext->blockTexelViewCompatibleMultipleLayers = in_ext->blockTexelViewCompatibleMultipleLayers;
+            out_ext->maxCombinedImageSamplerDescriptorCount = in_ext->maxCombinedImageSamplerDescriptorCount;
+            out_ext->fragmentShadingRateClampCombinerInputs = in_ext->fragmentShadingRateClampCombinerInputs;
+            out_ext->defaultRobustnessStorageBuffers = in_ext->defaultRobustnessStorageBuffers;
+            out_ext->defaultRobustnessUniformBuffers = in_ext->defaultRobustnessUniformBuffers;
+            out_ext->defaultRobustnessVertexInputs = in_ext->defaultRobustnessVertexInputs;
+            out_ext->defaultRobustnessImages = in_ext->defaultRobustnessImages;
+            out_ext->copySrcLayoutCount = in_ext->copySrcLayoutCount;
+            out_ext->pCopySrcLayouts = in_ext->pCopySrcLayouts;
+            out_ext->copyDstLayoutCount = in_ext->copyDstLayoutCount;
+            out_ext->pCopyDstLayouts = in_ext->pCopyDstLayouts;
+            memcpy(out_ext->optimalTilingLayoutUUID, in_ext->optimalTilingLayoutUUID, VK_UUID_SIZE * sizeof(uint8_t));
+            out_ext->identicalMemoryTypeRequirements = in_ext->identicalMemoryTypeRequirements;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
+
+static void convert_VkPhysicalDeviceLayeredApiPropertiesKHR_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceLayeredApiPropertiesKHR32 *in, VkPhysicalDeviceLayeredApiPropertiesKHR *out)
+{
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceLayeredApiVulkanPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static VkPhysicalDeviceLayeredApiPropertiesKHR *convert_VkPhysicalDeviceLayeredApiPropertiesKHR_array_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceLayeredApiPropertiesKHR32 *in, uint32_t count)
@@ -38223,7 +40894,7 @@ static VkPhysicalDeviceLayeredApiPropertiesKHR *convert_VkPhysicalDeviceLayeredA
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkPhysicalDeviceLayeredApiPropertiesKHR_win32_to_host(&in[i], &out[i]);
+        convert_VkPhysicalDeviceLayeredApiPropertiesKHR_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -39252,12 +41923,33 @@ static void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_
 
 static void convert_VkPhysicalDeviceLayeredApiPropertiesKHR_host_to_win32(const VkPhysicalDeviceLayeredApiPropertiesKHR *in, VkPhysicalDeviceLayeredApiPropertiesKHR32 *out)
 {
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure32 *out_header = (void *)out;
+
     if (!in) return;
 
     out->vendorID = in->vendorID;
     out->deviceID = in->deviceID;
     out->layeredAPI = in->layeredAPI;
     memcpy(out->deviceName, in->deviceName, VK_MAX_PHYSICAL_DEVICE_NAME_SIZE * sizeof(char));
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR:
+        {
+            VkPhysicalDeviceLayeredApiVulkanPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR);
+            const VkPhysicalDeviceLayeredApiVulkanPropertiesKHR *in_ext = (const VkPhysicalDeviceLayeredApiVulkanPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR;
+            convert_VkPhysicalDeviceProperties2_host_to_win32(&in_ext->properties, &out_ext->properties);
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }
 
 static void convert_VkPhysicalDeviceLayeredApiPropertiesKHR_array_host_to_win32(const VkPhysicalDeviceLayeredApiPropertiesKHR *in, VkPhysicalDeviceLayeredApiPropertiesKHR32 *out, uint32_t count)
@@ -61623,10 +64315,17 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties(void *args)
 static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2(void *args)
 {
     struct vkGetPhysicalDeviceProperties2_params *params = args;
+    VkPhysicalDeviceProperties2 pProperties_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    vk_funcs->p_vkGetPhysicalDeviceProperties2(params->physicalDevice, params->pProperties);
+    init_conversion_context(ctx);
+    convert_VkPhysicalDeviceProperties2_win64_to_host(ctx, params->pProperties, &pProperties_host);
+    vk_funcs->p_vkGetPhysicalDeviceProperties2(params->physicalDevice, &pProperties_host);
+    convert_VkPhysicalDeviceProperties2_host_to_win64(&pProperties_host, params->pProperties);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -61656,10 +64355,17 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2(void *args)
 static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2KHR(void *args)
 {
     struct vkGetPhysicalDeviceProperties2KHR_params *params = args;
+    VkPhysicalDeviceProperties2 pProperties_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    vk_funcs->p_vkGetPhysicalDeviceProperties2KHR(params->physicalDevice, params->pProperties);
+    init_conversion_context(ctx);
+    convert_VkPhysicalDeviceProperties2_win64_to_host(ctx, params->pProperties, &pProperties_host);
+    vk_funcs->p_vkGetPhysicalDeviceProperties2KHR(params->physicalDevice, &pProperties_host);
+    convert_VkPhysicalDeviceProperties2_host_to_win64(&pProperties_host, params->pProperties);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */

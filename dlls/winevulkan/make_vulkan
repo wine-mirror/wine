@@ -307,6 +307,7 @@ FORCE_STRUCT_CONVERSIONS = {
     "VkCommandBufferSubmitInfoKHR",
     "VkSemaphoreSubmitInfo",
     "VkSemaphoreSubmitInfoKHR",
+    "VkPhysicalDeviceLayeredApiPropertiesKHR",
 }
 
 STRUCT_CHAIN_CONVERSIONS = {
@@ -323,7 +324,6 @@ STRUCT_CHAIN_CONVERSIONS = {
     # Ignore to not confuse host loader.
     "VkDeviceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"]},
     "VkInstanceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO"]},
-    "VkPhysicalDeviceLayeredApiPropertiesKHR": {"strip": ["VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_API_VULKAN_PROPERTIES_KHR"]},
 }
 
 # Some struct members are conditionally ignored and callers are free to leave them uninitialized.
@@ -2416,6 +2416,11 @@ class Generator(object):
         f.write("       return handle;\n")
         f.write("    }\n")
         f.write("}\n\n")
+
+        f.write("static void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties232 *out);\n")
+        f.write("#ifdef _WIN64\n")
+        f.write("static void convert_VkPhysicalDeviceProperties2_host_to_win64(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties2 *out);\n")
+        f.write("#endif\n")
 
         f.write(conv_helpers)
         f.write(thunks)
