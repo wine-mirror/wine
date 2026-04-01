@@ -1320,22 +1320,22 @@ static const char *init_server_dir( dev_t dev, ino_t ino )
  */
 static int setup_config_dir(void)
 {
-    char *p;
+    char *p, *dir;
     struct stat st;
     int fd_cwd = open( ".", O_RDONLY );
 
     if (chdir( config_dir ) == -1)
     {
         if (errno != ENOENT) fatal_perror( "cannot use directory %s", config_dir );
-        if ((p = strrchr( config_dir, '/' )) && p != config_dir)
+        dir = strdup( config_dir );
+        if ((p = strrchr( dir, '/' )) && p != dir)
         {
-            while (p > config_dir + 1 && p[-1] == '/') p--;
+            while (p > dir + 1 && p[-1] == '/') p--;
             *p = 0;
-            if (!stat( config_dir, &st ) && st.st_uid != getuid())
-                fatal_error( "'%s' is not owned by you, refusing to create a configuration directory there\n",
-                             config_dir );
-            *p = '/';
+            if (!stat( dir, &st ) && st.st_uid != getuid())
+                fatal_error( "'%s' is not owned by you, refusing to create a configuration directory there\n", dir );
         }
+        free( dir );
         mkdir( config_dir, 0777 );
         if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s", config_dir );
         MESSAGE( "wine: created the configuration directory '%s'\n", config_dir );
