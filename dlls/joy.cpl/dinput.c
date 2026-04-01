@@ -252,7 +252,7 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
     if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
     if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetCooperativeLevel( entry->device, GetAncestor( dialog_hwnd, GA_ROOT ),
                                                                      DISCL_BACKGROUND | DISCL_EXCLUSIVE );
-    if (SUCCEEDED(hr)) hr = IDirectInputDevice8_SetProperty( entry->device, DIPROP_AUTOCENTER, &ac_prop.diph );
+    if (SUCCEEDED(hr)) IDirectInputDevice8_SetProperty( entry->device, DIPROP_AUTOCENTER, &ac_prop.diph );
 
     if (SUCCEEDED(hr)) list_add_tail( &devices, &entry->entry );
     else
