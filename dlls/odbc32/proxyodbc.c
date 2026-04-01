@@ -4821,6 +4821,22 @@ static SQLRETURN col_attributes_win32_a( struct statement *stmt, SQLUSMALLINT co
             free( strW );
         }
     }
+
+    if (stmt->hdr.win32_funcs->SQLColAttribute)
+        FIXME("Use SQLColAttribute\n");
+
+    if (stmt->hdr.win32_funcs->SQLColAttributeW)
+    {
+        switch (field_id)
+        {
+            case SQL_COLUMN_UNSIGNED:
+                return stmt->hdr.win32_funcs->SQLColAttributeW( stmt->hdr.win32_handle, col, field_id, char_attrs, buflen,
+                        retlen, num_attrs );
+            default:
+                FIXME("Unsupported for field %d.\n", field_id);
+        }
+    }
+
     return ret;
 }
 
