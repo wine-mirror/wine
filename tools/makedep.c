@@ -1304,7 +1304,7 @@ static struct file *load_file( const char *name )
     if (i == ARRAY_SIZE(parse_functions))
     {
         /* check for C++ header with no extension */
-        char *dir = strstr( name, "/msvcrt/" );
+        const char *dir = strstr( name, "/msvcrt/" );
         if (dir && !strchr( dir, '.' )) parse_cxx_file( file, f );
     }
 
@@ -3807,8 +3807,8 @@ static void output_module( struct makefile *make, unsigned int arch )
     struct strarray all_libs = empty_strarray;
     struct strarray dep_libs = empty_strarray;
     struct strarray imports = make->imports;
-    const char *module_name;
-    char *p, *spec_file = NULL;
+    const char *p, *module_name;
+    char *spec_file = NULL;
     unsigned int link_arch;
 
     if (!make->is_exe)
