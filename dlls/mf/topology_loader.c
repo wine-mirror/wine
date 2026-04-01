@@ -314,6 +314,16 @@ static HRESULT update_media_type_from_upstream(IMFMediaType *media_type, IMFMedi
     return hr;
 }
 
+static HRESULT clone_media_type(IMFMediaType *in_type, IMFMediaType **out_type)
+{
+    HRESULT hr = MFCreateMediaType(out_type);
+    if (FAILED(hr) || SUCCEEDED(hr = IMFMediaType_CopyAllItems(in_type, (IMFAttributes *)*out_type)))
+        return hr;
+    IMFMediaType_Release(*out_type);
+    *out_type = NULL;
+    return hr;
+}
+
 static HRESULT topology_branch_connect_with_type(IMFTopology *topology, struct topology_branch *branch, IMFMediaType *type)
 {
     HRESULT hr;
@@ -406,10 +416,9 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, BOOL deco
         {
             if (SUCCEEDED(hr = topology_branch_connect_with_type(topology, up_branch, up_type)))
             {
-                if (down_type && SUCCEEDED(MFCreateMediaType(&media_type)))
+                if (down_type && SUCCEEDED(clone_media_type(down_type, &media_type)))
                 {
-                    if (SUCCEEDED(IMFMediaType_CopyAllItems(down_type, (IMFAttributes *)media_type))
-                            && SUCCEEDED(update_media_type_from_upstream(media_type, up_type))
+                    if (SUCCEEDED(update_media_type_from_upstream(media_type, up_type))
                             && SUCCEEDED(IMFMediaTypeHandler_SetCurrentMediaType(down_branch->up.handler, media_type)))
                         method = CONNECT_DIRECT;
                     IMFMediaType_Release(media_type);
