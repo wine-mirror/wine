@@ -56,7 +56,8 @@ static const char *debugstr_ok( const char *cond )
         t v = (r);                                                                                 \
         ok( v op (e), "%s " f "\n", debugstr_ok( #r ), v, ##__VA_ARGS__ );                         \
     } while (0)
-#define ok_ret( e, r )      ok_ex( r, ==, e, UINT, "%#x" )
+#define ok_ptr( r, op, e )  ok_ex( r, op, e, const void *, "%p" )
+#define ok_ret( e, r )      ok_ex( r, ==, e, UINT_PTR, "%#Ix, error %ld", GetLastError() )
 
 #define check_gl_error(exp) check_gl_error_(__LINE__, exp)
 static void check_gl_error_( unsigned int line, GLenum exp )
@@ -3558,7 +3559,7 @@ static void test_copy_context(HDC hdc)
     ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
 }
 
-static void test_child_window(HWND hwnd, PIXELFORMATDESCRIPTOR *pfd)
+static void test_child_window( HWND hwnd, const PIXELFORMATDESCRIPTOR *pfd )
 {
     int pixel_format;
     DWORD t1, t;
@@ -3881,161 +3882,131 @@ static void test_memory_map( HDC hdc)
 
 START_TEST(opengl)
 {
-    HWND hwnd;
-    PIXELFORMATDESCRIPTOR pfd = {
-        sizeof(PIXELFORMATDESCRIPTOR),
-        1,                     /* version */
-        PFD_DRAW_TO_WINDOW |
-        PFD_SUPPORT_OPENGL |
-        PFD_DOUBLEBUFFER,
-        PFD_TYPE_RGBA,
-        24,                    /* 24-bit color depth */
-        0, 0, 0, 0, 0, 0,      /* color bits */
-        0,                     /* alpha buffer */
-        0,                     /* shift bit */
-        0,                     /* accumulation buffer */
-        0, 0, 0, 0,            /* accum bits */
-        32,                    /* z-buffer */
-        0,                     /* stencil buffer */
-        0,                     /* auxiliary buffer */
-        PFD_MAIN_PLANE,        /* main layer */
-        0,                     /* reserved */
-        0, 0, 0                /* layer masks */
+    const PIXELFORMATDESCRIPTOR pfd =
+    {
+        .nSize = sizeof(PIXELFORMATDESCRIPTOR),
+        .nVersion = 1,
+        .dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        .iPixelType = PFD_TYPE_RGBA,
+        .cColorBits = 24,
     };
 
-    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW, 10, 10, 200, 200, NULL, NULL,
-            NULL, NULL);
-    ok(hwnd != NULL, "err: %ld\n", GetLastError());
-    if (hwnd)
+    HMODULE gdi32 = GetModuleHandleA( "gdi32.dll" );
+    int format, res;
+    const char *tmp;
+    HGLRC hglrc;
+    HWND hwnd;
+    HDC hdc;
+
+    pD3DKMTCreateDCFromMemory = (void *)GetProcAddress( gdi32, "D3DKMTCreateDCFromMemory" );
+    pD3DKMTDestroyDCFromMemory = (void *)GetProcAddress( gdi32, "D3DKMTDestroyDCFromMemory" );
+
+    hwnd = CreateWindowW( L"static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200, NULL,
+                          NULL, NULL, NULL );
+    ok_ptr( hwnd, !=, NULL );
+
+    check_gl_error( GL_INVALID_OPERATION );
+
+    hdc = GetDC( hwnd );
+    format = ChoosePixelFormat( hdc, &pfd );
+    if (!format)
     {
-        HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
-        HDC hdc;
-        int iPixelFormat, res;
-        const char *tmp;
-        HGLRC hglrc;
-        DWORD error;
+        win_skip( "Unable to find pixel format.\n" );
+        goto cleanup;
+    }
 
-        pD3DKMTCreateDCFromMemory  = (void *)GetProcAddress( gdi32, "D3DKMTCreateDCFromMemory" );
-        pD3DKMTDestroyDCFromMemory = (void *)GetProcAddress( gdi32, "D3DKMTDestroyDCFromMemory" );
+    hglrc = wglCreateContext( hdc );
+    ok_ptr( hglrc, ==, NULL );
+    ok_ret( ERROR_INVALID_PIXEL_FORMAT, GetLastError() );
+    ok_ret( TRUE, SetPixelFormat( hdc, format, &pfd ) );
+    ok_ptr( glGetString( GL_RENDERER ), ==, NULL );
+    ok_ptr( glGetString( GL_VERSION ), ==, NULL );
+    ok_ptr( glGetString( GL_VENDOR ), ==, NULL );
 
-        check_gl_error( GL_INVALID_OPERATION );
-        ShowWindow(hwnd, SW_SHOW);
+    test_bitmap_rendering( TRUE );
+    test_bitmap_rendering( FALSE );
+    test_16bit_bitmap_rendering();
+    test_d3dkmt_rendering();
+    test_minimized();
+    test_window_dc();
+    test_message_window();
+    test_dc( hwnd, hdc );
 
-        hdc = GetDC(hwnd);
+    hglrc = wglCreateContext( hdc );
+    res = wglMakeCurrent( hdc, hglrc );
+    ok( res, "wglMakeCurrent failed!\n" );
+    if (!res)
+    {
+        skip( "Skipping OpenGL tests without a current context\n" );
+        goto cleanup;
+    }
+    trace( "OpenGL renderer: %s\n", glGetString( GL_RENDERER ) );
+    trace( "OpenGL driver version: %s\n", glGetString( GL_VERSION ) );
+    trace( "OpenGL vendor: %s\n", glGetString( GL_VENDOR ) );
 
-        iPixelFormat = ChoosePixelFormat(hdc, &pfd);
-        if(iPixelFormat == 0)
-        {
-            /* This should never happen as ChoosePixelFormat always returns a closest match, but currently this fails in Wine if we don't have glX */
-            win_skip("Unable to find pixel format.\n");
-            goto cleanup;
-        }
+    /* Initialisation of WGL functions depends on an implicit WGL context. For this reason we can't load them before making
+     * any WGL call :( On Wine this would work but not on real Windows because there can be different implementations (software, ICD, MCD).
+     */
+    init_functions();
 
-        /* We shouldn't be able to create a context from a hdc which doesn't have a pixel format set */
-        hglrc = wglCreateContext(hdc);
-        ok(hglrc == NULL, "wglCreateContext should fail when no pixel format has been set, but it passed\n");
-        error = GetLastError();
-        ok(error == ERROR_INVALID_PIXEL_FORMAT, "expected ERROR_INVALID_PIXEL_FORMAT for wglCreateContext without a pixelformat set, but received %#lx\n", error);
+    test_getprocaddress( hdc );
+    test_deletecontext( hwnd, hdc );
+    test_makecurrent( hdc );
+    test_copy_context( hdc );
 
-        res = SetPixelFormat(hdc, iPixelFormat, &pfd);
-        ok(res, "SetPixelformat failed: %lx\n", GetLastError());
+    /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
+    if (!pwglGetExtensionsStringARB)
+    {
+        win_skip( "wglGetExtensionsStringARB is not available\n" );
+        goto cleanup;
+    }
 
-        test_bitmap_rendering( TRUE );
-        test_bitmap_rendering( FALSE );
-        test_16bit_bitmap_rendering();
-        test_d3dkmt_rendering();
-        test_minimized();
-        test_window_dc();
-        test_message_window();
-        test_dc(hwnd, hdc);
+    test_choosepixelformat();
+    test_choosepixelformat_flag_is_ignored_when_unset( PFD_DRAW_TO_WINDOW );
+    test_choosepixelformat_flag_is_ignored_when_unset( PFD_DRAW_TO_BITMAP );
+    test_choosepixelformat_flag_is_ignored_when_unset( PFD_SUPPORT_GDI );
+    test_choosepixelformat_flag_is_ignored_when_unset( PFD_SUPPORT_OPENGL );
+    test_wglChoosePixelFormatARB( hdc );
+    test_debug_message_callback();
+    test_setpixelformat( hdc );
+    test_destroy( hdc );
+    test_sharelists( hdc );
+    test_colorbits( hdc );
+    test_gdi_dbuf( hdc );
+    test_acceleration( hdc );
+    test_framebuffer();
+    test_memory_map( hdc );
+    test_gl_error( hdc );
 
-        ok(!glGetString(GL_RENDERER) && !glGetString(GL_VERSION) && !glGetString(GL_VENDOR),
-           "Expected NULL string when no active context is set\n");
-        hglrc = wglCreateContext(hdc);
-        res = wglMakeCurrent(hdc, hglrc);
-        ok(res, "wglMakeCurrent failed!\n");
-        if(res)
-        {
-            trace("OpenGL renderer: %s\n", glGetString(GL_RENDERER));
-            trace("OpenGL driver version: %s\n", glGetString(GL_VERSION));
-            trace("OpenGL vendor: %s\n", glGetString(GL_VENDOR));
-        }
-        else
-        {
-            skip("Skipping OpenGL tests without a current context\n");
-            return;
-        }
+    tmp = pwglGetExtensionsStringEXT();
+    ok( tmp && *tmp, "got wgl_extensions %s\n", debugstr_a(tmp) );
+    wgl_extensions = tmp;
 
-        /* Initialisation of WGL functions depends on an implicit WGL context. For this reason we can't load them before making
-         * any WGL call :( On Wine this would work but not on real Windows because there can be different implementations (software, ICD, MCD).
-         */
-        init_functions();
+    tmp = pwglGetExtensionsStringARB( hdc );
+    ok( tmp && *tmp, "got wgl_extensions %s\n", debugstr_a(tmp) );
+    ok( !strcmp( tmp, wgl_extensions ), "got wgl_extensions %s\n", debugstr_a(tmp) );
 
-        test_getprocaddress(hdc);
-        test_deletecontext(hwnd, hdc);
-        test_makecurrent(hdc);
-        test_copy_context(hdc);
+    if (wgl_extensions == NULL) skip( "Skipping opengl32 tests because this OpenGL implementation "
+                                      "doesn't support WGL extensions!\n" );
 
-        /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
-        if (!pwglGetExtensionsStringARB)
-        {
-            win_skip("wglGetExtensionsStringARB is not available\n");
-            return;
-        }
+    if (strstr( wgl_extensions, "WGL_ARB_create_context" )) test_opengl3( hdc );
 
-        test_choosepixelformat();
-        test_choosepixelformat_flag_is_ignored_when_unset(PFD_DRAW_TO_WINDOW);
-        test_choosepixelformat_flag_is_ignored_when_unset(PFD_DRAW_TO_BITMAP);
-        test_choosepixelformat_flag_is_ignored_when_unset(PFD_SUPPORT_GDI);
-        test_choosepixelformat_flag_is_ignored_when_unset(PFD_SUPPORT_OPENGL);
-        test_wglChoosePixelFormatARB(hdc);
-        test_debug_message_callback();
-        test_setpixelformat(hdc);
-        test_destroy(hdc);
-        test_sharelists(hdc);
-        test_colorbits(hdc);
-        test_gdi_dbuf(hdc);
-        test_acceleration(hdc);
-        test_framebuffer();
-        test_memory_map(hdc);
-        test_gl_error(hdc);
+    if (strstr( wgl_extensions, "WGL_ARB_make_current_read" ))
+    {
+        test_make_current_read( hdc );
+        test_destroy_read( hdc );
+    }
+    else skip( "WGL_ARB_make_current_read not supported, skipping test\n" );
 
-        tmp = pwglGetExtensionsStringEXT();
-        ok(tmp && *tmp, "got wgl_extensions %s\n", debugstr_a(tmp));
-        wgl_extensions = tmp;
+    if (strstr( wgl_extensions, "WGL_ARB_pbuffer" )) test_pbuffers( hdc );
+    else skip( "WGL_ARB_pbuffer not supported, skipping pbuffer test\n" );
 
-        tmp = pwglGetExtensionsStringARB(hdc);
-        ok(tmp && *tmp, "got wgl_extensions %s\n", debugstr_a(tmp));
-        ok(!strcmp(tmp, wgl_extensions), "got wgl_extensions %s\n", debugstr_a(tmp));
+    if (strstr( wgl_extensions, "WGL_EXT_swap_control" )) test_swap_control( hdc );
+    else skip( "WGL_EXT_swap_control not supported, skipping test\n" );
 
-        if(wgl_extensions == NULL) skip("Skipping opengl32 tests because this OpenGL implementation doesn't support WGL extensions!\n");
-
-        if(strstr(wgl_extensions, "WGL_ARB_create_context"))
-            test_opengl3(hdc);
-
-        if(strstr(wgl_extensions, "WGL_ARB_make_current_read"))
-        {
-            test_make_current_read(hdc);
-            test_destroy_read(hdc);
-        }
-        else
-            skip("WGL_ARB_make_current_read not supported, skipping test\n");
-
-        if(strstr(wgl_extensions, "WGL_ARB_pbuffer"))
-            test_pbuffers(hdc);
-        else
-            skip("WGL_ARB_pbuffer not supported, skipping pbuffer test\n");
-
-        if(strstr(wgl_extensions, "WGL_EXT_swap_control"))
-            test_swap_control(hdc);
-        else
-            skip("WGL_EXT_swap_control not supported, skipping test\n");
-
-        if (winetest_interactive)
-            test_child_window(hwnd, &pfd);
+    if (winetest_interactive) test_child_window( hwnd, &pfd );
 
 cleanup:
-        ReleaseDC(hwnd, hdc);
-        DestroyWindow(hwnd);
-    }
+    ReleaseDC( hwnd, hdc );
+    DestroyWindow( hwnd );
 }
