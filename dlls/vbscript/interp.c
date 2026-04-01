@@ -115,15 +115,12 @@ static BOOL lookup_global_vars(ScriptDisp *script, const WCHAR *name, ref_t *ref
 
 static BOOL lookup_global_funcs(ScriptDisp *script, const WCHAR *name, ref_t *ref)
 {
-    function_t **funcs = script->global_funcs;
-    size_t i, cnt = script->global_funcs_cnt;
+    function_t *func = script_disp_find_func(script, name);
 
-    for(i = 0; i < cnt; i++) {
-        if(!vbs_wcsicmp(funcs[i]->name, name)) {
-            ref->type = REF_FUNC;
-            ref->u.f = funcs[i];
-            return TRUE;
-        }
+    if(func) {
+        ref->type = REF_FUNC;
+        ref->u.f = func;
+        return TRUE;
     }
 
     return FALSE;

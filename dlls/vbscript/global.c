@@ -3767,10 +3767,9 @@ static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned ar
 static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     named_item_t *item;
-    function_t **funcs;
+    function_t *func;
     IDispatch *disp;
     const WCHAR *name;
-    size_t i, cnt;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_variant(arg));
@@ -3785,36 +3784,30 @@ static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
     /* Search the current named item's script object first */
     item = This->ctx->current_named_item;
     if(item && item->script_obj) {
-        funcs = item->script_obj->global_funcs;
-        cnt = item->script_obj->global_funcs_cnt;
-        for(i = 0; i < cnt; i++) {
-            if(!vbs_wcsicmp(funcs[i]->name, name)) {
-                if(!res)
-                    return S_OK;
-                hres = create_func_ref(This->ctx, funcs[i], &disp);
-                if(FAILED(hres))
-                    return hres;
-                V_VT(res) = VT_DISPATCH;
-                V_DISPATCH(res) = disp;
-                return S_OK;
-            }
-        }
-    }
-
-    /* Search global script object */
-    funcs = This->ctx->script_obj->global_funcs;
-    cnt = This->ctx->script_obj->global_funcs_cnt;
-    for(i = 0; i < cnt; i++) {
-        if(!vbs_wcsicmp(funcs[i]->name, name)) {
+        func = script_disp_find_func(item->script_obj, name);
+        if(func) {
             if(!res)
                 return S_OK;
-            hres = create_func_ref(This->ctx, funcs[i], &disp);
+            hres = create_func_ref(This->ctx, func, &disp);
             if(FAILED(hres))
                 return hres;
             V_VT(res) = VT_DISPATCH;
             V_DISPATCH(res) = disp;
             return S_OK;
         }
+    }
+
+    /* Search global script object */
+    func = script_disp_find_func(This->ctx->script_obj, name);
+    if(func) {
+        if(!res)
+            return S_OK;
+        hres = create_func_ref(This->ctx, func, &disp);
+        if(FAILED(hres))
+            return hres;
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = disp;
+        return S_OK;
     }
 
     return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);

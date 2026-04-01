@@ -169,17 +169,22 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
 
     for (func_iter = code->funcs; func_iter; func_iter = func_iter->next)
     {
-        for (i = 0; i < obj->global_funcs_cnt; i++)
+        struct rb_entry *entry = rb_get(&obj->func_tree, func_iter->name);
+
+        if (entry)
         {
-            if (!vbs_wcsicmp(obj->global_funcs[i]->name, func_iter->name))
-            {
-                /* global function already exists, replace it */
-                obj->global_funcs[i] = func_iter;
-                break;
-            }
+            function_t *old_func = RB_ENTRY_VALUE(entry, function_t, entry);
+            func_iter->index = old_func->index;
+            obj->global_funcs[old_func->index] = func_iter;
+            rb_remove(&obj->func_tree, &old_func->entry);
+            rb_put(&obj->func_tree, func_iter->name, &func_iter->entry);
         }
-        if (i == obj->global_funcs_cnt)
+        else
+        {
+            func_iter->index = obj->global_funcs_cnt;
             obj->global_funcs[obj->global_funcs_cnt++] = func_iter;
+            rb_put(&obj->func_tree, func_iter->name, &func_iter->entry);
+        }
     }
 
     if (code->classes)

@@ -29,6 +29,22 @@ static const GUID GUID_VBScriptTypeInfo = {0xc59c6b12,0xf6c1,0x11cf,{0x88,0x35,0
 #define DISPID_FUNCTION_MASK 0x20000000
 #define FDEX_VERSION_MASK 0xf0000000
 
+static int func_name_cmp(const void *key, const struct rb_entry *entry)
+{
+    function_t *func = RB_ENTRY_VALUE(entry, function_t, entry);
+    return vbs_wcsicmp(key, func->name);
+}
+
+function_t *script_disp_find_func(ScriptDisp *disp, const WCHAR *name)
+{
+    struct rb_entry *entry = rb_get(&disp->func_tree, name);
+
+    if (!entry)
+        return NULL;
+
+    return RB_ENTRY_VALUE(entry, function_t, entry);
+}
+
 static inline BOOL is_func_id(vbdisp_t *This, DISPID id)
 {
     return id < This->desc->func_cnt;
@@ -1513,6 +1529,7 @@ static HRESULT WINAPI ScriptDisp_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    struct rb_entry *entry;
     unsigned i;
 
     TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(bstrName), grfdex, pid);
@@ -1527,11 +1544,11 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         }
     }
 
-    for(i = 0; i < This->global_funcs_cnt; i++) {
-        if(!vbs_wcsicmp(This->global_funcs[i]->name, bstrName)) {
-            *pid = i + 1 + DISPID_FUNCTION_MASK;
-            return S_OK;
-        }
+    entry = rb_get(&This->func_tree, bstrName);
+    if(entry) {
+        function_t *func = RB_ENTRY_VALUE(entry, function_t, entry);
+        *pid = func->index + 1 + DISPID_FUNCTION_MASK;
+        return S_OK;
     }
 
     *pid = -1;
@@ -1670,6 +1687,7 @@ HRESULT create_script_disp(script_ctx_t *ctx, ScriptDisp **ret)
     script_disp->ref = 1;
     script_disp->ctx = ctx;
     heap_pool_init(&script_disp->heap);
+    rb_init(&script_disp->func_tree, func_name_cmp);
     script_disp->rnd = 0x50000;
 
     *ret = script_disp;

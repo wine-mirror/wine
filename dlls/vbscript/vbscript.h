@@ -32,6 +32,7 @@
 #include "vbscript_defs.h"
 
 #include "wine/list.h"
+#include "wine/rbtree.h"
 
 typedef struct {
     void **blocks;
@@ -131,6 +132,7 @@ typedef struct {
     function_t **global_funcs;
     size_t global_funcs_cnt;
     size_t global_funcs_size;
+    struct rb_tree func_tree;
 
     class_desc_t *classes;
 
@@ -169,6 +171,7 @@ HRESULT get_disp_value(script_ctx_t*,IDispatch*,VARIANT*);
 void collect_objects(script_ctx_t*);
 HRESULT create_script_disp(script_ctx_t*,ScriptDisp**);
 HRESULT create_func_ref(script_ctx_t*,function_t*,IDispatch**);
+function_t *script_disp_find_func(ScriptDisp*,const WCHAR*);
 
 HRESULT to_int(VARIANT*,int*);
 
@@ -362,6 +365,8 @@ struct _function_t {
     unsigned code_off;
     vbscode_t *code_ctx;
     function_t *next;
+    struct rb_entry entry;
+    size_t index;
 };
 
 struct _vbscode_t {
