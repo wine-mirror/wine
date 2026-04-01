@@ -2064,6 +2064,9 @@ static void testSerializedStore(void)
 static void testCertOpenSystemStore(void)
 {
     HCERTSTORE store;
+    HCRYPTPROV prov;
+    BOOL ret;
+    DWORD size, pp_type;
 
     store = CertOpenSystemStoreW(0, NULL);
     ok(!store && GetLastError() == E_INVALIDARG,
@@ -2079,6 +2082,25 @@ static void testCertOpenSystemStore(void)
     CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, L"Bogus");
     RegDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\SystemCertificates\\Bogus");
+
+    ret = CryptAcquireContextA(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(ret, "CryptAcquireContext failed: %08lx\n", GetLastError());
+
+    store = CertOpenSystemStoreW(prov, L"My");
+    ok(store != 0, "CertOpenSystemStore failed: %08lx\n", GetLastError());
+
+    size = sizeof(pp_type);
+    pp_type = 0xdeadbeef;
+    ret = CryptGetProvParam(prov, PP_PROVTYPE, (BYTE *)&pp_type, &size, 0);
+    todo_wine
+    ok(ret, "CryptGetProvParam failed: %08lx\n", GetLastError());
+    todo_wine
+    ok(pp_type == PROV_RSA_FULL, "got %lu\n", pp_type);
+
+    CertCloseStore(store, 0);
+    ret = CryptReleaseContext(prov, 0);
+    todo_wine
+    ok(ret, "CryptReleaseContext: %08lx\n", GetLastError());
 }
 
 static const struct
