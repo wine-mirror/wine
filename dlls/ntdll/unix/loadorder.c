@@ -419,7 +419,8 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, WCHA
  *
  * Check if we should prefer loading native using heuristics based on the version resource.
  */
-static BOOL prefer_native_heuristics( const UNICODE_STRING *nt_name, void *version_res, ULONG version_len )
+static BOOL prefer_native_heuristics( const UNICODE_STRING *nt_name,
+                                      const struct pe_mapping_info *pe_mapping )
 {
     static const WCHAR fileinfoW[] = {'S','t','r','i','n','g','F','i','l','e','I','n','f','o',0};
     static const WCHAR companyW[] = {'C','o','m','p','a','n','y','N','a','m','e',0};
@@ -430,8 +431,10 @@ static BOOL prefer_native_heuristics( const UNICODE_STRING *nt_name, void *versi
     const WCHAR *name;
     ULONG len;
 
-    if (!version_len) return FALSE;
-    if (!get_version_entry( &entry, version_res, (char *)version_res + version_len )) return FALSE;
+    if (!pe_mapping) return FALSE;
+    if (!pe_mapping->version_len) return FALSE;
+    if (!get_version_entry( &entry, pe_mapping->version_res,
+                            (char *)pe_mapping->version_res + pe_mapping->version_len )) return FALSE;
     fileinfo = entry.value;
     if (entry.info->val_len < sizeof(*fileinfo)) return FALSE;
     if (fileinfo->dwSignature != VS_FFI_SIGNATURE) return FALSE;
@@ -471,7 +474,8 @@ void set_load_order_app_name( const WCHAR *app_name )
  * Return the loadorder of a module.
  * The system directory and '.dll' extension is stripped from the path.
  */
-enum loadorder get_load_order( const UNICODE_STRING *nt_name, void *version_res, ULONG version_len )
+enum loadorder get_load_order( const UNICODE_STRING *nt_name,
+                               const struct pe_mapping_info *pe_mapping )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
     enum loadorder ret = LO_INVALID;
@@ -529,7 +533,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name, void *version_res,
             TRACE( "got main exe default %s for %s\n", debugstr_loadorder(ret), debugstr_us(nt_name) );
             goto done;
         }
-        if (prefer_native_heuristics( nt_name, version_res, version_len ))
+        if (prefer_native_heuristics( nt_name, pe_mapping ))
         {
             ret = LO_NATIVE_BUILTIN;
             goto done;
