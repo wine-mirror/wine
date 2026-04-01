@@ -255,6 +255,11 @@ NTSYSAPI int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD d
 NTSYSAPI int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 );
 NTSYSAPI int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n );
 
+/* C23 requires these functions to be defined as macros */
+#undef wcschr
+#undef wcsrchr
+#undef wcspbrk
+
 #define iswspace(ch)       ntdll_iswspace(ch)
 #define wcslen(str)        ntdll_wcslen(str)
 #define wcscpy(dst,src)    ntdll_wcscpy(dst,src)
