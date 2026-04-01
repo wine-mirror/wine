@@ -474,13 +474,13 @@ void set_load_order_app_name( const WCHAR *app_name )
  * Return the loadorder of a module.
  * The system directory and '.dll' extension is stripped from the path.
  */
-enum loadorder get_load_order( const UNICODE_STRING *nt_name,
+enum loadorder get_load_order( const UNICODE_STRING *nt_name, BOOL is_system_dir,
                                const struct pe_mapping_info *pe_mapping )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
     enum loadorder ret = LO_INVALID;
     const WCHAR *path = nt_name->Buffer;
-    unsigned int i, len = nt_name->Length / sizeof(WCHAR);
+    unsigned int len = nt_name->Length / sizeof(WCHAR);
     WCHAR *module, *basename;
 
     if (!init_done) init_load_order();
@@ -491,20 +491,6 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name,
         len -= 4;
     }
 
-    /* Strip path information if the module resides in the system directory
-     */
-    if (len > wcslen(system_dir) - 4 && !wcsnicmp( system_dir + 4, path, wcslen(system_dir) - 4 ))
-    {
-        unsigned int pos = wcslen( system_dir ) - 4;
-        while (pos < len && (path[pos] == '\\' || path[pos] == '/')) pos++;
-        for (i = pos; i < len; i++) if (path[i] == '\\' || path[i] == '/') break;
-        if (i == len)
-        {
-            path += pos;
-            len -= pos;
-        }
-    }
-
     if (!(module = malloc( (len + 2) * sizeof(WCHAR) ))) return ret;
     memcpy( module + 1, path, len * sizeof(WCHAR) );  /* reserve module[0] for the wildcard char */
     module[len + 1] = 0;
@@ -512,7 +498,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name,
     basename = get_basename( module + 1 );
 
     /* first explicit module name */
-    if ((ret = get_load_order_value( std_key, app_key, module+1 )) != LO_INVALID)
+    if ((ret = get_load_order_value( std_key, app_key, is_system_dir ? basename : module+1 )) != LO_INVALID)
         goto done;
 
     /* then module basename preceded by '*' */
@@ -520,13 +506,13 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name,
     if ((ret = get_load_order_value( std_key, app_key, basename-1 )) != LO_INVALID)
         goto done;
 
-    /* then module basename without '*' (only if explicit path) */
-    if (basename != module+1 && ((ret = get_load_order_value( std_key, app_key, basename )) != LO_INVALID))
-        goto done;
-
     /* now some heuristics for explicit paths */
-    if (basename != module + 1)
+    if (!is_system_dir)
     {
+        /* module basename without '*' */
+        if (((ret = get_load_order_value( std_key, app_key, basename )) != LO_INVALID))
+            goto done;
+
         if (!main_exe_loaded)  /* if loading the main exe, try native first */
         {
             ret = LO_NATIVE_BUILTIN;
