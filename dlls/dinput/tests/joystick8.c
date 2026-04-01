@@ -1918,7 +1918,6 @@ static void test_simple_joystick( DWORD version )
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
@@ -3742,7 +3741,6 @@ static BOOL test_device_types( DWORD version )
         desc.caps = device_desc[i].hid_caps;
         desc.report_descriptor_len = device_desc[i].report_desc_len;
         memcpy( desc.report_descriptor_buf, device_desc[i].report_desc_buf, device_desc[i].report_desc_len );
-        fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
         if (!hid_device_start( &desc, 1 ))
         {
@@ -4212,7 +4210,6 @@ static void test_many_axes_joystick(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
@@ -4480,7 +4477,6 @@ static void test_driving_wheel_axes(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
@@ -4715,7 +4711,6 @@ static void test_winmm_joystick(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
 
@@ -5139,7 +5134,6 @@ static void test_windows_gaming_input(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
     res = WaitForSingleObject( controller_added.event, 5000 );
@@ -5250,7 +5244,6 @@ static void test_windows_gaming_input(void)
 
     desc.report_descriptor_len = sizeof(wheel_threepedals_desc);
     memcpy( desc.report_descriptor_buf, wheel_threepedals_desc, sizeof(wheel_threepedals_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     controller_added.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!controller_added.event, "CreateEventW failed, error %lu\n", GetLastError() );
@@ -5469,7 +5462,6 @@ static void test_rawinput( char **argv )
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     rawinput_device_added = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
     ok( !!rawinput_device_added, "CreateSemaphoreW failed, error %lu\n", GetLastError() );

@@ -711,6 +711,16 @@ BOOL bus_device_start(void)
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
 }
 
+static void fill_context( const char *file, int line, char *buffer, SIZE_T size )
+{
+    const char *source_file;
+    source_file = strrchr( file, '/' );
+    if (!source_file) source_file = strrchr( file, '\\' );
+    if (!source_file) source_file = file;
+    else source_file++;
+    snprintf( buffer, size, "%s:%d", source_file, line );
+}
+
 static void hid_device_remove( HANDLE control, struct hid_device_desc *desc, UINT count )
 {
     DWORD ret;
@@ -741,7 +751,7 @@ void hid_device_stop( struct hid_device_desc *desc, UINT count )
     CloseHandle( control );
 }
 
-BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout )
+BOOL hid_device_start_( const char *file, int line, struct hid_device_desc *desc, UINT count, DWORD timeout )
 {
     HANDLE control;
     DWORD ret = 0;
@@ -752,6 +762,8 @@ BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout 
 
     for (UINT i = 0; i < count; i++)
     {
+        fill_context( file, line, desc[i].context, ARRAY_SIZE(desc[i].context) );
+
         ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc + i, sizeof(*desc), NULL, 0, 5000 );
         ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
 
@@ -937,16 +949,6 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
     return ret;
 }
 
-void fill_context_( const char *file, int line, char *buffer, SIZE_T size )
-{
-    const char *source_file;
-    source_file = strrchr( file, '/' );
-    if (!source_file) source_file = strrchr( file, '\\' );
-    if (!source_file) source_file = file;
-    else source_file++;
-    snprintf( buffer, size, "%s:%d", source_file, line );
-}
-
 void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
                       struct hid_expect *expect, DWORD expect_size )
 {
@@ -957,7 +959,7 @@ void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_devi
     if (desc) memcpy( buffer, desc, sizeof(*desc) );
     else memset( buffer, 0, sizeof(*desc) );
 
-    fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
+    fill_context( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
     size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
@@ -1001,7 +1003,7 @@ void send_hid_input_( const char *file, int line, HANDLE device, struct hid_devi
     if (desc) memcpy( buffer, desc, sizeof(*desc) );
     else memset( buffer, 0, sizeof(*desc) );
 
-    fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
+    fill_context( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
     size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
@@ -3183,7 +3185,6 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     desc.input_size = polled ? sizeof(expect_in) : 0;
     memcpy( desc.input, &expect_in, sizeof(expect_in) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (hid_device_start( &desc, 1 )) test_hid_device( report_id, polled, &caps, &desc );
     hid_device_stop( &desc, 1 );
@@ -3592,7 +3593,6 @@ static void test_hidp_kdr(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
 
@@ -3902,7 +3902,6 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
 
     desc.report_descriptor_len = sizeof(gamepad_desc);
     memcpy( desc.report_descriptor_buf, gamepad_desc, sizeof(gamepad_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     hid_device_start( &desc, 1 );
     ret = WaitForSingleObject( stop_event, 5000 );
@@ -4167,7 +4166,6 @@ static void test_hid_multiple_tlc(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
 

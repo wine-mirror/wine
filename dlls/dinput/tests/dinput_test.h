@@ -51,8 +51,8 @@ extern const WCHAR expect_path_end[];
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */
 
-#define hid_device_start( a, b ) hid_device_start_( a, b, 1000 )
-BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout );
+#define hid_device_start( a, b ) hid_device_start_( __FILE__, __LINE__, a, b, 1000 )
+BOOL hid_device_start_( const char *file, int line, struct hid_device_desc *desc, UINT count, DWORD timeout );
 void hid_device_stop( struct hid_device_desc *desc, UINT count );
 BOOL bus_device_start(void);
 void bus_device_stop(void);
@@ -66,9 +66,6 @@ void dinput_test_exit(void);
 
 HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device );
 DWORD WINAPI dinput_test_device_thread( void *stop_event );
-
-#define fill_context( a, b ) fill_context_( __FILE__, __LINE__, a, b )
-void fill_context_( const char *file, int line, char *buffer, SIZE_T size );
 
 #define check_member_( file, line, val, exp, fmt, member )                                         \
     ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )

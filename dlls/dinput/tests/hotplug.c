@@ -167,7 +167,6 @@ static BOOL test_input_lost( DWORD version )
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
@@ -209,7 +208,6 @@ static BOOL test_input_lost( DWORD version )
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_NOEFFECT, "Unacquire returned: %#lx\n", hr );
 
-    fill_context( desc.context, ARRAY_SIZE(desc.context) );
     hid_device_start( &desc, 1 );
 
     hr = IDirectInputDevice8_Acquire( device );
