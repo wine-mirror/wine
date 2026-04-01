@@ -740,7 +740,7 @@ static void add_apiset_value( struct apiset *apiset, struct apiset_entry *entry,
     if (entry->val_count < ARRAY_SIZE(entry->values) - 1)
     {
         struct apiset_value *val = &entry->values[entry->val_count++];
-        char *sep = strchr( value, ':' );
+        const char *sep = strchr( value, ':' );
 
         if (sep)
         {
