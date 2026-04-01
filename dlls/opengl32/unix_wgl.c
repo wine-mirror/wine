@@ -1442,6 +1442,13 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     return TRUE;
 }
 
+HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hdc, int format, int width, int height, const int *attribs, HPBUFFERARB client_pbuffer )
+{
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    if (!funcs->p_pbuffer_create( hdc, format, width, height, attribs, client_pbuffer )) return 0;
+    return client_pbuffer;
+}
+
 static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GLenum severity,
                                        GLsizei length, const GLchar *message, const void *user )
 {

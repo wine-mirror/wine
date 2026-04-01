@@ -229,6 +229,7 @@ my %manual_unix_thunks =
      "wglCopyContext" => 1,
      "wglCreateContext" => 1,
      "wglCreateContextAttribsARB" => 1,
+     "wglCreatePbufferARB" => 1,
      "wglDeleteContext" => 1,
      "wglMakeContextCurrentARB" => 1,
      "wglMakeCurrent" => 1,
@@ -377,17 +378,6 @@ my %state_attrib_funcs =
      "glLightModeli" => "params->pname, &params->param, sizeof(params->param)",
     );
 
-#
-# Used to convert some types
-#
-sub ConvertType($)
-{
-    my $arg = shift;
-    my $ret = $arg->textContent();
-    my @type = $arg->findnodes("./ptype");
-    return $ret;
-}
-
 sub get_func_trace($$$)
 {
     my ($name, $func, $param_names) = @_;
@@ -420,27 +410,25 @@ sub get_func_trace($$$)
     return "TRACE( \"$trace_fmt\\n\"$trace_arg );\n";
 }
 
-sub get_func_args($$)
+sub get_func_args($)
 {
-    my ($func, $unix) = @_;
+    my $func = shift;
     my $ret = "";
     foreach my $arg (@{$func->[1]})
     {
         my $ptype = get_arg_type( $arg );
         my $pname = get_arg_name( $arg );
-        $ret .= " " . ($unix ? ConvertType( $arg ) : $arg->textContent()) . ",";
+        $ret .= " " . $arg->textContent() . ",";
     }
-    $ret .= " HPBUFFERARB client_pbuffer," if $unix && $func->[0] =~ /HPBUFFERARB/;
-    $ret .= " HGLRC client_context," if $unix && $func->[0] =~ /HGLRC/ && @{$func->[1]};
     $ret =~ s/,$/ /;
     $ret ||= "void";
     return $ret;
 }
 
-sub get_func_ret($$)
+sub get_func_ret($)
 {
-    my ($func, $unix) = @_;
-    my $ret = $unix ? ConvertType( $func->[0] ) : $func->[0]->textContent();
+    my $func = shift;
+    my $ret = $func->[0]->textContent();
     $ret =~ s/ $//;
     return $ret;
 }
@@ -448,7 +436,7 @@ sub get_func_ret($$)
 sub generate_unix_thunk($$$$)
 {
     my ($name, $func, $is_wow64, $prefix) = @_;
-    my $func_ret = get_func_ret( $func, 0 );
+    my $func_ret = get_func_ret( $func );
     my $manual_wow64_wrapper = $is_wow64 && defined $manual_wow64_wrappers{$name};
     my $need_wrap = $manual_wow64_wrapper || needs_wrapper( $name, $func );
     my $need_lock = 0;
@@ -681,8 +669,8 @@ sub generate_unix_thunk($$$$)
 sub generate_wrapper_declaration($$$)
 {
     my ($name, $func, $is_wow64) = @_;
-    my $decl_args = get_func_args( $func, 0 );
-    my $ret_type = get_func_ret( $func, 0 );
+    my $decl_args = get_func_args( $func );
+    my $ret_type = get_func_ret( $func );
     my $ret = "extern ";
     $ret .= $ret_type;
     $ret .= " " unless $ret_type =~ /\*$/;
@@ -719,8 +707,8 @@ sub get_handle_function($)
 sub generate_win_thunk($$)
 {
     my ($name, $func) = @_;
-    my $decl_args = get_func_args( $func, 0 );
-    my $func_ret = get_func_ret( $func, 0 );
+    my $decl_args = get_func_args( $func );
+    my $func_ret = get_func_ret( $func );
     my $params = "";
     my $checks = "";
     my $ret = "";
@@ -770,8 +758,8 @@ sub get_wow64_arg_type($)
 sub generate_null_func($$)
 {
     my ($name, $func) = @_;
-    my $decl_args = get_func_args( $func, 1 );
-    my $func_ret = get_func_ret( $func, 1 );
+    my $decl_args = get_func_args( $func );
+    my $func_ret = get_func_ret( $func );
     my $ret = "";
 
     $ret .= "static $func_ret null_$name($decl_args)\n";
@@ -1456,37 +1444,37 @@ print HEADER "\n";
 print HEADER "#ifndef GL_NO_PROTOTYPES\n";
 foreach (sort keys %norm_functions)
 {
-    my $decl_args = get_func_args( $norm_functions{$_}, 1 );
-    my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
+    my $decl_args = get_func_args( $norm_functions{$_} );
+    my $func_ret = get_func_ret( $norm_functions{$_} );
     printf HEADER "%-10s GLAPIENTRY $_($decl_args);\n", $func_ret;
 }
 print HEADER "#endif\n\n";
 
 foreach (sort keys %wgl_functions)
 {
-    my $decl_args = get_func_args( $wgl_functions{$_}, 1 );
-    my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
+    my $decl_args = get_func_args( $wgl_functions{$_} );
+    my $func_ret = get_func_ret( $wgl_functions{$_} );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %egl_functions)
 {
-    my $decl_args = get_func_args( $egl_functions{$_}, 1 );
-    my $func_ret = get_func_ret( $egl_functions{$_}, 1 );
+    my $decl_args = get_func_args( $egl_functions{$_} );
+    my $func_ret = get_func_ret( $egl_functions{$_} );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %norm_functions)
 {
-    my $decl_args = get_func_args( $norm_functions{$_}, 1 );
-    my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
+    my $decl_args = get_func_args( $norm_functions{$_} );
+    my $func_ret = get_func_ret( $norm_functions{$_} );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 
 foreach (sort keys %ext_functions)
 {
-    my $decl_args = get_func_args( $ext_functions{$_}, 1 );
-    my $func_ret = get_func_ret( $ext_functions{$_}, 1 );
+    my $decl_args = get_func_args( $ext_functions{$_} );
+    my $func_ret = get_func_ret( $ext_functions{$_} );
     printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
 }
 print HEADER "\n";
@@ -1712,8 +1700,8 @@ foreach (sort keys %ext_functions)
 {
     next unless is_exposed_function( $ext_functions{$_} );
     next unless defined $manual_win_functions{$_} || $manual_win_thunks{$_};
-    my $decl_args = get_func_args( $ext_functions{$_}, 0 );
-    my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
+    my $decl_args = get_func_args( $ext_functions{$_} );
+    my $func_ret = get_func_ret( $ext_functions{$_} );
     printf OUT "extern %s WINAPI %s(%s);\n", $func_ret, $_, $decl_args;
 }
 

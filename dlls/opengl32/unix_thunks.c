@@ -30378,7 +30378,7 @@ static NTSTATUS ext_wglCreatePbufferARB( void *args )
     struct wglCreatePbufferARB_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
     if (!funcs || !funcs->p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->p_wglCreatePbufferARB( params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList, params->ret );
+    params->ret = wrap_wglCreatePbufferARB( params->teb, params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList, params->ret );
     return STATUS_SUCCESS;
 }
 
@@ -86646,9 +86646,10 @@ static NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
         PTR32 piAttribList;
         PTR32 ret;
     } *params = args;
+    TEB *teb = get_teb64( params->teb );
     const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hDC) );
     if (!funcs || !funcs->p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
-    params->ret = (UINT_PTR)funcs->p_wglCreatePbufferARB( ULongToPtr(params->hDC), params->iPixelFormat, params->iWidth, params->iHeight, ULongToPtr(params->piAttribList), UlongToHandle( params->ret ) );
+    params->ret = (UINT_PTR)wrap_wglCreatePbufferARB( teb, ULongToPtr(params->hDC), params->iPixelFormat, params->iWidth, params->iHeight, ULongToPtr(params->piAttribList), UlongToHandle( params->ret ) );
     return STATUS_SUCCESS;
 }
 
@@ -90035,7 +90036,7 @@ static BOOL null_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     WARN( "unsupported\n" );
     return 0;
 }
-static HGLRC null_wglCreateContext( HDC hDc, HGLRC client_context )
+static HGLRC null_wglCreateContext( HDC hDc )
 {
     WARN( "unsupported\n" );
     return 0;

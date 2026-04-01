@@ -1443,7 +1443,7 @@ static void pbuffer_destroy( struct pbuffer *pbuffer )
     free( pbuffer );
 }
 
-static struct pbuffer *pbuffer_create( HDC hdc, int format, int width, int height, const int *attribs )
+static struct pbuffer *pbuffer_create( int format, int width, int height, const int *attribs )
 {
     struct pbuffer *pbuffer;
     UINT size, max_level = 0;
@@ -1582,7 +1582,7 @@ static BOOL create_memory_pbuffer( HDC hdc )
         int width = dib.rect.right - dib.rect.left, height = dib.rect.bottom - dib.rect.top;
         struct pbuffer *pbuffer;
 
-        if (!(pbuffer = pbuffer_create( hdc, format, width, height, NULL )))
+        if (!(pbuffer = pbuffer_create( format, width, height, NULL )))
             WARN( "Failed to create pbuffer for memory DC %p\n", hdc );
         else
         {
@@ -1941,8 +1941,8 @@ static void opengl_client_pbuffer_init( HPBUFFERARB client_pbuffer, struct pbuff
     client->unix_funcs = (UINT_PTR)funcs;
 }
 
-static HPBUFFERARB win32u_wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs,
-                                               HPBUFFERARB client_pbuffer )
+static BOOL win32u_pbuffer_create( HDC hdc, int format, int width, int height, const int *attribs,
+                                   HPBUFFERARB client_pbuffer )
 {
     const struct opengl_funcs *funcs = &display_funcs;
     struct pbuffer *pbuffer;
@@ -1954,17 +1954,17 @@ static HPBUFFERARB win32u_wglCreatePbufferARB( HDC hdc, int format, int width, i
     if (format <= 0 || format > total)
     {
         RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
-        return 0;
+        return FALSE;
     }
     if (width <= 0 || height <= 0)
     {
         RtlSetLastWin32Error( ERROR_INVALID_DATA );
-        return 0;
+        return FALSE;
     }
 
-    if (!(pbuffer = pbuffer_create( hdc, format, width, height, attribs ))) return 0;
+    if (!(pbuffer = pbuffer_create( format, width, height, attribs ))) return FALSE;
     opengl_client_pbuffer_init( client_pbuffer, pbuffer, funcs );
-    return client_pbuffer;
+    return TRUE;
 }
 
 static BOOL win32u_wglDestroyPbufferARB( HPBUFFERARB client_pbuffer )
@@ -2745,7 +2745,8 @@ static void display_funcs_init(void)
     display_funcs.p_wglMakeContextCurrentARB = win32u_wglMakeContextCurrentARB;
 
     global_extensions[WGL_ARB_pbuffer] = 1;
-    display_funcs.p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
+    display_funcs.p_pbuffer_create         = win32u_pbuffer_create;
+    display_funcs.p_wglCreatePbufferARB    = (void *)1; /* never called */
     display_funcs.p_wglDestroyPbufferARB   = win32u_wglDestroyPbufferARB;
     display_funcs.p_wglGetPbufferDCARB     = win32u_wglGetPbufferDCARB;
     display_funcs.p_wglReleasePbufferDCARB = win32u_wglReleasePbufferDCARB;

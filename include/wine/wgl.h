@@ -7202,8 +7202,8 @@ void       GLAPIENTRY glViewport( GLint x, GLint y, GLsizei width, GLsizei heigh
 
 typedef int        (GLAPIENTRY *PFN_wglChoosePixelFormat)( HDC hDc, const PIXELFORMATDESCRIPTOR *pPfd );
 typedef BOOL       (GLAPIENTRY *PFN_wglCopyContext)( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask );
-typedef HGLRC      (GLAPIENTRY *PFN_wglCreateContext)( HDC hDc, HGLRC client_context );
-typedef HGLRC      (GLAPIENTRY *PFN_wglCreateLayerContext)( HDC hDc, int level, HGLRC client_context );
+typedef HGLRC      (GLAPIENTRY *PFN_wglCreateContext)( HDC hDc );
+typedef HGLRC      (GLAPIENTRY *PFN_wglCreateLayerContext)( HDC hDc, int level );
 typedef BOOL       (GLAPIENTRY *PFN_wglDeleteContext)( HGLRC oldContext );
 typedef BOOL       (GLAPIENTRY *PFN_wglDescribeLayerPlane)( HDC hDc, int pixelFormat, int layerPlane, UINT nBytes, LAYERPLANEDESCRIPTOR *plpd );
 typedef int        (GLAPIENTRY *PFN_wglDescribePixelFormat)( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
@@ -10698,8 +10698,8 @@ typedef void       (GLAPIENTRY *PFN_glWriteMaskEXT)( GLuint res, GLuint in, GLen
 typedef void *     (GLAPIENTRY *PFN_wglAllocateMemoryNV)( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority );
 typedef BOOL       (GLAPIENTRY *PFN_wglBindTexImageARB)( HPBUFFERARB hPbuffer, int iBuffer );
 typedef BOOL       (GLAPIENTRY *PFN_wglChoosePixelFormatARB)( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
-typedef HGLRC      (GLAPIENTRY *PFN_wglCreateContextAttribsARB)( HDC hDC, HGLRC hShareContext, const int *attribList, HGLRC client_context );
-typedef HPBUFFERARB (GLAPIENTRY *PFN_wglCreatePbufferARB)( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList, HPBUFFERARB client_pbuffer );
+typedef HGLRC      (GLAPIENTRY *PFN_wglCreateContextAttribsARB)( HDC hDC, HGLRC hShareContext, const int *attribList );
+typedef HPBUFFERARB (GLAPIENTRY *PFN_wglCreatePbufferARB)( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList );
 typedef BOOL       (GLAPIENTRY *PFN_wglDestroyPbufferARB)( HPBUFFERARB hPbuffer );
 typedef void       (GLAPIENTRY *PFN_wglFreeMemoryNV)( void *pointer );
 typedef HDC        (GLAPIENTRY *PFN_wglGetCurrentReadDCARB)(void);
