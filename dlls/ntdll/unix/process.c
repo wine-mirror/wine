@@ -275,7 +275,7 @@ static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *n
     }
     if (status)
     {
-        if (is_builtin_path( attr->ObjectName, &info->machine ))
+        if (is_prefix_bootstrap && is_system_dir_path( attr->ObjectName, &info->machine ))
         {
             TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
             return STATUS_SUCCESS;

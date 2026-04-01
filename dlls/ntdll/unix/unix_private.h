@@ -227,7 +227,7 @@ extern NTSTATUS load_builtin( struct pe_mapping_info *pe_mapping, USHORT machine
                               SECTION_IMAGE_INFORMATION *info, void **module, SIZE_T *size,
                               ULONG_PTR limit_low, ULONG_PTR limit_high, off_t offset );
 extern NTSTATUS load_unixlib_by_name( const UNICODE_STRING *nt_name, void **handle_ret );
-extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine );
+extern BOOL is_system_dir_path( const UNICODE_STRING *path, WORD *machine );
 extern NTSTATUS load_main_exe( UNICODE_STRING *nt_name, USHORT load_machine, void **module );
 extern NTSTATUS load_start_exe( UNICODE_STRING *nt_name, void **module );
 extern ULONG_PTR redirect_arm64ec_rva( void *module, ULONG_PTR rva, const IMAGE_ARM64EC_METADATA *metadata );
