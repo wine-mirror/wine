@@ -302,6 +302,7 @@ struct be_process_io
     BOOL        (*write)(HANDLE, void*, const void*, SIZE_T, SIZE_T*);
     BOOL        (*get_selector)(HANDLE, DWORD, LDT_ENTRY*);
     BOOL        (*fetch_thread_name)(const struct dbg_thread*, WCHAR**);
+    BOOL        (*fetch_thread_context)(const struct dbg_thread*, dbg_ctx_t *);
 };
 
 extern	struct dbg_process*	dbg_curr_process;
@@ -311,6 +312,7 @@ extern	DWORD	                dbg_curr_tid;
 extern  dbg_ctx_t               dbg_context;
 extern  BOOL                    dbg_interactiveP;
 extern  HANDLE                  dbg_houtput;
+extern  struct list             dbg_process_list;
 
 struct dbg_internal_var
 {
@@ -483,7 +485,7 @@ extern enum dbg_start   dbg_active_launch(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_auto(int argc, char* argv[]);
 extern enum dbg_start   dbg_active_minidump(int argc, char* argv[]);
 extern void             dbg_active_wait_for_first_exception(void);
-extern BOOL             dbg_attach_debuggee(DWORD pid);
+extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL verbose);
 extern void             fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz);
 extern BOOL             dbg_fetch_active_thread_name(DWORD tid, WCHAR **description);
 

@@ -327,6 +327,20 @@ static void backtrace(void)
     stack_set_local_scope();
 }
 
+static const char *thread_display(const struct dbg_thread *thread)
+{
+    static char buffer[256];
+    WCHAR *thread_descr = dbg_fetch_thread_name(thread);
+    if (thread_descr)
+    {
+        snprintf(buffer, sizeof(buffer), "%04lx (%ls)", thread->tid, thread_descr);
+        free(thread_descr);
+    }
+    else
+        snprintf(buffer, sizeof(buffer), "%04lx", thread->tid);
+    return buffer;
+}
+
 /******************************************************************
  *		backtrace_tid
  *
@@ -336,23 +350,24 @@ static void backtrace(void)
 static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
 {
     struct dbg_thread*  thread = dbg_curr_thread;
+    dbg_ctx_t ctx = {{0}};
 
     if (!(dbg_curr_thread = dbg_get_thread(pcs, tid)))
         dbg_printf("Unknown thread id (%04lx) in process (%04lx)\n", tid, pcs->pid);
-    else
+    else if (pcs->active_debuggee)
     {
-        dbg_ctx_t ctx = {{0}};
-
         dbg_curr_tid = dbg_curr_thread->tid;
         if (SuspendThread(dbg_curr_thread->handle) != -1)
         {
             if (!pcs->be_cpu->get_context(dbg_curr_thread->handle, &ctx))
             {
-                dbg_printf("Can't get context for thread %04lx in current process\n",
-                           tid);
+                dbg_printf("Can't get context for thread %s in current process\n",
+                           thread_display(dbg_curr_thread));
             }
             else
             {
+                dbg_printf("\nBacktracing for thread %s in process %04lx (%ls):\n",
+                           thread_display(dbg_curr_thread), dbg_curr_pid, dbg_curr_process->imageName);
                 stack_fetch_frames(&ctx);
                 backtrace();
             }
@@ -360,17 +375,28 @@ static void backtrace_tid(struct dbg_process* pcs, DWORD tid)
         }
         else dbg_printf("Can't suspend thread %04lx in current process\n", tid);
     }
+    else if (pcs->process_io->fetch_thread_context &&
+             pcs->process_io->fetch_thread_context(dbg_curr_thread, &ctx))
+    {
+        dbg_curr_tid = dbg_curr_thread->tid;
+        dbg_printf("\nBacktracing for thread %s in process %04lx (%ls):\n",
+                   thread_display(dbg_curr_thread), dbg_curr_pid, dbg_curr_process->imageName);
+        stack_fetch_frames(&ctx);
+        backtrace();
+    }
+    else dbg_printf("Can't backtrace thread %04lx in current process\n", tid);
+
     dbg_curr_thread = thread;
     dbg_curr_tid = thread ? thread->tid : 0;
 }
 
 /******************************************************************
- *		backtrace_all
+ *		backtrace_all_active
  *
  * Do a backtrace on every running thread in the system (except the debugger)
  * (preserves current process information)
  */
-static void backtrace_all(void)
+static void backtrace_all_active(void)
 {
     struct dbg_process* process = dbg_curr_process;
     struct dbg_thread*  thread = dbg_curr_thread;
@@ -402,17 +428,11 @@ static void backtrace_all(void)
             }
             else if (entry.th32OwnerProcessID != dbg_curr_pid)
             {
-                if (!dbg_attach_debuggee(entry.th32OwnerProcessID))
-                {
-                    dbg_printf("\nwarning: could not attach to %04lx\n",
-                               entry.th32OwnerProcessID);
+                dbg_curr_process = NULL;
+                if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE))
                     continue;
-                }
                 dbg_active_wait_for_first_exception();
             }
-
-            dbg_printf("\nBacktracing for thread %04lx in process %04lx (%ls):\n",
-                       entry.th32ThreadID, dbg_curr_pid, dbg_curr_process->imageName);
             backtrace_tid(dbg_curr_process, entry.th32ThreadID);
         }
         while (Thread32Next(snapshot, &entry));
@@ -428,6 +448,18 @@ static void backtrace_all(void)
     dbg_context = ctx;
 }
 
+static void backtrace_all_attached(void)
+{
+    struct dbg_process *pcs;
+    struct dbg_thread *thread;
+
+    LIST_FOR_EACH_ENTRY(pcs, &dbg_process_list, struct dbg_process, entry)
+    {
+        LIST_FOR_EACH_ENTRY(thread, &pcs->threads, struct dbg_thread, entry)
+            backtrace_tid(pcs, thread->tid);
+    }
+}
+
 void stack_backtrace(DWORD tid)
 {
     /* backtrace every thread in every process except the debugger itself,
@@ -435,17 +467,16 @@ void stack_backtrace(DWORD tid)
      */
     if (tid == -1)
     {
-        backtrace_all();
-        return;
+        if (!dbg_curr_process || dbg_curr_process->active_debuggee)
+            backtrace_all_active();
+        else
+            backtrace_all_attached();
     }
-
-    if (!dbg_curr_process) 
+    else if (!dbg_curr_process)
     {
         dbg_printf("You must be attached to a process to run this command.\n");
-        return;
     }
-    
-    if (tid == dbg_curr_tid)
+    else if (tid == dbg_curr_tid)
     {
         backtrace();
     }

@@ -253,6 +253,24 @@ static BOOL is_pe_module_embedded(struct tgt_process_minidump_data* data,
     return FALSE;
 }
 
+static BOOL copy_context(dbg_ctx_t *ctx, struct tgt_process_minidump_data* data,
+                         const MINIDUMP_LOCATION_DESCRIPTOR *loc_desc)
+{
+    BOOL ret = TRUE;
+    unsigned len = loc_desc->DataSize;
+
+    if (len > sizeof(*ctx))
+    {
+        ERR("Incoming context size is larger than internal structure\n");
+        len = sizeof(*ctx);
+        ret = FALSE;
+    }
+    memcpy(ctx, (char*)data->mapping + loc_desc->Rva, len);
+    if (len < sizeof(*ctx))
+        memset((char*)ctx + len, 0, sizeof(*ctx) - len);
+    return ret;
+}
+
 static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 {
     void*                       stream;
@@ -556,8 +574,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             {
                 dbg_curr_thread->excpt_record.ExceptionInformation[i] = mes->ExceptionRecord.ExceptionInformation[i];
             }
-            memcpy(&dbg_context, (char*)data->mapping + mes->ThreadContext.Rva,
-                   min(sizeof(dbg_context), mes->ThreadContext.DataSize));
+            copy_context(&dbg_context, data, &mes->ThreadContext);
             memory_get_current_pc(&addr);
             stack_fetch_frames(&dbg_context);
             dbg_curr_process->be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 0);
@@ -676,6 +693,28 @@ static BOOL tgt_process_minidump_fetch_thread_name(const struct dbg_thread *thre
     return FALSE;
 }
 
+static BOOL tgt_process_minidump_fetch_thread_context(const struct dbg_thread* thread, dbg_ctx_t *ctx)
+{
+    struct tgt_process_minidump_data *data = private_data(thread->process);
+    void *stream;
+
+    if (MiniDumpReadDumpStream(data->mapping, ThreadListStream, NULL, &stream, NULL))
+    {
+        MINIDUMP_THREAD_LIST*   mtl = stream;
+        ULONG                   i;
+
+        for (i = 0; i < mtl->NumberOfThreads; i++)
+        {
+            if (thread->tid == mtl->Threads[i].ThreadId)
+            {
+                copy_context(ctx, data, &mtl->Threads[i].ThreadContext);
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
 static struct be_process_io be_process_minidump_io =
 {
     tgt_process_minidump_close_process,
@@ -683,4 +722,5 @@ static struct be_process_io be_process_minidump_io =
     tgt_process_minidump_write,
     tgt_process_minidump_get_selector,
     tgt_process_minidump_fetch_thread_name,
+    tgt_process_minidump_fetch_thread_context,
 };
