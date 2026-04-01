@@ -909,7 +909,7 @@ static int fallback_cmp( const void *key, const void *member )
 
 static int find_fallback_shape( const char *name )
 {
-    struct cursor_font_fallback *fallback;
+    const struct cursor_font_fallback *fallback;
 
     if ((fallback = bsearch( name, fallbacks, ARRAY_SIZE( fallbacks ),
                              sizeof(*fallback), fallback_cmp )))
