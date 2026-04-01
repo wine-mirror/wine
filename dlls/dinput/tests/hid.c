@@ -711,54 +711,68 @@ BOOL bus_device_start(void)
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
 }
 
-void hid_device_stop( struct hid_device_desc *desc, UINT count )
+static void hid_device_remove( HANDLE control, struct hid_device_desc *desc, UINT count )
 {
-    HANDLE control;
     DWORD ret;
 
-    control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
-                           NULL, OPEN_EXISTING, 0, NULL );
-    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
-    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, desc, sizeof(*desc), NULL, 0, 5000 );
-    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
-    CloseHandle( control );
-
-    if (!ret) return;
-
-    ret = WaitForSingleObject( device_removed, 5000 );
-    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
-
-    for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
+    for (UINT i = 0; i < count; i++)
     {
-        ret = WaitForSingleObject( device_removed, j > 0 ? 500 : 5000 );
+        ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, desc + i, sizeof(*desc), NULL, 0, 5000 );
+        ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
+        if (!ret) continue;
+
+        ret = WaitForSingleObject( device_removed, 5000 );
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+
+        for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
+        {
+            ret = WaitForSingleObject( device_removed, j > 0 ? 500 : 5000 );
+            ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        }
     }
+}
+
+void hid_device_stop( struct hid_device_desc *desc, UINT count )
+{
+    HANDLE control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                                  NULL, OPEN_EXISTING, 0, NULL );
+    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    hid_device_remove( control, desc, count );
+    CloseHandle( control );
 }
 
 BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout )
 {
     HANDLE control;
-    DWORD ret;
+    DWORD ret = 0;
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
-    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc, sizeof(*desc), NULL, 0, 5000 );
-    ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
-    CloseHandle( control );
 
-    ret = WaitForSingleObject( device_added, 5000 );
-    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
-
-    if (ret) return FALSE;
-
-    for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
+    for (UINT i = 0; i < count; i++)
     {
-        ret = WaitForSingleObject( device_added, timeout );
+        ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc + i, sizeof(*desc), NULL, 0, 5000 );
+        ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
+
+        ret = WaitForSingleObject( device_added, 5000 );
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+
+        if (ret)
+        {
+            hid_device_remove( control, desc, i );
+            break;
+        }
+
+        for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
+        {
+            ret = WaitForSingleObject( device_added, timeout );
+            ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        }
     }
 
-    return TRUE;
+    CloseHandle( control );
+    return !ret;
 }
 
 #define check_hidp_caps( a, b ) check_hidp_caps_( __LINE__, a, b )
