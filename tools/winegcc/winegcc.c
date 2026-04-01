@@ -505,7 +505,7 @@ static struct strarray get_link_args( const char *output_name )
 {
     struct strarray link_args = get_translator();
     struct strarray flags = empty_strarray;
-    char *version;
+    const char *version;
 
     strarray_addall( &link_args, linker_args );
 
