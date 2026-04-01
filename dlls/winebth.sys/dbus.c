@@ -944,7 +944,8 @@ bluez_gatt_characteristic_props_from_dict_entry( const char *prop_name, DBusMess
         p_dbus_message_iter_recurse( variant, &flags_iter );
         while (p_dbus_message_iter_get_arg_type( &flags_iter ) != DBUS_TYPE_INVALID)
         {
-            struct named_flag name, *flag;
+            const struct named_flag *flag;
+            struct named_flag name;
 
             p_dbus_message_iter_get_basic( &flags_iter, &name.name );
             if ((flag = bsearch( &name, flags, ARRAY_SIZE( flags ), sizeof( *flags ), named_flag_cmp )))
