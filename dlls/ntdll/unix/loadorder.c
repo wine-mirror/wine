@@ -110,12 +110,16 @@ static BOOL get_version_entry( struct version_entry *entry, const void *ptr, con
 static BOOL version_find_key( const struct version_entry *parent, const WCHAR *name,
                               struct version_entry *child )
 {
-    if (!get_version_entry( child, parent->child, parent->next )) return FALSE;
+    struct version_entry ret;
+
+    if (!get_version_entry( &ret, parent->child, parent->next )) return FALSE;
     for (;;)
     {
-        if (!wcsicmp( child->info->key, name )) return TRUE;
-        if (!get_version_entry( child, child->next, parent->next )) return FALSE;
+        if (!wcsicmp( ret.info->key, name )) break;
+        if (!get_version_entry( &ret, ret.next, parent->next )) return FALSE;
     }
+    *child = ret;
+    return TRUE;
 }
 
 /***************************************************************************
