@@ -714,7 +714,7 @@ BOOL bus_device_start(void)
 void hid_device_stop( struct hid_device_desc *desc, UINT count )
 {
     HANDLE control;
-    DWORD ret, i;
+    DWORD ret;
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
@@ -728,9 +728,9 @@ void hid_device_stop( struct hid_device_desc *desc, UINT count )
     ret = WaitForSingleObject( device_removed, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
 
-    for (i = 0; i < count; ++i)
+    for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
     {
-        ret = WaitForSingleObject( device_removed, i > 0 ? 500 : 5000 );
+        ret = WaitForSingleObject( device_removed, j > 0 ? 500 : 5000 );
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
 }
@@ -738,7 +738,7 @@ void hid_device_stop( struct hid_device_desc *desc, UINT count )
 BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout )
 {
     HANDLE control;
-    DWORD ret, i;
+    DWORD ret;
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
@@ -752,7 +752,7 @@ BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout 
 
     if (ret) return FALSE;
 
-    for (i = 0; i < count; ++i)
+    for (UINT j = 0; j < (desc->tlc_count ? desc->tlc_count : 1); ++j)
     {
         ret = WaitForSingleObject( device_added, timeout );
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -4038,6 +4038,7 @@ static void test_hid_multiple_tlc(void)
 
     struct hid_device_desc desc =
     {
+        .tlc_count = 2,
         .caps = { .InputReportByteLength = 7 },
         .attributes = default_attributes,
     };
@@ -4154,7 +4155,7 @@ static void test_hid_multiple_tlc(void)
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc, 2 )) goto done;
+    if (!hid_device_start( &desc, 1 )) goto done;
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x&col01", desc.attributes.VendorID,
               desc.attributes.ProductID );
@@ -4208,7 +4209,7 @@ static void test_hid_multiple_tlc(void)
     ok( !ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
 
 done:
-    hid_device_stop( &desc, 2 );
+    hid_device_stop( &desc, 1 );
 }
 
 START_TEST( hid )

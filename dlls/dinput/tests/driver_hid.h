@@ -79,6 +79,7 @@ struct hid_device_desc
 {
     BOOL is_polled;
     BOOL use_report_id;
+    UINT tlc_count;
 
     DWORD report_descriptor_len;
     char report_descriptor_buf[MAX_HID_DESCRIPTOR_LEN];
