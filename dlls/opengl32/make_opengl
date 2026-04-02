@@ -179,48 +179,60 @@ my %manual_win_thunks =
      "wglQueryRendererStringWINE" => 1,
      "wglSwapBuffers" => 1,
     );
-my %manual_unix_thunks =
-    (
-     "glClear" => 1,
-     "glCreateSyncFromCLeventARB" => 1,
-     "glDebugMessageCallback" => 1,
-     "glDebugMessageCallbackAMD" => 1,
-     "glDebugMessageCallbackARB" => 1,
-     "glDrawBuffer" => 1,
-     "glDrawBuffers" => 1,
-     "glDrawPixels" => 1,
-     "glFenceSync" => 1,
-     "glFinish" => 1,
-     "glFlush" => 1,
-     "glFramebufferDrawBufferEXT" => 1,
-     "glFramebufferDrawBuffersEXT" => 1,
-     "glFramebufferReadBufferEXT" => 1,
-     "glGetBooleanv" => 1,
-     "glGetDoublev" => 1,
-     "glGetError" => 1,
-     "glGetFloatv" => 1,
-     "glGetFramebufferParameterivEXT" => 1,
-     "glGetInteger64v" => 1,
-     "glGetIntegerv" => 1,
-     "glGetString" => 1,
-     "glGetUnsignedBytevEXT" => 1,
-     "glImportSyncEXT" => 1,
-     "glNamedFramebufferDrawBuffer" => 1,
-     "glNamedFramebufferDrawBuffers" => 1,
-     "glNamedFramebufferReadBuffer" => 1,
-     "glReadBuffer" => 1,
-     "glReadPixels" => 1,
-     "glViewport" => 1,
-     "wglCopyContext" => 1,
-     "wglCreateContext" => 1,
-     "wglCreateContextAttribsARB" => 1,
-     "wglCreatePbufferARB" => 1,
-     "wglDeleteContext" => 1,
-     "wglMakeContextCurrentARB" => 1,
-     "wglMakeCurrent" => 1,
-     "wglShareLists" => 1,
-     "wglSwapBuffers" => 1,
-    );
+
+sub manual_unix_thunks($)
+{
+    my $name = shift;
+    return "glClear"                        if $name =~ /^glClear$/;
+    return "glFinish"                       if $name =~ /^glFinish$/;
+    return "glFlush"                        if $name =~ /^glFlush$/;
+    return "glViewport"                     if $name =~ /^glViewport$/;
+    return "glGetError"                     if $name =~ /^glGetError$/;
+
+    return "glGetBooleanv"                  if $name =~ /^glGetBooleanv/;
+    return "glGetDoublev"                   if $name =~ /^glGetDoublev/;
+    return "glGetFloatv"                    if $name =~ /^glGetFloatv/;
+    return "glGetInteger64v"                if $name =~ /^glGetInteger64v/;
+    return "glGetIntegerv"                  if $name =~ /^glGetIntegerv/;
+    return 0                                if $name =~ /^glGetStringi/;
+    return "glGetString"                    if $name =~ /^glGetString/;
+    return "glGetUnsignedBytevEXT"          if $name =~ /^glGetUnsignedBytev/;
+
+    return "glCreateSyncFromCLeventARB"     if $name =~ /^glCreateSyncFromCLeventARB/;
+    return "glFenceSync"                    if $name =~ /^glFenceSync/;
+    return "glImportSyncEXT"                if $name =~ /^glImportSync/;
+
+    return 0                                if $name =~ /^glDrawBufferRegion/;
+    return "glDrawBuffers"                  if $name =~ /^glDrawBuffers/;
+    return "glDrawBuffer"                   if $name =~ /^glDrawBuffer/;
+    return "glFramebufferDrawBuffersEXT"    if $name =~ /^glFramebufferDrawBuffers/;
+    return "glFramebufferDrawBufferEXT"     if $name =~ /^glFramebufferDrawBuffer/;
+    return "glNamedFramebufferDrawBuffers"  if $name =~ /^glNamedFramebufferDrawBuffers/;
+    return "glNamedFramebufferDrawBuffer"   if $name =~ /^glNamedFramebufferDrawBuffer/;
+
+    return 0                                if $name =~ /^glReadBufferRegion/;
+    return "glReadBuffer"                   if $name =~ /^glReadBuffer/;
+    return "glFramebufferReadBufferEXT"     if $name =~ /^glFramebufferReadBuffer/;
+    return "glNamedFramebufferReadBuffer"   if $name =~ /^glNamedFramebufferReadBuffer/;
+
+    return "glDebugMessageCallbackAMD"      if $name =~ /^glDebugMessageCallbackAMD/;
+    return "glDebugMessageCallback"         if $name =~ /^glDebugMessageCallback/;
+
+    return "glDrawPixels"                   if $name =~ /^glDrawPixels/;
+    return "glReadPixels"                   if $name =~ /^glReadPixels/;
+    return "glGetFramebufferParameteriv"    if $name =~ /^glGetFramebufferParameteriv/;
+
+    return "wglCopyContext"                 if $name =~ /^wglCopyContext/;
+    return "wglCreateContextAttribsARB"     if $name =~ /^wglCreateContextAttribs/;
+    return "wglCreateContext"               if $name =~ /^wglCreateContext/;
+    return "wglCreatePbufferARB"            if $name =~ /^wglCreatePbuffer/;
+    return "wglDeleteContext"               if $name =~ /^wglDeleteContext/;
+    return "wglGetProcAddress"              if $name =~ /^wglGetProcAddress/;
+    return "wglMakeContextCurrentARB"       if $name =~ /^wglMakeContextCurrent/;
+    return "wglMakeCurrent"                 if $name =~ /^wglMakeCurrent/;
+    return "wglShareLists"                  if $name =~ /^wglShareLists/;
+    return "wglSwapBuffers"                 if $name =~ /^wglSwapBuffers/;
+}
 
 sub hide_default_fbo($)
 {
@@ -399,9 +411,9 @@ sub generate_unix_thunk($$$$)
     my ($name, $func, $is_wow64, $prefix) = @_;
     my $func_ret = get_func_ret( $func );
     my $wow64_wrap = $is_wow64 ? manual_wow64_wrapper( $name ) : 0;
-    my $need_wrap = $wow64_wrap || needs_wrapper( $name, $func );
+    my $wrapper = $wow64_wrap || needs_wrapper( $name, $func );
     my $need_lock = 0;
-    my $need_funcs = !$need_wrap || ($prefix eq "ext" && $name !~ /^wgl/);
+    my $need_funcs = !$wrapper || $name !~ /^wgl/;
     my $teb = $is_wow64 ? "teb" : "params->teb";
     my $ret_stat = "return STATUS_SUCCESS;";
     my $invalidation = "";
@@ -427,7 +439,7 @@ sub generate_unix_thunk($$$$)
     $use_context = @{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HGLRC";
 
     $ret_expr = "params->ret = " if !is_void_func( $func );
-    $call_args .= " $teb," if $need_wrap;
+    $call_args .= " $teb," if $wrapper;
     if ($is_wow64)
     {
         my $need_manual_thunk = 0;
@@ -507,7 +519,7 @@ sub generate_unix_thunk($$$$)
             }
         }
         $ret .= "    } *params = args;\n";
-        if (!$need_wrap && $need_manual_thunk)
+        if (!$wrapper && $need_manual_thunk)
         {
             $ret .= "    FIXME( \"params %p stub!\\n\", params );\n";
             $ret .= "    return STATUS_NOT_IMPLEMENTED;\n";
@@ -524,7 +536,7 @@ sub generate_unix_thunk($$$$)
                 : "    buffer = invalidate_buffer_target( $teb, params->target );\n";
             $output_conv .= "    if (buffer) free_buffer( funcs, buffer );\n";
         }
-        $ret .= "    TEB *teb = get_teb64( params->teb );\n" if $need_wrap || (!$use_dc && !$use_pbuffer && !$use_context);
+        $ret .= "    TEB *teb = get_teb64( params->teb );\n" if $wrapper || (!$use_dc && !$use_pbuffer && !$use_context);
     }
     else
     {
@@ -593,10 +605,11 @@ sub generate_unix_thunk($$$$)
     {
         $ret .= "wow64_$wow64_wrap($call_args funcs->p_$name );\n";
     }
-    elsif ($need_wrap)
+    elsif ($wrapper)
     {
+        $call_args .= " funcs->p_$name," if $name !~ /^wgl/;
         $call_args =~ s/,$/ /;
-        $ret .= "wrap_$name($call_args);\n";
+        $ret .= "wrap_$wrapper($call_args);\n";
     }
     else
     {
@@ -651,10 +664,10 @@ sub generate_wrapper_declaration($$$)
         }
         $ret .= " " . $arg->textContent() . ",";
     }
-    $ret .= " PFN_$name func," if $is_wow64;
     $ret .= " HPBUFFERARB handle," if $ret_type =~ /HPBUFFERARB/;
     $ret .= " HGLRC handle," if $ret_type =~ /HGLRC/;
     $ret .= " GLsync handle," if $ret_type =~ /GLsync/;
+    $ret .= " PFN_$name func," if $name !~ /^wgl/;
     $ret =~ s/,$/ /;
     $ret .= ");\n";
     return $ret;
@@ -1063,8 +1076,7 @@ sub needs_wrapper($$)
 {
     my ($name, $func) = @_;
     return 0 if defined $manual_win_functions{$name};
-    return 1 if defined $manual_unix_thunks{$name};
-    return 0;
+    return manual_unix_thunks( $name );
 }
 
 sub add_extension($)
@@ -1664,18 +1676,18 @@ print OUT "typedef ULONG PTR32;\n\n";
 
 foreach (sort keys %wgl_functions)
 {
-    next if !needs_wrapper( $_, $wgl_functions{$_} );
+    next unless needs_wrapper( $_, $wgl_functions{$_} ) eq $_;
     print OUT generate_wrapper_declaration($_, $wgl_functions{$_}, 0);
 }
 foreach (sort keys %norm_functions)
 {
-    next if !needs_wrapper( $_, $norm_functions{$_} );
+    next unless needs_wrapper( $_, $norm_functions{$_} ) eq $_;
     print OUT generate_wrapper_declaration($_, $norm_functions{$_}, 0);
 }
 foreach (sort keys %ext_functions)
 {
     next unless is_exposed_function( $ext_functions{$_} );
-    next if !needs_wrapper( $_, $ext_functions{$_} );
+    next unless needs_wrapper( $_, $ext_functions{$_} ) eq $_;
     print OUT generate_wrapper_declaration($_, $ext_functions{$_}, 0);
 }
 
