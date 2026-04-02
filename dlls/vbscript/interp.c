@@ -99,18 +99,14 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
 
 static BOOL lookup_global_vars(ScriptDisp *script, const WCHAR *name, ref_t *ref)
 {
-    dynamic_var_t **vars = script->global_vars;
-    size_t i, cnt = script->global_vars_cnt;
+    dynamic_var_t *var = script_disp_find_var(script, name);
 
-    for(i = 0; i < cnt; i++) {
-        if(!vbs_wcsicmp(vars[i]->name, name)) {
-            ref->type = vars[i]->is_const ? REF_CONST : REF_VAR;
-            ref->u.v = &vars[i]->v;
-            return TRUE;
-        }
-    }
+    if(!var)
+        return FALSE;
 
-    return FALSE;
+    ref->type = var->is_const ? REF_CONST : REF_VAR;
+    ref->u.v = &var->v;
+    return TRUE;
 }
 
 static BOOL lookup_global_funcs(ScriptDisp *script, const WCHAR *name, ref_t *ref)
@@ -297,6 +293,10 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
                 return E_OUTOFMEMORY;
             script_obj->global_vars = new_vars;
             script_obj->global_vars_size = cnt * 2;
+        }
+        {
+            new_var->index = script_obj->global_vars_cnt;
+            rb_put(&script_obj->var_tree, new_var->name, &new_var->entry);
         }
         script_obj->global_vars[script_obj->global_vars_cnt++] = new_var;
     }else {
@@ -1312,14 +1312,10 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
     assert(array_id < ctx->func->array_cnt);
 
     if(ctx->func->type == FUNC_GLOBAL) {
-        unsigned i;
-        for(i = 0; i < script_obj->global_vars_cnt; i++) {
-            if(!vbs_wcsicmp(script_obj->global_vars[i]->name, ident))
-                break;
-        }
-        assert(i < script_obj->global_vars_cnt);
-        v = &script_obj->global_vars[i]->v;
-        array_ref = &script_obj->global_vars[i]->array;
+        dynamic_var_t *var = script_disp_find_var(script_obj, ident);
+        assert(var != NULL);
+        v = &var->v;
+        array_ref = &var->array;
     }else {
         ref_t ref;
 

@@ -2037,10 +2037,8 @@ static BOOL lookup_script_identifier(compile_ctx_t *ctx, script_ctx_t *script, c
     for(c = 0; c < ARRAY_SIZE(contexts); c++) {
         if(!contexts[c]) continue;
 
-        for(i = 0; i < contexts[c]->global_vars_cnt; i++) {
-            if(!vbs_wcsicmp(contexts[c]->global_vars[i]->name, identifier))
-                return TRUE;
-        }
+        if(script_disp_find_var(contexts[c], identifier))
+            return TRUE;
 
         for(i = 0; i < contexts[c]->global_funcs_cnt; i++) {
             if(!vbs_wcsicmp(contexts[c]->global_funcs[i]->name, identifier))

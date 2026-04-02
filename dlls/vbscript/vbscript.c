@@ -140,18 +140,7 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
 
     for (i = 0; i < code->main_code.var_cnt; i++)
     {
-        size_t j;
-        BOOL found = FALSE;
-
-        for (j = 0; j < obj->global_vars_cnt; j++)
-        {
-            if (!vbs_wcsicmp(obj->global_vars[j]->name, code->main_code.vars[i].name))
-            {
-                found = TRUE;
-                break;
-            }
-        }
-        if (found)
+        if (script_disp_find_var(obj, code->main_code.vars[i].name))
             continue;
 
         if (!(var = heap_pool_alloc(&obj->heap, sizeof(*var))))
@@ -163,6 +152,8 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
         V_VT(&var->v) = VT_EMPTY;
         var->is_const = FALSE;
         var->array = NULL;
+        var->index = obj->global_vars_cnt;
+        rb_put(&obj->var_tree, var->name, &var->entry);
 
         obj->global_vars[obj->global_vars_cnt++] = var;
     }
@@ -174,9 +165,11 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
         if (entry)
         {
             function_t *old_func = RB_ENTRY_VALUE(entry, function_t, entry);
-            func_iter->index = old_func->index;
-            obj->global_funcs[old_func->index] = func_iter;
+            size_t old_index = old_func->index;
+            /* global function already exists, replace it */
             rb_remove(&obj->func_tree, &old_func->entry);
+            func_iter->index = old_index;
+            obj->global_funcs[old_index] = func_iter;
             rb_put(&obj->func_tree, func_iter->name, &func_iter->entry);
         }
         else
