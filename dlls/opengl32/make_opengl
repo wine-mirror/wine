@@ -231,20 +231,18 @@ sub hide_default_fbo($)
     return 0;
 }
 
-my %resolve_default_fbo_thunks =
-    (
-     "glCopyColorTable" => 1,
-     "glCopyPixels" => 1,
-     "glCopyTexImage1D" => 1,
-     "glCopyTexImage2D" => 1,
-     "glCopyTexSubImage1D" => 1,
-     "glCopyTexSubImage2D" => 1,
-     "glCopyTexSubImage3D" => 1,
-     "glCopyTextureSubImage1D" => 1,
-     "glCopyTextureSubImage2D" => 1,
-     "glCopyTextureSubImage3D" => 1,
-     "glReadPixels" => 1,
-    );
+sub resolve_default_fbo($)
+{
+    my $name = shift;
+    return 1 if $name =~ /^glCopyColorTable/;
+    return 1 if $name =~ /^glCopyPixels/;
+    return 1 if $name =~ /^glCopyTexImage/;
+    return 1 if $name =~ /^glCopyTexSubImage/;
+    return 1 if $name =~ /^glCopyTextureSubImage/;
+    return 1 if $name =~ /^glReadPixels/;
+    return 0;
+}
+
 my %map_default_fbo_thunks =
     (
      "glBindFramebuffer" => [ "framebuffer" ],
@@ -595,7 +593,7 @@ sub generate_unix_thunk($$$$)
         $target = "params->target" if $call_args =~ "params->target";
         $ret .= "    if (!$arg) $arg = get_default_fbo( $teb, $target );\n";
     }
-    $ret .= "    resolve_default_fbo( $teb, TRUE );\n" if defined $resolve_default_fbo_thunks{$name};
+    $ret .= "    resolve_default_fbo( $teb, TRUE );\n" if resolve_default_fbo( $name );
     $ret .= "    push_default_fbo( $teb );\n" if hide_default_fbo( $name );
     $ret .= "    pthread_mutex_lock( &wgl_lock );\n$invalidation" if $need_lock;
     $ret .= "    $ret_expr";
