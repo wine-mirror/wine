@@ -243,31 +243,24 @@ sub resolve_default_fbo($)
     return 0;
 }
 
-my %map_default_fbo_thunks =
-    (
-     "glBindFramebuffer" => [ "framebuffer" ],
-     "glBindFramebufferEXT" => [ "framebuffer" ],
-     "glBlitNamedFramebuffer" => [ "readFramebuffer", "drawFramebuffer" ],
-     "glCheckNamedFramebufferStatus" => [ "framebuffer" ],
-     "glCheckNamedFramebufferStatusEXT" => [ "framebuffer" ],
-     "glClearNamedFramebufferfi" => [ "framebuffer" ],
-     "glClearNamedFramebufferfv" => [ "framebuffer" ],
-     "glClearNamedFramebufferiv" => [ "framebuffer" ],
-     "glClearNamedFramebufferuiv" => [ "framebuffer" ],
-     "glGetNamedFramebufferAttachmentParameteriv" => [ "framebuffer" ],
-     "glGetNamedFramebufferAttachmentParameterivEXT" => [ "framebuffer" ],
-     "glGetNamedFramebufferParameterfvAMD" => [ "framebuffer" ],
-     "glGetNamedFramebufferParameteriv" => [ "framebuffer" ],
-     "glGetNamedFramebufferParameterivEXT" => [ "framebuffer" ],
-     "glInvalidateNamedFramebufferData" => [ "framebuffer" ],
-     "glInvalidateNamedFramebufferSubData" => [ "framebuffer" ],
-     "glNamedFramebufferParameteri" => [ "framebuffer" ],
-     "glNamedFramebufferParameteriEXT" => [ "framebuffer" ],
-     "glNamedFramebufferSampleLocationsfvARB" => [ "framebuffer" ],
-     "glNamedFramebufferSampleLocationsfvNV" => [ "framebuffer" ],
-     "glNamedFramebufferSamplePositionsfvAMD" => [ "framebuffer" ],
-     "glNamedFramebufferTextureMultiviewOVR" => [ "framebuffer" ],
-    );
+sub map_default_fbo($$)
+{
+    my ($name, $pname) = @_;
+    return 1 if $name =~ /^glBindFramebuffer/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glBlitNamedFramebuffer/ and $pname =~ /(read|draw)Framebuffer/;
+    return 1 if $name =~ /^glCheckNamedFramebufferStatus/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glClearNamedFramebuffer/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glGetNamedFramebufferAttachmentParameter/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glGetNamedFramebufferParameter/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glInvalidateNamedFramebuffer/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glNamedFramebufferParameter/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glNamedFramebufferSampleLocations/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glNamedFramebufferSampleLocations/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glNamedFramebufferSamplePositions/ and $pname eq "framebuffer";
+    return 1 if $name =~ /^glNamedFramebufferTextureMultiview/ and $pname eq "framebuffer";
+    return 0;
+}
+
 my %manual_wow64_wrappers =
     (
      "glBufferStorage" => 0,
@@ -420,6 +413,7 @@ sub generate_unix_thunk($$$$)
     my $use_pbuffer = 0;
     my $use_context = 0;
     my $call_args = "";
+    my @map_args = ();
     my $ret_expr = "";
     my $use_dc = 0;
     my $vars = "";
@@ -451,7 +445,7 @@ sub generate_unix_thunk($$$$)
 
             if ($ptype ne "PTR32")
             {
-                if (grep(/^$pname/, @{$map_default_fbo_thunks{$name}}))
+                if (map_default_fbo( $name, $pname ))
                 {
                     $call_args .= " $pname,";
                 }
@@ -547,7 +541,7 @@ sub generate_unix_thunk($$$$)
             }
             else
             {
-                if (grep(/^$pname/, @{$map_default_fbo_thunks{$name}}))
+                if (map_default_fbo( $name, $pname ))
                 {
                     $call_args .= " $pname,";
                 }
@@ -563,9 +557,10 @@ sub generate_unix_thunk($$$$)
     foreach my $arg (@{$func->[1]})
     {
         my $pname = get_arg_name( $arg );
-        if (grep(/^$pname/, @{$map_default_fbo_thunks{$name}}))
+        if (map_default_fbo( $name, $pname ))
         {
             $ret .= "    GLuint $pname = params->$pname;\n";
+            push @map_args, $pname;
         }
     }
 
@@ -586,7 +581,7 @@ sub generate_unix_thunk($$$$)
         $ret .= "    if (!funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
     $ret .= $input_conv;
-    foreach my $arg (@{$map_default_fbo_thunks{$name}})
+    foreach my $arg (@map_args)
     {
         my $target = "GL_DRAW_FRAMEBUFFER";
         $target = "GL_READ_FRAMEBUFFER" if $arg =~ "readFramebuffer";
