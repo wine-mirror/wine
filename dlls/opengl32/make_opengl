@@ -54,9 +54,6 @@ use File::Basename;
 my $spec_file = "opengl32.spec";
 my $wgl_file = "../../include/wine/wgl.h";
 
-# If set to 1, generate TRACEs for each OpenGL function
-my $gen_traces = 1;
-
 #
 # List of norm categories
 #
@@ -735,7 +732,7 @@ sub generate_win_thunk($$)
     $ret .= " = {$params }";
     $ret .= ";\n";
     $ret .= "    NTSTATUS status;\n";
-    $ret .= "    " . get_func_trace( $name, $func, 1 ) if $gen_traces;
+    $ret .= "    " . get_func_trace( $name, $func, 1 );
     $ret .= $checks;
     $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
     $ret .= "    return args.ret;\n" unless is_void_func($func);
