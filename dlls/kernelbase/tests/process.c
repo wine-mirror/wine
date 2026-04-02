@@ -43,6 +43,8 @@ static HANDLE (WINAPI *pOpenFileMappingFromApp)( ULONG, BOOL, LPCWSTR);
 static HANDLE (WINAPI *pCreateFileMappingFromApp)(HANDLE, PSECURITY_ATTRIBUTES, ULONG, ULONG64, PCWSTR);
 static LPVOID (WINAPI *pMapViewOfFileFromApp)(HANDLE, ULONG, ULONG64, SIZE_T);
 static BOOL (WINAPI *pUnmapViewOfFile2)(HANDLE, void *, ULONG);
+static HRESULT (WINAPI *pGetMachineTypeAttributes)(USHORT, MACHINE_ATTRIBUTES *);
+static BOOL (WINAPI *pIsWow64Process2)(HANDLE, USHORT *, USHORT *);
 
 static void test_CompareObjectHandles(void)
 {
@@ -627,6 +629,46 @@ static void test_QueryProcessCycleTime(void)
     ok( cycles2 > cycles1, "CPU cycles used by process should be increasing.\n" );
 }
 
+static void test_GetMachineTypeAttributes(void)
+{
+    HRESULT hr;
+    MACHINE_ATTRIBUTES attributes, expected;
+    USHORT process_machine, native_machine;
+    static const WORD machines[] = { 0, IMAGE_FILE_MACHINE_I386,
+                                     IMAGE_FILE_MACHINE_AMD64,
+                                     IMAGE_FILE_MACHINE_ARM64 };
+
+    if (!pGetMachineTypeAttributes)
+    {
+        win_skip("GetMachineTypeAttributes() is not supported.\n");
+        return;
+    }
+
+    pIsWow64Process2(GetCurrentProcess(), &process_machine, &native_machine);
+
+    if (0)  /* crashes on Windows */
+        hr = pGetMachineTypeAttributes(0, NULL);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(machines); i++)
+    {
+        winetest_push_context("%04x", machines[i]);
+        hr = pGetMachineTypeAttributes(machines[i], &attributes);
+        ok(hr == S_OK, "GetMachineTypeAttributes error 0x%08lx\n", hr);
+
+        expected = 0;
+        if (machines[i] == native_machine)
+            expected |= UserEnabled | KernelEnabled;
+        else if (machines[i] == IMAGE_FILE_MACHINE_I386)
+            expected |= UserEnabled | Wow64Container;
+        else if (machines[i] == IMAGE_FILE_MACHINE_AMD64 &&
+                 native_machine == IMAGE_FILE_MACHINE_ARM64)
+            expected |= UserEnabled;
+
+        ok(attributes == expected, "Got attributes 0x%08x, expected 0x%08x\n", attributes, expected);
+        winetest_pop_context();
+    }
+}
+
 static void init_funcs(void)
 {
     HMODULE hmod = GetModuleHandleA("kernelbase.dll");
@@ -634,6 +676,8 @@ static void init_funcs(void)
 #define X(f) { p##f = (void*)GetProcAddress(hmod, #f); }
     X(CompareObjectHandles);
     X(CreateFileMappingFromApp);
+    X(GetMachineTypeAttributes);
+    X(IsWow64Process2);
     X(MapViewOfFile3);
     X(MapViewOfFileFromApp);
     X(OpenFileMappingFromApp);
@@ -663,4 +707,5 @@ START_TEST(process)
     test_CreateFileMappingFromApp();
     test_MapViewOfFileFromApp();
     test_QueryProcessCycleTime();
+    test_GetMachineTypeAttributes();
 }
