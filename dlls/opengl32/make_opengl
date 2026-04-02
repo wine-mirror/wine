@@ -261,31 +261,28 @@ sub map_default_fbo($$)
     return 0;
 }
 
-my %manual_wow64_wrappers =
-    (
-     "glBufferStorage" => 0,
-     "glDeleteBuffers" => 0,
-     "glFlushMappedBufferRange" => 0,
-     "glFlushMappedNamedBufferRange" => 0,
-     "glFlushMappedNamedBufferRangeEXT" => 0,
-     "glGetBufferPointerv" => 0,
-     "glGetBufferPointervARB" => 0,
-     "glGetNamedBufferPointerv" => 0,
-     "glGetNamedBufferPointervEXT" => 0,
-     "glMapBuffer" => 0,
-     "glMapBufferARB" => 0,
-     "glMapBufferRange" => 0,
-     "glMapNamedBuffer" => 0,
-     "glMapNamedBufferEXT" => 0,
-     "glMapNamedBufferRange" => 0,
-     "glMapNamedBufferRangeEXT" => 0,
-     "glNamedBufferStorage" => 0,
-     "glNamedBufferStorageEXT" => 0,
-     "glUnmapBuffer" => 0,
-     "glUnmapBufferARB" => 0,
-     "glUnmapNamedBuffer" => 0,
-     "glUnmapNamedBufferEXT" => 0,
-    );
+sub manual_wow64_wrapper($)
+{
+    my $name = shift;
+    return 0 if $name =~ /^glBufferStorageExternal/;
+    return 0 if $name =~ /^glBufferStorageMem/;
+    return "glBufferStorage"               if $name =~ /^glBufferStorage/;
+    return "glDeleteBuffers"               if $name =~ /^glDeleteBuffers/;
+    return "glFlushMappedBufferRange"      if $name =~ /^glFlushMappedBufferRange/;
+    return "glFlushMappedNamedBufferRange" if $name =~ /^glFlushMappedNamedBufferRange/;
+    return "glGetBufferPointerv"           if $name =~ /^glGetBufferPointerv/;
+    return "glGetNamedBufferPointerv"      if $name =~ /^glGetNamedBufferPointerv/;
+    return "glMapBufferRange"              if $name =~ /^glMapBufferRange/;
+    return "glMapBuffer"                   if $name =~ /^glMapBuffer/;
+    return "glMapNamedBufferRange"         if $name =~ /^glMapNamedBufferRange/;
+    return "glMapNamedBuffer"              if $name =~ /^glMapNamedBuffer/;
+    return 0 if $name =~ /^glNamedBufferStorageExternal/;
+    return 0 if $name =~ /^glNamedBufferStorageMem/;
+    return "glNamedBufferStorage"          if $name =~ /^glNamedBufferStorage/;
+    return "glUnmapBuffer"                 if $name =~ /^glUnmapBuffer/;
+    return "glUnmapNamedBuffer"            if $name =~ /^glUnmapNamedBuffer/;
+}
+
 my %wow64_invalidate_buffer =
     (
      "glBufferAttachMemoryNV" => 1,
@@ -401,8 +398,8 @@ sub generate_unix_thunk($$$$)
 {
     my ($name, $func, $is_wow64, $prefix) = @_;
     my $func_ret = get_func_ret( $func );
-    my $manual_wow64_wrapper = $is_wow64 && defined $manual_wow64_wrappers{$name};
-    my $need_wrap = $manual_wow64_wrapper || needs_wrapper( $name, $func );
+    my $wow64_wrap = $is_wow64 ? manual_wow64_wrapper( $name ) : 0;
+    my $need_wrap = $wow64_wrap || needs_wrapper( $name, $func );
     my $need_lock = 0;
     my $need_funcs = !$need_wrap || ($prefix eq "ext" && $name !~ /^wgl/);
     my $teb = $is_wow64 ? "teb" : "params->teb";
@@ -592,17 +589,18 @@ sub generate_unix_thunk($$$$)
     $ret .= "    push_default_fbo( $teb );\n" if hide_default_fbo( $name );
     $ret .= "    pthread_mutex_lock( &wgl_lock );\n$invalidation" if $need_lock;
     $ret .= "    $ret_expr";
-    $call_args =~ s/,$/ /;
-    if ($manual_wow64_wrapper)
+    if ($wow64_wrap)
     {
-        $ret .= "wow64_$name($call_args);\n";
+        $ret .= "wow64_$wow64_wrap($call_args funcs->p_$name );\n";
     }
     elsif ($need_wrap)
     {
+        $call_args =~ s/,$/ /;
         $ret .= "wrap_$name($call_args);\n";
     }
     else
     {
+        $call_args =~ s/,$/ /;
         $ret .= "funcs->p_$name($call_args);\n";
     }
     $ret .= "    pthread_mutex_unlock( &wgl_lock );\n" if $need_lock;
@@ -653,6 +651,7 @@ sub generate_wrapper_declaration($$$)
         }
         $ret .= " " . $arg->textContent() . ",";
     }
+    $ret .= " PFN_$name func," if $is_wow64;
     $ret .= " HPBUFFERARB handle," if $ret_type =~ /HPBUFFERARB/;
     $ret .= " HGLRC handle," if $ret_type =~ /HGLRC/;
     $ret .= " GLsync handle," if $ret_type =~ /GLsync/;
@@ -1684,18 +1683,18 @@ print OUT "\n#ifdef _WIN64\n";
 
 foreach (sort keys %wgl_functions)
 {
-    next unless defined $manual_wow64_wrappers{$_};
+    next unless manual_wow64_wrapper( $_ ) eq $_;
     print OUT generate_wrapper_declaration($_, $wgl_functions{$_}, 1);
 }
 foreach (sort keys %norm_functions)
 {
-    next unless defined $manual_wow64_wrappers{$_};
+    next unless manual_wow64_wrapper( $_ ) eq $_;
     print OUT generate_wrapper_declaration($_, $norm_functions{$_}, 1);
 }
 foreach (sort keys %ext_functions)
 {
     next unless is_exposed_function( $ext_functions{$_} );
-    next unless defined $manual_wow64_wrappers{$_};
+    next unless manual_wow64_wrapper( $_ ) eq $_;
     print OUT generate_wrapper_declaration($_, $ext_functions{$_}, 1);
 }
 
