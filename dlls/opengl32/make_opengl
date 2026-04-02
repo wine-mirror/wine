@@ -1111,7 +1111,7 @@ sub parse_registry($)
     my $alias = "";
     my $number = "";
     my $depth = 0;
-    my $api = "";
+    my %apis = ();
 
     open IN, "$file" or die "cannot open $file";
 
@@ -1123,9 +1123,9 @@ sub parse_registry($)
         if ($depth == 1 and ($key) = ($line =~ /'(\w+)' : \{/))
         {
             $name = $key;
-            $api = "gl" if $name =~ /^WGL_/;
-            $api = "glx" if $name =~ /^GLX_/;
-            $api = "glu" if $name =~ /^GLU_/;
+            $apis{"gl"} = 1 if $name =~ /^WGL_/;
+            $apis{"glx"} = 1 if $name =~ /^GLX_/;
+            $apis{"glu"} = 1 if $name =~ /^GLU_/;
         }
 
         $depth++ if $line =~ /\{/;
@@ -1139,13 +1139,15 @@ sub parse_registry($)
         elsif (($key, $val) = ($line =~ /'(.*)' : (.*),/))
         {
             $number = $val if $key =~ /(|arb|es|sc)number/;
-            $api = "gl" if $key =~ /^(arb)?number$/ and $api eq "";
-            $api = "gles" if $key eq "esnumber" and $api eq "";
-            $api = "glsc" if $key eq "scnumber" and $api eq "";
+            next if defined $apis{"glx"} or defined $apis{"glu"};
+            $apis{"gl"} = 1 if $key =~ /^(arb)?number$/;
+            $apis{"gles"} = 1 if $key eq "esnumber";
+            $apis{"glsc"} = 1 if $key eq "scnumber";
         }
 
-        $api = "gl" if $depth == 1 and $api eq "";
-        if ($depth == 1 and is_supported_api( $api ) and is_supported_extension( $name ) and $flags =~ /public/ and $number ne "")
+        $apis{"gl"} = 1 if $depth == 1 and length( keys %apis ) == 0;
+        if ($depth == 1 and (defined $apis{"gl"} or defined $apis{"gles"}) and
+            is_supported_extension( $name ) and $flags =~ /public/ and $number ne "")
         {
             add_extension( $name );
 
@@ -1156,7 +1158,11 @@ sub parse_registry($)
             }
         }
 
-        $name = $flags = $alias = $api = $number = "" if $depth == 1;
+        if ($depth == 1)
+        {
+            $name = $flags = $alias = $number = "";
+            %apis = ();
+        }
     }
 
     close IN;
