@@ -1416,13 +1416,6 @@ typedef struct _WIN32_MEMORY_RANGE_ENTRY
     SIZE_T NumberOfBytes;
 } WIN32_MEMORY_RANGE_ENTRY, *PWIN32_MEMORY_RANGE_ENTRY;
 
-typedef enum _MACHINE_ATTRIBUTES
-{
-    UserEnabled    = 0x00000001,
-    KernelEnabled  = 0x00000002,
-    Wow64Container = 0x00000004,
-} MACHINE_ATTRIBUTES;
-
 typedef struct _PROCESS_MACHINE_INFORMATION
 {
     USHORT ProcessMachine;

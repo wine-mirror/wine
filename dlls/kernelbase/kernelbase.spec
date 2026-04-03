@@ -587,6 +587,7 @@
 @ stdcall GetLogicalProcessorInformationEx(long ptr ptr)
 @ stdcall GetLongPathNameA(str ptr long)
 @ stdcall GetLongPathNameW(wstr ptr long)
+@ stdcall GetMachineTypeAttributes(long ptr)
 @ stdcall GetMappedFileNameA(long ptr ptr long)
 @ stdcall GetMappedFileNameW(long ptr ptr long)
 # @ stub GetMemoryErrorHandlingCapabilities

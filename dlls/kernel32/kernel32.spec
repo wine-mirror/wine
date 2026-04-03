@@ -732,6 +732,7 @@
 # @ stub GetLongPathNameTransactedA
 # @ stub GetLongPathNameTransactedW
 @ stdcall -import GetLongPathNameW(wstr ptr long)
+@ stdcall -import GetMachineTypeAttributes(long ptr)
 @ stdcall GetMailslotInfo(long ptr ptr ptr ptr)
 @ stdcall GetMaximumProcessorCount(long)
 @ stdcall GetMaximumProcessorGroupCount()
