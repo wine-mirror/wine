@@ -3292,13 +3292,11 @@ todo_wine {
                 hr = IMFTopologyNode_GetGUID(mft_node, &MF_TOPONODE_TRANSFORM_OBJECTID, &class_id);
                 if (test->flags & LOADER_SET_XVP_FOR_PLAYBACK)
                 {
-                    todo_wine
                     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Got attribute hr %#lx.\n", hr);
                 }
                 else
                 {
                     ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
-                    todo_wine_if(IsEqualGUID(&test->converter_class, &CLSID_CColorConvertDMO))
                     ok(IsEqualGUID(&class_id, &test->converter_class), "got MF_TOPONODE_TRANSFORM_OBJECTID %s.\n", debugstr_guid(&class_id));
                 }
 
