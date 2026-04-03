@@ -1979,7 +1979,7 @@ static void test_scaling(HWND hwnd)
             Sleep(30);
             err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION | MCI_WAIT, (DWORD_PTR)&parm);
             ok(!err, "Got %s.\n", dbg_mcierr(err));
-            todo_wine ok(EqualRect(&parm.where.rc, &new_rect), "got %s, expected %s.\n",
+            ok(EqualRect(&parm.where.rc, &new_rect), "got %s, expected %s.\n",
                     wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&new_rect));
         }
         err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
