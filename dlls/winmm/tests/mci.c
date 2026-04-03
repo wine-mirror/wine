@@ -1902,6 +1902,95 @@ static void test_avi_end_position(void)
     ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
+static void test_scaling(HWND hwnd)
+{
+    const WCHAR *filename = load_resource(L"test.avi");
+    static const RECT orig_rect = { 0, 0, 32, 24 };
+    static const struct
+    {
+        BOOL parent;
+        DWORD style;
+    }
+    tests[] =
+    {
+        { TRUE, WS_CHILD },
+        { TRUE, WS_POPUP },
+        { FALSE, WS_POPUP },
+        { TRUE, WS_POPUP | WS_CHILD },
+    };
+    static const SIZE sizes[] =
+    {
+        { 12, 12 },
+        { 31, 48 },
+        { 33, 25 },
+        { 50, 50 },
+    };
+
+    MCI_PARMS_UNION parm = { 0 };
+    HWND video_window;
+    MCIDEVICEID id;
+    MCIERROR err;
+    DWORD open_flags;
+    RECT r, new_rect;
+    unsigned int i, j;
+    BOOL bret;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("test %d", i);
+        parm.dgv_open.lpstrDeviceType = (WCHAR *)L"AVIVideo";
+        parm.dgv_open.lpstrElementName = (WCHAR *)filename;
+        parm.dgv_open.hWndParent = hwnd;
+        parm.dgv_open.dwStyle = tests[i].style;
+        open_flags = MCI_OPEN_ELEMENT | MCI_DGV_OPEN_WS | MCI_OPEN_TYPE;
+        if (tests[i].parent)
+            open_flags |= MCI_DGV_OPEN_PARENT;
+
+        err = mciSendCommandW(0, MCI_OPEN, open_flags, (DWORD_PTR)&parm);
+        if (err == MCIERR_DEVICE_OPEN && tests[i].parent)
+        {
+            /* For some reason on some Testbot Win10 machines that doesn't work with parent. */
+            win_skip("MCI_OPEN failed, skipping test.\n");
+            continue;
+        }
+        ok(!err, "got %s.\n", dbg_mcierr(err));
+        id = parm.dgv_open.wDeviceID;
+
+        parm.status.dwItem = MCI_DGV_STATUS_HWND;
+        err = mciSendCommandA(id, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+        ok(!err,"got %s\n", dbg_mcierr(err));
+        video_window = (HWND)parm.status.dwReturn;
+        ok(!!video_window, "got NULL.\n");
+        GetClientRect(video_window, &r);
+        ok(EqualRect(&r, &orig_rect), "got %s, expected %s.\n", wine_dbgstr_rect(&r), wine_dbgstr_rect(&orig_rect));
+
+        err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION | MCI_WAIT, (DWORD_PTR)&parm);
+        ok(!err, "got %s.\n", dbg_mcierr(err));
+        ok(EqualRect(&parm.where.rc, &orig_rect), "got %s, expected %s.\n", wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&orig_rect));
+
+        for (j = 0; j < ARRAY_SIZE(sizes); ++j)
+        {
+            SetRect(&new_rect, 0, 0, sizes[j].cx, sizes[j].cy);
+            MoveWindow(video_window, 0, 0, new_rect.right, new_rect.bottom, FALSE);
+
+            GetClientRect(video_window, &r);
+            ok(EqualRect(&r, &new_rect), "got %s, expected %s.\n", wine_dbgstr_rect(&r), wine_dbgstr_rect(&new_rect));
+            /* There might be a delay between window size change and the change in destination rectangle on Windows. */
+            Sleep(30);
+            err = mciSendCommandW(id, MCI_WHERE, MCI_DGV_WHERE_DESTINATION | MCI_WAIT, (DWORD_PTR)&parm);
+            ok(!err, "Got %s.\n", dbg_mcierr(err));
+            todo_wine ok(EqualRect(&parm.where.rc, &new_rect), "got %s, expected %s.\n",
+                    wine_dbgstr_rect(&parm.where.rc), wine_dbgstr_rect(&new_rect));
+        }
+        err = mciSendCommandW(id, MCI_CLOSE, 0, 0);
+        ok(!err, "Got %s.\n", dbg_mcierr(err));
+        winetest_pop_context();
+    }
+
+    bret = DeleteFileW(filename);
+    ok(bret, "Got error %lu.\n", GetLastError());
+}
+
 START_TEST(mci)
 {
     char curdir[MAX_PATH], tmpdir[MAX_PATH];
@@ -1924,6 +2013,7 @@ START_TEST(mci)
         test_AutoOpenWAVE(hwnd);
         test_playTypeMpegvideo(hwnd);
         test_asyncWaveTypeMpegvideo(hwnd);
+        test_scaling(hwnd);
     }else
         skip("No output devices available, skipping all output tests\n");
 
