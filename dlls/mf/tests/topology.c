@@ -3427,7 +3427,6 @@ todo_wine {
     ok(ref == 0, "Release returned %ld\n", ref);
 
     ref = IMFMediaType_Release(input_types[0]);
-    todo_wine
     ok(ref == 0, "Release returned %ld\n", ref);
     ref = IMFMediaType_Release(input_types[1]);
     ok(ref == 0, "Release returned %ld\n", ref);

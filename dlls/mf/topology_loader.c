@@ -360,6 +360,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
             hr = IMFTopology_AddNode(topology, node);
         if (SUCCEEDED(hr))
             break;
+        IMFTopologyNode_DisconnectOutput(branch->up.node, branch->up.stream);
     }
 
     IMFTopologyNode_Release(node);
