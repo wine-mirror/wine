@@ -1038,3 +1038,19 @@ HRESULT color_convert_create(IUnknown *outer, IUnknown **out)
     TRACE("Created %p\n", *out);
     return S_OK;
 }
+
+HRESULT WINAPI winegstreamer_create_color_converter(IMFTransform **out)
+{
+    IUnknown *unknown;
+    HRESULT hr;
+
+    TRACE("out %p.\n", out);
+
+    if (!init_gstreamer())
+        return E_FAIL;
+
+    if (FAILED(hr = color_convert_create(NULL, &unknown)))
+        return hr;
+
+    return IUnknown_QueryInterface(unknown, &IID_IMFTransform, (void**)out);
+}

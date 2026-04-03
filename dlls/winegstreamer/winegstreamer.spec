@@ -4,3 +4,4 @@
 @ stdcall -private DllUnregisterServer()
 @ stdcall winegstreamer_create_wm_sync_reader(ptr ptr)
 @ stdcall winegstreamer_create_video_decoder(ptr)
+@ stdcall winegstreamer_create_color_converter(ptr)
