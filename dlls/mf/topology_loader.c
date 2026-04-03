@@ -458,7 +458,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, BOOL deco
         struct topology_branch *branch, IMFMediaType *up_type, IMFMediaType *down_type)
 {
     enum connect_method method_mask = CONNECT_DIRECT;
-    MFT_REGISTER_TYPE_INFO input_info, output_info;
+    MFT_REGISTER_TYPE_INFO input_info;
     IMFTransform *transform;
     IMFActivate **activates;
     IMFTopologyNode *node;
@@ -473,15 +473,6 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, BOOL deco
         return hr;
     if (FAILED(hr = IMFMediaType_GetGUID(up_type, &MF_MT_SUBTYPE, &input_info.guidSubtype)))
         return hr;
-    if (!down_type)
-        output_info = input_info;
-    else
-    {
-        if (FAILED(hr = IMFMediaType_GetMajorType(down_type, &output_info.guidMajorType)))
-            return hr;
-        if (FAILED(hr = IMFMediaType_GetGUID(down_type, &MF_MT_SUBTYPE, &output_info.guidSubtype)))
-            return hr;
-    }
 
     if (IsEqualGUID(&input_info.guidMajorType, &MFMediaType_Audio))
         category = decoder ? MFT_CATEGORY_AUDIO_DECODER : MFT_CATEGORY_AUDIO_EFFECT;
@@ -500,7 +491,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, BOOL deco
         method_mask |= CONNECT_CONVERTER;
     }
 
-    if (FAILED(hr = MFTEnumEx(category, MFT_ENUM_FLAG_ALL, &input_info, decoder ? NULL : &output_info, &activates, &count)))
+    if (FAILED(hr = MFTEnumEx(category, MFT_ENUM_FLAG_ALL, &input_info, NULL, &activates, &count)))
         return hr;
 
     for (i = 0; i < count; ++i)

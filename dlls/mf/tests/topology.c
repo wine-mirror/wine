@@ -2757,7 +2757,7 @@ static void test_topology_loader(void)
             .input_types = {&video_h264_1280}, .output_types = {&video_color_convert_1280_rgb32, &video_video_processor_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .decoded_type = &video_nv12_1280, .expected_output_index = 1,
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED | LOADER_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* H264 -> {DMO_RGB32, MF_RGB32} */
@@ -2810,7 +2810,7 @@ static void test_topology_loader(void)
             .decoded_type = &video_generic_yuv_1280, .expected_output_index = 1,
             .decoded_subtypes = {&MFVideoFormat_NV12, &MFVideoFormat_YUY2},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_VideoProcessorMFT,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_SET_XVP_FOR_PLAYBACK | LOADER_EXPECT_SINK_ENUMERATED | LOADER_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_SET_XVP_FOR_PLAYBACK | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* H264 -> RGB32, resize, set XVP */
