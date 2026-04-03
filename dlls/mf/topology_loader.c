@@ -175,6 +175,19 @@ static void topology_branch_destroy(struct topology_branch *branch)
     free(branch);
 }
 
+static HRESULT topology_branch_create_indirect(struct topology_branch *branch,
+        IMFTopologyNode *node, struct topology_branch **up, struct topology_branch **down)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = topology_branch_create(branch->up.node, branch->up.stream, node, 0, up)))
+        return hr;
+    if (FAILED(hr = topology_branch_create(node, 0, branch->down.node, branch->down.stream, down)))
+        topology_branch_destroy(*up);
+
+    return hr;
+}
+
 static HRESULT topology_branch_clone_nodes(struct topoloader_context *context, struct topology_branch *branch)
 {
     IMFTopologyNode *up, *down;
@@ -322,8 +335,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
 
     for (i = 0; i < count; ++i)
     {
-        struct topology_branch down_branch = {.up.node = node, .down = branch->down};
-        struct topology_branch up_branch = {.up = branch->up, .down.node = node};
+        struct topology_branch *up_branch, *down_branch;
         MF_CONNECT_METHOD method = method_mask;
         IMFMediaType *media_type;
 
@@ -335,27 +347,35 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
         if (SUCCEEDED(IMFActivate_GetGUID(activates[i], &MFT_TRANSFORM_CLSID_Attribute, &guid)))
             IMFTopologyNode_SetGUID(node, &MF_TOPONODE_TRANSFORM_OBJECTID, &guid);
 
-        hr = topology_branch_connect_down(topology, MF_CONNECT_DIRECT, &up_branch, up_type);
-        if (down_type && SUCCEEDED(MFCreateMediaType(&media_type)))
+        if (SUCCEEDED(hr = topology_branch_create_indirect(branch, node, &up_branch, &down_branch)))
         {
-            if (SUCCEEDED(IMFMediaType_CopyAllItems(down_type, (IMFAttributes *)media_type))
-                    && SUCCEEDED(update_media_type_from_upstream(media_type, up_type))
-                    && SUCCEEDED(IMFTransform_SetOutputType(transform, 0, media_type, 0)))
-                method = MF_CONNECT_DIRECT;
-            IMFMediaType_Release(media_type);
+            if (SUCCEEDED(hr = topology_branch_connect_down(topology, MF_CONNECT_DIRECT, up_branch, up_type)))
+            {
+                if (down_type && SUCCEEDED(MFCreateMediaType(&media_type)))
+                {
+                    if (SUCCEEDED(IMFMediaType_CopyAllItems(down_type, (IMFAttributes *)media_type))
+                            && SUCCEEDED(update_media_type_from_upstream(media_type, up_type))
+                            && SUCCEEDED(IMFTransform_SetOutputType(transform, 0, media_type, 0)))
+                        method = MF_CONNECT_DIRECT;
+                    IMFMediaType_Release(media_type);
+                }
+
+                if (method != MF_CONNECT_DIRECT
+                        && SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
+                {
+                    if (SUCCEEDED(update_media_type_from_upstream(media_type, up_type)))
+                        IMFTransform_SetOutputType(transform, 0, media_type, 0);
+                    IMFMediaType_Release(media_type);
+                }
+
+                hr = topology_branch_connect(topology, method, down_branch, !down_type);
+            }
+            topology_branch_destroy(down_branch);
+            topology_branch_destroy(up_branch);
         }
+
         IMFTransform_Release(transform);
 
-        if (SUCCEEDED(hr) && method != MF_CONNECT_DIRECT
-                && SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
-        {
-            if (SUCCEEDED(update_media_type_from_upstream(media_type, up_type)))
-                IMFTransform_SetOutputType(transform, 0, media_type, 0);
-            IMFMediaType_Release(media_type);
-        }
-
-        if (SUCCEEDED(hr))
-            hr = topology_branch_connect(topology, method, &down_branch, !down_type);
         if (SUCCEEDED(hr))
             hr = IMFTopology_AddNode(topology, node);
         if (SUCCEEDED(hr))
