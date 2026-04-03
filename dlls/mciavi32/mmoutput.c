@@ -472,6 +472,14 @@ BOOL    MCIAVI_OpenVideo(WINE_MCIAVI* wma)
     }
 
 paint_frame:
+    if (!(wma->hdd = DrawDibOpen()))
+    {
+	ERR("DrawDibOpen() failed.\n");
+	free(wma->outdata);
+	wma->outdata = NULL;
+	return FALSE;
+    }
+
     hDC = wma->hWndPaint ? GetDC(wma->hWndPaint) : 0;
     if (hDC)
     {
@@ -631,12 +639,9 @@ double MCIAVI_PaintFrame(WINE_MCIAVI* wma, HDC hDC)
         pBitmapInfo = (LPBITMAPINFO)wma->inbih;
     }
 
-    StretchDIBits(hDC,
-                  wma->dest.left, wma->dest.top,
-                  wma->dest.right - wma->dest.left, wma->dest.bottom - wma->dest.top,
-                  wma->source.left, wma->source.top,
-                  wma->source.right - wma->source.left, wma->source.bottom - wma->source.top,
-                  pBitmapData, pBitmapInfo, DIB_RGB_COLORS, SRCCOPY);
+    DrawDibDraw(wma->hdd, hDC, wma->dest.left, wma->dest.top, wma->dest.right - wma->dest.left, wma->dest.bottom - wma->dest.top,
+                &pBitmapInfo->bmiHeader, pBitmapData,
+                wma->source.left, wma->source.top, wma->source.right - wma->source.left, wma->source.bottom - wma->source.top, 0);
 
     return (wma->ash_video.dwScale / (double)wma->ash_video.dwRate) * 1000000;
 }

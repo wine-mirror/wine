@@ -84,6 +84,8 @@ typedef struct {
     /* data for the background mechanism */
     CRITICAL_SECTION	cs;
     HANDLE              hStopEvent;
+    /* data for presentation */
+    HDRAWDIB            hdd;
 } WINE_MCIAVI;
 
 extern HINSTANCE MCIAVI_hInstance;

@@ -175,6 +175,8 @@ static void MCIAVI_CleanUp(WINE_MCIAVI* wma)
         free(wma->lpFileName);
         wma->lpFileName = NULL;
 
+        DrawDibClose(wma->hdd);
+
         free(wma->lpVideoIndex);
         wma->lpVideoIndex = NULL;
         free(wma->lpAudioIndex);
