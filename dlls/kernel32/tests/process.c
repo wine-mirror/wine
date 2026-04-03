@@ -5699,7 +5699,7 @@ static void test_GetProcessInformation(void)
     ok(ret, "Unexpected return value %d.\n", ret);
 
     process = GetCurrentProcess();
-    status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+    status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures2, &process, sizeof(process),
             machines, sizeof(machines), NULL );
     ok(!status, "Failed to get architectures information.\n");
     for (i = 0; machines[i].Machine; i++)
