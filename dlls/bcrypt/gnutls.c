@@ -2359,6 +2359,7 @@ static NTSTATUS key_asymmetric_verify( void *args )
         case 20: hash_alg = GNUTLS_DIG_SHA1; break;
         case 32: hash_alg = GNUTLS_DIG_SHA256; break;
         case 48: hash_alg = GNUTLS_DIG_SHA384; break;
+        case 64: hash_alg = GNUTLS_DIG_SHA512; break;
 
         default:
             FIXME( "hash size %u not yet supported\n", params->hash_len );
