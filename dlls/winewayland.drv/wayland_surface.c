@@ -173,6 +173,18 @@ struct wayland_surface *wayland_surface_create(HWND hwnd)
         ERR("Failed to create wp_viewport Wayland surface\n");
         goto err;
     }
+    if (process_wayland.wp_alpha_modifier_v1)
+    {
+        COLORREF key;
+        DWORD flags;
+        BYTE alpha;
+
+        surface->wp_alpha_modifier_surface_v1 =
+            wp_alpha_modifier_v1_get_surface(process_wayland.wp_alpha_modifier_v1, surface->wl_surface);
+
+        if (!NtUserGetLayeredWindowAttributes(hwnd, &key, &alpha, &flags)) flags = 0;
+        wayland_surface_set_opacity(surface, alpha, flags);
+    }
 
     surface->window.scale = 1.0;
 
@@ -211,6 +223,12 @@ void wayland_surface_destroy(struct wayland_surface *surface)
     pthread_mutex_unlock(&process_wayland.text_input.mutex);
 
     wayland_surface_clear_role(surface);
+
+    if (surface->wp_alpha_modifier_surface_v1)
+    {
+        wp_alpha_modifier_surface_v1_destroy(surface->wp_alpha_modifier_surface_v1);
+        surface->wp_alpha_modifier_surface_v1 = NULL;
+    }
 
     if (surface->wp_viewport)
     {
@@ -1360,5 +1378,16 @@ void wayland_surface_assign_icon(struct wayland_surface *surface)
 
         xdg_toplevel_icon_manager_v1_set_icon(process_wayland.xdg_toplevel_icon_manager_v1,
                                               surface->xdg_toplevel, surface->xdg_toplevel_icon);
+    }
+}
+
+void wayland_surface_set_opacity(struct wayland_surface *surface, BYTE alpha, UINT flags)
+{
+    if (surface->wp_alpha_modifier_surface_v1)
+    {
+        uint32_t opacity = (flags & LWA_ALPHA) ? (UINT32_MAX / 0xff) * alpha : UINT32_MAX;
+        wp_alpha_modifier_surface_v1_set_multiplier(surface->wp_alpha_modifier_surface_v1, opacity);
+        wl_surface_commit(surface->wl_surface);
+        wl_display_flush(process_wayland.wl_display);
     }
 }
