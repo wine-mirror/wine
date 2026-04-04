@@ -1545,7 +1545,7 @@
 @ cdecl _vswprintf_p(ptr long wstr ptr) msvcr120._vswprintf_p
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) msvcr120._vswprintf_p_l
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr) msvcr120._vswprintf_s_l
-@ stub _vwprintf_l
+@ cdecl _vwprintf_l(wstr ptr ptr) msvcr120._vwprintf_l
 @ stub _vwprintf_p
 @ stub _vwprintf_p_l
 @ stub _vwprintf_s_l

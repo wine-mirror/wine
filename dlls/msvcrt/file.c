@@ -5532,6 +5532,14 @@ int CDECL vwprintf(const wchar_t *format, va_list valist)
 }
 
 /*********************************************************************
+ *              _vwprintf_l (MSVCRT.@)
+ */
+int CDECL _vwprintf_l(const wchar_t *format, _locale_t locale, va_list valist)
+{
+    return _vfwprintf_l(stdout, format, locale, valist);
+}
+
+/*********************************************************************
  *		vwprintf_s (MSVCRT.@)
  */
 int CDECL vwprintf_s(const wchar_t *format, va_list valist)
