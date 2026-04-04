@@ -3505,6 +3505,13 @@ static void run_tests(void)
     parse_script_w(L"");
     parse_script_w(L"' empty ;");
 
+    /* Vertical tab and form feed are valid whitespace separators */
+    parse_script_w(L"dim\x0b""x\n");
+    parse_script_w(L"dim\x0c""x\n");
+    parse_script_w(L"dim\x0b\x0c""x\n");
+    parse_script_w(L"x\x0b""=\x0b""1\n");
+    parse_script_w(L"x\x0c""=\x0c""1\n");
+
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     parse_script_w(L"reportSuccess");

@@ -386,7 +386,7 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
 
 static void skip_spaces(parser_ctx_t *ctx)
 {
-    while(*ctx->ptr == ' ' || *ctx->ptr == '\t')
+    while(*ctx->ptr == ' ' || *ctx->ptr == '\t' || *ctx->ptr == '\v' || *ctx->ptr == '\f')
         ctx->ptr++;
 }
 
