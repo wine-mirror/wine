@@ -1092,10 +1092,46 @@ static BOOL tgt_process_active_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY
 #endif
 }
 
+BOOL dbg_fetch_active_thread_name(DWORD tid, WCHAR **description)
+{
+    static HRESULT (WINAPI *my_GetThreadDescription)(HANDLE, PWSTR*) = NULL;
+    static BOOL resolved = FALSE;
+    HANDLE h;
+    WCHAR *result = NULL;
+
+    if (!resolved)
+    {
+        HMODULE kernelbase = GetModuleHandleA("kernelbase.dll");
+        if (kernelbase)
+            my_GetThreadDescription = (void *)GetProcAddress(kernelbase, "GetThreadDescription");
+        resolved = TRUE;
+    }
+
+    if (my_GetThreadDescription && (h = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, FALSE, tid)))
+    {
+        WCHAR *descr;
+        if (my_GetThreadDescription(h, &descr) == S_OK)
+        {
+            if (*descr) result = wcsdup(descr);
+            LocalFree(descr);
+        }
+        CloseHandle(h);
+    }
+    if (!result) return FALSE;
+    *description = result;
+    return TRUE;
+}
+
+static BOOL tgt_process_active_fetch_thread_name(const struct dbg_thread *thread, WCHAR **description)
+{
+    return dbg_fetch_active_thread_name(thread->tid, description);
+}
+
 static struct be_process_io be_process_active_io =
 {
     tgt_process_active_close_process,
     tgt_process_active_read,
     tgt_process_active_write,
-    tgt_process_active_get_selector
+    tgt_process_active_get_selector,
+    tgt_process_active_fetch_thread_name,
 };

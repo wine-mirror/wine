@@ -301,6 +301,7 @@ struct be_process_io
     BOOL        (*read)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
     BOOL        (*write)(HANDLE, void*, const void*, SIZE_T, SIZE_T*);
     BOOL        (*get_selector)(HANDLE, DWORD, LDT_ENTRY*);
+    BOOL        (*fetch_thread_name)(const struct dbg_thread*, WCHAR**);
 };
 
 extern	struct dbg_process*	dbg_curr_process;
@@ -395,7 +396,6 @@ extern void             info_win32_segments(DWORD start, int length);
 extern void             info_win32_exception(void);
 extern void             info_win32_system(void);
 extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const char* name);
-extern WCHAR*           fetch_thread_description(DWORD tid);
 
   /* memory.c */
 extern BOOL             memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result);
@@ -485,6 +485,7 @@ extern enum dbg_start   dbg_active_minidump(int argc, char* argv[]);
 extern void             dbg_active_wait_for_first_exception(void);
 extern BOOL             dbg_attach_debuggee(DWORD pid);
 extern void             fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz);
+extern BOOL             dbg_fetch_active_thread_name(DWORD tid, WCHAR **description);
 
   /* tgt_minidump.c */
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);
@@ -531,6 +532,7 @@ extern struct dbg_process* dbg_get_process_h(HANDLE handle);
 extern void             dbg_del_process(struct dbg_process* p);
 struct dbg_thread*	dbg_add_thread(struct dbg_process* p, DWORD tid, HANDLE h, void* teb);
 extern struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid);
+extern WCHAR*           dbg_fetch_thread_name(const struct dbg_thread *thread);
 extern void             dbg_del_thread(struct dbg_thread* t);
 extern BOOL             dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade);
 extern BOOL             dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR base, DWORD size);

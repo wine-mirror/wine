@@ -1801,14 +1801,10 @@ static enum packet_return packet_query_threads(struct gdb_context* gdbctx)
         reply_buffer_append_str(reply, "id=\"");
         reply_buffer_append_uinthex(reply, thread->tid, 4);
         reply_buffer_append_str(reply, "\" name=\"");
-        if ((description = fetch_thread_description(thread->tid)))
+        if ((description = dbg_fetch_thread_name(thread)))
         {
             reply_buffer_append_wstr(reply, description);
-            LocalFree(description);
-        }
-        else if (strlen(thread->name))
-        {
-            reply_buffer_append_str(reply, thread->name);
+            free(description);
         }
         else
         {

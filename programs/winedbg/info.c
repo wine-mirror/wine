@@ -676,39 +676,6 @@ static BOOL get_process_name(DWORD pid, PROCESSENTRY32W* entry)
     return ret;
 }
 
-WCHAR* fetch_thread_description(DWORD tid)
-{
-    static HRESULT (WINAPI *my_GetThreadDescription)(HANDLE, PWSTR*) = NULL;
-    static BOOL resolved = FALSE;
-    HANDLE h;
-    WCHAR* desc = NULL;
-
-    if (!resolved)
-    {
-        HMODULE kernelbase = GetModuleHandleA("kernelbase.dll");
-        if (kernelbase)
-            my_GetThreadDescription = (void *)GetProcAddress(kernelbase, "GetThreadDescription");
-        resolved = TRUE;
-    }
-
-    if (!my_GetThreadDescription)
-        return NULL;
-
-    h = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, FALSE, tid);
-    if (!h)
-        return NULL;
-
-    my_GetThreadDescription(h, &desc);
-    CloseHandle(h);
-
-    if (desc && desc[0] == '\0')
-    {
-        LocalFree(desc);
-        return NULL;
-    }
-    return desc;
-}
-
 void info_win32_threads(void)
 {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
@@ -718,7 +685,6 @@ void info_win32_threads(void)
         BOOL 		ok;
 	DWORD		lastProcessId = 0;
         struct dbg_process* p = NULL;
-        struct dbg_thread* t = NULL;
         WCHAR *description;
 
 	entry.dwSize = sizeof(entry);
@@ -751,20 +717,13 @@ void info_win32_threads(void)
                                entry.th32OwnerProcessID, p ? " (D)" : "", exename);
                     lastProcessId = entry.th32OwnerProcessID;
 		}
-                dbg_printf("\t%08lx %4ld%s ",
+                if (!dbg_fetch_active_thread_name(entry.th32ThreadID, &description))
+                    description = NULL;
+                dbg_printf("\t%08lx %4ld%s %ls\n",
                            entry.th32ThreadID, entry.tpBasePri,
-                           (entry.th32ThreadID == dbg_curr_tid) ? " <==" : "    ");
-
-                if ((description = fetch_thread_description(entry.th32ThreadID)))
-                {
-                    dbg_printf("%ls\n", description);
-                    LocalFree(description);
-                }
-                else
-                {
-                    t = dbg_get_thread(p, entry.th32ThreadID);
-                    dbg_printf("%s\n", t ? t->name : "");
-                }
+                           (entry.th32ThreadID == dbg_curr_tid) ? " <==" : "    ",
+                           description ? description : L"");
+                free(description);
 	    }
             ok = Thread32Next(snap, &entry);
         }

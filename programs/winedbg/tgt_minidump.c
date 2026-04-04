@@ -648,10 +648,39 @@ static BOOL tgt_process_minidump_get_selector(HANDLE hThread, DWORD sel, LDT_ENT
     return TRUE;
 }
 
+static BOOL tgt_process_minidump_fetch_thread_name(const struct dbg_thread *thread, WCHAR **description)
+{
+    struct tgt_process_minidump_data *data = private_data(thread->process);
+    void *stream;
+
+    if (MiniDumpReadDumpStream(data->mapping, ThreadNamesStream, NULL, &stream, NULL))
+    {
+        MINIDUMP_THREAD_NAME_LIST* mtnl = stream;
+        ULONG i;
+
+        for (i = 0; i < mtnl->NumberOfThreadNames; i++)
+        {
+            if (thread->tid == mtnl->ThreadNames[i].ThreadId)
+            {
+                MINIDUMP_STRING *mdmp_string = (MINIDUMP_STRING *)((char*)data->mapping + mtnl->ThreadNames[i].RvaOfThreadName);
+                WCHAR *ret;
+                if (!mdmp_string->Length) return FALSE;
+                if (!(ret = malloc(mdmp_string->Length + sizeof(WCHAR)))) return FALSE;
+                memcpy(ret, mdmp_string->Buffer, mdmp_string->Length);
+                ret[mdmp_string->Length / sizeof(WCHAR)] = L'\0';
+                *description = ret;
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
 static struct be_process_io be_process_minidump_io =
 {
     tgt_process_minidump_close_process,
     tgt_process_minidump_read,
     tgt_process_minidump_write,
     tgt_process_minidump_get_selector,
+    tgt_process_minidump_fetch_thread_name,
 };

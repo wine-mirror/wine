@@ -513,6 +513,23 @@ void dbg_del_thread(struct dbg_thread* t)
     free(t);
 }
 
+WCHAR* dbg_fetch_thread_name(const struct dbg_thread *thread)
+{
+    WCHAR *descr;
+
+    if (thread->process->process_io->fetch_thread_name &&
+        thread->process->process_io->fetch_thread_name(thread, &descr))
+        return descr;
+    if (*thread->name)
+    {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, thread->name, -1, NULL, 0);
+        if ((descr = malloc(len * sizeof(WCHAR))))
+            MultiByteToWideChar(CP_ACP, 0, thread->name, -1, descr, len);
+        return descr;
+    }
+    return NULL;
+}
+
 void dbg_set_option(const char* option, const char* val)
 {
     if (!strcasecmp(option, "module_load_mismatched"))
