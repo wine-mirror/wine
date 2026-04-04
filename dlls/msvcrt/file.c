@@ -5848,6 +5848,19 @@ int WINAPIV wprintf(const wchar_t *format, ...)
 }
 
 /*********************************************************************
+ *              _wprintf_l (MSVCRT.@)
+ */
+int WINAPIV _wprintf_l(const wchar_t *format, _locale_t locale, ...)
+{
+    va_list valist;
+    int res;
+    va_start(valist, locale);
+    res = _vwprintf_l(format, locale, valist);
+    va_end(valist);
+    return res;
+}
+
+/*********************************************************************
  *		wprintf_s (MSVCRT.@)
  */
 int WINAPIV wprintf_s(const wchar_t *format, ...)

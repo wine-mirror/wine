@@ -1633,7 +1633,7 @@
 @ varargs _wopen(wstr long) msvcr120._wopen
 @ cdecl _wperror(wstr) msvcr120._wperror
 @ extern _wpgmptr msvcr120._wpgmptr
-@ stub _wprintf_l
+@ varargs _wprintf_l(wstr ptr) msvcr120._wprintf_l
 @ stub _wprintf_p
 @ stub _wprintf_p_l
 @ stub _wprintf_s_l

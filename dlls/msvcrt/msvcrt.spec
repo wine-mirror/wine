@@ -1194,7 +1194,7 @@
 @ cdecl _wperror(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
 @ cdecl _wpopen (wstr wstr) _wpopen
-# stub _wprintf_l(wstr ptr)
+@ varargs _wprintf_l(wstr ptr)
 # stub _wprintf_p(wstr)
 # stub _wprintf_p_l(wstr ptr)
 # stub _wprintf_s_l(wstr ptr)
