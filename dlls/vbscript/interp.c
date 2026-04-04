@@ -84,7 +84,7 @@ typedef struct {
 static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *ref)
 {
     while(var) {
-        if(!wcsicmp(var->name, name)) {
+        if(!vbs_wcsicmp(var->name, name)) {
             ref->type = var->is_const ? REF_CONST : REF_VAR;
             ref->u.v = &var->v;
             return TRUE;
@@ -102,7 +102,7 @@ static BOOL lookup_global_vars(ScriptDisp *script, const WCHAR *name, ref_t *ref
     size_t i, cnt = script->global_vars_cnt;
 
     for(i = 0; i < cnt; i++) {
-        if(!wcsicmp(vars[i]->name, name)) {
+        if(!vbs_wcsicmp(vars[i]->name, name)) {
             ref->type = vars[i]->is_const ? REF_CONST : REF_VAR;
             ref->u.v = &vars[i]->v;
             return TRUE;
@@ -118,7 +118,7 @@ static BOOL lookup_global_funcs(ScriptDisp *script, const WCHAR *name, ref_t *re
     size_t i, cnt = script->global_funcs_cnt;
 
     for(i = 0; i < cnt; i++) {
-        if(!wcsicmp(funcs[i]->name, name)) {
+        if(!vbs_wcsicmp(funcs[i]->name, name)) {
             ref->type = REF_FUNC;
             ref->u.f = funcs[i];
             return TRUE;
@@ -138,7 +138,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 
     if(invoke_type != VBDISP_CALLGET
        && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
-       && !wcsicmp(name, ctx->func->name)) {
+       && !vbs_wcsicmp(name, ctx->func->name)) {
         ref->type = REF_VAR;
         ref->u.v = &ctx->ret_val;
         return S_OK;
@@ -146,7 +146,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 
     if(ctx->func->type != FUNC_GLOBAL) {
         for(i=0; i < ctx->func->var_cnt; i++) {
-            if(!wcsicmp(ctx->func->vars[i].name, name)) {
+            if(!vbs_wcsicmp(ctx->func->vars[i].name, name)) {
                 ref->type = REF_VAR;
                 ref->u.v = ctx->vars+i;
                 return S_OK;
@@ -154,7 +154,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
 
         for(i=0; i < ctx->func->arg_cnt; i++) {
-            if(!wcsicmp(ctx->func->args[i].name, name)) {
+            if(!vbs_wcsicmp(ctx->func->args[i].name, name)) {
                 ref->type = REF_VAR;
                 ref->u.v = ctx->args+i;
                 return S_OK;
@@ -167,7 +167,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         if(ctx->vbthis) {
             /* FIXME: Bind such identifier while generating bytecode. */
             for(i=0; i < ctx->vbthis->desc->prop_cnt; i++) {
-                if(!wcsicmp(ctx->vbthis->desc->props[i].name, name)) {
+                if(!vbs_wcsicmp(ctx->vbthis->desc->props[i].name, name)) {
                     ref->type = REF_VAR;
                     ref->u.v = ctx->vbthis->props+i;
                     return S_OK;
@@ -188,7 +188,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         exec_ctx_t *caller = ctx->caller;
 
         for(i=0; i < caller->func->var_cnt; i++) {
-            if(!wcsicmp(caller->func->vars[i].name, name)) {
+            if(!vbs_wcsicmp(caller->func->vars[i].name, name)) {
                 ref->type = REF_VAR;
                 ref->u.v = caller->vars+i;
                 return S_OK;
@@ -196,7 +196,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
 
         for(i=0; i < caller->func->arg_cnt; i++) {
-            if(!wcsicmp(caller->func->args[i].name, name)) {
+            if(!vbs_wcsicmp(caller->func->args[i].name, name)) {
                 ref->type = REF_VAR;
                 ref->u.v = caller->args+i;
                 return S_OK;
@@ -845,7 +845,7 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
     TRACE("%s\n", debugstr_w(identifier));
 
     if((ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
-       && !wcsicmp(identifier, ctx->func->name)) {
+       && !vbs_wcsicmp(identifier, ctx->func->name)) {
         V_VT(&v) = VT_BYREF|VT_VARIANT;
         V_BYREF(&v) = &ctx->ret_val;
         return stack_push(ctx, &v);
@@ -1227,7 +1227,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 
     TRACE("%s\n", debugstr_w(arg));
 
-    if(!wcsicmp(arg, L"regexp")) {
+    if(!vbs_wcsicmp(arg, L"regexp")) {
         V_VT(&v) = VT_DISPATCH;
         hres = create_regexp(&V_DISPATCH(&v));
         if(FAILED(hres))
@@ -1238,11 +1238,11 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 
     if(ctx->code->named_item)
         for(class_desc = ctx->code->named_item->script_obj->classes; class_desc; class_desc = class_desc->next)
-            if(!wcsicmp(class_desc->name, arg))
+            if(!vbs_wcsicmp(class_desc->name, arg))
                 break;
     if(!class_desc)
         for(class_desc = ctx->script->script_obj->classes; class_desc; class_desc = class_desc->next)
-            if(!wcsicmp(class_desc->name, arg))
+            if(!vbs_wcsicmp(class_desc->name, arg))
                 break;
     if(!class_desc) {
         FIXME("Class %s not found\n", debugstr_w(arg));
@@ -1275,7 +1275,7 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
     if(ctx->func->type == FUNC_GLOBAL) {
         unsigned i;
         for(i = 0; i < script_obj->global_vars_cnt; i++) {
-            if(!wcsicmp(script_obj->global_vars[i]->name, ident))
+            if(!vbs_wcsicmp(script_obj->global_vars[i]->name, ident))
                 break;
         }
         assert(i < script_obj->global_vars_cnt);
@@ -2599,17 +2599,17 @@ HRESULT exec_add_caller_dynamic_var(script_ctx_t *script, exec_ctx_t *ctx, const
 
     /* Skip if name already exists in caller's locals, args, or dynamic vars */
     for(i = 0; i < ctx->func->var_cnt; i++) {
-        if(!wcsicmp(ctx->func->vars[i].name, name))
+        if(!vbs_wcsicmp(ctx->func->vars[i].name, name))
             return S_OK;
     }
     for(i = 0; i < ctx->func->arg_cnt; i++) {
-        if(!wcsicmp(ctx->func->args[i].name, name))
+        if(!vbs_wcsicmp(ctx->func->args[i].name, name))
             return S_OK;
     }
     {
         dynamic_var_t *var;
         for(var = ctx->dynamic_vars; var; var = var->next) {
-            if(!wcsicmp(var->name, name))
+            if(!vbs_wcsicmp(var->name, name))
                 return S_OK;
         }
     }

@@ -425,6 +425,21 @@ static inline BOOL is_digit(WCHAR c)
     return '0' <= c && c <= '9';
 }
 
+/* ASCII-only case-insensitive compare for VBScript identifiers.
+ * VBScript identifiers are ASCII-only (Windows rejects all non-ASCII
+ * characters), so this avoids the expensive locale-aware wcsicmp. */
+static inline int vbs_wcsicmp(const WCHAR *s1, const WCHAR *s2)
+{
+    WCHAR c1, c2;
+    do {
+        c1 = *s1++;
+        c2 = *s2++;
+        if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
+        if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
+    } while (c1 && c1 == c2);
+    return c1 - c2;
+}
+
 HRESULT create_regexp(IDispatch**);
 BSTR string_replace(BSTR,BSTR,BSTR,int,int,int);
 
