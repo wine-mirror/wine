@@ -126,7 +126,7 @@ HRESULT get_builtin_id(BuiltinDisp *disp, const WCHAR *name, DISPID *id)
 
     while(min <= max) {
         i = (min + max) / 2;
-        r = wcsicmp(disp->members[i].name, name);
+        r = vbs_wcsicmp(disp->members[i].name, name);
         if(!r) {
             *id = i;
             return S_OK;
@@ -2465,25 +2465,25 @@ static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *args, unsigned args_cn
         hres = to_system_time(args + 2, &ud.st);
     if (SUCCEEDED(hres))
     {
-        if (!wcsicmp(interval, L"yyyy"))
+        if (!vbs_wcsicmp(interval, L"yyyy"))
             ud.st.wYear += count;
-        else if (!wcsicmp(interval, L"q"))
+        else if (!vbs_wcsicmp(interval, L"q"))
             ud.st.wMonth += 3 * count;
-        else if (!wcsicmp(interval, L"m"))
+        else if (!vbs_wcsicmp(interval, L"m"))
             ud.st.wMonth += count;
-        else if (!wcsicmp(interval, L"y")
-                || !wcsicmp(interval, L"d")
-                || !wcsicmp(interval, L"w"))
+        else if (!vbs_wcsicmp(interval, L"y")
+                || !vbs_wcsicmp(interval, L"d")
+                || !vbs_wcsicmp(interval, L"w"))
         {
             ud.st.wDay += count;
         }
-        else if (!wcsicmp(interval, L"ww"))
+        else if (!vbs_wcsicmp(interval, L"ww"))
             ud.st.wDay += 7 * count;
-        else if (!wcsicmp(interval, L"h"))
+        else if (!vbs_wcsicmp(interval, L"h"))
             ud.st.wHour += count;
-        else if (!wcsicmp(interval, L"n"))
+        else if (!vbs_wcsicmp(interval, L"n"))
             ud.st.wMinute += count;
-        else if (!wcsicmp(interval, L"s"))
+        else if (!vbs_wcsicmp(interval, L"s"))
             ud.st.wSecond += count;
         else
         {
@@ -3629,7 +3629,7 @@ static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
         funcs = item->script_obj->global_funcs;
         cnt = item->script_obj->global_funcs_cnt;
         for(i = 0; i < cnt; i++) {
-            if(!wcsicmp(funcs[i]->name, name)) {
+            if(!vbs_wcsicmp(funcs[i]->name, name)) {
                 hres = create_func_ref(This->ctx, funcs[i], &disp);
                 if(FAILED(hres))
                     return hres;
@@ -3644,7 +3644,7 @@ static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
     funcs = This->ctx->script_obj->global_funcs;
     cnt = This->ctx->script_obj->global_funcs_cnt;
     for(i = 0; i < cnt; i++) {
-        if(!wcsicmp(funcs[i]->name, name)) {
+        if(!vbs_wcsicmp(funcs[i]->name, name)) {
             hres = create_func_ref(This->ctx, funcs[i], &disp);
             if(FAILED(hres))
                 return hres;

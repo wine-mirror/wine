@@ -48,7 +48,7 @@ static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, vbdisp_invoke_type_t 
                 continue;
         }
 
-        if(This->desc->funcs[i].name && !wcsicmp(This->desc->funcs[i].name, name)) {
+        if(This->desc->funcs[i].name && !vbs_wcsicmp(This->desc->funcs[i].name, name)) {
             *id = i;
             return TRUE;
         }
@@ -68,7 +68,7 @@ HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, vbdisp_invoke_type_t invoke_typ
         if(!search_private && !This->desc->props[i].is_public)
             continue;
 
-        if(!wcsicmp(This->desc->props[i].name, name)) {
+        if(!vbs_wcsicmp(This->desc->props[i].name, name)) {
             *id = i + This->desc->func_cnt;
             return S_OK;
         }
@@ -972,14 +972,14 @@ static HRESULT WINAPI ScriptTypeInfo_GetIDsOfNames(ITypeInfo *iface, LPOLESTR *r
     {
         function_t *func = This->funcs[i].func;
 
-        if (wcsicmp(name, func->name)) continue;
+        if (vbs_wcsicmp(name, func->name)) continue;
         pMemId[0] = This->funcs[i].memid;
 
         for (j = 1; j < cNames; j++)
         {
             name = rgszNames[j];
             for (arg = func->arg_cnt; --arg >= 0;)
-                if (!wcsicmp(name, func->args[arg].name))
+                if (!vbs_wcsicmp(name, func->args[arg].name))
                     break;
             if (arg >= 0)
                 pMemId[j] = arg;
@@ -991,7 +991,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetIDsOfNames(ITypeInfo *iface, LPOLESTR *r
 
     for (i = 0; i < This->num_vars; i++)
     {
-        if (wcsicmp(name, This->disp->global_vars[i]->name)) continue;
+        if (vbs_wcsicmp(name, This->disp->global_vars[i]->name)) continue;
         pMemId[0] = i + 1;
         return S_OK;
     }
@@ -1279,7 +1279,7 @@ static HRESULT WINAPI ScriptTypeComp_Bind(ITypeComp *iface, LPOLESTR szName, ULO
 
     for (i = 0; i < This->num_funcs; i++)
     {
-        if (wcsicmp(szName, This->funcs[i].func->name)) continue;
+        if (vbs_wcsicmp(szName, This->funcs[i].func->name)) continue;
         if (!(flags & INVOKE_FUNC)) return TYPE_E_TYPEMISMATCH;
 
         hr = ITypeInfo_GetFuncDesc(&This->ITypeInfo_iface, i, &pBindPtr->lpfuncdesc);
@@ -1293,7 +1293,7 @@ static HRESULT WINAPI ScriptTypeComp_Bind(ITypeComp *iface, LPOLESTR szName, ULO
 
     for (i = 0; i < This->num_vars; i++)
     {
-        if (wcsicmp(szName, This->disp->global_vars[i]->name)) continue;
+        if (vbs_wcsicmp(szName, This->disp->global_vars[i]->name)) continue;
         if (!(flags & INVOKE_PROPERTYGET)) return TYPE_E_TYPEMISMATCH;
 
         hr = ITypeInfo_GetVarDesc(&This->ITypeInfo_iface, i, &pBindPtr->lpvardesc);
@@ -1520,14 +1520,14 @@ static HRESULT WINAPI ScriptDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return E_UNEXPECTED;
 
     for(i = 0; i < This->global_vars_cnt; i++) {
-        if(!wcsicmp(This->global_vars[i]->name, bstrName)) {
+        if(!vbs_wcsicmp(This->global_vars[i]->name, bstrName)) {
             *pid = i + 1;
             return S_OK;
         }
     }
 
     for(i = 0; i < This->global_funcs_cnt; i++) {
-        if(!wcsicmp(This->global_funcs[i]->name, bstrName)) {
+        if(!vbs_wcsicmp(This->global_funcs[i]->name, bstrName)) {
             *pid = i + 1 + DISPID_FUNCTION_MASK;
             return S_OK;
         }

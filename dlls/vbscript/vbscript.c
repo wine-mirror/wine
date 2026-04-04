@@ -145,7 +145,7 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
 
         for (j = 0; j < obj->global_vars_cnt; j++)
         {
-            if (!wcsicmp(obj->global_vars[j]->name, code->main_code.vars[i].name))
+            if (!vbs_wcsicmp(obj->global_vars[j]->name, code->main_code.vars[i].name))
             {
                 found = TRUE;
                 break;
@@ -171,7 +171,7 @@ HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res, BOOL 
     {
         for (i = 0; i < obj->global_funcs_cnt; i++)
         {
-            if (!wcsicmp(obj->global_funcs[i]->name, func_iter->name))
+            if (!vbs_wcsicmp(obj->global_funcs[i]->name, func_iter->name))
             {
                 /* global function already exists, replace it */
                 obj->global_funcs[i] = func_iter;
@@ -245,7 +245,7 @@ named_item_t *lookup_named_item(script_ctx_t *ctx, const WCHAR *name, unsigned f
     HRESULT hres;
 
     LIST_FOR_EACH_ENTRY(item, &ctx->named_items, named_item_t, entry) {
-        if((item->flags & flags) == flags && !wcsicmp(item->name, name)) {
+        if((item->flags & flags) == flags && !vbs_wcsicmp(item->name, name)) {
             if(!item->script_obj && !(item->flags & SCRIPTITEM_GLOBALMEMBERS)) {
                 hres = create_script_disp(ctx, &item->script_obj);
                 if(FAILED(hres)) return NULL;

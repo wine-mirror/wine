@@ -417,7 +417,7 @@ static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, B
     const_decl_t *decl;
 
     for(decl = ctx->const_decls; decl; decl = decl->next) {
-        if(!wcsicmp(decl->name, name))
+        if(!vbs_wcsicmp(decl->name, name))
             return decl->value_expr;
     }
 
@@ -425,7 +425,7 @@ static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, B
         return NULL;
 
     for(decl = ctx->global_consts; decl; decl = decl->next) {
-        if(!wcsicmp(decl->name, name))
+        if(!vbs_wcsicmp(decl->name, name))
             return decl->value_expr;
     }
 
@@ -437,7 +437,7 @@ static BOOL lookup_args_name(compile_ctx_t *ctx, const WCHAR *name)
     unsigned i;
 
     for(i = 0; i < ctx->func->arg_cnt; i++) {
-        if(!wcsicmp(ctx->func->args[i].name, name))
+        if(!vbs_wcsicmp(ctx->func->args[i].name, name))
             return TRUE;
     }
 
@@ -449,7 +449,7 @@ static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
     dim_decl_t *dim_decl;
 
     for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
-        if(!wcsicmp(dim_decl->name, name))
+        if(!vbs_wcsicmp(dim_decl->name, name))
             return TRUE;
     }
 
@@ -1723,7 +1723,7 @@ static BOOL lookup_funcs_name(compile_ctx_t *ctx, const WCHAR *name)
     function_t *iter;
 
     for(iter = ctx->code->funcs; iter; iter = iter->next) {
-        if(!wcsicmp(iter->name, name))
+        if(!vbs_wcsicmp(iter->name, name))
             return TRUE;
     }
 
@@ -1789,7 +1789,7 @@ static BOOL lookup_class_name(compile_ctx_t *ctx, const WCHAR *name)
     class_desc_t *iter;
 
     for(iter = ctx->code->classes; iter; iter = iter->next) {
-        if(!wcsicmp(iter->name, name))
+        if(!vbs_wcsicmp(iter->name, name))
             return TRUE;
     }
 
@@ -1840,7 +1840,7 @@ static BOOL lookup_class_funcs(class_desc_t *class_desc, const WCHAR *name)
     unsigned i;
 
     for(i=0; i < class_desc->func_cnt; i++) {
-        if(class_desc->funcs[i].name && !wcsicmp(class_desc->funcs[i].name, name))
+        if(class_desc->funcs[i].name && !vbs_wcsicmp(class_desc->funcs[i].name, name))
             return TRUE;
     }
 
@@ -1900,14 +1900,14 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
             }
         }
 
-        if(!wcsicmp(L"class_initialize", func_decl->name)) {
+        if(!vbs_wcsicmp(L"class_initialize", func_decl->name)) {
             if(func_decl->type != FUNC_SUB) {
                 FIXME("class initializer is not sub\n");
                 return E_FAIL;
             }
 
             class_desc->class_initialize_id = i;
-        }else  if(!wcsicmp(L"class_terminate", func_decl->name)) {
+        }else  if(!vbs_wcsicmp(L"class_terminate", func_decl->name)) {
             if(func_decl->type != FUNC_SUB) {
                 FIXME("class terminator is not sub\n");
                 return E_FAIL;
@@ -1977,17 +1977,17 @@ static BOOL lookup_script_identifier(compile_ctx_t *ctx, script_ctx_t *script, c
         if(!contexts[c]) continue;
 
         for(i = 0; i < contexts[c]->global_vars_cnt; i++) {
-            if(!wcsicmp(contexts[c]->global_vars[i]->name, identifier))
+            if(!vbs_wcsicmp(contexts[c]->global_vars[i]->name, identifier))
                 return TRUE;
         }
 
         for(i = 0; i < contexts[c]->global_funcs_cnt; i++) {
-            if(!wcsicmp(contexts[c]->global_funcs[i]->name, identifier))
+            if(!vbs_wcsicmp(contexts[c]->global_funcs[i]->name, identifier))
                 return TRUE;
         }
 
         for(class = contexts[c]->classes; class; class = class->next) {
-            if(!wcsicmp(class->name, identifier))
+            if(!vbs_wcsicmp(class->name, identifier))
                 return TRUE;
         }
     }
@@ -2001,17 +2001,17 @@ static BOOL lookup_script_identifier(compile_ctx_t *ctx, script_ctx_t *script, c
             continue;
 
         for(i = 0; i < var_cnt; i++) {
-            if(!wcsicmp(vars[i].name, identifier))
+            if(!vbs_wcsicmp(vars[i].name, identifier))
                 return TRUE;
         }
 
         for(func = code->funcs; func; func = func->next) {
-            if(!wcsicmp(func->name, identifier))
+            if(!vbs_wcsicmp(func->name, identifier))
                 return TRUE;
         }
 
         for(class = code->classes; class; class = class->next) {
-            if(!wcsicmp(class->name, identifier))
+            if(!vbs_wcsicmp(class->name, identifier))
                 return TRUE;
         }
     }
