@@ -271,7 +271,7 @@ void info_win32_module(DWORD64 base, BOOL multi_machine)
 
     if (!dbg_curr_process)
     {
-        dbg_printf("Cannot get info on module while no process is loaded\n");
+        dbg_printf("Cannot proceed with 'info module' while no process is being debugged\n");
         return;
     }
 
@@ -397,6 +397,12 @@ void info_win32_class(HWND hWnd, const char* name)
     WNDCLASSEXA	wca;
     HINSTANCE   hInst = hWnd ? (HINSTANCE)GetWindowLongPtrW(hWnd, GWLP_HINSTANCE) : 0;
 
+    if (dbg_curr_process && !dbg_curr_process->active_debuggee)
+    {
+        dbg_printf("Cannot proceed with 'info class' while debugging a non active process\n");
+        return;
+    }
+
     if (!name)
     {
         struct class_walker cw;
@@ -474,6 +480,12 @@ void info_win32_window(HWND hWnd, BOOL detailed)
     RECT	clientRect;
     RECT	windowRect;
     WORD	w;
+
+    if (dbg_curr_process && !dbg_curr_process->active_debuggee)
+    {
+        dbg_printf("Cannot proceed with 'info window' while debugging a non active process\n");
+        return;
+    }
 
     if (!IsWindow(hWnd)) hWnd = GetDesktopWindow();
 
@@ -585,7 +597,7 @@ static void dump_proc_info(const struct dump_proc* dp, unsigned idx, unsigned de
     }
 }
 
-void info_win32_processes(void)
+static void info_win32_active_processes(void)
 {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap != INVALID_HANDLE_VALUE)
@@ -637,6 +649,15 @@ void info_win32_processes(void)
         dump_proc_info(&dp, first, 0);
         free(dp.entries);
     }
+}
+
+void info_win32_processes(void)
+{
+    if (!dbg_curr_process || dbg_curr_process->active_debuggee)
+        info_win32_active_processes();
+    else
+        /* FIXME we could do better */
+        dbg_printf("Cannot proceed with 'info proc' while debugging a non active process\n");
 }
 
 static BOOL get_process_name(DWORD pid, PROCESSENTRY32W* entry)
@@ -764,7 +785,12 @@ void info_win32_frame_exceptions(DWORD tid)
 
     if (!dbg_curr_process || !dbg_curr_thread)
     {
-        dbg_printf("Cannot get info on exceptions while no process is loaded\n");
+        dbg_printf("Cannot proceed with 'info frame' while no process is being debugged\n");
+        return;
+    }
+    if (!dbg_curr_process->active_debuggee)
+    {
+        dbg_printf("Cannot proceed with 'info frame' while debugging a non active process\n");
         return;
     }
 
@@ -816,6 +842,11 @@ void info_win32_segments(DWORD start, int length)
     DWORD 	i;
     LDT_ENTRY	le;
 
+    if (dbg_curr_process && !dbg_curr_process->active_debuggee)
+    {
+        dbg_printf("Cannot proceed with 'info segments' while debugging a non active process\n");
+        return;
+    }
     if (length == -1) length = (8192 - start);
 
     for (i = start; i < start + length; i++)
@@ -855,11 +886,17 @@ void info_win32_virtual(DWORD pid)
     char                        prot[3+1];
     HANDLE                      hProc;
 
+    if (dbg_curr_process && !dbg_curr_process->active_debuggee)
+    {
+        dbg_printf("Cannot proceed with 'info maps' while debugging a non active process\n");
+        return;
+    }
+
     if (pid == dbg_curr_pid)
     {
         if (dbg_curr_process == NULL)
         {
-            dbg_printf("Cannot look at mapping of current process, while no process is loaded\n");
+            dbg_printf("Cannot proceed with 'info maps' while no process is being debugged\n");
             return;
         }
         hProc = dbg_curr_process->handle;
@@ -929,7 +966,12 @@ void info_wine_dbg_channel(BOOL turn_on, const char* cls, const char* name)
 
     if (!dbg_curr_process || !dbg_curr_thread)
     {
-        dbg_printf("Cannot set/get debug channels while no process is loaded\n");
+        dbg_printf("Cannot set/get debug channels while no process is being debugged\n");
+        return;
+    }
+    if (!dbg_curr_process->active_debuggee)
+    {
+        dbg_printf("Cannot set/get debug channels while debugging a non active process\n");
         return;
     }
     if (NtQueryInformationProcess(dbg_curr_process->handle, ProcessBasicInformation, &info, sizeof(info), NULL ))
@@ -982,11 +1024,17 @@ void info_win32_exception(void)
     ADDRESS64                   addr;
     char                        hexbuf[MAX_OFFSET_TO_STR_LEN];
 
-    if (!dbg_curr_thread->in_exception)
+    if (!dbg_curr_thread)
     {
-        dbg_printf("Thread isn't in an exception\n");
+        dbg_printf("Cannot proceed with 'info exception' as there's no current thread\n");
         return;
     }
+    if (!dbg_curr_thread->in_exception)
+    {
+        dbg_printf("Cannot proceed with 'info exception' while current thread isn't inside an exception\n");
+        return;
+    }
+
     rec = &dbg_curr_thread->excpt_record;
     memory_get_current_pc(&addr);
 
@@ -1204,6 +1252,13 @@ void info_win32_system(void)
     {
         IMAGE_FILE_MACHINE_I386, IMAGE_FILE_MACHINE_ARM, IMAGE_FILE_MACHINE_ARMNT,
     };
+
+    if (dbg_curr_process && !dbg_curr_process->active_debuggee)
+    {
+        /* FIXME we could better for minidump */
+        dbg_printf("Cannot proceed with 'info system' while debugging a non active process\n");
+        return;
+    }
 
     wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
     wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
