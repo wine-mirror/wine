@@ -4215,6 +4215,19 @@ static SQLRETURN set_stmt_option_win32( struct statement *stmt, SQLUSMALLINT opt
 {
     if (stmt->hdr.win32_funcs->SQLSetStmtOption)
         return stmt->hdr.win32_funcs->SQLSetStmtOption( stmt->hdr.win32_handle, option, value );
+
+    if (stmt->hdr.win32_funcs->SQLSetStmtAttrW)
+    {
+        switch (option)
+        {
+            case SQL_QUERY_TIMEOUT:
+            case SQL_MAX_LENGTH:
+                return stmt->hdr.win32_funcs->SQLSetStmtAttrW( stmt->hdr.win32_handle, option, (SQLPOINTER)value, 0 );
+            default:
+                FIXME("Unsupported option %d.\n", option);
+        }
+    }
+
     return SQL_ERROR;
 }
 
