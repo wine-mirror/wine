@@ -676,7 +676,7 @@ static BOOL get_process_name(DWORD pid, PROCESSENTRY32W* entry)
     return ret;
 }
 
-void info_win32_threads(void)
+static void info_win32_active_threads(void)
 {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (snap != INVALID_HANDLE_VALUE)
@@ -729,6 +729,34 @@ void info_win32_threads(void)
         }
 
         CloseHandle(snap);
+    }
+}
+
+void info_win32_threads(void)
+{
+    if (!dbg_curr_process || dbg_curr_process->active_debuggee)
+        info_win32_active_threads();
+    else
+    {
+        struct dbg_process *pcs;
+        struct dbg_thread *thread;
+        WCHAR *description;
+
+        dbg_printf("%-8.8s %-8.8s %s    %s (all IDs are in hex)\n",
+                   "process", "tid", "prio", "name");
+        LIST_FOR_EACH_ENTRY(pcs, &dbg_process_list, struct dbg_process, entry)
+        {
+            dbg_printf("%08lx%s %ls\n", pcs->pid, " (D)", pcs->imageName);
+            LIST_FOR_EACH_ENTRY(thread, &pcs->threads, struct dbg_thread, entry)
+            {
+                description = dbg_fetch_thread_name(thread);
+                /* FIXME thread prio is available from a minidump */
+                dbg_printf("\t%08lx %4s%s %ls\n",
+                           thread->tid, "?", (thread->tid == dbg_curr_tid) ? " <==" : "    ",
+                           description ? description : L"");
+                free(description);
+            }
+        }
     }
 }
 
