@@ -297,6 +297,7 @@ static void test_decompress(DWORD handler)
     DWORD res, diff;
     BYTE *i420_data;
     HRSRC resource;
+    DWORD bmp_len;
     HIC hic;
 
     BITMAPINFOHEADER i420_info =
@@ -322,8 +323,9 @@ static void test_decompress(DWORD handler)
 
     resource = FindResourceW(NULL, L"i420frame.bmp", (const WCHAR *)RT_RCDATA);
     i420_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    i420_data += *(DWORD *)(i420_data + 2);
-    i420_info.biSizeImage = SizeofResource(GetModuleHandleW(NULL), resource);
+    bmp_len = *(DWORD *)(i420_data + 2);
+    i420_data += bmp_len;
+    i420_info.biSizeImage = SizeofResource(GetModuleHandleW(NULL), resource) - bmp_len;
 
     hic = ICOpen(ICTYPE_VIDEO, handler, ICMODE_DECOMPRESS);
     ok(!!hic, "Failed to open codec.\n");
