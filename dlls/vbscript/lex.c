@@ -102,9 +102,12 @@ static const struct {
     {L"xor",       tXOR}
 };
 
+/* VBScript identifiers are ASCII-only: [A-Za-z0-9_]. Windows rejects all
+ * non-ASCII characters (Latin-1, Cyrillic, CJK) at the lexer level with
+ * error 1032 "Invalid character". */
 static inline BOOL is_identifier_char(WCHAR c)
 {
-    return iswalnum(c) || c == '_';
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
 }
 
 static int check_keyword(parser_ctx_t *ctx, const WCHAR *word, const WCHAR **lval)
@@ -411,7 +414,7 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
     if('0' <= c && c <= '9')
         return parse_numeric_literal(ctx, lval);
 
-    if(iswalpha(c)) {
+    if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
         int ret = 0;
         if(ctx->last_token != '.' && ctx->last_token != tDOT)
             ret = check_keywords(ctx, lval);

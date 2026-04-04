@@ -3049,6 +3049,36 @@ static void test_parse_errors(void)
             L"x = 1 _x\n",
             0, 7,
             NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: e-acute (chr 233) in identifier */
+            L"Dim caf\x00e9\n",
+            0, 7,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: sharp-s (chr 223) in identifier */
+            L"Dim st\x00df" L"e\n",
+            0, 6,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: u-umlaut (chr 252) in identifier */
+            L"Dim x\x00fc" L"b\n",
+            0, 5,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: Cyrillic a (chr 1072) as identifier start */
+            L"Dim \x0430\n",
+            0, 4,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Non-ASCII: e-acute (chr 233) starting identifier */
+            L"\x00e9var = 1\n",
+            0, 0,
+            NULL, S_OK, 1032
         }
     };
     HRESULT hres;
