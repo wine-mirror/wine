@@ -711,6 +711,7 @@ WINSHELLAPI DWORD       WINAPI DoEnvironmentSubstW(LPWSTR, UINT);
 WINSHELLAPI HRESULT     WINAPI SHEnumerateUnreadMailAccountsA(HKEY,DWORD,LPSTR,INT);
 WINSHELLAPI HRESULT     WINAPI SHEnumerateUnreadMailAccountsW(HKEY,DWORD,LPWSTR,INT);
 #define                        SHEnumerateUnreadMailAccounts WINELIB_NAME_AW(SHEnumerateUnreadMailAccounts)
+WINSHELLAPI HRESULT     WINAPI SHEvaluateSystemCommandTemplate(PCWSTR, PWSTR*, PWSTR*, PWSTR*);
 WINSHELLAPI HRESULT     WINAPI SHGetPropertyStoreForWindow(HWND,REFIID,void **);
 
 #ifdef __cplusplus

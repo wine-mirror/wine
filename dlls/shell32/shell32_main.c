@@ -1189,6 +1189,17 @@ HRESULT WINAPI SHEnumerateUnreadMailAccountsW(HKEY user, DWORD idx, LPWSTR maila
 }
 
 /***********************************************************************
+ *              SHEvaluateSystemCommandTemplate (SHELL32.@)
+ */
+HRESULT WINAPI SHEvaluateSystemCommandTemplate(PCWSTR cmdtemplate, PWSTR *application,
+                                               PWSTR *commandline, PWSTR *parameters)
+{
+    FIXME("(%s %p %p %p) stub!\n", debugstr_w(cmdtemplate), application,
+           commandline, parameters);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *              SHQueryUserNotificationState (SHELL32.@)
  */
 HRESULT WINAPI SHQueryUserNotificationState(QUERY_USER_NOTIFICATION_STATE *state)
