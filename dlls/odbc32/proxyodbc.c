@@ -4479,6 +4479,13 @@ static SQLRETURN transact_win32( struct environment *env, struct connection *con
     if (win32_funcs->SQLTransact)
         return win32_funcs->SQLTransact( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
                                          completion );
+
+    if (win32_funcs->SQLEndTran)
+    {
+        if (con) return win32_funcs->SQLEndTran( SQL_HANDLE_DBC, con->hdr.win32_handle, completion );
+        return win32_funcs->SQLEndTran( SQL_HANDLE_ENV, env->hdr.win32_handle, completion );
+    }
+
     return SQL_ERROR;
 }
 
