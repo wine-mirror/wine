@@ -320,7 +320,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
     if (FAILED(hr = MFTEnumEx(category, MFT_ENUM_FLAG_ALL, &input_info, decoder ? NULL : &output_info, &activates, &count)))
         return hr;
 
-    for (i = 0, hr = MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION; i < count; ++i)
+    for (i = 0; i < count; ++i)
     {
         struct topology_branch down_branch = {.up.node = node, .down = branch->down};
         struct topology_branch up_branch = {.up = branch->up, .down.node = node};
@@ -368,8 +368,10 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
         IMFActivate_Release(activates[i]);
     CoTaskMemFree(activates);
 
-    if (!count)
-        return MF_E_TOPO_CODEC_NOT_FOUND;
+    if (!count || FAILED(hr))
+        hr = decoder ? MF_E_TOPO_CODEC_NOT_FOUND
+                : MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION;
+    TRACE("returning %#lx\n", hr);
     return hr;
 }
 

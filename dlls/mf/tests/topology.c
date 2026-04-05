@@ -2605,7 +2605,6 @@ static void test_topology_loader(void)
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_pcm_44100}, .sink_method = MF_CONNECT_ALLOW_CONVERTER, .source_method = -1,
             .current_input = &audio_mp3_44100,
             .expected_result = MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION,
-            .flags = LOADER_TODO,
         },
         {
             /* MP3 -> PCM */
@@ -2699,7 +2698,7 @@ static void test_topology_loader(void)
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_pcm_48000}, .sink_method = MF_CONNECT_DIRECT, .source_method = MF_CONNECT_DIRECT,
             .mft_input_type = &audio_aac_44100, .mft_output_types = {&audio_pcm_48000},
             .expected_result = MF_E_TOPO_CODEC_NOT_FOUND,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO | LOADER_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
         },
 
         {
@@ -2830,7 +2829,7 @@ static void test_topology_loader(void)
             .input_types = {&video_h264_1280}, .output_types = {&video_color_convert_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .mft_input_type = &video_color_convert_1280_rgb32, .mft_output_types = {&video_color_convert_1280_rgb32},
             .expected_result = MF_E_TOPO_CODEC_NOT_FOUND, .decoder_class = CLSID_CMSH264DecoderMFT,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO | LOADER_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
         },
         {
             /* H264 -> RGB32, Video Processor media type, add test MFT */
