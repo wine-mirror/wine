@@ -2249,7 +2249,6 @@ static IMFSampleGrabberSinkCallback *create_test_grabber_callback(void)
 enum loader_test_flags
 {
     LOADER_TODO = 0x1,
-    LOADER_TODO_OUT_TYPE = 0x2,
     LOADER_SET_XVP_FOR_PLAYBACK = 0x4,
     LOADER_NEEDS_VIDEO_PROCESSOR = 0x8,
     LOADER_SET_ENUMERATE_SOURCE_TYPES = 0x10,
@@ -2259,12 +2258,10 @@ enum loader_test_flags
     LOADER_ADD_RESAMPLER_MFT = 0x100,
     LOADER_SUPPORT_ANY = 0x200,
     LOADER_EXPECT_SINK_ENUMERATED = 0x400,
-    LOADER_EXPECT_SINK_ENUMERATED_TODO = 0x800,
     LOADER_ADD_TEST_MFT = 0x1000,
     LOADER_TEST_MFT_EXPECT_CONVERTER = 0x2000,
     LOADER_EXPECT_MFT_OUTPUT_ENUMERATED = 0x4000,
     LOADER_EXPECT_MFT_INPUT_ENUMERATED = 0x8000,
-    LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO = 0x10000,
     LOADER_TODO_MFT_OUT_TYPE = 0x40000,
 };
 
@@ -2555,7 +2552,7 @@ static void test_topology_loader(void)
             /* PCM -> PCM, different enumerated bps, no current type, sink allow converter, no current output type */
             .input_types = {&audio_pcm_44100}, .output_types = {&audio_pcm_48000}, .sink_method = MF_CONNECT_ALLOW_CONVERTER, .source_method = MF_CONNECT_DIRECT,
             .expected_result = S_OK, .converter_class = CLSID_CResamplerMediaObject,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* PCM -> PCM, different enumerated bps, no current type, sink allow decoder */
@@ -2622,21 +2619,21 @@ static void test_topology_loader(void)
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_float_48000}, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = -1,
             .current_input = &audio_mp3_44100, .decoded_type = &audio_float_44100_no_ch,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject, .converter_class = CLSID_CResamplerMediaObject,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* MP3 -> {float, PCM}, need both decoder and converter, no current output type */
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_float_48000, &audio_pcm_48000}, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = -1,
             .current_input = &audio_mp3_44100, .decoded_type = &audio_float_44100_stereo,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject, .converter_class = CLSID_CResamplerMediaObject,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* MP3 -> {PCM, float}, need both decoder and converter, no current output type */
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_pcm_48000, &audio_float_48000}, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = -1,
             .current_input = &audio_mp3_44100, .decoded_type = &audio_float_44100_stereo, .expected_output_index = 1,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject, .converter_class = CLSID_CResamplerMediaObject,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_TODO_OUT_TYPE | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
 
         {
@@ -2650,7 +2647,7 @@ static void test_topology_loader(void)
             .input_types = {&audio_mp3_44100, &audio_pcm_44100}, .output_types = {&audio_pcm_44100}, .sink_method = MF_CONNECT_ALLOW_DECODER,
             .source_method = MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_SET_ENUMERATE_SOURCE_TYPES | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_SET_ENUMERATE_SOURCE_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
 
         {
@@ -2690,14 +2687,14 @@ static void test_topology_loader(void)
             .mft_input_type = &audio_pcm_44100, .mft_output_types = {&audio_pcm_48000},
             .decoded_type = &audio_pcm_44100,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
         {
             /* MP3 -> PCM, different enumerated bps, add incompatible test MFT, configure MFT */
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_pcm_48000}, .sink_method = MF_CONNECT_DIRECT, .source_method = MF_CONNECT_DIRECT,
             .mft_input_type = &audio_aac_44100, .mft_output_types = {&audio_pcm_48000},
             .expected_result = MF_E_TOPO_CODEC_NOT_FOUND,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
 
         {
@@ -2752,7 +2749,7 @@ static void test_topology_loader(void)
             /* RGB32 -> Any Video, no current output type, refuse input type */
             .input_types = {&video_i420_1280}, .output_types = {&video_video_processor_rgb32}, .sink_method = -1, .source_method = -1,
             .expected_result = S_OK, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_INVALID_INPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_INVALID_INPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
 
         {
@@ -2760,7 +2757,7 @@ static void test_topology_loader(void)
             .input_types = {&video_h264_1280}, .output_types = {&video_color_convert_1280_rgb32, &video_video_processor_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .decoded_type = &video_nv12_1280, .expected_output_index = 1,
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED_TODO | LOADER_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED | LOADER_TODO,
         },
         {
             /* H264 -> {DMO_RGB32, MF_RGB32} */
@@ -2775,28 +2772,28 @@ static void test_topology_loader(void)
             .decoded_type = &video_generic_yuv_1280, .expected_output_index = 1,
             .decoded_subtypes = {&MFVideoFormat_NV12, &MFVideoFormat_YUY2},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_TODO_OUT_TYPE | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* H264 -> {RGB24, RGB32} */
             .input_types = {&video_h264_1280}, .output_types = {&video_video_processor_1280_rgb24, &video_video_processor_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .decoded_type = &video_nv12_1280, .expected_output_index = 1,
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_TODO_OUT_TYPE | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* H264 -> {RGB24, RGB555} */
             .input_types = {&video_h264_1280}, .output_types = {&video_video_processor_1280_rgb24, &video_video_processor_1280_rgb555}, .sink_method = -1, .source_method = -1,
             .decoded_type = &video_nv12_1280, .expected_output_index = 1,
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_TODO_OUT_TYPE | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
         {
             /* H264 -> {RGB555, RGB24} */
             .input_types = {&video_h264_1280}, .output_types = {&video_video_processor_1280_rgb555, &video_video_processor_1280_rgb24}, .sink_method = -1, .source_method = -1,
             .decoded_type = &video_nv12_1280, .expected_output_index = 1,
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_TODO_OUT_TYPE | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
 
         {
@@ -2804,7 +2801,7 @@ static void test_topology_loader(void)
             .input_types = {&video_h264_1280}, .output_types = {&video_color_convert_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .decoded_type = &video_nv12_1280,
             .expected_result = MF_E_TOPO_CODEC_NOT_FOUND, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_EXPECT_SINK_ENUMERATED,
         },
 
         {
@@ -2813,7 +2810,7 @@ static void test_topology_loader(void)
             .decoded_type = &video_generic_yuv_1280, .expected_output_index = 1,
             .decoded_subtypes = {&MFVideoFormat_NV12, &MFVideoFormat_YUY2},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_VideoProcessorMFT,
-            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_SET_XVP_FOR_PLAYBACK | LOADER_EXPECT_SINK_ENUMERATED_TODO | LOADER_TODO,
+            .flags = LOADER_NO_CURRENT_OUTPUT | LOADER_SET_MEDIA_TYPES | LOADER_SET_XVP_FOR_PLAYBACK | LOADER_EXPECT_SINK_ENUMERATED | LOADER_TODO,
         },
         {
             /* H264 -> RGB32, resize, set XVP */
@@ -2828,21 +2825,21 @@ static void test_topology_loader(void)
             .input_types = {&video_h264_1280}, .output_types = {&video_color_convert_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .mft_input_type = &video_color_convert_1280_rgb32, .mft_output_types = {&video_color_convert_1280_rgb32},
             .expected_result = MF_E_TOPO_CODEC_NOT_FOUND, .decoder_class = CLSID_CMSH264DecoderMFT,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
         {
             /* H264 -> RGB32, Video Processor media type, add test MFT */
             .input_types = {&video_h264_1280}, .output_types = {&video_video_processor_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .mft_input_type = &video_video_processor_1280_rgb32, .mft_output_types = {&video_video_processor_1280_rgb32},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_TEST_MFT_EXPECT_CONVERTER | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_TEST_MFT_EXPECT_CONVERTER | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
         {
             /* H264 -> NV12, add test MFT */
             .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
             .mft_input_type = &video_nv12_1280, .mft_output_types = {&video_nv12_1280},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
     };
 
@@ -3334,7 +3331,6 @@ todo_wine {
                 ok(hr == S_OK, "Failed to get transform output type, hr %#lx.\n", hr);
                 hr = IMFMediaType_Compare(output_types[test->expected_output_index], (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &ret);
                 ok(hr == S_OK, "Failed to compare media types, hr %#lx.\n", hr);
-                todo_wine_if(test->flags & LOADER_TODO_OUT_TYPE)
                 ok(ret, "Output type of last transform doesn't match sink node type.\n");
                 IMFMediaType_Release(media_type);
 
@@ -3370,14 +3366,12 @@ todo_wine {
         else
             ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
         ok(!handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
-        todo_wine_if(test->flags & LOADER_EXPECT_SINK_ENUMERATED_TODO)
-        ok(handler.enum_complete == !!(test->flags & (LOADER_EXPECT_SINK_ENUMERATED | LOADER_EXPECT_SINK_ENUMERATED_TODO)),
+        ok(handler.enum_complete == !!(test->flags & LOADER_EXPECT_SINK_ENUMERATED),
                 "Got enum_complete %u.\n", handler.enum_complete);
 
         if (test_transform)
         {
-            todo_wine_if(test->flags & LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO)
-            ok(test_transform->input_enum_complete == !!(test->flags & (LOADER_EXPECT_MFT_INPUT_ENUMERATED | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO)),
+            ok(test_transform->input_enum_complete == !!(test->flags & LOADER_EXPECT_MFT_INPUT_ENUMERATED),
                     "got transform input_enum_complete %u\n", test_transform->input_enum_complete);
             todo_wine_if(test_transform->output_enum_complete && (test->flags & LOADER_TODO))
             ok(test_transform->output_enum_complete == !!(test->flags & LOADER_EXPECT_MFT_OUTPUT_ENUMERATED),
