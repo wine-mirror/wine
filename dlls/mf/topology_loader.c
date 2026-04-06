@@ -620,19 +620,34 @@ done:
 }
 
 static HRESULT topology_branch_foreach_up_types(IMFTopology *topology, enum connect_method method_mask,
-        struct topology_branch *branch)
+        struct topology_branch *branch, BOOL enumerate)
 {
-    IMFMediaType *type;
-    DWORD index = 0;
-    HRESULT hr;
+    HRESULT hr = MF_E_INVALIDMEDIATYPE;
+    IMFMediaType *up_type;
 
-    while (SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(branch->up.handler, index++, &type)))
+    TRACE("topology %p, method_mask %#x, branch %s.\n", topology, method_mask, debugstr_topology_branch(branch));
+
+    if (enumerate)
     {
-        hr = topology_branch_connect_down(topology, method_mask, branch, type);
-        IMFMediaType_Release(type);
-        if (SUCCEEDED(hr))
-            break;
+        for (UINT i = 0; SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(branch->up.handler, i, &up_type)); i++)
+        {
+            hr = topology_branch_connect_down(topology, method_mask, branch, up_type);
+            IMFMediaType_Release(up_type);
+            if (SUCCEEDED(hr))
+                return hr;
+        }
+        return hr;
     }
+
+    if (SUCCEEDED(hr = IMFMediaTypeHandler_GetCurrentMediaType(branch->up.handler, &up_type))
+            || SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(branch->up.handler, 0, &up_type)))
+    {
+        hr = topology_branch_connect_down(topology, method_mask, branch, up_type);
+        IMFMediaType_Release(up_type);
+        return hr;
+    }
+
+    TRACE("returning %#lx\n", hr);
     return hr;
 }
 
@@ -648,34 +663,20 @@ static HRESULT topology_branch_connect(IMFTopology *topology, enum connect_metho
         down_method = MF_CONNECT_ALLOW_DECODER;
     down_method = connect_method_from_mf(down_method) & method_mask;
 
-    if (enumerate_source_types)
-    {
-        if (topology_node_get_type(branch->up.node) != MF_TOPOLOGY_SOURCESTREAM_NODE
-                || FAILED(IMFTopologyNode_GetUINT32(branch->up.node, &MF_TOPONODE_CONNECT_METHOD, &up_method)))
-            up_method = MF_CONNECT_DIRECT;
+    if (topology_node_get_type(branch->up.node) != MF_TOPOLOGY_SOURCESTREAM_NODE
+            || FAILED(IMFTopologyNode_GetUINT32(branch->up.node, &MF_TOPONODE_CONNECT_METHOD, &up_method)))
+        up_method = MF_CONNECT_DIRECT;
 
-        if (up_method & MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES)
-            hr = topology_branch_foreach_up_types(topology, down_method, branch);
-        else
-        {
-            if (FAILED(hr) && (down_method & CONNECT_DIRECT))
-                hr = topology_branch_foreach_up_types(topology, CONNECT_DIRECT, branch);
-            if (FAILED(hr) && (down_method & CONNECT_CONVERTER))
-                hr = topology_branch_foreach_up_types(topology, CONNECT_CONVERTER, branch);
-            if (FAILED(hr) && (down_method & CONNECT_DECODER))
-                hr = topology_branch_foreach_up_types(topology, CONNECT_DECODER, branch);
-        }
-    }
+    if (up_method & MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES)
+        hr = topology_branch_foreach_up_types(topology, down_method, branch, enumerate_source_types);
     else
     {
-        IMFMediaType *up_type;
-
-        if (SUCCEEDED(hr = IMFMediaTypeHandler_GetCurrentMediaType(branch->up.handler, &up_type))
-                || SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(branch->up.handler, 0, &up_type)))
-        {
-            hr = topology_branch_connect_down(topology, down_method, branch, up_type);
-            IMFMediaType_Release(up_type);
-        }
+        if (FAILED(hr) && (down_method & CONNECT_DIRECT))
+            hr = topology_branch_foreach_up_types(topology, CONNECT_DIRECT, branch, enumerate_source_types);
+        if (FAILED(hr) && (down_method & CONNECT_CONVERTER))
+            hr = topology_branch_foreach_up_types(topology, CONNECT_CONVERTER, branch, enumerate_source_types);
+        if (FAILED(hr) && (down_method & CONNECT_DECODER))
+            hr = topology_branch_foreach_up_types(topology, CONNECT_DECODER, branch, enumerate_source_types);
     }
 
     TRACE("returning %#lx\n", hr);
