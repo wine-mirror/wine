@@ -185,11 +185,9 @@ static int token_winrt( int token, const char *str, YYSTYPE *yylval )
     return token_ident( str, yylval );
 }
 
-static void winrt_enable( int ns_prefix )
+static void winrt_enable(void)
 {
     if (!list_empty( &import_stack ) && !winrt_mode) error_loc( "WinRT IDL file imported in non-winrt mode.\n" );
-
-    use_abi_namespace = ns_prefix;
     winrt_mode = TRUE;
 }
 
@@ -210,12 +208,14 @@ static void winrt_enable( int ns_prefix )
     winrt{ws}+ns_prefix[^\n]*                   {
                                                     yy_pop_state();
                                                     yylloc->first_line -= 1;
-                                                    winrt_enable( TRUE );
+                                                    winrt_enable();
+                                                    if (list_empty( &import_stack )) use_abi_namespace = TRUE;
+
                                                 }
     winrt[^\n]*                                 {
                                                     yy_pop_state();
                                                     yylloc->first_line -= 1;
-                                                    winrt_enable( FALSE );
+                                                    winrt_enable();
                                                 }
     [^\n]*                                      {
                                                     yy_pop_state();
