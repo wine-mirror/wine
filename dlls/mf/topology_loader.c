@@ -297,6 +297,27 @@ static HRESULT update_media_type_from_upstream(IMFMediaType *media_type, IMFMedi
     return hr;
 }
 
+static HRESULT topology_branch_connect_with_type(IMFTopology *topology, struct topology_branch *branch, IMFMediaType *type)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(branch->up.handler, type)))
+    {
+        WARN("Failed to set upstream node media type, hr %#lx\n", hr);
+        return hr;
+    }
+
+    if (topology_node_get_type(branch->down.node) == MF_TOPOLOGY_TRANSFORM_NODE
+            && FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(branch->down.handler, type)))
+    {
+        WARN("Failed to set transform node media type, hr %#lx\n", hr);
+        return hr;
+    }
+
+    TRACE("Connecting branch %s with type %s.\n", debugstr_topology_branch(branch), debugstr_media_type(type));
+    return IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
+}
+
 static HRESULT topology_branch_connect(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
         struct topology_branch *branch, BOOL enumerate_source_types);
 static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_METHOD method_mask,
@@ -368,7 +389,7 @@ static HRESULT topology_branch_connect_indirect(IMFTopology *topology, MF_CONNEC
 
         if (SUCCEEDED(hr = topology_branch_create_indirect(branch, node, &up_branch, &down_branch)))
         {
-            if (SUCCEEDED(hr = topology_branch_connect_down(topology, MF_CONNECT_DIRECT, up_branch, up_type)))
+            if (SUCCEEDED(hr = topology_branch_connect_with_type(topology, up_branch, up_type)))
             {
                 if (down_type && SUCCEEDED(MFCreateMediaType(&media_type)))
                 {
@@ -468,21 +489,13 @@ static HRESULT topology_branch_connect_down(IMFTopology *topology, MF_CONNECT_ME
     if (SUCCEEDED(hr = get_first_supported_media_type(branch->down.handler, &down_type))
             && IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
     {
-        TRACE("Connecting branch %s with current type %s.\n", debugstr_topology_branch(branch), debugstr_media_type(up_type));
-        hr = IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
+        hr = topology_branch_connect_with_type(topology, branch, up_type);
         goto done;
     }
 
     if (SUCCEEDED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(branch->down.handler, up_type, NULL)))
     {
-        TRACE("Connected branch %s with upstream type %s.\n", debugstr_topology_branch(branch), debugstr_media_type(up_type));
-
-        if (topology_node_get_type(branch->down.node) == MF_TOPOLOGY_TRANSFORM_NODE
-                && FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(branch->down.handler, up_type)))
-            WARN("Failed to set transform node media type, hr %#lx\n", hr);
-
-        hr = IMFTopologyNode_ConnectOutput(branch->up.node, branch->up.stream, branch->down.node, branch->down.stream);
-
+        hr = topology_branch_connect_with_type(topology, branch, up_type);
         goto done;
     }
 
@@ -510,8 +523,6 @@ static HRESULT topology_branch_foreach_up_types(IMFTopology *topology, MF_CONNEC
     while (SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(branch->up.handler, index++, &type)))
     {
         hr = topology_branch_connect_down(topology, method_mask, branch, type);
-        if (SUCCEEDED(hr))
-            hr = IMFMediaTypeHandler_SetCurrentMediaType(branch->up.handler, type);
         IMFMediaType_Release(type);
         if (SUCCEEDED(hr))
             break;

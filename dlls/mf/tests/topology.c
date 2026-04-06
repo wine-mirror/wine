@@ -2265,7 +2265,6 @@ enum loader_test_flags
     LOADER_EXPECT_MFT_OUTPUT_ENUMERATED = 0x4000,
     LOADER_EXPECT_MFT_INPUT_ENUMERATED = 0x8000,
     LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO = 0x10000,
-    LOADER_TODO_MFT_IN_TYPE = 0x20000,
     LOADER_TODO_MFT_OUT_TYPE = 0x40000,
 };
 
@@ -2660,7 +2659,7 @@ static void test_topology_loader(void)
             .mft_output_types = {&audio_float_minimal, &audio_pcm_minimal, &audio_float_48000, &audio_pcm_48000},
             .mft_current_output = &audio_pcm_minimal,
             .expected_result = MF_E_INVALIDMEDIATYPE,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_TODO_MFT_IN_TYPE | LOADER_TODO_MFT_OUT_TYPE | LOADER_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_TODO_MFT_OUT_TYPE | LOADER_TODO,
         },
         {
             /* PCM -> PCM, different enumerated bps, add test MFT */
@@ -2675,7 +2674,7 @@ static void test_topology_loader(void)
             .mft_output_types = {&audio_float_minimal, &audio_pcm_minimal, &audio_float_48000, &audio_pcm_48000_resampler},
             .mft_current_output = &audio_pcm_48000,
             .expected_result = S_OK,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_TODO_MFT_IN_TYPE | LOADER_TODO_MFT_OUT_TYPE,
+            .flags = LOADER_ADD_TEST_MFT,
         },
         {
             /* PCM -> PCM, different enumerated bps, add test MFT, configure MFT, no output types */
@@ -2683,7 +2682,7 @@ static void test_topology_loader(void)
             .mft_output_types = {&audio_float_minimal, &audio_pcm_minimal, &audio_float_48000, &audio_pcm_48000_resampler},
             .mft_current_output = &audio_pcm_48000,
             .expected_result = S_OK,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_NO_CURRENT_OUTPUT | LOADER_TODO_MFT_IN_TYPE | LOADER_TODO_MFT_OUT_TYPE,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_NO_CURRENT_OUTPUT,
         },
         {
             /* MP3 -> PCM, different enumerated bps, add test MFT, configure MFT */
@@ -2691,7 +2690,7 @@ static void test_topology_loader(void)
             .mft_input_type = &audio_pcm_44100, .mft_output_types = {&audio_pcm_48000},
             .decoded_type = &audio_pcm_44100,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO | LOADER_TODO_MFT_OUT_TYPE,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
         },
         {
             /* MP3 -> PCM, different enumerated bps, add incompatible test MFT, configure MFT */
@@ -2836,14 +2835,14 @@ static void test_topology_loader(void)
             .input_types = {&video_h264_1280}, .output_types = {&video_video_processor_1280_rgb32}, .sink_method = -1, .source_method = -1,
             .mft_input_type = &video_video_processor_1280_rgb32, .mft_output_types = {&video_video_processor_1280_rgb32},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_TODO_MFT_OUT_TYPE | LOADER_TEST_MFT_EXPECT_CONVERTER | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_TEST_MFT_EXPECT_CONVERTER | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
         },
         {
             /* H264 -> NV12, add test MFT */
             .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
             .mft_input_type = &video_nv12_1280, .mft_output_types = {&video_nv12_1280},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_TODO_MFT_OUT_TYPE | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
+            .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED_TODO,
         },
     };
 
@@ -3383,7 +3382,6 @@ todo_wine {
             todo_wine_if(test_transform->output_enum_complete && (test->flags & LOADER_TODO))
             ok(test_transform->output_enum_complete == !!(test->flags & LOADER_EXPECT_MFT_OUTPUT_ENUMERATED),
                     "got transform output_enum_complete %u\n", test_transform->output_enum_complete);
-            todo_wine_if(test->flags & LOADER_TODO_MFT_IN_TYPE)
             ok(test_transform->input_type_set == (test->expected_result != MF_E_TOPO_CODEC_NOT_FOUND),
                     "Got transform input_type_set %u.\n", test_transform->input_type_set);
             todo_wine_if(test->flags & LOADER_TODO_MFT_OUT_TYPE)
