@@ -299,7 +299,7 @@ static HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, UIN
     {
         dst_dxbc = sections[0].data;
     }
-    else if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL) < 0))
+    else if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL)) < 0)
     {
         WARN("Failed to serialise DXBC, ret %d.\n", ret);
         hr = E_FAIL;
@@ -390,7 +390,7 @@ static HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT
             sections[section_count++] = *src_section;
     }
 
-    if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL) < 0))
+    if ((ret = vkd3d_shader_serialize_dxbc(section_count, sections, &dst_dxbc, NULL)) < 0)
     {
         WARN("Failed to serialise DXBC, ret %d.\n", ret);
         hr = E_FAIL;
