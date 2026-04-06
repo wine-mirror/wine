@@ -869,6 +869,7 @@ my %wgl_extensions;
 my %wgl_functions;
 my %egl_extensions;
 my %egl_functions;
+my %all_functions;
 my %all_enums;
 
 my %gl_types =
@@ -1031,9 +1032,10 @@ my %extension_aliases =
 my %supported_apis =
     (
      "gl" => 1,
-     "gles" => 1,
      "gles1" => 1,
      "gles2" => 1,
+     "wgl" => 1,
+     "egl" => 1,
     );
 
 sub is_supported_api($)
@@ -1069,7 +1071,7 @@ sub is_exposed_extension($)
 sub is_exposed_function($)
 {
     my $func = shift;
-    foreach my $ext (@{$func->[2]})
+    foreach my $ext (keys %{$func->[2]})
     {
         return 1 if is_exposed_extension($ext);
     }
@@ -1185,21 +1187,52 @@ sub parse_registry($)
     }
 }
 
+sub add_function($$$$)
+{
+    my ($name, $api, $feature, $append) = @_;
+
+    if ($feature =~ /^WGL_VERSION_\d+_\d+/)
+    {
+        return if defined $remapped_wgl_functions{$name} and !$remapped_wgl_functions{$name};
+        my $mapped = $remapped_wgl_functions{$name} || $name;
+        $wgl_functions{$mapped} = $all_functions{$name};
+    }
+    elsif ($feature =~ /^EGL_VERSION_\d+_\d+/)
+    {
+        $egl_functions{$name} = $all_functions{$name};
+    }
+    elsif ($feature =~ /^GL_VERSION_1_[01]$/)
+    {
+        $norm_functions{$name} = $all_functions{$name};
+    }
+    elsif ($feature =~ /^GL_ES_VERSION_/)
+    {
+        return;
+    }
+    elsif (is_supported_api( $api ) and !defined $norm_functions{$name})
+    {
+        return if defined $ext_functions{$name} and not $append;
+        if (!defined $ext_functions{$name})
+        {
+            $ext_functions{$name} = [ $all_functions{$name}[0], $all_functions{$name}[1], () ];
+        }
+        $ext_functions{$name}->[2]->{$feature} = 1;
+    }
+}
+
 sub parse_file($)
 {
     my $file = shift;
     my $xml = XML::LibXML->load_xml( location => $file );
-    my %functions;
     my %enums;
 
-    # save all functions
     foreach my $command ($xml->findnodes("/registry/commands/command"))
     {
         my $proto = @{$command->findnodes("./proto")}[0];
         my $name = @{$command->findnodes("./proto/name")}[0];
         $proto->removeChild( $name );
         my @params = $command->findnodes("./param");
-        $functions{$name->textContent()} = [ $proto, \@params ];
+        $all_functions{$name->textContent()} = [ $proto, \@params ];
     }
 
     # save all enums
@@ -1219,127 +1252,44 @@ sub parse_file($)
         $gl_types{$name} = $type->textContent;
     }
 
-    # generate norm functions
-    foreach my $feature ($xml->findnodes("/registry/feature"))
+    foreach my $feat ($xml->findnodes("/registry/feature"))
     {
-        if ($feature->{api} eq "wgl")
+        my ($api, $feature) = ($feat->{api}, $feat->{name});
+        my $compat;
+
+        $feature =~ s/^GL_VERSION_ES_.*_(1_\d+)$/GL_ES_VERSION_$1/;
+        if (my ($version) = ($feature =~ /GL_ES_VERSION_(\d+_\d+)$/))
         {
-            foreach my $cmd ($feature->findnodes("./require/command"))
-            {
-                my $name = $cmd->{name};
-                if (defined $remapped_wgl_functions{$name})
-                {
-                    next unless $remapped_wgl_functions{$name};
-                    $name = $remapped_wgl_functions{$name};
-                }
-                $wgl_functions{$name} = $functions{$cmd->{name}};
-            }
-            foreach my $name (@extra_wgl_functions)
-            {
-                $wgl_functions{$name} = $functions{$name} if defined $functions{$name};
-            }
+            $compat = ($version =~ /^1_/ ? "GL_NV_ES1_1" : "GL_ARB_ES" . $version);
+            add_extension( $compat . "_compatibility" ) if $version =~ /^1_/;
         }
-        elsif ($feature->{api} eq "egl")
+
+        foreach my $cmd ($feat->findnodes("./require/command"))
         {
-            foreach my $cmd ($feature->findnodes("./require/command"))
-            {
-                my $name = $cmd->{name};
-                $egl_functions{$name} = $functions{$cmd->{name}};
-            }
-            foreach my $enum ($feature->findnodes("./require/enum"))
-            {
-                $all_enums{$enum->{name}} = $enums{$enum->{name}};
-            }
+            add_function( $cmd->{name}, $api, $compat . "_compatibility", 0 ) if $compat;
+            add_function( $cmd->{name}, $api, $feature, 0 );
         }
-        next unless $feature->{name} =~ /^GL_VERSION_1_[01]$/;
-        foreach my $cmd ($feature->findnodes("./require/command"))
-        {
-            $norm_functions{$cmd->{name}} = $functions{$cmd->{name}};
-        }
-        foreach my $enum ($feature->findnodes("./require/enum"))
+
+        next if $api eq "wgl";
+        foreach my $enum ($feat->findnodes("./require/enum"))
         {
             $all_enums{$enum->{name}} = $enums{$enum->{name}};
         }
     }
-
-    # generate extension functions from norm functions, if they are newer than the category
-    foreach my $feature ($xml->findnodes("/registry/feature"))
+    foreach my $name (@extra_wgl_functions)
     {
-        my $feature_name = $feature->{name};
-        if ($feature_name =~ /GL_VERSION_ES_.*_1_/)
-        {
-            $feature_name = "GL_NV_ES1_1_compatibility";
-            add_extension( $feature_name );
-        }
-        elsif (my ($version) = ($feature_name =~ /GL_ES_VERSION_(.*)/))
-        {
-            $feature_name = "GL_ARB_ES" . $version . "_compatibility";
-        }
-        else
-        {
-            next unless is_supported_api( $feature->{api} );
-        }
-        next if $feature->{name} =~ /^GL_VERSION_1_[01]$/;
-        foreach my $cmd ($feature->findnodes("./require/command"))
-        {
-            my $name = $cmd->{name};
-            next if $norm_functions{$name} || $ext_functions{$name};
-            $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $feature_name ] ];
-        }
-        foreach my $enum ($feature->findnodes("./require/enum"))
-        {
-            $all_enums{$enum->{name}} = $enums{$enum->{name}};
-        }
+        add_function( $name, "wgl", "WGL_VERSION_1_0", 0 );
     }
 
-    # generate extension functions
     foreach my $ext ($xml->findnodes("/registry/extensions/extension"))
     {
-        next unless is_supported_extension( $ext->{name} );
-        if ($ext->{supported} eq "wgl")
-        {
-            foreach my $cmd ($ext->findnodes("./require/command"))
-            {
-                my $name = $cmd->{name};
-                $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $ext->{name} ] ];
-            }
-            foreach my $enum ($ext->findnodes("./require/enum"))
-            {
-                $all_enums{$enum->{name}} = $enums{$enum->{name}};
-            }
-            add_extension( $ext->{name} );
-            next;
-        }
-        if ($ext->{supported} eq "egl")
-        {
-            foreach my $cmd ($ext->findnodes("./require/command"))
-            {
-                my $name = $cmd->{name};
-                $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $ext->{name} ] ];
-            }
-            foreach my $enum ($ext->findnodes("./require/enum"))
-            {
-                $all_enums{$enum->{name}} = $enums{$enum->{name}};
-            }
-            add_extension( $ext->{name} );
-            next;
-        }
-        next unless is_supported_api( $ext->{supported} );
+        next unless is_supported_extension( $ext->{name} ) and is_supported_api( $ext->{supported} );
         foreach my $req ($ext->findnodes("./require"))
         {
-            next unless !$req->{api} || $req->{api} eq "gl";
+            next unless ($req->{api} || "gl") eq "gl";
             foreach my $cmd ($req->findnodes("./command"))
             {
-                my $name = $cmd->{name};
-                next if $norm_functions{$name};
-                if (!$ext_functions{$name})
-                {
-                    $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $ext->{name} ] ];
-                }
-                else
-                {
-                    push @{$ext_functions{$name}->[2]}, $ext->{name};
-                }
+                add_function( $cmd->{name}, $req->{api} || "gl", $ext->{name}, 1 );
             }
         }
         foreach my $enum ($ext->findnodes("./require/enum"))
@@ -1687,7 +1637,7 @@ foreach (sort keys %ext_functions)
     my $major = 0;
     my $minor = 0;
     my @exts;
-    foreach my $ext (@{$func->[2]})
+    foreach my $ext (sort keys %{$func->[2]})
     {
         if ($ext =~ /GL_VERSION_(\d+)_(\d+)/)
         {
