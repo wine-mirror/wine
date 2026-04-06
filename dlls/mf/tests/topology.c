@@ -2262,7 +2262,6 @@ enum loader_test_flags
     LOADER_TEST_MFT_EXPECT_CONVERTER = 0x2000,
     LOADER_EXPECT_MFT_OUTPUT_ENUMERATED = 0x4000,
     LOADER_EXPECT_MFT_INPUT_ENUMERATED = 0x8000,
-    LOADER_TODO_MFT_OUT_TYPE = 0x40000,
 };
 
 static void test_topology_loader(void)
@@ -2656,7 +2655,7 @@ static void test_topology_loader(void)
             .mft_output_types = {&audio_float_minimal, &audio_pcm_minimal, &audio_float_48000, &audio_pcm_48000},
             .mft_current_output = &audio_pcm_minimal,
             .expected_result = MF_E_INVALIDMEDIATYPE,
-            .flags = LOADER_ADD_TEST_MFT | LOADER_TODO_MFT_OUT_TYPE | LOADER_TODO,
+            .flags = LOADER_ADD_TEST_MFT,
         },
         {
             /* PCM -> PCM, different enumerated bps, add test MFT */
@@ -3378,7 +3377,6 @@ todo_wine {
                     "got transform output_enum_complete %u\n", test_transform->output_enum_complete);
             ok(test_transform->input_type_set == (test->expected_result != MF_E_TOPO_CODEC_NOT_FOUND),
                     "Got transform input_type_set %u.\n", test_transform->input_type_set);
-            todo_wine_if(test->flags & LOADER_TODO_MFT_OUT_TYPE)
             ok(test_transform->output_type_set == SUCCEEDED(test->expected_result),
                     "Got transform output_type_set %u.\n", test_transform->output_type_set);
             IMFTransform_Release(&test_transform->IMFTransform_iface);
