@@ -615,6 +615,7 @@ HKLM,System\Select,"Default",0x10003,1
 HKLM,System\Select,"Failed",0x10003,0
 HKLM,System\Select,"LastKnownGood",0x10003,1
 HKCU,AppEvents\Schemes\Apps\Explorer\Navigating\.Current,,,""
+HKCU,Software\Classes,,16
 HKCU,Software\Microsoft\Protected Storage System Provider,,16
 ; Some apps requires at least four subkeys of Active Setup\Installed Components
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA855-CC51-11CF-AAFA-00AA00B6015F},,2,"DirectDrawEx"
