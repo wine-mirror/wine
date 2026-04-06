@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-03-20 22:52+0200\n"
+"PO-Revision-Date: 2026-04-06 18:28+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12925,10 +12925,8 @@ msgid "Object variable not set"
 msgstr "Objekto kintamasis nenustatytas"
 
 #: dlls/vbscript/vbscript.rc:45
-#, fuzzy
-#| msgid "Object is not initialized.\n"
 msgid "For loop not initialized"
-msgstr "Objektas neinicijuotas.\n"
+msgstr "Besąlygis ciklas neinicijuotas"
 
 #: dlls/vbscript/vbscript.rc:46
 msgid "Invalid use of Null"
@@ -12980,152 +12978,116 @@ msgid "The remote server machine does not exist or is unavailable"
 msgstr "Nutolęs serveris neegzistuoja arba nepasiekiamas"
 
 #: dlls/vbscript/vbscript.rc:63
-#, fuzzy
-#| msgid "'|' is undefined"
 msgid "Variable is undefined"
-msgstr "„|“ neapibrėžtas"
+msgstr "Kintamasis neapibrėžtas"
 
 #: dlls/vbscript/vbscript.rc:64
 msgid "Invalid or unqualified reference"
 msgstr "Netinkama arba nepatikslinta nuoroda"
 
 #: dlls/vbscript/vbscript.rc:69
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'To'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „To“"
 
 #: dlls/vbscript/vbscript.rc:70
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'End'"
-msgstr "Tikėtasi „@end“"
+msgstr "Tikėtasi „End“"
 
 #: dlls/vbscript/vbscript.rc:71
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'Then'"
-msgstr "Tikėtasi „@end“"
+msgstr "Tikėtasi „Then“"
 
 #: dlls/vbscript/vbscript.rc:72
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected 'Wend'"
-msgstr "Tikėtasi „@end“"
+msgstr "Tikėtasi „Wend“"
 
 #: dlls/vbscript/vbscript.rc:73
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Loop'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „Loop“"
 
 #: dlls/vbscript/vbscript.rc:74
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Next'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „Next“"
 
 #: dlls/vbscript/vbscript.rc:75
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Case'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „Case“"
 
 #: dlls/vbscript/vbscript.rc:76
-#, fuzzy
-#| msgid "Expected '@end'"
 msgid "Expected statement"
-msgstr "Tikėtasi „@end“"
+msgstr "Tikėtasi sakinio"
 
 #: dlls/vbscript/vbscript.rc:77
-#, fuzzy
-#| msgid "Unexpected end of input data stream\n"
 msgid "Expected end of statement"
-msgstr "Netikėta duomenų srauto įvesties pabaiga\n"
+msgstr "Netikėta sakinio pabaiga"
 
 #: dlls/vbscript/vbscript.rc:78
-#, fuzzy
-#| msgid "Unterminated string constant"
 msgid "Expected integer constant"
-msgstr "Nebaigta eilutės konstanta"
+msgstr "Tikėtasi sveikosios konstantos"
 
 #: dlls/vbscript/vbscript.rc:79
 msgid "Expected 'While', 'Until' or end of statement"
-msgstr ""
+msgstr "Tikėtasi „While“, „Until“ ar sakinio pabaigos"
 
 #: dlls/vbscript/vbscript.rc:80
-#, fuzzy
-#| msgid "Invalid flag number.\n"
 msgid "Invalid number"
-msgstr "Neteisingas žymos bito numeris.\n"
+msgstr "Neteisingas skaičius"
 
 #: dlls/vbscript/vbscript.rc:83
 msgid "'loop' without 'do'"
-msgstr ""
+msgstr "„Loop“ be „Do“"
 
 #: dlls/vbscript/vbscript.rc:84
-#, fuzzy
-#| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
-msgstr "Neteisinga spausdintuvo būsena.\n"
+msgstr "Neteisingas „exit“ sakinys"
 
 #: dlls/vbscript/vbscript.rc:85
-#, fuzzy
-#| msgid "Label redefined"
 msgid "Name redefined"
-msgstr "Žymė apibrėžta iš naujo"
+msgstr "Vardas apibrėžtas iš naujo"
 
 #: dlls/vbscript/vbscript.rc:86
 msgid "Must be first statement on the line"
-msgstr ""
+msgstr "Privalo būti pirmas sakinys eilutėje"
 
 #: dlls/vbscript/vbscript.rc:87
 msgid "Cannot use parentheses when calling a Sub"
-msgstr ""
+msgstr "Negalima naudoti skliaustų kviečiant „Sub“"
 
 #: dlls/vbscript/vbscript.rc:88
-#, fuzzy
-#| msgid "Expected whitespace character\n"
 msgid "Expected literal constant"
-msgstr "Tikėtasi matomo tarpo ženklo\n"
+msgstr "Tikėtasi literalinės konstantos"
 
 #: dlls/vbscript/vbscript.rc:89
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'In'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „In“"
 
 #: dlls/vbscript/vbscript.rc:90
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Class'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „Class“"
 
 #: dlls/vbscript/vbscript.rc:91
 msgid "Must be defined inside a Class"
-msgstr ""
+msgstr "Privalo būti apibrėžtas klasėje"
 
 #: dlls/vbscript/vbscript.rc:92
 msgid "Expected Let or Set or Get in property declaration"
-msgstr ""
+msgstr "Tikėtasi „Let“, „Set“ arba „Get“ savybės apraše"
 
 #: dlls/vbscript/vbscript.rc:93
 msgid "Class initialize or terminate do not have arguments"
-msgstr ""
+msgstr "Klasės inicijavimas arba pabaiga neturi argumentų"
 
 #: dlls/vbscript/vbscript.rc:94
 msgid "Property set or let must have at least one argument"
-msgstr ""
+msgstr "Savybė „Set“ arba „Let“ privalo turėti bent vieną argumentą"
 
 #: dlls/vbscript/vbscript.rc:95
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
-msgstr "Tikėtasi „;“"
+msgstr "Netikėtas „Next“"
 
 #: dlls/vbscript/vbscript.rc:96
 msgid "'Default' specification must also specify 'Public'"
-msgstr ""
+msgstr "„Default“ specifikacija privalo nurodyti ir „Public“"
 
 #: dlls/vbscript/vbscript.rc:98
 msgid "Microsoft VBScript compilation error"
