@@ -11145,7 +11145,7 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_FUNC(eglUnsignalSyncEXT) \
     USE_GL_FUNC(eglWaitSyncKHR)
 
-#define ALL_GL_CLIENT_EXTS \
+#define ALL_GL_EXTS \
     USE_GL_EXT(GL_3DFX_multisample) \
     USE_GL_EXT(GL_3DFX_tbuffer) \
     USE_GL_EXT(GL_3DFX_texture_compression_FXT1) \
@@ -11933,132 +11933,6 @@ typedef BOOL       (GLAPIENTRY *PFN_wglSwapIntervalEXT)( int interval );
     USE_GL_EXT(GL_SUN_vertex) \
     USE_GL_EXT(GL_WIN_phong_shading) \
     USE_GL_EXT(GL_WIN_specular_fog)
-
-#define ALL_GL_EXTS ALL_GL_CLIENT_EXTS \
-    USE_GL_EXT(GL_ANDROID_extension_pack_es31a) \
-    USE_GL_EXT(GL_ANGLE_depth_texture) \
-    USE_GL_EXT(GL_ANGLE_framebuffer_blit) \
-    USE_GL_EXT(GL_ANGLE_framebuffer_multisample) \
-    USE_GL_EXT(GL_ANGLE_instanced_arrays) \
-    USE_GL_EXT(GL_ANGLE_pack_reverse_row_order) \
-    USE_GL_EXT(GL_ANGLE_program_binary) \
-    USE_GL_EXT(GL_ANGLE_texture_compression_dxt1) \
-    USE_GL_EXT(GL_ANGLE_texture_compression_dxt3) \
-    USE_GL_EXT(GL_ANGLE_texture_compression_dxt5) \
-    USE_GL_EXT(GL_ANGLE_texture_usage) \
-    USE_GL_EXT(GL_ANGLE_translated_shader_source) \
-    USE_GL_EXT(GL_APPLE_copy_texture_levels) \
-    USE_GL_EXT(GL_APPLE_framebuffer_multisample) \
-    USE_GL_EXT(GL_APPLE_sync) \
-    USE_GL_EXT(GL_ARM_mali_program_binary) \
-    USE_GL_EXT(GL_ARM_mali_shader_binary) \
-    USE_GL_EXT(GL_ARM_rgba8) \
-    USE_GL_EXT(GL_ARM_shader_core_properties) \
-    USE_GL_EXT(GL_ARM_shader_framebuffer_fetch) \
-    USE_GL_EXT(GL_ARM_shader_framebuffer_fetch_depth_stencil) \
-    USE_GL_EXT(GL_ARM_texture_unnormalized_coordinates) \
-    USE_GL_EXT(GL_DMP_program_binary) \
-    USE_GL_EXT(GL_DMP_shader_binary) \
-    USE_GL_EXT(GL_EXT_base_instance) \
-    USE_GL_EXT(GL_EXT_blend_func_extended) \
-    USE_GL_EXT(GL_EXT_buffer_storage) \
-    USE_GL_EXT(GL_EXT_clear_texture) \
-    USE_GL_EXT(GL_EXT_clip_control) \
-    USE_GL_EXT(GL_EXT_copy_image) \
-    USE_GL_EXT(GL_EXT_discard_framebuffer) \
-    USE_GL_EXT(GL_EXT_disjoint_timer_query) \
-    USE_GL_EXT(GL_EXT_draw_buffers) \
-    USE_GL_EXT(GL_EXT_draw_buffers_indexed) \
-    USE_GL_EXT(GL_EXT_draw_elements_base_vertex) \
-    USE_GL_EXT(GL_EXT_draw_transform_feedback) \
-    USE_GL_EXT(GL_EXT_geometry_shader) \
-    USE_GL_EXT(GL_EXT_instanced_arrays) \
-    USE_GL_EXT(GL_EXT_map_buffer_range) \
-    USE_GL_EXT(GL_EXT_memory_object_fd) \
-    USE_GL_EXT(GL_EXT_multi_draw_indirect) \
-    USE_GL_EXT(GL_EXT_multisampled_render_to_texture) \
-    USE_GL_EXT(GL_EXT_multiview_draw_buffers) \
-    USE_GL_EXT(GL_EXT_occlusion_query_boolean) \
-    USE_GL_EXT(GL_EXT_primitive_bounding_box) \
-    USE_GL_EXT(GL_EXT_robustness) \
-    USE_GL_EXT(GL_EXT_semaphore_fd) \
-    USE_GL_EXT(GL_EXT_shader_pixel_local_storage2) \
-    USE_GL_EXT(GL_EXT_sparse_texture) \
-    USE_GL_EXT(GL_EXT_tessellation_shader) \
-    USE_GL_EXT(GL_EXT_texture_border_clamp) \
-    USE_GL_EXT(GL_EXT_texture_buffer) \
-    USE_GL_EXT(GL_EXT_texture_storage_compression) \
-    USE_GL_EXT(GL_EXT_texture_view) \
-    USE_GL_EXT(GL_FJ_shader_binary_GCCSO) \
-    USE_GL_EXT(GL_HUAWEI_program_binary) \
-    USE_GL_EXT(GL_HUAWEI_shader_binary) \
-    USE_GL_EXT(GL_IMG_bindless_texture) \
-    USE_GL_EXT(GL_IMG_framebuffer_downsample) \
-    USE_GL_EXT(GL_IMG_multisampled_render_to_texture) \
-    USE_GL_EXT(GL_IMG_user_clip_plane) \
-    USE_GL_EXT(GL_MESA_sampler_objects) \
-    USE_GL_EXT(GL_NV_copy_buffer) \
-    USE_GL_EXT(GL_NV_coverage_sample) \
-    USE_GL_EXT(GL_NV_draw_buffers) \
-    USE_GL_EXT(GL_NV_draw_instanced) \
-    USE_GL_EXT(GL_NV_framebuffer_blit) \
-    USE_GL_EXT(GL_NV_framebuffer_multisample) \
-    USE_GL_EXT(GL_NV_instanced_arrays) \
-    USE_GL_EXT(GL_NV_non_square_matrices) \
-    USE_GL_EXT(GL_NV_polygon_mode) \
-    USE_GL_EXT(GL_NV_read_buffer) \
-    USE_GL_EXT(GL_NV_viewport_array) \
-    USE_GL_EXT(GL_OES_EGL_image) \
-    USE_GL_EXT(GL_OES_EGL_image_external) \
-    USE_GL_EXT(GL_OES_blend_equation_separate) \
-    USE_GL_EXT(GL_OES_blend_func_separate) \
-    USE_GL_EXT(GL_OES_blend_subtract) \
-    USE_GL_EXT(GL_OES_copy_image) \
-    USE_GL_EXT(GL_OES_draw_buffers_indexed) \
-    USE_GL_EXT(GL_OES_draw_elements_base_vertex) \
-    USE_GL_EXT(GL_OES_draw_texture) \
-    USE_GL_EXT(GL_OES_framebuffer_object) \
-    USE_GL_EXT(GL_OES_geometry_shader) \
-    USE_GL_EXT(GL_OES_get_program_binary) \
-    USE_GL_EXT(GL_OES_mapbuffer) \
-    USE_GL_EXT(GL_OES_matrix_palette) \
-    USE_GL_EXT(GL_OES_point_size_array) \
-    USE_GL_EXT(GL_OES_primitive_bounding_box) \
-    USE_GL_EXT(GL_OES_sample_shading) \
-    USE_GL_EXT(GL_OES_tessellation_shader) \
-    USE_GL_EXT(GL_OES_texture_3D) \
-    USE_GL_EXT(GL_OES_texture_border_clamp) \
-    USE_GL_EXT(GL_OES_texture_buffer) \
-    USE_GL_EXT(GL_OES_texture_cube_map) \
-    USE_GL_EXT(GL_OES_texture_storage_multisample_2d_array) \
-    USE_GL_EXT(GL_OES_texture_view) \
-    USE_GL_EXT(GL_OES_vertex_array_object) \
-    USE_GL_EXT(GL_OES_viewport_array) \
-    USE_GL_EXT(GL_OVR_multiview_multisampled_render_to_texture) \
-    USE_GL_EXT(GL_QCOM_YUV_texture_gather) \
-    USE_GL_EXT(GL_QCOM_alpha_test) \
-    USE_GL_EXT(GL_QCOM_binning_control) \
-    USE_GL_EXT(GL_QCOM_driver_control) \
-    USE_GL_EXT(GL_QCOM_extended_get) \
-    USE_GL_EXT(GL_QCOM_extended_get2) \
-    USE_GL_EXT(GL_QCOM_frame_extrapolation) \
-    USE_GL_EXT(GL_QCOM_framebuffer_foveated) \
-    USE_GL_EXT(GL_QCOM_motion_estimation) \
-    USE_GL_EXT(GL_QCOM_perfmon_global_mode) \
-    USE_GL_EXT(GL_QCOM_performance_monitor_global_mode) \
-    USE_GL_EXT(GL_QCOM_render_sRGB_R8_RG8) \
-    USE_GL_EXT(GL_QCOM_render_shared_exponent) \
-    USE_GL_EXT(GL_QCOM_shader_framebuffer_fetch_noncoherent) \
-    USE_GL_EXT(GL_QCOM_shader_framebuffer_fetch_rate) \
-    USE_GL_EXT(GL_QCOM_shading_rate) \
-    USE_GL_EXT(GL_QCOM_texture_foveated) \
-    USE_GL_EXT(GL_QCOM_texture_foveated2) \
-    USE_GL_EXT(GL_QCOM_texture_foveated_subsampled_layout) \
-    USE_GL_EXT(GL_QCOM_texture_lod_bias) \
-    USE_GL_EXT(GL_QCOM_tiled_rendering) \
-    USE_GL_EXT(GL_QCOM_writeonly_rendering) \
-    USE_GL_EXT(GL_QCOM_ycbcr_degamma) \
-    USE_GL_EXT(GL_VIV_shader_binary)
 
 #define ALL_GL_FUNCS \
     USE_GL_FUNC(glAccum) \
