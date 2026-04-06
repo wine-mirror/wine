@@ -581,41 +581,85 @@ HRESULT topology_node_init_media_type(IMFTopologyNode *node, DWORD stream, BOOL 
     return hr;
 }
 
+static HRESULT topology_branch_connect_direct(IMFTopology *topology, struct topology_branch *branch, IMFMediaType *up_type)
+{
+    IMFMediaType *down_type, *type;
+    DWORD flags;
+    HRESULT hr;
+
+    TRACE("topology %p, branch %s, up_type %s.\n", topology, debugstr_topology_branch(branch),
+            debugstr_media_type(up_type));
+
+    if (SUCCEEDED(hr = IMFMediaTypeHandler_GetCurrentMediaType(branch->down.handler, &down_type)))
+    {
+        if (IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
+            hr = topology_branch_connect_with_type(topology, branch, up_type);
+        else
+        {
+            TRACE("current type %s differs from up type %s, hr %#lx\n", debugstr_media_type(down_type),
+                    debugstr_media_type(up_type), hr);
+            hr = MF_E_INVALIDMEDIATYPE;
+        }
+        IMFMediaType_Release(down_type);
+        TRACE("returning %#lx\n", hr);
+        return hr;
+    }
+
+    IMFMediaType_AddRef((type = up_type));
+
+    if (hr == MF_E_NOT_INITIALIZED)
+    {
+        for (UINT i = 0; SUCCEEDED(hr = IMFMediaTypeHandler_GetMediaTypeByIndex(branch->down.handler, i, &down_type)); i++)
+        {
+            if ((hr = IMFMediaType_IsEqual(up_type, down_type, &flags)) != S_OK)
+                TRACE("down type %s differs from up type %s, hr %#lx flags %#lx\n", debugstr_media_type(down_type),
+                        debugstr_media_type(up_type), hr, flags);
+            else if (FAILED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(branch->down.handler, down_type, NULL)))
+                TRACE("down type %s not supported by downstream, hr %#lx\n", debugstr_media_type(down_type), hr);
+            else if (FAILED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(branch->up.handler, down_type, NULL)))
+                TRACE("down type %s not supported by upstream, hr %#lx\n", debugstr_media_type(down_type), hr);
+            else
+            {
+                TRACE("selecting down type %s\n", debugstr_media_type(down_type));
+                IMFMediaType_Release(type);
+                type = down_type;
+                continue;
+            }
+            IMFMediaType_Release(down_type);
+        }
+    }
+
+    if (FAILED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(branch->down.handler, type, NULL)))
+        TRACE("type %s not supported by downstream, hr %#lx\n", debugstr_media_type(type), hr);
+    else
+        hr = topology_branch_connect_with_type(topology, branch, type);
+
+    IMFMediaType_Release(type);
+    TRACE("returning %#lx\n", hr);
+    return hr;
+}
+
 static HRESULT topology_branch_connect_down(IMFTopology *topology, enum connect_method method,
         struct topology_branch *branch, IMFMediaType *up_type)
 {
     HRESULT hr = MF_E_INVALIDMEDIATYPE;
     IMFMediaType *down_type = NULL;
-    DWORD flags;
 
     TRACE("topology %p, method %#x, branch %s, up_type %s.\n", topology, method,
             debugstr_topology_branch(branch), debugstr_media_type(up_type));
 
     get_first_supported_media_type(branch->down.handler, &down_type);
 
-    if (method & CONNECT_DIRECT)
-    {
-        if (down_type && IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
-        {
-            hr = topology_branch_connect_with_type(topology, branch, up_type);
-            goto done;
-        }
-
-        if (SUCCEEDED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(branch->down.handler, up_type, NULL)))
-        {
-            hr = topology_branch_connect_with_type(topology, branch, up_type);
-            goto done;
-        }
-    }
-
+    if (FAILED(hr) && (method & CONNECT_DIRECT))
+        hr = topology_branch_connect_direct(topology, branch, up_type);
     if (FAILED(hr) && (method & CONNECT_CONVERTER))
         hr = topology_branch_connect_indirect(topology, FALSE, branch, up_type, down_type);
     if (FAILED(hr) && (method & CONNECT_DECODER))
         hr = topology_branch_connect_indirect(topology, TRUE, branch, up_type, down_type);
 
-done:
     if (down_type)
         IMFMediaType_Release(down_type);
+    TRACE("returning %#lx\n", hr);
     return hr;
 }
 
