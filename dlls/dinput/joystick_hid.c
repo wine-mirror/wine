@@ -1605,7 +1605,7 @@ static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEIN
                                                  attrs, caps, instance, version )))
             continue;
 
-        if (device_instance_is_disabled( instance, &override ))
+        if (device_instance_is_disabled( instance->tszInstanceName, &override ))
             goto next;
 
         if (override && SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) &&
