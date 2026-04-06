@@ -278,6 +278,47 @@ Dim aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 42
 Call ok(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 42, "255-char identifier should work")
 
+' Bracketed identifiers
+Dim [my var]
+[my var] = 42
+Call ok([my var] = 42, "[my var] = " & [my var])
+
+Dim [hello world!]
+[hello world!] = "works"
+Call ok([hello world!] = "works", "[hello world!] = " & [hello world!])
+
+Dim []
+[] = "empty"
+Call ok([] = "empty", "[] = " & [])
+
+Dim [   ]
+[   ] = "spaces"
+Call ok([   ] = "spaces", "[   ] = " & [   ])
+
+Dim [dim]
+[dim] = 99
+Call ok([dim] = 99, "[dim] = " & [dim])
+
+Class BracketTestObj
+    Public [my property]
+    Public Sub Class_Initialize
+        [my property] = "init"
+    End Sub
+End Class
+
+Dim bracketObj
+Set bracketObj = New BracketTestObj
+bracketObj.[my property] = "updated"
+Call ok(bracketObj.[my property] = "updated", "bracketObj.[my property] = " & bracketObj.[my property])
+
+Dim [loop var]
+Dim bracketTotal : bracketTotal = 0
+For [loop var] = 1 To 3
+    bracketTotal = bracketTotal + [loop var]
+Next
+Call ok(bracketTotal = 6, "For [loop var] total = " & bracketTotal)
+
+' Chained call syntax
 Class ChainedCallTarget
     Public Function Ret()
         Set Ret = Me

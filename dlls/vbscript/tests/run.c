@@ -3224,6 +3224,18 @@ static void test_parse_errors(void)
             L"Dim aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
             0, 260,
             NULL, S_OK, 1030
+        },
+        {
+            /* Nested square brackets */
+            L"Dim [[nested]]\n",
+            0, 13,
+            NULL, S_OK, 1032
+        },
+        {
+            /* Unclosed square bracket */
+            L"Dim [unclosed\n",
+            0, 13,
+            NULL, S_OK, 1007
         }
     };
     HRESULT hres;

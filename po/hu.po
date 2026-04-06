@@ -4117,29 +4117,29 @@ msgstr "Hiányzó ';'"
 msgid "Expected '('"
 msgstr "Hiányzó '('"
 
-#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:70
+#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:71
 msgid "Expected ')'"
 msgstr "Hiányzó ')'"
 
-#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:71
+#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:72
 #, fuzzy
 #| msgid "Subject Key Identifier"
 msgid "Expected identifier"
 msgstr "Tárgy kulcs azonosító"
 
-#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:72
+#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:73
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected '='"
 msgstr "Hiányzó ';'"
 
-#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:91
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:92
 #, fuzzy
 #| msgid "Invalid parameter.\n"
 msgid "Invalid character"
 msgstr "Érvénytelen paraméter.\n"
 
-#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:92
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:93
 msgid "Unterminated string constant"
 msgstr "Lezáratlan sztring konstans"
 
@@ -4187,7 +4187,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:115
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:116
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -14217,209 +14217,215 @@ msgstr ""
 msgid "Class not defined"
 msgstr "Osztály útvonal nem létezik.\n"
 
-#: dlls/vbscript/vbscript.rc:73
+#: dlls/vbscript/vbscript.rc:70
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'If'"
+msgid "Expected ']'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:74
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'To'"
+msgid "Expected 'If'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:75
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'End'"
+msgid "Expected 'To'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:76
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Function'"
+msgid "Expected 'End'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:77
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Sub'"
+msgid "Expected 'Function'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:78
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Then'"
+msgid "Expected 'Sub'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:79
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Wend'"
+msgid "Expected 'Then'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:80
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Loop'"
+msgid "Expected 'Wend'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:81
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Next'"
+msgid "Expected 'Loop'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:82
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Case'"
+msgid "Expected 'Next'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:83
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected 'Select'"
+msgid "Expected 'Case'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:84
 #, fuzzy
 #| msgid "Expected ';'"
-msgid "Expected statement"
+msgid "Expected 'Select'"
 msgstr "Hiányzó ';'"
 
 #: dlls/vbscript/vbscript.rc:85
+#, fuzzy
+#| msgid "Expected ';'"
+msgid "Expected statement"
+msgstr "Hiányzó ';'"
+
+#: dlls/vbscript/vbscript.rc:86
 #, fuzzy
 #| msgid "Unexpected network error.\n"
 msgid "Expected end of statement"
 msgstr "Nem várt hálózati hiba.\n"
 
-#: dlls/vbscript/vbscript.rc:86
+#: dlls/vbscript/vbscript.rc:87
 #, fuzzy
 #| msgid "Unterminated string constant"
 msgid "Expected integer constant"
 msgstr "Lezáratlan sztring konstans"
 
-#: dlls/vbscript/vbscript.rc:87
+#: dlls/vbscript/vbscript.rc:88
 msgid "Expected 'While', 'Until' or end of statement"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:89
+#: dlls/vbscript/vbscript.rc:90
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'With'"
 msgstr "Hiányzó ';'"
 
-#: dlls/vbscript/vbscript.rc:88
+#: dlls/vbscript/vbscript.rc:89
 #, fuzzy
 #| msgid "Secret too long.\n"
 msgid "Identifier too long"
 msgstr "Titkos név túl hosszú.\n"
 
-#: dlls/vbscript/vbscript.rc:90
+#: dlls/vbscript/vbscript.rc:91
 #, fuzzy
 #| msgid "Invalid flag number.\n"
 msgid "Invalid number"
 msgstr "Nem valós flag szám.\n"
 
-#: dlls/vbscript/vbscript.rc:93
+#: dlls/vbscript/vbscript.rc:94
 #, fuzzy
 #| msgid "Invalid user buffer.\n"
 msgid "Invalid use of 'Me' keyword"
 msgstr "Érvénytelen felhasználói puffer.\n"
 
-#: dlls/vbscript/vbscript.rc:94
+#: dlls/vbscript/vbscript.rc:95
 msgid "'loop' without 'do'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:95
+#: dlls/vbscript/vbscript.rc:96
 #, fuzzy
 #| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
 msgstr "Érvénytelen nyomtató állapot.\n"
 
-#: dlls/vbscript/vbscript.rc:96
+#: dlls/vbscript/vbscript.rc:97
 #, fuzzy
 #| msgid "Label redefined"
 msgid "Name redefined"
 msgstr "Címke újradefiniált"
 
-#: dlls/vbscript/vbscript.rc:97
+#: dlls/vbscript/vbscript.rc:98
 msgid "Must be first statement on the line"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:98
+#: dlls/vbscript/vbscript.rc:99
 msgid "Cannot use parentheses when calling a Sub"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:99
+#: dlls/vbscript/vbscript.rc:100
 #, fuzzy
 #| msgid "Unexpected network error.\n"
 msgid "Expected literal constant"
 msgstr "Nem várt hálózati hiba.\n"
 
-#: dlls/vbscript/vbscript.rc:100
+#: dlls/vbscript/vbscript.rc:101
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'In'"
 msgstr "Hiányzó ';'"
 
-#: dlls/vbscript/vbscript.rc:101
+#: dlls/vbscript/vbscript.rc:102
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Class'"
 msgstr "Hiányzó ';'"
 
-#: dlls/vbscript/vbscript.rc:102
+#: dlls/vbscript/vbscript.rc:103
 msgid "Must be defined inside a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:103
+#: dlls/vbscript/vbscript.rc:104
 msgid "Expected Let or Set or Get in property declaration"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:104
+#: dlls/vbscript/vbscript.rc:105
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Property'"
 msgstr "Hiányzó ';'"
 
-#: dlls/vbscript/vbscript.rc:105
+#: dlls/vbscript/vbscript.rc:106
 msgid "Number of arguments must be consistent across properties specification"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:106
+#: dlls/vbscript/vbscript.rc:107
 msgid "Cannot have multiple default property/method in a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:107
+#: dlls/vbscript/vbscript.rc:108
 msgid "Class initialize or terminate do not have arguments"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:108
+#: dlls/vbscript/vbscript.rc:109
 msgid "Property set or let must have at least one argument"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:109
+#: dlls/vbscript/vbscript.rc:110
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
 msgstr "Hiányzó ';'"
 
-#: dlls/vbscript/vbscript.rc:110
+#: dlls/vbscript/vbscript.rc:111
 msgid "'Default' specification must also specify 'Public'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:111
+#: dlls/vbscript/vbscript.rc:112
 msgid "'Default' specification can only be on Property Get"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:113
+#: dlls/vbscript/vbscript.rc:114
 msgid "Microsoft VBScript compilation error"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:114
+#: dlls/vbscript/vbscript.rc:115
 msgid "Microsoft VBScript runtime error"
 msgstr ""
 

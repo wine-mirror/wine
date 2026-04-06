@@ -278,6 +278,7 @@
 #define VBSE_SYNTAX_ERROR                1002
 #define VBSE_EXPECTED_LPAREN             1005
 #define VBSE_EXPECTED_RPAREN             1006
+#define VBSE_EXPECTED_RBRACKET           1007
 #define VBSE_EXPECTED_IDENTIFIER         1010
 #define VBSE_EXPECTED_ASSIGN             1011
 #define VBSE_EXPECTED_IF                 1012

@@ -3999,23 +3999,23 @@ msgstr "Expected ';'"
 msgid "Expected '('"
 msgstr "Expected '('"
 
-#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:70
+#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:71
 msgid "Expected ')'"
 msgstr "Expected ')'"
 
-#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:71
+#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:72
 msgid "Expected identifier"
 msgstr "Expected identifier"
 
-#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:72
+#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:73
 msgid "Expected '='"
 msgstr "Expected '='"
 
-#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:91
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:92
 msgid "Invalid character"
 msgstr "Invalid character"
 
-#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:92
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:93
 msgid "Unterminated string constant"
 msgstr "Unterminated string constant"
 
@@ -4059,7 +4059,7 @@ msgstr "Microsoft JScript compilation error"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime error"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:115
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:116
 msgid "Unknown runtime error"
 msgstr "Unknown runtime error"
 
@@ -12996,159 +12996,163 @@ msgstr "Invalid or unqualified reference"
 msgid "Class not defined"
 msgstr "Class not defined"
 
-#: dlls/vbscript/vbscript.rc:73
+#: dlls/vbscript/vbscript.rc:70
+msgid "Expected ']'"
+msgstr "Expected ']'"
+
+#: dlls/vbscript/vbscript.rc:74
 msgid "Expected 'If'"
 msgstr "Expected 'If'"
 
-#: dlls/vbscript/vbscript.rc:74
+#: dlls/vbscript/vbscript.rc:75
 msgid "Expected 'To'"
 msgstr "Expected 'To'"
 
-#: dlls/vbscript/vbscript.rc:75
+#: dlls/vbscript/vbscript.rc:76
 msgid "Expected 'End'"
 msgstr "Expected 'End'"
 
-#: dlls/vbscript/vbscript.rc:76
+#: dlls/vbscript/vbscript.rc:77
 msgid "Expected 'Function'"
 msgstr "Expected 'Function'"
 
-#: dlls/vbscript/vbscript.rc:77
+#: dlls/vbscript/vbscript.rc:78
 msgid "Expected 'Sub'"
 msgstr "Expected 'Sub'"
 
-#: dlls/vbscript/vbscript.rc:78
+#: dlls/vbscript/vbscript.rc:79
 msgid "Expected 'Then'"
 msgstr "Expected 'Then'"
 
-#: dlls/vbscript/vbscript.rc:79
+#: dlls/vbscript/vbscript.rc:80
 msgid "Expected 'Wend'"
 msgstr "Expected 'Wend'"
 
-#: dlls/vbscript/vbscript.rc:80
+#: dlls/vbscript/vbscript.rc:81
 msgid "Expected 'Loop'"
 msgstr "Expected 'Loop'"
 
-#: dlls/vbscript/vbscript.rc:81
+#: dlls/vbscript/vbscript.rc:82
 msgid "Expected 'Next'"
 msgstr "Expected 'Next'"
 
-#: dlls/vbscript/vbscript.rc:82
+#: dlls/vbscript/vbscript.rc:83
 msgid "Expected 'Case'"
 msgstr "Expected 'Case'"
 
-#: dlls/vbscript/vbscript.rc:83
+#: dlls/vbscript/vbscript.rc:84
 msgid "Expected 'Select'"
 msgstr "Expected 'Select'"
 
-#: dlls/vbscript/vbscript.rc:84
+#: dlls/vbscript/vbscript.rc:85
 msgid "Expected statement"
 msgstr "Expected statement"
 
-#: dlls/vbscript/vbscript.rc:85
+#: dlls/vbscript/vbscript.rc:86
 msgid "Expected end of statement"
 msgstr "Expected end of statement"
 
-#: dlls/vbscript/vbscript.rc:86
+#: dlls/vbscript/vbscript.rc:87
 msgid "Expected integer constant"
 msgstr "Expected integer constant"
 
-#: dlls/vbscript/vbscript.rc:87
+#: dlls/vbscript/vbscript.rc:88
 msgid "Expected 'While', 'Until' or end of statement"
 msgstr "Expected 'While', 'Until' or end of statement"
 
-#: dlls/vbscript/vbscript.rc:89
+#: dlls/vbscript/vbscript.rc:90
 msgid "Expected 'With'"
 msgstr "Expected 'With'"
 
-#: dlls/vbscript/vbscript.rc:88
+#: dlls/vbscript/vbscript.rc:89
 msgid "Identifier too long"
 msgstr "Identifier too long"
 
-#: dlls/vbscript/vbscript.rc:90
+#: dlls/vbscript/vbscript.rc:91
 msgid "Invalid number"
 msgstr "Invalid number"
 
-#: dlls/vbscript/vbscript.rc:93
+#: dlls/vbscript/vbscript.rc:94
 msgid "Invalid use of 'Me' keyword"
 msgstr "Invalid use of 'Me' keyword"
 
-#: dlls/vbscript/vbscript.rc:94
+#: dlls/vbscript/vbscript.rc:95
 msgid "'loop' without 'do'"
 msgstr "'loop' without 'do'"
 
-#: dlls/vbscript/vbscript.rc:95
+#: dlls/vbscript/vbscript.rc:96
 msgid "Invalid 'exit' statement"
 msgstr "Invalid 'exit' statement"
 
-#: dlls/vbscript/vbscript.rc:96
+#: dlls/vbscript/vbscript.rc:97
 msgid "Name redefined"
 msgstr "Name redefined"
 
-#: dlls/vbscript/vbscript.rc:97
+#: dlls/vbscript/vbscript.rc:98
 msgid "Must be first statement on the line"
 msgstr "Must be first statement on the line"
 
-#: dlls/vbscript/vbscript.rc:98
+#: dlls/vbscript/vbscript.rc:99
 msgid "Cannot use parentheses when calling a Sub"
 msgstr "Cannot use parentheses when calling a Sub"
 
-#: dlls/vbscript/vbscript.rc:99
+#: dlls/vbscript/vbscript.rc:100
 msgid "Expected literal constant"
 msgstr "Expected literal constant"
 
-#: dlls/vbscript/vbscript.rc:100
+#: dlls/vbscript/vbscript.rc:101
 msgid "Expected 'In'"
 msgstr "Expected 'In'"
 
-#: dlls/vbscript/vbscript.rc:101
+#: dlls/vbscript/vbscript.rc:102
 msgid "Expected 'Class'"
 msgstr "Expected 'Class'"
 
-#: dlls/vbscript/vbscript.rc:102
+#: dlls/vbscript/vbscript.rc:103
 msgid "Must be defined inside a Class"
 msgstr "Must be defined inside a Class"
 
-#: dlls/vbscript/vbscript.rc:103
+#: dlls/vbscript/vbscript.rc:104
 msgid "Expected Let or Set or Get in property declaration"
 msgstr "Expected Let or Set or Get in property declaration"
 
-#: dlls/vbscript/vbscript.rc:104
+#: dlls/vbscript/vbscript.rc:105
 msgid "Expected 'Property'"
 msgstr "Expected 'Property'"
 
-#: dlls/vbscript/vbscript.rc:105
+#: dlls/vbscript/vbscript.rc:106
 msgid "Number of arguments must be consistent across properties specification"
 msgstr "Number of arguments must be consistent across properties specification"
 
-#: dlls/vbscript/vbscript.rc:106
+#: dlls/vbscript/vbscript.rc:107
 msgid "Cannot have multiple default property/method in a Class"
 msgstr "Cannot have multiple default property/method in a Class"
 
-#: dlls/vbscript/vbscript.rc:107
+#: dlls/vbscript/vbscript.rc:108
 msgid "Class initialize or terminate do not have arguments"
 msgstr "Class initialize or terminate do not have arguments"
 
-#: dlls/vbscript/vbscript.rc:108
+#: dlls/vbscript/vbscript.rc:109
 msgid "Property set or let must have at least one argument"
 msgstr "Property set or let must have at least one argument"
 
-#: dlls/vbscript/vbscript.rc:109
+#: dlls/vbscript/vbscript.rc:110
 msgid "Unexpected 'Next'"
 msgstr "Unexpected 'Next'"
 
-#: dlls/vbscript/vbscript.rc:110
+#: dlls/vbscript/vbscript.rc:111
 msgid "'Default' specification must also specify 'Public'"
 msgstr "'Default' specification must also specify 'Public'"
 
-#: dlls/vbscript/vbscript.rc:111
+#: dlls/vbscript/vbscript.rc:112
 msgid "'Default' specification can only be on Property Get"
 msgstr "'Default' specification can only be on Property Get"
 
-#: dlls/vbscript/vbscript.rc:113
+#: dlls/vbscript/vbscript.rc:114
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript compilation error"
 
-#: dlls/vbscript/vbscript.rc:114
+#: dlls/vbscript/vbscript.rc:115
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript runtime error"
 

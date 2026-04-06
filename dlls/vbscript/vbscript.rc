@@ -66,6 +66,7 @@ STRINGTABLE
     VBSE_CLASS_NOT_DEFINED             "Class not defined"
     VBSE_SYNTAX_ERROR                  "Syntax error"
     VBSE_EXPECTED_LPAREN               "Expected '('"
+    VBSE_EXPECTED_RBRACKET             "Expected ']'"
     VBSE_EXPECTED_RPAREN               "Expected ')'"
     VBSE_EXPECTED_IDENTIFIER           "Expected identifier"
     VBSE_EXPECTED_ASSIGN               "Expected '='"
