@@ -86,8 +86,8 @@
 @ stub CM_Get_DevNode_Custom_Property_ExW
 @ stdcall CM_Get_DevNode_PropertyW(long ptr ptr ptr ptr long)
 @ stdcall CM_Get_DevNode_Property_ExW(long ptr ptr ptr ptr long ptr)
-@ stub CM_Get_DevNode_Property_Keys
-@ stub CM_Get_DevNode_Property_Keys_Ex
+@ stdcall CM_Get_DevNode_Property_Keys(long ptr ptr long)
+@ stdcall CM_Get_DevNode_Property_Keys_Ex(long ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr ptr long)
 @ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long)
 @ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr)

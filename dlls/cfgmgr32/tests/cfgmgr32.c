@@ -3564,9 +3564,12 @@ static void test_CM_Get_DevNode_Property(void)
     len = sizeof(buffer);
     ret = CM_Get_DevNode_PropertyW( node, &DEVPKEY_Device_BusRelations, &type, (BYTE *)buffer, &len, 0 );
     ok_x4( ret, ==, CR_NO_SUCH_VALUE );
+    type = 0xdeadbeef;
     len = sizeof(buffer);
     ret = CM_Get_DevNode_PropertyW( node, &DEVPKEY_Device_Parent, &type, (BYTE *)buffer, &len, 0 );
     todo_wine ok_x4( ret, ==, CR_SUCCESS );
+    todo_wine ok_u4( type, ==, DEVPROP_TYPE_STRING );
+    todo_wine ok_u4( len, >, 1 );
     len = sizeof(buffer);
     ret = CM_Get_DevNode_PropertyW( node, &DEVPKEY_Device_Children, &type, (BYTE *)buffer, &len, 0 );
     ok_x4( ret, ==, CR_NO_SUCH_VALUE );
@@ -3611,6 +3614,69 @@ static void test_CM_Get_DevNode_Property(void)
     todo_wine ok_x4( ret, ==, CR_SUCCESS );
     todo_wine ok_u4( type, ==, DEVPROP_TYPE_STRING );
     todo_wine ok_u4( len, >, 1 );
+}
+
+static void test_CM_Get_DevNode_Property_Keys(void)
+{
+    WCHAR iface[4096], instance_id[MAX_PATH];
+    DEVPROPKEY buffer[128];
+    DWORD i, size, type;
+    CONFIGRET ret;
+    DEVINST node;
+    GUID guid;
+
+
+    guid = GUID_DEVINTERFACE_HID;
+    ret = CM_Get_Device_Interface_ListW( &guid, NULL, iface, ARRAY_SIZE(iface), CM_GET_DEVICE_INTERFACE_LIST_PRESENT );
+    if (broken( !*iface ))
+    {
+        skip( "No HID device present, skipping tests\n" );
+        return;
+    }
+    ok_x4( ret, ==, CR_SUCCESS );
+    size = sizeof(instance_id);
+    ret = CM_Get_Device_Interface_PropertyW( iface, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_x4( type, ==, DEVPROP_TYPE_STRING );
+
+    node = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW( &node, instance_id, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    todo_wine ok_x4( node, ==, 2 );
+
+    size = ARRAY_SIZE(buffer);
+    ret = CM_Get_DevNode_Property_Keys( 0, buffer, &size, 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVNODE );
+    ok_u4( size, ==, ARRAY_SIZE(buffer) );
+    size = ARRAY_SIZE(buffer);
+    ret = CM_Get_DevNode_Property_Keys( 0xdeadbeef, buffer, &size, 0 );
+    ok_x4( ret, ==, CR_INVALID_DEVNODE );
+    ok_u4( size, ==, ARRAY_SIZE(buffer) );
+    size = ARRAY_SIZE(buffer);
+    ret = CM_Get_DevNode_Property_Keys( node, NULL, NULL, 0 );
+    ok_x4( ret, ==, CR_INVALID_POINTER );
+    size = ARRAY_SIZE(buffer);
+    ret = CM_Get_DevNode_Property_Keys( node, buffer, NULL, 0 );
+    ok_x4( ret, ==, CR_INVALID_POINTER );
+    size = ARRAY_SIZE(buffer);
+    ret = CM_Get_DevNode_Property_Keys( node, NULL, &size, 0 );
+    ok_x4( ret, ==, CR_INVALID_POINTER );
+    ok_u4( size, ==, ARRAY_SIZE(buffer) );
+    size = 0;
+    ret = CM_Get_DevNode_Property_Keys( node, NULL, &size, 0 );
+    ok_x4( ret, ==, CR_BUFFER_SMALL );
+    ok_u4( size, >, 3 );
+    size = ARRAY_SIZE(buffer);
+    memset( buffer, 0xcd, sizeof(buffer) );
+    ret = CM_Get_DevNode_Property_Keys( node, buffer, &size, 0 );
+    ok_x4( ret, ==, CR_SUCCESS );
+    ok_u4( size, >, 3 );
+    todo_wine ok( !memcmp( buffer + 0, &DEVPKEY_Device_DeviceDesc, sizeof(*buffer) ), "got {%s,%#lx}\n", debugstr_guid( &buffer[0].fmtid ), buffer[0].pid );
+    todo_wine ok( !memcmp( buffer + 1, &DEVPKEY_Device_HardwareIds, sizeof(*buffer) ), "got {%s,%#lx}\n", debugstr_guid( &buffer[1].fmtid ), buffer[1].pid );
+    todo_wine ok( !memcmp( buffer + 2, &DEVPKEY_Device_CompatibleIds, sizeof(*buffer) ), "got {%s,%#lx}\n", debugstr_guid( &buffer[2].fmtid ), buffer[2].pid );
+
+    for (i = 0; i < size; i++) if (!memcmp( buffer + i, &DEVPKEY_Device_Parent, sizeof(*buffer) )) break;
+    todo_wine ok( i < size, "DEVPKEY_Device_Parent not found\n" );
 }
 
 static void test_CM_Get_Class_Property_Keys(void)
@@ -3690,6 +3756,7 @@ START_TEST(cfgmgr32)
     test_CM_Open_DevNode_Key();
     test_CM_Get_DevNode_Registry_Property();
     test_CM_Get_DevNode_Property();
+    test_CM_Get_DevNode_Property_Keys();
     test_DevGetObjects();
     test_DevCreateObjectQuery();
     test_DevGetObjectProperties_invalid();

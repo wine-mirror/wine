@@ -740,6 +740,52 @@ static LSTATUS get_device_property( HKEY root, const struct device *dev, struct 
     return err;
 }
 
+LSTATUS enum_device_property_keys( HKEY hkey, const struct device *dev, DEVPROPKEY *buffer, ULONG *size )
+{
+    ULONG capacity = *size, count = 0;
+    LSTATUS err = ERROR_SUCCESS;
+    HKEY props_key;
+
+    if (capacity < ++count || !buffer) err = ERROR_MORE_DATA;
+    else buffer[count - 1] = DEVPKEY_Device_InstanceId;
+
+    for (UINT i = 0; i < ARRAY_SIZE(device_properties); i++)
+    {
+        const struct property_desc *desc = device_properties + i;
+        if (desc->name && !RegQueryValueExW( hkey, desc->name, NULL, NULL, NULL, NULL ))
+        {
+            if (capacity < ++count || !buffer) err = ERROR_MORE_DATA;
+            else buffer[count - 1] = *desc->key;
+        }
+    }
+
+    if (!open_key( hkey, L"Properties", KEY_ENUMERATE_SUB_KEYS, TRUE, &props_key ))
+    {
+        WCHAR name[MAX_PATH];
+        for (ULONG i = 0, len = ARRAY_SIZE(name); !RegEnumValueW( props_key, i, name, &len, 0, NULL, NULL, NULL ); i++, len = ARRAY_SIZE(name))
+        {
+            if (capacity < ++count || !buffer) err = ERROR_MORE_DATA;
+            else err = propkey_from_string( name, buffer + count - 1 );
+        }
+        RegCloseKey( props_key );
+    }
+
+    *size = count;
+    return err;
+}
+
+static LSTATUS get_device_property_keys( HKEY root, const struct device *dev, DEVPROPKEY *buffer, ULONG *size )
+{
+    LSTATUS err;
+    HKEY hkey;
+
+    if ((err = open_device_key( root, dev, KEY_QUERY_VALUE, TRUE, &hkey ))) return err;
+    err = enum_device_property_keys( hkey, dev, buffer, size );
+    RegCloseKey( hkey );
+
+    return err;
+}
+
 static CRITICAL_SECTION devnode_cs;
 static CRITICAL_SECTION_DEBUG devnode_cs_debug = {
     0, 0, &devnode_cs,
@@ -1649,11 +1695,21 @@ CONFIGRET WINAPI CM_Get_DevNode_PropertyW( DEVINST node, const DEVPROPKEY *key, 
  */
 CONFIGRET WINAPI CM_Get_DevNode_Property_Keys_Ex( DEVINST node, DEVPROPKEY *keys, ULONG *count, ULONG flags, HMACHINE machine )
 {
+    struct device dev;
+    LSTATUS err;
+
     TRACE( "node %#lx, keys %p, count %p, flags %#lx, machine %p\n", node, keys, count, flags, machine );
     if (machine) FIXME( "machine %p not implemented!\n", machine );
     if (flags) FIXME( "flags %#lx not implemented!\n", flags );
 
-    return CR_CALL_NOT_IMPLEMENTED;
+    if (!count) return CR_INVALID_POINTER;
+    if (*count && !keys) return CR_INVALID_POINTER;
+    if (devnode_get_device( node, &dev )) return CR_INVALID_DEVNODE;
+
+    err = get_device_property_keys( HKEY_LOCAL_MACHINE, &dev, keys, count );
+    if (err && err != ERROR_MORE_DATA) *count = 0;
+    if (err == ERROR_FILE_NOT_FOUND) return CR_NO_SUCH_DEVICE_INTERFACE;
+    return map_error( err );
 }
 
 /***********************************************************************
