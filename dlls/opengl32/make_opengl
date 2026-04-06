@@ -1945,6 +1945,7 @@ foreach (sort keys %ext_functions)
     my @exts;
     foreach my $ext (@{$func->[2]})
     {
+        next unless is_exposed_extension( $ext );
         push @exts, $ext;
         foreach my $alias (@{$extension_aliases{$ext}})
         {
