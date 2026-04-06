@@ -28,6 +28,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+#define MAX_IDENTIFIER_LENGTH 255
+
 static int lex_error(parser_ctx_t *ctx, HRESULT hres)
 {
     ctx->hres = hres;
@@ -166,6 +168,9 @@ static int parse_identifier(parser_ctx_t *ctx, const WCHAR **ret)
     while(ctx->ptr < ctx->end && is_identifier_char(*ctx->ptr))
         ctx->ptr++;
     len = ctx->ptr-ptr;
+
+    if(len > MAX_IDENTIFIER_LENGTH)
+        return lex_error(ctx, MAKE_VBSERROR(VBSE_IDENTIFIER_TOO_LONG));
 
     str = parser_alloc(ctx, (len+1)*sizeof(WCHAR));
     if(!str)

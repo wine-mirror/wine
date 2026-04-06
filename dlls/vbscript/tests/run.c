@@ -3218,6 +3218,12 @@ static void test_parse_errors(void)
             "End Class\n",
             2, 11,
             NULL, S_OK, 1037
+        },
+        {
+            /* Identifier too long (256 chars) */
+            L"Dim aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+            0, 260,
+            NULL, S_OK, 1030
         }
     };
     HRESULT hres;

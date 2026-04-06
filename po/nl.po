@@ -4025,11 +4025,11 @@ msgstr "Verwachte ID"
 msgid "Expected '='"
 msgstr "Verwacht '='"
 
-#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:90
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:91
 msgid "Invalid character"
 msgstr "Ongeldig teken"
 
-#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:91
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:92
 msgid "Unterminated string constant"
 msgstr "Onafgesloten tekenreeksconstante"
 
@@ -4073,7 +4073,7 @@ msgstr "Microsoft JScript compilatie fout"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime-fout"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:114
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:115
 msgid "Unknown runtime error"
 msgstr "Onbekende runtime-fout"
 
@@ -13170,115 +13170,121 @@ msgstr "Onafgesloten tekenreeksconstante"
 msgid "Expected 'While', 'Until' or end of statement"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:88
+#: dlls/vbscript/vbscript.rc:89
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'With'"
 msgstr "';' verwacht"
 
-#: dlls/vbscript/vbscript.rc:89
+#: dlls/vbscript/vbscript.rc:88
+#, fuzzy
+#| msgid "Secret too long.\n"
+msgid "Identifier too long"
+msgstr "Geheim te lang.\n"
+
+#: dlls/vbscript/vbscript.rc:90
 #, fuzzy
 #| msgid "Invalid flag number.\n"
 msgid "Invalid number"
 msgstr "Ongeldig vlagnumer.\n"
 
-#: dlls/vbscript/vbscript.rc:92
+#: dlls/vbscript/vbscript.rc:93
 #, fuzzy
 #| msgid "Invalid use of Null"
 msgid "Invalid use of 'Me' keyword"
 msgstr "Ongeldig gebruik van Null"
 
-#: dlls/vbscript/vbscript.rc:93
+#: dlls/vbscript/vbscript.rc:94
 msgid "'loop' without 'do'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:94
+#: dlls/vbscript/vbscript.rc:95
 #, fuzzy
 #| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
 msgstr "Ongeldige printerstatus.\n"
 
-#: dlls/vbscript/vbscript.rc:95
+#: dlls/vbscript/vbscript.rc:96
 #, fuzzy
 #| msgid "Label redefined"
 msgid "Name redefined"
 msgstr "Label hergedefinieerd"
 
-#: dlls/vbscript/vbscript.rc:96
+#: dlls/vbscript/vbscript.rc:97
 msgid "Must be first statement on the line"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:97
+#: dlls/vbscript/vbscript.rc:98
 msgid "Cannot use parentheses when calling a Sub"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:98
+#: dlls/vbscript/vbscript.rc:99
 #, fuzzy
 #| msgid "Expected an operator.\n"
 msgid "Expected literal constant"
 msgstr "Verwacht een operator.\n"
 
-#: dlls/vbscript/vbscript.rc:99
+#: dlls/vbscript/vbscript.rc:100
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'In'"
 msgstr "';' verwacht"
 
-#: dlls/vbscript/vbscript.rc:100
+#: dlls/vbscript/vbscript.rc:101
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Class'"
 msgstr "';' verwacht"
 
-#: dlls/vbscript/vbscript.rc:101
+#: dlls/vbscript/vbscript.rc:102
 msgid "Must be defined inside a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:102
+#: dlls/vbscript/vbscript.rc:103
 msgid "Expected Let or Set or Get in property declaration"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:103
+#: dlls/vbscript/vbscript.rc:104
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Property'"
 msgstr "';' verwacht"
 
-#: dlls/vbscript/vbscript.rc:104
+#: dlls/vbscript/vbscript.rc:105
 msgid "Number of arguments must be consistent across properties specification"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:105
+#: dlls/vbscript/vbscript.rc:106
 msgid "Cannot have multiple default property/method in a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:106
+#: dlls/vbscript/vbscript.rc:107
 msgid "Class initialize or terminate do not have arguments"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:107
+#: dlls/vbscript/vbscript.rc:108
 msgid "Property set or let must have at least one argument"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:108
+#: dlls/vbscript/vbscript.rc:109
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
 msgstr "';' verwacht"
 
-#: dlls/vbscript/vbscript.rc:109
+#: dlls/vbscript/vbscript.rc:110
 msgid "'Default' specification must also specify 'Public'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:110
+#: dlls/vbscript/vbscript.rc:111
 msgid "'Default' specification can only be on Property Get"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:112
+#: dlls/vbscript/vbscript.rc:113
 msgid "Microsoft VBScript compilation error"
 msgstr "Compilatiefout Microsoft VBScript"
 
-#: dlls/vbscript/vbscript.rc:113
+#: dlls/vbscript/vbscript.rc:114
 msgid "Microsoft VBScript runtime error"
 msgstr "Runtimefout Microsoft VBScript"
 
