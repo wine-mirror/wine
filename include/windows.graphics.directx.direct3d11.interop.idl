@@ -15,7 +15,7 @@
  */
 
 #ifdef __WIDL__
-#pragma winrt ns_prefix
+#pragma winrt
 #endif
 
 import "dxgi.idl";
