@@ -193,6 +193,7 @@ HRESULT d3d_video_decoder_create(struct d3d_device *device, const D3D11_VIDEO_DE
         else if (config->ConfigBitstreamRaw != 2)
         {
             FIXME("Unsupported ConfigBitstreamRaw value %u.\n", config->ConfigBitstreamRaw);
+            free(object);
             return E_NOTIMPL;
         }
     }
