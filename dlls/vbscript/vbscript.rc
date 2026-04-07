@@ -32,6 +32,7 @@ STRINGTABLE
     VBSE_ARRAY_LOCKED                  "This array is fixed or temporarily locked"
     VBSE_DIVISION_BY_ZERO              "Division by zero"
     VBSE_TYPE_MISMATCH                 "Type mismatch"
+    VBSE_OUT_OF_STACK                  "Out of stack space"
     VBSE_FILE_NOT_FOUND                "File not found"
     VBSE_IO_ERROR                      "Device I/O error"
     VBSE_FILE_ALREADY_EXISTS           "File already exists"

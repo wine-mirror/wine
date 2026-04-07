@@ -211,6 +211,7 @@ struct _script_ctx_t {
 
     exec_ctx_t *current_exec;
     exec_ctx_t *caller_exec;
+    unsigned call_depth;
 
     EXCEPINFO ei;
     vbscode_t *error_loc_code;

@@ -25,6 +25,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static DISPID propput_dispid = DISPID_PROPERTYPUT;
+static const unsigned max_call_depth = 1024;
 
 typedef struct _exec_ctx_t {
     vbscode_t *code;
@@ -2700,6 +2701,11 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     vbsop_t op;
     HRESULT hres = S_OK;
 
+    if(!extern_caller && ctx->call_depth++ >= max_call_depth) {
+        ctx->call_depth--;
+        return MAKE_VBSERROR(VBSE_OUT_OF_STACK);
+    }
+
     exec.code = func->code_ctx;
     exec.caller = ctx->caller_exec;
     ctx->caller_exec = NULL;
@@ -2858,6 +2864,8 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     }
 
     ctx->current_named_item = prev_named_item;
+    if(!extern_caller)
+        ctx->call_depth--;
     release_exec(&exec);
     return hres;
 }

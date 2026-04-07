@@ -1001,7 +1001,7 @@ msgstr "Имя файла:"
 msgid "Files of type:"
 msgstr "Файлы типа:"
 
-#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:36
+#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:37
 msgid "File not found"
 msgstr "Файл не найден"
 
@@ -4001,11 +4001,11 @@ msgstr "Неверный вызов процедуры или аргумент"
 msgid "Subscript out of range"
 msgstr "Индекс вне диапазона"
 
-#: dlls/jscript/jscript.rc:31
+#: dlls/jscript/jscript.rc:31 dlls/vbscript/vbscript.rc:36
 msgid "Out of stack space"
 msgstr "Превышен размер стека"
 
-#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:48
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:49
 msgid "Object required"
 msgstr "Требуется объект"
 
@@ -4013,25 +4013,25 @@ msgstr "Требуется объект"
 msgid "Automation server can't create object"
 msgstr "Сервер автоматизации не может создать объект"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:52
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support this property or method"
 msgstr "Объект не поддерживает это свойство или метод"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:53
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:54
 msgid "Object doesn't support this action"
 msgstr "Объект не поддерживает это действие"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:57
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:58
 msgid "Argument not optional"
 msgstr "Отсутствует обязательный аргумент"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:59
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:60
 #, fuzzy
 #| msgid "Object Class Violation"
 msgid "Object not a collection"
 msgstr "Нарушение класса объекта"
 
-#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:68
+#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:69
 msgid "Syntax error"
 msgstr "Синтаксическая ошибка"
 
@@ -4039,27 +4039,27 @@ msgstr "Синтаксическая ошибка"
 msgid "Expected ';'"
 msgstr "Ожидается «;»"
 
-#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:69
+#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:70
 msgid "Expected '('"
 msgstr "Ожидается «(»"
 
-#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:71
+#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:72
 msgid "Expected ')'"
 msgstr "Ожидается «)»"
 
-#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:72
+#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:73
 msgid "Expected identifier"
 msgstr "Ожидается идентификатор"
 
-#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:73
+#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:74
 msgid "Expected '='"
 msgstr "Ожидается «=»"
 
-#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:92
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:93
 msgid "Invalid character"
 msgstr "Неверный символ"
 
-#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:93
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:94
 msgid "Unterminated string constant"
 msgstr "Незавершённая строковая константа"
 
@@ -4103,7 +4103,7 @@ msgstr "Ошибка компиляции Microsoft JScript"
 msgid "Microsoft JScript runtime error"
 msgstr "Ошибка выполнения Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:116
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:117
 msgid "Unknown runtime error"
 msgstr "Неизвестная ошибка времени выполнения"
 
@@ -4129,7 +4129,7 @@ msgstr "«[object]» не объект типа «date»"
 msgid "Object expected"
 msgstr "Ожидается объект"
 
-#: dlls/jscript/jscript.rc:59 dlls/vbscript/vbscript.rc:65
+#: dlls/jscript/jscript.rc:59 dlls/vbscript/vbscript.rc:66
 msgid "Illegal assignment"
 msgstr "Неверное присваивание"
 
@@ -13304,321 +13304,321 @@ msgstr "Ошибка деления на ноль.\n"
 msgid "Type mismatch"
 msgstr "Несовпадение типов"
 
-#: dlls/vbscript/vbscript.rc:37
+#: dlls/vbscript/vbscript.rc:38
 msgid "Device I/O error"
 msgstr "Ошибка ввода/вывода на устройстве"
 
-#: dlls/vbscript/vbscript.rc:38
+#: dlls/vbscript/vbscript.rc:39
 msgid "File already exists"
 msgstr "Файл уже существует"
 
-#: dlls/vbscript/vbscript.rc:39
+#: dlls/vbscript/vbscript.rc:40
 msgid "Disk full"
 msgstr "Диск заполнен"
 
-#: dlls/vbscript/vbscript.rc:40
+#: dlls/vbscript/vbscript.rc:41
 msgid "Too many files"
 msgstr "Слишком много файлов"
 
-#: dlls/vbscript/vbscript.rc:41
+#: dlls/vbscript/vbscript.rc:42
 msgid "Permission denied"
 msgstr "Доступ запрещён"
 
-#: dlls/vbscript/vbscript.rc:42
+#: dlls/vbscript/vbscript.rc:43
 msgid "Path/File access error"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:43
+#: dlls/vbscript/vbscript.rc:44
 msgid "Path not found"
 msgstr "Путь не найден"
 
-#: dlls/vbscript/vbscript.rc:44
+#: dlls/vbscript/vbscript.rc:45
 msgid "Object variable not set"
 msgstr "Значение переменной (значение не задано)"
 
-#: dlls/vbscript/vbscript.rc:45
+#: dlls/vbscript/vbscript.rc:46
 #, fuzzy
 #| msgid "Object is not initialized.\n"
 msgid "For loop not initialized"
 msgstr "Объект не инициализирован.\n"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "Invalid use of Null"
 msgstr "Некорректное использование Null"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "Can't create necessary temporary file"
 msgstr "Не удалось создать временный файл"
 
-#: dlls/vbscript/vbscript.rc:49
+#: dlls/vbscript/vbscript.rc:50
 msgid "ActiveX component can't create object"
 msgstr "Компонент ActiveX не смог создать объект"
 
-#: dlls/vbscript/vbscript.rc:50
+#: dlls/vbscript/vbscript.rc:51
 msgid "Class doesn't support Automation"
 msgstr "Класс не поддерживает автоматизацию"
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 msgid "File name or class name not found during Automation operation"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:55
 msgid "Object doesn't support named arguments"
 msgstr "Объект не поддерживает именованные аргументы"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Object doesn't support current locale setting"
 msgstr "Объект не поддерживает выбор локали"
 
-#: dlls/vbscript/vbscript.rc:56
+#: dlls/vbscript/vbscript.rc:57
 msgid "Named argument not found"
 msgstr "Именованный аргумент не найден"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:61
+#: dlls/vbscript/vbscript.rc:62
 msgid "Specified DLL function not found"
 msgstr "Указанная функция не найдена в библиотеке"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "This key is already associated with an element of this collection"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "The remote server machine does not exist or is unavailable"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:64
+#: dlls/vbscript/vbscript.rc:65
 #, fuzzy
 #| msgid "'|' is undefined"
 msgid "Variable is undefined"
 msgstr "«|» не определён"
 
-#: dlls/vbscript/vbscript.rc:66
+#: dlls/vbscript/vbscript.rc:67
 msgid "Invalid or unqualified reference"
 msgstr "Некорректная или неполная ссылка"
 
-#: dlls/vbscript/vbscript.rc:67
+#: dlls/vbscript/vbscript.rc:68
 #, fuzzy
 #| msgid "Class does not exist.\n"
 msgid "Class not defined"
 msgstr "Класс не существует.\n"
 
-#: dlls/vbscript/vbscript.rc:70
+#: dlls/vbscript/vbscript.rc:71
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected ']'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:74
+#: dlls/vbscript/vbscript.rc:75
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'If'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:75
+#: dlls/vbscript/vbscript.rc:76
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'To'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:76
+#: dlls/vbscript/vbscript.rc:77
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'End'"
 msgstr "Ожидается «@end»"
 
-#: dlls/vbscript/vbscript.rc:77
+#: dlls/vbscript/vbscript.rc:78
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Function'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:78
+#: dlls/vbscript/vbscript.rc:79
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Sub'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:79
+#: dlls/vbscript/vbscript.rc:80
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'Then'"
 msgstr "Ожидается «@end»"
 
-#: dlls/vbscript/vbscript.rc:80
+#: dlls/vbscript/vbscript.rc:81
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'Wend'"
 msgstr "Ожидается «@end»"
 
-#: dlls/vbscript/vbscript.rc:81
+#: dlls/vbscript/vbscript.rc:82
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Loop'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:82
+#: dlls/vbscript/vbscript.rc:83
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Next'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:83
+#: dlls/vbscript/vbscript.rc:84
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Case'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:84
+#: dlls/vbscript/vbscript.rc:85
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Select'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:85
+#: dlls/vbscript/vbscript.rc:86
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected statement"
 msgstr "Ожидается «@end»"
 
-#: dlls/vbscript/vbscript.rc:86
+#: dlls/vbscript/vbscript.rc:87
 #, fuzzy
 #| msgid "Expected an operand.\n"
 msgid "Expected end of statement"
 msgstr "Ожидается операнд.\n"
 
-#: dlls/vbscript/vbscript.rc:87
+#: dlls/vbscript/vbscript.rc:88
 #, fuzzy
 #| msgid "Unterminated string constant"
 msgid "Expected integer constant"
 msgstr "Незавершённая строковая константа"
 
-#: dlls/vbscript/vbscript.rc:88
+#: dlls/vbscript/vbscript.rc:89
 msgid "Expected 'While', 'Until' or end of statement"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:90
+#: dlls/vbscript/vbscript.rc:91
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'With'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:89
+#: dlls/vbscript/vbscript.rc:90
 #, fuzzy
 #| msgid "Secret too long.\n"
 msgid "Identifier too long"
 msgstr "Слишком длинные секретные данные.\n"
 
-#: dlls/vbscript/vbscript.rc:91
+#: dlls/vbscript/vbscript.rc:92
 #, fuzzy
 #| msgid "Invalid flag number.\n"
 msgid "Invalid number"
 msgstr "Неверный номер флага.\n"
 
-#: dlls/vbscript/vbscript.rc:94
+#: dlls/vbscript/vbscript.rc:95
 #, fuzzy
 #| msgid "Invalid use of Null"
 msgid "Invalid use of 'Me' keyword"
 msgstr "Некорректное использование Null"
 
-#: dlls/vbscript/vbscript.rc:95
+#: dlls/vbscript/vbscript.rc:96
 msgid "'loop' without 'do'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:96
+#: dlls/vbscript/vbscript.rc:97
 #, fuzzy
 #| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
 msgstr "Неверное состояние принтера.\n"
 
-#: dlls/vbscript/vbscript.rc:97
+#: dlls/vbscript/vbscript.rc:98
 #, fuzzy
 #| msgid "Label redefined"
 msgid "Name redefined"
 msgstr "Метка переопределена"
 
-#: dlls/vbscript/vbscript.rc:98
+#: dlls/vbscript/vbscript.rc:99
 msgid "Must be first statement on the line"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:99
+#: dlls/vbscript/vbscript.rc:100
 msgid "Cannot use parentheses when calling a Sub"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:100
+#: dlls/vbscript/vbscript.rc:101
 #, fuzzy
 #| msgid "Expected an operator.\n"
 msgid "Expected literal constant"
 msgstr "Ожидается оператор.\n"
 
-#: dlls/vbscript/vbscript.rc:101
+#: dlls/vbscript/vbscript.rc:102
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'In'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:102
+#: dlls/vbscript/vbscript.rc:103
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Class'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:103
+#: dlls/vbscript/vbscript.rc:104
 msgid "Must be defined inside a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:104
+#: dlls/vbscript/vbscript.rc:105
 msgid "Expected Let or Set or Get in property declaration"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:105
+#: dlls/vbscript/vbscript.rc:106
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Property'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:106
+#: dlls/vbscript/vbscript.rc:107
 msgid "Number of arguments must be consistent across properties specification"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:107
+#: dlls/vbscript/vbscript.rc:108
 msgid "Cannot have multiple default property/method in a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:108
+#: dlls/vbscript/vbscript.rc:109
 msgid "Class initialize or terminate do not have arguments"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:109
+#: dlls/vbscript/vbscript.rc:110
 msgid "Property set or let must have at least one argument"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:110
+#: dlls/vbscript/vbscript.rc:111
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
 msgstr "Ожидается «;»"
 
-#: dlls/vbscript/vbscript.rc:111
+#: dlls/vbscript/vbscript.rc:112
 msgid "'Default' specification must also specify 'Public'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:112
+#: dlls/vbscript/vbscript.rc:113
 msgid "'Default' specification can only be on Property Get"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:114
+#: dlls/vbscript/vbscript.rc:115
 msgid "Microsoft VBScript compilation error"
 msgstr "Ошибка компиляции Microsoft VBScript"
 
-#: dlls/vbscript/vbscript.rc:115
+#: dlls/vbscript/vbscript.rc:116
 msgid "Microsoft VBScript runtime error"
 msgstr "Ошибка выполнения Microsoft VBScript"
 

@@ -2955,6 +2955,36 @@ function recursingfunction2
 end function
 call ok(recursingfunction2() = 1, "unexpected return value " & recursingfunction2())
 
+Dim recursionDepth
+recursionDepth = 0
+Sub RecurseN(n)
+    recursionDepth = recursionDepth + 1
+    If n > 1 Then RecurseN n - 1
+End Sub
+RecurseN 100
+Call ok(recursionDepth = 100, "recursion depth: " & recursionDepth & " expected 100")
+
+Sub RecurseForever()
+    RecurseForever
+End Sub
+
+Sub MutualA()
+    MutualB
+End Sub
+Sub MutualB()
+    MutualA
+End Sub
+
+On Error Resume Next
+Err.Clear
+MutualA
+Call ok(Err.Number = 28, "mutual recursion: err.number = " & Err.Number)
+
+Err.Clear
+RecurseForever
+Call ok(Err.Number = 28, "infinite recursion: err.number = " & Err.Number)
+On Error GoTo 0
+
 function f2(x,y)
 end function
 

@@ -993,7 +993,7 @@ msgstr "ფაილის სახელი:"
 msgid "Files of type:"
 msgstr "ტიპები:"
 
-#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:36
+#: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:37
 msgid "File not found"
 msgstr "ფაილი ვერ მოიძებნა"
 
@@ -3972,11 +3972,11 @@ msgstr "აარასწორი პროცედურის გამო�
 msgid "Subscript out of range"
 msgstr "ინდექსი დიაპაზონს გარეთაა"
 
-#: dlls/jscript/jscript.rc:31
+#: dlls/jscript/jscript.rc:31 dlls/vbscript/vbscript.rc:36
 msgid "Out of stack space"
 msgstr "სტეკის სივრცე გადაივსო"
 
-#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:48
+#: dlls/jscript/jscript.rc:32 dlls/vbscript/vbscript.rc:49
 msgid "Object required"
 msgstr "ობიექტი მიღებულია"
 
@@ -3984,23 +3984,23 @@ msgstr "ობიექტი მიღებულია"
 msgid "Automation server can't create object"
 msgstr "ავტომატიზაციის სერვერს ობიექტის შექმნა არ შეუძლია"
 
-#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:52
+#: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:53
 msgid "Object doesn't support this property or method"
 msgstr "ობიექტს თვისების ან მეთოდის მხარდაჭერა არ გააჩნია"
 
-#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:53
+#: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:54
 msgid "Object doesn't support this action"
 msgstr "ობიექტს ამ ქმედების მხარდაჭერა არ გააჩნია"
 
-#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:57
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:58
 msgid "Argument not optional"
 msgstr "არგუმენტი არასავალდებულო არაა"
 
-#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:59
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:60
 msgid "Object not a collection"
 msgstr "ობიექტი კოლექცია არაა"
 
-#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:68
+#: dlls/jscript/jscript.rc:38 dlls/vbscript/vbscript.rc:69
 msgid "Syntax error"
 msgstr "სინტაქსური შეცდომა"
 
@@ -4008,27 +4008,27 @@ msgstr "სინტაქსური შეცდომა"
 msgid "Expected ';'"
 msgstr "მოველოდი ';'"
 
-#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:69
+#: dlls/jscript/jscript.rc:40 dlls/vbscript/vbscript.rc:70
 msgid "Expected '('"
 msgstr "მოველოდი '('"
 
-#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:71
+#: dlls/jscript/jscript.rc:41 dlls/vbscript/vbscript.rc:72
 msgid "Expected ')'"
 msgstr "მოველოდი ')'"
 
-#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:72
+#: dlls/jscript/jscript.rc:42 dlls/vbscript/vbscript.rc:73
 msgid "Expected identifier"
 msgstr "მოველოდი იდენტიფიკატორს"
 
-#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:73
+#: dlls/jscript/jscript.rc:43 dlls/vbscript/vbscript.rc:74
 msgid "Expected '='"
 msgstr "მოველოდი '='"
 
-#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:92
+#: dlls/jscript/jscript.rc:44 dlls/vbscript/vbscript.rc:93
 msgid "Invalid character"
 msgstr "არასწორი სიმბოლო"
 
-#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:93
+#: dlls/jscript/jscript.rc:45 dlls/vbscript/vbscript.rc:94
 msgid "Unterminated string constant"
 msgstr "დაუსრულებელი სტრიქონი კონსტანტა"
 
@@ -4072,7 +4072,7 @@ msgstr "Microsoft JScript აგების შეცდომა"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript გაშვების გარემოს შეცდომა"
 
-#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:116
+#: dlls/jscript/jscript.rc:99 dlls/vbscript/vbscript.rc:117
 msgid "Unknown runtime error"
 msgstr "უცნობი გაშვების გარემოს შეცდომა"
 
@@ -4098,7 +4098,7 @@ msgstr "'[object]' თარიღის ობიექტი არაა"
 msgid "Object expected"
 msgstr "მოველოდი ობიექტს"
 
-#: dlls/jscript/jscript.rc:59 dlls/vbscript/vbscript.rc:65
+#: dlls/jscript/jscript.rc:59 dlls/vbscript/vbscript.rc:66
 msgid "Illegal assignment"
 msgstr "დაუშვებელი მინიჭება"
 
@@ -12933,322 +12933,322 @@ msgstr "ნულზე გაყოფის შეცდომა.\n"
 msgid "Type mismatch"
 msgstr "ტიპი არ ემთხვევა"
 
-#: dlls/vbscript/vbscript.rc:37
+#: dlls/vbscript/vbscript.rc:38
 msgid "Device I/O error"
 msgstr "მოწყობილობის შეტანა/გამოტანის შეცდომა"
 
-#: dlls/vbscript/vbscript.rc:38
+#: dlls/vbscript/vbscript.rc:39
 msgid "File already exists"
 msgstr "ფაილი უკვე არსებობს"
 
-#: dlls/vbscript/vbscript.rc:39
+#: dlls/vbscript/vbscript.rc:40
 msgid "Disk full"
 msgstr "დისკი გადავსებულია"
 
-#: dlls/vbscript/vbscript.rc:40
+#: dlls/vbscript/vbscript.rc:41
 msgid "Too many files"
 msgstr "მეტისმეტად ბევრი გახსნილი ფაილი"
 
-#: dlls/vbscript/vbscript.rc:41
+#: dlls/vbscript/vbscript.rc:42
 msgid "Permission denied"
 msgstr "წვდომა აკრძალულია"
 
-#: dlls/vbscript/vbscript.rc:42
+#: dlls/vbscript/vbscript.rc:43
 msgid "Path/File access error"
 msgstr "ბილიკთან/ფაილთან წვდომის შეცდომა"
 
-#: dlls/vbscript/vbscript.rc:43
+#: dlls/vbscript/vbscript.rc:44
 msgid "Path not found"
 msgstr "ბილიკი ვერ ვიპოვე"
 
-#: dlls/vbscript/vbscript.rc:44
+#: dlls/vbscript/vbscript.rc:45
 msgid "Object variable not set"
 msgstr "ობიექტის ცვლადი დაყენებული არაა"
 
-#: dlls/vbscript/vbscript.rc:45
+#: dlls/vbscript/vbscript.rc:46
 #, fuzzy
 #| msgid "Object is not initialized.\n"
 msgid "For loop not initialized"
 msgstr "ობიექტი ინიციალიზებული არაა.\n"
 
-#: dlls/vbscript/vbscript.rc:46
+#: dlls/vbscript/vbscript.rc:47
 msgid "Invalid use of Null"
 msgstr "ნულოვანი მნიშვნელობის არასწორი გამოყენება"
 
-#: dlls/vbscript/vbscript.rc:47
+#: dlls/vbscript/vbscript.rc:48
 msgid "Can't create necessary temporary file"
 msgstr "საჭირო დროებით ფაილის შექმნის შეცდომა"
 
-#: dlls/vbscript/vbscript.rc:49
+#: dlls/vbscript/vbscript.rc:50
 msgid "ActiveX component can't create object"
 msgstr "ActiveX კომპონენტს ობიექტის შექმნა არ შეუძლია"
 
-#: dlls/vbscript/vbscript.rc:50
+#: dlls/vbscript/vbscript.rc:51
 msgid "Class doesn't support Automation"
 msgstr "კლასს ავტომატიზაცის მხარდაჭერა არ გააჩნია"
 
-#: dlls/vbscript/vbscript.rc:51
+#: dlls/vbscript/vbscript.rc:52
 msgid "File name or class name not found during Automation operation"
 msgstr "ფაილის ან კლასის სახელი ავტომატიზაციის ოპერაციისას აღმოჩენილი არაა"
 
-#: dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:55
 msgid "Object doesn't support named arguments"
 msgstr "ობიექტს სახელიანი არგუმენტების მხარდაჭერა არ გააჩნია"
 
-#: dlls/vbscript/vbscript.rc:55
+#: dlls/vbscript/vbscript.rc:56
 msgid "Object doesn't support current locale setting"
 msgstr "ობიექტს მიმდინარე ენის პარამეტრის მხარდაჭერა არ გააჩნია"
 
-#: dlls/vbscript/vbscript.rc:56
+#: dlls/vbscript/vbscript.rc:57
 msgid "Named argument not found"
 msgstr "მითითებული არგუმენტი ვერ ვიპოვე"
 
-#: dlls/vbscript/vbscript.rc:58
+#: dlls/vbscript/vbscript.rc:59
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr "არგუმენტების არასწორი რაოდენობა ან არასწორი თვისების მინიჭება"
 
-#: dlls/vbscript/vbscript.rc:61
+#: dlls/vbscript/vbscript.rc:62
 msgid "Specified DLL function not found"
 msgstr "მითითებული DLL-ის ფუნქცია ვერ ვიპოვე"
 
-#: dlls/vbscript/vbscript.rc:60
+#: dlls/vbscript/vbscript.rc:61
 msgid "This key is already associated with an element of this collection"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:62
+#: dlls/vbscript/vbscript.rc:63
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
 "ცვლადი იყენებს ავტომატიზაციის ტიპს, რომელიც VBScript-ში მარდაჭერილი არაა"
 
-#: dlls/vbscript/vbscript.rc:63
+#: dlls/vbscript/vbscript.rc:64
 msgid "The remote server machine does not exist or is unavailable"
 msgstr "დაშორებული სერვერის მანქანა არ არსებობს ან ხელმიუწვდომელია"
 
-#: dlls/vbscript/vbscript.rc:64
+#: dlls/vbscript/vbscript.rc:65
 #, fuzzy
 #| msgid "'|' is undefined"
 msgid "Variable is undefined"
 msgstr "'|' აღწერილი არაა"
 
-#: dlls/vbscript/vbscript.rc:66
+#: dlls/vbscript/vbscript.rc:67
 msgid "Invalid or unqualified reference"
 msgstr "არასწორი ან შეუსაბამო მიმართვა"
 
-#: dlls/vbscript/vbscript.rc:67
+#: dlls/vbscript/vbscript.rc:68
 #, fuzzy
 #| msgid "Class does not exist.\n"
 msgid "Class not defined"
 msgstr "კლასი არ არსებობს.\n"
 
-#: dlls/vbscript/vbscript.rc:70
+#: dlls/vbscript/vbscript.rc:71
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected ']'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:74
+#: dlls/vbscript/vbscript.rc:75
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'If'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:75
+#: dlls/vbscript/vbscript.rc:76
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'To'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:76
+#: dlls/vbscript/vbscript.rc:77
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'End'"
 msgstr "მოველოდი '@end'"
 
-#: dlls/vbscript/vbscript.rc:77
+#: dlls/vbscript/vbscript.rc:78
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Function'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:78
+#: dlls/vbscript/vbscript.rc:79
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Sub'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:79
+#: dlls/vbscript/vbscript.rc:80
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'Then'"
 msgstr "მოველოდი '@end'"
 
-#: dlls/vbscript/vbscript.rc:80
+#: dlls/vbscript/vbscript.rc:81
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected 'Wend'"
 msgstr "მოველოდი '@end'"
 
-#: dlls/vbscript/vbscript.rc:81
+#: dlls/vbscript/vbscript.rc:82
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Loop'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:82
+#: dlls/vbscript/vbscript.rc:83
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Next'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:83
+#: dlls/vbscript/vbscript.rc:84
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Case'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:84
+#: dlls/vbscript/vbscript.rc:85
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Select'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:85
+#: dlls/vbscript/vbscript.rc:86
 #, fuzzy
 #| msgid "Expected '@end'"
 msgid "Expected statement"
 msgstr "მოველოდი '@end'"
 
-#: dlls/vbscript/vbscript.rc:86
+#: dlls/vbscript/vbscript.rc:87
 #, fuzzy
 #| msgid "Expected an operand.\n"
 msgid "Expected end of statement"
 msgstr "მოველოდი ოპერანდს.\n"
 
-#: dlls/vbscript/vbscript.rc:87
+#: dlls/vbscript/vbscript.rc:88
 #, fuzzy
 #| msgid "Unterminated string constant"
 msgid "Expected integer constant"
 msgstr "დაუსრულებელი სტრიქონი კონსტანტა"
 
-#: dlls/vbscript/vbscript.rc:88
+#: dlls/vbscript/vbscript.rc:89
 msgid "Expected 'While', 'Until' or end of statement"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:90
+#: dlls/vbscript/vbscript.rc:91
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'With'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:89
+#: dlls/vbscript/vbscript.rc:90
 #, fuzzy
 #| msgid "Secret too long.\n"
 msgid "Identifier too long"
 msgstr "საიდუმლო მეტისმეტად გრძელია.\n"
 
-#: dlls/vbscript/vbscript.rc:91
+#: dlls/vbscript/vbscript.rc:92
 #, fuzzy
 #| msgid "Invalid flag number.\n"
 msgid "Invalid number"
 msgstr "ალმის ნომერი არასწორია.\n"
 
-#: dlls/vbscript/vbscript.rc:94
+#: dlls/vbscript/vbscript.rc:95
 #, fuzzy
 #| msgid "Invalid use of Null"
 msgid "Invalid use of 'Me' keyword"
 msgstr "ნულოვანი მნიშვნელობის არასწორი გამოყენება"
 
-#: dlls/vbscript/vbscript.rc:95
+#: dlls/vbscript/vbscript.rc:96
 msgid "'loop' without 'do'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:96
+#: dlls/vbscript/vbscript.rc:97
 #, fuzzy
 #| msgid "Invalid printer state.\n"
 msgid "Invalid 'exit' statement"
 msgstr "არასწორი პრინტერის მდგომარეობა.\n"
 
-#: dlls/vbscript/vbscript.rc:97
+#: dlls/vbscript/vbscript.rc:98
 #, fuzzy
 #| msgid "Label redefined"
 msgid "Name redefined"
 msgstr "ჭდე თავიდან აღიწერა"
 
-#: dlls/vbscript/vbscript.rc:98
+#: dlls/vbscript/vbscript.rc:99
 msgid "Must be first statement on the line"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:99
+#: dlls/vbscript/vbscript.rc:100
 msgid "Cannot use parentheses when calling a Sub"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:100
+#: dlls/vbscript/vbscript.rc:101
 #, fuzzy
 #| msgid "Expected an operator.\n"
 msgid "Expected literal constant"
 msgstr "მოველოდი ოპერატორს.\n"
 
-#: dlls/vbscript/vbscript.rc:101
+#: dlls/vbscript/vbscript.rc:102
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'In'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:102
+#: dlls/vbscript/vbscript.rc:103
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Class'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:103
+#: dlls/vbscript/vbscript.rc:104
 msgid "Must be defined inside a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:104
+#: dlls/vbscript/vbscript.rc:105
 msgid "Expected Let or Set or Get in property declaration"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:105
+#: dlls/vbscript/vbscript.rc:106
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected 'Property'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:106
+#: dlls/vbscript/vbscript.rc:107
 msgid "Number of arguments must be consistent across properties specification"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:107
+#: dlls/vbscript/vbscript.rc:108
 msgid "Cannot have multiple default property/method in a Class"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:108
+#: dlls/vbscript/vbscript.rc:109
 msgid "Class initialize or terminate do not have arguments"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:109
+#: dlls/vbscript/vbscript.rc:110
 msgid "Property set or let must have at least one argument"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:110
+#: dlls/vbscript/vbscript.rc:111
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Unexpected 'Next'"
 msgstr "მოველოდი ';'"
 
-#: dlls/vbscript/vbscript.rc:111
+#: dlls/vbscript/vbscript.rc:112
 msgid "'Default' specification must also specify 'Public'"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:112
+#: dlls/vbscript/vbscript.rc:113
 msgid "'Default' specification can only be on Property Get"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:114
+#: dlls/vbscript/vbscript.rc:115
 msgid "Microsoft VBScript compilation error"
 msgstr "Microsoft VBScript აგების შეცდომა"
 
-#: dlls/vbscript/vbscript.rc:115
+#: dlls/vbscript/vbscript.rc:116
 msgid "Microsoft VBScript runtime error"
 msgstr "Microsoft VBScript გაშვების გარემოს შეცდომა"
 
