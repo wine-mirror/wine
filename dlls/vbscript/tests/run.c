@@ -2742,7 +2742,7 @@ static void test_parse_errors(void)
     static const struct
     {
         const WCHAR *src;
-        unsigned error_line;
+        int error_line;
         int error_char;
         const WCHAR *source_line;
         HRESULT source_line_hres;
@@ -3122,6 +3122,80 @@ static void test_parse_errors(void)
             L"\x00e9var = 1\n",
             0, 0,
             NULL, S_OK, 1032
+        },
+        {
+            /* Expected ')' - error 1006 */
+            L"x = (1 + 2\n",
+            0, 10,
+            NULL, S_OK, -1006
+        },
+        {
+            /* Expected 'If' - End With inside If block - error 1012 */
+            L"If True Then\n"
+            "  x = 1\n"
+            "End With\n",
+            2, 4,
+            NULL, S_OK, -1012
+        },
+        {
+            /* Expected 'Function' - End Sub inside Function - error 1015 */
+            L"Function F()\n"
+            "End Sub\n",
+            1, 4,
+            NULL, S_OK, -1015
+        },
+        {
+            /* Expected 'Sub' - End Function inside Sub - error 1016 */
+            L"Sub S()\n"
+            "End Function\n",
+            1, 4,
+            NULL, S_OK, -1016
+        },
+        {
+            /* Expected 'Select' - End If inside Select block - error 1022 */
+            L"Select Case 1\n"
+            "  Case 1\n"
+            "End If\n",
+            2, 4,
+            NULL, S_OK, -1022
+        },
+        {
+            /* Expected 'With' - End Sub inside With block - error 1029 */
+            L"With CreateObject(\"Scripting.Dictionary\")\n"
+            "End Sub\n",
+            1, 4,
+            NULL, S_OK, -1029
+        },
+        {
+            /* Expected 'Property' - End Sub inside Property Get - error 1050 */
+            L"Class C\n"
+            "  Property Get P()\n"
+            "  End Sub\n"
+            "End Class\n",
+            2, 6,
+            NULL, S_OK, -1050
+        },
+        {
+            /* Multiple default members - error 1052 */
+            L"Class C\n"
+            "  Public Default Function F()\n"
+            "    F = 1\n"
+            "  End Function\n"
+            "  Public Default Function G()\n"
+            "    G = 2\n"
+            "  End Function\n"
+            "End Class\n",
+            -4, -17,
+            NULL, S_OK, -1052
+        },
+        {
+            /* Default only on Property Get - error 1058 */
+            L"Class C\n"
+            "  Public Default Property Let P(v)\n"
+            "  End Property\n"
+            "End Class\n",
+            -1, -26,
+            NULL, S_OK, -1058
         }
     };
     HRESULT hres;
@@ -3139,7 +3213,8 @@ static void test_parse_errors(void)
         ok(hres == SCRIPT_E_REPORTED, "[%u] script returned: %08lx\n", i, hres);
         CHECK_CALLED(OnScriptError);
 
-        ok(error_line == invalid_scripts[i].error_line, "[%u] error line %lu expected %u\n",
+        todo_wine_if(invalid_scripts[i].error_line < 0)
+        ok(error_line == abs(invalid_scripts[i].error_line), "[%u] error line %lu expected %d\n",
            i, error_line, invalid_scripts[i].error_line);
         todo_wine_if(invalid_scripts[i].error_char < 0)
         ok(error_char == abs(invalid_scripts[i].error_char), "[%u] error char %ld expected %d\n",
