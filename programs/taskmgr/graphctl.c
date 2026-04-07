@@ -108,6 +108,26 @@ static void GraphCtrl_Init(TGraphCtrl* this)
 
 static void GraphCtrl_Resize(TGraphCtrl* this)
 {
+    /*  clean up existing GDI handles */
+    if (this->m_dcGrid != NULL)
+    {
+        SelectObject(this->m_dcGrid, this->m_bitmapOldGrid);
+        DeleteObject(this->m_bitmapGrid);
+        DeleteDC(this->m_dcGrid);
+        this->m_bitmapOldGrid = NULL;
+        this->m_bitmapGrid = NULL;
+        this->m_dcGrid = NULL;
+    }
+    if (this->m_dcPlot != NULL)
+    {
+        SelectObject(this->m_dcPlot, this->m_bitmapOldPlot);
+        DeleteObject(this->m_bitmapPlot);
+        DeleteDC(this->m_dcPlot);
+        this->m_bitmapOldPlot = NULL;
+        this->m_bitmapPlot = NULL;
+        this->m_dcPlot = NULL;
+    }
+
     /*  NOTE: Resize automatically gets called during the setup of the control */
     GetClientRect(this->m_hWnd, &this->m_rectClient);
 
@@ -143,7 +163,6 @@ static void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
     /*  to a bitmap.  The result is then BitBlt'd to the control whenever needed. */
     int i, j;
     int nCharacters;
-    int nTopGridPix, nMidGridPix, nBottomGridPix;
 
     HPEN oldPen;
     HPEN solidPen = CreatePen(PS_SOLID, 0, this->m_crGridColor);
@@ -196,15 +215,13 @@ static void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)
      *  use SetPixel instead of a dotted pen - this allows for a 
      *  finer dotted line and a more "technical" look
      */
-    nMidGridPix    = (this->m_rectPlot.top + this->m_rectPlot.bottom)/2;
-    nTopGridPix    = nMidGridPix - this->m_nPlotHeight/4;
-    nBottomGridPix = nMidGridPix + this->m_nPlotHeight/4;
 
     for (i=this->m_rectPlot.left; i<this->m_rectPlot.right; i+=2) 
     {
-        SetPixel(this->m_dcGrid, i, nTopGridPix,    this->m_crGridColor);
-        SetPixel(this->m_dcGrid, i, nMidGridPix,    this->m_crGridColor);
-        SetPixel(this->m_dcGrid, i, nBottomGridPix, this->m_crGridColor);
+        for (j=this->m_rectPlot.bottom; j>=this->m_rectPlot.top; j-=10)
+        {
+            SetPixel(this->m_dcGrid, i, j, this->m_crGridColor);
+        }
     }
 
     for (i=this->m_rectPlot.left; i<this->m_rectPlot.right; i+=10)
