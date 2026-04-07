@@ -9134,6 +9134,28 @@ static void test_ddrawstream_mem_allocator(void)
     /* GetBuffer() again blocks, even with AM_GBF_NOWAIT. */
 
     ok(media_sample1 != media_sample2, "Expected different samples.\n");
+    ok(media_sample2 != media_sample3, "Expected different samples.\n");
+    ok(media_sample1 != media_sample3, "Expected different samples.\n");
+
+    /* Release sample3 without ever calling GetMediaType */
+    ref = IMediaSample_Release(media_sample3);
+    ok(!ref, "Got refcount %ld.\n", ref);
+
+    hr = IMemAllocator_GetBuffer(mem_allocator, &media_sample3, NULL, NULL, AM_GBF_NOWAIT);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Confirm that because sample3 has been released, we no longer get the media type */
+    sample_mt = (AM_MEDIA_TYPE*)0xc0ffee;
+    hr = IMediaSample_GetMediaType(media_sample3, &sample_mt);
+    todo_wine
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sample_mt == NULL, "Got sample_mt %p.\n", sample_mt);
+
+    /* Check that we still get MediaType on a second call to sample1 */
+    hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    DeleteMediaType(sample_mt);
 
     check_interface(media_sample1, &IID_IDirectDrawStreamSample, FALSE);
     check_interface(media_sample1, &IID_IMediaSample2, FALSE);
@@ -9225,6 +9247,13 @@ static void test_ddrawstream_mem_allocator(void)
 
     hr = IMemAllocator_GetBuffer(mem_allocator, &media_sample1, NULL, NULL, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    sample_mt = (AM_MEDIA_TYPE*)0xc0ffee;
+    hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
+    todo_wine
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    todo_wine
+    ok(sample_mt == NULL, "Got sample_mt %p.\n", sample_mt);
 
     start = end = 0xdeadbeef;
     hr = IMediaSample_GetTime(media_sample1, &start, &end);
