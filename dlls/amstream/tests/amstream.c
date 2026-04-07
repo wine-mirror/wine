@@ -9147,9 +9147,7 @@ static void test_ddrawstream_mem_allocator(void)
     /* Confirm that because sample3 has been released, we no longer get the media type */
     sample_mt = (AM_MEDIA_TYPE*)0xc0ffee;
     hr = IMediaSample_GetMediaType(media_sample3, &sample_mt);
-    todo_wine
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(sample_mt == NULL, "Got sample_mt %p.\n", sample_mt);
 
     /* Check that we still get MediaType on a second call to sample1 */
@@ -9250,9 +9248,7 @@ static void test_ddrawstream_mem_allocator(void)
 
     sample_mt = (AM_MEDIA_TYPE*)0xc0ffee;
     hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
-    todo_wine
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(sample_mt == NULL, "Got sample_mt %p.\n", sample_mt);
 
     start = end = 0xdeadbeef;

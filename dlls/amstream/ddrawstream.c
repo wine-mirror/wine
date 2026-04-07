@@ -92,6 +92,7 @@ struct ddraw_sample
     struct list entry;
     HRESULT update_hr;
     bool pending;
+    bool needs_mt;
 };
 
 static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDrawSurface *surface,
@@ -2193,6 +2194,7 @@ static ULONG WINAPI media_sample_Release(IMediaSample *iface)
     if (!refcount)
     {
         IDirectDrawSurface_Unlock(sample->surface, NULL);
+        sample->needs_mt = false;
 
         WakeConditionVariable(&sample->update_cv);
 
@@ -2345,6 +2347,12 @@ static HRESULT WINAPI media_sample_GetMediaType(IMediaSample *iface, AM_MEDIA_TY
 
     TRACE("sample %p, ret_mt %p.\n", sample, ret_mt);
 
+    if (!sample->needs_mt)
+    {
+        *ret_mt = NULL;
+        return S_FALSE;
+    }
+
     /* Note that this usually matches the media type we pass to QueryAccept(),
      * but not if there's a sub-rect.
      * That's amstream just breaking the DirectShow rules.
@@ -2472,6 +2480,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     object->ref = 1;
     object->parent = parent;
     object->mmstream = parent->parent;
+    object->needs_mt = true;
     InitializeConditionVariable(&object->update_cv);
     IAMMediaStream_AddRef(&parent->IAMMediaStream_iface);
     if (object->mmstream)
