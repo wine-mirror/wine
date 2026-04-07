@@ -4,7 +4,7 @@
 @ stub CMP_RegisterServiceNotification
 @ stub CMP_Register_Notification
 @ stub CMP_Report_LogOn
-@ stdcall CMP_WaitNoPendingInstallEvents(long) setupapi.CMP_WaitNoPendingInstallEvents
+@ stdcall CMP_WaitNoPendingInstallEvents(long)
 @ stub CMP_WaitServicesAvailable
 @ stub CM_Add_Driver_PackageW
 @ stub CM_Add_Driver_Package_ExW
@@ -18,10 +18,10 @@
 @ stub CM_Add_Res_Des
 @ stub CM_Add_Res_Des_Ex
 @ stub CM_Apply_PowerScheme
-@ stdcall CM_Connect_MachineA(str ptr) setupapi.CM_Connect_MachineA
-@ stdcall CM_Connect_MachineW(wstr ptr) setupapi.CM_Connect_MachineW
-@ stdcall CM_Create_DevNodeA(ptr str long long) setupapi.CM_Create_DevNodeA
-@ stdcall CM_Create_DevNodeW(ptr wstr long long) setupapi.CM_Create_DevNodeW
+@ stdcall CM_Connect_MachineA(str ptr)
+@ stdcall CM_Connect_MachineW(wstr ptr)
+@ stdcall CM_Create_DevNodeA(ptr str long long)
+@ stdcall CM_Create_DevNodeW(ptr wstr long long)
 @ stub CM_Create_DevNode_ExA
 @ stub CM_Create_DevNode_ExW
 @ stub CM_Create_Range_List
@@ -41,7 +41,7 @@
 @ stub CM_Detect_Resource_Conflict_Ex
 @ stub CM_Disable_DevNode
 @ stub CM_Disable_DevNode_Ex
-@ stdcall CM_Disconnect_Machine(long) setupapi.CM_Disconnect_Machine
+@ stdcall CM_Disconnect_Machine(long)
 @ stub CM_Dup_Range_List
 @ stub CM_Duplicate_PowerScheme
 @ stub CM_Enable_DevNode
@@ -62,8 +62,8 @@
 @ stub CM_Free_Res_Des_Ex
 @ stub CM_Free_Res_Des_Handle
 @ stub CM_Free_Resource_Conflict_Handle
-@ stdcall CM_Get_Child(ptr long long) setupapi.CM_Get_Child
-@ stdcall CM_Get_Child_Ex(ptr long long ptr) setupapi.CM_Get_Child_Ex
+@ stdcall CM_Get_Child(ptr long long)
+@ stdcall CM_Get_Child_Ex(ptr long long ptr)
 @ stdcall CM_Get_Class_Key_NameA(ptr ptr ptr long)
 @ stdcall CM_Get_Class_Key_NameW(ptr ptr ptr long)
 @ stdcall CM_Get_Class_Key_Name_ExA(ptr ptr ptr long ptr)
@@ -92,8 +92,8 @@
 @ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long)
 @ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr)
-@ stdcall CM_Get_DevNode_Status(ptr ptr long long) setupapi.CM_Get_DevNode_Status
-@ stdcall CM_Get_DevNode_Status_Ex(ptr ptr long long ptr) setupapi.CM_Get_DevNode_Status_Ex
+@ stdcall CM_Get_DevNode_Status(ptr ptr long long)
+@ stdcall CM_Get_DevNode_Status_Ex(ptr ptr long long ptr)
 @ stdcall CM_Get_Device_IDA(ptr ptr long long)
 @ stdcall CM_Get_Device_IDW(ptr ptr long long)
 @ stdcall CM_Get_Device_ID_ExA(ptr ptr long long ptr)
@@ -108,8 +108,8 @@
 @ stdcall CM_Get_Device_ID_List_Size_ExW(ptr wstr long ptr)
 @ stdcall CM_Get_Device_ID_Size(ptr ptr long)
 @ stdcall CM_Get_Device_ID_Size_Ex(ptr ptr long ptr)
-@ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long) setupapi.CM_Get_Device_Interface_AliasA
-@ stdcall CM_Get_Device_Interface_AliasW(wstr ptr ptr ptr long) setupapi.CM_Get_Device_Interface_AliasW
+@ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long)
+@ stdcall CM_Get_Device_Interface_AliasW(wstr ptr ptr ptr long)
 @ stub CM_Get_Device_Interface_Alias_ExA
 @ stub CM_Get_Device_Interface_Alias_ExW
 @ stdcall CM_Get_Device_Interface_ListA(ptr ptr ptr long long)
@@ -142,7 +142,7 @@
 @ stub CM_Get_Next_Log_Conf_Ex
 @ stub CM_Get_Next_Res_Des
 @ stub CM_Get_Next_Res_Des_Ex
-@ stdcall CM_Get_Parent(ptr long long) setupapi.CM_Get_Parent
+@ stdcall CM_Get_Parent(ptr long long)
 @ stub CM_Get_Parent_Ex
 @ stub CM_Get_Res_Des_Data
 @ stub CM_Get_Res_Des_Data_Ex
@@ -151,9 +151,9 @@
 @ stub CM_Get_Resource_Conflict_Count
 @ stub CM_Get_Resource_Conflict_DetailsA
 @ stub CM_Get_Resource_Conflict_DetailsW
-@ stdcall CM_Get_Sibling(ptr long long) setupapi.CM_Get_Sibling
-@ stdcall CM_Get_Sibling_Ex(ptr long long ptr) setupapi.CM_Get_Sibling_Ex
-@ stdcall CM_Get_Version() setupapi.CM_Get_Version
+@ stdcall CM_Get_Sibling(ptr long long)
+@ stdcall CM_Get_Sibling_Ex(ptr long long ptr)
+@ stdcall CM_Get_Version()
 @ stub CM_Get_Version_Ex
 @ stub CM_Import_PowerScheme
 @ stub CM_Install_DevNodeW
@@ -197,8 +197,8 @@
 @ stub CM_Query_Remove_SubTree
 @ stub CM_Query_Remove_SubTree_Ex
 @ stub CM_Query_Resource_Conflict_List
-@ stdcall CM_Reenumerate_DevNode(ptr long) setupapi.CM_Reenumerate_DevNode
-@ stdcall CM_Reenumerate_DevNode_Ex(ptr long ptr) setupapi.CM_Reenumerate_DevNode_Ex
+@ stdcall CM_Reenumerate_DevNode(ptr long)
+@ stdcall CM_Reenumerate_DevNode_Ex(ptr long ptr)
 @ stub CM_Register_Device_Driver
 @ stub CM_Register_Device_Driver_Ex
 @ stub CM_Register_Device_InterfaceA
@@ -221,8 +221,8 @@
 @ stub CM_Set_ActiveScheme
 @ stub CM_Set_Class_PropertyW
 @ stub CM_Set_Class_Property_ExW
-@ stdcall CM_Set_Class_Registry_PropertyA(ptr long ptr long long ptr) setupapi.CM_Set_Class_Registry_PropertyA
-@ stdcall CM_Set_Class_Registry_PropertyW(ptr long ptr long long ptr) setupapi.CM_Set_Class_Registry_PropertyW
+@ stdcall CM_Set_Class_Registry_PropertyA(ptr long ptr long long ptr)
+@ stdcall CM_Set_Class_Registry_PropertyW(ptr long ptr long long ptr)
 @ stub CM_Set_DevNode_Problem
 @ stub CM_Set_DevNode_Problem_Ex
 @ stub CM_Set_DevNode_PropertyW

@@ -1011,6 +1011,33 @@ DWORD WINAPI CM_MapCrToWin32Err( CONFIGRET code, DWORD default_error )
 }
 
 /***********************************************************************
+ *      CM_Connect_MachineW  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Connect_MachineW( const WCHAR *name, HMACHINE *machine )
+{
+    FIXME( "name %s, machine %p stub!\n", debugstr_w(name), machine );
+    return CR_ACCESS_DENIED;
+}
+
+/***********************************************************************
+ *              CM_Connect_MachineA  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Connect_MachineA( const char *name, HMACHINE *machine )
+{
+    FIXME( "name %s, machine %p stub!\n", debugstr_a(name), machine );
+    return CR_ACCESS_DENIED;
+}
+
+/***********************************************************************
+ *      CM_Disconnect_Machine  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Disconnect_Machine( HMACHINE machine )
+{
+    FIXME( "machine %p stub!\n", machine );
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
  *           CM_Enumerate_Classes_Ex (cfgmgr32.@)
  */
 CONFIGRET WINAPI CM_Enumerate_Classes_Ex( ULONG index, GUID *class, ULONG flags, HMACHINE machine )
@@ -1235,6 +1262,28 @@ CONFIGRET WINAPI CM_Get_Class_Registry_PropertyA( GUID *class, ULONG property, U
     if ((err = init_registry_property( &prop, &DEVPKEY_DeviceClass_UpperFilters, property, type, buffer, len, TRUE ))) return map_error( err );
 
     return map_error( get_class_property( class, &prop ) );
+}
+
+/***********************************************************************
+ *      CM_Set_Class_Registry_PropertyW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Set_Class_Registry_PropertyW( GUID *class, ULONG property, const void *buffer,
+                                                  ULONG len, ULONG flags, HMACHINE machine )
+{
+    FIXME( "class %s, property %#lx, buffer %p, length %#lx, flags %#lx, machine %p stub!\n",
+           debugstr_guid( class ), property, buffer, len, flags, machine );
+    return CR_FAILURE;
+}
+
+/***********************************************************************
+ *      CM_Set_Class_Registry_PropertyA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Set_Class_Registry_PropertyA( GUID *class, ULONG property, const void *buffer,
+                                                  ULONG len, ULONG flags, HMACHINE machine )
+{
+    FIXME( "class %s, property %#lx, buffer %p, length %#lx, flags %#lx, machine %p stub!\n",
+           debugstr_guid( class ), property, buffer, len, flags, machine );
+    return CR_FAILURE;
 }
 
 /***********************************************************************
@@ -1509,6 +1558,24 @@ CONFIGRET WINAPI CM_Get_Device_Interface_Property_Keys_ExW( const WCHAR *name, D
 CONFIGRET WINAPI CM_Get_Device_Interface_Property_KeysW( const WCHAR *iface, DEVPROPKEY *keys, ULONG *count, ULONG flags )
 {
     return CM_Get_Device_Interface_Property_Keys_ExW( iface, keys, count, flags, NULL );
+}
+
+/***********************************************************************
+ *      CM_Get_Device_Interface_AliasW (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_AliasW( const WCHAR *iface, GUID *class, WCHAR *name, ULONG *len, ULONG flags )
+{
+    FIXME( "iface %s, class %p, name %p, len %p, flags %#lx stub!\n", debugstr_w(iface), class, name, len, flags );
+    return CR_FAILURE;
+}
+
+/***********************************************************************
+ *      CM_Get_Device_Interface_AliasA (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_AliasA( const char *iface, GUID *class, char *name, ULONG *len, ULONG flags )
+{
+    FIXME( "iface %s, class %p, name %p, len %p, flags %#lx stub!\n", debugstr_a(iface), class, name, len, flags );
+    return CR_FAILURE;
 }
 
 /***********************************************************************
@@ -1963,4 +2030,143 @@ CONFIGRET WINAPI CM_Get_DevNode_Property_Keys_Ex( DEVINST node, DEVPROPKEY *keys
 CONFIGRET WINAPI CM_Get_DevNode_Property_Keys( DEVINST node, DEVPROPKEY *keys, ULONG *count, ULONG flags )
 {
     return CM_Get_DevNode_Property_Keys_Ex( node, keys, count, flags, NULL );
+}
+
+/***********************************************************************
+ *             CM_Get_Child_Ex  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Child_Ex( DEVINST *child, DEVINST node, ULONG flags, HMACHINE machine )
+{
+    FIXME( "child %p, node %#lx, flags %#lx, machine %p stub!\n", child, node, flags, machine );
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *             CM_Get_Child  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Child( DEVINST *child, DEVINST node, ULONG flags )
+{
+    return CM_Get_Child_Ex( child, node, flags, NULL );
+}
+
+/***********************************************************************
+ *              CM_Get_Parent (cfgmgr32.@)
+ */
+DWORD WINAPI CM_Get_Parent( DEVINST *parent, DEVINST child, ULONG flags )
+{
+    FIXME( "parent %p, child %#lx, flags %#lx stub!\n", parent, child, flags );
+    if (parent) *parent = 0;
+    return CR_NO_SUCH_DEVNODE;
+}
+
+/***********************************************************************
+ *              CM_Create_DevNodeW  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Create_DevNodeW( DEVINST *node, DEVINSTID_W instance_id, DEVINST parent, ULONG flags )
+{
+    FIXME( "node %p, instance_id %s, parent %#lx, flags %#lx stub\n", node, debugstr_w(instance_id), parent, flags );
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *              CM_Create_DevNodeA  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Create_DevNodeA( DEVINST *node, DEVINSTID_A instance_id, DEVINST parent, ULONG flags )
+{
+    FIXME( "node %p, instance_id %s, parent %#lx, flags %#lx stub\n", node, debugstr_a(instance_id), parent, flags );
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *      CM_Get_DevNode_Status_Ex (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Status_Ex( ULONG *status, ULONG *problem, DEVINST node, ULONG flags, HMACHINE machine )
+{
+    FIXME( "status %p, problem %p, node %#lx, flags %#lx, machine %p stub!\n", status, problem,
+           node, flags, machine );
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *      CM_Get_DevNode_Status (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Status( ULONG *status, ULONG *problem, DEVINST node, ULONG flags )
+{
+    return CM_Get_DevNode_Status_Ex( status, problem, node, flags, NULL );
+}
+
+/***********************************************************************
+ *             CM_Get_Sibling_Ex  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Sibling_Ex( DEVINST *sibling, DEVINST node, ULONG flags, HMACHINE machine )
+{
+    FIXME( "sibling %p, node %#lx, flags %#lx, machine %p stub!\n", sibling, node, flags, machine );
+    return CR_FAILURE;
+}
+
+/***********************************************************************
+ *             CM_Get_Sibling  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Sibling( DEVINST *sibling, DEVINST node, ULONG flags )
+{
+    return CM_Get_Sibling_Ex( sibling, node, flags, NULL );
+}
+
+/***********************************************************************
+ *              CM_Reenumerate_DevNode_Ex  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Reenumerate_DevNode_Ex( DEVINST node, ULONG flags, HMACHINE machine )
+{
+    FIXME( "node %#lx, flags %#lx, machine %p stub!\n", node, flags, machine );
+    return CR_FAILURE;
+}
+
+/***********************************************************************
+ *              CM_Reenumerate_DevNode  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Reenumerate_DevNode( DEVINST node, ULONG flags )
+{
+    return CM_Reenumerate_DevNode_Ex( node, flags, NULL );
+}
+
+/***********************************************************************
+ *              CM_Request_Device_EjectA  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Request_Device_EjectA( DEVINST node, PNP_VETO_TYPE *type, char *name, ULONG length, ULONG flags )
+{
+    FIXME( "node %#lx, type %p, name %p, length %#lx, flags %#lx stub!\n", node, type, name, length, flags );
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *              CM_Request_Device_EjectW  (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Request_Device_EjectW( DEVINST node, PNP_VETO_TYPE *type, WCHAR *name, ULONG length, ULONG flags )
+{
+    FIXME( "node %#lx, type %p, name %p, length %#lx, flags %#lx stub!\n", node, type, name, length, flags );
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *      CMP_WaitNoPendingInstallEvents  (cfgmgr32.@)
+ */
+DWORD WINAPI CMP_WaitNoPendingInstallEvents( DWORD timeout )
+{
+    static BOOL warned = FALSE;
+
+    if (!warned)
+    {
+        FIXME( "%ld\n", timeout );
+        warned = TRUE;
+    }
+    return WAIT_OBJECT_0;
+}
+
+/***********************************************************************
+ *      CM_Get_Version (cfgmgr32.@)
+ */
+WORD WINAPI CM_Get_Version( void )
+{
+    TRACE( "\n" );
+    return 0x0400;
 }

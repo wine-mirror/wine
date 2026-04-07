@@ -800,21 +800,6 @@ void WINAPI pSetupSetGlobalFlags( DWORD flags )
 }
 
 /***********************************************************************
- *		CMP_WaitNoPendingInstallEvents  (SETUPAPI.@)
- */
-DWORD WINAPI CMP_WaitNoPendingInstallEvents( DWORD dwTimeout )
-{
-    static BOOL warned = FALSE;
-
-    if (!warned)
-    {
-        FIXME("%ld\n", dwTimeout);
-        warned = TRUE;
-    }
-    return WAIT_OBJECT_0;
-}
-
-/***********************************************************************
  *              AssertFail  (SETUPAPI.@)
  *
  * Shows an assert fail error messagebox
@@ -1465,13 +1450,4 @@ BOOL WINAPI SetupLogErrorW(LPCWSTR message, LogSeverity severity)
 
     free(msg);
     return ret;
-}
-
-/***********************************************************************
- *      CM_Get_Version (SETUPAPI.@)
- */
-WORD WINAPI CM_Get_Version(void)
-{
-    TRACE("()\n");
-    return 0x0400;
 }
