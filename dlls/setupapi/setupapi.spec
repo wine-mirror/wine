@@ -67,12 +67,12 @@
 @ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr) cfgmgr32.CM_Get_Class_Registry_PropertyW
 @ stub CM_Get_Depth
 @ stub CM_Get_Depth_Ex
-@ stdcall CM_Get_DevNode_PropertyW(long ptr ptr ptr ptr long)
-@ stdcall CM_Get_DevNode_Property_ExW(long ptr ptr ptr ptr long ptr)
-@ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr ptr long)
-@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long)
-@ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr)
-@ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr)
+@ stdcall CM_Get_DevNode_PropertyW(long ptr ptr ptr ptr long) cfgmgr32.CM_Get_DevNode_PropertyW
+@ stdcall CM_Get_DevNode_Property_ExW(long ptr ptr ptr ptr long ptr) cfgmgr32.CM_Get_DevNode_Property_ExW
+@ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr ptr long) cfgmgr32.CM_Get_DevNode_Registry_PropertyA
+@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long) cfgmgr32.CM_Get_DevNode_Registry_PropertyW
+@ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr) cfgmgr32.CM_Get_DevNode_Registry_Property_ExA
+@ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr) cfgmgr32.CM_Get_DevNode_Registry_Property_ExW
 @ stdcall CM_Get_DevNode_Status(ptr ptr long long)
 @ stdcall CM_Get_DevNode_Status_Ex(ptr ptr long long ptr)
 @ stdcall CM_Get_Device_IDA(ptr ptr long long) cfgmgr32.CM_Get_Device_IDA

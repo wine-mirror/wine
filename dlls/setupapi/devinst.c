@@ -853,29 +853,6 @@ static struct device *create_device(struct DeviceInfoSet *set,
     return device;
 }
 
-static struct device *get_devnode_device(DEVINST devnode, HDEVINFO *set, SP_DEVINFO_DATA *data)
-{
-    WCHAR instance_id[MAX_PATH];
-
-    data->cbSize = sizeof(*data);
-    *set = NULL;
-    if (CM_Get_Device_IDW(devnode, instance_id, ARRAY_SIZE(instance_id), 0))
-    {
-        WARN("device node %lu not found\n", devnode);
-        return NULL;
-    }
-
-    *set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
-    if (*set == INVALID_HANDLE_VALUE) return NULL;
-    if (!SetupDiOpenDeviceInfoW(*set, instance_id, NULL, 0, data))
-    {
-        SetupDiDestroyDeviceInfoList(*set);
-        *set = NULL;
-        return NULL;
-    }
-    return get_device(*set, data);
-}
-
 /***********************************************************************
  *              SetupDiBuildClassInfoList  (SETUPAPI.@)
  */
@@ -4683,59 +4660,6 @@ BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
 
     SetLastError(ls);
     return !ls;
-}
-
-/***********************************************************************
- *              CM_Get_DevNode_Property_ExW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_DevNode_Property_ExW(DEVINST devnode, const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type,
-    BYTE *prop_buff, ULONG *prop_buff_size, ULONG flags, HMACHINE machine)
-{
-    HDEVINFO set;
-    SP_DEVINFO_DATA data = { sizeof(data) };
-    struct device *device;
-    LSTATUS ls;
-
-    TRACE("%lu, %p, %p, %p, %p, %#lx, %p\n", devnode, prop_key, prop_type, prop_buff, prop_buff_size,
-          flags, machine);
-
-    if (machine)
-        return CR_MACHINE_UNAVAILABLE;
-
-    if (!prop_buff_size)
-        return CR_INVALID_POINTER;
-
-    if (!(device = get_devnode_device(devnode, &set, &data)))
-        return CR_NO_SUCH_DEVINST;
-
-    ls = get_device_property(device, set, &data, prop_key, prop_type, prop_buff, *prop_buff_size,
-                             prop_buff_size, flags);
-    SetupDiDestroyDeviceInfoList(set);
-    switch (ls)
-    {
-    case NO_ERROR:
-        return CR_SUCCESS;
-    case ERROR_INVALID_DATA:
-        return CR_INVALID_DATA;
-    case ERROR_INVALID_USER_BUFFER:
-        return CR_INVALID_POINTER;
-    case ERROR_INVALID_FLAGS:
-        return CR_INVALID_FLAG;
-    case ERROR_INSUFFICIENT_BUFFER:
-        return CR_BUFFER_SMALL;
-    case ERROR_NOT_FOUND:
-        return CR_NO_SUCH_VALUE;
-    }
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *              CM_Get_DevNode_PropertyW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_DevNode_PropertyW(DEVINST dev, const DEVPROPKEY *key, DEVPROPTYPE *type,
-    BYTE *buf, PULONG len, ULONG flags)
-{
-    return CM_Get_DevNode_Property_ExW(dev, key, type, buf, len, flags, NULL);
 }
 
 /***********************************************************************
