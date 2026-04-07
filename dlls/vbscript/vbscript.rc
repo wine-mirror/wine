@@ -86,6 +86,7 @@ STRINGTABLE
     VBSE_INVALID_NUMBER                "Invalid number"
     VBSE_INVALID_CHAR                  "Invalid character"
     VBSE_UNTERMINATED_STRING           "Unterminated string constant"
+    VBSE_INVALID_USE_OF_ME             "Invalid use of 'Me' keyword"
     VBSE_LOOP_WITHOUT_DO               "'loop' without 'do'"
     VBSE_INVALID_EXIT                  "Invalid 'exit' statement"
     VBSE_NAME_REDEFINED                "Name redefined"

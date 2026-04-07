@@ -238,7 +238,8 @@ SimpleStatement
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0, @2); CHECK_ERROR; }
     | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0, @2); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0, @2); CHECK_ERROR; }
-    | tSET CallExpression '=' Expression    { $$ = new_set_statement(ctx, @$, $2, $4); CHECK_ERROR; }
+    | tSET CallExpression '=' Expression    { if($2->type == EXPR_ME) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_INVALID_USE_OF_ME); YYABORT; }
+                                             $$ = new_set_statement(ctx, @$, $2, $4); CHECK_ERROR; }
     | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0, @$); CHECK_ERROR; }
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, @$, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, @$, FALSE); CHECK_ERROR; }

@@ -3196,6 +3196,16 @@ static void test_parse_errors(void)
             "End Class\n",
             1, 26,
             NULL, S_OK, 1058
+        },
+        {
+            /* Invalid use of 'Me' - Set Me inside class - error 1037 */
+            L"Class C\n"
+            "  Sub T()\n"
+            "    Set Me = Nothing\n"
+            "  End Sub\n"
+            "End Class\n",
+            2, 11,
+            NULL, S_OK, 1037
         }
     };
     HRESULT hres;

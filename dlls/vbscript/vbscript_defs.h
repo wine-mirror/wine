@@ -297,6 +297,7 @@
 #define VBSE_INVALID_NUMBER              1031
 #define VBSE_INVALID_CHAR                1032
 #define VBSE_UNTERMINATED_STRING         1033
+#define VBSE_INVALID_USE_OF_ME           1037
 #define VBSE_LOOP_WITHOUT_DO             1038
 #define VBSE_INVALID_EXIT                1039
 #define VBSE_NAME_REDEFINED              1041
