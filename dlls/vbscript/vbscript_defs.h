@@ -267,12 +267,14 @@
 #define VBSE_PARAMETER_NOT_OPTIONAL       449
 #define VBSE_FUNC_ARITY_MISMATCH          450
 #define VBSE_NOT_ENUM                     451
+#define VBSE_DUPLICATE_KEY                457
 #define VBSE_INVALID_DLL_FUNCTION_NAME    453
 #define VBSE_INVALID_TYPELIB_VARIABLE     458
 #define VBSE_SERVER_NOT_FOUND             462
 #define VBSE_VARIABLE_UNDEFINED           500
 #define VBSE_ILLEGAL_ASSIGNMENT           501
 #define VBSE_UNQUALIFIED_REFERENCE        505
+#define VBSE_CLASS_NOT_DEFINED            506
 #define VBSE_SYNTAX_ERROR                1002
 #define VBSE_EXPECTED_LPAREN             1005
 #define VBSE_EXPECTED_RPAREN             1006

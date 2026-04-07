@@ -3284,4 +3284,59 @@ Call ok(Err.Number = 13, "bool var as statement: err = " & Err.Number)
 
 On Error GoTo 0
 
+' Tests for missing runtime error codes
+On Error Resume Next
+
+' Error 11: Division by zero
+Err.Clear
+Dim divZeroResult
+divZeroResult = 1 \ 0
+Call ok(Err.Number = 11, "division by zero: err.number = " & Err.Number)
+
+' Error 94: Invalid use of Null
+Err.Clear
+Dim nullResult
+nullResult = CLng(Null)
+todo_wine_ok Err.Number = 94, "CLng(Null): err.number = " & Err.Number
+
+' Error 429: ActiveX component can't create object
+Err.Clear
+Dim badObj
+Set badObj = CreateObject("No.Such.Object.XXXXXX")
+Call ok(Err.Number = 429, "CreateObject bad ProgID: err.number = " & Err.Number)
+
+' Error 451: Object not a collection
+Err.Clear
+Dim forEachVar
+For Each forEachVar In 42
+Next
+Call ok(Err.Number = 451, "For Each over integer: err.number = " & Err.Number)
+
+' Error 457: Duplicate key in Dictionary
+Err.Clear
+Dim dictObj
+Set dictObj = CreateObject("Scripting.Dictionary")
+dictObj.Add "key1", 1
+dictObj.Add "key1", 2
+Call ok(Err.Number = 457, "duplicate Dictionary key: err.number = " & Err.Number)
+
+' Error 500: `New` with an undeclared identifier resolves the name as a
+' variable first and fails with "Variable is undefined" before reaching
+' class lookup.
+Err.Clear
+Dim undefinedNewTarget
+Set undefinedNewTarget = New NoSuchClass
+todo_wine_ok Err.Number = 500, "New undeclared identifier: err.number = " & Err.Number
+
+' Error 506: Class not defined. To reach the class lookup path, the
+' identifier must be a declared variable that isn't a class.
+Err.Clear
+Dim notAClass
+notAClass = 42
+Dim undefinedClassObj
+Set undefinedClassObj = New notAClass
+todo_wine_ok Err.Number = 506, "New non-class variable: err.number = " & Err.Number
+
+On Error GoTo 0
+
 reportSuccess()
