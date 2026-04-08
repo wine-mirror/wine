@@ -1318,7 +1318,7 @@ static void window_set_net_wm_fullscreen_monitors( struct x11drv_win_data *data,
  * windows spanning multiple monitors */
 static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
 {
-    struct monitor_indices monitors;
+    struct monitor_indices monitors = {0};
 
     /* If the current display device handler cannot detect dynamic device changes, do not use
      * _NET_WM_FULLSCREEN_MONITORS because xinerama_get_fullscreen_monitors() may report wrong
@@ -1736,7 +1736,7 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
 {
     static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
     RECT rect, old_rect = data->rects.window, new_rect;
-    unsigned int old_generation, generation;
+    unsigned long old_generation, generation;
     long old_monitors[4], monitors[4];
     UINT flags;
 

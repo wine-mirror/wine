@@ -635,7 +635,8 @@ enum x11drv_net_wm_state
 
 struct monitor_indices
 {
-    unsigned int generation;
+    /* compared with memcmp, make sure there's no padding */
+    unsigned long generation;
     long indices[4];
 };
 
@@ -763,7 +764,7 @@ extern POINT virtual_screen_to_root( INT x, INT y );
 extern POINT root_to_virtual_screen( INT x, INT y );
 extern RECT get_host_primary_monitor_rect(void);
 extern RECT get_work_area( const RECT *monitor_rect );
-extern BOOL xinerama_get_fullscreen_monitors( const RECT *rect, unsigned int *generation, long *indices );
+extern BOOL xinerama_get_fullscreen_monitors( const RECT *rect, unsigned long *generation, long *indices );
 extern void xinerama_init( unsigned int width, unsigned int height );
 extern void init_recursive_mutex( pthread_mutex_t *mutex );
 extern void init_icm_profile(void);

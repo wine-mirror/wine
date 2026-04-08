@@ -126,7 +126,7 @@ static inline int query_screens(void)
 
 /* Get xinerama monitor indices required for _NET_WM_FULLSCREEN_MONITORS. Return FALSE if rect is
  * not fullscreen */
-BOOL xinerama_get_fullscreen_monitors( const RECT *rect, unsigned int *generation, long *indices )
+BOOL xinerama_get_fullscreen_monitors( const RECT *rect, unsigned long *generation, long *indices )
 {
     RECT window_rect, intersected_rect, monitor_rect;
     BOOL ret = FALSE;
