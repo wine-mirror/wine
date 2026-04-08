@@ -23,10 +23,14 @@
 #include <windows.h>
 #include "initguid.h"
 #include "objidl.h"
+#include "objbase.h"
 #include "shlwapi.h"
+#include "appmodel.h"
 
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pSetCurrentProcessExplicitAppUserModelID)(const WCHAR *);
+static HRESULT (WINAPI *pGetCurrentProcessExplicitAppUserModelID)(WCHAR **);
 static HRESULT (WINAPI *pGetProcessReference)(IUnknown **);
 static void (WINAPI *pSetProcessReference)(IUnknown *);
 static HRESULT (WINAPI *pSHGetInstanceExplorer)(IUnknown **);
@@ -62,6 +66,8 @@ static const char * initial_buffer ="0123456789";
 static void init(HMODULE hshcore)
 {
 #define X(f) p##f = (void*)GetProcAddress(hshcore, #f)
+    X(SetCurrentProcessExplicitAppUserModelID);
+    X(GetCurrentProcessExplicitAppUserModelID);
     X(GetProcessReference);
     X(SetProcessReference);
     X(SHUnicodeToAnsi);
@@ -777,6 +783,62 @@ static void test_stream_size(void)
     DeleteFileA(filename);
 }
 
+static void test_AppUserModelID(void)
+{
+    WCHAR *appid;
+    HRESULT hr;
+
+    if (!pSetCurrentProcessExplicitAppUserModelID || !pGetCurrentProcessExplicitAppUserModelID)
+    {
+        win_skip("AppUserModelID functions not available.\n");
+        return;
+    }
+
+    /* String length validation. Native rejects strings with 128+ characters. */
+    {
+        WCHAR long_id[APPLICATION_USER_MODEL_ID_MAX_LENGTH + 10];
+        memset(long_id, 'A', sizeof(long_id));
+
+        /* 128 chars — should fail */
+        long_id[128] = 0;
+        hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
+        ok(hr == E_INVALIDARG, "Got hr %#lx for 128-char string.\n", hr);
+
+        /* 127 chars — should succeed */
+        long_id[127] = 0;
+        hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
+        ok(hr == S_OK, "Got hr %#lx for 127-char string.\n", hr);
+    }
+
+    /* Set a valid ID */
+    hr = pSetCurrentProcessExplicitAppUserModelID(L"Wine.Test.AppId");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Get should return the ID we set */
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(appid != NULL, "Expected non-NULL appid.\n");
+    if (appid)
+    {
+        ok(!lstrcmpW(appid, L"Wine.Test.AppId"), "Got %s.\n", wine_dbgstr_w(appid));
+        CoTaskMemFree(appid);
+    }
+
+    /* Set a different ID */
+    hr = pSetCurrentProcessExplicitAppUserModelID(L"Wine.Test.AppId2");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (appid)
+    {
+        ok(!lstrcmpW(appid, L"Wine.Test.AppId2"), "Got %s.\n", wine_dbgstr_w(appid));
+        CoTaskMemFree(appid);
+    }
+}
+
 START_TEST(shcore)
 {
     HMODULE hshcore = LoadLibraryA("shcore.dll");
@@ -789,6 +851,7 @@ START_TEST(shcore)
 
     init(hshcore);
 
+    test_AppUserModelID();
     test_process_reference();
     test_SHUnicodeToAnsi();
     test_SHAnsiToUnicode();
