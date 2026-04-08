@@ -473,6 +473,7 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
 
         flush_media_events(This);
         CloseHandle(This->media_event_handle);
+        CloseHandle(This->hEventCompletion);
 
         EnterCriticalSection(&message_cs);
         if (This->threaded && !--message_thread_refcount)
