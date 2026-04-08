@@ -1252,6 +1252,84 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Make sure it normalizes partial IPv4 addresses correctly. */
+    {   "http://1/", 0, S_OK, FALSE, 0,
+        {
+            {"http://0.0.0.1/",S_OK,FALSE},
+            {"0.0.0.1",S_OK,FALSE},
+            {"http://0.0.0.1/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"0.0.0.1",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://1/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Make sure it normalizes partial IPv4 addresses correctly. */
+    {   "http://1.2/", 0, S_OK, FALSE, 0,
+        {
+            {"http://1.0.0.2/",S_OK,FALSE},
+            {"1.0.0.2",S_OK,FALSE},
+            {"http://1.0.0.2/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"1.0.0.2",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://1.2/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Make sure it normalizes partial IPv4 addresses correctly. */
+    {   "http://1.2.3/", 0, S_OK, FALSE, 0,
+        {
+            {"http://1.2.0.3/",S_OK,FALSE},
+            {"1.2.0.3",S_OK,FALSE},
+            {"http://1.2.0.3/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"1.2.0.3",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://1.2.3/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     /* UINT_MAX */
     {   "http://4294967295/", 0, S_OK, FALSE, 0,
         {

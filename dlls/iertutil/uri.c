@@ -1,6 +1,7 @@
 /*
  * Copyright 2010 Jacek Caban for CodeWeavers
  * Copyright 2010 Thomas Mullaly
+ * Copyright 2026 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -149,8 +150,6 @@ typedef struct {
     BOOL            is_relative;
     BOOL            is_opaque;
     BOOL            has_implicit_scheme;
-    BOOL            has_implicit_ip;
-    UINT            implicit_ipv4;
     BOOL            must_have_path;
 
     const WCHAR     *scheme;
@@ -677,6 +676,21 @@ static INT find_file_extension(const WCHAR *path, DWORD path_len) {
     return -1;
 }
 
+static WCHAR *strdupwn(const WCHAR *str, DWORD length)
+{
+    WCHAR *ret;
+
+    if (!str)
+        return NULL;
+
+    if ((ret = malloc((length+1)*sizeof(WCHAR))))
+    {
+        memcpy(ret, str, length*sizeof(WCHAR));
+        ret[length] = '\0';
+    }
+    return ret;
+}
+
 /* Removes all the leading and trailing white spaces or
  * control characters from the URI and removes all control
  * characters inside of the URI string.
@@ -712,32 +726,6 @@ static BSTR pre_process_uri(LPCWSTR uri) {
         if(!iswcntrl(*ptr))
             *ptr2++ = *ptr;
     }
-
-    return ret;
-}
-
-/* Converts an IPv4 address in numerical form into its fully qualified
- * string form. This function returns the number of characters written
- * to 'dest'. If 'dest' is NULL this function will return the number of
- * characters that would have been written.
- *
- * It's up to the caller to ensure there's enough space in 'dest' for the
- * address.
- */
-static DWORD ui2ipv4(WCHAR *dest, UINT address) {
-    DWORD ret = 0;
-    UCHAR digits[4];
-
-    digits[0] = (address >> 24) & 0xff;
-    digits[1] = (address >> 16) & 0xff;
-    digits[2] = (address >> 8) & 0xff;
-    digits[3] = address & 0xff;
-
-    if(!dest) {
-        WCHAR tmp[16];
-        ret = swprintf(tmp, ARRAY_SIZE(tmp), L"%u.%u.%u.%u", digits[0], digits[1], digits[2], digits[3]);
-    } else
-        ret = swprintf(dest, 16, L"%u.%u.%u.%u", digits[0], digits[1], digits[2], digits[3]);
 
     return ret;
 }
@@ -828,10 +816,9 @@ static BOOL check_dec_octet(const WCHAR **ptr) {
  *  Ex:
  *      "234567" would be considered an implicit IPv4 address.
  */
-static BOOL check_implicit_ipv4(const WCHAR **ptr, UINT *val) {
+static BOOL check_implicit_ipv4(const WCHAR **ptr) {
     const WCHAR *start = *ptr;
     ULONGLONG ret = 0;
-    *val = 0;
 
     while(is_num(**ptr)) {
         ret = ret*10 + (**ptr - '0');
@@ -846,7 +833,6 @@ static BOOL check_implicit_ipv4(const WCHAR **ptr, UINT *val) {
     if(*ptr == start)
         return FALSE;
 
-    *val = ret;
     return TRUE;
 }
 
@@ -1215,13 +1201,12 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data) {
     data->host = *ptr;
 
     if(!check_ipv4address(ptr, FALSE)) {
-        if(!check_implicit_ipv4(ptr, &data->implicit_ipv4)) {
+        if(!check_implicit_ipv4(ptr)) {
             TRACE("(%p %p): URI didn't contain anything looking like an IPv4 address.\n", ptr, data);
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
-        } else
-            data->has_implicit_ip = TRUE;
+        }
     }
 
     data->host_len = *ptr - data->host;
@@ -1241,7 +1226,6 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data) {
         /* Found more data which belongs to the host, so this isn't an IPv4. */
         *ptr = data->host;
         data->host = NULL;
-        data->has_implicit_ip = FALSE;
         return FALSE;
     }
 
@@ -2094,38 +2078,6 @@ static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
     return TRUE;
 }
 
-/* Attempts to canonicalize an implicit IPv4 address. */
-static BOOL canonicalize_implicit_ipv4address(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
-    uri->host_start = uri->canon_len;
-
-    TRACE("%u\n", data->implicit_ipv4);
-    /* For unknown scheme types Windows doesn't convert
-     * the value into an IP address, but it still considers
-     * it an IPv4 address.
-     */
-    if(data->scheme_type == URL_SCHEME_UNKNOWN) {
-        if(!computeOnly)
-            memcpy(uri->canon_uri+uri->canon_len, data->host, data->host_len*sizeof(WCHAR));
-        uri->canon_len += data->host_len;
-    } else {
-        if(!computeOnly)
-            uri->canon_len += ui2ipv4(uri->canon_uri+uri->canon_len, data->implicit_ipv4);
-        else
-            uri->canon_len += ui2ipv4(NULL, data->implicit_ipv4);
-    }
-
-    uri->host_len = uri->canon_len - uri->host_start;
-    uri->host_type = Uri_HOST_IPV4;
-
-    if(!computeOnly)
-        TRACE("%p %p %lx %d): Canonicalized implicit IP address=%s len=%ld\n",
-            data, uri, flags, computeOnly,
-            debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len),
-            uri->host_len);
-
-    return TRUE;
-}
-
 /* Attempts to canonicalize an IPv4 address.
  *
  * If the parse_data represents a URI that has an implicit IPv4 address
@@ -2145,76 +2097,39 @@ static BOOL canonicalize_implicit_ipv4address(const parse_data *data, Uri *uri, 
  *  host type as HOST_IPV4.
  */
 static BOOL canonicalize_ipv4address(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
-    if(data->has_implicit_ip)
-        return canonicalize_implicit_ipv4address(data, uri, flags, computeOnly);
-    else {
-        uri->host_start = uri->canon_len;
+    uri->host_start = uri->canon_len;
 
-        /* Windows only normalizes for known scheme types. */
-        if(data->scheme_type != URL_SCHEME_UNKNOWN) {
-            /* parse_data contains a partial or full IPv4 address, so normalize it. */
-            DWORD i, octetDigitCount = 0, octetCount = 0;
-            BOOL octetHasDigit = FALSE;
+    if (data->scheme_type != URL_SCHEME_UNKNOWN)
+    {
+        WCHAR *host, full_ipv4[16];
+        const WCHAR *terminator;
+        IN_ADDR in_addr;
+        DWORD len;
 
-            for(i = 0; i < data->host_len; ++i) {
-                if(data->host[i] == '0' && !octetHasDigit) {
-                    /* Can ignore leading zeros if:
-                     *  1) It isn't the last digit of the octet.
-                     *  2) i+1 != data->host_len
-                     *  3) i+1 != '.'
-                     */
-                    if(octetDigitCount == 2 ||
-                       i+1 == data->host_len ||
-                       data->host[i+1] == '.') {
-                        if(!computeOnly)
-                            uri->canon_uri[uri->canon_len] = data->host[i];
-                        ++uri->canon_len;
-                        TRACE("Adding zero\n");
-                    }
-                } else if(data->host[i] == '.') {
-                    if(!computeOnly)
-                        uri->canon_uri[uri->canon_len] = data->host[i];
-                    ++uri->canon_len;
+        /* IPv4 address may be partial, normalize fully */
+        host = strdupwn(data->host, data->host_len);
+        RtlIpv4StringToAddressW(host, FALSE, &terminator, &in_addr);
+        RtlIpv4AddressToStringW(&in_addr, full_ipv4);
+        free(host);
 
-                    octetDigitCount = 0;
-                    octetHasDigit = FALSE;
-                    ++octetCount;
-                } else {
-                    if(!computeOnly)
-                        uri->canon_uri[uri->canon_len] = data->host[i];
-                    ++uri->canon_len;
-
-                    ++octetDigitCount;
-                    octetHasDigit = TRUE;
-                }
-            }
-
-            /* Make sure the canonicalized IP address has 4 dec-octets.
-             * If doesn't add "0" ones until there is 4;
-             */
-            for( ; octetCount < 3; ++octetCount) {
-                if(!computeOnly) {
-                    uri->canon_uri[uri->canon_len] = '.';
-                    uri->canon_uri[uri->canon_len+1] = '0';
-                }
-
-                uri->canon_len += 2;
-            }
-        } else {
-            /* Windows doesn't normalize addresses in unknown schemes. */
-            if(!computeOnly)
-                memcpy(uri->canon_uri+uri->canon_len, data->host, data->host_len*sizeof(WCHAR));
-            uri->canon_len += data->host_len;
-        }
-
-        uri->host_len = uri->canon_len - uri->host_start;
-        if(!computeOnly)
-            TRACE("(%p %p %lx %d): Canonicalized IPv4 address, ip=%s len=%ld\n",
-                data, uri, flags, computeOnly,
-                debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len),
-                uri->host_len);
+        len = wcslen(full_ipv4);
+        if (!computeOnly)
+            memcpy(uri->canon_uri+uri->canon_len, full_ipv4, len*sizeof(WCHAR));
+        uri->canon_len += len;
+        uri->host_len = len;
+    }
+    else
+    {
+        /* Windows doesn't normalize addresses in unknown schemes. */
+        if (!computeOnly)
+            memcpy(uri->canon_uri+uri->canon_len, data->host, data->host_len*sizeof(WCHAR));
+        uri->canon_len += data->host_len;
+        uri->host_len = uri->canon_len-uri->host_start;
     }
 
+    if (!computeOnly)
+        TRACE("(%p %p %lx %d): Canonicalized IPv4 address, ip=%s len=%ld\n", data, uri, flags,
+              computeOnly, debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len), uri->host_len);
     return TRUE;
 }
 
