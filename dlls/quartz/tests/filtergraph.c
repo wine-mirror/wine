@@ -5945,6 +5945,44 @@ static void test_events(void)
     hr = IMediaControl_Stop(media_control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    hr = IMediaEventEx_RestoreDefaultHandling(media_event, EC_COMPLETE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Test WaitForCompletion(). */
+
+    hr = IMediaControl_Run(media_control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
+    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+
+    hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
+            (LONG_PTR)&filter.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    code = 0xdeadbeef;
+    hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#lx.\n", code);
+
+    hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Pause(media_control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Run(media_control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
+    todo_wine ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Stop(media_control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     IMediaControl_Release(media_control);
     IMediaEventEx_Release(media_event);
     IMediaEventSink_Release(media_event_sink);
