@@ -1,5 +1,7 @@
 TESTDLL   = odbc32.dll
-IMPORTS   = odbc32
+IMPORTS   = advapi32 odbc32 odbccp32
 
 SOURCES = \
+	driver.c \
+	driver.spec \
 	odbc32.c

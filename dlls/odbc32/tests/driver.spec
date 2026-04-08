@@ -1,0 +1,11 @@
+@ stdcall init_funcs(ptr)
+
+@ stdcall SQLAllocHandle(long long ptr)
+@ stdcall SQLConnect(long str long str long str long)
+@ stdcall SQLDisconnect(long)
+@ stdcall SQLFreeHandle(long long)
+@ stdcall SQLGetConnectAttr(long long ptr long ptr)
+@ stdcall SQLGetEnvAttr(long long ptr long ptr)
+@ stdcall SQLGetInfo(long long ptr long ptr)
+@ stdcall SQLSetConnectAttr(long long ptr long)
+@ stdcall SQLSetEnvAttr(long long ptr long)

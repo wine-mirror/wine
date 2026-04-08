@@ -20,10 +20,231 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "odbcinst.h"
 #include "sql.h"
 #include "sqlext.h"
 
+#include "driver.h"
+
 #include <wine/test.h>
+
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    do { \
+        called_ ## func = FALSE; \
+        expect_ ## func = TRUE; \
+    } while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT( driver_SQLAllocHandle_env );
+DEFINE_EXPECT( driver_SQLAllocHandle_con );
+DEFINE_EXPECT( driver_SQLFreeHandle_env );
+DEFINE_EXPECT( driver_SQLFreeHandle_con );
+DEFINE_EXPECT( driver_SQLSetEnvAttr );
+DEFINE_EXPECT( driver_SQLGetInfo );
+DEFINE_EXPECT( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
+DEFINE_EXPECT( driver_SQLConnect );
+DEFINE_EXPECT( driver_SQLGetConnectAttr );
+DEFINE_EXPECT( driver_SQLDisconnect );
+
+static SQLRETURN WINAPI driver_SQLAllocHandle( SQLSMALLINT type,
+        SQLHANDLE input_handle, SQLHANDLE *out )
+{
+    if (type == SQL_HANDLE_ENV) CHECK_EXPECT( driver_SQLAllocHandle_env );
+    else if (type == SQL_HANDLE_DBC) CHECK_EXPECT( driver_SQLAllocHandle_con );
+    else ok( 0, "SQLAllocHandle type = %d\n", type );
+
+    *out = (SQLHANDLE)(ULONG_PTR)type;
+    return SQL_SUCCESS;
+}
+
+static SQLRETURN WINAPI driver_SQLFreeHandle( SQLSMALLINT type, SQLHANDLE handle )
+{
+    if (type == SQL_HANDLE_ENV) CHECK_EXPECT( driver_SQLFreeHandle_env );
+    else if (type == SQL_HANDLE_DBC) CHECK_EXPECT( driver_SQLFreeHandle_con );
+    else ok( 0, "SQLFreeHandle type = %d\n", type );
+
+    ok( (ULONG_PTR)handle == type, "handle = %p\n", handle );
+    return SQL_SUCCESS;
+}
+
+static SQLRETURN WINAPI driver_SQLGetEnvAttr( SQLHENV env, SQLINTEGER attr,
+        SQLPOINTER val, SQLINTEGER len, SQLINTEGER *out_len )
+{
+    ok( 0, "unexpected call\n" );
+    return SQL_ERROR;
+}
+
+static SQLRETURN WINAPI driver_SQLSetEnvAttr( SQLHENV env,
+        SQLINTEGER attr, SQLPOINTER val, SQLINTEGER len )
+{
+    CHECK_EXPECT( driver_SQLSetEnvAttr );
+    ok( (ULONG_PTR)env == SQL_HANDLE_ENV, "env = %p\n", env );
+    ok( attr == SQL_ATTR_ODBC_VERSION, "attr = %d\n", attr );
+    ok( val == (SQLPOINTER)SQL_OV_ODBC2, "val = %p\n", val );
+    ok( !len, "len = %d\n", len );
+    return SQL_SUCCESS;
+}
+
+static SQLRETURN WINAPI driver_SQLGetConnectAttr( SQLHDBC con, SQLINTEGER attr,
+        SQLPOINTER val, SQLINTEGER len, SQLINTEGER *out_len )
+{
+    CHECK_EXPECT( driver_SQLGetConnectAttr );
+    ok( attr == SQL_ATTR_LOGIN_TIMEOUT || attr == SQL_ATTR_CONNECTION_TIMEOUT, "attr = %d\n", attr );
+    ok( val != NULL, "val = %p\n", val );
+    ok( len == sizeof(SQLINTEGER), "len = %d\n", len );
+    todo_wine_if( attr == SQL_ATTR_LOGIN_TIMEOUT ) ok( out_len != NULL, "out_len = %p\n", out_len );
+
+    *(SQLINTEGER*)val = 0;
+    return SQL_SUCCESS;
+}
+
+static SQLRETURN WINAPI driver_SQLSetConnectAttr( SQLHDBC con, SQLINTEGER attr,
+        SQLPOINTER val, SQLINTEGER len )
+{
+    todo_wine ok( 0, "unexpected call\n" );
+    return SQL_ERROR;
+}
+
+static SQLRETURN WINAPI driver_SQLGetInfo( SQLHDBC con, SQLUSMALLINT type,
+        SQLPOINTER info, SQLSMALLINT len, SQLSMALLINT *out_len )
+{
+    if (type == SQL_DRIVER_ODBC_VER)
+    {
+        CHECK_EXPECT( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
+        ok( info != NULL, "info = %p\n", info );
+        todo_wine ok( len == 12, "len = %d\n", len );
+        ok( out_len != NULL, "out_len = %p\n", out_len );
+
+        strcpy( info, "03.00" );
+        *out_len = 5;
+        return SQL_SUCCESS;
+    }
+
+    CHECK_EXPECT2( driver_SQLGetInfo );
+    ok( type == SQL_CURSOR_COMMIT_BEHAVIOR || type == SQL_CURSOR_ROLLBACK_BEHAVIOR
+            || type == SQL_GETDATA_EXTENSIONS, "type = %d\n", type );
+    return SQL_ERROR;
+}
+
+static SQLRETURN WINAPI driver_SQLConnect( SQLHDBC con, SQLCHAR *server,
+        SQLSMALLINT server_len, SQLCHAR *user, SQLSMALLINT user_len,
+        SQLCHAR *auth, SQLSMALLINT auth_len )
+{
+    CHECK_EXPECT( driver_SQLConnect );
+
+    ok( (ULONG_PTR)con == SQL_HANDLE_DBC, "con = %p\n", con );
+    todo_wine ok( server_len == 12, "server_len = %d\n", server_len );
+    ok( !strncmp((char *)server, "winetest_dsn", 12), "server = %s\n",
+            debugstr_an((char *)server, server_len) );
+    ok( !strcmp((char *)user, "winetest"), "user = %s\n", user );
+    ok( user_len == SQL_NTS, "user_len = %d\n", user_len );
+    ok( !strcmp((char *)auth, "winetest"), "auth = %s\n", auth );
+    ok( auth_len == SQL_NTS, "auth_len = %d\n", auth_len );
+    return SQL_SUCCESS;
+}
+
+static SQLRETURN WINAPI driver_SQLDisconnect( SQLHDBC con )
+{
+    CHECK_EXPECT( driver_SQLDisconnect );
+    return SQL_SUCCESS;
+}
+
+struct driver_funcs driver_funcs =
+{
+    driver_SQLAllocHandle,
+    driver_SQLFreeHandle,
+    driver_SQLGetEnvAttr,
+    driver_SQLSetEnvAttr,
+    driver_SQLGetConnectAttr,
+    driver_SQLSetConnectAttr,
+    driver_SQLGetInfo,
+    driver_SQLConnect,
+    driver_SQLDisconnect,
+};
+
+static void load_resource(const char *name, char *path)
+{
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathA( MAX_PATH, path );
+    strcat( path, name );
+
+    file = CreateFileA( path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %lu\n", path, GetLastError() );
+
+    res = FindResourceA( NULL, name, "TESTDLL" );
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource(GetModuleHandleA(NULL), res) );
+    WriteFile( file, ptr, SizeofResource(GetModuleHandleA(NULL), res), &written, NULL );
+    ok( written == SizeofResource(GetModuleHandleA(NULL), res), "couldn't write resource\n" );
+    CloseHandle( file );
+}
+
+static HMODULE driver_hmod;
+
+static void cleanup_odbc_driver( char *driver_path )
+{
+    DWORD count;
+    BOOL r;
+
+    FreeLibrary( driver_hmod );
+    r = SQLRemoveDSNFromIni( "winetest_dsn" );
+    ok( r, "SQLRemoveDSNFromInit failed\n" );
+    r = SQLRemoveDriver( "winetest", TRUE, &count );
+    ok( r, "SQLRemoveDriver failed\n" );
+    DeleteFileA( driver_path );
+}
+
+static void setup_odbc_driver( char *driver_path )
+{
+    void (WINAPI *p_init_funcs)(struct driver_funcs *funcs);
+    char buf[512], tmp[MAX_PATH];
+    WORD tmp_len;
+    BOOL r;
+
+    load_resource( "driver.dll", driver_path );
+    driver_hmod = LoadLibraryA( driver_path );
+    ok( driver_hmod != NULL, "LoadLibrary failed\n" );
+    p_init_funcs = (void *)GetProcAddress( driver_hmod, "init_funcs" );
+    p_init_funcs( &driver_funcs );
+
+    sprintf( buf, "winetest%cdriver=%s%c", 0, driver_path, 0 );
+    r = SQLInstallDriver( NULL, buf, tmp, sizeof(tmp), &tmp_len );
+    ok( r, "SQLInstallDriver failed\n" );
+
+    r = SQLWriteDSNToIni( "winetest_dsn", "winetest" );
+    ok( r, "SQLWriteDSNToInit failed\n" );
+}
 
 static void test_SQLAllocHandle( void )
 {
@@ -117,7 +338,6 @@ static void test_SQLConnect( void )
     version = -1;
     size = -1;
     ret = SQLGetEnvAttr( env, SQL_ATTR_ODBC_VERSION, &version, sizeof(version), &size );
-    if (ret == SQL_ERROR) diag( env, SQL_HANDLE_ENV );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     ok( version != -1, "version not set\n" );
     ok( size == -1, "size set\n" );
@@ -153,50 +373,68 @@ static void test_SQLConnect( void )
     timeout = 0xdeadbeef;
     ret = SQLGetConnectAttr( con, SQL_ATTR_LOGIN_TIMEOUT, &timeout, sizeof(timeout), NULL );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( timeout == 15, "wrong timeout %d\n", timeout );
+    ok( timeout == SQL_LOGIN_TIMEOUT_DEFAULT, "wrong timeout %d\n", timeout );
 
-    ret = SQLConnect( con, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest",
+    SET_EXPECT( driver_SQLAllocHandle_env );
+    SET_EXPECT( driver_SQLSetEnvAttr );
+    SET_EXPECT( driver_SQLAllocHandle_con );
+    SET_EXPECT( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
+    SET_EXPECT( driver_SQLConnect );
+    SET_EXPECT( driver_SQLGetInfo );
+    ret = SQLConnect( con, (SQLCHAR *)"winetest_dsn", SQL_NTS, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest",
                       SQL_NTS );
+    CHECK_CALLED( driver_SQLAllocHandle_env );
+    CHECK_CALLED( driver_SQLSetEnvAttr );
+    CHECK_CALLED( driver_SQLAllocHandle_con );
+    CHECK_CALLED( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
+    CHECK_CALLED( driver_SQLConnect );
+    todo_wine CHECK_CALLED( driver_SQLGetInfo );
+    ok (ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
-    if (ret != SQL_SUCCESS)
-    {
-        SQLFreeConnect( con );
-        SQLFreeEnv( env );
-        skip( "data source winetest not available\n" );
-        return;
-    }
 
     timeout = 0xdeadbeef;
+    SET_EXPECT( driver_SQLGetConnectAttr );
     ret = SQLGetConnectAttr( con, SQL_ATTR_LOGIN_TIMEOUT, &timeout, sizeof(timeout), NULL );
+    CHECK_CALLED( driver_SQLGetConnectAttr );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    todo_wine ok( !timeout, "wrong timeout %d\n", timeout );
+    ok( !timeout, "wrong timeout %d\n", timeout );
 
     timeout = 0xdeadbeef;
     size = -1;
+    SET_EXPECT( driver_SQLGetConnectAttr );
     ret = SQLGetConnectAttr( con, SQL_ATTR_CONNECTION_TIMEOUT, &timeout, sizeof(timeout), &size );
+    CHECK_CALLED( driver_SQLGetConnectAttr );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( timeout != 0xdeadbeef, "timeout not set\n" );
+    ok( timeout != 0xdeadbeef, "timeout = %d\n", timeout );
     ok( size == -1, "size set\n" );
 
     ret = SQLTransact( NULL, NULL, SQL_COMMIT );
     ok( ret == SQL_INVALID_HANDLE, "got %d\n", ret );
 
     ret = SQLTransact( env, NULL, SQL_COMMIT );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    todo_wine ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
     ret = SQLTransact( NULL, con, SQL_COMMIT );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    todo_wine ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
     ret = SQLTransact( env, con, SQL_COMMIT );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    todo_wine ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
+    SET_EXPECT( driver_SQLDisconnect );
     ret = SQLDisconnect( con );
+    CHECK_CALLED( driver_SQLDisconnect );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
+    SET_EXPECT( driver_SQLFreeHandle_con );
+    SET_EXPECT( driver_SQLFreeHandle_env );
     ret = SQLFreeConnect( con );
+    CHECK_CALLED( driver_SQLFreeHandle_con );
+    todo_wine CHECK_CALLED( driver_SQLFreeHandle_env );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
+    SET_EXPECT( driver_SQLFreeHandle_env );
     ret = SQLFreeEnv( env );
+    todo_wine CHECK_NOT_CALLED( driver_SQLFreeHandle_env );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 }
 
@@ -629,11 +867,73 @@ static void test_SQLSetConnectAttr(void)
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 }
 
+BOOL is_process_elevated(void)
+{
+    TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+    HANDLE token;
+    DWORD size;
+    BOOL ret;
+
+    if (!OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token) ) return FALSE;
+    ret = GetTokenInformation( token, TokenElevationType, &type, sizeof(type), &size );
+    CloseHandle( token );
+    return ret && type == TokenElevationTypeFull;
+}
+
+static HANDLE get_admin_token(void)
+{
+    TOKEN_ELEVATION_TYPE type;
+    TOKEN_LINKED_TOKEN linked;
+    DWORD size;
+
+    if (!GetTokenInformation( GetCurrentThreadEffectiveToken(), TokenElevationType, &type, sizeof(type), &size )
+            || type == TokenElevationTypeFull)
+        return NULL;
+
+    if (!GetTokenInformation( GetCurrentThreadEffectiveToken(), TokenLinkedToken, &linked, sizeof(linked), &size ))
+        return NULL;
+    return linked.LinkedToken;
+}
+
+static void restart_as_admin_elevated(void)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    HANDLE token;
+
+    if (!(token = get_admin_token())) return;
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    if (CreateProcessAsUserW( token, NULL, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+    {
+        DWORD exit_code;
+
+        WaitForSingleObject( pi.hProcess, INFINITE );
+        GetExitCodeProcess( pi.hProcess, &exit_code );
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+        ExitProcess( exit_code );
+    }
+    CloseHandle( token );
+}
+
 START_TEST(odbc32)
 {
+    char driver_path[MAX_PATH];
+
+    if (!is_process_elevated()) restart_as_admin_elevated();
+
+    if (!is_process_elevated()) skip( "process is limited\n" );
+    else
+    {
+        setup_odbc_driver( driver_path );
+        test_SQLConnect();
+        cleanup_odbc_driver( driver_path );
+    }
+
     test_SQLAllocHandle();
     test_SQLGetDiagRec();
-    test_SQLConnect();
     test_SQLDriverConnect();
     test_SQLBrowseConnect();
     test_SQLDataSources();
