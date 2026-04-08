@@ -3135,21 +3135,21 @@ static void test_parse_errors(void)
             "  x = 1\n"
             "End With\n",
             2, 4,
-            NULL, S_OK, -1012
+            NULL, S_OK, 1012
         },
         {
             /* Expected 'Function' - End Sub inside Function - error 1015 */
             L"Function F()\n"
             "End Sub\n",
             1, 4,
-            NULL, S_OK, -1015
+            NULL, S_OK, 1015
         },
         {
             /* Expected 'Sub' - End Function inside Sub - error 1016 */
             L"Sub S()\n"
             "End Function\n",
             1, 4,
-            NULL, S_OK, -1016
+            NULL, S_OK, 1016
         },
         {
             /* Expected 'Select' - End If inside Select block - error 1022 */
@@ -3157,14 +3157,14 @@ static void test_parse_errors(void)
             "  Case 1\n"
             "End If\n",
             2, 4,
-            NULL, S_OK, -1022
+            NULL, S_OK, 1022
         },
         {
             /* Expected 'With' - End Sub inside With block - error 1029 */
             L"With CreateObject(\"Scripting.Dictionary\")\n"
             "End Sub\n",
             1, 4,
-            NULL, S_OK, -1029
+            NULL, S_OK, 1029
         },
         {
             /* Expected 'Property' - End Sub inside Property Get - error 1050 */
@@ -3173,7 +3173,7 @@ static void test_parse_errors(void)
             "  End Sub\n"
             "End Class\n",
             2, 6,
-            NULL, S_OK, -1050
+            NULL, S_OK, 1050
         },
         {
             /* Multiple default members - error 1052 */
