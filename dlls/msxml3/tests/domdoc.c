@@ -3611,9 +3611,9 @@ static void test_get_text(void)
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMNode *node, *node2, *node3;
-    IXMLDOMNode *nodeRoot;
     IXMLDOMNodeList *node_list;
     IXMLDOMNamedNodeMap *node_map;
+    IXMLDOMElement *element;
     HRESULT hr;
     LONG len;
 
@@ -3623,23 +3623,36 @@ static void test_get_text(void)
     ok(hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
 
-    str = SysAllocString( L"bs" );
-    hr = IXMLDOMDocument_getElementsByTagName( doc, str, &node_list );
+    /* Test to get all child node text. */
+    hr = IXMLDOMDocument_get_text(doc, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"fn1.txt\n \nfn2.txt\n \nf1"), "Unexpected text %s.\n", debugstr_w(str));
     SysFreeString(str);
 
-    /* Test to get all child node text. */
-    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMNode, (void**)&nodeRoot);
+    hr = IXMLDOMDocument_getElementsByTagName(doc, _bstr_("lc"), &node_list);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IXMLDOMNode_get_text( nodeRoot, &str );
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!wcscmp(str, L"fn1.txt\n \nfn2.txt\n \nf1"), "Unexpected text %s.\n", debugstr_w(str));
-        SysFreeString(str);
+    hr = IXMLDOMNodeList_get_item(node_list, 0, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_text(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"fn1.txt\n \nfn2.txt\n \nf1"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMNodeList_Release(node_list);
 
-        IXMLDOMNode_Release(nodeRoot);
-    }
+    hr = IXMLDOMDocument_getElementsByTagName(doc, _bstr_("pr"), &node_list);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNodeList_get_item(node_list, 0, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_text(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"fn2.txt"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+    IXMLDOMNodeList_Release(node_list);
+
+    hr = IXMLDOMDocument_getElementsByTagName( doc, _bstr_("bs"), &node_list );
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMNodeList_get_length( node_list, NULL );
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -3688,12 +3701,109 @@ static void test_get_text(void)
     ok( !lstrcmpW(str, L"str2"), "Unexpected string.\n" );
     SysFreeString(str);
 
-
     IXMLDOMNode_Release( node3 );
     IXMLDOMNode_Release( node2 );
     IXMLDOMNamedNodeMap_Release( node_map );
     IXMLDOMNode_Release( node );
-    IXMLDOMDocument_Release( doc );
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>\n <![CDATA[a]]>  This is <![CDATA[b]]> c </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"a  This is b c"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    /* Empty sections */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>\n <![CDATA[]]>  This is <![CDATA[]]> c </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"  This is  c"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>\n <![CDATA[]]>  This is <![CDATA[]]> <![CDATA[]]>b</a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"  This is  b"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>\n <![CDATA[]]>  This is <![CDATA[]]> <![CDATA[]]> </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"  This is"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>\n <b/>  This is </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"This is"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    /* Separated with PI */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>\n a <?pi ?>  This is </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"a   This is"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a><?pi p?>  This is </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"This is"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    /* Deeper nesting level */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>a <b> b <![CDATA[]]>  This is </b></a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"a  b   This is"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    /* Nested elements, first text node is not an immediate child. */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a><b> b </b> a </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_text(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"b  a"), "%s\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMElement_Release(element);
+
+    IXMLDOMDocument_Release(doc);
 
     free_bstrs();
 }
