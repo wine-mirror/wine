@@ -4338,9 +4338,9 @@ static void test_async_reader_com_init(void)
 
     CoUninitialize();
     hr = CoGetApartmentType(&type, &qualifier);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(type == APTTYPE_MTA, "got %d.\n", type);
-    todo_wine ok(qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d.\n", qualifier);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(type == APTTYPE_MTA, "got %d.\n", type);
+    ok(qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d.\n", qualifier);
 
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     ok(hr == S_OK, "failed to init com\n");
