@@ -4010,6 +4010,58 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* '\' are converted to '/' for known schemes */
+    {   "http://a\\b//c\\d?e\\f#g\\h", 0, S_OK, FALSE, 0,
+        {
+            {"http://a/b//c/d?e\\f#g\\h",S_OK,FALSE},
+            {"a",S_OK,FALSE},
+            {"http://a/b//c/d?e\\f#g\\h",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"#g\\h",S_OK,FALSE},
+            {"a",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/b//c/d",S_OK,FALSE},
+            {"/b//c/d?e\\f",S_OK,FALSE},
+            {"?e\\f",S_OK,FALSE},
+            {"http://a\\b//c\\d?e\\f#g\\h",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* '\' are not converted to '/' for unknown schemes */
+    {   "unknown://a\\b//c\\d?e\\f#g\\h", 0, S_OK, FALSE, 0,
+        {
+            {"unknown://a\\b//c\\d?e\\f#g\\h",S_OK,FALSE},
+            {"a\\b",S_OK,FALSE},
+            {"unknown://a\\b//c\\d?e\\f#g\\h",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"#g\\h",S_OK,FALSE},
+            {"a\\b",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"//c\\d",S_OK,FALSE},
+            {"//c\\d?e\\f",S_OK,FALSE},
+            {"?e\\f",S_OK,FALSE},
+            {"unknown://a\\b//c\\d?e\\f#g\\h",S_OK,FALSE},
+            {"unknown",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     /* Forbidden characters aren't percent encoded. */
     {   "file:c:\\in^|dex.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE, 0,
         {

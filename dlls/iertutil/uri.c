@@ -2427,7 +2427,7 @@ static DWORD canonicalize_path_hierarchical(const WCHAR *path, DWORD path_len, U
         }
     }
 
-    if(!is_file && *path && *path != '/') {
+    if(!is_file && *path && !is_slash(*path)) {
         /* Prepend a '/' to the path if it doesn't have one. */
         if(ret_path)
             ret_path[len] = '/';
@@ -2755,7 +2755,7 @@ static BOOL canonicalize_query(const parse_data *data, Uri *uri, DWORD flags, BO
                     continue;
                 }
             }
-        } else if(known_scheme && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr)) {
+        } else if(known_scheme && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr) && !is_slash(*ptr)) {
             if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) &&
                !(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO)) {
                 if(!computeOnly)
@@ -2805,7 +2805,7 @@ static BOOL canonicalize_fragment(const parse_data *data, Uri *uri, DWORD flags,
                     continue;
                 }
             }
-        } else if(known_scheme && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr)) {
+        } else if(known_scheme && is_ascii(*ptr) && !is_unreserved(*ptr) && !is_reserved(*ptr) && !is_slash(*ptr)) {
             if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) &&
                !(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO)) {
                 if(!computeOnly)
