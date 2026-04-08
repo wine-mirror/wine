@@ -6673,43 +6673,35 @@ static void test_testTransforms(void)
     free_bstrs();
 }
 
-struct namespaces_change_t {
-    const CLSID *clsid;
-    const char *name;
-};
-
-static const struct namespaces_change_t namespaces_change_test_data[] = {
-    { &CLSID_DOMDocument,   "CLSID_DOMDocument"   },
-    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2"  },
-    { &CLSID_DOMDocument26, "CLSID_DOMDocument26" },
-    { &CLSID_DOMDocument30, "CLSID_DOMDocument30" },
-    { &CLSID_DOMDocument40, "CLSID_DOMDocument40" },
-    { &CLSID_DOMDocument60, "CLSID_DOMDocument60" },
-    { 0 }
-};
-
 static void test_namespaces_change(void)
 {
-    const struct namespaces_change_t *class_ptr = namespaces_change_test_data;
+    static const GUID *classes[] =
+    {
+        &CLSID_DOMDocument,
+        &CLSID_DOMDocument2,
+        &CLSID_DOMDocument26,
+        &CLSID_DOMDocument30,
+        &CLSID_DOMDocument40,
+        &CLSID_DOMDocument60,
+        NULL,
+    };
 
-    while (class_ptr->clsid)
+    for (int i = 0; i < ARRAYSIZE(classes); ++i)
     {
         IXMLDOMDocument *doc = NULL;
         IXMLDOMElement *elem = NULL;
         IXMLDOMNode *node = NULL;
+        IXMLDOMNamedNodeMap *map;
 
         VARIANT var;
         HRESULT hr;
         BSTR str;
+        LONG len;
 
-        if (!is_clsid_supported(class_ptr->clsid, &IID_IXMLDOMDocument))
-        {
-            class_ptr++;
+        if (!is_clsid_supported(classes[i], &IID_IXMLDOMDocument))
             continue;
-        }
 
-        hr = CoCreateInstance(class_ptr->clsid, NULL, CLSCTX_INPROC_SERVER,
-                              &IID_IXMLDOMDocument, (void**)&doc);
+        hr = CoCreateInstance(classes[i], NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         V_VT(&var) = VT_I2;
@@ -6724,26 +6716,38 @@ static void test_namespaces_change(void)
         hr = IXMLDOMDocument_get_documentElement(doc, &elem);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+        hr = IXMLDOMElement_get_attributes(elem, &map);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IXMLDOMNamedNodeMap_get_length(map, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(!len, "Unexpected length %ld.\n", len);
+        IXMLDOMNamedNodeMap_Release(map);
+
         /* try same prefix, different uri */
         hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), _variantbstr_("ns/uri2"));
         ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-        /* try same prefix and uri */
+        /* Same prefix and uri create an explict attribute for implicitly defined namespace. */
         hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), _variantbstr_("ns/uri"));
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+        hr = IXMLDOMElement_get_attributes(elem, &map);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IXMLDOMNamedNodeMap_get_length(map, &len);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(len == 1, "Unexpected length %ld.\n", len);
+        IXMLDOMNamedNodeMap_Release(map);
+
         hr = IXMLDOMElement_get_xml(elem, &str);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(str, L"<ns:elem xmlns:ns=\"ns/uri\"/>"), "got element %s for %s\n",
-           wine_dbgstr_w(str), class_ptr->name);
+        ok(!lstrcmpW(str, L"<ns:elem xmlns:ns=\"ns/uri\"/>"), "Unexpected element %s.\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IXMLDOMElement_Release(elem);
         IXMLDOMDocument_Release(doc);
 
         free_bstrs();
-
-        class_ptr++;
     }
 }
 
