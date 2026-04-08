@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Zhiyi Zhang for CodeWeavers
+ * Copyright 2024-2026 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(iertutil);
 struct uri
 {
     IUriRuntimeClass IUriRuntimeClass_iface;
-    HSTRING raw_uri;
+    IUri *uri;
     LONG ref;
 };
 
@@ -68,7 +68,7 @@ static ULONG STDMETHODCALLTYPE uri_Release(IUriRuntimeClass *iface)
 
     if (!ref)
     {
-        WindowsDeleteString(impl->raw_uri);
+        IUri_Release(impl->uri);
         free(impl);
     }
 
@@ -95,60 +95,109 @@ static HRESULT STDMETHODCALLTYPE uri_GetTrustLevel(IUriRuntimeClass *iface, Trus
     return E_NOTIMPL;
 }
 
+static HRESULT uri_prop_to_hstring(IUri *uri, Uri_PROPERTY prop, HSTRING *out)
+{
+    BSTR bstr = NULL;
+    HRESULT hr;
+
+    hr = IUri_GetPropertyBSTR(uri, prop, &bstr, 0);
+    if (FAILED(hr))
+    {
+        *out = NULL;
+        return hr;
+    }
+
+    if (hr == S_FALSE || !SysStringLen(bstr))
+    {
+        SysFreeString(bstr);
+        *out = NULL;
+        return S_OK;
+    }
+
+    hr = WindowsCreateString(bstr, SysStringLen(bstr), out);
+    SysFreeString(bstr);
+    return hr;
+}
+
 static HRESULT STDMETHODCALLTYPE uri_AbsoluteUri(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p semi-stub!\n", iface, value);
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
 
-    /* TODO: Parse the raw URI and reconstruct it from parts according to RFC 3986 or RFC 3987 */
-    return IUriRuntimeClass_get_RawUri(iface, value);
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_ABSOLUTE_URI, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_DisplayUri(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_DISPLAY_URI, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Domain(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_DOMAIN, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Extension(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_EXTENSION, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Fragment(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_FRAGMENT, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Host(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_HOST, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Password(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_PASSWORD, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Path(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_PATH, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Query(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_QUERY, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_QueryParsed(IUriRuntimeClass *iface,
@@ -164,25 +213,43 @@ static HRESULT STDMETHODCALLTYPE uri_RawUri(IUriRuntimeClass *iface, HSTRING *va
 
     TRACE("iface %p, value %p.\n", iface, value);
 
-    return WindowsDuplicateString(impl->raw_uri, value);
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_RAW_URI, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_SchemeName(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_SCHEME_NAME, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_UserName(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return uri_prop_to_hstring(impl->uri, Uri_PROPERTY_USER_NAME, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Port(IUriRuntimeClass *iface, INT32 *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+    DWORD port;
+    HRESULT hr;
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    hr = IUri_GetPropertyDWORD(impl->uri, Uri_PROPERTY_PORT, &port, 0);
+    if (hr == S_OK)
+    {
+        *value = port;
+        return S_OK;
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT STDMETHODCALLTYPE uri_Suspicious(IUriRuntimeClass *iface, boolean *value)
@@ -333,28 +400,38 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
 
 DEFINE_IINSPECTABLE(uri_factory, IUriRuntimeClassFactory, struct iertutil, IActivationFactory_iface)
 
-static HRESULT STDMETHODCALLTYPE uri_factory_CreateUri(IUriRuntimeClassFactory *iface, HSTRING uri,
+static HRESULT STDMETHODCALLTYPE uri_factory_CreateUri(IUriRuntimeClassFactory *iface,
+                                                       HSTRING uri_string,
                                                        IUriRuntimeClass **instance)
 {
     const WCHAR *raw_buffer;
     struct uri *uri_impl;
+    HRESULT hr;
+    IUri *uri;
 
-    FIXME("iface %p, uri %s, instance %p semi-stub!\n", iface, debugstr_hstring(uri), instance);
+    TRACE("iface %p, uri_string %s, instance %p.\n", iface, debugstr_hstring(uri_string), instance);
 
-    if (!uri)
+    if (!uri_string)
         return E_POINTER;
+
+    raw_buffer = WindowsGetStringRawBuffer(uri_string, NULL);
+    hr = CreateUri(raw_buffer, Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME | Uri_CREATE_NO_DECODE_EXTRA_INFO, 0, &uri);
+    if (FAILED(hr))
+    {
+        *instance = NULL;
+        return E_INVALIDARG;
+    }
 
     uri_impl = calloc(1, sizeof(*uri_impl));
     if (!uri_impl)
+    {
+        IUri_Release(uri);
         return E_OUTOFMEMORY;
+    }
 
     uri_impl->IUriRuntimeClass_iface.lpVtbl = &uri_vtbl;
+    uri_impl->uri = uri;
     uri_impl->ref = 1;
-
-    raw_buffer = WindowsGetStringRawBuffer(uri, NULL);
-    WindowsCreateString(raw_buffer, wcslen(raw_buffer), &uri_impl->raw_uri);
-
-    /* TODO: Parse the URI according to RFC 3986 and RFC 3987 */
 
     *instance = &uri_impl->IUriRuntimeClass_iface;
     return S_OK;
