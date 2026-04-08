@@ -1329,6 +1329,7 @@ NTSTATUS load_unixlib_by_name( const UNICODE_STRING *nt_name, void **handle_ret 
     if (!(file = malloc( maxlen ))) return STATUS_NO_MEMORY;
 
     pos = maxlen - len - 4;
+    ext = file + pos + len;
     /* we don't want to depend on the current codepage here */
     for (i = 0; i < len; i++)
     {
@@ -1339,7 +1340,6 @@ NTSTATUS load_unixlib_by_name( const UNICODE_STRING *nt_name, void **handle_ret 
     }
     file[pos + len] = 0;
     file[--pos] = '/';
-    if (!ext) ext = file + pos + len;
 
     if (build_dir)
     {
