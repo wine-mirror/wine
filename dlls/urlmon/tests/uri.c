@@ -2565,6 +2565,32 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Forbidden characters are never encoded for unknown scheme types. */
+    {   "unknown://us er:pass word@exam ple.com/pa th?qu ery=val ue#frag ment", 0, S_OK, FALSE, 0,
+        {
+            {"unknown://us er:pass word@exam ple.com/pa th?qu ery=val ue#frag ment",S_OK,FALSE},
+            {"us er:pass word@exam ple.com",S_OK,FALSE},
+            {"unknown://us er:pass word@exam ple.com/pa th?qu ery=val ue#frag ment",S_OK,FALSE},
+            {"exam ple.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"#frag ment",S_OK,FALSE},
+            {"exam ple.com",S_OK,FALSE},
+            {"pass word",S_OK,FALSE},
+            {"/pa th",S_OK,FALSE},
+            {"/pa th?qu ery=val ue",S_OK,FALSE},
+            {"?qu ery=val ue",S_OK,FALSE},
+            {"unknown://us er:pass word@exam ple.com/pa th?qu ery=val ue#frag ment",S_OK,FALSE},
+            {"unknown",S_OK,FALSE},
+            {"us er:pass word",S_OK,FALSE},
+            {"us er",S_OK,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     /* Make sure forbidden characters are percent encoded. */
     {   "http://gov.uk/<|> test<|>", 0, S_OK, FALSE, 0,
         {

@@ -1856,9 +1856,9 @@ static BOOL canonicalize_username(const parse_data *data, Uri *uri, DWORD flags,
             }
         } else if(is_ascii(*ptr) && !is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
             /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
-             * is NOT set.
+             * is NOT set and the scheme is known.
              */
-            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
+            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) && data->scheme_type != URL_SCHEME_UNKNOWN) {
                 if(!computeOnly)
                     pct_encode_val(*ptr, uri->canon_uri + uri->canon_len);
 
@@ -1914,9 +1914,9 @@ static BOOL canonicalize_password(const parse_data *data, Uri *uri, DWORD flags,
             }
         } else if(is_ascii(*ptr) && !is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
             /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
-             * is NOT set.
+             * is NOT set and the scheme is known.
              */
-            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
+            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) && data->scheme_type != URL_SCHEME_UNKNOWN) {
                 if(!computeOnly)
                     pct_encode_val(*ptr, uri->canon_uri + uri->canon_len);
 
