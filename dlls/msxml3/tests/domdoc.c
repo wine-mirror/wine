@@ -13879,44 +13879,6 @@ static void test_transformNodeToObject(void)
     free_bstrs();
 }
 
-static void test_normalize_attribute_values(void)
-{
-    IXMLDOMDocument2 *doc;
-    VARIANT var;
-    HRESULT hr;
-
-    if (!is_clsid_supported(&CLSID_DOMDocument60, &IID_IXMLDOMDocument2))
-    {
-        win_skip("NormalizeAttributeValues is not supported.\n");
-        return;
-    }
-
-    doc = create_document_version(60, &IID_IXMLDOMDocument2);
-
-    V_VT(&var) = VT_I2;
-    V_I2(&var) = 10;
-    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("NormalizeAttributeValues"), &var);
-todo_wine {
-    ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
-    ok(V_VT(&var) == VT_BOOL, "Unexpected property value type, vt %d.\n", V_VT(&var));
-    ok(V_BOOL(&var) == VARIANT_FALSE, "Unexpected property value.\n");
-}
-    V_VT(&var) = VT_BOOL;
-    V_BOOL(&var) = VARIANT_TRUE;
-    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("NormalizeAttributeValues"), var);
-    ok(hr == S_OK, "Failed to set property, hr %#lx.\n", hr);
-
-    V_VT(&var) = VT_I2;
-    V_I2(&var) = 10;
-    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("NormalizeAttributeValues"), &var);
-todo_wine {
-    ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
-    ok(V_VT(&var) == VT_BOOL, "Unexpected property value type, vt %d.\n", V_VT(&var));
-    ok(V_BOOL(&var) == VARIANT_TRUE, "Unexpected property value.\n");
-}
-    IXMLDOMDocument2_Release(doc);
-}
-
 static void test_max_element_depth_values(void)
 {
     IXMLDOMDocument2 *doc;
@@ -15958,6 +15920,7 @@ static void test_text(void)
 
 static void test_attribute_value(void)
 {
+    IXMLDOMElement *element;
     IXMLDOMAttribute *attr;
     IXMLDOMDocument *doc;
     IXMLDOMNode *child;
@@ -16078,6 +16041,24 @@ static void test_attribute_value(void)
     VariantClear(&value);
 
     IXMLDOMAttribute_Release(attr);
+
+    /* Newlines in attribute value */
+    hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a attr=\"v\r\na\rl\nu\te\" />"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_getAttribute(element, _bstr_("attr"), &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(V_BSTR(&value), L"v\na\nl\nu\te"), "Unexpected value %s.\n", debugstr_w(V_BSTR(&value)));
+    VariantClear(&value);
+
+    IXMLDOMElement_Release(element);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();
@@ -16802,7 +16783,6 @@ START_TEST(domdoc)
     test_url();
     test_merging_text();
     test_transformNodeToObject();
-    test_normalize_attribute_values();
     test_namespaces_as_attributes();
     test_validate_on_parse_values();
     test_xsltemplate();
