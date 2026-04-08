@@ -1838,7 +1838,7 @@ struct test_recursion_context
     BYTE *send_buffer;
 };
 
-#define TEST_RECURSION_LIMIT 3
+#define TEST_RECURSION_LIMIT 5
 
 static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR context_ptr,
                                               DWORD status, void *buffer, DWORD buflen )

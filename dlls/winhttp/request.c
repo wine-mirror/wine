@@ -3343,11 +3343,12 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
     return !ret;
 }
 
+#define RECURSION_LIMIT 5
 static BOOL skip_async_queue( struct request *request, BOOL *wont_block, DWORD to_read )
 {
     to_read = min( to_read, request->content_length - request->content_read );
     *wont_block = end_of_data_stream( request ) || request->read.size >= to_read;
-    return request->hdr.recursion_count <= 3 && *wont_block;
+    return request->hdr.recursion_count <= RECURSION_LIMIT && *wont_block;
 }
 
 static DWORD query_data_available( struct request *request, DWORD *available, BOOL async )
@@ -3647,7 +3648,7 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, const void *buffer, DWORD to_w
         return FALSE;
     }
 
-    if (!(async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) || request->hdr.recursion_count <= 3)
+    if (!(async = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) || request->hdr.recursion_count <= RECURSION_LIMIT)
     {
         ret = write_data( request, buffer, to_write, written, async );
     }
