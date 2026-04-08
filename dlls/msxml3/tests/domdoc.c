@@ -16067,6 +16067,7 @@ static void test_xmldecl_attributes(void)
 {
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMNamedNodeMap *map;
+    IXMLDOMAttribute *attr;
     IXMLDOMDocument *doc;
     IXMLDOMNode *node;
     VARIANT_BOOL b;
@@ -16086,6 +16087,11 @@ static void test_xmldecl_attributes(void)
     hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMProcessingInstruction, (void **)&pi);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"version=\"1.0\" encoding=\"UTF-16\" standalone=\"yes\""), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
 
     hr = IXMLDOMProcessingInstruction_get_attributes(pi, &map);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -16143,6 +16149,100 @@ static void test_xmldecl_attributes(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     todo_wine
     ok(!wcscmp(str, L"<?xml version=\"1.0\"?>"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("standalone"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_put_text(attr, _bstr_("no"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNamedNodeMap_setNamedItem(map, (IXMLDOMNode *)attr, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IXMLDOMAttribute_Release(attr);
+
+    hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?xml version=\"1.0\" standalone=\"no\"?>"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"standalone=\"no\""), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("encoding"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_put_text(attr, _bstr_("utf-8"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNamedNodeMap_setNamedItem(map, (IXMLDOMNode *)attr, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMAttribute_Release(attr);
+
+    hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 2, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"standalone"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    hr = IXMLDOMNamedNodeMap_get_item(map, 1, &node);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"encoding"), "Unexpected name %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+}
+    hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"standalone=\"no\" encoding=\"utf-8\""), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?xml version=\"1.0\" standalone=\"no\"?>"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("version"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_put_text(attr, _bstr_("2.0abc"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNamedNodeMap_setNamedItem(map, (IXMLDOMNode *)attr, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMAttribute_Release(attr);
+
+    hr = IXMLDOMProcessingInstruction_get_text(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"standalone=\"no\" encoding=\"utf-8\" version=\"2.0abc\""), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMProcessingInstruction_get_xml(pi, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<?xml version=\"2.0abc\" standalone=\"no\"?>"), "Unexpected string %s.\n", debugstr_w(str));
     SysFreeString(str);
 
     IXMLDOMNamedNodeMap_Release(map);
