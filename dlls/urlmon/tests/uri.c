@@ -1901,6 +1901,58 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Empty port with a known scheme */
+    {   "http://example.com:/", 0, S_OK, FALSE, 0,
+        {
+            {"http://example.com/",S_OK,FALSE},
+            {"example.com",S_OK,FALSE},
+            {"http://example.com/",S_OK,FALSE},
+            {"example.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"example.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://example.com:/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Empty port with an unknown scheme */
+    {   "unknown://example.com:/", 0, S_OK, FALSE, 0,
+        {
+            {"unknown://example.com:/",S_OK,FALSE},
+            {"example.com:",S_OK,FALSE},
+            {"unknown://example.com:/",S_OK,FALSE},
+            {"example.com:",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"example.com:",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"unknown://example.com:/",S_OK,FALSE},
+            {"unknown",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     {   "zip://google.com:65536", 0, S_OK, FALSE, 0,
         {
             {"zip://google.com:65536/",S_OK,FALSE},

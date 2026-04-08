@@ -1173,9 +1173,9 @@ static BOOL parse_port(const WCHAR **ptr, parse_data *data) {
         ++(*ptr);
     }
 
-    data->has_port = TRUE;
     data->port_value = port;
     data->port_len = *ptr - data->port;
+    data->has_port = data->port_len > 0;
 
     TRACE("(%p %p): Found port %s len=%ld value=%lu\n", ptr, data,
         debugstr_wn(data->port, data->port_len), data->port_len, data->port_value);
@@ -1222,6 +1222,9 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data) {
             data->host = NULL;
             return FALSE;
         }
+        /* Include the ':' in the host for unknown schemes with no port value */
+        if(!data->has_port && is_unknown)
+            data->host_len++;
     } else if(!is_auth_delim(**ptr, !is_unknown)) {
         /* Found more data which belongs to the host, so this isn't an IPv4. */
         *ptr = data->host;
@@ -1309,6 +1312,9 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD extras) {
                         ignore_col = TRUE;
                 } else {
                     data->host_len = tmp - data->host;
+                    /* Include the ':' in the host for unknown schemes with no port value */
+                    if(!data->has_port && data->scheme_type == URL_SCHEME_UNKNOWN)
+                        data->host_len++;
                     break;
                 }
             }
