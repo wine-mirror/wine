@@ -4305,9 +4305,67 @@ static void test_sync_reader_allocator_failure(void)
     ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
 }
 
+static void test_async_reader_com_init(void)
+{
+    const WCHAR *filename = load_resource(L"test.wmv");
+    APTTYPEQUALIFIER qualifier;
+    struct callback callback;
+    IWMReader *reader;
+    APTTYPE type;
+    HRESULT hr;
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "failed to init com\n");
+    CoUninitialize();
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok(hr == CO_E_NOTINITIALIZED, "got %#lx.\n", hr);
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "failed to init com\n");
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(type == APTTYPE_MTA, "got %d.\n", type);
+    ok(qualifier == APTTYPEQUALIFIER_NONE, "got %d.\n", qualifier);
+
+    callback_init(&callback, NULL);
+
+    hr = WMCreateReader(NULL, 0, &reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IWMReader_Open(reader, filename, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    wait_opened_callback(&callback);
+
+    CoUninitialize();
+    hr = CoGetApartmentType(&type, &qualifier);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(type == APTTYPE_MTA, "got %d.\n", type);
+    todo_wine ok(qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA, "got %d.\n", qualifier);
+
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "failed to init com\n");
+
+    SetEvent(callback.expect_started);
+    hr = IWMReader_Start(reader, 0, 0, 1, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IWMReader_Close(reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IWMReader_Release(reader);
+
+    callback_cleanup(&callback);
+
+    DeleteFileW(filename);
+
+    CoUninitialize();
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
+
+    /* Keep this test before CoInitialize(). */
+    test_async_reader_com_init();
 
     hr = CoInitialize(0);
     ok(hr == S_OK, "failed to init com\n");
