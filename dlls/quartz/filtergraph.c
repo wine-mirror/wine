@@ -1791,6 +1791,7 @@ static HRESULT graph_start(struct filter_graph *graph, REFERENCE_TIME stream_sta
     }
     if (list_empty(&graph->media_events))
         ResetEvent(graph->media_event_handle);
+    ResetEvent(graph->hEventCompletion);
 
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);

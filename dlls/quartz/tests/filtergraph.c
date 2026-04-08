@@ -5978,7 +5978,7 @@ static void test_events(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
-    todo_wine ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_Stop(media_control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
