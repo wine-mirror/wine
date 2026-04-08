@@ -1177,7 +1177,9 @@ static HRESULT WINAPI ddraw_sink_Disconnect(IPin *iface)
     if (!stream->peer)
     {
         LeaveCriticalSection(&stream->cs);
-        return S_FALSE;
+        /* The MS documentation for IPin::Disconnect says to return S_FALSE
+         * when not connected, but the MS implementation returns S_OK */
+        return S_OK;
     }
 
     IPin_Release(stream->peer);

@@ -4095,7 +4095,6 @@ static void test_ddrawstream_receive_connection(void)
     hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     hr = IPin_Disconnect(pin);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Return S_OK from QueryAccept */
@@ -9481,7 +9480,7 @@ static void test_ddrawstream_set_format_dynamic(void)
     hr = IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IGraphBuilder_Disconnect(graph, pin);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
