@@ -3385,6 +3385,9 @@ static void test_saxreader_encoding(void)
         '<','a','>','t','e','x','t','<','/','a','>',
     };
 
+    static const char xml_win936_test[] =
+        "<?xml version=\"1.0\" encoding=\"windows-936\" ?><a>text</a>";
+
     static const char xml_win1252_test[] =
         "<?xml version=\"1.0\" encoding=\"windows-1252\" ?><a>" "\xc1" "\x80" "</a>";
 
@@ -3455,6 +3458,13 @@ static void test_saxreader_encoding(void)
 
     hr = ISAXXMLReader_putContentHandler(reader, &contentHandler);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    create_test_file(testXmlA, xml_win936_test, sizeof(xml_win936_test) - 1);
+    hr = ISAXXMLReader_parseURL(reader, L"test.xml");
+    todo_wine
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
+    flush_sequence(sequences, CONTENT_HANDLER_INDEX);
+    DeleteFileA(testXmlA);
 
     create_test_file(testXmlA, xml_win1252_test, sizeof(xml_win1252_test) - 1);
     set_expected_seq(xml_win1252_seq);
@@ -5316,6 +5326,26 @@ static void test_mxwriter_comment(void)
     ok(!lstrcmpW(L"<!---->\r\n<!--comment-->\r\n", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
+    /* As an element child */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ISAXContentHandler_startElement(content, L"", 0, L"", 0, _bstr_("a"), -1, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ISAXLexicalHandler_comment(lexical, L"comment", 7);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ISAXContentHandler_endElement(content, L"", 0, L"", 0, _bstr_("a"), -1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "Unexpected type %d.\n", V_VT(&dest));
+    todo_wine
+    ok(!lstrcmpW(L"<a><!--comment--></a>", V_BSTR(&dest)), "Unexpected content %s.\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
     IVBSAXLexicalHandler_Release(vblexical);
@@ -6396,6 +6426,33 @@ static void test_saxreader_dtd(void)
     hr = ISAXXMLReader_parse(reader, var);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"<?xml version=\"1.0\" encoding=\"value\" standalone=\"yes\"?><a>text</a>");
+
+    hr = ISAXXMLReader_parse(reader, var);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantClear(&var);
+
+    ISAXXMLReader_Release(reader);
+}
+
+static void test_saxreader_parse_input(void)
+{
+    ISAXXMLReader *reader;
+    VARIANT var;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void **)&reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocStringByteLen("<a>text</a>", 11);
+
+    hr = ISAXXMLReader_parse(reader, var);
+    todo_wine
+    ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
+
     VariantClear(&var);
 
     ISAXXMLReader_Release(reader);
@@ -6437,6 +6494,7 @@ START_TEST(saxreader)
     test_saxreader_pi();
     test_saxreader_characters();
     test_saxreader_dtd();
+    test_saxreader_parse_input();
 
     /* MXXMLWriter tests */
     get_class_support_data(mxwriter_support_data, &IID_IMXWriter);
