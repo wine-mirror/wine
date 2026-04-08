@@ -1301,7 +1301,7 @@ NTSTATUS load_builtin( struct pe_mapping_info *pe_mapping, USHORT machine,
  */
 NTSTATUS load_unixlib_by_name( const UNICODE_STRING *nt_name, void **handle_ret )
 {
-    unsigned int i, pos, namepos, maxlen = 0;
+    unsigned int i, pos, maxlen = 0;
     unsigned int len = nt_name->Length / sizeof(WCHAR);
     const char *so_dir = get_so_dir( current_machine );
     char *ptr = NULL, *file, *ext = NULL;
@@ -1309,8 +1309,7 @@ NTSTATUS load_unixlib_by_name( const UNICODE_STRING *nt_name, void **handle_ret 
 
     if (!len) return STATUS_DLL_NOT_FOUND;
 
-    for (i = namepos = 0; i < len; i++)
-        if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') break;
+    for (i = 0; i < len; i++) if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') break;
 
     if (i < len)  /* explicit path */
     {
@@ -1333,8 +1332,8 @@ NTSTATUS load_unixlib_by_name( const UNICODE_STRING *nt_name, void **handle_ret 
     /* we don't want to depend on the current codepage here */
     for (i = 0; i < len; i++)
     {
-        if (nt_name->Buffer[namepos + i] > 127) goto done;
-        file[pos + i] = (char)nt_name->Buffer[namepos + i];
+        if (nt_name->Buffer[i] > 127) goto done;
+        file[pos + i] = (char)nt_name->Buffer[i];
         if (file[pos + i] >= 'A' && file[pos + i] <= 'Z') file[pos + i] += 'a' - 'A';
         else if (file[pos + i] == '.') ext = file + pos + i;
     }
