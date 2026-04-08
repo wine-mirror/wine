@@ -10042,13 +10042,34 @@ static void test_get_doctype(void)
     todo_wine
     ok(V_VT(&v) == VT_NULL, "Unexpected type %d.\n", V_VT(&v));
 
+    hr = IXMLDOMDocumentType_get_text(doctype, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocumentType_get_text(doctype, &s);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!*s, "Unexpected text %s\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
     hr = IXMLDOMDocumentType_get_nodeName(doctype, &s);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(L"email", s), "got name %s\n", wine_dbgstr_w(s));
     SysFreeString(s);
 
+    /* The 'xml' property contains original doctype text as-is, with newlines normalized */
+    hr = IXMLDOMDocumentType_get_xml(doctype, &s);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(s, _bstr_(SZ_EMAIL_DTD)), "Unexpected text %s\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
     IXMLDOMDocumentType_Release(doctype);
+
     IXMLDOMDocument_Release(doc);
+    free_bstrs();
 }
 
 static void test_get_tagName(void)
