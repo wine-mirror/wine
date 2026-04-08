@@ -9839,11 +9839,11 @@ static void test_insertBefore(void)
 
 static void test_appendChild(void)
 {
+    IXMLDOMDocumentFragment *fragment, *fragment2;
+    IXMLDOMElement *elem, *elem2, *elem3;
     IXMLDOMComment *comment1, *comment2;
-    IXMLDOMDocumentFragment *fragment;
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMDocument *doc, *doc2;
-    IXMLDOMElement *elem, *elem2;
     IXMLDOMText *text1, *text2;
     IXMLDOMNodeList *list;
     DOMNodeType node_type;
@@ -9851,6 +9851,7 @@ static void test_appendChild(void)
     LONG length;
     VARIANT var;
     HRESULT hr;
+    BSTR xml;
 
     doc = create_document(&IID_IXMLDOMDocument);
     doc2 = create_document(&IID_IXMLDOMDocument);
@@ -9978,7 +9979,105 @@ static void test_appendChild(void)
     IXMLDOMText_Release(text2);
     IXMLDOMDocumentFragment_Release(fragment);
 
+    /* Nested fragments */
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &fragment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &fragment2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)elem, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<elem/>"), "Unexpected xml %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem2"), &elem2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment2, (IXMLDOMNode *)elem2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_get_xml(fragment2, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<elem2/>"), "Unexpected xml %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    EXPECT_CHILDREN(fragment2);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)fragment2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_NO_CHILDREN(fragment2);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<elem/><elem2/>"), "Unexpected xml %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem3"), &elem3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    EXPECT_CHILDREN(fragment);
+    hr = IXMLDOMElement_appendChild(elem3, (IXMLDOMNode *)fragment, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_NO_CHILDREN(fragment);
+
+    hr = IXMLDOMElement_get_xml(elem3, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<elem3><elem/><elem2/></elem3>"), "Unexpected xml %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMElement_Release(elem2);
+    IXMLDOMElement_Release(elem3);
+    IXMLDOMDocumentFragment_Release(fragment2);
+    IXMLDOMDocumentFragment_Release(fragment);
+
+    /* Append a child to empty linked fragment */
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &fragment);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &fragment2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem2"), &elem2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem3"), &elem3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)elem, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment, (IXMLDOMNode *)fragment2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentFragment_appendChild(fragment2, (IXMLDOMNode *)elem2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    EXPECT_CHILDREN(fragment);
+    EXPECT_CHILDREN(fragment2);
+    hr = IXMLDOMElement_appendChild(elem3, (IXMLDOMNode *)fragment, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_NO_CHILDREN(fragment);
+    EXPECT_CHILDREN(fragment2);
+    hr = IXMLDOMDocumentFragment_get_parentNode(fragment2, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected node %p.\n", node);
+
+    hr = IXMLDOMElement_get_xml(elem3, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<elem3><elem/></elem3>"), "Unexpected xml %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    hr = IXMLDOMDocumentFragment_get_xml(fragment2, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<elem2/>"), "Unexpected xml %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMElement_Release(elem2);
+    IXMLDOMElement_Release(elem3);
+    IXMLDOMDocumentFragment_Release(fragment);
+    IXMLDOMDocumentFragment_Release(fragment2);
+
     IXMLDOMDocument_Release(doc);
+    free_bstrs();
 }
 
 static void test_get_doctype(void)
