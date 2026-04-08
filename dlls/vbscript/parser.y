@@ -483,6 +483,7 @@ IntegerValue
 
 PrimaryExpression
     : tEXPRLBRACKET Expression ')'            { $$ = new_unary_expression(ctx, EXPR_BRACKETS, $2); }
+    | tEXPRLBRACKET Expression error          { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_RPAREN); YYABORT; }
     | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
@@ -503,9 +504,11 @@ PropertyDecl
     : Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND tPROPERTY
                                     { $$ = new_function_decl(ctx, $4, FUNC_PROPGET, @2, $1, $5, $7); CHECK_ERROR; }
     | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
-                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPLET, @2, $1, $6, $9); CHECK_ERROR; }
+                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
+                                      $$ = new_function_decl(ctx, $4, FUNC_PROPLET, @2, $1, $6, $9); CHECK_ERROR; }
     | Storage_opt tPROPERTY tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
-                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPSET, @2, $1, $6, $9); CHECK_ERROR; }
+                                    { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
+                                      $$ = new_function_decl(ctx, $4, FUNC_PROPSET, @2, $1, $6, $9); CHECK_ERROR; }
     | Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
     | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
@@ -1118,8 +1121,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
         if(type == FUNC_PROPGET || type == FUNC_FUNCTION || type == FUNC_SUB) {
             is_default = TRUE;
         }else {
-            FIXME("Invalid default property\n");
-            ctx->hres = E_FAIL;
+            ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET);
             return NULL;
         }
     }
@@ -1171,6 +1173,11 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
     function_decl_t *iter;
 
     for(iter = class_decl->funcs; iter; iter = iter->next) {
+        if(decl->is_default && iter->is_default) {
+            ctx->error_loc = iter->loc;
+            ctx->hres = MAKE_VBSERROR(VBSE_MULTIPLE_DEFAULT_MEMBERS);
+            return NULL;
+        }
         if(!wcsicmp(iter->name, decl->name)) {
             if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION) {
                 ctx->hres = MAKE_VBSERROR(VBSE_NAME_REDEFINED);

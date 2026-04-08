@@ -3127,7 +3127,7 @@ static void test_parse_errors(void)
             /* Expected ')' - error 1006 */
             L"x = (1 + 2\n",
             0, 10,
-            NULL, S_OK, -1006
+            NULL, S_OK, 1006
         },
         {
             /* Expected 'If' - End With inside If block - error 1012 */
@@ -3185,8 +3185,8 @@ static void test_parse_errors(void)
             "    G = 2\n"
             "  End Function\n"
             "End Class\n",
-            -4, -17,
-            NULL, S_OK, -1052
+            4, 17,
+            NULL, S_OK, 1052
         },
         {
             /* Default only on Property Get - error 1058 */
@@ -3194,8 +3194,8 @@ static void test_parse_errors(void)
             "  Public Default Property Let P(v)\n"
             "  End Property\n"
             "End Class\n",
-            -1, -26,
-            NULL, S_OK, -1058
+            1, 26,
+            NULL, S_OK, 1058
         }
     };
     HRESULT hres;
