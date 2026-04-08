@@ -4093,9 +4093,9 @@ static void test_ddrawstream_receive_connection(void)
     CopyMediaType(&mt, &rgb32_mt);
     ((VIDEOINFO*)mt.pbFormat)->bmiHeader.biHeight = -rgb32_video_info.bmiHeader.biHeight;
     hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
-    todo_wine
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     hr = IPin_Disconnect(pin);
+    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Return S_OK from QueryAccept */
