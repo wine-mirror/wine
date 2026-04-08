@@ -8901,6 +8901,67 @@ static void test_get_xml(void)
             "Unexpected xml %s.\n", wine_dbgstr_w(xml));
     SysFreeString(xml);
 
+    /* Default namespace */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a><elem xmlns=\"http://blah.org\" /></a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a><elem xmlns=\"http://blah.org\"/></a>\r\n"),
+            "Unexpected xml %s.\n", wine_dbgstr_w(xml));
+    SysFreeString(xml);
+
+    /* Load with preservedWhiteSpace == FALSE */
+    hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, VARIANT_FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a>  </a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    EXPECT_NO_CHILDREN(elem);
+
+    hr = IXMLDOMElement_get_xml(elem, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a>\r\n</a>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+
+    hr = IXMLDOMDocument_put_preserveWhiteSpace(doc, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_xml(elem, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a>\r\n</a>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+    IXMLDOMElement_Release(elem);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a></a>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_xml(elem, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(xml, L"<a></a>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+    IXMLDOMElement_Release(elem);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a/>"), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_xml(elem, &xml);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(xml, L"<a/>"), "Unexpected text %s.\n", debugstr_w(xml));
+    SysFreeString(xml);
+    IXMLDOMElement_Release(elem);
+
     IXMLDOMDocument_Release(doc);
 
     free_bstrs();
