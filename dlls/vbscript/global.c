@@ -3681,21 +3681,51 @@ static HRESULT Global_Unescape(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
     return S_OK;
 }
 
+static HRESULT dispatch_to_string(script_ctx_t *ctx, IDispatch *disp, BSTR *ret)
+{
+    DISPPARAMS dp = {0};
+    VARIANT v;
+    HRESULT hres;
+
+    if(!disp)
+        return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
+    hres = disp_call(ctx, disp, DISPID_VALUE, &dp, &v);
+    if(FAILED(hres))
+        return hres;
+    if(V_VT(&v) == VT_BSTR) {
+        *ret = V_BSTR(&v);
+        return S_OK;
+    }
+    hres = to_string(&v, ret);
+    VariantClear(&v);
+    return hres;
+}
+
 static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
+    BSTR conv_str = NULL;
     vbscode_t *code;
+    BSTR str;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_variant(arg));
 
-    if(V_VT(arg) != VT_BSTR) {
+    if(V_VT(arg) == VT_BSTR) {
+        str = V_BSTR(arg);
+    }else if(V_VT(arg) == VT_DISPATCH) {
+        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }else {
         if(res)
             return VariantCopy(res, arg);
         return S_OK;
     }
 
-    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
+    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
                           SCRIPTTEXT_ISEXPRESSION, FALSE, &code);
+    SysFreeString(conv_str);
     if(FAILED(hres)) {
         clear_error_loc(This->ctx);
         return hres;
@@ -3711,16 +3741,27 @@ static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
 static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
+    BSTR conv_str = NULL;
     vbscode_t *code;
+    BSTR str;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_variant(arg));
 
-    if(V_VT(arg) != VT_BSTR)
+    if(V_VT(arg) == VT_BSTR) {
+        str = V_BSTR(arg);
+    }else if(V_VT(arg) == VT_DISPATCH) {
+        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }else {
         return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
 
-    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
+    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
                           0, TRUE, &code);
+    SysFreeString(conv_str);
     if(FAILED(hres)) {
         clear_error_loc(This->ctx);
         return hres;
@@ -3746,16 +3787,27 @@ static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt
 
 static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
+    BSTR conv_str = NULL;
     vbscode_t *code;
+    BSTR str;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_variant(arg));
 
-    if(V_VT(arg) != VT_BSTR)
+    if(V_VT(arg) == VT_BSTR) {
+        str = V_BSTR(arg);
+    }else if(V_VT(arg) == VT_DISPATCH) {
+        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }else {
         return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+    }
 
-    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
+    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
                           0, TRUE, &code);
+    SysFreeString(conv_str);
     if(FAILED(hres)) {
         clear_error_loc(This->ctx);
         return hres;

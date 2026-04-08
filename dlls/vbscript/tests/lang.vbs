@@ -3134,6 +3134,90 @@ End Sub
 Call TestEvalNoLeak
 Call ok(getVT(evalLocal) = "VT_EMPTY*", "evalLocal leaked from Eval scope: " & getVT(evalLocal))
 
+' Eval with non-BSTR arguments: non-string values are returned as-is
+Call ok(Eval(42) = 42, "Eval(42) = " & Eval(42))
+Call ok(getVT(Eval(42)) = "VT_I2", "Eval(42) type = " & getVT(Eval(42)))
+Call ok(Eval(3.14) = 3.14, "Eval(3.14) = " & Eval(3.14))
+Call ok(Eval(True) = True, "Eval(True) = " & Eval(True))
+Call ok(IsNull(Eval(Null)), "Eval(Null) should be Null")
+Call ok(IsEmpty(Eval(Empty)), "Eval(Empty) should be Empty")
+
+' Eval with object that has a default property: converts to string via default, then evaluates
+Class EvalHasDefault
+    Public Default Function GetValue()
+        GetValue = "True"
+    End Function
+End Class
+Dim evalHasDefaultObj
+Set evalHasDefaultObj = New EvalHasDefault
+Call ok(Eval(evalHasDefaultObj) = True, "Eval(HasDefault) = " & Eval(evalHasDefaultObj))
+
+' Eval with object without default property: should fail with error 438
+Class EvalNoDefault
+    Public Name
+End Class
+Dim evalNoDefaultObj
+Set evalNoDefaultObj = New EvalNoDefault
+
+On Error Resume Next
+Err.Clear
+Dim evalObjResult
+evalObjResult = Eval(evalNoDefaultObj)
+Call ok(Err.Number = 438, "Eval(NoDefault) err.number = " & Err.Number & " expected 438")
+
+' Eval(Nothing) should fail with error 91
+Err.Clear
+Dim evalNothingResult
+evalNothingResult = Eval(Nothing)
+Call ok(Err.Number = 91, "Eval(Nothing) err.number = " & Err.Number & " expected 91")
+
+' Eval(dispatch) in If..Is should trigger error, not silently return the object
+Err.Clear
+Dim evalCheckResult
+evalCheckResult = True
+If Not Eval(evalNoDefaultObj) Is evalNoDefaultObj Or Err Then evalCheckResult = False
+Call ok(evalCheckResult = False, "Eval(obj) Is obj: checkResult = " & evalCheckResult & " expected False")
+
+' Execute/ExecuteGlobal with non-BSTR should fail with type mismatch
+Err.Clear
+Execute 42
+Call ok(Err.Number = 13, "Execute(42) err.number = " & Err.Number & " expected 13")
+
+Err.Clear
+ExecuteGlobal 42
+Call ok(Err.Number = 13, "ExecuteGlobal(42) err.number = " & Err.Number & " expected 13")
+
+' Execute/ExecuteGlobal with dispatch: converts via default property
+Class ExecHasDefault
+    Public Default Function GetValue()
+        GetValue = "execHdResult = 99"
+    End Function
+End Class
+Dim execHdObj : Set execHdObj = New ExecHasDefault
+Dim execHdResult : execHdResult = 0
+
+Err.Clear
+Execute execHdObj
+Call ok(Err.Number = 0, "Execute(HasDefault) err.number = " & Err.Number)
+Call ok(execHdResult = 99, "Execute(HasDefault) execHdResult = " & execHdResult)
+
+Err.Clear
+execHdResult = 0
+ExecuteGlobal execHdObj
+Call ok(Err.Number = 0, "ExecuteGlobal(HasDefault) err.number = " & Err.Number)
+Call ok(execHdResult = 99, "ExecuteGlobal(HasDefault) execHdResult = " & execHdResult)
+
+' Execute/ExecuteGlobal with dispatch without default property: error 438
+Err.Clear
+Execute evalNoDefaultObj
+Call ok(Err.Number = 438, "Execute(NoDefault) err.number = " & Err.Number & " expected 438")
+
+Err.Clear
+ExecuteGlobal evalNoDefaultObj
+Call ok(Err.Number = 438, "ExecuteGlobal(NoDefault) err.number = " & Err.Number & " expected 438")
+
+On Error GoTo 0
+
 ' ExecuteGlobal tests
 x = 0
 ExecuteGlobal "x = 42"
