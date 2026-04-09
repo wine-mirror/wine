@@ -3022,8 +3022,9 @@ static void test_media_types(void)
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     struct testfilter source;
     IEnumMediaTypes *enummt;
+    AM_MEDIA_TYPE *pmt, mt;
+    VIDEOINFOHEADER *vih;
     IMediaStream *stream;
-    AM_MEDIA_TYPE *pmt;
     unsigned int i, j;
     ULONG ref, count;
     HRESULT hr;
@@ -3121,13 +3122,29 @@ static void test_media_types(void)
 
     testfilter_init(&source);
 
+    /* Make a copy of the media type so we can manipulate the VIDEOINFOHEADER */
+    CopyMediaType(&mt, pmt);
+    CoTaskMemFree(pmt);
+    vih = (VIDEOINFOHEADER *)mt.pbFormat;
+
+    vih->bmiHeader.biHeight = 1;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* A negative height is never accepted */
+    vih->bmiHeader.biHeight = -1;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+
     for (i = 0; i < ARRAY_SIZE(rejected_subtypes); ++i)
     {
-        pmt->subtype = *rejected_subtypes[i];
-        hr = IPin_QueryAccept(pin, pmt);
+        mt.subtype = *rejected_subtypes[i];
+        vih->bmiHeader.biHeight = 1;
+        hr = IPin_QueryAccept(pin, &mt);
         ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for subtype %s.\n",
             hr, wine_dbgstr_guid(rejected_subtypes[i]));
-        hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, pmt);
+        hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
         ok(hr == (i < 4) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx on ReceiveConnection for subtype %s.\n", hr,
                 wine_dbgstr_guid(rejected_subtypes[i]));
 
@@ -3135,18 +3152,30 @@ static void test_media_types(void)
         {
             for (j = 0; j < ARRAY_SIZE(rejected_subtypes); ++j)
             {
-                pmt->subtype = *rejected_subtypes[j];
-                hr = IPin_QueryAccept(pin, pmt);
+                mt.subtype = *rejected_subtypes[j];
+                hr = IPin_QueryAccept(pin, &mt);
                 todo_wine_if(j < 4)
                 ok(hr == (j < 4 ? S_OK : VFW_E_TYPE_NOT_ACCEPTED), "Got hr %#lx for subtype %s whilst connected.\n",
                         hr, wine_dbgstr_guid(rejected_subtypes[j]));
             }
+
+            /* A negative height is never accepted */
+            vih->bmiHeader.biHeight = -1;
+            for (j = 0; j < ARRAY_SIZE(rejected_subtypes); ++j)
+            {
+                mt.subtype = *rejected_subtypes[j];
+                hr = IPin_QueryAccept(pin, &mt);
+                ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for subtype %s using negative height.\n",
+                        hr, wine_dbgstr_guid(rejected_subtypes[j]));
+            }
+
             hr = IPin_Disconnect(pin);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
         }
+
     }
 
-    CoTaskMemFree(pmt);
+    FreeMediaType(&mt);
 
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
