@@ -16699,6 +16699,79 @@ static void test_document_reload(void)
     free_bstrs();
 }
 
+static void test_setAttribute(void)
+{
+    IXMLDOMElement *element;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("prefix:name"), &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_namespaceURI(element, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<prefix:name/>"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_setAttribute(element, _bstr_("xmlns:prefix"), _variantbstr_("uri"));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_namespaceURI(element, &str);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"<prefix:name xmlns:prefix=\"uri\"/>"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_setAttribute(element, _bstr_("xmlns:prefix"), _variantbstr_("uri2"));
+    todo_wine
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
+static void test_createElement(void)
+{
+    IXMLDOMElement *element;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    /* URI is not specified, and is not required */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("prefix:name"), &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<prefix:name/>"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)element, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<prefix:name/>\r\n"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -16801,6 +16874,8 @@ START_TEST(domdoc)
     test_loadXML();
     test_cdata();
     test_document_reload();
+    test_setAttribute();
+    test_createElement();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
