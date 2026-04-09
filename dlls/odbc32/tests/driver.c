@@ -98,3 +98,83 @@ SQLRETURN WINAPI SQLDisconnect( SQLHDBC con )
 {
     return driver_funcs->SQLDisconnect( con );
 }
+
+SQLRETURN WINAPI SQLGetStmtAttr( SQLHSTMT stmt, SQLINTEGER attr,
+        SQLPOINTER val, SQLINTEGER max_len, SQLINTEGER *len )
+{
+    return driver_funcs->SQLGetStmtAttr( stmt, attr, val, max_len, len );
+}
+
+SQLRETURN WINAPI SQLSetStmtAttr( SQLHSTMT stmt, SQLINTEGER attr, SQLPOINTER val, SQLINTEGER len )
+{
+    return driver_funcs->SQLSetStmtAttr( stmt, attr, val, len );
+}
+
+SQLRETURN WINAPI SQLGetDiagField( SQLSMALLINT type, SQLHANDLE handle, SQLSMALLINT rec,
+        SQLSMALLINT identifier, SQLPOINTER info, SQLSMALLINT max_len, SQLSMALLINT *len )
+{
+    return driver_funcs->SQLGetDiagField( type, handle, rec, identifier, info, max_len, len );
+}
+
+SQLRETURN WINAPI SQLGetDiagRec( SQLSMALLINT type, SQLHANDLE handle,
+        SQLSMALLINT rec, SQLCHAR *state, SQLINTEGER *err, SQLCHAR *msg,
+        SQLSMALLINT max_len, SQLSMALLINT *len )
+{
+    return driver_funcs->SQLGetDiagRec( type, handle, rec, state, err, msg, max_len, len );
+}
+
+SQLRETURN WINAPI SQLExecDirect( SQLHSTMT stmt, SQLCHAR *cmd, SQLINTEGER len )
+{
+    return driver_funcs->SQLExecDirect( stmt, cmd, len );
+}
+
+SQLRETURN WINAPI SQLRowCount( SQLHSTMT stmt, SQLLEN *count )
+{
+    return driver_funcs->SQLRowCount( stmt, count );
+}
+
+SQLRETURN WINAPI SQLFetch( SQLHSTMT stmt )
+{
+    return driver_funcs->SQLFetch( stmt );
+}
+
+SQLRETURN WINAPI SQLGetData( SQLHSTMT stmt, SQLUSMALLINT col, SQLSMALLINT type,
+        SQLPOINTER val, SQLLEN max_len, SQLLEN *len )
+{
+    return driver_funcs->SQLGetData( stmt, col, type, val, max_len, len );
+}
+
+SQLRETURN WINAPI SQLBindCol( SQLHSTMT stmt, SQLUSMALLINT col, SQLSMALLINT type,
+        SQLPOINTER val, SQLLEN max_len, SQLLEN *len )
+{
+    return driver_funcs->SQLBindCol( stmt, col, type, val, max_len, len );
+}
+
+SQLRETURN WINAPI SQLPrepare( SQLHSTMT stmt, SQLCHAR *cmd, SQLINTEGER len )
+{
+    return driver_funcs->SQLPrepare( stmt, cmd, len );
+}
+
+SQLRETURN WINAPI SQLBindParameter( SQLHSTMT stmt, SQLUSMALLINT param,
+        SQLSMALLINT param_type, SQLSMALLINT ctype, SQLSMALLINT type, SQLULEN size,
+        SQLSMALLINT decimal_digits, SQLPOINTER val, SQLLEN max_len, SQLLEN *len )
+{
+    return driver_funcs->SQLBindParameter( stmt, param, param_type, ctype,
+            type, size, decimal_digits, val, max_len, len );
+}
+
+SQLRETURN WINAPI SQLExecute( SQLHSTMT stmt )
+{
+    return driver_funcs->SQLExecute( stmt );
+}
+
+SQLRETURN WINAPI SQLSetDescField( SQLHDESC desc, SQLSMALLINT rec,
+        SQLSMALLINT field, SQLPOINTER val, SQLINTEGER len )
+{
+    return driver_funcs->SQLSetDescField( desc, rec, field, val, len );
+}
+
+SQLRETURN WINAPI SQLFreeStmt( SQLHSTMT stmt, SQLUSMALLINT option )
+{
+    return driver_funcs->SQLFreeStmt( stmt, option );
+}
