@@ -53,6 +53,72 @@ DEFINE_GUID( GUID_DEVINTERFACE_WINEXINPUT,0x6c53d5fd,0x6480,0x440f,0xb6,0x18,0x4
 DEFINE_GUID( hid_joystick_guid, 0x9e573edb, 0x7734, 0x11d2, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7 );
 DEFINE_GUID( device_path_guid, 0x00000000, 0x0000, 0x0000, 0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf8 );
 
+static CRITICAL_SECTION joystick_cache_cs;
+static CRITICAL_SECTION_DEBUG joystick_cache_cs_debug =
+{
+    0, 0, &joystick_cache_cs,
+    { &joystick_cache_cs_debug.ProcessLocksList, &joystick_cache_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": joystick_cache_cs") }
+};
+static CRITICAL_SECTION joystick_cache_cs = { &joystick_cache_cs_debug, -1, 0, 0, 0, 0 };
+
+static struct list joystick_cache = LIST_INIT( joystick_cache );
+
+struct cache_entry
+{
+    struct list             entry;
+    DIDEVICEINSTANCEW       instance;
+    WCHAR                   path[MAX_PATH];
+};
+
+static const char *debugstr_device_instance( const DIDEVICEINSTANCEW *instance )
+{
+    return wine_dbg_sprintf( "product: %04x:%04x, instance: %s", LOWORD(instance->guidProduct.Data1),
+                             HIWORD(instance->guidProduct.Data1), debugstr_guid( &instance->guidInstance ) );
+}
+
+static HRESULT cache_entry_create( const DIDEVICEINSTANCEW *instance, const WCHAR *path, struct cache_entry **out )
+{
+    struct cache_entry *entry;
+
+    if (!(entry = calloc( 1, sizeof(*entry) ))) return E_OUTOFMEMORY;
+    entry->instance = *instance;
+    wcscpy( entry->path, path );
+    CharLowerW( entry->path );
+
+    *out = entry;
+    return S_OK;
+}
+
+static HRESULT insert_cache_entry( DIDEVICEINSTANCEW *instance, const WCHAR *path )
+{
+    struct cache_entry *entry, *next;
+    HRESULT hr;
+
+#define SWAP(x) MAKELONG( HIWORD(x), LOWORD(x) )
+    LIST_FOR_EACH_ENTRY( next, &joystick_cache, struct cache_entry, entry )
+        if (SWAP( next->instance.guidProduct.Data1 ) > SWAP( instance->guidProduct.Data1 )) break;
+#undef SWAP
+
+    if (FAILED(hr = cache_entry_create( instance, path, &entry ))) return hr;
+    TRACE( "Created instance %s, path %s\n", debugstr_device_instance( instance ), debugstr_w( path ) );
+    list_add_before( &next->entry, &entry->entry );
+
+    return S_OK;
+}
+
+void hid_joystick_cleanup_devices(void)
+{
+    struct list *ptr;
+
+    while ((ptr = list_head( &joystick_cache )))
+    {
+        struct cache_entry *entry = LIST_ENTRY( ptr, struct cache_entry, entry );
+        list_remove( &entry->entry );
+        free( entry );
+    }
+}
+
 struct pid_control_report
 {
     BYTE id;
@@ -1618,6 +1684,39 @@ failed:
     CloseHandle( device_file );
     HidD_FreePreparsedData( preparsed_data );
     return DIERR_DEVICENOTREG;
+}
+
+HRESULT hid_joystick_refresh_devices(void)
+{
+    WCHAR *paths = NULL;
+    HANDLE device;
+    HRESULT hr;
+    GUID hid;
+
+    TRACE( "\n" );
+
+    HidD_GetHidGuid( &hid );
+
+    EnterCriticalSection( &joystick_cache_cs );
+    hid_joystick_cleanup_devices();
+
+    hr = get_device_interfaces( hid, NULL, &paths );
+    for (WCHAR *path = paths; SUCCEEDED(hr) && *path; path = path + wcslen( path ) + 1)
+    {
+        DIDEVICEINSTANCEW instance = {.dwSize = sizeof(instance)};
+        HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
+        PHIDP_PREPARSED_DATA preparsed;
+        HIDP_CAPS caps;
+
+        if (FAILED(hid_joystick_device_try_open( path, &device, &preparsed, &attrs, &caps, &instance, 0x0800 ))) continue;
+        hr = insert_cache_entry( &instance, path );
+        HidD_FreePreparsedData( preparsed );
+        CloseHandle( device );
+    }
+    free( paths );
+
+    LeaveCriticalSection( &joystick_cache_cs );
+    return hr;
 }
 
 static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEINSTANCEW *instance,
