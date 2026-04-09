@@ -1,6 +1,7 @@
 @ stdcall init_funcs(ptr)
 
 @ stdcall SQLAllocHandle(long long ptr)
+@ stdcall SQLBrowseConnect(long str long ptr long ptr)
 @ stdcall SQLConnect(long str long str long str long)
 @ stdcall SQLDisconnect(long)
 @ stdcall SQLDriverConnect(long long str long ptr long ptr long)

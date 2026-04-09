@@ -73,6 +73,7 @@ DEFINE_EXPECT( driver_SQLConnect );
 DEFINE_EXPECT( driver_SQLGetConnectAttr );
 DEFINE_EXPECT( driver_SQLDisconnect );
 DEFINE_EXPECT( driver_SQLDriverConnect );
+DEFINE_EXPECT( driver_SQLBrowseConnect );
 
 static SQLRETURN WINAPI driver_SQLAllocHandle( SQLSMALLINT type,
         SQLHANDLE input_handle, SQLHANDLE *out )
@@ -191,6 +192,23 @@ static SQLRETURN WINAPI driver_SQLDriverConnect( SQLHDBC con, SQLHWND win,
     return SQL_SUCCESS;
 }
 
+static SQLRETURN WINAPI driver_SQLBrowseConnect( SQLHDBC con, SQLCHAR *in_con,
+        SQLSMALLINT in_con_len, SQLCHAR *out_con, SQLSMALLINT out_con_max_len,
+        SQLSMALLINT *out_con_len )
+{
+    CHECK_EXPECT( driver_SQLBrowseConnect );
+    ok( (ULONG_PTR)con == SQL_HANDLE_DBC, "con = %p\n", con );
+    todo_wine ok( in_con_len == 17, "in_con_len = %d\n", in_con_len );
+    todo_wine ok( !strcmp((char *)in_con, "DSN=winetest_dsn;"), "in_con = %s\n", in_con );
+    ok( out_con != NULL, "out_con = %p\n", out_con );
+    ok( out_con_max_len == 256, "out_con_max_len = %d\n", out_con_max_len );
+    ok( out_con_len != NULL, "out_con_len = %p\n", out_con_len );
+
+    strcpy( (char *)out_con, (char *)in_con );
+    *out_con_len = strlen( (char *)in_con );
+    return SQL_SUCCESS;
+}
+
 static SQLRETURN WINAPI driver_SQLDisconnect( SQLHDBC con )
 {
     CHECK_EXPECT( driver_SQLDisconnect );
@@ -208,6 +226,7 @@ struct driver_funcs driver_funcs =
     driver_SQLGetInfo,
     driver_SQLConnect,
     driver_SQLDriverConnect,
+    driver_SQLBrowseConnect,
     driver_SQLDisconnect,
 };
 
@@ -559,26 +578,39 @@ static void test_SQLBrowseConnect( void )
 
     len = 0;
     str[0] = 0;
-    ret = SQLBrowseConnect( con, (SQLCHAR *)"DSN=winetest", 12, str, sizeof(str), &len );
+    SET_EXPECT( driver_SQLAllocHandle_env );
+    SET_EXPECT( driver_SQLSetEnvAttr );
+    SET_EXPECT( driver_SQLAllocHandle_con );
+    SET_EXPECT( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
+    SET_EXPECT( driver_SQLBrowseConnect );
+    SET_EXPECT( driver_SQLGetInfo );
+    ret = SQLBrowseConnect( con, (SQLCHAR *)"DSN=winetest_dsn", 16, str, sizeof(str), &len );
+    CHECK_CALLED( driver_SQLAllocHandle_env );
+    CHECK_CALLED( driver_SQLSetEnvAttr );
+    CHECK_CALLED( driver_SQLAllocHandle_con );
+    CHECK_CALLED( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
+    CHECK_CALLED( driver_SQLBrowseConnect );
+    todo_wine CHECK_CALLED( driver_SQLGetInfo );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
-    if (ret != SQL_SUCCESS)
-    {
-        SQLFreeConnect( con );
-        SQLFreeEnv( env );
-        skip( "data source winetest not available\n" );
-        return;
-    }
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( !strcmp( (const char *)str, "DSN=winetest" ), "got '%s'\n", str );
-    ok( len == 12, "got %d\n", len );
+    todo_wine ok( !strcmp( (const char *)str, "DSN=winetest_dsn;" ), "got '%s'\n", str );
+    todo_wine ok( len == 17, "got %d\n", len );
 
+    SET_EXPECT( driver_SQLDisconnect );
     ret = SQLDisconnect( con );
+    CHECK_CALLED( driver_SQLDisconnect );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
+    SET_EXPECT( driver_SQLFreeHandle_con );
+    SET_EXPECT( driver_SQLFreeHandle_env );
     ret = SQLFreeConnect( con );
+    CHECK_CALLED( driver_SQLFreeHandle_con );
+    todo_wine CHECK_CALLED( driver_SQLFreeHandle_env );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
+    SET_EXPECT( driver_SQLFreeHandle_env );
     ret = SQLFreeEnv( env );
+    todo_wine CHECK_NOT_CALLED( driver_SQLFreeHandle_env );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 }
 
@@ -978,12 +1010,12 @@ START_TEST(odbc32)
         setup_odbc_driver( driver_path );
         test_SQLConnect();
         test_SQLDriverConnect();
+        test_SQLBrowseConnect();
         cleanup_odbc_driver( driver_path );
     }
 
     test_SQLAllocHandle();
     test_SQLGetDiagRec();
-    test_SQLBrowseConnect();
     test_SQLDataSources();
     test_SQLDrivers();
     test_SQLExecDirect();
