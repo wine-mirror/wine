@@ -106,7 +106,7 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 {
 	DWORD ichannels = dsb->pwfx->nChannels;
 	DWORD ochannels = dsb->device->pwfx->nChannels;
-	LONG64 oldFreqAdjustDen = dsb->freqAdjustDen;
+	DWORD oldFreqAdjustDen = dsb->freqAdjustDen;
 	WAVEFORMATEXTENSIBLE *pwfxe;
 	BOOL ieee = FALSE;
 
@@ -131,7 +131,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	dsb->maxwritelead = (DSBFREQUENCY_MAX / 100) * dsb->pwfx->nBlockAlign;
 
 	if (oldFreqAdjustDen)
-		dsb->freqAccNum = (dsb->freqAccNum * dsb->freqAdjustDen + oldFreqAdjustDen / 2) / oldFreqAdjustDen;
+		dsb->freqAccNum = (dsb->freqAccNum * (LONG64)dsb->freqAdjustDen +
+				oldFreqAdjustDen / 2) / oldFreqAdjustDen;
 
 	dsb->get_aux = ieee ? getbpp[4] : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
 	dsb->put_aux = putieee32;
@@ -419,17 +420,18 @@ static void upsample(DWORD freq_adjust_num, DWORD freq_acc_start, UINT count, fl
  * Note that this function will overwrite up to fir_width - 1 frames before and
  * after output[].
  */
-static void resample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq_acc_start,
+static void resample(DWORD freq_adjust_num, DWORD freq_adjust_den, DWORD freq_acc_start,
         float firgain, UINT required_input, UINT count, float *input, float *output)
 {
     if (freq_adjust_num > freq_adjust_den) {
         /* Take a reciprocal of the resampling ratio and convert it to a 0.32
          * fixed point. Round down to prevent output buffer overflow. */
-        DWORD freq_adjust_fixed_den = (freq_adjust_den << FREQ_ADJUST_SHIFT) / freq_adjust_num;
+        DWORD freq_adjust_fixed_den = ((LONG64)freq_adjust_den << FREQ_ADJUST_SHIFT)
+                / freq_adjust_num;
         /* Convert the subsample position to a 0.32 fixed point. Round up to
          * prevent output buffer overflow. */
-        DWORD freq_acc_fixed_start = (freq_acc_start * freq_adjust_fixed_den + freq_adjust_den - 1)
-                / freq_adjust_den;
+        DWORD freq_acc_fixed_start = ((LONG64)freq_acc_start * freq_adjust_fixed_den
+                + freq_adjust_den - 1) / freq_adjust_den;
 
         memset(output, 0, count * sizeof(float));
         downsample(freq_adjust_fixed_den, freq_acc_fixed_start, firgain, required_input, input,
@@ -437,16 +439,18 @@ static void resample(LONG64 freq_adjust_num, LONG64 freq_adjust_den, LONG64 freq
     } else {
         /* Convert the resampling ratio to a 0.32 fixed point. Round down to
          * prevent input buffer overflow. */
-        DWORD freq_adjust_fixed_num = (freq_adjust_num << FREQ_ADJUST_SHIFT) / freq_adjust_den;
+        DWORD freq_adjust_fixed_num = ((LONG64)freq_adjust_num << FREQ_ADJUST_SHIFT)
+                / freq_adjust_den;
         /* Convert the subsample position to a 0.32 fixed point. Round down to
          * prevent input buffer overflow. */
-        DWORD freq_acc_fixed_start = (freq_acc_start << FREQ_ADJUST_SHIFT) / freq_adjust_den;
+        DWORD freq_acc_fixed_start = ((LONG64)freq_acc_start << FREQ_ADJUST_SHIFT)
+                / freq_adjust_den;
 
         upsample(freq_adjust_fixed_num, freq_acc_fixed_start, count, input, output);
     }
 }
 
-static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *freqAccNum)
+static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *freqAccNum)
 {
     UINT i, channel;
     UINT istride = dsb->pwfx->nBlockAlign;
@@ -517,7 +521,7 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *
     return max_ipos;
 }
 
-static void cp_fields(IDirectSoundBufferImpl *dsb, UINT count, LONG64 *freqAccNum)
+static void cp_fields(IDirectSoundBufferImpl *dsb, UINT count, DWORD *freqAccNum)
 {
     DWORD ipos, adv;
 
