@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-09 22:04+0200\n"
+"PO-Revision-Date: 2026-04-09 23:32+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -3826,11 +3826,11 @@ msgstr "Kodek Indeo Video Interactive w wersji 5"
 
 #: dlls/iyuv_32/iyuv_32.rc:28
 msgid "IYUV codec"
-msgstr ""
+msgstr "Kodek IYUV"
 
 #: dlls/iyuv_32/iyuv_32.rc:29
 msgid "Intel Indeo IYUV codec"
-msgstr ""
+msgstr "Kodek Intel Indeo IYUV"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -13093,10 +13093,8 @@ msgid "Invalid number"
 msgstr "Nieprawidłowa liczba"
 
 #: dlls/vbscript/vbscript.rc:90
-#, fuzzy
-#| msgid "Invalid use of Null"
 msgid "Invalid use of 'Me' keyword"
-msgstr "Nieprawidłowe użycie Null"
+msgstr "Nieprawidłowe użycie słowa kluczowego 'Me'"
 
 #: dlls/vbscript/vbscript.rc:91
 msgid "'loop' without 'do'"
