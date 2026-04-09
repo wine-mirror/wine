@@ -1579,6 +1579,15 @@ static BOOL query_option( struct object_header *hdr, DWORD option, void *buffer,
         *buflen = sizeof(info);
         return TRUE;
     }
+    case WINHTTP_OPTION_CONNECT_RETRIES:
+    {
+        FIXME( "WINHTTP_OPTION_CONNECT_RETRIES\n" );
+        if (!validate_buffer( buffer, buflen, sizeof(DWORD) )) return FALSE;
+
+        *(DWORD *)buffer = 0;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+    }
     default:
         if (hdr->vtbl->query_option) ret = hdr->vtbl->query_option( hdr, option, buffer, buflen );
         else
