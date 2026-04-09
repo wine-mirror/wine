@@ -3153,7 +3153,6 @@ static void test_media_types(void)
             {
                 mt.subtype = *rejected_subtypes[j];
                 hr = IPin_QueryAccept(pin, &mt);
-                todo_wine_if(j < 4)
                 ok(hr == (j < 4 ? S_OK : VFW_E_TYPE_NOT_ACCEPTED), "Got hr %#lx for subtype %s whilst connected.\n",
                         hr, wine_dbgstr_guid(rejected_subtypes[j]));
             }

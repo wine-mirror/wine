@@ -1276,12 +1276,25 @@ static HRESULT WINAPI ddraw_sink_QueryId(IPin *iface, WCHAR **id)
 
 static HRESULT WINAPI ddraw_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
 {
+    struct ddraw_stream *stream = impl_from_IPin(iface);
+
     TRACE("iface %p, mt %p.\n", iface, mt);
 
-    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
-            && IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8)
-            && IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
-            && ((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader.biHeight >= 0)
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
+            || !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
+            || ((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader.biHeight < 0)
+        return VFW_E_TYPE_NOT_ACCEPTED;
+
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8))
+        return S_OK;
+
+    if (!stream->peer)
+        return VFW_E_TYPE_NOT_ACCEPTED;
+
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB555)
+            || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB565)
+            || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB24)
+            || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB32))
         return S_OK;
 
     return VFW_E_TYPE_NOT_ACCEPTED;
