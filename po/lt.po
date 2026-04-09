@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-09 19:28+0300\n"
+"PO-Revision-Date: 2026-04-10 00:32+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3811,11 +3811,11 @@ msgstr "Indeo Video 5 interaktyvus vaizdo kodekas"
 
 #: dlls/iyuv_32/iyuv_32.rc:28
 msgid "IYUV codec"
-msgstr ""
+msgstr "IYUV kodekas"
 
 #: dlls/iyuv_32/iyuv_32.rc:29
 msgid "Intel Indeo IYUV codec"
-msgstr ""
+msgstr "Intel Indeo IYUV kodekas"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
@@ -13062,10 +13062,8 @@ msgid "Invalid number"
 msgstr "Neteisingas skaičius"
 
 #: dlls/vbscript/vbscript.rc:90
-#, fuzzy
-#| msgid "Invalid use of Null"
 msgid "Invalid use of 'Me' keyword"
-msgstr "Netinkamas Null naudojimas"
+msgstr "Netinkamas raktažodžio „Me“ naudojimas"
 
 #: dlls/vbscript/vbscript.rc:91
 msgid "'loop' without 'do'"
