@@ -284,34 +284,6 @@ static inline float get_current_sample(const IDirectSoundBufferImpl *dsb,
     return dsb->get(dsb, buffer + (mixpos % buflen), channel);
 }
 
-static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
-{
-    UINT istride = dsb->pwfx->nBlockAlign;
-    UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
-    UINT committed_samples = 0;
-    DWORD channel, i;
-
-    if (!secondarybuffer_is_audible(dsb))
-        return count;
-
-    if(dsb->use_committed) {
-        committed_samples = (dsb->writelead - dsb->committed_mixpos) / istride;
-        committed_samples = committed_samples <= count ? committed_samples : count;
-    }
-
-    for (i = 0; i < committed_samples; i++)
-        for (channel = 0; channel < dsb->mix_channels; channel++)
-            dsb->put(dsb, i * ostride, channel, get_current_sample(dsb, dsb->committedbuff,
-                dsb->writelead, dsb->committed_mixpos + i * istride, channel));
-
-    for (; i < count; i++)
-        for (channel = 0; channel < dsb->mix_channels; channel++)
-            dsb->put(dsb, i * ostride, channel, get_current_sample(dsb, dsb->buffer->memory,
-                dsb->buflen, dsb->sec_mixpos + i * istride, channel));
-
-    return count;
-}
-
 /**
  * Note that this function will overwrite up to fir_width - 1 frames before and
  * after output[].
@@ -519,6 +491,34 @@ static UINT cp_fields_resample(IDirectSoundBufferImpl *dsb, UINT count, DWORD *f
             dsb->put(dsb, i * ostride, channel, output[channel * (fir_width - 1 + count) + i]);
 
     return max_ipos;
+}
+
+static UINT cp_fields_noresample(IDirectSoundBufferImpl *dsb, UINT count)
+{
+    UINT istride = dsb->pwfx->nBlockAlign;
+    UINT ostride = dsb->device->pwfx->nChannels * sizeof(float);
+    UINT committed_samples = 0;
+    DWORD channel, i;
+
+    if (!secondarybuffer_is_audible(dsb))
+        return count;
+
+    if(dsb->use_committed) {
+        committed_samples = (dsb->writelead - dsb->committed_mixpos) / istride;
+        committed_samples = committed_samples <= count ? committed_samples : count;
+    }
+
+    for (i = 0; i < committed_samples; i++)
+        for (channel = 0; channel < dsb->mix_channels; channel++)
+            dsb->put(dsb, i * ostride, channel, get_current_sample(dsb, dsb->committedbuff,
+                dsb->writelead, dsb->committed_mixpos + i * istride, channel));
+
+    for (; i < count; i++)
+        for (channel = 0; channel < dsb->mix_channels; channel++)
+            dsb->put(dsb, i * ostride, channel, get_current_sample(dsb, dsb->buffer->memory,
+                dsb->buflen, dsb->sec_mixpos + i * istride, channel));
+
+    return count;
 }
 
 static void cp_fields(IDirectSoundBufferImpl *dsb, UINT count, DWORD *freqAccNum)
