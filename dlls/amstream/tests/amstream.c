@@ -3020,11 +3020,12 @@ static void test_media_types(void)
         .cbSize = 0,
     };
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    struct testfilter source;
     IEnumMediaTypes *enummt;
     IMediaStream *stream;
     AM_MEDIA_TYPE *pmt;
+    unsigned int i, j;
     ULONG ref, count;
-    unsigned int i;
     HRESULT hr;
     IPin *pin;
 
@@ -3047,12 +3048,12 @@ static void test_media_types(void)
 
     static const GUID *rejected_subtypes[] =
     {
-        &MEDIASUBTYPE_RGB1,
-        &MEDIASUBTYPE_RGB4,
         &MEDIASUBTYPE_RGB565,
         &MEDIASUBTYPE_RGB555,
         &MEDIASUBTYPE_RGB24,
         &MEDIASUBTYPE_RGB32,
+        &MEDIASUBTYPE_RGB1,
+        &MEDIASUBTYPE_RGB4,
         &MEDIASUBTYPE_ARGB32,
         &MEDIASUBTYPE_ARGB1555,
         &MEDIASUBTYPE_ARGB4444,
@@ -3118,12 +3119,31 @@ static void test_media_types(void)
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     pmt->majortype = MEDIATYPE_Video;
 
+    testfilter_init(&source);
+
     for (i = 0; i < ARRAY_SIZE(rejected_subtypes); ++i)
     {
         pmt->subtype = *rejected_subtypes[i];
         hr = IPin_QueryAccept(pin, pmt);
         ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for subtype %s.\n",
             hr, wine_dbgstr_guid(rejected_subtypes[i]));
+        hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, pmt);
+        ok(hr == (i < 4) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx on ReceiveConnection for subtype %s.\n", hr,
+                wine_dbgstr_guid(rejected_subtypes[i]));
+
+        if (hr == S_OK)
+        {
+            for (j = 0; j < ARRAY_SIZE(rejected_subtypes); ++j)
+            {
+                pmt->subtype = *rejected_subtypes[j];
+                hr = IPin_QueryAccept(pin, pmt);
+                todo_wine_if(j < 4)
+                ok(hr == (j < 4 ? S_OK : VFW_E_TYPE_NOT_ACCEPTED), "Got hr %#lx for subtype %s whilst connected.\n",
+                        hr, wine_dbgstr_guid(rejected_subtypes[j]));
+            }
+            hr = IPin_Disconnect(pin);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
     }
 
     CoTaskMemFree(pmt);
@@ -3176,6 +3196,9 @@ static void test_media_types(void)
     IMediaStream_Release(stream);
 
     ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
