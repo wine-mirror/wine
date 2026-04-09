@@ -4225,8 +4225,8 @@ static xmlNodePtr create_xmlnode_from_domnode(struct xmldoc_context *context, st
     struct domnode *n;
     xmlDtdPtr dtd;
 
-    name = xmlchar_from_wchar(node->name);
-    data = xmlchar_from_wchar(node->data);
+    name = node->name ? xmlchar_from_wchar(node->name) : NULL;
+    data = node->data ? xmlchar_from_wchar(node->data) : NULL;
 
     switch (node->type)
     {
