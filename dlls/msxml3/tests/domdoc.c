@@ -16720,7 +16720,6 @@ static void test_setAttribute(void)
     SysFreeString(str);
 
     hr = IXMLDOMElement_setAttribute(element, _bstr_("xmlns:prefix"), _variantbstr_("uri"));
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMElement_get_namespaceURI(element, &str);
@@ -16728,7 +16727,6 @@ static void test_setAttribute(void)
 
     hr = IXMLDOMElement_get_xml(element, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"<prefix:name xmlns:prefix=\"uri\"/>"), "Unexpected xml %s.\n", debugstr_w(str));
     SysFreeString(str);
 

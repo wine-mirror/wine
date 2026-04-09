@@ -3459,8 +3459,9 @@ HRESULT node_set_attribute_value(struct domnode *node, const WCHAR *name, const 
         return hr;
     }
 
-    /* Check for conflict with element namespace */
-    match = is_same_namespace_prefix(node, attr_name.local) && !is_same_uri(node, attr_value);
+    /* Check for conflict with element namespace. It's possible to have no uri set on element,
+       while still having qualified name. */
+    match = node->uri && is_same_namespace_prefix(node, attr_name.local) && !is_same_uri(node, attr_value);
     parsed_name_cleanup(&attr_name);
 
     if (match)
