@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-06 18:28+0300\n"
+"PO-Revision-Date: 2026-04-09 19:28+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12986,10 +12986,8 @@ msgid "Invalid or unqualified reference"
 msgstr "Netinkama arba nepatikslinta nuoroda"
 
 #: dlls/vbscript/vbscript.rc:71
-#, fuzzy
-#| msgid "Expected 'In'"
 msgid "Expected 'If'"
-msgstr "Tikėtasi „In“"
+msgstr "Tikėtasi „If“"
 
 #: dlls/vbscript/vbscript.rc:72
 msgid "Expected 'To'"
@@ -13000,16 +12998,12 @@ msgid "Expected 'End'"
 msgstr "Tikėtasi „End“"
 
 #: dlls/vbscript/vbscript.rc:74
-#, fuzzy
-#| msgid "Expected 'To'"
 msgid "Expected 'Function'"
-msgstr "Tikėtasi „To“"
+msgstr "Tikėtasi „Function“"
 
 #: dlls/vbscript/vbscript.rc:75
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'Sub'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „Sub“"
 
 #: dlls/vbscript/vbscript.rc:76
 msgid "Expected 'Then'"
@@ -13032,10 +13026,8 @@ msgid "Expected 'Case'"
 msgstr "Tikėtasi „Case“"
 
 #: dlls/vbscript/vbscript.rc:81
-#, fuzzy
-#| msgid "Expected 'Next'"
 msgid "Expected 'Select'"
-msgstr "Tikėtasi „Next“"
+msgstr "Tikėtasi „Select“"
 
 #: dlls/vbscript/vbscript.rc:82
 msgid "Expected statement"
@@ -13054,10 +13046,8 @@ msgid "Expected 'While', 'Until' or end of statement"
 msgstr "Tikėtasi „While“, „Until“ ar sakinio pabaigos"
 
 #: dlls/vbscript/vbscript.rc:86
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected 'With'"
-msgstr "Tikėtasi „;“"
+msgstr "Tikėtasi „With“"
 
 #: dlls/vbscript/vbscript.rc:87
 msgid "Invalid number"
@@ -13104,18 +13094,17 @@ msgid "Expected Let or Set or Get in property declaration"
 msgstr "Tikėtasi „Let“, „Set“ arba „Get“ savybės apraše"
 
 #: dlls/vbscript/vbscript.rc:100
-#, fuzzy
-#| msgid "Expected 'Loop'"
 msgid "Expected 'Property'"
-msgstr "Tikėtasi „Loop“"
+msgstr "Tikėtasi „Property“"
 
 #: dlls/vbscript/vbscript.rc:101
 msgid "Number of arguments must be consistent across properties specification"
 msgstr ""
+"Argumentų skaičius privalo būti atitinkantis tarp savybių specifikacijų"
 
 #: dlls/vbscript/vbscript.rc:102
 msgid "Cannot have multiple default property/method in a Class"
-msgstr ""
+msgstr "Negalima turėti daugybinių numatytųjų savybių/metodų klasėje"
 
 #: dlls/vbscript/vbscript.rc:103
 msgid "Class initialize or terminate do not have arguments"
@@ -13134,10 +13123,8 @@ msgid "'Default' specification must also specify 'Public'"
 msgstr "„Default“ specifikacija privalo nurodyti ir „Public“"
 
 #: dlls/vbscript/vbscript.rc:107
-#, fuzzy
-#| msgid "'Default' specification must also specify 'Public'"
 msgid "'Default' specification can only be on Property Get"
-msgstr "„Default“ specifikacija privalo nurodyti ir „Public“"
+msgstr "„Default“ specifikacija galima tik savybei „Get“"
 
 #: dlls/vbscript/vbscript.rc:109
 msgid "Microsoft VBScript compilation error"
