@@ -10649,6 +10649,22 @@ static void test_get_attributes(void)
         IXMLDOMNode_Release(node2);
     }
 
+    hr = IXMLDOMNamedNodeMap_getNamedItem(map, _bstr_("xmlns:foaf"), &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"xmlns:foaf=\"http://xmlns.com/foaf/0.1/\""), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node2);
+
+    hr = IXMLDOMNamedNodeMap_getNamedItem(map, _bstr_("dcterms:created"), &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_xml(node2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"dcterms:created=\"2025\""), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node2);
+
     IXMLDOMNamedNodeMap_Release(map);
     IXMLDOMElement_Release(elem);
 
