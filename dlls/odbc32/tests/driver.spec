@@ -3,6 +3,7 @@
 @ stdcall SQLAllocHandle(long long ptr)
 @ stdcall SQLConnect(long str long str long str long)
 @ stdcall SQLDisconnect(long)
+@ stdcall SQLDriverConnect(long long str long ptr long ptr long)
 @ stdcall SQLFreeHandle(long long)
 @ stdcall SQLGetConnectAttr(long long ptr long ptr)
 @ stdcall SQLGetEnvAttr(long long ptr long ptr)

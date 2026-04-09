@@ -79,6 +79,14 @@ SQLRETURN WINAPI SQLConnect( SQLHDBC con, SQLCHAR *server, SQLSMALLINT server_le
     return driver_funcs->SQLConnect( con, server, server_len, user, user_len, auth, auth_len );
 }
 
+SQLRETURN WINAPI SQLDriverConnect( SQLHDBC con, SQLHWND win, SQLCHAR *in_con,
+        SQLSMALLINT in_con_len, SQLCHAR *out_con, SQLSMALLINT out_con_max_len,
+        SQLSMALLINT *out_con_len, SQLUSMALLINT completion )
+{
+    return driver_funcs->SQLDriverConnect( con, win, in_con, in_con_len,
+            out_con, out_con_max_len, out_con_len, completion );
+}
+
 SQLRETURN WINAPI SQLDisconnect( SQLHDBC con )
 {
     return driver_funcs->SQLDisconnect( con );
