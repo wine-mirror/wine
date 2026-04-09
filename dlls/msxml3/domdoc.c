@@ -1312,8 +1312,6 @@ static HRESULT WINAPI domdoc_load(IXMLDOMDocument3 *iface, VARIANT source, VARIA
                     TRACE("failed to parse document\n");
                 }
 
-                SafeArrayUnaccessData(psa);
-
                 return doc->error == S_OK ? S_OK : S_FALSE;
             default:
                 FIXME("unhandled SAFEARRAY dim: %d\n", dim);
