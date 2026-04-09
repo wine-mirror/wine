@@ -1568,6 +1568,17 @@ static BOOL query_option( struct object_header *hdr, DWORD option, void *buffer,
         *buflen = sizeof(DWORD_PTR);
         return TRUE;
     }
+    case WINHTTP_OPTION_HTTP_VERSION:
+    {
+        HTTP_VERSION_INFO *info = buffer;
+
+        FIXME( "WINHTTP_OPTION_HTTP_VERSION\n" );
+        if (!validate_buffer( buffer, buflen, sizeof(info) )) return FALSE;
+        info->dwMajorVersion = 1;
+        info->dwMinorVersion = 1;
+        *buflen = sizeof(info);
+        return TRUE;
+    }
     default:
         if (hdr->vtbl->query_option) ret = hdr->vtbl->query_option( hdr, option, buffer, buflen );
         else
