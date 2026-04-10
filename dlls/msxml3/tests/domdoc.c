@@ -14607,10 +14607,12 @@ static void test_put_text(void)
     IXMLDOMNamedNodeMap *map;
     IXMLDOMDocument2 *doc;
     IXMLDOMNode *node, *node2;
+    IXMLDOMText *text;
     VARIANT_BOOL b;
     BSTR str;
     const WCHAR *expected;
     HRESULT hr;
+    DOMNodeType type;
 
     doc = create_document(&IID_IXMLDOMDocument2);
 
@@ -14763,6 +14765,64 @@ static void test_put_text(void)
     ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument2_Release(doc);
+
+    /* test encoding */
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    b = VARIANT_FALSE;
+    str = SysAllocString(L"<?xml version='1.0' encoding='UTF-16'?>\n<esc>&lt;&gt;&amp;&#10;&quot;&apos;</esc>\n");
+    hr = IXMLDOMDocument2_loadXML(doc, str, &b);
+    ok(hr == S_OK, "Unable to create instance hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    str = NULL;
+    hr = IXMLDOMDocument2_get_text(doc, &str);
+
+    expected = L"<>&\n\"'";
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    element = NULL;
+    hr = IXMLDOMDocument2_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = SysAllocString(expected);
+    hr = IXMLDOMElement_put_text(element, str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    str = NULL;
+    hr = IXMLDOMDocument2_get_text(doc, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+
+    node = NULL;
+    hr = IXMLDOMElement_get_firstChild(element, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    type = -1;
+    hr = IXMLDOMNode_get_nodeType(node, &type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(type == NODE_TEXT, "got %d\n", type);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = SysAllocString(expected);
+    hr = IXMLDOMText_put_text(text, str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    str = NULL;
+    hr = IXMLDOMText_get_text(text, &str);
+    ok(!lstrcmpW(str, expected), "Incorrect element string, got '%s'\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMText_Release(text);
+    IXMLDOMNode_Release(node);
     IXMLDOMElement_Release(element);
     IXMLDOMDocument2_Release(doc);
     free_bstrs();
