@@ -2338,7 +2338,9 @@ static SQLRETURN free_statement( struct statement *stmt, SQLUSMALLINT option )
     }
     else if (stmt->hdr.win32_handle)
     {
-        if (stmt->hdr.win32_funcs->SQLFreeStmt)
+        if (option == SQL_DROP)
+            ret = free_handle( SQL_HANDLE_STMT, &stmt->hdr );
+        else if (stmt->hdr.win32_funcs->SQLFreeStmt)
             ret = stmt->hdr.win32_funcs->SQLFreeStmt( stmt->hdr.win32_handle, option );
     }
 

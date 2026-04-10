@@ -524,9 +524,7 @@ static SQLRETURN WINAPI driver_SQLFreeStmt( SQLHSTMT stmt, SQLUSMALLINT option )
 {
     CHECK_EXPECT( driver_SQLFreeStmt );
     ok( (ULONG_PTR)stmt == SQL_HANDLE_STMT, "stmt = %p\n", stmt );
-    todo_wine_if( option == SQL_DROP ) ok( option == SQL_UNBIND, "option = %d\n", option );
-    if (option == SQL_DROP)
-        return driver_SQLFreeHandle( SQL_HANDLE_STMT, stmt );
+    ok( option == SQL_UNBIND, "option = %d\n", option );
     return SQL_SUCCESS;
 }
 
@@ -1129,11 +1127,9 @@ static void test_SQLExecDirect( void )
     ok( !id[0], "id not set\n" );
     ok( len_id[0] == sizeof(id[0]), "got %d\n", (int)len_id[0] );
 
-    SET_EXPECT( driver_SQLFreeStmt );
     SET_EXPECT( driver_SQLFreeHandle_stmt );
     ret = SQLFreeStmt( stmt, SQL_DROP );
     CHECK_CALLED( driver_SQLFreeHandle_stmt );
-    todo_wine CHECK_NOT_CALLED( driver_SQLFreeStmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
     SET_EXPECT( driver_SQLAllocHandle_stmt );
@@ -1189,11 +1185,9 @@ static void test_SQLExecDirect( void )
     ok( len_name[0] == sizeof("John") - 1, "got %d\n", (int)len_name[0] );
     ok( len_name[1] == sizeof("Mary") - 1, "got %d\n", (int)len_name[1] );
 
-    SET_EXPECT( driver_SQLFreeStmt );
     SET_EXPECT( driver_SQLFreeHandle_stmt );
     ret = SQLFreeStmt( stmt, SQL_DROP );
     CHECK_CALLED( driver_SQLFreeHandle_stmt );
-    todo_wine CHECK_NOT_CALLED( driver_SQLFreeStmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
     SET_EXPECT( driver_SQLAllocHandle_stmt );
@@ -1240,11 +1234,9 @@ static void test_SQLExecDirect( void )
     ret = SQLFreeStmt( stmt, SQL_UNBIND );
     CHECK_CALLED( driver_SQLFreeStmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    SET_EXPECT( driver_SQLFreeStmt );
     SET_EXPECT( driver_SQLFreeHandle_stmt );
     ret = SQLFreeStmt( stmt, SQL_DROP );
     CHECK_CALLED( driver_SQLFreeHandle_stmt );
-    todo_wine CHECK_NOT_CALLED( driver_SQLFreeStmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
     SET_EXPECT( driver_SQLAllocHandle_stmt );
@@ -1288,11 +1280,9 @@ static void test_SQLExecDirect( void )
     todo_wine CHECK_NOT_CALLED( driver_SQLSetStmtAttr );
     ok( ret == SQL_ERROR, "got %d\n", ret );
 
-    SET_EXPECT( driver_SQLFreeStmt );
     SET_EXPECT( driver_SQLFreeHandle_stmt );
     ret = SQLFreeStmt( stmt, SQL_DROP );
     CHECK_CALLED( driver_SQLFreeHandle_stmt );
-    todo_wine CHECK_NOT_CALLED( driver_SQLFreeStmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
     SET_EXPECT( driver_SQLDisconnect );
