@@ -3020,13 +3020,19 @@ static void test_media_types(void)
         .cbSize = 0,
     };
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    DDSURFACEDESC current = { .dwSize = sizeof(current) };
+    DDSURFACEDESC desired = { .dwSize = sizeof(desired) };
+    IDirectDrawMediaStream *ddraw_stream;
+    IDirectDrawPalette *palette;
     struct testfilter source;
     IEnumMediaTypes *enummt;
     AM_MEDIA_TYPE *pmt, mt;
     VIDEOINFOHEADER *vih;
     IMediaStream *stream;
+    IDirectDraw *ddraw;
     unsigned int i, j;
     ULONG ref, count;
+    DWORD flags;
     HRESULT hr;
     IPin *pin;
 
@@ -3221,6 +3227,74 @@ static void test_media_types(void)
     IEnumMediaTypes_Release(enummt);
     IPin_Release(pin);
     IMediaStream_Release(stream);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    /* Test media types when ddraw is passed to AddMediaStream */
+    mmstream = create_ammultimediastream();
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)ddraw, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current, &palette, &desired, &flags);
+    ok(hr == 0x80040403, "Got hr %#lx.\n", hr);
+
+    memset(&mt, 0, sizeof(mt));
+    mt.majortype = MEDIATYPE_Video;
+    mt.subtype = MEDIASUBTYPE_RGB32;
+    mt.bFixedSizeSamples = TRUE;
+    mt.lSampleSize = 40000;
+    mt.formattype = FORMAT_VideoInfo;
+    mt.cbFormat = sizeof(req_vih);
+    mt.pbFormat = (BYTE*) &req_vih;
+
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_RGB8;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_RGB32;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    testfilter_init(&source);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_RGB8;
+    hr = IPin_QueryAccept(pin, &mt);
+    todo_wine
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
+    todo_wine
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+
+    IPin_Release(pin);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    IMediaStream_Release(stream);
+    IDirectDraw_Release(ddraw);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
