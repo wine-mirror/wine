@@ -3203,7 +3203,6 @@ static void test_media_types(void)
             ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Unexpected media type %s.\n", wine_dbgstr_guid(&pmt->majortype));
             ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB8), "Unexpected media subtype %s.\n", wine_dbgstr_guid(&pmt->subtype));
             ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Unexpected media formattype %s.\n", wine_dbgstr_guid(&pmt->formattype));
-            todo_wine
             ok(pmt->lSampleSize == 40000, "Unexpected sample size %lu.\n", pmt->lSampleSize);
             DeleteMediaType(pmt);
         }
@@ -3287,12 +3286,10 @@ static void test_media_types(void)
     ok(count == 1, "Got count %lu.\n", count);
     ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
             wine_dbgstr_guid(&pmt->majortype));
-    todo_wine
     ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB32), "Got subtype %s\n",
             wine_dbgstr_guid(&pmt->subtype));
     ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
     ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
-    todo_wine
     ok(pmt->lSampleSize == 40000, "Got sample size %lu.\n", pmt->lSampleSize);
     ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Got format type %s.\n",
             wine_dbgstr_guid(&pmt->formattype));

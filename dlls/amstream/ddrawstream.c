@@ -922,6 +922,8 @@ struct enum_media_types
     IEnumMediaTypes IEnumMediaTypes_iface;
     LONG refcount;
     unsigned int index;
+
+    struct ddraw_stream *stream;
 };
 
 static const IEnumMediaTypesVtbl enum_media_types_vtbl;
@@ -961,13 +963,19 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
     ULONG refcount = InterlockedDecrement(&enum_media_types->refcount);
     TRACE("%p decreasing refcount to %lu.\n", enum_media_types, refcount);
     if (!refcount)
+    {
+        IAMMediaStream_Release(&enum_media_types->stream->IAMMediaStream_iface);
         free(enum_media_types);
+    }
     return refcount;
 }
 
 static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count, AM_MEDIA_TYPE **mts, ULONG *ret_count)
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
+    struct format *format;
+    DWORD bytes_per_pixel;
+    GUID *subtype;
 
     TRACE("iface %p, count %lu, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
 
@@ -976,12 +984,29 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
 
     if (count && !enum_media_types->index)
     {
+        format = &enum_media_types->stream->format;
         mts[0] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         memset(mts[0], 0, sizeof(AM_MEDIA_TYPE));
         mts[0]->majortype = MEDIATYPE_Video;
-        mts[0]->subtype = MEDIASUBTYPE_RGB8;
+        if (enum_media_types->stream->format.flags & DDSD_PIXELFORMAT)
+            subtype_from_pf(&mts[0]->subtype, &format->pf);
+        else
+            mts[0]->subtype = MEDIASUBTYPE_RGB8;
+
         mts[0]->bFixedSizeSamples = TRUE;
-        mts[0]->lSampleSize = 10000;
+
+        subtype = &mts[0]->subtype;
+        if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB8))
+            bytes_per_pixel = 1;
+        if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB555)
+                || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565))
+            bytes_per_pixel = 2;
+        else if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB24))
+            bytes_per_pixel = 3;
+        else if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB32))
+            bytes_per_pixel = 4;
+
+        mts[0]->lSampleSize = format->width * format->height * bytes_per_pixel;
         ++enum_media_types->index;
         *ret_count = 1;
         return count == 1 ? S_OK : S_FALSE;
@@ -1025,6 +1050,8 @@ static HRESULT WINAPI enum_media_types_Clone(IEnumMediaTypes *iface, IEnumMediaT
     object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
     object->refcount = 1;
     object->index = enum_media_types->index;
+    object->stream = enum_media_types->stream;
+    IAMMediaStream_AddRef(&object->stream->IAMMediaStream_iface);
 
     *out = &object->IEnumMediaTypes_iface;
     return S_OK;
@@ -1328,6 +1355,7 @@ static HRESULT WINAPI ddraw_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *m
 
 static HRESULT WINAPI ddraw_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
 {
+    struct ddraw_stream *stream = impl_from_IPin(iface);
     struct enum_media_types *object;
 
     TRACE("iface %p, enum_media_types %p.\n", iface, enum_media_types);
@@ -1341,6 +1369,8 @@ static HRESULT WINAPI ddraw_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **e
     object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
     object->refcount = 1;
     object->index = 0;
+    object->stream = stream;
+    IAMMediaStream_AddRef(&stream->IAMMediaStream_iface);
 
     *enum_media_types = &object->IEnumMediaTypes_iface;
     return S_OK;
