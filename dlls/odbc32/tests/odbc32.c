@@ -175,7 +175,7 @@ static SQLRETURN WINAPI driver_SQLGetConnectAttr( SQLHDBC con, SQLINTEGER attr,
 static SQLRETURN WINAPI driver_SQLSetConnectAttr( SQLHDBC con, SQLINTEGER attr,
         SQLPOINTER val, SQLINTEGER len )
 {
-    todo_wine ok( 0, "unexpected call\n" );
+    ok( 0, "unexpected call\n" );
     return SQL_ERROR;
 }
 

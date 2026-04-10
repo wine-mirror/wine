@@ -439,7 +439,7 @@ static struct connection *create_connection( struct environment *env )
     struct connection *ret;
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     init_object( &ret->hdr, SQL_HANDLE_DBC, &env->hdr );
-    ret->attr_login_timeout = 15;
+    ret->attr_login_timeout = SQL_LOGIN_TIMEOUT_DEFAULT;
     return ret;
 }
 
@@ -1439,9 +1439,11 @@ static SQLRETURN create_con( struct connection *con )
 
     if ((ret = alloc_handle( SQL_HANDLE_DBC, con->hdr.parent, &con->hdr ))) return ret;
 
-    if (set_con_attr( con, SQL_ATTR_CONNECTION_TIMEOUT, INT_PTR(con->attr_con_timeout), 0 ))
+    if (con->con_timeout_set &&
+            set_con_attr( con, SQL_ATTR_CONNECTION_TIMEOUT, INT_PTR(con->attr_con_timeout), 0 ))
         WARN( "failed to set connection timeout\n" );
-    if (set_con_attr( con, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(con->attr_login_timeout), 0 ))
+    if (con->login_timeout_set &&
+            set_con_attr( con, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(con->attr_login_timeout), 0 ))
         WARN( "failed to set login timeout\n" );
 
     if (con->hdr.win32_handle)
@@ -3680,10 +3682,12 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
         {
         case SQL_ATTR_CONNECTION_TIMEOUT:
             con->attr_con_timeout = (UINT32)(ULONG_PTR)Value;
+            con->con_timeout_set = TRUE;
             break;
 
         case SQL_ATTR_LOGIN_TIMEOUT:
             con->attr_login_timeout = (UINT32)(ULONG_PTR)Value;
+            con->login_timeout_set = TRUE;
             break;
 
         default:
@@ -6994,10 +6998,12 @@ SQLRETURN WINAPI SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
         {
         case SQL_ATTR_CONNECTION_TIMEOUT:
             con->attr_con_timeout = (UINT32)(ULONG_PTR)Value;
+            con->con_timeout_set = TRUE;
             break;
 
         case SQL_ATTR_LOGIN_TIMEOUT:
             con->attr_login_timeout = (UINT32)(ULONG_PTR)Value;
+            con->login_timeout_set = TRUE;
             break;
 
         default:
