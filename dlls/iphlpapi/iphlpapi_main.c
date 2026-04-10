@@ -1248,7 +1248,7 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
 
 static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADDRESSES **info, ULONG *count )
 {
-    IP_ADAPTER_ADDRESSES *aa;
+    IP_ADAPTER_ADDRESSES *aa = NULL;
     NET_LUID *luids;
     struct nsi_ndis_ifinfo_rw *rw;
     struct nsi_ndis_ifinfo_dynamic *dyn;
@@ -1261,6 +1261,12 @@ static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADD
                                   (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
                                   (void **)&stat, sizeof(*stat), count, 0 );
     if (err) return err;
+
+    if (!*count)
+    {
+        err = ERROR_NO_DATA;
+        goto err;
+    }
 
     needed = *count * (sizeof(*aa) + ((CHARS_IN_GUID + 1) & ~1) + sizeof(stat->descr.String));
     needed += *count * sizeof(rw->alias.String); /* GAA_FLAG_SKIP_FRIENDLY_NAME is ignored */
