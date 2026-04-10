@@ -178,9 +178,11 @@ static HRESULT WINAPI domdoctype_get_nodeType(IXMLDOMDocumentType *iface, DOMNod
 
 static HRESULT WINAPI domdoctype_get_parentNode(IXMLDOMDocumentType *iface, IXMLDOMNode **parent)
 {
-    FIXME("%p, %p: stub\n", iface, parent);
+    domdoctype *doctype = impl_from_IXMLDOMDocumentType(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, parent);
+
+    return node_get_parent(doctype->node, parent);
 }
 
 static HRESULT WINAPI domdoctype_get_childNodes(IXMLDOMDocumentType *iface, IXMLDOMNodeList **list)

@@ -14618,9 +14618,11 @@ static DWORD WINAPI new_thread(void *arg)
 
 static void test_get_parentNode(void)
 {
+    IXMLDOMDocumentType *doctype;
     IXMLDOMNode *node, *child;
     IXMLDOMAttribute *attr;
     IXMLDOMElement *e, *e2;
+    DOMNodeType node_type;
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     HRESULT hr;
@@ -14659,6 +14661,22 @@ static void test_get_parentNode(void)
 
     IXMLDOMElement_Release(e2);
     IXMLDOMElement_Release(e);
+
+    /* DTD parent */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szEmailXML), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_doctype(doc, &doctype);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentType_get_parentNode(doctype, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentType_get_parentNode(doctype, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_nodeType(node, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_DOCUMENT, "Unexpected node type %d.\n", node_type);
+    IXMLDOMNode_Release(node);
+    IXMLDOMDocumentType_Release(doctype);
 
     IXMLDOMDocument_Release(doc);
 }
