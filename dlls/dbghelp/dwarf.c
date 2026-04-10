@@ -792,7 +792,7 @@ static BOOL dwarf2_fill_in_variant(struct module *module, VARIANT *v, const stru
         return FALSE;
     }
     /* native always stores in the shortest format in variant */
-    if (bt == btChar || bt == btInt || bt == btLong)
+    if (bt == btChar || bt == btInt || bt == btLong || bt == btBool)
     {
         if (sinteger == (signed char)sinteger)
         {
