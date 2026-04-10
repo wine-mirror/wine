@@ -1228,6 +1228,12 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
                                      NULL, 0, NULL, 0, &iface_count )))
         return status;
 
+    if (!iface_count)
+    {
+        *count = 0;
+        return STATUS_SUCCESS;
+    }
+
     if (!(luid_tbl = malloc( iface_count * sizeof(*luid_tbl) )))
         return STATUS_NO_MEMORY;
 
