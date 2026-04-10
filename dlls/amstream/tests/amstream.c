@@ -4211,13 +4211,11 @@ static void test_ddrawstream_receive_connection(void)
     mt = rgb555_mt;
     mt.pbFormat = (BYTE *)&video_info;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     mt = rgb8_mt;
     mt.pbFormat = (BYTE *)&video_info;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb565_mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
@@ -4226,7 +4224,6 @@ static void test_ddrawstream_receive_connection(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     /* .. even when connected (where all supported types were previously accepted) */
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     hr = IPin_Disconnect(pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);

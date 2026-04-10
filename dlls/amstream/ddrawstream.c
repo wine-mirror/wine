@@ -553,6 +553,22 @@ static unsigned int align(unsigned int n, unsigned int alignment)
     return (n + alignment - 1) & ~(alignment - 1);
 }
 
+static void subtype_from_pf(GUID *subtype, const DDPIXELFORMAT *pf)
+{
+    if (pf->dwRGBBitCount == 16 && pf->dwRBitMask == 0x7c00)
+        *subtype = MEDIASUBTYPE_RGB555;
+    else if (pf->dwRGBBitCount == 16 && pf->dwRBitMask == 0xf800)
+        *subtype = MEDIASUBTYPE_RGB565;
+    else if (pf->dwRGBBitCount == 24)
+        *subtype = MEDIASUBTYPE_RGB24;
+    else if (pf->dwRGBBitCount == 32)
+        *subtype = MEDIASUBTYPE_RGB32;
+    else if (pf->dwRGBBitCount == 8 && (pf->dwFlags & DDPF_PALETTEINDEXED8))
+        *subtype = MEDIASUBTYPE_RGB8;
+    else
+        FIXME("Unknown flags %#lx, bit count %lu.\n", pf->dwFlags, pf->dwRGBBitCount);
+}
+
 static void set_mt_from_desc(AM_MEDIA_TYPE *mt, const DDSURFACEDESC *format, unsigned int pitch)
 {
     VIDEOINFO *videoinfo = CoTaskMemAlloc(sizeof(VIDEOINFO));
@@ -577,37 +593,19 @@ static void set_mt_from_desc(AM_MEDIA_TYPE *mt, const DDSURFACEDESC *format, uns
     mt->lSampleSize = videoinfo->bmiHeader.biSizeImage;
     mt->bFixedSizeSamples = TRUE;
 
-    if (format->ddpfPixelFormat.dwRGBBitCount == 16 && format->ddpfPixelFormat.dwRBitMask == 0x7c00)
+    subtype_from_pf(&mt->subtype, &format->ddpfPixelFormat);
+
+    if (format->ddpfPixelFormat.dwRGBBitCount == 16 && format->ddpfPixelFormat.dwRBitMask == 0xf800)
     {
-        mt->subtype = MEDIASUBTYPE_RGB555;
-    }
-    else if (format->ddpfPixelFormat.dwRGBBitCount == 16 && format->ddpfPixelFormat.dwRBitMask == 0xf800)
-    {
-        mt->subtype = MEDIASUBTYPE_RGB565;
-        videoinfo = (VIDEOINFO *)mt->pbFormat;
         videoinfo->bmiHeader.biCompression = BI_BITFIELDS;
         videoinfo->dwBitMasks[iRED]   = 0xf800;
         videoinfo->dwBitMasks[iGREEN] = 0x07e0;
         videoinfo->dwBitMasks[iBLUE]  = 0x001f;
     }
-    else if (format->ddpfPixelFormat.dwRGBBitCount == 24)
-    {
-        mt->subtype = MEDIASUBTYPE_RGB24;
-    }
-    else if (format->ddpfPixelFormat.dwRGBBitCount == 32)
-    {
-        mt->subtype = MEDIASUBTYPE_RGB32;
-    }
     else if (format->ddpfPixelFormat.dwRGBBitCount == 8 && (format->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8))
     {
-        mt->subtype = MEDIASUBTYPE_RGB8;
         videoinfo->bmiHeader.biClrUsed = 256;
         /* FIXME: Translate the palette. */
-    }
-    else
-    {
-        FIXME("Unknown flags %#lx, bit count %lu.\n",
-                format->ddpfPixelFormat.dwFlags, format->ddpfPixelFormat.dwRGBBitCount);
     }
 }
 
@@ -1277,6 +1275,7 @@ static HRESULT WINAPI ddraw_sink_QueryId(IPin *iface, WCHAR **id)
 static HRESULT WINAPI ddraw_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
 {
     struct ddraw_stream *stream = impl_from_IPin(iface);
+    GUID subtype;
 
     TRACE("iface %p, mt %p.\n", iface, mt);
 
@@ -1284,6 +1283,13 @@ static HRESULT WINAPI ddraw_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *m
             || !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
             || ((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader.biHeight < 0)
         return VFW_E_TYPE_NOT_ACCEPTED;
+
+    if (stream->format.flags & DDSD_PIXELFORMAT)
+    {
+        subtype_from_pf(&subtype, &stream->format.pf);
+
+        return IsEqualGUID(&mt->subtype, &subtype) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED;
+    }
 
     if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8))
         return S_OK;
