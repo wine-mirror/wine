@@ -181,7 +181,6 @@ struct domnode
     struct domnode *owner;
     struct list children;
     struct list attributes;
-    struct list namespaces;
     struct list owned;
 };
 

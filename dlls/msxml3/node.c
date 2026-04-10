@@ -1103,7 +1103,6 @@ HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const 
     list_init(&object->owner_entry);
     list_init(&object->children);
     list_init(&object->attributes);
-    list_init(&object->namespaces);
     list_init(&object->owned);
     object->owner = owner;
     /* Document node does not have an owner */
