@@ -1280,7 +1280,8 @@ static HRESULT WINAPI ddraw_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *m
 
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
             && IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8)
-            && IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+            && IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
+            && ((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader.biHeight >= 0)
         return S_OK;
 
     return VFW_E_TYPE_NOT_ACCEPTED;

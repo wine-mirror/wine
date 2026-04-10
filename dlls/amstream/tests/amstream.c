@@ -3134,7 +3134,6 @@ static void test_media_types(void)
     /* A negative height is never accepted */
     vih->bmiHeader.biHeight = -1;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(rejected_subtypes); ++i)
