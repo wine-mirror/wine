@@ -1269,6 +1269,7 @@ struct domdoc_properties *domdoc_create_properties(MSXML_VERSION version)
     /* properties that are dependent on object versions */
     properties->version = version;
     properties->XPath = (version == MSXML4 || version == MSXML6);
+    properties->prohibit_dtd = version == MSXML6;
 
     /* document uri */
     properties->uri = NULL;
@@ -1300,6 +1301,7 @@ static struct domdoc_properties* domdoc_properties_clone(struct domdoc_propertie
         pcopy->version = properties->version;
         pcopy->preserving = properties->preserving;
         pcopy->validating = properties->validating;
+        pcopy->prohibit_dtd = properties->prohibit_dtd;
         pcopy->schemaCache = properties->schemaCache;
         if (pcopy->schemaCache)
             IXMLDOMSchemaCollection2_AddRef(pcopy->schemaCache);
@@ -4015,7 +4017,7 @@ static const ISAXLexicalHandlerVtbl parse_lexical_handler_vtbl =
 
 struct domdoc_properties *domdoc_create_properties(MSXML_VERSION version);
 
-static HRESULT parse_context_init(struct parse_context *c, VARIANT_BOOL preserving)
+static HRESULT parse_context_init(struct parse_context *c, const struct domdoc_properties *properties)
 {
     IUnknown *unk;
     HRESULT hr;
@@ -4044,9 +4046,11 @@ static HRESULT parse_context_init(struct parse_context *c, VARIANT_BOOL preservi
     V_UNKNOWN(&v) = (IUnknown *)&c->extension_handler;
     ISAXXMLReader_putProperty(c->reader, L"http://winehq.org/sax/properties/extension-handler", v);
 
+    ISAXXMLReader_putFeature(c->reader, L"prohibit-dtd", properties->prohibit_dtd ? VARIANT_TRUE : VARIANT_FALSE);
+
     domnode_create(NODE_DOCUMENT, NULL, 0, NULL, 0, NULL, &c->root);
     c->root->properties = domdoc_create_properties(MSXML_DEFAULT);
-    c->root->properties->preserving = preserving;
+    c->root->properties->preserving = properties->preserving;
     c->node = c->root;
 
     return hr;
@@ -4061,7 +4065,7 @@ static void parse_context_cleanup(struct parse_context *c)
         ISAXXMLReaderExtension_Release(c->reader_extension);
 }
 
-HRESULT parse_stream(ISequentialStream *stream, bool utf16, VARIANT_BOOL preserve, struct domnode **tree)
+HRESULT parse_stream(ISequentialStream *stream, bool utf16, const struct domdoc_properties *properties, struct domnode **tree)
 {
     struct parse_context context;
     HRESULT hr;
@@ -4069,7 +4073,7 @@ HRESULT parse_stream(ISequentialStream *stream, bool utf16, VARIANT_BOOL preserv
 
     *tree = NULL;
 
-    if (FAILED(hr = parse_context_init(&context, preserve)))
+    if (FAILED(hr = parse_context_init(&context, properties)))
         return hr;
 
     if (utf16)

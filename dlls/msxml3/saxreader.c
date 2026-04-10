@@ -6207,13 +6207,13 @@ static HRESULT WINAPI isaxxmlreader_putFeature(ISAXXMLReader *iface, const WCHAR
         (feature == SchemaValidation && value == VARIANT_FALSE) ||
          feature == Namespaces ||
          feature == NamespacePrefixes ||
-         feature == NormalizeLineBreaks)
+         feature == NormalizeLineBreaks ||
+         feature == ProhibitDTD)
     {
         return set_feature_value(reader, feature, value);
     }
 
     if (feature == LexicalHandlerParEntities ||
-            feature == ProhibitDTD ||
             feature == ExternalGeneralEntities ||
             feature == ExternalParameterEntities)
     {

@@ -279,7 +279,7 @@ static HRESULT domdoc_load_from_stream(domdoc *doc, ISequentialStream *stream)
     }
 
     hr = IStream_Seek(hstream, zero, STREAM_SEEK_SET, NULL);
-    hr = parse_stream((ISequentialStream *)hstream, false, doc->node->properties->preserving, &node);
+    hr = parse_stream((ISequentialStream *)hstream, false, doc->node->properties, &node);
     IStream_Release(hstream);
 
     if (!node)
@@ -1223,7 +1223,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     HRESULT hr;
 
     stream_wrapper_create(ptr, len, &stream);
-    hr = parse_stream(stream, false, doc->node->properties->preserving, &node);
+    hr = parse_stream(stream, false, doc->node->properties, &node);
     ISequentialStream_Release(stream);
 
     if (hr == S_OK)
@@ -1517,7 +1517,7 @@ static HRESULT WINAPI domdoc_loadXML(IXMLDOMDocument3 *iface, BSTR data, VARIANT
 
         if (SUCCEEDED(hr = stream_wrapper_create(ptr, lstrlenW(ptr) * sizeof(WCHAR), &stream)))
         {
-            hr = parse_stream(stream, true, doc->node->properties->preserving, &node);
+            hr = parse_stream(stream, true, doc->node->properties, &node);
             ISequentialStream_Release(stream);
         }
 
@@ -1819,14 +1819,15 @@ static HRESULT WINAPI domdoc_validate(IXMLDOMDocument3 *iface, IXMLDOMParseError
 static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIANT value)
 {
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
-    struct domnode *node = doc->node;
+    struct domdoc_properties *properties = doc->node->properties;
+    HRESULT hr;
+    VARIANT v;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_w(p), debugstr_variant(&value));
 
     if (wcsicmp(p, L"SelectionLanguage") == 0)
     {
         VARIANT varStr;
-        HRESULT hr;
         BSTR bstr;
 
         V_VT(&varStr) = VT_EMPTY;
@@ -1841,9 +1842,9 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
 
         hr = S_OK;
         if (wcsicmp(bstr, L"XPath") == 0)
-            node->properties->XPath = TRUE;
+            properties->XPath = TRUE;
         else if (wcsicmp(bstr, L"XSLPattern") == 0)
-            node->properties->XPath = FALSE;
+            properties->XPath = FALSE;
         else
             hr = E_FAIL;
 
@@ -1852,10 +1853,9 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
     }
     else if (!wcsicmp(p, L"SelectionNamespaces"))
     {
-        xmlChar *nsStr = (xmlChar *)node->properties->selectNsStr;
+        xmlChar *nsStr = (xmlChar *)properties->selectNsStr;
         struct list *pNsList;
         VARIANT varStr;
-        HRESULT hr;
         BSTR bstr;
 
         V_VT(&varStr) = VT_EMPTY;
@@ -1870,15 +1870,15 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
 
         hr = S_OK;
 
-        pNsList = &node->properties->selectNsList;
+        pNsList = &properties->selectNsList;
         domdoc_properties_clear_selection_namespaces(pNsList);
         free(nsStr);
         nsStr = xmlchar_from_wchar(bstr);
 
         TRACE("property value: \"%s\"\n", debugstr_w(bstr));
 
-        node->properties->selectNsStr = nsStr;
-        node->properties->selectNsStr_len = xmlStrlen(nsStr);
+        properties->selectNsStr = nsStr;
+        properties->selectNsStr_len = xmlStrlen(nsStr);
         if (bstr && *bstr)
         {
             xmlChar *pTokBegin, *pTokEnd, *pTokInner;
@@ -1977,16 +1977,15 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
     }
     else if (wcsicmp(p, L"ValidateOnParse") == 0)
     {
-        if (node->properties->version < MSXML4)
+        if (properties->version < MSXML4)
             return E_FAIL;
         else
         {
-            node->properties->validating = V_BOOL(&value);
+            properties->validating = V_BOOL(&value);
             return S_OK;
         }
     }
-    else if (wcsicmp(p, L"ProhibitDTD") == 0 ||
-             wcsicmp(p, L"NewParser") == 0 ||
+    else if (wcsicmp(p, L"NewParser") == 0 ||
              wcsicmp(p, L"ResolveExternals") == 0 ||
              wcsicmp(p, L"AllowXsltScript") == 0 ||
              wcsicmp(p, L"NormalizeAttributeValues") == 0 ||
@@ -1999,6 +1998,19 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
         return S_OK;
     }
 
+    if (!wcscmp(p, L"ProhibitDTD"))
+    {
+        V_VT(&v) = VT_EMPTY;
+        if (FAILED(hr = VariantChangeType(&v, &value, 0, VT_BOOL)))
+        {
+            WARN("Failed to convert to boolean.\n");
+            return hr;
+        }
+
+        properties->prohibit_dtd = V_BOOL(&v) == VARIANT_TRUE;
+        return S_OK;
+    }
+
     FIXME("Unknown property %s\n", debugstr_w(p));
     return E_FAIL;
 }
@@ -2006,6 +2018,7 @@ static HRESULT WINAPI domdoc_setProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
 static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIANT *var)
 {
     domdoc *doc = impl_from_IXMLDOMDocument3(iface);
+    struct domdoc_properties *properties = doc->node->properties;
 
     TRACE("%p, %s, %p.\n", iface, debugstr_w(p), var);
 
@@ -2015,9 +2028,7 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
     if (!wcsicmp(p, L"SelectionLanguage"))
     {
         V_VT(var) = VT_BSTR;
-        V_BSTR(var) = doc->node->properties->XPath ?
-                      SysAllocString(L"XPath") :
-                      SysAllocString(L"XSLPattern");
+        V_BSTR(var) = SysAllocString(properties->XPath ? L"XPath" : L"XSLPattern");
         return V_BSTR(var) ? S_OK : E_OUTOFMEMORY;
     }
     else if (!wcsicmp(p, L"SelectionNamespaces"))
@@ -2029,9 +2040,9 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
         select_ns_entry* pNsEntry;
 
         V_VT(var) = VT_BSTR;
-        nsStr = doc->node->properties->selectNsStr;
-        pNsList = &doc->node->properties->selectNsList;
-        lenA = doc->node->properties->selectNsStr_len;
+        nsStr = properties->selectNsStr;
+        pNsList = &properties->selectNsList;
+        lenA = properties->selectNsStr_len;
         lenW = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, NULL, 0);
         rebuiltStr = malloc(lenW * sizeof(WCHAR));
         MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, rebuiltStr, lenW);
@@ -2057,14 +2068,21 @@ static HRESULT WINAPI domdoc_getProperty(IXMLDOMDocument3 *iface, BSTR p, VARIAN
     }
     else if (!wcsicmp(p, L"ValidateOnParse"))
     {
-        if (doc->node->properties->version < MSXML4)
+        if (properties->version < MSXML4)
             return E_FAIL;
         else
         {
             V_VT(var) = VT_BOOL;
-            V_BOOL(var) = doc->node->properties->validating;
+            V_BOOL(var) = properties->validating;
             return S_OK;
         }
+    }
+
+    if (!wcscmp(p, L"ProhibitDTD"))
+    {
+        V_VT(var) = VT_BOOL;
+        V_BOOL(var) = properties->prohibit_dtd ? VARIANT_TRUE : VARIANT_FALSE;
+        return S_OK;
     }
 
     FIXME("Unknown property %s\n", debugstr_w(p));

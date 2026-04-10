@@ -557,15 +557,11 @@ static void test_prohibitdtd(void)
 
     VariantInit(&v);
     hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"ProhibitDTD"), &v);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
-    todo_wine
     ok(V_BOOL(&v) == VARIANT_TRUE, "Unexpected value %d.\n", V_BOOL(&v));
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml), NULL);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(L"<a/>"), NULL);
@@ -578,9 +574,7 @@ static void test_prohibitdtd(void)
 
     VariantInit(&v);
     hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"ProhibitDTD"), &v);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
     ok(!V_BOOL(&v), "Unexpected value %d.\n", V_BOOL(&v));
 
@@ -596,9 +590,7 @@ static void test_prohibitdtd(void)
 
     VariantInit(&v);
     hr = IXMLDOMDocument2_getProperty(doc2, _bstr_(L"ProhibitDTD"), &v);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
     ok(!V_BOOL(&v), "Unexpected value %d.\n", V_BOOL(&v));
     IXMLDOMDocument2_Release(doc2);

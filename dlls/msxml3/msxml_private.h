@@ -156,7 +156,8 @@ struct domdoc_properties
     struct list selectNsList;
     xmlChar const* selectNsStr;
     LONG selectNsStr_len;
-    BOOL XPath;
+    bool XPath;
+    bool prohibit_dtd;
     IUri *uri;
 };
 
@@ -199,7 +200,8 @@ extern struct domnode *domnode_get_first_child(struct domnode *node);
 extern struct domnode *domnode_get_next_sibling(struct domnode *node);
 extern HRESULT domnode_get_attribute(const struct domnode *node, const WCHAR *name, struct domnode **attr);
 extern HRESULT node_clone_domnode(struct domnode *, bool, struct domnode **);
-extern HRESULT parse_stream(ISequentialStream *stream, bool utf16, VARIANT_BOOL preserve, struct domnode **tree);
+extern HRESULT parse_stream(ISequentialStream *stream, bool utf16, const struct domdoc_properties *properties,
+        struct domnode **tree);
 extern void dump_doc_refcounts(struct domnode *node);
 
 struct parsed_name
