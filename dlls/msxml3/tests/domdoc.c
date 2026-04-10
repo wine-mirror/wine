@@ -791,6 +791,10 @@ static const char gbkxml[] =
 DECL_GBK
 "<open></open>";
 
+static const char gb2312xml[] =
+"<?xml version=\"1.0\" encoding=\"gb2312\"?>"
+"<open></open>";
+
 #define DECL_ISO8859_1 \
 "<?xml version=\"1.0\" encoding=\"ISO8859-1\"?>"
 
@@ -11090,6 +11094,7 @@ static void test_load(void)
     } encoding_tests[] =
     {
         { gbkxml,        S_OK,    VARIANT_TRUE  },
+        { gb2312xml,     S_OK,    VARIANT_TRUE  },
         { iso8859_1_xml, S_OK,    VARIANT_TRUE  },
         { win1252xml,    S_OK,    VARIANT_TRUE  },
         { win936xml,     S_FALSE, VARIANT_FALSE },
