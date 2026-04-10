@@ -16894,6 +16894,73 @@ static void test_default_namespace(void)
     free_bstrs();
 }
 
+static void test_prohibitdtd(void)
+{
+    IXMLDOMDocument2 *doc, *doc2;
+    IXMLDOMNode *node;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantInit(&v);
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("ProhibitDTD"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
+    ok(!V_BOOL(&v), "Unexpected value %d.\n", V_BOOL(&v));
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = 123;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("ProhibitDTD"), v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantInit(&v);
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("ProhibitDTD"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
+    todo_wine
+    ok(V_BOOL(&v) == VARIANT_TRUE, "Unexpected value %d.\n", V_BOOL(&v));
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_TRUE;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("ProhibitDTD"), v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML), NULL);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_("<a/>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocument2, (void **)&doc2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    VariantInit(&v);
+    hr = IXMLDOMDocument2_getProperty(doc2, _bstr_("ProhibitDTD"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
+    todo_wine
+    ok(V_BOOL(&v) == VARIANT_TRUE, "Unexpected value %d.\n", V_BOOL(&v));
+    IXMLDOMDocument2_Release(doc2);
+
+    IXMLDOMDocument2_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -16999,6 +17066,7 @@ START_TEST(domdoc)
     test_setAttribute();
     test_createElement();
     test_default_namespace();
+    test_prohibitdtd();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {

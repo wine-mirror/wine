@@ -36,6 +36,39 @@
 
 #include "wine/test.h"
 
+static const WCHAR email_xml[] =
+L"<?xml version=\"1.0\"?>"
+"<!DOCTYPE email ["\
+"   <!ELEMENT email         (recipients,from,reply-to?,subject,body,attachment*)>"\
+"       <!ATTLIST email attachments IDREFS #REQUIRED>"\
+"       <!ATTLIST email sent (yes|no) \"no\">"\
+"   <!ELEMENT recipients    (to+,cc*)>"\
+"   <!ELEMENT to            (#PCDATA)>"\
+"       <!ATTLIST to name CDATA #IMPLIED>"\
+"   <!ELEMENT cc            (#PCDATA)>"\
+"       <!ATTLIST cc name CDATA #IMPLIED>"\
+"   <!ELEMENT from          (#PCDATA)>"\
+"       <!ATTLIST from name CDATA #IMPLIED>"\
+"   <!ELEMENT reply-to      (#PCDATA)>"\
+"       <!ATTLIST reply-to name CDATA #IMPLIED>"\
+"   <!ELEMENT subject       ANY>"\
+"   <!ELEMENT body          ANY>"\
+"       <!ATTLIST body enc CDATA #FIXED \"UTF-8\">"\
+"   <!ELEMENT attachment    (#PCDATA)>"\
+"       <!ATTLIST attachment id ID #REQUIRED>"\
+"]>"
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 87)</subject>"
+"   <body>"
+"       It no longer causes spontaneous combustion..."
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
 static BSTR alloced_bstrs[256];
 static int alloced_bstrs_count;
 
@@ -512,6 +545,67 @@ todo_wine {
     free_bstrs();
 }
 
+static void test_prohibitdtd(void)
+{
+    IXMLDOMDocument2 *doc, *doc2;
+    IXMLDOMNode *node;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantInit(&v);
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"ProhibitDTD"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
+    todo_wine
+    ok(V_BOOL(&v) == VARIANT_TRUE, "Unexpected value %d.\n", V_BOOL(&v));
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml), NULL);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(L"<a/>"), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_I2;
+    V_I2(&v) = 0;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_(L"ProhibitDTD"), v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantInit(&v);
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"ProhibitDTD"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
+    ok(!V_BOOL(&v), "Unexpected value %d.\n", V_BOOL(&v));
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(email_xml), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_FALSE, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocument2, (void **)&doc2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    VariantInit(&v);
+    hr = IXMLDOMDocument2_getProperty(doc2, _bstr_(L"ProhibitDTD"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
+    ok(!V_BOOL(&v), "Unexpected value %d.\n", V_BOOL(&v));
+    IXMLDOMDocument2_Release(doc2);
+
+    IXMLDOMDocument2_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -534,6 +628,7 @@ START_TEST(domdoc)
     test_get_ownerDocument();
     test_get_parentNode();
     test_normalize_attribute_values();
+    test_prohibitdtd();
 
     CoUninitialize();
 }

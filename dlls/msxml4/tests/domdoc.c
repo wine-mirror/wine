@@ -375,6 +375,26 @@ static void test_get_parentNode(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_prohibitdtd(void)
+{
+    IXMLDOMDocument2 *doc;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument40, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantInit(&v);
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_(L"ProhibitDTD"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_BOOL, "Unexpected type %d.\n", V_VT(&v));
+    ok(!V_BOOL(&v), "Unexpected value %d.\n", V_BOOL(&v));
+
+    IXMLDOMDocument2_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -395,6 +415,7 @@ START_TEST(domdoc)
     test_create_attribute();
     test_get_ownerDocument();
     test_get_parentNode();
+    test_prohibitdtd();
 
     CoUninitialize();
 }
