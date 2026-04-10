@@ -97,6 +97,8 @@ struct ddraw_sample
 static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDrawSurface *surface,
     const RECT *rect, IDirectDrawStreamSample **ddraw_stream_sample);
 
+static HRESULT WINAPI ddrawstream_check_pixel_format(const DDSURFACEDESC *format);
+
 static void remove_queued_update(struct ddraw_sample *sample)
 {
     sample->pending = false;
@@ -326,6 +328,7 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
                                                     REFMSPID purpose_id, const STREAM_TYPE stream_type)
 {
     struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
+    DDSURFACEDESC desc = { .dwSize = sizeof(desc) };
     HRESULT hr;
 
     TRACE("stream %p, source_object %p, flags %lx, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
@@ -347,6 +350,14 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
     if (source_object
             && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw, (void **)&stream->ddraw)))
         FIXME("Stream object doesn't implement IDirectDraw interface, hr %#lx.\n", hr);
+
+    if (stream->ddraw
+            && SUCCEEDED(IDirectDraw_GetDisplayMode(stream->ddraw, &desc))
+            && SUCCEEDED(ddrawstream_check_pixel_format(&desc)))
+    {
+        stream->format.flags |= DDSD_PIXELFORMAT;
+        stream->format.pf = desc.ddpfPixelFormat;
+    }
 
     if (!source_object)
     {
@@ -609,19 +620,8 @@ static void set_mt_from_desc(AM_MEDIA_TYPE *mt, const DDSURFACEDESC *format, uns
     }
 }
 
-static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStream *iface,
-        const DDSURFACEDESC *format, IDirectDrawPalette *palette)
+static HRESULT WINAPI ddrawstream_check_pixel_format(const DDSURFACEDESC *format)
 {
-    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
-    struct format old_format;
-    IPin *old_peer;
-    HRESULT hr;
-
-    TRACE("stream %p, format %p, palette %p.\n", stream, format, palette);
-
-    if (palette)
-        FIXME("Setting palette is not yet supported.\n");
-
     if (!format)
         return E_POINTER;
 
@@ -716,6 +716,25 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
             }
         }
     }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStream *iface,
+        const DDSURFACEDESC *format, IDirectDrawPalette *palette)
+{
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    struct format old_format;
+    IPin *old_peer;
+    HRESULT hr;
+
+    TRACE("stream %p, format %p, palette %p.\n", stream, format, palette);
+
+    if (palette)
+        FIXME("Setting palette is not yet supported.\n");
+
+    if (FAILED(hr = ddrawstream_check_pixel_format(format)))
+        return hr;
 
     EnterCriticalSection(&stream->cs);
 

@@ -3246,7 +3246,7 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current, &palette, &desired, &flags);
-    ok(hr == 0x80040403, "Got hr %#lx.\n", hr);
+    ok(hr == MS_E_NOSTREAM, "Got hr %#lx.\n", hr);
 
     memset(&mt, 0, sizeof(mt));
     mt.majortype = MEDIATYPE_Video;
@@ -3258,17 +3258,14 @@ static void test_media_types(void)
     mt.pbFormat = (BYTE*) &req_vih;
 
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     mt.subtype = MEDIASUBTYPE_RGB8;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     mt.subtype = MEDIASUBTYPE_RGB32;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     testfilter_init(&source);
@@ -3281,14 +3278,12 @@ static void test_media_types(void)
 
     mt.subtype = MEDIASUBTYPE_RGB8;
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     hr = IPin_Disconnect(pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
-    todo_wine
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     IPin_Release(pin);
