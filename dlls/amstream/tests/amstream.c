@@ -3053,26 +3053,31 @@ static void test_media_types(void)
         {&FORMAT_VideoInfo, (BYTE *)&req_vih, sizeof(VIDEOINFOHEADER)},
     };
 
-    static const GUID *rejected_subtypes[] =
+    static const struct
     {
-        &MEDIASUBTYPE_RGB565,
-        &MEDIASUBTYPE_RGB555,
-        &MEDIASUBTYPE_RGB24,
-        &MEDIASUBTYPE_RGB32,
-        &MEDIASUBTYPE_RGB1,
-        &MEDIASUBTYPE_RGB4,
-        &MEDIASUBTYPE_ARGB32,
-        &MEDIASUBTYPE_ARGB1555,
-        &MEDIASUBTYPE_ARGB4444,
-        &MEDIASUBTYPE_Avi,
-        &MEDIASUBTYPE_I420,
-        &MEDIASUBTYPE_AYUV,
-        &MEDIASUBTYPE_YV12,
-        &MEDIASUBTYPE_YUY2,
-        &MEDIASUBTYPE_UYVY,
-        &MEDIASUBTYPE_YVYU,
-        &MEDIASUBTYPE_NV12,
-        &GUID_NULL,
+        const GUID *guid;
+        BYTE bytes_per_pixel;
+    }
+    rejected_subtypes[] =
+    {
+        {&MEDIASUBTYPE_RGB565, 2 },
+        {&MEDIASUBTYPE_RGB555, 2 },
+        {&MEDIASUBTYPE_RGB24, 3 },
+        {&MEDIASUBTYPE_RGB32, 4 },
+        {&MEDIASUBTYPE_RGB1},
+        {&MEDIASUBTYPE_RGB4},
+        {&MEDIASUBTYPE_ARGB32},
+        {&MEDIASUBTYPE_ARGB1555},
+        {&MEDIASUBTYPE_ARGB4444},
+        {&MEDIASUBTYPE_Avi},
+        {&MEDIASUBTYPE_I420},
+        {&MEDIASUBTYPE_AYUV},
+        {&MEDIASUBTYPE_YV12},
+        {&MEDIASUBTYPE_YUY2},
+        {&MEDIASUBTYPE_UYVY},
+        {&MEDIASUBTYPE_YVYU},
+        {&MEDIASUBTYPE_NV12},
+        {&GUID_NULL},
     };
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
@@ -3138,40 +3143,54 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* A negative height is never accepted */
-    vih->bmiHeader.biHeight = -1;
+    vih->bmiHeader.biHeight = -200;
     hr = IPin_QueryAccept(pin, &mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(rejected_subtypes); ++i)
     {
-        mt.subtype = *rejected_subtypes[i];
-        vih->bmiHeader.biHeight = 1;
+        mt.subtype = *rejected_subtypes[i].guid;
+        vih->bmiHeader.biHeight = 200;
+        vih->bmiHeader.biWidth = 200;
         hr = IPin_QueryAccept(pin, &mt);
         ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for subtype %s.\n",
-            hr, wine_dbgstr_guid(rejected_subtypes[i]));
+            hr, wine_dbgstr_guid(rejected_subtypes[i].guid));
         hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
         ok(hr == (i < 4) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx on ReceiveConnection for subtype %s.\n", hr,
-                wine_dbgstr_guid(rejected_subtypes[i]));
+                wine_dbgstr_guid(rejected_subtypes[i].guid));
 
         if (hr == S_OK)
         {
             for (j = 0; j < ARRAY_SIZE(rejected_subtypes); ++j)
             {
-                mt.subtype = *rejected_subtypes[j];
+                mt.subtype = *rejected_subtypes[j].guid;
                 hr = IPin_QueryAccept(pin, &mt);
                 ok(hr == (j < 4 ? S_OK : VFW_E_TYPE_NOT_ACCEPTED), "Got hr %#lx for subtype %s whilst connected.\n",
-                        hr, wine_dbgstr_guid(rejected_subtypes[j]));
+                        hr, wine_dbgstr_guid(rejected_subtypes[j].guid));
             }
 
             /* A negative height is never accepted */
-            vih->bmiHeader.biHeight = -1;
+            vih->bmiHeader.biHeight = -200;
             for (j = 0; j < ARRAY_SIZE(rejected_subtypes); ++j)
             {
-                mt.subtype = *rejected_subtypes[j];
+                mt.subtype = *rejected_subtypes[j].guid;
                 hr = IPin_QueryAccept(pin, &mt);
                 ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#lx for subtype %s using negative height.\n",
-                        hr, wine_dbgstr_guid(rejected_subtypes[j]));
+                        hr, wine_dbgstr_guid(rejected_subtypes[j].guid));
             }
+
+            hr = IEnumMediaTypes_Reset(enummt);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Unexpected media type %s.\n", wine_dbgstr_guid(&pmt->majortype));
+            todo_wine
+            ok(IsEqualGUID(&pmt->subtype, rejected_subtypes[i].guid), "Unexpected media subtype %s.\n", wine_dbgstr_guid(&pmt->subtype));
+            ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Unexpected media formattype %s.\n", wine_dbgstr_guid(&pmt->formattype));
+            todo_wine
+            ok(pmt->lSampleSize == 40000 * rejected_subtypes[i].bytes_per_pixel, "Unexpected sample size %lu.\n", pmt->lSampleSize);
+            DeleteMediaType(pmt);
 
             hr = IPin_Disconnect(pin);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
