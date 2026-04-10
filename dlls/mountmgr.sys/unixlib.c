@@ -328,6 +328,13 @@ static LONGLONG get_free_bytes_for_important_data(int fd)
     if (!(url = CFURLCreateFromFileSystemRepresentation( NULL, (UInt8 *)path, strlen( path ), false ))) goto done;
     if (!CFURLCopyResourcePropertyForKey( url, kCFURLVolumeAvailableCapacityForImportantUsageKey, &num, NULL )) goto done;
     CFNumberGetValue( num, kCFNumberLongLongType, &space );
+    if (space == 0)
+    {
+        /* It's unlikely that a writeable disk has exactly 0 free bytes. This
+         * probably means the disk is read-only, or is not APFS. Fall back to
+         * statfs. */
+        space = -1;
+    }
 
 done:
     free( path );
