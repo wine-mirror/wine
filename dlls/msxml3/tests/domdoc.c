@@ -10281,6 +10281,7 @@ static const get_node_typestring_t get_node_typestring[] = {
 static void test_get_nodeTypeString(void)
 {
     const get_node_typestring_t *entry = get_node_typestring;
+    IXMLDOMDocumentType *doctype;
     IXMLDOMDocument *doc;
     HRESULT hr;
     BSTR str;
@@ -10314,6 +10315,19 @@ static void test_get_nodeTypeString(void)
 
         entry++;
     }
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szEmailXML), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_get_doctype(doc, &doctype);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentType_get_nodeTypeString(doctype, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMDocumentType_get_nodeTypeString(doctype, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"documenttype"), "Unexpected string %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMDocumentType_Release(doctype);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();

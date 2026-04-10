@@ -284,9 +284,9 @@ static HRESULT WINAPI domdoctype_cloneNode(IXMLDOMDocumentType *iface, VARIANT_B
 
 static HRESULT WINAPI domdoctype_get_nodeTypeString(IXMLDOMDocumentType *iface, BSTR *p)
 {
-    FIXME("%p, %p: stub\n", iface, p);
+    TRACE("%p, %p.\n", iface, p);
 
-    return E_NOTIMPL;
+    return return_bstr(L"documenttype", p);
 }
 
 static HRESULT WINAPI domdoctype_get_text(IXMLDOMDocumentType *iface, BSTR *p)
