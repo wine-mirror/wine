@@ -787,6 +787,7 @@ static HRESULT select_nodes(struct domnode *node, BSTR query, bool xpath, struct
 
     xmlXPathFreeObject(result);
     xmlXPathFreeContext(ctxt);
+    xmlFreeDoc(xmldoc);
     free(xmlquery);
 
     return hr;
