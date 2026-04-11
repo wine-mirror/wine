@@ -16980,12 +16980,10 @@ static void test_setAttribute(void)
     IXMLDOMNode_Release(node);
 
     hr = IXMLDOMElement_setAttribute(element, _bstr_("prefix"), _variantbstr_("uri2"));
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMElement_get_xml(element, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"<prefix:name xmlns:prefix=\"uri\" prefix=\"uri2\"/>"), "Unexpected xml %s.\n", debugstr_w(str));
     SysFreeString(str);
 

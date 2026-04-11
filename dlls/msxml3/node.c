@@ -3442,6 +3442,13 @@ HRESULT node_set_attribute(struct domnode *node, IXMLDOMNode *attribute, IXMLDOM
     return S_OK;
 }
 
+static bool is_namespace_definition_name(const struct parsed_name *name)
+{
+    if (!name->prefix && !wcscmp(name->local, L"xmlns"))
+        return true;
+    return name->prefix && !wcscmp(name->prefix, L"xmlns");
+}
+
 HRESULT node_set_attribute_value(struct domnode *node, const WCHAR *name, const VARIANT *value)
 {
     struct parsed_name attr_name;
@@ -3462,7 +3469,10 @@ HRESULT node_set_attribute_value(struct domnode *node, const WCHAR *name, const 
 
     /* Check for conflict with element namespace. It's possible to have no uri set on element,
        while still having qualified name. */
-    match = node->uri && is_same_namespace_prefix(node, attr_name.local) && !is_same_uri(node, attr_value);
+    match = node->uri
+            && is_namespace_definition_name(&attr_name)
+            && is_same_namespace_prefix(node, attr_name.local)
+            && !is_same_uri(node, attr_value);
     parsed_name_cleanup(&attr_name);
 
     if (match)
