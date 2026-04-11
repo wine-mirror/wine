@@ -500,20 +500,13 @@ static HRESULT WINAPI domcdata_deleteData(IXMLDOMCDATASection *iface, LONG offse
     return node_delete_data(cdata->node, offset, count);
 }
 
-static HRESULT WINAPI domcdata_replaceData(
-    IXMLDOMCDATASection *iface,
-    LONG offset, LONG count, BSTR p)
+static HRESULT WINAPI domcdata_replaceData(IXMLDOMCDATASection *iface, LONG offset, LONG count, BSTR p)
 {
-    HRESULT hr;
+    domcdata *cdata = impl_from_IXMLDOMCDATASection(iface);
 
     TRACE("%p, %ld, %ld, %s.\n", iface, offset, count, debugstr_w(p));
 
-    hr = IXMLDOMCDATASection_deleteData(iface, offset, count);
-
-    if (hr == S_OK)
-       hr = IXMLDOMCDATASection_insertData(iface, offset, p);
-
-    return hr;
+    return node_replace_data(cdata->node, offset, count, p);
 }
 
 static HRESULT WINAPI domcdata_splitText(IXMLDOMCDATASection *iface, LONG offset, IXMLDOMText **node)

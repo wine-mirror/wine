@@ -4720,6 +4720,17 @@ HRESULT node_insert_data(struct domnode *node, LONG offset, BSTR data)
     return S_OK;
 }
 
+/* TODO: might be worth it to unroll to avoid intermediate allocations */
+HRESULT node_replace_data(struct domnode *node, LONG offset, LONG count, BSTR data)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = node_delete_data(node, offset, count)))
+        return hr;
+
+    return node_insert_data(node, offset, data);
+}
+
 HRESULT node_get_data_length(struct domnode *node, LONG *length)
 {
     if (!length)

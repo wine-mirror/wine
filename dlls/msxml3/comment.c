@@ -508,20 +508,13 @@ static HRESULT WINAPI domcomment_deleteData(IXMLDOMComment *iface, LONG offset, 
     return node_delete_data(comment->node, offset, count);
 }
 
-static HRESULT WINAPI domcomment_replaceData(
-    IXMLDOMComment *iface,
-    LONG offset, LONG count, BSTR p)
+static HRESULT WINAPI domcomment_replaceData(IXMLDOMComment *iface, LONG offset, LONG count, BSTR p)
 {
-    HRESULT hr;
+    domcomment *comment = impl_from_IXMLDOMComment(iface);
 
     TRACE("%p, %ld, %ld, %s.\n", iface, offset, count, debugstr_w(p));
 
-    hr = IXMLDOMComment_deleteData(iface, offset, count);
-
-    if (hr == S_OK)
-       hr = IXMLDOMComment_insertData(iface, offset, p);
-
-    return hr;
+    return node_replace_data(comment->node, offset, count, p);
 }
 
 static const struct IXMLDOMCommentVtbl domcomment_vtbl =
