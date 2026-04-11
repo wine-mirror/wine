@@ -5885,6 +5885,9 @@ static void test_cloneNode(void )
 
     doc = create_document(&IID_IXMLDOMDocument2);
 
+    hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_FALSE, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     /* Shallow cloning with a DTD */
     hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szEmailXML), &b);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

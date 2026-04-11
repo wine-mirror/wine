@@ -630,9 +630,6 @@ static HRESULT WINAPI domdoc_cloneNode(IXMLDOMDocument3 *iface, VARIANT_BOOL dee
 
     TRACE("%p, %d, %p.\n", iface, deep, node);
 
-    if (!node)
-        return E_INVALIDARG;
-
     return node_clone(doc->node, deep, node);
 }
 
