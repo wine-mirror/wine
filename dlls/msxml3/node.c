@@ -4672,3 +4672,26 @@ HRESULT node_delete_data(struct domnode *node, LONG offset, LONG count)
 
     return S_OK;
 }
+
+HRESULT node_substring_data(struct domnode *node, LONG offset, LONG count, BSTR *p)
+{
+    LONG length = SysStringLen(node->data);
+
+    if (!p)
+        return E_INVALIDARG;
+
+    *p = NULL;
+
+    if (offset < 0 || count < 0)
+        return E_INVALIDARG;
+
+    if (count == 0 || offset >= length)
+        return S_FALSE;
+
+    if (offset + count > length)
+        *p = SysAllocString(node->data + offset);
+    else
+        *p = SysAllocStringLen(node->data + offset, count);
+
+    return *p ? S_OK : E_OUTOFMEMORY;
+}

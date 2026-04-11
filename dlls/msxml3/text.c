@@ -543,44 +543,13 @@ static HRESULT WINAPI domtext_get_length(IXMLDOMText *iface, LONG *len)
     return S_OK;
 }
 
-static HRESULT WINAPI domtext_substringData(
-    IXMLDOMText *iface,
-    LONG offset, LONG count, BSTR *p)
+static HRESULT WINAPI domtext_substringData(IXMLDOMText *iface, LONG offset, LONG count, BSTR *p)
 {
-    HRESULT hr;
-    BSTR data;
+    domtext *text = impl_from_IXMLDOMText(iface);
 
     TRACE("%p, %ld, %ld, %p.\n", iface, offset, count, p);
 
-    if(!p)
-        return E_INVALIDARG;
-
-    *p = NULL;
-    if(offset < 0 || count < 0)
-        return E_INVALIDARG;
-
-    if(count == 0)
-        return S_FALSE;
-
-    hr = IXMLDOMText_get_data(iface, &data);
-    if(hr == S_OK)
-    {
-        LONG len = SysStringLen(data);
-
-        if(offset < len)
-        {
-            if(offset + count > len)
-                *p = SysAllocString(&data[offset]);
-            else
-                *p = SysAllocStringLen(&data[offset], count);
-        }
-        else
-            hr = S_FALSE;
-
-        SysFreeString(data);
-    }
-
-    return hr;
+    return node_substring_data(text->node, offset, count, p);
 }
 
 static HRESULT WINAPI domtext_appendData(IXMLDOMText *iface, BSTR p)

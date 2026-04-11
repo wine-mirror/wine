@@ -331,6 +331,7 @@ extern HRESULT node_validate(struct domnode *, IXMLDOMNode *, IXMLDOMParseError 
 extern void node_move_children(struct domnode *dst, struct domnode *src);
 extern HRESULT node_split_text(struct domnode *, LONG, IXMLDOMText **);
 extern HRESULT node_delete_data(struct domnode *, LONG, LONG);
+extern HRESULT node_substring_data(struct domnode *, LONG, LONG, BSTR *);
 
 extern UINT get_codepage_for_encoding(const WCHAR *encoding);
 

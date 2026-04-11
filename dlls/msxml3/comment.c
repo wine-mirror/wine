@@ -485,40 +485,11 @@ static HRESULT WINAPI domcomment_get_length(IXMLDOMComment *iface, LONG *len)
 
 static HRESULT WINAPI domcomment_substringData(IXMLDOMComment *iface, LONG offset, LONG count, BSTR *p)
 {
-    HRESULT hr;
-    BSTR data;
+    domcomment *comment = impl_from_IXMLDOMComment(iface);
 
     TRACE("%p, %ld, %ld, %p.\n", iface, offset, count, p);
 
-    if(!p)
-        return E_INVALIDARG;
-
-    *p = NULL;
-    if(offset < 0 || count < 0)
-        return E_INVALIDARG;
-
-    if(count == 0)
-        return S_FALSE;
-
-    hr = IXMLDOMComment_get_data(iface, &data);
-    if(hr == S_OK)
-    {
-        LONG len = SysStringLen(data);
-
-        if(offset < len)
-        {
-            if(offset + count > len)
-                *p = SysAllocString(&data[offset]);
-            else
-                *p = SysAllocStringLen(&data[offset], count);
-        }
-        else
-            hr = S_FALSE;
-
-        SysFreeString(data);
-    }
-
-    return hr;
+    return node_substring_data(comment->node, offset, count, p);
 }
 
 static HRESULT WINAPI domcomment_appendData(IXMLDOMComment *iface, BSTR p)
