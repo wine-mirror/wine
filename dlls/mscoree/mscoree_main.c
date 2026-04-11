@@ -596,7 +596,6 @@ STDAPI ClrCreateManagedInstance(LPCWSTR pTypeName, REFIID riid, void **ppObject)
     HRESULT ret;
     ICLRRuntimeInfo *info;
     RuntimeHost *host;
-    MonoObject *obj;
     IUnknown *unk;
 
     TRACE("(%s,%s,%p)\n", debugstr_w(pTypeName), debugstr_guid(riid), ppObject);
@@ -612,10 +611,7 @@ STDAPI ClrCreateManagedInstance(LPCWSTR pTypeName, REFIID riid, void **ppObject)
     }
 
     if (SUCCEEDED(ret))
-        ret = RuntimeHost_CreateManagedInstance(host, pTypeName, NULL, &obj);
-
-    if (SUCCEEDED(ret))
-        ret = RuntimeHost_GetIUnknownForObject(host, obj, &unk);
+        ret = RuntimeHost_CreateManagedInstance(host, pTypeName, &unk);
 
     if (SUCCEEDED(ret))
     {

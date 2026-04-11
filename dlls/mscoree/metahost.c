@@ -97,7 +97,6 @@ MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const cha
 static void (CDECL *mono_config_parse)(const char *filename);
 MonoDomain* (CDECL *mono_domain_get)(void);
 MonoDomain* (CDECL *mono_domain_get_by_id)(int id);
-BOOL (CDECL *mono_domain_set)(MonoDomain *domain,BOOL force);
 void (CDECL *mono_domain_set_config)(MonoDomain *domain,const char *base_dir,const char *config_file_name);
 static void (CDECL *mono_free)(void *);
 MonoImage* (CDECL *mono_get_corlib)(void);
@@ -125,8 +124,9 @@ static void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_
 static void (CDECL *mono_set_verbose_level)(DWORD level);
 MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 static char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
-MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
+MonoDomain* (CDECL *mono_threads_attach_coop)(MonoDomain *domain, void *attach_cookie);
+void (CDECL *mono_threads_detach_coop)(MonoDomain *orig_domain, void *attach_cookie);
 void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_log_handler)(MonoLogCallback callback, void *user_data);
@@ -215,7 +215,6 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
         LOAD_MONO_FUNCTION(mono_domain_get);
         LOAD_MONO_FUNCTION(mono_domain_get_by_id);
-        LOAD_MONO_FUNCTION(mono_domain_set);
         LOAD_MONO_FUNCTION(mono_domain_set_config);
         LOAD_MONO_FUNCTION(mono_free);
         LOAD_MONO_FUNCTION(mono_get_corlib);
@@ -237,8 +236,9 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_set_verbose_level);
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
         LOAD_MONO_FUNCTION(mono_string_new);
-        LOAD_MONO_FUNCTION(mono_thread_attach);
         LOAD_MONO_FUNCTION(mono_thread_manage);
+        LOAD_MONO_FUNCTION(mono_threads_attach_coop);
+        LOAD_MONO_FUNCTION(mono_threads_detach_coop);
 
 #undef LOAD_MONO_FUNCTION
 
