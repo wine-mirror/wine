@@ -2876,3 +2876,13 @@ BOOL WINAPI NtUserInitializeTouchInjection( UINT max_count, UINT mode )
     FIXME( "max_count %u, mode %#x stub!\n", max_count, mode );
     return TRUE;
 }
+
+/**********************************************************************
+ *       NtUserGetPointerType    (win32u.@)
+ */
+BOOL WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type )
+{
+    FIXME( "id %u, type %p stub!\n", id, type );
+    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}

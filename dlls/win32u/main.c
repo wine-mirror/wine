@@ -1748,6 +1748,11 @@ BOOL SYSCALL_API NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, U
     SYSCALL_FUNC( NtUserGetPointerInfoList );
 }
 
+BOOL SYSCALL_API NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type )
+{
+    SYSCALL_FUNC( NtUserGetPointerType );
+}
+
 INT SYSCALL_API NtUserGetPriorityClipboardFormat( UINT *list, INT count )
 {
     SYSCALL_FUNC( NtUserGetPriorityClipboardFormat );
