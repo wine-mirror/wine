@@ -4630,3 +4630,45 @@ HRESULT node_split_text(struct domnode *node, LONG offset, IXMLDOMText **out)
 
     return hr;
 }
+
+HRESULT node_delete_data(struct domnode *node, LONG offset, LONG count)
+{
+    ULONG length = SysStringLen(node->data);
+    BSTR str = NULL;
+
+    if (offset < 0 || count < 0 || offset > length)
+        return E_INVALIDARG;
+
+    if (length == 0 || count == 0)
+        return S_OK;
+
+    if (offset == 0)
+    {
+        if (count < length)
+        {
+            str = SysAllocStringLen(node->data + count, length - count);
+            if (!str) return E_OUTOFMEMORY;
+        }
+    }
+    else
+    {
+        if (offset + count >= length)
+        {
+            str = SysAllocStringLen(node->data, offset);
+            if (!str) return E_OUTOFMEMORY;
+        }
+        else
+        {
+            str = SysAllocStringLen(NULL, length - count);
+            if (!str) return E_OUTOFMEMORY;
+            memcpy(str, node->data, offset * sizeof(WCHAR));
+            memcpy(str + offset, node->data + offset + count, (length - count - offset) * sizeof(WCHAR));
+            str[length - count] = 0;
+        }
+    }
+
+    SysFreeString(node->data);
+    node->data = str;
+
+    return S_OK;
+}

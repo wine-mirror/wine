@@ -577,51 +577,13 @@ static HRESULT WINAPI domcomment_insertData(
     return hr;
 }
 
-static HRESULT WINAPI domcomment_deleteData(
-    IXMLDOMComment *iface,
-    LONG offset, LONG count)
+static HRESULT WINAPI domcomment_deleteData(IXMLDOMComment *iface, LONG offset, LONG count)
 {
-    HRESULT hr;
-    LONG len = -1;
-    BSTR str;
+    domcomment *comment = impl_from_IXMLDOMComment(iface);
 
     TRACE("%p, %ld, %ld.\n", iface, offset, count);
 
-    hr = IXMLDOMComment_get_length(iface, &len);
-    if(hr != S_OK) return hr;
-
-    if((offset < 0) || (offset > len) || (count < 0))
-        return E_INVALIDARG;
-
-    if(len == 0) return S_OK;
-
-    /* cutting start or end */
-    if((offset == 0) || ((count + offset) >= len))
-    {
-        if(offset == 0)
-            IXMLDOMComment_substringData(iface, count, len - count, &str);
-        else
-            IXMLDOMComment_substringData(iface, 0, offset, &str);
-        hr = IXMLDOMComment_put_data(iface, str);
-    }
-    else
-    /* cutting from the inside */
-    {
-        BSTR str_end;
-
-        IXMLDOMComment_substringData(iface, 0, offset, &str);
-        IXMLDOMComment_substringData(iface, offset + count, len - count, &str_end);
-
-        hr = IXMLDOMComment_put_data(iface, str);
-        if(hr == S_OK)
-            hr = IXMLDOMComment_appendData(iface, str_end);
-
-        SysFreeString(str_end);
-    }
-
-    SysFreeString(str);
-
-    return hr;
+    return node_delete_data(comment->node, offset, count);
 }
 
 static HRESULT WINAPI domcomment_replaceData(
