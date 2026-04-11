@@ -239,6 +239,7 @@ SimpleStatement
                                             { $$ = new_while_statement(ctx, @4, $5 ? STAT_DOWHILE : STAT_DOUNTIL, $6, $3);
                                               CHECK_ERROR; }
     | tDO StSep StatementsNl_opt tLOOP      { $$ = new_while_statement(ctx, @$, STAT_DOWHILE, NULL, $3); CHECK_ERROR; }
+    | tDO error                             { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_WHILE_UNTIL_EOS); YYABORT; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, @$, $1); CHECK_ERROR; }
     | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0, @2); CHECK_ERROR; }
     | tEXIT tFOR                            { $$ = new_statement(ctx, STAT_EXITFOR, 0, @2); CHECK_ERROR; }

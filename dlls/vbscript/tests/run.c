@@ -3236,6 +3236,12 @@ static void test_parse_errors(void)
             L"Dim [unclosed\n",
             0, 13,
             NULL, S_OK, 1007
+        },
+        {
+            /* Do followed by wrong keyword - error 1028 */
+            L"Do For\nLoop\n",
+            0, 3,
+            NULL, S_OK, 1028
         }
     };
     HRESULT hres;
