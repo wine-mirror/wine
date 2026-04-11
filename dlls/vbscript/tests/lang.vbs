@@ -2784,6 +2784,35 @@ Set x.objProp = y
 call ok(Err.Number = 438, "Set Property Let only: Err.Number = " & Err.Number & " expected 438")
 On Error GoTo 0
 
+' Wrong number of arguments error (450)
+Sub ArityTestSub(a, b)
+End Sub
+
+Function ArityTestFunc(a)
+    ArityTestFunc = a
+End Function
+
+On Error Resume Next
+
+Err.Clear
+ArityTestSub 1
+Call ok(Err.Number = 450, "too few args sub: err = " & Err.Number)
+
+Err.Clear
+ArityTestSub 1, 2, 3
+Call ok(Err.Number = 450, "too many args sub: err = " & Err.Number)
+
+Err.Clear
+Dim arityResult
+arityResult = ArityTestFunc()
+Call ok(Err.Number = 450, "too few args func: err = " & Err.Number)
+
+Err.Clear
+arityResult = ArityTestFunc(1, 2)
+Call ok(Err.Number = 450, "too many args func: err = " & Err.Number)
+
+On Error GoTo 0
+
 set x = new TestPropSyntax
 set x.prop = new TestPropSyntax
 set x.prop.prop = new TestPropSyntax
