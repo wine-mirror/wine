@@ -14799,18 +14799,6 @@ static void test_indent(void)
     SysFreeString(str);
 }
 
-static DWORD WINAPI new_thread(void *arg)
-{
-    HRESULT hr = CoInitialize(NULL);
-    ok(hr == S_OK, "failed to init com\n");
-    if (hr != S_OK) return 1;
-
-    test_indent();
-
-    CoUninitialize();
-    return 0;
-}
-
 static void test_get_parentNode(void)
 {
     IXMLDOMDocumentType *doctype;
@@ -17121,7 +17109,6 @@ static void test_prohibitdtd(void)
 START_TEST(domdoc)
 {
     HRESULT hr;
-    HANDLE thread;
 
     hr = CoInitialize( NULL );
     ok( hr == S_OK, "failed to init com\n");
@@ -17224,19 +17211,13 @@ START_TEST(domdoc)
     test_createElement();
     test_default_namespace();
     test_prohibitdtd();
+    test_indent();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
         test_mxnamespacemanager();
         test_mxnamespacemanager_override();
     }
-
-    /* We need to test test_indent in a seperate thread. This is to prevent regressions in multi-threaded
-    applications where the default indentation is set (e.g. by setting xmlTreeIndentString) in the first
-    thread but not for new threads, leading to the wrong indentation in subsequent threads. */
-    thread = CreateThread(NULL, 0, new_thread, NULL, 0, NULL);
-    WaitForSingleObject(thread, INFINITE);
-    CloseHandle(thread);
 
     CoUninitialize();
 }
