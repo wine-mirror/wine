@@ -752,16 +752,20 @@ BOOL WINAPI GetPointerDeviceProperties( HANDLE device, UINT32 *count,
 
 BOOL WINAPI GetPointerPenInfo( UINT32 id, POINTER_PEN_INFO *info )
 {
-    FIXME( "id %u, info %p stub!\n", id, info );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    UINT32 count = 1;
+
+    TRACE( "id %u, info %p\n", id, info );
+
+    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), &count, &count, info );
 }
 
 BOOL WINAPI GetPointerTouchInfo( UINT32 id, POINTER_TOUCH_INFO *info )
 {
-    FIXME( "id %u, info %p stub!\n", id, info );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    UINT32 count = 1;
+
+    TRACE( "id %u, info %p stub!\n", id, info );
+
+    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), &count, &count, info );
 }
 
 BOOL WINAPI GetRawPointerDeviceData( UINT32 id, UINT32 hist_count, UINT32 prop_count,
@@ -775,9 +779,50 @@ BOOL WINAPI GetRawPointerDeviceData( UINT32 id, UINT32 hist_count, UINT32 prop_c
 
 BOOL WINAPI GetPointerTouchInfoHistory( UINT32 id, UINT32 *count, POINTER_TOUCH_INFO *info )
 {
-    FIXME( "id %u, count %p, info %p stub!\n", id, count, info );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    UINT32 pointers = 1;
+
+    TRACE( "id %u, count %p, info %p\n", id, count, info );
+
+    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), count, &pointers, info );
+}
+
+BOOL WINAPI GetPointerPenInfoHistory( UINT32 id, UINT32 *count, POINTER_PEN_INFO *info )
+{
+    UINT32 pointers = 1;
+
+    TRACE( "id %u, count %p, info %p\n", id, count, info );
+
+    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), count, &pointers, info );
+}
+
+BOOL WINAPI GetPointerFrameTouchInfo( UINT32 id, UINT32 *count, POINTER_TOUCH_INFO *info )
+{
+    UINT32 entries = 1;
+
+    TRACE( "id %u, count %p, info %p\n", id, count, info );
+
+    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), &entries, count, info );
+}
+
+BOOL WINAPI GetPointerFramePenInfo( UINT32 id, UINT32 *count, POINTER_PEN_INFO *info )
+{
+    UINT32 entries = 1;
+
+    TRACE( "id %u, count %p, info %p\n", id, count, info );
+
+    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), &entries, count, info );
+}
+
+BOOL WINAPI GetPointerFrameTouchInfoHistory( UINT32 id, UINT32 *entries, UINT32 *pointers, POINTER_TOUCH_INFO *info )
+{
+    TRACE( "id %u, entries %p, pointers %p, info %p\n", id, entries, pointers, info );
+    return NtUserGetPointerInfoList( id, PT_TOUCH, 0, 0, sizeof(*info), entries, pointers, info );
+}
+
+BOOL WINAPI GetPointerFramePenInfoHistory( UINT32 id, UINT32 *entries, UINT32 *pointers, POINTER_PEN_INFO *info )
+{
+    TRACE( "id %u, entries %p, pointers %p, info %p\n", id, entries, pointers, info );
+    return NtUserGetPointerInfoList( id, PT_PEN, 0, 0, sizeof(*info), entries, pointers, info );
 }
 
 

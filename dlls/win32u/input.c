@@ -2812,18 +2812,6 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     return ret;
 }
 
-/**********************************************************************
- *       NtUserGetPointerInfoList    (win32u.@)
- */
-BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR unk0, UINT_PTR unk1, SIZE_T size,
-                                      UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info )
-{
-    FIXME( "id %#x, type %#x, unk0 %#lx, unk1 %#lx, size %#lx, entry_count %p, pointer_count %p, pointer_info %p stub!\n",
-           id, type, (long)unk0, (long)unk1, size, entry_count, pointer_count, pointer_info );
-    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-}
-
 static BOOL get_clip_cursor( RECT *rect, struct ratio dpi, MONITOR_DPI_TYPE type )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
@@ -3117,6 +3105,50 @@ BOOL WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type )
     }
 
     *type = pointer->type;
+    return TRUE;
+}
+
+/**********************************************************************
+ *       NtUserGetPointerInfoList    (win32u.@)
+ */
+BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR unk0, UINT_PTR unk1, SIZE_T size,
+                                      UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info )
+{
+    struct pointer *pointer;
+    size_t target_size = 0;
+
+    TRACE( "id %d, type %#x, unk0 %#lx, unk1 %#lx, size %#lx, entry_count %p, pointer_count %p, pointer_info %p\n",
+            id, type, (long)unk0, (long)unk1, size, entry_count, pointer_count, pointer_info );
+
+    switch (type)
+    {
+    case PT_MOUSE:
+    case PT_PEN: target_size = sizeof(POINTER_PEN_INFO); break;
+    case PT_POINTER: target_size = sizeof(POINTER_INFO); break;
+    case PT_TOUCHPAD:
+    case PT_TOUCH: target_size = sizeof(POINTER_TOUCH_INFO); break;
+    }
+
+    if (type == PT_MOUSE || size != target_size)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!(pointer = find_pointer( id )))
+    {
+        TRACE( "pointer id %d not found.\n", id );
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (type != PT_POINTER) FIXME( "Pointer type %#x not implemented!", type );
+
+    *entry_count = 1;
+    *pointer_count = 1;
+
+    memset( pointer_info, 0, size );
+    *(POINTER_INFO *)pointer_info = pointer->info;
     return TRUE;
 }
 

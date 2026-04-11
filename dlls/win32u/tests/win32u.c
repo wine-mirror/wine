@@ -1941,7 +1941,6 @@ static void test_NtUserGetPointerInfoList( BOOL mouse_in_pointer_enabled )
     entry_count = pointer_count = 2;
     ret = NtUserGetPointerInfoList( 1, PT_POINTER, 0, 0, sizeof(POINTER_INFO), &entry_count, &pointer_count, pointer_info );
     ok( !ret, "NtUserGetPointerInfoList succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
     ok( pointer_count == 2, "got pointer_count %u\n", pointer_count );
     ok( entry_count == 2, "got entry_count %u\n", entry_count );
@@ -1956,7 +1955,6 @@ static void test_NtUserGetPointerInfoList( BOOL mouse_in_pointer_enabled )
     entry_count = pointer_count = 2;
     ret = NtUserGetPointerInfoList( 1, PT_POINTER, 0, 0, sizeof(POINTER_INFO), &entry_count, &pointer_count, pointer_info );
     ok( !ret, "NtUserGetPointerInfoList succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
     ok( pointer_count == 2, "got pointer_count %u\n", pointer_count );
     ok( entry_count == 2, "got entry_count %u\n", entry_count );
@@ -1973,11 +1971,9 @@ static void test_NtUserGetPointerInfoList( BOOL mouse_in_pointer_enabled )
     memset( pointer_info, 0xcd, sizeof(pointer_info) );
     entry_count = pointer_count = 2;
     ret = NtUserGetPointerInfoList( 1, PT_POINTER, 0, 0, sizeof(POINTER_INFO), &entry_count, &pointer_count, pointer_info );
-    todo_wine_if(mouse_in_pointer_enabled)
     ok( ret == mouse_in_pointer_enabled, "NtUserGetPointerInfoList failed, error %lu\n", GetLastError() );
     if (!ret)
     {
-        todo_wine
         ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
         goto done;
     }

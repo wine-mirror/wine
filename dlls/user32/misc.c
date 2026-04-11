@@ -518,10 +518,36 @@ LRESULT WINAPI PackTouchHitTestingProximityEvaluation(const TOUCH_HIT_TESTING_IN
 
 BOOL WINAPI GetPointerInfo(UINT32 id, POINTER_INFO *info)
 {
-    FIXME("(%d %p): stub\n", id, info);
+    UINT32 count = 1;
 
-    SetLastError(ERROR_INVALID_PARAMETER);
-    return FALSE;
+    TRACE( "id %d, info %p\n", id, info );
+
+    return NtUserGetPointerInfoList( id, PT_POINTER, 0, 0, sizeof(*info), &count, &count, info );
+}
+
+BOOL WINAPI GetPointerInfoHistory( UINT32 id, UINT32 *count, POINTER_INFO *info )
+{
+    UINT32 pointers = 1;
+
+    TRACE( "id %u, count %p, info %p\n", id, count, info );
+
+    return NtUserGetPointerInfoList( id, PT_POINTER, 0, 0, sizeof(*info), count, &pointers, info );
+}
+
+BOOL WINAPI GetPointerFrameInfo( UINT32 id, UINT32 *count, POINTER_INFO *info )
+{
+    UINT32 entries = 1;
+
+    TRACE( "id %u, count %p, info %p\n", id, count, info );
+
+    return NtUserGetPointerInfoList( id, PT_POINTER, 0, 0, sizeof(*info), &entries, count, info );
+}
+
+BOOL WINAPI GetPointerFrameInfoHistory( UINT32 id, UINT32 *entries, UINT32 *pointers, POINTER_INFO *info )
+{
+    TRACE( "id %u, entries %p, pointers %p, info %p\n", id, entries, pointers, info );
+
+    return NtUserGetPointerInfoList( id, PT_POINTER, 0, 0, sizeof(*info), entries, pointers, info );
 }
 
 LRESULT WINAPI ImeWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
