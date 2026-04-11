@@ -407,6 +407,14 @@ static const KBDTABLES kbdus_tables =
 
 static LONG clipping_cursor; /* clipping thread counter */
 static LONG enable_mouse_in_pointer = -1;
+static LONG last_frame = 0;
+
+struct pointer
+{
+    UINT32 id;
+    struct list entry;
+    POINTER_INFO info;
+};
 
 BOOL grab_pointer = TRUE;
 BOOL grab_fullscreen = FALSE;
@@ -2879,6 +2887,104 @@ INT WINAPI NtUserScheduleDispatchNotification( HWND hwnd )
     return 0;
 }
 
+void destroy_thread_pointers(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct pointer *pointer, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( pointer, next, &thread_info->known_pointers, struct pointer, entry )
+    {
+        list_remove( &pointer->entry );
+        free( pointer );
+    }
+}
+
+static struct pointer *pointer_create( UINT32 id )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct pointer *pointer;
+
+    TRACE( "allocating pointer id %d\n", id );
+
+    if (!(pointer = calloc( 1, sizeof(*pointer) ))) return NULL;
+    pointer->id = id;
+    list_add_tail( &thread_info->known_pointers, &pointer->entry );
+
+    return pointer;
+}
+
+static struct pointer *find_pointer( UINT32 id )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct pointer *pointer;
+
+    TRACE( "looking for pointer id %d\n", id );
+
+    LIST_FOR_EACH_ENTRY( pointer, &thread_info->known_pointers, struct pointer, entry )
+        if (pointer->id == id) return pointer;
+
+    WARN( "failed to find pointer with id %d\n", id );
+    return NULL;
+}
+
+static POINTER_INFO pointer_info_from_msg( const MSG *msg )
+{
+    POINT location = { LOWORD( msg->lParam ), HIWORD( msg->lParam ) };
+    LARGE_INTEGER counter;
+    POINTER_INFO info =
+    {
+        .pointerId = GET_POINTERID_WPARAM( msg->wParam ),
+        .sourceDevice = INVALID_HANDLE_VALUE,
+        .frameId = InterlockedIncrement( &last_frame ),
+        .hwndTarget = msg->hwnd,
+        .historyCount = 1,
+        .dwTime = msg->time,
+    };
+
+    info.pointerFlags = HIWORD( msg->wParam );
+    switch (msg->message)
+    {
+    case WM_POINTERUPDATE: info.pointerFlags |= POINTER_FLAG_UPDATE; break;
+    case WM_POINTERDOWN: info.pointerFlags |= POINTER_FLAG_DOWN; break;
+    case WM_POINTERUP: info.pointerFlags |= POINTER_FLAG_UP; break;
+    }
+    info.ptPixelLocation = info.ptPixelLocationRaw = location;
+
+    info.ptHimetricLocation.x = location.x * HIMETRIC_PER_INCH / system_dpi;
+    info.ptHimetricLocation.y = location.y * HIMETRIC_PER_INCH / system_dpi;
+    info.ptHimetricLocationRaw = info.ptHimetricLocation;
+
+    NtQueryPerformanceCounter( &counter, NULL );
+    info.PerformanceCount = counter.QuadPart;
+
+    return info;
+}
+
+static POINTER_BUTTON_CHANGE_TYPE compare_button( const POINTER_INFO *old, const POINTER_INFO *new )
+{
+    POINTER_BUTTON_CHANGE_TYPE change = POINTER_CHANGE_NONE;
+    static const struct
+    {
+        POINTER_FLAGS flag;
+        POINTER_BUTTON_CHANGE_TYPE down, up;
+    } map[] =
+    {
+        { POINTER_FLAG_FIRSTBUTTON, POINTER_CHANGE_FIRSTBUTTON_DOWN, POINTER_CHANGE_FIRSTBUTTON_UP },
+        { POINTER_FLAG_SECONDBUTTON, POINTER_CHANGE_SECONDBUTTON_DOWN, POINTER_CHANGE_SECONDBUTTON_UP },
+        { POINTER_FLAG_THIRDBUTTON, POINTER_CHANGE_THIRDBUTTON_DOWN, POINTER_CHANGE_THIRDBUTTON_UP },
+        { POINTER_FLAG_FOURTHBUTTON, POINTER_CHANGE_FOURTHBUTTON_DOWN, POINTER_CHANGE_FOURTHBUTTON_UP },
+        { POINTER_FLAG_FIFTHBUTTON, POINTER_CHANGE_FIFTHBUTTON_DOWN, POINTER_CHANGE_FIFTHBUTTON_UP },
+    };
+    POINTER_FLAGS down = ~old->pointerFlags & new->pointerFlags, up = old->pointerFlags & ~new->pointerFlags;
+
+    for (size_t i = 0; i < ARRAY_SIZE(map); i++)
+    {
+        if (down & map[i].flag) change |= map[i].down;
+        if (up & map[i].flag) change |= map[i].up;
+    }
+    return change;
+}
+
 /***********************************************************************
  *          process_pointer_message
  *
@@ -2886,7 +2992,15 @@ INT WINAPI NtUserScheduleDispatchNotification( HWND hwnd )
  */
 BOOL process_pointer_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
 {
+    UINT id = GET_POINTERID_WPARAM( msg->wParam );
+    struct pointer *pointer;
+    POINTER_INFO info;
+
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
+    if (!(pointer = find_pointer( id )) && !(pointer = pointer_create( id ))) return TRUE;
+    info = pointer_info_from_msg( msg );
+    info.ButtonChangeType = compare_button( &pointer->info, &info );
+    pointer->info = info;
     return TRUE;
 }
 
@@ -2924,8 +3038,8 @@ BOOL WINAPI NtUserGetPointerDeviceRects( HANDLE handle, RECT *device_rect, RECT 
     }
 
     rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
-    SetRect( device_rect, 0, 0, (rect.right - rect.left) * HIMETRIC_PER_INCH / get_system_dpi(),
-             (rect.bottom - rect.top) * HIMETRIC_PER_INCH / get_system_dpi() );
+    SetRect( device_rect, 0, 0, (rect.right - rect.left) * HIMETRIC_PER_INCH / system_dpi,
+             (rect.bottom - rect.top) * HIMETRIC_PER_INCH / system_dpi );
     *display_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
 
     TRACE( "returning device %s, display %s\n", wine_dbgstr_rect(device_rect), wine_dbgstr_rect(display_rect) );

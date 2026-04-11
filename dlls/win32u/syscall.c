@@ -197,6 +197,7 @@ struct user_thread_info *get_user_thread_info(void)
 
         info = calloc( 1, sizeof(*info) );
         pthread_setspecific( user_thread_info_key, info );
+        list_init( &info->known_pointers );
 
         if (teb)
         {

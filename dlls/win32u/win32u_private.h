@@ -111,6 +111,7 @@ extern void update_current_mouse_window( HWND hwnd, INT hittest, POINT pos );
 extern BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset );
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout, UINT *mapped );
+extern void destroy_thread_pointers(void);
 extern BOOL process_pointer_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data );
 
 /* menu.c */
@@ -156,6 +157,7 @@ extern void set_standard_scroll_painted( HWND hwnd, int bar, BOOL painted );
 extern void track_scroll_bar( HWND hwnd, int scrollbar, POINT pt );
 
 /* sysparams.c */
+extern UINT system_dpi;
 extern BOOL decorated_mode;
 extern UINT64 thunk_lock_callback;
 extern HBRUSH get_55aa_brush(void);
