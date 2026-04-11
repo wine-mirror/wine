@@ -1937,6 +1937,7 @@ static void test_hid_touch_screen(void)
     RAWINPUTDEVICE rawdevice = {.usUsagePage = HID_USAGE_PAGE_DIGITIZER, .usUsage = HID_USAGE_DIGITIZER_TOUCH_SCREEN};
     UINT rawbuffer_count, rawbuffer_size, expect_flags, id, width, height;
     WCHAR device_path[MAX_PATH];
+    POINTER_INPUT_TYPE type;
     char rawbuffer[1024];
     RAWINPUT *rawinput;
     HANDLE file;
@@ -2022,6 +2023,9 @@ static void test_hid_touch_screen(void)
     todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
+    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     id = LOWORD( pointer_wparam[0] );
@@ -2165,6 +2169,9 @@ static void test_hid_touch_screen(void)
     todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
+    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( pointer_wparam[1] == 0, "got wparam %#Ix\n", pointer_wparam[1] );
@@ -2189,6 +2196,9 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
+    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( pointer_wparam[1] == 0, "got wparam %#Ix\n", pointer_wparam[1] );
@@ -2215,6 +2225,9 @@ static void test_hid_touch_screen(void)
     todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
+    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     id = LOWORD( pointer_wparam[0] );
@@ -2226,6 +2239,9 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
     ok( LOWORD( pointer_wparam[1] ) == id + 1, "got wparam %#Ix\n", pointer_wparam[1] );
+    ret = GetPointerType( LOWORD( pointer_wparam[1] ), &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x18, "got lparam %#Ix\n", pointer_lparam[1] );
     ok( HIWORD( pointer_lparam[1] ) * 128 / height == 0x20, "got lparam %#Ix\n", pointer_lparam[1] );
 
@@ -2249,6 +2265,9 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
+    ret = GetPointerType( LOWORD( pointer_wparam[0] ), &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
 
@@ -2257,6 +2276,9 @@ static void test_hid_touch_screen(void)
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
     ok( LOWORD( pointer_wparam[1] ) == id + 1, "got wparam %#Ix\n", pointer_wparam[1] );
+    ret = GetPointerType( LOWORD( pointer_wparam[1] ), &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_TOUCH, "got pointer type %#lx\n", type );
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x18, "got lparam %#Ix\n", pointer_lparam[1] );
     ok( HIWORD( pointer_lparam[1] ) * 128 / height == 0x20, "got lparam %#Ix\n", pointer_lparam[1] );
 

@@ -3037,9 +3037,18 @@ BOOL WINAPI NtUserInitializeTouchInjection( UINT max_count, UINT mode )
  */
 BOOL WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type )
 {
-    FIXME( "id %u, type %p stub!\n", id, type );
-    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    struct pointer *pointer;
+
+    TRACE( "%u, %p\n", id, type );
+
+    if (!id || !type || !(pointer = find_pointer( id )))
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    *type = pointer->type;
+    return TRUE;
 }
 
 /**********************************************************************

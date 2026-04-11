@@ -646,7 +646,7 @@
 # @ stub GetPointerPenInfoHistory
 @ stdcall GetPointerTouchInfo(long ptr)
 @ stdcall GetPointerTouchInfoHistory(long ptr ptr)
-@ stdcall GetPointerType(long ptr)
+@ stdcall GetPointerType(long ptr) NtUserGetPointerType
 @ stdcall GetPriorityClipboardFormat(ptr long) NtUserGetPriorityClipboardFormat
 @ stdcall GetProcessDefaultLayout(ptr)
 @ stdcall GetProcessDpiAwarenessInternal(long ptr)
