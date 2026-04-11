@@ -529,18 +529,13 @@ static HRESULT WINAPI domtext_put_data(IXMLDOMText *iface, BSTR data)
     return node_put_data(text->node, data);
 }
 
-static HRESULT WINAPI domtext_get_length(IXMLDOMText *iface, LONG *len)
+static HRESULT WINAPI domtext_get_length(IXMLDOMText *iface, LONG *length)
 {
     domtext *text = impl_from_IXMLDOMText(iface);
 
-    TRACE("%p, %p.\n", iface, len);
+    TRACE("%p, %p.\n", iface, length);
 
-    if (!len)
-        return E_INVALIDARG;
-
-    *len = SysStringLen(text->node->data);
-
-    return S_OK;
+    return node_get_data_length(text->node, length);
 }
 
 static HRESULT WINAPI domtext_substringData(IXMLDOMText *iface, LONG offset, LONG count, BSTR *p)

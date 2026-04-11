@@ -463,24 +463,13 @@ static HRESULT WINAPI domcomment_put_data(IXMLDOMComment *iface, BSTR data)
     return node_put_data(comment->node, data);
 }
 
-static HRESULT WINAPI domcomment_get_length(IXMLDOMComment *iface, LONG *len)
+static HRESULT WINAPI domcomment_get_length(IXMLDOMComment *iface, LONG *length)
 {
-    HRESULT hr;
-    BSTR data;
+    domcomment *comment = impl_from_IXMLDOMComment(iface);
 
-    TRACE("%p, %p.\n", iface, len);
+    TRACE("%p, %p.\n", iface, length);
 
-    if(!len)
-        return E_INVALIDARG;
-
-    hr = IXMLDOMComment_get_data(iface, &data);
-    if(hr == S_OK)
-    {
-        *len = SysStringLen(data);
-        SysFreeString(data);
-    }
-
-    return hr;
+    return node_get_data_length(comment->node, length);
 }
 
 static HRESULT WINAPI domcomment_substringData(IXMLDOMComment *iface, LONG offset, LONG count, BSTR *p)

@@ -4695,3 +4695,12 @@ HRESULT node_substring_data(struct domnode *node, LONG offset, LONG count, BSTR 
 
     return *p ? S_OK : E_OUTOFMEMORY;
 }
+
+HRESULT node_get_data_length(struct domnode *node, LONG *length)
+{
+    if (!length)
+        return E_INVALIDARG;
+
+    *length = SysStringLen(node->data);
+    return S_OK;
+}
