@@ -3242,6 +3242,12 @@ static void test_parse_errors(void)
             L"Do For\nLoop\n",
             0, 3,
             NULL, S_OK, 1028
+        },
+        {
+            /* Expected 'Class' - End Sub inside class body - error 1047 */
+            L"Class C\nEnd Sub\n",
+            1, 4,
+            NULL, S_OK, 1047
         }
     };
     HRESULT hres;
