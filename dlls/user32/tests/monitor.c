@@ -3292,9 +3292,9 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
                                 monitor.left + 2 * scale + 1, monitor.top + 2 * scale + 1, FALSE );
 
     ret = GetPointerDeviceRects( INVALID_HANDLE_VALUE, &device, &rect );
-    todo_wine ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
-    todo_wine ok( EqualRect( &rect, &scaled_virtual ), "got %s\n", wine_dbgstr_rect(&rect) );
-    todo_wine ok( EqualRect( &device, &expect_device ) /* w10 */ || EqualRect( &device, &scaled_device ) /* w11 */,
+    ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
+    ok( EqualRect( &rect, &scaled_virtual ), "got %s\n", wine_dbgstr_rect(&rect) );
+    ok( EqualRect( &device, &expect_device ) /* w10 */ || EqualRect( &device, &scaled_device ) /* w11 */,
         "got %s vs %s / %s\n", wine_dbgstr_rect(&device), wine_dbgstr_rect(&expect_device), wine_dbgstr_rect(&scaled_device) );
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
@@ -3584,9 +3584,9 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
                                     primary.left + 4 * scale + 1, primary.top + 4 * scale + 1, FALSE );
 
         ret = GetPointerDeviceRects( INVALID_HANDLE_VALUE, &device, &rect );
-        todo_wine ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
-        todo_wine ok( EqualRect( &rect, monitor_aware ? &virtual : &scaled_virtual ), "got %s\n", wine_dbgstr_rect(&rect) );
-        todo_wine ok( EqualRect( &device, &expect_device ) /* w10 */ || EqualRect( &device, &scaled_device ) /* w11 */,
+        ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
+        ok( EqualRect( &rect, monitor_aware ? &virtual : &scaled_virtual ), "got %s\n", wine_dbgstr_rect(&rect) );
+        ok( EqualRect( &device, &expect_device ) /* w10 */ || EqualRect( &device, &scaled_device ) /* w11 */,
             "got %s vs %s / %s\n", wine_dbgstr_rect(&device), wine_dbgstr_rect(&expect_device), wine_dbgstr_rect(&scaled_device) );
 
         DestroyWindow( primary_hwnd );
@@ -3733,11 +3733,11 @@ static void test_monitor_dpi(void)
             }
 
             ret = GetPointerDeviceRects( INVALID_HANDLE_VALUE, &device, &display );
-            todo_wine ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
-            todo_wine ok( EqualRect( &display, &virtual ), "got %s\n", wine_dbgstr_rect( &display ) );
+            ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
+            ok( EqualRect( &display, &virtual ), "got %s\n", wine_dbgstr_rect( &display ) );
             SetRect( &expect_rect, 0, 0, virtual.right * HIMETRIC_PER_INCH / system_dpi,
                      virtual.bottom * HIMETRIC_PER_INCH / system_dpi );
-            todo_wine ok( EqualRect( &device, &expect_rect ), "got %s\n", wine_dbgstr_rect( &device ) );
+            ok( EqualRect( &device, &expect_rect ), "got %s\n", wine_dbgstr_rect( &device ) );
 
             pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
 
@@ -3780,11 +3780,11 @@ static void test_monitor_dpi(void)
             }
 
             ret = GetPointerDeviceRects( INVALID_HANDLE_VALUE, &device, &display );
-            todo_wine ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
-            todo_wine ok( EqualRect( &display, &virtual ), "got %s\n", wine_dbgstr_rect( &display ) );
+            ok( ret, "GetPointerDeviceRects failed, error %lu.\n", GetLastError() );
+            ok( EqualRect( &display, &virtual ), "got %s\n", wine_dbgstr_rect( &display ) );
             SetRect( &expect_rect, 0, 0, virtual.right * HIMETRIC_PER_INCH / system_dpi,
                      virtual.bottom * HIMETRIC_PER_INCH / system_dpi );
-            todo_wine ok( EqualRect( &device, &expect_rect ), "got %s\n", wine_dbgstr_rect( &device ) );
+            ok( EqualRect( &device, &expect_rect ), "got %s\n", wine_dbgstr_rect( &device ) );
 
             pSetThreadDpiAwarenessContext( old_ctx );
         }

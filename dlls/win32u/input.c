@@ -40,6 +40,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
+#define HIMETRIC_PER_INCH 2540
+
 static const WCHAR keyboard_layouts_keyW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -2892,7 +2894,20 @@ BOOL WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type )
  */
 BOOL WINAPI NtUserGetPointerDeviceRects( HANDLE handle, RECT *device_rect, RECT *display_rect )
 {
-    FIXME( "handle %p, device_rect %p, display_rect %p stub!\n", handle, device_rect, display_rect );
-    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    RECT rect;
+
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        FIXME( "Pointer devices are not implemented!\n" );
+        RtlSetLastWin32Error( ERROR_NO_DATA );
+        return FALSE;
+    }
+
+    rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
+    SetRect( device_rect, 0, 0, (rect.right - rect.left) * HIMETRIC_PER_INCH / get_system_dpi(),
+             (rect.bottom - rect.top) * HIMETRIC_PER_INCH / get_system_dpi() );
+    *display_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
+
+    TRACE( "returning device %s, display %s\n", wine_dbgstr_rect(device_rect), wine_dbgstr_rect(display_rect) );
+    return TRUE;
 }

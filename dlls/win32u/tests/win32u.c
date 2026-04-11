@@ -3047,14 +3047,11 @@ void test_NtUserGetPointerDeviceRects( const char *arg )
     SetThreadDpiAwarenessContext( ctx );
 
     ret = NtUserGetPointerDeviceRects( INVALID_HANDLE_VALUE, &device, &display );
-    todo_wine
-    {
-        ok( ret, "NtUserGetPointerDeviceRects failed, error %lu.\n", GetLastError() );
-        ok( EqualRect( &device, &himetric_dev ), "device %s, expected %s\n",
-            wine_dbgstr_rect( &device ), wine_dbgstr_rect( &himetric_dev ) );
-        ok( EqualRect( &display, &screen ), "display %s, expected %s\n",
-            wine_dbgstr_rect( &display ), wine_dbgstr_rect( &screen ) );
-    }
+    ok( ret, "NtUserGetPointerDeviceRects failed, error %lu.\n", GetLastError() );
+    ok( EqualRect( &device, &himetric_dev ), "device %s, expected %s\n",
+        wine_dbgstr_rect( &device ), wine_dbgstr_rect( &himetric_dev ) );
+    ok( EqualRect( &display, &screen ), "display %s, expected %s\n",
+        wine_dbgstr_rect( &display ), wine_dbgstr_rect( &screen ) );
 }
 
 START_TEST(win32u)
