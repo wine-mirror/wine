@@ -90,7 +90,7 @@ struct color_convert
     struct wg_sample_queue *wg_sample_queue;
 };
 
-static inline struct color_convert *impl_from_IUnknown(IUnknown *iface)
+static struct color_convert *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct color_convert, IUnknown_inner);
 }
@@ -702,7 +702,7 @@ static const IMFTransformVtbl transform_vtbl =
     transform_ProcessOutput,
 };
 
-static inline struct color_convert *impl_from_IMediaObject(IMediaObject *iface)
+static struct color_convert *impl_from_IMediaObject(IMediaObject *iface)
 {
     return CONTAINING_RECORD(iface, struct color_convert, IMediaObject_iface);
 }
@@ -885,7 +885,7 @@ static const IMediaObjectVtbl media_object_vtbl =
     media_object_Lock,
 };
 
-static inline struct color_convert *impl_from_IPropertyBag(IPropertyBag *iface)
+static struct color_convert *impl_from_IPropertyBag(IPropertyBag *iface)
 {
     return CONTAINING_RECORD(iface, struct color_convert, IPropertyBag_iface);
 }
@@ -927,7 +927,7 @@ static const IPropertyBagVtbl property_bag_vtbl =
     property_bag_Write,
 };
 
-static inline struct color_convert *impl_from_IPropertyStore(IPropertyStore *iface)
+static struct color_convert *impl_from_IPropertyStore(IPropertyStore *iface)
 {
     return CONTAINING_RECORD(iface, struct color_convert, IPropertyStore_iface);
 }
