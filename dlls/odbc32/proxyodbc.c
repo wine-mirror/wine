@@ -2984,21 +2984,6 @@ SQLRETURN WINAPI SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMAL
     return ret;
 }
 
-static SQLRETURN get_env_attr_unix( struct environment *env, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
-                                    SQLINTEGER *retlen )
-{
-    struct SQLGetEnvAttr_params params = { env->hdr.unix_handle, attr, value, buflen, retlen };
-    return ODBC_CALL( SQLGetEnvAttr, &params );
-}
-
-static SQLRETURN get_env_attr_win32( struct environment *env, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
-                                     SQLINTEGER *retlen )
-{
-    if (env->hdr.win32_funcs->SQLGetEnvAttr)
-        return env->hdr.win32_funcs->SQLGetEnvAttr( env->hdr.win32_handle, attr, value, buflen, retlen );
-    return SQL_ERROR;
-}
-
 /*************************************************************************
  *				SQLGetEnvAttr           [ODBC32.037]
  */
@@ -3013,31 +2998,20 @@ SQLRETURN WINAPI SQLGetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
 
     if (!env) return SQL_INVALID_HANDLE;
 
-    if (env->hdr.unix_handle)
+    switch (Attribute)
     {
-        ret = get_env_attr_unix( env, Attribute, Value, BufferLength, StringLength );
-    }
-    else if (env->hdr.win32_handle)
-    {
-        ret = get_env_attr_win32( env, Attribute, Value, BufferLength, StringLength );
-    }
-    else
-    {
-        switch (Attribute)
-        {
-        case SQL_ATTR_CONNECTION_POOLING:
-            *(SQLINTEGER *)Value = SQL_CP_OFF;
-            break;
+    case SQL_ATTR_CONNECTION_POOLING:
+        *(SQLINTEGER *)Value = SQL_CP_OFF;
+        break;
 
-        case SQL_ATTR_ODBC_VERSION:
-            *(SQLINTEGER *)Value = env->attr_version;
-            break;
+    case SQL_ATTR_ODBC_VERSION:
+        *(SQLINTEGER *)Value = env->attr_version;
+        break;
 
-        default:
-            FIXME( "unhandled attribute %d\n", Attribute );
-            ret = SQL_ERROR;
-            break;
-        }
+    default:
+        FIXME( "unhandled attribute %d\n", Attribute );
+        ret = SQL_ERROR;
+        break;
     }
 
     TRACE("Returning %d\n", ret);

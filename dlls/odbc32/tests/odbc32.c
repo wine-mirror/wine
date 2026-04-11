@@ -707,9 +707,8 @@ static void test_SQLConnect( void )
     size = -1;
     ret = SQLGetEnvAttr( env, SQL_ATTR_ODBC_VERSION, &version, sizeof(version), &size );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( version != -1, "version not set\n" );
+    ok( version == SQL_OV_ODBC2, "version = %d\n", version );
     ok( size == -1, "size set\n" );
-    trace( "ODBC version %d\n", version );
 
     pooling = -1;
     ret = SQLGetEnvAttr( env, SQL_ATTR_CONNECTION_POOLING, &pooling, sizeof(pooling), NULL );
@@ -761,6 +760,10 @@ static void test_SQLConnect( void )
     todo_wine CHECK_CALLED( driver_SQLGetInfo );
     ok (ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
+
+    ret = SQLGetEnvAttr( env, SQL_ATTR_ODBC_VERSION, &version, sizeof(version), NULL );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( version == SQL_OV_ODBC2, "version = %d\n", version );
 
     timeout = 0xdeadbeef;
     SET_EXPECT( driver_SQLGetConnectAttr );
