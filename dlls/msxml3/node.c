@@ -3491,6 +3491,10 @@ HRESULT node_set_attribute_value(struct domnode *node, const WCHAR *name, const 
         hr = node_put_data(attr, attr_value);
     VariantClear(&v);
 
+    /* Allow setting namespace definition node once. */
+    if (attr && is_namespace_definition(attr))
+        attr->flags |= DOMNODE_READONLY_VALUE;
+
     return hr;
 }
 

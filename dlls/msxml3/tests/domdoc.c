@@ -16928,6 +16928,7 @@ static void test_document_reload(void)
 static void test_setAttribute(void)
 {
     IXMLDOMElement *element;
+    IXMLDOMAttribute *attr;
     IXMLDOMDocument *doc;
     IXMLDOMNode *node;
     HRESULT hr;
@@ -16959,13 +16960,30 @@ static void test_setAttribute(void)
     SysFreeString(str);
 
     hr = IXMLDOMElement_setAttribute(element, _bstr_("xmlns:prefix"), _variantbstr_("uri2"));
-    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMElement_get_xml(element, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"<prefix:name xmlns:prefix=\"uri\"/>"), "Unexpected xml %s.\n", debugstr_w(str));
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_getAttributeNode(element, _bstr_("xmlns:prefix"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_put_text(attr, _bstr_("uri3"));
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMAttribute_Release(attr);
+
+    hr = IXMLDOMElement_setAttribute(element, _bstr_("attr1"), _variantbstr_("value"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMElement_getAttributeNode(element, _bstr_("attr1"), &attr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_put_text(attr, _bstr_("value2"));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMAttribute_Release(attr);
+
+    hr = IXMLDOMElement_get_xml(element, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"<prefix:name xmlns:prefix=\"uri\" attr1=\"value2\"/>"), "Unexpected xml %s.\n", debugstr_w(str));
     SysFreeString(str);
 
     IXMLDOMElement_Release(element);
