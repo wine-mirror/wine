@@ -702,26 +702,13 @@ static HRESULT WINAPI domtext_replaceData(
     return hr;
 }
 
-static HRESULT WINAPI domtext_splitText(
-    IXMLDOMText *iface,
-    LONG offset, IXMLDOMText **txtNode)
+static HRESULT WINAPI domtext_splitText(IXMLDOMText *iface, LONG offset, IXMLDOMText **node)
 {
-    LONG length = 0;
+    domtext *text = impl_from_IXMLDOMText(iface);
 
-    TRACE("%p, %ld, %p.\n", iface, offset, txtNode);
+    TRACE("%p, %ld, %p.\n", iface, offset, node);
 
-    if (!txtNode || offset < 0) return E_INVALIDARG;
-
-    *txtNode = NULL;
-
-    IXMLDOMText_get_length(iface, &length);
-
-    if (offset > length) return E_INVALIDARG;
-    if (offset == length) return S_FALSE;
-
-    FIXME("adjacent text nodes are not supported\n");
-
-    return E_NOTIMPL;
+    return node_split_text(text->node, offset, node);
 }
 
 static const struct IXMLDOMTextVtbl domtext_vtbl =

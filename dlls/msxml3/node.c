@@ -4587,3 +4587,46 @@ void node_move_children(struct domnode *dest, struct domnode *src)
         domnode_append_child(dest, child);
     }
 }
+
+HRESULT node_split_text(struct domnode *node, LONG offset, IXMLDOMText **out)
+{
+    struct domnode *child;
+    ULONG length;
+    HRESULT hr;
+    BSTR head;
+
+    if (!out || offset < 0)
+        return E_INVALIDARG;
+
+    *out = NULL;
+
+    length = SysStringLen(node->data);
+    if (offset > length)
+        return E_INVALIDARG;
+    if (offset == length)
+        return S_FALSE;
+
+    if (FAILED(hr = domnode_create(node->type, NULL, 0, NULL, 0, node->owner, &child)))
+        return hr;
+
+    if (offset)
+    {
+        child->data = SysAllocStringLen(node->data + offset, length - offset);
+        head = SysAllocStringLen(node->data, offset);
+        SysFreeString(node->data);
+        node->data = head;
+    }
+    else
+    {
+        child->data = node->data;
+        node->data = NULL;
+    }
+
+    if (node->parent)
+        domnode_insert_domnode(node->parent, child, domnode_get_next_sibling(node));
+
+    if (FAILED(hr = create_node(child, (IXMLDOMNode **)out)))
+        domnode_unlink_child(child);
+
+    return hr;
+}

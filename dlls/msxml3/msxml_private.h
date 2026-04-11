@@ -329,6 +329,7 @@ extern HRESULT node_save(struct domnode *, IStream *);
 extern HRESULT node_get_elements_by_tagname(struct domnode *,BSTR,IXMLDOMNodeList**);
 extern HRESULT node_validate(struct domnode *, IXMLDOMNode *, IXMLDOMParseError **);
 extern void node_move_children(struct domnode *dst, struct domnode *src);
+extern HRESULT node_split_text(struct domnode *, LONG, IXMLDOMText **);
 
 extern UINT get_codepage_for_encoding(const WCHAR *encoding);
 

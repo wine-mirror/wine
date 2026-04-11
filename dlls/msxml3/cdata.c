@@ -636,52 +636,13 @@ static HRESULT WINAPI domcdata_replaceData(
     return hr;
 }
 
-static HRESULT WINAPI domcdata_splitText(
-    IXMLDOMCDATASection *iface,
-    LONG offset, IXMLDOMText **txtNode)
+static HRESULT WINAPI domcdata_splitText(IXMLDOMCDATASection *iface, LONG offset, IXMLDOMText **node)
 {
-    IXMLDOMDocument *doc;
-    LONG length = 0;
-    HRESULT hr;
+    domcdata *cdata = impl_from_IXMLDOMCDATASection(iface);
 
-    TRACE("%p, %ld, %p.\n", iface, offset, txtNode);
+    TRACE("%p, %ld, %p.\n", iface, offset, node);
 
-    if (!txtNode || offset < 0) return E_INVALIDARG;
-
-    *txtNode = NULL;
-
-    IXMLDOMCDATASection_get_length(iface, &length);
-
-    if (offset > length) return E_INVALIDARG;
-    if (offset == length) return S_FALSE;
-
-    hr = IXMLDOMCDATASection_get_ownerDocument(iface, &doc);
-    if (hr == S_OK)
-    {
-        BSTR data;
-
-        hr = IXMLDOMCDATASection_substringData(iface, offset, length - offset, &data);
-        if (hr == S_OK)
-        {
-            hr = IXMLDOMDocument_createTextNode(doc, data, txtNode);
-            if (hr == S_OK)
-            {
-                IXMLDOMNode *parent;
-
-                hr = IXMLDOMCDATASection_get_parentNode(iface, &parent);
-                if (hr == S_OK)
-                {
-                    IXMLDOMCDATASection_deleteData(iface, 0, offset);
-                    hr = IXMLDOMNode_appendChild(parent, (IXMLDOMNode*)*txtNode, NULL);
-                    IXMLDOMNode_Release(parent);
-                }
-            }
-            SysFreeString(data);
-        }
-        IXMLDOMDocument_Release(doc);
-    }
-
-    return hr;
+    return node_split_text(cdata->node, offset, node);
 }
 
 static const struct IXMLDOMCDATASectionVtbl domcdata_vtbl =

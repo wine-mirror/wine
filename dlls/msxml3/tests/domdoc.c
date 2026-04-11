@@ -7702,7 +7702,6 @@ static void test_splitText(void)
 
     hr = IXMLDOMText_get_nodeType(text, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(node_type == NODE_CDATA_SECTION, "Unexpected node type %d.\n", node_type);
 
     length = 0;
@@ -7744,15 +7743,15 @@ static void test_splitText(void)
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     ok(text2 == 0, "got %p\n", text);
 
-    text2 = 0;
+    text2 = NULL;
     hr = IXMLDOMText_splitText(text, 4, &text2);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (text2) IXMLDOMText_Release(text2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMText_Release(text2);
 
-    node = 0;
+    node = NULL;
     hr = IXMLDOMText_get_nextSibling(text, &node);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (node) IXMLDOMNode_Release(node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
 
     IXMLDOMText_Release(text);
 
@@ -7760,7 +7759,6 @@ static void test_splitText(void)
     length = 0;
     hr = IXMLDOMCDATASection_get_length(cdata, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(length == 10, "Unexpected length %ld.\n", length);
 
     hr = IXMLDOMCDATASection_splitText(cdata, 0, &text);
@@ -7768,17 +7766,14 @@ static void test_splitText(void)
 
     hr = IXMLDOMText_get_nodeType(text, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(node_type == NODE_CDATA_SECTION, "Unexpected node type %d.\n", node_type);
 
     hr = IXMLDOMText_get_length(text, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(length == 10, "Unexpected length %ld.\n", length);
 
     hr = IXMLDOMCDATASection_get_length(cdata, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!length, "Unexpected length %ld.\n", length);
 
     IXMLDOMText_Release(text);
@@ -7829,11 +7824,8 @@ static void test_splitText(void)
     ok(!node, "Unexpected pointer %p.\n", node);
 
     hr = IXMLDOMText_splitText(text, 10, &text2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-if (hr == S_OK)
-{
     hr = IXMLDOMText_get_nodeType(text2, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(node_type == NODE_TEXT, "Unexpected node type %d.\n", node_type);
@@ -7876,7 +7868,7 @@ if (hr == S_OK)
     IXMLDOMNode_Release(node);
 
     IXMLDOMText_Release(text2);
-}
+
     IXMLDOMText_Release(text);
 
     IXMLDOMElement_Release(root);
@@ -7887,17 +7879,14 @@ if (hr == S_OK)
 
     text = NULL;
     hr = IXMLDOMCDATASection_splitText(cdata, 9, &text);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMCDATASection_get_nextSibling(cdata, &node);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMText_get_nodeType(text, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(node_type == NODE_CDATA_SECTION, "Unexpected node type %d.\n", node_type);
     hr = IXMLDOMCDATASection_get_length(cdata, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(length == 9, "Unexpected length %ld.\n", length);
     hr = IXMLDOMText_get_length(text, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7911,25 +7900,20 @@ if (hr == S_OK)
 
     text2 = NULL;
     hr = IXMLDOMText_splitText(text, 9, &text2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IXMLDOMText_get_nextSibling(text, &node);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-if (text2)
-{
     hr = IXMLDOMText_get_nodeType(text2, &node_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(node_type == NODE_TEXT, "Unexpected node type %d.\n", node_type);
     hr = IXMLDOMText_get_length(text, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(length == 9, "Unexpected length %ld.\n", length);
     hr = IXMLDOMText_get_length(text2, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(length == 8, "Unexpected length %ld.\n", length);
     IXMLDOMText_Release(text2);
-}
+
     IXMLDOMText_Release(text);
 
     IXMLDOMDocument_Release(doc);
