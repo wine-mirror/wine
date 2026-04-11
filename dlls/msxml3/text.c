@@ -556,51 +556,13 @@ static HRESULT WINAPI domtext_appendData(IXMLDOMText *iface, BSTR p)
     return node_append_data(text->node, p);
 }
 
-static HRESULT WINAPI domtext_insertData(
-    IXMLDOMText *iface,
-    LONG offset, BSTR p)
+static HRESULT WINAPI domtext_insertData(IXMLDOMText *iface, LONG offset, BSTR p)
 {
-    HRESULT hr;
-    BSTR data;
-    LONG p_len;
+    domtext *text = impl_from_IXMLDOMText(iface);
 
     TRACE("%p, %ld, %s.\n", iface, offset, debugstr_w(p));
 
-    /* If have a NULL or empty string, don't do anything. */
-    if((p_len = SysStringLen(p)) == 0)
-        return S_OK;
-
-    if(offset < 0)
-    {
-        return E_INVALIDARG;
-    }
-
-    hr = IXMLDOMText_get_data(iface, &data);
-    if(hr == S_OK)
-    {
-        LONG len = SysStringLen(data);
-        BSTR str;
-
-        if(len < offset)
-        {
-            SysFreeString(data);
-            return E_INVALIDARG;
-        }
-
-        str = SysAllocStringLen(NULL, len + p_len);
-        /* start part, supplied string and end part */
-        memcpy(str, data, offset*sizeof(WCHAR));
-        memcpy(&str[offset], p, p_len*sizeof(WCHAR));
-        memcpy(&str[offset+p_len], &data[offset], (len-offset)*sizeof(WCHAR));
-        str[len+p_len] = 0;
-
-        hr = IXMLDOMText_put_data(iface, str);
-
-        SysFreeString(str);
-        SysFreeString(data);
-    }
-
-    return hr;
+    return node_insert_data(text->node, offset, p);
 }
 
 static HRESULT WINAPI domtext_deleteData(IXMLDOMText *iface, LONG offset, LONG count)

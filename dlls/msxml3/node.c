@@ -4696,6 +4696,30 @@ HRESULT node_substring_data(struct domnode *node, LONG offset, LONG count, BSTR 
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
+HRESULT node_insert_data(struct domnode *node, LONG offset, BSTR data)
+{
+    LONG length = SysStringLen(node->data);
+    LONG data_length = SysStringLen(data);
+    BSTR str;
+
+    if (data_length == 0)
+        return S_OK;
+
+    if (offset < 0 || length < offset)
+        return E_INVALIDARG;
+
+    if (!(str = SysAllocStringLen(NULL, length + data_length))) return E_OUTOFMEMORY;
+    memcpy(str, node->data, offset * sizeof(WCHAR));
+    memcpy(str + offset, data, data_length * sizeof(WCHAR));
+    memcpy(str + offset + data_length, node->data + offset, (length - offset) * sizeof(WCHAR));
+    str[length + data_length] = 0;
+
+    SysFreeString(node->data);
+    node->data = str;
+
+    return S_OK;
+}
+
 HRESULT node_get_data_length(struct domnode *node, LONG *length)
 {
     if (!length)

@@ -333,6 +333,7 @@ extern HRESULT node_split_text(struct domnode *, LONG, IXMLDOMText **);
 extern HRESULT node_delete_data(struct domnode *, LONG, LONG);
 extern HRESULT node_substring_data(struct domnode *, LONG, LONG, BSTR *);
 extern HRESULT node_get_data_length(struct domnode *, LONG *);
+extern HRESULT node_insert_data(struct domnode *, LONG, BSTR);
 
 extern UINT get_codepage_for_encoding(const WCHAR *encoding);
 
