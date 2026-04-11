@@ -9650,6 +9650,7 @@ static void test_insertBefore(void)
     IXMLDOMAttribute *attr;
     IXMLDOMElement *elem1, *elem2, *elem3, *elem4, *elem5;
     IXMLDOMNode *node, *newnode, *cdata;
+    IXMLDOMText *text;
     HRESULT hr;
     VARIANT v;
     BSTR p;
@@ -9749,6 +9750,20 @@ static void test_insertBefore(void)
     todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     ok(node == NULL, "got %p\n", node);
     IXMLDOMNode_Release(newnode);
+
+    /* text to attribute */
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_("text"), &text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!text, "Unexpected pointer %p.\n", text);
+
+    V_VT(&v) = VT_NULL;
+    hr = IXMLDOMAttribute_insertBefore(attr, (IXMLDOMNode *)text, v, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMAttribute_get_text(attr, &p);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(p, L"text"), "Unexpected text %s.\n", debugstr_w(p));
+    SysFreeString(p);
+    IXMLDOMText_Release(text);
 
     /* cdata to attribute */
     V_VT(&v) = VT_I4;
