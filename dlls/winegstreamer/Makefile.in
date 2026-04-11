@@ -1,8 +1,7 @@
 MODULE    = winegstreamer.dll
 UNIXLIB   = winegstreamer.so
 IMPORTLIB = winegstreamer
-IMPORTS   = $(FFMPEG_PE_LIBS) strmbase ole32 oleaut32 msdmo user32
-EXTRAINCL = $(FFMPEG_PE_CFLAGS)
+IMPORTS   = strmbase ole32 oleaut32 msdmo user32
 DELAYIMPORTS = mfplat mf
 UNIX_CFLAGS  = $(GSTREAMER_CFLAGS)
 UNIX_LIBS    = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
@@ -19,7 +18,6 @@ SOURCES = \
 	mfplat.c \
 	quartz_parser.c \
 	quartz_transform.c \
-	resampler.c \
 	rsrc.rc \
 	unixlib.c \
 	video_decoder.c \

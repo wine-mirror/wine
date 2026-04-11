@@ -18,10 +18,9 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
-
-#include "gst_private.h"
 
 #include "dmoreg.h"
 #include "dmort.h"
@@ -39,8 +38,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
+WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
 static const AVRational USER_TIME_BASE_Q = {1, 10000000};
 
@@ -1293,29 +1291,19 @@ static const char *debugstr_version(UINT version)
             AV_VERSION_MICRO(version));
 }
 
-HRESULT resampler_create(IUnknown *outer, IUnknown **out)
+static HRESULT WINAPI resampler_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **out)
 {
-    static const WAVEFORMATEX output_format =
-    {
-        .wFormatTag = WAVE_FORMAT_IEEE_FLOAT, .wBitsPerSample = 32, .nSamplesPerSec = 44100, .nChannels = 1,
-    };
-    static const WAVEFORMATEX input_format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM, .wBitsPerSample = 16, .nSamplesPerSec = 44100, .nChannels = 1,
-    };
     struct resampler *impl;
     HRESULT hr;
 
-    TRACE("outer %p, out %p.\n", outer, out);
+    TRACE("outer %p, riid %s, out %p.\n", outer, debugstr_guid(riid), out);
+
+    if (outer && !IsEqualGUID(riid, &IID_IUnknown))
+        return E_NOINTERFACE;
 
     TRACE("avutil version %s\n", debugstr_version(avutil_version()));
     TRACE("swresample version %s\n", debugstr_version(swresample_version()));
-
-    if (FAILED(hr = check_audio_transform_support(&input_format, &output_format)))
-    {
-        ERR_(winediag)("GStreamer doesn't support audio resampling, please install appropriate plugins.\n");
-        return hr;
-    }
 
     if (!(impl = calloc(1, sizeof(*impl))))
         return E_OUTOFMEMORY;
@@ -1331,7 +1319,38 @@ HRESULT resampler_create(IUnknown *outer, IUnknown **out)
     impl->input_info.cbAlignment = 1;
     impl->output_info.cbAlignment = 1;
 
-    *out = &impl->IUnknown_inner;
-    TRACE("Created resampler %p\n", *out);
+    TRACE("Created resampler %p\n", impl);
+
+    hr = IUnknown_QueryInterface(&impl->IUnknown_inner, riid, out);
+    IUnknown_Release(&impl->IUnknown_inner);
+    return hr;
+}
+
+static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
+{
+    *out = IsEqualGUID(riid, &IID_IClassFactory) || IsEqualGUID(riid, &IID_IUnknown) ? iface : NULL;
+    return *out ? S_OK : E_NOINTERFACE;
+}
+static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+static ULONG WINAPI class_factory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL dolock)
+{
     return S_OK;
 }
+
+static const IClassFactoryVtbl resampler_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    resampler_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
+IClassFactory resampler_factory = {&resampler_factory_vtbl};

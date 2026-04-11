@@ -1,6 +1,8 @@
 MODULE    = resampledmo.dll
-IMPORTS   = combase mfplat msdmo mfuuid dmoguids strmiids wmcodecdspuuid uuid
+IMPORTS   = $(FFMPEG_PE_LIBS) combase mfplat msdmo mfuuid dmoguids strmiids wmcodecdspuuid uuid
+EXTRAINCL = $(FFMPEG_PE_CFLAGS)
 
 SOURCES = \
 	resampledmo.c \
-	resampledmo.idl
+	resampledmo.idl \
+	resampler.c
