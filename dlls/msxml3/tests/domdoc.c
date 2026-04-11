@@ -7640,14 +7640,15 @@ static void test_XSLPattern(void)
 static void test_splitText(void)
 {
     IXMLDOMCDATASection *cdata;
+    DOMNodeType node_type;
     IXMLDOMElement *root;
     IXMLDOMDocument *doc;
     IXMLDOMText *text, *text2;
     IXMLDOMNode *node;
-    VARIANT var;
     VARIANT_BOOL success;
     LONG length;
     HRESULT hr;
+    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -7657,17 +7658,17 @@ static void test_splitText(void)
     hr = IXMLDOMDocument_get_documentElement(doc, &root);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    /* CDATA */
     hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("beautiful plumage"), &cdata);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    V_VT(&var) = VT_EMPTY;
     hr = IXMLDOMElement_appendChild(root, (IXMLDOMNode*)cdata, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     length = 0;
     hr = IXMLDOMCDATASection_get_length(cdata, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(length > 0, "got %ld\n", length);
+    ok(length == 17, "Unexpected length %ld.\n", length);
 
     hr = IXMLDOMCDATASection_splitText(cdata, 0, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -7682,22 +7683,27 @@ static void test_splitText(void)
     /* offset outside data */
     hr = IXMLDOMCDATASection_splitText(cdata, length + 1, &text);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
-    ok(text == 0, "got %p\n", text);
+    ok(!text, "Unexpected pointer %p.\n", text);
 
     text = (void*)0xdeadbeef;
     /* offset outside data */
     hr = IXMLDOMCDATASection_splitText(cdata, length, &text);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-    ok(text == 0, "got %p\n", text);
+    ok(!text, "Unexpected pointer %p.\n", text);
 
     /* no empty node created */
     node = (void*)0xdeadbeef;
     hr = IXMLDOMCDATASection_get_nextSibling(cdata, &node);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-    ok(node == 0, "got %p\n", text);
+    ok(!node, "Unexpected pointer %p.\n", node);
 
     hr = IXMLDOMCDATASection_splitText(cdata, 10, &text);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_nodeType(text, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(node_type == NODE_CDATA_SECTION, "Unexpected node type %d.\n", node_type);
 
     length = 0;
     hr = IXMLDOMText_get_length(text, &length);
@@ -7749,8 +7755,184 @@ static void test_splitText(void)
     if (node) IXMLDOMNode_Release(node);
 
     IXMLDOMText_Release(text);
+
+    /* Zero offset */
+    length = 0;
+    hr = IXMLDOMCDATASection_get_length(cdata, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 10, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMCDATASection_splitText(cdata, 0, &text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_nodeType(text, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(node_type == NODE_CDATA_SECTION, "Unexpected node type %d.\n", node_type);
+
+    hr = IXMLDOMText_get_length(text, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 10, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMCDATASection_get_length(cdata, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!length, "Unexpected length %ld.\n", length);
+
+    IXMLDOMText_Release(text);
+
     IXMLDOMElement_Release(root);
     IXMLDOMCDATASection_Release(cdata);
+
+    /* Text */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("e"), &root);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_("beautiful plumage"), &text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_appendChild(root, (IXMLDOMNode *)text, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    length = 0;
+    hr = IXMLDOMText_get_length(text, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 17, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMText_splitText(text, 0, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    text2 = (void *)0xdeadbeef;
+    /* negative offset */
+    hr = IXMLDOMText_splitText(text, -1, &text2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(text2 == (void *)0xdeadbeef, "Unexpected pointer %p.\n", text2);
+
+    text2 = (void *)0xdeadbeef;
+    /* offset outside data */
+    hr = IXMLDOMText_splitText(text, length + 1, &text2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(!text2, "Unexpected pointer %p.\n", text);
+
+    text2 = (void *)0xdeadbeef;
+    /* offset outside data */
+    hr = IXMLDOMText_splitText(text, length, &text2);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!text2, "Unexpected pointer %p.\n", text2);
+
+    /* no empty node created */
+    node = (void *)0xdeadbeef;
+    hr = IXMLDOMText_get_nextSibling(text, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!node, "Unexpected pointer %p.\n", node);
+
+    hr = IXMLDOMText_splitText(text, 10, &text2);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+if (hr == S_OK)
+{
+    hr = IXMLDOMText_get_nodeType(text2, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_TEXT, "Unexpected node type %d.\n", node_type);
+
+    length = 0;
+    hr = IXMLDOMText_get_length(text2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 7, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMText_get_nextSibling(text, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IXMLDOMNode_Release(node);
+
+    /* Zero offset */
+    hr = IXMLDOMText_get_previousSibling(text, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_splitText(text, 0, &text2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMText_get_nodeType(text2, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(node_type == NODE_TEXT, "Unexpected node type %d.\n", node_type);
+
+    length = 0;
+    hr = IXMLDOMText_get_length(text2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 10, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMText_get_length(text, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!length, "Unexpected length %ld.\n", length);
+
+    hr = IXMLDOMText_get_nextSibling(text, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMNode_get_text(node, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"beautiful"), "Unexpected text %s.\n", debugstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMText_Release(text2);
+}
+    IXMLDOMText_Release(text);
+
+    IXMLDOMElement_Release(root);
+
+    /* Split with detached nodes */
+    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("beautiful plumage"), &cdata);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    text = NULL;
+    hr = IXMLDOMCDATASection_splitText(cdata, 9, &text);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMCDATASection_get_nextSibling(cdata, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_nodeType(text, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(node_type == NODE_CDATA_SECTION, "Unexpected node type %d.\n", node_type);
+    hr = IXMLDOMCDATASection_get_length(cdata, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 9, "Unexpected length %ld.\n", length);
+    hr = IXMLDOMText_get_length(text, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 8, "Unexpected length %ld.\n", length);
+    IXMLDOMText_Release(text);
+
+    IXMLDOMCDATASection_Release(cdata);
+
+    hr = IXMLDOMDocument_createTextNode(doc, _bstr_("beautiful plumage"), &text);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    text2 = NULL;
+    hr = IXMLDOMText_splitText(text, 9, &text2);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IXMLDOMText_get_nextSibling(text, &node);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+if (text2)
+{
+    hr = IXMLDOMText_get_nodeType(text2, &node_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(node_type == NODE_TEXT, "Unexpected node type %d.\n", node_type);
+    hr = IXMLDOMText_get_length(text, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 9, "Unexpected length %ld.\n", length);
+    hr = IXMLDOMText_get_length(text2, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 8, "Unexpected length %ld.\n", length);
+    IXMLDOMText_Release(text2);
+}
+    IXMLDOMText_Release(text);
+
+    IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
 
