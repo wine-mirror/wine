@@ -1193,6 +1193,27 @@ static class_decl_t *new_class_decl(parser_ctx_t *ctx)
     return class_decl;
 }
 
+static unsigned count_args(arg_decl_t *args)
+{
+    unsigned cnt = 0;
+    while(args) { cnt++; args = args->next; }
+    return cnt;
+}
+
+static BOOL check_property_args(function_decl_t *a, function_decl_t *b)
+{
+    unsigned a_cnt = count_args(a->args);
+    unsigned b_cnt = count_args(b->args);
+
+    /* Property Get takes N args, Property Let/Set takes N+1 */
+    if(a->type == FUNC_PROPGET)
+        return (b_cnt == a_cnt + 1);
+    if(b->type == FUNC_PROPGET)
+        return (a_cnt == b_cnt + 1);
+    /* Let vs Set: same arg count */
+    return (a_cnt == b_cnt);
+}
+
 static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_decl, function_decl_t *decl)
 {
     function_decl_t *iter;
@@ -1219,6 +1240,11 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
                 iter = iter->next_prop_func;
             }
 
+            if(!check_property_args(iter, decl)) {
+                ctx->error_loc = decl->loc;
+                ctx->hres = MAKE_VBSERROR(VBSE_PROPERTY_ARG_COUNT_MISMATCH);
+                return NULL;
+            }
             iter->next_prop_func = decl;
             return class_decl;
         }

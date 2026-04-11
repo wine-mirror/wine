@@ -3248,6 +3248,15 @@ static void test_parse_errors(void)
             L"Class C\nEnd Sub\n",
             1, 4,
             NULL, S_OK, 1047
+        },
+        {
+            /* Property arg count mismatch - error 1051 */
+            L"Class C\n"
+            "Property Get P\n  P = 1\nEnd Property\n"
+            "Property Let P(a, b)\nEnd Property\n"
+            "End Class\n",
+            -4, -20,
+            NULL, S_OK, 1051
         }
     };
     HRESULT hres;
