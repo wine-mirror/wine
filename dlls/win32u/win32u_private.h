@@ -111,6 +111,7 @@ extern void update_current_mouse_window( HWND hwnd, INT hittest, POINT pos );
 extern BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset );
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout, UINT *mapped );
+extern BOOL process_pointer_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data );
 
 /* menu.c */
 extern UINT draw_nc_menu_bar( HDC hdc, RECT *rect, HWND hwnd );

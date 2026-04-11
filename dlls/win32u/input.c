@@ -2879,6 +2879,17 @@ INT WINAPI NtUserScheduleDispatchNotification( HWND hwnd )
     return 0;
 }
 
+/***********************************************************************
+ *          process_pointer_message
+ *
+ * returns TRUE if the contents of 'msg' should be passed to the application
+ */
+BOOL process_pointer_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
+{
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
+    return TRUE;
+}
+
 /**********************************************************************
  *       NtUserInitializeTouchInjection    (win32u.@)
  */
