@@ -67,7 +67,7 @@ static HRESULT try_create_wg_transform(struct resampler *impl)
     return wg_transform_create_mf(impl->input_type, impl->output_type, &attrs, &impl->wg_transform);
 }
 
-static inline struct resampler *impl_from_IUnknown(IUnknown *iface)
+static struct resampler *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct resampler, IUnknown_inner);
 }
@@ -589,7 +589,7 @@ static const IMFTransformVtbl transform_vtbl =
     transform_ProcessOutput,
 };
 
-static inline struct resampler *impl_from_IMediaObject(IMediaObject *iface)
+static struct resampler *impl_from_IMediaObject(IMediaObject *iface)
 {
     return CONTAINING_RECORD(iface, struct resampler, IMediaObject_iface);
 }
@@ -773,7 +773,7 @@ static const IMediaObjectVtbl media_object_vtbl =
     media_object_Lock,
 };
 
-static inline struct resampler *impl_from_IPropertyBag(IPropertyBag *iface)
+static struct resampler *impl_from_IPropertyBag(IPropertyBag *iface)
 {
     return CONTAINING_RECORD(iface, struct resampler, IPropertyBag_iface);
 }
@@ -815,7 +815,7 @@ static const IPropertyBagVtbl property_bag_vtbl =
     property_bag_Write,
 };
 
-static inline struct resampler *impl_from_IPropertyStore(IPropertyStore *iface)
+static struct resampler *impl_from_IPropertyStore(IPropertyStore *iface)
 {
     return CONTAINING_RECORD(iface, struct resampler, IPropertyStore_iface);
 }
@@ -877,7 +877,7 @@ static const IPropertyStoreVtbl property_store_vtbl =
     property_store_Commit,
 };
 
-static inline struct resampler *impl_from_IWMResamplerProps(IWMResamplerProps *iface)
+static struct resampler *impl_from_IWMResamplerProps(IWMResamplerProps *iface)
 {
     return CONTAINING_RECORD(iface, struct resampler, IWMResamplerProps_iface);
 }
