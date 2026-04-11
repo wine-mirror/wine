@@ -3911,19 +3911,6 @@ SQLRETURN WINAPI SQLSetDescRec(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber,
     return ret;
 }
 
-static SQLRETURN set_env_attr_unix( struct environment *env, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
-{
-    struct SQLSetEnvAttr_params params = { env->hdr.unix_handle, attr, value, len };
-    return ODBC_CALL( SQLSetEnvAttr, &params );
-}
-
-static SQLRETURN set_env_attr_win32( struct environment *env, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
-{
-    if (env->hdr.win32_funcs->SQLSetEnvAttr)
-        return env->hdr.win32_funcs->SQLSetEnvAttr( env->hdr.win32_handle, attr, value, len );
-    return SQL_ERROR;
-}
-
 /*************************************************************************
  *				SQLSetEnvAttr           [ODBC32.075]
  */
@@ -3942,31 +3929,25 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
         return SQL_SUCCESS;
     }
 
-    if (env->hdr.unix_handle)
+    switch (Attribute)
     {
-        ret = set_env_attr_unix( env, Attribute, Value, StringLength );
-    }
-    else if (env->hdr.win32_handle)
-    {
-        ret = set_env_attr_win32( env, Attribute, Value, StringLength );
-    }
-    else
-    {
-        switch (Attribute)
+    case SQL_ATTR_ODBC_VERSION:
+        if (!list_empty( &env->hdr.children ))
         {
-        case SQL_ATTR_ODBC_VERSION:
-            env->attr_version = (UINT32)(ULONG_PTR)Value;
-            break;
-
-        case SQL_ATTR_CONNECTION_POOLING:
-            FIXME("Ignore Pooling value\n");
-            break;
-
-        default:
-            FIXME( "unhandled attribute %d\n", Attribute );
-            ret = SQL_ERROR;
-            break;
+            FIXME( "report S1010 error\n" );
+            return SQL_ERROR;
         }
+        env->attr_version = (UINT32)(ULONG_PTR)Value;
+        break;
+
+    case SQL_ATTR_CONNECTION_POOLING:
+        FIXME("Ignore Pooling value\n");
+        break;
+
+    default:
+        FIXME( "unhandled attribute %d\n", Attribute );
+        ret = SQL_ERROR;
+        break;
     }
 
     TRACE("Returning %d\n", ret);

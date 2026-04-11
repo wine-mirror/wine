@@ -761,6 +761,9 @@ static void test_SQLConnect( void )
     ok (ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
 
+    ret = SQLSetEnvAttr( env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC2, 0 );
+    ok( ret == SQL_ERROR, "got %d\n", ret );
+
     ret = SQLGetEnvAttr( env, SQL_ATTR_ODBC_VERSION, &version, sizeof(version), NULL );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     ok( version == SQL_OV_ODBC2, "version = %d\n", version );
