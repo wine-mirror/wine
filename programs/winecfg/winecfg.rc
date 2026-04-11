@@ -86,6 +86,7 @@ BEGIN
     IDS_AUDIO_SYSDEFAULT "(System default)"
     IDS_AUDIO_DEVICE "Device"
     IDS_AUDIO_SPEAKER_CONFIG "Speaker configuration"
+    IDS_AUDIO_SPEAKER_7POINT1 "7.1 Surround"
     IDS_AUDIO_SPEAKER_5POINT1 "5.1 Surround"
     IDS_AUDIO_SPEAKER_QUAD "Quadraphonic"
     IDS_AUDIO_SPEAKER_STEREO "Stereo"
