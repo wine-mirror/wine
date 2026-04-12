@@ -6207,7 +6207,7 @@ static void test_audio_convert(void)
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 22050 * 8),
-        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
         ATTR_UINT32(MF_MT_AUDIO_CHANNEL_MASK, 3, .todo = TRUE),
         {0},
     };
@@ -6220,8 +6220,8 @@ static void test_audio_convert(void)
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
         ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 44100 * 4),
-        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
-        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
         {0},
     };
     const MFT_OUTPUT_STREAM_INFO output_info =
@@ -6245,7 +6245,7 @@ static void test_audio_convert(void)
     const struct attribute_desc output_sample_attributes[] =
     {
         ATTR_UINT32(mft_output_sample_incomplete, 1),
-        ATTR_UINT32(MFSampleExtension_CleanPoint, has_video_processor /* 0 on Win7 */, .todo = TRUE),
+        ATTR_UINT32(MFSampleExtension_CleanPoint, has_video_processor /* 0 on Win7 */),
         {0},
     };
     const struct sample_desc output_sample_desc[] =
@@ -6346,21 +6346,18 @@ static void test_audio_convert(void)
 
     memset(&dmo_mt, 0, sizeof(dmo_mt));
     hr = IMediaObject_GetInputCurrentType(dmo, 0, &dmo_mt);
-    todo_wine ok(hr == S_OK, "GetInputCurrentType returned %#lx\n", hr);
-    todo_wine ok(IsEqualGUID(&dmo_mt.formattype, &FORMAT_WaveFormatEx), "got format %s\n", debugstr_guid(&dmo_mt.formattype));
-    todo_wine ok(dmo_mt.cbFormat >= sizeof(WAVEFORMATEX), "got cbFormat %#lx\n", dmo_mt.cbFormat);
+    ok(hr == S_OK, "GetInputCurrentType returned %#lx\n", hr);
+    ok(IsEqualGUID(&dmo_mt.formattype, &FORMAT_WaveFormatEx), "got format %s\n", debugstr_guid(&dmo_mt.formattype));
+    ok(dmo_mt.cbFormat >= sizeof(WAVEFORMATEX), "got cbFormat %#lx\n", dmo_mt.cbFormat);
 
     hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &dmo_mt, &media_type);
-    todo_wine ok(hr == S_OK, "MFCreateMediaTypeFromRepresentation returned %#lx\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "MFCreateMediaTypeFromRepresentation returned %#lx\n", hr);
     check_media_type(media_type, expect_input_type_desc, -1);
     IMFMediaType_Release(media_type);
 
     hr = IMediaObject_SetInputType(dmo, 0, &dmo_mt, 0);
     ok(hr == S_OK, "SetInputType returned %#lx\n", hr);
     check_mft_get_input_current_type_(__LINE__, transform, expect_input_type_desc, FALSE, TRUE);
-    }
 
     MoFreeMediaType(&dmo_mt);
     IMediaObject_Release(dmo);
@@ -6386,11 +6383,11 @@ static void test_audio_convert(void)
 
     check_mft_set_output_type_required(transform, output_type_desc);
     check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type_(__LINE__, transform, expect_output_type_desc, FALSE, TRUE);
+    check_mft_get_output_current_type(transform, expect_output_type_desc);
 
     check_mft_set_input_type(transform, input_type_desc, S_OK);
     /* setting the input type does not set the output type to null */
-    check_mft_get_output_current_type_(__LINE__, transform, expect_output_type_desc, FALSE, TRUE);
+    check_mft_get_output_current_type(transform, expect_output_type_desc);
 
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMediaObject, (void **)&dmo);
@@ -6398,21 +6395,18 @@ static void test_audio_convert(void)
 
     memset(&dmo_mt, 0, sizeof(dmo_mt));
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &dmo_mt);
-    todo_wine ok(hr == S_OK, "GetOutputCurrentType returned %#lx\n", hr);
-    todo_wine ok(IsEqualGUID(&dmo_mt.formattype, &FORMAT_WaveFormatEx), "got format %s\n", debugstr_guid(&dmo_mt.formattype));
-    todo_wine ok(dmo_mt.cbFormat >= sizeof(WAVEFORMATEX), "got cbFormat %#lx\n", dmo_mt.cbFormat);
+    ok(hr == S_OK, "GetOutputCurrentType returned %#lx\n", hr);
+    ok(IsEqualGUID(&dmo_mt.formattype, &FORMAT_WaveFormatEx), "got format %s\n", debugstr_guid(&dmo_mt.formattype));
+    ok(dmo_mt.cbFormat >= sizeof(WAVEFORMATEX), "got cbFormat %#lx\n", dmo_mt.cbFormat);
 
     hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &dmo_mt, &media_type);
-    todo_wine ok(hr == S_OK, "MFCreateMediaTypeFromRepresentation returned %#lx\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "MFCreateMediaTypeFromRepresentation returned %#lx\n", hr);
     check_media_type(media_type, expect_output_type_desc, -1);
     IMFMediaType_Release(media_type);
 
     hr = IMediaObject_SetOutputType(dmo, 0, &dmo_mt, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx\n", hr);
-    check_mft_get_output_current_type_(__LINE__, transform, expect_output_type_desc, FALSE, TRUE);
-    }
+    check_mft_get_output_current_type(transform, expect_output_type_desc);
 
     MoFreeMediaType(&dmo_mt);
     IMediaObject_Release(dmo);

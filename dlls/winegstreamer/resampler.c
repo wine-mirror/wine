@@ -165,6 +165,22 @@ static int audio_frame_copy_to_buffer(AVFrame *frame, const WAVEFORMATEXTENSIBLE
     return size;
 }
 
+static HRESULT MF_RESULT_FROM_DMO(HRESULT hr)
+{
+    switch (hr)
+    {
+    case DMO_E_INVALIDSTREAMINDEX: return MF_E_INVALIDSTREAMNUMBER;
+    case DMO_E_INVALIDTYPE:        return MF_E_INVALIDMEDIATYPE;
+    case DMO_E_TYPE_NOT_SET:       return MF_E_TRANSFORM_TYPE_NOT_SET;
+    case DMO_E_NOTACCEPTING:       return MF_E_NOTACCEPTING;
+    case DMO_E_TYPE_NOT_ACCEPTED:  return MF_E_INVALIDMEDIATYPE;
+    case DMO_E_NO_MORE_ITEMS:      return MF_E_NO_MORE_TYPES;
+    case S_FALSE:                  return MF_E_TRANSFORM_NEED_MORE_INPUT;
+    }
+
+    return hr;
+}
+
 static const GUID *audio_formats[] =
 {
     &MFAudioFormat_Float,
@@ -182,17 +198,12 @@ struct resampler
     IUnknown *outer;
     LONG refcount;
 
-    IMFMediaType *input_type;
-    DMO_MEDIA_TYPE input_mt;
+    DMO_MEDIA_TYPE input_type;
     WAVEFORMATEXTENSIBLE input_format;
     MFT_INPUT_STREAM_INFO input_info;
-    IMFMediaType *output_type;
-    DMO_MEDIA_TYPE output_mt;
+    DMO_MEDIA_TYPE output_type;
     WAVEFORMATEXTENSIBLE output_format;
     MFT_OUTPUT_STREAM_INFO output_info;
-
-    wg_transform_t wg_transform;
-    struct wg_sample_queue *wg_sample_queue;
 
     struct SwrContext *context;
     AVFrame input_frame;
@@ -374,8 +385,8 @@ static HRESULT resampler_init(struct resampler *impl)
 
     if (!(impl->context = swr_alloc()))
         return E_OUTOFMEMORY;
-    if (FAILED(hr = init_audio_format(&impl->input_mt, &impl->input_format))
-            || FAILED(hr = init_audio_format(&impl->output_mt, &impl->output_format)))
+    if (FAILED(hr = init_audio_format(&impl->input_type, &impl->input_format))
+            || FAILED(hr = init_audio_format(&impl->output_type, &impl->output_format)))
     {
         resampler_cleanup(impl);
         return hr;
@@ -408,19 +419,6 @@ failed:
     ERR("ret %d\n", ret);
     resampler_cleanup(impl);
     return E_FAIL;
-}
-
-static HRESULT try_create_wg_transform(struct resampler *impl)
-{
-    struct wg_transform_attrs attrs = {0};
-
-    if (impl->wg_transform)
-    {
-        wg_transform_destroy(impl->wg_transform);
-        impl->wg_transform = 0;
-    }
-
-    return wg_transform_create_mf(impl->input_type, impl->output_type, &attrs, &impl->wg_transform);
 }
 
 static struct resampler *impl_from_IUnknown(IUnknown *iface)
@@ -476,17 +474,8 @@ static ULONG WINAPI unknown_Release(IUnknown *iface)
 
     if (!refcount)
     {
-        if (impl->wg_transform)
-            wg_transform_destroy(impl->wg_transform);
-        if (impl->input_type)
-            IMFMediaType_Release(impl->input_type);
-        if (impl->output_type)
-            IMFMediaType_Release(impl->output_type);
-
-        wg_sample_queue_destroy(impl->wg_sample_queue);
-
-        MoFreeMediaType(&impl->input_mt);
-        MoFreeMediaType(&impl->output_mt);
+        MoFreeMediaType(&impl->input_type);
+        MoFreeMediaType(&impl->output_type);
         resampler_cleanup(impl);
         free(impl);
     }
@@ -551,7 +540,7 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
-    if (!impl->input_type || !impl->output_type)
+    if (IsEqualGUID(&impl->input_type.majortype, &GUID_NULL) || IsEqualGUID(&impl->output_type.majortype, &GUID_NULL))
     {
         memset(info, 0, sizeof(*info));
         return MF_E_TRANSFORM_TYPE_NOT_SET;
@@ -567,7 +556,7 @@ static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD i
 
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
-    if (!impl->input_type || !impl->output_type)
+    if (IsEqualGUID(&impl->input_type.majortype, &GUID_NULL) || IsEqualGUID(&impl->output_type.majortype, &GUID_NULL))
     {
         memset(info, 0, sizeof(*info));
         return MF_E_TRANSFORM_TYPE_NOT_SET;
@@ -607,247 +596,94 @@ static HRESULT WINAPI transform_AddInputStreams(IMFTransform *iface, DWORD strea
     return E_NOTIMPL;
 }
 
-static HRESULT get_available_media_type(DWORD index, IMFMediaType **type, BOOL output)
-{
-    UINT32 sample_size, sample_rate = 48000, block_alignment, channel_count = 2;
-    IMFMediaType *media_type;
-    const GUID *subtype;
-    HRESULT hr;
-
-    *type = NULL;
-
-    if (index >= (output ? 2 : 1) * ARRAY_SIZE(audio_formats))
-        return MF_E_NO_MORE_TYPES;
-    subtype = audio_formats[index % ARRAY_SIZE(audio_formats)];
-
-    if (FAILED(hr = MFCreateMediaType(&media_type)))
-        return hr;
-
-    if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio)))
-        goto done;
-    if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, subtype)))
-        goto done;
-    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1)))
-        goto done;
-    if (index < ARRAY_SIZE(audio_formats))
-        goto done;
-
-    if (IsEqualGUID(subtype, &MFAudioFormat_Float))
-        sample_size = 32;
-    else if (IsEqualGUID(subtype, &MFAudioFormat_PCM))
-        sample_size = 16;
-    else
-    {
-        FIXME("Subtype %s not implemented!\n", debugstr_guid(subtype));
-        hr = E_NOTIMPL;
-        goto done;
-    }
-
-    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, sample_size)))
-        goto done;
-    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, channel_count)))
-        goto done;
-    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, sample_rate)))
-        goto done;
-
-    block_alignment = sample_size * channel_count / 8;
-    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, block_alignment)))
-        goto done;
-    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, sample_rate * block_alignment)))
-        goto done;
-    if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1)))
-        goto done;
-
-done:
-    if (SUCCEEDED(hr))
-        IMFMediaType_AddRef((*type = media_type));
-
-    IMFMediaType_Release(media_type);
-    return hr;
-}
-
 static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
+    struct resampler *impl = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE mt = {0};
+    HRESULT hr;
+
     TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
-    return get_available_media_type(index, type, FALSE);
+
+    if (FAILED(hr = MF_RESULT_FROM_DMO(IMediaObject_GetInputType(&impl->IMediaObject_iface, id, index, &mt))))
+        return hr;
+    hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &mt, type);
+    MoFreeMediaType(&mt);
+    return hr;
 }
 
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
-    return get_available_media_type(index, type, TRUE);
-}
-
-static HRESULT check_media_type(IMFMediaType *type)
-{
-    MF_ATTRIBUTE_TYPE item_type;
-    GUID major, subtype;
+    struct resampler *impl = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE mt = {0};
     HRESULT hr;
-    ULONG i;
 
-    if (!type)
-        return S_OK;
+    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
 
-    if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major)) ||
-            FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
-        return MF_E_ATTRIBUTENOTFOUND;
-
-    if (!IsEqualGUID(&major, &MFMediaType_Audio))
-        return MF_E_INVALIDMEDIATYPE;
-
-    for (i = 0; i < ARRAY_SIZE(audio_formats); ++i)
-        if (IsEqualGUID(&subtype, audio_formats[i]))
-            break;
-    if (i == ARRAY_SIZE(audio_formats))
-        return MF_E_INVALIDMEDIATYPE;
-
-    if (FAILED(IMFMediaType_GetItemType(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &item_type)) ||
-        item_type != MF_ATTRIBUTE_UINT32)
-        return MF_E_INVALIDMEDIATYPE;
-    if (FAILED(IMFMediaType_GetItemType(type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &item_type)) ||
-        item_type != MF_ATTRIBUTE_UINT32)
-        return MF_E_INVALIDMEDIATYPE;
-    if (FAILED(IMFMediaType_GetItemType(type, &MF_MT_AUDIO_NUM_CHANNELS, &item_type)) ||
-        item_type != MF_ATTRIBUTE_UINT32)
-        return MF_E_INVALIDMEDIATYPE;
-    if (FAILED(IMFMediaType_GetItemType(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &item_type)) ||
-        item_type != MF_ATTRIBUTE_UINT32)
-        return MF_E_INVALIDMEDIATYPE;
-
-    return S_OK;
+    if (FAILED(hr = MF_RESULT_FROM_DMO(IMediaObject_GetOutputType(&impl->IMediaObject_iface, id, index, &mt))))
+        return hr;
+    hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &mt, type);
+    MoFreeMediaType(&mt);
+    return hr;
 }
 
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
+    DWORD dmo_flags = flags & MFT_SET_TYPE_TEST_ONLY ? DMO_SET_TYPEF_TEST_ONLY : 0;
     struct resampler *impl = impl_from_IMFTransform(iface);
-    UINT32 block_alignment;
+    DMO_MEDIA_TYPE tmp = {0}, *mt = type ? &tmp : NULL;
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
 
-    if (FAILED(hr = check_media_type(type)))
+    if (type && FAILED(hr = MFInitAMMediaTypeFromMFMediaType(type, FORMAT_WaveFormatEx, (AM_MEDIA_TYPE *)&tmp)))
         return hr;
-    if (type && FAILED(hr = IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
-        return MF_E_INVALIDMEDIATYPE;
-    if (flags & MFT_SET_TYPE_TEST_ONLY)
-        return S_OK;
-
-    if (!type)
-    {
-        if (impl->input_type)
-        {
-            IMFMediaType_Release(impl->input_type);
-            impl->input_type = NULL;
-        }
-        return S_OK;
-    }
-
-    if (!impl->input_type && FAILED(hr = MFCreateMediaType(&impl->input_type)))
-        return hr;
-
-    if (SUCCEEDED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)impl->input_type)))
-        impl->input_info.cbSize = block_alignment;
-    else
-    {
-        IMFMediaType_Release(impl->input_type);
-        impl->input_info.cbSize = 0;
-        impl->input_type = NULL;
-    }
-
+    hr = MF_RESULT_FROM_DMO(IMediaObject_SetInputType(&impl->IMediaObject_iface, id, mt, dmo_flags));
+    MoFreeMediaType(&tmp);
     return hr;
 }
 
 static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
+    DWORD dmo_flags = flags & MFT_SET_TYPE_TEST_ONLY ? DMO_SET_TYPEF_TEST_ONLY : 0;
     struct resampler *impl = impl_from_IMFTransform(iface);
-    UINT32 block_alignment;
+    DMO_MEDIA_TYPE tmp = {0}, *mt = type ? &tmp : NULL;
     HRESULT hr;
 
     TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
 
-    if (!impl->input_type)
-        return MF_E_TRANSFORM_TYPE_NOT_SET;
-
-    if (FAILED(hr = check_media_type(type)))
+    if (type && FAILED(hr = MFInitAMMediaTypeFromMFMediaType(type, FORMAT_WaveFormatEx, (AM_MEDIA_TYPE *)&tmp)))
         return hr;
-    if (type && FAILED(hr = IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
-        return MF_E_INVALIDMEDIATYPE;
-    if (flags & MFT_SET_TYPE_TEST_ONLY)
-        return S_OK;
-
-    if (!type)
-    {
-        if (impl->output_type)
-        {
-            IMFMediaType_Release(impl->output_type);
-            impl->output_type = NULL;
-        }
-        return S_OK;
-    }
-
-    if (!impl->output_type && FAILED(hr = MFCreateMediaType(&impl->output_type)))
-        return hr;
-
-    if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)impl->output_type)))
-        goto failed;
-
-    if (FAILED(hr = try_create_wg_transform(impl)))
-        goto failed;
-
-    impl->output_info.cbSize = block_alignment;
-    return hr;
-
-failed:
-    IMFMediaType_Release(impl->output_type);
-    impl->output_info.cbSize = 0;
-    impl->output_type = NULL;
+    hr = MF_RESULT_FROM_DMO(IMediaObject_SetOutputType(&impl->IMediaObject_iface, id, mt, dmo_flags));
+    MoFreeMediaType(&tmp);
     return hr;
 }
 
 static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
     struct resampler *impl = impl_from_IMFTransform(iface);
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, type %p.\n", iface, id, type);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
-
-    if (!impl->input_type)
+    if (IsEqualGUID(&impl->input_type.majortype, &GUID_NULL))
         return MF_E_TRANSFORM_TYPE_NOT_SET;
-
-    if (FAILED(hr = MFCreateMediaType(type)))
-        return hr;
-
-    if (FAILED(hr = IMFMediaType_CopyAllItems(impl->input_type, (IMFAttributes *)*type)))
-        IMFMediaType_Release(*type);
-
-    return hr;
+    return MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &impl->input_type, type);
 }
 
 static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
     struct resampler *impl = impl_from_IMFTransform(iface);
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, type %p.\n", iface, id, type);
 
     if (id != 0)
         return MF_E_INVALIDSTREAMNUMBER;
-
-    if (!impl->output_type)
+    if (IsEqualGUID(&impl->output_type.majortype, &GUID_NULL))
         return MF_E_TRANSFORM_TYPE_NOT_SET;
-
-    if (FAILED(hr = MFCreateMediaType(type)))
-        return hr;
-
-    if (FAILED(hr = IMFMediaType_CopyAllItems(impl->output_type, (IMFAttributes *)*type)))
-        IMFMediaType_Release(*type);
-
-    return hr;
+    return MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &impl->output_type, type);
 }
 
 static HRESULT WINAPI transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
@@ -883,39 +719,55 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
 static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
     struct resampler *impl = impl_from_IMFTransform(iface);
+    IMediaBuffer *dmo_buffer;
+    IMFMediaBuffer *buffer;
+    HRESULT hr;
 
     TRACE("iface %p, id %#lx, sample %p, flags %#lx.\n", iface, id, sample, flags);
 
-    if (!impl->wg_transform)
-        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer)))
+        return hr;
+    if (SUCCEEDED(hr = MFCreateLegacyMediaBufferOnMFMediaBuffer(sample, buffer, 0, &dmo_buffer)))
+    {
+        hr = MF_RESULT_FROM_DMO(IMediaObject_ProcessInput(&impl->IMediaObject_iface, id, dmo_buffer, 0, 0, 0));
+        IMediaBuffer_Release(dmo_buffer);
+    }
+    IMFMediaBuffer_Release(buffer);
 
-    return wg_transform_push_mf(impl->wg_transform, sample, impl->wg_sample_queue);
+    return hr;
 }
 
 static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
-        MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
+        MFT_OUTPUT_DATA_BUFFER *output, DWORD *output_status)
 {
     struct resampler *impl = impl_from_IMFTransform(iface);
+    DMO_OUTPUT_DATA_BUFFER dmo_output = {0};
+    IMFMediaBuffer *buffer;
+    DWORD dmo_status;
     HRESULT hr;
 
-    TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
+    TRACE("iface %p, flags %#lx, count %lu, output %p, output_status %p.\n", iface, flags, count,
+            output, output_status);
 
     if (count != 1)
         return E_INVALIDARG;
 
-    if (!impl->wg_transform)
-        return MF_E_TRANSFORM_TYPE_NOT_SET;
-
-    *status = samples->dwStatus = 0;
-    if (!samples->pSample)
+    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(output->pSample, &buffer)))
+        return hr;
+    if (SUCCEEDED(hr = MFCreateLegacyMediaBufferOnMFMediaBuffer(output->pSample, buffer, 0,
+                          &dmo_output.pBuffer)))
     {
-        samples->dwStatus = MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
-        return MF_E_TRANSFORM_NEED_MORE_INPUT;
+        hr = MF_RESULT_FROM_DMO(IMediaObject_ProcessOutput(&impl->IMediaObject_iface, flags, 1,
+                &dmo_output, &dmo_status));
+        IMediaBuffer_Release(dmo_output.pBuffer);
     }
+    IMFMediaBuffer_Release(buffer);
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(impl->wg_transform, samples->pSample, 0, &samples->dwStatus, NULL)))
-        wg_sample_queue_flush(impl->wg_sample_queue, false);
-
+    output->dwStatus = *output_status = 0;
+    if (hr == S_FALSE)
+        output->dwStatus = MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;
+    else if (dmo_output.dwStatus & DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE)
+        output->dwStatus = MFT_OUTPUT_DATA_BUFFER_INCOMPLETE;
     return hr;
 }
 
@@ -1080,7 +932,7 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
         return DMO_E_INVALIDSTREAMINDEX;
     if (!type)
     {
-        clear_dmo_media_type(&impl->input_mt);
+        clear_dmo_media_type(&impl->input_type);
         resampler_cleanup(impl);
         return S_OK;
     }
@@ -1090,15 +942,15 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
         return S_OK;
 
-    MoFreeMediaType(&impl->input_mt);
-    if (FAILED(hr = MoCopyMediaType(&impl->input_mt, type)))
+    MoFreeMediaType(&impl->input_type);
+    if (FAILED(hr = MoCopyMediaType(&impl->input_type, type)))
         return hr;
     impl->input_info.cbSize = block_alignment;
 
-    if (!IsEqualGUID(&impl->output_mt.majortype, &GUID_NULL)
+    if (!IsEqualGUID(&impl->output_type.majortype, &GUID_NULL)
             && FAILED(hr = resampler_init(impl)))
     {
-        clear_dmo_media_type(&impl->input_mt);
+        clear_dmo_media_type(&impl->input_type);
         impl->input_info.cbSize = 0;
     }
 
@@ -1118,27 +970,27 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         return DMO_E_INVALIDSTREAMINDEX;
     if (!type)
     {
-        clear_dmo_media_type(&impl->output_mt);
+        clear_dmo_media_type(&impl->output_type);
         resampler_cleanup(impl);
         return S_OK;
     }
 
-    if (IsEqualGUID(&impl->input_mt.majortype, &GUID_NULL))
+    if (IsEqualGUID(&impl->input_type.majortype, &GUID_NULL))
         return DMO_E_TYPE_NOT_SET;
     if (FAILED(hr = check_dmo_media_type(type, &block_alignment)))
         return hr;
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
         return S_OK;
 
-    MoFreeMediaType(&impl->output_mt);
-    if (FAILED(hr = MoCopyMediaType(&impl->output_mt, type)))
+    MoFreeMediaType(&impl->output_type);
+    if (FAILED(hr = MoCopyMediaType(&impl->output_type, type)))
         return hr;
     impl->output_info.cbSize = block_alignment;
 
-    if (!IsEqualGUID(&impl->input_mt.majortype, &GUID_NULL)
+    if (!IsEqualGUID(&impl->input_type.majortype, &GUID_NULL)
             && FAILED(hr = resampler_init(impl)))
     {
-        clear_dmo_media_type(&impl->output_mt);
+        clear_dmo_media_type(&impl->output_type);
         impl->output_info.cbSize = 0;
     }
 
@@ -1153,9 +1005,9 @@ static HRESULT WINAPI media_object_GetInputCurrentType(IMediaObject *iface, DWOR
 
     if (index != 0)
         return DMO_E_INVALIDSTREAMINDEX;
-    if (IsEqualGUID(&impl->input_mt.majortype, &GUID_NULL))
+    if (IsEqualGUID(&impl->input_type.majortype, &GUID_NULL))
         return DMO_E_TYPE_NOT_SET;
-    return MoCopyMediaType(type, &impl->input_mt);
+    return MoCopyMediaType(type, &impl->input_type);
 }
 
 static HRESULT WINAPI media_object_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
@@ -1166,9 +1018,9 @@ static HRESULT WINAPI media_object_GetOutputCurrentType(IMediaObject *iface, DWO
 
     if (index != 0)
         return DMO_E_INVALIDSTREAMINDEX;
-    if (IsEqualGUID(&impl->output_mt.majortype, &GUID_NULL))
+    if (IsEqualGUID(&impl->output_type.majortype, &GUID_NULL))
         return DMO_E_TYPE_NOT_SET;
-    return MoCopyMediaType(type, &impl->output_mt);
+    return MoCopyMediaType(type, &impl->output_type);
 }
 
 static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size,
@@ -1467,13 +1319,6 @@ HRESULT resampler_create(IUnknown *outer, IUnknown **out)
 
     if (!(impl = calloc(1, sizeof(*impl))))
         return E_OUTOFMEMORY;
-
-    if (FAILED(hr = wg_sample_queue_create(&impl->wg_sample_queue)))
-    {
-        free(impl);
-        return hr;
-    }
-
     impl->IUnknown_inner.lpVtbl = &unknown_vtbl;
     impl->IMFTransform_iface.lpVtbl = &transform_vtbl;
     impl->IMediaObject_iface.lpVtbl = &media_object_vtbl;
