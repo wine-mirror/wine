@@ -113,6 +113,7 @@ android
     {
         applicationId "org.winehq.wine"
         minSdkVersion 26
+        targetSdkVersion 28
         versionCode 1
         versionName "@PACKAGE_VERSION@"
     }
@@ -125,6 +126,12 @@ android
         main.java.excludes = [ "build" ]
         main.res.srcDirs = [ "res" ]
         main.manifest.srcFile get_srcdir() + "/AndroidManifest.xml"
+    }
+
+    compileOptions
+    {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        compileOptions.targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
