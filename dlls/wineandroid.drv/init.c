@@ -84,7 +84,7 @@ void init_monitors( int width, int height )
            wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &monitor_rc_work ));
 
     /* if we're notified from Java thread, update registry */
-    if (*p_java_vm) NtUserCallNoParam( NtUserCallNoParam_DisplayModeChanged );
+    if (java_vm) NtUserCallNoParam( NtUserCallNoParam_DisplayModeChanged );
 }
 
 
@@ -168,7 +168,7 @@ void set_screen_dpi( DWORD dpi )
  */
 static void fetch_display_metrics(void)
 {
-    if (*p_java_vm) return;  /* for Java threads it will be set when the top view is created */
+    if (java_vm) return;  /* for Java threads it will be set when the top view is created */
 
     SERVER_START_REQ( get_window_rectangles )
     {
@@ -364,27 +364,12 @@ static void load_android_libs(void)
 #undef DECL_FUNCPTR
 #undef LOAD_FUNCPTR
 
-JavaVM **p_java_vm = NULL;
-jobject *p_java_object = NULL;
-unsigned short *p_java_gdt_sel = NULL;
-
 static HRESULT android_init( void *arg )
 {
     struct init_params *params = arg;
     pthread_mutexattr_t attr;
     jclass class;
-    jobject object;
     JNIEnv *jni_env;
-    JavaVM *java_vm;
-    void *ntdll;
-
-    if (!(ntdll = dlopen( "ntdll.so", RTLD_NOW ))) return STATUS_UNSUCCESSFUL;
-
-    p_java_vm = dlsym( ntdll, "java_vm" );
-    p_java_object = dlsym( ntdll, "java_object" );
-    p_java_gdt_sel = dlsym( ntdll, "java_gdt_sel" );
-
-    object = *p_java_object;
 
     init_ahardwarebuffers();
 
@@ -396,7 +381,7 @@ static HRESULT android_init( void *arg )
     register_window_callback = params->register_window_callback;
     start_device_callback = params->start_device_callback;
 
-    if ((java_vm = *p_java_vm))  /* running under Java */
+    if (java_vm)  /* running under Java */
     {
 #ifdef __i386__
         WORD old_fs;
@@ -404,7 +389,7 @@ static HRESULT android_init( void *arg )
 #endif
         load_android_libs();
         (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-        class = (*jni_env)->GetObjectClass( jni_env, object );
+        class = (*jni_env)->GetObjectClass( jni_env, java_object );
         (*jni_env)->RegisterNatives( jni_env, class, methods, ARRAY_SIZE( methods ));
         (*jni_env)->DeleteLocalRef( jni_env, class );
 #ifdef __i386__

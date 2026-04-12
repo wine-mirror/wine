@@ -184,9 +184,9 @@ union event_data
 
 int send_event( const union event_data *data );
 
-extern JavaVM **p_java_vm;
-extern jobject *p_java_object;
-extern unsigned short *p_java_gdt_sel;
+extern JavaVM *java_vm;
+extern jobject java_object;
+extern unsigned short java_gdt_sel;
 
 /* string helpers */
 
