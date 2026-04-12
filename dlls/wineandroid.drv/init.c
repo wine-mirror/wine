@@ -22,6 +22,8 @@
 #pragma makedep unix
 #endif
 
+#define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+
 #include "config.h"
 
 #include <stdarg.h>
@@ -335,12 +337,20 @@ static const JNINativeMethod methods[] =
 #define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
 #define LOAD_FUNCPTR(lib, func) do { \
     if ((p##func = dlsym( lib, #func )) == NULL) \
-        { ERR( "can't find symbol %s\n", #func); return; } \
+        { ERR( "can't find symbol %s\n", #func); abort(); return; } \
     } while(0)
 
 DECL_FUNCPTR( __android_log_print );
 DECL_FUNCPTR( ANativeWindow_fromSurface );
 DECL_FUNCPTR( ANativeWindow_release );
+DECL_FUNCPTR( AHardwareBuffer_describe );
+DECL_FUNCPTR( AHardwareBuffer_acquire );
+DECL_FUNCPTR( AHardwareBuffer_release );
+DECL_FUNCPTR( AHardwareBuffer_lock );
+DECL_FUNCPTR( AHardwareBuffer_unlock );
+DECL_FUNCPTR( AHardwareBuffer_recvHandleFromUnixSocket );
+DECL_FUNCPTR( AHardwareBuffer_sendHandleToUnixSocket );
+DECL_FUNCPTR( ANativeWindowBuffer_getHardwareBuffer );
 
 static void load_android_libs(void)
 {
@@ -349,16 +359,26 @@ static void load_android_libs(void)
     if (!(libandroid = dlopen( "libandroid.so", RTLD_GLOBAL )))
     {
         ERR( "failed to load libandroid.so: %s\n", dlerror() );
+        abort();
         return;
     }
     if (!(liblog = dlopen( "liblog.so", RTLD_GLOBAL )))
     {
         ERR( "failed to load liblog.so: %s\n", dlerror() );
+        abort();
         return;
     }
     LOAD_FUNCPTR( liblog, __android_log_print );
     LOAD_FUNCPTR( libandroid, ANativeWindow_fromSurface );
     LOAD_FUNCPTR( libandroid, ANativeWindow_release );
+    LOAD_FUNCPTR( libandroid, AHardwareBuffer_describe );
+    LOAD_FUNCPTR( libandroid, AHardwareBuffer_acquire );
+    LOAD_FUNCPTR( libandroid, AHardwareBuffer_release );
+    LOAD_FUNCPTR( libandroid, AHardwareBuffer_lock );
+    LOAD_FUNCPTR( libandroid, AHardwareBuffer_unlock );
+    LOAD_FUNCPTR( libandroid, AHardwareBuffer_recvHandleFromUnixSocket );
+    LOAD_FUNCPTR( libandroid, AHardwareBuffer_sendHandleToUnixSocket );
+    LOAD_FUNCPTR( libandroid, ANativeWindowBuffer_getHardwareBuffer );
 }
 
 #undef DECL_FUNCPTR
@@ -371,7 +391,7 @@ static HRESULT android_init( void *arg )
     jclass class;
     JNIEnv *jni_env;
 
-    init_ahardwarebuffers();
+    load_android_libs();
 
     pthread_mutexattr_init( &attr );
     pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
@@ -387,7 +407,6 @@ static HRESULT android_init( void *arg )
         WORD old_fs;
         __asm__( "mov %%fs,%0" : "=r" (old_fs) );
 #endif
-        load_android_libs();
         (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
         class = (*jni_env)->GetObjectClass( jni_env, java_object );
         (*jni_env)->RegisterNatives( jni_env, class, methods, ARRAY_SIZE( methods ));

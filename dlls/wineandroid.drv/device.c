@@ -22,9 +22,9 @@
 #pragma makedep unix
 #endif
 
-#include "config.h"
-
 #define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+
+#include "config.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -47,19 +47,6 @@
 #include <dlfcn.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
-
-#define DECL_FUNCPTR(f) static typeof(f) * p##f = NULL
-
-struct AHardwareBuffer* ANativeWindowBuffer_getHardwareBuffer(struct ANativeWindowBuffer* anwb) __INTRODUCED_IN(26);
-
-DECL_FUNCPTR( AHardwareBuffer_describe );
-DECL_FUNCPTR( AHardwareBuffer_acquire );
-DECL_FUNCPTR( AHardwareBuffer_release );
-DECL_FUNCPTR( AHardwareBuffer_lock );
-DECL_FUNCPTR( AHardwareBuffer_unlock );
-DECL_FUNCPTR( AHardwareBuffer_recvHandleFromUnixSocket );
-DECL_FUNCPTR( AHardwareBuffer_sendHandleToUnixSocket );
-DECL_FUNCPTR( ANativeWindowBuffer_getHardwareBuffer );
 
 #ifndef SYNC_IOC_WAIT
 #define SYNC_IOC_WAIT _IOW('>', 0, __s32)
@@ -482,38 +469,6 @@ NTSTATUS android_register_window( void *arg )
 void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
 {
     NtQueueApcThread( thread, register_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, opengl );
-}
-
-#define LOAD_FUNCPTR(lib, func) do { \
-    const char *err; \
-    dlerror(); \
-    p##func = dlsym( lib, #func ); \
-    if (!p##func) \
-    { \
-        err = dlerror(); \
-        ERR( "can't find symbol %s: %s\n", #func, err ? err : "unknown error" ); \
-        abort(); \
-    } \
-} while (0)
-void init_ahardwarebuffers(void)
-{
-    void *libandroid;
-
-    if (!(libandroid = dlopen( "libandroid.so", RTLD_NOW )))
-    {
-        const char *err = dlerror();
-        ERR( "failed to dlopen libandroid.so: %s\n", err ? err : "unknown error" );
-        abort();
-    }
-
-    LOAD_FUNCPTR( libandroid, AHardwareBuffer_describe );
-    LOAD_FUNCPTR( libandroid, AHardwareBuffer_acquire );
-    LOAD_FUNCPTR( libandroid, AHardwareBuffer_release );
-    LOAD_FUNCPTR( libandroid, AHardwareBuffer_lock );
-    LOAD_FUNCPTR( libandroid, AHardwareBuffer_unlock );
-    LOAD_FUNCPTR( libandroid, AHardwareBuffer_recvHandleFromUnixSocket );
-    LOAD_FUNCPTR( libandroid, AHardwareBuffer_sendHandleToUnixSocket );
-    LOAD_FUNCPTR( libandroid, ANativeWindowBuffer_getHardwareBuffer );
 }
 
 /* get the capture window stored in the desktop process */
