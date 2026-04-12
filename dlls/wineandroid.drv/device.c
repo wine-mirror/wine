@@ -566,7 +566,7 @@ static void create_desktop_view( JNIEnv* env )
     unwrap_java_call();
 }
 
-static NTSTATUS createWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS createWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
@@ -588,7 +588,7 @@ static NTSTATUS createWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWOR
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS destroyWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS destroyWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
@@ -610,7 +610,7 @@ static NTSTATUS destroyWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWO
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS windowPosChanged_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS windowPosChanged_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
@@ -634,7 +634,7 @@ static NTSTATUS windowPosChanged_ioctl( JNIEnv* env, void *data, DWORD in_size, 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS dequeueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS dequeueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ANativeWindow *parent;
     struct ioctl_android_dequeueBuffer *res = data;
@@ -733,7 +733,7 @@ static NTSTATUS dequeueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWO
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS cancelBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS cancelBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_cancelBuffer *res = data;
     struct ANativeWindow *parent;
@@ -756,7 +756,7 @@ static NTSTATUS cancelBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWOR
     return android_error_to_status( ret );
 }
 
-static NTSTATUS queueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS queueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_queueBuffer *res = data;
     struct ANativeWindow *parent;
@@ -779,7 +779,7 @@ static NTSTATUS queueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD
     return android_error_to_status( ret );
 }
 
-static NTSTATUS query_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS query_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_query *res = data;
     struct ANativeWindow *parent;
@@ -799,7 +799,7 @@ static NTSTATUS query_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_s
     return android_error_to_status( ret );
 }
 
-static NTSTATUS perform_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS perform_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_perform *res = data;
     struct ANativeWindow *parent;
@@ -886,7 +886,7 @@ static NTSTATUS perform_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out
     return android_error_to_status( ret );
 }
 
-static NTSTATUS setSwapInterval_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS setSwapInterval_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_set_swap_interval *res = data;
     struct ANativeWindow *parent;
@@ -905,7 +905,7 @@ static NTSTATUS setSwapInterval_ioctl( JNIEnv* env, void *data, DWORD in_size, D
     return android_error_to_status( ret );
 }
 
-static NTSTATUS setWindowParent_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS setWindowParent_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
@@ -926,7 +926,7 @@ static NTSTATUS setWindowParent_ioctl( JNIEnv* env, void *data, DWORD in_size, D
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS setCapture_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS setCapture_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     struct ioctl_android_set_capture *res = data;
 
@@ -940,7 +940,7 @@ static NTSTATUS setCapture_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS setCursor_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+static NTSTATUS setCursor_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
 {
     static jmethodID method;
     jobject object;
@@ -978,7 +978,7 @@ static NTSTATUS setCursor_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD o
     return STATUS_SUCCESS;
 }
 
-typedef NTSTATUS (*ioctl_func)( JNIEnv* env, void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
+typedef NTSTATUS (*ioctl_func)( JNIEnv* env, void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd );
 static const ioctl_func ioctl_funcs[] =
 {
     createWindow_ioctl,         /* IOCTL_CREATE_WINDOW */
@@ -1009,11 +1009,12 @@ NTSTATUS android_dispatch_ioctl( void *arg )
 
         if (in_size >= sizeof(*header))
         {
+            int reply_fd = -1;
             irp->IoStatus.Information = 0;
             pthread_mutex_lock(&dispatch_ioctl_lock);
             irp->IoStatus.Status = func( jni_env, irp->AssociatedIrp.SystemBuffer, in_size,
                                          irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                         &irp->IoStatus.Information );
+                                         &irp->IoStatus.Information, &reply_fd );
             pthread_mutex_unlock(&dispatch_ioctl_lock);
         }
         else irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
@@ -1059,7 +1060,7 @@ void start_android_device(void)
 /* Client-side ioctl support */
 
 
-static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size )
+static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size, int *reply_fd )
 {
     static const WCHAR deviceW[] = { '\\','D','e','v','i','c','e','\\','W','i','n','e','A','n','d','r','o','i','d', 0 };
     static HANDLE device;
@@ -1119,7 +1120,7 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
     res.buffer_id = -1;
     res.generation = 0;
 
-    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size );
+    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size, NULL );
     if (ret) return ret;
     if (size < sizeof(res)) return -EINVAL;
 
@@ -1175,7 +1176,7 @@ static int cancelBuffer( struct ANativeWindow *window, struct ANativeWindowBuffe
     cancel.hdr.hwnd = HandleToLong( win->hwnd );
     cancel.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
-    return android_ioctl( IOCTL_CANCEL_BUFFER, &cancel, sizeof(cancel), NULL, NULL );
+    return android_ioctl( IOCTL_CANCEL_BUFFER, &cancel, sizeof(cancel), NULL, NULL, NULL );
 }
 
 static int queueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer, int fence )
@@ -1194,7 +1195,7 @@ static int queueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer
     queue.hdr.hwnd = HandleToLong( win->hwnd );
     queue.hdr.opengl = win->opengl;
     wait_fence_and_close( fence );
-    return android_ioctl( IOCTL_QUEUE_BUFFER, &queue, sizeof(queue), NULL, NULL );
+    return android_ioctl( IOCTL_QUEUE_BUFFER, &queue, sizeof(queue), NULL, NULL, NULL );
 }
 
 static int dequeueBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer )
@@ -1229,7 +1230,7 @@ static int setSwapInterval( struct ANativeWindow *window, int interval )
     swap.hdr.hwnd = HandleToLong( win->hwnd );
     swap.hdr.opengl = win->opengl;
     swap.interval = interval;
-    return android_ioctl( IOCTL_SET_SWAP_INT, &swap, sizeof(swap), NULL, NULL );
+    return android_ioctl( IOCTL_SET_SWAP_INT, &swap, sizeof(swap), NULL, NULL, NULL );
 }
 
 static int query( const ANativeWindow *window, int what, int *value )
@@ -1242,7 +1243,7 @@ static int query( const ANativeWindow *window, int what, int *value )
     query.hdr.hwnd = HandleToLong( win->hwnd );
     query.hdr.opengl = win->opengl;
     query.what = what;
-    ret = android_ioctl( IOCTL_QUERY, &query, sizeof(query), &query, &size );
+    ret = android_ioctl( IOCTL_QUERY, &query, sizeof(query), &query, &size, NULL );
     TRACE( "hwnd %p what %d got %d -> %p\n", win->hwnd, what, query.value, value );
     if (!ret) *value = query.value;
     return ret;
@@ -1384,7 +1385,7 @@ static int perform( ANativeWindow *window, int operation, ... )
         break;
     }
     va_end( args );
-    return android_ioctl( IOCTL_PERFORM, &perf, sizeof(perf), NULL, NULL );
+    return android_ioctl( IOCTL_PERFORM, &perf, sizeof(perf), NULL, NULL, NULL );
 }
 
 struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
@@ -1417,7 +1418,7 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl )
     req.hdr.opengl = win->opengl;
     req.parent = get_ioctl_win_parent( NtUserGetAncestor( hwnd, GA_PARENT ));
     req.is_desktop = hwnd == desktop_window;
-    android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
+    android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL, NULL );
 
     return &win->win;
 }
@@ -1450,7 +1451,7 @@ void destroy_ioctl_window( HWND hwnd, BOOL opengl )
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = opengl;
-    android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
+    android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL, NULL );
 }
 
 int ioctl_window_pos_changed( HWND hwnd, const struct window_rects *rects,
@@ -1467,7 +1468,7 @@ int ioctl_window_pos_changed( HWND hwnd, const struct window_rects *rects,
     req.flags        = flags;
     req.after        = HandleToLong( after );
     req.owner        = HandleToLong( owner );
-    return android_ioctl( IOCTL_WINDOW_POS_CHANGED, &req, sizeof(req), NULL, NULL );
+    return android_ioctl( IOCTL_WINDOW_POS_CHANGED, &req, sizeof(req), NULL, NULL, NULL );
 }
 
 int ioctl_set_window_parent( HWND hwnd, HWND parent )
@@ -1477,7 +1478,7 @@ int ioctl_set_window_parent( HWND hwnd, HWND parent )
     req.hdr.hwnd = HandleToLong( hwnd );
     req.hdr.opengl = FALSE;
     req.parent = get_ioctl_win_parent( parent );
-    return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
+    return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL, NULL );
 }
 
 int ioctl_set_capture( HWND hwnd )
@@ -1486,7 +1487,7 @@ int ioctl_set_capture( HWND hwnd )
 
     req.hdr.hwnd  = HandleToLong( hwnd );
     req.hdr.opengl = FALSE;
-    return android_ioctl( IOCTL_SET_CAPTURE, &req, sizeof(req), NULL, NULL );
+    return android_ioctl( IOCTL_SET_CAPTURE, &req, sizeof(req), NULL, NULL, NULL );
 }
 
 int ioctl_set_cursor( int id, int width, int height,
@@ -1505,7 +1506,7 @@ int ioctl_set_cursor( int id, int width, int height,
     req->hotspotx = hotspotx;
     req->hotspoty = hotspoty;
     memcpy( req->bits, bits, width * height * sizeof(req->bits[0]) );
-    ret = android_ioctl( IOCTL_SET_CURSOR, req, size, NULL, NULL );
+    ret = android_ioctl( IOCTL_SET_CURSOR, req, size, NULL, NULL, NULL );
     free( req );
     return ret;
 }
