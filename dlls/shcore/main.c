@@ -942,19 +942,15 @@ static HRESULT WINAPI filestream_Write(IStream *iface, const void *buff, ULONG s
 static HRESULT WINAPI filestream_Seek(IStream *iface, LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER *new_pos)
 {
     struct shstream *stream = impl_from_IStream(iface);
-    DWORD position;
+    LARGE_INTEGER position;
 
     TRACE("%p, %s, %ld, %p.\n", iface, wine_dbgstr_longlong(move.QuadPart), origin, new_pos);
 
-    position = SetFilePointer(stream->u.file.handle, move.u.LowPart, NULL, origin);
-    if (position == INVALID_SET_FILE_POINTER)
+    if (!SetFilePointerEx(stream->u.file.handle, move, &position, origin))
         return HRESULT_FROM_WIN32(GetLastError());
 
     if (new_pos)
-    {
-        new_pos->u.HighPart = 0;
-        new_pos->u.LowPart = position;
-    }
+        new_pos->QuadPart = position.QuadPart;
 
     return S_OK;
 }
