@@ -2154,7 +2154,7 @@ static NTSTATUS server_get_name_info( HANDLE handle, FILE_NAME_INFORMATION *info
             const WCHAR *ptr = name->Name.Buffer;
             const WCHAR *end = ptr + name->Name.Length / sizeof(WCHAR);
 
-            /* Skip the volume mount point. */
+            /* Skip the volume mount point (if any). */
             while (ptr != end && *ptr == '\\') ++ptr;
             while (ptr != end && *ptr != '\\') ++ptr;
             while (ptr != end && *ptr == '\\') ++ptr;
@@ -2162,7 +2162,6 @@ static NTSTATUS server_get_name_info( HANDLE handle, FILE_NAME_INFORMATION *info
 
             info->FileNameLength = (end - ptr) * sizeof(WCHAR);
             if (*name_len < info->FileNameLength) status = STATUS_BUFFER_OVERFLOW;
-            else if (!info->FileNameLength) status = STATUS_INVALID_INFO_CLASS;
             else *name_len = info->FileNameLength;
             if (info->FileNameLength) memcpy( info->FileName, ptr, *name_len );
             free( name );
