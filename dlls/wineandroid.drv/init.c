@@ -50,7 +50,6 @@ static const unsigned int screen_bpp = 32;  /* we don't support other modes */
 static RECT monitor_rc_work;
 static int device_init_done;
 
-PNTAPCFUNC register_window_callback;
 UINT64 start_device_callback;
 
 typedef struct
@@ -386,7 +385,6 @@ static void load_android_libs(void)
 
 static HRESULT android_init( void *arg )
 {
-    struct init_params *params = arg;
     pthread_mutexattr_t attr;
     jclass class;
     JNIEnv *jni_env;
@@ -398,8 +396,7 @@ static HRESULT android_init( void *arg )
     pthread_mutex_init( &win_data_mutex, &attr );
     pthread_mutexattr_destroy( &attr );
 
-    register_window_callback = params->register_window_callback;
-    start_device_callback = params->start_device_callback;
+    start_device_callback = (UINT64)(UINT_PTR)arg;
 
     if (java_vm)  /* running under Java */
     {
@@ -426,7 +423,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     android_init,
     android_java_init,
     android_java_uninit,
-    android_register_window,
 };
 
 

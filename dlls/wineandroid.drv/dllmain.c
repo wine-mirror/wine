@@ -90,26 +90,15 @@ static NTSTATUS WINAPI android_start_device(void *param, ULONG size)
 }
 
 
-static void CALLBACK register_window_callback( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
-{
-    struct register_window_params params = { .arg1 = arg1, .arg2 = arg2, .arg3 = arg3 };
-    ANDROID_CALL( register_window, &params );
-}
-
-
 /***********************************************************************
  *       dll initialisation routine
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
-    struct init_params params;
-
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     DisableThreadLibraryCalls( inst );
     if (__wine_init_unix_call()) return FALSE;
 
-    params.register_window_callback = register_window_callback;
-    params.start_device_callback = (UINT_PTR)android_start_device;
-    return !ANDROID_CALL( init, &params );
+    return !ANDROID_CALL( init, (void *)(UINT_PTR)android_start_device );
 }

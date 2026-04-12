@@ -119,8 +119,6 @@ extern BOOL has_client_surface( HWND hwnd );
 extern NTSTATUS android_dispatch_ioctl( void *arg );
 extern NTSTATUS android_java_init( void *arg );
 extern NTSTATUS android_java_uninit( void *arg );
-extern NTSTATUS android_register_window( void *arg );
-extern PNTAPCFUNC register_window_callback;
 extern UINT64 start_device_callback;
 
 extern unsigned int screen_width;
@@ -175,7 +173,6 @@ union event_data
     {
         enum event_type type;
         HWND            hwnd;
-        ANativeWindow  *window;
         BOOL            client;
         unsigned int    width;
         unsigned int    height;

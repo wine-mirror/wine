@@ -25,24 +25,7 @@ enum android_funcs
     unix_init,
     unix_java_init,
     unix_java_uninit,
-    unix_register_window,
     unix_funcs_count
 };
 
 #define ANDROID_CALL(func, params) WINE_UNIX_CALL( unix_ ## func, params )
-
-/* android_init params */
-struct init_params
-{
-    PNTAPCFUNC register_window_callback;
-    UINT64 start_device_callback;
-};
-
-
-/* android_register_window params */
-struct register_window_params
-{
-    UINT_PTR arg1;
-    UINT_PTR arg2;
-    UINT_PTR arg3;
-};

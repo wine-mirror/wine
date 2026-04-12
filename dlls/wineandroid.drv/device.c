@@ -80,6 +80,8 @@ static JNIEnv *jni_env;
 static HWND capture_window;
 static HWND desktop_window;
 
+static pthread_mutex_t dispatch_ioctl_lock = PTHREAD_MUTEX_INITIALIZER;
+
 #define ANDROIDCONTROLTYPE  ((ULONG)'A')
 #define ANDROID_IOCTL(n) CTL_CODE(ANDROIDCONTROLTYPE, n, METHOD_BUFFERED, FILE_READ_ACCESS)
 
@@ -452,41 +454,32 @@ static struct native_win_data *create_native_win_data( HWND hwnd, BOOL opengl )
     return data;
 }
 
-NTSTATUS android_register_window( void *arg )
+/* register a native window received from the UI thread for use in ioctls */
+void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
 {
-    struct register_window_params *params = arg;
-    HWND hwnd = (HWND)params->arg1;
-    struct ANativeWindow *win = (struct ANativeWindow *)params->arg2;
-    BOOL opengl = params->arg3;
-    struct native_win_data *data = get_native_win_data( hwnd, opengl );
+    struct native_win_data *data = NULL;
 
-    if (!win) return 0;  /* do nothing and hold on to the window until we get a new surface */
+    pthread_mutex_lock(&dispatch_ioctl_lock);
+    data = get_native_win_data( hwnd, opengl );
+
+    if (!win) goto end;  /* do nothing and hold on to the window until we get a new surface */
 
     if (!data || data->parent == win)
     {
         pANativeWindow_release( win );
-        if (data) NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
         LOG( TRACE, "%p -> %p win %p (unchanged)\n", hwnd, data, win );
-        return 0;
+        goto end;
     }
 
     release_native_window( data );
     data->parent = win;
     data->generation++;
-    wrap_java_call();
     if (data->api) win->perform( win, NATIVE_WINDOW_API_CONNECT, data->api );
     win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
     win->setSwapInterval( win, data->swap_interval );
-    unwrap_java_call();
-    NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
     LOG( TRACE, "%p -> %p win %p\n", hwnd, data, win );
-    return 0;
-}
-
-/* register a native window received from the Java side for use in ioctls */
-void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
-{
-    NtQueueApcThread( thread, register_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, opengl );
+end:
+    pthread_mutex_unlock(&dispatch_ioctl_lock);
 }
 
 /* get the capture window stored in the desktop process */
@@ -1017,9 +1010,11 @@ NTSTATUS android_dispatch_ioctl( void *arg )
         if (in_size >= sizeof(*header))
         {
             irp->IoStatus.Information = 0;
+            pthread_mutex_lock(&dispatch_ioctl_lock);
             irp->IoStatus.Status = func( irp->AssociatedIrp.SystemBuffer, in_size,
                                          irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                          &irp->IoStatus.Information );
+            pthread_mutex_unlock(&dispatch_ioctl_lock);
         }
         else irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
     }

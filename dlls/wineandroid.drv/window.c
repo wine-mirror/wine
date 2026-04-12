@@ -246,11 +246,12 @@ void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface, jbool
 
         if (win->query( win, NATIVE_WINDOW_WIDTH, &width ) < 0) width = 0;
         if (win->query( win, NATIVE_WINDOW_HEIGHT, &height ) < 0) height = 0;
-        data.surface.window = win;
         data.surface.width = width;
         data.surface.height = height;
-        p__android_log_print( ANDROID_LOG_INFO, "wine", "surface_changed: %p %s %ux%u",
-                              data.surface.hwnd, client ? "client" : "whole", width, height );
+        p__android_log_print( ANDROID_LOG_INFO, "wine", "surface_changed: %p %p %s %ux%u",
+                              data.surface.hwnd, win, client ? "client" : "whole", width, height );
+
+        register_native_window( data.surface.hwnd, win, data.surface.client );
     }
     data.type = SURFACE_CHANGED;
     send_event( &data );
@@ -452,11 +453,11 @@ static int process_events( DWORD mask )
             break;
 
         case SURFACE_CHANGED:
-            TRACE("SURFACE_CHANGED %p %p %s size %ux%u\n", event->data.surface.hwnd,
-                  event->data.surface.window, event->data.surface.client ? "client" : "whole",
+            TRACE("SURFACE_CHANGED %p %s size %ux%u\n", event->data.surface.hwnd,
+                  event->data.surface.client ? "client" : "whole",
                   event->data.surface.width, event->data.surface.height );
 
-            register_native_window( event->data.surface.hwnd, event->data.surface.window, event->data.surface.client );
+            NtUserPostMessage( event->data.surface.hwnd, WM_ANDROID_REFRESH, event->data.surface.client, 0 );
             break;
 
         case MOTION_EVENT:
