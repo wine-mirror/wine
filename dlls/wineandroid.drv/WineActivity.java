@@ -782,7 +782,7 @@ public class WineActivity extends Activity
         wine_config_changed( getResources().getConfiguration().densityDpi );
     }
 
-    public void create_window( int hwnd, boolean is_desktop, boolean opengl, int parent, int pid )
+    public void create_window( int hwnd, boolean is_desktop, boolean opengl, int parent )
     {
         WineWindow win = get_window( hwnd );
         if (win == null)
@@ -806,7 +806,7 @@ public class WineActivity extends Activity
         if (win != null) win.destroy();
     }
 
-    public void set_window_parent( int hwnd, int parent, int pid )
+    public void set_window_parent( int hwnd, int parent )
     {
         WineWindow win = get_window( hwnd );
         if (win == null) return;
@@ -839,9 +839,9 @@ public class WineActivity extends Activity
         runOnUiThread( new Runnable() { public void run() { create_desktop_view(); }} );
     }
 
-    public void createWindow( final int hwnd, final boolean is_desktop, final boolean opengl, final int parent, final int pid )
+    public void createWindow( final int hwnd, final boolean is_desktop, final boolean opengl, final int parent )
     {
-        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, is_desktop, opengl, parent, pid ); }} );
+        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, is_desktop, opengl, parent ); }} );
     }
 
     public void destroyWindow( final int hwnd )
@@ -849,9 +849,9 @@ public class WineActivity extends Activity
         runOnUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
     }
 
-    public void setParent( final int hwnd, final int parent, final int pid )
+    public void setParent( final int hwnd, final int parent )
     {
-        runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent, pid ); }} );
+        runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent ); }} );
     }
 
     public void setCursor( final int id, final int width, final int height,

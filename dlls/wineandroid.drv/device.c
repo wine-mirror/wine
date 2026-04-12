@@ -143,6 +143,7 @@ struct ioctl_android_dequeueBuffer
 {
     struct ioctl_header hdr;
     HANDLE handle;
+    DWORD pid;
     int buffer_id;
     int generation;
 };
@@ -207,12 +208,6 @@ struct ioctl_android_set_cursor
 static inline BOOL is_in_desktop_process(void)
 {
     return thread != NULL;
-}
-
-static inline DWORD current_client_id(void)
-{
-    DWORD client_id = NtUserGetThreadInfo()->driver_data;
-    return client_id ? client_id : GetCurrentProcessId();
 }
 
 #ifdef __i386__  /* the Java VM uses %fs/%gs for its own purposes, so we need to wrap the calls */
@@ -561,7 +556,6 @@ static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, U
     jobject object;
     struct ioctl_android_create_window *res = data;
     struct native_win_data *win_data;
-    DWORD pid = current_client_id();
 
     if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
 
@@ -570,10 +564,10 @@ static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, U
 
     TRACE( "hwnd %08x opengl %u parent %08x\n", res->hdr.hwnd, res->hdr.opengl, res->parent );
 
-    if (!(object = load_java_method( &method, "createWindow", "(IZZII)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( &method, "createWindow", "(IZZI)V" ))) return STATUS_NOT_SUPPORTED;
 
     wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->is_desktop, res->hdr.opengl, res->parent, pid );
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->is_desktop, res->hdr.opengl, res->parent );
     unwrap_java_call();
     return STATUS_SUCCESS;
 }
@@ -671,7 +665,7 @@ static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, 
         int sv[2] = { -1, -1 };
         HANDLE local = 0;
         OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
-        CLIENT_ID cid = { .UniqueProcess = UlongToHandle( current_client_id() ) };
+        CLIENT_ID cid = { .UniqueProcess = UlongToHandle( res->pid ) };
         HANDLE process;
 
         if (!ahb)
@@ -901,7 +895,6 @@ static NTSTATUS setWindowParent_ioctl( void *data, DWORD in_size, DWORD out_size
     jobject object;
     struct ioctl_android_set_window_parent *res = data;
     struct native_win_data *win_data;
-    DWORD pid = current_client_id();
 
     if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
 
@@ -909,10 +902,10 @@ static NTSTATUS setWindowParent_ioctl( void *data, DWORD in_size, DWORD out_size
 
     TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
 
-    if (!(object = load_java_method( &method, "setParent", "(III)V" ))) return STATUS_NOT_SUPPORTED;
+    if (!(object = load_java_method( &method, "setParent", "(II)V" ))) return STATUS_NOT_SUPPORTED;
 
     wrap_java_call();
-    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent, pid );
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent );
     unwrap_java_call();
     return STATUS_SUCCESS;
 }
@@ -988,8 +981,7 @@ static const ioctl_func ioctl_funcs[] =
 
 NTSTATUS android_dispatch_ioctl( void *arg )
 {
-    struct ioctl_params *params = arg;
-    IRP *irp = params->irp;
+    IRP *irp = arg;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     DWORD code = (irpsp->Parameters.DeviceIoControl.IoControlCode - ANDROID_IOCTL(0)) >> 2;
 
@@ -1002,11 +994,9 @@ NTSTATUS android_dispatch_ioctl( void *arg )
         if (in_size >= sizeof(*header))
         {
             irp->IoStatus.Information = 0;
-            NtUserGetThreadInfo()->driver_data = params->client_id;
             irp->IoStatus.Status = func( irp->AssociatedIrp.SystemBuffer, in_size,
                                          irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                          &irp->IoStatus.Information );
-            NtUserGetThreadInfo()->driver_data = 0;
         }
         else irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
     }
@@ -1105,11 +1095,12 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
 
     res.hdr.hwnd = HandleToLong( win->hwnd );
     res.hdr.opengl = win->opengl;
+    res.pid = GetCurrentProcessId();
     res.handle = 0;
     res.buffer_id = -1;
     res.generation = 0;
 
-    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER, &res, sizeof(res.hdr), &res, &size );
+    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size );
     if (ret) return ret;
     if (size < sizeof(res)) return -EINVAL;
 

@@ -37,8 +37,7 @@ static HANDLE stop_event;
 
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
 {
-    struct ioctl_params params = { .irp = irp, .client_id = HandleToUlong(PsGetCurrentProcessId()) };
-    NTSTATUS status = ANDROID_CALL( dispatch_ioctl, &params );
+    NTSTATUS status = ANDROID_CALL( dispatch_ioctl, irp );
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return status;
 }

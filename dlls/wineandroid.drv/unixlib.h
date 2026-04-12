@@ -39,14 +39,6 @@ struct init_params
 };
 
 
-/* android_ioctl params */
-struct ioctl_params
-{
-    struct _IRP *irp;
-    DWORD client_id;
-};
-
-
 /* android_register_window params */
 struct register_window_params
 {
