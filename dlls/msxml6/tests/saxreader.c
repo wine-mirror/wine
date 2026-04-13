@@ -5312,6 +5312,78 @@ static void test_saxreader_max_xml_size(void)
     IStream_Release(stream);
 }
 
+static void test_saxreader_max_element_depth(void)
+{
+    ISAXXMLReader *reader;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void **)&reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memset(&v, 0, sizeof(v));
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("max-element-depth"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_I4, "Unexpected type %d.\n", V_VT(&v));
+    todo_wine
+    ok(V_I4(&v) == 256, "Unexpected value %ld.\n", V_I4(&v));
+
+    V_UI4(&v) = 2147483648;
+    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    V_I4(&v) = 2147483647;
+    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("max-element-depth"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(V_VT(&v) == VT_I4, "Unexpected type %d.\n", V_VT(&v));
+    ok(V_I4(&v) == 2147483647, "Unexpected value %ld.\n", V_I4(&v));
+
+    V_I4(&v) = 0;
+    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ISAXXMLReader_getProperty(reader, _bstr_("max-element-depth"), &v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_I4(&v) == 0, "Unexpected value %ld.\n", V_I4(&v));
+
+    V_I4(&v) = 1;
+    hr = ISAXXMLReader_putProperty(reader, _bstr_("max-element-depth"), v);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"<a>text</a>");
+    hr = ISAXXMLReader_parse(reader, v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"<a>text<!-- comment --></a>");
+    hr = ISAXXMLReader_parse(reader, v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"<a>text<!-- comment --><b/></a>");
+    hr = ISAXXMLReader_parse(reader, v);
+    todo_wine
+    ok(hr == 0xc00cee92, "Unexpected hr %#lx.\n", hr);
+    VariantClear(&v);
+
+    ISAXXMLReader_Release(reader);
+}
+
 START_TEST(saxreader)
 {
     HRESULT hr;
@@ -5337,6 +5409,7 @@ START_TEST(saxreader)
         test_saxreader_cdata();
         test_saxreader_characters();
         test_saxreader_pi();
+        test_saxreader_max_element_depth();
     }
 
     if (is_class_supported(&CLSID_MXXMLWriter60))
