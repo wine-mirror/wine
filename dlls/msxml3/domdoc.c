@@ -304,27 +304,13 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream 
     return doc->error = domdoc_load_from_stream(doc, (ISequentialStream *)stream);
 }
 
-static HRESULT WINAPI PersistStreamInit_Save(
-    IPersistStreamInit *iface, IStream *stream, BOOL clr_dirty)
+static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, IStream *stream, BOOL clr_dirty)
 {
-    domdoc *This = impl_from_IPersistStreamInit(iface);
-    BSTR xmlString;
-    HRESULT hr;
+    domdoc *doc = impl_from_IPersistStreamInit(iface);
 
-    TRACE("(%p)->(%p %d)\n", This, stream, clr_dirty);
+    TRACE("%p, %p, %d.\n", iface, stream, clr_dirty);
 
-    hr = IXMLDOMDocument3_get_xml(&This->IXMLDOMDocument3_iface, &xmlString);
-    if(hr == S_OK)
-    {
-        DWORD len = SysStringLen(xmlString) * sizeof(WCHAR);
-
-        hr = IStream_Write( stream, xmlString, len, NULL );
-        SysFreeString(xmlString);
-    }
-
-    TRACE("hr %#lx.\n", hr);
-
-    return hr;
+    return node_save(doc->node, stream);
 }
 
 static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface, ULARGE_INTEGER *size)

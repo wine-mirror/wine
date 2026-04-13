@@ -2138,12 +2138,14 @@ if (0)
 static void test_persiststream(void)
 {
     IPersistStreamInit *streaminit;
+    IStream *istream, *stream2;
     IPersistStream *stream;
     IXMLDOMDocument *doc;
     ULARGE_INTEGER size;
-    IStream *istream;
+    HGLOBAL global;
     HRESULT hr;
     CLSID clsid;
+    void *ptr;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -2179,6 +2181,20 @@ static void test_persiststream(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IStream_Release(istream);
     EXPECT_PARSE_ERROR(doc, S_OK, FALSE);
+
+    /* Save */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IPersistStreamInit_Save(streaminit, stream2, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = GetHGlobalFromStream(stream2, &global);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ptr = GlobalLock(global);
+    ok(!memcmp(ptr, "<?xml", 5), "Unexpected output.\n");
+    GlobalUnlock(global);
+
+    IStream_Release(stream2);
 
     istream = SHCreateMemStream((const BYTE*)"", 0);
     hr = IPersistStreamInit_Load(streaminit, istream);
