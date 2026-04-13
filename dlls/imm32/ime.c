@@ -540,7 +540,6 @@ BOOL WINAPI ImeSetActiveContext( HIMC himc, BOOL flag )
 
 BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
 {
-    struct ime_driver_call_params params = {.himc = himc, .state = state};
     INPUTCONTEXT *ctx;
     LRESULT ret;
 
@@ -549,8 +548,7 @@ BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
     if (!is_ime_hkl( GetKeyboardLayout( 0 ) )) return FALSE;
 
     if (!(ctx = ImmLockIMC( himc ))) return FALSE;
-    ret = NtUserMessageCall( ctx->hWnd, WINE_IME_PROCESS_KEY, vkey, lparam, &params,
-                             NtUserImeDriverCall, FALSE );
+    ret = TRUE; /* TODO: should be ctx->fOpen */
     switch (LOWORD(vkey))
     {
         case VK_SHIFT:

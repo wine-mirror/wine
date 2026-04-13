@@ -663,10 +663,6 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
 
     switch (call)
     {
-    case WINE_IME_PROCESS_KEY:
-        res = user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
-        TRACE( "ImeProcessKey vkey %#x, scan %#x -> %lu\n", LOWORD(wparam), HIWORD(lparam), res );
-        return res;
     case WINE_IME_TO_ASCII_EX:
         if (params->state)
         {

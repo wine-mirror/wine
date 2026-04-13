@@ -1106,14 +1106,6 @@ void macdrv_hotkey_press(const macdrv_event *event)
 
 
 /***********************************************************************
- *              ImeProcessKey (MACDRV.@)
- */
-UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_state)
-{
-    return 1;
-}
-
-/***********************************************************************
  *              ImeToAsciiEx (MACDRV.@)
  */
 UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, HIMC himc)

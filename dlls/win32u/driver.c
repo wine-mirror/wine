@@ -670,11 +670,6 @@ static void nulldrv_ReleaseKbdTables( const KBDTABLES *tables )
 {
 }
 
-static UINT nulldrv_ImeProcessKey( HIMC himc, UINT wparam, UINT lparam, const BYTE *state )
-{
-    return 1;
-}
-
 static UINT nulldrv_ImeToAsciiEx( UINT vkey, UINT vsc, const BYTE *state, HIMC himc )
 {
     return STATUS_NOT_IMPLEMENTED;
@@ -1102,11 +1097,6 @@ static void loaderdrv_ReleaseKbdTables( const KBDTABLES *tables )
     return load_driver()->pReleaseKbdTables( tables );
 }
 
-static UINT loaderdrv_ImeProcessKey( HIMC himc, UINT wparam, UINT lparam, const BYTE *state )
-{
-    return load_driver()->pImeProcessKey( himc, wparam, lparam, state );
-}
-
 static UINT loaderdrv_ImeToAsciiEx( UINT vkey, UINT vsc,const BYTE *state, HIMC himc )
 {
     return load_driver()->pImeToAsciiEx( vkey, vsc, state, himc );
@@ -1264,7 +1254,6 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_VkKeyScanEx,
     loaderdrv_KbdLayerDescriptor,
     loaderdrv_ReleaseKbdTables,
-    loaderdrv_ImeProcessKey,
     loaderdrv_ImeToAsciiEx,
     loaderdrv_NotifyIMEStatus,
     loaderdrv_SetIMECompositionRect,
@@ -1369,7 +1358,6 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(VkKeyScanEx);
     SET_USER_FUNC(KbdLayerDescriptor);
     SET_USER_FUNC(ReleaseKbdTables);
-    SET_USER_FUNC(ImeProcessKey);
     SET_USER_FUNC(ImeToAsciiEx);
     SET_USER_FUNC(NotifyIMEStatus);
     SET_USER_FUNC(SetIMECompositionRect);
