@@ -3045,6 +3045,22 @@ static POINTER_BUTTON_CHANGE_TYPE compare_button( const POINTER_INFO *old, const
     return change;
 }
 
+void update_pointer_from_msg( POINTER_INPUT_TYPE type, const MSG *msg )
+{
+    POINTER_INFO info = pointer_info_from_msg( msg );
+    POINTER_BUTTON_CHANGE_TYPE buttons;
+    struct pointer *pointer;
+
+    TRACE( "updating pointer id %d.\n", info.pointerId );
+
+    if (!(pointer = find_pointer( info.pointerId )) && !(pointer = pointer_create( info.pointerId, type ))) return;
+
+    buttons = compare_button( &pointer->info, &info );
+    pointer->info = info;
+    pointer->info.pointerType = pointer->type;
+    pointer->info.ButtonChangeType = buttons;
+}
+
 static POINTER_INPUT_TYPE pointer_type_from_hw( const struct hw_msg_source *source )
 {
     switch (source->origin)
@@ -3064,17 +3080,8 @@ static POINTER_INPUT_TYPE pointer_type_from_hw( const struct hw_msg_source *sour
  */
 BOOL process_pointer_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
 {
-    POINTER_INPUT_TYPE type = pointer_type_from_hw( &msg_data->source );
-    UINT id = GET_POINTERID_WPARAM( msg->wParam );
-    struct pointer *pointer;
-    POINTER_INFO info;
-
+    update_pointer_from_msg( pointer_type_from_hw( &msg_data->source ), msg );
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
-    if (!(pointer = find_pointer( id )) && !(pointer = pointer_create( id, type ))) return TRUE;
-    info = pointer_info_from_msg( msg );
-    info.ButtonChangeType = compare_button( &pointer->info, &info );
-    pointer->info = info;
-    pointer->info.pointerType = pointer->type;
     return TRUE;
 }
 

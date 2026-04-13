@@ -2686,7 +2686,21 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
             break;
         }
 
-        if (message) send_message( msg->hwnd, message, MAKELONG( 1, flags ), MAKELONG( msg->pt.x, msg->pt.y ) );
+        if (message)
+        {
+            MSG pointer_msg =
+            {
+                .message = message,
+                .lParam = MAKELONG( msg->pt.x, msg->pt.y ),
+                .wParam = MAKELONG( 1, flags ),
+                .hwnd = msg->hwnd,
+                .time = msg->time,
+                .pt = msg->pt,
+            };
+
+            update_pointer_from_msg( PT_MOUSE, &pointer_msg );
+            send_message( msg->hwnd, message, pointer_msg.wParam, pointer_msg.lParam );
+        }
     }
 
     /* FIXME: is this really the right place for this hook? */
