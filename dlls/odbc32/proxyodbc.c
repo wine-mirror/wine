@@ -468,6 +468,7 @@ static struct environment *create_environment( void )
     struct environment *ret;
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     init_object( &ret->hdr, SQL_HANDLE_ENV, NULL );
+    list_init( &ret->env_handles );
     ret->attr_version = SQL_OV_ODBC2;
     return ret;
 }
@@ -492,6 +493,12 @@ static SQLRETURN alloc_handle( SQLSMALLINT type, struct object *input, struct ob
 {
     SQLRETURN ret = SQL_ERROR;
 
+    if (type == SQL_HANDLE_ENV || type == SQL_HANDLE_DBC)
+    {
+        ERR( "invalid call\n" );
+        return SQL_ERROR;
+    }
+
     if (input->unix_handle)
     {
         struct SQLAllocHandle_params params = { type, input->unix_handle, &output->unix_handle };
@@ -505,14 +512,6 @@ static SQLRETURN alloc_handle( SQLSMALLINT type, struct object *input, struct ob
         {
             switch (type)
             {
-            case SQL_HANDLE_ENV:
-                if (input->win32_funcs->SQLAllocEnv)
-                    ret = input->win32_funcs->SQLAllocEnv( &output->win32_handle );
-                break;
-            case SQL_HANDLE_DBC:
-                if (input->win32_funcs->SQLAllocConnect)
-                    ret = input->win32_funcs->SQLAllocConnect( input->win32_handle, &output->win32_handle );
-                break;
             case SQL_HANDLE_STMT:
                 if (input->win32_funcs->SQLAllocStmt)
                     ret = input->win32_funcs->SQLAllocStmt( input->win32_handle, &output->win32_handle );
@@ -1261,56 +1260,108 @@ static int has_suffix( const WCHAR *str, const WCHAR *suffix )
     return len >= len2 && !wcsicmp( str + len - len2, suffix );
 }
 
-static SQLRETURN set_env_attr( struct environment *env, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+static SQLRETURN set_env_attr( struct env_handle *env, SQLINTEGER attr, SQLPOINTER value )
 {
     SQLRETURN ret = SQL_ERROR;
 
-    if (env->hdr.unix_handle)
+    if (env->unix_handle)
     {
-        struct SQLSetEnvAttr_params params = { env->hdr.unix_handle, attr, value, len };
+        struct SQLSetEnvAttr_params params = { env->unix_handle, attr, value, 0 };
         ret = ODBC_CALL( SQLSetEnvAttr, &params );
     }
-    else if (env->hdr.win32_handle)
+    else
     {
-        if (env->hdr.win32_funcs->SQLSetEnvAttr)
-            ret = env->hdr.win32_funcs->SQLSetEnvAttr( env->hdr.win32_handle, attr, value, len );
+        if (env->win32_funcs->SQLSetEnvAttr)
+            ret = env->win32_funcs->SQLSetEnvAttr( env->win32_handle, attr, value, 0 );
     }
 
     return ret;
 }
 
-static SQLRETURN alloc_env_handle( struct environment *env, BOOL is_unix )
+static SQLRETURN alloc_env_handle( struct env_handle *env )
 {
     SQLRETURN ret = SQL_ERROR;
 
-    if (is_unix)
+    if (!env->win32_funcs)
     {
-        struct SQLAllocHandle_params params = { SQL_HANDLE_ENV, 0, &env->hdr.unix_handle };
+        struct SQLAllocHandle_params params = { SQL_HANDLE_ENV, 0, &env->unix_handle };
         ret = ODBC_CALL( SQLAllocHandle, &params );
     }
     else
     {
-        if (env->hdr.win32_funcs->SQLAllocHandle)
-            ret = env->hdr.win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL, &env->hdr.win32_handle );
-        else if (env->hdr.win32_funcs->SQLAllocEnv)
-            ret = env->hdr.win32_funcs->SQLAllocEnv( &env->hdr.win32_handle );
+        if (env->win32_funcs->SQLAllocHandle)
+            ret = env->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL, &env->win32_handle );
+        else if (env->win32_funcs->SQLAllocEnv)
+            ret = env->win32_funcs->SQLAllocEnv( &env->win32_handle );
     }
 
     return ret;
 }
 
-#define INT_PTR(val) (SQLPOINTER)(ULONG_PTR)val
-static void prepare_env( struct environment *env )
+static void release_env( struct env_handle *env )
 {
-    if (set_env_attr( env, SQL_ATTR_ODBC_VERSION, INT_PTR(env->attr_version), 0 ))
-        WARN( "failed to set ODBC version\n" );
+    SQLRETURN ret = SQL_ERROR;
+
+    if (!env || --env->ref) return;
+
+    if (env->unix_handle)
+    {
+        struct SQLFreeHandle_params params = { SQL_HANDLE_ENV, env->unix_handle };
+        ret = ODBC_CALL( SQLFreeHandle, &params );
+    }
+    else if (env->win32_funcs->SQLFreeHandle)
+        ret = env->win32_funcs->SQLFreeHandle( SQL_HANDLE_ENV, env->win32_handle );
+    else if (env->win32_funcs->SQLFreeEnv)
+        ret = env->win32_funcs->SQLFreeEnv( env->win32_handle );
+
+    if (ret == SQL_SUCCESS)
+    {
+        list_remove( &env->entry );
+        free( env );
+    }
 }
 
-static SQLRETURN create_env( struct environment *env, BOOL is_unix )
+#define INT_PTR(val) (SQLPOINTER)(ULONG_PTR)val
+static SQLRETURN create_env( struct connection *con )
 {
+    struct environment *env = (struct environment *)con->hdr.parent;
+    struct env_handle *cur;
     SQLRETURN ret;
-    if ((ret = alloc_env_handle( env, is_unix ))) return ret;
-    prepare_env( env );
+
+    EnterCriticalSection( &env->hdr.cs );
+
+    LIST_FOR_EACH_ENTRY( cur, &env->env_handles, struct env_handle, entry )
+    {
+        if (con->hdr.win32_funcs == cur->win32_funcs)
+        {
+            cur->ref++;
+            release_env( con->env );
+            con->env = cur;
+            LeaveCriticalSection( &env->hdr.cs );
+            return SQL_SUCCESS;
+        }
+    }
+
+    if (!(cur = calloc( 1, sizeof(*cur) )))
+    {
+        LeaveCriticalSection( &env->hdr.cs );
+        return SQL_ERROR;
+    }
+    cur->win32_funcs = con->hdr.win32_funcs;
+    cur->ref = 1;
+    ret = alloc_env_handle( cur );
+    if (!SUCCESS(ret))
+    {
+        free( cur );
+        LeaveCriticalSection( &env->hdr.cs );
+        return ret;
+    }
+    list_add_head( &env->env_handles, &cur->entry );
+    con->env = cur;
+    LeaveCriticalSection( &env->hdr.cs );
+
+    if (set_env_attr( cur, SQL_ATTR_ODBC_VERSION, INT_PTR(env->attr_version) ))
+        WARN( "failed to set ODBC version\n" );
     return SQL_SUCCESS;
 }
 
@@ -1430,6 +1481,25 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
     return ret;
 }
 
+static SQLRETURN alloc_con_handle( struct connection *con )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (con->env->unix_handle)
+    {
+        struct SQLAllocHandle_params params = { SQL_HANDLE_DBC, con->env->unix_handle, &con->hdr.unix_handle };
+        ret = ODBC_CALL( SQLAllocHandle, &params );
+    }
+    else
+    {
+        if (con->env->win32_funcs->SQLAllocHandle)
+            ret = con->env->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, con->env->win32_handle, &con->hdr.win32_handle );
+        else if (con->env->win32_funcs->SQLAllocConnect)
+            ret = con->env->win32_funcs->SQLAllocConnect( con->env->win32_handle, &con->hdr.win32_handle );
+    }
+
+    return ret;
+}
 
 static SQLRETURN create_con( struct connection *con )
 {
@@ -1437,7 +1507,7 @@ static SQLRETURN create_con( struct connection *con )
     SQLSMALLINT len;
     SQLRETURN ret;
 
-    if ((ret = alloc_handle( SQL_HANDLE_DBC, con->hdr.parent, &con->hdr ))) return ret;
+    if ((ret = alloc_con_handle( con ))) return ret;
 
     if (con->con_timeout_set &&
             set_con_attr( con, SQL_ATTR_CONNECTION_TIMEOUT, INT_PTR(con->attr_con_timeout), 0 ))
@@ -1518,23 +1588,26 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(con->hdr.win32_funcs = con->hdr.parent->win32_funcs = load_driver( filename )))
+        con->hdr.unix_handle = 0;
+        if (!(con->hdr.win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
         }
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = connect_win32_a( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
     }
     else
     {
+        con->hdr.win32_handle = 0;
+        con->hdr.win32_funcs = NULL;
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = connect_unix_a( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
@@ -1834,32 +1907,49 @@ SQLRETURN WINAPI SQLEndTran(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLIN
     {
         ret = end_tran_win32( HandleType, obj, CompletionType );
     }
+    else if (HandleType == SQL_HANDLE_ENV)
+    {
+        struct connection *con;
+
+        LIST_FOR_EACH_ENTRY( con, &obj->children, struct connection, hdr.entry )
+        {
+            EnterCriticalSection( &con->hdr.cs );
+            /* TODO: we should call SQLEndTran depending on connection state */
+            if (con->hdr.unix_handle)
+                ret = end_tran_unix( SQL_HANDLE_DBC, &con->hdr, CompletionType );
+            else
+                ret = end_tran_win32( SQL_HANDLE_DBC, &con->hdr, CompletionType );
+            LeaveCriticalSection( &con->hdr.cs );
+
+            if (ret != SQL_SUCCESS) break;
+        }
+    }
 
     TRACE("Returning %d\n", ret);
     unlock_object( obj );
     return ret;
 }
 
-static SQLRETURN error_unix_a( struct environment *env, struct connection *con, struct statement *stmt, SQLCHAR *state,
+static SQLRETURN error_unix_a( struct env_handle *env, struct connection *con, struct statement *stmt, SQLCHAR *state,
                                SQLINTEGER *native_err, SQLCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
 {
-    struct SQLError_params params = { env ? env->hdr.unix_handle : 0, con ? con->hdr.unix_handle : 0,
+    struct SQLError_params params = { env ? env->unix_handle : 0, con ? con->hdr.unix_handle : 0,
                                       stmt ? stmt->hdr.unix_handle : 0, state, native_err, msg, buflen, retlen };
     return ODBC_CALL( SQLError, &params );
 }
 
-static SQLRETURN error_win32_a( struct environment *env, struct connection *con, struct statement *stmt, SQLCHAR *state,
+static SQLRETURN error_win32_a( struct env_handle *env, struct connection *con, struct statement *stmt, SQLCHAR *state,
                                 SQLINTEGER *native_err, SQLCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
 {
     const struct win32_funcs *win32_funcs;
     SQLRETURN ret = SQL_ERROR;
 
-    if (env) win32_funcs = env->hdr.win32_funcs;
+    if (env) win32_funcs = env->win32_funcs;
     else if (con) win32_funcs = con->hdr.win32_funcs;
     else win32_funcs = stmt->hdr.win32_funcs;
 
     if (win32_funcs->SQLError)
-        return win32_funcs->SQLError( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
+        return win32_funcs->SQLError( env ? env->win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
                                       stmt ? stmt->hdr.win32_handle : NULL, state, native_err, msg, buflen, retlen );
 
     if (win32_funcs->SQLErrorW)
@@ -1868,7 +1958,7 @@ static SQLRETURN error_win32_a( struct environment *env, struct connection *con,
         SQLSMALLINT lenW;
 
         if (!(msgW = malloc( buflen * sizeof(SQLWCHAR) ))) return SQL_ERROR;
-        ret = win32_funcs->SQLErrorW( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
+        ret = win32_funcs->SQLErrorW( env ? env->win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
                                       stmt ? stmt->hdr.win32_handle : NULL, stateW, native_err, msgW, buflen, &lenW );
         if (SUCCESS( ret ))
         {
@@ -1887,6 +1977,7 @@ static SQLRETURN error_win32_a( struct environment *env, struct connection *con,
 
 /*************************************************************************
  *				SQLError           [ODBC32.010]
+ * FIXME: implement proper error handling.
  */
 SQLRETURN WINAPI SQLError(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, SQLHSTMT StatementHandle,
                           SQLCHAR *SqlState, SQLINTEGER *NativeError, SQLCHAR *MessageText,
@@ -1895,7 +1986,7 @@ SQLRETURN WINAPI SQLError(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, S
     struct environment *env = (struct environment *)lock_object( EnvironmentHandle, SQL_HANDLE_ENV );
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(EnvironmentHandle %p, ConnectionHandle %p, StatementHandle %p, SqlState %p, NativeError %p,"
           " MessageText %p, BufferLength %d, TextLength %p)\n", EnvironmentHandle, ConnectionHandle,
@@ -1903,13 +1994,33 @@ SQLRETURN WINAPI SQLError(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, S
 
     if (!env && !con && !stmt) return SQL_INVALID_HANDLE;
 
-    if ((env && env->hdr.unix_handle) || (con && con->hdr.unix_handle) || (stmt && stmt->hdr.unix_handle))
+    if ((con && con->hdr.unix_handle) || (stmt && stmt->hdr.unix_handle))
     {
-        ret = error_unix_a( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
+        ret = error_unix_a( NULL, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
-    else if ((env && env->hdr.win32_handle) || (con && con->hdr.win32_handle) || (stmt && stmt->hdr.win32_handle))
+    else if ((con && con->hdr.win32_handle) || (stmt && stmt->hdr.win32_handle))
     {
-        ret = error_win32_a( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
+        ret = error_win32_a( NULL, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
+    }
+    else if (env)
+    {
+        struct env_handle *env_handle;
+
+        LIST_FOR_EACH_ENTRY( env_handle, &env->env_handles, struct env_handle, entry )
+        {
+            if (env_handle->unix_handle)
+            {
+                ret = error_unix_a( env_handle, NULL, NULL, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+            else
+            {
+                ret = error_win32_a( env_handle, NULL, NULL, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+
+            if (ret != SQL_NO_DATA) break;
+        }
     }
 
     if (SUCCESS( ret ))
@@ -2184,10 +2295,6 @@ static SQLRETURN free_handle( SQLSMALLINT type, struct object *obj )
         {
             switch (type)
             {
-            case SQL_HANDLE_ENV:
-                if (obj->win32_funcs->SQLFreeEnv)
-                    ret = obj->win32_funcs->SQLFreeEnv( obj->win32_handle );
-                break;
             case SQL_HANDLE_DBC:
                 if (obj->win32_funcs->SQLFreeConnect)
                     ret = obj->win32_funcs->SQLFreeConnect( obj->win32_handle );
@@ -2220,6 +2327,7 @@ SQLRETURN WINAPI SQLFreeConnect(SQLHDBC ConnectionHandle)
     else
     {
         ret = free_handle( SQL_HANDLE_DBC, &con->hdr );
+        cleanup_object( &con->hdr );
         con->hdr.closed = TRUE;
     }
 
@@ -2235,7 +2343,7 @@ SQLRETURN WINAPI SQLFreeConnect(SQLHDBC ConnectionHandle)
 SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
 {
     struct environment *env = (struct environment *)lock_object( EnvironmentHandle, SQL_HANDLE_ENV );
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_SUCCESS;
 
     TRACE("(EnvironmentHandle %p)\n", EnvironmentHandle);
 
@@ -2244,10 +2352,7 @@ SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
     if (!list_empty( &env->hdr.children )) ret = SQL_ERROR;
     else
     {
-        ret = free_handle( SQL_HANDLE_ENV, &env->hdr );
-
-        RegCloseKey( env->drivers_key );
-        RegCloseKey( env->sources_key );
+        cleanup_object( &env->hdr );
         env->hdr.closed = TRUE;
     }
 
@@ -2288,6 +2393,13 @@ static void cleanup_object( struct object *obj )
         RegCloseKey( env->sources_key );
         env->drivers_key = env->sources_key = NULL;
         env->drivers_idx = env->sources_idx = 0;
+        break;
+    }
+    case SQL_HANDLE_DBC:
+    {
+        struct connection *con = (struct connection *)obj;
+        release_env( con->env );
+        con->env = NULL;
         break;
     }
     case SQL_HANDLE_STMT:
@@ -2863,7 +2975,7 @@ SQLRETURN WINAPI SQLGetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSM
                                  SQLSMALLINT *StringLength)
 {
     struct object *obj = lock_object( Handle, HandleType );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, DiagIdentifier %d, DiagInfo %p, BufferLength %d,"
           " StringLength %p)\n", HandleType, Handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength, StringLength);
@@ -2879,6 +2991,33 @@ SQLRETURN WINAPI SQLGetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSM
     {
         ret = get_diag_field_win32_a( HandleType, obj, RecNumber, DiagIdentifier, DiagInfo, BufferLength,
                                       StringLength );
+    }
+    else if (HandleType == SQL_HANDLE_ENV)
+    {
+        struct environment *env = (struct environment *)obj;
+        struct env_handle *env_handle;
+
+        LIST_FOR_EACH_ENTRY( env_handle, &env->env_handles, struct env_handle, entry )
+        {
+            struct object env_obj;
+
+            env_obj.unix_handle = env_handle->unix_handle;
+            env_obj.win32_handle = env_handle->win32_handle;
+            env_obj.win32_funcs = env_handle->win32_funcs;
+
+            if (env_handle->unix_handle)
+            {
+                ret = get_diag_field_unix_a( HandleType, &env_obj, RecNumber,
+                        DiagIdentifier, DiagInfo, BufferLength, StringLength );
+            }
+            else
+            {
+                ret = get_diag_field_win32_a( HandleType, &env_obj, RecNumber,
+                        DiagIdentifier, DiagInfo, BufferLength, StringLength );
+            }
+
+            if (ret != SQL_NO_DATA) break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -2977,6 +3116,33 @@ SQLRETURN WINAPI SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMAL
     {
         ret = get_diag_rec_win32_a( HandleType, obj, RecNumber, SqlState, NativeError, MessageText, BufferLength,
                                     TextLength );
+    }
+    else if (HandleType == SQL_HANDLE_ENV)
+    {
+        struct environment *env = (struct environment *)obj;
+        struct env_handle *env_handle;
+
+        LIST_FOR_EACH_ENTRY( env_handle, &env->env_handles, struct env_handle, entry )
+        {
+            struct object env_obj;
+
+            env_obj.unix_handle = env_handle->unix_handle;
+            env_obj.win32_handle = env_handle->win32_handle;
+            env_obj.win32_funcs = env_handle->win32_funcs;
+
+            if (env_handle->unix_handle)
+            {
+                ret = get_diag_rec_unix_a( HandleType, &env_obj, RecNumber, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+            else
+            {
+                ret = get_diag_rec_win32_a( HandleType, &env_obj, RecNumber, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+
+            if (ret != SQL_NO_DATA) break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -4424,28 +4590,21 @@ SQLRETURN WINAPI SQLTables(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, SQLSM
     return ret;
 }
 
-static SQLRETURN transact_unix( struct environment *env, struct connection *con, SQLUSMALLINT completion )
+static SQLRETURN transact_unix( struct connection *con, SQLUSMALLINT completion )
 {
-    struct SQLTransact_params params = { env ? env->hdr.unix_handle : 0, con ? con->hdr.unix_handle : 0, completion };
+    struct SQLTransact_params params = { 0, con->hdr.unix_handle, completion };
     return ODBC_CALL( SQLTransact, &params );
 }
 
-static SQLRETURN transact_win32( struct environment *env, struct connection *con, SQLUSMALLINT completion )
+static SQLRETURN transact_win32( struct connection *con, SQLUSMALLINT completion )
 {
-    const struct win32_funcs *win32_funcs;
+    const struct win32_funcs *funcs = con->hdr.win32_funcs;
 
-    if (env) win32_funcs = env->hdr.win32_funcs;
-    else win32_funcs = con->hdr.win32_funcs;
+    if (funcs->SQLTransact)
+        return funcs->SQLTransact( NULL, con->hdr.win32_handle, completion );
 
-    if (win32_funcs->SQLTransact)
-        return win32_funcs->SQLTransact( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
-                                         completion );
-
-    if (win32_funcs->SQLEndTran)
-    {
-        if (con) return win32_funcs->SQLEndTran( SQL_HANDLE_DBC, con->hdr.win32_handle, completion );
-        return win32_funcs->SQLEndTran( SQL_HANDLE_ENV, env->hdr.win32_handle, completion );
-    }
+    if (funcs->SQLEndTran)
+        return funcs->SQLEndTran( SQL_HANDLE_DBC, con->hdr.win32_handle, completion );
 
     return SQL_ERROR;
 }
@@ -4457,20 +4616,37 @@ SQLRETURN WINAPI SQLTransact(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle
 {
     struct environment *env = (struct environment *)lock_object( EnvironmentHandle, SQL_HANDLE_ENV );
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_SUCCESS;
 
     TRACE("(EnvironmentHandle %p, ConnectionHandle %p, CompletionType %d)\n", EnvironmentHandle, ConnectionHandle,
           CompletionType);
 
     if (!env && !con) return SQL_INVALID_HANDLE;
 
-    if ((env && env->hdr.unix_handle) || (con && con->hdr.unix_handle))
+    if (con && con->hdr.unix_handle)
     {
-        ret = transact_unix( env, con, CompletionType );
+        ret = transact_unix( con, CompletionType );
     }
-    else if ((env && env->hdr.win32_handle) || (con && con->hdr.win32_handle))
+    else if (con)
     {
-        ret = transact_win32( env, con, CompletionType );
+        ret = transact_win32( con, CompletionType );
+    }
+    else
+    {
+        struct connection *cur;
+
+        LIST_FOR_EACH_ENTRY( cur, &env->hdr.children, struct connection, hdr.entry )
+        {
+            EnterCriticalSection( &cur->hdr.cs );
+            /* TODO: we should call SQLTransact depending on connection state */
+            if (cur->hdr.unix_handle)
+                ret = transact_unix( cur, CompletionType );
+            else
+                ret = transact_win32( cur, CompletionType );
+            LeaveCriticalSection( &cur->hdr.cs );
+
+            if (ret != SQL_SUCCESS) break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -4697,23 +4873,26 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(con->hdr.win32_funcs = con->hdr.parent->win32_funcs = load_driver( filename )))
+        con->hdr.unix_handle = 0;
+        if (!(con->hdr.win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
         }
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = browse_connect_win32_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
     }
     else
     {
+        con->hdr.win32_handle = 0;
+        con->hdr.win32_funcs = NULL;
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = browse_connect_unix_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
@@ -5846,14 +6025,15 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(con->hdr.win32_funcs = con->hdr.parent->win32_funcs = load_driver( filename )))
+        con->hdr.unix_handle = 0;
+        if (!(con->hdr.win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
         }
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = driver_connect_win32_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
@@ -5861,9 +6041,11 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
     }
     else
     {
+        con->hdr.win32_handle = 0;
+        con->hdr.win32_funcs = NULL;
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = driver_connect_unix_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
@@ -6067,23 +6249,26 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *ServerName, SQL
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(con->hdr.win32_funcs = con->hdr.parent->win32_funcs = load_driver( filename )))
+        con->hdr.unix_handle = 0;
+        if (!(con->hdr.win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
         }
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = connect_win32_w( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
     }
     else
     {
+        con->hdr.win32_handle = 0;
+        con->hdr.win32_funcs = NULL;
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = connect_unix_w( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
@@ -6155,26 +6340,26 @@ SQLRETURN WINAPI SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
     return ret;
 }
 
-static SQLRETURN error_unix_w( struct environment *env, struct connection *con, struct statement *stmt, SQLWCHAR *state,
+static SQLRETURN error_unix_w( struct env_handle *env, struct connection *con, struct statement *stmt, SQLWCHAR *state,
                                SQLINTEGER *native_err, SQLWCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
 {
-    struct SQLErrorW_params params = { env ? env->hdr.unix_handle : 0, con ? con->hdr.unix_handle : 0,
+    struct SQLErrorW_params params = { env ? env->unix_handle : 0, con ? con->hdr.unix_handle : 0,
                                        stmt ? stmt->hdr.unix_handle : 0, state, native_err, msg, buflen, retlen };
     return ODBC_CALL( SQLErrorW, &params );
 }
 
-static SQLRETURN error_win32_w( struct environment *env, struct connection *con, struct statement *stmt, SQLWCHAR *state,
+static SQLRETURN error_win32_w( struct env_handle *env, struct connection *con, struct statement *stmt, SQLWCHAR *state,
                                 SQLINTEGER *native_err, SQLWCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
 {
     const struct win32_funcs *win32_funcs;
     SQLRETURN ret;
 
-    if (env) win32_funcs = env->hdr.win32_funcs;
+    if (env) win32_funcs = env->win32_funcs;
     else if (con) win32_funcs = con->hdr.win32_funcs;
     else win32_funcs = stmt->hdr.win32_funcs;
 
     if (win32_funcs->SQLErrorW)
-        return win32_funcs->SQLErrorW( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
+        return win32_funcs->SQLErrorW( env ? env->win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
                                        stmt ? stmt->hdr.win32_handle : NULL, state, native_err, msg, buflen, retlen );
     if (win32_funcs->SQLError)
     {
@@ -6182,7 +6367,7 @@ static SQLRETURN error_win32_w( struct environment *env, struct connection *con,
         SQLSMALLINT lenA;
 
         if (!(msgA = malloc( buflen * sizeof(*msgA) ))) return SQL_ERROR;
-        ret = win32_funcs->SQLError( env ? env->hdr.win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
+        ret = win32_funcs->SQLError( env ? env->win32_handle : NULL, con ? con->hdr.win32_handle : NULL,
                 stmt ? stmt->hdr.win32_handle : NULL, stateA, native_err, msgA, buflen, &lenA );
         if (SUCCESS( ret ))
         {
@@ -6211,7 +6396,7 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
     struct environment *env = (struct environment *)lock_object( EnvironmentHandle, SQL_HANDLE_ENV );
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
     struct statement *stmt = (struct statement *)lock_object( StatementHandle, SQL_HANDLE_STMT );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(EnvironmentHandle %p, ConnectionHandle %p, StatementHandle %p, SqlState %p, NativeError %p,"
           " MessageText %p, BufferLength %d, TextLength %p)\n", EnvironmentHandle, ConnectionHandle,
@@ -6219,13 +6404,33 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
 
     if (!env && !con && !stmt) return SQL_INVALID_HANDLE;
 
-    if ((env && env->hdr.unix_handle) || (con && con->hdr.unix_handle) || (stmt && stmt->hdr.unix_handle))
+    if ((con && con->hdr.unix_handle) || (stmt && stmt->hdr.unix_handle))
     {
-        ret = error_unix_w( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
+        ret = error_unix_w( NULL, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
-    else if ((env && env->hdr.win32_handle) || (con && con->hdr.win32_handle) || (stmt && stmt->hdr.win32_handle))
+    else if ((con && con->hdr.win32_handle) || (stmt && stmt->hdr.win32_handle))
     {
-        ret = error_win32_w( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
+        ret = error_win32_w( NULL, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
+    }
+    else if (env)
+    {
+        struct env_handle *env_handle;
+
+        LIST_FOR_EACH_ENTRY( env_handle, &env->env_handles, struct env_handle, entry )
+        {
+            if (env_handle->unix_handle)
+            {
+                ret = error_unix_w( env_handle, NULL, NULL, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+            else
+            {
+                ret = error_win32_w( env_handle, NULL, NULL, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+
+            if (ret != SQL_NO_DATA) break;
+        }
     }
 
     if (SUCCESS( ret ))
@@ -6731,7 +6936,7 @@ SQLRETURN WINAPI SQLGetDiagFieldW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLS
                                   SQLSMALLINT *StringLength)
 {
     struct object *obj = lock_object( Handle, HandleType );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, DiagIdentifier %d, DiagInfo %p, BufferLength %d,"
           " StringLength %p)\n", HandleType, Handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength, StringLength);
@@ -6747,6 +6952,33 @@ SQLRETURN WINAPI SQLGetDiagFieldW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLS
     {
         ret = get_diag_field_win32_w( HandleType, obj, RecNumber, DiagIdentifier, DiagInfo, BufferLength,
                                       StringLength );
+    }
+    else if (HandleType == SQL_HANDLE_ENV)
+    {
+        struct environment *env = (struct environment *)obj;
+        struct env_handle *env_handle;
+
+        LIST_FOR_EACH_ENTRY( env_handle, &env->env_handles, struct env_handle, entry )
+        {
+            struct object env_obj;
+
+            env_obj.unix_handle = env_handle->unix_handle;
+            env_obj.win32_handle = env_handle->win32_handle;
+            env_obj.win32_funcs = env_handle->win32_funcs;
+
+            if (env_handle->unix_handle)
+            {
+                ret = get_diag_field_unix_w( HandleType, &env_obj, RecNumber,
+                        DiagIdentifier, DiagInfo, BufferLength, StringLength );
+            }
+            else
+            {
+                ret = get_diag_field_win32_w( HandleType, &env_obj, RecNumber,
+                        DiagIdentifier, DiagInfo, BufferLength, StringLength );
+            }
+
+            if (ret != SQL_NO_DATA) break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -6832,6 +7064,33 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
     {
         ret = get_diag_rec_win32_w( HandleType, obj, RecNumber, SqlState, NativeError, MessageText, BufferLength,
                                     TextLength );
+    }
+    else if (HandleType == SQL_HANDLE_ENV)
+    {
+        struct environment *env = (struct environment *)obj;
+        struct env_handle *env_handle;
+
+        LIST_FOR_EACH_ENTRY( env_handle, &env->env_handles, struct env_handle, entry )
+        {
+            struct object env_obj;
+
+            env_obj.unix_handle = env_handle->unix_handle;
+            env_obj.win32_handle = env_handle->win32_handle;
+            env_obj.win32_funcs = env_handle->win32_funcs;
+
+            if (env_handle->unix_handle)
+            {
+                ret = get_diag_rec_unix_w( HandleType, &env_obj, RecNumber, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+            else
+            {
+                ret = get_diag_rec_win32_w( HandleType, &env_obj, RecNumber, SqlState,
+                        NativeError, MessageText, BufferLength, TextLength );
+            }
+
+            if (ret != SQL_NO_DATA) break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -7124,14 +7383,15 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(con->hdr.win32_funcs = con->hdr.parent->win32_funcs = load_driver( filename )))
+        con->hdr.unix_handle = 0;
+        if (!(con->hdr.win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
         }
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = driver_connect_win32_w( con, WindowHandle, InConnectionString, Length, OutConnectionString,
@@ -7139,9 +7399,11 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
     }
     else
     {
+        con->hdr.win32_handle = 0;
+        con->hdr.win32_funcs = NULL;
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = driver_connect_unix_w( con, WindowHandle, InConnectionString, Length, OutConnectionString,
@@ -7581,14 +7843,15 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(con->hdr.win32_funcs = con->hdr.parent->win32_funcs = load_driver( filename )))
+        con->hdr.unix_handle = 0;
+        if (!(con->hdr.win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
         }
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = browse_connect_win32_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,
@@ -7596,9 +7859,11 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
     }
     else
     {
+        con->hdr.win32_handle = 0;
+        con->hdr.win32_funcs = NULL;
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
 
-        if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
+        if (!SUCCESS((ret = create_env( con )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
         ret = browse_connect_unix_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,

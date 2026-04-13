@@ -194,9 +194,19 @@ struct object
     BOOL closed;
 };
 
+struct env_handle
+{
+    struct list entry;
+    int ref;
+    UINT64 unix_handle;
+    void *win32_handle;
+    const struct win32_funcs *win32_funcs;
+};
+
 struct environment
 {
     struct object hdr;
+    struct list env_handles; /* list of connections env handles */
     /* attributes */
     UINT32 attr_version;
     /* drivers and data sources */
@@ -210,6 +220,8 @@ struct environment
 struct connection
 {
     struct object hdr;
+    struct env_handle *env;
+    /* win32 fields */
     UINT32 driver_odbc_ver;
     /* attributes */
     BOOL con_timeout_set;
