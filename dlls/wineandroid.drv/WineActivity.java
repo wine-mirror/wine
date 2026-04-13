@@ -30,6 +30,8 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.system.ErrnoException;
 import android.util.Log;
@@ -52,6 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import static android.system.Os.setenv;
 import static android.system.Os.getenv;
@@ -59,6 +62,7 @@ import static android.system.Os.getenv;
 public class WineActivity extends Activity
 {
     private native String wine_init( String[] cmdline );
+    private native void wine_looper_init();
     public native void wine_desktop_changed( int width, int height );
     public native void wine_config_changed( int dpi );
     public native void wine_surface_changed( int hwnd, Surface surface, boolean opengl );
@@ -72,6 +76,8 @@ public class WineActivity extends Activity
     protected WineWindow desktop_window;
     protected WineWindow message_window;
     private PointerIcon current_cursor;
+
+    private static final Handler uiHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -834,31 +840,40 @@ public class WineActivity extends Activity
             win.pos_changed( flags, insert_after, owner, style, window_rect, client_rect, visible_rect );
     }
 
+    /* Always post to the UI thread handler instead of using runOnUiThread().
+     * runOnUiThread() may execute the runnable immediately if already on the
+     * UI thread, which can break assumptions about ordering and lead to crashes.
+     * We need deferred execution to preserve the original asynchronous behavior.
+     */
+    private void postToUiThread(Runnable r) {
+        uiHandler.post(r);
+    }
+
     public void createDesktopView()
     {
-        runOnUiThread( new Runnable() { public void run() { create_desktop_view(); }} );
+        postToUiThread( new Runnable() { public void run() { create_desktop_view(); }} );
     }
 
     public void createWindow( final int hwnd, final boolean is_desktop, final boolean opengl, final int parent )
     {
-        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, is_desktop, opengl, parent ); }} );
+        postToUiThread( new Runnable() { public void run() { create_window( hwnd, is_desktop, opengl, parent ); }} );
     }
 
     public void destroyWindow( final int hwnd )
     {
-        runOnUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
+        postToUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
     }
 
     public void setParent( final int hwnd, final int parent )
     {
-        runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent ); }} );
+        postToUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent ); }} );
     }
 
     public void setCursor( final int id, final int width, final int height,
                            final int hotspotx, final int hotspoty, final int bits[] )
     {
         if (Build.VERSION.SDK_INT < 24) return;
-        runOnUiThread( new Runnable() { public void run() { set_cursor( id, width, height, hotspotx, hotspoty, bits ); }} );
+        postToUiThread( new Runnable() { public void run() { set_cursor( id, width, height, hotspotx, hotspoty, bits ); }} );
     }
 
     public void windowPosChanged( final int hwnd, final int flags, final int insert_after,
@@ -873,8 +888,16 @@ public class WineActivity extends Activity
         final Rect window_rect = new Rect( window_left, window_top, window_right, window_bottom );
         final Rect client_rect = new Rect( client_left, client_top, client_right, client_bottom );
         final Rect visible_rect = new Rect( visible_left, visible_top, visible_right, visible_bottom );
-        runOnUiThread( new Runnable() {
+        postToUiThread( new Runnable() {
             public void run() { window_pos_changed( hwnd, flags, insert_after, owner, style,
                                                     window_rect, client_rect, visible_rect ); }} );
+    }
+
+    private void obtainLooper() {
+        CountDownLatch latch = new CountDownLatch(1);
+        runOnUiThread( new Runnable() { public void run() {
+            try { wine_looper_init(); } finally { latch.countDown(); }
+        }});
+        try { latch.await(); } catch ( Exception e ) {}
     }
 }

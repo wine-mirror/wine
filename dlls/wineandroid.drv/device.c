@@ -32,6 +32,8 @@
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/uio.h>
 #include <unistd.h>
 
 #include "ntstatus.h"
@@ -132,6 +134,14 @@ struct native_win_wrapper
     HWND                          hwnd;
     BOOL                          opengl;
     LONG                          ref;
+};
+
+#define IPC_SOCKET_NAME "\0\\Device\\WineAndroid"
+#define IPC_SOCKET_ADDR_LEN ((socklen_t)(offsetof(struct sockaddr_un, sun_path) + sizeof(IPC_SOCKET_NAME) - 1))
+
+static const struct sockaddr_un ipc_addr = {
+    .sun_family = AF_UNIX,
+    .sun_path = IPC_SOCKET_NAME,
 };
 
 struct ioctl_header
@@ -541,10 +551,8 @@ static jobject load_java_method( JNIEnv* env, jmethodID *method, const char *nam
     {
         jclass class;
 
-        wrap_java_call();
         class = (*env)->GetObjectClass( env, java_object );
         *method = (*env)->GetMethodID( env, class, name, args );
-        unwrap_java_call();
         if (!*method)
         {
             LOG( FIXME, "method %s not found\n", name );
@@ -559,10 +567,11 @@ static void create_desktop_view( JNIEnv* env )
     static jmethodID method;
     jobject object;
 
-    if (!(object = load_java_method( env, &method, "createDesktopView", "()V" ))) return;
-
     wrap_java_call();
+    if (!(object = load_java_method( env, &method, "createDesktopView", "()V" ))) goto end;
+
     (*env)->CallVoidMethod( env, object, method );
+end:
     unwrap_java_call();
 }
 
@@ -582,9 +591,7 @@ static NTSTATUS createWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWOR
 
     if (!(object = load_java_method( env, &method, "createWindow", "(IZZI)V" ))) return STATUS_NOT_SUPPORTED;
 
-    wrap_java_call();
     (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd, res->is_desktop, res->hdr.opengl, res->parent );
-    unwrap_java_call();
     return STATUS_SUCCESS;
 }
 
@@ -603,9 +610,7 @@ static NTSTATUS destroyWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWO
 
     if (!(object = load_java_method( env, &method, "destroyWindow", "(I)V" ))) return STATUS_NOT_SUPPORTED;
 
-    wrap_java_call();
     (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd );
-    unwrap_java_call();
     if (win_data) free_native_win_data( win_data );
     return STATUS_SUCCESS;
 }
@@ -625,12 +630,10 @@ static NTSTATUS windowPosChanged_ioctl( JNIEnv* env, void *data, DWORD in_size, 
     if (!(object = load_java_method( env, &method, "windowPosChanged", "(IIIIIIIIIIIIIIIII)V" )))
         return STATUS_NOT_SUPPORTED;
 
-    wrap_java_call();
     (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd, res->flags, res->after, res->owner, res->style,
                             res->window_rect.left, res->window_rect.top, res->window_rect.right, res->window_rect.bottom,
                             res->client_rect.left, res->client_rect.top, res->client_rect.right, res->client_rect.bottom,
                             res->visible_rect.left, res->visible_rect.top, res->visible_rect.right, res->visible_rect.bottom );
-    unwrap_java_call();
     return STATUS_SUCCESS;
 }
 
@@ -750,9 +753,7 @@ static NTSTATUS cancelBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWOR
     if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
 
     LOG( TRACE, "%08x buffer %p\n", res->hdr.hwnd, buffer );
-    wrap_java_call();
     ret = parent->cancelBuffer( parent, buffer, -1 );
-    unwrap_java_call();
     return android_error_to_status( ret );
 }
 
@@ -773,9 +774,7 @@ static NTSTATUS queueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD
     if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
 
     LOG( TRACE, "%08x buffer %p\n", res->hdr.hwnd, buffer );
-    wrap_java_call();
     ret = parent->queueBuffer( parent, buffer, -1 );
-    unwrap_java_call();
     return android_error_to_status( ret );
 }
 
@@ -793,9 +792,7 @@ static NTSTATUS query_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_s
     if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
 
     *ret_size = sizeof( *res );
-    wrap_java_call();
     ret = parent->query( parent, res->what, &res->value );
-    unwrap_java_call();
     return android_error_to_status( ret );
 }
 
@@ -814,57 +811,39 @@ static NTSTATUS perform_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out
     switch (res->operation)
     {
     case NATIVE_WINDOW_SET_BUFFERS_FORMAT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         if (!ret) win_data->buffer_format = res->args[0];
         break;
     case NATIVE_WINDOW_API_CONNECT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         if (!ret) win_data->api = res->args[0];
         break;
     case NATIVE_WINDOW_API_DISCONNECT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         if (!ret) win_data->api = 0;
         break;
     case NATIVE_WINDOW_SET_USAGE:
     case NATIVE_WINDOW_SET_BUFFERS_TRANSFORM:
     case NATIVE_WINDOW_SET_SCALING_MODE:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFER_COUNT:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, (size_t)res->args[0] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFERS_DIMENSIONS:
     case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0], res->args[1] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFERS_GEOMETRY:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0], res->args[1], res->args[2] );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_BUFFERS_TIMESTAMP:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, res->args[0] | ((int64_t)res->args[1] << 32) );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_CONNECT:
     case NATIVE_WINDOW_DISCONNECT:
     case NATIVE_WINDOW_UNLOCK_AND_POST:
-        wrap_java_call();
         ret = parent->perform( parent, res->operation );
-        unwrap_java_call();
         break;
     case NATIVE_WINDOW_SET_CROP:
     {
@@ -873,9 +852,7 @@ static NTSTATUS perform_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out
         rect.top    = res->args[1];
         rect.right  = res->args[2];
         rect.bottom = res->args[3];
-        wrap_java_call();
         ret = parent->perform( parent, res->operation, &rect );
-        unwrap_java_call();
         break;
     }
     case NATIVE_WINDOW_LOCK:
@@ -899,9 +876,7 @@ static NTSTATUS setSwapInterval_ioctl( JNIEnv* env, void *data, DWORD in_size, D
     win_data->swap_interval = res->interval;
 
     if (!(parent = win_data->parent)) return STATUS_SUCCESS;
-    wrap_java_call();
     ret = parent->setSwapInterval( parent, res->interval );
-    unwrap_java_call();
     return android_error_to_status( ret );
 }
 
@@ -920,9 +895,7 @@ static NTSTATUS setWindowParent_ioctl( JNIEnv* env, void *data, DWORD in_size, D
 
     if (!(object = load_java_method( env, &method, "setParent", "(II)V" ))) return STATUS_NOT_SUPPORTED;
 
-    wrap_java_call();
     (*env)->CallVoidMethod( env, object, method, res->hdr.hwnd, res->parent );
-    unwrap_java_call();
     return STATUS_SUCCESS;
 }
 
@@ -961,8 +934,6 @@ static NTSTATUS setCursor_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD o
     if (!(object = load_java_method( env, &method, "setCursor", "(IIIII[I)V" )))
         return STATUS_NOT_SUPPORTED;
 
-    wrap_java_call();
-
     if (size)
     {
         jintArray array = (*env)->NewIntArray( env, size );
@@ -972,8 +943,6 @@ static NTSTATUS setCursor_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD o
         (*env)->DeleteLocalRef( env, array );
     }
     else (*env)->CallVoidMethod( env, object, method, res->id, 0, 0, 0, 0, NULL );
-
-    unwrap_java_call();
 
     return STATUS_SUCCESS;
 }
@@ -1046,21 +1015,201 @@ NTSTATUS android_java_uninit( void *arg )
     return STATUS_SUCCESS;
 }
 
+static ALooper *looper;
+static JNIEnv *looper_env; /* JNIEnv for the main thread looper. Must only be used from that thread. */
+
+void looper_init( JNIEnv* env, jobject obj )
+{
+    looper_env = env;
+    if (!(looper = pALooper_forThread()))
+    {
+        LOG( ERR, "No looper for current thread\n" );
+        abort();
+    }
+    pALooper_acquire( looper );
+}
+
+/* Handle a single ioctl request from a client socket.
+ * Returns 0 if a request was handled successfully and the caller may
+ * continue draining the socket, -1 if there is nothing more to read
+ * for now, and 1 if the client fd should be closed.
+ */
+static int handle_ioctl_message( JNIEnv *env, int fd )
+{
+    char buffer[1024], control[CMSG_SPACE(sizeof(int))];
+    int code = 0, status = -EINVAL, reply_fd = -1;
+    ULONG_PTR reply_size = 0;
+    ssize_t ret;
+    struct iovec iov[2] = { { &code, sizeof(code) }, { buffer, sizeof(buffer) } };
+    struct iovec reply_iov[2] = { { &status, sizeof(status) }, { buffer, 0 } };
+    struct msghdr msg = { NULL, 0, iov, 2, NULL, 0, 0 };
+    struct msghdr reply = { NULL, 0, reply_iov, 2, NULL, 0, 0 };
+    struct cmsghdr *cmsg;
+
+    ret = recvmsg( fd, &msg, MSG_DONTWAIT );
+    if (ret < 0)
+    {
+        if (errno == EINTR) return 0;
+        if (errno == EAGAIN || errno == EWOULDBLOCK) return -1;
+        return 1;
+    }
+
+    if (!ret || ret < sizeof(code)) return 1;
+    ret -= sizeof(code);
+
+    if ((unsigned int)code < NB_IOCTLS)
+    {
+        if (ret >= sizeof(struct ioctl_header))
+        {
+            pthread_mutex_lock( &dispatch_ioctl_lock );
+            status = status_to_android_error(
+                ioctl_funcs[code]( env, buffer, ret, sizeof(buffer), &reply_size, &reply_fd ) );
+            pthread_mutex_unlock( &dispatch_ioctl_lock );
+        }
+    }
+    else
+    {
+        LOG( FIXME, "ioctl %x not supported\n", code );
+        status = -ENOTSUP;
+    }
+
+    reply_iov[1].iov_len = reply_size;
+    if (reply_fd != -1)
+    {
+        reply.msg_control = control;
+        reply.msg_controllen = sizeof(control);
+        cmsg = CMSG_FIRSTHDR( &reply );
+        cmsg->cmsg_level = SOL_SOCKET;
+        cmsg->cmsg_type = SCM_RIGHTS;
+        cmsg->cmsg_len = CMSG_LEN( sizeof(reply_fd) );
+        memcpy( CMSG_DATA(cmsg), &reply_fd, sizeof(reply_fd) );
+        reply.msg_controllen = cmsg->cmsg_len;
+    }
+
+    ret = sendmsg( fd, &reply, 0 );
+    if (reply_fd != -1) close( reply_fd );
+    return ret < 0 ? 1 : 0;
+}
+
+static int looper_handle_client( int fd, int events, void *data )
+{
+    for (;;)
+    {
+        int ret = (events & (ALOOPER_EVENT_HANGUP | ALOOPER_EVENT_ERROR)) ? 1 : handle_ioctl_message( looper_env, fd );
+
+        if (!ret) continue;
+
+        if (ret > 0)
+        {
+            pALooper_removeFd( looper, fd );
+            close( fd );
+        }
+        break;
+    }
+
+    return 1;
+}
+
+static int looper_handle_listen( int fd, int events, void *data )
+{
+    for (;;)
+    {
+        int client = accept4( fd, NULL, NULL, SOCK_CLOEXEC | SOCK_NONBLOCK );
+
+        if (client < 0)
+        {
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN || errno == EWOULDBLOCK) break;
+            LOG( ERR,  "accept4 failed: %s\n", strerror( errno ) );
+            break;
+        }
+
+        if (pALooper_addFd( looper, client, client, ALOOPER_EVENT_INPUT | ALOOPER_EVENT_HANGUP | ALOOPER_EVENT_ERROR, looper_handle_client, NULL ) != 1) {
+            LOG( ERR, "Failed to add client to ALooper\n" );
+            close( client );
+        }
+    }
+
+    return 1;
+}
+
+static void *bootstrap_looper_thread( void *arg )
+{
+    JNIEnv *env;
+    jmethodID method = NULL;
+    jobject object = NULL;
+    int sockfd;
+
+    if (!java_vm || (*java_vm)->AttachCurrentThread( java_vm, &env, 0 ) != JNI_OK)
+    {
+        LOG( ERR,  "Failed to attach current thread\n" );
+        return NULL;
+    }
+
+    if (!(object = load_java_method( env, &method, "obtainLooper", "()V" )))
+    {
+        LOG( ERR,  "Failed to obtain looper\n" );
+        abort();
+    }
+    (*env)->CallVoidMethod( env, object, method );
+
+    sockfd = socket( AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC | SOCK_NONBLOCK, 0 );
+    if (sockfd < 0)
+    {
+        LOG( ERR,  "Failed to open server socket: %s\n", strerror( errno ) );
+        abort();
+    }
+
+    if (bind( sockfd, (const struct sockaddr *)&ipc_addr, IPC_SOCKET_ADDR_LEN ) < 0 ||
+        listen( sockfd, 32 ) < 0)
+    {
+        LOG( ERR, "Failed to bind server socket: %s\n", strerror( errno ) );
+        close(sockfd);
+        abort();
+    }
+
+    if (pALooper_addFd( looper, sockfd, sockfd, ALOOPER_EVENT_INPUT, looper_handle_listen, NULL ) != 1) {
+        LOG( ERR, "Failed to add listening socket to main looper\n" );
+        close(sockfd);
+        abort();
+    }
+
+    (*java_vm)->DetachCurrentThread( java_vm );
+    return NULL;
+}
+
 void start_android_device(void)
 {
     void *ret_ptr;
     ULONG ret_len;
     struct dispatch_callback_params params = {.callback = start_device_callback};
+    pthread_t t;
+
     log_flags = __wine_dbg_get_channel_flags(&__wine_dbch_android);
+
+    /* Use a temporary bootstrap thread to request the main thread looper
+     * without interfering with the current Wine/JVM execution context
+     * (including register and thread-state assumptions). Actual ioctl
+     * dispatch then runs from the main thread looper.
+     */
+    if (!pthread_create( &t, NULL, bootstrap_looper_thread, NULL ))
+        pthread_join(t, NULL);
+    else
+    {
+        LOG( ERR, "Failed to spawn looper bootstrap thread\n" );
+        abort();
+    }
+
     if (KeUserDispatchCallback( &params, sizeof(params), &ret_ptr, &ret_len )) return;
     if (ret_len == sizeof(thread)) thread = *(HANDLE *)ret_ptr;
+    return;
 }
 
 
 /* Client-side ioctl support */
 
 
-static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size, int *reply_fd )
+static int android_ioctl_old( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size, int *reply_fd )
 {
     static const WCHAR deviceW[] = { '\\','D','e','v','i','c','e','\\','W','i','n','e','A','n','d','r','o','i','d', 0 };
     static HANDLE device;
@@ -1094,6 +1243,66 @@ static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void
     return status_to_android_error( status );
 }
 
+static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size, int *recv_fd )
+{
+    static int device_fd = -1;
+    static pthread_mutex_t device_mutex = PTHREAD_MUTEX_INITIALIZER;
+    int status, err = -ENOENT;
+    ssize_t ret;
+    char control[CMSG_SPACE(sizeof(int))];
+    struct iovec iov[2] = { { &status, sizeof(status) }, { out, out_size ? *out_size : 0 } };
+    struct msghdr msg = { NULL, 0, iov, (out && out_size) ? 2 : 1,
+                          recv_fd ? control : NULL, recv_fd ? sizeof(control) : 0, 0 };
+    struct cmsghdr *cmsg;
+
+    pthread_mutex_lock( &device_mutex );
+
+    if (recv_fd) *recv_fd = -1;
+
+    if (device_fd == -1)
+    {
+        device_fd = socket( AF_UNIX, SOCK_SEQPACKET, 0 );
+        if (device_fd < 0) goto done;
+        if (connect( device_fd, (const struct sockaddr *)&ipc_addr, IPC_SOCKET_ADDR_LEN ) < 0)
+        {
+            close( device_fd );
+            device_fd = -1;
+            goto done;
+        }
+    }
+
+    ret = writev( device_fd, (struct iovec[]){ { &code, sizeof(code) }, { in, in_size } }, 2 );
+    if (ret <= 0 || ret != sizeof(code) + in_size) goto disconnected;
+
+    ret = recvmsg( device_fd, &msg, 0 );
+    if (ret <= 0 || ret < sizeof(status)) goto disconnected;
+
+    if (out && out_size) *out_size = ret - sizeof(status);
+    err = status;
+
+    if (recv_fd)
+        for (cmsg = CMSG_FIRSTHDR( &msg ); cmsg; cmsg = CMSG_NXTHDR( &msg, cmsg ))
+            if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS &&
+                cmsg->cmsg_len >= CMSG_LEN(sizeof(int)))
+            {
+                memcpy( recv_fd, CMSG_DATA(cmsg), sizeof(int) );
+                break;
+            }
+
+    goto done;
+
+disconnected:
+    close( device_fd );
+    device_fd = -1;
+    WARN( "parent process is gone\n" );
+    NtTerminateProcess( 0, 1 );
+    err = -ENOENT;
+
+done:
+    pthread_mutex_unlock( &device_mutex );
+    return err;
+}
+
 static void win_incRef( struct android_native_base_t *base )
 {
     struct native_win_wrapper *win = (struct native_win_wrapper *)base;
@@ -1120,7 +1329,7 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
     res.buffer_id = -1;
     res.generation = 0;
 
-    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size, NULL );
+    ret = android_ioctl_old( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size, NULL );
     if (ret) return ret;
     if (size < sizeof(res)) return -EINVAL;
 

@@ -28,6 +28,7 @@
 #include <jni.h>
 #include <android/log.h>
 #include <android/input.h>
+#include <android/looper.h>
 #include <android/native_window_jni.h>
 
 #include "windef.h"
@@ -58,6 +59,11 @@ DECL_FUNCPTR( AHardwareBuffer_unlock );
 DECL_FUNCPTR( AHardwareBuffer_recvHandleFromUnixSocket );
 DECL_FUNCPTR( AHardwareBuffer_sendHandleToUnixSocket );
 DECL_FUNCPTR( ANativeWindowBuffer_getHardwareBuffer );
+DECL_FUNCPTR( ALooper_acquire );
+DECL_FUNCPTR( ALooper_forThread );
+DECL_FUNCPTR( ALooper_addFd );
+DECL_FUNCPTR( ALooper_removeFd );
+DECL_FUNCPTR( ALooper_release );
 #endif
 
 #undef DECL_FUNCPTR
@@ -137,6 +143,7 @@ extern void set_screen_dpi( DWORD dpi );
 extern void update_keyboard_lock_state( WORD vkey, UINT state );
 
 /* JNI entry points */
+extern void looper_init( JNIEnv *env, jobject obj );
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height );
 extern void config_changed( JNIEnv *env, jobject obj, jint dpi );
 extern void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface,

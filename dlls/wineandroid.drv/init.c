@@ -326,6 +326,7 @@ static const struct user_driver_funcs android_drv_funcs =
 
 static const JNINativeMethod methods[] =
 {
+    { "wine_looper_init", "()V", looper_init },
     { "wine_desktop_changed", "(II)V", desktop_changed },
     { "wine_config_changed", "(I)V", config_changed },
     { "wine_surface_changed", "(ILandroid/view/Surface;Z)V", surface_changed },
@@ -350,6 +351,11 @@ DECL_FUNCPTR( AHardwareBuffer_unlock );
 DECL_FUNCPTR( AHardwareBuffer_recvHandleFromUnixSocket );
 DECL_FUNCPTR( AHardwareBuffer_sendHandleToUnixSocket );
 DECL_FUNCPTR( ANativeWindowBuffer_getHardwareBuffer );
+DECL_FUNCPTR( ALooper_acquire );
+DECL_FUNCPTR( ALooper_forThread );
+DECL_FUNCPTR( ALooper_addFd );
+DECL_FUNCPTR( ALooper_removeFd );
+DECL_FUNCPTR( ALooper_release );
 
 static void load_android_libs(void)
 {
@@ -378,6 +384,11 @@ static void load_android_libs(void)
     LOAD_FUNCPTR( libandroid, AHardwareBuffer_recvHandleFromUnixSocket );
     LOAD_FUNCPTR( libandroid, AHardwareBuffer_sendHandleToUnixSocket );
     LOAD_FUNCPTR( libandroid, ANativeWindowBuffer_getHardwareBuffer );
+    LOAD_FUNCPTR( libandroid, ALooper_acquire );
+    LOAD_FUNCPTR( libandroid, ALooper_forThread );
+    LOAD_FUNCPTR( libandroid, ALooper_addFd );
+    LOAD_FUNCPTR( libandroid, ALooper_removeFd );
+    LOAD_FUNCPTR( libandroid, ALooper_release );
 }
 
 #undef DECL_FUNCPTR
