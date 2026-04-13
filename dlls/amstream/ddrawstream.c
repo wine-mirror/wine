@@ -988,7 +988,9 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
         mts[0] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         memset(mts[0], 0, sizeof(AM_MEDIA_TYPE));
         mts[0]->majortype = MEDIATYPE_Video;
-        if (enum_media_types->stream->format.flags & DDSD_PIXELFORMAT)
+        if (enum_media_types->stream->peer)
+            mts[0]->subtype = enum_media_types->stream->mt.subtype;
+        else if (enum_media_types->stream->format.flags & DDSD_PIXELFORMAT)
             subtype_from_pf(&mts[0]->subtype, &format->pf);
         else
             mts[0]->subtype = MEDIASUBTYPE_RGB8;

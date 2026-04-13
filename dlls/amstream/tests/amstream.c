@@ -3185,10 +3185,8 @@ static void test_media_types(void)
             hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
             ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Unexpected media type %s.\n", wine_dbgstr_guid(&pmt->majortype));
-            todo_wine
             ok(IsEqualGUID(&pmt->subtype, rejected_subtypes[i].guid), "Unexpected media subtype %s.\n", wine_dbgstr_guid(&pmt->subtype));
             ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Unexpected media formattype %s.\n", wine_dbgstr_guid(&pmt->formattype));
-            todo_wine
             ok(pmt->lSampleSize == 40000 * rejected_subtypes[i].bytes_per_pixel, "Unexpected sample size %lu.\n", pmt->lSampleSize);
             DeleteMediaType(pmt);
 
