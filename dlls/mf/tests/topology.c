@@ -2446,6 +2446,19 @@ static void test_topology_loader(void)
         ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
         ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
     };
+    static const media_type_desc video_yuy2_1280 =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1280, 720),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 1280 * 720 * 3 / 2),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 1280),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
+    };
     static const media_type_desc video_dummy =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -2455,7 +2468,7 @@ static void test_topology_loader(void)
     {
         const media_type_desc *input_types[2];
         const media_type_desc *output_types[2];
-        const media_type_desc *mft_input_type;
+        const media_type_desc *mft_input_types[3];
         const media_type_desc *mft_output_types[5];
         const media_type_desc *current_input;
         const media_type_desc *mft_current_output;
@@ -2464,6 +2477,7 @@ static void test_topology_loader(void)
         MF_CONNECT_METHOD source_method;
         MF_CONNECT_METHOD sink_method;
         HRESULT expected_result;
+        unsigned int mft_current_input_1based_index;
         unsigned int expected_output_index;
         unsigned int flags;
         GUID decoder_class;
@@ -2681,17 +2695,17 @@ static void test_topology_loader(void)
             .flags = LOADER_ADD_TEST_MFT | LOADER_NO_CURRENT_OUTPUT,
         },
         {
-            /* MP3 -> PCM, different enumerated bps, add test MFT, configure MFT */
+            /* MP3 -> PCM, different enumerated bps, add test MFT */
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_pcm_48000}, .sink_method = MF_CONNECT_DIRECT, .source_method = MF_CONNECT_DIRECT,
-            .mft_input_type = &audio_pcm_44100, .mft_output_types = {&audio_pcm_48000},
+            .mft_input_types = {&audio_pcm_44100}, .mft_output_types = {&audio_pcm_48000},
             .decoded_type = &audio_pcm_44100,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject,
             .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
         {
-            /* MP3 -> PCM, different enumerated bps, add incompatible test MFT, configure MFT */
+            /* MP3 -> PCM, different enumerated bps, add incompatible test MFT */
             .input_types = {&audio_mp3_44100}, .output_types = {&audio_pcm_48000}, .sink_method = MF_CONNECT_DIRECT, .source_method = MF_CONNECT_DIRECT,
-            .mft_input_type = &audio_aac_44100, .mft_output_types = {&audio_pcm_48000},
+            .mft_input_types = {&audio_aac_44100}, .mft_output_types = {&audio_pcm_48000},
             .expected_result = MF_E_TOPO_CODEC_NOT_FOUND,
             .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
@@ -2822,23 +2836,32 @@ static void test_topology_loader(void)
         {
             /* H264 -> RGB32, Color Convert media type, add test MFT */
             .input_types = {&video_h264_1280}, .output_types = {&video_color_convert_1280_rgb32}, .sink_method = -1, .source_method = -1,
-            .mft_input_type = &video_color_convert_1280_rgb32, .mft_output_types = {&video_color_convert_1280_rgb32},
+            .mft_input_types = {&video_color_convert_1280_rgb32}, .mft_output_types = {&video_color_convert_1280_rgb32},
             .expected_result = MF_E_TOPO_CODEC_NOT_FOUND, .decoder_class = CLSID_CMSH264DecoderMFT,
             .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
         {
             /* H264 -> RGB32, Video Processor media type, add test MFT */
             .input_types = {&video_h264_1280}, .output_types = {&video_video_processor_1280_rgb32}, .sink_method = -1, .source_method = -1,
-            .mft_input_type = &video_video_processor_1280_rgb32, .mft_output_types = {&video_video_processor_1280_rgb32},
+            .mft_input_types = {&video_video_processor_1280_rgb32}, .mft_output_types = {&video_video_processor_1280_rgb32},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT, .converter_class = CLSID_CColorConvertDMO,
             .flags = LOADER_ADD_TEST_MFT | LOADER_TEST_MFT_EXPECT_CONVERTER | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
         },
         {
             /* H264 -> NV12, add test MFT */
             .input_types = {&video_h264_1280}, .output_types = {&video_nv12_1280}, .sink_method = -1, .source_method = -1,
-            .mft_input_type = &video_nv12_1280, .mft_output_types = {&video_nv12_1280},
+            .mft_input_types = {&video_nv12_1280}, .mft_output_types = {&video_nv12_1280},
             .expected_result = S_OK, .decoder_class = CLSID_CMSH264DecoderMFT,
             .flags = LOADER_ADD_TEST_MFT | LOADER_EXPECT_MFT_INPUT_ENUMERATED,
+        },
+
+        {
+            /* NV12 -> NV12, add test MFT, set unsupported MFT input */
+            .input_types = {&video_nv12_1280}, .output_types = {&video_nv12_1280}, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
+            .mft_input_types = {&video_nv12_1280, &video_yuy2_1280}, .mft_output_types = {&video_nv12_1280},
+            .mft_current_input_1based_index = 2,
+            .expected_result = S_OK,
+            .flags = LOADER_ADD_TEST_MFT,
         },
     };
 
@@ -2987,7 +3010,7 @@ static void test_topology_loader(void)
         const struct loader_test *test = &loader_tests[i];
         struct test_transform *test_transform = NULL;
         IMFMediaType *mft_output_types[4] = {0};
-        IMFMediaType *mft_input_type = NULL;
+        IMFMediaType *mft_input_types[2] = {0};
 
         winetest_push_context("%u", i);
 
@@ -3042,21 +3065,25 @@ static void test_topology_loader(void)
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             if (test->flags & LOADER_ADD_TEST_MFT)
             {
-                mft_input_type = input_types[0];
+                UINT input_count, output_count;
 
-                if (test->mft_input_type)
+                for (input_count = 0; test->mft_input_types[input_count]; ++input_count)
                 {
-                    hr = MFCreateMediaType(&mft_input_type);
+                    hr = MFCreateMediaType(&mft_input_types[input_count]);
                     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
-                    init_media_type(mft_input_type, *test->mft_input_type, -1);
+                    init_media_type(mft_input_types[input_count], *test->mft_input_types[input_count], -1);
                 }
-                for (j = 0; test->mft_output_types[j]; ++j)
+                if (!input_count)
+                    IMFMediaType_AddRef(mft_input_types[input_count++] = input_types[0]);
+
+                for (output_count = 0; test->mft_output_types[output_count]; ++output_count)
                 {
-                    hr = MFCreateMediaType(&mft_output_types[j]);
+                    hr = MFCreateMediaType(&mft_output_types[output_count]);
                     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
-                    init_media_type(mft_output_types[j], *test->mft_output_types[j], -1);
+                    init_media_type(mft_output_types[output_count], *test->mft_output_types[output_count], -1);
                 }
-                test_transform_create(1, &mft_input_type, j, mft_output_types, FALSE, &transform);
+
+                test_transform_create(input_count, mft_input_types, output_count, mft_output_types, FALSE, &transform);
                 test_transform = test_transform_from_IMFTransform(transform);
                 IMFTransform_AddRef(transform);
             }
@@ -3082,7 +3109,13 @@ static void test_topology_loader(void)
             }
             else
             {
-                IMFTransform_SetInputType(transform, 0, NULL, 0);
+                if (test->mft_current_input_1based_index)
+                {
+                    hr = IMFTransform_SetInputType(transform, 0, mft_input_types[test->mft_current_input_1based_index - 1], 0);
+                    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                }
+                else
+                    IMFTransform_SetInputType(transform, 0, NULL, 0);
                 IMFTransform_SetOutputType(transform, 0, NULL, 0);
             }
             IMFTransform_Release(transform);
@@ -3176,6 +3209,7 @@ todo_wine {
 
             hr = IMFTopology_GetNodeCount(full_topology, &node_count);
             ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
+            todo_wine_if(test->mft_current_input_1based_index)
             ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             hr = IMFTopologyNode_GetTopoNodeID(src_node, &node_id);
@@ -3396,8 +3430,8 @@ todo_wine {
         ok(ref == 0, "Release returned %ld\n", ref);
         ref = IMFStreamDescriptor_Release(sd);
         ok(ref == 0, "Release returned %ld\n", ref);
-        if (mft_input_type && test->mft_input_type)
-            IMFMediaType_Release(mft_input_type);
+        for (j = 0; j < ARRAY_SIZE(mft_input_types) && mft_input_types[j]; ++j)
+            IMFMediaType_Release(mft_input_types[j]);
         for (j = 0; j < ARRAY_SIZE(mft_output_types) && mft_output_types[j]; ++j)
             IMFMediaType_Release(mft_output_types[j]);
 
