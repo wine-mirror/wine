@@ -3789,6 +3789,8 @@ static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
         cnt = item->script_obj->global_funcs_cnt;
         for(i = 0; i < cnt; i++) {
             if(!vbs_wcsicmp(funcs[i]->name, name)) {
+                if(!res)
+                    return S_OK;
                 hres = create_func_ref(This->ctx, funcs[i], &disp);
                 if(FAILED(hres))
                     return hres;
@@ -3804,6 +3806,8 @@ static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
     cnt = This->ctx->script_obj->global_funcs_cnt;
     for(i = 0; i < cnt; i++) {
         if(!vbs_wcsicmp(funcs[i]->name, name)) {
+            if(!res)
+                return S_OK;
             hres = create_func_ref(This->ctx, funcs[i], &disp);
             if(FAILED(hres))
                 return hres;

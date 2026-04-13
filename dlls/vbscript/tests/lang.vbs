@@ -2988,6 +2988,16 @@ Err.Clear
 Set getRefRef = GetRef(vbNullString)
 Call ok(Err.Number = 5, "GetRef vbNullString error is " & Err.Number)
 
+' GetRef called as a statement (result discarded). Must not crash even
+' though no res pointer is passed to the builtin.
+Err.Clear
+Call GetRef("GetRefTestFunc")
+Call ok(Err.Number = 0, "Call GetRef statement err = " & Err.Number)
+
+Err.Clear
+GetRef "GetRefTestFunc"
+Call ok(Err.Number = 0, "Bare GetRef statement err = " & Err.Number)
+
 ' Eval tests
 Call ok(Eval("1 + 2") = 3, "Eval(""1 + 2"") = " & Eval("1 + 2"))
 Call ok(Eval("""test""") = "test", "Eval(""""""test"""""") = " & Eval("""test"""))
