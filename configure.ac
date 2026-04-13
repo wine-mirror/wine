@@ -1755,7 +1755,7 @@ AC_SUBST(ALSA_LIBS,"")
 if test "x$with_alsa" != "xno"
 then
     WINE_PACKAGE_FLAGS(ALSA,[alsa],[-lasound],,,
-        [AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access_mask,[:],[ALSA_LIBS=""])])
+        [AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access_mask,[:],[ALSA_LIBS=""],[$ALSA_LIBS])])
 fi
 WINE_NOTICE_WITH(alsa,[test -z "$ALSA_LIBS"],
                  [libasound ${notice_platform}development files not found, Alsa won't be supported.],
