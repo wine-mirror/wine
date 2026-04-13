@@ -50,8 +50,6 @@ static const unsigned int screen_bpp = 32;  /* we don't support other modes */
 static RECT monitor_rc_work;
 static int device_init_done;
 
-UINT64 start_device_callback;
-
 typedef struct
 {
     struct gdi_physdev dev;
@@ -394,7 +392,7 @@ static void load_android_libs(void)
 #undef DECL_FUNCPTR
 #undef LOAD_FUNCPTR
 
-static HRESULT android_init( void *arg )
+NTSTATUS __wine_unix_lib_init(void)
 {
     pthread_mutexattr_t attr;
     jclass class;
@@ -406,8 +404,6 @@ static HRESULT android_init( void *arg )
     pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
     pthread_mutex_init( &win_data_mutex, &attr );
     pthread_mutexattr_destroy( &attr );
-
-    start_device_callback = (UINT64)(UINT_PTR)arg;
 
     if (java_vm)  /* running under Java */
     {
@@ -427,14 +423,3 @@ static HRESULT android_init( void *arg )
     __wine_set_user_driver( &android_drv_funcs, WINE_GDI_DRIVER_VERSION );
     return STATUS_SUCCESS;
 }
-
-const unixlib_entry_t __wine_unix_call_funcs[] =
-{
-    android_dispatch_ioctl,
-    android_init,
-    android_java_init,
-    android_java_uninit,
-};
-
-
-C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );

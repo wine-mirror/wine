@@ -77,8 +77,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(android);
 #define SYNC_IOC_WAIT _IOW('>', 0, __s32)
 #endif
 
-static HANDLE thread;
-static JNIEnv *jni_env;
 static HWND capture_window;
 static HWND desktop_window;
 
@@ -236,49 +234,6 @@ struct ioctl_android_set_cursor
     int                 hotspoty;
     int                 bits[1];
 };
-
-
-static inline BOOL is_in_desktop_process(void)
-{
-    return thread != NULL;
-}
-
-#ifdef __i386__  /* the Java VM uses %fs/%gs for its own purposes, so we need to wrap the calls */
-
-static WORD orig_fs, java_fs;
-static inline void wrap_java_call(void)   { __asm__( "mov %0,%%fs" :: "r" (java_fs) ); }
-static inline void unwrap_java_call(void) { __asm__( "mov %0,%%fs" :: "r" (orig_fs) ); }
-static inline void init_java_thread( JavaVM *java_vm, JNIEnv** env )
-{
-    java_fs = java_gdt_sel;
-    __asm__( "mov %%fs,%0" : "=r" (orig_fs) );
-    __asm__( "mov %0,%%fs" :: "r" (java_fs) );
-    (*java_vm)->AttachCurrentThread( java_vm, env, 0 );
-    if (!java_gdt_sel) __asm__( "mov %%fs,%0" : "=r" (java_fs) );
-    __asm__( "mov %0,%%fs" :: "r" (orig_fs) );
-}
-
-#elif defined(__x86_64__)
-
-#include <asm/prctl.h>
-#include <asm/unistd.h>
-static void *orig_teb, *java_teb;
-static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
-static inline void wrap_java_call(void)   { arch_prctl( ARCH_SET_GS, java_teb ); }
-static inline void unwrap_java_call(void) { arch_prctl( ARCH_SET_GS, orig_teb ); }
-static inline void init_java_thread( JavaVM *java_vm, JNIEnv** env )
-{
-    arch_prctl( ARCH_GET_GS, &orig_teb );
-    (*java_vm)->AttachCurrentThread( java_vm, env, 0 );
-    arch_prctl( ARCH_GET_GS, &java_teb );
-    arch_prctl( ARCH_SET_GS, orig_teb );
-}
-
-#else
-static inline void wrap_java_call(void) { }
-static inline void unwrap_java_call(void) { }
-static inline void init_java_thread( JavaVM *java_vm, JNIEnv** env ) { (*java_vm)->AttachCurrentThread( java_vm, env, 0 ); }
-#endif  /* __i386__ */
 
 static struct native_win_data *data_map[65536];
 
@@ -565,12 +520,9 @@ static void create_desktop_view( JNIEnv* env )
     static jmethodID method;
     jobject object;
 
-    wrap_java_call();
-    if (!(object = load_java_method( env, &method, "createDesktopView", "()V" ))) goto end;
+    if (!(object = load_java_method( env, &method, "createDesktopView", "()V" ))) return;
 
     (*env)->CallVoidMethod( env, object, method );
-end:
-    unwrap_java_call();
 }
 
 static NTSTATUS createWindow_ioctl( JNIEnv* env, void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size, int *reply_fd )
@@ -933,57 +885,6 @@ static const ioctl_func ioctl_funcs[] =
     setCursor_ioctl,            /* IOCTL_SET_CURSOR */
 };
 
-NTSTATUS android_dispatch_ioctl( void *arg )
-{
-    IRP *irp = arg;
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    DWORD code = (irpsp->Parameters.DeviceIoControl.IoControlCode - ANDROID_IOCTL(0)) >> 2;
-
-    if (code < NB_IOCTLS)
-    {
-        struct ioctl_header *header = irp->AssociatedIrp.SystemBuffer;
-        DWORD in_size = irpsp->Parameters.DeviceIoControl.InputBufferLength;
-        ioctl_func func = ioctl_funcs[code];
-
-        if (in_size >= sizeof(*header))
-        {
-            int reply_fd = -1;
-            irp->IoStatus.Information = 0;
-            pthread_mutex_lock(&dispatch_ioctl_lock);
-            irp->IoStatus.Status = func( jni_env, irp->AssociatedIrp.SystemBuffer, in_size,
-                                         irpsp->Parameters.DeviceIoControl.OutputBufferLength,
-                                         &irp->IoStatus.Information, &reply_fd );
-            pthread_mutex_unlock(&dispatch_ioctl_lock);
-        }
-        else irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-    }
-    else
-    {
-        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
-        irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
-    }
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS android_java_init( void *arg )
-{
-    if (!java_vm) return STATUS_UNSUCCESSFUL;  /* not running under Java */
-
-    init_java_thread( java_vm, &jni_env );
-    create_desktop_view( jni_env );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS android_java_uninit( void *arg )
-{
-    if (!java_vm) return STATUS_UNSUCCESSFUL;  /* not running under Java */
-
-    wrap_java_call();
-    (*java_vm)->DetachCurrentThread( java_vm );
-    unwrap_java_call();
-    return STATUS_SUCCESS;
-}
-
 static ALooper *looper;
 static JNIEnv *looper_env; /* JNIEnv for the main thread looper. Must only be used from that thread. */
 
@@ -1143,15 +1044,14 @@ static void *bootstrap_looper_thread( void *arg )
         abort();
     }
 
+    create_desktop_view( env );
+
     (*java_vm)->DetachCurrentThread( java_vm );
     return NULL;
 }
 
 void start_android_device(void)
 {
-    void *ret_ptr;
-    ULONG ret_len;
-    struct dispatch_callback_params params = {.callback = start_device_callback};
     pthread_t t;
 
     log_flags = __wine_dbg_get_channel_flags(&__wine_dbch_android);
@@ -1168,49 +1068,11 @@ void start_android_device(void)
         LOG( ERR, "Failed to spawn looper bootstrap thread\n" );
         abort();
     }
-
-    if (KeUserDispatchCallback( &params, sizeof(params), &ret_ptr, &ret_len )) return;
-    if (ret_len == sizeof(thread)) thread = *(HANDLE *)ret_ptr;
-    return;
 }
 
 
 /* Client-side ioctl support */
 
-
-static int android_ioctl_old( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size, int *reply_fd )
-{
-    static const WCHAR deviceW[] = { '\\','D','e','v','i','c','e','\\','W','i','n','e','A','n','d','r','o','i','d', 0 };
-    static HANDLE device;
-    IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
-
-    if (!device)
-    {
-        OBJECT_ATTRIBUTES attr;
-        UNICODE_STRING name = RTL_CONSTANT_STRING( deviceW );
-        IO_STATUS_BLOCK io;
-        NTSTATUS status;
-        HANDLE file;
-
-        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
-        status = NtCreateFile( &file, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
-                               FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
-                               FILE_NON_DIRECTORY_FILE, NULL, 0 );
-        if (status) return -ENOENT;
-        if (InterlockedCompareExchangePointer( &device, file, NULL )) NtClose( file );
-    }
-
-    status = NtDeviceIoControlFile( device, NULL, NULL, NULL, &iosb, ANDROID_IOCTL(code),
-                                    in, in_size, out, out_size ? *out_size : 0 );
-    if (status == STATUS_FILE_DELETED)
-    {
-        WARN( "parent process is gone\n" );
-        NtTerminateProcess( 0, 1 );
-    }
-    if (out_size) *out_size = iosb.Information;
-    return status_to_android_error( status );
-}
 
 static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size, int *recv_fd )
 {
@@ -1683,8 +1545,5 @@ int ioctl_set_cursor( int id, int width, int height,
  */
 void ANDROID_SetDesktopWindow( HWND hwnd )
 {
-    if (!is_in_desktop_process())
-        return;
-    TRACE( "%p\n", hwnd );
     desktop_window = hwnd;
 }

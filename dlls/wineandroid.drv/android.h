@@ -35,7 +35,8 @@
 #include "winbase.h"
 #include "ntgdi.h"
 #include "wine/gdi_driver.h"
-#include "unixlib.h"
+#include "ntuser.h"
+#include "wine/unixlib.h"
 #include "android_native.h"
 
 
@@ -120,13 +121,6 @@ extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_h
 extern ANativeWindow *get_client_window( HWND hwnd );
 extern BOOL has_client_surface( HWND hwnd );
 
-/* unixlib interface */
-
-extern NTSTATUS android_dispatch_ioctl( void *arg );
-extern NTSTATUS android_java_init( void *arg );
-extern NTSTATUS android_java_uninit( void *arg );
-extern UINT64 start_device_callback;
-
 extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern RECT virtual_screen_rect;
@@ -203,7 +197,6 @@ int send_event( const union event_data *data );
 
 extern JavaVM *java_vm;
 extern jobject java_object;
-extern unsigned short java_gdt_sel;
 
 /* string helpers */
 
