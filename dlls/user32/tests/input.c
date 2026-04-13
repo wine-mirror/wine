@@ -5250,8 +5250,26 @@ static void test_input_message_source(void)
 
 static void test_UnregisterDeviceNotification(void)
 {
-    BOOL ret = UnregisterDeviceNotification(NULL);
-    ok(ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret);
+    const char *not_a_devnotify = "this is a valid but garbage pointer";
+    BOOL ret;
+
+    /* NULL gives ERROR_INVALID_HANDLE */
+    SetLastError( 0xdeadbeef );
+    ret = UnregisterDeviceNotification( NULL );
+    ok( ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret );
+    ok_ret( ERROR_INVALID_HANDLE, GetLastError() );
+
+    /* A valid pointer that isn't an HDEVNOTIFY gives ERROR_INVALID_HANDLE */
+    SetLastError( 0xdeadbeef );
+    ret = UnregisterDeviceNotification( (HDEVNOTIFY)not_a_devnotify );
+    ok( ret == FALSE, "Unregistering invalid HDEVNOTIFY returned: %d\n", ret );
+    ok_ret( ERROR_INVALID_HANDLE, GetLastError() );
+
+    /* A non-null faulting pointer gives ERROR_SERVICE_SPECIFIC_ERROR */
+    SetLastError( 0xdeadbeef );
+    ret = UnregisterDeviceNotification( (HDEVNOTIFY)0xdeadbeef );
+    ok( ret == FALSE, "Unregistering invalid HDEVNOTIFY returned: %d\n", ret );
+    ok_ret( ERROR_SERVICE_SPECIFIC_ERROR, GetLastError() );
 }
 
 static void test_SendInput( WORD vkey, WCHAR wch, HKL hkl )

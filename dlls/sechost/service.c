@@ -1979,8 +1979,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceCtrlDispatcherW( const SERVICE_TABLE_E
 static HANDLE device_notify_thread;
 static struct list device_notify_list = LIST_INIT(device_notify_list);
 
+#define DEVICE_NOTIFY_MAGIC 0xdecafbad
+
 struct device_notify
 {
+    DWORD magic;
     struct list entry;
     WCHAR *path;
     HANDLE handle;
@@ -1995,6 +1998,7 @@ static struct device_notify *device_notify_copy( struct device_notify *notify, D
     struct device_notify *event;
 
     if (!(event = calloc( 1, sizeof(*event) + header->dbch_size ))) return NULL;
+    event->magic = DEVICE_NOTIFY_MAGIC;
     event->handle = notify->handle;
     event->callback = notify->callback;
     memcpy( event->header, header, header->dbch_size );
@@ -2143,6 +2147,7 @@ HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( HANDLE handle, DEV_BROADCAST_H
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
     }
+    notify->magic = DEVICE_NOTIFY_MAGIC;
     notify->handle = handle;
     notify->callback = callback;
     memcpy( notify->header, filter, filter->dbch_size );
@@ -2183,16 +2188,37 @@ HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( HANDLE handle, DEV_BROADCAST_H
 BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle )
 {
     struct device_notify *notify = handle;
+    BOOL ret = TRUE;
 
     TRACE("%p\n", handle);
 
     if (!handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
+    }
 
     EnterCriticalSection( &service_cs );
-    list_remove( &notify->entry );
+
+    __TRY
+    {
+        if (notify->magic != DEVICE_NOTIFY_MAGIC)
+        {
+            SetLastError( ERROR_INVALID_HANDLE );
+            ret = FALSE;
+        }
+
+        list_remove( &notify->entry );
+        free( notify->path );
+        free( notify );
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        SetLastError( ERROR_SERVICE_SPECIFIC_ERROR );
+        ret = FALSE;
+    }
+    __ENDTRY
+
     LeaveCriticalSection(&service_cs);
-    free( notify->path );
-    free( notify );
-    return TRUE;
+    return ret;
 }
