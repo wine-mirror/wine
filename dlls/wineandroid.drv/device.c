@@ -177,8 +177,6 @@ struct ioctl_android_window_pos_changed
 struct ioctl_android_dequeueBuffer
 {
     struct ioctl_header hdr;
-    HANDLE handle;
-    DWORD pid;
     int buffer_id;
     int generation;
 };
@@ -652,14 +650,11 @@ static NTSTATUS dequeueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWO
     if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
     if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
 
-    res->handle = 0;
     res->buffer_id = -1;
     res->generation = 0;
     *ret_size = sizeof(*res);
 
-    wrap_java_call();
     ret = parent->dequeueBuffer( parent, &buffer, &fence );
-    unwrap_java_call();
     if (ret)
     {
         LOG( ERR, "%08x failed %d\n", res->hdr.hwnd, ret );
@@ -677,15 +672,10 @@ static NTSTATUS dequeueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWO
 
     res->buffer_id = register_buffer( win_data, ahb, &is_new );
     res->generation = win_data->generation;
-    res->handle = 0;
 
     if (is_new)
     {
         int sv[2] = { -1, -1 };
-        HANDLE local = 0;
-        OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
-        CLIENT_ID cid = { .UniqueProcess = UlongToHandle( res->pid ) };
-        HANDLE process;
 
         if (!ahb)
         {
@@ -699,37 +689,16 @@ static NTSTATUS dequeueBuffer_ioctl( JNIEnv* env, void *data, DWORD in_size, DWO
             return STATUS_UNSUCCESSFUL;
         }
 
-        if (NtOpenProcess( &process, PROCESS_DUP_HANDLE, &attr, &cid ))
-        {
-            close( sv[0] );
-            close( sv[1] );
-            wait_fence_and_close( fence );
-            return STATUS_UNSUCCESSFUL;
-        }
-
-        if (!wine_server_fd_to_handle( dup(sv[1]), GENERIC_READ | SYNCHRONIZE, 0, &local ))
-        {
-            NTSTATUS status = NtDuplicateObject( GetCurrentProcess(), local, process, &res->handle, 0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE );
-            if (status && local) NtClose( local );
-        }
-
-        NtClose( process );
-        close( sv[1] );
-
-        if (!res->handle)
-        {
-            close( sv[0] );
-            wait_fence_and_close( fence );
-            return STATUS_UNSUCCESSFUL;
-        }
-
         ret = pAHardwareBuffer_sendHandleToUnixSocket( ahb, sv[0] );
         close( sv[0] );
         if (ret)
         {
+            close( sv[1] );
             wait_fence_and_close( fence );
             return android_error_to_status( ret );
         }
+
+        *reply_fd = sv[1];
     }
 
     wait_fence_and_close( fence );
@@ -1320,35 +1289,24 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
     struct ioctl_android_dequeueBuffer res = {0};
     DWORD size = sizeof(res);
-    int ret;
+    int ret, buffer_fd = -1;
 
     res.hdr.hwnd = HandleToLong( win->hwnd );
     res.hdr.opengl = win->opengl;
-    res.pid = GetCurrentProcessId();
-    res.handle = 0;
     res.buffer_id = -1;
     res.generation = 0;
 
-    ret = android_ioctl_old( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size, NULL );
+    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER, &res, size, &res, &size, &buffer_fd );
     if (ret) return ret;
     if (size < sizeof(res)) return -EINVAL;
 
     if (res.buffer_id < 0 || res.buffer_id >= NB_CACHED_BUFFERS) return -EINVAL;
 
-    if (res.handle)
+    if (buffer_fd != -1)
     {
         AHardwareBuffer *ahb = NULL;
-        int fd;
-
-        if (wine_server_handle_to_fd( res.handle, GENERIC_READ | SYNCHRONIZE, &fd, NULL ))
-        {
-            NtClose( res.handle );
-            return -EINVAL;
-        }
-        NtClose( res.handle );
-
-        ret = pAHardwareBuffer_recvHandleFromUnixSocket( fd, &ahb );
-        close( fd );
+        ret = pAHardwareBuffer_recvHandleFromUnixSocket( buffer_fd, &ahb );
+        close( buffer_fd );
         if (ret) return ret;
 
         if (win->buffers[res.buffer_id].self)
