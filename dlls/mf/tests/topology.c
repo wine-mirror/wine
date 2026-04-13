@@ -1739,6 +1739,7 @@ struct test_handler
     ULONG media_types_count;
     IMFMediaType **media_types;
     BOOL enum_complete;
+    BOOL is_supported_called;
 };
 
 static struct test_handler *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *iface)
@@ -1775,6 +1776,8 @@ static HRESULT WINAPI test_handler_IsMediaTypeSupported(IMFMediaTypeHandler *ifa
     struct test_handler *impl = impl_from_IMFMediaTypeHandler(iface);
     BOOL result;
     ULONG i;
+
+    impl->is_supported_called = TRUE;
 
     if (out_type)
         *out_type = NULL;
@@ -3157,6 +3160,8 @@ static void test_topology_loader(void)
         ok(hr == S_OK, "Failed to get attribute count, hr %#lx.\n", hr);
         ok(!count, "Unexpected count %u.\n", count);
 
+        handler.is_supported_called = FALSE;
+
         if (test->flags & LOADER_SET_ENUMERATE_SOURCE_TYPES)
             IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, 1);
         if (test->flags & LOADER_SET_XVP_FOR_PLAYBACK)
@@ -3233,6 +3238,9 @@ todo_wine {
             ok(hr == S_OK, "Failed to get sink pref type, hr %#lx.\n", hr);
             if (hr == S_OK)
                 IMFMediaType_Release(media_type);
+
+            todo_wine_if(!handler.is_supported_called)
+            ok(handler.is_supported_called, "Sink input support not checked.\n");
 
             if (!IsEqualGUID(&test->decoder_class, &GUID_NULL))
             {
