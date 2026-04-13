@@ -1481,6 +1481,39 @@ static SQLRETURN get_info_win32_w( struct connection *con, SQLUSMALLINT type, SQ
     return ret;
 }
 
+static SQLRETURN free_handle( SQLSMALLINT type, struct object *obj )
+{
+    SQLRETURN ret = SQL_SUCCESS;
+
+    if (obj->unix_handle)
+    {
+        struct SQLFreeHandle_params params = { type, obj->unix_handle };
+        ret = ODBC_CALL( SQLFreeHandle, &params );
+    }
+    else if (obj->win32_handle)
+    {
+        if (obj->win32_funcs->SQLFreeHandle)
+            ret = obj->win32_funcs->SQLFreeHandle( type, obj->win32_handle );
+        else
+        {
+            switch (type)
+            {
+            case SQL_HANDLE_DBC:
+                if (obj->win32_funcs->SQLFreeConnect)
+                    ret = obj->win32_funcs->SQLFreeConnect( obj->win32_handle );
+                break;
+            case SQL_HANDLE_STMT:
+                if (obj->win32_funcs->SQLFreeStmt)
+                    ret = obj->win32_funcs->SQLFreeStmt( obj->win32_handle, SQL_DROP );
+                break;
+            default: break;
+            }
+        }
+    }
+
+    return ret;
+}
+
 static SQLRETURN alloc_con_handle( struct connection *con )
 {
     SQLRETURN ret = SQL_ERROR;
@@ -1562,6 +1595,52 @@ static SQLRETURN connect_unix_a( struct connection *con, SQLCHAR *servername, SQ
     return ODBC_CALL( SQLConnect, &params );
 }
 
+static void cleanup_object( struct object *obj );
+
+static SQLRETURN prepare_connection( WCHAR *filename, struct connection *con )
+{
+    SQLRETURN ret;
+
+    if (has_suffix( filename, L".dll" ))
+    {
+        const struct win32_funcs *funcs = load_driver( filename );
+
+        if (!funcs)
+        {
+            WARN( "failed to load driver %s\n", debugstr_w(filename) );
+            return SQL_ERROR;
+        }
+        if (con->hdr.unix_handle || (con->hdr.win32_handle && funcs != con->hdr.win32_funcs))
+        {
+            free_handle( SQL_HANDLE_DBC, &con->hdr );
+            cleanup_object( &con->hdr );
+            con->hdr.unix_handle = 0;
+            con->hdr.win32_handle = 0;
+        }
+        con->hdr.win32_funcs = funcs;
+        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
+
+        if (!SUCCESS((ret = create_env( con )))) return ret;
+        if (!con->hdr.win32_handle && !SUCCESS((ret = create_con( con )))) return ret;
+    }
+    else
+    {
+        if (con->hdr.win32_handle)
+        {
+            free_handle( SQL_HANDLE_DBC, &con->hdr );
+            cleanup_object( &con->hdr );
+            con->hdr.win32_handle = 0;
+            con->hdr.win32_funcs = NULL;
+        }
+        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+
+        if (!SUCCESS((ret = create_env( con )))) return ret;
+        if (!con->hdr.unix_handle && !SUCCESS((ret = create_con( con )))) return ret;
+    }
+
+    return SQL_SUCCESS;
+}
+
 /*************************************************************************
  *				SQLConnect           [ODBC32.007]
  */
@@ -1586,32 +1665,11 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
         goto done;
     }
 
-    if (has_suffix( filename, L".dll" ))
-    {
-        con->hdr.unix_handle = 0;
-        if (!(con->hdr.win32_funcs = load_driver( filename )))
-        {
-            WARN( "failed to load driver %s\n", debugstr_w(filename) );
-            goto done;
-        }
-        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
+    if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
+    if (con->hdr.win32_handle)
         ret = connect_win32_a( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
-    }
     else
-    {
-        con->hdr.win32_handle = 0;
-        con->hdr.win32_funcs = NULL;
-        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = connect_unix_a( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
-    }
 
 done:
     free( servername );
@@ -1824,8 +1882,6 @@ static SQLRETURN disconnect_win32( struct connection *con )
         return con->hdr.win32_funcs->SQLDisconnect( con->hdr.win32_handle );
     return SQL_ERROR;
 }
-
-static void cleanup_object( struct object *obj );
 
 static void destroy_dependent_objects( struct connection *con )
 {
@@ -2275,39 +2331,6 @@ SQLRETURN WINAPI SQLFetchScroll(SQLHSTMT StatementHandle, SQLSMALLINT FetchOrien
 
     TRACE("Returning %d\n", ret);
     unlock_object( &stmt->hdr );
-    return ret;
-}
-
-static SQLRETURN free_handle( SQLSMALLINT type, struct object *obj )
-{
-    SQLRETURN ret = SQL_SUCCESS;
-
-    if (obj->unix_handle)
-    {
-        struct SQLFreeHandle_params params = { type, obj->unix_handle };
-        ret = ODBC_CALL( SQLFreeHandle, &params );
-    }
-    else if (obj->win32_handle)
-    {
-        if (obj->win32_funcs->SQLFreeHandle)
-            ret = obj->win32_funcs->SQLFreeHandle( type, obj->win32_handle );
-        else
-        {
-            switch (type)
-            {
-            case SQL_HANDLE_DBC:
-                if (obj->win32_funcs->SQLFreeConnect)
-                    ret = obj->win32_funcs->SQLFreeConnect( obj->win32_handle );
-                break;
-            case SQL_HANDLE_STMT:
-                if (obj->win32_funcs->SQLFreeStmt)
-                    ret = obj->win32_funcs->SQLFreeStmt( obj->win32_handle, SQL_DROP );
-                break;
-            default: break;
-            }
-        }
-    }
-
     return ret;
 }
 
@@ -4871,32 +4894,11 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
         goto done;
     }
 
-    if (has_suffix( filename, L".dll" ))
-    {
-        con->hdr.unix_handle = 0;
-        if (!(con->hdr.win32_funcs = load_driver( filename )))
-        {
-            WARN( "failed to load driver %s\n", debugstr_w(filename) );
-            goto done;
-        }
-        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
+    if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
+    if (con->hdr.win32_handle)
         ret = browse_connect_win32_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
-    }
     else
-    {
-        con->hdr.win32_handle = 0;
-        con->hdr.win32_funcs = NULL;
-        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = browse_connect_unix_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
-    }
 
 done:
     free( strA );
@@ -6023,31 +6025,14 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
         goto done;
     }
 
-    if (has_suffix( filename, L".dll" ))
+    if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
+    if (con->hdr.win32_handle)
     {
-        con->hdr.unix_handle = 0;
-        if (!(con->hdr.win32_funcs = load_driver( filename )))
-        {
-            WARN( "failed to load driver %s\n", debugstr_w(filename) );
-            goto done;
-        }
-        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = driver_connect_win32_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
                                       DriverCompletion );
     }
     else
     {
-        con->hdr.win32_handle = 0;
-        con->hdr.win32_funcs = NULL;
-        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = driver_connect_unix_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
                                      DriverCompletion );
     }
@@ -6247,32 +6232,11 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *ServerName, SQL
         goto done;
     }
 
-    if (has_suffix( filename, L".dll" ))
-    {
-        con->hdr.unix_handle = 0;
-        if (!(con->hdr.win32_funcs = load_driver( filename )))
-        {
-            WARN( "failed to load driver %s\n", debugstr_w(filename) );
-            goto done;
-        }
-        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
+    if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
+    if (con->hdr.win32_handle)
         ret = connect_win32_w( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
-    }
     else
-    {
-        con->hdr.win32_handle = 0;
-        con->hdr.win32_funcs = NULL;
-        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = connect_unix_w( con, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
-    }
 
 done:
     free( filename );
@@ -7381,31 +7345,14 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
         goto done;
     }
 
-    if (has_suffix( filename, L".dll" ))
+    if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
+    if (con->hdr.win32_handle)
     {
-        con->hdr.unix_handle = 0;
-        if (!(con->hdr.win32_funcs = load_driver( filename )))
-        {
-            WARN( "failed to load driver %s\n", debugstr_w(filename) );
-            goto done;
-        }
-        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = driver_connect_win32_w( con, WindowHandle, InConnectionString, Length, OutConnectionString,
                                       BufferLength, Length2, DriverCompletion );
     }
     else
     {
-        con->hdr.win32_handle = 0;
-        con->hdr.win32_funcs = NULL;
-        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = driver_connect_unix_w( con, WindowHandle, InConnectionString, Length, OutConnectionString,
                                      BufferLength, Length2, DriverCompletion );
     }
@@ -7841,31 +7788,14 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
         goto done;
     }
 
-    if (has_suffix( filename, L".dll" ))
+    if (!SUCCESS((ret = prepare_connection( filename, con )))) goto done;
+    if (con->hdr.win32_handle)
     {
-        con->hdr.unix_handle = 0;
-        if (!(con->hdr.win32_funcs = load_driver( filename )))
-        {
-            WARN( "failed to load driver %s\n", debugstr_w(filename) );
-            goto done;
-        }
-        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = browse_connect_win32_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,
                                       StringLength2 );
     }
     else
     {
-        con->hdr.win32_handle = 0;
-        con->hdr.win32_funcs = NULL;
-        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
-
-        if (!SUCCESS((ret = create_env( con )))) goto done;
-        if (!SUCCESS((ret = create_con( con )))) goto done;
-
         ret = browse_connect_unix_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,
                                      StringLength2 );
     }

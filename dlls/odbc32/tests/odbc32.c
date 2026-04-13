@@ -861,15 +861,11 @@ static void test_SQLDriverConnect( void )
     str[0] = 0;
     SET_EXPECT( driver_SQLAllocHandle_env );
     SET_EXPECT( driver_SQLSetEnvAttr );
-    SET_EXPECT( driver_SQLAllocHandle_con );
-    SET_EXPECT( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
     SET_EXPECT( driver_SQLDriverConnect );
     SET_EXPECT( driver_SQLGetDiagRec );
     SET_EXPECT( driver_SQLGetInfo );
     ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"DSN=winetest_dsn;er\\9.99", strlen("DSN=winetest_dsn;er\\9.99"),
                             str, sizeof(str), &len, 0 );
-    todo_wine CHECK_NOT_CALLED( driver_SQLAllocHandle_con );
-    todo_wine CHECK_NOT_CALLED( driver_SQLGetInfo_SQL_DRIVER_ODBC_VER );
     CHECK_CALLED( driver_SQLDriverConnect );
     todo_wine CHECK_CALLED( driver_SQLGetDiagRec );
     todo_wine CHECK_CALLED( driver_SQLGetInfo );
