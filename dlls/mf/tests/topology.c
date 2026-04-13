@@ -3209,7 +3209,6 @@ todo_wine {
 
             hr = IMFTopology_GetNodeCount(full_topology, &node_count);
             ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
-            todo_wine_if(test->mft_current_input_1based_index)
             ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             hr = IMFTopologyNode_GetTopoNodeID(src_node, &node_id);

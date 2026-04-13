@@ -599,7 +599,8 @@ static HRESULT topology_branch_connect_direct(IMFTopology *topology, struct topo
 
     if (SUCCEEDED(hr = IMFMediaTypeHandler_GetCurrentMediaType(branch->down.handler, &down_type)))
     {
-        if (IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
+        if (topology_node_get_type(branch->down.node) != MF_TOPOLOGY_OUTPUT_NODE
+                || IMFMediaType_IsEqual(up_type, down_type, &flags) == S_OK)
             hr = topology_branch_connect_with_type(topology, branch, up_type);
         else
         {
