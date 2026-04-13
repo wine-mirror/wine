@@ -3475,11 +3475,16 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
     return !ret || ret == ERROR_IO_PENDING;
 }
 
-static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD *read, BOOL async )
+static DWORD read_data( struct request *request, char *buffer, DWORD size, DWORD *read, BOOL async )
 {
-    DWORD bytes_read = 0, ret;
+    DWORD bytes_read = 0, count, ret = ERROR_SUCCESS;
 
-    ret = read_data_stream( request, buffer, size, &bytes_read );
+    while (size)
+    {
+        if ((ret = read_data_stream( request, buffer + bytes_read, size, &count )) || !count) break;
+        bytes_read += count;
+        size -= count;
+    }
 
     TRACE( "%lu bytes read\n", bytes_read );
     if (end_of_data_stream( request )) finished_reading( request );
