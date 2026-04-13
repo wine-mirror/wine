@@ -160,10 +160,14 @@ static LSTATUS query_property( HKEY root, const WCHAR *prefix, DEVPROPTYPE type,
     WCHAR path[MAX_PATH];
     ULONG reg_type;
     LSTATUS err;
+    HKEY hkey;
 
-    err = RegQueryValueExW( root, propkey_string( &prop->key, prefix, path, ARRAY_SIZE(path) ),
-                            NULL, &reg_type, prop->buffer, prop->size );
-    if (type == DEVPROP_TYPE_EMPTY) type = reg_type & 0xffff;
+    if (!(err = open_key( root, propkey_string( &prop->key, prefix, path, ARRAY_SIZE(path) ), KEY_QUERY_VALUE, TRUE, &hkey )))
+    {
+        err = RegQueryValueExW( hkey, NULL, NULL, &reg_type, prop->buffer, prop->size );
+        if (type == DEVPROP_TYPE_EMPTY) type = reg_type & 0xffff;
+        RegCloseKey( hkey );
+    }
 
     if (!err && !prop->buffer) err = ERROR_MORE_DATA;
     if ((!err || err == ERROR_MORE_DATA) && prop->type) *prop->type = type;
