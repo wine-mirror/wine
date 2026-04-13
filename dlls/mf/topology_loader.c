@@ -442,7 +442,8 @@ static HRESULT topology_branch_connect_with_type(IMFTopology *topology, struct t
     }
 
     if (topology_node_get_type(branch->down.node) == MF_TOPOLOGY_TRANSFORM_NODE
-            && FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(branch->down.handler, type)))
+            ? FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(branch->down.handler, type))
+            : FAILED(hr = IMFMediaTypeHandler_IsMediaTypeSupported(branch->down.handler, type, NULL)))
     {
         WARN("Failed to set transform node media type, hr %#lx\n", hr);
         return hr;

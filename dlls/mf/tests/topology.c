@@ -2498,7 +2498,6 @@ static void test_topology_loader(void)
             .input_types = {&audio_pcm_44100}, .output_types = {&audio_pcm_44100}, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
             .current_input = &audio_pcm_44100_incomplete,
             .expected_result = MF_E_INVALIDMEDIATYPE,
-            .flags = LOADER_TODO,
         },
         {
             /* PCM -> PCM, same enumerated bps, different current bps */
@@ -2525,7 +2524,7 @@ static void test_topology_loader(void)
             .input_types = {&audio_pcm_44100_incomplete}, .output_types = {&audio_pcm_44100}, .sink_method = MF_CONNECT_DIRECT, .source_method = -1,
             .current_input = &audio_pcm_44100,
             .expected_result = MF_E_NO_MORE_TYPES,
-            .flags = LOADER_SET_ENUMERATE_SOURCE_TYPES | LOADER_TODO,
+            .flags = LOADER_SET_ENUMERATE_SOURCE_TYPES,
         },
 
         {
@@ -3239,7 +3238,6 @@ todo_wine {
             if (hr == S_OK)
                 IMFMediaType_Release(media_type);
 
-            todo_wine_if(!handler.is_supported_called)
             ok(handler.is_supported_called, "Sink input support not checked.\n");
 
             if (!IsEqualGUID(&test->decoder_class, &GUID_NULL))
