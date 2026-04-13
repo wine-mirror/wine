@@ -551,6 +551,14 @@ BOOL WINAPI ImeProcessKey( HIMC himc, UINT vkey, LPARAM lparam, BYTE *state )
     if (!(ctx = ImmLockIMC( himc ))) return FALSE;
     ret = NtUserMessageCall( ctx->hWnd, WINE_IME_PROCESS_KEY, vkey, lparam, &params,
                              NtUserImeDriverCall, FALSE );
+    switch (LOWORD(vkey))
+    {
+        case VK_SHIFT:
+        case VK_CONTROL:
+        case VK_CAPITAL:
+        case VK_MENU:
+            ret = FALSE;
+    }
     ImmUnlockIMC( himc );
 
     return ret;

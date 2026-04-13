@@ -1110,34 +1110,6 @@ void macdrv_hotkey_press(const macdrv_event *event)
  */
 UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_state)
 {
-    WORD vkey = LOWORD(wparam);
-    BOOL pressed = !(lparam >> 31);
-
-    TRACE("himc %p, vkey %#x, pressed %u\n",
-          himc, vkey, pressed);
-
-    if (!macdrv_using_input_method()) return 0;
-
-    if (!pressed)
-    {
-        /* Only key down events should be sent to the Cocoa input context. We do
-           not handle key ups, and instead let those go through as a normal
-           WM_KEYUP. */
-        return 0;
-    }
-
-    switch (vkey)
-    {
-        case VK_SHIFT:
-        case VK_CONTROL:
-        case VK_CAPITAL:
-        case VK_MENU:
-        case VK_KANA:
-        case VK_KANJI:
-        TRACE("Skipping metakey\n");
-        return 0;
-    }
-
     return 1;
 }
 
@@ -1150,12 +1122,28 @@ UINT macdrv_ImeToAsciiEx(UINT vkey, UINT vsc, const BYTE *state, HIMC himc)
     unsigned int flags;
     int keyc;
     bool ret;
-    BOOL repeat = !!(vsc & 0x4000);
+    BOOL repeat = !!(vsc & KF_REPEAT);
 
     TRACE("himc %p, vkey %#x state %p repeat %u\n",
           himc, vkey, state, repeat);
 
-    if (!state) return 0;
+    if (!state) return STATUS_SUCCESS;
+
+    if (vsc & KF_UP)
+    {
+        /* Only key down events should be sent to the Cocoa input context. We do
+           not handle key ups, and instead let those go through as a normal
+           WM_KEYUP. */
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    switch (vkey)
+    {
+        case VK_KANA:
+        case VK_KANJI:
+            TRACE("Skipping metakey\n");
+            return STATUS_NOT_IMPLEMENTED;
+    }
 
     flags = thread_data->last_modifiers;
     if (state[VK_SHIFT] & 0x80)
