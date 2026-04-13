@@ -32,9 +32,28 @@
 #include "windows.h"
 
 #include "initguid.h"
+#include "objsafe.h"
+#include "docobj.h"
+#include "dispex.h"
+
 #include "msxml6.h"
 
 #include "wine/test.h"
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
 
 static const WCHAR email_xml[] =
 L"<?xml version=\"1.0\"?>"
@@ -598,6 +617,36 @@ static void test_prohibitdtd(void)
     IXMLDOMDocument2_Release(doc);
 }
 
+static void test_interfaces(void)
+{
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument60, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(doc, &IID_IXMLDOMDocument, TRUE);
+    check_interface(doc, &IID_IPersistStreamInit, TRUE);
+    check_interface(doc, &IID_IObjectWithSite, TRUE);
+    check_interface(doc, &IID_IObjectSafety, TRUE);
+    check_interface(doc, &IID_IConnectionPointContainer, TRUE);
+    check_interface(doc, &IID_IDispatch, TRUE);
+    check_interface(doc, &IID_IDispatchEx, TRUE);
+    check_interface(doc, &IID_IUnknown, TRUE);
+    check_interface(doc, &IID_IPersistStream, TRUE);
+    check_interface(doc, &IID_ISequentialStream, FALSE);
+    check_interface(doc, &IID_IPersist, FALSE);
+todo_wine
+{
+    check_interface(doc, &IID_IOleCommandTarget, TRUE);
+    check_interface(doc, &IID_IPersistMoniker, TRUE);
+    check_interface(doc, &IID_IProvideClassInfo, TRUE);
+    check_interface(doc, &IID_IStream, TRUE);
+}
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -621,6 +670,7 @@ START_TEST(domdoc)
     test_get_parentNode();
     test_normalize_attribute_values();
     test_prohibitdtd();
+    test_interfaces();
 
     CoUninitialize();
 }

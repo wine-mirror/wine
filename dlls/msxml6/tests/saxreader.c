@@ -29,7 +29,6 @@
 #include "msxml6.h"
 #include "msxml6did.h"
 #include "ocidl.h"
-#include "initguid.h"
 #include "dispex.h"
 
 #include "wine/test.h"

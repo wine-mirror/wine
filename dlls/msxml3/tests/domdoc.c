@@ -1512,14 +1512,6 @@ static void test_domdoc( void )
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    check_interface(doc, &IID_IXMLDOMDocument, TRUE);
-    check_interface(doc, &IID_IPersistStreamInit, TRUE);
-    check_interface(doc, &IID_IObjectWithSite, TRUE);
-    check_interface(doc, &IID_IObjectSafety, TRUE);
-    check_interface(doc, &IID_IConnectionPointContainer, TRUE);
-    check_interface(doc, &IID_IDispatch, TRUE);
-    check_interface(doc, &IID_IDispatchEx, TRUE);
-
 if (0)
 {
     /* crashes on native */
@@ -17255,6 +17247,33 @@ static void test_prohibitdtd(void)
     IXMLDOMDocument2_Release(doc);
 }
 
+static void test_interfaces(void)
+{
+    IXMLDOMDocument *doc;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    check_interface(doc, &IID_IXMLDOMDocument, TRUE);
+    check_interface(doc, &IID_IPersistStreamInit, TRUE);
+    check_interface(doc, &IID_IObjectWithSite, TRUE);
+    check_interface(doc, &IID_IObjectSafety, TRUE);
+    check_interface(doc, &IID_IConnectionPointContainer, TRUE);
+    check_interface(doc, &IID_IDispatch, TRUE);
+    check_interface(doc, &IID_IDispatchEx, TRUE);
+    check_interface(doc, &IID_IUnknown, TRUE);
+    check_interface(doc, &IID_IPersistStream, TRUE);
+    check_interface(doc, &IID_ISequentialStream, FALSE);
+    check_interface(doc, &IID_IPersist, FALSE);
+todo_wine
+{
+    check_interface(doc, &IID_IOleCommandTarget, TRUE);
+    check_interface(doc, &IID_IPersistMoniker, TRUE);
+    check_interface(doc, &IID_IProvideClassInfo, TRUE);
+    check_interface(doc, &IID_IStream, TRUE);
+}
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -17361,6 +17380,7 @@ START_TEST(domdoc)
     test_default_namespace();
     test_prohibitdtd();
     test_indent();
+    test_interfaces();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
