@@ -3876,15 +3876,11 @@ static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder, BOOL force_conversi
                 if (status == Ok) /* locked bitmap */
                 {
                     wrc.X = 0;
+                    wrc.Y = 0;
                     wrc.Width = width;
-                    wrc.Height = 1;
-                    for (i=0; i<height; i++)
-                    {
-                        wrc.Y = i;
-                        hr = IWICBitmapSource_CopyPixels(source, &wrc, abs(lockeddata.Stride),
-                            abs(lockeddata.Stride), (BYTE*)lockeddata.Scan0+lockeddata.Stride*i);
-                        if (FAILED(hr)) break;
-                    }
+                    wrc.Height = height;
+                    hr = IWICBitmapSource_CopyPixels(source, &wrc, lockeddata.Stride,
+                        lockeddata.Stride * height, (BYTE*)lockeddata.Scan0);
 
                     GdipBitmapUnlockBits(bitmap, &lockeddata);
                 }
