@@ -9336,10 +9336,10 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MFVideoFormat, &am_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFInitMediaTypeFromAMMediaType(other_type, &am_type);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_GetAllocatedBlob(other_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE **)&area, &value32);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK) CoTaskMemFree(area);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CoTaskMemFree(area);
     IMFMediaType_DeleteAllItems(other_type);
     CoTaskMemFree(am_type.pbFormat);
 

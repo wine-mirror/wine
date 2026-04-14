@@ -4409,6 +4409,9 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
         else if (IsEqualGUID(&am_type->formattype, &FORMAT_MPEG2Video)
                 && am_type->cbFormat >= sizeof(MPEG2VIDEOINFO))
             hr = MFInitMediaTypeFromMPEG2VideoInfo(media_type, (MPEG2VIDEOINFO *)am_type->pbFormat, am_type->cbFormat, subtype);
+        else if (IsEqualGUID(&am_type->formattype, &FORMAT_MFVideoFormat)
+                && am_type->cbFormat >= sizeof(MFVIDEOFORMAT))
+            hr = MFInitMediaTypeFromMFVideoFormat(media_type, (MFVIDEOFORMAT *)am_type->pbFormat, am_type->cbFormat);
         else
         {
             FIXME("Unsupported format type %s / size %ld.\n", debugstr_guid(&am_type->formattype), am_type->cbFormat);
