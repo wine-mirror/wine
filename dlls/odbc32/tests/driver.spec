@@ -5,6 +5,7 @@
 @ stdcall SQLBindParameter(long long long long long long long ptr long ptr)
 @ stdcall SQLBrowseConnect(long str long ptr long ptr)
 @ stdcall SQLConnect(long str long str long str long)
+@ stdcall SQLDescribeCol(long long ptr long ptr ptr ptr ptr ptr)
 @ stdcall SQLDisconnect(long)
 @ stdcall SQLDriverConnect(long long str long ptr long ptr long)
 @ stdcall SQLExecDirect(long str long)

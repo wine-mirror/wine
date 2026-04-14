@@ -178,3 +178,11 @@ SQLRETURN WINAPI SQLFreeStmt( SQLHSTMT stmt, SQLUSMALLINT option )
 {
     return driver_funcs->SQLFreeStmt( stmt, option );
 }
+
+SQLRETURN WINAPI SQLDescribeCol( SQLHSTMT stmt, SQLUSMALLINT col,
+        SQLCHAR *name, SQLSMALLINT max_len, SQLSMALLINT *len, SQLSMALLINT *type,
+        SQLULEN *size, SQLSMALLINT *dec_digits, SQLSMALLINT *nullable )
+{
+    return driver_funcs->SQLDescribeCol( stmt, col, name, max_len, len,
+            type, size, dec_digits, nullable );
+}

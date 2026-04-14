@@ -89,6 +89,7 @@ DEFINE_EXPECT( driver_SQLBindParameter );
 DEFINE_EXPECT( driver_SQLExecute );
 DEFINE_EXPECT( driver_SQLSetDescField );
 DEFINE_EXPECT( driver_SQLFreeStmt );
+DEFINE_EXPECT( driver_SQLDescribeCol );
 
 static struct stmt_data
 {
@@ -528,6 +529,38 @@ static SQLRETURN WINAPI driver_SQLFreeStmt( SQLHSTMT stmt, SQLUSMALLINT option )
     return SQL_SUCCESS;
 }
 
+static SQLRETURN WINAPI driver_SQLDescribeCol( SQLHSTMT stmt, SQLUSMALLINT col,
+        SQLCHAR *name, SQLSMALLINT max_len, SQLSMALLINT *len, SQLSMALLINT *type,
+        SQLULEN *size, SQLSMALLINT *dec_digits, SQLSMALLINT *nullable )
+{
+    CHECK_EXPECT( driver_SQLDescribeCol );
+    ok( (ULONG_PTR)stmt == SQL_HANDLE_STMT, "stmt = %p\n", stmt );
+    ok( type != NULL, "type = %p\n", type );
+    ok( !size, "size = %p\n", size );
+    ok( !dec_digits, "dec_digits = %p\n", dec_digits );
+    ok( !nullable, "nullable = %p\n", nullable );
+
+    switch (col)
+    {
+    case 1:
+        ok( name != NULL, "name = %p\n", name );
+        ok( max_len == 32, "max_len = %d\n", max_len );
+        ok( len != NULL, "len = %p\n", len );
+        *len = 2;
+        strcpy( (char *)name, "Id" );
+        *type = SQL_INTEGER;
+        break;
+    default:
+        ok( !name, "name = %p\n", name );
+        ok( !max_len, "max_len = %d\n", max_len );
+        todo_wine ok( len != NULL, "len = %p\n", len );
+        *type = col;
+        break;
+    }
+
+    return SQL_SUCCESS;
+}
+
 struct driver_funcs driver_funcs =
 {
     driver_SQLAllocHandle,
@@ -555,6 +588,7 @@ struct driver_funcs driver_funcs =
     driver_SQLExecute,
     driver_SQLSetDescField,
     driver_SQLFreeStmt,
+    driver_SQLDescribeCol,
 };
 
 static void load_resource(const char *name, char *path)
@@ -1028,7 +1062,7 @@ static void test_SQLExecDirect( void )
     SQLULEN rows_fetched;
     SQLINTEGER id[2], err, size;
     SQLCHAR name[32], msg[256], state[6];
-    SQLSMALLINT len;
+    SQLSMALLINT len, type;
 
     ret = SQLAllocEnv( &env );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
@@ -1086,6 +1120,38 @@ static void test_SQLExecDirect( void )
     CHECK_CALLED( driver_SQLExecDirect );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     ok( stmt_data.rows_no == 1, "rows_no = %d\n", stmt_data.rows_no );
+
+    SET_EXPECT( driver_SQLDescribeCol );
+    ret = SQLDescribeCol( stmt, 1, name, sizeof(name), &len, &type, NULL, NULL, NULL );
+    CHECK_CALLED( driver_SQLDescribeCol );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( len == 2, "len = %d\n", len );
+    ok( !strcmp((char *)name, "Id"), "name = %s\n", wine_dbgstr_an((char *)name, len) );
+    ok( type == SQL_INTEGER, "type = %d\n", type );
+
+    SET_EXPECT( driver_SQLDescribeCol );
+    ret = SQLDescribeCol( stmt, SQL_DATE, NULL, 0, NULL, &type, NULL, NULL, NULL );
+    CHECK_CALLED( driver_SQLDescribeCol );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( type == SQL_DATE, "type = %d\n", type );
+
+    SET_EXPECT( driver_SQLDescribeCol );
+    ret = SQLDescribeCol( stmt, SQL_TYPE_DATE, NULL, 0, NULL, &type, NULL, NULL, NULL );
+    CHECK_CALLED( driver_SQLDescribeCol );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( type == SQL_DATE, "type = %d\n", type );
+
+    SET_EXPECT( driver_SQLDescribeCol );
+    ret = SQLDescribeCol( stmt, SQL_TYPE_TIME, NULL, 0, NULL, &type, NULL, NULL, NULL );
+    CHECK_CALLED( driver_SQLDescribeCol );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( type == SQL_TIME, "type = %d\n", type );
+
+    SET_EXPECT( driver_SQLDescribeCol );
+    ret = SQLDescribeCol( stmt, SQL_TYPE_TIMESTAMP, NULL, 0, NULL, &type, NULL, NULL, NULL );
+    CHECK_CALLED( driver_SQLDescribeCol );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( type == SQL_TIMESTAMP, "type = %d\n", type );
 
     SET_EXPECT( driver_SQLExecDirect );
     ret = SQLExecDirect( stmt, (SQLCHAR *)"INSERT INTO winetest VALUES (1, 'Mary')",

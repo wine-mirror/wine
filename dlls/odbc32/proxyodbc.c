@@ -473,6 +473,55 @@ static struct environment *create_environment( void )
     return ret;
 }
 
+static SQLSMALLINT map_type( struct statement *stmt, BOOL in, SQLSMALLINT type )
+{
+    struct connection *con = (struct connection *)stmt->hdr.parent;
+    struct environment *env = (struct environment *)con->hdr.parent;
+
+    C_ASSERT(SQL_DATE == SQL_C_DATE);
+    C_ASSERT(SQL_TIME == SQL_C_TIME);
+    C_ASSERT(SQL_TIMESTAMP == SQL_C_TIMESTAMP);
+    C_ASSERT(SQL_TYPE_DATE == SQL_C_TYPE_DATE);
+    C_ASSERT(SQL_TYPE_TIME == SQL_C_TYPE_TIME);
+    C_ASSERT(SQL_TYPE_TIMESTAMP == SQL_C_TYPE_TIMESTAMP);
+
+    switch (type)
+    {
+    case SQL_DATE:
+        if ((in && con->driver_odbc_ver >= 0x300)
+                || (!in && env->attr_version >= SQL_OV_ODBC3))
+            return SQL_TYPE_DATE;
+        break;
+    case SQL_TIME:
+        if ((in && con->driver_odbc_ver >= 0x300)
+                || (!in && env->attr_version >= SQL_OV_ODBC3))
+            return SQL_TYPE_TIME;
+        break;
+    case SQL_TIMESTAMP:
+        if ((in && con->driver_odbc_ver >= 0x300)
+                || (!in && env->attr_version >= SQL_OV_ODBC3))
+            return SQL_TYPE_TIMESTAMP;
+        break;
+    case SQL_TYPE_DATE:
+        if ((in && con->driver_odbc_ver < 0x300)
+                || (!in && env->attr_version == SQL_OV_ODBC2))
+            return SQL_DATE;
+        break;
+    case SQL_TYPE_TIME:
+        if ((in && con->driver_odbc_ver < 0x300)
+                || (!in && env->attr_version == SQL_OV_ODBC2))
+            return SQL_TIME;
+        break;
+    case SQL_TYPE_TIMESTAMP:
+        if ((in && con->driver_odbc_ver < 0x300)
+                || (!in && env->attr_version == SQL_OV_ODBC2))
+            return SQL_TIMESTAMP;
+        break;
+    }
+
+    return type;
+}
+
 /*************************************************************************
  *				SQLAllocEnv           [ODBC32.002]
  */
@@ -806,6 +855,8 @@ static SQLRETURN bind_col_unix( struct statement *stmt, SQLUSMALLINT column, SQL
 static SQLRETURN bind_col_win32( struct statement *stmt, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
                                  SQLLEN buflen, SQLLEN *retlen )
 {
+    type = map_type( stmt, TRUE, type );
+
     if (stmt->hdr.win32_funcs->SQLBindCol)
         return stmt->hdr.win32_funcs->SQLBindCol( stmt->hdr.win32_handle, column, type, value, buflen, retlen );
     return SQL_ERROR;
@@ -945,17 +996,20 @@ static SQLRETURN col_attribute_win32_a( struct statement *stmt, SQLUSMALLINT col
                                         SQLPOINTER char_attr, SQLSMALLINT buflen, SQLSMALLINT *retlen,
                                         SQLLEN *num_attr )
 {
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     if (stmt->hdr.win32_funcs->SQLColAttribute)
-        return stmt->hdr.win32_funcs->SQLColAttribute( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
+    {
+        ret = stmt->hdr.win32_funcs->SQLColAttribute( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
                                                        retlen, num_attr );
-
-    if (stmt->hdr.win32_funcs->SQLColAttributeW)
+    }
+    else if (stmt->hdr.win32_funcs->SQLColAttributeW)
     {
         if (buflen < 0)
+        {
             ret = stmt->hdr.win32_funcs->SQLColAttributeW( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
                                                            retlen, num_attr );
+        }
         else
         {
             SQLWCHAR *strW;
@@ -971,10 +1025,8 @@ static SQLRETURN col_attribute_win32_a( struct statement *stmt, SQLUSMALLINT col
             }
             free( strW );
         }
-        return ret;
     }
-
-    if (stmt->hdr.win32_funcs->SQLColAttributes)
+    else if (stmt->hdr.win32_funcs->SQLColAttributes)
     {
         if (buflen < 0) return SQL_ERROR;
         if (!col)
@@ -1024,11 +1076,13 @@ static SQLRETURN col_attribute_win32_a( struct statement *stmt, SQLUSMALLINT col
             return SQL_ERROR;
         }
 
-        return stmt->hdr.win32_funcs->SQLColAttributes( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
+        ret = stmt->hdr.win32_funcs->SQLColAttributes( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
                                                         retlen, num_attr );
     }
 
-    return SQL_ERROR;
+    if (SUCCESS( ret ) && num_attr && field_id == SQL_COLUMN_TYPE)
+        *num_attr = map_type( stmt, FALSE, *num_attr );
+    return ret;
 }
 
 /*************************************************************************
@@ -1817,10 +1871,11 @@ static SQLRETURN describe_col_win32_a( struct statement *stmt, SQLUSMALLINT col_
     SQLRETURN ret = SQL_ERROR;
 
     if (stmt->hdr.win32_funcs->SQLDescribeCol)
-        return stmt->hdr.win32_funcs->SQLDescribeCol( stmt->hdr.win32_handle, col_number, col_name, buflen, retlen,
+    {
+        ret = stmt->hdr.win32_funcs->SQLDescribeCol( stmt->hdr.win32_handle, col_number, col_name, buflen, retlen,
                                                       data_type, col_size, decimal_digits, nullable );
-
-    if (stmt->hdr.win32_funcs->SQLDescribeColW)
+    }
+    else if (stmt->hdr.win32_funcs->SQLDescribeColW)
     {
         SQLWCHAR *nameW;
         SQLSMALLINT lenW;
@@ -1835,6 +1890,9 @@ static SQLRETURN describe_col_win32_a( struct statement *stmt, SQLUSMALLINT col_
         }
         free( nameW );
     }
+
+    if (SUCCESS( ret ) && data_type)
+        *data_type = map_type( stmt, FALSE, *data_type );
     return ret;
 }
 
@@ -2747,6 +2805,8 @@ static SQLRETURN get_data_win32( struct statement *stmt, SQLUSMALLINT column, SQ
 {
     if (!stmt->hdr.win32_funcs->SQLGetData)
         return SQL_ERROR;
+
+    type = map_type( stmt, TRUE, type );
 
     if (type == SQL_C_WCHAR && is_ansi_driver( &stmt->hdr ))
     {
@@ -4160,6 +4220,8 @@ static SQLRETURN set_param_win32( struct statement *stmt, SQLUSMALLINT param, SQ
                                   SQLSMALLINT param_type, SQLULEN precision, SQLSMALLINT scale, SQLPOINTER value,
                                   SQLLEN *retlen )
 {
+    value_type = map_type( stmt, TRUE, value_type );
+    param_type = map_type( stmt, TRUE, param_type );
     if (stmt->hdr.win32_funcs->SQLSetParam)
         return stmt->hdr.win32_funcs->SQLSetParam( stmt->hdr.win32_handle, param, value_type, param_type, precision,
                                                    scale, value, retlen );
@@ -5132,9 +5194,14 @@ static SQLRETURN describe_param_unix( struct statement *stmt, SQLUSMALLINT param
 static SQLRETURN describe_param_win32( struct statement *stmt, SQLUSMALLINT param, SQLSMALLINT *type, SQLULEN *size,
                                        SQLSMALLINT *digits, SQLSMALLINT *nullable )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (stmt->hdr.win32_funcs->SQLDescribeParam)
-        return stmt->hdr.win32_funcs->SQLDescribeParam( stmt->hdr.win32_handle, param, type, size, digits, nullable );
-    return SQL_ERROR;
+        ret = stmt->hdr.win32_funcs->SQLDescribeParam( stmt->hdr.win32_handle, param, type, size, digits, nullable );
+
+    if (SUCCESS( ret ) && type)
+        *type = map_type( stmt, FALSE, *type );
+    return ret;
 }
 
 /*************************************************************************
@@ -5910,6 +5977,8 @@ static SQLRETURN bind_parameter_win32( struct statement *stmt, SQLUSMALLINT para
                                        SQLSMALLINT value_type, SQLSMALLINT param_type, SQLULEN size,
                                        SQLSMALLINT digits, SQLPOINTER value, SQLLEN buflen, SQLLEN *len )
 {
+    value_type = map_type( stmt, TRUE, value_type );
+    param_type = map_type( stmt, TRUE, param_type );
     if (stmt->hdr.win32_funcs->SQLBindParameter)
         return stmt->hdr.win32_funcs->SQLBindParameter( stmt->hdr.win32_handle, param, io_type, value_type,
                                                         param_type, size, digits, value, buflen, len );
@@ -6265,11 +6334,19 @@ static SQLRETURN describe_col_win32_w( struct statement *stmt, SQLUSMALLINT col_
                                        SQLSMALLINT buf_len, SQLSMALLINT *name_len, SQLSMALLINT *data_type,
                                        SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (stmt->hdr.win32_funcs->SQLDescribeColW)
-        return stmt->hdr.win32_funcs->SQLDescribeColW( stmt->hdr.win32_handle, col_number, col_name, buf_len,
+    {
+        ret = stmt->hdr.win32_funcs->SQLDescribeColW( stmt->hdr.win32_handle, col_number, col_name, buf_len,
                                                        name_len, data_type, col_size, decimal_digits, nullable );
-    if (stmt->hdr.win32_funcs->SQLDescribeCol) FIXME( "Unicode to ANSI conversion not handled\n" );
-    return SQL_ERROR;
+    }
+    else if (stmt->hdr.win32_funcs->SQLDescribeCol) FIXME( "Unicode to ANSI conversion not handled\n" );
+
+
+    if (SUCCESS( ret ) && data_type)
+        *data_type = map_type( stmt, FALSE, *data_type );
+    return ret;
 }
 
 /*************************************************************************
@@ -6610,17 +6687,19 @@ static SQLRETURN col_attribute_win32_w( struct statement *stmt, SQLUSMALLINT col
                                         SQLPOINTER char_attr, SQLSMALLINT buflen, SQLSMALLINT *retlen,
                                         SQLLEN *num_attr )
 {
-    if (stmt->hdr.win32_funcs->SQLColAttributeW)
-        return stmt->hdr.win32_funcs->SQLColAttributeW( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
-                                                       retlen, num_attr );
+    SQLRETURN ret = SQL_ERROR;
 
-    if (stmt->hdr.win32_funcs->SQLColAttribute)
+    if (stmt->hdr.win32_funcs->SQLColAttributeW)
+    {
+        ret = stmt->hdr.win32_funcs->SQLColAttributeW( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
+                                                       retlen, num_attr );
+    }
+    else if (stmt->hdr.win32_funcs->SQLColAttribute)
     {
         FIXME( "Unicode to ANSI conversion not handled\n" );
         return SQL_ERROR;
     }
-
-    if (stmt->hdr.win32_funcs->SQLColAttributesW)
+    else if (stmt->hdr.win32_funcs->SQLColAttributesW)
     {
         if (buflen < 0) return SQL_ERROR;
         if (!col)
@@ -6670,11 +6749,13 @@ static SQLRETURN col_attribute_win32_w( struct statement *stmt, SQLUSMALLINT col
             return SQL_ERROR;
         }
 
-        return stmt->hdr.win32_funcs->SQLColAttributesW( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
+        ret = stmt->hdr.win32_funcs->SQLColAttributesW( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
                                                          retlen, num_attr );
     }
 
-    return SQL_ERROR;
+    if (SUCCESS( ret ) && num_attr && field_id == SQL_COLUMN_TYPE)
+        *num_attr = map_type( stmt, FALSE, *num_attr );
+    return ret;
 }
 
 /*************************************************************************
