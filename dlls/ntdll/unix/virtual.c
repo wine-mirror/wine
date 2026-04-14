@@ -60,6 +60,9 @@
 #endif
 #include <unistd.h>
 #include <dlfcn.h>
+#if defined(__linux__) && defined(__GLIBC__)
+# include <pthread.h>
+#endif
 #ifdef HAVE_VALGRIND_VALGRIND_H
 # include <valgrind/valgrind.h>
 #endif
@@ -4612,6 +4615,53 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
 
 
 /***********************************************************************
+ *           refresh_stack_info_from_pthread
+ *
+ * Some environments (gVisor's runsc sentry, user-mode Linux kernels,
+ * Firecracker, certain seccomp/mount namespace layouts) allocate the
+ * pthread stack at an address range that does not exactly match the
+ * DeallocationStack/StackBase bounds cached in the TEB at thread
+ * creation time. When the TEB bounds look too narrow (e.g. because
+ * the active pthread stack lives at a lower address than
+ * DeallocationStack), virtual_setup_exception can reject a legitimate
+ * exception frame as a stack overflow and kill the thread.
+ *
+ * Query the real pthread stack bounds from the kernel via
+ * pthread_getattr_np(). If the kernel reports a lower start address
+ * than the cached TEB bounds, widen stack_info->start so the caller
+ * can finish writing the exception frame into memory that is in fact
+ * mapped and writable. On all conventional Linux kernels the pthread
+ * bounds and the TEB bounds agree, and this helper is a no-op.
+ *
+ * Returns TRUE if stack_info->start was widened.
+ */
+static BOOL refresh_stack_info_from_pthread( struct thread_stack_info *stack_info )
+{
+#if defined(__linux__) && defined(__GLIBC__)
+    pthread_attr_t attr;
+    void *addr;
+    size_t sz;
+    BOOL ret = FALSE;
+
+    if (pthread_getattr_np( pthread_self(), &attr )) return FALSE;
+    if (!pthread_attr_getstack( &attr, &addr, &sz ))
+    {
+        if ((char *)addr < stack_info->start)
+        {
+            stack_info->start = (char *)addr;
+            ret = TRUE;
+        }
+    }
+    pthread_attr_destroy( &attr );
+    return ret;
+#else
+    (void)stack_info;
+    return FALSE;
+#endif
+}
+
+
+/***********************************************************************
  *           virtual_setup_exception
  */
 void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *rec )
@@ -4636,11 +4686,28 @@ void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *r
 
     if (stack < stack_info.start + host_page_size)
     {
-        /* stack overflow on last page, unrecoverable */
-        UINT diff = stack_info.start + host_page_size - stack;
-        ERR( "stack overflow %u bytes addr %p stack %p (%p-%p-%p)\n",
-             diff, rec->ExceptionAddress, stack, stack_info.start, stack_info.limit, stack_info.end );
-        abort_thread(1);
+        /* The proposed exception frame would land in the guard page of
+         * the thread stack as known to the TEB. Before declaring this an
+         * unrecoverable overflow, give the kernel one chance to correct
+         * our bookkeeping: under user-mode Linux kernels (gVisor,
+         * Firecracker, etc.) the actual pthread stack may extend below
+         * the cached DeallocationStack. */
+        if (refresh_stack_info_from_pthread( &stack_info ) &&
+            stack >= stack_info.start + host_page_size)
+        {
+            WARN( "stack_info start widened from TEB value to pthread value;"
+                  " proceeding with exception frame addr %p stack %p (%p-%p-%p)\n",
+                  rec->ExceptionAddress, stack, stack_info.start,
+                  stack_info.limit, stack_info.end );
+        }
+        else
+        {
+            /* stack overflow on last page, unrecoverable */
+            UINT diff = stack_info.start + host_page_size - stack;
+            ERR( "stack overflow %u bytes addr %p stack %p (%p-%p-%p)\n",
+                 diff, rec->ExceptionAddress, stack, stack_info.start, stack_info.limit, stack_info.end );
+            abort_thread(1);
+        }
     }
     else if (stack < stack_info.limit)
     {
