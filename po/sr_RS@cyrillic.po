@@ -4414,11 +4414,11 @@ msgstr "Датотека није пронађена.\n"
 msgid "Path not found.\n"
 msgstr "%s путања није пронађена.\n"
 
-#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3775
+#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3780
 msgid "Too many open files.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3760
+#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3765
 msgid "Access denied.\n"
 msgstr ""
 
@@ -5858,7 +5858,7 @@ msgstr "Инсталациони програми.\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1760 dlls/kernelbase/winerror.mc:3790
+#: dlls/kernelbase/winerror.mc:1760 dlls/kernelbase/winerror.mc:3795
 #, fuzzy
 msgid "Connection refused.\n"
 msgstr "Повезивање на %s.\n"
@@ -7590,79 +7590,83 @@ msgid "This network connection does not exist.\n"
 msgstr "Датотека не постоји.\n"
 
 #: dlls/kernelbase/winerror.mc:3750
+msgid "File or directory is not a reparse point.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3755
 #, fuzzy
 msgid "Call interrupted.\n"
 msgstr "Отвори датотеку.\n"
 
-#: dlls/kernelbase/winerror.mc:3755
+#: dlls/kernelbase/winerror.mc:3760
 #, fuzzy
 msgid "Invalid file handle.\n"
 msgstr "Неисправна синтакса.\n"
 
-#: dlls/kernelbase/winerror.mc:3765
+#: dlls/kernelbase/winerror.mc:3770
 #, fuzzy
 msgid "Invalid pointer address.\n"
 msgstr "IP адреса.\n"
 
-#: dlls/kernelbase/winerror.mc:3770
+#: dlls/kernelbase/winerror.mc:3775
 #, fuzzy
 msgid "Invalid argument.\n"
 msgstr "Неисправна синтакса.\n"
 
-#: dlls/kernelbase/winerror.mc:3780
+#: dlls/kernelbase/winerror.mc:3785
 msgid "Cannot assign requested address.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3785
+#: dlls/kernelbase/winerror.mc:3790
 #, fuzzy
 msgid "Connection reset by peer.\n"
 msgstr "Повезивање на %s.\n"
 
-#: dlls/kernelbase/winerror.mc:3795
+#: dlls/kernelbase/winerror.mc:3800
 #, fuzzy
 msgid "Host not found.\n"
 msgstr "%s путања није пронађена.\n"
 
-#: dlls/kernelbase/winerror.mc:3800
+#: dlls/kernelbase/winerror.mc:3805
 #, fuzzy
 msgid "Nonauthoritative host not found.\n"
 msgstr "Датотека није пронађена.\n"
 
-#: dlls/kernelbase/winerror.mc:3805
+#: dlls/kernelbase/winerror.mc:3810
 #, fuzzy
 #| msgid "A printer error occurred."
 msgid "Nonrecoverable error.\n"
 msgstr "Дошло је до грешке у штампачу."
 
-#: dlls/kernelbase/winerror.mc:3810
+#: dlls/kernelbase/winerror.mc:3815
 msgid "Name valid, no data record.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3831
+#: dlls/kernelbase/winerror.mc:3836
 #, fuzzy
 msgid "Not implemented.\n"
 msgstr "Датотека није пронађена"
 
-#: dlls/kernelbase/winerror.mc:3852
+#: dlls/kernelbase/winerror.mc:3857
 #, fuzzy
 msgid "Call failed.\n"
 msgstr "Отвори датотеку.\n"
 
-#: dlls/kernelbase/winerror.mc:3817
+#: dlls/kernelbase/winerror.mc:3822
 #, fuzzy
 msgid "Unable to find matching object.\n"
 msgstr "Неисправна синтакса.\n"
 
-#: dlls/kernelbase/winerror.mc:3824
+#: dlls/kernelbase/winerror.mc:3829
 msgid "No Signature found in file.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3838
+#: dlls/kernelbase/winerror.mc:3843
 #, fuzzy
 msgid "Invalid call.\n"
 msgstr "Неисправни акредитиви.\n"
 
-#: dlls/kernelbase/winerror.mc:3845
+#: dlls/kernelbase/winerror.mc:3850
 #, fuzzy
 msgid "Resource is not currently available.\n"
 msgstr "Недоступно"

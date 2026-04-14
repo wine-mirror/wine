@@ -3742,6 +3742,11 @@ SymbolicName=ERROR_NOT_CONNECTED
 Language=ENU
 This network connection does not exist.
 .
+MessageId=4390
+SymbolicName=ERROR_NOT_A_REPARSE_POINT
+Language=ENU
+File or directory is not a reparse point.
+.
 MessageId=10004
 SymbolicName=WSAEINTR
 Language=ENU
