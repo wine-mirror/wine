@@ -1468,9 +1468,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGdiDib(GDIPCONST BITMAPINFO* info,
                                                VOID *bits, GpBitmap **bitmap)
 {
     DWORD height, stride;
-    HBITMAP hbm;
-    void *bmbits;
-    GpStatus status;
+    PixelFormat format;
+    BYTE *scan0;
 
     TRACE("(%p, %p, %p)\n", info, bits, bitmap);
 
@@ -1480,20 +1479,62 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGdiDib(GDIPCONST BITMAPINFO* info,
     if (info->bmiHeader.biSize < sizeof(BITMAPINFOHEADER))
         return InvalidParameter;
 
-    hbm = CreateDIBSection(0, info, DIB_RGB_COLORS, &bmbits, NULL, 0);
-    if (!hbm)
-        return InvalidParameter;
-
     height = abs(info->bmiHeader.biHeight);
     stride = ((info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 31) >> 3) & ~3;
-    TRACE("height %lu, stride %lu, image size %lu\n", height, stride, height * stride);
+    scan0 = bits;
 
-    memcpy(bmbits, bits, height * stride);
+    if (info->bmiHeader.biHeight > 0)
+    {
+        scan0 = scan0 + (height - 1) * stride;
+        stride = -stride;
+    }
 
-    status = GdipCreateBitmapFromHBITMAP(hbm, NULL, bitmap);
-    DeleteObject(hbm);
+    switch (info->bmiHeader.biBitCount)
+    {
+        case 1:
+            format = PixelFormat1bppIndexed;
+            break;
+        case 4:
+            format = PixelFormat4bppIndexed;
+            break;
+        case 8:
+            format = PixelFormat8bppIndexed;
+            break;
+        case 16:
+        {
+            if (info->bmiHeader.biCompression == BI_RGB)
+            {
+                format = PixelFormat16bppRGB555;
+                break;
+            }
+            if (info->bmiHeader.biCompression == BI_BITFIELDS && info->bmiHeader.biSize >= FIELD_OFFSET(BITMAPV4HEADER, bV4AlphaMask))
+            {
+                const BITMAPV4HEADER *header = (const BITMAPV4HEADER*)info;
+                if (header->bV4RedMask == 0x7c00 && header->bV4GreenMask == 0x3e0 && header->bV4BlueMask == 0x1f)
+                {
+                    format = PixelFormat16bppRGB555;
+                    break;
+                }
+                if (header->bV4RedMask == 0xf800 && header->bV4GreenMask == 0x7e0 && header->bV4BlueMask == 0x1f)
+                {
+                    format = PixelFormat16bppRGB565;
+                    break;
+                }
+            }
+            return InvalidParameter;
+        }
+        case 24:
+            format = PixelFormat24bppRGB;
+            break;
+        case 32:
+            format = PixelFormat32bppRGB;
+            break;
+        default:
+            FIXME("don't know how to handle %d bpp\n", info->bmiHeader.biBitCount);
+            return InvalidParameter;
+    }
 
-    return status;
+    return GdipCreateBitmapFromScan0(info->bmiHeader.biWidth, height, stride, format, scan0, bitmap);
 }
 
 /* FIXME: no icm */

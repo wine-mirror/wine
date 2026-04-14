@@ -290,12 +290,10 @@ static void check_bitmap_bits_(GpBitmap *bitmap, UINT width, UINT height, int st
     ok_(file, line)(stat == Ok, "GdipBitmapLockBits failed, status=%i\n", stat);
     ok_(file, line)(width == lock.Width, "BitmapData.Width == %d, expected %d\n", lock.Width, width);
     ok_(file, line)(height == lock.Height, "BitmapData.Height == %d, expected %d\n", lock.Height, height);
-todo_wine_if(stride < 0)
     ok_(file, line)(stride == lock.Stride, "BitmapData.Stride == %i, expected %i\n", lock.Stride, stride);
     ok_(file, line)(format == lock.PixelFormat, "BitmapData.PixelFormat == %x, expected %x\n", lock.PixelFormat, format);
     if (scan0)
     {
-todo_wine
         ok_(file, line)(scan0 == lock.Scan0, "BitmapData.Scan0 == %p, expected %p\n", lock.Scan0, scan0);
     }
     ok_(file, line)(lock.Reserved == 0, "BitmapData.Reserved == %p, expected 0\n", (void*)lock.Reserved);
