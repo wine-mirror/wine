@@ -586,7 +586,8 @@ static HRESULT WINAPI FuncRef_QueryInterface(IDispatch *iface, REFIID riid, void
         return S_OK;
     }
 
-    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    if(!IsEqualGUID(riid, &IID_IDispatchEx))
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
     *ppv = NULL;
     return E_NOINTERFACE;
 }
