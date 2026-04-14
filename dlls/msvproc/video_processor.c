@@ -15,15 +15,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "gst_private.h"
+#include <stddef.h>
+#include <stdarg.h>
+
+#define COBJMACROS
+#include "windef.h"
+#include "winbase.h"
 
 #include "d3d9types.h"
-#include "mediaerr.h"
+#include "dshow.h"
+#include "dvdmedia.h"
 #include "mfapi.h"
+#include "mfidl.h"
 #include "mferror.h"
 #include "mfobjects.h"
 #include "mftransform.h"
-#include "wmcodecdsp.h"
 
 #include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
@@ -33,9 +39,9 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-extern GUID MFVideoFormat_ABGR32;
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32, D3DFMT_A8B8G8R8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_P208,MAKEFOURCC('P','2','0','8'));
 
 static const GUID MF_XVP_PLAYBACK_MODE = { 0x3c5d293f, 0xad67, 0x4e29, { 0xaf, 0x12, 0xcf, 0x3e, 0x23, 0x8a, 0xcc, 0xe9 } };
 
@@ -462,6 +468,29 @@ static void video_processor_cleanup(struct video_processor *impl)
     av_frame_unref(&impl->output_frame);
     av_frame_unref(&impl->input_frame);
     sws_free_context(&impl->context);
+}
+
+static BOOL is_mf_video_area_empty(const MFVideoArea *area)
+{
+    return !area->OffsetX.value && !area->OffsetY.value && !area->Area.cx && !area->Area.cy;
+}
+
+static void get_mf_video_content_rect(const MFVideoInfo *info, RECT *rect)
+{
+    if (!is_mf_video_area_empty(&info->MinimumDisplayAperture))
+    {
+        rect->left = info->MinimumDisplayAperture.OffsetX.value;
+        rect->top = info->MinimumDisplayAperture.OffsetY.value;
+        rect->right = rect->left + info->MinimumDisplayAperture.Area.cx;
+        rect->bottom = rect->top + info->MinimumDisplayAperture.Area.cy;
+    }
+    else
+    {
+        rect->left = 0;
+        rect->top = 0;
+        rect->right = info->dwWidth;
+        rect->bottom = info->dwHeight;
+    }
 }
 
 static void update_video_aperture(MFVideoInfo *input_info, MFVideoInfo *output_info)
@@ -1158,33 +1187,21 @@ static const char *debugstr_version(UINT version)
             AV_VERSION_MICRO(version));
 }
 
-HRESULT video_processor_create(REFIID riid, void **ret)
+static HRESULT WINAPI video_processor_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **out)
 {
-    const MFVIDEOFORMAT input_format =
-    {
-        .dwSize = sizeof(MFVIDEOFORMAT),
-        .videoInfo = {.dwWidth = 1920, .dwHeight = 1080},
-        .guidFormat = MFVideoFormat_I420,
-    };
-    const MFVIDEOFORMAT output_format =
-    {
-        .dwSize = sizeof(MFVIDEOFORMAT),
-        .videoInfo = {.dwWidth = 1920, .dwHeight = 1080},
-        .guidFormat = MFVideoFormat_NV12,
-    };
     struct video_processor *impl;
     HRESULT hr;
 
-    TRACE("riid %s, ret %p.\n", debugstr_guid(riid), ret);
+    TRACE("outer %p, riid %s, out %p.\n", outer, debugstr_guid(riid), out);
+
+    *out = NULL;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
 
     TRACE("avutil version %s\n", debugstr_version(avutil_version()));
     TRACE("swscale version %s\n", debugstr_version(swscale_version()));
-
-    if (FAILED(hr = check_video_transform_support(&input_format, &output_format)))
-    {
-        ERR_(winediag)("GStreamer doesn't support video conversion, please install appropriate plugins.\n");
-        return hr;
-    }
 
     if (!(impl = calloc(1, sizeof(*impl))))
         return E_OUTOFMEMORY;
@@ -1201,9 +1218,9 @@ HRESULT video_processor_create(REFIID riid, void **ret)
 
     impl->IMFTransform_iface.lpVtbl = &video_processor_vtbl;
     impl->refcount = 1;
+    TRACE("Created video processor %p\n", impl);
 
-    *ret = &impl->IMFTransform_iface;
-    TRACE("Created %p\n", *ret);
+    *out = &impl->IMFTransform_iface;
     return S_OK;
 
 failed:
@@ -1215,3 +1232,32 @@ failed:
     free(impl);
     return hr;
 }
+
+static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
+{
+    *out = IsEqualGUID(riid, &IID_IClassFactory) || IsEqualGUID(riid, &IID_IUnknown) ? iface : NULL;
+    return *out ? S_OK : E_NOINTERFACE;
+}
+static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+static ULONG WINAPI class_factory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    return S_OK;
+}
+
+static const IClassFactoryVtbl video_processor_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    video_processor_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
+IClassFactory video_processor_factory = {&video_processor_factory_vtbl};

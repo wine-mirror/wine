@@ -37,41 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32, D3DFMT_A8B8G8R8);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_P208,MAKEFOURCC('P','2','0','8'));
 
-static HRESULT WINAPI video_processor_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
-        REFIID riid, void **out)
-{
-    static const GUID CLSID_wg_video_processor = {0xd527607f,0x89cb,0x4e94,{0x95,0x71,0xbc,0xfe,0x62,0x17,0x56,0x13}};
-    return CoCreateInstance(&CLSID_wg_video_processor, outer, CLSCTX_INPROC_SERVER, riid, out);
-}
-
-static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
-{
-    *out = IsEqualGUID(riid, &IID_IClassFactory) || IsEqualGUID(riid, &IID_IUnknown) ? iface : NULL;
-    return *out ? S_OK : E_NOINTERFACE;
-}
-static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
-{
-    return 2;
-}
-static ULONG WINAPI class_factory_Release(IClassFactory *iface)
-{
-    return 1;
-}
-static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL dolock)
-{
-    return S_OK;
-}
-
-static const IClassFactoryVtbl video_processor_factory_vtbl =
-{
-    class_factory_QueryInterface,
-    class_factory_AddRef,
-    class_factory_Release,
-    video_processor_factory_CreateInstance,
-    class_factory_LockServer,
-};
-
-static IClassFactory video_processor_factory = {&video_processor_factory_vtbl};
+extern IClassFactory video_processor_factory;
 
 /***********************************************************************
  *              DllGetClassObject (msvproc.@)

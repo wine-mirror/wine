@@ -65,12 +65,6 @@ coclass wg_wave_parser {}
 coclass decodebin_parser {}
 
 [
-    threading(both),
-    uuid(d527607f-89cb-4e94-9571-bcfe62175613)
-]
-coclass wg_video_processor {}
-
-[
     helpstring("Generic Decodebin Byte Stream Handler"),
     threading(both),
     uuid(317df618-5e5a-468a-9f15-d827a9a08162)

@@ -181,8 +181,6 @@ bool wg_video_format_is_rgb(enum wg_video_format format);
 
 HRESULT aac_decoder_create(REFIID riid, void **ret);
 HRESULT h264_decoder_create(REFIID riid, void **ret);
-HRESULT video_processor_create(REFIID riid, void **ret);
-
 HRESULT h264_encoder_create(REFIID riid, void **ret);
 
 extern const GUID MFAudioFormat_RAW_AAC;
