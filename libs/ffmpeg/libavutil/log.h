@@ -359,8 +359,14 @@ void av_log_default_callback(void *avcl, int level, const char *fmt,
  *
  * @return The AVClass class_name
  */
-const char* av_default_item_name(void* ctx);
-AVClassCategory av_default_get_category(void *ptr);
+static inline const char *av_default_item_name(void *ptr)
+{
+    return (*(AVClass **) ptr)->class_name;
+}
+static inline AVClassCategory av_default_get_category(void *ptr)
+{
+    return (*(AVClass **) ptr)->category;
+}
 
 /**
  * Format a line of log the same way as the default callback.
@@ -423,5 +429,56 @@ int av_log_get_flags(void);
 /**
  * @}
  */
+
+#include "wine/debug.h"
+#undef OUT
+
+WINE_DECLARE_DEBUG_CHANNEL(ffmpeg);
+
+static enum __wine_debug_class wine_dbglog_from_level( int level )
+{
+    if (level >= 0) level &= 0xff;
+    if (level < 0) return __WINE_DBCL_TRACE;
+    if (level <= AV_LOG_ERROR) return __WINE_DBCL_ERR;
+    if (level <= AV_LOG_WARNING) return __WINE_DBCL_WARN;
+    return __WINE_DBCL_TRACE;
+}
+
+#define av_log( a, b, c, ... ) wine_av_log( __func__, a, b, c, ##__VA_ARGS__ )
+static inline void wine_av_log( const char *func, void *avcl, int level, const char *fmt, ... )
+{
+    enum __wine_debug_class dbcl = wine_dbglog_from_level( level );
+    va_list args;
+
+    if (!(__wine_dbch_ffmpeg.flags & (1 << dbcl))) return;
+    va_start( args, fmt );
+    wine_dbg_vlog( dbcl, &__wine_dbch_ffmpeg, func, fmt, args );
+    va_end( args );
+}
+
+#define av_log_once( a, b, c, d, e, ... ) wine_av_log_once( __func__, a, b, c, d, e, ##__VA_ARGS__ )
+static inline void wine_av_log_once( const char *func, void *avcl, int initial_level, int subsequent_level,
+                                     int *state, const char *fmt, ... )
+{
+    enum __wine_debug_class dbcl;
+    va_list args;
+    int level;
+
+    level = InterlockedExchange( (LONG *)state, 1 ) ? subsequent_level : initial_level;
+    dbcl = wine_dbglog_from_level( level );
+
+    if (!(__wine_dbch_ffmpeg.flags & (1 << dbcl))) return;
+    va_start( args, fmt );
+    wine_dbg_vlog( dbcl, &__wine_dbch_ffmpeg, func, fmt, args );
+    va_end( args );
+}
+
+#define av_vlog( a, b, c, d ) wine_av_vlog( __func__, a, b, c, d )
+static inline void wine_av_vlog( const char *func, void *avcl, int level, const char *fmt, va_list args )
+{
+    enum __wine_debug_class dbcl = wine_dbglog_from_level( level );
+    if (!(__wine_dbch_ffmpeg.flags & (1 << dbcl))) return;
+    wine_dbg_vlog( dbcl, &__wine_dbch_ffmpeg, func, fmt, args );
+}
 
 #endif /* AVUTIL_LOG_H */

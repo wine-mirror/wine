@@ -51,7 +51,6 @@ SOURCES = \
 	libavutil/intmath.c \
 	libavutil/lfg.c \
 	libavutil/lls.c \
-	libavutil/log.c \
 	libavutil/lzo.c \
 	libavutil/mastering_display_metadata.c \
 	libavutil/mathematics.c \
