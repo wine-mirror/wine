@@ -774,34 +774,49 @@ __ASM_GLOBAL_FUNC( clear_alignment_flag,
 /***********************************************************************
  *           set_gs_base
  *
- * Set the gs.base MSR to point at the given TEB. Normally this is done
- * via arch_prctl(ARCH_SET_GS), but some user-mode Linux kernel
- * emulators (notably gVisor's runsc sentry) silently ignore
- * arch_prctl(ARCH_SET_GS) calls: the syscall returns success but the
- * write never takes effect, leaving gs.base at whatever the emulator
- * initially chose (often a glibc-private address). Under those
- * conditions Wine's PE ntdll hits NULL-pointer faults every time it
- * reads NtCurrentTeb() via `%gs:0x30`.
+ * Set the gs.base MSR to point at the given TEB.
  *
- * Use the wrgsbase instruction as the primary path - it modifies the
- * gs.base MSR directly and works on every environment that exposes
- * the fsgsbase feature to user mode, including gVisor. Verify by
- * re-reading via a %gs-prefixed load (since rdgsbase can also be
- * broken on emulators). Fall back to arch_prctl if wrgsbase had no
- * effect, so that this helper is safe on hosts that disable
- * CR4.FSGSBASE. If both paths fail, the caller sees a gs.base that
- * still doesn't match teb and can escalate.
+ * On bare-metal Linux, arch_prctl(ARCH_SET_GS) is the canonical path
+ * and always works. On user-mode Linux kernel emulators - notably
+ * gVisor's runsc sentry - arch_prctl(ARCH_SET_GS) either returns
+ * failure or lies (returns success but never writes the MSR), leaving
+ * gs.base at whatever the emulator initially chose (often a
+ * glibc-private address). Under those conditions Wine's PE ntdll hits
+ * NULL-pointer faults every time it reads NtCurrentTeb() via
+ * `%gs:0x30`.
+ *
+ * Try arch_prctl first and VERIFY the write took effect by reading
+ * `%gs:0x30` (which, on a correctly-initialised TEB, equals teb
+ * because teb->NtTib.Self is set to &teb->Tib and Tib is at offset 0
+ * inside TEB). If either the syscall failed or the verification
+ * mismatched, fall through to wrgsbase - a direct CPU instruction,
+ * not a syscall, that cannot be intercepted by an emulator.
+ *
+ * This layout keeps the pre-patch behaviour on every host that
+ * implements arch_prctl correctly, INCLUDING hosts that disable
+ * CR4.FSGSBASE. On those hosts arch_prctl works, verification
+ * passes, and the wrgsbase fallback is never executed, so there is
+ * no risk of an unconditional SIGILL from wrgsbase on a host where
+ * FSGSBASE is not enabled. The wrgsbase fallback is only reached
+ * when arch_prctl has already been proven broken, which in practice
+ * means a user-mode Linux kernel that does expose the FSGSBASE
+ * feature to user space (such as gVisor).
  */
 static inline void set_gs_base( TEB *teb )
 {
-    if (user_shared_data->ProcessorFeatures[PF_RDWRFSGSBASE_AVAILABLE])
+    ULONG_PTR probe = 0;
+
+    if (arch_prctl( ARCH_SET_GS, teb ) == 0)
     {
-        ULONG_PTR probe = 0;
-        __asm__ volatile("wrgsbase %0" :: "r"((ULONG_PTR)teb));
-        __asm__ volatile("mov %%gs:0x30, %0" : "=r"(probe));
+        __asm__ volatile( "movq %%gs:0x30, %0" : "=r"(probe) );
         if (probe == (ULONG_PTR)teb) return;
     }
-    arch_prctl( ARCH_SET_GS, teb );
+    /* arch_prctl failed or silently discarded the write - fall back
+     * to the wrgsbase instruction. This is only reached on broken
+     * hosts; on bare-metal Linux the early return above is always
+     * taken and wrgsbase is never executed, so hosts with
+     * CR4.FSGSBASE cleared are unaffected. */
+    __asm__ volatile( "wrgsbase %0" :: "r"((ULONG_PTR)teb) );
 }
 
 
