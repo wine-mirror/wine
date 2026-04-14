@@ -3326,7 +3326,7 @@ Call ok(Err.Number = 457, "duplicate Dictionary key: err.number = " & Err.Number
 Err.Clear
 Dim undefinedNewTarget
 Set undefinedNewTarget = New NoSuchClass
-todo_wine_ok Err.Number = 500, "New undeclared identifier: err.number = " & Err.Number
+Call ok(Err.Number = 500, "New undeclared identifier: err.number = " & Err.Number)
 
 ' Error 506: Class not defined. To reach the class lookup path, the
 ' identifier must be a declared variable that isn't a class.
@@ -3335,7 +3335,7 @@ Dim notAClass
 notAClass = 42
 Dim undefinedClassObj
 Set undefinedClassObj = New notAClass
-todo_wine_ok Err.Number = 506, "New non-class variable: err.number = " & Err.Number
+Call ok(Err.Number = 506, "New non-class variable: err.number = " & Err.Number)
 
 On Error GoTo 0
 

@@ -1255,7 +1255,7 @@ static HRESULT interp_deref(exec_ctx_t *ctx)
 
 static HRESULT interp_new(exec_ctx_t *ctx)
 {
-    const WCHAR *arg = ctx->instr->arg1.bstr;
+    BSTR arg = ctx->instr->arg1.bstr;
     class_desc_t *class_desc = NULL;
     vbdisp_t *obj;
     VARIANT v;
@@ -1281,8 +1281,13 @@ static HRESULT interp_new(exec_ctx_t *ctx)
             if(!vbs_wcsicmp(class_desc->name, arg))
                 break;
     if(!class_desc) {
-        FIXME("Class %s not found\n", debugstr_w(arg));
-        return E_FAIL;
+        ref_t ref;
+
+        hres = lookup_identifier(ctx, arg, VBDISP_ANY, &ref);
+        if(FAILED(hres))
+            return hres;
+        return MAKE_VBSERROR(ref.type == REF_NONE ? VBSE_VARIABLE_UNDEFINED
+                                                  : VBSE_CLASS_NOT_DEFINED);
     }
 
     hres = create_vbdisp(class_desc, &obj);
