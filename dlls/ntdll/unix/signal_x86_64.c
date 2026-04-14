@@ -2262,6 +2262,49 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
 
 
 /**********************************************************************
+ *		get_signal_trap_code
+ *
+ * Return an effective x86 trap number for a signal. The hardware trap
+ * number is normally read from gregs[REG_TRAPNO], which the Linux kernel
+ * populates on every synchronous signal delivery. Some environments
+ * synthesise signals without populating that field (e.g. gVisor's
+ * runsc sentry kernel, Firecracker's vmm, and certain emulators): in
+ * that case we fall back to deriving a sensible trap number from the
+ * siginfo, which is always populated by the common kernel signal path.
+ *
+ * On bare-metal and hypervisor Linux, gregs[REG_TRAPNO] is non-zero, so
+ * this helper returns the unchanged hardware value and the fallback is
+ * never exercised.
+ */
+static inline unsigned int get_signal_trap_code( int signal, const ucontext_t *ucontext,
+                                                 const siginfo_t *siginfo )
+{
+    unsigned int trap = TRAP_sig(ucontext);
+    if (trap) return trap;
+
+    switch (signal)
+    {
+    case SIGSEGV:
+        if (siginfo->si_code == SEGV_MAPERR || siginfo->si_code == SEGV_ACCERR)
+            return TRAP_x86_PAGEFLT;
+        return TRAP_x86_PAGEFLT;
+    case SIGBUS:
+        if (siginfo->si_code == BUS_ADRALN) return TRAP_x86_ALIGNFLT;
+        return TRAP_x86_PAGEFLT;
+    case SIGILL:
+        return TRAP_x86_PRIVINFLT;
+    case SIGTRAP:
+        if (siginfo->si_code == TRAP_BRKPT) return TRAP_x86_BPTFLT;
+        return TRAP_x86_TRCTRAP;
+    case SIGFPE:
+        return TRAP_x86_ARITHTRAP;
+    default:
+        return 0;
+    }
+}
+
+
+/**********************************************************************
  *		segv_handler
  *
  * Handler for SIGSEGV and related errors.
@@ -2271,11 +2314,12 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     ucontext_t *ucontext = init_handler( sigcontext );
     EXCEPTION_RECORD rec = { 0 };
     struct xcontext context;
+    unsigned int trap_code = get_signal_trap_code( signal, ucontext, siginfo );
 
     rec.ExceptionAddress = (void *)RIP_sig(ucontext);
     save_context( &context, ucontext );
 
-    switch(TRAP_sig(ucontext))
+    switch (trap_code)
     {
     case TRAP_x86_OFLOW:   /* Overflow exception */
         rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
@@ -2335,7 +2379,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        ERR_(seh)( "Got unexpected trap %ld\n", (ULONG_PTR)TRAP_sig(ucontext) );
+        ERR_(seh)( "Got unexpected trap %u (hw %ld)\n", trap_code, (ULONG_PTR)TRAP_sig(ucontext) );
         /* fall through */
     case TRAP_x86_NMI:       /* NMI interrupt */
     case TRAP_x86_DNA:       /* Device not available exception */
@@ -2367,7 +2411,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec.ExceptionAddress = (void *)RIP_sig(ucontext);
     save_context( &context, ucontext );
 
-    switch (TRAP_sig(ucontext))
+    switch (get_signal_trap_code( signal, ucontext, siginfo ))
     {
     case TRAP_x86_TRCTRAP:
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
