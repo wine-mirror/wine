@@ -2591,15 +2591,30 @@ static HRESULT WINAPI folder_get_ParentFolder(IFolder *iface, IFolder **parent)
 static HRESULT WINAPI folder_get_Attributes(IFolder *iface, FileAttribute *attr)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, attr);
-    return E_NOTIMPL;
+    DWORD fa;
+
+    TRACE("(%p)->(%p)\n", This, attr);
+
+    if(!attr)
+        return E_POINTER;
+
+    fa = GetFileAttributesW(This->path);
+    if(fa == INVALID_FILE_ATTRIBUTES)
+        return create_error(GetLastError());
+
+    *attr = fa & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
+            FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE |
+            FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED);
+    return S_OK;
 }
 
 static HRESULT WINAPI folder_put_Attributes(IFolder *iface, FileAttribute attr)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(0x%x): stub\n", This, attr);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(0x%x)\n", This, attr);
+
+    return SetFileAttributesW(This->path, attr) ? S_OK : create_error(GetLastError());
 }
 
 static HRESULT WINAPI folder_get_DateCreated(IFolder *iface, DATE *date)

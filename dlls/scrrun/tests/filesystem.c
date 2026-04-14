@@ -1077,6 +1077,57 @@ static void test_GetFolder(void)
     SetCurrentDirectoryW(prev_path);
 }
 
+static void test_Folder_Attributes(void)
+{
+    static const DWORD attr_mask = FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
+            FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE |
+            FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED;
+
+    WCHAR temp_path[MAX_PATH], dir_path[MAX_PATH];
+    IFolder *folder;
+    FileAttribute fa;
+    DWORD gfa, new_gfa;
+    BSTR path;
+    HRESULT hr;
+
+    GetTempPathW(MAX_PATH, temp_path);
+    lstrcpyW(dir_path, temp_path);
+    lstrcatW(dir_path, L"scrrun_attr_test");
+    ok(CreateDirectoryW(dir_path, NULL), "CreateDirectory failed, error %ld\n", GetLastError());
+
+    path = SysAllocString(dir_path);
+    hr = IFileSystem3_GetFolder(fs3, path, &folder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_get_Attributes(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_get_Attributes(folder, &fa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    gfa = GetFileAttributesW(dir_path) & attr_mask;
+    ok(fa == gfa, "Unexpected flags %#x, expected %lx.\n", fa, gfa);
+    ok(fa & FILE_ATTRIBUTE_DIRECTORY, "directory bit not set, got %#x.\n", fa);
+
+    /* FILE_ATTRIBUTE_READONLY is silently ignored on directories by Windows
+     * (it has a different meaning for folders), so exercise HIDDEN instead. */
+    hr = IFolder_put_Attributes(folder, gfa | FILE_ATTRIBUTE_HIDDEN);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    new_gfa = GetFileAttributesW(dir_path) & attr_mask;
+    ok(new_gfa == (gfa | FILE_ATTRIBUTE_HIDDEN), "got %#lx, expected %lx\n",
+       new_gfa, gfa | FILE_ATTRIBUTE_HIDDEN);
+
+    hr = IFolder_get_Attributes(folder, &fa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fa == new_gfa, "got %#x, expected %lx.\n", fa, new_gfa);
+
+    hr = IFolder_put_Attributes(folder, gfa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IFolder_Release(folder);
+    SysFreeString(path);
+    RemoveDirectoryW(dir_path);
+}
+
 static void test_Folder_ParentFolder(void)
 {
     WCHAR windir[MAX_PATH];
@@ -3061,6 +3112,7 @@ START_TEST(filesystem)
     test_CopyFolder();
     test_BuildPath();
     test_GetFolder();
+    test_Folder_Attributes();
     test_Folder_ParentFolder();
     test_FolderCollection();
     test_FileCollection();
