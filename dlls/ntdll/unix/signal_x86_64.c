@@ -794,11 +794,14 @@ __ASM_GLOBAL_FUNC( clear_alignment_flag,
  */
 static inline void set_gs_base( TEB *teb )
 {
-    ULONG_PTR probe = 0;
-    __asm__ volatile("wrgsbase %0" :: "r"((ULONG_PTR)teb));
-    __asm__ volatile("mov %%gs:0x30, %0" : "=r"(probe));
-    if (probe != (ULONG_PTR)teb)
-        arch_prctl( ARCH_SET_GS, teb );
+    if (user_shared_data->ProcessorFeatures[PF_RDWRFSGSBASE_AVAILABLE])
+    {
+        ULONG_PTR probe = 0;
+        __asm__ volatile("wrgsbase %0" :: "r"((ULONG_PTR)teb));
+        __asm__ volatile("mov %%gs:0x30, %0" : "=r"(probe));
+        if (probe == (ULONG_PTR)teb) return;
+    }
+    arch_prctl( ARCH_SET_GS, teb );
 }
 
 
