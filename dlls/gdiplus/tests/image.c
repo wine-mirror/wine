@@ -272,6 +272,38 @@ static void test_Scan0(void)
     ok( !bm, "expected null bitmap\n" );
 }
 
+#define check_bitmap_bits(bitmap, width, height, stride, format, scan0, todo_scan0) \
+    check_bitmap_bits_(bitmap, width, height, stride, format, scan0, todo_scan0, __FILE__, __LINE__);
+
+static void check_bitmap_bits_(GpBitmap *bitmap, UINT width, UINT height, int stride,
+    PixelFormat format, void* scan0, BOOL todo_scan0, const char* file, int line)
+{
+    GpStatus stat;
+    PixelFormat actual_format;
+    BitmapData lock;
+
+    stat = GdipGetImagePixelFormat((GpImage*)bitmap, &actual_format);
+    ok_(file, line)(stat == Ok, "GdipGetImagePixelFormat failed, status=%i\n", stat);
+    ok_(file, line)(format == actual_format, "GdipGetImagePixelFormat returned format %x, expected %x\n", actual_format, format);
+
+    stat = GdipBitmapLockBits(bitmap, NULL, 0, actual_format, &lock);
+    ok_(file, line)(stat == Ok, "GdipBitmapLockBits failed, status=%i\n", stat);
+    ok_(file, line)(width == lock.Width, "BitmapData.Width == %d, expected %d\n", lock.Width, width);
+    ok_(file, line)(height == lock.Height, "BitmapData.Height == %d, expected %d\n", lock.Height, height);
+todo_wine_if(stride < 0)
+    ok_(file, line)(stride == lock.Stride, "BitmapData.Stride == %i, expected %i\n", lock.Stride, stride);
+    ok_(file, line)(format == lock.PixelFormat, "BitmapData.PixelFormat == %x, expected %x\n", lock.PixelFormat, format);
+    if (scan0)
+    {
+todo_wine
+        ok_(file, line)(scan0 == lock.Scan0, "BitmapData.Scan0 == %p, expected %p\n", lock.Scan0, scan0);
+    }
+    ok_(file, line)(lock.Reserved == 0, "BitmapData.Reserved == %p, expected 0\n", (void*)lock.Reserved);
+
+    stat = GdipBitmapUnlockBits(bitmap, &lock);
+    ok_(file, line)(stat == Ok, "GdipBitmapUnlockBits failed, status=%i\n", stat);
+}
+
 static void test_FromGdiDib(void)
 {
     GpBitmap *bm;
@@ -279,7 +311,6 @@ static void test_FromGdiDib(void)
     BYTE buff[400];
     BYTE rbmi[sizeof(BITMAPINFOHEADER)+256*sizeof(RGBQUAD)];
     BITMAPINFO *bmi = (BITMAPINFO*)rbmi;
-    PixelFormat format;
 
     bm = NULL;
 
@@ -306,9 +337,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat32bppRGB, format);
+        check_bitmap_bits(bm, 10, 10, -40, PixelFormat32bppRGB, &buff[40*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -319,9 +348,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat24bppRGB, format);
+        check_bitmap_bits(bm, 10, 10, -32, PixelFormat24bppRGB, &buff[32*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -332,9 +359,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat16bppRGB555, format);
+        check_bitmap_bits(bm, 10, 10, -20, PixelFormat16bppRGB555, &buff[20*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -345,9 +370,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat8bppIndexed, format);
+        check_bitmap_bits(bm, 10, 10, -12, PixelFormat8bppIndexed, &buff[12*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -358,9 +381,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat4bppIndexed, format);
+        check_bitmap_bits(bm, 10, 10, -8, PixelFormat4bppIndexed, &buff[8*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
@@ -371,9 +392,7 @@ static void test_FromGdiDib(void)
     ok(NULL != bm, "Expected bitmap to be initialized\n");
     if (stat == Ok)
     {
-        stat = GdipGetImagePixelFormat((GpImage*)bm, &format);
-        expect(Ok, stat);
-        expect(PixelFormat1bppIndexed, format);
+        check_bitmap_bits(bm, 10, 10, -4, PixelFormat1bppIndexed, &buff[4*9], TRUE);
 
         GdipDisposeImage((GpImage*)bm);
     }
