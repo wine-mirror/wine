@@ -1082,6 +1082,7 @@ static void test_Folder_ParentFolder(void)
     WCHAR windir[MAX_PATH];
     IFolder *folder, *parent, *grandparent;
     BSTR str, expected;
+    VARIANT_BOOL isroot;
     HRESULT hr;
 
     GetWindowsDirectoryW(windir, MAX_PATH);
@@ -1110,6 +1111,15 @@ static void test_Folder_ParentFolder(void)
     SysFreeString(str);
     SysFreeString(expected);
 
+    /* Non-root folder: IsRootFolder is FALSE. */
+    hr = IFolder_get_IsRootFolder(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    isroot = VARIANT_TRUE;
+    hr = IFolder_get_IsRootFolder(folder, &isroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(isroot == VARIANT_FALSE, "got %d\n", isroot);
+
     IFolder_Release(folder);
 
     /* Root folder: ParentFolder returns NULL. */
@@ -1117,6 +1127,12 @@ static void test_Folder_ParentFolder(void)
     hr = IFolder_get_ParentFolder(parent, &grandparent);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(grandparent == NULL, "got %p, expected NULL\n", grandparent);
+
+    /* Root folder: IsRootFolder is TRUE. */
+    isroot = VARIANT_FALSE;
+    hr = IFolder_get_IsRootFolder(parent, &isroot);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(isroot == VARIANT_TRUE, "got %d\n", isroot);
 
     IFolder_Release(parent);
 }

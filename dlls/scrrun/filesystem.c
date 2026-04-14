@@ -2654,8 +2654,15 @@ static HRESULT WINAPI folder_Move(IFolder *iface, BSTR dest)
 static HRESULT WINAPI folder_get_IsRootFolder(IFolder *iface, VARIANT_BOOL *isroot)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, isroot);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, isroot);
+
+    if(!isroot)
+        return E_POINTER;
+
+    *isroot = get_parent_folder_name(This->path, SysStringLen(This->path))
+              ? VARIANT_FALSE : VARIANT_TRUE;
+    return S_OK;
 }
 
 static HRESULT WINAPI folder_get_Size(IFolder *iface, VARIANT *size)
