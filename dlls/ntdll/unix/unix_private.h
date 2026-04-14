@@ -300,6 +300,7 @@ extern NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING 
                                              struct pe_image_info *info, void *so_handle );
 extern NTSTATUS virtual_relocate_module( void *module );
 extern TEB *virtual_alloc_first_teb(void);
+extern void virtual_init_thread_stack_cache(void);
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb );
 extern void virtual_free_teb( TEB *teb );
 extern NTSTATUS virtual_clear_tls_index( ULONG index );

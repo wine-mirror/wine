@@ -1126,6 +1126,7 @@ static void start_thread( TEB *teb )
     thread_data->syscall_table = KeServiceDescriptorTable;
     thread_data->syscall_trace = TRACE_ON(syscall);
     thread_data->pthread_id = pthread_self();
+    virtual_init_thread_stack_cache();
     pthread_setspecific( teb_key, teb );
     server_init_thread( thread_data->start, &suspend );
     signal_start_thread( thread_data->start, thread_data->param, suspend, teb );
