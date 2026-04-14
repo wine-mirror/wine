@@ -1008,11 +1008,6 @@ static BOOL initialize_vk_device( TEB *teb, struct context *ctx )
     static PFN_vkGetPhysicalDeviceProperties2KHR p_vkGetPhysicalDeviceProperties2KHR;
 
     if (ctx->buffers->vk_device) return TRUE; /* already initialized */
-    if (!is_extension_supported( ctx, "GL_EXT_memory_object_fd" ))
-    {
-        TRACE( "GL_EXT_memory_object_fd is not supported\n" );
-        return FALSE;
-    }
 
     if (!vk_funcs)
     {
@@ -1188,6 +1183,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     size_t size = ARRAYSIZE(legacy_extensions) - 1, count = 0;
     const char *version, *rest = "", **extensions;
+    BOOL has_GL_EXT_memory_object_fd = FALSE;
     int i, j;
 
     static const char *disabled, *enabled;
@@ -1258,6 +1254,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
         for (i = 0, j = 0; i < count; i++)
         {
             size_t len = strlen( extensions[i] );
+            if (!strcmp( extensions[i], "GL_EXT_memory_object_fd" )) has_GL_EXT_memory_object_fd = TRUE;
             if (!has_extension( disabled, extensions[i], len ) && (!*enabled || has_extension( enabled, extensions[i], len )))
                 extensions[j++] = extensions[i];
             else
@@ -1273,7 +1270,7 @@ static void make_context_current( TEB *teb, const struct opengl_funcs *funcs, HD
     ctx->extension_array = extensions;
     ctx->extension_count = count;
 
-    if (is_win64 && ctx->buffers && !initialize_vk_device( teb, ctx )
+    if (is_win64 && ctx->buffers && (!has_GL_EXT_memory_object_fd || !initialize_vk_device( teb, ctx ))
         && !(ctx->use_pinned_memory = is_extension_supported( ctx, "GL_AMD_pinned_memory" )))
     {
         if (ctx->major_version > 4 || (ctx->major_version == 4 && ctx->minor_version > 3))
