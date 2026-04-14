@@ -2207,10 +2207,12 @@ BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle )
             SetLastError( ERROR_INVALID_HANDLE );
             ret = FALSE;
         }
-
-        list_remove( &notify->entry );
-        free( notify->path );
-        free( notify );
+        else
+        {
+            list_remove( &notify->entry );
+            free( notify->path );
+            free( notify );
+        }
     }
     __EXCEPT_PAGE_FAULT
     {
