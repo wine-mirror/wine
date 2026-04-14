@@ -309,8 +309,9 @@ static void test_FromGdiDib(void)
     GpBitmap *bm;
     GpStatus stat;
     BYTE buff[400];
-    BYTE rbmi[sizeof(BITMAPINFOHEADER)+256*sizeof(RGBQUAD)];
+    BYTE rbmi[sizeof(BITMAPV5HEADER)+256*sizeof(RGBQUAD)];
     BITMAPINFO *bmi = (BITMAPINFO*)rbmi;
+    BITMAPCOREINFO *bmci = (BITMAPCOREINFO*)rbmi;
 
     bm = NULL;
 
@@ -409,7 +410,46 @@ static void test_FromGdiDib(void)
         GdipDisposeImage((GpImage*)bm);
     }
 
+    bmi->bmiHeader.biSize = sizeof(BITMAPV5HEADER);
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, -4, PixelFormat1bppIndexed, &buff[4*9], TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biSize = sizeof(BITMAPV4HEADER);
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, -4, PixelFormat1bppIndexed, &buff[4*9], TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+#if 0
+    bmi->bmiHeader.biSize = sizeof(BITMAPV4HEADER)+4;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(InvalidParameter, stat); // Native sometimes fails and sometimes succeeds
+    if (stat == Ok)
+        GdipDisposeImage((GpImage*)bm);
+#endif
+
+    bmi->bmiHeader.biSize = sizeof(BITMAPV4HEADER);
     bmi->bmiHeader.biBitCount = 0;
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(InvalidParameter, stat);
+
+    bmci->bmciHeader.bcSize = sizeof(BITMAPCOREHEADER);
+    bmci->bmciHeader.bcWidth = 10;
+    bmci->bmciHeader.bcHeight = 10;
+    bmci->bmciHeader.bcPlanes = 1;
+    bmci->bmciHeader.bcBitCount = 1;
     stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
     expect(InvalidParameter, stat);
 }

@@ -1477,6 +1477,9 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGdiDib(GDIPCONST BITMAPINFO* info,
     if (!info || !bits || !bitmap)
         return InvalidParameter;
 
+    if (info->bmiHeader.biSize < sizeof(BITMAPINFOHEADER))
+        return InvalidParameter;
+
     hbm = CreateDIBSection(0, info, DIB_RGB_COLORS, &bmbits, NULL, 0);
     if (!hbm)
         return InvalidParameter;
