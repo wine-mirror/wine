@@ -1009,7 +1009,7 @@ static NTSTATUS setCursor_ioctl( void *data, DWORD in_size, DWORD out_size, ULON
                                     res->hotspotx, res->hotspoty, array );
         (*jni_env)->DeleteLocalRef( jni_env, array );
     }
-    else (*jni_env)->CallVoidMethod( jni_env, object, method, res->id, 0, 0, 0, 0, 0 );
+    else (*jni_env)->CallVoidMethod( jni_env, object, method, res->id, 0, 0, 0, 0, NULL );
 
     unwrap_java_call();
 
