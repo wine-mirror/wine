@@ -704,6 +704,14 @@ static void test_GetFile(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(date > 0.0, "got %f\n", date);
 
+    hr = IFile_get_DateLastAccessed(file, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    date = 0.0;
+    hr = IFile_get_DateLastAccessed(file, &date);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(date > 0.0, "got %f\n", date);
+
     hr = IFile_get_Path(file, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
 
@@ -1075,6 +1083,49 @@ static void test_GetFolder(void)
     IFolder_Release(folder);
     RemoveDirectoryW(dir);
     SetCurrentDirectoryW(prev_path);
+}
+
+static void test_Folder_Dates(void)
+{
+    WCHAR temp_path[MAX_PATH], dir_path[MAX_PATH];
+    IFolder *folder;
+    BSTR path;
+    DATE date;
+    HRESULT hr;
+
+    GetTempPathW(MAX_PATH, temp_path);
+    lstrcpyW(dir_path, temp_path);
+    lstrcatW(dir_path, L"scrrun_dates_test");
+    ok(CreateDirectoryW(dir_path, NULL), "CreateDirectory failed, error %ld\n", GetLastError());
+
+    path = SysAllocString(dir_path);
+    hr = IFileSystem3_GetFolder(fs3, path, &folder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_get_DateCreated(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    date = 0.0;
+    hr = IFolder_get_DateCreated(folder, &date);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(date > 0.0, "got %f\n", date);
+
+    hr = IFolder_get_DateLastModified(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    date = 0.0;
+    hr = IFolder_get_DateLastModified(folder, &date);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(date > 0.0, "got %f\n", date);
+
+    hr = IFolder_get_DateLastAccessed(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    date = 0.0;
+    hr = IFolder_get_DateLastAccessed(folder, &date);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(date > 0.0, "got %f\n", date);
+
+    IFolder_Release(folder);
+    SysFreeString(path);
+    RemoveDirectoryW(dir_path);
 }
 
 static void test_Folder_Attributes(void)
@@ -3113,6 +3164,7 @@ START_TEST(filesystem)
     test_BuildPath();
     test_GetFolder();
     test_Folder_Attributes();
+    test_Folder_Dates();
     test_Folder_ParentFolder();
     test_FolderCollection();
     test_FileCollection();

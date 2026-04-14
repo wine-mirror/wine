@@ -199,6 +199,7 @@ static HRESULT create_foldercoll_enum(struct foldercollection*, IUnknown**);
 static HRESULT create_filecoll_enum(struct filecollection*, IUnknown**);
 static HRESULT create_drivecoll_enum(struct drivecollection*, IUnknown**);
 static inline DWORD get_parent_folder_name(const WCHAR *path, DWORD len);
+static HRESULT get_date_from_filetime(const FILETIME *ft, DATE *date);
 
 static inline BOOL is_dir_data(const WIN32_FIND_DATAW *data)
 {
@@ -2620,22 +2621,40 @@ static HRESULT WINAPI folder_put_Attributes(IFolder *iface, FileAttribute attr)
 static HRESULT WINAPI folder_get_DateCreated(IFolder *iface, DATE *date)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, date);
-    return E_NOTIMPL;
+    WIN32_FILE_ATTRIBUTE_DATA attrs;
+
+    TRACE("(%p)->(%p)\n", This, date);
+
+    if (GetFileAttributesExW(This->path, GetFileExInfoStandard, &attrs))
+        return get_date_from_filetime(&attrs.ftCreationTime, date);
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI folder_get_DateLastModified(IFolder *iface, DATE *date)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, date);
-    return E_NOTIMPL;
+    WIN32_FILE_ATTRIBUTE_DATA attrs;
+
+    TRACE("(%p)->(%p)\n", This, date);
+
+    if (GetFileAttributesExW(This->path, GetFileExInfoStandard, &attrs))
+        return get_date_from_filetime(&attrs.ftLastWriteTime, date);
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI folder_get_DateLastAccessed(IFolder *iface, DATE *date)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, date);
-    return E_NOTIMPL;
+    WIN32_FILE_ATTRIBUTE_DATA attrs;
+
+    TRACE("(%p)->(%p)\n", This, date);
+
+    if (GetFileAttributesExW(This->path, GetFileExInfoStandard, &attrs))
+        return get_date_from_filetime(&attrs.ftLastAccessTime, date);
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI folder_get_Type(IFolder *iface, BSTR *type)
@@ -3081,8 +3100,14 @@ static HRESULT WINAPI file_get_DateLastModified(IFile *iface, DATE *date)
 static HRESULT WINAPI file_get_DateLastAccessed(IFile *iface, DATE *pdate)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pdate);
-    return E_NOTIMPL;
+    WIN32_FILE_ATTRIBUTE_DATA attrs;
+
+    TRACE("(%p)->(%p)\n", This, pdate);
+
+    if (GetFileAttributesExW(This->path, GetFileExInfoStandard, &attrs))
+        return get_date_from_filetime(&attrs.ftLastAccessTime, pdate);
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI file_get_Size(IFile *iface, VARIANT *pvarSize)
