@@ -318,7 +318,7 @@ static void test_FromGdiDib(void)
 
     bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biWidth = 10;
-    bmi->bmiHeader.biHeight = 10;
+    bmi->bmiHeader.biHeight = -10;
     bmi->bmiHeader.biPlanes = 1;
     bmi->bmiHeader.biBitCount = 32;
     bmi->bmiHeader.biCompression = BI_RGB;
@@ -331,6 +331,18 @@ static void test_FromGdiDib(void)
 
     stat = GdipCreateBitmapFromGdiDib(bmi, buff, NULL);
     expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, stat);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    if (stat == Ok)
+    {
+        check_bitmap_bits(bm, 10, 10, 40, PixelFormat32bppRGB, buff, TRUE);
+
+        GdipDisposeImage((GpImage*)bm);
+    }
+
+    bmi->bmiHeader.biHeight = 10;
 
     stat = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
     expect(Ok, stat);
