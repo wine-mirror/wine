@@ -4069,6 +4069,7 @@ TEB *virtual_alloc_first_teb(void)
     teb = init_teb( ptr, FALSE );
     pthread_key_create( &teb_key, NULL );
     pthread_setspecific( teb_key, teb );
+    virtual_init_thread_stack_cache();
     return teb;
 }
 
@@ -4615,7 +4616,7 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
 
 
 /***********************************************************************
- *           refresh_stack_info_from_pthread
+ *           pthread stack bounds cache
  *
  * Some environments (gVisor's runsc sentry, user-mode Linux kernels,
  * Firecracker, certain seccomp/mount namespace layouts) allocate the
@@ -4626,38 +4627,63 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
  * DeallocationStack), virtual_setup_exception can reject a legitimate
  * exception frame as a stack overflow and kill the thread.
  *
- * Query the real pthread stack bounds from the kernel via
- * pthread_getattr_np(). If the kernel reports a lower start address
- * than the cached TEB bounds, widen stack_info->start so the caller
- * can finish writing the exception frame into memory that is in fact
- * mapped and writable. On all conventional Linux kernels the pthread
- * bounds and the TEB bounds agree, and this helper is a no-op.
+ * To widen the bounds without calling pthread_getattr_np() from a
+ * signal handler (it is not async-signal-safe), each thread caches
+ * its real pthread stack start address in thread-local storage during
+ * startup, before any fault can occur. refresh_stack_info_from_pthread()
+ * then only reads the TLS slot from the signal path, which is safe.
  *
- * Returns TRUE if stack_info->start was widened.
+ * On all conventional Linux kernels the pthread bounds and the TEB
+ * bounds agree and the cache is never consulted.
  */
-static BOOL refresh_stack_info_from_pthread( struct thread_stack_info *stack_info )
+#if defined(__linux__) && defined(__GLIBC__)
+static __thread char *pthread_stack_start_cache;
+#endif
+
+/***********************************************************************
+ *           virtual_init_thread_stack_cache
+ *
+ * Populate the current thread's pthread stack start cache. Must be
+ * called from a normal (non-signal-handler) context during thread
+ * startup, because pthread_getattr_np() is a glibc extension that is
+ * not documented as async-signal-safe. A no-op on platforms that do
+ * not provide pthread_getattr_np().
+ */
+void virtual_init_thread_stack_cache(void)
 {
 #if defined(__linux__) && defined(__GLIBC__)
     pthread_attr_t attr;
     void *addr;
     size_t sz;
-    BOOL ret = FALSE;
 
-    if (pthread_getattr_np( pthread_self(), &attr )) return FALSE;
+    pthread_stack_start_cache = NULL;
+    if (pthread_getattr_np( pthread_self(), &attr )) return;
     if (!pthread_attr_getstack( &attr, &addr, &sz ))
-    {
-        if ((char *)addr < stack_info->start)
-        {
-            stack_info->start = (char *)addr;
-            ret = TRUE;
-        }
-    }
+        pthread_stack_start_cache = addr;
     pthread_attr_destroy( &attr );
-    return ret;
+#endif
+}
+
+/***********************************************************************
+ *           refresh_stack_info_from_pthread
+ *
+ * Async-signal-safe: only reads the thread-local cache populated by
+ * virtual_init_thread_stack_cache() at thread startup. Returns TRUE
+ * if stack_info->start was widened because the real pthread stack
+ * starts below the cached TEB bounds.
+ */
+static BOOL refresh_stack_info_from_pthread( struct thread_stack_info *stack_info )
+{
+#if defined(__linux__) && defined(__GLIBC__)
+    if (pthread_stack_start_cache && pthread_stack_start_cache < stack_info->start)
+    {
+        stack_info->start = pthread_stack_start_cache;
+        return TRUE;
+    }
 #else
     (void)stack_info;
-    return FALSE;
 #endif
+    return FALSE;
 }
 
 
