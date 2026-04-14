@@ -2961,8 +2961,29 @@ static HRESULT WINAPI file_get_Drive(IFile *iface, IDrive **ppdrive)
 static HRESULT WINAPI file_get_ParentFolder(IFile *iface, IFolder **ppfolder)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, ppfolder);
-    return E_NOTIMPL;
+    WCHAR *parent_path;
+    DWORD len;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, ppfolder);
+
+    if(!ppfolder)
+        return E_POINTER;
+
+    *ppfolder = NULL;
+
+    len = get_parent_folder_name(This->path, lstrlenW(This->path));
+    if(!len)
+        return S_OK;
+
+    if(!(parent_path = malloc((len + 1) * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+    memcpy(parent_path, This->path, len * sizeof(WCHAR));
+    parent_path[len] = 0;
+
+    hr = create_folder(parent_path, ppfolder);
+    free(parent_path);
+    return hr;
 }
 
 static HRESULT WINAPI file_get_Attributes(IFile *iface, FileAttribute *pfa)

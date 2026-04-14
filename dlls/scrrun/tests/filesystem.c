@@ -769,6 +769,51 @@ static void test_GetFile(void)
     RemoveDirectoryW(pathW);
 }
 
+static void test_File_ParentFolder(void)
+{
+    WCHAR pathW[MAX_PATH];
+    IFile *file;
+    IFolder *parent;
+    BSTR path, expected, str;
+    HRESULT hr;
+    HANDLE hf;
+
+    get_temp_path(NULL, pathW);
+    hf = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(hf == INVALID_HANDLE_VALUE) {
+        skip("Can't create temporary file\n");
+        return;
+    }
+    CloseHandle(hf);
+
+    path = SysAllocString(pathW);
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFile_get_ParentFolder(file, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    parent = (void*)0xdeadbeef;
+    hr = IFile_get_ParentFolder(file, &parent);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(parent != NULL && parent != (void*)0xdeadbeef, "got parent %p\n", parent);
+
+    hr = IFileSystem3_GetParentFolderName(fs3, path, &expected);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_get_Path(parent, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpiW(str, expected), "got %s, expected %s\n",
+       wine_dbgstr_w(str), wine_dbgstr_w(expected));
+    SysFreeString(str);
+    SysFreeString(expected);
+
+    IFolder_Release(parent);
+    IFile_Release(file);
+    SysFreeString(path);
+    DeleteFileW(pathW);
+}
+
 static inline BOOL create_file(const WCHAR *name)
 {
     HANDLE f = CreateFileW(name, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
@@ -2995,6 +3040,7 @@ START_TEST(filesystem)
     test_GetBaseName();
     test_GetAbsolutePathName();
     test_GetFile();
+    test_File_ParentFolder();
     test_GetTempName();
     test_CopyFolder();
     test_BuildPath();
