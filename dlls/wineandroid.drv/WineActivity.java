@@ -31,6 +31,7 @@ import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.system.ErrnoException;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -52,9 +53,12 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import static android.system.Os.setenv;
+import static android.system.Os.getenv;
+
 public class WineActivity extends Activity
 {
-    private native String wine_init( String[] cmdline, String[] env );
+    private native String wine_init( String[] cmdline );
     public native void wine_desktop_changed( int width, int height );
     public native void wine_config_changed( int dpi );
     public native void wine_surface_changed( int hwnd, Surface surface, boolean opengl );
@@ -107,12 +111,23 @@ public class WineActivity extends Activity
         return "";
     }
 
+    private void putenv( String name, String val )
+    {
+        try
+        {
+            setenv( name, val, true );
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
+        }
+    }
+
     private void loadWine( String cmdline )
     {
         copyAssetFiles();
 
         String wine_abi = get_wine_abi();
-        File bindir = new File( getFilesDir(), wine_abi + "/bin" );
         File libdir = new File( getFilesDir(), wine_abi + "/lib" );
         File dlldir = new File( libdir, "wine" );
         File prefix = new File( getFilesDir(), "prefix" );
@@ -120,14 +135,10 @@ public class WineActivity extends Activity
         String locale = Locale.getDefault().getLanguage() + "_" +
             Locale.getDefault().getCountry() + ".UTF-8";
 
-        HashMap<String,String> env = new HashMap<String,String>();
-        env.put( "WINELOADER", loader.toString() );
-        env.put( "WINEPREFIX", prefix.toString() );
-        env.put( "WINEDLLPATH", dlldir.toString() );
-        env.put( "LD_LIBRARY_PATH", libdir.toString() + ":" + getPackageResourcePath() + "!/lib/" + wine_abi + ":" + getApplicationInfo().nativeLibraryDir );
-        env.put( "LC_ALL", locale );
-        env.put( "LANG", locale );
-        env.put( "PATH", bindir.toString() + ":" + System.getenv( "PATH" ));
+        putenv( "WINEPREFIX", prefix.toString() );
+        putenv( "LD_LIBRARY_PATH", libdir.toString() + ":" + getPackageResourcePath() + "!/lib/" + wine_abi + ":" + getApplicationInfo().nativeLibraryDir );
+        putenv( "LC_ALL", locale );
+        putenv( "LANG", locale );
 
         if (cmdline == null)
         {
@@ -140,8 +151,8 @@ public class WineActivity extends Activity
         if (winedebug != null)
         {
             File log = new File( getFilesDir(), "log" );
-            env.put( "WINEDEBUG", winedebug );
-            env.put( "WINEDEBUGLOG", log.toString() );
+            putenv( "WINEDEBUG", winedebug );
+            putenv( "WINEDEBUGLOG", log.toString() );
             Log.i( LOGTAG, "logging to " + log.toString() );
             log.delete();
         }
@@ -151,25 +162,17 @@ public class WineActivity extends Activity
         System.load( dlldir.toString() + get_so_dir(wine_abi) + "/ntdll.so" );
         prefix.mkdirs();
 
-        runWine( cmdline, env );
+        runWine( loader.toString(), cmdline );
     }
 
-    private final void runWine( String cmdline, HashMap<String,String> environ )
+    private final void runWine( String loader, String cmdline )
     {
-        String[] env = new String[environ.size() * 2];
-        int j = 0;
-        for (Map.Entry<String,String> entry : environ.entrySet())
-        {
-            env[j++] = entry.getKey();
-            env[j++] = entry.getValue();
-        }
-
-        String[] cmd = { environ.get( "WINELOADER" ),
+        String[] cmd = { loader,
                          "c:\\windows\\system32\\explorer.exe",
                          "/desktop=shell,,android",
                          cmdline };
 
-        String err = wine_init( cmd, env );
+        String err = wine_init( cmd );
         Log.e( LOGTAG, err );
     }
 

@@ -1886,12 +1886,13 @@ DECLSPEC_EXPORT jobject java_object = 0;
 DECLSPEC_EXPORT unsigned short java_gdt_sel = 0;
 
 /* main Wine initialisation */
-static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jobjectArray environment )
+static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline )
 {
     char **argv;
     char *str;
-    char error[1024];
+    char error[1024], *winedebuglog = NULL;
     int i, argc, length;
+    void (*update_func)( const char * );
 
     /* get the command line array */
 
@@ -1918,39 +1919,19 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
 
     /* set the environment variables */
 
-    if (environment)
+    // Activity always modifies LD_LIBRARY_PATH in order to load libraries
+    // from custom location in JVM process.
+    update_func = dlsym( RTLD_DEFAULT, "android_update_LD_LIBRARY_PATH" );
+    if (update_func) update_func( getenv("LD_LIBRARY_PATH") );
+
+    winedebuglog = getenv("WINEDEBUGLOG");
+    if (winedebuglog)
     {
-        int count = (*env)->GetArrayLength( env, environment );
-        for (i = 0; i < count - 1; i += 2)
+        int fd = open( winedebuglog, O_WRONLY | O_CREAT | O_APPEND, 0666 );
+        if (fd != -1)
         {
-            jobject var_obj = (*env)->GetObjectArrayElement( env, environment, i );
-            jobject val_obj = (*env)->GetObjectArrayElement( env, environment, i + 1 );
-            const char *var = (*env)->GetStringUTFChars( env, var_obj, NULL );
-
-            if (val_obj)
-            {
-                const char *val = (*env)->GetStringUTFChars( env, val_obj, NULL );
-                setenv( var, val, 1 );
-                if (!strcmp( var, "LD_LIBRARY_PATH" ))
-                {
-                    void (*update_func)( const char * ) = dlsym( RTLD_DEFAULT,
-                                                                 "android_update_LD_LIBRARY_PATH" );
-                    if (update_func) update_func( val );
-                }
-                else if (!strcmp( var, "WINEDEBUGLOG" ))
-                {
-                    int fd = open( val, O_WRONLY | O_CREAT | O_APPEND, 0666 );
-                    if (fd != -1)
-                    {
-                        dup2( fd, 2 );
-                        close( fd );
-                    }
-                }
-                (*env)->ReleaseStringUTFChars( env, val_obj, val );
-            }
-            else unsetenv( var );
-
-            (*env)->ReleaseStringUTFChars( env, var_obj, var );
+            dup2( fd, 2 );
+            close( fd );
         }
     }
 
@@ -1981,7 +1962,7 @@ jint JNI_OnLoad( JavaVM *vm, void *reserved )
 {
     static const JNINativeMethod method =
     {
-        "wine_init", "([Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/String;", wine_init_jni
+        "wine_init", "([Ljava/lang/String;)Ljava/lang/String;", wine_init_jni
     };
 
     JNIEnv *env;
