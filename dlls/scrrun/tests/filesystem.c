@@ -1032,6 +1032,50 @@ static void test_GetFolder(void)
     SetCurrentDirectoryW(prev_path);
 }
 
+static void test_Folder_ParentFolder(void)
+{
+    WCHAR windir[MAX_PATH];
+    IFolder *folder, *parent, *grandparent;
+    BSTR str, expected;
+    HRESULT hr;
+
+    GetWindowsDirectoryW(windir, MAX_PATH);
+    str = SysAllocString(windir);
+    hr = IFileSystem3_GetFolder(fs3, str, &folder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    hr = IFolder_get_ParentFolder(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    parent = (void*)0xdeadbeef;
+    hr = IFolder_get_ParentFolder(folder, &parent);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(parent != NULL && parent != (void*)0xdeadbeef, "got parent %p\n", parent);
+
+    str = SysAllocString(windir);
+    hr = IFileSystem3_GetParentFolderName(fs3, str, &expected);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
+
+    hr = IFolder_get_Path(parent, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpiW(str, expected), "got %s, expected %s\n",
+       wine_dbgstr_w(str), wine_dbgstr_w(expected));
+    SysFreeString(str);
+    SysFreeString(expected);
+
+    IFolder_Release(folder);
+
+    /* Root folder: ParentFolder returns NULL. */
+    grandparent = (void*)0xdeadbeef;
+    hr = IFolder_get_ParentFolder(parent, &grandparent);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(grandparent == NULL, "got %p, expected NULL\n", grandparent);
+
+    IFolder_Release(parent);
+}
+
 static void _test_clone(IEnumVARIANT *enumvar, BOOL position_inherited, LONG count, int line)
 {
     HRESULT hr;
@@ -2955,6 +2999,7 @@ START_TEST(filesystem)
     test_CopyFolder();
     test_BuildPath();
     test_GetFolder();
+    test_Folder_ParentFolder();
     test_FolderCollection();
     test_FileCollection();
     test_DriveCollection();

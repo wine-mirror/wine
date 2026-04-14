@@ -198,6 +198,7 @@ static HRESULT create_file(BSTR, IFile**);
 static HRESULT create_foldercoll_enum(struct foldercollection*, IUnknown**);
 static HRESULT create_filecoll_enum(struct filecollection*, IUnknown**);
 static HRESULT create_drivecoll_enum(struct drivecollection*, IUnknown**);
+static inline DWORD get_parent_folder_name(const WCHAR *path, DWORD len);
 
 static inline BOOL is_dir_data(const WIN32_FIND_DATAW *data)
 {
@@ -2562,8 +2563,29 @@ static HRESULT WINAPI folder_get_Drive(IFolder *iface, IDrive **drive)
 static HRESULT WINAPI folder_get_ParentFolder(IFolder *iface, IFolder **parent)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, parent);
-    return E_NOTIMPL;
+    WCHAR *parent_path;
+    DWORD len;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, parent);
+
+    if(!parent)
+        return E_POINTER;
+
+    *parent = NULL;
+
+    len = get_parent_folder_name(This->path, SysStringLen(This->path));
+    if(!len)
+        return S_OK;
+
+    if(!(parent_path = malloc((len + 1) * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+    memcpy(parent_path, This->path, len * sizeof(WCHAR));
+    parent_path[len] = 0;
+
+    hr = create_folder(parent_path, parent);
+    free(parent_path);
+    return hr;
 }
 
 static HRESULT WINAPI folder_get_Attributes(IFolder *iface, FileAttribute *attr)
