@@ -772,6 +772,37 @@ __ASM_GLOBAL_FUNC( clear_alignment_flag,
 
 
 /***********************************************************************
+ *           set_gs_base
+ *
+ * Set the gs.base MSR to point at the given TEB. Normally this is done
+ * via arch_prctl(ARCH_SET_GS), but some user-mode Linux kernel
+ * emulators (notably gVisor's runsc sentry) silently ignore
+ * arch_prctl(ARCH_SET_GS) calls: the syscall returns success but the
+ * write never takes effect, leaving gs.base at whatever the emulator
+ * initially chose (often a glibc-private address). Under those
+ * conditions Wine's PE ntdll hits NULL-pointer faults every time it
+ * reads NtCurrentTeb() via `%gs:0x30`.
+ *
+ * Use the wrgsbase instruction as the primary path - it modifies the
+ * gs.base MSR directly and works on every environment that exposes
+ * the fsgsbase feature to user mode, including gVisor. Verify by
+ * re-reading via a %gs-prefixed load (since rdgsbase can also be
+ * broken on emulators). Fall back to arch_prctl if wrgsbase had no
+ * effect, so that this helper is safe on hosts that disable
+ * CR4.FSGSBASE. If both paths fail, the caller sees a gs.base that
+ * still doesn't match teb and can escalate.
+ */
+static inline void set_gs_base( TEB *teb )
+{
+    ULONG_PTR probe = 0;
+    __asm__ volatile("wrgsbase %0" :: "r"((ULONG_PTR)teb));
+    __asm__ volatile("mov %%gs:0x30, %0" : "=r"(probe));
+    if (probe != (ULONG_PTR)teb)
+        arch_prctl( ARCH_SET_GS, teb );
+}
+
+
+/***********************************************************************
  *           init_handler
  */
 static inline ucontext_t *init_handler( void *sigcontext )
@@ -779,9 +810,24 @@ static inline ucontext_t *init_handler( void *sigcontext )
     clear_alignment_flag();
 #ifdef __linux__
     {
-        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&get_current_teb()->GdiTebBatch;
+        TEB *teb = get_current_teb();
+        struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
         thread_data->syscall_dispatch = 0; /* SYSCALL_DISPATCH_FILTER_ALLOW */
         if (fs32_sel) arch_prctl( ARCH_SET_FS, thread_data->pthread_teb );
+        /* Under gVisor's runsc sentry (and other user-mode Linux
+         * kernels), the initial arch_prctl(ARCH_SET_GS) call in
+         * signal_start_thread_c may have been silently ignored,
+         * leaving gs.base set to a non-TEB value. If the first fault
+         * on a thread is delivered via this handler while gs.base is
+         * still wrong, re-issue the set (via wrgsbase) here so the
+         * resumed user code sees the correct TEB via %gs:0x30. On
+         * bare-metal Linux arch_prctl works and this is a no-op. */
+        {
+            ULONG_PTR gs_self = 0;
+            __asm__ volatile("mov %%gs:0x30, %0" : "=r"(gs_self));
+            if (gs_self != (ULONG_PTR)teb)
+                set_gs_base( teb );
+        }
     }
 #elif defined __APPLE__
     {
@@ -2249,7 +2295,7 @@ static inline BOOL check_invalid_gsbase( ucontext_t *ucontext )
     TRACE( "gsbase %016lx teb %p at instr %p, fixing up\n", cur_gsbase, teb, instr );
 
 #ifdef __linux__
-    arch_prctl( ARCH_SET_GS, teb );
+    set_gs_base( teb );
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
@@ -2829,7 +2875,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     thread_data->instrumentation_callback = &instrumentation_callback;
 
 #if defined __linux__
-    arch_prctl( ARCH_SET_GS, teb );
+    set_gs_base( teb );
     if (fs32_sel)
     {
         arch_prctl( ARCH_GET_FS, &thread_data->pthread_teb );
