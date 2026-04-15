@@ -72,6 +72,8 @@ static int log_flags;
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
 
+static int desktop_client_fd = -1;
+
 #ifndef SYNC_IOC_WAIT
 #define SYNC_IOC_WAIT _IOW('>', 0, __s32)
 #endif
@@ -910,6 +912,8 @@ static int handle_ioctl_message( JNIEnv *env, int fd )
         {
             pthread_mutex_lock( &dispatch_ioctl_lock );
             status = ioctl_funcs[code]( env, buffer, ret, sizeof(buffer), &reply_size, &reply_fd );
+            if (IOCTL_CREATE_DESKTOP_VIEW == code) /* special case: desktop client */
+                desktop_client_fd = fd;
             pthread_mutex_unlock( &dispatch_ioctl_lock );
         }
     }
@@ -949,6 +953,8 @@ static int looper_handle_client( int fd, int events, void *data )
         {
             pALooper_removeFd( looper, fd );
             close( fd );
+            if (fd == desktop_client_fd) /* our explorer process died */
+                _exit(0);
         }
         break;
     }
