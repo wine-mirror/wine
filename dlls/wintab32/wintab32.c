@@ -73,8 +73,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             TRACE("Initialization\n");
             DisableThreadLibraryCalls(hInstDLL);
             TABLET_Register();
-            hwndDefault = CreateWindowW(L"WineTabletClass", L"Tablet",
-                                        WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);
+            hwndDefault = CreateWindowW(L"WineTabletClass", L"Tablet", 0,
+                                        0, 0, 0, 0, HWND_MESSAGE, 0, hInstDLL, 0);
             if (!hwndDefault)
                 return FALSE;
             break;
@@ -101,9 +101,6 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
     switch(uMsg)
     {
-        case WM_NCCREATE:
-            return TRUE;
-
         case WT_PACKET:
             {
                 WTPACKET packet;
@@ -116,7 +113,7 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                    (WPARAM)packet.pkSerialNumber,
                                    (LPARAM)handler->handle, FALSE);
                 }
-                break;
+                return 0;
             }
         case WT_PROXIMITY:
             {
@@ -129,8 +126,9 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                         TABLET_PostTabletMessage(handler, WT_PROXIMITY,
                                                 (WPARAM)handler->handle, lParam, TRUE);
                 }
-                break;
+                return 0;
             }
     }
-    return 0;
+
+    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
