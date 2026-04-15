@@ -1744,11 +1744,42 @@ static HRESULT interp_erase(exec_ctx_t *ctx)
     return hres;
 }
 
+static HRESULT do_for_step(exec_ctx_t *ctx, VARIANT *loop_var)
+{
+    BOOL gteq_zero;
+    VARIANT zero;
+    HRESULT hres;
+
+    V_VT(&zero) = VT_I2;
+    V_I2(&zero) = 0;
+    hres = VarCmp(stack_top(ctx, 0), &zero, ctx->script->lcid, 0);
+    if(FAILED(hres))
+        goto loop_not_initialized;
+
+    gteq_zero = hres == VARCMP_GT || hres == VARCMP_EQ;
+
+    hres = VarCmp(loop_var, stack_top(ctx, 1), ctx->script->lcid, 0);
+    if(FAILED(hres))
+        goto loop_not_initialized;
+
+    if(hres == VARCMP_EQ || hres == (gteq_zero ? VARCMP_LT : VARCMP_GT)) {
+        ctx->instr++;
+    }else {
+        stack_popn(ctx, 3);
+        instr_jmp(ctx, ctx->instr->arg1.uint);
+    }
+    return S_OK;
+
+loop_not_initialized:
+    WARN("For loop not initialized\n");
+    stack_popn(ctx, 2);
+    instr_jmp(ctx, ctx->instr->arg1.uint);
+    return hres;
+}
+
 static HRESULT interp_step(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg2.bstr;
-    BOOL gteq_zero;
-    VARIANT zero;
     ref_t ref;
     HRESULT hres;
 
@@ -1767,14 +1798,6 @@ static HRESULT interp_step(exec_ctx_t *ctx)
         return S_OK;
     }
 
-    V_VT(&zero) = VT_I2;
-    V_I2(&zero) = 0;
-    hres = VarCmp(stack_top(ctx, 0), &zero, ctx->script->lcid, 0);
-    if(FAILED(hres))
-        goto loop_not_initialized;
-
-    gteq_zero = hres == VARCMP_GT || hres == VARCMP_EQ;
-
     hres = lookup_identifier(ctx, ident, VBDISP_ANY, &ref);
     if(FAILED(hres))
         return hres;
@@ -1784,23 +1807,7 @@ static HRESULT interp_step(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    hres = VarCmp(ref.u.v, stack_top(ctx, 1), ctx->script->lcid, 0);
-    if(FAILED(hres))
-        goto loop_not_initialized;
-
-    if(hres == VARCMP_EQ || hres == (gteq_zero ? VARCMP_LT : VARCMP_GT)) {
-        ctx->instr++;
-    }else {
-        stack_popn(ctx, 3);
-        instr_jmp(ctx, ctx->instr->arg1.uint);
-    }
-    return S_OK;
-
-loop_not_initialized:
-    WARN("For loop not initialized\n");
-    stack_popn(ctx, 2);
-    instr_jmp(ctx, ctx->instr->arg1.uint);
-    return hres;
+    return do_for_step(ctx, ref.u.v);
 }
 
 static HRESULT interp_newenum(exec_ctx_t *ctx)
@@ -2891,10 +2898,23 @@ static HRESULT interp_neg(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT do_incc(exec_ctx_t *ctx, VARIANT *v)
+{
+    VARIANT tmp;
+    HRESULT hres;
+
+    hres = VarAdd(stack_top(ctx, 0), v, &tmp);
+    if(FAILED(hres))
+        return hres;
+
+    VariantClear(v);
+    *v = tmp;
+    return S_OK;
+}
+
 static HRESULT interp_incc(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg1.bstr;
-    VARIANT v;
     ref_t ref;
     HRESULT hres;
 
@@ -2909,13 +2929,7 @@ static HRESULT interp_incc(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    hres = VarAdd(stack_top(ctx, 0), ref.u.v, &v);
-    if(FAILED(hres))
-        return hres;
-
-    VariantClear(ref.u.v);
-    *ref.u.v = v;
-    return S_OK;
+    return do_incc(ctx, ref.u.v);
 }
 
 static HRESULT interp_with(exec_ctx_t *ctx)
