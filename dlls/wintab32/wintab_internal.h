@@ -146,11 +146,11 @@ typedef struct tagOPENCONTEXT
     struct tagOPENCONTEXT *next;
 } OPENCONTEXT, *LPOPENCONTEXT;
 
+HWND TABLET_GetInternalWindow(void);
 int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
                              LPARAM lParam, BOOL send_always);
 LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd);
 
-extern HWND hwndDefault;
 extern CRITICAL_SECTION csTablet;
 
 #endif /* __WINE_WINTAB_INTERNAL_H */

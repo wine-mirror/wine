@@ -149,14 +149,16 @@ static inline BOOL LoadTablet(void)
 
     if (loaded == TI_START)
     {
-        if (NtUserMessageCall(hwndDefault, NtUserWintabInit, 0, 0, NULL, NtUserWintabDriverCall, FALSE))
+        HWND hwndInternal = TABLET_GetInternalWindow();
+        if (hwndInternal &&
+            NtUserMessageCall(hwndInternal, NtUserWintabInit, 0, 0, NULL, NtUserWintabDriverCall, FALSE))
         {
-            TRACE("Initialized the tablet to hwnd %p\n", hwndDefault);
+            TRACE("Initialized the tablet to hwnd %p\n", hwndInternal);
             loaded = TI_OK;
         }
         else
         {
-            TRACE("Failed to initialize the tablet to hwnd %p\n", hwndDefault);
+            TRACE("Failed to initialize the tablet to hwnd %p\n", hwndInternal);
             loaded = TI_FAIL;
         }
     }
