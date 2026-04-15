@@ -4014,7 +4014,8 @@ static NTSTATUS resolve_absolute_reparse_point( const WCHAR *target, unsigned in
 
 /* limited version of collapse_path() that only deals with . and .. elements
  * in relative symlinks */
-static NTSTATUS collapse_relative_symlink( WCHAR *path, unsigned int len, unsigned int *ret_len )
+static NTSTATUS collapse_relative_symlink( WCHAR *path, unsigned int len, unsigned int *ret_len,
+                                           unsigned int *nt_pos, const char *unix_name, int *unix_len )
 {
     const WCHAR *end = path + len;
     WCHAR *p, *start, *next;
@@ -4057,6 +4058,12 @@ static NTSTATUS collapse_relative_symlink( WCHAR *path, unsigned int len, unsign
                     while (p > start && p[-1] != '\\') p--;
                     if (p > start) p--;
                     end = p;
+                    if (p - path < *nt_pos)
+                    {
+                        while (*unix_len && unix_name[*unix_len - 1] != '/') --*unix_len;
+                        if (*unix_len) --*unix_len;
+                        *nt_pos = p - path;
+                    }
                     continue;
                 }
                 else if (p[2] == '\\') /* ..\ component */
@@ -4067,6 +4074,12 @@ static NTSTATUS collapse_relative_symlink( WCHAR *path, unsigned int len, unsign
                     while (p > start && p[-1] != '\\') p--;
                     memmove( p, next, (end - next) * sizeof(WCHAR) );
                     end -= (next - p);
+                    if (p - path < *nt_pos)
+                    {
+                        while (*unix_len && unix_name[*unix_len - 1] != '/') --*unix_len;
+                        if (*unix_len) --*unix_len;
+                        *nt_pos = p - path;
+                    }
                     continue;
                 }
             }
@@ -4147,7 +4160,8 @@ static NTSTATUS resolve_reparse_point( int fd, int root_fd, OBJECT_ATTRIBUTES *a
             memcpy( new_nt_name, name, nt_pos * sizeof(WCHAR) );
             memcpy( new_nt_name + nt_pos, target, target_len * sizeof(WCHAR) );
 
-            if ((status = collapse_relative_symlink( new_nt_name, nt_pos + target_len, &collapsed_len )))
+            if ((status = collapse_relative_symlink( new_nt_name, nt_pos + target_len,
+                                                     &collapsed_len, &nt_pos, *unix_name, &pos )))
             {
                 if (attr->RootDirectory)
                 {

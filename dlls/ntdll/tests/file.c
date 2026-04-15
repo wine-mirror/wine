@@ -7134,7 +7134,7 @@ static void test_reparse_points(void)
     ok( !status, "got %#lx\n", status );
 
     ret = ReadFile( handle2, buffer, sizeof(buffer), &size, NULL );
-    todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
     todo_wine ok( size == 5, "got size %lu\n", size );
     ok( !memcmp( buffer, "file2", size ), "got data %s\n", debugstr_an( buffer, size ));
 
