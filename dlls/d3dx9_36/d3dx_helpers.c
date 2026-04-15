@@ -73,6 +73,8 @@ static uint32_t d3dx_conv_flags_from_filter(uint32_t filter)
 
     if ((filter & D3DX_FILTER_PMA) && ((filter & D3DX_FILTER_PMA) != D3DX_FILTER_PMA))
         conv_flags |= (filter & D3DX_FILTER_PMA_IN) ? CONV_FLAG_PM_ALPHA_IN : CONV_FLAG_PM_ALPHA_OUT;
+    if ((filter & D3DX_FILTER_SRGB) && ((filter & D3DX_FILTER_SRGB) != D3DX_FILTER_SRGB))
+        conv_flags |= (filter & D3DX_FILTER_SRGB_IN) ? CONV_FLAG_SRGB_IN : CONV_FLAG_SRGB_OUT;
 
     return conv_flags;
 }
@@ -2468,6 +2470,33 @@ static void straight_alpha_from_premultiplied_alpha(struct vec4 *vec)
     vec->z = (vec->w == 0.0f) ? 0.0f : vec->z / vec->w;
 }
 
+/*
+ * All versions of d3dx (9-11) treat sRGB as "simplified sRGB." Rather
+ * than using the sRGB transfer function defined in IEC 61966-2-1:1999, they
+ * use a plain gamma 2.2 transfer function which ignores the special handling
+ * of the linear section near 0.
+ *
+ * Native d3dx also seems to use a lookup table to do this conversion, which
+ * matches the output of earlier versions of DirectXTex (prior to commit
+ * 98699f90f9177cee0f1be5ff441d0c42c32d9b69). If it's determined later on that
+ * an application needs to more closely match native's conversion values for
+ * formats larger than 8bpc this should be considered, but for now these
+ * functions result in matching native's output for 8bpc formats.
+ */
+static void srgb_from_linear_rgb(struct vec4 *vec)
+{
+    vec->x = powf(vec->x, 1.0f / 2.2f);
+    vec->y = powf(vec->y, 1.0f / 2.2f);
+    vec->z = powf(vec->z, 1.0f / 2.2f);
+}
+
+static void linear_rgb_from_srgb(struct vec4 *vec)
+{
+    vec->x = powf(vec->x, 2.2f);
+    vec->y = powf(vec->y, 2.2f);
+    vec->z = powf(vec->z, 2.2f);
+}
+
 static void convert_argb_pixel(const uint8_t *src_ptr, const struct pixel_format_desc *src_fmt,
         uint8_t *dst_ptr, const struct pixel_format_desc *dst_fmt, const PALETTEENTRY *palette,
         struct argb_conversion_info *conv_info, const struct d3dx_color_key *color_key,
@@ -2509,6 +2538,8 @@ static void convert_argb_pixel(const uint8_t *src_ptr, const struct pixel_format
         format_to_d3dx_color(src_fmt, src_ptr, palette, &color);
         if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
             straight_alpha_from_premultiplied_alpha(&color.value);
+        if (conv_flags & CONV_FLAG_SRGB_IN)
+            linear_rgb_from_srgb(&color.value);
         tmp = color;
 
         if (color_key)
@@ -2528,6 +2559,8 @@ static void convert_argb_pixel(const uint8_t *src_ptr, const struct pixel_format
         }
 
         color = tmp;
+        if (conv_flags & CONV_FLAG_SRGB_OUT)
+            srgb_from_linear_rgb(&color.value);
         if (conv_flags & CONV_FLAG_PM_ALPHA_OUT)
             premultiplied_alpha_from_straight_alpha(&color.value);
         format_from_d3dx_color(dst_fmt, &color, dst_ptr);
@@ -2727,6 +2760,8 @@ static void box_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src
                     format_to_d3dx_color(src_format, ptr, palette, &tmp);
                     if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
                         straight_alpha_from_premultiplied_alpha(&color.value);
+                    if (conv_flags & CONV_FLAG_SRGB_IN)
+                        linear_rgb_from_srgb(&color.value);
                     if (color_key)
                         check_color_key(&tmp, color_key, ck_format);
                     vec4_add(&color.value, &tmp.value);
@@ -2734,6 +2769,8 @@ static void box_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src
                     format_to_d3dx_color(src_format, ptr + src_format->bytes_per_pixel, palette, &tmp);
                     if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
                         straight_alpha_from_premultiplied_alpha(&color.value);
+                    if (conv_flags & CONV_FLAG_SRGB_IN)
+                        linear_rgb_from_srgb(&color.value);
                     if (color_key)
                         check_color_key(&tmp, color_key, ck_format);
                     vec4_add(&color.value, &tmp.value);
@@ -2742,6 +2779,8 @@ static void box_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src
                     format_to_d3dx_color(src_format, ptr, palette, &tmp);
                     if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
                         straight_alpha_from_premultiplied_alpha(&color.value);
+                    if (conv_flags & CONV_FLAG_SRGB_IN)
+                        linear_rgb_from_srgb(&color.value);
                     if (color_key)
                         check_color_key(&tmp, color_key, ck_format);
                     vec4_add(&color.value, &tmp.value);
@@ -2749,12 +2788,16 @@ static void box_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src
                     format_to_d3dx_color(src_format, ptr + src_format->bytes_per_pixel, palette, &tmp);
                     if (conv_flags & CONV_FLAG_PM_ALPHA_IN)
                         straight_alpha_from_premultiplied_alpha(&color.value);
+                    if (conv_flags & CONV_FLAG_SRGB_IN)
+                        linear_rgb_from_srgb(&color.value);
                     if (color_key)
                         check_color_key(&tmp, color_key, ck_format);
                     vec4_add(&color.value, &tmp.value);
                 }
 
                 vec4_scale(&color.value, src_size->depth > 1 ? 0.125f : 0.25f);
+                if (conv_flags & CONV_FLAG_SRGB_OUT)
+                    srgb_from_linear_rgb(&color.value);
                 if (conv_flags & CONV_FLAG_PM_ALPHA_OUT)
                     premultiplied_alpha_from_straight_alpha(&color.value);
                 format_from_d3dx_color(dst_format, &color, dst_ptr);

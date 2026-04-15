@@ -1394,7 +1394,7 @@ static void test_dxt_premultiplied_alpha(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
-    todo_wine check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_in_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 1);
+    check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_in_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 1);
     IDirect3DSurface9_UnlockRect(decomp_surf);
 
     /* DXT4, SRGB in. */
@@ -1403,7 +1403,7 @@ static void test_dxt_premultiplied_alpha(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
-    todo_wine check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_in_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 1);
+    check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_in_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 1);
     IDirect3DSurface9_UnlockRect(decomp_surf);
 
     /*
@@ -1426,7 +1426,7 @@ static void test_dxt_premultiplied_alpha(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
-    todo_wine check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_out_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 0);
+    check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_out_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 0);
     IDirect3DSurface9_UnlockRect(decomp_surf);
 
     /* DXT4, SRGB out. */
@@ -1446,7 +1446,7 @@ static void test_dxt_premultiplied_alpha(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
-    todo_wine check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_out_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 0);
+    check_test_readback(lock_rect.pBits, lock_rect.Pitch, 0, dxt_srgb_out_expected, 4, 4, 1, D3DFMT_A8R8G8B8, 0);
     IDirect3DSurface9_UnlockRect(decomp_surf);
 
     IDirect3DSurface9_Release(decomp_surf);
@@ -5432,11 +5432,11 @@ static void test_srgb_filter_flags(void)
         },
         {
             { 0, 0, 2, 2 }, test_a8r8g8b8, D3DFMT_A8R8G8B8, D3DX_FILTER_NONE | D3DX_FILTER_SRGB_IN,
-            test_a8r8g8b8_srgb_in_expected, .todo = TRUE
+            test_a8r8g8b8_srgb_in_expected
         },
         {
             { 0, 0, 2, 2 }, test_a8r8g8b8, D3DFMT_A8R8G8B8, D3DX_FILTER_NONE | D3DX_FILTER_SRGB_OUT,
-            test_a8r8g8b8_srgb_out_expected, .todo = TRUE
+            test_a8r8g8b8_srgb_out_expected
         },
         {
             { 0, 0, 2, 2 }, test_float4_srgb_in, D3DFMT_A32B32G32R32F, D3DX_FILTER_NONE | D3DX_FILTER_SRGB_IN,

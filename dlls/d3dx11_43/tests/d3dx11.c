@@ -4696,7 +4696,7 @@ static void test_srgb_filter_flags(void)
         },
         {
             2, 2, test_a8r8g8b8, NULL, DXGI_FORMAT_R8G8B8A8_UNORM, D3DX11_FILTER_NONE | D3DX11_FILTER_SRGB_IN,
-            test_a8r8g8b8_srgb_in_expected, NULL, DXGI_FORMAT_R8G8B8A8_UNORM, .todo = TRUE
+            test_a8r8g8b8_srgb_in_expected, NULL, DXGI_FORMAT_R8G8B8A8_UNORM
         },
         {
             2, 2, test_a8r8g8b8, NULL, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3DX11_FILTER_NONE,
@@ -4704,7 +4704,7 @@ static void test_srgb_filter_flags(void)
         },
         {
             2, 2, test_a8r8g8b8, NULL, DXGI_FORMAT_R8G8B8A8_UNORM, D3DX11_FILTER_NONE | D3DX11_FILTER_SRGB_OUT,
-            test_a8r8g8b8_srgb_out_expected, NULL, DXGI_FORMAT_R8G8B8A8_UNORM, .todo = TRUE
+            test_a8r8g8b8_srgb_out_expected, NULL, DXGI_FORMAT_R8G8B8A8_UNORM
         },
         {
             2, 2, test_a8r8g8b8, NULL, DXGI_FORMAT_R8G8B8A8_UNORM, D3DX11_FILTER_NONE,

@@ -246,6 +246,8 @@ enum conversion_flag
 {
     CONV_FLAG_PM_ALPHA_IN  = 0x01,
     CONV_FLAG_PM_ALPHA_OUT = 0x02,
+    CONV_FLAG_SRGB_IN  = 0x04,
+    CONV_FLAG_SRGB_OUT = 0x08,
 };
 
 enum component_type
