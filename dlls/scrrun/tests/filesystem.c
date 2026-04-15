@@ -822,6 +822,101 @@ static void test_File_ParentFolder(void)
     DeleteFileW(pathW);
 }
 
+static void test_File_ShortName(void)
+{
+    WCHAR long_path[MAX_PATH], expected_path[MAX_PATH], *ptr;
+    IFile *file;
+    BSTR path, str;
+    DWORD len;
+    HRESULT hr;
+    HANDLE hf;
+
+    get_temp_path(NULL, long_path);
+    hf = CreateFileW(long_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hf == INVALID_HANDLE_VALUE) {
+        skip("Can't create temporary file\n");
+        return;
+    }
+    CloseHandle(hf);
+
+    len = GetShortPathNameW(long_path, expected_path, MAX_PATH);
+    ok(len && len < MAX_PATH, "GetShortPathNameW failed, len %lu\n", len);
+
+    path = SysAllocString(long_path);
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(path);
+
+    hr = IFile_get_ShortPath(file, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFile_get_ShortPath(file, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, expected_path), "got %s, expected %s\n",
+       wine_dbgstr_w(str), wine_dbgstr_w(expected_path));
+    SysFreeString(str);
+
+    hr = IFile_get_ShortName(file, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFile_get_ShortName(file, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ptr = wcsrchr(expected_path, '\\');
+    ok(ptr != NULL, "short path has no backslash: %s\n", wine_dbgstr_w(expected_path));
+    ok(!lstrcmpW(str, ptr + 1), "got %s, expected %s\n",
+       wine_dbgstr_w(str), wine_dbgstr_w(ptr + 1));
+    SysFreeString(str);
+
+    IFile_Release(file);
+    DeleteFileW(long_path);
+}
+
+static void test_Folder_ShortName(void)
+{
+    static const WCHAR dir_name[] = L"scrrun_shortname_test_longname";
+    WCHAR temp_path[MAX_PATH], dir_path[MAX_PATH], expected_path[MAX_PATH], *ptr;
+    IFolder *folder;
+    BSTR path, str;
+    DWORD len;
+    HRESULT hr;
+
+    GetTempPathW(MAX_PATH, temp_path);
+    lstrcpyW(dir_path, temp_path);
+    lstrcatW(dir_path, dir_name);
+    ok(CreateDirectoryW(dir_path, NULL), "CreateDirectory failed, error %ld\n", GetLastError());
+
+    len = GetShortPathNameW(dir_path, expected_path, MAX_PATH);
+    ok(len && len < MAX_PATH, "GetShortPathNameW failed, len %lu\n", len);
+
+    path = SysAllocString(dir_path);
+    hr = IFileSystem3_GetFolder(fs3, path, &folder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(path);
+
+    hr = IFolder_get_ShortPath(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_get_ShortPath(folder, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(str, expected_path), "got %s, expected %s\n",
+       wine_dbgstr_w(str), wine_dbgstr_w(expected_path));
+    SysFreeString(str);
+
+    hr = IFolder_get_ShortName(folder, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_get_ShortName(folder, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ptr = wcsrchr(expected_path, '\\');
+    ok(ptr != NULL, "short path has no backslash: %s\n", wine_dbgstr_w(expected_path));
+    ok(!lstrcmpW(str, ptr + 1), "got %s, expected %s\n",
+       wine_dbgstr_w(str), wine_dbgstr_w(ptr + 1));
+    SysFreeString(str);
+
+    IFolder_Release(folder);
+    RemoveDirectoryW(dir_path);
+}
+
 static inline BOOL create_file(const WCHAR *name)
 {
     HANDLE f = CreateFileW(name, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
@@ -3159,6 +3254,7 @@ START_TEST(filesystem)
     test_GetAbsolutePathName();
     test_GetFile();
     test_File_ParentFolder();
+    test_File_ShortName();
     test_GetTempName();
     test_CopyFolder();
     test_BuildPath();
@@ -3166,6 +3262,7 @@ START_TEST(filesystem)
     test_Folder_Attributes();
     test_Folder_Dates();
     test_Folder_ParentFolder();
+    test_Folder_ShortName();
     test_FolderCollection();
     test_FileCollection();
     test_DriveCollection();

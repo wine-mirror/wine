@@ -2543,15 +2543,49 @@ static HRESULT WINAPI folder_put_Name(IFolder *iface, BSTR name)
 static HRESULT WINAPI folder_get_ShortPath(IFolder *iface, BSTR *path)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, path);
-    return E_NOTIMPL;
+    WCHAR short_path[MAX_PATH];
+    DWORD len;
+
+    TRACE("(%p)->(%p)\n", This, path);
+
+    if (!path)
+        return E_POINTER;
+
+    *path = NULL;
+
+    len = GetShortPathNameW(This->path, short_path, MAX_PATH);
+    if (!len)
+        return HRESULT_FROM_WIN32(GetLastError());
+    if (len >= MAX_PATH)
+        return E_FAIL;
+
+    *path = SysAllocString(short_path);
+    return *path ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI folder_get_ShortName(IFolder *iface, BSTR *name)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, name);
-    return E_NOTIMPL;
+    WCHAR short_path[MAX_PATH];
+    const WCHAR *ptr;
+    DWORD len;
+
+    TRACE("(%p)->(%p)\n", This, name);
+
+    if (!name)
+        return E_POINTER;
+
+    *name = NULL;
+
+    len = GetShortPathNameW(This->path, short_path, MAX_PATH);
+    if (!len)
+        return HRESULT_FROM_WIN32(GetLastError());
+    if (len >= MAX_PATH)
+        return E_FAIL;
+
+    ptr = wcsrchr(short_path, '\\');
+    *name = SysAllocString(ptr ? ptr + 1 : short_path);
+    return *name ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI folder_get_Drive(IFolder *iface, IDrive **drive)
@@ -2981,15 +3015,49 @@ static HRESULT WINAPI file_put_Name(IFile *iface, BSTR pbstrName)
 static HRESULT WINAPI file_get_ShortPath(IFile *iface, BSTR *pbstrPath)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pbstrPath);
-    return E_NOTIMPL;
+    WCHAR short_path[MAX_PATH];
+    DWORD len;
+
+    TRACE("(%p)->(%p)\n", This, pbstrPath);
+
+    if (!pbstrPath)
+        return E_POINTER;
+
+    *pbstrPath = NULL;
+
+    len = GetShortPathNameW(This->path, short_path, MAX_PATH);
+    if (!len)
+        return HRESULT_FROM_WIN32(GetLastError());
+    if (len >= MAX_PATH)
+        return E_FAIL;
+
+    *pbstrPath = SysAllocString(short_path);
+    return *pbstrPath ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI file_get_ShortName(IFile *iface, BSTR *pbstrName)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pbstrName);
-    return E_NOTIMPL;
+    WCHAR short_path[MAX_PATH];
+    const WCHAR *ptr;
+    DWORD len;
+
+    TRACE("(%p)->(%p)\n", This, pbstrName);
+
+    if (!pbstrName)
+        return E_POINTER;
+
+    *pbstrName = NULL;
+
+    len = GetShortPathNameW(This->path, short_path, MAX_PATH);
+    if (!len)
+        return HRESULT_FROM_WIN32(GetLastError());
+    if (len >= MAX_PATH)
+        return E_FAIL;
+
+    ptr = wcsrchr(short_path, '\\');
+    *pbstrName = SysAllocString(ptr ? ptr + 1 : short_path);
+    return *pbstrName ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI file_get_Drive(IFile *iface, IDrive **ppdrive)
