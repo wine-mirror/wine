@@ -495,6 +495,134 @@ Call ok((CByte(170) Imp Null) = 85,          "CByte(170) Imp Null is not 85")
 Call ok((CByte(255) Imp Null) = 0,           "CByte(255) Imp Null is not 0")
 Call ok(getVT(CByte(255) Imp Null) = "VT_UI1",    "getVT(CByte(255) Imp Null) = " & getVT(CByte(255) Imp Null))
 
+' Empty at rest keeps its type tag. Variable references come through with
+' VT_BYREF|VT_VARIANT, which getVT renders as "VT_EMPTY*".
+Call ok(getVT(Empty) = "VT_EMPTY",           "getVT(Empty) = " & getVT(Empty))
+Dim emp : emp = Empty
+Call ok(getVT(emp) = "VT_EMPTY*",            "getVT(emp) = " & getVT(emp))
+
+' Binary logical / bitwise ops coerce Empty to VT_I4 0 before evaluation, so
+' the operator's normal widening rules see a VT_I4 left/right operand.
+Call ok(getVT(Empty And Empty) = "VT_I4",    "getVT(Empty And Empty) = " & getVT(Empty And Empty))
+Call ok((Empty And Empty) = 0,               "Empty And Empty is not 0")
+Call ok(getVT(Empty And CInt(0)) = "VT_I4",  "getVT(Empty And CInt(0)) = " & getVT(Empty And CInt(0)))
+Call ok(getVT(Empty And CInt(5)) = "VT_I4",  "getVT(Empty And CInt(5)) = " & getVT(Empty And CInt(5)))
+Call ok(getVT(Empty And False) = "VT_I4",    "getVT(Empty And False) = " & getVT(Empty And False))
+Call ok(getVT(Empty And Null) = "VT_I4",     "getVT(Empty And Null) = " & getVT(Empty And Null))
+
+Call ok(getVT(Empty Or Empty) = "VT_I4",     "getVT(Empty Or Empty) = " & getVT(Empty Or Empty))
+Call ok((Empty Or CInt(5)) = 5,              "Empty Or CInt(5) is not 5")
+Call ok(getVT(Empty Or CInt(5)) = "VT_I4",   "getVT(Empty Or CInt(5)) = " & getVT(Empty Or CInt(5)))
+Call ok(getVT(Empty Or False) = "VT_I4",     "getVT(Empty Or False) = " & getVT(Empty Or False))
+Call ok(isNull(Empty Or Null),               "Empty Or Null is not Null")
+
+Call ok(getVT(Empty Xor Empty) = "VT_I4",    "getVT(Empty Xor Empty) = " & getVT(Empty Xor Empty))
+Call ok((Empty Xor CInt(5)) = 5,             "Empty Xor CInt(5) is not 5")
+Call ok(getVT(Empty Xor CInt(5)) = "VT_I4",  "getVT(Empty Xor CInt(5)) = " & getVT(Empty Xor CInt(5)))
+Call ok(isNull(Empty Xor Null),              "Empty Xor Null is not Null")
+
+Call ok((Empty Eqv Empty) = -1,              "Empty Eqv Empty is not -1")
+Call ok(getVT(Empty Eqv Empty) = "VT_I4",    "getVT(Empty Eqv Empty) = " & getVT(Empty Eqv Empty))
+Call ok(isNull(Empty Eqv Null),              "Empty Eqv Null is not Null")
+
+Call ok((Empty Imp Empty) = -1,              "Empty Imp Empty is not -1")
+Call ok(getVT(Empty Imp Empty) = "VT_I4",    "getVT(Empty Imp Empty) = " & getVT(Empty Imp Empty))
+Call ok((Empty Imp False) = -1,              "Empty Imp False is not -1")
+Call ok((Empty Imp Null) = -1,               "Empty Imp Null is not -1")
+Call ok(getVT(Empty Imp Null) = "VT_I4",     "getVT(Empty Imp Null) = " & getVT(Empty Imp Null))
+
+Call ok((Not Empty) = -1,                    "Not Empty is not -1")
+Call ok(getVT(Not Empty) = "VT_I4",          "getVT(Not Empty) = " & getVT(Not Empty))
+
+' Arithmetic binary ops coerce Empty to VT_I2 0 — narrower than the logical
+' family — so the widening picks up whichever side has the larger numeric
+' type and the result reflects that.
+Call ok((Empty + Empty) = 0,                 "Empty + Empty is not 0")
+Call ok(getVT(Empty + Empty) = "VT_I2",      "getVT(Empty + Empty) = " & getVT(Empty + Empty))
+Call ok((Empty + CInt(5)) = 5,               "Empty + CInt(5) is not 5")
+Call ok(getVT(Empty + CInt(5)) = "VT_I2",    "getVT(Empty + CInt(5)) = " & getVT(Empty + CInt(5)))
+Call ok((Empty + CLng(123456)) = 123456,     "Empty + CLng(123456) is not 123456")
+Call ok(getVT(Empty + CLng(123456)) = "VT_I4",    "getVT(Empty + CLng(123456)) = " & getVT(Empty + CLng(123456)))
+Call ok(getVT(Empty + CDbl(1.5)) = "VT_R8",  "getVT(Empty + CDbl(1.5)) = " & getVT(Empty + CDbl(1.5)))
+Call ok(getVT(Empty + CCur(12.34)) = "VT_CY",     "getVT(Empty + CCur(12.34)) = " & getVT(Empty + CCur(12.34)))
+Call ok((Empty + False) = 0,                 "Empty + False is not 0")
+Call ok(getVT(Empty + False) = "VT_I2",      "getVT(Empty + False) = " & getVT(Empty + False))
+
+Call ok((Empty - CInt(5)) = -5,              "Empty - CInt(5) is not -5")
+Call ok(getVT(Empty - CInt(5)) = "VT_I2",    "getVT(Empty - CInt(5)) = " & getVT(Empty - CInt(5)))
+
+Call ok((Empty * CInt(5)) = 0,               "Empty * CInt(5) is not 0")
+Call ok(getVT(Empty * CInt(5)) = "VT_I2",    "getVT(Empty * CInt(5)) = " & getVT(Empty * CInt(5)))
+
+Call ok((Empty \ CInt(1)) = 0,               "Empty \\ CInt(1) is not 0")
+Call ok(getVT(Empty \ CInt(1)) = "VT_I2",    "getVT(Empty \\ CInt(1)) = " & getVT(Empty \ CInt(1)))
+
+Call ok((Empty Mod CInt(3)) = 0,             "Empty Mod CInt(3) is not 0")
+Call ok(getVT(Empty Mod CInt(3)) = "VT_I2",  "getVT(Empty Mod CInt(3)) = " & getVT(Empty Mod CInt(3)))
+
+Call ok((-Empty) = 0,                        "-Empty is not 0")
+Call ok(getVT(-Empty) = "VT_I2",             "getVT(-Empty) = " & getVT(-Empty))
+
+' Unary + and string concat do NOT coerce Empty. Unary + is essentially a
+' no-op, and & makes "" out of Empty inside the concat, not a number.
+Call ok(getVT(+Empty) = "VT_EMPTY",          "getVT(+Empty) = " & getVT(+Empty))
+Call ok((Empty & "foo") = "foo",             "Empty & 'foo' is not 'foo'")
+Call ok(getVT(Empty & "foo") = "VT_BSTR",    "getVT(Empty & 'foo') = " & getVT(Empty & "foo"))
+Call ok(("foo" & Empty) = "foo",             "'foo' & Empty is not 'foo'")
+
+' Reverse-order smoke tests: Empty on the right of commutative ops must
+' coerce too, otherwise a missing-r-coerce bug would only show up for
+' particular operand shapes. Values match the Empty-on-left rows above.
+Call ok((CInt(5) And Empty) = 0,             "CInt(5) And Empty is not 0")
+Call ok(getVT(CInt(5) And Empty) = "VT_I4",  "getVT(CInt(5) And Empty) = " & getVT(CInt(5) And Empty))
+Call ok((CInt(5) Or  Empty) = 5,             "CInt(5) Or Empty is not 5")
+Call ok(getVT(CInt(5) Or  Empty) = "VT_I4",  "getVT(CInt(5) Or Empty) = " & getVT(CInt(5) Or Empty))
+Call ok((CInt(5) Xor Empty) = 5,             "CInt(5) Xor Empty is not 5")
+Call ok(getVT(CInt(5) Xor Empty) = "VT_I4",  "getVT(CInt(5) Xor Empty) = " & getVT(CInt(5) Xor Empty))
+Call ok((CInt(5) +   Empty) = 5,             "CInt(5) + Empty is not 5")
+Call ok(getVT(CInt(5) +   Empty) = "VT_I2",  "getVT(CInt(5) + Empty) = " & getVT(CInt(5) + Empty))
+Call ok((CInt(5) *   Empty) = 0,             "CInt(5) * Empty is not 0")
+Call ok(getVT(CInt(5) *   Empty) = "VT_I2",  "getVT(CInt(5) * Empty) = " & getVT(CInt(5) * Empty))
+
+' Asymmetric-operator reverse-order tests. Imp is A Imp B = Not A Or B so
+' the result depends on the left operand's bit pattern. Subtraction and
+' exponent are also non-commutative and each direction is a separate case.
+Call ok((CInt(0) Imp Empty) = -1,            "CInt(0) Imp Empty is not -1")
+Call ok(getVT(CInt(0) Imp Empty) = "VT_I4",  "getVT(CInt(0) Imp Empty) = " & getVT(CInt(0) Imp Empty))
+Call ok((CInt(5) Imp Empty) = -6,            "CInt(5) Imp Empty is not -6")
+Call ok(getVT(CInt(5) Imp Empty) = "VT_I4",  "getVT(CInt(5) Imp Empty) = " & getVT(CInt(5) Imp Empty))
+Call ok((False Imp Empty) = -1,              "False Imp Empty is not -1")
+Call ok(getVT(False Imp Empty) = "VT_I4",    "getVT(False Imp Empty) = " & getVT(False Imp Empty))
+Call ok((True Imp Empty) = 0,                "True Imp Empty is not 0")
+Call ok(getVT(True Imp Empty) = "VT_I4",     "getVT(True Imp Empty) = " & getVT(True Imp Empty))
+Call ok(isNull(Null Imp Empty),              "Null Imp Empty is not Null")
+
+Call ok((CInt(5) - Empty) = 5,               "CInt(5) - Empty is not 5")
+Call ok(getVT(CInt(5) - Empty) = "VT_I2",    "getVT(CInt(5) - Empty) = " & getVT(CInt(5) - Empty))
+Call ok((CLng(7) - Empty) = 7,               "CLng(7) - Empty is not 7")
+Call ok(getVT(CLng(7) - Empty) = "VT_I4",    "getVT(CLng(7) - Empty) = " & getVT(CLng(7) - Empty))
+
+Call ok((Empty ^ CInt(2)) = 0,               "Empty ^ CInt(2) is not 0")
+Call ok(getVT(Empty ^ CInt(2)) = "VT_R8",    "getVT(Empty ^ CInt(2)) = " & getVT(Empty ^ CInt(2)))
+Call ok((CInt(2) ^ Empty) = 1,               "CInt(2) ^ Empty is not 1")
+Call ok(getVT(CInt(2) ^ Empty) = "VT_R8",    "getVT(CInt(2) ^ Empty) = " & getVT(CInt(2) ^ Empty))
+
+' Dividing BY Empty is dividing by zero once the arithmetic coercion runs,
+' so /, \ and Mod must raise runtime error 11 (division by zero).
+Dim div_r
+On Error Resume Next
+Err.Clear
+div_r = CInt(1) / Empty
+Call ok(Err.Number = 11, "CInt(1) / Empty should raise 11: " & Err.Number)
+Err.Clear
+div_r = CInt(1) \ Empty
+Call ok(Err.Number = 11, "CInt(1) \\ Empty should raise 11: " & Err.Number)
+Err.Clear
+div_r = CInt(3) Mod Empty
+Call ok(Err.Number = 11, "CInt(3) Mod Empty should raise 11: " & Err.Number)
+Err.Clear
+On Error Goto 0
+
 Call ok(2 >= 1, "! 2 >= 1")
 Call ok(2 >= 2, "! 2 >= 2")
 Call ok(2 => 1, "! 2 => 1")
