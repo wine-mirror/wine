@@ -209,6 +209,8 @@ enum error_codes
     E_SAX_BADXMLCASE = 0xc00ce576,
     E_SAX_INVALID_STANDALONE = 0xc00ce579,
     E_SAX_INVALID_VERSION = 0xc00ce57f,
+
+    E_SAX_MAX_ELEMENT_DEPTH = 0xc00cee92,
 };
 
 enum attdef_type
@@ -465,6 +467,7 @@ struct saxreader
     BSTR xmldecl_standalone;
     BSTR xmldecl_encoding;
     int max_xml_size;
+    int max_element_depth;
     BSTR empty_bstr;
     MSXML_VERSION version;
 };
@@ -886,6 +889,7 @@ struct saxlocator
     bool vbInterface;
     struct list elements;
     enum saxreader_state state;
+    int depth;
 
     ISequentialStream *stream;
     bool eos;
@@ -2378,11 +2382,17 @@ static void saxlocator_start_element(struct saxlocator *locator, const struct te
         struct element *element)
 {
     struct saxcontenthandler_iface *handler = saxreader_get_contenthandler(locator->saxreader);
+    int max_depth = locator->saxreader->max_element_depth;
+    MSXML_VERSION version = locator->saxreader->version;
     BSTR uri = NULL, local = NULL;
     HRESULT hr;
 
     if (locator->status != S_OK)
         return;
+
+    ++locator->depth;
+    if (max_depth && locator->depth > max_depth)
+        return saxreader_set_error(locator, version < MSXML6 ? E_ABORT : E_SAX_MAX_ELEMENT_DEPTH);
 
     if (!saxreader_has_handler(locator, SAXContentHandler))
         return;
@@ -2390,7 +2400,7 @@ static void saxlocator_start_element(struct saxlocator *locator, const struct te
     locator->line = position->line;
     locator->column = position->column;
     /* Point to the closing '>' */
-    if (locator->saxreader->version >= MSXML4)
+    if (version >= MSXML4)
         --locator->column;
 
     if (is_namespaces_enabled(locator->saxreader))
@@ -2446,6 +2456,7 @@ static void saxlocator_end_element(struct saxlocator *locator, const struct text
     if (locator->status != S_OK)
         return;
 
+    --locator->depth;
     locator->line = position->line;
     /* Point to the closing '>' */
     if (locator->saxreader->version >= MSXML4)
@@ -5840,9 +5851,16 @@ static HRESULT saxreader_put_property(struct saxreader *reader, const WCHAR *pro
 
     if (!wcscmp(prop, L"max-element-depth"))
     {
-        if (V_VT(v) == VT_I4 && V_I4(v) == 0) return S_OK;
-        FIXME("(%p)->(%s): max-element-depth unsupported\n", reader, debugstr_variant(v));
-        return E_NOTIMPL;
+        int depth;
+
+        if (FAILED(saxreader_get_int_property(&value, &depth)))
+            return E_FAIL;
+
+        if (depth < 0)
+            return E_INVALIDARG;
+
+        reader->max_element_depth = depth;
+        return S_OK;
     }
 
     FIXME("(%p)->(%s:%s): unsupported property\n", reader, debugstr_w(prop), debugstr_variant(v));
@@ -5911,6 +5929,13 @@ static HRESULT saxreader_get_property(const struct saxreader *reader, const WCHA
     {
         V_VT(value) = VT_I4;
         V_I4(value) = reader->max_xml_size;
+        return S_OK;
+    }
+
+    if (!wcscmp(prop, L"max-element-depth"))
+    {
+        V_VT(value) = VT_I4;
+        V_I4(value) = reader->max_element_depth;
         return S_OK;
     }
 
@@ -6438,6 +6463,7 @@ static HRESULT saxreader_create(MSXML_VERSION version, struct saxreader **reader
     object->features = Namespaces | NamespacePrefixes | NormalizeLineBreaks;
     object->version = version;
     object->empty_bstr = SysAllocString(L"");
+    object->max_element_depth = version > MSXML3 ? 256 : 5000;
 
     init_dispex(&object->dispex, (IUnknown *)&object->IVBSAXXMLReader_iface, &saxreader_dispex);
 
