@@ -116,7 +116,7 @@ public class WineActivity extends Activity
         File libdir = new File( getFilesDir(), wine_abi + "/lib" );
         File dlldir = new File( libdir, "wine" );
         File prefix = new File( getFilesDir(), "prefix" );
-        File loader = new File( bindir, "wine" );
+        File loader = new File( dlldir, get_so_dir(wine_abi) + "/wine" );
         String locale = Locale.getDefault().getLanguage() + "_" +
             Locale.getDefault().getCountry() + ".UTF-8";
 
@@ -124,7 +124,7 @@ public class WineActivity extends Activity
         env.put( "WINELOADER", loader.toString() );
         env.put( "WINEPREFIX", prefix.toString() );
         env.put( "WINEDLLPATH", dlldir.toString() );
-        env.put( "LD_LIBRARY_PATH", libdir.toString() + ":" + getApplicationInfo().nativeLibraryDir );
+        env.put( "LD_LIBRARY_PATH", libdir.toString() + ":" + getPackageResourcePath() + "!/lib/" + wine_abi + ":" + getApplicationInfo().nativeLibraryDir );
         env.put( "LC_ALL", locale );
         env.put( "LANG", locale );
         env.put( "PATH", bindir.toString() + ":" + System.getenv( "PATH" ));
