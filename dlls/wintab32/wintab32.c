@@ -33,6 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
 
+static HINSTANCE wintab_instance;
 HWND hwndDefault = NULL;
 static CRITICAL_SECTION_DEBUG csTablet_debug =
 {
@@ -51,6 +52,7 @@ static VOID TABLET_Register(void)
     ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style = CS_GLOBALCLASS;
     wndClass.lpfnWndProc = TABLET_WindowProc;
+    wndClass.hInstance = wintab_instance;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = 0;
     wndClass.hCursor = NULL;
@@ -71,6 +73,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
     {
         case DLL_PROCESS_ATTACH:
             TRACE("Initialization\n");
+            wintab_instance = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
             TABLET_Register();
             hwndDefault = CreateWindowW(L"WineTabletClass", L"Tablet", 0,
