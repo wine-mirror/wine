@@ -82,6 +82,7 @@ extern UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_
  */
 
 extern void start_android_device(void);
+extern void createDesktopView( int *event_source );
 extern void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL client );
 extern struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl );
 extern struct ANativeWindow *grab_ioctl_window( struct ANativeWindow *window );
