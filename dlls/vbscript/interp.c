@@ -961,6 +961,50 @@ static HRESULT assign_value(exec_ctx_t *ctx, VARIANT *dst, VARIANT *src, WORD fl
     return S_OK;
 }
 
+static HRESULT assign_local_var(exec_ctx_t *ctx, VARIANT *v, WORD flags, DISPPARAMS *dp)
+{
+    HRESULT hres;
+
+    if(V_VT(v) == (VT_VARIANT|VT_BYREF))
+        v = V_VARIANTREF(v);
+
+    if(arg_cnt(dp)) {
+        SAFEARRAY *array;
+
+        if(V_VT(v) == VT_DISPATCH)
+            return disp_propput(ctx->script, V_DISPATCH(v), DISPID_VALUE, flags, dp);
+
+        if(!(V_VT(v) & VT_ARRAY))
+            return DISP_E_TYPEMISMATCH;
+
+        switch(V_VT(v)) {
+        case VT_ARRAY|VT_BYREF|VT_VARIANT:
+            array = *V_ARRAYREF(v);
+            break;
+        case VT_ARRAY|VT_VARIANT:
+            array = V_ARRAY(v);
+            break;
+        default:
+            FIXME("Unsupported array type %x\n", V_VT(v));
+            return E_NOTIMPL;
+        }
+
+        if(!array) {
+            WARN("null array\n");
+            return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+        }
+
+        hres = array_access(array, dp, &v);
+        if(FAILED(hres))
+            return hres;
+    }else if(V_VT(v) == (VT_ARRAY|VT_BYREF|VT_VARIANT)) {
+        FIXME("non-array assign\n");
+        return E_NOTIMPL;
+    }
+
+    return assign_value(ctx, v, dp->rgvarg, flags);
+}
+
 static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *dp)
 {
     ref_t ref;
@@ -971,51 +1015,9 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
         return hres;
 
     switch(ref.type) {
-    case REF_VAR: {
-        VARIANT *v = ref.u.v;
-
-        if(V_VT(v) == (VT_VARIANT|VT_BYREF))
-            v = V_VARIANTREF(v);
-
-        if(arg_cnt(dp)) {
-            SAFEARRAY *array;
-
-            if(V_VT(v) == VT_DISPATCH) {
-                hres = disp_propput(ctx->script, V_DISPATCH(v), DISPID_VALUE, flags, dp);
-                break;
-            }
-
-            if(!(V_VT(v) & VT_ARRAY))
-                return DISP_E_TYPEMISMATCH;
-
-            switch(V_VT(v)) {
-            case VT_ARRAY|VT_BYREF|VT_VARIANT:
-                array = *V_ARRAYREF(v);
-                break;
-            case VT_ARRAY|VT_VARIANT:
-                array = V_ARRAY(v);
-                break;
-            default:
-                FIXME("Unsupported array type %x\n", V_VT(v));
-                return E_NOTIMPL;
-            }
-
-            if(!array) {
-                WARN("null array\n");
-                return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
-            }
-
-            hres = array_access(array, dp, &v);
-            if(FAILED(hres))
-                return hres;
-        }else if(V_VT(v) == (VT_ARRAY|VT_BYREF|VT_VARIANT)) {
-            FIXME("non-array assign\n");
-            return E_NOTIMPL;
-        }
-
-        hres = assign_value(ctx, v, dp->rgvarg, flags);
+    case REF_VAR:
+        hres = assign_local_var(ctx, ref.u.v, flags, dp);
         break;
-    }
     case REF_DISP:
         hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, flags, dp);
         break;
