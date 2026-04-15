@@ -436,7 +436,12 @@ static BOOL prefer_native_heuristics( const UNICODE_STRING *nt_name,
     ULONG len;
 
     if (!pe_mapping) return FALSE;
-    if (!pe_mapping->version_len) return FALSE;
+    if (pe_mapping->image.wine_builtin || pe_mapping->image.wine_fakedll) return FALSE;
+    if (!pe_mapping->version_len)
+    {
+        TRACE( "preferring native with no version for %s\n", debugstr_us( nt_name ));
+        return TRUE;
+    }
     if (!get_version_entry( &entry, pe_mapping->version_res,
                             (char *)pe_mapping->version_res + pe_mapping->version_len )) return FALSE;
     fileinfo = entry.value;
