@@ -165,7 +165,8 @@ public class WineActivity extends Activity
 
         createProgressDialog( 0, "Setting up the Windows environment..." );
 
-        System.load( dlldir.toString() + get_so_dir(wine_abi) + "/ntdll.so" );
+        for ( String lib : new String[] { "ntdll.so", "win32u.so", "wineandroid.so" } )
+            System.load( dlldir.toString() + get_so_dir(wine_abi) + "/" + lib );
         prefix.mkdirs();
 
         runWine( loader.toString(), cmdline );

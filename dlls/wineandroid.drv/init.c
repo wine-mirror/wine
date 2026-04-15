@@ -39,6 +39,10 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
+#ifndef WINE_JAVA_CLASS
+#define WINE_JAVA_CLASS "org/winehq/wine/WineActivity"
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 unsigned int screen_width = 0;
@@ -395,8 +399,6 @@ static void load_android_libs(void)
 NTSTATUS __wine_unix_lib_init(void)
 {
     pthread_mutexattr_t attr;
-    jclass class;
-    JNIEnv *jni_env;
 
     load_android_libs();
 
@@ -405,21 +407,21 @@ NTSTATUS __wine_unix_lib_init(void)
     pthread_mutex_init( &win_data_mutex, &attr );
     pthread_mutexattr_destroy( &attr );
 
-    if (java_vm)  /* running under Java */
-    {
-#ifdef __i386__
-        WORD old_fs;
-        __asm__( "mov %%fs,%0" : "=r" (old_fs) );
-#endif
-        (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-        class = (*jni_env)->GetObjectClass( jni_env, java_object );
-        (*jni_env)->RegisterNatives( jni_env, class, methods, ARRAY_SIZE( methods ));
-        (*jni_env)->DeleteLocalRef( jni_env, class );
-#ifdef __i386__
-        /* the Java VM hijacks %fs for its own purposes, restore it */
-        __asm__( "mov %0,%%fs" :: "r" (old_fs) );
-#endif
-    }
     __wine_set_user_driver( &android_drv_funcs, WINE_GDI_DRIVER_VERSION );
     return STATUS_SUCCESS;
+}
+
+jint JNI_OnLoad( JavaVM *vm, void *reserved )
+{
+    JNIEnv *env;
+    jclass class;
+
+    load_android_libs();
+
+    java_vm = vm;
+    if ((*vm)->AttachCurrentThread( vm, &env, NULL ) != JNI_OK) return JNI_ERR;
+    if (!(class = (*env)->FindClass( env, WINE_JAVA_CLASS ))) return JNI_ERR;
+    (*env)->RegisterNatives( env, class, methods, ARRAY_SIZE( methods ));
+    (*env)->DeleteLocalRef( env, class );
+    return JNI_VERSION_1_6;
 }
