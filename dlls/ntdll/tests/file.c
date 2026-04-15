@@ -7116,6 +7116,31 @@ static void test_reparse_points(void)
     status = NtOpenFile( &handle2, READ_CONTROL, &attr, &io, 0, 0 );
     ok( status == STATUS_IO_REPARSE_DATA_INVALID, "got %#lx\n", status );
 
+    NtClose( handle );
+
+    /* Test a link that unwinds past the directory the link is in. */
+
+    RtlInitUnicodeString( &nameW, L"testreparse_dir\\file" );
+    status = NtCreateFile( &handle, GENERIC_ALL, &attr, &io, NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN_IF, FILE_NON_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    swprintf( path, ARRAY_SIZE(path), L"..\\testreparse_file", temp_path );
+    data_size = init_reparse_symlink( &data, path, SYMLINK_FLAG_RELATIVE );
+    status = NtFsControlFile( handle, NULL, NULL, NULL, &io, FSCTL_SET_REPARSE_POINT, data, data_size, NULL, 0 );
+    ok( !status, "got %#lx\n", status );
+
+    status = NtOpenFile( &handle2, GENERIC_READ | SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    ok( !status, "got %#lx\n", status );
+
+    ret = ReadFile( handle2, buffer, sizeof(buffer), &size, NULL );
+    todo_wine ok( ret == TRUE, "got error %lu\n", GetLastError() );
+    todo_wine ok( size == 5, "got size %lu\n", size );
+    ok( !memcmp( buffer, "file2", size ), "got data %s\n", debugstr_an( buffer, size ));
+
+    NtClose( handle2 );
+    NtClose( handle );
+
     /* Create an absolute symlink. */
 
     RtlInitUnicodeString( &nameW, L"testreparse_dirlink" );
