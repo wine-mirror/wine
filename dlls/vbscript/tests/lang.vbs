@@ -464,6 +464,16 @@ call ok(false imp false, "false does not imp false?")
 call ok(not (true imp false), "true imp false?")
 call ok(false imp null, "false imp null is false?")
 
+' For VT_UI1 Imp VT_NULL, native VBScript keeps UI1 width and returns
+' the bitwise complement of the left operand, rather than applying
+' VarImp's three-valued all-ones rule. interp_imp has a narrow special
+' case to match this native behavior.
+Call ok((CByte(0) Imp Null) = 255,           "CByte(0) Imp Null is not 255")
+Call ok(getVT(CByte(0) Imp Null) = "VT_UI1", "getVT(CByte(0) Imp Null) = " & getVT(CByte(0) Imp Null))
+Call ok((CByte(170) Imp Null) = 85,          "CByte(170) Imp Null is not 85")
+Call ok((CByte(255) Imp Null) = 0,           "CByte(255) Imp Null is not 0")
+Call ok(getVT(CByte(255) Imp Null) = "VT_UI1",    "getVT(CByte(255) Imp Null) = " & getVT(CByte(255) Imp Null))
+
 Call ok(2 >= 1, "! 2 >= 1")
 Call ok(2 >= 2, "! 2 >= 2")
 Call ok(2 => 1, "! 2 => 1")

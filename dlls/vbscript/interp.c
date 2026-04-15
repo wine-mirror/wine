@@ -2097,7 +2097,18 @@ static HRESULT interp_imp(exec_ctx_t *ctx)
 
     hres = stack_pop_val(ctx, &l);
     if(SUCCEEDED(hres)) {
-        hres = VarImp(l.v, r.v, &v);
+        /* Native VarImp returns VT_NULL for UI1 0xFF Imp Null under the
+         * three-valued "all-ones Imp unknown = unknown" rule, but native
+         * VBScript keeps UI1 width and returns the bitwise complement of
+         * the left operand. Handle UI1 Imp Null directly. */
+        if ((V_VT(l.v) & VT_TYPEMASK) == VT_UI1 &&
+            (V_VT(r.v) & VT_TYPEMASK) == VT_NULL) {
+            V_VT(&v) = VT_UI1;
+            V_UI1(&v) = ~V_UI1(l.v);
+            hres = S_OK;
+        } else {
+            hres = VarImp(l.v, r.v, &v);
+        }
         release_val(&l);
     }
     release_val(&r);
