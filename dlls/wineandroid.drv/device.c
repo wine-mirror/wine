@@ -73,6 +73,7 @@ static int log_flags;
 WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 static int desktop_client_fd = -1;
+static jobject java_object;
 
 #ifndef SYNC_IOC_WAIT
 #define SYNC_IOC_WAIT _IOW('>', 0, __s32)
@@ -867,17 +868,6 @@ static const ioctl_func ioctl_funcs[] =
 static ALooper *looper;
 static JNIEnv *looper_env; /* JNIEnv for the main thread looper. Must only be used from that thread. */
 
-void looper_init( JNIEnv* env, jobject obj )
-{
-    looper_env = env;
-    if (!(looper = pALooper_forThread()))
-    {
-        LOG( ERR, "No looper for current thread\n" );
-        abort();
-    }
-    pALooper_acquire( looper );
-}
-
 /* Handle a single ioctl request from a client socket.
  * Returns 0 if a request was handled successfully and the caller may
  * continue draining the socket, -1 if there is nothing more to read
@@ -985,25 +975,19 @@ static int looper_handle_listen( int fd, int events, void *data )
     return 1;
 }
 
-static void *bootstrap_looper_thread( void *arg )
+/* main Wine initialisation */
+void wine_init_jni( JNIEnv *env, jobject obj )
 {
-    JNIEnv *env;
-    jmethodID method = NULL;
-    jobject object = NULL;
     int sockfd;
 
-    if (!java_vm || (*java_vm)->AttachCurrentThread( java_vm, &env, 0 ) != JNI_OK)
+    java_object = (*env)->NewGlobalRef( env, obj );
+    looper_env = env;
+    if (!(looper = pALooper_forThread()))
     {
-        LOG( ERR,  "Failed to attach current thread\n" );
-        return NULL;
-    }
-
-    if (!(object = load_java_method( env, &method, "obtainLooper", "()V" )))
-    {
-        LOG( ERR,  "Failed to obtain looper\n" );
+        LOG( ERR, "No looper for current thread\n");
         abort();
     }
-    (*env)->CallVoidMethod( env, object, method );
+    pALooper_acquire( looper );
 
     sockfd = socket( AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC | SOCK_NONBLOCK, 0 );
     if (sockfd < 0)
@@ -1023,27 +1007,6 @@ static void *bootstrap_looper_thread( void *arg )
     if (pALooper_addFd( looper, sockfd, sockfd, ALOOPER_EVENT_INPUT, looper_handle_listen, NULL ) != 1) {
         LOG( ERR, "Failed to add listening socket to main looper\n" );
         close(sockfd);
-        abort();
-    }
-
-    (*java_vm)->DetachCurrentThread( java_vm );
-    return NULL;
-}
-
-void start_android_device(void)
-{
-    pthread_t t;
-
-    /* Use a temporary bootstrap thread to request the main thread looper
-     * without interfering with the current Wine/JVM execution context
-     * (including register and thread-state assumptions). Actual ioctl
-     * dispatch then runs from the main thread looper.
-     */
-    if (!pthread_create( &t, NULL, bootstrap_looper_thread, NULL ))
-        pthread_join(t, NULL);
-    else
-    {
-        LOG( ERR, "Failed to spawn looper bootstrap thread\n" );
         abort();
     }
 }

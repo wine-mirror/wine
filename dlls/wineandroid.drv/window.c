@@ -173,7 +173,7 @@ struct java_event
 
 static struct list event_queue = LIST_INIT( event_queue );
 static struct java_event *current_event;
-static int event_source;
+int event_source = -1;
 static DWORD desktop_tid;
 
 extern int event_sink;
@@ -1235,7 +1235,6 @@ BOOL has_client_surface( HWND hwnd )
  */
 BOOL ANDROID_CreateDesktop( const WCHAR *name, UINT width, UINT height )
 {
-    start_android_device();
     createDesktopView( &event_source );
     init_event_queue();
     /* wait until we receive the surface changed event */

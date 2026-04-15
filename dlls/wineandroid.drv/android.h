@@ -81,7 +81,6 @@ extern UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_
  * Android pseudo-device
  */
 
-extern void start_android_device(void);
 extern void createDesktopView( int *event_source );
 extern void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL client );
 extern struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl );
@@ -139,6 +138,7 @@ extern void update_keyboard_lock_state( WORD vkey, UINT state );
 
 /* JNI entry points */
 extern void looper_init( JNIEnv *env, jobject obj );
+extern void wine_init_jni( JNIEnv *env, jobject obj );
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height );
 extern void config_changed( JNIEnv *env, jobject obj, jint dpi );
 extern void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface,
@@ -196,8 +196,7 @@ union event_data
 
 int send_event( const union event_data *data );
 
-extern JavaVM *java_vm;
-extern jobject java_object;
+extern int event_source;
 
 /* string helpers */
 

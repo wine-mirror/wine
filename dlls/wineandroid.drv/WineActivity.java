@@ -61,8 +61,7 @@ import static android.system.Os.getenv;
 
 public class WineActivity extends Activity
 {
-    private native String wine_init( String[] cmdline );
-    private native void wine_looper_init();
+    private native void wine_init();
     public native void wine_desktop_changed( int width, int height );
     public native void wine_config_changed( int dpi );
     public native void wine_surface_changed( int hwnd, Surface surface, boolean opengl );
@@ -138,6 +137,7 @@ public class WineActivity extends Activity
         File dlldir = new File( libdir, "wine" );
         File prefix = new File( getFilesDir(), "prefix" );
         File loader = new File( dlldir, get_so_dir(wine_abi) + "/wine" );
+        File log = null;
         String locale = Locale.getDefault().getLanguage() + "_" +
             Locale.getDefault().getCountry() + ".UTF-8";
 
@@ -156,7 +156,7 @@ public class WineActivity extends Activity
         if (winedebug == null) winedebug = readFileString( new File( getFilesDir(), "winedebug" ));
         if (winedebug != null)
         {
-            File log = new File( getFilesDir(), "log" );
+            log = new File( getFilesDir(), "log" );
             putenv( "WINEDEBUG", winedebug );
             putenv( "WINEDEBUGLOG", log.toString() );
             Log.i( LOGTAG, "logging to " + log.toString() );
@@ -169,18 +169,32 @@ public class WineActivity extends Activity
             System.load( dlldir.toString() + get_so_dir(wine_abi) + "/" + lib );
         prefix.mkdirs();
 
-        runWine( loader.toString(), cmdline );
+        runWine( loader.toString(), cmdline, log );
     }
 
-    private final void runWine( String loader, String cmdline )
+    private final void runWine( String loader, String cmdline, File log )
     {
+        CountDownLatch latch = new CountDownLatch(1);
         String[] cmd = { loader,
                          "c:\\windows\\system32\\explorer.exe",
                          "/desktop=shell,,android",
                          cmdline };
 
-        String err = wine_init( cmd );
-        Log.e( LOGTAG, err );
+        runOnUiThread( new Runnable() { public void run() {
+            try { wine_init(); } finally { latch.countDown(); }
+        }});
+        try { latch.await(); } catch ( Exception e ) {}
+
+        try {
+            new ProcessBuilder(cmd)
+                .redirectErrorStream(true)
+                .redirectOutput(ProcessBuilder.Redirect.appendTo(
+                    log != null ? log : new File("/dev/null")
+                ))
+                .start();
+        } catch (IOException e) {
+            Log.e("WineError", "Failed to exec " + String.join(" ", cmd) + ": " + e);
+        }
     }
 
     private void createProgressDialog( final int max, final String message )
@@ -898,13 +912,5 @@ public class WineActivity extends Activity
         postToUiThread( new Runnable() {
             public void run() { window_pos_changed( hwnd, flags, insert_after, owner, style,
                                                     window_rect, client_rect, visible_rect ); }} );
-    }
-
-    private void obtainLooper() {
-        CountDownLatch latch = new CountDownLatch(1);
-        runOnUiThread( new Runnable() { public void run() {
-            try { wine_looper_init(); } finally { latch.countDown(); }
-        }});
-        try { latch.await(); } catch ( Exception e ) {}
     }
 }
