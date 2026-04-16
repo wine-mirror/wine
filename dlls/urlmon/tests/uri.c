@@ -8297,6 +8297,7 @@ static const uri_parse_test uri_parse_tests[] = {
     {"http://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_NO_META,"http://google.com/test/../",S_OK,FALSE},
     {"http://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,0,"http://google.com/",S_OK,FALSE},
     {"zip://google.com/test/../",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,0,"zip://google.com/",S_OK,FALSE},
+    {"zip://google.com/test/%2E./",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_UNESCAPE,"zip://google.com/test/../",S_OK,FALSE,TRUE},
     {"file:///c:/test/../test",Uri_CREATE_NO_CANONICALIZE,PARSE_CANONICALIZE,URL_DONT_SIMPLIFY,"file:///c:/test/../test",S_OK,FALSE},
 
     /* PARSE_FRIENDLY tests. */

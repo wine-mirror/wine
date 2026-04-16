@@ -6340,8 +6340,8 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
 static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
                                   DWORD output_len, DWORD *result_len)
 {
-    const WCHAR *ptr = NULL;
-    WCHAR *path = NULL;
+    const WCHAR *ptr = NULL, *end_ptr = NULL;
+    WCHAR *reduced = NULL;
     const WCHAR **pptr;
     DWORD len = 0;
     BOOL reduce_path;
@@ -6362,24 +6362,29 @@ static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
     reduce_path = !(flags & URL_DONT_SIMPLIFY) &&
                   ptr && check_hierarchical(pptr);
 
-    for(ptr = uri->canon_uri; ptr < uri->canon_uri+uri->canon_len; ++ptr) {
+    /* Reduce path first, otherwise it's difficult to check if the output will exceed
+     * output_len during escaping/unescaping. */
+    if (reduce_path && uri->path_start > -1)
+    {
+        DWORD path_end = uri->path_start+uri->path_len, new_path_end;
+
+        reduced = malloc(sizeof(WCHAR)*uri->canon_len);
+        if (!reduced) return E_OUTOFMEMORY;
+
+        memcpy(reduced, uri->canon_uri, sizeof(WCHAR)*path_end);
+        new_path_end = uri->path_start+remove_dot_segments(reduced+uri->path_start, uri->path_len);
+        memcpy(reduced+new_path_end, uri->canon_uri+path_end, sizeof(WCHAR)*(uri->canon_len-path_end));
+        ptr = reduced;
+        end_ptr = ptr+new_path_end+(uri->canon_len-path_end);
+    }
+    else
+    {
+        ptr = uri->canon_uri;
+        end_ptr = ptr+uri->canon_len;
+    }
+
+    for(; ptr < end_ptr; ++ptr) {
         BOOL do_default_action = TRUE;
-
-        /* Keep track of the path if we need to remove dot segments from
-         * it later.
-         */
-        if(reduce_path && !path && ptr == uri->canon_uri+uri->path_start)
-            path = output+len;
-
-        /* Check if it's time to reduce the path. */
-        if(reduce_path && ptr == uri->canon_uri+uri->path_start+uri->path_len) {
-            DWORD current_path_len = (output+len) - path;
-            DWORD new_path_len = remove_dot_segments(path, current_path_len);
-
-            /* Update the current length. */
-            len -= (current_path_len-new_path_len);
-            reduce_path = FALSE;
-        }
 
         if(*ptr == '%') {
             const WCHAR decoded = decode_pct_val(ptr);
@@ -6424,16 +6429,7 @@ static HRESULT parse_canonicalize(const Uri *uri, DWORD flags, LPWSTR output,
         }
     }
 
-    /* Sometimes the path is the very last component of the IUri, so
-     * see if the dot segments need to be reduced now.
-     */
-    if(reduce_path && path) {
-        DWORD current_path_len = (output+len) - path;
-        DWORD new_path_len = remove_dot_segments(path, current_path_len);
-
-        /* Update the current length. */
-        len -= (current_path_len-new_path_len);
-    }
+    if (reduced) free(reduced);
 
     if(len < output_len)
         output[len] = 0;
