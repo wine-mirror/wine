@@ -3265,8 +3265,13 @@ static HRESULT WINAPI file_Copy(IFile *iface, BSTR Destination, VARIANT_BOOL Ove
 static HRESULT WINAPI file_Move(IFile *iface, BSTR Destination)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(Destination));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(Destination));
+
+    if (!MoveFileW(This->path, Destination))
+        return create_error(GetLastError());
+
+    return S_OK;
 }
 
 static HRESULT WINAPI file_OpenAsTextStream(IFile *iface, IOMode mode, Tristate format, ITextStream **stream)

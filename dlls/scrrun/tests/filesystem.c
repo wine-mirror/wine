@@ -3289,6 +3289,46 @@ static void test_File_Delete(void)
     SysFreeString(path);
 }
 
+static void test_File_Move(void)
+{
+    WCHAR src_path[MAX_PATH], dst_path[MAX_PATH];
+    IFile *file;
+    BSTR path, dst;
+    HRESULT hr;
+    HANDLE hf;
+    DWORD attrs;
+
+    get_temp_path(NULL, src_path);
+    hf = CreateFileW(src_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hf == INVALID_HANDLE_VALUE)
+    {
+        skip("Can't create temporary file\n");
+        return;
+    }
+    CloseHandle(hf);
+
+    get_temp_path(NULL, dst_path);
+
+    path = SysAllocString(src_path);
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    dst = SysAllocString(dst_path);
+    hr = IFile_Move(file, dst);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    attrs = GetFileAttributesW(src_path);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "source file should be gone\n");
+
+    attrs = GetFileAttributesW(dst_path);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "destination file should exist\n");
+
+    IFile_Release(file);
+    SysFreeString(path);
+    SysFreeString(dst);
+    DeleteFileW(dst_path);
+}
+
 static void test_Folder_Delete(void)
 {
     WCHAR temp_path[MAX_PATH], dir_path[MAX_PATH], file_path[MAX_PATH];
@@ -3408,6 +3448,7 @@ START_TEST(filesystem)
     test_DoOpenPipeStream();
     test_File_Delete();
     test_Folder_Delete();
+    test_File_Move();
 
     IFileSystem3_Release(fs3);
 
