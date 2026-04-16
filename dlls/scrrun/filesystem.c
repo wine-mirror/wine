@@ -2746,8 +2746,13 @@ static HRESULT WINAPI folder_Copy(IFolder *iface, BSTR dest, VARIANT_BOOL overwr
 static HRESULT WINAPI folder_Move(IFolder *iface, BSTR dest)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(dest));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(dest));
+
+    if (!MoveFileW(This->path, dest))
+        return create_error(GetLastError());
+
+    return S_OK;
 }
 
 static HRESULT WINAPI folder_get_IsRootFolder(IFolder *iface, VARIANT_BOOL *isroot)
