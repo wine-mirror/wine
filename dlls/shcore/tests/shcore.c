@@ -25,6 +25,7 @@
 #include "objidl.h"
 #include "objbase.h"
 #include "shlwapi.h"
+#include "winternl.h"
 #include "appmodel.h"
 
 #include "wine/test.h"
@@ -787,6 +788,9 @@ static void test_AppUserModelID(void)
 {
     WCHAR *appid;
     HRESULT hr;
+    WCHAR long_id[APPLICATION_USER_MODEL_ID_MAX_LENGTH + 10];
+    PEB *peb = NtCurrentTeb()->Peb;
+    RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
 
     if (!pSetCurrentProcessExplicitAppUserModelID || !pGetCurrentProcessExplicitAppUserModelID)
     {
@@ -794,36 +798,46 @@ static void test_AppUserModelID(void)
         return;
     }
 
-    /* String length validation. Native rejects strings with 128+ characters. */
-    {
-        WCHAR long_id[APPLICATION_USER_MODEL_ID_MAX_LENGTH + 10];
-        memset(long_id, 'A', sizeof(long_id));
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
-        /* 128 chars — should fail */
-        long_id[128] = 0;
-        hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
-        ok(hr == E_INVALIDARG, "Got hr %#lx for 128-char string.\n", hr);
-
-        /* 127 chars — should succeed */
-        long_id[127] = 0;
-        hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
-        ok(hr == S_OK, "Got hr %#lx for 127-char string.\n", hr);
-    }
+    params->dwFlags |= STARTF_TITLEISAPPID;
+    appid = NULL;
+    hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok( !wcscmp( appid, params->WindowTitle.Buffer ), "got %s / %s\n",
+        debugstr_w(appid), debugstr_w(params->WindowTitle.Buffer) );
+    CoTaskMemFree(appid);
 
     /* Set a valid ID */
+    params->dwFlags = STARTF_TITLEISLINKNAME;
     hr = pSetCurrentProcessExplicitAppUserModelID(L"Wine.Test.AppId");
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok( params->dwFlags == (STARTF_TITLEISAPPID | 0x4000), "wrong flags %lx\n", params->dwFlags );
+    ok( !wcscmp( params->WindowTitle.Buffer, L"Wine.Test.AppId" ), "got %s\n",
+        debugstr_w(params->WindowTitle.Buffer) );
 
     /* Get should return the ID we set */
     appid = NULL;
     hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(appid != NULL, "Expected non-NULL appid.\n");
-    if (appid)
-    {
-        ok(!lstrcmpW(appid, L"Wine.Test.AppId"), "Got %s.\n", wine_dbgstr_w(appid));
-        CoTaskMemFree(appid);
-    }
+    ok(!lstrcmpW(appid, L"Wine.Test.AppId"), "Got %s.\n", wine_dbgstr_w(appid));
+    CoTaskMemFree(appid);
+
+    /* String length validation. Native rejects strings with 128+ characters. */
+    memset(long_id, 'A', sizeof(long_id));
+
+    /* 128 chars — should fail */
+    long_id[128] = 0;
+    hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
+    ok(hr == E_INVALIDARG, "Got hr %#lx for 128-char string.\n", hr);
+
+    /* 127 chars — should succeed */
+    long_id[127] = 0;
+    hr = pSetCurrentProcessExplicitAppUserModelID(long_id);
+    ok(hr == S_OK, "Got hr %#lx for 127-char string.\n", hr);
 
     /* Set a different ID */
     hr = pSetCurrentProcessExplicitAppUserModelID(L"Wine.Test.AppId2");
@@ -832,11 +846,8 @@ static void test_AppUserModelID(void)
     appid = NULL;
     hr = pGetCurrentProcessExplicitAppUserModelID(&appid);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (appid)
-    {
-        ok(!lstrcmpW(appid, L"Wine.Test.AppId2"), "Got %s.\n", wine_dbgstr_w(appid));
-        CoTaskMemFree(appid);
-    }
+    ok(!lstrcmpW(appid, L"Wine.Test.AppId2"), "Got %s.\n", wine_dbgstr_w(appid));
+    CoTaskMemFree(appid);
 }
 
 START_TEST(shcore)

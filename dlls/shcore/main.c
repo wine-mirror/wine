@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winternl.h"
 #include "initguid.h"
 #include "ocidl.h"
 #include "featurestagingapi.h"
@@ -250,66 +251,55 @@ HRESULT WINAPI IUnknown_SetSite(IUnknown *obj, IUnknown *site)
     return hr;
 }
 
-static WCHAR *explicit_app_user_model_id;
-static CRITICAL_SECTION appid_cs;
-static CRITICAL_SECTION_DEBUG appid_cs_debug =
-{
-    0, 0, &appid_cs,
-    { &appid_cs_debug.ProcessLocksList, &appid_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": appid_cs") }
-};
-static CRITICAL_SECTION appid_cs = { &appid_cs_debug, -1, 0, 0, 0, 0 };
-
 HRESULT WINAPI SetCurrentProcessExplicitAppUserModelID(const WCHAR *appid)
 {
-    WCHAR *new_id = NULL;
-    DWORD len;
+    RTL_USER_PROCESS_PARAMETERS *params;
+    HRESULT ret = S_OK;
 
     TRACE("%s\n", debugstr_w(appid));
 
     if (!appid)
         return E_INVALIDARG;
 
-    len = lstrlenW(appid);
-    if (len > APPLICATION_USER_MODEL_ID_MAX_LENGTH - 3)
+    if (lstrlenW(appid) > APPLICATION_USER_MODEL_ID_MAX_LENGTH - 3)
         return E_INVALIDARG;
 
-    new_id = CoTaskMemAlloc((len + 1) * sizeof(WCHAR));
-    if (!new_id) return E_OUTOFMEMORY;
-    memcpy(new_id, appid, (len + 1) * sizeof(WCHAR));
-
-    EnterCriticalSection(&appid_cs);
-    CoTaskMemFree(explicit_app_user_model_id);
-    explicit_app_user_model_id = new_id;
-    LeaveCriticalSection(&appid_cs);
-
-    return S_OK;
+    RtlAcquirePebLock();
+    params = RtlGetCurrentPeb()->ProcessParameters;
+    if (params->dwFlags & 0x4000) RtlFreeUnicodeString( &params->WindowTitle );
+    if (RtlCreateUnicodeString( &params->WindowTitle, appid ))
+    {
+        params->dwFlags |= STARTF_TITLEISAPPID;
+        params->dwFlags |= 0x4000; /* needs free (?) */
+        params->dwFlags &= ~STARTF_TITLEISLINKNAME; /* mutually exclusive */
+    }
+    else ret = E_OUTOFMEMORY;
+    RtlReleasePebLock();
+    return ret;
 }
 
 HRESULT WINAPI GetCurrentProcessExplicitAppUserModelID(WCHAR **appid)
 {
+    RTL_USER_PROCESS_PARAMETERS *params;
+    HRESULT ret = S_OK;
+
     TRACE("%p\n", appid);
 
     if (!appid) return E_INVALIDARG;
 
     *appid = NULL;
 
-    EnterCriticalSection(&appid_cs);
-    if (explicit_app_user_model_id)
+    RtlAcquirePebLock();
+    params = RtlGetCurrentPeb()->ProcessParameters;
+    if (params->dwFlags & STARTF_TITLEISAPPID)
     {
-        DWORD len = (lstrlenW(explicit_app_user_model_id) + 1) * sizeof(WCHAR);
-        WCHAR *copy = CoTaskMemAlloc(len);
-        if (copy)
-        {
-            memcpy(copy, explicit_app_user_model_id, len);
-            *appid = copy;
-        }
+        *appid = CoTaskMemAlloc( params->WindowTitle.MaximumLength );
+        if (*appid) wcscpy( *appid, params->WindowTitle.Buffer );
+        else ret = E_OUTOFMEMORY;
     }
-    LeaveCriticalSection(&appid_cs);
-
-    if (*appid)
-        return S_OK;
-    return E_FAIL;
+    else ret = E_FAIL;
+    RtlReleasePebLock();
+    return ret;
 }
 
 /*************************************************************************
