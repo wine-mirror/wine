@@ -3248,6 +3248,28 @@ static void test_media_types(void)
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current, &palette, &desired, &flags);
     ok(hr == MS_E_NOSTREAM, "Got hr %#lx.\n", hr);
 
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(count == 1, "Got count %lu.\n", count);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video), "Got major type %s\n",
+            wine_dbgstr_guid(&pmt->majortype));
+    todo_wine
+    ok(IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_RGB32), "Got subtype %s\n",
+            wine_dbgstr_guid(&pmt->subtype));
+    ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
+    todo_wine
+    ok(pmt->lSampleSize == 40000, "Got sample size %lu.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &GUID_NULL), "Got format type %s.\n",
+            wine_dbgstr_guid(&pmt->formattype));
+    ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
+
+    DeleteMediaType(pmt);
+    IEnumMediaTypes_Release(enummt);
+
     memset(&mt, 0, sizeof(mt));
     mt.majortype = MEDIATYPE_Video;
     mt.subtype = MEDIASUBTYPE_RGB32;
