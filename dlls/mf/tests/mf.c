@@ -9315,9 +9315,9 @@ static void test_h264_output_alignment(void)
 
     frame_size = get_current_media_type_frame_size(transform);
     todo_wine
-    ok(frame_size == (((UINT64)64 << 32) | 72), "Unexpected frame size %#llx\n", frame_size);
+    ok(frame_size == (((UINT64)64 << 32) | 72), "Unexpected frame size %#I64x\n", frame_size);
     frame_size = get_current_media_type_frame_size(handler);
-    ok(frame_size == (((UINT64)64 << 32) | 72), "Unexpected frame size %#llx\n", frame_size);
+    ok(frame_size == (((UINT64)64 << 32) | 72), "Unexpected frame size %#I64x\n", frame_size);
 
     propvar.vt = VT_EMPTY;
     hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
@@ -9328,10 +9328,10 @@ static void test_h264_output_alignment(void)
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
     frame_size = get_current_media_type_frame_size(transform);
     todo_wine
-    ok(frame_size == (((UINT64)64 << 32) | 80), "Unexpected frame size %#llx\n", frame_size);
+    ok(frame_size == (((UINT64)64 << 32) | 80), "Unexpected frame size %#I64x\n", frame_size);
     frame_size = get_current_media_type_frame_size(handler);
     todo_wine
-    ok(frame_size == (((UINT64)64 << 32) | 80), "Unexpected frame size %#llx\n", frame_size);
+    ok(frame_size == (((UINT64)64 << 32) | 80), "Unexpected frame size %#I64x\n", frame_size);
 
     hr = IMFMediaSession_Stop(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

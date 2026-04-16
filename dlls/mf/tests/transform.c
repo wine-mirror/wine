@@ -5836,7 +5836,7 @@ static void test_h264_decoder_alignment(void)
     output_type = transform_find_available_output_type(transform, &MFVideoFormat_NV12);
     hr = IMFMediaType_GetUINT64(output_type, &MF_MT_FRAME_SIZE, &frame_size);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(frame_size == (((UINT64)actual_width << 32) | actual_height), "Unexpected frame size %#llx\n", frame_size);
+    ok(frame_size == (((UINT64)actual_width << 32) | actual_height), "Unexpected frame size %#I64x\n", frame_size);
 
     hr = IMFTransform_SetOutputType(transform, 0, output_type, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -5874,7 +5874,7 @@ static void test_h264_decoder_alignment(void)
             output_type = transform_find_available_output_type(transform, &MFVideoFormat_NV12);
             hr = IMFMediaType_GetUINT64(output_type, &MF_MT_FRAME_SIZE, &frame_size);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(frame_size == (((UINT64)aligned_width << 32) | aligned_height), "Unexpected frame size %#llx\n", frame_size);
+            ok(frame_size == (((UINT64)aligned_width << 32) | aligned_height), "Unexpected frame size %#I64x\n", frame_size);
 
             hr = IMFTransform_SetOutputType(transform, 0, output_type, 0);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
