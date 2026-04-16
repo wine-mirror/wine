@@ -9766,6 +9766,7 @@ static void test_VarImp(void)
     VARIMP(I2,-1,NULL,0,NULL,0);
     VARIMP(I4,-1,NULL,0,NULL,0);
     VARIMP(R8,-1.0,NULL,0,NULL,0);
+    VARIMP(DATE,-1.0,NULL,0,NULL,0);
     VARIMP(UI1,255,NULL,0,NULL,0);
 
     /* VT_CY stores values scaled by 10000 in .int64, so CY -1 has .int64 of
