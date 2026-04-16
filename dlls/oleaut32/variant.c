@@ -3048,52 +3048,69 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 
     if (leftvt == VT_NULL || rightvt == VT_NULL)
     {
-        /*
-         * Special cases for when left variant is VT_NULL
-         * (VT_NULL & 0 = VT_NULL, VT_NULL & value = value)
-         */
-        if (leftvt == VT_NULL)
+        /* Three-valued logic for `And` with Null:
+         *   zero    And Null = zero  (typed by the resvt computed above)
+         *   nonzero And Null = Null
+         *   Null    And Null = Null
+         *
+         * Both orderings must produce the same result. */
+        VARIANT *other = leftvt == VT_NULL ? right : left;
+
+        switch (V_VT(other))
+        {
+        case VT_EMPTY:                                break;
+        case VT_I1:   if (V_I1(other))                resvt = VT_NULL; break;
+        case VT_UI1:  if (V_UI1(other))               resvt = VT_NULL; break;
+        case VT_I2:   if (V_I2(other))                resvt = VT_NULL; break;
+        case VT_UI2:  if (V_UI2(other))               resvt = VT_NULL; break;
+        case VT_I4:   if (V_I4(other))                resvt = VT_NULL; break;
+        case VT_UI4:  if (V_UI4(other))               resvt = VT_NULL; break;
+        case VT_I8:   if (V_I8(other))                resvt = VT_NULL; break;
+        case VT_UI8:  if (V_UI8(other))               resvt = VT_NULL; break;
+        case VT_INT:  if (V_INT(other))               resvt = VT_NULL; break;
+        case VT_UINT: if (V_UINT(other))              resvt = VT_NULL; break;
+        case VT_BOOL: if (V_BOOL(other))              resvt = VT_NULL; break;
+        case VT_R4:   if (V_R4(other) != 0.0f)        resvt = VT_NULL; break;
+        case VT_R8:   if (V_R8(other) != 0.0)         resvt = VT_NULL; break;
+        case VT_DATE: if (V_DATE(other) != 0.0)       resvt = VT_NULL; break;
+        case VT_CY:   if (V_CY(other).int64)          resvt = VT_NULL; break;
+        case VT_DECIMAL: if (V_DECIMAL(other).Hi32 || V_DECIMAL(other).Lo64) resvt = VT_NULL; break;
+        case VT_BSTR:
         {
             VARIANT_BOOL b;
-            switch(rightvt)
-            {
-            case VT_I1:   if (V_I1(right)) resvt = VT_NULL; break;
-            case VT_UI1:  if (V_UI1(right)) resvt = VT_NULL; break;
-            case VT_I2:   if (V_I2(right)) resvt = VT_NULL; break;
-            case VT_UI2:  if (V_UI2(right)) resvt = VT_NULL; break;
-            case VT_I4:   if (V_I4(right)) resvt = VT_NULL; break;
-            case VT_UI4:  if (V_UI4(right)) resvt = VT_NULL; break;
-            case VT_I8:   if (V_I8(right)) resvt = VT_NULL; break;
-            case VT_UI8:  if (V_UI8(right)) resvt = VT_NULL; break;
-            case VT_INT:  if (V_INT(right)) resvt = VT_NULL; break;
-            case VT_UINT: if (V_UINT(right)) resvt = VT_NULL; break;
-            case VT_BOOL: if (V_BOOL(right)) resvt = VT_NULL; break;
-            case VT_R4:   if (V_R4(right)) resvt = VT_NULL; break;
-            case VT_R8:   if (V_R8(right)) resvt = VT_NULL; break;
-            case VT_CY:
-                if(V_CY(right).int64)
-                    resvt = VT_NULL;
-                break;
-            case VT_DECIMAL:
-                if (V_DECIMAL(right).Hi32 || V_DECIMAL(right).Lo64)
-                    resvt = VT_NULL;
-                break;
-            case VT_BSTR:
-                hres = VarBoolFromStr(V_BSTR(right),
+            hres = VarBoolFromStr(V_BSTR(other),
                 LOCALE_USER_DEFAULT, VAR_LOCALBOOL, &b);
-                if (FAILED(hres))
-                    return hres;
-                else if (b)
-                    V_VT(result) = VT_NULL;
-                else
-                {
-                    V_VT(result) = VT_BOOL;
-                    V_BOOL(result) = b;
-                }
+            if (FAILED(hres))
                 goto VarAnd_Exit;
+            if (b)
+                V_VT(result) = VT_NULL;
+            else
+            {
+                V_VT(result) = VT_BOOL;
+                V_BOOL(result) = VARIANT_FALSE;
             }
+            goto VarAnd_Exit;
         }
+        default:
+            V_VT(result) = VT_NULL;
+            goto VarAnd_Exit;
+        }
+
         V_VT(result) = resvt;
+        switch (resvt)
+        {
+        case VT_BOOL: V_BOOL(result) = VARIANT_FALSE; break;
+        case VT_I1:   V_I1(result)   = 0; break;
+        case VT_UI1:  V_UI1(result)  = 0; break;
+        case VT_I2:   V_I2(result)   = 0; break;
+        case VT_UI2:  V_UI2(result)  = 0; break;
+        case VT_I4:   V_I4(result)   = 0; break;
+        case VT_UI4:  V_UI4(result)  = 0; break;
+        case VT_I8:   V_I8(result)   = 0; break;
+        case VT_UI8:  V_UI8(result)  = 0; break;
+        case VT_INT:  V_INT(result)  = 0; break;
+        case VT_UINT: V_UINT(result) = 0; break;
+        }
         goto VarAnd_Exit;
     }
 
