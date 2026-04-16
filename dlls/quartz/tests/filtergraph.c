@@ -5962,8 +5962,8 @@ static void test_events(void)
 
     code = 0xdeadbeef;
     hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(code == EC_COMPLETE, "Got code %#lx.\n", code);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#lx.\n", code);
 
     hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
     todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
@@ -5977,12 +5977,12 @@ static void test_events(void)
 
     code = 0xdeadbeef;
     hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(code == 0, "Got code %#lx.\n", code);
 
     code = 0xdeadbeef;
     hr = IMediaEventEx_WaitForCompletion(media_event, 0, &code);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(code == 0, "Got code %#lx.\n", code);
 
     hr = IMediaEventEx_SetNotifyFlags(media_event, 0);
