@@ -4,7 +4,7 @@ EXTRADEFS = -D_OPENGL32_
 IMPORTLIB = opengl32
 IMPORTS   = user32 gdi32 advapi32 win32u
 DELAYIMPORTS = glu32
-UNIX_LIBS    = -lwin32u
+UNIX_LIBS    = -lwin32u $(PTHREAD_LIBS)
 
 EXTRADLLFLAGS = -Wl,--image-base,0x7a800000
 
