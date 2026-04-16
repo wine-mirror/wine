@@ -3289,6 +3289,71 @@ static void test_File_Delete(void)
     SysFreeString(path);
 }
 
+static void test_Folder_Delete(void)
+{
+    WCHAR temp_path[MAX_PATH], dir_path[MAX_PATH], file_path[MAX_PATH];
+    IFolder *folder;
+    BSTR path;
+    HRESULT hr;
+    HANDLE hf;
+    DWORD attrs;
+
+    GetTempPathW(MAX_PATH, temp_path);
+    lstrcpyW(dir_path, temp_path);
+    lstrcatW(dir_path, L"scrrun_del_test");
+
+    if (!CreateDirectoryW(dir_path, NULL))
+    {
+        skip("Can't create temporary directory\n");
+        return;
+    }
+
+    lstrcpyW(file_path, dir_path);
+    lstrcatW(file_path, L"\\testfile.txt");
+    hf = CreateFileW(file_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(hf != INVALID_HANDLE_VALUE, "CreateFile failed, error %ld\n", GetLastError());
+    CloseHandle(hf);
+
+    path = SysAllocString(dir_path);
+    hr = IFileSystem3_GetFolder(fs3, path, &folder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_Delete(folder, VARIANT_FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    attrs = GetFileAttributesW(dir_path);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "expected folder to be deleted\n");
+
+    IFolder_Release(folder);
+    SysFreeString(path);
+
+    ok(CreateDirectoryW(dir_path, NULL), "CreateDirectory failed, error %ld\n", GetLastError());
+    lstrcpyW(file_path, dir_path);
+    lstrcatW(file_path, L"\\readonly.txt");
+    hf = CreateFileW(file_path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
+    ok(hf != INVALID_HANDLE_VALUE, "CreateFile failed, error %ld\n", GetLastError());
+    CloseHandle(hf);
+
+    path = SysAllocString(dir_path);
+    hr = IFileSystem3_GetFolder(fs3, path, &folder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFolder_Delete(folder, VARIANT_FALSE);
+    ok(hr == CTL_E_PERMISSIONDENIED, "Unexpected hr %#lx.\n", hr);
+
+    attrs = GetFileAttributesW(dir_path);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "folder should still exist\n");
+
+    hr = IFolder_Delete(folder, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    attrs = GetFileAttributesW(dir_path);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "expected folder to be deleted\n");
+
+    IFolder_Release(folder);
+    SysFreeString(path);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -3342,6 +3407,7 @@ START_TEST(filesystem)
     test_MoveFolder();
     test_DoOpenPipeStream();
     test_File_Delete();
+    test_Folder_Delete();
 
     IFileSystem3_Release(fs3);
 
