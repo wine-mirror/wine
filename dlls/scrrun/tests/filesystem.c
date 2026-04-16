@@ -3230,6 +3230,65 @@ static void test_DoOpenPipeStream(void)
         ITextStream_Release(stream_write);
 }
 
+static void test_File_Delete(void)
+{
+    WCHAR pathW[MAX_PATH];
+    IFile *file;
+    BSTR path;
+    HRESULT hr;
+    HANDLE hf;
+    DWORD attrs;
+
+    get_temp_path(NULL, pathW);
+    hf = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hf == INVALID_HANDLE_VALUE)
+    {
+        skip("Can't create temporary file\n");
+        return;
+    }
+    CloseHandle(hf);
+
+    path = SysAllocString(pathW);
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFile_Delete(file, VARIANT_FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    attrs = GetFileAttributesW(pathW);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "expected file to be deleted\n");
+
+    IFile_Release(file);
+    SysFreeString(path);
+
+    hf = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
+    if (hf == INVALID_HANDLE_VALUE)
+    {
+        skip("Can't create temporary readonly file\n");
+        return;
+    }
+    CloseHandle(hf);
+
+    path = SysAllocString(pathW);
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IFile_Delete(file, VARIANT_FALSE);
+    ok(hr == CTL_E_PERMISSIONDENIED, "Unexpected hr %#lx.\n", hr);
+
+    attrs = GetFileAttributesW(pathW);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "file should still exist\n");
+
+    hr = IFile_Delete(file, VARIANT_TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    attrs = GetFileAttributesW(pathW);
+    ok(attrs == INVALID_FILE_ATTRIBUTES, "expected file to be deleted\n");
+
+    IFile_Release(file);
+    SysFreeString(path);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -3282,6 +3341,7 @@ START_TEST(filesystem)
     test_MoveFile();
     test_MoveFolder();
     test_DoOpenPipeStream();
+    test_File_Delete();
 
     IFileSystem3_Release(fs3);
 

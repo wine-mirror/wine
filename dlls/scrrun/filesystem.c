@@ -3211,8 +3211,17 @@ static HRESULT WINAPI file_get_Type(IFile *iface, BSTR *pbstrType)
 static HRESULT WINAPI file_Delete(IFile *iface, VARIANT_BOOL Force)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%x)\n", This, Force);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, Force);
+
+    if (!DeleteFileW(This->path))
+    {
+        if (!Force || !SetFileAttributesW(This->path, FILE_ATTRIBUTE_NORMAL)
+                || !DeleteFileW(This->path))
+            return create_error(GetLastError());
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI file_Copy(IFile *iface, BSTR Destination, VARIANT_BOOL OverWriteFiles)
