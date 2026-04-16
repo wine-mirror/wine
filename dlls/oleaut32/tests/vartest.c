@@ -9759,6 +9759,26 @@ static void test_VarImp(void)
 	    V_I8(&result), -3);
     }
 
+    /* All-ones left Imp Null returns Null for every numeric type: the
+     * three-valued "True Imp unknown = unknown" rule applies to any bit
+     * pattern that matches VARIANT_TRUE in the operand's width, including
+     * VT_UI1 0xFF (despite being unsigned). */
+    VARIMP(I2,-1,NULL,0,NULL,0);
+    VARIMP(I4,-1,NULL,0,NULL,0);
+    VARIMP(R8,-1.0,NULL,0,NULL,0);
+    VARIMP(UI1,255,NULL,0,NULL,0);
+
+    /* VT_CY stores values scaled by 10000 in .int64, so CY -1 has .int64 of
+     * -10000 (not -1). Previously Wine's all-ones check compared against -1
+     * and never fired, producing a bitwise result instead of Null. */
+    V_VT(&left) = VT_CY;
+    V_CY(&left).int64 = -10000;
+    V_VT(&right) = VT_NULL;
+    V_I4(&right) = 0;
+    V_VT(&exp) = VT_NULL;
+    V_I4(&exp) = 0;
+    test_var_call2(__LINE__, pVarImp, &left, &right, &exp);
+
     SysFreeString(false_str);
     SysFreeString(true_str);
 }

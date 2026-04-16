@@ -5929,7 +5929,8 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_BOOL:   if (V_BOOL(left) == VARIANT_TRUE) resvt = VT_NULL; break;
         case VT_R4:     if (V_R4(left) == -1.0) resvt = VT_NULL; break;
         case VT_R8:     if (V_R8(left) == -1.0) resvt = VT_NULL; break;
-        case VT_CY:     if (V_CY(left).int64 == -1) resvt = VT_NULL; break;
+        /* VT_CY stores values scaled by 10000, so -1 is -10000 in .int64. */
+        case VT_CY:     if (V_CY(left).int64 == -10000) resvt = VT_NULL; break;
         case VT_DECIMAL:
             if (V_DECIMAL(left).Hi32 == 0xffffffff)
                 resvt = VT_NULL;
