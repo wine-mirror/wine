@@ -75,6 +75,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         lld \
         llvm \
         mesa-vulkan-drivers \
+        nasm \
         netbase \
         ocl-icd-opencl-dev \
         perl \
