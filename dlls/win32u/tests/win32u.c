@@ -3004,6 +3004,59 @@ static void test_NtUserRegisterWindowMessage(void)
     ok( !wcscmp( buf, L"#0xabc" ), "buf = %s\n", debugstr_w(buf) );
 }
 
+static BOOL CALLBACK get_virtual_screen_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    RECT *virtual_rect = (RECT *)lp;
+    UnionRect( virtual_rect, virtual_rect, rect );
+    return TRUE;
+}
+
+static RECT get_virtual_screen_rect(void)
+{
+    RECT rect = {0};
+    EnumDisplayMonitors( 0, NULL, get_virtual_screen_proc, (LPARAM)&rect );
+    return rect;
+}
+
+void test_NtUserGetPointerDeviceRects( const char *arg )
+{
+    RECT screen, himetric_dev = {0}, device = {0}, display = {0};
+    DPI_AWARENESS_CONTEXT ctx = 0;
+    const UINT himetric = 2540;
+    UINT ret, dpi;
+
+    if (!strcmp( arg, "unaware" )) ctx = DPI_AWARENESS_CONTEXT_UNAWARE;
+    else if (!strcmp( arg, "system" )) ctx = DPI_AWARENESS_CONTEXT_SYSTEM_AWARE;
+    else if (!strcmp( arg, "monitor" )) ctx = DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
+
+    if (ctx)
+    {
+        ret = SetProcessDpiAwarenessContext( ctx );
+        ok( ret, "SetProcessDpiAwarenessContext failed, error %lu.\n", GetLastError() );
+    }
+
+    screen = get_virtual_screen_rect();
+
+    /* operating on unaware scaled values returns wrong values */
+    ctx = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+
+    dpi = GetDpiForSystem();
+    himetric_dev.right = GetSystemMetrics( SM_CXVIRTUALSCREEN ) * himetric / dpi;
+    himetric_dev.bottom = GetSystemMetrics( SM_CYVIRTUALSCREEN ) * himetric / dpi;
+
+    SetThreadDpiAwarenessContext( ctx );
+
+    ret = NtUserGetPointerDeviceRects( INVALID_HANDLE_VALUE, &device, &display );
+    todo_wine
+    {
+        ok( ret, "NtUserGetPointerDeviceRects failed, error %lu.\n", GetLastError() );
+        ok( EqualRect( &device, &himetric_dev ), "device %s, expected %s\n",
+            wine_dbgstr_rect( &device ), wine_dbgstr_rect( &himetric_dev ) );
+        ok( EqualRect( &display, &screen ), "display %s, expected %s\n",
+            wine_dbgstr_rect( &display ), wine_dbgstr_rect( &screen ) );
+    }
+}
+
 START_TEST(win32u)
 {
     char **argv;
@@ -3033,6 +3086,14 @@ START_TEST(win32u)
         return;
     }
 
+    if (argc > 3 && !strcmp( argv[2], "NtUserGetPointerDeviceRects" ))
+    {
+        winetest_push_context( "dpi context %s", argv[3] );
+        test_NtUserGetPointerDeviceRects( argv[3] );
+        winetest_pop_context();
+        return;
+    }
+
     test_NtUserEnumDisplayDevices();
     test_window_props();
     test_class();
@@ -3058,6 +3119,10 @@ START_TEST(win32u)
 
     run_in_process( argv, "NtUserEnableMouseInPointer 0" );
     run_in_process( argv, "NtUserEnableMouseInPointer 1" );
+
+    run_in_process( argv, "NtUserGetPointerDeviceRects unaware" );
+    run_in_process( argv, "NtUserGetPointerDeviceRects system" );
+    run_in_process( argv, "NtUserGetPointerDeviceRects monitor" );
 
     run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x6010" );
     run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x11" );
