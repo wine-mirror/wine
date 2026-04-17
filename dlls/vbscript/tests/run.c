@@ -3257,6 +3257,98 @@ static void test_parse_errors(void)
             "End Class\n",
             -4, -20,
             NULL, S_OK, 1051
+        },
+        {
+            /* Const redefined */
+            L"Const X = 1\n"
+            "Const X = 2\n",
+            1, 6,
+            L"Const X = 2", S_OK, 1041
+        },
+        {
+            /* Const redefined on same statement */
+            L"Const C = 1, C = 2\n",
+            0, 13,
+            L"Const C = 1, C = 2", S_OK, 1041
+        },
+        {
+            /* Dim after Const with same name */
+            L"Const D = 1\n"
+            "Dim D\n",
+            1, 4,
+            L"Dim D", S_OK, 1041
+        },
+        {
+            /* Const after Dim with same name */
+            L"Dim E\n"
+            "Const E = 1\n",
+            1, 6,
+            L"Const E = 1", S_OK, 1041
+        },
+        {
+            /* Sub after Const with same name */
+            L"Const F = 1\n"
+            "Sub F()\n"
+            "End Sub\n",
+            1, 4,
+            L"Sub F()", S_OK, 1041
+        },
+        {
+            /* Sub after Dim with same name */
+            L"Dim G\n"
+            "Sub G()\n"
+            "End Sub\n",
+            1, 4,
+            L"Sub G()", S_OK, 1041
+        },
+        {
+            /* Function after Const with same name */
+            L"Const H = 1\n"
+            "Function H()\n"
+            "End Function\n",
+            1, 9,
+            L"Function H()", S_OK, 1041
+        },
+        {
+            /* Const after Sub with same name */
+            L"Sub I()\n"
+            "End Sub\n"
+            "Const I = 1\n",
+            2, 6,
+            L"Const I = 1", S_OK, 1041
+        },
+        {
+            /* Dim after Sub with same name */
+            L"Sub J()\n"
+            "End Sub\n"
+            "Dim J\n",
+            2, 4,
+            L"Dim J", S_OK, 1041
+        },
+        {
+            /* Class after Const with same name */
+            L"Const K = 1\n"
+            "Class K\n"
+            "End Class\n",
+            1, 6,
+            L"Class K", S_OK, 1041
+        },
+        {
+            /* Class after Dim with same name */
+            L"Dim L\n"
+            "Class L\n"
+            "End Class\n",
+            1, 6,
+            L"Class L", S_OK, 1041
+        },
+        {
+            /* Class after Sub with same name */
+            L"Sub M()\n"
+            "End Sub\n"
+            "Class M\n"
+            "End Class\n",
+            2, 6,
+            L"Class M", S_OK, 1041
         }
     };
     HRESULT hres;

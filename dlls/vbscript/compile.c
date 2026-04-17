@@ -432,6 +432,18 @@ static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, B
     return NULL;
 }
 
+static const_decl_t *find_const_decl(compile_ctx_t *ctx, const WCHAR *name)
+{
+    const_decl_t *decl;
+
+    for(decl = ctx->const_decls; decl; decl = decl->next) {
+        if(!vbs_wcsicmp(decl->name, name))
+            return decl;
+    }
+
+    return NULL;
+}
+
 static BOOL lookup_args_name(compile_ctx_t *ctx, const WCHAR *name)
 {
     unsigned i;
@@ -450,6 +462,18 @@ static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
 
     for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
         if(!vbs_wcsicmp(dim_decl->name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL lookup_func_decls(compile_ctx_t *ctx, const WCHAR *name)
+{
+    function_decl_t *func_decl;
+
+    for(func_decl = ctx->func_decls; func_decl; func_decl = func_decl->next) {
+        if(!vbs_wcsicmp(func_decl->name, name))
             return TRUE;
     }
 
@@ -1203,9 +1227,19 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
 
     while(1) {
         if(lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)
-           || lookup_const_decls(ctx, dim_decl->name, FALSE)) {
+           || (ctx->func->type == FUNC_GLOBAL && lookup_func_decls(ctx, dim_decl->name))) {
             ctx->loc = dim_decl->loc;
+            WARN("dim %s name redefined\n", debugstr_w(dim_decl->name));
             return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+        }
+
+        {
+            const_decl_t *const_decl = find_const_decl(ctx, dim_decl->name);
+            if(const_decl) {
+                ctx->loc = dim_decl->loc > const_decl->loc ? dim_decl->loc : const_decl->loc;
+                WARN("dim %s name redefined\n", debugstr_w(dim_decl->name));
+                return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+            }
         }
 
         ctx->func->var_cnt++;
@@ -1282,8 +1316,16 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
 
         if(!lookup_const_decls(ctx, decl->name, FALSE)) {
             if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
+                ctx->loc = decl->loc;
+                WARN("%s redefined\n", debugstr_w(decl->name));
                 return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
             }
+        }
+
+        if(lookup_func_decls(ctx, decl->name)) {
+            ctx->loc = decl->loc;
+            WARN("%s redefined\n", debugstr_w(decl->name));
+            return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         }
 
         if(ctx->func->type == FUNC_GLOBAL) {
@@ -1448,10 +1490,15 @@ static HRESULT collect_const_decls(compile_ctx_t *ctx, statement_t *stat)
             for(decl = const_stat->decls; decl; decl = decl->next) {
                 const_decl_t *new_decl;
 
-                if(lookup_const_decls(ctx, decl->name, FALSE))
-                    break; /* already collected */
+                if(lookup_const_decls(ctx, decl->name, FALSE)) {
+                    ctx->loc = decl->loc;
+                    WARN("%s: const redefined\n", debugstr_w(decl->name));
+                    return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
+                }
 
                 if(lookup_args_name(ctx, decl->name) || lookup_dim_decls(ctx, decl->name)) {
+                    ctx->loc = decl->loc;
+                    WARN("%s redefined\n", debugstr_w(decl->name));
                     return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
                 }
 
@@ -1459,6 +1506,7 @@ static HRESULT collect_const_decls(compile_ctx_t *ctx, statement_t *stat)
                 if(!new_decl)
                     return E_OUTOFMEMORY;
                 new_decl->name = decl->name;
+                new_decl->loc = decl->loc;
                 new_decl->value_expr = decl->value_expr;
                 new_decl->next = ctx->const_decls;
                 ctx->const_decls = new_decl;
@@ -1789,6 +1837,8 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     HRESULT hres;
 
     if(lookup_dim_decls(ctx, decl->name) || lookup_const_decls(ctx, decl->name, FALSE)) {
+        ctx->loc = decl->name_loc;
+        WARN("%s: redefinition\n", debugstr_w(decl->name));
         return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
     }
 
@@ -1911,6 +1961,8 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
     if(lookup_dim_decls(ctx, class_decl->name) || lookup_funcs_name(ctx, class_decl->name)
             || lookup_const_decls(ctx, class_decl->name, FALSE) || lookup_class_name(ctx, class_decl->name)) {
+        ctx->loc = class_decl->loc;
+        WARN("%s: redefinition\n", debugstr_w(class_decl->name));
         return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
     }
 

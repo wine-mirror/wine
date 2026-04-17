@@ -1129,8 +1129,8 @@ static HRESULT interp_const(exec_ctx_t *ctx)
         return hres;
 
     if(ref.type != REF_NONE) {
-        FIXME("%s already defined\n", debugstr_w(arg));
-        return E_FAIL;
+        WARN("%s already defined\n", debugstr_w(arg));
+        return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
     }
 
     hres = stack_assume_val(ctx, 0);

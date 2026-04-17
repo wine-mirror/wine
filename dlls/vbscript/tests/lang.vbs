@@ -2619,6 +2619,36 @@ Class class_test_identifiers_as_property_name
     End Property
 End Class
 
+' Local Dim inside a class method should not conflict with a global Function of the same name
+Function GlobalShadowFunc()
+    GlobalShadowFunc = 42
+End Function
+
+Class TestLocalDimShadowsGlobalFunc
+    Public Sub TestShadow()
+        Dim GlobalShadowFunc
+        GlobalShadowFunc = 10
+        Call ok(GlobalShadowFunc = 10, "local Dim should shadow global Function: " & GlobalShadowFunc)
+    End Sub
+
+    Private Function ClassPrivateFunc()
+        ClassPrivateFunc = 99
+    End Function
+
+    Public Sub TestPrivate()
+        Call ok(ClassPrivateFunc() = 99, "private class function should be callable: " & ClassPrivateFunc())
+    End Sub
+End Class
+
+' Global function with same name as private class function
+Function ClassPrivateFunc()
+    ClassPrivateFunc = 1
+End Function
+
+Dim objShadow : Set objShadow = New TestLocalDimShadowsGlobalFunc
+objShadow.TestShadow
+objShadow.TestPrivate
+
 sub test_dotIdentifiers
     ' test keywords that can also be an identifier after a dot
     Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
@@ -3432,6 +3462,32 @@ Call ok(Err.Number = 13, "Eval type mismatch: Err.Number = " & Err.Number & " ex
 Call ok(Err.Source = "Microsoft VBScript runtime error", "Eval type mismatch: Err.Source = """ & Err.Source & """")
 
 On Error Goto 0
+' Duplicate Sub declarations: last one wins
+dim dupSubResult
+dupSubResult = 0
+Sub DupSub()
+    dupSubResult = 1
+End Sub
+Sub DupSub()
+    dupSubResult = 2
+End Sub
+DupSub
+call ok(dupSubResult = 2, "dupSubResult = " & dupSubResult)
+
+' Sub replaced by Function with same name: Function wins
+dim dupMixedResult
+dupMixedResult = 0
+Sub DupMixed()
+    dupMixedResult = 1
+End Sub
+Function DupMixed()
+    dupMixedResult = 2
+    DupMixed = 42
+End Function
+dim dupMixedRet
+dupMixedRet = DupMixed()
+call ok(dupMixedResult = 2, "dupMixedResult = " & dupMixedResult)
+call ok(dupMixedRet = 42, "dupMixedRet = " & dupMixedRet)
 
 ' Test calling a dispatch variable as statement (invokes default property)
 funcCalled = ""
