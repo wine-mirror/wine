@@ -1539,12 +1539,10 @@ static void detect_keyboard_layout( Display *display )
 }
 
 
-/* initialize or update keyboard layouts */
-static void init_keyboard_layouts( Display *display )
+/* initialize keyc2scan and keyc2vkey */
+static void init_keycode_mappings( Display *display )
 {
-    XModifierKeymap *mmp;
     KeySym keysym;
-    KeyCode *kcp;
     XKeyEvent e2;
     WORD scan, vkey;
     int keyc, i, keyn, syms;
@@ -1571,35 +1569,6 @@ static void init_keyboard_layouts( Display *display )
     };
     int vkey_range;
 
-    pthread_mutex_lock( &kbd_mutex );
-    XDisplayKeycodes( display, &min_keycode, &max_keycode );
-    XFree( XGetKeyboardMapping( display, min_keycode, max_keycode + 1 - min_keycode, &keysyms_per_keycode ) );
-
-    mmp = XGetModifierMapping( display );
-    kcp = mmp->modifiermap;
-    for (i = 0; i < 8; i += 1) /* There are 8 modifier keys */
-    {
-        for (int j = 0; j < mmp->max_keypermod; j += 1, kcp += 1)
-        {
-            for (int k = 0; *kcp && k < keysyms_per_keycode; k += 1)
-            {
-                if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Num_Lock)
-                {
-                    NumLockMask = 1 << i;
-                    TRACE_(key)( "NumLockMask is %x\n", NumLockMask );
-                }
-                else if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Scroll_Lock)
-                {
-                    ScrollLockMask = 1 << i;
-                    TRACE_(key)( "ScrollLockMask is %x\n", ScrollLockMask );
-                }
-            }
-        }
-    }
-    XFreeModifiermap( mmp );
-
-    /* Detect the keyboard layout */
-    detect_keyboard_layout( display );
     lkey = main_key_tab[kbd_layout].key;
     syms = (keysyms_per_keycode > 4) ? 4 : keysyms_per_keycode;
 
@@ -1800,6 +1769,45 @@ static void init_keyboard_layouts( Display *display )
 	TRACE_(key)("assigning scancode %02x to unidentified keycode %u (%s)\n",scan,keyc,ksname);
 	keyc2scan[keyc]=scan++;
       }
+}
+
+
+/* initialize or update keyboard layouts */
+void init_keyboard_layouts( Display *display )
+{
+    XModifierKeymap *mmp;
+    KeyCode *kcp;
+
+    pthread_mutex_lock( &kbd_mutex );
+    XDisplayKeycodes( display, &min_keycode, &max_keycode );
+    XFree( XGetKeyboardMapping( display, min_keycode, max_keycode + 1 - min_keycode, &keysyms_per_keycode ) );
+
+    mmp = XGetModifierMapping( display );
+    kcp = mmp->modifiermap;
+    for (int i = 0; i < 8; i += 1) /* There are 8 modifier keys */
+    {
+        for (int j = 0; j < mmp->max_keypermod; j += 1, kcp += 1)
+        {
+            for (int k = 0; *kcp && k < keysyms_per_keycode; k += 1)
+            {
+                if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Num_Lock)
+                {
+                    NumLockMask = 1 << i;
+                    TRACE_(key)( "NumLockMask is %x\n", NumLockMask );
+                }
+                else if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Scroll_Lock)
+                {
+                    ScrollLockMask = 1 << i;
+                    TRACE_(key)( "ScrollLockMask is %x\n", ScrollLockMask );
+                }
+            }
+        }
+    }
+    XFreeModifiermap( mmp );
+
+    detect_keyboard_layout( display );
+
+    init_keycode_mappings( display );
 
     pthread_mutex_unlock( &kbd_mutex );
 }
