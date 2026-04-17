@@ -776,7 +776,6 @@ IOKIT_LIBS
 DISKARBITRATION_LIBS
 COREFOUNDATION_LIBS
 CORETEXT_LIBS
-DELAYLOADFLAG
 CONFIGURE_TARGETS
 DISABLED_SUBDIRS
 SUBDIRS
@@ -811,6 +810,7 @@ SED_CMD
 RUNTESTFLAGS
 wine64dir
 toolsdir
+toolsext
 x86_64_DISABLED_SUBDIRS
 x86_64_DELAYLOADFLAG
 x86_64_STRIP
@@ -872,7 +872,6 @@ aarch64_CFLAGS
 aarch64_CXX
 aarch64_CC
 HOST_ARCH
-toolsext
 TARGETFLAGS
 LD
 CPPBIN
@@ -6598,13 +6597,6 @@ then
     fi
 fi
 
-case $build_os in
-  cygwin*|mingw32*) toolsext=".exe"
- ;;
-  *) toolsext=""
- ;;
-esac
-
 HOST_ARCH=unknown
 case "$host_cpu" in
   aarch64*)        HOST_ARCH=aarch64 ;;
@@ -6614,20 +6606,30 @@ case "$host_cpu" in
 esac
 
 
+
+case $build_os in
+  cygwin*|mingw32*) toolsext=".exe"
+ ;;
+  *) toolsext=""
+ ;;
+esac
+
 case $host_os in
-  darwin*)
-    with_fontconfig=${with_fontconfig:-no}
-    ;;
-  mingw32*|cygwin*)
+  mingw32*)
     enable_archs=${enable_archs:-$HOST_ARCH}
     eval "${HOST_ARCH}_CC=\$CC"
+    with_mingw=${with_mingw:-no}
+    ;;
+esac
+
+case $host_os in
+  mingw32*|cygwin*)
         enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
     enable_wine=${enable_wine:-no}
     enable_win16=${enable_win16:-no}
         with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
-    with_mingw=${with_mingw:-no}
     ;;
 esac
 
@@ -10528,8 +10530,8 @@ CXXFLAGS=$saved_CXXFLAGS
 LDFLAGS=$saved_LDFLAGS
 
 case $HOST_ARCH-$host_os in
-  x86_64-darwin*|arm-*|aarch64-*)
-    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for $host, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
+  x86_64-darwin*|arm-*|aarch64-*|*-cygwin*)
+    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for $host, please install mingw-w64, clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
     DLLEXT="" ;;
   *)
     DLLEXT=".so"
@@ -12401,37 +12403,6 @@ case $host_os in
   cygwin*|mingw32*)
     LIBEXT="dll"
     DLLEXT=""
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-delayload,autoconftest.dll" >&5
-printf %s "checking whether the compiler supports -Wl,-delayload,autoconftest.dll... " >&6; }
-if test ${ac_cv_cflags__Wl__delayload_autoconftest_dll+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-delayload,autoconftest.dll"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl__delayload_autoconftest_dll=yes
-else case e in #(
-  e) ac_cv_cflags__Wl__delayload_autoconftest_dll=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__delayload_autoconftest_dll" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__delayload_autoconftest_dll" >&6; }
-if test "x$ac_cv_cflags__Wl__delayload_autoconftest_dll" = xyes
-then :
-  DELAYLOADFLAG="-Wl,-delayload,"
-
-fi
     ;;
 
   darwin*)
@@ -12439,6 +12410,7 @@ fi
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
     enable_winemac_drv=${enable_winemac_drv:-yes}
+    with_fontconfig=${with_fontconfig:-no}
         CORETEXT_LIBS="-framework CoreText"
 
     COREFOUNDATION_LIBS="-framework CoreFoundation"
@@ -25008,7 +24980,6 @@ ac_ct_CXX = $ac_ct_CXX
 CPPBIN = $CPPBIN
 LD = $LD
 TARGETFLAGS = $TARGETFLAGS
-toolsext = $toolsext
 HOST_ARCH = $HOST_ARCH
 aarch64_CC = $aarch64_CC
 aarch64_CXX = $aarch64_CXX
@@ -25070,6 +25041,7 @@ x86_64_TARGET = $x86_64_TARGET
 x86_64_STRIP = $x86_64_STRIP
 x86_64_DELAYLOADFLAG = $x86_64_DELAYLOADFLAG
 x86_64_DISABLED_SUBDIRS = $x86_64_DISABLED_SUBDIRS
+toolsext = $toolsext
 toolsdir = $toolsdir
 wine64dir = $wine64dir
 RUNTESTFLAGS = $RUNTESTFLAGS
@@ -25104,7 +25076,6 @@ READELF = $READELF
 SUBDIRS = $SUBDIRS
 DISABLED_SUBDIRS = $DISABLED_SUBDIRS
 CONFIGURE_TARGETS = $CONFIGURE_TARGETS
-DELAYLOADFLAG = $DELAYLOADFLAG
 CORETEXT_LIBS = $CORETEXT_LIBS
 COREFOUNDATION_LIBS = $COREFOUNDATION_LIBS
 DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS

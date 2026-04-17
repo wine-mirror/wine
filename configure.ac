@@ -160,11 +160,6 @@ then
     fi
 fi
 
-case $build_os in
-  cygwin*|mingw32*) AC_SUBST(toolsext,".exe") ;;
-  *) AC_SUBST(toolsext,"") ;;
-esac
-
 HOST_ARCH=unknown
 case "$host_cpu" in
   aarch64*)        HOST_ARCH=aarch64 ;;
@@ -175,13 +170,23 @@ esac
 m4_set_add_all([_AC_SUBST_VARS],[HOST_ARCH]m4_foreach([cpu],[aarch64,arm,arm64ec,i386,x86_64],
                                 [m4_foreach([var],[CC,CXX,CFLAGS,CXXFLAGS,EXTRACFLAGS,EXTRACXXFLAGS,LDFLAGS,DEBUG,TARGET,STRIP,DELAYLOADFLAG,DISABLED_SUBDIRS],[,cpu[_]var])]))
 
+dnl Some special cases for the Windows platform
+
+case $build_os in
+  cygwin*|mingw32*) AC_SUBST(toolsext,".exe") ;;
+  *) AC_SUBST(toolsext,"") ;;
+esac
+
 case $host_os in
-  darwin*)
-    with_fontconfig=${with_fontconfig:-no}
-    ;;
-  mingw32*|cygwin*)
+  mingw32*)
     enable_archs=${enable_archs:-$HOST_ARCH}
     AS_VAR_SET(${HOST_ARCH}_CC,$CC)
+    with_mingw=${with_mingw:-no}
+    ;;
+esac
+
+case $host_os in
+  mingw32*|cygwin*)
     dnl Disable modules that can't be used on Windows
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
@@ -190,7 +195,6 @@ case $host_os in
     dnl Disable dependencies that are not useful on Windows
     with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
-    with_mingw=${with_mingw:-no}
     ;;
 esac
 
@@ -695,8 +699,8 @@ CXXFLAGS=$saved_CXXFLAGS
 LDFLAGS=$saved_LDFLAGS
 
 case $HOST_ARCH-$host_os in
-  x86_64-darwin*|arm-*|aarch64-*)
-    test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $host, please install clang/llvm-dlltool/lld, or llvm-mingw.])
+  x86_64-darwin*|arm-*|aarch64-*|*-cygwin*)
+    test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $host, please install mingw-w64, clang/llvm-dlltool/lld, or llvm-mingw.])
     DLLEXT="" ;;
   *)
     AC_SUBST(DLLEXT,".so")
@@ -967,7 +971,6 @@ case $host_os in
   cygwin*|mingw32*)
     LIBEXT="dll"
     DLLEXT=""
-    WINE_TRY_CFLAGS([-Wl,-delayload,autoconftest.dll],[AC_SUBST(DELAYLOADFLAG,["-Wl,-delayload,"])])
     ;;
 
   darwin*)
@@ -975,6 +978,7 @@ case $host_os in
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
     enable_winemac_drv=${enable_winemac_drv:-yes}
+    with_fontconfig=${with_fontconfig:-no}
     dnl declare needed frameworks
     AC_SUBST(CORETEXT_LIBS,"-framework CoreText")
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
