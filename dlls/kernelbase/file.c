@@ -873,6 +873,22 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
                            NULL, attributes & FILE_ATTRIBUTE_VALID_FLAGS, sharing,
                            nt_disposition[creation - CREATE_NEW],
                            get_nt_file_options( attributes, creation ), NULL, 0 );
+
+    /* Before Windows NT, the write flag was ignored on CD drives */
+    if (status == STATUS_ACCESS_DENIED && (access & GENERIC_WRITE) && (GetVersion() & 0x80000000))
+    {
+        WCHAR volume[MAX_PATH];
+        if (GetVolumePathNameW( filename, volume, ARRAY_SIZE(volume) ) &&
+            GetDriveTypeW( volume ) == DRIVE_CDROM)
+        {
+            WARN( "Ignoring write flag on CD drive\n" );
+            status = NtCreateFile( &ret, (access & ~GENERIC_WRITE) | SYNCHRONIZE | FILE_READ_ATTRIBUTES,
+                                   &attr, &io, NULL, attributes & FILE_ATTRIBUTE_VALID_FLAGS, sharing,
+                                   nt_disposition[creation - CREATE_NEW],
+                                   get_nt_file_options( attributes, creation ), NULL, 0 );
+        }
+    }
+
     if (status)
     {
         if (vxd_name && vxd_name[0])

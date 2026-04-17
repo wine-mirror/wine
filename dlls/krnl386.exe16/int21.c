@@ -920,13 +920,6 @@ static BOOL INT21_CreateFile( CONTEXT *context,
     MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
 
     winHandle = CreateFileW( pathW, winAccess, winSharing, NULL, winMode, winAttributes, 0 );
-    /* DOS allows opening files on a CDROM R/W */
-    if( winHandle == INVALID_HANDLE_VALUE &&
-        (GetLastError() == ERROR_WRITE_PROTECT ||
-         GetLastError() == ERROR_ACCESS_DENIED)) {
-        winHandle = CreateFileW( pathW, winAccess & ~GENERIC_WRITE,
-                                 winSharing, NULL, winMode, winAttributes, 0 );
-    }
 
     if (winHandle == INVALID_HANDLE_VALUE)
         return FALSE;
