@@ -3349,6 +3349,81 @@ static void test_parse_errors(void)
             "End Class\n",
             2, 6,
             L"Class M", S_OK, 1041
+        },
+        {
+            /* Duplicate Sub inside Class */
+            L"Class N\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "End Class\n",
+            3, 8,
+            L"    Sub Foo", S_OK, 1041
+        },
+        {
+            /* Duplicate Function inside Class */
+            L"Class O\n"
+            "    Function Foo\n"
+            "    End Function\n"
+            "    Function Foo\n"
+            "    End Function\n"
+            "End Class\n",
+            3, 13,
+            L"    Function Foo", S_OK, 1041
+        },
+        {
+            /* Sub and Function with same name inside Class */
+            L"Class P\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "    Function Foo\n"
+            "    End Function\n"
+            "End Class\n",
+            3, 13,
+            L"    Function Foo", S_OK, 1041
+        },
+        {
+            /* Property Get and Sub with same name inside Class */
+            L"Class Q\n"
+            "    Property Get Foo\n"
+            "    End Property\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "End Class\n",
+            3, 8,
+            L"    Sub Foo", S_OK, 1041
+        },
+        {
+            /* Duplicate Property Get inside Class */
+            L"Class R\n"
+            "    Property Get Foo\n"
+            "    End Property\n"
+            "    Property Get Foo\n"
+            "    End Property\n"
+            "End Class\n",
+            3, 17,
+            L"    Property Get Foo", S_OK, 1041
+        },
+        {
+            /* Dim and Sub with same name inside Class */
+            L"Class S\n"
+            "    Dim Foo\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "End Class\n",
+            2, 8,
+            L"    Sub Foo", S_OK, 1041
+        },
+        {
+            /* Sub and Dim with same name inside Class */
+            L"Class T\n"
+            "    Sub Foo\n"
+            "    End Sub\n"
+            "    Dim Foo\n"
+            "End Class\n",
+            3, 8,
+            L"    Dim Foo", S_OK, 1041
         }
     };
     HRESULT hres;

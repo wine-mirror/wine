@@ -2043,6 +2043,14 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
     for(prop_decl = class_decl->props, i=0; prop_decl; prop_decl = prop_decl->next, i++) {
         if(lookup_class_funcs(class_desc, prop_decl->name)) {
+            function_decl_t *func_iter;
+            unsigned loc = prop_decl->loc;
+            for(func_iter = class_decl->funcs; func_iter; func_iter = func_iter->next) {
+                if(!vbs_wcsicmp(func_iter->name, prop_decl->name) && func_iter->name_loc > loc)
+                    loc = func_iter->name_loc;
+            }
+            WARN("%s: redefined\n", debugstr_w(prop_decl->name));
+            ctx->loc = loc;
             return MAKE_VBSERROR(VBSE_NAME_REDEFINED);
         }
 

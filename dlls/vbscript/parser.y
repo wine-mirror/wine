@@ -1240,13 +1240,18 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
             return NULL;
         }
         if(!wcsicmp(iter->name, decl->name)) {
-            if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION) {
+            if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION
+                    || iter->type == FUNC_SUB || iter->type == FUNC_FUNCTION) {
+                WARN("%s::%s redefined\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
+                ctx->error_loc = iter->name_loc;
                 ctx->hres = MAKE_VBSERROR(VBSE_NAME_REDEFINED);
                 return NULL;
             }
 
             while(1) {
                 if(iter->type == decl->type) {
+                    WARN("%s::%s redefined\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
+                    ctx->error_loc = iter->name_loc;
                     ctx->hres = MAKE_VBSERROR(VBSE_NAME_REDEFINED);
                     return NULL;
                 }
