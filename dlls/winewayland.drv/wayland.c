@@ -270,7 +270,12 @@ BOOL wayland_process_init(void)
 
     TRACE("wl_display=%p\n", process_wayland.wl_display);
 
+#if (WAYLAND_VERSION_MAJOR == 1 && WAYLAND_VERSION_MINOR >= 23)
+    if (!(process_wayland.wl_event_queue =
+          wl_display_create_queue_with_name(process_wayland.wl_display, "winewayland")))
+#else
     if (!(process_wayland.wl_event_queue = wl_display_create_queue(process_wayland.wl_display)))
+#endif
     {
         ERR("Failed to create event queue\n");
         return FALSE;
