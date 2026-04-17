@@ -882,6 +882,7 @@ W32KAPI HWND    WINAPI NtUserGetOpenClipboardWindow(void);
 W32KAPI BOOL    WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR, UINT_PTR, SIZE_T size,
                                                  UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info );
 W32KAPI BOOL    WINAPI NtUserGetPointerType( UINT32 id, POINTER_INPUT_TYPE *type );
+W32KAPI BOOL    WINAPI NtUserGetPointerDeviceRects( HANDLE handle, RECT *device_rect, RECT *display_rect );
 W32KAPI INT     WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count );
 W32KAPI BOOL    WINAPI NtUserGetProcessDefaultLayout( ULONG *layout );
 W32KAPI ULONG   WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process );

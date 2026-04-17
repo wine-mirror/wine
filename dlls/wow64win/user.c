@@ -2842,6 +2842,15 @@ NTSTATUS WINAPI wow64_NtUserGetPointerType( UINT *args )
     return NtUserGetPointerType( id, type );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetPointerDeviceRects( UINT *args )
+{
+    HANDLE device = get_handle( &args );
+    RECT *device_rect = get_ptr( &args );
+    RECT *display_rect = get_ptr( &args );
+
+    return NtUserGetPointerDeviceRects( device, device_rect, display_rect );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetPriorityClipboardFormat( UINT *args )
 {
     UINT *list = get_ptr( &args );

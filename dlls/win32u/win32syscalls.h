@@ -1068,7 +1068,7 @@
     SYSCALL_ENTRY( 0x1428, NtUserGetPointerDeviceInputSpace, 0 ) \
     SYSCALL_ENTRY( 0x1429, NtUserGetPointerDeviceOrientation, 0 ) \
     SYSCALL_ENTRY( 0x142a, NtUserGetPointerDeviceProperties, 0 ) \
-    SYSCALL_ENTRY( 0x142b, NtUserGetPointerDeviceRects, 0 ) \
+    SYSCALL_ENTRY( 0x142b, NtUserGetPointerDeviceRects, 12 ) \
     SYSCALL_ENTRY( 0x142c, NtUserGetPointerDevices, 0 ) \
     SYSCALL_ENTRY( 0x142d, NtUserGetPointerFrameTimes, 0 ) \
     SYSCALL_ENTRY( 0x142e, NtUserGetPointerInfoList, 32 ) \
@@ -2610,7 +2610,7 @@
     SYSCALL_ENTRY( 0x1428, NtUserGetPointerDeviceInputSpace, 0 ) \
     SYSCALL_ENTRY( 0x1429, NtUserGetPointerDeviceOrientation, 0 ) \
     SYSCALL_ENTRY( 0x142a, NtUserGetPointerDeviceProperties, 0 ) \
-    SYSCALL_ENTRY( 0x142b, NtUserGetPointerDeviceRects, 0 ) \
+    SYSCALL_ENTRY( 0x142b, NtUserGetPointerDeviceRects, 24 ) \
     SYSCALL_ENTRY( 0x142c, NtUserGetPointerDevices, 0 ) \
     SYSCALL_ENTRY( 0x142d, NtUserGetPointerFrameTimes, 0 ) \
     SYSCALL_ENTRY( 0x142e, NtUserGetPointerInfoList, 64 ) \
@@ -3831,7 +3831,6 @@
     SYSCALL_STUB( NtUserGetPointerDeviceInputSpace ) \
     SYSCALL_STUB( NtUserGetPointerDeviceOrientation ) \
     SYSCALL_STUB( NtUserGetPointerDeviceProperties ) \
-    SYSCALL_STUB( NtUserGetPointerDeviceRects ) \
     SYSCALL_STUB( NtUserGetPointerDevices ) \
     SYSCALL_STUB( NtUserGetPointerFrameTimes ) \
     SYSCALL_STUB( NtUserGetPointerInputTransform ) \

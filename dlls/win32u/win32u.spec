@@ -1066,7 +1066,7 @@
 @ stub -syscall NtUserGetPointerDeviceInputSpace
 @ stub -syscall NtUserGetPointerDeviceOrientation
 @ stub -syscall NtUserGetPointerDeviceProperties
-@ stub -syscall NtUserGetPointerDeviceRects
+@ stdcall -syscall NtUserGetPointerDeviceRects(long ptr ptr)
 @ stub -syscall NtUserGetPointerDevices
 @ stub -syscall NtUserGetPointerFrameTimes
 @ stdcall -syscall NtUserGetPointerInfoList(long long long long long ptr ptr ptr)
