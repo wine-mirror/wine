@@ -542,7 +542,6 @@ static struct strarray get_link_args( const char *output_name )
         break;
 
     case PLATFORM_MINGW:
-    case PLATFORM_CYGWIN:
     case PLATFORM_WINDOWS_GNU:
         strarray_add( &link_args, "-nodefaultlibs" );
         strarray_add( &link_args, "-nostartfiles" );

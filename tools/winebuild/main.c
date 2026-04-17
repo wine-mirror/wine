@@ -579,7 +579,6 @@ int main(int argc, char **argv)
 
     init_signals( exit_on_signal );
     target = init_argv0_target( argv[0] );
-    if (target.platform == PLATFORM_CYGWIN) target.platform = PLATFORM_MINGW;
     if (is_pe()) unwind_tables = 1;
 
     files = parse_options( argc, argv, short_options, long_options, 0, option_callback );
