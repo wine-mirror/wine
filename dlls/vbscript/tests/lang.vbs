@@ -1217,6 +1217,184 @@ Call TestSubExit2
 TestSubMultiArgs 1, 2, 3, 4, 5
 Call TestSubMultiArgs(1, 2, 3, 4, 5)
 
+Sub TestSubParenExpr(a, b)
+    Call ok(a=16, "a = " & a)
+    Call ok(b=7, "b = " & b)
+End Sub
+
+TestSubParenExpr (2) * 8, 7
+TestSubParenExpr 8 * (2), 7
+
+Sub TestSubParenExprAdd(a, b)
+    Call ok(a=6, "a = " & a)
+    Call ok(b=7, "b = " & b)
+End Sub
+
+TestSubParenExprAdd (2) + 4, 7
+TestSubParenExprAdd 4 + (2), 7
+
+Sub TestSubParenExprNoSpace(a)
+    Call ok(a=6, "a = " & a)
+End Sub
+
+TestSubParenExprNoSpace(10 \ 2) + 1
+
+' Regression test: function call with space before ( in expression context
+' e.g. x = (CInt (2) + 1) * 3 must parse and evaluate correctly
+x = CInt (2) + 1
+Call ok(x = 3, "CInt (2) + 1 = " & x)
+x = (CInt (2) + 1) * 3
+Call ok(x = 9, "(CInt (2) + 1) * 3 = " & x)
+
+' Regression test: function call with space before ( and * in expression context
+' e.g. x = CInt (2) * 3 must treat CInt (2) as a function call, not expression grouping
+x = CInt (2) * 3
+Call ok(x = 6, "CInt (2) * 3 = " & x)
+
+' Test member expression in statement context: obj.Method (x) * y, z
+Class TestObjParenExpr
+    Sub Check(a, b)
+        Call ok(a=16, "obj a = " & a)
+        Call ok(b=7, "obj b = " & b)
+    End Sub
+End Class
+
+Dim objParenExpr
+Set objParenExpr = New TestObjParenExpr
+objParenExpr.Check (2) * 8, 7
+
+Sub TestSubParenExprConcat(a, b)
+    Call ok(a="helloworld", "a = " & a)
+    Call ok(b=7, "b = " & b)
+End Sub
+
+TestSubParenExprConcat ("hello") & "world", 7
+
+' Test: function call as argument with & after paren must be a call, not grouping
+' e.g. TestSub Mid ("hello", 2) & "x" should call TestSub with "ellox"
+' Mid("hello", 2) returns "ello", & "x" concatenates to "ellox"
+Sub TestSubArgCallConcat(a)
+    Call ok(a="ellox", "a = " & a)
+End Sub
+
+TestSubArgCallConcat Mid ("hello", 2) & "x"
+
+' Test: obj(idx).method (expr) * val, y in statement context
+' The (expr) after .method must be expression grouping, not call paren
+Class TestIndexedObjParenExpr
+    Public arr_(1)
+    Public Sub Init()
+        Set arr_(0) = New TestObjParenExpr
+    End Sub
+    Public Default Property Get Item(idx)
+        Set Item = arr_(idx)
+    End Property
+End Class
+
+Dim idxObj
+Set idxObj = New TestIndexedObjParenExpr
+Call idxObj.Init()
+idxObj(0).Check (2) * 8, 7
+
+' No-space variants of Sub-first-arg paren pattern.
+' On native VBScript, `S(x) OP y` in statement context treats the whole
+' `S(x) OP y` as a call to S with argument `(x) OP y` — for every binary
+' operator except `=` (parsed as assignment).
+' Each case is wrapped in Execute so parse failures of one don't abort the rest.
+Dim npArg, npArgA, npArgB
+Sub NpS(a)
+    npArg = a
+End Sub
+Sub NpT(a, b)
+    npArgA = a
+    npArgB = b
+End Sub
+
+Sub CheckNpS(src, expected)
+    npArg = Empty
+    On Error Resume Next
+    Err.Clear
+    Execute src
+    Dim e : e = Err.Number
+    On Error GoTo 0
+    Call ok(e = 0, "parse error for " & src & ": err=" & e)
+    If e = 0 Then Call ok(npArg = expected, src & ": npArg = " & npArg & " expected " & expected)
+End Sub
+
+CheckNpS "NpS(10)+5",                15
+CheckNpS "NpS(10)-3",                7
+CheckNpS "NpS(10)*3",                30
+CheckNpS "NpS(10)/2",                5
+CheckNpS "NpS(10)\3",                3
+CheckNpS "NpS(10)^2",                100
+CheckNpS "NpS(""hi"")&""!""",        "hi!"
+CheckNpS "NpS(10) Mod 3",            1
+CheckNpS "NpS(10)<>10",              False
+CheckNpS "NpS(10)<5",                False
+CheckNpS "NpS(10)>5",                True
+CheckNpS "NpS(10)<=10",              True
+CheckNpS "NpS(10)>=5",               True
+CheckNpS "NpS(1) And 1",             1
+CheckNpS "NpS(0) Or 1",              1
+CheckNpS "NpS(1) Xor 1",             0
+CheckNpS "NpS(1) Eqv 1",             -1
+CheckNpS "NpS(1) Imp 1",             -1
+CheckNpS "NpS(Nothing) Is Nothing",  True
+
+' Two-arg form: S(x) OP y, z — result of `(x) OP y` is first arg, z is second.
+Sub CheckNpT(src, expectedA, expectedB)
+    npArgA = Empty
+    npArgB = Empty
+    On Error Resume Next
+    Err.Clear
+    Execute src
+    Dim e : e = Err.Number
+    On Error GoTo 0
+    Call ok(e = 0, "parse error for " & src & ": err=" & e)
+    If e = 0 Then Call ok(npArgA = expectedA and npArgB = expectedB, _
+        src & ": a=" & npArgA & " b=" & npArgB)
+End Sub
+
+CheckNpT "NpT(10)+5, 7",             15,      7
+CheckNpT "NpT(10)*3, 7",             30,      7
+CheckNpT "NpT(""hi"")&""!"", 7",     "hi!",   7
+
+' Member expression: obj.Method(x) OP y — no space, same pattern.
+Class NpCls
+    Sub Check(a)
+        npArg = a
+    End Sub
+End Class
+Dim npObj
+Set npObj = New NpCls
+CheckNpS "npObj.Check(10)+5",        15
+CheckNpS "npObj.Check(10)*3",        30
+
+Function ParenId(a)
+    ParenId = a
+End Function
+
+Dim parenRes
+parenRes = 0
+If False Then
+ElseIf ParenId(3) <= ParenId(4) + 0.1 Then
+    parenRes = 1
+End If
+Call ok(parenRes = 1, "ElseIf f(x) <= f(y) + z: parenRes = " & parenRes)
+
+parenRes = 0
+If False Then
+ElseIf ParenId(3) * 2 > 0 Then
+    parenRes = 1
+End If
+Call ok(parenRes = 1, "ElseIf f(x) * y > z: parenRes = " & parenRes)
+
+Dim parenOuter, parenInner
+ReDim parenOuter(3)
+parenInner = Array(1, 3, 5, 7)
+parenOuter(parenInner(1) And 1) = 99
+Call ok(parenOuter(1) = 99, "outer(inner(i) And k) = v: parenOuter(1) = " & parenOuter(1))
+
 Sub TestSubLocalVal
     x = false
     Call ok(not x, "local x is not false?")

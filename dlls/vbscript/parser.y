@@ -153,7 +153,8 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
-%type <uint> Storage Storage_opt IntegerValue
+%type <uint> Storage Storage_opt IntegerValue SubFirstArgOp
+%type <expression> SubFirstArgRest
 %type <dim_decl> DimDeclList DimDecl MemberDeclList MemberDecl
 %type <dim_list> DimList
 %type <redim_decl> ReDimDeclList ReDimDecl
@@ -222,6 +223,17 @@ Statement
 
 SimpleStatement
     : CallExpression ArgumentList_opt       { call_expression_t *call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
+                                              $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
+    | CallExpression Arguments SubFirstArgOp Expression SubFirstArgRest
+                                            { expression_t *first_arg, *combined;
+                                              call_expression_t *call_expr;
+                                              first_arg = new_unary_expression(ctx, EXPR_BRACKETS, $2);
+                                              CHECK_ERROR;
+                                              combined = new_binary_expression(ctx, $3, first_arg, $4);
+                                              CHECK_ERROR;
+                                              combined->next = $5;
+                                              call_expr = new_call_expression(ctx, $1, combined);
+                                              CHECK_ERROR;
                                               $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
     | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, @$, $2); CHECK_ERROR; }
     | CallExpression '=' Expression
@@ -351,6 +363,31 @@ DoType
 Step_opt
     : /* empty */                           { $$ = NULL;}
     | tSTEP Expression                      { $$ = $2; }
+
+SubFirstArgRest
+    : /* empty */                           { $$ = NULL; }
+    | ',' ArgumentList                      { $$ = $2; }
+
+SubFirstArgOp
+    : '+'                                   { $$ = EXPR_ADD; }
+    | '-'                                   { $$ = EXPR_SUB; }
+    | '*'                                   { $$ = EXPR_MUL; }
+    | '/'                                   { $$ = EXPR_DIV; }
+    | '\\'                                  { $$ = EXPR_IDIV; }
+    | '^'                                   { $$ = EXPR_EXP; }
+    | '&'                                   { $$ = EXPR_CONCAT; }
+    | '<'                                   { $$ = EXPR_LT; }
+    | '>'                                   { $$ = EXPR_GT; }
+    | tLTEQ                                 { $$ = EXPR_LTEQ; }
+    | tGTEQ                                 { $$ = EXPR_GTEQ; }
+    | tNEQ                                  { $$ = EXPR_NEQUAL; }
+    | tMOD                                  { $$ = EXPR_MOD; }
+    | tAND                                  { $$ = EXPR_AND; }
+    | tOR                                   { $$ = EXPR_OR; }
+    | tXOR                                  { $$ = EXPR_XOR; }
+    | tEQV                                  { $$ = EXPR_EQV; }
+    | tIMP                                  { $$ = EXPR_IMP; }
+    | tIS                                   { $$ = EXPR_IS; }
 
 IfStatement
     : tIF Expression tTHEN tNL StSep_opt StatementsNl_opt ElseIfs_opt Else_opt tEND tIF
