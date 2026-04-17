@@ -67,9 +67,9 @@ static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,unsigned,BOOL,dim_lis
 static dim_list_t *new_dim(parser_ctx_t*,unsigned,dim_list_t*);
 static redim_decl_t *new_redim_decl(parser_ctx_t*,const WCHAR*,expression_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,unsigned,expression_t*,statement_t*);
-static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,unsigned,arg_decl_t*,statement_t*);
+static function_decl_t *new_function_decl(parser_ctx_t*,unsigned,unsigned,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
-static const_decl_t *new_const_decl(parser_ctx_t*,const WCHAR*,expression_t*);
+static const_decl_t *new_const_decl(parser_ctx_t*,unsigned,const WCHAR*,expression_t*);
 static case_clausule_t *new_case_clausule(parser_ctx_t*,expression_t*,statement_t*,case_clausule_t*);
 
 static class_decl_t *new_class_decl(parser_ctx_t*);
@@ -327,7 +327,7 @@ ConstDeclList
     | ConstDecl ',' ConstDeclList           { $1->next = $3; $$ = $1; }
 
 ConstDecl
-    : Identifier '=' Expression             { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
+    : Identifier '=' Expression             { $$ = new_const_decl(ctx, @1, $1, $3); CHECK_ERROR; }
     | Identifier error                      { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_ASSIGN); YYABORT; }
 
 DoType
@@ -514,7 +514,7 @@ PrimaryExpression
     | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
-    : tCLASS Identifier StSep ClassBody tEND tCLASS StSep       { $4->name = $2; $$ = $4; }
+    : tCLASS Identifier StSep ClassBody tEND tCLASS StSep       { $4->name = $2; $4->loc = @2; $$ = $4; }
     | tCLASS Identifier tEND tCLASS         { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_STATEMENT); YYABORT; }
     | tCLASS Identifier StSep ClassBody tEND error               { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_CLASS); YYABORT; }
 
@@ -531,13 +531,13 @@ ClassBody
 
 PropertyDecl
     : Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND tPROPERTY
-                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPGET, @2, $1, $5, $7); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPGET, $1, $5, $7); CHECK_ERROR; }
     | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
                                     { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
-                                      $$ = new_function_decl(ctx, $4, FUNC_PROPLET, @2, $1, $6, $9); CHECK_ERROR; }
+                                      $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPLET, $1, $6, $9); CHECK_ERROR; }
     | Storage_opt tPROPERTY tSET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND tPROPERTY
                                     { if($1 & STORAGE_IS_DEFAULT) { ctx->error_loc = @3; ctx->hres = MAKE_VBSERROR(VBSE_DEFAULT_ONLY_ON_PROPERTY_GET); YYABORT; }
-                                      $$ = new_function_decl(ctx, $4, FUNC_PROPSET, @2, $1, $6, $9); CHECK_ERROR; }
+                                      $$ = new_function_decl(ctx, @2, @4, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
     | Storage_opt tPROPERTY tGET Identifier ArgumentsDecl_opt StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_PROPERTY); YYABORT; }
     | Storage_opt tPROPERTY tLET Identifier '(' ArgumentDeclList ')' StSep BodyStatements tEND error
@@ -552,17 +552,17 @@ PropertyDecl
 
 FunctionDecl
     : Storage_opt tSUB Identifier StSep BodyStatements tEND tSUB
-                                    { $$ = new_function_decl(ctx, $3, FUNC_SUB, @2, $1, NULL, $5); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_SUB, $1, NULL, $5); CHECK_ERROR; }
     | Storage_opt tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND tSUB
-                                    { $$ = new_function_decl(ctx, $3, FUNC_SUB, @2, $1, $4, $6); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
     | Storage_opt tSUB Identifier StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SUB); YYABORT; }
     | Storage_opt tSUB Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_SUB); YYABORT; }
     | Storage_opt tFUNCTION Identifier StSep BodyStatements tEND tFUNCTION
-                                    { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, @2, $1, NULL, $5); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_FUNCTION, $1, NULL, $5); CHECK_ERROR; }
     | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND tFUNCTION
-                                    { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, @2, $1, $4, $6); CHECK_ERROR; }
+                                    { $$ = new_function_decl(ctx, @2, @3, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
     | Storage_opt tFUNCTION Identifier StSep BodyStatements tEND error
                                     { ctx->hres = MAKE_VBSERROR(VBSE_EXPECTED_FUNCTION); YYABORT; }
     | Storage_opt tFUNCTION Identifier ArgumentsDecl Nl_opt BodyStatements tEND error
@@ -1149,8 +1149,8 @@ static arg_decl_t *new_argument_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL 
     return arg_decl;
 }
 
-static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, function_type_t type,
-        unsigned loc, unsigned storage_flags, arg_decl_t *arg_decl, statement_t *body)
+static function_decl_t *new_function_decl(parser_ctx_t *ctx, unsigned loc, unsigned name_loc, const WCHAR *name,
+        function_type_t type, unsigned storage_flags, arg_decl_t *arg_decl, statement_t *body)
 {
     function_decl_t *decl;
     BOOL is_default = FALSE;
@@ -1175,6 +1175,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
     decl->args = arg_decl;
     decl->body = body;
     decl->loc = loc;
+    decl->name_loc = name_loc;
     decl->next = NULL;
     decl->next_prop_func = NULL;
     return decl;
@@ -1200,6 +1201,7 @@ static class_decl_t *new_class_decl(parser_ctx_t *ctx)
     if(!class_decl)
         return NULL;
 
+    class_decl->loc = 0;
     class_decl->funcs = NULL;
     class_decl->props = NULL;
     class_decl->next = NULL;
@@ -1311,7 +1313,7 @@ static BOOL is_const_expression(expression_t *expr)
     }
 }
 
-static const_decl_t *new_const_decl(parser_ctx_t *ctx, const WCHAR *name, expression_t *expr)
+static const_decl_t *new_const_decl(parser_ctx_t *ctx, unsigned loc, const WCHAR *name, expression_t *expr)
 {
     const_decl_t *decl;
 
@@ -1326,6 +1328,7 @@ static const_decl_t *new_const_decl(parser_ctx_t *ctx, const WCHAR *name, expres
         return NULL;
 
     decl->name = name;
+    decl->loc = loc;
     decl->value_expr = expr;
     decl->next = NULL;
     return decl;
