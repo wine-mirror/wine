@@ -2959,8 +2959,52 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
 
         if (pRtlVirtualUnwind2)
         {
-            CONTEXT new_context = context;
+            CONTEXT new_context;
 
+            new_context = context;
+            status = pRtlVirtualUnwind2( UNW_FLAG_NHANDLER, (ULONG_PTR)code_mem, orig_rip,
+                                         test->unwind_info ? &runtime_func : NULL, &new_context,
+                                         NULL, NULL, &frame, &ctx_ptr, NULL, NULL, NULL, 0 );
+            ok( !status, "got %#lx.\n", status );
+
+            new_context = context;
+            data = (void *)0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_NHANDLER, (ULONG_PTR)code_mem, orig_rip,
+                                         test->unwind_info ? &runtime_func : NULL, &new_context,
+                                         NULL, &data, &frame, &ctx_ptr, NULL, NULL, NULL, 0 );
+            ok( !status, "got %#lx.\n", status );
+            ok( data == (void *)0xdeadbeef, "got %p.\n", data );
+
+            new_context = context;
+            data = (void *)0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_EHANDLER, (ULONG_PTR)code_mem, orig_rip,
+                                         test->unwind_info ? &runtime_func : NULL, &new_context,
+                                         NULL, &data, &frame, &ctx_ptr, NULL, NULL, NULL, 0 );
+            ok( !status, "got %#lx.\n", status );
+            if (test->results[i].handler)
+                ok( *(DWORD *)data == 0x08070605, "got %#lx.\n", *(DWORD *)data );
+            else
+                ok( data == (void *)0xdeadbeef, "got %p.\n", data );
+
+            new_context = context;
+            handler = (void *)0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_NHANDLER, (ULONG_PTR)code_mem, orig_rip,
+                                         test->unwind_info ? &runtime_func : NULL, &new_context,
+                                         NULL, NULL, &frame, &ctx_ptr, NULL, NULL, &handler, 0 );
+            ok( !status, "got %#lx.\n", status );
+            ok( !handler, "got %p.\n", handler );
+
+            new_context = context;
+            handler = (void *)0xdeadbeef;
+            data = (void *)0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_NHANDLER, (ULONG_PTR)code_mem, orig_rip,
+                                         test->unwind_info ? &runtime_func : NULL, &new_context,
+                                         NULL, &data, &frame, &ctx_ptr, NULL, NULL, &handler, 0 );
+            ok( !status, "got %#lx.\n", status );
+            ok( !handler, "got %p.\n", handler );
+            ok( data == (void *)0xdeadbeef, "got %p.\n", data );
+
+            new_context = context;
             handler = (void *)0xdeadbeef;
             data = (void *)0xdeadbeef;
             status = pRtlVirtualUnwind2( UNW_FLAG_EHANDLER, (ULONG_PTR)code_mem, orig_rip,
