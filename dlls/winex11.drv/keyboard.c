@@ -1435,16 +1435,8 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     return TRUE;
 }
 
-/**********************************************************************
- *		X11DRV_KEYBOARD_DetectLayout
- *
- * Called from X11DRV_InitKeyboard
- *  This routine walks through the defined keyboard layouts and selects
- *  whichever matches most closely.
- * kbd_section must be held.
- */
-static void
-X11DRV_KEYBOARD_DetectLayout( Display *display )
+/* fuzzy layout detection through keysym / keycode matching, kbd_section must be held */
+static void detect_keyboard_layout( Display *display )
 {
   unsigned current, match, mismatch, seq, i, syms;
   int score, keyc, key, pkey, ok;
@@ -1547,10 +1539,8 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
 }
 
 
-/**********************************************************************
- *		X11DRV_InitKeyboard
- */
-void X11DRV_InitKeyboard( Display *display )
+/* initialize or update keyboard layouts */
+static void init_keyboard_layouts( Display *display )
 {
     XModifierKeymap *mmp;
     KeySym keysym;
@@ -1582,37 +1572,34 @@ void X11DRV_InitKeyboard( Display *display )
     int vkey_range;
 
     pthread_mutex_lock( &kbd_mutex );
-    XDisplayKeycodes(display, &min_keycode, &max_keycode);
+    XDisplayKeycodes( display, &min_keycode, &max_keycode );
     XFree( XGetKeyboardMapping( display, min_keycode, max_keycode + 1 - min_keycode, &keysyms_per_keycode ) );
 
-    mmp = XGetModifierMapping(display);
+    mmp = XGetModifierMapping( display );
     kcp = mmp->modifiermap;
     for (i = 0; i < 8; i += 1) /* There are 8 modifier keys */
     {
-        int j;
-
-        for (j = 0; j < mmp->max_keypermod; j += 1, kcp += 1)
-	    if (*kcp)
+        for (int j = 0; j < mmp->max_keypermod; j += 1, kcp += 1)
+        {
+            for (int k = 0; *kcp && k < keysyms_per_keycode; k += 1)
             {
-		int k;
-
-		for (k = 0; k < keysyms_per_keycode; k += 1)
-                    if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Num_Lock)
-		    {
-                        NumLockMask = 1 << i;
-                        TRACE_(key)("NumLockMask is %x\n", NumLockMask);
-		    }
-                    else if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Scroll_Lock)
-		    {
-                        ScrollLockMask = 1 << i;
-                        TRACE_(key)("ScrollLockMask is %x\n", ScrollLockMask);
-		    }
+                if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Num_Lock)
+                {
+                    NumLockMask = 1 << i;
+                    TRACE_(key)( "NumLockMask is %x\n", NumLockMask );
+                }
+                else if (XkbKeycodeToKeysym( display, *kcp, 0, k ) == XK_Scroll_Lock)
+                {
+                    ScrollLockMask = 1 << i;
+                    TRACE_(key)( "ScrollLockMask is %x\n", ScrollLockMask );
+                }
             }
+        }
     }
-    XFreeModifiermap(mmp);
+    XFreeModifiermap( mmp );
 
     /* Detect the keyboard layout */
-    X11DRV_KEYBOARD_DetectLayout( display );
+    detect_keyboard_layout( display );
     lkey = main_key_tab[kbd_layout].key;
     syms = (keysyms_per_keycode > 4) ? 4 : keysyms_per_keycode;
 
@@ -1844,13 +1831,23 @@ BOOL X11DRV_MappingNotify( HWND dummy, XEvent *event )
     HWND hwnd;
 
     XRefreshKeyboardMapping(&event->xmapping);
-    X11DRV_InitKeyboard( event->xmapping.display );
+    init_keyboard_layouts( event->xmapping.display );
 
     hwnd = get_focus();
     if (!hwnd) hwnd = get_active_window();
     NtUserPostMessage( hwnd, WM_INPUTLANGCHANGEREQUEST,
                        0 /*FIXME*/, (LPARAM)NtUserGetKeyboardLayout(0) );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           x11drv_init_keyboard
+ */
+void x11drv_init_keyboard( Display *display )
+{
+    XkbUseExtension( display, NULL, NULL );
+    init_keyboard_layouts( display );
 }
 
 

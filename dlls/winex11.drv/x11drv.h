@@ -753,7 +753,7 @@ extern void X11DRV_ActivateWindow( HWND hwnd, HWND previous );
 extern void reapply_cursor_clipping(void);
 extern void ungrab_clipping_window(void);
 extern void move_resize_window( HWND hwnd, int dir, POINT pos );
-extern void X11DRV_InitKeyboard( Display *display );
+extern void x11drv_init_keyboard( Display *display );
 extern BOOL X11DRV_ProcessEvents( DWORD mask );
 
 typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );
