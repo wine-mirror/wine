@@ -174,6 +174,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
         window_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
     }
 
+    conf->resizeable = data->resizeable;
     conf->state = window_state;
     conf->scale = NtUserGetSystemDpiForProcess(0) / 96.0;
     conf->visible = (style & WS_VISIBLE) == WS_VISIBLE;
@@ -465,6 +466,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
 
     data->rects = *new_rects;
     data->is_fullscreen = fullscreen;
+    data->resizeable = swp_flags & WINE_SWP_RESIZABLE;
     data->managed = managed;
 
     if (!surface)

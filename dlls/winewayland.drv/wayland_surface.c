@@ -579,10 +579,20 @@ static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface
 
     if (!IsRectEmpty(&rect))
     {
+        int width = rect.right - rect.left, height = rect.bottom - rect.top;
         xdg_surface_set_window_geometry(surface->xdg_surface,
                                         rect.left, rect.top,
-                                        rect.right - rect.left,
-                                        rect.bottom - rect.top);
+                                        width, height);
+        if (surface->window.resizeable)
+        {
+            xdg_toplevel_set_min_size(surface->xdg_toplevel, 0, 0);
+            xdg_toplevel_set_max_size(surface->xdg_toplevel, 0, 0);
+        }
+        else
+        {
+            xdg_toplevel_set_min_size(surface->xdg_toplevel, width, height);
+            xdg_toplevel_set_max_size(surface->xdg_toplevel, width, height);
+        }
     }
 }
 
