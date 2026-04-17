@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-09 23:32+0200\n"
+"PO-Revision-Date: 2026-04-17 23:17+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -7261,10 +7261,8 @@ msgid "This network connection does not exist.\n"
 msgstr "Połączenie sieciowe nie istnieje.\n"
 
 #: dlls/kernelbase/winerror.mc:3750
-#, fuzzy
-#| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
-msgstr "Plik lub katalog zepsuty.\n"
+msgstr "Plik lub katalog nie jest punktem ponownej analizy.\n"
 
 #: dlls/kernelbase/winerror.mc:3755
 msgid "Call interrupted.\n"
@@ -13016,7 +13014,7 @@ msgstr "Nie odnaleziono danej funkcji DLL"
 
 #: dlls/vbscript/vbscript.rc:61
 msgid "This key is already associated with an element of this collection"
-msgstr ""
+msgstr "Ten klucz jest już powiązany z elementem tej kolekcji"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Variable uses an Automation type not supported in VBScript"
@@ -13035,16 +13033,12 @@ msgid "Invalid or unqualified reference"
 msgstr "Nieprawidłowe lub niezwartościowane odniesienie"
 
 #: dlls/vbscript/vbscript.rc:68
-#, fuzzy
-#| msgid "Class does not exist.\n"
 msgid "Class not defined"
-msgstr "Klasa nie istnieje.\n"
+msgstr "Klasa niezdefiniowana"
 
 #: dlls/vbscript/vbscript.rc:71
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected ']'"
-msgstr "Oczekiwano ';'"
+msgstr "Oczekiwano ']'"
 
 #: dlls/vbscript/vbscript.rc:75
 msgid "Expected 'If'"
@@ -13111,10 +13105,8 @@ msgid "Expected 'With'"
 msgstr "Oczekiwano 'With'"
 
 #: dlls/vbscript/vbscript.rc:90
-#, fuzzy
-#| msgid "Secret too long.\n"
 msgid "Identifier too long"
-msgstr "Secret zbyt długi.\n"
+msgstr "Identyfikator zbyt długi"
 
 #: dlls/vbscript/vbscript.rc:92
 msgid "Invalid number"
@@ -15382,20 +15374,36 @@ msgid ""
 "//X         Execute script in debugger\n"
 "//U         Use Unicode for redirected I/O from the console\n"
 msgstr ""
+"Użycie: CScript nazwa_skryptu.rozszerzenie [opcja...] [argumenty...]\n"
+"\n"
+"Opcje:\n"
+"//B         Tryb wsadowy: wyłącza wyświetlanie błędów skryptu i monitów\n"
+"//D         Włącza aktywne debugowanie\n"
+"//E:engine  Używa silnika do wykonania skryptu\n"
+"//H:CScript Zmienia domyślny host skryptu na CScript.exe\n"
+"//H:WScript Zmienia domyślny host skryptu na WScript.exe (domyślnie)\n"
+"//I         Tryb interaktywny (domyślnie, przeciwny do //B)\n"
+"//Job:xxxx  Wykonuje zadanie WSF\n"
+"//Logo      Wyświetla logo (domyślnie)\n"
+"//Nologo    Zapobiega wyświetlaniu logo: baner nie będzie wyświetlany w "
+"czasie wykonywania\n"
+"//S         Zapisuje bieżące opcje wiersza poleceń dla tego użytkownika\n"
+"//T:nn      Limit czasu w sekundach: maksymalny czas działania skryptu\n"
+"//X         Wykonuje skrypt w debugerze\n"
+"//U         Używa Unicode dla przekierowanych operacji wejścia/wyjścia z "
+"konsoli\n"
 
 #: programs/wscript/wscript.rc:47
 msgid "Input Error: There is no script file specified.\n"
-msgstr ""
+msgstr "Błąd wejściowy: nie określono pliku skryptu.\n"
 
 #: programs/wscript/wscript.rc:48
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Input Error: Can not find script file \"%1\".\n"
-msgstr "Błąd: nie można znaleźć procesu \"%1\".\n"
+msgstr "Błąd wejściowy: nie można odnaleźć pliku skryptu „%1”.\n"
 
 #: programs/wscript/wscript.rc:49
 msgid "CScript Error: Loading script \"%1\" failed (%2).\n"
-msgstr ""
+msgstr "Błąd CScript: wczytywanie skryptu „%1” się nie powiodło (%2).\n"
 
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
@@ -19394,10 +19402,8 @@ msgid "(System default)"
 msgstr "(Domyślne systemowe)"
 
 #: programs/winecfg/winecfg.rc:90
-#, fuzzy
-#| msgid "5.1 Surround"
 msgid "7.1 Surround"
-msgstr "Dźwięk przestrzenny w układzie 5.1"
+msgstr "Dźwięk przestrzenny w układzie 7.1"
 
 #: programs/winecfg/winecfg.rc:91
 msgid "5.1 Surround"
