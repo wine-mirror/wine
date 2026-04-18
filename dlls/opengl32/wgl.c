@@ -306,6 +306,14 @@ static struct handle_entry *alloc_client_context(void)
 static void free_client_context( struct handle_entry *ptr )
 {
     struct context *context = context_from_opengl_client_context( ptr->context );
+
+    for (int i = 0; i < context->syncs.count; i++)
+    {
+        struct handle_entry *entry = context->syncs.handles + i;
+        if (LOWORD(entry->handle) == 0xffff) continue;
+        free( entry->user_data );
+    }
+
     free_handle( &contexts, ptr );
     free( context );
 }
