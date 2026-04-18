@@ -1963,7 +1963,7 @@ GLsync WINAPI glCreateSyncFromCLeventARB( struct _cl_context *context, struct _c
     assert( args.ret == ptr->user_data || !args.ret );
 
     if (!status && args.ret) return UlongToHandle( ptr->handle );
-    free_client_context( ptr );
+    free_client_sync( ctx, ptr );
     return NULL;
 }
 
@@ -2003,7 +2003,7 @@ GLsync WINAPI glFenceSync( GLenum condition, GLbitfield flags )
     assert( args.ret == ptr->user_data || !args.ret );
 
     if (!status && args.ret) return UlongToHandle( ptr->handle );
-    free_client_context( ptr );
+    free_client_sync( ctx, ptr );
     return NULL;
 }
 
@@ -2025,7 +2025,7 @@ GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync
     assert( args.ret == ptr->user_data || !args.ret );
 
     if (!status && args.ret) return UlongToHandle( ptr->handle );
-    free_client_context( ptr );
+    free_client_sync( ctx, ptr );
     return NULL;
 }
 
