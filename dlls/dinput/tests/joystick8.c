@@ -6267,7 +6267,7 @@ static void test_joystick_instance_guid( DWORD version )
     IDirectInputDevice8_Release( device );
 
     hr = dinput_create_device( &di, &expect_instances[0], &device );
-    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
     if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
 
     hr = dinput_create_device( &di, &instances[1], &device );
@@ -6293,10 +6293,10 @@ static void test_joystick_instance_guid( DWORD version )
 
     /* Stopped devices should return E_FAIL. */
     hr = dinput_create_device( &di, &instances[0], &device );
-    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
     if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
     hr = dinput_create_device( &di, &instances[2], &device );
-    todo_wine ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
+    ok( hr == E_FAIL, "Unexpected hr %#lx.\n", hr );
     if (SUCCEEDED(hr)) IDirectInputDevice8_Release( device );
 
     /* After calling EnumDevices(), guidInstance values will be reassigned. */

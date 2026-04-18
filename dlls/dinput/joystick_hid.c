@@ -1563,7 +1563,7 @@ static HRESULT hid_joystick_device_try_open( WCHAR *path, HANDLE *device, PHIDP_
 
     device_file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
-    if (device_file == INVALID_HANDLE_VALUE) return DIERR_DEVICENOTREG;
+    if (device_file == INVALID_HANDLE_VALUE) return E_FAIL;
 
     if (!HidD_GetPreparsedData( device_file, &preparsed_data )) goto failed;
     if (!HidD_GetAttributes( device_file, attrs )) goto failed;
