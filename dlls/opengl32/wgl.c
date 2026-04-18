@@ -145,8 +145,6 @@ static struct handle_entry *alloc_handle( struct handle_table *table, void *user
     struct handle_entry *ptr = NULL;
     WORD generation;
 
-    EnterCriticalSection( &wgl_cs );
-
     if ((ptr = table->next_free)) table->next_free = ptr->next_free;
     else if (table->count < ARRAY_SIZE(table->handles)) ptr = table->handles + table->count++;
     else ptr = NULL;
@@ -158,19 +156,15 @@ static struct handle_entry *alloc_handle( struct handle_table *table, void *user
         ptr->user_data = user_data;
     }
 
-    LeaveCriticalSection( &wgl_cs );
-
     if (!ptr) RtlSetLastWin32Error( ERROR_NOT_ENOUGH_MEMORY );
     return ptr;
 }
 
 static void free_handle( struct handle_table *table, struct handle_entry *ptr )
 {
-    EnterCriticalSection( &wgl_cs );
     ptr->handle |= 0xffff;
     ptr->next_free = table->next_free;
     table->next_free = ptr;
-    LeaveCriticalSection( &wgl_cs );
 }
 
 static struct handle_entry *get_handle_ptr( struct handle_table *table, HANDLE handle )
@@ -178,19 +172,20 @@ static struct handle_entry *get_handle_ptr( struct handle_table *table, HANDLE h
     WORD index = LOWORD( handle ) - 1;
     struct handle_entry *ptr = table->handles + index;
 
-    EnterCriticalSection( &wgl_cs );
-    if (index >= table->count || ULongToHandle( ptr->handle ) != handle) ptr = NULL;
-    LeaveCriticalSection( &wgl_cs );
-
-    if (!ptr) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-    return ptr;
+    if (index < table->count && ULongToHandle( ptr->handle ) == handle) return ptr;
+    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+    return NULL;
 }
 
 static struct opengl_client_pbuffer *pbuffer_from_handle( HPBUFFERARB handle )
 {
     struct handle_entry *ptr;
-    if (!(ptr = get_handle_ptr( &pbuffers, handle ))) return NULL;
-    return ptr->pbuffer;
+
+    EnterCriticalSection( &wgl_cs );
+    ptr = get_handle_ptr( &pbuffers, handle );
+    LeaveCriticalSection( &wgl_cs );
+
+    return ptr ? ptr->pbuffer : NULL;
 }
 
 BOOL get_pbuffer_from_handle( HPBUFFERARB handle, HPBUFFERARB *obj )
@@ -206,19 +201,21 @@ static struct handle_entry *alloc_client_pbuffer(void)
     struct handle_entry *ptr;
 
     if (!(pbuffer = calloc( 1, sizeof(*pbuffer) ))) return NULL;
-    if (!(ptr = alloc_handle( &pbuffers, pbuffer )))
-    {
-        free( pbuffer );
-        return NULL;
-    }
 
+    EnterCriticalSection( &wgl_cs );
+    ptr = alloc_handle( &pbuffers, pbuffer );
+    LeaveCriticalSection( &wgl_cs );
+
+    if (!ptr) free( pbuffer );
     return ptr;
 }
 
 static void free_client_pbuffer( struct handle_entry *ptr )
 {
     struct opengl_client_pbuffer *pbuffer = ptr->pbuffer;
+    EnterCriticalSection( &wgl_cs );
     free_handle( &pbuffers, ptr );
+    LeaveCriticalSection( &wgl_cs );
     free( pbuffer );
 }
 
@@ -249,7 +246,11 @@ BOOL WINAPI wglDestroyPbufferARB( HPBUFFERARB handle )
 
     TRACE( "handle %p\n", handle );
 
-    if (!(ptr = get_handle_ptr( &pbuffers, handle ))) return FALSE;
+    EnterCriticalSection( &wgl_cs );
+    ptr = get_handle_ptr( &pbuffers, handle );
+    LeaveCriticalSection( &wgl_cs );
+
+    if (!ptr) return FALSE;
     args.hPbuffer = &ptr->pbuffer->obj;
 
     if ((status = UNIX_CALL( wglDestroyPbufferARB, &args ))) WARN( "wglDestroyPbufferARB returned %#lx\n", status );
@@ -272,8 +273,12 @@ static struct context *context_from_opengl_client_context( struct opengl_client_
 static struct opengl_client_context *opengl_client_context_from_handle( HGLRC handle )
 {
     struct handle_entry *ptr;
-    if (!(ptr = get_handle_ptr( &contexts, handle ))) return NULL;
-    return ptr->context;
+
+    EnterCriticalSection( &wgl_cs );
+    ptr = get_handle_ptr( &contexts, handle );
+    LeaveCriticalSection( &wgl_cs );
+
+    return ptr ? ptr->context : NULL;
 }
 
 static struct context *context_from_handle( HGLRC handle )
@@ -294,12 +299,12 @@ static struct handle_entry *alloc_client_context(void)
     struct handle_entry *ptr;
 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
-    if (!(ptr = alloc_handle( &contexts, context )))
-    {
-        free( context );
-        return NULL;
-    }
 
+    EnterCriticalSection( &wgl_cs );
+    ptr = alloc_handle( &contexts, context );
+    LeaveCriticalSection( &wgl_cs );
+
+    if (!ptr) free( context );
     return ptr;
 }
 
@@ -314,7 +319,9 @@ static void free_client_context( struct handle_entry *ptr )
         free( entry->user_data );
     }
 
+    EnterCriticalSection( &wgl_cs );
     free_handle( &contexts, ptr );
+    LeaveCriticalSection( &wgl_cs );
     free( context );
 }
 
@@ -377,7 +384,11 @@ BOOL WINAPI wglDeleteContext( HGLRC handle )
 
     TRACE( "handle %p\n", handle );
 
-    if (!(ptr = get_handle_ptr( &contexts, handle ))) return FALSE;
+    EnterCriticalSection( &wgl_cs );
+    ptr = get_handle_ptr( &contexts, handle );
+    LeaveCriticalSection( &wgl_cs );
+
+    if (!ptr) return FALSE;
     args.oldContext = &ptr->context->obj;
 
     if (handle && handle == teb->glCurrentRC) wglMakeCurrent( NULL, NULL );
