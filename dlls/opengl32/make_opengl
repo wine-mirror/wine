@@ -172,6 +172,7 @@ my %manual_win_thunks =
      "wglMakeContextCurrentARB" => 1,
      "wglQueryCurrentRendererStringWINE" => 1,
      "wglQueryRendererStringWINE" => 1,
+     "wglShareLists" => 1,
      "wglSwapBuffers" => 1,
     );
 

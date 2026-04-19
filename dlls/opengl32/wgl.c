@@ -469,6 +469,33 @@ BOOL WINAPI wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC handle )
 }
 
 /***********************************************************************
+ *      wglShareLists
+ */
+BOOL WINAPI wglShareLists( HGLRC src_handle, HGLRC dst_handle )
+{
+    struct wglShareLists_params args = { .teb = NtCurrentTeb() };
+    struct context *src_context, *dst_context;
+    struct display_lists *lists;
+    NTSTATUS status;
+
+    TRACE( "src_handle %p, dst_handle %p\n", src_handle, dst_handle );
+
+    if (!(src_context = context_from_handle( src_handle ))) return FALSE;
+    if (!(dst_context = context_from_handle( dst_handle ))) return FALSE;
+
+    args.hrcSrvShare = &src_context->base.obj;
+    args.hrcSrvSource = &dst_context->base.obj;
+    if ((status = UNIX_CALL( wglShareLists, &args ))) WARN( "wglShareLists returned %#lx\n", status );
+    if (!args.ret) return FALSE;
+
+    lists = display_lists_acquire( src_context->lists );
+    lists = InterlockedExchangePointer( (void *)&dst_context->lists, lists );
+    display_lists_release( lists );
+
+    return TRUE;
+}
+
+/***********************************************************************
  *		wglGetCurrentReadDCARB
  *
  * Provided by the WGL_ARB_make_current_read extension.

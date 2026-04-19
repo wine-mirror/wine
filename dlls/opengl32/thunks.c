@@ -36,17 +36,6 @@ BOOL WINAPI wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *p
     return args.ret;
 }
 
-BOOL WINAPI wglShareLists( HGLRC hrcSrvShare, HGLRC hrcSrvSource )
-{
-    struct wglShareLists_params args = { .teb = NtCurrentTeb() };
-    NTSTATUS status;
-    TRACE( "hrcSrvShare %p, hrcSrvSource %p\n", hrcSrvShare, hrcSrvSource );
-    if (!get_context_from_handle( hrcSrvShare, &args.hrcSrvShare )) return 0;
-    if (!get_context_from_handle( hrcSrvSource, &args.hrcSrvSource )) return 0;
-    if ((status = UNIX_CALL( wglShareLists, &args ))) WARN( "wglShareLists returned %#lx\n", status );
-    return args.ret;
-}
-
 void WINAPI glAccum( GLenum op, GLfloat value )
 {
     struct glAccum_params args = { .teb = NtCurrentTeb(), .op = op, .value = value };
