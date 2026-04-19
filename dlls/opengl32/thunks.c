@@ -2770,9 +2770,10 @@ static void WINAPI glAccumxOES( GLenum op, GLfixed value )
 
 static GLboolean WINAPI glAcquireKeyedMutexWin32EXT( GLuint memory, GLuint64 key, GLuint timeout )
 {
-    struct glAcquireKeyedMutexWin32EXT_params args = { .teb = NtCurrentTeb(), .memory = memory, .key = key, .timeout = timeout };
+    struct glAcquireKeyedMutexWin32EXT_params args = { .teb = NtCurrentTeb(), .key = key, .timeout = timeout };
     NTSTATUS status;
     TRACE( "memory %d, key %s, timeout %d\n", memory, wine_dbgstr_longlong(key), timeout );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glAcquireKeyedMutexWin32EXT, &args ))) WARN( "glAcquireKeyedMutexWin32EXT returned %#lx\n", status );
     return args.ret;
 }
@@ -3944,9 +3945,10 @@ static void WINAPI glBufferAddressRangeNV( GLenum pname, GLuint index, GLuint64E
 
 static void WINAPI glBufferAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset )
 {
-    struct glBufferAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .target = target, .memory = memory, .offset = offset };
+    struct glBufferAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .target = target, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, memory %d, offset %s\n", target, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glBufferAttachMemoryNV, &args ))) WARN( "glBufferAttachMemoryNV returned %#lx\n", status );
 }
 
@@ -3976,9 +3978,10 @@ static void WINAPI glBufferPageCommitmentARB( GLenum target, GLintptr offset, GL
 
 static void WINAPI glBufferPageCommitmentMemNV( GLenum target, GLintptr offset, GLsizeiptr size, GLuint memory, GLuint64 memOffset, GLboolean commit )
 {
-    struct glBufferPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .target = target, .offset = offset, .size = size, .memory = memory, .memOffset = memOffset, .commit = commit };
+    struct glBufferPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .target = target, .offset = offset, .size = size, .memOffset = memOffset, .commit = commit };
     NTSTATUS status;
     TRACE( "target %d, offset %Id, size %Id, memory %d, memOffset %s, commit %d\n", target, offset, size, memory, wine_dbgstr_longlong(memOffset), commit );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glBufferPageCommitmentMemNV, &args ))) WARN( "glBufferPageCommitmentMemNV returned %#lx\n", status );
 }
 
@@ -4017,9 +4020,10 @@ static void WINAPI glBufferStorageExternalEXT( GLenum target, GLintptr offset, G
 
 static void WINAPI glBufferStorageMemEXT( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset )
 {
-    struct glBufferStorageMemEXT_params args = { .teb = NtCurrentTeb(), .target = target, .size = size, .memory = memory, .offset = offset };
+    struct glBufferStorageMemEXT_params args = { .teb = NtCurrentTeb(), .target = target, .size = size, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, size %Id, memory %d, offset %s\n", target, size, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glBufferStorageMemEXT, &args ))) WARN( "glBufferStorageMemEXT returned %#lx\n", status );
 }
 
@@ -5538,6 +5542,7 @@ static void WINAPI glCreateMemoryObjectsEXT( GLsizei n, GLuint *memoryObjects )
     NTSTATUS status;
     TRACE( "n %d, memoryObjects %p\n", n, memoryObjects );
     if ((status = UNIX_CALL( glCreateMemoryObjectsEXT, &args ))) WARN( "glCreateMemoryObjectsEXT returned %#lx\n", status );
+    if (n > 0) put_context_objects( OBJ_TYPE_MEMORY, n, memoryObjects );
 }
 
 static void WINAPI glCreatePerfQueryINTEL( GLuint queryId, GLuint *queryHandle )
@@ -5906,10 +5911,14 @@ static void WINAPI glDeleteFramebuffersEXT( GLsizei n, const GLuint *framebuffer
 
 static void WINAPI glDeleteMemoryObjectsEXT( GLsizei n, const GLuint *memoryObjects )
 {
-    struct glDeleteMemoryObjectsEXT_params args = { .teb = NtCurrentTeb(), .n = n, .memoryObjects = memoryObjects };
+    GLuint memoryObjects_buf[64], *memoryObjects_tmp;
+    struct glDeleteMemoryObjectsEXT_params args = { .teb = NtCurrentTeb(), .n = n };
     NTSTATUS status;
     TRACE( "n %d, memoryObjects %p\n", n, memoryObjects );
+    memoryObjects_tmp = n > 0 ? memdup_objects( n, memoryObjects, memoryObjects_buf, ARRAY_SIZE(memoryObjects_buf) ) : NULL;
+    args.memoryObjects = n > 0 ? del_context_objects( OBJ_TYPE_MEMORY, n, memoryObjects_tmp ) : NULL;
     if ((status = UNIX_CALL( glDeleteMemoryObjectsEXT, &args ))) WARN( "glDeleteMemoryObjectsEXT returned %#lx\n", status );
+    if (memoryObjects_tmp != memoryObjects_buf) free( memoryObjects_tmp );
 }
 
 static void WINAPI glDeleteNamedStringARB( GLint namelen, const GLchar *name )
@@ -9169,17 +9178,19 @@ static void WINAPI glGetMaterialxv( GLenum face, GLenum pname, GLfixed *params )
 
 static void WINAPI glGetMemoryObjectDetachedResourcesuivNV( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params )
 {
-    struct glGetMemoryObjectDetachedResourcesuivNV_params args = { .teb = NtCurrentTeb(), .memory = memory, .pname = pname, .first = first, .count = count, .params = params };
+    struct glGetMemoryObjectDetachedResourcesuivNV_params args = { .teb = NtCurrentTeb(), .pname = pname, .first = first, .count = count, .params = params };
     NTSTATUS status;
     TRACE( "memory %d, pname %d, first %d, count %d, params %p\n", memory, pname, first, count, params );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glGetMemoryObjectDetachedResourcesuivNV, &args ))) WARN( "glGetMemoryObjectDetachedResourcesuivNV returned %#lx\n", status );
 }
 
 static void WINAPI glGetMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, GLint *params )
 {
-    struct glGetMemoryObjectParameterivEXT_params args = { .teb = NtCurrentTeb(), .memoryObject = memoryObject, .pname = pname, .params = params };
+    struct glGetMemoryObjectParameterivEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "memoryObject %d, pname %d, params %p\n", memoryObject, pname, params );
+    args.memoryObject = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memoryObject );
     if ((status = UNIX_CALL( glGetMemoryObjectParameterivEXT, &args ))) WARN( "glGetMemoryObjectParameterivEXT returned %#lx\n", status );
 }
 
@@ -11852,17 +11863,19 @@ static void WINAPI glImageTransformParameterivHP( GLenum target, GLenum pname, c
 
 static void WINAPI glImportMemoryWin32HandleEXT( GLuint memory, GLuint64 size, GLenum handleType, void *handle )
 {
-    struct glImportMemoryWin32HandleEXT_params args = { .teb = NtCurrentTeb(), .memory = memory, .size = size, .handleType = handleType, .handle = handle };
+    struct glImportMemoryWin32HandleEXT_params args = { .teb = NtCurrentTeb(), .size = size, .handleType = handleType, .handle = handle };
     NTSTATUS status;
     TRACE( "memory %d, size %s, handleType %d, handle %p\n", memory, wine_dbgstr_longlong(size), handleType, handle );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glImportMemoryWin32HandleEXT, &args ))) WARN( "glImportMemoryWin32HandleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLenum handleType, const void *name )
 {
-    struct glImportMemoryWin32NameEXT_params args = { .teb = NtCurrentTeb(), .memory = memory, .size = size, .handleType = handleType, .name = name };
+    struct glImportMemoryWin32NameEXT_params args = { .teb = NtCurrentTeb(), .size = size, .handleType = handleType, .name = name };
     NTSTATUS status;
     TRACE( "memory %d, size %s, handleType %d, name %p\n", memory, wine_dbgstr_longlong(size), handleType, name );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glImportMemoryWin32NameEXT, &args ))) WARN( "glImportMemoryWin32NameEXT returned %#lx\n", status );
 }
 
@@ -12167,9 +12180,10 @@ static GLboolean WINAPI glIsImageHandleResidentNV( GLuint64 handle )
 
 static GLboolean WINAPI glIsMemoryObjectEXT( GLuint memoryObject )
 {
-    struct glIsMemoryObjectEXT_params args = { .teb = NtCurrentTeb(), .memoryObject = memoryObject };
+    struct glIsMemoryObjectEXT_params args = { .teb = NtCurrentTeb() };
     NTSTATUS status;
     TRACE( "memoryObject %d\n", memoryObject );
+    args.memoryObject = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memoryObject );
     if ((status = UNIX_CALL( glIsMemoryObjectEXT, &args ))) WARN( "glIsMemoryObjectEXT returned %#lx\n", status );
     return args.ret;
 }
@@ -13318,9 +13332,10 @@ static void WINAPI glMemoryBarrierEXT( GLbitfield barriers )
 
 static void WINAPI glMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, const GLint *params )
 {
-    struct glMemoryObjectParameterivEXT_params args = { .teb = NtCurrentTeb(), .memoryObject = memoryObject, .pname = pname, .params = params };
+    struct glMemoryObjectParameterivEXT_params args = { .teb = NtCurrentTeb(), .pname = pname, .params = params };
     NTSTATUS status;
     TRACE( "memoryObject %d, pname %d, params %p\n", memoryObject, pname, params );
+    args.memoryObject = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memoryObject );
     if ((status = UNIX_CALL( glMemoryObjectParameterivEXT, &args ))) WARN( "glMemoryObjectParameterivEXT returned %#lx\n", status );
 }
 
@@ -14976,10 +14991,11 @@ static void WINAPI glMulticastWaitSyncNV( GLuint signalGpu, GLbitfield waitGpuMa
 
 static void WINAPI glNamedBufferAttachMemoryNV( GLuint buffer, GLuint memory, GLuint64 offset )
 {
-    struct glNamedBufferAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .memory = memory, .offset = offset };
+    struct glNamedBufferAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .offset = offset };
     NTSTATUS status;
     TRACE( "buffer %d, memory %d, offset %s\n", buffer, memory, wine_dbgstr_longlong(offset) );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glNamedBufferAttachMemoryNV, &args ))) WARN( "glNamedBufferAttachMemoryNV returned %#lx\n", status );
 }
 
@@ -15022,10 +15038,11 @@ static void WINAPI glNamedBufferPageCommitmentEXT( GLuint buffer, GLintptr offse
 
 static void WINAPI glNamedBufferPageCommitmentMemNV( GLuint buffer, GLintptr offset, GLsizeiptr size, GLuint memory, GLuint64 memOffset, GLboolean commit )
 {
-    struct glNamedBufferPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .offset = offset, .size = size, .memory = memory, .memOffset = memOffset, .commit = commit };
+    struct glNamedBufferPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .offset = offset, .size = size, .memOffset = memOffset, .commit = commit };
     NTSTATUS status;
     TRACE( "buffer %d, offset %Id, size %Id, memory %d, memOffset %s, commit %d\n", buffer, offset, size, memory, wine_dbgstr_longlong(memOffset), commit );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glNamedBufferPageCommitmentMemNV, &args ))) WARN( "glNamedBufferPageCommitmentMemNV returned %#lx\n", status );
 }
 
@@ -15059,10 +15076,11 @@ static void WINAPI glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offs
 
 static void WINAPI glNamedBufferStorageMemEXT( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset )
 {
-    struct glNamedBufferStorageMemEXT_params args = { .teb = NtCurrentTeb(), .size = size, .memory = memory, .offset = offset };
+    struct glNamedBufferStorageMemEXT_params args = { .teb = NtCurrentTeb(), .size = size, .offset = offset };
     NTSTATUS status;
     TRACE( "buffer %d, size %Id, memory %d, offset %s\n", buffer, size, memory, wine_dbgstr_longlong(offset) );
     args.buffer = *map_context_objects( OBJ_TYPE_BUFFER, 1, &buffer );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glNamedBufferStorageMemEXT, &args ))) WARN( "glNamedBufferStorageMemEXT returned %#lx\n", status );
 }
 
@@ -18141,9 +18159,10 @@ static void WINAPI glReferencePlaneSGIX( const GLdouble *equation )
 
 static GLboolean WINAPI glReleaseKeyedMutexWin32EXT( GLuint memory, GLuint64 key )
 {
-    struct glReleaseKeyedMutexWin32EXT_params args = { .teb = NtCurrentTeb(), .memory = memory, .key = key };
+    struct glReleaseKeyedMutexWin32EXT_params args = { .teb = NtCurrentTeb(), .key = key };
     NTSTATUS status;
     TRACE( "memory %d, key %s\n", memory, wine_dbgstr_longlong(key) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glReleaseKeyedMutexWin32EXT, &args ))) WARN( "glReleaseKeyedMutexWin32EXT returned %#lx\n", status );
     return args.ret;
 }
@@ -18426,9 +18445,10 @@ static void WINAPI glResetHistogramEXT( GLenum target )
 
 static void WINAPI glResetMemoryObjectParameterNV( GLuint memory, GLenum pname )
 {
-    struct glResetMemoryObjectParameterNV_params args = { .teb = NtCurrentTeb(), .memory = memory, .pname = pname };
+    struct glResetMemoryObjectParameterNV_params args = { .teb = NtCurrentTeb(), .pname = pname };
     NTSTATUS status;
     TRACE( "memory %d, pname %d\n", memory, pname );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glResetMemoryObjectParameterNV, &args ))) WARN( "glResetMemoryObjectParameterNV returned %#lx\n", status );
 }
 
@@ -19643,9 +19663,10 @@ static GLboolean WINAPI glTestObjectAPPLE( GLenum object, GLuint name )
 
 static void WINAPI glTexAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset )
 {
-    struct glTexAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .target = target, .memory = memory, .offset = offset };
+    struct glTexAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .target = target, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, memory %d, offset %s\n", target, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexAttachMemoryNV, &args ))) WARN( "glTexAttachMemoryNV returned %#lx\n", status );
 }
 
@@ -20223,9 +20244,10 @@ static void WINAPI glTexPageCommitmentARB( GLenum target, GLint level, GLint xof
 
 static void WINAPI glTexPageCommitmentMemNV( GLenum target, GLint layer, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset, GLboolean commit )
 {
-    struct glTexPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .target = target, .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset, .commit = commit };
+    struct glTexPageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .target = target, .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .offset = offset, .commit = commit };
     NTSTATUS status;
     TRACE( "target %d, layer %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, memory %d, offset %s, commit %d\n", target, layer, level, xoffset, yoffset, zoffset, width, height, depth, memory, wine_dbgstr_longlong(offset), commit );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexPageCommitmentMemNV, &args ))) WARN( "glTexPageCommitmentMemNV returned %#lx\n", status );
 }
 
@@ -20368,41 +20390,46 @@ static void WINAPI glTexStorage3DMultisample( GLenum target, GLsizei samples, GL
 
 static void WINAPI glTexStorageMem1DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset )
 {
-    struct glTexStorageMem1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalFormat = internalFormat, .width = width, .memory = memory, .offset = offset };
+    struct glTexStorageMem1DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalFormat = internalFormat, .width = width, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, levels %d, internalFormat %d, width %d, memory %d, offset %s\n", target, levels, internalFormat, width, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexStorageMem1DEXT, &args ))) WARN( "glTexStorageMem1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTexStorageMem2DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset )
 {
-    struct glTexStorageMem2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .memory = memory, .offset = offset };
+    struct glTexStorageMem2DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, levels %d, internalFormat %d, width %d, height %d, memory %d, offset %s\n", target, levels, internalFormat, width, height, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexStorageMem2DEXT, &args ))) WARN( "glTexStorageMem2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTexStorageMem2DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
 {
-    struct glTexStorageMem2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
+    struct glTexStorageMem2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, samples %d, internalFormat %d, width %d, height %d, fixedSampleLocations %d, memory %d, offset %s\n", target, samples, internalFormat, width, height, fixedSampleLocations, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexStorageMem2DMultisampleEXT, &args ))) WARN( "glTexStorageMem2DMultisampleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTexStorageMem3DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset )
 {
-    struct glTexStorageMem3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset };
+    struct glTexStorageMem3DEXT_params args = { .teb = NtCurrentTeb(), .target = target, .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, levels %d, internalFormat %d, width %d, height %d, depth %d, memory %d, offset %s\n", target, levels, internalFormat, width, height, depth, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexStorageMem3DEXT, &args ))) WARN( "glTexStorageMem3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTexStorageMem3DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
 {
-    struct glTexStorageMem3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
+    struct glTexStorageMem3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .target = target, .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations, .offset = offset };
     NTSTATUS status;
     TRACE( "target %d, samples %d, internalFormat %d, width %d, height %d, depth %d, fixedSampleLocations %d, memory %d, offset %s\n", target, samples, internalFormat, width, height, depth, fixedSampleLocations, memory, wine_dbgstr_longlong(offset) );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexStorageMem3DMultisampleEXT, &args ))) WARN( "glTexStorageMem3DMultisampleEXT returned %#lx\n", status );
 }
 
@@ -20456,10 +20483,11 @@ static void WINAPI glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffse
 
 static void WINAPI glTextureAttachMemoryNV( GLuint texture, GLuint memory, GLuint64 offset )
 {
-    struct glTextureAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .memory = memory, .offset = offset };
+    struct glTextureAttachMemoryNV_params args = { .teb = NtCurrentTeb(), .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, memory %d, offset %s\n", texture, memory, wine_dbgstr_longlong(offset) );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTextureAttachMemoryNV, &args ))) WARN( "glTextureAttachMemoryNV returned %#lx\n", status );
 }
 
@@ -20633,10 +20661,11 @@ static void WINAPI glTexturePageCommitmentEXT( GLuint texture, GLint level, GLin
 
 static void WINAPI glTexturePageCommitmentMemNV( GLuint texture, GLint layer, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset, GLboolean commit )
 {
-    struct glTexturePageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset, .commit = commit };
+    struct glTexturePageCommitmentMemNV_params args = { .teb = NtCurrentTeb(), .layer = layer, .level = level, .xoffset = xoffset, .yoffset = yoffset, .zoffset = zoffset, .width = width, .height = height, .depth = depth, .offset = offset, .commit = commit };
     NTSTATUS status;
     TRACE( "texture %d, layer %d, level %d, xoffset %d, yoffset %d, zoffset %d, width %d, height %d, depth %d, memory %d, offset %s, commit %d\n", texture, layer, level, xoffset, yoffset, zoffset, width, height, depth, memory, wine_dbgstr_longlong(offset), commit );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTexturePageCommitmentMemNV, &args ))) WARN( "glTexturePageCommitmentMemNV returned %#lx\n", status );
 }
 
@@ -20871,46 +20900,51 @@ static void WINAPI glTextureStorage3DMultisampleEXT( GLuint texture, GLenum targ
 
 static void WINAPI glTextureStorageMem1DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem1DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .memory = memory, .offset = offset };
+    struct glTextureStorageMem1DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalFormat %d, width %d, memory %d, offset %s\n", texture, levels, internalFormat, width, memory, wine_dbgstr_longlong(offset) );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTextureStorageMem1DEXT, &args ))) WARN( "glTextureStorageMem1DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem2DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem2DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .memory = memory, .offset = offset };
+    struct glTextureStorageMem2DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalFormat %d, width %d, height %d, memory %d, offset %s\n", texture, levels, internalFormat, width, height, memory, wine_dbgstr_longlong(offset) );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTextureStorageMem2DEXT, &args ))) WARN( "glTextureStorageMem2DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem2DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
+    struct glTextureStorageMem2DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .fixedSampleLocations = fixedSampleLocations, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, samples %d, internalFormat %d, width %d, height %d, fixedSampleLocations %d, memory %d, offset %s\n", texture, samples, internalFormat, width, height, fixedSampleLocations, memory, wine_dbgstr_longlong(offset) );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTextureStorageMem2DMultisampleEXT, &args ))) WARN( "glTextureStorageMem2DMultisampleEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem3DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem3DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .memory = memory, .offset = offset };
+    struct glTextureStorageMem3DEXT_params args = { .teb = NtCurrentTeb(), .levels = levels, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, levels %d, internalFormat %d, width %d, height %d, depth %d, memory %d, offset %s\n", texture, levels, internalFormat, width, height, depth, memory, wine_dbgstr_longlong(offset) );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTextureStorageMem3DEXT, &args ))) WARN( "glTextureStorageMem3DEXT returned %#lx\n", status );
 }
 
 static void WINAPI glTextureStorageMem3DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
 {
-    struct glTextureStorageMem3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations, .memory = memory, .offset = offset };
+    struct glTextureStorageMem3DMultisampleEXT_params args = { .teb = NtCurrentTeb(), .samples = samples, .internalFormat = internalFormat, .width = width, .height = height, .depth = depth, .fixedSampleLocations = fixedSampleLocations, .offset = offset };
     NTSTATUS status;
     TRACE( "texture %d, samples %d, internalFormat %d, width %d, height %d, depth %d, fixedSampleLocations %d, memory %d, offset %s\n", texture, samples, internalFormat, width, height, depth, fixedSampleLocations, memory, wine_dbgstr_longlong(offset) );
     args.texture = *map_context_objects( OBJ_TYPE_TEXTURE, 1, &texture );
+    args.memory = *map_context_objects( OBJ_TYPE_MEMORY, 1, &memory );
     if ((status = UNIX_CALL( glTextureStorageMem3DMultisampleEXT, &args ))) WARN( "glTextureStorageMem3DMultisampleEXT returned %#lx\n", status );
 }
 
