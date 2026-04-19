@@ -1348,6 +1348,9 @@ INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UIN
 
     if (err) goto done;
 
+    if (!is_bitmapobj_dib( bmp ) && (src_info->bmiHeader.biBitCount != 1 && src_info->bmiHeader.biBitCount != 32))
+        goto done;
+
     /* fill out the src colour table, if it needs one */
     if (src_info->bmiHeader.biBitCount <= 8 && src_info->bmiHeader.biClrUsed == 0)
         fill_default_color_table( src_info );

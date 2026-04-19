@@ -2447,19 +2447,15 @@ static void test_GetDIBits(void)
         }
         else
         {
-            todo_wine
             ok(lines == 0, "GetDIBits succeeded.\n");
-            todo_wine_if(depths[i] == 15 || depths[i] == 16)
             ok(*(unsigned int *)bi->bmiColors == 0, "Got unexpected bmiColors %#x\n", *(unsigned int *)bi->bmiColors);
 
             /* lines > 0. Still fails */
             lines = GetDIBits(hdc, hbmp, 0, 1, NULL, bi, DIB_RGB_COLORS);
-            todo_wine
             ok(lines == 0, "GetDIBits failed.\n");
 
             /* buf != NULL. Still fails */
             lines = GetDIBits(hdc, hbmp, 0, 1, buf, bi, DIB_RGB_COLORS);
-            todo_wine
             ok(lines == 0, "GetDIBits failed.\n");
 
             /* Reset biBitCount to 0. Now it succeeds */
@@ -2479,7 +2475,6 @@ static void test_GetDIBits(void)
         if (depths[i] == 1 || depths[i] == 32)
             ok(lines == 1, "GetDIBits failed.\n");
         else
-            todo_wine_if(depths[i] != 2 && depths[i] != 15)
             ok(lines == 0, "GetDIBits succeeded.\n");
 
         /* Same result when using a memory DC so it's not related the display DC */
@@ -2495,7 +2490,6 @@ static void test_GetDIBits(void)
         if (depths[i] == 1 || depths[i] == 32)
             ok(lines == 1, "GetDIBits failed.\n");
         else
-            todo_wine_if(depths[i] != 2 && depths[i] != 15)
             ok(lines == 0, "GetDIBits succeeded.\n");
 
         DeleteDC(mem_dc);
