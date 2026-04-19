@@ -4367,11 +4367,11 @@ msgstr "Файл не знайдено.\n"
 msgid "Path not found.\n"
 msgstr "Шлях не знайдено.\n"
 
-#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3780
+#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3855
 msgid "Too many open files.\n"
 msgstr "Забагато відкритих файлів.\n"
 
-#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3765
+#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3840
 msgid "Access denied.\n"
 msgstr "Доступ заборонено.\n"
 
@@ -4615,7 +4615,7 @@ msgstr "Немає вільних структур.\n"
 msgid "Already assigned.\n"
 msgstr "Вже призначено.\n"
 
-#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1715
+#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1790
 msgid "Invalid password.\n"
 msgstr "Невірний пароль.\n"
 
@@ -5096,2300 +5096,2372 @@ msgid "Invalid oplock message received.\n"
 msgstr "Отримане невірне oplock-повідомлення.\n"
 
 #: dlls/kernelbase/winerror.mc:970
-msgid "Message 0x%1 not found in file %2.\n"
-msgstr ""
+#, fuzzy
+#| msgid "Disk is corrupt.\n"
+msgid "Disk is too fragmented.\n"
+msgstr "Диск пошкоджений.\n"
 
 #: dlls/kernelbase/winerror.mc:975
-msgid "Invalid address.\n"
-msgstr "Невірна адреса.\n"
+msgid "File cannot be opened because it is in the process of being deleted.\n"
+msgstr ""
 
 #: dlls/kernelbase/winerror.mc:980
-msgid "Arithmetic overflow.\n"
+msgid "Short name settings incompatible with global registry setting.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:985
-msgid "Pipe connected.\n"
-msgstr "Канал приєднаний.\n"
+msgid "Short names are not enabled on this volume.\n"
+msgstr ""
 
 #: dlls/kernelbase/winerror.mc:990
-msgid "Pipe listening.\n"
+msgid "Security stream is inconsistent.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:995
-msgid "Extended attribute access denied.\n"
+msgid "File lock operation cannot be processed due to invalid byte range.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1000
-msgid "I/O operation aborted.\n"
-msgstr "Операція вводу/виводу перервана.\n"
+msgid "Subsystem for supporting image type is not present.\n"
+msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1005
-msgid "Overlapped I/O incomplete.\n"
+msgid "Notification GUID is already defined.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1010
-msgid "Overlapped I/O pending.\n"
-msgstr ""
+#, fuzzy
+#| msgid "Invalid icon handle.\n"
+msgid "Invalid exception handler.\n"
+msgstr "Невірна рукоятка іконки.\n"
 
 #: dlls/kernelbase/winerror.mc:1015
-msgid "No access to memory location.\n"
-msgstr ""
+#, fuzzy
+#| msgid "Duplicate service name.\n"
+msgid "Duplicate privileges for the token.\n"
+msgstr "Дубльоване ім'я сервісу.\n"
 
 #: dlls/kernelbase/winerror.mc:1020
-msgid "Swap error.\n"
-msgstr "Помилка довантаження.\n"
+#, fuzzy
+#| msgid "Not all objects could be exported.\n"
+msgid "No ranges could be processed.\n"
+msgstr "Не всі об'єкти можуть бути експортовані.\n"
 
 #: dlls/kernelbase/winerror.mc:1025
-msgid "Stack overflow.\n"
-msgstr "Переповнення стека.\n"
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation not allowed on system file.\n"
+msgstr "Операція скасована користувачем.\n"
 
 #: dlls/kernelbase/winerror.mc:1030
-msgid "Invalid message.\n"
-msgstr "Невірне повідомлення.\n"
+msgid "Disk resources have been exhausted.\n"
+msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1035
-msgid "Cannot complete.\n"
-msgstr "Неможливо завершити.\n"
+#, fuzzy
+#| msgid "Invalid key.\n"
+msgid "Invalid token.\n"
+msgstr "Невірний ключ.\n"
 
 #: dlls/kernelbase/winerror.mc:1040
-msgid "Invalid flags.\n"
-msgstr "Невірні прапорці.\n"
+msgid "Command feature not supported on the device.\n"
+msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1045
-msgid "Unrecognized volume.\n"
+msgid "Message 0x%1 not found in file %2.\n"
 msgstr ""
 
 #: dlls/kernelbase/winerror.mc:1050
+msgid "Invalid address.\n"
+msgstr "Невірна адреса.\n"
+
+#: dlls/kernelbase/winerror.mc:1055
+msgid "Arithmetic overflow.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1060
+msgid "Pipe connected.\n"
+msgstr "Канал приєднаний.\n"
+
+#: dlls/kernelbase/winerror.mc:1065
+msgid "Pipe listening.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1070
+msgid "Extended attribute access denied.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1075
+msgid "I/O operation aborted.\n"
+msgstr "Операція вводу/виводу перервана.\n"
+
+#: dlls/kernelbase/winerror.mc:1080
+msgid "Overlapped I/O incomplete.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1085
+msgid "Overlapped I/O pending.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1090
+msgid "No access to memory location.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1095
+msgid "Swap error.\n"
+msgstr "Помилка довантаження.\n"
+
+#: dlls/kernelbase/winerror.mc:1100
+msgid "Stack overflow.\n"
+msgstr "Переповнення стека.\n"
+
+#: dlls/kernelbase/winerror.mc:1105
+msgid "Invalid message.\n"
+msgstr "Невірне повідомлення.\n"
+
+#: dlls/kernelbase/winerror.mc:1110
+msgid "Cannot complete.\n"
+msgstr "Неможливо завершити.\n"
+
+#: dlls/kernelbase/winerror.mc:1115
+msgid "Invalid flags.\n"
+msgstr "Невірні прапорці.\n"
+
+#: dlls/kernelbase/winerror.mc:1120
+msgid "Unrecognized volume.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1125
 msgid "File invalid.\n"
 msgstr "Файл невірний.\n"
 
-#: dlls/kernelbase/winerror.mc:1055
+#: dlls/kernelbase/winerror.mc:1130
 msgid "Cannot run full-screen.\n"
 msgstr "Не може відкрити на весь екран.\n"
 
-#: dlls/kernelbase/winerror.mc:1060
+#: dlls/kernelbase/winerror.mc:1135
 msgid "Nonexistent token.\n"
 msgstr "Неіснуючий знак.\n"
 
-#: dlls/kernelbase/winerror.mc:1065
+#: dlls/kernelbase/winerror.mc:1140
 msgid "Registry corrupt.\n"
 msgstr "Реєстр пошкоджено.\n"
 
-#: dlls/kernelbase/winerror.mc:1070
+#: dlls/kernelbase/winerror.mc:1145
 msgid "Invalid key.\n"
 msgstr "Невірний ключ.\n"
 
-#: dlls/kernelbase/winerror.mc:1075
+#: dlls/kernelbase/winerror.mc:1150
 msgid "Can't open registry key.\n"
 msgstr "Неможливо відкрити ключ реєстру.\n"
 
-#: dlls/kernelbase/winerror.mc:1080
+#: dlls/kernelbase/winerror.mc:1155
 msgid "Can't read registry key.\n"
 msgstr "Неможливо прочитати ключ реєстру.\n"
 
-#: dlls/kernelbase/winerror.mc:1085
+#: dlls/kernelbase/winerror.mc:1160
 msgid "Can't write registry key.\n"
 msgstr "Неможливо записати ключ реєстру.\n"
 
-#: dlls/kernelbase/winerror.mc:1090
+#: dlls/kernelbase/winerror.mc:1165
 msgid "Registry has been recovered.\n"
 msgstr "Реєстр відновлено.\n"
 
-#: dlls/kernelbase/winerror.mc:1095
+#: dlls/kernelbase/winerror.mc:1170
 msgid "Registry is corrupt.\n"
 msgstr "Реєстр пошкоджений.\n"
 
-#: dlls/kernelbase/winerror.mc:1100
+#: dlls/kernelbase/winerror.mc:1175
 msgid "I/O to registry failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1105
+#: dlls/kernelbase/winerror.mc:1180
 msgid "Not registry file.\n"
 msgstr "Не файл реєстру.\n"
 
-#: dlls/kernelbase/winerror.mc:1110
+#: dlls/kernelbase/winerror.mc:1185
 msgid "Key deleted.\n"
 msgstr "Ключ видалено.\n"
 
-#: dlls/kernelbase/winerror.mc:1115
+#: dlls/kernelbase/winerror.mc:1190
 msgid "No registry log space.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1120
+#: dlls/kernelbase/winerror.mc:1195
 msgid "Registry key has subkeys.\n"
 msgstr "Ключ реєстру має підрозділи.\n"
 
-#: dlls/kernelbase/winerror.mc:1125
+#: dlls/kernelbase/winerror.mc:1200
 msgid "Subkey must be volatile.\n"
 msgstr "Підрозділ має бути непостійним.\n"
 
-#: dlls/kernelbase/winerror.mc:1130
+#: dlls/kernelbase/winerror.mc:1205
 msgid "Notify change request in progress.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1135
+#: dlls/kernelbase/winerror.mc:1210
 msgid "Dependent services are running.\n"
 msgstr "Працюють залежні служби.\n"
 
-#: dlls/kernelbase/winerror.mc:1140
+#: dlls/kernelbase/winerror.mc:1215
 msgid "Invalid service control.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1145
+#: dlls/kernelbase/winerror.mc:1220
 msgid "Service request timeout.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1150
+#: dlls/kernelbase/winerror.mc:1225
 msgid "Cannot create service thread.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1155
+#: dlls/kernelbase/winerror.mc:1230
 msgid "Service database locked.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1160
+#: dlls/kernelbase/winerror.mc:1235
 msgid "Service already running.\n"
 msgstr "Сервіс вже працює.\n"
 
-#: dlls/kernelbase/winerror.mc:1165
+#: dlls/kernelbase/winerror.mc:1240
 msgid "Invalid service account.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1170
+#: dlls/kernelbase/winerror.mc:1245
 msgid "Service is disabled.\n"
 msgstr "Сервіс вимкнений.\n"
 
-#: dlls/kernelbase/winerror.mc:1175
+#: dlls/kernelbase/winerror.mc:1250
 msgid "Circular dependency.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1180
+#: dlls/kernelbase/winerror.mc:1255
 msgid "Service does not exist.\n"
 msgstr "Сервіс не існує.\n"
 
-#: dlls/kernelbase/winerror.mc:1185
+#: dlls/kernelbase/winerror.mc:1260
 msgid "Service cannot accept control message.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1190
+#: dlls/kernelbase/winerror.mc:1265
 msgid "Service not active.\n"
 msgstr "Сервіс не активний.\n"
 
-#: dlls/kernelbase/winerror.mc:1195
+#: dlls/kernelbase/winerror.mc:1270
 msgid "Service controller connect failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1200
+#: dlls/kernelbase/winerror.mc:1275
 msgid "Exception in service.\n"
 msgstr "Виняток в сервісі.\n"
 
-#: dlls/kernelbase/winerror.mc:1205
+#: dlls/kernelbase/winerror.mc:1280
 msgid "Database does not exist.\n"
 msgstr "База даних не існує.\n"
 
-#: dlls/kernelbase/winerror.mc:1210
+#: dlls/kernelbase/winerror.mc:1285
 msgid "Service-specific error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1215
+#: dlls/kernelbase/winerror.mc:1290
 msgid "Process aborted.\n"
 msgstr "Процес перервано.\n"
 
-#: dlls/kernelbase/winerror.mc:1220
+#: dlls/kernelbase/winerror.mc:1295
 msgid "Service dependency failed.\n"
 msgstr "Невдала сервісна залежність.\n"
 
-#: dlls/kernelbase/winerror.mc:1225
+#: dlls/kernelbase/winerror.mc:1300
 msgid "Service login failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1230
+#: dlls/kernelbase/winerror.mc:1305
 msgid "Service start-hang.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1235
+#: dlls/kernelbase/winerror.mc:1310
 msgid "Invalid service lock.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1240
+#: dlls/kernelbase/winerror.mc:1315
 msgid "Service marked for delete.\n"
 msgstr "Служба позначена на видалення.\n"
 
-#: dlls/kernelbase/winerror.mc:1245
+#: dlls/kernelbase/winerror.mc:1320
 msgid "Service exists.\n"
 msgstr "Сервіс існує.\n"
 
-#: dlls/kernelbase/winerror.mc:1250
+#: dlls/kernelbase/winerror.mc:1325
 msgid "System running last-known-good config.\n"
 msgstr "Система працює згідно останньої відомої справної конфігурації.\n"
 
-#: dlls/kernelbase/winerror.mc:1255
+#: dlls/kernelbase/winerror.mc:1330
 msgid "Service dependency deleted.\n"
 msgstr "Сервісна залежність видалена.\n"
 
-#: dlls/kernelbase/winerror.mc:1260
+#: dlls/kernelbase/winerror.mc:1335
 msgid "Boot already accepted as last-good config.\n"
 msgstr "Завантаження вже прийняте як остання успішна конфігурація.\n"
 
-#: dlls/kernelbase/winerror.mc:1265
+#: dlls/kernelbase/winerror.mc:1340
 msgid "Service not started since last boot.\n"
 msgstr "Служба не запускалася з часів останнього завантаження.\n"
 
-#: dlls/kernelbase/winerror.mc:1270
+#: dlls/kernelbase/winerror.mc:1345
 msgid "Duplicate service name.\n"
 msgstr "Дубльоване ім'я сервісу.\n"
 
-#: dlls/kernelbase/winerror.mc:1275
+#: dlls/kernelbase/winerror.mc:1350
 msgid "Different service account.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1280
+#: dlls/kernelbase/winerror.mc:1355
 msgid "Driver failure cannot be detected.\n"
 msgstr "Відмова драйвера не може бути виявлена.\n"
 
-#: dlls/kernelbase/winerror.mc:1285
+#: dlls/kernelbase/winerror.mc:1360
 msgid "Process abort cannot be detected.\n"
 msgstr "Скасування процесу не виявлене.\n"
 
-#: dlls/kernelbase/winerror.mc:1290
+#: dlls/kernelbase/winerror.mc:1365
 msgid "No recovery program for service.\n"
 msgstr "Немає програми відновлення для служби.\n"
 
-#: dlls/kernelbase/winerror.mc:1295
+#: dlls/kernelbase/winerror.mc:1370
 msgid "Service not implemented by exe.\n"
 msgstr "Сервіс не реалізований в exe.\n"
 
-#: dlls/kernelbase/winerror.mc:1300
+#: dlls/kernelbase/winerror.mc:1375
 msgid "End of media.\n"
 msgstr "Кінець носія.\n"
 
-#: dlls/kernelbase/winerror.mc:1305
+#: dlls/kernelbase/winerror.mc:1380
 msgid "Filemark detected.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1310
+#: dlls/kernelbase/winerror.mc:1385
 msgid "Beginning of media.\n"
 msgstr "Початок носія.\n"
 
-#: dlls/kernelbase/winerror.mc:1315
+#: dlls/kernelbase/winerror.mc:1390
 msgid "Setmark detected.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1320
+#: dlls/kernelbase/winerror.mc:1395
 msgid "No data detected.\n"
 msgstr "Даних не виявлено.\n"
 
-#: dlls/kernelbase/winerror.mc:1325
+#: dlls/kernelbase/winerror.mc:1400
 msgid "Partition failure.\n"
 msgstr "Помилка розділу.\n"
 
-#: dlls/kernelbase/winerror.mc:1330
+#: dlls/kernelbase/winerror.mc:1405
 msgid "Invalid block length.\n"
 msgstr "Невірна довжина блоку.\n"
 
-#: dlls/kernelbase/winerror.mc:1335
+#: dlls/kernelbase/winerror.mc:1410
 msgid "Device not partitioned.\n"
 msgstr "Привід не містить розділів.\n"
 
-#: dlls/kernelbase/winerror.mc:1340
+#: dlls/kernelbase/winerror.mc:1415
 msgid "Unable to lock media.\n"
 msgstr "Неможливо заблокувати носій.\n"
 
-#: dlls/kernelbase/winerror.mc:1345
+#: dlls/kernelbase/winerror.mc:1420
 msgid "Unable to unload media.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1350
+#: dlls/kernelbase/winerror.mc:1425
 msgid "Media changed.\n"
 msgstr "Носій змінений.\n"
 
-#: dlls/kernelbase/winerror.mc:1355
+#: dlls/kernelbase/winerror.mc:1430
 msgid "I/O bus reset.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1360
+#: dlls/kernelbase/winerror.mc:1435
 msgid "No media in drive.\n"
 msgstr "В приводі немає носія.\n"
 
-#: dlls/kernelbase/winerror.mc:1365
+#: dlls/kernelbase/winerror.mc:1440
 msgid "No Unicode translation.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1370
+#: dlls/kernelbase/winerror.mc:1445
 msgid "DLL initialization failed.\n"
 msgstr "Ініціалізація DLL не вдалась.\n"
 
-#: dlls/kernelbase/winerror.mc:1375
+#: dlls/kernelbase/winerror.mc:1450
 msgid "Shutdown in progress.\n"
 msgstr "Проводиться вимкнення системи.\n"
 
-#: dlls/kernelbase/winerror.mc:1380
+#: dlls/kernelbase/winerror.mc:1455
 msgid "No shutdown in progress.\n"
 msgstr "Не проводиться вимкнення системи.\n"
 
-#: dlls/kernelbase/winerror.mc:1385
+#: dlls/kernelbase/winerror.mc:1460
 msgid "I/O device error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1390
+#: dlls/kernelbase/winerror.mc:1465
 msgid "No serial devices found.\n"
 msgstr "Не знайдено послідовних пристроїв.\n"
 
-#: dlls/kernelbase/winerror.mc:1395
+#: dlls/kernelbase/winerror.mc:1470
 msgid "Shared IRQ busy.\n"
 msgstr "Спільний IRQ зайнятий.\n"
 
-#: dlls/kernelbase/winerror.mc:1400
+#: dlls/kernelbase/winerror.mc:1475
 msgid "Serial I/O completed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1405
+#: dlls/kernelbase/winerror.mc:1480
 msgid "Serial I/O counter timeout.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1410
+#: dlls/kernelbase/winerror.mc:1485
 msgid "Floppy ID address mark not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1415
+#: dlls/kernelbase/winerror.mc:1490
 msgid "Floppy reports wrong cylinder.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1420
+#: dlls/kernelbase/winerror.mc:1495
 msgid "Unknown floppy error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1425
+#: dlls/kernelbase/winerror.mc:1500
 msgid "Floppy registers inconsistent.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1430
+#: dlls/kernelbase/winerror.mc:1505
 msgid "Hard disk recalibrate failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1435
+#: dlls/kernelbase/winerror.mc:1510
 msgid "Hard disk operation failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1440
+#: dlls/kernelbase/winerror.mc:1515
 msgid "Hard disk reset failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1445
+#: dlls/kernelbase/winerror.mc:1520
 msgid "End of tape media.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1450
+#: dlls/kernelbase/winerror.mc:1525
 msgid "Not enough server memory.\n"
 msgstr "Замало пам'яті сервера.\n"
 
-#: dlls/kernelbase/winerror.mc:1455
+#: dlls/kernelbase/winerror.mc:1530
 msgid "Possible deadlock.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1460
+#: dlls/kernelbase/winerror.mc:1535
 msgid "Incorrect alignment.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1465
+#: dlls/kernelbase/winerror.mc:1540
 msgid "Set-power-state vetoed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1470
+#: dlls/kernelbase/winerror.mc:1545
 msgid "Set-power-state failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1475
+#: dlls/kernelbase/winerror.mc:1550
 msgid "Too many links.\n"
 msgstr "Забагато посилань.\n"
 
-#: dlls/kernelbase/winerror.mc:1480
+#: dlls/kernelbase/winerror.mc:1555
 msgid "Newer Windows version needed.\n"
 msgstr "Необхідна новіша версія Windows.\n"
 
-#: dlls/kernelbase/winerror.mc:1485
+#: dlls/kernelbase/winerror.mc:1560
 msgid "Wrong operating system.\n"
 msgstr "Невірна операційна система.\n"
 
-#: dlls/kernelbase/winerror.mc:1490
+#: dlls/kernelbase/winerror.mc:1565
 msgid "Single-instance application.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1495
+#: dlls/kernelbase/winerror.mc:1570
 msgid "Real-mode application.\n"
 msgstr "Додаток реального часу.\n"
 
-#: dlls/kernelbase/winerror.mc:1500
+#: dlls/kernelbase/winerror.mc:1575
 msgid "Invalid DLL.\n"
 msgstr "Невірна DLL.\n"
 
-#: dlls/kernelbase/winerror.mc:1505
+#: dlls/kernelbase/winerror.mc:1580
 msgid "No associated application.\n"
 msgstr "Немає пов'язаного додатка.\n"
 
-#: dlls/kernelbase/winerror.mc:1510
+#: dlls/kernelbase/winerror.mc:1585
 msgid "DDE failure.\n"
 msgstr "Помилка DDE.\n"
 
-#: dlls/kernelbase/winerror.mc:1515
+#: dlls/kernelbase/winerror.mc:1590
 msgid "DLL not found.\n"
 msgstr "DLL не знайдена.\n"
 
-#: dlls/kernelbase/winerror.mc:1520
+#: dlls/kernelbase/winerror.mc:1595
 msgid "Out of user handles.\n"
 msgstr "Недостатньо користувацьких рукояток.\n"
 
-#: dlls/kernelbase/winerror.mc:1525
+#: dlls/kernelbase/winerror.mc:1600
 msgid "Message can only be used in synchronous calls.\n"
 msgstr "Повідомлення може бути використане лише в синхронних викликах.\n"
 
-#: dlls/kernelbase/winerror.mc:1530
+#: dlls/kernelbase/winerror.mc:1605
 msgid "The source element is empty.\n"
 msgstr "Початковий елемент порожній.\n"
 
-#: dlls/kernelbase/winerror.mc:1535
+#: dlls/kernelbase/winerror.mc:1610
 msgid "The destination element is full.\n"
 msgstr "Елемент призначення повний.\n"
 
-#: dlls/kernelbase/winerror.mc:1540
+#: dlls/kernelbase/winerror.mc:1615
 msgid "The element address is invalid.\n"
 msgstr "Адреса елемента невірна.\n"
 
-#: dlls/kernelbase/winerror.mc:1545
+#: dlls/kernelbase/winerror.mc:1620
 msgid "The magazine is not present.\n"
 msgstr "Журнал відсутній.\n"
 
-#: dlls/kernelbase/winerror.mc:1550
+#: dlls/kernelbase/winerror.mc:1625
 msgid "The device needs reinitialization.\n"
 msgstr "Пристрій потребує переініціалізації.\n"
 
-#: dlls/kernelbase/winerror.mc:1555
+#: dlls/kernelbase/winerror.mc:1630
 msgid "The device requires cleaning.\n"
 msgstr "Пристрій потребує очищення.\n"
 
-#: dlls/kernelbase/winerror.mc:1560
+#: dlls/kernelbase/winerror.mc:1635
 msgid "The device door is open.\n"
 msgstr "Дверка пристрою відкрита.\n"
 
-#: dlls/kernelbase/winerror.mc:1565
+#: dlls/kernelbase/winerror.mc:1640
 msgid "The device is not connected.\n"
 msgstr "Пристрій не під'єднаний.\n"
 
-#: dlls/kernelbase/winerror.mc:1570
+#: dlls/kernelbase/winerror.mc:1645
 msgid "Element not found.\n"
 msgstr "Елемент не знайдено.\n"
 
-#: dlls/kernelbase/winerror.mc:1575
+#: dlls/kernelbase/winerror.mc:1650
 msgid "No match found.\n"
 msgstr "Відповідностей не знайдено.\n"
 
-#: dlls/kernelbase/winerror.mc:1580
+#: dlls/kernelbase/winerror.mc:1655
 msgid "Property set not found.\n"
 msgstr "Набір властивостей не знайдено.\n"
 
-#: dlls/kernelbase/winerror.mc:1585
+#: dlls/kernelbase/winerror.mc:1660
 msgid "Point not found.\n"
 msgstr "Точка не знайдена.\n"
 
-#: dlls/kernelbase/winerror.mc:1590
+#: dlls/kernelbase/winerror.mc:1665
 msgid "No running tracking service.\n"
 msgstr "Служба слідкування не працює.\n"
 
-#: dlls/kernelbase/winerror.mc:1595
+#: dlls/kernelbase/winerror.mc:1670
 msgid "No such volume ID.\n"
 msgstr "Немає такого ID тому.\n"
 
-#: dlls/kernelbase/winerror.mc:1600
+#: dlls/kernelbase/winerror.mc:1675
 msgid "Unable to remove the file to be replaced.\n"
 msgstr "Не вдалось видалити файл для заміни.\n"
 
-#: dlls/kernelbase/winerror.mc:1605
+#: dlls/kernelbase/winerror.mc:1680
 msgid "Unable to move the replacement file into place.\n"
 msgstr "Не вдалось помістити файл на місце замінюваного.\n"
 
-#: dlls/kernelbase/winerror.mc:1610
+#: dlls/kernelbase/winerror.mc:1685
 msgid "Moving the replacement file failed.\n"
 msgstr "Перенести файл для заміни не вдалось.\n"
 
-#: dlls/kernelbase/winerror.mc:1615
+#: dlls/kernelbase/winerror.mc:1690
 msgid "The journal is being deleted.\n"
 msgstr "Журнал видаляється.\n"
 
-#: dlls/kernelbase/winerror.mc:1620
+#: dlls/kernelbase/winerror.mc:1695
 msgid "The journal is not active.\n"
 msgstr "Журнал не активний.\n"
 
-#: dlls/kernelbase/winerror.mc:1625
+#: dlls/kernelbase/winerror.mc:1700
 msgid "Potential matching file found.\n"
 msgstr "Знайдений потенційний відповідний файл.\n"
 
-#: dlls/kernelbase/winerror.mc:1630
+#: dlls/kernelbase/winerror.mc:1705
 msgid "The journal entry was deleted.\n"
 msgstr "Запис журналу був видалений.\n"
 
-#: dlls/kernelbase/winerror.mc:1635
+#: dlls/kernelbase/winerror.mc:1710
 msgid "Invalid device name.\n"
 msgstr "Невірна назва пристрою.\n"
 
-#: dlls/kernelbase/winerror.mc:1640
+#: dlls/kernelbase/winerror.mc:1715
 msgid "Connection unavailable.\n"
 msgstr "Під'єднання недоступне.\n"
 
-#: dlls/kernelbase/winerror.mc:1645
+#: dlls/kernelbase/winerror.mc:1720
 msgid "Device already remembered.\n"
 msgstr "Пристрій вже запам'ятований.\n"
 
-#: dlls/kernelbase/winerror.mc:1650
+#: dlls/kernelbase/winerror.mc:1725
 msgid "No network or bad path.\n"
 msgstr "Мережі немає або невірний шлях.\n"
 
-#: dlls/kernelbase/winerror.mc:1655
+#: dlls/kernelbase/winerror.mc:1730
 msgid "Invalid network provider name.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1660
+#: dlls/kernelbase/winerror.mc:1735
 msgid "Cannot open network connection profile.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1665
+#: dlls/kernelbase/winerror.mc:1740
 msgid "Corrupt network connection profile.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1670
+#: dlls/kernelbase/winerror.mc:1745
 msgid "Not a container.\n"
 msgstr "Не контейнер.\n"
 
-#: dlls/kernelbase/winerror.mc:1675
+#: dlls/kernelbase/winerror.mc:1750
 msgid "Extended error.\n"
 msgstr "Розширена помилка.\n"
 
-#: dlls/kernelbase/winerror.mc:1680
+#: dlls/kernelbase/winerror.mc:1755
 msgid "Invalid group name.\n"
 msgstr "Невірна назва групи.\n"
 
-#: dlls/kernelbase/winerror.mc:1685
+#: dlls/kernelbase/winerror.mc:1760
 msgid "Invalid computer name.\n"
 msgstr "Невірне ім'я комп'ютера.\n"
 
-#: dlls/kernelbase/winerror.mc:1690
+#: dlls/kernelbase/winerror.mc:1765
 msgid "Invalid event name.\n"
 msgstr "Невірна назва події.\n"
 
-#: dlls/kernelbase/winerror.mc:1695
+#: dlls/kernelbase/winerror.mc:1770
 msgid "Invalid domain name.\n"
 msgstr "Невірне ім'я домену.\n"
 
-#: dlls/kernelbase/winerror.mc:1700
+#: dlls/kernelbase/winerror.mc:1775
 msgid "Invalid service name.\n"
 msgstr "Невірна назва сервісу.\n"
 
-#: dlls/kernelbase/winerror.mc:1705
+#: dlls/kernelbase/winerror.mc:1780
 msgid "Invalid network name.\n"
 msgstr "Невірне мережне ім'я.\n"
 
-#: dlls/kernelbase/winerror.mc:1710
+#: dlls/kernelbase/winerror.mc:1785
 msgid "Invalid share name.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1720
+#: dlls/kernelbase/winerror.mc:1795
 msgid "Invalid message name.\n"
 msgstr "Невірна назва повідомлення.\n"
 
-#: dlls/kernelbase/winerror.mc:1725
+#: dlls/kernelbase/winerror.mc:1800
 msgid "Invalid message destination.\n"
 msgstr "Невірне місце призначення повідомлення.\n"
 
-#: dlls/kernelbase/winerror.mc:1730
+#: dlls/kernelbase/winerror.mc:1805
 msgid "Session credential conflict.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1735
+#: dlls/kernelbase/winerror.mc:1810
 msgid "Remote session limit exceeded.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1740
+#: dlls/kernelbase/winerror.mc:1815
 msgid "Duplicate domain or workgroup name.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1745
+#: dlls/kernelbase/winerror.mc:1820
 msgid "No network.\n"
 msgstr "Немає мережі.\n"
 
-#: dlls/kernelbase/winerror.mc:1750
+#: dlls/kernelbase/winerror.mc:1825
 msgid "Operation canceled by user.\n"
 msgstr "Операція скасована користувачем.\n"
 
-#: dlls/kernelbase/winerror.mc:1755
+#: dlls/kernelbase/winerror.mc:1830
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1760 dlls/kernelbase/winerror.mc:3795
+#: dlls/kernelbase/winerror.mc:1835 dlls/kernelbase/winerror.mc:3870
 msgid "Connection refused.\n"
 msgstr "У з'єднанні відмовлено.\n"
 
-#: dlls/kernelbase/winerror.mc:1765
+#: dlls/kernelbase/winerror.mc:1840
 msgid "Connection gracefully closed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1770
+#: dlls/kernelbase/winerror.mc:1845
 msgid "Address already associated with transport endpoint.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1775
+#: dlls/kernelbase/winerror.mc:1850
 msgid "Address not associated with transport endpoint.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1780
+#: dlls/kernelbase/winerror.mc:1855
 msgid "Connection invalid.\n"
 msgstr "Невірне з'єднання.\n"
 
-#: dlls/kernelbase/winerror.mc:1785
+#: dlls/kernelbase/winerror.mc:1860
 msgid "Connection is active.\n"
 msgstr "З'єднання активне.\n"
 
-#: dlls/kernelbase/winerror.mc:1790
+#: dlls/kernelbase/winerror.mc:1865
 msgid "Network unreachable.\n"
 msgstr "Мережа недоступна.\n"
 
-#: dlls/kernelbase/winerror.mc:1795
+#: dlls/kernelbase/winerror.mc:1870
 msgid "Host unreachable.\n"
 msgstr "Мережний вузол недоступний.\n"
 
-#: dlls/kernelbase/winerror.mc:1800
+#: dlls/kernelbase/winerror.mc:1875
 msgid "Protocol unreachable.\n"
 msgstr "Протокол недоступний.\n"
 
-#: dlls/kernelbase/winerror.mc:1805
+#: dlls/kernelbase/winerror.mc:1880
 msgid "Port unreachable.\n"
 msgstr "Порт недоступний.\n"
 
-#: dlls/kernelbase/winerror.mc:1810
+#: dlls/kernelbase/winerror.mc:1885
 msgid "Request aborted.\n"
 msgstr "Запит перервано.\n"
 
-#: dlls/kernelbase/winerror.mc:1815
+#: dlls/kernelbase/winerror.mc:1890
 msgid "Connection aborted.\n"
 msgstr "З'єднання перервано.\n"
 
-#: dlls/kernelbase/winerror.mc:1820
+#: dlls/kernelbase/winerror.mc:1895
 msgid "Please retry operation.\n"
 msgstr "Повторіть операцію.\n"
 
-#: dlls/kernelbase/winerror.mc:1825
+#: dlls/kernelbase/winerror.mc:1900
 msgid "Connection count limit reached.\n"
 msgstr "Досягнута межа кількості підключень.\n"
 
-#: dlls/kernelbase/winerror.mc:1830
+#: dlls/kernelbase/winerror.mc:1905
 msgid "Login time restriction.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1835
+#: dlls/kernelbase/winerror.mc:1910
 msgid "Login workstation restriction.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1840
+#: dlls/kernelbase/winerror.mc:1915
 msgid "Incorrect network address.\n"
 msgstr "Невірна мережна адреса.\n"
 
-#: dlls/kernelbase/winerror.mc:1845
+#: dlls/kernelbase/winerror.mc:1920
 msgid "Service already registered.\n"
 msgstr "Сервіс вже зареєстрований.\n"
 
-#: dlls/kernelbase/winerror.mc:1850
+#: dlls/kernelbase/winerror.mc:1925
 msgid "Service not found.\n"
 msgstr "Сервіс не знайдений.\n"
 
-#: dlls/kernelbase/winerror.mc:1855
+#: dlls/kernelbase/winerror.mc:1930
 msgid "User not authenticated.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1860
+#: dlls/kernelbase/winerror.mc:1935
 msgid "User not logged on.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1865
+#: dlls/kernelbase/winerror.mc:1940
 msgid "Continue work in progress.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1870
+#: dlls/kernelbase/winerror.mc:1945
 msgid "Already initialized.\n"
 msgstr "Вже ініціалізовано.\n"
 
-#: dlls/kernelbase/winerror.mc:1875
+#: dlls/kernelbase/winerror.mc:1950
 msgid "No more local devices.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1880
+#: dlls/kernelbase/winerror.mc:1955
 msgid "The site does not exist.\n"
 msgstr "Сайт не існує.\n"
 
-#: dlls/kernelbase/winerror.mc:1885
+#: dlls/kernelbase/winerror.mc:1960
 msgid "The domain controller already exists.\n"
 msgstr "Контролер домену вже існує.\n"
 
-#: dlls/kernelbase/winerror.mc:1890
+#: dlls/kernelbase/winerror.mc:1965
 msgid "Supported only when connected.\n"
 msgstr "Підтримується лише коли під'єднано.\n"
 
-#: dlls/kernelbase/winerror.mc:1895
+#: dlls/kernelbase/winerror.mc:1970
 msgid "Perform operation even when nothing changed.\n"
 msgstr "Виконати операцію, навіть якщо нічого не змінилося.\n"
 
-#: dlls/kernelbase/winerror.mc:1900
+#: dlls/kernelbase/winerror.mc:1975
 msgid "The user profile is invalid.\n"
 msgstr "Невірний профіль користувача.\n"
 
-#: dlls/kernelbase/winerror.mc:1905
+#: dlls/kernelbase/winerror.mc:1980
 msgid "Not supported on Small Business Server.\n"
 msgstr "Не підтримується на Small Business Server.\n"
 
-#: dlls/kernelbase/winerror.mc:1910
+#: dlls/kernelbase/winerror.mc:1985
 msgid "Not all privileges assigned.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1915
+#: dlls/kernelbase/winerror.mc:1990
 msgid "Some security IDs not mapped.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1920
+#: dlls/kernelbase/winerror.mc:1995
 msgid "No quotas for account.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1925
+#: dlls/kernelbase/winerror.mc:2000
 msgid "Local user session key.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1930
+#: dlls/kernelbase/winerror.mc:2005
 msgid "Password too complex for LM.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1935
+#: dlls/kernelbase/winerror.mc:2010
 msgid "Unknown revision.\n"
 msgstr "Невідома ревізія.\n"
 
-#: dlls/kernelbase/winerror.mc:1940
+#: dlls/kernelbase/winerror.mc:2015
 msgid "Incompatible revision levels.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1945
+#: dlls/kernelbase/winerror.mc:2020
 msgid "Invalid owner.\n"
 msgstr "Недійсний власник.\n"
 
-#: dlls/kernelbase/winerror.mc:1950
+#: dlls/kernelbase/winerror.mc:2025
 msgid "Invalid primary group.\n"
 msgstr "Невірна основна група.\n"
 
-#: dlls/kernelbase/winerror.mc:1955
+#: dlls/kernelbase/winerror.mc:2030
 msgid "No impersonation token.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1960
+#: dlls/kernelbase/winerror.mc:2035
 msgid "Can't disable mandatory group.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1965
+#: dlls/kernelbase/winerror.mc:2040
 msgid "No logon servers available.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1970
+#: dlls/kernelbase/winerror.mc:2045
 msgid "No such logon session.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1975
+#: dlls/kernelbase/winerror.mc:2050
 msgid "No such privilege.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1980
+#: dlls/kernelbase/winerror.mc:2055
 msgid "Privilege not held.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:1985
+#: dlls/kernelbase/winerror.mc:2060
 msgid "Invalid account name.\n"
 msgstr "Невірне ім'я облікового запису.\n"
 
-#: dlls/kernelbase/winerror.mc:1990
+#: dlls/kernelbase/winerror.mc:2065
 msgid "User already exists.\n"
 msgstr "Користувач вже існує.\n"
 
-#: dlls/kernelbase/winerror.mc:1995
+#: dlls/kernelbase/winerror.mc:2070
 msgid "No such user.\n"
 msgstr "Немає такого користувача.\n"
 
-#: dlls/kernelbase/winerror.mc:2000
+#: dlls/kernelbase/winerror.mc:2075
 msgid "Group already exists.\n"
 msgstr "Група вже існує.\n"
 
-#: dlls/kernelbase/winerror.mc:2005
+#: dlls/kernelbase/winerror.mc:2080
 msgid "No such group.\n"
 msgstr "Немає такої групи.\n"
 
-#: dlls/kernelbase/winerror.mc:2010
+#: dlls/kernelbase/winerror.mc:2085
 msgid "User already in group.\n"
 msgstr "Користувач вже в групі.\n"
 
-#: dlls/kernelbase/winerror.mc:2015
+#: dlls/kernelbase/winerror.mc:2090
 msgid "User not in group.\n"
 msgstr "Користувач не в групі.\n"
 
-#: dlls/kernelbase/winerror.mc:2020
+#: dlls/kernelbase/winerror.mc:2095
 msgid "Can't delete last admin user.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2025
+#: dlls/kernelbase/winerror.mc:2100
 msgid "Wrong password.\n"
 msgstr "Невірний пароль.\n"
 
-#: dlls/kernelbase/winerror.mc:2030
+#: dlls/kernelbase/winerror.mc:2105
 msgid "Ill-formed password.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2035
+#: dlls/kernelbase/winerror.mc:2110
 msgid "Password restriction.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2040
+#: dlls/kernelbase/winerror.mc:2115
 msgid "Logon failure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2045
+#: dlls/kernelbase/winerror.mc:2120
 msgid "Account restriction.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2050
+#: dlls/kernelbase/winerror.mc:2125
 msgid "Invalid logon hours.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2055
+#: dlls/kernelbase/winerror.mc:2130
 msgid "Invalid workstation.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2060
+#: dlls/kernelbase/winerror.mc:2135
 msgid "Password expired.\n"
 msgstr "Пароль протермінований.\n"
 
-#: dlls/kernelbase/winerror.mc:2065
+#: dlls/kernelbase/winerror.mc:2140
 msgid "Account disabled.\n"
 msgstr "Обліковий запис вимкнений.\n"
 
-#: dlls/kernelbase/winerror.mc:2070
+#: dlls/kernelbase/winerror.mc:2145
 msgid "No security ID mapped.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2075
+#: dlls/kernelbase/winerror.mc:2150
 msgid "Too many LUIDs requested.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2080
+#: dlls/kernelbase/winerror.mc:2155
 msgid "LUIDs exhausted.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2085
+#: dlls/kernelbase/winerror.mc:2160
 msgid "Invalid sub authority.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2090
+#: dlls/kernelbase/winerror.mc:2165
 msgid "Invalid ACL.\n"
 msgstr "Невірний ACL.\n"
 
-#: dlls/kernelbase/winerror.mc:2095
+#: dlls/kernelbase/winerror.mc:2170
 msgid "Invalid SID.\n"
 msgstr "Невірний SID.\n"
 
-#: dlls/kernelbase/winerror.mc:2100
+#: dlls/kernelbase/winerror.mc:2175
 msgid "Invalid security descriptor.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2105
+#: dlls/kernelbase/winerror.mc:2180
 msgid "Bad inherited ACL.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2110
+#: dlls/kernelbase/winerror.mc:2185
 msgid "Server disabled.\n"
 msgstr "Сервер вимкнений.\n"
 
-#: dlls/kernelbase/winerror.mc:2115
+#: dlls/kernelbase/winerror.mc:2190
 msgid "Server not disabled.\n"
 msgstr "Сервер не вимкнений.\n"
 
-#: dlls/kernelbase/winerror.mc:2120
+#: dlls/kernelbase/winerror.mc:2195
 msgid "Invalid ID authority.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2125
+#: dlls/kernelbase/winerror.mc:2200
 msgid "Allotted space exceeded.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2130
+#: dlls/kernelbase/winerror.mc:2205
 msgid "Invalid group attributes.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2135
+#: dlls/kernelbase/winerror.mc:2210
 msgid "Bad impersonation level.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2140
+#: dlls/kernelbase/winerror.mc:2215
 msgid "Can't open anonymous security token.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2145
+#: dlls/kernelbase/winerror.mc:2220
 msgid "Bad validation class.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2150
+#: dlls/kernelbase/winerror.mc:2225
 msgid "Bad token type.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2155
+#: dlls/kernelbase/winerror.mc:2230
 msgid "No security on object.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2160
+#: dlls/kernelbase/winerror.mc:2235
 msgid "Can't access domain information.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2165
+#: dlls/kernelbase/winerror.mc:2240
 msgid "Invalid server state.\n"
 msgstr "Невірний стан сервера.\n"
 
-#: dlls/kernelbase/winerror.mc:2170
+#: dlls/kernelbase/winerror.mc:2245
 msgid "Invalid domain state.\n"
 msgstr "Невірний стан домену.\n"
 
-#: dlls/kernelbase/winerror.mc:2175
+#: dlls/kernelbase/winerror.mc:2250
 msgid "Invalid domain role.\n"
 msgstr "Невірна роль домену.\n"
 
-#: dlls/kernelbase/winerror.mc:2180
+#: dlls/kernelbase/winerror.mc:2255
 msgid "No such domain.\n"
 msgstr "Немає такого домену.\n"
 
-#: dlls/kernelbase/winerror.mc:2185
+#: dlls/kernelbase/winerror.mc:2260
 msgid "Domain already exists.\n"
 msgstr "Домен вже існує.\n"
 
-#: dlls/kernelbase/winerror.mc:2190
+#: dlls/kernelbase/winerror.mc:2265
 msgid "Domain limit exceeded.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2195
+#: dlls/kernelbase/winerror.mc:2270
 msgid "Internal database corruption.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2200
+#: dlls/kernelbase/winerror.mc:2275
 msgid "Internal error.\n"
 msgstr "Внутрішня помилка.\n"
 
-#: dlls/kernelbase/winerror.mc:2205
+#: dlls/kernelbase/winerror.mc:2280
 msgid "Generic access types not mapped.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2210
+#: dlls/kernelbase/winerror.mc:2285
 msgid "Bad descriptor format.\n"
 msgstr "Невірний формат дескриптора.\n"
 
-#: dlls/kernelbase/winerror.mc:2215
+#: dlls/kernelbase/winerror.mc:2290
 msgid "Not a logon process.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2220
+#: dlls/kernelbase/winerror.mc:2295
 msgid "Logon session ID exists.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2225
+#: dlls/kernelbase/winerror.mc:2300
 msgid "Unknown authentication package.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2230
+#: dlls/kernelbase/winerror.mc:2305
 msgid "Bad logon session state.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2235
+#: dlls/kernelbase/winerror.mc:2310
 msgid "Logon session ID collision.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2240
+#: dlls/kernelbase/winerror.mc:2315
 msgid "Invalid logon type.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2245
+#: dlls/kernelbase/winerror.mc:2320
 msgid "Cannot impersonate.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2250
+#: dlls/kernelbase/winerror.mc:2325
 msgid "Invalid transaction state.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2255
+#: dlls/kernelbase/winerror.mc:2330
 msgid "Security DB commit failure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2260
+#: dlls/kernelbase/winerror.mc:2335
 msgid "Account is built-in.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2265
+#: dlls/kernelbase/winerror.mc:2340
 msgid "Group is built-in.\n"
 msgstr "Група є вбудованою.\n"
 
-#: dlls/kernelbase/winerror.mc:2270
+#: dlls/kernelbase/winerror.mc:2345
 msgid "User is built-in.\n"
 msgstr "Користувач є вбудованим.\n"
 
-#: dlls/kernelbase/winerror.mc:2275
+#: dlls/kernelbase/winerror.mc:2350
 msgid "Group is primary for user.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2280
+#: dlls/kernelbase/winerror.mc:2355
 msgid "Token already in use.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2285
+#: dlls/kernelbase/winerror.mc:2360
 msgid "No such local group.\n"
 msgstr "Немає такої локальної групи.\n"
 
-#: dlls/kernelbase/winerror.mc:2290
+#: dlls/kernelbase/winerror.mc:2365
 msgid "User not in local group.\n"
 msgstr "Користувач не в локальній групі.\n"
 
-#: dlls/kernelbase/winerror.mc:2295
+#: dlls/kernelbase/winerror.mc:2370
 msgid "User already in local group.\n"
 msgstr "Користувач вже в локальній групі.\n"
 
-#: dlls/kernelbase/winerror.mc:2300
+#: dlls/kernelbase/winerror.mc:2375
 msgid "Local group already exists.\n"
 msgstr "Локальна група вже існує.\n"
 
-#: dlls/kernelbase/winerror.mc:2305 dlls/kernelbase/winerror.mc:2330
+#: dlls/kernelbase/winerror.mc:2380 dlls/kernelbase/winerror.mc:2405
 msgid "Logon type not granted.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2310
+#: dlls/kernelbase/winerror.mc:2385
 msgid "Too many secrets.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2315
+#: dlls/kernelbase/winerror.mc:2390
 msgid "Secret too long.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2320
+#: dlls/kernelbase/winerror.mc:2395
 msgid "Internal security DB error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2325
+#: dlls/kernelbase/winerror.mc:2400
 msgid "Too many context IDs.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2335
+#: dlls/kernelbase/winerror.mc:2410
 msgid "Cross-encrypted NT password required.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2340
+#: dlls/kernelbase/winerror.mc:2415
 msgid "No such member.\n"
 msgstr "Немає такого члена.\n"
 
-#: dlls/kernelbase/winerror.mc:2345
+#: dlls/kernelbase/winerror.mc:2420
 msgid "Invalid member.\n"
 msgstr "Невірний член.\n"
 
-#: dlls/kernelbase/winerror.mc:2350
+#: dlls/kernelbase/winerror.mc:2425
 msgid "Too many SIDs.\n"
 msgstr "Забагато SIDів.\n"
 
-#: dlls/kernelbase/winerror.mc:2355
+#: dlls/kernelbase/winerror.mc:2430
 msgid "Cross-encrypted LM password required.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2360
+#: dlls/kernelbase/winerror.mc:2435
 msgid "No inheritable components.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2365
+#: dlls/kernelbase/winerror.mc:2440
 msgid "File or directory corrupt.\n"
 msgstr "Файл чи директорія пошкоджені.\n"
 
-#: dlls/kernelbase/winerror.mc:2370
+#: dlls/kernelbase/winerror.mc:2445
 msgid "Disk is corrupt.\n"
 msgstr "Диск пошкоджений.\n"
 
-#: dlls/kernelbase/winerror.mc:2375
+#: dlls/kernelbase/winerror.mc:2450
 msgid "No user session key.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2380
+#: dlls/kernelbase/winerror.mc:2455
 msgid "License quota exceeded.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2385
+#: dlls/kernelbase/winerror.mc:2460
 msgid "Wrong target name.\n"
 msgstr "Невірна назва цілі.\n"
 
-#: dlls/kernelbase/winerror.mc:2390
+#: dlls/kernelbase/winerror.mc:2465
 msgid "Mutual authentication failed.\n"
 msgstr "Взаємне завірення не вдалось.\n"
 
-#: dlls/kernelbase/winerror.mc:2395
+#: dlls/kernelbase/winerror.mc:2470
 msgid "Time skew between client and server.\n"
 msgstr "На клієнті і сервері різний час.\n"
 
-#: dlls/kernelbase/winerror.mc:2400
+#: dlls/kernelbase/winerror.mc:2475
 msgid "Invalid window handle.\n"
 msgstr "Невірна рукоятка вікна.\n"
 
-#: dlls/kernelbase/winerror.mc:2405
+#: dlls/kernelbase/winerror.mc:2480
 msgid "Invalid menu handle.\n"
 msgstr "Невірна рукоятка меню.\n"
 
-#: dlls/kernelbase/winerror.mc:2410
+#: dlls/kernelbase/winerror.mc:2485
 msgid "Invalid cursor handle.\n"
 msgstr "Невірна рукоятка курсора.\n"
 
-#: dlls/kernelbase/winerror.mc:2415
+#: dlls/kernelbase/winerror.mc:2490
 msgid "Invalid accelerator table handle.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2420
+#: dlls/kernelbase/winerror.mc:2495
 msgid "Invalid hook handle.\n"
 msgstr "Невірна рукоятка гачка.\n"
 
-#: dlls/kernelbase/winerror.mc:2425
+#: dlls/kernelbase/winerror.mc:2500
 msgid "Invalid DWP handle.\n"
 msgstr "Невірна рукоятка DWP.\n"
 
-#: dlls/kernelbase/winerror.mc:2430
+#: dlls/kernelbase/winerror.mc:2505
 msgid "Can't create top-level child window.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2435
+#: dlls/kernelbase/winerror.mc:2510
 msgid "Can't find window class.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2440
+#: dlls/kernelbase/winerror.mc:2515
 msgid "Window owned by another thread.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2445
+#: dlls/kernelbase/winerror.mc:2520
 msgid "Hotkey already registered.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2450
+#: dlls/kernelbase/winerror.mc:2525
 msgid "Class already exists.\n"
 msgstr "Клас вже існує.\n"
 
-#: dlls/kernelbase/winerror.mc:2455
+#: dlls/kernelbase/winerror.mc:2530
 msgid "Class does not exist.\n"
 msgstr "Клас не існує.\n"
 
-#: dlls/kernelbase/winerror.mc:2460
+#: dlls/kernelbase/winerror.mc:2535
 msgid "Class has open windows.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2465 dlls/mferror/mferror.mc:130
+#: dlls/kernelbase/winerror.mc:2540 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "Невірний індекс.\n"
 
-#: dlls/kernelbase/winerror.mc:2470
+#: dlls/kernelbase/winerror.mc:2545
 msgid "Invalid icon handle.\n"
 msgstr "Невірна рукоятка іконки.\n"
 
-#: dlls/kernelbase/winerror.mc:2475
+#: dlls/kernelbase/winerror.mc:2550
 msgid "Private dialog index.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2480
+#: dlls/kernelbase/winerror.mc:2555
 msgid "List box ID not found.\n"
 msgstr "ID списку не знайдено.\n"
 
-#: dlls/kernelbase/winerror.mc:2485
+#: dlls/kernelbase/winerror.mc:2560
 msgid "No wildcard characters.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2490
+#: dlls/kernelbase/winerror.mc:2565
 msgid "Clipboard not open.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2495
+#: dlls/kernelbase/winerror.mc:2570
 msgid "Hotkey not registered.\n"
 msgstr "Гаряча клавіша не зареєстрована.\n"
 
-#: dlls/kernelbase/winerror.mc:2500
+#: dlls/kernelbase/winerror.mc:2575
 msgid "Not a dialog window.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2505
+#: dlls/kernelbase/winerror.mc:2580
 msgid "Control ID not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2510
+#: dlls/kernelbase/winerror.mc:2585
 msgid "Invalid combo box message.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2515
+#: dlls/kernelbase/winerror.mc:2590
 msgid "Not a combo box window.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2520
+#: dlls/kernelbase/winerror.mc:2595
 msgid "Invalid edit height.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2525
+#: dlls/kernelbase/winerror.mc:2600
 msgid "DC not found.\n"
 msgstr "DC не знайдений.\n"
 
-#: dlls/kernelbase/winerror.mc:2530
+#: dlls/kernelbase/winerror.mc:2605
 msgid "Invalid hook filter.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2535
+#: dlls/kernelbase/winerror.mc:2610
 msgid "Invalid filter procedure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2540
+#: dlls/kernelbase/winerror.mc:2615
 msgid "Hook procedure needs module handle.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2545
+#: dlls/kernelbase/winerror.mc:2620
 msgid "Global-only hook procedure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2550
+#: dlls/kernelbase/winerror.mc:2625
 msgid "Journal hook already set.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2555
+#: dlls/kernelbase/winerror.mc:2630
 msgid "Hook procedure not installed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2560
+#: dlls/kernelbase/winerror.mc:2635
 msgid "Invalid list box message.\n"
 msgstr "Невірне повідомлення списку.\n"
 
-#: dlls/kernelbase/winerror.mc:2565
+#: dlls/kernelbase/winerror.mc:2640
 msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2570
+#: dlls/kernelbase/winerror.mc:2645
 msgid "No tab stops on this list box.\n"
 msgstr "В цьому списку немає табуляції.\n"
 
-#: dlls/kernelbase/winerror.mc:2575
+#: dlls/kernelbase/winerror.mc:2650
 msgid "Can't destroy object owned by another thread.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2580
+#: dlls/kernelbase/winerror.mc:2655
 msgid "Child window menus not allowed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2585
+#: dlls/kernelbase/winerror.mc:2660
 msgid "Window has no system menu.\n"
 msgstr "Вікно не має системного меню.\n"
 
-#: dlls/kernelbase/winerror.mc:2590
+#: dlls/kernelbase/winerror.mc:2665
 msgid "Invalid message box style.\n"
 msgstr "Невірний стиль повідомлення.\n"
 
-#: dlls/kernelbase/winerror.mc:2595
+#: dlls/kernelbase/winerror.mc:2670
 msgid "Invalid SPI parameter.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2600
+#: dlls/kernelbase/winerror.mc:2675
 msgid "Screen already locked.\n"
 msgstr "Екран вже заблокований.\n"
 
-#: dlls/kernelbase/winerror.mc:2605
+#: dlls/kernelbase/winerror.mc:2680
 msgid "Window handles have different parents.\n"
 msgstr "Віконні рукоятки мають різних предків.\n"
 
-#: dlls/kernelbase/winerror.mc:2610
+#: dlls/kernelbase/winerror.mc:2685
 msgid "Not a child window.\n"
 msgstr "Не дочірнє вікно.\n"
 
-#: dlls/kernelbase/winerror.mc:2615
+#: dlls/kernelbase/winerror.mc:2690
 msgid "Invalid GW command.\n"
 msgstr "Невірна команда GW.\n"
 
-#: dlls/kernelbase/winerror.mc:2620
+#: dlls/kernelbase/winerror.mc:2695
 msgid "Invalid thread ID.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2625
+#: dlls/kernelbase/winerror.mc:2700
 msgid "Not an MDI child window.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2630
+#: dlls/kernelbase/winerror.mc:2705
 msgid "Popup menu already active.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2635
+#: dlls/kernelbase/winerror.mc:2710
 msgid "No scrollbars.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2640
+#: dlls/kernelbase/winerror.mc:2715
 msgid "Invalid scrollbar range.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2645
+#: dlls/kernelbase/winerror.mc:2720
 msgid "Invalid ShowWin command.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2650
+#: dlls/kernelbase/winerror.mc:2725
 msgid "No system resources.\n"
 msgstr "Немає системних ресурсів.\n"
 
-#: dlls/kernelbase/winerror.mc:2655
+#: dlls/kernelbase/winerror.mc:2730
 msgid "No non-paged system resources.\n"
 msgstr "Немає невивантажуваних системних ресурсів.\n"
 
-#: dlls/kernelbase/winerror.mc:2660
+#: dlls/kernelbase/winerror.mc:2735
 msgid "No paged system resources.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2665
+#: dlls/kernelbase/winerror.mc:2740
 msgid "No working set quota.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2670
+#: dlls/kernelbase/winerror.mc:2745
 msgid "No page file quota.\n"
 msgstr "Немає квоти файлу довантаження.\n"
 
-#: dlls/kernelbase/winerror.mc:2675
+#: dlls/kernelbase/winerror.mc:2750
 msgid "Exceeded commitment limit.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2680
+#: dlls/kernelbase/winerror.mc:2755
 msgid "Menu item not found.\n"
 msgstr "Елемент меню не знайдений.\n"
 
-#: dlls/kernelbase/winerror.mc:2685
+#: dlls/kernelbase/winerror.mc:2760
 msgid "Invalid keyboard handle.\n"
 msgstr "Невірна рукоятка клавіатури.\n"
 
-#: dlls/kernelbase/winerror.mc:2690
+#: dlls/kernelbase/winerror.mc:2765
 msgid "Hook type not allowed.\n"
 msgstr "Недозволений тип гачка.\n"
 
-#: dlls/kernelbase/winerror.mc:2695
+#: dlls/kernelbase/winerror.mc:2770
 msgid "Interactive window station required.\n"
 msgstr "Необхідна інтерактивна віконна станція.\n"
 
-#: dlls/kernelbase/winerror.mc:2700
+#: dlls/kernelbase/winerror.mc:2775
 msgid "Timeout.\n"
 msgstr "Тайм-аут.\n"
 
-#: dlls/kernelbase/winerror.mc:2705
+#: dlls/kernelbase/winerror.mc:2780
 msgid "Invalid monitor handle.\n"
 msgstr "Невірна рукоятка монітору.\n"
 
-#: dlls/kernelbase/winerror.mc:2710
+#: dlls/kernelbase/winerror.mc:2785
 msgid "Event log file corrupt.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2715
+#: dlls/kernelbase/winerror.mc:2790
 msgid "Event log can't start.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2720
+#: dlls/kernelbase/winerror.mc:2795
 msgid "Event log file full.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2725
+#: dlls/kernelbase/winerror.mc:2800
 msgid "Event log file changed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2730
+#: dlls/kernelbase/winerror.mc:2805
 msgid "Installer service failed.\n"
 msgstr "Сервіс встановлення зламався.\n"
 
-#: dlls/kernelbase/winerror.mc:2735
+#: dlls/kernelbase/winerror.mc:2810
 msgid "Installation aborted by user.\n"
 msgstr "Встановлення скасоване користувачем.\n"
 
-#: dlls/kernelbase/winerror.mc:2740
+#: dlls/kernelbase/winerror.mc:2815
 msgid "Installation failure.\n"
 msgstr "Помилка встановлення.\n"
 
-#: dlls/kernelbase/winerror.mc:2745
+#: dlls/kernelbase/winerror.mc:2820
 msgid "Installation suspended.\n"
 msgstr "Встановлення призупинене.\n"
 
-#: dlls/kernelbase/winerror.mc:2750
+#: dlls/kernelbase/winerror.mc:2825
 msgid "Unknown product.\n"
 msgstr "Невідомий продукт.\n"
 
-#: dlls/kernelbase/winerror.mc:2755
+#: dlls/kernelbase/winerror.mc:2830
 msgid "Unknown feature.\n"
 msgstr "Невідома ознака.\n"
 
-#: dlls/kernelbase/winerror.mc:2760
+#: dlls/kernelbase/winerror.mc:2835
 msgid "Unknown component.\n"
 msgstr "Невідомий компонент.\n"
 
-#: dlls/kernelbase/winerror.mc:2765
+#: dlls/kernelbase/winerror.mc:2840
 msgid "Unknown property.\n"
 msgstr "Невідома властивість.\n"
 
-#: dlls/kernelbase/winerror.mc:2770
+#: dlls/kernelbase/winerror.mc:2845
 msgid "Invalid handle state.\n"
 msgstr "Невірний стан рукоятки.\n"
 
-#: dlls/kernelbase/winerror.mc:2775
+#: dlls/kernelbase/winerror.mc:2850
 msgid "Bad configuration.\n"
 msgstr "Невірна конфігурація.\n"
 
-#: dlls/kernelbase/winerror.mc:2780
+#: dlls/kernelbase/winerror.mc:2855
 msgid "Index is missing.\n"
 msgstr "Індекс загублений.\n"
 
-#: dlls/kernelbase/winerror.mc:2785
+#: dlls/kernelbase/winerror.mc:2860
 msgid "Installation source is missing.\n"
 msgstr "Джерело встановлення втрачене.\n"
 
-#: dlls/kernelbase/winerror.mc:2790
+#: dlls/kernelbase/winerror.mc:2865
 msgid "Wrong installation package version.\n"
 msgstr "Невірна версія пакету встановлення.\n"
 
-#: dlls/kernelbase/winerror.mc:2795
+#: dlls/kernelbase/winerror.mc:2870
 msgid "Product uninstalled.\n"
 msgstr "Продукт видалено.\n"
 
-#: dlls/kernelbase/winerror.mc:2800
+#: dlls/kernelbase/winerror.mc:2875
 msgid "Invalid query syntax.\n"
 msgstr "Невірний синтаксис запиту.\n"
 
-#: dlls/kernelbase/winerror.mc:2805
+#: dlls/kernelbase/winerror.mc:2880
 msgid "Invalid field.\n"
 msgstr "Невірне поле.\n"
 
-#: dlls/kernelbase/winerror.mc:2810
+#: dlls/kernelbase/winerror.mc:2885
 msgid "Device removed.\n"
 msgstr "Пристрій видалено.\n"
 
-#: dlls/kernelbase/winerror.mc:2815
+#: dlls/kernelbase/winerror.mc:2890
 msgid "Installation already running.\n"
 msgstr "Встановлення вже почалось.\n"
 
-#: dlls/kernelbase/winerror.mc:2820
+#: dlls/kernelbase/winerror.mc:2895
 msgid "Installation package failed to open.\n"
 msgstr "Не вдалось відкрити встановлювальний пакунок.\n"
 
-#: dlls/kernelbase/winerror.mc:2825
+#: dlls/kernelbase/winerror.mc:2900
 msgid "Installation package is invalid.\n"
 msgstr "Пакет встановлення помилковий.\n"
 
-#: dlls/kernelbase/winerror.mc:2830
+#: dlls/kernelbase/winerror.mc:2905
 msgid "Installer user interface failed.\n"
 msgstr "Збій користувацького інтерфейсу встановлювача.\n"
 
-#: dlls/kernelbase/winerror.mc:2835
+#: dlls/kernelbase/winerror.mc:2910
 msgid "Failed to open installation log file.\n"
 msgstr "Не вдалось відкрити файл звіту встановлення.\n"
 
-#: dlls/kernelbase/winerror.mc:2840
+#: dlls/kernelbase/winerror.mc:2915
 msgid "Installation language not supported.\n"
 msgstr "Мова встановлення не підтримується.\n"
 
-#: dlls/kernelbase/winerror.mc:2845
+#: dlls/kernelbase/winerror.mc:2920
 msgid "Installation transform failed to apply.\n"
 msgstr "Не вдалось застосувати перетворення встановлення.\n"
 
-#: dlls/kernelbase/winerror.mc:2850
+#: dlls/kernelbase/winerror.mc:2925
 msgid "Installation package rejected.\n"
 msgstr "Пакет встановлення відхилено.\n"
 
-#: dlls/kernelbase/winerror.mc:2855
+#: dlls/kernelbase/winerror.mc:2930
 msgid "Function could not be called.\n"
 msgstr "Функція не може бути викликана.\n"
 
-#: dlls/kernelbase/winerror.mc:2860
+#: dlls/kernelbase/winerror.mc:2935
 msgid "Function failed.\n"
 msgstr "Функція не виконана.\n"
 
-#: dlls/kernelbase/winerror.mc:2865
+#: dlls/kernelbase/winerror.mc:2940
 msgid "Invalid table.\n"
 msgstr "Невірна таблиця.\n"
 
-#: dlls/kernelbase/winerror.mc:2870
+#: dlls/kernelbase/winerror.mc:2945
 msgid "Data type mismatch.\n"
 msgstr "Невідповідність типів даних.\n"
 
-#: dlls/kernelbase/winerror.mc:2875 dlls/kernelbase/winerror.mc:3085
+#: dlls/kernelbase/winerror.mc:2950 dlls/kernelbase/winerror.mc:3160
 msgid "Unsupported type.\n"
 msgstr "Непідтримуваний тип.\n"
 
-#: dlls/kernelbase/winerror.mc:2880
+#: dlls/kernelbase/winerror.mc:2955
 msgid "Creation failed.\n"
 msgstr "Помилка створення.\n"
 
-#: dlls/kernelbase/winerror.mc:2885
+#: dlls/kernelbase/winerror.mc:2960
 msgid "Temporary directory not writable.\n"
 msgstr "Тимчасова тека недоступна для запису.\n"
 
-#: dlls/kernelbase/winerror.mc:2890
+#: dlls/kernelbase/winerror.mc:2965
 msgid "Installation platform not supported.\n"
 msgstr "Платформа встановлення не підтримується.\n"
 
-#: dlls/kernelbase/winerror.mc:2895
+#: dlls/kernelbase/winerror.mc:2970
 msgid "Installer not used.\n"
 msgstr "Встановлювач не використаний.\n"
 
-#: dlls/kernelbase/winerror.mc:2900
+#: dlls/kernelbase/winerror.mc:2975
 msgid "Failed to open the patch package.\n"
 msgstr "Помилка відкриття пакету виправлень.\n"
 
-#: dlls/kernelbase/winerror.mc:2905
+#: dlls/kernelbase/winerror.mc:2980
 msgid "Invalid patch package.\n"
 msgstr "Невірний пакет виправлень.\n"
 
-#: dlls/kernelbase/winerror.mc:2910
+#: dlls/kernelbase/winerror.mc:2985
 msgid "Unsupported patch package.\n"
 msgstr "Непідтримуваний пакет виправлень.\n"
 
-#: dlls/kernelbase/winerror.mc:2915
+#: dlls/kernelbase/winerror.mc:2990
 msgid "Another version is installed.\n"
 msgstr "Встановлена інша версія.\n"
 
-#: dlls/kernelbase/winerror.mc:2920
+#: dlls/kernelbase/winerror.mc:2995
 msgid "Invalid command line.\n"
 msgstr "Невірний командний рядок.\n"
 
-#: dlls/kernelbase/winerror.mc:2925
+#: dlls/kernelbase/winerror.mc:3000
 msgid "Remote installation not allowed.\n"
 msgstr "Віддалене встановлення не дозволене.\n"
 
-#: dlls/kernelbase/winerror.mc:2930
+#: dlls/kernelbase/winerror.mc:3005
 msgid "Reboot initiated after successful install.\n"
 msgstr "Перезавантаження розпочато після успішного встановлення.\n"
 
-#: dlls/kernelbase/winerror.mc:2935
+#: dlls/kernelbase/winerror.mc:3010
 msgid "Invalid string binding.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2940
+#: dlls/kernelbase/winerror.mc:3015
 msgid "Wrong kind of binding.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2945
+#: dlls/kernelbase/winerror.mc:3020
 msgid "Invalid binding.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2950
+#: dlls/kernelbase/winerror.mc:3025
 msgid "RPC protocol sequence not supported.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2955
+#: dlls/kernelbase/winerror.mc:3030
 msgid "Invalid RPC protocol sequence.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2960
+#: dlls/kernelbase/winerror.mc:3035
 msgid "Invalid string UUID.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2965
+#: dlls/kernelbase/winerror.mc:3040
 msgid "Invalid endpoint format.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2970
+#: dlls/kernelbase/winerror.mc:3045
 msgid "Invalid network address.\n"
 msgstr "Невірна мережна адреса.\n"
 
-#: dlls/kernelbase/winerror.mc:2975
+#: dlls/kernelbase/winerror.mc:3050
 msgid "No endpoint found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2980
+#: dlls/kernelbase/winerror.mc:3055
 msgid "Invalid timeout value.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2985
+#: dlls/kernelbase/winerror.mc:3060
 msgid "Object UUID not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2990
+#: dlls/kernelbase/winerror.mc:3065
 msgid "UUID already registered.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:2995
+#: dlls/kernelbase/winerror.mc:3070
 msgid "UUID type already registered.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3000
+#: dlls/kernelbase/winerror.mc:3075
 msgid "Server already listening.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3005
+#: dlls/kernelbase/winerror.mc:3080
 msgid "No protocol sequences registered.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3010
+#: dlls/kernelbase/winerror.mc:3085
 msgid "RPC server not listening.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3015
+#: dlls/kernelbase/winerror.mc:3090
 msgid "Unknown manager type.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3020
+#: dlls/kernelbase/winerror.mc:3095
 msgid "Unknown interface.\n"
 msgstr "Невідомий інтерфейс.\n"
 
-#: dlls/kernelbase/winerror.mc:3025
+#: dlls/kernelbase/winerror.mc:3100
 msgid "No bindings.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3030
+#: dlls/kernelbase/winerror.mc:3105
 msgid "No protocol sequences.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3035
+#: dlls/kernelbase/winerror.mc:3110
 msgid "Can't create endpoint.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3040
+#: dlls/kernelbase/winerror.mc:3115
 msgid "Out of resources.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3045
+#: dlls/kernelbase/winerror.mc:3120
 msgid "RPC server unavailable.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3050
+#: dlls/kernelbase/winerror.mc:3125
 msgid "RPC server too busy.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3055
+#: dlls/kernelbase/winerror.mc:3130
 msgid "Invalid network options.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3060
+#: dlls/kernelbase/winerror.mc:3135
 msgid "No RPC call active.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3065
+#: dlls/kernelbase/winerror.mc:3140
 msgid "RPC call failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3070
+#: dlls/kernelbase/winerror.mc:3145
 msgid "RPC call failed and didn't execute.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3075
+#: dlls/kernelbase/winerror.mc:3150
 msgid "RPC protocol error.\n"
 msgstr "Помилка протоколу RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3080
+#: dlls/kernelbase/winerror.mc:3155
 msgid "Unsupported transfer syntax.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3090
+#: dlls/kernelbase/winerror.mc:3165
 msgid "Invalid tag.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3095
+#: dlls/kernelbase/winerror.mc:3170
 msgid "Invalid array bounds.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3100
+#: dlls/kernelbase/winerror.mc:3175
 msgid "No entry name.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3105
+#: dlls/kernelbase/winerror.mc:3180
 msgid "Invalid name syntax.\n"
 msgstr "Невірний синтаксис імені.\n"
 
-#: dlls/kernelbase/winerror.mc:3110
+#: dlls/kernelbase/winerror.mc:3185
 msgid "Unsupported name syntax.\n"
 msgstr "Непідтримуваний синтаксис імені.\n"
 
-#: dlls/kernelbase/winerror.mc:3115
+#: dlls/kernelbase/winerror.mc:3190
 msgid "No network address.\n"
 msgstr "Немає мережної адреси.\n"
 
-#: dlls/kernelbase/winerror.mc:3120
+#: dlls/kernelbase/winerror.mc:3195
 msgid "Duplicate endpoint.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3125
+#: dlls/kernelbase/winerror.mc:3200
 msgid "Unknown authentication type.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3130
+#: dlls/kernelbase/winerror.mc:3205
 msgid "Maximum calls too low.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3135
+#: dlls/kernelbase/winerror.mc:3210
 msgid "String too long.\n"
 msgstr "Рядок занадто довгий.\n"
 
-#: dlls/kernelbase/winerror.mc:3140
+#: dlls/kernelbase/winerror.mc:3215
 msgid "Protocol sequence not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3145
+#: dlls/kernelbase/winerror.mc:3220
 msgid "Procedure number out of range.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3150
+#: dlls/kernelbase/winerror.mc:3225
 msgid "Binding has no authentication data.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3155
+#: dlls/kernelbase/winerror.mc:3230
 msgid "Unknown authentication service.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3160
+#: dlls/kernelbase/winerror.mc:3235
 msgid "Unknown authentication level.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3165
+#: dlls/kernelbase/winerror.mc:3240
 msgid "Invalid authentication identity.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3170
+#: dlls/kernelbase/winerror.mc:3245
 msgid "Unknown authorization service.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3175
+#: dlls/kernelbase/winerror.mc:3250
 msgid "Invalid entry.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3180
+#: dlls/kernelbase/winerror.mc:3255
 msgid "Can't perform operation.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3185
+#: dlls/kernelbase/winerror.mc:3260
 msgid "Endpoints not registered.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3190
+#: dlls/kernelbase/winerror.mc:3265
 msgid "Nothing to export.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3195
+#: dlls/kernelbase/winerror.mc:3270
 msgid "Incomplete name.\n"
 msgstr "Неповне ім'я.\n"
 
-#: dlls/kernelbase/winerror.mc:3200
+#: dlls/kernelbase/winerror.mc:3275
 msgid "Invalid version option.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3205
+#: dlls/kernelbase/winerror.mc:3280
 msgid "No more members.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3210
+#: dlls/kernelbase/winerror.mc:3285
 msgid "Not all objects unexported.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3215
+#: dlls/kernelbase/winerror.mc:3290
 msgid "Interface not found.\n"
 msgstr "Інтерфейс не знайдений.\n"
 
-#: dlls/kernelbase/winerror.mc:3220
+#: dlls/kernelbase/winerror.mc:3295
 msgid "Entry already exists.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3225
+#: dlls/kernelbase/winerror.mc:3300
 msgid "Entry not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3230
+#: dlls/kernelbase/winerror.mc:3305
 msgid "Name service unavailable.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3235
+#: dlls/kernelbase/winerror.mc:3310
 msgid "Invalid network address family.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3240
+#: dlls/kernelbase/winerror.mc:3315
 msgid "Operation not supported.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3245
+#: dlls/kernelbase/winerror.mc:3320
 msgid "No security context available.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3250
+#: dlls/kernelbase/winerror.mc:3325
 msgid "RPCInternal error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3255
+#: dlls/kernelbase/winerror.mc:3330
 msgid "RPC divide-by-zero.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3260
+#: dlls/kernelbase/winerror.mc:3335
 msgid "Address error.\n"
 msgstr "Помилка адреси.\n"
 
-#: dlls/kernelbase/winerror.mc:3265
+#: dlls/kernelbase/winerror.mc:3340
 msgid "Floating-point divide-by-zero.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3270
+#: dlls/kernelbase/winerror.mc:3345
 msgid "Floating-point underflow.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3275
+#: dlls/kernelbase/winerror.mc:3350
 msgid "Floating-point overflow.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3280
+#: dlls/kernelbase/winerror.mc:3355
 msgid "No more entries.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3285
+#: dlls/kernelbase/winerror.mc:3360
 msgid "Character translation table open failed.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3290
+#: dlls/kernelbase/winerror.mc:3365
 msgid "Character translation table file too small.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3295
+#: dlls/kernelbase/winerror.mc:3370
 msgid "Null context handle.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3300
+#: dlls/kernelbase/winerror.mc:3375
 msgid "Context handle damaged.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3305
+#: dlls/kernelbase/winerror.mc:3380
 msgid "Binding handle mismatch.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3310
+#: dlls/kernelbase/winerror.mc:3385
 msgid "Cannot get call handle.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3315
+#: dlls/kernelbase/winerror.mc:3390
 msgid "Null reference pointer.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3320
+#: dlls/kernelbase/winerror.mc:3395
 msgid "Enumeration value out of range.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3325
+#: dlls/kernelbase/winerror.mc:3400
 msgid "Byte count too small.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3330
+#: dlls/kernelbase/winerror.mc:3405
 msgid "Bad stub data.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3335
+#: dlls/kernelbase/winerror.mc:3410
 msgid "Invalid user buffer.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3340
+#: dlls/kernelbase/winerror.mc:3415
 msgid "Unrecognized media.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3345
+#: dlls/kernelbase/winerror.mc:3420
 msgid "No trust secret.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3350
+#: dlls/kernelbase/winerror.mc:3425
 msgid "No trust SAM account.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3355
+#: dlls/kernelbase/winerror.mc:3430
 msgid "Trusted domain failure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3360
+#: dlls/kernelbase/winerror.mc:3435
 msgid "Trusted relationship failure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3365
+#: dlls/kernelbase/winerror.mc:3440
 msgid "Trust logon failure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3370
+#: dlls/kernelbase/winerror.mc:3445
 msgid "RPC call already in progress.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3375
+#: dlls/kernelbase/winerror.mc:3450
 msgid "NETLOGON is not started.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3380
+#: dlls/kernelbase/winerror.mc:3455
 msgid "Account expired.\n"
 msgstr "Обліковий запис протермінований.\n"
 
-#: dlls/kernelbase/winerror.mc:3385
+#: dlls/kernelbase/winerror.mc:3460
 msgid "Redirector has open handles.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3390
+#: dlls/kernelbase/winerror.mc:3465
 msgid "Printer driver already installed.\n"
 msgstr "Драйвер принтера вже встановлений.\n"
 
-#: dlls/kernelbase/winerror.mc:3395
+#: dlls/kernelbase/winerror.mc:3470
 msgid "Unknown port.\n"
 msgstr "Невідомий порт.\n"
 
-#: dlls/kernelbase/winerror.mc:3400
+#: dlls/kernelbase/winerror.mc:3475
 msgid "Unknown printer driver.\n"
 msgstr "Невідомий драйвер принтера.\n"
 
-#: dlls/kernelbase/winerror.mc:3405
+#: dlls/kernelbase/winerror.mc:3480
 msgid "Unknown print processor.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3410
+#: dlls/kernelbase/winerror.mc:3485
 msgid "Invalid separator file.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3415
+#: dlls/kernelbase/winerror.mc:3490
 msgid "Invalid priority.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3420
+#: dlls/kernelbase/winerror.mc:3495
 msgid "Invalid printer name.\n"
 msgstr "Невірне ім'я принтера.\n"
 
-#: dlls/kernelbase/winerror.mc:3425
+#: dlls/kernelbase/winerror.mc:3500
 msgid "Printer already exists.\n"
 msgstr "Принтер вже існує.\n"
 
-#: dlls/kernelbase/winerror.mc:3430
+#: dlls/kernelbase/winerror.mc:3505
 msgid "Invalid printer command.\n"
 msgstr "Невірна команда принтера.\n"
 
-#: dlls/kernelbase/winerror.mc:3435
+#: dlls/kernelbase/winerror.mc:3510
 msgid "Invalid data type.\n"
 msgstr "Невірний тип даних.\n"
 
-#: dlls/kernelbase/winerror.mc:3440
+#: dlls/kernelbase/winerror.mc:3515
 msgid "Invalid environment.\n"
 msgstr "Невірне оточення.\n"
 
-#: dlls/kernelbase/winerror.mc:3445
+#: dlls/kernelbase/winerror.mc:3520
 msgid "No more bindings.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3450
+#: dlls/kernelbase/winerror.mc:3525
 msgid "Can't log on with inter-domain trust account.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3455
+#: dlls/kernelbase/winerror.mc:3530
 msgid "Can't log on with workstation trust account.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3460
+#: dlls/kernelbase/winerror.mc:3535
 msgid "Can't log on with server trust account.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3465
+#: dlls/kernelbase/winerror.mc:3540
 msgid "Domain trust information inconsistent.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3470
+#: dlls/kernelbase/winerror.mc:3545
 msgid "Server has open handles.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3475
+#: dlls/kernelbase/winerror.mc:3550
 msgid "Resource data not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3480
+#: dlls/kernelbase/winerror.mc:3555
 msgid "Resource type not found.\n"
 msgstr "Тип ресурсу не знайдений.\n"
 
-#: dlls/kernelbase/winerror.mc:3485
+#: dlls/kernelbase/winerror.mc:3560
 msgid "Resource name not found.\n"
 msgstr "Ім’я ресурсу не знайдене.\n"
 
-#: dlls/kernelbase/winerror.mc:3490
+#: dlls/kernelbase/winerror.mc:3565
 msgid "Resource language not found.\n"
 msgstr "Мова ресурсу не знайдена.\n"
 
-#: dlls/kernelbase/winerror.mc:3495
+#: dlls/kernelbase/winerror.mc:3570
 msgid "Not enough quota.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3500
+#: dlls/kernelbase/winerror.mc:3575
 msgid "No interfaces.\n"
 msgstr "Немає інтерфейсів.\n"
 
-#: dlls/kernelbase/winerror.mc:3505
+#: dlls/kernelbase/winerror.mc:3580
 msgid "RPC call canceled.\n"
 msgstr "Запит RPC скасований.\n"
 
-#: dlls/kernelbase/winerror.mc:3510
+#: dlls/kernelbase/winerror.mc:3585
 msgid "Binding incomplete.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3515
+#: dlls/kernelbase/winerror.mc:3590
 msgid "RPC comm failure.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3520
+#: dlls/kernelbase/winerror.mc:3595
 msgid "Unsupported authorization level.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3525
+#: dlls/kernelbase/winerror.mc:3600
 msgid "No principal name registered.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3530
+#: dlls/kernelbase/winerror.mc:3605
 msgid "Not an RPC error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3535
+#: dlls/kernelbase/winerror.mc:3610
 msgid "UUID is local only.\n"
 msgstr "UUID тільки локальний.\n"
 
-#: dlls/kernelbase/winerror.mc:3540
+#: dlls/kernelbase/winerror.mc:3615
 msgid "Security package error.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3545
+#: dlls/kernelbase/winerror.mc:3620
 msgid "Thread not canceled.\n"
 msgstr "Виконання потоку не відмінено.\n"
 
-#: dlls/kernelbase/winerror.mc:3550
+#: dlls/kernelbase/winerror.mc:3625
 msgid "Invalid handle operation.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3555
+#: dlls/kernelbase/winerror.mc:3630
 msgid "Wrong serializing package version.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3560
+#: dlls/kernelbase/winerror.mc:3635
 msgid "Wrong stub version.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3565
+#: dlls/kernelbase/winerror.mc:3640
 msgid "Invalid pipe object.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3570
+#: dlls/kernelbase/winerror.mc:3645
 msgid "Wrong pipe order.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3575
+#: dlls/kernelbase/winerror.mc:3650
 msgid "Wrong pipe version.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3580
+#: dlls/kernelbase/winerror.mc:3655
 msgid "Group member not found.\n"
 msgstr "Член групи не знайдений.\n"
 
-#: dlls/kernelbase/winerror.mc:3585
+#: dlls/kernelbase/winerror.mc:3660
 msgid "Can't create endpoint mapper DB.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3590
+#: dlls/kernelbase/winerror.mc:3665
 msgid "Invalid object.\n"
 msgstr "Невірний об'єкт.\n"
 
-#: dlls/kernelbase/winerror.mc:3595
+#: dlls/kernelbase/winerror.mc:3670
 msgid "Invalid time.\n"
 msgstr "Невірний час.\n"
 
-#: dlls/kernelbase/winerror.mc:3600
+#: dlls/kernelbase/winerror.mc:3675
 msgid "Invalid form name.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3605
+#: dlls/kernelbase/winerror.mc:3680
 msgid "Invalid form size.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3610
+#: dlls/kernelbase/winerror.mc:3685
 msgid "Already awaiting printer handle.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3615
+#: dlls/kernelbase/winerror.mc:3690
 msgid "Printer deleted.\n"
 msgstr "Принтер видалений.\n"
 
-#: dlls/kernelbase/winerror.mc:3620
+#: dlls/kernelbase/winerror.mc:3695
 msgid "Invalid printer state.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3625
+#: dlls/kernelbase/winerror.mc:3700
 msgid "User must change password.\n"
 msgstr "Користувач повинен змінити пароль.\n"
 
-#: dlls/kernelbase/winerror.mc:3630
+#: dlls/kernelbase/winerror.mc:3705
 msgid "Domain controller not found.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3635
+#: dlls/kernelbase/winerror.mc:3710
 msgid "Account locked out.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3640
+#: dlls/kernelbase/winerror.mc:3715
 msgid "Invalid pixel format.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3645
+#: dlls/kernelbase/winerror.mc:3720
 msgid "Invalid driver.\n"
 msgstr "Невірний драйвер.\n"
 
-#: dlls/kernelbase/winerror.mc:3650
+#: dlls/kernelbase/winerror.mc:3725
 msgid "Invalid object resolver set.\n"
 msgstr "Невірний набір арбітрів об'єкту.\n"
 
-#: dlls/kernelbase/winerror.mc:3655
+#: dlls/kernelbase/winerror.mc:3730
 msgid "Incomplete RPC send.\n"
 msgstr "Неповне відсилання RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3660
+#: dlls/kernelbase/winerror.mc:3735
 msgid "Invalid asynchronous RPC handle.\n"
 msgstr "Помилковий асинхронний гачок RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3665
+#: dlls/kernelbase/winerror.mc:3740
 msgid "Invalid asynchronous RPC call.\n"
 msgstr "Помилковий асинхронний виклик RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3670
+#: dlls/kernelbase/winerror.mc:3745
 msgid "RPC pipe closed.\n"
 msgstr "RPC-пайп закрито.\n"
 
-#: dlls/kernelbase/winerror.mc:3675
+#: dlls/kernelbase/winerror.mc:3750
 msgid "Discipline error on RPC pipe.\n"
 msgstr "Дисциплінарна помилка на RPC-пайпі.\n"
 
-#: dlls/kernelbase/winerror.mc:3680
+#: dlls/kernelbase/winerror.mc:3755
 msgid "No data on RPC pipe.\n"
 msgstr "На RPC-пайпі відсутні дані.\n"
 
-#: dlls/kernelbase/winerror.mc:3685
+#: dlls/kernelbase/winerror.mc:3760
 msgid "No site name available.\n"
 msgstr "Ім'я сайту недоступне.\n"
 
-#: dlls/kernelbase/winerror.mc:3690
+#: dlls/kernelbase/winerror.mc:3765
 msgid "The file cannot be accessed.\n"
 msgstr "Немає доступу до файлу.\n"
 
-#: dlls/kernelbase/winerror.mc:3695
+#: dlls/kernelbase/winerror.mc:3770
 msgid "The filename cannot be resolved.\n"
 msgstr "Ім'я файлу не може бути вирішене.\n"
 
-#: dlls/kernelbase/winerror.mc:3700
+#: dlls/kernelbase/winerror.mc:3775
 msgid "RPC entry type mismatch.\n"
 msgstr "Невідповідність типу запису RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3705
+#: dlls/kernelbase/winerror.mc:3780
 msgid "Not all objects could be exported.\n"
 msgstr "Не всі об'єкти можуть бути експортовані.\n"
 
-#: dlls/kernelbase/winerror.mc:3710
+#: dlls/kernelbase/winerror.mc:3785
 msgid "The interface could not be exported.\n"
 msgstr "Інтерфейс не може бути експортований.\n"
 
-#: dlls/kernelbase/winerror.mc:3715
+#: dlls/kernelbase/winerror.mc:3790
 msgid "The profile could not be added.\n"
 msgstr "Профіль не може бути доданий.\n"
 
-#: dlls/kernelbase/winerror.mc:3720
+#: dlls/kernelbase/winerror.mc:3795
 msgid "The profile element could not be added.\n"
 msgstr "Елемент профілю не може бути доданий.\n"
 
-#: dlls/kernelbase/winerror.mc:3725
+#: dlls/kernelbase/winerror.mc:3800
 msgid "The profile element could not be removed.\n"
 msgstr "Елемент профілю не може бути видалений.\n"
 
-#: dlls/kernelbase/winerror.mc:3730
+#: dlls/kernelbase/winerror.mc:3805
 msgid "The group element could not be added.\n"
 msgstr "Елемент групи не може бути доданий.\n"
 
-#: dlls/kernelbase/winerror.mc:3735
+#: dlls/kernelbase/winerror.mc:3810
 msgid "The group element could not be removed.\n"
 msgstr "Елемент групи не може бути видалений.\n"
 
-#: dlls/kernelbase/winerror.mc:3740
+#: dlls/kernelbase/winerror.mc:3815
 msgid "The username could not be found.\n"
 msgstr "Ім'я користувача не знайдено.\n"
 
-#: dlls/kernelbase/winerror.mc:3745
+#: dlls/kernelbase/winerror.mc:3820
 msgid "This network connection does not exist.\n"
 msgstr "Цього мережевого з'єднання не існує.\n"
 
-#: dlls/kernelbase/winerror.mc:3750
+#: dlls/kernelbase/winerror.mc:3825
 #, fuzzy
 #| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
 msgstr "Файл чи директорія пошкоджені.\n"
 
-#: dlls/kernelbase/winerror.mc:3755
+#: dlls/kernelbase/winerror.mc:3830
 #, fuzzy
 #| msgid "Call not implemented.\n"
 msgid "Call interrupted.\n"
 msgstr "Виклик не реалізовано.\n"
 
-#: dlls/kernelbase/winerror.mc:3760
+#: dlls/kernelbase/winerror.mc:3835
 #, fuzzy
 #| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
 msgstr "Невірний дескриптор.\n"
 
-#: dlls/kernelbase/winerror.mc:3770
+#: dlls/kernelbase/winerror.mc:3845
 #, fuzzy
 #| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
 msgstr "Невірна мережна адреса.\n"
 
-#: dlls/kernelbase/winerror.mc:3775
+#: dlls/kernelbase/winerror.mc:3850
 #, fuzzy
 #| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
 msgstr "Невірне ім'я.\n"
 
-#: dlls/kernelbase/winerror.mc:3785
+#: dlls/kernelbase/winerror.mc:3860
 msgid "Cannot assign requested address.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3790
+#: dlls/kernelbase/winerror.mc:3865
 #, fuzzy
 #| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
 msgstr "У з'єднанні відмовлено.\n"
 
-#: dlls/kernelbase/winerror.mc:3800
+#: dlls/kernelbase/winerror.mc:3875
 #, fuzzy
 #| msgid "Point not found.\n"
 msgid "Host not found.\n"
 msgstr "Точка не знайдена.\n"
 
-#: dlls/kernelbase/winerror.mc:3805
+#: dlls/kernelbase/winerror.mc:3880
 #, fuzzy
 #| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
 msgstr "Атрибут не знайдено.\n"
 
-#: dlls/kernelbase/winerror.mc:3810
+#: dlls/kernelbase/winerror.mc:3885
 #, fuzzy
 #| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
 msgstr "Виникла критична помилка.\n"
 
-#: dlls/kernelbase/winerror.mc:3815
+#: dlls/kernelbase/winerror.mc:3890
 msgid "Name valid, no data record.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3836
+#: dlls/kernelbase/winerror.mc:3911
 msgid "Not implemented.\n"
 msgstr "Не реалізовано.\n"
 
-#: dlls/kernelbase/winerror.mc:3857
+#: dlls/kernelbase/winerror.mc:3932
 msgid "Call failed.\n"
 msgstr "Помилка запиту.\n"
 
-#: dlls/kernelbase/winerror.mc:3822
+#: dlls/kernelbase/winerror.mc:3897
 msgid "Unable to find matching object.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3829
+#: dlls/kernelbase/winerror.mc:3904
 msgid "No Signature found in file.\n"
 msgstr "Відсутній підпис файла.\n"
 
-#: dlls/kernelbase/winerror.mc:3843
+#: dlls/kernelbase/winerror.mc:3918
 msgid "Invalid call.\n"
 msgstr "Невірний запит.\n"
 
-#: dlls/kernelbase/winerror.mc:3850
+#: dlls/kernelbase/winerror.mc:3925
 msgid "Resource is not currently available.\n"
 msgstr "Наразі ресурс недоступний.\n"
 

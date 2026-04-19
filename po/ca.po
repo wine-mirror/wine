@@ -4360,11 +4360,11 @@ msgstr "No s'ha trobat el fitxer.\n"
 msgid "Path not found.\n"
 msgstr "No s'ha trobat el camí.\n"
 
-#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3780
+#: dlls/kernelbase/winerror.mc:50 dlls/kernelbase/winerror.mc:3855
 msgid "Too many open files.\n"
 msgstr "Hi ha massa fitxers oberts.\n"
 
-#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3765
+#: dlls/kernelbase/winerror.mc:55 dlls/kernelbase/winerror.mc:3840
 msgid "Access denied.\n"
 msgstr "S'ha denegat l'accés.\n"
 
@@ -4608,7 +4608,7 @@ msgstr "No queden estructures.\n"
 msgid "Already assigned.\n"
 msgstr "Ja s'ha assignat.\n"
 
-#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1715
+#: dlls/kernelbase/winerror.mc:360 dlls/kernelbase/winerror.mc:1790
 msgid "Invalid password.\n"
 msgstr "La contrasenya no és vàlida.\n"
 
@@ -5089,2288 +5089,2362 @@ msgid "Invalid oplock message received.\n"
 msgstr "S'ha rebut un missatge no vàlid de bloqueig d'operació.\n"
 
 #: dlls/kernelbase/winerror.mc:970
+#, fuzzy
+#| msgid "Disk is corrupt.\n"
+msgid "Disk is too fragmented.\n"
+msgstr "El disc és corrupte.\n"
+
+#: dlls/kernelbase/winerror.mc:975
+msgid "File cannot be opened because it is in the process of being deleted.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:980
+msgid "Short name settings incompatible with global registry setting.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:985
+msgid "Short names are not enabled on this volume.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:990
+#, fuzzy
+#| msgid "Floppy registers inconsistent.\n"
+msgid "Security stream is inconsistent.\n"
+msgstr "Els registres de disquet són inconsistents.\n"
+
+#: dlls/kernelbase/winerror.mc:995
+msgid "File lock operation cannot be processed due to invalid byte range.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1000
+msgid "Subsystem for supporting image type is not present.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1005
+msgid "Notification GUID is already defined.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1010
+#, fuzzy
+#| msgid "Invalid icon handle.\n"
+msgid "Invalid exception handler.\n"
+msgstr "L'identificador d'icona no és vàlid.\n"
+
+#: dlls/kernelbase/winerror.mc:1015
+#, fuzzy
+#| msgid "Duplicate service name.\n"
+msgid "Duplicate privileges for the token.\n"
+msgstr "El nom del servei és un duplicat.\n"
+
+#: dlls/kernelbase/winerror.mc:1020
+#, fuzzy
+#| msgid "Not all objects could be exported.\n"
+msgid "No ranges could be processed.\n"
+msgstr "No s'ha pogut exportar tots els objectes.\n"
+
+#: dlls/kernelbase/winerror.mc:1025
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "Operation not allowed on system file.\n"
+msgstr "L'usuari ha cancel·lat l'operació.\n"
+
+#: dlls/kernelbase/winerror.mc:1030
+msgid "Disk resources have been exhausted.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1035
+#, fuzzy
+#| msgid "Invalid key.\n"
+msgid "Invalid token.\n"
+msgstr "La clau no és vàlida.\n"
+
+#: dlls/kernelbase/winerror.mc:1040
+msgid "Command feature not supported on the device.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:1045
 msgid "Message 0x%1 not found in file %2.\n"
 msgstr "No s'ha trobat el missatge 0x%1 en el fitxer %2.\n"
 
-#: dlls/kernelbase/winerror.mc:975
+#: dlls/kernelbase/winerror.mc:1050
 msgid "Invalid address.\n"
 msgstr "L'adreça no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:980
+#: dlls/kernelbase/winerror.mc:1055
 msgid "Arithmetic overflow.\n"
 msgstr "Hi ha hagut un desbordament d'aritmètic.\n"
 
-#: dlls/kernelbase/winerror.mc:985
+#: dlls/kernelbase/winerror.mc:1060
 msgid "Pipe connected.\n"
 msgstr "S'ha connectat la canonada.\n"
 
-#: dlls/kernelbase/winerror.mc:990
+#: dlls/kernelbase/winerror.mc:1065
 msgid "Pipe listening.\n"
 msgstr "La canonada escolta.\n"
 
-#: dlls/kernelbase/winerror.mc:995
+#: dlls/kernelbase/winerror.mc:1070
 msgid "Extended attribute access denied.\n"
 msgstr "S'ha denegat l'accés als atributs estesos.\n"
 
-#: dlls/kernelbase/winerror.mc:1000
+#: dlls/kernelbase/winerror.mc:1075
 msgid "I/O operation aborted.\n"
 msgstr "S'ha avortat l'operació E/S.\n"
 
-#: dlls/kernelbase/winerror.mc:1005
+#: dlls/kernelbase/winerror.mc:1080
 msgid "Overlapped I/O incomplete.\n"
 msgstr "L'E/S superposada està incompleta.\n"
 
-#: dlls/kernelbase/winerror.mc:1010
+#: dlls/kernelbase/winerror.mc:1085
 msgid "Overlapped I/O pending.\n"
 msgstr "L'E/S superposada està pendent.\n"
 
-#: dlls/kernelbase/winerror.mc:1015
+#: dlls/kernelbase/winerror.mc:1090
 msgid "No access to memory location.\n"
 msgstr "No hi ha cap accés a la ubicació de memòria.\n"
 
-#: dlls/kernelbase/winerror.mc:1020
+#: dlls/kernelbase/winerror.mc:1095
 msgid "Swap error.\n"
 msgstr "Hi ha hagut un error d'intercanvi.\n"
 
-#: dlls/kernelbase/winerror.mc:1025
+#: dlls/kernelbase/winerror.mc:1100
 msgid "Stack overflow.\n"
 msgstr "Hi ha hagut un desbordament de pila.\n"
 
-#: dlls/kernelbase/winerror.mc:1030
+#: dlls/kernelbase/winerror.mc:1105
 msgid "Invalid message.\n"
 msgstr "El missatge no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1035
+#: dlls/kernelbase/winerror.mc:1110
 msgid "Cannot complete.\n"
 msgstr "No es pot acabar.\n"
 
-#: dlls/kernelbase/winerror.mc:1040
+#: dlls/kernelbase/winerror.mc:1115
 msgid "Invalid flags.\n"
 msgstr "Les opcions no són vàlides.\n"
 
-#: dlls/kernelbase/winerror.mc:1045
+#: dlls/kernelbase/winerror.mc:1120
 msgid "Unrecognized volume.\n"
 msgstr "No s'ha reconegut el volum.\n"
 
-#: dlls/kernelbase/winerror.mc:1050
+#: dlls/kernelbase/winerror.mc:1125
 msgid "File invalid.\n"
 msgstr "El fitxer no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1055
+#: dlls/kernelbase/winerror.mc:1130
 msgid "Cannot run full-screen.\n"
 msgstr "No es pot executar a pantalla completa.\n"
 
-#: dlls/kernelbase/winerror.mc:1060
+#: dlls/kernelbase/winerror.mc:1135
 msgid "Nonexistent token.\n"
 msgstr "El component lèxic no existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:1065
+#: dlls/kernelbase/winerror.mc:1140
 msgid "Registry corrupt.\n"
 msgstr "El registre és corrupte.\n"
 
-#: dlls/kernelbase/winerror.mc:1070
+#: dlls/kernelbase/winerror.mc:1145
 msgid "Invalid key.\n"
 msgstr "La clau no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:1075
+#: dlls/kernelbase/winerror.mc:1150
 msgid "Can't open registry key.\n"
 msgstr "No es pot obrir la clau de registre.\n"
 
-#: dlls/kernelbase/winerror.mc:1080
+#: dlls/kernelbase/winerror.mc:1155
 msgid "Can't read registry key.\n"
 msgstr "No es pot llegir la clau de registre.\n"
 
-#: dlls/kernelbase/winerror.mc:1085
+#: dlls/kernelbase/winerror.mc:1160
 msgid "Can't write registry key.\n"
 msgstr "No es pot escriure la clau de registre.\n"
 
-#: dlls/kernelbase/winerror.mc:1090
+#: dlls/kernelbase/winerror.mc:1165
 msgid "Registry has been recovered.\n"
 msgstr "S'ha recuperat el registre.\n"
 
-#: dlls/kernelbase/winerror.mc:1095
+#: dlls/kernelbase/winerror.mc:1170
 msgid "Registry is corrupt.\n"
 msgstr "El registre està corrupte.\n"
 
-#: dlls/kernelbase/winerror.mc:1100
+#: dlls/kernelbase/winerror.mc:1175
 msgid "I/O to registry failed.\n"
 msgstr "L'E/S al registre ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1105
+#: dlls/kernelbase/winerror.mc:1180
 msgid "Not registry file.\n"
 msgstr "No és fitxer de registre.\n"
 
-#: dlls/kernelbase/winerror.mc:1110
+#: dlls/kernelbase/winerror.mc:1185
 msgid "Key deleted.\n"
 msgstr "S'ha suprimit la clau.\n"
 
-#: dlls/kernelbase/winerror.mc:1115
+#: dlls/kernelbase/winerror.mc:1190
 msgid "No registry log space.\n"
 msgstr "No hi ha espai per al registre del registre.\n"
 
-#: dlls/kernelbase/winerror.mc:1120
+#: dlls/kernelbase/winerror.mc:1195
 msgid "Registry key has subkeys.\n"
 msgstr "La clau de registre té subclaus.\n"
 
-#: dlls/kernelbase/winerror.mc:1125
+#: dlls/kernelbase/winerror.mc:1200
 msgid "Subkey must be volatile.\n"
 msgstr "La subclau ha de ser volàtil.\n"
 
-#: dlls/kernelbase/winerror.mc:1130
+#: dlls/kernelbase/winerror.mc:1205
 msgid "Notify change request in progress.\n"
 msgstr "La sol·licitud de canvi de notificació està en curs.\n"
 
-#: dlls/kernelbase/winerror.mc:1135
+#: dlls/kernelbase/winerror.mc:1210
 msgid "Dependent services are running.\n"
 msgstr "Els serveis dependents s'estan executant.\n"
 
-#: dlls/kernelbase/winerror.mc:1140
+#: dlls/kernelbase/winerror.mc:1215
 msgid "Invalid service control.\n"
 msgstr "El control de servei no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1145
+#: dlls/kernelbase/winerror.mc:1220
 msgid "Service request timeout.\n"
 msgstr "S'ha superat el temps d'espera de sol·licitud de servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1150
+#: dlls/kernelbase/winerror.mc:1225
 msgid "Cannot create service thread.\n"
 msgstr "No es pot crear el fil de servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1155
+#: dlls/kernelbase/winerror.mc:1230
 msgid "Service database locked.\n"
 msgstr "S'ha bloquejat la base de dades de servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1160
+#: dlls/kernelbase/winerror.mc:1235
 msgid "Service already running.\n"
 msgstr "El servei ja està executant.\n"
 
-#: dlls/kernelbase/winerror.mc:1165
+#: dlls/kernelbase/winerror.mc:1240
 msgid "Invalid service account.\n"
 msgstr "El compte de servei no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1170
+#: dlls/kernelbase/winerror.mc:1245
 msgid "Service is disabled.\n"
 msgstr "El servei està inhabilitat.\n"
 
-#: dlls/kernelbase/winerror.mc:1175
+#: dlls/kernelbase/winerror.mc:1250
 msgid "Circular dependency.\n"
 msgstr "Hi ha una dependència circular.\n"
 
-#: dlls/kernelbase/winerror.mc:1180
+#: dlls/kernelbase/winerror.mc:1255
 msgid "Service does not exist.\n"
 msgstr "El servei no existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:1185
+#: dlls/kernelbase/winerror.mc:1260
 msgid "Service cannot accept control message.\n"
 msgstr "El servei no pot acceptar el missatge de control.\n"
 
-#: dlls/kernelbase/winerror.mc:1190
+#: dlls/kernelbase/winerror.mc:1265
 msgid "Service not active.\n"
 msgstr "El servei no està actiu.\n"
 
-#: dlls/kernelbase/winerror.mc:1195
+#: dlls/kernelbase/winerror.mc:1270
 msgid "Service controller connect failed.\n"
 msgstr "La connexió de controlador de servei ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1200
+#: dlls/kernelbase/winerror.mc:1275
 msgid "Exception in service.\n"
 msgstr "Hi ha hagut una excepció en el servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1205
+#: dlls/kernelbase/winerror.mc:1280
 msgid "Database does not exist.\n"
 msgstr "La base de dades no existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:1210
+#: dlls/kernelbase/winerror.mc:1285
 msgid "Service-specific error.\n"
 msgstr "Hi ha hagut un error específic al servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1215
+#: dlls/kernelbase/winerror.mc:1290
 msgid "Process aborted.\n"
 msgstr "S'ha avortat el procés.\n"
 
-#: dlls/kernelbase/winerror.mc:1220
+#: dlls/kernelbase/winerror.mc:1295
 msgid "Service dependency failed.\n"
 msgstr "Una dependència del servei ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1225
+#: dlls/kernelbase/winerror.mc:1300
 msgid "Service login failed.\n"
 msgstr "L'inici de sessió ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1230
+#: dlls/kernelbase/winerror.mc:1305
 msgid "Service start-hang.\n"
 msgstr "L'inici de servei s'ha congelat.\n"
 
-#: dlls/kernelbase/winerror.mc:1235
+#: dlls/kernelbase/winerror.mc:1310
 msgid "Invalid service lock.\n"
 msgstr "El bloqueig de servei no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1240
+#: dlls/kernelbase/winerror.mc:1315
 msgid "Service marked for delete.\n"
 msgstr "El servei està marcat per a suprimir-se.\n"
 
-#: dlls/kernelbase/winerror.mc:1245
+#: dlls/kernelbase/winerror.mc:1320
 msgid "Service exists.\n"
 msgstr "El servei existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:1250
+#: dlls/kernelbase/winerror.mc:1325
 msgid "System running last-known-good config.\n"
 msgstr "El sistema està executant l'última configuració bona coneguda.\n"
 
-#: dlls/kernelbase/winerror.mc:1255
+#: dlls/kernelbase/winerror.mc:1330
 msgid "Service dependency deleted.\n"
 msgstr "S'ha suprimit la dependència del servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1260
+#: dlls/kernelbase/winerror.mc:1335
 msgid "Boot already accepted as last-good config.\n"
 msgstr "L'arrencada ja s'accepta com a l'última configuració bona.\n"
 
-#: dlls/kernelbase/winerror.mc:1265
+#: dlls/kernelbase/winerror.mc:1340
 msgid "Service not started since last boot.\n"
 msgstr "No s'ha el servei iniciat des de l'última arrencada.\n"
 
-#: dlls/kernelbase/winerror.mc:1270
+#: dlls/kernelbase/winerror.mc:1345
 msgid "Duplicate service name.\n"
 msgstr "El nom del servei és un duplicat.\n"
 
-#: dlls/kernelbase/winerror.mc:1275
+#: dlls/kernelbase/winerror.mc:1350
 msgid "Different service account.\n"
 msgstr "El compte de servei és diferent.\n"
 
-#: dlls/kernelbase/winerror.mc:1280
+#: dlls/kernelbase/winerror.mc:1355
 msgid "Driver failure cannot be detected.\n"
 msgstr "No es pot detectar la fallada del controlador.\n"
 
-#: dlls/kernelbase/winerror.mc:1285
+#: dlls/kernelbase/winerror.mc:1360
 msgid "Process abort cannot be detected.\n"
 msgstr "No es pot detectar l'avortament de procés.\n"
 
-#: dlls/kernelbase/winerror.mc:1290
+#: dlls/kernelbase/winerror.mc:1365
 msgid "No recovery program for service.\n"
 msgstr "No hi ha cap programa de recuperació per al servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1295
+#: dlls/kernelbase/winerror.mc:1370
 msgid "Service not implemented by exe.\n"
 msgstr "El servei no és implementat per exe.\n"
 
-#: dlls/kernelbase/winerror.mc:1300
+#: dlls/kernelbase/winerror.mc:1375
 msgid "End of media.\n"
 msgstr "És la fi del suport.\n"
 
-#: dlls/kernelbase/winerror.mc:1305
+#: dlls/kernelbase/winerror.mc:1380
 msgid "Filemark detected.\n"
 msgstr "S'ha detectat una marca de fitxer.\n"
 
-#: dlls/kernelbase/winerror.mc:1310
+#: dlls/kernelbase/winerror.mc:1385
 msgid "Beginning of media.\n"
 msgstr "És el començament del suport.\n"
 
-#: dlls/kernelbase/winerror.mc:1315
+#: dlls/kernelbase/winerror.mc:1390
 msgid "Setmark detected.\n"
 msgstr "S'ha detectat una marca de conjunt.\n"
 
-#: dlls/kernelbase/winerror.mc:1320
+#: dlls/kernelbase/winerror.mc:1395
 msgid "No data detected.\n"
 msgstr "No s'ha detectat dades.\n"
 
-#: dlls/kernelbase/winerror.mc:1325
+#: dlls/kernelbase/winerror.mc:1400
 msgid "Partition failure.\n"
 msgstr "La partició ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1330
+#: dlls/kernelbase/winerror.mc:1405
 msgid "Invalid block length.\n"
 msgstr "La longitud de bloc no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:1335
+#: dlls/kernelbase/winerror.mc:1410
 msgid "Device not partitioned.\n"
 msgstr "El dispositiu no té partició.\n"
 
-#: dlls/kernelbase/winerror.mc:1340
+#: dlls/kernelbase/winerror.mc:1415
 msgid "Unable to lock media.\n"
 msgstr "No s'ha pogut bloquejar el suport.\n"
 
-#: dlls/kernelbase/winerror.mc:1345
+#: dlls/kernelbase/winerror.mc:1420
 msgid "Unable to unload media.\n"
 msgstr "No s'ha pogut descarregar el suport.\n"
 
-#: dlls/kernelbase/winerror.mc:1350
+#: dlls/kernelbase/winerror.mc:1425
 msgid "Media changed.\n"
 msgstr "S'ha canviat el suport.\n"
 
-#: dlls/kernelbase/winerror.mc:1355
+#: dlls/kernelbase/winerror.mc:1430
 msgid "I/O bus reset.\n"
 msgstr "S'ha restablert el bus E/S.\n"
 
-#: dlls/kernelbase/winerror.mc:1360
+#: dlls/kernelbase/winerror.mc:1435
 msgid "No media in drive.\n"
 msgstr "No hi ha cap suport en la unitat.\n"
 
-#: dlls/kernelbase/winerror.mc:1365
+#: dlls/kernelbase/winerror.mc:1440
 msgid "No Unicode translation.\n"
 msgstr "No hi ha cap traducció Unicode.\n"
 
-#: dlls/kernelbase/winerror.mc:1370
+#: dlls/kernelbase/winerror.mc:1445
 msgid "DLL initialization failed.\n"
 msgstr "La inicialització DLL ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1375
+#: dlls/kernelbase/winerror.mc:1450
 msgid "Shutdown in progress.\n"
 msgstr "L'aturada està en curs.\n"
 
-#: dlls/kernelbase/winerror.mc:1380
+#: dlls/kernelbase/winerror.mc:1455
 msgid "No shutdown in progress.\n"
 msgstr "Cap aturada està en curs.\n"
 
-#: dlls/kernelbase/winerror.mc:1385
+#: dlls/kernelbase/winerror.mc:1460
 msgid "I/O device error.\n"
 msgstr "Hi ha hagut un error de dispositiu E/S.\n"
 
-#: dlls/kernelbase/winerror.mc:1390
+#: dlls/kernelbase/winerror.mc:1465
 msgid "No serial devices found.\n"
 msgstr "No s'ha trobat cap dispositiu serial.\n"
 
-#: dlls/kernelbase/winerror.mc:1395
+#: dlls/kernelbase/winerror.mc:1470
 msgid "Shared IRQ busy.\n"
 msgstr "L'IRQ compartida està ocupada.\n"
 
-#: dlls/kernelbase/winerror.mc:1400
+#: dlls/kernelbase/winerror.mc:1475
 msgid "Serial I/O completed.\n"
 msgstr "S'ha acabat l'E/S serial.\n"
 
-#: dlls/kernelbase/winerror.mc:1405
+#: dlls/kernelbase/winerror.mc:1480
 msgid "Serial I/O counter timeout.\n"
 msgstr "S'ha superat el temps d'espera de sol·licitud de servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1410
+#: dlls/kernelbase/winerror.mc:1485
 msgid "Floppy ID address mark not found.\n"
 msgstr "No s'ha trobat la marca d'adreça d'ID de disquet.\n"
 
-#: dlls/kernelbase/winerror.mc:1415
+#: dlls/kernelbase/winerror.mc:1490
 msgid "Floppy reports wrong cylinder.\n"
 msgstr "El disquet informa del cilindre equivocat.\n"
 
-#: dlls/kernelbase/winerror.mc:1420
+#: dlls/kernelbase/winerror.mc:1495
 msgid "Unknown floppy error.\n"
 msgstr "Hi ha hagut un error de disquet desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:1425
+#: dlls/kernelbase/winerror.mc:1500
 msgid "Floppy registers inconsistent.\n"
 msgstr "Els registres de disquet són inconsistents.\n"
 
-#: dlls/kernelbase/winerror.mc:1430
+#: dlls/kernelbase/winerror.mc:1505
 msgid "Hard disk recalibrate failed.\n"
 msgstr "El recalibratge del disc dur ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1435
+#: dlls/kernelbase/winerror.mc:1510
 msgid "Hard disk operation failed.\n"
 msgstr "L'operació de disc dur ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1440
+#: dlls/kernelbase/winerror.mc:1515
 msgid "Hard disk reset failed.\n"
 msgstr "La reinicialització del disc dur ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1445
+#: dlls/kernelbase/winerror.mc:1520
 msgid "End of tape media.\n"
 msgstr "És la fi del suport de cinta.\n"
 
-#: dlls/kernelbase/winerror.mc:1450
+#: dlls/kernelbase/winerror.mc:1525
 msgid "Not enough server memory.\n"
 msgstr "No hi ha prou memòria en el servidor.\n"
 
-#: dlls/kernelbase/winerror.mc:1455
+#: dlls/kernelbase/winerror.mc:1530
 msgid "Possible deadlock.\n"
 msgstr "Un bloqueig mutu és possible.\n"
 
-#: dlls/kernelbase/winerror.mc:1460
+#: dlls/kernelbase/winerror.mc:1535
 msgid "Incorrect alignment.\n"
 msgstr "L'alineació és incorrecta.\n"
 
-#: dlls/kernelbase/winerror.mc:1465
+#: dlls/kernelbase/winerror.mc:1540
 msgid "Set-power-state vetoed.\n"
 msgstr "S'ha vetat l'ajust d'estat de potència.\n"
 
-#: dlls/kernelbase/winerror.mc:1470
+#: dlls/kernelbase/winerror.mc:1545
 msgid "Set-power-state failed.\n"
 msgstr "L'ajust d'estat de potència ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1475
+#: dlls/kernelbase/winerror.mc:1550
 msgid "Too many links.\n"
 msgstr "Hi ha massa enllaços.\n"
 
-#: dlls/kernelbase/winerror.mc:1480
+#: dlls/kernelbase/winerror.mc:1555
 msgid "Newer Windows version needed.\n"
 msgstr "Cal una versió de Windows més nou.\n"
 
-#: dlls/kernelbase/winerror.mc:1485
+#: dlls/kernelbase/winerror.mc:1560
 msgid "Wrong operating system.\n"
 msgstr "El sistema operatiu és incorrecte.\n"
 
-#: dlls/kernelbase/winerror.mc:1490
+#: dlls/kernelbase/winerror.mc:1565
 msgid "Single-instance application.\n"
 msgstr "Aplicació d'instància única.\n"
 
-#: dlls/kernelbase/winerror.mc:1495
+#: dlls/kernelbase/winerror.mc:1570
 msgid "Real-mode application.\n"
 msgstr "Aplicació de mode real.\n"
 
-#: dlls/kernelbase/winerror.mc:1500
+#: dlls/kernelbase/winerror.mc:1575
 msgid "Invalid DLL.\n"
 msgstr "La DLL no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:1505
+#: dlls/kernelbase/winerror.mc:1580
 msgid "No associated application.\n"
 msgstr "Cap aplicació està associada.\n"
 
-#: dlls/kernelbase/winerror.mc:1510
+#: dlls/kernelbase/winerror.mc:1585
 msgid "DDE failure.\n"
 msgstr "El DDE ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1515
+#: dlls/kernelbase/winerror.mc:1590
 msgid "DLL not found.\n"
 msgstr "No s'ha trobat la DLL.\n"
 
-#: dlls/kernelbase/winerror.mc:1520
+#: dlls/kernelbase/winerror.mc:1595
 msgid "Out of user handles.\n"
 msgstr "No queden identificadors d'usuari.\n"
 
-#: dlls/kernelbase/winerror.mc:1525
+#: dlls/kernelbase/winerror.mc:1600
 msgid "Message can only be used in synchronous calls.\n"
 msgstr "El missatge només pot utilitzar-se en les trucades sincròniques.\n"
 
-#: dlls/kernelbase/winerror.mc:1530
+#: dlls/kernelbase/winerror.mc:1605
 msgid "The source element is empty.\n"
 msgstr "L'element font està buit.\n"
 
-#: dlls/kernelbase/winerror.mc:1535
+#: dlls/kernelbase/winerror.mc:1610
 msgid "The destination element is full.\n"
 msgstr "L'element de destinació està ple.\n"
 
-#: dlls/kernelbase/winerror.mc:1540
+#: dlls/kernelbase/winerror.mc:1615
 msgid "The element address is invalid.\n"
 msgstr "L'adreça d'element no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:1545
+#: dlls/kernelbase/winerror.mc:1620
 msgid "The magazine is not present.\n"
 msgstr "El magazine no està present.\n"
 
-#: dlls/kernelbase/winerror.mc:1550
+#: dlls/kernelbase/winerror.mc:1625
 msgid "The device needs reinitialization.\n"
 msgstr "El dispositiu necessita reinicialització.\n"
 
-#: dlls/kernelbase/winerror.mc:1555
+#: dlls/kernelbase/winerror.mc:1630
 msgid "The device requires cleaning.\n"
 msgstr "El dispositiu requereix una neteja.\n"
 
-#: dlls/kernelbase/winerror.mc:1560
+#: dlls/kernelbase/winerror.mc:1635
 msgid "The device door is open.\n"
 msgstr "La porta de dispositiu està oberta.\n"
 
-#: dlls/kernelbase/winerror.mc:1565
+#: dlls/kernelbase/winerror.mc:1640
 msgid "The device is not connected.\n"
 msgstr "El dispositiu no està connectat.\n"
 
-#: dlls/kernelbase/winerror.mc:1570
+#: dlls/kernelbase/winerror.mc:1645
 msgid "Element not found.\n"
 msgstr "No s'ha trobat l'element.\n"
 
-#: dlls/kernelbase/winerror.mc:1575
+#: dlls/kernelbase/winerror.mc:1650
 msgid "No match found.\n"
 msgstr "No s'ha trobat cap coincidència.\n"
 
-#: dlls/kernelbase/winerror.mc:1580
+#: dlls/kernelbase/winerror.mc:1655
 msgid "Property set not found.\n"
 msgstr "No s'ha trobat el conjunt de propietats.\n"
 
-#: dlls/kernelbase/winerror.mc:1585
+#: dlls/kernelbase/winerror.mc:1660
 msgid "Point not found.\n"
 msgstr "No s'ha trobat el punt.\n"
 
-#: dlls/kernelbase/winerror.mc:1590
+#: dlls/kernelbase/winerror.mc:1665
 msgid "No running tracking service.\n"
 msgstr "No s'està executant cap servei de rastreig.\n"
 
-#: dlls/kernelbase/winerror.mc:1595
+#: dlls/kernelbase/winerror.mc:1670
 msgid "No such volume ID.\n"
 msgstr "No hi ha tal ID de volum.\n"
 
-#: dlls/kernelbase/winerror.mc:1600
+#: dlls/kernelbase/winerror.mc:1675
 msgid "Unable to remove the file to be replaced.\n"
 msgstr "No s'ha pogut eliminar el fitxer a substituir-se.\n"
 
-#: dlls/kernelbase/winerror.mc:1605
+#: dlls/kernelbase/winerror.mc:1680
 msgid "Unable to move the replacement file into place.\n"
 msgstr "No s'ha pogut desplaçar el fitxer de substitució al lloc.\n"
 
-#: dlls/kernelbase/winerror.mc:1610
+#: dlls/kernelbase/winerror.mc:1685
 msgid "Moving the replacement file failed.\n"
 msgstr "El moviment del fitxer de substitució ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:1615
+#: dlls/kernelbase/winerror.mc:1690
 msgid "The journal is being deleted.\n"
 msgstr "El journal s'està suprimint.\n"
 
-#: dlls/kernelbase/winerror.mc:1620
+#: dlls/kernelbase/winerror.mc:1695
 msgid "The journal is not active.\n"
 msgstr "El journal no està actiu.\n"
 
-#: dlls/kernelbase/winerror.mc:1625
+#: dlls/kernelbase/winerror.mc:1700
 msgid "Potential matching file found.\n"
 msgstr "Fitxer coincident potencial trobat.\n"
 
-#: dlls/kernelbase/winerror.mc:1630
+#: dlls/kernelbase/winerror.mc:1705
 msgid "The journal entry was deleted.\n"
 msgstr "L'entrada de journal s'ha suprimit.\n"
 
-#: dlls/kernelbase/winerror.mc:1635
+#: dlls/kernelbase/winerror.mc:1710
 msgid "Invalid device name.\n"
 msgstr "El nom de dispositiu no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1640
+#: dlls/kernelbase/winerror.mc:1715
 msgid "Connection unavailable.\n"
 msgstr "La connexió no està disponible.\n"
 
-#: dlls/kernelbase/winerror.mc:1645
+#: dlls/kernelbase/winerror.mc:1720
 msgid "Device already remembered.\n"
 msgstr "Ja s'ha recordat el dispositiu.\n"
 
-#: dlls/kernelbase/winerror.mc:1650
+#: dlls/kernelbase/winerror.mc:1725
 msgid "No network or bad path.\n"
 msgstr "No hi ha cap xarxa o el camí és dolent.\n"
 
-#: dlls/kernelbase/winerror.mc:1655
+#: dlls/kernelbase/winerror.mc:1730
 msgid "Invalid network provider name.\n"
 msgstr "El nom de proveïdor de xarxa no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1660
+#: dlls/kernelbase/winerror.mc:1735
 msgid "Cannot open network connection profile.\n"
 msgstr "No es pot obrir el perfil de connexió de xarxa.\n"
 
-#: dlls/kernelbase/winerror.mc:1665
+#: dlls/kernelbase/winerror.mc:1740
 msgid "Corrupt network connection profile.\n"
 msgstr "El perfil de connexió de xarxa és corrupte.\n"
 
-#: dlls/kernelbase/winerror.mc:1670
+#: dlls/kernelbase/winerror.mc:1745
 msgid "Not a container.\n"
 msgstr "No és un contenidor.\n"
 
-#: dlls/kernelbase/winerror.mc:1675
+#: dlls/kernelbase/winerror.mc:1750
 msgid "Extended error.\n"
 msgstr "Hi ha hagut un error estès.\n"
 
-#: dlls/kernelbase/winerror.mc:1680
+#: dlls/kernelbase/winerror.mc:1755
 msgid "Invalid group name.\n"
 msgstr "El nom de grup no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1685
+#: dlls/kernelbase/winerror.mc:1760
 msgid "Invalid computer name.\n"
 msgstr "El nom d'ordinador no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1690
+#: dlls/kernelbase/winerror.mc:1765
 msgid "Invalid event name.\n"
 msgstr "El nom d'esdeveniment no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1695
+#: dlls/kernelbase/winerror.mc:1770
 msgid "Invalid domain name.\n"
 msgstr "El nom de domini no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1700
+#: dlls/kernelbase/winerror.mc:1775
 msgid "Invalid service name.\n"
 msgstr "El nom de servei no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1705
+#: dlls/kernelbase/winerror.mc:1780
 msgid "Invalid network name.\n"
 msgstr "El nom de xarxa no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1710
+#: dlls/kernelbase/winerror.mc:1785
 msgid "Invalid share name.\n"
 msgstr "El nom de compartició no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1720
+#: dlls/kernelbase/winerror.mc:1795
 msgid "Invalid message name.\n"
 msgstr "El nom de missatge no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1725
+#: dlls/kernelbase/winerror.mc:1800
 msgid "Invalid message destination.\n"
 msgstr "La destinació de missatge no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:1730
+#: dlls/kernelbase/winerror.mc:1805
 msgid "Session credential conflict.\n"
 msgstr "Hi ha hagut un conflicte de credencials de sessió.\n"
 
-#: dlls/kernelbase/winerror.mc:1735
+#: dlls/kernelbase/winerror.mc:1810
 msgid "Remote session limit exceeded.\n"
 msgstr "S'ha superat el límit de sessions remotes.\n"
 
-#: dlls/kernelbase/winerror.mc:1740
+#: dlls/kernelbase/winerror.mc:1815
 msgid "Duplicate domain or workgroup name.\n"
 msgstr "El nom de domini o grup de treball és un duplicat.\n"
 
-#: dlls/kernelbase/winerror.mc:1745
+#: dlls/kernelbase/winerror.mc:1820
 msgid "No network.\n"
 msgstr "No hi ha cap xarxa.\n"
 
-#: dlls/kernelbase/winerror.mc:1750
+#: dlls/kernelbase/winerror.mc:1825
 msgid "Operation canceled by user.\n"
 msgstr "L'usuari ha cancel·lat l'operació.\n"
 
-#: dlls/kernelbase/winerror.mc:1755
+#: dlls/kernelbase/winerror.mc:1830
 msgid "File has a user-mapped section.\n"
 msgstr "El fitxer té una secció assignada per usuari.\n"
 
-#: dlls/kernelbase/winerror.mc:1760 dlls/kernelbase/winerror.mc:3795
+#: dlls/kernelbase/winerror.mc:1835 dlls/kernelbase/winerror.mc:3870
 msgid "Connection refused.\n"
 msgstr "S'ha refusat la connexió.\n"
 
-#: dlls/kernelbase/winerror.mc:1765
+#: dlls/kernelbase/winerror.mc:1840
 msgid "Connection gracefully closed.\n"
 msgstr "S'ha tancat la connexió amb gràcia.\n"
 
-#: dlls/kernelbase/winerror.mc:1770
+#: dlls/kernelbase/winerror.mc:1845
 msgid "Address already associated with transport endpoint.\n"
 msgstr "L'adreça ja està associada amb el punt final de transport.\n"
 
-#: dlls/kernelbase/winerror.mc:1775
+#: dlls/kernelbase/winerror.mc:1850
 msgid "Address not associated with transport endpoint.\n"
 msgstr "L'adreça no està associada amb el punt final de transport.\n"
 
-#: dlls/kernelbase/winerror.mc:1780
+#: dlls/kernelbase/winerror.mc:1855
 msgid "Connection invalid.\n"
 msgstr "La connexió no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:1785
+#: dlls/kernelbase/winerror.mc:1860
 msgid "Connection is active.\n"
 msgstr "La connexió està activa.\n"
 
-#: dlls/kernelbase/winerror.mc:1790
+#: dlls/kernelbase/winerror.mc:1865
 msgid "Network unreachable.\n"
 msgstr "La xarxa és inabastable.\n"
 
-#: dlls/kernelbase/winerror.mc:1795
+#: dlls/kernelbase/winerror.mc:1870
 msgid "Host unreachable.\n"
 msgstr "La màquina és inabastable.\n"
 
-#: dlls/kernelbase/winerror.mc:1800
+#: dlls/kernelbase/winerror.mc:1875
 msgid "Protocol unreachable.\n"
 msgstr "El protocol és inabastable.\n"
 
-#: dlls/kernelbase/winerror.mc:1805
+#: dlls/kernelbase/winerror.mc:1880
 msgid "Port unreachable.\n"
 msgstr "El port és inabastable.\n"
 
-#: dlls/kernelbase/winerror.mc:1810
+#: dlls/kernelbase/winerror.mc:1885
 msgid "Request aborted.\n"
 msgstr "S'ha avortat la sol·licitud.\n"
 
-#: dlls/kernelbase/winerror.mc:1815
+#: dlls/kernelbase/winerror.mc:1890
 msgid "Connection aborted.\n"
 msgstr "S'ha avortat la connexió.\n"
 
-#: dlls/kernelbase/winerror.mc:1820
+#: dlls/kernelbase/winerror.mc:1895
 msgid "Please retry operation.\n"
 msgstr "Si us plau, torneu a intentar l'operació.\n"
 
-#: dlls/kernelbase/winerror.mc:1825
+#: dlls/kernelbase/winerror.mc:1900
 msgid "Connection count limit reached.\n"
 msgstr "S'ha arribat al límit de nombre de connexions.\n"
 
-#: dlls/kernelbase/winerror.mc:1830
+#: dlls/kernelbase/winerror.mc:1905
 msgid "Login time restriction.\n"
 msgstr "Hi ha una restricció de temps de sessió.\n"
 
-#: dlls/kernelbase/winerror.mc:1835
+#: dlls/kernelbase/winerror.mc:1910
 msgid "Login workstation restriction.\n"
 msgstr "Hi ha una restricció d'estació de treball de sessió.\n"
 
-#: dlls/kernelbase/winerror.mc:1840
+#: dlls/kernelbase/winerror.mc:1915
 msgid "Incorrect network address.\n"
 msgstr "L'adreça de xarxa és incorrecta.\n"
 
-#: dlls/kernelbase/winerror.mc:1845
+#: dlls/kernelbase/winerror.mc:1920
 msgid "Service already registered.\n"
 msgstr "Ja s'ha registrat el servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1850
+#: dlls/kernelbase/winerror.mc:1925
 msgid "Service not found.\n"
 msgstr "No s'ha trobat el servei.\n"
 
-#: dlls/kernelbase/winerror.mc:1855
+#: dlls/kernelbase/winerror.mc:1930
 msgid "User not authenticated.\n"
 msgstr "L'usuari no està autenticat.\n"
 
-#: dlls/kernelbase/winerror.mc:1860
+#: dlls/kernelbase/winerror.mc:1935
 msgid "User not logged on.\n"
 msgstr "L'usuari no ha iniciat sessió.\n"
 
-#: dlls/kernelbase/winerror.mc:1865
+#: dlls/kernelbase/winerror.mc:1940
 msgid "Continue work in progress.\n"
 msgstr "Continua el treball en curs.\n"
 
-#: dlls/kernelbase/winerror.mc:1870
+#: dlls/kernelbase/winerror.mc:1945
 msgid "Already initialized.\n"
 msgstr "Ja s'ha inicialitzat.\n"
 
-#: dlls/kernelbase/winerror.mc:1875
+#: dlls/kernelbase/winerror.mc:1950
 msgid "No more local devices.\n"
 msgstr "No hi ha més dispositius locals.\n"
 
-#: dlls/kernelbase/winerror.mc:1880
+#: dlls/kernelbase/winerror.mc:1955
 msgid "The site does not exist.\n"
 msgstr "El lloc no existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:1885
+#: dlls/kernelbase/winerror.mc:1960
 msgid "The domain controller already exists.\n"
 msgstr "El controlador de domini ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:1890
+#: dlls/kernelbase/winerror.mc:1965
 msgid "Supported only when connected.\n"
 msgstr "Només s'admet quan es connecta.\n"
 
-#: dlls/kernelbase/winerror.mc:1895
+#: dlls/kernelbase/winerror.mc:1970
 msgid "Perform operation even when nothing changed.\n"
 msgstr "Realitza l'operació encara que no hagi canviat res.\n"
 
-#: dlls/kernelbase/winerror.mc:1900
+#: dlls/kernelbase/winerror.mc:1975
 msgid "The user profile is invalid.\n"
 msgstr "El perfil d'usuari no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1905
+#: dlls/kernelbase/winerror.mc:1980
 msgid "Not supported on Small Business Server.\n"
 msgstr "No s'admet en el Small Business Server.\n"
 
-#: dlls/kernelbase/winerror.mc:1910
+#: dlls/kernelbase/winerror.mc:1985
 msgid "Not all privileges assigned.\n"
 msgstr "No tots els privilegis estan assignats.\n"
 
-#: dlls/kernelbase/winerror.mc:1915
+#: dlls/kernelbase/winerror.mc:1990
 msgid "Some security IDs not mapped.\n"
 msgstr "Alguns ID de seguretat no estan assignats.\n"
 
-#: dlls/kernelbase/winerror.mc:1920
+#: dlls/kernelbase/winerror.mc:1995
 msgid "No quotas for account.\n"
 msgstr "No hi ha cap quota per al compte.\n"
 
-#: dlls/kernelbase/winerror.mc:1925
+#: dlls/kernelbase/winerror.mc:2000
 msgid "Local user session key.\n"
 msgstr "Clau de sessió d'usuari local.\n"
 
-#: dlls/kernelbase/winerror.mc:1930
+#: dlls/kernelbase/winerror.mc:2005
 msgid "Password too complex for LM.\n"
 msgstr "La contrasenya és massa complex per al LM.\n"
 
-#: dlls/kernelbase/winerror.mc:1935
+#: dlls/kernelbase/winerror.mc:2010
 msgid "Unknown revision.\n"
 msgstr "La revisió és desconeguda.\n"
 
-#: dlls/kernelbase/winerror.mc:1940
+#: dlls/kernelbase/winerror.mc:2015
 msgid "Incompatible revision levels.\n"
 msgstr "Els nivells de revisió són incompatibles.\n"
 
-#: dlls/kernelbase/winerror.mc:1945
+#: dlls/kernelbase/winerror.mc:2020
 msgid "Invalid owner.\n"
 msgstr "El propietari no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1950
+#: dlls/kernelbase/winerror.mc:2025
 msgid "Invalid primary group.\n"
 msgstr "El grup principal no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1955
+#: dlls/kernelbase/winerror.mc:2030
 msgid "No impersonation token.\n"
 msgstr "No hi ha cap component lèxic de suplantació.\n"
 
-#: dlls/kernelbase/winerror.mc:1960
+#: dlls/kernelbase/winerror.mc:2035
 msgid "Can't disable mandatory group.\n"
 msgstr "No es pot inhabilitar un grup obligatori.\n"
 
-#: dlls/kernelbase/winerror.mc:1965
+#: dlls/kernelbase/winerror.mc:2040
 msgid "No logon servers available.\n"
 msgstr "Cap servidor d'autenticació està disponible.\n"
 
-#: dlls/kernelbase/winerror.mc:1970
+#: dlls/kernelbase/winerror.mc:2045
 msgid "No such logon session.\n"
 msgstr "No hi ha tal sessió d'inici.\n"
 
-#: dlls/kernelbase/winerror.mc:1975
+#: dlls/kernelbase/winerror.mc:2050
 msgid "No such privilege.\n"
 msgstr "No hi ha tal privilegi.\n"
 
-#: dlls/kernelbase/winerror.mc:1980
+#: dlls/kernelbase/winerror.mc:2055
 msgid "Privilege not held.\n"
 msgstr "No es té el privilegi.\n"
 
-#: dlls/kernelbase/winerror.mc:1985
+#: dlls/kernelbase/winerror.mc:2060
 msgid "Invalid account name.\n"
 msgstr "El nom del compte no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:1990
+#: dlls/kernelbase/winerror.mc:2065
 msgid "User already exists.\n"
 msgstr "L'usuari ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:1995
+#: dlls/kernelbase/winerror.mc:2070
 msgid "No such user.\n"
 msgstr "No hi ha tal usuari.\n"
 
-#: dlls/kernelbase/winerror.mc:2000
+#: dlls/kernelbase/winerror.mc:2075
 msgid "Group already exists.\n"
 msgstr "El grup ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:2005
+#: dlls/kernelbase/winerror.mc:2080
 msgid "No such group.\n"
 msgstr "No hi ha tal grup.\n"
 
-#: dlls/kernelbase/winerror.mc:2010
+#: dlls/kernelbase/winerror.mc:2085
 msgid "User already in group.\n"
 msgstr "L'usuari ja hi és en el grup.\n"
 
-#: dlls/kernelbase/winerror.mc:2015
+#: dlls/kernelbase/winerror.mc:2090
 msgid "User not in group.\n"
 msgstr "L'usuari no hi és en el grup.\n"
 
-#: dlls/kernelbase/winerror.mc:2020
+#: dlls/kernelbase/winerror.mc:2095
 msgid "Can't delete last admin user.\n"
 msgstr "No es pot suprimir l'últim usuari administrador.\n"
 
-#: dlls/kernelbase/winerror.mc:2025
+#: dlls/kernelbase/winerror.mc:2100
 msgid "Wrong password.\n"
 msgstr "La contrasenya està equivocada.\n"
 
-#: dlls/kernelbase/winerror.mc:2030
+#: dlls/kernelbase/winerror.mc:2105
 msgid "Ill-formed password.\n"
 msgstr "La contrasenya està mal formada.\n"
 
-#: dlls/kernelbase/winerror.mc:2035
+#: dlls/kernelbase/winerror.mc:2110
 msgid "Password restriction.\n"
 msgstr "Hi ha una restricció de contrasenya.\n"
 
-#: dlls/kernelbase/winerror.mc:2040
+#: dlls/kernelbase/winerror.mc:2115
 msgid "Logon failure.\n"
 msgstr "L'inici de sessió ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:2045
+#: dlls/kernelbase/winerror.mc:2120
 msgid "Account restriction.\n"
 msgstr "Hi ha una restricció de compte.\n"
 
-#: dlls/kernelbase/winerror.mc:2050
+#: dlls/kernelbase/winerror.mc:2125
 msgid "Invalid logon hours.\n"
 msgstr "Les hores de sessió no són vàlides.\n"
 
-#: dlls/kernelbase/winerror.mc:2055
+#: dlls/kernelbase/winerror.mc:2130
 msgid "Invalid workstation.\n"
 msgstr "L'estació de treball no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2060
+#: dlls/kernelbase/winerror.mc:2135
 msgid "Password expired.\n"
 msgstr "La contrasenya s'ha caducat.\n"
 
-#: dlls/kernelbase/winerror.mc:2065
+#: dlls/kernelbase/winerror.mc:2140
 msgid "Account disabled.\n"
 msgstr "S'ha inhabilitat el compte.\n"
 
-#: dlls/kernelbase/winerror.mc:2070
+#: dlls/kernelbase/winerror.mc:2145
 msgid "No security ID mapped.\n"
 msgstr "No s'ha assignat cap ID de seguretat.\n"
 
-#: dlls/kernelbase/winerror.mc:2075
+#: dlls/kernelbase/winerror.mc:2150
 msgid "Too many LUIDs requested.\n"
 msgstr "S'han sol·licitat massa LUID.\n"
 
-#: dlls/kernelbase/winerror.mc:2080
+#: dlls/kernelbase/winerror.mc:2155
 msgid "LUIDs exhausted.\n"
 msgstr "S'han acabat els LUID.\n"
 
-#: dlls/kernelbase/winerror.mc:2085
+#: dlls/kernelbase/winerror.mc:2160
 msgid "Invalid sub authority.\n"
 msgstr "La subautoritat no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2090
+#: dlls/kernelbase/winerror.mc:2165
 msgid "Invalid ACL.\n"
 msgstr "L'ACL no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2095
+#: dlls/kernelbase/winerror.mc:2170
 msgid "Invalid SID.\n"
 msgstr "L'SID no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2100
+#: dlls/kernelbase/winerror.mc:2175
 msgid "Invalid security descriptor.\n"
 msgstr "El descriptor de seguretat no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2105
+#: dlls/kernelbase/winerror.mc:2180
 msgid "Bad inherited ACL.\n"
 msgstr "L'ACL heretat és dolent.\n"
 
-#: dlls/kernelbase/winerror.mc:2110
+#: dlls/kernelbase/winerror.mc:2185
 msgid "Server disabled.\n"
 msgstr "El servidor està inhabilitat.\n"
 
-#: dlls/kernelbase/winerror.mc:2115
+#: dlls/kernelbase/winerror.mc:2190
 msgid "Server not disabled.\n"
 msgstr "El servidor no està inhabilitat.\n"
 
-#: dlls/kernelbase/winerror.mc:2120
+#: dlls/kernelbase/winerror.mc:2195
 msgid "Invalid ID authority.\n"
 msgstr "L'autoritat d'ID no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2125
+#: dlls/kernelbase/winerror.mc:2200
 msgid "Allotted space exceeded.\n"
 msgstr "S'ha superat l'espai assignat.\n"
 
-#: dlls/kernelbase/winerror.mc:2130
+#: dlls/kernelbase/winerror.mc:2205
 msgid "Invalid group attributes.\n"
 msgstr "Els atributs de grup no són vàlids.\n"
 
-#: dlls/kernelbase/winerror.mc:2135
+#: dlls/kernelbase/winerror.mc:2210
 msgid "Bad impersonation level.\n"
 msgstr "El nivell de suplantació és dolent.\n"
 
-#: dlls/kernelbase/winerror.mc:2140
+#: dlls/kernelbase/winerror.mc:2215
 msgid "Can't open anonymous security token.\n"
 msgstr "No es pot obrir el component lèxic de seguretat anònim.\n"
 
-#: dlls/kernelbase/winerror.mc:2145
+#: dlls/kernelbase/winerror.mc:2220
 msgid "Bad validation class.\n"
 msgstr "La classe de validació és dolenta.\n"
 
-#: dlls/kernelbase/winerror.mc:2150
+#: dlls/kernelbase/winerror.mc:2225
 msgid "Bad token type.\n"
 msgstr "El tipus de component lèxic és dolent.\n"
 
-#: dlls/kernelbase/winerror.mc:2155
+#: dlls/kernelbase/winerror.mc:2230
 msgid "No security on object.\n"
 msgstr "No hi ha cap seguretat en l'objecte.\n"
 
-#: dlls/kernelbase/winerror.mc:2160
+#: dlls/kernelbase/winerror.mc:2235
 msgid "Can't access domain information.\n"
 msgstr "No es pot accedir a la informació de domini.\n"
 
-#: dlls/kernelbase/winerror.mc:2165
+#: dlls/kernelbase/winerror.mc:2240
 msgid "Invalid server state.\n"
 msgstr "L'estat de servidor no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2170
+#: dlls/kernelbase/winerror.mc:2245
 msgid "Invalid domain state.\n"
 msgstr "L'estat de domini no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2175
+#: dlls/kernelbase/winerror.mc:2250
 msgid "Invalid domain role.\n"
 msgstr "El rol de domini no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2180
+#: dlls/kernelbase/winerror.mc:2255
 msgid "No such domain.\n"
 msgstr "No hi ha tal domini.\n"
 
-#: dlls/kernelbase/winerror.mc:2185
+#: dlls/kernelbase/winerror.mc:2260
 msgid "Domain already exists.\n"
 msgstr "El domini ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:2190
+#: dlls/kernelbase/winerror.mc:2265
 msgid "Domain limit exceeded.\n"
 msgstr "S'ha superat el límit de domini.\n"
 
-#: dlls/kernelbase/winerror.mc:2195
+#: dlls/kernelbase/winerror.mc:2270
 msgid "Internal database corruption.\n"
 msgstr "Hi ha corrupció de base de dades interna.\n"
 
-#: dlls/kernelbase/winerror.mc:2200
+#: dlls/kernelbase/winerror.mc:2275
 msgid "Internal error.\n"
 msgstr "Hi ha hagut un error intern.\n"
 
-#: dlls/kernelbase/winerror.mc:2205
+#: dlls/kernelbase/winerror.mc:2280
 msgid "Generic access types not mapped.\n"
 msgstr "No s'han assignat els tipus genèrics d'accés.\n"
 
-#: dlls/kernelbase/winerror.mc:2210
+#: dlls/kernelbase/winerror.mc:2285
 msgid "Bad descriptor format.\n"
 msgstr "El format de descriptor és dolent.\n"
 
-#: dlls/kernelbase/winerror.mc:2215
+#: dlls/kernelbase/winerror.mc:2290
 msgid "Not a logon process.\n"
 msgstr "No és un procés d'inici de sessió.\n"
 
-#: dlls/kernelbase/winerror.mc:2220
+#: dlls/kernelbase/winerror.mc:2295
 msgid "Logon session ID exists.\n"
 msgstr "L'ID de sessió d'inici existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:2225
+#: dlls/kernelbase/winerror.mc:2300
 msgid "Unknown authentication package.\n"
 msgstr "El paquet d'autenticació és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:2230
+#: dlls/kernelbase/winerror.mc:2305
 msgid "Bad logon session state.\n"
 msgstr "L'estat de sessió d'inici és dolent.\n"
 
-#: dlls/kernelbase/winerror.mc:2235
+#: dlls/kernelbase/winerror.mc:2310
 msgid "Logon session ID collision.\n"
 msgstr "Hi ha hagut una col·lisió d'ID de sessió d'inici.\n"
 
-#: dlls/kernelbase/winerror.mc:2240
+#: dlls/kernelbase/winerror.mc:2315
 msgid "Invalid logon type.\n"
 msgstr "El tipus d'inici de sessió no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2245
+#: dlls/kernelbase/winerror.mc:2320
 msgid "Cannot impersonate.\n"
 msgstr "No es pot suplantar.\n"
 
-#: dlls/kernelbase/winerror.mc:2250
+#: dlls/kernelbase/winerror.mc:2325
 msgid "Invalid transaction state.\n"
 msgstr "L'estat de transacció no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2255
+#: dlls/kernelbase/winerror.mc:2330
 msgid "Security DB commit failure.\n"
 msgstr "Ha fallat la comissió de base de dades de seguretat.\n"
 
-#: dlls/kernelbase/winerror.mc:2260
+#: dlls/kernelbase/winerror.mc:2335
 msgid "Account is built-in.\n"
 msgstr "El compte és integrat.\n"
 
-#: dlls/kernelbase/winerror.mc:2265
+#: dlls/kernelbase/winerror.mc:2340
 msgid "Group is built-in.\n"
 msgstr "El grup és integrat.\n"
 
-#: dlls/kernelbase/winerror.mc:2270
+#: dlls/kernelbase/winerror.mc:2345
 msgid "User is built-in.\n"
 msgstr "L'usuari és integrat.\n"
 
-#: dlls/kernelbase/winerror.mc:2275
+#: dlls/kernelbase/winerror.mc:2350
 msgid "Group is primary for user.\n"
 msgstr "El grup és el principal per a l'usuari.\n"
 
-#: dlls/kernelbase/winerror.mc:2280
+#: dlls/kernelbase/winerror.mc:2355
 msgid "Token already in use.\n"
 msgstr "El component lèxic ja està en ús.\n"
 
-#: dlls/kernelbase/winerror.mc:2285
+#: dlls/kernelbase/winerror.mc:2360
 msgid "No such local group.\n"
 msgstr "No hi ha tal grup local.\n"
 
-#: dlls/kernelbase/winerror.mc:2290
+#: dlls/kernelbase/winerror.mc:2365
 msgid "User not in local group.\n"
 msgstr "L'usuari no hi és en el grup local.\n"
 
-#: dlls/kernelbase/winerror.mc:2295
+#: dlls/kernelbase/winerror.mc:2370
 msgid "User already in local group.\n"
 msgstr "L'usuari ja hi és en el grup local.\n"
 
-#: dlls/kernelbase/winerror.mc:2300
+#: dlls/kernelbase/winerror.mc:2375
 msgid "Local group already exists.\n"
 msgstr "El grup local ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:2305 dlls/kernelbase/winerror.mc:2330
+#: dlls/kernelbase/winerror.mc:2380 dlls/kernelbase/winerror.mc:2405
 msgid "Logon type not granted.\n"
 msgstr "No s'ha concedit el tipus d'inici de sessió.\n"
 
-#: dlls/kernelbase/winerror.mc:2310
+#: dlls/kernelbase/winerror.mc:2385
 msgid "Too many secrets.\n"
 msgstr "Hi ha massa secrets.\n"
 
-#: dlls/kernelbase/winerror.mc:2315
+#: dlls/kernelbase/winerror.mc:2390
 msgid "Secret too long.\n"
 msgstr "El secret és massa llarg.\n"
 
-#: dlls/kernelbase/winerror.mc:2320
+#: dlls/kernelbase/winerror.mc:2395
 msgid "Internal security DB error.\n"
 msgstr "Hi ha hagut un error intern de base de dades de seguretat.\n"
 
-#: dlls/kernelbase/winerror.mc:2325
+#: dlls/kernelbase/winerror.mc:2400
 msgid "Too many context IDs.\n"
 msgstr "Hi ha massa ID de context.\n"
 
-#: dlls/kernelbase/winerror.mc:2335
+#: dlls/kernelbase/winerror.mc:2410
 msgid "Cross-encrypted NT password required.\n"
 msgstr "Cal una contrasenya mutualment xifrada NT.\n"
 
-#: dlls/kernelbase/winerror.mc:2340
+#: dlls/kernelbase/winerror.mc:2415
 msgid "No such member.\n"
 msgstr "No hi ha tal membre.\n"
 
-#: dlls/kernelbase/winerror.mc:2345
+#: dlls/kernelbase/winerror.mc:2420
 msgid "Invalid member.\n"
 msgstr "El membre no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2350
+#: dlls/kernelbase/winerror.mc:2425
 msgid "Too many SIDs.\n"
 msgstr "Hi ha massa SID.\n"
 
-#: dlls/kernelbase/winerror.mc:2355
+#: dlls/kernelbase/winerror.mc:2430
 msgid "Cross-encrypted LM password required.\n"
 msgstr "Cal una contrasenya mutualment xifrada LM.\n"
 
-#: dlls/kernelbase/winerror.mc:2360
+#: dlls/kernelbase/winerror.mc:2435
 msgid "No inheritable components.\n"
 msgstr "Cap component és heretable.\n"
 
-#: dlls/kernelbase/winerror.mc:2365
+#: dlls/kernelbase/winerror.mc:2440
 msgid "File or directory corrupt.\n"
 msgstr "El fitxer o directori és corrupte.\n"
 
-#: dlls/kernelbase/winerror.mc:2370
+#: dlls/kernelbase/winerror.mc:2445
 msgid "Disk is corrupt.\n"
 msgstr "El disc és corrupte.\n"
 
-#: dlls/kernelbase/winerror.mc:2375
+#: dlls/kernelbase/winerror.mc:2450
 msgid "No user session key.\n"
 msgstr "No hi ha cap clau de sessió d'usuari.\n"
 
-#: dlls/kernelbase/winerror.mc:2380
+#: dlls/kernelbase/winerror.mc:2455
 msgid "License quota exceeded.\n"
 msgstr "S'ha superat la quota de llicència.\n"
 
-#: dlls/kernelbase/winerror.mc:2385
+#: dlls/kernelbase/winerror.mc:2460
 msgid "Wrong target name.\n"
 msgstr "El nom de la destinació és incorrecte.\n"
 
-#: dlls/kernelbase/winerror.mc:2390
+#: dlls/kernelbase/winerror.mc:2465
 msgid "Mutual authentication failed.\n"
 msgstr "L'autenticació mútua ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:2395
+#: dlls/kernelbase/winerror.mc:2470
 msgid "Time skew between client and server.\n"
 msgstr "Hi ha una asimetria horària entre el client i el servidor.\n"
 
-#: dlls/kernelbase/winerror.mc:2400
+#: dlls/kernelbase/winerror.mc:2475
 msgid "Invalid window handle.\n"
 msgstr "L'identificador de finestra no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2405
+#: dlls/kernelbase/winerror.mc:2480
 msgid "Invalid menu handle.\n"
 msgstr "L'identificador de menú no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2410
+#: dlls/kernelbase/winerror.mc:2485
 msgid "Invalid cursor handle.\n"
 msgstr "L'identificador de cursor no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2415
+#: dlls/kernelbase/winerror.mc:2490
 msgid "Invalid accelerator table handle.\n"
 msgstr "L'identificador de taula acceleradora no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2420
+#: dlls/kernelbase/winerror.mc:2495
 msgid "Invalid hook handle.\n"
 msgstr "L'identificador de ganxo no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2425
+#: dlls/kernelbase/winerror.mc:2500
 msgid "Invalid DWP handle.\n"
 msgstr "L'identificador DWP no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2430
+#: dlls/kernelbase/winerror.mc:2505
 msgid "Can't create top-level child window.\n"
 msgstr "No es pot crear una finestra filla que és en el nivell superior.\n"
 
-#: dlls/kernelbase/winerror.mc:2435
+#: dlls/kernelbase/winerror.mc:2510
 msgid "Can't find window class.\n"
 msgstr "No es pot trobar la classe de finestra.\n"
 
-#: dlls/kernelbase/winerror.mc:2440
+#: dlls/kernelbase/winerror.mc:2515
 msgid "Window owned by another thread.\n"
 msgstr "La finestra pertany a un altre fil.\n"
 
-#: dlls/kernelbase/winerror.mc:2445
+#: dlls/kernelbase/winerror.mc:2520
 msgid "Hotkey already registered.\n"
 msgstr "Ja s'ha registrat la tecla d'accés directe.\n"
 
-#: dlls/kernelbase/winerror.mc:2450
+#: dlls/kernelbase/winerror.mc:2525
 msgid "Class already exists.\n"
 msgstr "La classe ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:2455
+#: dlls/kernelbase/winerror.mc:2530
 msgid "Class does not exist.\n"
 msgstr "La classe no existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:2460
+#: dlls/kernelbase/winerror.mc:2535
 msgid "Class has open windows.\n"
 msgstr "La classe té finestres obertes.\n"
 
-#: dlls/kernelbase/winerror.mc:2465 dlls/mferror/mferror.mc:130
+#: dlls/kernelbase/winerror.mc:2540 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
 msgstr "L'índex no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2470
+#: dlls/kernelbase/winerror.mc:2545
 msgid "Invalid icon handle.\n"
 msgstr "L'identificador d'icona no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2475
+#: dlls/kernelbase/winerror.mc:2550
 msgid "Private dialog index.\n"
 msgstr "L'índex de diàleg és privat.\n"
 
-#: dlls/kernelbase/winerror.mc:2480
+#: dlls/kernelbase/winerror.mc:2555
 msgid "List box ID not found.\n"
 msgstr "No s'ha trobat l'ID de quadre de llista.\n"
 
-#: dlls/kernelbase/winerror.mc:2485
+#: dlls/kernelbase/winerror.mc:2560
 msgid "No wildcard characters.\n"
 msgstr "No hi ha cap caràcter comodí.\n"
 
-#: dlls/kernelbase/winerror.mc:2490
+#: dlls/kernelbase/winerror.mc:2565
 msgid "Clipboard not open.\n"
 msgstr "El porta-retalls no està obert.\n"
 
-#: dlls/kernelbase/winerror.mc:2495
+#: dlls/kernelbase/winerror.mc:2570
 msgid "Hotkey not registered.\n"
 msgstr "La tecla d'accés directe no està registrada.\n"
 
-#: dlls/kernelbase/winerror.mc:2500
+#: dlls/kernelbase/winerror.mc:2575
 msgid "Not a dialog window.\n"
 msgstr "No és finestra de diàleg.\n"
 
-#: dlls/kernelbase/winerror.mc:2505
+#: dlls/kernelbase/winerror.mc:2580
 msgid "Control ID not found.\n"
 msgstr "No s'ha trobat l'ID de control.\n"
 
-#: dlls/kernelbase/winerror.mc:2510
+#: dlls/kernelbase/winerror.mc:2585
 msgid "Invalid combo box message.\n"
 msgstr "El missatge de quadre combinat no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2515
+#: dlls/kernelbase/winerror.mc:2590
 msgid "Not a combo box window.\n"
 msgstr "No és finestra de quadre combinat.\n"
 
-#: dlls/kernelbase/winerror.mc:2520
+#: dlls/kernelbase/winerror.mc:2595
 msgid "Invalid edit height.\n"
 msgstr "L'altura d'edició no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2525
+#: dlls/kernelbase/winerror.mc:2600
 msgid "DC not found.\n"
 msgstr "No s'ha trobat el DC.\n"
 
-#: dlls/kernelbase/winerror.mc:2530
+#: dlls/kernelbase/winerror.mc:2605
 msgid "Invalid hook filter.\n"
 msgstr "El filtre de ganxo no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2535
+#: dlls/kernelbase/winerror.mc:2610
 msgid "Invalid filter procedure.\n"
 msgstr "El procediment de filtre no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2540
+#: dlls/kernelbase/winerror.mc:2615
 msgid "Hook procedure needs module handle.\n"
 msgstr "El procediment de ganxo necessita l'identificador de mòdul.\n"
 
-#: dlls/kernelbase/winerror.mc:2545
+#: dlls/kernelbase/winerror.mc:2620
 msgid "Global-only hook procedure.\n"
 msgstr "El procediment de ganxo és només global.\n"
 
-#: dlls/kernelbase/winerror.mc:2550
+#: dlls/kernelbase/winerror.mc:2625
 msgid "Journal hook already set.\n"
 msgstr "Ja s'ha definit el ganxo de journal.\n"
 
-#: dlls/kernelbase/winerror.mc:2555
+#: dlls/kernelbase/winerror.mc:2630
 msgid "Hook procedure not installed.\n"
 msgstr "El procediment de ganxo no està instal·lat.\n"
 
-#: dlls/kernelbase/winerror.mc:2560
+#: dlls/kernelbase/winerror.mc:2635
 msgid "Invalid list box message.\n"
 msgstr "El missatge de quadre de llista no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2565
+#: dlls/kernelbase/winerror.mc:2640
 msgid "Invalid LB_SETCOUNT sent.\n"
 msgstr "S'ha enviat un LB_SETCOUNT no vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2570
+#: dlls/kernelbase/winerror.mc:2645
 msgid "No tab stops on this list box.\n"
 msgstr "No hi ha cap tabulador que s'aturi en aquest quadre de llista.\n"
 
-#: dlls/kernelbase/winerror.mc:2575
+#: dlls/kernelbase/winerror.mc:2650
 msgid "Can't destroy object owned by another thread.\n"
 msgstr "No es pot destruir un objecte d'un altre fil.\n"
 
-#: dlls/kernelbase/winerror.mc:2580
+#: dlls/kernelbase/winerror.mc:2655
 msgid "Child window menus not allowed.\n"
 msgstr "No es permeten els menús de finestres filles.\n"
 
-#: dlls/kernelbase/winerror.mc:2585
+#: dlls/kernelbase/winerror.mc:2660
 msgid "Window has no system menu.\n"
 msgstr "La finestra no té menú de sistema.\n"
 
-#: dlls/kernelbase/winerror.mc:2590
+#: dlls/kernelbase/winerror.mc:2665
 msgid "Invalid message box style.\n"
 msgstr "L'estil de quadre de missatge no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2595
+#: dlls/kernelbase/winerror.mc:2670
 msgid "Invalid SPI parameter.\n"
 msgstr "El paràmetre SPI no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2600
+#: dlls/kernelbase/winerror.mc:2675
 msgid "Screen already locked.\n"
 msgstr "La pantalla ja s'ha bloquejat.\n"
 
-#: dlls/kernelbase/winerror.mc:2605
+#: dlls/kernelbase/winerror.mc:2680
 msgid "Window handles have different parents.\n"
 msgstr "Els identificadors de finestra tenen pares diferents.\n"
 
-#: dlls/kernelbase/winerror.mc:2610
+#: dlls/kernelbase/winerror.mc:2685
 msgid "Not a child window.\n"
 msgstr "No és finestra filla.\n"
 
-#: dlls/kernelbase/winerror.mc:2615
+#: dlls/kernelbase/winerror.mc:2690
 msgid "Invalid GW command.\n"
 msgstr "L'ordre GW no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2620
+#: dlls/kernelbase/winerror.mc:2695
 msgid "Invalid thread ID.\n"
 msgstr "L'ID de fil no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2625
+#: dlls/kernelbase/winerror.mc:2700
 msgid "Not an MDI child window.\n"
 msgstr "No és finestra filla MDI.\n"
 
-#: dlls/kernelbase/winerror.mc:2630
+#: dlls/kernelbase/winerror.mc:2705
 msgid "Popup menu already active.\n"
 msgstr "El menú emergent ja està actiu.\n"
 
-#: dlls/kernelbase/winerror.mc:2635
+#: dlls/kernelbase/winerror.mc:2710
 msgid "No scrollbars.\n"
 msgstr "No hi ha cap barra de desplaçament.\n"
 
-#: dlls/kernelbase/winerror.mc:2640
+#: dlls/kernelbase/winerror.mc:2715
 msgid "Invalid scrollbar range.\n"
 msgstr "L'interval de desplaçament no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2645
+#: dlls/kernelbase/winerror.mc:2720
 msgid "Invalid ShowWin command.\n"
 msgstr "L'ordre ShowWin no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2650
+#: dlls/kernelbase/winerror.mc:2725
 msgid "No system resources.\n"
 msgstr "No hi ha recursos de sistema.\n"
 
-#: dlls/kernelbase/winerror.mc:2655
+#: dlls/kernelbase/winerror.mc:2730
 msgid "No non-paged system resources.\n"
 msgstr "No hi ha recursos de sistema no paginats.\n"
 
-#: dlls/kernelbase/winerror.mc:2660
+#: dlls/kernelbase/winerror.mc:2735
 msgid "No paged system resources.\n"
 msgstr "No hi ha recursos de sistema paginats.\n"
 
-#: dlls/kernelbase/winerror.mc:2665
+#: dlls/kernelbase/winerror.mc:2740
 msgid "No working set quota.\n"
 msgstr "No hi ha cap quota de conjunt de treball.\n"
 
-#: dlls/kernelbase/winerror.mc:2670
+#: dlls/kernelbase/winerror.mc:2745
 msgid "No page file quota.\n"
 msgstr "No hi ha cap quota de fitxer de paginació.\n"
 
-#: dlls/kernelbase/winerror.mc:2675
+#: dlls/kernelbase/winerror.mc:2750
 msgid "Exceeded commitment limit.\n"
 msgstr "S'ha superat el límit de compromís.\n"
 
-#: dlls/kernelbase/winerror.mc:2680
+#: dlls/kernelbase/winerror.mc:2755
 msgid "Menu item not found.\n"
 msgstr "No s'ha trobat l'element de menú.\n"
 
-#: dlls/kernelbase/winerror.mc:2685
+#: dlls/kernelbase/winerror.mc:2760
 msgid "Invalid keyboard handle.\n"
 msgstr "L'identificador de teclat no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2690
+#: dlls/kernelbase/winerror.mc:2765
 msgid "Hook type not allowed.\n"
 msgstr "El tipus de ganxo no es permet.\n"
 
-#: dlls/kernelbase/winerror.mc:2695
+#: dlls/kernelbase/winerror.mc:2770
 msgid "Interactive window station required.\n"
 msgstr "Cal una estació de finestra interactiva.\n"
 
-#: dlls/kernelbase/winerror.mc:2700
+#: dlls/kernelbase/winerror.mc:2775
 msgid "Timeout.\n"
 msgstr "S'ha superat el temps d'espera.\n"
 
-#: dlls/kernelbase/winerror.mc:2705
+#: dlls/kernelbase/winerror.mc:2780
 msgid "Invalid monitor handle.\n"
 msgstr "L'identificador de monitor no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2710
+#: dlls/kernelbase/winerror.mc:2785
 msgid "Event log file corrupt.\n"
 msgstr "El fitxer de registre d'esdeveniments és corrupte.\n"
 
-#: dlls/kernelbase/winerror.mc:2715
+#: dlls/kernelbase/winerror.mc:2790
 msgid "Event log can't start.\n"
 msgstr "No es pot iniciar el registre d'esdeveniments.\n"
 
-#: dlls/kernelbase/winerror.mc:2720
+#: dlls/kernelbase/winerror.mc:2795
 msgid "Event log file full.\n"
 msgstr "El fitxer de registre d'esdeveniments està ple.\n"
 
-#: dlls/kernelbase/winerror.mc:2725
+#: dlls/kernelbase/winerror.mc:2800
 msgid "Event log file changed.\n"
 msgstr "S'ha canviat el fitxer de registre d'esdeveniments.\n"
 
-#: dlls/kernelbase/winerror.mc:2730
+#: dlls/kernelbase/winerror.mc:2805
 msgid "Installer service failed.\n"
 msgstr "El servei d'instal·lació ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:2735
+#: dlls/kernelbase/winerror.mc:2810
 msgid "Installation aborted by user.\n"
 msgstr "L'usuari ha avortat la instal·lació.\n"
 
-#: dlls/kernelbase/winerror.mc:2740
+#: dlls/kernelbase/winerror.mc:2815
 msgid "Installation failure.\n"
 msgstr "La instal·lació ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:2745
+#: dlls/kernelbase/winerror.mc:2820
 msgid "Installation suspended.\n"
 msgstr "S'ha suspès la instal·lació.\n"
 
-#: dlls/kernelbase/winerror.mc:2750
+#: dlls/kernelbase/winerror.mc:2825
 msgid "Unknown product.\n"
 msgstr "El producte és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:2755
+#: dlls/kernelbase/winerror.mc:2830
 msgid "Unknown feature.\n"
 msgstr "La característica és desconeguda.\n"
 
-#: dlls/kernelbase/winerror.mc:2760
+#: dlls/kernelbase/winerror.mc:2835
 msgid "Unknown component.\n"
 msgstr "El component és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:2765
+#: dlls/kernelbase/winerror.mc:2840
 msgid "Unknown property.\n"
 msgstr "La propietat és desconeguda.\n"
 
-#: dlls/kernelbase/winerror.mc:2770
+#: dlls/kernelbase/winerror.mc:2845
 msgid "Invalid handle state.\n"
 msgstr "L'estat d'identificador no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2775
+#: dlls/kernelbase/winerror.mc:2850
 msgid "Bad configuration.\n"
 msgstr "La configuració és dolenta.\n"
 
-#: dlls/kernelbase/winerror.mc:2780
+#: dlls/kernelbase/winerror.mc:2855
 msgid "Index is missing.\n"
 msgstr "Manca l'índex.\n"
 
-#: dlls/kernelbase/winerror.mc:2785
+#: dlls/kernelbase/winerror.mc:2860
 msgid "Installation source is missing.\n"
 msgstr "Manca la font d'instal·lació.\n"
 
-#: dlls/kernelbase/winerror.mc:2790
+#: dlls/kernelbase/winerror.mc:2865
 msgid "Wrong installation package version.\n"
 msgstr "La versió de paquet d'instal·lació és incorrecta.\n"
 
-#: dlls/kernelbase/winerror.mc:2795
+#: dlls/kernelbase/winerror.mc:2870
 msgid "Product uninstalled.\n"
 msgstr "S'ha desinstal·lat el producte.\n"
 
-#: dlls/kernelbase/winerror.mc:2800
+#: dlls/kernelbase/winerror.mc:2875
 msgid "Invalid query syntax.\n"
 msgstr "La sintaxi de consulta no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2805
+#: dlls/kernelbase/winerror.mc:2880
 msgid "Invalid field.\n"
 msgstr "El camp no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2810
+#: dlls/kernelbase/winerror.mc:2885
 msgid "Device removed.\n"
 msgstr "S'ha tret el dispositiu.\n"
 
-#: dlls/kernelbase/winerror.mc:2815
+#: dlls/kernelbase/winerror.mc:2890
 msgid "Installation already running.\n"
 msgstr "La instal·lació ja s'està executant.\n"
 
-#: dlls/kernelbase/winerror.mc:2820
+#: dlls/kernelbase/winerror.mc:2895
 msgid "Installation package failed to open.\n"
 msgstr "El paquet d'instal·lació ha fallat en obrir.\n"
 
-#: dlls/kernelbase/winerror.mc:2825
+#: dlls/kernelbase/winerror.mc:2900
 msgid "Installation package is invalid.\n"
 msgstr "El paquet d'instal·lació no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2830
+#: dlls/kernelbase/winerror.mc:2905
 msgid "Installer user interface failed.\n"
 msgstr "La interfície d'usuari de l'instal·lador ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:2835
+#: dlls/kernelbase/winerror.mc:2910
 msgid "Failed to open installation log file.\n"
 msgstr "Ha fallat l'obertura del fitxer de registre d'instal·lació.\n"
 
-#: dlls/kernelbase/winerror.mc:2840
+#: dlls/kernelbase/winerror.mc:2915
 msgid "Installation language not supported.\n"
 msgstr "La llengua d'instal·lació no és compatible.\n"
 
-#: dlls/kernelbase/winerror.mc:2845
+#: dlls/kernelbase/winerror.mc:2920
 msgid "Installation transform failed to apply.\n"
 msgstr "La transformació d'instal·lació ha fallat en aplicar-se.\n"
 
-#: dlls/kernelbase/winerror.mc:2850
+#: dlls/kernelbase/winerror.mc:2925
 msgid "Installation package rejected.\n"
 msgstr "S'ha rebutjat el paquet d'instal·lació.\n"
 
-#: dlls/kernelbase/winerror.mc:2855
+#: dlls/kernelbase/winerror.mc:2930
 msgid "Function could not be called.\n"
 msgstr "No s'ha pogut trucar a la funció.\n"
 
-#: dlls/kernelbase/winerror.mc:2860
+#: dlls/kernelbase/winerror.mc:2935
 msgid "Function failed.\n"
 msgstr "La funció ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:2865
+#: dlls/kernelbase/winerror.mc:2940
 msgid "Invalid table.\n"
 msgstr "La taula no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2870
+#: dlls/kernelbase/winerror.mc:2945
 msgid "Data type mismatch.\n"
 msgstr "Els tipus de dades no es coincideixen.\n"
 
-#: dlls/kernelbase/winerror.mc:2875 dlls/kernelbase/winerror.mc:3085
+#: dlls/kernelbase/winerror.mc:2950 dlls/kernelbase/winerror.mc:3160
 msgid "Unsupported type.\n"
 msgstr "El tipus és incompatible.\n"
 
-#: dlls/kernelbase/winerror.mc:2880
+#: dlls/kernelbase/winerror.mc:2955
 msgid "Creation failed.\n"
 msgstr "La creació ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:2885
+#: dlls/kernelbase/winerror.mc:2960
 msgid "Temporary directory not writable.\n"
 msgstr "No es pot escriure al directori temporal.\n"
 
-#: dlls/kernelbase/winerror.mc:2890
+#: dlls/kernelbase/winerror.mc:2965
 msgid "Installation platform not supported.\n"
 msgstr "La plataforma d'instal·lació no és compatible.\n"
 
-#: dlls/kernelbase/winerror.mc:2895
+#: dlls/kernelbase/winerror.mc:2970
 msgid "Installer not used.\n"
 msgstr "No s'ha utilitzat l'instal·lador.\n"
 
-#: dlls/kernelbase/winerror.mc:2900
+#: dlls/kernelbase/winerror.mc:2975
 msgid "Failed to open the patch package.\n"
 msgstr "S'ha fallat en obrir el paquet de pedaç.\n"
 
-#: dlls/kernelbase/winerror.mc:2905
+#: dlls/kernelbase/winerror.mc:2980
 msgid "Invalid patch package.\n"
 msgstr "El paquet de pedaç no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2910
+#: dlls/kernelbase/winerror.mc:2985
 msgid "Unsupported patch package.\n"
 msgstr "El paquet de pedaç és incompatible.\n"
 
-#: dlls/kernelbase/winerror.mc:2915
+#: dlls/kernelbase/winerror.mc:2990
 msgid "Another version is installed.\n"
 msgstr "Una altra versió està instal·lada.\n"
 
-#: dlls/kernelbase/winerror.mc:2920
+#: dlls/kernelbase/winerror.mc:2995
 msgid "Invalid command line.\n"
 msgstr "La línia d'ordres no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2925
+#: dlls/kernelbase/winerror.mc:3000
 msgid "Remote installation not allowed.\n"
 msgstr "No es permet la instal·lació remota.\n"
 
-#: dlls/kernelbase/winerror.mc:2930
+#: dlls/kernelbase/winerror.mc:3005
 msgid "Reboot initiated after successful install.\n"
 msgstr "S'ha iniciat un reinici després d'instal·lació amb èxit.\n"
 
-#: dlls/kernelbase/winerror.mc:2935
+#: dlls/kernelbase/winerror.mc:3010
 msgid "Invalid string binding.\n"
 msgstr "La vinculació de cadena no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2940
+#: dlls/kernelbase/winerror.mc:3015
 msgid "Wrong kind of binding.\n"
 msgstr "El tipus de vinculació és incorrecte.\n"
 
-#: dlls/kernelbase/winerror.mc:2945
+#: dlls/kernelbase/winerror.mc:3020
 msgid "Invalid binding.\n"
 msgstr "La vinculació no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2950
+#: dlls/kernelbase/winerror.mc:3025
 msgid "RPC protocol sequence not supported.\n"
 msgstr "La seqüència de protocol RPC no és compatible.\n"
 
-#: dlls/kernelbase/winerror.mc:2955
+#: dlls/kernelbase/winerror.mc:3030
 msgid "Invalid RPC protocol sequence.\n"
 msgstr "La seqüència de protocol RPC no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2960
+#: dlls/kernelbase/winerror.mc:3035
 msgid "Invalid string UUID.\n"
 msgstr "L'UUID de cadena no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2965
+#: dlls/kernelbase/winerror.mc:3040
 msgid "Invalid endpoint format.\n"
 msgstr "El format de punt final no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2970
+#: dlls/kernelbase/winerror.mc:3045
 msgid "Invalid network address.\n"
 msgstr "L'adreça de xarxa no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:2975
+#: dlls/kernelbase/winerror.mc:3050
 msgid "No endpoint found.\n"
 msgstr "No s'ha trobat cap punt final.\n"
 
-#: dlls/kernelbase/winerror.mc:2980
+#: dlls/kernelbase/winerror.mc:3055
 msgid "Invalid timeout value.\n"
 msgstr "El valor de temps d'espera no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:2985
+#: dlls/kernelbase/winerror.mc:3060
 msgid "Object UUID not found.\n"
 msgstr "No s'ha trobat l'UUID de l'objecte.\n"
 
-#: dlls/kernelbase/winerror.mc:2990
+#: dlls/kernelbase/winerror.mc:3065
 msgid "UUID already registered.\n"
 msgstr "Ja s'ha registrat l'UUID.\n"
 
-#: dlls/kernelbase/winerror.mc:2995
+#: dlls/kernelbase/winerror.mc:3070
 msgid "UUID type already registered.\n"
 msgstr "Ja s'ha registrat el tipus UUID.\n"
 
-#: dlls/kernelbase/winerror.mc:3000
+#: dlls/kernelbase/winerror.mc:3075
 msgid "Server already listening.\n"
 msgstr "El servidor ja escolta.\n"
 
-#: dlls/kernelbase/winerror.mc:3005
+#: dlls/kernelbase/winerror.mc:3080
 msgid "No protocol sequences registered.\n"
 msgstr "No s'ha registrat cap seqüència de protocol.\n"
 
-#: dlls/kernelbase/winerror.mc:3010
+#: dlls/kernelbase/winerror.mc:3085
 msgid "RPC server not listening.\n"
 msgstr "El servidor RPC no escolta.\n"
 
-#: dlls/kernelbase/winerror.mc:3015
+#: dlls/kernelbase/winerror.mc:3090
 msgid "Unknown manager type.\n"
 msgstr "El tipus de gestor és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3020
+#: dlls/kernelbase/winerror.mc:3095
 msgid "Unknown interface.\n"
 msgstr "La interfície és desconeguda.\n"
 
-#: dlls/kernelbase/winerror.mc:3025
+#: dlls/kernelbase/winerror.mc:3100
 msgid "No bindings.\n"
 msgstr "No hi ha cap vinculació.\n"
 
-#: dlls/kernelbase/winerror.mc:3030
+#: dlls/kernelbase/winerror.mc:3105
 msgid "No protocol sequences.\n"
 msgstr "No hi ha cap seqüència de protocol.\n"
 
-#: dlls/kernelbase/winerror.mc:3035
+#: dlls/kernelbase/winerror.mc:3110
 msgid "Can't create endpoint.\n"
 msgstr "No es pot crear el punt final.\n"
 
-#: dlls/kernelbase/winerror.mc:3040
+#: dlls/kernelbase/winerror.mc:3115
 msgid "Out of resources.\n"
 msgstr "No queden recursos.\n"
 
-#: dlls/kernelbase/winerror.mc:3045
+#: dlls/kernelbase/winerror.mc:3120
 msgid "RPC server unavailable.\n"
 msgstr "El servidor RPC no està disponible.\n"
 
-#: dlls/kernelbase/winerror.mc:3050
+#: dlls/kernelbase/winerror.mc:3125
 msgid "RPC server too busy.\n"
 msgstr "El servidor RPC està massa ocupat.\n"
 
-#: dlls/kernelbase/winerror.mc:3055
+#: dlls/kernelbase/winerror.mc:3130
 msgid "Invalid network options.\n"
 msgstr "Les opcions de xarxa no són vàlides.\n"
 
-#: dlls/kernelbase/winerror.mc:3060
+#: dlls/kernelbase/winerror.mc:3135
 msgid "No RPC call active.\n"
 msgstr "No hi ha cap trucada RPC activa.\n"
 
-#: dlls/kernelbase/winerror.mc:3065
+#: dlls/kernelbase/winerror.mc:3140
 msgid "RPC call failed.\n"
 msgstr "La trucada RPC ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:3070
+#: dlls/kernelbase/winerror.mc:3145
 msgid "RPC call failed and didn't execute.\n"
 msgstr "La trucada RPC ha fallat i no s'ha executat.\n"
 
-#: dlls/kernelbase/winerror.mc:3075
+#: dlls/kernelbase/winerror.mc:3150
 msgid "RPC protocol error.\n"
 msgstr "Hi ha hagut un error del protocol RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3080
+#: dlls/kernelbase/winerror.mc:3155
 msgid "Unsupported transfer syntax.\n"
 msgstr "La sintaxi de transferència és incompatible.\n"
 
-#: dlls/kernelbase/winerror.mc:3090
+#: dlls/kernelbase/winerror.mc:3165
 msgid "Invalid tag.\n"
 msgstr "L'etiqueta no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3095
+#: dlls/kernelbase/winerror.mc:3170
 msgid "Invalid array bounds.\n"
 msgstr "Els límits de vector no són vàlids.\n"
 
-#: dlls/kernelbase/winerror.mc:3100
+#: dlls/kernelbase/winerror.mc:3175
 msgid "No entry name.\n"
 msgstr "No hi ha cap nom d'entrada.\n"
 
-#: dlls/kernelbase/winerror.mc:3105
+#: dlls/kernelbase/winerror.mc:3180
 msgid "Invalid name syntax.\n"
 msgstr "La sintaxi de nom no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3110
+#: dlls/kernelbase/winerror.mc:3185
 msgid "Unsupported name syntax.\n"
 msgstr "La sintaxi de nom és incompatible.\n"
 
-#: dlls/kernelbase/winerror.mc:3115
+#: dlls/kernelbase/winerror.mc:3190
 msgid "No network address.\n"
 msgstr "No hi ha cap adreça de xarxa.\n"
 
-#: dlls/kernelbase/winerror.mc:3120
+#: dlls/kernelbase/winerror.mc:3195
 msgid "Duplicate endpoint.\n"
 msgstr "El punt final és un duplicat.\n"
 
-#: dlls/kernelbase/winerror.mc:3125
+#: dlls/kernelbase/winerror.mc:3200
 msgid "Unknown authentication type.\n"
 msgstr "El tipus d'autenticació és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3130
+#: dlls/kernelbase/winerror.mc:3205
 msgid "Maximum calls too low.\n"
 msgstr "El nombre màxim de trucades és massa baix.\n"
 
-#: dlls/kernelbase/winerror.mc:3135
+#: dlls/kernelbase/winerror.mc:3210
 msgid "String too long.\n"
 msgstr "La cadena és massa llarga.\n"
 
-#: dlls/kernelbase/winerror.mc:3140
+#: dlls/kernelbase/winerror.mc:3215
 msgid "Protocol sequence not found.\n"
 msgstr "No s'ha trobat la seqüència de protocol.\n"
 
-#: dlls/kernelbase/winerror.mc:3145
+#: dlls/kernelbase/winerror.mc:3220
 msgid "Procedure number out of range.\n"
 msgstr "El número de procediment és fora d'interval.\n"
 
-#: dlls/kernelbase/winerror.mc:3150
+#: dlls/kernelbase/winerror.mc:3225
 msgid "Binding has no authentication data.\n"
 msgstr "La vinculació no té dades d'autenticació.\n"
 
-#: dlls/kernelbase/winerror.mc:3155
+#: dlls/kernelbase/winerror.mc:3230
 msgid "Unknown authentication service.\n"
 msgstr "El servei d'autenticació és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3160
+#: dlls/kernelbase/winerror.mc:3235
 msgid "Unknown authentication level.\n"
 msgstr "El nivell d'autenticació és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3165
+#: dlls/kernelbase/winerror.mc:3240
 msgid "Invalid authentication identity.\n"
 msgstr "La identitat d'autenticació no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3170
+#: dlls/kernelbase/winerror.mc:3245
 msgid "Unknown authorization service.\n"
 msgstr "El servei d'autorització és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3175
+#: dlls/kernelbase/winerror.mc:3250
 msgid "Invalid entry.\n"
 msgstr "L'entrada no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3180
+#: dlls/kernelbase/winerror.mc:3255
 msgid "Can't perform operation.\n"
 msgstr "No es pot realitzar l'operació.\n"
 
-#: dlls/kernelbase/winerror.mc:3185
+#: dlls/kernelbase/winerror.mc:3260
 msgid "Endpoints not registered.\n"
 msgstr "Els punts finals no estan registrats.\n"
 
-#: dlls/kernelbase/winerror.mc:3190
+#: dlls/kernelbase/winerror.mc:3265
 msgid "Nothing to export.\n"
 msgstr "No hi ha res a exportar.\n"
 
-#: dlls/kernelbase/winerror.mc:3195
+#: dlls/kernelbase/winerror.mc:3270
 msgid "Incomplete name.\n"
 msgstr "El nom és incomplet.\n"
 
-#: dlls/kernelbase/winerror.mc:3200
+#: dlls/kernelbase/winerror.mc:3275
 msgid "Invalid version option.\n"
 msgstr "L'opció de versió no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3205
+#: dlls/kernelbase/winerror.mc:3280
 msgid "No more members.\n"
 msgstr "No hi ha més membres.\n"
 
-#: dlls/kernelbase/winerror.mc:3210
+#: dlls/kernelbase/winerror.mc:3285
 msgid "Not all objects unexported.\n"
 msgstr "Alguns objectes s'han exportat.\n"
 
-#: dlls/kernelbase/winerror.mc:3215
+#: dlls/kernelbase/winerror.mc:3290
 msgid "Interface not found.\n"
 msgstr "No s'ha trobat la interfície.\n"
 
-#: dlls/kernelbase/winerror.mc:3220
+#: dlls/kernelbase/winerror.mc:3295
 msgid "Entry already exists.\n"
 msgstr "L'entrada ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:3225
+#: dlls/kernelbase/winerror.mc:3300
 msgid "Entry not found.\n"
 msgstr "No s'ha trobat l'entrada.\n"
 
-#: dlls/kernelbase/winerror.mc:3230
+#: dlls/kernelbase/winerror.mc:3305
 msgid "Name service unavailable.\n"
 msgstr "El servei de noms no està disponible.\n"
 
-#: dlls/kernelbase/winerror.mc:3235
+#: dlls/kernelbase/winerror.mc:3310
 msgid "Invalid network address family.\n"
 msgstr "La família d'adreces de xarxa no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3240
+#: dlls/kernelbase/winerror.mc:3315
 msgid "Operation not supported.\n"
 msgstr "No s'admet l'operació.\n"
 
-#: dlls/kernelbase/winerror.mc:3245
+#: dlls/kernelbase/winerror.mc:3320
 msgid "No security context available.\n"
 msgstr "Cap context de seguretat està disponible.\n"
 
-#: dlls/kernelbase/winerror.mc:3250
+#: dlls/kernelbase/winerror.mc:3325
 msgid "RPCInternal error.\n"
 msgstr "Hi ha hagut un error RPCInternal.\n"
 
-#: dlls/kernelbase/winerror.mc:3255
+#: dlls/kernelbase/winerror.mc:3330
 msgid "RPC divide-by-zero.\n"
 msgstr "Hi ha hagut una divisió per zero RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3260
+#: dlls/kernelbase/winerror.mc:3335
 msgid "Address error.\n"
 msgstr "Hi ha hagut un error d'adreça.\n"
 
-#: dlls/kernelbase/winerror.mc:3265
+#: dlls/kernelbase/winerror.mc:3340
 msgid "Floating-point divide-by-zero.\n"
 msgstr "Hi ha hagut una divisió per zero de coma flotant.\n"
 
-#: dlls/kernelbase/winerror.mc:3270
+#: dlls/kernelbase/winerror.mc:3345
 msgid "Floating-point underflow.\n"
 msgstr "Hi ha hagut un desbordament underflow de punt flotant.\n"
 
-#: dlls/kernelbase/winerror.mc:3275
+#: dlls/kernelbase/winerror.mc:3350
 msgid "Floating-point overflow.\n"
 msgstr "Hi ha hagut un desbordament overflow de punt flotant.\n"
 
-#: dlls/kernelbase/winerror.mc:3280
+#: dlls/kernelbase/winerror.mc:3355
 msgid "No more entries.\n"
 msgstr "No hi ha més entrades.\n"
 
-#: dlls/kernelbase/winerror.mc:3285
+#: dlls/kernelbase/winerror.mc:3360
 msgid "Character translation table open failed.\n"
 msgstr "Ha fallat l'obertura de la taula de traducció de caràcters.\n"
 
-#: dlls/kernelbase/winerror.mc:3290
+#: dlls/kernelbase/winerror.mc:3365
 msgid "Character translation table file too small.\n"
 msgstr "El fitxer de taula de traducció de caràcters és massa petit.\n"
 
-#: dlls/kernelbase/winerror.mc:3295
+#: dlls/kernelbase/winerror.mc:3370
 msgid "Null context handle.\n"
 msgstr "L'identificador de context és nul.\n"
 
-#: dlls/kernelbase/winerror.mc:3300
+#: dlls/kernelbase/winerror.mc:3375
 msgid "Context handle damaged.\n"
 msgstr "L'identificador de context és danyat.\n"
 
-#: dlls/kernelbase/winerror.mc:3305
+#: dlls/kernelbase/winerror.mc:3380
 msgid "Binding handle mismatch.\n"
 msgstr "Els identificadors de vinculació no es coincideixen.\n"
 
-#: dlls/kernelbase/winerror.mc:3310
+#: dlls/kernelbase/winerror.mc:3385
 msgid "Cannot get call handle.\n"
 msgstr "No es pot obtenir l'identificador de trucada.\n"
 
-#: dlls/kernelbase/winerror.mc:3315
+#: dlls/kernelbase/winerror.mc:3390
 msgid "Null reference pointer.\n"
 msgstr "El punter és una referència nul·la.\n"
 
-#: dlls/kernelbase/winerror.mc:3320
+#: dlls/kernelbase/winerror.mc:3395
 msgid "Enumeration value out of range.\n"
 msgstr "El valor d'enumeració és fora d'interval.\n"
 
-#: dlls/kernelbase/winerror.mc:3325
+#: dlls/kernelbase/winerror.mc:3400
 msgid "Byte count too small.\n"
 msgstr "El nombre de bytes és massa petit.\n"
 
-#: dlls/kernelbase/winerror.mc:3330
+#: dlls/kernelbase/winerror.mc:3405
 msgid "Bad stub data.\n"
 msgstr "Les dades d'esbós (stub) són dolentes.\n"
 
-#: dlls/kernelbase/winerror.mc:3335
+#: dlls/kernelbase/winerror.mc:3410
 msgid "Invalid user buffer.\n"
 msgstr "La memòria intermèdia d'usuari no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3340
+#: dlls/kernelbase/winerror.mc:3415
 msgid "Unrecognized media.\n"
 msgstr "No es reconeix el suport.\n"
 
-#: dlls/kernelbase/winerror.mc:3345
+#: dlls/kernelbase/winerror.mc:3420
 msgid "No trust secret.\n"
 msgstr "No hi ha cap secret de confiança.\n"
 
-#: dlls/kernelbase/winerror.mc:3350
+#: dlls/kernelbase/winerror.mc:3425
 msgid "No trust SAM account.\n"
 msgstr "No hi ha cap compte SAM de confiança.\n"
 
-#: dlls/kernelbase/winerror.mc:3355
+#: dlls/kernelbase/winerror.mc:3430
 msgid "Trusted domain failure.\n"
 msgstr "El domini de confiança ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:3360
+#: dlls/kernelbase/winerror.mc:3435
 msgid "Trusted relationship failure.\n"
 msgstr "La relació de confiança ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:3365
+#: dlls/kernelbase/winerror.mc:3440
 msgid "Trust logon failure.\n"
 msgstr "L'inici de sessió de confiança ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:3370
+#: dlls/kernelbase/winerror.mc:3445
 msgid "RPC call already in progress.\n"
 msgstr "La trucada RPC ja està en curs.\n"
 
-#: dlls/kernelbase/winerror.mc:3375
+#: dlls/kernelbase/winerror.mc:3450
 msgid "NETLOGON is not started.\n"
 msgstr "No s'ha iniciat el NETLOGON.\n"
 
-#: dlls/kernelbase/winerror.mc:3380
+#: dlls/kernelbase/winerror.mc:3455
 msgid "Account expired.\n"
 msgstr "El compte s'ha caducat.\n"
 
-#: dlls/kernelbase/winerror.mc:3385
+#: dlls/kernelbase/winerror.mc:3460
 msgid "Redirector has open handles.\n"
 msgstr "El redirector té identificadors oberts.\n"
 
-#: dlls/kernelbase/winerror.mc:3390
+#: dlls/kernelbase/winerror.mc:3465
 msgid "Printer driver already installed.\n"
 msgstr "El controlador d'impressora ja està instal·lat.\n"
 
-#: dlls/kernelbase/winerror.mc:3395
+#: dlls/kernelbase/winerror.mc:3470
 msgid "Unknown port.\n"
 msgstr "El port és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3400
+#: dlls/kernelbase/winerror.mc:3475
 msgid "Unknown printer driver.\n"
 msgstr "El controlador d'impressora és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3405
+#: dlls/kernelbase/winerror.mc:3480
 msgid "Unknown print processor.\n"
 msgstr "El processador d'impressió és desconegut.\n"
 
-#: dlls/kernelbase/winerror.mc:3410
+#: dlls/kernelbase/winerror.mc:3485
 msgid "Invalid separator file.\n"
 msgstr "El fitxer separador no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3415
+#: dlls/kernelbase/winerror.mc:3490
 msgid "Invalid priority.\n"
 msgstr "La prioritat no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3420
+#: dlls/kernelbase/winerror.mc:3495
 msgid "Invalid printer name.\n"
 msgstr "El nom d'impressora no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3425
+#: dlls/kernelbase/winerror.mc:3500
 msgid "Printer already exists.\n"
 msgstr "La impressora ja existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:3430
+#: dlls/kernelbase/winerror.mc:3505
 msgid "Invalid printer command.\n"
 msgstr "L'ordre d'impressora no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3435
+#: dlls/kernelbase/winerror.mc:3510
 msgid "Invalid data type.\n"
 msgstr "El tipus de dades no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3440
+#: dlls/kernelbase/winerror.mc:3515
 msgid "Invalid environment.\n"
 msgstr "L'entorn no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3445
+#: dlls/kernelbase/winerror.mc:3520
 msgid "No more bindings.\n"
 msgstr "No hi ha més vinculacions.\n"
 
-#: dlls/kernelbase/winerror.mc:3450
+#: dlls/kernelbase/winerror.mc:3525
 msgid "Can't log on with inter-domain trust account.\n"
 msgstr ""
 "No es pot iniciar la sessió amb compte de confiança de diversos dominis.\n"
 
-#: dlls/kernelbase/winerror.mc:3455
+#: dlls/kernelbase/winerror.mc:3530
 msgid "Can't log on with workstation trust account.\n"
 msgstr ""
 "No es pot iniciar la sessió amb compte de confiança d'estació de treball.\n"
 
-#: dlls/kernelbase/winerror.mc:3460
+#: dlls/kernelbase/winerror.mc:3535
 msgid "Can't log on with server trust account.\n"
 msgstr "No es pot iniciar la sessió amb compte de confiança de servidor.\n"
 
-#: dlls/kernelbase/winerror.mc:3465
+#: dlls/kernelbase/winerror.mc:3540
 msgid "Domain trust information inconsistent.\n"
 msgstr "La informació de confiança de domini és inconsistent.\n"
 
-#: dlls/kernelbase/winerror.mc:3470
+#: dlls/kernelbase/winerror.mc:3545
 msgid "Server has open handles.\n"
 msgstr "El servidor té identificadors oberts.\n"
 
-#: dlls/kernelbase/winerror.mc:3475
+#: dlls/kernelbase/winerror.mc:3550
 msgid "Resource data not found.\n"
 msgstr "No s'han trobat les dades del recurs.\n"
 
-#: dlls/kernelbase/winerror.mc:3480
+#: dlls/kernelbase/winerror.mc:3555
 msgid "Resource type not found.\n"
 msgstr "No s'ha trobat el tipus del recurs.\n"
 
-#: dlls/kernelbase/winerror.mc:3485
+#: dlls/kernelbase/winerror.mc:3560
 msgid "Resource name not found.\n"
 msgstr "No s'ha trobat el nom del recurs.\n"
 
-#: dlls/kernelbase/winerror.mc:3490
+#: dlls/kernelbase/winerror.mc:3565
 msgid "Resource language not found.\n"
 msgstr "No s'ha trobat la llengua del recurs.\n"
 
-#: dlls/kernelbase/winerror.mc:3495
+#: dlls/kernelbase/winerror.mc:3570
 msgid "Not enough quota.\n"
 msgstr "Manca quota.\n"
 
-#: dlls/kernelbase/winerror.mc:3500
+#: dlls/kernelbase/winerror.mc:3575
 msgid "No interfaces.\n"
 msgstr "No hi ha cap interfície.\n"
 
-#: dlls/kernelbase/winerror.mc:3505
+#: dlls/kernelbase/winerror.mc:3580
 msgid "RPC call canceled.\n"
 msgstr "S'ha cancel·lat la trucada RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3510
+#: dlls/kernelbase/winerror.mc:3585
 msgid "Binding incomplete.\n"
 msgstr "La vinculació està incompleta.\n"
 
-#: dlls/kernelbase/winerror.mc:3515
+#: dlls/kernelbase/winerror.mc:3590
 msgid "RPC comm failure.\n"
 msgstr "La comunicació RPC ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:3520
+#: dlls/kernelbase/winerror.mc:3595
 msgid "Unsupported authorization level.\n"
 msgstr "No s'admet el nivell d'autorització.\n"
 
-#: dlls/kernelbase/winerror.mc:3525
+#: dlls/kernelbase/winerror.mc:3600
 msgid "No principal name registered.\n"
 msgstr "No s'ha registrat cap nom principal.\n"
 
-#: dlls/kernelbase/winerror.mc:3530
+#: dlls/kernelbase/winerror.mc:3605
 msgid "Not an RPC error.\n"
 msgstr "No és un error RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3535
+#: dlls/kernelbase/winerror.mc:3610
 msgid "UUID is local only.\n"
 msgstr "L'UUID és només local.\n"
 
-#: dlls/kernelbase/winerror.mc:3540
+#: dlls/kernelbase/winerror.mc:3615
 msgid "Security package error.\n"
 msgstr "Hi ha hagut un error de paquet de seguretat.\n"
 
-#: dlls/kernelbase/winerror.mc:3545
+#: dlls/kernelbase/winerror.mc:3620
 msgid "Thread not canceled.\n"
 msgstr "No s'ha cancel·lat el fil.\n"
 
-#: dlls/kernelbase/winerror.mc:3550
+#: dlls/kernelbase/winerror.mc:3625
 msgid "Invalid handle operation.\n"
 msgstr "L'operació d'identificador no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3555
+#: dlls/kernelbase/winerror.mc:3630
 msgid "Wrong serializing package version.\n"
 msgstr "La versió del paquet serialitzador és incorrecta.\n"
 
-#: dlls/kernelbase/winerror.mc:3560
+#: dlls/kernelbase/winerror.mc:3635
 msgid "Wrong stub version.\n"
 msgstr "La versió d'esbós (stub) és incorrecta.\n"
 
-#: dlls/kernelbase/winerror.mc:3565
+#: dlls/kernelbase/winerror.mc:3640
 msgid "Invalid pipe object.\n"
 msgstr "L'objecte de canonada no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3570
+#: dlls/kernelbase/winerror.mc:3645
 msgid "Wrong pipe order.\n"
 msgstr "L'ordre de canonada és incorrecta.\n"
 
-#: dlls/kernelbase/winerror.mc:3575
+#: dlls/kernelbase/winerror.mc:3650
 msgid "Wrong pipe version.\n"
 msgstr "La versió de canonada és incorrecta.\n"
 
-#: dlls/kernelbase/winerror.mc:3580
+#: dlls/kernelbase/winerror.mc:3655
 msgid "Group member not found.\n"
 msgstr "No s'ha trobat el membre del grup.\n"
 
-#: dlls/kernelbase/winerror.mc:3585
+#: dlls/kernelbase/winerror.mc:3660
 msgid "Can't create endpoint mapper DB.\n"
 msgstr "No es pot crear la DB assignadora de punts finals.\n"
 
-#: dlls/kernelbase/winerror.mc:3590
+#: dlls/kernelbase/winerror.mc:3665
 msgid "Invalid object.\n"
 msgstr "L'objecte no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3595
+#: dlls/kernelbase/winerror.mc:3670
 msgid "Invalid time.\n"
 msgstr "L'hora no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3600
+#: dlls/kernelbase/winerror.mc:3675
 msgid "Invalid form name.\n"
 msgstr "El nom de forma no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3605
+#: dlls/kernelbase/winerror.mc:3680
 msgid "Invalid form size.\n"
 msgstr "La mida de forma no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3610
+#: dlls/kernelbase/winerror.mc:3685
 msgid "Already awaiting printer handle.\n"
 msgstr "Ja s'espera l'identificador d'impressora.\n"
 
-#: dlls/kernelbase/winerror.mc:3615
+#: dlls/kernelbase/winerror.mc:3690
 msgid "Printer deleted.\n"
 msgstr "S'ha suprimit la impressora.\n"
 
-#: dlls/kernelbase/winerror.mc:3620
+#: dlls/kernelbase/winerror.mc:3695
 msgid "Invalid printer state.\n"
 msgstr "L'estat d'impressora no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3625
+#: dlls/kernelbase/winerror.mc:3700
 msgid "User must change password.\n"
 msgstr "L'usuari ha de canviar la contrasenya.\n"
 
-#: dlls/kernelbase/winerror.mc:3630
+#: dlls/kernelbase/winerror.mc:3705
 msgid "Domain controller not found.\n"
 msgstr "No s'ha trobat el controlador de domini.\n"
 
-#: dlls/kernelbase/winerror.mc:3635
+#: dlls/kernelbase/winerror.mc:3710
 msgid "Account locked out.\n"
 msgstr "El compte està bloquejat.\n"
 
-#: dlls/kernelbase/winerror.mc:3640
+#: dlls/kernelbase/winerror.mc:3715
 msgid "Invalid pixel format.\n"
 msgstr "El format de píxels no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3645
+#: dlls/kernelbase/winerror.mc:3720
 msgid "Invalid driver.\n"
 msgstr "El controlador no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3650
+#: dlls/kernelbase/winerror.mc:3725
 msgid "Invalid object resolver set.\n"
 msgstr "El conjunt de resolució d'objectes no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3655
+#: dlls/kernelbase/winerror.mc:3730
 msgid "Incomplete RPC send.\n"
 msgstr "L'enviament RPC està incomplet.\n"
 
-#: dlls/kernelbase/winerror.mc:3660
+#: dlls/kernelbase/winerror.mc:3735
 msgid "Invalid asynchronous RPC handle.\n"
 msgstr "L'identificador RPC asíncron no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3665
+#: dlls/kernelbase/winerror.mc:3740
 msgid "Invalid asynchronous RPC call.\n"
 msgstr "La trucada RPC asíncrona no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3670
+#: dlls/kernelbase/winerror.mc:3745
 msgid "RPC pipe closed.\n"
 msgstr "S'ha tancat la canonada RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3675
+#: dlls/kernelbase/winerror.mc:3750
 msgid "Discipline error on RPC pipe.\n"
 msgstr "Hi ha hagut un error de disciplina en la canonada RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3680
+#: dlls/kernelbase/winerror.mc:3755
 msgid "No data on RPC pipe.\n"
 msgstr "No hi ha dades en la canonada RPC.\n"
 
-#: dlls/kernelbase/winerror.mc:3685
+#: dlls/kernelbase/winerror.mc:3760
 msgid "No site name available.\n"
 msgstr "Cap nom de lloc està disponible.\n"
 
-#: dlls/kernelbase/winerror.mc:3690
+#: dlls/kernelbase/winerror.mc:3765
 msgid "The file cannot be accessed.\n"
 msgstr "No es pot accedir al fitxer.\n"
 
-#: dlls/kernelbase/winerror.mc:3695
+#: dlls/kernelbase/winerror.mc:3770
 msgid "The filename cannot be resolved.\n"
 msgstr "No es pot resoldre el nom de fitxer.\n"
 
-#: dlls/kernelbase/winerror.mc:3700
+#: dlls/kernelbase/winerror.mc:3775
 msgid "RPC entry type mismatch.\n"
 msgstr "Els tipus d'entrada RPC no es coincideixen.\n"
 
-#: dlls/kernelbase/winerror.mc:3705
+#: dlls/kernelbase/winerror.mc:3780
 msgid "Not all objects could be exported.\n"
 msgstr "No s'ha pogut exportar tots els objectes.\n"
 
-#: dlls/kernelbase/winerror.mc:3710
+#: dlls/kernelbase/winerror.mc:3785
 msgid "The interface could not be exported.\n"
 msgstr "No s'ha pogut exportar la interfície.\n"
 
-#: dlls/kernelbase/winerror.mc:3715
+#: dlls/kernelbase/winerror.mc:3790
 msgid "The profile could not be added.\n"
 msgstr "No s'ha pogut afegir el perfil.\n"
 
-#: dlls/kernelbase/winerror.mc:3720
+#: dlls/kernelbase/winerror.mc:3795
 msgid "The profile element could not be added.\n"
 msgstr "No s'ha pogut afegir l'element de perfil.\n"
 
-#: dlls/kernelbase/winerror.mc:3725
+#: dlls/kernelbase/winerror.mc:3800
 msgid "The profile element could not be removed.\n"
 msgstr "No s'ha pogut eliminar l'element de perfil.\n"
 
-#: dlls/kernelbase/winerror.mc:3730
+#: dlls/kernelbase/winerror.mc:3805
 msgid "The group element could not be added.\n"
 msgstr "No s'ha pogut afegir l'element de grup.\n"
 
-#: dlls/kernelbase/winerror.mc:3735
+#: dlls/kernelbase/winerror.mc:3810
 msgid "The group element could not be removed.\n"
 msgstr "No s'ha pogut eliminar l'element de grup.\n"
 
-#: dlls/kernelbase/winerror.mc:3740
+#: dlls/kernelbase/winerror.mc:3815
 msgid "The username could not be found.\n"
 msgstr "No s'ha pogut trobar el nom d'usuari.\n"
 
-#: dlls/kernelbase/winerror.mc:3745
+#: dlls/kernelbase/winerror.mc:3820
 msgid "This network connection does not exist.\n"
 msgstr "Aquesta connexió de xarxa no existeix.\n"
 
-#: dlls/kernelbase/winerror.mc:3750
+#: dlls/kernelbase/winerror.mc:3825
 #, fuzzy
 #| msgid "File or directory corrupt.\n"
 msgid "File or directory is not a reparse point.\n"
 msgstr "El fitxer o directori és corrupte.\n"
 
-#: dlls/kernelbase/winerror.mc:3755
+#: dlls/kernelbase/winerror.mc:3830
 msgid "Call interrupted.\n"
 msgstr "S'ha interromput la trucada.\n"
 
-#: dlls/kernelbase/winerror.mc:3760
+#: dlls/kernelbase/winerror.mc:3835
 msgid "Invalid file handle.\n"
 msgstr "L'identificador de fitxer no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3770
+#: dlls/kernelbase/winerror.mc:3845
 msgid "Invalid pointer address.\n"
 msgstr "L'identificador de punter no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3775
+#: dlls/kernelbase/winerror.mc:3850
 msgid "Invalid argument.\n"
 msgstr "L'argument no és vàlid.\n"
 
-#: dlls/kernelbase/winerror.mc:3785
+#: dlls/kernelbase/winerror.mc:3860
 msgid "Cannot assign requested address.\n"
 msgstr ""
 
-#: dlls/kernelbase/winerror.mc:3790
+#: dlls/kernelbase/winerror.mc:3865
 msgid "Connection reset by peer.\n"
 msgstr "Un igual ha restablert la connexió.\n"
 
-#: dlls/kernelbase/winerror.mc:3800
+#: dlls/kernelbase/winerror.mc:3875
 msgid "Host not found.\n"
 msgstr "No s'ha trobat l'amfitrió.\n"
 
-#: dlls/kernelbase/winerror.mc:3805
+#: dlls/kernelbase/winerror.mc:3880
 msgid "Nonauthoritative host not found.\n"
 msgstr "No s'ha trobat l'amfitrió no autoritzat.\n"
 
-#: dlls/kernelbase/winerror.mc:3810
+#: dlls/kernelbase/winerror.mc:3885
 msgid "Nonrecoverable error.\n"
 msgstr "No es pot recuperar de l'error.\n"
 
-#: dlls/kernelbase/winerror.mc:3815
+#: dlls/kernelbase/winerror.mc:3890
 msgid "Name valid, no data record.\n"
 msgstr "El nom és vàlid però no hi ha dades.\n"
 
-#: dlls/kernelbase/winerror.mc:3836
+#: dlls/kernelbase/winerror.mc:3911
 msgid "Not implemented.\n"
 msgstr "No implementat.\n"
 
-#: dlls/kernelbase/winerror.mc:3857
+#: dlls/kernelbase/winerror.mc:3932
 msgid "Call failed.\n"
 msgstr "La trucada ha fallat.\n"
 
-#: dlls/kernelbase/winerror.mc:3822
+#: dlls/kernelbase/winerror.mc:3897
 #, fuzzy
 #| msgid "Unable to unload media.\n"
 msgid "Unable to find matching object.\n"
 msgstr "No s'ha pogut descarregar el suport.\n"
 
-#: dlls/kernelbase/winerror.mc:3829
+#: dlls/kernelbase/winerror.mc:3904
 msgid "No Signature found in file.\n"
 msgstr "No s'ha trobat cap signatura en el fitxer.\n"
 
-#: dlls/kernelbase/winerror.mc:3843
+#: dlls/kernelbase/winerror.mc:3918
 msgid "Invalid call.\n"
 msgstr "La trucada no és vàlida.\n"
 
-#: dlls/kernelbase/winerror.mc:3850
+#: dlls/kernelbase/winerror.mc:3925
 msgid "Resource is not currently available.\n"
 msgstr "El recurs actualment no està disponible.\n"
 

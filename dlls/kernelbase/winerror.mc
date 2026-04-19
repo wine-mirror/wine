@@ -962,6 +962,81 @@ SymbolicName=ERROR_INVALID_OPLOCK_PROTOCOL
 Language=ENU
 Invalid oplock message received.
 .
+MessageId=302
+SymbolicName=ERROR_DISK_TOO_FRAGMENTED
+Language=ENU
+Disk is too fragmented.
+.
+MessageId=303
+SymbolicName=ERROR_DELETE_PENDING
+Language=ENU
+File cannot be opened because it is in the process of being deleted.
+.
+MessageId=304
+SymbolicName=ERROR_INCOMPATIBLE_WITH_GLOBAL_SHORT_NAME_REGISTRY_SETTING
+Language=ENU
+Short name settings incompatible with global registry setting.
+.
+MessageId=305
+SymbolicName=ERROR_SHORT_NAMES_NOT_ENABLED_ON_VOLUME
+Language=ENU
+Short names are not enabled on this volume.
+.
+MessageId=306
+SymbolicName=ERROR_SECURITY_STREAM_IS_INCONSISTENT
+Language=ENU
+Security stream is inconsistent.
+.
+MessageId=307
+SymbolicName=ERROR_INVALID_LOCK_RANGE
+Language=ENU
+File lock operation cannot be processed due to invalid byte range.
+.
+MessageId=308
+SymbolicName=ERROR_IMAGE_SUBSYSTEM_NOT_PRESENT
+Language=ENU
+Subsystem for supporting image type is not present.
+.
+MessageId=309
+SymbolicName=ERROR_NOTIFICATION_GUID_ALREADY_DEFINED
+Language=ENU
+Notification GUID is already defined.
+.
+MessageId=310
+SymbolicName=ERROR_INVALID_EXCEPTION_HANDLER
+Language=ENU
+Invalid exception handler.
+.
+MessageId=311
+SymbolicName=ERROR_DUPLICATE_PRIVILEGES
+Language=ENU
+Duplicate privileges for the token.
+.
+MessageId=312
+SymbolicName=ERROR_NO_RANGES_PROCESSED
+Language=ENU
+No ranges could be processed.
+.
+MessageId=313
+SymbolicName=ERROR_NOT_ALLOWED_ON_SYSTEM_FILE
+Language=ENU
+Operation not allowed on system file.
+.
+MessageId=314
+SymbolicName=ERROR_DISK_RESOURCES_EXHAUSTED
+Language=ENU
+Disk resources have been exhausted.
+.
+MessageId=315
+SymbolicName=ERROR_INVALID_TOKEN
+Language=ENU
+Invalid token.
+.
+MessageId=316
+SymbolicName=ERROR_DEVICE_FEATURE_NOT_SUPPORTED
+Language=ENU
+Command feature not supported on the device.
+.
 MessageId=317
 SymbolicName=ERROR_MR_MID_NOT_FOUND
 Language=ENU
