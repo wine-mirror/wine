@@ -148,7 +148,6 @@ struct opengl_funcs
     BOOL (*p_context_flush)( struct opengl_context *context, void (*flush)(void), UINT flags );
     BOOL (*p_context_create)( struct opengl_context *context, HDC hdc, const int *attribs );
     BOOL (*p_context_destroy)( struct opengl_context *context );
-    BOOL (*p_context_reset)( struct opengl_context *context, const int *attribs );
     BOOL (*p_pbuffer_create)( HDC hdc, int format, int width, int height, const int *attribs, HPBUFFERARB client_pbuffer );
     void *egl_handle;
 };

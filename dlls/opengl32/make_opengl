@@ -150,6 +150,7 @@ my %manual_win_functions =
      "wglMakeCurrent" => 1,
      "wglRealizeLayerPalette" => 1,
      "wglSetLayerPaletteEntries" => 1,
+     "wglShareLists" => 1,
      "wglSwapLayerBuffers" => 1,
      "wglUseFontBitmapsA" => 1,
      "wglUseFontBitmapsW" => 1,
@@ -176,7 +177,6 @@ my %manual_win_thunks =
      "wglMakeContextCurrentARB" => 1,
      "wglQueryCurrentRendererStringWINE" => 1,
      "wglQueryRendererStringWINE" => 1,
-     "wglShareLists" => 1,
      "wglSwapBuffers" => 1,
     );
 

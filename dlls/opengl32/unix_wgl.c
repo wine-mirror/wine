@@ -127,7 +127,6 @@ struct context
     struct opengl_context base;
 
     HGLRC client;                  /* client-side context handle */
-    HGLRC share;                   /* context to be shared with */
     int *attribs;                  /* creation attributes */
     UINT64 debug_callback;         /* client pointer */
     UINT64 debug_user;             /* client pointer */
@@ -437,33 +436,6 @@ static struct context *context_from_client_context( HGLRC client_context )
 {
     struct opengl_context *base = opengl_context_from_handle( client_context );
     return base ? CONTAINING_RECORD( base, struct context, base ) : NULL;
-}
-
-static struct context *get_updated_context( TEB *teb, HGLRC client_context );
-
-/* update context if it has been re-shared with another one */
-static struct context *update_context( TEB *teb, HGLRC client_context, struct context *ctx )
-{
-    struct opengl_client_context *client = opengl_client_context_from_client( client_context );
-    const struct opengl_funcs *funcs = get_context_funcs( client_context );
-
-    if (client->current_tid) return ctx; /* currently in use */
-    if (ctx->share == (HGLRC)-1) return ctx; /* not re-shared */
-
-    if (!funcs->p_context_reset( &ctx->base, ctx->attribs ))
-    {
-        WARN( "Failed to re-create context for wglShareLists\n" );
-        return ctx;
-    }
-    ctx->share = (HGLRC)-1; /* initial shared context */
-    copy_context_attributes( teb, client_context, ctx, client_context, ctx, ctx->used );
-    return ctx;
-}
-
-static struct context *get_updated_context( TEB *teb, HGLRC client_context )
-{
-    struct context *context = context_from_client_context( client_context );
-    return client_context ? update_context( teb, client_context, context ) : NULL;
 }
 
 static int *memdup_attribs( const int *attribs )
@@ -854,8 +826,8 @@ const GLubyte *wrap_glGetString( TEB *teb, GLenum name, PFN_glGetString p_glGetS
 BOOL wrap_wglCopyContext( TEB *teb, HGLRC client_src, HGLRC client_dst, UINT mask )
 {
     struct context *src, *dst;
-    if (!(src = get_updated_context( teb, client_src ))) return FALSE;
-    if (!(dst = get_updated_context( teb, client_dst ))) return FALSE;
+    if (!(src = context_from_client_context( client_src ))) return FALSE;
+    if (!(dst = context_from_client_context( client_dst ))) return FALSE;
     return copy_context_attributes( teb, client_dst, dst, client_src, src, mask );
 }
 
@@ -1306,21 +1278,6 @@ BOOL wrap_wglSwapBuffers( TEB *teb, HDC hdc )
     return ret;
 }
 
-BOOL wrap_wglShareLists( TEB *teb, HGLRC client_src, HGLRC client_dst )
-{
-    const struct opengl_funcs *src_funcs = get_context_funcs( client_src ), *dst_funcs = get_context_funcs( client_dst );
-    struct context *src, *dst;
-    BOOL ret = FALSE;
-
-    if (!(src = context_from_client_context( client_src ))) return FALSE;
-    if (!(dst = context_from_client_context( client_dst ))) return FALSE;
-    if (src_funcs != dst_funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-    else if ((ret = dst->used != -1)) dst->share = client_src;
-    else FIXME( "Unsupported attributes on context %p/%p\n", client_dst, dst );
-
-    return ret;
-}
-
 HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, const int *attribs, HGLRC client_context )
 {
     const struct opengl_funcs *funcs = get_dc_funcs( hdc );
@@ -1333,7 +1290,6 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
         return 0;
     }
     context->base.client_context = client_context;
-    context->share = (HGLRC)-1; /* initial shared context */
     context->attribs = memdup_attribs( attribs );
 
     if (is_win64 && is_wow64()) context->buffers = acquire_buffers();
@@ -1356,7 +1312,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
     if (client_context)
     {
         const struct opengl_funcs *funcs = get_context_funcs( client_context );
-        if (!(ctx = get_updated_context( teb, client_context ))) return FALSE;
+        if (!(ctx = context_from_client_context( client_context ))) return FALSE;
         if (!funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, client_context )) return FALSE;
         make_context_current( teb, funcs, draw_hdc, read_hdc, client_context, ctx );
     }

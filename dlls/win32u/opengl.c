@@ -2357,14 +2357,6 @@ static BOOL win32u_context_destroy( struct opengl_context *context )
     return TRUE;
 }
 
-static BOOL win32u_context_reset( struct opengl_context *context, const int *attribs )
-{
-    TRACE( "context %p, attribs %p\n", context, attribs );
-
-    if (!win32u_context_destroy( context )) return FALSE;
-    return driver_funcs->p_context_create( context->format, global_context, attribs, &context->driver_private );
-}
-
 static BOOL flush_memory_pbuffer( void (*flush)(void) )
 {
     HDC draw_hdc = NtCurrentTeb()->glReserved1[0], read_hdc = NtCurrentTeb()->glReserved1[1];
@@ -2761,7 +2753,6 @@ static void display_funcs_init(void)
     display_funcs.p_context_flush = win32u_context_flush;
     display_funcs.p_context_create = win32u_context_create;
     display_funcs.p_context_destroy = win32u_context_destroy;
-    display_funcs.p_context_reset = win32u_context_reset;
 
     global_extensions[WGL_ARB_multisample] = 1;
 

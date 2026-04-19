@@ -58,15 +58,6 @@ static NTSTATUS wgl_wglSetPixelFormat( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wgl_wglShareLists( void *args )
-{
-    struct wglShareLists_params *params = args;
-    const struct opengl_funcs *funcs = get_context_funcs( params->hrcSrvShare );
-    if (!funcs || !funcs->p_wglShareLists) return STATUS_NOT_IMPLEMENTED;
-    params->ret = wrap_wglShareLists( params->teb, params->hrcSrvShare, params->hrcSrvSource );
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS wgl_wglSwapBuffers( void *args )
 {
     struct wglSwapBuffers_params *params = args;
@@ -30537,7 +30528,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wgl_wglDeleteContext,
     wgl_wglGetPixelFormat,
     wgl_wglSetPixelFormat,
-    wgl_wglShareLists,
     wgl_wglSwapBuffers,
     gl_glAccum,
     gl_glAlphaFunc,
@@ -33696,22 +33686,6 @@ static NTSTATUS wow64_wgl_wglSetPixelFormat( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( ULongToPtr(params->hdc) );
     if (!funcs || !funcs->p_wglSetPixelFormat) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->p_wglSetPixelFormat( ULongToPtr(params->hdc), params->ipfd, ULongToPtr(params->ppfd) );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wow64_wgl_wglShareLists( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hrcSrvShare;
-        PTR32 hrcSrvSource;
-        BOOL ret;
-    } *params = args;
-    TEB *teb = get_teb64( params->teb );
-    const struct opengl_funcs *funcs = get_context_funcs( ULongToPtr(params->hrcSrvShare) );
-    if (!funcs || !funcs->p_wglShareLists) return STATUS_NOT_IMPLEMENTED;
-    params->ret = wrap_wglShareLists( teb, ULongToPtr(params->hrcSrvShare), ULongToPtr(params->hrcSrvSource) );
     return STATUS_SUCCESS;
 }
 
@@ -86870,7 +86844,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_wgl_wglDeleteContext,
     wow64_wgl_wglGetPixelFormat,
     wow64_wgl_wglSetPixelFormat,
-    wow64_wgl_wglShareLists,
     wow64_wgl_wglSwapBuffers,
     wow64_gl_glAccum,
     wow64_gl_glAlphaFunc,
@@ -89987,11 +89960,6 @@ static BOOL null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPT
     WARN( "unsupported\n" );
     return 0;
 }
-static BOOL null_wglShareLists( HGLRC hrcSrvShare, HGLRC hrcSrvSource )
-{
-    WARN( "unsupported\n" );
-    return 0;
-}
 static BOOL null_wglSwapBuffers( HDC hdc )
 {
     WARN( "unsupported\n" );
@@ -91356,7 +91324,6 @@ struct opengl_funcs null_opengl_funcs =
     .p_wglDeleteContext = null_wglDeleteContext,
     .p_wglGetPixelFormat = null_wglGetPixelFormat,
     .p_wglSetPixelFormat = null_wglSetPixelFormat,
-    .p_wglShareLists = null_wglShareLists,
     .p_wglSwapBuffers = null_wglSwapBuffers,
     .p_glAccum = null_glAccum,
     .p_glAlphaFunc = null_glAlphaFunc,

@@ -53,14 +53,6 @@ struct wglSetPixelFormat_params
     BOOL ret;
 };
 
-struct wglShareLists_params
-{
-    TEB *teb;
-    HGLRC hrcSrvShare;
-    HGLRC hrcSrvSource;
-    BOOL ret;
-};
-
 struct wglSwapBuffers_params
 {
     TEB *teb;
@@ -25823,7 +25815,6 @@ enum unix_funcs
     unix_wglDeleteContext,
     unix_wglGetPixelFormat,
     unix_wglSetPixelFormat,
-    unix_wglShareLists,
     unix_wglSwapBuffers,
     unix_glAccum,
     unix_glAlphaFunc,
