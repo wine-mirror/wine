@@ -5653,6 +5653,33 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Punycode-encoded host with Uri_CREATE_NO_CANONICALIZE */
+    {
+        "http://xn--0zwm56d.EXAMPLE.com/", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE, 0,
+        {
+            {"http://xn--0zwm56d.EXAMPLE.com/",S_OK,FALSE},
+            {"xn--0zwm56d.EXAMPLE.com",S_OK,FALSE},
+            {"http://xn--0zwm56d.EXAMPLE.com/",S_OK,FALSE},
+            {"EXAMPLE.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"xn--0zwm56d.EXAMPLE.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://xn--0zwm56d.EXAMPLE.com/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE,NULL},
+        },
+        {
+            {Uri_HOST_IDN,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     /* Multiple flags */
     {   "http://username:password@winehq.org/index.html?query=value#fragment", 0, S_OK, FALSE, Uri_DISPLAY_NO_FRAGMENT | Uri_DISPLAY_IDN_HOST,
         {

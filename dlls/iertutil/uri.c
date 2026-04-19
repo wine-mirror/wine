@@ -1360,11 +1360,19 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD extras) {
 
         data->host_type = Uri_HOST_DNS;
 
+        /* If it contains Unicode, then it's an IDN */
         for(i = 0; i < data->host_len; i++) {
             if(!is_ascii(data->host[i])) {
                 data->host_type = Uri_HOST_IDN;
                 break;
             }
+        }
+
+        /* If it's Punycode-encoded, then it's also an IDN */
+        if(data->host_type == Uri_HOST_DNS) {
+            DWORD decoded_length = IdnToUnicode(0, data->host, data->host_len, NULL, 0);
+            if(decoded_length > 0 && decoded_length != data->host_len)
+                data->host_type = Uri_HOST_IDN;
         }
     }
 
