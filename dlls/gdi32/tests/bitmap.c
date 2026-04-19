@@ -2105,9 +2105,10 @@ static void test_GetDIBits(void)
         0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
         0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
     };
+    unsigned int depths[] = {1, 2, 4, 8, 15, 16, 24, 32};
     HBITMAP hbmp;
     BITMAP bm;
-    HDC hdc;
+    HDC hdc, mem_dc;
     int i, bytes, lines;
     BYTE buf[1024];
     char bi_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
@@ -2417,6 +2418,90 @@ static void test_GetDIBits(void)
     /* returned bits are DWORD aligned and upside down */
     ok(!memcmp(buf, dib_bits_24, sizeof(dib_bits_24)), "DIB bits don't match\n");
     DeleteObject(hbmp);
+
+    /* Test a SDL3 behavior where GetDIBits() gets called twice consecutively to get bmiColors.
+     * However, tests show that the second call fails when hbmp is a compatible bitmap and the
+     * bitmap depth is not 1-bit or 32-bit. Tests for GetDIBits() when hbmp is a DIB are already
+     * covered by other tests */
+    for (i = 0; i < ARRAY_SIZE(depths); i++)
+    {
+        winetest_push_context("depth %u", depths[i]);
+
+        hbmp = CreateBitmap(1, 1, 1, depths[i], NULL);
+
+        /* Simulate SDL3 behavior by calling GetDIBits() twice */
+        memset(bi, 0, sizeof(*bi));
+        bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        lines = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_RGB_COLORS);
+        ok(lines == 1, "GetDIBits failed.\n");
+        lines = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_RGB_COLORS);
+        if (depths[i] == 1)
+        {
+            ok(lines == 1, "GetDIBits failed.\n");
+            ok(*(unsigned int *)bi->bmiColors == 0, "Got unexpected bmiColors %#x\n", *(unsigned int *)bi->bmiColors);
+        }
+        else if (depths[i] == 32)
+        {
+            ok(lines == 1, "GetDIBits failed.\n");
+            ok(*(unsigned int *)bi->bmiColors == 0xff0000, "Got unexpected bmiColors %#x\n", *(unsigned int *)bi->bmiColors);
+        }
+        else
+        {
+            todo_wine
+            ok(lines == 0, "GetDIBits succeeded.\n");
+            todo_wine_if(depths[i] == 15 || depths[i] == 16)
+            ok(*(unsigned int *)bi->bmiColors == 0, "Got unexpected bmiColors %#x\n", *(unsigned int *)bi->bmiColors);
+
+            /* lines > 0. Still fails */
+            lines = GetDIBits(hdc, hbmp, 0, 1, NULL, bi, DIB_RGB_COLORS);
+            todo_wine
+            ok(lines == 0, "GetDIBits failed.\n");
+
+            /* buf != NULL. Still fails */
+            lines = GetDIBits(hdc, hbmp, 0, 1, buf, bi, DIB_RGB_COLORS);
+            todo_wine
+            ok(lines == 0, "GetDIBits failed.\n");
+
+            /* Reset biBitCount to 0. Now it succeeds */
+            bi->bmiHeader.biBitCount = 0;
+            lines = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_RGB_COLORS);
+            ok(lines == 1, "GetDIBits failed.\n");
+        }
+
+        /* Test that GetDIBits() is rejecting DDB that's not 1-bit or 32-bit */
+        memset(bi, 0, sizeof(*bi));
+        bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bi->bmiHeader.biWidth = 1;
+        bi->bmiHeader.biHeight = 1;
+        bi->bmiHeader.biPlanes = 1;
+        bi->bmiHeader.biBitCount = depths[i];
+        lines = GetDIBits(hdc, hbmp, 0, 1, buf, bi, DIB_RGB_COLORS);
+        if (depths[i] == 1 || depths[i] == 32)
+            ok(lines == 1, "GetDIBits failed.\n");
+        else
+            todo_wine_if(depths[i] != 2 && depths[i] != 15)
+            ok(lines == 0, "GetDIBits succeeded.\n");
+
+        /* Same result when using a memory DC so it's not related the display DC */
+        mem_dc = CreateCompatibleDC(hdc);
+        SelectObject(mem_dc, hbmp);
+        memset(bi, 0, sizeof(*bi));
+        bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bi->bmiHeader.biWidth = 1;
+        bi->bmiHeader.biHeight = 1;
+        bi->bmiHeader.biPlanes = 1;
+        bi->bmiHeader.biBitCount = depths[i];
+        lines = GetDIBits(mem_dc, hbmp, 0, 1, buf, bi, DIB_RGB_COLORS);
+        if (depths[i] == 1 || depths[i] == 32)
+            ok(lines == 1, "GetDIBits failed.\n");
+        else
+            todo_wine_if(depths[i] != 2 && depths[i] != 15)
+            ok(lines == 0, "GetDIBits succeeded.\n");
+
+        DeleteDC(mem_dc);
+        DeleteObject(hbmp);
+        winetest_pop_context();
+    }
 
     ReleaseDC(0, hdc);
 }
