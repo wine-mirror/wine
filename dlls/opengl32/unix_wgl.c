@@ -439,7 +439,7 @@ static struct context *update_context( TEB *teb, HGLRC client_context, struct co
     if (ctx->share == (HGLRC)-1) return ctx; /* not re-shared */
 
     share = ctx->share ? get_updated_context( teb, ctx->share ) : NULL;
-    if (!funcs->p_context_reset( &ctx->base, share ? &share->base : NULL, ctx->attribs ))
+    if (!funcs->p_context_reset( &ctx->base, ctx->attribs ))
     {
         WARN( "Failed to re-create context for wglShareLists\n" );
         return ctx;
@@ -1350,7 +1350,7 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC client_shared, c
         }
     }
 
-    if (!(funcs->p_context_create( &context->base, hdc, shared ? &shared->base : NULL, attribs )))
+    if (!(funcs->p_context_create( &context->base, hdc, attribs )))
     {
         free_context( context );
         return 0;

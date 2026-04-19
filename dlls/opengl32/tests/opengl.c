@@ -1982,7 +1982,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( TRUE, wglShareLists( ctx1, ctx3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         /* object 1 is now valid there as well */
-        todo_wine ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( TRUE, test->exists( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
 
         /* object 1 is still valid in ctx2 */
@@ -2052,21 +2052,19 @@ static void test_sharelists(HDC winhdc)
         ok_u4( obj3, ==, 3 );
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( TRUE, test->exists( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, test->exists( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( TRUE, test->exists( obj3 ) );
+        ok_ret( TRUE, test->exists( obj3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
 
         /* test deleting objects in shared contexts */
         delete_object( test->type, obj1 );
-        todo_wine_if( test->type == OBJ_PROGRAM_OBJECT || test->type == OBJ_PROGRAM_OBJECT_ARB ||
-                      test->type == OBJ_SHADER_OBJECT || test->type == OBJ_SHADER_OBJECT_ARB )
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine_if( i >= 14 ) ok_ret( FALSE, test->exists( obj1 ) );
+        ok_ret( FALSE, test->exists( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, test->exists( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
@@ -2077,7 +2075,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( TRUE, wglDeleteContext( ctx3 ) );
 
         /* objects are still valid after shared context destruction */
-        todo_wine_if( i >= 14 ) ok_ret( FALSE, test->exists( obj1 ) );
+        ok_ret( FALSE, test->exists( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, test->exists( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
@@ -2138,7 +2136,7 @@ static void test_sharelists(HDC winhdc)
         ok_ret( TRUE, wglShareLists( ctx1, ctx3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         /* object 1 is now valid there as well */
-        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( TRUE, ext.glIsSync( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
 
         /* object 1 is still valid in ctx2 */
@@ -2211,16 +2209,16 @@ static void test_sharelists(HDC winhdc)
         todo_wine ok_ptr( obj3, ==, (GLsync)3 );
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( TRUE, ext.glIsSync( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, ext.glIsSync( obj2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
-        todo_wine ok_ret( TRUE, ext.glIsSync( obj3 ) );
+        ok_ret( TRUE, ext.glIsSync( obj3 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
 
         /* test deleting objects in shared contexts */
         ext.glDeleteSync( obj1 );
-        todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
         ok_ret( FALSE, ext.glIsSync( obj1 ) );

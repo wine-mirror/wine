@@ -418,18 +418,41 @@ static GLuint create_object( enum object_type type )
     return 0;
 }
 
+static void destroy_object( enum object_type type, GLuint object )
+{
+    switch (type)
+    {
+    case OBJ_TYPE_BUFFER: { MAKE_OBJECT_CALL( glDeleteBuffers, .n = 1, .buffers = &object ); return; }
+    case OBJ_TYPE_DISPLAY_LIST: { MAKE_OBJECT_CALL( glDeleteLists, .range = 1, .list = object ); return; }
+    case OBJ_TYPE_FRAMEBUFFER: { MAKE_OBJECT_CALL( glDeleteFramebuffers, .n = 1, .framebuffers = &object ); return; }
+    case OBJ_TYPE_MEMORY: { MAKE_OBJECT_CALL( glDeleteMemoryObjectsEXT, .n = 1, .memoryObjects = &object ); return; }
+    case OBJ_TYPE_PATH: { MAKE_OBJECT_CALL( glDeletePathsNV, .range = 1, .path = object ); return; }
+    case OBJ_TYPE_PROGRAM: { MAKE_OBJECT_CALL( glDeleteProgramsARB, .n = 1, .programs = &object ); return; }
+    case OBJ_TYPE_RENDERBUFFER: { MAKE_OBJECT_CALL( glDeleteRenderbuffers, .n = 1, .renderbuffers = &object ); return; }
+    case OBJ_TYPE_SAMPLER: { MAKE_OBJECT_CALL( glDeleteSamplers, .count = 1, .samplers = &object ); return; }
+    case OBJ_TYPE_SEMAPHORE: { MAKE_OBJECT_CALL( glDeleteSemaphoresEXT, .n = 1, .semaphores = &object ); return; }
+    case OBJ_TYPE_SHADER: { MAKE_OBJECT_CALL( glDeleteObjectARB, .obj = object ); return; }
+    case OBJ_TYPE_SHADER_ATI: { MAKE_OBJECT_CALL( glDeleteFragmentShaderATI, .id = object ); return; }
+    case OBJ_TYPE_SHADER_EXT: { MAKE_OBJECT_CALL( glDeleteVertexShaderEXT, .id = object ); return; }
+    case OBJ_TYPE_TEXTURE: { MAKE_OBJECT_CALL( glDeleteTextures, .n = 1, .textures = &object ); return; }
+    case OBJ_TYPE_COUNT: return;
+    }
+}
+
 #undef MAKE_OBJECT_CALL
 
 static void destroy_host_object( struct object_table *table, GLuint host_id, GLuint client_id )
 {
-    WARN( "Leaking %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    WARN( "Destroying %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    destroy_object( table->type, host_id );
 }
 
 static void destroy_host_shader( struct object_table *table, GLuint host_id, GLuint client_id )
 {
     GLuint *object;
     if (!(object = find_object_id( table->client_ids, host_id )) || !(client_id = *object)) return;
-    WARN( "Leaking %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    WARN( "Destroying %s client %#x, host %#x\n", debugstr_object_type( table->type ), client_id, host_id );
+    destroy_object( table->type, host_id );
 }
 
 static void free_object_table( struct object_table *table )
@@ -475,6 +498,8 @@ static struct display_lists *display_lists_acquire( struct display_lists *lists 
 
 static void display_lists_release( struct display_lists *lists )
 {
+    struct glDeleteSync_params delete_sync = { .teb = NtCurrentTeb() };
+
     if (InterlockedDecrement( &lists->refcount )) return;
 
     for (UINT i = 0; i < OBJ_TYPE_COUNT; i++)
@@ -485,6 +510,8 @@ static void display_lists_release( struct display_lists *lists )
         struct handle_entry *entry = lists->syncs.handles + i;
         if (LOWORD(entry->handle) == 0xffff) continue;
         WARN( "Leaking sync client %#x, host %p\n", entry->handle, entry->user_data );
+        delete_sync.sync = entry->user_data;
+        UNIX_CALL( glDeleteSync, &delete_sync );
         free( entry->user_data );
     }
 

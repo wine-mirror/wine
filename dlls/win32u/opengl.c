@@ -77,6 +77,7 @@ static const struct opengl_driver_funcs nulldrv_funcs, *driver_funcs = &nulldrv_
 static struct list devices_egl = LIST_INIT( devices_egl );
 static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
+static void *global_context;
 
 static BOOLEAN global_extensions[GL_EXTENSION_COUNT];
 static struct wgl_pixel_format *pixel_formats;
@@ -215,7 +216,7 @@ static BOOL make_null_context_current(void)
         }
 
         if (format > formats_count) return FALSE;
-        driver_funcs->p_context_create( format, NULL, NULL, &data->null_context );
+        driver_funcs->p_context_create( format, global_context, NULL, &data->null_context );
         if (driver_funcs->p_null_surface_create) driver_funcs->p_null_surface_create( format, &data->null_surface );
     }
 
@@ -1233,6 +1234,11 @@ static void init_device_info( struct egl_platform *egl, const struct opengl_func
     TRACE( "  - device_uuid: %s\n", debugstr_guid(&egl->device_uuid) );
     TRACE( "  - driver_uuid: %s\n", debugstr_guid(&egl->driver_uuid) );
 
+    if (egl == &display_egl)
+    {
+        if (core_context) core_context = InterlockedExchangePointer( &global_context, core_context );
+        else if (compat_context) compat_context = InterlockedExchangePointer( &global_context, compat_context );
+    }
     if (compat_context) funcs->p_eglDestroyContext( egl->display, compat_context );
     if (core_context) funcs->p_eglDestroyContext( egl->display, core_context );
 
@@ -1928,7 +1934,7 @@ static void push_internal_context( struct opengl_context *context, struct opengl
 
     if (!context->internal_context)
     {
-        driver_funcs->p_context_create( format, context->driver_private, NULL, &context->internal_context );
+        driver_funcs->p_context_create( format, global_context, NULL, &context->internal_context );
         if (!context->internal_context) ERR( "Failed to create internal context\n" );
     }
 
@@ -2308,12 +2314,11 @@ static int get_window_swap_interval( HWND hwnd )
     return interval;
 }
 
-static BOOL win32u_context_create( struct opengl_context *context, HDC hdc, struct opengl_context *share, const int *attribs )
+static BOOL win32u_context_create( struct opengl_context *context, HDC hdc, const int *attribs )
 {
-    void *share_private = share ? share->driver_private : NULL;
     int format;
 
-    TRACE( "context %p, hdc %p, share %p, attribs %p\n", context, hdc, share, attribs );
+    TRACE( "context %p, hdc %p, attribs %p\n", context, hdc, attribs );
 
     if ((format = get_dc_pixel_format( hdc )) <= 0 &&
         (format = get_window_pixel_format( NtUserWindowFromDC( hdc ) )) <= 0)
@@ -2322,7 +2327,7 @@ static BOOL win32u_context_create( struct opengl_context *context, HDC hdc, stru
         else RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    if (!driver_funcs->p_context_create( format, share_private, attribs, &context->driver_private ))
+    if (!driver_funcs->p_context_create( format, global_context, attribs, &context->driver_private ))
     {
         WARN( "Failed to create driver context for context %p\n", context );
         return FALSE;
@@ -2352,14 +2357,12 @@ static BOOL win32u_context_destroy( struct opengl_context *context )
     return TRUE;
 }
 
-static BOOL win32u_context_reset( struct opengl_context *context, struct opengl_context *share, const int *attribs )
+static BOOL win32u_context_reset( struct opengl_context *context, const int *attribs )
 {
-    void *share_private = share ? share->driver_private : NULL;
-
-    TRACE( "context %p, share %p, attribs %p\n", context, share, attribs );
+    TRACE( "context %p, attribs %p\n", context, attribs );
 
     if (!win32u_context_destroy( context )) return FALSE;
-    return driver_funcs->p_context_create( context->format, share_private, attribs, &context->driver_private );
+    return driver_funcs->p_context_create( context->format, global_context, attribs, &context->driver_private );
 }
 
 static BOOL flush_memory_pbuffer( void (*flush)(void) )
@@ -2833,6 +2836,18 @@ static void display_funcs_init(void)
         display_funcs.p_wglQueryRendererStringWINE = win32u_wglQueryRendererStringWINE;
         LIST_FOR_EACH_ENTRY_SAFE( egl, next, &devices_egl, struct egl_platform, entry )
             init_device_info( egl, &display_funcs );
+    }
+
+    if (!global_context)
+    {
+        for (int format = 1; format <= formats_count; format++)
+        {
+            struct wgl_pixel_format *desc = pixel_formats + format - 1;
+            if (!(desc->pfd.dwFlags & PFD_SUPPORT_OPENGL)) continue;
+            if (desc->pfd.iPixelType != PFD_TYPE_RGBA) continue;
+            if (desc->pfd.cColorBits < 24) continue;
+            if (driver_funcs->p_context_create( format, NULL, NULL, &global_context )) break;
+        }
     }
 }
 
