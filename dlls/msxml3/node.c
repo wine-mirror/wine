@@ -525,8 +525,6 @@ static void domnode_add_refs(struct domnode *node, unsigned int count)
 {
     struct domnode *p = node;
 
-    if (node->owner)
-        node->owner->refcount += count;
     while (p)
     {
         p->refcount += count;
@@ -1114,11 +1112,14 @@ HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const 
     return S_OK;
 }
 
-static void domnode_append_attribute(struct domnode *parent, struct domnode *node)
+static void domnode_insert_attribute(struct domnode *parent, struct domnode *node, struct domnode *ref_node)
 {
     domnode_unlink_attribute(node);
 
-    list_add_tail(&parent->attributes, &node->entry);
+    if (ref_node)
+        list_add_before(&ref_node->entry, &node->entry);
+    else
+        list_add_tail(&parent->attributes, &node->entry);
     node->parent = parent;
     domnode_add_refs(node->parent, node->refcount);
     domnode_set_owner(node, parent);
@@ -1133,7 +1134,7 @@ static HRESULT parse_xml_decl_append_attribute(struct domnode *pi, const WCHAR *
         return hr;
 
     if (SUCCEEDED(hr = node_put_data(attribute, value)))
-        domnode_append_attribute(pi, attribute);
+        domnode_insert_attribute(pi, attribute, NULL);
     else
         domnode_destroy_tree(attribute);
 
@@ -1235,24 +1236,10 @@ HRESULT node_get_owner_document(const struct domnode *node, IXMLDOMDocument **do
 
 struct domnode *domnode_addref(struct domnode *node)
 {
+    if (node->owner)
+        ++node->owner->refcount;
     domnode_add_refs(node, 1);
     return node;
-}
-
-static struct domnode *domnode_drop_refs(struct domnode *node, unsigned int count)
-{
-    struct domnode *top = NULL;
-
-    if (node->owner)
-        node->owner->refcount -= count;
-    while (node)
-    {
-        top = node;
-        node->refcount -= count;
-        node = node->parent;
-    }
-
-    return top;
 }
 
 struct domdoc_properties *domdoc_create_properties(MSXML_VERSION version)
@@ -1383,7 +1370,15 @@ void domnode_release(struct domnode *node)
 {
     struct domnode *top;
 
-    top = domnode_drop_refs(node, 1);
+    if (node->owner)
+        --node->owner->refcount;
+    while (node)
+    {
+        top = node;
+        --node->refcount;
+        node = node->parent;
+    }
+
     if (top->refcount == 0)
         domnode_destroy_tree(top);
 }
@@ -1416,7 +1411,7 @@ HRESULT node_clone_domnode(struct domnode *node, bool deep, struct domnode **clo
     LIST_FOR_EACH_ENTRY(n, &node->attributes, struct domnode, entry)
     {
         node_clone_domnode(n, true, &child);
-        domnode_append_attribute(object, child);
+        domnode_insert_attribute(object, child, NULL);
     }
 
     *cloned = object;
@@ -3429,14 +3424,12 @@ HRESULT node_set_attribute(struct domnode *node, IXMLDOMNode *attribute, IXMLDOM
                 return hr;
         }
 
-        list_add_before(&old_attr->entry, &attr->entry);
-        attr->parent = node;
-
+        domnode_insert_attribute(node, attr, old_attr);
         domnode_unlink_attribute(old_attr);
     }
     else
     {
-        domnode_append_attribute(node, attr);
+        domnode_insert_attribute(node, attr, NULL);
     }
 
     return S_OK;
@@ -3484,7 +3477,7 @@ HRESULT node_set_attribute_value(struct domnode *node, const WCHAR *name, const 
     if (domnode_get_attribute(node, name, &attr) != S_OK)
     {
         if (SUCCEEDED(hr = domnode_create(NODE_ATTRIBUTE, name, wcslen(name), NULL, 0, node->owner, &attr)))
-            domnode_append_attribute(node, attr);
+            domnode_insert_attribute(node, attr, NULL);
     }
 
     if (SUCCEEDED(hr))
@@ -3602,7 +3595,7 @@ static void parse_context_append_child(struct parse_context *context, struct dom
 static void parse_context_append_attribute(struct parse_context *context, struct domnode *node, struct domnode *attribute)
 {
     if (context->status == S_OK)
-        domnode_append_attribute(node, attribute);
+        domnode_insert_attribute(node, attribute, NULL);
 }
 
 static void parse_context_node_put_data(struct parse_context *context, struct domnode *node, const WCHAR *data, int data_len)
