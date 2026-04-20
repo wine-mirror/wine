@@ -1044,44 +1044,51 @@ HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const 
 {
     struct domnode *object;
     WCHAR *p;
-    BSTR str;
 
     *node = NULL;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    str = SysAllocStringLen(name, name_len);
+    list_init(&object->entry);
+    list_init(&object->owner_entry);
+    list_init(&object->children);
+    list_init(&object->attributes);
+    list_init(&object->owned);
+    object->owner = owner;
+    /* Document node does not have an owner */
+    if (owner)
+        list_add_tail(&owner->owned, &object->owner_entry);
+
+    object->qname = SysAllocStringLen(name, name_len);
     if (type == NODE_ELEMENT || type == NODE_ATTRIBUTE)
     {
-        if (!parser_is_valid_qualified_name(str))
+        if (!parser_is_valid_qualified_name(object->qname))
         {
-            SysFreeString(str);
+            domnode_destroy_tree(object);
             return E_FAIL;
         }
 
-        if ((p = wcschr(str, ':')))
+        if ((p = wcschr(object->qname, ':')))
         {
-            object->prefix = SysAllocStringLen(str, p - str);
+            object->prefix = SysAllocStringLen(object->qname, p - object->qname);
             object->name = SysAllocString(p + 1);
         }
         else
         {
-            object->name = str;
+            object->name = object->qname;
         }
     }
     else
     {
-        object->name = str;
+        object->name = object->qname;
     }
-    object->qname = str;
 
     if (uri_len)
     {
         if (!(object->uri = SysAllocStringLen(uri, uri_len)))
         {
-            free(object->name);
-            free(object);
+            domnode_destroy_tree(object);
             return E_OUTOFMEMORY;
         }
     }
@@ -1096,16 +1103,6 @@ HRESULT domnode_create(DOMNodeType type, const WCHAR *name, int name_len, const 
         default:
             ;
     }
-
-    list_init(&object->entry);
-    list_init(&object->owner_entry);
-    list_init(&object->children);
-    list_init(&object->attributes);
-    list_init(&object->owned);
-    object->owner = owner;
-    /* Document node does not have an owner */
-    if (owner)
-        list_add_tail(&owner->owned, &object->owner_entry);
 
     *node = object;
 
