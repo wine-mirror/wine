@@ -3518,7 +3518,6 @@ todo_wine {
                         /* Non-optional transform is connected to its downstream node after the optional
                          * node is inserted upstream, i.e. after each branch is connected, its optional
                          * nodes are inserted before the next branch is connected. */
-                        todo_wine
                         ok(optional_transforms[0]->set_output_sequence_id < test_transform->set_output_sequence_id,
                                 "Optional transform output was not configured before the non-optional one.\n");
                     }

@@ -140,8 +140,6 @@ struct topology_branch
         DWORD stream;
         IMFMediaTypeHandler *handler;
     } up, down;
-
-    struct list entry;
 };
 
 static const char *debugstr_topology_type(MF_TOPOLOGY_TYPE type)
@@ -218,6 +216,21 @@ static HRESULT topology_branch_create_indirect(struct topology_branch *branch,
     return hr;
 }
 
+/* create a branch for a given node output stream, skipping any optional nodes */
+static HRESULT topology_branch_create_for_output(IMFTopologyNode *node, DWORD stream, struct topology_branch **out)
+{
+    IMFTopologyNode *down_node;
+    DWORD down_stream;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTopologyNode_GetOutput(node, stream, &down_node, &down_stream)))
+        return hr;
+    hr = topology_branch_create(node, stream, down_node, down_stream, out);
+    IMFTopologyNode_Release(down_node);
+
+    return hr;
+}
+
 static HRESULT topology_branch_create_cloned(IMFTopology *topology, IMFTopologyNode *up_node, DWORD up_stream,
         IMFTopologyNode *down_node, DWORD down_stream, struct topology_branch **out)
 {
@@ -235,28 +248,6 @@ static HRESULT topology_branch_create_cloned(IMFTopology *topology, IMFTopologyN
     hr = topology_branch_create(up, up_stream, down, down_stream, out);
     IMFTopologyNode_Release(up);
     IMFTopologyNode_Release(down);
-    return hr;
-}
-
-static HRESULT topology_node_list_branches(IMFTopologyNode *node, struct list *branches)
-{
-    struct topology_branch *branch;
-    DWORD i, count, down_stream;
-    IMFTopologyNode *down_node;
-    HRESULT hr;
-
-    hr = IMFTopologyNode_GetOutputCount(node, &count);
-    for (i = 0; SUCCEEDED(hr) && i < count; ++i)
-    {
-        if (FAILED(IMFTopologyNode_GetOutput(node, i, &down_node, &down_stream)))
-            continue;
-
-        if (SUCCEEDED(hr = topology_branch_create(node, i, down_node, down_stream, &branch)))
-            list_add_tail(branches, &branch->entry);
-
-        IMFTopologyNode_Release(down_node);
-    }
-
     return hr;
 }
 
@@ -746,28 +737,32 @@ static HRESULT topology_branch_connect(IMFTopology *topology, enum connect_metho
     return hr;
 }
 
-static HRESULT topology_loader_resolve_branches(IMFTopology *topology, struct list *branches)
+static HRESULT topology_loader_resolve_node(IMFTopology *topology, IMFTopologyNode *node)
 {
     enum connect_method method_mask = connect_method_from_mf(MF_CONNECT_ALLOW_DECODER);
-    struct topology_branch *branch, *cloned, *next;
-    HRESULT hr = S_OK;
+    struct topology_branch *branch, *cloned;
+    DWORD output_count;
+    HRESULT hr;
 
-    LIST_FOR_EACH_ENTRY_SAFE(branch, next, branches, struct topology_branch, entry)
+    TRACE("topology %p, node %p\n", topology, node);
+
+    if (SUCCEEDED(hr = IMFTopologyNode_GetOutputCount(node, &output_count)) && !output_count)
+        return topology_node_get_type(node) == MF_TOPOLOGY_OUTPUT_NODE ? S_OK : MF_E_TOPO_UNSUPPORTED;
+
+    for (UINT i = 0; SUCCEEDED(hr) && SUCCEEDED(topology_branch_create_for_output(node, i, &branch)); ++i)
     {
-        list_remove(&branch->entry);
-
         if (SUCCEEDED(hr = topology_branch_create_cloned(topology, branch->up.node, branch->up.stream,
                 branch->down.node, branch->down.stream, &cloned)))
         {
             hr = topology_branch_connect(topology, method_mask, cloned, NULL);
             topology_branch_destroy(cloned);
         }
-
+        if (SUCCEEDED(hr))
+            hr = topology_loader_resolve_node(topology, branch->down.node);
         topology_branch_destroy(branch);
-        if (FAILED(hr))
-            break;
     }
 
+    TRACE("returning %#lx\n", hr);
     return hr;
 }
 
@@ -1046,13 +1041,10 @@ static HRESULT clone_topology(IMFTopology *input_topology, IMFCollection *source
 static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
         IMFTopology **ret_topology, IMFTopology *current_topology)
 {
-    struct list branches = LIST_INIT(branches);
-    struct topology_branch *branch, *next;
     IMFTopology *output_topology;
     IMFTopologyNode *node;
     IMFCollection *nodes;
-    unsigned short i = 0;
-    HRESULT hr = E_FAIL;
+    HRESULT hr;
 
     TRACE("iface %p, input_topology %p, ret_topology %p, current_topology %p.\n",
             iface, input_topology, ret_topology, current_topology);
@@ -1065,24 +1057,10 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     if (FAILED(hr = clone_topology(input_topology, nodes, &output_topology)))
         goto done;
 
-    for (i = 0; SUCCEEDED(IMFTopology_GetNode(input_topology, i, &node)); i++)
+    while (SUCCEEDED(hr) && SUCCEEDED(IMFCollection_RemoveElement(nodes, 0, (IUnknown **)&node)))
     {
-        hr = topology_node_list_branches(node, &branches);
+        hr = topology_loader_resolve_node(output_topology, node);
         IMFTopologyNode_Release(node);
-        if (FAILED(hr))
-            break;
-    }
-    if (SUCCEEDED(hr) && list_empty(&branches))
-        hr = MF_E_TOPO_UNSUPPORTED;
-
-    while (SUCCEEDED(hr) && !list_empty(&branches))
-        hr = topology_loader_resolve_branches(output_topology, &branches);
-
-    LIST_FOR_EACH_ENTRY_SAFE(branch, next, &branches, struct topology_branch, entry)
-    {
-        WARN("Failed to resolve branch %s\n", debugstr_topology_branch(branch));
-        list_remove(&branch->entry);
-        topology_branch_destroy(branch);
     }
 
     if (FAILED(hr))
