@@ -20,3 +20,4 @@
 #define IDS_NO_SCRIPT_FILE     2
 #define IDS_FILE_NOT_FOUND     3
 #define IDS_SCRIPT_LOAD_ERROR  4
+#define IDS_TIMEOUT_EXCEEDED   5

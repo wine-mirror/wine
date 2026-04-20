@@ -15124,6 +15124,12 @@ msgstr "შეცდომა: პროცესი \"%1\" ვერ ვიპ�
 msgid "CScript Error: Loading script \"%1\" failed (%2).\n"
 msgstr ""
 
+#: programs/wscript/wscript.rc:52
+msgid ""
+"Script execution time was exceeded on script \"%1\".\n"
+"Script execution was terminated.\n"
+msgstr ""
+
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
 msgstr "DirectX-ის დიაგნოსტიკის პროგრამა"

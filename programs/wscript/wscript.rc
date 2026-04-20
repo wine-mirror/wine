@@ -46,4 +46,7 @@ Options:\n\
     IDS_NO_SCRIPT_FILE, "Input Error: There is no script file specified.\n"
     IDS_FILE_NOT_FOUND, "Input Error: Can not find script file ""%1"".\n"
     IDS_SCRIPT_LOAD_ERROR, "CScript Error: Loading script ""%1"" failed (%2).\n"
+    IDS_TIMEOUT_EXCEEDED,
+"Script execution time was exceeded on script ""%1"".\n\
+Script execution was terminated.\n"
 }

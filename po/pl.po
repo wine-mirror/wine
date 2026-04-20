@@ -15405,6 +15405,12 @@ msgstr "Błąd wejściowy: nie można odnaleźć pliku skryptu „%1”.\n"
 msgid "CScript Error: Loading script \"%1\" failed (%2).\n"
 msgstr "Błąd CScript: wczytywanie skryptu „%1” się nie powiodło (%2).\n"
 
+#: programs/wscript/wscript.rc:52
+msgid ""
+"Script execution time was exceeded on script \"%1\".\n"
+"Script execution was terminated.\n"
+msgstr ""
+
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
 msgstr "Narzędzie diagnostyki DirectX"

@@ -286,6 +286,7 @@ static HRESULT WINAPI Host_put_Timeout(IHost *iface, LONG v)
     if(v < 0)
         return E_INVALIDARG;
     wshTimeout = v;
+    schedule_timeout(v);
     return S_OK;
 }
 
