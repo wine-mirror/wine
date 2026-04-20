@@ -101,6 +101,8 @@ echo @echo 2 > "saytwo.bat"
 echo @echo 3 > "say (3).bat"
 echo @echo 4 > "say .bat"
 echo @echo 5 > "bazbaz(5).bat"
+mkdir "foo (1)"
+echo @echo 6 > "foo (1)\saysix.bat"
 
 echo ------ Testing invocation of batch files ----------
 call say one
@@ -145,6 +147,9 @@ cmd /c s"aytwo
 if errorlevel 2 echo error %ErrorLevel%
 cmd /c say (3)
 call :setError 0
+cmd /c "say (3)"
+if errorlevel 2 echo error %ErrorLevel%
+call :setError 0
 cmd /c say" (3)"
 if errorlevel 2 echo error %ErrorLevel%
 call :setError 0
@@ -155,6 +160,7 @@ rem Deliberately invoking a fully qualified batch name containing a bracket
 rem should fail, as a bracket is a command delimiter.
 cmd /c "bazbaz(5).bat"
 if errorlevel 1 echo Passed
+cmd /c "foo (1)\saysix.bat"
 
 echo ---------- Testing CMD /C quoting -----------------
 cmd /c @echo "hi"
@@ -172,7 +178,7 @@ cmd /c "say one
 call :setError 0
 cmd /c "say"" one"
 if errorlevel 2 echo error %ErrorLevel%
-rem cond 3 - special char - first test fails on Vista, W2K8!
+rem cond 3 - special char
 cmd /c "say (3)"
 cmd /c ""say (3)""
 rem cond 4 - no spaces (quotes make no difference here)
@@ -284,6 +290,8 @@ call tell(12(34)
 call tell(12;34)
 echo --------- Finished  --------------
 del tell.bat say*.* bazbaz*.bat
+del "foo (1)\saysix.bat"
+rmdir "foo (1)"
 exit
 :setError
 exit /B %1
