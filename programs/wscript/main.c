@@ -555,8 +555,13 @@ static BOOL set_host_properties(const WCHAR *prop)
         WINE_FIXME("ignoring //h:\n");
     else if(wcsnicmp(prop, L"job:", 4) == 0)
         WINE_FIXME("ignoring //job:\n");
-    else if(wcsnicmp(prop, L"t:", 2) == 0)
-        WINE_FIXME("ignoring //t:\n");
+    else if(wcsnicmp(prop, L"t:", 2) == 0) {
+        WCHAR *end;
+        LONG t = wcstol(prop + 2, &end, 10);
+        if(end == prop + 2 || *end || t < 0)
+            return FALSE;
+        wshTimeout = t;
+    }
     else
         return FALSE;
     return TRUE;

@@ -27,4 +27,22 @@ End Sub
 
 Call ok(WScript is WSH, "WScript is not WSH")
 
+Call ok(WScript.Timeout = 0, "default Timeout = " & WScript.Timeout)
+Call ok(TypeName(WScript.Timeout) = "Long", "Timeout TypeName = " & TypeName(WScript.Timeout))
+
+WScript.Timeout = 30
+Call ok(WScript.Timeout = 30, "WScript.Timeout = " & WScript.Timeout)
+
+WScript.Timeout = 0
+Call ok(WScript.Timeout = 0, "WScript.Timeout = " & WScript.Timeout)
+
+Dim prev_timeout
+prev_timeout = WScript.Timeout
+On Error Resume Next
+Err.Clear
+WScript.Timeout = -1
+Call ok(Err.Number = 5, "negative Timeout err.Number = " & Err.Number)
+Call ok(WScript.Timeout = prev_timeout, "negative Timeout changed value to " & WScript.Timeout)
+On Error Goto 0
+
 Call winetest.reportSuccess()

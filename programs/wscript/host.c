@@ -41,6 +41,8 @@ VARIANT_BOOL wshInteractive =
     VARIANT_FALSE;
 #endif
 
+LONG wshTimeout = 0;
+
 static HRESULT to_string(VARIANT *src, BSTR *dst)
 {
     VARIANT v;
@@ -271,14 +273,20 @@ static HRESULT WINAPI Host_get_BuildVersion(IHost *iface, int *out_Build)
 
 static HRESULT WINAPI Host_get_Timeout(IHost *iface, LONG *out_Timeout)
 {
-    WINE_FIXME("(%p)\n", out_Timeout);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", out_Timeout);
+
+    *out_Timeout = wshTimeout;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_put_Timeout(IHost *iface, LONG v)
 {
-    WINE_FIXME("(%ld)\n", v);
-    return E_NOTIMPL;
+    TRACE("(%ld)\n", v);
+
+    if(v < 0)
+        return E_INVALIDARG;
+    wshTimeout = v;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_CreateObject(IHost *iface, BSTR ProgID, BSTR Prefix,
