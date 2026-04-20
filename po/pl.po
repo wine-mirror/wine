@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2026-04-17 23:17+0200\n"
+"PO-Revision-Date: 2026-04-21 00:49+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -5047,78 +5047,69 @@ msgid "Invalid oplock message received.\n"
 msgstr "Otrzymano niepoprawną wiadomość oplock.\n"
 
 #: dlls/kernelbase/winerror.mc:970
-#, fuzzy
-#| msgid "Disk is corrupt.\n"
 msgid "Disk is too fragmented.\n"
-msgstr "Dysk jest zepsuty.\n"
+msgstr "Dysk jest zbyt pofragmentowany.\n"
 
 #: dlls/kernelbase/winerror.mc:975
 msgid "File cannot be opened because it is in the process of being deleted.\n"
-msgstr ""
+msgstr "Nie można otworzyć pliku, ponieważ trwa jego usuwanie.\n"
 
 #: dlls/kernelbase/winerror.mc:980
 msgid "Short name settings incompatible with global registry setting.\n"
 msgstr ""
+"Ustawienia krótkiej nazwy są niezgodne z globalnymi ustawieniami rejestru.\n"
 
 #: dlls/kernelbase/winerror.mc:985
 msgid "Short names are not enabled on this volume.\n"
-msgstr ""
+msgstr "Krótkie nazwy nie są włączone na tym wolumenie.\n"
 
 #: dlls/kernelbase/winerror.mc:990
-#, fuzzy
-#| msgid "Floppy registers inconsistent.\n"
 msgid "Security stream is inconsistent.\n"
-msgstr "Rejestry dyskietki niespójne.\n"
+msgstr "Strumień bezpieczeństwa jest niespójny.\n"
 
 #: dlls/kernelbase/winerror.mc:995
 msgid "File lock operation cannot be processed due to invalid byte range.\n"
 msgstr ""
+"Nie można wykonać operacji blokady pliku z powodu nieprawidłowego zakresu "
+"bajtów.\n"
 
 #: dlls/kernelbase/winerror.mc:1000
 msgid "Subsystem for supporting image type is not present.\n"
-msgstr ""
+msgstr "Podsystem obsługujący typ obrazu nie jest obecny.\n"
 
 #: dlls/kernelbase/winerror.mc:1005
 msgid "Notification GUID is already defined.\n"
-msgstr ""
+msgstr "GUID powiadomienia jest już określony.\n"
 
 #: dlls/kernelbase/winerror.mc:1010
-#, fuzzy
-#| msgid "Invalid icon handle.\n"
 msgid "Invalid exception handler.\n"
-msgstr "Niepoprawny uchwyt ikony.\n"
+msgstr "Nieprawidłowy program obsługi wyjątków.\n"
 
 #: dlls/kernelbase/winerror.mc:1015
-#, fuzzy
-#| msgid "Duplicate service name.\n"
 msgid "Duplicate privileges for the token.\n"
-msgstr "Powielona nazwa usługi.\n"
+msgstr ""
+"Zduplikowane uprawnienia dla tokena.\n"
+"\n"
 
 #: dlls/kernelbase/winerror.mc:1020
-#, fuzzy
-#| msgid "Not all objects could be exported.\n"
 msgid "No ranges could be processed.\n"
-msgstr "Nie można było wyeksportować wszystkich obiektów.\n"
+msgstr "Nie udało się przetworzyć żadnych zakresów.\n"
 
 #: dlls/kernelbase/winerror.mc:1025
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation not allowed on system file.\n"
-msgstr "Operacja anulowana przez użytkownika.\n"
+msgstr "Operacja nie jest dozwolona na pliku systemowym.\n"
 
 #: dlls/kernelbase/winerror.mc:1030
 msgid "Disk resources have been exhausted.\n"
-msgstr ""
+msgstr "Zasoby dyskowe zostały wyczerpane.\n"
 
 #: dlls/kernelbase/winerror.mc:1035
-#, fuzzy
-#| msgid "Invalid key.\n"
 msgid "Invalid token.\n"
-msgstr "Niepoprawny klucz.\n"
+msgstr "Nieprawidłowy token.\n"
 
 #: dlls/kernelbase/winerror.mc:1040
 msgid "Command feature not supported on the device.\n"
-msgstr ""
+msgstr "Funkcja poleceń nie jest obsługiwana na tym urządzeniu.\n"
 
 #: dlls/kernelbase/winerror.mc:1045
 msgid "Message 0x%1 not found in file %2.\n"
@@ -5622,7 +5613,7 @@ msgstr "Nie jest uruchomiona żadna usługa śledząca.\n"
 
 #: dlls/kernelbase/winerror.mc:1670
 msgid "No such volume ID.\n"
-msgstr "Brak takiego identyfikatora woluminu.\n"
+msgstr "Brak takiego identyfikatora wolumenu.\n"
 
 #: dlls/kernelbase/winerror.mc:1675
 msgid "Unable to remove the file to be replaced.\n"
@@ -14857,7 +14848,7 @@ msgstr "VER wyświetla wersję uruchomionego wiersza poleceń.\n"
 
 #: programs/cmd/cmd.rc:256
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL pokazuje etykietę woluminu urządzenia dyskowego.\n"
+msgstr "VOL pokazuje etykietę wolumenu urządzenia dyskowego.\n"
 
 #: programs/cmd/cmd.rc:260
 msgid ""
@@ -15182,7 +15173,7 @@ msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Numer seryny wolumenu to %1!04x!-%2!04x!\n"
+"Numer seryjny wolumenu to %1!04x!-%2!04x!\n"
 "\n"
 
 #: programs/cmd/cmd.rc:390
@@ -15484,6 +15475,8 @@ msgid ""
 "Script execution time was exceeded on script \"%1\".\n"
 "Script execution was terminated.\n"
 msgstr ""
+"Przekroczono czas wykonania skryptu „%1”.\n"
+"Wykonywanie skryptu zostało przerwane.\n"
 
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
