@@ -6477,11 +6477,13 @@ static void saxreader_parse_xmldecl_body(struct saxlocator *locator)
         else
         {
             saxreader_set_error(locator, E_SAX_UNEXPECTED_ATTRIBUTE);
-            continue;
         }
 
         saxreader_free_name(&name);
         SysFreeString(value);
+
+        if (locator->status != S_OK)
+            continue;
 
         saxreader_skipspaces(locator);
         if (locator->eos)
