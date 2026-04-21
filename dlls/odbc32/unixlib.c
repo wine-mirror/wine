@@ -636,6 +636,7 @@ static void replicate_odbc_to_registry( BOOL is_user, SQLHENV env )
         KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
         dir = SQL_FETCH_NEXT;
+        if (!filename) continue;
         if (!query_value( key_sources, dsn, len_dsn * sizeof(WCHAR), info, sizeof(buffer) ) && desc[0])
         {
             set_value( key_sources, dsn, len_dsn * sizeof(WCHAR), REG_SZ, (const BYTE *)desc,
