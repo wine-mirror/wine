@@ -2236,6 +2236,17 @@ static void test_pnp_devices(void)
         ok(!wcscmp(buffer_w, expect_device_location_w), "Got device location info %s.\n", debugstr_w(buffer_w));
     }
 
+    /* DEVPKEY_Device_Parent — should be set by ntoskrnl during bus enumeration. */
+    prop_type = DEVPROP_TYPE_EMPTY;
+    size = 0;
+    memset(buffer_w, 0, sizeof(buffer_w));
+    ret = SetupDiGetDevicePropertyW(set, &device, &DEVPKEY_Device_Parent, &prop_type, (BYTE *)buffer_w,
+                                    sizeof(buffer_w), &size, 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ok(prop_type == DEVPROP_TYPE_STRING, "got type %#lx\n", prop_type);
+    ok(size == sizeof(L"ROOT\\WINETEST\\0"), "got size %lu\n", size);
+    ok(!wcscmp(buffer_w, L"ROOT\\WINETEST\\0"), "got parent ID %s\n", debugstr_w(buffer_w));
+
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &child_class, 0, &iface);
     ok(ret, "failed to get interface, error %#lx\n", GetLastError());
     ok(IsEqualGUID(&iface.InterfaceClassGuid, &child_class),
