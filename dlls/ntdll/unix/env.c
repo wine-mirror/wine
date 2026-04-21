@@ -2438,3 +2438,11 @@ void WINAPI RtlSetLastWin32Error( DWORD err )
 #endif
     teb->LastErrorValue = err;
 }
+
+/**********************************************************************
+ *      RtlGetCurrentPeb  (ntdll.so)
+ */
+PEB * WINAPI RtlGetCurrentPeb(void)
+{
+    return peb;
+}
