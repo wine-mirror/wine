@@ -1138,6 +1138,38 @@ static const char *debugstr_object_type( enum object_type type )
     }
 }
 
+static BOOL same_object_type( enum object_type a, enum object_type b )
+{
+    if (a == b) return TRUE;
+    if (a == OBJ_BUFFER && b == OBJ_BUFFER_ARB) return TRUE;
+    if (b == OBJ_BUFFER && a == OBJ_BUFFER_ARB) return TRUE;
+    if (a == OBJ_FENCE_APPLE && b == OBJ_FENCE_NV) return TRUE;
+    if (b == OBJ_FENCE_APPLE && a == OBJ_FENCE_NV) return TRUE;
+    if (a == OBJ_FRAMEBUFFER && b == OBJ_FRAMEBUFFER_EXT) return TRUE;
+    if (b == OBJ_FRAMEBUFFER && a == OBJ_FRAMEBUFFER_EXT) return TRUE;
+    if (a == OBJ_PROGRAM_ARB && b == OBJ_PROGRAM_NV) return TRUE;
+    if (b == OBJ_PROGRAM_ARB && a == OBJ_PROGRAM_NV) return TRUE;
+    if (a == OBJ_PROGRAM_OBJECT && b == OBJ_PROGRAM_OBJECT_ARB) return TRUE;
+    if (b == OBJ_PROGRAM_OBJECT && a == OBJ_PROGRAM_OBJECT_ARB) return TRUE;
+    if (a == OBJ_QUERY && b == OBJ_QUERY_ARB) return TRUE;
+    if (b == OBJ_QUERY && a == OBJ_QUERY_ARB) return TRUE;
+    if (b == OBJ_QUERY && a == OBJ_OCCLUSION_QUERY_NV) return TRUE;
+    if (a == OBJ_QUERY && b == OBJ_OCCLUSION_QUERY_NV) return TRUE;
+    if (b == OBJ_QUERY_ARB && a == OBJ_OCCLUSION_QUERY_NV) return TRUE;
+    if (a == OBJ_QUERY_ARB && b == OBJ_OCCLUSION_QUERY_NV) return TRUE;
+    if (a == OBJ_RENDERBUFFER && b == OBJ_RENDERBUFFER_EXT) return TRUE;
+    if (b == OBJ_RENDERBUFFER && a == OBJ_RENDERBUFFER_EXT) return TRUE;
+    if (a == OBJ_SHADER_OBJECT && b == OBJ_SHADER_OBJECT_ARB) return TRUE;
+    if (b == OBJ_SHADER_OBJECT && a == OBJ_SHADER_OBJECT_ARB) return TRUE;
+    if (a == OBJ_TEXTURE && b == OBJ_TEXTURE_EXT) return TRUE;
+    if (b == OBJ_TEXTURE && a == OBJ_TEXTURE_EXT) return TRUE;
+    if (a == OBJ_TRANSFORM_FEEDBACK && b == OBJ_TRANSFORM_FEEDBACK_NV) return TRUE;
+    if (b == OBJ_TRANSFORM_FEEDBACK && a == OBJ_TRANSFORM_FEEDBACK_NV) return TRUE;
+    if (a == OBJ_VERTEX_ARRAY && b == OBJ_VERTEX_ARRAY_APPLE) return TRUE;
+    if (b == OBJ_VERTEX_ARRAY && a == OBJ_VERTEX_ARRAY_APPLE) return TRUE;
+    return FALSE;
+}
+
 static BOOL create_object( enum object_type type, GLuint name, GLuint *obj )
 {
     switch (type)
@@ -1842,6 +1874,40 @@ static void test_sharelists(HDC winhdc)
         }
     }
 
+    ctx1 = wglCreateContext( winhdc );
+    ok_ptr( ctx1, !=, NULL );
+    ok_ret( TRUE, wglMakeCurrent( winhdc, ctx1 ) );
+    ok_ret( GL_NO_ERROR, glGetError() );
+
+    for (UINT i = 0, expect = 1; i < ARRAY_SIZE(object_tests); i++)
+    {
+        const struct object_test *test = object_tests + i;
+        GLuint obj;
+
+        if (!test->supported || (test->type == OBJ_SEMAPHORE_EXT && winetest_platform_is_wine))
+        {
+            skip( "Skipping object type %s\n", debugstr_object_type( test->type ) );
+            expect--;
+            continue;
+        }
+
+        /* aliased object types share the same namespace */
+        if (i > 0 && same_object_type( test->type, test[-1].type )) expect++;
+        /* shaders and programs share the same namespace */
+        else if (test->type == OBJ_SHADER_OBJECT || test->type == OBJ_SHADER_OBJECT_ARB) expect++;
+        else expect = 1;
+
+        winetest_push_context( "%u %s", i, debugstr_object_type( test->type ) );
+
+        create_object( test->type, 0, &obj );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_u4( obj, ==, expect );
+
+        winetest_pop_context();
+    }
+
+    ok_ret( TRUE, wglDeleteContext( ctx1 ) );
+
     for (UINT i = 0; i < ARRAY_SIZE(object_tests); i++)
     {
         /* some functions don't allow implicit names even in compat contexts */
@@ -1875,6 +1941,17 @@ static void test_sharelists(HDC winhdc)
         ok_u4( obj1, ==, 1 );
         ok_ret( TRUE, test->exists( obj1 ) );
         ok_ret( GL_NO_ERROR, glGetError() );
+
+        for (UINT j = 0; j < ARRAY_SIZE(object_tests); j++)
+        {
+            const struct object_test *other = object_tests + j;
+            BOOL expect = i == j || same_object_type( test->type, other->type );
+            if (!other->exists) continue;
+            winetest_push_context( "%u %s", j, debugstr_object_type( other->type ) );
+            ok_ret( expect, other->exists( obj1 ) );
+            ok_ret( GL_NO_ERROR, glGetError() );
+            winetest_pop_context();
+        }
 
         /* share ctx1 (lists #1) with ctx2 */
         ok_ret( TRUE, wglShareLists( ctx1, ctx2 ) );
