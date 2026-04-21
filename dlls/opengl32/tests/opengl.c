@@ -1495,11 +1495,113 @@ next:
     }
 }
 
+static void delete_object( enum object_type type, GLuint name )
+{
+    switch (type)
+    {
+    case OBJ_BUFFER: ext.glDeleteBuffers( 1, &name ); break;
+    case OBJ_BUFFER_ARB: ext.glDeleteBuffersARB( 1, &name ); break;
+    case OBJ_COMMAND_LIST_NV: ext.glDeleteCommandListsNV( 1, &name ); break;
+    case OBJ_FENCE_APPLE: ext.glDeleteFencesAPPLE( 1, &name ); break;
+    case OBJ_FENCE_NV: ext.glDeleteFencesNV( 1, &name ); break;
+    case OBJ_FRAMEBUFFER: ext.glDeleteFramebuffers( 1, &name ); break;
+    case OBJ_FRAMEBUFFER_EXT: ext.glDeleteFramebuffersEXT( 1, &name ); break;
+    case OBJ_DISPLAY_LIST: glDeleteLists( name, 1 ); break;
+    case OBJ_MEMORY_OBJECT_EXT: ext.glDeleteMemoryObjectsEXT( 1, &name ); break;
+    case OBJ_OBJECT_BUFFER_ATI: ext.glDeleteObjectBufferATI( name ); break;
+    case OBJ_PATH_NV: ext.glDeletePathsNV( name, 1 ); break;
+    case OBJ_PROGRAM_ARB: ext.glDeleteProgramsARB( 1, &name ); break;
+    case OBJ_PROGRAM_NV: ext.glDeleteProgramsNV( 1, &name ); break;
+    case OBJ_SHADER_EXT: ext.glDeleteVertexShaderEXT( name ); break;
+    case OBJ_SHADER_ATI: ext.glDeleteFragmentShaderATI( name ); break;
+    case OBJ_PROGRAM_OBJECT: ext.glDeleteProgram( name ); break;
+    case OBJ_PROGRAM_OBJECT_ARB: ext.glDeleteObjectARB( name ); break;
+    case OBJ_SHADER_OBJECT: ext.glDeleteShader( name ); break;
+    case OBJ_SHADER_OBJECT_ARB: ext.glDeleteObjectARB( name ); break;
+    case OBJ_PROGRAM_PIPELINE: ext.glDeleteProgramPipelines( 1, &name ); break;
+    case OBJ_QUERY: ext.glDeleteQueries( 1, &name ); break;
+    case OBJ_QUERY_ARB: ext.glDeleteQueriesARB( 1, &name ); break;
+    case OBJ_OCCLUSION_QUERY_NV: ext.glDeleteOcclusionQueriesNV( 1, &name ); break;
+    case OBJ_RENDERBUFFER: ext.glDeleteRenderbuffers( 1, &name ); break;
+    case OBJ_RENDERBUFFER_EXT: ext.glDeleteRenderbuffersEXT( 1, &name ); break;
+    case OBJ_SAMPLER: ext.glDeleteSamplers( 1, &name ); break;
+    case OBJ_SEMAPHORE_EXT: ext.glDeleteSemaphoresEXT( 1, &name ); break;
+    case OBJ_STATE_NV: ext.glDeleteStatesNV( 1, &name ); break;
+    case OBJ_TEXTURE: glDeleteTextures( 1, &name ); break;
+    case OBJ_TEXTURE_EXT: ext.glDeleteTexturesEXT( 1, &name ); break;
+    case OBJ_TRANSFORM_FEEDBACK: ext.glDeleteTransformFeedbacks( 1, &name ); break;
+    case OBJ_TRANSFORM_FEEDBACK_NV: ext.glDeleteTransformFeedbacksNV( 1, &name ); break;
+    case OBJ_VERTEX_ARRAY: ext.glDeleteVertexArrays( 1, &name ); break;
+    case OBJ_VERTEX_ARRAY_APPLE: ext.glDeleteVertexArraysAPPLE( 1, &name ); break;
+    case OBJ_TYPE_COUNT: return;
+    }
+}
+
+static GLboolean GLAPIENTRY is_program_object_arb( GLuint name )
+{
+    GLint type = 0xdeadbeef;
+    ext.glGetObjectParameterivARB( name, GL_OBJECT_TYPE_ARB, &type );
+    if (type != GL_PROGRAM_OBJECT_ARB) glGetError(); /* other glIs* functions don't set error on failure */
+    return type == GL_PROGRAM_OBJECT_ARB;
+}
+
+static GLboolean GLAPIENTRY is_shader_object_arb( GLuint name )
+{
+    GLint type = 0xdeadbeef;
+    ext.glGetObjectParameterivARB( name, GL_OBJECT_TYPE_ARB, &type );
+    if (type != GL_SHADER_OBJECT_ARB) glGetError(); /* other glIs* functions don't set error on failure */
+    return type == GL_SHADER_OBJECT_ARB;
+}
+
 static void test_sharelists(HDC winhdc)
 {
+    const struct object_test
+    {
+        enum object_type type;
+        GLboolean (*GLAPIENTRY exists)( GLuint name );
+        BOOL shared;
+        BOOL supported;
+    } object_tests[] =
+    {
+        { OBJ_BUFFER, ext.glIsBuffer, TRUE, !!ext.glIsBuffer },
+        { OBJ_BUFFER_ARB, ext.glIsBufferARB, TRUE, !!ext.glIsBufferARB },
+        { OBJ_FRAMEBUFFER, ext.glIsFramebuffer, TRUE, !!ext.glIsFramebuffer },
+        { OBJ_FRAMEBUFFER_EXT, ext.glIsFramebufferEXT, TRUE, !!ext.glIsFramebufferEXT },
+        { OBJ_RENDERBUFFER, ext.glIsRenderbuffer, TRUE, !!ext.glIsRenderbuffer },
+        { OBJ_RENDERBUFFER_EXT, ext.glIsRenderbufferEXT, TRUE, !!ext.glIsRenderbufferEXT },
+        { OBJ_TEXTURE, glIsTexture, TRUE, TRUE },
+        { OBJ_TEXTURE_EXT, ext.glIsTextureEXT, TRUE, !!ext.glIsTextureEXT },
+        { OBJ_SAMPLER, ext.glIsSampler, TRUE, !!ext.glIsSampler },
+        { OBJ_DISPLAY_LIST, glIsList, TRUE, TRUE },
+        { OBJ_PROGRAM_ARB, ext.glIsProgramARB, TRUE, !!ext.glIsProgramARB },
+        { OBJ_PROGRAM_NV, ext.glIsProgramNV, TRUE, !!ext.glIsProgramNV },
+        { OBJ_SEMAPHORE_EXT, ext.glIsSemaphoreEXT, TRUE, !!ext.glIsSemaphoreEXT },
+        { OBJ_MEMORY_OBJECT_EXT, ext.glIsMemoryObjectEXT, TRUE, !!ext.glIsMemoryObjectEXT },
+        { OBJ_PATH_NV, ext.glIsPathNV, TRUE, !!ext.glIsPathNV },
+        { OBJ_PROGRAM_OBJECT, ext.glIsProgram, TRUE, !!ext.glIsProgram },
+        { OBJ_PROGRAM_OBJECT_ARB, is_program_object_arb, TRUE, !!ext.glCreateProgramObjectARB },
+        { OBJ_SHADER_OBJECT, ext.glIsShader, TRUE, !!ext.glIsShader },
+        { OBJ_SHADER_OBJECT_ARB, is_shader_object_arb, TRUE, !!ext.glCreateShaderObjectARB },
+        { OBJ_SHADER_EXT, NULL, TRUE, !!ext.glGenVertexShadersEXT },
+        { OBJ_SHADER_ATI, NULL, TRUE, !!ext.glGenFragmentShadersATI },
+        /* non shared objects */
+        { OBJ_OBJECT_BUFFER_ATI, ext.glIsObjectBufferATI, FALSE /* needs confirmation */, !!ext.glIsObjectBufferATI },
+        { OBJ_COMMAND_LIST_NV, ext.glIsCommandListNV, FALSE, !!ext.glIsCommandListNV },
+        { OBJ_FENCE_APPLE, ext.glIsFenceAPPLE, FALSE, !!ext.glIsFenceAPPLE },
+        { OBJ_FENCE_NV, ext.glIsFenceNV, FALSE, !!ext.glIsFenceNV },
+        { OBJ_PROGRAM_PIPELINE, ext.glIsProgramPipeline, FALSE, !!ext.glIsProgramPipeline },
+        { OBJ_QUERY, ext.glIsQuery, FALSE, !!ext.glIsQuery },
+        { OBJ_QUERY_ARB, ext.glIsQueryARB, FALSE, !!ext.glIsQueryARB },
+        { OBJ_OCCLUSION_QUERY_NV, ext.glIsOcclusionQueryNV, FALSE, !!ext.glIsOcclusionQueryNV },
+        { OBJ_STATE_NV, ext.glIsStateNV, FALSE, !!ext.glIsStateNV },
+        { OBJ_TRANSFORM_FEEDBACK, ext.glIsTransformFeedback, FALSE, !!ext.glIsTransformFeedback },
+        { OBJ_TRANSFORM_FEEDBACK_NV, ext.glIsTransformFeedbackNV, FALSE, !!ext.glIsTransformFeedbackNV },
+        { OBJ_VERTEX_ARRAY, ext.glIsVertexArray, FALSE, !!ext.glIsVertexArray },
+        { OBJ_VERTEX_ARRAY_APPLE, ext.glIsVertexArrayAPPLE, FALSE, !!ext.glIsVertexArrayAPPLE },
+    };
     BOOL res, nvidia, amd, source_current, source_sharing, dest_current, dest_sharing;
     const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
-    HGLRC source, dest, other;
+    HGLRC source, dest, other, ctx1, ctx2, ctx3;
     BOOL ms_hint_supported;
 
     ms_hint_supported = gl_extension_supported(extensions, "GL_NV_multisample_filter_hint");
@@ -1738,6 +1840,177 @@ static void test_sharelists(HDC winhdc)
                 }
             }
         }
+    }
+
+    for (UINT i = 0; i < ARRAY_SIZE(object_tests); i++)
+    {
+        /* some functions don't allow implicit names even in compat contexts */
+        const struct object_test *test = object_tests + i;
+        GLuint obj1, obj2, obj3;
+
+        if (!test->exists || (test->type == OBJ_SEMAPHORE_EXT && winetest_platform_is_wine) ||
+            broken( test->type == OBJ_PROGRAM_ARB && amd /* crashes on destroy after sharing */ ))
+        {
+            skip( "Skipping object type %s\n", debugstr_object_type( test->type ) );
+            continue;
+        }
+
+        winetest_push_context( "%u %s", i, debugstr_object_type( test->type ) );
+
+        ctx1 = wglCreateContext( winhdc );
+        ok_ptr( ctx1, !=, NULL );
+        ctx2 = wglCreateContext( winhdc );
+        ok_ptr( ctx2, !=, NULL );
+        ctx3 = wglCreateContext( winhdc );
+        ok_ptr( ctx3, !=, NULL );
+
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* create object 1 in ctx1 (lists #1) */
+        ok_ret( FALSE, test->exists( 1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        create_object( test->type, is_implicit_allowed( test->type, TRUE ) ? 1 : 0, &obj1 );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_u4( obj1, ==, 1 );
+        ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* share ctx1 (lists #1) with ctx2 */
+        ok_ret( TRUE, wglShareLists( ctx1, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* object 1 is still valid in ctx1 */
+        ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* object 1 is now valid in ctx2 */
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        if (!test->shared)
+        {
+            ok_ret( FALSE, test->exists( obj1 ) );
+            ok_ret( TRUE, wglDeleteContext( ctx1 ) );
+            ok_ret( TRUE, wglDeleteContext( ctx2 ) );
+            ok_ret( TRUE, wglDeleteContext( ctx3 ) );
+            winetest_pop_context();
+            continue;
+        }
+        ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* object 1 is not valid in ctx3 */
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* share ctx1 (lists #1) with ctx3 */
+        ok_ret( TRUE, wglShareLists( ctx1, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* object 1 is now valid there as well */
+        todo_wine ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* object 1 is still valid in ctx2 */
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        ok_ret( TRUE, wglDeleteContext( ctx1 ) );
+
+        /* now try the other way around */
+        ctx1 = wglCreateContext( winhdc );
+        ok_ptr( ctx1, !=, NULL );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* create object 2 in ctx1 (lists #2) */
+        ok_ret( FALSE, test->exists( 2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        create_object( test->type, is_implicit_allowed( test->type, TRUE ) ? 2 : 0, &obj2 );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        if (obj2 != 2)
+        {
+            GLuint tmp = obj2;
+            create_object( test->type, is_implicit_allowed( test->type, TRUE ) ? 2 : 0, &obj2 );
+            delete_object( test->type, tmp );
+        }
+        ok_u4( obj2, ==, 2 );
+        ok_ret( TRUE, test->exists( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* object 1 in invalid in ctx1 */
+        ok_ret( FALSE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* cannot overwrite non-empty lists with some other */
+        todo_wine ok_ret( FALSE, wglShareLists( ctx1, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, wglShareLists( ctx2, ctx1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* even after deleting all the objects */
+        delete_object( test->type, obj2 );
+        ok_ret( FALSE, test->exists( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, wglShareLists( ctx2, ctx1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, test->exists( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, test->exists( 3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* test creating objects in shared contexts */
+        create_object( test->type, is_implicit_allowed( test->type, TRUE ) ? 3 : 0, &obj3 );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        if (obj3 != 3)
+        {
+            GLuint tmp = obj3;
+            create_object( test->type, is_implicit_allowed( test->type, TRUE ) ? 3 : 0, &obj3 );
+            delete_object( test->type, tmp );
+        }
+        ok_u4( obj3, ==, 3 );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( TRUE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, test->exists( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( TRUE, test->exists( obj3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* test deleting objects in shared contexts */
+        delete_object( test->type, obj1 );
+        todo_wine_if( test->type == OBJ_PROGRAM_OBJECT || test->type == OBJ_PROGRAM_OBJECT_ARB ||
+                      test->type == OBJ_SHADER_OBJECT || test->type == OBJ_SHADER_OBJECT_ARB )
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( FALSE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, test->exists( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, test->exists( obj3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        ok_ret( TRUE, wglDeleteContext( ctx1 ) );
+        ok_ret( TRUE, wglDeleteContext( ctx3 ) );
+
+        /* objects are still valid after shared context destruction */
+        todo_wine ok_ret( FALSE, test->exists( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, test->exists( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, test->exists( obj3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, wglDeleteContext( ctx2 ) );
+
+        winetest_pop_context();
     }
 }
 
