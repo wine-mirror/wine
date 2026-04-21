@@ -484,6 +484,14 @@ BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
     static enum wayland_surface_config_state mask =
         WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
 
+    /* The fullscreen state requires a size smaller or equal to the configured
+     * size. If we have a larger size, we can use surface geometry during
+     * surface reconfiguration to provide the smaller size, so we are always
+     * compatible with a fullscreen state.
+     * NOTE: Fullscreen combined with maximized is the same as fullscreen. */
+    if (conf->state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN)
+        return TRUE;
+
     /* We require the same state. */
     if ((state & mask) != (conf->state & mask)) return FALSE;
 
@@ -495,11 +503,6 @@ BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
     {
         return FALSE;
     }
-
-    /* The fullscreen state requires a size smaller or equal to the configured
-     * size. If we have a larger size, we can use surface geometry during
-     * surface reconfiguration to provide the smaller size, so we are always
-     * compatible with a fullscreen state. */
 
     return TRUE;
 }
@@ -554,6 +557,7 @@ static void wayland_surface_reconfigure_geometry(struct wayland_surface *surface
         /* If the window rect in the monitor is smaller than required,
          * fall back to an appropriately sized rect at the top-left. */
         if ((surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED) &&
+            !(surface->current.state & WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN) &&
             (rect.right - rect.left < surface->current.width ||
              rect.bottom - rect.top < surface->current.height))
         {
