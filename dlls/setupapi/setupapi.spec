@@ -120,7 +120,7 @@
 @ stub CM_Get_Next_Res_Des
 @ stub CM_Get_Next_Res_Des_Ex
 @ stdcall CM_Get_Parent(ptr long long) cfgmgr32.CM_Get_Parent
-@ stub CM_Get_Parent_Ex
+@ stdcall CM_Get_Parent_Ex(ptr long long ptr) cfgmgr32.CM_Get_Parent_Ex
 @ stub CM_Get_Res_Des_Data
 @ stub CM_Get_Res_Des_Data_Ex
 @ stub CM_Get_Res_Des_Data_Size

@@ -143,7 +143,7 @@
 @ stub CM_Get_Next_Res_Des
 @ stub CM_Get_Next_Res_Des_Ex
 @ stdcall CM_Get_Parent(ptr long long)
-@ stub CM_Get_Parent_Ex
+@ stdcall CM_Get_Parent_Ex(ptr long long ptr)
 @ stub CM_Get_Res_Des_Data
 @ stub CM_Get_Res_Des_Data_Ex
 @ stub CM_Get_Res_Des_Data_Size

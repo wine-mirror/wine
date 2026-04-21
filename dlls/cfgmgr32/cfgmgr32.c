@@ -1786,6 +1786,39 @@ CONFIGRET WINAPI CM_Locate_DevNodeA( DEVINST *node, DEVINSTID_A instance_id, ULO
 }
 
 /***********************************************************************
+ *           CM_Get_Parent (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Parent( DEVINST *parent, DEVINST node, ULONG flags )
+{
+    return CM_Get_Parent_Ex( parent, node, flags, NULL );
+}
+
+/***********************************************************************
+ *           CM_Get_Parent_Ex (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Get_Parent_Ex( DEVINST *parent, DEVINST node, ULONG flags, HMACHINE machine )
+{
+    WCHAR parent_id[MAX_DEVICE_ID_LEN];
+    DEVPROPTYPE type;
+    struct device dev;
+    struct property prop;
+    DWORD size = sizeof(parent_id);
+
+    TRACE( "parent %p, node %#lx, flags %#lx, machine %p\n", parent, node, flags, machine );
+    if (machine) FIXME( "machine %p not implemented!\n", machine );
+
+    if (!parent) return CR_INVALID_POINTER;
+    *parent = 0;
+
+    if (devnode_get_device( node, &dev )) return CR_INVALID_DEVNODE;
+
+    init_property( &prop, &DEVPKEY_Device_Parent, &type, (BYTE *)parent_id, &size, TRUE );
+    if (get_device_property( HKEY_LOCAL_MACHINE, &dev, &prop )) return CR_NO_SUCH_DEVNODE;
+
+    return CM_Locate_DevNodeW( parent, parent_id, 0 );
+}
+
+/***********************************************************************
  *           CM_Get_Device_ID_Size_Ex (cfgmgr32.@)
  */
 CONFIGRET WINAPI CM_Get_Device_ID_Size_Ex( ULONG *len, DEVINST node, ULONG flags, HMACHINE machine )
@@ -2051,16 +2084,6 @@ CONFIGRET WINAPI CM_Get_Child_Ex( DEVINST *child, DEVINST node, ULONG flags, HMA
 CONFIGRET WINAPI CM_Get_Child( DEVINST *child, DEVINST node, ULONG flags )
 {
     return CM_Get_Child_Ex( child, node, flags, NULL );
-}
-
-/***********************************************************************
- *              CM_Get_Parent (cfgmgr32.@)
- */
-DWORD WINAPI CM_Get_Parent( DEVINST *parent, DEVINST child, ULONG flags )
-{
-    FIXME( "parent %p, child %#lx, flags %#lx stub!\n", parent, child, flags );
-    if (parent) *parent = 0;
-    return CR_NO_SUCH_DEVNODE;
 }
 
 /***********************************************************************
