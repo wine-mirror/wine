@@ -565,21 +565,31 @@ static struct clock_timer *presentation_clock_next_timer(struct presentation_clo
 static void CALLBACK presentation_clock_timer_callback(IUnknown *context)
 {
     struct presentation_clock *clock = impl_from_IMFPresentationClock((IMFPresentationClock*)context);
+    IMFPresentationTimeSource *time_source;
     struct clock_timer *timer;
     LONGLONG time, systime;
 
     EnterCriticalSection(&clock->cs);
-    if (clock->time_source &&
-            SUCCEEDED(IMFPresentationTimeSource_GetCorrelatedTime(clock->time_source, 0, &time, &systime)))
+    if ((time_source = clock->time_source))
+        IMFPresentationTimeSource_AddRef(time_source);
+    LeaveCriticalSection(&clock->cs);
+
+    /* We don't hold the critical section during a call to GetCorrelatedTime as it can result in a deadlock. */
+    if (time_source &&
+            SUCCEEDED(IMFPresentationTimeSource_GetCorrelatedTime(time_source, 0, &time, &systime)))
     {
+        EnterCriticalSection(&clock->cs);
         while ( (timer = presentation_clock_next_timer(clock, time)) )
         {
             list_remove(&timer->entry);
             MFInvokeCallback(timer->result);
             IUnknown_Release(&timer->IUnknown_iface);
         }
+        LeaveCriticalSection(&clock->cs);
     }
-    LeaveCriticalSection(&clock->cs);
+
+    if (time_source)
+        IMFPresentationTimeSource_Release(time_source);
 }
 
 static HRESULT clock_change_state(struct presentation_clock *clock, enum clock_command command,
