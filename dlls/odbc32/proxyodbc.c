@@ -4178,15 +4178,21 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
         return SQL_SUCCESS;
     }
 
+    if (!env)
+        return SQL_INVALID_HANDLE;
+
     switch (Attribute)
     {
     case SQL_ATTR_ODBC_VERSION:
         if (!list_empty( &env->hdr.children ))
         {
             FIXME( "report S1010 error\n" );
-            return SQL_ERROR;
+            ret = SQL_ERROR;
         }
-        env->attr_version = (UINT32)(ULONG_PTR)Value;
+        else
+        {
+            env->attr_version = (UINT32)(ULONG_PTR)Value;
+        }
         break;
 
     case SQL_ATTR_CONNECTION_POOLING:
