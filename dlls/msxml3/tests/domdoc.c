@@ -12133,7 +12133,8 @@ static void test_dispex(void)
         hr = IXMLDOMDocument_createNode(doc, v, _bstr_("name"), NULL, &node);
         ok(hr == S_OK, "failed to create node type %d\n", *type);
 
-        IXMLDOMNode_QueryInterface(node, &IID_IUnknown, (void**)&unk);
+        hr = IXMLDOMNode_QueryInterface(node, &IID_IUnknown, (void**)&unk);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         test_domobj_dispex(unk);
         IUnknown_Release(unk);
@@ -13400,7 +13401,8 @@ static void test_newline_normalization(void)
         hr = IXMLDOMDocument_createNode(doc, v, _bstr_("name"), NULL, &node);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-        IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+        hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMText, (void**)&text);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         /* \r\n is normalized to \n and back to \r\n */
 
