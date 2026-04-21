@@ -3480,99 +3480,211 @@ static HRESULT Global_ScriptEngineBuildVersion(BuiltinDisp *This, VARIANT *arg, 
     return return_int(res, VBSCRIPT_BUILD_VERSION);
 }
 
-static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+#define LOCNUM_INTO(lcid, type, field) GetLocaleInfoW((lcid), (type)|LOCALE_RETURN_NUMBER, \
+        (LPWSTR)&(field), sizeof(field)/sizeof(WCHAR))
+
+/* LCID_US gives the intermediate double-to-BSTR conversion a stable canonical
+ * form (period decimal, no grouping) that GetNumberFormatW / GetCurrencyFormatW
+ * will then reformat using the target locale. */
+#define LCID_EN_US MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT)
+
+static HRESULT format_number_lcid(LCID lcid, VARIANT *var, int ndigits, int nleading,
+        int nparens, int ngrouping, BSTR *out)
 {
-    union
-    {
-        struct
-        {
-            int num_dig, inc_lead, use_parens, group;
-        } s;
-        int val[4];
-    } int_args = { .s.num_dig = -1, .s.inc_lead = -2, .s.use_parens = -2, .s.group = -2 };
+    WCHAR buff[256], decimal[8], thousands[8];
+    NUMBERFMTW fmt;
+    VARIANT v;
     HRESULT hres;
-    BSTR str;
-    int i;
 
-    TRACE("\n");
+    *out = NULL;
+    V_VT(&v) = VT_EMPTY;
+    hres = VariantCopyInd(&v, var);
+    if(FAILED(hres)) return hres;
+    hres = VariantChangeTypeEx(&v, &v, LCID_EN_US, 0, VT_BSTR);
+    if(FAILED(hres)) return hres;
 
-    assert(1 <= args_cnt && args_cnt <= 5);
+    if(ndigits < 0)
+        LOCNUM_INTO(lcid, LOCALE_IDIGITS, fmt.NumDigits);
+    else
+        fmt.NumDigits = ndigits;
 
-    for (i = 1; i < args_cnt; ++i)
-    {
-        if (V_VT(args+i) == VT_ERROR) continue;
-        if (V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        if (FAILED(hres = to_int(args+i, &int_args.val[i-1]))) return hres;
+    if(nleading == -2)
+        LOCNUM_INTO(lcid, LOCALE_ILZERO, fmt.LeadingZero);
+    else
+        fmt.LeadingZero = nleading == -1 ? 1 : 0;
+
+    if(ngrouping == -2) {
+        WCHAR grouping[10] = {0};
+        GetLocaleInfoW(lcid, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping));
+        fmt.Grouping = grouping[2] == '2' ? 32 : grouping[0] - '0';
+    }else {
+        fmt.Grouping = ngrouping == -1 ? 3 : 0;
     }
 
-    hres = VarFormatNumber(args, int_args.s.num_dig, int_args.s.inc_lead, int_args.s.use_parens,
-        int_args.s.group, 0, &str);
-    if (FAILED(hres)) return hres;
+    if(nparens == -2)
+        LOCNUM_INTO(lcid, LOCALE_INEGNUMBER, fmt.NegativeOrder);
+    else
+        fmt.NegativeOrder = nparens == -1 ? 0 : 1;
 
+    fmt.lpDecimalSep = decimal;
+    GetLocaleInfoW(lcid, LOCALE_SDECIMAL, decimal, ARRAY_SIZE(decimal));
+    fmt.lpThousandSep = thousands;
+    GetLocaleInfoW(lcid, LOCALE_STHOUSAND, thousands, ARRAY_SIZE(thousands));
+
+    if(!GetNumberFormatW(lcid, 0, V_BSTR(&v), &fmt, buff, ARRAY_SIZE(buff))) {
+        SysFreeString(V_BSTR(&v));
+        return DISP_E_TYPEMISMATCH;
+    }
+    SysFreeString(V_BSTR(&v));
+
+    *out = SysAllocString(buff);
+    return *out ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT format_currency_lcid(LCID lcid, VARIANT *var, int ndigits, int nleading,
+        int nparens, int ngrouping, BSTR *out)
+{
+    WCHAR buff[256], decimal[8], thousands[4], currency[13];
+    CURRENCYFMTW fmt;
+    VARIANT v;
+    HRESULT hres;
+    CY cy;
+
+    *out = NULL;
+    if(V_VT(var) == VT_BSTR || V_VT(var) == (VT_BSTR|VT_BYREF)) {
+        hres = VarCyFromStr(V_ISBYREF(var) ? *V_BSTRREF(var) : V_BSTR(var), lcid, 0, &cy);
+        if(FAILED(hres)) return hres;
+        V_VT(&v) = VT_CY;
+        V_CY(&v) = cy;
+    }else {
+        V_VT(&v) = VT_EMPTY;
+        hres = VariantCopyInd(&v, var);
+        if(FAILED(hres)) return hres;
+    }
+    hres = VariantChangeTypeEx(&v, &v, lcid, 0, VT_BSTR);
+    if(FAILED(hres)) return hres;
+
+    if(ndigits < 0)
+        LOCNUM_INTO(lcid, LOCALE_IDIGITS, fmt.NumDigits);
+    else
+        fmt.NumDigits = ndigits;
+
+    if(nleading == -2)
+        LOCNUM_INTO(lcid, LOCALE_ILZERO, fmt.LeadingZero);
+    else
+        fmt.LeadingZero = nleading == -1 ? 1 : 0;
+
+    if(ngrouping == -2) {
+        WCHAR grouping[10] = {0};
+        GetLocaleInfoW(lcid, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping));
+        fmt.Grouping = grouping[2] == '2' ? 32 : grouping[0] - '0';
+    }else {
+        fmt.Grouping = ngrouping == -1 ? 3 : 0;
+    }
+
+    if(nparens == -2)
+        LOCNUM_INTO(lcid, LOCALE_INEGCURR, fmt.NegativeOrder);
+    else
+        fmt.NegativeOrder = nparens == -1 ? 0 : 1;
+
+    LOCNUM_INTO(lcid, LOCALE_ICURRENCY, fmt.PositiveOrder);
+    fmt.lpDecimalSep = decimal;
+    GetLocaleInfoW(lcid, LOCALE_SDECIMAL, decimal, ARRAY_SIZE(decimal));
+    fmt.lpThousandSep = thousands;
+    GetLocaleInfoW(lcid, LOCALE_STHOUSAND, thousands, ARRAY_SIZE(thousands));
+    fmt.lpCurrencySymbol = currency;
+    GetLocaleInfoW(lcid, LOCALE_SCURRENCY, currency, ARRAY_SIZE(currency));
+
+    if(!GetCurrencyFormatW(lcid, 0, V_BSTR(&v), &fmt, buff, ARRAY_SIZE(buff))) {
+        SysFreeString(V_BSTR(&v));
+        return DISP_E_TYPEMISMATCH;
+    }
+    SysFreeString(V_BSTR(&v));
+
+    *out = SysAllocString(buff);
+    return *out ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT parse_format_args(VARIANT *args, unsigned args_cnt, int *vals)
+{
+    HRESULT hres;
+    unsigned i;
+    for(i = 1; i < args_cnt; ++i) {
+        if(V_VT(args+i) == VT_ERROR) continue;
+        if(V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        hres = to_int(args+i, &vals[i-1]);
+        if(FAILED(hres)) return hres;
+    }
+    return S_OK;
+}
+
+static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+{
+    int a[4] = {-1, -2, -2, -2};
+    HRESULT hres;
+    BSTR str;
+
+    TRACE("\n");
+    assert(1 <= args_cnt && args_cnt <= 5);
+
+    hres = parse_format_args(args, args_cnt, a);
+    if(FAILED(hres)) return hres;
+    hres = format_number_lcid(This->ctx->lcid, args, a[0], a[1], a[2], a[3], &str);
+    if(FAILED(hres)) return hres;
     return return_bstr(res, str);
 }
 
 static HRESULT Global_FormatCurrency(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    union
-    {
-        struct
-        {
-            int num_dig, inc_lead, use_parens, group;
-        } s;
-        int val[4];
-    } int_args = { .s.num_dig = -1, .s.inc_lead = -2, .s.use_parens = -2, .s.group = -2 };
+    int a[4] = {-1, -2, -2, -2};
     HRESULT hres;
     BSTR str;
-    int i;
 
     TRACE("\n");
-
     assert(1 <= args_cnt && args_cnt <= 5);
 
-    for (i = 1; i < args_cnt; ++i)
-    {
-        if (V_VT(args+i) == VT_ERROR) continue;
-        if (V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        if (FAILED(hres = to_int(args+i, &int_args.val[i-1]))) return hres;
-    }
-
-    hres = VarFormatCurrency(args, int_args.s.num_dig, int_args.s.inc_lead, int_args.s.use_parens,
-        int_args.s.group, 0, &str);
-    if (FAILED(hres)) return hres;
-
+    hres = parse_format_args(args, args_cnt, a);
+    if(FAILED(hres)) return hres;
+    hres = format_currency_lcid(This->ctx->lcid, args, a[0], a[1], a[2], a[3], &str);
+    if(FAILED(hres)) return hres;
     return return_bstr(res, str);
 }
 
 static HRESULT Global_FormatPercent(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    union
-    {
-        struct
-        {
-            int num_dig, inc_lead, use_parens, group;
-        } s;
-        int val[4];
-    } int_args = { .s.num_dig = -1, .s.inc_lead = -2, .s.use_parens = -2, .s.group = -2 };
+    int a[4] = {-1, -2, -2, -2};
+    WCHAR buff[258];
+    DWORD len;
+    VARIANT v;
     HRESULT hres;
     BSTR str;
-    int i;
 
     TRACE("\n");
-
     assert(1 <= args_cnt && args_cnt <= 5);
 
-    for (i = 1; i < args_cnt; ++i)
-    {
-        if (V_VT(args+i) == VT_ERROR) continue;
-        if (V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        if (FAILED(hres = to_int(args+i, &int_args.val[i-1]))) return hres;
+    hres = parse_format_args(args, args_cnt, a);
+    if(FAILED(hres)) return hres;
+
+    V_VT(&v) = VT_R8;
+    hres = to_double(args, &V_R8(&v));
+    if(FAILED(hres)) return hres;
+    if(V_R8(&v) > (1e300 / 100.0)) return DISP_E_OVERFLOW;
+    V_R8(&v) *= 100.0;
+
+    hres = format_number_lcid(This->ctx->lcid, &v, a[0], a[1], a[2], a[3], &str);
+    if(FAILED(hres)) return hres;
+
+    len = lstrlenW(str);
+    if(len && str[len-1] == ')') {
+        memcpy(buff, str, (len-1) * sizeof(WCHAR));
+        lstrcpyW(buff + len - 1, L"%)");
+    }else {
+        memcpy(buff, str, len * sizeof(WCHAR));
+        lstrcpyW(buff + len, L"%");
     }
-
-    hres = VarFormatPercent(args, int_args.s.num_dig, int_args.s.inc_lead, int_args.s.use_parens,
-        int_args.s.group, 0, &str);
-    if (FAILED(hres)) return hres;
-
+    SysFreeString(str);
+    str = SysAllocString(buff);
+    if(!str) return E_OUTOFMEMORY;
     return return_bstr(res, str);
 }
 
@@ -3585,6 +3697,10 @@ static HRESULT Global_GetLocale(BuiltinDisp *This, VARIANT *args, unsigned args_
 static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int format = 0;
+    LCID lcid = This->ctx->lcid;
+    WCHAR buff[256];
+    VARIANT v;
+    SYSTEMTIME st;
     HRESULT hres;
     BSTR str;
 
@@ -3592,21 +3708,55 @@ static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned 
 
     assert(1 <= args_cnt && args_cnt <= 2);
 
-    if (V_VT(args) == VT_NULL)
+    if(V_VT(args) == VT_NULL)
         return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
 
-    if (args_cnt == 2)
-    {
-        if (V_VT(args+1) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
-        if (V_VT(args+1) != VT_ERROR)
-        {
-            if (FAILED(hres = to_int(args+1, &format))) return hres;
-        }
+    if(args_cnt == 2 && V_VT(args+1) != VT_ERROR) {
+        if(V_VT(args+1) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        hres = to_int(args+1, &format);
+        if(FAILED(hres)) return hres;
     }
 
-    hres = VarFormatDateTime(args, format, 0, &str);
-    if (FAILED(hres)) return hres;
+    /* vbGeneralDate (0) falls back to oleaut32 — the "show date if date, time if
+     * time, both otherwise" logic depends on the tokenizer; ctx->lcid does not
+     * yet propagate. */
+    if(format == 0) {
+        hres = VarFormatDateTime(args, format, 0, &str);
+        if(FAILED(hres)) return hres;
+        return return_bstr(res, str);
+    }
 
+    V_VT(&v) = VT_EMPTY;
+    hres = VariantCopyInd(&v, args);
+    if(FAILED(hres)) return hres;
+    hres = VariantChangeTypeEx(&v, &v, lcid, 0, VT_DATE);
+    if(FAILED(hres)) return hres;
+    if(!VariantTimeToSystemTime(V_DATE(&v), &st))
+        return E_INVALIDARG;
+
+    switch(format) {
+    case 1: /* vbLongDate */
+        if(!GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, buff, ARRAY_SIZE(buff)))
+            return E_FAIL;
+        break;
+    case 2: /* vbShortDate */
+        if(!GetDateFormatW(lcid, DATE_SHORTDATE, &st, NULL, buff, ARRAY_SIZE(buff)))
+            return E_FAIL;
+        break;
+    case 3: /* vbLongTime */
+        if(!GetTimeFormatW(lcid, 0, &st, NULL, buff, ARRAY_SIZE(buff)))
+            return E_FAIL;
+        break;
+    case 4: /* vbShortTime */
+        if(!GetTimeFormatW(lcid, TIME_NOSECONDS|TIME_FORCE24HOURFORMAT, &st, NULL, buff, ARRAY_SIZE(buff)))
+            return E_FAIL;
+        break;
+    default:
+        return E_INVALIDARG;
+    }
+
+    str = SysAllocString(buff);
+    if(!str) return E_OUTOFMEMORY;
     return return_bstr(res, str);
 }
 

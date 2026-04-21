@@ -3815,4 +3815,41 @@ Call ok(Err.Number = 506, "New non-class variable: err.number = " & Err.Number)
 
 On Error GoTo 0
 
+' === GetLocale / SetLocale / locale-sensitive Format* ===
+Dim origLcid
+origLcid = GetLocale()
+Call ok(origLcid > 0, "GetLocale initial: " & origLcid)
+
+' SetLocale returns the previous LCID.
+Call ok(SetLocale(1033) = origLcid, "SetLocale(1033) return value")
+Call ok(GetLocale() = 1033, "GetLocale after SetLocale(1033): " & GetLocale())
+
+' en-US formatting
+Call ok(FormatNumber(1234567.89) = "1,234,567.89", "FormatNumber en-US: " & FormatNumber(1234567.89))
+Call ok(FormatCurrency(1234567.89) = "$1,234,567.89", "FormatCurrency en-US: " & FormatCurrency(1234567.89))
+Call ok(FormatPercent(0.1234) = "12.34%", "FormatPercent en-US: " & FormatPercent(0.1234))
+Call ok(FormatDateTime(DateSerial(2026,3,15), 1) = "Sunday, March 15, 2026", _
+    "FormatDateTime en-US: " & FormatDateTime(DateSerial(2026,3,15), 1))
+
+' de-DE: '.' thousands, ',' decimal
+Call SetLocale(1031)
+Call ok(GetLocale() = 1031, "GetLocale after SetLocale(1031)")
+Call ok(FormatNumber(1234567.89) = "1.234.567,89", "FormatNumber de-DE: " & FormatNumber(1234567.89))
+Call ok(FormatPercent(0.1234) = "12,34%", "FormatPercent de-DE: " & FormatPercent(0.1234))
+
+' ja-JP: Anglo number formatting
+Call SetLocale(1041)
+Call ok(GetLocale() = 1041, "GetLocale after SetLocale(1041)")
+Call ok(FormatNumber(1234567.89) = "1,234,567.89", "FormatNumber ja-JP: " & FormatNumber(1234567.89))
+Call ok(FormatPercent(0.1234) = "12.34%", "FormatPercent ja-JP: " & FormatPercent(0.1234))
+
+' CStr goes through VariantChangeType with LCID=0 (LOCALE_USER_DEFAULT).
+' Plumbing ctx->lcid into that path is follow-up work.
+Call SetLocale(1031)
+Call todo_wine_ok(CStr(1.5) = "1,5", "CStr(1.5) de-DE: " & CStr(1.5))
+
+' Restore original locale.
+Call SetLocale(origLcid)
+Call ok(GetLocale() = origLcid, "restore: GetLocale = " & GetLocale())
+
 reportSuccess()

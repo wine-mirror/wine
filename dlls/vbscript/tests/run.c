@@ -3871,6 +3871,15 @@ static void test_setlocale_reset_uses_host_lcid(void)
     site_lcid_override = 0;
 }
 
+static void test_setlocale_does_not_touch_thread_locale(void)
+{
+    LCID thread_lcid_before = GetThreadLocale();
+    parse_script_w(L"SetLocale 1036\n");
+    ok(GetThreadLocale() == thread_lcid_before,
+       "SetLocale leaked to thread locale: before=%#lx after=%#lx\n",
+       thread_lcid_before, GetThreadLocale());
+}
+
 static void run_tests(void)
 {
     HRESULT hres;
@@ -3878,6 +3887,7 @@ static void run_tests(void)
     strict_dispid_check = TRUE;
 
     test_setlocale_reset_uses_host_lcid();
+    test_setlocale_does_not_touch_thread_locale();
 
     parse_script_w(L"");
     parse_script_w(L"' empty ;");
