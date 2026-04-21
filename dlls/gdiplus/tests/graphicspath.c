@@ -1503,15 +1503,15 @@ static void test_warp_path(void)
 
     /* NULL path */
     status = GdipWarpPath(NULL, NULL, dest_points, count, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
-    todo_wine expect(InvalidParameter, status);
+    expect(InvalidParameter, status);
 
     /* NULL destination points */
     status = GdipWarpPath(path, NULL, NULL, count, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
-    todo_wine expect(InvalidParameter, status);
+    expect(InvalidParameter, status);
 
     /* Zero number of point in destination points */
     status = GdipWarpPath(path, NULL, dest_points, 0, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
-    todo_wine expect(InvalidParameter, status);
+    expect(InvalidParameter, status);
 
     /* Valid warp with one destination point */
     status = GdipWarpPath(path, NULL, dest_points, 1, 0.0, 0.0, 128.0, 128.0, WarpModePerspective, FlatnessDefault);
