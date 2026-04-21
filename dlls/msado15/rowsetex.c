@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 struct rowsetex
 {
     IRowsetExactScroll IRowsetExactScroll_iface;
+    IAccessor IAccessor_iface;
     LONG refs;
 
     IRowset *rowset;
@@ -46,6 +47,11 @@ struct rowsetex
 static inline struct rowsetex *impl_from_IRowsetExactScroll(IRowsetExactScroll *iface)
 {
     return CONTAINING_RECORD(iface, struct rowsetex, IRowsetExactScroll_iface);
+}
+
+static inline struct rowsetex *impl_from_IAccessor(IAccessor *iface)
+{
+    return CONTAINING_RECORD(iface, struct rowsetex, IAccessor_iface);
 }
 
 static HRESULT WINAPI rowsetex_QueryInterface(IRowsetExactScroll *iface, REFIID riid, void **obj)
@@ -66,6 +72,16 @@ static HRESULT WINAPI rowsetex_QueryInterface(IRowsetExactScroll *iface, REFIID 
     {
         if (!rowset->rowset_loc) return E_NOINTERFACE;
         *obj = &rowset->IRowsetExactScroll_iface;
+    }
+    else if (IsEqualGUID(&IID_IAccessor, riid))
+    {
+        if (!rowset->accessor)
+        {
+            HRESULT hr = IRowset_QueryInterface(rowset->rowset,
+                    &IID_IAccessor, (void**)&rowset->accessor);
+            if (FAILED(hr)) return hr;
+        }
+        *obj = &rowset->IAccessor_iface;
     }
     else if (IsEqualGUID(&IID_IColumnsInfo, riid) ||
             IsEqualGUID(&IID_IRowsetIndex, riid) ||
@@ -365,6 +381,73 @@ static const struct IRowsetExactScrollVtbl rowsetex_vtbl =
     rowsetex_GetExactPosition
 };
 
+static HRESULT WINAPI accessor_QueryInterface(IAccessor *iface, REFIID riid, void **obj)
+{
+    struct rowsetex *rowset = impl_from_IAccessor(iface);
+    return IRowsetExactScroll_QueryInterface(&rowset->IRowsetExactScroll_iface, riid, obj);
+}
+
+static ULONG WINAPI accessor_AddRef(IAccessor *iface)
+{
+    struct rowsetex *rowset = impl_from_IAccessor(iface);
+    return IRowsetExactScroll_AddRef(&rowset->IRowsetExactScroll_iface);
+}
+
+static ULONG WINAPI accessor_Release(IAccessor *iface)
+{
+    struct rowsetex *rowset = impl_from_IAccessor(iface);
+    return IRowsetExactScroll_Release(&rowset->IRowsetExactScroll_iface);
+}
+
+static HRESULT WINAPI accessor_AddRefAccessor(IAccessor *iface, HACCESSOR hacc, DBREFCOUNT *refs)
+{
+    struct rowsetex *rowset = impl_from_IAccessor(iface);
+
+    TRACE("%p, %Id, %p\n", rowset, hacc, refs);
+    return IAccessor_AddRefAccessor(rowset->accessor, hacc, refs);
+}
+
+static HRESULT WINAPI accessor_CreateAccessor(IAccessor *iface, DBACCESSORFLAGS flags,
+        DBCOUNTITEM bindings_no, const DBBINDING bindings[], DBLENGTH row_size,
+        HACCESSOR *hacc, DBBINDSTATUS status[])
+{
+    struct rowsetex *rowset = impl_from_IAccessor(iface);
+
+    /* FIXME: native modifies bindings and wraps returned accessor */
+    TRACE("%p, %ld, %Id, %p, %Id, %p, %p\n", rowset, flags, bindings_no,
+            bindings, row_size, hacc, status);
+    return IAccessor_CreateAccessor(rowset->accessor, flags,
+            bindings_no, bindings, row_size, hacc, status);
+}
+
+static HRESULT WINAPI accessor_GetBindings(IAccessor *iface, HACCESSOR hacc,
+        DBACCESSORFLAGS *flags, DBCOUNTITEM *bindings_no, DBBINDING **bindings)
+{
+    struct rowsetex *rowset = impl_from_IAccessor(iface);
+
+    TRACE("%p, %Id, %p, %p, %p\n", rowset, hacc, flags, bindings_no, bindings);
+    return IAccessor_GetBindings(rowset->accessor, hacc, flags, bindings_no, bindings);
+}
+
+static HRESULT WINAPI accessor_ReleaseAccessor(IAccessor *iface, HACCESSOR hacc, DBREFCOUNT *refs)
+{
+    struct rowsetex *rowset = impl_from_IAccessor(iface);
+
+    TRACE("%p, %Id, %p\n", rowset, hacc, refs);
+    return IAccessor_ReleaseAccessor(rowset->accessor, hacc, refs);
+}
+
+static const struct IAccessorVtbl accessor_vtbl =
+{
+    accessor_QueryInterface,
+    accessor_AddRef,
+    accessor_Release,
+    accessor_AddRefAccessor,
+    accessor_CreateAccessor,
+    accessor_GetBindings,
+    accessor_ReleaseAccessor
+};
+
 HRESULT create_rowsetex(IUnknown *rowset, IUnknown **ret)
 {
     struct rowsetex *rowsetex;
@@ -374,6 +457,7 @@ HRESULT create_rowsetex(IUnknown *rowset, IUnknown **ret)
     if (!rowsetex) return E_OUTOFMEMORY;
 
     rowsetex->IRowsetExactScroll_iface.lpVtbl = &rowsetex_vtbl;
+    rowsetex->IAccessor_iface.lpVtbl = &accessor_vtbl;
     rowsetex->refs = 1;
 
     hr = IUnknown_QueryInterface(rowset, &IID_IRowset, (void **)&rowsetex->rowset);
