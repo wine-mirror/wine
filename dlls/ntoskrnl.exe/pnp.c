@@ -379,12 +379,13 @@ static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *
     create_dyn_data_key( device );
 }
 
-static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
+static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set, DEVICE_OBJECT *parent_device )
 {
     static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
 
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    WCHAR parent_id[MAX_DEVICE_ID_LEN];
     DEVICE_CAPABILITIES caps;
     BOOL need_driver = TRUE;
     NTSTATUS status;
@@ -433,6 +434,10 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
             WARN("Failed to set bus reported device desc property.\n");
         ExFreePool( id );
     }
+
+    if (!get_device_instance_id( parent_device, parent_id ))
+        SetupDiSetDevicePropertyW( set, &sp_device, &DEVPKEY_Device_Parent, DEVPROP_TYPE_STRING,
+                (BYTE *)parent_id, (wcslen( parent_id ) + 1) * sizeof(WCHAR), 0 );
 
     if (need_driver && !install_device_driver( device, set, &sp_device ) && !caps.RawDeviceOK)
     {
@@ -535,7 +540,7 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
         if (!wine_parent->children || !device_in_list( wine_parent->children, child ))
         {
             TRACE("Adding new device %p.\n", child);
-            enumerate_new_device( child, set );
+            enumerate_new_device( child, set, parent );
         }
     }
 
