@@ -2012,6 +2012,163 @@ static void test_sharelists(HDC winhdc)
 
         winetest_pop_context();
     }
+
+    /* GLsync are pointers, test them separately */
+    if (ext.glIsSync)
+    {
+        GLsync obj1, obj2, obj3;
+        BOOL ret;
+
+        winetest_push_context( "sync" );
+
+        ctx1 = wglCreateContext( winhdc );
+        ok_ptr( ctx1, !=, NULL );
+        ctx2 = wglCreateContext( winhdc );
+        ok_ptr( ctx2, !=, NULL );
+        ctx3 = wglCreateContext( winhdc );
+        ok_ptr( ctx3, !=, NULL );
+
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* create object 1 in ctx1 (lists #1) */
+        ok_ret( FALSE, ext.glIsSync( (GLsync)1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        obj1 = ext.glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ptr( obj1, ==, (GLsync)1 );
+        ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* share ctx1 (lists #1) with ctx2 */
+        ok_ret( TRUE, wglShareLists( ctx1, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* object 1 is still valid in ctx1 */
+        ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* object 1 is now valid in ctx2 */
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* object 1 is not valid in ctx3 */
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ret = ext.glIsSync( obj1 );
+        ok( !ret || broken(nvidia), "glIsSync returned %d\n", ret );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* share ctx1 (lists #1) with ctx3 */
+        ok_ret( TRUE, wglShareLists( ctx1, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* object 1 is now valid there as well */
+        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* object 1 is still valid in ctx2 */
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        ok_ret( TRUE, wglDeleteContext( ctx1 ) );
+
+        /* now try the other way around */
+        ctx1 = wglCreateContext( winhdc );
+        ok_ptr( ctx1, !=, NULL );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* create object 2 in ctx1 (lists #2) */
+        ok_ret( FALSE, ext.glIsSync( (GLsync)2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        obj2 = ext.glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        if (obj2 != (GLsync)2)
+        {
+            GLsync tmp = obj2;
+            obj2 = ext.glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+            ext.glDeleteSync( tmp );
+        }
+        todo_wine ok_ptr( obj2, ==, (GLsync)2 );
+        ok_ret( TRUE, ext.glIsSync( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        /* object 1 in invalid in ctx1 */
+        ret = ext.glIsSync( obj1 );
+        ok( !ret || broken(nvidia), "glIsSync returned %d\n", ret );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* cannot overwrite non-empty lists with some other */
+        todo_wine ok_ret( FALSE, wglShareLists( ctx1, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ret = wglShareLists( ctx2, ctx1 );
+        ok( !ret || broken(nvidia), "wglShareLists returned %d\n", ret );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* even after deleting all the objects */
+        ext.glDeleteSync( obj2 );
+        ok_ret( FALSE, ext.glIsSync( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ret = wglShareLists( ctx2, ctx1 );
+        ok( !ret || broken(nvidia), "wglShareLists returned %d\n", ret );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, ext.glIsSync( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, ext.glIsSync( (GLsync)3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* test creating objects in shared contexts */
+        obj3 = ext.glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        if (obj3 != (GLsync)3)
+        {
+            GLsync tmp = obj3;
+            obj3 = ext.glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+            ext.glDeleteSync( tmp );
+        }
+        todo_wine ok_ptr( obj3, ==, (GLsync)3 );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( TRUE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, ext.glIsSync( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( TRUE, ext.glIsSync( obj3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        /* test deleting objects in shared contexts */
+        ext.glDeleteSync( obj1 );
+        todo_wine ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, wglMakeCurrent( winhdc, ctx2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( FALSE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( FALSE, ext.glIsSync( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, ext.glIsSync( obj3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+
+        ok_ret( TRUE, wglDeleteContext( ctx1 ) );
+        ok_ret( TRUE, wglDeleteContext( ctx3 ) );
+
+        /* objects are still valid after shared context destruction */
+        ok_ret( FALSE, ext.glIsSync( obj1 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        todo_wine ok_ret( FALSE, ext.glIsSync( obj2 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, ext.glIsSync( obj3 ) );
+        ok_ret( GL_NO_ERROR, glGetError() );
+        ok_ret( TRUE, wglDeleteContext( ctx2 ) );
+
+        winetest_pop_context();
+    }
 }
 
 static void test_makecurrent(HDC winhdc)
