@@ -15480,7 +15480,8 @@ static void test_pi(void)
 
         hr = IXMLDOMProcessingInstruction_get_nodeValue(pi, &v);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr );
-        ok(!lstrcmpW(str, L"A \nCo\nmment\n  & < \""), "Unexpected text %s.\n", debugstr_w(str));
+        ok(V_VT(&v) == VT_BSTR, "Unexpected type %d.\n", V_VT(&v));
+        ok(!lstrcmpW(V_BSTR(&v), L"A \nCo\nmment\n  & < \""), "Unexpected value %s.\n", debugstr_w(V_BSTR(&v)));
         VariantClear(&v);
 
         hr = IXMLDOMProcessingInstruction_put_nodeValue(pi, _variantbstr_("comment ?> a"));
@@ -16987,7 +16988,6 @@ static void test_document_reload(void)
     ok(!wcscmp(str, L"<b>text</b>"), "Unexpected xml %s.\n", debugstr_w(str));
     SysFreeString(str);
     IXMLDOMElement_Release(element2);
-    SysFreeString(str);
 
     hr = IXMLDOMElement_get_xml(element, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
