@@ -1284,10 +1284,10 @@ static void test_source_resolver(void)
     }
     leading_char_tests[] =
     {
-        {L"/",            ERROR_SUCCESS, TRUE},
-        {L"//",           ERROR_SUCCESS, TRUE},
-        {L"///",          ERROR_SUCCESS, TRUE},
-        {L"/////",        ERROR_SUCCESS, TRUE},
+        {L"/",            ERROR_SUCCESS},
+        {L"//",           ERROR_SUCCESS},
+        {L"///",          ERROR_SUCCESS},
+        {L"/////",        ERROR_SUCCESS},
         {L":",            ERROR_INVALID_NAME, TRUE},
         {L"::",           ERROR_PATH_NOT_FOUND},
         {L":::::",        ERROR_PATH_NOT_FOUND},

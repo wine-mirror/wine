@@ -6421,13 +6421,20 @@ static HRESULT resolver_create_scheme_handler(const WCHAR *scheme, DWORD flags, 
     return hr;
 }
 
-static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
+/* Also in kernelbase */
+static BOOL is_escaped_drive_spec(const WCHAR *str)
 {
-    static const WCHAR fileschemeW[] = L"file:";
+    return isalpha(str[0]) && (str[1] == ':' || str[1] == '|');
+}
+
+static BOOL resolver_find_scheme(const WCHAR *url, unsigned int *len)
+{
     const WCHAR *ptr = url;
-    unsigned int len;
-    WCHAR *scheme;
-    HRESULT hr;
+
+    *len = 0;
+
+    if (is_escaped_drive_spec(url))
+        return FALSE;
 
     /* RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
     while (*ptr)
@@ -6449,14 +6456,22 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
         ptr++;
     }
 
-    /* Schemes must end with a ':', if not found try "file:" */
+    /* Schemes must end with a ':' */
     if (ptr == url || *ptr != ':')
-    {
-        url = fileschemeW;
-        len = ARRAY_SIZE(fileschemeW) - 1;
-    }
-    else
-        len = ptr - url + 1;
+        return FALSE;
+
+    *len = ptr - url + 1;
+    return TRUE;
+}
+
+static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
+{
+    unsigned int len;
+    WCHAR *scheme;
+    HRESULT hr;
+
+    if (!resolver_find_scheme(url, &len))
+        return MF_E_UNSUPPORTED_SCHEME;
 
     scheme = malloc((len + 1) * sizeof(WCHAR));
     if (!scheme)
@@ -6466,8 +6481,6 @@ static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSch
     scheme[len] = 0;
 
     hr = resolver_create_scheme_handler(scheme, flags, handler);
-    if (FAILED(hr) && url != fileschemeW)
-        hr = resolver_create_scheme_handler(fileschemeW, flags, handler);
 
     free(scheme);
 
@@ -6571,10 +6584,49 @@ static ULONG WINAPI source_resolver_Release(IMFSourceResolver *iface)
     return refcount;
 }
 
+static WCHAR *resolver_normalise_url(const WCHAR *url)
+{
+    static const WCHAR filescheme[] = L"file:", filescheme_dblslash[] = L"file://";
+    unsigned int len = 0, slash_count;
+    WCHAR *normalised_url;
+    const WCHAR *scheme;
+
+    if (resolver_find_scheme(url, &len))
+        return wcsdup(url);
+
+    /* If not found try "file:"
+     * Native allows leading slashes in file paths. If "file:" is missing, native prepends
+     * it before calling BeginCreateObject(), and includes two or three slashes if any were
+     * present. The rules don't seem to follow much of a pattern, and may have been designed
+     * to get the desired result from PathCreateFromUrlW(). */
+    while (url[len] == L'/')
+        ++len;
+    if (!len)
+        slash_count = 0;
+    else if (is_escaped_drive_spec(&url[len]))
+        slash_count = 1 - (len == 5 || len == 6);
+    else if (len < 5)
+        slash_count = len & 1;
+    else
+        slash_count = len > 6;
+    url += len - slash_count;
+
+    scheme = len ? filescheme_dblslash : filescheme;
+    len = wcslen(url);
+    if (!(normalised_url = malloc((wcslen(scheme) + len + 1) * sizeof(WCHAR))))
+        return NULL;
+
+    wcscpy(normalised_url, scheme);
+    wcscat(normalised_url, url);
+
+    return normalised_url;
+}
+
 static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
         DWORD flags, IPropertyStore *props, MF_OBJECT_TYPE *obj_type, IUnknown **object)
 {
     struct source_resolver *resolver = impl_from_IMFSourceResolver(iface);
+    WCHAR *normalised_url = NULL;
     IMFSchemeHandler *handler;
     IRtwqAsyncResult *result;
     RTWQASYNCRESULT *data;
@@ -6585,23 +6637,26 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     if (!url || !obj_type || !object)
         return E_POINTER;
 
-    if (FAILED(hr = resolver_get_scheme_handler(url, flags, &handler)))
-        return hr;
+    if (!(normalised_url = resolver_normalise_url(url)))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = resolver_get_scheme_handler(normalised_url, flags, &handler)))
+        goto done;
 
     hr = RtwqCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
     IMFSchemeHandler_Release(handler);
     if (FAILED(hr))
-        return hr;
+        goto done;
 
     data = (RTWQASYNCRESULT *)result;
     data->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, NULL, (IMFAsyncCallback *)&resolver->url_callback,
+    hr = IMFSchemeHandler_BeginCreateObject(handler, normalised_url, flags, props, NULL, (IMFAsyncCallback *)&resolver->url_callback,
             (IUnknown *)result);
     if (FAILED(hr))
     {
         IRtwqAsyncResult_Release(result);
-        return hr;
+        goto done;
     }
 
     WaitForSingleObject(data->hEvent, INFINITE);
@@ -6609,6 +6664,8 @@ static HRESULT WINAPI source_resolver_CreateObjectFromURL(IMFSourceResolver *ifa
     hr = resolver_end_create_object(resolver, OBJECT_FROM_URL, result, obj_type, object);
     IRtwqAsyncResult_Release(result);
 
+done:
+    free(normalised_url);
     return hr;
 }
 
@@ -6660,12 +6717,16 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
     IMFSchemeHandler *handler;
     IUnknown *inner_cookie = NULL;
     IRtwqAsyncResult *result;
+    WCHAR *normalised_url;
     HRESULT hr;
 
     TRACE("%p, %s, %#lx, %p, %p, %p, %p.\n", iface, debugstr_w(url), flags, props, cancel_cookie, callback, state);
 
-    if (FAILED(hr = resolver_get_scheme_handler(url, flags, &handler)))
-        return hr;
+    if (!(normalised_url = resolver_normalise_url(url)))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = resolver_get_scheme_handler(normalised_url, flags, &handler)))
+        goto done;
 
     if (cancel_cookie)
         *cancel_cookie = NULL;
@@ -6673,9 +6734,9 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
     hr = RtwqCreateAsyncResult((IUnknown *)handler, (IRtwqAsyncCallback *)callback, state, &result);
     IMFSchemeHandler_Release(handler);
     if (FAILED(hr))
-        return hr;
+        goto done;
 
-    hr = IMFSchemeHandler_BeginCreateObject(handler, url, flags, props, cancel_cookie ? &inner_cookie : NULL,
+    hr = IMFSchemeHandler_BeginCreateObject(handler, normalised_url, flags, props, cancel_cookie ? &inner_cookie : NULL,
             (IMFAsyncCallback *)&resolver->url_callback, (IUnknown *)result);
 
     if (SUCCEEDED(hr) && inner_cookie)
@@ -6686,6 +6747,8 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
 
     IRtwqAsyncResult_Release(result);
 
+done:
+    free(normalised_url);
     return hr;
 }
 
