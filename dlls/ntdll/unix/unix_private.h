@@ -331,7 +331,6 @@ extern void *get_native_context( CONTEXT *context );
 extern void *get_wow_context( CONTEXT *context );
 extern BOOL get_thread_times( int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time,
                               LARGE_INTEGER *user_time );
-extern void signal_init_threading(void);
 extern NTSTATUS signal_alloc_thread( TEB *teb );
 extern void signal_free_thread( TEB *teb );
 extern void signal_disable_syscall_dispatch(void);

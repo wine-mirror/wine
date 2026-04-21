@@ -1043,14 +1043,6 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *inf
 
 
 /**********************************************************************
- *             signal_init_threading
- */
-void signal_init_threading(void)
-{
-}
-
-
-/**********************************************************************
  *             signal_alloc_thread
  */
 NTSTATUS signal_alloc_thread( TEB *teb )

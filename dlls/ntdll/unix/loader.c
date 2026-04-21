@@ -1858,7 +1858,6 @@ static void start_main_thread(void)
 {
     TEB *teb = virtual_alloc_first_teb();
 
-    signal_init_threading();
     dbg_init();
     startup_info_size = server_init_process();
     virtual_map_user_shared_data();

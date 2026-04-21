@@ -2328,29 +2328,6 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *inf
 
 
 /**********************************************************************
- *             signal_init_threading
- */
-void signal_init_threading(void)
-{
-#ifdef __linux__
-    /* the preloader may have allocated it already */
-    gdt_fs_sel = get_fs();
-    if (!gdt_fs_sel || !is_gdt_sel( gdt_fs_sel ))
-    {
-        struct modify_ldt_s ldt_info = { -1 };
-
-        ldt_info.seg_32bit = 1;
-        ldt_info.usable = 1;
-        if (set_thread_area( &ldt_info ) >= 0) gdt_fs_sel = (ldt_info.entry_number << 3) | 3;
-        else gdt_fs_sel = 0;
-    }
-#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
-    gdt_fs_sel = GSEL( GUFS_SEL, SEL_UPL );
-#endif
-}
-
-
-/**********************************************************************
  *		signal_alloc_thread
  */
 NTSTATUS signal_alloc_thread( TEB *teb )
@@ -2396,6 +2373,18 @@ void signal_init_process(void)
     thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack - frame_size) & ~(ULONG_PTR)63);
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
+
+#ifdef __linux__
+    gdt_fs_sel = get_fs(); /* the preloader may have allocated it already */
+    if (!gdt_fs_sel || !is_gdt_sel( gdt_fs_sel ))
+    {
+        struct modify_ldt_s ldt_info = { .entry_number = -1, .seg_32bit = 1, .usable = 1 };
+        if (set_thread_area( &ldt_info ) >= 0) gdt_fs_sel = (ldt_info.entry_number << 3) | 3;
+        else gdt_fs_sel = 0;
+    }
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
+    gdt_fs_sel = GSEL( GUFS_SEL, SEL_UPL );
+#endif
 
     /* leave some space if libc is using the LDT for %gs */
     if (!gdt_fs_sel && !is_gdt_sel( get_gs() )) memset( ldt_bitmap, 0xff, 512 / 8 );
