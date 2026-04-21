@@ -494,12 +494,16 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
 {
     struct wine_device *wine_parent = CONTAINING_RECORD(parent, struct wine_device, device_obj);
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    SP_DEVINFO_DATA parent_sp = {sizeof(parent_sp)};
+    WCHAR parent_id[MAX_DEVICE_ID_LEN];
+    WCHAR (*child_ids)[MAX_DEVICE_ID_LEN] = NULL;
     DEVICE_RELATIONS *relations;
     IO_STATUS_BLOCK irp_status;
     IO_STACK_LOCATION *irpsp;
     HDEVINFO set;
     KEVENT event;
     IRP *irp;
+    DWORD count = 0;
     ULONG i;
 
     TRACE( "(%p)\n", parent );
@@ -561,6 +565,35 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
 
     ExFreePool( wine_parent->children );
     wine_parent->children = relations;
+
+    count = relations->Count;
+    child_ids = malloc( count * sizeof(*child_ids) );
+
+    for (i = 0; i < count; ++i)
+        get_device_instance_id( relations->Objects[i], child_ids[i] );
+
+    if (count && !get_device_instance_id( parent, parent_id )
+            && SetupDiOpenDeviceInfoW( set, parent_id, NULL, 0, &parent_sp ))
+    {
+        DWORD multi_len = 1;
+        WCHAR *children_multi, *p;
+
+        for (i = 0; i < count; ++i)
+            multi_len += wcslen( child_ids[i] ) + 1;
+
+        children_multi = malloc( multi_len * sizeof(WCHAR) );
+        p = children_multi;
+        for (i = 0; i < count; ++i)
+        {
+            wcscpy( p, child_ids[i] );
+            p += wcslen( child_ids[i] ) + 1;
+        }
+        *p = 0;
+        SetupDiSetDevicePropertyW( set, &parent_sp, &DEVPKEY_Device_Children,
+                DEVPROP_TYPE_STRING_LIST, (BYTE *)children_multi,
+                multi_len * sizeof(WCHAR), 0 );
+        free( children_multi );
+    }
 
     SetupDiDestroyDeviceInfoList( set );
 }
