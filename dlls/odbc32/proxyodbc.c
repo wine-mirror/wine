@@ -5524,7 +5524,7 @@ static SQLRETURN param_options_unix( struct statement *stmt, SQLULEN row_count, 
     struct SQLParamOptions_params params = { stmt->hdr.unix_handle, row_count, &row };
     SQLRETURN ret;
 
-    if (SUCCESS((ret = ODBC_CALL( SQLParamOptions, &params )))) *row_number = row;
+    if (SUCCESS((ret = ODBC_CALL( SQLParamOptions, &params ))) && row_number) *row_number = row;
     return ret;
 }
 
