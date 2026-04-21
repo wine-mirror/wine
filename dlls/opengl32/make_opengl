@@ -158,11 +158,6 @@ my %manual_win_thunks =
      "glCreateSyncFromCLeventARB" => 1,
      "glDeleteSync" => 1,
      "glFenceSync" => 1,
-     "glGetBooleanv" => 1,
-     "glGetDoublev" => 1,
-     "glGetFloatv" => 1,
-     "glGetInteger64v" => 1,
-     "glGetIntegerv" => 1,
      "glGetString" => 1,
      "glGetStringi" => 1,
      "glImportSyncEXT" => 1,
@@ -685,6 +680,7 @@ sub get_handle_function($)
 sub generate_win_thunk($$)
 {
     my ($name, $func) = @_;
+    my $get_integer = get_integer_call( $name, $func );
     my $decl_args = get_func_args( $func );
     my $func_ret = get_func_ret( $func );
     my $params = "";
@@ -713,9 +709,11 @@ sub generate_win_thunk($$)
     $ret .= " = {$params }";
     $ret .= ";\n";
     $ret .= "    NTSTATUS status;\n";
+    $ret .= "    int integer;\n" if $get_integer;
     $ret .= "    " . get_func_trace( $name, $func, 1 );
     $ret .= $checks;
-    $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
+    $ret .= $get_integer ? "    $get_integer\n    else " : "    ";
+    $ret .= "if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
     $ret .= "    return args.ret;\n" unless is_void_func($func);
     $ret .= "}\n";
 
@@ -1094,6 +1092,26 @@ sub add_extension($)
         $wgl_extensions{$alias} = 1 if $alias =~ /^WGL/;
         $egl_extensions{$alias} = 1 if $alias =~ /^EGL/;
     }
+}
+
+sub get_integer_call($)
+{
+    my ($name, $func) = @_;
+    my $params;
+    my $pname;
+
+    foreach my $arg (@{$func->[1]})
+    {
+        my $name = get_arg_name( $arg );
+        my $type = get_arg_type( $arg );
+        $pname = $name if $name =~ /^(pname|target|value)$/;
+        $params = $name;
+    }
+
+    return 0 if !$pname;
+
+    my $hook = "if (get_integer( $pname, &integer )) *$params = integer;";
+    return $hook if $name =~ /^glGet(Boolean|Double|Float|Integer|Integer64)v/;
 }
 
 sub parse_registry($)

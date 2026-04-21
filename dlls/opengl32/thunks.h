@@ -3,7 +3,6 @@
 extern GLsync WINAPI glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags );
 extern void WINAPI glDeleteSync( GLsync sync );
 extern GLsync WINAPI glFenceSync( GLenum condition, GLbitfield flags );
-extern void WINAPI glGetInteger64v( GLenum pname, GLint64 *data );
 extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index );
 extern GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags );
 extern BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );

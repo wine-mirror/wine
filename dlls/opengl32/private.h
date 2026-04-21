@@ -44,5 +44,6 @@ extern BOOL get_context_from_handle( HGLRC handle, HGLRC *obj );
 extern BOOL get_sync_from_handle( GLsync handle, GLsync *obj );
 extern void set_gl_error( GLenum error );
 extern struct registry_entry *get_function_entry( const char *name );
+extern BOOL get_integer( GLenum name, GLint *data );
 
 #endif /* __WINE_OPENGL32_PRIVATE_H */

@@ -2039,8 +2039,12 @@ GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync
     return NULL;
 }
 
-static BOOL get_integer( struct context *ctx, GLenum name, GLint *data )
+BOOL get_integer( GLenum name, GLint *data )
 {
+    struct context *ctx;
+
+    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return FALSE;
+
     switch (name)
     {
     case GL_MAJOR_VERSION:
@@ -2117,76 +2121,6 @@ const GLubyte * WINAPI glGetString( GLenum name )
     else if (args.ret) append_wow64_string( (char *)args.ret );
 #endif
     return args.ret;
-}
-
-void WINAPI glGetBooleanv( GLenum pname, GLboolean *data )
-{
-    struct glGetBooleanv_params args = { .teb = NtCurrentTeb(), .pname = pname, .data = data };
-    struct context *ctx;
-    NTSTATUS status;
-    GLint value;
-
-    TRACE( "pname %d, data %p\n", pname, data );
-
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
-    if (get_integer( ctx, pname, &value )) *data = value;
-    else if ((status = UNIX_CALL( glGetBooleanv, &args ))) WARN( "glGetBooleanv returned %#lx\n", status );
-}
-
-void WINAPI glGetDoublev( GLenum pname, GLdouble *data )
-{
-    struct glGetDoublev_params args = { .teb = NtCurrentTeb(), .pname = pname, .data = data };
-    struct context *ctx;
-    NTSTATUS status;
-    GLint value;
-
-    TRACE( "pname %d, data %p\n", pname, data );
-
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
-    if (get_integer( ctx, pname, &value )) *data = value;
-    else if ((status = UNIX_CALL( glGetDoublev, &args ))) WARN( "glGetDoublev returned %#lx\n", status );
-}
-
-void WINAPI glGetFloatv( GLenum pname, GLfloat *data )
-{
-    struct glGetFloatv_params args = { .teb = NtCurrentTeb(), .pname = pname, .data = data };
-    struct context *ctx;
-    NTSTATUS status;
-    GLint value;
-
-    TRACE( "pname %d, data %p\n", pname, data );
-
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
-    if (get_integer( ctx, pname, &value )) *data = value;
-    else if ((status = UNIX_CALL( glGetFloatv, &args ))) WARN( "glGetFloatv returned %#lx\n", status );
-}
-
-void WINAPI glGetInteger64v( GLenum pname, GLint64 *data )
-{
-    struct glGetInteger64v_params args = { .teb = NtCurrentTeb(), .pname = pname, .data = data };
-    struct context *ctx;
-    NTSTATUS status;
-    GLint value;
-
-    TRACE( "pname %d, data %p\n", pname, data );
-
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
-    if (get_integer( ctx, pname, &value )) *data = value;
-    else if ((status = UNIX_CALL( glGetInteger64v, &args ))) WARN( "glGetInteger64v returned %#lx\n", status );
-}
-
-void WINAPI glGetIntegerv( GLenum pname, GLint *data )
-{
-    struct glGetIntegerv_params args = { .teb = NtCurrentTeb(), .pname = pname, .data = data };
-    struct context *ctx;
-    NTSTATUS status;
-    GLint value;
-
-    TRACE( "pname %d, data %p\n", pname, data );
-
-    if (!(ctx = context_from_handle( NtCurrentTeb()->glCurrentRC ))) return;
-    if (get_integer( ctx, pname, &value )) *data = value;
-    else if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#lx\n", status );
 }
 
 const char * WINAPI wglGetExtensionsStringARB( HDC hdc )
