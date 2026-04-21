@@ -568,7 +568,7 @@ static WCHAR *get_driver_filename( const WCHAR *name )
         WCHAR buffer[1024];
         KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
-        if (wcscmp( name, drivers.names[i] )) continue;
+        if (wcsicmp( name, drivers.names[i] )) continue;
         if ((key_driver = open_key( key_odbcinst, drivers.names[i], wcslen(drivers.names[i]) * sizeof(WCHAR) )))
         {
             if (query_value( key_driver, driverW, sizeof(driverW), info, sizeof(buffer) ) && info->Type == REG_SZ &&
