@@ -5218,6 +5218,7 @@ static void test_whitespace(void)
     hr = IXMLDOMNode_get_text(node, &text);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(text, L""), "Unexpected text %s.\n", debugstr_w(text));
+    SysFreeString(text);
     {
         IXMLDOMNodeList *list;
 
@@ -5235,7 +5236,6 @@ static void test_whitespace(void)
         IXMLDOMNodeList_Release(list);
     }
     IXMLDOMNode_Release(node);
-    SysFreeString(text);
 
     hr = IXMLDOMNodeList_nextNode(list, &node);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
